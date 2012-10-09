@@ -41,7 +41,7 @@
 #define CRC(crcval, newchar) crcval = (crcval >> 8) ^ crc_table[(crcval ^ newchar) & 0x00ff]
 
 /* CRC16 defs */
-static const uint16 crc_table[256] =
+static const UINT16 crc_table[256] =
 {
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
@@ -462,7 +462,7 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 		return NULL;
 	}
 	enc->outputBuffer = enc->outputBufferPlus + 64;
-	enc->hash_table = (uint16*) xzalloc(enc->buf_len * 2);
+	enc->hash_table = (UINT16*) xzalloc(enc->buf_len * 2);
 	if (enc->hash_table == NULL)
 	{
 		free(enc->historyBuffer);
@@ -499,7 +499,7 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
  * @return  TRUE on success, FALSE on failure
  */
 
-BOOL compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
 		return FALSE;
@@ -525,7 +525,7 @@ BOOL compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @return  TRUE on success, FALSE on failure
  */
 
-BOOL compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_4(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	/* RDP 4.0 encoding not yet implemented */
 	return FALSE;
@@ -541,7 +541,7 @@ BOOL compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @return  TRUE on success, FALSE on failure
  */
 
-BOOL compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	char* outputBuffer;     /* points to enc->outputBuffer */
 	char* hptr_end;         /* points to end of history data */
@@ -554,20 +554,20 @@ BOOL compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	uint32 copy_offset;     /* pattern match starts here... */
 	uint32 lom;             /* ...and matches this many bytes */
 	int last_crc_index;     /* don't compute CRC beyond this index */
-	uint16 *hash_table;     /* hash table for pattern matching */
+	UINT16 *hash_table;     /* hash table for pattern matching */
 
 	uint32 i;
 	uint32 j;
 	uint32 k;
 	uint32 x;
-	uint8  data;
-	uint16 data16;
+	BYTE  data;
+	UINT16 data16;
 	uint32 historyOffset;
-	uint16 crc;
+	UINT16 crc;
 	uint32 ctr;
 	uint32 saved_ctr;
 	uint32 data_end;
-	uint8 byte_val;
+	BYTE byte_val;
 
 	crc = 0;
 	opb_index = 0;

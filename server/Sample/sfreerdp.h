@@ -36,8 +36,8 @@ struct test_peer_context
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 	STREAM* s;
-	uint8* icon_data;
-	uint8* bg_data;
+	BYTE* icon_data;
+	BYTE* bg_data;
 	int icon_width;
 	int icon_height;
 	int icon_x;

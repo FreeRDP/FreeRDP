@@ -37,17 +37,17 @@ struct rdp_tcp
 {
 	int sockfd;
 	char ip_address[32];
-	uint8 mac_address[6];
+	BYTE mac_address[6];
 	struct rdp_settings* settings;
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
 };
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port);
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
 BOOL tcp_disconnect(rdpTcp* tcp);
-int tcp_read(rdpTcp* tcp, uint8* data, int length);
-int tcp_write(rdpTcp* tcp, uint8* data, int length);
+int tcp_read(rdpTcp* tcp, BYTE* data, int length);
+int tcp_write(rdpTcp* tcp, BYTE* data, int length);
 BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
 

@@ -162,7 +162,7 @@ static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 		window->windowWidth, window->windowHeight);
 }
 
-static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, uint8 state)
+static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
@@ -249,7 +249,7 @@ static void xf_on_free_rail_client_event(RDP_EVENT* event)
 	}
 }
 
-static void xf_send_rail_client_event(rdpChannels* channels, uint16 event_type, void* param)
+static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
 {
 	RDP_EVENT* out_event = NULL;
 	void * payload = NULL;
@@ -284,7 +284,7 @@ void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
 }
 
-void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
+void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, UINT16 command)
 {
 	rdpChannels* channels;
 	RAIL_SYSCOMMAND_ORDER syscommand;
@@ -518,7 +518,7 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels,
 		DEBUG_X11_LMS("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
 			minmax->windowId, minmax->maxWidth, minmax->maxHeight,
-			(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
+			(INT16)minmax->maxPosX, (INT16)minmax->maxPosY,
 			minmax->minTrackWidth, minmax->minTrackHeight,
 			minmax->maxTrackWidth, minmax->maxTrackHeight);
 
@@ -562,7 +562,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 
 		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
-			movetype_names[movesize->moveSizeType], (sint16) movesize->posX, (sint16) movesize->posY);
+			movetype_names[movesize->moveSizeType], (INT16) movesize->posX, (INT16) movesize->posY);
 
 		switch (movesize->moveSizeType)
 		{

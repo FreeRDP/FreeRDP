@@ -98,7 +98,7 @@ struct _TRANSFER_DATA
 	URBDRC_CHANNEL_CALLBACK* callback;
 	URBDRC_PLUGIN* urbdrc;
 	IUDEVMAN* udevman;
-	uint8* pBuffer;
+	BYTE* pBuffer;
 	uint32 cbSize;
 	uint32 UsbDevice;
 };
@@ -114,21 +114,21 @@ struct _IUDEVICE
 		uint32 *UrbdStatus,
 		uint32 *StartFrame,
 		uint32 NumberOfPackets,
-		uint8 *IsoPacket,
+		BYTE *IsoPacket,
 		uint32 *BufferSize,
-		uint8 *Buffer,
+		BYTE *Buffer,
 		int Timeout);
 
 	int (*control_transfer) (IUDEVICE * idev, uint32 RequestId,
 		uint32 EndpointAddress,
 		uint32 TransferFlags,
-		uint8 bmRequestType,
-		uint8 Request,
-		uint16 Value,
-		uint16 Index,
+		BYTE bmRequestType,
+		BYTE Request,
+		UINT16 Value,
+		UINT16 Index,
 		uint32 *UrbdStatus,
 		uint32 *BufferSize,
-		uint8 *Buffer,
+		BYTE *Buffer,
 		uint32 Timeout);
 
 	int (*bulk_or_interrupt_transfer) (IUDEVICE * idev, uint32 RequestId,
@@ -136,14 +136,14 @@ struct _IUDEVICE
 		uint32 TransferFlags,
 		uint32 *UsbdStatus,
 		uint32 *BufferSize,
-		uint8 *Buffer,
+		BYTE *Buffer,
 		uint32 Timeout);
 
 
 	int (*select_configuration) (IUDEVICE * idev, uint32 bConfigurationValue);
 
-	int (*select_interface) (IUDEVICE * idev, uint8 InterfaceNumber,
-		uint8 AlternateSetting);
+	int (*select_interface) (IUDEVICE * idev, BYTE InterfaceNumber,
+		BYTE AlternateSetting);
 
 	int (*control_pipe_request) (IUDEVICE * idev, uint32 RequestId,
 		uint32 EndpointAddress,
@@ -153,16 +153,16 @@ struct _IUDEVICE
 	int (*control_query_device_text) (IUDEVICE * idev, uint32 TextType,
 		uint32 LocaleId,
 		uint32 *BufferSize,
-		uint8 * Buffer);
+		BYTE * Buffer);
 
 	int (*os_feature_descriptor_request) (IUDEVICE * idev, uint32 RequestId,
-		uint8 Recipient,
-		uint8 InterfaceNumber,
-		uint8 Ms_PageIndex,
-		uint16 Ms_featureDescIndex,
+		BYTE Recipient,
+		BYTE InterfaceNumber,
+		BYTE Ms_PageIndex,
+		UINT16 Ms_featureDescIndex,
 		uint32 * UsbdStatus,
 		uint32 * BufferSize,
-		uint8* Buffer,
+		BYTE* Buffer,
 		int Timeout);
 
 	void (*cancel_all_transfer_request) (IUDEVICE * idev);
@@ -191,7 +191,7 @@ struct _IUDEVICE
 
 	int (*query_device_port_status) (IUDEVICE * idev, uint32 *UsbdStatus,
 		uint32 * BufferSize,
-		uint8 * Buffer);
+		BYTE * Buffer);
 
 	int (*request_queue_is_none) (IUDEVICE * idev);
 
@@ -211,8 +211,8 @@ struct _IUDEVICE
 	BASIC_DEV_STATE_DEFINED(channel_id, uint32);
 	BASIC_DEV_STATE_DEFINED(UsbDevice, uint32);
 	BASIC_DEV_STATE_DEFINED(ReqCompletion, uint32);
-	BASIC_DEV_STATE_DEFINED(bus_number, uint16);
-	BASIC_DEV_STATE_DEFINED(dev_number, uint16);
+	BASIC_DEV_STATE_DEFINED(bus_number, UINT16);
+	BASIC_DEV_STATE_DEFINED(dev_number, UINT16);
 	BASIC_DEV_STATE_DEFINED(port_number, int);
 	BASIC_DEV_STATE_DEFINED(isoch_queue, void *);
 	BASIC_DEV_STATE_DEFINED(MsConfig, MSUSB_CONFIG_DESCRIPTOR *);
@@ -237,8 +237,8 @@ struct _IUDEVMAN
 	int  (*register_udevice) (IUDEVMAN* idevman, int bus_number, 
 		int dev_number,
 		int UsbDevice, 
-		uint16 idVendor, 
-		uint16 idProduct, 
+		UINT16 idVendor, 
+		UINT16 idProduct, 
 		int flag);
 	IUDEVICE *(*get_next) (IUDEVMAN *idevman);
 	IUDEVICE *(*get_udevice_by_UsbDevice) (IUDEVMAN * idevman, 
@@ -246,8 +246,8 @@ struct _IUDEVMAN
 	IUDEVICE *(*get_udevice_by_UsbDevice_try_again) (IUDEVMAN * idevman, 
 		uint32 UsbDevice);
 	/* Extension */
-	int (*check_device_exist_by_id) (IUDEVMAN * idevman, uint16 idVendor, 
-		uint16 idProduct);
+	int (*check_device_exist_by_id) (IUDEVMAN * idevman, UINT16 idVendor, 
+		UINT16 idProduct);
 	int (*isAutoAdd) (IUDEVMAN * idevman);
 	/* Basic state */
 	BASIC_DEVMAN_STATE_DEFINED(defUsbDevice, uint32);

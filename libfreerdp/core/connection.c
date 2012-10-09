@@ -204,11 +204,11 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
-	uint8 client_random[CLIENT_RANDOM_LENGTH];
-	uint8 crypt_client_random[256 + 8];
+	BYTE client_random[CLIENT_RANDOM_LENGTH];
+	BYTE crypt_client_random[256 + 8];
 	uint32 key_len;
-	uint8* mod;
-	uint8* exp;
+	BYTE* mod;
+	BYTE* exp;
 	uint32 length;
 	STREAM* s;
 
@@ -251,7 +251,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
-		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
@@ -267,12 +267,12 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 {
-	uint8 client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
-	uint8 crypt_client_random[256 + 8];
+	BYTE client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
+	BYTE crypt_client_random[256 + 8];
 	uint32 rand_len, key_len;
-	uint16 channel_id, length, sec_flags;
-	uint8* mod;
-	uint8* priv_exp;
+	UINT16 channel_id, length, sec_flags;
+	BYTE* mod;
+	BYTE* priv_exp;
 
 	if (rdp->settings->encryption == FALSE)
 	{
@@ -323,7 +323,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
 	{
-		uint8 fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
@@ -372,7 +372,7 @@ BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 {
 	int i;
-	uint16 channel_id;
+	UINT16 channel_id;
 	BOOL all_joined = TRUE;
 
 	if (!mcs_recv_channel_join_confirm(rdp->mcs, s, &channel_id))
@@ -456,9 +456,9 @@ BOOL rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 {
-	uint8* mark;
-	uint16 width;
-	uint16 height;
+	BYTE* mark;
+	UINT16 width;
+	UINT16 height;
 
 	width = rdp->settings->width;
 	height = rdp->settings->height;
@@ -636,7 +636,7 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 {
 	int i;
-	uint16 channel_id;
+	UINT16 channel_id;
 	BOOL all_joined = TRUE;
 
 	if (!mcs_recv_channel_join_request(rdp->mcs, s, &channel_id))

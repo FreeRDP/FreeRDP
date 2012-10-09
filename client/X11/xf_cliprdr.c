@@ -56,7 +56,7 @@ struct clipboard_context
 	int num_formats;
 	Atom targets[20];
 	int num_targets;
-	uint8* data;
+	BYTE* data;
 	uint32 data_format;
 	uint32 data_alt_format;
 	int data_length;
@@ -70,7 +70,7 @@ struct clipboard_context
 	/* INCR mechanism */
 	Atom incr_atom;
 	BOOL incr_starts;
-	uint8* incr_data;
+	BYTE* incr_data;
 	int incr_data_length;
 };
 
@@ -99,7 +99,7 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	cb->identity_atom = XInternAtom(xfi->display, "_FREERDP_CLIPRDR_ID", FALSE);
 
 	XChangeProperty(xfi->display, xfi->drawable, cb->identity_atom,
-			XA_INTEGER, 32, PropModeReplace, (uint8*) &id, 1);
+			XA_INTEGER, 32, PropModeReplace, (BYTE*) &id, 1);
 
 	XSelectInput(xfi->display, cb->root_window, PropertyChangeMask);
 
@@ -158,17 +158,17 @@ void xf_cliprdr_uninit(xfInfo* xfi)
 	}
 }
 
-static uint8* lf2crlf(uint8* data, int* size)
+static BYTE* lf2crlf(BYTE* data, int* size)
 {
-	uint8 c;
-	uint8* outbuf;
-	uint8* out;
-	uint8* in_end;
-	uint8* in;
+	BYTE c;
+	BYTE* outbuf;
+	BYTE* out;
+	BYTE* in_end;
+	BYTE* in;
 	int out_size;
 
 	out_size = (*size) * 2 + 1;
-	outbuf = (uint8*) xzalloc(out_size);
+	outbuf = (BYTE*) xzalloc(out_size);
 	out = outbuf;
 	in = data;
 	in_end = data + (*size);
@@ -193,12 +193,12 @@ static uint8* lf2crlf(uint8* data, int* size)
 	return outbuf;
 }
 
-static void crlf2lf(uint8* data, int* size)
+static void crlf2lf(BYTE* data, int* size)
 {
-	uint8 c;
-	uint8* out;
-	uint8* in;
-	uint8* in_end;
+	BYTE c;
+	BYTE* out;
+	BYTE* in;
+	BYTE* in_end;
 
 	out = data;
 	in = data;
@@ -215,9 +215,9 @@ static void crlf2lf(uint8* data, int* size)
 	*size = out - data;
 }
 
-static void be2le(uint8* data, int size)
+static void be2le(BYTE* data, int size)
 {
-	uint8 c;
+	BYTE c;
 
 	while (size >= 2)
 	{
@@ -245,7 +245,7 @@ static BOOL xf_cliprdr_is_self_owned(xfInfo* xfi)
 	{
 		result = XGetWindowProperty(xfi->display, cb->owner,
 			cb->identity_atom, 0, 4, 0, XA_INTEGER,
-			&type, &format, &length, &bytes_left, (uint8**) &pid);
+			&type, &format, &length, &bytes_left, (BYTE**) &pid);
 	}
 
 	if (pid)
@@ -305,7 +305,7 @@ static int xf_cliprdr_select_format_by_atom(clipboardContext* cb, Atom target)
 static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 {
 	Atom type;
-	uint8* format_data;
+	BYTE* format_data;
 	int format, result;
 	unsigned long length, bytes_left;
 	RDP_CB_FORMAT_LIST_EVENT* event;
@@ -313,7 +313,7 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 
 	result = XGetWindowProperty(xfi->display, cb->root_window,
 		cb->property_atom, 0, 3600, 0, XA_STRING,
-		&type, &format, &length, &bytes_left, (uint8**) &format_data);
+		&type, &format, &length, &bytes_left, (BYTE**) &format_data);
 
 	if (result != Success)
 	{
@@ -325,7 +325,7 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	event->raw_format_data = (uint8*) malloc(length);
+	event->raw_format_data = (BYTE*) malloc(length);
 	memcpy(event->raw_format_data, format_data, length);
 	event->raw_format_data_size = length;
 	XFree(format_data);
@@ -397,7 +397,7 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, uint32 format)
 	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
 }
 
-static void xf_cliprdr_send_data_response(xfInfo* xfi, uint8* data, int size)
+static void xf_cliprdr_send_data_response(xfInfo* xfi, BYTE* data, int size)
 {
 	RDP_CB_DATA_RESPONSE_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
@@ -436,7 +436,7 @@ static void xf_cliprdr_process_cb_data_request_event(xfInfo* xfi, RDP_CB_DATA_RE
 		/* CB_FORMAT_RAW */
 		i = 0;
 		XChangeProperty(xfi->display, xfi->drawable, cb->property_atom,
-			XA_INTEGER, 32, PropModeReplace, (uint8*) &event->format, 1);
+			XA_INTEGER, 32, PropModeReplace, (BYTE*) &event->format, 1);
 	}
 	else
 	{
@@ -468,7 +468,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 	int i, j;
 	Atom atom;
 	int format;
-	uint8* data = NULL;
+	BYTE* data = NULL;
 	unsigned long length, bytes_left;
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
@@ -516,16 +516,16 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 	}
 }
 
-static uint8* xf_cliprdr_process_requested_raw(uint8* data, int* size)
+static BYTE* xf_cliprdr_process_requested_raw(BYTE* data, int* size)
 {
-	uint8* outbuf;
+	BYTE* outbuf;
 
-	outbuf = (uint8*) malloc(*size);
+	outbuf = (BYTE*) malloc(*size);
 	memcpy(outbuf, data, *size);
 	return outbuf;
 }
 
-static uint8* xf_cliprdr_process_requested_unicodetext(uint8* data, int* size)
+static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 {
 	char* inbuf;
 	WCHAR* outbuf;
@@ -537,21 +537,21 @@ static uint8* xf_cliprdr_process_requested_unicodetext(uint8* data, int* size)
 
 	*size = (int) ((out_size + 1) * 2);
 
-	return (uint8*) outbuf;
+	return (BYTE*) outbuf;
 }
 
-static uint8* xf_cliprdr_process_requested_text(uint8* data, int* size)
+static BYTE* xf_cliprdr_process_requested_text(BYTE* data, int* size)
 {
-	uint8* outbuf;
+	BYTE* outbuf;
 
 	outbuf = lf2crlf(data, size);
 
 	return outbuf;
 }
 
-static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
+static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 {
-	uint8* outbuf;
+	BYTE* outbuf;
 
 	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
 	if (*size < 54)
@@ -561,29 +561,29 @@ static uint8* xf_cliprdr_process_requested_dib(uint8* data, int* size)
 	}
 
 	*size -= 14;
-	outbuf = (uint8*) xzalloc(*size);
+	outbuf = (BYTE*) xzalloc(*size);
 	memcpy(outbuf, data + 14, *size);
 
 	return outbuf;
 }
 
-static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
+static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 {
 	char* inbuf;
-	uint8* in;
-	uint8* outbuf;
+	BYTE* in;
+	BYTE* outbuf;
 	char num[11];
 
 	inbuf = NULL;
 
 	if (*size > 2)
 	{
-		if ((uint8) data[0] == 0xFE && (uint8) data[1] == 0xFF)
+		if ((BYTE) data[0] == 0xFE && (BYTE) data[1] == 0xFF)
 		{
 			be2le(data, *size);
 		}
 
-		if ((uint8) data[0] == 0xFF && (uint8) data[1] == 0xFE)
+		if ((BYTE) data[0] == 0xFF && (BYTE) data[1] == 0xFE)
 		{
 			freerdp_UnicodeToAsciiAlloc((WCHAR*) (data + 2), &inbuf, (*size - 2) / 2);
 		}
@@ -595,7 +595,7 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 		memcpy(inbuf, data, *size);
 	}
 
-	outbuf = (uint8*) xzalloc(*size + 200);
+	outbuf = (BYTE*) xzalloc(*size + 200);
 	strcpy((char*) outbuf,
 		"Version:0.9\r\n"
 		"StartHTML:0000000000\r\n"
@@ -603,10 +603,10 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 		"StartFragment:0000000000\r\n"
 		"EndFragment:0000000000\r\n");
 
-	in = (uint8*) strstr((char*) inbuf, "<body");
+	in = (BYTE*) strstr((char*) inbuf, "<body");
 	if (in == NULL)
 	{
-		in = (uint8*) strstr((char*) inbuf, "<BODY");
+		in = (BYTE*) strstr((char*) inbuf, "<BODY");
 	}
 	/* StartHTML */
 	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
@@ -638,9 +638,9 @@ static uint8* xf_cliprdr_process_requested_html(uint8* data, int* size)
 	return outbuf;
 }
 
-static void xf_cliprdr_process_requested_data(xfInfo* xfi, BOOL has_data, uint8* data, int size)
+static void xf_cliprdr_process_requested_data(xfInfo* xfi, BOOL has_data, BYTE* data, int size)
 {
-	uint8* outbuf;
+	BYTE* outbuf;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	if (cb->incr_starts && has_data)
@@ -695,7 +695,7 @@ static BOOL xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 {
 	Atom type;
 	int format;
-	uint8* data = NULL;
+	BYTE* data = NULL;
 	BOOL has_data = FALSE;
 	unsigned long length, bytes_left, dummy;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
@@ -758,7 +758,7 @@ static BOOL xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 			{
 				bytes_left = length * format / 8;
 				DEBUG_X11("%d bytes", (int)bytes_left);
-				cb->incr_data = (uint8*) realloc(cb->incr_data, cb->incr_data_length + bytes_left);
+				cb->incr_data = (BYTE*) realloc(cb->incr_data, cb->incr_data_length + bytes_left);
 				memcpy(cb->incr_data + cb->incr_data_length, data, bytes_left);
 				cb->incr_data_length += bytes_left;
 				XFree(data);
@@ -807,7 +807,7 @@ static void xf_cliprdr_provide_targets(xfInfo* xfi, XEvent* respond)
 			respond->xselection.requestor,
 			respond->xselection.property,
 			XA_ATOM, 32, PropModeReplace,
-			(uint8*) cb->targets, cb->num_targets);
+			(BYTE*) cb->targets, cb->num_targets);
 	}
 }
 
@@ -821,7 +821,7 @@ static void xf_cliprdr_provide_data(xfInfo* xfi, XEvent* respond)
 			respond->xselection.requestor,
 			respond->xselection.property,
 			respond->xselection.target, 8, PropModeReplace,
-			(uint8*) cb->data, cb->data_length);
+			(BYTE*) cb->data, cb->data_length);
 	}
 }
 
@@ -868,24 +868,24 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 	XFlush(xfi->display);
 }
 
-static void xf_cliprdr_process_text(clipboardContext* cb, uint8* data, int size)
+static void xf_cliprdr_process_text(clipboardContext* cb, BYTE* data, int size)
 {
-	cb->data = (uint8*) malloc(size);
+	cb->data = (BYTE*) malloc(size);
 	memcpy(cb->data, data, size);
 	cb->data_length = size;
 	crlf2lf(cb->data, &cb->data_length);
 }
 
-static void xf_cliprdr_process_unicodetext(clipboardContext* cb, uint8* data, int size)
+static void xf_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data, int size)
 {
 	cb->data_length = freerdp_UnicodeToAsciiAlloc((WCHAR*) data, (CHAR**) &(cb->data), size / 2);
 	crlf2lf(cb->data, &cb->data_length);
 }
 
-static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
+static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 {
 	STREAM* s;
-	uint16 bpp;
+	UINT16 bpp;
 	uint32 offset;
 	uint32 ncolors;
 
@@ -899,7 +899,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	s = stream_new(0);
 	stream_attach(s, data, size);
 	stream_seek(s, 14);
-	stream_read_uint16(s, bpp);
+	stream_read_UINT16(s, bpp);
 	stream_read_uint32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
 	stream_detach(s);
@@ -908,8 +908,8 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	DEBUG_X11_CLIPRDR("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
 
 	s = stream_new(14 + size);
-	stream_write_uint8(s, 'B');
-	stream_write_uint8(s, 'M');
+	stream_write_BYTE(s, 'B');
+	stream_write_BYTE(s, 'M');
 	stream_write_uint32(s, 14 + size);
 	stream_write_uint32(s, 0);
 	stream_write_uint32(s, offset);
@@ -921,7 +921,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, uint8* data, int size)
 	stream_free(s);
 }
 
-static void xf_cliprdr_process_html(clipboardContext* cb, uint8* data, int size)
+static void xf_cliprdr_process_html(clipboardContext* cb, BYTE* data, int size)
 {
 	char* start_str;
 	char* end_str;
@@ -943,7 +943,7 @@ static void xf_cliprdr_process_html(clipboardContext* cb, uint8* data, int size)
 		return;
 	}
 
-	cb->data = (uint8*) malloc(size - start + 1);
+	cb->data = (BYTE*) malloc(size - start + 1);
 	memcpy(cb->data, data + start, end - start);
 	cb->data_length = end - start;
 	crlf2lf(cb->data, &cb->data_length);
@@ -1071,7 +1071,7 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	uint32 format;
 	XEvent* respond;
 	uint32 alt_format;
-	uint8* data = NULL;
+	BYTE* data = NULL;
 	BOOL delay_respond;
 	unsigned long length, bytes_left;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;

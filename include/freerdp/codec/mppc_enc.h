@@ -39,12 +39,12 @@ struct rdp_mppc_enc
 	int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
 	int   flagsHold;
 	int   first_pkt;        /* this is the first pkt passing through enc */
-	uint16* hash_table;
+	UINT16* hash_table;
 };
 
-FREERDP_API BOOL compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-FREERDP_API BOOL compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len);
-FREERDP_API BOOL compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len);
+FREERDP_API BOOL compress_rdp(struct rdp_mppc_enc* enc, BYTE* srcData, int len);
+FREERDP_API BOOL compress_rdp_4(struct rdp_mppc_enc* enc, BYTE* srcData, int len);
+FREERDP_API BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len);
 FREERDP_API struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
 FREERDP_API void mppc_enc_free(struct rdp_mppc_enc* enc);
 

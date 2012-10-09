@@ -398,7 +398,7 @@ void xf_peer_dump_rfx(freerdp_peer* client)
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
 	STREAM* s;
-	uint8* data;
+	BYTE* data;
 	xfInfo* xfi;
 	RFX_RECT rect;
 	XImage* image;
@@ -429,7 +429,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 		image = xf_snapshot(xfp, x, y, width, height);
 
-		data = (uint8*) image->data;
+		data = (BYTE*) image->data;
 		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
@@ -450,7 +450,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		image = xf_snapshot(xfp, x, y, width, height);
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
-				(uint8*) image->data, width, height, width * xfi->bytesPerPixel);
+				(BYTE*) image->data, width, height, width * xfi->bytesPerPixel);
 
 		cmd->destLeft = x;
 		cmd->destTop = y;

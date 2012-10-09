@@ -27,11 +27,11 @@
 
 #include "rfx_dwt.h"
 
-static void rfx_dwt_2d_decode_block(sint16* buffer, sint16* idwt, int subband_width)
+static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_width)
 {
-	sint16 *dst, *l, *h;
-	sint16 *l_dst, *h_dst;
-	sint16 *hl, *lh, *hh, *ll;
+	INT16 *dst, *l, *h;
+	INT16 *l_dst, *h_dst;
+	INT16 *hl, *lh, *hh, *ll;
 	int total_width;
 	int x, y;
 	int n;
@@ -108,18 +108,18 @@ static void rfx_dwt_2d_decode_block(sint16* buffer, sint16* idwt, int subband_wi
 	}
 }
 
-void rfx_dwt_2d_decode(sint16* buffer, sint16* dwt_buffer)
+void rfx_dwt_2d_decode(INT16* buffer, INT16* dwt_buffer)
 {
 	rfx_dwt_2d_decode_block(buffer + 3840, dwt_buffer, 8);
 	rfx_dwt_2d_decode_block(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_decode_block(buffer, dwt_buffer, 32);
 }
 
-static void rfx_dwt_2d_encode_block(sint16* buffer, sint16* dwt, int subband_width)
+static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, int subband_width)
 {
-	sint16 *src, *l, *h;
-	sint16 *l_src, *h_src;
-	sint16 *hl, *lh, *hh, *ll;
+	INT16 *src, *l, *h;
+	INT16 *l_src, *h_src;
+	INT16 *hl, *lh, *hh, *ll;
 	int total_width;
 	int x, y;
 	int n;
@@ -190,7 +190,7 @@ static void rfx_dwt_2d_encode_block(sint16* buffer, sint16* dwt, int subband_wid
 	}
 }
 
-void rfx_dwt_2d_encode(sint16* buffer, sint16* dwt_buffer)
+void rfx_dwt_2d_encode(INT16* buffer, INT16* dwt_buffer)
 {
 	rfx_dwt_2d_encode_block(buffer, dwt_buffer, 32);
 	rfx_dwt_2d_encode_block(buffer + 3072, dwt_buffer, 16);

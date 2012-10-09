@@ -57,7 +57,7 @@ struct _TSMF_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 
-	uint8 presentation_id[16];
+	BYTE presentation_id[16];
 	uint32 stream_id;
 };
 
@@ -113,7 +113,7 @@ BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
 
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	uint32 cbSize,
-	uint8* pBuffer)
+	BYTE* pBuffer)
 {
 	int length;
 	STREAM* input;
@@ -132,7 +132,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		return 1;
 	}
 	input = stream_new(0);
-	stream_attach(input, (uint8*) pBuffer, cbSize);
+	stream_attach(input, (BYTE*) pBuffer, cbSize);
 	output = stream_new(256);
 	stream_seek(output, 8);
 
@@ -355,7 +355,7 @@ static int tsmf_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 static int tsmf_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel* pChannel,
-	uint8* Data,
+	BYTE* Data,
 	int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
@@ -421,7 +421,7 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 			}
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((uint8*)data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((BYTE*)data) + data->size);
 	}
 }
 

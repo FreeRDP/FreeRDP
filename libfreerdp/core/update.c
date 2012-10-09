@@ -38,11 +38,11 @@ static const char* const UPDATE_TYPE_STRINGS[] =
 
 BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 {
-	uint16 numberOrders;
+	UINT16 numberOrders;
 
-	stream_seek_uint16(s); /* pad2OctetsA (2 bytes) */
-	stream_read_uint16(s, numberOrders); /* numberOrders (2 bytes) */
-	stream_seek_uint16(s); /* pad2OctetsB (2 bytes) */
+	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
+	stream_read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
+	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
 
 	while (numberOrders > 0)
 	{
@@ -56,24 +56,24 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 
 void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
-	stream_read_uint16(s, bitmap_data->destLeft);
-	stream_read_uint16(s, bitmap_data->destTop);
-	stream_read_uint16(s, bitmap_data->destRight);
-	stream_read_uint16(s, bitmap_data->destBottom);
-	stream_read_uint16(s, bitmap_data->width);
-	stream_read_uint16(s, bitmap_data->height);
-	stream_read_uint16(s, bitmap_data->bitsPerPixel);
-	stream_read_uint16(s, bitmap_data->flags);
-	stream_read_uint16(s, bitmap_data->bitmapLength);
+	stream_read_UINT16(s, bitmap_data->destLeft);
+	stream_read_UINT16(s, bitmap_data->destTop);
+	stream_read_UINT16(s, bitmap_data->destRight);
+	stream_read_UINT16(s, bitmap_data->destBottom);
+	stream_read_UINT16(s, bitmap_data->width);
+	stream_read_UINT16(s, bitmap_data->height);
+	stream_read_UINT16(s, bitmap_data->bitsPerPixel);
+	stream_read_UINT16(s, bitmap_data->flags);
+	stream_read_UINT16(s, bitmap_data->bitmapLength);
 
 	if (bitmap_data->flags & BITMAP_COMPRESSION)
 	{
 		if (!(bitmap_data->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
-			stream_read_uint16(s, bitmap_data->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
-			stream_read_uint16(s, bitmap_data->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
-			stream_read_uint16(s, bitmap_data->cbScanWidth); /* cbScanWidth (2 bytes) */
-			stream_read_uint16(s, bitmap_data->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			stream_read_UINT16(s, bitmap_data->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_UINT16(s, bitmap_data->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_UINT16(s, bitmap_data->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_UINT16(s, bitmap_data->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
 			bitmap_data->bitmapLength = bitmap_data->cbCompMainBodySize;
 		}
 
@@ -93,11 +93,11 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 {
 	int i;
 
-	stream_read_uint16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
+	stream_read_UINT16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
 	if (bitmap_update->number > bitmap_update->count)
 	{
-		uint16 count;
+		UINT16 count;
 
 		count = bitmap_update->number * 2;
 
@@ -122,7 +122,7 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	int i;
 	PALETTE_ENTRY* entry;
 
-	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 	stream_read_uint32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
 
 	if (palette_update->number > 256)
@@ -133,15 +133,15 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	{
 		entry = &palette_update->entries[i];
 
-		stream_read_uint8(s, entry->blue);
-		stream_read_uint8(s, entry->green);
-		stream_read_uint8(s, entry->red);
+		stream_read_BYTE(s, entry->blue);
+		stream_read_BYTE(s, entry->green);
+		stream_read_BYTE(s, entry->red);
 	}
 }
 
 void update_read_synchronize(rdpUpdate* update, STREAM* s)
 {
-	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	/**
 	 * The Synchronize Update is an artifact from the
@@ -163,8 +163,8 @@ void update_recv_play_sound(rdpUpdate* update, STREAM* s)
 
 void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
 {
-	stream_read_uint16(s, pointer_position->xPos); /* xPos (2 bytes) */
-	stream_read_uint16(s, pointer_position->yPos); /* yPos (2 bytes) */
+	stream_read_UINT16(s, pointer_position->xPos); /* xPos (2 bytes) */
+	stream_read_UINT16(s, pointer_position->yPos); /* yPos (2 bytes) */
 }
 
 void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
@@ -174,13 +174,13 @@ void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system
 
 void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 {
-	stream_read_uint16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
-	stream_read_uint16(s, pointer_color->xPos); /* xPos (2 bytes) */
-	stream_read_uint16(s, pointer_color->yPos); /* yPos (2 bytes) */
-	stream_read_uint16(s, pointer_color->width); /* width (2 bytes) */
-	stream_read_uint16(s, pointer_color->height); /* height (2 bytes) */
-	stream_read_uint16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
-	stream_read_uint16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
+	stream_read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_UINT16(s, pointer_color->xPos); /* xPos (2 bytes) */
+	stream_read_UINT16(s, pointer_color->yPos); /* yPos (2 bytes) */
+	stream_read_UINT16(s, pointer_color->width); /* width (2 bytes) */
+	stream_read_UINT16(s, pointer_color->height); /* height (2 bytes) */
+	stream_read_UINT16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
+	stream_read_UINT16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
 
 	/**
 	 * There does not seem to be any documentation on why
@@ -195,39 +195,39 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthXorMask > 0)
 	{
-		pointer_color->xorMaskData = (uint8*) malloc(pointer_color->lengthXorMask);
+		pointer_color->xorMaskData = (BYTE*) malloc(pointer_color->lengthXorMask);
 		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
 	}
 
 	if (pointer_color->lengthAndMask > 0)
 	{
-		pointer_color->andMaskData = (uint8*) malloc(pointer_color->lengthAndMask);
+		pointer_color->andMaskData = (BYTE*) malloc(pointer_color->lengthAndMask);
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
 	if (stream_get_left(s) > 0)
-		stream_seek_uint8(s); /* pad (1 byte) */
+		stream_seek_BYTE(s); /* pad (1 byte) */
 }
 
 void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
 {
-	stream_read_uint16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
+	stream_read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
 }
 
 void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
 {
-	stream_read_uint16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_read_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
 }
 
 void update_recv_pointer(rdpUpdate* update, STREAM* s)
 {
-	uint16 messageType;
+	UINT16 messageType;
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
-	stream_read_uint16(s, messageType); /* messageType (2 bytes) */
-	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
+	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	switch (messageType)
 	{
@@ -263,10 +263,10 @@ void update_recv_pointer(rdpUpdate* update, STREAM* s)
 
 BOOL update_recv(rdpUpdate* update, STREAM* s)
 {
-	uint16 updateType;
+	UINT16 updateType;
 	rdpContext* context = update->context;
 
-	stream_read_uint16(s, updateType); /* updateType (2 bytes) */
+	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
@@ -347,23 +347,23 @@ static void update_end_paint(rdpContext* context)
 
 }
 
-static void update_write_refresh_rect(STREAM* s, uint8 count, RECTANGLE_16* areas)
+static void update_write_refresh_rect(STREAM* s, BYTE count, RECTANGLE_16* areas)
 {
 	int i;
 
-	stream_write_uint8(s, count); /* numberOfAreas (1 byte) */
+	stream_write_BYTE(s, count); /* numberOfAreas (1 byte) */
 	stream_seek(s, 3); /* pad3Octets (3 bytes) */
 
 	for (i = 0; i < count; i++)
 	{
-		stream_write_uint16(s, areas[i].left); /* left (2 bytes) */
-		stream_write_uint16(s, areas[i].top); /* top (2 bytes) */
-		stream_write_uint16(s, areas[i].right); /* right (2 bytes) */
-		stream_write_uint16(s, areas[i].bottom); /* bottom (2 bytes) */
+		stream_write_UINT16(s, areas[i].left); /* left (2 bytes) */
+		stream_write_UINT16(s, areas[i].top); /* top (2 bytes) */
+		stream_write_UINT16(s, areas[i].right); /* right (2 bytes) */
+		stream_write_UINT16(s, areas[i].bottom); /* bottom (2 bytes) */
 	}
 }
 
-static void update_send_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
+static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
@@ -377,21 +377,21 @@ static void update_send_refresh_rect(rdpContext* context, uint8 count, RECTANGLE
 	}
 }
 
-static void update_write_suppress_output(STREAM* s, uint8 allow, RECTANGLE_16* area)
+static void update_write_suppress_output(STREAM* s, BYTE allow, RECTANGLE_16* area)
 {
-	stream_write_uint8(s, allow); /* allowDisplayUpdates (1 byte) */
+	stream_write_BYTE(s, allow); /* allowDisplayUpdates (1 byte) */
 	stream_seek(s, 3); /* pad3Octets (3 bytes) */
 
 	if (allow > 0)
 	{
-		stream_write_uint16(s, area->left); /* left (2 bytes) */
-		stream_write_uint16(s, area->top); /* top (2 bytes) */
-		stream_write_uint16(s, area->right); /* right (2 bytes) */
-		stream_write_uint16(s, area->bottom); /* bottom (2 bytes) */
+		stream_write_UINT16(s, area->left); /* left (2 bytes) */
+		stream_write_UINT16(s, area->top); /* top (2 bytes) */
+		stream_write_UINT16(s, area->right); /* right (2 bytes) */
+		stream_write_UINT16(s, area->bottom); /* bottom (2 bytes) */
 	}
 }
 
-static void update_send_suppress_output(rdpContext* context, uint8 allow, RECTANGLE_16* area)
+static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
@@ -460,18 +460,18 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
 
-	stream_write_uint16(s, 1); /* numberOrders (2 bytes) */
-	stream_write_uint8(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
-	stream_write_uint8(s, ORDER_TYPE_SCRBLT); /* orderType (1 byte) */
-	stream_write_uint8(s, 0x7F); /* fieldFlags (variable) */
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_BYTE(s, ORDER_TYPE_SCRBLT); /* orderType (1 byte) */
+	stream_write_BYTE(s, 0x7F); /* fieldFlags (variable) */
 
-	stream_write_uint16(s, scrblt->nLeftRect);
-	stream_write_uint16(s, scrblt->nTopRect);
-	stream_write_uint16(s, scrblt->nWidth);
-	stream_write_uint16(s, scrblt->nHeight);
-	stream_write_uint8(s, scrblt->bRop);
-	stream_write_uint16(s, scrblt->nXSrc);
-	stream_write_uint16(s, scrblt->nYSrc);
+	stream_write_UINT16(s, scrblt->nLeftRect);
+	stream_write_UINT16(s, scrblt->nTopRect);
+	stream_write_UINT16(s, scrblt->nWidth);
+	stream_write_UINT16(s, scrblt->nHeight);
+	stream_write_BYTE(s, scrblt->bRop);
+	stream_write_UINT16(s, scrblt->nXSrc);
+	stream_write_UINT16(s, scrblt->nYSrc);
 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 }
@@ -479,7 +479,7 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	STREAM* s;
-	uint8 updateCode;
+	BYTE updateCode;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -496,13 +496,13 @@ static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_
 {
 	stream_check_size(s, 15 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
 
-	stream_write_uint16(s, pointer_color->cacheIndex);
-	stream_write_uint16(s, pointer_color->xPos);
-	stream_write_uint16(s, pointer_color->yPos);
-	stream_write_uint16(s, pointer_color->width);
-	stream_write_uint16(s, pointer_color->height);
-	stream_write_uint16(s, pointer_color->lengthAndMask);
-	stream_write_uint16(s, pointer_color->lengthXorMask);
+	stream_write_UINT16(s, pointer_color->cacheIndex);
+	stream_write_UINT16(s, pointer_color->xPos);
+	stream_write_UINT16(s, pointer_color->yPos);
+	stream_write_UINT16(s, pointer_color->width);
+	stream_write_UINT16(s, pointer_color->height);
+	stream_write_UINT16(s, pointer_color->lengthAndMask);
+	stream_write_UINT16(s, pointer_color->lengthXorMask);
 
 	if (pointer_color->lengthXorMask > 0)
 		stream_write(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
@@ -510,7 +510,7 @@ static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_
 	if (pointer_color->lengthAndMask > 0)
 		stream_write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	
-	stream_write_uint8(s, 0); /* pad (1 byte) */
+	stream_write_BYTE(s, 0); /* pad (1 byte) */
 }
 
 static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
@@ -529,7 +529,7 @@ static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* poi
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	stream_write_uint16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
+	stream_write_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
         update_write_pointer_color(s, &pointer_new->colorPtrAttr);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_POINTER, s);
 }
@@ -540,30 +540,30 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	stream_write_uint16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
+	stream_write_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s);
 }
 
 BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 {
 	int index;
-	uint8 numberOfAreas;
+	BYTE numberOfAreas;
 	RECTANGLE_16* areas;
 
 	if (stream_get_left(s) < 4)
 		return FALSE;
 
-	stream_read_uint8(s, numberOfAreas);
+	stream_read_BYTE(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
 
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
 
 	for (index = 0; index < numberOfAreas; index++)
 	{
-		stream_read_uint16(s, areas[index].left);
-		stream_read_uint16(s, areas[index].top);
-		stream_read_uint16(s, areas[index].right);
-		stream_read_uint16(s, areas[index].bottom);
+		stream_read_UINT16(s, areas[index].left);
+		stream_read_UINT16(s, areas[index].top);
+		stream_read_UINT16(s, areas[index].right);
+		stream_read_UINT16(s, areas[index].bottom);
 	}
 
 	IFCALL(update->RefreshRect, update->context, numberOfAreas, areas);
@@ -575,12 +575,12 @@ BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 
 BOOL update_read_suppress_output(rdpUpdate* update, STREAM* s)
 {
-	uint8 allowDisplayUpdates;
+	BYTE allowDisplayUpdates;
 
 	if (stream_get_left(s) < 4)
 		return FALSE;
 
-	stream_read_uint8(s, allowDisplayUpdates);
+	stream_read_BYTE(s, allowDisplayUpdates);
 	stream_seek(s, 3); /* pad3Octects */
 
 	if (allowDisplayUpdates > 0 && stream_get_left(s) < 8)

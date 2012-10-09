@@ -357,7 +357,7 @@ BOOL disk_file_seek(DISK_FILE* file, uint64 Offset)
 	return TRUE;
 }
 
-BOOL disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
+BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, uint32* Length)
 {
 	ssize_t r;
 
@@ -372,7 +372,7 @@ BOOL disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length)
 	return TRUE;
 }
 
-BOOL disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length)
+BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, uint32 Length)
 {
 	ssize_t r;
 
@@ -421,8 +421,8 @@ BOOL disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STR
 			stream_write_uint64(output, st.st_size); /* AllocationSize */
 			stream_write_uint64(output, st.st_size); /* EndOfFile */
 			stream_write_uint32(output, st.st_nlink); /* NumberOfLinks */
-			stream_write_uint8(output, file->delete_pending ? 1 : 0); /* DeletePending */
-			stream_write_uint8(output, file->is_dir ? 1 : 0); /* Directory */
+			stream_write_BYTE(output, file->delete_pending ? 1 : 0); /* DeletePending */
+			stream_write_BYTE(output, file->is_dir ? 1 : 0); /* Directory */
 			/* Reserved(2), MUST NOT be added! */
 			break;
 
@@ -502,15 +502,15 @@ BOOL disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint3
 			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
 			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
 			if (Length)
-				stream_read_uint8(input, file->delete_pending);
+				stream_read_BYTE(input, file->delete_pending);
 			else
 				file->delete_pending = 1;
 			break;
 
 		case FileRenameInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
-			stream_seek_uint8(input); /* ReplaceIfExists */
-			stream_seek_uint8(input); /* RootDirectory */
+			stream_seek_BYTE(input); /* ReplaceIfExists */
+			stream_seek_BYTE(input); /* RootDirectory */
 			stream_read_uint32(input, FileNameLength);
 
 			freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(input), &s, FileNameLength / 2);
@@ -541,7 +541,7 @@ BOOL disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint3
 	return TRUE;
 }
 
-BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
+BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, BYTE InitialQuery,
 	const char* path, STREAM* output)
 {
 	int length;
@@ -555,7 +555,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8
 	if (!file->dir)
 	{
 		stream_write_uint32(output, 0); /* Length */
-		stream_write_uint8(output, 0); /* Padding */
+		stream_write_BYTE(output, 0); /* Padding */
 		return FALSE;
 	}
 
@@ -592,7 +592,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8
 	{
 		DEBUG_SVC("  pattern %s not found.", file->pattern);
 		stream_write_uint32(output, 0); /* Length */
-		stream_write_uint8(output, 0); /* Padding */
+		stream_write_BYTE(output, 0); /* Padding */
 		return FALSE;
 	}
 
@@ -664,7 +664,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8
 			stream_write_uint32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
 			stream_write_uint32(output, length); /* FileNameLength */
 			stream_write_uint32(output, 0); /* EaSize */
-			stream_write_uint8(output, 0); /* ShortNameLength */
+			stream_write_BYTE(output, 0); /* ShortNameLength */
 			/* Reserved(1), MUST NOT be added! */
 			stream_write_zero(output, 24); /* ShortName */
 			stream_write(output, ent_path, length);
@@ -682,7 +682,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8
 
 		default:
 			stream_write_uint32(output, 0); /* Length */
-			stream_write_uint8(output, 0); /* Padding */
+			stream_write_BYTE(output, 0); /* Padding */
 			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			ret = FALSE;
 			break;

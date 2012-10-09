@@ -34,14 +34,14 @@
 
 void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
 {
-	stream_read_uint16(s, system_time->wYear); /* wYear, must be set to 0 */
-	stream_read_uint16(s, system_time->wMonth); /* wMonth */
-	stream_read_uint16(s, system_time->wDayOfWeek); /* wDayOfWeek */
-	stream_read_uint16(s, system_time->wDay); /* wDay */
-	stream_read_uint16(s, system_time->wHour); /* wHour */
-	stream_read_uint16(s, system_time->wMinute); /* wMinute */
-	stream_read_uint16(s, system_time->wSecond); /* wSecond */
-	stream_read_uint16(s, system_time->wMilliseconds); /* wMilliseconds */
+	stream_read_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
+	stream_read_UINT16(s, system_time->wMonth); /* wMonth */
+	stream_read_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
+	stream_read_UINT16(s, system_time->wDay); /* wDay */
+	stream_read_UINT16(s, system_time->wHour); /* wHour */
+	stream_read_UINT16(s, system_time->wMinute); /* wMinute */
+	stream_read_UINT16(s, system_time->wSecond); /* wSecond */
+	stream_read_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
 }
 
 /**
@@ -53,14 +53,14 @@ void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
 
 void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 {
-	stream_write_uint16(s, system_time->wYear); /* wYear, must be set to 0 */
-	stream_write_uint16(s, system_time->wMonth); /* wMonth */
-	stream_write_uint16(s, system_time->wDayOfWeek); /* wDayOfWeek */
-	stream_write_uint16(s, system_time->wDay); /* wDay */
-	stream_write_uint16(s, system_time->wHour); /* wHour */
-	stream_write_uint16(s, system_time->wMinute); /* wMinute */
-	stream_write_uint16(s, system_time->wSecond); /* wSecond */
-	stream_write_uint16(s, system_time->wMilliseconds); /* wMilliseconds */
+	stream_write_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
+	stream_write_UINT16(s, system_time->wMonth); /* wMonth */
+	stream_write_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
+	stream_write_UINT16(s, system_time->wDay); /* wDay */
+	stream_write_UINT16(s, system_time->wHour); /* wHour */
+	stream_write_UINT16(s, system_time->wMinute); /* wMinute */
+	stream_write_UINT16(s, system_time->wSecond); /* wSecond */
+	stream_write_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
 	DEBUG_TIMEZONE("Time: y=%d,m=%d,dow=%d,d=%d, %02d:%02d:%02d.%03d",
 		system_time->wYear, system_time->wMonth, system_time->wDayOfWeek,
 		system_time->wDay, system_time->wHour, system_time->wMinute,

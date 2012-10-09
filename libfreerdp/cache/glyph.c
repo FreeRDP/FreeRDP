@@ -29,7 +29,7 @@
 
 #include <freerdp/cache/glyph.h>
 
-void update_process_glyph(rdpContext* context, uint8* data, int* index,
+void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 		int* x, int* y, uint32 cacheId, uint32 ulCharInc, uint32 flAccel)
 {
 	int offset;
@@ -72,7 +72,7 @@ void update_process_glyph(rdpContext* context, uint8* data, int* index,
 	}
 }
 
-void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 length,
+void update_process_glyph_fragments(rdpContext* context, BYTE* data, uint32 length,
 		uint32 cacheId, uint32 ulCharInc, uint32 flAccel, uint32 bgcolor, uint32 fgcolor, int x, int y,
 		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight)
 {
@@ -80,7 +80,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 	uint32 id;
 	uint32 size;
 	int index = 0;
-	uint8* fragments;
+	BYTE* fragments;
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
@@ -106,7 +106,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 				}
 
 				id = data[index + 1];
-				fragments = (uint8*) glyph_cache_fragment_get(glyph_cache, id, &size);
+				fragments = (BYTE*) glyph_cache_fragment_get(glyph_cache, id, &size);
 
 				if (fragments != NULL)
 				{
@@ -143,7 +143,7 @@ void update_process_glyph_fragments(rdpContext* context, uint8* data, uint32 len
 				id = data[index + 1];
 				size = data[index + 2];
 
-				fragments = (uint8*) malloc(size);
+				fragments = (BYTE*) malloc(size);
 				memcpy(fragments, data, size);
 				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
 
@@ -198,7 +198,7 @@ void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 
 	if (opBottom == -32768)
 	{
-		uint8 flags = (uint8) (opTop & 0x0F);
+		BYTE flags = (BYTE) (opTop & 0x0F);
 
 		if (flags & 0x01)
 			opBottom = fast_index->bkBottom;
@@ -238,7 +238,7 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 	GLYPH_DATA_V2* glyph_data;
 	rdpGlyph* glyph;
 	rdpCache* cache = context->cache;
-	uint8 text_data[2];
+	BYTE text_data[2];
 
 	opLeft = fast_glyph->opLeft;
 	opTop = fast_glyph->opTop;
@@ -249,7 +249,7 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 
 	if (opBottom == -32768)
 	{
-		uint8 flags = (uint8) (opTop & 0x0F);
+		BYTE flags = (BYTE) (opTop & 0x0F);
 
 		if (flags & 0x01)
 			opBottom = fast_glyph->bkBottom;
@@ -417,7 +417,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, uint32 index, uint32*
 	void* fragment;
 
 	fragment = glyph_cache->fragCache.entries[index].fragment;
-	*size = (uint8) glyph_cache->fragCache.entries[index].size;
+	*size = (BYTE) glyph_cache->fragCache.entries[index].size;
 
 	if (fragment == NULL)
 	{

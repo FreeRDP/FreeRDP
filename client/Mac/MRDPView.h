@@ -113,13 +113,13 @@ void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDat
 int register_fds(int *fds, int count, void *inst);
 int invoke_draw_rect(rdpContext *context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
-int receive_channel_data(freerdp *inst, int chan_id, uint8 *data, int size, int flags, int total_size);
+int receive_channel_data(freerdp *inst, int chan_id, BYTE *data, int size, int flags, int total_size);
 void process_cliprdr_event(freerdp *inst, RDP_EVENT *event);
 void cliprdr_process_cb_format_list_event(freerdp *inst, RDP_CB_FORMAT_LIST_EVENT* event);
 void cliprdr_send_data_request(freerdp *inst, uint32 format);
 void cliprdr_process_cb_monitor_ready_event(freerdp* inst);
 void cliprdr_process_cb_data_response_event(freerdp *inst, RDP_CB_DATA_RESPONSE_EVENT *event);
-void cliprdr_process_text(freerdp *inst, uint8 *data, int len);
+void cliprdr_process_text(freerdp *inst, BYTE *data, int len);
 void cliprdr_send_supported_format_list(freerdp *inst);
 int register_channel_fds(int *fds, int count, void *inst);
 
@@ -127,14 +127,14 @@ void mac_process_rail_event(freerdp *inst, RDP_EVENT *event);
 void mac_rail_register_callbacks(freerdp *inst, rdpRail *rail);
 void mac_rail_CreateWindow(rdpRail *rail, rdpWindow *window);
 void mac_rail_MoveWindow(rdpRail *rail, rdpWindow *window);
-void mac_rail_ShowWindow(rdpRail *rail, rdpWindow *window, uint8 state);
+void mac_rail_ShowWindow(rdpRail *rail, rdpWindow *window, BYTE state);
 void mac_rail_SetWindowText(rdpRail *rail, rdpWindow *window);
 void mac_rail_SetWindowIcon(rdpRail *rail, rdpWindow *window, rdpIcon *icon);
 void mac_rail_SetWindowRects(rdpRail *rail, rdpWindow *window);
 void mac_rail_SetWindowVisibilityRects(rdpRail *rail, rdpWindow *window);
 void mac_rail_DestroyWindow(rdpRail *rail, rdpWindow *window);
 void mac_process_rail_get_sysparams_event(rdpChannels *channels, RDP_EVENT *event);
-void mac_send_rail_client_event(rdpChannels *channels, uint16 event_type, void *param);
+void mac_send_rail_client_event(rdpChannels *channels, UINT16 event_type, void *param);
 void mac_on_free_rail_client_event(RDP_EVENT* event);
 void mac_process_rail_server_sysparam_event(rdpChannels* channels, RDP_EVENT* event);
 void mac_process_rail_exec_result_event(rdpChannels* channels, RDP_EVENT* event);
@@ -153,7 +153,7 @@ struct mac_context
 struct cursor
 {
     rdpPointer  *pointer;
-    uint8       *cursor_data;   // bitmapped pixel data
+    BYTE       *cursor_data;   // bitmapped pixel data
     void        *bmiRep;        // NSBitmapImageRep
     void        *nsCursor;      // NSCursor
     void        *nsImage;       // NSImage

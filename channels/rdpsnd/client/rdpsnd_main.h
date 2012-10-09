@@ -30,7 +30,7 @@ typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* for
 typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
-typedef void (*pcPlay) (rdpsndDevicePlugin* device, uint8* data, int size);
+typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);

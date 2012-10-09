@@ -41,7 +41,7 @@
 uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 {
 	uint32 color32;
-	uint8 a, r, g, b;
+	BYTE a, r, g, b;
 
 	a = 0xFF;
 	GetBGR32(r, g, b, color);
@@ -96,7 +96,7 @@ static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	if (hdcDest->alpha)
 	{
 		int x, y;
-		uint8* dstp;
+		BYTE* dstp;
 
 		for (y = 0; y < nHeight; y++)
 		{
@@ -124,7 +124,7 @@ static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	else
 	{
 		int y;
-		uint8* dstp;
+		BYTE* dstp;
 
 		for (y = 0; y < nHeight; y++)
 		{
@@ -141,7 +141,7 @@ static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_WHITENESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int y;
-	uint8* dstp;
+	BYTE* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -157,8 +157,8 @@ static int BitBlt_WHITENESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_SRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int y;
-	uint8* srcp;
-	uint8* dstp;
+	BYTE* srcp;
+	BYTE* dstp;
 
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
@@ -393,7 +393,7 @@ static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	uint32* srcp;
 	uint32* dstp;
 	uint32* patp;
-	uint8* srcp8;
+	BYTE* srcp8;
 	uint32 src32;
 	uint32 color32;
 	HGDI_BITMAP hSrcBmp;
@@ -413,7 +413,7 @@ static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 		for (y = 0; y < nHeight; y++)
 		{
-			srcp8 = (uint8*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			srcp8 = (BYTE*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
 			dstp = (uint32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)

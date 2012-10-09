@@ -30,14 +30,14 @@
 
 typedef struct
 {
-	uint8 magic[2];
+	BYTE magic[2];
 } BITMAP_MAGIC;
 
 typedef struct
 {
 	uint32 filesz;
-	uint16 creator1;
-	uint16 creator2;
+	UINT16 creator1;
+	UINT16 creator2;
 	uint32 bmp_offset;
 } BITMAP_CORE_HEADER;
 
@@ -46,8 +46,8 @@ typedef struct
 	uint32 header_sz;
 	sint32 width;
 	sint32 height;
-	uint16 nplanes;
-	uint16 bitspp;
+	UINT16 nplanes;
+	UINT16 bitspp;
 	uint32 compress_type;
 	uint32 bmp_bytesz;
 	sint32 hres;

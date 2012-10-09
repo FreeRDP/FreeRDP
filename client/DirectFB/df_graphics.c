@@ -44,7 +44,7 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if (result == DFB_OK)
 	{
 		int pitch;
-		uint8* point = NULL;
+		BYTE* point = NULL;
 
 		df_pointer->xhot = pointer->xPos;
 		df_pointer->yhot = pointer->yPos;

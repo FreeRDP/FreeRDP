@@ -40,10 +40,6 @@
 #ifdef FREERDP_HAVE_INTTYPES_H
 
 #include <inttypes.h>
-typedef uint8_t uint8;
-typedef int8_t sint8;
-typedef uint16_t uint16;
-typedef int16_t sint16;
 typedef uint32_t uint32;
 typedef int32_t sint32;
 typedef uint64_t uint64;
@@ -51,10 +47,6 @@ typedef int64_t sint64;
 
 #else
 
-typedef unsigned char uint8;
-typedef signed char sint8;
-typedef unsigned short uint16;
-typedef signed short sint16;
 typedef unsigned int uint32;
 typedef signed int sint32;
 #ifdef _WIN32
@@ -66,45 +58,6 @@ typedef signed long long sint64;
 #endif
 
 #endif /* HAVE_INTTYPES_H */
-
-#ifdef FREERDP_HAVE_STDBOOL_H
-
-#include <stdbool.h>
-
-#ifdef _WIN32
-#define BOOL BOOLEAN
-#else
-typedef int BOOL;
-#endif
-
-#else
-
-#ifndef __cplusplus
-
-#define TRUE	1
-#define FALSE	0
-
-#ifdef _WIN32
-#define BOOL BOOLEAN
-#else
-typedef int BOOL;
-#endif
-
-#else /* ifdef __cplusplus */
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE 	0
-#endif
-
-typedef int BOOL;
-
-#endif /* __cplusplus */
-
-#endif /* FREERDP_HAVE_STDBOOL_H */
 
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
@@ -119,35 +72,35 @@ typedef int BOOL;
 typedef struct
 {
 	uint32 time_low;
-	uint16 time_mid;
-	uint16 time_hi_and_version;
-	uint8 clock_seq_hi_and_reserved;
-	uint8 clock_seq_low;
-	uint8 node[6];
+	UINT16 time_mid;
+	UINT16 time_hi_and_version;
+	BYTE clock_seq_hi_and_reserved;
+	BYTE clock_seq_low;
+	BYTE node[6];
 } uuid;
 
 struct _RDP_PLUGIN_DATA
 {
-	uint16 size;
+	UINT16 size;
 	void* data[4];
 };
 typedef struct _RDP_PLUGIN_DATA RDP_PLUGIN_DATA;
 
 struct _RDP_RECT
 {
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
+	INT16 x;
+	INT16 y;
+	INT16 width;
+	INT16 height;
 };
 typedef struct _RDP_RECT RDP_RECT;
 
 struct _RECTANGLE_16
 {
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	UINT16 left;
+	UINT16 top;
+	UINT16 right;
+	UINT16 bottom;
 };
 typedef struct _RECTANGLE_16 RECTANGLE_16;
 
@@ -158,8 +111,8 @@ typedef void (*RDP_EVENT_CALLBACK) (RDP_EVENT* event);
 
 struct _RDP_EVENT
 {
-	uint16 event_class;
-	uint16 event_type;
+	UINT16 event_class;
+	UINT16 event_type;
 	RDP_EVENT_CALLBACK on_event_free_callback;
 	void* user_data;
 };

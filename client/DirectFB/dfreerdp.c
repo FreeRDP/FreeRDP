@@ -261,7 +261,7 @@ BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 }
 
 static int
-df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }

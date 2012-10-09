@@ -73,7 +73,7 @@
 #define TIOCOUTQ FIONWRITE
 #endif
 
-static uint32 tty_write_data(SERIAL_TTY* tty, uint8* data, int len);
+static uint32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len);
 static void tty_set_termios(SERIAL_TTY* tty);
 static BOOL tty_get_termios(SERIAL_TTY* tty);
 static int tty_get_error_status();
@@ -83,7 +83,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 	int purge_mask;
 	uint32 result;
 	uint32 modemstate;
-	uint8 immediate;
+	BYTE immediate;
 	uint32 ret = STATUS_SUCCESS;
 	uint32 length = 0;
 	uint32 pos;
@@ -113,9 +113,9 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 			break;
 
 		case IOCTL_SERIAL_SET_LINE_CONTROL:
-			stream_read_uint8(input, tty->stop_bits);
-			stream_read_uint8(input, tty->parity);
-			stream_read_uint8(input, tty->word_length);
+			stream_read_BYTE(input, tty->stop_bits);
+			stream_read_BYTE(input, tty->parity);
+			stream_read_BYTE(input, tty->word_length);
 			tty_set_termios(tty);
 			DEBUG_SVC("SERIAL_SET_LINE_CONTROL stop %d parity %d word %d",
 				tty->stop_bits, tty->parity, tty->word_length);
@@ -124,14 +124,14 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 		case IOCTL_SERIAL_GET_LINE_CONTROL:
 			DEBUG_SVC("SERIAL_GET_LINE_CONTROL");
 			length = 3;
-			stream_write_uint8(output, tty->stop_bits);
-			stream_write_uint8(output, tty->parity);
-			stream_write_uint8(output, tty->word_length);
+			stream_write_BYTE(output, tty->stop_bits);
+			stream_write_BYTE(output, tty->parity);
+			stream_write_BYTE(output, tty->word_length);
 			break;
 
 		case IOCTL_SERIAL_IMMEDIATE_CHAR:
 			DEBUG_SVC("SERIAL_IMMEDIATE_CHAR");
-			stream_read_uint8(input, immediate);
+			stream_read_BYTE(input, immediate);
 			tty_write_data(tty, &immediate, 1);
 			break;
 
@@ -293,8 +293,8 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 			stream_write_uint32(output, result);	/* Amount in out queue */
 			DEBUG_SVC("SERIAL_GET_COMMSTATUS out queue %d", result);
 
-			stream_write_uint8(output, 0); /* EofReceived */
-			stream_write_uint8(output, 0); /* WaitForImmediate */
+			stream_write_BYTE(output, 0); /* EofReceived */
+			stream_write_BYTE(output, 0); /* WaitForImmediate */
 			break;
 
 		case IOCTL_SERIAL_PURGE:
@@ -369,7 +369,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 	return ret;
 }
 
-BOOL serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length)
+BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, uint32* Length)
 {
 	long timeout = 90;
 	struct termios *ptermios;
@@ -418,7 +418,7 @@ BOOL serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length)
 	return TRUE;
 }
 
-BOOL serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length)
+BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, uint32 Length)
 {
 	ssize_t r;
 	uint32 event_txempty = Length;
@@ -969,7 +969,7 @@ static void tty_set_termios(SERIAL_TTY* tty)
 	tcsetattr(tty->fd, TCSANOW, ptermios);
 }
 
-static uint32 tty_write_data(SERIAL_TTY* tty, uint8* data, int len)
+static uint32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 {
 	ssize_t r;
 

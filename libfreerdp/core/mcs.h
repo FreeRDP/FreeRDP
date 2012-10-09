@@ -112,7 +112,7 @@ typedef struct
 
 struct rdp_mcs
 {
-	uint16 user_id;
+	UINT16 user_id;
 	struct rdp_transport* transport;
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
@@ -142,13 +142,13 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, STREAM* s);
 BOOL mcs_send_attach_user_request(rdpMcs* mcs);
 BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, STREAM* s);
 BOOL mcs_send_attach_user_confirm(rdpMcs* mcs);
-BOOL mcs_recv_channel_join_request(rdpMcs* mcs, STREAM* s, uint16* channel_id);
-BOOL mcs_send_channel_join_request(rdpMcs* mcs, uint16 channel_id);
-BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, STREAM* s, uint16* channel_id);
-BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, uint16 channel_id);
+BOOL mcs_recv_channel_join_request(rdpMcs* mcs, STREAM* s, UINT16* channel_id);
+BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id);
+BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, STREAM* s, UINT16* channel_id);
+BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id);
 BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
-BOOL mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, uint16* length);
-void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, uint16 length, uint8 options);
+BOOL mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length);
+void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, UINT16 length, BYTE options);
 
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);

@@ -132,7 +132,7 @@ BOOL freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->data = (uint8*) realloc(s->data, record.length);
+				s->data = (BYTE*) realloc(s->data, record.length);
 				record.data = s->data;
 				s->size = record.length;
 
@@ -182,7 +182,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-static int freerdp_send_channel_data(freerdp* instance, int channel_id, uint8* data, int size)
+static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
 }

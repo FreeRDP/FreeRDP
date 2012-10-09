@@ -40,7 +40,7 @@ struct _OFFSCREEN_DELETE_LIST
 {
 	uint32 sIndices;
 	uint32 cIndices;
-	uint16* indices;
+	UINT16* indices;
 };
 typedef struct _OFFSCREEN_DELETE_LIST OFFSCREEN_DELETE_LIST;
 
@@ -95,7 +95,7 @@ struct _STREAM_BITMAP_FIRST_ORDER
 	uint32 bitmapHeight;
 	uint32 bitmapSize;
 	uint32 bitmapBlockSize;
-	uint8* bitmapBlock;
+	BYTE* bitmapBlock;
 };
 typedef struct _STREAM_BITMAP_FIRST_ORDER STREAM_BITMAP_FIRST_ORDER;
 
@@ -104,7 +104,7 @@ struct _STREAM_BITMAP_NEXT_ORDER
 	uint32 bitmapFlags;
 	uint32 bitmapType;
 	uint32 bitmapBlockSize;
-	uint8* bitmapBlock;
+	BYTE* bitmapBlock;
 };
 typedef struct _STREAM_BITMAP_NEXT_ORDER STREAM_BITMAP_NEXT_ORDER;
 
@@ -113,14 +113,14 @@ struct _DRAW_GDIPLUS_FIRST_ORDER
 	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_FIRST_ORDER DRAW_GDIPLUS_FIRST_ORDER;
 
 struct _DRAW_GDIPLUS_NEXT_ORDER
 {
 	uint32 cbSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_NEXT_ORDER DRAW_GDIPLUS_NEXT_ORDER;
 
@@ -129,7 +129,7 @@ struct _DRAW_GDIPLUS_END_ORDER
 	uint32 cbSize;
 	uint32 cbTotalSize;
 	uint32 cbTotalEmfSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_END_ORDER DRAW_GDIPLUS_END_ORDER;
 
@@ -140,7 +140,7 @@ struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER
 	uint32 cacheIndex;
 	uint32 cbSize;
 	uint32 cbTotalSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_CACHE_FIRST_ORDER DRAW_GDIPLUS_CACHE_FIRST_ORDER;
 
@@ -150,7 +150,7 @@ struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER
 	uint32 cacheType;
 	uint32 cacheIndex;
 	uint32 cbSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_CACHE_NEXT_ORDER DRAW_GDIPLUS_CACHE_NEXT_ORDER;
 
@@ -161,7 +161,7 @@ struct _DRAW_GDIPLUS_CACHE_END_ORDER
 	uint32 cacheIndex;
 	uint32 cbSize;
 	uint32 cbTotalSize;
-	uint8* emfRecords;
+	BYTE* emfRecords;
 };
 typedef struct _DRAW_GDIPLUS_CACHE_END_ORDER DRAW_GDIPLUS_CACHE_END_ORDER;
 

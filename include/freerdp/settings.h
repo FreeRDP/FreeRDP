@@ -99,14 +99,14 @@
 /* SYSTEM_TIME */
 typedef struct
 {
-	uint16 wYear;
-	uint16 wMonth;
-	uint16 wDayOfWeek;
-	uint16 wDay;
-	uint16 wHour;
-	uint16 wMinute;
-	uint16 wSecond;
-	uint16 wMilliseconds;
+	UINT16 wYear;
+	UINT16 wMonth;
+	UINT16 wDayOfWeek;
+	UINT16 wDay;
+	UINT16 wHour;
+	UINT16 wMinute;
+	UINT16 wSecond;
+	UINT16 wMilliseconds;
 } SYSTEM_TIME;
 
 /* TIME_ZONE_INFORMATION */
@@ -128,7 +128,7 @@ typedef struct
 	uint32 cbLen;
 	uint32 version;
 	uint32 logonId;
-	uint8 securityVerifier[16];
+	BYTE securityVerifier[16];
 } ARC_CS_PRIVATE_PACKET;
 
 /* ARC_SC_PRIVATE_PACKET */
@@ -137,7 +137,7 @@ typedef struct
 	uint32 cbLen;
 	uint32 version;
 	uint32 logonId;
-	uint8 arcRandomBits[16];
+	BYTE arcRandomBits[16];
 } ARC_SC_PRIVATE_PACKET;
 
 /* Certificates */
@@ -145,7 +145,7 @@ typedef struct
 struct rdp_CertBlob
 {
 	uint32 length;
-	uint8* data;
+	BYTE* data;
 };
 typedef struct rdp_CertBlob rdpCertBlob;
 
@@ -160,7 +160,7 @@ struct rdp_CertInfo
 {
 	BYTE* Modulus;
 	DWORD ModulusLength;
-	uint8 exponent[4];
+	BYTE exponent[4];
 };
 typedef struct rdp_CertInfo rdpCertInfo;
 
@@ -177,7 +177,7 @@ struct rdp_key
 	DWORD ModulusLength;
 	BYTE* PrivateExponent;
 	DWORD PrivateExponentLength;
-	uint8 exponent[4];
+	BYTE exponent[4];
 };
 typedef struct rdp_key rdpKey;
 
@@ -205,8 +205,8 @@ struct rdp_ext_set
 
 struct _BITMAP_CACHE_CELL_INFO
 {
-	uint16 numEntries;
-	uint16 maxSize;
+	UINT16 numEntries;
+	UINT16 maxSize;
 };
 typedef struct _BITMAP_CACHE_CELL_INFO BITMAP_CACHE_CELL_INFO;
 
@@ -221,8 +221,8 @@ typedef struct _BITMAP_CACHE_V2_CELL_INFO BITMAP_CACHE_V2_CELL_INFO;
 
 struct _GLYPH_CACHE_DEFINITION
 {
-	uint16 cacheEntries;
-	uint16 cacheMaximumCellSize;
+	UINT16 cacheEntries;
+	UINT16 cacheMaximumCellSize;
 };
 typedef struct _GLYPH_CACHE_DEFINITION GLYPH_CACHE_DEFINITION;
 
@@ -369,8 +369,8 @@ struct rdp_settings
 	ALIGN64 BOOL frame_marker; /* 221 */
 	ALIGN64 BOOL fastpath_input; /* 222 */
 	ALIGN64 BOOL fastpath_output; /* 223 */
-	ALIGN64 uint8* received_caps; /* 224 */
-	ALIGN64 uint8* order_support; /* 225 */
+	ALIGN64 BYTE* received_caps; /* 224 */
+	ALIGN64 BYTE* order_support; /* 225 */
 	ALIGN64 BOOL surface_commands; /* 226 */
 	ALIGN64 BOOL disable_wallpaper; /* 227 */
 	ALIGN64 BOOL disable_full_window_drag; /* 228 */

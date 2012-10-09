@@ -42,8 +42,8 @@ struct rdp_brush
 	uint32 style;
 	uint32 hatch;
 	uint32 index;
-	uint8* data;
-	uint8 p8x8[8];
+	BYTE* data;
+	BYTE p8x8[8];
 };
 typedef struct rdp_brush rdpBrush;
 
@@ -190,7 +190,7 @@ struct _MULTI_DRAW_NINE_GRID_ORDER
 	uint32 bitmapId;
 	uint32 nDeltaEntries;
 	uint32 cbData;
-	uint8* codeDeltaList;
+	BYTE* codeDeltaList;
 };
 typedef struct _MULTI_DRAW_NINE_GRID_ORDER MULTI_DRAW_NINE_GRID_ORDER;
 
@@ -311,7 +311,7 @@ struct _GLYPH_INDEX_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8 data[256];
+	BYTE data[256];
 };
 typedef struct _GLYPH_INDEX_ORDER GLYPH_INDEX_ORDER;
 
@@ -334,7 +334,7 @@ struct _FAST_INDEX_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8 data[256];
+	BYTE data[256];
 };
 typedef struct _FAST_INDEX_ORDER FAST_INDEX_ORDER;
 
@@ -356,7 +356,7 @@ struct _FAST_GLYPH_ORDER
 	sint32 x;
 	sint32 y;
 	uint32 cbData;
-	uint8 data[256];
+	BYTE data[256];
 	void* glyph_data;
 };
 typedef struct _FAST_GLYPH_ORDER FAST_GLYPH_ORDER;

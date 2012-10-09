@@ -131,7 +131,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
 	STREAM* s;
 	int length;
-	uint8 padding;
+	BYTE padding;
 	uint32 version;
 	int modulus_length;
 	int exponent_length;
@@ -185,7 +185,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	/* skip zero padding, if any */
 	do
 	{
-		stream_peek_uint8(s, padding);
+		stream_peek_BYTE(s, padding);
 
 		if (padding == 0)
 		{
@@ -250,7 +250,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 
 static BOOL certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
 {
-	uint8 magic[4];
+	BYTE magic[4];
 	uint32 keylen;
 	uint32 bitlen;
 	uint32 datalen;
@@ -279,13 +279,13 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	return TRUE;
 }
 
-static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, uint8* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
+static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, BYTE* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
-	uint8 sig[TSSK_KEY_LENGTH];
-	uint8 encsig[TSSK_KEY_LENGTH + 8];
-	uint8 md5hash[CRYPTO_MD5_DIGEST_LENGTH];
+	BYTE sig[TSSK_KEY_LENGTH];
+	BYTE encsig[TSSK_KEY_LENGTH + 8];
+	BYTE md5hash[CRYPTO_MD5_DIGEST_LENGTH];
 
 	md5ctx = crypto_md5_init();
 	crypto_md5_update(md5ctx, sigdata, sigdatalen);
@@ -348,7 +348,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	uint32 wPublicKeyBlobLen;
 	uint32 wSignatureBlobType;
 	uint32 wSignatureBlobLen;
-	uint8* sigdata;
+	BYTE* sigdata;
 	int sigdatalen;
 
 	/* -4, because we need to include dwVersion */
@@ -362,7 +362,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 		return FALSE;
 	}
 
-	stream_read_uint16(s, wPublicKeyBlobType);
+	stream_read_UINT16(s, wPublicKeyBlobType);
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
@@ -370,7 +370,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 		return FALSE;
 	}
 
-	stream_read_uint16(s, wPublicKeyBlobLen);
+	stream_read_UINT16(s, wPublicKeyBlobLen);
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
@@ -379,7 +379,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	sigdatalen = stream_get_tail(s) - sigdata;
-	stream_read_uint16(s, wSignatureBlobType);
+	stream_read_UINT16(s, wSignatureBlobType);
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
@@ -387,7 +387,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 		return FALSE;
 	}
 
-	stream_read_uint16(s, wSignatureBlobLen);
+	stream_read_UINT16(s, wSignatureBlobLen);
 
 	if (wSignatureBlobLen != 72)
 	{
@@ -428,7 +428,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
 
-		certificate->x509_cert_chain->array[i].data = (uint8*) malloc(certLength);
+		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
 		stream_read(s, certificate->x509_cert_chain->array[i].data, certLength);
 		certificate->x509_cert_chain->array[i].length = certLength;
 
@@ -458,7 +458,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
  * @param length certificate length
  */
 
-BOOL certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length)
+BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
 	STREAM* s;
 	uint32 dwVersion;

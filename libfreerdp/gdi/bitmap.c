@@ -62,14 +62,14 @@ INLINE GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos)
 	return (GDI_COLOR) *colorp;
 }
 
-INLINE uint8 gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE BYTE gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
-	return *((uint8*)&(hBmp->data[(Y * hBmp->width) + X]));
+	return *((BYTE*)&(hBmp->data[(Y * hBmp->width) + X]));
 }
 
-INLINE uint16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE UINT16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
-	return *((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
+	return *((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
 }
 
 INLINE uint32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y)
@@ -77,14 +77,14 @@ INLINE uint32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y)
 	return *((uint32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4]));
 }
 
-INLINE uint8* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE BYTE* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
-	return ((uint8*)&(hBmp->data[(Y * hBmp->width) + X]));
+	return ((BYTE*)&(hBmp->data[(Y * hBmp->width) + X]));
 }
 
-INLINE uint16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE UINT16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y)
 {
-	return ((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
+	return ((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
 }
 
 INLINE uint32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
@@ -109,14 +109,14 @@ INLINE GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor)
 	return 0;
 }
 
-INLINE void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, uint8 pixel)
+INLINE void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, BYTE pixel)
 {
-	*((uint8*)&(hBmp->data[(Y * hBmp->width) + X])) = pixel;
+	*((BYTE*)&(hBmp->data[(Y * hBmp->width) + X])) = pixel;
 }
 
-INLINE void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, uint16 pixel)
+INLINE void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, UINT16 pixel)
 {
-	*((uint16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2])) = pixel;
+	*((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2])) = pixel;
 }
 
 INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel)
@@ -134,7 +134,7 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel)
  * @return new bitmap
  */
 
-HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* data)
+HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data)
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
 	hBitmap->objectType = GDIOBJECT_BITMAP;

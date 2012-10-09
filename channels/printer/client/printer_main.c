@@ -135,7 +135,7 @@ static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, Length);
-	stream_write_uint8(irp->output, 0); /* Padding */
+	stream_write_BYTE(irp->output, 0); /* Padding */
 
 	irp->Complete(irp);
 }
@@ -241,7 +241,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	int PrintNameLen;
 	WCHAR* PrintName;
 	uint32 CachedFieldsLen;
-	uint8* CachedPrinterConfigData;
+	BYTE* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;
 
 	port = malloc(10);
@@ -278,9 +278,9 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	stream_write_uint32(printer_dev->device.data, PrintNameLen + 2);
 	stream_write_uint32(printer_dev->device.data, CachedFieldsLen);
 	stream_write(printer_dev->device.data, DriverName, DriverNameLen);
-	stream_write_uint16(printer_dev->device.data, 0);
+	stream_write_UINT16(printer_dev->device.data, 0);
 	stream_write(printer_dev->device.data, PrintName, PrintNameLen);
-	stream_write_uint16(printer_dev->device.data, 0);
+	stream_write_UINT16(printer_dev->device.data, 0);
 
 	if (CachedFieldsLen > 0)
 	{

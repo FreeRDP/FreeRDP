@@ -286,7 +286,7 @@ BOOL tls_disconnect(rdpTls* tls)
 	return TRUE;
 }
 
-int tls_read(rdpTls* tls, uint8* data, int length)
+int tls_read(rdpTls* tls, BYTE* data, int length)
 {
 	int status;
 
@@ -311,7 +311,7 @@ int tls_read(rdpTls* tls, uint8* data, int length)
 	return status;
 }
 
-int tls_read_all(rdpTls* tls, uint8* data, int length)
+int tls_read_all(rdpTls* tls, BYTE* data, int length)
 {
 	int status;
 
@@ -324,7 +324,7 @@ int tls_read_all(rdpTls* tls, uint8* data, int length)
 	return status;
 }
 
-int tls_write(rdpTls* tls, uint8* data, int length)
+int tls_write(rdpTls* tls, BYTE* data, int length)
 {
 	int status;
 
@@ -350,7 +350,7 @@ int tls_write(rdpTls* tls, uint8* data, int length)
 }
 
 
-int tls_write_all(rdpTls* tls, uint8* data, int length)
+int tls_write_all(rdpTls* tls, BYTE* data, int length)
 {
 	int status;
 	int sent = 0;

@@ -56,7 +56,7 @@ struct _UDEVMAN
 	IUDEVICE* tail; /* tail device in linked list */
 
 	uint32 defUsbDevice;
-	uint16 flags;
+	UINT16 flags;
 	int device_num;
 	int sem_timeout;
 
@@ -125,8 +125,8 @@ udevman_get_udevice_by_addr(IUDEVMAN * idevman, int bus_number, int dev_number)
 static int
 udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_number, 
 	int UsbDevice, 
-	uint16 idVendor, 
-	uint16 idProduct, 
+	UINT16 idVendor, 
+	UINT16 idProduct, 
 	int flag)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
@@ -324,7 +324,7 @@ udevman_parse_device_pid_vid (char *str, int *id1, int *id2, char sign)
 
 
 static int 
-udevman_check_device_exist_by_id(IUDEVMAN * idevman, uint16 idVendor, uint16 idProduct)
+udevman_check_device_exist_by_id(IUDEVMAN * idevman, UINT16 idVendor, UINT16 idProduct)
 {
 	if (libusb_open_device_with_vid_pid (NULL, idVendor, idProduct)) 
 		return 1;
@@ -537,8 +537,8 @@ int FreeRDPUDEVMANEntry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 				0, 
 				0, 
 				UsbDevice, 
-				(uint16) idVendor, 
-				(uint16) idProduct, 
+				(UINT16) idVendor, 
+				(UINT16) idProduct, 
 				UDEVMAN_FLAG_ADD_BY_VID_PID);
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)

@@ -92,7 +92,7 @@ struct rdp_nego
 	uint32 selected_protocol;
 	uint32 requested_protocols;
 	BOOL security_layer_negotiation_enabled;
-	uint8 enabled_protocols[3];
+	BYTE enabled_protocols[3];
 
 	rdpTransport* transport;
 };

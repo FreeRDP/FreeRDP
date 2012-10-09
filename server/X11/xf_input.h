@@ -25,10 +25,10 @@
 #include "xfreerdp.h"
 
 void xf_input_synchronize_event(rdpInput* input, uint32 flags);
-void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 void xf_input_register_callbacks(rdpInput* input);
 
 #endif /* __XF_INPUT_H */

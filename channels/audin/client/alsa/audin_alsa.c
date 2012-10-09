@@ -51,7 +51,7 @@ typedef struct _AudinALSADevice
 
 	freerdp_thread* thread;
 
-	uint8* buffer;
+	BYTE* buffer;
 	int buffer_frames;
 
 	AudinReceive receive;
@@ -93,13 +93,13 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 	return TRUE;
 }
 
-static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, uint8* src, int size)
+static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size)
 {
 	int frames;
 	int cframes;
 	int ret = 0;
 	int encoded_size;
-	uint8* encoded_data;
+	BYTE* encoded_data;
 	int rbytes_per_frame;
 	int tbytes_per_frame;
 
@@ -173,7 +173,7 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, uint8* src, int siz
 static void* audin_alsa_thread_func(void* arg)
 {
 	int error;
-	uint8* buffer;
+	BYTE* buffer;
 	int rbytes_per_frame;
 	int tbytes_per_frame;
 	snd_pcm_t* capture_handle = NULL;
@@ -183,9 +183,9 @@ static void* audin_alsa_thread_func(void* arg)
 
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
-	alsa->buffer = (uint8*) xzalloc(tbytes_per_frame * alsa->frames_per_packet);
+	alsa->buffer = (BYTE*) xzalloc(tbytes_per_frame * alsa->frames_per_packet);
 	alsa->buffer_frames = 0;
-	buffer = (uint8*) xzalloc(rbytes_per_frame * alsa->frames_per_packet);
+	buffer = (BYTE*) xzalloc(rbytes_per_frame * alsa->frames_per_packet);
 	freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
 	do
 	{

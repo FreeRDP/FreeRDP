@@ -22,9 +22,9 @@
 
 #include "wf_interface.h"
 
-void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-void wf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 #endif /* WF_INPUT_H */

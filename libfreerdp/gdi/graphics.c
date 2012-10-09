@@ -40,9 +40,9 @@
 
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
 {
-	uint8* bmpData;
+	BYTE* bmpData;
 	HGDI_BITMAP bitmap;
 
 	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
@@ -93,13 +93,13 @@ void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length,
+		BYTE* data, int width, int height, int bpp, int length,
 		BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 	RFX_MESSAGE* msg;
-	uint8* src;
-	uint8* dst;
+	BYTE* src;
+	BYTE* dst;
 	int yindex;
 	int xindex;
 	rdpGdi* gdi;
@@ -108,9 +108,9 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) malloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	switch (codec_id)
 	{
@@ -188,7 +188,7 @@ void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 
 void gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
-	uint8* data;
+	BYTE* data;
 	gdiGlyph* gdi_glyph;
 
 	gdi_glyph = (gdiGlyph*) glyph;

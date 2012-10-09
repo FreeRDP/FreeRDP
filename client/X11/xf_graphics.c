@@ -38,7 +38,7 @@
 
 void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
-	uint8* data;
+	BYTE* data;
 	Pixmap pixmap;
 	XImage* image;
 	xfContext* context_ = (xfContext*) context;
@@ -112,13 +112,13 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length,
+		BYTE* data, int width, int height, int bpp, int length,
 		BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 	RFX_MESSAGE* msg;
-	uint8* src;
-	uint8* dst;
+	BYTE* src;
+	BYTE* dst;
 	int yindex;
 	int xindex;
 	xfInfo* xfi;
@@ -127,9 +127,9 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) malloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	switch (codec_id)
 	{
@@ -217,7 +217,7 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
-		freerdp_alpha_cursor_convert((uint8*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
+		freerdp_alpha_cursor_convert((BYTE*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
 				pointer->width, pointer->height, pointer->xorBpp, xfi->clrconv);
 	}
 

@@ -453,11 +453,11 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
-static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
 	int len;
 	int ret;
-	uint8* src;
+	BYTE* src;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->stream)

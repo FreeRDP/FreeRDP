@@ -41,8 +41,8 @@ typedef BOOL (*psPeerPostConnect)(freerdp_peer* client);
 typedef BOOL (*psPeerActivate)(freerdp_peer* client);
 typedef BOOL (*psPeerLogon)(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
 
-typedef int (*psPeerSendChannelData)(freerdp_peer* client, int channelId, uint8* data, int size);
-typedef int (*psPeerReceiveChannelData)(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size);
+typedef int (*psPeerSendChannelData)(freerdp_peer* client, int channelId, BYTE* data, int size);
+typedef int (*psPeerReceiveChannelData)(freerdp_peer* client, int channelId, BYTE* data, int size, int flags, int total_size);
 
 struct rdp_freerdp_peer
 {

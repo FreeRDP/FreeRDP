@@ -30,8 +30,8 @@ struct _USB_SEARCHDEV
 	void * inode;
 	void * prev;
 	void * next;
-	uint16 idVendor;
-	uint16 idProduct;
+	UINT16 idVendor;
+	UINT16 idProduct;
 };
 
 typedef struct _USB_SEARCHMAN USB_SEARCHMAN;
@@ -60,9 +60,9 @@ struct _USB_SEARCHMAN
 	/* close searchman */
 	void (*close) (USB_SEARCHMAN* self);
 	/* add a new usb device for search */
-	int (*add) (USB_SEARCHMAN* seachman, uint16 idVendor, uint16 idProduct);
+	int (*add) (USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
 	/* remove a usb device from list */
-	int (*remove) (USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct);
+	int (*remove) (USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
 	/* check list has next device*/
 	int (*has_next) (USB_SEARCHMAN* seachman);
 	/* get the device from list*/

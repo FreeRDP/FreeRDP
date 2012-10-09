@@ -22,8 +22,8 @@
 
 #include "wfreerdp.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata);
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata);
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);
 void wf_image_free(wfBitmap* image);
 
 void wf_register_graphics(rdpGraphics* graphics);

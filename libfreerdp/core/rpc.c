@@ -213,7 +213,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	STREAM* s;
 	int ntlm_token_length;
-	uint8* ntlm_token_data;
+	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
 
@@ -235,7 +235,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->tls_out);
 
 	ntlm_token_data = NULL;
-	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
+	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
 	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
@@ -263,7 +263,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
 	STREAM* s;
 	int ntlm_token_length;
-	uint8* ntlm_token_data;
+	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_in->ntlm;
 
@@ -285,7 +285,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->tls_in);
 
 	ntlm_token_data = NULL;
-	crypto_base64_decode((uint8*) http_response->AuthParam, strlen(http_response->AuthParam),
+	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
 	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
@@ -311,20 +311,20 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 
 void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
 {
-	stream_read_uint8(s, header->rpc_vers); /* rpc_vers (1 byte) */
-	stream_read_uint8(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
-	stream_read_uint8(s, header->ptype); /* PTYPE (1 byte) */
-	stream_read_uint8(s, header->pfc_flags); /* pfc_flags (1 byte) */
-	stream_read_uint8(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
-	stream_read_uint8(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
-	stream_read_uint16(s, header->frag_length); /* frag_length (2 bytes) */
-	stream_read_uint16(s, header->auth_length); /* auth_length (2 bytes) */
+	stream_read_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
+	stream_read_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
+	stream_read_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_read_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
+	stream_read_BYTE(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
+	stream_read_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
+	stream_read_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
 	stream_read_uint32(s, header->call_id); /* call_id (4 bytes) */
 }
 
-int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
+int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
@@ -339,7 +339,7 @@ int rpc_out_write(rdpRpc* rpc, uint8* data, int length)
 	return status;
 }
 
-int rpc_in_write(rdpRpc* rpc, uint8* data, int length)
+int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
@@ -472,7 +472,7 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	if (bind_pdu->auth_verifier.auth_pad_length > 0)
 		stream_write(pdu, bind_pdu->auth_verifier.auth_pad, bind_pdu->auth_verifier.auth_pad_length);
 
-	stream_write(pdu, &bind_pdu->auth_verifier.auth_type, 8); /* assumed that uint8 pointer is 32bit long (4 bytes) */
+	stream_write(pdu, &bind_pdu->auth_verifier.auth_type, 8); /* assumed that BYTE pointer is 32bit long (4 bytes) */
 	stream_write(pdu, bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
 	stream_seal(pdu);
 
@@ -486,11 +486,11 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 {
-	uint8* p;
+	BYTE* p;
 	STREAM* s;
 	int status;
-	uint8* pdu;
-	uint8* auth_data;
+	BYTE* pdu;
+	BYTE* auth_data;
 	RPC_PDU_HEADER header;
 	int pdu_length = 0x8FFF;
 
@@ -585,11 +585,11 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
+int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	STREAM* s;
 	int status;
-	uint8* pdu;
+	BYTE* pdu;
 	int content_length;
 	RPC_PDU_HEADER header;
 
@@ -661,7 +661,7 @@ int rpc_out_read(rdpRpc* rpc, uint8* data, int length)
 	return header.frag_length;
 }
 
-int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
+int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	int i;
 	int status;
@@ -672,7 +672,7 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu;
 
-	uint8 auth_pad_length = 16 - ((24 + length + 8 + 16) % 16);
+	BYTE auth_pad_length = 16 - ((24 + length + 8 + 16) % 16);
 
 	ntlm = rpc->ntlm;
 
@@ -773,17 +773,17 @@ int rpc_tsg_write(rdpRpc* rpc, uint8* data, int length, uint16 opnum)
 	return length;
 }
 
-int rpc_read(rdpRpc* rpc, uint8* data, int length)
+int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 	int read = 0;
 	int data_length;
-	uint16 frag_length;
-	uint16 auth_length;
-	uint8 auth_pad_length;
+	UINT16 frag_length;
+	UINT16 auth_length;
+	BYTE auth_pad_length;
 	uint32 call_id = -1;
 	int rpc_length = length + 0xFF;
-	uint8* rpc_data = malloc(rpc_length);
+	BYTE* rpc_data = malloc(rpc_length);
 
 	if (rpc_data == NULL)
 	{
@@ -825,8 +825,8 @@ int rpc_read(rdpRpc* rpc, uint8* data, int length)
 			return status;
 		}
 
-		frag_length = *(uint16*)(rpc_data + 8);
-		auth_length = *(uint16*)(rpc_data + 10);
+		frag_length = *(UINT16*)(rpc_data + 8);
+		auth_length = *(UINT16*)(rpc_data + 10);
 		call_id = *(uint32*)(rpc_data + 12);
 		status = *(uint32*)(rpc_data + 16); /* alloc_hint */
 		auth_pad_length = *(rpc_data + frag_length - auth_length - 6); /* -6 = -8 + 2 (sec_trailer + 2) */

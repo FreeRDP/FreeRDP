@@ -45,7 +45,7 @@ struct cliprdr_plugin
 };
 typedef struct cliprdr_plugin cliprdrPlugin;
 
-STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen);
+STREAM* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, uint32 dataLen);
 void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* data_out);
 
 #ifdef WITH_DEBUG_CLIPRDR

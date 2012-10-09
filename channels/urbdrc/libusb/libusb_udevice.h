@@ -52,9 +52,9 @@ struct _UDEVICE
 	uint32	UsbDevice; /* An unique interface ID */
 	uint32	ReqCompletion; /* An unique interface ID */
 	uint32	channel_id;
-	uint16	status;
-	uint16	bus_number;
-	uint16	dev_number;
+	UINT16	status;
+	UINT16	bus_number;
+	UINT16	dev_number;
 	char	path[17];
 	int	port_number;
 	int	isCompositeDevice;
@@ -77,7 +77,7 @@ typedef UDEVICE * PUDEVICE;
 
 
 int
-udev_new_by_id(uint16_t idVendor, uint16_t idProduct, IUDEVICE ***devArray);
+udev_new_by_id(UINT16_t idVendor, UINT16_t idProduct, IUDEVICE ***devArray);
 IUDEVICE*
 udev_new_by_addr(int bus_number, int dev_number);
 

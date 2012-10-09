@@ -321,16 +321,16 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	}
 }
 
-static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
-	uint8* src;
+	BYTE* src;
 	int len;
 	int status;
 	int frames;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
-	uint8* pindex;
-	uint8* end;
+	BYTE* pindex;
+	BYTE* end;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->out_handle == 0)

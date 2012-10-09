@@ -138,9 +138,9 @@ struct _ICON_INFO
 	uint32 cbColorTable;
 	uint32 cbBitsMask;
 	uint32 cbBitsColor;
-	uint8* bitsMask;
-	uint8* colorTable;
-	uint8* bitsColor;
+	BYTE* bitsMask;
+	BYTE* colorTable;
+	BYTE* bitsColor;
 };
 typedef struct _ICON_INFO ICON_INFO;
 

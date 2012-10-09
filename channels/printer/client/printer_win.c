@@ -82,7 +82,7 @@ static void printer_win_get_printjob_name(char* buf, int size)
 
 }
 
-static void printer_win_write_printjob(rdpPrintJob* printjob, uint8* data, int size)
+static void printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
 {
 	rdpWinPrintJob* win_printjob = (rdpWinPrintJob*)printjob;
 

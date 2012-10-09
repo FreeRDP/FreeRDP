@@ -426,7 +426,7 @@ BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return TRUE;
 }
 
-int wf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+int wf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }

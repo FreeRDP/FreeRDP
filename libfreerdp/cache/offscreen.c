@@ -31,7 +31,7 @@
 void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	int i;
-	uint16 index;
+	UINT16 index;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
 

@@ -27,13 +27,13 @@
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata)
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
 	HDC hdc;
 	int negHeight;
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
-	uint8* cdata = NULL;
+	BYTE* cdata = NULL;
 
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
@@ -65,7 +65,7 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, 
 	return bitmap;
 }
 
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data)
 {
 	HDC hdc;
 	wfBitmap* image;
@@ -143,16 +143,16 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, BOOL compressed, int codec_id)
+		BYTE* data, int width, int height, int bpp, int length, BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 
 	size = width * height * (bpp / 8);
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) malloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	if (compressed)
 	{

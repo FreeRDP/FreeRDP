@@ -31,7 +31,7 @@
 
 #include <freerdp/rail.h>
 
-void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString)
+void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString)
 {
 	unicode_string->length = cbString;
 	unicode_string->string = malloc(cbString);
@@ -48,12 +48,12 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 
 void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	stream_read_uint16(s, unicode_string->length); /* cbString (2 bytes) */
+	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 
 	if (unicode_string->string == NULL)
-		unicode_string->string = (uint8*) malloc(unicode_string->length);
+		unicode_string->string = (BYTE*) malloc(unicode_string->length);
 	else
-		unicode_string->string = (uint8*) realloc(unicode_string->string, unicode_string->length);
+		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
 }
@@ -61,7 +61,7 @@ void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	stream_check_size(s, 2 + unicode_string->length);
-	stream_write_uint16(s, unicode_string->length); /* cbString (2 bytes) */
+	stream_write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
@@ -76,18 +76,18 @@ void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_str
 
 void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 {
-	stream_read_uint16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_read_uint16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_read_uint16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_read_uint16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	stream_read_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
 void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 {
-	stream_write_uint16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_write_uint16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_write_uint16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_write_uint16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	stream_write_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
 void* rail_clone_order(uint32 event_type, void* order)

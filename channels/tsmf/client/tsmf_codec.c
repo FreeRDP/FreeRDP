@@ -36,7 +36,7 @@
 
 typedef struct _TSMFMediaTypeMap
 {
-	uint8 guid[16];
+	BYTE guid[16];
 	const char* name;
 	int type;
 } TSMFMediaTypeMap;
@@ -259,7 +259,7 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] =
 	}
 };
 
-static void tsmf_print_guid(const uint8* guid)
+static void tsmf_print_guid(const BYTE* guid)
 {
 #ifdef WITH_DEBUG_DVC
 	int i;
@@ -454,15 +454,15 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 		case TSMF_FORMAT_TYPE_WAVEFORMATEX:
 			/* http://msdn.microsoft.com/en-us/library/dd757720.aspx */
 
-			stream_seek_uint16(s);
-			stream_read_uint16(s, mediatype->Channels);
+			stream_seek_UINT16(s);
+			stream_read_UINT16(s, mediatype->Channels);
 			stream_read_uint32(s, mediatype->SamplesPerSecond.Numerator);
 			mediatype->SamplesPerSecond.Denominator = 1;
 			stream_read_uint32(s, mediatype->BitRate);
 			mediatype->BitRate *= 8;
-			stream_read_uint16(s, mediatype->BlockAlign);
-			stream_read_uint16(s, mediatype->BitsPerSample);
-			stream_read_uint16(s, mediatype->ExtraDataSize);
+			stream_read_UINT16(s, mediatype->BlockAlign);
+			stream_read_UINT16(s, mediatype->BitsPerSample);
+			stream_read_UINT16(s, mediatype->ExtraDataSize);
 			if (mediatype->ExtraDataSize > 0)
 				mediatype->ExtraData = stream_get_tail(s);
 			
@@ -516,7 +516,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 
 BOOL tsmf_codec_check_media_type(STREAM* s)
 {
-	uint8* m;
+	BYTE* m;
 	BOOL ret;
 	TS_AM_MEDIA_TYPE mediatype;
 

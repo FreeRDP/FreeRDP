@@ -86,7 +86,7 @@
 
 static uint32 sc_output_string(IRP* irp, char *src, BOOL wide)
 {
-	uint8* p;
+	BYTE* p;
 	uint32 len;
 
 	p = stream_get_tail(irp->output);
@@ -1060,7 +1060,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	SCARDHANDLE hCard;
 	DWORD dwAttrId = 0, dwAttrLen = 0;
 	DWORD attrLen = 0;
-	uint8* pbAttr = NULL;
+	BYTE* pbAttr = NULL;
 
 	stream_seek(irp->input, 0x20);
 	stream_read_uint32(irp->input, dwAttrId);
@@ -1083,7 +1083,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	}
 #endif
 
-	rv = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+	rv = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
 	if( rv != SCARD_S_SUCCESS ) {
 #ifdef SCARD_AUTOALLOCATE
 		if(dwAttrLen == 0)
@@ -1100,7 +1100,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A && rv == SCARD_E_UNSUPPORTED_FEATURE)
 	{
 		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
-			attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+			attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
 		if( rv != SCARD_S_SUCCESS ) {
 #ifdef SCARD_AUTOALLOCATE
 			if(dwAttrLen == 0)
@@ -1117,7 +1117,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && rv == SCARD_E_UNSUPPORTED_FEATURE)
 	{
 		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
-			attrLen == 0 ? NULL : (uint8*) &pbAttr, &attrLen);
+			attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
 		if( rv != SCARD_S_SUCCESS ) {
 #ifdef SCARD_AUTOALLOCATE
 			if(dwAttrLen == 0)
@@ -1190,8 +1190,8 @@ void scard_error(SCARD_DEVICE* scard, IRP* irp, uint32 ntstatus)
 typedef struct _SERVER_SCARD_ATRMASK
 {
 	uint32 cbAtr;
-	uint8 rgbAtr[36];
-	uint8 rgbMask[36];
+	BYTE rgbAtr[36];
+	BYTE rgbMask[36];
 }
 SERVER_SCARD_ATRMASK;
 

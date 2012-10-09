@@ -70,7 +70,7 @@ struct rdp_transport
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
 STREAM* transport_send_stream_init(rdpTransport* transport, int size);
-BOOL transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
 void transport_attach(rdpTransport* transport, int sockfd);
 BOOL transport_disconnect(rdpTransport* transport);
 BOOL transport_connect_rdp(rdpTransport* transport);

@@ -28,7 +28,7 @@
 #define TPKT_HEADER_LENGTH	4
 
 BOOL tpkt_verify_header(STREAM* s);
-uint16 tpkt_read_header(STREAM* s);
-void tpkt_write_header(STREAM* s, uint16 length);
+UINT16 tpkt_read_header(STREAM* s);
+void tpkt_write_header(STREAM* s, UINT16 length);
 
 #endif /* __TPKT_H */

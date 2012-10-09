@@ -56,7 +56,7 @@ STREAM* stream_new(int size)
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (uint8*) xzalloc(size);
+			stream->data = (BYTE*) xzalloc(size);
 			stream->p = stream->data;
 			stream->size = size;
 		}
@@ -107,9 +107,9 @@ void stream_extend(STREAM* stream, int request_size)
 	stream->size += increased_size;
 
 	if (original_size == 0)
-		stream->data = (uint8*) malloc(stream->size);
+		stream->data = (BYTE*) malloc(stream->size);
 	else
-		stream->data = (uint8*) realloc(stream->data, stream->size);
+		stream->data = (BYTE*) realloc(stream->data, stream->size);
 
 	memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);

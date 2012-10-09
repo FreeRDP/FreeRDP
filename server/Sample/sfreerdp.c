@@ -144,7 +144,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	int size;
 	STREAM* s;
 	RFX_RECT rect;
-	uint8* rgb_data;
+	BYTE* rgb_data;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	testPeerContext* context = (testPeerContext*) client->context;
@@ -200,7 +200,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 	FILE* fp;
 	int i;
 	char line[50];
-	uint8* rgb_data;
+	BYTE* rgb_data;
 	int c;
 
 	if (!client->settings->rfx_codec && !client->settings->ns_codec)
@@ -226,7 +226,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 		if (fgets(line, sizeof(line), fp))
 		{
 			sscanf(line, "%d", &c);
-			rgb_data[i] = (uint8)c;
+			rgb_data[i] = (BYTE)c;
 		}
 	}
 
@@ -414,7 +414,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	s = stream_new(4096);
 
-	WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test1", 5, NULL);
+	WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test1", 5, NULL);
 
 	while (1)
 	{
@@ -542,7 +542,7 @@ void tf_peer_synchronize_event(rdpInput* input, uint32 flags)
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
-void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	freerdp_peer* client = input->context->peer;
 	rdpUpdate* update = client->update;
@@ -569,7 +569,7 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	{
 		if (context->debug_channel)
 		{
-			WTSVirtualChannelWrite(context->debug_channel, (uint8*) "test2", 5, NULL);
+			WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test2", 5, NULL);
 		}
 	}
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
@@ -595,26 +595,26 @@ void tf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	}
 }
 
-void tf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
-void tf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	//printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 
 	test_peer_draw_icon(input->context->peer, x + 10, y);
 }
 
-void tf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	//printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
 }
 
-static void tf_peer_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16* areas)
+static void tf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
-	uint8 i;
+	BYTE i;
 
 	printf("Client requested to refresh:\n");
 
@@ -624,7 +624,7 @@ static void tf_peer_refresh_rect(rdpContext* context, uint8 count, RECTANGLE_16*
 	}
 }
 
-static void tf_peer_suppress_output(rdpContext* context, uint8 allow, RECTANGLE_16* area)
+static void tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
 	if (allow > 0)
 	{

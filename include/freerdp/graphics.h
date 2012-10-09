@@ -35,7 +35,7 @@ typedef void (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Free)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Paint)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Decompress)(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length,
+		BYTE* data, int width, int height, int bpp, int length,
 		BOOL compressed, int codec_id);
 typedef void (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap, BOOL primary);
 
@@ -58,7 +58,7 @@ struct rdp_bitmap
 	uint32 bpp; /* 22 */
 	uint32 flags; /* 23 */
 	uint32 length; /* 24 */
-	uint8* data; /* 25 */
+	BYTE* data; /* 25 */
 	uint32 paddingB[32 - 26]; /* 26 */
 
 	BOOL compressed; /* 32 */
@@ -71,10 +71,10 @@ FREERDP_API void Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
 FREERDP_API void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
 FREERDP_API void Bitmap_Register(rdpContext* context, rdpBitmap* bitmap);
 FREERDP_API void Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, BOOL compressed);
+		BYTE* data, int width, int height, int bpp, int length, BOOL compressed);
 FREERDP_API void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap,
-		uint16 left, uint16 top, uint16 right, uint16 bottom);
-FREERDP_API void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, uint16 width, uint16 height);
+		UINT16 left, UINT16 top, UINT16 right, UINT16 bottom);
+FREERDP_API void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, UINT16 height);
 FREERDP_API void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary);
 
 /* Pointer Class */
@@ -102,8 +102,8 @@ struct rdp_pointer
 	uint32 xorBpp; /* 20 */
 	uint32 lengthAndMask; /* 21 */
 	uint32 lengthXorMask; /* 22 */
-	uint8* xorMaskData; /* 23 */
-	uint8* andMaskData; /* 24 */
+	BYTE* xorMaskData; /* 23 */
+	BYTE* andMaskData; /* 24 */
 	uint32 paddingB[32 - 25]; /* 25 */
 };
 
@@ -137,7 +137,7 @@ struct rdp_glyph
 	uint32 cx; /* 18 */
 	uint32 cy; /* 19 */
 	uint32 cb; /* 20 */
-	uint8* aj; /* 21 */
+	BYTE* aj; /* 21 */
 	uint32 paddingB[32 - 22]; /* 22 */
 };
 

@@ -1094,7 +1094,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	return TRUE;
 }
 
-static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
+static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, uint32 data_size, uint32 extensions,
         			uint64 start_time, uint64 end_time, uint64 duration)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;

@@ -1108,7 +1108,7 @@ void credssp_send(rdpCredssp* credssp)
 		length -= der_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
 		length -= der_write_sequence_tag(s, length); /* NegoDataItem */
 		length -= der_write_contextual_tag(s, 0, length, TRUE); /* [0] negoToken */
-		der_write_octet_string(s, (uint8*) credssp->negoToken.pvBuffer, length); /* OCTET STRING */
+		der_write_octet_string(s, (BYTE*) credssp->negoToken.pvBuffer, length); /* OCTET STRING */
 	}
 
 	/* [2] authInfo (OCTET STRING) */

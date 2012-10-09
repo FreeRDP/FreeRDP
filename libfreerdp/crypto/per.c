@@ -30,14 +30,14 @@
  * @return
  */
 
-BOOL per_read_length(STREAM* s, uint16* length)
+BOOL per_read_length(STREAM* s, UINT16* length)
 {
-	uint8 byte;
+	BYTE byte;
 
 	if (stream_get_left(s) < 1)
 		return FALSE;
 
-	stream_read_uint8(s, byte);
+	stream_read_BYTE(s, byte);
 
 	if (byte & 0x80)
 	{
@@ -46,7 +46,7 @@ BOOL per_read_length(STREAM* s, uint16* length)
 
 		byte &= ~(0x80);
 		*length = (byte << 8);
-		stream_read_uint8(s, byte);
+		stream_read_BYTE(s, byte);
 		*length += byte;
 	}
 	else
@@ -66,9 +66,9 @@ BOOL per_read_length(STREAM* s, uint16* length)
 void per_write_length(STREAM* s, int length)
 {
 	if (length > 0x7F)
-		stream_write_uint16_be(s, (length | 0x8000));
+		stream_write_UINT16_be(s, (length | 0x8000));
 	else
-		stream_write_uint8(s, length);
+		stream_write_BYTE(s, length);
 }
 
 /**
@@ -78,12 +78,12 @@ void per_write_length(STREAM* s, int length)
  * @return
  */
 
-BOOL per_read_choice(STREAM* s, uint8* choice)
+BOOL per_read_choice(STREAM* s, BYTE* choice)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
 
-	stream_read_uint8(s, *choice);
+	stream_read_BYTE(s, *choice);
 	return TRUE;
 }
 
@@ -93,9 +93,9 @@ BOOL per_read_choice(STREAM* s, uint8* choice)
  * @param choice index of chosen field
  */
 
-void per_write_choice(STREAM* s, uint8 choice)
+void per_write_choice(STREAM* s, BYTE choice)
 {
-	stream_write_uint8(s, choice);
+	stream_write_BYTE(s, choice);
 }
 
 /**
@@ -105,12 +105,12 @@ void per_write_choice(STREAM* s, uint8 choice)
  * @return
  */
 
-BOOL per_read_selection(STREAM* s, uint8* selection)
+BOOL per_read_selection(STREAM* s, BYTE* selection)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
 
-	stream_read_uint8(s, *selection);
+	stream_read_BYTE(s, *selection);
 	return TRUE;
 }
 
@@ -120,9 +120,9 @@ BOOL per_read_selection(STREAM* s, uint8* selection)
  * @param selection bit map of selected fields
  */
 
-void per_write_selection(STREAM* s, uint8 selection)
+void per_write_selection(STREAM* s, BYTE selection)
 {
-	stream_write_uint8(s, selection);
+	stream_write_BYTE(s, selection);
 }
 
 /**
@@ -132,12 +132,12 @@ void per_write_selection(STREAM* s, uint8 selection)
  * @return
  */
 
-BOOL per_read_number_of_sets(STREAM* s, uint8* number)
+BOOL per_read_number_of_sets(STREAM* s, BYTE* number)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
 
-	stream_read_uint8(s, *number);
+	stream_read_BYTE(s, *number);
 	return TRUE;
 }
 
@@ -147,9 +147,9 @@ BOOL per_read_number_of_sets(STREAM* s, uint8* number)
  * @param number number of sets
  */
 
-void per_write_number_of_sets(STREAM* s, uint8 number)
+void per_write_number_of_sets(STREAM* s, BYTE number)
 {
-	stream_write_uint8(s, number);
+	stream_write_BYTE(s, number);
 }
 
 /**
@@ -178,7 +178,7 @@ void per_write_padding(STREAM* s, int length)
 	int i;
 
 	for (i = 0; i < length; i++)
-		stream_write_uint8(s, 0);
+		stream_write_BYTE(s, 0);
 }
 
 /**
@@ -190,7 +190,7 @@ void per_write_padding(STREAM* s, int length)
 
 BOOL per_read_integer(STREAM* s, uint32* integer)
 {
-	uint16 length;
+	UINT16 length;
 
 	if (!per_read_length(s, &length))
 		return FALSE;
@@ -199,9 +199,9 @@ BOOL per_read_integer(STREAM* s, uint32* integer)
 		return FALSE;
 
 	if (length == 1)
-		stream_read_uint8(s, *integer);
+		stream_read_BYTE(s, *integer);
 	else if (length == 2)
-		stream_read_uint16_be(s, *integer);
+		stream_read_UINT16_be(s, *integer);
 	else
 		return FALSE;
 
@@ -219,12 +219,12 @@ void per_write_integer(STREAM* s, uint32 integer)
 	if (integer <= 0xFF)
 	{
 		per_write_length(s, 1);
-		stream_write_uint8(s, integer);
+		stream_write_BYTE(s, integer);
 	}
 	else if (integer <= 0xFFFF)
 	{
 		per_write_length(s, 2);
-		stream_write_uint16_be(s, integer);
+		stream_write_UINT16_be(s, integer);
 	}
 	else if (integer <= 0xFFFFFFFF)
 	{
@@ -234,19 +234,19 @@ void per_write_integer(STREAM* s, uint32 integer)
 }
 
 /**
- * Read PER INTEGER (uint16).
+ * Read PER INTEGER (UINT16).
  * @param s stream
  * @param integer integer
  * @param min minimum value
  * @return
  */
 
-BOOL per_read_integer16(STREAM* s, uint16* integer, uint16 min)
+BOOL per_read_integer16(STREAM* s, UINT16* integer, UINT16 min)
 {
 	if (stream_get_left(s) < 2)
 		return FALSE;
 
-	stream_read_uint16_be(s, *integer);
+	stream_read_UINT16_be(s, *integer);
 
 	if (*integer + min > 0xFFFF)
 		return FALSE;
@@ -257,15 +257,15 @@ BOOL per_read_integer16(STREAM* s, uint16* integer, uint16 min)
 }
 
 /**
- * Write PER INTEGER (uint16).
+ * Write PER INTEGER (UINT16).
  * @param s stream
  * @param integer integer
  * @param min minimum value
  */
 
-void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
+void per_write_integer16(STREAM* s, UINT16 integer, UINT16 min)
 {
-	stream_write_uint16_be(s, integer - min);
+	stream_write_UINT16_be(s, integer - min);
 }
 
 /**
@@ -276,12 +276,12 @@ void per_write_integer16(STREAM* s, uint16 integer, uint16 min)
  * @return
  */
 
-BOOL per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
+BOOL per_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count)
 {
 	if (stream_get_left(s) < 1)
 		return FALSE;
 
-	stream_read_uint8(s, *enumerated);
+	stream_read_BYTE(s, *enumerated);
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
@@ -298,9 +298,9 @@ BOOL per_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
  * @return
  */
 
-void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count)
+void per_write_enumerated(STREAM* s, BYTE enumerated, BYTE count)
 {
-	stream_write_uint8(s, enumerated);
+	stream_write_BYTE(s, enumerated);
 }
 
 /**
@@ -310,11 +310,11 @@ void per_write_enumerated(STREAM* s, uint8 enumerated, uint8 count)
  * @return
  */
 
-BOOL per_read_object_identifier(STREAM* s, uint8 oid[6])
+BOOL per_read_object_identifier(STREAM* s, BYTE oid[6])
 {
-	uint8 t12;
-	uint16 length;
-	uint8 a_oid[6];
+	BYTE t12;
+	UINT16 length;
+	BYTE a_oid[6];
 
 	if (!per_read_length(s, &length))
 		return FALSE;
@@ -325,14 +325,14 @@ BOOL per_read_object_identifier(STREAM* s, uint8 oid[6])
 	if (stream_get_left(s) < length)
 		return FALSE;
 
-	stream_read_uint8(s, t12); /* first two tuples */
+	stream_read_BYTE(s, t12); /* first two tuples */
 	a_oid[0] = (t12 >> 4);
 	a_oid[1] = (t12 & 0x0F);
 
-	stream_read_uint8(s, a_oid[2]); /* tuple 3 */
-	stream_read_uint8(s, a_oid[3]); /* tuple 4 */
-	stream_read_uint8(s, a_oid[4]); /* tuple 5 */
-	stream_read_uint8(s, a_oid[5]); /* tuple 6 */
+	stream_read_BYTE(s, a_oid[2]); /* tuple 3 */
+	stream_read_BYTE(s, a_oid[3]); /* tuple 4 */
+	stream_read_BYTE(s, a_oid[4]); /* tuple 5 */
+	stream_read_BYTE(s, a_oid[5]); /* tuple 6 */
 
 	if ((a_oid[0] == oid[0]) && (a_oid[1] == oid[1]) &&
 		(a_oid[2] == oid[2]) && (a_oid[3] == oid[3]) &&
@@ -352,15 +352,15 @@ BOOL per_read_object_identifier(STREAM* s, uint8 oid[6])
  * @param oid object identifier (oid)
  */
 
-void per_write_object_identifier(STREAM* s, uint8 oid[6])
+void per_write_object_identifier(STREAM* s, BYTE oid[6])
 {
-	uint8 t12 = (oid[0] << 4) & (oid[1] & 0x0F);
-	stream_write_uint8(s, 5); /* length */
-	stream_write_uint8(s, t12); /* first two tuples */
-	stream_write_uint8(s, oid[2]); /* tuple 3 */
-	stream_write_uint8(s, oid[3]); /* tuple 4 */
-	stream_write_uint8(s, oid[4]); /* tuple 5 */
-	stream_write_uint8(s, oid[5]); /* tuple 6 */
+	BYTE t12 = (oid[0] << 4) & (oid[1] & 0x0F);
+	stream_write_BYTE(s, 5); /* length */
+	stream_write_BYTE(s, t12); /* first two tuples */
+	stream_write_BYTE(s, oid[2]); /* tuple 3 */
+	stream_write_BYTE(s, oid[3]); /* tuple 4 */
+	stream_write_BYTE(s, oid[4]); /* tuple 5 */
+	stream_write_BYTE(s, oid[5]); /* tuple 6 */
 }
 
 /**
@@ -370,12 +370,12 @@ void per_write_object_identifier(STREAM* s, uint8 oid[6])
  * @param length string length
  */
 
-void per_write_string(STREAM* s, uint8* str, int length)
+void per_write_string(STREAM* s, BYTE* str, int length)
 {
 	int i;
 
 	for (i = 0; i < length; i++)
-		stream_write_uint8(s, str[i]);
+		stream_write_BYTE(s, str[i]);
 }
 
 /**
@@ -387,11 +387,11 @@ void per_write_string(STREAM* s, uint8* str, int length)
  * @return
  */
 
-BOOL per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
+BOOL per_read_octet_string(STREAM* s, BYTE* oct_str, int length, int min)
 {
 	int i;
-	uint16 mlength;
-	uint8* a_oct_str;
+	UINT16 mlength;
+	BYTE* a_oct_str;
 
 	if (!per_read_length(s, &mlength))
 		return FALSE;
@@ -422,7 +422,7 @@ BOOL per_read_octet_string(STREAM* s, uint8* oct_str, int length, int min)
  * @param min minimum string length
  */
 
-void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
+void per_write_octet_string(STREAM* s, BYTE* oct_str, int length, int min)
 {
 	int i;
 	int mlength;
@@ -432,7 +432,7 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 	per_write_length(s, mlength);
 
 	for (i = 0; i < length; i++)
-		stream_write_uint8(s, oct_str[i]);
+		stream_write_BYTE(s, oct_str[i]);
 }
 
 /**
@@ -446,7 +446,7 @@ void per_write_octet_string(STREAM* s, uint8* oct_str, int length, int min)
 BOOL per_read_numeric_string(STREAM* s, int min)
 {
 	int length;
-	uint16 mlength;
+	UINT16 mlength;
 
 	if (!per_read_length(s, &mlength))
 		return FALSE;
@@ -468,11 +468,11 @@ BOOL per_read_numeric_string(STREAM* s, int min)
  * @param min minimum string length
  */
 
-void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min)
+void per_write_numeric_string(STREAM* s, BYTE* num_str, int length, int min)
 {
 	int i;
 	int mlength;
-	uint8 num, c1, c2;
+	BYTE num, c1, c2;
 
 	mlength = (length - min >= 0) ? length - min : min;
 
@@ -487,6 +487,6 @@ void per_write_numeric_string(STREAM* s, uint8* num_str, int length, int min)
 		c2 = (c2 - 0x30) % 10;
 		num = (c1 << 4) | c2;
 
-		stream_write_uint8(s, num); /* string */
+		stream_write_BYTE(s, num); /* string */
 	}
 }

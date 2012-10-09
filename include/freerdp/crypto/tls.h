@@ -47,11 +47,11 @@ FREERDP_API BOOL tls_connect(rdpTls* tls);
 FREERDP_API BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
 FREERDP_API BOOL tls_disconnect(rdpTls* tls);
 
-FREERDP_API int tls_read(rdpTls* tls, uint8* data, int length);
-FREERDP_API int tls_write(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_read(rdpTls* tls, BYTE* data, int length);
+FREERDP_API int tls_write(rdpTls* tls, BYTE* data, int length);
 
-FREERDP_API int tls_read_all(rdpTls* tls, uint8* data, int length);
-FREERDP_API int tls_write_all(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_read_all(rdpTls* tls, BYTE* data, int length);
+FREERDP_API int tls_write_all(rdpTls* tls, BYTE* data, int length);
 
 FREERDP_API BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
 FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint);

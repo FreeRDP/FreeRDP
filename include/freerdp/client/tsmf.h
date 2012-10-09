@@ -32,16 +32,16 @@ enum RDP_EVENT_TYPE_TSMF
 struct _RDP_VIDEO_FRAME_EVENT
 {
 	RDP_EVENT event;
-	uint8* frame_data;
+	BYTE* frame_data;
 	uint32 frame_size;
 	uint32 frame_pixfmt;
-	sint16 frame_width;
-	sint16 frame_height;
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
-	uint16 num_visible_rects;
+	INT16 frame_width;
+	INT16 frame_height;
+	INT16 x;
+	INT16 y;
+	INT16 width;
+	INT16 height;
+	UINT16 num_visible_rects;
 	RDP_RECT* visible_rects;
 };
 typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
@@ -49,10 +49,10 @@ typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
 struct _RDP_REDRAW_EVENT
 {
 	RDP_EVENT event;
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
+	INT16 x;
+	INT16 y;
+	INT16 width;
+	INT16 height;
 };
 typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
 

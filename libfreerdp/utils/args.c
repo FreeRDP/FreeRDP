@@ -252,11 +252,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			else
 			{
-				settings->width = (uint16) strtol(argv[index], &p, 10);
+				settings->width = (UINT16) strtol(argv[index], &p, 10);
 
 				if (*p == 'x')
 				{
-					settings->height = (uint16) strtol(p + 1, &p, 10);
+					settings->height = (UINT16) strtol(p + 1, &p, 10);
 				}
 				if (*p == '%')
 				{

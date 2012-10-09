@@ -45,21 +45,21 @@
 
 static void nsc_decode(NSC_CONTEXT* context)
 {
-	uint16 x;
-	uint16 y;
-	uint16 rw;
-	uint8 shift;
-	uint8* yplane;
-	uint8* coplane;
-	uint8* cgplane;
-	uint8* aplane;
-	sint16 y_val;
-	sint16 co_val;
-	sint16 cg_val;
-	sint16 r_val;
-	sint16 g_val;
-	sint16 b_val;
-	uint8* bmpdata;
+	UINT16 x;
+	UINT16 y;
+	UINT16 rw;
+	BYTE shift;
+	BYTE* yplane;
+	BYTE* coplane;
+	BYTE* cgplane;
+	BYTE* aplane;
+	INT16 y_val;
+	INT16 co_val;
+	INT16 cg_val;
+	INT16 r_val;
+	INT16 g_val;
+	INT16 b_val;
+	BYTE* bmpdata;
 
 	bmpdata = context->bmpdata;
 	rw = ROUND_UP_TO(context->width, 8);
@@ -82,9 +82,9 @@ static void nsc_decode(NSC_CONTEXT* context)
 		aplane = context->priv->plane_buf[3] + y * context->width; /* A */
 		for (x = 0; x < context->width; x++)
 		{
-			y_val = (sint16) *yplane;
-			co_val = (sint16) (sint8) (*coplane << shift);
-			cg_val = (sint16) (sint8) (*cgplane << shift);
+			y_val = (INT16) *yplane;
+			co_val = (INT16) (INT8) (*coplane << shift);
+			cg_val = (INT16) (INT8) (*cgplane << shift);
 			r_val = y_val + co_val - cg_val;
 			g_val = y_val + cg_val;
 			b_val = y_val - co_val - cg_val;
@@ -100,11 +100,11 @@ static void nsc_decode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
+static void nsc_rle_decode(BYTE* in, BYTE* out, uint32 origsz)
 {
 	uint32 len;
 	uint32 left;
-	uint8 value;
+	BYTE value;
 
 	left = origsz;
 	while (left > 4)
@@ -146,8 +146,8 @@ static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
 
 static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
-	uint16 i;
-	uint8* rle;
+	UINT16 i;
+	BYTE* rle;
 	uint32 origsize;
 	uint32 planesize;
 
@@ -176,8 +176,8 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 	for (i = 0; i < 4; i++)
 		stream_read_uint32(s, context->nsc_stream.PlaneByteCount[i]);
 
-	stream_read_uint8(s, context->nsc_stream.ColorLossLevel);
-	stream_read_uint8(s, context->nsc_stream.ChromaSubSamplingLevel);
+	stream_read_BYTE(s, context->nsc_stream.ColorLossLevel);
+	stream_read_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel);
 	stream_seek(s, 2);
 
 	context->nsc_stream.Planes = stream_get_tail(s);
@@ -210,7 +210,7 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 4; i++)
-			context->priv->plane_buf[i] = (uint8*) realloc(context->priv->plane_buf[i], length);
+			context->priv->plane_buf[i] = (BYTE*) realloc(context->priv->plane_buf[i], length);
 		context->priv->plane_buf_length = length;
 	}
 
@@ -316,8 +316,8 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
-	uint16 width, uint16 height, uint8* data, uint32 length)
+void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
+	UINT16 width, UINT16 height, BYTE* data, uint32 length)
 {
 	STREAM* s;
 

@@ -53,8 +53,8 @@ struct _POINTER_COLOR_UPDATE
 	uint32 height;
 	uint32 lengthAndMask;
 	uint32 lengthXorMask;
-	uint8* xorMaskData;
-	uint8* andMaskData;
+	BYTE* xorMaskData;
+	BYTE* andMaskData;
 };
 typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
 

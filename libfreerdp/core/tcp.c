@@ -61,7 +61,7 @@
 
 void tcp_get_ip_address(rdpTcp * tcp)
 {
-	uint8* ip;
+	BYTE* ip;
 	socklen_t length;
 	struct sockaddr_in sockaddr;
 
@@ -69,7 +69,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
-		ip = (uint8*) (&sockaddr.sin_addr);
+		ip = (BYTE*) (&sockaddr.sin_addr);
 		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
 			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
@@ -87,7 +87,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 void tcp_get_mac_address(rdpTcp * tcp)
 {
 #ifdef LINUX
-	uint8* mac;
+	BYTE* mac;
 	struct ifreq if_req;
 	struct if_nameindex* ni;
 
@@ -117,7 +117,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 {
 	uint32 option_value;
 	socklen_t option_len;
@@ -160,12 +160,12 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 	return TRUE;
 }
 
-int tcp_read(rdpTcp* tcp, uint8* data, int length)
+int tcp_read(rdpTcp* tcp, BYTE* data, int length)
 {
 	return freerdp_tcp_read(tcp->sockfd, data, length);
 }
 
-int tcp_write(rdpTcp* tcp, uint8* data, int length)
+int tcp_write(rdpTcp* tcp, BYTE* data, int length)
 {
 	return freerdp_tcp_write(tcp->sockfd, data, length);
 }

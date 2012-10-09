@@ -50,14 +50,14 @@ int add_drdynvc_suite(void)
 	return 0;
 }
 
-static const uint8 test_capability_request_data[] =
+static const BYTE test_capability_request_data[] =
 {
 	"\x58\x00\x02\x00\x33\x33\x11\x11\x3D\x0A\xA7\x04"
 };
 
 static int data_received = 0;
 
-static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, int data_size)
+static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);

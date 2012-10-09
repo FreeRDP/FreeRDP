@@ -133,7 +133,7 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, BOOL fullscreen)
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
 
 BOOL xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
-		unsigned long* nitems, unsigned long* bytes, uint8** prop)
+		unsigned long* nitems, unsigned long* bytes, BYTE** prop)
 {
 	int status;
 	Atom actual_type;
@@ -224,7 +224,7 @@ void xf_SetWindowDecorations(xfInfo* xfi, xfWindow* window, BOOL show)
 	hints.status = 0;
 
 	XChangeProperty(xfi->display, window->handle, xfi->_MOTIF_WM_HINTS, xfi->_MOTIF_WM_HINTS, 32,
-		PropModeReplace, (uint8*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
+		PropModeReplace, (BYTE*) &hints, PROP_MOTIF_WM_HINTS_ELEMENTS);
 }
 
 void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window)
@@ -235,7 +235,7 @@ void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window)
 	window_state[1] = xfi->_NET_WM_STATE_SKIP_TASKBAR;
 
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_STATE,
-		XA_ATOM, 32, PropModeReplace, (uint8*) &window_state, 2);
+		XA_ATOM, 32, PropModeReplace, (BYTE*) &window_state, 2);
 }
 
 void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style)
@@ -282,7 +282,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 	}
 
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_WINDOW_TYPE,
-		XA_ATOM, 32, PropModeReplace, (uint8*) &window_type, 1);
+		XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
 
 }
 
@@ -373,7 +373,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 			input_mask |= EnterWindowMask | LeaveWindowMask;
 
 		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
-				PropModeReplace, (uint8*) xf_icon_prop, ARRAY_SIZE(xf_icon_prop));
+				PropModeReplace, (BYTE*) xf_icon_prop, ARRAY_SIZE(xf_icon_prop));
 
 		if (xfi->parent_window)
                         XReparentWindow(xfi->display, window->handle, xfi->parent_window, 0, 0);
@@ -688,7 +688,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	xf_UpdateWindowArea(xfi, window, 0, 0, width, height);
 }
 
-void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state)
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state)
 {
 	switch (state)
 	{
@@ -777,7 +777,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	}
 
 	XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
-		PropModeReplace, (uint8*) propdata, propsize);
+		PropModeReplace, (BYTE*) propdata, propsize);
 
 	XFlush(xfi->display);
 }

@@ -100,11 +100,11 @@ DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
 void disk_file_free(DISK_FILE* file);
 
 BOOL disk_file_seek(DISK_FILE* file, uint64 Offset);
-BOOL disk_file_read(DISK_FILE* file, uint8* buffer, uint32* Length);
-BOOL disk_file_write(DISK_FILE* file, uint8* buffer, uint32 Length);
+BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, uint32* Length);
+BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, uint32 Length);
 BOOL disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output);
 BOOL disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input);
-BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, uint8 InitialQuery,
+BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, BYTE InitialQuery,
 	const char* path, STREAM* output);
 
 #endif /* __DISK_FILE_H */

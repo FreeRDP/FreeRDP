@@ -51,18 +51,18 @@ int add_cliprdr_suite(void)
 	return 0;
 }
 
-static const uint8 test_clip_caps_data[] =
+static const BYTE test_clip_caps_data[] =
 {
 	"\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0C\x00"
 	"\x02\x00\x00\x00\x0E\x00\x00\x00"
 };
 
-static const uint8 test_monitor_ready_data[] =
+static const BYTE test_monitor_ready_data[] =
 {
 	"\x01\x00\x00\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_format_list_data[] =
+static const BYTE test_format_list_data[] =
 {
 	"\x02\x00\x00\x00\x48\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -71,23 +71,23 @@ static const uint8 test_format_list_data[] =
 	"\x6D\x00\x61\x00\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_format_list_response_data[] =
+static const BYTE test_format_list_response_data[] =
 {
 	"\x03\x00\x01\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_data_request_data[] =
+static const BYTE test_data_request_data[] =
 {
 	"\x04\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
 };
 
-static const uint8 test_data_response_data[] =
+static const BYTE test_data_response_data[] =
 {
 	"\x05\x00\x01\x00\x18\x00\x00\x00\x68\x00\x65\x00\x6C\x00\x6C\x00"
 	"\x6F\x00\x20\x00\x77\x00\x6F\x00\x72\x00\x6c\x00\x64\x00\x00\x00"
 };
 
-static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, int data_size)
+static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
 	freerdp_hexdump(data, data_size);
@@ -199,7 +199,7 @@ void test_cliprdr(void)
 	/* UI sends data response event to cliprdr */
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
 	data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
-	data_response_event->data = (uint8*)malloc(6);
+	data_response_event->data = (BYTE*)malloc(6);
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;

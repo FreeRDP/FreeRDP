@@ -34,7 +34,7 @@
 
 #include "xf_gdi.h"
 
-static const uint8 xf_rop2_table[] =
+static const BYTE xf_rop2_table[] =
 {
 	0,
 	GXclear,        /* 0 */
@@ -205,10 +205,10 @@ BOOL xf_set_rop3(xfInfo* xfi, int rop3)
 	return TRUE;
 }
 
-Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
+Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, BYTE* data)
 {
 	Pixmap bitmap;
-	uint8* cdata;
+	BYTE* cdata;
 	XImage* image;
 
 	bitmap = XCreatePixmap(xfi->display, xfi->drawable, width, height, xfi->depth);
@@ -235,7 +235,7 @@ Pixmap xf_brush_new(xfInfo* xfi, int width, int height, int bpp, uint8* data)
 	return bitmap;
 }
 
-Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, uint8* data)
+Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, BYTE* data)
 {
 	int scanline;
 	XImage* image;
@@ -254,7 +254,7 @@ Pixmap xf_mono_bitmap_new(xfInfo* xfi, int width, int height, uint8* data)
 	return bitmap;
 }
 
-Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, uint8* data)
+Pixmap xf_glyph_new(xfInfo* xfi, int width, int height, BYTE* data)
 {
 	int scanline;
 	Pixmap bitmap;
@@ -911,7 +911,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 	}
 }
 
-static void xf_gdi_surface_update_frame(xfInfo* xfi, uint16 tx, uint16 ty, uint16 width, uint16 height)
+static void xf_gdi_surface_update_frame(xfInfo* xfi, UINT16 tx, UINT16 ty, UINT16 width, UINT16 height)
 {
 	if (xfi->remote_app != TRUE)
 	{
@@ -998,7 +998,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 
-		xfi->bmp_codec_nsc = (uint8*) realloc(xfi->bmp_codec_nsc,
+		xfi->bmp_codec_nsc = (BYTE*) realloc(xfi->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
 		freerdp_image_flip(nsc_context->bmpdata, xfi->bmp_codec_nsc,
@@ -1026,7 +1026,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		/* Validate that the data received is large enough */
 		if( surface_bits_command->width * surface_bits_command->height * surface_bits_command->bpp / 8 <= surface_bits_command->bitmapDataLength )
 		{
-			xfi->bmp_codec_none = (uint8*) realloc(xfi->bmp_codec_none,
+			xfi->bmp_codec_none = (BYTE*) realloc(xfi->bmp_codec_none,
 					surface_bits_command->width * surface_bits_command->height * 4);
 
 			freerdp_image_flip(surface_bits_command->bitmapData, xfi->bmp_codec_none,

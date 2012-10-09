@@ -43,7 +43,7 @@ struct wf_bitmap
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
-	uint8* pdata;
+	BYTE* pdata;
 };
 typedef struct wf_bitmap wfBitmap;
 
@@ -72,8 +72,8 @@ struct wf_info
 
 	HWND hwnd;
 	HGDI_DC hdc;
-	uint16 srcBpp;
-	uint16 dstBpp;
+	UINT16 srcBpp;
+	UINT16 dstBpp;
 	freerdp* instance;
 	wfBitmap* primary;
 	wfBitmap* drawing;

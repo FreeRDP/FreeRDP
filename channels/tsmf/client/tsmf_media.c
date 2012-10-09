@@ -57,7 +57,7 @@
 
 struct _TSMF_PRESENTATION
 {
-	uint8 presentation_id[GUID_SIZE];
+	BYTE presentation_id[GUID_SIZE];
 
 	const char* audio_name;
 	const char* audio_device;
@@ -67,14 +67,14 @@ struct _TSMF_PRESENTATION
 	uint32 last_y;
 	uint32 last_width;
 	uint32 last_height;
-	uint16 last_num_rects;
+	UINT16 last_num_rects;
 	RDP_RECT* last_rects;
 
 	uint32 output_x;
 	uint32 output_y;
 	uint32 output_width;
 	uint32 output_height;
-	uint16 output_num_rects;
+	UINT16 output_num_rects;
 	RDP_RECT* output_rects;
 
 	IWTSVirtualChannelCallback* channel_callback;
@@ -127,7 +127,7 @@ struct _TSMF_SAMPLE
 	uint64 duration;
 	uint32 extensions;
 	uint32 data_size;
-	uint8* data;
+	BYTE* data;
 	uint32 decoded_size;
 	uint32 pixfmt;
 
@@ -250,7 +250,7 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 	}
 }
 
-TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCallback* pChannelCallback)
+TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
 	TSMF_PRESENTATION* presentation;
 	pthread_t thid = pthread_self();
@@ -284,7 +284,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCa
 	return presentation;
 }
 
-TSMF_PRESENTATION* tsmf_presentation_find_by_id(const uint8* guid)
+TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
 	LIST_ITEM* item;
 	TSMF_PRESENTATION* presentation;
@@ -1021,7 +1021,7 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
 	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
-	uint32 data_size, uint8* data)
+	uint32 data_size, BYTE* data)
 {
 	TSMF_SAMPLE* sample;
 

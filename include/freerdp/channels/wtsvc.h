@@ -108,7 +108,7 @@ FREERDP_API void WTSFreeMemory(
 FREERDP_API BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint32 TimeOut,
-	/* __out */ uint8* Buffer,
+	/* __out */ BYTE* Buffer,
 	/* __in */  uint32 BufferSize,
 	/* __out */ uint32* pBytesRead);
 
@@ -117,7 +117,7 @@ FREERDP_API BOOL WTSVirtualChannelRead(
  */
 FREERDP_API BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
-	/* __in */  uint8* Buffer,
+	/* __in */  BYTE* Buffer,
 	/* __in */  uint32 Length,
 	/* __out */ uint32* pBytesWritten);
 

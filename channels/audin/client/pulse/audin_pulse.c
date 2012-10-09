@@ -48,7 +48,7 @@ typedef struct _AudinPulseDevice
 	FREERDP_DSP_CONTEXT* dsp_context;
 
 	int bytes_per_frame;
-	uint8* buffer;
+	BYTE* buffer;
 	int buffer_frames;
 
 	AudinReceive receive;
@@ -281,9 +281,9 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	int cframes;
 	BOOL ret;
 	const void* data;
-	const uint8* src;
+	const BYTE* src;
 	int encoded_size;
-	uint8* encoded_data;
+	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
 
 	pa_stream_peek(stream, &data, &length);
@@ -291,7 +291,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 
 	DEBUG_DVC("length %d frames %d", (int) length, frames);
 
-	src = (const uint8*) data;
+	src = (const BYTE*) data;
 	while (frames > 0)
 	{
 		cframes = pulse->frames_per_packet - pulse->buffer_frames;

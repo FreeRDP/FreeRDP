@@ -48,7 +48,7 @@ static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 	return search;
 }
 
-static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV*	search;
 	
@@ -77,7 +77,7 @@ static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 
 	return 1;
 }
 
-static int searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV* search;
 	USB_SEARCHDEV* point;

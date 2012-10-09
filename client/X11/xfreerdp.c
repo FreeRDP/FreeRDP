@@ -75,7 +75,7 @@
 
 static HANDLE g_sem;
 static int g_thread_count = 0;
-static uint8 g_disconnect_reason = 0;
+static BYTE g_disconnect_reason = 0;
 
 static long xv_port = 0;
 static const size_t password_size = 512;
@@ -759,7 +759,7 @@ BOOL xf_post_connect(freerdp* instance)
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
 
-	xfi->bmp_codec_none = (uint8*) malloc(64 * 64 * 4);
+	xfi->bmp_codec_none = (BYTE*) malloc(64 * 64 * 4);
 
 	if (xfi->sw_gdi)
 	{
@@ -966,7 +966,7 @@ int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 	return 1;
 }
 
-int xf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
@@ -1272,7 +1272,7 @@ void* thread_func(void* param)
 	pthread_exit(NULL);
 }
 
-static uint8 exit_code_from_disconnect_reason(uint32 reason)
+static BYTE exit_code_from_disconnect_reason(uint32 reason)
 {
 	if (reason == 0 ||
 	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))

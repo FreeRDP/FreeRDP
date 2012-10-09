@@ -112,7 +112,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 	return sockfd;
 }
 
-int freerdp_tcp_read(int sockfd, uint8* data, int length)
+int freerdp_tcp_read(int sockfd, BYTE* data, int length)
 {
 	int status;
 
@@ -145,7 +145,7 @@ int freerdp_tcp_read(int sockfd, uint8* data, int length)
 	return status;
 }
 
-int freerdp_tcp_write(int sockfd, uint8* data, int length)
+int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 {
 	int status;
 

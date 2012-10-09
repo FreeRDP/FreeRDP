@@ -54,8 +54,8 @@ typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** passwor
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
 
-typedef int (*pSendChannelData)(freerdp* instance, int channelId, uint8* data, int size);
-typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size);
+typedef int (*pSendChannelData)(freerdp* instance, int channelId, BYTE* data, int size);
+typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
 
 /**
  * Defines the context for a given instance of RDP connection.

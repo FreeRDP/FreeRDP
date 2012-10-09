@@ -77,7 +77,7 @@ static void printer_cups_get_printjob_name(char* buf, int size)
 		t->tm_hour, t->tm_min, t->tm_sec);
 }
 
-static void printer_cups_write_printjob(rdpPrintJob* printjob, uint8* data, int size)
+static void printer_cups_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
 {
 	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
 

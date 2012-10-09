@@ -73,7 +73,7 @@ struct _IWTSVirtualChannel
 	/* Starts a write request on the channel. */
 	int (*Write) (IWTSVirtualChannel* pChannel,
 		uint32 cbSize,
-		uint8* pBuffer,
+		BYTE* pBuffer,
 		void* pReserved);
 	/* Closes the channel. */
 	int (*Close) (IWTSVirtualChannel* pChannel);
@@ -122,7 +122,7 @@ struct _IWTSListenerCallback
 	   the associated listener. */
 	int (*OnNewChannelConnection) (IWTSListenerCallback* pListenerCallback,
 		IWTSVirtualChannel* pChannel,
-		uint8* Data,
+		BYTE* Data,
 		int* pbAccept,
 		IWTSVirtualChannelCallback** ppCallback);
 };
@@ -132,7 +132,7 @@ struct _IWTSVirtualChannelCallback
 	/* Notifies the user about data that is being received. */
 	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback,
 		uint32 cbSize,
-		uint8* pBuffer);
+		BYTE* pBuffer);
 	/* Notifies the user that the channel has been closed. */
 	int (*OnClose) (IWTSVirtualChannelCallback* pChannelCallback);
 };

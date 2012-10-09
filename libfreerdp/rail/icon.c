@@ -28,7 +28,7 @@
 
 #include <freerdp/rail/icon.h>
 
-ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** extra)
+ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra)
 {
 	ICON_INFO* entry;
 
@@ -52,7 +52,7 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** ex
 	return entry;
 }
 
-void icon_cache_put(rdpIconCache* cache, uint8 id, uint16 index, ICON_INFO* entry, void* extra)
+void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry, void* extra)
 {
 	if (id >= cache->numCaches)
 	{
@@ -83,7 +83,7 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 		int i;
 
 		cache->rail = rail;
-		cache->numCaches = (uint8) rail->settings->num_icon_cache_entries;
+		cache->numCaches = (BYTE) rail->settings->num_icon_cache_entries;
 		cache->numCacheEntries = rail->settings->num_icon_cache_entries;
 
 		cache->caches = xzalloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));

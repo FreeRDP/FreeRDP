@@ -32,9 +32,9 @@ struct rdpdr_plugin
 
 	DEVMAN* devman;
 
-	uint16 versionMajor;
-	uint16 versionMinor;
-	uint16 clientID;
+	UINT16 versionMajor;
+	UINT16 versionMinor;
+	UINT16 clientID;
 	char computerName[256];
 };
 

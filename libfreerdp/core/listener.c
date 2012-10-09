@@ -73,7 +73,7 @@ static const char *inet_ntop(int af, const void* src, char* dst, socklen_t cnt)
 #endif
 #endif
 
-static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, uint16 port)
+static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, UINT16 port)
 {
 	rdpListener* listener = (rdpListener*) instance->listener;
 	int status;

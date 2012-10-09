@@ -50,7 +50,7 @@ request_queue_has_next(REQUEST_QUEUE* queue)
 TRANSFER_REQUEST*
 request_queue_register_request(REQUEST_QUEUE* queue, uint32 RequestId, 
 	struct libusb_transfer * transfer, 
-	uint8 endpoint)
+	BYTE endpoint)
 {
 	TRANSFER_REQUEST*   request;
 
@@ -90,7 +90,7 @@ request_queue_rewind(REQUEST_QUEUE *queue)
 
 /* Get first*/
 TRANSFER_REQUEST*
-request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, uint8 ep)
+request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, BYTE ep)
 {
 	TRANSFER_REQUEST * request;
 	pthread_mutex_lock(&queue->request_loading);

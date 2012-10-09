@@ -77,7 +77,7 @@ struct xf_window
 	BOOL is_mapped;
 	BOOL is_transient;
 	xfLocalMove local_move;
-	uint8 rail_state;
+	BYTE rail_state;
 	BOOL rail_ignore_configure;
 };
 
@@ -96,7 +96,7 @@ void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height
 xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id);
 void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
-void xf_ShowWindow(xfInfo* xfi, xfWindow* window, uint8 state);
+void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state);
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
 void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
@@ -107,7 +107,7 @@ void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);
 rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd);
 
 BOOL xf_GetWindowProperty(xfInfo* xfi, Window window, Atom property, int length,
-		unsigned long* nitems, unsigned long* bytes, uint8** prop);
+		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 
 void xf_SetWindowMinMaxInfo(xfInfo* xfi, xfWindow* window, int maxWidth, int maxHeight,
 		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);

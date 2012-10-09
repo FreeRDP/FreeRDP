@@ -126,10 +126,10 @@
  * { itu-t(0) recommendation(0) t(20) t124(124) version(0) 1 }
  * v.1 of ITU-T Recommendation T.124 (Feb 1998): "Generic Conference Control"
  */
-uint8 t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+BYTE t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
 
-uint8 h221_cs_key[4] = "Duca";
-uint8 h221_sc_key[4] = "McDn";
+BYTE h221_cs_key[4] = "Duca";
+BYTE h221_sc_key[4] = "McDn";
 
 /**
  * Read a GCC Conference Create Request.\n
@@ -140,10 +140,10 @@ uint8 h221_sc_key[4] = "McDn";
 
 BOOL gcc_read_conference_create_request(STREAM* s, rdpSettings* settings)
 {
-	uint16 length;
-	uint8 choice;
-	uint8 number;
-	uint8 selection;
+	UINT16 length;
+	BYTE choice;
+	BYTE number;
+	BYTE selection;
 
 	/* ConnectData */
 	if (!per_read_choice(s, &choice))
@@ -209,7 +209,7 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 	per_write_selection(s, 0x08); /* select optional userData from ConferenceCreateRequest */
 
 	/* ConferenceCreateRequest::conferenceName */
-	per_write_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
+	per_write_numeric_string(s, (BYTE*)"1", 1, 1); /* ConferenceName::numeric */
 	per_write_padding(s, 1); /* padding */
 
 	/* UserData (SET OF SEQUENCE) */
@@ -225,12 +225,12 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 
 BOOL gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 {
-	uint16 length;
+	UINT16 length;
 	uint32 tag;
-	uint16 nodeID;
-	uint8 result;
-	uint8 choice;
-	uint8 number;
+	UINT16 nodeID;
+	BYTE result;
+	BYTE choice;
+	BYTE number;
 
 	/* ConnectData */
 	per_read_choice(s, &choice);
@@ -308,8 +308,8 @@ void gcc_write_conference_create_response(STREAM* s, STREAM* user_data)
 
 BOOL gcc_read_client_data_blocks(STREAM* s, rdpSettings* settings, int length)
 {
-	uint16 type;
-	uint16 blockLength;
+	UINT16 type;
+	UINT16 blockLength;
 	int pos;
 
 	while (length > 0)
@@ -370,10 +370,10 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 
 BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 {
-	uint16 type;
-	uint16 offset = 0;
-	uint16 blockLength;
-	uint8* holdp;
+	UINT16 type;
+	UINT16 offset = 0;
+	UINT16 blockLength;
+	BYTE* holdp;
 
 	while (offset < length)
 	{
@@ -429,10 +429,10 @@ void gcc_write_server_data_blocks(STREAM* s, rdpSettings* settings)
 	gcc_write_server_security_data(s, settings);
 }
 
-BOOL gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
+BOOL gcc_read_user_data_header(STREAM* s, UINT16* type, UINT16* length)
 {
-	stream_read_uint16(s, *type); /* type */
-	stream_read_uint16(s, *length); /* length */
+	stream_read_UINT16(s, *type); /* type */
+	stream_read_UINT16(s, *length); /* length */
 
 	if (*length < 4)
 		return FALSE;
@@ -451,10 +451,10 @@ BOOL gcc_read_user_data_header(STREAM* s, uint16* type, uint16* length)
  * @param length data block length
  */
 
-void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
+void gcc_write_user_data_header(STREAM* s, UINT16 type, UINT16 length)
 {
-	stream_write_uint16(s, type); /* type */
-	stream_write_uint16(s, length); /* length */
+	stream_write_UINT16(s, type); /* type */
+	stream_write_UINT16(s, length); /* length */
 }
 
 /**
@@ -464,16 +464,16 @@ void gcc_write_user_data_header(STREAM* s, uint16 type, uint16 length)
  * @param settings rdp settings
  */
 
-BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 blockLength)
+BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
 	char* str;
 	uint32 version;
 	uint32 color_depth;
-	uint16 colorDepth = 0;
-	uint16 postBeta2ColorDepth = 0;
-	uint16 highColorDepth = 0;
-	uint16 supportedColorDepths = 0;
-	uint16 earlyCapabilityFlags = 0;
+	UINT16 colorDepth = 0;
+	UINT16 postBeta2ColorDepth = 0;
+	UINT16 highColorDepth = 0;
+	UINT16 supportedColorDepths = 0;
+	UINT16 earlyCapabilityFlags = 0;
 	uint32 serverSelectedProtocol = 0;
 
 	/* Length of all required fields, until imeFileName */
@@ -483,10 +483,10 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 blockLen
 	stream_read_uint32(s, version); /* version */
 	settings->rdp_version = (version == RDP_VERSION_4 ? 4 : 7);
 
-	stream_read_uint16(s, settings->width); /* desktopWidth */
-	stream_read_uint16(s, settings->height); /* desktopHeight */
-	stream_read_uint16(s, colorDepth); /* colorDepth */
-	stream_seek_uint16(s); /* SASSequence (Secure Access Sequence) */
+	stream_read_UINT16(s, settings->width); /* desktopWidth */
+	stream_read_UINT16(s, settings->height); /* desktopHeight */
+	stream_read_UINT16(s, colorDepth); /* colorDepth */
+	stream_seek_UINT16(s); /* SASSequence (Secure Access Sequence) */
 	stream_read_uint32(s, settings->kbd_layout); /* keyboardLayout */
 	stream_read_uint32(s, settings->client_build); /* clientBuild */
 
@@ -516,12 +516,12 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 blockLen
 	{
 		if (blockLength < 2)
 			break;
-		stream_read_uint16(s, postBeta2ColorDepth); /* postBeta2ColorDepth */
+		stream_read_UINT16(s, postBeta2ColorDepth); /* postBeta2ColorDepth */
 		blockLength -= 2;
 
 		if (blockLength < 2)
 			break;
-		stream_seek_uint16(s); /* clientProductID */
+		stream_seek_UINT16(s); /* clientProductID */
 		blockLength -= 2;
 
 		if (blockLength < 4)
@@ -531,17 +531,17 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 blockLen
 
 		if (blockLength < 2)
 			break;
-		stream_read_uint16(s, highColorDepth); /* highColorDepth */
+		stream_read_UINT16(s, highColorDepth); /* highColorDepth */
 		blockLength -= 2;
 
 		if (blockLength < 2)
 			break;
-		stream_read_uint16(s, supportedColorDepths); /* supportedColorDepths */
+		stream_read_UINT16(s, supportedColorDepths); /* supportedColorDepths */
 		blockLength -= 2;
 
 		if (blockLength < 2)
 			break;
-		stream_read_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
+		stream_read_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 		blockLength -= 2;
 
 		if (blockLength < 64)
@@ -555,12 +555,12 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, uint16 blockLen
 
 		if (blockLength < 1)
 			break;
-		stream_read_uint8(s, settings->performance_flags); /* connectionType */
+		stream_read_BYTE(s, settings->performance_flags); /* connectionType */
 		blockLength -= 1;
 
 		if (blockLength < 1)
 			break;
-		stream_seek_uint8(s); /* pad1octet */
+		stream_seek_BYTE(s); /* pad1octet */
 		blockLength -= 1;
 
 		if (blockLength < 4)
@@ -634,10 +634,10 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	uint32 version;
 	WCHAR* clientName;
 	int clientNameLength;
-	uint8 connectionType;
-	uint16 highColorDepth;
-	uint16 supportedColorDepths;
-	uint16 earlyCapabilityFlags;
+	BYTE connectionType;
+	UINT16 highColorDepth;
+	UINT16 supportedColorDepths;
+	UINT16 earlyCapabilityFlags;
 	WCHAR* clientDigProductId;
 	int clientDigProductIdLength;
 
@@ -649,10 +649,10 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->client_product_id, &clientDigProductId, 0);
 
 	stream_write_uint32(s, version); /* version */
-	stream_write_uint16(s, settings->width); /* desktopWidth */
-	stream_write_uint16(s, settings->height); /* desktopHeight */
-	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* colorDepth, ignored because of postBeta2ColorDepth */
-	stream_write_uint16(s, RNS_UD_SAS_DEL);	/* SASSequence (Secure Access Sequence) */
+	stream_write_UINT16(s, settings->width); /* desktopWidth */
+	stream_write_UINT16(s, settings->height); /* desktopHeight */
+	stream_write_UINT16(s, RNS_UD_COLOR_8BPP); /* colorDepth, ignored because of postBeta2ColorDepth */
+	stream_write_UINT16(s, RNS_UD_SAS_DEL);	/* SASSequence (Secure Access Sequence) */
 	stream_write_uint32(s, settings->kbd_layout); /* keyboardLayout */
 	stream_write_uint32(s, settings->client_build); /* clientBuild */
 
@@ -674,8 +674,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	stream_write_zero(s, 64); /* imeFileName */
 
-	stream_write_uint16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
-	stream_write_uint16(s, 1); /* clientProductID */
+	stream_write_UINT16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
+	stream_write_UINT16(s, 1); /* clientProductID */
 	stream_write_uint32(s, 0); /* serialNumber (should be initialized to 0) */
 
 	highColorDepth = MIN(settings->color_depth, 24);
@@ -700,10 +700,10 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
 	}
 
-	stream_write_uint16(s, highColorDepth); /* highColorDepth */
-	stream_write_uint16(s, supportedColorDepths); /* supportedColorDepths */
+	stream_write_UINT16(s, highColorDepth); /* highColorDepth */
+	stream_write_UINT16(s, supportedColorDepths); /* supportedColorDepths */
 
-	stream_write_uint16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
+	stream_write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
 	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 30 characters) */
 	if (clientDigProductIdLength > 62)
@@ -716,8 +716,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_zero(s, 64 - clientDigProductIdLength - 2);
 	free(clientDigProductId);
 
-	stream_write_uint8(s, connectionType); /* connectionType */
-	stream_write_uint8(s, 0); /* pad1octet */
+	stream_write_BYTE(s, connectionType); /* connectionType */
+	stream_write_BYTE(s, 0); /* pad1octet */
 
 	stream_write_uint32(s, settings->selected_protocol); /* serverSelectedProtocol */
 }
@@ -753,7 +753,7 @@ void gcc_write_server_core_data(STREAM* s, rdpSettings* settings)
  * @param settings rdp settings
  */
 
-BOOL gcc_read_client_security_data(STREAM* s, rdpSettings* settings, uint16 blockLength)
+BOOL gcc_read_client_security_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
 	if (blockLength < 8)
 		return FALSE;
@@ -797,7 +797,7 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings* settings)
 
 BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 {
-	uint8* data;
+	BYTE* data;
 	uint32 length;
 
 	stream_read_uint32(s, settings->encryption_method); /* encryptionMethod */
@@ -848,7 +848,7 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 	return TRUE;
 }
 
-static const uint8 initial_signature[] =
+static const BYTE initial_signature[] =
 {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -865,7 +865,7 @@ static const uint8 initial_signature[] =
  * Yes, Terminal Services Private Key is publicly available.
  */
 
-const uint8 tssk_modulus[] =
+const BYTE tssk_modulus[] =
 {
 	0x3d, 0x3a, 0x5e, 0xbd, 0x72, 0x43, 0x3e, 0xc9,
 	0x4d, 0xbb, 0xc1, 0x1e, 0x4a, 0xba, 0x5f, 0xcb,
@@ -877,7 +877,7 @@ const uint8 tssk_modulus[] =
 	0x20, 0x93, 0x09, 0x5f, 0x05, 0x6d, 0xea, 0x87
 };
 
-const uint8 tssk_privateExponent[] =
+const BYTE tssk_privateExponent[] =
 {
 	0x87, 0xa7, 0x19, 0x32, 0xda, 0x11, 0x87, 0x55,
 	0x58, 0x00, 0x16, 0x16, 0x25, 0x65, 0x68, 0xf8,
@@ -889,7 +889,7 @@ const uint8 tssk_privateExponent[] =
 	0xc7, 0x10, 0x01, 0x13, 0xe7, 0x3f, 0xf3, 0x5f
 };
 
-const uint8 tssk_exponent[] =
+const BYTE tssk_exponent[] =
 {
 	0x5b, 0x7b, 0x88, 0xc0
 };
@@ -897,10 +897,10 @@ const uint8 tssk_exponent[] =
 void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 {
 	CryptoMd5 md5;
-	uint8* sigData;
+	BYTE* sigData;
 	int expLen, keyLen, sigDataLen;
-	uint8 encryptedSignature[TSSK_KEY_LENGTH];
-	uint8 signature[sizeof(initial_signature)];
+	BYTE encryptedSignature[TSSK_KEY_LENGTH];
+	BYTE signature[sizeof(initial_signature)];
 	uint32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
 
 	if (!settings->encryption)
@@ -986,9 +986,9 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, CERT_CHAIN_VERSION_1); /* dwVersion (4 bytes) */
 	stream_write_uint32(s, SIGNATURE_ALG_RSA); /* dwSigAlgId */
 	stream_write_uint32(s, KEY_EXCHANGE_ALG_RSA); /* dwKeyAlgId */
-	stream_write_uint16(s, BB_RSA_KEY_BLOB); /* wPublicKeyBlobType */
+	stream_write_UINT16(s, BB_RSA_KEY_BLOB); /* wPublicKeyBlobType */
 
-	stream_write_uint16(s, wPublicKeyBlobLen); /* wPublicKeyBlobLen */
+	stream_write_UINT16(s, wPublicKeyBlobLen); /* wPublicKeyBlobLen */
 	stream_write(s, "RSA1", 4); /* magic */
 	stream_write_uint32(s, keyLen + 8); /* keylen */
 	stream_write_uint32(s, keyLen * 8); /* bitlen */
@@ -1000,8 +1000,8 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 
 	sigDataLen = stream_get_tail(s) - sigData;
 
-	stream_write_uint16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
-	stream_write_uint16(s, keyLen + 8); /* wSignatureBlobLen */
+	stream_write_UINT16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
+	stream_write_UINT16(s, keyLen + 8); /* wSignatureBlobLen */
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
@@ -1023,7 +1023,7 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
  * @param settings rdp settings
  */
 
-BOOL gcc_read_client_network_data(STREAM* s, rdpSettings* settings, uint16 blockLength)
+BOOL gcc_read_client_network_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
 	int i;
 
@@ -1058,7 +1058,7 @@ BOOL gcc_read_client_network_data(STREAM* s, rdpSettings* settings, uint16 block
 void gcc_write_client_network_data(STREAM* s, rdpSettings* settings)
 {
 	int i;
-	uint16 length;
+	UINT16 length;
 
 	if (settings->num_channels > 0)
 	{
@@ -1080,12 +1080,12 @@ void gcc_write_client_network_data(STREAM* s, rdpSettings* settings)
 BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 {
 	int i;
-	uint16 MCSChannelId;
-	uint16 channelCount;
-	uint16 channelId;
+	UINT16 MCSChannelId;
+	UINT16 channelCount;
+	UINT16 channelId;
 
-	stream_read_uint16(s, MCSChannelId); /* MCSChannelId */
-	stream_read_uint16(s, channelCount); /* channelCount */
+	stream_read_UINT16(s, MCSChannelId); /* MCSChannelId */
+	stream_read_UINT16(s, channelCount); /* channelCount */
 
 	if (channelCount != settings->num_channels)
 	{
@@ -1095,7 +1095,7 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 
 	for (i = 0; i < channelCount; i++)
 	{
-		stream_read_uint16(s, channelId); /* channelId */
+		stream_read_UINT16(s, channelId); /* channelId */
 		settings->channels[i].channel_id = channelId;
 	}
 
@@ -1111,16 +1111,16 @@ void gcc_write_server_network_data(STREAM* s, rdpSettings* settings)
 
 	gcc_write_user_data_header(s, SC_NET, 8 + settings->num_channels * 2 + (settings->num_channels % 2 == 1 ? 2 : 0));
 
-	stream_write_uint16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
-	stream_write_uint16(s, settings->num_channels); /* channelCount */
+	stream_write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
+	stream_write_UINT16(s, settings->num_channels); /* channelCount */
 
 	for (i = 0; i < settings->num_channels; i++)
 	{
-		stream_write_uint16(s, settings->channels[i].channel_id);
+		stream_write_UINT16(s, settings->channels[i].channel_id);
 	}
 
 	if (settings->num_channels % 2 == 1)
-		stream_write_uint16(s, 0);
+		stream_write_UINT16(s, 0);
 }
 
 /**
@@ -1130,7 +1130,7 @@ void gcc_write_server_network_data(STREAM* s, rdpSettings* settings)
  * @param settings rdp settings
  */
 
-BOOL gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, uint16 blockLength)
+BOOL gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
 	uint32 flags;
 
@@ -1174,7 +1174,7 @@ void gcc_write_client_cluster_data(STREAM* s, rdpSettings* settings)
  * @param settings rdp settings
  */
 
-BOOL gcc_read_client_monitor_data(STREAM* s, rdpSettings* settings, uint16 blockLength)
+BOOL gcc_read_client_monitor_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
 	printf("CS_MONITOR\n");
 	return TRUE;
@@ -1190,7 +1190,7 @@ BOOL gcc_read_client_monitor_data(STREAM* s, rdpSettings* settings, uint16 block
 void gcc_write_client_monitor_data(STREAM* s, rdpSettings* settings)
 {
 	int i;
-	uint16 length;
+	UINT16 length;
 	uint32 left, top, right, bottom, flags;
 
 	if (settings->num_monitors > 1)

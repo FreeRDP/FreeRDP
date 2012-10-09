@@ -58,7 +58,7 @@ static void on_free_rail_channel_event(RDP_EVENT* event)
 	}
 }
 
-void rail_send_channel_event(void* rail_object, uint16 event_type, void* param)
+void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param)
 {
 	void * payload = NULL;
 	RDP_EVENT* out_event = NULL;

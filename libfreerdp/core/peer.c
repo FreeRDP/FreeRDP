@@ -67,11 +67,11 @@ static BOOL freerdp_peer_check_fds(freerdp_peer* client)
 
 static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 {
-	uint8 type;
-	uint16 length;
+	BYTE type;
+	UINT16 length;
 	uint32 share_id;
-	uint8 compressed_type;
-	uint16 compressed_len;
+	BYTE compressed_type;
+	UINT16 compressed_len;
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return FALSE;
@@ -156,12 +156,12 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
-	uint16 length;
-	uint16 pduType;
-	uint16 pduLength;
-	uint16 pduSource;
-	uint16 channelId;
-	uint16 securityFlags;
+	UINT16 length;
+	UINT16 pduType;
+	UINT16 pduLength;
+	UINT16 pduSource;
+	UINT16 channelId;
+	UINT16 securityFlags;
 
 	rdp = client->context->rdp;
 
@@ -215,7 +215,7 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 static BOOL peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
-	uint16 length;
+	UINT16 length;
 	rdpFastPath* fastpath;
 
 	rdp = client->context->rdp;
@@ -350,7 +350,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	transport_disconnect(client->context->rdp->transport);
 }
 
-static int freerdp_peer_send_channel_data(freerdp_peer* client, int channelId, uint8* data, int size)
+static int freerdp_peer_send_channel_data(freerdp_peer* client, int channelId, BYTE* data, int size)
 {
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }

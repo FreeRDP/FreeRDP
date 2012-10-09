@@ -68,7 +68,7 @@ static void audin_server_select_format(audin_server_context* context, int client
 
 static void audin_server_send_version(audin_server* audin, STREAM* s)
 {
-	stream_write_uint8(s, MSG_SNDIN_VERSION);
+	stream_write_BYTE(s, MSG_SNDIN_VERSION);
 	stream_write_uint32(s, 1); /* Version (4 bytes) */
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
@@ -92,7 +92,7 @@ static void audin_server_send_formats(audin_server* audin, STREAM* s)
 	uint32 nAvgBytesPerSec;
 
 	stream_set_pos(s, 0);
-	stream_write_uint8(s, MSG_SNDIN_FORMATS);
+	stream_write_BYTE(s, MSG_SNDIN_FORMATS);
 	stream_write_uint32(s, audin->context.num_server_formats); /* NumFormats (4 bytes) */
 	stream_write_uint32(s, 0); /* cbSizeFormatsPacket (4 bytes), client-to-server only */
 
@@ -102,13 +102,13 @@ static void audin_server_send_formats(audin_server* audin, STREAM* s)
 			audin->context.server_formats[i].nChannels *
 			audin->context.server_formats[i].wBitsPerSample / 8;
 		stream_check_size(s, 18);
-		stream_write_uint16(s, audin->context.server_formats[i].wFormatTag);
-		stream_write_uint16(s, audin->context.server_formats[i].nChannels);
+		stream_write_UINT16(s, audin->context.server_formats[i].wFormatTag);
+		stream_write_UINT16(s, audin->context.server_formats[i].nChannels);
 		stream_write_uint32(s, audin->context.server_formats[i].nSamplesPerSec);
 		stream_write_uint32(s, nAvgBytesPerSec);
-		stream_write_uint16(s, audin->context.server_formats[i].nBlockAlign);
-		stream_write_uint16(s, audin->context.server_formats[i].wBitsPerSample);
-		stream_write_uint16(s, audin->context.server_formats[i].cbSize);
+		stream_write_UINT16(s, audin->context.server_formats[i].nBlockAlign);
+		stream_write_UINT16(s, audin->context.server_formats[i].wBitsPerSample);
+		stream_write_UINT16(s, audin->context.server_formats[i].cbSize);
 		if (audin->context.server_formats[i].cbSize)
 		{
 			stream_check_size(s, audin->context.server_formats[i].cbSize);
@@ -144,13 +144,13 @@ static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, uint32 len
 			return FALSE;
 		}
 
-		stream_read_uint16(s, audin->context.client_formats[i].wFormatTag);
-		stream_read_uint16(s, audin->context.client_formats[i].nChannels);
+		stream_read_UINT16(s, audin->context.client_formats[i].wFormatTag);
+		stream_read_UINT16(s, audin->context.client_formats[i].nChannels);
 		stream_read_uint32(s, audin->context.client_formats[i].nSamplesPerSec);
 		stream_seek_uint32(s); /* nAvgBytesPerSec */
-		stream_read_uint16(s, audin->context.client_formats[i].nBlockAlign);
-		stream_read_uint16(s, audin->context.client_formats[i].wBitsPerSample);
-		stream_read_uint16(s, audin->context.client_formats[i].cbSize);
+		stream_read_UINT16(s, audin->context.client_formats[i].nBlockAlign);
+		stream_read_UINT16(s, audin->context.client_formats[i].wBitsPerSample);
+		stream_read_UINT16(s, audin->context.client_formats[i].cbSize);
 		if (audin->context.client_formats[i].cbSize > 0)
 		{
 			stream_seek(s, audin->context.client_formats[i].cbSize);
@@ -170,7 +170,7 @@ static void audin_server_send_open(audin_server* audin, STREAM* s)
 	audin->opened = TRUE;
 
 	stream_set_pos(s, 0);
-	stream_write_uint8(s, MSG_SNDIN_OPEN);
+	stream_write_BYTE(s, MSG_SNDIN_OPEN);
 	stream_write_uint32(s, audin->context.frames_per_packet); /* FramesPerPacket (4 bytes) */
 	stream_write_uint32(s, audin->context.selected_client_format); /* initialFormat (4 bytes) */
 	/*
@@ -178,13 +178,13 @@ static void audin_server_send_open(audin_server* audin, STREAM* s)
 	 * The second format specify the format that SHOULD be used to capture data from
 	 * the actual audio input device.
 	 */
-	stream_write_uint16(s, 1); /* wFormatTag = PCM */
-	stream_write_uint16(s, 2); /* nChannels */
+	stream_write_UINT16(s, 1); /* wFormatTag = PCM */
+	stream_write_UINT16(s, 2); /* nChannels */
 	stream_write_uint32(s, 44100); /* nSamplesPerSec */
 	stream_write_uint32(s, 44100 * 2 * 2); /* nAvgBytesPerSec */
-	stream_write_uint16(s, 4); /* nBlockAlign */
-	stream_write_uint16(s, 16); /* wBitsPerSample */
-	stream_write_uint16(s, 0); /* cbSize */
+	stream_write_UINT16(s, 4); /* nBlockAlign */
+	stream_write_UINT16(s, 16); /* wBitsPerSample */
+	stream_write_UINT16(s, 0); /* cbSize */
 
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
@@ -207,7 +207,7 @@ static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, uint32 length
 	rdpsndFormat* format;
 	int sbytes_per_sample;
 	int sbytes_per_frame;
-	uint8* src;
+	BYTE* src;
 	int size;
 	int frames;
 
@@ -265,7 +265,7 @@ static void* audin_server_thread_func(void* arg)
 	void* fd;
 	STREAM* s;
 	void* buffer;
-	uint8 MessageId;
+	BYTE MessageId;
 	BOOL ready = FALSE;
 	uint32 bytes_returned = 0;
 	audin_server* audin = (audin_server*) arg;
@@ -324,7 +324,7 @@ static void* audin_server_thread_func(void* arg)
 		if (bytes_returned < 1)
 			continue;
 
-		stream_read_uint8(s, MessageId);
+		stream_read_BYTE(s, MessageId);
 		bytes_returned--;
 		switch (MessageId)
 		{

@@ -241,7 +241,7 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 			pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((uint8*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((BYTE*) data) + data->size);
 	}
 
 	return 0;
@@ -303,7 +303,7 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 	return 0;
 }
 
-static int dvcman_write_channel(IWTSVirtualChannel* pChannel, uint32 cbSize, uint8* pBuffer, void* pReserved)
+static int dvcman_write_channel(IWTSVirtualChannel* pChannel, uint32 cbSize, BYTE* pBuffer, void* pReserved)
 {
 	int status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
@@ -424,7 +424,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, ui
 	return 0;
 }
 
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint8* data, uint32 data_size)
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, BYTE* data, uint32 data_size)
 {
 	int error = 0;
 	DVCMAN_CHANNEL* channel;

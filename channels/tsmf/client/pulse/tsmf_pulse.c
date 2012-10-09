@@ -298,10 +298,10 @@ static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio,
 	return tsmf_pulse_open_stream(pulse);
 }
 
-static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
+static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_size)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
-	uint8* src;
+	BYTE* src;
 	int len;
 	int ret;
 

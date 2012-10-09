@@ -32,7 +32,7 @@ void xf_input_synchronize_event(rdpInput* input, uint32 flags)
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
-void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 #ifdef WITH_XTEST
 	unsigned int keycode;
@@ -63,12 +63,12 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 #endif
 }
 
-void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
-void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
@@ -115,7 +115,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 #endif
 }
 
-void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;

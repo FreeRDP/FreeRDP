@@ -53,15 +53,15 @@ HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 	return hPen;
 }
 
-INLINE uint8 gdi_GetPenColor_8bpp(HGDI_PEN pen)
+INLINE BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen)
 {
 	/* TODO: implement conversion using palette */
 	return 0xFF;
 }
 
-INLINE uint16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
+INLINE UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 {
-	uint16 p;
+	UINT16 p;
 	int r, g, b;
 	GetRGB32(r, g, b, pen->color);
  	RGB_888_565(r, g, b);

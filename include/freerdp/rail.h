@@ -152,8 +152,8 @@ enum SPI_MASK
 
 struct _RAIL_UNICODE_STRING
 {
-	uint16 length;
-	uint8* string;
+	UINT16 length;
+	BYTE* string;
 };
 typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
 
@@ -181,7 +181,7 @@ typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 
 struct _RAIL_EXEC_ORDER
 {
-	uint16 flags;
+	UINT16 flags;
 	RAIL_UNICODE_STRING exeOrFile;
 	RAIL_UNICODE_STRING workingDir;
 	RAIL_UNICODE_STRING arguments;
@@ -190,8 +190,8 @@ typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
 
 struct _RAIL_EXEC_RESULT_ORDER
 {
-	uint16 flags;
-	uint16 execResult;
+	UINT16 flags;
+	UINT16 execResult;
 	uint32 rawResult;
 	RAIL_UNICODE_STRING exeOrFile;
 };
@@ -224,15 +224,15 @@ typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
 struct _RAIL_SYSMENU_ORDER
 {
 	uint32 windowId;
-	uint16 left;
-	uint16 top;
+	UINT16 left;
+	UINT16 top;
 };
 typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
 
 struct _RAIL_SYSCOMMAND_ORDER
 {
 	uint32 windowId;
-	uint16 command;
+	UINT16 command;
 };
 typedef struct _RAIL_SYSCOMMAND_ORDER RAIL_SYSCOMMAND_ORDER;
 
@@ -247,14 +247,14 @@ typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
 struct _RAIL_MINMAXINFO_ORDER
 {
 	uint32 windowId;
-	uint16 maxWidth;
-	uint16 maxHeight;
-	uint16 maxPosX;
-	uint16 maxPosY;
-	uint16 minTrackWidth;
-	uint16 minTrackHeight;
-	uint16 maxTrackWidth;
-	uint16 maxTrackHeight;
+	UINT16 maxWidth;
+	UINT16 maxHeight;
+	UINT16 maxPosX;
+	UINT16 maxPosY;
+	UINT16 minTrackWidth;
+	UINT16 minTrackHeight;
+	UINT16 maxTrackWidth;
+	UINT16 maxTrackHeight;
 };
 typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
 
@@ -262,19 +262,19 @@ struct _RAIL_LOCALMOVESIZE_ORDER
 {
 	uint32 windowId;
 	BOOL isMoveSizeStart;
-	uint16 moveSizeType;
-	uint16 posX;
-	uint16 posY;
+	UINT16 moveSizeType;
+	UINT16 posX;
+	UINT16 posY;
 };
 typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
 
 struct _RAIL_WINDOWMOVE_ORDER
 {
 	uint32 windowId;
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	UINT16 left;
+	UINT16 top;
+	UINT16 right;
+	UINT16 bottom;
 };
 typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
 
@@ -288,7 +288,7 @@ struct _RAIL_GET_APPID_RESP_ORDER
 {
 	uint32 windowId;
 	RAIL_UNICODE_STRING applicationId;
-	uint8 applicationIdBuffer[512];
+	BYTE applicationIdBuffer[512];
 };
 typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
 

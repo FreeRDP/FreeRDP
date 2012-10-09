@@ -62,7 +62,7 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
-void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, uint16 left, uint16 top, uint16 right, uint16 bottom)
+void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 right, UINT16 bottom)
 {
 	bitmap->left = left;
 	bitmap->top = top;
@@ -70,7 +70,7 @@ void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, uint16 left, ui
 	bitmap->bottom = bottom;
 }
 
-void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, uint16 width, uint16 height)
+void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, UINT16 height)
 {
 	bitmap->width = width;
 	bitmap->height = height;

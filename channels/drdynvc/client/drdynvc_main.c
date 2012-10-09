@@ -64,12 +64,12 @@ static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		stream_write_uint8(stream, val);
+		stream_write_BYTE(stream, val);
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		stream_write_uint16(stream, val);
+		stream_write_UINT16(stream, val);
 	}
 	else
 	{
@@ -79,7 +79,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, uint32 val)
 	return cb;
 }
 
-int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, uint32 data_size)
+int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, BYTE* data, uint32 data_size)
 {
 	STREAM* data_out;
 	uint32 pos = 0;
@@ -101,7 +101,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x40 | cbChId);
+		stream_write_BYTE(data_out, 0x40 | cbChId);
 		stream_set_pos(data_out, pos);
 		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
 	}
@@ -109,7 +109,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x30 | cbChId);
+		stream_write_BYTE(data_out, 0x30 | cbChId);
 		stream_set_pos(data_out, pos);
 		stream_write(data_out, data, data_size);
 		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
@@ -120,7 +120,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 		cbLen = drdynvc_write_variable_uint(data_out, data_size);
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
-		stream_write_uint8(data_out, 0x20 | cbChId | (cbLen << 2));
+		stream_write_BYTE(data_out, 0x20 | cbChId | (cbLen << 2));
 		stream_set_pos(data_out, pos);
 		chunk_len = CHANNEL_CHUNK_LENGTH - pos;
 		stream_write(data_out, data, chunk_len);
@@ -136,7 +136,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, uint32 ChannelId, uint8* data, ui
 
 			pos = stream_get_pos(data_out);
 			stream_set_pos(data_out, 0);
-			stream_write_uint8(data_out, 0x30 | cbChId);
+			stream_write_BYTE(data_out, 0x30 | cbChId);
 			stream_set_pos(data_out, pos);
 
 			chunk_len = data_size;
@@ -177,17 +177,17 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
 	stream_seek(s, 1); /* pad */
-	stream_read_uint16(s, drdynvc->version);
+	stream_read_UINT16(s, drdynvc->version);
 	if (drdynvc->version == 2)
 	{
-		stream_read_uint16(s, drdynvc->PriorityCharge0);
-		stream_read_uint16(s, drdynvc->PriorityCharge1);
-		stream_read_uint16(s, drdynvc->PriorityCharge2);
-		stream_read_uint16(s, drdynvc->PriorityCharge3);
+		stream_read_UINT16(s, drdynvc->PriorityCharge0);
+		stream_read_UINT16(s, drdynvc->PriorityCharge1);
+		stream_read_UINT16(s, drdynvc->PriorityCharge2);
+		stream_read_UINT16(s, drdynvc->PriorityCharge3);
 	}
 	data_out = stream_new(4);
-	stream_write_uint16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
-	stream_write_uint16(data_out, drdynvc->version);
+	stream_write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
+	stream_write_UINT16(data_out, drdynvc->version);
 	error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
 	if (error != CHANNEL_RC_OK)
 	{
@@ -206,10 +206,10 @@ static uint32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
 	switch (cbLen)
 	{
 		case 0:
-			stream_read_uint8(stream, val);
+			stream_read_BYTE(stream, val);
 			break;
 		case 1:
-			stream_read_uint16(stream, val);
+			stream_read_UINT16(stream, val);
 			break;
 		default:
 			stream_read_uint32(stream, val);
@@ -232,7 +232,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*)stream_get_tail(s));
 
 	data_out = stream_new(pos + 4);
-	stream_write_uint8(data_out, 0x10 | cbChId);
+	stream_write_BYTE(data_out, 0x10 | cbChId);
 	stream_set_pos(s, 1);
 	stream_copy(data_out, s, pos - 1);
 	
@@ -304,7 +304,7 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	int Sp;
 	int cbChId;
 
-	stream_read_uint8(s, value);
+	stream_read_BYTE(s, value);
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;

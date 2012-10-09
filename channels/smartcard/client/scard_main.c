@@ -307,7 +307,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		scard->device.data = stream_new(length + 1);
 
 		for (i = 0; i <= length; i++)
-			stream_write_uint8(scard->device.data, name[i] < 0 ? '_' : name[i]);
+			stream_write_BYTE(scard->device.data, name[i] < 0 ? '_' : name[i]);
 
 		scard->path = path;
 

@@ -45,13 +45,13 @@ struct rdp_window
 	uint32 ownerWindowId;
 	uint32 style;
 	uint32 extendedStyle;
-	uint8 showState;
+	BYTE showState;
 	RAIL_UNICODE_STRING titleInfo;
 	uint32 clientOffsetX;
 	uint32 clientOffsetY;
 	uint32 clientAreaWidth;
 	uint32 clientAreaHeight;
-	uint8 RPContent;
+	BYTE RPContent;
 	uint32 rootParentHandle;
 	sint32 windowOffsetX;
 	sint32 windowOffsetY;
@@ -59,11 +59,11 @@ struct rdp_window
 	uint32 windowClientDeltaY;
 	uint32 windowWidth;
 	uint32 windowHeight;
-	uint16 numWindowRects;
+	UINT16 numWindowRects;
 	RECTANGLE_16* windowRects;
 	uint32 visibleOffsetX;
 	uint32 visibleOffsetY;
-	uint16 numVisibilityRects;
+	UINT16 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 };
 

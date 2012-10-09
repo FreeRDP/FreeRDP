@@ -37,7 +37,7 @@ void wf_rail_register_callbacks(wfInfo* wfi, rdpRail* rail)
 {
 }
 
-void wf_rail_send_client_system_command(wfInfo* wfi, uint32 windowId, uint16 command)
+void wf_rail_send_client_system_command(wfInfo* wfi, uint32 windowId, UINT16 command)
 {
 }
 

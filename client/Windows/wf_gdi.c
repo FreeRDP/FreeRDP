@@ -39,7 +39,7 @@
 #include "wfreerdp.h"
 #include "wf_graphics.h"
 
-const uint8 wf_rop2_table[] =
+const BYTE wf_rop2_table[] =
 {
 	R2_BLACK,       /* 0 */
 	R2_NOTMERGEPEN, /* DPon */
@@ -84,19 +84,19 @@ void wf_glyph_free(wfBitmap* glyph)
 	wf_image_free(glyph);
 }
 
-uint8* wf_glyph_convert(wfInfo* wfi, int width, int height, uint8* data)
+BYTE* wf_glyph_convert(wfInfo* wfi, int width, int height, BYTE* data)
 {
 	int indexx;
 	int indexy;
-	uint8* src;
-	uint8* dst;
-	uint8* cdata;
+	BYTE* src;
+	BYTE* dst;
+	BYTE* cdata;
 	int src_bytes_per_row;
 	int dst_bytes_per_row;
 
 	src_bytes_per_row = (width + 7) / 8;
 	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
-	cdata = (uint8 *) malloc(dst_bytes_per_row * height);
+	cdata = (BYTE *) malloc(dst_bytes_per_row * height);
 
 	src = data;
 	for (indexy = 0; indexy < height; indexy++)
@@ -120,8 +120,8 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, uint32 color, int bpp)
 	int i;
 	HBRUSH br;
 	LOGBRUSH lbr;
-	uint8* cdata;
-	uint8 ipattern[8];
+	BYTE* cdata;
+	BYTE ipattern[8];
 	HBITMAP pattern = NULL;
 
 	lbr.lbStyle = brush->style;
@@ -466,7 +466,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wfi->image->_bitmap.width = surface_bits_command->width;
 		wfi->image->_bitmap.height = surface_bits_command->height;
 		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
-		wfi->image->_bitmap.data = (uint8*) realloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+		wfi->image->_bitmap.data = (BYTE*) realloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 		freerdp_image_flip(nsc_context->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
 		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
@@ -476,12 +476,12 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wfi->image->_bitmap.height = surface_bits_command->height;
 		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
 
-		wfi->image->_bitmap.data = (uint8*) realloc(wfi->image->_bitmap.data,
+		wfi->image->_bitmap.data = (BYTE*) realloc(wfi->image->_bitmap.data,
 				wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 
 		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == TRUE))
 		{
-			uint8* temp_image;
+			BYTE* temp_image;
 
 			freerdp_image_convert(surface_bits_command->bitmapData, wfi->image->_bitmap.data,
 				wfi->image->_bitmap.width, wfi->image->_bitmap.height,
@@ -490,7 +490,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = wfi->image->_bitmap.data;
 
-			temp_image = (uint8*) malloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
+			temp_image = (BYTE*) malloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 			freerdp_image_flip(wfi->image->_bitmap.data, temp_image, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
 			free(wfi->image->_bitmap.data);
 			wfi->image->_bitmap.data = temp_image;

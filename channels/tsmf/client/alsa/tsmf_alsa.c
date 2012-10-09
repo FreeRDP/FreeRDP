@@ -147,14 +147,14 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	return TRUE;
 }
 
-static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, uint8* data, uint32 data_size)
+static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_size)
 {
 	int len;
 	int error;
 	int frames;
-	uint8* end;
-	uint8* src;
-	uint8* pindex;
+	BYTE* end;
+	BYTE* src;
+	BYTE* pindex;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;

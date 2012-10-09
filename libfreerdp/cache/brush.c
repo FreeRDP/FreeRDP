@@ -32,7 +32,7 @@
 
 void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	uint8 style;
+	BYTE style;
 	rdpBrush* brush = &patblt->brush;
 	rdpCache* cache = context->cache;
 
@@ -56,7 +56,7 @@ void update_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 
 void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	uint8 style;
+	BYTE style;
 	rdpBrush* brush = &polygon_cb->brush;
 	rdpCache* cache = context->cache;
 

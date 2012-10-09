@@ -81,7 +81,7 @@ RFX_TILE* rfx_pool_get_tile(RFX_POOL* pool)
 	if (pool->count < 1)
 	{
 		tile = xnew(RFX_TILE);
-		tile->data = (uint8*) malloc(4096 * 4); /* 64x64 * 4 */
+		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
 	}
 	else
 	{

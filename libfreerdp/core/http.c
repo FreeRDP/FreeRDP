@@ -409,11 +409,11 @@ void http_response_print(HttpResponse* http_response)
 
 HttpResponse* http_response_recv(rdpTls* tls)
 {
-	uint8* p;
+	BYTE* p;
 	int nbytes;
 	int length;
 	int status;
-	uint8* buffer;
+	BYTE* buffer;
 	char* content;
 	char* header_end;
 	HttpResponse* http_response;
@@ -432,7 +432,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		if (status > 0)
 		{
 			nbytes += status;
-			p = (uint8*) &buffer[nbytes];
+			p = (BYTE*) &buffer[nbytes];
 		}
 		else if (status == 0)
 		{
@@ -492,7 +492,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		{
 			length *= 2;
 			buffer = realloc(buffer, length);
-			p = (uint8*) &buffer[nbytes];
+			p = (BYTE*) &buffer[nbytes];
 		}
 	}
 

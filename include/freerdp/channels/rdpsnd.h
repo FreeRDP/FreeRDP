@@ -27,13 +27,13 @@ typedef struct rdpsnd_format rdpsndFormat;
 
 struct rdpsnd_format
 {
-	uint16 wFormatTag;
-	uint16 nChannels;
+	UINT16 wFormatTag;
+	UINT16 nChannels;
 	uint32 nSamplesPerSec;
-	uint16 nBlockAlign;
-	uint16 wBitsPerSample;
-	uint16 cbSize;
-	uint8* data;
+	UINT16 nBlockAlign;
+	UINT16 wBitsPerSample;
+	UINT16 cbSize;
+	BYTE* data;
 };
 
 #define SNDC_CLOSE         1

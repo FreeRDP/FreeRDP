@@ -22,7 +22,7 @@
 
 #include <freerdp/codec/rfx.h>
 
-void rfx_dwt_2d_decode(sint16* buffer, sint16* dwt_buffer);
-void rfx_dwt_2d_encode(sint16* buffer, sint16* dwt_buffer);
+void rfx_dwt_2d_decode(INT16* buffer, INT16* dwt_buffer);
+void rfx_dwt_2d_encode(INT16* buffer, INT16* dwt_buffer);
 
 #endif /* __RFX_DWT_H */

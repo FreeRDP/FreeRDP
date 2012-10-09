@@ -40,8 +40,8 @@
 
 typedef struct wts_data_item
 {
-	uint16 channel_id;
-	uint8* buffer;
+	UINT16 channel_id;
+	BYTE* buffer;
 	uint32 length;
 } wts_data_item;
 
@@ -67,7 +67,7 @@ static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, 
 	return channel;
 }
 
-static void wts_queue_receive_data(rdpPeerChannel* channel, const uint8* buffer, uint32 length)
+static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* buffer, uint32 length)
 {
 	wts_data_item* item;
 
@@ -105,12 +105,12 @@ static int wts_read_variable_uint(STREAM* s, int cbLen, uint32 *val)
 		case 0:
 			if (stream_get_left(s) < 1)
 				return 0;
-			stream_read_uint8(s, *val);
+			stream_read_BYTE(s, *val);
 			return 1;
 		case 1:
 			if (stream_get_left(s) < 2)
 				return 0;
-			stream_read_uint16(s, *val);
+			stream_read_UINT16(s, *val);
 			return 2;
 		default:
 			if (stream_get_left(s) < 4)
@@ -122,13 +122,13 @@ static int wts_read_variable_uint(STREAM* s, int cbLen, uint32 *val)
 
 static void wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, uint32 length)
 {
-	uint16 Version;
+	UINT16 Version;
 
 	if (length < 3)
 		return;
 
-	stream_seek_uint8(channel->receive_data); /* Pad (1 byte) */
-	stream_read_uint16(channel->receive_data, Version);
+	stream_seek_BYTE(channel->receive_data); /* Pad (1 byte) */
+	stream_read_UINT16(channel->receive_data, Version);
 
 	DEBUG_DVC("Version: %d", Version);
 
@@ -223,7 +223,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		return;
 
 	stream_set_pos(channel->receive_data, 0);
-	stream_read_uint8(channel->receive_data, value);
+	stream_read_BYTE(channel->receive_data, value);
 
 	length--;
 	Cmd = (value & 0xf0) >> 4;
@@ -289,12 +289,12 @@ static int wts_write_variable_uint(STREAM* stream, uint32 val)
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		stream_write_uint8(stream, val);
+		stream_write_BYTE(stream, val);
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		stream_write_uint16(stream, val);
+		stream_write_UINT16(stream, val);
 	}
 	else
 	{
@@ -305,13 +305,13 @@ static int wts_write_variable_uint(STREAM* stream, uint32 val)
 	return cb;
 }
 
-static void wts_write_drdynvc_header(STREAM *s, uint8 Cmd, uint32 ChannelId)
+static void wts_write_drdynvc_header(STREAM *s, BYTE Cmd, uint32 ChannelId)
 {
-	uint8* bm;
+	BYTE* bm;
 	int cbChId;
 
 	stream_get_mark(s, bm);
-	stream_seek_uint8(s);
+	stream_seek_BYTE(s);
 	cbChId = wts_write_variable_uint(s, ChannelId);
 	*bm = ((Cmd & 0x0F) << 4) | cbChId;
 }
@@ -326,7 +326,7 @@ static void wts_write_drdynvc_create_request(STREAM *s, uint32 ChannelId, const 
 	stream_write(s, ChannelName, len);
 }
 
-static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8* data, int size, int flags, int total_size)
+static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
@@ -354,7 +354,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, uint8*
 	}
 }
 
-static int WTSReceiveChannelData(freerdp_peer* client, int channelId, uint8* data, int size, int flags, int total_size)
+static int WTSReceiveChannelData(freerdp_peer* client, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	int i;
 	BOOL result = FALSE;
@@ -462,7 +462,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 		{
 			vcm->drdynvc_channel = channel;
 			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-			WTSVirtualChannelWrite(channel, (uint8*) &dynvc_caps, sizeof(dynvc_caps), NULL);
+			WTSVirtualChannelWrite(channel, (BYTE*) &dynvc_caps, sizeof(dynvc_caps), NULL);
 		}
 	}
 
@@ -635,7 +635,7 @@ void WTSFreeMemory(
 BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
 	/* __in */  uint32 TimeOut,
-	/* __out */ uint8* Buffer,
+	/* __out */ BYTE* Buffer,
 	/* __in */  uint32 BufferSize,
 	/* __out */ uint32* pBytesRead)
 {
@@ -673,7 +673,7 @@ BOOL WTSVirtualChannelRead(
 
 BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
-	/* __in */  uint8* Buffer,
+	/* __in */  BYTE* Buffer,
 	/* __in */  uint32 Length,
 	/* __out */ uint32* pBytesWritten)
 {
@@ -713,7 +713,7 @@ BOOL WTSVirtualChannelWrite(
 			item->buffer = malloc(channel->client->settings->vc_chunk_size);
 			stream_attach(s, item->buffer, channel->client->settings->vc_chunk_size);
 
-			stream_seek_uint8(s);
+			stream_seek_BYTE(s);
 			cbChId = wts_write_variable_uint(s, channel->channel_id);
 
 			if (first && (Length > (uint32) stream_get_left(s)))

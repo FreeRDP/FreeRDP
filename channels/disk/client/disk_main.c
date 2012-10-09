@@ -122,7 +122,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	char* path;
 	uint32 FileId;
 	DISK_FILE* file;
-	uint8 Information;
+	BYTE Information;
 	uint32 DesiredAccess;
 	uint32 CreateDisposition;
 	uint32 CreateOptions;
@@ -184,7 +184,7 @@ static void disk_process_irp_create(DISK_DEVICE* disk, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, FileId);
-	stream_write_uint8(irp->output, Information);
+	stream_write_BYTE(irp->output, Information);
 
 	free(path);
 
@@ -221,7 +221,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 	DISK_FILE* file;
 	uint32 Length;
 	uint64 Offset;
-	uint8* buffer = NULL;
+	BYTE* buffer = NULL;
 
 	stream_read_uint32(irp->input, Length);
 	stream_read_uint64(irp->input, Offset);
@@ -244,7 +244,7 @@ static void disk_process_irp_read(DISK_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*) malloc(Length);
+		buffer = (BYTE*) malloc(Length);
 		if (!disk_file_read(file, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -312,7 +312,7 @@ static void disk_process_irp_write(DISK_DEVICE* disk, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, Length);
-	stream_write_uint8(irp->output, 0); /* Padding */
+	stream_write_BYTE(irp->output, 0); /* Padding */
 
 	irp->Complete(irp);
 }
@@ -406,7 +406,7 @@ static void disk_process_irp_query_volume_information(DISK_DEVICE* disk, IRP* ir
 			stream_write_uint64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
 			stream_write_uint32(output, svfst.f_fsid); /* VolumeSerialNumber */
 			stream_write_uint32(output, length); /* VolumeLabelLength */
-			stream_write_uint8(output, 0); /* SupportsObjects */
+			stream_write_BYTE(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
 			stream_write(output, outStr, length); /* VolumeLabel (Unicode) */
 			free(outStr);
@@ -470,12 +470,12 @@ static void disk_process_irp_query_directory(DISK_DEVICE* disk, IRP* irp)
 {
 	char* path;
 	DISK_FILE* file;
-	uint8 InitialQuery;
+	BYTE InitialQuery;
 	uint32 PathLength;
 	uint32 FsInformationClass;
 
 	stream_read_uint32(irp->input, FsInformationClass);
-	stream_read_uint8(irp->input, InitialQuery);
+	stream_read_BYTE(irp->input, InitialQuery);
 	stream_read_uint32(irp->input, PathLength);
 	stream_seek(irp->input, 23); /* Padding */
 
@@ -675,7 +675,7 @@ void disk_register_disk_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* na
 		disk->device.data = stream_new(length + 1);
 
 		for (i = 0; i <= length; i++)
-			stream_write_uint8(disk->device.data, name[i] < 0 ? '_' : name[i]);
+			stream_write_BYTE(disk->device.data, name[i] < 0 ? '_' : name[i]);
 
 		disk->path = path;
 		disk->files = list_new();

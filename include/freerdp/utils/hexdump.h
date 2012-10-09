@@ -24,6 +24,6 @@
 
 #define FREERDP_HEXDUMP_LINE_LENGTH	16
 
-FREERDP_API void freerdp_hexdump(uint8* data, int length);
+FREERDP_API void freerdp_hexdump(BYTE* data, int length);
 
 #endif /* __UTILS_HEXDUMP_H */

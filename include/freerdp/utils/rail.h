@@ -24,7 +24,7 @@
 #include <freerdp/rail.h>
 #include <freerdp/utils/stream.h>
 
-FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString);
+FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString);
 FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);

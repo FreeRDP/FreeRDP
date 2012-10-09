@@ -75,8 +75,8 @@ struct _CACHE_BITMAP_ORDER
 	uint32 bitmapLength;
 	uint32 cacheIndex;
 	BOOL compressed;
-	uint8 bitmapComprHdr[8];
-	uint8* bitmapDataStream;
+	BYTE bitmapComprHdr[8];
+	BYTE* bitmapDataStream;
 };
 typedef struct _CACHE_BITMAP_ORDER CACHE_BITMAP_ORDER;
 
@@ -96,7 +96,7 @@ struct _CACHE_BITMAP_V2_ORDER
 	uint32 cbCompMainBodySize;
 	uint32 cbScanWidth;
 	uint32 cbUncompressedSize;
-	uint8* bitmapDataStream;
+	BYTE* bitmapDataStream;
 };
 typedef struct _CACHE_BITMAP_V2_ORDER CACHE_BITMAP_V2_ORDER;
 
@@ -107,7 +107,7 @@ struct _BITMAP_DATA_EX
 	uint32 width;
 	uint32 height;
 	uint32 length;
-	uint8* data;
+	BYTE* data;
 };
 typedef struct _BITMAP_DATA_EX BITMAP_DATA_EX;
 
@@ -139,7 +139,7 @@ struct _GLYPH_DATA
 	uint32 cx;
 	uint32 cy;
 	uint32 cb;
-	uint8* aj;
+	BYTE* aj;
 };
 typedef struct _GLYPH_DATA GLYPH_DATA;
 
@@ -148,7 +148,7 @@ struct _CACHE_GLYPH_ORDER
 	uint32 cacheId;
 	uint32 cGlyphs;
 	GLYPH_DATA* glyphData[255];
-	uint8* unicodeCharacters;
+	BYTE* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
 
@@ -160,7 +160,7 @@ struct _GLYPH_DATA_V2
 	uint32 cx;
 	uint32 cy;
 	uint32 cb;
-	uint8* aj;
+	BYTE* aj;
 };
 typedef struct _GLYPH_DATA_V2 GLYPH_DATA_V2;
 
@@ -170,7 +170,7 @@ struct _CACHE_GLYPH_V2_ORDER
 	uint32 flags;
 	uint32 cGlyphs;
 	GLYPH_DATA_V2* glyphData[255];
-	uint8* unicodeCharacters;
+	BYTE* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
 
@@ -182,7 +182,7 @@ struct _CACHE_BRUSH_ORDER
 	uint32 cy;
 	uint32 style;
 	uint32 length;
-	uint8* data;
+	BYTE* data;
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 

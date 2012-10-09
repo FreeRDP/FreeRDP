@@ -64,7 +64,7 @@ struct rdp_printer
 	pcFreePrinter Free;
 };
 
-typedef void (*pcWritePrintJob) (rdpPrintJob* printjob, uint8* data, int size);
+typedef void (*pcWritePrintJob) (rdpPrintJob* printjob, BYTE* data, int size);
 typedef void (*pcClosePrintJob) (rdpPrintJob* printjob);
 
 struct rdp_print_job

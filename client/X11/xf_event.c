@@ -701,12 +701,12 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	
 	                for (i=0;i<nitems;i++)
 	                {
-	                        if ((Atom) ((uint16 **) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
+	                        if ((Atom) ((UINT16 **) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
 	                        {
 	                                maxVert = TRUE;
 	                        }
 
-	                        if ((Atom) ((uint16 **)prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+	                        if ((Atom) ((UINT16 **)prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
 	                        {
 	                                maxHorz = TRUE;
 	                        }

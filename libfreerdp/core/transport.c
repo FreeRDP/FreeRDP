@@ -155,7 +155,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16 port)
+BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
 	rdpTsg* tsg = tsg_new(transport);
 
@@ -184,7 +184,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, uint16
 	return TRUE;
 }
 
-BOOL transport_connect(rdpTransport* transport, const char* hostname, uint16 port)
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
@@ -386,7 +386,7 @@ int transport_check_fds(rdpTransport** ptransport)
 {
 	int pos;
 	int status;
-	uint16 length;
+	UINT16 length;
 	STREAM* received;
 	rdpTransport* transport = *ptransport;
 

@@ -14,7 +14,7 @@
 {
 @public
     rdpPointer       *pointer;
-    uint8            *cursor_data;   // bitmapped pixel data
+    BYTE            *cursor_data;   // bitmapped pixel data
     NSBitmapImageRep *bmiRep;
     NSCursor         *nsCursor;
     NSImage          *nsImage;

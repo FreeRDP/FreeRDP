@@ -40,14 +40,14 @@
 
 struct _SYSTEM_TIME_ENTRY
 {
-	uint16 wYear;
-	uint16 wMonth;
-	uint16 wDayOfWeek;
-	uint16 wDay;
-	uint16 wHour;
-	uint16 wMinute;
-	uint16 wSecond;
-	uint16 wMilliseconds;
+	UINT16 wYear;
+	UINT16 wMonth;
+	UINT16 wDayOfWeek;
+	UINT16 wDay;
+	UINT16 wHour;
+	UINT16 wMinute;
+	UINT16 wSecond;
+	UINT16 wMilliseconds;
 };
 typedef struct _SYSTEM_TIME_ENTRY SYSTEM_TIME_ENTRY;
 

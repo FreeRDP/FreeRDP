@@ -110,13 +110,13 @@ void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
 
 BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 {
-	uint16 clientAddressFamily;
-	uint16 cbClientAddress;
-	uint16 cbClientDir;
-	uint16 cbAutoReconnectLen;
+	UINT16 clientAddressFamily;
+	UINT16 cbClientAddress;
+	UINT16 cbClientDir;
+	UINT16 cbAutoReconnectLen;
 
-	stream_read_uint16(s, clientAddressFamily); /* clientAddressFamily */
-	stream_read_uint16(s, cbClientAddress); /* cbClientAddress */
+	stream_read_UINT16(s, clientAddressFamily); /* clientAddressFamily */
+	stream_read_UINT16(s, cbClientAddress); /* cbClientAddress */
 
 	settings->ipv6 = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
@@ -126,7 +126,7 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ip_address, cbClientAddress / 2);
 	stream_seek(s, cbClientAddress);
 
-	stream_read_uint16(s, cbClientDir); /* cbClientDir */
+	stream_read_UINT16(s, cbClientDir); /* cbClientDir */
 
 	if (stream_get_left(s) < cbClientDir)
 		return FALSE;
@@ -143,7 +143,7 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	stream_seek_uint32(s); /* clientSessionId, should be set to 0 */
 	stream_read_uint32(s, settings->performance_flags); /* performanceFlags */
 
-	stream_read_uint16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
+	stream_read_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
 
 	if (cbAutoReconnectLen > 0)
 		return rdp_read_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
@@ -178,26 +178,26 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	cbAutoReconnectLen = (int) settings->client_auto_reconnect_cookie->cbLen;
 
-	stream_write_uint16(s, clientAddressFamily); /* clientAddressFamily */
+	stream_write_UINT16(s, clientAddressFamily); /* clientAddressFamily */
 
-	stream_write_uint16(s, cbClientAddress + 2); /* cbClientAddress */
+	stream_write_UINT16(s, cbClientAddress + 2); /* cbClientAddress */
 
 	if (cbClientAddress > 0)
 		stream_write(s, clientAddress, cbClientAddress); /* clientAddress */
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
-	stream_write_uint16(s, cbClientDir + 2); /* cbClientDir */
+	stream_write_UINT16(s, cbClientDir + 2); /* cbClientDir */
 
 	if (cbClientDir > 0)
 		stream_write(s, clientDir, cbClientDir); /* clientDir */
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	rdp_write_client_time_zone(s, settings); /* clientTimeZone */
 
 	stream_write_uint32(s, 0); /* clientSessionId, should be set to 0 */
 	stream_write_uint32(s, settings->performance_flags); /* performanceFlags */
 
-	stream_write_uint16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
+	stream_write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
 
 	if (cbAutoReconnectLen > 0)
 		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
@@ -219,11 +219,11 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 {
 	uint32 flags;
-	uint16 cbDomain;
-	uint16 cbUserName;
-	uint16 cbPassword;
-	uint16 cbAlternateShell;
-	uint16 cbWorkingDir;
+	UINT16 cbDomain;
+	UINT16 cbUserName;
+	UINT16 cbPassword;
+	UINT16 cbAlternateShell;
+	UINT16 cbWorkingDir;
 
 	stream_seek_uint32(s); /* CodePage */
 	stream_read_uint32(s, flags); /* flags */
@@ -233,11 +233,11 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	settings->console_audio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
 	settings->compression = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
 
-	stream_read_uint16(s, cbDomain); /* cbDomain */
-	stream_read_uint16(s, cbUserName); /* cbUserName */
-	stream_read_uint16(s, cbPassword); /* cbPassword */
-	stream_read_uint16(s, cbAlternateShell); /* cbAlternateShell */
-	stream_read_uint16(s, cbWorkingDir); /* cbWorkingDir */
+	stream_read_UINT16(s, cbDomain); /* cbDomain */
+	stream_read_UINT16(s, cbUserName); /* cbUserName */
+	stream_read_UINT16(s, cbPassword); /* cbPassword */
+	stream_read_UINT16(s, cbAlternateShell); /* cbAlternateShell */
+	stream_read_UINT16(s, cbWorkingDir); /* cbWorkingDir */
 
 	if (stream_get_left(s) < cbDomain + 2)
 		return FALSE;
@@ -373,31 +373,31 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	stream_write_uint32(s, 0); /* CodePage */
 	stream_write_uint32(s, flags); /* flags */
 
-	stream_write_uint16(s, cbDomain); /* cbDomain */
-	stream_write_uint16(s, cbUserName); /* cbUserName */
-	stream_write_uint16(s, cbPassword); /* cbPassword */
-	stream_write_uint16(s, cbAlternateShell); /* cbAlternateShell */
-	stream_write_uint16(s, cbWorkingDir); /* cbWorkingDir */
+	stream_write_UINT16(s, cbDomain); /* cbDomain */
+	stream_write_UINT16(s, cbUserName); /* cbUserName */
+	stream_write_UINT16(s, cbPassword); /* cbPassword */
+	stream_write_UINT16(s, cbAlternateShell); /* cbAlternateShell */
+	stream_write_UINT16(s, cbWorkingDir); /* cbWorkingDir */
 
 	if (cbDomain > 0)
 		stream_write(s, domain, cbDomain);
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	if (cbUserName > 0)
 		stream_write(s, userName, cbUserName);
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	if (cbPassword > 0)
 		stream_write(s, password, cbPassword);
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	if (cbAlternateShell > 0)
 		stream_write(s, alternateShell, cbAlternateShell);
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	if (cbWorkingDir > 0)
 		stream_write(s, workingDir, cbWorkingDir);
-	stream_write_uint16(s, 0);
+	stream_write_UINT16(s, 0);
 
 	free(domain);
 	free(userName);
@@ -420,9 +420,9 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 BOOL rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 {
-	uint16 length;
-	uint16 channelId;
-	uint16 securityFlags;
+	UINT16 length;
+	UINT16 channelId;
+	UINT16 securityFlags;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
@@ -485,7 +485,7 @@ void rdp_recv_logon_info_v2(rdpRdp* rdp, STREAM* s)
 	uint32 cbDomain;
 	uint32 cbUserName;
 
-	stream_seek_uint16(s); /* version (2 bytes) */
+	stream_seek_UINT16(s); /* version (2 bytes) */
 	stream_seek_uint32(s); /* size (4 bytes) */
 	stream_seek_uint32(s); /* sessionId (4 bytes) */
 	stream_read_uint32(s, cbDomain); /* cbDomain (4 bytes) */
@@ -513,9 +513,9 @@ void rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 {
 	uint32 cbFieldData;
 	uint32 fieldsPresent;
-	uint16 Length;
+	UINT16 Length;
 
-	stream_read_uint16(s, Length); /* The total size in bytes of this structure */
+	stream_read_UINT16(s, Length); /* The total size in bytes of this structure */
 	stream_read_uint32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
 	/* logonFields */

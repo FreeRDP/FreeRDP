@@ -31,7 +31,7 @@
 #include <freerdp/client/tsmf.h>
 #include <freerdp/rail.h>
 
-static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_cliprdr_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 
@@ -54,7 +54,7 @@ static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)
 	return event;
 }
 
-static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_tsmf_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 
@@ -71,14 +71,14 @@ static RDP_EVENT* freerdp_tsmf_event_new(uint16 event_type)
 	return event;
 }
 
-static RDP_EVENT* freerdp_rail_event_new(uint16 event_type)
+static RDP_EVENT* freerdp_rail_event_new(UINT16 event_type)
 {
 	RDP_EVENT* event = NULL;
 	event = xnew(RDP_EVENT);
 	return event;
 }
 
-RDP_EVENT* freerdp_event_new(uint16 event_class, uint16 event_type,
+RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 	RDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
 {
 	RDP_EVENT* event = NULL;

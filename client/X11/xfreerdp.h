@@ -117,13 +117,13 @@ struct xf_info
 
 	HGDI_DC hdc;
 	BOOL sw_gdi;
-	uint8* primary_buffer;
+	BYTE* primary_buffer;
 
 	BOOL frame_begin;
-	uint16 frame_x1;
-	uint16 frame_y1;
-	uint16 frame_x2;
-	uint16 frame_y2;
+	UINT16 frame_x1;
+	UINT16 frame_y1;
+	UINT16 frame_x2;
+	UINT16 frame_y2;
 
 	BOOL focused;
 	BOOL mouse_active;
@@ -136,8 +136,8 @@ struct xf_info
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
-	uint8* bmp_codec_none;
-	uint8* bmp_codec_nsc;
+	BYTE* bmp_codec_none;
+	BYTE* bmp_codec_nsc;
 	void* rfx_context;
 	void* nsc_context;
 	void* xv_context;

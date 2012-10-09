@@ -31,17 +31,17 @@
 #include "nsc_types.h"
 #include "nsc_sse2.h"
 
-static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, uint8* bmpdata, int rowstride)
+static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
-	uint16 x;
-	uint16 y;
-	uint16 rw;
-	uint8 ccl;
-	uint8* src;
-	uint8* yplane;
-	uint8* coplane;
-	uint8* cgplane;
-	uint8* aplane;
+	UINT16 x;
+	UINT16 y;
+	UINT16 rw;
+	BYTE ccl;
+	BYTE* src;
+	BYTE* yplane;
+	BYTE* coplane;
+	BYTE* cgplane;
+	BYTE* aplane;
 	__m128i r_val;
 	__m128i g_val;
 	__m128i b_val;
@@ -165,7 +165,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, uint8* bmpdata,
 				case RDP_PIXEL_FORMAT_P4_PLANER:
 					{
 						int shift;
-						uint8 idx[8];
+						BYTE idx[8];
 
 						for (shift = 7; shift >= 0; shift--)
 						{
@@ -283,14 +283,14 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, uint8* bmpdata,
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 {
-	uint16 x;
-	uint16 y;
-	uint8* co_dst;
-	uint8* cg_dst;
-	sint8* co_src0;
-	sint8* co_src1;
-	sint8* cg_src0;
-	sint8* cg_src1;
+	UINT16 x;
+	UINT16 y;
+	BYTE* co_dst;
+	BYTE* cg_dst;
+	INT8* co_src0;
+	INT8* co_src1;
+	INT8* cg_src0;
+	INT8* cg_src1;
 	uint32 tempWidth;
 	uint32 tempHeight;
 	__m128i t;
@@ -304,9 +304,9 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	{
 		co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
 		cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
-		co_src0 = (sint8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
+		co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
 		co_src1 = co_src0 + tempWidth;
-		cg_src0 = (sint8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
+		cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
 		cg_src1 = cg_src0 + tempWidth;
 		for (x = 0; x < tempWidth >> 1; x += 8)
 		{
@@ -333,7 +333,7 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_sse2(NSC_CONTEXT* context, uint8* bmpdata, int rowstride)
+static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
 	nsc_encode_argb_to_aycocg_sse2(context, bmpdata, rowstride);
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)

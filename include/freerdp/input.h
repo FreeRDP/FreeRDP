@@ -55,10 +55,10 @@ typedef struct rdp_input rdpInput;
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
 typedef void (*pSynchronizeEvent)(rdpInput* input, uint32 flags);
-typedef void (*pKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
-typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, uint16 flags, uint16 code);
-typedef void (*pMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-typedef void (*pExtendedMouseEvent)(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+typedef void (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
+typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
+typedef void (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+typedef void (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 struct rdp_input
 {
@@ -75,10 +75,10 @@ struct rdp_input
 };
 
 FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags);
-FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
+FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
 FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, uint32 rdp_scancode);
-FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code);
-FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
-FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y);
+FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 #endif /* __INPUT_API_H */

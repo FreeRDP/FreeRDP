@@ -338,14 +338,14 @@ int tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 			rects = (RDP_RECT*) xzalloc(sizeof(RDP_RECT) * num_rects);
 			for (i = 0; i < num_rects; i++)
 			{
-				stream_read_uint16(ifman->input, rects[i].y); /* Top */
-				stream_seek_uint16(ifman->input);
-				stream_read_uint16(ifman->input, rects[i].x); /* Left */
-				stream_seek_uint16(ifman->input);
-				stream_read_uint16(ifman->input, rects[i].height); /* Bottom */
-				stream_seek_uint16(ifman->input);
-				stream_read_uint16(ifman->input, rects[i].width); /* Right */
-				stream_seek_uint16(ifman->input);
+				stream_read_UINT16(ifman->input, rects[i].y); /* Top */
+				stream_seek_UINT16(ifman->input);
+				stream_read_UINT16(ifman->input, rects[i].x); /* Left */
+				stream_seek_UINT16(ifman->input);
+				stream_read_UINT16(ifman->input, rects[i].height); /* Bottom */
+				stream_seek_UINT16(ifman->input);
+				stream_read_UINT16(ifman->input, rects[i].width); /* Right */
+				stream_seek_UINT16(ifman->input);
 				rects[i].width -= rects[i].x;
 				rects[i].height -= rects[i].y;
 

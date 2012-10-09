@@ -52,7 +52,7 @@ struct _BITMAP_DATA
 	uint32 cbCompMainBodySize;
 	uint32 cbScanWidth;
 	uint32 cbUncompressedSize;
-	uint8* bitmapDataStream;
+	BYTE* bitmapDataStream;
 	BOOL compressed;
 };
 typedef struct _BITMAP_DATA BITMAP_DATA;
@@ -69,9 +69,9 @@ typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
 struct _PALETTE_ENTRY
 {
-	uint8 red;
-	uint8 green;
-	uint8 blue;
+	BYTE red;
+	BYTE green;
+	BYTE blue;
 };
 typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
 
@@ -112,7 +112,7 @@ struct _SURFACE_BITS_COMMAND
 	uint32 width;
 	uint32 height;
 	uint32 bitmapDataLength;
-	uint8* bitmapData;
+	BYTE* bitmapData;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
@@ -141,8 +141,8 @@ typedef void (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
 typedef void (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
 typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
 
-typedef void (*pRefreshRect)(rdpContext* context, uint8 count, RECTANGLE_16* areas);
-typedef void (*pSuppressOutput)(rdpContext* context, uint8 allow, RECTANGLE_16* area);
+typedef void (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
+typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
 
 typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
 typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);

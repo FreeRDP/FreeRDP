@@ -61,12 +61,12 @@ void rdp_print_redirection_flags(uint32 flags)
 
 BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 {
-	uint16 flags;
-	uint16 length;
+	UINT16 flags;
+	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	stream_read_uint16(s, flags); /* flags (2 bytes) */
-	stream_read_uint16(s, length); /* length (2 bytes) */
+	stream_read_UINT16(s, flags); /* flags (2 bytes) */
+	stream_read_UINT16(s, length); /* length (2 bytes) */
 	stream_read_uint32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	stream_read_uint32(s, redirection->flags); /* redirFlags (4 bytes) */
 
@@ -172,9 +172,9 @@ BOOL rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s)
 {
-	stream_seek_uint16(s); /* pad2Octets (2 bytes) */
+	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 	rdp_recv_server_redirection_pdu(rdp, s);
-	stream_seek_uint8(s); /* pad2Octets (1 byte) */
+	stream_seek_BYTE(s); /* pad2Octets (1 byte) */
 	return TRUE;
 }
 

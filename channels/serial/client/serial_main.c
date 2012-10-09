@@ -108,7 +108,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, FileId);
-	stream_write_uint8(irp->output, 0);
+	stream_write_BYTE(irp->output, 0);
 
 	free(path);
 
@@ -144,7 +144,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	SERIAL_TTY* tty;
 	uint32 Length;
 	uint64 Offset;
-	uint8* buffer = NULL;
+	BYTE* buffer = NULL;
 
 	stream_read_uint32(irp->input, Length);
 	stream_read_uint64(irp->input, Offset);
@@ -162,7 +162,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		buffer = (uint8*) malloc(Length);
+		buffer = (BYTE*) malloc(Length);
 
 		if (!serial_tty_read(tty, buffer, &Length))
 		{
@@ -226,7 +226,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	stream_write_uint32(irp->output, Length);
-	stream_write_uint8(irp->output, 0); /* Padding */
+	stream_write_BYTE(irp->output, 0); /* Padding */
 
 	irp->Complete(irp);
 }
@@ -420,7 +420,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->device.data = stream_new(len + 1);
 
 		for (i = 0; i <= len; i++)
-			stream_write_uint8(serial->device.data, name[i] < 0 ? '_' : name[i]);
+			stream_write_BYTE(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		serial->path = path;
 		serial->irp_list = list_new();

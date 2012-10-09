@@ -26,8 +26,8 @@
 struct _pcap_header
 {
 	uint32 magic_number;   /* magic number */
-	uint16 version_major;  /* major version number */
-	uint16 version_minor;  /* minor version number */
+	UINT16 version_major;  /* major version number */
+	UINT16 version_minor;  /* minor version number */
 	sint32 thiszone;       /* GMT to local correction */
 	uint32 sigfigs;        /* accuracy of timestamps */
 	uint32 snaplen;        /* max length of captured packets, in octets */

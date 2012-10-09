@@ -42,7 +42,7 @@ typedef struct _rdpsnd_server
 	STREAM* rdpsnd_pdu;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
-	uint8* out_buffer;
+	BYTE* out_buffer;
 	int out_buffer_size;
 	int out_frames;
 	int out_pending_frames;
@@ -53,9 +53,9 @@ typedef struct _rdpsnd_server
 
 #define RDPSND_PDU_INIT(_s, _msgType) \
 { \
-	stream_write_uint8(_s, _msgType); \
-	stream_write_uint8(_s, 0); \
-	stream_seek_uint16(_s); \
+	stream_write_BYTE(_s, _msgType); \
+	stream_write_BYTE(_s, 0); \
+	stream_seek_UINT16(_s); \
 }
 
 #define RDPSND_PDU_FINISH(_s) \
@@ -64,7 +64,7 @@ typedef struct _rdpsnd_server
 	int _pos; \
 	_pos = stream_get_pos(_s); \
 	stream_set_pos(_s, 2); \
-	stream_write_uint16(_s, _pos - 4); \
+	stream_write_UINT16(_s, _pos - 4); \
 	stream_set_pos(_s, _pos); \
 	_r = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(_s), stream_get_length(_s), NULL); \
 	stream_set_pos(_s, 0); \
@@ -73,32 +73,32 @@ typedef struct _rdpsnd_server
 
 static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
-	uint16 i;
+	UINT16 i;
 
 	RDPSND_PDU_INIT(s, SNDC_FORMATS);
 
 	stream_write_uint32(s, 0); /* dwFlags */
 	stream_write_uint32(s, 0); /* dwVolume */
 	stream_write_uint32(s, 0); /* dwPitch */
-	stream_write_uint16(s, 0); /* wDGramPort */
-	stream_write_uint16(s, rdpsnd->context.num_server_formats); /* wNumberOfFormats */
-	stream_write_uint8(s, rdpsnd->context.block_no); /* cLastBlockConfirmed */
-	stream_write_uint16(s, 0x06); /* wVersion */
-	stream_write_uint8(s, 0); /* bPad */
+	stream_write_UINT16(s, 0); /* wDGramPort */
+	stream_write_UINT16(s, rdpsnd->context.num_server_formats); /* wNumberOfFormats */
+	stream_write_BYTE(s, rdpsnd->context.block_no); /* cLastBlockConfirmed */
+	stream_write_UINT16(s, 0x06); /* wVersion */
+	stream_write_BYTE(s, 0); /* bPad */
 
 	for (i = 0; i < rdpsnd->context.num_server_formats; i++)
 	{
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
 		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
 
 		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec *
 			rdpsnd->context.server_formats[i].nChannels *
 			rdpsnd->context.server_formats[i].wBitsPerSample / 8); /* nAvgBytesPerSec */
 
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].nBlockAlign); /* nBlockAlign */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].wBitsPerSample); /* wBitsPerSample */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].cbSize); /* cbSize */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nBlockAlign); /* nBlockAlign */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wBitsPerSample); /* wBitsPerSample */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].cbSize); /* cbSize */
 
 		if (rdpsnd->context.server_formats[i].cbSize > 0)
 		{
@@ -119,11 +119,11 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_seek_uint32(s); /* dwFlags */
 	stream_seek_uint32(s); /* dwVolume */
 	stream_seek_uint32(s); /* dwPitch */
-	stream_seek_uint16(s); /* wDGramPort */
-	stream_read_uint16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
-	stream_seek_uint8(s); /* cLastBlockConfirmed */
-	stream_seek_uint16(s); /* wVersion */
-	stream_seek_uint8(s); /* bPad */
+	stream_seek_UINT16(s); /* wDGramPort */
+	stream_read_UINT16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
+	stream_seek_BYTE(s); /* cLastBlockConfirmed */
+	stream_seek_UINT16(s); /* wVersion */
+	stream_seek_BYTE(s); /* bPad */
 
 	if (rdpsnd->context.num_client_formats > 0)
 	{
@@ -138,13 +138,13 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 				return FALSE;
 			}
 
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].wFormatTag);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].nChannels);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wFormatTag);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nChannels);
 			stream_read_uint32(s, rdpsnd->context.client_formats[i].nSamplesPerSec);
 			stream_seek_uint32(s); /* nAvgBytesPerSec */
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].nBlockAlign);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].wBitsPerSample);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].cbSize);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nBlockAlign);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wBitsPerSample);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].cbSize);
 
 			if (rdpsnd->context.client_formats[i].cbSize > 0)
 			{
@@ -161,8 +161,8 @@ static void* rdpsnd_server_thread_func(void* arg)
 	void* fd;
 	STREAM* s;
 	void* buffer;
-	uint8 msgType;
-	uint16 BodySize;
+	BYTE msgType;
+	UINT16 BodySize;
 	uint32 bytes_returned = 0;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) arg;
 	freerdp_thread* thread = rdpsnd->rdpsnd_channel_thread;
@@ -200,9 +200,9 @@ static void* rdpsnd_server_thread_func(void* arg)
 				break;
 		}
 
-		stream_read_uint8(s, msgType);
-		stream_seek_uint8(s); /* bPad */
-		stream_read_uint16(s, BodySize);
+		stream_read_BYTE(s, msgType);
+		stream_seek_BYTE(s); /* bPad */
+		stream_read_UINT16(s, BodySize);
 
 		if (BodySize + 4 > (int) bytes_returned)
 			continue;
@@ -301,7 +301,7 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 {
 	int size;
 	BOOL r;
-	uint8* src;
+	BYTE* src;
 	int frames;
 	int fill_size;
 	rdpsndFormat* format;
@@ -353,13 +353,13 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 
 	/* WaveInfo PDU */
 	stream_set_pos(s, 0);
-	stream_write_uint8(s, SNDC_WAVE); /* msgType */
-	stream_write_uint8(s, 0); /* bPad */
-	stream_write_uint16(s, size + fill_size + 8); /* BodySize */
+	stream_write_BYTE(s, SNDC_WAVE); /* msgType */
+	stream_write_BYTE(s, 0); /* bPad */
+	stream_write_UINT16(s, size + fill_size + 8); /* BodySize */
 
-	stream_write_uint16(s, 0); /* wTimeStamp */
-	stream_write_uint16(s, rdpsnd->context.selected_client_format); /* wFormatNo */
-	stream_write_uint8(s, rdpsnd->context.block_no); /* cBlockNo */
+	stream_write_UINT16(s, 0); /* wTimeStamp */
+	stream_write_UINT16(s, rdpsnd->context.selected_client_format); /* wFormatNo */
+	stream_write_BYTE(s, rdpsnd->context.block_no); /* cBlockNo */
 	stream_seek(s, 3); /* bPad */
 	stream_write(s, src, 4);
 
@@ -397,7 +397,7 @@ static BOOL rdpsnd_server_send_samples(rdpsnd_server_context* context, const voi
 		cframesize = cframes * rdpsnd->src_bytes_per_frame;
 
 		memcpy(rdpsnd->out_buffer + (rdpsnd->out_pending_frames * rdpsnd->src_bytes_per_frame), buf, cframesize);
-		buf = (uint8*) buf + cframesize;
+		buf = (BYTE*) buf + cframesize;
 		nframes -= cframes;
 		rdpsnd->out_pending_frames += cframes;
 
@@ -418,8 +418,8 @@ static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, i
 
 	RDPSND_PDU_INIT(s, SNDC_SETVOLUME);
 
-	stream_write_uint16(s, left);
-	stream_write_uint16(s, right);
+	stream_write_UINT16(s, left);
+	stream_write_UINT16(s, right);
 	
 	RDPSND_PDU_FINISH(s);
 }

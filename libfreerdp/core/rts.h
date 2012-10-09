@@ -93,23 +93,23 @@
 
 struct _rts_pdu_header
 {
-	uint8 rpc_vers;
-	uint8 rpc_vers_minor;
-	uint8 ptype;
-	uint8 pfc_flags;
-	uint8 packed_drep[4];
-	uint16 frag_length;
-	uint16 auth_length;
+	BYTE rpc_vers;
+	BYTE rpc_vers_minor;
+	BYTE ptype;
+	BYTE pfc_flags;
+	BYTE packed_drep[4];
+	UINT16 frag_length;
+	UINT16 auth_length;
 	uint32 call_id;
-	uint16 flags;
-	uint16 numberOfCommands;
+	UINT16 flags;
+	UINT16 numberOfCommands;
 };
 typedef struct _rts_pdu_header RTS_PDU_HEADER;
 
 struct _rts_pdu
 {
 	RTS_PDU_HEADER header;
-	uint8* content;
+	BYTE* content;
 };
 typedef struct _rts_pdu RTS_PDU;
 
@@ -121,11 +121,11 @@ void rts_pdu_header_write(STREAM* s, RTS_PDU_HEADER* header);
 void rts_receive_window_size_command_read(rdpRpc* rpc, STREAM* s);
 void rts_receive_window_size_command_write(STREAM* s, uint32 ReceiveWindowSize);
 void rts_flow_control_ack_command_read(rdpRpc* rpc, STREAM* s);
-void rts_flow_control_ack_command_write(STREAM* s, uint32 BytesReceived, uint32 AvailableWindow, uint8* ChannelCookie);
+void rts_flow_control_ack_command_write(STREAM* s, uint32 BytesReceived, uint32 AvailableWindow, BYTE* ChannelCookie);
 void rts_connection_timeout_command_read(rdpRpc* rpc, STREAM* s);
 void rts_connection_timeout_command_write(STREAM* s, uint32 ConnectionTimeout);
 void rts_cookie_command_read(rdpRpc* rpc, STREAM* s);
-void rts_cookie_command_write(STREAM* s, uint8* Cookie);
+void rts_cookie_command_write(STREAM* s, BYTE* Cookie);
 void rts_channel_lifetime_command_read(rdpRpc* rpc, STREAM* s);
 void rts_channel_lifetime_command_write(STREAM* s, uint32 ChannelLifetime);
 void rts_client_keepalive_command_read(rdpRpc* rpc, STREAM* s);
@@ -141,9 +141,9 @@ void rts_negative_ance_command_write(STREAM* s);
 void rts_ance_command_read(rdpRpc* rpc, STREAM* s);
 void rts_ance_command_write(STREAM* s);
 void rts_client_address_command_read(rdpRpc* rpc, STREAM* s);
-void rts_client_address_command_write(STREAM* s, uint32 AddressType, uint8* ClientAddress);
+void rts_client_address_command_write(STREAM* s, uint32 AddressType, BYTE* ClientAddress);
 void rts_association_group_id_command_read(rdpRpc* rpc, STREAM* s);
-void rts_association_group_id_command_write(STREAM* s, uint8* AssociationGroupId);
+void rts_association_group_id_command_write(STREAM* s, BYTE* AssociationGroupId);
 void rts_destination_command_read(rdpRpc* rpc, STREAM* s);
 void rts_destination_command_write(STREAM* s, uint32 Destination);
 void rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, STREAM* s);

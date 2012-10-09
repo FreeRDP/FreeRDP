@@ -313,14 +313,14 @@ static const uint32 rop3_code_table[] =
 
 /* GDI Helper Functions */
 
-INLINE uint32 gdi_rop3_code(uint8 code)
+INLINE uint32 gdi_rop3_code(BYTE code)
 {
 	return rop3_code_table[code];
 }
 
-INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
+INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
-	uint8* p;
+	BYTE* p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
 	
 	if (x >= 0 && x < hBmp->width && y >= 0 && y < hBmp->height)
@@ -335,9 +335,9 @@ INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 }
 
-INLINE uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
+INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 {
-	uint8 * p;
+	BYTE * p;
 
 	if (hdcBrush->brush != NULL)
 	{
@@ -355,11 +355,11 @@ INLINE uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 		}
 	}
 
-	p = (uint8*) &(hdcBrush->textColor);
+	p = (BYTE*) &(hdcBrush->textColor);
 	return p;
 }
 
-INLINE int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
+INLINE int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width)
 {
 	int byte;
 	int shift;
@@ -373,7 +373,7 @@ INLINE int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width)
 
 gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 {
-	uint8* extra;
+	BYTE* extra;
 	gdiBitmap* gdi_bmp;
 
 	gdi_bmp = (gdiBitmap*) malloc(sizeof(gdiBitmap));
@@ -404,7 +404,7 @@ void gdi_glyph_free(gdiBitmap *gdi_bmp)
 	}
 }
 
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
+gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
 {
 	gdiBitmap* bitmap;
 
@@ -467,7 +467,7 @@ void gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	uint8* data;
+	BYTE* data;
 	rdpBrush* brush;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
@@ -748,7 +748,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->height = surface_bits_command->height;
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
-		gdi->image->bitmap->data = (uint8*) realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 		freerdp_image_flip(nsc_context->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
@@ -759,12 +759,12 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 
-		gdi->image->bitmap->data = (uint8*) realloc(gdi->image->bitmap->data,
+		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data,
 				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 
 		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == TRUE))
 		{
-			uint8* temp_image;
+			BYTE* temp_image;
 
 			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
@@ -773,7 +773,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
 
-			temp_image = (uint8*) malloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+			temp_image = (BYTE*) malloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 			freerdp_image_flip(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 			free(gdi->image->bitmap->data);
 			gdi->image->bitmap->data = temp_image;
@@ -875,7 +875,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
  * @return
  */
 
-int gdi_init(freerdp* instance, uint32 flags, uint8* buffer)
+int gdi_init(freerdp* instance, uint32 flags, BYTE* buffer)
 {
 	rdpGdi* gdi;
 	rdpCache* cache;

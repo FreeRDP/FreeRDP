@@ -38,9 +38,9 @@ struct _ITSMFDecoder
 	/* Set the decoder format. Return true if supported. */
 	BOOL (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
 	/* Decode a sample. */
-	BOOL (*Decode) (ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions);
+	BOOL (*Decode) (ITSMFDecoder* decoder, const BYTE* data, uint32 data_size, uint32 extensions);
 	/* Get the decoded data */
-	uint8* (*GetDecodedData) (ITSMFDecoder* decoder, uint32* size);
+	BYTE* (*GetDecodedData) (ITSMFDecoder* decoder, uint32* size);
 	/* Get the pixel format of decoded video frame */
 	uint32 (*GetDecodedFormat) (ITSMFDecoder* decoder);
 	/* Get the width and height of decoded video frame */
@@ -50,7 +50,7 @@ struct _ITSMFDecoder
 	/* Optional Contol function */
 	void (*Control) (ITSMFDecoder * decoder, ITSMFControlMsg control_msg, uint32 *arg);
 	/* Decode a sample with extended interface. */
-	int (*DecodeEx) (ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
+	int (*DecodeEx) (ITSMFDecoder * decoder, const BYTE * data, uint32 data_size, uint32 extensions,
         			uint64 start_time, uint64 end_time, uint64 duration);
 	/* Get current play time */
 	uint64 (*GetRunningTime) (ITSMFDecoder * decoder);

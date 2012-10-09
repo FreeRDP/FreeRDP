@@ -200,8 +200,8 @@ xf_tsmf_is_format_supported(xfXvContext* xv, uint32 pixfmt)
 static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT* vevent)
 {
 	int i;
-	uint8* data1;
-	uint8* data2;
+	BYTE* data1;
+	BYTE* data2;
 	uint32 pixfmt;
 	uint32 xvpixfmt;
 	BOOL converti420yv12 = FALSE;

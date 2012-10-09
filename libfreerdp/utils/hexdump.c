@@ -28,9 +28,9 @@
 
 #include <freerdp/utils/hexdump.h>
 
-void freerdp_hexdump(uint8* data, int length)
+void freerdp_hexdump(BYTE* data, int length)
 {
-	uint8* p = data;
+	BYTE* p = data;
 	int i, line, offset = 0;
 
 	while (offset < length)

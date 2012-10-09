@@ -32,8 +32,8 @@ typedef struct _TSMF_STREAM TSMF_STREAM;
 
 typedef struct _TSMF_SAMPLE TSMF_SAMPLE;
 
-TSMF_PRESENTATION* tsmf_presentation_new(const uint8* guid, IWTSVirtualChannelCallback* pChannelCallback);
-TSMF_PRESENTATION* tsmf_presentation_find_by_id(const uint8* guid);
+TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCallback);
+TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid);
 void tsmf_presentation_start(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_stop(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_paused(TSMF_PRESENTATION* presentation);
@@ -55,7 +55,7 @@ void tsmf_stream_free(TSMF_STREAM* stream);
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
 	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
-	uint32 data_size, uint8* data);
+	uint32 data_size, BYTE* data);
 
 void tsmf_media_init(void);
 

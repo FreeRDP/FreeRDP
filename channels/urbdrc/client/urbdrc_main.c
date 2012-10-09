@@ -94,7 +94,7 @@ static void func_close_udevice(USB_SEARCHMAN* searchman, IUDEVICE* pdev)
 	pdev->SigToEnd(pdev);
 	idVendor = pdev->query_device_descriptor(pdev, ID_VENDOR);
 	idProduct = pdev->query_device_descriptor(pdev, ID_PRODUCT);
-	searchman->add(searchman, (uint16) idVendor, (uint16) idProduct);
+	searchman->add(searchman, (UINT16) idVendor, (UINT16) idProduct);
 
 	pdev->cancel_all_transfer_request(pdev);
 	pdev->wait_action_completion(pdev);
@@ -121,12 +121,12 @@ static int fun_device_string_send_set(char* out_data, int out_offset, char* str)
 
 	while (str[i])
 	{
-		data_write_uint16(out_data + out_offset + offset, str[i]);   /* str */
+		data_write_UINT16(out_data + out_offset + offset, str[i]);   /* str */
 		i++;
 		offset += 2;
 	}
 
-	data_write_uint16(out_data + out_offset + offset, 0x0000);   /* add "\0" */
+	data_write_UINT16(out_data + out_offset + offset, 0x0000);   /* add "\0" */
 	offset += 2;
 
 	return offset + out_offset;
@@ -187,7 +187,7 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 	IUDEVICE* pdev;
 	uint32 FunctionId;
 	uint32 RequestField;
-	uint16 URB_Function;
+	UINT16 URB_Function;
 	IUDEVMAN* udevman = transfer_data->udevman;
 
 	if (transfer_data->cbSize >= 8)
@@ -198,7 +198,7 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 			FunctionId == TRANSFER_OUT_REQUEST) &&
 			transfer_data->cbSize >= 16)
 		{
-			data_read_uint16(transfer_data->pBuffer + 14, URB_Function);
+			data_read_UINT16(transfer_data->pBuffer + 14, URB_Function);
 
 			if (URB_Function == URB_FUNCTION_ISOCH_TRANSFER &&
 				transfer_data->cbSize >= 20)
@@ -237,7 +237,7 @@ static int urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, 
 	data_write_uint32(out_data + 4, MessageId); /* message id */
 	data_write_uint32(out_data + 8, Version); /* usb protocol version */
 	data_write_uint32(out_data + 12, 0x00000000); /* HRESULT */
-	callback->channel->Write(callback->channel, out_size, (uint8*) out_data, NULL);
+	callback->channel->Write(callback->channel, out_size, (BYTE*) out_data, NULL);
 	zfree(out_data);
 
 	return 0;
@@ -268,7 +268,7 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	data_write_uint32(out_data + 12, MajorVersion);
 	data_write_uint32(out_data + 16, MinorVersion);
 	data_write_uint32(out_data + 20, Capabilities); /* capabilities version */
-	callback->channel->Write(callback->channel, out_size, (uint8 *)out_data, NULL);
+	callback->channel->Write(callback->channel, out_size, (BYTE *)out_data, NULL);
 	zfree(out_data);
 
 	return 0;
@@ -291,7 +291,7 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, uint32 M
 	data_write_uint32(out_data + 4, MessageId); /* message id */
 	data_write_uint32(out_data + 8, ADD_VIRTUAL_CHANNEL); /* function id */
 
-	channel->Write(channel, out_size, (uint8*) out_data, NULL);
+	channel->Write(channel, out_size, (BYTE*) out_data, NULL);
 	zfree(out_data);
 
 	return 0;
@@ -358,7 +358,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	out_offset = fun_device_string_send_set(out_data, out_offset, HardwareIds[0]);
 	/* HardwareIds 2 */
 	out_offset = fun_device_string_send_set(out_data, out_offset, HardwareIds[1]);
-	data_write_uint16(out_data + out_offset, 0x0000); /* add "\0" */
+	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
 	out_offset += 2;
 
 	data_write_uint32(out_data + out_offset, cchCompatIds); /* cchCompatIds */
@@ -373,7 +373,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	if (pdev->isCompositeDevice(pdev))
 		out_offset = fun_device_string_send_set(out_data, out_offset, composite_str);
 
-	data_write_uint16(out_data + out_offset, 0x0000); /* add "\0" */
+	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
 	out_offset += 2;
 
 	data_write_uint32(out_data + out_offset, 0x00000027); /* cchContainerId */
@@ -399,7 +399,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	data_write_uint32(out_data + out_offset + 24, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
 	out_offset += 28;
 
-	callback->channel->Write(callback->channel, out_offset, (uint8 *)out_data, NULL);
+	callback->channel->Write(callback->channel, out_offset, (BYTE *)out_data, NULL);
 	zfree(out_data);
 
 	return 0;
@@ -658,7 +658,7 @@ void* urbdrc_new_device_create(void * arg)
 	IWTSVirtualChannelManager* channel_mgr;
 	URBDRC_PLUGIN* urbdrc = transfer_data->urbdrc;
 	USB_SEARCHMAN* searchman = urbdrc->searchman;
-	uint8* pBuffer = transfer_data->pBuffer;
+	BYTE* pBuffer = transfer_data->pBuffer;
 	IUDEVMAN* udevman = transfer_data->udevman;
 	IUDEVICE* pdev = NULL;
 	uint32 ChannelId = 0;
@@ -756,7 +756,7 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 			transfer_data->udevman = urbdrc->udevman;
 			transfer_data->urbdrc = urbdrc;
 			transfer_data->cbSize = cbSize;
-			transfer_data->pBuffer = (uint8 *)malloc((cbSize));
+			transfer_data->pBuffer = (BYTE *)malloc((cbSize));
 
 			for (i = 0; i < (cbSize); i++)
 			{
@@ -775,7 +775,7 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 	return error;
 }
 
-static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, uint32 cbSize, uint8* Buffer)
+static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, uint32 cbSize, BYTE* Buffer)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
@@ -829,7 +829,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			transfer_data->udevman = udevman;
 			transfer_data->cbSize = cbSize - 4;
 			transfer_data->UsbDevice = InterfaceId;
-			transfer_data->pBuffer = (uint8 *)malloc((cbSize - 4));
+			transfer_data->pBuffer = (BYTE *)malloc((cbSize - 4));
 
 			memcpy(transfer_data->pBuffer, pBuffer + 4, (cbSize - 4));
 
@@ -898,7 +898,7 @@ static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 }
 
 static int urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel * pChannel, uint8* pData, int* pbAccept, IWTSVirtualChannelCallback** ppCallback)
+	IWTSVirtualChannel * pChannel, BYTE* pData, int* pbAccept, IWTSVirtualChannelCallback** ppCallback)
 {
 	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*) pListenerCallback;
 	URBDRC_CHANNEL_CALLBACK* callback;

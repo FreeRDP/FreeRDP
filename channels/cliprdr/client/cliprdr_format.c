@@ -109,7 +109,7 @@ static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, uint16 flags)
+void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, UINT16 flags)
 {
 	int i;
 	BOOL ascii;
@@ -153,10 +153,10 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 	}
 }
 
-void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, uint16 flags)
+void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, UINT16 flags)
 {
 	int allocated_formats = 8;
-	uint8* end_mark;
+	BYTE* end_mark;
 	CLIPRDR_FORMAT_NAME* format_name;
 	
 	stream_get_mark(s, end_mark);
@@ -167,7 +167,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 
 	while (stream_get_left(s) >= 6)
 	{
-		uint8* p;
+		BYTE* p;
 		int name_len;
 		
 		if (cliprdr->num_format_names >= allocated_formats)
@@ -194,7 +194,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 	}
 }
 
-void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
+void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
 {
 	int i;
 	uint32 format;
@@ -207,7 +207,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 
 	if (dataLen > 0)
 	{
-		cb_event->raw_format_data = (uint8*) malloc(dataLen);
+		cb_event->raw_format_data = (BYTE*) malloc(dataLen);
 		memcpy(cb_event->raw_format_data, stream_get_tail(s), dataLen);
 		cb_event->raw_format_data_size = dataLen;
 	}
@@ -286,7 +286,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 	cliprdr_send_format_list_response(cliprdr);
 }
 
-void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
+void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
 {
 	/* where is this documented? */
 #if 0
@@ -300,7 +300,7 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 #endif
 }
 
-void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
+void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
 {
 	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
@@ -341,7 +341,7 @@ void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DA
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, uint16 msgFlags)
+void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
 {
 	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
@@ -351,7 +351,7 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 	if (dataLen > 0)
 	{
 		cb_event->size = dataLen;
-		cb_event->data = (uint8*) malloc(dataLen);
+		cb_event->data = (BYTE*) malloc(dataLen);
 		memcpy(cb_event->data, stream_get_tail(s), dataLen);
 	}
 

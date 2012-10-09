@@ -34,7 +34,7 @@ struct _ISOCH_CALLBACK_DATA
 	void * prev;
 	void * next;
 	void * device;
-	uint8 * out_data;
+	BYTE * out_data;
 	uint32 out_size;
 	void * callback;
 };

@@ -150,7 +150,7 @@ static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, uint32 value)
 {
 }
 
-static void rdpsnd_audio_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_audio_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
 	rdpsndAudioQPlugin* aq_plugin_p = (rdpsndAudioQPlugin *) device;
 	AudioQueueBufferRef aq_buf_ref;

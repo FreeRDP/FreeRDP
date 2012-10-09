@@ -31,7 +31,7 @@ struct _ITSMFAudioDevice
 	/* Set the audio data format. */
 	BOOL (*SetFormat) (ITSMFAudioDevice* audio, uint32 sample_rate, uint32 channels, uint32 bits_per_sample);
 	/* Play audio data. */
-	BOOL (*Play) (ITSMFAudioDevice* audio, uint8* data, uint32 data_size);
+	BOOL (*Play) (ITSMFAudioDevice* audio, BYTE* data, uint32 data_size);
 	/* Get the latency of the last written sample, in 100ns */
 	uint64 (*GetLatency) (ITSMFAudioDevice* audio);
 	/* Change the playback volume level */

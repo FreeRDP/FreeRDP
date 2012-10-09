@@ -83,7 +83,7 @@ void test_color_GetRGB_565(void)
 	*/
 	
 	int r, g, b;
-	uint16 rgb16 = 0xAE7D;
+	UINT16 rgb16 = 0xAE7D;
 	GetRGB_565(r, g, b, rgb16);
 	
 	CU_ASSERT(r == 0x15);
@@ -103,7 +103,7 @@ void test_color_GetRGB16(void)
 	*/
 	
 	int r, g, b;
-	uint16 rgb16 = 0xAE7D;
+	UINT16 rgb16 = 0xAE7D;
 	GetRGB16(r, g, b, rgb16);
 	
 	CU_ASSERT(r == 0xAD);
@@ -122,7 +122,7 @@ void test_color_GetBGR_565(void)
 	*/
 		
 	int r, g, b;
-	uint16 bgr16 = 0xEE75;
+	UINT16 bgr16 = 0xEE75;
 	GetBGR_565(r, g, b, bgr16);
 	
 	CU_ASSERT(r == 0x15);
@@ -142,7 +142,7 @@ void test_color_GetBGR16(void)
 	*/
 		
 	int r, g, b;
-	uint16 bgr16 = 0xEE75;
+	UINT16 bgr16 = 0xEE75;
 	GetBGR16(r, g, b, bgr16);
 	
 	CU_ASSERT(r == 0xAD);

@@ -90,8 +90,8 @@ IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 	irp->input = data_in;
 
 	irp->output = stream_new(256);
-	stream_write_uint16(irp->output, RDPDR_CTYP_CORE);
-	stream_write_uint16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
+	stream_write_UINT16(irp->output, RDPDR_CTYP_CORE);
+	stream_write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
 	stream_write_uint32(irp->output, DeviceId);
 	stream_write_uint32(irp->output, irp->CompletionId);
 	stream_seek_uint32(irp->output); /* IoStatus */

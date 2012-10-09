@@ -25,7 +25,7 @@
 
 #include "wf_input.h"
 
-void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
 
@@ -45,7 +45,7 @@ void wf_peer_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	SendInput(1, &keyboard_event, sizeof(INPUT));
 }
 
-void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	INPUT keyboard_event;
 
@@ -62,7 +62,7 @@ void wf_peer_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 	SendInput(1, &keyboard_event, sizeof(INPUT));
 }
 
-void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	INPUT mouse_event;
 	float width, height;
@@ -127,7 +127,7 @@ void wf_peer_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 	}
 }
 
-void wf_peer_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	{

@@ -53,10 +53,10 @@ struct _SERIAL_TTY
 	uint32 read_total_timeout_constant;
 	uint32 write_total_timeout_multiplier;
 	uint32 write_total_timeout_constant;
-	uint8 stop_bits;
-	uint8 parity;
-	uint8 word_length;
-	uint8 chars[6];
+	BYTE stop_bits;
+	BYTE parity;
+	BYTE word_length;
+	BYTE chars[6];
 	struct termios* ptermios;
 	struct termios* pold_termios;
 	int event_txempty;
@@ -69,8 +69,8 @@ struct _SERIAL_TTY
 SERIAL_TTY* serial_tty_new(const char* path, uint32 id);
 void serial_tty_free(SERIAL_TTY* tty);
 
-BOOL serial_tty_read(SERIAL_TTY* tty, uint8* buffer, uint32* Length);
-BOOL serial_tty_write(SERIAL_TTY* tty, uint8* buffer, uint32 Length);
+BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, uint32* Length);
+BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, uint32 Length);
 uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, STREAM* output, uint32* abort_io);
 
 BOOL serial_tty_get_event(SERIAL_TTY* tty, uint32* result);

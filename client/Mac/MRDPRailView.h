@@ -50,7 +50,7 @@
 
 void mac_rail_MoveWindow(rdpRail *rail, rdpWindow *window);
 void apple_to_windowMove(NSRect * r, RAIL_WINDOW_MOVE_ORDER * windowMove);
-void mac_send_rail_client_event(rdpChannels *channels, uint16 event_type, void *param);
+void mac_send_rail_client_event(rdpChannels *channels, UINT16 event_type, void *param);
 void windows_to_apple_cords(NSRect * r);
 void rail_MoveWindow(rdpRail * rail, rdpWindow * window);
 void mac_rail_send_activate(int window_id);

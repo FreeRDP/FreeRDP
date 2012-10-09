@@ -116,7 +116,7 @@
 
 struct _GDIOBJECT
 {
-	uint8 objectType;
+	BYTE objectType;
 };
 typedef struct _GDIOBJECT GDIOBJECT;
 typedef GDIOBJECT* HGDIOBJECT;
@@ -127,7 +127,7 @@ typedef GDI_COLOR* LPGDI_COLOR;
 
 struct _GDI_RECT
 {
-	uint8 objectType;
+	BYTE objectType;
 	int left;
 	int top;
 	int right;
@@ -138,7 +138,7 @@ typedef GDI_RECT* HGDI_RECT;
 
 struct _GDI_RGN
 {
-	uint8 objectType;
+	BYTE objectType;
 	int x; /* left */
 	int y; /* top */
 	int w; /* width */
@@ -150,20 +150,20 @@ typedef GDI_RGN* HGDI_RGN;
 
 struct _GDI_BITMAP
 {
-	uint8 objectType;
+	BYTE objectType;
 	int bytesPerPixel;
 	int bitsPerPixel;
 	int width;
 	int height;
 	int scanline;
-	uint8* data;
+	BYTE* data;
 };
 typedef struct _GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
 
 struct _GDI_PEN
 {
-	uint8 objectType;
+	BYTE objectType;
 	int style;
 	int width;
 	int posX;
@@ -175,15 +175,15 @@ typedef GDI_PEN* HGDI_PEN;
 
 struct _GDI_PALETTEENTRY
 {
-	uint8 red;
-	uint8 green;
-	uint8 blue;
+	BYTE red;
+	BYTE green;
+	BYTE blue;
 };
 typedef struct _GDI_PALETTEENTRY GDI_PALETTEENTRY;
 
 struct _GDI_PALETTE
 {
-	uint16 count;
+	UINT16 count;
 	GDI_PALETTEENTRY *entries;
 };
 typedef struct _GDI_PALETTE GDI_PALETTE;
@@ -199,7 +199,7 @@ typedef GDI_POINT* HGDI_POINT;
 
 struct _GDI_BRUSH
 {
-	uint8 objectType;
+	BYTE objectType;
 	int style;
 	HGDI_BITMAP pattern;
 	GDI_COLOR color;
@@ -273,7 +273,7 @@ struct rdp_gdi
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
-	uint8* primary_buffer;
+	BYTE* primary_buffer;
 	GDI_COLOR textColor;
 	void* rfx_context;
 	void* nsc_context;
@@ -281,13 +281,13 @@ struct rdp_gdi
 	gdiBitmap* image;
 };
 
-FREERDP_API uint32 gdi_rop3_code(uint8 code);
-FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
-FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
-FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
+FREERDP_API uint32 gdi_rop3_code(BYTE code);
+FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
+FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
+FREERDP_API int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
-FREERDP_API int gdi_init(freerdp* instance, uint32 flags, uint8* buffer);
+FREERDP_API int gdi_init(freerdp* instance, uint32 flags, BYTE* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef WITH_DEBUG_GDI

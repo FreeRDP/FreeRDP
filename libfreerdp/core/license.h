@@ -102,16 +102,16 @@ typedef struct
 {
 	uint32 dwVersion;
 	uint32 cbCompanyName;
-	uint8* pbCompanyName;
+	BYTE* pbCompanyName;
 	uint32 cbProductId;
-	uint8* pbProductId;
+	BYTE* pbProductId;
 } PRODUCT_INFO;
 
 typedef struct
 {
-	uint16 type;
-	uint16 length;
-	uint8* data;
+	UINT16 type;
+	UINT16 length;
+	BYTE* data;
 } LICENSE_BLOB;
 
 typedef struct
@@ -133,16 +133,16 @@ struct rdp_license
 	LICENSE_STATE state;
 	struct rdp_rdp* rdp;
 	struct rdp_certificate* certificate;
-	uint8 hwid[HWID_LENGTH];
-	uint8 modulus[MODULUS_MAX_SIZE];
-	uint8 exponent[EXPONENT_MAX_SIZE];
-	uint8 client_random[CLIENT_RANDOM_LENGTH];
-	uint8 server_random[SERVER_RANDOM_LENGTH];
-	uint8 master_secret[MASTER_SECRET_LENGTH];
-	uint8 premaster_secret[PREMASTER_SECRET_LENGTH];
-	uint8 session_key_blob[SESSION_KEY_BLOB_LENGTH];
-	uint8 mac_salt_key[MAC_SALT_KEY_LENGTH];
-	uint8 licensing_encryption_key[LICENSING_ENCRYPTION_KEY_LENGTH];
+	BYTE hwid[HWID_LENGTH];
+	BYTE modulus[MODULUS_MAX_SIZE];
+	BYTE exponent[EXPONENT_MAX_SIZE];
+	BYTE client_random[CLIENT_RANDOM_LENGTH];
+	BYTE server_random[SERVER_RANDOM_LENGTH];
+	BYTE master_secret[MASTER_SECRET_LENGTH];
+	BYTE premaster_secret[PREMASTER_SECRET_LENGTH];
+	BYTE session_key_blob[SESSION_KEY_BLOB_LENGTH];
+	BYTE mac_salt_key[MAC_SALT_KEY_LENGTH];
+	BYTE licensing_encryption_key[LICENSING_ENCRYPTION_KEY_LENGTH];
 	PRODUCT_INFO* product_info;
 	LICENSE_BLOB* error_info;
 	LICENSE_BLOB* key_exchange_list;
@@ -157,7 +157,7 @@ struct rdp_license
 };
 
 BOOL license_recv(rdpLicense* license, STREAM* s);
-BOOL license_send(rdpLicense* license, STREAM* s, uint8 type);
+BOOL license_send(rdpLicense* license, STREAM* s, BYTE type);
 STREAM* license_send_stream_init(rdpLicense* license);
 
 void license_generate_randoms(rdpLicense* license);
@@ -170,7 +170,7 @@ PRODUCT_INFO* license_new_product_info();
 void license_free_product_info(PRODUCT_INFO* productInfo);
 void license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo);
 
-LICENSE_BLOB* license_new_binary_blob(uint16 type);
+LICENSE_BLOB* license_new_binary_blob(UINT16 type);
 void license_free_binary_blob(LICENSE_BLOB* blob);
 void license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob);
 void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob);
@@ -188,7 +188,7 @@ void license_read_error_alert_packet(rdpLicense* license, STREAM* s);
 void license_write_new_license_request_packet(rdpLicense* license, STREAM* s);
 void license_send_new_license_request_packet(rdpLicense* license);
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, uint8* mac_data);
+void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, BYTE* mac_data);
 void license_send_platform_challenge_response_packet(rdpLicense* license);
 
 BOOL license_send_valid_client_error_packet(rdpLicense* license);

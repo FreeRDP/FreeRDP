@@ -22,7 +22,7 @@
 
 #include "graphics.h"
 
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8* data);
+gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data);
 void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 #endif /* __GDI_CORE_H */
