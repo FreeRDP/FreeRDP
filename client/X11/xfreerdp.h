@@ -39,10 +39,10 @@ typedef struct xf_info xfInfo;
 
 struct xf_WorkArea
 {
-	uint32 x;
-	uint32 y;
-	uint32 width;
-	uint32 height;
+	UINT32 x;
+	UINT32 y;
+	UINT32 width;
+	UINT32 height;
 };
 typedef struct xf_WorkArea xfWorkArea;
 
@@ -130,7 +130,7 @@ struct xf_info
 	BOOL mouse_motion;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
-	uint32 keyboard_layout_id;
+	UINT32 keyboard_layout_id;
 	BOOL pressed_keys[256];
 	XModifierKeymap* modifier_map;
 	XSetWindowAttributes attribs;

@@ -31,9 +31,9 @@ void rdp_write_client_input_pdu_header(STREAM* s, UINT16 number)
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 }
 
-void rdp_write_input_event_header(STREAM* s, uint32 time, UINT16 type)
+void rdp_write_input_event_header(STREAM* s, UINT32 time, UINT16 type)
 {
-	stream_write_uint32(s, time); /* eventTime (4 bytes) */
+	stream_write_UINT32(s, time); /* eventTime (4 bytes) */
 	stream_write_UINT16(s, type); /* messageType (2 bytes) */
 }
 
@@ -51,13 +51,13 @@ void rdp_send_client_input_pdu(rdpRdp* rdp, STREAM* s)
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->user_id);
 }
 
-void input_write_synchronize_event(STREAM* s, uint32 flags)
+void input_write_synchronize_event(STREAM* s, UINT32 flags)
 {
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
-	stream_write_uint32(s, flags); /* toggleFlags (4 bytes) */
+	stream_write_UINT32(s, flags); /* toggleFlags (4 bytes) */
 }
 
-void input_send_synchronize_event(rdpInput* input, uint32 flags)
+void input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	STREAM* s;
 	rdpRdp* rdp = input->context->rdp;
@@ -147,7 +147,7 @@ void input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 	rdp_send_client_input_pdu(rdp, s);
 }
 
-void input_send_fastpath_synchronize_event(rdpInput* input, uint32 flags)
+void input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	STREAM* s;
 	rdpRdp* rdp = input->context->rdp;
@@ -204,13 +204,13 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 
 static BOOL input_recv_sync_event(rdpInput* input, STREAM* s)
 {
-	uint32 toggleFlags;
+	UINT32 toggleFlags;
 
 	if (stream_get_left(s) < 6)
 		return FALSE;
 
 	stream_seek(s, 2); /* pad2Octets (2 bytes) */
-	stream_read_uint32(s, toggleFlags); /* toggleFlags (4 bytes) */
+	stream_read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
 
 	IFCALL(input->SynchronizeEvent, input, toggleFlags);
 
@@ -386,7 +386,7 @@ void input_register_client_callbacks(rdpInput* input)
 	}
 }
 
-void freerdp_input_send_synchronize_event(rdpInput* input, uint32 flags)
+void freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	IFCALL(input->SynchronizeEvent, input, flags);
 }
@@ -396,7 +396,7 @@ void freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 cod
 	IFCALL(input->KeyboardEvent, input, flags, code);
 }
 
-void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, uint32 rdp_scancode)
+void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode)
 {
 	freerdp_input_send_keyboard_event(input,
 			(RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0) |

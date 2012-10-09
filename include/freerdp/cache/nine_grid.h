@@ -40,20 +40,20 @@ struct rdp_nine_grid_cache
 {
 	pDrawNineGrid DrawNineGrid; /* 0 */
 	pMultiDrawNineGrid MultiDrawNineGrid; /* 1 */
-	uint32 paddingA[16 - 2]; /* 2 */
+	UINT32 paddingA[16 - 2]; /* 2 */
 
-	uint32 maxEntries; /* 16 */
-	uint32 maxSize; /* 17 */
+	UINT32 maxEntries; /* 16 */
+	UINT32 maxSize; /* 17 */
 	NINE_GRID_ENTRY* entries; /* 18 */
-	uint32 paddingB[32 - 19]; /* 19 */
+	UINT32 paddingB[32 - 19]; /* 19 */
 
 	/* internal */
 
 	rdpSettings* settings;
 };
 
-FREERDP_API void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index);
-FREERDP_API void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry);
+FREERDP_API void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
+FREERDP_API void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
 
 FREERDP_API void nine_grid_cache_register_callbacks(rdpUpdate* update);
 

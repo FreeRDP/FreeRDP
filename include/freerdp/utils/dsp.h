@@ -32,9 +32,9 @@ union _ADPCM
 	struct
 	{
 		BYTE predictor[2];
-		sint32 delta[2];
-		sint32 sample1[2];
-		sint32 sample2[2];
+		INT32 delta[2];
+		INT32 sample1[2];
+		INT32 sample2[2];
 	} ms;
 };
 typedef union _ADPCM ADPCM;
@@ -43,20 +43,20 @@ typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 struct _FREERDP_DSP_CONTEXT
 {
 	BYTE* resampled_buffer;
-	uint32 resampled_size;
-	uint32 resampled_frames;
-	uint32 resampled_maxlength;
+	UINT32 resampled_size;
+	UINT32 resampled_frames;
+	UINT32 resampled_maxlength;
 
 	BYTE* adpcm_buffer;
-	uint32 adpcm_size;
-	uint32 adpcm_maxlength;
+	UINT32 adpcm_size;
+	UINT32 adpcm_maxlength;
 
 	ADPCM adpcm;
 
 	void (*resample)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int bytes_per_sample,
-		uint32 schan, uint32 srate, int sframes,
-		uint32 rchan, uint32 rrate);
+		UINT32 schan, UINT32 srate, int sframes,
+		UINT32 rchan, UINT32 rrate);
 
 	void (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int size, int channels, int block_size);

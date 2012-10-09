@@ -115,7 +115,7 @@ BYTE* wf_glyph_convert(wfInfo* wfi, int width, int height, BYTE* data)
 	return cdata;
 }
 
-HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, uint32 color, int bpp)
+HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, UINT32 color, int bpp)
 {
 	int i;
 	HBRUSH br;
@@ -235,8 +235,8 @@ void wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	HBRUSH brush;
 	HBRUSH org_brush;
 	int org_bkmode;
-	uint32 fgcolor;
-	uint32 bgcolor;
+	UINT32 fgcolor;
+	UINT32 bgcolor;
 	COLORREF org_bkcolor;
 	COLORREF org_textcolor;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
@@ -280,7 +280,7 @@ void wf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	RECT rect;
 	HBRUSH brush;
-	uint32 brush_color;
+	UINT32 brush_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
@@ -302,7 +302,7 @@ void wf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	int i;
 	RECT rect;
 	HBRUSH brush;
-	uint32 brush_color;
+	UINT32 brush_color;
 	DELTA_RECT* rectangle;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
@@ -333,7 +333,7 @@ void wf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	HPEN pen;
 	HPEN org_pen;
 	int x, y, w, h;
-	uint32 pen_color;
+	UINT32 pen_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	pen_color = freerdp_color_convert_bgr(line_to->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);
@@ -365,7 +365,7 @@ void wf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	int org_rop2;
 	HPEN hpen;
 	HPEN org_hpen;
-	uint32 pen_color;
+	UINT32 pen_color;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	pen_color = freerdp_color_convert_bgr(polyline->penColor, wfi->srcBpp, wfi->dstBpp, wfi->clrconv);

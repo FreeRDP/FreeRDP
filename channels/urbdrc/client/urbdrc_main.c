@@ -185,14 +185,14 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 {
 	int noAck = 0;
 	IUDEVICE* pdev;
-	uint32 FunctionId;
-	uint32 RequestField;
+	UINT32 FunctionId;
+	UINT32 RequestField;
 	UINT16 URB_Function;
 	IUDEVMAN* udevman = transfer_data->udevman;
 
 	if (transfer_data->cbSize >= 8)
 	{
-		data_read_uint32(transfer_data->pBuffer + 4, FunctionId);
+		data_read_UINT32(transfer_data->pBuffer + 4, FunctionId);
 
 		if ((FunctionId == TRANSFER_IN_REQUEST ||
 			FunctionId == TRANSFER_OUT_REQUEST) &&
@@ -203,7 +203,7 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 			if (URB_Function == URB_FUNCTION_ISOCH_TRANSFER &&
 				transfer_data->cbSize >= 20)
 			{
-				data_read_uint32(transfer_data->pBuffer + 16, RequestField);
+				data_read_UINT32(transfer_data->pBuffer + 16, RequestField);
 				noAck = (RequestField & 0x80000000)>>31;
 
 				if (!noAck)
@@ -218,66 +218,66 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 
 #endif
 
-static int urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, uint32 data_sizem, uint32 MessageId)
+static int urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
-	uint32 InterfaceId;
-	uint32 Version;
-	uint32 out_size;
+	UINT32 InterfaceId;
+	UINT32 Version;
+	UINT32 out_size;
 	char * out_data;
 
 	LLOGLN(10, ("urbdrc_process_capability_request"));
-	data_read_uint32(data + 0, Version);
+	data_read_UINT32(data + 0, Version);
 
 	InterfaceId = ((STREAM_ID_NONE<<30) | CAPABILITIES_NEGOTIATOR);
 
 	out_size = 16;
 	out_data = (char *) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId); /* interface id */
-	data_write_uint32(out_data + 4, MessageId); /* message id */
-	data_write_uint32(out_data + 8, Version); /* usb protocol version */
-	data_write_uint32(out_data + 12, 0x00000000); /* HRESULT */
+	data_write_UINT32(out_data + 0, InterfaceId); /* interface id */
+	data_write_UINT32(out_data + 4, MessageId); /* message id */
+	data_write_UINT32(out_data + 8, Version); /* usb protocol version */
+	data_write_UINT32(out_data + 12, 0x00000000); /* HRESULT */
 	callback->channel->Write(callback->channel, out_size, (BYTE*) out_data, NULL);
 	zfree(out_data);
 
 	return 0;
 }
 
-static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, uint32 data_sizem, uint32 MessageId)
+static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
-	uint32 InterfaceId;
-	uint32 out_size;
-	uint32 MajorVersion;
-	uint32 MinorVersion;
-	uint32 Capabilities;
+	UINT32 InterfaceId;
+	UINT32 out_size;
+	UINT32 MajorVersion;
+	UINT32 MinorVersion;
+	UINT32 Capabilities;
 	char* out_data;
 
 	LLOGLN(10, ("urbdrc_process_channel_create"));
-	data_read_uint32(data + 0, MajorVersion);
-	data_read_uint32(data + 4, MinorVersion);
-	data_read_uint32(data + 8, Capabilities);
+	data_read_UINT32(data + 0, MajorVersion);
+	data_read_UINT32(data + 4, MinorVersion);
+	data_read_UINT32(data + 8, Capabilities);
 
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_CHANNEL_NOTIFICATION);
 
 	out_size = 24;
 	out_data = (char *) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId); /* interface id */
-	data_write_uint32(out_data + 4, MessageId); /* message id */
-	data_write_uint32(out_data + 8, CHANNEL_CREATED); /* function id */
-	data_write_uint32(out_data + 12, MajorVersion);
-	data_write_uint32(out_data + 16, MinorVersion);
-	data_write_uint32(out_data + 20, Capabilities); /* capabilities version */
+	data_write_UINT32(out_data + 0, InterfaceId); /* interface id */
+	data_write_UINT32(out_data + 4, MessageId); /* message id */
+	data_write_UINT32(out_data + 8, CHANNEL_CREATED); /* function id */
+	data_write_UINT32(out_data + 12, MajorVersion);
+	data_write_UINT32(out_data + 16, MinorVersion);
+	data_write_UINT32(out_data + 20, Capabilities); /* capabilities version */
 	callback->channel->Write(callback->channel, out_size, (BYTE *)out_data, NULL);
 	zfree(out_data);
 
 	return 0;
 }
 
-static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, uint32 MessageId)
+static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 MessageId)
 {
-	uint32 out_size;
-	uint32 InterfaceId;
+	UINT32 out_size;
+	UINT32 InterfaceId;
 	char* out_data;
 
 	LLOGLN(10, ("urdbrc_send_virtual_channel_add"));
@@ -287,9 +287,9 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, uint32 M
 	out_size = 12;
 	out_data = (char *) malloc(out_size);
 	memset(out_data, 0, out_size);
-	data_write_uint32(out_data + 0, InterfaceId); /* interface */
-	data_write_uint32(out_data + 4, MessageId); /* message id */
-	data_write_uint32(out_data + 8, ADD_VIRTUAL_CHANNEL); /* function id */
+	data_write_UINT32(out_data + 0, InterfaceId); /* interface */
+	data_write_UINT32(out_data + 4, MessageId); /* message id */
+	data_write_UINT32(out_data + 8, ADD_VIRTUAL_CHANNEL); /* function id */
 
 	channel->Write(channel, out_size, (BYTE*) out_data, NULL);
 	zfree(out_data);
@@ -300,7 +300,7 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, uint32 M
 static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
 	char* out_data;
-	uint32 InterfaceId;
+	UINT32 InterfaceId;
 	char HardwareIds[2][DEVICE_HARDWARE_ID_SIZE];
 	char CompatibilityIds[3][DEVICE_COMPATIBILITY_ID_SIZE];
 	char strContainerId[DEVICE_CONTAINER_STR_SIZE];
@@ -343,16 +343,16 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	out_data = (char*) malloc(size);
 	memset(out_data, 0, size);
 
-	data_write_uint32(out_data + 0, InterfaceId); /* interface */
-	data_write_uint32(out_data + 4, 0); /* message id */
-	data_write_uint32(out_data + 8, ADD_DEVICE); /* function id */
-	data_write_uint32(out_data + 12, 0x00000001); /* NumUsbDevice */
-	data_write_uint32(out_data + 16, pdev->get_UsbDevice(pdev)); /* UsbDevice */
-	data_write_uint32(out_data + 20, 0x00000025); /* cchDeviceInstanceId */
+	data_write_UINT32(out_data + 0, InterfaceId); /* interface */
+	data_write_UINT32(out_data + 4, 0); /* message id */
+	data_write_UINT32(out_data + 8, ADD_DEVICE); /* function id */
+	data_write_UINT32(out_data + 12, 0x00000001); /* NumUsbDevice */
+	data_write_UINT32(out_data + 16, pdev->get_UsbDevice(pdev)); /* UsbDevice */
+	data_write_UINT32(out_data + 20, 0x00000025); /* cchDeviceInstanceId */
 
 	out_offset = fun_device_string_send_set(out_data, out_offset, strInstanceId);
 
-	data_write_uint32(out_data + out_offset, 0x00000036); /* cchHwIds */
+	data_write_UINT32(out_data + out_offset, 0x00000036); /* cchHwIds */
 	out_offset += 4;
 	/* HardwareIds 1 */
 	out_offset = fun_device_string_send_set(out_data, out_offset, HardwareIds[0]);
@@ -361,7 +361,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
 	out_offset += 2;
 
-	data_write_uint32(out_data + out_offset, cchCompatIds); /* cchCompatIds */
+	data_write_UINT32(out_data + out_offset, cchCompatIds); /* cchCompatIds */
 	out_offset += 4;
 	/* CompatibilityIds 1 */
 	out_offset = fun_device_string_send_set(out_data, out_offset, CompatibilityIds[0]);
@@ -376,27 +376,27 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
 	out_offset += 2;
 
-	data_write_uint32(out_data + out_offset, 0x00000027); /* cchContainerId */
+	data_write_UINT32(out_data + out_offset, 0x00000027); /* cchContainerId */
 	out_offset += 4;
 	/* ContainerId */
 	out_offset = fun_device_string_send_set(out_data, out_offset, strContainerId);
 
 	/* USB_DEVICE_CAPABILITIES 28 bytes */
-	data_write_uint32(out_data + out_offset, 0x0000001c); /* CbSize */
-	data_write_uint32(out_data + out_offset + 4, 2); /* UsbBusInterfaceVersion, 0 ,1 or 2 */
-	data_write_uint32(out_data + out_offset + 8, 0x600); /* USBDI_Version, 0x500 or 0x600 */
+	data_write_UINT32(out_data + out_offset, 0x0000001c); /* CbSize */
+	data_write_UINT32(out_data + out_offset + 4, 2); /* UsbBusInterfaceVersion, 0 ,1 or 2 */
+	data_write_UINT32(out_data + out_offset + 8, 0x600); /* USBDI_Version, 0x500 or 0x600 */
 
 	/* Supported_USB_Version, 0x110,0x110 or 0x200(usb2.0) */
 	bcdUSB = pdev->query_device_descriptor(pdev, BCD_USB);
-	data_write_uint32(out_data + out_offset + 12, bcdUSB);
-	data_write_uint32(out_data + out_offset + 16, 0x00000000); /* HcdCapabilities, MUST always be zero */
+	data_write_UINT32(out_data + out_offset + 12, bcdUSB);
+	data_write_UINT32(out_data + out_offset + 16, 0x00000000); /* HcdCapabilities, MUST always be zero */
 
 	if (bcdUSB < 0x200)
-		data_write_uint32(out_data + out_offset + 20, 0x00000000); /* DeviceIsHighSpeed */
+		data_write_UINT32(out_data + out_offset + 20, 0x00000000); /* DeviceIsHighSpeed */
 	else
-		data_write_uint32(out_data + out_offset + 20, 0x00000001); /* DeviceIsHighSpeed */
+		data_write_UINT32(out_data + out_offset + 20, 0x00000001); /* DeviceIsHighSpeed */
 
-	data_write_uint32(out_data + out_offset + 24, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
+	data_write_UINT32(out_data + out_offset + 24, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
 	out_offset += 28;
 
 	callback->channel->Write(callback->channel, out_offset, (BYTE *)out_data, NULL);
@@ -405,15 +405,15 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	return 0;
 }
 
-static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, uint32 cbSize)
+static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
-	uint32 MessageId;
-	uint32 FunctionId;
+	UINT32 MessageId;
+	UINT32 FunctionId;
 
 	int error = 0;
 
-	data_read_uint32(pBuffer + 0, MessageId);
-	data_read_uint32(pBuffer + 4, FunctionId);
+	data_read_UINT32(pBuffer + 0, MessageId);
+	data_read_UINT32(pBuffer + 4, FunctionId);
 
 	switch (FunctionId)
 	{
@@ -661,16 +661,16 @@ void* urbdrc_new_device_create(void * arg)
 	BYTE* pBuffer = transfer_data->pBuffer;
 	IUDEVMAN* udevman = transfer_data->udevman;
 	IUDEVICE* pdev = NULL;
-	uint32 ChannelId = 0;
-	uint32 MessageId;
-	uint32 FunctionId;
+	UINT32 ChannelId = 0;
+	UINT32 MessageId;
+	UINT32 FunctionId;
 	int i = 0, found = 0;
 
 	channel_mgr = urbdrc->listener_callback->channel_mgr;
 	ChannelId =  channel_mgr->GetChannelId(callback->channel);
 
-	data_read_uint32(pBuffer + 0, MessageId);
-	data_read_uint32(pBuffer + 4, FunctionId);
+	data_read_UINT32(pBuffer + 0, MessageId);
+	data_read_UINT32(pBuffer + 4, FunctionId);
 
 	int error = 0;
 
@@ -728,15 +728,15 @@ void* urbdrc_new_device_create(void * arg)
 	return 0;
 }
 
-static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, uint32 cbSize)
+static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
 	int i, error = 0;
-	uint32 MessageId;
-	uint32 FunctionId;
+	UINT32 MessageId;
+	UINT32 FunctionId;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) callback->plugin;
 
-	data_read_uint32(pBuffer + 0, MessageId);
-	data_read_uint32(pBuffer + 4, FunctionId);
+	data_read_UINT32(pBuffer + 0, MessageId);
+	data_read_UINT32(pBuffer + 4, FunctionId);
 
 	switch (FunctionId)
 	{
@@ -775,14 +775,14 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 	return error;
 }
 
-static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, uint32 cbSize, BYTE* Buffer)
+static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* Buffer)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
 	IUDEVMAN* udevman;
-	uint32 InterfaceTemp;
-	uint32 InterfaceId;
-	uint32 Mask;
+	UINT32 InterfaceTemp;
+	UINT32 InterfaceId;
+	UINT32 Mask;
 	int error = 0;
 	char* pBuffer = (char*) Buffer;
 
@@ -799,7 +799,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	udevman = (IUDEVMAN*) urbdrc->udevman;
 
-	data_read_uint32(pBuffer + 0, InterfaceTemp);
+	data_read_UINT32(pBuffer + 0, InterfaceTemp);
 	InterfaceId = (InterfaceTemp & 0x0fffffff);
 	Mask = ((InterfaceTemp & 0xf0000000)>>30);
 	LLOGLN(10, ("urbdrc_on_data_received: Size=%d InterfaceId=0x%X Mask=0x%X", cbSize, InterfaceId, Mask));
@@ -861,7 +861,7 @@ static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 	IUDEVMAN* udevman = (IUDEVMAN*) urbdrc->udevman;
 	USB_SEARCHMAN* searchman = (USB_SEARCHMAN*) urbdrc->searchman;
 	IUDEVICE* pdev = NULL;
-	uint32 ChannelId = 0;
+	UINT32 ChannelId = 0;
 	int found = 0;
 
 	ChannelId = callback->channel_mgr->GetChannelId(callback->channel);

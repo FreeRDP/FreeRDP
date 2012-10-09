@@ -239,12 +239,12 @@ typedef struct _TSG_PACKET
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
-DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths);
+DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths);
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
 
-int tsg_write(rdpTsg* tsg, BYTE* data, uint32 length);
-int tsg_read(rdpTsg* tsg, BYTE* data, uint32 length);
+int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
+int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);

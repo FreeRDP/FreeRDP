@@ -116,7 +116,7 @@ int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA
 int receive_channel_data(freerdp *inst, int chan_id, BYTE *data, int size, int flags, int total_size);
 void process_cliprdr_event(freerdp *inst, RDP_EVENT *event);
 void cliprdr_process_cb_format_list_event(freerdp *inst, RDP_CB_FORMAT_LIST_EVENT* event);
-void cliprdr_send_data_request(freerdp *inst, uint32 format);
+void cliprdr_send_data_request(freerdp *inst, UINT32 format);
 void cliprdr_process_cb_monitor_ready_event(freerdp* inst);
 void cliprdr_process_cb_data_response_event(freerdp *inst, RDP_CB_DATA_RESPONSE_EVENT *event);
 void cliprdr_process_text(freerdp *inst, BYTE *data, int len);

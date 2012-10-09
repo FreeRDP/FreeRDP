@@ -65,7 +65,7 @@ struct _PARALLEL_DEVICE
 
 	int file;
 	char* path;
-	uint32 id;
+	UINT32 id;
 
 	PSLIST_HEADER pIrpList;
 	freerdp_thread* thread;
@@ -75,12 +75,12 @@ typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path;
-	uint32 PathLength;
+	UINT32 PathLength;
 
 	stream_seek(irp->input, 28);
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
-	stream_read_uint32(irp->input, PathLength);
+	stream_read_UINT32(irp->input, PathLength);
 
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
 
@@ -103,7 +103,7 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 		DEBUG_SVC("%s(%d) created", parallel->path, parallel->file);
 	}
 
-	stream_write_uint32(irp->output, parallel->id);
+	stream_write_UINT32(irp->output, parallel->id);
 	stream_write_BYTE(irp->output, 0);
 
 	free(path);
@@ -125,13 +125,13 @@ static void parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	uint32 Length;
-	uint64 Offset;
+	UINT32 Length;
+	UINT64 Offset;
 	ssize_t status;
 	BYTE* buffer = NULL;
 
-	stream_read_uint32(irp->input, Length);
-	stream_read_uint64(irp->input, Offset);
+	stream_read_UINT32(irp->input, Length);
+	stream_read_UINT64(irp->input, Offset);
 
 	buffer = (BYTE*) malloc(Length);
 
@@ -151,7 +151,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 		DEBUG_SVC("read %llu-%llu from %d", Offset, Offset + Length, parallel->id);
 	}
 
-	stream_write_uint32(irp->output, Length);
+	stream_write_UINT32(irp->output, Length);
 	if (Length > 0)
 	{
 		stream_check_size(irp->output, Length);
@@ -164,13 +164,13 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	uint32 Length;
-	uint64 Offset;
+	UINT32 Length;
+	UINT64 Offset;
 	ssize_t status;
-	uint32 len;
+	UINT32 len;
 
-	stream_read_uint32(irp->input, Length);
-	stream_read_uint64(irp->input, Offset);
+	stream_read_UINT32(irp->input, Length);
+	stream_read_UINT64(irp->input, Offset);
 	stream_seek(irp->input, 20); /* Padding */
 
 	DEBUG_SVC("Length %u Offset %llu", Length, Offset);
@@ -194,7 +194,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 		len -= status;
 	}
 
-	stream_write_uint32(irp->output, Length);
+	stream_write_UINT32(irp->output, Length);
 	stream_write_BYTE(irp->output, 0); /* Padding */
 
 	irp->Complete(irp);
@@ -203,7 +203,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 static void parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	DEBUG_SVC("in");
-	stream_write_uint32(irp->output, 0); /* OutputBufferLength */
+	stream_write_UINT32(irp->output, 0); /* OutputBufferLength */
 	irp->Complete(irp);
 }
 

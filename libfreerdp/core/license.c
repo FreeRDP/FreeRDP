@@ -386,14 +386,14 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 
 void license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo)
 {
-	stream_read_uint32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
+	stream_read_UINT32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
 
-	stream_read_uint32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
+	stream_read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
 	stream_read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
-	stream_read_uint32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
+	stream_read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
 	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
 	stream_read(s, productInfo->pbProductId, productInfo->cbProductId);
@@ -540,10 +540,10 @@ void license_free_binary_blob(LICENSE_BLOB* blob)
 
 void license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
 {
-	uint32 i;
-	uint32 scopeCount;
+	UINT32 i;
+	UINT32 scopeCount;
 
-	stream_read_uint32(s, scopeCount); /* ScopeCount (4 bytes) */
+	stream_read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
 	scopeList->count = scopeCount;
 	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
@@ -581,7 +581,7 @@ SCOPE_LIST* license_new_scope_list()
 
 void license_free_scope_list(SCOPE_LIST* scopeList)
 {
-	uint32 i;
+	UINT32 i;
 
 	/*
 	 * We must NOT call license_free_binary_blob() on each scopelist->array[i] element,
@@ -691,11 +691,11 @@ void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
 
 void license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 {
-	uint32 dwErrorCode;
-	uint32 dwStateTransition;
+	UINT32 dwErrorCode;
+	UINT32 dwStateTransition;
 
-	stream_read_uint32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
-	stream_read_uint32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
+	stream_read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
+	stream_read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
 	license_read_binary_blob(s, license->error_info); /* bbErrorInfo */
 
 #ifdef WITH_DEBUG_LICENSE
@@ -754,7 +754,7 @@ void license_write_platform_id(rdpLicense* license, STREAM* s)
 
 void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 {
-	stream_write_uint32(s, KEY_EXCHANGE_ALG_RSA); /* PreferredKeyExchangeAlg (4 bytes) */
+	stream_write_UINT32(s, KEY_EXCHANGE_ALG_RSA); /* PreferredKeyExchangeAlg (4 bytes) */
 	license_write_platform_id(license, s); /* PlatformId (4 bytes) */
 	stream_write(s, license->client_random, 32); /* ClientRandom (32 bytes) */
 	license_write_padded_binary_blob(s, license->encrypted_premaster_secret); /* EncryptedPremasterSecret */
@@ -879,8 +879,8 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license)
 
 	s = license_send_stream_init(license);
 
-	stream_write_uint32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
-	stream_write_uint32(s, ST_NO_TRANSITION); /* dwStateTransition */
+	stream_write_UINT32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
+	stream_write_UINT32(s, ST_NO_TRANSITION); /* dwStateTransition */
 
 	license_write_binary_blob(s, license->error_info);
 

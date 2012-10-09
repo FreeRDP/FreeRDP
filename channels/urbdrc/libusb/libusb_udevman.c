@@ -55,7 +55,7 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
-	uint32 defUsbDevice;
+	UINT32 defUsbDevice;
 	UINT16 flags;
 	int device_num;
 	int sem_timeout;
@@ -342,7 +342,7 @@ udevman_is_auto_add(IUDEVMAN * idevman)
 
 
 static IUDEVICE*
-udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN * idevman, uint32 UsbDevice)
+udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN * idevman, UINT32 UsbDevice)
 {
 	UDEVICE * pdev;
 	idevman->loading_lock(idevman);
@@ -361,7 +361,7 @@ udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN * idevman, uint32 UsbDevice)
 }
 
 static IUDEVICE*
-udevman_get_udevice_by_UsbDevice(IUDEVMAN * idevman, uint32 UsbDevice)
+udevman_get_udevice_by_UsbDevice(IUDEVMAN * idevman, UINT32 UsbDevice)
 {
 	UDEVICE * pdev;
 	idevman->loading_lock(idevman);
@@ -420,7 +420,7 @@ udevman_push_urb(IUDEVMAN * idevman)
 }
 
 
-BASIC_STATE_FUNC_DEFINED(defUsbDevice, uint32)
+BASIC_STATE_FUNC_DEFINED(defUsbDevice, UINT32)
 BASIC_STATE_FUNC_DEFINED(device_num, int)
 BASIC_STATE_FUNC_DEFINED(sem_timeout, int)
 
@@ -474,7 +474,7 @@ int FreeRDPUDEVMANEntry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	UDEVMAN* udevman;
 	RDP_PLUGIN_DATA * plugin_data = pEntryPoints->plugin_data;
-	uint32   UsbDevice = BASE_USBDEVICE_NUM;
+	UINT32   UsbDevice = BASE_USBDEVICE_NUM;
 	char * token;
 	char * message = "id";
 	char hardware_id[16];

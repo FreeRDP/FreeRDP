@@ -123,7 +123,7 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	PALETTE_ENTRY* entry;
 
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
-	stream_read_uint32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
+	stream_read_UINT32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
 
 	if (palette_update->number > 256)
 		palette_update->number = 256;
@@ -151,8 +151,8 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 
 void update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
 {
-	stream_read_uint32(s, play_sound->duration); /* duration (4 bytes) */
-	stream_read_uint32(s, play_sound->frequency); /* frequency (4 bytes) */
+	stream_read_UINT32(s, play_sound->duration); /* duration (4 bytes) */
+	stream_read_UINT32(s, play_sound->frequency); /* frequency (4 bytes) */
 }
 
 void update_recv_play_sound(rdpUpdate* update, STREAM* s)
@@ -169,7 +169,7 @@ void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_po
 
 void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	stream_read_uint32(s, pointer_system->type); /* systemPointerType (4 bytes) */
+	stream_read_UINT32(s, pointer_system->type); /* systemPointerType (4 bytes) */
 }
 
 void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)

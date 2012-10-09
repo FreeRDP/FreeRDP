@@ -119,7 +119,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 
 BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 {
-	uint32 option_value;
+	UINT32 option_value;
 	socklen_t option_len;
 
 	if (hostname[0] == '/')
@@ -213,7 +213,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 {
 #ifndef _WIN32
-	uint32 option_value;
+	UINT32 option_value;
 	socklen_t option_len;
 
 	option_value = 1;

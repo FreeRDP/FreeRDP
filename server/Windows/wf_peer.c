@@ -115,7 +115,7 @@ BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL
 	return TRUE;
 }
 
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
+void wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 
 }

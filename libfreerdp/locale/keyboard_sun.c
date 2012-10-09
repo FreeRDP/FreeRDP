@@ -54,10 +54,10 @@
 
 struct _SOLARIS_KEYBOARD
 {
-	uint32 type; /* Solaris keyboard type */
-	uint32 layout; /* Layout */
+	UINT32 type; /* Solaris keyboard type */
+	UINT32 layout; /* Layout */
 	char* xkbType; /* XKB keyboard */
-	uint32 keyboardLayoutId; /* XKB keyboard layout */
+	UINT32 keyboardLayoutId; /* XKB keyboard layout */
 };
 typedef struct _SOLARIS_KEYBOARD SOLARIS_KEYBOARD;
 
@@ -202,7 +202,7 @@ static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] =
 	{ 6,   272,  "sun(type6)",               KBD_PORTUGUESE_BRAZILIAN_ABNT		}  /*  Brazil6_usb */
 };
 
-uint32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length)
+UINT32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length)
 {
 	FILE* kbd;
 

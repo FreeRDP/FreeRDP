@@ -68,7 +68,7 @@ FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelMa
 FREERDP_API void* WTSVirtualChannelOpenEx(
 	/* __in */ WTSVirtualChannelManager* vcm,
 	/* __in */ const char* pVirtualName,
-	/* __in */ uint32 flags);
+	/* __in */ UINT32 flags);
 
 /**
  * Returns information about a specified virtual channel.
@@ -80,7 +80,7 @@ FREERDP_API BOOL WTSVirtualChannelQuery(
 	/* __in */  void* hChannelHandle,
 	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
 	/* __out */ void** ppBuffer,
-	/* __out */ uint32* pBytesReturned);
+	/* __out */ UINT32* pBytesReturned);
 
 /**
  * Frees memory allocated by WTSVirtualChannelQuery
@@ -107,10 +107,10 @@ FREERDP_API void WTSFreeMemory(
  */
 FREERDP_API BOOL WTSVirtualChannelRead(
 	/* __in */  void* hChannelHandle,
-	/* __in */  uint32 TimeOut,
+	/* __in */  UINT32 TimeOut,
 	/* __out */ BYTE* Buffer,
-	/* __in */  uint32 BufferSize,
-	/* __out */ uint32* pBytesRead);
+	/* __in */  UINT32 BufferSize,
+	/* __out */ UINT32* pBytesRead);
 
 /**
  * Writes data to the server end of a virtual channel.
@@ -118,8 +118,8 @@ FREERDP_API BOOL WTSVirtualChannelRead(
 FREERDP_API BOOL WTSVirtualChannelWrite(
 	/* __in */  void* hChannelHandle,
 	/* __in */  BYTE* Buffer,
-	/* __in */  uint32 Length,
-	/* __out */ uint32* pBytesWritten);
+	/* __in */  UINT32 Length,
+	/* __out */ UINT32* pBytesWritten);
 
 /**
  * Closes an open virtual channel handle.

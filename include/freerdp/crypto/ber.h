@@ -76,9 +76,9 @@ FREERDP_API int ber_write_octet_string_tag(STREAM* s, int length);
 FREERDP_API int ber_skip_octet_string(int length);
 FREERDP_API BOOL ber_read_BOOL(STREAM* s, BOOL* value);
 FREERDP_API void ber_write_BOOL(STREAM* s, BOOL value);
-FREERDP_API BOOL ber_read_integer(STREAM* s, uint32* value);
-FREERDP_API int ber_write_integer(STREAM* s, uint32 value);
+FREERDP_API BOOL ber_read_integer(STREAM* s, UINT32* value);
+FREERDP_API int ber_write_integer(STREAM* s, UINT32 value);
 FREERDP_API BOOL ber_read_integer_length(STREAM* s, int* length);
-FREERDP_API int ber_skip_integer(uint32 value);
+FREERDP_API int ber_skip_integer(UINT32 value);
 
 #endif /* FREERDP_CRYPTO_BER_H */

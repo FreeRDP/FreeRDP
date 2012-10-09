@@ -72,7 +72,7 @@
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
 { \
-	uint32 _v = _val; \
+	UINT32 _v = _val; \
 	_nbits = 0; \
 	while (_v) \
 	{ \
@@ -150,7 +150,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buff
 		if (k)
 		{
 			int mag;
-			uint32 sign;
+			UINT32 sign;
 
 			/* RL MODE */
 			while (!rfx_bitstream_eos(bs))
@@ -179,14 +179,14 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buff
 		}
 		else
 		{
-			uint32 mag;
-			uint32 nIdx;
-			uint32 val1;
-			uint32 val2;
+			UINT32 mag;
+			UINT32 nIdx;
+			UINT32 val1;
+			UINT32 val2;
 
 			/* GR (GOLOMB-RICE) MODE */
 			GetGRCode(&krp, &kr, vk, mag16) /* values coded are 2 * magnitude - sign */
-			mag = (uint32) mag16;
+			mag = (UINT32) mag16;
 
 			if (mode == RLGR1)
 			{
@@ -271,13 +271,13 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buff
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
 
-static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, uint32 val)
+static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 {
 	int kr = *krp >> LSGR;
 
 	/* unary part of GR code */
 
-	uint32 vk = (val) >> kr;
+	UINT32 vk = (val) >> kr;
 	OutputBit(vk, 1);
 	OutputBit(1, 0);
 
@@ -371,7 +371,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buff
 
 			if (mode == RLGR1)
 			{
-				uint32 twoMs;
+				UINT32 twoMs;
 
 				/* RLGR1 variant */
 
@@ -394,10 +394,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buff
 			}
 			else /* mode == RLGR3 */
 			{
-				uint32 twoMs1;
-				uint32 twoMs2;
-				uint32 sum2Ms;
-				uint32 nIdx;
+				UINT32 twoMs1;
+				UINT32 twoMs2;
+				UINT32 sum2Ms;
+				UINT32 nIdx;
 
 				/* RLGR3 variant */
 

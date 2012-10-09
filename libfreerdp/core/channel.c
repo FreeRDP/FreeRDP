@@ -37,7 +37,7 @@
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 {
 	STREAM* s;
-	uint32 flags;
+	UINT32 flags;
 	int i, left;
 	int chunk_size;
 	rdpChannel* channel = NULL;
@@ -77,8 +77,8 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}
 
-		stream_write_uint32(s, size);
-		stream_write_uint32(s, flags);
+		stream_write_UINT32(s, size);
+		stream_write_UINT32(s, flags);
 		stream_check_size(s, chunk_size);
 		stream_write(s, data, chunk_size);
 
@@ -94,12 +94,12 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 
 void freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 {
-	uint32 length;
-	uint32 flags;
+	UINT32 length;
+	UINT32 flags;
 	int chunk_length;
 
-	stream_read_uint32(s, length);
-	stream_read_uint32(s, flags);
+	stream_read_UINT32(s, length);
+	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(instance->ReceiveChannelData, instance,
@@ -108,12 +108,12 @@ void freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 
 void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, UINT16 channel_id)
 {
-	uint32 length;
-	uint32 flags;
+	UINT32 length;
+	UINT32 flags;
 	int chunk_length;
 
-	stream_read_uint32(s, length);
-	stream_read_uint32(s, flags);
+	stream_read_UINT32(s, length);
+	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(client->ReceiveChannelData, client,

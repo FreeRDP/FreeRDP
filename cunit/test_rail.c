@@ -411,7 +411,7 @@ typedef struct
 typedef struct
 {
 	RAIL_ORDERS order_info;
-	uint32 event_type;
+	UINT32 event_type;
 }
 RAIL_EVENT;
 

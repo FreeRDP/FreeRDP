@@ -21,7 +21,7 @@
 #define __TSMF_MAIN_H
 
 void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 message_id, uint64 duration, uint32 data_size);
+	UINT32 message_id, UINT64 duration, UINT32 data_size);
 BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback,
 	RDP_EVENT* event);
 

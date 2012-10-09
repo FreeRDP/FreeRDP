@@ -25,7 +25,7 @@
 
 #include "redirection.h"
 
-void rdp_print_redirection_flags(uint32 flags)
+void rdp_print_redirection_flags(UINT32 flags)
 {
 	printf("redirectionFlags = {\n");
 
@@ -67,8 +67,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	stream_read_UINT16(s, flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, length); /* length (2 bytes) */
-	stream_read_uint32(s, redirection->sessionID); /* sessionID (4 bytes) */
-	stream_read_uint32(s, redirection->flags); /* redirFlags (4 bytes) */
+	stream_read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
+	stream_read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
 
 	DEBUG_REDIR("flags: 0x%04X, length:%d, sessionID:0x%08X", flags, length, redirection->sessionID);
 
@@ -84,7 +84,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		stream_read_uint32(s, redirection->LoadBalanceInfoLength);
+		stream_read_UINT32(s, redirection->LoadBalanceInfoLength);
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
 		stream_read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #ifdef WITH_DEBUG_REDIR
@@ -108,7 +108,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		/* Note: length (hopefully) includes double zero termination */
-		stream_read_uint32(s, redirection->PasswordCookieLength);
+		stream_read_UINT32(s, redirection->PasswordCookieLength);
 		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
 		stream_read(s, redirection->PasswordCookie, redirection->PasswordCookieLength);
 
@@ -139,12 +139,12 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
 		int i;
-		uint32 count;
-		uint32 targetNetAddressesLength;
+		UINT32 count;
+		UINT32 targetNetAddressesLength;
 
-		stream_read_uint32(s, targetNetAddressesLength);
+		stream_read_UINT32(s, targetNetAddressesLength);
 
-		stream_read_uint32(s, redirection->targetNetAddressesCount);
+		stream_read_UINT32(s, redirection->targetNetAddressesCount);
 		count = redirection->targetNetAddressesCount;
 
 		redirection->targetNetAddresses = (rdpString*) xzalloc(count * sizeof(rdpString));

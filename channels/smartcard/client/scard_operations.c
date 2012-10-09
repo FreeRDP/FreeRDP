@@ -84,10 +84,10 @@
 #define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
 
-static uint32 sc_output_string(IRP* irp, char *src, BOOL wide)
+static UINT32 sc_output_string(IRP* irp, char *src, BOOL wide)
 {
 	BYTE* p;
-	uint32 len;
+	UINT32 len;
 
 	p = stream_get_tail(irp->output);
 	len = strlen(src) + 1;
@@ -113,29 +113,29 @@ static uint32 sc_output_string(IRP* irp, char *src, BOOL wide)
 	return len;
 }
 
-static void sc_output_alignment(IRP *irp, uint32 seed)
+static void sc_output_alignment(IRP *irp, UINT32 seed)
 {
-	const uint32 field_lengths = 20;/* Remove the lengths of the fields
+	const UINT32 field_lengths = 20;/* Remove the lengths of the fields
 					 * RDPDR_HEADER, DeviceID,
 					 * CompletionID, and IoStatus
 					 * of Section 2.2.1.5.5 of MS-RDPEFS.
 					 */
-	uint32 size = stream_get_length(irp->output) - field_lengths;
-	uint32 add = (seed - (size % seed)) % seed;
+	UINT32 size = stream_get_length(irp->output) - field_lengths;
+	UINT32 add = (seed - (size % seed)) % seed;
 
 	if (add > 0)
 		stream_write_zero(irp->output, add);
 }
 
-static void sc_output_repos(IRP* irp, uint32 written)
+static void sc_output_repos(IRP* irp, UINT32 written)
 {
-	uint32 add = (4 - (written % 4)) % 4;
+	UINT32 add = (4 - (written % 4)) % 4;
 
 	if (add > 0)
 		stream_write_zero(irp->output, add);
 }
 
-static uint32 sc_output_return(IRP* irp, uint32 rv)
+static UINT32 sc_output_return(IRP* irp, UINT32 rv)
 {
 	stream_write_zero(irp->output, 256);
 	return rv;
@@ -145,11 +145,11 @@ static void sc_output_buffer_limit(IRP* irp, char *buffer, unsigned int length, 
 {
 	int header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
 
-	stream_write_uint32(irp->output, header);
+	stream_write_UINT32(irp->output, header);
 
 	if (length <= 0)
 	{
-		stream_write_uint32(irp->output, 0);
+		stream_write_UINT32(irp->output, 0);
 	}
 	else
 	{
@@ -170,8 +170,8 @@ static void sc_output_buffer_start_limit(IRP *irp, int length, int highLimit)
 {
 	int header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
 
-	stream_write_uint32(irp->output, header);
-	stream_write_uint32(irp->output, 0x00000001);	/* Magic DWORD - any non zero */
+	stream_write_UINT32(irp->output, header);
+	stream_write_UINT32(irp->output, 0x00000001);	/* Magic DWORD - any non zero */
 }
 
 static void sc_output_buffer_start(IRP *irp, int length)
@@ -179,7 +179,7 @@ static void sc_output_buffer_start(IRP *irp, int length)
 	sc_output_buffer_start_limit(irp, length, 0x7FFFFFFF);
 }
 
-static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, BOOL wide)
+static UINT32 sc_input_string(IRP* irp, char **dest, UINT32 dataLength, BOOL wide)
 {
 	char* buffer;
 	int bufferSize;
@@ -207,9 +207,9 @@ static uint32 sc_input_string(IRP* irp, char **dest, uint32 dataLength, BOOL wid
 	return bufferSize;
 }
 
-static void sc_input_repos(IRP* irp, uint32 read)
+static void sc_input_repos(IRP* irp, UINT32 read)
 {
-	uint32 add = 4 - (read % 4);
+	UINT32 add = 4 - (read % 4);
 
 	if (add < 4 && add > 0)
 		stream_seek(irp->input, add);
@@ -217,10 +217,10 @@ static void sc_input_repos(IRP* irp, uint32 read)
 
 static void sc_input_reader_name(IRP* irp, char **dest, BOOL wide)
 {
-	uint32 dataLength;
+	UINT32 dataLength;
 
 	stream_seek(irp->input, 8);
-	stream_read_uint32(irp->input, dataLength);
+	stream_read_UINT32(irp->input, dataLength);
 
 	DEBUG_SCARD("datalength %d", dataLength);
 	sc_input_repos(irp, sc_input_string(irp, dest, dataLength, wide));
@@ -228,8 +228,8 @@ static void sc_input_reader_name(IRP* irp, char **dest, BOOL wide)
 
 static void sc_input_skip_linked(IRP* irp)
 {
-	uint32 len;
-	stream_read_uint32(irp->input, len);
+	UINT32 len;
+	stream_read_UINT32(irp->input, len);
 
 	if (len > 0)
 	{
@@ -238,7 +238,7 @@ static void sc_input_skip_linked(IRP* irp)
 	}
 }
 
-static uint32 sc_map_state(uint32 state)
+static UINT32 sc_map_state(UINT32 state)
 {
 	/* is this mapping still needed? */
 
@@ -260,28 +260,28 @@ static uint32 sc_map_state(uint32 state)
 	return state;
 }
 
-static uint32 handle_EstablishContext(IRP* irp)
+static UINT32 handle_EstablishContext(IRP* irp)
 {
-	uint32 len, rv;
-	uint32 scope;
+	UINT32 len, rv;
+	UINT32 scope;
 	SCARDCONTEXT hContext = -1;
 
 	stream_seek(irp->input, 8);
-	stream_read_uint32(irp->input, len);
+	stream_read_UINT32(irp->input, len);
 
 	if (len != 8)
 		return SCARD_F_INTERNAL_ERROR;
 
-	stream_seek_uint32(irp->input);
-	stream_read_uint32(irp->input, scope);
+	stream_seek_UINT32(irp->input);
+	stream_read_UINT32(irp->input, scope);
 
 	rv = SCardEstablishContext(scope, NULL, NULL, &hContext);
 
-	stream_write_uint32(irp->output, 4);	// cbContext
-	stream_write_uint32(irp->output, -1);	// ReferentID
+	stream_write_UINT32(irp->output, 4);	// cbContext
+	stream_write_UINT32(irp->output, -1);	// ReferentID
 
-	stream_write_uint32(irp->output, 4);
-	stream_write_uint32(irp->output, hContext);
+	stream_write_UINT32(irp->output, 4);
+	stream_write_UINT32(irp->output, hContext);
 
 	/* TODO: store hContext in allowed context list */
 
@@ -289,16 +289,16 @@ static uint32 handle_EstablishContext(IRP* irp)
 	return SCARD_S_SUCCESS;
 }
 
-static uint32 handle_ReleaseContext(IRP* irp)
+static UINT32 handle_ReleaseContext(IRP* irp)
 {
-	uint32 len, rv;
+	UINT32 len, rv;
 	SCARDCONTEXT hContext = -1;
 
 	stream_seek(irp->input, 8);
-	stream_read_uint32(irp->input, len);
+	stream_read_UINT32(irp->input, len);
 
 	stream_seek(irp->input, 0x10);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	rv = SCardReleaseContext(hContext);
 	if (rv)
@@ -310,13 +310,13 @@ static uint32 handle_ReleaseContext(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_IsValidContext(IRP* irp)
+static UINT32 handle_IsValidContext(IRP* irp)
 {
-	uint32 rv;
+	UINT32 rv;
 	SCARDCONTEXT hContext;
 
 	stream_seek(irp->input, 0x1C);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	rv = SCardIsValidContext(hContext);
 
@@ -330,9 +330,9 @@ static uint32 handle_IsValidContext(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_ListReaders(IRP* irp, BOOL wide)
+static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 {
-	uint32 len, rv;
+	UINT32 len, rv;
 	SCARDCONTEXT hContext;
 	DWORD dwReaders;
 	char *readerList = NULL, *walker;
@@ -340,15 +340,15 @@ static uint32 handle_ListReaders(IRP* irp, BOOL wide)
 	int pos, poslen1, poslen2;
 
 	stream_seek(irp->input, 8);
-	stream_read_uint32(irp->input, len);
+	stream_read_UINT32(irp->input, len);
 
 	stream_seek(irp->input, 0x1c);
-	stream_read_uint32(irp->input, len);
+	stream_read_UINT32(irp->input, len);
 
 	if (len != 4)
 		return SCARD_F_INTERNAL_ERROR;
 
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	/* ignore rest of [MS-RDPESC] 2.2.2.4 ListReaders_Call */
 
@@ -371,12 +371,12 @@ static uint32 handle_ListReaders(IRP* irp, BOOL wide)
 /*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
 
 	poslen1 = stream_get_pos(irp->output);
-	stream_seek_uint32(irp->output);
+	stream_seek_UINT32(irp->output);
 
-	stream_write_uint32(irp->output, 0x01760650);
+	stream_write_UINT32(irp->output, 0x01760650);
 
 	poslen2 = stream_get_pos(irp->output);
-	stream_seek_uint32(irp->output);
+	stream_seek_UINT32(irp->output);
 
 	walker = readerList;
 	dataLength = 0;
@@ -397,9 +397,9 @@ static uint32 handle_ListReaders(IRP* irp, BOOL wide)
 	pos = stream_get_pos(irp->output);
 
 	stream_set_pos(irp->output, poslen1);
-	stream_write_uint32(irp->output, dataLength);
+	stream_write_UINT32(irp->output, dataLength);
 	stream_set_pos(irp->output, poslen2);
-	stream_write_uint32(irp->output, dataLength);
+	stream_write_UINT32(irp->output, dataLength);
 
 	stream_set_pos(irp->output, pos);
 
@@ -415,7 +415,7 @@ static uint32 handle_ListReaders(IRP* irp, BOOL wide)
 	return rv;
 }
 
-static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
+static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -425,12 +425,12 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 	int i;
 
 	stream_seek(irp->input, 0x18);
-	stream_read_uint32(irp->input, dwTimeout);
-	stream_read_uint32(irp->input, readerCount);
+	stream_read_UINT32(irp->input, dwTimeout);
+	stream_read_UINT32(irp->input, readerCount);
 
 	stream_seek(irp->input, 8);
 
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	stream_seek(irp->input, 4);
 
@@ -454,9 +454,9 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 			 * convert to host endian or fix the headers to
 			 * request the order we want
 			 */
-			stream_read_uint32(irp->input, cur->dwCurrentState);
-			stream_read_uint32(irp->input, cur->dwEventState);
-			stream_read_uint32(irp->input, cur->cbAtr);
+			stream_read_UINT32(irp->input, cur->dwCurrentState);
+			stream_read_UINT32(irp->input, cur->dwEventState);
+			stream_read_UINT32(irp->input, cur->cbAtr);
 			stream_read(irp->input, cur->rgbAtr, 32);
 
 			stream_seek(irp->input, 4);
@@ -469,10 +469,10 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		for (i = 0; i < readerCount; i++)
 		{
 			cur = &readerStates[i];
-			uint32 dataLength;
+			UINT32 dataLength;
 
 			stream_seek(irp->input, 8);
-			stream_read_uint32(irp->input, dataLength);
+			stream_read_UINT32(irp->input, dataLength);
 			sc_input_repos(irp, sc_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
 			DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
@@ -496,9 +496,9 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 	else
 		DEBUG_SCARD("Success");
 
-	stream_write_uint32(irp->output, readerCount);
-	stream_write_uint32(irp->output, 0x00084dd8);
-	stream_write_uint32(irp->output, readerCount);
+	stream_write_UINT32(irp->output, readerCount);
+	stream_write_UINT32(irp->output, 0x00084dd8);
+	stream_write_UINT32(irp->output, readerCount);
 
 	for (i = 0; i < readerCount; i++)
 	{
@@ -510,9 +510,9 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 			(unsigned) cur->dwEventState);
 
 		/* TODO: do byte conversions if necessary */
-		stream_write_uint32(irp->output, cur->dwCurrentState);
-		stream_write_uint32(irp->output, cur->dwEventState);
-		stream_write_uint32(irp->output, cur->cbAtr);
+		stream_write_UINT32(irp->output, cur->dwCurrentState);
+		stream_write_UINT32(irp->output, cur->dwEventState);
+		stream_write_UINT32(irp->output, cur->cbAtr);
 		stream_write(irp->output, cur->rgbAtr, 32);
 
 		stream_write_zero(irp->output, 4);
@@ -526,13 +526,13 @@ static uint32 handle_GetStatusChange(IRP* irp, BOOL wide)
 	return rv;
 }
 
-static uint32 handle_Cancel(IRP *irp)
+static UINT32 handle_Cancel(IRP *irp)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
 
 	stream_seek(irp->input, 0x1C);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	rv = SCardCancel(hContext);
 
@@ -546,7 +546,7 @@ static uint32 handle_Cancel(IRP *irp)
 	return rv;
 }
 
-static uint32 handle_Connect(IRP* irp, BOOL wide)
+static UINT32 handle_Connect(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -557,13 +557,13 @@ static uint32 handle_Connect(IRP* irp, BOOL wide)
 	SCARDHANDLE hCard;
 
 	stream_seek(irp->input, 0x1c);
-	stream_read_uint32(irp->input, dwShareMode);
-	stream_read_uint32(irp->input, dwPreferredProtocol);
+	stream_read_UINT32(irp->input, dwShareMode);
+	stream_read_UINT32(irp->input, dwPreferredProtocol);
 
 	sc_input_reader_name(irp, &readerName, wide);
 
 	stream_seek(irp->input, 4);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 
 	DEBUG_SCARD("(context: 0x%08x, share: 0x%08x, proto: 0x%08x, reader: \"%s\")",
 		(unsigned) hContext, (unsigned) dwShareMode,
@@ -577,13 +577,13 @@ static uint32 handle_Connect(IRP* irp, BOOL wide)
 	else
 		DEBUG_SCARD("Success 0x%08x", (unsigned) hCard);
 
-	stream_write_uint32(irp->output, 0x00000000);
-	stream_write_uint32(irp->output, 0x00000000);
-	stream_write_uint32(irp->output, 0x00000004);
-	stream_write_uint32(irp->output, 0x016Cff34);
-	stream_write_uint32(irp->output, dwActiveProtocol);
-	stream_write_uint32(irp->output, 0x00000004);
-	stream_write_uint32(irp->output, hCard);
+	stream_write_UINT32(irp->output, 0x00000000);
+	stream_write_UINT32(irp->output, 0x00000000);
+	stream_write_UINT32(irp->output, 0x00000004);
+	stream_write_UINT32(irp->output, 0x016Cff34);
+	stream_write_UINT32(irp->output, dwActiveProtocol);
+	stream_write_UINT32(irp->output, 0x00000004);
+	stream_write_UINT32(irp->output, hCard);
 
 	sc_output_alignment(irp, 8);
 
@@ -591,7 +591,7 @@ static uint32 handle_Connect(IRP* irp, BOOL wide)
 	return rv;
 }
 
-static uint32 handle_Reconnect(IRP* irp)
+static UINT32 handle_Reconnect(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -602,14 +602,14 @@ static uint32 handle_Reconnect(IRP* irp)
 	DWORD dwActiveProtocol = 0;
 
 	stream_seek(irp->input, 0x20);
-	stream_read_uint32(irp->input, dwShareMode);
-	stream_read_uint32(irp->input, dwPreferredProtocol);
-	stream_read_uint32(irp->input, dwInitialization);
+	stream_read_UINT32(irp->input, dwShareMode);
+	stream_read_UINT32(irp->input, dwPreferredProtocol);
+	stream_read_UINT32(irp->input, dwInitialization);
 
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, share: 0x%08x, proto: 0x%08x, init: 0x%08x)",
 		(unsigned) hContext, (unsigned) hCard,
@@ -623,13 +623,13 @@ static uint32 handle_Reconnect(IRP* irp)
 	else
 		DEBUG_SCARD("Success (proto: 0x%08x)", (unsigned) dwActiveProtocol);
 
-	stream_write_uint32(irp->output, dwActiveProtocol);
+	stream_write_UINT32(irp->output, dwActiveProtocol);
 	sc_output_alignment(irp, 8);
 
 	return rv;
 }
 
-static uint32 handle_Disconnect(IRP* irp)
+static UINT32 handle_Disconnect(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
@@ -637,11 +637,11 @@ static uint32 handle_Disconnect(IRP* irp)
 	DWORD dwDisposition = 0;
 
 	stream_seek(irp->input, 0x20);
-	stream_read_uint32(irp->input, dwDisposition);
+	stream_read_UINT32(irp->input, dwDisposition);
 	stream_seek(irp->input, 4);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 	stream_seek(irp->input, 4);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, disposition: 0x%08x)",
 		(unsigned) hContext, (unsigned) hCard, (unsigned) dwDisposition);
@@ -658,13 +658,13 @@ static uint32 handle_Disconnect(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_BeginTransaction(IRP* irp)
+static UINT32 handle_BeginTransaction(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hCard;
 
 	stream_seek(irp->input, 0x30);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	rv = SCardBeginTransaction(hCard);
 
@@ -678,17 +678,17 @@ static uint32 handle_BeginTransaction(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_EndTransaction(IRP* irp)
+static UINT32 handle_EndTransaction(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hCard;
 	DWORD dwDisposition = 0;
 
 	stream_seek(irp->input, 0x20);
-	stream_read_uint32(irp->input, dwDisposition);
+	stream_read_UINT32(irp->input, dwDisposition);
 
 	stream_seek(irp->input, 0x0C);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	rv = SCardEndTransaction(hCard, dwDisposition);
 
@@ -702,7 +702,7 @@ static uint32 handle_EndTransaction(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_State(IRP* irp)
+static UINT32 handle_State(IRP* irp)
 {
 	LONG rv;
 	SCARDHANDLE hCard;
@@ -717,10 +717,10 @@ static uint32 handle_State(IRP* irp)
 #endif
 
 	stream_seek(irp->input, 0x24);
-	stream_seek_uint32(irp->input);	/* atrLen */
+	stream_seek_UINT32(irp->input);	/* atrLen */
 
 	stream_seek(irp->input, 0x0c);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 	stream_seek(irp->input, 0x04);
 
 #ifdef SCARD_AUTOALLOCATE
@@ -752,11 +752,11 @@ static uint32 handle_State(IRP* irp)
 
 	state = sc_map_state(state);
 
-	stream_write_uint32(irp->output, state);
-	stream_write_uint32(irp->output, protocol);
-	stream_write_uint32(irp->output, atrLen);
-	stream_write_uint32(irp->output, 0x00000001);
-	stream_write_uint32(irp->output, atrLen);
+	stream_write_UINT32(irp->output, state);
+	stream_write_UINT32(irp->output, protocol);
+	stream_write_UINT32(irp->output, atrLen);
+	stream_write_UINT32(irp->output, 0x00000001);
+	stream_write_UINT32(irp->output, atrLen);
 	stream_write(irp->output, pbAtr, atrLen);
 
 	sc_output_repos(irp, atrLen);
@@ -780,7 +780,7 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	DWORD atrLen = 0;
 	char * readerName;
 	BYTE pbAtr[MAX_ATR_SIZE];
-	uint32 dataLength;
+	UINT32 dataLength;
 	int pos, poslen1, poslen2;
 
 #ifdef WITH_DEBUG_SCARD
@@ -788,10 +788,10 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 #endif
 
 	stream_seek(irp->input, 0x24);
-	stream_read_uint32(irp->input, readerLen);
-	stream_read_uint32(irp->input, atrLen);
+	stream_read_UINT32(irp->input, readerLen);
+	stream_read_UINT32(irp->input, atrLen);
 	stream_seek(irp->input, 0x0c);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 	stream_seek(irp->input, 0x4);
 
 	atrLen = MAX_ATR_SIZE;
@@ -826,18 +826,18 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	state = sc_map_state(state);
 
 	poslen1 = stream_get_pos(irp->output);
-	stream_write_uint32(irp->output, readerLen);
-	stream_write_uint32(irp->output, 0x00020000);
-	stream_write_uint32(irp->output, state);
-	stream_write_uint32(irp->output, protocol);
+	stream_write_UINT32(irp->output, readerLen);
+	stream_write_UINT32(irp->output, 0x00020000);
+	stream_write_UINT32(irp->output, state);
+	stream_write_UINT32(irp->output, protocol);
 	stream_write(irp->output, pbAtr, atrLen);
 
 	if (atrLen < 32)
 		stream_write_zero(irp->output, 32 - atrLen);
-	stream_write_uint32(irp->output, atrLen);
+	stream_write_UINT32(irp->output, atrLen);
 
 	poslen2 = stream_get_pos(irp->output);
-	stream_write_uint32(irp->output, readerLen);
+	stream_write_UINT32(irp->output, readerLen);
 
 	dataLength = sc_output_string(irp, readerName, wide);
 	dataLength += sc_output_string(irp, "\0", wide);
@@ -845,9 +845,9 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 
 	pos = stream_get_pos(irp->output);
 	stream_set_pos(irp->output, poslen1);
-	stream_write_uint32(irp->output,dataLength);
+	stream_write_UINT32(irp->output,dataLength);
 	stream_set_pos(irp->output, poslen2);
-	stream_write_uint32(irp->output,dataLength);
+	stream_write_UINT32(irp->output,dataLength);
 	stream_set_pos(irp->output, pos);
 
 	sc_output_alignment(irp, 8);
@@ -862,42 +862,42 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	return rv;
 }
 
-static uint32 handle_Transmit(IRP* irp)
+static UINT32 handle_Transmit(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hCard;
-	uint32 map[7], linkedLen;
+	UINT32 map[7], linkedLen;
 	SCARD_IO_REQUEST pioSendPci, pioRecvPci, *pPioRecvPci;
 	DWORD cbSendLength = 0, cbRecvLength = 0;
 	BYTE *sendBuf = NULL, *recvBuf = NULL;
 
 	stream_seek(irp->input, 0x14);
-	stream_read_uint32(irp->input, map[0]);
+	stream_read_UINT32(irp->input, map[0]);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, map[1]);
+	stream_read_UINT32(irp->input, map[1]);
 
-	stream_read_uint32(irp->input, pioSendPci.dwProtocol);
-	stream_read_uint32(irp->input, pioSendPci.cbPciLength);
+	stream_read_UINT32(irp->input, pioSendPci.dwProtocol);
+	stream_read_UINT32(irp->input, pioSendPci.cbPciLength);
 
-	stream_read_uint32(irp->input, map[2]);
-	stream_read_uint32(irp->input, cbSendLength);
-	stream_read_uint32(irp->input, map[3]);
-	stream_read_uint32(irp->input, map[4]);
-	stream_read_uint32(irp->input, map[5]);
-	stream_read_uint32(irp->input, cbRecvLength);
+	stream_read_UINT32(irp->input, map[2]);
+	stream_read_UINT32(irp->input, cbSendLength);
+	stream_read_UINT32(irp->input, map[3]);
+	stream_read_UINT32(irp->input, map[4]);
+	stream_read_UINT32(irp->input, map[5]);
+	stream_read_UINT32(irp->input, cbRecvLength);
 
 	if (map[0] & SCARD_INPUT_LINKED)
 		sc_input_skip_linked(irp);
 
 	stream_seek(irp->input, 4);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	if (map[2] & SCARD_INPUT_LINKED)
 	{
 		/* sendPci */
-		stream_read_uint32(irp->input, linkedLen);
+		stream_read_UINT32(irp->input, linkedLen);
 
-		stream_read_uint32(irp->input, pioSendPci.dwProtocol);
+		stream_read_UINT32(irp->input, pioSendPci.dwProtocol);
 		stream_seek(irp->input, linkedLen - 4);
 
 		sc_input_repos(irp, linkedLen);
@@ -907,7 +907,7 @@ static uint32 handle_Transmit(IRP* irp)
 	if (map[3] & SCARD_INPUT_LINKED)
 	{
 		/* send buffer */
-		stream_read_uint32(irp->input, linkedLen);
+		stream_read_UINT32(irp->input, linkedLen);
 
 		sendBuf = malloc(linkedLen);
 		stream_read(irp->input, sendBuf, linkedLen);
@@ -920,18 +920,18 @@ static uint32 handle_Transmit(IRP* irp)
 	if (map[4] & SCARD_INPUT_LINKED)
 	{
 		/* recvPci */
-		stream_read_uint32(irp->input, linkedLen);
+		stream_read_UINT32(irp->input, linkedLen);
 
-		stream_read_uint32(irp->input, pioRecvPci.dwProtocol);
+		stream_read_UINT32(irp->input, pioRecvPci.dwProtocol);
 		stream_seek(irp->input, linkedLen - 4);
 
 		sc_input_repos(irp, linkedLen);
 
-		stream_read_uint32(irp->input, map[6]);
+		stream_read_UINT32(irp->input, map[6]);
 		if (map[6] & SCARD_INPUT_LINKED)
 		{
 			/* not sure what this is */
-			stream_read_uint32(irp->input, linkedLen);
+			stream_read_UINT32(irp->input, linkedLen);
 			stream_seek(irp->input, linkedLen);
 
 			sc_input_repos(irp, linkedLen);
@@ -959,7 +959,7 @@ static uint32 handle_Transmit(IRP* irp)
 	{
 		DEBUG_SCARD("Success (%d bytes)", (int) cbRecvLength);
 
-		stream_write_uint32(irp->output, 0); 	/* pioRecvPci 0x00; */
+		stream_write_UINT32(irp->output, 0); 	/* pioRecvPci 0x00; */
 
 		sc_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
 
@@ -974,32 +974,32 @@ static uint32 handle_Transmit(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_Control(IRP* irp)
+static UINT32 handle_Control(IRP* irp)
 {
 	LONG rv;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
-	uint32 map[3];
-	uint32 controlCode;
-	uint32 controlFunction;
+	UINT32 map[3];
+	UINT32 controlCode;
+	UINT32 controlFunction;
 	BYTE *recvBuffer = NULL, *sendBuffer = NULL;
-	uint32 recvLength;
+	UINT32 recvLength;
 	DWORD nBytesReturned;
 	DWORD outBufferSize;
 
 	stream_seek(irp->input, 0x14);
-	stream_read_uint32(irp->input, map[0]);
+	stream_read_UINT32(irp->input, map[0]);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, map[1]);
-	stream_read_uint32(irp->input, controlCode);
-	stream_read_uint32(irp->input, recvLength);
-	stream_read_uint32(irp->input, map[2]);
+	stream_read_UINT32(irp->input, map[1]);
+	stream_read_UINT32(irp->input, controlCode);
+	stream_read_UINT32(irp->input, recvLength);
+	stream_read_UINT32(irp->input, map[2]);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, outBufferSize);
+	stream_read_UINT32(irp->input, outBufferSize);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, hContext);
+	stream_read_UINT32(irp->input, hContext);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	/* Translate Windows SCARD_CTL_CODE's to corresponding local code */
 	if (WIN_CTL_DEVICE_TYPE(controlCode) == WIN_FILE_DEVICE_SMARTCARD)
@@ -1012,7 +1012,7 @@ static uint32 handle_Control(IRP* irp)
 	if (map[2] & SCARD_INPUT_LINKED)
 	{
 		/* read real input size */
-		stream_read_uint32(irp->input, recvLength);
+		stream_read_UINT32(irp->input, recvLength);
 
 		recvBuffer = malloc(recvLength);
 
@@ -1036,9 +1036,9 @@ static uint32 handle_Control(IRP* irp)
 	else
 		DEBUG_SCARD("Success (out: %u bytes)", (unsigned) nBytesReturned);
 
-	stream_write_uint32(irp->output, (uint32) nBytesReturned);
-	stream_write_uint32(irp->output, 0x00000004);
-	stream_write_uint32(irp->output, nBytesReturned);
+	stream_write_UINT32(irp->output, (UINT32) nBytesReturned);
+	stream_write_UINT32(irp->output, 0x00000004);
+	stream_write_UINT32(irp->output, nBytesReturned);
 
 	if (nBytesReturned > 0)
 	{
@@ -1054,7 +1054,7 @@ static uint32 handle_Control(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_GetAttrib(IRP* irp)
+static UINT32 handle_GetAttrib(IRP* irp)
 {
 	LONG rv;
 	SCARDHANDLE hCard;
@@ -1063,11 +1063,11 @@ static uint32 handle_GetAttrib(IRP* irp)
 	BYTE* pbAttr = NULL;
 
 	stream_seek(irp->input, 0x20);
-	stream_read_uint32(irp->input, dwAttrId);
+	stream_read_UINT32(irp->input, dwAttrId);
 	stream_seek(irp->input, 0x4);
-	stream_read_uint32(irp->input, dwAttrLen);
+	stream_read_UINT32(irp->input, dwAttrLen);
 	stream_seek(irp->input, 0xC);
-	stream_read_uint32(irp->input, hCard);
+	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)",
 		(unsigned) hCard, (unsigned) dwAttrId, (int) dwAttrLen);
@@ -1147,9 +1147,9 @@ static uint32 handle_GetAttrib(IRP* irp)
 	{
 		DEBUG_SCARD("Success (%d bytes)", (int) dwAttrLen);
 
-		stream_write_uint32(irp->output, dwAttrLen);
-		stream_write_uint32(irp->output, 0x00000200);
-		stream_write_uint32(irp->output, dwAttrLen);
+		stream_write_UINT32(irp->output, dwAttrLen);
+		stream_write_UINT32(irp->output, 0x00000200);
+		stream_write_UINT32(irp->output, dwAttrLen);
 
 		if (!pbAttr)
 		{
@@ -1161,7 +1161,7 @@ static uint32 handle_GetAttrib(IRP* irp)
 		}
 		sc_output_repos(irp, dwAttrLen);
 		/* align to multiple of 4 */
-		stream_write_uint32(irp->output, 0);
+		stream_write_UINT32(irp->output, 0);
 	}
 	sc_output_alignment(irp, 8);
 
@@ -1170,13 +1170,13 @@ static uint32 handle_GetAttrib(IRP* irp)
 	return rv;
 }
 
-static uint32 handle_AccessStartedEvent(IRP* irp)
+static UINT32 handle_AccessStartedEvent(IRP* irp)
 {
 	sc_output_alignment(irp, 8);
 	return SCARD_S_SUCCESS;
 }
 
-void scard_error(SCARD_DEVICE* scard, IRP* irp, uint32 ntstatus)
+void scard_error(SCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
 {
 	/* [MS-RDPESC] 3.1.4.4 */
 	printf("scard processing error %x\n", ntstatus);
@@ -1189,19 +1189,19 @@ void scard_error(SCARD_DEVICE* scard, IRP* irp, uint32 ntstatus)
 /* http://msdn.microsoft.com/en-gb/library/ms938473.aspx */
 typedef struct _SERVER_SCARD_ATRMASK
 {
-	uint32 cbAtr;
+	UINT32 cbAtr;
 	BYTE rgbAtr[36];
 	BYTE rgbMask[36];
 }
 SERVER_SCARD_ATRMASK;
 
-static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
+static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 {
 	LONG rv;
 	int i, j, k;
 	SCARDCONTEXT hContext;
-	uint32 atrMaskCount = 0;
-	uint32 readerCount = 0;
+	UINT32 atrMaskCount = 0;
+	UINT32 readerCount = 0;
 	SCARD_READERSTATE* cur = NULL;
 	SCARD_READERSTATE* rsCur = NULL;
 	SCARD_READERSTATE* readerStates = NULL;
@@ -1209,8 +1209,8 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	SERVER_SCARD_ATRMASK* pAtrMasks = NULL;
 
 	stream_seek(irp->input, 0x2C);
-	stream_read_uint32(irp->input, hContext);
-	stream_read_uint32(irp->input, atrMaskCount);
+	stream_read_UINT32(irp->input, hContext);
+	stream_read_UINT32(irp->input, atrMaskCount);
 
 	pAtrMasks = malloc(atrMaskCount * sizeof(SERVER_SCARD_ATRMASK));
 
@@ -1219,12 +1219,12 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 
 	for (i = 0; i < atrMaskCount; i++)
 	{
-		stream_read_uint32(irp->input, pAtrMasks[i].cbAtr);
+		stream_read_UINT32(irp->input, pAtrMasks[i].cbAtr);
 		stream_read(irp->input, pAtrMasks[i].rgbAtr, 36);
 		stream_read(irp->input, pAtrMasks[i].rgbMask, 36);
 	}
 
-	stream_read_uint32(irp->input, readerCount);
+	stream_read_UINT32(irp->input, readerCount);
 
 	readerStates = xzalloc(readerCount * sizeof(SCARD_READERSTATE));
 
@@ -1242,9 +1242,9 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		 * convert to host endian or fix the headers to
 		 * request the order we want
 		 */
-		stream_read_uint32(irp->input, cur->dwCurrentState);
-		stream_read_uint32(irp->input, cur->dwEventState);
-		stream_read_uint32(irp->input, cur->cbAtr);
+		stream_read_UINT32(irp->input, cur->dwCurrentState);
+		stream_read_UINT32(irp->input, cur->dwEventState);
+		stream_read_UINT32(irp->input, cur->cbAtr);
 		stream_read(irp->input, cur->rgbAtr, 32);
 
 		stream_seek(irp->input, 4);
@@ -1258,10 +1258,10 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	for (i = 0; i < readerCount; i++)
 	{
 		cur = &readerStates[i];
-		uint32 dataLength;
+		UINT32 dataLength;
 
 		stream_seek(irp->input, 8);
-		stream_read_uint32(irp->input, dataLength);
+		stream_read_UINT32(irp->input, dataLength);
 		sc_input_repos(irp, sc_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
 		DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
@@ -1304,15 +1304,15 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		}
 	}
 
-	stream_write_uint32(irp->output, readerCount);
-	stream_write_uint32(irp->output, 0x00084dd8);
-	stream_write_uint32(irp->output, readerCount);
+	stream_write_UINT32(irp->output, readerCount);
+	stream_write_UINT32(irp->output, 0x00084dd8);
+	stream_write_UINT32(irp->output, readerCount);
 
 	for (i = 0, rsCur = readerStates; i < readerCount; i++, rsCur++)
 	{
-		stream_write_uint32(irp->output, cur->dwCurrentState);
-		stream_write_uint32(irp->output, cur->dwEventState);
-		stream_write_uint32(irp->output, cur->cbAtr);
+		stream_write_UINT32(irp->output, cur->dwCurrentState);
+		stream_write_UINT32(irp->output, cur->dwEventState);
+		stream_write_UINT32(irp->output, cur->cbAtr);
 		stream_write(irp->output, cur->rgbAtr, 32);
 
 		stream_write_zero(irp->output, 4);
@@ -1329,11 +1329,11 @@ static uint32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 
 BOOL scard_async_op(IRP* irp)
 {
-	uint32 ioctl_code;
+	UINT32 ioctl_code;
 
 	/* peek ahead */
 	stream_seek(irp->input, 8);
-	stream_read_uint32(irp->input, ioctl_code);
+	stream_read_UINT32(irp->input, ioctl_code);
 	stream_rewind(irp->input, 12);
 
 	switch (ioctl_code)
@@ -1369,22 +1369,22 @@ BOOL scard_async_op(IRP* irp)
 
 void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 {
-	uint32 pos;
-	uint32 result;
-	uint32 result_pos;
-	uint32 output_len;
-	uint32 input_len;
-	uint32 ioctl_code;
-	uint32 stream_len;
-	uint32 irp_result_pos;
-	uint32 output_len_pos;
-	const uint32 header_lengths = 16;	/* MS-RPCE, Sections 2.2.6.1
+	UINT32 pos;
+	UINT32 result;
+	UINT32 result_pos;
+	UINT32 output_len;
+	UINT32 input_len;
+	UINT32 ioctl_code;
+	UINT32 stream_len;
+	UINT32 irp_result_pos;
+	UINT32 output_len_pos;
+	const UINT32 header_lengths = 16;	/* MS-RPCE, Sections 2.2.6.1
 						 * and 2.2.6.2.
 						 */
 
-	stream_read_uint32(irp->input, output_len);
-	stream_read_uint32(irp->input, input_len);
-	stream_read_uint32(irp->input, ioctl_code);
+	stream_read_UINT32(irp->input, output_len);
+	stream_read_UINT32(irp->input, input_len);
+	stream_read_UINT32(irp->input, ioctl_code);
 
 	stream_seek(irp->input, 20);	/* padding */
 
@@ -1397,20 +1397,20 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 
 	irp_result_pos = stream_get_pos(irp->output);
 
-	stream_write_uint32(irp->output, 0x00000000); 	/* MS-RDPEFS 
+	stream_write_UINT32(irp->output, 0x00000000); 	/* MS-RDPEFS 
 							 * OutputBufferLength
 							 * will be updated 
 							 * later in this 
 							 * function.
 							 */
 	/* [MS-RPCE] 2.2.6.1 */
-	stream_write_uint32(irp->output, 0x00081001); /* len 8, LE, v1 */
-	stream_write_uint32(irp->output, 0xcccccccc); /* filler */
+	stream_write_UINT32(irp->output, 0x00081001); /* len 8, LE, v1 */
+	stream_write_UINT32(irp->output, 0xcccccccc); /* filler */
 
 	output_len_pos = stream_get_pos(irp->output);
 	stream_seek(irp->output, 4);		/* size */
 
-	stream_write_uint32(irp->output, 0x0);	/* filler */
+	stream_write_UINT32(irp->output, 0x0);	/* filler */
 
 	result_pos = stream_get_pos(irp->output);
 	stream_seek(irp->output, 4);		/* result */
@@ -1530,16 +1530,16 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 	pos = stream_get_pos(irp->output);
 	stream_len = pos - irp_result_pos - 4;	/* Value of OutputBufferLength */
 	stream_set_pos(irp->output, irp_result_pos);
-	stream_write_uint32(irp->output, stream_len);
+	stream_write_UINT32(irp->output, stream_len);
 
 	stream_set_pos(irp->output, output_len_pos);
 	/* Remove the effect of the MS-RPCE Common Type Header and Private
 	 * Header (Sections 2.2.6.1 and 2.2.6.2).
 	 */
-	stream_write_uint32(irp->output, stream_len - header_lengths);
+	stream_write_UINT32(irp->output, stream_len - header_lengths);
 
 	stream_set_pos(irp->output, result_pos);
-	stream_write_uint32(irp->output, result);
+	stream_write_UINT32(irp->output, result);
 
 	stream_set_pos(irp->output, pos);
 

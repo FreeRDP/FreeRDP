@@ -24,7 +24,7 @@
 
 #include "xfreerdp.h"
 
-void xf_input_synchronize_event(rdpInput* input, uint32 flags);
+void xf_input_synchronize_event(rdpInput* input, UINT32 flags);
 void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
 void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
 void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);

@@ -28,14 +28,14 @@ struct _TSMF_IFMAN
 	const char* audio_name;
 	const char* audio_device;
 	BYTE presentation_id[16];
-	uint32 stream_id;
-	uint32 message_id;
+	UINT32 stream_id;
+	UINT32 message_id;
 
 	STREAM* input;
-	uint32 input_size;
+	UINT32 input_size;
 	STREAM* output;
 	BOOL output_pending;
-	uint32 output_interface_id;
+	UINT32 output_interface_id;
 };
 
 int tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman);

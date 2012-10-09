@@ -192,7 +192,7 @@ void security_licensing_encryption_key(BYTE* session_key_blob, BYTE* client_rand
 	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
 }
 
-void security_uint32_le(BYTE* output, uint32 value)
+void security_UINT32_le(BYTE* output, UINT32 value)
 {
 	output[0] = (value) & 0xFF;
 	output[1] = (value >> 8) & 0xFF;
@@ -200,7 +200,7 @@ void security_uint32_le(BYTE* output, uint32 value)
 	output[3] = (value >> 24) & 0xFF;
 }
 
-void security_mac_data(BYTE* mac_salt_key, BYTE* data, uint32 length, BYTE* output)
+void security_mac_data(BYTE* mac_salt_key, BYTE* data, UINT32 length, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -209,7 +209,7 @@ void security_mac_data(BYTE* mac_salt_key, BYTE* data, uint32 length, BYTE* outp
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1(MacSaltKey + pad1 + length + data)) */
 
-	security_uint32_le(length_le, length); /* length must be little-endian */
+	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
@@ -227,7 +227,7 @@ void security_mac_data(BYTE* mac_salt_key, BYTE* data, uint32 length, BYTE* outp
 	crypto_md5_final(md5, output);
 }
 
-void security_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BYTE* output)
+void security_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -235,7 +235,7 @@ void security_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BYTE* output
 	BYTE md5_digest[CRYPTO_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[CRYPTO_SHA1_DIGEST_LENGTH];
 
-	security_uint32_le(length_le, length); /* length must be little-endian */
+	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
@@ -255,7 +255,7 @@ void security_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BYTE* output
 	memcpy(output, md5_digest, 8);
 }
 
-void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BOOL encryption, BYTE* output)
+void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL encryption, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -264,10 +264,10 @@ void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BOOL 
 	BYTE md5_digest[CRYPTO_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[CRYPTO_SHA1_DIGEST_LENGTH];
 
-	security_uint32_le(length_le, length); /* length must be little-endian */
+	security_UINT32_le(length_le, length); /* length must be little-endian */
 	if (encryption)
 	{
-		security_uint32_le(use_count_le, rdp->encrypt_checksum_use_count);
+		security_UINT32_le(use_count_le, rdp->encrypt_checksum_use_count);
 	}
 	else
 	{
@@ -276,7 +276,7 @@ void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BOOL 
 		 * decrypt it, which means decrypt_checksum_use_count is
 		 * off by one.
 		 */
-		security_uint32_le(use_count_le, rdp->decrypt_checksum_use_count - 1);
+		security_UINT32_le(use_count_le, rdp->decrypt_checksum_use_count - 1);
 	}
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
@@ -500,7 +500,7 @@ void security_hmac_signature(BYTE* data, int length, BYTE* output, rdpRdp* rdp)
 	BYTE buf[20];
 	BYTE use_count_le[4];
 
-	security_uint32_le(use_count_le, rdp->encrypt_use_count);
+	security_UINT32_le(use_count_le, rdp->encrypt_use_count);
 
 	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
 	crypto_hmac_update(rdp->fips_hmac, data, length);
@@ -528,7 +528,7 @@ BOOL security_fips_check_signature(BYTE* data, int length, BYTE* sig, rdpRdp* rd
 	BYTE buf[20];
 	BYTE use_count_le[4];
 
-	security_uint32_le(use_count_le, rdp->decrypt_use_count);
+	security_UINT32_le(use_count_le, rdp->decrypt_use_count);
 
 	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
 	crypto_hmac_update(rdp->fips_hmac, data, length);

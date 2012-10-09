@@ -100,10 +100,10 @@ static void nsc_decode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_rle_decode(BYTE* in, BYTE* out, uint32 origsz)
+static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 origsz)
 {
-	uint32 len;
-	uint32 left;
+	UINT32 len;
+	UINT32 left;
 	BYTE value;
 
 	left = origsz;
@@ -121,13 +121,13 @@ static void nsc_rle_decode(BYTE* in, BYTE* out, uint32 origsz)
 			in++;
 			if (*in < 0xFF)
 			{
-				len = (uint32) *in++;
+				len = (UINT32) *in++;
 				len += 2;
 			}
 			else
 			{
 				in++;
-				len = *((uint32*) in);
+				len = *((UINT32*) in);
 				in += 4;
 			}
 			memset(out, value, len);
@@ -141,15 +141,15 @@ static void nsc_rle_decode(BYTE* in, BYTE* out, uint32 origsz)
 		}
 	}
 
-	*((uint32*)out) = *((uint32*)in);
+	*((UINT32*)out) = *((UINT32*)in);
 }
 
 static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
 	UINT16 i;
 	BYTE* rle;
-	uint32 origsize;
-	uint32 planesize;
+	UINT32 origsize;
+	UINT32 planesize;
 
 	rle = context->nsc_stream.Planes;
 
@@ -174,7 +174,7 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 	int i;
 
 	for (i = 0; i < 4; i++)
-		stream_read_uint32(s, context->nsc_stream.PlaneByteCount[i]);
+		stream_read_UINT32(s, context->nsc_stream.PlaneByteCount[i]);
 
 	stream_read_BYTE(s, context->nsc_stream.ColorLossLevel);
 	stream_read_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel);
@@ -186,9 +186,9 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
-	uint32 length;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 length;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	nsc_stream_initialize(context, s);
 	length = context->width * context->height * 4;
@@ -281,7 +281,7 @@ NSC_CONTEXT* nsc_context_new(void)
 	return nsc_context;
 }
 
-void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt)
+void nsc_context_set_cpu_opt(NSC_CONTEXT* context, UINT32 cpu_opt)
 {
 	if (cpu_opt)
 		NSC_INIT_SIMD(context);
@@ -317,7 +317,7 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 }
 
 void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
-	UINT16 width, UINT16 height, BYTE* data, uint32 length)
+	UINT16 width, UINT16 height, BYTE* data, UINT32 length)
 {
 	STREAM* s;
 

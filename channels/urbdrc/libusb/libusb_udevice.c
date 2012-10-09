@@ -62,9 +62,9 @@ struct _ISO_USER_DATA
 	BYTE *		output_data;
 	int			iso_status;
 	int			completed;
-	uint32		error_count;
+	UINT32		error_count;
 	int			noack;
-	uint32		start_frame;
+	UINT32		start_frame;
 };
 
 static int 
@@ -155,9 +155,9 @@ func_iso_callback(struct libusb_transfer *transfer)
 	ISO_USER_DATA * iso_user_data   = (ISO_USER_DATA *) transfer->user_data;
 	BYTE * data		= iso_user_data->IsoPacket;
 	int * completed		= &iso_user_data->completed;
-	uint32 offset		= 0;
-	uint32 index		= 0;
-	uint32 i, act_len;
+	UINT32 offset		= 0;
+	UINT32 index		= 0;
+	UINT32 i, act_len;
 	BYTE *b;
 
 	*completed = 1;
@@ -170,9 +170,9 @@ func_iso_callback(struct libusb_transfer *transfer)
 		for (i = 0; i < transfer->num_iso_packets; i++) 
 		{
 			act_len = transfer->iso_packet_desc[i].actual_length;
-			data_write_uint32(data + offset, index);
-			data_write_uint32(data + offset + 4, act_len);
-			data_write_uint32(data + offset + 8, 
+			data_write_UINT32(data + offset, index);
+			data_write_UINT32(data + offset + 4, act_len);
+			data_write_UINT32(data + offset + 8, 
 				transfer->iso_packet_desc[i].status);
 			offset += 12;
 			if (transfer->iso_packet_desc[i].status == USBD_STATUS_SUCCESS) 
@@ -215,7 +215,7 @@ func_iso_callback(struct libusb_transfer *transfer)
 static const LIBUSB_ENDPOINT_DESCEIPTOR*
 func_get_ep_desc(LIBUSB_CONFIG_DESCRIPTOR * LibusbConfig, 
 	MSUSB_CONFIG_DESCRIPTOR * MsConfig, 
-	uint32 EndpointAddress)
+	UINT32 EndpointAddress)
 {
 	MSUSB_INTERFACE_DESCRIPTOR **		MsInterfaces;
 	const LIBUSB_INTERFACE *			interface;
@@ -255,7 +255,7 @@ func_bulk_transfer_cb(struct libusb_transfer *transfer)
 
 
 static int
-func_set_usbd_status(UDEVICE* pdev, uint32* status, int err_result)
+func_set_usbd_status(UDEVICE* pdev, UINT32* status, int err_result)
 {
 	switch (err_result)
 	{
@@ -319,8 +319,8 @@ func_set_usbd_status(UDEVICE* pdev, uint32* status, int err_result)
 
 
 static void
-func_iso_data_init(ISO_USER_DATA * iso_user_data, uint32 numPacket, uint32 buffsize, 
-	uint32 noAck, BYTE * isoPacket, BYTE * buffer)
+func_iso_data_init(ISO_USER_DATA * iso_user_data, UINT32 numPacket, UINT32 buffsize, 
+	UINT32 noAck, BYTE * isoPacket, BYTE * buffer)
 {
 	/* init struct iso_user_data */
 	iso_user_data->IsoPacket = isoPacket;
@@ -334,7 +334,7 @@ func_iso_data_init(ISO_USER_DATA * iso_user_data, uint32 numPacket, uint32 buffs
 
 
 static int
-func_config_release_all_interface(LIBUSB_DEVICE_HANDLE *libusb_handle, uint32_t NumInterfaces)
+func_config_release_all_interface(LIBUSB_DEVICE_HANDLE *libusb_handle, UINT32_t NumInterfaces)
 {
 	int i, ret;
 	for (i = 0; i < NumInterfaces; i++)
@@ -774,7 +774,7 @@ libusb_udev_complete_msconfig_setup(IUDEVICE * idev, MSUSB_CONFIG_DESCRIPTOR * M
 
 
 static int
-libusb_udev_select_configuration(IUDEVICE * idev, uint32 bConfigurationValue)
+libusb_udev_select_configuration(IUDEVICE * idev, UINT32 bConfigurationValue)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
 	MSUSB_CONFIG_DESCRIPTOR * MsConfig = pdev->MsConfig;
@@ -815,9 +815,9 @@ libusb_udev_select_configuration(IUDEVICE * idev, uint32 bConfigurationValue)
 
 
 static int
-libusb_udev_control_pipe_request(IUDEVICE * idev, uint32 RequestId, 
-	uint32 EndpointAddress, 
-	uint32 *UsbdStatus,
+libusb_udev_control_pipe_request(IUDEVICE * idev, UINT32 RequestId, 
+	UINT32 EndpointAddress, 
+	UINT32 *UsbdStatus,
 	int command)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
@@ -863,9 +863,9 @@ libusb_udev_control_pipe_request(IUDEVICE * idev, uint32 RequestId,
 
 
 static int
-libusb_udev_control_query_device_text(IUDEVICE * idev, uint32 TextType, 
-	uint32 LocaleId, 
-	uint32 * BufferSize, 
+libusb_udev_control_query_device_text(IUDEVICE * idev, UINT32 TextType, 
+	UINT32 LocaleId, 
+	UINT32 * BufferSize, 
 	BYTE * Buffer)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
@@ -929,13 +929,13 @@ libusb_udev_control_query_device_text(IUDEVICE * idev, uint32 TextType,
 
 
 static int
-libusb_udev_os_feature_descriptor_request(IUDEVICE * idev, uint32 RequestId, 
+libusb_udev_os_feature_descriptor_request(IUDEVICE * idev, UINT32 RequestId, 
 	BYTE Recipient, 
 	BYTE InterfaceNumber, 
 	BYTE Ms_PageIndex, 
 	UINT16 Ms_featureDescIndex, 
-	uint32 * UsbdStatus,
-	uint32 * BufferSize, 
+	UINT32 * UsbdStatus,
+	UINT32 * BufferSize, 
 	BYTE* Buffer, 
 	int Timeout)
 {
@@ -1203,8 +1203,8 @@ libusb_udev_unlock_fifo_isoch(IUDEVICE * idev)
 
 
 static int
-libusb_udev_query_device_port_status(IUDEVICE * idev, uint32 *UsbdStatus,
-	uint32 * BufferSize, 
+libusb_udev_query_device_port_status(IUDEVICE * idev, UINT32 *UsbdStatus,
+	UINT32 * BufferSize, 
 	BYTE * Buffer)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
@@ -1249,22 +1249,22 @@ libusb_udev_request_queue_is_none(IUDEVICE * idev)
 
 
 static int 
-libusb_udev_isoch_transfer(IUDEVICE * idev, uint32 RequestId, uint32 EndpointAddress, 
-	uint32 TransferFlags, 
+libusb_udev_isoch_transfer(IUDEVICE * idev, UINT32 RequestId, UINT32 EndpointAddress, 
+	UINT32 TransferFlags, 
 	int NoAck, 
-	uint32 *ErrorCount, 
-	uint32 *UrbdStatus, 
-	uint32 *StartFrame,
-	uint32 NumberOfPackets, 
+	UINT32 *ErrorCount, 
+	UINT32 *UrbdStatus, 
+	UINT32 *StartFrame,
+	UINT32 NumberOfPackets, 
 	BYTE *IsoPacket, 
-	uint32 *BufferSize, 
+	UINT32 *BufferSize, 
 	BYTE *Buffer, 
 	int Timeout)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
 	ISO_USER_DATA iso_user_data;
 	struct libusb_transfer *  iso_transfer = NULL;
-	uint32 iso_packet_size;
+	UINT32 iso_packet_size;
 	int error = 0, ret = 0, submit = 0;
 
 
@@ -1344,16 +1344,16 @@ libusb_udev_isoch_transfer(IUDEVICE * idev, uint32 RequestId, uint32 EndpointAdd
 
 
 static int
-libusb_udev_control_transfer(IUDEVICE * idev, uint32 RequestId, uint32 EndpointAddress, 
-	uint32 TransferFlags, 
+libusb_udev_control_transfer(IUDEVICE * idev, UINT32 RequestId, UINT32 EndpointAddress, 
+	UINT32 TransferFlags, 
 	BYTE bmRequestType, 
 	BYTE Request, 
 	UINT16 Value, 
 	UINT16 Index, 
-	uint32 *UrbdStatus, 
-	uint32 *BufferSize, 
+	UINT32 *UrbdStatus, 
+	UINT32 *BufferSize, 
 	BYTE *Buffer, 
-	uint32 Timeout)
+	UINT32 Timeout)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
 	int error = 0;
@@ -1381,19 +1381,19 @@ libusb_udev_control_transfer(IUDEVICE * idev, uint32 RequestId, uint32 EndpointA
 
 
 static int 
-libusb_udev_bulk_or_interrupt_transfer(IUDEVICE * idev, uint32 RequestId, 
-	uint32 EndpointAddress, 
-	uint32 TransferFlags, 
-	uint32 *UsbdStatus, 
-	uint32 *BufferSize, 
+libusb_udev_bulk_or_interrupt_transfer(IUDEVICE * idev, UINT32 RequestId, 
+	UINT32 EndpointAddress, 
+	UINT32 TransferFlags, 
+	UINT32 *UsbdStatus, 
+	UINT32 *BufferSize, 
 	BYTE *Buffer, 
-	uint32 Timeout)
+	UINT32 Timeout)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
 	const LIBUSB_ENDPOINT_DESCEIPTOR * ep_desc;
 	struct libusb_transfer * transfer = NULL;
 	TRANSFER_REQUEST * request = NULL;
-	uint32 transfer_type;
+	UINT32 transfer_type;
 	int completed = 0, ret = 0, submit = 0;
 	int transferDir = EndpointAddress & 0x80;
 
@@ -1601,7 +1601,7 @@ func_cancel_xact_request(TRANSFER_REQUEST *request)
 
 
 static int
-libusb_udev_cancel_transfer_request(IUDEVICE * idev, uint32 RequestId)
+libusb_udev_cancel_transfer_request(IUDEVICE * idev, UINT32 RequestId)
 {
 	UDEVICE * pdev = (UDEVICE *) idev;
 	REQUEST_QUEUE * request_queue = pdev->request_queue;
@@ -1644,9 +1644,9 @@ cancel_retry:
 	return 0;
 }
 
-BASIC_STATE_FUNC_DEFINED(channel_id, uint32)
-BASIC_STATE_FUNC_DEFINED(UsbDevice, uint32)
-BASIC_STATE_FUNC_DEFINED(ReqCompletion, uint32)
+BASIC_STATE_FUNC_DEFINED(channel_id, UINT32)
+BASIC_STATE_FUNC_DEFINED(UsbDevice, UINT32)
+BASIC_STATE_FUNC_DEFINED(ReqCompletion, UINT32)
 BASIC_STATE_FUNC_DEFINED(bus_number, UINT16)
 BASIC_STATE_FUNC_DEFINED(dev_number, UINT16)
 BASIC_STATE_FUNC_DEFINED(port_number, int)

@@ -88,7 +88,7 @@ void rfx_decode_YCbCr_to_RGB_NEON(INT16 * y_r_buffer, INT16 * cb_g_buffer, INT16
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const uint32 factor)
+rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const UINT32 factor)
 {
 	if (factor <= 6)
 		return;
@@ -107,7 +107,7 @@ rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const 
 }
 
 void
-rfx_quantization_decode_NEON(INT16 * buffer, const uint32 * quantization_values)
+rfx_quantization_decode_NEON(INT16 * buffer, const UINT32 * quantization_values)
 {
 	rfx_quantization_decode_block_NEON(buffer, 1024, quantization_values[8]); /* HL1 */
 	rfx_quantization_decode_block_NEON(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
@@ -314,7 +314,7 @@ int isNeonSupported()
 		return 0;
 	}
 
-	uint64_t features = android_getCpuFeatures();
+	UINT64_t features = android_getCpuFeatures();
 	if ((features & ANDROID_CPU_ARM_FEATURE_ARMv7))
 	{
 		if (features & ANDROID_CPU_ARM_FEATURE_NEON)

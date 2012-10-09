@@ -93,14 +93,14 @@ void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window);
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, BOOL decorations);
 void xf_ResizeDesktopWindow(xfInfo* xfi, xfWindow* window, int width, int height);
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id);
+xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id);
 void xf_SetWindowText(xfInfo *xfi, xfWindow* window, char *name);
 void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state);
 void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon);
 void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style);
+void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, UINT32 style, UINT32 ex_style);
 void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width, int height);
 BOOL xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y);
 void xf_DestroyWindow(xfInfo* xfi, xfWindow* window);

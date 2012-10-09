@@ -130,7 +130,7 @@ static void* scard_thread_func(void* arg)
 }
 
 /* Begin TS Client defect workaround. */
-static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, UINT32 CompletionId)
 {
 	/*
 	 * Search from the beginning of the LIST for one outstanding "CompletionID"
@@ -157,7 +157,7 @@ static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, uint32 Com
 	return NULL;    /* Either no items in the list or no match. */
 }
 
-static BOOL  scard_check_for_duplicate_id(SCARD_DEVICE* scard, uint32 CompletionId)
+static BOOL  scard_check_for_duplicate_id(SCARD_DEVICE* scard, UINT32 CompletionId)
 {
 	/*
 	 * Search from the end of the LIST for one outstanding "CompletionID"
@@ -208,7 +208,7 @@ static void  scard_irp_complete(IRP* irp)
 
 	pos = stream_get_pos(irp->output);
 	stream_set_pos(irp->output, 12);
-	stream_write_uint32(irp->output, irp->IoStatus);
+	stream_write_UINT32(irp->output, irp->IoStatus);
 	stream_set_pos(irp->output, pos);
 
 	/* Begin TS Client defect workaround. */

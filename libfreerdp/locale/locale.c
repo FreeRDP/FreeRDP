@@ -34,7 +34,7 @@ struct _SYSTEM_LOCALE
 {
 	char language[4]; /* Two or three letter language code */
 	char country[10]; /* Two or three letter country code (Sometimes with Cyrl_ prefix) */
-	uint32 code; /* 32-bit unsigned integer corresponding to the locale */
+	UINT32 code; /* 32-bit unsigned integer corresponding to the locale */
 };
 typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
 
@@ -248,7 +248,7 @@ static const SYSTEM_LOCALE SYSTEM_LOCALE_TABLE[] =
 
 struct _LOCALE_NAME
 {
-	uint32 localeId;
+	UINT32 localeId;
 	const char* name;
 };
 typedef struct _LOCALE_NAME LOCALE_NAME;
@@ -458,8 +458,8 @@ static const LOCALE_NAME LOCALE_NAME_TABLE[] =
 
 struct _LOCALE_KEYBOARD_LAYOUTS
 {
-	uint32 locale; /* Locale ID */
-	uint32 keyboardLayouts[5]; /* array of associated keyboard layouts */
+	UINT32 locale; /* Locale ID */
+	UINT32 keyboardLayouts[5]; /* array of associated keyboard layouts */
 
 };
 typedef struct _LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS;
@@ -691,7 +691,7 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 	return locale;
 }
 
-uint32 freerdp_get_system_locale_id()
+UINT32 freerdp_get_system_locale_id()
 {
 	SYSTEM_LOCALE* locale;
 
@@ -703,7 +703,7 @@ uint32 freerdp_get_system_locale_id()
 	return 0;
 }
 
-const char* freerdp_get_system_locale_name_from_id(uint32 localeId)
+const char* freerdp_get_system_locale_name_from_id(UINT32 localeId)
 {
 	int index;
 
@@ -716,7 +716,7 @@ const char* freerdp_get_system_locale_name_from_id(uint32 localeId)
 	return NULL;
 }
 
-uint32 freerdp_detect_keyboard_layout_from_system_locale()
+UINT32 freerdp_detect_keyboard_layout_from_system_locale()
 {
 	int i, j;
 	char language[4];

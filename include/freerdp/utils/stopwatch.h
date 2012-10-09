@@ -42,6 +42,6 @@ FREERDP_API void stopwatch_stop(STOPWATCH* stopwatch);
 FREERDP_API void stopwatch_reset(STOPWATCH* stopwatch);
 
 FREERDP_API double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
-FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, uint32* sec, uint32* usec);
+FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec);
 
 #endif /* __UTILS_STOPWATCH_H */

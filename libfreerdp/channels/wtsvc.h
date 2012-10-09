@@ -61,7 +61,7 @@ struct rdp_peer_channel
 {
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
-	uint32 channel_id;
+	UINT32 channel_id;
 	UINT16 channel_type;
 	UINT16 index;
 
@@ -71,7 +71,7 @@ struct rdp_peer_channel
 	HANDLE mutex;
 
 	BYTE dvc_open_state;
-	uint32 dvc_total_length;
+	UINT32 dvc_total_length;
 };
 
 struct WTSVirtualChannelManager
@@ -83,7 +83,7 @@ struct WTSVirtualChannelManager
 
 	rdpPeerChannel* drdynvc_channel;
 	BYTE drdynvc_state;
-	uint32 dvc_channel_id_seq;
+	UINT32 dvc_channel_id_seq;
 	LIST* dvc_channel_list;
 };
 

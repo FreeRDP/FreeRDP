@@ -26,6 +26,6 @@
 FREERDP_API HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor);
 FREERDP_API BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen);
 FREERDP_API UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen);
-FREERDP_API uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen);
+FREERDP_API UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen);
 
 #endif /* __GDI_PEN_H */

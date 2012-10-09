@@ -233,7 +233,7 @@ void mcs_write_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU domainMCSPDU, U
  */
 
 static void mcs_init_domain_parameters(DomainParameters* domainParameters,
-		uint32 maxChannelIds, uint32 maxUserIds, uint32 maxTokenIds, uint32 maxMCSPDUsize)
+		UINT32 maxChannelIds, UINT32 maxUserIds, UINT32 maxTokenIds, UINT32 maxMCSPDUsize)
 {
 	domainParameters->maxChannelIds = maxChannelIds;
 	domainParameters->maxUserIds = maxUserIds;
@@ -489,7 +489,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, STREAM* s)
 {
 	int length;
 	BYTE result;
-	uint32 calledConnectId;
+	UINT32 calledConnectId;
 
 	tpkt_read_header(s);
 

@@ -180,7 +180,7 @@ void searchman_free(USB_SEARCHMAN* self)
 	free(self);
 }
 
-USB_SEARCHMAN* searchman_new(void * urbdrc, uint32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 {
 	int ret;
 	USB_SEARCHMAN* searchman;

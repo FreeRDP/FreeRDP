@@ -179,7 +179,7 @@ void* freerdp_keyboard_xkb_init()
 	return (void*) display;
 }
 
-uint32 freerdp_keyboard_init_xkbfile(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
+UINT32 freerdp_keyboard_init_xkbfile(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
 	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
@@ -227,12 +227,12 @@ static char* comma_substring(char* s, int n)
 	return s;
 }
 
-uint32 detect_keyboard_layout_from_xkbfile(void* display)
+UINT32 detect_keyboard_layout_from_xkbfile(void* display)
 {
 	char* layout;
 	char* variant;
-	uint32 group = 0;
-	uint32 keyboard_layout = 0;
+	UINT32 group = 0;
+	UINT32 keyboard_layout = 0;
 	XkbRF_VarDefsRec rules_names;
 	XKeyboardState coreKbdState;
 	XkbStateRec state;

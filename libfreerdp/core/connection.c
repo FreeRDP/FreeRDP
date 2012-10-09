@@ -206,10 +206,10 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
 	BYTE client_random[CLIENT_RANDOM_LENGTH];
 	BYTE crypt_client_random[256 + 8];
-	uint32 key_len;
+	UINT32 key_len;
 	BYTE* mod;
 	BYTE* exp;
-	uint32 length;
+	UINT32 length;
 	STREAM* s;
 
 	if (rdp->settings->encryption == FALSE)
@@ -232,7 +232,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
-	stream_write_uint32(s, length);
+	stream_write_UINT32(s, length);
 	stream_write(s, crypt_client_random, length);
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
@@ -269,7 +269,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 {
 	BYTE client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
 	BYTE crypt_client_random[256 + 8];
-	uint32 rand_len, key_len;
+	UINT32 rand_len, key_len;
 	UINT16 channel_id, length, sec_flags;
 	BYTE* mod;
 	BYTE* priv_exp;
@@ -294,7 +294,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	stream_read_uint32(s, rand_len);
+	stream_read_UINT32(s, rand_len);
 	key_len = rdp->settings->server_key->ModulusLength;
 
 	if (rand_len != key_len + 8)

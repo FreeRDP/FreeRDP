@@ -69,7 +69,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 {
 	BYTE type;
 	UINT16 length;
-	uint32 share_id;
+	UINT32 share_id;
 	BYTE compressed_type;
 	UINT16 compressed_len;
 
@@ -132,7 +132,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			stream_read_uint32(s, client->ack_frame_id);
+			stream_read_UINT32(s, client->ack_frame_id);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:

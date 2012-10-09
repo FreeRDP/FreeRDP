@@ -494,8 +494,8 @@ void test_mppc_enc(void)
 
 	/* needed by decoder */
 	struct rdp_mppc_dec* rmppc;
-	uint32 roff;
-	uint32 rlen;
+	UINT32 roff;
+	UINT32 rlen;
 
 	/* required for timing the test */
 	struct timeval start_time;

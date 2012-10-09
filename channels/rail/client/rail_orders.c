@@ -129,21 +129,21 @@ void rail_send_pdu(rdpRailOrder* rail_order, STREAM* s, UINT16 orderType)
 void rail_write_high_contrast(STREAM* s, HIGH_CONTRAST* high_contrast)
 {
 	high_contrast->colorSchemeLength = high_contrast->colorScheme.length + 2;
-	stream_write_uint32(s, high_contrast->flags); /* flags (4 bytes) */
-	stream_write_uint32(s, high_contrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
+	stream_write_UINT32(s, high_contrast->flags); /* flags (4 bytes) */
+	stream_write_UINT32(s, high_contrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
 	rail_write_unicode_string(s, &high_contrast->colorScheme); /* colorScheme */
 }
 
 void rail_read_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	stream_read_uint32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
+	stream_read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
 void rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_result)
 {
 	stream_read_UINT16(s, exec_result->flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, exec_result->execResult); /* execResult (2 bytes) */
-	stream_read_uint32(s, exec_result->rawResult); /* rawResult (4 bytes) */
+	stream_read_UINT32(s, exec_result->rawResult); /* rawResult (4 bytes) */
 	stream_seek_UINT16(s); /* padding (2 bytes) */
 	rail_read_unicode_string(s, &exec_result->exeOrFile); /* exeOrFile */
 }
@@ -151,7 +151,7 @@ void rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_
 void rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
-	stream_read_uint32(s, sysparam->param); /* systemParam (4 bytes) */
+	stream_read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 	stream_read_BYTE(s, body); /* body (1 byte) */
 
 	switch (sysparam->param)
@@ -171,7 +171,7 @@ void rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 
 void rail_read_server_minmaxinfo_order(STREAM* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
 {
-	stream_read_uint32(s, minmaxinfo->windowId); /* windowId (4 bytes) */
+	stream_read_UINT32(s, minmaxinfo->windowId); /* windowId (4 bytes) */
 	stream_read_UINT16(s, minmaxinfo->maxWidth); /* maxWidth (2 bytes) */
 	stream_read_UINT16(s, minmaxinfo->maxHeight); /* maxHeight (2 bytes) */
 	stream_read_UINT16(s, minmaxinfo->maxPosX); /* maxPosX (2 bytes) */
@@ -185,7 +185,7 @@ void rail_read_server_minmaxinfo_order(STREAM* s, RAIL_MINMAXINFO_ORDER* minmaxi
 void rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize)
 {
 	UINT16 isMoveSizeStart;
-	stream_read_uint32(s, localmovesize->windowId); /* windowId (4 bytes) */
+	stream_read_UINT32(s, localmovesize->windowId); /* windowId (4 bytes) */
 
 	stream_read_UINT16(s, isMoveSizeStart); /* isMoveSizeStart (2 bytes) */
 	localmovesize->isMoveSizeStart = (isMoveSizeStart != 0) ? TRUE : FALSE;
@@ -197,7 +197,7 @@ void rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* l
 
 void rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp)
 {
-	stream_read_uint32(s, get_appid_resp->windowId); /* windowId (4 bytes) */
+	stream_read_UINT32(s, get_appid_resp->windowId); /* windowId (4 bytes) */
 	stream_read(s, &get_appid_resp->applicationIdBuffer[0], 512); /* applicationId (256 UNICODE chars) */
 
 	get_appid_resp->applicationId.length = 512;
@@ -206,17 +206,17 @@ void rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER*
 
 void rail_read_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info)
 {
-	stream_read_uint32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
+	stream_read_UINT32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
 }
 
 void rail_write_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	stream_write_uint32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
+	stream_write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
 void rail_write_client_status_order(STREAM* s, RAIL_CLIENT_STATUS_ORDER* client_status)
 {
-	stream_write_uint32(s, client_status->flags); /* flags (4 bytes) */
+	stream_write_UINT32(s, client_status->flags); /* flags (4 bytes) */
 }
 
 void rail_write_client_exec_order(STREAM* s, RAIL_EXEC_ORDER* exec)
@@ -233,7 +233,7 @@ void rail_write_client_exec_order(STREAM* s, RAIL_EXEC_ORDER* exec)
 void rail_write_client_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
-	stream_write_uint32(s, sysparam->param); /* systemParam (4 bytes) */
+	stream_write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
 	switch (sysparam->param)
 	{
@@ -288,7 +288,7 @@ void rail_write_client_activate_order(STREAM* s, RAIL_ACTIVATE_ORDER* activate)
 {
 	BYTE enabled;
 
-	stream_write_uint32(s, activate->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, activate->windowId); /* windowId (4 bytes) */
 
 	enabled = activate->enabled;
 	stream_write_BYTE(s, enabled); /* enabled (1 byte) */
@@ -296,27 +296,27 @@ void rail_write_client_activate_order(STREAM* s, RAIL_ACTIVATE_ORDER* activate)
 
 void rail_write_client_sysmenu_order(STREAM* s, RAIL_SYSMENU_ORDER* sysmenu)
 {
-	stream_write_uint32(s, sysmenu->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, sysmenu->windowId); /* windowId (4 bytes) */
 	stream_write_UINT16(s, sysmenu->left); /* left (2 bytes) */
 	stream_write_UINT16(s, sysmenu->top); /* top (2 bytes) */
 }
 
 void rail_write_client_syscommand_order(STREAM* s, RAIL_SYSCOMMAND_ORDER* syscommand)
 {
-	stream_write_uint32(s, syscommand->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, syscommand->windowId); /* windowId (4 bytes) */
 	stream_write_UINT16(s, syscommand->command); /* command (2 bytes) */
 }
 
 void rail_write_client_notify_event_order(STREAM* s, RAIL_NOTIFY_EVENT_ORDER* notify_event)
 {
-	stream_write_uint32(s, notify_event->windowId); /* windowId (4 bytes) */
-	stream_write_uint32(s, notify_event->notifyIconId); /* notifyIconId (4 bytes) */
-	stream_write_uint32(s, notify_event->message); /* notifyIconId (4 bytes) */
+	stream_write_UINT32(s, notify_event->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, notify_event->notifyIconId); /* notifyIconId (4 bytes) */
+	stream_write_UINT32(s, notify_event->message); /* notifyIconId (4 bytes) */
 }
 
 void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* window_move)
 {
-	stream_write_uint32(s, window_move->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, window_move->windowId); /* windowId (4 bytes) */
 	stream_write_UINT16(s, window_move->left); /* left (2 bytes) */
 	stream_write_UINT16(s, window_move->top); /* top (2 bytes) */
 	stream_write_UINT16(s, window_move->right); /* right (2 bytes) */
@@ -325,12 +325,12 @@ void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* wind
 
 void rail_write_client_get_appid_req_order(STREAM* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req)
 {
-	stream_write_uint32(s, get_appid_req->windowId); /* windowId (4 bytes) */
+	stream_write_UINT32(s, get_appid_req->windowId); /* windowId (4 bytes) */
 }
 
 void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info)
 {
-	stream_write_uint32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
+	stream_write_UINT32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
 }
 
 void rail_recv_handshake_order(rdpRailOrder* rail_order, STREAM* s)

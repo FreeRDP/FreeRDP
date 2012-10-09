@@ -267,7 +267,7 @@ BOOL er_read_bit_string(STREAM* s, int* length, BYTE* padding)
 	return TRUE;
 }
 
-BOOL er_write_bit_string_tag(STREAM* s, uint32 length, BYTE padding, BOOL flag)
+BOOL er_write_bit_string_tag(STREAM* s, UINT32 length, BYTE padding, BOOL flag)
 {
 	er_write_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_write_length(s, length, flag);
@@ -344,7 +344,7 @@ void er_write_BOOL(STREAM* s, BOOL value)
 	stream_write_BYTE(s, (value == TRUE) ? 0xFF : 0);
 }
 
-BOOL er_read_integer(STREAM* s, uint32* value)
+BOOL er_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
@@ -369,7 +369,7 @@ BOOL er_read_integer(STREAM* s, uint32* value)
 		*value += (byte << 16);
 	}
 	else if (length == 4)
-		stream_read_uint32_be(s, *value);
+		stream_read_UINT32_be(s, *value);
 	else
 		return FALSE;
 
@@ -382,7 +382,7 @@ BOOL er_read_integer(STREAM* s, uint32* value)
  * @param value
  */
 
-int er_write_integer(STREAM* s, sint32 value)
+int er_write_integer(STREAM* s, INT32 value)
 {
 	er_write_universal_tag(s, ER_TAG_INTEGER, FALSE);
 
@@ -401,14 +401,14 @@ int er_write_integer(STREAM* s, sint32 value)
 	else
 	{
 		er_write_length(s, 4, FALSE);
-		stream_write_uint32_be(s, value);
+		stream_write_UINT32_be(s, value);
 		return 5;
 	}
 
 	return 0;
 }
 
-int er_skip_integer(sint32 value)
+int er_skip_integer(INT32 value)
 {
 	if (value <= 127 && value >= -128)
 	{

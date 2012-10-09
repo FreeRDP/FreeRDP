@@ -187,7 +187,7 @@ static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 	stream_seek_UINT16(s); /* size (2 bytes), must be set to zero */
 }
 
-static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, uint32 size, STREAM* s)
+static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = fastpath->rdp->update->context;
@@ -261,7 +261,7 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
 	UINT16 size;
 	int next_pos;
-	uint32 totalSize;
+	UINT32 totalSize;
 	BYTE updateCode;
 	BYTE fragmentation;
 	BYTE compression;
@@ -269,8 +269,8 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	STREAM* update_stream;
 	STREAM* comp_stream;
 	rdpRdp  *rdp;
-	uint32 roff;
-	uint32 rlen;
+	UINT32 roff;
+	UINT32 rlen;
 
 	rdp = fastpath->rdp;
 
@@ -530,9 +530,9 @@ BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static uint32 fastpath_get_sec_bytes(rdpRdp* rdp)
+static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 {
-	uint32 sec_bytes;
+	UINT32 sec_bytes;
 
 	if (rdp->do_crypt)
 	{
@@ -650,7 +650,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
 	BOOL result;
 	UINT16 pduLength;
 	UINT16 maxLength;
-	uint32 totalLength;
+	UINT32 totalLength;
 	BYTE fragmentation;
 	BYTE header;
 	STREAM* update;

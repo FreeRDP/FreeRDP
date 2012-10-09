@@ -243,9 +243,9 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 		tsmf_pulse_stream_request_callback, pulse);
 	buffer_attr.maxlength = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	buffer_attr.tlength = pa_usec_to_bytes(250000, &pulse->sample_spec);
-	buffer_attr.prebuf = (uint32_t) -1;
-	buffer_attr.minreq = (uint32_t) -1;
-	buffer_attr.fragsize = (uint32_t) -1;
+	buffer_attr.prebuf = (UINT32_t) -1;
+	buffer_attr.minreq = (UINT32_t) -1;
+	buffer_attr.fragsize = (UINT32_t) -1;
 	if (pa_stream_connect_playback(pulse->stream,
 		pulse->device[0] ? pulse->device : NULL, &buffer_attr,
 		PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
@@ -284,7 +284,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 }
 
 static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio,
-	uint32 sample_rate, uint32 channels, uint32 bits_per_sample)
+	UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 
@@ -298,7 +298,7 @@ static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio,
 	return tsmf_pulse_open_stream(pulse);
 }
 
-static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_size)
+static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 	BYTE* src;
@@ -341,15 +341,15 @@ static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_siz
 	return TRUE;
 }
 
-static uint64 tsmf_pulse_get_latency(ITSMFAudioDevice* audio)
+static UINT64 tsmf_pulse_get_latency(ITSMFAudioDevice* audio)
 {
 	pa_usec_t usec;
-	uint64 latency = 0;
+	UINT64 latency = 0;
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*) audio;
 
 	if (pulse->stream && pa_stream_get_latency(pulse->stream, &usec, NULL) == 0)
 	{
-		latency = ((uint64)usec) * 10LL;
+		latency = ((UINT64)usec) * 10LL;
 	}
 	return latency;
 }

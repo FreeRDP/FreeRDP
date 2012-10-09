@@ -27,7 +27,7 @@
 
 #include "xf_input.h"
 
-void xf_input_synchronize_event(rdpInput* input, uint32 flags)
+void xf_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }

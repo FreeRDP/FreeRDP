@@ -37,7 +37,7 @@ void wf_rfx_encode(freerdp_peer* client);
 BOOL wf_peer_post_connect(freerdp_peer* client);
 BOOL wf_peer_activate(freerdp_peer* client);
 
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
+void wf_peer_synchronize_event(rdpInput* input, UINT32 flags);
 
 void wf_peer_send_changes(freerdp_peer* client);
 

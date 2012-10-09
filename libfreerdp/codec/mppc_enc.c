@@ -551,22 +551,22 @@ BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 	char* cptr2;
 	int opb_index;          /* index into outputBuffer */
 	int bits_left;          /* unused bits in current byte in outputBuffer */
-	uint32 copy_offset;     /* pattern match starts here... */
-	uint32 lom;             /* ...and matches this many bytes */
+	UINT32 copy_offset;     /* pattern match starts here... */
+	UINT32 lom;             /* ...and matches this many bytes */
 	int last_crc_index;     /* don't compute CRC beyond this index */
 	UINT16 *hash_table;     /* hash table for pattern matching */
 
-	uint32 i;
-	uint32 j;
-	uint32 k;
-	uint32 x;
+	UINT32 i;
+	UINT32 j;
+	UINT32 k;
+	UINT32 x;
 	BYTE  data;
 	UINT16 data16;
-	uint32 historyOffset;
+	UINT32 historyOffset;
 	UINT16 crc;
-	uint32 ctr;
-	uint32 saved_ctr;
-	uint32 data_end;
+	UINT32 ctr;
+	UINT32 saved_ctr;
+	UINT32 data_end;
 	BYTE byte_val;
 
 	crc = 0;

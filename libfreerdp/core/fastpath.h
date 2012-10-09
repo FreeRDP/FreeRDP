@@ -114,7 +114,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);
 STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath);
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s);
 
-BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction, uint32 frameId);
+BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction, UINT32 frameId);
 
 rdpFastPath* fastpath_new(rdpRdp* rdp);
 void fastpath_free(rdpFastPath* fastpath);

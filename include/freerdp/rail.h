@@ -159,8 +159,8 @@ typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
 
 struct _HIGH_CONTRAST
 {
-	uint32 flags;
-	uint32 colorSchemeLength;
+	UINT32 flags;
+	UINT32 colorSchemeLength;
 	RAIL_UNICODE_STRING colorScheme;
 };
 typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
@@ -169,13 +169,13 @@ typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
 
 struct _RAIL_HANDSHAKE_ORDER
 {
-	uint32 buildNumber;
+	UINT32 buildNumber;
 };
 typedef struct _RAIL_HANDSHAKE_ORDER RAIL_HANDSHAKE_ORDER;
 
 struct _RAIL_CLIENT_STATUS_ORDER
 {
-	uint32 flags;
+	UINT32 flags;
 };
 typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 
@@ -192,15 +192,15 @@ struct _RAIL_EXEC_RESULT_ORDER
 {
 	UINT16 flags;
 	UINT16 execResult;
-	uint32 rawResult;
+	UINT32 rawResult;
 	RAIL_UNICODE_STRING exeOrFile;
 };
 typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 
 struct _RAIL_SYSPARAM_ORDER
 {
-	uint32 param;
-	uint32 params;
+	UINT32 param;
+	UINT32 params;
 	BOOL dragFullWindows;
 	BOOL keyboardCues;
 	BOOL keyboardPref;
@@ -216,14 +216,14 @@ typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
 
 struct _RAIL_ACTIVATE_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	BOOL enabled;
 };
 typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
 
 struct _RAIL_SYSMENU_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	UINT16 left;
 	UINT16 top;
 };
@@ -231,22 +231,22 @@ typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
 
 struct _RAIL_SYSCOMMAND_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	UINT16 command;
 };
 typedef struct _RAIL_SYSCOMMAND_ORDER RAIL_SYSCOMMAND_ORDER;
 
 struct _RAIL_NOTIFY_EVENT_ORDER
 {
-	uint32 windowId;
-	uint32 notifyIconId;
-	uint32 message;
+	UINT32 windowId;
+	UINT32 notifyIconId;
+	UINT32 message;
 };
 typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
 
 struct _RAIL_MINMAXINFO_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	UINT16 maxWidth;
 	UINT16 maxHeight;
 	UINT16 maxPosX;
@@ -260,7 +260,7 @@ typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
 
 struct _RAIL_LOCALMOVESIZE_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	BOOL isMoveSizeStart;
 	UINT16 moveSizeType;
 	UINT16 posX;
@@ -270,7 +270,7 @@ typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
 
 struct _RAIL_WINDOWMOVE_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	UINT16 left;
 	UINT16 top;
 	UINT16 right;
@@ -280,13 +280,13 @@ typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
 
 struct _RAIL_GET_APPID_REQ_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 };
 typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
 
 struct _RAIL_GET_APPID_RESP_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	RAIL_UNICODE_STRING applicationId;
 	BYTE applicationIdBuffer[512];
 };
@@ -294,7 +294,7 @@ typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
 
 struct _RAIL_LANGBARINFO_ORDER
 {
-	uint32 languageBarStatus;
+	UINT32 languageBarStatus;
 };
 typedef struct _RAIL_LANGBARINFO_ORDER RAIL_LANGBAR_INFO_ORDER;
 

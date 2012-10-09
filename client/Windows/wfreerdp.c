@@ -96,8 +96,8 @@ void wf_sw_end_paint(rdpContext* context)
 	int i;
 	rdpGdi* gdi;
 	wfInfo* wfi;
-	sint32 x, y;
-	uint32 w, h;
+	INT32 x, y;
+	UINT32 w, h;
 	int ninvalid;
 	RECT update_rect;
 	HGDI_RGN cinvalid;
@@ -247,9 +247,9 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 #endif
 }
  
-uint32 wfi_detect_cpu()
+UINT32 wfi_detect_cpu()
 {
-	uint32 cpu_opt = 0;
+	UINT32 cpu_opt = 0;
 	unsigned int eax, ebx, ecx, edx = 0;
 
 	cpuid(1, &eax, &ebx, &ecx, &edx);

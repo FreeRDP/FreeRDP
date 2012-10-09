@@ -225,7 +225,7 @@ static void rfx_encode_rgb_to_ycbcr_sse2(INT16* y_r_buffer, INT16* cb_g_buffer, 
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_decode_block_sse2(INT16* buffer, const int buffer_size, const uint32 factor)
+rfx_quantization_decode_block_sse2(INT16* buffer, const int buffer_size, const UINT32 factor)
 {
 	__m128i a;
 	__m128i * ptr = (__m128i*) buffer;
@@ -244,7 +244,7 @@ rfx_quantization_decode_block_sse2(INT16* buffer, const int buffer_size, const u
 	} while(ptr < buf_end);
 }
 
-static void rfx_quantization_decode_sse2(INT16* buffer, const uint32* quantization_values)
+static void rfx_quantization_decode_sse2(INT16* buffer, const UINT32* quantization_values)
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(INT16));
 
@@ -263,7 +263,7 @@ static void rfx_quantization_decode_sse2(INT16* buffer, const uint32* quantizati
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_encode_block_sse2(INT16* buffer, const int buffer_size, const uint32 factor)
+rfx_quantization_encode_block_sse2(INT16* buffer, const int buffer_size, const UINT32 factor)
 {
 	__m128i a;
 	__m128i* ptr = (__m128i*) buffer;
@@ -285,7 +285,7 @@ rfx_quantization_encode_block_sse2(INT16* buffer, const int buffer_size, const u
 	} while(ptr < buf_end);
 }
 
-static void rfx_quantization_encode_sse2(INT16* buffer, const uint32* quantization_values)
+static void rfx_quantization_encode_sse2(INT16* buffer, const UINT32* quantization_values)
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(INT16));
 

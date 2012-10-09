@@ -320,7 +320,7 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 	XSetStipple(xfi->display, xfi->gc, xfi->bitmap_mono);
 }
 
-void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
@@ -343,7 +343,7 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	XSetFillStyle(xfi->display, xfi->gc, FillStippled);
 }
 
-void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 

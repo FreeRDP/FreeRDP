@@ -25,40 +25,6 @@
 
 #include <freerdp/config.h>
 
-#ifdef _WIN32
-#include <windef.h>
-#endif
-
-#ifdef FREERDP_HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
-#ifdef FREERDP_HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
-#ifdef FREERDP_HAVE_INTTYPES_H
-
-#include <inttypes.h>
-typedef uint32_t uint32;
-typedef int32_t sint32;
-typedef uint64_t uint64;
-typedef int64_t sint64;
-
-#else
-
-typedef unsigned int uint32;
-typedef signed int sint32;
-#ifdef _WIN32
-typedef unsigned __int64 uint64;
-typedef signed __int64 sint64;
-#else
-typedef unsigned long long uint64;
-typedef signed long long sint64;
-#endif
-
-#endif /* HAVE_INTTYPES_H */
-
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
 #endif
@@ -71,7 +37,7 @@ typedef signed long long sint64;
 
 typedef struct
 {
-	uint32 time_low;
+	UINT32 time_low;
 	UINT16 time_mid;
 	UINT16 time_hi_and_version;
 	BYTE clock_seq_hi_and_reserved;

@@ -288,9 +288,9 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	{
 		buffer_attr.maxlength = pa_usec_to_bytes(pulse->latency * 2 * 1000, &pulse->sample_spec);
 		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
-		buffer_attr.prebuf = (uint32_t) -1;
-		buffer_attr.minreq = (uint32_t) -1;
-		buffer_attr.fragsize = (uint32_t) -1;
+		buffer_attr.prebuf = (UINT32_t) -1;
+		buffer_attr.minreq = (UINT32_t) -1;
+		buffer_attr.fragsize = (UINT32_t) -1;
 		flags |= PA_STREAM_ADJUST_LATENCY;
 	}
 
@@ -424,7 +424,7 @@ static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 	rdpsnd_pulse_open(device, format, latency);
 }
 
-static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	pa_cvolume cv;
 	pa_volume_t left;

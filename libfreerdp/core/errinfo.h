@@ -123,7 +123,7 @@
 
 struct _ERRINFO
 {
-	uint32 code;
+	UINT32 code;
 	char* name;
 	char* info;
 };
@@ -131,6 +131,6 @@ typedef struct _ERRINFO ERRINFO;
 
 #define ERRINFO_DEFINE(_code)	{ ERRINFO_##_code , "ERRINFO_" #_code , ERRINFO_##_code##_STRING }
 
-void rdp_print_errinfo(uint32 code);
+void rdp_print_errinfo(UINT32 code);
 
 #endif

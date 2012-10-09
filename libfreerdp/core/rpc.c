@@ -321,7 +321,7 @@ void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
 	stream_read_BYTE(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
 	stream_read_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
 	stream_read_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
-	stream_read_uint32(s, header->call_id); /* call_id (4 bytes) */
+	stream_read_UINT32(s, header->call_id); /* call_id (4 bytes) */
 }
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
@@ -781,7 +781,7 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 	UINT16 frag_length;
 	UINT16 auth_length;
 	BYTE auth_pad_length;
-	uint32 call_id = -1;
+	UINT32 call_id = -1;
 	int rpc_length = length + 0xFF;
 	BYTE* rpc_data = malloc(rpc_length);
 
@@ -793,7 +793,7 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 
 	if (rpc->read_buffer_len > 0)
 	{
-		if (rpc->read_buffer_len > (uint32) length)
+		if (rpc->read_buffer_len > (UINT32) length)
 		{
 			printf("rpc_read error: receiving buffer is not large enough\n");
 			free(rpc_data);
@@ -827,8 +827,8 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 
 		frag_length = *(UINT16*)(rpc_data + 8);
 		auth_length = *(UINT16*)(rpc_data + 10);
-		call_id = *(uint32*)(rpc_data + 12);
-		status = *(uint32*)(rpc_data + 16); /* alloc_hint */
+		call_id = *(UINT32*)(rpc_data + 12);
+		status = *(UINT32*)(rpc_data + 16); /* alloc_hint */
 		auth_pad_length = *(rpc_data + frag_length - auth_length - 6); /* -6 = -8 + 2 (sec_trailer + 2) */
 
 		/* data_length must be calculated because alloc_hint carries size of more than one pdu */

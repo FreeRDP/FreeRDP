@@ -100,10 +100,10 @@ typedef struct rdp_license rdpLicense;
 
 typedef struct
 {
-	uint32 dwVersion;
-	uint32 cbCompanyName;
+	UINT32 dwVersion;
+	UINT32 cbCompanyName;
 	BYTE* pbCompanyName;
-	uint32 cbProductId;
+	UINT32 cbProductId;
 	BYTE* pbProductId;
 } PRODUCT_INFO;
 
@@ -116,7 +116,7 @@ typedef struct
 
 typedef struct
 {
-	uint32 count;
+	UINT32 count;
 	LICENSE_BLOB* array;
 } SCOPE_LIST;
 

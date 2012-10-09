@@ -474,9 +474,9 @@ typedef void (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
 {
-	uint32 id;
+	UINT32 id;
 
-	uint32 type;
+	UINT32 type;
 	char* name;
 	STREAM* data;
 
@@ -492,13 +492,13 @@ struct _IRP
 
 	DEVICE* device;
 	DEVMAN* devman;
-	uint32 FileId;
-	uint32 CompletionId;
-	uint32 MajorFunction;
-	uint32 MinorFunction;
+	UINT32 FileId;
+	UINT32 CompletionId;
+	UINT32 MajorFunction;
+	UINT32 MinorFunction;
 	STREAM* input;
 
-	uint32 IoStatus;
+	UINT32 IoStatus;
 	STREAM* output;
 
 	pcIRPResponse Complete;
@@ -508,7 +508,7 @@ struct _IRP
 struct _DEVMAN
 {
 	rdpSvcPlugin* plugin;
-	uint32 id_sequence;
+	UINT32 id_sequence;
 	LIST* devices;
 };
 

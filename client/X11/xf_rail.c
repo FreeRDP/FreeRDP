@@ -52,16 +52,16 @@ void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
 	}
 }
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
 	BOOL intersect;
-	uint32 iwidth, iheight;
-	sint32 ileft, itop;
-	uint32 iright, ibottom;
-	sint32 wleft, wtop; 
-	uint32 wright, wbottom;
+	UINT32 iwidth, iheight;
+	INT32 ileft, itop;
+	UINT32 iright, ibottom;
+	INT32 wleft, wtop; 
+	UINT32 wright, wbottom;
 
 	window_list_rewind(rail->list);
 
@@ -284,7 +284,7 @@ void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
 }
 
-void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, UINT16 command)
+void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 command)
 {
 	rdpChannels* channels;
 	RAIL_SYSCOMMAND_ORDER syscommand;
@@ -325,8 +325,8 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 	       //Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
 	       //we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
 	       //attempting to adjust the rail window.
-	       uint32 offsetX = 0;
-               uint32 offsetY = 0;
+	       UINT32 offsetX = 0;
+               UINT32 offsetY = 0;
 
                if (window->windowOffsetX < 0)
                        offsetX = offsetX - window->windowOffsetX;
@@ -348,7 +348,7 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 			"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-			(uint32) xfw->handle, window_move.left, window_move.top, 
+			(UINT32) xfw->handle, window_move.left, window_move.top, 
 			window_move.right, window_move.bottom, xfw->width, xfw->height,
 			window->windowId,
 			window->windowOffsetX, window->windowOffsetY, 
@@ -375,15 +375,15 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	channels = xfi->_context->channels;
 
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-        	(uint32) xfw->handle, 
+        	(UINT32) xfw->handle, 
 		xfw->left, xfw->top, xfw->right, xfw->bottom,
 		xfw->width, xfw->height);
 
 	//Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
 	//we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
 	//attempting to adjust the rail window.
-	uint32 offsetX = 0;
-        uint32 offsetY = 0;
+	UINT32 offsetX = 0;
+        UINT32 offsetY = 0;
 
         if (window->windowOffsetX < 0)
                 offsetX = offsetX - window->windowOffsetX;

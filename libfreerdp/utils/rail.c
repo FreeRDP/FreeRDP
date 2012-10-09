@@ -90,12 +90,12 @@ void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 	stream_write_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
-void* rail_clone_order(uint32 event_type, void* order)
+void* rail_clone_order(UINT32 event_type, void* order)
 {
 	struct
 	{
-		uint32 type;
-		uint32 size;
+		UINT32 type;
+		UINT32 size;
 	} ordersize_table[] =
 	{
 		{RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, sizeof(RAIL_SYSPARAM_ORDER)},
@@ -174,7 +174,7 @@ void* rail_clone_order(uint32 event_type, void* order)
 	return new_order;
 }
 
-void rail_free_cloned_order(uint32 event_type, void* order)
+void rail_free_cloned_order(UINT32 event_type, void* order)
 {
 	//printf("rail_free_cloned_order: type=%d order=%p\n", event_type, order);
 	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||

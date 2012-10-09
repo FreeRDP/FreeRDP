@@ -146,7 +146,7 @@ static void rdpsnd_audio_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 {
 }
 
-static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 }
 

@@ -77,7 +77,7 @@ rdpWindow* window_list_get_by_extra_id(rdpWindowList* list, void* extraId)
 	return NULL;
 }
 
-rdpWindow* window_list_get_by_id(rdpWindowList* list, uint32 windowId)
+rdpWindow* window_list_get_by_id(rdpWindowList* list, UINT32 windowId)
 {
 	rdpWindow* window;
 

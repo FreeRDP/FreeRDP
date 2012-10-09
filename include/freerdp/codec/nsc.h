@@ -33,7 +33,7 @@ extern "C" {
 /* NSCODEC_BITMAP_STREAM */
 struct _NSC_STREAM
 {
-	uint32 PlaneByteCount[4];
+	UINT32 PlaneByteCount[4];
 	BYTE ColorLossLevel;
 	BYTE ChromaSubSamplingLevel;
 	UINT16 Reserved;
@@ -46,13 +46,13 @@ typedef struct _NSC_CONTEXT_PRIV NSC_CONTEXT_PRIV;
 typedef struct _NSC_CONTEXT NSC_CONTEXT;
 struct _NSC_CONTEXT
 {
-	uint32 OrgByteCount[4];	/* original byte length of luma, chroma orange, chroma green, alpha variable in order */
+	UINT32 OrgByteCount[4];	/* original byte length of luma, chroma orange, chroma green, alpha variable in order */
 	NSC_STREAM nsc_stream;
 	UINT16 bpp;
 	UINT16 width;
 	UINT16 height;
 	BYTE* bmpdata;     /* final argb values in little endian order */
-	uint32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
+	UINT32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
 	RDP_PIXEL_FORMAT pixel_format;
 
 	/* color palette allocated by the application */
@@ -65,10 +65,10 @@ struct _NSC_CONTEXT
 };
 
 FREERDP_API NSC_CONTEXT* nsc_context_new(void);
-FREERDP_API void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt);
+FREERDP_API void nsc_context_set_cpu_opt(NSC_CONTEXT* context, UINT32 cpu_opt);
 FREERDP_API void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
-	UINT16 width, UINT16 height, BYTE* data, uint32 length);
+	UINT16 width, UINT16 height, BYTE* data, UINT32 length);
 FREERDP_API void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
 	BYTE* bmpdata, int width, int height, int rowstride);
 FREERDP_API void nsc_context_free(NSC_CONTEXT* context);

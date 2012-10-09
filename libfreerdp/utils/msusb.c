@@ -35,7 +35,7 @@ msusb_mspipe_new()
 }
 
 static void
-msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR ** MsPipes, uint32 NumberOfPipes)
+msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR ** MsPipes, UINT32 NumberOfPipes)
 {
 	int pnum = 0;
 	if (MsPipes)
@@ -49,7 +49,7 @@ msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR ** MsPipes, uint32 NumberOfPipes)
 }
 
 void
-msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, MSUSB_PIPE_DESCRIPTOR ** NewMsPipes, uint32 NewNumberOfPipes)
+msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, MSUSB_PIPE_DESCRIPTOR ** NewMsPipes, UINT32 NewNumberOfPipes)
 {
 	/* free orignal MsPipes */
 	msusb_mspipes_free(MsInterface->MsPipes, MsInterface->NumberOfPipes);
@@ -60,7 +60,7 @@ msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, MSUSB_PIPE_DESCR
 }
 
 static MSUSB_PIPE_DESCRIPTOR **
-msusb_mspipes_read(BYTE * data, uint32 data_size, uint32 NumberOfPipes, int * offset)
+msusb_mspipes_read(BYTE * data, UINT32 data_size, UINT32 NumberOfPipes, int * offset)
 {
 	MSUSB_PIPE_DESCRIPTOR ** MsPipes;
 	int pnum, move = 0;
@@ -73,8 +73,8 @@ msusb_mspipes_read(BYTE * data, uint32 data_size, uint32 NumberOfPipes, int * of
 		MSUSB_PIPE_DESCRIPTOR * MsPipe = msusb_mspipe_new();
 		
 		data_read_UINT16(data + move, MsPipe->MaximumPacketSize);
-		data_read_uint32(data + move + 4, MsPipe->MaximumTransferSize);
-		data_read_uint32(data + move + 8, MsPipe->PipeFlags);
+		data_read_UINT32(data + move + 4, MsPipe->MaximumTransferSize);
+		data_read_UINT32(data + move + 8, MsPipe->PipeFlags);
 		move += 12;
 /* Already set to zero by memset
 		MsPipe->PipeHandle	   = 0;
@@ -111,7 +111,7 @@ msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR * MsInterface)
 }
 
 static void
-msusb_msinterface_free_list(MSUSB_INTERFACE_DESCRIPTOR ** MsInterfaces, uint32 NumInterfaces)
+msusb_msinterface_free_list(MSUSB_INTERFACE_DESCRIPTOR ** MsInterfaces, UINT32 NumInterfaces)
 {
 	int inum = 0;
 
@@ -133,7 +133,7 @@ msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR * MsConfig, BYTE InterfaceNumb
 }
 
 MSUSB_INTERFACE_DESCRIPTOR *
-msusb_msinterface_read(BYTE * data, uint32 data_size, int * offset)
+msusb_msinterface_read(BYTE * data, UINT32 data_size, int * offset)
 {
 	MSUSB_INTERFACE_DESCRIPTOR * MsInterface;
 	
@@ -143,7 +143,7 @@ msusb_msinterface_read(BYTE * data, uint32 data_size, int * offset)
 	data_read_UINT16(data + 2, MsInterface->NumberOfPipesExpected);
 	data_read_BYTE(data + 4, MsInterface->InterfaceNumber);
 	data_read_BYTE(data + 5, MsInterface->AlternateSetting);
-	data_read_uint32(data + 8, MsInterface->NumberOfPipes);
+	data_read_UINT32(data + 8, MsInterface->NumberOfPipes);
 	*offset += 12;
 
 	MsInterface->InterfaceHandle	= 0;
@@ -184,9 +184,9 @@ msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, BYTE * data, i
 	/* Padding */ 
 	data_write_BYTE(data + 7, 0);
 	/* InterfaceHandle */
-	data_write_uint32(data + 8, MsInterface->InterfaceHandle);
+	data_write_UINT32(data + 8, MsInterface->InterfaceHandle);
 	/* NumberOfPipes */
-	data_write_uint32(data + 12, MsInterface->NumberOfPipes);
+	data_write_UINT32(data + 12, MsInterface->NumberOfPipes);
 	move += 16;
 	/* Pipes */
 	MsPipes = MsInterface->MsPipes;
@@ -200,13 +200,13 @@ msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, BYTE * data, i
 		/* Interval */
 		data_write_BYTE(data + move + 3, MsPipe->bInterval);
 		/* PipeType */
-		data_write_uint32(data + move + 4, MsPipe->PipeType);
+		data_write_UINT32(data + move + 4, MsPipe->PipeType);
 		/* PipeHandle */
-		data_write_uint32(data + move + 8, MsPipe->PipeHandle);
+		data_write_UINT32(data + move + 8, MsPipe->PipeHandle);
 		/* MaximumTransferSize */
-		data_write_uint32(data + move + 12, MsPipe->MaximumTransferSize);
+		data_write_UINT32(data + move + 12, MsPipe->MaximumTransferSize);
 		/* PipeFlags */
-		data_write_uint32(data + move + 16, MsPipe->PipeFlags);
+		data_write_UINT32(data + move + 16, MsPipe->PipeFlags);
 		
 		move += 20;
 	}
@@ -217,7 +217,7 @@ msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR * MsInterface, BYTE * data, i
 }
 
 static MSUSB_INTERFACE_DESCRIPTOR **
-msusb_msinterface_read_list(BYTE * data, uint32 data_size, uint32 NumInterfaces)
+msusb_msinterface_read_list(BYTE * data, UINT32 data_size, UINT32 NumInterfaces)
 {
 	MSUSB_INTERFACE_DESCRIPTOR ** MsInterfaces;
 	int inum, offset = 0;
@@ -242,9 +242,9 @@ msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR * MsConfg, BYTE * data, int * offse
 	int inum = 0;
 	
 	/* ConfigurationHandle*/
-	data_write_uint32(data + *offset, MsConfg->ConfigurationHandle); 
+	data_write_UINT32(data + *offset, MsConfg->ConfigurationHandle); 
 	/* NumInterfaces*/
-	data_write_uint32(data + *offset + 4, MsConfg->NumInterfaces); 
+	data_write_UINT32(data + *offset + 4, MsConfg->NumInterfaces); 
 	*offset += 8;
 	/* Interfaces */
 	MsInterfaces = MsConfg->MsInterfaces;
@@ -279,7 +279,7 @@ msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR * MsConfig)
 }
 
 MSUSB_CONFIG_DESCRIPTOR *
-msusb_msconfig_read(BYTE * data, uint32 data_size, uint32 NumInterfaces)
+msusb_msconfig_read(BYTE * data, UINT32 data_size, UINT32 NumInterfaces)
 {
 	MSUSB_CONFIG_DESCRIPTOR * MsConfig;
 	BYTE lenConfiguration, typeConfiguration;

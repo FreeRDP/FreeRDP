@@ -285,8 +285,8 @@ static rdpChannel* freerdp_channels_find_channel_by_name(rdpChannels* channels,
  * according to MS docs
  * only called from main thread
  */
-static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
-	int channelCount, uint32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
+static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
+	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
 	rdpChannels* channels;
@@ -388,7 +388,7 @@ static uint32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
  * can be called from any thread
  * thread safe because no 2 threads can have the same channel name registered
  */
-static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHandle,
+static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 	char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
 {
 	int index;
@@ -442,7 +442,7 @@ static uint32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, uint32* pOpenHa
  * can be called from any thread
  * thread safe because no 2 threads can have the same openHandle
  */
-static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
+static UINT32 FREERDP_CC MyVirtualChannelClose(UINT32 openHandle)
 {
 	int index;
 	rdpChannels* channels;
@@ -472,7 +472,7 @@ static uint32 FREERDP_CC MyVirtualChannelClose(uint32 openHandle)
 }
 
 /* can be called from any thread */
-static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, uint32 dataLength, void* pUserData)
+static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
 {
 	int index;
 	SYNC_DATA* item;
@@ -533,7 +533,7 @@ static uint32 FREERDP_CC MyVirtualChannelWrite(uint32 openHandle, void* pData, u
 	return CHANNEL_RC_OK;
 }
 
-static uint32 FREERDP_CC MyVirtualChannelEventPush(uint32 openHandle, RDP_EVENT* event)
+static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT* event)
 {
 	int index;
 	rdpChannels* channels;

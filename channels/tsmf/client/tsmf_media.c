@@ -63,24 +63,24 @@ struct _TSMF_PRESENTATION
 	const char* audio_device;
 	int eos;
 
-	uint32 last_x;
-	uint32 last_y;
-	uint32 last_width;
-	uint32 last_height;
+	UINT32 last_x;
+	UINT32 last_y;
+	UINT32 last_width;
+	UINT32 last_height;
 	UINT16 last_num_rects;
 	RDP_RECT* last_rects;
 
-	uint32 output_x;
-	uint32 output_y;
-	uint32 output_width;
-	uint32 output_height;
+	UINT32 output_x;
+	UINT32 output_y;
+	UINT32 output_width;
+	UINT32 output_height;
 	UINT16 output_num_rects;
 	RDP_RECT* output_rects;
 
 	IWTSVirtualChannelCallback* channel_callback;
 
-	uint64 audio_start_time;
-	uint64 audio_end_time;
+	UINT64 audio_start_time;
+	UINT64 audio_end_time;
 
 	/* The stream list could be accessed by different threads and need to be protected. */
 	HANDLE mutex;
@@ -90,7 +90,7 @@ struct _TSMF_PRESENTATION
 
 struct _TSMF_STREAM
 {
-	uint32 stream_id;
+	UINT32 stream_id;
 
 	TSMF_PRESENTATION* presentation;
 
@@ -98,18 +98,18 @@ struct _TSMF_STREAM
 
 	int major_type;
 	int eos;
-	uint32 width;
-	uint32 height;
+	UINT32 width;
+	UINT32 height;
 
 	ITSMFAudioDevice* audio;
-	uint32 sample_rate;
-	uint32 channels;
-	uint32 bits_per_sample;
+	UINT32 sample_rate;
+	UINT32 channels;
+	UINT32 bits_per_sample;
 
 	/* The end_time of last played sample */
-	uint64 last_end_time;
+	UINT64 last_end_time;
 	/* Next sample should not start before this system time. */
-	uint64 next_start_time;
+	UINT64 next_start_time;
 
 	freerdp_thread* thread;
 
@@ -121,32 +121,32 @@ struct _TSMF_STREAM
 
 struct _TSMF_SAMPLE
 {
-	uint32 sample_id;
-	uint64 start_time;
-	uint64 end_time;
-	uint64 duration;
-	uint32 extensions;
-	uint32 data_size;
+	UINT32 sample_id;
+	UINT64 start_time;
+	UINT64 end_time;
+	UINT64 duration;
+	UINT32 extensions;
+	UINT32 data_size;
 	BYTE* data;
-	uint32 decoded_size;
-	uint32 pixfmt;
+	UINT32 decoded_size;
+	UINT32 pixfmt;
 
 	TSMF_STREAM* stream;
 	IWTSVirtualChannelCallback* channel_callback;
-	uint64 ack_time;
+	UINT64 ack_time;
 };
 
 static LIST* presentation_list = NULL;
-static uint64 last_played_audio_time = 0;
+static UINT64 last_played_audio_time = 0;
 static HANDLE tsmf_mutex = NULL;
 static int TERMINATING = 0;
 
-static uint64 get_current_time(void)
+static UINT64 get_current_time(void)
 {
 	struct timeval tp;
 
 	gettimeofday(&tp, 0);
-	return ((uint64)tp.tv_sec) * 10000000LL + ((uint64)tp.tv_usec) * 10LL;
+	return ((UINT64)tp.tv_sec) * 10000000LL + ((UINT64)tp.tv_usec) * 10LL;
 }
 
 static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
@@ -235,7 +235,7 @@ static void tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 {
 	TSMF_SAMPLE* sample;
-	uint64 ack_time;
+	UINT64 ack_time;
 
 	ack_time = get_current_time();
 	while (list_size(stream->sample_ack_list) > 0 && !freerdp_thread_is_stopped(stream->thread))
@@ -323,7 +323,7 @@ static void tsmf_presentation_restore_last_video_frame(TSMF_PRESENTATION* presen
 
 static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 {
-	uint64 t;
+	UINT64 t;
 	RDP_VIDEO_FRAME_EVENT* vevent;
 	TSMF_STREAM* stream = sample->stream;
 	TSMF_PRESENTATION* presentation = stream->presentation;
@@ -426,7 +426,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 {
-	uint64 latency = 0;
+	UINT64 latency = 0;
 	TSMF_STREAM* stream = sample->stream;
 
 	DEBUG_DVC("MessageId %d EndTime %d consumed.",
@@ -456,9 +456,9 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 {
 	BOOL ret = FALSE;
-	uint32 width;
-	uint32 height;
-	uint32 pixfmt = 0;
+	UINT32 width;
+	UINT32 height;
+	UINT32 pixfmt = 0;
 	TSMF_STREAM* stream = sample->stream;
 
 	if (stream->decoder)
@@ -485,7 +485,7 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 		if (stream->decoder->GetDecodedFormat)
 		{
 			pixfmt = stream->decoder->GetDecodedFormat(stream->decoder);
-			if (pixfmt == ((uint32) -1))
+			if (pixfmt == ((UINT32) -1))
 			{
 				tsmf_sample_ack(sample);
 				tsmf_sample_free(sample);
@@ -526,9 +526,9 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 	else
 	{
 		TSMF_STREAM * stream = sample->stream;
-		uint64 ack_anticipation_time = get_current_time();
-		uint64 currentRunningTime = sample->start_time;
-		uint32 bufferLevel = 0;
+		UINT64 ack_anticipation_time = get_current_time();
+		UINT64 currentRunningTime = sample->start_time;
+		UINT32 bufferLevel = 0;
 		if (stream->decoder->GetRunningTime)
 		{
 			currentRunningTime = stream->decoder->GetRunningTime(stream->decoder);
@@ -738,7 +738,7 @@ static void tsmf_stream_restart(TSMF_STREAM* stream)
 	}
 }
 
-static void tsmf_stream_change_volume(TSMF_STREAM* stream, uint32 newVolume, uint32 muted)
+static void tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UINT32 muted)
 {
 	if (!stream)
 		return;
@@ -753,7 +753,7 @@ static void tsmf_stream_change_volume(TSMF_STREAM* stream, uint32 newVolume, uin
 	}
 }
 
-void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, uint32 newVolume, uint32 muted)
+void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 newVolume, UINT32 muted)
 {
 	LIST_ITEM* item;
 	TSMF_STREAM* stream;
@@ -831,7 +831,7 @@ void tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 }
 
 void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
-	uint32 x, uint32 y, uint32 width, uint32 height,
+	UINT32 x, UINT32 y, UINT32 width, UINT32 height,
 	int num_rects, RDP_RECT* rects)
 {
 	presentation->output_x = x;
@@ -910,7 +910,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	free(presentation);
 }
 
-TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, uint32 stream_id)
+TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 {
 	TSMF_STREAM* stream;
 
@@ -936,7 +936,7 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, uint32 stream_id)
 	return stream;
 }
 
-TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, uint32 stream_id)
+TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 {
 	LIST_ITEM* item;
 	TSMF_STREAM* stream;
@@ -1020,8 +1020,8 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 }
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
-	uint32 data_size, BYTE* data)
+	UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration, UINT32 extensions,
+	UINT32 data_size, BYTE* data)
 {
 	TSMF_SAMPLE* sample;
 

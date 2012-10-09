@@ -48,7 +48,7 @@ request_queue_has_next(REQUEST_QUEUE* queue)
 }
 
 TRANSFER_REQUEST*
-request_queue_register_request(REQUEST_QUEUE* queue, uint32 RequestId, 
+request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId, 
 	struct libusb_transfer * transfer, 
 	BYTE endpoint)
 {
@@ -110,7 +110,7 @@ request_queue_get_request_by_endpoint(REQUEST_QUEUE *queue, BYTE ep)
 }
 
 int
-request_queue_unregister_request(REQUEST_QUEUE *queue, uint32 RequestId)
+request_queue_unregister_request(REQUEST_QUEUE *queue, UINT32 RequestId)
 {
 	TRANSFER_REQUEST *request, *request_temp;
 	pthread_mutex_lock(&queue->request_loading);

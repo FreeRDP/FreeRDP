@@ -29,7 +29,7 @@
 #include "wf_window.h"
 #include "wf_rail.h"
 
-void wf_rail_paint(wfInfo* wfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
+void wf_rail_paint(wfInfo* wfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
 }
 
@@ -37,7 +37,7 @@ void wf_rail_register_callbacks(wfInfo* wfi, rdpRail* rail)
 {
 }
 
-void wf_rail_send_client_system_command(wfInfo* wfi, uint32 windowId, UINT16 command)
+void wf_rail_send_client_system_command(wfInfo* wfi, UINT32 windowId, UINT16 command)
 {
 }
 

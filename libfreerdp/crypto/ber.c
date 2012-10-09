@@ -338,7 +338,7 @@ void ber_write_BOOL(STREAM* s, BOOL value)
 	stream_write_BYTE(s, (value == TRUE) ? 0xFF : 0);
 }
 
-BOOL ber_read_integer(STREAM* s, uint32* value)
+BOOL ber_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
@@ -363,7 +363,7 @@ BOOL ber_read_integer(STREAM* s, uint32* value)
 		*value += (byte << 16);
 	}
 	else if (length == 4)
-		stream_read_uint32_be(s, *value);
+		stream_read_UINT32_be(s, *value);
 	else
 		return FALSE;
 
@@ -376,7 +376,7 @@ BOOL ber_read_integer(STREAM* s, uint32* value)
  * @param value
  */
 
-int ber_write_integer(STREAM* s, uint32 value)
+int ber_write_integer(STREAM* s, UINT32 value)
 {
 	ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 
@@ -402,14 +402,14 @@ int ber_write_integer(STREAM* s, uint32 value)
 	else if (value <= 0xFFFFFFFF)
 	{
 		ber_write_length(s, 4);
-		stream_write_uint32_be(s, value);
+		stream_write_UINT32_be(s, value);
 		return 5;
 	}
 
 	return 0;
 }
 
-int ber_skip_integer(uint32 value)
+int ber_skip_integer(UINT32 value)
 {
 	if (value <= 0xFF)
 	{

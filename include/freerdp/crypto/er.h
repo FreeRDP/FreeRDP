@@ -73,16 +73,16 @@ FREERDP_API int er_write_sequence_tag(STREAM* s, int length, BOOL flag);
 FREERDP_API int er_skip_sequence(int length);
 FREERDP_API int er_skip_sequence_tag(int length);
 FREERDP_API BOOL er_read_bit_string(STREAM* s, int* length, BYTE* padding);
-FREERDP_API BOOL er_write_bit_string_tag(STREAM* s, uint32 length, BYTE padding, BOOL flag);
+FREERDP_API BOOL er_write_bit_string_tag(STREAM* s, UINT32 length, BYTE padding, BOOL flag);
 FREERDP_API BOOL er_read_octet_string(STREAM* s, int* length);
 FREERDP_API void er_write_octet_string(STREAM* s, BYTE* oct_str, int length, BOOL flag);
 FREERDP_API int er_write_octet_string_tag(STREAM* s, int length, BOOL flag);
 FREERDP_API int er_skip_octet_string(int length);
 FREERDP_API BOOL er_read_BOOL(STREAM* s, BOOL* value);
 FREERDP_API void er_write_BOOL(STREAM* s, BOOL value);
-FREERDP_API BOOL er_read_integer(STREAM* s, uint32* value);
-FREERDP_API int er_write_integer(STREAM* s, sint32 value);
+FREERDP_API BOOL er_read_integer(STREAM* s, UINT32* value);
+FREERDP_API int er_write_integer(STREAM* s, INT32 value);
 FREERDP_API BOOL er_read_integer_length(STREAM* s, int* length);
-FREERDP_API int er_skip_integer(sint32 value);
+FREERDP_API int er_skip_integer(INT32 value);
 
 #endif /* FREERDP_CRYPTO_ER_H */

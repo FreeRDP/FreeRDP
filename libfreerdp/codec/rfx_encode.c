@@ -182,10 +182,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 
 void rfx_encode_rgb_to_ycbcr(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 {
-	/* sint32 is used intentionally because we calculate with shifted factors! */
+	/* INT32 is used intentionally because we calculate with shifted factors! */
 	int i;
-	sint32 r, g, b;
-	sint32 y, cb, cr;
+	INT32 r, g, b;
+	INT32 y, cb, cr;
 
 	/**
 	 * The encoded YCbCr coefficients are represented as 11.5 fixed-point numbers:
@@ -222,7 +222,7 @@ void rfx_encode_rgb_to_ycbcr(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 	}
 }
 
-static void rfx_encode_component(RFX_CONTEXT* context, const uint32* quantization_values,
+static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
 	INT16* data, BYTE* buffer, int buffer_size, int* size)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_encode_component);
@@ -247,7 +247,7 @@ static void rfx_encode_component(RFX_CONTEXT* context, const uint32* quantizatio
 }
 
 void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int height, int rowstride,
-	const uint32* y_quants, const uint32* cb_quants, const uint32* cr_quants,
+	const UINT32* y_quants, const UINT32* cb_quants, const UINT32* cr_quants,
 	STREAM* data_out, int* y_size, int* cb_size, int* cr_size)
 {
 	INT16* y_r_buffer = context->priv->y_r_buffer;

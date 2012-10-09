@@ -30,7 +30,7 @@ typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
 typedef void (*psAudinServerOpening)(audin_server_context* context);
-typedef void (*psAudinServerOpenResult)(audin_server_context* context, uint32 result);
+typedef void (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
 typedef void (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
 
 struct _audin_server_context

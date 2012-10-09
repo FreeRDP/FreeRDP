@@ -89,7 +89,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 			
 			stream_extend(body, stream_get_size(body) + 4 + name_length);
 
-			stream_write_uint32(body, cb_event->formats[i]);
+			stream_write_UINT32(body, cb_event->formats[i]);
 			stream_write(body, name, name_length);
 		}
 				
@@ -109,7 +109,7 @@ static void cliprdr_send_format_list_response(cliprdrPlugin* cliprdr)
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, UINT16 flags)
+void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT32 length, UINT16 flags)
 {
 	int i;
 	BOOL ascii;
@@ -137,7 +137,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 	{
 		format_name = &cliprdr->format_names[i];
 
-		stream_read_uint32(s, format_name->id);
+		stream_read_UINT32(s, format_name->id);
 
 		if (ascii)
 		{
@@ -153,7 +153,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint3
 	}
 }
 
-void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32 length, UINT16 flags)
+void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT32 length, UINT16 flags)
 {
 	int allocated_formats = 8;
 	BYTE* end_mark;
@@ -178,7 +178,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 		}
 		
 		format_name = &cliprdr->format_names[cliprdr->num_format_names++];
-		stream_read_uint32(s, format_name->id);
+		stream_read_UINT32(s, format_name->id);
 		
 		format_name->name = NULL;
 		format_name->length = 0;
@@ -194,10 +194,10 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, uint32
 	}
 }
 
-void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
+void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	int i;
-	uint32 format;
+	UINT32 format;
 	BOOL supported;
 	CLIPRDR_FORMAT_NAME* format_name;
 	RDP_CB_FORMAT_LIST_EVENT* cb_event;
@@ -218,7 +218,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 		cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
 
 	if (cliprdr->num_format_names > 0)
-		cb_event->formats = (uint32*) malloc(sizeof(uint32) * cliprdr->num_format_names);
+		cb_event->formats = (UINT32*) malloc(sizeof(UINT32) * cliprdr->num_format_names);
 
 	cb_event->num_formats = 0;
 
@@ -286,7 +286,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataL
 	cliprdr_send_format_list_response(cliprdr);
 }
 
-void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
+void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	/* where is this documented? */
 #if 0
@@ -300,14 +300,14 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, STREAM* s, uin
 #endif
 }
 
-void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
+void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, STREAM* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
 	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
 
-	stream_read_uint32(s, cb_event->format);
+	stream_read_UINT32(s, cb_event->format);
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
 }
 
@@ -337,11 +337,11 @@ void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DA
 	DEBUG_CLIPRDR("Sending Format Data Request");
 
 	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
-	stream_write_uint32(s, cb_event->format);
+	stream_write_UINT32(s, cb_event->format);
 	cliprdr_packet_send(cliprdr, s);
 }
 
-void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, uint32 dataLen, UINT16 msgFlags)
+void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, STREAM* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 

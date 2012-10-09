@@ -238,7 +238,7 @@ void xf_SetWindowUnlisted(xfInfo* xfi, xfWindow* window)
 		XA_ATOM, 32, PropModeReplace, (BYTE*) &window_state, 2);
 }
 
-void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_style)
+void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, UINT32 style, UINT32 ex_style)
 {
 	Atom window_type;
 
@@ -463,7 +463,7 @@ void xf_FixWindowCoordinates(xfInfo* xfi, int* x, int* y, int* width, int* heigh
 
 char rail_window_class[] = "RAIL:00000000";
 
-xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, uint32 id)
+xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id)
 {
 	XGCValues gcv;
 	int input_mask;
@@ -500,7 +500,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 		CWBorderPixel | CWWinGravity | CWBitGravity, &xfi->attribs);
 
 	DEBUG_X11_LMS("Create window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  rdp=0x%X",
-			(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+			(UINT32) window->handle, window->left, window->top, window->right, window->bottom,
 			window->width, window->height, wnd->windowId);
 
 	memset(&gcv, 0, sizeof(gcv));
@@ -587,7 +587,7 @@ void xf_StartLocalMoveSize(xfInfo* xfi, xfWindow* window, int direction, int x, 
 
 	DEBUG_X11_LMS("direction=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d   "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d  mouse_x=%d mouse_y=%d",
-		direction, (uint32) window->handle, 
+		direction, (UINT32) window->handle, 
 		window->left, window->top, window->right, window->bottom,
 		window->width, window->height, window->window->windowId,
 		window->window->windowOffsetX, window->window->windowOffsetY, 
@@ -620,7 +620,7 @@ void xf_EndLocalMoveSize(xfInfo *xfi, xfWindow *window)
 	DEBUG_X11_LMS("state=%d window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  "
 		"RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 		window->local_move.state, 
-		(uint32) window->handle, window->left, window->top, window->right, window->bottom,
+		(UINT32) window->handle, window->left, window->top, window->right, window->bottom,
 		window->width, window->height, window->window->windowId,
 		window->window->windowOffsetX, window->window->windowOffsetY, 
 		window->window->windowWidth, window->window->windowHeight);
@@ -666,7 +666,7 @@ void xf_MoveWindow(xfInfo* xfi, xfWindow* window, int x, int y, int width, int h
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u  "
 		"new rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 		"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-		(uint32) window->handle, window->left, window->top, 
+		(UINT32) window->handle, window->left, window->top, 
 		window->right, window->bottom, window->width, window->height,
 		x, y, x + width -1, y + height -1, width, height, 
 		window->window->windowId,
@@ -754,7 +754,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	int propsize;
 	long* propdata;
 	long* dstp;
-	uint32* srcp;
+	UINT32* srcp;
 
 	if (icon->big != TRUE)
 		return;
@@ -766,7 +766,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	propdata[0] = icon->entry->width;
 	propdata[1] = icon->entry->height;
 	dstp = &(propdata[2]);
-	srcp = (uint32*) icon->extra;
+	srcp = (UINT32*) icon->extra;
 
 	for (y = 0; y < icon->entry->height; y++)
 	{

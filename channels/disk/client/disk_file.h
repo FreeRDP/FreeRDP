@@ -49,8 +49,8 @@
 #define unlink(a) _unlink(a)
 #define ftruncate(a,b) _chsize(a,b)
 
-typedef uint32 ssize_t ;
-typedef uint32 mode_t ;
+typedef UINT32 ssize_t ;
+typedef UINT32 mode_t ;
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 #define STAT stat
@@ -70,9 +70,9 @@ typedef uint32 mode_t ;
 #define EPOCH_DIFF 11644473600LL
 
 #define FILE_TIME_SYSTEM_TO_RDP(_t) \
-	(((uint64)(_t) + EPOCH_DIFF) * 10000000LL)
+	(((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
 #define FILE_TIME_RDP_TO_SYSTEM(_t) \
-	(((_t) == 0LL || (_t) == (uint64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
+	(((_t) == 0LL || (_t) == (UINT64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
 
 #define FILE_ATTR_SYSTEM_TO_RDP(_f, _st) ( \
 	(S_ISDIR(_st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) | \
@@ -83,7 +83,7 @@ typedef uint32 mode_t ;
 typedef struct _DISK_FILE DISK_FILE;
 struct _DISK_FILE
 {
-	uint32 id;
+	UINT32 id;
 	BOOL is_dir;
 	int fd;
 	int err;
@@ -95,16 +95,16 @@ struct _DISK_FILE
 	BOOL delete_pending;
 };
 
-DISK_FILE* disk_file_new(const char* base_path, const char* path, uint32 id,
-	uint32 DesiredAccess, uint32 CreateDisposition, uint32 CreateOptions);
+DISK_FILE* disk_file_new(const char* base_path, const char* path, UINT32 id,
+	UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions);
 void disk_file_free(DISK_FILE* file);
 
-BOOL disk_file_seek(DISK_FILE* file, uint64 Offset);
-BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, uint32* Length);
-BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, uint32 Length);
-BOOL disk_file_query_information(DISK_FILE* file, uint32 FsInformationClass, STREAM* output);
-BOOL disk_file_set_information(DISK_FILE* file, uint32 FsInformationClass, uint32 Length, STREAM* input);
-BOOL disk_file_query_directory(DISK_FILE* file, uint32 FsInformationClass, BYTE InitialQuery,
+BOOL disk_file_seek(DISK_FILE* file, UINT64 Offset);
+BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, UINT32* Length);
+BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, UINT32 Length);
+BOOL disk_file_query_information(DISK_FILE* file, UINT32 FsInformationClass, STREAM* output);
+BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input);
+BOOL disk_file_query_directory(DISK_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
 	const char* path, STREAM* output);
 
 #endif /* __DISK_FILE_H */

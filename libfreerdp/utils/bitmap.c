@@ -35,25 +35,25 @@ typedef struct
 
 typedef struct
 {
-	uint32 filesz;
+	UINT32 filesz;
 	UINT16 creator1;
 	UINT16 creator2;
-	uint32 bmp_offset;
+	UINT32 bmp_offset;
 } BITMAP_CORE_HEADER;
 
 typedef struct
 {
-	uint32 header_sz;
-	sint32 width;
-	sint32 height;
+	UINT32 header_sz;
+	INT32 width;
+	INT32 height;
 	UINT16 nplanes;
 	UINT16 bitspp;
-	uint32 compress_type;
-	uint32 bmp_bytesz;
-	sint32 hres;
-	sint32 vres;
-	uint32 ncolors;
-	uint32 nimpcolors;
+	UINT32 compress_type;
+	UINT32 bmp_bytesz;
+	INT32 hres;
+	INT32 vres;
+	UINT32 ncolors;
+	UINT32 nimpcolors;
 } BITMAP_INFO_HEADER;
 
 void freerdp_bitmap_write(char* filename, void* data, int width, int height, int bpp)

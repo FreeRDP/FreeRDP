@@ -56,15 +56,15 @@ struct rdpsnd_plugin
 	BOOL expectingWave;
 	BYTE waveData[4];
 	UINT16 waveDataSize;
-	uint32 wTimeStamp; /* server timestamp */
-	uint32 wave_timestamp; /* client timestamp */
+	UINT32 wTimeStamp; /* server timestamp */
+	UINT32 wave_timestamp; /* client timestamp */
 
 	BOOL is_open;
-	uint32 close_timestamp;
+	UINT32 close_timestamp;
 
 	UINT16 fixed_format;
 	UINT16 fixed_channel;
-	uint32 fixed_rate;
+	UINT32 fixed_rate;
 	int latency;
 
 	/* Device plugin */
@@ -74,11 +74,11 @@ struct rdpsnd_plugin
 struct data_out_item
 {
 	STREAM* data_out;
-	uint32 out_timestamp;
+	UINT32 out_timestamp;
 };
 
 /* get time in milliseconds */
-static uint32 get_mstime(void)
+static UINT32 get_mstime(void)
 {
 	struct timeval tp;
 
@@ -91,7 +91,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 {
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)plugin;
 	struct data_out_item* item;
-	uint32 cur_time;
+	UINT32 cur_time;
 
 	while (list_size(rdpsnd->data_out_list) > 0)
 	{
@@ -159,9 +159,9 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 
 	rdpsnd_free_supported_formats(rdpsnd);
 
-	stream_seek_uint32(data_in); /* dwFlags */
-	stream_seek_uint32(data_in); /* dwVolume */
-	stream_seek_uint32(data_in); /* dwPitch */
+	stream_seek_UINT32(data_in); /* dwFlags */
+	stream_seek_UINT32(data_in); /* dwVolume */
+	stream_seek_UINT32(data_in); /* dwPitch */
 	stream_seek_UINT16(data_in); /* wDGramPort */
 	stream_read_UINT16(data_in, wNumberOfFormats);
 	stream_read_BYTE(data_in, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
@@ -182,9 +182,9 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 	stream_write_BYTE(data_out, SNDC_FORMATS); /* msgType */
 	stream_write_BYTE(data_out, 0); /* bPad */
 	stream_seek_UINT16(data_out); /* BodySize */
-	stream_write_uint32(data_out, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
-	stream_write_uint32(data_out, 0xFFFFFFFF); /* dwVolume */
-	stream_write_uint32(data_out, 0); /* dwPitch */
+	stream_write_UINT32(data_out, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
+	stream_write_UINT32(data_out, 0xFFFFFFFF); /* dwVolume */
+	stream_write_UINT32(data_out, 0); /* dwPitch */
 	stream_write_UINT16_be(data_out, 0); /* wDGramPort */
 	stream_seek_UINT16(data_out); /* wNumberOfFormats */
 	stream_write_BYTE(data_out, 0); /* cLastBlockConfirmed */
@@ -197,8 +197,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		format = &out_formats[n_out_formats];
 		stream_read_UINT16(data_in, format->wFormatTag);
 		stream_read_UINT16(data_in, format->nChannels);
-		stream_read_uint32(data_in, format->nSamplesPerSec);
-		stream_seek_uint32(data_in); /* nAvgBytesPerSec */
+		stream_read_UINT32(data_in, format->nSamplesPerSec);
+		stream_seek_UINT32(data_in); /* nAvgBytesPerSec */
 		stream_read_UINT16(data_in, format->nBlockAlign);
 		stream_read_UINT16(data_in, format->wBitsPerSample);
 		stream_read_UINT16(data_in, format->cbSize);
@@ -321,8 +321,8 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 {
 	UINT16 wTimeStamp;
-	uint32 delay_ms;
-	uint32 process_ms;
+	UINT32 delay_ms;
+	UINT32 process_ms;
 	struct data_out_item* item;
 
 	rdpsnd->expectingWave = 0;
@@ -367,9 +367,9 @@ static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 
 static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_in)
 {
-	uint32 dwVolume;
+	UINT32 dwVolume;
 
-	stream_read_uint32(data_in, dwVolume);
+	stream_read_UINT32(data_in, dwVolume);
 	DEBUG_SVC("dwVolume 0x%X", dwVolume);
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);

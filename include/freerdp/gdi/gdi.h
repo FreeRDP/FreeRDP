@@ -281,13 +281,13 @@ struct rdp_gdi
 	gdiBitmap* image;
 };
 
-FREERDP_API uint32 gdi_rop3_code(BYTE code);
+FREERDP_API UINT32 gdi_rop3_code(BYTE code);
 FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
-FREERDP_API int gdi_init(freerdp* instance, uint32 flags, BYTE* buffer);
+FREERDP_API int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef WITH_DEBUG_GDI

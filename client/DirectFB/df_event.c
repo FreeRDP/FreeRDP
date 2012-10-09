@@ -154,7 +154,7 @@ void df_keyboard_init()
 
 }
 
-void df_send_mouse_button_event(rdpInput* input, BOOL down, uint32 button, UINT16 x, UINT16 y)
+void df_send_mouse_button_event(rdpInput* input, BOOL down, UINT32 button, UINT16 x, UINT16 y)
 {
 	UINT16 flags;
 

@@ -136,7 +136,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 	free(cups_printjob) ;
 }
 
-static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
+static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
 	rdpCupsPrintJob* cups_printjob;
@@ -191,7 +191,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, uint32 id)
 	return (rdpPrintJob*)cups_printjob;
 }
 
-static rdpPrintJob* printer_cups_find_printjob(rdpPrinter* printer, uint32 id)
+static rdpPrintJob* printer_cups_find_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
 

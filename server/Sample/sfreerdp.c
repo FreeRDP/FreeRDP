@@ -321,9 +321,9 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	test_peer_end_frame(client);
 }
 
-static BOOL test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
+static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	sint32 sec, usec;
+	INT32 sec, usec;
 
 	if (*old_sec==0 && *old_usec==0)
 	{
@@ -362,8 +362,8 @@ static BOOL test_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec,
 void tf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	uint32 prev_seconds;
-	uint32 prev_useconds;
+	UINT32 prev_seconds;
+	UINT32 prev_useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
 	pcap_record record;
@@ -401,7 +401,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 	void* fd;
 	STREAM* s;
 	void* buffer;
-	uint32 bytes_returned = 0;
+	UINT32 bytes_returned = 0;
 	testPeerContext* context = (testPeerContext*) arg;
 	freerdp_thread* thread = context->debug_channel_thread;
 
@@ -537,7 +537,7 @@ BOOL tf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-void tf_peer_synchronize_event(rdpInput* input, uint32 flags)
+void tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }

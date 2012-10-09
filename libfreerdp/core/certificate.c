@@ -132,7 +132,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	STREAM* s;
 	int length;
 	BYTE padding;
-	uint32 version;
+	UINT32 version;
 	int modulus_length;
 	int exponent_length;
 
@@ -214,7 +214,7 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
  * @return new X.509 certificate chain
  */
 
-rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count)
+rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
 	rdpX509CertChain* x509_cert_chain;
 
@@ -248,13 +248,13 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 	}
 }
 
-static BOOL certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, uint32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, UINT32 length)
 {
 	BYTE magic[4];
-	uint32 keylen;
-	uint32 bitlen;
-	uint32 datalen;
-	uint32 modlen;
+	UINT32 keylen;
+	UINT32 bitlen;
+	UINT32 datalen;
+	UINT32 modlen;
 
 	stream_read(s, magic, 4);
 
@@ -264,9 +264,9 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 		return FALSE;
 	}
 
-	stream_read_uint32(s, keylen);
-	stream_read_uint32(s, bitlen);
-	stream_read_uint32(s, datalen);
+	stream_read_UINT32(s, keylen);
+	stream_read_UINT32(s, bitlen);
+	stream_read_UINT32(s, datalen);
 	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 
@@ -279,7 +279,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	return TRUE;
 }
 
-static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, BYTE* sigdata, int sigdatalen, STREAM* s, uint32 siglen)
+static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, BYTE* sigdata, int sigdatalen, STREAM* s, UINT32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
@@ -342,19 +342,19 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
 {
-	uint32 dwSigAlgId;
-	uint32 dwKeyAlgId;
-	uint32 wPublicKeyBlobType;
-	uint32 wPublicKeyBlobLen;
-	uint32 wSignatureBlobType;
-	uint32 wSignatureBlobLen;
+	UINT32 dwSigAlgId;
+	UINT32 dwKeyAlgId;
+	UINT32 wPublicKeyBlobType;
+	UINT32 wPublicKeyBlobLen;
+	UINT32 wSignatureBlobType;
+	UINT32 wSignatureBlobLen;
 	BYTE* sigdata;
 	int sigdatalen;
 
 	/* -4, because we need to include dwVersion */
 	sigdata = stream_get_tail(s) - 4;
-	stream_read_uint32(s, dwSigAlgId);
-	stream_read_uint32(s, dwKeyAlgId);
+	stream_read_UINT32(s, dwSigAlgId);
+	stream_read_UINT32(s, dwKeyAlgId);
 
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
@@ -413,18 +413,18 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
 {
 	int i;
-	uint32 certLength;
-	uint32 numCertBlobs;
+	UINT32 certLength;
+	UINT32 numCertBlobs;
 
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
-	stream_read_uint32(s, numCertBlobs); /* numCertBlobs */
+	stream_read_UINT32(s, numCertBlobs); /* numCertBlobs */
 
 	certificate->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
 
 	for (i = 0; i < (int) numCertBlobs; i++)
 	{
-		stream_read_uint32(s, certLength);
+		stream_read_UINT32(s, certLength);
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
 
@@ -461,7 +461,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
 	STREAM* s;
-	uint32 dwVersion;
+	UINT32 dwVersion;
 
 	if (length < 1)
 	{
@@ -472,7 +472,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	s = stream_new(0);
 	stream_attach(s, server_cert, length);
 
-	stream_read_uint32(s, dwVersion); /* dwVersion (4 bytes) */
+	stream_read_UINT32(s, dwVersion); /* dwVersion (4 bytes) */
 
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
 	{

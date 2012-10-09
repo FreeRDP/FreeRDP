@@ -22,7 +22,7 @@
 
 #include <freerdp/codec/rfx.h>
 
-void rfx_quantization_decode(INT16* buffer, const uint32* quantization_values);
-void rfx_quantization_encode(INT16* buffer, const uint32* quantization_values);
+void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values);
+void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values);
 
 #endif /* __RFX_QUANTIZATION_H */

@@ -37,7 +37,7 @@ typedef struct _AudinPulseDevice
 	IAudinDevice iface;
 
 	char device_name[32];
-	uint32 frames_per_packet;
+	UINT32 frames_per_packet;
 	pa_threaded_mainloop* mainloop;
 	pa_context* context;
 	pa_sample_spec sample_spec;
@@ -197,7 +197,7 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
 	return FALSE;
 }
 
-static void audin_pulse_set_format(IAudinDevice* device, audinFormat* format, uint32 FramesPerPacket)
+static void audin_pulse_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	pa_sample_spec sample_spec = { 0 };
@@ -387,10 +387,10 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		audin_pulse_stream_state_callback, pulse);
 	pa_stream_set_read_callback(pulse->stream,
 		audin_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = (uint32_t) -1;
-	buffer_attr.tlength = (uint32_t) -1;
-	buffer_attr.prebuf = (uint32_t) -1;
-	buffer_attr.minreq = (uint32_t) -1;
+	buffer_attr.maxlength = (UINT32_t) -1;
+	buffer_attr.tlength = (UINT32_t) -1;
+	buffer_attr.prebuf = (UINT32_t) -1;
+	buffer_attr.minreq = (UINT32_t) -1;
 	/* 500ms latency */
 	buffer_attr.fragsize = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	if (pa_stream_connect_record(pulse->stream,

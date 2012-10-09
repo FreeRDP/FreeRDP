@@ -111,7 +111,7 @@ void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 		Pointer_Set(context, pointer);
 }
 
-rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
 	rdpPointer* pointer;
 
@@ -126,7 +126,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer)
+void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer)
 {
 	rdpPointer* prevPointer;
 

@@ -53,7 +53,7 @@ struct xf_xv_context
 	int xv_image_size;
 	int xv_shmid;
 	char* xv_shmaddr;
-	uint32* xv_pixfmts;
+	UINT32* xv_pixfmts;
 };
 
 #ifdef WITH_DEBUG_XV
@@ -142,7 +142,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	fo = XvListImageFormats(xfi->display, xv->xv_port, &ret);
 	if (ret > 0)
 	{
-		xv->xv_pixfmts = (uint32*) xzalloc((ret + 1) * sizeof(uint32));
+		xv->xv_pixfmts = (UINT32*) xzalloc((ret + 1) * sizeof(UINT32));
 		for (i = 0; i < ret; i++)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
@@ -181,7 +181,7 @@ void xf_tsmf_uninit(xfInfo* xfi)
 }
 
 static BOOL
-xf_tsmf_is_format_supported(xfXvContext* xv, uint32 pixfmt)
+xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 {
 	int i;
 
@@ -202,8 +202,8 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	int i;
 	BYTE* data1;
 	BYTE* data2;
-	uint32 pixfmt;
-	uint32 xvpixfmt;
+	UINT32 pixfmt;
+	UINT32 xvpixfmt;
 	BOOL converti420yv12 = FALSE;
 	XvImage * image;
 	int colorkey = 0;

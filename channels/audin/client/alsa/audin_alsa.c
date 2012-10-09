@@ -37,12 +37,12 @@ typedef struct _AudinALSADevice
 	IAudinDevice iface;
 
 	char device_name[32];
-	uint32 frames_per_packet;
-	uint32 target_rate;
-	uint32 actual_rate;
+	UINT32 frames_per_packet;
+	UINT32 target_rate;
+	UINT32 actual_rate;
 	snd_pcm_format_t format;
-	uint32 target_channels;
-	uint32 actual_channels;
+	UINT32 target_channels;
+	UINT32 actual_channels;
 	int bytes_per_channel;
 	int wformat;
 	int block_size;
@@ -265,7 +265,7 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 	return FALSE;
 }
 
-static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, uint32 FramesPerPacket)
+static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;

@@ -111,7 +111,7 @@ static void printer_win_close_printjob(rdpPrintJob* printjob)
 	free(win_printjob) ;
 }
 
-static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, uint32 id)
+static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpWinPrinter* win_printer = (rdpWinPrinter*)printer;
 	rdpWinPrintJob* win_printjob;
@@ -145,7 +145,7 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, uint32 id)
 	return (rdpPrintJob*)win_printjob;
 }
 
-static rdpPrintJob* printer_win_find_printjob(rdpPrinter* printer, uint32 id)
+static rdpPrintJob* printer_win_find_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpWinPrinter* win_printer = (rdpWinPrinter*)printer;
 

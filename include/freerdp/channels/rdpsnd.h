@@ -29,7 +29,7 @@ struct rdpsnd_format
 {
 	UINT16 wFormatTag;
 	UINT16 nChannels;
-	uint32 nSamplesPerSec;
+	UINT32 nSamplesPerSec;
 	UINT16 nBlockAlign;
 	UINT16 wBitsPerSample;
 	UINT16 cbSize;

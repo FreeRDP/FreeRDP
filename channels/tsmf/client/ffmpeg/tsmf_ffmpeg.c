@@ -51,8 +51,8 @@ typedef struct _TSMFFFmpegDecoder
 	int prepared;
 
 	BYTE* decoded_data;
-	uint32 decoded_size;
-	uint32 decoded_size_max;
+	UINT32 decoded_size;
+	UINT32 decoded_size_max;
 } TSMFFFmpegDecoder;
 
 static BOOL tsmf_ffmpeg_init_context(ITSMFDecoder* decoder)
@@ -109,7 +109,7 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
-	uint32 size;
+	UINT32 size;
 	const BYTE* s;
 	BYTE* p;
 
@@ -151,12 +151,12 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			*p++ = 0xff; /* Flag? */
 			*p++ = 0xe0 | 0x01; /* Reserved | #sps */
 			s = media_type->ExtraData + 20;
-			size = ((uint32)(*s)) * 256 + ((uint32)(*(s + 1)));
+			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
 			memcpy(p, s, size + 2);
 			s += size + 2;
 			p += size + 2;
 			*p++ = 1; /* #pps */
-			size = ((uint32)(*s)) * 256 + ((uint32)(*(s + 1)));
+			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
 			memcpy(p, s, size + 2);
 		}
 		else
@@ -260,7 +260,7 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* medi
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, uint32 data_size, uint32 extensions)
+static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	int decoded;
@@ -319,12 +319,12 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, ui
 	return ret;
 }
 
-static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, uint32 data_size, uint32 extensions)
+static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	int len;
 	int frame_size;
-	uint32 src_size;
+	UINT32 src_size;
 	const BYTE* src;
 	BYTE* dst;
 	int dst_offset;
@@ -419,7 +419,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, ui
 	return TRUE;
 }
 
-static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, uint32 data_size, uint32 extensions)
+static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
@@ -442,7 +442,7 @@ static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, uint32 d
 	}
 }
 
-static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, uint32* size)
+static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, UINT32* size)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	BYTE* buf;
@@ -454,7 +454,7 @@ static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, uint32* size)
 	return buf;
 }
 
-static uint32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
+static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
@@ -466,11 +466,11 @@ static uint32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
 		default:
 			DEBUG_WARN("unsupported pixel format %u",
 				mdecoder->codec_context->pix_fmt);
-			return (uint32) -1;
+			return (UINT32) -1;
 	}
 }
 
-static BOOL tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, uint32* width, uint32* height)
+static BOOL tsmf_ffmpeg_get_decoded_dimension(ITSMFDecoder* decoder, UINT32* width, UINT32* height)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 

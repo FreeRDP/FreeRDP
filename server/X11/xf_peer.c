@@ -320,9 +320,9 @@ void xf_peer_live_rfx(freerdp_peer* client)
 		pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
 }
 
-static BOOL xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_sec, uint32 new_usec)
+static BOOL xf_peer_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	sint32 sec, usec;
+	INT32 sec, usec;
 
 	if (*old_sec == 0 && *old_usec == 0)
 	{
@@ -361,8 +361,8 @@ static BOOL xf_peer_sleep_tsdiff(uint32 *old_sec, uint32 *old_usec, uint32 new_s
 void xf_peer_dump_rfx(freerdp_peer* client)
 {
 	STREAM* s;
-	uint32 prev_seconds;
-	uint32 prev_useconds;
+	UINT32 prev_seconds;
+	UINT32 prev_useconds;
 	rdpUpdate* update;
 	rdpPcap* pcap_rfx;
 	pcap_record record;

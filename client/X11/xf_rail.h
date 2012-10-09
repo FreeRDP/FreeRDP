@@ -22,9 +22,9 @@
 
 #include "xfreerdp.h"
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom);
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
-void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, UINT16 command);
+void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 command);
 void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled);
 void xf_process_rail_event(xfInfo* xfi, rdpChannels* chanman, RDP_EVENT* event);
 void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window);

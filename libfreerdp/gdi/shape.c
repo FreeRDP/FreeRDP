@@ -54,7 +54,7 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	HGDI_BITMAP bmp;
 	BYTE pixel8;
 	UINT16 pixel16;
-	uint32 pixel32;
+	UINT32 pixel32;
 	int bpp = hdc->bitsPerPixel;
 
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;

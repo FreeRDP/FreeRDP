@@ -29,7 +29,7 @@ typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
+typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
 typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);

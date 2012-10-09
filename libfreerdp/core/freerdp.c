@@ -273,7 +273,7 @@ void freerdp_context_free(freerdp* instance)
 	instance->context = NULL;
 }
 
-uint32 freerdp_error_info(freerdp* instance)
+UINT32 freerdp_error_info(freerdp* instance)
 {
 	return instance->context->rdp->errorInfo;
 }

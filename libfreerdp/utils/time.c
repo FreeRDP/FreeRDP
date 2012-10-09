@@ -29,10 +29,10 @@
 
 #include <freerdp/utils/time.h>
 
-uint64 freerdp_windows_gmtime()
+UINT64 freerdp_windows_gmtime()
 {
 	time_t unix_time;
-	uint64 windows_time;
+	UINT64 windows_time;
 
 	gmtime(&unix_time);
 	windows_time = freerdp_get_windows_time_from_unix_time(unix_time);
@@ -40,14 +40,14 @@ uint64 freerdp_windows_gmtime()
 	return windows_time;
 }
 
-uint64 freerdp_get_windows_time_from_unix_time(time_t unix_time)
+UINT64 freerdp_get_windows_time_from_unix_time(time_t unix_time)
 {
-	uint64 windows_time;
+	UINT64 windows_time;
 	windows_time = (unix_time * 10000000) + 621355968000000000ULL;
 	return windows_time;
 }
 
-time_t freerdp_get_unix_time_from_windows_time(uint64 windows_time)
+time_t freerdp_get_unix_time_from_windows_time(UINT64 windows_time)
 {
 	time_t unix_time;
 	unix_time = (windows_time - 621355968000000000ULL) / 10000000;

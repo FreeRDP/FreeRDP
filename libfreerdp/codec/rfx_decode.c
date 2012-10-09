@@ -90,9 +90,9 @@ static void rfx_decode_format_rgb(INT16* r_buf, INT16* g_buf, INT16* b_buf,
 
 void rfx_decode_ycbcr_to_rgb(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 {
-	/* sint32 is used intentionally because we calculate with shifted factors! */
-	sint32 y, cb, cr;
-	sint32 r, g, b;
+	/* INT32 is used intentionally because we calculate with shifted factors! */
+	INT32 y, cb, cr;
+	INT32 r, g, b;
 	int i;
 
 	/**
@@ -149,7 +149,7 @@ void rfx_decode_ycbcr_to_rgb(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf)
 	}
 }
 
-static void rfx_decode_component(RFX_CONTEXT* context, const uint32* quantization_values,
+static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
 	const BYTE* data, int size, INT16* buffer)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
@@ -174,9 +174,9 @@ static void rfx_decode_component(RFX_CONTEXT* context, const uint32* quantizatio
 }
 
 void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
-	int y_size, const uint32 * y_quants,
-	int cb_size, const uint32 * cb_quants,
-	int cr_size, const uint32 * cr_quants, BYTE* rgb_buffer)
+	int y_size, const UINT32 * y_quants,
+	int cb_size, const UINT32 * cb_quants,
+	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer)
 {
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb);
 

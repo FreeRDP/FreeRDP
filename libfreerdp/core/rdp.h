@@ -140,7 +140,7 @@ struct rdp_rdp
 	struct crypto_des3_struct* fips_encrypt;
 	struct crypto_des3_struct* fips_decrypt;
 	struct crypto_hmac_struct* fips_hmac;
-	uint32 sec_flags;
+	UINT32 sec_flags;
 	BOOL do_crypt;
 	BOOL do_secure_checksum;
 	BYTE sign_key[16];
@@ -152,8 +152,8 @@ struct rdp_rdp
 	BYTE fips_sign_key[20];
 	BYTE fips_encrypt_key[24];
 	BYTE fips_decrypt_key[24];
-	uint32 errorInfo;
-	uint32 finalize_sc_pdus;
+	UINT32 errorInfo;
+	UINT32 finalize_sc_pdus;
 	BOOL disconnect;
 };
 
@@ -163,10 +163,10 @@ void rdp_write_security_header(STREAM* s, UINT16 flags);
 BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT16* channel_id);
 void rdp_write_share_control_header(STREAM* s, UINT16 length, UINT16 type, UINT16 channel_id);
 
-BOOL rdp_read_share_data_header(STREAM* s, UINT16* length, BYTE* type, uint32* share_id, 
+BOOL rdp_read_share_data_header(STREAM* s, UINT16* length, BYTE* type, UINT32* share_id, 
 			BYTE *compressed_type, UINT16 *compressed_len);
 
-void rdp_write_share_data_header(STREAM* s, UINT16 length, BYTE type, uint32 share_id);
+void rdp_write_share_data_header(STREAM* s, UINT16 length, BYTE type, UINT32 share_id);
 
 STREAM* rdp_send_stream_init(rdpRdp* rdp);
 

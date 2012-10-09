@@ -36,7 +36,7 @@ typedef struct clipboard_format_mapping clipboardFormatMapping;
 struct clipboard_format_mapping
 {
 	Atom target_format;
-	uint32 format_id;
+	UINT32 format_id;
 };
 
 typedef struct clipboard_context clipboardContext;
@@ -52,13 +52,13 @@ struct clipboard_context
 	int num_format_mappings;
 
 	/* server->client data */
-	uint32* formats;
+	UINT32* formats;
 	int num_formats;
 	Atom targets[20];
 	int num_targets;
 	BYTE* data;
-	uint32 data_format;
-	uint32 data_alt_format;
+	UINT32 data_format;
+	UINT32 data_alt_format;
 	int data_length;
 	XEvent* respond;
 
@@ -77,7 +77,7 @@ struct clipboard_context
 void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 {
 	int n;
-	uint32 id;
+	UINT32 id;
 	clipboardContext* cb;
 
 	cb = xnew(clipboardContext);
@@ -233,8 +233,8 @@ static void be2le(BYTE* data, int size)
 static BOOL xf_cliprdr_is_self_owned(xfInfo* xfi)
 {
 	Atom type;
-	uint32 id = 0;
-	uint32* pid = NULL;
+	UINT32 id = 0;
+	UINT32* pid = NULL;
 	int format, result = 0;
 	unsigned long length, bytes_left;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
@@ -263,7 +263,7 @@ static BOOL xf_cliprdr_is_self_owned(xfInfo* xfi)
 	return (id ? TRUE : FALSE);
 }
 
-static int xf_cliprdr_select_format_by_id(clipboardContext* cb, uint32 format_id)
+static int xf_cliprdr_select_format_by_id(clipboardContext* cb, UINT32 format_id)
 {
 	int i;
 
@@ -355,7 +355,7 @@ static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-	event->formats = (uint32*) malloc(sizeof(uint32) * cb->num_format_mappings);
+	event->formats = (UINT32*) malloc(sizeof(UINT32) * cb->num_format_mappings);
 	event->num_formats = cb->num_format_mappings;
 
 	for (i = 0; i < cb->num_format_mappings; i++)
@@ -384,7 +384,7 @@ static void xf_cliprdr_send_format_list(xfInfo* xfi)
 	}
 }
 
-static void xf_cliprdr_send_data_request(xfInfo* xfi, uint32 format)
+static void xf_cliprdr_send_data_request(xfInfo* xfi, UINT32 format)
 {
 	RDP_CB_DATA_REQUEST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
@@ -485,7 +485,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
 			RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 
-		event->formats = (uint32*) malloc(sizeof(uint32) * cb->num_format_mappings);
+		event->formats = (UINT32*) malloc(sizeof(UINT32) * cb->num_format_mappings);
 		num = 0;
 		for (i = 0; i < length; i++)
 		{
@@ -886,8 +886,8 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 {
 	STREAM* s;
 	UINT16 bpp;
-	uint32 offset;
-	uint32 ncolors;
+	UINT32 offset;
+	UINT32 ncolors;
 
 	/* size should be at least sizeof(BITMAPINFOHEADER) */
 	if (size < 40)
@@ -900,7 +900,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	stream_attach(s, data, size);
 	stream_seek(s, 14);
 	stream_read_UINT16(s, bpp);
-	stream_read_uint32(s, ncolors);
+	stream_read_UINT32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
 	stream_detach(s);
 	stream_free(s);
@@ -910,9 +910,9 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	s = stream_new(14 + size);
 	stream_write_BYTE(s, 'B');
 	stream_write_BYTE(s, 'M');
-	stream_write_uint32(s, 14 + size);
-	stream_write_uint32(s, 0);
-	stream_write_uint32(s, offset);
+	stream_write_UINT32(s, 14 + size);
+	stream_write_UINT32(s, 0);
+	stream_write_UINT32(s, offset);
 	stream_write(s, data, size);
 
 	cb->data = stream_get_head(s);
@@ -1068,9 +1068,9 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	int i;
 	int fmt;
 	Atom type;
-	uint32 format;
+	UINT32 format;
 	XEvent* respond;
-	uint32 alt_format;
+	UINT32 alt_format;
 	BYTE* data = NULL;
 	BOOL delay_respond;
 	unsigned long length, bytes_left;

@@ -25,9 +25,9 @@
 void rfx_decode_ycbcr_to_rgb(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf);
 
 void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
-	int y_size, const uint32 * y_quants,
-	int cb_size, const uint32 * cb_quants,
-	int cr_size, const uint32 * cr_quants, BYTE* rgb_buffer);
+	int y_size, const UINT32 * y_quants,
+	int cb_size, const UINT32 * cb_quants,
+	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer);
 
 #endif /* __RFX_DECODE_H */
 

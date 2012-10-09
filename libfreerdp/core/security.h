@@ -30,10 +30,10 @@ void security_master_secret(BYTE* premaster_secret, BYTE* client_random, BYTE* s
 void security_session_key_blob(BYTE* master_secret, BYTE* client_random, BYTE* server_random, BYTE* output);
 void security_mac_salt_key(BYTE* session_key_blob, BYTE* client_random, BYTE* server_random, BYTE* output);
 void security_licensing_encryption_key(BYTE* session_key_blob, BYTE* client_random, BYTE* server_random, BYTE* output);
-void security_mac_data(BYTE* mac_salt_key, BYTE* data, uint32 length, BYTE* output);
+void security_mac_data(BYTE* mac_salt_key, BYTE* data, UINT32 length, BYTE* output);
 
-void security_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BYTE* output);
-void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, uint32 length, BOOL encryption, BYTE* output);
+void security_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BYTE* output);
+void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL encryption, BYTE* output);
 BOOL security_establish_keys(BYTE* client_random, rdpRdp* rdp);
 
 BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);

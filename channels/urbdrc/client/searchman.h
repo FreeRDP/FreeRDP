@@ -38,7 +38,7 @@ typedef struct _USB_SEARCHMAN USB_SEARCHMAN;
 struct _USB_SEARCHMAN
 {
 	int				usb_numbers;
-	uint32			UsbDevice;
+	UINT32			UsbDevice;
 	USB_SEARCHDEV *	idev; /* iterator device */
 	USB_SEARCHDEV *	head; /* head device in linked list */
 	USB_SEARCHDEV *	tail; /* tail device in linked list */
@@ -71,7 +71,7 @@ struct _USB_SEARCHMAN
 	void (*free) (USB_SEARCHMAN* searchman);
 };
 
-USB_SEARCHMAN * searchman_new(void * urbdrc, uint32 UsbDevice);
+USB_SEARCHMAN * searchman_new(void * urbdrc, UINT32 UsbDevice);
 
 #endif
 

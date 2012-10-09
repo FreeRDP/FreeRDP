@@ -31,8 +31,8 @@
 
 static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int bytes_per_sample,
-	uint32 schan, uint32 srate, int sframes,
-	uint32 rchan, uint32 rrate)
+	UINT32 schan, UINT32 srate, int sframes,
+	UINT32 rchan, UINT32 rrate)
 {
 	BYTE* dst;
 	BYTE* p;
@@ -103,8 +103,8 @@ static const INT16 ima_step_size_table[] =
 static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm,
 	int channel, BYTE sample)
 {
-	sint32 ss;
-	sint32 d;
+	INT32 ss;
+	INT32 d;
 
 	ss = ima_step_size_table[adpcm->ima.last_step[channel]];
 	d = (ss >> 3);
@@ -140,7 +140,7 @@ static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	BYTE* dst;
 	BYTE sample;
 	UINT16 decoded;
-	uint32 out_size;
+	UINT32 out_size;
 	int channel;
 	int i;
 
@@ -240,11 +240,11 @@ static const struct
 static BYTE dsp_encode_ima_adpcm_sample(ADPCM* adpcm,
 	int channel, INT16 sample)
 {
-	sint32 e;
-	sint32 d;
-	sint32 ss;
+	INT32 e;
+	INT32 d;
+	INT32 ss;
 	BYTE enc;
-	sint32 diff;
+	INT32 diff;
 
 	ss = ima_step_size_table[adpcm->ima.last_step[channel]];
 	d = e = sample - adpcm->ima.last_sample[channel];
@@ -300,7 +300,7 @@ static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	BYTE* dst;
 	INT16 sample;
 	BYTE encoded;
-	uint32 out_size;
+	UINT32 out_size;
 	int i;
 
 	out_size = size / 2;
@@ -381,7 +381,7 @@ static const INT16 ms_adpcm_coeff2_table[] =
 static INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* adpcm, BYTE sample, int channel)
 {
 	INT8 nibble;
-	sint32 presample;
+	INT32 presample;
 
 	nibble = (sample & 0x08 ? (INT8)sample - 16 : sample);
 	presample = ((adpcm->ms.sample1[channel] * ms_adpcm_coeff1_table[adpcm->ms.predictor[channel]]) +
@@ -404,7 +404,7 @@ static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 {
 	BYTE* dst;
 	BYTE sample;
-	uint32 out_size;
+	UINT32 out_size;
 
 	out_size = size * 4;
 	if (out_size > context->adpcm_maxlength)
@@ -492,10 +492,10 @@ static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	context->adpcm_size = dst - context->adpcm_buffer;
 }
 
-static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, sint32 sample, int channel)
+static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, INT32 sample, int channel)
 {
-	sint32 presample;
-	sint32 errordelta;
+	INT32 presample;
+	INT32 errordelta;
 
 	presample = ((adpcm->ms.sample1[channel] * ms_adpcm_coeff1_table[adpcm->ms.predictor[channel]]) +
 		(adpcm->ms.sample2[channel] * ms_adpcm_coeff2_table[adpcm->ms.predictor[channel]])) / 256;
@@ -523,8 +523,8 @@ static void freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int size, int channels, int block_size)
 {
 	BYTE* dst;
-	sint32 sample;
-	uint32 out_size;
+	INT32 sample;
+	UINT32 out_size;
 
 	out_size = size / 2;
 	if (out_size > context->adpcm_maxlength)

@@ -35,16 +35,16 @@
 
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
-int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
+int freerdp_keyboard_load_map(UINT32 keycode_to_vkcode[256], char* name)
 {
 	FILE* fp;
 	char* pch;
 	char* beg;
 	char* end;
-	uint32 vkcode;
+	UINT32 vkcode;
 	int kbd_found = 0;
 	char* keymap_path;
-	uint32 keycode = 0;
+	UINT32 keycode = 0;
 	char buffer[1024] = "";
 	char keymap_name[256] = "";
 	char keymap_include[256] = "";
@@ -177,7 +177,7 @@ int freerdp_keyboard_load_map(uint32 keycode_to_vkcode[256], char* name)
 	return 1;
 }
 
-void freerdp_keyboard_load_maps(uint32 keycode_to_vkcode[256], char* names)
+void freerdp_keyboard_load_maps(UINT32 keycode_to_vkcode[256], char* names)
 {
 	char* kbd;
 	char* names_end;

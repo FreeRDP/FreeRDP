@@ -27,7 +27,7 @@
  * The extended flag is for all practical an important 9th bit with a strange encoding - not just a modifier.
  */
 
-typedef uint32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancode */
+typedef UINT32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancode */
 #define RDP_SCANCODE_CODE(_rdp_scancode) ((BYTE)(_rdp_scancode & 0xFF))
 #define RDP_SCANCODE_EXTENDED(_rdp_scancode) (((_rdp_scancode) & 0x100) ? TRUE : FALSE)
 #define MAKE_RDP_SCANCODE(_code, _extended) (((_code) & 0xFF) | ((_extended) ? 0x100 : 0))

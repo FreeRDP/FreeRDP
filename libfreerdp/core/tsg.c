@@ -372,7 +372,7 @@ BYTE tsg_packet5[20] =
 	0x00, 0x00, 0x00, 0x00
 };
 
-DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count, uint32* lengths)
+DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
 {
 	STREAM* s;
 	int status;
@@ -381,11 +381,11 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	byte* buffer1 = NULL ;
 	byte* buffer2 = NULL ;
 	byte* buffer3 = NULL ;
-	uint32 buffer1Length;
-	uint32 buffer2Length;
-	uint32 buffer3Length;
-	uint32 numBuffers = 0;
-	uint32 totalDataBytes = 0;
+	UINT32 buffer1Length;
+	UINT32 buffer2Length;
+	UINT32 buffer3Length;
+	UINT32 numBuffers = 0;
+	UINT32 totalDataBytes = 0;
 
 	tsg = (rdpTsg*) IDL_handle;
 	buffer1Length = buffer2Length = buffer3Length = 0;
@@ -417,18 +417,18 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 	s = stream_new(28 + totalDataBytes);
 
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
-	stream_write_uint32(s, 0); /* ContextType (4 bytes) */
+	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
 	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (4 bytes) */
 
-	stream_write_uint32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
-	stream_write_uint32_be(s, numBuffers); /* numBuffers (4 bytes) */
+	stream_write_UINT32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
+	stream_write_UINT32_be(s, numBuffers); /* numBuffers (4 bytes) */
 
 	if (buffer1Length > 0)
-		stream_write_uint32_be(s, buffer1Length); /* buffer1Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer1Length); /* buffer1Length (4 bytes) */
 	if (buffer2Length > 0)
-		stream_write_uint32_be(s, buffer2Length); /* buffer2Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer2Length); /* buffer2Length (4 bytes) */
 	if (buffer3Length > 0)
-		stream_write_uint32_be(s, buffer3Length); /* buffer3Length (4 bytes) */
+		stream_write_UINT32_be(s, buffer3Length); /* buffer3Length (4 bytes) */
 
 	if (buffer1Length > 0)
 		stream_write(s, buffer1, buffer1Length); /* buffer1 (variable) */
@@ -456,7 +456,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], uint32 count,
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
 	BYTE* data;
-	uint32 length;
+	UINT32 length;
 	STREAM* s_p4;
 	int status = -1;
 	rdpRpc* rpc = tsg->rpc;
@@ -578,9 +578,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	s_p4 = stream_new(60 + dest_addr_unic_len + 2);
 	stream_write(s_p4, tsg_packet4, 48);
-	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
-	stream_write_uint32(s_p4, 0x00000000); /* Offset */
-	stream_write_uint32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
+	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
+	stream_write_UINT32(s_p4, 0x00000000); /* Offset */
+	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
 	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
 	stream_write_UINT16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
 
@@ -653,7 +653,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	return TRUE;
 }
 
-int tsg_read(rdpTsg* tsg, BYTE* data, uint32 length)
+int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
 
@@ -662,7 +662,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, uint32 length)
 	return status;
 }
 
-int tsg_write(rdpTsg* tsg, BYTE* data, uint32 length)
+int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
 }

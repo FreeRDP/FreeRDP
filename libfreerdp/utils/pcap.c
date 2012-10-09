@@ -83,7 +83,7 @@ void pcap_write_record(rdpPcap* pcap, pcap_record* record)
 	fwrite(record->data, record->length, 1, pcap->fp);
 }
 
-void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
+void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;

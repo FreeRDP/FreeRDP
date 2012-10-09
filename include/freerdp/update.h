@@ -39,19 +39,19 @@ typedef struct rdp_update rdpUpdate;
 
 struct _BITMAP_DATA
 {
-	uint32 destLeft;
-	uint32 destTop;
-	uint32 destRight;
-	uint32 destBottom;
-	uint32 width;
-	uint32 height;
-	uint32 bitsPerPixel;
-	uint32 flags;
-	uint32 bitmapLength;
-	uint32 cbCompFirstRowSize;
-	uint32 cbCompMainBodySize;
-	uint32 cbScanWidth;
-	uint32 cbUncompressedSize;
+	UINT32 destLeft;
+	UINT32 destTop;
+	UINT32 destRight;
+	UINT32 destBottom;
+	UINT32 width;
+	UINT32 height;
+	UINT32 bitsPerPixel;
+	UINT32 flags;
+	UINT32 bitmapLength;
+	UINT32 cbCompFirstRowSize;
+	UINT32 cbCompMainBodySize;
+	UINT32 cbScanWidth;
+	UINT32 cbUncompressedSize;
 	BYTE* bitmapDataStream;
 	BOOL compressed;
 };
@@ -59,8 +59,8 @@ typedef struct _BITMAP_DATA BITMAP_DATA;
 
 struct _BITMAP_UPDATE
 {
-	uint32 count;
-	uint32 number;
+	UINT32 count;
+	UINT32 number;
 	BITMAP_DATA* rectangles;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
@@ -77,14 +77,14 @@ typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
 
 struct _PALETTE_UPDATE
 {
-	uint32 number;
+	UINT32 number;
 	PALETTE_ENTRY entries[256];
 };
 typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 
 struct rdp_palette
 {
-	uint32 count;
+	UINT32 count;
 	PALETTE_ENTRY* entries;
 };
 typedef struct rdp_palette rdpPalette;
@@ -93,8 +93,8 @@ typedef struct rdp_palette rdpPalette;
 
 struct _PLAY_SOUND_UPDATE
 {
-	uint32 duration;
-	uint32 frequency;
+	UINT32 duration;
+	UINT32 frequency;
 };
 typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
 
@@ -102,24 +102,24 @@ typedef struct _PLAY_SOUND_UPDATE PLAY_SOUND_UPDATE;
 
 struct _SURFACE_BITS_COMMAND
 {
-	uint32 cmdType;
-	uint32 destLeft;
-	uint32 destTop;
-	uint32 destRight;
-	uint32 destBottom;
-	uint32 bpp;
-	uint32 codecID;
-	uint32 width;
-	uint32 height;
-	uint32 bitmapDataLength;
+	UINT32 cmdType;
+	UINT32 destLeft;
+	UINT32 destTop;
+	UINT32 destRight;
+	UINT32 destBottom;
+	UINT32 bpp;
+	UINT32 codecID;
+	UINT32 width;
+	UINT32 height;
+	UINT32 bitmapDataLength;
 	BYTE* bitmapData;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
 struct _SURFACE_FRAME_MARKER
 {
-	uint32 frameAction;
-	uint32 frameId;
+	UINT32 frameAction;
+	UINT32 frameId;
 };
 typedef struct _SURFACE_FRAME_MARKER SURFACE_FRAME_MARKER;
 
@@ -151,7 +151,7 @@ typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* s
 struct rdp_update
 {
 	rdpContext* context; /* 0 */
-	uint32 paddingA[16 - 1]; /* 1 */
+	UINT32 paddingA[16 - 1]; /* 1 */
 
 	pBeginPaint BeginPaint; /* 16 */
 	pEndPaint EndPaint; /* 17 */
@@ -161,23 +161,23 @@ struct rdp_update
 	pBitmapUpdate BitmapUpdate; /* 21 */
 	pPalette Palette; /* 22 */
 	pPlaySound PlaySound; /* 23 */
-	uint32 paddingB[32 - 24]; /* 24 */
+	UINT32 paddingB[32 - 24]; /* 24 */
 
 	rdpPointerUpdate* pointer; /* 32 */
 	rdpPrimaryUpdate* primary; /* 33 */
 	rdpSecondaryUpdate* secondary; /* 34 */
 	rdpAltSecUpdate* altsec; /* 35 */
 	rdpWindowUpdate* window; /* 36 */
-	uint32 paddingC[48 - 37]; /* 37 */
+	UINT32 paddingC[48 - 37]; /* 37 */
 
 	pRefreshRect RefreshRect; /* 48 */
 	pSuppressOutput SuppressOutput; /* 49 */
-	uint32 paddingD[64 - 50]; /* 50 */
+	UINT32 paddingD[64 - 50]; /* 50 */
 
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */
 	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
-	uint32 paddingE[80 - 67]; /* 67 */
+	UINT32 paddingE[80 - 67]; /* 67 */
 
 	/* internal */
 

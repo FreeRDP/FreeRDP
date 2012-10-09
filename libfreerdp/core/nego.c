@@ -234,7 +234,7 @@ int nego_transport_disconnect(rdpNego* nego)
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
 	STREAM* s;
-	uint32 cbSize;
+	UINT32 cbSize;
 	UINT16 cchPCB = 0;
 	WCHAR* wszPCB = NULL;
 
@@ -257,10 +257,10 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	}
 
 	s = transport_send_stream_init(nego->transport, cbSize);
-	stream_write_uint32(s, cbSize); /* cbSize */
-	stream_write_uint32(s, 0); /* Flags */
-	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
-	stream_write_uint32(s, nego->preconnection_id); /* Id */
+	stream_write_UINT32(s, cbSize); /* cbSize */
+	stream_write_UINT32(s, 0); /* Flags */
+	stream_write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
+	stream_write_UINT32(s, nego->preconnection_id); /* Id */
 	stream_write_UINT16(s, cchPCB); /* cchPCB */
 
 	if (wszPCB)
@@ -591,7 +591,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		stream_write_BYTE(s, TYPE_RDP_NEG_REQ);
 		stream_write_BYTE(s, 0); /* flags, must be set to zero */
 		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_uint32(s, nego->requested_protocols); /* requestedProtocols */
+		stream_write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
 		length += 8;
 	}
 
@@ -622,7 +622,7 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 
 	stream_read_BYTE(s, flags);
 	stream_read_UINT16(s, length);
-	stream_read_uint32(s, nego->requested_protocols);
+	stream_read_UINT32(s, nego->requested_protocols);
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
@@ -643,7 +643,7 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 
 	stream_read_BYTE(s, nego->flags);
 	stream_read_UINT16(s, length);
-	stream_read_uint32(s, nego->selected_protocol);
+	stream_read_UINT32(s, nego->selected_protocol);
 
 	nego->state = NEGO_STATE_FINAL;
 }
@@ -658,13 +658,13 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 {
 	BYTE flags;
 	UINT16 length;
-	uint32 failureCode;
+	UINT32 failureCode;
 
 	DEBUG_NEGO("RDP_NEG_FAILURE");
 
 	stream_read_BYTE(s, flags);
 	stream_read_UINT16(s, length);
-	stream_read_uint32(s, failureCode);
+	stream_read_UINT32(s, failureCode);
 
 	switch (failureCode)
 	{
@@ -719,7 +719,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		stream_write_BYTE(s, TYPE_RDP_NEG_RSP);
 		stream_write_BYTE(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
 		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
+		stream_write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
 	else if (!settings->rdp_security)
@@ -732,7 +732,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
 		printf("nego_send_negotiation_response: client supports only Standard RDP Security\n");
-		stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
+		stream_write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
 	}
@@ -936,7 +936,7 @@ void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu)
  * @param id
  */
 
-void nego_set_preconnection_id(rdpNego* nego, uint32 id)
+void nego_set_preconnection_id(rdpNego* nego, UINT32 id)
 {
 	nego->preconnection_id = id;
 }

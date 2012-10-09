@@ -69,7 +69,7 @@ INLINE UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
 	return p;
 }
 
-INLINE uint32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
+INLINE UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
 {
 	return pen->color;
 }

@@ -33,11 +33,11 @@
 #include "rdpdr_capabilities.h"
 
 /* Output device redirection capability set header */
-static void rdpdr_write_capset_header(STREAM* data_out, UINT16 capabilityType, UINT16 capabilityLength, uint32 version)
+static void rdpdr_write_capset_header(STREAM* data_out, UINT16 capabilityType, UINT16 capabilityLength, UINT32 version)
 {
 	stream_write_UINT16(data_out, capabilityType);
 	stream_write_UINT16(data_out, capabilityLength);
-	stream_write_uint32(data_out, version);
+	stream_write_UINT32(data_out, version);
 }
 
 /* Output device direction general capability set */
@@ -45,16 +45,16 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_GENERAL_TYPE, 44, GENERAL_CAPABILITY_VERSION_02);
 
-	stream_write_uint32(data_out, 0); /* osType, ignored on receipt */
-	stream_write_uint32(data_out, 0); /* osVersion, unused and must be set to zero */
+	stream_write_UINT32(data_out, 0); /* osType, ignored on receipt */
+	stream_write_UINT32(data_out, 0); /* osVersion, unused and must be set to zero */
 	stream_write_UINT16(data_out, 1); /* protocolMajorVersion, must be set to 1 */
 	stream_write_UINT16(data_out, RDPDR_MINOR_RDP_VERSION_5_2); /* protocolMinorVersion */
-	stream_write_uint32(data_out, 0x0000FFFF); /* ioCode1 */
-	stream_write_uint32(data_out, 0); /* ioCode2, must be set to zero, reserved for future use */
-	stream_write_uint32(data_out, RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU | RDPDR_USER_LOGGEDON_PDU); /* extendedPDU */
-	stream_write_uint32(data_out, ENABLE_ASYNCIO); /* extraFlags1 */
-	stream_write_uint32(data_out, 0); /* extraFlags2, must be set to zero, reserved for future use */
-	stream_write_uint32(data_out, 0); /* SpecialTypeDeviceCap, number of special devices to be redirected before logon */
+	stream_write_UINT32(data_out, 0x0000FFFF); /* ioCode1 */
+	stream_write_UINT32(data_out, 0); /* ioCode2, must be set to zero, reserved for future use */
+	stream_write_UINT32(data_out, RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU | RDPDR_USER_LOGGEDON_PDU); /* extendedPDU */
+	stream_write_UINT32(data_out, ENABLE_ASYNCIO); /* extraFlags1 */
+	stream_write_UINT32(data_out, 0); /* extraFlags2, must be set to zero, reserved for future use */
+	stream_write_UINT32(data_out, 0); /* SpecialTypeDeviceCap, number of special devices to be redirected before logon */
 }
 
 /* Process device direction general capability set */

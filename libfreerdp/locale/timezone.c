@@ -53,9 +53,9 @@ typedef struct _SYSTEM_TIME_ENTRY SYSTEM_TIME_ENTRY;
 
 struct _TIME_ZONE_RULE_ENTRY
 {
-	uint64 TicksStart;
-	uint64 TicksEnd;
-	sint32 DaylightDelta;
+	UINT64 TicksStart;
+	UINT64 TicksEnd;
+	INT32 DaylightDelta;
 	SYSTEM_TIME_ENTRY StandardDate;
 	SYSTEM_TIME_ENTRY DaylightDate;
 };
@@ -64,13 +64,13 @@ typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;
 struct _TIME_ZONE_ENTRY
 {
 	const char* Id;
-	uint32 Bias;
+	UINT32 Bias;
 	BOOL SupportsDST;
 	const char* DisplayName;
 	const char* StandardName;
 	const char* DaylightName;
 	TIME_ZONE_RULE_ENTRY* RuleTable;
-	uint32 RuleTableCount;
+	UINT32 RuleTableCount;
 };
 typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
 
@@ -1598,7 +1598,7 @@ BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const ch
 	return FALSE;
 }
 
-TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
+TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 {
 	int i, j;
 	char* tzid;
@@ -1632,10 +1632,10 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 	return NULL;
 }
 
-TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, uint32 count)
+TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
 	int i;
-	uint64 windows_time;
+	UINT64 windows_time;
 
 	windows_time = freerdp_windows_gmtime();
 
@@ -1663,14 +1663,14 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 
 #ifdef HAVE_TM_GMTOFF
 	if (local_time->tm_gmtoff >= 0)
-		clientTimeZone->bias = (uint32) (local_time->tm_gmtoff / 60);
+		clientTimeZone->bias = (UINT32) (local_time->tm_gmtoff / 60);
 	else
-		clientTimeZone->bias = (uint32) (1440 + (sint32) (local_time->tm_gmtoff / 60));
+		clientTimeZone->bias = (UINT32) (1440 + (INT32) (local_time->tm_gmtoff / 60));
 #elif sun
 	if (local_time->tm_isdst > 0)
-		clientTimeZone->bias = (uint32) (altzone / 3600);
+		clientTimeZone->bias = (UINT32) (altzone / 3600);
 	else
-		clientTimeZone->bias = (uint32) (timezone / 3600);
+		clientTimeZone->bias = (UINT32) (timezone / 3600);
 #else
 	clientTimeZone->bias = 0;
 #endif

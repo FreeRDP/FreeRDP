@@ -111,7 +111,7 @@ void xf_kbd_send_key(xfInfo* xfi, BOOL down, BYTE keycode)
 
 		if ((rdp_scancode == RDP_SCANCODE_CAPSLOCK) && (down == FALSE))
 		{
-			uint32 syncFlags;
+			UINT32 syncFlags;
 			syncFlags = xf_kbd_get_toggle_keys_state(xfi);
 			input->SynchronizeEvent(input, syncFlags);
 		}
@@ -122,7 +122,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 {
 	int dummy;
 	Window wdummy;
-	uint32 state = 0;
+	UINT32 state = 0;
 
 	if (xfi->remote_app != TRUE)
 	{
@@ -182,7 +182,7 @@ int xf_kbd_get_toggle_keys_state(xfInfo* xfi)
 void xf_kbd_focus_in(xfInfo* xfi)
 {
 	rdpInput* input;
-	uint32 syncFlags;
+	UINT32 syncFlags;
 
 	input = xfi->instance->input;
 

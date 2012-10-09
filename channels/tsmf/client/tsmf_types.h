@@ -40,19 +40,19 @@ typedef struct _TS_AM_MEDIA_TYPE
 	int SubType;
 	int FormatType;
 
-	uint32 Width;
-	uint32 Height;	
-	uint32 BitRate;
+	UINT32 Width;
+	UINT32 Height;	
+	UINT32 BitRate;
 	struct
 	{
-		uint32 Numerator;
-		uint32 Denominator;
+		UINT32 Numerator;
+		UINT32 Denominator;
 	} SamplesPerSecond;
-	uint32 Channels;
-	uint32 BitsPerSample;
-	uint32 BlockAlign;
+	UINT32 Channels;
+	UINT32 BitsPerSample;
+	UINT32 BlockAlign;
 	const BYTE* ExtraData;
-	uint32 ExtraDataSize;
+	UINT32 ExtraDataSize;
 } TS_AM_MEDIA_TYPE;
 
 #endif

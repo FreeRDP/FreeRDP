@@ -100,14 +100,14 @@ enum DomainMCSPDU
 
 typedef struct
 {
-	uint32 maxChannelIds;
-	uint32 maxUserIds;
-	uint32 maxTokenIds;
-	uint32 numPriorities;
-	uint32 minThroughput;
-	uint32 maxHeight;
-	uint32 maxMCSPDUsize;
-	uint32 protocolVersion;
+	UINT32 maxChannelIds;
+	UINT32 maxUserIds;
+	UINT32 maxTokenIds;
+	UINT32 numPriorities;
+	UINT32 minThroughput;
+	UINT32 maxHeight;
+	UINT32 maxMCSPDUsize;
+	UINT32 protocolVersion;
 } DomainParameters;
 
 struct rdp_mcs

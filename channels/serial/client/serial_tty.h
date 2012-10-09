@@ -35,24 +35,24 @@ typedef struct _SERIAL_TTY SERIAL_TTY;
 
 struct _SERIAL_TTY
 {
-	uint32 id;
+	UINT32 id;
 	int fd;
 
 	int dtr;
 	int rts;
-	uint32 control;
-	uint32 xonoff;
-	uint32 onlimit;
-	uint32 offlimit;
-	uint32 baud_rate;
-	uint32 queue_in_size;
-	uint32 queue_out_size;
-	uint32 wait_mask;
-	uint32 read_interval_timeout;
-	uint32 read_total_timeout_multiplier;
-	uint32 read_total_timeout_constant;
-	uint32 write_total_timeout_multiplier;
-	uint32 write_total_timeout_constant;
+	UINT32 control;
+	UINT32 xonoff;
+	UINT32 onlimit;
+	UINT32 offlimit;
+	UINT32 baud_rate;
+	UINT32 queue_in_size;
+	UINT32 queue_out_size;
+	UINT32 wait_mask;
+	UINT32 read_interval_timeout;
+	UINT32 read_total_timeout_multiplier;
+	UINT32 read_total_timeout_constant;
+	UINT32 write_total_timeout_multiplier;
+	UINT32 write_total_timeout_constant;
 	BYTE stop_bits;
 	BYTE parity;
 	BYTE word_length;
@@ -66,13 +66,13 @@ struct _SERIAL_TTY
 	int event_pending;
 };
 
-SERIAL_TTY* serial_tty_new(const char* path, uint32 id);
+SERIAL_TTY* serial_tty_new(const char* path, UINT32 id);
 void serial_tty_free(SERIAL_TTY* tty);
 
-BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, uint32* Length);
-BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, uint32 Length);
-uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, STREAM* output, uint32* abort_io);
+BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length);
+BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length);
+UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, STREAM* output, UINT32* abort_io);
 
-BOOL serial_tty_get_event(SERIAL_TTY* tty, uint32* result);
+BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result);
 
 #endif /* __SERIAL_TTY_H */

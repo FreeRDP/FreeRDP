@@ -142,7 +142,7 @@ static const BYTE BMF_BPP[] =
 		0, 1, 0, 8, 16, 24, 32
 };
 
-static INLINE void update_read_coord(STREAM* s, sint32* coord, BOOL delta)
+static INLINE void update_read_coord(STREAM* s, INT32* coord, BOOL delta)
 {
 	INT8 lsi8;
 	INT16 lsi16;
@@ -159,7 +159,7 @@ static INLINE void update_read_coord(STREAM* s, sint32* coord, BOOL delta)
 	}
 }
 
-static INLINE void update_read_color(STREAM* s, uint32* color)
+static INLINE void update_read_color(STREAM* s, UINT32* color)
 {
 	BYTE byte;
 
@@ -171,7 +171,7 @@ static INLINE void update_read_color(STREAM* s, uint32* color)
 	*color |= (byte << 16);
 }
 
-static INLINE void update_read_colorref(STREAM* s, uint32* color)
+static INLINE void update_read_colorref(STREAM* s, UINT32* color)
 {
 	BYTE byte;
 
@@ -184,7 +184,7 @@ static INLINE void update_read_colorref(STREAM* s, uint32* color)
 	stream_seek_BYTE(s);
 }
 
-static INLINE void update_read_color_quad(STREAM* s, uint32* color)
+static INLINE void update_read_color_quad(STREAM* s, UINT32* color)
 {
 	BYTE byte;
 
@@ -197,7 +197,7 @@ static INLINE void update_read_color_quad(STREAM* s, uint32* color)
 	stream_seek_BYTE(s);
 }
 
-static INLINE void update_read_2byte_unsigned(STREAM* s, uint32* value)
+static INLINE void update_read_2byte_unsigned(STREAM* s, UINT32* value)
 {
 	BYTE byte;
 
@@ -215,7 +215,7 @@ static INLINE void update_read_2byte_unsigned(STREAM* s, uint32* value)
 	}
 }
 
-static INLINE void update_read_2byte_signed(STREAM* s, sint32* value)
+static INLINE void update_read_2byte_signed(STREAM* s, INT32* value)
 {
 	BYTE byte;
 	BOOL negative;
@@ -236,7 +236,7 @@ static INLINE void update_read_2byte_signed(STREAM* s, sint32* value)
 		*value *= -1;
 }
 
-static INLINE void update_read_4byte_unsigned(STREAM* s, uint32* value)
+static INLINE void update_read_4byte_unsigned(STREAM* s, UINT32* value)
 {
 	BYTE byte;
 	BYTE count;
@@ -280,7 +280,7 @@ static INLINE void update_read_4byte_unsigned(STREAM* s, uint32* value)
 	}
 }
 
-static INLINE void update_read_delta(STREAM* s, sint32* value)
+static INLINE void update_read_delta(STREAM* s, INT32* value)
 {
 	BYTE byte;
 
@@ -864,7 +864,7 @@ void update_read_mem3blt_order(STREAM* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* 
 void update_read_save_bitmap_order(STREAM* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)
 {
 	if (orderInfo->fieldFlags & ORDER_FIELD_01)
-		stream_read_uint32(s, save_bitmap->savedBitmapPosition);
+		stream_read_UINT32(s, save_bitmap->savedBitmapPosition);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_02)
 		update_read_coord(s, &save_bitmap->nLeftRect, orderInfo->deltaCoordinates);
@@ -1242,8 +1242,8 @@ void update_read_cache_bitmap_v2_order(STREAM* s, CACHE_BITMAP_V2_ORDER* cache_b
 
 	if (cache_bitmap_v2_order->flags & CBR2_PERSISTENT_KEY_PRESENT)
 	{
-		stream_read_uint32(s, cache_bitmap_v2_order->key1); /* key1 (4 bytes) */
-		stream_read_uint32(s, cache_bitmap_v2_order->key2); /* key2 (4 bytes) */
+		stream_read_UINT32(s, cache_bitmap_v2_order->key1); /* key1 (4 bytes) */
+		stream_read_UINT32(s, cache_bitmap_v2_order->key2); /* key2 (4 bytes) */
 	}
 
 	if (cache_bitmap_v2_order->flags & CBR2_HEIGHT_SAME_AS_WIDTH)
@@ -1297,8 +1297,8 @@ void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_b
 	cache_bitmap_v3_order->bpp = CBR23_BPP[bitsPerPixelId];
 
 	stream_read_UINT16(s, cache_bitmap_v3_order->cacheIndex); /* cacheIndex (2 bytes) */
-	stream_read_uint32(s, cache_bitmap_v3_order->key1); /* key1 (4 bytes) */
-	stream_read_uint32(s, cache_bitmap_v3_order->key2); /* key2 (4 bytes) */
+	stream_read_UINT32(s, cache_bitmap_v3_order->key1); /* key1 (4 bytes) */
+	stream_read_UINT32(s, cache_bitmap_v3_order->key2); /* key2 (4 bytes) */
 
 	bitmapData = &cache_bitmap_v3_order->bitmapData;
 
@@ -1308,7 +1308,7 @@ void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_b
 	stream_read_BYTE(s, bitmapData->codecID); /* codecID (1 byte) */
 	stream_read_UINT16(s, bitmapData->width); /* width (2 bytes) */
 	stream_read_UINT16(s, bitmapData->height); /* height (2 bytes) */
-	stream_read_uint32(s, bitmapData->length); /* length (4 bytes) */
+	stream_read_UINT32(s, bitmapData->length); /* length (4 bytes) */
 
 	if (bitmapData->data == NULL)
 		bitmapData->data = (BYTE*) malloc(bitmapData->length);
@@ -1321,7 +1321,7 @@ void update_read_cache_bitmap_v3_order(STREAM* s, CACHE_BITMAP_V3_ORDER* cache_b
 void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16 flags)
 {
 	int i;
-	uint32* colorTable;
+	UINT32* colorTable;
 
 	stream_read_BYTE(s, cache_color_table_order->cacheIndex); /* cacheIndex (1 byte) */
 	stream_read_BYTE(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
@@ -1329,9 +1329,9 @@ void update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 	colorTable = cache_color_table_order->colorTable;
 
 	if (colorTable == NULL)
-		colorTable = (uint32*) malloc(cache_color_table_order->numberColors * 4);
+		colorTable = (UINT32*) malloc(cache_color_table_order->numberColors * 4);
 	else
-		colorTable = (uint32*) realloc(colorTable, cache_color_table_order->numberColors * 4);
+		colorTable = (UINT32*) realloc(colorTable, cache_color_table_order->numberColors * 4);
 
 	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
 	{
@@ -1559,7 +1559,7 @@ void update_read_create_nine_grid_bitmap_order(STREAM* s, CREATE_NINE_GRID_BITMA
 	stream_read_UINT16(s, create_nine_grid_bitmap->bitmapId); /* bitmapId (2 bytes) */
 
 	nineGridInfo = &(create_nine_grid_bitmap->nineGridInfo);
-	stream_read_uint32(s, nineGridInfo->flFlags); /* flFlags (4 bytes) */
+	stream_read_UINT32(s, nineGridInfo->flFlags); /* flFlags (4 bytes) */
 	stream_read_UINT16(s, nineGridInfo->ulLeftWidth); /* ulLeftWidth (2 bytes) */
 	stream_read_UINT16(s, nineGridInfo->ulRightWidth); /* ulRightWidth (2 bytes) */
 	stream_read_UINT16(s, nineGridInfo->ulTopHeight); /* ulTopHeight (2 bytes) */
@@ -1569,7 +1569,7 @@ void update_read_create_nine_grid_bitmap_order(STREAM* s, CREATE_NINE_GRID_BITMA
 
 void update_read_frame_marker_order(STREAM* s, FRAME_MARKER_ORDER* frame_marker)
 {
-	stream_read_uint32(s, frame_marker->action); /* action (4 bytes) */
+	stream_read_UINT32(s, frame_marker->action); /* action (4 bytes) */
 }
 
 void update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first)
@@ -1581,7 +1581,7 @@ void update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER*
 	stream_read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */
 
 	if (stream_bitmap_first->bitmapFlags & STREAM_BITMAP_V2)
-		stream_read_uint32(s, stream_bitmap_first->bitmapSize); /* bitmapSize (4 bytes) */
+		stream_read_UINT32(s, stream_bitmap_first->bitmapSize); /* bitmapSize (4 bytes) */
 	else
 		stream_read_UINT16(s, stream_bitmap_first->bitmapSize); /* bitmapSize (2 bytes) */
 
@@ -1601,8 +1601,8 @@ void update_read_draw_gdiplus_first_order(STREAM* s, DRAW_GDIPLUS_FIRST_ORDER* d
 {
 	stream_seek_BYTE(s); /* pad1Octet (1 byte) */
 	stream_read_UINT16(s, draw_gdiplus_first->cbSize); /* cbSize (2 bytes) */
-	stream_read_uint32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
-	stream_read_uint32(s, draw_gdiplus_first->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_first->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
 	stream_seek(s, draw_gdiplus_first->cbSize); /* emfRecords */
 }
 
@@ -1617,8 +1617,8 @@ void update_read_draw_gdiplus_end_order(STREAM* s, DRAW_GDIPLUS_END_ORDER* draw_
 {
 	stream_seek_BYTE(s); /* pad1Octet (1 byte) */
 	stream_read_UINT16(s, draw_gdiplus_end->cbSize); /* cbSize (2 bytes) */
-	stream_read_uint32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
-	stream_read_uint32(s, draw_gdiplus_end->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_end->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
 	stream_seek(s, draw_gdiplus_end->cbSize); /* emfRecords */
 }
 
@@ -1628,7 +1628,7 @@ void update_read_draw_gdiplus_cache_first_order(STREAM* s, DRAW_GDIPLUS_CACHE_FI
 	stream_read_UINT16(s, draw_gdiplus_cache_first->cacheType); /* cacheType (2 bytes) */
 	stream_read_UINT16(s, draw_gdiplus_cache_first->cacheIndex); /* cacheIndex (2 bytes) */
 	stream_read_UINT16(s, draw_gdiplus_cache_first->cbSize); /* cbSize (2 bytes) */
-	stream_read_uint32(s, draw_gdiplus_cache_first->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_cache_first->cbTotalSize); /* cbTotalSize (4 bytes) */
 	stream_seek(s, draw_gdiplus_cache_first->cbSize); /* emfRecords */
 }
 
@@ -1647,11 +1647,11 @@ void update_read_draw_gdiplus_cache_end_order(STREAM* s, DRAW_GDIPLUS_CACHE_END_
 	stream_read_UINT16(s, draw_gdiplus_cache_end->cacheType); /* cacheType (2 bytes) */
 	stream_read_UINT16(s, draw_gdiplus_cache_end->cacheIndex); /* cacheIndex (2 bytes) */
 	stream_read_UINT16(s, draw_gdiplus_cache_end->cbSize); /* cbSize (2 bytes) */
-	stream_read_uint32(s, draw_gdiplus_cache_end->cbTotalSize); /* cbTotalSize (4 bytes) */
+	stream_read_UINT32(s, draw_gdiplus_cache_end->cbTotalSize); /* cbTotalSize (4 bytes) */
 	stream_seek(s, draw_gdiplus_cache_end->cbSize); /* emfRecords */
 }
 
-void update_read_field_flags(STREAM* s, uint32* fieldFlags, BYTE flags, BYTE fieldBytes)
+void update_read_field_flags(STREAM* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes)
 {
 	int i;
 	BYTE byte;

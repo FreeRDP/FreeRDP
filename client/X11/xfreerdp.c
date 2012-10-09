@@ -109,8 +109,8 @@ void xf_sw_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	xfInfo* xfi;
-	sint32 x, y;
-	uint32 w, h;
+	INT32 x, y;
+	UINT32 w, h;
 
 	xfi = ((xfContext*) context)->xfi;
 	gdi = context->gdi;
@@ -204,8 +204,8 @@ void xf_hw_begin_paint(rdpContext* context)
 void xf_hw_end_paint(rdpContext* context)
 {
 	xfInfo* xfi;
-	sint32 x, y;
-	uint32 w, h;
+	INT32 x, y;
+	UINT32 w, h;
 
 	xfi = ((xfContext*) context)->xfi;
 
@@ -646,10 +646,10 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 #endif
 }
 
-uint32 xf_detect_cpu()
+UINT32 xf_detect_cpu()
 {
 	unsigned int eax, ebx, ecx, edx = 0;
-	uint32 cpu_opt = 0;
+	UINT32 cpu_opt = 0;
 
 	cpuid(1, &eax, &ebx, &ecx, &edx);
 
@@ -670,7 +670,7 @@ uint32 xf_detect_cpu()
 BOOL xf_post_connect(freerdp* instance)
 {
 #ifdef WITH_SSE2
-	uint32 cpu;
+	UINT32 cpu;
 #endif
 	xfInfo* xfi;
 	XGCValues gcv;
@@ -691,7 +691,7 @@ BOOL xf_post_connect(freerdp* instance)
 	if (xfi->sw_gdi)
 	{
 		rdpGdi* gdi;
-		uint32 flags;
+		UINT32 flags;
 
 		flags = CLRCONV_ALPHA;
 
@@ -1272,7 +1272,7 @@ void* thread_func(void* param)
 	pthread_exit(NULL);
 }
 
-static BYTE exit_code_from_disconnect_reason(uint32 reason)
+static BYTE exit_code_from_disconnect_reason(UINT32 reason)
 {
 	if (reason == 0 ||
 	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))

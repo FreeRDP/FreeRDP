@@ -34,7 +34,7 @@ void update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* 
 	palette_cache_put(cache->palette, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
 }
 
-void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
+void* palette_cache_get(rdpPaletteCache* palette_cache, UINT32 index)
 {
 	void* entry;
 
@@ -55,7 +55,7 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, uint32 index)
 	return entry;
 }
 
-void palette_cache_put(rdpPaletteCache* palette_cache, uint32 index, void* entry)
+void palette_cache_put(rdpPaletteCache* palette_cache, UINT32 index, void* entry)
 {
 	if (index >= palette_cache->maxEntries)
 	{

@@ -58,7 +58,7 @@
 #define BLACK_PIXEL 0x000000
 #define WHITE_PIXEL 0xFFFFFF
 
-typedef uint32 PIXEL;
+typedef UINT32 PIXEL;
 
 static const BYTE g_MaskBit0 = 0x01; /* Least significant bit */
 static const BYTE g_MaskBit1 = 0x02;
@@ -79,7 +79,7 @@ static const BYTE g_MaskLiteRunLength = 0x0F;
  * Reads the supplied order header and extracts the compression
  * order code ID.
  */
-static uint32 ExtractCodeId(BYTE bOrderHdr)
+static UINT32 ExtractCodeId(BYTE bOrderHdr)
 {
 	int code;
 
@@ -115,10 +115,10 @@ static uint32 ExtractCodeId(BYTE bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
-static uint32 ExtractRunLength(uint32 code, BYTE* pbOrderHdr, uint32* advance)
+static UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
 {
-	uint32 runLength;
-	uint32 ladvance;
+	UINT32 runLength;
+	UINT32 ladvance;
 
 	ladvance = 1;
 	runLength = 0;

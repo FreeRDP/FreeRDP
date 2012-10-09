@@ -67,21 +67,21 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	(UINT16)(*_s->p) + \
 	(UINT16)(((UINT16)(*(_s->p + 1))) << 8); \
 	_s->p += 2; } while (0)
-#define stream_read_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->p) + \
-	(((uint32)(*(_s->p + 1))) << 8) + \
-	(((uint32)(*(_s->p + 2))) << 16) + \
-	(((uint32)(*(_s->p + 3))) << 24); \
+#define stream_read_UINT32(_s, _v) do { _v = \
+	(UINT32)(*_s->p) + \
+	(((UINT32)(*(_s->p + 1))) << 8) + \
+	(((UINT32)(*(_s->p + 2))) << 16) + \
+	(((UINT32)(*(_s->p + 3))) << 24); \
 	_s->p += 4; } while (0)
-#define stream_read_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->p) + \
-	(((uint64)(*(_s->p + 1))) << 8) + \
-	(((uint64)(*(_s->p + 2))) << 16) + \
-	(((uint64)(*(_s->p + 3))) << 24) + \
-	(((uint64)(*(_s->p + 4))) << 32) + \
-	(((uint64)(*(_s->p + 5))) << 40) + \
-	(((uint64)(*(_s->p + 6))) << 48) + \
-	(((uint64)(*(_s->p + 7))) << 56); \
+#define stream_read_UINT64(_s, _v) do { _v = \
+	(UINT64)(*_s->p) + \
+	(((UINT64)(*(_s->p + 1))) << 8) + \
+	(((UINT64)(*(_s->p + 2))) << 16) + \
+	(((UINT64)(*(_s->p + 3))) << 24) + \
+	(((UINT64)(*(_s->p + 4))) << 32) + \
+	(((UINT64)(*(_s->p + 5))) << 40) + \
+	(((UINT64)(*(_s->p + 6))) << 48) + \
+	(((UINT64)(*(_s->p + 7))) << 56); \
 	_s->p += 8; } while (0)
 #define stream_read(_s, _b, _n) do { \
 	memcpy(_b, (_s->p), (_n)); \
@@ -93,20 +93,20 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 #define stream_write_UINT16(_s, _v) do { \
 	*_s->p++ = (_v) & 0xFF; \
 	*_s->p++ = ((_v) >> 8) & 0xFF; } while (0)
-#define stream_write_uint32(_s, _v) do { \
+#define stream_write_UINT32(_s, _v) do { \
 	*_s->p++ = (_v) & 0xFF; \
 	*_s->p++ = ((_v) >> 8) & 0xFF; \
 	*_s->p++ = ((_v) >> 16) & 0xFF; \
 	*_s->p++ = ((_v) >> 24) & 0xFF; } while (0)
-#define stream_write_uint64(_s, _v) do { \
-	*_s->p++ = (uint64)(_v) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 8) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 16) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 24) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 32) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 40) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 48) & 0xFF; \
-	*_s->p++ = ((uint64)(_v) >> 56) & 0xFF; } while (0)
+#define stream_write_UINT64(_s, _v) do { \
+	*_s->p++ = (UINT64)(_v) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 8) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 16) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 24) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 32) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 40) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 48) & 0xFF; \
+	*_s->p++ = ((UINT64)(_v) >> 56) & 0xFF; } while (0)
 #define stream_write(_s, _b, _n) do { \
 	memcpy(_s->p, (_b), (_n)); \
 	_s->p += (_n); \
@@ -125,43 +125,43 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	(UINT16)(*_s->p) + \
 	(((UINT16)(*(_s->p + 1))) << 8); \
 	} while (0)
-#define stream_peek_uint32(_s, _v) do { _v = \
-	(uint32)(*_s->p) + \
-	(((uint32)(*(_s->p + 1))) << 8) + \
-	(((uint32)(*(_s->p + 2))) << 16) + \
-	(((uint32)(*(_s->p + 3))) << 24); \
+#define stream_peek_UINT32(_s, _v) do { _v = \
+	(UINT32)(*_s->p) + \
+	(((UINT32)(*(_s->p + 1))) << 8) + \
+	(((UINT32)(*(_s->p + 2))) << 16) + \
+	(((UINT32)(*(_s->p + 3))) << 24); \
 	} while (0)
-#define stream_peek_uint64(_s, _v) do { _v = \
-	(uint64)(*_s->p) + \
-	(((uint64)(*(_s->p + 1))) << 8) + \
-	(((uint64)(*(_s->p + 2))) << 16) + \
-	(((uint64)(*(_s->p + 3))) << 24) + \
-	(((uint64)(*(_s->p + 4))) << 32) + \
-	(((uint64)(*(_s->p + 5))) << 40) + \
-	(((uint64)(*(_s->p + 6))) << 48) + \
-	(((uint64)(*(_s->p + 7))) << 56); \
+#define stream_peek_UINT64(_s, _v) do { _v = \
+	(UINT64)(*_s->p) + \
+	(((UINT64)(*(_s->p + 1))) << 8) + \
+	(((UINT64)(*(_s->p + 2))) << 16) + \
+	(((UINT64)(*(_s->p + 3))) << 24) + \
+	(((UINT64)(*(_s->p + 4))) << 32) + \
+	(((UINT64)(*(_s->p + 5))) << 40) + \
+	(((UINT64)(*(_s->p + 6))) << 48) + \
+	(((UINT64)(*(_s->p + 7))) << 56); \
 	} while (0)
 
 #define stream_seek_BYTE(_s)	stream_seek(_s, 1)
 #define stream_seek_UINT16(_s)	stream_seek(_s, 2)
-#define stream_seek_uint32(_s)	stream_seek(_s, 4)
-#define stream_seek_uint64(_s)	stream_seek(_s, 8)
+#define stream_seek_UINT32(_s)	stream_seek(_s, 4)
+#define stream_seek_UINT64(_s)	stream_seek(_s, 8)
 
 #define stream_read_UINT16_be(_s, _v) do { _v = \
 	(((UINT16)(*_s->p)) << 8) + \
 	(UINT16)(*(_s->p + 1)); \
 	_s->p += 2; } while (0)
-#define stream_read_uint32_be(_s, _v) do { _v = \
-	(((uint32)(*(_s->p))) << 24) + \
-	(((uint32)(*(_s->p + 1))) << 16) + \
-	(((uint32)(*(_s->p + 2))) << 8) + \
-	(((uint32)(*(_s->p + 3)))); \
+#define stream_read_UINT32_be(_s, _v) do { _v = \
+	(((UINT32)(*(_s->p))) << 24) + \
+	(((UINT32)(*(_s->p + 1))) << 16) + \
+	(((UINT32)(*(_s->p + 2))) << 8) + \
+	(((UINT32)(*(_s->p + 3)))); \
 	_s->p += 4; } while (0)
 
 #define stream_write_UINT16_be(_s, _v) do { \
 	*_s->p++ = ((_v) >> 8) & 0xFF; \
 	*_s->p++ = (_v) & 0xFF; } while (0)
-#define stream_write_uint32_be(_s, _v) do { \
+#define stream_write_UINT32_be(_s, _v) do { \
 	stream_write_UINT16_be(_s, ((_v) >> 16 & 0xFFFF)); \
 	stream_write_UINT16_be(_s, ((_v) & 0xFFFF)); \
 	} while (0)

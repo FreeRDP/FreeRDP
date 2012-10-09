@@ -143,7 +143,7 @@ void test_cliprdr(void)
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 2;
-	format_list_event->formats = (uint32*) malloc(sizeof(uint32) * 2);
+	format_list_event->formats = (UINT32*) malloc(sizeof(UINT32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;

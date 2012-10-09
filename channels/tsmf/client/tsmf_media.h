@@ -38,24 +38,24 @@ void tsmf_presentation_start(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_stop(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_paused(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_restarted(TSMF_PRESENTATION* presentation);
-void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, uint32 newVolume, uint32 muted);
+void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 newVolume, UINT32 muted);
 void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
-	uint32 x, uint32 y, uint32 width, uint32 height,
+	UINT32 x, UINT32 y, UINT32 width, UINT32 height,
 	int num_rects, RDP_RECT* rects);
 void tsmf_presentation_set_audio_device(TSMF_PRESENTATION* presentation,
 	const char* name, const char* device);
 void tsmf_presentation_flush(TSMF_PRESENTATION* presentation);
 void tsmf_presentation_free(TSMF_PRESENTATION* presentation);
 
-TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, uint32 stream_id);
-TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, uint32 stream_id);
+TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id);
+TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id);
 void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, STREAM* s);
 void tsmf_stream_end(TSMF_STREAM* stream);
 void tsmf_stream_free(TSMF_STREAM* stream);
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,
-	uint32 sample_id, uint64 start_time, uint64 end_time, uint64 duration, uint32 extensions,
-	uint32 data_size, BYTE* data);
+	UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration, UINT32 extensions,
+	UINT32 data_size, BYTE* data);
 
 void tsmf_media_init(void);
 

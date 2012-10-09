@@ -73,42 +73,42 @@
 #define TIOCOUTQ FIONWRITE
 #endif
 
-static uint32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len);
+static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len);
 static void tty_set_termios(SERIAL_TTY* tty);
 static BOOL tty_get_termios(SERIAL_TTY* tty);
 static int tty_get_error_status();
 
-uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, STREAM* output, uint32* abort_io)
+UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, STREAM* output, UINT32* abort_io)
 {
 	int purge_mask;
-	uint32 result;
-	uint32 modemstate;
+	UINT32 result;
+	UINT32 modemstate;
 	BYTE immediate;
-	uint32 ret = STATUS_SUCCESS;
-	uint32 length = 0;
-	uint32 pos;
+	UINT32 ret = STATUS_SUCCESS;
+	UINT32 length = 0;
+	UINT32 pos;
 
 	DEBUG_SVC("in");
 
-	stream_seek(output, sizeof(uint32));
+	stream_seek(output, sizeof(UINT32));
 
 	switch (IoControlCode)
 	{
 		case IOCTL_SERIAL_SET_BAUD_RATE:
-			stream_read_uint32(input, tty->baud_rate);
+			stream_read_UINT32(input, tty->baud_rate);
 			tty_set_termios(tty);
 			DEBUG_SVC("SERIAL_SET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_GET_BAUD_RATE:
 			length = 4;
-			stream_write_uint32(output, tty->baud_rate);
+			stream_write_UINT32(output, tty->baud_rate);
 			DEBUG_SVC("SERIAL_GET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_SET_QUEUE_SIZE:
-			stream_read_uint32(input, tty->queue_in_size);
-			stream_read_uint32(input, tty->queue_out_size);
+			stream_read_UINT32(input, tty->queue_in_size);
+			stream_read_UINT32(input, tty->queue_out_size);
 			DEBUG_SVC("SERIAL_SET_QUEUE_SIZE in %d out %d", tty->queue_in_size, tty->queue_out_size);
 			break;
 
@@ -138,7 +138,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 		case IOCTL_SERIAL_CONFIG_SIZE:
 			DEBUG_SVC("SERIAL_CONFIG_SIZE");
 			length = 4;
-			stream_write_uint32(output, 0);
+			stream_write_UINT32(output, 0);
 			break;
 
 		case IOCTL_SERIAL_GET_CHARS:
@@ -156,30 +156,30 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 		case IOCTL_SERIAL_GET_HANDFLOW:
 			length = 16;
 			tty_get_termios(tty);
-			stream_write_uint32(output, tty->control);
-			stream_write_uint32(output, tty->xonoff);
-			stream_write_uint32(output, tty->onlimit);
-			stream_write_uint32(output, tty->offlimit);
+			stream_write_UINT32(output, tty->control);
+			stream_write_UINT32(output, tty->xonoff);
+			stream_write_UINT32(output, tty->onlimit);
+			stream_write_UINT32(output, tty->offlimit);
 			DEBUG_SVC("IOCTL_SERIAL_GET_HANDFLOW %X %X %X %X",
 				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			break;
 
 		case IOCTL_SERIAL_SET_HANDFLOW:
-			stream_read_uint32(input, tty->control);
-			stream_read_uint32(input, tty->xonoff);
-			stream_read_uint32(input, tty->onlimit);
-			stream_read_uint32(input, tty->offlimit);
+			stream_read_UINT32(input, tty->control);
+			stream_read_UINT32(input, tty->xonoff);
+			stream_read_UINT32(input, tty->onlimit);
+			stream_read_UINT32(input, tty->offlimit);
 			DEBUG_SVC("IOCTL_SERIAL_SET_HANDFLOW %X %X %X %X",
 				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			tty_set_termios(tty);
 			break;
 
 		case IOCTL_SERIAL_SET_TIMEOUTS:
-			stream_read_uint32(input, tty->read_interval_timeout);
-			stream_read_uint32(input, tty->read_total_timeout_multiplier);
-			stream_read_uint32(input, tty->read_total_timeout_constant);
-			stream_read_uint32(input, tty->write_total_timeout_multiplier);
-			stream_read_uint32(input, tty->write_total_timeout_constant);
+			stream_read_UINT32(input, tty->read_interval_timeout);
+			stream_read_UINT32(input, tty->read_total_timeout_multiplier);
+			stream_read_UINT32(input, tty->read_total_timeout_constant);
+			stream_read_UINT32(input, tty->write_total_timeout_multiplier);
+			stream_read_UINT32(input, tty->write_total_timeout_constant);
 
 			/* http://www.codeproject.com/KB/system/chaiyasit_t.aspx, see 'ReadIntervalTimeout' section
 				http://msdn.microsoft.com/en-us/library/ms885171.aspx */
@@ -201,21 +201,21 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 				tty->read_total_timeout_multiplier,
 				tty->read_total_timeout_constant);
 			length = 20;
-			stream_write_uint32(output, tty->read_interval_timeout);
-			stream_write_uint32(output, tty->read_total_timeout_multiplier);
-			stream_write_uint32(output, tty->read_total_timeout_constant);
-			stream_write_uint32(output, tty->write_total_timeout_multiplier);
-			stream_write_uint32(output, tty->write_total_timeout_constant);
+			stream_write_UINT32(output, tty->read_interval_timeout);
+			stream_write_UINT32(output, tty->read_total_timeout_multiplier);
+			stream_write_UINT32(output, tty->read_total_timeout_constant);
+			stream_write_UINT32(output, tty->write_total_timeout_multiplier);
+			stream_write_UINT32(output, tty->write_total_timeout_constant);
 			break;
 
 		case IOCTL_SERIAL_GET_WAIT_MASK:
 			DEBUG_SVC("SERIAL_GET_WAIT_MASK %X", tty->wait_mask);
 			length = 4;
-			stream_write_uint32(output, tty->wait_mask);
+			stream_write_UINT32(output, tty->wait_mask);
 			break;
 
 		case IOCTL_SERIAL_SET_WAIT_MASK:
-			stream_read_uint32(input, tty->wait_mask);
+			stream_read_UINT32(input, tty->wait_mask);
 			DEBUG_SVC("SERIAL_SET_WAIT_MASK %X", tty->wait_mask);
 			break;
 
@@ -270,19 +270,19 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 #endif
 			DEBUG_SVC("SERIAL_GET_MODEMSTATUS %X", modemstate);
 			length = 4;
-			stream_write_uint32(output, modemstate);
+			stream_write_UINT32(output, modemstate);
 			break;
 
 		case IOCTL_SERIAL_GET_COMMSTATUS:
 			length = 18;
-			stream_write_uint32(output, 0);	/* Errors */
-			stream_write_uint32(output, 0);	/* Hold reasons */
+			stream_write_UINT32(output, 0);	/* Errors */
+			stream_write_UINT32(output, 0);	/* Hold reasons */
 
 			result = 0;
 #ifdef TIOCINQ
 			ioctl(tty->fd, TIOCINQ, &result);
 #endif
-			stream_write_uint32(output, result); /* Amount in in queue */
+			stream_write_UINT32(output, result); /* Amount in in queue */
 			if (result)
 				DEBUG_SVC("SERIAL_GET_COMMSTATUS in queue %d", result);
 
@@ -290,7 +290,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 #ifdef TIOCOUTQ
 			ioctl(tty->fd, TIOCOUTQ, &result);
 #endif
-			stream_write_uint32(output, result);	/* Amount in out queue */
+			stream_write_UINT32(output, result);	/* Amount in out queue */
 			DEBUG_SVC("SERIAL_GET_COMMSTATUS out queue %d", result);
 
 			stream_write_BYTE(output, 0); /* EofReceived */
@@ -298,7 +298,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 			break;
 
 		case IOCTL_SERIAL_PURGE:
-			stream_read_uint32(input, purge_mask);
+			stream_read_UINT32(input, purge_mask);
 			DEBUG_SVC("SERIAL_PURGE purge_mask %X", purge_mask);
 
 		/*	See http://msdn.microsoft.com/en-us/library/ms901431.aspx
@@ -327,7 +327,7 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 			if (serial_tty_get_event(tty, &result))
 			{
 				DEBUG_SVC("WAIT end  event = %X", result);
-				stream_write_uint32(output, result);
+				stream_write_UINT32(output, result);
 				break;
 			}
 			ret = STATUS_PENDING;
@@ -363,13 +363,13 @@ uint32 serial_tty_control(SERIAL_TTY* tty, uint32 IoControlCode, STREAM* input, 
 	/* Write OutputBufferLength */
 	pos = stream_get_pos(output);
 	stream_set_pos(output, 16);
-	stream_write_uint32(output, length);
+	stream_write_UINT32(output, length);
 	stream_set_pos(output, pos);
 
 	return ret;
 }
 
-BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, uint32* Length)
+BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 {
 	long timeout = 90;
 	struct termios *ptermios;
@@ -418,10 +418,10 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, uint32* Length)
 	return TRUE;
 }
 
-BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, uint32 Length)
+BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 {
 	ssize_t r;
-	uint32 event_txempty = Length;
+	UINT32 event_txempty = Length;
 
 	DEBUG_SVC("in");
 
@@ -463,7 +463,7 @@ void serial_tty_free(SERIAL_TTY* tty)
 }
 
 
-SERIAL_TTY* serial_tty_new(const char* path, uint32 id)
+SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 {
 	SERIAL_TTY* tty;
 
@@ -531,7 +531,7 @@ SERIAL_TTY* serial_tty_new(const char* path, uint32 id)
 	return tty;
 }
 
-BOOL serial_tty_get_event(SERIAL_TTY* tty, uint32* result)
+BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 {
 	int bytes;
 	BOOL ret = FALSE;
@@ -969,7 +969,7 @@ static void tty_set_termios(SERIAL_TTY* tty)
 	tcsetattr(tty->fd, TCSANOW, ptermios);
 }
 
-static uint32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
+static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 {
 	ssize_t r;
 

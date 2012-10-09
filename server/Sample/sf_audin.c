@@ -46,7 +46,7 @@ static void sf_peer_audin_opening(audin_server_context* context)
 	context->SelectFormat(context, 0);
 }
 
-static void sf_peer_audin_open_result(audin_server_context* context, uint32 result)
+static void sf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
 	printf("AUDIN open result %d.\n", result);
 }

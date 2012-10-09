@@ -70,7 +70,7 @@ typedef struct _TSMFGstreamerDecoder
 	GstElement *aVolume;
 
 	BOOL paused;
-	uint64 last_sample_end_time;
+	UINT64 last_sample_end_time;
 
 	Display *disp;
 	int *xfwin;
@@ -95,7 +95,7 @@ const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
 const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
 const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
 
-static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(uint64 ms_timestamp)
+static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
 {
 	/* 
 	 * Convert Microsoft 100ns timestamps to Gstreamer 1ns units.
@@ -1094,8 +1094,8 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	return TRUE;
 }
 
-static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, uint32 data_size, uint32 extensions,
-        			uint64 start_time, uint64 end_time, uint64 duration)
+static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
+        			UINT64 start_time, UINT64 end_time, UINT64 duration)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1215,12 +1215,12 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, u
 			FILE *fin = fopen("/tmp/tsmf_aseek.info", "rt");
 			if (fin)
 			{
-				uint64 AStartTime = 0;
+				UINT64 AStartTime = 0;
 				fscanf(fin, "%"PRIu64, &AStartTime);
 				fclose(fin);
 				if (start_time > AStartTime)
 				{
-					uint64 streamDelay = (start_time - AStartTime) / 10;
+					UINT64 streamDelay = (start_time - AStartTime) / 10;
 					usleep(streamDelay);
 				}
 				unlink("/tmp/tsmf_aseek.info");
@@ -1249,12 +1249,12 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, u
 			fin = fopen("/tmp/tsmf_vseek.info", "rt");
 			if (fin)
 			{
-				uint64 VStartTime = 0;
+				UINT64 VStartTime = 0;
 				fscanf(fin, "%"PRIu64, &VStartTime);
 				fclose(fin);
 				if (start_time > VStartTime)
 				{
-					uint64 streamDelay = (start_time - VStartTime) / 10;
+					UINT64 streamDelay = (start_time - VStartTime) / 10;
 					usleep(streamDelay);
 				}
 				unlink("/tmp/tsmf_vseek.info");
@@ -1301,7 +1301,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, u
 	return TRUE;
 }
 
-static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, uint32 newVolume, uint32 muted)
+static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, UINT32 newVolume, UINT32 muted)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1327,7 +1327,7 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, uint32 newVolum
 	g_object_set(mdecoder->aVolume, "volume", mdecoder->gstVolume, NULL);
 }
 
-static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg control_msg, uint32 *arg)
+static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg control_msg, UINT32 *arg)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1453,7 +1453,7 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 	}
 }
 
-static uint64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
+static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
 {
 	TSMFGstreamerDecoder *mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)

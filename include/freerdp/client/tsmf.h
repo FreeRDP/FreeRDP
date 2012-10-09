@@ -33,8 +33,8 @@ struct _RDP_VIDEO_FRAME_EVENT
 {
 	RDP_EVENT event;
 	BYTE* frame_data;
-	uint32 frame_size;
-	uint32 frame_pixfmt;
+	UINT32 frame_size;
+	UINT32 frame_pixfmt;
 	INT16 frame_width;
 	INT16 frame_height;
 	INT16 x;

@@ -72,7 +72,7 @@ struct _IWTSVirtualChannel
 {
 	/* Starts a write request on the channel. */
 	int (*Write) (IWTSVirtualChannel* pChannel,
-		uint32 cbSize,
+		UINT32 cbSize,
 		BYTE* pBuffer,
 		void* pReserved);
 	/* Closes the channel. */
@@ -85,7 +85,7 @@ struct _IWTSVirtualChannelManager
 	   endpoint, or creates a static channel. */
 	int (*CreateListener) (IWTSVirtualChannelManager* pChannelMgr,
 		const char* pszChannelName,
-		uint32 ulFlags,
+		UINT32 ulFlags,
 		IWTSListenerCallback* pListenerCallback,
 		IWTSListener** ppListener);
 	/* Push a virtual channel event.
@@ -93,9 +93,9 @@ struct _IWTSVirtualChannelManager
 	int (*PushEvent) (IWTSVirtualChannelManager* pChannelMgr,
 		RDP_EVENT* pEvent);
 	/* Find the channel or ID to send data to a specific endpoint. */
-	uint32 (*GetChannelId) (IWTSVirtualChannel * channel);
+	UINT32 (*GetChannelId) (IWTSVirtualChannel * channel);
 	IWTSVirtualChannel* (*FindChannelById) (IWTSVirtualChannelManager* pChannelMgr, 
-		uint32 ChannelId);
+		UINT32 ChannelId);
 };
 
 struct _IWTSPlugin
@@ -110,7 +110,7 @@ struct _IWTSPlugin
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has disconnected from the RD Session Host server. */
 	int (*Disconnected) (IWTSPlugin* pPlugin,
-		uint32 dwDisconnectCode);
+		UINT32 dwDisconnectCode);
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has terminated. */
 	int (*Terminated) (IWTSPlugin* pPlugin);
@@ -131,7 +131,7 @@ struct _IWTSVirtualChannelCallback
 {
 	/* Notifies the user about data that is being received. */
 	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback,
-		uint32 cbSize,
+		UINT32 cbSize,
 		BYTE* pBuffer);
 	/* Notifies the user that the channel has been closed. */
 	int (*OnClose) (IWTSVirtualChannelCallback* pChannelCallback);

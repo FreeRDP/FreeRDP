@@ -29,13 +29,13 @@ struct _ITSMFAudioDevice
 	/* Open the audio device. */
 	BOOL (*Open) (ITSMFAudioDevice* audio, const char* device);
 	/* Set the audio data format. */
-	BOOL (*SetFormat) (ITSMFAudioDevice* audio, uint32 sample_rate, uint32 channels, uint32 bits_per_sample);
+	BOOL (*SetFormat) (ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample);
 	/* Play audio data. */
-	BOOL (*Play) (ITSMFAudioDevice* audio, BYTE* data, uint32 data_size);
+	BOOL (*Play) (ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size);
 	/* Get the latency of the last written sample, in 100ns */
-	uint64 (*GetLatency) (ITSMFAudioDevice* audio);
+	UINT64 (*GetLatency) (ITSMFAudioDevice* audio);
 	/* Change the playback volume level */
-	void (*ChangeVolume) (ITSMFAudioDevice* audio, uint32 newVolume, uint32 muted);
+	void (*ChangeVolume) (ITSMFAudioDevice* audio, UINT32 newVolume, UINT32 muted);
 	/* Flush queued audio data */
 	void (*Flush) (ITSMFAudioDevice* audio);
 	/* Free the audio device */

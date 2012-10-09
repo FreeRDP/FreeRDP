@@ -34,7 +34,7 @@
 struct _NSC_CONTEXT_PRIV
 {
 	BYTE* plane_buf[5];		/* Decompressed Plane Buffers in the respective order */
-	uint32 plane_buf_length;	/* Lengths of each plane buffer */
+	UINT32 plane_buf_length;	/* Lengths of each plane buffer */
 
 	/* profilers */
 	PROFILER_DEFINE(prof_nsc_rle_decompress_data);

@@ -53,7 +53,7 @@ int add_color_suite(void)
 void test_color_GetRGB32(void)
 {
 	int r, g, b;
-	uint32 rgb32 = 0x00AABBCC;
+	UINT32 rgb32 = 0x00AABBCC;
 	GetRGB32(r, g, b, rgb32);
 
 	CU_ASSERT(r == 0xAA);
@@ -64,7 +64,7 @@ void test_color_GetRGB32(void)
 void test_color_GetBGR32(void)
 {
 	int r, g, b;
-	uint32 bgr32 = 0x00CCBBAA;
+	UINT32 bgr32 = 0x00CCBBAA;
 	GetBGR32(r, g, b, bgr32);
 
 	CU_ASSERT(r == 0xAA);

@@ -53,7 +53,7 @@
 
 #endif
 
-static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
+static UINT32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
@@ -67,7 +67,7 @@ static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 	return 0;
 }
 
-static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static UINT32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
@@ -83,7 +83,7 @@ static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugi
 	return 0;
 }
 
-static uint32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static UINT32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 

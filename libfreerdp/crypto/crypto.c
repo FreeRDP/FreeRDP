@@ -30,7 +30,7 @@ CryptoSha1 crypto_sha1_init(void)
 	return sha1;
 }
 
-void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, uint32 length)
+void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length)
 {
 	SHA1_Update(&sha1->sha_ctx, data, length);
 }
@@ -48,7 +48,7 @@ CryptoMd5 crypto_md5_init(void)
 	return md5;
 }
 
-void crypto_md5_update(CryptoMd5 md5, const BYTE* data, uint32 length)
+void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length)
 {
 	MD5_Update(&md5->md5_ctx, data, length);
 }
@@ -59,14 +59,14 @@ void crypto_md5_final(CryptoMd5 md5, BYTE* out_data)
 	free(md5);
 }
 
-CryptoRc4 crypto_rc4_init(const BYTE* key, uint32 length)
+CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
 {
 	CryptoRc4 rc4 = malloc(sizeof(*rc4));
 	RC4_set_key(&rc4->rc4_key, length, key);
 	return rc4;
 }
 
-void crypto_rc4(CryptoRc4 rc4, uint32 length, const BYTE* in_data, BYTE* out_data)
+void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data)
 {
 	RC4(&rc4->rc4_key, length, in_data, out_data);
 }
@@ -95,13 +95,13 @@ CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec)
 	return des3;
 }
 
-void crypto_des3_encrypt(CryptoDes3 des3, uint32 length, const BYTE* in_data, BYTE* out_data)
+void crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
 {
 	int len;
 	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
 }
 
-void crypto_des3_decrypt(CryptoDes3 des3, uint32 length, const BYTE* in_data, BYTE* out_data)
+void crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
 {
 	int len;
 	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
@@ -125,17 +125,17 @@ CryptoHmac crypto_hmac_new(void)
 	return hmac;
 }
 
-void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, uint32 length)
+void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
 {
 	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
 }
 
-void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, uint32 length)
+void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)
 {
 	HMAC_Update(&hmac->hmac_ctx, data, length);
 }
 
-void crypto_hmac_final(CryptoHmac hmac, BYTE* out_data, uint32 length)
+void crypto_hmac_final(CryptoHmac hmac, BYTE* out_data, UINT32 length)
 {
 	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
 }
@@ -148,7 +148,7 @@ void crypto_hmac_free(CryptoHmac hmac)
 	free(hmac);
 }
 
-CryptoCert crypto_cert_read(BYTE* data, uint32 length)
+CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
 	/* this will move the data pointer but we don't care, we don't use it again */
@@ -204,7 +204,7 @@ exit:
 	return status;
 }
 
-static void crypto_rsa_common(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* exponent, int exponent_size, BYTE* output)
+static void crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, int exponent_size, BYTE* output)
 {
 	BN_CTX* ctx;
 	int output_length;
@@ -249,42 +249,42 @@ static void crypto_rsa_common(const BYTE* input, int length, uint32 key_length, 
 	free(input_reverse);
 }
 
-static void crypto_rsa_public(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
+static void crypto_rsa_public(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 	crypto_rsa_common(input, length, key_length, modulus, exponent, EXPONENT_MAX_SIZE, output);
 }
 
-static void crypto_rsa_private(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+static void crypto_rsa_private(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 
 	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
 }
 
-void crypto_rsa_public_encrypt(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
+void crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 
 	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
-void crypto_rsa_public_decrypt(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
+void crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
 
 	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
-void crypto_rsa_private_encrypt(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+void crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 
 	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
-void crypto_rsa_private_decrypt(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+void crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 
 	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
-void crypto_rsa_decrypt(const BYTE* input, int length, uint32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+void crypto_rsa_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
 
 	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
@@ -313,7 +313,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	int i = 0;
 	char* p;
 	char* fp_buffer;
-	uint32 fp_len;
+	UINT32 fp_len;
 	BYTE fp[EVP_MAX_MD_SIZE];
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);

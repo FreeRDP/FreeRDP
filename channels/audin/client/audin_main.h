@@ -41,7 +41,7 @@ struct audin_format
 {
 	UINT16 wFormatTag;
 	UINT16 nChannels;
-	uint32 nSamplesPerSec;
+	UINT32 nSamplesPerSec;
 	UINT16 nBlockAlign;
 	UINT16 wBitsPerSample;
 	UINT16 cbSize;
@@ -53,7 +53,7 @@ struct _IAudinDevice
 {
 	void (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* user_data);
 	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
-	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, uint32 FramesPerPacket);
+	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
 	void (*Close) (IAudinDevice* devplugin);
 	void (*Free) (IAudinDevice* devplugin);
 };

@@ -188,7 +188,7 @@ void per_write_padding(STREAM* s, int length)
  * @return
  */
 
-BOOL per_read_integer(STREAM* s, uint32* integer)
+BOOL per_read_integer(STREAM* s, UINT32* integer)
 {
 	UINT16 length;
 
@@ -214,7 +214,7 @@ BOOL per_read_integer(STREAM* s, uint32* integer)
  * @param integer integer
  */
 
-void per_write_integer(STREAM* s, uint32 integer)
+void per_write_integer(STREAM* s, UINT32 integer)
 {
 	if (integer <= 0xFF)
 	{
@@ -229,7 +229,7 @@ void per_write_integer(STREAM* s, uint32 integer)
 	else if (integer <= 0xFFFFFFFF)
 	{
 		per_write_length(s, 4);
-		stream_write_uint32_be(s, integer);
+		stream_write_UINT32_be(s, integer);
 	}
 }
 

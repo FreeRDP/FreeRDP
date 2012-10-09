@@ -45,7 +45,7 @@
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 
-uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
+UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
 {
 	char* pch;
 	char* beg;
@@ -54,7 +54,7 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 	char buffer[1024];
 	char* layout = NULL;
 	char* variant = NULL;
-	uint32 keyboardLayoutId = 0;
+	UINT32 keyboardLayoutId = 0;
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
 
@@ -211,11 +211,11 @@ char* freerdp_detect_keymap_from_xkb()
 	return keymap;
 }
 
-uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
+UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
-	uint32 vkcode;
-	uint32 keycode;
-	uint32 keycode_to_vkcode[256];
+	UINT32 vkcode;
+	UINT32 keycode;
+	UINT32 keycode_to_vkcode[256];
 
 	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
 	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));

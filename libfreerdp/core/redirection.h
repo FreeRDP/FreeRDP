@@ -44,8 +44,8 @@
 
 struct rdp_redirection
 {
-	uint32 flags;
-	uint32 sessionID;
+	UINT32 flags;
+	UINT32 sessionID;
 	rdpString tsvUrl;
 	rdpString username;
 	rdpString domain;
@@ -56,7 +56,7 @@ struct rdp_redirection
 	DWORD LoadBalanceInfoLength;
 	rdpString targetNetBiosName;
 	rdpString targetNetAddress;
-	uint32 targetNetAddressesCount;
+	UINT32 targetNetAddressesCount;
 	rdpString* targetNetAddresses;
 };
 typedef struct rdp_redirection rdpRedirection;

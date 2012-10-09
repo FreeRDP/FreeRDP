@@ -534,7 +534,7 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
                 xfw->bottom = xfw->top + xfw->height - 1;
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u send_event=%d",
-			(uint32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
+			(UINT32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
 		/* additonal checks for not in a local move and not ignoring configure to send
@@ -723,7 +723,7 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	                else
 	                {
 	                        //If the window is in the iconic state
-	                        if (((uint32) *prop == 3))
+	                        if (((UINT32) *prop == 3))
 	                        {
 	                                minimized = TRUE;
 	                        }
@@ -872,7 +872,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	}
 
 	if (event->type != MotionNotify)
-		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type], event->type, (uint32) event->xany.window);
+		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type], event->type, (UINT32) event->xany.window);
 
 	switch (event->type)
 	{

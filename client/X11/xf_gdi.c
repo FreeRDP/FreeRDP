@@ -331,8 +331,8 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	Pixmap pattern;
 	rdpBrush* brush;
-	uint32 foreColor;
-	uint32 backColor;
+	UINT32 foreColor;
+	UINT32 backColor;
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
@@ -440,7 +440,7 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
-	uint32 color;
+	UINT32 color;
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
@@ -470,7 +470,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	int i;
-	uint32 color;
+	UINT32 color;
 	DELTA_RECT* rectangle;
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
@@ -509,7 +509,7 @@ void xf_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_
 
 void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
-	uint32 color;
+	UINT32 color;
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
@@ -555,7 +555,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	int x1, y1;
 	int x2, y2;
 	int npoints;
-	uint32 color;
+	UINT32 color;
 	XPoint* points;
 	int width, height;
 	xfContext* context_ = (xfContext*) context;
@@ -642,8 +642,8 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	rdpBrush* brush;
 	xfBitmap* bitmap;
-	uint32 foreColor;
-	uint32 backColor;
+	UINT32 foreColor;
+	UINT32 backColor;
 	Pixmap pattern = 0;
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
@@ -717,7 +717,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
 	int i, npoints;
 	XPoint* points;
-	uint32 brush_color;
+	UINT32 brush_color;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	xf_set_rop2(xfi, polygon_sc->bRop2);
@@ -772,8 +772,8 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	XPoint* points;
 	Pixmap pattern;
 	rdpBrush* brush;
-	uint32 foreColor;
-	uint32 backColor;
+	UINT32 foreColor;
+	UINT32 backColor;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	brush = &(polygon_cb->brush);

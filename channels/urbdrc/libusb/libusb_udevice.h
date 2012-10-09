@@ -49,9 +49,9 @@ struct _UDEVICE
 	void * prev;
 	void * next;
 
-	uint32	UsbDevice; /* An unique interface ID */
-	uint32	ReqCompletion; /* An unique interface ID */
-	uint32	channel_id;
+	UINT32	UsbDevice; /* An unique interface ID */
+	UINT32	ReqCompletion; /* An unique interface ID */
+	UINT32	channel_id;
 	UINT16	status;
 	UINT16	bus_number;
 	UINT16	dev_number;

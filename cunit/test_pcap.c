@@ -58,7 +58,7 @@ BYTE test_packet_3[64] =
 typedef struct
 {
 	void* data;
-	uint32 length;
+	UINT32 length;
 } test_packet;
 
 void test_pcap(void)

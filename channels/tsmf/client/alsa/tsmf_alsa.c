@@ -39,11 +39,11 @@ typedef struct _TSMFALSAAudioDevice
 
 	char device[32];
 	snd_pcm_t* out_handle;
-	uint32 source_rate;
-	uint32 actual_rate;
-	uint32 source_channels;
-	uint32 actual_channels;
-	uint32 bytes_per_sample;
+	UINT32 source_rate;
+	UINT32 actual_rate;
+	UINT32 source_channels;
+	UINT32 actual_channels;
+	UINT32 bytes_per_sample;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 } TSMFALSAAudioDevice;
@@ -81,7 +81,7 @@ static BOOL tsmf_alsa_open(ITSMFAudioDevice* audio, const char* device)
 }
 
 static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio,
-	uint32 sample_rate, uint32 channels, uint32 bits_per_sample)
+	UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample)
 {
 	int error;
 	snd_pcm_uframes_t frames;
@@ -147,7 +147,7 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio,
 	return TRUE;
 }
 
-static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_size)
+static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 {
 	int len;
 	int error;
@@ -214,9 +214,9 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, BYTE* data, uint32 data_size
 	return TRUE;
 }
 
-static uint64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
+static UINT64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
 {
-	uint64 latency = 0;
+	UINT64 latency = 0;
 	snd_pcm_sframes_t frames = 0;
 	TSMFALSAAudioDevice* alsa = (TSMFALSAAudioDevice*) audio;
 
@@ -224,7 +224,7 @@ static uint64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
 		snd_pcm_delay(alsa->out_handle, &frames) == 0 &&
 		frames > 0)
 	{
-		latency = ((uint64)frames) * 10000000LL / (uint64)alsa->actual_rate;
+		latency = ((UINT64)frames) * 10000000LL / (UINT64)alsa->actual_rate;
 	}
 	return latency;
 }

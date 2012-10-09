@@ -49,7 +49,7 @@ static BYTE LOMHTab[] = {0, 4, 10, 19};
 static BYTE CopyOffsetBitsLUT[] = {
 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15 };
 
-static uint32 CopyOffsetBaseLUT[] = {
+static UINT32 CopyOffsetBaseLUT[] = {
 1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577, 32769, 49153, 65537 };
 
 static BYTE LOMBitsLUT[] = {
@@ -104,7 +104,7 @@ UINT16 getLOMindex(UINT16 huff)
 		return HuffIndexLOM[LOMHTab[miniLOMhash(huff)]];
 }
 
-uint32 transposebits(uint32 x)
+UINT32 transposebits(UINT32 x)
 {
 	x = ((x & 0x55555555) << 1) | ((x >> 1) & 0x55555555);
 	x = ((x & 0x33333333) << 2) | ((x >> 2) & 0x33333333);
@@ -119,16 +119,16 @@ uint32 transposebits(uint32 x)
 }
 
 #define cache_add(_s, _x) do { \
-		*((uint32*)((_s)+2)) <<= 16; \
-		*((uint32*)((_s)+2)) |= (*((uint32*)(_s)) >> 16); \
-		*((uint32*)(_s)) = (*((uint32*)(_s)) << 16) | (_x); } while(0)
+		*((UINT32*)((_s)+2)) <<= 16; \
+		*((UINT32*)((_s)+2)) |= (*((UINT32*)(_s)) >> 16); \
+		*((UINT32*)(_s)) = (*((UINT32*)(_s)) << 16) | (_x); } while(0)
 
 #define cache_swap(_s, _i) do { \
 		UINT16 t = *(_s); \
 		*(_s) = *((_s) + (_i)); \
 		*((_s) + (_i)) = t; } while(0)
 
-int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	int type = ctype & 0x0f;
 
@@ -169,11 +169,11 @@ int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uin
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	BYTE*    history_buf;    /* uncompressed data goes here */
 	BYTE*    history_ptr;    /* points to next free slot in history_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
 	UINT16    copy_offset;    /* location to copy data from */
 	UINT16    lom;            /* length of match */
 	BYTE*    src_ptr;        /* used while copying compressed data */
@@ -182,7 +182,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
 	int       bits_left;      /* bits left in d34 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp;
-	uint32    i32;
+	UINT32    i32;
 
 	printf("decompress_rdp_4:\n");
 
@@ -599,11 +599,11 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	BYTE*    history_buf;    /* uncompressed data goes here */
 	BYTE*    history_ptr;    /* points to next free slot in bistory_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
 	UINT16    copy_offset;    /* location to copy data from */
 	UINT16    lom;            /* length of match */
 	BYTE*    src_ptr;        /* used while copying compressed data */
@@ -612,7 +612,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
 	int       bits_left;      /* bits left in d32 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp;
-	uint32    i32;
+	UINT32    i32;
 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
@@ -1063,12 +1063,12 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	BYTE*    history_buf;    /* uncompressed data goes here */
 	UINT16*   offset_cache;	  /* Copy Offset cache */
 	BYTE*    history_ptr;    /* points to next free slot in bistory_buf */
-	uint32    d32;            /* we process 4 compressed bytes at a time */
+	UINT32    d32;            /* we process 4 compressed bytes at a time */
 	UINT16    copy_offset;    /* location to copy data from */
 	UINT16    lom;            /* length of match */
 	UINT16    LUTIndex;       /* LookUp table Index */
@@ -1078,7 +1078,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
 	int       bits_left;      /* bits left in d32 for processing */
 	int       cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp, i;
-	uint32    i32;
+	UINT32    i32;
 
 	if ((dec == NULL) || (dec->history_buf == NULL))
 	{
@@ -1398,7 +1398,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, u
  * @return        True on success, False on failure
  */
 
-int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
+int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
 	return FALSE;
 }

@@ -83,7 +83,7 @@
  */
 struct _COMPLETIONIDINFO
 {
-        uint32 ID;              /* CompletionID */
+        UINT32 ID;              /* CompletionID */
         BOOL duplicate;      /* Indicates whether or not this 
 				 * CompletionID is a duplicate of an 
                                  * earlier, outstanding, CompletionID.

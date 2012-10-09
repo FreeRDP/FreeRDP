@@ -76,21 +76,21 @@ enum RDP_NEG_MSG
 struct rdp_nego
 {
 	int port;
-	uint32 flags;
+	UINT32 flags;
 	char* hostname;
 	char* cookie;
 	BYTE* RoutingToken;
 	DWORD RoutingTokenLength;
 	BOOL send_preconnection_pdu;
-	uint32 preconnection_id;
+	UINT32 preconnection_id;
 	char* preconnection_blob;
 
 	NEGO_STATE state;
 	BOOL tcp_connected;
 	BOOL security_connected;
 
-	uint32 selected_protocol;
-	uint32 requested_protocols;
+	UINT32 selected_protocol;
+	UINT32 requested_protocols;
 	BOOL security_layer_negotiation_enabled;
 	BYTE enabled_protocols[3];
 
@@ -129,7 +129,7 @@ void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
 void nego_set_cookie(rdpNego* nego, char* cookie);
 void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
-void nego_set_preconnection_id(rdpNego* nego, uint32 id);
+void nego_set_preconnection_id(rdpNego* nego, UINT32 id);
 void nego_set_preconnection_blob(rdpNego* nego, char* blob);
 
 #ifdef WITH_DEBUG_NEGO

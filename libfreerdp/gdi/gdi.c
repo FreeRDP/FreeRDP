@@ -51,7 +51,7 @@
 #include "gdi.h"
 
 /* Ternary Raster Operation Table */
-static const uint32 rop3_code_table[] =
+static const UINT32 rop3_code_table[] =
 {
 	0x00000042, /* 0 */
 	0x00010289, /* DPSoon */
@@ -313,7 +313,7 @@ static const uint32 rop3_code_table[] =
 
 /* GDI Helper Functions */
 
-INLINE uint32 gdi_rop3_code(BYTE code)
+INLINE UINT32 gdi_rop3_code(BYTE code)
 {
 	return rop3_code_table[code];
 }
@@ -476,7 +476,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	if (brush->style == GDI_BS_SOLID)
 	{
-		uint32 color;
+		UINT32 color;
 		originalBrush = gdi->drawing->hdc->brush;
 
 		color = freerdp_color_convert_rgb(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
@@ -532,7 +532,7 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
-	uint32 brush_color;
+	UINT32 brush_color;
 	rdpGdi *gdi = context->gdi;
 
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
@@ -551,7 +551,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 	int i;
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
-	uint32 brush_color;
+	UINT32 brush_color;
 	DELTA_RECT* rectangle;
 	rdpGdi *gdi = context->gdi;
 
@@ -573,7 +573,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 
 void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
-	uint32 color;
+	UINT32 color;
 	HGDI_PEN hPen;
 	rdpGdi *gdi = context->gdi;
 
@@ -591,12 +591,12 @@ void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	int i;
-	uint32 color;
+	UINT32 color;
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
-	sint32 x;
-	sint32 y;
+	INT32 x;
+	INT32 y;
 
 	color = freerdp_color_convert_rgb(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
@@ -634,8 +634,8 @@ void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	rdpBrush* brush;
-	uint32 foreColor;
-	uint32 backColor;
+	UINT32 foreColor;
+	UINT32 backColor;
 	gdiBitmap* bitmap;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
@@ -875,7 +875,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
  * @return
  */
 
-int gdi_init(freerdp* instance, uint32 flags, BYTE* buffer)
+int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 {
 	rdpGdi* gdi;
 	rdpCache* cache;

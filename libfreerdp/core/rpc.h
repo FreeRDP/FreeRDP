@@ -51,7 +51,7 @@ struct _rpc_pdu_header
 	BYTE packed_drep[4];
 	UINT16 frag_length;
 	UINT16 auth_length;
-	uint32 call_id;
+	UINT32 call_id;
 };
 typedef struct _rpc_pdu_header RPC_PDU_HEADER;
 
@@ -59,7 +59,7 @@ typedef   UINT16   p_context_id_t;
 
 typedef struct   {
 	uuid		if_uuid;
-	uint32		if_version;
+	UINT32		if_version;
 } p_syntax_id_t;
 
 typedef struct {
@@ -139,7 +139,7 @@ typedef  struct {
 	BYTE	rpc_vers_minor;
 	BYTE	reserved[2];/* must be zero */
 	BYTE	packed_drep[4];
-	uint32	reject_status;
+	UINT32	reject_status;
 	BYTE	reserved2[4];
 } rpcrt_optional_data_t;
 
@@ -161,7 +161,7 @@ typedef struct{
 	BYTE	auth_level;      /* :01  which level within service */
 	BYTE	auth_pad_length; /* :01 */
 	BYTE	auth_reserved;   /* :01 reserved, m.b.z. */
-	uint32	auth_context_id; /* :04 */
+	UINT32	auth_context_id; /* :04 */
 	BYTE*	auth_value; /* credentials; size_is(auth_length) */
 } auth_verifier_co_t;
 
@@ -178,13 +178,13 @@ typedef struct {
 	BYTE  packed_drep[4];        /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;           /* 08:02 total length of fragment */
 	UINT16 auth_length;           /* 10:02 length of auth_value */
-	uint32  call_id;              /* 12:04 call identifier */
+	UINT32  call_id;              /* 12:04 call identifier */
 
 	/* end common fields */
 
 	UINT16 max_xmit_frag;         /* ignored */
 	UINT16 max_recv_frag;         /* ignored */
-	uint32 assoc_group_id;        /* ignored */
+	UINT32 assoc_group_id;        /* ignored */
 
 	/* presentation context list */
 
@@ -209,13 +209,13 @@ typedef struct {
 	BYTE	packed_drep[4];     /* 04:04 NDR data rep format label*/
 	UINT16	frag_length;        /* 08:02 total length of fragment */
 	UINT16	auth_length;        /* 10:02 length of auth_value */
-	uint32	call_id;           /* 12:04 call identifier */
+	UINT32	call_id;           /* 12:04 call identifier */
 
 	/* end common fields */
 
 	UINT16		max_xmit_frag;      /* ignored */
 	UINT16		max_recv_frag;      /* ignored */
-	uint32		assoc_group_id;     /* ignored */
+	UINT32		assoc_group_id;     /* ignored */
 	port_any_t	sec_addr;        /* ignored */
 
 	/* restore 4-octet alignment */
@@ -244,13 +244,13 @@ typedef struct {
 	BYTE    packed_drep[4];      /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;         /* 08:02 total length of fragment */
 	UINT16 auth_length;         /* 10:02 length of auth_value */
-	uint32  call_id;            /* 12:04 call identifier */
+	UINT32  call_id;            /* 12:04 call identifier */
 
 	/* end common fields */
 
 	UINT16 max_xmit_frag;     /* 16:02 max transmit frag size, bytes */
 	UINT16 max_recv_frag;     /* 18:02 max receive  frag size, bytes */
-	uint32 assoc_group_id;    /* 20:04 incarnation of client-server
+	UINT32 assoc_group_id;    /* 20:04 incarnation of client-server
 														* assoc group */
 	/* presentation context list */
 
@@ -273,13 +273,13 @@ typedef struct {
 	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;        /* 08:02 total length of fragment */
 	UINT16 auth_length;        /* 10:02 length of auth_value */
-	uint32  call_id;           /* 12:04 call identifier */
+	UINT32  call_id;           /* 12:04 call identifier */
 
 	/* end common fields */
 
 	UINT16 max_xmit_frag;      /* 16:02 max transmit frag size */
 	UINT16 max_recv_frag;      /* 18:02 max receive  frag size */
-	uint32 assoc_group_id;     /* 20:04 returned assoc_group_id */
+	UINT32 assoc_group_id;     /* 20:04 returned assoc_group_id */
 	port_any_t sec_addr;        /* 24:yy optional secondary address
 								 * for process incarnation; local port
 								 * part of address only */
@@ -308,7 +308,7 @@ typedef struct {
 	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;        /* 08:02 total length of fragment */
 	UINT16 auth_length;        /* 10:02 length of auth_value */
-	uint32  call_id;           /* 12:04 call identifier */
+	UINT32  call_id;           /* 12:04 call identifier */
 
 	/* end common fields */
 
@@ -332,7 +332,7 @@ typedef struct {
 	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;        /* 08:02 total length of fragment */
 	UINT16 auth_length;        /* 10:02 length of auth_value */
-	uint32  call_id;           /* 12:04 call identifier */
+	UINT32  call_id;           /* 12:04 call identifier */
 
 	/* end common fields */
 
@@ -355,7 +355,7 @@ typedef struct {
 	BYTE    packed_drep[4];       /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;          /* 08:02 total length of fragment */
 	UINT16 auth_length;          /* 10:02 length of auth_value */
-	uint32  call_id;             /* 12:04 call identifier */
+	UINT32  call_id;             /* 12:04 call identifier */
 
 	/* end common fields */
 
@@ -377,13 +377,13 @@ typedef struct {
 	BYTE   packed_drep[4];      /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;         /* 08:02 total length of fragment */
 	UINT16 auth_length;         /* 10:02 length of auth_value */
-	uint32  call_id;            /* 12:04 call identifier */
+	UINT32  call_id;            /* 12:04 call identifier */
 
 	/* end common fields */
 
 	/* needed for request, response, fault */
 
-	uint32  alloc_hint;      /* 16:04 allocation hint */
+	UINT32  alloc_hint;      /* 16:04 allocation hint */
 	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
 
 	/* needed for response or fault */
@@ -393,7 +393,7 @@ typedef struct {
 
 	/* fault code  */
 
-	uint32  status;           /* 24:04 run-time fault code or zero */
+	UINT32  status;           /* 24:04 run-time fault code or zero */
 
 	/* always pad to next 8-octet boundary */
 
@@ -423,7 +423,7 @@ typedef struct {
 	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;         /* 08:02 total length of fragment */
 	UINT16 auth_length;         /* 10:02 length of auth_value */
-	uint32  call_id;            /* 12:04 call identifier */
+	UINT32  call_id;            /* 12:04 call identifier */
 
 	/* end common fields */
 
@@ -445,13 +445,13 @@ typedef struct {
 	BYTE  packed_drep[4];     /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;        /* 08:02 total length of fragment */
 	UINT16 auth_length;        /* 10:02 length of auth_value */
-	uint32  call_id;           /* 12:04 call identifier */
+	UINT32  call_id;           /* 12:04 call identifier */
 
 	/* end common fields */
 
 	/* needed on request, response, fault */
 
-	uint32  alloc_hint;        /* 16:04 allocation hint */
+	UINT32  alloc_hint;        /* 16:04 allocation hint */
 	p_context_id_t p_cont_id;  /* 20:02 pres context, i.e. data rep */
 	UINT16 opnum;              /* 22:02 operation #
 								 * within the interface */
@@ -484,13 +484,13 @@ typedef struct {
 	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;         /* 08:02 total length of fragment */
 	UINT16 auth_length;         /* 10:02 length of auth_value */
-	uint32 call_id;             /* 12:04 call identifier */
+	UINT32 call_id;             /* 12:04 call identifier */
 
 	/* end common fields */
 
 	/* needed for request, response, fault */
 
-	uint32  alloc_hint;         /* 16:04 allocation hint */
+	UINT32  alloc_hint;         /* 16:04 allocation hint */
 	p_context_id_t p_cont_id;    /* 20:02 pres context, i.e.
 							  * data rep */
 
@@ -523,7 +523,7 @@ typedef struct {
 	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
 	UINT16 frag_length;         /* 08:02 total length of fragment */
 	UINT16 auth_length;         /* 10:02 */
-	uint32  call_id;            /* 12:04 call identifier */
+	UINT32  call_id;            /* 12:04 call identifier */
 
 	/* end common fields */
 } rpcconn_shutdown_hdr_t;
@@ -568,9 +568,9 @@ struct rdp_ntlm_http
 
 struct rpc_ping_originator
 {
-	uint32 ConnectionTimeout;
-	uint32 LastPacketSentTimestamp;
-	uint32 KeepAliveInterval;
+	UINT32 ConnectionTimeout;
+	UINT32 LastPacketSentTimestamp;
+	UINT32 KeepAliveInterval;
 };
 typedef struct rpc_ping_originator RpcPingOriginator;
 
@@ -580,11 +580,11 @@ struct rpc_in_channel
 {
 	/* Sending Channel */
 
-	uint32 PlugState;
+	UINT32 PlugState;
 	void* SendQueue;
-	uint32 BytesSent;
-	uint32 SenderAvailableWindow;
-	uint32 PeerReceiveWindow;
+	UINT32 BytesSent;
+	UINT32 SenderAvailableWindow;
+	UINT32 PeerReceiveWindow;
 
 	/* Ping Originator */
 
@@ -598,11 +598,11 @@ struct rpc_out_channel
 {
 	/* Receiving Channel */
 
-	uint32 ReceiveWindow;
-	uint32 ReceiveWindowSize;
-	uint32 ReceiverAvailableWindow;
-	uint32 BytesReceived;
-	uint32 AvailableWindowAdvertised;
+	UINT32 ReceiveWindow;
+	UINT32 ReceiveWindowSize;
+	UINT32 ReceiverAvailableWindow;
+	UINT32 BytesReceived;
+	UINT32 AvailableWindowAdvertised;
 };
 typedef struct rpc_out_channel RpcOutChannel;
 
@@ -650,14 +650,14 @@ struct rdp_rpc
 	rdpTransport* transport;
 
 	BYTE* write_buffer;
-	uint32 write_buffer_len;
+	UINT32 write_buffer_len;
 	BYTE* read_buffer;
-	uint32 read_buffer_len;
+	UINT32 read_buffer_len;
 
-	uint32 call_id;
-	uint32 pipe_call_id;
+	UINT32 call_id;
+	UINT32 pipe_call_id;
 
-	uint32 ReceiveWindow;
+	UINT32 ReceiveWindow;
 
 	RpcVirtualConnection* VirtualConnection;
 };

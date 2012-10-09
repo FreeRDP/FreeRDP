@@ -78,7 +78,7 @@ void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
 }
 
-void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
+void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)
 {
 	void* entry;
 
@@ -114,7 +114,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 	return entry;
 }
 
-void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp)
+void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp)
 {
 	void* prevEntry;
 

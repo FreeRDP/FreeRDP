@@ -104,7 +104,7 @@ BOOL rdp_recv_control_pdu(STREAM* s, UINT16* action)
 
 	stream_read_UINT16(s, *action); /* action (2 bytes) */
 	stream_seek_UINT16(s); /* grantId (2 bytes) */
-	stream_seek_uint32(s); /* controlId (4 bytes) */
+	stream_seek_UINT32(s); /* controlId (4 bytes) */
 
 	return TRUE;
 }
@@ -113,7 +113,7 @@ void rdp_write_client_control_pdu(STREAM* s, UINT16 action)
 {
 	stream_write_UINT16(s, action); /* action (2 bytes) */
 	stream_write_UINT16(s, 0); /* grantId (2 bytes) */
-	stream_write_uint32(s, 0); /* controlId (4 bytes) */
+	stream_write_UINT32(s, 0); /* controlId (4 bytes) */
 }
 
 BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s)
@@ -144,7 +144,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 
 	stream_write_UINT16(s, CTRLACTION_COOPERATE); /* action (2 bytes) */
 	stream_write_UINT16(s, 0); /* grantId (2 bytes) */
-	stream_write_uint32(s, 0); /* controlId (4 bytes) */
+	stream_write_UINT32(s, 0); /* controlId (4 bytes) */
 
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
 
@@ -159,7 +159,7 @@ BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 
 	stream_write_UINT16(s, CTRLACTION_GRANTED_CONTROL); /* action (2 bytes) */
 	stream_write_UINT16(s, rdp->mcs->user_id); /* grantId (2 bytes) */
-	stream_write_uint32(s, 0x03EA); /* controlId (4 bytes) */
+	stream_write_UINT32(s, 0x03EA); /* controlId (4 bytes) */
 
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
 
@@ -176,10 +176,10 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
 }
 
-void rdp_write_persistent_list_entry(STREAM* s, uint32 key1, uint32 key2)
+void rdp_write_persistent_list_entry(STREAM* s, UINT32 key1, UINT32 key2)
 {
-	stream_write_uint32(s, key1); /* key1 (4 bytes) */
-	stream_write_uint32(s, key2); /* key2 (4 bytes) */
+	stream_write_UINT32(s, key1); /* key1 (4 bytes) */
+	stream_write_UINT32(s, key2); /* key2 (4 bytes) */
 }
 
 void rdp_write_client_persistent_key_list_pdu(STREAM* s, rdpSettings* settings)
@@ -287,7 +287,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, STREAM* s)
 	 */
 	if (stream_get_left(s) > 0)
 	{
-		stream_read_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+		stream_read_UINT32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 		stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 		stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
 	}
@@ -311,7 +311,7 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 
 	s = rdp_pdu_init(rdp);
 
-	stream_write_uint32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+	stream_write_UINT32(s, rdp->settings->share_id); /* shareId (4 bytes) */
 	stream_write_UINT16(s, 1); /* lengthSourceDescriptor (2 bytes) */
 	stream_write_BYTE(s, 0); /* sourceDescriptor (should be 0x00) */
 

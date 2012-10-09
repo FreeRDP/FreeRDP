@@ -44,7 +44,7 @@
 
 void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
-rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count);
+rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count);
 void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain);
 
 BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s);

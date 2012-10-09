@@ -45,11 +45,11 @@ struct rdpsnd_alsa_plugin
 	char* device_name;
 	snd_pcm_t* out_handle;
 	snd_mixer_t* mixer_handle;
-	uint32 source_rate;
-	uint32 actual_rate;
+	UINT32 source_rate;
+	UINT32 actual_rate;
 	snd_pcm_format_t format;
-	uint32 source_channels;
-	uint32 actual_channels;
+	UINT32 source_channels;
+	UINT32 actual_channels;
 	int bytes_per_channel;
 	int wformat;
 	int block_size;
@@ -291,7 +291,7 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndForma
 	return FALSE;
 }
 
-static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	long left;
 	long right;

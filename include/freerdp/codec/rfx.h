@@ -82,9 +82,9 @@ struct _RFX_CONTEXT
 	UINT16 width;
 	UINT16 height;
 	RLGR_MODE mode;
-	uint32 version;
-	uint32 codec_id;
-	uint32 codec_version;
+	UINT32 version;
+	UINT32 codec_id;
+	UINT32 codec_version;
 	RDP_PIXEL_FORMAT pixel_format;
 	BYTE bits_per_pixel;
 
@@ -92,10 +92,10 @@ struct _RFX_CONTEXT
 	const BYTE* palette;
 
 	/* temporary data within a frame */
-	uint32 frame_idx;
+	UINT32 frame_idx;
 	BOOL header_processed;
 	BYTE num_quants;
-	uint32* quants;
+	UINT32* quants;
 	BYTE quant_idx_y;
 	BYTE quant_idx_cb;
 	BYTE quant_idx_cr;
@@ -103,8 +103,8 @@ struct _RFX_CONTEXT
 	/* routines */
 	void (*decode_ycbcr_to_rgb)(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf);
 	void (*encode_rgb_to_ycbcr)(INT16* y_r_buf, INT16* cb_g_buf, INT16* cr_b_buf);
-	void (*quantization_decode)(INT16* buffer, const uint32* quantization_values);
-	void (*quantization_encode)(INT16* buffer, const uint32* quantization_values);
+	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
+	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
 	void (*dwt_2d_decode)(INT16* buffer, INT16* dwt_buffer);
 	void (*dwt_2d_encode)(INT16* buffer, INT16* dwt_buffer);
 
@@ -115,11 +115,11 @@ typedef struct _RFX_CONTEXT RFX_CONTEXT;
 
 FREERDP_API RFX_CONTEXT* rfx_context_new(void);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
-FREERDP_API void rfx_context_set_cpu_opt(RFX_CONTEXT* context, uint32 cpu_opt);
+FREERDP_API void rfx_context_set_cpu_opt(RFX_CONTEXT* context, UINT32 cpu_opt);
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
 
-FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, uint32 length);
+FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length);
 FREERDP_API UINT16 rfx_message_get_tile_count(RFX_MESSAGE* message);
 FREERDP_API RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* message, int index);
 FREERDP_API UINT16 rfx_message_get_rect_count(RFX_MESSAGE* message);

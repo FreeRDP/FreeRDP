@@ -37,9 +37,9 @@
 static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
 	int i;
-	uint32 length;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 length;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -83,8 +83,8 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int r
 	INT16 g_val;
 	INT16 b_val;
 	BYTE a_val;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -209,8 +209,8 @@ static void nsc_encode_subsampling(NSC_CONTEXT* context)
 	INT8* co_src1;
 	INT8* cg_src0;
 	INT8* cg_src1;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -246,11 +246,11 @@ void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 	}
 }
 
-static uint32 nsc_rle_encode(BYTE* in, BYTE* out, uint32 origsz)
+static UINT32 nsc_rle_encode(BYTE* in, BYTE* out, UINT32 origsz)
 {
-	uint32 left;
-	uint32 runlength = 1;
-	uint32 planesize = 0;
+	UINT32 left;
+	UINT32 runlength = 1;
+	UINT32 planesize = 0;
 
 	left = origsz;
 	/**
@@ -304,8 +304,8 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 {
 	UINT16 i;
 	BYTE* rle;
-	uint32 origsize;
-	uint32 planesize;
+	UINT32 origsize;
+	UINT32 planesize;
 
 	rle = context->nsc_stream.Planes;
 
@@ -351,10 +351,10 @@ void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
 
 	/* Assemble the NSCodec message into stream */
 	stream_check_size(s, 20);
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
 	stream_write_BYTE(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
 	stream_write_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	stream_write_UINT16(s, 0); /* Reserved (2 bytes) */

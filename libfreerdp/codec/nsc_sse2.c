@@ -49,8 +49,8 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 	__m128i y_val;
 	__m128i co_val;
 	__m128i cg_val;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -291,8 +291,8 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	INT8* co_src1;
 	INT8* cg_src0;
 	INT8* cg_src1;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 	__m128i t;
 	__m128i val;
 	__m128i mask = _mm_set1_epi16(0xFF);

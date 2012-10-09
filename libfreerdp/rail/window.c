@@ -34,7 +34,7 @@
 
 struct _WINDOW_STYLE
 {
-	uint32 style;
+	UINT32 style;
 	const char* name;
 	BOOL multi;
 };
@@ -97,7 +97,7 @@ static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 	{ WS_EX_WINDOWEDGE, "WS_EX_WINDOWEDGE", FALSE }
 };
 
-void print_window_styles(uint32 style)
+void print_window_styles(UINT32 style)
 {
 	int i;
 
@@ -118,7 +118,7 @@ void print_window_styles(uint32 style)
 	printf("}\n");
 }
 
-void print_extended_window_styles(uint32 style)
+void print_extended_window_styles(UINT32 style)
 {
 	int i;
 
