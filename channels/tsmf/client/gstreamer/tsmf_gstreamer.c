@@ -1039,7 +1039,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 
 	out_pad = gst_element_get_static_pad(mdecoder->outconv, "sink");
 
-	gBOOL linkResult = FALSE;
+	gboolean linkResult = FALSE;
 	gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outconv);
 	gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outsink);
 	if (mdecoder->aVolume)
