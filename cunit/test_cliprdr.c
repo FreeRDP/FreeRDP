@@ -26,7 +26,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "test_cliprdr.h"
 

@@ -24,7 +24,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "wf_cliprdr.h"
 

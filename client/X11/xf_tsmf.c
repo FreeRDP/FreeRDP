@@ -35,7 +35,7 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/plugins/tsmf.h>
+#include <freerdp/client/tsmf.h>
 
 #include "xf_tsmf.h"
 

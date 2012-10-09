@@ -15,7 +15,7 @@
 #import "freerdp/gdi/gdi.h"
 #import "freerdp/graphics.h"
 #import "freerdp/utils/event.h"
-#import "freerdp/plugins/cliprdr.h"
+#import "freerdp/client/cliprdr.h"
 #import "freerdp/utils/args.h"
 #import "freerdp/rail/rail.h"
 #import "freerdp/rail.h"

@@ -33,7 +33,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_constants.h"
 #include "cliprdr_main.h"

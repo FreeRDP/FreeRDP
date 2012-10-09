@@ -55,7 +55,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
 #include <freerdp/rail.h>
 
 #ifdef WITH_STATIC_PLUGINS

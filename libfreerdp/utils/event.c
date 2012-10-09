@@ -27,8 +27,8 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/plugins/cliprdr.h>
-#include <freerdp/plugins/tsmf.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/tsmf.h>
 #include <freerdp/rail.h>
 
 static RDP_EVENT* freerdp_cliprdr_event_new(uint16 event_type)

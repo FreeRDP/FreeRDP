@@ -41,7 +41,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/plugins/tsmf.h>
+#include <freerdp/client/tsmf.h>
 
 #include <winpr/synch.h>
 
