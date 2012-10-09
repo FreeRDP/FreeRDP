@@ -1,21 +1,22 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * FreeRDP Windows Server
- *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Client
+* FreeRDP Windows Server
+*
+* Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+* Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,7 +54,7 @@ void wf_peer_init(freerdp_peer* client)
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
-	
+
 	freerdp_peer_context_new(client);
 }
 
@@ -92,12 +93,14 @@ boolean wf_peer_activate(freerdp_peer* client)
 {
 	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
-	
+
 	printf("PeerActivate\n");
 
 	wfi = context->info;
 	client->activated = true;
 	wf_update_peer_activate(wfi, context);
+
+	wfreerdp_server_peer_callback_event(((rdpContext*) context)->peer->pId, WF_SRV_CALLBACK_EVENT_ACTIVATE);
 
 	return true;
 }
@@ -112,6 +115,8 @@ boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, b
 			identity->User, identity->Domain, identity->Password);
 	}
 
+
+	wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
 	return true;
 }
 
@@ -162,10 +167,10 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 			FD_SET(fds, &rfds_set);
 		}
-		
+
 		if (max_fds == 0)
 			break;
-		
+
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		SetEvent(context->socketEvent);

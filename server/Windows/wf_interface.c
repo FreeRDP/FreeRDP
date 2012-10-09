@@ -3,6 +3,7 @@
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +26,8 @@
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 #include <freerdp/utils/tcp.h>
+#include <freerdp\listener.h>
+//#include <libfreerdp\core\listener.h>
 
 #include "wf_peer.h"
 #include "wf_settings.h"
@@ -32,18 +35,7 @@
 
 #include "wf_interface.h"
 
-//todo: remove this
-struct rdp_listener
-{
-	freerdp_listener* instance;
-
- 	int sockfds[5];
-	int num_sockfds;
-};
-//
-
-cbConEvent cbConnect;
-cbConEvent cbDisconnect;
+cbCallback cbEvent;
 
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
@@ -53,7 +45,6 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	void* rfds[32];
 	fd_set rfds_set;
 	freerdp_listener* instance;
-	struct rdp_listener* listener;
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
@@ -61,9 +52,8 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 	ZeroMemory(rfds, sizeof(rfds));
 	instance = (freerdp_listener*) lpParam;
-	listener = (struct rdp_listener*) instance->listener;
 
-	while (listener->num_sockfds > 0)
+	while(wfi->force_all_disconnect == FALSE)
 	{
 		rcount = 0;
 
@@ -151,8 +141,7 @@ wfServer* wfreerdp_server_new()
 		server->port = 3389;
 	}
 
-	cbConnect = NULL;
-	cbDisconnect = NULL;
+	cbEvent = NULL;
 
 	return server;
 }
@@ -212,7 +201,7 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 	else
 	{
-		printf("nonexistent peer\n");
+		printf("nonexistent peer id=%d\n", pId);
 		return 0;
 	}
 
@@ -293,25 +282,14 @@ FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
 	}
 }
 
-FREERDP_API void wfreerdp_server_register_connect_event(cbConEvent cb)
+FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb)
 {
-	cbConnect = cb;
+	cbEvent = cb;
 }
 
-FREERDP_API void wfreerdp_server_register_disconnect_event(cbConEvent cb)
+void wfreerdp_server_peer_callback_event(int pId, UINT32 eType)
 {
-	cbDisconnect = cb;
-}
-
-
-void wfreerdp_server_peer_connect_event(int pId)
-{
-	if (cbConnect)
-		cbConnect(pId);
-}
-void wfreerdp_server_peer_disconnect_event(int pId)
-{
-	if (cbDisconnect)
-		cbDisconnect(pId);
+	if (cbEvent)
+		cbEvent(pId, eType);
 }
 

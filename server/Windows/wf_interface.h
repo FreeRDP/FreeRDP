@@ -1,21 +1,22 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * FreeRDP Windows Server
- *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Client
+* FreeRDP Windows Server
+*
+* Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+* Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifndef WF_INTERFACE_H
 #define WF_INTERFACE_H
@@ -28,6 +29,11 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+
+#define WF_SRV_CALLBACK_EVENT_CONNECT 1
+#define WF_SRV_CALLBACK_EVENT_DISCONNECT 2
+#define WF_SRV_CALLBACK_EVENT_ACTIVATE 4
+#define WF_SRV_CALLBACK_EVENT_AUTH 8
 
 typedef struct wf_info wfInfo;
 typedef struct wf_peer_context wfPeerContext;
@@ -86,7 +92,7 @@ struct wf_server
 };
 typedef struct wf_server wfServer;
 
-typedef void (__stdcall* cbConEvent) (int);
+typedef void (__stdcall* cbCallback) (int, UINT32);
 
 FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
@@ -103,10 +109,13 @@ FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId);
 FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId);
 
-FREERDP_API void wfreerdp_server_register_connect_event(cbConEvent cb);
-FREERDP_API void wfreerdp_server_register_disconnect_event(cbConEvent cb);
+//FREERDP_API void wfreerdp_server_register_connect_event(cbConEvent cb);
+//FREERDP_API void wfreerdp_server_register_disconnect_event(cbConEvent cb);
+FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb);
 
-void wfreerdp_server_peer_connect_event(int pId);
-void wfreerdp_server_peer_disconnect_event(int pId);
+//void wfreerdp_server_peer_connect_event(int pId);
+//void wfreerdp_server_peer_disconnect_event(int pId);
+
+void wfreerdp_server_peer_callback_event(int pId, UINT32 eType);
 
 #endif /* WF_INTERFACE_H */
