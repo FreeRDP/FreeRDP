@@ -10,8 +10,9 @@
 
 @implementation AppDelegate
 
-//@synthesize window = _window;
-//@synthesize mrdpView;
+@synthesize window = _window;
+
+@synthesize mrdpView;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {

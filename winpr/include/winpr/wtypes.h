@@ -39,11 +39,11 @@
 #define __int3264 __int32
 #endif
 
-#ifdef OBJC_BOOL_DEFINED
-typedef OBJC_BOOL BOOL, *PBOOL, *LPBOOL;
-#else
-typedef int BOOL, *PBOOL, *LPBOOL;
+#ifndef __OBJC__
+typedef int BOOL;
 #endif
+
+typedef BOOL *PBOOL, *LPBOOL;
 
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;

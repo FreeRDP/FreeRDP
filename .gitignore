@@ -1,5 +1,6 @@
 # CMake
 CMakeFiles/
+CMakeScripts/
 CMakeCache.txt
 config.h
 install_manifest.txt
@@ -23,6 +24,7 @@ client/X11/xfreerdp.1
 
 # Mac OS X
 .DS_Store
+*.xcodeproj/
 
 # Windows
 *.vcxproj

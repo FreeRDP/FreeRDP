@@ -2,6 +2,7 @@
 
 #import "freerdp/gdi/gdi.h"
 #import "freerdp/rail/rail.h"
+
 #import "MRDPRailWindow.h"
 
 @interface MRDPRailView : NSView
