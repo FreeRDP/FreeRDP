@@ -36,7 +36,13 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 if(MONOLITHIC_BUILD)
 
 else()
-	target_link_libraries(${MODULE_NAME} winpr-crt winpr-file winpr-handle)
+	set(${MODULE_PREFIX}_LIBS
+		winpr-crt
+		winpr-handle)
+	if (NOT WIN32)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-file)
+	endif()
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
