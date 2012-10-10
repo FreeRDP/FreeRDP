@@ -64,10 +64,6 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
-if(NOT BUILD_SHARED_LIBS AND MONOLITHIC_BUILD)
-	set(STATIC_CHANNELS ON)
-endif()
-
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)

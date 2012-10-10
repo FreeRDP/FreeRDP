@@ -24,6 +24,7 @@ endif()
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 
+option(STATIC_CHANNELS "Build channels statically" ON)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 if(WITH_CLIENT AND WITH_CHANNELS)
