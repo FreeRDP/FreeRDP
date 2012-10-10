@@ -23,6 +23,10 @@ set(${MODULE_PREFIX}_SRCS
 	registry_reg.h
 	registry.c)
 
+if(MSVC AND (NOT MONOLITHIC_BUILD))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 if(MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
