@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Offscreen Bitmap Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -31,7 +31,7 @@
 void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	int i;
-	uint16 index;
+	UINT16 index;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
 
@@ -46,7 +46,7 @@ void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BI
 	offscreen_cache_put(cache->offscreen, create_offscreen_bitmap->id, bitmap);
 
 	if(cache->offscreen->currentSurface == create_offscreen_bitmap->id)
-		Bitmap_SetSurface(context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, FALSE);
 
 	for (i = 0; i < (int) create_offscreen_bitmap->deleteList.cIndices; i++)
 	{
@@ -61,19 +61,19 @@ void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switch
 
 	if (switch_surface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
-		Bitmap_SetSurface(context, NULL, true);
+		Bitmap_SetSurface(context, NULL, TRUE);
 	}
 	else
 	{
 		rdpBitmap* bitmap;
 		bitmap = offscreen_cache_get(cache->offscreen, switch_surface->bitmapId);
-		Bitmap_SetSurface(context, bitmap, false);
+		Bitmap_SetSurface(context, bitmap, FALSE);
 	}
 
 	cache->offscreen->currentSurface = switch_surface->bitmapId;
 }
 
-rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index)
+rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -94,7 +94,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, uint32 index)
 	return bitmap;
 }
 
-void offscreen_cache_put(rdpOffscreenCache* offscreen, uint32 index, rdpBitmap* bitmap)
+void offscreen_cache_put(rdpOffscreenCache* offscreen, UINT32 index, rdpBitmap* bitmap)
 {
 	if (index >= offscreen->maxEntries)
 	{
@@ -106,7 +106,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreen, uint32 index, rdpBitmap* 
 	offscreen->entries[index] = bitmap;
 }
 
-void offscreen_cache_delete(rdpOffscreenCache* offscreen, uint32 index)
+void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index)
 {
 	rdpBitmap* prevBitmap;
 
@@ -169,7 +169,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreen_cache)
 				Bitmap_Free(offscreen_cache->update->context, bitmap);
 		}
 
-		xfree(offscreen_cache->entries);
-		xfree(offscreen_cache);
+		free(offscreen_cache->entries);
+		free(offscreen_cache);
 	}
 }

@@ -43,21 +43,21 @@ struct rdp_tls
 	rdpCertificateStore* certificate_store;
 };
 
-FREERDP_API boolean tls_connect(rdpTls* tls);
-FREERDP_API boolean tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
-FREERDP_API boolean tls_disconnect(rdpTls* tls);
+FREERDP_API BOOL tls_connect(rdpTls* tls);
+FREERDP_API BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
+FREERDP_API BOOL tls_disconnect(rdpTls* tls);
 
-FREERDP_API int tls_read(rdpTls* tls, uint8* data, int length);
-FREERDP_API int tls_write(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_read(rdpTls* tls, BYTE* data, int length);
+FREERDP_API int tls_write(rdpTls* tls, BYTE* data, int length);
 
-FREERDP_API int tls_read_all(rdpTls* tls, uint8* data, int length);
-FREERDP_API int tls_write_all(rdpTls* tls, uint8* data, int length);
+FREERDP_API int tls_read_all(rdpTls* tls, BYTE* data, int length);
+FREERDP_API int tls_write_all(rdpTls* tls, BYTE* data, int length);
 
-FREERDP_API boolean tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
+FREERDP_API BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
 FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint);
 FREERDP_API void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
 
-FREERDP_API boolean tls_print_error(char* func, SSL* connection, int value);
+FREERDP_API BOOL tls_print_error(char* func, SSL* connection, int value);
 
 FREERDP_API rdpTls* tls_new(rdpSettings* settings);
 FREERDP_API void tls_free(rdpTls* tls);

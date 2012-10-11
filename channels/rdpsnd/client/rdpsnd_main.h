@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -26,11 +26,11 @@ typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef boolean (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
-typedef void (*pcPlay) (rdpsndDevicePlugin* device, uint8* data, int size);
+typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
+typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);

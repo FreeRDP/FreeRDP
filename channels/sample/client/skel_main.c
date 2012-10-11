@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2009-2012 Jay Sorg
@@ -129,7 +129,7 @@ static void skel_process_terminate(rdpSvcPlugin* plugin)
 
 	/* put your cleanup here */
 
-	xfree(plugin);
+	free(plugin);
 }
 
 DEFINE_SVC_PLUGIN(skel, "skel",

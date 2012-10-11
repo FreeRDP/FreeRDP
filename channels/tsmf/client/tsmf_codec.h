@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - Codec
  *
  * Copyright 2010-2011 Vic Lee
@@ -22,8 +22,8 @@
 
 #include "tsmf_types.h"
 
-boolean tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s);
-boolean tsmf_codec_check_media_type(STREAM* s);
+BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s);
+BOOL tsmf_codec_check_media_type(STREAM* s);
 
 #endif
 

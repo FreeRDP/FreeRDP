@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Bit Stream
  *
  * Copyright 2011 Vic Lee
@@ -24,7 +24,7 @@
 
 struct _RFX_BITSTREAM
 {
-	uint8* buffer;
+	BYTE* buffer;
 	int nbytes;
 	int byte_pos;
 	int bits_left;
@@ -32,7 +32,7 @@ struct _RFX_BITSTREAM
 typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 
 #define rfx_bitstream_attach(bs, _buffer, _nbytes) do { \
-	bs->buffer = (uint8*) (_buffer); \
+	bs->buffer = (BYTE*) (_buffer); \
 	bs->nbytes = (_nbytes); \
 	bs->byte_pos = 0; \
 	bs->bits_left = 8; } while (0)
@@ -40,7 +40,7 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 #define rfx_bitstream_get_bits(bs, _nbits, _r) do { \
 	int nbits = _nbits; \
 	int b; \
-	uint16 n = 0; \
+	UINT16 n = 0; \
 	while (bs->byte_pos < bs->nbytes && nbits > 0) \
 	{ \
 		b = nbits; \
@@ -60,7 +60,7 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 	_r = n; } while (0)
 
 #define rfx_bitstream_put_bits(bs, _bits, _nbits) do { \
-	uint16 bits = (_bits); \
+	UINT16 bits = (_bits); \
 	int nbits = (_nbits); \
 	int b; \
 	while (bs->byte_pos < bs->nbytes && nbits > 0) \
@@ -68,7 +68,6 @@ typedef struct _RFX_BITSTREAM RFX_BITSTREAM;
 		b = nbits; \
 		if (b > bs->bits_left) \
 			b = bs->bits_left; \
-		bs->buffer[bs->byte_pos] &= ~(((1 << b) - 1) << (bs->bits_left - b)); \
 		bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs->bits_left - b); \
 		bs->bits_left -= b; \
 		nbits -= b; \

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - RLGR
  *
  * Copyright 2011 Vic Lee
@@ -63,7 +63,7 @@
 		nZeroesWritten = buffer_size; \
 	if (nZeroesWritten > 0) \
 	{ \
-		memset(dst, 0, nZeroesWritten * sizeof(sint16)); \
+		memset(dst, 0, nZeroesWritten * sizeof(INT16)); \
 		dst += nZeroesWritten; \
 	} \
 	buffer_size -= (nZeroes); \
@@ -72,7 +72,7 @@
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
 { \
-	uint32 _v = _val; \
+	UINT32 _v = _val; \
 	_nbits = 0; \
 	while (_v) \
 	{ \
@@ -82,7 +82,7 @@
 }
 
 /* Converts from (2 * magnitude - sign) to integer */
-#define GetIntFrom2MagSign(twoMs) (((twoMs) & 1) ? -1 * (sint16)(((twoMs) + 1) >> 1) : (sint16)((twoMs) >> 1))
+#define GetIntFrom2MagSign(twoMs) (((twoMs) & 1) ? -1 * (INT16)(((twoMs) + 1) >> 1) : (INT16)((twoMs) >> 1))
 
 /*
  * Update the passed parameter and clamp it to the range [0, KPMAX]
@@ -121,18 +121,18 @@
 		UpdateParam(*krp, vk, *kr); /* at 1, no change! */ \
 	}
 
-int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* buffer, int buffer_size)
+int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buffer, int buffer_size)
 {
 	int k;
 	int kp;
 	int kr;
 	int krp;
-	uint16 r;
-	sint16* dst;
+	UINT16 r;
+	INT16* dst;
 	RFX_BITSTREAM* bs;
 
 	int vk;
-	uint16 mag16;
+	UINT16 mag16;
 
 	bs = xnew(RFX_BITSTREAM);
 	rfx_bitstream_attach(bs, data, data_size);
@@ -150,7 +150,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 		if (k)
 		{
 			int mag;
-			uint32 sign;
+			UINT32 sign;
 
 			/* RL MODE */
 			while (!rfx_bitstream_eos(bs))
@@ -179,14 +179,14 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 		}
 		else
 		{
-			uint32 mag;
-			uint32 nIdx;
-			uint32 val1;
-			uint32 val2;
+			UINT32 mag;
+			UINT32 nIdx;
+			UINT32 val1;
+			UINT32 val2;
 
 			/* GR (GOLOMB-RICE) MODE */
 			GetGRCode(&krp, &kr, vk, mag16) /* values coded are 2 * magnitude - sign */
-			mag = (uint32) mag16;
+			mag = (UINT32) mag16;
 
 			if (mode == RLGR1)
 			{
@@ -234,7 +234,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 		}
 	}
 
-	xfree(bs);
+	free(bs);
 
 	return (dst - buffer);
 }
@@ -259,7 +259,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
 #define OutputBit(count, bit) \
 {	\
-	uint16 _b = (bit ? 0xFFFF : 0); \
+	UINT16 _b = (bit ? 0xFFFF : 0); \
 	int _c = (count); \
 	for (; _c > 0; _c -= 16) \
 		rfx_bitstream_put_bits(bs, _b, (_c > 16 ? 16 : _c)); \
@@ -271,13 +271,13 @@ int rfx_rlgr_decode(RLGR_MODE mode, const uint8* data, int data_size, sint16* bu
 /* Outputs the Golomb/Rice encoding of a non-negative integer */
 #define CodeGR(krp, val) rfx_rlgr_code_gr(bs, krp, val)
 
-static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, uint32 val)
+static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 {
 	int kr = *krp >> LSGR;
 
 	/* unary part of GR code */
 
-	uint32 vk = (val) >> kr;
+	UINT32 vk = (val) >> kr;
 	OutputBit(vk, 1);
 	OutputBit(1, 0);
 
@@ -298,7 +298,7 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, uint32 val)
 	}
 }
 
-int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* buffer, int buffer_size)
+int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buffer, int buffer_size)
 {
 	int k;
 	int kp;
@@ -371,7 +371,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 
 			if (mode == RLGR1)
 			{
-				uint32 twoMs;
+				UINT32 twoMs;
 
 				/* RLGR1 variant */
 
@@ -394,10 +394,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 			}
 			else /* mode == RLGR3 */
 			{
-				uint32 twoMs1;
-				uint32 twoMs2;
-				uint32 sum2Ms;
-				uint32 nIdx;
+				UINT32 twoMs1;
+				UINT32 twoMs2;
+				UINT32 sum2Ms;
+				UINT32 nIdx;
 
 				/* RLGR3 variant */
 
@@ -431,7 +431,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const sint16* data, int data_size, uint8* bu
 	}
 
 	processed_size = rfx_bitstream_get_processed_bytes(bs);
-	xfree(bs);
+	free(bs);
 
 	return processed_size;
 }

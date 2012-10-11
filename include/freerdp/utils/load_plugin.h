@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Plugin Loading Utils
  *
  * Copyright 2011 Vic Lee
@@ -25,11 +25,11 @@
 
 FREERDP_API void* freerdp_open_library(const char* file);
 FREERDP_API void* freerdp_get_library_symbol(void* library, const char* name);
-FREERDP_API boolean freerdp_close_library(void* library);
+FREERDP_API BOOL freerdp_close_library(void* library);
 FREERDP_API void* freerdp_load_library_symbol(const char* file, const char* name);
 FREERDP_API void* freerdp_load_plugin(const char* name, const char* entry_name);
 FREERDP_API void* freerdp_load_channel_plugin(rdpSettings* settings, const char* name, const char* entry_name);
-FREERDP_API boolean freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr);
+FREERDP_API BOOL freerdp_register_static_plugin(const char* name, const char* entry_name, void* entry_addr);
 FREERDP_API void* freerdp_load_static_plugin(const char* name, const char* entry_name);
 
 #endif /* __LOAD_PLUGIN_UTILS_H */

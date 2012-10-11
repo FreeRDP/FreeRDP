@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -24,10 +24,17 @@ set(${MODULE_PREFIX}_SRCS
 	rail_orders.c
 	rail_orders.h)
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+# rail is always built-in
+
+set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} freerdp)
 else()
 	target_link_libraries(${MODULE_NAME} freerdp-utils)
@@ -36,3 +43,4 @@ endif()
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+

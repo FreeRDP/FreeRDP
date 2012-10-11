@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * pcap File Format Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -22,6 +22,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef _WIN32
@@ -72,7 +73,7 @@ void pcap_read_record(rdpPcap* pcap, pcap_record* record)
 {
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
-	record->data = xmalloc(record->length);
+	record->data = malloc(record->length);
 	fread(record->data, record->length, 1, pcap->fp);
 }
 
@@ -82,7 +83,7 @@ void pcap_write_record(rdpPcap* pcap, pcap_record* record)
 	fwrite(record->data, record->length, 1, pcap->fp);
 }
 
-void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
+void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;
@@ -114,42 +115,42 @@ void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 	record->header.ts_usec = tp.tv_usec;
 }
 
-boolean pcap_has_next_record(rdpPcap* pcap)
+BOOL pcap_has_next_record(rdpPcap* pcap)
 {
 	if (pcap->file_size - (ftell(pcap->fp)) <= 16)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != true)
-		return false;
+	if (pcap_has_next_record(pcap) != TRUE)
+		return FALSE;
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
 
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
 {
 	fread(record->data, record->length, 1, pcap->fp);
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != true)
-		return false;
+	if (pcap_has_next_record(pcap) != TRUE)
+		return FALSE;
 
 	pcap_read_record(pcap, record);
 
-	return true;
+	return TRUE;
 }
 
-rdpPcap* pcap_open(char* name, boolean write)
+rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
 

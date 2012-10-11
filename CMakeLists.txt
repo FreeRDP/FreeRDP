@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -64,10 +64,6 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
-if(NOT BUILD_SHARED_LIBS AND WITH_MONOLITHIC_BUILD)
-	set(WITH_STATIC_PLUGINS ON)
-endif()
-
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)
@@ -99,6 +95,9 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 	if(WITH_SSE2_TARGET)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+	endif()
+	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 	endif()
 endif()
 
@@ -173,12 +172,23 @@ if(NOT WIN32)
 	endif()
 endif()
 
+if(WIN32)
+	set(CMAKE_INSTALL_BINDIR ${CMAKE_INSTALL_PREFIX})
+	set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX})
+	set(CMAKE_INSTALL_FULL_LIBDIR ${CMAKE_INSTALL_PREFIX})
+endif()
+
 # Path to put FreeRDP data
 set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
 set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp")
+if(WIN32)
+	set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}")
+else()
+	set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp")
+endif()
+
 set(FREERDP_CLIENT_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/client")
 set(FREERDP_SERVER_PLUGIN_PATH "${FREERDP_PLUGIN_PATH}/server")
 

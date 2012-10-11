@@ -25,7 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
@@ -42,7 +45,7 @@
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 
 
-uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
+UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
 {
 	char* pch;
 	char* beg;
@@ -51,7 +54,7 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 	char buffer[1024];
 	char* layout = NULL;
 	char* variant = NULL;
-	uint32 keyboardLayoutId = 0;
+	UINT32 keyboardLayoutId = 0;
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
 
@@ -103,8 +106,8 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	if (keyboardLayoutId > 0)
 	{
-		*xkb_layout = xstrdup(layout);
-		*xkb_variant = xstrdup(variant);
+		*xkb_layout = _strdup(layout);
+		*xkb_variant = _strdup(variant);
 		return keyboardLayoutId;
 	}
 
@@ -149,8 +152,8 @@ uint32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	if (keyboardLayoutId > 0)
 	{
-		*xkb_layout = xstrdup(layout);
-		*xkb_variant = xstrdup(variant);
+		*xkb_layout = _strdup(layout);
+		*xkb_variant = _strdup(variant);
 		return keyboardLayoutId;
 	}
 
@@ -194,7 +197,7 @@ char* freerdp_detect_keymap_from_xkb()
 				*end = '\0';
 
 				length = (end - beg);
-				keymap = (char*) xmalloc(length + 1);
+				keymap = (char*) malloc(length + 1);
 				strncpy(keymap, beg, length);
 				keymap[length] = '\0';
 
@@ -208,11 +211,11 @@ char* freerdp_detect_keymap_from_xkb()
 	return keymap;
 }
 
-uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
+UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
-	uint32 vkcode;
-	uint32 keycode;
-	uint32 keycode_to_vkcode[256];
+	UINT32 vkcode;
+	UINT32 keycode;
+	UINT32 keycode_to_vkcode[256];
 
 	memset(keycode_to_vkcode, 0, sizeof(keycode_to_vkcode));
 	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
@@ -236,8 +239,8 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (keyboardLayoutId == 0)
 		{
 			keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
-			xfree(xkb_layout);
-			xfree(xkb_variant);
+			free(xkb_layout);
+			free(xkb_variant);
 		}
 
 		keymap = freerdp_detect_keymap_from_xkb();
@@ -245,7 +248,7 @@ uint32 freerdp_keyboard_init_x11(uint32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (keymap != NULL)
 		{
 			freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
-			xfree(keymap);
+			free(keymap);
 		}
 	}
 #endif

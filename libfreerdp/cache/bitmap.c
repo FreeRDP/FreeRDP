@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Bitmap Cache V2
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -38,7 +38,7 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, (uint8) memblt->cacheId, memblt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
 
 	memblt->bitmap = bitmap;
 	IFCALL(cache->bitmap->MemBlt, context, memblt);
@@ -46,7 +46,7 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
-	uint8 style;
+	BYTE style;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
 	rdpBrush* brush = &mem3blt->brush;
@@ -54,7 +54,7 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, (uint8) mem3blt->cacheId, mem3blt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId, mem3blt->cacheIndex);
 
 	style = brush->style;
 
@@ -144,7 +144,7 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 
 	bitmap->Decompress(context, bitmap,
 			bitmapData->data, bitmap->width, bitmap->height,
-			bitmapData->bpp, bitmapData->length, true,
+			bitmapData->bpp, bitmapData->length, TRUE,
 			bitmapData->codecID);
 
 	bitmap->New(context, bitmap);
@@ -162,14 +162,14 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 	int i;
 	rdpBitmap* bitmap;
 	BITMAP_DATA* bitmap_data;
-	boolean reused = true;
+	BOOL reused = TRUE;
 	rdpCache* cache = context->cache;
 
 	if (cache->bitmap->bitmap == NULL)
 	{
 		cache->bitmap->bitmap = Bitmap_Alloc(context);
-		cache->bitmap->bitmap->ephemeral = true;
-		reused = false;
+		cache->bitmap->bitmap->ephemeral = TRUE;
+		reused = FALSE;
 	}
 
 	bitmap = cache->bitmap->bitmap;
@@ -196,7 +196,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 		if (reused)
 			bitmap->Free(context, bitmap);
 		else
-			reused = true;
+			reused = TRUE;
 
 		bitmap->New(context, bitmap);
 
@@ -204,7 +204,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 	}
 }
 
-rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index)
+rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -229,7 +229,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, uint32 id, uint32 inde
 	return bitmap;
 }
 
-void bitmap_cache_put(rdpBitmapCache* bitmap_cache, uint32 id, uint32 index, rdpBitmap* bitmap)
+void bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 index, rdpBitmap* bitmap)
 {
 	if (id > bitmap_cache->maxCells)
 	{
@@ -280,20 +280,7 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		bitmap_cache->update = ((freerdp*) settings->instance)->update;
 		bitmap_cache->context = bitmap_cache->update->context;
 
-		bitmap_cache->maxCells = 5;
-
-		settings->bitmap_cache = false;
-		settings->bitmapCacheV2NumCells = 5;
-		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[0].persistent = false;
-		settings->bitmapCacheV2CellInfo[1].numEntries = 600;
-		settings->bitmapCacheV2CellInfo[1].persistent = false;
-		settings->bitmapCacheV2CellInfo[2].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[2].persistent = false;
-		settings->bitmapCacheV2CellInfo[3].numEntries = 4096;
-		settings->bitmapCacheV2CellInfo[3].persistent = false;
-		settings->bitmapCacheV2CellInfo[4].numEntries = 2048;
-		settings->bitmapCacheV2CellInfo[4].persistent = false;
+		bitmap_cache->maxCells = settings->bitmapCacheV2NumCells;
 
 		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
@@ -327,13 +314,13 @@ void bitmap_cache_free(rdpBitmapCache* bitmap_cache)
 				}
 			}
 
-			xfree(bitmap_cache->cells[i].entries);
+			free(bitmap_cache->cells[i].entries);
 		}
 
 		if (bitmap_cache->bitmap != NULL)
 			Bitmap_Free(bitmap_cache->context, bitmap_cache->bitmap);
 
-		xfree(bitmap_cache->cells);
-		xfree(bitmap_cache);
+		free(bitmap_cache->cells);
+		free(bitmap_cache);
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -64,7 +64,7 @@ static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, W
 
 	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
 	icon->entry = window_icon->iconInfo;
-	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? true : false;
+	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 
 	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
 			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
@@ -160,7 +160,7 @@ void rail_free(rdpRail* rail)
 	{
 		icon_cache_free(rail->cache);
 		window_list_free(rail->list);
-		xfree(rail->clrconv);
-		xfree(rail);
+		free(rail->clrconv);
+		free(rail);
 	}
 }

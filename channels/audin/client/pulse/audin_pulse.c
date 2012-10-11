@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Input Redirection Virtual Channel - PulseAudio implementation
  *
  * Copyright 2010-2011 Vic Lee
@@ -37,7 +37,7 @@ typedef struct _AudinPulseDevice
 	IAudinDevice iface;
 
 	char device_name[32];
-	uint32 frames_per_packet;
+	UINT32 frames_per_packet;
 	pa_threaded_mainloop* mainloop;
 	pa_context* context;
 	pa_sample_spec sample_spec;
@@ -48,7 +48,7 @@ typedef struct _AudinPulseDevice
 	FREERDP_DSP_CONTEXT* dsp_context;
 
 	int bytes_per_frame;
-	uint8* buffer;
+	BYTE* buffer;
 	int buffer_frames;
 
 	AudinReceive receive;
@@ -80,19 +80,19 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 	}
 }
 
-static boolean audin_pulse_connect(IAudinDevice* device)
+static BOOL audin_pulse_connect(IAudinDevice* device)
 {
 	pa_context_state_t state;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
 	if (!pulse->context)
-		return false;
+		return FALSE;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
 		DEBUG_WARN("pa_context_connect failed (%d)",
 			pa_context_errno(pulse->context));
-		return false;
+		return FALSE;
 	}
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
@@ -100,7 +100,7 @@ static boolean audin_pulse_connect(IAudinDevice* device)
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_threaded_mainloop_start failed (%d)",
 			pa_context_errno(pulse->context));
-		return false;
+		return FALSE;
 	}
 	for (;;)
 	{
@@ -119,12 +119,12 @@ static boolean audin_pulse_connect(IAudinDevice* device)
 	if (state == PA_CONTEXT_READY)
 	{
 		DEBUG_DVC("connected");
-		return true;
+		return TRUE;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return false;
+		return FALSE;
 	}
 }
 
@@ -152,10 +152,10 @@ static void audin_pulse_free(IAudinDevice* device)
 		pulse->mainloop = NULL;
 	}
 	freerdp_dsp_context_free(pulse->dsp_context);
-	xfree(pulse);
+	free(pulse);
 }
 
-static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
+static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* format)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -170,7 +170,7 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -181,7 +181,7 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 8) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -190,14 +190,14 @@ static boolean audin_pulse_format_supported(IAudinDevice* device, audinFormat* f
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 	}
-	return false;
+	return FALSE;
 }
 
-static void audin_pulse_set_format(IAudinDevice* device, audinFormat* format, uint32 FramesPerPacket)
+static void audin_pulse_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	pa_sample_spec sample_spec = { 0 };
@@ -279,11 +279,11 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 {
 	int frames;
 	int cframes;
-	boolean ret;
+	BOOL ret;
 	const void* data;
-	const uint8* src;
+	const BYTE* src;
 	int encoded_size;
-	uint8* encoded_data;
+	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
 
 	pa_stream_peek(stream, &data, &length);
@@ -291,7 +291,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 
 	DEBUG_DVC("length %d frames %d", (int) length, frames);
 
-	src = (const uint8*) data;
+	src = (const BYTE*) data;
 	while (frames > 0)
 	{
 		cframes = pulse->frames_per_packet - pulse->buffer_frames;
@@ -350,7 +350,7 @@ static void audin_pulse_close(IAudinDevice* device)
 	pulse->user_data = NULL;
 	if (pulse->buffer)
 	{
-		xfree(pulse->buffer);
+		free(pulse->buffer);
 		pulse->buffer = NULL;
 		pulse->buffer_frames = 0;
 	}
@@ -387,10 +387,10 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		audin_pulse_stream_state_callback, pulse);
 	pa_stream_set_read_callback(pulse->stream,
 		audin_pulse_stream_request_callback, pulse);
-	buffer_attr.maxlength = (uint32_t) -1;
-	buffer_attr.tlength = (uint32_t) -1;
-	buffer_attr.prebuf = (uint32_t) -1;
-	buffer_attr.minreq = (uint32_t) -1;
+	buffer_attr.maxlength = (UINT32) -1;
+	buffer_attr.tlength = (UINT32) -1;
+	buffer_attr.prebuf = (UINT32) -1;
+	buffer_attr.minreq = (UINT32) -1;
 	/* 500ms latency */
 	buffer_attr.fragsize = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	if (pa_stream_connect_record(pulse->stream,

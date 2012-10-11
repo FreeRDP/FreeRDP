@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,7 +27,6 @@
 #include <winpr/windows.h>
 #include <freerdp/utils/tcp.h>
 #include <freerdp\listener.h>
-//#include <libfreerdp\core\listener.h>
 
 #include "wf_peer.h"
 #include "wf_settings.h"
@@ -57,7 +56,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != true)
+		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
@@ -81,8 +80,8 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
-		
-		if (instance->CheckFileDescriptor(instance) != true)
+
+		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
@@ -106,7 +105,7 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 	wf_settings_read_dword(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("DefaultPort"), &server->port);
 
-	if (instance->Open(instance, NULL, (uint16) server->port))
+	if (instance->Open(instance, NULL, (UINT16) server->port))
 	{
 		server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL);
 		return TRUE;

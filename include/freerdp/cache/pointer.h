@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Pointer Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -33,7 +33,7 @@ typedef struct rdp_pointer_cache rdpPointerCache;
 
 struct rdp_pointer_cache
 {
-	uint32 cacheSize; /* 0 */
+	UINT32 cacheSize; /* 0 */
 	rdpPointer** entries; /* 1 */
 
 	/* internal */
@@ -42,8 +42,8 @@ struct rdp_pointer_cache
 	rdpSettings* settings;
 };
 
-FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index);
-FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer);
+FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
+FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer);
 
 FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
 

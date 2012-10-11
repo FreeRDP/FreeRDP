@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * ASN.1 Encoding Rules (BER/DER common functions)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -28,18 +28,18 @@
 
 void er_read_length(STREAM* s, int* length)
 {
-	uint8 byte;
+	BYTE byte;
 
-	stream_read_uint8(s, byte);
+	stream_read_BYTE(s, byte);
 
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
 
 		if (byte == 1)
-			stream_read_uint8(s, *length);
+			stream_read_BYTE(s, *length);
 		if (byte == 2)
-			stream_read_uint16_be(s, *length);
+			stream_read_UINT16_be(s, *length);
 	}
 	else
 	{
@@ -53,7 +53,7 @@ void er_read_length(STREAM* s, int* length)
  * @param length length
  */
 
-int er_write_length(STREAM* s, int length, boolean flag)
+int er_write_length(STREAM* s, int length, BOOL flag)
 {
 	if (flag)
 		return der_write_length(s, length);
@@ -84,28 +84,28 @@ int er_get_content_length(int length)
  * @return
  */
 
-boolean er_read_universal_tag(STREAM* s, uint8 tag, boolean pc)
+BOOL er_read_universal_tag(STREAM* s, BYTE tag, BOOL pc)
 {
-	uint8 byte;
+	BYTE byte;
 
-	stream_read_uint8(s, byte);
+	stream_read_BYTE(s, byte);
 
 	if (byte != (ER_CLASS_UNIV | ER_PC(pc) | (ER_TAG_MASK & tag)))
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /**
  * Write er Universal tag.
  * @param s stream
  * @param tag er universally-defined tag
- * @param pc primitive (false) or constructed (true)
+ * @param pc primitive (FALSE) or constructed (TRUE)
  */
 
-void er_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
+void er_write_universal_tag(STREAM* s, BYTE tag, BOOL pc)
 {
-	stream_write_uint8(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
+	stream_write_BYTE(s, (ER_CLASS_UNIV | ER_PC(pc)) | (ER_TAG_MASK & tag));
 }
 
 /**
@@ -115,35 +115,35 @@ void er_write_universal_tag(STREAM* s, uint8 tag, boolean pc)
  * @param length length
  */
 
-boolean er_read_application_tag(STREAM* s, uint8 tag, int* length)
+BOOL er_read_application_tag(STREAM* s, BYTE tag, int* length)
 {
-	uint8 byte;
+	BYTE byte;
 
 	if (tag > 30)
 	{
-		stream_read_uint8(s, byte);
+		stream_read_BYTE(s, byte);
 
 		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK))
-			return false;
+			return FALSE;
 
-		stream_read_uint8(s, byte);
+		stream_read_BYTE(s, byte);
 
 		if (byte != tag)
-			return false;
+			return FALSE;
 
 		er_read_length(s, length);
 	}
 	else
 	{
-		stream_read_uint8(s, byte);
+		stream_read_BYTE(s, byte);
 
 		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag)))
-			return false;
+			return FALSE;
 
 		er_read_length(s, length);
 	}
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -153,41 +153,41 @@ boolean er_read_application_tag(STREAM* s, uint8 tag, int* length)
  * @param length length
  */
 
-void er_write_application_tag(STREAM* s, uint8 tag, int length, boolean flag)
+void er_write_application_tag(STREAM* s, BYTE tag, int length, BOOL flag)
 {
 	if (tag > 30)
 	{
-		stream_write_uint8(s, (ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK);
-		stream_write_uint8(s, tag);
+		stream_write_BYTE(s, (ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK);
+		stream_write_BYTE(s, tag);
 		er_write_length(s, length, flag);
 	}
 	else
 	{
-		stream_write_uint8(s, (ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag));
+		stream_write_BYTE(s, (ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag));
 		er_write_length(s, length, flag);
 	}
 }
 
-boolean er_read_contextual_tag(STREAM* s, uint8 tag, int* length, boolean pc)
+BOOL er_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc)
 {
-	uint8 byte;
+	BYTE byte;
 
-	stream_read_uint8(s, byte);
+	stream_read_BYTE(s, byte);
 
 	if (byte != ((ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag)))
 	{
 		stream_rewind(s, 1);
-		return false;
+		return FALSE;
 	}
 
 	er_read_length(s, length);
 
-	return true;
+	return TRUE;
 }
 
-int er_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc, boolean flag)
+int er_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc, BOOL flag)
 {
-	stream_write_uint8(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
+	stream_write_BYTE(s, (ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag));
 	return er_write_length(s, length, flag) + 1;
 }
 
@@ -196,18 +196,18 @@ int er_skip_contextual_tag(int length)
 	return _er_skip_length(length) + 1;
 }
 
-boolean er_read_sequence_tag(STREAM* s, int* length)
+BOOL er_read_sequence_tag(STREAM* s, int* length)
 {
-	uint8 byte;
+	BYTE byte;
 
-	stream_read_uint8(s, byte);
+	stream_read_BYTE(s, byte);
 
 	if (byte != ((ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_SEQUENCE_OF)))
-		return false;
+		return FALSE;
 
 	er_read_length(s, length);
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -216,9 +216,9 @@ boolean er_read_sequence_tag(STREAM* s, int* length)
  * @param length length
  */
 
-int er_write_sequence_tag(STREAM* s, int length, boolean flag)
+int er_write_sequence_tag(STREAM* s, int length, BOOL flag)
 {
-	stream_write_uint8(s, (ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_MASK & ER_TAG_SEQUENCE));
+	stream_write_BYTE(s, (ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_MASK & ER_TAG_SEQUENCE));
 	return er_write_length(s, length, flag) + 1;
 }
 
@@ -232,56 +232,56 @@ int er_skip_sequence_tag(int length)
 	return 1 + _er_skip_length(length);
 }
 
-boolean er_read_enumerated(STREAM* s, uint8* enumerated, uint8 count)
+BOOL er_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count)
 {
 	int length;
 
-	er_read_universal_tag(s, ER_TAG_ENUMERATED, false);
+	er_read_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_read_length(s, &length);
 
 	if (length == 1)
-		stream_read_uint8(s, *enumerated);
+		stream_read_BYTE(s, *enumerated);
 	else
-		return false;
+		return FALSE;
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
-void er_write_enumerated(STREAM* s, uint8 enumerated, uint8 count, boolean flag)
+void er_write_enumerated(STREAM* s, BYTE enumerated, BYTE count, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_ENUMERATED, false);
+	er_write_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_write_length(s, 1, flag);
-	stream_write_uint8(s, enumerated);
+	stream_write_BYTE(s, enumerated);
 }
 
-boolean er_read_bit_string(STREAM* s, int* length, uint8* padding)
+BOOL er_read_bit_string(STREAM* s, int* length, BYTE* padding)
 {
-	er_read_universal_tag(s, ER_TAG_BIT_STRING, false);
+	er_read_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_read_length(s, length);
-	stream_read_uint8(s, *padding);
+	stream_read_BYTE(s, *padding);
 
-	return true;
+	return TRUE;
 }
 
-boolean er_write_bit_string_tag(STREAM* s, uint32 length, uint8 padding, boolean flag)
+BOOL er_write_bit_string_tag(STREAM* s, UINT32 length, BYTE padding, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_BIT_STRING, false);
+	er_write_universal_tag(s, ER_TAG_BIT_STRING, FALSE);
 	er_write_length(s, length, flag);
-	stream_write_uint8(s, padding);
-	return true;
+	stream_write_BYTE(s, padding);
+	return TRUE;
 }
 
-boolean er_read_octet_string(STREAM* s, int* length)
+BOOL er_read_octet_string(STREAM* s, int* length)
 {
-	if(!er_read_universal_tag(s, ER_TAG_OCTET_STRING, false))
-		return false;
+	if(!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
+		return FALSE;
 	er_read_length(s, length);
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -291,16 +291,16 @@ boolean er_read_octet_string(STREAM* s, int* length)
  * @param length string length
  */
 
-void er_write_octet_string(STREAM* s, uint8* oct_str, int length, boolean flag)
+void er_write_octet_string(STREAM* s, BYTE* oct_str, int length, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_OCTET_STRING, false);
+	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	er_write_length(s, length, flag);
 	stream_write(s, oct_str, length);
 }
 
-int er_write_octet_string_tag(STREAM* s, int length, boolean flag)
+int er_write_octet_string_tag(STREAM* s, int length, BOOL flag)
 {
-	er_write_universal_tag(s, ER_TAG_OCTET_STRING, false);
+	er_write_universal_tag(s, ER_TAG_OCTET_STRING, FALSE);
 	er_write_length(s, length, flag);
 	return 1 + _er_skip_length(length);
 }
@@ -316,19 +316,19 @@ int er_skip_octet_string(int length)
  * @param value
  */
 
-boolean er_read_boolean(STREAM* s, boolean* value)
+BOOL er_read_BOOL(STREAM* s, BOOL* value)
 {
 	int length;
-	uint8 v;
+	BYTE v;
 
-	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, false))
-		return false;
+	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
+		return FALSE;
 	er_read_length(s, &length);
 	if (length != 1)
-		return false;
-	stream_read_uint8(s, v);
-	*value = (v ? true : false);
-	return true;
+		return FALSE;
+	stream_read_BYTE(s, v);
+	*value = (v ? TRUE : FALSE);
+	return TRUE;
 }
 
 /**
@@ -337,43 +337,43 @@ boolean er_read_boolean(STREAM* s, boolean* value)
  * @param value
  */
 
-void er_write_boolean(STREAM* s, boolean value)
+void er_write_BOOL(STREAM* s, BOOL value)
 {
-	er_write_universal_tag(s, ER_TAG_BOOLEAN, false);
-	er_write_length(s, 1, false);
-	stream_write_uint8(s, (value == true) ? 0xFF : 0);
+	er_write_universal_tag(s, ER_TAG_BOOLEAN, FALSE);
+	er_write_length(s, 1, FALSE);
+	stream_write_BYTE(s, (value == TRUE) ? 0xFF : 0);
 }
 
-boolean er_read_integer(STREAM* s, uint32* value)
+BOOL er_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
-	er_read_universal_tag(s, ER_TAG_INTEGER, false);
+	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, &length);
 
 	if (value == NULL)
 	{
 		stream_seek(s, length);
-		return true;
+		return TRUE;
 	}
 
 	if (length == 1)
-		stream_read_uint8(s, *value);
+		stream_read_BYTE(s, *value);
 	else if (length == 2)
-		stream_read_uint16_be(s, *value);
+		stream_read_UINT16_be(s, *value);
 	else if (length == 3)
 	{
-		uint8 byte;
-		stream_read_uint8(s, byte);
-		stream_read_uint16_be(s, *value);
+		BYTE byte;
+		stream_read_BYTE(s, byte);
+		stream_read_UINT16_be(s, *value);
 		*value += (byte << 16);
 	}
 	else if (length == 4)
-		stream_read_uint32_be(s, *value);
+		stream_read_UINT32_be(s, *value);
 	else
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -382,33 +382,33 @@ boolean er_read_integer(STREAM* s, uint32* value)
  * @param value
  */
 
-int er_write_integer(STREAM* s, sint32 value)
+int er_write_integer(STREAM* s, INT32 value)
 {
-	er_write_universal_tag(s, ER_TAG_INTEGER, false);
+	er_write_universal_tag(s, ER_TAG_INTEGER, FALSE);
 
 	if (value <= 127 && value >= -128)
 	{
-		er_write_length(s, 1, false);
-		stream_write_uint8(s, value);
+		er_write_length(s, 1, FALSE);
+		stream_write_BYTE(s, value);
 		return 2;
 	}
 	else if (value <= 32767 && value >= -32768)
 	{
-		er_write_length(s, 2, false);
-		stream_write_uint16_be(s, value);
+		er_write_length(s, 2, FALSE);
+		stream_write_UINT16_be(s, value);
 		return 3;
 	}
 	else
 	{
-		er_write_length(s, 4, false);
-		stream_write_uint32_be(s, value);
+		er_write_length(s, 4, FALSE);
+		stream_write_UINT32_be(s, value);
 		return 5;
 	}
 
 	return 0;
 }
 
-int er_skip_integer(sint32 value)
+int er_skip_integer(INT32 value)
 {
 	if (value <= 127 && value >= -128)
 	{
@@ -426,9 +426,9 @@ int er_skip_integer(sint32 value)
 	return 0;
 }
 
-boolean er_read_integer_length(STREAM* s, int* length)
+BOOL er_read_integer_length(STREAM* s, int* length)
 {
-	er_read_universal_tag(s, ER_TAG_INTEGER, false);
+	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, length);
-	return true;
+	return TRUE;
 }

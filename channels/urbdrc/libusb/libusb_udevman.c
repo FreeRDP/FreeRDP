@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -22,20 +22,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "urbdrc_types.h"
 #include "urbdrc_main.h"
+
 #include "libusb_udevice.h"
 
 int libusb_debug;
 
 #define BASIC_STATE_FUNC_DEFINED(_arg, _type) \
-static _type udevman_get_##_arg (IUDEVMAN * idevman) \
+static _type udevman_get_##_arg (IUDEVMAN* idevman) \
 { \
 	UDEVMAN * udevman = (UDEVMAN *) idevman; \
 	return udevman->_arg; \
 } \
-static void udevman_set_##_arg (IUDEVMAN * idevman, _type _t) \
+static void udevman_set_##_arg (IUDEVMAN* idevman, _type _t) \
 { \
 	UDEVMAN * udevman = (UDEVMAN *) idevman; \
 	udevman->_arg = _t; \
@@ -45,8 +45,8 @@ static void udevman_set_##_arg (IUDEVMAN * idevman, _type _t) \
 	_man->iface.get_##_arg = udevman_get_##_arg; \
 	_man->iface.set_##_arg = udevman_set_##_arg
 
-
 typedef struct _UDEVMAN UDEVMAN;
+
 struct _UDEVMAN
 {
 	IUDEVMAN iface;
@@ -55,8 +55,8 @@ struct _UDEVMAN
 	IUDEVICE* head; /* head device in linked list */
 	IUDEVICE* tail; /* tail device in linked list */
 
-	uint32 defUsbDevice;
-	uint16 flags;
+	UINT32 defUsbDevice;
+	UINT16 flags;
 	int device_num;
 	int sem_timeout;
 
@@ -65,17 +65,13 @@ struct _UDEVMAN
 };
 typedef UDEVMAN * PUDEVMAN;  
 
-
-
-static void
-udevman_rewind(IUDEVMAN * idevman)
+static void udevman_rewind(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman; 
 	udevman->idev = udevman->head;
 }
 
-static int
-udevman_has_next(IUDEVMAN * idevman)
+static int udevman_has_next(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	if (udevman->idev == NULL)
@@ -84,10 +80,9 @@ udevman_has_next(IUDEVMAN * idevman)
 		return 1;
 }
 
-static IUDEVICE*
-udevman_get_next(IUDEVMAN * idevman)
+static IUDEVICE* udevman_get_next(IUDEVMAN* idevman)
 {
-	UDEVMAN * udevman = (UDEVMAN *) idevman;
+	UDEVMAN * udevman = (UDEVMAN*) idevman;
 	IUDEVICE* pdev;
 
 	pdev = udevman->idev;
@@ -96,9 +91,7 @@ udevman_get_next(IUDEVMAN * idevman)
 	return pdev;
 }
 
-
-static IUDEVICE*
-udevman_get_udevice_by_addr(IUDEVMAN * idevman, int bus_number, int dev_number)
+static IUDEVICE* udevman_get_udevice_by_addr(IUDEVMAN* idevman, int bus_number, int dev_number)
 {
 	IUDEVICE * pdev;
 
@@ -120,13 +113,10 @@ udevman_get_udevice_by_addr(IUDEVMAN * idevman, int bus_number, int dev_number)
 	return NULL;
 }
 
-
-
-static int
-udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_number, 
+static int udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_number,
 	int UsbDevice, 
-	uint16 idVendor, 
-	uint16 idProduct, 
+	UINT16 idVendor, 
+	UINT16 idProduct, 
 	int flag)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
@@ -210,8 +200,7 @@ udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_number,
 }
 
 
-static int
-udevman_unregister_udevice(IUDEVMAN * idevman, int bus_number, int dev_number)
+static int udevman_unregister_udevice(IUDEVMAN* idevman, int bus_number, int dev_number)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	UDEVICE * pdev, * dev;
@@ -296,8 +285,7 @@ udevman_unregister_udevice(IUDEVMAN * idevman, int bus_number, int dev_number)
 	return 0;
 }
 
-static void
-udevman_parse_device_addr (char *str, int *id1, int *id2, char sign)
+static void udevman_parse_device_addr (char *str, int *id1, int *id2, char sign)
 {
 	char  s1[8], *s2; 
 	memset(s1, 0, sizeof(s1));
@@ -309,8 +297,7 @@ udevman_parse_device_addr (char *str, int *id1, int *id2, char sign)
 	*id2 = atoi(s2);
 }
 
-static void
-udevman_parse_device_pid_vid (char *str, int *id1, int *id2, char sign)
+static void udevman_parse_device_pid_vid (char *str, int *id1, int *id2, char sign)
 {
 	char  s1[8], *s2; 
 	memset(s1, 0, sizeof(s1));
@@ -322,9 +309,7 @@ udevman_parse_device_pid_vid (char *str, int *id1, int *id2, char sign)
 	*id2 = (int) strtol(s2, NULL, 16);
 }
 
-
-static int 
-udevman_check_device_exist_by_id(IUDEVMAN * idevman, uint16 idVendor, uint16 idProduct)
+static int udevman_check_device_exist_by_id(IUDEVMAN* idevman, UINT16 idVendor, UINT16 idProduct)
 {
 	if (libusb_open_device_with_vid_pid (NULL, idVendor, idProduct)) 
 		return 1;
@@ -332,17 +317,13 @@ udevman_check_device_exist_by_id(IUDEVMAN * idevman, uint16 idVendor, uint16 idP
 	return 0;
 }
 
-
-static int
-udevman_is_auto_add(IUDEVMAN * idevman)
+static int udevman_is_auto_add(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	return (udevman->flags & UDEVMAN_FLAG_ADD_BY_AUTO) ? 1 : 0;
 }
 
-
-static IUDEVICE*
-udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN * idevman, uint32 UsbDevice)
+static IUDEVICE* udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN* idevman, UINT32 UsbDevice)
 {
 	UDEVICE * pdev;
 	idevman->loading_lock(idevman);
@@ -360,8 +341,7 @@ udevman_get_udevice_by_UsbDevice_try_again(IUDEVMAN * idevman, uint32 UsbDevice)
 	return NULL;
 }
 
-static IUDEVICE*
-udevman_get_udevice_by_UsbDevice(IUDEVMAN * idevman, uint32 UsbDevice)
+static IUDEVICE* udevman_get_udevice_by_UsbDevice(IUDEVMAN* idevman, UINT32 UsbDevice)
 {
 	UDEVICE * pdev;
 	idevman->loading_lock(idevman);
@@ -389,44 +369,39 @@ udevman_get_udevice_by_UsbDevice(IUDEVMAN * idevman, uint32 UsbDevice)
 }
 
 
-static void
-udevman_loading_lock(IUDEVMAN * idevman)
+static void udevman_loading_lock(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	pthread_mutex_lock(&udevman->devman_loading);
 }
 
-static void
-udevman_loading_unlock(IUDEVMAN * idevman)
+static void udevman_loading_unlock(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	pthread_mutex_unlock(&udevman->devman_loading);
 }
 
 
-static void
-udevman_wait_urb(IUDEVMAN * idevman)
+static void udevman_wait_urb(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	sem_wait(&udevman->sem_urb_lock);
 }
 
 
-static void
-udevman_push_urb(IUDEVMAN * idevman)
+static void udevman_push_urb(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	sem_post(&udevman->sem_urb_lock);
 }
 
 
-BASIC_STATE_FUNC_DEFINED(defUsbDevice, uint32)
+BASIC_STATE_FUNC_DEFINED(defUsbDevice, UINT32)
 BASIC_STATE_FUNC_DEFINED(device_num, int)
 BASIC_STATE_FUNC_DEFINED(sem_timeout, int)
 
 
-static void
-udevman_free(IUDEVMAN* idevman)
+static void udevman_free(IUDEVMAN* idevman)
 {
 	UDEVMAN * udevman = (UDEVMAN *) idevman;
 	pthread_mutex_destroy(&udevman->devman_loading);
@@ -440,8 +415,7 @@ udevman_free(IUDEVMAN* idevman)
 }
 
 
-static void
-udevman_load_interface(UDEVMAN * udevman)
+static void udevman_load_interface(UDEVMAN * udevman)
 {
 	/* standard */
 	udevman->iface.free = udevman_free;
@@ -474,7 +448,7 @@ int FreeRDPUDEVMANEntry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	UDEVMAN* udevman;
 	RDP_PLUGIN_DATA * plugin_data = pEntryPoints->plugin_data;
-	uint32   UsbDevice = BASE_USBDEVICE_NUM;
+	UINT32   UsbDevice = BASE_USBDEVICE_NUM;
 	char * token;
 	char * message = "id";
 	char hardware_id[16];
@@ -537,8 +511,8 @@ int FreeRDPUDEVMANEntry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 				0, 
 				0, 
 				UsbDevice, 
-				(uint16) idVendor, 
-				(uint16) idProduct, 
+				(UINT16) idVendor, 
+				(UINT16) idProduct, 
 				UDEVMAN_FLAG_ADD_BY_VID_PID);
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)

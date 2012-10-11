@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Static Virtual Channel Interface
  *
  * Copyright 2009-2011 Jay Sorg
@@ -60,7 +60,7 @@ FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
 #define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#ifdef WITH_STATIC_PLUGINS
+#ifdef STATIC_CHANNELS
 #define DEFINE_SVC_PLUGIN_ENTRY(_prefix) int _prefix##_entry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 #define DEFINE_DEV_PLUGIN_ENTRY(_prefix) int _prefix##_entry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 #define REGISTER_SVC_PLUGIN_ENTRY(_prefix)  freerdp_register_static_plugin(#_prefix, "VirtualChannelEntry", _prefix##_entry) 

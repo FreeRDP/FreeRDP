@@ -23,7 +23,11 @@ set(${MODULE_PREFIX}_SRCS
 	registry_reg.h
 	registry.c)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MSVC AND (NOT MONOLITHIC_BUILD))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
+if(MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -31,7 +35,7 @@ endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 
 else()
 	target_link_libraries(${MODULE_NAME} winpr-utils)

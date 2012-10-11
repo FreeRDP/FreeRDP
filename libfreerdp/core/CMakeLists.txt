@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # libfreerdp-core cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -92,7 +92,7 @@ set(${MODULE_PREFIX}_SRCS
 	peer.c
 	peer.h)
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
 else()
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -100,14 +100,14 @@ endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS winpr)
 else()
 	set(${MODULE_PREFIX}_LIBS
 		winpr-utils
-		winpr-sspi)
-	
-	if(NOT WIN32)
+		winpr-sspi
+		winpr-crt)
+	if (NOT WIN32)
 		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-registry)
 	endif()
 endif()
@@ -120,7 +120,7 @@ endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_LIBRARIES})
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}

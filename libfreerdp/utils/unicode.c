@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Unicode Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -54,8 +54,10 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length)
 {
 	*str = malloc((length * 2) + 1);
+	memset(*str, 0, (length * 2) + 1);
 
 	WideCharToMultiByte(CP_UTF8, 0, wstr, length, *str, length, NULL, NULL);
+	(*str)[length] = 0;
 
 	return length;
 }

@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * File System Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Device Redirection Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/client/channels.h>
 
-#include "rdpdr_types.h"
+#include "rdpdr_main.h"
 #include "devman.h"
 
 DEVMAN* devman_new(rdpSvcPlugin* plugin)
@@ -57,7 +58,7 @@ void devman_free(DEVMAN* devman)
 
 	list_free(devman->devices);
 
-	xfree(devman);
+	free(devman);
 }
 
 static void devman_register_device(DEVMAN* devman, DEVICE* device)
@@ -68,15 +69,27 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
-boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
+BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 {
+	char* name;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
-	PDEVICE_SERVICE_ENTRY entry;
+	PDEVICE_SERVICE_ENTRY entry = NULL;
 
-	entry = freerdp_load_plugin((char*) plugin_data->data[0], "DeviceServiceEntry");
+	name = (char*) plugin_data->data[0];
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_find_static_device_service_entry(name);
+
+	if (!entry)
+	{
+		printf("loading device service %s (plugin)\n", name);
+		entry = freerdp_load_plugin(name, "DeviceServiceEntry");
+	}
+	else
+	{
+		printf("loading device service %s (static)\n", name);
+	}
 
 	if (entry == NULL)
-		return false;
+		return FALSE;
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
@@ -84,10 +97,10 @@ boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	entry(&ep);
 
-	return true;
+	return TRUE;
 }
 
-DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)
+DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
 	LIST_ITEM* item;
 	DEVICE* device;

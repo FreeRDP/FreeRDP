@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -34,10 +34,10 @@ void wf_peer_init(freerdp_peer* client);
 void wf_dxgi_encode(freerdp_peer* client, UINT timeout);
 void wf_rfx_encode(freerdp_peer* client);
 
-boolean wf_peer_post_connect(freerdp_peer* client);
-boolean wf_peer_activate(freerdp_peer* client);
+BOOL wf_peer_post_connect(freerdp_peer* client);
+BOOL wf_peer_activate(freerdp_peer* client);
 
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags);
+void wf_peer_synchronize_event(rdpInput* input, UINT32 flags);
 
 void wf_peer_send_changes(freerdp_peer* client);
 

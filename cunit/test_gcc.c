@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * T.124 Generic Conference Control (GCC) Unit Tests
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -48,7 +48,7 @@ int add_gcc_suite(void)
 	return 0;
 }
 
-uint8 gcc_user_data[284] =
+BYTE gcc_user_data[284] =
 	"\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
 	"\x09\x04\x00\x00\xCE\x0E\x00\x00\x45\x00\x4c\x00\x54\x00\x4f\x00"
 	"\x4e\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x32\x00\x00\x00"
@@ -68,7 +68,7 @@ uint8 gcc_user_data[284] =
 	"\x00\x00\x80\x80\x63\x6c\x69\x70\x72\x64\x72\x00\x00\x00\xA0\xC0"
 	"\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
-uint8 gcc_conference_create_request_expected[307] =
+BYTE gcc_conference_create_request_expected[307] =
 	"\x00\x05\x00\x14\x7C\x00\x01\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
 	"\x00\x44\x75\x63\x61\x81\x1c\x01\xc0\xd8\x00\x04\x00\x08\x00\x00"
 	"\x05\x00\x04\x01\xCA\x03\xAA\x09\x04\x00\x00\xCE\x0E\x00\x00\x45"
@@ -102,10 +102,10 @@ void test_gcc_write_conference_create_request(void)
 	s = stream_new(sizeof(gcc_conference_create_request_expected));
 
 	gcc_write_conference_create_request(s, &user_data);
-	ASSERT_STREAM(s, (uint8*) gcc_conference_create_request_expected, sizeof(gcc_conference_create_request_expected));
+	ASSERT_STREAM(s, (BYTE*) gcc_conference_create_request_expected, sizeof(gcc_conference_create_request_expected));
 }
 
-uint8 gcc_client_core_data_expected[216] =
+BYTE gcc_client_core_data_expected[216] =
 	"\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
 	"\x09\x04\x00\x00\xCE\x0E\x00\x00\x45\x00\x4c\x00\x54\x00\x4f\x00"
 	"\x4e\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x32\x00\x00\x00"
@@ -142,10 +142,10 @@ void test_gcc_write_client_core_data(void)
 
 	gcc_write_client_core_data(s, settings);
 
-	ASSERT_STREAM(s, (uint8*) gcc_client_core_data_expected, sizeof(gcc_client_core_data_expected));
+	ASSERT_STREAM(s, (BYTE*) gcc_client_core_data_expected, sizeof(gcc_client_core_data_expected));
 }
 
-uint8 gcc_client_security_data_expected[12] =
+BYTE gcc_client_security_data_expected[12] =
 		"\x02\xC0\x0C\x00\x1B\x00\x00\x00\x00\x00\x00\x00";
 
 void test_gcc_write_client_security_data(void)
@@ -165,10 +165,10 @@ void test_gcc_write_client_security_data(void)
 
 	gcc_write_client_security_data(s, settings);
 
-	ASSERT_STREAM(s, (uint8*) gcc_client_security_data_expected, sizeof(gcc_client_security_data_expected));
+	ASSERT_STREAM(s, (BYTE*) gcc_client_security_data_expected, sizeof(gcc_client_security_data_expected));
 }
 
-uint8 gcc_client_cluster_data_expected[12] =
+BYTE gcc_client_cluster_data_expected[12] =
 		"\x04\xC0\x0C\x00\x0D\x00\x00\x00\x00\x00\x00\x00";
 
 void test_gcc_write_client_cluster_data(void)
@@ -181,10 +181,10 @@ void test_gcc_write_client_cluster_data(void)
 
 	gcc_write_client_cluster_data(s, settings);
 
-	ASSERT_STREAM(s, (uint8*) gcc_client_cluster_data_expected, sizeof(gcc_client_cluster_data_expected));
+	ASSERT_STREAM(s, (BYTE*) gcc_client_cluster_data_expected, sizeof(gcc_client_cluster_data_expected));
 }
 
-uint8 gcc_client_network_data_expected[44] =
+BYTE gcc_client_network_data_expected[44] =
 		"\x03\xC0\x2C\x00\x03\x00\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00"
 		"\x00\x00\x80\x80\x63\x6c\x69\x70\x72\x64\x72\x00\x00\x00\xA0\xC0"
 		"\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
@@ -211,5 +211,5 @@ void test_gcc_write_client_network_data(void)
 
 	gcc_write_client_network_data(s, settings);
 
-	ASSERT_STREAM(s, (uint8*) gcc_client_network_data_expected, sizeof(gcc_client_network_data_expected));
+	ASSERT_STREAM(s, (BYTE*) gcc_client_network_data_expected, sizeof(gcc_client_network_data_expected));
 }

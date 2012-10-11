@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI 16bpp Internal Buffer Routines
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -38,10 +38,10 @@
 
 #include <freerdp/gdi/16bpp.h>
 
-uint16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
+UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 {
-	uint8 r, g, b;
-	uint16 color16;
+	BYTE r, g, b;
+	UINT16 color16;
 
 	GetBGR32(r, g, b, color);
 
@@ -74,11 +74,11 @@ uint16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
 	int x, y;
-	uint16 *dstp;
+	UINT16 *dstp;
 	int nXDest, nYDest;
 	int nWidth, nHeight;
 
-	uint16 color16;
+	UINT16 color16;
 	
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 	
@@ -89,7 +89,7 @@ int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 
 	for (y = 0; y < nHeight; y++)
 	{
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -108,7 +108,7 @@ int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 static int BitBlt_BLACKNESS_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int y;
-	uint8* dstp;
+	BYTE* dstp;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -124,7 +124,7 @@ static int BitBlt_BLACKNESS_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_WHITENESS_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int y;
-	uint8* dstp;
+	BYTE* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
@@ -140,8 +140,8 @@ static int BitBlt_WHITENESS_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_SRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int y;
-	uint8* srcp;
-	uint8* dstp;
+	BYTE* srcp;
+	BYTE* dstp;
 
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
@@ -201,13 +201,13 @@ static int BitBlt_SRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_NOTSRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -226,11 +226,11 @@ static int BitBlt_NOTSRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 static int BitBlt_DSTINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint16* dstp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -248,13 +248,13 @@ static int BitBlt_DSTINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_SRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -273,13 +273,13 @@ static int BitBlt_SRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_NOTSRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -298,13 +298,13 @@ static int BitBlt_NOTSRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int
 static int BitBlt_SRCINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -323,13 +323,13 @@ static int BitBlt_SRCINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_SRCAND_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -348,13 +348,13 @@ static int BitBlt_SRCAND_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 static int BitBlt_SRCPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 		
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -373,10 +373,10 @@ static int BitBlt_SRCPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {	
 	int x, y;
-	uint8* srcp;
-	uint16* dstp;
-	uint16 src16;
-	uint16 color16;
+	BYTE* srcp;
+	UINT16* dstp;
+	UINT16 src16;
+	UINT16 color16;
 	HGDI_BITMAP hSrcBmp;
 
 	/* D = (S & P) | (~S & D) */
@@ -394,8 +394,8 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint8*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (BYTE*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -415,22 +415,22 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_PSDPxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
-	uint16* patp;
-	uint16 color16;
+	UINT16* srcp;
+	UINT16* dstp;
+	UINT16* patp;
+	UINT16 color16;
 
 	/* D = (S & D) | (~S & P) */
 
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		color16 = gdi_get_color_16bpp(hdcDest, hdcDest->brush->color);
-		patp = (uint16*) &color16;
+		patp = (UINT16*) &color16;
 
 		for (y = 0; y < nHeight; y++)
 		{
-			srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
@@ -447,14 +447,14 @@ static int BitBlt_PSDPxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	{
 		for (y = 0; y < nHeight; y++)
 		{
-			srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
 					srcp++;
 					dstp++;
@@ -469,20 +469,20 @@ static int BitBlt_PSDPxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_SPna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
-	uint16* patp;
+	UINT16* srcp;
+	UINT16* dstp;
+	UINT16* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 				*dstp = *srcp & ~(*patp);
 				srcp++;
 				dstp++;
@@ -496,18 +496,18 @@ static int BitBlt_SPna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 static int BitBlt_DPa_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint16* dstp;
-	uint16* patp;
+	UINT16* dstp;
+	UINT16* patp;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 
 				*dstp = *dstp & *patp;
 				dstp++;
@@ -521,18 +521,18 @@ static int BitBlt_DPa_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 static int BitBlt_PDxn_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint16* dstp;
-	uint16* patp;
+	UINT16* dstp;
+	UINT16* patp;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 				*dstp = *dstp ^ ~(*patp);
 				dstp++;
 			}
@@ -545,13 +545,13 @@ static int BitBlt_PDxn_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 static int BitBlt_DSna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -571,20 +571,20 @@ static int BitBlt_DSna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 static int BitBlt_MERGECOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
-	uint16* patp;
+	UINT16* srcp;
+	UINT16* dstp;
+	UINT16* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 				*dstp = *srcp & *patp;
 				srcp++;
 				dstp++;
@@ -598,13 +598,13 @@ static int BitBlt_MERGECOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_MERGEPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
+	UINT16* srcp;
+	UINT16* dstp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
@@ -623,9 +623,9 @@ static int BitBlt_MERGEPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 static int BitBlt_PATCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint16* dstp;
-	uint16* patp;
-	uint16 color16;
+	UINT16* dstp;
+	UINT16* patp;
+	UINT16 color16;
 
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
@@ -633,7 +633,7 @@ static int BitBlt_PATCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 		for (y = 0; y < nHeight; y++)
 		{
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
@@ -649,13 +649,13 @@ static int BitBlt_PATCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	{
 		for (y = 0; y < nHeight; y++)
 		{
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 					*dstp = *patp;
 					dstp++;
 				}
@@ -669,9 +669,9 @@ static int BitBlt_PATCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 static int BitBlt_PATINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
 	int x, y;
-	uint16* dstp;
-	uint16* patp;
-	uint16 color16;
+	UINT16* dstp;
+	UINT16* patp;
+	UINT16 color16;
 
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
@@ -679,7 +679,7 @@ static int BitBlt_PATINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 
 		for (y = 0; y < nHeight; y++)
 		{
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
@@ -695,13 +695,13 @@ static int BitBlt_PATINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	{
 		for (y = 0; y < nHeight; y++)
 		{
-			dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+			dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (dstp != 0)
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 					*dstp = *patp ^ *dstp;
 					dstp++;
 				}
@@ -715,20 +715,20 @@ static int BitBlt_PATINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 static int BitBlt_PATPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
 	int x, y;
-	uint16* srcp;
-	uint16* dstp;
-	uint16* patp;
+	UINT16* srcp;
+	UINT16* dstp;
+	UINT16* patp;
 	
 	for (y = 0; y < nHeight; y++)
 	{
-		srcp = (uint16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+		dstp = (UINT16*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 		if (dstp != 0)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (uint16*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT16*) gdi_get_brush_pointer(hdcDest, x, y);
 				*dstp = *dstp | (*patp | ~(*srcp));
 				srcp++;
 				dstp++;
@@ -883,102 +883,102 @@ int PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 	return 1;
 }
 
-static INLINE void SetPixel_BLACK_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_BLACK_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = 0 */
 	*pixel = 0;
 }
 
-static INLINE void SetPixel_NOTMERGEPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOTMERGEPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = ~(D | P) */
 	*pixel = ~(*pixel | *pen);
 }
 
-static INLINE void SetPixel_MASKNOTPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MASKNOTPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = D & ~P */
 	*pixel &= ~(*pen);
 }
 
-static INLINE void SetPixel_NOTCOPYPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOTCOPYPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = ~P */
 	*pixel = ~(*pen);
 }
 
-static INLINE void SetPixel_MASKPENNOT_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MASKPENNOT_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = P & ~D */
 	*pixel = *pen & ~*pixel;
 }
 
-static INLINE void SetPixel_NOT_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOT_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = ~D */
 	*pixel = ~(*pixel);
 }
 
-static INLINE void SetPixel_XORPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_XORPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = D ^ P */
 	*pixel = *pixel ^ *pen;
 }
 
-static INLINE void SetPixel_NOTMASKPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOTMASKPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = ~(D & P) */
 	*pixel = ~(*pixel & *pen);
 }
 
-static INLINE void SetPixel_MASKPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MASKPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = D & P */
 	*pixel &= *pen;
 }
 
-static INLINE void SetPixel_NOTXORPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOTXORPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = ~(D ^ P) */
 	*pixel = ~(*pixel ^ *pen);
 }
 
-static INLINE void SetPixel_NOP_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_NOP_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = D */
 }
 
-static INLINE void SetPixel_MERGENOTPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MERGENOTPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = D | ~P */
 	*pixel |= ~(*pen);
 }
 
-static INLINE void SetPixel_COPYPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_COPYPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = P */
 	*pixel = *pen;
 }
 
-static INLINE void SetPixel_MERGEPENNOT_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MERGEPENNOT_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = P | ~D */
 	*pixel = *pen | ~(*pixel);
 }
 
-static INLINE void SetPixel_MERGEPEN_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_MERGEPEN_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = P | D */
 	*pixel |= *pen;
 }
 
-static INLINE void SetPixel_WHITE_16bpp(uint16 *pixel, uint16 *pen)
+static INLINE void SetPixel_WHITE_16bpp(UINT16 *pixel, UINT16 *pen)
 {
 	/* D = 1 */
 	*pixel = 0xFFFF;
 }
 
-#define PIXEL_TYPE		uint16
+#define PIXEL_TYPE		UINT16
 #define GDI_GET_POINTER		gdi_GetPointer_16bpp
 #define GDI_GET_PEN_COLOR	gdi_GetPenColor_16bpp
 

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Memory Pool
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>

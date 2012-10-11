@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Glyph Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -34,15 +34,15 @@ typedef struct rdp_glyph_cache rdpGlyphCache;
 
 struct _GLYPH_CACHE
 {
-	uint32 number;
-	uint32 maxCellSize;
+	UINT32 number;
+	UINT32 maxCellSize;
 	rdpGlyph** entries;
 };
 
 struct _FRAGMENT_CACHE_ENTRY
 {
 	void* fragment;
-	uint32 size;
+	UINT32 size;
 };
 
 struct _FRAGMENT_CACHE
@@ -59,11 +59,11 @@ struct rdp_glyph_cache
 	rdpSettings* settings;
 };
 
-FREERDP_API rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, uint32 id, uint32 index);
-FREERDP_API void glyph_cache_put(rdpGlyphCache* glyph_cache, uint32 id, uint32 index, rdpGlyph* entry);
+FREERDP_API rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index);
+FREERDP_API void glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index, rdpGlyph* entry);
 
-FREERDP_API void* glyph_cache_fragment_get(rdpGlyphCache* glyph, uint32 index, uint32* count);
-FREERDP_API void glyph_cache_fragment_put(rdpGlyphCache* glyph, uint32 index, uint32 count, void* entry);
+FREERDP_API void* glyph_cache_fragment_get(rdpGlyphCache* glyph, UINT32 index, UINT32* count);
+FREERDP_API void glyph_cache_fragment_put(rdpGlyphCache* glyph, UINT32 index, UINT32 count, void* entry);
 
 FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 

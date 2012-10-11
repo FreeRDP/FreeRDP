@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * DirectFB Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -47,8 +47,8 @@ struct df_pointer
 {
 	rdpPointer pointer;
 	IDirectFBSurface* surface;
-	uint32 xhot;
-	uint32 yhot;
+	UINT32 xhot;
+	UINT32 yhot;
 };
 typedef struct df_pointer dfPointer;
 

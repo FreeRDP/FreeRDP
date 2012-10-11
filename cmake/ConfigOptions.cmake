@@ -18,11 +18,13 @@ endif()
 option(BUILD_TESTING "Build unit tests" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	option(WITH_MONOLITHIC_BUILD "Use monolithic build" OFF)
+	option(MONOLITHIC_BUILD "Use monolithic build" OFF)
 endif()
 
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
+
+option(STATIC_CHANNELS "Build channels statically" ON)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 if(WITH_CLIENT AND WITH_CHANNELS)

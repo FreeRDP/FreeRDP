@@ -35,18 +35,25 @@
 #include "wf_mirage.h"
 #include "wf_update.h"
 #include "wf_settings.h"
+#include "wf_rdpsnd.h"
 
 #include "wf_peer.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();
+	context->vcm = WTSCreateVirtualChannelManager(client);
 	wf_info_peer_register(context->info, context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	wf_info_peer_unregister(context->info, context);
+
+	if (context->rdpsnd)
+		rdpsnd_server_context_free(context->rdpsnd);
+
+	WTSDestroyVirtualChannelManager(context->vcm);
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -58,8 +65,9 @@ void wf_peer_init(freerdp_peer* client)
 	freerdp_peer_context_new(client);
 }
 
-boolean wf_peer_post_connect(freerdp_peer* client)
+BOOL wf_peer_post_connect(freerdp_peer* client)
 {
+	int i;
 	HDC hdc;
 	wfInfo* wfi;
 	rdpSettings* settings;
@@ -86,10 +94,21 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 		client->update->DesktopResize(client->update->context);
 	}
 
-	return true;
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].joined)
+		{
+			if (strncmp(client->settings->channels[i].name, "rdpsnd", 6) == 0)
+			{
+				wf_peer_rdpsnd_init(context); /* Audio Output */
+			}
+		}
+	}
+
+	return TRUE;
 }
 
-boolean wf_peer_activate(freerdp_peer* client)
+BOOL wf_peer_activate(freerdp_peer* client)
 {
 	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -97,15 +116,15 @@ boolean wf_peer_activate(freerdp_peer* client)
 	printf("PeerActivate\n");
 
 	wfi = context->info;
-	client->activated = true;
+	client->activated = TRUE;
 	wf_update_peer_activate(wfi, context);
 
 	wfreerdp_server_peer_callback_event(((rdpContext*) context)->peer->pId, WF_SRV_CALLBACK_EVENT_ACTIVATE);
 
-	return true;
+	return TRUE;
 }
 
-boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
+BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
 {
 	printf("PeerLogon\n");
 
@@ -117,10 +136,10 @@ boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, b
 
 
 	wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
-	return true;
+	return TRUE;
 }
 
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
+void wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 
 }
@@ -149,7 +168,7 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	{
 		rcount = 0;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
+		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get peer file descriptor\n");
 			break;
@@ -207,9 +226,9 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_peer_init(client);
 
 	settings = client->settings;
-	settings->rfx_codec = true;
-	settings->ns_codec = false;
-	settings->jpeg_codec = false;
+	settings->rfx_codec = TRUE;
+	settings->ns_codec = FALSE;
+	settings->jpeg_codec = FALSE;
 	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;
@@ -274,7 +293,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 		if (WaitForSingleObject(context->socketEvent, 0) == 0)
 		{
-			if (client->CheckFileDescriptor(client) != true)
+			if (client->CheckFileDescriptor(client) != TRUE)
 			{
 				printf("Failed to check peer file descriptor\n");
 				context->socketClose = TRUE;
@@ -293,6 +312,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			printf("Forcing Disconnect -> ");
 			break;
 		}
+
+		/* FIXME: we should wait on this, instead of calling it every time */
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+			break;
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

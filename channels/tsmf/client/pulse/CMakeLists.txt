@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -26,7 +26,7 @@ include_directories(${PULSEAUDIO_INCLUDE_DIR})
 add_library(tsmf_pulse ${TSMF_PULSE_SRCS})
 set_target_properties(tsmf_pulse PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY} freerdp)
 else()
 	target_link_libraries(tsmf_pulse ${PULSEAUDIO_LIBRARY} freerdp-utils)

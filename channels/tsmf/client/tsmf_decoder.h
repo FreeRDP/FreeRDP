@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - Decoder
  *
  * Copyright 2010-2011 Vic Lee
@@ -36,30 +36,30 @@ typedef struct _ITSMFDecoder ITSMFDecoder;
 struct _ITSMFDecoder
 {
 	/* Set the decoder format. Return true if supported. */
-	boolean (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
+	BOOL (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
 	/* Decode a sample. */
-	boolean (*Decode) (ITSMFDecoder* decoder, const uint8* data, uint32 data_size, uint32 extensions);
+	BOOL (*Decode) (ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions);
 	/* Get the decoded data */
-	uint8* (*GetDecodedData) (ITSMFDecoder* decoder, uint32* size);
+	BYTE* (*GetDecodedData) (ITSMFDecoder* decoder, UINT32* size);
 	/* Get the pixel format of decoded video frame */
-	uint32 (*GetDecodedFormat) (ITSMFDecoder* decoder);
+	UINT32 (*GetDecodedFormat) (ITSMFDecoder* decoder);
 	/* Get the width and height of decoded video frame */
-	boolean (*GetDecodedDimension) (ITSMFDecoder* decoder, uint32* width, uint32* height);
+	BOOL (*GetDecodedDimension) (ITSMFDecoder* decoder, UINT32* width, UINT32* height);
 	/* Free the decoder */
 	void (*Free) (ITSMFDecoder * decoder);
 	/* Optional Contol function */
-	void (*Control) (ITSMFDecoder * decoder, ITSMFControlMsg control_msg, uint32 *arg);
+	void (*Control) (ITSMFDecoder * decoder, ITSMFControlMsg control_msg, UINT32 *arg);
 	/* Decode a sample with extended interface. */
-	int (*DecodeEx) (ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
-        			uint64 start_time, uint64 end_time, uint64 duration);
+	int (*DecodeEx) (ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
+        			UINT64 start_time, UINT64 end_time, UINT64 duration);
 	/* Get current play time */
-	uint64 (*GetRunningTime) (ITSMFDecoder * decoder);
+	UINT64 (*GetRunningTime) (ITSMFDecoder * decoder);
 	/* Update Gstreamer Rendering Area */
 	void (*UpdateRenderingArea) (ITSMFDecoder * decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
 	/* Change Gstreamer Audio Volume */
-	void (*ChangeVolume) (ITSMFDecoder * decoder, uint32 newVolume, uint32 muted);
+	void (*ChangeVolume) (ITSMFDecoder * decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */
-	uint32 (*BufferLevel) (ITSMFDecoder * decoder);
+	UINT32 (*BufferLevel) (ITSMFDecoder * decoder);
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"

@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Windows cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -36,12 +36,10 @@ set(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
-if(WITH_MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-client)
 
-	if(WITH_RDPDR)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rdpdr disk printer)
-	endif()
+if(MONOLITHIC_BUILD)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 		freerdp-core
@@ -55,4 +53,3 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")
-

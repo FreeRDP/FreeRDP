@@ -113,7 +113,7 @@ void wf_update_encode(wfInfo* wfi)
 
 	RFX_RECT rect;
 	long height, width;
-	uint8* pDataBits = NULL;
+	BYTE* pDataBits = NULL;
 	int stride;
 
 	SURFACE_BITS_COMMAND* cmd;
@@ -128,11 +128,12 @@ void wf_update_encode(wfInfo* wfi)
 
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = (uint16) width;
-	rect.height = (uint16) height;
+	rect.width = (UINT16) width;
+	rect.height = (UINT16) height;
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
+	stream_clear(wfi->s);
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 		pDataBits, width, height, stride);
 
@@ -244,7 +245,7 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 				wf_mirror_driver_deactivate(wfi);
 			}
 
-			client->activated = false;
+			client->activated = FALSE;
 			wfi->activePeerCount--;
 
 			printf("Deactivating Peer Updates: %d\n", wfi->activePeerCount);

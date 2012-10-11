@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2009-2011 Jay Sorg
@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <alsa/asoundlib.h>
 
 #include <freerdp/types.h>
@@ -43,11 +45,11 @@ struct rdpsnd_alsa_plugin
 	char* device_name;
 	snd_pcm_t* out_handle;
 	snd_mixer_t* mixer_handle;
-	uint32 source_rate;
-	uint32 actual_rate;
+	UINT32 source_rate;
+	UINT32 actual_rate;
 	snd_pcm_format_t format;
-	uint32 source_channels;
-	uint32 actual_channels;
+	UINT32 source_channels;
+	UINT32 actual_channels;
 	int bytes_per_channel;
 	int wformat;
 	int block_size;
@@ -257,12 +259,12 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 
 	rdpsnd_alsa_close(device);
-	xfree(alsa->device_name);
+	free(alsa->device_name);
 	freerdp_dsp_context_free(alsa->dsp_context);
-	xfree(alsa);
+	free(alsa);
 }
 
-static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -272,7 +274,7 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -282,14 +284,14 @@ static boolean rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFo
 				format->wBitsPerSample == 4 &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 	}
-	return false;
+	return FALSE;
 }
 
-static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	long left;
 	long right;
@@ -319,16 +321,16 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	}
 }
 
-static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
-	uint8* src;
+	BYTE* src;
 	int len;
 	int status;
 	int frames;
 	int rbytes_per_frame;
 	int sbytes_per_frame;
-	uint8* pindex;
-	uint8* end;
+	BYTE* pindex;
+	BYTE* end;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->out_handle == 0)
@@ -434,12 +436,12 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	if (data && strcmp((char*) data->data[0], "alsa") == 0)
 	{
-		alsa->device_name = xstrdup((char*) data->data[1]);
+		alsa->device_name = _strdup((char*) data->data[1]);
 	}
 
 	if (alsa->device_name == NULL)
 	{
-		alsa->device_name = xstrdup("default");
+		alsa->device_name = _strdup("default");
 	}
 
 	alsa->out_handle = 0;

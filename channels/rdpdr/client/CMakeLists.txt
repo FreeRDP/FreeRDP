@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -19,38 +19,30 @@ set(MODULE_NAME "rdpdr")
 set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
 	irp.c
 	irp.h
+	devman.c
+	devman.h
 	rdpdr_main.c
-	rdpdr_main.h)
+	rdpdr_main.h
+	rdpdr_capabilities.c
+	rdpdr_capabilities.h)
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+# rdpdr is always built-in
+
+set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
+if(MONOLITHIC_BUILD)
+	target_link_libraries(${MODULE_NAME} freerdp winpr)
 else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils)
+	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
 endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 
-add_subdirectory(disk)
-add_subdirectory(printer)
-
-if(NOT WIN32)
-	add_subdirectory(parallel)
-	add_subdirectory(serial)
-endif()
-
-if(WITH_PCSC)
-	add_subdirectory(smartcard)
-endif()

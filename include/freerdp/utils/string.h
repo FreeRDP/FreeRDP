@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * String Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -28,7 +28,7 @@ struct rdp_string
 {
 	char* ascii;
 	char* unicode;
-	uint32 length;
+	UINT32 length;
 };
 typedef struct rdp_string rdpString;
 

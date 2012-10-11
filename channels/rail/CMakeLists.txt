@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,5 +17,10 @@
 
 if(WITH_CLIENT_CHANNELS)
 	add_subdirectory(client)
+	if(${MODULE_PREFIX}_CLIENT_STATIC)
+		set(CHANNEL_STATIC_CLIENT_MODULES ${CHANNEL_STATIC_CLIENT_MODULES} ${MODULE_PREFIX} PARENT_SCOPE)
+		set(${MODULE_PREFIX}_CLIENT_NAME ${${MODULE_PREFIX}_CLIENT_NAME} PARENT_SCOPE)
+		set(${MODULE_PREFIX}_CLIENT_ENTRY ${${MODULE_PREFIX}_CLIENT_ENTRY} PARENT_SCOPE)
+	endif()
 endif()
 

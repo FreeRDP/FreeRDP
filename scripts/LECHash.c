@@ -1,7 +1,7 @@
 #include<stdio.h>
-typedef unsigned short uint16;
+typedef unsigned short UINT16;
 
-static uint16 HuffCodeLEC[] = {
+static UINT16 HuffCodeLEC[] = {
         0x0004, 0x0024, 0x0014, 0x0011, 0x0051, 0x0031, 0x0071, 0x0009, 0x0049, 0x0029, 0x0069, 0x0015, 0x0095, 
 0x0055, 0x00d5, 0x0035, 0x00b5, 0x0075, 0x001d, 0x00f5, 0x011d, 0x009d, 0x019d, 0x005d, 0x000d, 0x008d, 0x015d, 
 0x00dd, 0x01dd, 0x003d, 0x013d, 0x00bd, 0x004d, 0x01bd, 0x007d, 0x006b, 0x017d, 0x00fd, 0x01fd, 0x0003, 0x0103, 
@@ -24,20 +24,20 @@ static uint16 HuffCodeLEC[] = {
 0x002c, 0x001c, 0x0000, 0x003c, 0x0002, 0x0022, 0x0010, 0x0012, 0x0008, 0x0032, 0x000a, 0x002a, 0x001a, 0x003a, 
 0x0006, 0x0026, 0x0016, 0x0036, 0x000e, 0x002e, 0x001e, 0x003e, 0x0001, 0x00ed, 0x0018, 0x0021, 0x0025, 0x0065 };
 
-uint16 HashTable[512] = { [0 ... 511] = 0xffff };
+UINT16 HashTable[512] = { [0 ... 511] = 0xffff };
 
-static uint16 tab[8] = {511, 0, 508, 448, 494, 347, 486, 482};
+static UINT16 tab[8] = {511, 0, 508, 448, 494, 347, 486, 482};
 
-uint16 hash(uint16 key)
+UINT16 hash(UINT16 key)
 {
-        uint16 h;
+        UINT16 h;
         h = (key & 0x1ff) ^ (key  >> 9) ^ (key >> 4) ^ (key >> 7);
         return h;
 }
 
-uint16 minihash(uint16 key)
+UINT16 minihash(UINT16 key)
 {
-        uint16 h;
+        UINT16 h;
         h = ((((key >> 8) ^ (key & 0xff)) >> 2) & 0xf);
         if(key >> 9)
                 h = ~h;
@@ -47,7 +47,7 @@ uint16 minihash(uint16 key)
 void buildhashtable(void)
 {
         int i,j;
-        uint16 h;
+        UINT16 h;
         for(i=0;i<293;i++)
         {
                 h=hash(HuffCodeLEC[i]);
@@ -64,9 +64,9 @@ void buildhashtable(void)
         }
 }
 
-uint16 getvalue(uint16 huff)
+UINT16 getvalue(UINT16 huff)
 {
-        uint16 h = HashTable[hash(huff)];
+        UINT16 h = HashTable[hash(huff)];
         if((h ^ huff) >> 9)
                 return h & 0x1ff;
         else
@@ -77,7 +77,7 @@ main()
 {
         int i;
         buildhashtable();
-        printf("static uint16 HuffIndexLEC[512] = {\n");
+        printf("static UINT16 HuffIndexLEC[512] = {\n");
         for(i=0;i<512;i++)
         {
                 if(i == 511)

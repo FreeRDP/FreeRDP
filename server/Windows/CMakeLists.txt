@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Windows Server cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_rdpsnd.c
+	wf_rdpsnd.h
 	wf_settings.c
 	wf_settings.h
 	wf_info.c
@@ -51,7 +53,10 @@ if(WITH_WIN8)
 	set(${MODULE_PREFIX}_LIBS d3d11 dxgi dxguid)
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
+
+if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
 

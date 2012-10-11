@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Clipboard Virtual Channel
  *
  * Copyright 2009-2011 Jay Sorg
@@ -25,12 +25,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_constants.h"
 #include "cliprdr_main.h"
@@ -52,13 +55,13 @@ static const char* const CB_MSG_TYPE_STRINGS[] =
 	"CB_UNLOCK_CLIPDATA"
 };
 
-STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen)
+STREAM* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
 	STREAM* s;
 
 	s = stream_new(dataLen + 8);
-	stream_write_uint16(s, msgType);
-	stream_write_uint16(s, msgFlags);
+	stream_write_UINT16(s, msgType);
+	stream_write_UINT16(s, msgFlags);
 	/* Write actual length after the entire packet has been constructed. */
 	stream_seek(s, 4);
 
@@ -68,12 +71,12 @@ STREAM* cliprdr_packet_new(uint16 msgType, uint16 msgFlags, uint32 dataLen)
 void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* s)
 {
 	int pos;
-	uint32 dataLen;
+	UINT32 dataLen;
 
 	pos = stream_get_pos(s);
 	dataLen = pos - 8;
 	stream_set_pos(s, 4);
-	stream_write_uint32(s, dataLen);
+	stream_write_UINT32(s, dataLen);
 	stream_set_pos(s, pos);
 
 	svc_plugin_send((rdpSvcPlugin*) cliprdr, s);
@@ -84,7 +87,7 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 	DEBUG_CLIPRDR("connecting");
 }
 
-void cliprdr_print_general_capability_flags(uint32 flags)
+void cliprdr_print_general_capability_flags(UINT32 flags)
 {
 	printf("generalFlags (0x%08X) {\n", flags);
 
@@ -102,11 +105,11 @@ void cliprdr_print_general_capability_flags(uint32 flags)
 
 static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s)
 {
-	uint32 version;
-	uint32 generalFlags;
+	UINT32 version;
+	UINT32 generalFlags;
 
-	stream_read_uint32(s, version); /* version (4 bytes) */
-	stream_read_uint32(s, generalFlags); /* generalFlags (4 bytes) */
+	stream_read_UINT32(s, version); /* version (4 bytes) */
+	stream_read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
 
 	DEBUG_CLIPRDR("Version: %d", version);
 
@@ -115,36 +118,36 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s
 #endif
 
 	if (generalFlags & CB_USE_LONG_FORMAT_NAMES)
-		cliprdr->use_long_format_names = true;
+		cliprdr->use_long_format_names = TRUE;
 
 	if (generalFlags & CB_STREAM_FILECLIP_ENABLED)
-		cliprdr->stream_fileclip_enabled = true;
+		cliprdr->stream_fileclip_enabled = TRUE;
 
 	if (generalFlags & CB_FILECLIP_NO_FILE_PATHS)
-		cliprdr->fileclip_no_file_paths = true;
+		cliprdr->fileclip_no_file_paths = TRUE;
 
 	if (generalFlags & CB_CAN_LOCK_CLIPDATA)
-		cliprdr->can_lock_clipdata = true;
+		cliprdr->can_lock_clipdata = TRUE;
 
-	cliprdr->received_caps = true;
+	cliprdr->received_caps = TRUE;
 }
 
-static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, uint16 length, uint16 flags)
+static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, UINT16 length, UINT16 flags)
 {
 	int i;
-	uint16 lengthCapability;
-	uint16 cCapabilitiesSets;
-	uint16 capabilitySetType;
+	UINT16 lengthCapability;
+	UINT16 cCapabilitiesSets;
+	UINT16 capabilitySetType;
 
-	stream_read_uint16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
-	stream_seek_uint16(s); /* pad1 (2 bytes) */
+	stream_read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
+	stream_seek_UINT16(s); /* pad1 (2 bytes) */
 
 	DEBUG_CLIPRDR("cCapabilitiesSets %d", cCapabilitiesSets);
 
 	for (i = 0; i < cCapabilitiesSets; i++)
 	{
-		stream_read_uint16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
-		stream_read_uint16(s, lengthCapability); /* lengthCapability (2 bytes) */
+		stream_read_UINT16(s, capabilitySetType); /* capabilitySetType (2 bytes) */
+		stream_read_UINT16(s, lengthCapability); /* lengthCapability (2 bytes) */
 
 		switch (capabilitySetType)
 		{
@@ -162,7 +165,7 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, uint16 
 static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 {
 	STREAM* s;
-	uint32 flags;
+	UINT32 flags;
 
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
@@ -170,17 +173,17 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 	flags = CB_USE_LONG_FORMAT_NAMES;
 
-	stream_write_uint16(s, 1); /* cCapabilitiesSets */
-	stream_write_uint16(s, 0); /* pad1 */
-	stream_write_uint16(s, CB_CAPSTYPE_GENERAL); /* capabilitySetType */
-	stream_write_uint16(s, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability */
-	stream_write_uint32(s, CB_CAPS_VERSION_2); /* version */
-	stream_write_uint32(s, flags); /* generalFlags */
+	stream_write_UINT16(s, 1); /* cCapabilitiesSets */
+	stream_write_UINT16(s, 0); /* pad1 */
+	stream_write_UINT16(s, CB_CAPSTYPE_GENERAL); /* capabilitySetType */
+	stream_write_UINT16(s, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability */
+	stream_write_UINT32(s, CB_CAPS_VERSION_2); /* version */
+	stream_write_UINT32(s, flags); /* generalFlags */
 
 	cliprdr_packet_send(cliprdr, s);
 }
 
-static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, STREAM* s, uint16 length, uint16 flags)
+static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, STREAM* s, UINT16 length, UINT16 flags)
 {
 	RDP_EVENT* event;
 
@@ -193,14 +196,14 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, STREAM* s, uin
 
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 {
-	uint16 msgType;
-	uint16 msgFlags;
-	uint32 dataLen;
+	UINT16 msgType;
+	UINT16 msgFlags;
+	UINT32 dataLen;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) plugin;
 
-	stream_read_uint16(s, msgType);
-	stream_read_uint16(s, msgFlags);
-	stream_read_uint32(s, dataLen);
+	stream_read_UINT16(s, msgType);
+	stream_read_UINT16(s, msgFlags);
+	stream_read_UINT32(s, dataLen);
 
 	DEBUG_CLIPRDR("msgType: %s (%d), msgFlags: %d dataLen: %d",
 		CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
@@ -265,9 +268,35 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 {
-	xfree(plugin);
+	free(plugin);
 }
 
-DEFINE_SVC_PLUGIN(cliprdr, "cliprdr",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)
+/* cliprdr is always built-in */
+#define VirtualChannelEntry	cliprdr_VirtualChannelEntry
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	cliprdrPlugin* _p;
+
+	_p = (cliprdrPlugin*) malloc(sizeof(cliprdrPlugin));
+	ZeroMemory(_p, sizeof(cliprdrPlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP |
+			CHANNEL_OPTION_COMPRESS_RDP |
+			CHANNEL_OPTION_SHOW_PROTOCOL;
+
+	strcpy(_p->plugin.channel_def.name, "cliprdr");
+
+	_p->plugin.connect_callback = cliprdr_process_connect;
+	_p->plugin.receive_callback = cliprdr_process_receive;
+	_p->plugin.event_callback = cliprdr_process_event;
+	_p->plugin.terminate_callback = cliprdr_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}
+
+

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -125,7 +125,7 @@ static void rdpsnd_audio_free(rdpsndDevicePlugin* device)
 {
 }
 
-static boolean rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -146,11 +146,11 @@ static void rdpsnd_audio_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 {
 }
 
-static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_audio_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 }
 
-static void rdpsnd_audio_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_audio_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
 	rdpsndAudioQPlugin* aq_plugin_p = (rdpsndAudioQPlugin *) device;
 	AudioQueueBufferRef aq_buf_ref;

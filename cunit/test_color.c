@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Color Conversion Unit Tests
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -53,7 +53,7 @@ int add_color_suite(void)
 void test_color_GetRGB32(void)
 {
 	int r, g, b;
-	uint32 rgb32 = 0x00AABBCC;
+	UINT32 rgb32 = 0x00AABBCC;
 	GetRGB32(r, g, b, rgb32);
 
 	CU_ASSERT(r == 0xAA);
@@ -64,7 +64,7 @@ void test_color_GetRGB32(void)
 void test_color_GetBGR32(void)
 {
 	int r, g, b;
-	uint32 bgr32 = 0x00CCBBAA;
+	UINT32 bgr32 = 0x00CCBBAA;
 	GetBGR32(r, g, b, bgr32);
 
 	CU_ASSERT(r == 0xAA);
@@ -83,7 +83,7 @@ void test_color_GetRGB_565(void)
 	*/
 	
 	int r, g, b;
-	uint16 rgb16 = 0xAE7D;
+	UINT16 rgb16 = 0xAE7D;
 	GetRGB_565(r, g, b, rgb16);
 	
 	CU_ASSERT(r == 0x15);
@@ -103,7 +103,7 @@ void test_color_GetRGB16(void)
 	*/
 	
 	int r, g, b;
-	uint16 rgb16 = 0xAE7D;
+	UINT16 rgb16 = 0xAE7D;
 	GetRGB16(r, g, b, rgb16);
 	
 	CU_ASSERT(r == 0xAD);
@@ -122,7 +122,7 @@ void test_color_GetBGR_565(void)
 	*/
 		
 	int r, g, b;
-	uint16 bgr16 = 0xEE75;
+	UINT16 bgr16 = 0xEE75;
 	GetBGR_565(r, g, b, bgr16);
 	
 	CU_ASSERT(r == 0x15);
@@ -142,7 +142,7 @@ void test_color_GetBGR16(void)
 	*/
 		
 	int r, g, b;
-	uint16 bgr16 = 0xEE75;
+	UINT16 bgr16 = 0xEE75;
 	GetBGR16(r, g, b, bgr16);
 	
 	CU_ASSERT(r == 0xAD);

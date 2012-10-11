@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * pcap File Format Unit Tests
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -42,14 +42,14 @@ int add_pcap_suite(void)
 	return 0;
 }
 
-uint8 test_packet_1[16] =
+BYTE test_packet_1[16] =
 	"\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA";
 
-uint8 test_packet_2[32] =
+BYTE test_packet_2[32] =
 	"\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
 	"\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB";
 
-uint8 test_packet_3[64] =
+BYTE test_packet_3[64] =
 	"\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC"
 	"\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC"
 	"\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC"
@@ -58,7 +58,7 @@ uint8 test_packet_3[64] =
 typedef struct
 {
 	void* data;
-	uint32 length;
+	UINT32 length;
 } test_packet;
 
 void test_pcap(void)
@@ -74,7 +74,7 @@ void test_pcap(void)
 	packets[2].data = test_packet_3;
 	packets[2].length = sizeof(test_packet_3);
 
-	pcap = pcap_open("/tmp/test.pcap", true);
+	pcap = pcap_open("/tmp/test.pcap", TRUE);
 	pcap_add_record(pcap, test_packet_1, sizeof(test_packet_1));
 	pcap_flush(pcap);
 	pcap_add_record(pcap, test_packet_2, sizeof(test_packet_2));
@@ -82,7 +82,7 @@ void test_pcap(void)
 	pcap_add_record(pcap, test_packet_3, sizeof(test_packet_3));
 	pcap_close(pcap);
 
-	pcap = pcap_open("/tmp/test.pcap", false);
+	pcap = pcap_open("/tmp/test.pcap", FALSE);
 
 	int i = 0;
 	while (pcap_has_next_record(pcap))

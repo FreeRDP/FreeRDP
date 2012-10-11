@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Glyph Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -111,7 +111,7 @@ void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 		Pointer_Set(context, pointer);
 }
 
-rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
 	rdpPointer* pointer;
 
@@ -126,7 +126,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer)
+void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer)
 {
 	rdpPointer* prevPointer;
 
@@ -187,7 +187,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 				Pointer_Free(pointer_cache->update->context, pointer);
 		}
 
-		xfree(pointer_cache->entries);
-		xfree(pointer_cache);
+		free(pointer_cache->entries);
+		free(pointer_cache);
 	}
 }

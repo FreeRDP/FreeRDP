@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script for gstreamer plugin
 #
 # (C) Copyright 2012 Hewlett-Packard Development Company, L.P.
@@ -27,7 +27,7 @@ include_directories(${GSTREAMER_INCLUDE_DIRS})
 add_library(tsmf_gstreamer ${TSMF_GSTREAMER_SRCS})
 set_target_properties(tsmf_gstreamer PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	target_link_libraries(tsmf_gstreamer freerdp)
 else()
 	target_link_libraries(tsmf_gstreamer freerdp-utils)

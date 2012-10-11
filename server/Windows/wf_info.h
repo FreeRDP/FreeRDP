@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
@@ -39,6 +39,6 @@ void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
 void wf_info_invalidate_full_screen(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
-void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits, int* pitch);
+void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch);
 
 #endif /* WF_INFO_H */

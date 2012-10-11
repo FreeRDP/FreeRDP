@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Dynamic Virtual Channel Manager
  *
  * Copyright 2010-2011 Vic Lee
@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include <freerdp/utils/memory.h>
@@ -61,7 +62,7 @@ struct _DVCMAN_LISTENER
 
 	DVCMAN* dvcman;
 	char* channel_name;
-	uint32 flags;
+	UINT32 flags;
 	IWTSListenerCallback* listener_callback;
 };
 
@@ -81,7 +82,7 @@ struct _DVCMAN_CHANNEL
 
 	DVCMAN* dvcman;
 	DVCMAN_CHANNEL* next;
-	uint32 channel_id;
+	UINT32 channel_id;
 	IWTSVirtualChannelCallback* channel_callback;
 
 	STREAM* dvc_data;
@@ -96,7 +97,7 @@ static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBa
 }
 
 static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
-	const char* pszChannelName, uint32 ulFlags,
+	const char* pszChannelName, UINT32 ulFlags,
 	IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
@@ -108,7 +109,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		listener = xnew(DVCMAN_LISTENER);
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->dvcman = dvcman;
-		listener->channel_name = xstrdup(pszChannelName);
+		listener->channel_name = _strdup(pszChannelName);
 		listener->flags = ulFlags;
 		listener->listener_callback = pListenerCallback;
 
@@ -185,12 +186,12 @@ RDP_PLUGIN_DATA* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->plugin_data;
 }
 
-uint32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
+UINT32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
 {
 	return ((DVCMAN_CHANNEL*)channel)->channel_id;
 }
 
-IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId)
+IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {
 	LIST_ITEM* curr;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
@@ -240,7 +241,7 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 			pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 		}
 		
-		data = (RDP_PLUGIN_DATA*)(((uint8*) data) + data->size);
+		data = (RDP_PLUGIN_DATA*)(((BYTE*) data) + data->size);
 	}
 
 	return 0;
@@ -251,7 +252,7 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 	if (channel->channel_callback)
 		channel->channel_callback->OnClose(channel->channel_callback);
 
-	xfree(channel);
+	free(channel);
 }
 
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
@@ -270,8 +271,8 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
 		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
-		xfree(listener->channel_name);
-		xfree(listener);
+		free(listener->channel_name);
+		free(listener);
 	}
 
 	for (i = 0; i < dvcman->num_plugins; i++)
@@ -282,7 +283,7 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 			pPlugin->Terminated(pPlugin);
 	}
 
-	xfree(dvcman);
+	free(dvcman);
 }
 
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
@@ -302,7 +303,7 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 	return 0;
 }
 
-static int dvcman_write_channel(IWTSVirtualChannel* pChannel, uint32 cbSize, uint8* pBuffer, void* pReserved)
+static int dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYTE* pBuffer, void* pReserved)
 {
 	int status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
@@ -329,7 +330,7 @@ static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 	return 1;
 }
 
-int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, const char* ChannelName)
+int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName)
 {
 	int i;
 	int bAccept;
@@ -377,7 +378,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 Channel
 }
 
 
-int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId)
+int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannel* ichannel;
@@ -403,7 +404,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelI
 	return 0;
 }
 
-int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint32 length)
+int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length)
 {
 	DVCMAN_CHANNEL* channel;
 
@@ -423,7 +424,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, ui
 	return 0;
 }
 
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint8* data, uint32 data_size)
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size)
 {
 	int error = 0;
 	DVCMAN_CHANNEL* channel;
@@ -439,7 +440,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 C
 	if (channel->dvc_data)
 	{
 		/* Fragmented data */
-		if (stream_get_length(channel->dvc_data) + data_size > (uint32) stream_get_size(channel->dvc_data))
+		if (stream_get_length(channel->dvc_data) + data_size > (UINT32) stream_get_size(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
 			stream_free(channel->dvc_data);

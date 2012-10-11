@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#   FreeRDP: A Remote Desktop Protocol client.
+#   FreeRDP: A Remote Desktop Protocol Implementation
 #   XKB database conversion script
 
 #   Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>

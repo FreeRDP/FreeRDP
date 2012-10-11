@@ -336,7 +336,7 @@ BOOL wf_info_have_invalid_region(wfInfo* wfi)
 	return IsRectEmpty(&wfi->invalid);
 }
 
-void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits, int* pitch)
+void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch)
 {
 	*width = (wfi->invalid.right - wfi->invalid.left);
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
@@ -353,7 +353,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, uint8** pBits
 		*height += 1;
 
 		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
-		*pBits = ((uint8*) (changes->Userbuffer)) + offset;
+		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
 		*pitch = wfi->width * 4;
 	}
 #endif

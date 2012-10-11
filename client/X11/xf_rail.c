@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 RAIL
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -34,9 +34,9 @@
 
 void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == false)
+	if (xfi->remote_app == FALSE)
 	{
-		xfi->remote_app = true;
+		xfi->remote_app = TRUE;
 		xfi->drawable = DefaultRootWindow(xfi->display);
 		xf_DestroyWindow(xfi, xfi->window);
 		xfi->window = NULL;
@@ -45,23 +45,23 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == true)
+	if (xfi->remote_app == TRUE)
 	{
-		xfi->remote_app = false;
+		xfi->remote_app = FALSE;
 		xf_create_window(xfi);
 	}
 }
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32 uright, uint32 ubottom)
+void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
-	boolean intersect;
-	uint32 iwidth, iheight;
-	sint32 ileft, itop;
-	uint32 iright, ibottom;
-	sint32 wleft, wtop; 
-	uint32 wright, wbottom;
+	BOOL intersect;
+	UINT32 iwidth, iheight;
+	INT32 ileft, itop;
+	UINT32 iright, ibottom;
+	INT32 wleft, wtop; 
+	UINT32 wright, wbottom;
 
 	window_list_rewind(rail->list);
 
@@ -90,7 +90,7 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, sint32 uleft, sint32 utop, uint32
 		iwidth = iright - ileft + 1;
 		iheight = ibottom - itop + 1;
 
-		intersect = ((iright > ileft) && (ibottom > itop)) ? true : false;
+		intersect = ((iright > ileft) && (ibottom > itop)) ? TRUE : FALSE;
 
 		if (intersect)
 		{
@@ -162,7 +162,7 @@ static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 		window->windowWidth, window->windowHeight);
 }
 
-static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, uint8 state)
+static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
 	xfInfo* xfi;
 	xfWindow* xfw;
@@ -249,7 +249,7 @@ static void xf_on_free_rail_client_event(RDP_EVENT* event)
 	}
 }
 
-static void xf_send_rail_client_event(rdpChannels* channels, uint16 event_type, void* param)
+static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
 {
 	RDP_EVENT* out_event = NULL;
 	void * payload = NULL;
@@ -263,7 +263,7 @@ static void xf_send_rail_client_event(rdpChannels* channels, uint16 event_type, 
 	}
 }
 
-void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
+void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 {
 	rdpRail* rail;
 	rdpChannels* channels;
@@ -284,7 +284,7 @@ void xf_rail_send_activate(xfInfo* xfi, Window xwindow, boolean enabled)
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
 }
 
-void xf_rail_send_client_system_command(xfInfo* xfi, uint32 windowId, uint16 command)
+void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 command)
 {
 	rdpChannels* channels;
 	RAIL_SYSCOMMAND_ORDER syscommand;
@@ -325,8 +325,8 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 	       //Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
 	       //we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
 	       //attempting to adjust the rail window.
-	       uint32 offsetX = 0;
-               uint32 offsetY = 0;
+	       UINT32 offsetX = 0;
+               UINT32 offsetY = 0;
 
                if (window->windowOffsetX < 0)
                        offsetX = offsetX - window->windowOffsetX;
@@ -348,7 +348,7 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 			"  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-			(uint32) xfw->handle, window_move.left, window_move.top, 
+			(UINT32) xfw->handle, window_move.left, window_move.top, 
 			window_move.right, window_move.bottom, xfw->width, xfw->height,
 			window->windowId,
 			window->windowOffsetX, window->windowOffsetY, 
@@ -375,15 +375,15 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	channels = xfi->_context->channels;
 
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-        	(uint32) xfw->handle, 
+        	(UINT32) xfw->handle, 
 		xfw->left, xfw->top, xfw->right, xfw->bottom,
 		xfw->width, xfw->height);
 
 	//Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
 	//we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
 	//attempting to adjust the rail window.
-	uint32 offsetX = 0;
-        uint32 offsetY = 0;
+	UINT32 offsetX = 0;
+        UINT32 offsetY = 0;
 
         if (window->windowOffsetX < 0)
                 offsetX = offsetX - window->windowOffsetX;
@@ -453,7 +453,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP
 	sysparam->taskbarPos.right = 0;
 	sysparam->taskbarPos.bottom = 0;
 
-	sysparam->dragFullWindows = false;
+	sysparam->dragFullWindows = FALSE;
 
 	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
 }
@@ -518,7 +518,7 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels,
 		DEBUG_X11_LMS("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 			"minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
 			minmax->windowId, minmax->maxWidth, minmax->maxHeight,
-			(sint16)minmax->maxPosX, (sint16)minmax->maxPosY,
+			(INT16)minmax->maxPosX, (INT16)minmax->maxPosY,
 			minmax->minTrackWidth, minmax->minTrackHeight,
 			minmax->maxTrackWidth, minmax->maxTrackHeight);
 
@@ -562,7 +562,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 
 		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 			movesize->windowId, movesize->isMoveSizeStart,
-			movetype_names[movesize->moveSizeType], (sint16) movesize->posX, (sint16) movesize->posY);
+			movetype_names[movesize->moveSizeType], (INT16) movesize->posX, (INT16) movesize->posY);
 
 		switch (movesize->moveSizeType)
 		{

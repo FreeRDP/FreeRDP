@@ -33,6 +33,8 @@
 #define HANDLE_TYPE_MUTEX			3
 #define HANDLE_TYPE_SEMAPHORE			4
 #define HANDLE_TYPE_TIMER			5
+#define HANDLE_TYPE_NAMED_PIPE			6
+#define HANDLE_TYPE_ANONYMOUS_PIPE		7
 
 WINPR_API HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object);
 WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);
