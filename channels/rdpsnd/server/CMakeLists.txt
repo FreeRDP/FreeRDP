@@ -28,5 +28,5 @@ else()
 	set(${MODULE_PREFIX}_LIBS freerdp-utils PARENT_SCOPE)
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Server")
+#set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Server")
 

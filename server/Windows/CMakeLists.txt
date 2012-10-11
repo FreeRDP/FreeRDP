@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
+	wf_rdpsnd.c
+	wf_rdpsnd.h
 	wf_settings.c
 	wf_settings.h
 	wf_info.c
@@ -50,6 +52,8 @@ endif()
 if(WITH_WIN8)		
 	set(${MODULE_PREFIX}_LIBS d3d11 dxgi dxguid)
 endif()
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
 
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)

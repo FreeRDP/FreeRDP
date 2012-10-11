@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
@@ -127,7 +129,8 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 
 	if (rdpsnd->context.num_client_formats > 0)
 	{
-		rdpsnd->context.client_formats = xzalloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
+		rdpsnd->context.client_formats = (rdpsndFormat*) malloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
+		ZeroMemory(rdpsnd->context.client_formats, sizeof(rdpsndFormat));
 
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
@@ -290,7 +293,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	
 	if (rdpsnd->out_buffer_size < out_buffer_size)
 	{
-		rdpsnd->out_buffer = realloc(rdpsnd->out_buffer, out_buffer_size);
+		rdpsnd->out_buffer = (BYTE*) realloc(rdpsnd->out_buffer, out_buffer_size);
 		rdpsnd->out_buffer_size = out_buffer_size;
 	}
 

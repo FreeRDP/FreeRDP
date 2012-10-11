@@ -28,6 +28,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/server/rdpsnd.h>
 
 typedef struct wf_info wfInfo;
 typedef struct wf_peer_context wfPeerContext;
@@ -73,6 +74,9 @@ struct wf_peer_context
 	HANDLE socketEvent;
 	HANDLE socketThread;
 	HANDLE socketSemaphore;
+
+	WTSVirtualChannelManager* vcm;
+	rdpsnd_server_context* rdpsnd;
 };
 
 struct wf_server
