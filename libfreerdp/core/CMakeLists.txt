@@ -104,10 +104,12 @@ if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS winpr)
 else()
 	set(${MODULE_PREFIX}_LIBS
-		winpr-registry
 		winpr-utils
 		winpr-sspi
 		winpr-crt)
+	if (NOT WIN32)
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-registry)
+	endif()
 endif()
 
 if(WIN32)
