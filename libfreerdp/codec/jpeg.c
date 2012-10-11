@@ -28,7 +28,6 @@
 #ifdef WITH_JPEG
 
 #define XMD_H
-#define HAVE_BOOLEAN
 
 #include <jpeglib.h>
 
