@@ -34,18 +34,25 @@
 #include "wf_mirage.h"
 #include "wf_update.h"
 #include "wf_settings.h"
+#include "wf_rdpsnd.h"
 
 #include "wf_peer.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();
+	context->vcm = WTSCreateVirtualChannelManager(client);
 	wf_info_peer_register(context->info, context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	wf_info_peer_unregister(context->info, context);
+
+	if (context->rdpsnd)
+		rdpsnd_server_context_free(context->rdpsnd);
+
+	WTSDestroyVirtualChannelManager(context->vcm);
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -59,6 +66,7 @@ void wf_peer_init(freerdp_peer* client)
 
 BOOL wf_peer_post_connect(freerdp_peer* client)
 {
+	int i;
 	HDC hdc;
 	wfInfo* wfi;
 	rdpSettings* settings;
@@ -83,6 +91,17 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 		settings->color_depth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
+	}
+
+	for (i = 0; i < client->settings->num_channels; i++)
+	{
+		if (client->settings->channels[i].joined)
+		{
+			if (strncmp(client->settings->channels[i].name, "rdpsnd", 6) == 0)
+			{
+				wf_peer_rdpsnd_init(context); /* Audio Output */
+			}
+		}
 	}
 
 	return TRUE;
@@ -268,6 +287,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			if (context->socketClose)
 				break;
 		}
+
+		/* FIXME: we should wait on this, instead of calling it every time */
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+			break;
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
