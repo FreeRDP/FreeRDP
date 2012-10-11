@@ -38,6 +38,16 @@
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
+#define REG_QUERY_DWORD_VALUE(_key, _subkey, _type, _value, _size, _result) \
+	_size = sizeof(DWORD); \
+	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*) &_value, &_size) == ERROR_SUCCESS) \
+		_result = _value
+
+#define REG_QUERY_BOOL_VALUE(_key, _subkey, _type, _value, _size, _result) \
+	_size = sizeof(DWORD); \
+	if (RegQueryValueEx(_key, _subkey, NULL, &_type, (BYTE*) &_value, &_size) == ERROR_SUCCESS) \
+		_result = _value ? TRUE : FALSE
+
 void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
 	HKEY hKey;
@@ -48,46 +58,53 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Client"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
-	if (status != ERROR_SUCCESS)
-		return;
+	if (status == ERROR_SUCCESS)
+	{
+		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopWidth"), dwType, dwValue, dwSize, settings->width);
+		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize, settings->height);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("DesktopWidth"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->width = dwValue;
+		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->fullscreen);
+		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize, settings->color_depth);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("DesktopHeight"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->height = dwValue;
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize, settings->kbd_type);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardSubType"), dwType, dwValue, dwSize, settings->kbd_subtype);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardFunctionKeys"), dwType, dwValue, dwSize, settings->kbd_fn_keys);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardLayout"), dwType, dwValue, dwSize, settings->kbd_layout);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("KeyboardType"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->kbd_type = dwValue;
+		REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
+		REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
+		REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("KeyboardSubType"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->kbd_subtype = dwValue;
+		REG_QUERY_BOOL_VALUE(hKey, _T("BitmapCache"), dwType, dwValue, dwSize, settings->bitmap_cache);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("KeyboardFunctionKeys"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->kbd_fn_keys = dwValue;
+		REG_QUERY_BOOL_VALUE(hKey, _T("OffscreenBitmapCache"), dwType, dwValue, dwSize, settings->offscreen_bitmap_cache);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue, dwSize, settings->offscreen_bitmap_cache_size);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue, dwSize, settings->offscreen_bitmap_cache_entries);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("KeyboardLayout"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->kbd_layout = dwValue;
+		REG_QUERY_BOOL_VALUE(hKey, _T("GlyphCache"), dwType, dwValue, dwSize, settings->glyph_cache);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("NlaSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->nla_security = dwValue ? 1 : 0;
+		RegCloseKey(hKey);
+	}
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("TlsSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->tls_security = dwValue ? 1 : 0;
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Client\\BitmapCacheV2"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
-	dwSize = sizeof(DWORD);
-	if (RegQueryValueEx(hKey, _T("RdpSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->rdp_security = dwValue ? 1 : 0;
+	if (status == ERROR_SUCCESS)
+	{
+		REG_QUERY_DWORD_VALUE(hKey, _T("NumCells"), dwType, dwValue, dwSize, settings->bitmapCacheV2NumCells);
 
-	RegCloseKey(hKey);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cell0NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[0].numEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Cell0Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[0].persistent);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cell1NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[1].numEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Cell1Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[1].persistent);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cell2NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[2].numEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Cell2Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[2].persistent);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cell3NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[3].numEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Cell3Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[3].persistent);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cell4NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[4].numEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Cell4Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[4].persistent);
+
+		RegCloseKey(hKey);
+	}
 }
 
 void settings_server_load_hkey_local_machine(rdpSettings* settings)
@@ -103,14 +120,9 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	if (status != ERROR_SUCCESS)
 		return;
 
-	if (RegQueryValueEx(hKey, _T("NlaSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->nla_security = dwValue ? 1 : 0;
-
-	if (RegQueryValueEx(hKey, _T("TlsSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->tls_security = dwValue ? 1 : 0;
-
-	if (RegQueryValueEx(hKey, _T("RdpSecurity"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-		settings->rdp_security = dwValue ? 1 : 0;
+	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
+	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
+	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
 
 	RegCloseKey(hKey);
 }
@@ -220,7 +232,19 @@ rdpSettings* settings_new(void* instance)
 
 		settings->bitmap_cache = TRUE;
 		settings->persistent_bitmap_cache = FALSE;
+
+		settings->bitmapCacheV2NumCells = 5;
 		settings->bitmapCacheV2CellInfo = xzalloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
+		settings->bitmapCacheV2CellInfo[0].persistent = FALSE;
+		settings->bitmapCacheV2CellInfo[1].numEntries = 600;
+		settings->bitmapCacheV2CellInfo[1].persistent = FALSE;
+		settings->bitmapCacheV2CellInfo[2].numEntries = 2048;
+		settings->bitmapCacheV2CellInfo[2].persistent = FALSE;
+		settings->bitmapCacheV2CellInfo[3].numEntries = 4096;
+		settings->bitmapCacheV2CellInfo[3].persistent = FALSE;
+		settings->bitmapCacheV2CellInfo[4].numEntries = 2048;
+		settings->bitmapCacheV2CellInfo[4].persistent = FALSE;
 
 		settings->refresh_rect = TRUE;
 		settings->suppress_output = TRUE;

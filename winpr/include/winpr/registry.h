@@ -31,13 +31,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef ERROR_SUCCESS
-#define ERROR_SUCCESS			0
-#endif
-
-#ifndef ERROR_FILE_NOT_FOUND
-#define ERROR_FILE_NOT_FOUND		2
-#endif
+#include <winpr/error.h>
 
 #define DELETE				0x00010000
 #define READ_CONTROL			0x00020000
