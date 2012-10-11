@@ -149,6 +149,24 @@ typedef enum _CRED_PROTECTION_TYPE
 	CredTrustedProtection = 2
 } CRED_PROTECTION_TYPE, *PCRED_PROTECTION_TYPE;
 
+#ifdef UNICODE
+#define CRED_SESSION_WILDCARD_NAME	CRED_SESSION_WILDCARD_NAME_W
+#define CREDENTIAL_ATTRIBUTE		CREDENTIAL_ATTRIBUTEW
+#define PCREDENTIAL_ATTRIBUTE		PCREDENTIAL_ATTRIBUTEW
+#define CREDENTIAL			CREDENTIALW
+#define PCREDENTIAL			PCREDENTIALW
+#define CREDENTIAL_TARGET_INFORMATION	CREDENTIAL_TARGET_INFORMATIONW
+#define PCREDENTIAL_TARGET_INFORMATION	PCREDENTIAL_TARGET_INFORMATIONW
+#else
+#define CRED_SESSION_WILDCARD_NAME	CRED_SESSION_WILDCARD_NAME_A
+#define CREDENTIAL_ATTRIBUTE		CREDENTIAL_ATTRIBUTEA
+#define PCREDENTIAL_ATTRIBUTE		PCREDENTIAL_ATTRIBUTEA
+#define CREDENTIAL			CREDENTIALA
+#define PCREDENTIAL			PCREDENTIALA
+#define CREDENTIAL_TARGET_INFORMATION	CREDENTIAL_TARGET_INFORMATIONA
+#define PCREDENTIAL_TARGET_INFORMATION	PCREDENTIAL_TARGET_INFORMATIONA
+#endif
+
 WINPR_API BOOL CredWriteW(PCREDENTIALW Credential, DWORD Flags);
 WINPR_API BOOL CredWriteA(PCREDENTIALA Credential, DWORD Flags);
 
@@ -201,6 +219,40 @@ WINPR_API BOOL CredFindBestCredentialA(LPCSTR TargetName, DWORD Type, DWORD Flag
 WINPR_API BOOL CredGetSessionTypes(DWORD MaximumPersistCount, LPDWORD MaximumPersist);
 
 WINPR_API VOID CredFree(PVOID Buffer);
+
+#ifdef UNICODE
+#define CredWrite			CredWriteW
+#define CredRead			CredReadW
+#define CredEnumerate			CredEnumerateW
+#define CredWriteDomainCredentials	CredWriteDomainCredentialsW
+#define CredReadDomainCredentials	CredReadDomainCredentialsW
+#define CredDelete			CredDeleteW
+#define CredRename			CredRenameW
+#define CredGetTargetInfo		CredGetTargetInfoW
+#define CredMarshalCredential		CredMarshalCredentialW
+#define CredUnmarshalCredential		CredUnmarshalCredentialW
+#define CredIsMarshaledCredential	CredIsMarshaledCredentialW
+#define CredProtect			CredProtectW
+#define CredUnprotect			CredUnprotectW
+#define CredIsProtected			CredIsProtectedW
+#define CredFindBestCredential		CredFindBestCredentialW
+#else
+#define CredWrite			CredWriteA
+#define CredRead			CredReadA
+#define CredEnumerate			CredEnumerateA
+#define CredWriteDomainCredentials	CredWriteDomainCredentialsA
+#define CredReadDomainCredentials	CredReadDomainCredentialsA
+#define CredDelete			CredDeleteA
+#define CredRename			CredRenameA
+#define CredGetTargetInfo		CredGetTargetInfoA
+#define CredMarshalCredential		CredMarshalCredentialA
+#define CredUnmarshalCredential		CredUnmarshalCredentialA
+#define CredIsMarshaledCredential	CredIsMarshaledCredentialA
+#define CredProtect			CredProtectA
+#define CredUnprotect			CredUnprotectA
+#define CredIsProtected			CredIsProtectedA
+#define CredFindBestCredential		CredFindBestCredentialA
+#endif
 
 #endif
 
