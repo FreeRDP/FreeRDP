@@ -208,7 +208,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_C
 
 INCLUDE(CTest)
 
-if(BUILD_TESTING)
+if(TEST_BUILD)
 	enable_testing()
 endif()
 

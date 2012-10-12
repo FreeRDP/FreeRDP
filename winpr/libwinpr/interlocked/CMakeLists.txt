@@ -42,6 +42,6 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
 
-if(BUILD_TESTING)
+if(TEST_BUILD)
 	add_subdirectory(test)
 endif()
