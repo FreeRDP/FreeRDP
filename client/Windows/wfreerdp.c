@@ -179,7 +179,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	settings->glyph_cache = FALSE;
+	settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfi->cursor = g_default_cursor;
 

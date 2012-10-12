@@ -351,7 +351,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
-			settings->glyph_cache = FALSE;
+			settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{

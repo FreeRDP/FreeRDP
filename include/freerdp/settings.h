@@ -436,7 +436,8 @@ struct rdp_settings
 	ALIGN64 BOOL persistent_bitmap_cache; /* 330 */
 	ALIGN64 UINT32 bitmapCacheV2NumCells; /* 331 */
 	ALIGN64 BITMAP_CACHE_V2_CELL_INFO* bitmapCacheV2CellInfo; /* 332 */
-	UINT64 paddingQ[344 - 333]; /* 333 */
+	ALIGN64 BOOL allow_cache_waiting_list; /* 333 */
+	UINT64 paddingQ[344 - 334]; /* 334 */
 
 	/* Offscreen Bitmap Cache */
 	ALIGN64 BOOL offscreen_bitmap_cache; /* 344 */
@@ -445,7 +446,7 @@ struct rdp_settings
 	UINT64 paddingR[352 - 347]; /* 347 */
 
 	/* Glyph Cache */
-	ALIGN64 BOOL glyph_cache; /* 352 */
+	ALIGN64 void* unused352; /* 352 */
 	ALIGN64 UINT32 glyphSupportLevel; /* 353 */
 	ALIGN64 GLYPH_CACHE_DEFINITION* glyphCache; /* 354 */
 	ALIGN64 GLYPH_CACHE_DEFINITION* fragCache; /* 355 */

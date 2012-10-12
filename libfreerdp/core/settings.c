@@ -81,8 +81,6 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue, dwSize, settings->offscreen_bitmap_cache_size);
 		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue, dwSize, settings->offscreen_bitmap_cache_entries);
 
-		REG_QUERY_BOOL_VALUE(hKey, _T("GlyphCache"), dwType, dwValue, dwSize, settings->glyph_cache);
-
 		RegCloseKey(hKey);
 	}
 
@@ -102,6 +100,52 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		REG_QUERY_BOOL_VALUE(hKey, _T("Cell3Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[3].persistent);
 		REG_QUERY_DWORD_VALUE(hKey, _T("Cell4NumEntries"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[4].numEntries);
 		REG_QUERY_BOOL_VALUE(hKey, _T("Cell4Persistent"), dwType, dwValue, dwSize, settings->bitmapCacheV2CellInfo[4].persistent);
+
+		REG_QUERY_BOOL_VALUE(hKey, _T("AllowCacheWaitingList"), dwType, dwValue, dwSize, settings->allow_cache_waiting_list);
+
+		RegCloseKey(hKey);
+	}
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Client\\GlyphCache"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		REG_QUERY_DWORD_VALUE(hKey, _T("SupportLevel"), dwType, dwValue, dwSize, settings->glyphSupportLevel);
+
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache0NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[0].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache0MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[0].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache1NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[1].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache1MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[1].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache2NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[2].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache2MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[2].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache3NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[3].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache3MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[3].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache4NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[4].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache4MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[4].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache5NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[5].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache5MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[5].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache6NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[6].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache6MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[6].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache7NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[7].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache7MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[7].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache8NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[8].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache8MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[8].cacheMaximumCellSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache9NumEntries"), dwType, dwValue, dwSize, settings->glyphCache[9].cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("Cache9MaxCellSize"), dwType, dwValue, dwSize, settings->glyphCache[9].cacheMaximumCellSize);
+
+		REG_QUERY_DWORD_VALUE(hKey, _T("FragCacheNumEntries"), dwType, dwValue, dwSize, settings->fragCache->cacheEntries);
+		REG_QUERY_DWORD_VALUE(hKey, _T("FragCacheMaxCellSize"), dwType, dwValue, dwSize, settings->fragCache->cacheMaximumCellSize);
+
+		RegCloseKey(hKey);
+	}
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Client\\PointerCache"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		REG_QUERY_BOOL_VALUE(hKey, _T("LargePointer"), dwType, dwValue, dwSize, settings->large_pointer);
+		REG_QUERY_BOOL_VALUE(hKey, _T("ColorPointer"), dwType, dwValue, dwSize, settings->color_pointer);
+		REG_QUERY_DWORD_VALUE(hKey, _T("PointerCacheSize"), dwType, dwValue, dwSize, settings->pointer_cache_size);
 
 		RegCloseKey(hKey);
 	}
@@ -232,6 +276,7 @@ rdpSettings* settings_new(void* instance)
 
 		settings->bitmap_cache = TRUE;
 		settings->persistent_bitmap_cache = FALSE;
+		settings->allow_cache_waiting_list = TRUE;
 
 		settings->bitmapCacheV2NumCells = 5;
 		settings->bitmapCacheV2CellInfo = xzalloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
@@ -249,8 +294,7 @@ rdpSettings* settings_new(void* instance)
 		settings->refresh_rect = TRUE;
 		settings->suppress_output = TRUE;
 
-		settings->glyph_cache = TRUE;
-		settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+		settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
 		settings->glyphCache = xzalloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
 		settings->fragCache = xnew(GLYPH_CACHE_DEFINITION);
 		settings->glyphCache[0].cacheEntries = 254;
