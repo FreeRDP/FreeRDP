@@ -28,5 +28,7 @@
 
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
 
+DWORD WINAPI wf_rdpsnd_thread(LPVOID lpParam);
+
 #endif /* WF_RDPSND_H */
 

@@ -54,7 +54,7 @@ if(WITH_WIN8)
 endif()
 
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server dsound)
 
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)

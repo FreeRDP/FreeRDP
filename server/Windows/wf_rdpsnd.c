@@ -24,9 +24,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <winpr\windows.h>
+#define CINTERFACE
+#include <mmsystem.h>
+#include <dsound.h>
+
 #include <freerdp/server/rdpsnd.h>
 
 #include "wf_rdpsnd.h"
+
+
+/*
+ * Here are some temp things that shall be moved
+ *
+ */
+IDirectSoundCapture8 * cap;
+IDirectSoundCaptureBuffer8* capBuf;
+DSCBUFFERDESC dscbd;
+DWORD capturePos;
+
+#define BYTESPERSEC 176400
 
 static const rdpsndFormat test_audio_formats[] =
 {
@@ -44,7 +61,54 @@ static const rdpsndFormat test_audio_formats[] =
 
 static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
+	HRESULT hr;
+	
+	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
+	WAVEFORMATEX wfx = {WAVE_FORMAT_PCM, 2, 44100, BYTESPERSEC, 4, 16, 0};
+
+
 	printf("RDPSND Activated\n");
+
+	hr = DirectSoundCaptureCreate8(NULL, &cap, NULL);
+
+	if (FAILED(hr))
+	{
+		_tprintf(_T("Failed to create sound capture device\n"));
+		return;
+	}
+	_tprintf(_T("Created sound capture device\n"));
+
+	dscbd.dwSize = sizeof(DSCBUFFERDESC);
+	dscbd.dwFlags = 0;
+	dscbd.dwBufferBytes = BYTESPERSEC;
+	dscbd.dwReserved = 0;
+	dscbd.lpwfxFormat = &wfx;
+	dscbd.dwFXCount = 0;
+	dscbd.lpDSCFXDesc = NULL;
+
+	hr = cap->lpVtbl->CreateCaptureBuffer(cap, &dscbd, &pDSCB, NULL);
+
+	if (FAILED(hr))
+	{
+		_tprintf(_T("Failed to create capture buffer\n"));
+	}
+	_tprintf(_T("Created capture buffer"));
+
+	hr = pDSCB->lpVtbl->QueryInterface(pDSCB, &IID_IDirectSoundCaptureBuffer8, (LPVOID*)&capBuf);
+	if (FAILED(hr))
+	{
+		_tprintf(_T("Failed to QI capture buffer\n"));
+	}
+	_tprintf(_T("Created IDirectSoundCaptureBuffer8\n"));
+	pDSCB->lpVtbl->Release(pDSCB); 
+
+	context->SelectFormat(context, 4);
+	context->SetVolume(context, 0x7FFF, 0x7FFF);
+	capturePos = 0;
+
+	CreateThread(NULL, 0, wf_rdpsnd_thread, context, 0, NULL);
+
+
 }
 
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
@@ -66,4 +130,98 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd->Initialize(context->rdpsnd);
 
 	return TRUE;
+}
+
+DWORD WINAPI wf_rdpsnd_thread(LPVOID lpParam)
+{
+	HRESULT hr;
+	DWORD beg, end;
+	DWORD diff, rate;
+	rdpsnd_server_context* context;
+
+	context = (rdpsnd_server_context*)lpParam;
+
+	rate = 1000 / 5;
+
+	_tprintf(_T("Trying to start capture\n"));
+	hr = capBuf->lpVtbl->Start(capBuf, DSCBSTART_LOOPING);
+	if (FAILED(hr))
+	{
+		_tprintf(_T("Failed to start capture\n"));
+	}
+	_tprintf(_T("Capture started\n"));
+
+	while (1)
+	{
+		VOID* pbCaptureData  = NULL;
+		DWORD dwCaptureLength;
+		VOID* pbCaptureData2 = NULL;
+		DWORD dwCaptureLength2;
+		VOID* pbPlayData   = NULL;
+		DWORD dwReadPos;
+		LONG lLockSize;
+		beg = GetTickCount();
+
+		
+
+		hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, NULL, &dwReadPos);
+		if (FAILED(hr))
+		{
+			_tprintf(_T("Failed to get read pos\n"));
+			break;
+		}
+
+		lLockSize = dwReadPos - capturePos;//dscbd.dwBufferBytes;
+		if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
+
+		if (lLockSize == 0) continue;
+
+		hr = capBuf->lpVtbl->Lock(capBuf, capturePos, lLockSize, &pbCaptureData, &dwCaptureLength, &pbCaptureData2, &dwCaptureLength2, 0L);
+		if (FAILED(hr))
+		{
+			_tprintf(_T("Failed to lock sound capture buffer\n"));
+			break;
+		}
+
+		//fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
+		//fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
+
+		//FIXME: frames = bytes/(bytespersample * channels)
+		
+		context->SendSamples(context, pbCaptureData, dwCaptureLength/4);
+		context->SendSamples(context, pbCaptureData2, dwCaptureLength2/4);
+
+
+		hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
+		if (FAILED(hr))
+		{
+			_tprintf(_T("Failed to unlock sound capture buffer\n"));
+			return 0;
+		}
+
+		//TODO keep track of location in buffer
+		capturePos += dwCaptureLength;
+		capturePos %= dscbd.dwBufferBytes;
+		capturePos += dwCaptureLength2;
+		capturePos %= dscbd.dwBufferBytes;
+
+		end = GetTickCount();
+		diff = end - beg;
+
+		if (diff < rate)
+		{
+			Sleep(rate - diff);
+		}
+	}
+
+	_tprintf(_T("Trying to stop sound capture\n"));
+	hr = capBuf->lpVtbl->Stop(capBuf);
+	if (FAILED(hr))
+	{
+		_tprintf(_T("Failed to stop capture\n"));
+	}
+	_tprintf(_T("Capture stopped\n"));
+
+
+	return 0;
 }
