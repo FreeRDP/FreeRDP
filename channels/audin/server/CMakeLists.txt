@@ -15,14 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(CHANNEL "audin")
+set(MODULE_NAME "${CHANNEL}-server")
 set(MODULE_PREFIX "CHANNEL_AUDIN_SERVER")
 
 set(${MODULE_PREFIX}_SRCS
-	audin.c
-	PARENT_SCOPE)
+	audin.c)
+
+# audin-server is always built-in
+
+set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+set(${MODULE_PREFIX}_CHANNEL ${CHANNEL} PARENT_SCOPE)
+set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
+
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
+	set(${MODULE_PREFIX}_LIBS freerdp)
 else()
-	set(${MODULE_PREFIX}_LIBS freerdp-utils freerdp-channels PARENT_SCOPE)
+	set(${MODULE_PREFIX}_LIBS freerdp-utils freerdp-channels)
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL}/Server")
