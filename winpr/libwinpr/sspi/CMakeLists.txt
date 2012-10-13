@@ -77,14 +77,11 @@ endif()
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 else()
-	if (NOT WIN32)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-			winpr-crt
-			winpr-sysinfo
-			winpr-registry)
-	endif()
-	
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-utils)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
+		winpr-crt
+		winpr-sysinfo
+		winpr-registry
+		winpr-utils)
 endif()
 
 if(MONOLITHIC_BUILD)
@@ -96,6 +93,6 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
 
-if(TEST_BUILD)
+if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

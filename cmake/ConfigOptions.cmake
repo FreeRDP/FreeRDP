@@ -27,7 +27,7 @@ if(MSVC)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
 
-option(TEST_BUILD "Build unit tests" OFF)
+option(BUILD_TESTING "Build unit tests" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
 	option(MONOLITHIC_BUILD "Use monolithic build" OFF)

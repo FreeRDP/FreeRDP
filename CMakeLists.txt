@@ -200,7 +200,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DI
 
 INCLUDE(CTest)
 
-if(TEST_BUILD)
+if(BUILD_TESTING)
 	enable_testing()
 endif()
 
