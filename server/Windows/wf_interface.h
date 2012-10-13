@@ -57,6 +57,9 @@ struct wf_info
 	BOOL mirrorDriverActive;
 	UINT framesWaiting;
 
+	HANDLE snd_mutex;
+	BOOL snd_stop;
+
 	RECT invalid;
 	HANDLE mutex;
 	BOOL updatePending;

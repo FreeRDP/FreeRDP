@@ -32,7 +32,7 @@
 #include <freerdp/server/rdpsnd.h>
 
 #include "wf_rdpsnd.h"
-
+#include "wf_info.h"
 
 /*
  * Here are some temp things that shall be moved
@@ -44,6 +44,9 @@ DSCBUFFERDESC dscbd;
 DWORD capturePos;
 
 #define BYTESPERSEC 176400
+
+//FIXME support multiple clients
+wfPeerContext* latestPeer;
 
 static const rdpsndFormat test_audio_formats[] =
 {
@@ -106,13 +109,62 @@ static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	context->SetVolume(context, 0x7FFF, 0x7FFF);
 	capturePos = 0;
 
-	CreateThread(NULL, 0, wf_rdpsnd_thread, context, 0, NULL);
+	CreateThread(NULL, 0, wf_rdpsnd_thread, latestPeer, 0, NULL);
 
 
 }
 
+int wf_rdpsnd_lock()
+{
+	DWORD dRes;
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+
+	dRes = WaitForSingleObject(wfi->snd_mutex, INFINITE);
+
+	switch (dRes)
+	{
+	case WAIT_ABANDONED:
+	case WAIT_OBJECT_0:
+		return TRUE;
+		break;
+
+	case WAIT_TIMEOUT:
+		return FALSE;
+		break;
+
+	case WAIT_FAILED:
+		printf("wf_rdpsnd_lock failed with 0x%08X\n", GetLastError());
+		return -1;
+		break;
+	}
+
+	return -1;
+}
+
+int wf_rdpsnd_unlock()
+{
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+
+	if (ReleaseMutex(wfi->snd_mutex) == 0)
+	{
+		printf("wf_rdpsnd_unlock failed with 0x%08X\n", GetLastError());
+		return -1;
+	}
+
+	return TRUE;
+}
+
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 {
+	wfInfo* wfi;
+	
+	wfi = wf_info_get_instance();
+
+	wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL);
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 
@@ -129,6 +181,8 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 
 	context->rdpsnd->Initialize(context->rdpsnd);
 
+	latestPeer = context;
+	wfi->snd_stop = FALSE;
 	return TRUE;
 }
 
@@ -137,10 +191,12 @@ DWORD WINAPI wf_rdpsnd_thread(LPVOID lpParam)
 	HRESULT hr;
 	DWORD beg, end;
 	DWORD diff, rate;
-	rdpsnd_server_context* context;
+	wfPeerContext* context;
+	wfInfo* wfi;
 
-	context = (rdpsnd_server_context*)lpParam;
+	wfi = wf_info_get_instance();
 
+	context = (wfPeerContext*)lpParam;
 	rate = 1000 / 5;
 
 	_tprintf(_T("Trying to start capture\n"));
@@ -162,48 +218,66 @@ DWORD WINAPI wf_rdpsnd_thread(LPVOID lpParam)
 		LONG lLockSize;
 		beg = GetTickCount();
 
+		if (wf_rdpsnd_lock() > 0)
+		{
+			//check for main exit condition
+			if (wfi->snd_stop == TRUE)
+			{
+				wf_rdpsnd_unlock();
+				break;
+			}
+
+			hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, NULL, &dwReadPos);
+			if (FAILED(hr))
+			{
+				_tprintf(_T("Failed to get read pos\n"));
+				wf_rdpsnd_unlock();
+				break;
+			}
+
+			lLockSize = dwReadPos - capturePos;//dscbd.dwBufferBytes;
+			if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
+
+			if (lLockSize == 0) 
+			{
+				wf_rdpsnd_unlock();
+				continue;
+			}
+
+			
+			hr = capBuf->lpVtbl->Lock(capBuf, capturePos, lLockSize, &pbCaptureData, &dwCaptureLength, &pbCaptureData2, &dwCaptureLength2, 0L);
+			if (FAILED(hr))
+			{
+				_tprintf(_T("Failed to lock sound capture buffer\n"));
+				wf_rdpsnd_unlock();
+				break;
+			}
+
+			//fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
+			//fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
+
+			//FIXME: frames = bytes/(bytespersample * channels)
 		
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength/4);
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2/4);
 
-		hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, NULL, &dwReadPos);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to get read pos\n"));
-			break;
+
+			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
+			if (FAILED(hr))
+			{
+				_tprintf(_T("Failed to unlock sound capture buffer\n"));
+				wf_rdpsnd_unlock();
+				return 0;
+			}
+
+			//TODO keep track of location in buffer
+			capturePos += dwCaptureLength;
+			capturePos %= dscbd.dwBufferBytes;
+			capturePos += dwCaptureLength2;
+			capturePos %= dscbd.dwBufferBytes;
+
+			wf_rdpsnd_unlock();
 		}
-
-		lLockSize = dwReadPos - capturePos;//dscbd.dwBufferBytes;
-		if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
-
-		if (lLockSize == 0) continue;
-
-		hr = capBuf->lpVtbl->Lock(capBuf, capturePos, lLockSize, &pbCaptureData, &dwCaptureLength, &pbCaptureData2, &dwCaptureLength2, 0L);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to lock sound capture buffer\n"));
-			break;
-		}
-
-		//fwrite(pbCaptureData, 1, dwCaptureLength, pFile);
-		//fwrite(pbCaptureData2, 1, dwCaptureLength2, pFile);
-
-		//FIXME: frames = bytes/(bytespersample * channels)
-		
-		context->SendSamples(context, pbCaptureData, dwCaptureLength/4);
-		context->SendSamples(context, pbCaptureData2, dwCaptureLength2/4);
-
-
-		hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
-		if (FAILED(hr))
-		{
-			_tprintf(_T("Failed to unlock sound capture buffer\n"));
-			return 0;
-		}
-
-		//TODO keep track of location in buffer
-		capturePos += dwCaptureLength;
-		capturePos %= dscbd.dwBufferBytes;
-		capturePos += dwCaptureLength2;
-		capturePos %= dscbd.dwBufferBytes;
 
 		end = GetTickCount();
 		diff = end - beg;

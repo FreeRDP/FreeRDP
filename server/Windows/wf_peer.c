@@ -51,7 +51,13 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 	wf_info_peer_unregister(context->info, context);
 
 	if (context->rdpsnd)
+	{
+		printf("snd_free\n");
+		wf_rdpsnd_lock();
+		context->info->snd_stop = TRUE;
 		rdpsnd_server_context_free(context->rdpsnd);
+		wf_rdpsnd_unlock();
+	}
 
 	WTSDestroyVirtualChannelManager(context->vcm);
 }
