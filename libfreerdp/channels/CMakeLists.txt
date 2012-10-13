@@ -24,26 +24,25 @@ set(${MODULE_PREFIX}_SRCS
 	wtsvc.c
 	wtsvc.h)
 
-if(MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE freerdp
+	MODULES freerdp-utils)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-interlocked)
+
 if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		freerdp-utils)
-		
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		winpr-crt
-		winpr-synch
-		winpr-interlocked)
-	
+else()	
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
