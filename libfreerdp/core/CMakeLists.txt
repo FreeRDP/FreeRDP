@@ -98,16 +98,6 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS winpr)
-else()
-	set(${MODULE_PREFIX}_LIBS
-		winpr-registry
-		winpr-utils
-		winpr-sspi
-		winpr-crt)
-endif()
-
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
 else()
@@ -120,6 +110,11 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE freerdp
 	MODULES freerdp-core freerdp-crypto freerdp-codec freerdp-locale freerdp-utils)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-registry winpr-utils winpr-sspi winpr-crt)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
