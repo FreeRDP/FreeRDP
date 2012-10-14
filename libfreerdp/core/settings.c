@@ -36,8 +36,10 @@
 #include <freerdp/settings.h>
 #include <freerdp/utils/file.h>
 
+#ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable: 4244)
+#endif
 
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
@@ -397,4 +399,7 @@ void settings_free(rdpSettings* settings)
 	}
 }
 
+#ifdef _WIN32
 #pragma warning(pop)
+#endif
+

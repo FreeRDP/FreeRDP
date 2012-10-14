@@ -54,6 +54,9 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULES freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

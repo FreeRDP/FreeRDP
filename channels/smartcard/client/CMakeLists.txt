@@ -24,7 +24,15 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(${PCSC_INCLUDE_DIRS})
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(NOT STATIC_CHANNELS)
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+else()
+	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+	set(${MODULE_PREFIX}_ENTRY "DVCPluginEntry" PARENT_SCOPE)
+	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
@@ -37,10 +45,12 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE winpr
 	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
 
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PCSC_LIBRARIES})
+
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-target_link_libraries(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PCSC_LIBRARIES})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
