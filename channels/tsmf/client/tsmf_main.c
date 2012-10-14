@@ -425,12 +425,17 @@ static void tsmf_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
 	}
 }
 
+#ifdef STATIC_CHANNELS
+#define DVCPluginEntry	tsmf_DVCPluginEntry
+#endif
+
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	TSMF_PLUGIN * tsmf;
 	int error = 0;
+	TSMF_PLUGIN* tsmf;
 
 	tsmf = (TSMF_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
+
 	if (tsmf == NULL)
 	{
 		tsmf = xnew(TSMF_PLUGIN);
@@ -448,6 +453,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		tsmf_process_plugin_data((IWTSPlugin*) tsmf,
 			pEntryPoints->GetPluginData(pEntryPoints));
 	}
+
 	return error;
 }
 

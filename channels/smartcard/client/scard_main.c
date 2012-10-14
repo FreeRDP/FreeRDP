@@ -282,6 +282,10 @@ static void scard_irp_request(DEVICE* device, IRP* irp)
 	freerdp_thread_signal(scard->thread);
 }
 
+#ifdef STATIC_CHANNELS
+#define DeviceServiceEntry	smartcard_DeviceServiceEntry
+#endif
+
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;

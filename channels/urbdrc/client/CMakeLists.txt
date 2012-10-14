@@ -32,7 +32,15 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(..)
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(NOT STATIC_CHANNELS)
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+else()
+	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
+	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
+	set(${MODULE_PREFIX}_ENTRY "DVCPluginEntry" PARENT_SCOPE)
+	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set(${MODULE_PREFIX}_LIBS

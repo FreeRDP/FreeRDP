@@ -301,10 +301,10 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 }
 
 #ifdef STATIC_CHANNELS
-int printer_entry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
-#else
-int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+#define DeviceServiceEntry	printer_DeviceServiceEntry
 #endif
+
+int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;
 	char* name;
