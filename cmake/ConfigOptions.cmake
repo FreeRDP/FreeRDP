@@ -28,6 +28,7 @@ if(MSVC)
 endif()
 
 option(BUILD_TESTING "Build unit tests" OFF)
+option(WITH_SAMPLE "Build sample code" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
 	option(MONOLITHIC_BUILD "Use monolithic build" OFF)

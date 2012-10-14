@@ -48,10 +48,9 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 	set(WITH_SUN true)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND (NOT ANDROID))
+	find_suggested_package(X11)
 	if(WITH_X11)
-		find_suggested_package(X11)
-
 		add_definitions(-DWITH_X11)
 		include_directories(${X11_INCLUDE_DIRS})
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
