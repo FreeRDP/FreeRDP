@@ -36,6 +36,9 @@
 #include <freerdp/settings.h>
 #include <freerdp/utils/file.h>
 
+#pragma warning(push)
+#pragma warning(disable: 4244)
+
 static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
 #define REG_QUERY_DWORD_VALUE(_key, _subkey, _type, _value, _size, _result) \
@@ -393,3 +396,5 @@ void settings_free(rdpSettings* settings)
 		free(settings);
 	}
 }
+
+#pragma warning(pop)

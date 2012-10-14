@@ -37,7 +37,9 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE winpr
 	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
 
-target_link_libraries(${MODULE_NAME} ${PCSC_LIBRARIES})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+target_link_libraries(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PCSC_LIBRARIES})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 

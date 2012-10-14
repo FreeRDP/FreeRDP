@@ -38,4 +38,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-utils)
 
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL}/Server")
