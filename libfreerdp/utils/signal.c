@@ -24,14 +24,19 @@
 #include <stddef.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/memory.h>
+
 #ifdef _WIN32
+
 #include <errno.h>
+
 int freerdp_handle_signals(void)
 {
 	errno = ENOSYS;
 	return -1;
 }
-#else
+
+#elif (!ANDROID)
+
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;
 struct termios orig_flags;
@@ -117,4 +122,12 @@ int freerdp_handle_signals(void)
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
 	return 0;
 }
+
+#else
+
+int freerdp_handle_signals(void)
+{
+	return -1;
+}
+
 #endif

@@ -49,18 +49,21 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 endif()
 
 if(NOT WIN32)
-	find_suggested_package(X11)
 	if(WITH_X11)
+		find_suggested_package(X11)
+
 		add_definitions(-DWITH_X11)
 		include_directories(${X11_INCLUDE_DIRS})
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
 		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${X11_LIBRARIES})
+
 		if(WITH_SUN)
 			add_definitions(-DWITH_SUN)
 			set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SUN_SRCS})
 		elseif(NOT APPLE)
 			find_suggested_package(XKBFile)
 		endif()
+
 		if(WITH_XKBFILE)
 			add_definitions(-DWITH_XKBFILE)
 			include_directories(${XKBFILE_INCLUDE_DIRS})
