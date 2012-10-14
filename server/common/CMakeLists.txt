@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP Clients
+# FreeRDP Server Common
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,31 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Clients
+set(MODULE_NAME "freerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER")
 
-add_subdirectory(common)
+set(${MODULE_PREFIX}_SRCS
+	server.c)
 
-if(WIN32)
-	add_subdirectory(Windows)
-else()
-	if(WITH_SAMPLE)
-		add_subdirectory(Sample)
-	endif()
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-	find_optional_package(DirectFB)
-	if(WITH_DIRECTFB)
-		add_subdirectory(DirectFB)
-	endif()
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
 
-if(NOT WIN32 AND (NOT ANDROID))
-	find_suggested_package(X11)
-	if(WITH_X11)
-		add_subdirectory(X11)
-	endif()
-endif()
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-if(APPLE)
-	add_subdirectory(Mac)
-endif()
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")
 

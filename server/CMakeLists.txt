@@ -17,6 +17,8 @@
 
 # Servers
 
+add_subdirectory(common)
+
 if(NOT WIN32)
 	if(WITH_SAMPLE)
 		add_subdirectory(Sample)

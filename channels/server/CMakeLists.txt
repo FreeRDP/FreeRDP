@@ -28,7 +28,7 @@ foreach(STATIC_MODULE ${CHANNEL_STATIC_SERVER_MODULES})
 	message(STATUS "Adding static server channel: ${STATIC_MODULE_CHANNEL}")
 endforeach()
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
@@ -36,3 +36,4 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/Server")
+
