@@ -22,14 +22,7 @@ set(MODULE_PREFIX "CHANNEL_RDPSND_SERVER")
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd.c)
 
-# rdpsnd-server is always built-in
-
-set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-set(${MODULE_PREFIX}_CHANNEL ${CHANNEL} PARENT_SCOPE)
-set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
-
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

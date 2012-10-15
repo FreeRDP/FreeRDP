@@ -30,18 +30,7 @@ if(WIN32)
 		dirent.h)
 endif()
 
-if(MSVC AND (NOT STATIC_CHANNELS))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
-
-if(NOT STATIC_CHANNELS)
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-else()
-	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-	set(${MODULE_PREFIX}_ENTRY "DeviceServiceEntry" PARENT_SCOPE)
-	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
-endif()
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

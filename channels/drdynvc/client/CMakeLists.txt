@@ -25,13 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 	dvcman.c
 	dvcman.h)
 
-# drdynvc is always built-in
-
-set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
-
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "DVCPluginEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
