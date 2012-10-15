@@ -19,24 +19,16 @@
 
 #include <freerdp/svc.h>
 
-#ifndef PDEVICE_SERVICE_ENTRY_POINTS
-#define PDEVICE_SERVICE_ENTRY_POINTS void*
-#endif
-
-typedef int (*VIRTUAL_CHANNEL_ENTRY_FN)(PCHANNEL_ENTRY_POINTS pEntryPoints);
-typedef int (*DEVICE_SERVICE_ENTRY_FN)(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);
-
-struct _VIRTUAL_CHANNEL_ENTRY
+struct _STATIC_ENTRY
 {
 	const char* name;
-	const VIRTUAL_CHANNEL_ENTRY_FN entry;
+	const void* entry;
 };
-typedef struct _VIRTUAL_CHANNEL_ENTRY VIRTUAL_CHANNEL_ENTRY;
+typedef struct _STATIC_ENTRY STATIC_ENTRY;
 
-struct _DEVICE_SERVICE_ENTRY
+struct _STATIC_ENTRY_TABLE
 {
 	const char* name;
-	const DEVICE_SERVICE_ENTRY_FN entry;
+	const STATIC_ENTRY* table;
 };
-typedef struct _DEVICE_SERVICE_ENTRY DEVICE_SERVICE_ENTRY;
-
+typedef struct _STATIC_ENTRY_TABLE STATIC_ENTRY_TABLE;

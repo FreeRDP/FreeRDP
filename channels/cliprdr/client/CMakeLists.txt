@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "cliprdr")
-set(MODULE_PREFIX "CHANNEL_CLIPRDR_CLIENT")
+set(CHANNEL_NAME "cliprdr")
+set(MODULE_NAME "${CHANNEL_NAME}")
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
 
 set(${MODULE_PREFIX}_SRCS
 	cliprdr_constants.h
@@ -25,7 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	cliprdr_main.c
 	cliprdr_main.h)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "DVCPluginEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "printer")
-set(MODULE_PREFIX "CHANNEL_RDPDR_PRINTER_CLIENT")
+set(CHANNEL_NAME "printer")
+set(MODULE_NAME "${CHANNEL_NAME}")
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
 
 set(${MODULE_PREFIX}_SRCS
 	printer_main.c
@@ -37,7 +38,7 @@ if(WIN32)
 		printer_win.h)
 endif()
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DVCPluginEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -55,10 +56,10 @@ if(WITH_CUPS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CUPS_LIBRARIES})
 endif()
 
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
 if(NOT STATIC_CHANNELS)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

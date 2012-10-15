@@ -25,60 +25,54 @@
 
 #include <freerdp/client/channels.h>
 
-extern const VIRTUAL_CHANNEL_ENTRY VIRTUAL_CHANNEL_TABLE[];
-extern const DEVICE_SERVICE_ENTRY DEVICE_SERVICE_TABLE[];
+extern const STATIC_ENTRY_TABLE CLIENT_STATIC_ENTRY_TABLES[];
 
-void* freerdp_channels_find_static_virtual_channel_entry(const char* name)
+void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table, const char* entry)
 {
 	int index = 0;
-	VIRTUAL_CHANNEL_ENTRY* pEntry;
+	STATIC_ENTRY* pEntry;
 
-	pEntry = (VIRTUAL_CHANNEL_ENTRY*) &VIRTUAL_CHANNEL_TABLE[index++];
+	pEntry = (STATIC_ENTRY*) &table->table[index++];
 
 	while (pEntry->entry != NULL)
 	{
-		if (strcmp(pEntry->name, name) == 0)
+		if (strcmp(pEntry->name, entry) == 0)
 		{
 			return (void*) pEntry->entry;
 		}
 
-		pEntry = (VIRTUAL_CHANNEL_ENTRY*) &VIRTUAL_CHANNEL_TABLE[index++];
+		pEntry = (STATIC_ENTRY*) &table->table[index++];
 	}
 
 	return NULL;
-}
-
-void* freerdp_channels_find_static_device_service_entry(const char* name)
-{
-	int index = 0;
-	DEVICE_SERVICE_ENTRY* pEntry;
-
-	pEntry = (DEVICE_SERVICE_ENTRY*) &DEVICE_SERVICE_TABLE[index++];
-
-	while (pEntry->entry != NULL)
-	{
-		if (strcmp(pEntry->name, name) == 0)
-		{
-			return (void*) pEntry->entry;
-		}
-
-		pEntry = (DEVICE_SERVICE_ENTRY*) &DEVICE_SERVICE_TABLE[index++];		
-	}
-
-	return NULL;	
 }
 
 void* freerdp_channels_find_static_entry(const char* name, const char* entry)
 {
-	if (strcmp(entry, "VirtualChannelEntry") == 0)
+	int index = 0;
+	STATIC_ENTRY_TABLE* pEntry;
+
+	pEntry = (STATIC_ENTRY_TABLE*) &CLIENT_STATIC_ENTRY_TABLES[index++];
+
+	while (pEntry->table != NULL)
 	{
-		return freerdp_channels_find_static_virtual_channel_entry(name);
-	}
-	else if (strcmp(entry, "DeviceServiceEntry") == 0)
-	{
-		return freerdp_channels_find_static_device_service_entry(name);
+		if (strcmp(pEntry->name, name) == 0)
+		{
+			return freerdp_channels_find_static_entry_in_table(pEntry, entry);
+		}
+
+		pEntry = (STATIC_ENTRY_TABLE*) &CLIENT_STATIC_ENTRY_TABLES[index++];
 	}
 
 	return NULL;
 }
 
+void* freerdp_channels_find_static_virtual_channel_entry(const char* name)
+{
+	return freerdp_channels_find_static_entry("VirtualChannelEntry", name);
+}
+
+void* freerdp_channels_find_static_device_service_entry(const char* name)
+{
+	return freerdp_channels_find_static_entry("DeviceServiceEntry", name);
+}

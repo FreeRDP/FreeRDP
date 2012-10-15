@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "serial")
-set(MODULE_PREFIX "CHANNEL_DEVICE_SERIAL_CLIENT")
+set(CHANNEL_NAME "serial")
+set(MODULE_NAME "${CHANNEL_NAME}")
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
 
 set(${MODULE_PREFIX}_SRCS
 	serial_tty.c
