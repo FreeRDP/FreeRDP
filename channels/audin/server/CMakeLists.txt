@@ -29,6 +29,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-utils freerdp-channels)
+	MODULES freerdp-utils)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL}/Server")

@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Server Virtual Channel Interface
+ * Server Channels
  *
  * Copyright 2011-2012 Vic Lee
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

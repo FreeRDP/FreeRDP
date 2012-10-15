@@ -58,7 +58,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-core freerdp-utils freerdp-codec freerdp-channels)
+	MODULES freerdp-core freerdp-utils freerdp-codec)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

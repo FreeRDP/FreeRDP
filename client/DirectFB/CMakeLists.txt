@@ -36,7 +36,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-codec freerdp-channels freerdp-utils)
+	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-codec freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
