@@ -22,7 +22,7 @@ string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
 set(${MODULE_PREFIX}_SRCS
 	parallel_main.c)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DeviceServiceEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

@@ -25,7 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 	serial_constants.h
 	serial_main.c)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DeviceServiceEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(serial PROPERTIES PREFIX "")
 

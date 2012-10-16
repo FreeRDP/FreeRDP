@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 	skel_main.c
 	skel_main.h)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} TRUE "DVCPluginEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

@@ -26,7 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	dvcman.c
 	dvcman.h)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "VirtualChannelEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
