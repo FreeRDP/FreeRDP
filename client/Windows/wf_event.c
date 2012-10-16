@@ -119,7 +119,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
-static int xf_event_process_WM_MOUSEWHEEL(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, boolean app)
+static int xf_event_process_WM_MOUSEWHEEL(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	int delta;
 	int flags;
@@ -200,7 +200,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_SETCURSOR:
-				SetCursor(wfi->cursor);
+				if (LOWORD(lParam) == HTCLIENT)
+					SetCursor(wfi->cursor);
+				else
+					DefWindowProc(hWnd, Msg, wParam, lParam);
 				break;
 
 			default:
@@ -223,7 +226,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_SETCURSOR:
-			SetCursor(g_default_cursor);
+			if (LOWORD(lParam) == HTCLIENT)
+				SetCursor(g_default_cursor);
+			else
+				DefWindowProc(hWnd, Msg, wParam, lParam);
 			break;
 
 		case WM_SETFOCUS:
