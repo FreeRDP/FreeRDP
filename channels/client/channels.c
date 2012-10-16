@@ -19,6 +19,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tables.h"
 
 #include <stdio.h>
@@ -33,6 +37,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/load_plugin.h>
+#include <freerdp/utils/file.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
 
@@ -64,7 +69,7 @@
 
 extern const STATIC_ENTRY_TABLE CLIENT_STATIC_ENTRY_TABLES[];
 
-void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table, const char* entry)
+void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* table, const char* identifier)
 {
 	int index = 0;
 	STATIC_ENTRY* pEntry;
@@ -73,7 +78,7 @@ void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* tabl
 
 	while (pEntry->entry != NULL)
 	{
-		if (strcmp(pEntry->name, entry) == 0)
+		if (strcmp(pEntry->name, identifier) == 0)
 		{
 			return (void*) pEntry->entry;
 		}
@@ -84,7 +89,7 @@ void* freerdp_channels_find_static_entry_in_table(const STATIC_ENTRY_TABLE* tabl
 	return NULL;
 }
 
-void* freerdp_channels_find_static_entry(const char* name, const char* entry)
+void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier)
 {
 	int index = 0;
 	STATIC_ENTRY_TABLE* pEntry;
@@ -95,7 +100,7 @@ void* freerdp_channels_find_static_entry(const char* name, const char* entry)
 	{
 		if (strcmp(pEntry->name, name) == 0)
 		{
-			return freerdp_channels_find_static_entry_in_table(pEntry, entry);
+			return freerdp_channels_find_static_entry_in_table(pEntry, identifier);
 		}
 
 		pEntry = (STATIC_ENTRY_TABLE*) &CLIENT_STATIC_ENTRY_TABLES[index++];
@@ -104,14 +109,35 @@ void* freerdp_channels_find_static_entry(const char* name, const char* entry)
 	return NULL;
 }
 
-void* freerdp_channels_find_static_virtual_channel_entry(const char* name)
+void* freerdp_channels_client_find_dynamic_entry(const char* name, const char* identifier)
 {
-	return freerdp_channels_find_static_entry("VirtualChannelEntry", name);
+	char* path;
+	void* entry;
+	char* module;
+
+	module = freerdp_append_shared_library_suffix((char*) identifier);
+	path = freerdp_construct_path(FREERDP_CLIENT_PLUGIN_PATH, module);
+
+	entry = freerdp_load_library_symbol(path, module);
+
+	free(module);
+	free(path);
+
+	return entry;
 }
 
-void* freerdp_channels_find_static_device_service_entry(const char* name)
+void* freerdp_channels_client_find_entry(const char* name, const char* identifier)
 {
-	return freerdp_channels_find_static_entry("DeviceServiceEntry", name);
+	void* pChannelEntry = NULL;
+
+	pChannelEntry = freerdp_channels_client_find_static_entry(name, identifier);
+
+	if (!pChannelEntry)
+	{
+		pChannelEntry = freerdp_channels_client_find_dynamic_entry(name, identifier);
+	}
+
+	return pChannelEntry;
 }
 
 struct lib_data

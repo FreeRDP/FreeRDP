@@ -27,51 +27,21 @@
 
 #include <winpr/path.h>
 
-HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath)
-{
-	size_t pszPathLength;
+#define DEFINE_UNICODE			FALSE
+#define PATH_SEPARATOR			'\\'
+#define PATH_CCH_ADD_SEPARATOR		PathCchAddBackslashA
+#include "include/PathCchAddSeparator.c"
+#undef DEFINE_UNICODE
+#undef PATH_SEPARATOR
+#undef PATH_CCH_ADD_SEPARATOR
 
-	if (!pszPath)
-		return S_FALSE;
-
-	pszPathLength = lstrlenA(pszPath);
-
-	if (pszPath[pszPathLength - 1] == '\\')
-		return S_FALSE;
-
-	if (cchPath > (pszPathLength + 1))
-	{
-		pszPath[pszPathLength] = '\\';
-		pszPath[pszPathLength + 1] = '\0';
-
-		return S_OK;
-	}
-
-	return S_FALSE;
-}
-
-HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath)
-{
-	size_t pszPathLength;
-
-	if (!pszPath)
-		return S_FALSE;
-
-	pszPathLength = lstrlenW(pszPath);
-
-	if (pszPath[pszPathLength - 1] == '\\')
-		return S_FALSE;
-
-	if (cchPath > (pszPathLength + 1))
-	{
-		pszPath[pszPathLength] = '\\';
-		pszPath[pszPathLength + 1] = '\0';
-
-		return S_OK;
-	}
-
-	return S_FALSE;
-}
+#define DEFINE_UNICODE			TRUE
+#define PATH_SEPARATOR			'\\'
+#define PATH_CCH_ADD_SEPARATOR		PathCchAddBackslashW
+#include "include/PathCchAddSeparator.c"
+#undef DEFINE_UNICODE
+#undef PATH_SEPARATOR
+#undef PATH_CCH_ADD_SEPARATOR
 
 HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath)
 {
@@ -83,51 +53,21 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 	return 0;
 }
 
-HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
-{
-	size_t pszPathLength;
+#define DEFINE_UNICODE			FALSE
+#define PATH_SEPARATOR			'\\'
+#define PATH_CCH_ADD_SEPARATOR_EX	PathCchAddBackslashExA
+#include "include/PathCchAddSeparatorEx.c"
+#undef DEFINE_UNICODE
+#undef PATH_SEPARATOR
+#undef PATH_CCH_ADD_SEPARATOR_EX
 
-	if (!pszPath)
-		return S_FALSE;
-
-	pszPathLength = lstrlenA(pszPath);
-
-	if (pszPath[pszPathLength - 1] == '\\')
-		return S_FALSE;
-
-	if (cchPath > (pszPathLength + 1))
-	{
-		pszPath[pszPathLength] = '\\';
-		pszPath[pszPathLength + 1] = '\0';
-
-		return S_OK;
-	}
-
-	return S_FALSE;
-}
-
-HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining)
-{
-	size_t pszPathLength;
-
-	if (!pszPath)
-		return S_FALSE;
-
-	pszPathLength = lstrlenW(pszPath);
-
-	if (pszPath[pszPathLength - 1] == '\\')
-		return S_FALSE;
-
-	if (cchPath > (pszPathLength + 1))
-	{
-		pszPath[pszPathLength] = '\\';
-		pszPath[pszPathLength + 1] = '\0';
-
-		return S_OK;
-	}
-
-	return S_FALSE;
-}
+#define DEFINE_UNICODE			TRUE
+#define PATH_SEPARATOR			'\\'
+#define PATH_CCH_ADD_SEPARATOR_EX	PathCchAddBackslashExW
+#include "include/PathCchAddSeparatorEx.c"
+#undef DEFINE_UNICODE
+#undef PATH_SEPARATOR
+#undef PATH_CCH_ADD_SEPARATOR_EX
 
 HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
 {

@@ -550,4 +550,3 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	return error;
 }
-
