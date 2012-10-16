@@ -80,7 +80,7 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data)
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
-	
+
 	return image;
 }
 
@@ -120,7 +120,7 @@ void wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
-	
+
 	if (wf_bitmap != 0)
 	{
 		SelectObject(wf_bitmap->hdc, wf_bitmap->org_bitmap);
@@ -198,8 +198,8 @@ void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	int width, height, bpp;
 
 	width  = pointer->width;
-        height = pointer->height;
-        bpp    = pointer->xorBpp;
+	height = pointer->height;
+	bpp    = pointer->xorBpp;
 
 	if ((bpp != 1 && bpp != 8 && bpp != 15 && bpp != 16 && bpp != 24 && bpp != 32) ||
 			width > 32 || height > 32)
@@ -211,7 +211,7 @@ void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	memset(xm, 0, 32 * 4);
 	for (i = 0; i < 32; i++)
 	{
-		ii = (bpp == 1) ? i : (height - 1) - i;  
+		ii = (bpp == 1) ? i : (height - 1) - i;
 		for (j = 0; j < 32; j++)
 		{
 			if (freerdp_get_pixel(pointer->andMaskData, j, i, width, height, 1))

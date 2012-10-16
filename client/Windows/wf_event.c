@@ -162,7 +162,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		{
 			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
-				
+
 				x = ps.rcPaint.left;
 				y = ps.rcPaint.top;
 				w = ps.rcPaint.right - ps.rcPaint.left + 1;
@@ -194,7 +194,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			case WM_MOUSEMOVE:
 				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam), Y_POS(lParam));
 				break;
-			
+
 			case WM_MOUSEWHEEL:
 				xf_event_process_WM_MOUSEWHEEL(wfi, hWnd, Msg, wParam, lParam, FALSE);
 				break;
