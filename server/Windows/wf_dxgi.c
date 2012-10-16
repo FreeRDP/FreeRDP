@@ -238,13 +238,13 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to acquire next frame\n"));
+		//_tprintf(_T("Failed to acquire next frame\n"));
 
 		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to release frame\n"));
+			//_tprintf(_T("Failed to release frame\n"));
 		}
 		
 		return 1;
