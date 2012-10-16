@@ -27,6 +27,8 @@
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
+extern HINSTANCE g_hInstance; /* in wfreerdp.c */
+
 HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
 	HDC hdc;
@@ -78,7 +80,7 @@ wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data)
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
-	
+
 	return image;
 }
 
@@ -118,7 +120,7 @@ void wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
-	
+
 	if (wf_bitmap != 0)
 	{
 		SelectObject(wf_bitmap->hdc, wf_bitmap->org_bitmap);
@@ -189,17 +191,64 @@ void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 
 void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
+	unsigned char am[32 * 4];
+	unsigned char xm[32 * 4];
+	int i, j, ii;
+	int width, height, bpp;
 
+	width  = pointer->width;
+	height = pointer->height;
+	bpp    = pointer->xorBpp;
+
+	if ((bpp != 1 && bpp != 8 && bpp != 15 && bpp != 16 && bpp != 24 && bpp != 32) ||
+			width > 32 || height > 32)
+	{
+		printf("wf_Pointer_New: Unsupported Cursor width = %u, height = %u, xorBpp = %u\n", width, height, bpp);
+		return;
+	}
+	memset(am, 0, 32 * 4);
+	memset(xm, 0, 32 * 4);
+	for (i = 0; i < 32; i++)
+	{
+		ii = (bpp == 1) ? i : (height - 1) - i;
+		for (j = 0; j < 32; j++)
+		{
+			if (freerdp_get_pixel(pointer->andMaskData, j, i, width, height, 1))
+			{
+				freerdp_set_pixel(am, j, ii, width, height, 1, 1);
+			}
+			if (freerdp_get_pixel(pointer->xorMaskData, j, i, width, height, bpp))
+			{
+				freerdp_set_pixel(xm, j, ii, width, height, 1, 1);
+			}
+		}
+	}
+	hCur = CreateCursor(g_hInstance, pointer->xPos, pointer->yPos, pointer->width, pointer->height, am, xm);
+	((wfPointer*) pointer)->cursor = hCur;
 }
 
 void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
 
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != 0)
+		DestroyCursor(hCur);
 }
 
 void wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
+	wfInfo* wfi;
+	HCURSOR hCur;
 
+	wfi = ((wfContext*) context)->wfi;
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != NULL)
+	{
+		SetCursor(hCur);
+		wfi->cursor = hCur;
+	}
 }
 
 void wf_Pointer_SetNull(rdpContext* context)

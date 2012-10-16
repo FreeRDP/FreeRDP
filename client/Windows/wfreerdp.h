@@ -50,6 +50,7 @@ typedef struct wf_bitmap wfBitmap;
 struct wf_pointer
 {
 	rdpPointer pointer;
+	HCURSOR cursor;
 };
 typedef struct wf_pointer wfPointer;
 
