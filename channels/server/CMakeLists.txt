@@ -47,4 +47,3 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/Server")
-

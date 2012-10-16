@@ -21,7 +21,13 @@ set(MODULE_PREFIX "FREERDP_SERVER")
 set(${MODULE_PREFIX}_SRCS
 	server.c)
 
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
 
@@ -29,4 +35,3 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")
-

@@ -21,7 +21,13 @@ set(MODULE_PREFIX "FREERDP_CLIENT")
 set(${MODULE_PREFIX}_SRCS
 	client.c)
 
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-client)
 

@@ -22,7 +22,7 @@ string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" MODULE_PREFIX)
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd.c)
 
-add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} FALSE "VirtualChannelEntry")
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

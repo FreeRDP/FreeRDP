@@ -38,7 +38,6 @@ set(${MODULE_PREFIX}_SRCS
 	wf_settings.c
 	wf_settings.h
 	wf_info.c
-
 	wf_info.h)
 
 if(WITH_SERVER_INTERFACE)
