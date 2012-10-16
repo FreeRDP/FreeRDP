@@ -48,9 +48,12 @@ else()
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
+
 if(WITH_WIN8)		
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi dxguid)
 endif()
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dsound)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 
