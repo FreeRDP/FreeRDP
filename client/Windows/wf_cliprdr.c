@@ -107,4 +107,3 @@ void wf_cliprdr_check_owner(wfInfo* wfi)
 {
 
 }
-

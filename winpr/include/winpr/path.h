@@ -159,6 +159,95 @@ WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 #define PathCchRemoveFileSpec		PathCchRemoveFileSpecA
 #endif
 
+/* Unix-style Paths */
+
+WINPR_API HRESULT PathCchAddSlashA(PSTR pszPath, size_t cchPath);
+WINPR_API HRESULT PathCchAddSlashW(PWSTR pszPath, size_t cchPath);
+
+WINPR_API HRESULT PathCchAddSlashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSlashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+
+WINPR_API HRESULT UnixPathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
+WINPR_API HRESULT UnixPathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
+
+WINPR_API HRESULT UnixPathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
+WINPR_API HRESULT UnixPathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
+
+WINPR_API HRESULT UnixPathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut);
+WINPR_API HRESULT UnixPathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut);
+
+#ifdef UNICODE
+#define PathCchAddSlash			PathCchAddSlashW
+#define PathCchAddSlashEx		PathCchAddSlashExW
+#define UnixPathCchAddExtension		UnixPathCchAddExtensionW
+#define UnixPathCchAppend		UnixPathCchAppendW
+#define UnixPathAllocCombine		UnixPathAllocCombineW
+#else
+#define PathCchAddSlash			PathCchAddSlashA
+#define PathCchAddSlashEx		PathCchAddSlashExA
+#define UnixPathCchAddExtension		UnixPathCchAddExtensionA
+#define UnixPathCchAppend		UnixPathCchAppendA
+#define UnixPathAllocCombine		UnixPathAllocCombineA
+#endif
+
+/* Native-style Paths */
+
+WINPR_API HRESULT PathCchAddSeparatorA(PSTR pszPath, size_t cchPath);
+WINPR_API HRESULT PathCchAddSeparatorW(PWSTR pszPath, size_t cchPath);
+
+WINPR_API HRESULT PathCchAddSeparatorExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining);
+WINPR_API HRESULT PathCchAddSeparatorExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining);
+
+WINPR_API HRESULT NativePathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
+WINPR_API HRESULT NativePathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
+
+WINPR_API HRESULT NativePathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
+WINPR_API HRESULT NativePathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
+
+WINPR_API HRESULT NativePathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags, PSTR* ppszPathOut);
+WINPR_API HRESULT NativePathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags, PWSTR* ppszPathOut);
+
+#ifdef UNICODE
+#define PathCchAddSeparator		PathCchAddSeparatorW
+#define PathCchAddSeparatorEx		PathCchAddSeparatorExW
+#define NativePathCchAddExtension	NativePathCchAddExtensionW
+#define NativePathCchAppend		NativePathCchAppendW
+#define NativePathAllocCombine		NativePathAllocCombineW
+#else
+#define PathCchAddSeparator		PathCchAddSeparatorA
+#define PathCchAddSeparatorEx		PathCchAddSeparatorExA
+#define NativePathCchAddExtension	NativePathCchAddExtensionA
+#define NativePathCchAppend		NativePathCchAppendA
+#define NativePathAllocCombine		NativePathAllocCombineA
+#endif
+
+/* Path Portability Functions */
+
+#define PATH_STYLE_WINDOWS			0x00000001
+#define PATH_STYLE_UNIX				0x00000002
+#define PATH_STYLE_NATIVE			0x00000003
+
+#define PATH_SHARED_LIB_EXT_WITH_DOT		0x00000001
+#define PATH_SHARED_LIB_EXT_APPLE_SO		0x00000002
+#define PATH_SHARED_LIB_EXT_EXPLICIT		0x80000000
+#define PATH_SHARED_LIB_EXT_EXPLICIT_DLL	0x80000001
+#define PATH_SHARED_LIB_EXT_EXPLICIT_SO		0x80000002
+#define PATH_SHARED_LIB_EXT_EXPLICIT_DYLIB	0x80000003
+
+WINPR_API HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags);
+WINPR_API HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags);
+
+WINPR_API PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags);
+WINPR_API PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags);
+
+#ifdef UNICODE
+#define PathCchConvertStyle		PathCchConvertStyleW
+#define PathGetSharedLibraryExtension	PathGetSharedLibraryExtensionW
+#else
+#define PathCchConvertStyle		PathCchConvertStyleA
+#define PathGetSharedLibraryExtension	PathGetSharedLibraryExtensionA
+#endif
+
 #endif
 
 #endif /* WINPR_PATH_H */
