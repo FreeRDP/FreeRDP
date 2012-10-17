@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "cliprdr")
-set(MODULE_PREFIX "CHANNEL_CLIPRDR_CLIENT")
+set(CHANNEL_NAME "cliprdr")
+set(MODULE_NAME "${CHANNEL_NAME}")
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
 
 set(${MODULE_PREFIX}_SRCS
 	cliprdr_constants.h
@@ -25,22 +26,22 @@ set(${MODULE_PREFIX}_SRCS
 	cliprdr_main.c
 	cliprdr_main.h)
 
-# cliprdr is always built-in
-
-set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
-
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp winpr)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt)
+
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

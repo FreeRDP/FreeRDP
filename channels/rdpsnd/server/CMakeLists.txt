@@ -15,18 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "rdpsnd")
-set(MODULE_PREFIX "CHANNEL_RDPSND_SERVER")
+set(CHANNEL_NAME "rdpsnd")
+set(MODULE_NAME "${CHANNEL_NAME}-server")
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" MODULE_PREFIX)
 
 set(${MODULE_PREFIX}_SRCS
-	rdpsnd.c
-	PARENT_SCOPE)
+	rdpsnd.c)
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
-else()
-	set(${MODULE_PREFIX}_LIBS freerdp-utils PARENT_SCOPE)
-endif()
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Server")
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL}/Server")

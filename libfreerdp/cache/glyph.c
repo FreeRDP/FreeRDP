@@ -464,9 +464,6 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 		glyph->settings = settings;
 		glyph->context = ((freerdp*) settings->instance)->update->context;
 
-		if (settings->glyph_cache)
-			settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
-
 		for (i = 0; i < 10; i++)
 		{
 			glyph->glyphCache[i].number = settings->glyphCache[i].cacheEntries;

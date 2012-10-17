@@ -45,6 +45,8 @@ RelWithDebInfo
 *.so
 *.so.*
 *.dylib
+bin
+libs
 cunit/test_freerdp
 client/X11/xfreerdp
 client/Mac/xcode

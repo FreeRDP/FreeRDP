@@ -80,10 +80,25 @@ struct data_out_item
 /* get time in milliseconds */
 static UINT32 get_mstime(void)
 {
+#ifndef _WIN32
 	struct timeval tp;
-
 	gettimeofday(&tp, 0);
 	return (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+#else
+	FILETIME ft;
+	UINT64 time64 = 0;
+
+	GetSystemTimeAsFileTime(&ft);
+	
+	time64 |= ft.dwHighDateTime;
+	time64 <<= 32;
+	time64 |= ft.dwLowDateTime;
+	time64 /= 10000;
+	
+	/* fix epoch? */
+
+	return (UINT32) time64;
+#endif
 }
 
 /* process the linked list of data that has queued to be sent */

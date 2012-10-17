@@ -15,12 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(WITH_CLIENT_CHANNELS)
-	add_subdirectory(client)
-	if(${MODULE_PREFIX}_CLIENT_STATIC)
-		set(CHANNEL_STATIC_CLIENT_MODULES ${CHANNEL_STATIC_CLIENT_MODULES} ${MODULE_PREFIX} PARENT_SCOPE)
-		set(${MODULE_PREFIX}_CLIENT_NAME ${${MODULE_PREFIX}_CLIENT_NAME} PARENT_SCOPE)
-		set(${MODULE_PREFIX}_CLIENT_ENTRY ${${MODULE_PREFIX}_CLIENT_ENTRY} PARENT_SCOPE)
-	endif()
-endif()
+set(CHANNEL_NAME "rail")
+set(MODULE_NAME ${CHANNEL_NAME})
+string(TOUPPER "CHANNEL_${CHANNEL_NAME}" MODULE_PREFIX)
 
+if(WITH_CLIENT_CHANNELS)
+	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+endif()

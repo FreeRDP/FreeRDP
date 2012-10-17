@@ -23,13 +23,17 @@
 
 #include <errno.h>
 #include <freerdp/utils/passphrase.h>
+
 #ifdef _WIN32
+
 char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
 {
-	errno=ENOSYS;
+	errno = ENOSYS;
 	return NULL;
 }
-#else
+
+#elif (!ANDROID)
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -125,4 +129,13 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 		return NULL;
 	}
 }
+
+#else
+
+char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
+{
+	return NULL;
+}
+
 #endif
+

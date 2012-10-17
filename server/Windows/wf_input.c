@@ -164,3 +164,20 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 		wf_peer_mouse_event(input, flags, x, y);
 	}
 }
+
+
+void wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+{
+}
+
+void wf_peer_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+{
+}
+
+void wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+{
+}
+
+void wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+{
+}

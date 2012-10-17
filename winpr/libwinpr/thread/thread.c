@@ -196,7 +196,9 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 
 	pthread_mutex_lock(&thread->mutex);
 
+#ifndef ANDROID
 	pthread_cancel(thread->thread);
+#endif
 
 	pthread_mutex_unlock(&thread->mutex);
 

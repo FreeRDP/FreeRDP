@@ -76,7 +76,7 @@ BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 	PDEVICE_SERVICE_ENTRY entry = NULL;
 
 	name = (char*) plugin_data->data[0];
-	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_find_static_device_service_entry(name);
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_client_find_static_entry("DeviceServiceEntry", name);
 
 	if (!entry)
 	{

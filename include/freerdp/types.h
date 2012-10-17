@@ -23,8 +23,6 @@
 
 #include <winpr/wtypes.h>
 
-#include <freerdp/config.h>
-
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
 #endif

@@ -1,21 +1,22 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Windows Server
- *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Client
+* FreeRDP Windows Server
+*
+* Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+* Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifndef WF_INTERFACE_H
 #define WF_INTERFACE_H
@@ -28,6 +29,12 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/server/rdpsnd.h>
+
+#define WF_SRV_CALLBACK_EVENT_CONNECT 1
+#define WF_SRV_CALLBACK_EVENT_DISCONNECT 2
+#define WF_SRV_CALLBACK_EVENT_ACTIVATE 4
+#define WF_SRV_CALLBACK_EVENT_AUTH 8
 
 typedef struct wf_info wfInfo;
 typedef struct wf_peer_context wfPeerContext;
@@ -50,6 +57,9 @@ struct wf_info
 	BOOL mirrorDriverActive;
 	UINT framesWaiting;
 
+	HANDLE snd_mutex;
+	BOOL snd_stop;
+
 	RECT invalid;
 	HANDLE mutex;
 	BOOL updatePending;
@@ -60,6 +70,9 @@ struct wf_info
 	unsigned long lastUpdate;
 	unsigned long nextUpdate;
 	SURFACE_BITS_COMMAND cmd;
+
+	BOOL input_disabled;
+	BOOL force_all_disconnect;
 };
 
 struct wf_peer_context
@@ -73,6 +86,9 @@ struct wf_peer_context
 	HANDLE socketEvent;
 	HANDLE socketThread;
 	HANDLE socketSemaphore;
+
+	WTSVirtualChannelManager* vcm;
+	rdpsnd_server_context* rdpsnd;
 };
 
 struct wf_server
@@ -83,10 +99,25 @@ struct wf_server
 };
 typedef struct wf_server wfServer;
 
+typedef void (__stdcall* cbCallback) (int, UINT32);
+
 FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
 
 FREERDP_API wfServer* wfreerdp_server_new();
 FREERDP_API void wfreerdp_server_free(wfServer* server);
+
+FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server);
+
+FREERDP_API UINT32 wfreerdp_server_num_peers();
+FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr);
+FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId);
+FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId);
+FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId);
+FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId);
+
+FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb);
+
+void wfreerdp_server_peer_callback_event(int pId, UINT32 eType);
 
 #endif /* WF_INTERFACE_H */

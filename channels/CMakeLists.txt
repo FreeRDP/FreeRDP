@@ -17,6 +17,64 @@
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+macro(add_channel_client _channel_prefix _channel_name)
+	add_subdirectory(client)
+	if(${_channel_prefix}_CLIENT_STATIC)
+		set(CHANNEL_STATIC_CLIENT_MODULES ${CHANNEL_STATIC_CLIENT_MODULES} ${_channel_prefix} PARENT_SCOPE)
+		set(${_channel_prefix}_CLIENT_NAME ${${_channel_prefix}_CLIENT_NAME} PARENT_SCOPE)
+		set(${_channel_prefix}_CLIENT_CHANNEL ${${_channel_prefix}_CLIENT_CHANNEL} PARENT_SCOPE)
+		set(${_channel_prefix}_CLIENT_ENTRY ${${_channel_prefix}_CLIENT_ENTRY} PARENT_SCOPE)
+		set(CHANNEL_STATIC_CLIENT_ENTRIES ${CHANNEL_STATIC_CLIENT_ENTRIES} ${${_channel_prefix}_CLIENT_ENTRY} PARENT_SCOPE)
+	endif()
+endmacro(add_channel_client)
+
+macro(add_channel_server _channel_prefix _channel_name)
+	add_subdirectory(server)
+	if(${_channel_prefix}_SERVER_STATIC)
+		set(CHANNEL_STATIC_SERVER_MODULES ${CHANNEL_STATIC_SERVER_MODULES} ${_channel_prefix} PARENT_SCOPE)
+		set(${_channel_prefix}_SERVER_NAME ${${_channel_prefix}_SERVER_NAME} PARENT_SCOPE)
+		set(${_channel_prefix}_SERVER_CHANNEL ${${_channel_prefix}_SERVER_CHANNEL} PARENT_SCOPE)
+		set(${_channel_prefix}_SERVER_ENTRY ${${_channel_prefix}_SERVER_ENTRY} PARENT_SCOPE)
+		set(CHANNEL_STATIC_SERVER_ENTRIES ${CHANNEL_STATIC_SERVER_ENTRIES} ${${_channel_prefix}_SERVER_ENTRY} PARENT_SCOPE)
+	endif()
+endmacro(add_channel_server)
+
+macro(add_channel_client_library _module_prefix _module_name _channel_name _plugin _entry)
+
+	if(_plugin AND MSVC AND (NOT STATIC_CHANNELS))
+		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
+	endif()
+	
+	if(_plugin AND (NOT STATIC_CHANNELS))
+		add_library(${_module_name} ${${_module_prefix}_SRCS})
+	else()
+		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+		set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+		set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+		add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	endif()
+	
+endmacro(add_channel_client_library)
+
+macro(add_channel_server_library _module_prefix _module_name _channel_name _plugin _entry)
+
+	if(_plugin AND MSVC AND (NOT STATIC_CHANNELS))
+		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
+	endif()
+	
+	if(_plugin AND (NOT STATIC_CHANNELS))
+		add_library(${_module_name} ${${_module_prefix}_SRCS})
+	else()
+		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+		set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
+		set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
+		add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	endif()
+	
+endmacro(add_channel_server_library)
+
 set(FILENAME "ChannelOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 

@@ -32,7 +32,11 @@
 #include "statvfs.h"
 #else
 #include <dirent.h>
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
 #include <sys/statvfs.h>
+#endif
 #endif
 
 #ifdef _WIN32
@@ -49,8 +53,8 @@
 #define unlink(a) _unlink(a)
 #define ftruncate(a,b) _chsize(a,b)
 
-typedef UINT32 ssize_t ;
-typedef UINT32 mode_t ;
+typedef UINT32 ssize_t;
+typedef UINT32 mode_t;
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 #define STAT stat

@@ -1042,6 +1042,10 @@ static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data
 	return TRUE;
 }
 
+#ifdef STATIC_CHANNELS
+#define DVCPluginEntry urbdrc_DVCPluginEntry
+#endif
+
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int error = 0;

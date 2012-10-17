@@ -44,8 +44,12 @@ void* _aligned_malloc(size_t size, size_t alignment)
 	if (alignment % 2 == 1)
 		return NULL;
 
+#ifdef ANDROID
+	memptr = memalign(alignment, size);
+#else
 	if (posix_memalign(&memptr, alignment, size) != 0)
 		return NULL;
+#endif
 
 	return memptr;
 }
@@ -83,8 +87,12 @@ void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	if (alignment < sizeof(void*))
 		alignment = sizeof(void*);
 
+#ifdef ANDROID
+	memptr = memalign(alignment, size);
+#else
 	if (posix_memalign(&memptr, alignment, size) != 0)
 		return NULL;
+#endif
 
 	return memptr;
 }

@@ -227,7 +227,7 @@ static int df_process_plugin_args(rdpSettings* settings, const char* name,
 	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
 
 	if (entry)
 	{

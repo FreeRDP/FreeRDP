@@ -28,20 +28,20 @@ set(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME}
-		winpr
-		freerdp
-		freerdp-channels-server)
-else()
-	target_link_libraries(${MODULE_NAME}
-		winpr-crt
-		freerdp-core
-		freerdp-utils
-		freerdp-codec
-		freerdp-channels
-		freerdp-channels-server)
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core freerdp-utils freerdp-codec)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")
 

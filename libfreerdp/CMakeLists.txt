@@ -29,7 +29,6 @@ set(${MODULE_PREFIX}_SUBMODULES
 	cache
 	codec
 	crypto
-	channels
 	locale
 	core)
 
