@@ -3,7 +3,7 @@ CMakeFiles/
 CMakeScripts/
 CMakeCache.txt
 config.h
-install_manifest.txt
+install_manifest*.txt
 CTestTestfile.cmake
 freerdp.pc
 Makefile

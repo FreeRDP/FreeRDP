@@ -311,8 +311,19 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "FreeRDP")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
+set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
 set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
 set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
 
+if(${MSVC_RUNTIME} STREQUAL "dynamic")
+	include(InstallRequiredSystemLibraries)
+endif()
+
 include(CPack)
+
+cpack_add_component(headers DISPLAY_NAME "Headers")
+cpack_add_component(libraries DISPLAY_NAME "Libraries")
+cpack_add_component(clients DISPLAY_NAME "Clients")
+
+set(CPACK_COMPONENTS_ALL clients libraries headers)
