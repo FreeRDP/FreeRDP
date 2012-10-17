@@ -307,6 +307,13 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${FREERDP_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${FREERDP_VERSION_REVISION})
 
+set(CPACK_SET_DESTDIR "on")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/tmp")
+
+set(CPACK_PACKAGE_CONTACT "Marc-Andre Moreau")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "marcandre.moreau@gmail.com")
+set(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "FreeRDP")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
@@ -316,8 +323,10 @@ set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
 set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
 set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
 
-if(${MSVC_RUNTIME} STREQUAL "dynamic")
-	include(InstallRequiredSystemLibraries)
+if(MSVC)
+	if(MSVC_RUNTIME STREQUAL "dynamic")
+		include(InstallRequiredSystemLibraries)
+	endif()
 endif()
 
 include(CPack)
@@ -327,3 +336,4 @@ cpack_add_component(libraries DISPLAY_NAME "Libraries")
 cpack_add_component(clients DISPLAY_NAME "Clients")
 
 set(CPACK_COMPONENTS_ALL clients libraries headers)
+

@@ -18,6 +18,8 @@ _CPack_Packages
 *.zip
 *.exe
 *.sh
+*.deb
+*.rpm
 *.tar.Z
 *.tar.gz
 
