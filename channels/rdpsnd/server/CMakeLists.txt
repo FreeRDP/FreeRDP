@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "rdpsnd")
-set(MODULE_NAME "${CHANNEL_NAME}-server")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" MODULE_PREFIX)
+define_channel_server("rdpsnd")
 
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd.c)

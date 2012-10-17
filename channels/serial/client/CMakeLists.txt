@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "serial")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("serial")
 
 set(${MODULE_PREFIX}_SRCS
 	serial_tty.c
@@ -27,7 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
-set_target_properties(serial PROPERTIES PREFIX "")
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
@@ -41,3 +39,4 @@ if(NOT STATIC_CHANNELS)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+

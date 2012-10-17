@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "drdynvc")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("drdynvc")
 
 set(${MODULE_PREFIX}_SRCS
 	drdynvc_main.c
