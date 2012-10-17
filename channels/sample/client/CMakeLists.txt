@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "sample")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("sample")
 
 set(${MODULE_PREFIX}_SRCS
 	skel_main.c

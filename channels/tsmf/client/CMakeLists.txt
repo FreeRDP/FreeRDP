@@ -16,9 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "tsmf")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("tsmf")
 
 set(${MODULE_PREFIX}_SRCS
 	tsmf_audio.c
@@ -69,6 +67,6 @@ if(WITH_ALSA)
 	add_subdirectory(alsa)
 endif()
 
-if(WITH_PULSEAUDIO)
+if(WITH_PULSE)
 	add_subdirectory(pulse)
 endif()

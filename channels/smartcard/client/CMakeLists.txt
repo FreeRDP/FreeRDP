@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "smartcard")
-set(MODULE_PREFIX "CHANNEL_RDPDR_SMARTCARD_CLIENT")
+define_channel_client("smartcard")
 
 set(${MODULE_PREFIX}_SRCS
 	scard_main.c

@@ -12,6 +12,12 @@ cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
 DartConfiguration.tcl
+_CPack_Packages
+
+# Packages
+*.sh
+*.tar.Z
+*.tar.gz
 
 # Eclipse
 *.project

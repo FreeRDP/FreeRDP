@@ -19,7 +19,8 @@ set(MODULE_NAME "freerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	client.c)
+	client.c
+	file.c)
 
 if(MSVC)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
