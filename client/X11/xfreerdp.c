@@ -553,7 +553,7 @@ BOOL xf_pre_connect(freerdp* instance)
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
 		}
-		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s:%d: Authentication only. Don't connect to X.\n", __FILE__, __LINE__);
 		/* Avoid XWindows initialization and configuration below. */
 		return TRUE;
 	}
@@ -949,7 +949,7 @@ int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
 
 	if (entry)
 	{

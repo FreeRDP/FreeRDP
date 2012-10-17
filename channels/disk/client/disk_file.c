@@ -55,6 +55,11 @@
 
 #include "disk_file.h"
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#endif
+
 static BOOL disk_file_wildcard_match(const char* pattern, const char* filename)
 {
 	const char *p = pattern, *f = filename;
@@ -455,6 +460,8 @@ BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT3
 	UINT32 FileAttributes;
 	UINT32 FileNameLength;
 
+	m = 0;
+
 	switch (FsInformationClass)
 	{
 		case FileBasicInformation:
@@ -692,3 +699,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, UINT32 FsInformationClass, BYTE 
 
 	return ret;
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif

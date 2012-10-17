@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP Client User Interfaces
+# FreeRDP Clients
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,28 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# User Interfaces
+# Clients
 
-if(NOT WIN32)
-	# Build Sample Client
-	add_subdirectory(Sample)
+add_subdirectory(common)
 
-	# Build X11 Client
-	find_suggested_package(X11)
-	if(WITH_X11)
-		add_subdirectory(X11)
+if(WIN32)
+	add_subdirectory(Windows)
+else()
+	if(WITH_SAMPLE)
+		add_subdirectory(Sample)
 	endif()
 
-	# Build DirectFB Client
 	find_optional_package(DirectFB)
 	if(WITH_DIRECTFB)
 		add_subdirectory(DirectFB)
 	endif()
-else()
-	# Build Windows Client
-	add_subdirectory(Windows)
+endif()
+
+if(NOT WIN32 AND (NOT ANDROID))
+	find_suggested_package(X11)
+	if(WITH_X11)
+		add_subdirectory(X11)
+	endif()
 endif()
 
 if(APPLE)
 	add_subdirectory(Mac)
 endif()
+

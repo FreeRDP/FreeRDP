@@ -22,9 +22,9 @@
 
 #include <freerdp/api.h>
 
-FREERDP_API void* freerdp_channels_find_static_virtual_channel_entry(const char* name);
-FREERDP_API void* freerdp_channels_find_static_device_service_entry(const char* name);
-FREERDP_API void* freerdp_channels_find_static_entry(const char* name, const char* entry);
+FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier);
+FREERDP_API void* freerdp_channels_client_find_dynamic_entry(const char* name, const char* identifier);
+FREERDP_API void* freerdp_channels_client_find_entry(const char* name, const char* identifier);
 
 #endif /* FREERDP_CHANNELS_CLIENT */
 

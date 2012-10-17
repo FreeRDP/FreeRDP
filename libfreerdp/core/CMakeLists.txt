@@ -92,25 +92,11 @@ set(${MODULE_PREFIX}_SRCS
 	peer.c
 	peer.h)
 
-if(MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
-
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS winpr)
-else()
-	set(${MODULE_PREFIX}_LIBS
-		winpr-utils
-		winpr-sspi
-		winpr-crt)
-	if (NOT WIN32)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-registry)
-	endif()
-endif()
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
@@ -120,15 +106,19 @@ endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_LIBRARIES})
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE freerdp
+	MODULES freerdp-core freerdp-crypto freerdp-codec freerdp-locale freerdp-utils)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-registry winpr-utils winpr-sspi winpr-crt)
+
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		freerdp-utils
-		freerdp-codec
-		freerdp-crypto
-		freerdp-locale)
-		
+else()		
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()

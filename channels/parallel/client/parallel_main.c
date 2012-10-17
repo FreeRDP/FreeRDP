@@ -307,6 +307,10 @@ static void parallel_free(DEVICE* device)
 	free(parallel);
 }
 
+#ifdef STATIC_CHANNELS
+#define DeviceServiceEntry	parallel_DeviceServiceEntry
+#endif
+
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;

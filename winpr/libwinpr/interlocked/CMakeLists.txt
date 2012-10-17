@@ -25,18 +25,21 @@ if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-if(MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-crt winpr-handle winpr-synch)
+
 if(MONOLITHIC_BUILD)
 
 else()
-	target_link_libraries(${MODULE_NAME} winpr-crt winpr-handle winpr-synch)
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

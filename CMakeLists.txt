@@ -28,6 +28,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
+include(CMakeDetermineSystem)
 include(FindPkgConfig)
 include(TestBigEndian)
 
@@ -36,6 +37,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
 include(AutoVersioning)
 include(ConfigOptions)
+include(ComplexLibrary)
 include(BuildFeatureCheck)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
@@ -62,10 +64,6 @@ endif()
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
-endif()
-
-if(NOT BUILD_SHARED_LIBS AND MONOLITHIC_BUILD)
-	set(STATIC_CHANNELS ON)
 endif()
 
 # Configure MSVC Runtime
@@ -97,11 +95,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	endif()
-	if(WITH_SSE2_TARGET)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-	endif()
 	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+	endif()
+	if(WITH_SSE2)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
 	endif()
 endif()
 
@@ -125,18 +123,10 @@ if(MSVC)
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 endif()
 
-# config.h definition for installable headers
-check_include_files(limits.h FREERDP_HAVE_LIMITS_H)
-check_include_files(stdint.h FREERDP_HAVE_STDINT_H)
-check_include_files(stdbool.h FREERDP_HAVE_STDBOOL_H)
-check_include_files(inttypes.h FREERDP_HAVE_INTTYPES_H)
-
 # Include files
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
-check_include_files(limits.h HAVE_LIMITS_H)
 check_include_files(stdint.h HAVE_STDINT_H)
-check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(inttypes.h HAVE_INTTYPES_H)
 check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
 check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
@@ -159,20 +149,37 @@ if(APPLE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl-framework,CoreFoundation")	
 endif()
 
+# Android
+if(ANDROID)
+	set(WITH_X11 OFF)
+	set(WITH_CUPS OFF)
+	set(WITH_ALSA OFF)
+	set(WITH_PULSEAUDIO OFF)
+	set(WITH_FFMPEG OFF)
+	set(WITH_GSTREAMER OFF)
+	set(WITH_PCSC OFF)
+endif()
+
 if(NOT WIN32)
 	find_required_package(ZLIB)
 	find_optional_package(PulseAudio)
 	find_optional_package(MacAudio)
 	find_optional_package(PCSC)
-	find_suggested_package(Cups)
+
+	if(NOT ANDROID)
+		find_suggested_package(Cups)
+	endif()
 
 	if(NOT APPLE)
-		find_suggested_package(FFmpeg)
 		find_suggested_package(XRandR)
 		find_suggested_package(Gstreamer)
-		find_suggested_package(ALSA)
-	else(NOT APPLE)
-		find_optional_package(FFmpeg)
+		if(NOT ANDROID)
+			find_suggested_package(ALSA)
+		endif()
+	endif()
+
+	if(NOT ANDROID)
+		find_suggested_package(FFmpeg)
 	endif()
 endif()
 
@@ -206,7 +213,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/freerdp/config.h)
+
+# RPATH configuration
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 
 # Unit Tests
 

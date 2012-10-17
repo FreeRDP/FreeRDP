@@ -1,21 +1,21 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Windows Server
- *
- * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Client
+* FreeRDP Windows Server
+*
+* Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,19 +41,19 @@ int wf_info_lock(wfInfo* wfi)
 
 	switch (dRes)
 	{
-		case WAIT_ABANDONED:
-		case WAIT_OBJECT_0:
-			return TRUE;
-			break;
+	case WAIT_ABANDONED:
+	case WAIT_OBJECT_0:
+		return TRUE;
+		break;
 
-		case WAIT_TIMEOUT:
-			return FALSE;
-			break;
+	case WAIT_TIMEOUT:
+		return FALSE;
+		break;
 
-		case WAIT_FAILED:
-			printf("wf_info_lock failed with 0x%08X\n", GetLastError());
-			return -1;
-			break;
+	case WAIT_FAILED:
+		printf("wf_info_lock failed with 0x%08X\n", GetLastError());
+		return -1;
+		break;
 	}
 
 	return -1;
@@ -67,19 +67,19 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 
 	switch (dRes)
 	{
-		case WAIT_ABANDONED:
-		case WAIT_OBJECT_0:
-			return TRUE;
-			break;
+	case WAIT_ABANDONED:
+	case WAIT_OBJECT_0:
+		return TRUE;
+		break;
 
-		case WAIT_TIMEOUT:
-			return FALSE;
-			break;
+	case WAIT_TIMEOUT:
+		return FALSE;
+		break;
 
-		case WAIT_FAILED:
-			printf("wf_info_try_lock failed with 0x%08X\n", GetLastError());
-			return -1;
-			break;
+	case WAIT_FAILED:
+		printf("wf_info_try_lock failed with 0x%08X\n", GetLastError());
+		return -1;
+		break;
 	}
 
 	return -1;
@@ -100,7 +100,7 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
-/*
+	/*
 	OSVERSIONINFOEX osvi;
 	SYSTEM_INFO si;
 	BOOL bOsVersionInfoEx;
@@ -136,19 +136,32 @@ wfInfo* wf_info_init()
 			_tprintf(_T("Failed to create update thread\n"));
 		}
 
-		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * 32);
+		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		memset(wfi->peers, 0, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
 
-		wfi->framesPerSecond = 24;
+		//Set FPS
+		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-				wfi->framesPerSecond = dwValue;
-				
+				wfi->framesPerSecond = dwValue;		
 		}
+		RegCloseKey(hKey);
 
+		//Set input toggle
+		wfi->input_disabled = FALSE;
+
+		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		if (status == ERROR_SUCCESS)
+		{
+			if (RegQueryValueEx(hKey, _T("DisableInput"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			{
+				if (dwValue != 0)
+					wfi->input_disabled = TRUE;
+			}
+		}
 		RegCloseKey(hKey);
 
 		//detect windows version
@@ -162,15 +175,15 @@ wfInfo* wf_info_init()
 		wfi->win8 = FALSE;
 		if(bOsVersionInfoEx != 0 )
 		{
-			if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
-			osvi.dwMajorVersion > 4 )
-			{
-				if ( osvi.dwMajorVersion == 6 && 
-					osvi.dwMinorVersion == 2)
-				{
-					wfi->win8 = TRUE;
-				}
-			}
+		if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
+		osvi.dwMajorVersion > 4 )
+		{
+		if ( osvi.dwMajorVersion == 6 && 
+		osvi.dwMinorVersion == 2)
+		{
+		wfi->win8 = TRUE;
+		}
+		}
 		}
 		*/
 	}
@@ -190,6 +203,15 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
+		int i;
+		int peerId;
+		if (wfi->peerCount == WF_INFO_MAXPEERS)
+		{
+			context->socketClose = TRUE;
+			wf_info_unlock(wfi);
+			return;
+		}
+
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -199,12 +221,25 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 #else
 		wf_mirror_driver_activate(wfi);
 #endif
+		//look trhough the array of peers until an empty slot
+		for(i=0; i<WF_INFO_MAXPEERS; ++i)
+		{
+			//empty index will be our peer id
+			if (wfi->peers[i] == NULL)
+			{
+				peerId = i;
+				break;
+			}
+		}
 
-		wfi->peers[wfi->peerCount++] = ((rdpContext*) context)->peer;
-
-		printf("Registering Peer: %d\n", wfi->peerCount);
+		wfi->peers[peerId] = ((rdpContext*) context)->peer;
+		wfi->peers[peerId]->pId = peerId;
+		wfi->peerCount++;
+		printf("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
 
 		wf_info_unlock(wfi);
+
+		wfreerdp_server_peer_callback_event(peerId, WF_SRV_CALLBACK_EVENT_CONNECT);
 	}
 }
 
@@ -212,10 +247,14 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		wfi->peers[--(wfi->peerCount)] = NULL;
+		int peerId;
+
+		peerId = ((rdpContext*) context)->peer->pId;
+		wfi->peers[peerId] = NULL;
+		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
 
-		printf("Unregistering Peer: %d\n", wfi->peerCount);
+		printf("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
 
 #ifdef WITH_WIN8
 		if (wfi->peerCount == 0)
@@ -223,6 +262,8 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 #endif
 
 		wf_info_unlock(wfi);
+
+		wfreerdp_server_peer_callback_event(peerId, WF_SRV_CALLBACK_EVENT_DISCONNECT);
 	}
 }
 

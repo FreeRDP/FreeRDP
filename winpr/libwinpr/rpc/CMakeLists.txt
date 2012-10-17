@@ -41,11 +41,9 @@ set(${MODULE_PREFIX}_SRCS
 	ndr_union.h
 	midl.c)
 
-if(MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})

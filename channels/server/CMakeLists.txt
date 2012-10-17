@@ -18,23 +18,32 @@
 set(MODULE_NAME "freerdp-channels-server")
 set(MODULE_PREFIX "FREERDP_CHANNELS_SERVER")
 
-foreach(_MODULE_NAME ${CHANNEL_BUILTIN_SERVER_MODULES})
-	string(TOUPPER "CHANNEL_${_MODULE_NAME}" _MODULE_PREFIX)
-	message(STATUS "Adding built-in channel server module: ${_MODULE_NAME}")
-
-	foreach(SRC ${${_MODULE_PREFIX}_SERVER_SRCS})
-		set(CHANNEL_SERVER_SRCS ${CHANNEL_SERVER_SRCS} "../${_MODULE_NAME}/server/${SRC}")
-	endforeach()
-
-	set(CHANNEL_SERVER_LIBS ${CHANNEL_SERVER_LIBS} ${${_MODULE_PREFIX}_SERVER_LIBS})
+set(${MODULE_PREFIX}_SRCS
+	channels.c
+	channels.h)
+	
+foreach(STATIC_MODULE ${CHANNEL_STATIC_SERVER_MODULES})
+	set(STATIC_MODULE_NAME ${${STATIC_MODULE}_SERVER_NAME})
+	set(STATIC_MODULE_CHANNEL ${${STATIC_MODULE}_SERVER_CHANNEL})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${STATIC_MODULE_NAME})
+	message(STATUS "Adding static server channel: ${STATIC_MODULE_CHANNEL}")
 endforeach()
 
-add_library(${MODULE_NAME} ${CHANNEL_SERVER_SRCS})
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
-target_link_libraries(${MODULE_NAME} ${CHANNEL_SERVER_LIBS})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE freerdp
+	MODULES freerdp-utils)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-interlocked)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/Server")
-

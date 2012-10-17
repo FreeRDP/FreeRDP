@@ -24,17 +24,26 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(${PCSC_INCLUDE_DIRS})
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp winpr)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PCSC_LIBRARIES})
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
-
-target_link_libraries(${MODULE_NAME} ${PCSC_LIBRARIES})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")

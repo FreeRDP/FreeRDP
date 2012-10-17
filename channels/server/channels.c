@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Server Virtual Channel Interface
+ * Server Channels
  *
  * Copyright 2011-2012 Vic Lee
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +18,17 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/server/channels.h>
 
 #include <winpr/synch.h>
 
-#include "wtsvc.h"
+#include "channels.h"
 
 #define CREATE_REQUEST_PDU			0x01
 #define DATA_FIRST_PDU				0x02
@@ -49,6 +47,11 @@ static void wts_data_item_free(wts_data_item* item)
 {
 	free(item->buffer);
 	free(item);
+}
+
+void* freerdp_channels_server_find_static_entry(const char* name, const char* entry)
+{
+	return NULL;
 }
 
 static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, UINT32 ChannelId)
@@ -805,3 +808,4 @@ BOOL WTSVirtualChannelClose(
 
 	return TRUE;
 }
+

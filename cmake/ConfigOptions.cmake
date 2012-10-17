@@ -1,9 +1,21 @@
 
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
+	set(TARGET_ARCH "x86")
+elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+	set(TARGET_ARCH "x64")
+endif()
+
 option(WITH_MANPAGES "Generate manpages." ON)
-option(WITH_NEON "Enable NEON optimization for rfx decoder" OFF)
 option(WITH_PROFILER "Compile profiler." OFF)
-option(WITH_SSE2_TARGET "Allow compiler to generate SSE2 instructions." OFF)
-option(WITH_SSE2 "Use SSE2 optimization." OFF)
+
+if((TARGET_ARCH MATCHES "x86|x64") AND (NOT DEFINED WITH_SSE2))
+	option(WITH_SSE2 "Enable SSE2 optimization." ON)
+else()
+	option(WITH_SSE2 "Enable SSE2 optimization." OFF)
+endif()
+
+option(WITH_NEON "Enable NEON optimization." OFF)
+
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
 if(APPLE)
@@ -16,6 +28,7 @@ if(MSVC)
 endif()
 
 option(BUILD_TESTING "Build unit tests" OFF)
+option(WITH_SAMPLE "Build sample code" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
 	option(MONOLITHIC_BUILD "Use monolithic build" OFF)
@@ -24,6 +37,7 @@ endif()
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 
+option(STATIC_CHANNELS "Build channels statically" ON)
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 if(WITH_CLIENT AND WITH_CHANNELS)
