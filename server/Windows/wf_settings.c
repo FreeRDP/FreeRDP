@@ -92,7 +92,7 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 		strA[length] = '\0';
 		free(strX);
 #else
-		strA = (char*) str;
+		strA = (char*) strX;
 #endif
 		*value = strA;
 		return TRUE;
