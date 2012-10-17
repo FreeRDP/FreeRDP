@@ -236,7 +236,7 @@ int wf_dxgi_cleanup(wfInfo* wfi)
 
 int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 {
-	HRESULT status;
+	HRESULT status = 0;
 	UINT i = 0;
 	UINT DataBufferSize = 0;
 	BYTE* DataBuffer = NULL;
@@ -262,7 +262,11 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to acquire next frame with status=%d\n", status));
+		_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
+		_tprintf(_T("\tAccumulated Frames: %d\n\tRects: %d\n\tBuffSize: %d\n"),
+			FrameInfo.AccumulatedFrames,
+			FrameInfo.RectsCoalesced,
+			FrameInfo.TotalMetadataBufferSize);
 
 		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
