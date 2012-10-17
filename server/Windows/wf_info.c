@@ -282,7 +282,7 @@ BOOL wf_info_have_updates(wfInfo* wfi)
 void wf_info_update_changes(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
+	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond * 1000);
 #else
 	GETCHANGESBUF* buf;
 

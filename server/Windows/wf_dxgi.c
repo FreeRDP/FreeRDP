@@ -338,6 +338,16 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	wfi->framesWaiting = FrameInfo.AccumulatedFrames;
 
+	if (FrameInfo.AccumulatedFrames == 0)
+	{
+		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
+
+		if (FAILED(status))
+		{
+			_tprintf(_T("Failed to release frame with status=%d\n"), status);
+		}
+	}
+
 	return 0;
 }
 
