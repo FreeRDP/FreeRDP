@@ -67,17 +67,27 @@ DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
 int wf_dxgi_init(wfInfo* context)
 {
-	HRESULT status;
-	UINT dTop, i = 0;
-	DXGI_OUTPUT_DESC desc;
-	IDXGIOutput * pOutput;
-	UINT DriverTypeIndex;
-	IDXGIDevice* DxgiDevice = NULL;
-	IDXGIAdapter* DxgiAdapter = NULL;
-	IDXGIOutput* DxgiOutput = NULL;
-	IDXGIOutput1* DxgiOutput1 = NULL;
-
+	//not sure if needed
 	gAcquiredDesktopImage = NULL;
+
+	if (wf_dxgi_createDevice(context) != 0)
+	{
+		return 1;
+	}
+
+	if (wf_dxgi_getDuplication(context) != 0)
+	{
+		return 1;
+	}
+
+	return 0;
+	
+}
+
+int wf_dxgi_createDevice(wfInfo* context)
+{
+	HRESULT status;
+	UINT DriverTypeIndex;
 
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
@@ -116,7 +126,21 @@ int wf_dxgi_init(wfInfo* context)
 		}
 		*/
 	}
-		
+
+	return 0;
+}
+
+int wf_dxgi_getDuplication(wfInfo* context)
+{
+	HRESULT status;
+	UINT dTop, i = 0;
+	DXGI_OUTPUT_DESC desc;
+	IDXGIOutput * pOutput;
+	IDXGIDevice* DxgiDevice = NULL;
+	IDXGIAdapter* DxgiAdapter = NULL;
+	IDXGIOutput* DxgiOutput = NULL;
+	IDXGIOutput1* DxgiOutput1 = NULL;
+
 	status = gDevice->lpVtbl->QueryInterface(gDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
 
 	if (FAILED(status))
@@ -200,6 +224,7 @@ int wf_dxgi_init(wfInfo* context)
 	return 0;
 }
 
+
 int wf_dxgi_cleanup(wfInfo* wfi)
 {
 	if (wfi->framesWaiting > 0)
@@ -262,20 +287,29 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
-		_tprintf(_T("\tAccumulated Frames: %d\n\tRects: %d\n\tBuffSize: %d\n"),
-			FrameInfo.AccumulatedFrames,
-			FrameInfo.RectsCoalesced,
-			FrameInfo.TotalMetadataBufferSize);
-
-		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
-
-		if (FAILED(status))
+		if (status == DXGI_ERROR_ACCESS_LOST)
 		{
-			_tprintf(_T("Failed to release frame with status=%d\n", status));
+			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
+			_tprintf(_T("Trying to reinitialize due to ACCESS LOST..."));
+			wf_dxgi_getDuplication(wfi);
 		}
+		else
+		{
+			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
+			_tprintf(_T("\tAccumulated Frames: %d\n\tRects: %d\n\tBuffSize: %d\n"),
+				FrameInfo.AccumulatedFrames,
+				FrameInfo.RectsCoalesced,
+				FrameInfo.TotalMetadataBufferSize);
+
+			status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
+
+			if (FAILED(status))
+			{
+				_tprintf(_T("Failed to release frame with status=%d\n", status));
+			}
 		
-		return 1;
+			return 1;
+		}
 	}
 		
 	status = DesktopResource->lpVtbl->QueryInterface(DesktopResource, &IID_ID3D11Texture2D, (void**) &gAcquiredDesktopImage);
