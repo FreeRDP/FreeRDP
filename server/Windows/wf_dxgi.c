@@ -217,7 +217,7 @@ int wf_dxgi_getDuplication(wfInfo* context)
 			return 1;
 		}
 		
-		_tprintf(_T("Failed to get duplicate output\n"));
+		_tprintf(_T("Failed to get duplicate output. Status = %#X\n"), status);
 		return 1;
 	}
 
@@ -291,7 +291,22 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 		{
 			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
 			_tprintf(_T("Trying to reinitialize due to ACCESS LOST..."));
+			if (gAcquiredDesktopImage)
+			{
+
+				gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
+				gAcquiredDesktopImage = NULL;
+			}
+
+			if (gOutputDuplication)
+			{
+				gOutputDuplication->lpVtbl->Release(gOutputDuplication);
+				gOutputDuplication = NULL;
+			} 
+
 			wf_dxgi_getDuplication(wfi);
+
+			return 1;
 		}
 		else
 		{
