@@ -27,18 +27,28 @@
 
 #include <winpr/path.h>
 
-#define PATH_SLASH_STR			"/"
 #define PATH_SLASH_CHR			'/'
+#define PATH_SLASH_STR			"/"
 
-#define PATH_BACKSLASH_STR		"\\"
 #define PATH_BACKSLASH_CHR		'\\'
+#define PATH_BACKSLASH_STR		"\\"
 
 #ifdef _WIN32
-#define PATH_SEPARATOR_STR		PATH_BACKSLASH_STR
-#define PATH_SEPARATOR_CHR		PATH_BACKSLASH_CHR
+#define PATH_SLASH_STR_W		L"/"
+#define PATH_BACKSLASH_STR_W		L"\\"
 #else
-#define PATH_SEPARATOR_STR		PATH_SLASH_STR
+#define PATH_SLASH_STR_W		"/"
+#define PATH_BACKSLASH_STR_W		"\\"
+#endif
+
+#ifdef _WIN32
+#define PATH_SEPARATOR_CHR		PATH_BACKSLASH_CHR
+#define PATH_SEPARATOR_STR		PATH_BACKSLASH_STR
+#define PATH_SEPARATOR_STR_W		PATH_BACKSLASH_STR_W
+#else
 #define PATH_SEPARATOR_CHR		PATH_SLASH_CHR
+#define PATH_SEPARATOR_STR		PATH_SLASH_STR
+#define PATH_SEPARATOR_STR_W		PATH_SLASH_STR_W
 #endif
 
 #define SHARED_LIBRARY_EXT_DLL		"dll"
@@ -269,7 +279,7 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 
 #define DEFINE_UNICODE		TRUE
 #define _PATH_SEPARATOR_CHR	PATH_BACKSLASH_CHR
-#define _PATH_SEPARATOR_STR	PATH_BACKSLASH_STR
+#define _PATH_SEPARATOR_STR	PATH_BACKSLASH_STR_W
 #define PATH_CCH_APPEND		PathCchAppendW
 #include "include/PathCchAppend.c"
 #undef DEFINE_UNICODE
@@ -379,7 +389,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 
 #define DEFINE_UNICODE		TRUE
 #define _PATH_SEPARATOR_CHR	PATH_BACKSLASH_CHR
-#define _PATH_SEPARATOR_STR	PATH_BACKSLASH_STR
+#define _PATH_SEPARATOR_STR	PATH_BACKSLASH_STR_W
 #define PATH_ALLOC_COMBINE	PathAllocCombineW
 #include "include/PathAllocCombine.c"
 #undef DEFINE_UNICODE
@@ -401,7 +411,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 
 #define DEFINE_UNICODE		TRUE
 #define _PATH_SEPARATOR_CHR	PATH_SLASH_CHR
-#define _PATH_SEPARATOR_STR	PATH_SLASH_STR
+#define _PATH_SEPARATOR_STR	PATH_SLASH_STR_W
 #define PATH_ALLOC_COMBINE	UnixPathAllocCombineW
 #include "include/PathAllocCombine.c"
 #undef DEFINE_UNICODE
@@ -423,7 +433,7 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 
 #define DEFINE_UNICODE		TRUE
 #define _PATH_SEPARATOR_CHR	PATH_SEPARATOR_CHR
-#define _PATH_SEPARATOR_STR	PATH_SEPARATOR_STR
+#define _PATH_SEPARATOR_STR	PATH_SEPARATOR_STR_W
 #define PATH_ALLOC_COMBINE	NativePathAllocCombineW
 #include "include/PathAllocCombine.c"
 #undef DEFINE_UNICODE
@@ -637,7 +647,7 @@ HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	int index;
+	size_t index;
 
 	if (dwFlags & PATH_STYLE_WINDOWS)
 	{
@@ -694,7 +704,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 
 HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	int index;
+	size_t index;
 
 	if (dwFlags & PATH_STYLE_WINDOWS)
 	{
