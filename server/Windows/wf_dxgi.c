@@ -81,7 +81,10 @@ int wf_dxgi_init(wfInfo* context)
 
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
-		status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, D3D11_CREATE_DEVICE_DEBUG, FeatureLevels, NumFeatureLevels,
+		/*status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, D3D11_CREATE_DEVICE_DEBUG, FeatureLevels, NumFeatureLevels,
+								D3D11_SDK_VERSION, &gDevice, &FeatureLevel, &gContext);
+		*/
+		status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, NULL, FeatureLevels, NumFeatureLevels,
 								D3D11_SDK_VERSION, &gDevice, &FeatureLevel, &gContext);
 		if (SUCCEEDED(status))
 			break;
@@ -92,9 +95,10 @@ int wf_dxgi_init(wfInfo* context)
 	if (FAILED(status))
 	{
 		_tprintf(_T("Failed to create device in InitializeDx\n"));
-		//return 1;
+		return 1;
 
 		//debug
+		/*
 		for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 		{
 			status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, NULL, FeatureLevels, NumFeatureLevels,
@@ -110,6 +114,7 @@ int wf_dxgi_init(wfInfo* context)
 			_tprintf(_T("Failed to create device in InitializeDx\n"));
 			return 1;
 		}
+		*/
 	}
 		
 	status = gDevice->lpVtbl->QueryInterface(gDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
@@ -257,13 +262,13 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to acquire next frame\n"));
+		_tprintf(_T("Failed to acquire next frame with status=%d\n", status));
 
 		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to release frame\n"));
+			_tprintf(_T("Failed to release frame with status=%d\n", status));
 		}
 		
 		return 1;
