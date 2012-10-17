@@ -85,12 +85,31 @@ int wf_dxgi_init(wfInfo* context)
 								D3D11_SDK_VERSION, &gDevice, &FeatureLevel, &gContext);
 		if (SUCCEEDED(status))
 			break;
+
+		_tprintf(_T("D3D11CreateDevice returned [%d] for Driver Type %d\n"), status, DriverTypes[DriverTypeIndex]);
 	}
 
 	if (FAILED(status))
 	{
 		_tprintf(_T("Failed to create device in InitializeDx\n"));
-		return 1;
+		//return 1;
+
+		//debug
+		for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
+		{
+			status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, NULL, FeatureLevels, NumFeatureLevels,
+									D3D11_SDK_VERSION, &gDevice, &FeatureLevel, &gContext);
+			if (SUCCEEDED(status))
+				break;
+
+			_tprintf(_T("D3D11CreateDevice returned [%d] for Driver Type %d\n"), status, DriverTypes[DriverTypeIndex]);
+		}
+
+		if (FAILED(status))
+		{
+			_tprintf(_T("Failed to create device in InitializeDx\n"));
+			return 1;
+		}
 	}
 		
 	status = gDevice->lpVtbl->QueryInterface(gDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
