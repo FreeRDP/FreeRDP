@@ -22,7 +22,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-file)
+	MODULES winpr-file winpr-path)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

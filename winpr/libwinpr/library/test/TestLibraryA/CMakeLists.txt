@@ -16,8 +16,15 @@
 # limitations under the License.
 
 set(MODULE_NAME "TestLibraryA")
+set(MODULE_PREFIX "TEST_LIBRARY_A")
 
-add_library(${MODULE_NAME} TestLibraryA.c)
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} TestLibraryA.c)
+
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
