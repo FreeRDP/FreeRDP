@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
 #include <winpr/handle.h>
 
 #include <winpr/file.h>
@@ -266,6 +267,8 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
+	ZeroMemory(lpFindFileData, sizeof(LPWIN32_FIND_DATAA));
+
 	return NULL;
 }
 

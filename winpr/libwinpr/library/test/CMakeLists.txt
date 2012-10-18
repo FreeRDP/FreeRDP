@@ -28,14 +28,14 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
 set(TEST_AREA "${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME}Area")
-file(MAKE_DIRECTORY ${TEST_AREA})
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
-	add_test(${TestName} ${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME} ${TestName} ${TEST_AREA})
+	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName} ${TEST_AREA})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
 
 add_subdirectory(TestLibraryA)
 add_subdirectory(TestLibraryB)
+
