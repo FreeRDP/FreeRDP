@@ -136,12 +136,10 @@ endif()
 target_link_libraries(MacFreeRDP
 			${EXTRA_LIBS}
 			freerdp-core
-			freerdp-channels
 			freerdp-cache
 			freerdp-gdi
 			freerdp-utils
 			freerdp-codec
-			freerdp-rail
-)
+			freerdp-rail)
 
 set_property(TARGET MacFreeRDP PROPERTY FOLDER "Client/Mac")

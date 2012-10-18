@@ -25,15 +25,10 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CMAKE_DL_LIBS})
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		freerdp-core
-		freerdp-gdi
-		freerdp-utils
-		freerdp-channels)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core freerdp-gdi freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

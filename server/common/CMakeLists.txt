@@ -1,7 +1,6 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP cmake build script
+# FreeRDP Server Common
 #
-# Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,23 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_MACAUDIO_SRCS
-	rdpsnd_audio_q.c)
+set(MODULE_NAME "freerdp-server")
+set(MODULE_PREFIX "FREERDP_SERVER")
 
-include_directories(..)
-include_directories(${MACAUDIO_INCLUDE_DIRS})
+set(${MODULE_PREFIX}_SRCS
+	server.c)
 
-add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
-set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
-
-if(MONOLITHIC_BUILD)
-	target_link_libraries(rdpsnd_macaudio freerdp)
-else()
-	target_link_libraries(rdpsnd_macaudio freerdp-utils)
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-target_link_libraries(rdpsnd_macaudio ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
-target_link_libraries(rdpsnd_macaudio ${MAC_COREFOUNDATION_LIBRARY_PATH})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-install(TARGETS rdpsnd_macaudio DESTINATION ${FREERDP_PLUGIN_PATH})
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")

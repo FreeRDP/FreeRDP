@@ -11,8 +11,9 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	char* str;
 	int length;
 	LPTSTR BasePath;
-	//HINSTANCE library;
-	LPTSTR LibraryPath;
+	HINSTANCE library;
+	LPCTSTR SharedLibraryExtension;
+	TCHAR LibraryPath[PATHCCH_MAX_CCH];
 
 	str = argv[1];
 
@@ -23,28 +24,31 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	BasePath[length] = 0;
 #else
 	BasePath = _strdup(str);
+	length = strlen(BasePath);
 #endif
 	
-	_tprintf(_T("Base Path: %s\n"), BasePath);
+	CopyMemory(LibraryPath, BasePath, length * sizeof(TCHAR));
+	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
+	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
 
-	PathAllocCombine(BasePath, _T("TestLibraryA\\TestLibraryA.dll"), 0, &LibraryPath);
+	SharedLibraryExtension = PathGetSharedLibraryExtension(PATH_SHARED_LIB_EXT_WITH_DOT);
+	NativePathCchAddExtension(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension); /* add shared library extension */
 
-	//_tprintf(_T("Loading Library: %s\n"), LibraryPath);
+	_tprintf(_T("Loading Library: %s\n"), LibraryPath);
 
-	/*
 	library = LoadLibrary(LibraryPath);
 
 	if (!library)
 	{
-		printf("LoadLibrary failure\n");
+		_tprintf(_T("LoadLibrary failure\n"));
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		printf("FreeLibrary failure\n");
+		_tprintf(_T("FreeLibrary failure\n"));
 		return -1;
-	}*/
+	}
 
 	return 0;
 }

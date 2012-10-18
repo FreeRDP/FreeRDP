@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "rdpdr")
-set(MODULE_PREFIX "CHANNEL_RDPDR_CLIENT")
+define_channel_client("rdpdr")
 
 set(${MODULE_PREFIX}_SRCS
 	irp.c
@@ -28,21 +27,20 @@ set(${MODULE_PREFIX}_SRCS
 	rdpdr_capabilities.c
 	rdpdr_capabilities.h)
 
-# rdpdr is always built-in
-
-set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
-
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp winpr)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
-

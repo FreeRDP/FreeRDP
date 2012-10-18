@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "disk")
-set(MODULE_PREFIX "CHANNEL_RDPDR_DISK_CLIENT")
+define_channel_client("disk")
 
 set(${MODULE_PREFIX}_SRCS
 	disk_file.c
@@ -30,31 +29,25 @@ if(WIN32)
 		dirent.h)
 endif()
 
-if(MSVC AND (NOT STATIC_CHANNELS))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
-
-if(NOT STATIC_CHANNELS)
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-else()
-	set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-	set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-	set(${MODULE_PREFIX}_ENTRY "DeviceServiceEntry" PARENT_SCOPE)
-
-	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
-endif()
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS freerdp winpr)
-else()
-	set(${MODULE_PREFIX}_LIBS freerdp-utils winpr-crt winpr-synch winpr-thread winpr-interlocked)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 

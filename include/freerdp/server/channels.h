@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * config.h definitions for installable headers
+ * Server Channels
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,20 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CONFIG_H
-#define FREERDP_CONFIG_H
+#ifndef FREERDP_CHANNELS_SERVER
+#define FREERDP_CHANNELS_SERVER
 
-/*
- * This generated config.h header is meant for installation, which is why
- * all definitions MUST be prefixed to avoid conflicting with third-party
- * libraries. Only add configurable definitions which really must be used
- * from installable headers, such as the base type definition types.
- */
+#include <freerdp/api.h>
 
-#cmakedefine FREERDP_HAVE_LIMITS_H
-#cmakedefine FREERDP_HAVE_STDINT_H
-#cmakedefine FREERDP_HAVE_STDBOOL_H
-#cmakedefine FREERDP_HAVE_INTTYPES_H
+FREERDP_API void* freerdp_channels_server_find_static_entry(const char* name, const char* entry);
 
-#endif
+#endif /* FREERDP_CHANNELS_SERVER */
 

@@ -39,14 +39,14 @@ find_suggested_package(Xext)
 if(WITH_XEXT)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
-	target_link_libraries(${MODULE_NAME} ${XEXT_LIBRARIES})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XEXT_LIBRARIES})
 endif()
 
 find_suggested_package(Xdamage)
 if(WITH_XDAMAGE)
         add_definitions(-DWITH_XDAMAGE)
         include_directories(${XDAMAGE_INCLUDE_DIRS})
-        target_link_libraries(${MODULE_NAME} ${XDAMAGE_LIBRARIES})
+        set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XDAMAGE_LIBRARIES})
 endif()
 
 find_suggested_package(Xfixes)
@@ -54,30 +54,29 @@ if(WITH_XFIXES)
         add_definitions(-DWITH_XFIXES)
         include_directories(${XFIXES_INCLUDE_DIRS})
         target_link_libraries(${MODULE_NAME} ${XFIXES_LIBRARIES})
+        set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XFIXES_LIBRARIES})
 endif()
 
 find_suggested_package(XTest)
 if(WITH_XTEST)
         add_definitions(-DWITH_XTEST)
         include_directories(${XTEST_INCLUDE_DIRS})
-        target_link_libraries(${MODULE_NAME} ${XTEST_LIBRARIES})
+        set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XTEST_LIBRARIES})
 endif()
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
-	target_link_libraries(${MODULE_NAME} winpr)
-else()
-	target_link_libraries(${MODULE_NAME}
-		freerdp-core
-		freerdp-codec
-		freerdp-utils
-		freerdp-gdi
-		freerdp-crypto
-		freerdp-locale)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${X11_LIBRARIES})
 
-	target_link_libraries(${MODULE_NAME} winpr-sspi)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core freerdp-codec freerdp-utils freerdp-gdi freerdp-crypto freerdp-locale)
 
-target_link_libraries(${MODULE_NAME} ${X11_LIBRARIES})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-sspi)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/X11")

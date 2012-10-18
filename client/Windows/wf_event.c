@@ -119,6 +119,30 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
+static int wf_event_process_WM_MOUSEWHEEL(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	int delta;
+	int flags;
+	rdpInput* input;
+
+	DefWindowProc(hWnd, Msg, wParam, lParam);
+	input = wfi->instance->input;
+	delta = ((signed short) HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam); */
+
+	if (delta > 0)
+	{
+		flags = PTR_FLAGS_WHEEL | 0x0078;
+	}
+	else
+	{
+		flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
+	}
+
+	input->MouseEvent(input, flags, 0, 0);
+	
+	return 0;
+}
+
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
@@ -141,7 +165,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		{
 			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
-				
+
 				x = ps.rcPaint.left;
 				y = ps.rcPaint.top;
 				w = ps.rcPaint.right - ps.rcPaint.left + 1;
@@ -174,8 +198,15 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam), Y_POS(lParam));
 				break;
 
+			case WM_MOUSEWHEEL:
+				wf_event_process_WM_MOUSEWHEEL(wfi, hWnd, Msg, wParam, lParam);
+				break;
+
 			case WM_SETCURSOR:
-				SetCursor(wfi->cursor);
+				if (LOWORD(lParam) == HTCLIENT)
+					SetCursor(wfi->cursor);
+				else
+					DefWindowProc(hWnd, Msg, wParam, lParam);
 				break;
 
 			default:
@@ -198,7 +229,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_SETCURSOR:
-			SetCursor(g_default_cursor);
+			if (LOWORD(lParam) == HTCLIENT)
+				SetCursor(g_default_cursor);
+			else
+				DefWindowProc(hWnd, Msg, wParam, lParam);
 			break;
 
 		case WM_SETFOCUS:

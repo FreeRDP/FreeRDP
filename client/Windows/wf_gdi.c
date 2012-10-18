@@ -142,7 +142,7 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, UINT32 color, int bpp)
 		{
 			for (i = 0; i != 8; i++)
 				ipattern[7 - i] = brush->data[i];
-	
+
 			cdata = wf_glyph_convert(wfi, 8, 8, ipattern);
 			pattern = CreateBitmap(8, 8, 1, 1, cdata);
 			lbr.lbHatch = (ULONG_PTR) pattern;
@@ -342,7 +342,7 @@ void wf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 
 	wf_set_rop2(wfi->drawing->hdc, line_to->bRop2);
 	org_pen = (HPEN) SelectObject(wfi->drawing->hdc, pen);
-	
+
 	MoveToEx(wfi->drawing->hdc, line_to->nXStart, line_to->nYStart, NULL);
 	LineTo(wfi->drawing->hdc, line_to->nXEnd, line_to->nYEnd);
 
@@ -469,7 +469,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wfi->image->_bitmap.data = (BYTE*) realloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
 		freerdp_image_flip(nsc_context->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
 		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
-	} 
+	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
 		wfi->image->_bitmap.width = surface_bits_command->width;

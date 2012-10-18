@@ -48,19 +48,21 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 	set(WITH_SUN true)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND (NOT ANDROID))
 	find_suggested_package(X11)
 	if(WITH_X11)
 		add_definitions(-DWITH_X11)
 		include_directories(${X11_INCLUDE_DIRS})
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
 		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${X11_LIBRARIES})
+
 		if(WITH_SUN)
 			add_definitions(-DWITH_SUN)
 			set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SUN_SRCS})
 		elseif(NOT APPLE)
 			find_suggested_package(XKBFile)
 		endif()
+
 		if(WITH_XKBFILE)
 			add_definitions(-DWITH_XKBFILE)
 			include_directories(${XKBFILE_INCLUDE_DIRS})
@@ -72,21 +74,25 @@ if(NOT WIN32)
 	endif()
 endif()
 
-if(MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt)
+
 if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-crt)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-utils)
-
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()

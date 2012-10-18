@@ -1,7 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "rail")
-set(MODULE_PREFIX "CHANNEL_RAIL_CLIENT")
+define_channel_client("rail")
 
 set(${MODULE_PREFIX}_SRCS
 	rail_main.c
@@ -24,23 +23,16 @@ set(${MODULE_PREFIX}_SRCS
 	rail_orders.c
 	rail_orders.h)
 
-# rail is always built-in
-
-set(${MODULE_PREFIX}_STATIC ON PARENT_SCOPE)
-set(${MODULE_PREFIX}_NAME ${MODULE_NAME} PARENT_SCOPE)
-set(${MODULE_PREFIX}_ENTRY "VirtualChannelEntry" PARENT_SCOPE)
-
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(${MODULE_NAME} freerdp)
-else()
-	target_link_libraries(${MODULE_NAME} freerdp-utils)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
 

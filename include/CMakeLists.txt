@@ -18,17 +18,15 @@
 # limitations under the License.
 
 file(GLOB FREERDP_HEADERS "freerdp/*.h")
-install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp)
+install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp COMPONENT headers)
 
-install(DIRECTORY freerdp/cache DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/codec DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/crypto DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/gdi DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/locale DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/rail DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/utils DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/client DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/server DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/channels DESTINATION include/freerdp FILES_MATCHING PATTERN "*.h")
-
-
+install(DIRECTORY freerdp/cache DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/codec DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/crypto DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/gdi DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/locale DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/rail DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/utils DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/client DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/server DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/channels DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")

@@ -293,7 +293,6 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 			_tprintf(_T("Trying to reinitialize due to ACCESS LOST..."));
 			if (gAcquiredDesktopImage)
 			{
-
 				gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
 				gAcquiredDesktopImage = NULL;
 			}

@@ -179,7 +179,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	settings->glyph_cache = FALSE;
+	settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfi->cursor = g_default_cursor;
 
@@ -457,7 +457,7 @@ int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_D
 	void* entry = NULL;
 	rdpChannels* channels = (rdpChannels*) user_data;
 
-	entry = freerdp_channels_find_static_virtual_channel_entry(name);
+	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
 
 	if (entry)
 	{

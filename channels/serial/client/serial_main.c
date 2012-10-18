@@ -397,6 +397,10 @@ static void serial_free(DEVICE* device)
 	free(serial);
 }
 
+#ifdef STATIC_CHANNELS
+#define DeviceServiceEntry	serial_DeviceServiceEntry
+#endif
+
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i, len;

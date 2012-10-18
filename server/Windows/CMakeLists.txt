@@ -38,7 +38,6 @@ set(${MODULE_PREFIX}_SRCS
 	wf_settings.c
 	wf_settings.h
 	wf_info.c
-
 	wf_info.h)
 
 if(WITH_SERVER_INTERFACE)
@@ -49,26 +48,21 @@ else()
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
+
 if(WITH_WIN8)		
-	set(${MODULE_PREFIX}_LIBS d3d11 dxgi dxguid)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi dxguid)
 endif()
 
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dsound)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-channels-server dsound)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
-else()
-
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		freerdp-core
-		freerdp-utils
-		freerdp-codec
-		freerdp-channels)
-endif()
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core freerdp-utils freerdp-codec)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
 
 if(WITH_SERVER_INTERFACE)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})

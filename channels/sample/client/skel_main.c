@@ -40,7 +40,7 @@
 
 #include "skel_main.h"
 
-struct skel_plugin
+struct sample_plugin
 {
 	rdpSvcPlugin plugin;
 
@@ -48,12 +48,12 @@ struct skel_plugin
 
 };
 
-static void skel_process_interval(rdpSvcPlugin* plugin)
+static void sample_process_interval(rdpSvcPlugin* plugin)
 {
 	printf("skel_process_interval:\n");
 }
 
-static void skel_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
 	skelPlugin* skel = (skelPlugin*)plugin;
 	STREAM* data_out;
@@ -88,27 +88,27 @@ static void skel_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	stream_free(data_in);
 }
 
-static void skel_process_connect(rdpSvcPlugin* plugin)
+static void sample_process_connect(rdpSvcPlugin* plugin)
 {
-	skelPlugin* skel = (skelPlugin*)plugin;
+	samplePlugin* sample = (samplePlugin*) plugin;
 	DEBUG_SVC("connecting");
 
-	printf("skel_process_connect:\n");
+	printf("sample_process_connect:\n");
 
-	if (skel == NULL)
+	if (sample == NULL)
 	{
 		return;
 	}
 
 	/* if you want a call from channel thread once is a while do this */
 	plugin->interval_ms = 1000;
-	plugin->interval_callback = skel_process_interval;
+	plugin->interval_callback = sample_process_interval;
 
 }
 
-static void skel_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
-	printf("skel_process_event:\n");
+	printf("sample_process_event:\n");
 
 	/* events comming from main freerdp window to plugin */
 	/* send them back with svc_plugin_send_event */
@@ -116,11 +116,11 @@ static void skel_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	freerdp_event_free(event);
 }
 
-static void skel_process_terminate(rdpSvcPlugin* plugin)
+static void sample_process_terminate(rdpSvcPlugin* plugin)
 {
 	skelPlugin* skel = (skelPlugin*)plugin;
 
-	printf("skel_process_terminate:\n");
+	printf("sample_process_terminate:\n");
 
 	if (skel == NULL)
 	{
@@ -132,5 +132,27 @@ static void skel_process_terminate(rdpSvcPlugin* plugin)
 	free(plugin);
 }
 
-DEFINE_SVC_PLUGIN(skel, "skel",
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP)
+#define VirtualChannelEntry	sample_VirtualChannelEntry
+
+const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	samplePlugin* _p;
+
+	_p = (samplePlugin*) malloc(sizeof(samplePlugin));
+	ZeroMemory(_p, sizeof(samplePlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP;
+
+	strcpy(_p->plugin.channel_def.name, "sample");
+
+	_p->plugin.connect_callback = sample_process_connect;
+	_p->plugin.receive_callback = sample_process_receive;
+	_p->plugin.event_callback = sample_process_event;
+	_p->plugin.terminate_callback = sample_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}

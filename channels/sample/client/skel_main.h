@@ -18,9 +18,9 @@
  * limitations under the License.
  */
 
-#ifndef __SKEL_MAIN_H
-#define __SKEL_MAIN_H
+#ifndef __SAMPLE_MAIN_H
+#define __SAMPLE_MAIN_H
 
-typedef struct skel_plugin skelPlugin;
+typedef struct sample_plugin samplePlugin;
 
-#endif /* __SKEL_MAIN_H */
+#endif /* __SAMPLE_MAIN_H */

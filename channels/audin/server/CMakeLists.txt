@@ -15,14 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_PREFIX "CHANNEL_AUDIN_SERVER")
+define_channel_server("audin")
 
 set(${MODULE_PREFIX}_SRCS
-	audin.c
-	PARENT_SCOPE)
+	audin.c)
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS freerdp PARENT_SCOPE)
-else()
-	set(${MODULE_PREFIX}_LIBS freerdp-utils freerdp-channels PARENT_SCOPE)
-endif()
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
+
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL}/Server")
