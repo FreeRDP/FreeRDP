@@ -287,6 +287,50 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 #undef _PATH_SEPARATOR_STR
 #undef PATH_CCH_APPEND
 
+/* Unix-style Paths */
+
+#define DEFINE_UNICODE		FALSE
+#define _PATH_SEPARATOR_CHR	PATH_SLASH_CHR
+#define _PATH_SEPARATOR_STR	PATH_SLASH_STR
+#define PATH_CCH_APPEND		UnixPathCchAppendA
+#include "include/PathCchAppend.c"
+#undef DEFINE_UNICODE
+#undef _PATH_SEPARATOR_CHR
+#undef _PATH_SEPARATOR_STR
+#undef PATH_CCH_APPEND
+
+#define DEFINE_UNICODE		TRUE
+#define _PATH_SEPARATOR_CHR	PATH_SLASH_CHR
+#define _PATH_SEPARATOR_STR	PATH_SLASH_STR_W
+#define PATH_CCH_APPEND		UnixPathCchAppendW
+#include "include/PathCchAppend.c"
+#undef DEFINE_UNICODE
+#undef _PATH_SEPARATOR_CHR
+#undef _PATH_SEPARATOR_STR
+#undef PATH_CCH_APPEND
+
+/* Native-style Paths */
+
+#define DEFINE_UNICODE		FALSE
+#define _PATH_SEPARATOR_CHR	PATH_SEPARATOR_CHR
+#define _PATH_SEPARATOR_STR	PATH_SEPARATOR_STR
+#define PATH_CCH_APPEND		NativePathCchAppendA
+#include "include/PathCchAppend.c"
+#undef DEFINE_UNICODE
+#undef _PATH_SEPARATOR_CHR
+#undef _PATH_SEPARATOR_STR
+#undef PATH_CCH_APPEND
+
+#define DEFINE_UNICODE		TRUE
+#define _PATH_SEPARATOR_CHR	PATH_SEPARATOR_CHR
+#define _PATH_SEPARATOR_STR	PATH_SEPARATOR_STR_W
+#define PATH_CCH_APPEND		NativePathCchAppendW
+#include "include/PathCchAppend.c"
+#undef DEFINE_UNICODE
+#undef _PATH_SEPARATOR_CHR
+#undef _PATH_SEPARATOR_STR
+#undef PATH_CCH_APPEND
+
 /*
  * PathCchAppendEx
  */

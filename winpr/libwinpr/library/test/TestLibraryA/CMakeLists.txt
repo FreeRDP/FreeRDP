@@ -21,4 +21,7 @@ add_library(${MODULE_NAME} TestLibraryA.c)
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
+set_target_properties(${MODULE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TEST_AREA}/${MODULE_NAME}")
+file(MAKE_DIRECTORY "${TEST_AREA}/${MODULE_NAME}")
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test/Extra")
