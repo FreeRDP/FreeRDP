@@ -6,9 +6,9 @@
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 
-TCHAR testFile1[] = _T("TestFile1");
-TCHAR testFile2[] = _T("TestFile2");
-TCHAR testFile3[] = _T("TestFile3");
+static TCHAR testFile1[] = _T("TestFile1");
+static TCHAR testFile2[] = _T("TestFile2");
+static TCHAR testFile3[] = _T("TestFile3");
 
 int TestFileFindFirstFile(int argc, char* argv[])
 {
@@ -34,6 +34,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 	CopyMemory(FilePath, BasePath, length * sizeof(TCHAR));
 	FilePath[length] = 0;
 
+	PathCchConvertStyle(BasePath, length, PATH_STYLE_WINDOWS);
 	NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestFile1"));
 
 	_tprintf(_T("Finding file: %s\n"), FilePath);
@@ -48,14 +49,12 @@ int TestFileFindFirstFile(int argc, char* argv[])
 
 	_tprintf(_T("FindFirstFile: %s"), FindData.cFileName);
 
-#if 0
 	if (_tcscmp(FindData.cFileName, testFile1) != 0)
 	{
 		_tprintf(_T("FindFirstFile failure: Expected: %d, Actual: %s\n"),
 				testFile1, FindData.cFileName);
 		return -1;
 	}
-#endif
 
 	FindClose(hFind);
 

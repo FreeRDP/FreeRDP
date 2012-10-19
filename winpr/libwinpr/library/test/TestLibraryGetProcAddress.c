@@ -33,6 +33,8 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 #endif
 	
 	CopyMemory(LibraryPath, BasePath, length * sizeof(TCHAR));
+	LibraryPath[length] = 0;
+
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
 
@@ -49,7 +51,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 		return -1;
 	}
 
-	pFunctionA = (TEST_AB_FN) GetProcAddress(library, _T("FunctionA"));
+	pFunctionA = (TEST_AB_FN) GetProcAddress(library, "FunctionA");
 
 	if (!pFunctionA)
 	{
@@ -57,7 +59,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 		return -1;
 	}
 
-	pFunctionB = (TEST_AB_FN) GetProcAddress(library, _T("FunctionB"));
+	pFunctionB = (TEST_AB_FN) GetProcAddress(library, "FunctionB");
 
 	if (!pFunctionB)
 	{

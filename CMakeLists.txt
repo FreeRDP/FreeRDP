@@ -237,7 +237,11 @@ INCLUDE(CTest)
 
 if(BUILD_TESTING)
 	enable_testing()
-	set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+	if(MSVC)
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+	else()
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+	endif()
 endif()
 
 # WinPR

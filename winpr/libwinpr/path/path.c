@@ -811,17 +811,17 @@ static const CHAR SharedLibraryExtensionDllA[] = "dll";
 static const CHAR SharedLibraryExtensionSoA[] = "so";
 static const CHAR SharedLibraryExtensionDylibA[] = "dylib";
 
-static const WCHAR SharedLibraryExtensionDllW[] = { 'd','l','l' };
-static const WCHAR SharedLibraryExtensionSoW[] = { 's','o' };
-static const WCHAR SharedLibraryExtensionDylibW[] = { 'd','y','l','i','b' };
+static const WCHAR SharedLibraryExtensionDllW[] = { 'd','l','l','\0' };
+static const WCHAR SharedLibraryExtensionSoW[] = { 's','o','\0' };
+static const WCHAR SharedLibraryExtensionDylibW[] = { 'd','y','l','i','b','\0' };
 
 static const CHAR SharedLibraryExtensionDotDllA[] = ".dll";
 static const CHAR SharedLibraryExtensionDotSoA[] = ".so";
 static const CHAR SharedLibraryExtensionDotDylibA[] = ".dylib";
 
-static const WCHAR SharedLibraryExtensionDotDllW[] = { '.','d','l','l' };
-static const WCHAR SharedLibraryExtensionDotSoW[] = { '.','s','o' };
-static const WCHAR SharedLibraryExtensionDotDylibW[] = { '.','d','y','l','i','b' };
+static const WCHAR SharedLibraryExtensionDotDllW[] = { '.','d','l','l','\0' };
+static const WCHAR SharedLibraryExtensionDotSoW[] = { '.','s','o','\0' };
+static const WCHAR SharedLibraryExtensionDotDylibW[] = { '.','d','y','l','i','b','\0' };
 
 PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 {
