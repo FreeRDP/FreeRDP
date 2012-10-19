@@ -25,6 +25,8 @@
 #include <stdlib.h>
 
 #include <winpr\windows.h>
+
+#include <InitGuid.h>
 #define CINTERFACE
 #include <mmsystem.h>
 #include <dsound.h>

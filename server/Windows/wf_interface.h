@@ -29,6 +29,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+
 #include <freerdp/server/rdpsnd.h>
 
 #define WF_SRV_CALLBACK_EVENT_CONNECT 1
