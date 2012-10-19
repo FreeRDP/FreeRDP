@@ -1,15 +1,12 @@
 
-set(CHANNEL_TYPE "device")
-set(CHANNEL_SHORT_NAME "disk")
-set(CHANNEL_LONG_NAME "Disk Redirection Virtual Channel Extension")
-set(CHANNEL_SPECIFICATIONS "[MS-RDPEFS]")
-
-string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
+set(OPTION_DEFAULT ON)
 
 if(ANDROID)
-	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" OFF)
-else()
-	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+	set(OPTION_DEFAULT OFF)
 endif()
 
+define_channel_options(NAME "disk" TYPE "device"
+	DESCRIPTION "Disk Redirection Virtual Channel Extension"
+	SPECIFICATIONS "[MS-RDPEFS]"
+	DEFAULT ${OPTION_DEFAULT})
 
