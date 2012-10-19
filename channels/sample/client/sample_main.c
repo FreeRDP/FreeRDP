@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Audio Output Virtual Channel
+ * Sample Virtual Channel
  *
  * Copyright 2009-2012 Jay Sorg
  * Copyright 2010-2012 Vic Lee
@@ -30,15 +30,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/constants.h>
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 
-#include "skel_main.h"
+#include "sample_main.h"
 
 struct sample_plugin
 {
@@ -50,20 +52,20 @@ struct sample_plugin
 
 static void sample_process_interval(rdpSvcPlugin* plugin)
 {
-	printf("skel_process_interval:\n");
+	printf("sample_process_interval:\n");
 }
 
 static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
-	skelPlugin* skel = (skelPlugin*)plugin;
-	STREAM* data_out;
 	int bytes;
+	STREAM* data_out;
+	samplePlugin* sample = (samplePlugin*) plugin;
 
-	printf("skel_process_receive:\n");
+	printf("sample_process_receive:\n");
 
-	if (skel == NULL)
+	if (sample == NULL)
 	{
-		printf("skel_process_receive: skel is nil\n");
+		printf("sample_process_receive: sample is nil\n");
 		return;
 	}
 
@@ -71,7 +73,7 @@ static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	/* here we just send the same data back */
 
 	bytes = stream_get_size(data_in);
-	printf("skel_process_receive: got bytes %d\n", bytes);
+	printf("sample_process_receive: got bytes %d\n", bytes);
 	if (bytes > 0)
 	{
 		data_out = stream_new(bytes);
@@ -80,7 +82,7 @@ static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 		   we do not free it */
 
 		bytes = stream_get_length(data_in);
-		printf("skel_process_receive: sending bytes %d\n", bytes);
+		printf("sample_process_receive: sending bytes %d\n", bytes);
 
 		svc_plugin_send(plugin, data_out);
 	}
@@ -118,11 +120,11 @@ static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void sample_process_terminate(rdpSvcPlugin* plugin)
 {
-	skelPlugin* skel = (skelPlugin*)plugin;
+	samplePlugin* sample = (samplePlugin*)plugin;
 
 	printf("sample_process_terminate:\n");
 
-	if (skel == NULL)
+	if (sample == NULL)
 	{
 		return;
 	}

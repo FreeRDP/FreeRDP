@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Audio Output Virtual Channel
+ * Sample Virtual Channel
  *
  * Copyright 2012 Jay Sorg
  * Copyright 2010-2012 Vic Lee

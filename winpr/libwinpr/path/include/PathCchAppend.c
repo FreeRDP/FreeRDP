@@ -48,7 +48,7 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, L _PATH_SEPARATOR_STR L"%s", pszMore);
+			swprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, _PATH_SEPARATOR_STR L"%s", pszMore);
 			return S_OK;
 		}
 	}

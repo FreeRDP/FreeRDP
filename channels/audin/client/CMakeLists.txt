@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "audin")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("audin")
 
 set(${MODULE_PREFIX}_SRCS
 	audin_main.c
@@ -40,12 +38,12 @@ if(NOT STATIC_CHANNELS)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 if(WITH_ALSA)
 	add_subdirectory(alsa)
 endif()
 
-if(WITH_PULSEAUDIO)
+if(WITH_PULSE)
 	add_subdirectory(pulse)
 endif()

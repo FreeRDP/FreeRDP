@@ -16,23 +16,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPSND_MACAUDIO_SRCS
-	rdpsnd_audio_q.c)
+define_channel_client_subsystem("rdpsnd" "mac" "")
+
+set(${MODULE_PREFIX}_SRCS
+	rdpsnd_mac.c)
 
 include_directories(..)
 include_directories(${MACAUDIO_INCLUDE_DIRS})
 
-add_library(rdpsnd_macaudio ${RDPSND_MACAUDIO_SRCS})
-set_target_properties(rdpsnd_macaudio PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(rdpsnd_macaudio freerdp)
-else()
-	target_link_libraries(rdpsnd_macaudio freerdp-utils)
-endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-target_link_libraries(rdpsnd_macaudio ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
-target_link_libraries(rdpsnd_macaudio ${MAC_COREFOUNDATION_LIBRARY_PATH})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${MAC_COREFOUNDATION_LIBRARY_PATH})
 
-install(TARGETS rdpsnd_macaudio DESTINATION ${FREERDP_PLUGIN_PATH})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 

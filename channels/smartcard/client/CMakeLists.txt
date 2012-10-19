@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "smartcard")
-set(MODULE_PREFIX "CHANNEL_RDPDR_SMARTCARD_CLIENT")
+define_channel_client("smartcard")
 
 set(${MODULE_PREFIX}_SRCS
 	scard_main.c
@@ -46,4 +45,4 @@ if(NOT STATIC_CHANNELS)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

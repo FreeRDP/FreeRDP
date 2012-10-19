@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,23 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(AUDIN_PULSE_SRCS
-	audin_pulse.c
-)
+define_channel_client_subsystem("audin" "pulse" "")
+
+set(${MODULE_PREFIX}_SRCS
+	audin_pulse.c)
 
 include_directories(..)
-include_directories(${PULSEAUDIO_INCLUDE_DIR})
+include_directories(${PULSE_INCLUDE_DIR})
 
-add_library(audin_pulse ${AUDIN_PULSE_SRCS})
-set_target_properties(audin_pulse PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(audin_pulse freerdp)
-else()
-	target_link_libraries(audin_pulse freerdp-utils)
-endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-target_link_libraries(audin_pulse ${PULSEAUDIO_LIBRARY})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
 
-install(TARGETS audin_pulse DESTINATION ${FREERDP_PLUGIN_PATH})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PULSE_LIBRARY})
 
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})

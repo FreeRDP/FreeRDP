@@ -1,10 +1,8 @@
 
-set(CHANNEL_TYPE "static")
-set(CHANNEL_SHORT_NAME "rdpsnd")
-set(CHANNEL_LONG_NAME "Audio Output Virtual Channel Extension")
-set(CHANNEL_SPECIFICATIONS "[MS-RDPEA]")
+set(OPTION_DEFAULT ON)
 
-string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
-
-option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+define_channel_options(NAME "rdpsnd" TYPE "static"
+	DESCRIPTION "Audio Output Virtual Channel Extension"
+	SPECIFICATIONS "[MS-RDPEA]"
+	DEFAULT ${OPTION_DEFAULT})
 

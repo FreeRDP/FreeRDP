@@ -1021,7 +1021,6 @@ BOOL mac_pre_connect(freerdp *inst)
     int  i;
     
     inst->settings->offscreen_bitmap_cache = FALSE;
-    inst->settings->glyph_cache = TRUE;
     inst->settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
     inst->settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
     inst->settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
