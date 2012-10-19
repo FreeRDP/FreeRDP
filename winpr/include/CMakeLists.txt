@@ -16,4 +16,4 @@
 # limitations under the License.
 
 file(GLOB WINPR_HEADERS "winpr/*.h")
-install(FILES ${WINPR_HEADERS} DESTINATION include/winpr)
+install(FILES ${WINPR_HEADERS} DESTINATION include/winpr COMPONENT headers)

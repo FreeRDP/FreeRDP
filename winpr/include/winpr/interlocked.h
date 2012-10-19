@@ -150,21 +150,21 @@ WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, 
 
 /* Doubly-Linked List */
 
-VOID InitializeListHead(PLIST_ENTRY ListHead);
+WINPR_API VOID InitializeListHead(PLIST_ENTRY ListHead);
 
-BOOL IsListEmpty(const LIST_ENTRY* ListHead);
+WINPR_API BOOL IsListEmpty(const LIST_ENTRY* ListHead);
 
-BOOL RemoveEntryList(PLIST_ENTRY Entry);
+WINPR_API BOOL RemoveEntryList(PLIST_ENTRY Entry);
 
-VOID InsertHeadList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry);
-PLIST_ENTRY RemoveHeadList(PLIST_ENTRY ListHead);
+WINPR_API VOID InsertHeadList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry);
+WINPR_API PLIST_ENTRY RemoveHeadList(PLIST_ENTRY ListHead);
 
-VOID InsertTailList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry);
-PLIST_ENTRY RemoveTailList(PLIST_ENTRY ListHead);
-VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend);
+WINPR_API VOID InsertTailList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry);
+WINPR_API PLIST_ENTRY RemoveTailList(PLIST_ENTRY ListHead);
+WINPR_API VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend);
 
-VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry);
-PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead);
+WINPR_API VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry);
+WINPR_API PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead);
 
 #endif /* WINPR_INTERLOCKED_H */
 

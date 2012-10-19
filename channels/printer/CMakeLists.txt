@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "printer")
-set(MODULE_NAME ${CHANNEL_NAME})
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}" MODULE_PREFIX)
+define_channel("printer")
 
 if(WITH_CLIENT_CHANNELS)
 	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})

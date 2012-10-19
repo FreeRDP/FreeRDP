@@ -16,7 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "xfreerdp")
-set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
+set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 
 include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
@@ -101,7 +101,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-rail freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")
-

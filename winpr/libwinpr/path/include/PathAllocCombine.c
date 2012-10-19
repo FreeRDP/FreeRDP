@@ -59,7 +59,7 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 		if (backslashIn)
 			swprintf_s(pszPathOut, sizeOfBuffer, L"%s%s", pszPathIn, pszMore);
 		else
-			swprintf_s(pszPathOut, sizeOfBuffer, L"%s" L _PATH_SEPARATOR_STR L"%s", pszPathIn, pszMore);
+			swprintf_s(pszPathOut, sizeOfBuffer, L"%s" _PATH_SEPARATOR_STR L"%s", pszPathIn, pszMore);
 
 		*ppszPathOut = pszPathOut;
 

@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP cmake build script for gstreamer plugin
+# FreeRDP cmake build script for gstreamer subsystem
 #
 # (C) Copyright 2012 Hewlett-Packard Development Company, L.P.
 #
@@ -15,25 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+define_channel_client_subsystem("tsmf" "gstreamer" "video")
 
-
-set(TSMF_GSTREAMER_SRCS
-	tsmf_gstreamer.c
-)
+set(${MODULE_PREFIX}_SRCS
+	tsmf_gstreamer.c)
 
 include_directories(..)
 include_directories(${GSTREAMER_INCLUDE_DIRS})
 
-add_library(tsmf_gstreamer ${TSMF_GSTREAMER_SRCS})
-set_target_properties(tsmf_gstreamer PROPERTIES PREFIX "")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(MONOLITHIC_BUILD)
-	target_link_libraries(tsmf_gstreamer freerdp)
-else()
-	target_link_libraries(tsmf_gstreamer freerdp-utils)
-endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-target_link_libraries(tsmf_gstreamer ${GSTREAMER_LIBRARIES} gstapp-0.10 gstinterfaces-0.10 Xrandr X11 Xext)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
 
-install(TARGETS tsmf_gstreamer DESTINATION ${FREERDP_PLUGIN_PATH})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
+	${GSTREAMER_LIBRARIES}
+	gstapp-0.10
+	gstinterfaces-0.10
+	Xrandr X11 Xext)
 
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})

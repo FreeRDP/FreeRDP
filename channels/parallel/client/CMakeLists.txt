@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CHANNEL_NAME "parallel")
-set(MODULE_NAME "${CHANNEL_NAME}")
-string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" MODULE_PREFIX)
+define_channel_client("parallel")
 
 set(${MODULE_PREFIX}_SRCS
 	parallel_main.c)
@@ -42,4 +40,4 @@ if(NOT STATIC_CHANNELS)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${MODULE_NAME}/Client")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
