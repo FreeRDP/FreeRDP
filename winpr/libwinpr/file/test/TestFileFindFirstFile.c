@@ -7,8 +7,6 @@
 #include <winpr/windows.h>
 
 static TCHAR testFile1[] = _T("TestFile1");
-static TCHAR testFile2[] = _T("TestFile2");
-static TCHAR testFile3[] = _T("TestFile3");
 
 int TestFileFindFirstFile(int argc, char* argv[])
 {
