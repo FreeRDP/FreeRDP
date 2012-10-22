@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +33,27 @@
 #include <winpr/synch.h>
 
 #include "channels.h"
+
+/**
+ * this is a workaround to force importing symbols
+ * will need to fix that later on cleanly
+ */
+
+#include <freerdp/server/audin.h>
+#include <freerdp/server/rdpsnd.h>
+
+void freerdp_channels_dummy()
+{
+	audin_server_context_new(NULL);
+	audin_server_context_free(NULL);
+
+	rdpsnd_server_context_new(NULL);
+	rdpsnd_server_context_free(NULL);
+}
+
+/**
+ * end of ugly symbols import workaround
+ */
 
 #define CREATE_REQUEST_PDU			0x01
 #define DATA_FIRST_PDU				0x02

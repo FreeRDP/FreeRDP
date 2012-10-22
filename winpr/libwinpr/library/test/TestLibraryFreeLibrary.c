@@ -28,6 +28,8 @@ int TestLibraryFreeLibrary(int argc, char* argv[])
 #endif
 
 	CopyMemory(LibraryPath, BasePath, length * sizeof(TCHAR));
+	LibraryPath[length] = 0;
+
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
 

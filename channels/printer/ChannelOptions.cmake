@@ -1,16 +1,16 @@
 
-set(CHANNEL_TYPE "device")
-set(CHANNEL_SHORT_NAME "printer")
-set(CHANNEL_LONG_NAME "Print Virtual Channel Extension")
-set(CHANNEL_SPECIFICATIONS "[MS-RDPEPC]")
-
-string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
+set(OPTION_DEFAULT ON)
 
 if(WIN32)
-	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+	set(OPTION_DEFAULT ON)
 elseif(WITH_CUPS)
-	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+	set(OPTION_DEFAULT ON)
 else()
-	option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" OFF)
+	set(OPTION_DEFAULT OFF)
 endif()
+
+define_channel_options(NAME "printer" TYPE "device"
+	DESCRIPTION "Print Virtual Channel Extension"
+	SPECIFICATIONS "[MS-RDPEPC]"
+	DEFAULT ${OPTION_DEFAULT})
 

@@ -21,6 +21,7 @@
 #define FREERDP_CHANNELS_CLIENT
 
 #include <freerdp/api.h>
+#include <freerdp/channels/channels.h>
 
 FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier);
 FREERDP_API void* freerdp_channels_client_find_dynamic_entry(const char* name, const char* identifier);

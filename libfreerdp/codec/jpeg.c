@@ -23,7 +23,10 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
+
 #include <freerdp/codec/color.h>
+
+#include <freerdp/codec/jpeg.h>
 
 #ifdef WITH_JPEG
 
@@ -122,8 +125,7 @@ do_decompress(char* comp_data, int comp_data_bytes,
 }
 
 /* jpeg decompress */
-BOOL
-jpeg_decompress(BYTE * input, BYTE * output, int width, int height, int size, int bpp)
+BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size, int bpp)
 {
 	int lwidth;
 	int lheight;
@@ -149,8 +151,7 @@ jpeg_decompress(BYTE * input, BYTE * output, int width, int height, int size, in
 
 #else
 
-BOOL
-jpeg_decompress(BYTE * input, BYTE * output, int width, int height, int size, int bpp)
+BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size, int bpp)
 {
 	return 0;
 }

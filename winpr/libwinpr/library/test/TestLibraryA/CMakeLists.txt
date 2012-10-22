@@ -16,12 +16,17 @@
 # limitations under the License.
 
 set(MODULE_NAME "TestLibraryA")
+set(MODULE_PREFIX "TEST_LIBRARY_A")
 
-add_library(${MODULE_NAME} TestLibraryA.c)
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} TestLibraryA.c)
+
+if(MSVC)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
-
-set_target_properties(${MODULE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${TEST_AREA}/${MODULE_NAME}")
-file(MAKE_DIRECTORY "${TEST_AREA}/${MODULE_NAME}")
+set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}/${TEST_AREA}/${MODULE_NAME}")
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test/Extra")

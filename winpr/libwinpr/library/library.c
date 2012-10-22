@@ -140,11 +140,8 @@ BOOL FreeLibrary(HMODULE hLibModule)
 
 	status = dlclose(hLibModule);
 
-	if (status == 0)
-	{
-		printf("FreeLibrary() failure: %s\n", dlerror());
+	if (status != 0)
 		return FALSE;
-	}
 
 	return TRUE;
 }

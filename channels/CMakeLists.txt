@@ -17,6 +17,29 @@
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+include(CMakeParseArguments)
+
+macro(define_channel_options)
+	set(PREFIX "CHANNEL")
+	
+	cmake_parse_arguments(${PREFIX}
+		""
+		"NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT"
+		""
+		${ARGN})
+		
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
+	set(CHANNEL_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel")
+	option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
+
+endmacro(define_channel_options)
+
+macro(define_channel_client_options _channel_client_default)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
+	set(CHANNEL_CLIENT_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel client")
+	option(${CHANNEL_CLIENT_OPTION} "${CHANNEL_CLIENT_OPTION_DOC}" ${_channel_client_default})
+endmacro(define_channel_client_options)
+
 macro(define_channel _channel_name)
 	set(CHANNEL_NAME ${_channel_name})
 	set(MODULE_NAME ${CHANNEL_NAME})
@@ -123,7 +146,7 @@ foreach(FILEPATH ${FILEPATHS})
 		set(CHANNEL_OPTION)
 		include(${FILEPATH})
 		if(${CHANNEL_OPTION})
-			message(STATUS "Adding ${CHANNEL_TYPE} channel \"${CHANNEL_SHORT_NAME}\": ${CHANNEL_LONG_NAME}")
+			message(STATUS "Adding ${CHANNEL_TYPE} channel \"${CHANNEL_NAME}\": ${CHANNEL_DESCRIPTION}")
 			add_subdirectory(${DIR})
 		endif()
 	endif()
@@ -131,9 +154,12 @@ endforeach(FILEPATH)
 
 if(WITH_CLIENT_CHANNELS)
 	add_subdirectory(client)
+	set(FREERDP_CHANNELS_CLIENT_SRCS ${FREERDP_CHANNELS_CLIENT_SRCS} PARENT_SCOPE)
+	set(FREERDP_CHANNELS_CLIENT_LIBS ${FREERDP_CHANNELS_CLIENT_LIBS} PARENT_SCOPE)
 endif()
 
 if(WITH_SERVER_CHANNELS)
 	add_subdirectory(server)
+	set(FREERDP_CHANNELS_SERVER_SRCS ${FREERDP_CHANNELS_SERVER_SRCS} PARENT_SCOPE)
+	set(FREERDP_CHANNELS_SERVER_LIBS ${FREERDP_CHANNELS_SERVER_LIBS} PARENT_SCOPE)
 endif()
-
