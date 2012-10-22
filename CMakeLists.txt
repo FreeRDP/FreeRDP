@@ -61,9 +61,12 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-# Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
-	set(BUILD_SHARED_LIBS ON)
+	if(ANDROID)
+		set(BUILD_SHARED_LIBS OFF)
+	else()
+		set(BUILD_SHARED_LIBS ON)
+	endif()
 endif()
 
 if(NOT DEFINED EXPORT_ALL_SYMBOLS)
