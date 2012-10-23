@@ -28,7 +28,12 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(../client)
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(STATIC_CHANNELS)
+	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
+else()
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set(${MODULE_PREFIX}_LIBS
@@ -39,4 +44,7 @@ set(${MODULE_PREFIX}_LIBS
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+endif()
+
