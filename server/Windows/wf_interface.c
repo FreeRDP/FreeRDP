@@ -36,25 +36,31 @@
 
 cbCallback cbEvent;
 
-void get_screen_info()
+int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
 {
-	int i;
 	DISPLAY_DEVICE dd;
 
 	memset(&dd, 0, sizeof(DISPLAY_DEVICE));
 	dd.cb = sizeof(DISPLAY_DEVICE);
 
-	for (i=0; ; i++)
+	if (EnumDisplayDevices(NULL, id, &dd, 0) != 0)
 	{
-		if (EnumDisplayDevices(NULL, i, &dd, 0) != 0)
-		{
-			_tprintf(_T("%d) [%d] [%s] [%s]\n"), i, dd.DeviceID, dd.DeviceName, dd.DeviceString);
-		}
-		else
-		{
-			break;
-		}
+		HDC dc;
+
+		_tcscpy(name, dd.DeviceName);
+		dc = CreateDC(NULL, dd.DeviceName, NULL, NULL);
+		*width = GetDeviceCaps(dc, HORZRES);
+		*height = GetDeviceCaps(dc, VERTRES);
+		*bpp = GetDeviceCaps(dc, BITSPIXEL);
+		ReleaseDC(NULL, dc);
+
 	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)

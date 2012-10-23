@@ -44,8 +44,30 @@ int main(int argc, char* argv[])
 	//first the args that will cause the program to terminate
 	if (strcmp("--list-screens", argv[index]) == 0)
 	{
-		printf("Detecting screens...\n");
-		get_screen_info();
+		_TCHAR name[32];
+		int width;
+		int height;
+		int bpp;
+		int i;
+
+		_tprintf(_T("Detecting screens...\n"));
+		_tprintf(_T("ID\tName\tResolution\n"));
+		
+		for (i=0; ; i++)
+		{
+			if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+			{
+				if ( (width * height * bpp) == 0 )
+					continue;
+
+				_tprintf(_T("%d\t%s\t"), i, name);
+				_tprintf(_T("%dx%dx%d\n"), width, height, bpp);
+			}
+			else
+			{
+				break;
+			}
+		}
 		return 0;
 	}
 
