@@ -102,6 +102,8 @@ typedef struct wf_server wfServer;
 
 typedef void (__stdcall* cbCallback) (int, UINT32);
 
+FREERDP_API void get_screen_info();
+
 FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);
 

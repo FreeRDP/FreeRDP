@@ -36,6 +36,27 @@
 
 cbCallback cbEvent;
 
+void get_screen_info()
+{
+	int i;
+	DISPLAY_DEVICE dd;
+
+	memset(&dd, 0, sizeof(DISPLAY_DEVICE));
+	dd.cb = sizeof(DISPLAY_DEVICE);
+
+	for (i=0; ; i++)
+	{
+		if (EnumDisplayDevices(NULL, i, &dd, 0) != 0)
+		{
+			_tprintf(_T("%d) [%d] [%s] [%s]\n"), i, dd.DeviceID, dd.DeviceName, dd.DeviceString);
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
 	int i, fds;

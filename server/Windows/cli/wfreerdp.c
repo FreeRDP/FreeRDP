@@ -34,9 +34,20 @@
 
 int main(int argc, char* argv[])
 {
+	int index;
 	wfServer* server;
 
 	server = wfreerdp_server_new();
+
+	//handle args
+	index = 1;
+	//first the args that will cause the program to terminate
+	if (strcmp("--list-screens", argv[index]) == 0)
+	{
+		printf("Detecting screens...\n");
+		get_screen_info();
+		return 0;
+	}
 
 	if (argc == 2)
 		server->port = (DWORD) atoi(argv[1]);
