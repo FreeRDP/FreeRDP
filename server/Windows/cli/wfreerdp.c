@@ -41,38 +41,55 @@ int main(int argc, char* argv[])
 
 	//handle args
 	index = 1;
-	//first the args that will cause the program to terminate
-	if (strcmp("--list-screens", argv[index]) == 0)
+	while (index < argc)
 	{
-		_TCHAR name[32];
-		int width;
-		int height;
-		int bpp;
-		int i;
-
-		_tprintf(_T("Detecting screens...\n"));
-		_tprintf(_T("ID\tName\tResolution\n"));
-		
-		for (i=0; ; i++)
+		//first the args that will cause the program to terminate
+		if (strcmp("--list-screens", argv[index]) == 0)
 		{
-			if (get_screen_info(i, name, &width, &height, &bpp) != 0)
-			{
-				if ( (width * height * bpp) == 0 )
-					continue;
+			_TCHAR name[32];
+			int width;
+			int height;
+			int bpp;
+			int i;
 
-				_tprintf(_T("%d\t%s\t"), i, name);
-				_tprintf(_T("%dx%dx%d\n"), width, height, bpp);
-			}
-			else
+			_tprintf(_T("Detecting screens...\n"));
+			_tprintf(_T("ID\tName\tResolution\n"));
+		
+			for (i=0; ; i++)
 			{
-				break;
+				if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+				{
+					if ( (width * height * bpp) == 0 )
+						continue;
+
+					_tprintf(_T("%d\t%s\t"), i, name);
+					_tprintf(_T("%dx%dx%d\n"), width, height, bpp);
+				}
+				else
+				{
+					break;
+				}
 			}
+			return 0;
 		}
-		return 0;
-	}
+	
+		if (strcmp("--screen", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing screen id parameter\n");
+				return 0;
+			}
 
-	if (argc == 2)
-		server->port = (DWORD) atoi(argv[1]);
+			set_screen_id(atoi(argv[index]));
+			index++;
+		}
+
+
+		if (index == argc - 1)
+			server->port = (DWORD) atoi(argv[index]);
+	}
 
 	printf("Starting server\n");
 

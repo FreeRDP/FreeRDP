@@ -161,7 +161,7 @@ int wf_dxgi_getDuplication(wfInfo* context)
 		++i;
 	}
 
-	dTop = 0;
+	dTop = context->screenID;
 
 	status = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
 	DxgiAdapter->lpVtbl->Release(DxgiAdapter);

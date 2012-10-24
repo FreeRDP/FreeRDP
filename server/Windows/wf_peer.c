@@ -82,11 +82,18 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	hdc = GetDC(NULL);
+	/*hdc = GetDC(NULL);
 	wfi->width = GetDeviceCaps(hdc, HORZRES);
 	wfi->height = GetDeviceCaps(hdc, VERTRES);
 	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
 	ReleaseDC(NULL, hdc);
+	*/
+
+	if (get_screen_info(wfi->screenID, NULL, &wfi->width, &wfi->height, &wfi->bitsPerPixel) == 0)
+	{
+		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
+		return FALSE;
+	}
 
 	if ((settings->width != wfi->width) || (settings->height != wfi->height))
 	{
