@@ -89,7 +89,11 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	ReleaseDC(NULL, hdc);
 	*/
 
-	if (get_screen_info(wfi->screenID, NULL, &wfi->width, &wfi->height, &wfi->bitsPerPixel) == 0)
+	if ( 
+		(get_screen_info(wfi->screenID, NULL, &wfi->width, &wfi->height, &wfi->bitsPerPixel) == 0) ||
+		(wfi->width == 0) ||
+		(wfi->height == 0) ||
+		(wfi->bitsPerPixel == 0) )
 	{
 		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
 		return FALSE;
