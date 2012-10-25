@@ -1,6 +1,5 @@
 
 #include <stdio.h>
-#include <malloc.h>
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 #include <winpr/interlocked.h>
