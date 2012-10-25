@@ -149,7 +149,7 @@ BOOL nego_connect(rdpNego* nego)
 /* connect to selected security layer */
 BOOL nego_security_connect(rdpNego* nego)
 {
-	if(!nego->tcp_connected)
+	if (!nego->tcp_connected)
 	{
 		nego->security_connected = FALSE;
 	}
@@ -160,7 +160,7 @@ BOOL nego_security_connect(rdpNego* nego)
 			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA");
 			nego->security_connected = transport_connect_nla(nego->transport);
 		}
-		else if (nego->selected_protocol == PROTOCOL_TLS )
+		else if (nego->selected_protocol == PROTOCOL_TLS)
 		{
 			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS");
 			nego->security_connected = transport_connect_tls(nego->transport);
@@ -175,6 +175,7 @@ BOOL nego_security_connect(rdpNego* nego)
 			DEBUG_NEGO("cannot connect security layer because no protocol has been selected yet.");
 		}
 	}
+
 	return nego->security_connected;
 }
 
@@ -562,6 +563,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	STREAM* s;
 	int length;
 	BYTE *bm, *em;
+	int cookie_length;
 
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
@@ -575,7 +577,11 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	}
 	else if (nego->cookie != NULL)
 	{
-		int cookie_length = strlen(nego->cookie);
+		cookie_length = strlen(nego->cookie);
+
+		if (cookie_length > nego->cookie_max_length)
+			cookie_length = nego->cookie_max_length;
+
 		stream_write(s, "Cookie: mstshash=", 17);
 		stream_write(s, (BYTE*) nego->cookie, cookie_length);
 		stream_write_BYTE(s, 0x0D); /* CR */
@@ -802,6 +808,7 @@ void nego_init(rdpNego* nego)
 	nego->requested_protocols = PROTOCOL_RDP;
 	nego->transport->recv_callback = nego_recv;
 	nego->transport->recv_extra = (void*) nego;
+	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->flags = 0;
 }
 
@@ -917,6 +924,17 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 void nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	nego->cookie = cookie;
+}
+
+/**
+ * Set cookie maximum length
+ * @param nego
+ * @param cookie_max_length
+ */
+
+void nego_set_cookie_max_length(rdpNego* nego, UINT32 cookie_max_length)
+{
+	nego->cookie_max_length = cookie_max_length;
 }
 
 /**

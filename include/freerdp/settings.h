@@ -301,7 +301,8 @@ struct rdp_settings
 	ALIGN64 BOOL send_preconnection_pdu; /* 72 */
 	ALIGN64 UINT32 preconnection_id; /* 73 */
 	ALIGN64 char* preconnection_blob; /* 74 */
-	UINT64 paddingC[80 - 75]; /* 75 */
+	ALIGN64 char* computer_name; /* 75 */
+	UINT64 paddingC[80 - 76]; /* 76 */
 
 	/* User Interface Parameters */
 	ALIGN64 BOOL sw_gdi; /* 80 */
