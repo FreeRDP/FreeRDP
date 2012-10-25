@@ -31,7 +31,7 @@ set(TEST_AREA "${MODULE_NAME}Area")
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
-	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName} ${TEST_AREA})
+	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName} "${TESTING_OUTPUT_DIRECTORY}/${TEST_AREA}")
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
