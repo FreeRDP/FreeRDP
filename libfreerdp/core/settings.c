@@ -31,6 +31,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 
 #include <freerdp/settings.h>
@@ -184,6 +185,15 @@ void settings_load_hkey_local_machine(rdpSettings* settings)
 		settings_client_load_hkey_local_machine(settings);
 }
 
+void settings_get_computer_name(rdpSettings* settings)
+{
+	DWORD nSize = 0;
+
+	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+	settings->computer_name = (char*) malloc(nSize);
+	GetComputerNameExA(ComputerNameNetBIOS, settings->computer_name, &nSize);
+}
+
 rdpSettings* settings_new(void* instance)
 {
 	rdpSettings* settings;
@@ -234,6 +244,8 @@ rdpSettings* settings_new(void* instance)
 		settings->authentication = TRUE;
 		settings->authentication_only = FALSE;
 		settings->from_stdin = FALSE;
+
+		settings_get_computer_name(settings);
 
 		settings->received_caps = xzalloc(32);
 		settings->order_support = xzalloc(32);

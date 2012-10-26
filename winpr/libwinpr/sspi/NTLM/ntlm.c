@@ -132,7 +132,11 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			RegCloseKey(hKey);
 		}
 
-		context->SuppressExtendedProtection = FALSE;
+		/*
+		 * Extended Protection is enabled by default in Windows 7,
+		 * but enabling it in WinPR breaks TS Gateway at this point
+		 */
+		context->SuppressExtendedProtection = TRUE;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
