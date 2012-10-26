@@ -317,7 +317,7 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	//AvPairsCount++; /* MsvAvRestrictions */
 	//AvPairsValueLength += 48;
 
-	if (!context->SuppressExtendedProtection)
+	if (context->SuppressExtendedProtection != FALSE)
 	{
 		AvPairsCount++; /* MsvChannelBindings */
 		AvPairsValueLength += 16;
@@ -363,7 +363,7 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
 	}
 
-	if (!context->SuppressExtendedProtection)
+	if (context->SuppressExtendedProtection != FALSE)
 	{
 		BYTE ChannelBindingToken[16];
 
