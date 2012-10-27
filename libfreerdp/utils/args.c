@@ -869,58 +869,72 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		 You can prompt for username, password, domain and hostname to avoid disclosing
 		 these settings to ps. */
 
-	if (settings->from_stdin) {
+	if (settings->from_stdin)
+	{
 		/* username */
-		if (NULL == settings->username) {
+		if (NULL == settings->username)
+		{
 			char input[512];
 			input[0] = '\0';
 			printf("username: ");
-			if (scanf("%511s", input) > 0) {
+			if (scanf("%511s", input) > 0)
+			{
 				settings->username = _strdup(input);
 			}
 		}
 		/* password */
-		if (NULL == settings->password) {
+		if (NULL == settings->password)
+		{
 			settings->password = malloc(512 * sizeof(char));
 			if (isatty(STDIN_FILENO))
 				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
-			else {
+			else
+			{
 				printf("password: ");
-				if (scanf("%511s", settings->password) <= 0) {
+				if (scanf("%511s", settings->password) <= 0)
+				{
 					free(settings->password);
 					settings->password = NULL;
 				}
 			}
 		}
 		/* domain */
-		if (NULL == settings->domain) {
+		if (NULL == settings->domain)
+		{
 			char input[512];
 			input[0] = '\0';
 			printf("domain (control-D to skip): ");
-			if (scanf("%511s", input) > 0) {
+			if (scanf("%511s", input) > 0)
+			{
 				/* Try to catch the cases where the string is NULL-ish right
 				   at the get go */
-				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0')) {
+				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0'))
+				{
 					settings->domain = _strdup(input);
 				}
 			}
 		}
 		/* hostname */
-		if (NULL == settings->hostname) {
+		if (NULL == settings->hostname)
+		{
 			char input[512];
 			input[0] = '\0';
 			printf("hostname: ");
-			if (scanf("%511s", input) > 0) {
+			if (scanf("%511s", input) > 0)
+			{
 				freerdp_parse_hostname(settings, input);
 			}
 		}
 	}
 
 	/* Must have a hostname. Do you? */
-	if (NULL == settings->hostname) {
+	if (NULL == settings->hostname)
+	{
 		printf("missing server name\n");
 		return FREERDP_ARGS_PARSE_FAILURE;
-	} else {
+	}
+	else
+	{
 		return index;
 	}
 
