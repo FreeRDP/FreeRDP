@@ -877,7 +877,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			char input[512];
 			input[0] = '\0';
 			printf("username: ");
-			if (scanf("%511s", input) > 0)
+			if (scanf("%511s%*c", input) > 0)
 			{
 				settings->username = _strdup(input);
 			}
@@ -887,11 +887,13 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->password = malloc(512 * sizeof(char));
 			if (isatty(STDIN_FILENO))
+			{
 				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+			}
 			else
 			{
 				printf("password: ");
-				if (scanf("%511s", settings->password) <= 0)
+				if (scanf("%511s%*c", settings->password) <= 0)
 				{
 					free(settings->password);
 					settings->password = NULL;
@@ -904,7 +906,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			char input[512];
 			input[0] = '\0';
 			printf("domain (control-D to skip): ");
-			if (scanf("%511s", input) > 0)
+			if (scanf("%511s%*c", input) > 0)
 			{
 				/* Try to catch the cases where the string is NULL-ish right
 				   at the get go */
@@ -913,6 +915,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 					settings->domain = _strdup(input);
 				}
 			}
+			if (feof(stdin))
+			{
+				printf("\n");
+				clearerr(stdin);
+			}
 		}
 		/* hostname */
 		if (NULL == settings->hostname)
@@ -920,7 +927,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			char input[512];
 			input[0] = '\0';
 			printf("hostname: ");
-			if (scanf("%511s", input) > 0)
+			if (scanf("%511s%*c", input) > 0)
 			{
 				freerdp_parse_hostname(settings, input);
 			}
