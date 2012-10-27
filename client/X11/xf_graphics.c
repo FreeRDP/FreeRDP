@@ -203,6 +203,7 @@ void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 
 void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+#ifdef WITH_XCURSOR
 	XcursorImage ci;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
@@ -222,29 +223,36 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	}
 
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfi->display, &ci);
+
 	free(ci.pixels);
+#endif
 }
 
 void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+#ifdef WITH_XCURSOR
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	if (((xfPointer*) pointer)->cursor != 0)
 		XFreeCursor(xfi->display, ((xfPointer*) pointer)->cursor);
+#endif
 }
 
 void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
+#ifdef WITH_XCURSOR
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	/* in RemoteApp mode, window can be null if none has had focus */
 
 	if (xfi->window != NULL)
 		XDefineCursor(xfi->display, xfi->window->handle, ((xfPointer*) pointer)->cursor);
+#endif
 }
 
 void xf_Pointer_SetNull(rdpContext* context)
 {
+#ifdef WITH_XCURSOR
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 	static Cursor nullcursor = None;
 
@@ -260,16 +268,20 @@ void xf_Pointer_SetNull(rdpContext* context)
 		ci.pixels = &xp;
 		nullcursor = XcursorImageLoadCursor(xfi->display, &ci);
 	}
+
 	if (xfi->window != NULL && nullcursor != None)
 		XDefineCursor(xfi->display, xfi->window->handle, nullcursor);
+#endif
 }
 
 void xf_Pointer_SetDefault(rdpContext* context)
 {
+#ifdef WITH_XCURSOR
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
 	if (xfi->window != NULL)
 		XUndefineCursor(xfi->display, xfi->window->handle);
+#endif
 }
 
 /* Glyph Class */
