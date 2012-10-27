@@ -22,10 +22,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/args.h>
+#include <freerdp/utils/passphrase.h>
+
+
+void freerdp_parse_hostname(rdpSettings* settings, char* hostname) {
+	char* p;
+	if (hostname[0] == '[' && (p = strchr(hostname, ']'))
+			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':')))) {
+			/* Either "[...]" or "[...]:..." with at most one : after the brackets */
+		settings->hostname = xstrdup(hostname + 1);
+		if ((p = strchr((char*)settings->hostname, ']'))) {
+			*p = 0;
+			if (p[1] == ':')
+				settings->port = atoi(p + 2);
+		}
+	} else {
+		/* Port number is cut off and used if exactly one : in the string */
+		settings->hostname = xstrdup(hostname);
+		if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':')) {
+			*p = 0;
+			settings->port = atoi(p + 1);
+		}
+	}
+}
+
+
 
 /**
  * Parse command-line arguments and update rdpSettings members accordingly.
@@ -82,6 +108,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  --app: RemoteApp connection. This implies -g workarea\n"
 				"  --ext: load an extension\n"
 				"  --no-auth: disable authentication\n"
+				"  --authonly: authentication only, no UI\n"
+				"  --from-stdin: unspecified username, password, domain and hostname params are prompted\n"
 				"  --no-fastpath: disable fast-path\n"
 				"  --gdi: graphics rendering (hw, sw)\n"
 				"  --no-osb: disable offscreen bitmaps\n"
@@ -301,6 +329,14 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
 			settings->authentication = false;
+		}
+		else if (strcmp("--authonly", argv[index]) == 0)
+		{
+			settings->authentication_only = true;
+		}
+		else if (strcmp("--from-stdin", argv[index]) == 0)
+		{
+			settings->from_stdin = true;
 		}
 		else if (strcmp("--ignore-certificate", argv[index]) == 0)
 		{
@@ -633,28 +669,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (argv[index][0] != '-')
 		{
-			if (argv[index][0] == '[' && (p = strchr(argv[index], ']'))
-				&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
-			{
-				/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-				settings->hostname = xstrdup(argv[index] + 1);
-				if ((p = strchr((char*)settings->hostname, ']')))
-				{
-					*p = 0;
-					if (p[1] == ':')
-						settings->port = atoi(p + 2);
-				}
-			}
-			else
-			{
-				/* Port number is cut off and used if exactly one : in the string */
-				settings->hostname = xstrdup(argv[index]);
-				if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
-				{
-					*p = 0;
-					settings->port = atoi(p + 1);
-				}
-			}
+			freerdp_parse_hostname(settings, argv[index]);
+
 			/* server is the last argument for the current session. arguments
 			   followed will be parsed for the next session. */
 			index++;
@@ -677,7 +693,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			if (settings->disable_theming)
 				settings->performance_flags |= PERF_DISABLE_THEMING;
 
-			return index;
+			break; /* post process missing arguments */
+
 		}
 		else
 		{
@@ -695,6 +712,65 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		index++;
 	}
-	printf("missing server name\n");
-	return FREERDP_ARGS_PARSE_FAILURE;
+
+
+	/* --from-stdin will prompt for missing arguments only.
+		 You can prompt for username, password, domain and hostname to avoid disclosing
+		 these settings to ps. */
+
+	if (settings->from_stdin) {
+		/* username */
+		if (NULL == settings->username) {
+			char input[512];
+			input[0] = '\0';
+			printf("username: ");
+			if (scanf("%511s", input) > 0) {
+				settings->username = xstrdup(input);
+			}
+		}
+		/* password */
+		if (NULL == settings->password) {
+			settings->password = xmalloc(512 * sizeof(char));
+			if (isatty(STDIN_FILENO))
+				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+			else {
+				printf("password: ");
+				if (scanf("%511s", settings->password) <= 0) {
+					free(settings->password);
+					settings->password = NULL;
+				}
+			}
+		}
+		/* domain */
+		if (NULL == settings->domain) {
+			char input[512];
+			input[0] = '\0';
+			printf("domain (control-D to skip): ");
+			if (scanf("%511s", input) > 0) {
+				/* Try to catch the cases where the string is NULL-ish right
+				   at the get go */
+				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0')) {
+					settings->domain = xstrdup(input);
+				}
+			}
+		}
+		/* hostname */
+		if (NULL == settings->hostname) {
+			char input[512];
+			input[0] = '\0';
+			printf("hostname: ");
+			if (scanf("%511s", input) > 0) {
+				freerdp_parse_hostname(settings, input);
+			}
+		}
+	}
+
+	/* Must have a hostname. Do you? */
+	if (NULL == settings->hostname) {
+		printf("missing server name\n");
+		return FREERDP_ARGS_PARSE_FAILURE;
+	} else {
+		return index;
+	}
+
 }

@@ -35,8 +35,6 @@ boolean freerdp_connect(freerdp* instance)
 
 	rdp = instance->context->rdp;
 
-	extension_pre_connect(rdp->extension);
-
 	IFCALLRET(instance->PreConnect, status, instance);
 
 	if (status != true)
@@ -44,6 +42,9 @@ boolean freerdp_connect(freerdp* instance)
 		printf("freerdp_pre_connect failed\n");
 		return false;
 	}
+
+	rdp->extension = extension_new(instance);
+	extension_pre_connect(rdp->extension);
 
 	status = rdp_client_connect(rdp);
 
