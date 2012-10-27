@@ -270,7 +270,16 @@ struct rdp_settings
 	boolean compression; /* 59 */
 	uint32 performance_flags; /* 60 */
 	rdpBlob* password_cookie; /* 61 */
-	uint32 paddingC[80 - 62]; /* 62 */
+	char* kerberos_kdc; /* 62 */
+	char* kerberos_realm; /* 63 */
+	boolean ts_gateway; /* 64 */
+	char* tsg_hostname; /* 65 */
+	char* tsg_username; /* 66 */
+	char* tsg_password; /* 67 */
+	boolean local; /* 68 */
+	boolean authentication_only; /* 69 */
+	boolean from_stdin; /* 70 */
+	uint32 paddingC[80 - 71]; /* 71 */
 
 	/* User Interface Parameters */
 	boolean sw_gdi; /* 80 */

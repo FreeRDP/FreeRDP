@@ -144,6 +144,15 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, uint3
 {
 	STREAM* data_in;
 	svc_data_in_item* item;
+	
+	if ( (dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
+	{
+		/* According to MS-RDPBCGR 2.2.6.1, "All virtual channel traffic MUST be suspended.
+		This flag is only valid in server-to-client virtual channel traffic. It MUST be
+		ignored in client-to-server data." Thus it would be best practice to cease data
+		transmission. However, simply returing here avoids a crash. */
+		return;
+	}
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
