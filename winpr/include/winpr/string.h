@@ -49,7 +49,11 @@ WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
 WINPR_API int _stricmp(const char* string1, const char* string2);
 
+WINPR_API size_t _wcslen(const WCHAR* str);
+WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
+
 WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
+WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
 
 WINPR_API LPSTR CharUpperA(LPSTR lpsz);
 WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);
@@ -148,6 +152,11 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 #endif
 
 #define	 sprintf_s	snprintf
+
+#else
+
+#define _wcslen		wcslen
+#define _wcschr		wcschr
 
 #endif
 

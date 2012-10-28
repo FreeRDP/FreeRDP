@@ -29,6 +29,10 @@
 #include <winpr/sam.h>
 #include <winpr/print.h>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef _WIN32
 #define WINPR_SAM_FILE		"C:\\SAM"
 #else

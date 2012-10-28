@@ -149,24 +149,6 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 	http_request->AuthParam = _strdup(auth_param);
 }
 
-#ifndef _WIN32
-
-errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
-{
-	int length;
-
-	length = snprintf(NULL, 0, "%d", value);
-
-	if (sizeInCharacters < length)
-		return -1;
-
-	snprintf(buffer, length + 1, "%d", value);
-
-	return 0;
-}
-
-#endif
-
 char* http_encode_body_line(char* param, char* value)
 {
 	char* line;

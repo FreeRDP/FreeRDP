@@ -20,6 +20,7 @@
 #ifndef FREERDP_CLIENT_RDP_FILE
 #define FREERDP_CLIENT_RDP_FILE
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
 struct rdp_file
@@ -98,7 +99,7 @@ struct rdp_file
 	DWORD PromptForCredentialsOnce; /* promptcredentialonce */
 	DWORD NegotiateSecurityLayer; /* negotiate security layer */
 	DWORD EnableCredSSPSupport; /* enablecredsspsupport */
-	LPSTR LoadBalanceInfo; /* LoadBalanceInfo */
+	LPSTR LoadBalanceInfo; /* loadbalanceinfo */
 
 	DWORD RemoteApplicationMode; /* remoteapplicationmode */
 	LPSTR RemoteApplicationName; /* remoteapplicationname */
@@ -115,14 +116,14 @@ struct rdp_file
 	LPSTR ShellWorkingDirectory; /* shell working directory */
 
 	LPSTR GatewayHostname; /* gatewayhostname */
-	LPSTR GatewayUsageMethod; /* gatewayusagemethod */
-	LPSTR GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
-	LPSTR GatewayCredentialsSource; /* gatewaycredentialssource */
+	DWORD GatewayUsageMethod; /* gatewayusagemethod */
+	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
+	DWORD GatewayCredentialsSource; /* gatewaycredentialssource */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
 	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
-	DWORD KdcProxyName; /* kdcproxyname */
+	LPSTR KdcProxyName; /* kdcproxyname */
 
 	LPSTR DrivesToRedirect; /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
@@ -130,5 +131,8 @@ struct rdp_file
 };
 
 typedef struct rdp_file rdpFile;
+
+FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size);
 
 #endif /* FREERDP_CLIENT_RDP_FILE */

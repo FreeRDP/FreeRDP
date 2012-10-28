@@ -30,3 +30,365 @@
  * RDP Settings for Remote Desktop Services in Windows Server 2008 R2:
  * http://technet.microsoft.com/en-us/library/ff393699/
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <winpr/crt.h>
+
+#include <freerdp/utils/hexdump.h>
+
+static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
+static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
+
+BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value)
+{
+	if (_stricmp(name, "use multimon") == 0)
+		file->UseMultiMon = value;
+	else if (_stricmp(name, "screen mode id") == 0)
+		file->ScreenModeId = value;
+	else if (_stricmp(name, "span monitors") == 0)
+		file->SpanMonitors = value;
+	else if (_stricmp(name, "smartsizing") == 0)
+		file->SmartSizing = value;
+	else if (_stricmp(name, "enablesuperpan") == 0)
+		file->EnableSuperSpan = value;
+	else if (_stricmp(name, "superpanaccelerationfactor") == 0)
+		file->SuperSpanAccelerationFactor = value;
+	else if (_stricmp(name, "desktopwidth") == 0)
+		file->DesktopWidth = value;
+	else if (_stricmp(name, "desktopheight") == 0)
+		file->DesktopHeight = value;
+	else if (_stricmp(name, "desktop size id") == 0)
+		file->DesktopSizeId = value;
+	else if (_stricmp(name, "session bpp") == 0)
+		file->SessionBpp = value;
+	else if (_stricmp(name, "compression") == 0)
+		file->Compression = value;
+	else if (_stricmp(name, "keyboardhook") == 0)
+		file->KeyboardHook = value;
+	else if (_stricmp(name, "disable ctrl+alt+del") == 0)
+		file->DisableCtrlAltDel = value;
+	else if (_stricmp(name, "audiomode") == 0)
+		file->AudioMode = value;
+	else if (_stricmp(name, "audioqualitymode") == 0)
+		file->AudioQualityMode = value;
+	else if (_stricmp(name, "audiocapturemode") == 0)
+		file->AudioCaptureMode = value;
+	else if (_stricmp(name, "videoplaybackmode") == 0)
+		file->VideoPlaybackMode = value;
+	else if (_stricmp(name, "connection type") == 0)
+		file->ConnectionType = value;
+	else if (_stricmp(name, "networkautodetect") == 0)
+		file->NetworkAutoDetect = value;
+	else if (_stricmp(name, "bandwidthautodetect") == 0)
+		file->BandwidthAutoDetect = value;
+	else if (_stricmp(name, "pinconnectionbar") == 0)
+		file->PinConnectionBar = value;
+	else if (_stricmp(name, "displayconnectionbar") == 0)
+		file->DisplayConnectionBar = value;
+	else if (_stricmp(name, "workspaceid") == 0)
+		file->WorkspaceId = value;
+	else if (_stricmp(name, "enableworkspacereconnect") == 0)
+		file->EnableWorkspaceReconnect = value;
+	else if (_stricmp(name, "disable wallpaper") == 0)
+		file->DisableWallpaper = value;
+	else if (_stricmp(name, "allow font smoothing") == 0)
+		file->AllowFontSmoothing = value;
+	else if (_stricmp(name, "allow desktop composition") == 0)
+		file->AllowDesktopComposition = value;
+	else if (_stricmp(name, "disable full window drag") == 0)
+		file->DisableFullWindowDrag = value;
+	else if (_stricmp(name, "disable menu anims") == 0)
+		file->DisableMenuAnims = value;
+	else if (_stricmp(name, "disable themes") == 0)
+		file->DisableThemes = value;
+	else if (_stricmp(name, "disable cursor setting") == 0)
+		file->DisableCursorSetting = value;
+	else if (_stricmp(name, "bitmapcachesize") == 0)
+		file->BitmapCacheSize = value;
+	else if (_stricmp(name, "bitmapcachepersistenable") == 0)
+		file->BitmapCachePersistEnable = value;
+	else if (_stricmp(name, "server port") == 0)
+		file->ServerPort = value;
+	else if (_stricmp(name, "redirectdrives") == 0)
+		file->RedirectDrives = value;
+	else if (_stricmp(name, "redirectprinters") == 0)
+		file->RedirectPrinters = value;
+	else if (_stricmp(name, "redirectcomports") == 0)
+		file->RedirectComPorts = value;
+	else if (_stricmp(name, "redirectsmartcards") == 0)
+		file->RedirectSmartCards = value;
+	else if (_stricmp(name, "redirectclipboard") == 0)
+		file->RedirectClipboard = value;
+	else if (_stricmp(name, "redirectposdevices") == 0)
+		file->RedirectPosDevices = value;
+	else if (_stricmp(name, "redirectdirectx") == 0)
+		file->RedirectDirectX = value;
+	else if (_stricmp(name, "disableprinterredirection") == 0)
+		file->DisablePrinterRedirection = value;
+	else if (_stricmp(name, "disableclipboardredirection") == 0)
+		file->DisableClipboardRedirection = value;
+	else if (_stricmp(name, "connect to console") == 0)
+		file->ConnectToConsole = value;
+	else if (_stricmp(name, "administrative session") == 0)
+		file->AdministrativeSession = value;
+	else if (_stricmp(name, "autoreconnection enabled") == 0)
+		file->AutoReconnectionEnabled = value;
+	else if (_stricmp(name, "autoreconnect max retries") == 0)
+		file->AutoReconnectMaxRetries = value;
+	else if (_stricmp(name, "public mode") == 0)
+		file->PublicMode = value;
+	else if (_stricmp(name, "authentication level") == 0)
+		file->AuthenticationLevel = value;
+	else if (_stricmp(name, "promptcredentialonce") == 0)
+		file->PromptCredentialOnce = value;
+	else if (_stricmp(name, "prompt for credentials") == 0)
+		file->PromptForCredentials = value;
+	else if (_stricmp(name, "promptcredentialonce") == 0)
+		file->PromptForCredentialsOnce = value;
+	else if (_stricmp(name, "negotiate security layer") == 0)
+		file->NegotiateSecurityLayer = value;
+	else if (_stricmp(name, "enablecredsspsupport") == 0)
+		file->EnableCredSSPSupport = value;
+	else if (_stricmp(name, "remoteapplicationmode") == 0)
+		file->RemoteApplicationMode = value;
+	else if (_stricmp(name, "remoteapplicationexpandcmdline") == 0)
+		file->RemoteApplicationExpandCmdLine = value;
+	else if (_stricmp(name, "remoteapplicationexpandworkingdir") == 0)
+		file->RemoteApplicationExpandWorkingDir = value;
+	else if (_stricmp(name, "disableconnectionsharing") == 0)
+		file->DisableConnectionSharing = value;
+	else if (_stricmp(name, "disableremoteappcapscheck") == 0)
+		file->DisableRemoteAppCapsCheck = value;
+	else if (_stricmp(name, "gatewayusagemethod") == 0)
+		file->GatewayUsageMethod = value;
+	else if (_stricmp(name, "gatewayprofileusagemethod") == 0)
+		file->GatewayProfileUsageMethod = value;
+	else if (_stricmp(name, "gatewaycredentialssource") == 0)
+		file->GatewayCredentialsSource = value;
+	else if (_stricmp(name, "use redirection server name") == 0)
+		file->UseRedirectionServerName = value;
+	else if (_stricmp(name, "rdgiskdcproxy") == 0)
+		file->RdgIsKdcProxy = value;
+	else
+		return FALSE;
+
+	return TRUE;
+}
+
+void freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, WCHAR* name, WCHAR* value)
+{
+	int length;
+	int ivalue;
+	char* nameA;
+	char* valueA;
+
+	length = _wcslen(name);
+	nameA = (char*) malloc(length + 1);
+	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
+	nameA[length] = '\0';
+
+	length = _wcslen(value);
+	valueA = (char*) malloc(length + 1);
+	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
+	valueA[length] = '\0';
+
+	ivalue = atoi(valueA);
+	freerdp_client_rdp_file_set_integer(file, nameA, ivalue);
+
+	free(nameA);
+	free(valueA);
+}
+
+BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
+{
+	if (_stricmp(name, "username") == 0)
+		file->Username = value;
+	else if (_stricmp(name, "domain") == 0)
+		file->Domain = value;
+	else if (_stricmp(name, "full address") == 0)
+		file->FullAddress = value;
+	else if (_stricmp(name, "alternate full address") == 0)
+		file->AlternateFullAddress = value;
+	else if (_stricmp(name, "usbdevicestoredirect") == 0)
+		file->UsbDevicesToRedirect = value;
+	else if (_stricmp(name, "loadbalanceinfo") == 0)
+		file->LoadBalanceInfo = value;
+	else if (_stricmp(name, "remoteapplicationname") == 0)
+		file->RemoteApplicationName = value;
+	else if (_stricmp(name, "remoteapplicationicon") == 0)
+		file->RemoteApplicationIcon = value;
+	else if (_stricmp(name, "remoteapplicationprogram") == 0)
+		file->RemoteApplicationProgram = value;
+	else if (_stricmp(name, "remoteapplicationfile") == 0)
+		file->RemoteApplicationFile = value;
+	else if (_stricmp(name, "remoteapplicationcmdline") == 0)
+		file->RemoteApplicationCmdLine = value;
+	else if (_stricmp(name, "alternate shell") == 0)
+		file->AlternateShell = value;
+	else if (_stricmp(name, "shell working directory") == 0)
+		file->ShellWorkingDirectory = value;
+	else if (_stricmp(name, "gatewayhostname") == 0)
+		file->GatewayHostname = value;
+	else if (_stricmp(name, "kdcproxyname") == 0)
+		file->KdcProxyName = value;
+	else if (_stricmp(name, "drivestoredirect") == 0)
+		file->DrivesToRedirect = value;
+	else if (_stricmp(name, "devicestoredirect") == 0)
+		file->DevicesToRedirect = value;
+	else if (_stricmp(name, "winposstr") == 0)
+		file->WinPosStr = value;
+	else
+		return FALSE;
+
+	return TRUE;
+}
+
+void freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, WCHAR* name, WCHAR* value)
+{
+	int length;
+	char* nameA;
+	char* valueA;
+
+	length = _wcslen(name);
+	nameA = (char*) malloc(length + 1);
+	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
+	nameA[length] = '\0';
+
+	length = _wcslen(value);
+	valueA = (char*) malloc(length + 1);
+	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
+	valueA[length] = '\0';
+
+	if (!freerdp_client_rdp_file_set_string(file, nameA, valueA))
+		free(valueA);
+
+	free(nameA);
+}
+
+BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, size_t size)
+{
+	return FALSE;
+}
+
+BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, BYTE* buffer, size_t size)
+{
+	int length;
+	WCHAR* line;
+	WCHAR* type;
+	WCHAR* context;
+	WCHAR *d1, *d2;
+	WCHAR *beg, *end;
+	WCHAR *name, *value;
+
+	line = wcstok_s((WCHAR*) buffer, CR_LF_STR_W, &context);
+
+	while (line != NULL)
+	{
+		length = _wcslen(line);
+
+		if (length > 1)
+		{
+			beg = line;
+			end = &line[length - 1];
+
+			d1 = _wcschr(line, ':');
+
+			if (!d1)
+				goto next_line; /* not first delimiter */
+
+			type = &d1[1];
+			d2 = _wcschr(type, ':');
+
+			if (!d2)
+				goto next_line; /* no second delimiter */
+
+			if ((d2 - d1) != 2)
+				goto next_line; /* improper type length */
+
+			if (d2 == end)
+				goto next_line; /* no value */
+
+			*d1 = 0;
+			*d2 = 0;
+			name = beg;
+			value = &d2[1];
+
+			if (*type == 'i')
+			{
+				/* integer type */
+				freerdp_client_parse_rdp_file_integer_unicode(file, name, value);
+			}
+			else if (*type == 's')
+			{
+				/* string type */
+				freerdp_client_parse_rdp_file_string_unicode(file, name, value);
+			}
+			else if (*type == 'b')
+			{
+				/* binary type */
+			}
+		}
+
+next_line:
+		line = wcstok_s(NULL, CR_LF_STR_W, &context);
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size)
+{
+	if (size < 2)
+		return FALSE;
+
+	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
+		return freerdp_client_parse_rdp_file_buffer_unicode(file, &buffer[2], size - 2);
+
+	return freerdp_client_parse_rdp_file_buffer_ascii(file, buffer, size);
+}
+
+BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
+{
+	BYTE* buffer;
+	FILE* fp = NULL;
+	size_t read_size;
+	long int file_size;
+
+	fp = fopen(name, "r");
+
+	if (!fp)
+		return FALSE;
+
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (file_size < 1)
+		return FALSE;
+
+	buffer = (BYTE*) malloc(file_size);
+
+	read_size = fread(buffer, file_size, 1, fp);
+
+	if (!read_size)
+	{
+		if (!ferror(fp))
+			read_size = file_size;
+	}
+
+	if (read_size < 1)
+	{
+		free(buffer);
+		buffer = NULL;
+		return FALSE;
+	}
+
+	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
+}

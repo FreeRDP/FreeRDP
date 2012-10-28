@@ -74,9 +74,59 @@ int _stricmp(const char* string1, const char* string2)
 	return strcasecmp(string1, string2);
 }
 
+/* _wcslen -> wcslen */
+
+size_t _wcslen(const WCHAR* str)
+{
+	WCHAR* p = (WCHAR*) str;
+
+	while (*p)
+		p++;
+
+	return (p - str);
+}
+
+/* _wcschr -> wcschr */
+
+WCHAR* _wcschr(const WCHAR* str, WCHAR c)
+{
+	WCHAR* p = (WCHAR*) str;
+
+	while (*p && (*p != c))
+		p++;
+
+	return ((*p == c) ? p : NULL);
+}
+
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
 {
 	return strtok_r(strToken, strDelimit, context);
+}
+
+WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
+{
+	WCHAR* nextToken;
+
+	if (!strToken)
+		strToken = *context;
+
+	while (*strToken && _wcschr(strDelimit, *strToken))
+		strToken++;
+
+	if (!*strToken)
+		return NULL;
+
+	nextToken = strToken++;
+
+	while (*strToken && !(_wcschr(strDelimit, *strToken)))
+		strToken++;
+
+	if (*strToken)
+		*strToken++ = 0;
+
+	*context = strToken;
+
+	return nextToken;
 }
 
 /* Windows API Sets - api-ms-win-core-string-l2-1-0.dll
