@@ -33,13 +33,16 @@
 
 #include "rpc.h"
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password)
+/**
+ * The Security Support Provider Interface:
+ * http://technet.microsoft.com/en-us/library/bb742535/
+ */
+
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password)
 {
 	SECURITY_STATUS status;
 
 	sspi_GlobalInit();
-
-	ntlm->confidentiality = confidentiality;
 
 #ifdef WITH_NATIVE_SSPI
 	{
@@ -87,10 +90,26 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* dom
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
 
-	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_DELEGATE;
+	ntlm->fContextReq = 0;
 
-	if (ntlm->confidentiality)
+	if (http)
+	{
+		/* flags for HTTP authentication */
 		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
+	}
+	else
+	{
+		/** 
+		 * flags for RPC authentication:
+		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
+		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
+		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
+		 */
+
+		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
+		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
+		ntlm->fContextReq |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT;
+	}
 
 	return TRUE;
 }

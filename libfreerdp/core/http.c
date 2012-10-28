@@ -228,9 +228,9 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 
 	for (i = 0; i < http_request->count; i++)
 	{
-		length += (strlen(http_request->lines[i]) + 1); /* add +1 for each '\n' character */
+		length += (strlen(http_request->lines[i]) + 2); /* add +2 for each '\r\n' character */
 	}
-	length += 1; /* empty line "\n" at end of header */
+	length += 2; /* empty line "\r\n" at end of header */
 	length += 1; /* null terminator */
 
 	s = stream_new(length);
@@ -238,10 +238,10 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	for (i = 0; i < http_request->count; i++)
 	{
 		stream_write(s, http_request->lines[i], strlen(http_request->lines[i]));
-		stream_write(s, "\n", 1);
+		stream_write(s, "\r\n", 2);
 		free(http_request->lines[i]);
 	}
-	stream_write(s, "\n", 1);
+	stream_write(s, "\r\n", 2);
 
 	free(http_request->lines);
 
