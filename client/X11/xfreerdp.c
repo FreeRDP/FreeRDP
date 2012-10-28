@@ -780,6 +780,14 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 	{
 		printf("Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (instance->settings->from_stdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return FALSE;
+		}
 
 		if (answer == 'y' || answer == 'Y')
 		{
