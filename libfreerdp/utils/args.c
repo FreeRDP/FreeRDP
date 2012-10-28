@@ -947,7 +947,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	}
 
 	/* Must have a hostname. Do you? */
-	if (NULL == settings->hostname)
+	if ((settings->hostname == NULL) && (settings->connection_file == NULL))
 	{
 		printf("missing server name\n");
 		return FREERDP_ARGS_PARSE_FAILURE;
@@ -956,5 +956,4 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	{
 		return index;
 	}
-
 }

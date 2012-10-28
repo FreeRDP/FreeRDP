@@ -510,12 +510,12 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	if (settings->connection_file)
 	{
-		file = (rdpFile*) malloc(sizeof(rdpFile));
-		ZeroMemory(file, sizeof(rdpFile));
+		file = freerdp_client_rdp_file_new();
 
 		printf("Using connection file: %s\n", settings->connection_file);
 
 		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
 	}
 
 	bitmap_cache = settings->bitmap_cache;

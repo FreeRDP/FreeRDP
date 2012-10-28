@@ -41,10 +41,10 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/hexdump.h>
-
 static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
+
+#define INVALID_INTEGER_VALUE		0xFFFFFFFF
 
 BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value)
 {
@@ -391,4 +391,81 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 	}
 
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
+}
+
+BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
+{
+	if (~((size_t) file->Domain))
+		settings->domain = file->Domain;
+
+	if (~((size_t) file->Username))
+	{
+		char* p;
+		size_t size;
+
+		p = strchr(file->Username, '\\');
+
+		if (p)
+		{
+			size = p - file->Username;
+			settings->domain = (char*) malloc(size + 1);
+			CopyMemory(settings->domain, file->Username, size);
+			settings->domain[size] = 0;
+
+			size = strlen(file->Username) - size - 1;
+			settings->username = (char*) malloc(size + 1);
+			CopyMemory(settings->username, &file->Username[p - file->Username + 1], size);
+			settings->username[size] = 0;
+		}
+		else
+		{
+			settings->username = file->Username;
+		}
+	}
+
+	if (~file->ServerPort)
+		settings->port = file->ServerPort;
+	if (~((size_t) file->FullAddress))
+		settings->hostname = file->FullAddress;
+	if (~file->DesktopWidth)
+		settings->width = file->DesktopWidth;
+	if (~file->DesktopHeight)
+		settings->height = file->DesktopHeight;
+	if (~file->SessionBpp)
+		settings->color_depth = file->SessionBpp;
+	if (~file->ConnectToConsole)
+		settings->console_session = file->ConnectToConsole;
+	if (~file->AdministrativeSession)
+		settings->console_session = file->AdministrativeSession;
+	if (~file->NegotiateSecurityLayer)
+		settings->security_layer_negotiation = file->NegotiateSecurityLayer;
+	if (~file->EnableCredSSPSupport)
+		settings->nla_security = file->EnableCredSSPSupport;
+	if (~((size_t) file->AlternateShell))
+		settings->shell = file->AlternateShell;
+	if (~((size_t) file->ShellWorkingDirectory))
+		settings->directory = file->ShellWorkingDirectory;
+	if (~((size_t) file->GatewayHostname))
+		settings->tsg_hostname = file->GatewayHostname;
+	if (~file->RemoteApplicationMode)
+		settings->remote_app = file->RemoteApplicationMode;
+
+	printf("Username: %s Password: %s Domain: %s\n", settings->username, settings->password, settings->domain);
+
+	return TRUE;
+}
+
+rdpFile* freerdp_client_rdp_file_new()
+{
+	rdpFile* file;
+
+	file = (rdpFile*) malloc(sizeof(rdpFile));
+	FillMemory(file, sizeof(rdpFile), 0xFF);
+
+	return file;
+}
+
+void freerdp_client_rdp_file_free(rdpFile* file)
+{
+	free(file);
 }

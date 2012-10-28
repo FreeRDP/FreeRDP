@@ -134,5 +134,9 @@ typedef struct rdp_file rdpFile;
 
 FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name);
 FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size);
+FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
+
+FREERDP_API rdpFile* freerdp_client_rdp_file_new();
+FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
 
 #endif /* FREERDP_CLIENT_RDP_FILE */
