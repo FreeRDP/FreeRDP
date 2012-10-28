@@ -206,6 +206,12 @@ void freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, WCHAR* name, W
 	free(valueA);
 }
 
+void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, char* name, char* value)
+{
+	int ivalue = atoi(value);
+	freerdp_client_rdp_file_set_integer(file, name, ivalue);
+}
+
 BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 {
 	if (_stricmp(name, "username") == 0)
@@ -272,9 +278,75 @@ void freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, WCHAR* name, WC
 	free(nameA);
 }
 
+void freerdp_client_parse_rdp_file_string_ascii(rdpFile* file, char* name, char* value)
+{
+	freerdp_client_rdp_file_set_string(file, name, value);
+}
+
 BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, size_t size)
 {
-	return FALSE;
+	int length;
+	char* line;
+	char* type;
+	char* context;
+	char *d1, *d2;
+	char *beg, *end;
+	char *name, *value;
+
+	line = strtok_s((char*) buffer, "\r\n", &context);
+
+	while (line != NULL)
+	{
+		length = strlen(line);
+
+		if (length > 1)
+		{
+			beg = line;
+			end = &line[length - 1];
+
+			d1 = strchr(line, ':');
+
+			if (!d1)
+				goto next_line; /* not first delimiter */
+
+			type = &d1[1];
+			d2 = strchr(type, ':');
+
+			if (!d2)
+				goto next_line; /* no second delimiter */
+
+			if ((d2 - d1) != 2)
+				goto next_line; /* improper type length */
+
+			if (d2 == end)
+				goto next_line; /* no value */
+
+			*d1 = 0;
+			*d2 = 0;
+			name = beg;
+			value = &d2[1];
+
+			if (*type == 'i')
+			{
+				/* integer type */
+				freerdp_client_parse_rdp_file_integer_ascii(file, name, value);
+			}
+			else if (*type == 's')
+			{
+				/* string type */
+				freerdp_client_parse_rdp_file_string_ascii(file, name, value);
+			}
+			else if (*type == 'b')
+			{
+				/* binary type */
+			}
+		}
+
+next_line:
+		line = strtok_s(NULL, "\r\n", &context);
+	}
+
+	return TRUE;
 }
 
 BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, BYTE* buffer, size_t size)
@@ -449,8 +521,6 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		settings->tsg_hostname = file->GatewayHostname;
 	if (~file->RemoteApplicationMode)
 		settings->remote_app = file->RemoteApplicationMode;
-
-	printf("Username: %s Password: %s Domain: %s\n", settings->username, settings->password, settings->domain);
 
 	return TRUE;
 }

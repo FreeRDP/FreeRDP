@@ -209,63 +209,62 @@ static BYTE testRdpFileUTF16[] =
 	0x0a, 0x00
 };
 
-/*
-screen mode id:i:2
-use multimon:i:0
-desktopwidth:i:1920
-desktopheight:i:1080
-session bpp:i:32
-winposstr:s:0,1,553,211,1353,811
-compression:i:1
-keyboardhook:i:2
-audiocapturemode:i:0
-videoplaybackmode:i:1
-connection type:i:7
-networkautodetect:i:1
-bandwidthautodetect:i:1
-displayconnectionbar:i:1
-enableworkspacereconnect:i:0
-disable wallpaper:i:0
-allow font smoothing:i:0
-allow desktop composition:i:0
-disable full window drag:i:1
-disable menu anims:i:1
-disable themes:i:0
-disable cursor setting:i:0
-bitmapcachepersistenable:i:1
-full address:s:LAB1-W7-DM-01.lab1.awake.local
-audiomode:i:0
-redirectprinters:i:1
-redirectcomports:i:0
-redirectsmartcards:i:1
-redirectclipboard:i:1
-redirectposdevices:i:0
-autoreconnection enabled:i:1
-authentication level:i:2
-prompt for credentials:i:0
-negotiate security layer:i:1
-remoteapplicationmode:i:0
-alternate shell:s:
-shell working directory:s:
-gatewayhostname:s:LAB1-W2K8R2-GW.lab1.awake.local
-gatewayusagemethod:i:1
-gatewaycredentialssource:i:0
-gatewayprofileusagemethod:i:1
-promptcredentialonce:i:1
-use redirection server name:i:0
-rdgiskdcproxy:i:0
-kdcproxyname:s:
-drivestoredirect:s:*
-username:s:LAB1\JohnDoe
- */
+static char testRdpFileUTF8[] =
+	"screen mode id:i:2\n"
+	"use multimon:i:0\n"
+	"desktopwidth:i:1920\n"
+	"desktopheight:i:1080\n"
+	"session bpp:i:32\n"
+	"winposstr:s:0,1,553,211,1353,811\n"
+	"compression:i:1\n"
+	"keyboardhook:i:2\n"
+	"audiocapturemode:i:0\n"
+	"videoplaybackmode:i:1\n"
+	"connection type:i:7\n"
+	"networkautodetect:i:1\n"
+	"bandwidthautodetect:i:1\n"
+	"displayconnectionbar:i:1\n"
+	"enableworkspacereconnect:i:0\n"
+	"disable wallpaper:i:0\n"
+	"allow font smoothing:i:0\n"
+	"allow desktop composition:i:0\n"
+	"disable full window drag:i:1\n"
+	"disable menu anims:i:1\n"
+	"disable themes:i:0\n"
+	"disable cursor setting:i:0\n"
+	"bitmapcachepersistenable:i:1\n"
+	"full address:s:LAB1-W7-DM-01.lab1.awake.local\n"
+	"audiomode:i:0\n"
+	"redirectprinters:i:1\n"
+	"redirectcomports:i:0\n"
+	"redirectsmartcards:i:1\n"
+	"redirectclipboard:i:1\n"
+	"redirectposdevices:i:0\n"
+	"autoreconnection enabled:i:1\n"
+	"authentication level:i:2\n"
+	"prompt for credentials:i:0\n"
+	"negotiate security layer:i:1\n"
+	"remoteapplicationmode:i:0\n"
+	"alternate shell:s:\n"
+	"shell working directory:s:\n"
+	"gatewayhostname:s:LAB1-W2K8R2-GW.lab1.awake.local\n"
+	"gatewayusagemethod:i:1\n"
+	"gatewaycredentialssource:i:0\n"
+	"gatewayprofileusagemethod:i:1\n"
+	"promptcredentialonce:i:1\n"
+	"use redirection server name:i:0\n"
+	"rdgiskdcproxy:i:0\n"
+	"kdcproxyname:s:\n"
+	"drivestoredirect:s:*\n"
+	"username:s:LAB1\\JohnDoe\n";
 
 int TestClientRdpFile(int argc, char* argv[])
 {
 	rdpFile* file;
 
-	file = (rdpFile*) malloc(sizeof(rdpFile));
-	ZeroMemory(file, sizeof(rdpFile));
+	/* Unicode */
 
+	file = freerdp_client_rdp_file_new();
 	freerdp_client_parse_rdp_file_buffer(file, testRdpFileUTF16, sizeof(testRdpFileUTF16));
 
 	if (file->UseMultiMon != 0)
@@ -290,7 +289,42 @@ int TestClientRdpFile(int argc, char* argv[])
 	{
 		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
 				file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
+		return -1;
 	}
+
+	freerdp_client_rdp_file_free(file);
+
+	/* Ascii */
+
+	file = freerdp_client_rdp_file_new();
+	freerdp_client_parse_rdp_file_buffer(file, (BYTE*) testRdpFileUTF8, sizeof(testRdpFileUTF8));
+
+	if (file->UseMultiMon != 0)
+	{
+		printf("UseMultiMon mismatch: Actual: %d, Expected: %d\n", file->UseMultiMon, 0);
+		return -1;
+	}
+
+	if (file->ScreenModeId != 2)
+	{
+		printf("ScreenModeId mismatch: Actual: %d, Expected: %d\n", file->ScreenModeId, 2);
+		return -1;
+	}
+
+	if (file->GatewayProfileUsageMethod != 1)
+	{
+		printf("GatewayProfileUsageMethod mismatch: Actual: %d, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
+		return -1;
+	}
+
+	if (strcmp(file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local") != 0)
+	{
+		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
+				file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
+		return -1;
+	}
+
+	freerdp_client_rdp_file_free(file);
 
 	return 0;
 }
