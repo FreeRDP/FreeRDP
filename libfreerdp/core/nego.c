@@ -579,7 +579,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	{
 		cookie_length = strlen(nego->cookie);
 
-		if (cookie_length > nego->cookie_max_length)
+		if (cookie_length > (int) nego->cookie_max_length)
 			cookie_length = nego->cookie_max_length;
 
 		stream_write(s, "Cookie: mstshash=", 17);

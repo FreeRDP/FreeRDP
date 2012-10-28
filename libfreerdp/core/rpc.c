@@ -212,13 +212,24 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	STREAM* s;
+	rdpSettings* settings;
 	int ntlm_token_length;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
 
-	ntlm_client_init(ntlm, TRUE, rpc->settings->username,
-			rpc->settings->domain, rpc->settings->password);
+	settings = rpc->settings;
+
+	if (settings->tsg_same_credentials)
+	{
+		ntlm_client_init(ntlm, TRUE, settings->username,
+			settings->domain, settings->password);
+	}
+	else
+	{
+		ntlm_client_init(ntlm, TRUE, settings->tsg_username,
+			settings->tsg_domain, settings->tsg_password);
+	}
 
 	ntlm_authenticate(ntlm);
 

@@ -72,8 +72,8 @@ struct rdp_file
 	LPSTR Domain; /* domain */
 	PBYTE Password51; /* password 51 */
 
-	LPTSTR FullAddress; /* full address */
-	LPTSTR AlternateFullAddress; /* alternate full address */
+	LPSTR FullAddress; /* full address */
+	LPSTR AlternateFullAddress; /* alternate full address */
 	DWORD ServerPort; /* server port */
 
 	DWORD RedirectDrives; /* redirectdrives */

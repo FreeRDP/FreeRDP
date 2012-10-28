@@ -41,6 +41,8 @@
 
 #include <winpr/crt.h>
 
+#define DEBUG_CLIENT_FILE	1
+
 static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 
@@ -48,6 +50,10 @@ static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 
 BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value)
 {
+#ifdef DEBUG_CLIENT_FILE
+	printf("%s:i:%d\n", name, value);
+#endif
+
 	if (_stricmp(name, "use multimon") == 0)
 		file->UseMultiMon = value;
 	else if (_stricmp(name, "screen mode id") == 0)
@@ -214,6 +220,10 @@ void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, char* name, char
 
 BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 {
+#ifdef DEBUG_CLIENT_FILE
+	printf("%s:s:%s\n", name, value);
+#endif
+
 	if (_stricmp(name, "username") == 0)
 		file->Username = value;
 	else if (_stricmp(name, "domain") == 0)
@@ -517,8 +527,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		settings->shell = file->AlternateShell;
 	if (~((size_t) file->ShellWorkingDirectory))
 		settings->directory = file->ShellWorkingDirectory;
+	
 	if (~((size_t) file->GatewayHostname))
 		settings->tsg_hostname = file->GatewayHostname;
+	if (~file->GatewayUsageMethod)
+		settings->ts_gateway = TRUE;
+	if (~file->PromptCredentialOnce)
+		settings->tsg_same_credentials = TRUE;
+	
 	if (~file->RemoteApplicationMode)
 		settings->remote_app = file->RemoteApplicationMode;
 
