@@ -28,6 +28,8 @@
 
 #include "ndr_array.h"
 
+#ifndef _WIN32
+
 void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
@@ -139,3 +141,5 @@ void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 
 	printf("warning: NdrComplexArrayBufferSize unimplemented\n");
 }
+
+#endif

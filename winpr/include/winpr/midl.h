@@ -22,7 +22,11 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 WINPR_API void* MIDL_user_allocate(size_t cBytes);
 WINPR_API void MIDL_user_free(void* p);
+
+#endif
 
 #endif /* WINPR_RPC_MIDL_H */

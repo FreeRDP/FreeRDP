@@ -27,6 +27,8 @@
 
 #include <winpr/ndr.h>
 
+#ifndef _WIN32
+
 #include "ndr_array.h"
 #include "ndr_context.h"
 #include "ndr_pointer.h"
@@ -344,3 +346,5 @@ CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRIN
 
 	return client_call_return;
 }
+
+#endif

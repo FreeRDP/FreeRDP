@@ -25,7 +25,11 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 void RpcRaiseException(RPC_STATUS exception)
 {
 	printf("RpcRaiseException: 0x%08luX\n", exception);
 }
+
+#endif

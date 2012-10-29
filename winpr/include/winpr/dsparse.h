@@ -22,13 +22,75 @@
 
 #ifdef _WIN32
 
+#include <winpr/rpc.h>
 #include <winpr/windows.h>
+
+#include <ntdsapi.h>
 
 #else
 
 #include <winpr/crt.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+
+typedef enum
+{ 
+	DS_NAME_NO_FLAGS = 0x0,
+	DS_NAME_FLAG_SYNTACTICAL_ONLY = 0x1,
+	DS_NAME_FLAG_EVAL_AT_DC = 0x2,
+	DS_NAME_FLAG_GCVERIFY = 0x4,
+	DS_NAME_FLAG_TRUST_REFERRAL = 0x8
+} DS_NAME_FLAGS;
+
+typedef enum
+{ 
+	DS_UNKNOWN_NAME = 0,
+	DS_FQDN_1779_NAME = 1,
+	DS_NT4_ACCOUNT_NAME = 2,
+	DS_DISPLAY_NAME = 3,
+	DS_UNIQUE_ID_NAME = 6,
+	DS_CANONICAL_NAME = 7,
+	DS_USER_PRINCIPAL_NAME = 8,
+	DS_CANONICAL_NAME_EX = 9,
+	DS_SERVICE_PRINCIPAL_NAME = 10,
+	DS_SID_OR_SID_HISTORY_NAME = 11,
+	DS_DNS_DOMAIN_NAME = 12
+} DS_NAME_FORMAT;
+
+typedef enum
+{ 
+	DS_NAME_NO_ERROR = 0,
+	DS_NAME_ERROR_RESOLVING = 1,
+	DS_NAME_ERROR_NOT_FOUND = 2,
+	DS_NAME_ERROR_NOT_UNIQUE = 3,
+	DS_NAME_ERROR_NO_MAPPING = 4,
+	DS_NAME_ERROR_DOMAIN_ONLY = 5,
+	DS_NAME_ERROR_NO_SYNTACTICAL_MAPPING = 6,
+	DS_NAME_ERROR_TRUST_REFERRAL = 7
+} DS_NAME_ERROR;
+
+typedef enum
+{
+	DS_SPN_DNS_HOST = 0,
+	DS_SPN_DN_HOST = 1,
+	DS_SPN_NB_HOST = 2,
+	DS_SPN_DOMAIN = 3,
+	DS_SPN_NB_DOMAIN = 4,
+	DS_SPN_SERVICE = 5
+} DS_SPN_NAME_TYPE;
+
+typedef struct
+{
+	DWORD status;
+	LPTSTR pDomain;
+	LPTSTR pName;
+} DS_NAME_RESULT_ITEM, *PDS_NAME_RESULT_ITEM;
+
+typedef struct
+{
+	DWORD cItems;
+	PDS_NAME_RESULT_ITEM rItems;
+} DS_NAME_RESULT, *PDS_NAME_RESULT;
 
 WINPR_API DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass, DWORD* pcServiceName,
 		LPWSTR ServiceName, DWORD* pcInstanceName, LPWSTR InstanceName, USHORT* pInstancePort);

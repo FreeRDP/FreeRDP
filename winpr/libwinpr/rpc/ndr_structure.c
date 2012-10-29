@@ -25,6 +25,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
+
+#ifndef _WIN32
+
 #include "ndr_private.h"
 #include "ndr_pointer.h"
 #include "ndr_structure.h"
@@ -315,3 +318,5 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		pStubMsg->PointerLength = 0;
 	}
 }
+
+#endif
