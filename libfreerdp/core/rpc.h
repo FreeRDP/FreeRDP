@@ -42,490 +42,341 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 
+/**
+ * CAE Specification
+ * DCE 1.1: Remote Procedure Call
+ * Document Number: C706
+ * http://pubs.opengroup.org/onlinepubs/9629399/
+ */
+
+#define DEFINE_RPC_COMMON_FIELDS() \
+	BYTE rpc_vers; \
+	BYTE rpc_vers_minor; \
+	BYTE ptype; \
+	BYTE pfc_flags; \
+	BYTE packed_drep[4]; \
+	UINT16 frag_length; \
+	UINT16 auth_length; \
+	UINT32 call_id
+
 struct _rpc_pdu_header
 {
-	BYTE rpc_vers;
-	BYTE rpc_vers_minor;
-	BYTE ptype;
-	BYTE pfc_flags;
-	BYTE packed_drep[4];
-	UINT16 frag_length;
-	UINT16 auth_length;
-	UINT32 call_id;
+	DEFINE_RPC_COMMON_FIELDS();
 };
 typedef struct _rpc_pdu_header RPC_PDU_HEADER;
 
-typedef   UINT16   p_context_id_t;
+typedef UINT16 p_context_id_t;
+typedef UINT16 p_reject_reason_t;
 
-typedef struct   {
-	uuid		if_uuid;
-	UINT32		if_version;
+typedef struct
+{
+	uuid if_uuid;
+	UINT32 if_version;
 } p_syntax_id_t;
 
-typedef struct {
-	p_context_id_t	p_cont_id;
-	BYTE			n_transfer_syn;     /* number of items */
-	BYTE			reserved;           /* alignment pad, m.b.z. */
-	p_syntax_id_t	abstract_syntax;    /* transfer syntax list */
-	p_syntax_id_t*	transfer_syntaxes; /*size_is(n_transfer_syn)*/
+typedef struct
+{
+	p_context_id_t p_cont_id;
+	BYTE n_transfer_syn; /* number of items */
+	BYTE reserved; /* alignment pad, m.b.z. */
+	p_syntax_id_t abstract_syntax; /* transfer syntax list */
+	p_syntax_id_t* transfer_syntaxes; /* size_is(n_transfer_syn) */
 } p_cont_elem_t;
 
-typedef struct {
-	BYTE			n_context_elem;      /* number of items */
-	BYTE			reserved;            /* alignment pad, m.b.z. */
-	UINT16			reserved2;           /* alignment pad, m.b.z. */
-	p_cont_elem_t*	p_cont_elem;          /*size_is(n_cont_elem)*/
+typedef struct
+{
+	BYTE n_context_elem; /* number of items */
+	BYTE reserved; /* alignment pad, m.b.z. */
+	UINT16 reserved2; /* alignment pad, m.b.z. */
+	p_cont_elem_t* p_cont_elem; /* size_is(n_cont_elem) */
 } p_cont_list_t;
 
-typedef enum {
-	acceptance, user_rejection, provider_rejection
+typedef enum
+{
+	acceptance,
+	user_rejection,
+	provider_rejection
 } p_cont_def_result_t;
 
-typedef enum {
+typedef enum
+{
 	reason_not_specified,
 	abstract_syntax_not_supported,
 	proposed_transfer_syntaxes_not_supported,
 	local_limit_exceeded
 } p_provider_reason_t;
 
-
-typedef struct {
-	p_cont_def_result_t   result;
-	p_provider_reason_t   reason;  /* only relevant if result !=
-										 * acceptance */
-	p_syntax_id_t         transfer_syntax;/* tr syntax selected
-											 * 0 if result not
-											 * accepted */
+typedef struct
+{
+	p_cont_def_result_t result;
+	p_provider_reason_t reason;
+	p_syntax_id_t transfer_syntax;
 } p_result_t;
 
 /* Same order and number of elements as in bind request */
 
-typedef struct {
-	BYTE		n_results;      /* count */
-	BYTE		reserved;       /* alignment pad, m.b.z. */
-	UINT16		reserved2;       /* alignment pad, m.b.z. */
-	p_result_t*	p_results; /*size_is(n_results)*/
+typedef struct
+{
+	BYTE n_results; /* count */
+	BYTE reserved; /* alignment pad, m.b.z. */
+	UINT16 reserved2; /* alignment pad, m.b.z. */
+	p_result_t* p_results; /* size_is(n_results) */
 } p_result_list_t;
 
-typedef struct {
-	BYTE   major;
-	BYTE   minor;
+typedef struct
+{
+	BYTE major;
+	BYTE minor;
 } version_t;
-typedef   version_t   p_rt_version_t;
+typedef version_t p_rt_version_t;
 
-typedef struct {
-	BYTE			n_protocols;   /* count */
-	p_rt_version_t*	p_protocols;   /* size_is(n_protocols) */
+typedef struct
+{
+	BYTE n_protocols; /* count */
+	p_rt_version_t*	p_protocols; /* size_is(n_protocols) */
 } p_rt_versions_supported_t;
 
-typedef struct {
-	UINT16	length;
-	char*	port_spec; /* port string spec; size_is(length) */
+typedef struct
+{
+	UINT16 length;
+	char* port_spec; /* port string spec; size_is(length) */
 } port_any_t;
 
-#define REASON_NOT_SPECIFIED            0
-#define TEMPORARY_CONGESTION            1
-#define LOCAL_LIMIT_EXCEEDED            2
-#define CALLED_PADDR_UNKNOWN            3 /* not used */
-#define PROTOCOL_VERSION_NOT_SUPPORTED  4
-#define DEFAULT_CONTEXT_NOT_SUPPORTED   5 /* not used */
-#define USER_DATA_NOT_READABLE          6 /* not used */
-#define NO_PSAP_AVAILABLE               7 /* not used */
+#define REASON_NOT_SPECIFIED			0
+#define TEMPORARY_CONGESTION			1
+#define LOCAL_LIMIT_EXCEEDED			2
+#define CALLED_PADDR_UNKNOWN			3
+#define PROTOCOL_VERSION_NOT_SUPPORTED		4
+#define DEFAULT_CONTEXT_NOT_SUPPORTED		5
+#define USER_DATA_NOT_READABLE			6
+#define NO_PSAP_AVAILABLE			7
 
-typedef  UINT16 rpcrt_reason_code_t;/* 0..65535 */
+typedef UINT16 rpcrt_reason_code_t;
 
-typedef  struct {
-	BYTE	rpc_vers;
-	BYTE	rpc_vers_minor;
-	BYTE	reserved[2];/* must be zero */
-	BYTE	packed_drep[4];
-	UINT32	reject_status;
-	BYTE	reserved2[4];
+typedef struct
+{
+	BYTE rpc_vers;
+	BYTE rpc_vers_minor;
+	BYTE reserved[2]; /* must be zero */
+	BYTE packed_drep[4];
+	UINT32 reject_status;
+	BYTE reserved2[4];
 } rpcrt_optional_data_t;
 
-typedef struct {
-	rpcrt_reason_code_t		reason_code; /* 0..65535 */
-	rpcrt_optional_data_t	rpc_info; /* may be RPC specific */
+typedef struct
+{
+	rpcrt_reason_code_t reason_code; /* 0..65535 */
+	rpcrt_optional_data_t rpc_info; /* may be RPC specific */
 } rpcconn_reject_optional_data_t;
 
-typedef struct {
-	rpcrt_reason_code_t		reason_code; /* 0..65535 */
-	rpcrt_optional_data_t	rpc_info; /* may be RPC-specific */
+typedef struct
+{
+	rpcrt_reason_code_t reason_code; /* 0..65535 */
+	rpcrt_optional_data_t rpc_info; /* may be RPC-specific */
 } rpcconn_disc_optional_data_t;
 
-typedef struct{
+typedef struct
+{
 	/* restore 4 byte alignment */
-
-	BYTE*	auth_pad; /* align(4); size_is(auth_pad_length) */
-	BYTE	auth_type;       /* :01  which authent service */
-	BYTE	auth_level;      /* :01  which level within service */
-	BYTE	auth_pad_length; /* :01 */
-	BYTE	auth_reserved;   /* :01 reserved, m.b.z. */
-	UINT32	auth_context_id; /* :04 */
-	BYTE*	auth_value; /* credentials; size_is(auth_length) */
+	BYTE* auth_pad; /* align(4); size_is(auth_pad_length) */
+	BYTE auth_type; /* :01  which authent service */
+	BYTE auth_level; /* :01  which level within service */
+	BYTE auth_pad_length; /* :01 */
+	BYTE auth_reserved; /* :01 reserved, m.b.z. */
+	UINT32 auth_context_id; /* :04 */
+	BYTE* auth_value; /* credentials; size_is(auth_length) */
 } auth_verifier_co_t;
 
 /* Connection-oriented PDU Definitions */
 
-typedef struct {
-	/* start 8-octet aligned */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-	/* common fields */
-	BYTE  rpc_vers;          /* 00:01 RPC version */
-	BYTE  rpc_vers_minor ;       /* 01:01 minor version */
-	BYTE  PTYPE; /* 02:01 alter context PDU */
-	BYTE  pfc_flags;             /* 03:01 flags */
-	BYTE  packed_drep[4];        /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;           /* 08:02 total length of fragment */
-	UINT16 auth_length;           /* 10:02 length of auth_value */
-	UINT32  call_id;              /* 12:04 call identifier */
-
-	/* end common fields */
-
-	UINT16 max_xmit_frag;         /* ignored */
-	UINT16 max_recv_frag;         /* ignored */
-	UINT32 assoc_group_id;        /* ignored */
+	UINT16 max_xmit_frag; /* ignored */
+	UINT16 max_recv_frag; /* ignored */
+	UINT32 assoc_group_id; /* ignored */
 
 	/* presentation context list */
 
-	p_cont_list_t  p_context_elem; /* variable size */
+	p_cont_list_t p_context_elem; /* variable size */
 
 	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
 
-	auth_verifier_co_t   auth_verifier;
+	/* following fields present if auth_length != 0 */
+
+	auth_verifier_co_t auth_verifier;
 
 } rpcconn_alter_context_hdr_t;
 
-typedef struct {
-	/* start 8-octet aligned */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-	/* common fields */
-	BYTE	rpc_vers;       /* 00:01 RPC version */
-	BYTE	rpc_vers_minor;      /* 01:01 minor version */
-	BYTE	PTYPE; /* 02:01 alter
-										 	 	 context response PDU */
-	BYTE	pfc_flags;          /* 03:01 flags */
-	BYTE	packed_drep[4];     /* 04:04 NDR data rep format label*/
-	UINT16	frag_length;        /* 08:02 total length of fragment */
-	UINT16	auth_length;        /* 10:02 length of auth_value */
-	UINT32	call_id;           /* 12:04 call identifier */
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
+	UINT32 assoc_group_id;
+	port_any_t sec_addr;
 
-	/* end common fields */
-
-	UINT16		max_xmit_frag;      /* ignored */
-	UINT16		max_recv_frag;      /* ignored */
-	UINT32		assoc_group_id;     /* ignored */
-	port_any_t	sec_addr;        /* ignored */
-
-	/* restore 4-octet alignment */
-
-	BYTE*		pad2; /* size_is(align(4)) */
-
-	/* presentation context result list, including hints */
-
-	p_result_list_t		p_result_list;    /* variable size */
-
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t	auth_verifier; /* xx:yy */
-} rpcconn_alter_context_response_hdr_t;
-
-/*  bind header */
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;      /* 01:01 minor version */
-	BYTE  PTYPE;        /* 02:01 bind PDU */
-	BYTE  pfc_flags;           /* 03:01 flags */
-	BYTE    packed_drep[4];      /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;         /* 08:02 total length of fragment */
-	UINT16 auth_length;         /* 10:02 length of auth_value */
-	UINT32  call_id;            /* 12:04 call identifier */
-
-	/* end common fields */
-
-	UINT16 max_xmit_frag;     /* 16:02 max transmit frag size, bytes */
-	UINT16 max_recv_frag;     /* 18:02 max receive  frag size, bytes */
-	UINT32 assoc_group_id;    /* 20:04 incarnation of client-server
-														* assoc group */
-	/* presentation context list */
-
-	p_cont_list_t  p_context_elem; /* variable size */
-
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier;
-} rpcconn_bind_hdr_t;
-
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;       /* 00:01 RPC version */
-	BYTE  rpc_vers_minor ;    /* 01:01 minor version */
-	BYTE  PTYPE;   /* 02:01 bind ack PDU */
-	BYTE  pfc_flags;          /* 03:01 flags */
-	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;        /* 08:02 total length of fragment */
-	UINT16 auth_length;        /* 10:02 length of auth_value */
-	UINT32  call_id;           /* 12:04 call identifier */
-
-	/* end common fields */
-
-	UINT16 max_xmit_frag;      /* 16:02 max transmit frag size */
-	UINT16 max_recv_frag;      /* 18:02 max receive  frag size */
-	UINT32 assoc_group_id;     /* 20:04 returned assoc_group_id */
-	port_any_t sec_addr;        /* 24:yy optional secondary address
-								 * for process incarnation; local port
-								 * part of address only */
 	/* restore 4-octet alignment */
 
 	BYTE* pad2; /* size_is(align(4)) */
 
 	/* presentation context result list, including hints */
 
-	p_result_list_t     p_result_list;    /* variable size */
+	p_result_list_t	p_result_list; /* variable size */
 
 	/* optional authentication verifier */
 	/* following fields present iff auth_length != 0 */
 
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
+} rpcconn_alter_context_response_hdr_t;
+
+/*  bind header */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
+
+	UINT16 max_xmit_frag; /* 16:02 max transmit frag size, bytes */
+	UINT16 max_recv_frag; /* 18:02 max receive  frag size, bytes */
+	UINT32 assoc_group_id; /* 20:04 incarnation of client-server assoc group */
+
+	/* presentation context list */
+
+	p_cont_list_t p_context_elem; /* variable size */
+
+	/* optional authentication verifier */
+	/* following fields present if auth_length != 0 */
+
+	auth_verifier_co_t auth_verifier;
+} rpcconn_bind_hdr_t;
+
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
+
+	UINT16 max_xmit_frag; /* 16:02 max transmit frag size */
+	UINT16 max_recv_frag; /* 18:02 max receive  frag size */
+	UINT32 assoc_group_id; /* 20:04 returned assoc_group_id */
+	port_any_t sec_addr; /* 24:yy optional secondary address for process incarnation; local port part of address only */
+
+	/* restore 4-octet alignment */
+
+	BYTE* pad2; /* size_is(align(4)) */
+
+	/* presentation context result list, including hints */
+
+	p_result_list_t p_result_list; /* variable size */
+
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_bind_ack_hdr_t;
 
-typedef struct {
-	/* start 8-octet aligned */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-	/* common fields */
-	BYTE  rpc_vers;       /* 00:01 RPC version */
-	BYTE  rpc_vers_minor ;    /* 01:01 minor version */
-	BYTE  PTYPE;   /* 02:01 bind ack PDU */
-	BYTE  pfc_flags;          /* 03:01 flags */
-	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;        /* 08:02 total length of fragment */
-	UINT16 auth_length;        /* 10:02 length of auth_value */
-	UINT32  call_id;           /* 12:04 call identifier */
+	UINT16 max_xmit_frag; /* 16:02 max transmit frag size */
+	UINT16 max_recv_frag; /* 18:02 max receive frag size */
 
-	/* end common fields */
-
-	UINT16 max_xmit_frag;      /* 16:02 max transmit frag size */
-	UINT16 max_recv_frag;      /* 18:02 max receive  frag size */
-
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_rpc_auth_3_hdr_t;
 
-typedef struct {
-	/* start 8-octet aligned */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-	/* common fields */
-	BYTE  rpc_vers;       /* 00:01 RPC version */
-	BYTE  rpc_vers_minor ;    /* 01:01 minor version */
-	BYTE  PTYPE;   /* 02:01 bind nak PDU */
-	BYTE  pfc_flags;          /* 03:01 flags */
-	BYTE    packed_drep[4];     /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;        /* 08:02 total length of fragment */
-	UINT16 auth_length;        /* 10:02 length of auth_value */
-	UINT32  call_id;           /* 12:04 call identifier */
+	p_reject_reason_t provider_reject_reason;
 
-	/* end common fields */
-
-	/*p_reject_reason_t*/UINT16 provider_reject_reason; /* 16:02 presentation (TODO search definition of p_reject_reason_t)
-												  context reject */
-
-	p_rt_versions_supported_t versions; /* 18:yy array of protocol
-										 * versions supported */
+	p_rt_versions_supported_t versions; /* 18:yy array of protocol versions supported */
 } rpcconn_bind_nak_hdr_t;
 
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;       /* 01:01 minor version */
-	BYTE  PTYPE;    /* 02:01 CO cancel PDU */
-	BYTE  pfc_flags;            /* 03:01 flags */
-	BYTE    packed_drep[4];       /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;          /* 08:02 total length of fragment */
-	UINT16 auth_length;          /* 10:02 length of auth_value */
-	UINT32  call_id;             /* 12:04 call identifier */
-
-	/* end common fields */
-
-	/* optional authentication verifier
-	 * following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 
 } rpcconn_cancel_hdr_t;
 
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;      /* 01:01 minor version */
-	BYTE  PTYPE;       /* 02:01 fault PDU */
-	BYTE  pfc_flags;           /* 03:01 flags */
-	BYTE   packed_drep[4];      /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;         /* 08:02 total length of fragment */
-	UINT16 auth_length;         /* 10:02 length of auth_value */
-	UINT32  call_id;            /* 12:04 call identifier */
-
-	/* end common fields */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
 	/* needed for request, response, fault */
 
-	UINT32  alloc_hint;      /* 16:04 allocation hint */
+	UINT32 alloc_hint; /* 16:04 allocation hint */
 	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
 
 	/* needed for response or fault */
 
-	BYTE  cancel_count;      /* 22:01 received cancel count */
-	BYTE  reserved;         /* 23:01 reserved, m.b.z. */
+	BYTE cancel_count; /* 22:01 received cancel count */
+	BYTE reserved; /* 23:01 reserved, m.b.z. */
 
-	/* fault code  */
+	/* fault code */
 
-	UINT32  status;           /* 24:04 run-time fault code or zero */
+	UINT32 status; /* 24:04 run-time fault code or zero */
 
 	/* always pad to next 8-octet boundary */
 
-	BYTE  reserved2[4];     /* 28:04 reserved padding, m.b.z. */
+	BYTE reserved2[4]; /* 28:04 reserved padding, m.b.z. */
 
-	/* stub data here, 8-octet aligned
-		   .
-		   .
-		   .                          */
+	/* stub data here, 8-octet aligned */
 	BYTE* stub_data;
 
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_fault_hdr_t;
 
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;      /* 01:01 minor version */
-	BYTE  PTYPE;    /* 02:01 orphaned PDU */
-	BYTE  pfc_flags;           /* 03:01 flags */
-	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;         /* 08:02 total length of fragment */
-	UINT16 auth_length;         /* 10:02 length of auth_value */
-	UINT32  call_id;            /* 12:04 call identifier */
-
-	/* end common fields */
-
-	/* optional authentication verifier
-	 * following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_orphaned_hdr_t;
 
-
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;       /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;     /* 01:01 minor version */
-	BYTE  PTYPE;   /* 02:01 request PDU */
-	BYTE  pfc_flags;          /* 03:01 flags */
-	BYTE  packed_drep[4];     /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;        /* 08:02 total length of fragment */
-	UINT16 auth_length;        /* 10:02 length of auth_value */
-	UINT32  call_id;           /* 12:04 call identifier */
-
-	/* end common fields */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
 	/* needed on request, response, fault */
 
-	UINT32  alloc_hint;        /* 16:04 allocation hint */
-	p_context_id_t p_cont_id;  /* 20:02 pres context, i.e. data rep */
-	UINT16 opnum;              /* 22:02 operation #
-								 * within the interface */
+	UINT32 alloc_hint; /* 16:04 allocation hint */
+	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
+	UINT16 opnum; /* 22:02 operation number within the interface */
 
-	/* optional field for request, only present if the PFC_OBJECT_UUID
-	 * field is non-zero */
+	/* optional field for request, only present if the PFC_OBJECT_UUID field is non-zero */
 
-	uuid  object;              /* 24:16 object UID */
+	uuid object; /* 24:16 object UID */
 
-	/* stub data, 8-octet aligned
-			   .
-			   .
-			   .                 */
+	/* stub data, 8-octet aligned */
+
 	BYTE* stub_data;
 
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_request_hdr_t;
 
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;      /* 01:01 minor version */
-	BYTE  PTYPE;    /* 02:01 response PDU */
-	BYTE  pfc_flags;           /* 03:01 flags */
-	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;         /* 08:02 total length of fragment */
-	UINT16 auth_length;         /* 10:02 length of auth_value */
-	UINT32 call_id;             /* 12:04 call identifier */
-
-	/* end common fields */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 
 	/* needed for request, response, fault */
 
-	UINT32  alloc_hint;         /* 16:04 allocation hint */
-	p_context_id_t p_cont_id;    /* 20:02 pres context, i.e.
-							  * data rep */
+	UINT32 alloc_hint; /* 16:04 allocation hint */
+	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
 
 	/* needed for response or fault */
 
-	BYTE  cancel_count;        /* 22:01 cancel count */
-	BYTE  reserved;            /* 23:01 reserved, m.b.z. */
+	BYTE cancel_count; /* 22:01 cancel count */
+	BYTE reserved; /* 23:01 reserved, m.b.z. */
 
-	/* stub data here, 8-octet aligned
-	   .
-	   .
-	   .                          */
+	/* stub data here, 8-octet aligned */
 	BYTE* stub_data;
 
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t   auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier; /* xx:yy */
 } rpcconn_response_hdr_t;
 
-
-typedef struct {
-	/* start 8-octet aligned */
-
-	/* common fields */
-	BYTE  rpc_vers;        /* 00:01 RPC version */
-	BYTE  rpc_vers_minor;      /* 01:01 minor version */
-	BYTE  PTYPE;   /* 02:01 shutdown PDU */
-	BYTE  pfc_flags;           /* 03:01 flags */
-	BYTE  packed_drep[4];      /* 04:04 NDR data rep format label*/
-	UINT16 frag_length;         /* 08:02 total length of fragment */
-	UINT16 auth_length;         /* 10:02 */
-	UINT32  call_id;            /* 12:04 call identifier */
-
-	/* end common fields */
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
 } rpcconn_shutdown_hdr_t;
 
 struct rdp_ntlm

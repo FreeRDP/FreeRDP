@@ -349,7 +349,6 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 	return status;
 }
 
-
 int tls_write_all(rdpTls* tls, BYTE* data, int length)
 {
 	int status;

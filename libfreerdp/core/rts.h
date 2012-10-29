@@ -26,6 +26,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>

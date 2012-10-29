@@ -415,7 +415,7 @@ void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
 {
 	stream_read_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
 	stream_read_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
-	stream_read_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_read_BYTE(s, header->ptype); /* ptype (1 byte) */
 	stream_read_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
 	stream_read_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
 	stream_read_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
@@ -424,6 +424,21 @@ void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header)
 	stream_read_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
 	stream_read_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
 	stream_read_UINT32(s, header->call_id); /* call_id (4 bytes) */
+}
+
+void rpc_pdu_header_write(STREAM* s, RPC_PDU_HEADER* header)
+{
+	stream_write_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
+	stream_write_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
+	stream_write_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_write_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[2]); /* packet_drep[2] (1 byte) */
+	stream_write_BYTE(s, header->packed_drep[3]); /* packet_drep[3] (1 byte) */
+	stream_write_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
+	stream_write_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
+	stream_write_UINT32(s, header->call_id); /* call_id (4 bytes) */
 }
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
@@ -477,9 +492,10 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	ntlm_stream->p = ntlm_stream->data = rpc->ntlm->outputBuffer.pvBuffer;
 
 	bind_pdu = xnew(rpcconn_bind_hdr_t);
+
 	bind_pdu->rpc_vers = 5;
 	bind_pdu->rpc_vers_minor = 0;
-	bind_pdu->PTYPE = PTYPE_BIND;
+	bind_pdu->ptype = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_PENDING_CANCEL | PFC_CONC_MPX;
 	bind_pdu->packed_drep[0] = 0x10;
 	bind_pdu->packed_drep[1] = 0x00;
@@ -488,9 +504,11 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->frag_length = 124 + ntlm_stream->size;
 	bind_pdu->auth_length = ntlm_stream->size;
 	bind_pdu->call_id = 2;
+
 	bind_pdu->max_xmit_frag = 0x0FF8;
 	bind_pdu->max_recv_frag = 0x0FF8;
 	bind_pdu->assoc_group_id = 0;
+
 	bind_pdu->p_context_elem.n_context_elem = 2;
 	bind_pdu->p_context_elem.reserved = 0;
 	bind_pdu->p_context_elem.reserved2 = 0;
@@ -498,27 +516,27 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[0].p_cont_id = 0;
 	bind_pdu->p_context_elem.p_cont_elem[0].n_transfer_syn = 1;
 	bind_pdu->p_context_elem.p_cont_elem[0].reserved = 0;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_low = 0x44e265dd;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_mid = 0x7daf;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_hi_and_version = 0x42cd;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_low = 0x44E265DD;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_mid = 0x7DAF;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_hi_and_version = 0x42CD;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.clock_seq_hi_and_reserved = 0x85;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.clock_seq_low = 0x60;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[0] = 0x3c;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[1] = 0xdb;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[2] = 0x6e;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[3] = 0x7a;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[0] = 0x3C;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[1] = 0xDB;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[2] = 0x6E;
+	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[3] = 0x7A;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[4] = 0x27;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[5] = 0x29;
 	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_version = 0x00030001;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_low = 0x8a885d04;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_mid = 0x1ceb;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x11c9;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.clock_seq_hi_and_reserved = 0x9f;
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_low = 0x8A885D04;
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_mid = 0x1CEB;
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x11C9;
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.clock_seq_hi_and_reserved = 0x9F;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.clock_seq_low = 0xe8;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[0] = 0x08;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[1] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[2] = 0x2b;
+	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[2] = 0x2B;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[3] = 0x10;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[4] = 0x48;
 	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[5] = 0x60;
@@ -526,20 +544,20 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[1].p_cont_id = 1;
 	bind_pdu->p_context_elem.p_cont_elem[1].n_transfer_syn = 1;
 	bind_pdu->p_context_elem.p_cont_elem[1].reserved = 0;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_low = 0x44e265dd;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_mid = 0x7daf;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_hi_and_version = 0x42cd;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_low = 0x44E265DD;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_mid = 0x7DAF;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_hi_and_version = 0x42CD;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.clock_seq_hi_and_reserved = 0x85;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.clock_seq_low = 0x60;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[0] = 0x3c;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[1] = 0xdb;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[2] = 0x6e;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[3] = 0x7a;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[0] = 0x3C;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[1] = 0xDB;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[2] = 0x6E;
+	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[3] = 0x7A;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[4] = 0x27;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[5] = 0x29;
 	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_version = 0x00030001;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_low = 0x6cb71c2c;
+	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_low = 0x6CB71C2C;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_mid = 0x9812;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x4540;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.clock_seq_hi_and_reserved = 0x03;
@@ -551,13 +569,14 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[4] = 0x00;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[5] = 0x00;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_version = 0x00000001;
-	bind_pdu->auth_verifier.auth_pad = NULL; /* align(4); size_is(auth_pad_length) p*/
-	bind_pdu->auth_verifier.auth_type = 0x0a;       /* :01  which authent service */
-	bind_pdu->auth_verifier.auth_level = 0x05;      /* :01  which level within service */
-	bind_pdu->auth_verifier.auth_pad_length = 0x00; /* :01 */
-	bind_pdu->auth_verifier.auth_reserved = 0x00;   /* :01 reserved, m.b.z. */
-	bind_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	bind_pdu->auth_verifier.auth_value = malloc(bind_pdu->auth_length); /* credentials; size_is(auth_length) p*/;
+
+	bind_pdu->auth_verifier.auth_pad = NULL;
+	bind_pdu->auth_verifier.auth_type = 0x0A;
+	bind_pdu->auth_verifier.auth_level = 0x05;
+	bind_pdu->auth_verifier.auth_pad_length = 0x00;
+	bind_pdu->auth_verifier.auth_reserved = 0x00;
+	bind_pdu->auth_verifier.auth_context_id = 0x00000000;
+	bind_pdu->auth_verifier.auth_value = malloc(bind_pdu->auth_length);
 	memcpy(bind_pdu->auth_verifier.auth_value, ntlm_stream->data, bind_pdu->auth_length);
 
 	stream_free(ntlm_stream);
@@ -580,7 +599,7 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, pdu->size);
 
-	stream_free(pdu) ;
+	stream_free(pdu);
 	free(bind_pdu);
 
 	return TRUE;
@@ -644,9 +663,10 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	s->p = s->data = rpc->ntlm->outputBuffer.pvBuffer;
 
 	rpc_auth_3_pdu = xnew(rpcconn_rpc_auth_3_hdr_t);
+
 	rpc_auth_3_pdu->rpc_vers = 5;
 	rpc_auth_3_pdu->rpc_vers_minor = 0;
-	rpc_auth_3_pdu->PTYPE = PTYPE_RPC_AUTH_3;
+	rpc_auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
 	rpc_auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
 	rpc_auth_3_pdu->packed_drep[0] = 0x10;
 	rpc_auth_3_pdu->packed_drep[1] = 0x00;
@@ -658,13 +678,13 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_auth_3_pdu->max_xmit_frag = 0x0FF8;
 	rpc_auth_3_pdu->max_recv_frag = 0x0FF8;
-	rpc_auth_3_pdu->auth_verifier.auth_pad = NULL; /* align(4); size_is(auth_pad_length) p */
-	rpc_auth_3_pdu->auth_verifier.auth_type = 0x0a;       /* :01  which authent service */
-	rpc_auth_3_pdu->auth_verifier.auth_level = 0x05;      /* :01  which level within service */
-	rpc_auth_3_pdu->auth_verifier.auth_pad_length = 0x00; /* :01 */
-	rpc_auth_3_pdu->auth_verifier.auth_reserved = 0x00;   /* :01 reserved, m.b.z. */
-	rpc_auth_3_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	rpc_auth_3_pdu->auth_verifier.auth_value = malloc(rpc_auth_3_pdu->auth_length); /* credentials; size_is(auth_length) p */
+	rpc_auth_3_pdu->auth_verifier.auth_pad = NULL;
+	rpc_auth_3_pdu->auth_verifier.auth_type = 0x0A;
+	rpc_auth_3_pdu->auth_verifier.auth_level = 0x05;
+	rpc_auth_3_pdu->auth_verifier.auth_pad_length = 0x00;
+	rpc_auth_3_pdu->auth_verifier.auth_reserved = 0x00;
+	rpc_auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
+	rpc_auth_3_pdu->auth_verifier.auth_value = malloc(rpc_auth_3_pdu->auth_length);
 	memcpy(rpc_auth_3_pdu->auth_verifier.auth_value, s->data, rpc_auth_3_pdu->auth_length);
 
 	stream_free(s);
@@ -782,9 +802,10 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 		auth_pad_length = 0;
 
 	request_pdu = xnew(rpcconn_request_hdr_t);
+
 	request_pdu->rpc_vers = 5;
 	request_pdu->rpc_vers_minor = 0;
-	request_pdu->PTYPE = PTYPE_REQUEST;
+	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
 	request_pdu->packed_drep[0] = 0x10;
 	request_pdu->packed_drep[1] = 0x00;
@@ -803,19 +824,19 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
 	request_pdu->stub_data = data;
-	request_pdu->auth_verifier.auth_type = 0x0A; /* :01  which authentication service */
-	request_pdu->auth_verifier.auth_level = 0x05; /* :01  which level within service */
-	request_pdu->auth_verifier.auth_pad_length = auth_pad_length; /* :01 */
-	request_pdu->auth_verifier.auth_pad = malloc(auth_pad_length); /* align(4); size_is(auth_pad_length) p */
+	request_pdu->auth_verifier.auth_type = 0x0A;
+	request_pdu->auth_verifier.auth_level = 0x05;
+	request_pdu->auth_verifier.auth_pad_length = auth_pad_length;
+	request_pdu->auth_verifier.auth_pad = malloc(auth_pad_length);
 
 	for (i = 0; i < auth_pad_length; i++)
 	{
 		request_pdu->auth_verifier.auth_pad[i] = 0x00;
 	}
 
-	request_pdu->auth_verifier.auth_reserved = 0x00; /* :01 reserved, m.b.z. */
-	request_pdu->auth_verifier.auth_context_id = 0x00000000; /* :04 */
-	request_pdu->auth_verifier.auth_value = malloc(request_pdu->auth_length); /* credentials; size_is(auth_length) p */
+	request_pdu->auth_verifier.auth_reserved = 0x00;
+	request_pdu->auth_verifier.auth_context_id = 0x00000000;
+	request_pdu->auth_verifier.auth_value = malloc(request_pdu->auth_length);
 
 	pdu = stream_new(request_pdu->frag_length);
 

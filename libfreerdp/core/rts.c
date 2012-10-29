@@ -45,6 +45,11 @@
  *
  */
 
+/**
+ * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
+ * http://msdn.microsoft.com/en-us/library/cc243950/
+ */
+
 BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
@@ -352,7 +357,7 @@ void rts_ping_traffic_sent_notify_command_write(STREAM* s, UINT32 PingTrafficSen
 	stream_write_UINT32(s, PingTrafficSent); /* PingTrafficSent (4 bytes) */
 }
 
-void rpc_generate_cookie(BYTE* cookie)
+void rts_generate_cookie(BYTE* cookie)
 {
 	RAND_pseudo_bytes(cookie, 16);
 }
@@ -383,8 +388,8 @@ BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	s = stream_new(header.frag_length);
 
-	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
-	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
@@ -430,8 +435,8 @@ BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	s = stream_new(header.frag_length);
 
-	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
-	rpc_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
