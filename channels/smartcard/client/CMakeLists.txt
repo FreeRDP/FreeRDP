@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(${PCSC_INCLUDE_DIRS})
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
