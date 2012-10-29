@@ -185,9 +185,6 @@ typedef struct
 	rpcrt_optional_data_t rpc_info; /* may be RPC-specific */
 } rpcconn_disc_optional_data_t;
 
-#define dce_c_rpc_authn_protocol_none		0
-#define dce_c_rpc_authn_protocol_krb5		1
-
 typedef struct
 {
 	/* restore 4-byte alignment */
@@ -357,6 +354,7 @@ typedef struct
 	/* needed on request, response, fault */
 
 	UINT32 alloc_hint; /* 16:04 allocation hint */
+
 	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
 	UINT16 opnum; /* 22:02 operation number within the interface */
 
