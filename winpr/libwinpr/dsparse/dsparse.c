@@ -66,7 +66,27 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
 		USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn)
 {
-	return 0;
+	DWORD SpnLength;
+	DWORD ServiceClassLength;
+	DWORD ServiceNameLength;
+
+	if ((*pcSpnLength != 0) && (pszSpn == NULL))
+		return ERROR_INVALID_PARAMETER;
+
+	ServiceClassLength = strlen(ServiceClass);
+	ServiceNameLength = strlen(ServiceName);
+
+	SpnLength = ServiceClassLength + 1 + ServiceNameLength + 1;
+
+	if ((*pcSpnLength == 0) || (*pcSpnLength < SpnLength))
+	{
+		*pcSpnLength = SpnLength;
+		return ERROR_BUFFER_OVERFLOW;
+	}
+
+	sprintf_s(pszSpn, *pcSpnLength, "%s/%s", ServiceClass, ServiceName);
+
+	return ERROR_SUCCESS;
 }
 
 #endif

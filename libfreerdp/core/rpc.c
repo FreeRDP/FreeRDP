@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/tchar.h>
 #include <winpr/dsparse.h>
 
 #include <openssl/rand.h>
@@ -141,6 +142,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	DWORD status;
 	DWORD SpnLength;
 	LPTSTR hostnameX;
+
+	length = 0;
 
 #ifdef UNICODE
 	length = strlen(hostname);

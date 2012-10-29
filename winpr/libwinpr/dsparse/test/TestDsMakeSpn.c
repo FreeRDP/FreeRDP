@@ -7,6 +7,7 @@
 
 LPCTSTR testServiceClass = _T("HTTP");
 LPCTSTR testServiceName = _T("LAB1-W2K8R2-GW.lab1.awake.local");
+LPCTSTR testSpn = _T("HTTP/LAB1-W2K8R2-GW.lab1.awake.local");
 
 int TestDsMakeSpn(int argc, char* argv[])
 {
@@ -46,6 +47,12 @@ int TestDsMakeSpn(int argc, char* argv[])
 	if (status != ERROR_SUCCESS)
 	{
 		_tprintf(_T("DsMakeSpn: expected ERROR_SUCCESS\n"));
+		return -1;
+	}
+
+	if (_tcscmp(Spn, testSpn) != 0)
+	{
+		_tprintf(_T("DsMakeSpn: SPN mismatch: Actual: %s, Expected: %s\n"), Spn, testSpn);
 		return -1;
 	}
 

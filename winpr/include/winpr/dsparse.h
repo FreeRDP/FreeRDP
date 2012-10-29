@@ -32,6 +32,7 @@
 #include <winpr/crt.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/error.h>
 
 typedef enum
 { 

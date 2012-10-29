@@ -49,6 +49,8 @@ WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
 WINPR_API int _stricmp(const char* string1, const char* string2);
 
+WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
+
 WINPR_API size_t _wcslen(const WCHAR* str);
 WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 
@@ -155,6 +157,7 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 
 #else
 
+#define _wcscmp		wcscmp
 #define _wcslen		wcslen
 #define _wcschr		wcschr
 

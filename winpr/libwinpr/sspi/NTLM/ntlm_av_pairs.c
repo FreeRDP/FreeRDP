@@ -265,7 +265,8 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	NTLM_AV_PAIR* ChallengeTargetInfo;
 	NTLM_AV_PAIR* AuthenticateTargetInfo;
 
-	AvPairsCount = AvPairsValueLength = 0;
+	AvPairsCount = 1;
+	AvPairsValueLength = 0;
 	ChallengeTargetInfo = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
 
 	AvNbDomainName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvNbDomainName);
@@ -317,8 +318,18 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	//AvPairsCount++; /* MsvAvRestrictions */
 	//AvPairsValueLength += 48;
 
+	/**
+	 * Extended Protection for Authentication:
+	 * http://blogs.technet.com/b/srd/archive/2009/12/08/extended-protection-for-authentication.aspx
+	 */
+
 	if (context->SuppressExtendedProtection != FALSE)
 	{
+		/**
+		 * SEC_CHANNEL_BINDINGS structure
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/dd919963/
+		 */
+
 		AvPairsCount++; /* MsvChannelBindings */
 		AvPairsValueLength += 16;
 

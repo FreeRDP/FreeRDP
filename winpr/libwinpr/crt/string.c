@@ -74,6 +74,19 @@ int _stricmp(const char* string1, const char* string2)
 	return strcasecmp(string1, string2);
 }
 
+/* _wcscmp -> wcscmp */
+
+int _wcscmp(const WCHAR* string1, const WCHAR* string2)
+{
+	while (*string1 && (*string1 == *string2))
+	{
+		string1++;
+		string2++;
+	}
+
+	return *string1 - *string2;
+}
+
 /* _wcslen -> wcslen */
 
 size_t _wcslen(const WCHAR* str)
