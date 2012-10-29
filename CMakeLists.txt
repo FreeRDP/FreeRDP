@@ -35,10 +35,12 @@ include(TestBigEndian)
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
+# Check for cmake compatibility (enable/disable features)
+include(CheckCmakeCompat)
+
 include(AutoVersioning)
 include(ConfigOptions)
 include(ComplexLibrary)
-include(BuildFeatureCheck)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
@@ -269,11 +271,9 @@ endif()
 # Intel Performance Primitives
 #find_optional_package(IPP)
 
-# Build CUnit
-
-find_optional_package(CUnit)
 if(WITH_CUNIT)
-	add_subdirectory(cunit)
+	message(FATAL_ERROR "cunit (WITH_CUNIT) is deprecated please use BUILD_TESTING to build ctest tests.
+The cunit directory contains the old tests and is kept until all tests are converted.")
 endif()
 
 # Sub-directories
