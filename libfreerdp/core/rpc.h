@@ -70,7 +70,17 @@ typedef UINT16 p_reject_reason_t;
 
 typedef struct
 {
-	uuid if_uuid;
+	UINT32 time_low;
+	UINT16 time_mid;
+	UINT16 time_hi_and_version;
+	BYTE clock_seq_hi_and_reserved;
+	BYTE clock_seq_low;
+	BYTE node[6];
+} uuid_t;
+
+typedef struct
+{
+	uuid_t if_uuid;
 	UINT32 if_version;
 } p_syntax_id_t;
 
@@ -175,16 +185,22 @@ typedef struct
 	rpcrt_optional_data_t rpc_info; /* may be RPC-specific */
 } rpcconn_disc_optional_data_t;
 
+#define dce_c_rpc_authn_protocol_none		0
+#define dce_c_rpc_authn_protocol_krb5		1
+
 typedef struct
 {
-	/* restore 4 byte alignment */
-	BYTE* auth_pad; /* align(4); size_is(auth_pad_length) */
+	/* restore 4-byte alignment */
+
+	BYTE* auth_pad; /* align(4); [size_is(auth_pad_length)] */
+
 	BYTE auth_type; /* :01  which authent service */
 	BYTE auth_level; /* :01  which level within service */
 	BYTE auth_pad_length; /* :01 */
 	BYTE auth_reserved; /* :01 reserved, m.b.z. */
 	UINT32 auth_context_id; /* :04 */
-	BYTE* auth_value; /* credentials; size_is(auth_length) */
+
+	BYTE* auth_value; /* credentials; [size_is(auth_length)] */
 } auth_verifier_co_t;
 
 /* Connection-oriented PDU Definitions */
@@ -258,6 +274,7 @@ typedef struct
 	UINT16 max_xmit_frag; /* 16:02 max transmit frag size */
 	UINT16 max_recv_frag; /* 18:02 max receive  frag size */
 	UINT32 assoc_group_id; /* 20:04 returned assoc_group_id */
+
 	port_any_t sec_addr; /* 24:yy optional secondary address for process incarnation; local port part of address only */
 
 	/* restore 4-octet alignment */
@@ -345,7 +362,7 @@ typedef struct
 
 	/* optional field for request, only present if the PFC_OBJECT_UUID field is non-zero */
 
-	uuid object; /* 24:16 object UID */
+	uuid_t object; /* 24:16 object UID */
 
 	/* stub data, 8-octet aligned */
 
@@ -508,6 +525,10 @@ struct rdp_rpc
 
 	UINT32 call_id;
 	UINT32 pipe_call_id;
+
+	BYTE rpc_vers;
+	BYTE rpc_vers_minor;
+	BYTE packed_drep[4];
 
 	UINT32 ReceiveWindow;
 

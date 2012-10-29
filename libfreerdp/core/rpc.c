@@ -430,7 +430,7 @@ void rpc_pdu_header_write(STREAM* s, RPC_PDU_HEADER* header)
 {
 	stream_write_BYTE(s, header->rpc_vers); /* rpc_vers (1 byte) */
 	stream_write_BYTE(s, header->rpc_vers_minor); /* rpc_vers_minor (1 byte) */
-	stream_write_BYTE(s, header->ptype); /* PTYPE (1 byte) */
+	stream_write_BYTE(s, header->ptype); /* ptype (1 byte) */
 	stream_write_BYTE(s, header->pfc_flags); /* pfc_flags (1 byte) */
 	stream_write_BYTE(s, header->packed_drep[0]); /* packet_drep[0] (1 byte) */
 	stream_write_BYTE(s, header->packed_drep[1]); /* packet_drep[1] (1 byte) */
@@ -439,6 +439,16 @@ void rpc_pdu_header_write(STREAM* s, RPC_PDU_HEADER* header)
 	stream_write_UINT16(s, header->frag_length); /* frag_length (2 bytes) */
 	stream_write_UINT16(s, header->auth_length); /* auth_length (2 bytes) */
 	stream_write_UINT32(s, header->call_id); /* call_id (4 bytes) */
+}
+
+void rpc_pdu_header_init(rdpRpc* rpc, RPC_PDU_HEADER* header)
+{
+	header->rpc_vers = rpc->rpc_vers;
+	header->rpc_vers_minor = rpc->rpc_vers_minor;
+	header->packed_drep[0] = rpc->packed_drep[0];
+	header->packed_drep[1] = rpc->packed_drep[1];
+	header->packed_drep[2] = rpc->packed_drep[2];
+	header->packed_drep[3] = rpc->packed_drep[3];
 }
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
@@ -476,10 +486,10 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 
 BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 {
-	STREAM* pdu;
+	int offset;
+	BYTE* buffer;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
-	STREAM* ntlm_stream = stream_new(0);
 
 	rpc->ntlm = ntlm_new();
 
@@ -488,21 +498,18 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	ntlm_client_init(rpc->ntlm, FALSE, settings->username, settings->domain, settings->password);
 
 	ntlm_authenticate(rpc->ntlm);
-	ntlm_stream->size = rpc->ntlm->outputBuffer.cbBuffer;
-	ntlm_stream->p = ntlm_stream->data = rpc->ntlm->outputBuffer.pvBuffer;
 
-	bind_pdu = xnew(rpcconn_bind_hdr_t);
+	bind_pdu = (rpcconn_bind_hdr_t*) malloc(sizeof(rpcconn_bind_hdr_t));
+	ZeroMemory(bind_pdu, sizeof(rpcconn_bind_hdr_t));
 
-	bind_pdu->rpc_vers = 5;
-	bind_pdu->rpc_vers_minor = 0;
+	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) bind_pdu);
+
+	bind_pdu->auth_length = rpc->ntlm->outputBuffer.cbBuffer;
+	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer.pvBuffer;
+
 	bind_pdu->ptype = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_PENDING_CANCEL | PFC_CONC_MPX;
-	bind_pdu->packed_drep[0] = 0x10;
-	bind_pdu->packed_drep[1] = 0x00;
-	bind_pdu->packed_drep[2] = 0x00;
-	bind_pdu->packed_drep[3] = 0x00;
-	bind_pdu->frag_length = 124 + ntlm_stream->size;
-	bind_pdu->auth_length = ntlm_stream->size;
+	bind_pdu->frag_length = 124 + bind_pdu->auth_length;
 	bind_pdu->call_id = 2;
 
 	bind_pdu->max_xmit_frag = 0x0FF8;
@@ -570,37 +577,32 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[5] = 0x00;
 	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_version = 0x00000001;
 
-	bind_pdu->auth_verifier.auth_pad = NULL;
 	bind_pdu->auth_verifier.auth_type = 0x0A;
 	bind_pdu->auth_verifier.auth_level = 0x05;
 	bind_pdu->auth_verifier.auth_pad_length = 0x00;
 	bind_pdu->auth_verifier.auth_reserved = 0x00;
 	bind_pdu->auth_verifier.auth_context_id = 0x00000000;
-	bind_pdu->auth_verifier.auth_value = malloc(bind_pdu->auth_length);
-	memcpy(bind_pdu->auth_verifier.auth_value, ntlm_stream->data, bind_pdu->auth_length);
 
-	stream_free(ntlm_stream);
+	buffer = (BYTE*) malloc(bind_pdu->frag_length);
 
-	pdu = stream_new(bind_pdu->frag_length);
+	CopyMemory(buffer, bind_pdu, 24);
+	CopyMemory(&buffer[24], &bind_pdu->p_context_elem, 4);
+	CopyMemory(&buffer[28], bind_pdu->p_context_elem.p_cont_elem, 24);
+	CopyMemory(&buffer[52], bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes, 20);
+	CopyMemory(&buffer[72], bind_pdu->p_context_elem.p_cont_elem + 1, 24);
+	CopyMemory(&buffer[96], bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes, 20);
 
-	stream_write(pdu, bind_pdu, 24);
-	stream_write(pdu, &bind_pdu->p_context_elem, 4);
-	stream_write(pdu, bind_pdu->p_context_elem.p_cont_elem, 24);
-	stream_write(pdu, bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes, 20);
-	stream_write(pdu, bind_pdu->p_context_elem.p_cont_elem + 1, 24);
-	stream_write(pdu, bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes, 20);
+	offset = 116;
 
 	if (bind_pdu->auth_verifier.auth_pad_length > 0)
-		stream_write(pdu, bind_pdu->auth_verifier.auth_pad, bind_pdu->auth_verifier.auth_pad_length);
+		offset += bind_pdu->auth_verifier.auth_pad_length;
 
-	stream_write(pdu, &bind_pdu->auth_verifier.auth_type, 8); /* assumed that BYTE pointer is 32bit long (4 bytes) */
-	stream_write(pdu, bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
-	stream_seal(pdu);
+	CopyMemory(&buffer[offset], &bind_pdu->auth_verifier.auth_type, 8);
+	CopyMemory(&buffer[offset + 8], bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
+	offset += (8 + bind_pdu->auth_length);
 
-	rpc_in_write(rpc, pdu->data, pdu->size);
-
-	stream_free(pdu);
-	free(bind_pdu);
+	rpc_in_write(rpc, buffer, offset);
+	free(buffer);
 
 	return TRUE;
 }
@@ -662,22 +664,20 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	s->size = rpc->ntlm->outputBuffer.cbBuffer;
 	s->p = s->data = rpc->ntlm->outputBuffer.pvBuffer;
 
-	rpc_auth_3_pdu = xnew(rpcconn_rpc_auth_3_hdr_t);
+	rpc_auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) malloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
+	ZeroMemory(rpc_auth_3_pdu, sizeof(rpcconn_rpc_auth_3_hdr_t));
 
-	rpc_auth_3_pdu->rpc_vers = 5;
-	rpc_auth_3_pdu->rpc_vers_minor = 0;
+	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) rpc_auth_3_pdu);
+
 	rpc_auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
 	rpc_auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
-	rpc_auth_3_pdu->packed_drep[0] = 0x10;
-	rpc_auth_3_pdu->packed_drep[1] = 0x00;
-	rpc_auth_3_pdu->packed_drep[2] = 0x00;
-	rpc_auth_3_pdu->packed_drep[3] = 0x00;
 	rpc_auth_3_pdu->frag_length = 28 + s->size;
 	rpc_auth_3_pdu->auth_length = s->size;
 	rpc_auth_3_pdu->call_id = 2;
 
 	rpc_auth_3_pdu->max_xmit_frag = 0x0FF8;
 	rpc_auth_3_pdu->max_recv_frag = 0x0FF8;
+
 	rpc_auth_3_pdu->auth_verifier.auth_pad = NULL;
 	rpc_auth_3_pdu->auth_verifier.auth_type = 0x0A;
 	rpc_auth_3_pdu->auth_verifier.auth_level = 0x05;
@@ -701,7 +701,7 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, pdu->data, stream_get_length(pdu));
 
-	stream_free(pdu) ;
+	stream_free(pdu);
 	free(rpc_auth_3_pdu);
 
 	return TRUE;
@@ -801,16 +801,13 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (auth_pad_length == 16)
 		auth_pad_length = 0;
 
-	request_pdu = xnew(rpcconn_request_hdr_t);
+	request_pdu = (rpcconn_request_hdr_t*) malloc(sizeof(rpcconn_request_hdr_t));
+	ZeroMemory(request_pdu, sizeof(rpcconn_request_hdr_t));
 
-	request_pdu->rpc_vers = 5;
-	request_pdu->rpc_vers_minor = 0;
+	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) request_pdu);
+
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->packed_drep[0] = 0x10;
-	request_pdu->packed_drep[1] = 0x00;
-	request_pdu->packed_drep[2] = 0x00;
-	request_pdu->packed_drep[3] = 0x00;
 	request_pdu->frag_length = 24 + length + auth_pad_length + 8 + 16;
 	request_pdu->auth_length = 16;
 	request_pdu->call_id = ++rpc->call_id;
@@ -866,7 +863,8 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Buffers[0].cbBuffer = stream_get_length(pdu);
 
 	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
-	Buffers[1].pvBuffer = xzalloc(Buffers[1].cbBuffer);
+	Buffers[1].pvBuffer = malloc(Buffers[1].cbBuffer);
+	ZeroMemory(Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
@@ -885,7 +883,7 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	status = rpc_in_write(rpc, pdu->data, pdu->p - pdu->data);
 
-	stream_free(pdu) ;
+	stream_free(pdu);
 
 	if (status < 0)
 	{
@@ -1124,6 +1122,15 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->write_buffer = NULL;
 		rpc->read_buffer_len = 0;
 		rpc->write_buffer_len = 0;
+
+		rpc->rpc_vers = 5;
+		rpc->rpc_vers_minor = 0;
+
+		/* little-endian data representation */
+		rpc->packed_drep[0] = 0x10;
+		rpc->packed_drep[1] = 0x00;
+		rpc->packed_drep[2] = 0x00;
+		rpc->packed_drep[3] = 0x00;
 
 		rpc->ReceiveWindow = 0x00010000;
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);

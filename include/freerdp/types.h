@@ -33,16 +33,6 @@
 
 #include <freerdp/settings.h>
 
-typedef struct
-{
-	UINT32 time_low;
-	UINT16 time_mid;
-	UINT16 time_hi_and_version;
-	BYTE clock_seq_hi_and_reserved;
-	BYTE clock_seq_low;
-	BYTE node[6];
-} uuid;
-
 struct _RDP_PLUGIN_DATA
 {
 	UINT16 size;
