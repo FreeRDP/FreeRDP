@@ -25,6 +25,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
+
+#ifndef _WIN32
+
 #include "ndr_pointer.h"
 #include "ndr_private.h"
 
@@ -324,3 +327,5 @@ void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 {
 	printf("warning: NdrByteCountPointerBufferSize unimplemented\n");
 }
+
+#endif

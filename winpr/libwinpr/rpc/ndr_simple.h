@@ -22,6 +22,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
 void NdrSimpleTypeUnmarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
@@ -31,5 +33,7 @@ char NdrGetSimpleTypeBufferAlignment(unsigned char FormatChar);
 char NdrGetSimpleTypeBufferSize(unsigned char FormatChar);
 char NdrGetSimpleTypeMemorySize(unsigned char FormatChar);
 int NdrGetTypeFlags(unsigned char FormatChar);
+
+#endif
 
 #endif /* WINPR_RPC_NDR_SIMPLE_H */

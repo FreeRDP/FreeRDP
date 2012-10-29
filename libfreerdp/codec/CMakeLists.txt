@@ -61,17 +61,24 @@ if(WITH_SSE2)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SSE2_SRCS})
 
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "-msse2")
+		set_source_files_properties(${${MODULE_PREFIX}_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2")
 	endif()
 
 	if(MSVC)
-		set_property(SOURCE rfx_sse2.c nsc_sse2.c PROPERTY COMPILE_FLAGS "/arch:SSE2")
+		set_source_files_properties(${${MODULE_PREFIX}_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "/arch:SSE2")
 	endif()
 endif()
 
 if(WITH_NEON)
+	if(ANDROID)
+		set(ANDROID_CPU_FEATURES_PATH "${ANDROID_NDK}/sources/android/cpufeatures")
+		include_directories(${ANDROID_CPU_FEATURES_PATH})
+		set(${MODULE_PREFIX}_NEON_SRCS ${${MODULE_PREFIX}_NEON_SRCS}
+			${ANDROID_CPU_FEATURES_PATH}/cpu-features.c
+			${ANDROID_CPU_FEATURES_PATH}/cpu-features.h)
+	endif()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_NEON_SRCS})
-	set_property(SOURCE rfx_neon.c PROPERTY COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp")
+	set_source_files_properties(${${MODULE_PREFIX}_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp -Wno-unused-variable")
 endif()
 
 if(WITH_JPEG)

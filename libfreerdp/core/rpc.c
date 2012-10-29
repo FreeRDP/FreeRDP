@@ -27,19 +27,25 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/tchar.h>
+#include <winpr/dsparse.h>
+
 #include <openssl/rand.h>
 
 #include "http.h"
 
 #include "rpc.h"
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password)
+/**
+ * The Security Support Provider Interface:
+ * http://technet.microsoft.com/en-us/library/bb742535/
+ */
+
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password)
 {
 	SECURITY_STATUS status;
 
 	sspi_GlobalInit();
-
-	ntlm->confidentiality = confidentiality;
 
 #ifdef WITH_NATIVE_SSPI
 	{
@@ -61,6 +67,25 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* dom
 #endif
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+
+	if (http)
+	{
+		DWORD status;
+		DWORD SpnLength;
+
+		SpnLength = 0;
+		status = DsMakeSpn(_T("HTTP"), _T("LAB1-W2K8R2-GW.lab1.awake.local"), NULL, 0, NULL, &SpnLength, NULL);
+
+		if (status != ERROR_BUFFER_OVERFLOW)
+		{
+			_tprintf(_T("DsMakeSpn: expected ERROR_BUFFER_OVERFLOW\n"));
+			return -1;
+		}
+
+		ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+
+		status = DsMakeSpn(_T("HTTP"), _T("LAB1-W2K8R2-GW.lab1.awake.local"), NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
+	}
 
 	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
 
@@ -87,10 +112,60 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* dom
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
 
-	ntlm->fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_DELEGATE;
+	ntlm->fContextReq = 0;
 
-	if (ntlm->confidentiality)
+	if (http)
+	{
+		/* flags for HTTP authentication */
 		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
+	}
+	else
+	{
+		/** 
+		 * flags for RPC authentication:
+		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
+		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
+		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
+		 */
+
+		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
+		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
+		ntlm->fContextReq |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT;
+	}
+
+	return TRUE;
+}
+
+BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
+{
+	int length;
+	DWORD status;
+	DWORD SpnLength;
+	LPTSTR hostnameX;
+
+	length = 0;
+
+#ifdef UNICODE
+	length = strlen(hostname);
+	hostnameX = (LPWSTR) malloc(length * sizeof(TCHAR));
+	MultiByteToWideChar(CP_ACP, 0, hostname, length, hostnameX, length);
+	hostnameX[length] = 0;
+#else
+	hostnameX = hostname;
+#endif
+
+	SpnLength = 0;
+	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
+
+	if (status != ERROR_BUFFER_OVERFLOW)
+		return FALSE;
+
+	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+
+	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
+
+	if (status != ERROR_SUCCESS)
+		return -1;
 
 	return TRUE;
 }
@@ -116,7 +191,8 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
 			(ntlm->haveContext) ? &ntlm->context : NULL,
-			NULL, ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
+			(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
+			ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
 			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
 			0, &ntlm->context, &ntlm->outputBufferDesc,
 			&ntlm->pfContextAttr, &ntlm->expiration);
@@ -212,13 +288,26 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	STREAM* s;
+	rdpSettings* settings;
 	int ntlm_token_length;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
 
-	ntlm_client_init(ntlm, TRUE, rpc->settings->username,
-			rpc->settings->domain, rpc->settings->password);
+	settings = rpc->settings;
+
+	if (settings->tsg_same_credentials)
+	{
+		ntlm_client_init(ntlm, TRUE, settings->username,
+			settings->domain, settings->password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+	}
+	else
+	{
+		ntlm_client_init(ntlm, TRUE, settings->tsg_username,
+			settings->tsg_domain, settings->tsg_password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+	}
 
 	ntlm_authenticate(ntlm);
 
@@ -262,13 +351,26 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
 	STREAM* s;
+	rdpSettings* settings;
 	int ntlm_token_length;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->ntlm_http_in->ntlm;
 
-	ntlm_client_init(ntlm, TRUE, rpc->settings->username,
-			rpc->settings->domain, rpc->settings->password);
+	settings = rpc->settings;
+
+	if (settings->tsg_same_credentials)
+	{
+		ntlm_client_init(ntlm, TRUE, settings->username,
+			settings->domain, settings->password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+	}
+	else
+	{
+		ntlm_client_init(ntlm, TRUE, settings->tsg_username,
+			settings->tsg_domain, settings->tsg_password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+	}
 
 	ntlm_authenticate(ntlm);
 
