@@ -43,3 +43,10 @@ if(APPLE)
 	add_subdirectory(Mac)
 endif()
 
+if(ANDROID)
+	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Android")
+		message(STATUS "Adding Android client")
+		add_subdirectory(Android)
+	endif()
+endif()
+

@@ -3,6 +3,8 @@ if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86") AND (CMAKE_SIZEOF_VOID_P EQU
 	set(TARGET_ARCH "x86")
 elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
 	set(TARGET_ARCH "x64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm*")
+	set(TARGET_ARCH "ARM")
 endif()
 
 option(WITH_MANPAGES "Generate manpages." ON)
@@ -14,7 +16,11 @@ else()
 	option(WITH_SSE2 "Enable SSE2 optimization." OFF)
 endif()
 
-option(WITH_NEON "Enable NEON optimization." OFF)
+if((TARGET_ARCH MATCHES "ARM") AND (NOT DEFINED WITH_NEON))
+	option(WITH_NEON "Enable NEON optimization." ON)
+else()
+	option(WITH_NEON "Enable NEON optimization." OFF)
+endif()
 
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
@@ -31,13 +37,18 @@ option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	option(MONOLITHIC_BUILD "Use monolithic build" OFF)
+	if(ANDROID)
+		option(MONOLITHIC_BUILD "Use monolithic build" ON)
+	else()
+		option(MONOLITHIC_BUILD "Use monolithic build" OFF)
+	endif()
 endif()
 
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 
 option(STATIC_CHANNELS "Build channels statically" ON)
+
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
 if(WITH_CLIENT AND WITH_CHANNELS)

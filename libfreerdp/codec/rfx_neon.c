@@ -31,10 +31,9 @@
 #include "rfx_types.h"
 #include "rfx_neon.h"
 
-#if defined(ANDROID)
-#include <cpu-features.h>
+#if ANDROID
+#include "cpu-features.h"
 #endif
-
 
 void rfx_decode_YCbCr_to_RGB_NEON(INT16 * y_r_buffer, INT16 * cb_g_buffer, INT16 * cr_b_buffer)
 {
@@ -42,17 +41,17 @@ void rfx_decode_YCbCr_to_RGB_NEON(INT16 * y_r_buffer, INT16 * cb_g_buffer, INT16
 	int16x8_t max = vdupq_n_s16(255);
 	int16x8_t y_add = vdupq_n_s16(128);
 
-	int16x8_t* y_r_buf = (int16x8_t*)y_r_buffer;
-	int16x8_t* cb_g_buf = (int16x8_t*)cb_g_buffer;
-	int16x8_t* cr_b_buf = (int16x8_t*)cr_b_buffer;
+	int16x8_t* y_r_buf = (int16x8_t*) y_r_buffer;
+	int16x8_t* cb_g_buf = (int16x8_t*) cb_g_buffer;
+	int16x8_t* cr_b_buf = (int16x8_t*) cr_b_buffer;
 
 	int i;
 	for (i = 0; i < 4096 / 8; i++)
 	{
-		int16x8_t y = vld1q_s16((INT16*)&y_r_buf[i]);
+		int16x8_t y = vld1q_s16((INT16*) &y_r_buf[i]);
 		y = vaddq_s16(y, y_add);
 
-		int16x8_t cr = vld1q_s16((INT16*)&cr_b_buf[i]);
+		int16x8_t cr = vld1q_s16((INT16*) &cr_b_buf[i]);
 
 		// r = between((y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5)), 0, 255);
 		int16x8_t r = vaddq_s16(y, cr);
@@ -295,50 +294,47 @@ rfx_dwt_2d_decode_block_NEON(INT16 * buffer, INT16 * idwt, int subband_width)
 	rfx_dwt_2d_decode_block_vert_NEON(l_dst, h_dst, buffer, subband_width);
 }
 
-void
-rfx_dwt_2d_decode_NEON(INT16 * buffer, INT16 * dwt_buffer)
+void rfx_dwt_2d_decode_NEON(INT16 * buffer, INT16 * dwt_buffer)
 {
 	rfx_dwt_2d_decode_block_NEON(buffer + 3840, dwt_buffer, 8);
 	rfx_dwt_2d_decode_block_NEON(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_decode_block_NEON(buffer, dwt_buffer, 32);
 }
 
-
-
 int isNeonSupported()
 {
-#if defined(ANDROID)
+#if ANDROID
 	if (android_getCpuFamily() != ANDROID_CPU_FAMILY_ARM)
 	{
 		DEBUG_RFX("NEON optimization disabled - No ARM CPU found");
 		return 0;
 	}
 
-	UINT64_t features = android_getCpuFeatures();
+	UINT64 features = android_getCpuFeatures();
+
 	if ((features & ANDROID_CPU_ARM_FEATURE_ARMv7))
 	{
 		if (features & ANDROID_CPU_ARM_FEATURE_NEON)
 		{
 			DEBUG_RFX("NEON optimization enabled!");
-			return 1;
+			return FALSE;
 		}
 		DEBUG_RFX("NEON optimization disabled - CPU not NEON capable");
 	}
 	else
+	{
 		DEBUG_RFX("NEON optimization disabled - No ARMv7 CPU found");
+	}
 
-	return 0;
+	return FALSE;
 #else
-	return 1;
+	return TRUE;
 #endif
 }
 
-
 void rfx_init_neon(RFX_CONTEXT * context)
 {
-
-
-	if(isNeonSupported())
+	if (isNeonSupported())
 	{
 		DEBUG_RFX("Using NEON optimizations");
 

@@ -28,6 +28,10 @@ _CPack_Packages
 *.cproject
 *.settings
 
+# .rdp files
+*.rdp
+*.RDP
+
 # Documentation
 docs/api
 client/X11/xfreerdp.1

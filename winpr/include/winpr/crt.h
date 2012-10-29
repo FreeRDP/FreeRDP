@@ -50,6 +50,10 @@ WINPR_API size_t _aligned_msize(void* memblock, size_t alignment, size_t offset)
 
 WINPR_API void _aligned_free(void* memblock);
 
+/* Data Conversion */
+
+WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix);
+
 /* Buffer Manipulation */
 
 WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);

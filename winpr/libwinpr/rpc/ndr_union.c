@@ -26,6 +26,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 #include "ndr_union.h"
 
 void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -37,3 +39,5 @@ void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned cha
 {
 	printf("warning: NdrNonEncapsulatedUnionBufferSize unimplemented\n");
 }
+
+#endif

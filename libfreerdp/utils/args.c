@@ -100,16 +100,31 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 	while (index < argc)
 	{
+		if (index == 1)
+		{
+			p = strstr(argv[index], ".rdp");
+
+			if (!p)
+				p = strstr(argv[index], ".RDP");
+
+			if (p)
+			{
+				settings->connection_file = _strdup(argv[index]);
+				index++;
+				continue;
+			}
+		}
+
 		if ((strcmp("-h", argv[index]) == 0 ) || (strcmp("--help", argv[index]) == 0 ))
 		{
 			printf("\n"
 				"FreeRDP - A Free Remote Desktop Protocol Client\n"
 				"See http://www.freerdp.com for more information\n"
 				"\n"
-				"Usage: %s [options] server:port\n"
+				"Usage: %s [file] [options] server:port\n"
 				"  -0: connect to console session\n"
 				"  -a: set color depth in bit, default is 16\n"
-				"  -c: initial working directory\n"
+				"  -c: shell working directory\n"
 				"  -D: hide window decorations\n"
 				"  -T: window title\n"
 				"  -d: domain\n"
@@ -935,7 +950,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	}
 
 	/* Must have a hostname. Do you? */
-	if (NULL == settings->hostname)
+	if ((settings->hostname == NULL) && (settings->connection_file == NULL))
 	{
 		printf("missing server name\n");
 		return FREERDP_ARGS_PARSE_FAILURE;
@@ -944,5 +959,4 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	{
 		return index;
 	}
-
 }

@@ -81,7 +81,7 @@ set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH
 # Set the info plist to the custom instance
 set_target_properties(MacFreeRDP PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
-find_optional_package(MacAudio)
+#find_optional_package(MacAudio)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS})
 

@@ -540,6 +540,7 @@ struct rdp_ntlm
 	SecBuffer outputBuffer;
 	BOOL haveContext;
 	BOOL haveInputBuffer;
+	LPTSTR ServicePrincipalName;
 	SecBufferDesc inputBufferDesc;
 	SecBufferDesc outputBufferDesc;
 	CredHandle credentials;

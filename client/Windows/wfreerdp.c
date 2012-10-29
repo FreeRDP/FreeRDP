@@ -43,6 +43,8 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
+
+#include <freerdp/client/file.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
@@ -144,6 +146,7 @@ BOOL wf_pre_connect(freerdp* instance)
 {
 	int i1;
 	wfInfo* wfi;
+	rdpFile* file;
 	wfContext* context;
 	rdpSettings* settings;
 
@@ -153,6 +156,18 @@ BOOL wf_pre_connect(freerdp* instance)
 	context->wfi = wfi;
 
 	settings = instance->settings;
+
+	settings = instance->settings;
+
+	if (settings->connection_file)
+	{
+		file = freerdp_client_rdp_file_new();
+
+		printf("Using connection file: %s\n", settings->connection_file);
+
+		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
+	}
 
 	settings->os_major_type = OSMAJORTYPE_WINDOWS;
 	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;

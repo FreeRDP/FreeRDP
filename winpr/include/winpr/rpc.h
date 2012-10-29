@@ -20,6 +20,12 @@
 #ifndef WINPR_RPC_H
 #define WINPR_RPC_H
 
+#ifdef _WIN32
+
+#include <rpc.h>
+
+#else
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -41,5 +47,7 @@ typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 #include <winpr/midl.h>
 
 void RpcRaiseException(RPC_STATUS exception);
+
+#endif
 
 #endif /* WINPR_RPC_H */

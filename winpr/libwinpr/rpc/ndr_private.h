@@ -22,6 +22,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 void NdrpAlignLength(unsigned long* length, unsigned int alignment);
 void NdrpIncrementLength(unsigned long* length, unsigned int size);
 
@@ -38,5 +40,7 @@ extern const char NdrTypeFlags[];
 extern const char* FC_TYPE_STRINGS[];
 
 #include "ndr_correlation.h"
+
+#endif
 
 #endif /* WINPR_RPC_NDR_PRIVATE_H */

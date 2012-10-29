@@ -22,7 +22,11 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+#endif
 
 #endif /* WINPR_RPC_NDR_UNION_H */

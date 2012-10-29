@@ -25,6 +25,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
+
+#ifndef _WIN32
+
 #include "ndr_simple.h"
 #include "ndr_private.h"
 
@@ -195,3 +198,5 @@ void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFOR
 {
 
 }
+
+#endif

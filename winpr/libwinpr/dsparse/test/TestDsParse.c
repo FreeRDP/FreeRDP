@@ -7,7 +7,8 @@
 
 
 /* Forward declare test functions. */
-int TestIoGetOverlappedResult(int, char*[]);
+int TestDsMakeSpn(int, char*[]);
+int TestDsCrackNames(int, char*[]);
 
 
 /* Create map.  */
@@ -21,8 +22,12 @@ typedef struct
 
 functionMapEntry cmakeGeneratedFunctionMapEntries[] = {
     {
-    "TestIoGetOverlappedResult",
-    TestIoGetOverlappedResult
+    "TestDsMakeSpn",
+    TestDsMakeSpn
+  },
+  {
+    "TestDsCrackNames",
+    TestDsCrackNames
   },
 
   {0,0}
