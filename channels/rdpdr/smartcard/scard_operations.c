@@ -29,9 +29,9 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-#include <PCSC/pcsclite.h>
-#include <PCSC/reader.h>
-#include <PCSC/winscard.h>
+#include <pcsclite.h>
+#include <reader.h>
+#include <winscard.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>

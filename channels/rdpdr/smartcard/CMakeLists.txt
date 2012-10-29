@@ -23,7 +23,7 @@ set(SCARD_SRCS
 )
 
 include_directories(..)
-include_directories(${PCSC_INCLUDE_DIRS})
+include_directories(${PCSC_INCLUDE_DIR})
 
 add_library(scard ${SCARD_SRCS})
 set_target_properties(scard PROPERTIES PREFIX "")
