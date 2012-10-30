@@ -88,7 +88,10 @@ int main(int argc, char* argv[])
 
 
 		if (index == argc - 1)
+		{
 			server->port = (DWORD) atoi(argv[index]);
+			break;
+		}
 	}
 
 	printf("Starting server\n");
