@@ -516,13 +516,11 @@ struct rdp_rpc
 	rdpSettings* settings;
 	rdpTransport* transport;
 
-	BYTE* write_buffer;
-	UINT32 write_buffer_len;
-	BYTE* read_buffer;
-	UINT32 read_buffer_len;
-
 	UINT32 call_id;
 	UINT32 pipe_call_id;
+
+	BYTE* buffer;
+	UINT32 length;
 
 	BYTE rpc_vers;
 	BYTE rpc_vers_minor;
@@ -551,6 +549,7 @@ void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header);
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
 
+int rpc_recv_pdu(rdpRpc* rpc);
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);

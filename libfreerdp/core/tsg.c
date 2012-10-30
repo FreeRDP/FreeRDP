@@ -489,10 +489,7 @@ BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 
 	free(buffer);
 
-	length = 0x8FFF;
-	buffer = malloc(length);
-
-	status = rpc_read(rpc, buffer, length);
+	status = rpc_recv_pdu(rpc);
 
 	if (status <= 0)
 	{
@@ -500,15 +497,13 @@ BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	memcpy(tsg->TunnelContext, buffer + (status - 24), 16);
+	CopyMemory(tsg->TunnelContext, rpc->buffer + (status - 24), 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG TunnelContext:\n");
 	freerdp_hexdump(tsg->TunnelContext, 16);
 	printf("\n");
 #endif
-
-	free(buffer);
 
 	return TRUE;
 }
@@ -533,11 +528,10 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
 
-	memcpy(tsg_packet2 + 4, tsg->TunnelContext, 16);
-
 	length = sizeof(tsg_packet2);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet2, length);
+	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
@@ -549,18 +543,13 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 
 	free(buffer);
 
-	length = 0x8FFF;
-	buffer = malloc(length);
-
-	status = rpc_read(rpc, buffer, length);
+	status = rpc_recv_pdu(rpc);
 
 	if (status <= 0)
 	{
 		printf("TsProxyAuthorizeTunnel read failure\n");
 		return FALSE;
 	}
-
-	free(buffer);
 
 	return TRUE;
 }
@@ -585,11 +574,10 @@ BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
 
-	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
-
 	length = sizeof(tsg_packet3);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet3, length);
+	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
@@ -608,11 +596,11 @@ BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
 
 BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 {
-	STREAM* s;
 	int status;
 	UINT32 count;
 	BYTE* buffer;
 	UINT32 length;
+	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
 
 	/**
@@ -628,19 +616,21 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxyCreateChannel");
 
+	offset = 0;
 	count = _wcslen(tsg->hostname) + 1;
 
-	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
-	memcpy(tsg_packet4 + 38, &tsg->port, 2);
+	length = 48 + 12 + (count * 2);
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, tsg_packet4, 48);
+	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
+	CopyMemory(buffer + 38, &tsg->port, 2);
 
-	s = stream_new(60 + (count * 2));
-	stream_write(s, tsg_packet4, 48);
-	stream_write_UINT32(s, count); /* MaximumCount */
-	stream_write_UINT32(s, 0x00000000); /* Offset */
-	stream_write_UINT32(s, count); /* ActualCount */
-	stream_write(s, tsg->hostname, count);
+	CopyMemory(&buffer[48], &count, 4); /* MaximumCount */
+	CopyMemory(&buffer[52], &offset, 4); /* Offset */
+	CopyMemory(&buffer[56], &count, 4); /* ActualCount */
+	CopyMemory(&buffer[60], &tsg->hostname, count);
 
-	status = rpc_tsg_write(rpc, s->data, s->size, TsProxyCreateChannelOpnum);
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
 	{
@@ -648,12 +638,9 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	//free(buffer);
+	free(buffer);
 
-	length = 0x8FFF;
-	buffer = malloc(length);
-
-	status = rpc_read(rpc, buffer, length);
+	status = rpc_recv_pdu(rpc);
 
 	if (status < 0)
 	{
@@ -661,15 +648,13 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	memcpy(tsg->ChannelContext, buffer + 4, 16);
+	CopyMemory(tsg->ChannelContext, rpc->buffer + 4, 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG ChannelContext:\n");
 	freerdp_hexdump(tsg->ChannelContext, 16);
 	printf("\n");
 #endif
-
-	free(buffer);
 
 	return TRUE;
 }
@@ -707,6 +692,8 @@ BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
 
 	free(buffer);
 
+	/* read? */
+
 	return TRUE;
 }
 
@@ -741,10 +728,37 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
+	RPC_PDU_HEADER* header;
+	rdpRpc* rpc = tsg->rpc;
 
-	status = rpc_read(tsg->rpc, data, length);
+	printf("tsg_read: %d, pending: %d\n", length, tsg->pendingPdu);
 
-	return status;
+	if (tsg->pendingPdu)
+	{
+		header = (RPC_PDU_HEADER*) rpc->buffer;
+
+		CopyMemory(data, &rpc->buffer[tsg->bytesRead], length);
+		tsg->bytesAvailable -= length;
+		tsg->bytesRead += length;
+
+		if (tsg->bytesAvailable < 1)
+			tsg->pendingPdu = FALSE;
+	}
+	else
+	{
+		status = rpc_recv_pdu(rpc);
+		tsg->pendingPdu = TRUE;
+
+		header = (RPC_PDU_HEADER*) rpc->buffer;
+		tsg->bytesAvailable = header->frag_length;
+		tsg->bytesRead = 0;
+
+		CopyMemory(data, &rpc->buffer[tsg->bytesRead], length);
+		tsg->bytesAvailable -= length;
+		tsg->bytesRead += length;
+	}
+
+	return length;
 }
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
@@ -763,6 +777,7 @@ rdpTsg* tsg_new(rdpTransport* transport)
 		tsg->transport = transport;
 		tsg->settings = transport->settings;
 		tsg->rpc = rpc_new(tsg->transport);
+		tsg->pendingPdu = FALSE;
 	}
 
 	return tsg;

@@ -42,6 +42,9 @@ struct rdp_tsg
 	rdpRpc* rpc;
 	UINT16 port;
 	LPWSTR hostname;
+	BOOL pendingPdu;
+	BOOL bytesRead;
+	BOOL bytesAvailable;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	BYTE TunnelContext[16];
