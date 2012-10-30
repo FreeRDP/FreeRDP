@@ -40,6 +40,8 @@ typedef struct rdp_tsg rdpTsg;
 struct rdp_tsg
 {
 	rdpRpc* rpc;
+	UINT16 port;
+	LPWSTR hostname;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	BYTE TunnelContext[16];
@@ -47,6 +49,12 @@ struct rdp_tsg
 };
 
 typedef wchar_t* RESOURCENAME;
+
+#define TsProxyCreateTunnelOpnum		1
+#define TsProxyAuthorizeTunnelOpnum		2
+#define TsProxyMakeTunnelCallOpnum		3
+#define TsProxyCreateChannelOpnum		4
+#define TsProxySetupReceivePipeOpnum		8
 
 #define MAX_RESOURCE_NAMES			50
 

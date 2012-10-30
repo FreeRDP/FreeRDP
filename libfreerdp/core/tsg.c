@@ -25,12 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 
+#include <winpr/crt.h>
 #include <winpr/ndr.h>
 
 #include "tsg.h"
@@ -453,23 +455,12 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	return length;
 }
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 {
-	BYTE* data;
+	int status;
+	BYTE* buffer;
 	UINT32 length;
-	STREAM* s_p4;
-	int status = -1;
 	rdpRpc* rpc = tsg->rpc;
-	WCHAR* dest_addr_unic;
-	int dest_addr_unic_len;
-
-	if (!rpc_connect(rpc))
-	{
-		printf("rpc_connect failed!\n");
-		return FALSE;
-	}
-
-	DEBUG_TSG("rpc_connect success");
 
 	/**
 	 * OpNum = 1
@@ -483,31 +474,33 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateTunnel");
-	status = rpc_tsg_write(rpc, tsg_packet1, sizeof(tsg_packet1), 1);
+
+	length = sizeof(tsg_packet1);
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, tsg_packet1, length);
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=1 failed!\n");
+		printf("TsProxyCreateTunnel write failure\n");
 		return FALSE;
 	}
+
+	free(buffer);
 
 	length = 0x8FFF;
-	data = malloc(length);
-	if (data == NULL)
-	{
-		printf("rpc_recv - memory allocation error\n") ;
-		return FALSE ;
-	}
-	status = rpc_read(rpc, data, length);
+	buffer = malloc(length);
+
+	status = rpc_read(rpc, buffer, length);
 
 	if (status <= 0)
 	{
-		printf("rpc_recv failed!\n");
-		free(data) ;
+		printf("TsProxyCreateTunnel read failure\n");
 		return FALSE;
 	}
 
-	memcpy(tsg->TunnelContext, data + (status - 24), 16);
+	memcpy(tsg->TunnelContext, buffer + (status - 24), 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG TunnelContext:\n");
@@ -515,7 +508,17 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	printf("\n");
 #endif
 
-	memcpy(tsg_packet2 + 4, tsg->TunnelContext, 16);
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
 	/**
 	 * OpNum = 2
@@ -529,25 +532,45 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
-	status = rpc_tsg_write(rpc, tsg_packet2, sizeof(tsg_packet2), 2);
+
+	memcpy(tsg_packet2 + 4, tsg->TunnelContext, 16);
+
+	length = sizeof(tsg_packet2);
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, tsg_packet2, length);
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=2 failed!\n");
-		free(data) ;
+		printf("TsProxyAuthorizeTunnel write failure\n");
 		return FALSE;
 	}
 
-	status = rpc_read(rpc, data, length);
+	free(buffer);
+
+	length = 0x8FFF;
+	buffer = malloc(length);
+
+	status = rpc_read(rpc, buffer, length);
 
 	if (status <= 0)
 	{
-		printf("rpc_recv failed!\n");
-		free(data) ;
+		printf("TsProxyAuthorizeTunnel read failure\n");
 		return FALSE;
 	}
 
-	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
 	/**
 	 * OpNum = 3
@@ -561,30 +584,36 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
-	status = rpc_tsg_write(rpc, tsg_packet3, sizeof(tsg_packet3), 3);
+
+	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
+
+	length = sizeof(tsg_packet3);
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, tsg_packet3, length);
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=3 failed!\n");
-		free(data) ;
+		printf("TsProxyMakeTunnelCall write failure\n");
 		return FALSE;
 	}
-	status = -1;
 
-	dest_addr_unic_len = freerdp_AsciiToUnicodeAlloc(hostname, &dest_addr_unic, 0) * 2;
+	/* read? */
 
-	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
-	memcpy(tsg_packet4 + 38, &port, 2);
+	free(buffer);
 
-	s_p4 = stream_new(60 + dest_addr_unic_len + 2);
-	stream_write(s_p4, tsg_packet4, 48);
-	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
-	stream_write_UINT32(s_p4, 0x00000000); /* Offset */
-	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
-	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
-	stream_write_UINT16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
+	return TRUE;
+}
 
-	free(dest_addr_unic);
+BOOL tsg_proxy_create_channel(rdpTsg* tsg)
+{
+	STREAM* s;
+	int status;
+	UINT32 count;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
 	/**
 	 * OpNum = 4
@@ -598,27 +627,41 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateChannel");
-	status = rpc_tsg_write(rpc, s_p4->data, s_p4->size, 4);
+
+	count = _wcslen(tsg->hostname) + 1;
+
+	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
+	memcpy(tsg_packet4 + 38, &tsg->port, 2);
+
+	s = stream_new(60 + (count * 2));
+	stream_write(s, tsg_packet4, 48);
+	stream_write_UINT32(s, count); /* MaximumCount */
+	stream_write_UINT32(s, 0x00000000); /* Offset */
+	stream_write_UINT32(s, count); /* ActualCount */
+	stream_write(s, tsg->hostname, count);
+
+	status = rpc_tsg_write(rpc, s->data, s->size, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=4 failed!\n");
-		stream_free(s_p4);
-		free(data);
+		printf("TsProxyCreateChannel write failure\n");
 		return FALSE;
 	}
 
-	status = rpc_read(rpc, data, length);
+	//free(buffer);
+
+	length = 0x8FFF;
+	buffer = malloc(length);
+
+	status = rpc_read(rpc, buffer, length);
 
 	if (status < 0)
 	{
-		printf("rpc_recv failed!\n");
-		stream_free(s_p4);
-		free(data);
+		printf("TsProxyCreateChannel read failure\n");
 		return FALSE;
 	}
 
-	memcpy(tsg->ChannelContext, data + 4, 16);
+	memcpy(tsg->ChannelContext, buffer + 4, 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG ChannelContext:\n");
@@ -626,7 +669,17 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	printf("\n");
 #endif
 
-	memcpy(tsg_packet5 + 4, tsg->ChannelContext, 16);
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
 	/**
 	 * OpNum = 8
@@ -637,18 +690,50 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxySetupReceivePipe");
-	status = rpc_tsg_write(rpc, tsg_packet5, sizeof(tsg_packet5), 8);
+
+	memcpy(tsg_packet5 + 4, tsg->ChannelContext, 16);
+
+	length = sizeof(tsg_packet5);
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, tsg_packet5, length);
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
 	{
-		printf("rpc_write opnum=8 failed!\n");
-		stream_free(s_p4);
-		free(data);
+		printf("TsProxySetupReceivePipe write failure\n");
 		return FALSE;
 	}
 
-	stream_free(s_p4);
-	free(data);
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+{
+	rdpRpc* rpc = tsg->rpc;
+
+	tsg->port = port;
+	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->hostname, 0);
+
+	if (!rpc_connect(rpc))
+	{
+		printf("rpc_connect failed!\n");
+		return FALSE;
+	}
+
+	DEBUG_TSG("rpc_connect success");
+
+	tsg_proxy_create_tunnel(tsg);
+
+	tsg_proxy_authorize_tunnel(tsg);
+
+	tsg_proxy_make_tunnel_call(tsg);
+
+	tsg_proxy_create_channel(tsg);
+
+	tsg_proxy_setup_receive_pipe(tsg);
 
 	return TRUE;
 }

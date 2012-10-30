@@ -895,7 +895,7 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 	if (rpc_data == NULL)
 	{
 		printf("rpc_read error: memory allocation failed\n") ;
-		return -1 ;
+		return -1;
 	}
 
 	if (rpc->read_buffer_len > 0)
