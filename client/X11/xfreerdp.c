@@ -786,7 +786,7 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 			if (instance->settings->from_stdin)
 				printf(" - Run without parameter \"--from-stdin\" to set trust.");
 			printf("\n");
-			return FALSE;
+			return false;
 		}
 
 		if (answer == 'y' || answer == 'Y')
