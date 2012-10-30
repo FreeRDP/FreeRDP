@@ -710,43 +710,50 @@ const int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = (char*) pEntryPoints->plugin_data->data[1];
 	path = (char*) pEntryPoints->plugin_data->data[2];
 
+	if (name && name[0] && path && path[0])
+	{
 #ifndef WIN32
-        disk_register_disk_path(pEntryPoints, name, path);
+		disk_register_disk_path(pEntryPoints, name, path);
 #else
-        /* Special case: path[0] == '*' -> export all drives */
-	/* Special case: path[0] == '%' -> user home dir */
-	if( path[0] == '%' )
-	{
-		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
-		disk_register_disk_path(pEntryPoints, name, _strdup(buf));
-	}
-	else if( path[0] == '*' )
-	{
-		int i;
-
-		/* Enumerate all devices: */
-		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
-
-		for (dev = devlist, i = 0; *dev; dev += 4, i++)
+		/* Special case: path[0] == '*' -> export all drives */
+		/* Special case: path[0] == '%' -> user home dir */
+		if( path[0] == '%' )
 		{
-			if (*dev > 'B')
-                        {
-				/* Suppress disk drives A and B to avoid pesty messages */
-				_snprintf(buf, sizeof(buf) - 4, "%s", name);
-				len = strlen(buf);
-				buf[len] = '_';
-				buf[len + 1] = dev[0];
-				buf[len + 2] = 0;
-				buf[len + 3] = 0;
-				disk_register_disk_path(pEntryPoints, _strdup(buf), _strdup(dev));
+			_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
+			disk_register_disk_path(pEntryPoints, name, _strdup(buf));
+		}
+		else if( path[0] == '*' )
+		{
+			int i;
+
+			/* Enumerate all devices: */
+			GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
+
+			for (dev = devlist, i = 0; *dev; dev += 4, i++)
+			{
+				if (*dev > 'B')
+				{
+					/* Suppress disk drives A and B to avoid pesty messages */
+					_snprintf(buf, sizeof(buf) - 4, "%s", name);
+					len = strlen(buf);
+					buf[len] = '_';
+					buf[len + 1] = dev[0];
+					buf[len + 2] = 0;
+					buf[len + 3] = 0;
+					disk_register_disk_path(pEntryPoints, _strdup(buf), _strdup(dev));
+				}
 			}
 		}
-	}
-        else
-        {
-		disk_register_disk_path(pEntryPoints, name, path);
-	}
+		else
+		{
+			disk_register_disk_path(pEntryPoints, name, path);
+		}
 #endif
-	
         return 0;
+	}
+	else
+	{
+		printf("Wrong syntax specified, disk is not redirected.\n");
+		return 1;
+	}
  }
