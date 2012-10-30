@@ -803,15 +803,24 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 int rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
+	int bytesRead = 0;
 	RPC_PDU_HEADER* header;
 
 	/* read first 20 bytes to get RPC PDU Header */
-	status = tls_read(rpc->tls_out, rpc->buffer, 20);
 
-	if (status <= 0)
+	ZeroMemory(rpc->buffer, 20);
+
+	while (bytesRead < 20)
 	{
-		printf("rpc_recv_pdu: error reading header\n");
-		return status;
+		status = tls_read(rpc->tls_out, &rpc->buffer[bytesRead], 20 - bytesRead);
+
+		if (status < 0)
+		{
+			printf("rpc_recv_pdu: error reading header\n");
+			return status;
+		}
+
+		bytesRead += status;
 	}
 
 	header = (RPC_PDU_HEADER*) rpc->buffer;
@@ -821,14 +830,20 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	{
 		rpc->length = header->frag_length;
 		rpc->buffer = (BYTE*) realloc(rpc->buffer, rpc->length);
+		header = (RPC_PDU_HEADER*) rpc->buffer;
 	}
 
-	status = tls_read(rpc->tls_out, &rpc->buffer[20], header->frag_length - 20);
-
-	if (status < 0)
+	while (bytesRead < header->frag_length)
 	{
-		printf("rpc_recv_pdu: error reading fragment\n");
-		return status;
+		status = tls_read(rpc->tls_out, &rpc->buffer[bytesRead], header->frag_length - bytesRead);
+
+		if (status < 0)
+		{
+			printf("rpc_recv_pdu: error reading fragment\n");
+			return status;
+		}
+
+		bytesRead += status;
 	}
 
 	if (header->ptype == PTYPE_RTS) /* RTS PDU */
@@ -845,7 +860,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_recv_pdu: length: %d\n", header->frag_length);
-	freerdp_hexdump(rpc->buffer, rpc->length);
+	freerdp_hexdump(rpc->buffer, header->frag_length);
 	printf("\n");
 #endif
 

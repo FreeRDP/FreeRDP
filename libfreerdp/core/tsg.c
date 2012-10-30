@@ -728,6 +728,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
+	int copyLength;
 	RPC_PDU_HEADER* header;
 	rdpRpc* rpc = tsg->rpc;
 
@@ -737,12 +738,16 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		header = (RPC_PDU_HEADER*) rpc->buffer;
 
-		CopyMemory(data, &rpc->buffer[tsg->bytesRead], length);
-		tsg->bytesAvailable -= length;
-		tsg->bytesRead += length;
+		copyLength = (tsg->bytesAvailable > length) ? length : tsg->bytesAvailable;
+
+		CopyMemory(data, &rpc->buffer[tsg->bytesRead], copyLength);
+		tsg->bytesAvailable -= copyLength;
+		tsg->bytesRead += copyLength;
 
 		if (tsg->bytesAvailable < 1)
 			tsg->pendingPdu = FALSE;
+
+		return copyLength;
 	}
 	else
 	{
@@ -753,12 +758,14 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->bytesAvailable = header->frag_length;
 		tsg->bytesRead = 0;
 
-		CopyMemory(data, &rpc->buffer[tsg->bytesRead], length);
-		tsg->bytesAvailable -= length;
-		tsg->bytesRead += length;
-	}
+		copyLength = (tsg->bytesAvailable > length) ? length : tsg->bytesAvailable;
 
-	return length;
+		CopyMemory(data, &rpc->buffer[tsg->bytesRead], copyLength);
+		tsg->bytesAvailable -= copyLength;
+		tsg->bytesRead += copyLength;
+
+		return copyLength;
+	}
 }
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
