@@ -76,11 +76,11 @@ typedef struct
 	BYTE clock_seq_hi_and_reserved;
 	BYTE clock_seq_low;
 	BYTE node[6];
-} uuid_t;
+} p_uuid_t;
 
 typedef struct
 {
-	uuid_t if_uuid;
+	p_uuid_t if_uuid;
 	UINT32 if_version;
 } p_syntax_id_t;
 
@@ -387,7 +387,7 @@ typedef struct
 
 	/* optional field for request, only present if the PFC_OBJECT_UUID field is non-zero */
 
-	uuid_t object; /* 24:16 object UID */
+	p_uuid_t object; /* 24:16 object UID */
 
 	/* stub data, 8-octet aligned */
 
