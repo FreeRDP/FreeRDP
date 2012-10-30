@@ -312,6 +312,33 @@ typedef struct
 
 } rpcconn_cancel_hdr_t;
 
+/* fault codes */
+
+#define nca_s_fault_object_not_found		0x1C000024
+#define nca_s_fault_cancel			0x1C00000D
+#define nca_s_fault_addr_error			0x1C000002
+#define nca_s_fault_context_mismatch		0x1C00001A
+#define nca_s_fault_fp_div_zero			0x1C000003
+#define nca_s_fault_fp_error			0x1C00000F
+#define nca_s_fault_fp_overflow			0x1C000005
+#define nca_s_fault_fp_underflow		0x1C000004
+#define nca_s_fault_ill_inst			0x1C00000E
+#define nca_s_fault_int_div_by_zero		0x1C000001
+#define nca_s_fault_int_overflow		0x1C000010
+#define nca_s_fault_invalid_bound		0x1C000007
+#define nca_s_fault_invalid_tag			0x1C000006
+#define nca_s_fault_pipe_closed			0x1C000015
+#define nca_s_fault_pipe_comm_error		0x1C000018
+#define nca_s_fault_pipe_discipline		0x1C000017
+#define nca_s_fault_pipe_empty			0x1C000014
+#define nca_s_fault_pipe_memory			0x1C000019
+#define nca_s_fault_pipe_order			0x1C000016
+#define nca_s_fault_remote_no_memory		0x1C00001B
+#define ncs_s_fault_user_defined		0x1C000021
+#define nca_s_fault_tx_open_failed		0x1C000022
+#define nca_s_fault_codeset_conv_error		0x1C000023
+#define nca_s_fault_no_client_stub		0x1C000025
+
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();

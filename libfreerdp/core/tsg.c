@@ -420,7 +420,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
 	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
-	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (4 bytes) */
+	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (16 bytes) */
 
 	stream_write_UINT32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
 	stream_write_UINT32_be(s, numBuffers); /* numBuffers (4 bytes) */
@@ -497,7 +497,7 @@ BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	CopyMemory(tsg->TunnelContext, rpc->buffer + (status - 24), 16);
+	CopyMemory(tsg->TunnelContext, rpc->buffer + (status - 48), 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG TunnelContext:\n");
@@ -531,7 +531,7 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 	length = sizeof(tsg_packet2);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet2, length);
-	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16);
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
@@ -577,7 +577,7 @@ BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
 	length = sizeof(tsg_packet3);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet3, length);
-	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16);
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
@@ -622,8 +622,8 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 	length = 48 + 12 + (count * 2);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet4, 48);
-	CopyMemory(buffer + 4, tsg->TunnelContext, 16);
-	CopyMemory(buffer + 38, &tsg->port, 2);
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16);
+	CopyMemory(&buffer[38], &tsg->port, 2);
 
 	CopyMemory(&buffer[48], &count, 4); /* MaximumCount */
 	CopyMemory(&buffer[52], &offset, 4); /* Offset */
@@ -648,7 +648,7 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	CopyMemory(tsg->ChannelContext, rpc->buffer + 4, 16);
+	CopyMemory(tsg->ChannelContext, &rpc->buffer[4], 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG ChannelContext:\n");
@@ -676,11 +676,10 @@ BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxySetupReceivePipe");
 
-	memcpy(tsg_packet5 + 4, tsg->ChannelContext, 16);
-
 	length = sizeof(tsg_packet5);
 	buffer = (BYTE*) malloc(length);
 	CopyMemory(buffer, tsg_packet5, length);
+	CopyMemory(&buffer[4], tsg->ChannelContext, 16);
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 

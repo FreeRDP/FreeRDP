@@ -800,6 +800,18 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	return header->frag_length;
 }
 
+int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
+{
+	rpcconn_fault_hdr_t* fault_pdu;
+
+	fault_pdu = (rpcconn_fault_hdr_t*) header;
+
+	printf("RPC Fault PDU:\n");
+	printf("status: 0x%08X\n", fault_pdu->status);
+
+	return 0;
+}
+
 int rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
@@ -849,6 +861,11 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	if (header->ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		printf("rpc_recv_pdu error: Unexpected RTS PDU\n");
+		return -1;
+	}
+	else if (header->ptype == PTYPE_FAULT)
+	{
+		rpc_recv_fault_pdu(header);
 		return -1;
 	}
 	else
