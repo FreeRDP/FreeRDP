@@ -1,3 +1,39 @@
+RELEASEDATE	Version 1.0.2
+
+FreeRDP 1.0.2 is a maintenance release which contains several bug and stability fixes.
+
+* xfreerdp:
+	* new parameter --from-stdin - prompts for unspecified arguments username, password, domain and host.
+	* fix compability with x2go
+	* fix keyboard state in remote app
+
+* libfreerdp-core:
+	* several memory leaks and double frees were fixed
+	* support for FastPath PDUs up to 32767
+	* register audio only if plugin is registered
+	* load extensions after argument parsing
+
+* libfreerdp-utils:
+	* fixed crash when HOME environment variable wasn't set
+
+* xfreerdp-server
+	* deadlock fixed
+	* accept TLSv1 and SSLv3
+
+* smartcard
+	* don't incorrectly set SCARD_STATE_IGNORE
+
+* libfreerdp-codec
+	* performance improvement
+
+* libfreerdp-gdi
+	* support for PatBlt DPa operation
+
+* plugin
+	* ignore CHANNEL_FLAG_SUSPEND/CHANNEL_FLAG_RESUME to prevent possible crash
+
+For a detailed list of changes use "git diff 1.0.1..1.0.2"
+
 2012-02-07	Version 1.0.1
 
 FreeRDP 1.0.1 is a maintenance release to address a certain number of
