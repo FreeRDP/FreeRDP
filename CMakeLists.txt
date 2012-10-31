@@ -131,6 +131,7 @@ if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_AMD64_")
 	else()
@@ -249,7 +250,7 @@ set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 include(CTest)
 
 if(BUILD_TESTING)
-	find_suggested_package(Cmockery)
+	find_optional_package(Cmockery)
 	
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_TEST_EXPORTS")
 	
