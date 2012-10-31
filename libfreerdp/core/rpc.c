@@ -48,6 +48,8 @@ const p_uuid_t TSGU_UUID =
 	{ 0x3C, 0xDB, 0x6E, 0x7A, 0x27, 0x29 } /* node[6] */
 };
 
+#define TSGU_SYNTAX_IF_VERSION	0x00030001
+
 const p_uuid_t NDR_UUID =
 {
 	0x8A885D04, /* time_low */
@@ -57,6 +59,8 @@ const p_uuid_t NDR_UUID =
 	0xE8, /* clock_seq_low */
 	{ 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60 } /* node[6] */
 };
+
+#define NDR_SYNTAX_IF_VERSION	0x00000002
 
 const p_uuid_t BTFN_UUID =
 {
@@ -68,8 +72,6 @@ const p_uuid_t BTFN_UUID =
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } /* node[6] */
 };
 
-#define TSGU_SYNTAX_IF_VERSION	0x00030001
-#define NDR_SYNTAX_IF_VERSION	0x00000002
 #define BTFN_SYNTAX_IF_VERSION	0x00000001
 
 extern const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[];
