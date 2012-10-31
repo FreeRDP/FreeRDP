@@ -36,6 +36,8 @@
 
 #include "rpc.h"
 
+extern const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[];
+
 static char* PTYPE_STRINGS[] =
 {
 	"PTYPE_REQUEST",
@@ -60,6 +62,35 @@ static char* PTYPE_STRINGS[] =
 	"PTYPE_ORPHANED",
 	"PTYPE_RTS",
 	""
+};
+
+const RPC_FAULT_CODE RPC_FAULT_CODES[] =
+{
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_object_not_found)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_cancel)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_addr_error)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_context_mismatch)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_fp_div_zero)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_fp_error)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_fp_overflow)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_fp_underflow)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_ill_inst)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_int_div_by_zero)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_int_overflow)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_invalid_bound)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_invalid_tag)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_closed)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_comm_error)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_discipline)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_empty)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_memory)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_pipe_order)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_remote_no_memory)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_user_defined)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_tx_open_failed)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_codeset_conv_error)
+	DEFINE_RPC_FAULT_CODE(nca_s_fault_no_client_stub)
+	{ 0, NULL }
 };
 
 void rpc_pdu_header_print(RPC_PDU_HEADER* header)
@@ -802,12 +833,32 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 
 int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
 {
+	int index;
 	rpcconn_fault_hdr_t* fault_pdu;
 
 	fault_pdu = (rpcconn_fault_hdr_t*) header;
 
 	printf("RPC Fault PDU:\n");
-	printf("status: 0x%08X\n", fault_pdu->status);
+
+	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
+	{
+		if (RPC_FAULT_CODES[index].code == fault_pdu->status)
+		{
+			printf("status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, fault_pdu->status);
+			return 0;
+		}
+	}
+
+	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
+	{
+		if (RPC_TSG_FAULT_CODES[index].code == fault_pdu->status)
+		{
+			printf("status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, fault_pdu->status);
+			return 0;
+		}
+	}
+
+	printf("status: %s (0x%08X)\n", "UNKNOWN", fault_pdu->status);
 
 	return 0;
 }

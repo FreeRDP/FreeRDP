@@ -314,6 +314,15 @@ typedef struct
 
 /* fault codes */
 
+struct _RPC_FAULT_CODE
+{
+	UINT32 code;
+	char* name;
+};
+typedef struct _RPC_FAULT_CODE RPC_FAULT_CODE;
+
+#define DEFINE_RPC_FAULT_CODE(_code)	{ _code , #_code },
+
 #define nca_s_fault_object_not_found		0x1C000024
 #define nca_s_fault_cancel			0x1C00000D
 #define nca_s_fault_addr_error			0x1C000002
@@ -334,7 +343,7 @@ typedef struct
 #define nca_s_fault_pipe_memory			0x1C000019
 #define nca_s_fault_pipe_order			0x1C000016
 #define nca_s_fault_remote_no_memory		0x1C00001B
-#define ncs_s_fault_user_defined		0x1C000021
+#define nca_s_fault_user_defined		0x1C000021
 #define nca_s_fault_tx_open_failed		0x1C000022
 #define nca_s_fault_codeset_conv_error		0x1C000023
 #define nca_s_fault_no_client_stub		0x1C000025

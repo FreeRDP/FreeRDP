@@ -84,7 +84,6 @@ typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef long LONG, *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
-typedef LONG HRESULT;
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
 typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
@@ -107,6 +106,9 @@ typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
 typedef unsigned long ULONG, *PULONG;
+
+typedef ULONG HRESULT;
+typedef ULONG SCODE;
 
 typedef ULONG_PTR DWORD_PTR;
 typedef ULONG_PTR SIZE_T;
