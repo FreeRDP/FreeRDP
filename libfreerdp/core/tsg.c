@@ -658,7 +658,7 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 		return FALSE;
 	}
 
-	CopyMemory(tsg->ChannelContext, &rpc->buffer[4], 16);
+	CopyMemory(tsg->ChannelContext, &rpc->buffer[status - 52], 16);
 
 #ifdef WITH_DEBUG_TSG
 	printf("TSG ChannelContext:\n");

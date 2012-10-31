@@ -36,6 +36,42 @@
 
 #include "rpc.h"
 
+/* Syntax UUIDs */
+
+const p_uuid_t TSGU_UUID =
+{
+	0x44E265DD, /* time_low */
+	0x7DAF, /* time_mid */
+	0x42CD, /* time_hi_and_version */
+	0x85, /* clock_seq_hi_and_reserved */
+	0x60, /* clock_seq_low */
+	{ 0x3C, 0xDB, 0x6E, 0x7A, 0x27, 0x29 } /* node[6] */
+};
+
+const p_uuid_t NDR_UUID =
+{
+	0x8A885D04, /* time_low */
+	0x1CEB, /* time_mid */
+	0x11C9, /* time_hi_and_version */
+	0x9F, /* clock_seq_hi_and_reserved */
+	0xE8, /* clock_seq_low */
+	{ 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60 } /* node[6] */
+};
+
+const p_uuid_t BTFN_UUID =
+{
+	0x6CB71C2C, /* time_low */
+	0x9812, /* time_mid */
+	0x4540, /* time_hi_and_version */
+	0x03, /* clock_seq_hi_and_reserved */
+	0x00, /* clock_seq_low */
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } /* node[6] */
+};
+
+#define TSGU_SYNTAX_IF_VERSION	0x00030001
+#define NDR_SYNTAX_IF_VERSION	0x00000002
+#define BTFN_SYNTAX_IF_VERSION	0x00000001
+
 extern const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[];
 
 static char* PTYPE_STRINGS[] =
@@ -653,6 +689,7 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	UINT32 offset;
+	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
 
@@ -686,67 +723,29 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 	bind_pdu->p_context_elem.p_cont_elem = malloc(sizeof(p_cont_elem_t) * bind_pdu->p_context_elem.n_context_elem);
 
-	bind_pdu->p_context_elem.p_cont_elem[0].p_cont_id = 0;
-	bind_pdu->p_context_elem.p_cont_elem[0].n_transfer_syn = 1;
-	bind_pdu->p_context_elem.p_cont_elem[0].reserved = 0;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_low = 0x44E265DD;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_mid = 0x7DAF;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.time_hi_and_version = 0x42CD;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.clock_seq_hi_and_reserved = 0x85;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.clock_seq_low = 0x60;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[0] = 0x3C;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[1] = 0xDB;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[2] = 0x6E;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[3] = 0x7A;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[4] = 0x27;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_uuid.node[5] = 0x29;
-	bind_pdu->p_context_elem.p_cont_elem[0].abstract_syntax.if_version = 0x00030001;
+	p_cont_elem = &bind_pdu->p_context_elem.p_cont_elem[0];
 
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	p_cont_elem->p_cont_id = 0;
+	p_cont_elem->n_transfer_syn = 1;
+	p_cont_elem->reserved = 0;
+	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
+	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
 
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_low = 0x8A885D04;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_mid = 0x1CEB;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x11C9;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.clock_seq_hi_and_reserved = 0x9F;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.clock_seq_low = 0xe8;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[0] = 0x08;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[1] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[2] = 0x2B;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[3] = 0x10;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[4] = 0x48;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_uuid.node[5] = 0x60;
-	bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes[0].if_version = 0x00000002;
+	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &NDR_UUID, sizeof(p_uuid_t));
+	p_cont_elem->transfer_syntaxes[0].if_version = NDR_SYNTAX_IF_VERSION;
 
-	bind_pdu->p_context_elem.p_cont_elem[1].p_cont_id = 1;
-	bind_pdu->p_context_elem.p_cont_elem[1].n_transfer_syn = 1;
-	bind_pdu->p_context_elem.p_cont_elem[1].reserved = 0;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_low = 0x44E265DD;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_mid = 0x7DAF;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.time_hi_and_version = 0x42CD;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.clock_seq_hi_and_reserved = 0x85;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.clock_seq_low = 0x60;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[0] = 0x3C;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[1] = 0xDB;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[2] = 0x6E;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[3] = 0x7A;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[4] = 0x27;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_uuid.node[5] = 0x29;
-	bind_pdu->p_context_elem.p_cont_elem[1].abstract_syntax.if_version = 0x00030001;
+	p_cont_elem = &bind_pdu->p_context_elem.p_cont_elem[1];
 
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	p_cont_elem->p_cont_id = 1;
+	p_cont_elem->n_transfer_syn = 1;
+	p_cont_elem->reserved = 0;
+	CopyMemory(&(p_cont_elem->abstract_syntax.if_uuid), &TSGU_UUID, sizeof(p_uuid_t));
+	p_cont_elem->abstract_syntax.if_version = TSGU_SYNTAX_IF_VERSION;
 
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_low = 0x6CB71C2C;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_mid = 0x9812;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.time_hi_and_version = 0x4540;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.clock_seq_hi_and_reserved = 0x03;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.clock_seq_low = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[0] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[1] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[2] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[3] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[4] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_uuid.node[5] = 0x00;
-	bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes[0].if_version = 0x00000001;
+	p_cont_elem->transfer_syntaxes = malloc(sizeof(p_syntax_id_t));
+	CopyMemory(&(p_cont_elem->transfer_syntaxes[0].if_uuid), &BTFN_UUID, sizeof(p_uuid_t));
+	p_cont_elem->transfer_syntaxes[0].if_version = BTFN_SYNTAX_IF_VERSION;
 
 	offset = 116;
 	bind_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
@@ -763,10 +762,10 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 	CopyMemory(buffer, bind_pdu, 24);
 	CopyMemory(&buffer[24], &bind_pdu->p_context_elem, 4);
-	CopyMemory(&buffer[28], bind_pdu->p_context_elem.p_cont_elem, 24);
+	CopyMemory(&buffer[28], &bind_pdu->p_context_elem.p_cont_elem[0], 24);
 	CopyMemory(&buffer[52], bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes, 20);
-	CopyMemory(&buffer[72], bind_pdu->p_context_elem.p_cont_elem + 1, 24);
-	CopyMemory(&buffer[96], bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes, 20);
+	CopyMemory(&buffer[72], &bind_pdu->p_context_elem.p_cont_elem[1], 24);
+	CopyMemory(&buffer[96], bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes, 20);
 
 	offset = 116;
 	rpc_offset_pad(&offset, bind_pdu->auth_verifier.auth_pad_length);
@@ -777,6 +776,9 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_in_write(rpc, buffer, bind_pdu->frag_length);
 
+	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
+	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
+	free(bind_pdu->p_context_elem.p_cont_elem);
 	free(bind_pdu);
 	free(buffer);
 

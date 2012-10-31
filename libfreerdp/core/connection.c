@@ -104,7 +104,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
-		//nego_set_cookie_max_length(rdp->nego, MSTSC_COOKIE_MAX_LENGTH);
+		nego_set_cookie_max_length(rdp->nego, MSTSC_COOKIE_MAX_LENGTH);
 	}
 	else
 	{
