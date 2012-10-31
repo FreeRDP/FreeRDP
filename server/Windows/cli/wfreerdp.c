@@ -32,6 +32,22 @@
 
 #include "wfreerdp.h"
 
+int IDcount = 0;
+
+BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	
+	printf("%d\t(%d, %d), (%d, %d)\n",
+		IDcount,
+		lprcMonitor->left,
+		lprcMonitor->top,
+		lprcMonitor->right,
+		lprcMonitor->bottom);
+
+
+	IDcount++;
+}
+
 int main(int argc, char* argv[])
 {
 	int index;
@@ -70,6 +86,12 @@ int main(int argc, char* argv[])
 					break;
 				}
 			}
+
+			{
+				printf("\n");
+				EnumDisplayMonitors(NULL, NULL, moncb, NULL);
+			}
+
 			return 0;
 		}
 	

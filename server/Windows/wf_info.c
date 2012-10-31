@@ -313,11 +313,11 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	if (wfi->invalid.top < 0)
 		wfi->invalid.top = 0;
 
-	if (wfi->invalid.right >= wfi->width)
-		wfi->invalid.right = wfi->width - 1;
+	if (wfi->invalid.right >= wfi->servscreen_width)
+		wfi->invalid.right = wfi->servscreen_width - 1;
 
-	if (wfi->invalid.bottom >= wfi->height)
-		wfi->invalid.bottom = wfi->height - 1;
+	if (wfi->invalid.bottom >= wfi->servscreen_height)
+		wfi->invalid.bottom = wfi->servscreen_height - 1;
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)
@@ -328,7 +328,7 @@ void wf_info_clear_invalid_region(wfInfo* wfi)
 
 void wf_info_invalidate_full_screen(wfInfo* wfi)
 {
-	SetRect(&wfi->invalid, 0, 0, wfi->width, wfi->height);
+	SetRect(&wfi->invalid, 0, 0, wfi->servscreen_width, wfi->servscreen_height);
 }
 
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
@@ -352,9 +352,9 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 		*width += 1;
 		*height += 1;
 
-		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->servscreen_width * 4);
 		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
-		*pitch = wfi->width * 4;
+		*pitch = wfi->servscreen_width * 4;
 	}
 #endif
 }

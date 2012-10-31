@@ -26,10 +26,10 @@
 /*
 This function will iterate over the loaded display devices until it finds
 the mirror device we want to load. If found, it will then copy the registry
-key corresponding to the device to the context and returns TRUE. Otherwise
+key corresponding to the device to the wfi and returns TRUE. Otherwise
 the function returns FALSE.
 */
-BOOL wf_mirror_driver_find_display_device(wfInfo* context)
+BOOL wf_mirror_driver_find_display_device(wfInfo* wfi)
 {
 	BOOL result;
 	BOOL devFound;
@@ -52,13 +52,13 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* context)
 			if (_tcsncmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
 			{
 				deviceKeyLength = _tcslen(deviceInfo.DeviceKey) - deviceKeyPrefixLength;
-				context->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
+				wfi->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
 
-				_tcsncpy_s(context->deviceKey, deviceKeyLength + 1,
+				_tcsncpy_s(wfi->deviceKey, deviceKeyLength + 1,
 					&deviceInfo.DeviceKey[deviceKeyPrefixLength], deviceKeyLength);
 			}
 
-			_tcsncpy_s(context->deviceName, 32, deviceInfo.DeviceName, _tcslen(deviceInfo.DeviceName));
+			_tcsncpy_s(wfi->deviceName, 32, deviceInfo.DeviceName, _tcslen(deviceInfo.DeviceName));
 			return TRUE;
 		}
 
@@ -70,7 +70,7 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* context)
 
 /**
  * This function will attempt to access the the windows registry using the device
- * key stored in the current context. It will attempt to read the value of the
+ * key stored in the current wfi. It will attempt to read the value of the
  * "Attach.ToDesktop" subkey and will return TRUE if the value is already set to
  * val. If unable to read the subkey, this function will return FALSE. If the 
  * subkey is not set to val it will then attempt to set it to val and return TRUE. If 
@@ -78,7 +78,7 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* context)
  * FALSE.
  */
 
-BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode)
+BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 {
 	HKEY hKey;
 	LONG status;
@@ -86,7 +86,7 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode)
 	DWORD dwSize;
 	DWORD dwValue;
 
-	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, context->deviceKey,
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, wfi->deviceKey,
 		0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
@@ -170,7 +170,7 @@ void wf_mirror_driver_print_display_change_status(LONG status)
  * If unload is nonzero then the the driver will be asked to remove itself.
  */
 
-BOOL wf_mirror_driver_update(wfInfo* context, int unload)
+BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 {
 	HDC dc;
 	BOOL status;
@@ -182,20 +182,27 @@ BOOL wf_mirror_driver_update(wfInfo* context, int unload)
 	
 	if (!unload)
 	{
+		int vscreen_w;
+		int vscreen_h;
+		//first let's get the virtual screen dimentions
+		vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
 		/*
 		 * Will have to come back to this for supporting non primary displays and multimonitor setups
 		 */
 		dc = GetDC(NULL);
-		context->width = GetDeviceCaps(dc, HORZRES);
-		context->height = GetDeviceCaps(dc, VERTRES);
-		context->bitsPerPixel = GetDeviceCaps(dc, BITSPIXEL);
+		wfi->servscreen_width = GetDeviceCaps(dc, HORZRES);
+		wfi->servscreen_height = GetDeviceCaps(dc, VERTRES);
+		wfi->bitsPerPixel = GetDeviceCaps(dc, BITSPIXEL);
 		ReleaseDC(NULL, dc);
+		
 	}
 	else
 	{
-		context->width = 0;
-		context->height = 0;
-		context->bitsPerPixel = 0;
+		wfi->servscreen_width = 0;
+		wfi->servscreen_height = 0;
+		wfi->bitsPerPixel = 0;
 	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
@@ -210,17 +217,17 @@ BOOL wf_mirror_driver_update(wfInfo* context, int unload)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = context->width;
-	deviceMode->dmPelsHeight = context->height;
-	deviceMode->dmBitsPerPel = context->bitsPerPixel;
+	deviceMode->dmPelsWidth = wfi->servscreen_width;
+	deviceMode->dmPelsHeight = wfi->servscreen_height;
+	deviceMode->dmBitsPerPel = wfi->bitsPerPixel;
 	deviceMode->dmPosition.x = 0;
 	deviceMode->dmPosition.y = 0;
 
 	deviceMode->dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_POSITION;
 
-	_tcsncpy_s(deviceMode->dmDeviceName, 32, context->deviceName, _tcslen(context->deviceName));
+	_tcsncpy_s(deviceMode->dmDeviceName, 32, wfi->deviceName, _tcslen(wfi->deviceName));
 
-	disp_change_status = ChangeDisplaySettingsEx(context->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
+	disp_change_status = ChangeDisplaySettingsEx(wfi->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
 
 	status = (disp_change_status == DISP_CHANGE_SUCCESSFUL) ? TRUE : FALSE;
 
@@ -230,50 +237,50 @@ BOOL wf_mirror_driver_update(wfInfo* context, int unload)
 	return status;
 }
 
-BOOL wf_mirror_driver_map_memory(wfInfo* context)
+BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 {
 	int status;
 	GETCHANGESBUF* b;
 
-	context->driverDC = CreateDC(context->deviceName, NULL, NULL, NULL);
+	wfi->driverDC = CreateDC(wfi->deviceName, NULL, NULL, NULL);
 
-	if (context->driverDC == NULL)
+	if (wfi->driverDC == NULL)
 	{
-		_tprintf(_T("Could not create device driver context!\n"));
+		_tprintf(_T("Could not create device driver wfi!\n"));
 		return FALSE;
 	}
 
-	context->changeBuffer = malloc(sizeof(GETCHANGESBUF));
-	ZeroMemory(context->changeBuffer, sizeof(GETCHANGESBUF));
+	wfi->changeBuffer = malloc(sizeof(GETCHANGESBUF));
+	ZeroMemory(wfi->changeBuffer, sizeof(GETCHANGESBUF));
 
-	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer);
+	status = ExtEscape(wfi->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) wfi->changeBuffer);
 
 	if (status <= 0)
 	{
 		_tprintf(_T("Failed to map shared memory from the driver! code %d\n"), status);
 	}
 
-	b = (GETCHANGESBUF*) context->changeBuffer;
+	b = (GETCHANGESBUF*) wfi->changeBuffer;
 
 	return TRUE;
 }
 
 /* Unmap the shared memory and release the DC */
 
-BOOL wf_mirror_driver_cleanup(wfInfo* context)
+BOOL wf_mirror_driver_cleanup(wfInfo* wfi)
 {
 	int status;
 
-	status = ExtEscape(context->driverDC, dmf_esc_usm_pipe_unmap, sizeof(GETCHANGESBUF), (LPSTR) context->changeBuffer, 0, 0);
+	status = ExtEscape(wfi->driverDC, dmf_esc_usm_pipe_unmap, sizeof(GETCHANGESBUF), (LPSTR) wfi->changeBuffer, 0, 0);
 	
 	if (status <= 0)
 	{
 		_tprintf(_T("Failed to unmap shared memory from the driver! code %d\n"), status);
 	}
 
-	if (context->driverDC != NULL)
+	if (wfi->driverDC != NULL)
 	{
-		status = DeleteDC(context->driverDC);
+		status = DeleteDC(wfi->driverDC);
 
 		if (status == 0)
 		{
@@ -281,7 +288,7 @@ BOOL wf_mirror_driver_cleanup(wfInfo* context)
 		}
 	}
 
-	free(context->changeBuffer);
+	free(wfi->changeBuffer);
 
 	return TRUE;
 }

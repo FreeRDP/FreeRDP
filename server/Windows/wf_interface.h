@@ -43,8 +43,18 @@ typedef struct wf_peer_context wfPeerContext;
 struct wf_info
 {
 	STREAM* s;
-	int width;
-	int height;
+
+	//screen and monitor info
+	int screenID;
+	int virtscreen_width;
+	int virtscreen_height;
+	int servscreen_width;
+	int servscreen_height;
+	int servscreen_xoffset;
+	int servscreen_yoffset;
+	//int width;
+	//int height;
+
 	int frame_idx;
 	int bitsPerPixel;
 	HDC driverDC;
@@ -74,7 +84,6 @@ struct wf_info
 
 	BOOL input_disabled;
 	BOOL force_all_disconnect;
-	int screenID;
 };
 
 struct wf_peer_context
