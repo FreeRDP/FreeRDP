@@ -51,7 +51,7 @@ struct rdp_tsg
 	BYTE ChannelContext[16];
 };
 
-typedef wchar_t* RESOURCENAME;
+typedef WCHAR* RESOURCENAME;
 
 #define TsProxyCreateTunnelOpnum		1
 #define TsProxyAuthorizeTunnelOpnum		2
@@ -64,11 +64,13 @@ typedef wchar_t* RESOURCENAME;
 typedef struct _tsendpointinfo
 {
 	RESOURCENAME* resourceName;
-	unsigned long numResourceNames;
+	UINT32 numResourceNames;
 	RESOURCENAME* alternateResourceNames;
-	unsigned short numAlternateResourceNames;
-	unsigned long Port;
+	UINT16 numAlternateResourceNames;
+	UINT32 Port;
 } TSENDPOINTINFO, *PTSENDPOINTINFO;
+
+#define TS_GATEWAY_TRANSPORT			0x5452
 
 #define TSG_PACKET_TYPE_HEADER			0x00004844
 #define TSG_PACKET_TYPE_VERSIONCAPS		0x00005643
@@ -82,6 +84,7 @@ typedef struct _tsendpointinfo
 #define TSG_PACKET_TYPE_MESSAGE_PACKET		0x00004750
 #define TSG_PACKET_TYPE_AUTH			0x00004054
 #define TSG_PACKET_TYPE_REAUTH			0x00005250
+
 #define TSG_ASYNC_MESSAGE_CONSENT_MESSAGE	0x00000001
 #define TSG_ASYNC_MESSAGE_SERVICE_MESSAGE	0x00000002
 #define TSG_ASYNC_MESSAGE_REAUTH		0x00000003
@@ -96,13 +99,13 @@ typedef struct _tsendpointinfo
 
 typedef struct _TSG_PACKET_HEADER
 {
-	unsigned short ComponentId;
-	unsigned short PacketId;
+	UINT16 ComponentId;
+	UINT16 PacketId;
 } TSG_PACKET_HEADER, *PTSG_PACKET_HEADER;
 
 typedef struct _TSG_CAPABILITY_NAP
 {
-	unsigned long capabilities;
+	UINT32 capabilities;
 } TSG_CAPABILITY_NAP, *PTSG_CAPABILITY_NAP;
 
 typedef union
@@ -112,7 +115,7 @@ typedef union
 
 typedef struct _TSG_PACKET_CAPABILITIES
 {
-	unsigned long capabilityType;
+	UINT32 capabilityType;
 	TSG_CAPABILITIES_UNION tsgPacket;
 } TSG_PACKET_CAPABILITIES, *PTSG_PACKET_CAPABILITIES;
 
@@ -120,24 +123,24 @@ typedef struct _TSG_PACKET_VERSIONCAPS
 {
 	TSG_PACKET_HEADER tsgHeader;
 	PTSG_PACKET_CAPABILITIES tsgCaps;
-	unsigned long numCapabilities;
-	unsigned short majorVersion;
-	unsigned short minorVersion;
-	unsigned short quarantineCapabilities;
+	UINT32 numCapabilities;
+	UINT16 majorVersion;
+	UINT16 minorVersion;
+	UINT16 quarantineCapabilities;
 } TSG_PACKET_VERSIONCAPS, *PTSG_PACKET_VERSIONCAPS;
 
 typedef struct _TSG_PACKET_QUARCONFIGREQUEST
 {
-	unsigned long flags;
+	UINT32 flags;
 } TSG_PACKET_QUARCONFIGREQUEST, *PTSG_PACKET_QUARCONFIGREQUEST;
 
 typedef struct _TSG_PACKET_QUARREQUEST
 {
-	unsigned long flags;
-	wchar_t* machineName;
-	unsigned long nameLength;
-	byte* data;
-	unsigned long dataLen;
+	UINT32 flags;
+	WCHAR* machineName;
+	UINT32 nameLength;
+	BYTE* data;
+	UINT32 dataLen;
 } TSG_PACKET_QUARREQUEST, *PTSG_PACKET_QUARREQUEST;
 
 typedef struct _TSG_REDIRECTION_FLAGS
@@ -154,33 +157,33 @@ typedef struct _TSG_REDIRECTION_FLAGS
 
 typedef struct _TSG_PACKET_RESPONSE
 {
-	unsigned long flags;
-	unsigned long reserved;
-	byte* responseData;
-	unsigned long responseDataLen;
+	UINT32 flags;
+	UINT32 reserved;
+	BYTE* responseData;
+	UINT32 responseDataLen;
 	TSG_REDIRECTION_FLAGS redirectionFlags;
 } TSG_PACKET_RESPONSE,	*PTSG_PACKET_RESPONSE;
 
 typedef struct _TSG_PACKET_QUARENC_RESPONSE
 {
-	unsigned long flags;
-	unsigned long certChainLen;
-	wchar_t* certChainData;
+	UINT32 flags;
+	UINT32 certChainLen;
+	WCHAR* certChainData;
 	GUID nonce;
 	PTSG_PACKET_VERSIONCAPS versionCaps;
 } TSG_PACKET_QUARENC_RESPONSE, *PTSG_PACKET_QUARENC_RESPONSE;
 
 typedef struct TSG_PACKET_STRING_MESSAGE
 {
-	long isDisplayMandatory;
-	long isConsentMandatory;
-	unsigned long msgBytes;
-	wchar_t* msgBuffer;
+	INT32 isDisplayMandatory;
+	INT32 isConsentMandatory;
+	UINT32 msgBytes;
+	WCHAR* msgBuffer;
 } TSG_PACKET_STRING_MESSAGE, *PTSG_PACKET_STRING_MESSAGE;
 
 typedef struct TSG_PACKET_REAUTH_MESSAGE
 {
-	unsigned __int64 tunnelContext;
+	UINT64 tunnelContext;
 } TSG_PACKET_REAUTH_MESSAGE, *PTSG_PACKET_REAUTH_MESSAGE;
 
 typedef union
@@ -192,9 +195,9 @@ typedef union
 
 typedef struct _TSG_PACKET_MSG_RESPONSE
 {
-	unsigned long msgID;
-	unsigned long msgType;
-	long isMsgPresent;
+	UINT32 msgID;
+	UINT32 msgType;
+	INT32 isMsgPresent;
 	TSG_PACKET_TYPE_MESSAGE_UNION messagePacket;
 } TSG_PACKET_MSG_RESPONSE, *PTSG_PACKET_MSG_RESPONSE;
 
@@ -206,14 +209,14 @@ typedef struct TSG_PACKET_CAPS_RESPONSE
 
 typedef struct TSG_PACKET_MSG_REQUEST
 {
-	unsigned long maxMessagesPerBatch;
+	UINT32 maxMessagesPerBatch;
 } TSG_PACKET_MSG_REQUEST, *PTSG_PACKET_MSG_REQUEST;
 
 typedef struct _TSG_PACKET_AUTH
 {
 	TSG_PACKET_VERSIONCAPS tsgVersionCaps;
-	unsigned long cookieLen;
-	byte* cookie;
+	UINT32 cookieLen;
+	BYTE* cookie;
 } TSG_PACKET_AUTH, *PTSG_PACKET_AUTH;
 
 typedef union
@@ -225,7 +228,7 @@ typedef union
 typedef struct TSG_PACKET_REAUTH
 {
 	unsigned __int64 tunnelContext;
-	unsigned long packetId;
+	UINT32 packetId;
 	TSG_INITIAL_PACKET_TYPE_UNION tsgInitialPacket;
 } TSG_PACKET_REAUTH, *PTSG_PACKET_REAUTH;
 
@@ -246,11 +249,11 @@ typedef union
 
 typedef struct _TSG_PACKET
 {
-	unsigned long packetId;
+	UINT32 packetId;
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
-DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths);
+DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
 

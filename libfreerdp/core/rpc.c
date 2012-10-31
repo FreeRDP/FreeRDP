@@ -884,6 +884,8 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	return header->frag_length;
 }
 
+/* TODO: verify, there seems to be trailing junk added */
+
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	int status;
