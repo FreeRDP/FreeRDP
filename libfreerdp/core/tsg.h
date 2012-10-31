@@ -42,6 +42,7 @@ struct rdp_tsg
 	rdpRpc* rpc;
 	UINT16 port;
 	LPWSTR hostname;
+	LPWSTR MachineName;
 	BOOL pendingPdu;
 	BOOL bytesRead;
 	BOOL bytesAvailable;

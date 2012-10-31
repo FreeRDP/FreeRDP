@@ -573,6 +573,9 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_read(STREAM* s, RPC_PDU_HEADER* header);
 
+UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
+UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
+
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
 

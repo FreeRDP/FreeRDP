@@ -924,15 +924,19 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
+
 	request_pdu->stub_data = data;
 
-	/* missing 4 bytes here? */
-
 	offset = 24;
+	stub_data_pad = 0;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 
-	offset += stub_data_pad + length;
+	printf("stub_data_pad: %d\n", stub_data_pad);
+
+	offset += length;
 	request_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
+
+	printf("auth_pad_length: %d\n", request_pdu->auth_verifier.auth_pad_length);
 
 	request_pdu->auth_verifier.auth_type = 0x0A;
 	request_pdu->auth_verifier.auth_level = 0x05;

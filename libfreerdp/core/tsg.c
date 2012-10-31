@@ -43,6 +43,8 @@
  * RPC NDR Interface Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802752/
  */
 
+/* this might be a verification trailer */
+
 BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
 {
 	0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -247,52 +249,6 @@ BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
 
 	UINT32 TunnelId:	2e 85 76 3f
 	HRESULT ReturnValue:	00 00 00 00
- */
-
-BYTE tsg_packet2[112] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x52, 0x51, 0x00, 0x00, 0x52, 0x51, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00, 0x15, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00,
-	0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x2D, 0x00, 0x4E, 0x00, 0x48, 0x00, 0x35, 0x00, 0x37, 0x00,
-	0x30, 0x00, 0x2E, 0x00, 0x43, 0x00, 0x53, 0x00, 0x4F, 0x00, 0x44, 0x00, 0x2E, 0x00, 0x6C, 0x00,
-	0x6F, 0x00, 0x63, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-/**
-	TsProxyAuthorizeTunnel
-
-	TunnelContext:
-		ContextType:	0x00, 0x00, 0x00, 0x00,
-		ContextUuid:	0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44,
-				0x8D, 0x99, 0x29, 0x30, 0x53, 0x6C, 0x04, 0x33,
-
-	TsgPacket:
-		PacketId:	0x52, 0x51, 0x00, 0x00,
-		SwitchValue:	0x52, 0x51, 0x00, 0x00,
-
-		PacketQuarRequestPtr: 0x00, 0x00, 0x02, 0x00,
-		PacketQuarRequest:
-			Flags:	0x00, 0x00, 0x00, 0x00,
-			MachineNamePtr: 0x04, 0x00, 0x02, 0x00,
-			NameLength:	0x15, 0x00, 0x00, 0x00,
-			DataPtr:	0x08, 0x00, 0x02, 0x00,
-			DataLen:	0x00, 0x00, 0x00, 0x00,
-			MachineName:
-				MaxCount:	0x15, 0x00, 0x00, 0x00, (21 elements)
-				Offset:		0x00, 0x00, 0x00, 0x00,
-				ActualCount:	0x15, 0x00, 0x00, 0x00, (21 elements)
-				Array:		0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x2D, 0x00,
-						0x4E, 0x00, 0x48, 0x00, 0x35, 0x00, 0x37, 0x00,
-						0x30, 0x00, 0x2E, 0x00, 0x43, 0x00, 0x53, 0x00,
-						0x4F, 0x00, 0x44, 0x00, 0x2E, 0x00, 0x6C, 0x00,
-						0x6F, 0x00, 0x63, 0x00, 0x61, 0x00, 0x6C, 0x00,
-						0x00, 0x00,
-
-			DataLenConf:
-				MaxCount: 0x00, 0x00, 0x00, 0x00,
-						0x00, 0x00
  */
 
 BYTE tsg_packet3[40] =
@@ -506,9 +462,12 @@ BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 
 BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 {
+	UINT32 pad;
 	int status;
 	BYTE* buffer;
+	UINT32 count;
 	UINT32 length;
+	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
 
 	/**
@@ -524,10 +483,47 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
 
-	length = sizeof(tsg_packet2);
+	count = _wcslen(tsg->MachineName) + 1;
+
+	offset = 64 + (count * 2);
+	rpc_offset_align(&offset, 4);
+	offset += 4;
+
+	length = offset;
 	buffer = (BYTE*) malloc(length);
-	CopyMemory(buffer, tsg_packet2, length);
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16);
+
+	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+
+	/* 4-byte alignment */
+
+	*((UINT32*) &buffer[20]) = TSG_PACKET_TYPE_QUARREQUEST; /* PacketId */
+	*((UINT32*) &buffer[24]) = TSG_PACKET_TYPE_QUARREQUEST; /* SwitchValue */
+
+	*((UINT32*) &buffer[28]) = 0x00020000; /* PacketQuarRequestPtr */
+
+	*((UINT32*) &buffer[32]) = 0x00000000; /* Flags */
+
+	*((UINT32*) &buffer[36]) = 0x00020004; /* MachineNamePtr */
+
+	*((UINT32*) &buffer[40]) = count; /* NameLength */
+
+	*((UINT32*) &buffer[44]) = 0x00020008; /* DataPtr */
+	*((UINT32*) &buffer[48]) = 0; /* DataLength */
+
+	/* MachineName */
+	*((UINT32*) &buffer[52]) = count; /* MaxCount */
+	*((UINT32*) &buffer[56]) = 0; /* Offset */
+	*((UINT32*) &buffer[60]) = count; /* ActualCount */
+	CopyMemory(&buffer[64], tsg->MachineName, count * 2); /* Array */
+	offset = 64 + (count * 2);
+
+	/* 4-byte alignment */
+	pad = rpc_offset_align(&offset, 4);
+	ZeroMemory(&buffer[offset - pad], pad);
+
+	*((UINT32*) &buffer[offset]) = 0x00000000; /* MaxCount */
+	offset += 4;
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
@@ -695,9 +691,11 @@ BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
 	rdpRpc* rpc = tsg->rpc;
+	rdpSettings* settings = rpc->settings;
 
 	tsg->port = port;
 	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->hostname, 0);
+	freerdp_AsciiToUnicodeAlloc(settings->computer_name, &tsg->MachineName, 0);
 
 	if (!rpc_connect(rpc))
 	{
@@ -707,15 +705,20 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	DEBUG_TSG("rpc_connect success");
 
-	tsg_proxy_create_tunnel(tsg);
+	if (!tsg_proxy_create_tunnel(tsg))
+		return FALSE;
 
-	tsg_proxy_authorize_tunnel(tsg);
+	if (!tsg_proxy_authorize_tunnel(tsg))
+		return FALSE;
 
-	tsg_proxy_make_tunnel_call(tsg);
+	if (!tsg_proxy_make_tunnel_call(tsg))
+		return FALSE;
 
-	tsg_proxy_create_channel(tsg);
+	if (!tsg_proxy_create_channel(tsg))
+		return FALSE;
 
-	tsg_proxy_setup_receive_pipe(tsg);
+	if (!tsg_proxy_setup_receive_pipe(tsg))
+		return FALSE;
 
 	return TRUE;
 }
