@@ -286,49 +286,6 @@ BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
 	HRESULT ReturnValue:	00 00 00 00
  */
 
-BYTE tsg_packet3[40] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x01, 0x00, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00,
-	0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00
-};
-
-/**
-	TsProxyMakeTunnelCall
-
-	0x00, 0x00, 0x00, 0x00,
-	0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30, 0x53, 0x6C, 0x04, 0x33,
-
-	0x01, 0x00, 0x00, 0x00,
-	0x52, 0x47, 0x00, 0x00,
-	0x52, 0x47, 0x00, 0x00,
-	0x00, 0x00, 0x02, 0x00,
-	0x01, 0x00, 0x00, 0x00
- */
-
-BYTE tsg_packet4[48] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00
-};
-
-/**
-	TsProxyCreateChannel
-
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x00, 0x00, 0x02, 0x00,
-
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-	0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00
- */
-
-BYTE tsg_packet5[20] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00
-};
-
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
 {
 	STREAM* s;
@@ -640,7 +597,6 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 	UINT32 count;
 	BYTE* buffer;
 	UINT32 length;
-	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
 
 	/**
@@ -656,19 +612,33 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxyCreateChannel");
 
-	offset = 0;
-	count = _wcslen(tsg->hostname) + 1;
+	count = _wcslen(tsg->Hostname) + 1;
 
-	length = 48 + 12 + (count * 2);
+	length = 60 + (count * 2);
+
 	buffer = (BYTE*) malloc(length);
-	CopyMemory(buffer, tsg_packet4, 48);
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16);
-	CopyMemory(&buffer[38], &tsg->port, 2);
 
-	CopyMemory(&buffer[48], &count, 4); /* MaximumCount */
-	CopyMemory(&buffer[52], &offset, 4); /* Offset */
-	CopyMemory(&buffer[56], &count, 4); /* ActualCount */
-	CopyMemory(&buffer[60], &tsg->hostname, count);
+	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+
+	/* TSENDPOINTINFO */
+
+	*((UINT32*) &buffer[20]) = 0x00020000; /* ResourceNamePtr */
+	*((UINT32*) &buffer[24]) = 0x00000001; /* NumResourceNames */
+	*((UINT32*) &buffer[28]) = 0x00000000; /* AlternateResourceNamesPtr */
+	*((UINT32*) &buffer[32]) = 0x00000000; /* NumAlternateResourceNames */
+
+	*((UINT16*) &buffer[36]) = 0x0003; /* ??? */
+
+	*((UINT16*) &buffer[38]) = tsg->Port; /* Port */
+
+	*((UINT32*) &buffer[40]) = 0x00000001; /* ??? */
+
+	*((UINT32*) &buffer[44]) = 0x00020004; /* ResourceNamePtr */
+	*((UINT32*) &buffer[48]) = count; /* MaxCount */
+	*((UINT32*) &buffer[52]) = 0; /* Offset */
+	*((UINT32*) &buffer[56]) = count; /* ActualCount */
+	CopyMemory(&buffer[60], tsg->Hostname, count * 2); /* Array */
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
@@ -716,10 +686,12 @@ BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
 
 	DEBUG_TSG("TsProxySetupReceivePipe");
 
-	length = sizeof(tsg_packet5);
+	length = 20;
+
 	buffer = (BYTE*) malloc(length);
-	CopyMemory(buffer, tsg_packet5, length);
-	CopyMemory(&buffer[4], tsg->ChannelContext, 16);
+
+	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
@@ -741,8 +713,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
-	tsg->port = port;
-	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->hostname, 0);
+	tsg->Port = port;
+	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->Hostname, 0);
 	freerdp_AsciiToUnicodeAlloc(settings->computer_name, &tsg->MachineName, 0);
 
 	if (!rpc_connect(rpc))
