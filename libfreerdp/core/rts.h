@@ -116,9 +116,6 @@ typedef struct _rts_pdu RTS_PDU;
 
 BOOL rts_connect(rdpRpc* rpc);
 
-void rts_pdu_header_read(STREAM* s, RTS_PDU_HEADER* header);
-void rts_pdu_header_write(STREAM* s, RTS_PDU_HEADER* header);
-
 void rts_receive_window_size_command_read(rdpRpc* rpc, STREAM* s);
 void rts_receive_window_size_command_write(STREAM* s, UINT32 ReceiveWindowSize);
 void rts_flow_control_ack_command_read(rdpRpc* rpc, STREAM* s);

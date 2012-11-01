@@ -441,11 +441,11 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 rdpNtlm* ntlm_new()
 {
-	rdpNtlm* ntlm = xnew(rdpNtlm);
+	rdpNtlm* ntlm = (rdpNtlm*) malloc(sizeof(rdpNtlm));
 
 	if (ntlm != NULL)
 	{
-
+		ZeroMemory(ntlm, sizeof(rdpNtlm));
 	}
 
 	return ntlm;
@@ -1021,8 +1021,6 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	return header->frag_length;
 }
 
-/* TODO: verify, there seems to be trailing junk added */
-
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	int status;
@@ -1196,13 +1194,16 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtu
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 {
-	RpcVirtualConnection* virtual_connection = xnew(RpcVirtualConnection);
+	RpcVirtualConnection* virtual_connection = (RpcVirtualConnection*) malloc(sizeof(RpcVirtualConnection));
 
 	if (virtual_connection != NULL)
 	{
+		ZeroMemory(virtual_connection, sizeof(RpcVirtualConnection));
 		virtual_connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-		virtual_connection->DefaultInChannel = xnew(RpcInChannel);
-		virtual_connection->DefaultOutChannel = xnew(RpcOutChannel);
+		virtual_connection->DefaultInChannel = (RpcInChannel*) malloc(sizeof(RpcInChannel));
+		virtual_connection->DefaultOutChannel = (RpcOutChannel*) malloc(sizeof(RpcOutChannel));
+		ZeroMemory(virtual_connection->DefaultInChannel, sizeof(RpcInChannel));
+		ZeroMemory(virtual_connection->DefaultOutChannel, sizeof(RpcOutChannel));
 		rpc_client_virtual_connection_init(rpc, virtual_connection);
 	}
 
@@ -1221,10 +1222,11 @@ rdpNtlmHttp* ntlm_http_new()
 {
 	rdpNtlmHttp* ntlm_http;
 
-	ntlm_http = xnew(rdpNtlmHttp);
+	ntlm_http = (rdpNtlmHttp*) malloc(sizeof(rdpNtlmHttp));
 
 	if (ntlm_http != NULL)
 	{
+		ZeroMemory(ntlm_http, sizeof(rdpNtlmHttp));
 		ntlm_http->ntlm = ntlm_new();
 		ntlm_http->context = http_context_new();
 	}
@@ -1270,10 +1272,12 @@ void ntlm_http_free(rdpNtlmHttp* ntlm_http)
 
 rdpRpc* rpc_new(rdpTransport* transport)
 {
-	rdpRpc* rpc = (rdpRpc*) xnew(rdpRpc);
+	rdpRpc* rpc = (rdpRpc*) malloc(sizeof(rdpRpc));
 
 	if (rpc != NULL)
 	{
+		ZeroMemory(rpc, sizeof(rdpRpc));
+
 		rpc->transport = transport;
 		rpc->settings = transport->settings;
 
