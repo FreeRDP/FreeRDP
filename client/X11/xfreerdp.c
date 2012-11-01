@@ -1242,7 +1242,7 @@ int xfreerdp_run(freerdp* instance)
 		int thid = 0;
 		fscanf(fin, "%d", &thid);
 		fclose(fin);
-		pthread_kill((pthread_t) thid, SIGUSR1);
+		pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
 
 		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
 		int timeout = 5;
@@ -1254,7 +1254,7 @@ int xfreerdp_run(freerdp* instance)
 			if (timeout <= 0)
 			{
 				unlink("/tmp/tsmf.tid");
-				pthread_kill((pthread_t) thid, SIGKILL);
+				pthread_kill((pthread_t) (size_t) thid, SIGKILL);
 				break;
 			}
 			fin1 = fopen("/tmp/tsmf.tid", "rt");

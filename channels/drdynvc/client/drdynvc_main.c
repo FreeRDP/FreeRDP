@@ -368,7 +368,7 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 /* drdynvc is always built-in */
 #define VirtualChannelEntry	drdynvc_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	drdynvcPlugin* _p;
 

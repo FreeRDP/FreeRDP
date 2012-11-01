@@ -255,7 +255,7 @@ static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 /* rail is always built-in */
 #define VirtualChannelEntry	rail_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	railPlugin* _p;
 

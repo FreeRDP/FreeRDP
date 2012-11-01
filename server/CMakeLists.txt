@@ -25,8 +25,12 @@ if(NOT WIN32)
 	endif()
 
 	find_suggested_package(X11)
-	if(WITH_X11)
+	if(WITH_X11 AND (NOT APPLE))
 		add_subdirectory(X11)
+	endif()
+
+	if(APPLE)
+		add_subdirectory(Mac)
 	endif()
 else()
 	add_subdirectory(Windows)

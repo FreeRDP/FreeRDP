@@ -259,7 +259,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	
 	if (fout)
 	{
-		fprintf(fout, "%d\n", (int) thid);
+		fprintf(fout, "%d\n", (int) (size_t) thid);
 		fclose(fout);
 	}
 
