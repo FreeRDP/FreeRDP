@@ -32,6 +32,7 @@
 #include "wf_dxgi.h"
 
 static wfInfo* wfInfoInstance = NULL;
+static int _IDcount = 0;
 
 int wf_info_lock(wfInfo* wfi)
 {
@@ -215,6 +216,10 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+		//get the offset of the top left corner of selected screen
+		EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
+		_IDcount = 0;
+
 #ifdef WITH_WIN8
 		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
@@ -357,4 +362,23 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 		*pitch = wfi->servscreen_width * 4;
 	}
 #endif
+}
+
+BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	wfInfo * wfi;
+
+	wfi = wf_info_get_instance();
+
+	if(_IDcount == wfi->screenID)
+	{
+		wfi->servscreen_xoffset = lprcMonitor->left;
+		wfi->servscreen_yoffset = lprcMonitor->top;
+	}
+	else
+	{
+		_IDcount++;
+	}	
+
+	return TRUE;
 }

@@ -65,17 +65,17 @@ ID3D11Texture2D* sStage;
 
 DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
-int wf_dxgi_init(wfInfo* context)
+int wf_dxgi_init(wfInfo* wfi)
 {
 	//not sure if needed
 	gAcquiredDesktopImage = NULL;
 
-	if (wf_dxgi_createDevice(context) != 0)
+	if (wf_dxgi_createDevice(wfi) != 0)
 	{
 		return 1;
 	}
 
-	if (wf_dxgi_getDuplication(context) != 0)
+	if (wf_dxgi_getDuplication(wfi) != 0)
 	{
 		return 1;
 	}
@@ -84,7 +84,7 @@ int wf_dxgi_init(wfInfo* context)
 	
 }
 
-int wf_dxgi_createDevice(wfInfo* context)
+int wf_dxgi_createDevice(wfInfo* wfi)
 {
 	HRESULT status;
 	UINT DriverTypeIndex;
@@ -108,7 +108,7 @@ int wf_dxgi_createDevice(wfInfo* context)
 	return 0;
 }
 
-int wf_dxgi_getDuplication(wfInfo* context)
+int wf_dxgi_getDuplication(wfInfo* wfi)
 {
 	HRESULT status;
 	UINT dTop, i = 0;
@@ -161,7 +161,7 @@ int wf_dxgi_getDuplication(wfInfo* context)
 		++i;
 	}
 
-	dTop = context->screenID;
+	dTop = wfi->screenID;
 
 	status = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
 	DxgiAdapter->lpVtbl->Release(DxgiAdapter);
@@ -324,7 +324,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	return 0;
 }
 
-int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid)
+int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 {
 	HRESULT status;
 	D3D11_BOX Box;

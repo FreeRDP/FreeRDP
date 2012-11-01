@@ -46,6 +46,8 @@ BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARA
 
 
 	IDcount++;
+
+	return TRUE;
 }
 
 int main(int argc, char* argv[])
@@ -88,8 +90,15 @@ int main(int argc, char* argv[])
 			}
 
 			{
+				int vscreen_w;
+				int vscreen_h;
+				vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+				vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
 				printf("\n");
-				EnumDisplayMonitors(NULL, NULL, moncb, NULL);
+				EnumDisplayMonitors(NULL, NULL, moncb, 0);
+				IDcount = 0;
+				printf("\nVirtual Screen = %dx%d\n", vscreen_w, vscreen_h);
 			}
 
 			return 0;
