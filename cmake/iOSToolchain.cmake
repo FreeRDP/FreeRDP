@@ -10,7 +10,7 @@
 #   SIMULATOR - used to build for the Simulator platforms, which have an x86 arch.
 #
 # CMAKE_IOS_DEVELOPER_ROOT = automatic(default) or /path/to/platform/Developer folder
-#   By default this location is automatcially chosen based on the IOS_PLATFORM value above.
+#   By default this location is automatically chosen based on the IOS_PLATFORM value above.
 #   If set manually, it will override the default location and force the user of a particular Developer Platform
 #
 # CMAKE_IOS_SDK_ROOT = automatic(default) or /path/to/platform/Developer/SDKs/SDK folder
@@ -35,6 +35,10 @@ set (CMAKE_SYSTEM_VERSION 1)
 set (UNIX True)
 set (APPLE True)
 set (IOS True)
+
+# Workaround for FindThreads.cmake
+set(Threads_FOUND TRUE)
+set(CMAKE_THREAD_LIBS_INIT "-pthread")
 
 # Determine the cmake host system version so we know where to find the iOS SDKs
 find_program (CMAKE_UNAME uname /bin /usr/bin /usr/local/bin)
@@ -121,7 +125,7 @@ if (NOT DEFINED CMAKE_IOS_DEVELOPER_ROOT)
 endif (NOT DEFINED CMAKE_IOS_DEVELOPER_ROOT)
 set (CMAKE_IOS_DEVELOPER_ROOT ${CMAKE_IOS_DEVELOPER_ROOT} CACHE PATH "Location of iOS Platform")
 
-# Find and use the most recent iOS sdk unless specified manually with CMAKE_IOS_SDK_ROOT
+# Find and use the most recent iOS SDK unless specified manually with CMAKE_IOS_SDK_ROOT
 if (NOT DEFINED CMAKE_IOS_SDK_ROOT)
 	file (GLOB _CMAKE_IOS_SDKS "${CMAKE_IOS_DEVELOPER_ROOT}/SDKs/*")
 	if (_CMAKE_IOS_SDKS) 
@@ -129,9 +133,9 @@ if (NOT DEFINED CMAKE_IOS_SDK_ROOT)
 		list (REVERSE _CMAKE_IOS_SDKS)
 		list (GET _CMAKE_IOS_SDKS 0 CMAKE_IOS_SDK_ROOT)
 	else (_CMAKE_IOS_SDKS)
-		message (FATAL_ERROR "No iOS SDK's found in default seach path ${CMAKE_IOS_DEVELOPER_ROOT}. Manually set CMAKE_IOS_SDK_ROOT or install the iOS SDK.")
+		message (FATAL_ERROR "No iOS SDK's found in default search path ${CMAKE_IOS_DEVELOPER_ROOT}. Manually set CMAKE_IOS_SDK_ROOT or install the iOS SDK.")
 	endif (_CMAKE_IOS_SDKS)
-	message (STATUS "Toolchain using default iOS SDK: ${CMAKE_IOS_SDK_ROOT}")
+	message (STATUS "iOS SDK root: ${CMAKE_IOS_SDK_ROOT}")
 endif (NOT DEFINED CMAKE_IOS_SDK_ROOT)
 set (CMAKE_IOS_SDK_ROOT ${CMAKE_IOS_SDK_ROOT} CACHE PATH "Location of the selected iOS SDK")
 
@@ -148,6 +152,9 @@ endif (${IOS_PLATFORM} STREQUAL "OS")
 
 set (CMAKE_OSX_ARCHITECTURES ${IOS_ARCH} CACHE string  "Build architecture for iOS")
 
+set (CMAKE_PREFIX_PATH "${CMAKE_IOS_SDK_ROOT}/usr")
+set (CMAKE_REQUIRED_INCLUDES "${CMAKE_IOS_SDK_ROOT}/usr/include")
+
 # Set the find root to the iOS developer roots and to user defined paths
 set (CMAKE_FIND_ROOT_PATH ${CMAKE_IOS_DEVELOPER_ROOT} ${CMAKE_IOS_SDK_ROOT} ${CMAKE_PREFIX_PATH} CACHE string  "iOS find search path root")
 
@@ -158,14 +165,12 @@ set (CMAKE_FIND_FRAMEWORK FIRST)
 set (CMAKE_SYSTEM_FRAMEWORK_PATH
 	${CMAKE_IOS_SDK_ROOT}/System/Library/Frameworks
 	${CMAKE_IOS_SDK_ROOT}/System/Library/PrivateFrameworks
-	${CMAKE_IOS_SDK_ROOT}/Developer/Library/Frameworks
-)
+	${CMAKE_IOS_SDK_ROOT}/Developer/Library/Frameworks)
 
 # only search the iOS sdks, not the remainder of the host filesystem
 set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
 
 # This little macro lets you set any XCode specific property
 macro (set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE)

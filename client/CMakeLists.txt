@@ -32,14 +32,14 @@ else()
 	endif()
 endif()
 
-if(NOT WIN32 AND (NOT ANDROID))
+if((NOT WIN32) AND (NOT ANDROID) AND (NOT IOS))
 	find_suggested_package(X11)
 	if(WITH_X11)
 		add_subdirectory(X11)
 	endif()
 endif()
 
-if(APPLE)
+if(APPLE AND (NOT IOS))
 	add_subdirectory(Mac)
 endif()
 
