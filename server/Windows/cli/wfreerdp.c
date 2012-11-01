@@ -57,6 +57,8 @@ int main(int argc, char* argv[])
 
 	server = wfreerdp_server_new();
 
+	set_screen_id(0);
+
 	//handle args
 	index = 1;
 	while (index < argc)

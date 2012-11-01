@@ -375,10 +375,8 @@ BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMo
 		wfi->servscreen_xoffset = lprcMonitor->left;
 		wfi->servscreen_yoffset = lprcMonitor->top;
 	}
-	else
-	{
-		_IDcount++;
-	}	
+	
+	_IDcount++;	
 
 	return TRUE;
 }
