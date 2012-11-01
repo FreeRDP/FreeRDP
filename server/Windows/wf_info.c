@@ -308,7 +308,20 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
 	{
-		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
+		LPRECT lpR = &buf->buffer->pointrect[i].rect;
+
+		//need to make sure we only get updates from the selected screen
+		if (	(lpR->left >= wfi->servscreen_xoffset) &&
+			(lpR->right <= (wfi->servscreen_xoffset + wfi->servscreen_width) ) &&
+			(lpR->top >= wfi->servscreen_yoffset) &&
+			(lpR->bottom <= (wfi->servscreen_yoffset + wfi->servscreen_height) ) )
+		{
+			UnionRect(&wfi->invalid, &wfi->invalid, lpR);
+		}
+		else
+		{
+			continue;
+		}
 	}
 #endif
 
@@ -323,6 +336,8 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	if (wfi->invalid.bottom >= wfi->servscreen_height)
 		wfi->invalid.bottom = wfi->servscreen_height - 1;
+
+	//printf("invalid region: (%d, %d), (%d, %d)\n", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)
@@ -357,7 +372,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 		*width += 1;
 		*height += 1;
 
-		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->servscreen_width * 4);
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->virtscreen_width * 4);
 		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
 		*pitch = wfi->virtscreen_width * 4;
 	}
