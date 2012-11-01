@@ -359,7 +359,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 
 		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->servscreen_width * 4);
 		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
-		*pitch = wfi->servscreen_width * 4;
+		*pitch = wfi->virtscreen_width * 4;
 	}
 #endif
 }

@@ -182,20 +182,18 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 	
 	if (!unload)
 	{
-		int vscreen_w;
-		int vscreen_h;
 		//first let's get the virtual screen dimentions
-		vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-		vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+		wfi->virtscreen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		wfi->virtscreen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
 		/*
 		 * Will have to come back to this for supporting non primary displays and multimonitor setups
 		 */
-		dc = GetDC(NULL);
+		/*dc = GetDC(NULL);
 		wfi->servscreen_width = GetDeviceCaps(dc, HORZRES);
 		wfi->servscreen_height = GetDeviceCaps(dc, VERTRES);
 		wfi->bitsPerPixel = GetDeviceCaps(dc, BITSPIXEL);
-		ReleaseDC(NULL, dc);
+		ReleaseDC(NULL, dc);*/
 		
 	}
 	else
@@ -217,11 +215,11 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = wfi->servscreen_width;
-	deviceMode->dmPelsHeight = wfi->servscreen_height;
+	deviceMode->dmPelsWidth = wfi->virtscreen_width;
+	deviceMode->dmPelsHeight = wfi->virtscreen_height;
 	deviceMode->dmBitsPerPel = wfi->bitsPerPixel;
-	deviceMode->dmPosition.x = 0;
-	deviceMode->dmPosition.y = 0;
+	deviceMode->dmPosition.x = wfi->servscreen_xoffset;
+	deviceMode->dmPosition.y = wfi->servscreen_yoffset;
 
 	deviceMode->dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_POSITION;
 
