@@ -330,7 +330,11 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 
 	s = stream_new(28 + totalDataBytes);
 
+	printf("TotalDataBytes: %d numBuffers: %d buffer1Length: %d buffer2Length: %d buffer3Length: %d\n",
+			totalDataBytes, numBuffers, buffer1Length, buffer2Length, buffer3Length);
+
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
+
 	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
 	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (16 bytes) */
 
@@ -354,7 +358,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	stream_seal(s);
 
 	length = s->size;
-	status = rpc_tsg_write(tsg->rpc, s->data, s->size, 9);
+	status = rpc_tsg_write(tsg->rpc, s->data, s->size, TsProxySendToServerOpnum);
 
 	stream_free(s);
 

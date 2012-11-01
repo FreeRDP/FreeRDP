@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
@@ -37,6 +39,7 @@
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
+	"NEGO_STATE_EXT",
 	"NEGO_STATE_NLA",
 	"NEGO_STATE_TLS",
 	"NEGO_STATE_RDP",
@@ -44,11 +47,12 @@ static const char* const NEGO_STATE_STRINGS[] =
 	"NEGO_STATE_FINAL"
 };
 
-static const char PROTOCOL_SECURITY_STRINGS[3][4] =
+static const char PROTOCOL_SECURITY_STRINGS[4][4] =
 {
 	"RDP",
 	"TLS",
-	"NLA"
+	"NLA",
+	"EXT"
 };
 
 BOOL nego_security_connect(rdpNego* nego);
@@ -63,12 +67,22 @@ BOOL nego_connect(rdpNego* nego)
 {
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
-		if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+		if (nego->enabled_protocols[PROTOCOL_EXT])
+		{
+			nego->state = NEGO_STATE_EXT;
+		}
+		else if (nego->enabled_protocols[PROTOCOL_NLA])
+		{
 			nego->state = NEGO_STATE_NLA;
-		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_TLS])
+		{
 			nego->state = NEGO_STATE_TLS;
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
+		{
 			nego->state = NEGO_STATE_RDP;
+		}
 		else
 		{
 			DEBUG_NEGO("No security protocol is enabled");
@@ -79,29 +93,38 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
-			nego->enabled_protocols[PROTOCOL_NLA] = 0;
-			nego->enabled_protocols[PROTOCOL_TLS] = 0;
-			nego->enabled_protocols[PROTOCOL_RDP] = 0;
-			if(nego->state == NEGO_STATE_NLA)
+
+			nego->enabled_protocols[PROTOCOL_NLA] = FALSE;
+			nego->enabled_protocols[PROTOCOL_TLS] = FALSE;
+			nego->enabled_protocols[PROTOCOL_RDP] = FALSE;
+			nego->enabled_protocols[PROTOCOL_EXT] = FALSE;
+
+			if (nego->state == NEGO_STATE_EXT)
 			{
-				nego->enabled_protocols[PROTOCOL_NLA] = 1;
+				nego->enabled_protocols[PROTOCOL_EXT] = TRUE;
+				nego->enabled_protocols[PROTOCOL_NLA] = TRUE;
+				nego->selected_protocol = PROTOCOL_EXT;
+			}
+			else if (nego->state == NEGO_STATE_NLA)
+			{
+				nego->enabled_protocols[PROTOCOL_NLA] = TRUE;
 				nego->selected_protocol = PROTOCOL_NLA;
 			}
 			else if (nego->state == NEGO_STATE_TLS)
 			{
-				nego->enabled_protocols[PROTOCOL_TLS] = 1;
+				nego->enabled_protocols[PROTOCOL_TLS] = TRUE;
 				nego->selected_protocol = PROTOCOL_TLS;
 			}
 			else if (nego->state == NEGO_STATE_RDP)
 			{
-				nego->enabled_protocols[PROTOCOL_RDP] = 1;
+				nego->enabled_protocols[PROTOCOL_RDP] = TRUE;
 				nego->selected_protocol = PROTOCOL_RDP;
 			}
 		}
 
-		if(!nego_send_preconnection_pdu(nego))
+		if (!nego_send_preconnection_pdu(nego))
 		{
-			DEBUG_NEGO("Failed to send preconnection information");
+			DEBUG_NEGO("Failed to send preconnection pdu");
 			nego->state = NEGO_STATE_FINAL;
 			return FALSE;
 		}
@@ -220,8 +243,8 @@ int nego_transport_disconnect(rdpNego* nego)
 	if (nego->tcp_connected)
 		transport_disconnect(nego->transport);
 
-	nego->tcp_connected = 0;
-	nego->security_connected = 0;
+	nego->tcp_connected = FALSE;
+	nego->security_connected = FALSE;
 
 	return 1;
 }
@@ -277,6 +300,52 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 }
 
 /**
+ * Attempt negotiating NLA + TLS extended security.
+ * @param nego
+ */
+
+void nego_attempt_ext(rdpNego* nego)
+{
+	nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS | PROTOCOL_EXT;
+
+	DEBUG_NEGO("Attempting NLA extended security");
+
+	if (!nego_transport_connect(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	if (!nego_recv_response(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
+
+	if (nego->state != NEGO_STATE_FINAL)
+	{
+		nego_transport_disconnect(nego);
+
+		if (nego->enabled_protocols[PROTOCOL_NLA])
+			nego->state = NEGO_STATE_NLA;
+		else if (nego->enabled_protocols[PROTOCOL_TLS])
+			nego->state = NEGO_STATE_TLS;
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
+			nego->state = NEGO_STATE_RDP;
+		else
+			nego->state = NEGO_STATE_FAIL;
+	}
+}
+
+/**
  * Attempt negotiating NLA + TLS security.
  * @param nego
  */
@@ -306,13 +375,14 @@ void nego_attempt_nla(rdpNego* nego)
 	}
 
 	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
+
 	if (nego->state != NEGO_STATE_FINAL)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		if (nego->enabled_protocols[PROTOCOL_TLS])
 			nego->state = NEGO_STATE_TLS;
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
 		else
 			nego->state = NEGO_STATE_FAIL;
@@ -352,7 +422,7 @@ void nego_attempt_tls(rdpNego* nego)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		if (nego->enabled_protocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
 		else
 			nego->state = NEGO_STATE_FAIL;
@@ -441,7 +511,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				if (nego->selected_protocol)
 				{
 					if ((nego->selected_protocol == PROTOCOL_NLA) &&
-							(!nego->enabled_protocols[PROTOCOL_NLA]))
+						(!nego->enabled_protocols[PROTOCOL_NLA]))
 					{
 						nego->state = NEGO_STATE_FAIL;
 					}
@@ -541,7 +611,9 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 
 void nego_send(rdpNego* nego)
 {
-	if (nego->state == NEGO_STATE_NLA)
+	if (nego->state == NEGO_STATE_EXT)
+		nego_attempt_ext(nego);
+	else if (nego->state == NEGO_STATE_NLA)
 		nego_attempt_nla(nego);
 	else if (nego->state == NEGO_STATE_TLS)
 		nego_attempt_tls(nego);
@@ -820,10 +892,11 @@ void nego_init(rdpNego* nego)
 
 rdpNego* nego_new(struct rdp_transport * transport)
 {
-	rdpNego* nego = (rdpNego*) xzalloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
 
 	if (nego != NULL)
 	{
+		ZeroMemory(nego, sizeof(rdpNego));
 		nego->transport = transport;
 		nego_init(nego);
 	}
@@ -900,6 +973,18 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 {
 	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_NLA] = enable_nla;
+}
+
+/**
+ * Enable NLA extended security protocol.
+ * @param nego pointer to the negotiation structure
+ * @param enable_ext whether to enable network level authentication extended protocol (TRUE for enabled, FALSE for disabled)
+ */
+
+void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
+{
+	DEBUG_NEGO("Enabling NLA extended security: %s", enable_ext ? "TRUE" : "FALSE");
+	nego->enabled_protocols[PROTOCOL_EXT] = enable_ext;
 }
 
 /**

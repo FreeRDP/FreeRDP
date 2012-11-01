@@ -104,7 +104,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
-		nego_set_cookie_max_length(rdp->nego, MSTSC_COOKIE_MAX_LENGTH);
 	}
 	else
 	{
@@ -120,6 +119,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_enable_rdp(rdp->nego, settings->rdp_security);
 	nego_enable_tls(rdp->nego, settings->tls_security);
 	nego_enable_nla(rdp->nego, settings->nla_security);
+	nego_enable_ext(rdp->nego, settings->ext_security);
+
+	if (settings->mstsc_cookie_mode)
+		settings->cookie_max_length = MSTSC_COOKIE_MAX_LENGTH;
+
+	nego_set_cookie_max_length(rdp->nego, settings->cookie_max_length);
 
 	if (!nego_connect(rdp->nego))
 	{
@@ -149,11 +154,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	rdp->transport->process_single_pdu = TRUE;
+
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 	}
+
 	rdp->transport->process_single_pdu = FALSE;
 
 	return TRUE;

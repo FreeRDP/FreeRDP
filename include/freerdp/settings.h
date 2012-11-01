@@ -58,6 +58,10 @@
 /* Auto Reconnect Version */
 #define AUTO_RECONNECT_VERSION_1		0x00000001
 
+/* Cookie Lengths */
+#define MSTSC_COOKIE_MAX_LENGTH			9
+#define DEFAULT_COOKIE_MAX_LENGTH		0xFF
+
 /* Order Support */
 #define NEG_DSTBLT_INDEX			0x00
 #define NEG_PATBLT_INDEX			0x01
@@ -338,7 +342,10 @@ struct rdp_settings
 	ALIGN64 BOOL rdp_security; /* 147 */
 	ALIGN64 UINT32 ntlm_version; /* 148 */
 	ALIGN64 BOOL salted_checksum; /* 149 */
-	UINT64 paddingF[160 - 150]; /* 150 */
+	ALIGN64 BOOL ext_security; /* 150 */
+	ALIGN64 BOOL mstsc_cookie_mode; /* 151 */
+	ALIGN64 UINT32 cookie_max_length; /* 152 */
+	UINT64 paddingF[160 - 153]; /* 153 */
 
 	/* Session */
 	ALIGN64 BOOL console_audio; /* 160 */

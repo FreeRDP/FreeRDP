@@ -1,0 +1,562 @@
+Using connection file: JohnDoeTSG.rdp
+screen mode id:i:2
+use multimon:i:0
+desktopwidth:i:1920
+desktopheight:i:1080
+session bpp:i:32
+winposstr:s:0,1,553,211,1353,811
+compression:i:1
+keyboardhook:i:2
+audiocapturemode:i:0
+videoplaybackmode:i:1
+connection type:i:7
+networkautodetect:i:1
+bandwidthautodetect:i:1
+displayconnectionbar:i:1
+enableworkspacereconnect:i:0
+disable wallpaper:i:0
+allow font smoothing:i:0
+allow desktop composition:i:0
+disable full window drag:i:1
+disable menu anims:i:1
+disable themes:i:0
+disable cursor setting:i:0
+bitmapcachepersistenable:i:1
+full address:s:LAB1-W7-DM-01.lab1.awake.local
+audiomode:i:0
+redirectprinters:i:1
+redirectcomports:i:0
+redirectsmartcards:i:1
+redirectclipboard:i:1
+redirectposdevices:i:0
+autoreconnection enabled:i:1
+authentication level:i:2
+prompt for credentials:i:0
+negotiate security layer:i:1
+remoteapplicationmode:i:0
+gatewayhostname:s:LAB1-W2K8R2-GW.lab1.awake.local
+gatewayusagemethod:i:1
+gatewaycredentialssource:i:0
+gatewayprofileusagemethod:i:1
+promptcredentialonce:i:1
+use redirection server name:i:0
+rdgiskdcproxy:i:0
+drivestoredirect:s:*
+username:s:LAB1\JohnDoe
+DBG_NEGO nego_set_negotiation_enabled (936): Enabling security layer negotiation: TRUE
+DBG_NEGO nego_enable_rdp (948): Enabling RDP security: TRUE
+DBG_NEGO nego_enable_tls (959): Enabling TLS security: TRUE
+DBG_NEGO nego_enable_nla (972): Enabling NLA security: TRUE
+DBG_NEGO nego_enable_ext (984): Enabling NLA extended security: TRUE
+DBG_NEGO nego_connect (135): state: NEGO_STATE_EXT
+DBG_NEGO nego_attempt_ext (311): Attempting NLA extended security
+connected to LAB1-W2K8R2-GW.lab1.awake.local:443
+connected to LAB1-W2K8R2-GW.lab1.awake.local:443
+DBG_RPC rpc_ntlm_http_out_connect (531): 
+RPC_OUT_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1
+Cache-Control: no-cache
+Connection: Keep-Alive
+Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, SessionId=fbd9c34f-397d-471d-a109-1b08cc554624
+Accept: application/rpc
+User-Agent: MSRPC
+Content-Length: 0
+Host: LAB1-W2K8R2-GW.lab1.awake.local
+Authorization: NTLM TlRMTVNTUAABAAAAt4II4gAAAAAAAAAAAAAAAAAAAAAGAbEdAAAADw=
+
+
+DBG_RPC rpc_ntlm_http_out_connect (554): 
+RPC_OUT_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1
+Cache-Control: no-cache
+Connection: Keep-Alive
+Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, SessionId=fbd9c34f-397d-471d-a109-1b08cc554624
+Accept: application/rpc
+User-Agent: MSRPC
+Content-Length: 76
+Host: LAB1-W2K8R2-GW.lab1.awake.local
+Authorization: NTLM TlRMTVNTUAADAAAAGAAYAIQAAABmAWYBnAAAAAgACABYAAAADgAOAGAAAAAWABYAbgAAABAAEAACAgAANbKI4gYBsR0AAAAP1XRhe0uRkAJWYmUo95qq1EwAQQBCADEASgBvAGgAbgBEAG8AZQB3AG8AcgBrAHMAdABhAHQAaQBvAG4AtHOZ0qxcgvISeR8/UBclGBidsMGFzfwETzfdBTmBkWvkhg+2WZjg3wEBAAAAAAAAuNIO48W3zQEYnbDBhc38BAAAAAACAAgATABBAEIAMQABABwATABBAEIAMQAtAFcAMgBLADgAUgAyAC0ARwBXAAQAIABsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAMAPgBMAEEAQgAxAC0AVwAyAEsAOABSADIALQBHAFcALgBsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAUAIABsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAcACAC40g7jxbfNAQYABAACAAAACgAQAAAAAAAAAAAAAAAAAAAAAAAJAEgASABUAFQAUAAvAEwAQQBCADEALQBXADIASwA4AFIAMgAtAEcAVwAuAGwAYQBiADEALgBhAHcAYQBrAGUALgBsAG8AYwBhAGwAAAAAAAAAAAAAAAAAAAAAAH11WLRsIanYKVPhXsB3JBQ
+
+
+DBG_RPC rts_send_CONN_A1_pdu (387): Sending CONN_A1 RTS PDU
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RTS (20)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 76
+auth_length: 0
+call_id: 0
+rpc_out_write(): length: 76
+0000 05 00 14 03 10 00 00 00 4c 00 00 00 00 00 00 00 ........L.......
+0010 00 00 04 00 06 00 00 00 01 00 00 00 03 00 00 00 ................
+0020 4b 1b 94 ad f4 fd 62 16 5d 09 97 72 46 44 12 43 K.....b.]..rFD.C
+0030 03 00 00 00 84 32 4b 9a c2 6f a7 a7 17 86 42 6a .....2K..o....Bj
+0040 2f 95 da 2b 00 00 00 00 00 00 01 00             /..+........
+
+DBG_RPC rpc_ntlm_http_in_connect (594): 
+RPC_IN_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1
+Cache-Control: no-cache
+Connection: Keep-Alive
+Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729
+Accept: application/rpc
+User-Agent: MSRPC
+Content-Length: 0
+Host: LAB1-W2K8R2-GW.lab1.awake.local
+Authorization: NTLM TlRMTVNTUAABAAAAt4II4gAAAAAAAAAAAAAAAAAAAAAGAbEdAAAADw=
+
+
+DBG_RPC rpc_ntlm_http_in_connect (617): 
+RPC_IN_DATA /rpc/rpcproxy.dll?localhost:3388 HTTP/1.1
+Cache-Control: no-cache
+Connection: Keep-Alive
+Pragma: ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729
+Accept: application/rpc
+User-Agent: MSRPC
+Content-Length: 1073741824
+Host: LAB1-W2K8R2-GW.lab1.awake.local
+Authorization: NTLM TlRMTVNTUAADAAAAGAAYAIQAAABmAWYBnAAAAAgACABYAAAADgAOAGAAAAAWABYAbgAAABAAEAACAgAANbKI4gYBsR0AAAAPimP66NS3bRER/eyd7PKlUUwAQQBCADEASgBvAGgAbgBEAG8AZQB3AG8AcgBrAHMAdABhAHQAaQBvAG4AvbF0mfNPxNH97Rk7dGAFCmCJ3CuqCQSGCQff5gwE2hIhttKkEpcHZwEBAAAAAAAAuNIO48W3zQFgidwrqgkEhgAAAAACAAgATABBAEIAMQABABwATABBAEIAMQAtAFcAMgBLADgAUgAyAC0ARwBXAAQAIABsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAMAPgBMAEEAQgAxAC0AVwAyAEsAOABSADIALQBHAFcALgBsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAUAIABsAGEAYgAxAC4AYQB3AGEAawBlAC4AbABvAGMAYQBsAAcACAC40g7jxbfNAQYABAACAAAACgAQAAAAAAAAAAAAAAAAAAAAAAAJAEgASABUAFQAUAAvAEwAQQBCADEALQBXADIASwA4AFIAMgAtAEcAVwAuAGwAYQBiADEALgBhAHcAYQBrAGUALgBsAG8AYwBhAGwAAAAAAAAAAAAAAAAAAAAAAJACPQufbPfsgjgoiKl7sDI
+
+
+DBG_RPC rts_send_CONN_B1_pdu (434): Sending CONN_B1 RTS PDU
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RTS (20)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 104
+auth_length: 0
+call_id: 0
+rpc_in_write() length: 104
+0000 05 00 14 03 10 00 00 00 68 00 00 00 00 00 00 00 ........h.......
+0010 00 00 06 00 06 00 00 00 01 00 00 00 03 00 00 00 ................
+0020 4b 1b 94 ad f4 fd 62 16 5d 09 97 72 46 44 12 43 K.....b.]..rFD.C
+0030 03 00 00 00 32 7c 6e 4f 34 32 14 d6 97 3c 5b c8 ....2|nO42...<[.
+0040 76 77 bf 47 04 00 00 00 00 00 00 40 05 00 00 00 vw.G.......@....
+0050 e0 93 04 00 0c 00 00 00 9d f4 70 b9 26 5c fc 38 ..........p.&\.8
+0060 c8 0a 8b 2c 37 f5 4d b3                         ...,7.M.
+
+HTTP/1.1 200 Success
+Content-Type:application/rpc
+Content-Length:1073741824
+
+rts_recv(): length: 8
+0000 02 00 00 00 c0 d4 01 00                         ........
+
+DBG_RTS rts_recv_pdu_commands (576): numberOfCommands:1
+DBG_RTS rts_recv_pdu_commands (591): CommandType: ConnectionTimeout (0x00000002)
+rts_recv(): length: 24
+0000 06 00 00 00 01 00 00 00 00 00 00 00 00 00 01 00 ................
+0010 02 00 00 00 c0 d4 01 00                         ........
+
+DBG_RTS rts_recv_pdu_commands (576): numberOfCommands:3
+DBG_RTS rts_recv_pdu_commands (591): CommandType: Version (0x00000006)
+DBG_RTS rts_recv_pdu_commands (591): CommandType: ReceiveWindowSize (0x00000000)
+DBG_RTS rts_recv_pdu_commands (591): CommandType: ConnectionTimeout (0x00000002)
+DBG_RPC rpc_send_bind_pdu (701): Sending bind PDU
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_BIND (11)
+pfc_flags (0x17) = { PFC_FIRST_FRAG PFC_LAST_FRAG PFC_PENDING_CANCEL PFC_CONC_MPX }
+packed_drep[4]: 10 00 00 00
+frag_length: 164
+auth_length: 40
+call_id: 2
+rpc_in_write() length: 164
+0000 05 00 0b 17 10 00 00 00 a4 00 28 00 02 00 00 00 ..........(.....
+0010 f8 0f f8 0f 00 00 00 00 02 00 00 00 00 00 01 00 ................
+0020 dd 65 e2 44 af 7d cd 42 85 60 3c db 6e 7a 27 29 .e.D.}.B.`<.nz')
+0030 01 00 03 00 04 5d 88 8a eb 1c c9 11 9f e8 08 00 .....]..........
+0040 2b 10 48 60 02 00 00 00 01 00 01 00 dd 65 e2 44 +.H`.........e.D
+0050 af 7d cd 42 85 60 3c db 6e 7a 27 29 01 00 03 00 .}.B.`<.nz')....
+0060 2c 1c b7 6c 12 98 40 45 03 00 00 00 00 00 00 00 ,..l..@E........
+0070 01 00 00 00 0a 05 00 00 00 00 00 00 4e 54 4c 4d ............NTLM
+0080 53 53 50 00 01 00 00 00 97 82 08 e2 00 00 00 00 SSP.............
+0090 00 00 00 00 00 00 00 00 00 00 00 00 06 01 b1 1d ................
+00a0 00 00 00 0f                                     ....
+
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_BIND_ACK (12)
+pfc_flags (0x17) = { PFC_FIRST_FRAG PFC_LAST_FRAG PFC_PENDING_CANCEL PFC_CONC_MPX }
+packed_drep[4]: 10 00 00 00
+frag_length: 354
+auth_length: 262
+call_id: 2
+rpc_recv_pdu: length: 354
+0000 05 00 0c 17 10 00 00 00 62 01 06 01 02 00 00 00 ........b.......
+0010 f8 0f f8 0f d9 01 02 00 05 00 33 33 38 38 00 00 ..........3388..
+0020 02 00 00 00 00 00 00 00 04 5d 88 8a eb 1c c9 11 .........]......
+0030 9f e8 08 00 2b 10 48 60 02 00 00 00 03 00 03 00 ....+.H`........
+0040 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0050 00 00 00 00 0a 05 00 00 00 00 00 00 4e 54 4c 4d ............NTLM
+0060 53 53 50 00 02 00 00 00 08 00 08 00 38 00 00 00 SSP.........8...
+0070 15 82 89 e2 d7 e3 c1 fd 61 c4 eb 43 00 00 00 00 ........a..C....
+0080 00 00 00 00 c6 00 c6 00 40 00 00 00 06 01 b1 1d ........@.......
+0090 00 00 00 0f 4c 00 41 00 42 00 31 00 02 00 08 00 ....L.A.B.1.....
+00a0 4c 00 41 00 42 00 31 00 01 00 1c 00 4c 00 41 00 L.A.B.1.....L.A.
+00b0 42 00 31 00 2d 00 57 00 32 00 4b 00 38 00 52 00 B.1.-.W.2.K.8.R.
+00c0 32 00 2d 00 47 00 57 00 04 00 20 00 6c 00 61 00 2.-.G.W... .l.a.
+00d0 62 00 31 00 2e 00 61 00 77 00 61 00 6b 00 65 00 b.1...a.w.a.k.e.
+00e0 2e 00 6c 00 6f 00 63 00 61 00 6c 00 03 00 3e 00 ..l.o.c.a.l...>.
+00f0 4c 00 41 00 42 00 31 00 2d 00 57 00 32 00 4b 00 L.A.B.1.-.W.2.K.
+0100 38 00 52 00 32 00 2d 00 47 00 57 00 2e 00 6c 00 8.R.2.-.G.W...l.
+0110 61 00 62 00 31 00 2e 00 61 00 77 00 61 00 6b 00 a.b.1...a.w.a.k.
+0120 65 00 2e 00 6c 00 6f 00 63 00 61 00 6c 00 05 00 e...l.o.c.a.l...
+0130 20 00 6c 00 61 00 62 00 31 00 2e 00 61 00 77 00  .l.a.b.1...a.w.
+0140 61 00 6b 00 65 00 2e 00 6c 00 6f 00 63 00 61 00 a.k.e...l.o.c.a.
+0150 6c 00 07 00 08 00 b8 d2 0e e3 c5 b7 cd 01 00 00 l...............
+0160 00 00                                           ..
+
+DBG_RPC rpc_send_rpc_auth_3_pdu (821): Sending auth_3 PDU
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RPC_AUTH_3 (16)
+pfc_flags (0x13) = { PFC_FIRST_FRAG PFC_LAST_FRAG PFC_CONC_MPX }
+packed_drep[4]: 10 00 00 00
+frag_length: 486
+auth_length: 454
+call_id: 2
+rpc_in_write() length: 486
+0000 05 00 10 13 10 00 00 00 e6 01 c6 01 02 00 00 00 ................
+0010 f8 0f f8 0f 00 00 00 00 0a 05 00 00 00 00 00 00 ................
+0020 4e 54 4c 4d 53 53 50 00 03 00 00 00 18 00 18 00 NTLMSSP.........
+0030 84 00 00 00 1a 01 1a 01 9c 00 00 00 08 00 08 00 ................
+0040 58 00 00 00 0e 00 0e 00 60 00 00 00 16 00 16 00 X.......`.......
+0050 6e 00 00 00 10 00 10 00 b6 01 00 00 15 b2 88 e2 n...............
+0060 06 01 b1 1d 00 00 00 0f 74 f1 c7 1d 4c b5 50 98 ........t...L.P.
+0070 78 33 af 11 bf ff 85 2a 4c 00 41 00 42 00 31 00 x3.....*L.A.B.1.
+0080 4a 00 6f 00 68 00 6e 00 44 00 6f 00 65 00 77 00 J.o.h.n.D.o.e.w.
+0090 6f 00 72 00 6b 00 73 00 74 00 61 00 74 00 69 00 o.r.k.s.t.a.t.i.
+00a0 6f 00 6e 00 c3 98 1c a3 5d 06 f9 59 97 a2 0c 56 o.n.....]..Y...V
+00b0 93 d0 78 26 51 43 93 2b 19 39 67 93 aa e1 e4 6c ..x&QC.+.9g....l
+00c0 83 43 2b 58 7b ca 9d 33 4a 02 81 65 01 01 00 00 .C+X{..3J..e....
+00d0 00 00 00 00 b8 d2 0e e3 c5 b7 cd 01 51 43 93 2b ............QC.+
+00e0 19 39 67 93 00 00 00 00 02 00 08 00 4c 00 41 00 .9g.........L.A.
+00f0 42 00 31 00 01 00 1c 00 4c 00 41 00 42 00 31 00 B.1.....L.A.B.1.
+0100 2d 00 57 00 32 00 4b 00 38 00 52 00 32 00 2d 00 -.W.2.K.8.R.2.-.
+0110 47 00 57 00 04 00 20 00 6c 00 61 00 62 00 31 00 G.W... .l.a.b.1.
+0120 2e 00 61 00 77 00 61 00 6b 00 65 00 2e 00 6c 00 ..a.w.a.k.e...l.
+0130 6f 00 63 00 61 00 6c 00 03 00 3e 00 4c 00 41 00 o.c.a.l...>.L.A.
+0140 42 00 31 00 2d 00 57 00 32 00 4b 00 38 00 52 00 B.1.-.W.2.K.8.R.
+0150 32 00 2d 00 47 00 57 00 2e 00 6c 00 61 00 62 00 2.-.G.W...l.a.b.
+0160 31 00 2e 00 61 00 77 00 61 00 6b 00 65 00 2e 00 1...a.w.a.k.e...
+0170 6c 00 6f 00 63 00 61 00 6c 00 05 00 20 00 6c 00 l.o.c.a.l... .l.
+0180 61 00 62 00 31 00 2e 00 61 00 77 00 61 00 6b 00 a.b.1...a.w.a.k.
+0190 65 00 2e 00 6c 00 6f 00 63 00 61 00 6c 00 07 00 e...l.o.c.a.l...
+01a0 08 00 b8 d2 0e e3 c5 b7 cd 01 06 00 04 00 02 00 ................
+01b0 00 00 0a 00 10 00 00 00 00 00 00 00 00 00 00 00 ................
+01c0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+01d0 00 00 00 00 00 00 f5 4d 13 ac 9d e9 64 2d b1 64 .......M....d-.d
+01e0 2d 7f 03 37 bd 3b                               -..7.;
+
+DBG_TSG tsg_connect (730): rpc_connect success
+DBG_TSG tsg_proxy_create_tunnel (393): TsProxyCreateTunnel
+stub_data_pad: 0
+auth_pad_length: 0
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 156
+auth_length: 16
+call_id: 1
+rpc_in_write() length: 156
+0000 05 00 00 03 10 00 00 00 9c 00 10 00 01 00 00 00 ................
+0010 6c 00 00 00 00 00 01 00 43 56 00 00 43 56 00 00 l.......CV..CV..
+0020 00 00 02 00 52 54 43 56 04 00 02 00 01 00 00 00 ....RTCV........
+0030 01 00 01 00 00 00 00 00 01 00 00 00 01 00 00 00 ................
+0040 01 00 00 00 1f 00 00 00 8a e3 13 71 02 f4 36 71 ...........q..6q
+0050 01 00 04 00 01 00 00 00 02 40 28 00 dd 65 e2 44 .........@(..e.D
+0060 af 7d cd 42 85 60 3c db 6e 7a 27 29 01 00 03 00 .}.B.`<.nz')....
+0070 04 5d 88 8a eb 1c c9 11 9f e8 08 00 2b 10 48 60 .]..........+.H`
+0080 02 00 00 00 0a 05 00 00 00 00 00 00 01 00 00 00 ................
+0090 0c 20 03 96 36 6a a9 79 00 00 00 00             . ..6j.y....
+
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RESPONSE (2)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 1936
+auth_length: 16
+call_id: 1
+rpc_recv_pdu: length: 1936
+0000 05 00 02 03 10 00 00 00 90 07 10 00 01 00 00 00 ................
+0010 60 07 00 00 00 00 00 00 00 00 02 00 50 43 00 00 `...........PC..
+0020 50 43 00 00 04 00 02 00 00 00 00 00 5f 03 00 00 PC.........._...
+0030 08 00 02 00 cc 31 db a3 06 b9 fa 4d a7 61 01 f0 .....1.....M.a..
+0040 33 97 9f 1d 0c 00 02 00 01 00 00 00 01 00 00 00 3...............
+0050 00 00 00 00 01 00 00 00 14 00 02 00 5f 03 00 00 ............_...
+0060 00 00 00 00 5f 03 00 00 2d 00 2d 00 2d 00 2d 00 ...._...-.-.-.-.
+0070 2d 00 42 00 45 00 47 00 49 00 4e 00 20 00 43 00 -.B.E.G.I.N. .C.
+0080 45 00 52 00 54 00 49 00 46 00 49 00 43 00 41 00 E.R.T.I.F.I.C.A.
+0090 54 00 45 00 2d 00 2d 00 2d 00 2d 00 2d 00 0d 00 T.E.-.-.-.-.-...
+00a0 0a 00 4d 00 49 00 49 00 43 00 52 00 54 00 43 00 ..M.I.I.C.R.T.C.
+00b0 43 00 41 00 62 00 4b 00 67 00 41 00 77 00 49 00 C.A.b.K.g.A.w.I.
+00c0 42 00 41 00 67 00 49 00 51 00 4c 00 6f 00 66 00 B.A.g.I.Q.L.o.f.
+00d0 6c 00 4d 00 59 00 51 00 6e 00 6d 00 62 00 70 00 l.M.Y.Q.n.m.b.p.
+00e0 4f 00 54 00 34 00 47 00 32 00 50 00 66 00 74 00 O.T.4.G.2.P.f.t.
+00f0 47 00 64 00 7a 00 41 00 4a 00 42 00 67 00 55 00 G.d.z.A.J.B.g.U.
+0100 72 00 44 00 67 00 4d 00 43 00 48 00 51 00 55 00 r.D.g.M.C.H.Q.U.
+0110 41 00 4d 00 43 00 6f 00 78 00 4b 00 44 00 41 00 A.M.C.o.x.K.D.A.
+0120 6d 00 0d 00 0a 00 42 00 67 00 4e 00 56 00 42 00 m.....B.g.N.V.B.
+0130 41 00 4d 00 54 00 48 00 30 00 78 00 42 00 51 00 A.M.T.H.0.x.B.Q.
+0140 6a 00 45 00 74 00 56 00 7a 00 4a 00 4c 00 4f 00 j.E.t.V.z.J.L.O.
+0150 46 00 49 00 79 00 4c 00 55 00 64 00 58 00 4c 00 F.I.y.L.U.d.X.L.
+0160 6d 00 78 00 68 00 59 00 6a 00 45 00 75 00 59 00 m.x.h.Y.j.E.u.Y.
+0170 58 00 64 00 68 00 61 00 32 00 55 00 75 00 62 00 X.d.h.a.2.U.u.b.
+0180 47 00 39 00 6a 00 59 00 57 00 77 00 77 00 48 00 G.9.j.Y.W.w.w.H.
+0190 68 00 63 00 4e 00 4d 00 54 00 49 00 78 00 4d 00 h.c.N.M.T.I.x.M.
+01a0 44 00 49 00 33 00 0d 00 0a 00 4d 00 44 00 45 00 D.I.3.....M.D.E.
+01b0 77 00 4d 00 44 00 49 00 79 00 57 00 68 00 63 00 w.M.D.I.y.W.h.c.
+01c0 4e 00 4d 00 7a 00 6b 00 78 00 4d 00 6a 00 4d 00 N.M.z.k.x.M.j.M.
+01d0 78 00 4d 00 6a 00 4d 00 31 00 4f 00 54 00 55 00 x.M.j.M.1.O.T.U.
+01e0 35 00 57 00 6a 00 41 00 71 00 4d 00 53 00 67 00 5.W.j.A.q.M.S.g.
+01f0 77 00 4a 00 67 00 59 00 44 00 56 00 51 00 51 00 w.J.g.Y.D.V.Q.Q.
+0200 44 00 45 00 78 00 39 00 4d 00 51 00 55 00 49 00 D.E.x.9.M.Q.U.I.
+0210 78 00 4c 00 56 00 63 00 79 00 53 00 7a 00 68 00 x.L.V.c.y.S.z.h.
+0220 53 00 4d 00 69 00 31 00 48 00 0d 00 0a 00 56 00 S.M.i.1.H.....V.
+0230 79 00 35 00 73 00 59 00 57 00 49 00 78 00 4c 00 y.5.s.Y.W.I.x.L.
+0240 6d 00 46 00 33 00 59 00 57 00 74 00 6c 00 4c 00 m.F.3.Y.W.t.l.L.
+0250 6d 00 78 00 76 00 59 00 32 00 46 00 73 00 4d 00 m.x.v.Y.2.F.s.M.
+0260 49 00 47 00 66 00 4d 00 41 00 30 00 47 00 43 00 I.G.f.M.A.0.G.C.
+0270 53 00 71 00 47 00 53 00 49 00 62 00 33 00 44 00 S.q.G.S.I.b.3.D.
+0280 51 00 45 00 42 00 41 00 51 00 55 00 41 00 41 00 Q.E.B.A.Q.U.A.A.
+0290 34 00 47 00 4e 00 41 00 44 00 43 00 42 00 69 00 4.G.N.A.D.C.B.i.
+02a0 51 00 4b 00 42 00 67 00 51 00 43 00 59 00 0d 00 Q.K.B.g.Q.C.Y...
+02b0 0a 00 73 00 4a 00 38 00 68 00 33 00 41 00 6a 00 ..s.J.8.h.3.A.j.
+02c0 75 00 38 00 31 00 32 00 56 00 73 00 56 00 39 00 u.8.1.2.V.s.V.9.
+02d0 35 00 39 00 6f 00 2f 00 68 00 30 00 6b 00 56 00 5.9.o./.h.0.k.V.
+02e0 59 00 61 00 4b 00 70 00 69 00 64 00 73 00 35 00 Y.a.K.p.i.d.s.5.
+02f0 55 00 55 00 33 00 46 00 6e 00 58 00 4e 00 31 00 U.U.3.F.n.X.N.1.
+0300 43 00 76 00 4e 00 79 00 79 00 57 00 62 00 69 00 C.v.N.y.y.W.b.i.
+0310 50 00 59 00 72 00 43 00 54 00 6c 00 48 00 39 00 P.Y.r.C.T.l.H.9.
+0320 31 00 6e 00 35 00 71 00 72 00 41 00 67 00 7a 00 1.n.5.q.r.A.g.z.
+0330 36 00 0d 00 0a 00 46 00 70 00 31 00 4b 00 46 00 6.....F.p.1.K.F.
+0340 4c 00 39 00 56 00 6d 00 4a 00 36 00 50 00 47 00 L.9.V.m.J.6.P.G.
+0350 6e 00 65 00 55 00 71 00 30 00 52 00 57 00 52 00 n.e.U.q.0.R.W.R.
+0360 37 00 53 00 46 00 57 00 44 00 4c 00 30 00 45 00 7.S.F.W.D.L.0.E.
+0370 6b 00 46 00 67 00 5a 00 41 00 57 00 34 00 63 00 k.F.g.Z.A.W.4.c.
+0380 67 00 43 00 48 00 64 00 6c 00 4f 00 4c 00 39 00 g.C.H.d.l.O.L.9.
+0390 32 00 59 00 78 00 49 00 35 00 50 00 61 00 43 00 2.Y.x.I.5.P.a.C.
+03a0 2b 00 42 00 6d 00 2b 00 31 00 48 00 75 00 4c 00 +.B.m.+.1.H.u.L.
+03b0 32 00 5a 00 65 00 0d 00 0a 00 66 00 71 00 6f 00 2.Z.e.....f.q.o.
+03c0 69 00 37 00 70 00 36 00 77 00 4a 00 58 00 67 00 i.7.p.6.w.J.X.g.
+03d0 44 00 59 00 74 00 67 00 4b 00 38 00 4f 00 67 00 D.Y.t.g.K.8.O.g.
+03e0 4a 00 43 00 62 00 57 00 4e 00 4c 00 4e 00 79 00 J.C.b.W.N.L.N.y.
+03f0 51 00 6a 00 58 00 46 00 6b 00 6d 00 79 00 6c 00 Q.j.X.F.k.m.y.l.
+0400 54 00 78 00 2f 00 48 00 35 00 4b 00 77 00 49 00 T.x./.H.5.K.w.I.
+0410 44 00 41 00 51 00 41 00 42 00 6f 00 33 00 51 00 D.A.Q.A.B.o.3.Q.
+0420 77 00 63 00 6a 00 41 00 54 00 42 00 67 00 4e 00 w.c.j.A.T.B.g.N.
+0430 56 00 48 00 53 00 55 00 45 00 0d 00 0a 00 44 00 V.H.S.U.E.....D.
+0440 44 00 41 00 4b 00 42 00 67 00 67 00 72 00 42 00 D.A.K.B.g.g.r.B.
+0450 67 00 45 00 46 00 42 00 51 00 63 00 44 00 41 00 g.E.F.B.Q.c.D.A.
+0460 54 00 42 00 62 00 42 00 67 00 4e 00 56 00 48 00 T.B.b.B.g.N.V.H.
+0470 51 00 45 00 45 00 56 00 44 00 42 00 53 00 67 00 Q.E.E.V.D.B.S.g.
+0480 42 00 41 00 79 00 6e 00 33 00 49 00 6a 00 2f 00 B.A.y.n.3.I.j./.
+0490 6e 00 54 00 6b 00 6e 00 71 00 7a 00 70 00 76 00 n.T.k.n.q.z.p.v.
+04a0 68 00 4b 00 38 00 71 00 6a 00 53 00 6c 00 6f 00 h.K.8.q.j.S.l.o.
+04b0 53 00 77 00 77 00 4b 00 6a 00 45 00 6f 00 0d 00 S.w.w.K.j.E.o...
+04c0 0a 00 4d 00 43 00 59 00 47 00 41 00 31 00 55 00 ..M.C.Y.G.A.1.U.
+04d0 45 00 41 00 78 00 4d 00 66 00 54 00 45 00 46 00 E.A.x.M.f.T.E.F.
+04e0 43 00 4d 00 53 00 31 00 58 00 4d 00 6b 00 73 00 C.M.S.1.X.M.k.s.
+04f0 34 00 55 00 6a 00 49 00 74 00 52 00 31 00 63 00 4.U.j.I.t.R.1.c.
+0500 75 00 62 00 47 00 46 00 69 00 4d 00 53 00 35 00 u.b.G.F.i.M.S.5.
+0510 68 00 64 00 32 00 46 00 72 00 5a 00 53 00 35 00 h.d.2.F.r.Z.S.5.
+0520 73 00 62 00 32 00 4e 00 68 00 62 00 49 00 49 00 s.b.2.N.h.b.I.I.
+0530 51 00 4c 00 6f 00 66 00 6c 00 4d 00 59 00 51 00 Q.L.o.f.l.M.Y.Q.
+0540 6e 00 0d 00 0a 00 6d 00 62 00 70 00 4f 00 54 00 n.....m.b.p.O.T.
+0550 34 00 47 00 32 00 50 00 66 00 74 00 47 00 64 00 4.G.2.P.f.t.G.d.
+0560 7a 00 41 00 4a 00 42 00 67 00 55 00 72 00 44 00 z.A.J.B.g.U.r.D.
+0570 67 00 4d 00 43 00 48 00 51 00 55 00 41 00 41 00 g.M.C.H.Q.U.A.A.
+0580 34 00 47 00 42 00 41 00 48 00 6d 00 4f 00 2b 00 4.G.B.A.H.m.O.+.
+0590 58 00 70 00 59 00 33 00 46 00 4f 00 78 00 31 00 X.p.Y.3.F.O.x.1.
+05a0 31 00 30 00 39 00 50 00 57 00 41 00 6b 00 75 00 1.0.9.P.W.A.k.u.
+05b0 31 00 43 00 4a 00 53 00 6a 00 44 00 55 00 49 00 1.C.J.S.j.D.U.I.
+05c0 4a 00 79 00 71 00 0d 00 0a 00 72 00 4b 00 45 00 J.y.q.....r.K.E.
+05d0 4a 00 67 00 50 00 5a 00 79 00 4c 00 46 00 41 00 J.g.P.Z.y.L.F.A.
+05e0 56 00 73 00 52 00 65 00 68 00 6d 00 76 00 78 00 V.s.R.e.h.m.v.x.
+05f0 67 00 57 00 35 00 77 00 63 00 7a 00 55 00 51 00 g.W.5.w.c.z.U.Q.
+0600 4b 00 36 00 5a 00 33 00 63 00 56 00 55 00 5a 00 K.6.Z.3.c.V.U.Z.
+0610 4f 00 72 00 38 00 48 00 46 00 37 00 2b 00 70 00 O.r.8.H.F.7.+.p.
+0620 55 00 51 00 4a 00 38 00 63 00 76 00 4f 00 53 00 U.Q.J.8.c.v.O.S.
+0630 78 00 32 00 36 00 32 00 54 00 6b 00 38 00 32 00 x.2.6.2.T.k.8.2.
+0640 4f 00 52 00 6a 00 69 00 7a 00 0d 00 0a 00 61 00 O.R.j.i.z.....a.
+0650 64 00 31 00 59 00 72 00 56 00 78 00 7a 00 4b 00 d.1.Y.r.V.x.z.K.
+0660 77 00 74 00 47 00 50 00 55 00 50 00 62 00 36 00 w.t.G.P.U.P.b.6.
+0670 66 00 51 00 7a 00 44 00 41 00 30 00 45 00 78 00 f.Q.z.D.A.0.E.x.
+0680 70 00 34 00 48 00 33 00 69 00 4b 00 78 00 7a 00 p.4.H.3.i.K.x.z.
+0690 42 00 4c 00 62 00 6c 00 44 00 73 00 76 00 42 00 B.L.b.l.D.s.v.B.
+06a0 31 00 7a 00 46 00 58 00 6a 00 44 00 75 00 52 00 1.z.F.X.j.D.u.R.
+06b0 77 00 46 00 38 00 46 00 68 00 75 00 79 00 38 00 w.F.8.F.h.u.y.8.
+06c0 6a 00 44 00 36 00 49 00 61 00 75 00 37 00 0d 00 j.D.6.I.a.u.7...
+06d0 0a 00 78 00 48 00 6e 00 56 00 78 00 6a 00 75 00 ..x.H.n.V.x.j.u.
+06e0 56 00 4d 00 4b 00 2b 00 4f 00 0d 00 0a 00 2d 00 V.M.K.+.O.....-.
+06f0 2d 00 2d 00 2d 00 2d 00 45 00 4e 00 44 00 20 00 -.-.-.-.E.N.D. .
+0700 43 00 45 00 52 00 54 00 49 00 46 00 49 00 43 00 C.E.R.T.I.F.I.C.
+0710 41 00 54 00 45 00 2d 00 2d 00 2d 00 2d 00 2d 00 A.T.E.-.-.-.-.-.
+0720 0d 00 0a 00 00 00 00 00 52 54 43 56 10 00 02 00 ........RTCV....
+0730 01 00 00 00 01 00 01 00 01 00 00 00 01 00 00 00 ................
+0740 01 00 00 00 01 00 00 00 1f 00 00 00 00 00 00 00 ................
+0750 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0760 1f 70 18 55 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 .p.U...J...L.7PG
+0770 9c 02 00 00 00 00 00 00 0a 05 00 00 00 00 00 00 ................
+0780 01 00 00 00 fd 28 d5 da 3c 12 66 e6 00 00 00 00 .....(..<.f.....
+
+TSG TunnelContext:
+0000 1f 70 18 55 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 .p.U...J...L.7PG
+
+DBG_TSG tsg_proxy_authorize_tunnel (481): TsProxyAuthorizeTunnel
+stub_data_pad: 0
+auth_pad_length: 0
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 140
+auth_length: 16
+call_id: 2
+rpc_in_write() length: 140
+0000 05 00 00 03 10 00 00 00 8c 00 10 00 02 00 00 00 ................
+0010 5c 00 00 00 00 00 02 00 00 00 00 00 1f 70 18 55 \............p.U
+0020 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 52 51 00 00 ...J...L.7PGRQ..
+0030 52 51 00 00 00 00 02 00 00 00 00 00 04 00 02 00 RQ..............
+0040 0c 00 00 00 08 00 02 00 00 00 00 00 0c 00 00 00 ................
+0050 00 00 00 00 0c 00 00 00 77 00 6f 00 72 00 6b 00 ........w.o.r.k.
+0060 73 00 74 00 61 00 74 00 69 00 6f 00 6e 00 00 00 s.t.a.t.i.o.n...
+0070 00 00 00 00 0a 05 00 00 00 00 00 00 01 00 00 00 ................
+0080 a0 b5 06 a0 a7 b4 bb 71 01 00 00 00             .......q....
+
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RESPONSE (2)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 128
+auth_length: 16
+call_id: 2
+rpc_recv_pdu: length: 128
+0000 05 00 02 03 10 00 00 00 80 00 10 00 02 00 00 00 ................
+0010 4c 00 00 00 00 00 00 00 00 00 02 00 52 50 00 00 L...........RP..
+0020 52 50 00 00 04 00 02 00 52 51 00 00 00 00 00 00 RP......RQ......
+0030 08 00 02 00 04 00 00 00 01 00 00 00 00 00 00 00 ................
+0040 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+0050 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 ................
+0060 00 00 00 00 00 00 00 00 0a 05 04 00 00 00 00 00 ................
+0070 01 00 00 00 2f 21 22 d5 c3 a7 33 7e 01 00 00 00 ..../!"...3~....
+
+DBG_TSG tsg_proxy_make_tunnel_call (564): TsProxyMakeTunnelCall
+stub_data_pad: 0
+auth_pad_length: 0
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 88
+auth_length: 16
+call_id: 3
+rpc_in_write() length: 88
+0000 05 00 00 03 10 00 00 00 58 00 10 00 03 00 00 00 ........X.......
+0010 28 00 00 00 00 00 03 00 00 00 00 00 1f 70 18 55 (............p.U
+0020 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 01 00 00 00 ...J...L.7PG....
+0030 52 47 00 00 52 47 00 00 00 00 02 00 01 00 00 00 RG..RG..........
+0040 0a 05 00 00 00 00 00 00 01 00 00 00 97 a0 e5 97 ................
+0050 56 aa 4d 78 02 00 00 00                         V.Mx....
+
+DBG_TSG tsg_proxy_create_channel (617): TsProxyCreateChannel
+stub_data_pad: 0
+auth_pad_length: 2
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 172
+auth_length: 16
+call_id: 4
+rpc_in_write() length: 172
+0000 05 00 00 03 10 00 00 00 ac 00 10 00 04 00 00 00 ................
+0010 7a 00 00 00 00 00 04 00 00 00 00 00 1f 70 18 55 z............p.U
+0020 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 00 00 02 00 ...J...L.7PG....
+0030 01 00 00 00 00 00 00 00 00 00 00 00 03 00 3d 0d ..............=.
+0040 01 00 00 00 04 00 02 00 1f 00 00 00 00 00 00 00 ................
+0050 1f 00 00 00 4c 00 41 00 42 00 31 00 2d 00 57 00 ....L.A.B.1.-.W.
+0060 37 00 2d 00 44 00 4d 00 2d 00 30 00 31 00 2e 00 7.-.D.M.-.0.1...
+0070 6c 00 61 00 62 00 31 00 2e 00 61 00 77 00 61 00 l.a.b.1...a.w.a.
+0080 6b 00 65 00 2e 00 6c 00 6f 00 63 00 61 00 6c 00 k.e...l.o.c.a.l.
+0090 00 00 00 00 0a 05 02 00 00 00 00 00 01 00 00 00 ................
+00a0 e6 7f 65 16 8f d2 c3 38 03 00 00 00             ..e....8....
+
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_RESPONSE (2)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 80
+auth_length: 16
+call_id: 4
+rpc_recv_pdu: length: 80
+0000 05 00 02 03 10 00 00 00 50 00 10 00 04 00 00 00 ........P.......
+0010 1c 00 00 00 00 00 00 00 00 00 00 00 4f ee 14 00 ............O...
+0020 4e b5 f2 40 80 15 cb 6b 44 a5 9c 5e 01 00 00 00 N..@...kD..^....
+0030 00 00 00 00 00 00 00 00 0a 05 04 00 00 00 00 00 ................
+0040 01 00 00 00 29 b7 07 76 c1 cf f5 e2 02 00 00 00 ....)..v........
+
+TSG ChannelContext:
+0000 4f ee 14 00 4e b5 f2 40 80 15 cb 6b 44 a5 9c 5e O...N..@...kD..^
+
+DBG_TSG tsg_proxy_setup_receive_pipe (691): TsProxySetupReceivePipe
+stub_data_pad: 0
+auth_pad_length: 0
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 68
+auth_length: 16
+call_id: 5
+rpc_in_write() length: 68
+0000 05 00 00 03 10 00 00 00 44 00 10 00 05 00 00 00 ........D.......
+0010 14 00 00 00 00 00 08 00 00 00 00 00 1f 70 18 55 .............p.U
+0020 b4 09 d1 4a bd e5 ac 4c ae 37 50 47 0a 05 00 00 ...J...L.7PG....
+0030 00 00 00 00 01 00 00 00 e1 99 8d 54 b6 f7 33 28 ...........T..3(
+0040 04 00 00 00                                     ....
+
+DBG_NEGO nego_send_negotiation_request (662): requested_protocols: 11
+TotalDataBytes: 51 numBuffers: 1 buffer1Length: 47 buffer2Length: 0 buffer3Length: 0
+stub_data_pad: 0
+auth_pad_length: 1
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_REQUEST (0)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 128
+auth_length: 16
+call_id: 6
+rpc_in_write() length: 128
+0000 05 00 00 03 10 00 00 00 80 00 10 00 06 00 00 00 ................
+0010 4f 00 00 00 00 00 09 00 00 00 00 00 4f ee 14 00 O...........O...
+0020 4e b5 f2 40 80 15 cb 6b 44 a5 9c 5e 00 00 00 33 N..@...kD..^...3
+0030 00 00 00 01 00 00 00 2f 03 00 00 2f 2a e0 00 00 ......./.../*...
+0040 00 00 00 43 6f 6f 6b 69 65 3a 20 6d 73 74 73 68 ...Cookie: mstsh
+0050 61 73 68 3d 4c 41 42 31 5c 4a 6f 68 6e 0d 0a 01 ash=LAB1\John...
+0060 00 08 00 0b 00 00 00 00 0a 05 01 00 00 00 00 00 ................
+0070 01 00 00 00 ad 2c 26 31 ad 11 d6 78 05 00 00 00 .....,&1...x....
+
+tsg_read: 16384, pending: 0
+rpc_vers: 5
+rpc_vers_minor: 0
+ptype: PTYPE_FAULT (3)
+pfc_flags (0x03) = { PFC_FIRST_FRAG PFC_LAST_FRAG }
+packed_drep[4]: 10 00 00 00
+frag_length: 32
+auth_length: 0
+call_id: 5
+RPC Fault PDU:
+status: ERROR_ACCESS_DENIED (0x00000005)
+DBG_NEGO nego_connect (141): Protocol Security Negotiation Failure
+Error: protocol security negotiation or connection failure

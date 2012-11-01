@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Fujitsu Technology Solutions GmbH
  * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -752,8 +753,8 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	offset = 116;
 	bind_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
 
-	bind_pdu->auth_verifier.auth_type = 0x0A;
-	bind_pdu->auth_verifier.auth_level = 0x05;
+	bind_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	bind_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	bind_pdu->auth_verifier.auth_reserved = 0x00;
 	bind_pdu->auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + bind_pdu->auth_length);
@@ -839,8 +840,8 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	offset += 4;
 	auth_3_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
 
-	auth_3_pdu->auth_verifier.auth_type = 0x0A;
-	auth_3_pdu->auth_verifier.auth_level = 0x05;
+	auth_3_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	auth_3_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu->auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
 
@@ -866,13 +867,13 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-//if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
-//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
-
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 	RPC_PDU_HEADER* header;
+
+	//if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
+	//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	/* read first 20 bytes to get RPC PDU Header */
 	status = tls_read(rpc->tls_out, data, 20);
@@ -1074,8 +1075,8 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	printf("auth_pad_length: %d\n", request_pdu->auth_verifier.auth_pad_length);
 
-	request_pdu->auth_verifier.auth_type = 0x0A;
-	request_pdu->auth_verifier.auth_level = 0x05;
+	request_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
+	request_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	request_pdu->auth_verifier.auth_reserved = 0x00;
 	request_pdu->auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + request_pdu->auth_length);

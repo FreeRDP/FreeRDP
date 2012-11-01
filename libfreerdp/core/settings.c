@@ -77,9 +77,13 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardFunctionKeys"), dwType, dwValue, dwSize, settings->kbd_fn_keys);
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardLayout"), dwType, dwValue, dwSize, settings->kbd_layout);
 
+		REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ext_security);
 		REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
 		REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
 		REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
+
+		REG_QUERY_BOOL_VALUE(hKey, _T("MstscCookieMode"), dwType, dwValue, dwSize, settings->mstsc_cookie_mode);
+		REG_QUERY_DWORD_VALUE(hKey, _T("CookieMaxLength"), dwType, dwValue, dwSize, settings->cookie_max_length);
 
 		REG_QUERY_BOOL_VALUE(hKey, _T("BitmapCache"), dwType, dwValue, dwSize, settings->bitmap_cache);
 
@@ -170,6 +174,7 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	if (status != ERROR_SUCCESS)
 		return;
 
+	REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ext_security);
 	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
 	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
 	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
@@ -198,10 +203,12 @@ rdpSettings* settings_new(void* instance)
 {
 	rdpSettings* settings;
 
-	settings = (rdpSettings*) xzalloc(sizeof(rdpSettings));
+	settings = (rdpSettings*) malloc(sizeof(rdpSettings));
 
 	if (settings != NULL)
 	{
+		ZeroMemory(settings, sizeof(rdpSettings));
+
 		settings->instance = instance;
 
 		/* Server instances are NULL */
@@ -217,10 +224,13 @@ rdpSettings* settings_new(void* instance)
 		settings->decorations = TRUE;
 		settings->rdp_version = 7;
 		settings->color_depth = 16;
+		settings->ext_security = FALSE;
 		settings->nla_security = TRUE;
 		settings->tls_security = TRUE;
 		settings->rdp_security = TRUE;
 		settings->security_layer_negotiation = TRUE;
+		settings->mstsc_cookie_mode = FALSE;
+		settings->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 		settings->client_build = 2600;
 		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
 		settings->kbd_subtype = 0;
@@ -247,8 +257,10 @@ rdpSettings* settings_new(void* instance)
 
 		settings_get_computer_name(settings);
 
-		settings->received_caps = xzalloc(32);
-		settings->order_support = xzalloc(32);
+		settings->received_caps = malloc(32);
+		settings->order_support = malloc(32);
+		ZeroMemory(settings->received_caps, 32);
+		ZeroMemory(settings->order_support, 32);
 
 		settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
 		settings->order_support[NEG_PATBLT_INDEX] = TRUE;
@@ -273,8 +285,10 @@ rdpSettings* settings_new(void* instance)
 		settings->order_support[NEG_ELLIPSE_SC_INDEX] = TRUE;
 		settings->order_support[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
-		settings->client_hostname = xzalloc(32);
-		settings->client_product_id = xzalloc(32);
+		settings->client_hostname = malloc(32);
+		settings->client_product_id = malloc(32);
+		ZeroMemory(settings->client_hostname, 32);
+		ZeroMemory(settings->client_product_id, 32);
 
 		settings->color_pointer = TRUE;
 		settings->large_pointer = TRUE;
@@ -296,7 +310,7 @@ rdpSettings* settings_new(void* instance)
 		settings->allow_cache_waiting_list = TRUE;
 
 		settings->bitmapCacheV2NumCells = 5;
-		settings->bitmapCacheV2CellInfo = xzalloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+		settings->bitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 		settings->bitmapCacheV2CellInfo[0].numEntries = 600;
 		settings->bitmapCacheV2CellInfo[0].persistent = FALSE;
 		settings->bitmapCacheV2CellInfo[1].numEntries = 600;
@@ -312,8 +326,8 @@ rdpSettings* settings_new(void* instance)
 		settings->suppress_output = TRUE;
 
 		settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
-		settings->glyphCache = xzalloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
-		settings->fragCache = xnew(GLYPH_CACHE_DEFINITION);
+		settings->glyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+		settings->fragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
 		settings->glyphCache[0].cacheEntries = 254;
 		settings->glyphCache[0].cacheMaximumCellSize = 4;
 		settings->glyphCache[1].cacheEntries = 254;
@@ -362,10 +376,13 @@ rdpSettings* settings_new(void* instance)
 		settings->client_hostname[31] = 0;
 		settings->mouse_motion = TRUE;
 
-		settings->client_auto_reconnect_cookie = xnew(ARC_CS_PRIVATE_PACKET);
-		settings->server_auto_reconnect_cookie = xnew(ARC_SC_PRIVATE_PACKET);
+		settings->client_auto_reconnect_cookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
+		settings->server_auto_reconnect_cookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(ARC_SC_PRIVATE_PACKET));
+		ZeroMemory(settings->client_auto_reconnect_cookie, sizeof(ARC_CS_PRIVATE_PACKET));
+		ZeroMemory(settings->server_auto_reconnect_cookie, sizeof(ARC_SC_PRIVATE_PACKET));
 
-		settings->client_time_zone = xnew(TIME_ZONE_INFO);
+		settings->client_time_zone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
+		ZeroMemory(settings->client_time_zone, sizeof(TIME_ZONE_INFO));
 
 		freerdp_detect_paths(settings);
 

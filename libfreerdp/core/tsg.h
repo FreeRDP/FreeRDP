@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Fujitsu Technology Solutions GmbH
  * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +60,11 @@ typedef WCHAR* RESOURCENAME;
 #define TsProxyAuthorizeTunnelOpnum		2
 #define TsProxyMakeTunnelCallOpnum		3
 #define TsProxyCreateChannelOpnum		4
+#define TsProxyUnused5Opnum			5
+#define TsProxyCloseChannelOpnum		6
+#define TsProxyCloseTunnelOpnum			7
 #define TsProxySetupReceivePipeOpnum		8
+#define TsProxySendToServerOpnum		9
 
 #define MAX_RESOURCE_NAMES			50
 
