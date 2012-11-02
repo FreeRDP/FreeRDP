@@ -73,7 +73,7 @@
  *
  * <sigil><keyword><separator><value>
  *
- * <sigil>: '/' or '-'
+ * <sigil>: '/' or '-' or ('+' | '-')
  *
  * <keyword>: option, named argument, flag
  *
@@ -87,6 +87,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 {
 	int i, j;
 	int length;
+	BOOL match;
 	char* sigil;
 	int sigil_length;
 	int sigil_index;
@@ -115,11 +116,15 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			sigil_length = 1;
 		}
+		else
+		{
+			continue;
+		}
 
 		if (sigil_length > 0)
 		{
 			if (length < (sigil_length + 1))
-				return -1;
+				return COMMAND_LINE_ERROR_NO_KEYWORD;
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
@@ -159,36 +164,50 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 			for (j = 0; options[j].Name != NULL; j++)
 			{
+				match = FALSE;
+
 				if (strncmp(options[j].Name, keyword, keyword_length) == 0)
 				{
 					if (strlen(options[j].Name) == keyword_length)
+						match = TRUE;
+				}
+
+				if ((!match) && (options[j].Alias != NULL))
+				{
+					if (strncmp(options[j].Alias, keyword, keyword_length) == 0)
 					{
-						printf("option: %.*s", keyword_length, keyword);
+						if (strlen(options[j].Alias) == keyword_length)
+							match = TRUE;
+					}
+				}
 
-						if (value)
-							printf(" value: %s", value);
+				if (!match)
+					continue;
 
-						printf("\n");
+				printf("option: %.*s", keyword_length, keyword);
 
-						if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
-							return -1;
+				if (value)
+					printf(" value: %s", value);
 
-						if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
-							return -1;
+				printf("\n");
 
-						if (value)
-						{
-							options[j].Value = value;
-							options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
-						}
-						else
-						{
-							if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
-							{
-								options[j].Value = (LPSTR) 1;
-								options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
-							}
-						}
+				if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
+					return COMMAND_LINE_ERROR_MISSING_VALUE;
+
+				if (value)
+				{
+					options[j].Value = value;
+					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+				}
+				else
+				{
+					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
+					{
+						options[j].Value = (LPSTR) 1;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 				}
 			}
@@ -237,6 +256,12 @@ COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* optio
 	{
 		if (strcmp(options[i].Name, Name) == 0)
 			return &options[i];
+
+		if (options[i].Alias != NULL)
+		{
+			if (strcmp(options[i].Alias, Name) == 0)
+				return &options[i];
+		}
 	}
 
 	return NULL;
@@ -250,6 +275,12 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 	{
 		if (_wcscmp(options[i].Name, Name) == 0)
 			return &options[i];
+
+		if (options[i].Alias != NULL)
+		{
+			if (_wcscmp(options[i].Alias, Name) == 0)
+				return &options[i];
+		}
 	}
 
 	return NULL;
