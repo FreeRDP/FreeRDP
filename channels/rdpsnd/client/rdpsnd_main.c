@@ -451,13 +451,15 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RD
 	char* fullname;
 
 	if (strrchr(name, '.') != NULL)
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+	{
+		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+	}
 	else
 	{
 		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, "rdpsnd_");
+		strcpy(fullname, "rdpsnd-client-");
 		strcat(fullname, name);
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY)freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
+		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
 		free(fullname);
 	}
 	if (entry == NULL)
@@ -468,11 +470,13 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RD
 	entryPoints.rdpsnd = rdpsnd;
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;
 	entryPoints.plugin_data = data;
+
 	if (entry(&entryPoints) != 0)
 	{
 		DEBUG_WARN("%s entry returns error.", name);
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -496,7 +500,7 @@ static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, RDP_PLUGIN_DATA* da
 	}
 	else
 	{
-		rdpsnd_load_device_plugin(rdpsnd, (char*)data->data[0], data);
+		rdpsnd_load_device_plugin(rdpsnd, (char*) data->data[0], data);
 	}
 }
 
