@@ -23,12 +23,26 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+/* Command-Line Argument Flags */
+
+#define COMMAND_LINE_INPUT_FLAG_MASK		0x0000FFFF
+#define COMMAND_LINE_OUTPUT_FLAG_MASK		0xFFFF0000
+
 #define COMMAND_LINE_VALUE_FLAG			0x00000001
 #define COMMAND_LINE_VALUE_REQUIRED		0x00000002
 #define COMMAND_LINE_VALUE_OPTIONAL		0x00000004
 #define COMMAND_LINE_VALUE_BOOLEAN		0x00000008
 
-#define COMMAND_LINE_VALUE_PRESENT		0x80000001
+#define COMMAND_LINE_VALUE_PRESENT		0x80000000
+
+/* Command-Line Parsing Flags */
+
+#define COMMAND_LINE_SIGIL_SLASH		0x00000001
+#define COMMAND_LINE_SIGIL_DASH			0x00000002
+#define COMMAND_LINE_SIGIL_DOUBLE_DASH		0x00000004
+
+#define COMMAND_LINE_SEPARATOR_COLON		0x00000100
+#define COMMAND_LINE_SEPARATOR_EQUAL		0x00000200
 
 struct _COMMAND_LINE_ARGUMENT_A
 {
@@ -52,13 +66,23 @@ typedef struct _COMMAND_LINE_ARGUMENT_W COMMAND_LINE_ARGUMENT_W;
 #define COMMAND_LINE_ARGUMENT	COMMAND_LINE_ARGUMENT_A
 #endif
 
+WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
+WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
+
 WINPR_API int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags);
 WINPR_API int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags);
 
+WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
+WINPR_API COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
+
 #ifdef UNICODE
+#define CommandLineClearArguments	CommandLineClearArgumentsW
 #define CommandLineParseArguments	CommandLineParseArgumentsW
+#define CommandLineFindArgument		CommandLineFindArgumentW
 #else
+#define CommandLineClearArguments	CommandLineClearArgumentsA
 #define CommandLineParseArguments	CommandLineParseArgumentsA
+#define CommandLineFindArgument		CommandLineFindArgumentA
 #endif
 
 #endif /* WINPR_CMDLINE_H */

@@ -103,20 +103,34 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	for (i = 1; i < argc; i++)
 	{
 		sigil_index = 0;
+		sigil_length = 0;
 		sigil = (char*) &argv[i][sigil_index];
 		length = strlen(argv[i]);
 
-		if (sigil[sigil_index] == '/')
+		if ((sigil[sigil_index] == '/') && (flags & COMMAND_LINE_SIGIL_SLASH))
 		{
 			sigil_length = 1;
+		}
+		else if ((sigil[sigil_index] == '-') && (flags & COMMAND_LINE_SIGIL_DASH))
+		{
+			sigil_length = 1;
+		}
 
+		if (sigil_length > 0)
+		{
 			if (length < (sigil_length + 1))
 				return -1;
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
 
-			separator = strchr(keyword, ':');
+			separator = NULL;
+
+			if ((flags & COMMAND_LINE_SEPARATOR_COLON) && (!separator))
+				separator = strchr(keyword, ':');
+
+			if ((flags & COMMAND_LINE_SEPARATOR_EQUAL) && (!separator))
+				separator = strchr(keyword, '=');
 
 			if (separator)
 			{
@@ -187,4 +201,56 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags)
 {
 	return 0;
+}
+
+int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
+{
+	int i;
+
+	for (i = 0; options[i].Name != NULL; i++)
+	{
+		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
+		options[i].Value = NULL;
+	}
+
+	return 0;
+}
+
+int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
+{
+	int i;
+
+	for (i = 0; options[i].Name != NULL; i++)
+	{
+		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
+		options[i].Value = NULL;
+	}
+
+	return 0;
+}
+
+COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name)
+{
+	int i;
+
+	for (i = 0; options[i].Name != NULL; i++)
+	{
+		if (strcmp(options[i].Name, Name) == 0)
+			return &options[i];
+	}
+
+	return NULL;
+}
+
+COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name)
+{
+	int i;
+
+	for (i = 0; options[i].Name != NULL; i++)
+	{
+		if (_wcscmp(options[i].Name, Name) == 0)
+			return &options[i];
+	}
+
+	return NULL;
 }

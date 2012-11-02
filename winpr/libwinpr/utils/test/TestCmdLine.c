@@ -15,42 +15,61 @@ const char* testArgv[] =
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
-	{ "w", COMMAND_LINE_VALUE_REQUIRED },
-	{ "h", COMMAND_LINE_VALUE_REQUIRED },
-	{ "f", COMMAND_LINE_VALUE_FLAG },
-	{ "admin", COMMAND_LINE_VALUE_FLAG },
-	{ "multimon", COMMAND_LINE_VALUE_FLAG },
-	{ "v", COMMAND_LINE_VALUE_REQUIRED },
-	{ "?", COMMAND_LINE_VALUE_FLAG },
-	{ NULL, 0 }
+	{ "w", COMMAND_LINE_VALUE_REQUIRED, NULL },
+	{ "h", COMMAND_LINE_VALUE_REQUIRED, NULL },
+	{ "f", COMMAND_LINE_VALUE_FLAG, NULL },
+	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL },
+	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL },
+	{ "v", COMMAND_LINE_VALUE_REQUIRED, NULL },
+	{ "?", COMMAND_LINE_VALUE_FLAG, NULL },
+	{ NULL, 0, NULL }
 };
 
 #define testArgc (sizeof(testArgv) / sizeof(testArgv[0]))
 
 int TestCmdLine(int argc, char* argv[])
 {
-	if (CommandLineParseArgumentsA(testArgc, testArgv, args, 0) != 0)
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON;
+
+	if (CommandLineParseArgumentsA(testArgc, testArgv, args, flags) != 0)
 		return -1;
 
-	if (strcmp("1024", args[0].Value) != 0)
+	arg = CommandLineFindArgumentA(args, "w");
+
+	if (strcmp("1024", arg->Value) != 0)
 		return -1;
 
-	if (strcmp("768", args[1].Value) != 0)
+	arg = CommandLineFindArgumentA(args, "h");
+
+	if (strcmp("768", arg->Value) != 0)
 		return -1;
 
-	if (args[2].Value)
+	arg = CommandLineFindArgumentA(args, "f");
+
+	if (arg->Value)
 		return -1;
 
-	if (!args[3].Value)
+	arg = CommandLineFindArgumentA(args, "admin");
+
+	if (!arg->Value)
 		return -1;
 
-	if (!args[4].Value)
+	arg = CommandLineFindArgumentA(args, "multimon");
+
+	if (!arg->Value)
 		return -1;
 
-	if (strcmp("localhost:3389", args[5].Value) != 0)
+	arg = CommandLineFindArgumentA(args, "v");
+
+	if (strcmp("localhost:3389", arg->Value) != 0)
 		return -1;
 
-	if (args[6].Value)
+	arg = CommandLineFindArgumentA(args, "?");
+
+	if (arg->Value)
 		return -1;
 
 	return 0;
