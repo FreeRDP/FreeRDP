@@ -19,10 +19,11 @@ set(MODULE_NAME "winpr-utils")
 set(MODULE_PREFIX "WINPR_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
+	sam.c
 	ntlm.c
 	print.c
-	sam.c
-	stream.c)
+	stream.c
+	cmdline.c)
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
@@ -50,3 +51,8 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+
