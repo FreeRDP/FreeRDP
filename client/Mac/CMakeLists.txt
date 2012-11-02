@@ -4,8 +4,6 @@ project(MacFreeRDP)
 set(MODULE_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC")
 
-find_required_package(OpenSSL)
-
 set(FRAMEWORK_HEADERS_PATH /System/Library/Frameworks/Cocoa.framework/Versions/A/Headers/)
 include_directories(${FRAMEWORK_HEADERS_PATH} /System/Library/Frameworks) 
 	
@@ -73,8 +71,6 @@ set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH
 
 # Set the info plist to the custom instance
 set_target_properties(MacFreeRDP PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
-
-#find_optional_package(MacAudio)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS})
 

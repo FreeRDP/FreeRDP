@@ -18,9 +18,6 @@
 set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_required_package(Threads)
-
 set(${MODULE_PREFIX}_SRCS
 	args.c
 	dsp.c

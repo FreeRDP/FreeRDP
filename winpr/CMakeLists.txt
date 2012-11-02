@@ -38,9 +38,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 
+include(FindFeature)
 include(AutoVersioning)
 include(ConfigOptions)
-include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
@@ -59,11 +59,6 @@ endif()
 # Default to build shared libs
 if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
-endif()
-
-# Libraries that we have a hard dependency on
-if(NOT DEFINED OPENSSL_INCLUDE_DIR OR NOT DEFINED OPENSSL_LIBRARIES)
-	find_required_package(OpenSSL)
 endif()
 
 if(FREERDP_BUILD)

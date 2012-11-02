@@ -38,10 +38,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 
+include(FindFeature)
 include(AutoVersioning)
 include(ConfigOptions)
 include(ComplexLibrary)
-include(FindOptionalPackage)
+include(FeatureSummary)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
@@ -174,38 +175,106 @@ if(APPLE)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl-framework,CoreFoundation")	
 endif()
 
-# Android
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads REQUIRED)
+
+if(UNIX OR CYGWIN)
+	set(X11_FEATURE_TYPE "RECOMMENDED")
+else()
+	set(X11_FEATURE_TYPE "DISABLED")
+endif()
+
+set(X11_FEATURE_PURPOSE "X11")
+set(X11_FEATURE_DESCRIPTION "X11 client and server")
+
+set(DIRECTFB_FEATURE_TYPE "OPTIONAL")
+set(DIRECTFB_FEATURE_PURPOSE "DirectFB")
+set(DIRECTFB_FEATURE_DESCRIPTION "DirectFB client")
+
+set(ZLIB_FEATURE_TYPE "REQUIRED")
+set(ZLIB_FEATURE_PURPOSE "compression")
+set(ZLIB_FEATURE_DESCRIPTION "data compression")
+
+set(OPENSSL_FEATURE_TYPE "REQUIRED")
+set(OPENSSL_FEATURE_PURPOSE "cryptography")
+set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+set(ALSA_FEATURE_TYPE "RECOMMENDED")
+set(ALSA_FEATURE_PURPOSE "sound")
+set(ALSA_FEATURE_DESCRIPTION "audio input, audio output and multimedia redirection")
+
+set(PULSE_FEATURE_TYPE "OPTIONAL")
+set(PULSE_FEATURE_PURPOSE "sound")
+set(PULSE_FEATURE_DESCRIPTION "audio input, audio output and multimedia redirection")
+
+set(CUPS_FEATURE_TYPE "OPTIONAL")
+set(CUPS_FEATURE_PURPOSE "printing")
+set(CUPS_FEATURE_DESCRIPTION "printer device redirection")
+
+set(PCSC_FEATURE_TYPE "OPTIONAL")
+set(PCSC_FEATURE_PURPOSE "smart card")
+set(PCSC_FEATURE_DESCRIPTION "smart card device redirection")
+
+set(FFMPEG_FEATURE_TYPE "RECOMMENDED")
+set(FFMPEG_FEATURE_PURPOSE "multimedia")
+set(FFMPEG_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
+
+set(GSTREAMER_FEATURE_TYPE "RECOMMENDED")
+set(GSTREAMER_FEATURE_PURPOSE "multimedia")
+set(GSTREAMER_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
+
+if(WIN32)
+	set(X11_FEATURE_TYPE "DISABLED")
+	set(DIRECTFB_FEATURE_TYPE "DISABLED")
+	set(ALSA_FEATURE_TYPE "DISABLED")
+	set(PULSE_FEATURE_TYPE "DISABLED")
+	set(CUPS_FEATURE_TYPE "DISABLED")
+	set(PCSC_FEATURE_TYPE "DISABLED")
+	set(FFMPEG_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_FEATURE_TYPE "DISABLED")
+endif()
+
+if(APPLE)
+	set(DIRECTFB_FEATURE_TYPE "DISABLED")
+	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
+endif()
+
 if(ANDROID)
-	set(WITH_X11 OFF)
-	set(WITH_CUPS OFF)
-	set(WITH_ALSA OFF)
-	set(WITH_PULSE OFF)
-	set(WITH_FFMPEG OFF)
-	set(WITH_GSTREAMER OFF)
-	set(WITH_PCSC OFF)
+	set(X11_FEATURE_TYPE "DISABLED")
+	set(DIRECTFB_FEATURE_TYPE "DISABLED")
+	set(ALSA_FEATURE_TYPE "DISABLED")
+	set(PULSE_FEATURE_TYPE "DISABLED")
+	set(CUPS_FEATURE_TYPE "DISABLED")
+	set(PCSC_FEATURE_TYPE "DISABLED")
+	set(FFMPEG_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_FEATURE_TYPE "DISABLED")
 endif()
 
-if(NOT WIN32)
-	find_required_package(ZLIB)
-	find_optional_package(PCSC)
-	find_optional_package(PulseAudio)
-
-	if(NOT ANDROID)
-		find_suggested_package(Cups)
-	endif()
-
-	if(NOT APPLE)
-		find_suggested_package(XRandR)
-		find_suggested_package(Gstreamer)
-		if(NOT ANDROID)
-			find_suggested_package(ALSA)
-		endif()
-	endif()
-
-	if((NOT ANDROID) AND (NOT APPLE))
-		find_suggested_package(FFmpeg)
-	endif()
+if(IOS)
+	set(X11_FEATURE_TYPE "DISABLED")
+	set(DIRECTFB_FEATURE_TYPE "DISABLED")
+	set(ALSA_FEATURE_TYPE "DISABLED")
+	set(PULSE_FEATURE_TYPE "DISABLED")
+	set(CUPS_FEATURE_TYPE "DISABLED")
+	set(PCSC_FEATURE_TYPE "DISABLED")
+	set(FFMPEG_FEATURE_TYPE "DISABLED")
+	set(GSTREAMER_FEATURE_TYPE "DISABLED")
 endif()
+
+find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
+find_feature(DirectFB ${DIRECTFB_FEATURE_TYPE} ${DIRECTFB_FEATURE_PURPOSE} ${DIRECTFB_FEATURE_DESCRIPTION})
+
+find_feature(ZLIB ${ZLIB_FEATURE_TYPE} ${ZLIB_FEATURE_PURPOSE} ${ZLIB_FEATURE_DESCRIPTION})
+find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
+
+find_feature(ALSA ${ALSA_FEATURE_TYPE} ${ALSA_FEATURE_PURPOSE} ${ALSA_FEATURE_DESCRIPTION})
+find_feature(Pulse ${PULSE_FEATURE_TYPE} ${PULSE_FEATURE_PURPOSE} ${PULSE_FEATURE_DESCRIPTION})
+
+find_feature(Cups ${CUPS_FEATURE_TYPE} ${CUPS_FEATURE_PURPOSE} ${CUPS_FEATURE_DESCRIPTION})
+find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
+
+find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FEATURE_DESCRIPTION})
+find_feature(Gstreamer ${GSTREAMER_FEATURE_TYPE} ${GSTREAMER_FEATURE_PURPOSE} ${GSTREAMER_FEATURE_DESCRIPTION})
 
 if(WIN32)
 	set(CMAKE_INSTALL_BINDIR ${CMAKE_INSTALL_PREFIX})
@@ -250,7 +319,7 @@ set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 include(CTest)
 
 if(BUILD_TESTING)
-	find_optional_package(Cmockery)
+	find_package(Cmockery)
 	
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_TEST_EXPORTS")
 	
@@ -274,9 +343,6 @@ if(NOT MSVC)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
-
-# Intel Performance Primitives
-#find_optional_package(IPP)
 
 if(WITH_CUNIT)
 	message(FATAL_ERROR "cunit (WITH_CUNIT) is deprecated please use BUILD_TESTING to build ctest tests.
@@ -364,4 +430,3 @@ cpack_add_component(libraries DISPLAY_NAME "Libraries")
 cpack_add_component(clients DISPLAY_NAME "Clients")
 
 set(CPACK_COMPONENTS_ALL clients libraries headers)
-
