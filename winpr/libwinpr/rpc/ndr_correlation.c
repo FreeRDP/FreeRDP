@@ -25,6 +25,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
+
+#ifndef _WIN32
+
 #include "ndr_correlation.h"
 #include "ndr_private.h"
 
@@ -189,3 +192,5 @@ PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 
 	return pFormat;
 }
+
+#endif

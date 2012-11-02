@@ -26,6 +26,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 #include "ndr_array.h"
 #include "ndr_context.h"
 #include "ndr_pointer.h"
@@ -554,3 +556,5 @@ const NDR_TYPE_FREE_ROUTINE pfnFreeRoutines[] =
 	NULL, /* FC_END */
 	NULL, /* FC_PAD */
 };
+
+#endif

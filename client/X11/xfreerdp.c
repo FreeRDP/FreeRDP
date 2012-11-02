@@ -59,6 +59,8 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/rail.h>
 
+#include <freerdp/client/file.h>
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
@@ -480,6 +482,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 BOOL xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
+	rdpFile* file;
 	BOOL bitmap_cache;
 	rdpSettings* settings;
 	int arg_parse_result;
@@ -504,6 +507,17 @@ BOOL xf_pre_connect(freerdp* instance)
 	}
 
 	settings = instance->settings;
+
+	if (settings->connection_file)
+	{
+		file = freerdp_client_rdp_file_new();
+
+		printf("Using connection file: %s\n", settings->connection_file);
+
+		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
+	}
+
 	bitmap_cache = settings->bitmap_cache;
 
 	settings->os_major_type = OSMAJORTYPE_UNIX;
@@ -848,6 +862,14 @@ BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	{
 		printf("Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (instance->settings->from_stdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return FALSE;
+		}
 
 		if (answer == 'y' || answer == 'Y')
 		{

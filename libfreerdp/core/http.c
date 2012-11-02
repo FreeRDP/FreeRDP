@@ -149,24 +149,6 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 	http_request->AuthParam = _strdup(auth_param);
 }
 
-#ifndef _WIN32
-
-errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
-{
-	int length;
-
-	length = snprintf(NULL, 0, "%d", value);
-
-	if (sizeInCharacters < length)
-		return -1;
-
-	snprintf(buffer, length + 1, "%d", value);
-
-	return 0;
-}
-
-#endif
-
 char* http_encode_body_line(char* param, char* value)
 {
 	char* line;
@@ -246,9 +228,9 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 
 	for (i = 0; i < http_request->count; i++)
 	{
-		length += (strlen(http_request->lines[i]) + 1); /* add +1 for each '\n' character */
+		length += (strlen(http_request->lines[i]) + 2); /* add +2 for each '\r\n' character */
 	}
-	length += 1; /* empty line "\n" at end of header */
+	length += 2; /* empty line "\r\n" at end of header */
 	length += 1; /* null terminator */
 
 	s = stream_new(length);
@@ -256,10 +238,10 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	for (i = 0; i < http_request->count; i++)
 	{
 		stream_write(s, http_request->lines[i], strlen(http_request->lines[i]));
-		stream_write(s, "\n", 1);
+		stream_write(s, "\r\n", 2);
 		free(http_request->lines[i]);
 	}
-	stream_write(s, "\n", 1);
+	stream_write(s, "\r\n", 2);
 
 	free(http_request->lines);
 

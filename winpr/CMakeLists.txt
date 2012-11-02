@@ -35,9 +35,11 @@ include(TestBigEndian)
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 
+# Check for cmake compatibility (enable/disable features)
+include(CheckCmakeCompat)
+
 include(AutoVersioning)
 include(ConfigOptions)
-include(BuildFeatureCheck)
 include(FindOptionalPackage)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)

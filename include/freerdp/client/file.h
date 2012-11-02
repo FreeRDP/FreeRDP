@@ -20,6 +20,7 @@
 #ifndef FREERDP_CLIENT_RDP_FILE
 #define FREERDP_CLIENT_RDP_FILE
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
 struct rdp_file
@@ -71,8 +72,8 @@ struct rdp_file
 	LPSTR Domain; /* domain */
 	PBYTE Password51; /* password 51 */
 
-	LPTSTR FullAddress; /* full address */
-	LPTSTR AlternateFullAddress; /* alternate full address */
+	LPSTR FullAddress; /* full address */
+	LPSTR AlternateFullAddress; /* alternate full address */
 	DWORD ServerPort; /* server port */
 
 	DWORD RedirectDrives; /* redirectdrives */
@@ -98,7 +99,7 @@ struct rdp_file
 	DWORD PromptForCredentialsOnce; /* promptcredentialonce */
 	DWORD NegotiateSecurityLayer; /* negotiate security layer */
 	DWORD EnableCredSSPSupport; /* enablecredsspsupport */
-	LPSTR LoadBalanceInfo; /* LoadBalanceInfo */
+	LPSTR LoadBalanceInfo; /* loadbalanceinfo */
 
 	DWORD RemoteApplicationMode; /* remoteapplicationmode */
 	LPSTR RemoteApplicationName; /* remoteapplicationname */
@@ -115,14 +116,14 @@ struct rdp_file
 	LPSTR ShellWorkingDirectory; /* shell working directory */
 
 	LPSTR GatewayHostname; /* gatewayhostname */
-	LPSTR GatewayUsageMethod; /* gatewayusagemethod */
-	LPSTR GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
-	LPSTR GatewayCredentialsSource; /* gatewaycredentialssource */
+	DWORD GatewayUsageMethod; /* gatewayusagemethod */
+	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
+	DWORD GatewayCredentialsSource; /* gatewaycredentialssource */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
 	DWORD RdgIsKdcProxy; /* rdgiskdcproxy */
-	DWORD KdcProxyName; /* kdcproxyname */
+	LPSTR KdcProxyName; /* kdcproxyname */
 
 	LPSTR DrivesToRedirect; /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
@@ -130,5 +131,12 @@ struct rdp_file
 };
 
 typedef struct rdp_file rdpFile;
+
+FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size);
+FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
+
+FREERDP_API rdpFile* freerdp_client_rdp_file_new();
+FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
 
 #endif /* FREERDP_CLIENT_RDP_FILE */

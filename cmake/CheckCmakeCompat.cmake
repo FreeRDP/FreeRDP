@@ -16,6 +16,11 @@
 # limitations under the License.
 #=============================================================================
 
+# Enable compatibility for cmake < 2.8.3
+if(${CMAKE_VERSION} VERSION_LESS 2.8.3)
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/compat_2.8.3/)
+endif()
+
 # If MONOLITHIC_BUILD is used with cmake < 2.8.8 build fails
 if (MONOLITHIC_BUILD)
 	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)

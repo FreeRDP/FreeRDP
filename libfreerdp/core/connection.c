@@ -62,7 +62,7 @@
  */
 
 /**
- * Establish RDP Connection based on the settings given in the 'rdp' paremeter.
+ * Establish RDP Connection based on the settings given in the 'rdp' parameter.
  * @msdn{cc240452}
  * @param rdp RDP module
  * @return true if the connection succeeded. FALSE otherwise.
@@ -74,7 +74,43 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->hostname, settings->port);
-	nego_set_cookie(rdp->nego, settings->username);
+
+	if (settings->ts_gateway)
+	{
+		char* user;
+		char* domain;
+		char* cookie;
+		int user_length;
+		int domain_length;
+		int cookie_length;
+
+		user = settings->username;
+		user_length = strlen(settings->username);
+
+		if (settings->domain)
+			domain = settings->domain;
+		else
+			domain = settings->computer_name;
+
+		domain_length = strlen(domain);
+
+		cookie_length = domain_length + 1 + user_length;
+		cookie = (char*) malloc(cookie_length + 1);
+
+		CopyMemory(cookie, domain, domain_length);
+		CharUpperBuffA(cookie, domain_length);
+		cookie[domain_length] = '\\';
+		CopyMemory(&cookie[domain_length + 1], user, user_length);
+		cookie[cookie_length] = '\0';
+
+		nego_set_cookie(rdp->nego, cookie);
+		//nego_set_cookie_max_length(rdp->nego, MSTSC_COOKIE_MAX_LENGTH);
+	}
+	else
+	{
+		nego_set_cookie(rdp->nego, settings->username);
+	}
+
 	nego_set_send_preconnection_pdu(rdp->nego, settings->send_preconnection_pdu);
 	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
 	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
