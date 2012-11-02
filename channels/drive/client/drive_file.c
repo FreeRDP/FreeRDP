@@ -53,14 +53,14 @@
 #include <fcntl.h>
 #endif
 
-#include "disk_file.h"
+#include "drive_file.h"
 
 #ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable: 4244)
 #endif
 
-static BOOL disk_file_wildcard_match(const char* pattern, const char* filename)
+static BOOL drive_file_wildcard_match(const char* pattern, const char* filename)
 {
 	const char *p = pattern, *f = filename;
 	char c;
@@ -89,7 +89,7 @@ static BOOL disk_file_wildcard_match(const char* pattern, const char* filename)
 	return FALSE;
 }
 
-static void disk_file_fix_path(char* path)
+static void drive_file_fix_path(char* path)
 {
 	int i;
 	int length;
@@ -114,19 +114,19 @@ static void disk_file_fix_path(char* path)
 		path[length - 1] = '\0';
 }
 
-static char* disk_file_combine_fullpath(const char* base_path, const char* path)
+static char* drive_file_combine_fullpath(const char* base_path, const char* path)
 {
 	char* fullpath;
 
 	fullpath = (char*) malloc(strlen(base_path) + strlen(path) + 1);
 	strcpy(fullpath, base_path);
 	strcat(fullpath, path);
-	disk_file_fix_path(fullpath);
+	drive_file_fix_path(fullpath);
 
 	return fullpath;
 }
 
-static BOOL disk_file_remove_dir(const char* path)
+static BOOL drive_file_remove_dir(const char* path)
 {
 	DIR* dir;
 	char* p;
@@ -159,7 +159,7 @@ static BOOL disk_file_remove_dir(const char* path)
 		}
 		else if (S_ISDIR(st.st_mode))
 		{
-			ret = disk_file_remove_dir(p);
+			ret = drive_file_remove_dir(p);
 		}
 		else if (unlink(p) < 0)
 		{
@@ -193,7 +193,7 @@ static BOOL disk_file_remove_dir(const char* path)
 	return ret;
 }
 
-static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
+static void drive_file_set_fullpath(DRIVE_FILE* file, char* fullpath)
 {
 	free(file->fullpath);
 	file->fullpath = fullpath;
@@ -205,7 +205,7 @@ static void disk_file_set_fullpath(DISK_FILE* file, char* fullpath)
 		file->filename += 1;
 }
 
-static BOOL disk_file_init(DISK_FILE* file, UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions)
+static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions)
 {
 	struct STAT st;
 	BOOL exists;
@@ -311,27 +311,27 @@ static BOOL disk_file_init(DISK_FILE* file, UINT32 DesiredAccess, UINT32 CreateD
 	return TRUE;
 }
 
-DISK_FILE* disk_file_new(const char* base_path, const char* path, UINT32 id,
+DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 	UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions)
 {
-	DISK_FILE* file;
+	DRIVE_FILE* file;
 
-	file = xnew(DISK_FILE);
+	file = xnew(DRIVE_FILE);
 	file->id = id;
 	file->basepath = (char*) base_path;
-	disk_file_set_fullpath(file, disk_file_combine_fullpath(base_path, path));
+	drive_file_set_fullpath(file, drive_file_combine_fullpath(base_path, path));
 	file->fd = -1;
 
-	if (!disk_file_init(file, DesiredAccess, CreateDisposition, CreateOptions))
+	if (!drive_file_init(file, DesiredAccess, CreateDisposition, CreateOptions))
 	{
-		disk_file_free(file);
+		drive_file_free(file);
 		return NULL;
 	}
 
 	return file;
 }
 
-void disk_file_free(DISK_FILE* file)
+void drive_file_free(DRIVE_FILE* file)
 {
 	if (file->fd != -1)
 		close(file->fd);
@@ -341,7 +341,7 @@ void disk_file_free(DISK_FILE* file)
 	if (file->delete_pending)
 	{
 		if (file->is_dir)
-			disk_file_remove_dir(file->fullpath);
+			drive_file_remove_dir(file->fullpath);
 		else
 			unlink(file->fullpath);
 	}
@@ -351,7 +351,7 @@ void disk_file_free(DISK_FILE* file)
 	free(file);
 }
 
-BOOL disk_file_seek(DISK_FILE* file, UINT64 Offset)
+BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 {
 	if (file->is_dir || file->fd == -1)
 		return FALSE;
@@ -362,7 +362,7 @@ BOOL disk_file_seek(DISK_FILE* file, UINT64 Offset)
 	return TRUE;
 }
 
-BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, UINT32* Length)
+BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 {
 	ssize_t r;
 
@@ -377,7 +377,7 @@ BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, UINT32* Length)
 	return TRUE;
 }
 
-BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, UINT32 Length)
+BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
 {
 	ssize_t r;
 
@@ -396,7 +396,7 @@ BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, UINT32 Length)
 	return TRUE;
 }
 
-BOOL disk_file_query_information(DISK_FILE* file, UINT32 FsInformationClass, STREAM* output)
+BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, STREAM* output)
 {
 	struct STAT st;
 
@@ -447,7 +447,7 @@ BOOL disk_file_query_information(DISK_FILE* file, UINT32 FsInformationClass, STR
 	return TRUE;
 }
 
-BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
+BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
 {
 	char* s;
 
@@ -522,14 +522,14 @@ BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT3
 
 			freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(input), &s, FileNameLength / 2);
 
-			fullpath = disk_file_combine_fullpath(file->basepath, s);
+			fullpath = drive_file_combine_fullpath(file->basepath, s);
 			free(s);
 
 			/* TODO rename does not work on win32 */
                         if (rename(file->fullpath, fullpath) == 0)
 			{
 				DEBUG_SVC("renamed %s to %s", file->fullpath, fullpath);
-				disk_file_set_fullpath(file, fullpath);
+				drive_file_set_fullpath(file, fullpath);
 			}
 			else
 			{
@@ -548,7 +548,7 @@ BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT3
 	return TRUE;
 }
 
-BOOL disk_file_query_directory(DISK_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
+BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
 	const char* path, STREAM* output)
 {
 	int length;
@@ -586,7 +586,7 @@ BOOL disk_file_query_directory(DISK_FILE* file, UINT32 FsInformationClass, BYTE 
 			if (ent == NULL)
 				continue;
 
-			if (disk_file_wildcard_match(file->pattern, ent->d_name))
+			if (drive_file_wildcard_match(file->pattern, ent->d_name))
 				break;
 		} while (ent);
 	}

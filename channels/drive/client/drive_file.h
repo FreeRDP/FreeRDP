@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __DISK_FILE_H
-#define __DISK_FILE_H
+#ifndef FREERDP_CHANNEL_DRIVE_FILE_H
+#define FREERDP_CHANNEL_DRIVE_FILE_H
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -84,8 +84,9 @@ typedef UINT32 mode_t;
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
 
-typedef struct _DISK_FILE DISK_FILE;
-struct _DISK_FILE
+typedef struct _DRIVE_FILE DRIVE_FILE;
+
+struct _DRIVE_FILE
 {
 	UINT32 id;
 	BOOL is_dir;
@@ -99,16 +100,16 @@ struct _DISK_FILE
 	BOOL delete_pending;
 };
 
-DISK_FILE* disk_file_new(const char* base_path, const char* path, UINT32 id,
+DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 	UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions);
-void disk_file_free(DISK_FILE* file);
+void drive_file_free(DRIVE_FILE* file);
 
-BOOL disk_file_seek(DISK_FILE* file, UINT64 Offset);
-BOOL disk_file_read(DISK_FILE* file, BYTE* buffer, UINT32* Length);
-BOOL disk_file_write(DISK_FILE* file, BYTE* buffer, UINT32 Length);
-BOOL disk_file_query_information(DISK_FILE* file, UINT32 FsInformationClass, STREAM* output);
-BOOL disk_file_set_information(DISK_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input);
-BOOL disk_file_query_directory(DISK_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
+BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
+BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length);
+BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length);
+BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, STREAM* output);
+BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input);
+BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
 	const char* path, STREAM* output);
 
-#endif /* __DISK_FILE_H */
+#endif /* FREERDP_CHANNEL_DRIVE_FILE_H */

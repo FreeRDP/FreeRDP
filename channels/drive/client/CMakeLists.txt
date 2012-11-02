@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client("disk")
+define_channel_client("drive")
 
 set(${MODULE_PREFIX}_SRCS
-	disk_file.c
-	disk_file.h
-	disk_main.c)
-	
+	drive_file.c
+	drive_file.h
+	drive_main.c)
+
 if(WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 		statvfs.c

@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("disk")
+define_channel("drive")
 
 if(WITH_CLIENT_CHANNELS)
 	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
+

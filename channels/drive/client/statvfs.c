@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * statvfs emulation für windows
+ * statvfs emulation for Windows
  *
  * Copyright 2012 Gerald Richter
  *
