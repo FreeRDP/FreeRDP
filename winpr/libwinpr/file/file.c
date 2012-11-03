@@ -30,6 +30,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 /**
  * api-ms-win-core-file-l1-2-0.dll:
  * 
@@ -120,6 +124,20 @@
  */
 
 #ifndef _WIN32
+
+#include <time.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -267,7 +285,61 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
+	char* p;
+	int index;
+	int length;
+	DIR* pDir;
+	LPSTR path;
+	LPSTR pattern;
+	struct stat fileStat;
+	struct dirent* pDirent;
+
 	ZeroMemory(lpFindFileData, sizeof(LPWIN32_FIND_DATAA));
+
+	/* Separate lpFileName into path and pattern components */
+
+	p = strrchr(lpFileName, '/'); /* TODO: portability */
+
+	index = (p - lpFileName);
+	length = (p - lpFileName);
+	path = (LPSTR) malloc(length + 1);
+	CopyMemory(path, lpFileName, length);
+	path[length] = '\0';
+
+	length = strlen(lpFileName) - index;
+	pattern = (LPSTR) malloc(length + 1);
+	CopyMemory(pattern, &lpFileName[index + 1], length);
+	pattern[length] = '\0';
+
+	/* Check if the path is a directory */
+
+	if (lstat(path, &fileStat) < 0)
+		return INVALID_HANDLE_VALUE; /* stat error */
+
+	if (S_ISDIR(fileStat.st_mode) == 0)
+		return INVALID_HANDLE_VALUE; /* not a directory */
+
+	/* Open directory for reading */
+
+	pDir = opendir(path);
+
+	if (!pDir)
+		return ERROR_FILE_NOT_FOUND;
+
+	while ((pDirent = readdir(pDir)) != NULL)
+	{
+		if ((strcmp(pDirent->d_name, ".") == 0) || (strcmp(pDirent->d_name, "..") == 0))
+		{
+			/* skip "." and ".." */
+			continue;
+		}
+
+		if (strcmp(pDirent->d_name, pattern) == 0)
+		{
+			strcpy(lpFindFileData->cFileName, pDirent->d_name);
+			return (HANDLE) 1;
+		}
+	}
 
 	return NULL;
 }
