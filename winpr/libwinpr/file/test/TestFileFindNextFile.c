@@ -54,7 +54,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	if (_tcscmp(FindData.cFileName, testDirectory2File1) != 0)
 	{
-		_tprintf(_T("FindFirstFile failure: Expected: %d, Actual: %s\n"),
+		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"),
 				testDirectory2File1, FindData.cFileName);
 		return -1;
 	}

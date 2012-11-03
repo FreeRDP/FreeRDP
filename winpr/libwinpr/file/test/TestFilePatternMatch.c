@@ -40,6 +40,28 @@ int TestFilePatternMatch(int argc, char* argv[])
 		return -1;
 	}
 
+	/* 'X*' expression */
+
+	if (!FilePatternMatchA("document.txt", "document.*"))
+	{
+		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.txt", "document.*");
+		return -1;
+	}
+
+	/* 'X?' expression */
+
+	if (!FilePatternMatchA("document.docx", "document.doc?"))
+	{
+		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.docx", "document.doc?");
+		return -1;
+	}
+
+	if (FilePatternMatchA("document.doc", "document.doc?"))
+	{
+		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.doc", "document.doc?");
+		return -1;
+	}
+
 	/* no wildcards expression */
 
 	if (!FilePatternMatchA("document.txt", "document.txt"))

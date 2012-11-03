@@ -343,9 +343,6 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		 * State 0: match 'X'
 		 */
 
-		if (cchFileName < cchX)
-			return FALSE;
-
 		if (_strnicmp(lpFileName, lpX, cchX) != 0)
 			return FALSE;
 
@@ -359,14 +356,21 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		 * State 2: match Y
 		 */
 
-		/* TODO: case insensitive character search */
-		lpMatch = strchr(&lpFileName[cchX], *lpY);
+		if (cchY != 0)
+		{
+			/* TODO: case insensitive character search */
+			lpMatch = strchr(&lpFileName[cchX], *lpY);
 
-		if (!lpMatch)
-			return FALSE;
+			if (!lpMatch)
+				return FALSE;
 
-		if (_strnicmp(lpMatch, lpY, cchY) != 0)
-			return FALSE;
+			if (_strnicmp(lpMatch, lpY, cchY) != 0)
+				return FALSE;
+		}
+		else
+		{
+			lpMatch = (LPSTR) &lpFileName[cchFileName];
+		}
 
 		/**
 		 * State 3: final state
@@ -401,14 +405,24 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		 * State 2: match Y
 		 */
 
-		/* TODO: case insensitive character search */
-		lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
+		if (cchY != 0)
+		{
+			/* TODO: case insensitive character search */
+			lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
 
-		if (!lpMatch)
-			return FALSE;
+			if (!lpMatch)
+				return FALSE;
 
-		if (_strnicmp(lpMatch, lpY, cchY) != 0)
-			return FALSE;
+			if (_strnicmp(lpMatch, lpY, cchY) != 0)
+				return FALSE;
+			}
+		else
+		{
+			if ((cchX + 1) > cchFileName)
+				return FALSE;
+
+			lpMatch = (LPSTR) &lpFileName[cchX + 1];
+		}
 
 		/**
 		 * State 3: final state
@@ -616,61 +630,82 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 	return FALSE;
 }
 
+struct _WIN32_FILE_SEARCH
+{
+	DIR* pDir;
+	LPSTR lpPath;
+	LPSTR lpPattern;
+	struct dirent* pDirent;
+};
+typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	char* p;
 	int index;
 	int length;
-	DIR* pDir;
-	LPSTR path;
-	LPSTR pattern;
 	struct stat fileStat;
-	struct dirent* pDirent;
+	WIN32_FILE_SEARCH* pFileSearch;
 
 	ZeroMemory(lpFindFileData, sizeof(LPWIN32_FIND_DATAA));
 
+	pFileSearch = (WIN32_FILE_SEARCH*) malloc(sizeof(WIN32_FILE_SEARCH));
+	ZeroMemory(pFileSearch, sizeof(WIN32_FILE_SEARCH));
+
 	/* Separate lpFileName into path and pattern components */
 
-	p = strrchr(lpFileName, '/'); /* TODO: portability */
+	p = strrchr(lpFileName, '/');
+
+	if (!p)
+		p = strrchr(lpFileName, '\\');
 
 	index = (p - lpFileName);
 	length = (p - lpFileName);
-	path = (LPSTR) malloc(length + 1);
-	CopyMemory(path, lpFileName, length);
-	path[length] = '\0';
+	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
+	CopyMemory(pFileSearch->lpPath, lpFileName, length);
+	pFileSearch->lpPath[length] = '\0';
 
 	length = strlen(lpFileName) - index;
-	pattern = (LPSTR) malloc(length + 1);
-	CopyMemory(pattern, &lpFileName[index + 1], length);
-	pattern[length] = '\0';
+	pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+	CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
+	pFileSearch->lpPattern[length] = '\0';
 
 	/* Check if the path is a directory */
 
-	if (lstat(path, &fileStat) < 0)
+	if (lstat(pFileSearch->lpPath, &fileStat) < 0)
+	{
+		free(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* stat error */
+	}
 
 	if (S_ISDIR(fileStat.st_mode) == 0)
+	{
+		free(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* not a directory */
+	}
 
 	/* Open directory for reading */
 
-	pDir = opendir(path);
+	pFileSearch->pDir = opendir(pFileSearch->lpPath);
 
-	if (!pDir)
-		return INVALID_HANDLE_VALUE;
-
-	while ((pDirent = readdir(pDir)) != NULL)
+	if (!pFileSearch->pDir)
 	{
-		if ((strcmp(pDirent->d_name, ".") == 0) || (strcmp(pDirent->d_name, "..") == 0))
+		free(pFileSearch);
+		return INVALID_HANDLE_VALUE; /* failed to open directory */
+	}
+
+	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
+	{
+		if ((strcmp(pFileSearch->pDirent->d_name, ".") == 0) || (strcmp(pFileSearch->pDirent->d_name, "..") == 0))
 		{
 			/* skip "." and ".." */
 			continue;
 		}
 
-		if (FilePatternMatchA(pattern, pDirent->d_name))
+		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
-			strcpy(lpFindFileData->cFileName, pDirent->d_name);
-			return (HANDLE) 1;
+			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
+			return (HANDLE) pFileSearch;
 		}
 	}
 
