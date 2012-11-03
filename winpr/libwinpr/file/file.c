@@ -283,6 +283,314 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 	return TRUE;
 }
 
+LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
+{
+	LPSTR lpWildcard;
+
+	*pFlags = 0;
+	lpWildcard = strpbrk(lpPattern, "*?~");
+
+	if (lpWildcard)
+	{
+		if (*lpWildcard == '*')
+		{
+			*pFlags = WILDCARD_STAR;
+			return lpWildcard;
+		}
+		else if (*lpWildcard == '?')
+		{
+			*pFlags = WILDCARD_QM;
+			return lpWildcard;
+		}
+		else if (*lpWildcard == '~')
+		{
+			if (lpWildcard[1] == '*')
+			{
+				*pFlags = WILDCARD_DOS_STAR;
+				return lpWildcard;
+			}
+			else if (lpWildcard[1] == '?')
+			{
+				*pFlags = WILDCARD_DOS_QM;
+				return lpWildcard;
+			}
+			else if (lpWildcard[1] == '.')
+			{
+				*pFlags = WILDCARD_DOS_DOT;
+				return lpWildcard;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
+		LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR* ppMatchEnd)
+{
+	printf("FilePatternMatchSubExpressionA: X: %.*s Y: %.*s Wildcard: %.*s FileName: %.*s\n",
+			cchX, lpX, cchY, lpY, 1, lpWildcard, cchFileName, lpFileName);
+
+	if (*lpWildcard == '*')
+	{
+		/*
+		 *                            S
+		 *                         <-----<
+		 *                      X  |     |  e       Y
+		 * X * Y ==        (0)----->-(1)->-----(2)-----(3)
+		 */
+
+		/* State 0: match 'X' */
+
+		if (cchFileName < cchX)
+			return FALSE;
+
+		if (_strnicmp(lpFileName, lpX, cchX) != 0)
+			return FALSE;
+
+		/*
+		 * State 1: match 'S' or 'e'
+		 *
+		 * We use 'e' to transition to state 2
+		 */
+
+		/**
+		 * State 2: match Y
+		 */
+
+		if (cchFileName < (cchX + cchY))
+			return FALSE;
+
+		if (_strnicmp(&lpFileName[cchFileName - cchY], lpY, cchY) != 0)
+			return FALSE;
+
+		/**
+		 * State 3: final state
+		 */
+
+		*ppMatchEnd = (LPSTR) &lpFileName[cchFileName];
+
+		return TRUE;
+	}
+	else if (*lpWildcard == '?')
+	{
+		/**
+		 *                     X     S     S     Y
+		 * X ?? Y ==       (0)---(1)---(2)---(3)---(4)
+		 */
+
+		printf("warning: unimplemented '?' pattern match\n");
+
+		return TRUE;
+	}
+	else if (*lpWildcard == '~')
+	{
+		printf("warning: unimplemented '~' pattern match\n");
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
+{
+	BOOL match;
+	LPSTR lpTail;
+	size_t cchTail;
+	size_t cchPattern;
+	size_t cchFileName;
+	DWORD dwFlags;
+	DWORD dwNextFlags;
+	LPSTR lpWildcard;
+	LPSTR lpNextWildcard;
+
+	/**
+	 * Wild Card Matching
+	 *
+	 * '*'	matches 0 or more characters
+	 * '?'	matches exactly one character
+	 *
+	 * '~*'	DOS_STAR - matches 0 or more characters until encountering and matching final '.'
+	 *
+	 * '~?'	DOS_QM - matches any single character, or upon encountering a period or end of name
+	 *               string, advances the expresssion to the end of the set of contiguous DOS_QMs.
+	 *
+	 * '~.'	DOS_DOT - matches either a '.' or zero characters beyond name string.
+	 */
+
+	if (!lpPattern)
+		return FALSE;
+
+	if (!lpFileName)
+		return FALSE;
+
+	cchPattern = strlen(lpPattern);
+	cchFileName = strlen(lpFileName);
+
+	/**
+	 * First and foremost the file system starts off name matching with the expression “*”.
+	 * If the expression contains a single wild card character ‘*’ all matches are satisfied
+	 * immediately. This is the most common wild card character used in Windows and expression
+	 * evaluation is optimized by looking for this character first.
+	 */
+
+	if ((lpPattern[0] == '*') && (cchPattern == 1))
+		return TRUE;
+
+	/**
+	 * Subsequently evaluation of the “*X” expression is performed. This is a case where
+	 * the expression starts off with a wild card character and contains some non-wild card
+	 * characters towards the tail end of the name. This is evaluated by making sure the
+	 * expression starts off with the character ‘*’ and does not contain any wildcards in
+	 * the latter part of the expression. The tail part of the expression beyond the first
+	 * character ‘*’ is matched against the file name at the end uppercasing each character
+	 * if necessary during the comparison.
+	 */
+
+	if (lpPattern[0] == '*')
+	{
+		lpTail = (LPSTR) &lpPattern[1];
+		cchTail = strlen(lpTail);
+
+		if (!FilePatternFindNextWildcardA(lpTail, &dwFlags))
+		{
+			/* tail contains no wildcards */
+
+			if (cchFileName < cchTail)
+				return FALSE;
+
+			if (_stricmp(&lpFileName[cchFileName - cchTail], lpTail) == 0)
+				return TRUE;
+
+			return FALSE;
+		}
+	}
+
+	/**
+	 * The remaining expressions are evaluated in a non deterministic
+	 * finite order as listed below, where:
+	 *
+	 * 'S' is any single character
+	 * 'S-.' is any single character except the final '.'
+	 * 'e' is a null character transition
+	 * 'EOF' is the end of the name string
+	 *
+	 *                            S
+	 *                         <-----<
+	 *                      X  |     |  e       Y
+	 * X * Y ==        (0)----->-(1)->-----(2)-----(3)
+	 *
+	 *
+	 *                           S-.
+	 *                         <-----<
+	 *                      X  |     |  e       Y
+	 * X ~* Y ==       (0)----->-(1)->-----(2)-----(3)
+	 *
+	 *
+	 *                     X     S     S     Y
+	 * X ?? Y ==       (0)---(1)---(2)---(3)---(4)
+	 *
+	 *
+	 *                     X     S-.     S-.     Y
+	 * X ~?~? ==      (0)---(1)-----(2)-----(3)---(4)
+	 *                        |       |_______|
+	 *                        |            ^  |
+	 *                        |_______________|
+	 *                            ^EOF of .^
+	 *
+	 */
+
+	lpWildcard = FilePatternFindNextWildcardA(lpPattern, &dwFlags);
+
+	if (lpWildcard)
+	{
+		LPSTR lpMatchEnd;
+		LPSTR lpSubPattern;
+		size_t cchSubPattern;
+		LPSTR lpSubFileName;
+		size_t cchSubFileName;
+		size_t cchWildcard;
+		size_t cchNextWildcard;
+
+		cchSubPattern = cchPattern;
+		lpSubPattern = (LPSTR) lpPattern;
+
+		cchSubFileName = cchFileName;
+		lpSubFileName = (LPSTR) lpFileName;
+
+		cchWildcard = ((dwFlags & WILDCARD_DOS) ? 2 : 1);
+		lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
+
+		if (!lpNextWildcard)
+		{
+			LPSTR lpX;
+			LPSTR lpY;
+			size_t cchX;
+			size_t cchY;
+
+			lpX = (LPSTR) lpSubPattern;
+			cchX = (lpWildcard - lpSubPattern);
+
+			lpY = (LPSTR) &lpSubPattern[cchX + cchWildcard];
+			cchY = (cchSubPattern - (lpY - lpSubPattern));
+
+			match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
+					lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
+
+			return match;
+		}
+		else
+		{
+			LPSTR lpX;
+			LPSTR lpY;
+			size_t cchX;
+			size_t cchY;
+
+			while (lpNextWildcard)
+			{
+				cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
+
+				lpX = (LPSTR) lpSubPattern;
+				cchX = (lpWildcard - lpSubPattern);
+
+				lpY = (LPSTR) &lpSubPattern[cchX + cchWildcard];
+				cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
+
+				cchSubFileName = (lpNextWildcard - lpSubFileName);
+
+				match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
+						lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
+
+				if (!match)
+					return FALSE;
+
+				/* Recursively match subexpressions */
+
+				lpSubFileName = lpMatchEnd;
+				cchSubFileName = strlen(lpSubFileName);
+
+				cchWildcard = cchNextWildcard;
+				lpWildcard = lpNextWildcard;
+				dwFlags = dwNextFlags;
+
+				lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
+			}
+
+			return TRUE;
+		}
+	}
+	else
+	{
+		/* no wildcard characters */
+
+		if (_stricmp(lpFileName, lpPattern) == 0)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	char* p;
@@ -324,7 +632,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	pDir = opendir(path);
 
 	if (!pDir)
-		return ERROR_FILE_NOT_FOUND;
+		return INVALID_HANDLE_VALUE;
 
 	while ((pDirent = readdir(pDir)) != NULL)
 	{
@@ -334,7 +642,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 			continue;
 		}
 
-		if (strcmp(pDirent->d_name, pattern) == 0)
+		if (FilePatternMatchA(pattern, pDirent->d_name))
 		{
 			strcpy(lpFindFileData->cFileName, pDirent->d_name);
 			return (HANDLE) 1;

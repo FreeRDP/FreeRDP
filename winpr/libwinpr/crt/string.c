@@ -74,6 +74,11 @@ int _stricmp(const char* string1, const char* string2)
 	return strcasecmp(string1, string2);
 }
 
+int _strnicmp(const char* string1, const char* string2, size_t count)
+{
+	return strncasecmp(string1, string2, count);
+}
+
 /* _wcscmp -> wcscmp */
 
 int _wcscmp(const WCHAR* string1, const WCHAR* string2)

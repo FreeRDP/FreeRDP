@@ -48,6 +48,7 @@ WINPR_API char* _strdup(const char* strSource);
 WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
 WINPR_API int _stricmp(const char* string1, const char* string2);
+WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
 
 WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
 
