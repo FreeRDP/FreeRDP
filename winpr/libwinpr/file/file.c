@@ -731,6 +731,19 @@ HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPV
 
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
+	WIN32_FILE_SEARCH* pFileSearch;
+
+	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+
+	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
+	{
+		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
+		{
+			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
+			return TRUE;
+		}
+	}
+
 	return FALSE;
 }
 
@@ -741,7 +754,17 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 
 BOOL FindClose(HANDLE hFindFile)
 {
-	return FALSE;
+	WIN32_FILE_SEARCH* pFileSearch;
+
+	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+
+	free(pFileSearch->lpPath);
+	free(pFileSearch->lpPattern);
+	closedir(pFileSearch->pDir);
+
+	free(pFileSearch);
+
+	return TRUE;
 }
 
 #endif
