@@ -328,8 +328,7 @@ LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR* ppMatchEnd)
 {
-	printf("FilePatternMatchSubExpressionA: X: %.*s Y: %.*s Wildcard: %.*s FileName: %.*s\n",
-			cchX, lpX, cchY, lpY, 1, lpWildcard, cchFileName, lpFileName);
+	LPSTR lpMatch;
 
 	if (*lpWildcard == '*')
 	{
@@ -340,7 +339,9 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		 * X * Y ==        (0)----->-(1)->-----(2)-----(3)
 		 */
 
-		/* State 0: match 'X' */
+		/*
+		 * State 0: match 'X'
+		 */
 
 		if (cchFileName < cchX)
 			return FALSE;
@@ -358,28 +359,62 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 		 * State 2: match Y
 		 */
 
-		if (cchFileName < (cchX + cchY))
+		/* TODO: case insensitive character search */
+		lpMatch = strchr(&lpFileName[cchX], *lpY);
+
+		if (!lpMatch)
 			return FALSE;
 
-		if (_strnicmp(&lpFileName[cchFileName - cchY], lpY, cchY) != 0)
+		if (_strnicmp(lpMatch, lpY, cchY) != 0)
 			return FALSE;
 
 		/**
 		 * State 3: final state
 		 */
 
-		*ppMatchEnd = (LPSTR) &lpFileName[cchFileName];
+		*ppMatchEnd = (LPSTR) &lpMatch[cchY];
 
 		return TRUE;
 	}
 	else if (*lpWildcard == '?')
 	{
 		/**
-		 *                     X     S     S     Y
-		 * X ?? Y ==       (0)---(1)---(2)---(3)---(4)
+		 *                     X     S     Y
+		 * X ? Y ==        (0)---(1)---(2)---(3)
 		 */
 
-		printf("warning: unimplemented '?' pattern match\n");
+		/*
+		 * State 0: match 'X'
+		 */
+
+		if (cchFileName < cchX)
+			return FALSE;
+
+		if (_strnicmp(lpFileName, lpX, cchX) != 0)
+			return FALSE;
+
+		/*
+		 * State 1: match 'S'
+		 */
+
+		/**
+		 * State 2: match Y
+		 */
+
+		/* TODO: case insensitive character search */
+		lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
+
+		if (!lpMatch)
+			return FALSE;
+
+		if (_strnicmp(lpMatch, lpY, cchY) != 0)
+			return FALSE;
+
+		/**
+		 * State 3: final state
+		 */
+
+		*ppMatchEnd = (LPSTR) &lpMatch[cchY];
 
 		return TRUE;
 	}
@@ -505,6 +540,10 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
 	if (lpWildcard)
 	{
+		LPSTR lpX;
+		LPSTR lpY;
+		size_t cchX;
+		size_t cchY;
 		LPSTR lpMatchEnd;
 		LPSTR lpSubPattern;
 		size_t cchSubPattern;
@@ -524,11 +563,6 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
 		if (!lpNextWildcard)
 		{
-			LPSTR lpX;
-			LPSTR lpY;
-			size_t cchX;
-			size_t cchY;
-
 			lpX = (LPSTR) lpSubPattern;
 			cchX = (lpWildcard - lpSubPattern);
 
@@ -542,13 +576,9 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 		}
 		else
 		{
-			LPSTR lpX;
-			LPSTR lpY;
-			size_t cchX;
-			size_t cchY;
-
 			while (lpNextWildcard)
 			{
+				cchSubFileName = cchFileName - (lpSubFileName - lpFileName);
 				cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
 
 				lpX = (LPSTR) lpSubPattern;
@@ -557,18 +587,13 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 				lpY = (LPSTR) &lpSubPattern[cchX + cchWildcard];
 				cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
 
-				cchSubFileName = (lpNextWildcard - lpSubFileName);
-
 				match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
 						lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
 				if (!match)
 					return FALSE;
 
-				/* Recursively match subexpressions */
-
 				lpSubFileName = lpMatchEnd;
-				cchSubFileName = strlen(lpSubFileName);
 
 				cchWildcard = cchNextWildcard;
 				lpWildcard = lpNextWildcard;
