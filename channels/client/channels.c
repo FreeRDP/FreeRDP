@@ -42,6 +42,8 @@
 #include <freerdp/utils/debug.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/interlocked.h>
 
@@ -116,7 +118,7 @@ void* freerdp_channels_client_find_dynamic_entry(const char* name, const char* i
 	char* module;
 
 	module = freerdp_append_shared_library_suffix((char*) identifier);
-	path = freerdp_construct_path(FREERDP_CLIENT_PLUGIN_PATH, module);
+	path = freerdp_construct_path(FREERDP_PLUGIN_PATH, module);
 
 	entry = freerdp_load_library_symbol(path, module);
 
@@ -138,6 +140,151 @@ void* freerdp_channels_client_find_entry(const char* name, const char* identifie
 	}
 
 	return pChannelEntry;
+}
+
+LPCSTR gAddinPath = FREERDP_ADDIN_PATH;
+LPCSTR gInstallPrefix = FREERDP_INSTALL_PREFIX;
+
+FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
+{
+	int index;
+	int nDashes;
+	HANDLE hFind;
+	DWORD nAddins;
+	LPSTR lpPattern;
+	size_t cchPattern;
+	LPCSTR lpExtension;
+	LPSTR lpSearchPath;
+	size_t cchSearchPath;
+	size_t cchAddinPath;
+	size_t cchInstallPrefix;
+	FREERDP_ADDIN** ppAddins;
+	WIN32_FIND_DATAA FindData;
+
+	cchAddinPath = strlen(gAddinPath);
+	cchInstallPrefix = strlen(gInstallPrefix);
+
+	lpExtension = PathGetSharedLibraryExtensionA(0);
+
+	cchPattern = 128 + strlen(lpExtension) + 2;
+	lpPattern = (LPSTR) malloc(cchPattern + 1);
+
+	if (lpName && lpSubsystem && lpType)
+	{
+		sprintf_s(lpPattern, cchPattern, "%s-client-%s-%s.%s", lpName, lpSubsystem, lpType, lpExtension);
+	}
+	else if (lpName && lpType)
+	{
+		sprintf_s(lpPattern, cchPattern, "%s-client-?-%s.%s", lpName, lpType, lpExtension);
+	}
+	else if (lpName)
+	{
+		sprintf_s(lpPattern, cchPattern, "%s-client*.%s", lpName, lpExtension);
+	}
+	else
+	{
+		sprintf_s(lpPattern, cchPattern, "?-client*.%s", lpExtension);
+	}
+
+	cchPattern = strlen(lpPattern);
+
+	cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern + 3;
+	lpSearchPath = (LPSTR) malloc(cchSearchPath + 1);
+
+	CopyMemory(lpSearchPath, gInstallPrefix, cchInstallPrefix);
+	lpSearchPath[cchInstallPrefix] = '\0';
+
+	NativePathCchAppendA(lpSearchPath, cchSearchPath + 1, gAddinPath);
+	NativePathCchAppendA(lpSearchPath, cchSearchPath + 1, lpPattern);
+
+	cchSearchPath = strlen(lpSearchPath);
+
+	hFind = FindFirstFileA(lpSearchPath, &FindData);
+
+	nAddins = 0;
+	ppAddins = (FREERDP_ADDIN**) malloc(sizeof(FREERDP_ADDIN*) * 128);
+	ppAddins[nAddins] = NULL;
+
+	if (hFind == INVALID_HANDLE_VALUE)
+		return ppAddins;
+
+	do
+	{
+		char* p[5];
+		nDashes = 0;
+		FREERDP_ADDIN* pAddin;
+
+		pAddin = (FREERDP_ADDIN*) malloc(sizeof(FREERDP_ADDIN));
+		ZeroMemory(pAddin, sizeof(FREERDP_ADDIN));
+
+		for (index = 0; FindData.cFileName[index]; index++)
+			nDashes += (FindData.cFileName[index] == '-') ? 1 : 0;
+
+		if (nDashes == 1)
+		{
+			/* <name>-client.<extension> */
+
+			p[0] = FindData.cFileName;
+			p[1] = strchr(p[0], '-') + 1;
+
+			strncpy(pAddin->cName, p[0], p[1] - p[0] - 1);
+
+			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
+
+			ppAddins[nAddins++] = pAddin;
+		}
+		else if (nDashes == 2)
+		{
+			/* <name>-client-<subsystem>.<extension> */
+
+			p[0] = FindData.cFileName;
+			p[1] = strchr(p[0], '-') + 1;
+			p[2] = strchr(p[1], '-') + 1;
+			p[3] = strchr(p[2], '.') + 1;
+
+			strncpy(pAddin->cName, p[0], p[1] - p[0] - 1);
+			strncpy(pAddin->cSubsystem, p[2], p[3] - p[2] - 1);
+
+			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
+			pAddin->dwFlags |= FREERDP_ADDIN_SUBSYSTEM;
+
+			ppAddins[nAddins++] = pAddin;
+		}
+		else if (nDashes == 3)
+		{
+			/* <name>-client-<subsystem>-<type>.<extension> */
+
+			p[0] = FindData.cFileName;
+			p[1] = strchr(p[0], '-') + 1;
+			p[2] = strchr(p[1], '-') + 1;
+			p[3] = strchr(p[2], '-') + 1;
+			p[4] = strchr(p[3], '.') + 1;
+
+			strncpy(pAddin->cName, p[0], p[1] - p[0] - 1);
+			strncpy(pAddin->cSubsystem, p[2], p[3] - p[2] - 1);
+			strncpy(pAddin->cType, p[3], p[4] - p[3] - 1);
+
+			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
+			pAddin->dwFlags |= FREERDP_ADDIN_SUBSYSTEM;
+			pAddin->dwFlags |= FREERDP_ADDIN_TYPE;
+
+			ppAddins[nAddins++] = pAddin;
+		}
+		else
+		{
+			free(pAddin);
+		}
+	}
+	while (FindNextFileA(hFind, &FindData));
+
+	FindClose(hFind);
+
+	ppAddins[nAddins] = NULL;
+
+	return ppAddins;
 }
 
 struct lib_data

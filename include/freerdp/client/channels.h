@@ -23,9 +23,30 @@
 #include <freerdp/api.h>
 #include <freerdp/channels/channels.h>
 
+#define FREERDP_ADDIN_CLIENT			0x00000001
+#define FREERDP_ADDIN_SERVER			0x00000002
+
+#define FREERDP_ADDIN_STATIC			0x00000010
+#define FREERDP_ADDIN_DYNAMIC			0x00000020
+
+#define FREERDP_ADDIN_NAME			0x00000100
+#define FREERDP_ADDIN_SUBSYSTEM			0x00000200
+#define FREERDP_ADDIN_TYPE			0x00000400
+
+struct _FREERDP_ADDIN
+{
+	DWORD dwFlags;
+	CHAR cName[16];
+	CHAR cType[16];
+	CHAR cSubsystem[16];
+};
+typedef struct _FREERDP_ADDIN FREERDP_ADDIN;
+
 FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier);
 FREERDP_API void* freerdp_channels_client_find_dynamic_entry(const char* name, const char* identifier);
 FREERDP_API void* freerdp_channels_client_find_entry(const char* name, const char* identifier);
+
+FREERDP_API FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags);
 
 #endif /* FREERDP_CHANNELS_CLIENT */
 

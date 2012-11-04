@@ -23,9 +23,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-
+#include <winpr/error.h>
 #include <winpr/handle.h>
 
 #ifndef _WIN32
@@ -187,7 +188,11 @@ WINPR_API BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_
 
 #define WAIT_OBJECT_0		0x00000000L
 #define WAIT_ABANDONED		0x00000080L
+
+#ifndef WAIT_TIMEOUT
 #define WAIT_TIMEOUT		0x00000102L
+#endif
+
 #define WAIT_FAILED		((DWORD) 0xFFFFFFFF)
 
 WINPR_API DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);

@@ -709,7 +709,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		}
 	}
 
-	return NULL;
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
@@ -732,6 +732,12 @@ HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPV
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	WIN32_FILE_SEARCH* pFileSearch;
+
+	if (!hFindFile)
+		return FALSE;
+
+	if (hFindFile == INVALID_HANDLE_VALUE)
+		return FALSE;
 
 	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
