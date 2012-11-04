@@ -22,6 +22,8 @@ int TestClientChannels(int argc, char* argv[])
 				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
 	}
 
+	freerdp_channels_addin_list_free(ppAddins);
+
 	printf("Enumerate rdpsnd\n");
 	ppAddins = freerdp_channels_list_client_addins("rdpsnd", NULL, NULL, 0);
 
@@ -32,6 +34,8 @@ int TestClientChannels(int argc, char* argv[])
 		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
 				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
 	}
+
+	freerdp_channels_addin_list_free(ppAddins);
 
 	printf("Enumerate tsmf video\n");
 	ppAddins = freerdp_channels_list_client_addins("tsmf", NULL, "video", 0);
@@ -44,6 +48,8 @@ int TestClientChannels(int argc, char* argv[])
 				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
 	}
 
+	freerdp_channels_addin_list_free(ppAddins);
+
 	printf("Enumerate unknown\n");
 	ppAddins = freerdp_channels_list_client_addins("unknown", NULL, NULL, 0);
 
@@ -54,6 +60,8 @@ int TestClientChannels(int argc, char* argv[])
 		printf("Addin: Name: %s Subsystem: %s Type: %s\n",
 				pAddin->cName, pAddin->cSubsystem, pAddin->cType);
 	}
+
+	freerdp_channels_addin_list_free(ppAddins);
 
 	return 0;
 }

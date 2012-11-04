@@ -229,7 +229,8 @@ FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsys
 
 			strncpy(pAddin->cName, p[0], p[1] - p[0] - 1);
 
-			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
+			pAddin->dwFlags |= FREERDP_ADDIN_DYNAMIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
 
 			ppAddins[nAddins++] = pAddin;
@@ -246,7 +247,8 @@ FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsys
 			strncpy(pAddin->cName, p[0], p[1] - p[0] - 1);
 			strncpy(pAddin->cSubsystem, p[2], p[3] - p[2] - 1);
 
-			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
+			pAddin->dwFlags |= FREERDP_ADDIN_DYNAMIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
 			pAddin->dwFlags |= FREERDP_ADDIN_SUBSYSTEM;
 
@@ -266,7 +268,8 @@ FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsys
 			strncpy(pAddin->cSubsystem, p[2], p[3] - p[2] - 1);
 			strncpy(pAddin->cType, p[3], p[4] - p[3] - 1);
 
-			pAddin->dwFlags = FREERDP_ADDIN_DYNAMIC;
+			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
+			pAddin->dwFlags |= FREERDP_ADDIN_DYNAMIC;
 			pAddin->dwFlags |= FREERDP_ADDIN_NAME;
 			pAddin->dwFlags |= FREERDP_ADDIN_SUBSYSTEM;
 			pAddin->dwFlags |= FREERDP_ADDIN_TYPE;
@@ -285,6 +288,16 @@ FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsys
 	ppAddins[nAddins] = NULL;
 
 	return ppAddins;
+}
+
+void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
+{
+	int index;
+
+	for (index = 0; ppAddins[index] != NULL; index++)
+		free(ppAddins[index]);
+
+	free(ppAddins);
 }
 
 struct lib_data
