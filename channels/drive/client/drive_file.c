@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
@@ -60,35 +61,6 @@
 #pragma warning(push)
 #pragma warning(disable: 4244)
 #endif
-
-static BOOL drive_file_wildcard_match(const char* pattern, const char* filename)
-{
-	const char *p = pattern, *f = filename;
-	char c;
-
-	/*
-	 * TODO: proper wildcard rules per msft's File System Behavior Overview
-	 * Simple cases for now.
-	 */
-	f = filename;
-	while ((c = *p++))
-	{
-		if (c == '*')
-		{
-			c = *p++;
-			if (!c)	/* shortcut */
-				return TRUE;
-			/* TODO: skip to tail comparison */
-		}
-		if (c != *f++)
-			return FALSE;
-	}
-
-	if (!*f)
-		return TRUE;
-
-	return FALSE;
-}
 
 static void drive_file_fix_path(char* path)
 {
@@ -222,8 +194,8 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 	{
 		file->is_dir = (S_ISDIR(st.st_mode) ? TRUE : FALSE);
 #ifndef WIN32
-		if (st.st_size > (unsigned long)0x07fffffff)
-		    largeFile = TRUE;
+		if (st.st_size > (unsigned long) 0x07FFFFFFF)
+			largeFile = TRUE;
 #endif
 		exists = TRUE;
 	}
@@ -232,14 +204,14 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 		file->is_dir = ((CreateOptions & FILE_DIRECTORY_FILE) ? TRUE : FALSE);
 		if (file->is_dir)
 		{
-			//Should only create the directory if the disposition allows for it
+			/* Should only create the directory if the disposition allows for it */
 			if ((CreateDisposition == FILE_OPEN_IF) || (CreateDisposition == FILE_CREATE))
 			{
-			  if (mkdir(file->fullpath, mode) != 0)
-			  {
-				file->err = errno;
-				return TRUE;
-			  }
+				if (mkdir(file->fullpath, mode) != 0)
+				{
+					file->err = errno;
+					return TRUE;
+				}
 			}
 		}
 		exists = FALSE;
@@ -248,6 +220,7 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 	if (file->is_dir)
 	{
 		file->dir = opendir(file->fullpath);
+
 		if (file->dir == NULL)
 		{
 			file->err = errno;
@@ -279,7 +252,7 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 				break;
 		}
 
-		if (CreateOptions & FILE_DELETE_ON_CLOSE && DesiredAccess & DELETE)
+		if ((CreateOptions & FILE_DELETE_ON_CLOSE) && (DesiredAccess & DELETE))
 		{
 			file->delete_pending = TRUE;
 		}
@@ -302,6 +275,7 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 		}
 #endif
 		file->fd = OPEN(file->fullpath, oflag, mode);
+
 		if (file->fd == -1)
 		{
 			file->err = errno;
@@ -336,6 +310,7 @@ void drive_file_free(DRIVE_FILE* file)
 {
 	if (file->fd != -1)
 		close(file->fd);
+
 	if (file->dir != NULL)
 		closedir(file->dir);
 
@@ -371,9 +346,11 @@ BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 		return FALSE;
 
 	r = read(file->fd, buffer, *Length);
+
 	if (r < 0)
 		return FALSE;
-	*Length = (UINT32)r;
+
+	*Length = (UINT32) r;
 
 	return TRUE;
 }
@@ -388,8 +365,10 @@ BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
 	while (Length > 0)
 	{
 		r = write(file->fd, buffer, Length);
+
 		if (r == -1)
 			return FALSE;
+
 		Length -= r;
 		buffer += r;
 	}
@@ -406,6 +385,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, S
 		stream_write_UINT32(output, 0); /* Length */
 		return FALSE;
 	}
+
 	switch (FsInformationClass)
 	{
 		case FileBasicInformation:
@@ -587,9 +567,11 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			if (ent == NULL)
 				continue;
 
-			if (drive_file_wildcard_match(file->pattern, ent->d_name))
+			if (FilePatternMatchA(ent->d_name, file->pattern))
 				break;
-		} while (ent);
+
+		}
+		while (ent);
 	}
 	else
 	{

@@ -41,7 +41,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
+	MODULES winpr-crt winpr-file winpr-synch winpr-thread winpr-interlocked)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -50,5 +50,3 @@ if(NOT STATIC_CHANNELS)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
-
-
