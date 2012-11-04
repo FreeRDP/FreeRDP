@@ -108,11 +108,19 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		sigil = (char*) &argv[i][sigil_index];
 		length = strlen(argv[i]);
 
-		if ((sigil[sigil_index] == '/') && (flags & COMMAND_LINE_SIGIL_SLASH))
+		if ((sigil[0] == '/') && (flags & COMMAND_LINE_SIGIL_SLASH))
 		{
 			sigil_length = 1;
 		}
-		else if ((sigil[sigil_index] == '-') && (flags & COMMAND_LINE_SIGIL_DASH))
+		else if ((sigil[0] == '-') && (flags & COMMAND_LINE_SIGIL_DASH))
+		{
+			sigil_length = 1;
+		}
+		else if ((sigil[0] == '+') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
+		{
+			sigil_length = 1;
+		}
+		else if ((sigil[0] == '-') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
 		{
 			sigil_length = 1;
 		}
@@ -143,7 +151,6 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				separator_index = (separator - argv[i]);
 
 				keyword_length = (separator - keyword);
-				printf("option: %.*s ", keyword_length, keyword);
 
 				value_index = separator_index + separator_length;
 				value = (char*) &argv[i][value_index];
@@ -155,7 +162,6 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				separator_index = -1;
 
 				keyword_length = (length - keyword_index);
-				printf("option: %.*s ", keyword_length, keyword);
 
 				value_index = -1;
 				value = NULL;
@@ -207,6 +213,17 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
 					{
 						options[j].Value = (LPSTR) 1;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					}
+					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
+					{
+						if (sigil[0] == '+')
+							options[j].Value = (LPSTR) 1;
+						else if (sigil[0] == '-')
+							options[j].Value = (LPSTR) 0;
+						else
+							options[j].Value = (LPSTR) 1;
+
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 				}
@@ -284,4 +301,16 @@ COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* optio
 	}
 
 	return NULL;
+}
+
+COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument)
+{
+	COMMAND_LINE_ARGUMENT_A* nextArgument;
+
+	nextArgument = &argument[1];
+
+	if (nextArgument->Name == NULL)
+		return NULL;
+
+	return nextArgument;
 }

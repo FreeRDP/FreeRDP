@@ -33,9 +33,9 @@
 #define COMMAND_LINE_VALUE_FLAG			0x00000001
 #define COMMAND_LINE_VALUE_REQUIRED		0x00000002
 #define COMMAND_LINE_VALUE_OPTIONAL		0x00000004
-#define COMMAND_LINE_VALUE_BOOLEAN		0x00000008
+#define COMMAND_LINE_VALUE_BOOL			0x00000008
 
-#define COMMAND_LINE_ALIAS			0x00000100
+#define COMMAND_LINE_FINAL_ARGUMENT		0x00000100
 
 /* Command-Line Argument Output Flags */
 
@@ -65,6 +65,13 @@
 #define COMMAND_LINE_ERROR_9			-1009
 #define COMMAND_LINE_ERROR_10			-1010
 
+/* Command-Line Macros */
+
+#define CommandLineSwitchStart(_arg) if (0) { }
+#define CommandLineSwitchCase(_arg, _name) else if (strcmp(_arg->Name, _name) == 0)
+#define CommandLineSwitchDefault(_arg) else
+#define CommandLineSwitchEnd(_arg)
+
 typedef struct _COMMAND_LINE_ARGUMENT_A COMMAND_LINE_ARGUMENT_A;
 typedef struct _COMMAND_LINE_ARGUMENT_W COMMAND_LINE_ARGUMENT_W;
 
@@ -74,6 +81,7 @@ struct _COMMAND_LINE_ARGUMENT_A
 	DWORD Flags;
 	LPSTR Value;
 	LPCSTR Alias;
+	LPCSTR Text;
 };
 
 struct _COMMAND_LINE_ARGUMENT_W
@@ -82,6 +90,7 @@ struct _COMMAND_LINE_ARGUMENT_W
 	DWORD Flags;
 	LPWSTR Value;
 	LPCWSTR Alias;
+	LPCWSTR Text;
 };
 
 #ifdef UNICODE
@@ -98,6 +107,8 @@ WINPR_API int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_A
 
 WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
 WINPR_API COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
+
+WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument);
 
 #ifdef UNICODE
 #define CommandLineClearArguments	CommandLineClearArgumentsW
