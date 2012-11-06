@@ -35,14 +35,13 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 if(WITH_ALSA)
-	add_subdirectory(alsa)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
 endif()
 
 if(WITH_PULSE)
-	add_subdirectory(pulse)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
 endif()
 
 if(WITH_MACAUDIO)
-	add_subdirectory(mac)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "mac" "")
 endif()
-

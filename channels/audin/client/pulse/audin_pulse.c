@@ -430,7 +430,11 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	}
 }
 
-int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_audin_client_subsystem_entry	pulse_freerdp_audin_client_subsystem_entry
+#endif
+
+int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	AudinPulseDevice* pulse;
 	RDP_PLUGIN_DATA * data;

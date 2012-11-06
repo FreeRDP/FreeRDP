@@ -58,7 +58,7 @@ struct _IAudinDevice
 	void (*Free) (IAudinDevice* devplugin);
 };
 
-#define AUDIN_DEVICE_EXPORT_FUNC_NAME "FreeRDPAudinDeviceEntry"
+#define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
 typedef void (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 

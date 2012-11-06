@@ -47,7 +47,7 @@ struct rdpsnd_device_plugin
 	pcFree Free;
 };
 
-#define RDPSND_DEVICE_EXPORT_FUNC_NAME "FreeRDPRdpsndDeviceEntry"
+#define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
 
 typedef void (*PREGISTERRDPSNDDEVICE)(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device);
 
@@ -63,4 +63,3 @@ typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef int (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* __RDPSND_MAIN_H */
-

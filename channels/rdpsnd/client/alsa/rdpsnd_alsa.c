@@ -416,7 +416,11 @@ static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
 	snd_pcm_start(alsa->out_handle);
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndAlsaPlugin* alsa;
 	RDP_PLUGIN_DATA* data;

@@ -49,5 +49,7 @@ FREERDP_API void* freerdp_channels_client_find_entry(const char* name, const cha
 FREERDP_API FREERDP_ADDIN** freerdp_channels_list_client_addins(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags);
 FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
 
+FREERDP_API void* freerdp_channels_load_addin_entry(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags);
+
 #endif /* FREERDP_CHANNELS_CLIENT */
 

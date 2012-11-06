@@ -523,7 +523,11 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 	pa_stream_trigger(pulse->stream, NULL, NULL);
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndPulsePlugin* pulse;
 	RDP_PLUGIN_DATA* data;

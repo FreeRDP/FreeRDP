@@ -192,14 +192,16 @@ static void rdpsnd_audio_start(rdpsndDevicePlugin* device)
  * our job here is to fill aq_buf_ref with audio data and enqueue it
  */
 
-static void aq_playback_cb(void *user_data,
-			   AudioQueueRef aq_ref,
-			   AudioQueueBufferRef aq_buf_ref
-			  )
+static void aq_playback_cb(void* user_data, AudioQueueRef aq_ref, AudioQueueBufferRef aq_buf_ref)
 {
+
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	mac_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndAudioQPlugin* aqPlugin;
 	RDP_PLUGIN_DATA* data;
@@ -217,13 +219,15 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	data = pEntryPoints->plugin_data;
     
-	if (data && strcmp((char *)data->data[0], "macaudio") == 0) {
+	if (data && strcmp((char *)data->data[0], "macaudio") == 0)
+	{
 		if(strlen((char *)data->data[1]) > 0)
 			aqPlugin->device_name = strdup((char *)data->data[1]);
 		else
 			aqPlugin->device_name = NULL;
 	}
-	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)aqPlugin);
+
+	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) aqPlugin);
+
 	return 0;
 }
-
