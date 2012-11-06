@@ -35,7 +35,10 @@
 #define COMMAND_LINE_VALUE_OPTIONAL		0x00000004
 #define COMMAND_LINE_VALUE_BOOL			0x00000008
 
-#define COMMAND_LINE_FINAL_ARGUMENT		0x00000100
+#define COMMAND_LINE_ADVANCED			0x00000100
+#define COMMAND_LINE_PRINT			0x00000200
+#define COMMAND_LINE_PRINT_HELP			0x00000400
+#define COMMAND_LINE_PRINT_VERSION		0x00000800
 
 /* Command-Line Argument Output Flags */
 
@@ -57,13 +60,12 @@
 #define COMMAND_LINE_ERROR_NO_KEYWORD		-1001
 #define COMMAND_LINE_ERROR_UNEXPECTED_VALUE	-1002
 #define COMMAND_LINE_ERROR_MISSING_VALUE	-1003
-#define COMMAND_LINE_ERROR_4			-1004
-#define COMMAND_LINE_ERROR_5			-1005
-#define COMMAND_LINE_ERROR_6			-1006
-#define COMMAND_LINE_ERROR_7			-1007
-#define COMMAND_LINE_ERROR_8			-1008
-#define COMMAND_LINE_ERROR_9			-1009
-#define COMMAND_LINE_ERROR_10			-1010
+
+/* Command-Line Parsing Status Codes */
+
+#define COMMAND_LINE_STATUS_PRINT		-2001
+#define COMMAND_LINE_STATUS_PRINT_HELP		-2002
+#define COMMAND_LINE_STATUS_PRINT_VERSION	-2003
 
 /* Command-Line Macros */
 
@@ -72,6 +74,9 @@
 #define CommandLineSwitchDefault(_arg) else
 #define CommandLineSwitchEnd(_arg)
 
+#define BoolValueTrue		((LPSTR) 1)
+#define BoolValueFalse		((LPSTR) 0)
+
 typedef struct _COMMAND_LINE_ARGUMENT_A COMMAND_LINE_ARGUMENT_A;
 typedef struct _COMMAND_LINE_ARGUMENT_W COMMAND_LINE_ARGUMENT_W;
 
@@ -79,7 +84,10 @@ struct _COMMAND_LINE_ARGUMENT_A
 {
 	LPCSTR Name;
 	DWORD Flags;
+	LPSTR Format;
+	LPSTR Default;
 	LPSTR Value;
+	LONG Index;
 	LPCSTR Alias;
 	LPCSTR Text;
 };
@@ -88,7 +96,10 @@ struct _COMMAND_LINE_ARGUMENT_W
 {
 	LPCWSTR Name;
 	DWORD Flags;
+	LPSTR Format;
+	LPWSTR Default;
 	LPWSTR Value;
+	LONG Index;
 	LPCWSTR Alias;
 	LPCWSTR Text;
 };

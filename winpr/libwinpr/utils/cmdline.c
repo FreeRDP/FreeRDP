@@ -211,15 +211,22 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
 					{
 						if (sigil[0] == '+')
-							options[j].Value = (LPSTR) 1;
+							options[j].Value = BoolValueTrue;
 						else if (sigil[0] == '-')
-							options[j].Value = (LPSTR) 0;
+							options[j].Value = BoolValueFalse;
 						else
-							options[j].Value = (LPSTR) 1;
+							options[j].Value = BoolValueTrue;
 
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 				}
+
+				if (options[j].Flags & COMMAND_LINE_PRINT)
+						return COMMAND_LINE_STATUS_PRINT;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_HELP)
+						return COMMAND_LINE_STATUS_PRINT_HELP;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
+						return COMMAND_LINE_STATUS_PRINT_VERSION;
 			}
 		}
 	}

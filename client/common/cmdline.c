@@ -28,49 +28,114 @@
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
-	{ "w", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "width" },
-	{ "h", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "height" },
-	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, "fullscreen" },
-	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "session bpp (color depth)" },
-	{ "v", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "destination server" },
-	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, "console", "admin (or console) session" },
-	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, "multi-monitor" },
-	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "addin" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "username" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "password" },
-	{ "d", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "domain" },
-	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "compression" },
-	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "audio output mode" },
-	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, "audio input (microphone)" },
-	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "smooth fonts (cleartype)" },
-	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "desktop composition" },
-	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "full window drag" },
-	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "menu animations" },
-	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "themes" },
-	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "wallpaper" },
-	{ "codec", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "codec" },
-	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "protocol security negotiation" },
-	{ "sec", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "force specific protocol security" },
-	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "rdp protocol security" },
-	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "tls protocol security" },
-	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "nla protocol security" },
-	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, NULL, "nla extended protocol security" },
-	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, "certificate name" },
-	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, "ignore certificate" },
-	{ "ver", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_FINAL_ARGUMENT, NULL, "version", "print version" },
-	{ "?", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_FINAL_ARGUMENT, NULL, "help", "print help" },
-	{ NULL, 0, NULL, NULL, NULL }
+	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL, "destination server" },
+	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "server port" },
+	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "width" },
+	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "height" },
+	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "fullscreen" },
+	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "session bpp (color depth)" },
+	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "admin (or console) session" },
+	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "multi-monitor" },
+	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "addin" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "username" },
+	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "password" },
+	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "domain" },
+	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "compression" },
+	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "audio output mode" },
+	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "audio input (microphone)" },
+	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "smooth fonts (cleartype)" },
+	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "desktop composition" },
+	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "full window drag" },
+	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "menu animations" },
+	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "themes" },
+	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "wallpaper" },
+	{ "codec", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "codec" },
+	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "protocol security negotiation" },
+	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
+	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
+	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
+	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
+	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
+	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "certificate name" },
+	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
+	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "print version" },
+	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
+
+int freerdp_client_print_command_line_help()
+{
+	char* str;
+	int length;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	arg = args;
+
+	do
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
+		{
+			printf("%4s", "/");
+			printf("%-20s", arg->Name);
+			printf("\t%s\n", arg->Text);
+		}
+		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
+		{
+			printf("%4s", "/");
+
+			if (arg->Format)
+			{
+				length = strlen(arg->Name) + strlen(arg->Format) + 2;
+				str = malloc(length + 1);
+				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
+				printf("%-20s", str);
+				free(str);
+			}
+			else
+			{
+				printf("%-20s", arg->Name);
+			}
+
+			printf("\t%s\n", arg->Text);
+		}
+		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
+		{
+			if (arg->Default == BoolValueTrue)
+				printf("%4s", "-");
+			else
+				printf("%4s", "+");
+
+			printf("%-20s", arg->Name);
+
+			printf("\t%s\n", arg->Text);
+		}
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return 1;
+}
 
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
+	int length;
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
+
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags);
+
+	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
+	{
+		freerdp_client_print_command_line_help();
+		return COMMAND_LINE_STATUS_PRINT_HELP;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
+	{
+		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
 
 	arg = args;
 
@@ -84,7 +149,23 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "v")
 		{
 			p = strchr(arg->Value, ':');
-			settings->hostname = _strdup(arg->Value);
+
+			if (p)
+			{
+				length = p - arg->Value;
+				settings->port = atoi(&p[1]);
+				settings->hostname = (char*) malloc(length + 1);
+				strncpy(settings->hostname, arg->Value, length);
+				settings->hostname[length] = '\0';
+			}
+			else
+			{
+				settings->hostname = _strdup(arg->Value);
+			}
+		}
+		CommandLineSwitchCase(arg, "port")
+		{
+			settings->port = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
