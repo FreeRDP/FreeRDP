@@ -60,6 +60,7 @@
 #include <freerdp/rail.h>
 
 #include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
