@@ -189,6 +189,8 @@ FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR lpName, LPSTR l
 		}
 	}
 
+	ppAddins[nAddins] = NULL;
+
 	return ppAddins;
 }
 
@@ -360,8 +362,43 @@ void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 	free(ppAddins);
 }
 
-void* freerdp_channels_load_dynamic_addin_entry(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
+void* freerdp_channels_load_static_addin_entry(LPCSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
 {
+	int i, j;
+	STATIC_SUBSYSTEM_ENTRY* subsystems;
+
+	for (i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
+	{
+		if ((lpSubsystem == NULL) && (lpType == NULL))
+		{
+			return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+		}
+
+		subsystems = (STATIC_SUBSYSTEM_ENTRY*) CLIENT_STATIC_ADDIN_TABLE[i].table;
+
+		for (j = 0; subsystems[j].name != NULL; j++)
+		{
+			if (strcmp(subsystems[j].name, lpSubsystem) == 0)
+			{
+				if (lpType)
+				{
+					if (strcmp(subsystems[j].type, lpType) == 0)
+						return (void*) subsystems[j].entry;
+				}
+				else
+				{
+					return (void*) subsystems[j].entry;
+				}
+			}
+		}
+	}
+
+	return NULL;
+}
+
+void* freerdp_channels_load_dynamic_addin_entry(LPCSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
+{
+	void* entry;
 	LPSTR lpFileName;
 	LPSTR lpFilePath;
 	size_t cchFileName;
@@ -412,57 +449,47 @@ void* freerdp_channels_load_dynamic_addin_entry(LPSTR lpName, LPSTR lpSubsystem,
 	NativePathCchAppendA(lpFilePath, cchFilePath + 1, lpFileName);
 	cchFilePath = strlen(lpFilePath);
 
-	printf("lpFilePath: %s\n", lpFilePath);
-
 	library = LoadLibraryA(lpFilePath);
 
 	if (!library)
-		printf("failed to load library\n");
+		return NULL;
 
-	return NULL;
-}
-
-void* freerdp_channels_load_static_addin_entry(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
-{
-	int i, j;
-	STATIC_SUBSYSTEM_ENTRY* subsystems;
-
-	for (i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
+	if (lpSubsystem)
 	{
-		if ((lpSubsystem == NULL) && (lpType == NULL))
-		{
-			return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
-		}
+		LPSTR lpEntryName;
+		size_t cchEntryName;
 
-		subsystems = (STATIC_SUBSYSTEM_ENTRY*) CLIENT_STATIC_ADDIN_TABLE[i].table;
+		/* subsystem add-in */
 
-		for (j = 0; subsystems[j].name != NULL; j++)
-		{
-			if (strcmp(subsystems[j].name, lpSubsystem) == 0)
-			{
-				if (lpType)
-				{
-					if (strcmp(subsystems[j].type, lpType) == 0)
-						return (void*) subsystems[j].entry;
-				}
-				else
-				{
-					return (void*) subsystems[j].entry;
-				}
-			}
-		}
+		cchEntryName = 64 + strlen(lpName);
+		lpEntryName = (LPSTR) malloc(cchEntryName + 1);
+		sprintf_s(lpEntryName, cchEntryName + 1, "freerdp_%s_client_subsystem_entry", lpName);
+
+		entry = GetProcAddress(library, lpEntryName);
+
+		if (entry)
+			return entry;
+	}
+	else
+	{
+		/* channel add-in */
+
+		entry = GetProcAddress(library, lpType);
+
+		if (entry)
+			return entry;
 	}
 
 	return NULL;
 }
 
-void* freerdp_channels_load_addin_entry(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
+void* freerdp_channels_load_addin_entry(LPCSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags)
 {
 	void* entry = NULL;
 
 	entry = freerdp_channels_load_static_addin_entry(lpName, lpSubsystem, lpType, dwFlags);
 
-	if (entry)
+	if (!entry)
 		entry = freerdp_channels_load_dynamic_addin_entry(lpName, lpSubsystem, lpType, dwFlags);
 
 	return entry;

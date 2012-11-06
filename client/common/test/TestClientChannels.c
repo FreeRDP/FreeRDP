@@ -54,7 +54,6 @@ int TestClientChannels(int argc, char* argv[])
 
 	freerdp_channels_addin_list_free(ppAddins);
 
-	printf("Enumerate unknown\n");
 	ppAddins = freerdp_channels_list_client_addins("unknown", NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
@@ -67,8 +66,10 @@ int TestClientChannels(int argc, char* argv[])
 
 	freerdp_channels_addin_list_free(ppAddins);
 
+	printf("Enumerate static addins\n");
+
 	dwFlags = FREERDP_ADDIN_STATIC;
-	freerdp_channels_list_client_addins(NULL, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_client_addins(NULL, NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -80,9 +81,9 @@ int TestClientChannels(int argc, char* argv[])
 
 	freerdp_channels_addin_list_free(ppAddins);
 
-	dwFlags = FREERDP_ADDIN_STATIC;
+	dwFlags = FREERDP_ADDIN_DYNAMIC;
 
-	entry = freerdp_channels_load_addin_entry("drive", NULL, NULL, dwFlags);
+	entry = freerdp_channels_load_addin_entry("drive", NULL, "DeviceServiceEntry", dwFlags);
 
 	printf("drive entry: %s\n", entry ? "non-null" : "null");
 
