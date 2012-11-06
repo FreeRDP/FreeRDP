@@ -190,13 +190,6 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!match)
 					continue;
 
-				printf("option: %.*s", keyword_length, keyword);
-
-				if (value)
-					printf(" value: %s", value);
-
-				printf("\n");
-
 				if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 

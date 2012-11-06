@@ -468,6 +468,19 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
+BOOL xf_detect_new_command_line_syntax(int argc, char* argv[])
+{
+	int index;
+
+	for (index = 1; index < argc; index++)
+	{
+		if (argv[index][0] == '/')
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will parse the command line parameters given to xfreerdp (using freerdp_parse_args())
@@ -495,15 +508,24 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	
-	arg_parse_result = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
+	if (xf_detect_new_command_line_syntax(instance->context->argc,instance->context->argv))
+	{
+		printf("Using new command-line syntax\n");
+
+		freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+	}
+	else
+	{
+		arg_parse_result = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
 				xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi);
 	
-	if (arg_parse_result < 0)
-	{
-		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
-		
-		exit(XF_EXIT_PARSE_ARGUMENTS);
+		if (arg_parse_result < 0)
+		{
+			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
+				fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
+
+			exit(XF_EXIT_PARSE_ARGUMENTS);
+		}
 	}
 
 	settings = instance->settings;
