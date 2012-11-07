@@ -32,15 +32,25 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "server port" },
 	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "width" },
 	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "height" },
+	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "screen size" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "fullscreen" },
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "session bpp (color depth)" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "admin (or console) session" },
 	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "multi-monitor" },
+	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "work area" },
+	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "window title" },
+	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "window decorations" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "addin" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "username" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\|@]<user>", NULL, NULL, -1, NULL, "username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "domain" },
+	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "gateway" },
+	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\|@]<user>", NULL, NULL, -1, NULL, "gateway username" },
+	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "gateway password" },
+	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "gateway domain" },
 	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "compression" },
+	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "alternate shell" },
+	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "shell working directory" },
 	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "audio output mode" },
 	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "audio input (microphone)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "smooth fonts (cleartype)" },
@@ -49,7 +59,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "menu animations" },
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "themes" },
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "wallpaper" },
-	{ "codec", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "codec" },
+	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "<sw|hw>", NULL, NULL, -1, NULL, "GDI rendering" },
+	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
+	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
+	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Frame acknowledgement" },
+	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "NSCodec" },
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "protocol security negotiation" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
@@ -63,11 +77,31 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
+int freerdp_client_print_version()
+{
+	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
+	return 1;
+}
+
 int freerdp_client_print_command_line_help()
 {
 	char* str;
 	int length;
 	COMMAND_LINE_ARGUMENT_A* arg;
+
+	printf("\n");
+	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
+	printf("See www.freerdp.com for more information\n");
+	printf("\n");
+
+	printf("Usage: xfreerdp [file] [options] [/v:<server>[:port]]\n");
+	printf("\n");
+
+	printf("Syntax:\n");
+	printf("    /flag (enables flag)\n");
+	printf("    /option:<value> (specifies option with value)\n");
+	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
+	printf("\n");
 
 	arg = args;
 
@@ -75,13 +109,13 @@ int freerdp_client_print_command_line_help()
 	{
 		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
 		{
-			printf("%4s", "/");
+			printf("    %s", "/");
 			printf("%-20s", arg->Name);
 			printf("\t%s\n", arg->Text);
 		}
 		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
-			printf("%4s", "/");
+			printf("    %s", "/");
 
 			if (arg->Format)
 			{
@@ -105,10 +139,7 @@ int freerdp_client_print_command_line_help()
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
-			if (arg->Default == BoolValueTrue)
-				printf("%4s", "-");
-			else
-				printf("%4s", "+");
+			printf("    %s", arg->Default ? "-" : "+");
 
 			printf("%-20s", str);
 			free(str);
@@ -118,12 +149,43 @@ int freerdp_client_print_command_line_help()
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
+	printf("\n");
+
+	printf("Examples:\n");
+	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
+	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
+	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
+	printf("\n");
+
+	return 1;
+}
+
+int freerdp_client_command_line_filter(int index, LPCSTR arg, void* context)
+{
+	if (index == 1)
+	{
+		int length;
+		rdpSettings* settings;
+
+		length = strlen(arg);
+
+		if (length > 4)
+		{
+			if (_stricmp(&arg[length - 4], ".rdp") == 0)
+			{
+				settings = (rdpSettings*) context;
+				settings->connection_file = _strdup(arg);
+			}
+		}
+	}
+
 	return 1;
 }
 
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
+	char* str;
 	int length;
 	int status;
 	DWORD flags;
@@ -131,7 +193,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags);
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args,
+			flags, freerdp_client_command_line_filter, settings);
 
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{
@@ -140,6 +203,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
+		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
 	}
 
@@ -181,9 +245,36 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->height = atoi(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "size")
+		{
+			str = _strdup(arg->Value);
+
+			p = strchr(str, 'x');
+
+			if (p)
+			{
+				*p = '\0';
+				settings->width = atoi(str);
+				settings->height = atoi(&p[1]);
+			}
+
+			free(str);
+		}
 		CommandLineSwitchCase(arg, "f")
 		{
 			settings->fullscreen = TRUE;
+		}
+		CommandLineSwitchCase(arg, "workarea")
+		{
+			settings->workarea = TRUE;
+		}
+		CommandLineSwitchCase(arg, "t")
+		{
+			settings->window_title = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "decorations")
+		{
+			settings->decorations = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
@@ -191,7 +282,23 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			settings->username = _strdup(arg->Value);
+			p = strchr(arg->Value, '\\');
+
+			if (!p)
+				p = strchr(arg->Value, '@');
+
+			if (p)
+			{
+				length = p - arg->Value;
+				settings->domain = (char*) malloc(length + 1);
+				strncpy(settings->domain, arg->Value, length);
+				settings->domain[length] = '\0';
+				settings->username = _strdup(&p[1]);
+			}
+			else
+			{
+				settings->username = _strdup(arg->Value);
+			}
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -201,9 +308,68 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->password = _strdup(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "g")
+		{
+			p = strchr(arg->Value, ':');
+
+			if (p)
+			{
+				length = p - arg->Value;
+				settings->tsg_port = atoi(&p[1]);
+				settings->tsg_hostname = (char*) malloc(length + 1);
+				strncpy(settings->tsg_hostname, arg->Value, length);
+				settings->tsg_hostname[length] = '\0';
+			}
+			else
+			{
+				settings->tsg_hostname = _strdup(arg->Value);
+			}
+
+			settings->ts_gateway = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gu")
+		{
+			p = strchr(arg->Value, '\\');
+
+			if (!p)
+				p = strchr(arg->Value, '@');
+
+			if (p)
+			{
+				length = p - arg->Value;
+				settings->tsg_domain = (char*) malloc(length + 1);
+				strncpy(settings->tsg_domain, arg->Value, length);
+				settings->tsg_domain[length] = '\0';
+				settings->tsg_username = _strdup(&p[1]);
+			}
+			else
+			{
+				settings->tsg_username = _strdup(arg->Value);
+			}
+
+			settings->tsg_same_credentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "gd")
+		{
+			settings->tsg_domain = _strdup(arg->Value);
+			settings->tsg_same_credentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "gp")
+		{
+			settings->tsg_password = _strdup(arg->Value);
+			settings->tsg_same_credentials = FALSE;
+		}
 		CommandLineSwitchCase(arg, "z")
 		{
 			settings->compression = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "shell")
+		{
+			settings->shell = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "shell-dir")
+		{
+			settings->directory = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -228,6 +394,36 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "aero")
 		{
 			settings->desktop_composition = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "gdi")
+		{
+			if (strcmp(arg->Value, "sw") == 0)
+				settings->sw_gdi = TRUE;
+			else if (strcmp(arg->Value, "hw") == 0)
+				settings->sw_gdi = FALSE;
+		}
+		CommandLineSwitchCase(arg, "rfx")
+		{
+			settings->rfx_codec = TRUE;
+			settings->fastpath_output = TRUE;
+			settings->color_depth = 32;
+			settings->performance_flags = PERF_FLAG_NONE;
+			settings->large_pointer = TRUE;
+		}
+		CommandLineSwitchCase(arg, "rfx-mode")
+		{
+			if (strcmp(arg->Value, "video") == 0)
+				settings->rfx_codec_mode = 0x00;
+			else if (strcmp(arg->Value, "image") == 0)
+				settings->rfx_codec_mode = 0x02;
+		}
+		CommandLineSwitchCase(arg, "frame-ack")
+		{
+			settings->frame_acknowledge = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "nsc")
+		{
+			settings->ns_codec = TRUE;
 		}
 		CommandLineSwitchCase(arg, "nego")
 		{

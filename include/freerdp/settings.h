@@ -309,7 +309,8 @@ struct rdp_settings
 	ALIGN64 char* connection_file; /* 76 */
 	ALIGN64 char* tsg_domain; /* 77 */
 	ALIGN64 BOOL tsg_same_credentials; /* 78 */
-	UINT64 paddingC[80 - 79]; /* 79 */
+	ALIGN64 UINT32 tsg_port; /* 79 */
+	//UINT64 paddingC[80 - 80]; /* 80 */
 
 	/* User Interface Parameters */
 	ALIGN64 BOOL sw_gdi; /* 80 */

@@ -64,7 +64,7 @@ int TestCmdLine(int argc, char* argv[])
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
-	status = CommandLineParseArgumentsA(testArgc, testArgv, args, flags);
+	status = CommandLineParseArgumentsA(testArgc, testArgv, args, flags, NULL, NULL);
 
 	if (status != 0)
 	{

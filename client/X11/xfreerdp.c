@@ -495,11 +495,11 @@ BOOL xf_detect_new_command_line_syntax(int argc, char* argv[])
  */
 BOOL xf_pre_connect(freerdp* instance)
 {
+	int status;
 	xfInfo* xfi;
 	rdpFile* file;
 	BOOL bitmap_cache;
 	rdpSettings* settings;
-	int arg_parse_result;
 	
 	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
 	((xfContext*) instance->context)->xfi = xfi;
@@ -513,16 +513,19 @@ BOOL xf_pre_connect(freerdp* instance)
 	{
 		printf("Using new command-line syntax\n");
 
-		freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+		status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+
+		if (status < 0)
+			exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
 	else
 	{
-		arg_parse_result = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
+		status = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
 				xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi);
 	
-		if (arg_parse_result < 0)
+		if (status < 0)
 		{
-			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
+			if (status == FREERDP_ARGS_PARSE_FAILURE)
 				fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 
 			exit(XF_EXIT_PARSE_ARGUMENTS);

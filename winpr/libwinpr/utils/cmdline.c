@@ -83,7 +83,8 @@
  *
  */
 
-int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags)
+int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
+		DWORD flags, COMMAND_LINE_FILTER_FN_A filter, void* context)
 {
 	int i, j;
 	int length;
@@ -103,6 +104,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
+		if (filter)
+			filter(i, argv[i], context);
+
 		sigil_index = 0;
 		sigil_length = 0;
 		sigil = (char*) &argv[i][sigil_index];
@@ -190,6 +194,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!match)
 					continue;
 
+				options[j].Index = i;
+
 				if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
@@ -234,7 +240,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	return 0;
 }
 
-int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags)
+int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
+		DWORD flags, COMMAND_LINE_FILTER_FN_W filter, void* context)
 {
 	return 0;
 }
