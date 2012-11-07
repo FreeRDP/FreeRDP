@@ -100,12 +100,18 @@ int freerdp_client_print_command_line_help()
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
+			length = strlen(arg->Name) + 32;
+			str = malloc(length + 1);
+			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
+					arg->Default ? "on" : "off");
+
 			if (arg->Default == BoolValueTrue)
 				printf("%4s", "-");
 			else
 				printf("%4s", "+");
 
-			printf("%-20s", arg->Name);
+			printf("%-20s", str);
+			free(str);
 
 			printf("\t%s\n", arg->Text);
 		}
