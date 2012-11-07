@@ -110,16 +110,19 @@ struct _COMMAND_LINE_ARGUMENT_W
 #define COMMAND_LINE_ARGUMENT	COMMAND_LINE_ARGUMENT_A
 #endif
 
-typedef int (*COMMAND_LINE_FILTER_FN_A)(int index, LPCSTR arg, void* context);
-typedef int (*COMMAND_LINE_FILTER_FN_W)(int index, LPCWSTR arg, void* context);
+typedef int (*COMMAND_LINE_PRE_FILTER_FN_A)(void* context, int index, LPCSTR arg);
+typedef int (*COMMAND_LINE_PRE_FILTER_FN_W)(void* context, int index, LPCWSTR arg);
+
+typedef int (*COMMAND_LINE_POST_FILTER_FN_A)(void* context, COMMAND_LINE_ARGUMENT_A* arg);
+typedef int (*COMMAND_LINE_POST_FILTER_FN_W)(void* context, COMMAND_LINE_ARGUMENT_W* arg);
 
 WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
 WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
 
-WINPR_API int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
-		DWORD flags, COMMAND_LINE_FILTER_FN_A filter, void* context);
-WINPR_API int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
-		DWORD flags, COMMAND_LINE_FILTER_FN_W filter, void* context);
+WINPR_API int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
+		void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter);
+WINPR_API int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags,
+		void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter, COMMAND_LINE_POST_FILTER_FN_W postFilter);
 
 WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
 WINPR_API COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);

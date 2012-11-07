@@ -160,7 +160,7 @@ int freerdp_client_print_command_line_help()
 	return 1;
 }
 
-int freerdp_client_command_line_filter(int index, LPCSTR arg, void* context)
+int freerdp_client_command_line_pre_filter(void* context, int index, LPCSTR arg)
 {
 	if (index == 1)
 	{
@@ -182,6 +182,26 @@ int freerdp_client_command_line_filter(int index, LPCSTR arg, void* context)
 	return 1;
 }
 
+int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
+{
+	CommandLineSwitchStart(arg)
+
+	CommandLineSwitchCase(arg, "a")
+	{
+		int index;
+		int nCommas;
+
+		nCommas = 0;
+
+		for (index = 0; arg->Value[index]; index++)
+			nCommas += (arg->Value[index] == ',') ? 1 : 0;
+	}
+
+	CommandLineSwitchEnd(arg)
+
+	return 1;
+}
+
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
@@ -193,8 +213,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args,
-			flags, freerdp_client_command_line_filter, settings);
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
+			freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
 
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{

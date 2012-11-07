@@ -83,8 +83,8 @@
  *
  */
 
-int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options,
-		DWORD flags, COMMAND_LINE_FILTER_FN_A filter, void* context)
+int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
+		void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
 	int length;
@@ -104,8 +104,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
-		if (filter)
-			filter(i, argv[i], context);
+		if (preFilter)
+			preFilter(context, i, argv[i]);
 
 		sigil_index = 0;
 		sigil_length = 0;
@@ -227,6 +227,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					}
 				}
 
+				if (postFilter)
+					postFilter(context, &options[j]);
+
 				if (options[j].Flags & COMMAND_LINE_PRINT)
 						return COMMAND_LINE_STATUS_PRINT;
 				else if (options[j].Flags & COMMAND_LINE_PRINT_HELP)
@@ -240,8 +243,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	return 0;
 }
 
-int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
-		DWORD flags, COMMAND_LINE_FILTER_FN_W filter, void* context)
+int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags,
+		void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter, COMMAND_LINE_POST_FILTER_FN_W postFilter)
 {
 	return 0;
 }
