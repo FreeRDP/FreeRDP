@@ -57,18 +57,18 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 
 	if (settings->fullscreen)
 	{
-		settings->width = WidthOfScreen(xfi->screen);
-		settings->height = HeightOfScreen(xfi->screen);	
+		settings->DesktopWidth = WidthOfScreen(xfi->screen);
+		settings->DesktopHeight = HeightOfScreen(xfi->screen);
 	}
 	else if (settings->workarea)
 	{
-		settings->width = xfi->workArea.width;
-		settings->height = xfi->workArea.height;
+		settings->DesktopWidth = xfi->workArea.width;
+		settings->DesktopHeight = xfi->workArea.height;
 	}
 	else if (settings->percent_screen)
 	{
-		settings->width = (xfi->workArea.width * settings->percent_screen) / 100;
-		settings->height = (xfi->workArea.height * settings->percent_screen) / 100;
+		settings->DesktopWidth = (xfi->workArea.width * settings->percent_screen) / 100;
+		settings->DesktopHeight = (xfi->workArea.height * settings->percent_screen) / 100;
 	}
 
 	if (settings->fullscreen != TRUE && settings->workarea != TRUE)
@@ -121,20 +121,20 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		vscreen->area.bottom = MAX(vscreen->monitors[i].area.bottom, vscreen->area.bottom);
 	}
 
-	//if no monitor information is present then make sure variables are set accordingly
+	/* if no monitor information is present then make sure variables are set accordingly */
 	if (settings->num_monitors == 0)
 	{
 	        vscreen->area.left = 0;
-	        vscreen->area.right = settings->width -1;
+	        vscreen->area.right = settings->DesktopWidth -1;
                 vscreen->area.top = 0;
-                vscreen->area.bottom = settings->height - 1;
+                vscreen->area.bottom = settings->DesktopHeight - 1;
 	}
 	
 
 	if (settings->num_monitors)
 	{
-		settings->width = vscreen->area.right - vscreen->area.left + 1;
-		settings->height = vscreen->area.bottom - vscreen->area.top + 1;
+		settings->DesktopWidth = vscreen->area.right - vscreen->area.left + 1;
+		settings->DesktopHeight = vscreen->area.bottom - vscreen->area.top + 1;
 	}
 
 	return TRUE;

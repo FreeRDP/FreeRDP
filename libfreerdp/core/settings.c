@@ -66,16 +66,16 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopWidth"), dwType, dwValue, dwSize, settings->width);
-		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize, settings->height);
+		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopWidth"), dwType, dwValue, dwSize, settings->DesktopWidth);
+		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize, settings->DesktopHeight);
 
 		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->fullscreen);
-		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize, settings->color_depth);
+		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize, settings->ColorDepth);
 
-		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize, settings->kbd_type);
-		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardSubType"), dwType, dwValue, dwSize, settings->kbd_subtype);
-		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardFunctionKeys"), dwType, dwValue, dwSize, settings->kbd_fn_keys);
-		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardLayout"), dwType, dwValue, dwSize, settings->kbd_layout);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize, settings->KeyboardType);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardSubType"), dwType, dwValue, dwSize, settings->KeyboardSubType);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardFunctionKeys"), dwType, dwValue, dwSize, settings->KeyboardFunctionKey);
+		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardLayout"), dwType, dwValue, dwSize, settings->KeyboardLayout);
 
 		REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ext_security);
 		REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
@@ -216,14 +216,14 @@ rdpSettings* settings_new(void* instance)
 		if (!settings->instance)
 			settings->server_mode = TRUE;
 
-		settings->width = 1024;
-		settings->height = 768;
+		settings->DesktopWidth = 1024;
+		settings->DesktopHeight = 768;
 		settings->workarea = FALSE;
 		settings->fullscreen = FALSE;
 		settings->grab_keyboard = TRUE;
 		settings->decorations = TRUE;
-		settings->rdp_version = 7;
-		settings->color_depth = 16;
+		settings->RdpVersion = 7;
+		settings->ColorDepth = 16;
 		settings->ext_security = FALSE;
 		settings->nla_security = TRUE;
 		settings->tls_security = TRUE;
@@ -231,11 +231,11 @@ rdpSettings* settings_new(void* instance)
 		settings->security_layer_negotiation = TRUE;
 		settings->mstsc_cookie_mode = FALSE;
 		settings->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
-		settings->client_build = 2600;
-		settings->kbd_type = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
-		settings->kbd_subtype = 0;
-		settings->kbd_fn_keys = 12;
-		settings->kbd_layout = 0;
+		settings->ClientBuild = 2600;
+		settings->KeyboardType = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
+		settings->KeyboardSubType = 0;
+		settings->KeyboardFunctionKey = 12;
+		settings->KeyboardLayout = 0;
 		settings->encryption = FALSE;
 		settings->salted_checksum = TRUE;
 		settings->port = 3389;
@@ -298,7 +298,7 @@ rdpSettings* settings_new(void* instance)
 		settings->disable_full_window_drag = FALSE;
 		settings->disable_menu_animations = FALSE;
 		settings->disable_theming = FALSE;
-		settings->connection_type = 0;
+		settings->ConnectionType = 0;
 
 		settings->draw_gdi_plus = FALSE;
 

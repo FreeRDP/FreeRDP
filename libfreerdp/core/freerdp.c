@@ -61,11 +61,11 @@ BOOL freerdp_connect(freerdp* instance)
 
 	IFCALLRET(instance->PreConnect, status, instance);
 
-	if (settings->kbd_layout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
+	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
-		settings->kbd_type = 7;
-		settings->kbd_subtype = 2;
-		settings->kbd_fn_keys = 12;
+		settings->KeyboardType = 7;
+		settings->KeyboardSubType = 2;
+		settings->KeyboardFunctionKey = 12;
 	}
 
 	extension_load_and_init_plugins(rdp->extension);

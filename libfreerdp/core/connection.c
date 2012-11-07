@@ -503,8 +503,8 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	UINT16 width;
 	UINT16 height;
 
-	width = rdp->settings->width;
-	height = rdp->settings->height;
+	width = rdp->settings->DesktopWidth;
+	height = rdp->settings->DesktopHeight;
 
 	stream_get_mark(s, mark);
 
@@ -531,7 +531,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
 	 * In this case, the UI should be informed and do actual window resizing at this point.
 	 */
-	if (width != rdp->settings->width || height != rdp->settings->height)
+	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
 	{
 		IFCALL(rdp->update->DesktopResize, rdp->update->context);
 	}

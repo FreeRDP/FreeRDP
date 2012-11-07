@@ -558,7 +558,7 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	printf("\n");
 
 	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
+		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
 	if (!client->settings->rfx_codec)
 	{
@@ -566,10 +566,10 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 		return 0;
 	}
 
-	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
+	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 
-	client->settings->width = xfi->width;
-	client->settings->height = xfi->height;
+	client->settings->DesktopWidth = xfi->width;
+	client->settings->DesktopHeight = xfi->height;
 
 	client->update->DesktopResize(client->update->context);
 	xfp->activated = FALSE;

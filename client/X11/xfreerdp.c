@@ -237,11 +237,11 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 	if (xfi->fullscreen != TRUE)
 	{
-		xfi->width = settings->width;
-		xfi->height = settings->height;
+		xfi->width = settings->DesktopWidth;
+		xfi->height = settings->DesktopHeight;
 
 		if (xfi->window)
-			xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+			xf_ResizeDesktopWindow(xfi, xfi->window, settings->DesktopWidth, settings->DesktopHeight);
 
 		if (xfi->primary)
 		{
@@ -748,7 +748,7 @@ BOOL xf_post_connect(freerdp* instance)
 	}
 	else
 	{
-		xfi->srcBpp = instance->settings->color_depth;
+		xfi->srcBpp = instance->settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 
 		xfi->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
@@ -775,8 +775,8 @@ BOOL xf_post_connect(freerdp* instance)
 		nsc_context_set_cpu_opt(nsc_context, cpu);
 #endif
 
-	xfi->width = instance->settings->width;
-	xfi->height = instance->settings->height;
+	xfi->width = instance->settings->DesktopWidth;
+	xfi->height = instance->settings->DesktopHeight;
 
 	xf_create_window(xfi);
 

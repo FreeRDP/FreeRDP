@@ -33,9 +33,9 @@
 void xf_kbd_init(xfInfo* xfi)
 {
 	xf_kbd_clear(xfi);
-	xfi->keyboard_layout_id = xfi->instance->settings->kbd_layout;
+	xfi->keyboard_layout_id = xfi->instance->settings->KeyboardLayout;
 	xfi->keyboard_layout_id = freerdp_keyboard_init(xfi->keyboard_layout_id);
-	xfi->instance->settings->kbd_layout = xfi->keyboard_layout_id;
+	xfi->instance->settings->KeyboardLayout = xfi->keyboard_layout_id;
 }
 
 void xf_kbd_clear(xfInfo* xfi)

@@ -289,7 +289,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 	}
 	stream_seek(s, 2);
 
-	if (settings->rdp_version >= 5)
+	if (settings->RdpVersion >= 5)
 		return rdp_read_extended_info_packet(s, settings); /* extraInfo */
 
 	return TRUE;
@@ -407,7 +407,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	if (!usedPasswordCookie)
 		free(password);
 
-	if (settings->rdp_version >= 5)
+	if (settings->RdpVersion >= 5)
 		rdp_write_extended_info_packet(s, settings); /* extraInfo */
 }
 

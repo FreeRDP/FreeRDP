@@ -510,11 +510,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->FullAddress))
 		settings->hostname = file->FullAddress;
 	if (~file->DesktopWidth)
-		settings->width = file->DesktopWidth;
+		settings->DesktopWidth = file->DesktopWidth;
 	if (~file->DesktopHeight)
-		settings->height = file->DesktopHeight;
+		settings->DesktopHeight = file->DesktopHeight;
 	if (~file->SessionBpp)
-		settings->color_depth = file->SessionBpp;
+		settings->ColorDepth = file->SessionBpp;
 	if (~file->ConnectToConsole)
 		settings->console_session = file->ConnectToConsole;
 	if (~file->AdministrativeSession)

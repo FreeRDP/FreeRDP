@@ -216,10 +216,10 @@ void rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	stream_seek_UINT16(s); /* multipleRectangleSupport (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
 
-	if (!settings->server_mode && preferredBitsPerPixel != settings->color_depth)
+	if (!settings->server_mode && preferredBitsPerPixel != settings->ColorDepth)
 	{
 		/* The client must respect the actual color depth used by the server */
-		settings->color_depth = preferredBitsPerPixel;
+		settings->ColorDepth = preferredBitsPerPixel;
 	}
 
 	if (desktopResizeFlag == FALSE)
@@ -228,8 +228,8 @@ void rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	if (!settings->server_mode && settings->desktop_resize)
 	{
 		/* The server may request a different desktop size during Deactivation-Reactivation sequence */
-		settings->width = desktopWidth;
-		settings->height = desktopHeight;
+		settings->DesktopWidth = desktopWidth;
+		settings->DesktopHeight = desktopHeight;
 	}
 }
 
@@ -251,8 +251,8 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 
 	drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
 
-	if (settings->rdp_version > 5)
-		preferredBitsPerPixel = settings->color_depth;
+	if (settings->RdpVersion > 5)
+		preferredBitsPerPixel = settings->ColorDepth;
 	else
 		preferredBitsPerPixel = 8;
 
@@ -262,8 +262,8 @@ void rdp_write_bitmap_capability_set(STREAM* s, rdpSettings* settings)
 	stream_write_UINT16(s, 1); /* receive1BitPerPixel (2 bytes) */
 	stream_write_UINT16(s, 1); /* receive4BitsPerPixel (2 bytes) */
 	stream_write_UINT16(s, 1); /* receive8BitsPerPixel (2 bytes) */
-	stream_write_UINT16(s, settings->width); /* desktopWidth (2 bytes) */
-	stream_write_UINT16(s, settings->height); /* desktopHeight (2 bytes) */
+	stream_write_UINT16(s, settings->DesktopWidth); /* desktopWidth (2 bytes) */
+	stream_write_UINT16(s, settings->DesktopHeight); /* desktopHeight (2 bytes) */
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 	stream_write_UINT16(s, desktopResizeFlag); /* desktopResizeFlag (2 bytes) */
 	stream_write_UINT16(s, 1); /* bitmapCompressionFlag (2 bytes) */
@@ -407,7 +407,7 @@ void rdp_write_bitmap_cache_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	bpp = (settings->color_depth + 7) / 8;
+	bpp = (settings->ColorDepth + 7) / 8;
 
 	stream_write_UINT32(s, 0); /* pad1 (4 bytes) */
 	stream_write_UINT32(s, 0); /* pad2 (4 bytes) */
@@ -678,10 +678,10 @@ void rdp_read_input_capability_set(STREAM* s, UINT16 length, rdpSettings* settin
 
 	if (settings->server_mode)
 	{
-		stream_read_UINT32(s, settings->kbd_layout); /* keyboardLayout (4 bytes) */
-		stream_read_UINT32(s, settings->kbd_type); /* keyboardType (4 bytes) */
-		stream_read_UINT32(s, settings->kbd_subtype); /* keyboardSubType (4 bytes) */
-		stream_read_UINT32(s, settings->kbd_fn_keys); /* keyboardFunctionKeys (4 bytes) */
+		stream_read_UINT32(s, settings->KeyboardLayout); /* keyboardLayout (4 bytes) */
+		stream_read_UINT32(s, settings->KeyboardType); /* keyboardType (4 bytes) */
+		stream_read_UINT32(s, settings->KeyboardSubType); /* keyboardSubType (4 bytes) */
+		stream_read_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 	}
 	else
 	{
@@ -735,10 +735,10 @@ void rdp_write_input_capability_set(STREAM* s, rdpSettings* settings)
 
 	stream_write_UINT16(s, inputFlags); /* inputFlags (2 bytes) */
 	stream_write_UINT16(s, 0); /* pad2OctetsA (2 bytes) */
-	stream_write_UINT32(s, settings->kbd_layout); /* keyboardLayout (4 bytes) */
-	stream_write_UINT32(s, settings->kbd_type); /* keyboardType (4 bytes) */
-	stream_write_UINT32(s, settings->kbd_subtype); /* keyboardSubType (4 bytes) */
-	stream_write_UINT32(s, settings->kbd_fn_keys); /* keyboardFunctionKeys (4 bytes) */
+	stream_write_UINT32(s, settings->KeyboardLayout); /* keyboardLayout (4 bytes) */
+	stream_write_UINT32(s, settings->KeyboardType); /* keyboardType (4 bytes) */
+	stream_write_UINT32(s, settings->KeyboardSubType); /* keyboardSubType (4 bytes) */
+	stream_write_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 	stream_write_zero(s, 64); /* imeFileName (64 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_INPUT);
@@ -2061,7 +2061,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_bitmap_capability_set(s, settings);
 	rdp_write_order_capability_set(s, settings);
 
-	if (settings->rdp_version >= 5)
+	if (settings->RdpVersion >= 5)
 		rdp_write_bitmap_cache_v2_capability_set(s, settings);
 	else
 		rdp_write_bitmap_cache_capability_set(s, settings);

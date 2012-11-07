@@ -885,9 +885,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;
 
-	gdi->width = instance->settings->width;
-	gdi->height = instance->settings->height;
-	gdi->srcBpp = instance->settings->color_depth;
+	gdi->width = instance->settings->DesktopWidth;
+	gdi->height = instance->settings->DesktopHeight;
+	gdi->srcBpp = instance->settings->ColorDepth;
 	gdi->primary_buffer = buffer;
 
 	/* default internal buffer format */

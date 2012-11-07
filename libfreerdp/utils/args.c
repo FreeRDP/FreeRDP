@@ -192,7 +192,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing color depth\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->color_depth = atoi(argv[index]);
+			settings->ColorDepth = atoi(argv[index]);
 		}
 		else if (strcmp("-u", argv[index]) == 0)
 		{
@@ -267,15 +267,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			else
 			{
-				settings->width = (UINT16) strtol(argv[index], &p, 10);
+				settings->DesktopWidth = (UINT16) strtol(argv[index], &p, 10);
 
 				if (*p == 'x')
 				{
-					settings->height = (UINT16) strtol(p + 1, &p, 10);
+					settings->DesktopHeight = (UINT16) strtol(p + 1, &p, 10);
 				}
 				if (*p == '%')
 				{
-					settings->percent_screen = settings->width;
+					settings->percent_screen = settings->DesktopWidth;
+
 					if (settings->percent_screen <= 0 || settings->percent_screen > 100)
 					{
 						printf("invalid geometry percentage\n");
@@ -326,7 +327,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing keyboard layout id\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			sscanf(argv[index], "%X", &(settings->kbd_layout));
+			sscanf(argv[index], "%X", &(settings->KeyboardLayout));
 		}
 		else if (strcmp("-K", argv[index]) == 0)
 		{
@@ -489,7 +490,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->rfx_codec = TRUE;
 			settings->fastpath_output = TRUE;
-			settings->color_depth = 32;
+			settings->ColorDepth = 32;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = TRUE;
 		}
@@ -601,17 +602,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 					PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS |
 					PERF_DISABLE_THEMING;
 
-				settings->connection_type = CONNECTION_TYPE_MODEM;
+				settings->ConnectionType = CONNECTION_TYPE_MODEM;
 			}
 			else if (argv[index][0] == 'b') /* broadband */
 			{
 				settings->performance_flags = PERF_DISABLE_WALLPAPER;
-				settings->connection_type = CONNECTION_TYPE_BROADBAND_HIGH;
+				settings->ConnectionType = CONNECTION_TYPE_BROADBAND_HIGH;
 			}
 			else if (argv[index][0] == 'l') /* lan */
 			{
 				settings->performance_flags = PERF_FLAG_NONE;
-				settings->connection_type = CONNECTION_TYPE_LAN;
+				settings->ConnectionType = CONNECTION_TYPE_LAN;
 			}
 			else
 			{

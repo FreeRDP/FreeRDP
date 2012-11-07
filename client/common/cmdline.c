@@ -259,11 +259,11 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
-			settings->width = atoi(arg->Value);
+			settings->DesktopWidth = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "h")
 		{
-			settings->height = atoi(arg->Value);
+			settings->DesktopHeight = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
@@ -274,8 +274,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			if (p)
 			{
 				*p = '\0';
-				settings->width = atoi(str);
-				settings->height = atoi(&p[1]);
+				settings->DesktopWidth = atoi(str);
+				settings->DesktopHeight = atoi(&p[1]);
 			}
 
 			free(str);
@@ -298,7 +298,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
-			settings->color_depth = atoi(arg->Value);
+			settings->ColorDepth = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
@@ -426,7 +426,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->rfx_codec = TRUE;
 			settings->fastpath_output = TRUE;
-			settings->color_depth = 32;
+			settings->ColorDepth = 32;
 			settings->performance_flags = PERF_FLAG_NONE;
 			settings->large_pointer = TRUE;
 		}

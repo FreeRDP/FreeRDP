@@ -107,7 +107,7 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	if (cache_bitmap_v2->bitmapBpp == 0)
 	{
 		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
+		cache_bitmap_v2->bitmapBpp = context->instance->settings->ColorDepth;
 	}
 
 	bitmap->Decompress(context, bitmap,
@@ -139,7 +139,7 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 	if (cache_bitmap_v3->bitmapData.bpp == 0)
 	{
 		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->color_depth;
+		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->ColorDepth;
 	}
 
 	bitmap->Decompress(context, bitmap,

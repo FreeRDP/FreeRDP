@@ -35,7 +35,7 @@
 
 struct _RDP_PLUGIN_DATA
 {
-	UINT16 size;
+	DWORD size;
 	void* data[4];
 };
 typedef struct _RDP_PLUGIN_DATA RDP_PLUGIN_DATA;

@@ -481,14 +481,14 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 		return FALSE;
 
 	stream_read_UINT32(s, version); /* version */
-	settings->rdp_version = (version == RDP_VERSION_4 ? 4 : 7);
+	settings->RdpVersion = (version == RDP_VERSION_4 ? 4 : 7);
 
-	stream_read_UINT16(s, settings->width); /* desktopWidth */
-	stream_read_UINT16(s, settings->height); /* desktopHeight */
-	stream_read_UINT16(s, colorDepth); /* colorDepth */
+	stream_read_UINT16(s, settings->DesktopWidth); /* DesktopWidth */
+	stream_read_UINT16(s, settings->DesktopHeight); /* DesktopHeight */
+	stream_read_UINT16(s, colorDepth); /* ColorDepth */
 	stream_seek_UINT16(s); /* SASSequence (Secure Access Sequence) */
-	stream_read_UINT32(s, settings->kbd_layout); /* keyboardLayout */
-	stream_read_UINT32(s, settings->client_build); /* clientBuild */
+	stream_read_UINT32(s, settings->KeyboardLayout); /* KeyboardLayout */
+	stream_read_UINT32(s, settings->ClientBuild); /* ClientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
@@ -497,9 +497,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	settings->client_hostname[31] = 0;
 	free(str);
 
-	stream_read_UINT32(s, settings->kbd_type); /* keyboardType */
-	stream_read_UINT32(s, settings->kbd_subtype); /* keyboardSubType */
-	stream_read_UINT32(s, settings->kbd_fn_keys); /* keyboardFunctionKey */
+	stream_read_UINT32(s, settings->KeyboardType); /* KeyboardType */
+	stream_read_UINT32(s, settings->KeyboardSubType); /* KeyboardSubType */
+	stream_read_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey */
 
 	stream_seek(s, 64); /* imeFileName */
 
@@ -573,7 +573,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	} while (0);
 
 	if (highColorDepth > 0)
+	{
 		color_depth = highColorDepth;
+	}
 	else if (postBeta2ColorDepth > 0)
 	{
 		switch (postBeta2ColorDepth)
@@ -616,8 +618,8 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
-	if (color_depth < settings->color_depth || !settings->server_mode)
-		settings->color_depth = color_depth;
+	if (color_depth < settings->ColorDepth || !settings->server_mode)
+		settings->ColorDepth = color_depth;
 
 	return TRUE;
 }
@@ -643,18 +645,18 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
-	version = settings->rdp_version >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
+	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
 	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->client_hostname, &clientName, 0);
 	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->client_product_id, &clientDigProductId, 0);
 
-	stream_write_UINT32(s, version); /* version */
-	stream_write_UINT16(s, settings->width); /* desktopWidth */
-	stream_write_UINT16(s, settings->height); /* desktopHeight */
-	stream_write_UINT16(s, RNS_UD_COLOR_8BPP); /* colorDepth, ignored because of postBeta2ColorDepth */
+	stream_write_UINT32(s, version); /* Version */
+	stream_write_UINT16(s, settings->DesktopWidth); /* DesktopWidth */
+	stream_write_UINT16(s, settings->DesktopHeight); /* DesktopHeight */
+	stream_write_UINT16(s, RNS_UD_COLOR_8BPP); /* ColorDepth, ignored because of postBeta2ColorDepth */
 	stream_write_UINT16(s, RNS_UD_SAS_DEL);	/* SASSequence (Secure Access Sequence) */
-	stream_write_UINT32(s, settings->kbd_layout); /* keyboardLayout */
-	stream_write_UINT32(s, settings->client_build); /* clientBuild */
+	stream_write_UINT32(s, settings->KeyboardLayout); /* KeyboardLayout */
+	stream_write_UINT32(s, settings->ClientBuild); /* ClientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 
@@ -668,9 +670,9 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
 	free(clientName);
 
-	stream_write_UINT32(s, settings->kbd_type); /* keyboardType */
-	stream_write_UINT32(s, settings->kbd_subtype); /* keyboardSubType */
-	stream_write_UINT32(s, settings->kbd_fn_keys); /* keyboardFunctionKey */
+	stream_write_UINT32(s, settings->KeyboardType); /* KeyboardType */
+	stream_write_UINT32(s, settings->KeyboardSubType); /* KeyboardSubType */
+	stream_write_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey */
 
 	stream_write_zero(s, 64); /* imeFileName */
 
@@ -678,14 +680,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_UINT16(s, 1); /* clientProductID */
 	stream_write_UINT32(s, 0); /* serialNumber (should be initialized to 0) */
 
-	highColorDepth = MIN(settings->color_depth, 24);
+	highColorDepth = MIN(settings->ColorDepth, 24);
 
 	supportedColorDepths =
 			RNS_UD_24BPP_SUPPORT |
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;
 
-	connectionType = settings->connection_type;
+	connectionType = settings->ConnectionType;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
 	if (settings->rfx_codec)
@@ -694,7 +696,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	if (connectionType != 0)
 		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 
-	if (settings->color_depth == 32)
+	if (settings->ColorDepth == 32)
 	{
 		supportedColorDepths |= RNS_UD_32BPP_SUPPORT;
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
@@ -730,10 +732,10 @@ BOOL gcc_read_server_core_data(STREAM* s, rdpSettings* settings)
 	stream_read_UINT32(s, version); /* version */
 	stream_read_UINT32(s, clientRequestedProtocols); /* clientRequestedProtocols */
 
-	if (version == RDP_VERSION_4 && settings->rdp_version > 4)
-		settings->rdp_version = 4;
-	else if (version == RDP_VERSION_5_PLUS && settings->rdp_version < 5)
-		settings->rdp_version = 7;
+	if (version == RDP_VERSION_4 && settings->RdpVersion > 4)
+		settings->RdpVersion = 4;
+	else if (version == RDP_VERSION_5_PLUS && settings->RdpVersion < 5)
+		settings->RdpVersion = 7;
 
 	return TRUE;
 }
@@ -742,7 +744,7 @@ void gcc_write_server_core_data(STREAM* s, rdpSettings* settings)
 {
 	gcc_write_user_data_header(s, SC_CORE, 12);
 
-	stream_write_UINT32(s, settings->rdp_version == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
+	stream_write_UINT32(s, settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
 	stream_write_UINT32(s, settings->requested_protocols); /* clientRequestedProtocols */
 }
 

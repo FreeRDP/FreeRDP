@@ -50,7 +50,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
+				bitmap->width, bitmap->height, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
 
 		if (bitmap->ephemeral != TRUE)
 		{
@@ -338,12 +338,12 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	xfInfo* xfi = context_->xfi;
 
 	bgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
 
 	fgcolor = (xfi->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, context_->settings->color_depth, xfi->bpp, xfi->clrconv);
+		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
