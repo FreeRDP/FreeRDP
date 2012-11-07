@@ -28,9 +28,9 @@
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	client->context->rdp->settings->server_mode = TRUE;
+	client->context->rdp->settings->ServerMode = TRUE;
 	client->context->rdp->settings->FrameAcknowledge = 0;
-	client->context->rdp->settings->local = client->local;
+	client->context->rdp->settings->LocalConnection = client->local;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
 
 	if (client->context->rdp->settings->RdpKeyFile != NULL)
@@ -194,7 +194,7 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			return FALSE;
 
-		client->settings->pdu_source = pduSource;
+		client->settings->PduSource = pduSource;
 
 		switch (pduType)
 		{

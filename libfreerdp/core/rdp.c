@@ -227,7 +227,7 @@ BOOL rdp_read_header(rdpRdp* rdp, STREAM* s, UINT16* length, UINT16* channel_id)
 	UINT16 initiator;
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
+	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest : DomainMCSPDU_SendDataIndication;
 
 	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, length))
 	{
@@ -274,7 +274,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, UINT16 length, UINT16 channel_id)
 	int body_length;
 	enum DomainMCSPDU MCSPDU;
 
-	MCSPDU = (rdp->settings->server_mode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
+	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
 
 	if ((rdp->sec_flags & SEC_ENCRYPT) && (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS))
 	{
@@ -453,7 +453,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, BYTE type, UINT16 channel_id)
 	stream_seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
-	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->share_id);
+	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId);
 
 	s->p = sec_hold;
 	length += RdpSecurity_stream_out(rdp, s, length);
@@ -752,7 +752,7 @@ static BOOL rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 			rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource);
 			nextp += pduLength;
 
-			rdp->settings->pdu_source = pduSource;
+			rdp->settings->PduSource = pduSource;
 
 			switch (pduType)
 			{

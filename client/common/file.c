@@ -508,7 +508,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->ServerPort)
 		settings->ServerPort = file->ServerPort;
 	if (~((size_t) file->FullAddress))
-		settings->Hostname = file->FullAddress;
+		settings->ServerHostname = file->FullAddress;
 	if (~file->DesktopWidth)
 		settings->DesktopWidth = file->DesktopWidth;
 	if (~file->DesktopHeight)

@@ -467,7 +467,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
 			client->settings->OsMajorType, client->settings->OsMinorType);
 
-	if (client->settings->autologon)
+	if (client->settings->AutoLogonEnabled)
 	{
 		printf(" and wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",

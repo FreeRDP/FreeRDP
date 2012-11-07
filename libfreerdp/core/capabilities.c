@@ -117,7 +117,7 @@ void rdp_read_general_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 	BYTE refreshRectSupport;
 	BYTE suppressOutputSupport;
 
-	if (settings->server_mode)
+	if (settings->ServerMode)
 	{
 		stream_read_UINT16(s, settings->OsMajorType); /* osMajorType (2 bytes) */
 		stream_read_UINT16(s, settings->OsMinorType); /* osMinorType (2 bytes) */
@@ -138,7 +138,7 @@ void rdp_read_general_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 	stream_read_BYTE(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
 
 	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
-		settings->FastpathOutput = FALSE;
+		settings->FastPathOutput = FALSE;
 
 	if (refreshRectSupport == FALSE)
 		settings->RefreshRect = FALSE;
@@ -166,7 +166,7 @@ void rdp_write_general_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->AutoReconnectionEnabled)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
 
-	if (settings->FastpathOutput)
+	if (settings->FastPathOutput)
 		extraFlags |= FASTPATH_OUTPUT_SUPPORTED;
 
 	if (settings->SaltedChecksum)
@@ -216,7 +216,7 @@ void rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	stream_seek_UINT16(s); /* multipleRectangleSupport (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
 
-	if (!settings->server_mode && preferredBitsPerPixel != settings->ColorDepth)
+	if (!settings->ServerMode && preferredBitsPerPixel != settings->ColorDepth)
 	{
 		/* The client must respect the actual color depth used by the server */
 		settings->ColorDepth = preferredBitsPerPixel;
@@ -225,7 +225,7 @@ void rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	if (desktopResizeFlag == FALSE)
 		settings->DesktopResize = FALSE;
 
-	if (!settings->server_mode && settings->DesktopResize)
+	if (!settings->ServerMode && settings->DesktopResize)
 	{
 		/* The server may request a different desktop size during Deactivation-Reactivation sequence */
 		settings->DesktopWidth = desktopWidth;
@@ -342,7 +342,7 @@ void rdp_write_order_capability_set(STREAM* s, rdpSettings* settings)
 		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
 	}
 
-	if (settings->FrameMarkerEnabled)
+	if (settings->FrameMarkerCommandEnabled)
 	{
 		orderSupportExFlags |= ALTSEC_FRAME_MARKER_SUPPORT;
 		orderFlags |= ORDER_FLAGS_EXTRA_SUPPORT;
@@ -521,9 +521,9 @@ void rdp_read_pointer_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 	stream_read_UINT16(s, pointerCacheSize); /* pointerCacheSize (2 bytes) */
 
 	if (colorPointerFlag == FALSE)
-		settings->ColorPointer = FALSE;
+		settings->ColorPointerFlag = FALSE;
 
-	if (settings->server_mode)
+	if (settings->ServerMode)
 	{
 		settings->PointerCacheSize = pointerCacheSize;
 	}
@@ -543,12 +543,12 @@ void rdp_write_pointer_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	colorPointerFlag = (settings->ColorPointer) ? 1 : 0;
+	colorPointerFlag = (settings->ColorPointerFlag) ? 1 : 0;
 
 	stream_write_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	stream_write_UINT16(s, settings->PointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 
-	if (settings->LargePointer)
+	if (settings->LargePointerFlag)
 	{
 		stream_write_UINT16(s, settings->PointerCacheSize); /* pointerCacheSize (2 bytes) */
 	}
@@ -583,7 +583,7 @@ void rdp_write_share_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	nodeId = (settings->server_mode) ? 0x03EA : 0;
+	nodeId = (settings->ServerMode) ? 0x03EA : 0;
 
 	stream_write_UINT16(s, nodeId); /* nodeId (2 bytes) */
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
@@ -676,7 +676,7 @@ void rdp_read_input_capability_set(STREAM* s, UINT16 length, rdpSettings* settin
 	stream_read_UINT16(s, inputFlags); /* inputFlags (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 
-	if (settings->server_mode)
+	if (settings->ServerMode)
 	{
 		stream_read_UINT32(s, settings->KeyboardLayout); /* keyboardLayout (4 bytes) */
 		stream_read_UINT32(s, settings->KeyboardType); /* keyboardType (4 bytes) */
@@ -693,7 +693,7 @@ void rdp_read_input_capability_set(STREAM* s, UINT16 length, rdpSettings* settin
 
 	stream_seek(s, 64); /* imeFileName (64 bytes) */
 
-	if (settings->server_mode != TRUE)
+	if (settings->ServerMode != TRUE)
 	{
 		if (inputFlags & INPUT_FLAG_FASTPATH_INPUT)
 		{
@@ -706,7 +706,7 @@ void rdp_read_input_capability_set(STREAM* s, UINT16 length, rdpSettings* settin
 		else
 		{
 			/* server does not support fastpath input */
-			settings->FastpathInput = FALSE;
+			settings->FastPathInput = FALSE;
 		}
 	}
 }
@@ -727,7 +727,7 @@ void rdp_write_input_capability_set(STREAM* s, rdpSettings* settings)
 
 	inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_MOUSEX | INPUT_FLAG_UNICODE;
 
-	if (settings->FastpathInput)
+	if (settings->FastPathInput)
 	{
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT;
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT2;
@@ -896,11 +896,11 @@ void rdp_read_offscreen_bitmap_cache_capability_set(STREAM* s, UINT16 length, rd
 	UINT32 offscreenSupportLevel;
 
 	stream_read_UINT32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
-	stream_read_UINT16(s, settings->OffscreenBitmapCacheSize); /* offscreenCacheSize (2 bytes) */
-	stream_read_UINT16(s, settings->OffscreenBitmapCacheEntries); /* offscreenCacheEntries (2 bytes) */
+	stream_read_UINT16(s, settings->OffscreenCacheSize); /* offscreenCacheSize (2 bytes) */
+	stream_read_UINT16(s, settings->OffscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
 
 	if (offscreenSupportLevel & TRUE)
-		settings->OffscreenBitmapCacheEnabled = TRUE;
+		settings->OffscreenSupportLevel = TRUE;
 }
 
 /**
@@ -917,12 +917,12 @@ void rdp_write_offscreen_bitmap_cache_capability_set(STREAM* s, rdpSettings* set
 
 	header = rdp_capability_set_start(s);
 
-	if (settings->OffscreenBitmapCacheEnabled)
+	if (settings->OffscreenSupportLevel)
 		offscreenSupportLevel = TRUE;
 
 	stream_write_UINT32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
-	stream_write_UINT16(s, settings->OffscreenBitmapCacheSize); /* offscreenCacheSize (2 bytes) */
-	stream_write_UINT16(s, settings->OffscreenBitmapCacheEntries); /* offscreenCacheEntries (2 bytes) */
+	stream_write_UINT16(s, settings->OffscreenCacheSize); /* offscreenCacheSize (2 bytes) */
+	stream_write_UINT16(s, settings->OffscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_OFFSCREEN_CACHE);
 }
@@ -1050,7 +1050,7 @@ void rdp_read_virtual_channel_capability_set(STREAM* s, UINT16 length, rdpSettin
 	else
 		VCChunkSize = 1600;
 
-	if (settings->server_mode != TRUE)
+	if (settings->ServerMode != TRUE)
 		settings->VirtualChannelChunkSize = VCChunkSize;
 }
 
@@ -1370,7 +1370,7 @@ void rdp_write_large_pointer_capability_set(STREAM* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	largePointerSupportFlags = (settings->LargePointer) ? LARGE_POINTER_FLAG_96x96 : 0;
+	largePointerSupportFlags = (settings->LargePointerFlag) ? LARGE_POINTER_FLAG_96x96 : 0;
 
 	stream_write_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
 
@@ -1430,7 +1430,7 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 
 	stream_read_BYTE(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 
-	if (settings->server_mode)
+	if (settings->ServerMode)
 	{
 		settings->RemoteFxCodec = FALSE;
 		settings->NSCodec = FALSE;
@@ -1439,13 +1439,13 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 
 	while (bitmapCodecCount > 0)
 	{
-		if (settings->server_mode && strncmp((char*)stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
+		if (settings->ServerMode && strncmp((char*)stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
 		{
 			stream_seek(s, 16); /* codecGUID (16 bytes) */
 			stream_read_BYTE(s, settings->RemoteFxCodecId);
 			settings->RemoteFxCodec = TRUE;
 		}
-		else if (settings->server_mode && strncmp((char*)stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
+		else if (settings->ServerMode && strncmp((char*)stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
 		{
 			stream_seek(s, 16); /*codec GUID (16 bytes) */
 			stream_read_BYTE(s, settings->NSCodecId);
@@ -1592,7 +1592,7 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	{
 		stream_write(s, CODEC_GUID_REMOTEFX, 16); /* codecGUID */
 
-		if (settings->server_mode)
+		if (settings->ServerMode)
 		{
 			stream_write_BYTE(s, 0); /* codecID is defined by the client */
 			rdp_write_rfx_server_capability_container(s, settings);
@@ -1606,7 +1606,7 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->NSCodec)
 	{
 		stream_write(s, CODEC_GUID_NSCODEC, 16);
-		if (settings->server_mode)
+		if (settings->ServerMode)
 		{
 			stream_write_BYTE(s, 0); /* codecID is defined by the client */
 			rdp_write_nsc_server_capability_container(s, settings);
@@ -1620,7 +1620,7 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	if (settings->JpegCodec)
 	{
 		stream_write(s, CODEC_GUID_JPEG, 16);
-		if (settings->server_mode)
+		if (settings->ServerMode)
 		{
 			stream_write_BYTE(s, 0); /* codecID is defined by the client */
 			rdp_write_jpeg_server_capability_container(s, settings);
@@ -1642,7 +1642,7 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 
 void rdp_read_frame_acknowledge_capability_set(STREAM* s, UINT16 length, rdpSettings* settings)
 {
-	if (settings->server_mode)
+	if (settings->ServerMode)
 	{
 		stream_read_UINT32(s, settings->FrameAcknowledge); /* (4 bytes) */
 	}
@@ -1886,7 +1886,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	rdp->settings->pdu_source = pduSource;
+	rdp->settings->PduSource = pduSource;
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
@@ -1894,7 +1894,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	stream_read_UINT32(s, rdp->settings->share_id); /* shareId (4 bytes) */
+	stream_read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 	stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
@@ -1919,7 +1919,7 @@ void rdp_write_demand_active(STREAM* s, rdpSettings* settings)
 	UINT16 numberCapabilities;
 	UINT16 lengthCombinedCapabilities;
 
-	stream_write_UINT32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_write_UINT32(s, settings->ShareId); /* shareId (4 bytes) */
 	stream_write_UINT16(s, 4); /* lengthSourceDescriptor (2 bytes) */
 
 	stream_get_mark(s, lm);
@@ -1972,7 +1972,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 	s = rdp_pdu_init(rdp);
 
-	rdp->settings->share_id = 0x10000 + rdp->mcs->user_id;
+	rdp->settings->ShareId = 0x10000 + rdp->mcs->user_id;
 
 	rdp_write_demand_active(s, rdp->settings);
 
@@ -2015,7 +2015,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 		return FALSE;
 
-	rdp->settings->pdu_source = pduSource;
+	rdp->settings->PduSource = pduSource;
 
 	if (pduType != PDU_TYPE_CONFIRM_ACTIVE)
 		return FALSE;
@@ -2043,7 +2043,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 
 	lengthSourceDescriptor = sizeof(SOURCE_DESCRIPTOR);
 
-	stream_write_UINT32(s, settings->share_id); /* shareId (4 bytes) */
+	stream_write_UINT32(s, settings->ShareId); /* shareId (4 bytes) */
 	stream_write_UINT16(s, 0x03EA); /* originatorId (2 bytes) */
 	stream_write_UINT16(s, lengthSourceDescriptor);/* lengthSourceDescriptor (2 bytes) */
 
@@ -2078,7 +2078,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 	rdp_write_color_cache_capability_set(s, settings);
 	rdp_write_window_activation_capability_set(s, settings);
 
-	if (settings->OffscreenBitmapCacheEnabled)
+	if (settings->OffscreenSupportLevel)
 	{
 		numberCapabilities++;
 		rdp_write_offscreen_bitmap_cache_capability_set(s, settings);
@@ -2092,7 +2092,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 
 	if (settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
 	{
-		if (settings->LargePointer)
+		if (settings->LargePointerFlag)
 		{
 			numberCapabilities++;
 			rdp_write_large_pointer_capability_set(s, settings);

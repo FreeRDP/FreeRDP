@@ -55,23 +55,23 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		xfi->workArea.height = HeightOfScreen(xfi->screen);
 	}
 
-	if (settings->fullscreen)
+	if (settings->Fullscreen)
 	{
 		settings->DesktopWidth = WidthOfScreen(xfi->screen);
 		settings->DesktopHeight = HeightOfScreen(xfi->screen);
 	}
-	else if (settings->workarea)
+	else if (settings->Workarea)
 	{
 		settings->DesktopWidth = xfi->workArea.width;
 		settings->DesktopHeight = xfi->workArea.height;
 	}
-	else if (settings->percent_screen)
+	else if (settings->PercentScreen)
 	{
-		settings->DesktopWidth = (xfi->workArea.width * settings->percent_screen) / 100;
-		settings->DesktopHeight = (xfi->workArea.height * settings->percent_screen) / 100;
+		settings->DesktopWidth = (xfi->workArea.width * settings->PercentScreen) / 100;
+		settings->DesktopHeight = (xfi->workArea.height * settings->PercentScreen) / 100;
 	}
 
-	if (settings->fullscreen != TRUE && settings->workarea != TRUE)
+	if (settings->Fullscreen != TRUE && settings->Workarea != TRUE)
 		return TRUE;
 
 #ifdef WITH_XINERAMA

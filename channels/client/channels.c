@@ -1241,7 +1241,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	struct lib_data* llib;
 
 	channels->is_connected = 1;
-	hostname = instance->settings->Hostname;
+	hostname = instance->settings->ServerHostname;
 	hostname_len = strlen(hostname);
 
 	DEBUG_CHANNELS("hostname [%s] channels->num_libs [%d]", Hostname, channels->num_libs_data);

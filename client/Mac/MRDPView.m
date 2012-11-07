@@ -1051,7 +1051,7 @@ BOOL mac_pre_connect(freerdp *inst)
     inst->settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = FALSE;
     inst->settings->order_support[NEG_POLYLINE_INDEX] = FALSE;
     inst->settings->color_depth = 24;
-    inst->settings->sw_gdi = 1;
+    inst->settings->SoftwareGdi = 1;
     
     // setup callbacks
     inst->update->BeginPaint = mac_begin_paint;

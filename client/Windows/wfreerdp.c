@@ -198,9 +198,9 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	wfi->cursor = g_default_cursor;
 
-	wfi->fullscreen = settings->fullscreen;
+	wfi->fullscreen = settings->Fullscreen;
 	wfi->fs_toggle = wfi->fullscreen;
-	wfi->sw_gdi = settings->sw_gdi;
+	wfi->sw_gdi = settings->SoftwareGdi;
 
 	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
 	wfi->clrconv->palette = NULL;
@@ -341,12 +341,12 @@ BOOL wf_post_connect(freerdp* instance)
 			wfi->nsc_context = nsc_context_new();
 	}
 
-	if (settings->window_title != NULL)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->window_title);
+	if (settings->WindowTitle != NULL)
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->Hostname);
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->ServerHostname);
 	else
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->Hostname, settings->ServerPort);
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
 	if (wfi->hwnd == 0)
 	{

@@ -664,7 +664,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
 	totalLength = stream_get_length(s) - (6 + sec_bytes);
 	stream_set_pos(s, 0);
 	update = stream_new(0);
-	try_comp = rdp->settings->compression;
+	try_comp = rdp->settings->CompressionEnabled;
 	comp_update = stream_new(0);
 
 	for (fragment = 0; totalLength > 0 || fragment == 0; fragment++)

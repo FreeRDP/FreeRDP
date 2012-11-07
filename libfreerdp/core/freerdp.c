@@ -83,7 +83,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	status = rdp_client_connect(rdp);
 	/* --authonly tests the connection without a UI */
-	if (instance->settings->authentication_only)
+	if (instance->settings->AuthenticationOnly)
 	{
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		return status;

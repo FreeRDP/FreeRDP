@@ -836,7 +836,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = TRUE;
 
-			if (!settings->local)
+			if (!settings->LocalConnection)
 			{
 				settings->Encryption = TRUE;
 				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;

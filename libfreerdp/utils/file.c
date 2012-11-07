@@ -86,34 +86,34 @@ BOOL freerdp_check_file_exists(char* file)
 
 char* freerdp_get_home_path(rdpSettings* settings)
 {
-	if (settings->home_path == NULL)
-		settings->home_path = getenv(HOME_ENV_VARIABLE);
-	if (settings->home_path == NULL)
-		settings->home_path = _strdup("/");
+	if (settings->HomePath == NULL)
+		settings->HomePath = getenv(HOME_ENV_VARIABLE);
+	if (settings->HomePath == NULL)
+		settings->HomePath = _strdup("/");
 
-	return settings->home_path;
+	return settings->HomePath;
 }
 
 char* freerdp_get_config_path(rdpSettings* settings)
 {
-	if (settings->config_path != NULL)
-		return settings->config_path;
+	if (settings->ConfigPath != NULL)
+		return settings->ConfigPath;
 
-	settings->config_path = (char*) malloc(strlen(settings->home_path) + sizeof(FREERDP_CONFIG_DIR) + 2);
-	sprintf(settings->config_path, "%s" PATH_SEPARATOR_STR "%s", settings->home_path, FREERDP_CONFIG_DIR);
+	settings->ConfigPath = (char*) malloc(strlen(settings->HomePath) + sizeof(FREERDP_CONFIG_DIR) + 2);
+	sprintf(settings->ConfigPath, "%s" PATH_SEPARATOR_STR "%s", settings->HomePath, FREERDP_CONFIG_DIR);
 
-	if (!freerdp_check_file_exists(settings->config_path))
-		freerdp_mkdir(settings->config_path);
+	if (!freerdp_check_file_exists(settings->ConfigPath))
+		freerdp_mkdir(settings->ConfigPath);
 
-	return settings->config_path;
+	return settings->ConfigPath;
 }
 
 char* freerdp_get_current_path(rdpSettings* settings)
 {
-	if (settings->current_path == NULL)
-		settings->current_path = getcwd(NULL, 0);
+	if (settings->CurrentPath == NULL)
+		settings->CurrentPath = getcwd(NULL, 0);
 
-	return settings->current_path;
+	return settings->CurrentPath;
 }
 
 char* freerdp_construct_path(char* base_path, char* relative_path)
@@ -216,54 +216,8 @@ BOOL freerdp_path_contains_separator(char* path)
 	return TRUE;
 }
 
-/* detects if we are running from the source tree */
-
-BOOL freerdp_detect_development_mode(rdpSettings* settings)
-{
-	int depth = 0;
-	char* current_path;
-	char* development_path = NULL;
-	BOOL development_mode = FALSE;
-
-	if (freerdp_check_file_exists(".git"))
-	{
-		depth = 0;
-		development_mode = TRUE;
-	}
-	else if (freerdp_check_file_exists(PARENT_PATH ".git"))
-	{
-		depth = 1;
-		development_mode = TRUE;
-	}
-	else if (freerdp_check_file_exists(PARENT_PATH PARENT_PATH ".git"))
-	{
-		depth = 2;
-		development_mode = TRUE;
-	}
-
-	current_path = freerdp_get_current_path(settings);
-
-	if (development_mode)
-		development_path = freerdp_get_parent_path(current_path, depth);
-
-	settings->development_mode = development_mode;
-	settings->development_path = development_path;
-
-	return settings->development_mode;
-}
-
 void freerdp_detect_paths(rdpSettings* settings)
 {
 	freerdp_get_home_path(settings);
 	freerdp_get_config_path(settings);
-	freerdp_detect_development_mode(settings);
-
-#if 0
-	printf("home path: %s\n", settings->home_path);
-	printf("config path: %s\n", settings->config_path);
-	printf("current path: %s\n", settings->current_path);
-
-	if (settings->development_mode)
-		printf("development path: %s\n", settings->development_path);
-#endif
 }

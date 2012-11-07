@@ -53,9 +53,9 @@ void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
 	{
 		/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-		settings->Hostname = _strdup(hostname + 1);
+		settings->ServerHostname = _strdup(hostname + 1);
 
-		if ((p = strchr((char*)settings->Hostname, ']')))
+		if ((p = strchr((char*) settings->ServerHostname, ']')))
 		{
 			*p = 0;
 
@@ -66,9 +66,9 @@ void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 	else
 	{
 		/* Port number is cut off and used if exactly one : in the string */
-		settings->Hostname = _strdup(hostname);
+		settings->ServerHostname = _strdup(hostname);
 
-		if ((p = strchr((char*)settings->Hostname, ':')) && !strchr(p + 1, ':'))
+		if ((p = strchr((char*)settings->ServerHostname, ':')) && !strchr(p + 1, ':'))
 		{
 			*p = 0;
 			settings->ServerPort = atoi(p + 1);
@@ -213,7 +213,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 			settings->Password = _strdup(argv[index]);
-			settings->autologon = 1;
+			settings->AutoLogonEnabled = TRUE;
 
 			/*
 			 * Overwrite original password which could be revealed by a simple "ps aux" command.
@@ -263,7 +263,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (strncmp("workarea", argv[index], 1) == 0)
 			{
-				settings->workarea = TRUE;
+				settings->Workarea = TRUE;
 			}
 			else
 			{
@@ -275,9 +275,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				}
 				if (*p == '%')
 				{
-					settings->percent_screen = settings->DesktopWidth;
+					settings->PercentScreen = settings->DesktopWidth;
 
-					if (settings->percent_screen <= 0 || settings->percent_screen > 100)
+					if (settings->PercentScreen <= 0 || settings->PercentScreen > 100)
 					{
 						printf("invalid geometry percentage\n");
 						return FREERDP_ARGS_PARSE_FAILURE;
@@ -292,11 +292,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-f", argv[index]) == 0)
 		{
-			settings->fullscreen = TRUE;
+			settings->Fullscreen = TRUE;
 		}
 		else if (strcmp("-D", argv[index]) == 0)
 		{
-			settings->decorations = FALSE;
+			settings->Decorations = FALSE;
 		}
 		else if (strcmp("-T", argv[index]) == 0)
 		{
@@ -307,7 +307,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->window_title = _strdup(argv[index]);
+			settings->WindowTitle = _strdup(argv[index]);
 		}
 		else if (strcmp("-t", argv[index]) == 0)
 		{
@@ -331,7 +331,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-K", argv[index]) == 0)
 		{
-			settings->grab_keyboard = FALSE;
+			settings->GrabKeyboard = FALSE;
 		}
 		else if (strcmp("-n", argv[index]) == 0)
 		{
@@ -346,7 +346,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
-			settings->ConsoleAudio = TRUE;
+			settings->RemoteConsoleAudio = TRUE;
 		}
 		else if (strcmp("-0", argv[index]) == 0)
 		{
@@ -354,7 +354,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("-z", argv[index]) == 0)
 		{
-			settings->compression = TRUE;
+			settings->CompressionEnabled = TRUE;
 		}
 		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
@@ -362,7 +362,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
-			settings->OffscreenBitmapCacheEnabled = FALSE;
+			settings->OffscreenSupportLevel = FALSE;
 		}
 		else if (strcmp("--no-bmp-cache", argv[index]) == 0)
 		{
@@ -374,11 +374,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--authonly", argv[index]) == 0)
 		{
-			settings->authentication_only = TRUE;
+			settings->AuthenticationOnly = TRUE;
 		}
 		else if (strcmp("--from-stdin", argv[index]) == 0)
 		{
-			settings->from_stdin = TRUE;
+			settings->CredentialsFromStdin = TRUE;
 		}
 		else if (strcmp("--ignore-certificate", argv[index]) == 0)
 		{
@@ -397,8 +397,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
-			settings->FastpathInput = FALSE;
-			settings->FastpathOutput = FALSE;
+			settings->FastPathInput = FALSE;
+			settings->FastPathOutput = FALSE;
 		}
 		else if (strcmp("--gdi", argv[index]) == 0)
 		{
@@ -410,11 +410,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (strncmp("sw", argv[index], 1) == 0) /* software */
 			{
-				settings->sw_gdi = TRUE;
+				settings->SoftwareGdi = TRUE;
 			}
 			else if (strncmp("hw", argv[index], 1) == 0) /* hardware */
 			{
-				settings->sw_gdi = FALSE;
+				settings->SoftwareGdi = FALSE;
 			}
 			else
 			{
@@ -480,10 +480,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
 			settings->RemoteFxCodec = TRUE;
-			settings->FastpathOutput = TRUE;
+			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
 			settings->PerformanceFlags = PERF_FLAG_NONE;
-			settings->LargePointer = TRUE;
+			settings->LargePointerFlag = TRUE;
 		}
 		else if (strcmp("--rfx-mode", argv[index]) == 0)
 		{
@@ -570,13 +570,13 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
-			settings->mouse_motion = FALSE;
+			settings->MouseMotion = FALSE;
 		}
 		else if (strcmp("--app", argv[index]) == 0)
 		{
 			settings->RemoteApplicationMode = TRUE;
 			settings->RemoteAppLanguageBarSupported = TRUE;
-			settings->workarea = TRUE;
+			settings->Workarea = TRUE;
 			settings->PerformanceFlags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
@@ -620,9 +620,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->parent_window_xid = strtol(argv[index], NULL, 0);
+			settings->ParentWindowId = strtol(argv[index], NULL, 0);
 
-			if (settings->parent_window_xid == 0)
+			if (settings->ParentWindowId == 0)
 			{
 				printf("invalid parent window XID\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
@@ -876,7 +876,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		 You can prompt for username, password, domain and hostname to avoid disclosing
 		 these settings to ps. */
 
-	if (settings->from_stdin)
+	if (settings->CredentialsFromStdin)
 	{
 		/* username */
 		if (NULL == settings->Username)
@@ -895,7 +895,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			settings->Password = malloc(512 * sizeof(char));
 			if (isatty(STDIN_FILENO))
 			{
-				freerdp_passphrase_read("password: ", settings->Password, 512, settings->from_stdin);
+				freerdp_passphrase_read("password: ", settings->Password, 512, settings->CredentialsFromStdin);
 			}
 			else
 			{
@@ -929,7 +929,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 		}
 		/* hostname */
-		if (NULL == settings->Hostname)
+		if (settings->ServerHostname == NULL)
 		{
 			char input[512];
 			input[0] = '\0';
@@ -942,7 +942,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	}
 
 	/* Must have a hostname. Do you? */
-	if ((settings->Hostname == NULL) && (settings->ConnectionFile == NULL))
+	if ((settings->ServerHostname == NULL) && (settings->ConnectionFile == NULL))
 	{
 		printf("missing server name\n");
 		return FREERDP_ARGS_PARSE_FAILURE;

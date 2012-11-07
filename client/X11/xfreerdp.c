@@ -312,19 +312,19 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.bit_gravity = NorthWestGravity;
 	xfi->attribs.win_gravity = NorthWestGravity;
 
-	if (xfi->instance->settings->window_title != NULL)
+	if (xfi->instance->settings->WindowTitle != NULL)
 	{
-		win_title = _strdup(xfi->instance->settings->window_title);
+		win_title = _strdup(xfi->instance->settings->WindowTitle);
 	}
 	else if (xfi->instance->settings->ServerPort == 3389)
 	{
-		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->Hostname));
-		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->Hostname);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->ServerHostname));
+		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->ServerHostname);
 	}
 	else
 	{
-		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->Hostname) + sizeof(":00000"));
-		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->Hostname, xfi->instance->settings->ServerPort);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->ServerHostname) + sizeof(":00000"));
+		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->ServerHostname, xfi->instance->settings->ServerPort);
 	}
 
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
@@ -563,7 +563,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
 
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? TRUE : FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
 
 	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
 	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
@@ -572,15 +572,15 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
 
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
 
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
-	if (settings->authentication_only)
+	if (settings->AuthenticationOnly)
 	{
 		/* Check --authonly has a username and password. */
 		if (settings->Username == NULL )
@@ -648,14 +648,14 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
-	xfi->mouse_motion = settings->mouse_motion;
+	xfi->mouse_motion = settings->MouseMotion;
 	xfi->complex_regions = TRUE;
-	xfi->decorations = settings->decorations;
-	xfi->fullscreen = settings->fullscreen;
-	xfi->grab_keyboard = settings->grab_keyboard;
+	xfi->decorations = settings->Decorations;
+	xfi->fullscreen = settings->Fullscreen;
+	xfi->grab_keyboard = settings->GrabKeyboard;
 	xfi->fullscreen_toggle = TRUE;
-	xfi->sw_gdi = settings->sw_gdi;
-	xfi->parent_window = (Window) settings->parent_window_xid;
+	xfi->sw_gdi = settings->SoftwareGdi;
+	xfi->parent_window = (Window) settings->ParentWindowId;
 
 	xf_detect_monitors(xfi, settings);
 
@@ -856,7 +856,7 @@ BOOL xf_authenticate(freerdp* instance, char** username, char** password, char**
 	// But it doesn't do anything to fix it...
 	*password = malloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->CredentialsFromStdin) == NULL)
 		return FALSE;
 
 	return TRUE;
@@ -891,7 +891,7 @@ BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 		if (feof(stdin))
 		{
 			printf("\nError: Could not read answer from stdin.");
-			if (instance->settings->from_stdin)
+			if (instance->settings->CredentialsFromStdin)
 				printf(" - Run without parameter \"--from-stdin\" to set trust.");
 			printf("\n");
 			return FALSE;
@@ -1167,7 +1167,7 @@ int xfreerdp_run(freerdp* instance)
 
 	BOOL status = freerdp_connect(instance);
 	/* Connection succeeded. --authonly ? */
-	if (instance->settings->authentication_only) {
+	if (instance->settings->AuthenticationOnly) {
 		freerdp_disconnect(instance);
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		exit(!status);
@@ -1369,7 +1369,7 @@ int main(int argc, char* argv[])
 
 	instance->context->argc = argc;
 	instance->context->argv = argv;
-	instance->settings->sw_gdi = FALSE;
+	instance->settings->SoftwareGdi = FALSE;
 
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

@@ -136,10 +136,10 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->PublicKeyLength);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->tls->PublicKey, credssp->tls->PublicKeyLength);
 
-	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->Hostname);
+	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
 	spn = (SEC_CHAR*) malloc(length + 1);
-	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->Hostname);
+	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
 
 #ifdef UNICODE
 	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
@@ -1251,7 +1251,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings)
 
 		credssp->instance = instance;
 		credssp->settings = settings;
-		credssp->server = settings->server_mode;
+		credssp->server = settings->ServerMode;
 		credssp->tls = tls;
 		credssp->send_seq_num = 0;
 		credssp->recv_seq_num = 0;

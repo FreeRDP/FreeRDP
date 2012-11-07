@@ -69,7 +69,7 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopWidth"), dwType, dwValue, dwSize, settings->DesktopWidth);
 		REG_QUERY_DWORD_VALUE(hKey, _T("DesktopHeight"), dwType, dwValue, dwSize, settings->DesktopHeight);
 
-		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->fullscreen);
+		REG_QUERY_BOOL_VALUE(hKey, _T("Fullscreen"), dwType, dwValue, dwSize, settings->Fullscreen);
 		REG_QUERY_DWORD_VALUE(hKey, _T("ColorDepth"), dwType, dwValue, dwSize, settings->ColorDepth);
 
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardType"), dwType, dwValue, dwSize, settings->KeyboardType);
@@ -87,9 +87,9 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 		REG_QUERY_BOOL_VALUE(hKey, _T("BitmapCache"), dwType, dwValue, dwSize, settings->BitmapCacheEnabled);
 
-		REG_QUERY_BOOL_VALUE(hKey, _T("OffscreenBitmapCache"), dwType, dwValue, dwSize, settings->OffscreenBitmapCacheEnabled);
-		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue, dwSize, settings->OffscreenBitmapCacheSize);
-		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue, dwSize, settings->OffscreenBitmapCacheEntries);
+		REG_QUERY_BOOL_VALUE(hKey, _T("OffscreenBitmapCache"), dwType, dwValue, dwSize, settings->OffscreenSupportLevel);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheSize"), dwType, dwValue, dwSize, settings->OffscreenCacheSize);
+		REG_QUERY_DWORD_VALUE(hKey, _T("OffscreenBitmapCacheEntries"), dwType, dwValue, dwSize, settings->OffscreenCacheEntries);
 
 		RegCloseKey(hKey);
 	}
@@ -153,8 +153,8 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		REG_QUERY_BOOL_VALUE(hKey, _T("LargePointer"), dwType, dwValue, dwSize, settings->LargePointer);
-		REG_QUERY_BOOL_VALUE(hKey, _T("ColorPointer"), dwType, dwValue, dwSize, settings->ColorPointer);
+		REG_QUERY_BOOL_VALUE(hKey, _T("LargePointer"), dwType, dwValue, dwSize, settings->LargePointerFlag);
+		REG_QUERY_BOOL_VALUE(hKey, _T("ColorPointer"), dwType, dwValue, dwSize, settings->ColorPointerFlag);
 		REG_QUERY_DWORD_VALUE(hKey, _T("PointerCacheSize"), dwType, dwValue, dwSize, settings->PointerCacheSize);
 
 		RegCloseKey(hKey);
@@ -184,7 +184,7 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 
 void settings_load_hkey_local_machine(rdpSettings* settings)
 {
-	if (settings->server_mode)
+	if (settings->ServerMode)
 		settings_server_load_hkey_local_machine(settings);
 	else
 		settings_client_load_hkey_local_machine(settings);
@@ -214,14 +214,14 @@ rdpSettings* settings_new(void* instance)
 		/* Server instances are NULL */
 
 		if (!settings->instance)
-			settings->server_mode = TRUE;
+			settings->ServerMode = TRUE;
 
 		settings->DesktopWidth = 1024;
 		settings->DesktopHeight = 768;
-		settings->workarea = FALSE;
-		settings->fullscreen = FALSE;
-		settings->grab_keyboard = TRUE;
-		settings->decorations = TRUE;
+		settings->Workarea = FALSE;
+		settings->Fullscreen = FALSE;
+		settings->GrabKeyboard = TRUE;
+		settings->Decorations = TRUE;
 		settings->RdpVersion = 7;
 		settings->ColorDepth = 16;
 		settings->ExtSecurity = FALSE;
@@ -252,8 +252,8 @@ rdpSettings* settings_new(void* instance)
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
 		settings->Authentication = TRUE;
-		settings->authentication_only = FALSE;
-		settings->from_stdin = FALSE;
+		settings->AuthenticationOnly = FALSE;
+		settings->CredentialsFromStdin = FALSE;
 
 		settings_get_computer_name(settings);
 
@@ -290,8 +290,8 @@ rdpSettings* settings_new(void* instance)
 		ZeroMemory(settings->ClientHostname, 32);
 		ZeroMemory(settings->ClientProductId, 32);
 
-		settings->ColorPointer = TRUE;
-		settings->LargePointer = TRUE;
+		settings->ColorPointerFlag = TRUE;
+		settings->LargePointerFlag = TRUE;
 		settings->PointerCacheSize = 20;
 		settings->SoundBeepsEnabled = TRUE;
 		settings->DisableWallpaper = FALSE;
@@ -302,7 +302,7 @@ rdpSettings* settings_new(void* instance)
 
 		settings->DrawGdiPlusEnabled = FALSE;
 
-		settings->FrameMarkerEnabled = FALSE;
+		settings->FrameMarkerCommandEnabled = FALSE;
 		settings->BitmapCacheV3Enabled = FALSE;
 
 		settings->BitmapCacheEnabled = TRUE;
@@ -351,14 +351,14 @@ rdpSettings* settings_new(void* instance)
 		settings->FragCache->cacheEntries = 256;
 		settings->FragCache->cacheMaximumCellSize = 256;
 
-		settings->OffscreenBitmapCacheEnabled = TRUE;
-		settings->OffscreenBitmapCacheSize = 7680;
-		settings->OffscreenBitmapCacheEntries = 2000;
+		settings->OffscreenSupportLevel = TRUE;
+		settings->OffscreenCacheSize = 7680;
+		settings->OffscreenCacheEntries = 2000;
 
 		settings->DrawNineGridCacheSize = 2560;
 		settings->DrawNineGridCacheEntries = 256;
 
-		settings->client_dir = _strdup(client_dll);
+		settings->ClientDir = _strdup(client_dll);
 
 		settings->RemoteAppNumIconCaches = 3;
 		settings->RemoteAppNumIconCacheEntries = 12;
@@ -367,14 +367,14 @@ rdpSettings* settings_new(void* instance)
 
 		settings->MultifragMaxRequestSize = 0x200000;
 
-		settings->FastpathInput = TRUE;
-		settings->FastpathOutput = TRUE;
+		settings->FastPathInput = TRUE;
+		settings->FastPathOutput = TRUE;
 
 		settings->FrameAcknowledge = 2;
 
 		gethostname(settings->ClientHostname, 31);
 		settings->ClientHostname[31] = 0;
-		settings->mouse_motion = TRUE;
+		settings->MouseMotion = TRUE;
 
 		settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
 		settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(ARC_SC_PRIVATE_PACKET));
@@ -396,14 +396,14 @@ void settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
-		free(settings->Hostname);
+		free(settings->ServerHostname);
 		free(settings->Username);
 		free(settings->Password);
 		free(settings->Domain);
 		free(settings->AlternateShell);
 		free(settings->ShellWorkingDirectory);
-		free(settings->ip_address);
-		free(settings->client_dir);
+		free(settings->ClientAddress);
+		free(settings->ClientDir);
 		free(settings->CertificateFile);
 		free(settings->PrivateKeyFile);
 		free(settings->ReceivedCapabilities);
@@ -421,9 +421,8 @@ void settings_free(rdpSettings* settings)
 		free(settings->GlyphCache);
 		free(settings->FragCache);
 		key_free(settings->ServerKey);
-		free(settings->config_path);
-		free(settings->current_path);
-		free(settings->development_path);
+		free(settings->ConfigPath);
+		free(settings->CurrentPath);
 		free(settings);
 	}
 }

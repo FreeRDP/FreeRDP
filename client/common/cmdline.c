@@ -244,13 +244,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			{
 				length = p - arg->Value;
 				settings->ServerPort = atoi(&p[1]);
-				settings->Hostname = (char*) malloc(length + 1);
-				strncpy(settings->Hostname, arg->Value, length);
-				settings->Hostname[length] = '\0';
+				settings->ServerHostname = (char*) malloc(length + 1);
+				strncpy(settings->ServerHostname, arg->Value, length);
+				settings->ServerHostname[length] = '\0';
 			}
 			else
 			{
-				settings->Hostname = _strdup(arg->Value);
+				settings->ServerHostname = _strdup(arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "port")
@@ -282,19 +282,19 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "f")
 		{
-			settings->fullscreen = TRUE;
+			settings->Fullscreen = TRUE;
 		}
 		CommandLineSwitchCase(arg, "workarea")
 		{
-			settings->workarea = TRUE;
+			settings->Workarea = TRUE;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
-			settings->window_title = _strdup(arg->Value);
+			settings->WindowTitle = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "decorations")
 		{
-			settings->decorations = arg->Value ? TRUE : FALSE;
+			settings->Decorations = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
@@ -381,7 +381,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "z")
 		{
-			settings->compression = arg->Value ? TRUE : FALSE;
+			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "shell")
 		{
@@ -418,17 +418,17 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "gdi")
 		{
 			if (strcmp(arg->Value, "sw") == 0)
-				settings->sw_gdi = TRUE;
+				settings->SoftwareGdi = TRUE;
 			else if (strcmp(arg->Value, "hw") == 0)
-				settings->sw_gdi = FALSE;
+				settings->SoftwareGdi = FALSE;
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{
 			settings->RemoteFxCodec = TRUE;
-			settings->FastpathOutput = TRUE;
+			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
 			settings->PerformanceFlags = PERF_FLAG_NONE;
-			settings->LargePointer = TRUE;
+			settings->LargePointerFlag = TRUE;
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{

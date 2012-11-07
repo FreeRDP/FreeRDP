@@ -80,8 +80,8 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
-	tcp->settings->IPv6 = 0;
-	tcp->settings->ip_address = _strdup(tcp->ip_address);
+	tcp->settings->IPv6Enabled = 0;
+	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
 void tcp_get_mac_address(rdpTcp * tcp)

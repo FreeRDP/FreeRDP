@@ -73,7 +73,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, settings->Hostname, settings->ServerPort);
+	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
 	if (settings->GatewayUsageMethod)
 	{
@@ -136,7 +136,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
 				(settings->PasswordCookie != NULL && settings->PasswordCookieLength > 0)))
-			settings->autologon = TRUE;
+			settings->AutoLogonEnabled = TRUE;
 	}
 
 	rdp_set_blocking_mode(rdp, FALSE);
@@ -191,7 +191,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	free(settings->ServerRandom);
 	free(settings->ServerCertificate);
-	free(settings->ip_address);
+	free(settings->ClientAddress);
 
 	rdp->transport = transport_new(settings);
 	rdp->license = license_new(rdp);
@@ -209,18 +209,18 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	{
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
-			free(settings->Hostname);
-			settings->Hostname = _strdup(redirection->targetNetAddress.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
-			free(settings->Hostname);
-			settings->Hostname = _strdup(redirection->targetFQDN.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
-			free(settings->Hostname);
-			settings->Hostname = _strdup(redirection->targetNetBiosName.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 

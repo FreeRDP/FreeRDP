@@ -618,7 +618,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
-	if (color_depth < settings->ColorDepth || !settings->server_mode)
+	if (color_depth < settings->ColorDepth || !settings->ServerMode)
 		settings->ColorDepth = color_depth;
 
 	return TRUE;

@@ -91,7 +91,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 
 	printf("Client %s is activated\n", client->hostname);
 
-	if (client->settings->autologon)
+	if (client->settings->AutoLogonEnabled)
 	{
 		printf(" and wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",
