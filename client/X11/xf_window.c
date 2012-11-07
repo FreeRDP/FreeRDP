@@ -398,7 +398,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		 * This extra call after the window is mapped will position the login window correctly
 		 */
 
-		if (xfi->instance->settings->remote_app)
+		if (xfi->instance->settings->RemoteApplicationMode)
                         XMoveWindow(xfi->display, window->handle, 0, 0);
 
 	}

@@ -80,7 +80,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
-	tcp->settings->ipv6 = 0;
+	tcp->settings->IPv6 = 0;
 	tcp->settings->ip_address = _strdup(tcp->ip_address);
 }
 

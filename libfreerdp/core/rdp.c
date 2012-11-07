@@ -717,7 +717,7 @@ static BOOL rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	if (rdp->settings->encryption)
+	if (rdp->settings->Encryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))

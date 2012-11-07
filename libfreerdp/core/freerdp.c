@@ -91,9 +91,9 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status)
 	{
-		if (instance->settings->dump_rfx)
+		if (instance->settings->DumpRemoteFx)
 		{
-			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, TRUE);
+			instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile, TRUE);
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = TRUE;
 		}
@@ -114,14 +114,14 @@ BOOL freerdp_connect(freerdp* instance)
 			return FALSE;
 		}
 
-		if (instance->settings->play_rfx)
+		if (instance->settings->PlayRemoteFx)
 		{
 			STREAM* s;
 			rdpUpdate* update;
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, FALSE);
+			instance->update->pcap_rfx = pcap_open(instance->settings->PlayRemoteFxFile, FALSE);
 
 			if (instance->update->pcap_rfx)
 				instance->update->play_rfx = TRUE;

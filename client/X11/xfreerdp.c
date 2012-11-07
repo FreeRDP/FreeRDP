@@ -316,15 +316,15 @@ void xf_create_window(xfInfo* xfi)
 	{
 		win_title = _strdup(xfi->instance->settings->window_title);
 	}
-	else if (xfi->instance->settings->port == 3389)
+	else if (xfi->instance->settings->ServerPort == 3389)
 	{
-		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
-		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->Hostname));
+		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->Hostname);
 	}
 	else
 	{
-		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
-		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->Hostname) + sizeof(":00000"));
+		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->Hostname, xfi->instance->settings->ServerPort);
 	}
 
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
@@ -534,61 +534,61 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (settings->connection_file)
+	if (settings->ConnectionFile)
 	{
 		file = freerdp_client_rdp_file_new();
 
-		printf("Using connection file: %s\n", settings->connection_file);
+		printf("Using connection file: %s\n", settings->ConnectionFile);
 
-		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
 	}
 
-	bitmap_cache = settings->bitmap_cache;
+	bitmap_cache = settings->BitmapCacheEnabled;
 
-	settings->os_major_type = OSMAJORTYPE_UNIX;
-	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
+	settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_LINETO_INDEX] = TRUE;
-	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
-	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
 
-	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? TRUE : FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? TRUE : FALSE;
 
-	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
 
-	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? FALSE : TRUE;
 
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
 	if (settings->authentication_only)
 	{
 		/* Check --authonly has a username and password. */
-		if (settings->username == NULL )
+		if (settings->Username == NULL )
 		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
 			exit(1);
 		}
-		if (settings->password == NULL )
+		if (settings->Password == NULL )
 		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
@@ -753,13 +753,13 @@ BOOL xf_post_connect(freerdp* instance)
 
 		xfi->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
-		if (instance->settings->rfx_codec)
+		if (instance->settings->RemoteFxCodec)
 		{
 			rfx_context = (void*) rfx_context_new();
 			xfi->rfx_context = rfx_context;
 		}
 
-		if (instance->settings->ns_codec)
+		if (instance->settings->NSCodec)
 		{
 			nsc_context = (void*) nsc_context_new();
 			xfi->nsc_context = nsc_context;

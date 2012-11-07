@@ -369,7 +369,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->refresh_rect)
+	if (rdp->settings->RefreshRect)
 	{
 		s = rdp_data_pdu_init(rdp);
 		update_write_refresh_rect(s, count, areas);
@@ -397,7 +397,7 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->suppress_output)
+	if (rdp->settings->SuppressOutput)
 	{
 		s = rdp_data_pdu_init(rdp);
 		update_write_suppress_output(s, allow, area);

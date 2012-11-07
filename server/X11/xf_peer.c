@@ -461,7 +461,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	}
 
 	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
+	cmd->codecID = client->settings->RemoteFxCodecId;
 	cmd->width = width;
 	cmd->height = height;
 	cmd->bitmapDataLength = stream_get_length(s);
@@ -550,8 +550,8 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
+			client->settings->Domain ? client->settings->Domain : "",
+			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
@@ -560,7 +560,7 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
-	if (!client->settings->rfx_codec)
+	if (!client->settings->RemoteFxCodec)
 	{
 		printf("Client does not support RemoteFX\n");
 		return 0;
@@ -635,14 +635,14 @@ void* xf_peer_main_loop(void* arg)
 			freerdp_mkdir(server_file_path);
 	}
 
-	settings->cert_file = freerdp_construct_path(server_file_path, "server.crt");
-	settings->privatekey_file = freerdp_construct_path(server_file_path, "server.key");
+	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
+	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
 
 	settings->NlaSecurity = TRUE;
 	settings->TlsSecurity = FALSE;
 	settings->RdpSecurity = FALSE;
 
-	settings->rfx_codec = TRUE;
+	settings->RemoteFxCodec = TRUE;
 
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;

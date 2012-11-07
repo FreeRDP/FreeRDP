@@ -73,9 +73,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, settings->hostname, settings->port);
+	nego_set_target(rdp->nego, settings->Hostname, settings->ServerPort);
 
-	if (settings->ts_gateway)
+	if (settings->GatewayUsageMethod)
 	{
 		char* user;
 		char* domain;
@@ -84,13 +84,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		int domain_length;
 		int cookie_length;
 
-		user = settings->username;
-		user_length = strlen(settings->username);
+		user = settings->Username;
+		user_length = strlen(settings->Username);
 
-		if (settings->domain)
-			domain = settings->domain;
+		if (settings->Domain)
+			domain = settings->Domain;
 		else
-			domain = settings->computer_name;
+			domain = settings->ComputerName;
 
 		domain_length = strlen(domain);
 
@@ -107,12 +107,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 	else
 	{
-		nego_set_cookie(rdp->nego, settings->username);
+		nego_set_cookie(rdp->nego, settings->Username);
 	}
 
-	nego_set_send_preconnection_pdu(rdp->nego, settings->send_preconnection_pdu);
-	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
-	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
+	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
+	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
+	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
 
 	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
 
@@ -121,10 +121,10 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_enable_nla(rdp->nego, settings->NlaSecurity);
 	nego_enable_ext(rdp->nego, settings->ExtSecurity);
 
-	if (settings->mstsc_cookie_mode)
-		settings->cookie_max_length = MSTSC_COOKIE_MAX_LENGTH;
+	if (settings->MstscCookieMode)
+		settings->CookieMaxLength = MSTSC_COOKIE_MAX_LENGTH;
 
-	nego_set_cookie_max_length(rdp->nego, settings->cookie_max_length);
+	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
 	if (!nego_connect(rdp->nego))
 	{
@@ -134,8 +134,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
-		if ((settings->username != NULL) && ((settings->password != NULL) ||
-				(settings->password_cookie != NULL && settings->password_cookie_length > 0)))
+		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
+				(settings->PasswordCookie != NULL && settings->PasswordCookieLength > 0)))
 			settings->autologon = TRUE;
 	}
 
@@ -189,8 +189,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 
-	free(settings->server_random);
-	free(settings->server_certificate);
+	free(settings->ServerRandom);
+	free(settings->ServerCertificate);
 	free(settings->ip_address);
 
 	rdp->transport = transport_new(settings);
@@ -199,7 +199,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdp->mcs = mcs_new(rdp->transport);
 
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	settings->redirected_session_id = redirection->sessionID;
+	settings->RedirectedSessionId = redirection->sessionID;
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
@@ -209,37 +209,37 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	{
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetNetAddress.ascii);
+			free(settings->Hostname);
+			settings->Hostname = _strdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetFQDN.ascii);
+			free(settings->Hostname);
+			settings->Hostname = _strdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetNetBiosName.ascii);
+			free(settings->Hostname);
+			settings->Hostname = _strdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		free(settings->username);
-		settings->username = _strdup(redirection->username.ascii);
+		free(settings->Username);
+		settings->Username = _strdup(redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		free(settings->domain);
-		settings->domain = _strdup(redirection->domain.ascii);
+		free(settings->Domain);
+		settings->Domain = _strdup(redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		settings->password_cookie = redirection->PasswordCookie;
-		settings->password_cookie_length = redirection->PasswordCookieLength;
+		settings->PasswordCookie = redirection->PasswordCookie;
+		settings->PasswordCookieLength = redirection->PasswordCookieLength;
 	}
 
 	return rdp_client_connect(rdp);
@@ -255,7 +255,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	UINT32 length;
 	STREAM* s;
 
-	if (rdp->settings->encryption == FALSE)
+	if (rdp->settings->Encryption == FALSE)
 	{
 		/* no RDP encryption */
 		return TRUE;
@@ -264,9 +264,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
-	key_len = rdp->settings->server_cert->cert_info.ModulusLength;
-	mod = rdp->settings->server_cert->cert_info.Modulus;
-	exp = rdp->settings->server_cert->cert_info.exponent;
+	key_len = rdp->settings->ServerCert->cert_info.ModulusLength;
+	mod = rdp->settings->ServerCert->cert_info.Modulus;
+	exp = rdp->settings->ServerCert->cert_info.exponent;
 	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
@@ -289,7 +289,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = TRUE;
-	if (rdp->settings->salted_checksum)
+	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
 	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
@@ -317,7 +317,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	BYTE* mod;
 	BYTE* priv_exp;
 
-	if (rdp->settings->encryption == FALSE)
+	if (rdp->settings->Encryption == FALSE)
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -338,7 +338,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	stream_read_UINT32(s, rand_len);
-	key_len = rdp->settings->server_key->ModulusLength;
+	key_len = rdp->settings->ServerKey->ModulusLength;
 
 	if (rand_len != key_len + 8)
 	{
@@ -350,8 +350,8 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	stream_read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
 	stream_seek(s, 8);
-	mod = rdp->settings->server_key->Modulus;
-	priv_exp = rdp->settings->server_key->PrivateExponent;
+	mod = rdp->settings->ServerKey->Modulus;
+	priv_exp = rdp->settings->ServerKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
 
 	/* now calculate encrypt / decrypt and update keys */
@@ -361,7 +361,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	rdp->do_crypt = TRUE;
-	if (rdp->settings->salted_checksum)
+	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
 	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
@@ -636,7 +636,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	if (!mcs_recv_connect_initial(rdp->mcs, s))
 		return FALSE;
 
-	printf("Accepted client: %s\n", rdp->settings->client_hostname);
+	printf("Accepted client: %s\n", rdp->settings->ClientHostname);
 	printf("Accepted channels:");
 
 	for (i = 0; i < rdp->settings->num_channels; i++)

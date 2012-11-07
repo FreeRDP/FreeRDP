@@ -518,7 +518,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	tsg->Port = port;
 	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->Hostname, 0);
-	freerdp_AsciiToUnicodeAlloc(settings->computer_name, &tsg->MachineName, 0);
+	freerdp_AsciiToUnicodeAlloc(settings->ComputerName, &tsg->MachineName, 0);
 
 	if (!rpc_connect(rpc))
 	{

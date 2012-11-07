@@ -493,8 +493,8 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
 	stream_seek(s, 32);
-	snprintf(settings->client_hostname, 31, "%s", str);
-	settings->client_hostname[31] = 0;
+	snprintf(settings->ClientHostname, 31, "%s", str);
+	settings->ClientHostname[31] = 0;
 	free(str);
 
 	stream_read_UINT32(s, settings->KeyboardType); /* KeyboardType */
@@ -549,13 +549,13 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 
 		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 		stream_seek(s, 64);
-		snprintf(settings->client_product_id, 32, "%s", str);
+		snprintf(settings->ClientProductId, 32, "%s", str);
 		free(str);
 		blockLength -= 64;
 
 		if (blockLength < 1)
 			break;
-		stream_read_BYTE(s, settings->performance_flags); /* connectionType */
+		stream_read_BYTE(s, settings->PerformanceFlags); /* connectionType */
 		blockLength -= 1;
 
 		if (blockLength < 1)
@@ -647,8 +647,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
-	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->client_hostname, &clientName, 0);
-	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->client_product_id, &clientDigProductId, 0);
+	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->ClientHostname, &clientName, 0);
+	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->ClientProductId, &clientDigProductId, 0);
 
 	stream_write_UINT32(s, version); /* Version */
 	stream_write_UINT16(s, settings->DesktopWidth); /* DesktopWidth */
@@ -690,7 +690,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	connectionType = settings->ConnectionType;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->rfx_codec)
+	if (settings->RemoteFxCodec)
 		connectionType = CONNECTION_TYPE_LAN;
 
 	if (connectionType != 0)
@@ -760,7 +760,7 @@ BOOL gcc_read_client_security_data(STREAM* s, rdpSettings* settings, UINT16 bloc
 	if (blockLength < 8)
 		return FALSE;
 
-	if (settings->encryption)
+	if (settings->Encryption)
 	{
 		stream_read_UINT32(s, settings->EncryptionMethod); /* encryptionMethods */
 		if (settings->EncryptionMethod == 0)
@@ -784,7 +784,7 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings* settings)
 {
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	if (settings->encryption)
+	if (settings->Encryption)
 	{
 		stream_write_UINT32(s, settings->EncryptionMethod); /* encryptionMethods */
 		stream_write_UINT32(s, 0); /* extEncryptionMethods */
@@ -808,38 +808,38 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 	if (settings->EncryptionMethod == 0 && settings->EncryptionLevel == 0)
 	{
 		/* serverRandom and serverRandom must not be present */
-		settings->encryption = FALSE;
+		settings->Encryption = FALSE;
 		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		return TRUE;
 	}
 
-	stream_read_UINT32(s, settings->server_random_length); /* serverRandomLen */
-	stream_read_UINT32(s, settings->server_certificate_length); /* serverCertLen */
+	stream_read_UINT32(s, settings->ServerRandomLength); /* serverRandomLen */
+	stream_read_UINT32(s, settings->ServerCertificateLength); /* serverCertLen */
 
-	if (settings->server_random_length > 0)
+	if (settings->ServerRandomLength > 0)
 	{
 		/* serverRandom */
-		settings->server_random = (BYTE*) malloc(settings->server_random_length);
-		stream_read(s, settings->server_random, settings->server_random_length);
+		settings->ServerRandom = (BYTE*) malloc(settings->ServerRandomLength);
+		stream_read(s, settings->ServerRandom, settings->ServerRandomLength);
 	}
 	else
 	{
 		return FALSE;
 	}
 
-	if (settings->server_certificate_length > 0)
+	if (settings->ServerCertificateLength > 0)
 	{
 		/* serverCertificate */
-		settings->server_certificate = (BYTE*) malloc(settings->server_certificate_length);
-		stream_read(s, settings->server_certificate, settings->server_certificate_length);
+		settings->ServerCertificate = (BYTE*) malloc(settings->ServerCertificateLength);
+		stream_read(s, settings->ServerCertificate, settings->ServerCertificateLength);
 
-		certificate_free(settings->server_cert);
-		settings->server_cert = certificate_new();
-		data = settings->server_certificate;
-		length = settings->server_certificate_length;
+		certificate_free(settings->ServerCert);
+		settings->ServerCert = certificate_new();
+		data = settings->ServerCertificate;
+		length = settings->ServerCertificateLength;
 
-		if (!certificate_read_server_certificate(settings->server_cert, data, length))
+		if (!certificate_read_server_certificate(settings->ServerCert, data, length))
 			return FALSE;
 	}
 	else
@@ -905,7 +905,7 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	BYTE signature[sizeof(initial_signature)];
 	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
 
-	if (!settings->encryption)
+	if (!settings->Encryption)
 	{
 		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
@@ -937,8 +937,8 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	{
 		serverRandomLen = 32;
 
-		keyLen = settings->server_key->ModulusLength;
-		expLen = sizeof(settings->server_key->exponent);
+		keyLen = settings->ServerKey->ModulusLength;
+		expLen = sizeof(settings->ServerKey->exponent);
 		wPublicKeyBlobLen = 4; /* magic (RSA1) */
 		wPublicKeyBlobLen += 4; /* keylen */
 		wPublicKeyBlobLen += 4; /* bitlen */
@@ -978,10 +978,10 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	stream_write_UINT32(s, serverRandomLen); /* serverRandomLen */
 	stream_write_UINT32(s, serverCertLen); /* serverCertLen */
 
-	settings->server_random_length = serverRandomLen;
-	settings->server_random = (BYTE*) malloc(serverRandomLen);
-	crypto_nonce(settings->server_random, serverRandomLen);
-	stream_write(s, settings->server_random, serverRandomLen);
+	settings->ServerRandomLength = serverRandomLen;
+	settings->ServerRandom = (BYTE*) malloc(serverRandomLen);
+	crypto_nonce(settings->ServerRandom, serverRandomLen);
+	stream_write(s, settings->ServerRandom, serverRandomLen);
 
 	sigData = stream_get_tail(s);
 
@@ -996,8 +996,8 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	stream_write_UINT32(s, keyLen * 8); /* bitlen */
 	stream_write_UINT32(s, keyLen - 1); /* datalen */
 
-	stream_write(s, settings->server_key->exponent, expLen);
-	stream_write(s, settings->server_key->Modulus, keyLen);
+	stream_write(s, settings->ServerKey->exponent, expLen);
+	stream_write(s, settings->ServerKey->Modulus, keyLen);
 	stream_write_zero(s, 8);
 
 	sigDataLen = stream_get_tail(s) - sigData;
@@ -1142,7 +1142,7 @@ BOOL gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, UINT16 block
 	stream_read_UINT32(s, flags); /* flags */
 
 	if ((flags & REDIRECTED_SESSIONID_FIELD_VALID))
-		stream_read_UINT32(s, settings->redirected_session_id); /* redirectedSessionID */
+		stream_read_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
 
 	return TRUE;
 }
@@ -1162,11 +1162,11 @@ void gcc_write_client_cluster_data(STREAM* s, rdpSettings* settings)
 
 	flags = REDIRECTION_SUPPORTED | (REDIRECTION_VERSION4 << 2);
 
-	if (settings->console_session || settings->redirected_session_id)
+	if (settings->ConsoleSession || settings->RedirectedSessionId)
 		flags |= REDIRECTED_SESSIONID_FIELD_VALID;
 
 	stream_write_UINT32(s, flags); /* flags */
-	stream_write_UINT32(s, settings->redirected_session_id); /* redirectedSessionID */
+	stream_write_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
 }
 
 /**

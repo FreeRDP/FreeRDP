@@ -189,15 +189,15 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 
-	if (transport->settings->ts_gateway)
+	if (transport->settings->GatewayUsageMethod)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->tcp_out = tcp_new(settings);
 
-		status = tcp_connect(transport->tcp_in, settings->tsg_hostname, 443);
+		status = tcp_connect(transport->tcp_in, settings->GatewayHostname, 443);
 
 		if (status)
-			status = tcp_connect(transport->tcp_out, settings->tsg_hostname, 443);
+			status = tcp_connect(transport->tcp_out, settings->GatewayHostname, 443);
 
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);
@@ -225,7 +225,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != TRUE)
+	if (tls_accept(transport->tls, transport->settings->CertificateFile, transport->settings->PrivateKeyFile) != TRUE)
 		return FALSE;
 
 	return TRUE;
@@ -242,7 +242,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->tls->sockfd = transport->tcp->sockfd;
 
-	if (tls_accept(transport->tls, transport->settings->cert_file, transport->settings->privatekey_file) != TRUE)
+	if (tls_accept(transport->tls, transport->settings->CertificateFile, transport->settings->PrivateKeyFile) != TRUE)
 		return FALSE;
 
 	/* Network Level Authentication */

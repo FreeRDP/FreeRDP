@@ -159,42 +159,42 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (settings->connection_file)
+	if (settings->ConnectionFile)
 	{
 		file = freerdp_client_rdp_file_new();
 
-		printf("Using connection file: %s\n", settings->connection_file);
+		printf("Using connection file: %s\n", settings->ConnectionFile);
 
-		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
 	}
 
-	settings->os_major_type = OSMAJORTYPE_WINDOWS;
-	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;
-	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_LINETO_INDEX] = TRUE;
-	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
-	settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
+	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfi->cursor = g_default_cursor;
 
@@ -330,23 +330,23 @@ BOOL wf_post_connect(freerdp* instance)
 		wfi->image = wf_image_new(wfi, 64, 64, 32, NULL);
 		wfi->image->_bitmap.data = NULL;
 
-		if (settings->rfx_codec)
+		if (settings->RemoteFxCodec)
 		{
 			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);
 			wfi->rfx_context = rfx_context_new();
 			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
 		}
 
-		if (settings->ns_codec)
+		if (settings->NSCodec)
 			wfi->nsc_context = nsc_context_new();
 	}
 
 	if (settings->window_title != NULL)
 		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->window_title);
-	else if (settings->port == 3389)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->hostname);
+	else if (settings->ServerPort == 3389)
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->Hostname);
 	else
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->hostname, settings->port);
+		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->Hostname, settings->ServerPort);
 
 	if (wfi->hwnd == 0)
 	{

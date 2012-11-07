@@ -280,13 +280,13 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		bitmap_cache->update = ((freerdp*) settings->instance)->update;
 		bitmap_cache->context = bitmap_cache->update->context;
 
-		bitmap_cache->maxCells = settings->bitmapCacheV2NumCells;
+		bitmap_cache->maxCells = settings->BitmapCacheV2NumCells;
 
 		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
 		for (i = 0; i < (int) bitmap_cache->maxCells; i++)
 		{
-			bitmap_cache->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
+			bitmap_cache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
 			/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
 			bitmap_cache->cells[i].entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * (bitmap_cache->cells[i].number + 1));
 		}

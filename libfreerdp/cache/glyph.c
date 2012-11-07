@@ -466,8 +466,8 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 
 		for (i = 0; i < 10; i++)
 		{
-			glyph->glyphCache[i].number = settings->glyphCache[i].cacheEntries;
-			glyph->glyphCache[i].maxCellSize = settings->glyphCache[i].cacheMaximumCellSize;
+			glyph->glyphCache[i].number = settings->GlyphCache[i].cacheEntries;
+			glyph->glyphCache[i].maxCellSize = settings->GlyphCache[i].cacheMaximumCellSize;
 			glyph->glyphCache[i].entries = (rdpGlyph**) xzalloc(sizeof(rdpGlyph*) * glyph->glyphCache[i].number);
 		}
 

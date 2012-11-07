@@ -669,7 +669,7 @@ void test_rail_plugin(void)
 
 	printf("\n");
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	inst->settings = &settings;
 	inst->SendChannelData = emulate_client_send_channel_data;
 

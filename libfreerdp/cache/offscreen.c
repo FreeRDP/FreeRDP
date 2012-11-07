@@ -145,8 +145,8 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 		offscreen_cache->maxSize = 7680;
 		offscreen_cache->maxEntries = 2000;
 
-		settings->offscreen_bitmap_cache_size = offscreen_cache->maxSize;
-		settings->offscreen_bitmap_cache_entries = offscreen_cache->maxEntries;
+		settings->OffscreenBitmapCacheSize = offscreen_cache->maxSize;
+		settings->OffscreenBitmapCacheEntries = offscreen_cache->maxEntries;
 
 		offscreen_cache->entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * offscreen_cache->maxEntries);
 	}

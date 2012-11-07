@@ -539,7 +539,7 @@ void* WTSVirtualChannelOpenEx(
 		channel->vcm = vcm;
 		channel->client = client;
 		channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
-		channel->receive_data = stream_new(client->settings->vc_chunk_size);
+		channel->receive_data = stream_new(client->settings->VirtualChannelChunkSize);
 		channel->receive_event = wait_obj_new();
 		channel->receive_queue = list_new();
 		channel->mutex = CreateMutex(NULL, FALSE, NULL);
@@ -585,7 +585,7 @@ void* WTSVirtualChannelOpenEx(
 			channel->channel_id = client->settings->channels[i].channel_id;
 			channel->index = i;
 			channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
-			channel->receive_data = stream_new(client->settings->vc_chunk_size);
+			channel->receive_data = stream_new(client->settings->VirtualChannelChunkSize);
 			channel->receive_event = wait_obj_new();
 			channel->receive_queue = list_new();
 			channel->mutex = CreateMutex(NULL, FALSE, NULL);
@@ -738,8 +738,8 @@ BOOL WTSVirtualChannelWrite(
 		while (Length > 0)
 		{
 			item = xnew(wts_data_item);
-			item->buffer = malloc(channel->client->settings->vc_chunk_size);
-			stream_attach(s, item->buffer, channel->client->settings->vc_chunk_size);
+			item->buffer = malloc(channel->client->settings->VirtualChannelChunkSize);
+			stream_attach(s, item->buffer, channel->client->settings->VirtualChannelChunkSize);
 
 			stream_seek_BYTE(s);
 			cbChId = wts_write_variable_uint(s, channel->channel_id);

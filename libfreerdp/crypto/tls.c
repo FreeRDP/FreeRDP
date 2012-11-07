@@ -140,7 +140,7 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
+	if (!tls_verify_certificate(tls, cert, tls->settings->Hostname))
 	{
 		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
@@ -428,12 +428,12 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	rdpCertificateData* certificate_data;
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	if (tls->settings->ignore_certificate)
+	if (tls->settings->IgnoreCertificate)
 		return TRUE;  /* success! */
 
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
-	if (tls->settings->certificate_name)
-		hostname = tls->settings->certificate_name;
+	if (tls->settings->CertificateName)
+		hostname = tls->settings->CertificateName;
 
 	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);

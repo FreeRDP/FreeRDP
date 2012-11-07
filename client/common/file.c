@@ -478,7 +478,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
 	if (~((size_t) file->Domain))
-		settings->domain = file->Domain;
+		settings->Domain = file->Domain;
 
 	if (~((size_t) file->Username))
 	{
@@ -490,25 +490,25 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (p)
 		{
 			size = p - file->Username;
-			settings->domain = (char*) malloc(size + 1);
-			CopyMemory(settings->domain, file->Username, size);
-			settings->domain[size] = 0;
+			settings->Domain = (char*) malloc(size + 1);
+			CopyMemory(settings->Domain, file->Username, size);
+			settings->Domain[size] = 0;
 
 			size = strlen(file->Username) - size - 1;
-			settings->username = (char*) malloc(size + 1);
-			CopyMemory(settings->username, &file->Username[p - file->Username + 1], size);
-			settings->username[size] = 0;
+			settings->Username = (char*) malloc(size + 1);
+			CopyMemory(settings->Username, &file->Username[p - file->Username + 1], size);
+			settings->Username[size] = 0;
 		}
 		else
 		{
-			settings->username = file->Username;
+			settings->Username = file->Username;
 		}
 	}
 
 	if (~file->ServerPort)
-		settings->port = file->ServerPort;
+		settings->ServerPort = file->ServerPort;
 	if (~((size_t) file->FullAddress))
-		settings->hostname = file->FullAddress;
+		settings->Hostname = file->FullAddress;
 	if (~file->DesktopWidth)
 		settings->DesktopWidth = file->DesktopWidth;
 	if (~file->DesktopHeight)
@@ -516,27 +516,27 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->SessionBpp)
 		settings->ColorDepth = file->SessionBpp;
 	if (~file->ConnectToConsole)
-		settings->console_session = file->ConnectToConsole;
+		settings->ConsoleSession = file->ConnectToConsole;
 	if (~file->AdministrativeSession)
-		settings->console_session = file->AdministrativeSession;
+		settings->ConsoleSession = file->AdministrativeSession;
 	if (~file->NegotiateSecurityLayer)
 		settings->NegotiateSecurityLayer = file->NegotiateSecurityLayer;
 	if (~file->EnableCredSSPSupport)
 		settings->NlaSecurity = file->EnableCredSSPSupport;
 	if (~((size_t) file->AlternateShell))
-		settings->shell = file->AlternateShell;
+		settings->AlternateShell = file->AlternateShell;
 	if (~((size_t) file->ShellWorkingDirectory))
-		settings->directory = file->ShellWorkingDirectory;
+		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
 	
 	if (~((size_t) file->GatewayHostname))
-		settings->tsg_hostname = file->GatewayHostname;
+		settings->GatewayHostname = file->GatewayHostname;
 	if (~file->GatewayUsageMethod)
-		settings->ts_gateway = TRUE;
+		settings->GatewayUsageMethod = TRUE;
 	if (~file->PromptCredentialOnce)
-		settings->tsg_same_credentials = TRUE;
+		settings->GatewayUseSameCredentials = TRUE;
 	
 	if (~file->RemoteApplicationMode)
-		settings->remote_app = file->RemoteApplicationMode;
+		settings->RemoteApplicationMode = file->RemoteApplicationMode;
 
 	return TRUE;
 }

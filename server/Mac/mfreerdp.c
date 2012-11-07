@@ -94,8 +94,8 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	if (client->settings->autologon)
 	{
 		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
+			client->settings->Domain ? client->settings->Domain : "",
+			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
@@ -199,12 +199,12 @@ static void* mf_peer_main_loop(void* arg)
 	mf_peer_init(client);
 
 	/* Initialize the real server settings here */
-	client->settings->cert_file = _strdup("server.crt");
-	client->settings->privatekey_file = _strdup("server.key");
+	client->settings->CertificateFile = _strdup("server.crt");
+	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->NlaSecurity = FALSE;
-	client->settings->rfx_codec = TRUE;
-	client->settings->suppress_output = TRUE;
-	client->settings->refresh_rect = TRUE;
+	client->settings->RemoteFxCodec = TRUE;
+	client->settings->SuppressOutput = TRUE;
+	client->settings->RefreshRect = TRUE;
 
 	client->PostConnect = mf_peer_post_connect;
 	client->Activate = mf_peer_activate;

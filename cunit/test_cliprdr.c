@@ -113,7 +113,7 @@ void test_cliprdr(void)
 	RDP_CB_DATA_REQUEST_EVENT* data_request_event;
 	RDP_CB_DATA_RESPONSE_EVENT* data_response_event;
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 

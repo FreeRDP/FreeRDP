@@ -154,7 +154,7 @@ BOOL nego_connect(rdpNego* nego)
 
 	if(nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->encryption = TRUE;
+		nego->transport->settings->Encryption = TRUE;
 		nego->transport->settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
@@ -838,12 +838,12 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 			if (!settings->local)
 			{
-				settings->encryption = TRUE;
+				settings->Encryption = TRUE;
 				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->encryption && settings->server_key == NULL && settings->rdp_key_file == NULL)
+			if (settings->Encryption && settings->ServerKey == NULL && settings->RdpKeyFile == NULL)
 				return FALSE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_TLS)
@@ -851,7 +851,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = FALSE;
-			settings->encryption = FALSE;
+			settings->Encryption = FALSE;
 			settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
@@ -860,7 +860,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = TRUE;
 			settings->RdpSecurity = FALSE;
-			settings->encryption = FALSE;
+			settings->Encryption = FALSE;
 			settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}

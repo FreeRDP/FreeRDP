@@ -368,7 +368,7 @@ void input_register_client_callbacks(rdpInput* input)
 {
 	rdpRdp* rdp = input->context->rdp;
 
-	if (rdp->settings->fastpath_input)
+	if (rdp->settings->FastpathInput)
 	{
 		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
 		input->KeyboardEvent = input_send_fastpath_keyboard_event;

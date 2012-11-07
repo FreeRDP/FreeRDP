@@ -164,7 +164,7 @@ rdpPointerCache* pointer_cache_new(rdpSettings* settings)
 	if (pointer_cache != NULL)
 	{
 		pointer_cache->settings = settings;
-		pointer_cache->cacheSize = settings->pointer_cache_size;
+		pointer_cache->cacheSize = settings->PointerCacheSize;
 		pointer_cache->update = ((freerdp*) settings->instance)->update;
 		pointer_cache->entries = (rdpPointer**) xzalloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
 	}

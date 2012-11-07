@@ -53,25 +53,25 @@ void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 			&& (p[1] == 0 || (p[1] == ':' && !strchr(p + 2, ':'))))
 	{
 		/* Either "[...]" or "[...]:..." with at most one : after the brackets */
-		settings->hostname = _strdup(hostname + 1);
+		settings->Hostname = _strdup(hostname + 1);
 
-		if ((p = strchr((char*)settings->hostname, ']')))
+		if ((p = strchr((char*)settings->Hostname, ']')))
 		{
 			*p = 0;
 
 			if (p[1] == ':')
-				settings->port = atoi(p + 2);
+				settings->ServerPort = atoi(p + 2);
 		}
 	}
 	else
 	{
 		/* Port number is cut off and used if exactly one : in the string */
-		settings->hostname = _strdup(hostname);
+		settings->Hostname = _strdup(hostname);
 
-		if ((p = strchr((char*)settings->hostname, ':')) && !strchr(p + 1, ':'))
+		if ((p = strchr((char*)settings->Hostname, ':')) && !strchr(p + 1, ':'))
 		{
 			*p = 0;
-			settings->port = atoi(p + 1);
+			settings->ServerPort = atoi(p + 1);
 		}
 	}
 }
@@ -109,7 +109,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 
 			if (p)
 			{
-				settings->connection_file = _strdup(argv[index]);
+				settings->ConnectionFile = _strdup(argv[index]);
 				index++;
 				continue;
 			}
@@ -202,7 +202,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing username\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->username = _strdup(argv[index]);
+			settings->Username = _strdup(argv[index]);
 		}
 		else if (strcmp("-p", argv[index]) == 0)
 		{
@@ -212,7 +212,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing password\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->password = _strdup(argv[index]);
+			settings->Password = _strdup(argv[index]);
 			settings->autologon = 1;
 
 			/*
@@ -230,7 +230,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing domain\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->domain = _strdup(argv[index]);
+			settings->Domain = _strdup(argv[index]);
 		}
 		else if (strcmp("-s", argv[index]) == 0)
 		{
@@ -240,7 +240,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing shell\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->shell = _strdup(argv[index]);
+			settings->AlternateShell = _strdup(argv[index]);
 		}
 		else if (strcmp("-c", argv[index]) == 0)
 		{
@@ -250,7 +250,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing directory\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->directory = _strdup(argv[index]);
+			settings->ShellWorkingDirectory = _strdup(argv[index]);
 		}
 		else if (strcmp("-g", argv[index]) == 0)
 		{
@@ -317,7 +317,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing port number\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->port = atoi(argv[index]);
+			settings->ServerPort = atoi(argv[index]);
 		}
 		else if (strcmp("-k", argv[index]) == 0)
 		{
@@ -341,16 +341,16 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing client hostname\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			strncpy(settings->client_hostname, argv[index], 31);
-			settings->client_hostname[31] = 0;
+			strncpy(settings->ClientHostname, argv[index], 31);
+			settings->ClientHostname[31] = 0;
 		}
 		else if (strcmp("-o", argv[index]) == 0)
 		{
-			settings->console_audio = TRUE;
+			settings->ConsoleAudio = TRUE;
 		}
 		else if (strcmp("-0", argv[index]) == 0)
 		{
-			settings->console_session = TRUE;
+			settings->ConsoleSession = TRUE;
 		}
 		else if (strcmp("-z", argv[index]) == 0)
 		{
@@ -358,15 +358,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
-			settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+			settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 		}
 		else if (strcmp("--no-osb", argv[index]) == 0)
 		{
-			settings->offscreen_bitmap_cache = FALSE;
+			settings->OffscreenBitmapCacheEnabled = FALSE;
 		}
 		else if (strcmp("--no-bmp-cache", argv[index]) == 0)
 		{
-			settings->bitmap_cache = FALSE;
+			settings->BitmapCacheEnabled = FALSE;
 		}
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
@@ -382,7 +382,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--ignore-certificate", argv[index]) == 0)
 		{
-			settings->ignore_certificate = TRUE;
+			settings->IgnoreCertificate = TRUE;
 		}
 		else if (strcmp("--certificate-name", argv[index]) == 0)
 		{
@@ -393,12 +393,12 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
 
-			settings->certificate_name = _strdup(argv[index]);
+			settings->CertificateName = _strdup(argv[index]);
 		}
 		else if (strcmp("--no-fastpath", argv[index]) == 0)
 		{
-			settings->fastpath_input = FALSE;
-			settings->fastpath_output = FALSE;
+			settings->FastpathInput = FALSE;
+			settings->FastpathOutput = FALSE;
 		}
 		else if (strcmp("--gdi", argv[index]) == 0)
 		{
@@ -430,24 +430,24 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing codec name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->bitmap_cache_v3 = TRUE;
+			settings->BitmapCacheV3Enabled = TRUE;
 			if (strcmp("rfx", argv[index]) == 0)
 			{
 				printf("setting rfx\n");
-				settings->v3_codec_id = CODEC_ID_REMOTEFX;
-				settings->rfx_codec = TRUE;
+				settings->BitmapCacheV3CodecId = CODEC_ID_REMOTEFX;
+				settings->RemoteFxCodec = TRUE;
 			}
 			else if (strcmp("nsc", argv[index]) == 0)
 			{
 				printf("setting codec nsc\n");
-				settings->v3_codec_id = CODEC_ID_NSCODEC;
-				settings->ns_codec = TRUE;
+				settings->BitmapCacheV3CodecId = CODEC_ID_NSCODEC;
+				settings->NSCodec = TRUE;
 			}
 #ifdef WITH_JPEG
 			else if (strcmp("jpeg", argv[index]) == 0)
 			{
 				printf("setting codec jpeg\n");
-				settings->v3_codec_id = CODEC_ID_JPEG;
+				settings->BitmapCacheV3CodecId = CODEC_ID_JPEG;
 				settings->jpeg_codec = TRUE;
 				if (settings->jpeg_quality == 0)
 					settings->jpeg_quality = 75;
@@ -479,11 +479,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 #endif
 		else if (strcmp("--rfx", argv[index]) == 0)
 		{
-			settings->rfx_codec = TRUE;
-			settings->fastpath_output = TRUE;
+			settings->RemoteFxCodec = TRUE;
+			settings->FastpathOutput = TRUE;
 			settings->ColorDepth = 32;
-			settings->performance_flags = PERF_FLAG_NONE;
-			settings->large_pointer = TRUE;
+			settings->PerformanceFlags = PERF_FLAG_NONE;
+			settings->LargePointer = TRUE;
 		}
 		else if (strcmp("--rfx-mode", argv[index]) == 0)
 		{
@@ -495,11 +495,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (argv[index][0] == 'v') /* video */
 			{
-				settings->rfx_codec_mode = 0x00;
+				settings->RemoteFxCodecMode = 0x00;
 			}
 			else if (argv[index][0] == 'i') /* image */
 			{
-				settings->rfx_codec_mode = 0x02;
+				settings->RemoteFxCodecMode = 0x02;
 			}
 			else
 			{
@@ -515,11 +515,11 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing frame acknowledge number\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->frame_acknowledge = atoi(argv[index]);
+			settings->FrameAcknowledge = atoi(argv[index]);
 		}
 		else if (strcmp("--nsc", argv[index]) == 0)
 		{
-			settings->ns_codec = TRUE;
+			settings->NSCodec = TRUE;
 		}
 		else if (strcmp("--dump-rfx", argv[index]) == 0)
 		{
@@ -529,9 +529,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing file name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->dump_rfx_file = _strdup(argv[index]);
-			settings->dump_rfx = TRUE;
-			settings->rfx_codec_only = TRUE;
+			settings->DumpRemoteFxFile = _strdup(argv[index]);
+			settings->DumpRemoteFx = TRUE;
+			settings->RemoteFxOnly = TRUE;
 		}
 		else if (strcmp("--play-rfx", argv[index]) == 0)
 		{
@@ -541,32 +541,32 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing file name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->play_rfx_file = _strdup(argv[index]);
-			settings->play_rfx = TRUE;
+			settings->PlayRemoteFxFile = _strdup(argv[index]);
+			settings->PlayRemoteFx = TRUE;
 		}
 		else if (strcmp("--fonts", argv[index]) == 0)
 		{
-			settings->smooth_fonts = TRUE;
+			settings->AllowFontSmoothing = TRUE;
 		}
 		else if (strcmp("--disable-wallpaper", argv[index]) == 0)
 		{
-			settings->disable_wallpaper = TRUE;
+			settings->DisableWallpaper = TRUE;
 		}
 		else if (strcmp("--disable-full-window-drag", argv[index]) == 0)
 		{
-			settings->disable_full_window_drag = TRUE;
+			settings->DisableFullWindowDrag = TRUE;
 		}
 		else if (strcmp("--disable-menu-animations", argv[index]) == 0)
 		{
-			settings->disable_menu_animations = TRUE;
+			settings->DisableMenuAnims = TRUE;
 		}
 		else if (strcmp("--disable-theming", argv[index]) == 0)
 		{
-			settings->disable_theming = TRUE;
+			settings->DisableThemes = TRUE;
 		}
 		else if (strcmp("--composition", argv[index]) == 0)
 		{
-			settings->desktop_composition = TRUE;
+			settings->AllowDesktopComposition = TRUE;
 		}
 		else if (strcmp("--no-motion", argv[index]) == 0)
 		{
@@ -574,10 +574,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--app", argv[index]) == 0)
 		{
-			settings->remote_app = TRUE;
-			settings->rail_langbar_supported = TRUE;
+			settings->RemoteApplicationMode = TRUE;
+			settings->RemoteAppLanguageBarSupported = TRUE;
 			settings->workarea = TRUE;
-			settings->performance_flags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG;
+			settings->PerformanceFlags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG;
 		}
 		else if (strcmp("-x", argv[index]) == 0)
 		{
@@ -589,7 +589,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (argv[index][0] == 'm') /* modem */
 			{
-				settings->performance_flags = PERF_DISABLE_WALLPAPER |
+				settings->PerformanceFlags = PERF_DISABLE_WALLPAPER |
 					PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS |
 					PERF_DISABLE_THEMING;
 
@@ -597,17 +597,17 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			else if (argv[index][0] == 'b') /* broadband */
 			{
-				settings->performance_flags = PERF_DISABLE_WALLPAPER;
+				settings->PerformanceFlags = PERF_DISABLE_WALLPAPER;
 				settings->ConnectionType = CONNECTION_TYPE_BROADBAND_HIGH;
 			}
 			else if (argv[index][0] == 'l') /* lan */
 			{
-				settings->performance_flags = PERF_FLAG_NONE;
+				settings->PerformanceFlags = PERF_FLAG_NONE;
 				settings->ConnectionType = CONNECTION_TYPE_LAN;
 			}
 			else
 			{
-				settings->performance_flags = strtol(argv[index], 0, 16);
+				settings->PerformanceFlags = strtol(argv[index], 0, 16);
 			}
 		}
 		else if (strcmp("-X", argv[index]) == 0)
@@ -653,7 +653,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				settings->RdpSecurity = TRUE;
 				settings->TlsSecurity = FALSE;
 				settings->NlaSecurity = FALSE;
-				settings->encryption = TRUE;
+				settings->Encryption = TRUE;
 				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
@@ -681,28 +681,28 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--tsg", argv[index]) == 0)
 		{
-			settings->ts_gateway = TRUE;
+			settings->GatewayUsageMethod = TRUE;
 			index++;
 			if (index == argc)
 			{
 				printf("missing TSG username\n");
 				return -1;
 			}
-			settings->tsg_username = _strdup(argv[index]);
+			settings->GatewayUsername = _strdup(argv[index]);
 			index++;
 			if (index == argc)
 			{
 				printf("missing TSG password\n");
 				return -1;
 			}
-			settings->tsg_password = _strdup(argv[index]);
+			settings->GatewayPassword = _strdup(argv[index]);
 			index++;
 			if (index == argc)
 			{
 				printf("missing TSG server\n");
 				return -1;
 			}
-			settings->tsg_hostname = _strdup(argv[index]);
+			settings->GatewayHostname = _strdup(argv[index]);
 		}
 		else if (strcmp("--plugin", argv[index]) == 0)
 		{
@@ -715,7 +715,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			plugin_data = NULL;
 			if (strstr(argv[t], "rdpsnd"))
-				settings->audio_playback = TRUE;
+				settings->AudioPlayback = TRUE;
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
 			{
 				index += 2;
@@ -728,7 +728,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 						plugin_data = (RDP_PLUGIN_DATA*) realloc(plugin_data, sizeof(RDP_PLUGIN_DATA) * (i + 2));
 
 					if (strstr(argv[t], "drdynvc") && strstr(argv[index], "audin"))
-						settings->audio_capture = TRUE;
+						settings->AudioCapture = TRUE;
 
 					plugin_data[i].size = sizeof(RDP_PLUGIN_DATA);
 					plugin_data[i].data[0] = NULL;
@@ -796,7 +796,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-salted-checksum", argv[index]) == 0)
 		{
-			settings->salted_checksum = FALSE;
+			settings->SaltedChecksum = FALSE;
 		}
 		else if (strcmp("--pcid", argv[index]) == 0)
 		{
@@ -806,8 +806,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing preconnection id value\n");
 				return -1;
 			}
-			settings->send_preconnection_pdu = TRUE;
-			settings->preconnection_id = atoi(argv[index]);
+			settings->SendPreconnectionPdu = TRUE;
+			settings->PreconnectionId = atoi(argv[index]);
 		}
 		else if (strcmp("--pcb", argv[index]) == 0)
 		{
@@ -817,8 +817,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing preconnection blob value\n");
 				return -1;
 			}
-			settings->send_preconnection_pdu = TRUE;
-			settings->preconnection_blob = _strdup(argv[index]);
+			settings->SendPreconnectionPdu = TRUE;
+			settings->PreconnectionBlob = _strdup(argv[index]);
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
@@ -833,23 +833,23 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			   followed will be parsed for the next session. */
 			index++;
 
-			if (settings->smooth_fonts)
-				settings->performance_flags |= PERF_ENABLE_FONT_SMOOTHING;
+			if (settings->AllowFontSmoothing)
+				settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
 
-			if (settings->desktop_composition)
-				settings->performance_flags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+			if (settings->AllowDesktopComposition)
+				settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
 
-			if (settings->disable_wallpaper)
-				settings->performance_flags |= PERF_DISABLE_WALLPAPER;
+			if (settings->DisableWallpaper)
+				settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
 
-			if (settings->disable_full_window_drag)
-				settings->performance_flags |= PERF_DISABLE_FULLWINDOWDRAG;
+			if (settings->DisableFullWindowDrag)
+				settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
 
-			if (settings->disable_menu_animations)
-				settings->performance_flags |= PERF_DISABLE_MENUANIMATIONS;
+			if (settings->DisableMenuAnims)
+				settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
 
-			if (settings->disable_theming)
-				settings->performance_flags |= PERF_DISABLE_THEMING;
+			if (settings->DisableThemes)
+				settings->PerformanceFlags |= PERF_DISABLE_THEMING;
 
 			break; /* post process missing arguments */
 
@@ -879,36 +879,36 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	if (settings->from_stdin)
 	{
 		/* username */
-		if (NULL == settings->username)
+		if (NULL == settings->Username)
 		{
 			char input[512];
 			input[0] = '\0';
 			printf("username: ");
 			if (scanf("%511s%*c", input) > 0)
 			{
-				settings->username = _strdup(input);
+				settings->Username = _strdup(input);
 			}
 		}
 		/* password */
-		if (NULL == settings->password)
+		if (NULL == settings->Password)
 		{
-			settings->password = malloc(512 * sizeof(char));
+			settings->Password = malloc(512 * sizeof(char));
 			if (isatty(STDIN_FILENO))
 			{
-				freerdp_passphrase_read("password: ", settings->password, 512, settings->from_stdin);
+				freerdp_passphrase_read("password: ", settings->Password, 512, settings->from_stdin);
 			}
 			else
 			{
 				printf("password: ");
-				if (scanf("%511s%*c", settings->password) <= 0)
+				if (scanf("%511s%*c", settings->Password) <= 0)
 				{
-					free(settings->password);
-					settings->password = NULL;
+					free(settings->Password);
+					settings->Password = NULL;
 				}
 			}
 		}
 		/* domain */
-		if (NULL == settings->domain)
+		if (NULL == settings->Domain)
 		{
 			char input[512];
 			input[0] = '\0';
@@ -919,7 +919,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				   at the get go */
 				if (input[0] != '\0' && !(input[0] == '.' && input[1] == '\0'))
 				{
-					settings->domain = _strdup(input);
+					settings->Domain = _strdup(input);
 				}
 			}
 			if (feof(stdin))
@@ -929,7 +929,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 		}
 		/* hostname */
-		if (NULL == settings->hostname)
+		if (NULL == settings->Hostname)
 		{
 			char input[512];
 			input[0] = '\0';
@@ -942,7 +942,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 	}
 
 	/* Must have a hostname. Do you? */
-	if ((settings->hostname == NULL) && (settings->connection_file == NULL))
+	if ((settings->Hostname == NULL) && (settings->ConnectionFile == NULL))
 	{
 		printf("missing server name\n");
 		return FREERDP_ARGS_PARSE_FAILURE;

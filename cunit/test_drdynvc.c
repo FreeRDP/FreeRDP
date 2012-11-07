@@ -71,7 +71,7 @@ void test_drdynvc(void)
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 

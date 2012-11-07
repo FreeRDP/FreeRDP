@@ -212,11 +212,11 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 void wf_peer_read_settings(freerdp_peer* client)
 {
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->cert_file)))
-		client->settings->cert_file = _strdup("server.crt");
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->CertificateFile)))
+		client->settings->CertificateFile = _strdup("server.crt");
 
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->privatekey_file)))
-		client->settings->privatekey_file = _strdup("server.key");
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->PrivateKeyFile)))
+		client->settings->PrivateKeyFile = _strdup("server.key");
 }
 
 DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
@@ -232,9 +232,9 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_peer_init(client);
 
 	settings = client->settings;
-	settings->rfx_codec = TRUE;
-	settings->ns_codec = FALSE;
-	settings->jpeg_codec = FALSE;
+	settings->RemoteFxCodec = TRUE;
+	settings->NSCodec = FALSE;
+	settings->JpegCodec = FALSE;
 	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;

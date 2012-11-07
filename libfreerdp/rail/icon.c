@@ -83,8 +83,8 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 		int i;
 
 		cache->rail = rail;
-		cache->numCaches = (BYTE) rail->settings->num_icon_cache_entries;
-		cache->numCacheEntries = rail->settings->num_icon_cache_entries;
+		cache->numCaches = (BYTE) rail->settings->RemoteAppNumIconCacheEntries;
+		cache->numCacheEntries = rail->settings->RemoteAppNumIconCacheEntries;
 
 		cache->caches = xzalloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));
 

@@ -115,18 +115,18 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	if ((settings->password == NULL) || (settings->username == NULL))
+	if ((settings->Password == NULL) || (settings->Username == NULL))
 	{
 		if (instance->Authenticate)
 		{
 			BOOL proceed = instance->Authenticate(instance,
-					&settings->username, &settings->password, &settings->domain);
+					&settings->Username, &settings->Password, &settings->Domain);
 			if (!proceed)
 				return 0;
 		}
 	}
 
-	sspi_SetAuthIdentity(&(credssp->identity), settings->username, settings->domain, settings->password);
+	sspi_SetAuthIdentity(&(credssp->identity), settings->Username, settings->Domain, settings->Password);
 
 #ifdef WITH_DEBUG_NLA
 	_tprintf(_T("User: %s Domain: %s Password: %s\n"),
@@ -136,10 +136,10 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->tls->PublicKeyLength);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->tls->PublicKey, credssp->tls->PublicKeyLength);
 
-	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->hostname);
+	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->Hostname);
 
 	spn = (SEC_CHAR*) malloc(length + 1);
-	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->hostname);
+	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->Hostname);
 
 #ifdef UNICODE
 	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);

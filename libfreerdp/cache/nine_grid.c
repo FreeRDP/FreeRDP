@@ -105,8 +105,8 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 		nine_grid->maxSize = 2560;
 		nine_grid->maxEntries = 256;
 
-		nine_grid->settings->draw_nine_grid_cache_size = nine_grid->maxSize;
-		nine_grid->settings->draw_nine_grid_cache_entries = nine_grid->maxEntries;
+		nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
+		nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
 
 		nine_grid->entries = (NINE_GRID_ENTRY*) xzalloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
 	}

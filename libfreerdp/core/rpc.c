@@ -509,17 +509,17 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 
 	settings = rpc->settings;
 
-	if (settings->tsg_same_credentials)
+	if (settings->GatewayUseSameCredentials)
 	{
-		ntlm_client_init(ntlm, TRUE, settings->username,
-			settings->domain, settings->password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+		ntlm_client_init(ntlm, TRUE, settings->Username,
+			settings->Domain, settings->Password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 	else
 	{
-		ntlm_client_init(ntlm, TRUE, settings->tsg_username,
-			settings->tsg_domain, settings->tsg_password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+		ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
+			settings->GatewayDomain, settings->GatewayPassword);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 
 	ntlm_authenticate(ntlm);
@@ -572,17 +572,17 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 
 	settings = rpc->settings;
 
-	if (settings->tsg_same_credentials)
+	if (settings->GatewayUseSameCredentials)
 	{
-		ntlm_client_init(ntlm, TRUE, settings->username,
-			settings->domain, settings->password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+		ntlm_client_init(ntlm, TRUE, settings->Username,
+			settings->Domain, settings->Password);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 	else
 	{
-		ntlm_client_init(ntlm, TRUE, settings->tsg_username,
-			settings->tsg_domain, settings->tsg_password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->tsg_hostname);
+		ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
+			settings->GatewayDomain, settings->GatewayPassword);
+		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 
 	ntlm_authenticate(ntlm);
@@ -700,7 +700,7 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending bind PDU");
 
-	ntlm_client_init(rpc->ntlm, FALSE, settings->username, settings->domain, settings->password);
+	ntlm_client_init(rpc->ntlm, FALSE, settings->Username, settings->Domain, settings->Password);
 
 	ntlm_authenticate(rpc->ntlm);
 
@@ -1246,7 +1246,7 @@ void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL
 	http_context_set_cache_control(ntlm_http->context, "no-cache");
 	http_context_set_connection(ntlm_http->context, "Keep-Alive");
 	http_context_set_user_agent(ntlm_http->context, "MSRPC");
-	http_context_set_host(ntlm_http->context, rpc->settings->tsg_hostname);
+	http_context_set_host(ntlm_http->context, rpc->settings->GatewayHostname);
 
 	if (channel == TSG_CHANNEL_IN)
 	{
