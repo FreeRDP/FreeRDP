@@ -356,15 +356,6 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			settings->compression = TRUE;
 		}
-		else if (strcmp("--ntlm", argv[index]) == 0)
-		{
-			index++;
-
-			settings->ntlm_version = atoi(argv[index]);
-
-			if (settings->ntlm_version != 2)
-				settings->ntlm_version = 1;
-		}
 		else if (strcmp("--no-glyph-cache", argv[index]) == 0)
 		{
 			settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
@@ -379,7 +370,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-auth", argv[index]) == 0)
 		{
-			settings->authentication = FALSE;
+			settings->Authentication = FALSE;
 		}
 		else if (strcmp("--authonly", argv[index]) == 0)
 		{
@@ -639,15 +630,15 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-rdp", argv[index]) == 0)
 		{
-			settings->rdp_security = FALSE;
+			settings->RdpSecurity = FALSE;
 		}
 		else if (strcmp("--no-tls", argv[index]) == 0)
 		{
-			settings->tls_security = FALSE;
+			settings->TlsSecurity = FALSE;
 		}
 		else if (strcmp("--no-nla", argv[index]) == 0)
 		{
-			settings->nla_security = FALSE;
+			settings->NlaSecurity = FALSE;
 		}
 		else if (strcmp("--sec", argv[index]) == 0)
 		{
@@ -659,24 +650,24 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			}
 			if (strncmp("rdp", argv[index], 1) == 0) /* Standard RDP */
 			{
-				settings->rdp_security = TRUE;
-				settings->tls_security = FALSE;
-				settings->nla_security = FALSE;
+				settings->RdpSecurity = TRUE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = FALSE;
 				settings->encryption = TRUE;
-				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 			else if (strncmp("tls", argv[index], 1) == 0) /* TLS */
 			{
-				settings->rdp_security = FALSE;
-				settings->tls_security = TRUE;
-				settings->nla_security = FALSE;
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = TRUE;
+				settings->NlaSecurity = FALSE;
 			}
 			else if (strncmp("nla", argv[index], 1) == 0) /* NLA */
 			{
-				settings->rdp_security = FALSE;
-				settings->tls_security = FALSE;
-				settings->nla_security = TRUE;
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = TRUE;
 			}
 			else
 			{
@@ -686,7 +677,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--no-nego", argv[index]) == 0)
 		{
-			settings->security_layer_negotiation = FALSE;
+			settings->NegotiateSecurityLayer = FALSE;
 		}
 		else if (strcmp("--tsg", argv[index]) == 0)
 		{

@@ -364,7 +364,7 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 
 	/* extended client data supported */
 
-	if (settings->negotiationFlags)
+	if (settings->NegotiationFlags)
 		gcc_write_client_monitor_data(s, settings);
 }
 
@@ -568,7 +568,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 		stream_read_UINT32(s, serverSelectedProtocol); /* serverSelectedProtocol */
 		blockLength -= 4;
 
-		if (settings->selected_protocol != serverSelectedProtocol)
+		if (settings->SelectedProtocol != serverSelectedProtocol)
 			return FALSE;
 	} while (0);
 
@@ -721,7 +721,7 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 	stream_write_BYTE(s, connectionType); /* connectionType */
 	stream_write_BYTE(s, 0); /* pad1octet */
 
-	stream_write_UINT32(s, settings->selected_protocol); /* serverSelectedProtocol */
+	stream_write_UINT32(s, settings->SelectedProtocol); /* serverSelectedProtocol */
 }
 
 BOOL gcc_read_server_core_data(STREAM* s, rdpSettings* settings)
@@ -745,7 +745,7 @@ void gcc_write_server_core_data(STREAM* s, rdpSettings* settings)
 	gcc_write_user_data_header(s, SC_CORE, 12);
 
 	stream_write_UINT32(s, settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
-	stream_write_UINT32(s, settings->requested_protocols); /* clientRequestedProtocols */
+	stream_write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols */
 }
 
 /**
@@ -762,9 +762,9 @@ BOOL gcc_read_client_security_data(STREAM* s, rdpSettings* settings, UINT16 bloc
 
 	if (settings->encryption)
 	{
-		stream_read_UINT32(s, settings->encryption_method); /* encryptionMethods */
-		if (settings->encryption_method == 0)
-			stream_read_UINT32(s, settings->encryption_method); /* extEncryptionMethods */
+		stream_read_UINT32(s, settings->EncryptionMethod); /* encryptionMethods */
+		if (settings->EncryptionMethod == 0)
+			stream_read_UINT32(s, settings->EncryptionMethod); /* extEncryptionMethods */
 	}
 	else
 	{
@@ -786,14 +786,14 @@ void gcc_write_client_security_data(STREAM* s, rdpSettings* settings)
 
 	if (settings->encryption)
 	{
-		stream_write_UINT32(s, settings->encryption_method); /* encryptionMethods */
+		stream_write_UINT32(s, settings->EncryptionMethod); /* encryptionMethods */
 		stream_write_UINT32(s, 0); /* extEncryptionMethods */
 	}
 	else
 	{
 		/* French locale, disable encryption */
 		stream_write_UINT32(s, 0); /* encryptionMethods */
-		stream_write_UINT32(s, settings->encryption_method); /* extEncryptionMethods */
+		stream_write_UINT32(s, settings->EncryptionMethod); /* extEncryptionMethods */
 	}
 }
 
@@ -802,15 +802,15 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 	BYTE* data;
 	UINT32 length;
 
-	stream_read_UINT32(s, settings->encryption_method); /* encryptionMethod */
-	stream_read_UINT32(s, settings->encryption_level); /* encryptionLevel */
+	stream_read_UINT32(s, settings->EncryptionMethod); /* encryptionMethod */
+	stream_read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->encryption_method == 0 && settings->encryption_level == 0)
+	if (settings->EncryptionMethod == 0 && settings->EncryptionLevel == 0)
 	{
 		/* serverRandom and serverRandom must not be present */
 		settings->encryption = FALSE;
-		settings->encryption_method = ENCRYPTION_METHOD_NONE;
-		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		return TRUE;
 	}
 
@@ -907,24 +907,24 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 
 	if (!settings->encryption)
 	{
-		settings->encryption_method = ENCRYPTION_METHOD_NONE;
-		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 	}
-	else if ((settings->encryption_method & ENCRYPTION_METHOD_FIPS) != 0)
+	else if ((settings->EncryptionMethod & ENCRYPTION_METHOD_FIPS) != 0)
 	{
-		settings->encryption_method = ENCRYPTION_METHOD_FIPS;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_FIPS;
 	}
-	else if ((settings->encryption_method & ENCRYPTION_METHOD_128BIT) != 0)
+	else if ((settings->EncryptionMethod & ENCRYPTION_METHOD_128BIT) != 0)
 	{
-		settings->encryption_method = ENCRYPTION_METHOD_128BIT;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_128BIT;
 	}
-	else if ((settings->encryption_method & ENCRYPTION_METHOD_40BIT) != 0)
+	else if ((settings->EncryptionMethod & ENCRYPTION_METHOD_40BIT) != 0)
 	{
-		settings->encryption_method = ENCRYPTION_METHOD_40BIT;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT;
 	}
 
-	if (settings->encryption_method != ENCRYPTION_METHOD_NONE)
-		settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	if (settings->EncryptionMethod != ENCRYPTION_METHOD_NONE)
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 
 	headerLen = 12;
 	keyLen = 0;
@@ -932,8 +932,8 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	serverRandomLen = 0;
 	serverCertLen = 0;
 
-	if (settings->encryption_method != ENCRYPTION_METHOD_NONE ||
-	    settings->encryption_level != ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethod != ENCRYPTION_METHOD_NONE ||
+	    settings->EncryptionLevel != ENCRYPTION_LEVEL_NONE)
 	{
 		serverRandomLen = 32;
 
@@ -966,11 +966,11 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 
 	gcc_write_user_data_header(s, SC_SECURITY, headerLen);
 
-	stream_write_UINT32(s, settings->encryption_method); /* encryptionMethod */
-	stream_write_UINT32(s, settings->encryption_level); /* encryptionLevel */
+	stream_write_UINT32(s, settings->EncryptionMethod); /* encryptionMethod */
+	stream_write_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->encryption_method == ENCRYPTION_METHOD_NONE &&
-	    settings->encryption_level == ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethod == ENCRYPTION_METHOD_NONE &&
+	    settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
 	{
 		return;
 	}

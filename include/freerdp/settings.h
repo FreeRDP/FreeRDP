@@ -280,13 +280,13 @@ struct rdp_settings
 	ALIGN64 char* ClientDigProductId; /* 27 */
 
 	/* Protocol Security Negotiation */
-	ALIGN64 UINT32 requested_protocols; /* 28 */
-	ALIGN64 UINT32 selected_protocol; /* 29 */
-	ALIGN64 UINT32 encryption_method; /* 30 */
-	ALIGN64 UINT32 encryption_level; /* 31 */
-	ALIGN64 BOOL authentication; /* 32 */
-	ALIGN64 UINT32 negotiationFlags; /* 33 */
-	ALIGN64 BOOL security_layer_negotiation; /* 34 */
+	ALIGN64 UINT32 RequestedProtocols; /* 28 */
+	ALIGN64 UINT32 SelectedProtocol; /* 29 */
+	ALIGN64 UINT32 EncryptionMethod; /* 30 */
+	ALIGN64 UINT32 EncryptionLevel; /* 31 */
+	ALIGN64 BOOL Authentication; /* 32 */
+	ALIGN64 UINT32 NegotiationFlags; /* 33 */
+	ALIGN64 BOOL NegotiateSecurityLayer; /* 34 */
 	UINT64 padding002[48 - 35]; /* 35 */
 
 	/* Connection Settings */
@@ -347,11 +347,11 @@ struct rdp_settings
 
 	/* Security */
 	ALIGN64 BOOL encryption; /* 144 */
-	ALIGN64 BOOL tls_security; /* 145 */
-	ALIGN64 BOOL nla_security; /* 146 */
-	ALIGN64 BOOL rdp_security; /* 147 */
-	ALIGN64 BOOL ext_security; /* 148 */
-	ALIGN64 UINT32 ntlm_version; /* 149 */
+	ALIGN64 BOOL TlsSecurity; /* 145 */
+	ALIGN64 BOOL NlaSecurity; /* 146 */
+	ALIGN64 BOOL RdpSecurity; /* 147 */
+	ALIGN64 BOOL ExtSecurity; /* 148 */
+	ALIGN64 void* unused149; /* 149 */
 	ALIGN64 BOOL salted_checksum; /* 150 */
 	ALIGN64 BOOL mstsc_cookie_mode; /* 151 */
 	ALIGN64 UINT32 cookie_max_length; /* 152 */

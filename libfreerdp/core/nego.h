@@ -98,7 +98,7 @@ struct rdp_nego
 
 	UINT32 selected_protocol;
 	UINT32 requested_protocols;
-	BOOL security_layer_negotiation_enabled;
+	BOOL NegotiateSecurityLayer_enabled;
 	BYTE enabled_protocols[16];
 
 	rdpTransport* transport;
@@ -130,7 +130,7 @@ void nego_free(rdpNego* nego);
 
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL security_layer_negotiation_enabled);
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled);
 void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 void nego_enable_nla(rdpNego* nego, BOOL enable_nla);

@@ -77,10 +77,10 @@ void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardFunctionKeys"), dwType, dwValue, dwSize, settings->KeyboardFunctionKey);
 		REG_QUERY_DWORD_VALUE(hKey, _T("KeyboardLayout"), dwType, dwValue, dwSize, settings->KeyboardLayout);
 
-		REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ext_security);
-		REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
-		REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
-		REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
+		REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ExtSecurity);
+		REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->NlaSecurity);
+		REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->TlsSecurity);
+		REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->RdpSecurity);
 
 		REG_QUERY_BOOL_VALUE(hKey, _T("MstscCookieMode"), dwType, dwValue, dwSize, settings->mstsc_cookie_mode);
 		REG_QUERY_DWORD_VALUE(hKey, _T("CookieMaxLength"), dwType, dwValue, dwSize, settings->cookie_max_length);
@@ -174,10 +174,10 @@ void settings_server_load_hkey_local_machine(rdpSettings* settings)
 	if (status != ERROR_SUCCESS)
 		return;
 
-	REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ext_security);
-	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->nla_security);
-	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->tls_security);
-	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->rdp_security);
+	REG_QUERY_BOOL_VALUE(hKey, _T("ExtSecurity"), dwType, dwValue, dwSize, settings->ExtSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("NlaSecurity"), dwType, dwValue, dwSize, settings->NlaSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("TlsSecurity"), dwType, dwValue, dwSize, settings->TlsSecurity);
+	REG_QUERY_BOOL_VALUE(hKey, _T("RdpSecurity"), dwType, dwValue, dwSize, settings->RdpSecurity);
 
 	RegCloseKey(hKey);
 }
@@ -224,11 +224,11 @@ rdpSettings* settings_new(void* instance)
 		settings->decorations = TRUE;
 		settings->RdpVersion = 7;
 		settings->ColorDepth = 16;
-		settings->ext_security = FALSE;
-		settings->nla_security = TRUE;
-		settings->tls_security = TRUE;
-		settings->rdp_security = TRUE;
-		settings->security_layer_negotiation = TRUE;
+		settings->ExtSecurity = FALSE;
+		settings->NlaSecurity = TRUE;
+		settings->TlsSecurity = TRUE;
+		settings->RdpSecurity = TRUE;
+		settings->NegotiateSecurityLayer = TRUE;
 		settings->mstsc_cookie_mode = FALSE;
 		settings->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 		settings->ClientBuild = 2600;
@@ -248,10 +248,10 @@ rdpSettings* settings_new(void* instance)
 
 		settings->auto_reconnection = TRUE;
 
-		settings->encryption_method = ENCRYPTION_METHOD_NONE;
-		settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
-		settings->authentication = TRUE;
+		settings->Authentication = TRUE;
 		settings->authentication_only = FALSE;
 		settings->from_stdin = FALSE;
 

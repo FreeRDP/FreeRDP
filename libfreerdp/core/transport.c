@@ -129,7 +129,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != TRUE)
+	if (transport->settings->Authentication != TRUE)
 		return TRUE;
 
 	settings = transport->settings;
@@ -247,7 +247,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	/* Network Level Authentication */
 
-	if (transport->settings->authentication != TRUE)
+	if (transport->settings->Authentication != TRUE)
 		return TRUE;
 
 	settings = transport->settings;

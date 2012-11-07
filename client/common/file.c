@@ -520,9 +520,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->AdministrativeSession)
 		settings->console_session = file->AdministrativeSession;
 	if (~file->NegotiateSecurityLayer)
-		settings->security_layer_negotiation = file->NegotiateSecurityLayer;
+		settings->NegotiateSecurityLayer = file->NegotiateSecurityLayer;
 	if (~file->EnableCredSSPSupport)
-		settings->nla_security = file->EnableCredSSPSupport;
+		settings->NlaSecurity = file->EnableCredSSPSupport;
 	if (~((size_t) file->AlternateShell))
 		settings->shell = file->AlternateShell;
 	if (~((size_t) file->ShellWorkingDirectory))

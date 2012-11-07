@@ -114,12 +114,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
 	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
 
-	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
+	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
 
-	nego_enable_rdp(rdp->nego, settings->rdp_security);
-	nego_enable_tls(rdp->nego, settings->tls_security);
-	nego_enable_nla(rdp->nego, settings->nla_security);
-	nego_enable_ext(rdp->nego, settings->ext_security);
+	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
+	nego_enable_tls(rdp->nego, settings->TlsSecurity);
+	nego_enable_nla(rdp->nego, settings->NlaSecurity);
+	nego_enable_ext(rdp->nego, settings->ExtSecurity);
 
 	if (settings->mstsc_cookie_mode)
 		settings->cookie_max_length = MSTSC_COOKIE_MAX_LENGTH;
@@ -292,7 +292,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -364,7 +364,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	if (rdp->settings->salted_checksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -584,17 +584,17 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 			(rdp->nego->requested_protocols == PROTOCOL_RDP) ? 1: 0);
 
 	printf("Server Security: NLA:%d TLS:%d RDP:%d\n",
-			settings->nla_security, settings->tls_security, settings->rdp_security);
+			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	if ((settings->nla_security) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_NLA;
 	}
-	else if ((settings->tls_security) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_TLS;
 	}
-	else if ((settings->rdp_security) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_RDP;
 	}

@@ -89,7 +89,7 @@ BOOL nego_connect(rdpNego* nego)
 			nego->state = NEGO_STATE_FAIL;
 		}
 
-		if (!nego->security_layer_negotiation_enabled)
+		if (!nego->NegotiateSecurityLayer_enabled)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
@@ -148,15 +148,15 @@ BOOL nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
-	nego->transport->settings->requested_protocols = nego->requested_protocols;
-	nego->transport->settings->selected_protocol = nego->selected_protocol;
-	nego->transport->settings->negotiationFlags = nego->flags;
+	nego->transport->settings->RequestedProtocols = nego->requested_protocols;
+	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
+	nego->transport->settings->NegotiationFlags = nego->flags;
 
 	if(nego->selected_protocol == PROTOCOL_RDP)
 	{
 		nego->transport->settings->encryption = TRUE;
-		nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		nego->transport->settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
 	/* finally connect security layer (if not already done) */
@@ -226,7 +226,7 @@ BOOL nego_transport_connect(rdpNego* nego)
 {
 	nego_tcp_connect(nego);
 
-	if (nego->tcp_connected && !nego->security_layer_negotiation_enabled)
+	if (nego->tcp_connected && !nego->NegotiateSecurityLayer_enabled)
 		return nego_security_connect(nego);
 
 	return nego->tcp_connected;
@@ -661,7 +661,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += cookie_length + 19;
 	}
 
-	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
+	DEBUG_NEGO("requested_protocols: %d", nego->RequestedProtocols);
 
 	if (nego->requested_protocols > PROTOCOL_RDP)
 	{
@@ -702,7 +702,7 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 	stream_read_UINT16(s, length);
 	stream_read_UINT32(s, nego->requested_protocols);
 
-	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
+	DEBUG_NEGO("requested_protocols: %d", nego->RequestedProtocols);
 
 	nego->state = NEGO_STATE_FINAL;
 }
@@ -800,7 +800,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		stream_write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
-	else if (!settings->rdp_security)
+	else if (!settings->RdpSecurity)
 	{
 		stream_write_BYTE(s, TYPE_RDP_NEG_FAILURE);
 		stream_write_BYTE(s, 0); /* flags */
@@ -827,42 +827,42 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	if (status)
 	{
 		/* update settings with negotiated protocol security */
-		settings->requested_protocols = nego->requested_protocols;
-		settings->selected_protocol = nego->selected_protocol;
+		settings->RequestedProtocols = nego->requested_protocols;
+		settings->SelectedProtocol = nego->selected_protocol;
 
-		if (settings->selected_protocol == PROTOCOL_RDP)
+		if (settings->SelectedProtocol == PROTOCOL_RDP)
 		{
-			settings->tls_security = FALSE;
-			settings->nla_security = FALSE;
-			settings->rdp_security = TRUE;
+			settings->TlsSecurity = FALSE;
+			settings->NlaSecurity = FALSE;
+			settings->RdpSecurity = TRUE;
 
 			if (!settings->local)
 			{
 				settings->encryption = TRUE;
-				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
 			if (settings->encryption && settings->server_key == NULL && settings->rdp_key_file == NULL)
 				return FALSE;
 		}
-		else if (settings->selected_protocol == PROTOCOL_TLS)
+		else if (settings->SelectedProtocol == PROTOCOL_TLS)
 		{
-			settings->tls_security = TRUE;
-			settings->nla_security = FALSE;
-			settings->rdp_security = FALSE;
+			settings->TlsSecurity = TRUE;
+			settings->NlaSecurity = FALSE;
+			settings->RdpSecurity = FALSE;
 			settings->encryption = FALSE;
-			settings->encryption_method = ENCRYPTION_METHOD_NONE;
-			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+			settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
-		else if (settings->selected_protocol == PROTOCOL_NLA)
+		else if (settings->SelectedProtocol == PROTOCOL_NLA)
 		{
-			settings->tls_security = TRUE;
-			settings->nla_security = TRUE;
-			settings->rdp_security = FALSE;
+			settings->TlsSecurity = TRUE;
+			settings->NlaSecurity = TRUE;
+			settings->RdpSecurity = FALSE;
 			settings->encryption = FALSE;
-			settings->encryption_method = ENCRYPTION_METHOD_NONE;
-			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+			settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 	}
 
@@ -933,10 +933,10 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
  * @param enable_rdp whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL security_layer_negotiation_enabled)
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled)
 {
-	DEBUG_NEGO("Enabling security layer negotiation: %s", security_layer_negotiation_enabled ? "TRUE" : "FALSE");
-	nego->security_layer_negotiation_enabled = security_layer_negotiation_enabled;
+	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer_enabled ? "TRUE" : "FALSE");
+	nego->NegotiateSecurityLayer_enabled = NegotiateSecurityLayer_enabled;
 }
 
 /**

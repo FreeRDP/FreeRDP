@@ -201,7 +201,7 @@ static void* mf_peer_main_loop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->cert_file = _strdup("server.crt");
 	client->settings->privatekey_file = _strdup("server.key");
-	client->settings->nla_security = FALSE;
+	client->settings->NlaSecurity = FALSE;
 	client->settings->rfx_codec = TRUE;
 	client->settings->suppress_output = TRUE;
 	client->settings->refresh_rect = TRUE;

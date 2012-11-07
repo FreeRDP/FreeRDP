@@ -537,7 +537,7 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	if (rdp->do_crypt)
 	{
 		sec_bytes = 8;
-		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+		if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else

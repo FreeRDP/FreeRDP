@@ -447,7 +447,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "nego")
 		{
-			settings->security_layer_negotiation = arg->Value ? TRUE : FALSE;
+			settings->NegotiateSecurityLayer = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "pcid")
 		{
@@ -463,34 +463,34 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
 			{
-				settings->rdp_security = TRUE;
-				settings->tls_security = FALSE;
-				settings->nla_security = FALSE;
-				settings->ext_security = FALSE;
+				settings->RdpSecurity = TRUE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = FALSE;
 				settings->encryption = TRUE;
-				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */
 			{
-				settings->rdp_security = FALSE;
-				settings->tls_security = TRUE;
-				settings->nla_security = FALSE;
-				settings->ext_security = FALSE;
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = TRUE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = FALSE;
 			}
 			else if (strcmp("nla", arg->Value) == 0) /* NLA */
 			{
-				settings->rdp_security = FALSE;
-				settings->tls_security = FALSE;
-				settings->nla_security = TRUE;
-				settings->ext_security = FALSE;
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = TRUE;
+				settings->ExtSecurity = FALSE;
 			}
 			else if (strcmp("ext", arg->Value) == 0) /* NLA Extended */
 			{
-				settings->rdp_security = FALSE;
-				settings->tls_security = FALSE;
-				settings->nla_security = FALSE;
-				settings->ext_security = TRUE;
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = TRUE;
 			}
 			else
 			{
@@ -499,19 +499,19 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
-			settings->rdp_security = arg->Value ? TRUE : FALSE;
+			settings->RdpSecurity = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
-			settings->tls_security = arg->Value ? TRUE : FALSE;
+			settings->TlsSecurity = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
-			settings->nla_security = arg->Value ? TRUE : FALSE;
+			settings->NlaSecurity = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
-			settings->ext_security = arg->Value ? TRUE : FALSE;
+			settings->ExtSecurity = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{

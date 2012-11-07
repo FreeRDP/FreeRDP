@@ -157,7 +157,7 @@ void test_gcc_write_client_security_data(void)
 	settings = settings_new(NULL);
 
 	settings->encryption = 1; /* turn on encryption */
-	settings->encryption_method =
+	settings->EncryptionMethod =
 			ENCRYPTION_METHOD_40BIT |
 			ENCRYPTION_METHOD_56BIT |
 			ENCRYPTION_METHOD_128BIT |
