@@ -232,7 +232,7 @@ rdpSettings* settings_new(void* instance)
 		settings->MstscCookieMode = FALSE;
 		settings->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
 		settings->ClientBuild = 2600;
-		settings->KeyboardType = 4; /* @msdn{cc240510} 'IBM enhanced (101- or 102-key) keyboard' */
+		settings->KeyboardType = 4;
 		settings->KeyboardSubType = 0;
 		settings->KeyboardFunctionKey = 12;
 		settings->KeyboardLayout = 0;
@@ -254,6 +254,16 @@ rdpSettings* settings_new(void* instance)
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;
 		settings->CredentialsFromStdin = FALSE;
+
+		settings->ChannelCount = 0;
+		settings->ChannelDefArraySize = 32;
+		settings->ChannelDefArray = (rdpChannel*) malloc(sizeof(rdpChannel) * settings->ChannelDefArraySize);
+		ZeroMemory(settings->ChannelDefArray, sizeof(rdpChannel) * settings->ChannelDefArraySize);
+
+		settings->MonitorCount = 0;
+		settings->MonitorDefArraySize = 32;
+		settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+		ZeroMemory(settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 
 		settings_get_computer_name(settings);
 
@@ -402,6 +412,8 @@ void settings_free(rdpSettings* settings)
 		free(settings->Domain);
 		free(settings->AlternateShell);
 		free(settings->ShellWorkingDirectory);
+		free(settings->ChannelDefArray);
+		free(settings->MonitorDefArray);
 		free(settings->ClientAddress);
 		free(settings->ClientDir);
 		free(settings->CertificateFile);

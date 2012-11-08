@@ -135,7 +135,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
-				(settings->PasswordCookie != NULL && settings->PasswordCookieLength > 0)))
+				(settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
 			settings->AutoLogonEnabled = TRUE;
 	}
 
@@ -238,8 +238,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		settings->PasswordCookie = redirection->PasswordCookie;
-		settings->PasswordCookieLength = redirection->PasswordCookieLength;
+		settings->RedirectionPassword = redirection->PasswordCookie;
+		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
 	}
 
 	return rdp_client_connect(rdp);
@@ -247,13 +247,13 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
-	BYTE client_random[CLIENT_RANDOM_LENGTH];
-	BYTE crypt_client_random[256 + 8];
-	UINT32 key_len;
 	BYTE* mod;
 	BYTE* exp;
-	UINT32 length;
 	STREAM* s;
+	UINT32 length;
+	UINT32 key_len;
+	BYTE crypt_client_random[256 + 8];
+	BYTE client_random[CLIENT_RANDOM_LENGTH];
 
 	if (rdp->settings->DisableEncryption == FALSE)
 	{
