@@ -493,13 +493,13 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	return TRUE;
 }
 
-rdpKey* key_new(const char* keyfile)
+rdpRsaKey* key_new(const char* keyfile)
 {
 	FILE* fp;
 	RSA* rsa;
-	rdpKey* key;
+	rdpRsaKey* key;
 
-	key = (rdpKey*) xzalloc(sizeof(rdpKey));
+	key = (rdpRsaKey*) xzalloc(sizeof(rdpRsaKey));
 
 	if (key == NULL)
 		return NULL;
@@ -571,7 +571,7 @@ rdpKey* key_new(const char* keyfile)
 	return key;
 }
 
-void key_free(rdpKey* key)
+void key_free(rdpRsaKey* key)
 {
 	if (key != NULL)
 	{

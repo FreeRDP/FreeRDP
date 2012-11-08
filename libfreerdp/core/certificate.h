@@ -54,8 +54,8 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 rdpCertificate* certificate_new();
 void certificate_free(rdpCertificate* certificate);
 
-rdpKey* key_new(const char *keyfile);
-void key_free(rdpKey* key);
+rdpRsaKey* key_new(const char *keyfile);
+void key_free(rdpRsaKey* key);
 
 #ifdef WITH_DEBUG_CERTIFICATE
 #define DEBUG_CERTIFICATE(fmt, ...) DEBUG_CLASS(CERTIFICATE, fmt, ## __VA_ARGS__)

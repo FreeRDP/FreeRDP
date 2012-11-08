@@ -42,11 +42,11 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 	int chunk_size;
 	rdpChannel* channel = NULL;
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		if (rdp->settings->channels[i].channel_id == channel_id)
+		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
 		{
-			channel = &rdp->settings->channels[i];
+			channel = &rdp->settings->ChannelDefArray[i];
 			break;
 		}
 	}

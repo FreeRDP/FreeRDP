@@ -35,7 +35,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 	if (client->context->rdp->settings->RdpKeyFile != NULL)
 	{
-		client->context->rdp->settings->ServerKey =
+		client->context->rdp->settings->RdpServerRsaKey =
 		    key_new(client->context->rdp->settings->RdpKeyFile);
 	}
 
@@ -171,7 +171,7 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		return FALSE;
 	}
 
-	if (rdp->settings->Encryption)
+	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 
@@ -289,7 +289,7 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
-			if (rdp->settings->Encryption)
+			if (rdp->settings->DisableEncryption)
 			{
 				if (!rdp_server_accept_client_keys(rdp, s))
 					return FALSE;

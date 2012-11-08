@@ -674,13 +674,13 @@ static rdpChannel* freerdp_channels_find_channel_by_id(rdpChannels* channels, rd
 	int lcount;
 	rdpChannel* lrdp_channel;
 
-	lcount = settings->num_channels;
+	lcount = settings->ChannelCount;
 
 	for (lindex = 0; lindex < lcount; lindex++)
 	{
-		lrdp_channel = settings->channels + lindex;
+		lrdp_channel = settings->ChannelDefArray + lindex;
 
-		if (lrdp_channel->channel_id == channel_id)
+		if (lrdp_channel->ChannelId == channel_id)
 		{
 			if (pindex != 0)
 				*pindex = lindex;
@@ -700,13 +700,13 @@ static rdpChannel* freerdp_channels_find_channel_by_name(rdpChannels* channels,
 	int lcount;
 	rdpChannel* lrdp_channel;
 
-	lcount = settings->num_channels;
+	lcount = settings->ChannelCount;
 
 	for (lindex = 0; lindex < lcount; lindex++)
 	{
-		lrdp_channel = settings->channels + lindex;
+		lrdp_channel = settings->ChannelDefArray + lindex;
 
-		if (strcmp(channel_name, lrdp_channel->name) == 0)
+		if (strcmp(channel_name, lrdp_channel->Name) == 0)
 		{
 			if (pindex != 0)
 				*pindex = lindex;
@@ -804,12 +804,12 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 		strncpy(lchannel_data->name, lchannel_def->name, CHANNEL_NAME_LEN);
 		lchannel_data->options = lchannel_def->options;
 
-		if (channels->settings->num_channels < 16)
+		if (channels->settings->ChannelCount < 16)
 		{
-			lrdp_channel = channels->settings->channels + channels->settings->num_channels;
-			strncpy(lrdp_channel->name, lchannel_def->name, 7);
+			lrdp_channel = channels->settings->ChannelDefArray + channels->settings->ChannelCount;
+			strncpy(lrdp_channel->Name, lchannel_def->name, 7);
 			lrdp_channel->options = lchannel_def->options;
-			channels->settings->num_channels++;
+			channels->settings->ChannelCount++;
 		}
 		else
 		{
@@ -1166,7 +1166,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 {
 	void* entry;
 
-	DEBUG_CHANNELS("%s", name);
+	DEBUG_CHANNELS("%s", Name);
 
 	entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
 
@@ -1284,7 +1284,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 		return 1;
 	}
 
-	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, lrdp_channel->name, &index);
+	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, lrdp_channel->Name, &index);
 
 	if (lchannel_data == 0)
 	{
@@ -1335,7 +1335,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 
 	if (lchannel_data == NULL)
 	{
-		DEBUG_CHANNELS("could not find channel name %s", name);
+		DEBUG_CHANNELS("could not find channel name %s", Name);
 		freerdp_event_free(event);
 		return 1;
 	}
@@ -1372,7 +1372,7 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 			lchannel_data->name, &item->Index);
 
 		if (lrdp_channel != NULL)
-			instance->SendChannelData(instance, lrdp_channel->channel_id, item->Data, item->DataLength);
+			instance->SendChannelData(instance, lrdp_channel->ChannelId, item->Data, item->DataLength);
 
 		if (lchannel_data->open_event_proc != 0)
 		{

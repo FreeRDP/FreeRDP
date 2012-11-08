@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDP_SETTINGS_H
-#define __RDP_SETTINGS_H
+#ifndef FREERDP_SETTINGS_H
+#define FREERDP_SETTINGS_H
 
 #include <freerdp/types.h>
 
@@ -41,6 +41,71 @@
 #define CONNECTION_TYPE_BROADBAND_HIGH		0x04
 #define CONNECTION_TYPE_WAN			0x05
 #define CONNECTION_TYPE_LAN			0x06
+#define CONNECTION_TYPE_AUTODETECT		0x07
+
+/* Client to Server (CS) data blocks */
+#define CS_CORE			0xC001
+#define CS_SECURITY		0xC002
+#define CS_NET			0xC003
+#define CS_CLUSTER		0xC004
+#define CS_MONITOR		0xC005
+#define CS_MCS_MSGCHANNEL	0xC006
+#define CS_MULTITRANSPORT	0xC008
+
+/* Server to Client (SC) data blocks */
+#define SC_CORE			0x0C01
+#define SC_SECURITY		0x0C02
+#define SC_NET			0x0C03
+#define SC_MULTITRANSPORT	0x0C06
+
+/* RDP version */
+#define RDP_VERSION_4		0x00080001
+#define RDP_VERSION_5_PLUS	0x00080004
+
+/* Color depth */
+#define RNS_UD_COLOR_4BPP	0xCA00
+#define RNS_UD_COLOR_8BPP	0xCA01
+#define RNS_UD_COLOR_16BPP_555	0xCA02
+#define RNS_UD_COLOR_16BPP_565	0xCA03
+#define RNS_UD_COLOR_24BPP	0xCA04
+
+/* Secure Access Sequence */
+#define RNS_UD_SAS_DEL		0xAA03
+
+/* Supported Color Depths */
+#define RNS_UD_24BPP_SUPPORT	0x0001
+#define RNS_UD_16BPP_SUPPORT	0x0002
+#define RNS_UD_15BPP_SUPPORT	0x0004
+#define RNS_UD_32BPP_SUPPORT	0x0008
+
+/* Early Capability Flags (Client to Server) */
+#define RNS_UD_CS_SUPPORT_ERRINFO_PDU		0x0001
+#define RNS_UD_CS_WANT_32BPP_SESSION		0x0002
+#define RNS_UD_CS_SUPPORT_STATUSINFO_PDU	0x0004
+#define RNS_UD_CS_STRONG_ASYMMETRIC_KEYS	0x0008
+#define RNS_UD_CS_VALID_CONNECTION_TYPE		0x0020
+#define RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU	0x0040
+#define RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT	0x0080
+#define RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL	0x0100
+#define RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE	0x0200
+
+/* Early Capability Flags (Server to Client) */
+#define RNS_UD_SC_EDGE_ACTIONS_SUPPORTED	0x00000001
+#define RNS_UD_SC_DYNAMIC_DST_SUPPORTED		0x00000002
+
+/* Cluster Information Flags */
+#define REDIRECTION_SUPPORTED			0x00000001
+#define REDIRECTED_SESSIONID_FIELD_VALID	0x00000002
+#define REDIRECTED_SMARTCARD			0x00000040
+
+#define REDIRECTION_VERSION1			0x00
+#define REDIRECTION_VERSION2			0x01
+#define REDIRECTION_VERSION3			0x02
+#define REDIRECTION_VERSION4			0x03
+#define REDIRECTION_VERSION5			0x04
+#define REDIRECTION_VERSION6			0x05
+
+#define MONITOR_PRIMARY				0x00000001
 
 /* Encryption Methods */
 #define ENCRYPTION_METHOD_NONE			0x00000000
@@ -55,6 +120,24 @@
 #define ENCRYPTION_LEVEL_CLIENT_COMPATIBLE	0x00000002
 #define ENCRYPTION_LEVEL_HIGH			0x00000003
 #define ENCRYPTION_LEVEL_FIPS			0x00000004
+
+/* Multitransport Types */
+#define TRANSPORT_TYPE_UDP_FECR			0x00000001
+#define TRANSPORT_TYPE_UDP_FECL			0x00000004
+#define TRANSPORT_TYPE_UDP_PREFERRED		0x00000100
+
+/* Static Virtual Channel Options */
+#define CHANNEL_OPTION_INITIALIZED		0x80000000
+#define CHANNEL_OPTION_ENCRYPT_RDP		0x40000000
+#define CHANNEL_OPTION_ENCRYPT_SC		0x20000000
+#define CHANNEL_OPTION_ENCRYPT_CS		0x10000000
+#define CHANNEL_OPTION_PRI_HIGH			0x08000000
+#define CHANNEL_OPTION_PRI_MED			0x04000000
+#define CHANNEL_OPTION_PRI_LOW			0x02000000
+#define CHANNEL_OPTION_COMPRESS_RDP		0x00800000
+#define CHANNEL_OPTION_COMPRESS			0x00400000
+#define CHANNEL_OPTION_SHOW_PROTOCOL		0x00200000
+#define CHANNEL_REMOTE_CONTROL_PERSISTENT	0x00100000
 
 /* Auto Reconnect Version */
 #define AUTO_RECONNECT_VERSION_1		0x00000001
@@ -188,7 +271,7 @@ struct rdp_certificate
 };
 typedef struct rdp_certificate rdpCertificate;
 
-struct rdp_key
+struct rdp_rsa_key
 {
 	BYTE* Modulus;
 	DWORD ModulusLength;
@@ -196,24 +279,17 @@ struct rdp_key
 	DWORD PrivateExponentLength;
 	BYTE exponent[4];
 };
-typedef struct rdp_key rdpKey;
+typedef struct rdp_rsa_key rdpRsaKey;
 
 /* Channels */
 
-struct _RDPDR_DRIVE
-{
-	char* name;
-	char* path;
-};
-typedef struct _RDPDR_DRIVE RDPDR_DRIVE;
-
 struct rdp_channel
 {
-	char name[8]; /* ui sets */
-	int options; /* ui sets */
-	int channel_id; /* core sets */
-	BOOL joined; /* client has joined the channel */
-	void* handle; /* just for ui */
+	char Name[8];
+	UINT32 options;
+	int ChannelId;
+	BOOL joined;
+	void* handle;
 };
 typedef struct rdp_channel rdpChannel;
 
@@ -254,12 +330,13 @@ typedef struct _GLYPH_CACHE_DEFINITION GLYPH_CACHE_DEFINITION;
 
 struct rdp_monitor
 {
-	int x;
-	int y;
-	int width;
-	int height;
-	int is_primary;
+	INT32 x;
+	INT32 y;
+	INT32 width;
+	INT32 height;
+	UINT32 is_primary;
 };
+typedef struct rdp_monitor rdpMonitor;
 
 /* Settings */
 
@@ -278,26 +355,67 @@ struct rdp_settings
 	ALIGN64 void* instance; /* 0 */
 	UINT64 padding001[16 - 1]; /* 1 */
 
-	/**
-	 * Section: Core
-	 */
-
 	/* Core Parameters */
 	ALIGN64 BOOL ServerMode; /* 16 */
 	ALIGN64 UINT32 ShareId; /* 17 */
 	ALIGN64 UINT32 PduSource; /* 18 */
-	ALIGN64 UINT32 RdpVersion; /* 19 */
-	ALIGN64 UINT32 DesktopWidth; /* 20 */
-	ALIGN64 UINT32 DesktopHeight; /* 21 */
-	ALIGN64 UINT32 ColorDepth; /* 22 */
-	ALIGN64 UINT32 ClientBuild; /* 28 */
-	ALIGN64 char* ClientName; /* 29 */
-	ALIGN64 char* ClientDigProductId; /* 30 */
-	UINT64 padding0064[64 - 31]; /* 31 */
+	ALIGN64 UINT32 ServerPort; /* 19 */
+	ALIGN64 char* ServerHostname; /* 20 */
+	UINT64 padding0064[64 - 21]; /* 21 */
+	UINT64 padding0128[128 - 64]; /* 64 */
 
-	/* Server Info */
-	ALIGN64 UINT32 ServerPort; /* 65 */
-	ALIGN64 char* ServerHostname; /* 66 */
+	/**
+	 * GCC User Data Blocks
+	 */
+
+	/* Client/Server Core Data */
+	ALIGN64 UINT32 RdpVersion; /* 128 */
+	ALIGN64 UINT32 DesktopWidth; /* 129 */
+	ALIGN64 UINT32 DesktopHeight; /* 130 */
+	ALIGN64 UINT32 ColorDepth; /* 131 */
+	ALIGN64 UINT32 ConnectionType; /* 132 */
+	ALIGN64 UINT32 ClientBuild; /* 133 */
+	ALIGN64 char* ClientName; /* 134 */
+	ALIGN64 char* ClientDigProductId; /* 135 */
+	ALIGN64 UINT32 EarlyCapabilitiesFlag; /* 136 */
+	ALIGN64 BOOL NetworkAutoDetect; /* 137 */
+	ALIGN64 BOOL SupportAsymetricKeys; /* 138 */
+	ALIGN64 BOOL SupportErrorInfoPdu; /* 139 */
+	ALIGN64 BOOL SupportStatusInfoPdu; /* 140 */
+	ALIGN64 BOOL SupportMonitorLayoutPdu; /* 141 */
+	ALIGN64 BOOL SupportGraphicsPipeline; /* 142 */
+	ALIGN64 BOOL SupportDynamicTimeZone; /* 143 */
+	UINT64 padding0192[192 - 143]; /* 143 */
+
+	/* Client/Server Security Data */
+	ALIGN64 BOOL DisableEncryption; /* 192 */
+	ALIGN64 UINT32 EncryptionMethods; /* 193 */
+	ALIGN64 UINT32 ExtEncryptionMethods; /* 194 */
+	ALIGN64 UINT32 EncryptionLevel; /* 195 */
+	ALIGN64 BYTE* ServerRandom; /* 196 */
+	ALIGN64 DWORD ServerRandomLength; /* 197 */
+	ALIGN64 BYTE* ServerCertificate; /* 198 */
+	ALIGN64 DWORD ServerCertificateLength; /* 199 */
+	UINT64 padding0256[256 - 200]; /* 200 */
+
+	/* Client Network Data */
+	ALIGN64 UINT32 ChannelCount;
+	ALIGN64 UINT32 ChannelDefArraySize;
+	ALIGN64 rdpChannel ChannelDefArray[16];
+
+	/* Client Cluster Data */
+	ALIGN64 UINT32 ClusterInfoFlags; /* 162 */
+	ALIGN64 UINT32 RedirectedSessionId; /* 162 */
+
+	/* Client Monitor Data */
+	ALIGN64 int MonitorCount;
+	ALIGN64 UINT32 MonitorDefArraySize;
+	ALIGN64 rdpMonitor MonitorDefArray[16];
+
+	/* Client Message Channel Data */
+
+	/* Client Multitransport Channel Data */
+	ALIGN64 UINT32 MultitransportFlags;
 
 	/* Client Info */
 	ALIGN64 char* Username; /* 67 */
@@ -305,7 +423,7 @@ struct rdp_settings
 	ALIGN64 char* Domain; /* 69 */
 	ALIGN64 char* AlternateShell; /* 54 */
 	ALIGN64 char* ShellWorkingDirectory; /* 55 */
-	UINT64 padding0128[128 - 70]; /* 70 */
+	UINT64 padding1128[128 - 70]; /* 70 */
 
 	/* Client Info Flags */
 	ALIGN64 BOOL AutoLogonEnabled; /* 58 */
@@ -347,9 +465,17 @@ struct rdp_settings
 	ALIGN64 DWORD Password51Length; /* 775 */
 	UINT64 padding0832[832 - 776]; /* 776 */
 
+	/* Server Certificate */
+	ALIGN64 BOOL IgnoreCertificate; /* 256 */
+	ALIGN64 char* CertificateName; /* 257 */
+	ALIGN64 char* CertificateFile; /* 258 */
+	ALIGN64 char* PrivateKeyFile; /* 259 */
+	ALIGN64 char* RdpKeyFile; /* 260 */
+	ALIGN64 rdpRsaKey* RdpServerRsaKey; /* 261 */
+	ALIGN64 rdpCertificate* RdpServerCertificate; /* 262 */
+
 	/* Performance Flags */
 	ALIGN64 UINT32 PerformanceFlags; /* 128 */
-	ALIGN64 UINT32 ConnectionType; /* 129 */
 	ALIGN64 BOOL AllowFontSmoothing; /* 130 */
 	ALIGN64 BOOL DisableWallpaper; /* 131 */
 	ALIGN64 BOOL DisableFullWindowDrag; /* 132 */
@@ -358,16 +484,15 @@ struct rdp_settings
 	ALIGN64 BOOL DisableCursorShadow; /* 135 */
 	ALIGN64 BOOL DisableCursorBlinking; /* 136 */
 	ALIGN64 BOOL AllowDesktopComposition; /* 137 */
-	UINT64 padding0192[192 - 138]; /* 138 */
+	UINT64 padding1192[192 - 138]; /* 138 */
 
 	/* Protocol Security */
 	ALIGN64 BOOL TlsSecurity; /* 192 */
 	ALIGN64 BOOL NlaSecurity; /* 193 */
 	ALIGN64 BOOL RdpSecurity; /* 194 */
 	ALIGN64 BOOL ExtSecurity; /* 195 */
-	ALIGN64 BOOL Encryption; /* 196 */
 	ALIGN64 BOOL Authentication; /* 197 */
-	UINT64 padding0256[256 - 198]; /* 198 */
+	UINT64 padding1256[256 - 198]; /* 198 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 256 */
@@ -380,8 +505,6 @@ struct rdp_settings
 	/* Protocol Security Negotiation */
 	ALIGN64 UINT32 RequestedProtocols; /* 320 */
 	ALIGN64 UINT32 SelectedProtocol; /* 321 */
-	ALIGN64 UINT32 EncryptionMethod; /* 322 */
-	ALIGN64 UINT32 EncryptionLevel; /* 323 */
 	ALIGN64 UINT32 NegotiationFlags; /* 324 */
 	ALIGN64 BOOL NegotiateSecurityLayer; /* 325 */
 	UINT64 padding0384[384 - 326]; /* 326 */
@@ -540,7 +663,6 @@ struct rdp_settings
 
 	/* Session */
 	ALIGN64 BOOL ConsoleSession; /* 161 */
-	ALIGN64 UINT32 RedirectedSessionId; /* 162 */
 	UINT64 padding007[176 - 165]; /* 165 */
 
 	/* Kerberos Authentication */
@@ -550,18 +672,6 @@ struct rdp_settings
 	/* Certificate */
 	ALIGN64 char* ClientHostname; /* 250 */
 	ALIGN64 char* ClientProductId; /* 251 */
-	ALIGN64 BYTE* ServerRandom; /* 252 */
-	ALIGN64 DWORD ServerRandomLength; /* 253 */
-	ALIGN64 BYTE* ServerCertificate; /* 254 */
-	ALIGN64 DWORD ServerCertificateLength; /* 255 */
-	ALIGN64 BOOL IgnoreCertificate; /* 256 */
-	ALIGN64 char* CertificateName; /* 260 */
-
-	ALIGN64 char* CertificateFile; /* 248 */
-	ALIGN64 char* PrivateKeyFile; /* 249 */
-	ALIGN64 rdpCertificate* ServerCert; /* 257 */
-	ALIGN64 char* RdpKeyFile; /* 258 */
-	ALIGN64 rdpKey* ServerKey; /* 259 */
 
 	ALIGN64 BOOL LocalConnection; /* 69 */
 	ALIGN64 BOOL AuthenticationOnly; /* 70 */
@@ -640,14 +750,6 @@ struct rdp_settings
 	ALIGN64 char* PlayRemoteFxFile; /* 299 */
 	UINT64 padding014[312 - 300]; /* 300 */
 
-	/* Channels */
-	ALIGN64 int num_channels;
-	ALIGN64 rdpChannel channels[16];
-
-	/* Monitors */
-	ALIGN64 int num_monitors;
-	ALIGN64 struct rdp_monitor monitors[16];
-
 	/* Extensions */
 	ALIGN64 int num_extensions;
 	ALIGN64 struct rdp_ext_set extensions[16];
@@ -657,4 +759,4 @@ typedef struct rdp_settings rdpSettings;
 rdpSettings* settings_new(void* instance);
 void settings_free(rdpSettings* settings);
 
-#endif /* __RDP_SETTINGS_H */
+#endif /* FREERDP_SETTINGS_H */

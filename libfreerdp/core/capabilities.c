@@ -1861,7 +1861,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	if (rdp->disconnect)
 		return TRUE;
 
-	if (rdp->settings->Encryption)
+	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 		if (securityFlags & SEC_ENCRYPT)
@@ -1996,7 +1996,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
 
-	if (rdp->settings->Encryption)
+	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 		if (securityFlags & SEC_ENCRYPT)

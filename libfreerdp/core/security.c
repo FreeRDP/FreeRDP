@@ -357,7 +357,7 @@ BOOL security_establish_keys(BYTE* client_random, rdpRdp* rdp)
 	settings = rdp->settings;
 	server_random = settings->ServerRandom;
 
-	if (settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		CryptoSha1 sha1;
 		BYTE client_encrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
@@ -413,14 +413,14 @@ BOOL security_establish_keys(BYTE* client_random, rdpRdp* rdp)
 		    server_random, rdp->encrypt_key);
 	}
 
-	if (settings->EncryptionMethod == 1) /* 40 and 56 bit */
+	if (settings->EncryptionMethods == 1) /* 40 and 56 bit */
 	{
 		memcpy(rdp->sign_key, salt40, 3); /* TODO 56 bit */
 		memcpy(rdp->decrypt_key, salt40, 3); /* TODO 56 bit */
 		memcpy(rdp->encrypt_key, salt40, 3); /* TODO 56 bit */
 		rdp->rc4_key_len = 8;
 	}
-	else if (settings->EncryptionMethod == 2) /* 128 bit */
+	else if (settings->EncryptionMethods == 2) /* 128 bit */
 	{
 		rdp->rc4_key_len = 16;
 	}

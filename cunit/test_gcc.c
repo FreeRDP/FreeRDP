@@ -156,8 +156,8 @@ void test_gcc_write_client_security_data(void)
 	s = stream_new(12);
 	settings = settings_new(NULL);
 
-	settings->Encryption = 1; /* turn on encryption */
-	settings->EncryptionMethod =
+	settings->DisableEncryption = 1; /* turn on encryption */
+	settings->EncryptionMethods =
 			ENCRYPTION_METHOD_40BIT |
 			ENCRYPTION_METHOD_56BIT |
 			ENCRYPTION_METHOD_128BIT |
@@ -197,17 +197,17 @@ void test_gcc_write_client_network_data(void)
 	s = stream_new(44);
 	settings = settings_new(NULL);
 
-	settings->num_channels = 3;
-	memset(settings->channels, 0, sizeof(rdpChannel) * settings->num_channels);
+	settings->ChannelCount = 3;
+	memset(settings->ChannelDefArray, 0, sizeof(rdpChannel) * settings->ChannelCount);
 
-	strcpy(settings->channels[0].name, "rdpdr");
-	settings->channels[0].options = 0x80800000;
+	strcpy(settings->ChannelDefArray[0].Name, "rdpdr");
+	settings->ChannelDefArray[0].options = 0x80800000;
 
-	strcpy(settings->channels[1].name, "cliprdr");
-	settings->channels[1].options = 0xc0A00000;
+	strcpy(settings->ChannelDefArray[1].Name, "cliprdr");
+	settings->ChannelDefArray[1].options = 0xc0A00000;
 
-	strcpy(settings->channels[2].name, "rdpsnd");
-	settings->channels[2].options = 0xc0000000;
+	strcpy(settings->ChannelDefArray[2].Name, "rdpsnd");
+	settings->ChannelDefArray[2].options = 0xc0000000;
 
 	gcc_write_client_network_data(s, settings);
 

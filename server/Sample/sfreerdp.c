@@ -485,11 +485,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
 
-	for (i = 0; i < client->settings->num_channels; i++)
+	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
-		if (client->settings->channels[i].joined)
+		if (client->settings->ChannelDefArray[i].joined)
 		{
-			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
+			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
 			{
 				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
 
@@ -501,7 +501,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 						tf_debug_channel_thread_func, context);
 				}
 			}
-			else if (strncmp(client->settings->channels[i].name, "rdpsnd", 6) == 0)
+			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
 			{
 				sf_peer_rdpsnd_init(context); /* Audio Output */
 			}

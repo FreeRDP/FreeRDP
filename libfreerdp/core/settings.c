@@ -236,7 +236,7 @@ rdpSettings* settings_new(void* instance)
 		settings->KeyboardSubType = 0;
 		settings->KeyboardFunctionKey = 12;
 		settings->KeyboardLayout = 0;
-		settings->Encryption = FALSE;
+		settings->DisableEncryption = FALSE;
 		settings->SaltedChecksum = TRUE;
 		settings->ServerPort = 3389;
 		settings->DesktopResize = TRUE;
@@ -248,7 +248,7 @@ rdpSettings* settings_new(void* instance)
 
 		settings->AutoReconnectionEnabled = TRUE;
 
-		settings->EncryptionMethod = ENCRYPTION_METHOD_NONE;
+		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
 		settings->Authentication = TRUE;
@@ -413,14 +413,14 @@ void settings_free(rdpSettings* settings)
 		free(settings->ServerRandom);
 		free(settings->ServerCertificate);
 		free(settings->RdpKeyFile);
-		certificate_free(settings->ServerCert);
+		certificate_free(settings->RdpServerCertificate);
 		free(settings->ClientAutoReconnectCookie);
 		free(settings->ServerAutoReconnectCookie);
 		free(settings->ClientTimeZone);
 		free(settings->BitmapCacheV2CellInfo);
 		free(settings->GlyphCache);
 		free(settings->FragCache);
-		key_free(settings->ServerKey);
+		key_free(settings->RdpServerRsaKey);
 		free(settings->ConfigPath);
 		free(settings->CurrentPath);
 		free(settings);

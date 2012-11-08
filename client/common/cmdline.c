@@ -467,8 +467,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				settings->TlsSecurity = FALSE;
 				settings->NlaSecurity = FALSE;
 				settings->ExtSecurity = FALSE;
-				settings->Encryption = TRUE;
-				settings->EncryptionMethod = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->DisableEncryption = TRUE;
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */

@@ -163,7 +163,7 @@ static int RdpSecurity_stream_init(rdpRdp* rdp, STREAM* s)
 	if (rdp->do_crypt)
 	{
 		stream_seek(s, 12);
-		if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			stream_seek(s, 4);
 		rdp->sec_flags |= SEC_ENCRYPT;
 		if (rdp->do_secure_checksum)
@@ -276,7 +276,7 @@ void rdp_write_header(rdpRdp* rdp, STREAM* s, UINT16 length, UINT16 channel_id)
 
 	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication : DomainMCSPDU_SendDataRequest;
 
-	if ((rdp->sec_flags & SEC_ENCRYPT) && (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS))
+	if ((rdp->sec_flags & SEC_ENCRYPT) && (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
 	{
 		int pad;
 
@@ -314,7 +314,7 @@ static UINT32 RdpSecurity_stream_out(rdpRdp* rdp, STREAM* s, int length)
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				data = s->p + 12;
 
@@ -363,7 +363,7 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp)
 	{
 		sec_bytes = 12;
 
-		if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else if (rdp->sec_flags != 0)
@@ -641,7 +641,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 {
 	BYTE cmac[8], wmac[8];
 
-	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
@@ -717,7 +717,7 @@ static BOOL rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	if (rdp->settings->Encryption)
+	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))

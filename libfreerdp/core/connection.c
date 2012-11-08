@@ -255,7 +255,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	UINT32 length;
 	STREAM* s;
 
-	if (rdp->settings->Encryption == FALSE)
+	if (rdp->settings->DisableEncryption == FALSE)
 	{
 		/* no RDP encryption */
 		return TRUE;
@@ -264,19 +264,22 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
-	key_len = rdp->settings->ServerCert->cert_info.ModulusLength;
-	mod = rdp->settings->ServerCert->cert_info.Modulus;
-	exp = rdp->settings->ServerCert->cert_info.exponent;
+	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
+	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
+	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
 	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = transport_send_stream_init(rdp->mcs->transport, length);
+
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
+
 	stream_write_UINT32(s, length);
 	stream_write(s, crypt_client_random, length);
+
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
 		return FALSE;
@@ -292,7 +295,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -317,7 +320,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	BYTE* mod;
 	BYTE* priv_exp;
 
-	if (rdp->settings->Encryption == FALSE)
+	if (rdp->settings->DisableEncryption == FALSE)
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -338,7 +341,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	stream_read_UINT32(s, rand_len);
-	key_len = rdp->settings->ServerKey->ModulusLength;
+	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
 
 	if (rand_len != key_len + 8)
 	{
@@ -350,8 +353,8 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	stream_read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
 	stream_seek(s, 8);
-	mod = rdp->settings->ServerKey->Modulus;
-	priv_exp = rdp->settings->ServerKey->PrivateExponent;
+	mod = rdp->settings->RdpServerRsaKey->Modulus;
+	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
 
 	/* now calculate encrypt / decrypt and update keys */
@@ -364,7 +367,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->EncryptionMethod == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -436,9 +439,9 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 			return FALSE;
 		rdp->mcs->global_channel_joined = TRUE;
 
-		if (rdp->settings->num_channels > 0)
+		if (rdp->settings->ChannelCount > 0)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[0].channel_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
 				return FALSE;
 
 			all_joined = FALSE;
@@ -446,20 +449,20 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		for (i = 0; i < rdp->settings->num_channels; i++)
+		for (i = 0; i < rdp->settings->ChannelCount; i++)
 		{
-			if (rdp->settings->channels[i].joined)
+			if (rdp->settings->ChannelDefArray[i].joined)
 				continue;
 
-			if (rdp->settings->channels[i].channel_id != channel_id)
+			if (rdp->settings->ChannelDefArray[i].ChannelId != channel_id)
 				return FALSE;
 
-			rdp->settings->channels[i].joined = TRUE;
+			rdp->settings->ChannelDefArray[i].joined = TRUE;
 			break;
 		}
-		if (i + 1 < rdp->settings->num_channels)
+		if (i + 1 < rdp->settings->ChannelCount)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[i + 1].channel_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[i + 1].ChannelId))
 				return FALSE;
 
 			all_joined = FALSE;
@@ -639,9 +642,9 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	printf("Accepted client: %s\n", rdp->settings->ClientHostname);
 	printf("Accepted channels:");
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		printf(" %s", rdp->settings->channels[i].name);
+		printf(" %s", rdp->settings->ChannelDefArray[i].Name);
 	}
 	printf("\n");
 
@@ -693,12 +696,12 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	else if (channel_id == MCS_GLOBAL_CHANNEL_ID)
 		rdp->mcs->global_channel_joined = TRUE;
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		if (rdp->settings->channels[i].channel_id == channel_id)
-			rdp->settings->channels[i].joined = TRUE;
+		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
+			rdp->settings->ChannelDefArray[i].joined = TRUE;
 
-		if (!rdp->settings->channels[i].joined)
+		if (!rdp->settings->ChannelDefArray[i].joined)
 			all_joined = FALSE;
 	}
 
