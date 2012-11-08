@@ -667,6 +667,167 @@ struct rdp_settings
 	UINT64 padding2240[2240 - 2124]; /* 2176 */
 
 	/**
+	 * Mandatory Capabilities
+	 */
+
+	/* Capabilities */
+	ALIGN64 BYTE* ReceivedCapabilities; /* 2240 */
+	ALIGN64 UINT32 ReceivedCapabilitiesSize; /* 2241 */
+	UINT64 padding2304[2304 - 2242]; /* 2242 */
+
+	/* General Capabilities */
+	ALIGN64 UINT32 OsMajorType; /* 2304 */
+	ALIGN64 UINT32 OsMinorType; /* 2305 */
+	ALIGN64 BOOL RefreshRect; /* 2306 */
+	ALIGN64 BOOL SuppressOutput; /* 2307 */
+	ALIGN64 BOOL FastPathOutput; /* 2308 */
+	ALIGN64 BOOL SaltedChecksum; /* 2309 */
+	ALIGN64 BOOL LongCredentialsSupported; /* 2310 */
+	ALIGN64 BOOL NoBitmapCompressionHeader; /* 2311 */
+	UINT64 padding2368[2368 - 2312]; /* 2312 */
+
+	/* Bitmap Capabilities */
+	ALIGN64 BOOL DesktopResize; /* 2368 */
+	ALIGN64 BOOL DrawAllowDynamicColorFidelity; /* 2369 */
+	ALIGN64 BOOL DrawAllowColorSubsampling; /* 2370 */
+	ALIGN64 BOOL DrawAllowSkipAlpha; /* 2371 */
+	UINT64 padding2432[2432 - 2372]; /* 2372 */
+
+	/* Order Capabilities */
+	ALIGN64 BYTE* OrderSupport; /* 2432 */
+	ALIGN64 BOOL BitmapCacheV3Enabled; /* 2433 */
+	ALIGN64 BOOL AltSecFrameMarkerSupport; /* 2434 */
+	UINT64 padding2496[2496 - 2435]; /* 2435 */
+
+	/* Bitmap Cache Capabilities */
+	ALIGN64 BOOL BitmapCacheEnabled; /* 2497 */
+	ALIGN64 UINT32 BitmapCacheVersion; /* 2498 */
+	ALIGN64 BOOL AllowCacheWaitingList; /* 2499 */
+	ALIGN64 BOOL BitmapCachePersistEnabled; /* 2500 */
+	ALIGN64 UINT32 BitmapCacheV2NumCells; /* 2501 */
+	ALIGN64 BITMAP_CACHE_V2_CELL_INFO* BitmapCacheV2CellInfo; /* 2502 */
+	UINT64 padding2560[2560 - 2503]; /* 2503 */
+
+	/* Pointer Capabilities */
+	ALIGN64 BOOL ColorPointerFlag; /* 2560 */
+	ALIGN64 UINT32 PointerCacheSize; /* 2561 */
+	UINT64 padding2624[2624 - 2562]; /* 2562 */
+
+	/* Input Capabilities */
+	ALIGN64 UINT32 KeyboardLayout; /* 2624 */
+	ALIGN64 UINT32 KeyboardType; /* 2625 */
+	ALIGN64 UINT32 KeyboardSubType; /* 2626 */
+	ALIGN64 UINT32 KeyboardFunctionKey; /* 2627 */
+	ALIGN64 char* ImeFileName; /* 2628 */
+	ALIGN64 BOOL UnicodeInput; /* 2629 */
+	ALIGN64 BOOL FastPathInput; /* 2630 */
+	UINT64 padding2688[2688 - 2631]; /* 2631 */
+
+	/* Brush Capabilities */
+	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
+	UINT64 padding2752[2752 - 2689]; /* 2689 */
+
+	/* Glyph Cache Capabilities */
+	ALIGN64 UINT32 GlyphSupportLevel; /* 2752 */
+	ALIGN64 GLYPH_CACHE_DEFINITION* GlyphCache; /* 2753 */
+	ALIGN64 GLYPH_CACHE_DEFINITION* FragCache; /* 2754 */
+	UINT64 padding2816[2816 - 2755]; /* 2755 */
+
+	/* Offscreen Bitmap Cache */
+	ALIGN64 UINT32 OffscreenSupportLevel; /* 2816 */
+	ALIGN64 UINT32 OffscreenCacheSize; /* 2817 */
+	ALIGN64 UINT32 OffscreenCacheEntries; /* 2818 */
+	UINT64 padding2880[2880 - 2819]; /* 2819 */
+
+	/* Virtual Channel Capabilities */
+	ALIGN64 UINT32 VirtualChannelCompressionFlags; /* 2880 */
+	ALIGN64 UINT32 VirtualChannelChunkSize; /* 2881 */
+	UINT64 padding2944[2944 - 2882]; /* 2882 */
+
+	/* Sound Capabilities */
+	ALIGN64 BOOL SoundBeepsEnabled; /* 2944 */
+	UINT64 padding3008[3008 - 2945]; /* 2945 */
+	UINT64 padding3072[3072 - 3008]; /* 3008 */
+
+	/**
+	 * Optional Capabilities
+	 */
+
+	/* Bitmap Cache Host Capabilities */
+	UINT64 padding3136[3136 - 3072]; /* 3072 */
+
+	/* Control Capabilities */
+	UINT64 padding3200[3200 - 3136]; /* 3136 */
+
+	/* Window Activation Capabilities */
+	UINT64 padding3264[3264 - 3200]; /* 3200 */
+
+	/* Font Capabilities */
+	UINT64 padding3328[3328 - 3200]; /* 3264 */
+
+	/* Multifragment Update Capabilities */
+	ALIGN64 UINT32 MultifragMaxRequestSize; /* 3328 */
+	UINT64 padding3392[3392 - 3329]; /* 3329 */
+
+	/* Large Pointer Update Capabilities */
+	ALIGN64 UINT32 LargePointerFlag; /* 3392 */
+	UINT64 padding3456[3456 - 3393]; /* 3393 */
+
+	/* Desktop Composition Capabilities */
+	ALIGN64 UINT32 CompDeskSupportLevel; /* 3456 */
+	UINT64 padding3520[3520 - 3457]; /* 3457 */
+
+	/* Surface Commands Capabilities */
+	ALIGN64 BOOL SurfaceCommandsEnabled; /* 3520 */
+	ALIGN64 BOOL FrameMarkerCommandEnabled; /* 3521 */
+	UINT64 padding3584[3584 - 3522]; /* 3522 */
+	UINT64 padding3648[3648 - 3584]; /* 3584 */
+
+	/*
+	 * Bitmap Codecs Capabilities
+	 */
+
+	/* RemoteFX */
+	ALIGN64 BOOL RemoteFxOnly; /* 3648 */
+	ALIGN64 BOOL RemoteFxCodec; /* 3649 */
+	ALIGN64 UINT32 RemoteFxCodecId; /* 3650 */
+	ALIGN64 UINT32 RemoteFxCodecMode; /* 3651 */
+	UINT64 padding3712[3712 - 3652]; /* 3652 */
+
+	/* NSCodec */
+	ALIGN64 BOOL NSCodec; /* 3712 */
+	ALIGN64 UINT32 NSCodecId; /* 3713 */
+	ALIGN64 BOOL FrameAcknowledge; /* 3714 */
+	UINT64 padding3776[3776 - 3715]; /* 3715 */
+
+	/* JPEG */
+	ALIGN64 BOOL JpegCodec; /* 3776 */
+	ALIGN64 UINT32 JpegCodecId; /* 3777 */
+	ALIGN64 UINT32 JpegQuality; /* 3778 */
+	UINT64 padding3840[3840 - 3779]; /* 3779 */
+	UINT64 padding3904[3904 - 3779]; /* 3840 */
+
+	/**
+	 * Caches
+	 */
+
+	/* Bitmap Cache V3 */
+	ALIGN64 UINT32 BitmapCacheV3CodecId; /* 3904 */
+	UINT64 padding3968[3968 - 3905]; /* 3905 */
+
+	/* Draw Nine Grid */
+	ALIGN64 BOOL DrawNineGridEnabled; /* 3968 */
+	ALIGN64 UINT32 DrawNineGridCacheSize; /* 3969 */
+	ALIGN64 UINT32 DrawNineGridCacheEntries; /* 3970 */
+	UINT64 padding4032[4032 - 3971]; /* 3971 */
+
+	/* Draw GDI+ */
+	ALIGN64 BOOL DrawGdiPlusEnabled; /* 4032 */
+	ALIGN64 BOOL DrawGdiPlusCacheEnabled; /* 4033 */
+	UINT64 padding4096[4096 - 4034]; /* 4034 */
+	UINT64 padding4160[4160 - 4096]; /* 4096 */
+
+	/**
 	 * WARNING: End of ABI stable zone!
 	 *
 	 * The zone below this point is ABI unstable, and
@@ -674,159 +835,34 @@ struct rdp_settings
 	 */
 
 	/**
-	 * Section: Mandatory Capabilities
-	 */
-
-	ALIGN64 BYTE* ReceivedCapabilities; /*  */
-	ALIGN64 UINT32 ReceivedCapabilitiesSize; /*  */
-
-	/* General Capabilities */
-	ALIGN64 UINT32 OsMajorType; /*  */
-	ALIGN64 UINT32 OsMinorType; /*  */
-	ALIGN64 BOOL RefreshRect; /*  */
-	ALIGN64 BOOL SuppressOutput; /*  */
-	ALIGN64 BOOL FastPathOutput; /*  */
-	ALIGN64 BOOL SaltedChecksum; /*  */
-	ALIGN64 BOOL LongCredentialsSupported; /*  */
-	ALIGN64 BOOL NoBitmapCompressionHeader; /*  */
-
-	/* Bitmap Capabilities */
-	ALIGN64 BOOL DesktopResize; /*  */
-	ALIGN64 BOOL DrawAllowDynamicColorFidelity; /* */
-	ALIGN64 BOOL DrawAllowColorSubsampling; /* */
-	ALIGN64 BOOL DrawAllowSkipAlpha; /* */
-
-	/* Order Capabilities */
-	ALIGN64 BYTE* OrderSupport; /*  */
-	ALIGN64 BOOL BitmapCacheV3Enabled; /*  */
-	ALIGN64 BOOL AltSecFrameMarkerSupport; /*  */
-
-	/* Bitmap Cache Capabilities */
-	ALIGN64 BOOL BitmapCacheEnabled; /*  */
-	ALIGN64 UINT32 BitmapCacheVersion; /*  */
-	ALIGN64 BOOL AllowCacheWaitingList; /*  */
-	ALIGN64 BOOL BitmapCachePersistEnabled; /*  */
-	ALIGN64 UINT32 BitmapCacheV2NumCells; /*  */
-	ALIGN64 BITMAP_CACHE_V2_CELL_INFO* BitmapCacheV2CellInfo; /*  */
-
-	/* Pointer Capabilities */
-	ALIGN64 BOOL ColorPointerFlag; /* 321 */
-	ALIGN64 UINT32 PointerCacheSize; /* 322 */
-
-	/* Input Capabilities */
-	ALIGN64 UINT32 KeyboardLayout; /*  */
-	ALIGN64 UINT32 KeyboardType; /*  */
-	ALIGN64 UINT32 KeyboardSubType; /*  */
-	ALIGN64 UINT32 KeyboardFunctionKey; /*  */
-	ALIGN64 char* ImeFileName; /*  */
-	ALIGN64 BOOL UnicodeInput; /*  */
-	ALIGN64 BOOL FastPathInput; /*  */
-
-	/* Brush Capabilities */
-	ALIGN64 UINT32 BrushSupportLevel; /*  */
-
-	/* Glyph Cache Capabilities */
-	ALIGN64 UINT32 GlyphSupportLevel; /*  */
-	ALIGN64 GLYPH_CACHE_DEFINITION* GlyphCache; /*  */
-	ALIGN64 GLYPH_CACHE_DEFINITION* FragCache; /*  */
-
-	/* Offscreen Bitmap Cache */
-	ALIGN64 UINT32 OffscreenSupportLevel; /*  */
-	ALIGN64 UINT32 OffscreenCacheSize; /*  */
-	ALIGN64 UINT32 OffscreenCacheEntries; /*  */
-
-	/* Virtual Channel Capabilities */
-	ALIGN64 UINT32 VirtualChannelCompressionFlags; /*  */
-	ALIGN64 UINT32 VirtualChannelChunkSize; /*  */
-
-	/* Sound Capabilities */
-	ALIGN64 BOOL SoundBeepsEnabled; /*  */
-
-	/**
-	 * Section: Optional Capabilities
-	 */
-
-	/* Bitmap Cache Host Capabilities */
-
-	/* Control Capabilities */
-
-	/* Window Activation Capabilities */
-
-	/* Font Capabilities */
-
-	/* Multifragment Update Capabilities */
-	ALIGN64 UINT32 MultifragMaxRequestSize; /*  */
-
-	/* Large Pointer Update Capabilities */
-	ALIGN64 UINT32 LargePointerFlag; /*  */
-
-	/* Desktop Composition Capabilities */
-	ALIGN64 UINT32 CompDeskSupportLevel; /*  */
-
-	/* Surface Commands Capabilities */
-	ALIGN64 BOOL SurfaceCommandsEnabled; /*  */
-	ALIGN64 BOOL FrameMarkerCommandEnabled; /*  */
-
-	/* Bitmap Codecs Capabilities */
-
-	/* RemoteFX */
-	ALIGN64 BOOL RemoteFxOnly; /*  */
-	ALIGN64 BOOL RemoteFxCodec; /*  */
-	ALIGN64 UINT32 RemoteFxCodecId; /*  */
-	ALIGN64 UINT32 RemoteFxCodecMode; /*  */
-
-	/* NSCodec */
-	ALIGN64 BOOL NSCodec; /*  */
-	ALIGN64 UINT32 NSCodecId; /*  */
-	ALIGN64 BOOL FrameAcknowledge; /*  */
-
-	/* JPEG */
-	ALIGN64 BOOL JpegCodec; /*  */
-	ALIGN64 UINT32 JpegCodecId; /*  */
-	ALIGN64 UINT32 JpegQuality; /*  */
-
-	/**
-	 * Section: Caches
-	 */
-
-	/* Bitmap Cache V3 */
-	ALIGN64 UINT32 BitmapCacheV3CodecId; /*  */
-
-	/* Draw Nine Grid */
-	ALIGN64 BOOL DrawNineGridEnabled; /*  */
-	ALIGN64 UINT32 DrawNineGridCacheSize; /*  */
-	ALIGN64 UINT32 DrawNineGridCacheEntries; /*  */
-
-	/* Draw GDI+ */
-	ALIGN64 BOOL DrawGdiPlusEnabled; /*  */
-	ALIGN64 BOOL DrawGdiPlusCacheEnabled; /*  */
-	UINT64 padding021[376 - 370]; /*  */
-
-	/**
-	 * Section: Device Redirection
+	 * Device Redirection
 	 */
 
 	/* Device Redirection */
-	ALIGN64 BOOL DeviceRedirection;
+	ALIGN64 BOOL DeviceRedirection; /*  */
 
 	/* Drive Redirection */
-	ALIGN64 BOOL RedirectDrives;
+	ALIGN64 BOOL RedirectDrives; /*  */
 
 	/* Smartcard Redirection */
-	ALIGN64 BOOL RedirectSmartCards;
+	ALIGN64 BOOL RedirectSmartCards; /*  */
 
 	/* Printer Redirection */
-	ALIGN64 BOOL RedirectPrinters;
+	ALIGN64 BOOL RedirectPrinters; /*  */
 
 	/* Serial Port Redirection */
-	ALIGN64 BOOL RedirectSerialPorts;
+	ALIGN64 BOOL RedirectSerialPorts; /*  */
 
 	/* Parallel Port Redirection */
-	ALIGN64 BOOL RedirectParallelPorts;
+	ALIGN64 BOOL RedirectParallelPorts; /*  */
+
+	/*
+	 * Extensions
+	 */
 
 	/* Extensions */
-	ALIGN64 int num_extensions;
-	ALIGN64 struct rdp_ext_set extensions[16];
+	ALIGN64 int num_extensions; /*  */
+	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 };
 typedef struct rdp_settings rdpSettings;
 
