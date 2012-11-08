@@ -297,7 +297,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8)
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
 #else
 	return 0;

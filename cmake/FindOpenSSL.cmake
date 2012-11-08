@@ -26,7 +26,9 @@
 
 if (UNIX)
   find_package(PkgConfig QUIET)
-  pkg_check_modules(_OPENSSL QUIET openssl)
+  # QUIET option not recognized by cmake 2.8.0 or 2.8.1
+  #pkg_check_modules(_OPENSSL QUIET openssl)
+  pkg_check_modules(_OPENSSL openssl)
 endif (UNIX)
 
 # http://www.slproweb.com/products/Win32OpenSSL.html
