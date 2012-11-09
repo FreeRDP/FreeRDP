@@ -133,9 +133,8 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	s = stream_new(28 + totalDataBytes);
 
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
-
-	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
-	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (16 bytes) */
+	stream_write(s, &tsg->ChannelContext.ContextType, 4); /* ContextType (4 bytes) */
+	stream_write(s, tsg->ChannelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */
 
 	stream_write_UINT32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
 	stream_write_UINT32_be(s, numBuffers); /* numBuffers (4 bytes) */
@@ -349,14 +348,16 @@ BOOL tsg_proxy_create_tunnel_read_response(rdpTsg* tsg)
 		/* ??? (16 bytes): all zeros */
 		offset += 16;
 
-		offset += 4; /* ContextType (4 bytes) */
-		CopyMemory(tsg->TunnelContext, &buffer[offset], 16); /* ContextUuid */
+		/* TunnelContext (20 bytes) */
+		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType */
+		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
+		offset += 20;
 
 		/* TODO: trailing bytes */
 
 #ifdef WITH_DEBUG_TSG
 		printf("TSG TunnelContext:\n");
-		freerdp_hexdump(tsg->TunnelContext, 16);
+		freerdp_hexdump((void*) &tsg->TunnelContext, 20);
 		printf("\n");
 #endif
 
@@ -422,14 +423,16 @@ BOOL tsg_proxy_create_tunnel_read_response(rdpTsg* tsg)
 		offset += 4; /* 0x00000001 (4 bytes) */
 		offset += 4; /* 0x00000002 (4 bytes) */
 
-		offset += 4; /* ContextType (4 bytes) */
-		CopyMemory(tsg->TunnelContext, &buffer[offset], 16); /* ContextUuid */
+		/* TunnelContext (20 bytes) */
+		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType */
+		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
+		offset += 20;
 
 		/* TODO: trailing bytes */
 
 #ifdef WITH_DEBUG_TSG
 		printf("TSG TunnelContext:\n");
-		freerdp_hexdump(tsg->TunnelContext, 16);
+		freerdp_hexdump((void*) &tsg->TunnelContext, 20);
 		printf("\n");
 #endif
 
@@ -497,8 +500,9 @@ BOOL tsg_proxy_authorize_tunnel_write_request(rdpTsg* tsg)
 	length = offset;
 	buffer = (BYTE*) malloc(length);
 
-	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
 
 	/* 4-byte alignment */
 
@@ -661,8 +665,9 @@ BOOL tsg_proxy_make_tunnel_call_write_request(rdpTsg* tsg)
 	length = 40;
 	buffer = (BYTE*) malloc(length);
 
-	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
 
 	*((UINT32*) &buffer[20]) = TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST; /* ProcId */
 
@@ -742,8 +747,9 @@ BOOL tsg_proxy_create_channel_write_request(rdpTsg* tsg)
 
 	buffer = (BYTE*) malloc(length);
 
-	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
 
 	/* TSENDPOINTINFO */
 
@@ -789,13 +795,15 @@ BOOL tsg_proxy_create_channel_read_response(rdpTsg* tsg)
 	length = status;
 	buffer = rpc->buffer;
 
-	CopyMemory(tsg->ChannelContext, &rpc->buffer[28], 16); /* ChannelContext (16 bytes) */
+	/* ChannelContext (20 bytes) */
+	CopyMemory(&tsg->ChannelContext.ContextType, &rpc->buffer[24], 4); /* ContextType (4 bytes) */
+	CopyMemory(tsg->ChannelContext.ContextUuid, &rpc->buffer[28], 16); /* ContextUuid (16 bytes) */
 
 	/* TODO: trailing bytes */
 
 #ifdef WITH_DEBUG_TSG
 	printf("ChannelContext:\n");
-	freerdp_hexdump(tsg->ChannelContext, 16);
+	freerdp_hexdump((void*) &tsg->ChannelContext, 20);
 	printf("\n");
 #endif
 
@@ -843,8 +851,9 @@ BOOL tsg_proxy_setup_receive_pipe_write_request(rdpTsg* tsg)
 
 	buffer = (BYTE*) malloc(length);
 
-	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
-	CopyMemory(&buffer[4], tsg->ChannelContext, 16); /* ContextUuid */
+	/* ChannelContext */
+	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 

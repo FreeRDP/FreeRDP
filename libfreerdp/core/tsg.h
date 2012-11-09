@@ -50,8 +50,8 @@ struct rdp_tsg
 	BOOL bytesAvailable;
 	rdpSettings* settings;
 	rdpTransport* transport;
-	BYTE TunnelContext[16];
-	BYTE ChannelContext[16];
+	CONTEXT_HANDLE TunnelContext;
+	CONTEXT_HANDLE ChannelContext;
 };
 
 typedef WCHAR* RESOURCENAME;

@@ -79,6 +79,29 @@ typedef struct
 	BYTE node[6];
 } p_uuid_t;
 
+#define ndr_c_int_big_endian		0
+#define ndr_c_int_little_endian		1
+#define ndr_c_float_ieee		0
+#define ndr_c_float_vax			1
+#define ndr_c_float_cray		2
+#define ndr_c_float_ibm			3
+#define ndr_c_char_ascii		0
+#define ndr_c_char_ebcdic		1
+
+typedef struct
+{
+	BYTE int_rep;
+	BYTE char_rep;
+	BYTE float_rep;
+	BYTE reserved;
+} ndr_format_t, *ndr_format_p_t;
+
+typedef struct ndr_context_handle
+{
+	UINT32 context_handle_attributes;
+	p_uuid_t context_handle_uuid;
+} ndr_context_handle;
+
 typedef struct
 {
 	p_uuid_t if_uuid;
