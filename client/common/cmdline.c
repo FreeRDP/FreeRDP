@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
+#include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
 
 #include <freerdp/client/cmdline.h>
