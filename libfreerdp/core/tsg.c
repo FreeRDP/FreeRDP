@@ -210,6 +210,14 @@ BOOL tsg_proxy_create_tunnel_write_request(rdpTsg* tsg)
 			TSG_MESSAGING_CAP_SERVICE_MSG |
 			TSG_MESSAGING_CAP_REAUTH;
 
+	/*
+	 * FIXME: temporary hack
+	 *
+	 * Using reduced capabilities appear to trigger
+	 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
+	 */
+	//NapCapabilities = TSG_NAP_CAPABILITY_IDLE_TIMEOUT;
+
 	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
 
 	CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
@@ -256,7 +264,7 @@ BOOL tsg_proxy_create_tunnel_read_response(rdpTsg* tsg)
 	if ((packet->packetId != TSG_PACKET_TYPE_CAPS_RESPONSE) ||
 			(SwitchValue != TSG_PACKET_TYPE_CAPS_RESPONSE))
 	{
-		printf("Unexpected PacketId: 0x%08X\n", packet->packetId);
+		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE\n", packet->packetId);
 		return FALSE;
 	}
 
@@ -394,7 +402,7 @@ BOOL tsg_proxy_create_tunnel(rdpTsg* tsg)
 	return TRUE;
 }
 
-BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
+BOOL tsg_proxy_authorize_tunnel_write_request(rdpTsg* tsg)
 {
 	UINT32 pad;
 	int status;
@@ -403,19 +411,6 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 	UINT32 length;
 	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
-
-	/**
-	 * OpNum = 2
-	 *
-	 * HRESULT TsProxyAuthorizeTunnel(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in, ref] PTSG_PACKET tsgPacket,
-	 * [out, ref] PTSG_PACKET* tsgPacketResponse
-	 * );
-	 *
-	 */
-
-	DEBUG_TSG("TsProxyAuthorizeTunnel");
 
 	count = _wcslen(tsg->MachineName) + 1;
 
@@ -462,43 +457,130 @@ BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
 	if (status <= 0)
-	{
-		printf("TsProxyAuthorizeTunnel write failure\n");
 		return FALSE;
-	}
 
 	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_authorize_tunnel_read_response(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 Pointer;
+	UINT32 SizeValue;
+	UINT32 SwitchValue;
+	PTSG_PACKET packet;
+	rdpRpc* rpc = tsg->rpc;
+	PTSG_PACKET_RESPONSE packetResponse;
 
 	status = rpc_recv_pdu(rpc);
 
 	if (status <= 0)
+		return FALSE;
+
+	length = status;
+	buffer = rpc->buffer;
+
+	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
+	ZeroMemory(packet, sizeof(TSG_PACKET));
+
+	packet->packetId = *((UINT32*) &buffer[28]); /* PacketId */
+	SwitchValue = *((UINT32*) &buffer[32]); /* SwitchValue */
+
+	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) ||
+			(SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
-		printf("TsProxyAuthorizeTunnel read failure\n");
+		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n", packet->packetId);
+		return FALSE;
+	}
+
+	packetResponse = (PTSG_PACKET_RESPONSE) malloc(sizeof(TSG_PACKET_RESPONSE));
+	ZeroMemory(packetResponse, sizeof(TSG_PACKET_RESPONSE));
+	packet->tsgPacket.packetResponse = packetResponse;
+
+	Pointer = *((UINT32*) &buffer[36]); /* PacketResponsePtr */
+	packetResponse->flags = *((UINT32*) &buffer[40]); /* Flags */
+
+	if (packetResponse->flags != TSG_PACKET_TYPE_QUARREQUEST)
+	{
+		printf("Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST\n",
+				packetResponse->flags);
+		return FALSE;
+	}
+
+	/* Reserved (4 bytes) */
+	Pointer = *((UINT32*) &buffer[48]); /* ResponseDataPtr */
+	packetResponse->responseDataLen = *((UINT32*) &buffer[52]); /* ResponseDataLength */
+
+	packetResponse->redirectionFlags.enableAllRedirections = *((UINT32*) &buffer[56]); /* EnableAllRedirections */
+	packetResponse->redirectionFlags.disableAllRedirections = *((UINT32*) &buffer[60]); /* DisableAllRedirections */
+	packetResponse->redirectionFlags.driveRedirectionDisabled = *((UINT32*) &buffer[64]); /* DriveRedirectionDisabled */
+	packetResponse->redirectionFlags.printerRedirectionDisabled = *((UINT32*) &buffer[68]); /* PrinterRedirectionDisabled */
+	packetResponse->redirectionFlags.portRedirectionDisabled = *((UINT32*) &buffer[72]); /* PortRedirectionDisabled */
+	packetResponse->redirectionFlags.reserved = *((UINT32*) &buffer[76]); /* Reserved */
+	packetResponse->redirectionFlags.clipboardRedirectionDisabled = *((UINT32*) &buffer[80]); /* ClipboardRedirectionDisabled */
+	packetResponse->redirectionFlags.pnpRedirectionDisabled = *((UINT32*) &buffer[84]); /* PnpRedirectionDisabled */
+	offset = 88;
+
+	SizeValue = *((UINT32*) &buffer[offset]);
+	offset += 4;
+
+	if (SizeValue != packetResponse->responseDataLen)
+	{
+		printf("Unexpected size value: %d, expected: %d\n", SizeValue, packetResponse->responseDataLen);
+		return FALSE;
+	}
+
+	offset += SizeValue; /* ResponseData */
+
+	/* TODO: trailing bytes */
+
+	free(packetResponse);
+	free(packet);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_authorize_tunnel(rdpTsg* tsg)
+{
+	/**
+	 * OpNum = 2
+	 *
+	 * HRESULT TsProxyAuthorizeTunnel(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in, ref] PTSG_PACKET tsgPacket,
+	 * [out, ref] PTSG_PACKET* tsgPacketResponse
+	 * );
+	 *
+	 */
+
+	DEBUG_TSG("TsProxyAuthorizeTunnel");
+
+	if (!tsg_proxy_authorize_tunnel_write_request(tsg))
+	{
+		printf("TsProxyAuthorizeTunnel: error writing request\n");
+		return FALSE;
+	}
+
+	if (!tsg_proxy_authorize_tunnel_read_response(tsg))
+	{
+		printf("TsProxyAuthorizeTunnel: error reading response\n");
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
+BOOL tsg_proxy_make_tunnel_call_write_request(rdpTsg* tsg)
 {
 	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
-
-	/**
-	 * OpNum = 3
-	 *
-	 * HRESULT TsProxyMakeTunnelCall(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in] unsigned long procId,
-	 * [in, ref] PTSG_PACKET tsgPacket,
-	 * [out, ref] PTSG_PACKET* tsgPacketResponse
-	 * );
-	 */
-
-	DEBUG_TSG("TsProxyMakeTunnelCall");
 
 	length = 40;
 	buffer = (BYTE*) malloc(length);
@@ -520,19 +602,51 @@ BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
 	if (status <= 0)
-	{
-		printf("TsProxyMakeTunnelCall write failure\n");
 		return FALSE;
-	}
 
 	free(buffer);
-
-	/* read? */
 
 	return TRUE;
 }
 
-BOOL tsg_proxy_create_channel(rdpTsg* tsg)
+BOOL tsg_proxy_make_tunnel_call_read_response(rdpTsg* tsg)
+{
+	/* ??? */
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_make_tunnel_call(rdpTsg* tsg)
+{
+	/**
+	 * OpNum = 3
+	 *
+	 * HRESULT TsProxyMakeTunnelCall(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in] unsigned long procId,
+	 * [in, ref] PTSG_PACKET tsgPacket,
+	 * [out, ref] PTSG_PACKET* tsgPacketResponse
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxyMakeTunnelCall");
+
+	if (!tsg_proxy_make_tunnel_call_write_request(tsg))
+	{
+		printf("TsProxyMakeTunnelCall: error writing request\n");
+		return FALSE;
+	}
+
+	if (!tsg_proxy_make_tunnel_call_read_response(tsg))
+	{
+		printf("TsProxyMakeTunnelCall: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_create_channel_write_request(rdpTsg* tsg)
 {
 	int status;
 	UINT32 count;
@@ -540,20 +654,13 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
 
-	/**
-	 * OpNum = 4
-	 *
-	 * HRESULT TsProxyCreateChannel(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in, ref] PTSENDPOINTINFO tsEndPointInfo,
-	 * [out] PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext,
-	 * [out] unsigned long* channelId
-	 * );
-	 */
-
-	DEBUG_TSG("TsProxyCreateChannel");
-
 	count = _wcslen(tsg->Hostname) + 1;
+
+#ifdef WITH_DEBUG_TSG
+	printf("ResourceName:\n");
+	freerdp_hexdump((BYTE*) tsg->Hostname, (count - 1) * 2);
+	printf("\n");
+#endif
 
 	length = 60 + (count * 2);
 
@@ -584,25 +691,34 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
-	{
-		printf("TsProxyCreateChannel write failure\n");
 		return FALSE;
-	}
 
 	free(buffer);
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_create_channel_read_response(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
 	status = rpc_recv_pdu(rpc);
 
 	if (status < 0)
-	{
-		printf("TsProxyCreateChannel read failure\n");
 		return FALSE;
-	}
 
-	CopyMemory(tsg->ChannelContext, &rpc->buffer[status - 52], 16);
+	length = status;
+	buffer = rpc->buffer;
+
+	CopyMemory(tsg->ChannelContext, &rpc->buffer[28], 16); /* ChannelContext (16 bytes) */
+
+	/* TODO: trailing bytes */
 
 #ifdef WITH_DEBUG_TSG
-	printf("TSG ChannelContext:\n");
+	printf("ChannelContext:\n");
 	freerdp_hexdump(tsg->ChannelContext, 16);
 	printf("\n");
 #endif
@@ -610,22 +726,42 @@ BOOL tsg_proxy_create_channel(rdpTsg* tsg)
 	return TRUE;
 }
 
-BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
+BOOL tsg_proxy_create_channel(rdpTsg* tsg)
+{
+	/**
+	 * OpNum = 4
+	 *
+	 * HRESULT TsProxyCreateChannel(
+	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+	 * [in, ref] PTSENDPOINTINFO tsEndPointInfo,
+	 * [out] PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext,
+	 * [out] unsigned long* channelId
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxyCreateChannel");
+
+	if (!tsg_proxy_create_channel_write_request(tsg))
+	{
+		printf("TsProxyCreateChannel: error writing request\n");
+		return FALSE;
+	}
+
+	if (!tsg_proxy_create_channel_read_response(tsg))
+	{
+		printf("TsProxyCreateChannel: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_setup_receive_pipe_write_request(rdpTsg* tsg)
 {
 	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
-
-	/**
-	 * OpNum = 8
-	 *
-	 * DWORD TsProxySetupReceivePipe(
-	 * [in, max_is(32767)] byte pRpcMessage[]
-	 * );
-	 */
-
-	DEBUG_TSG("TsProxySetupReceivePipe");
 
 	length = 20;
 
@@ -637,14 +773,54 @@ BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
 	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
-	{
-		printf("TsProxySetupReceivePipe write failure\n");
 		return FALSE;
-	}
 
 	free(buffer);
 
-	/* read? */
+	return TRUE;
+}
+
+BOOL tsg_proxy_setup_receive_pipe_read_response(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	status = rpc_recv_pdu(rpc);
+
+	if (status < 0)
+		return FALSE;
+
+	length = status;
+	buffer = rpc->buffer;
+
+	return TRUE;
+}
+
+BOOL tsg_proxy_setup_receive_pipe(rdpTsg* tsg)
+{
+	/**
+	 * OpNum = 8
+	 *
+	 * DWORD TsProxySetupReceivePipe(
+	 * [in, max_is(32767)] byte pRpcMessage[]
+	 * );
+	 */
+
+	DEBUG_TSG("TsProxySetupReceivePipe");
+
+	if (!tsg_proxy_setup_receive_pipe_write_request(tsg))
+	{
+		printf("TsProxySetupReceivePipe: error writing request\n");
+		return FALSE;
+	}
+
+	if (!tsg_proxy_setup_receive_pipe_read_response(tsg))
+	{
+		printf("TsProxySetupReceivePipe: error reading response\n");
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -666,17 +842,128 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	DEBUG_TSG("rpc_connect success");
 
+	/*
+	 *     Sequential processing rules for connection process:
+	 *
+	 *  1. The RDG client MUST call TsProxyCreateTunnel to create a tunnel to the gateway.
+	 *
+	 *  2. If the call fails, the RDG client MUST end the protocol and MUST NOT perform the following steps.
+	 *
+	 *  3. The RDG client MUST initialize the following ADM elements using TsProxyCreateTunnel out parameters:
+	 *
+	 * 	a. The RDG client MUST initialize the ADM element Tunnel id with the tunnelId out parameter.
+	 *
+	 * 	b. The RDG client MUST initialize the ADM element Tunnel Context Handle with the tunnelContext
+	 * 	   out parameter. This Tunnel Context Handle is used for subsequent tunnel-related calls.
+	 *
+	 * 	c. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_CAPS_RESPONSE, where TSGPacketResponse is an out parameter,
+	 *
+	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
+	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.nonce.
+	 *
+	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
+	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
+	 *
+	 * 	d. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_QUARENC_RESPONSE, where TSGPacketResponse is an out parameter,
+	 *
+	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
+	 * 		    TSGPacket.packetQuarEncResponse->nonce.
+	 *
+	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
+	 * 		    TSGPacket.packetQuarEncResponse->versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
+	 *
+	 *  4. The RDG client MUST get its statement of health (SoH) by calling NAP EC API.<49> Details of the SoH format are
+	 *     specified in [TNC-IF-TNCCSPBSoH]. If the SoH is received successfully, then the RDG client MUST encrypt the SoH
+	 *     using the Triple Data Encryption Standard algorithm and encode it using one of PKCS #7 or X.509 encoding types,
+	 *     whichever is supported by the RDG server certificate context available in the ADM element CertChainData.
+	 *
+	 *  5. The RDG client MUST copy the ADM element Nonce to TSGPacket.packetQuarRequest->data and append the encrypted SoH
+	 *     message into TSGPacket.packetQuarRequest->data. The RDG client MUST set the TSGPacket.packetQuarRequest->dataLen
+	 *     to the sum of the number of bytes in the encrypted SoH message and number of bytes in the ADM element Nonce, where
+	 *     TSGpacket is an input parameter of TsProxyAuthorizeTunnel. The format of the packetQuarRequest field is specified
+	 *     in section 2.2.9.2.1.4.
+	 */
+
 	if (!tsg_proxy_create_tunnel(tsg))
 		return FALSE;
+
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 *  6. The RDG client MUST call TsProxyAuthorizeTunnel to authorize the tunnel.
+	 *
+	 *  7. If the call succeeds or fails with error E_PROXY_QUARANTINE_ACCESSDENIED, follow the steps later in this section.
+	 *     Else, the RDG client MUST end the protocol and MUST NOT follow the steps later in this section.
+	 *
+	 *  8. If the ADM element Negotiated Capabilities contains TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
+	 *     Timeout Value SHOULD be initialized with first 4 bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData
+	 *     and the Statement of health response variable should be initialized with the remaining bytes of responseData, where
+	 *     TSGPacketResponse is an out parameter of TsProxyAuthorizeTunnel. The format of the responseData member is specified
+	 *     in section 2.2.9.2.1.5.1.
+	 *
+	 *  9. If the ADM element Negotiated Capabilities doesn't contain TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
+	 *     Timeout Value SHOULD be initialized to zero and the Statement of health response variable should be initialized with all
+	 *     the bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData.
+	 *
+	 * 10. Verify the signature of the Statement of health response variable using SHA-1 hash and decode it using the RDG server
+	 *     certificate context available in the ADM element CertChainData using one of PKCS #7 or X.509 encoding types, whichever
+	 *     is supported by the RDG Server certificate. The SoHR is processed by calling the NAP EC API
+	 *     INapEnforcementClientConnection::GetSoHResponse.
+	 *
+	 * 11. If the call TsProxyAuthorizeTunnel fails with error E_PROXY_QUARANTINE_ACCESSDENIED, the RDG client MUST end the protocol
+	 *     and MUST NOT follow the steps later in this section.
+	 *
+	 * 12. If the ADM element Idle Timeout Value is nonzero, the RDG client SHOULD start the idle time processing as specified in
+	 *     section 3.6.2.1.1 and SHOULD end the protocol when the connection has been idle for the specified Idle Timeout Value.
+	 */
 
 	if (!tsg_proxy_authorize_tunnel(tsg))
 		return FALSE;
 
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 * 13. If the ADM element Negotiated Capabilities contains TSG_MESSAGING_CAP_SERVICE_MSG, a TsProxyMakeTunnelCall call MAY be
+	 *     made by the client, with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter, to receive messages from the RDG server.
+	 *
+	 */
+
 	if (!tsg_proxy_make_tunnel_call(tsg))
 		return FALSE;
 
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 * 14. The RDG client MUST call TsProxyCreateChannel to create a channel to the target server name as specified by the ADM
+	 *     element Target Server Name (section 3.5.1).
+	 *
+	 * 15. If the call fails, the RDG client MUST end the protocol and MUST not follow the below steps.
+	 *
+	 * 16. The RDG client MUST initialize the following ADM elements using TsProxyCreateChannel out parameters.
+	 *
+	 * 	a. The RDG client MUST initialize the ADM element Channel id with the channelId out parameter.
+	 *
+	 * 	b. The RDG client MUST initialize the ADM element Channel Context Handle with the channelContext
+	 * 	   out parameter. This Channel Context Handle is used for subsequent channel-related calls.
+	 */
+
 	if (!tsg_proxy_create_channel(tsg))
 		return FALSE;
+
+	/**
+	 *  Sequential processing rules for data transfer:
+	 *
+	 *  1. The RDG client MUST call TsProxySetupReceivePipe to receive data from the target server, via the RDG server.
+	 *
+	 *  2. The RDG client MUST call TsProxySendToServer to send data to the target server via the RDG server, and if
+	 *     the Idle Timeout Timer is started, the RDG client SHOULD reset the Idle Timeout Timer.
+	 *
+	 *  3. If TsProxyMakeTunnelCall is returned, the RDG client MUST process the message and MAY call TsProxyMakeTunnelCall
+	 *     again with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter.
+	 *
+	 *  4. The RDG client MUST end the protocol after it receives the final response to TsProxySetupReceivePipe.
+	 *     The final response format is specified in section 2.2.9.4.3.
+	 */
 
 	if (!tsg_proxy_setup_receive_pipe(tsg))
 		return FALSE;
