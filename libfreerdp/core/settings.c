@@ -199,7 +199,7 @@ void settings_get_computer_name(rdpSettings* settings)
 	GetComputerNameExA(ComputerNameNetBIOS, settings->ComputerName, &nSize);
 }
 
-rdpSettings* settings_new(void* instance)
+rdpSettings* freerdp_settings_new(void* instance)
 {
 	rdpSettings* settings;
 
@@ -394,6 +394,10 @@ rdpSettings* settings_new(void* instance)
 		settings->ClientTimeZone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
 		ZeroMemory(settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
 
+		settings->DeviceArraySize = 16;
+		settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
+		ZeroMemory(settings->DeviceArray, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
+
 		freerdp_detect_paths(settings);
 
 		settings_load_hkey_local_machine(settings);
@@ -402,7 +406,7 @@ rdpSettings* settings_new(void* instance)
 	return settings;
 }
 
-void settings_free(rdpSettings* settings)
+void freerdp_settings_free(rdpSettings* settings)
 {
 	if (settings != NULL)
 	{
@@ -412,6 +416,7 @@ void settings_free(rdpSettings* settings)
 		free(settings->Domain);
 		free(settings->AlternateShell);
 		free(settings->ShellWorkingDirectory);
+		free(settings->ComputerName);
 		free(settings->ChannelDefArray);
 		free(settings->MonitorDefArray);
 		free(settings->ClientAddress);
@@ -435,8 +440,20 @@ void settings_free(rdpSettings* settings)
 		key_free(settings->RdpServerRsaKey);
 		free(settings->ConfigPath);
 		free(settings->CurrentPath);
+		free(settings->DeviceArray);
 		free(settings);
 	}
+}
+
+void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
+{
+	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
+	{
+		settings->DeviceArraySize *= 2;
+		settings->DeviceArray = (RDPDR_DEVICE**) realloc(settings->DeviceArray, settings->DeviceArraySize);
+	}
+
+	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
 #ifdef _WIN32

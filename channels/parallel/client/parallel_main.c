@@ -316,10 +316,12 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* name;
 	char* path;
 	int i, length;
+	RDPDR_PARALLEL* device;
 	PARALLEL_DEVICE* parallel;
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
+	device = (RDPDR_PARALLEL*) pEntryPoints->device;
+	name = device->Name;
+	path = device->Path;
 
 	if (name[0] && path[0])
 	{

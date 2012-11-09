@@ -311,6 +311,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* driver_name;
 	rdpPrinter* printer;
 	rdpPrinter** printers;
+	RDPDR_PRINTER* device;
 	rdpPrinterDriver* driver = NULL;
 
 #ifdef WITH_CUPS
@@ -326,8 +327,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		return 1;
 	}
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	driver_name = (char*) pEntryPoints->plugin_data->data[2];
+	device = (RDPDR_PRINTER*) pEntryPoints->device;
+	name = device->Name;
+	driver_name = device->DriverName;
 
 	if (name && name[0])
 	{

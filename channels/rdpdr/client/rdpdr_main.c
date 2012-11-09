@@ -49,25 +49,20 @@
 
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 {
+	int index;
+	RDPDR_DEVICE* device;
+	rdpSettings* settings;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
-	RDP_PLUGIN_DATA* data;
 
 	rdpdr->devman = devman_new(plugin);
-	data = (RDP_PLUGIN_DATA*) plugin->channel_entry_points.pExtendedData;
+	settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
 
-	while (data && data->size > 0)
+	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
+
+	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		if (strcmp((char*) data->data[0], "clientname") == 0)
-		{
-			strncpy(rdpdr->computerName, (char*) data->data[1], sizeof(rdpdr->computerName) - 1);
-			DEBUG_SVC("computerName %s", rdpdr->computerName);
-		}
-		else
-		{
-			devman_load_device_service(rdpdr->devman, data);
-		}
-
-		data = (RDP_PLUGIN_DATA*) (((BYTE*) data) + data->size);
+		device = settings->DeviceArray[index];
+		devman_load_device_service(rdpdr->devman, device);
 	}
 }
 

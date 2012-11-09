@@ -919,7 +919,7 @@ rdpRdp* rdp_new(freerdp* instance)
 	if (rdp != NULL)
 	{
 		rdp->instance = instance;
-		rdp->settings = settings_new((void*) instance);
+		rdp->settings = freerdp_settings_new((void*) instance);
 
 		if (instance != NULL)
 			instance->settings = rdp->settings;
@@ -954,7 +954,7 @@ void rdp_free(rdpRdp* rdp)
 		crypto_des3_free(rdp->fips_encrypt);
 		crypto_des3_free(rdp->fips_decrypt);
 		crypto_hmac_free(rdp->fips_hmac);
-		settings_free(rdp->settings);
+		freerdp_settings_free(rdp->settings);
 		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);

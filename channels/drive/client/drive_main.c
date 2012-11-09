@@ -701,14 +701,16 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
+	RDPDR_DRIVE* drive;
 #ifdef WIN32
 	char* dev;
 	int len;
 	char devlist[512], buf[512];
 #endif
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
+	drive = (RDPDR_DRIVE*) pEntryPoints->device;
+	name = drive->Name;
+	path = drive->Path;
 
 #ifndef WIN32
         drive_register_drive_path(pEntryPoints, name, path);

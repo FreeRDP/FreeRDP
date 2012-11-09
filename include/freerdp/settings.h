@@ -21,6 +21,7 @@
 #ifndef FREERDP_SETTINGS_H
 #define FREERDP_SETTINGS_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 /* Performance Flags */
@@ -359,6 +360,67 @@ struct rdp_monitor
 	UINT32 is_primary;
 };
 typedef struct rdp_monitor rdpMonitor;
+
+/* Device Redirection */
+
+#define RDPDR_DTYP_SERIAL		0x00000001
+#define RDPDR_DTYP_PARALLEL		0x00000002
+#define RDPDR_DTYP_PRINT		0x00000004
+#define RDPDR_DTYP_FILESYSTEM		0x00000008
+#define RDPDR_DTYP_SMARTCARD		0x00000020
+
+struct _RDPDR_DEVICE
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+};
+typedef struct _RDPDR_DEVICE RDPDR_DEVICE;
+
+struct _RDPDR_DRIVE
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+	char* Path;
+};
+typedef struct _RDPDR_DRIVE RDPDR_DRIVE;
+
+struct _RDPDR_PRINTER
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+	char* DriverName;
+};
+typedef struct _RDPDR_PRINTER RDPDR_PRINTER;
+
+struct _RDPDR_SMARTCARD
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+	char* Path;
+};
+typedef struct _RDPDR_SMARTCARD RDPDR_SMARTCARD;
+
+struct _RDPDR_SERIAL
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+	char* Path;
+};
+typedef struct _RDPDR_SERIAL RDPDR_SERIAL;
+
+struct _RDPDR_PARALLEL
+{
+	UINT32 Id;
+	UINT32 Type;
+	char* Name;
+	char* Path;
+};
+typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 
 /* Settings */
 
@@ -840,9 +902,13 @@ struct rdp_settings
 
 	/* Device Redirection */
 	ALIGN64 BOOL DeviceRedirection; /*  */
+	ALIGN64 UINT32 DeviceCount; /*  */
+	ALIGN64 UINT32 DeviceArraySize; /*  */
+	ALIGN64 RDPDR_DEVICE** DeviceArray; /*  */
 
 	/* Drive Redirection */
 	ALIGN64 BOOL RedirectDrives; /*  */
+	ALIGN64 char* DrivesToRedirect; /* */
 
 	/* Smartcard Redirection */
 	ALIGN64 BOOL RedirectSmartCards; /*  */
@@ -866,7 +932,9 @@ struct rdp_settings
 };
 typedef struct rdp_settings rdpSettings;
 
-rdpSettings* settings_new(void* instance);
-void settings_free(rdpSettings* settings);
+FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+
+FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
+FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 #endif /* FREERDP_SETTINGS_H */

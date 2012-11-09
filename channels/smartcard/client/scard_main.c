@@ -291,10 +291,12 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* name;
 	char* path;
 	int i, length;
+	RDPDR_SMARTCARD* device;
 	SCARD_DEVICE* scard;
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
+	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
+	name = device->Name;
+	path = device->Path;
 
 	if (name)
 	{

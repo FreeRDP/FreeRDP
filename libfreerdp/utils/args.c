@@ -708,18 +708,23 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		{
 			index++;
 			t = index;
+
 			if (index == argc)
 			{
 				printf("missing plugin name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
+
 			plugin_data = NULL;
+
 			if (strstr(argv[t], "rdpsnd"))
 				settings->AudioPlayback = TRUE;
+
 			if (index < argc - 1 && strcmp("--data", argv[index + 1]) == 0)
 			{
 				index += 2;
 				i = 0;
+
 				while (index < argc && strcmp("--", argv[index]) != 0)
 				{
 					if (plugin_data == NULL)
@@ -755,6 +760,99 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 					}
 					index++;
 					i++;
+				}
+
+				if (strstr(argv[t], "rdpdr"))
+				{
+					RDP_PLUGIN_DATA* data = plugin_data;
+
+					printf("Device Redirection!\n");
+
+					while (data && data->size > 0)
+					{
+						printf("Device Type: %s\n", data->data[0]);
+
+						if (strcmp(data->data[0], "drive") == 0)
+						{
+							RDPDR_DRIVE* drive;
+
+							drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+							ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+
+							drive->Type = RDPDR_DTYP_FILESYSTEM;
+							drive->Name = _strdup(data->data[1]);
+							drive->Path = _strdup(data->data[2]);
+
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
+						}
+						else if (strcmp(data->data[0], "printer") == 0)
+						{
+							RDPDR_PRINTER* printer;
+
+							printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
+							ZeroMemory(printer, sizeof(RDPDR_PRINTER));
+
+							printer->Type = RDPDR_DTYP_PRINT;
+							printer->Name = _strdup(data->data[1]);
+
+							if (data->data[2])
+								printer->DriverName = _strdup(data->data[2]);
+
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
+						}
+						else if (strcmp(data->data[0], "smartcard") == 0)
+						{
+							RDPDR_SMARTCARD* smartcard;
+
+							smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
+							ZeroMemory(smartcard, sizeof(RDPDR_SMARTCARD));
+
+							smartcard->Type = RDPDR_DTYP_SMARTCARD;
+							smartcard->Name = _strdup(data->data[1]);
+							smartcard->Path = _strdup(data->data[2]);
+
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+						}
+						else if (strcmp(data->data[0], "serial") == 0)
+						{
+							RDPDR_SERIAL* serial;
+
+							serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
+							ZeroMemory(serial, sizeof(RDPDR_SERIAL));
+
+							serial->Type = RDPDR_DTYP_SERIAL;
+							serial->Name = _strdup(data->data[1]);
+							serial->Path = _strdup(data->data[2]);
+
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
+						}
+						else if (strcmp(data->data[0], "parallel") == 0)
+						{
+							RDPDR_PARALLEL* parallel;
+
+							parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
+							ZeroMemory(parallel, sizeof(RDPDR_PARALLEL));
+
+							parallel->Type = RDPDR_DTYP_PARALLEL;
+							parallel->Name = _strdup(data->data[1]);
+							parallel->Path = _strdup(data->data[2]);
+
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
+						}
+						else
+						{
+							printf("WARNING: unknown device type: %s\n", data->data[0]);
+
+							if (strcmp(data->data[0], "disk") == 0)
+								printf("Maybe you meant \"drive\" instead of \"disk\"?\n");
+							else if (strcmp(data->data[0], "scard") == 0)
+								printf("Maybe you meant \"smartcard\" instead of \"scard\"?\n");
+						}
+
+						data = (RDP_PLUGIN_DATA*) (((BYTE*) data) + data->size);
+					}
+
+					plugin_data = (RDP_PLUGIN_DATA*) settings;
 				}
 			}
 

@@ -517,6 +517,8 @@ BOOL xf_pre_connect(freerdp* instance)
 
 		if (status < 0)
 			exit(XF_EXIT_PARSE_ARGUMENTS);
+
+		freerdp_client_load_addins(instance->context->channels, instance->settings);
 	}
 	else
 	{

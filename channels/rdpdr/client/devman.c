@@ -26,8 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -35,13 +36,16 @@
 #include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"
+
 #include "devman.h"
 
 DEVMAN* devman_new(rdpSvcPlugin* plugin)
 {
 	DEVMAN* devman;
 
-	devman = xnew(DEVMAN);
+	devman = (DEVMAN*) malloc(sizeof(DEVMAN));
+	ZeroMemory(devman, sizeof(DEVMAN));
+
 	devman->plugin = plugin;
 	devman->id_sequence = 1;
 	devman->devices = list_new();
@@ -69,23 +73,42 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
-BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
+static char DRIVE_SERVICE_NAME[] = "drive";
+static char PRINTER_SERVICE_NAME[] = "printer";
+static char SMARTCARD_SERVICE_NAME[] = "smartcard";
+static char SERIAL_SERVICE_NAME[] = "serial";
+static char PARALLEL_SERVICE_NAME[] = "parallel";
+
+BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 {
-	char* name;
+	char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry = NULL;
 
-	name = (char*) plugin_data->data[0];
-	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_client_find_static_entry("DeviceServiceEntry", name);
+	if (device->Type == RDPDR_DTYP_FILESYSTEM)
+		ServiceName = DRIVE_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_PRINT)
+		ServiceName = PRINTER_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_SMARTCARD)
+		ServiceName = SMARTCARD_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_SERIAL)
+		ServiceName = SERIAL_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_PARALLEL)
+		ServiceName = PARALLEL_SERVICE_NAME;
+
+	if (!ServiceName)
+		return FALSE;
+
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_client_find_static_entry("DeviceServiceEntry", ServiceName);
 
 	if (!entry)
 	{
-		printf("loading device service %s (plugin)\n", name);
-		entry = freerdp_load_plugin(name, "DeviceServiceEntry");
+		printf("loading device service %s (dynamic)\n", ServiceName);
+		entry = freerdp_load_plugin(ServiceName, "DeviceServiceEntry");
 	}
 	else
 	{
-		printf("loading device service %s (static)\n", name);
+		printf("loading device service %s (static)\n", ServiceName);
 	}
 
 	if (entry == NULL)
@@ -93,7 +116,7 @@ BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
-	ep.plugin_data = plugin_data;
+	ep.device = device;
 
 	entry(&ep);
 

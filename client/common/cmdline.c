@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
+#include <freerdp/client/channels.h>
+
 #include <freerdp/client/cmdline.h>
 
 COMMAND_LINE_ARGUMENT_A args[] =
@@ -182,19 +184,170 @@ int freerdp_client_command_line_pre_filter(void* context, int index, LPCSTR arg)
 	return 1;
 }
 
+int freerdp_client_load_device_addin(rdpSettings* settings, int count, char** params)
+{
+	if (strcmp(params[0], "drive") == 0)
+	{
+		RDPDR_DRIVE* drive;
+
+		if (count < 3)
+			return -1;
+
+		drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+		ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+
+		drive->Type = RDPDR_DTYP_FILESYSTEM;
+		drive->Name = _strdup(params[1]);
+		drive->Path = _strdup(params[2]);
+
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
+
+		return 1;
+	}
+	else if (strcmp(params[0], "printer") == 0)
+	{
+		RDPDR_PRINTER* printer;
+
+		if (count < 2)
+			return -1;
+
+		printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
+		ZeroMemory(printer, sizeof(RDPDR_PRINTER));
+
+		printer->Type = RDPDR_DTYP_PRINT;
+		printer->Name = _strdup(params[1]);
+
+		if (params[2])
+			printer->DriverName = _strdup(params[2]);
+
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
+
+		return 1;
+	}
+	else if (strcmp(params[0], "smartcard") == 0)
+	{
+		RDPDR_SMARTCARD* smartcard;
+
+		if (count < 3)
+			return -1;
+
+		smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
+		ZeroMemory(smartcard, sizeof(RDPDR_SMARTCARD));
+
+		smartcard->Type = RDPDR_DTYP_SMARTCARD;
+		smartcard->Name = _strdup(params[1]);
+		smartcard->Path = _strdup(params[2]);
+
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+
+		return 1;
+	}
+	else if (strcmp(params[0], "serial") == 0)
+	{
+		RDPDR_SERIAL* serial;
+
+		if (count < 3)
+			return -1;
+
+		serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
+		ZeroMemory(serial, sizeof(RDPDR_SERIAL));
+
+		serial->Type = RDPDR_DTYP_SERIAL;
+		serial->Name = _strdup(params[1]);
+		serial->Path = _strdup(params[2]);
+
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
+
+		return 1;
+	}
+	else if (strcmp(params[0], "parallel") == 0)
+	{
+		RDPDR_PARALLEL* parallel;
+
+		if (count < 3)
+			return -1;
+
+		parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
+		ZeroMemory(parallel, sizeof(RDPDR_PARALLEL));
+
+		parallel->Type = RDPDR_DTYP_PARALLEL;
+		parallel->Name = _strdup(params[1]);
+		parallel->Path = _strdup(params[2]);
+
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
+	rdpSettings* settings;
+
 	CommandLineSwitchStart(arg)
 
 	CommandLineSwitchCase(arg, "a")
 	{
+		int nArgs;
+		char* str;
+		char* p[4];
 		int index;
 		int nCommas;
 
 		nCommas = 0;
+		settings = (rdpSettings*) context;
 
 		for (index = 0; arg->Value[index]; index++)
 			nCommas += (arg->Value[index] == ',') ? 1 : 0;
+
+		if (nCommas >= 1)
+		{
+			nArgs = nCommas + 1;
+			str = _strdup(arg->Value);
+
+			p[0] = str;
+			p[1] = p[2] = p[3] = NULL;
+
+			if (nCommas >= 1)
+			{
+				p[1] = strchr(p[0], ',');
+				*p[1] = '\0';
+				p[1]++;
+			}
+
+			if (nCommas >= 2)
+			{
+				p[2] = strchr(p[1], ',');
+				*p[2] = '\0';
+				p[2]++;
+			}
+			else
+			{
+				p[2] = str + strlen(str);
+			}
+
+			if (nCommas >= 3)
+			{
+				p[3] = strchr(p[2], ',');
+				*p[3] = '\0';
+				p[3]++;
+			}
+			else
+			{
+				p[3] = str + strlen(str);
+			}
+
+			printf("addin: %s %s %s\n", p[0], p[1], p[2]);
+
+			if (freerdp_client_load_device_addin(settings, nArgs, p) > 0)
+			{
+				settings->DeviceRedirection = TRUE;
+			}
+
+			free(str);
+		}
 	}
 
 	CommandLineSwitchEnd(arg)
@@ -549,6 +702,24 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (settings->DisableThemes)
 		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+
+	return 1;
+}
+
+int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
+{
+	void* entry = NULL;
+
+	if (settings->DeviceRedirection)
+	{
+		entry = freerdp_channels_client_find_entry("VirtualChannelEntry", "rdpdr");
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
+				printf("loading channel %s\n", "rdpdr");
+		}
+	}
 
 	return 1;
 }

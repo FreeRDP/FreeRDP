@@ -127,7 +127,7 @@ void test_gcc_write_client_core_data(void)
 	rdpSettings* settings;
 
 	s = stream_new(512);
-	settings = settings_new(NULL);
+	settings = freerdp_settings_new(NULL);
 
 	settings->width = 1280;
 	settings->height = 1024;
@@ -154,7 +154,7 @@ void test_gcc_write_client_security_data(void)
 	rdpSettings* settings;
 
 	s = stream_new(12);
-	settings = settings_new(NULL);
+	settings = freerdp_settings_new(NULL);
 
 	settings->DisableEncryption = 1; /* turn on encryption */
 	settings->EncryptionMethods =
@@ -177,7 +177,7 @@ void test_gcc_write_client_cluster_data(void)
 	rdpSettings* settings;
 
 	s = stream_new(12);
-	settings = settings_new(NULL);
+	settings = freerdp_settings_new(NULL);
 
 	gcc_write_client_cluster_data(s, settings);
 
@@ -195,7 +195,7 @@ void test_gcc_write_client_network_data(void)
 	rdpSettings* settings;
 
 	s = stream_new(44);
-	settings = settings_new(NULL);
+	settings = freerdp_settings_new(NULL);
 
 	settings->ChannelCount = 3;
 	memset(settings->ChannelDefArray, 0, sizeof(rdpChannel) * settings->ChannelCount);

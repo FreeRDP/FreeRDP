@@ -24,6 +24,7 @@
 #include <freerdp/freerdp.h>
 
 FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
+FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
 #endif /* FREERDP_CLIENT_CMDLINE */
 
