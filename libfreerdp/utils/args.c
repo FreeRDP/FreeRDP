@@ -837,7 +837,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 						}
 						else
 						{
-							printf("WARNING: unknown device type: %s\n", data->data[0]);
+							printf("WARNING: unknown device type: %s\n", (char*) data->data[0]);
 
 							if (strcmp(data->data[0], "disk") == 0)
 								printf("Maybe you meant \"drive\" instead of \"disk\"?\n");

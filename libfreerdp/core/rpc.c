@@ -247,6 +247,17 @@ void rpc_pdu_header_print(RPC_PDU_HEADER* header)
 	printf("frag_length: %d\n", header->frag_length);
 	printf("auth_length: %d\n", header->auth_length);
 	printf("call_id: %d\n", header->call_id);
+
+	if (header->ptype == PTYPE_RESPONSE)
+	{
+		rpcconn_response_hdr_t* response;
+
+		response = (rpcconn_response_hdr_t*) header;
+		printf("alloc_hint: %d\n", response->alloc_hint);
+		printf("p_cont_id: %d\n", response->p_cont_id);
+		printf("cancel_count: %d\n", response->cancel_count);
+		printf("reserved: %d\n", response->reserved);
+	}
 }
 
 /**
@@ -953,7 +964,9 @@ int rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
 	int bytesRead = 0;
+	int totalBytesRead = 0;
 	RPC_PDU_HEADER* header;
+	RPC_PDU_HEADER fragHeader;
 
 	/* read first 20 bytes to get RPC PDU Header */
 
@@ -993,6 +1006,54 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		}
 
 		bytesRead += status;
+	}
+
+	if (!(header->pfc_flags & PFC_LAST_FRAG))
+	{
+		totalBytesRead = bytesRead;
+		CopyMemory(&fragHeader, header, sizeof(RPC_PDU_HEADER));
+
+		printf("Fragmented PDU\n");
+
+		while (!(fragHeader.pfc_flags & PFC_LAST_FRAG))
+		{
+			bytesRead = 0;
+
+			printf("Reading Fragment Header\n");
+
+			while (bytesRead < 20)
+			{
+				status = tls_read(rpc->tls_out, &((BYTE*) &fragHeader)[bytesRead], 20 - bytesRead);
+
+				if (status < 0)
+				{
+					printf("rpc_recv_pdu: error reading fragment header\n");
+					return status;
+				}
+
+				bytesRead += status;
+			}
+
+			if (fragHeader.frag_length > rpc->length)
+			{
+				rpc->length = header->frag_length;
+				rpc->buffer = (BYTE*) realloc(rpc->buffer, rpc->length);
+				header = (RPC_PDU_HEADER*) rpc->buffer;
+			}
+
+			while (totalBytesRead < (fragHeader.frag_length - 20))
+			{
+				status = tls_read(rpc->tls_out, &rpc->buffer[totalBytesRead], fragHeader.frag_length - totalBytesRead);
+
+				if (status < 0)
+				{
+					printf("rpc_recv_pdu: error reading fragment\n");
+					return status;
+				}
+
+				totalBytesRead += status;
+			}
+		}
 	}
 
 	if (header->ptype == PTYPE_RTS) /* RTS PDU */
