@@ -367,7 +367,7 @@ BOOL tsg_proxy_create_tunnel_read_response(rdpTsg* tsg)
 	else if ((packet->packetId == TSG_PACKET_TYPE_QUARENC_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_QUARENC_RESPONSE))
 	{
 		packetQuarEncResponse = (PTSG_PACKET_QUARENC_RESPONSE) malloc(sizeof(TSG_PACKET_QUARENC_RESPONSE));
-		ZeroMemory(packetCapsResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
+		ZeroMemory(packetQuarEncResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
 		/* PacketQuarResponsePtr (4 bytes) */
@@ -432,6 +432,9 @@ BOOL tsg_proxy_create_tunnel_read_response(rdpTsg* tsg)
 		freerdp_hexdump(tsg->TunnelContext, 16);
 		printf("\n");
 #endif
+
+		free(versionCaps);
+		free(packetQuarEncResponse);
 	}
 	else
 	{
@@ -841,7 +844,7 @@ BOOL tsg_proxy_setup_receive_pipe_write_request(rdpTsg* tsg)
 	buffer = (BYTE*) malloc(length);
 
 	*((UINT32*) &buffer[0]) = 0x00000000; /* ContextType */
-	CopyMemory(&buffer[4], tsg->TunnelContext, 16); /* ContextUuid */
+	CopyMemory(&buffer[4], tsg->ChannelContext, 16); /* ContextUuid */
 
 	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
@@ -855,6 +858,7 @@ BOOL tsg_proxy_setup_receive_pipe_write_request(rdpTsg* tsg)
 
 BOOL tsg_proxy_setup_receive_pipe_read_response(rdpTsg* tsg)
 {
+#if 0
 	int status;
 	BYTE* buffer;
 	UINT32 length;
@@ -867,6 +871,7 @@ BOOL tsg_proxy_setup_receive_pipe_read_response(rdpTsg* tsg)
 
 	length = status;
 	buffer = rpc->buffer;
+#endif
 
 	return TRUE;
 }
