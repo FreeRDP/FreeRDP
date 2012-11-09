@@ -1103,9 +1103,16 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	else
 	{
 		status = rpc_recv_pdu(rpc);
-		tsg->pendingPdu = TRUE;
 
 		header = (RPC_PDU_HEADER*) rpc->buffer;
+
+		if (header->frag_length == 64)
+		{
+			printf("Ignoring 64-byte length PDU (probably TsProxySetupPipe return code)\n");
+			return tsg_read(tsg, data, length);
+		}
+
+		tsg->pendingPdu = TRUE;
 		tsg->bytesAvailable = header->frag_length;
 		tsg->bytesRead = 0;
 
