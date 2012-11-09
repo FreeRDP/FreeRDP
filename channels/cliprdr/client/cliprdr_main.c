@@ -298,5 +298,3 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
-
-

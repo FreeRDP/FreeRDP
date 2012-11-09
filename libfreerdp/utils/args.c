@@ -766,12 +766,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				{
 					RDP_PLUGIN_DATA* data = plugin_data;
 
-					printf("Device Redirection!\n");
-
 					while (data && data->size > 0)
 					{
-						printf("Device Type: %s\n", data->data[0]);
-
 						if (strcmp(data->data[0], "drive") == 0)
 						{
 							RDPDR_DRIVE* drive;

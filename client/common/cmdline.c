@@ -184,7 +184,28 @@ int freerdp_client_command_line_pre_filter(void* context, int index, LPCSTR arg)
 	return 1;
 }
 
-int freerdp_client_load_device_addin(rdpSettings* settings, int count, char** params)
+int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params)
+{
+	RDP_PLUGIN_DATA* data;
+
+	data = (RDP_PLUGIN_DATA*) malloc(sizeof(RDP_PLUGIN_DATA));
+	ZeroMemory(data, sizeof(RDP_PLUGIN_DATA));
+
+	data->size = sizeof(RDP_PLUGIN_DATA);
+
+	if (count > 0)
+		data->data[0] = params[0];
+	if (count > 1)
+		data->data[1] = params[1];
+	if (count > 2)
+		data->data[2] = params[2];
+	if (count > 3)
+		data->data[3] = params[3];
+
+	return 1;
+}
+
+int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params)
 {
 	if (strcmp(params[0], "drive") == 0)
 	{
@@ -341,7 +362,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 			printf("addin: %s %s %s\n", p[0], p[1], p[2]);
 
-			if (freerdp_client_load_device_addin(settings, nArgs, p) > 0)
+			if (freerdp_client_add_device_channel(settings, nArgs, p) > 0)
 			{
 				settings->DeviceRedirection = TRUE;
 			}
@@ -499,6 +520,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			}
 
 			settings->GatewayUsageMethod = TRUE;
+			settings->GatewayUseSameCredentials = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{

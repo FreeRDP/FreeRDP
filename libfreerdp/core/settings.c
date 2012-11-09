@@ -377,6 +377,8 @@ rdpSettings* freerdp_settings_new(void* instance)
 
 		settings->MultifragMaxRequestSize = 0x200000;
 
+		settings->GatewayUseSameCredentials = TRUE;
+
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;
 
