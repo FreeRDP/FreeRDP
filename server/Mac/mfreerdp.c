@@ -45,8 +45,8 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->width;
-	context->rfx_context->height = client->settings->height;
+	context->rfx_context->width = client->settings->DesktopWidth;
+	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->nsc_context = nsc_context_new();
@@ -102,7 +102,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	printf("\n");
 
 	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
+		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
 
