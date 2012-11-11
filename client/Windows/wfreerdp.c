@@ -45,6 +45,7 @@
 #include <freerdp/utils/svc_plugin.h>
 
 #include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
@@ -211,30 +212,30 @@ BOOL wf_pre_connect(freerdp* instance)
 	if (wfi->percentscreen > 0)
 	{
 		i1 = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
-		settings->width = i1;
+		settings->DesktopWidth = i1;
 
 		i1 = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
-		settings->height = i1;
+		settings->DesktopHeight = i1;
 	}
 
 	if (wfi->fs_toggle)
 	{
-		settings->width = GetSystemMetrics(SM_CXSCREEN);
-		settings->height = GetSystemMetrics(SM_CYSCREEN);
+		settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
+		settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
 	}
 
-	i1 = settings->width;
+	i1 = settings->DesktopWidth;
 	i1 = (i1 + 3) & (~3);
-	settings->width = i1;
+	settings->DesktopWidth = i1;
 
-	if ((settings->width < 64) || (settings->height < 64) ||
-		(settings->width > 4096) || (settings->height > 4096))
+	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
+		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
-		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->width, settings->height);
+		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
 		return 1;
 	}
 
-	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
+	settings->KeyboardLayout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return TRUE;
@@ -294,8 +295,8 @@ BOOL wf_post_connect(freerdp* instance)
 	wfi = context->wfi;
 
 	wfi->dstBpp = 32;
-	width = settings->width;
-	height = settings->height;
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
 
 	if (wfi->sw_gdi)
 	{
@@ -304,12 +305,12 @@ BOOL wf_post_connect(freerdp* instance)
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
 
-		rfx_context_set_cpu_opt(gdi->rfx_context, wfi_detect_cpu());
+		rfx_context_set_cpu_opt((RFX_CONTEXT*) gdi->rfx_context, wfi_detect_cpu());
 	}
 	else
 	{
 		wf_gdi_register_update_callbacks(instance->update);
-		wfi->srcBpp = instance->settings->color_depth;
+		wfi->srcBpp = instance->settings->ColorDepth;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, NULL);
 
 		wfi->hdc = gdi_GetDC();
@@ -728,13 +729,26 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//while (1)
 	{
+		int status;
 		int arg_parse_result;
 
 		data = (thread_data*) xzalloc(sizeof(thread_data)); 
 		data->instance = instance;
 
-		arg_parse_result = freerdp_parse_args(instance->settings, __argc, __argv,
-			wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
+		if (freerdp_detect_new_command_line_syntax(__argc, __argv))
+		{
+			printf("Using new command-line syntax\n");
+
+			status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+			arg_parse_result = status;
+
+			freerdp_client_load_addins(instance->context->channels, instance->settings);
+		}
+		else
+		{
+			arg_parse_result = freerdp_parse_args(instance->settings, __argc, __argv,
+				wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
+		}
 
 		if (arg_parse_result < 0)
 		{
