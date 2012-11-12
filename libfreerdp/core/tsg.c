@@ -1108,7 +1108,12 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 		if (header->frag_length == 64)
 		{
-			printf("Ignoring 64-byte length PDU (probably TsProxySetupPipe return code)\n");
+			printf("Ignoring 64-byte length PDU (probably TsProxySetupReceivePipe return code)\n");
+			return tsg_read(tsg, data, length);
+		}
+		if (header->frag_length == 80)
+		{
+			printf("Ignoring 80-byte length PDU (probably TsProxySetupReceivePipe return code)\n");
 			return tsg_read(tsg, data, length);
 		}
 

@@ -1015,6 +1015,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 		printf("Fragmented PDU\n");
 
+#if 0
 		while (!(fragHeader.pfc_flags & PFC_LAST_FRAG))
 		{
 			bytesRead = 0;
@@ -1054,6 +1055,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 				totalBytesRead += status;
 			}
 		}
+#endif
 	}
 
 	if (header->ptype == PTYPE_RTS) /* RTS PDU */
@@ -1366,7 +1368,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->ReceiveWindow = 0x00010000;
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 
-		rpc->call_id = 0;
+		rpc->call_id = 1;
 	}
 
 	return rpc;
