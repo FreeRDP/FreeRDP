@@ -166,13 +166,10 @@ if(APPLE)
 		include_directories(/opt/local/include)
 		link_directories(/opt/local/lib)
 	endif()
-	
 	if(WITH_CLANG)
 		set(CMAKE_C_COMPILER "clang")
 	endif()
-	
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl-framework,CoreFoundation")	
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -225,6 +222,7 @@ set(GSTREAMER_FEATURE_DESCRIPTION "multimedia redirection, audio and video playb
 
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
+	set(ZLIB_FEATURE_TYPE "DISABLED")
 	set(DIRECTFB_FEATURE_TYPE "DISABLED")
 	set(ALSA_FEATURE_TYPE "DISABLED")
 	set(PULSE_FEATURE_TYPE "DISABLED")

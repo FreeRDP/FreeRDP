@@ -271,6 +271,8 @@ WINPR_API BOOL FindClose(HANDLE hFindFile);
 #define FindNextFile		FindNextFileA
 #endif
 
+#endif
+
 /* Extra Functions */
 
 #define WILDCARD_STAR		0x00000001
@@ -282,8 +284,6 @@ WINPR_API BOOL FindClose(HANDLE hFindFile);
 
 WINPR_API BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern);
 WINPR_API LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags);
-
-#endif
 
 #endif /* WINPR_FILE_H */
 

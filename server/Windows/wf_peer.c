@@ -88,14 +88,14 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
 	ReleaseDC(NULL, hdc);
 
-	if ((settings->width != wfi->width) || (settings->height != wfi->height))
+	if ((settings->DesktopWidth != wfi->width) || (settings->DesktopHeight != wfi->height))
 	{
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
-			settings->width, settings->height, wfi->width, wfi->height);
+			settings->DesktopWidth, settings->DesktopHeight, wfi->width, wfi->height);
 
-		settings->width = wfi->width;
-		settings->height = wfi->height;
-		settings->color_depth = wfi->bitsPerPixel;
+		settings->DesktopWidth = wfi->width;
+		settings->DesktopHeight = wfi->height;
+		settings->ColorDepth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
 	}

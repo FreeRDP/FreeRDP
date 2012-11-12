@@ -23,7 +23,11 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <winerror.h>
+
+#else
 
 #define FACILITY_WINDOWSUPDATE		36
 #define FACILITY_WINDOWS_CE		24

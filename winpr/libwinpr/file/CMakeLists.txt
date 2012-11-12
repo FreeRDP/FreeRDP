@@ -19,11 +19,8 @@ set(MODULE_NAME "winpr-file")
 set(MODULE_PREFIX "WINPR_FILE")
 
 set(${MODULE_PREFIX}_SRCS
-	file.c)
-
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
+	file.c
+	pattern.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}

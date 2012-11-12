@@ -80,6 +80,19 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
+BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[])
+{
+	int index;
+
+	for (index = 1; index < argc; index++)
+	{
+		if (argv[index][0] == '/')
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 int freerdp_client_print_version()
 {
 	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
