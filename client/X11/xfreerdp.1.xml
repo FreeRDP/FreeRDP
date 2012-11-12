@@ -372,10 +372,10 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--gdi</term>
+        <term>--gdi <replaceable class="parameter">backend</replaceable></term>
         <listitem>
           <para>
-            GDI rendering backend. <replaceable class="parameter">backend</replaceable> can be either sw (software) or hw (hardware).
+            GDI (Graphics Device Interface) rendering backend. <replaceable class="parameter">backend</replaceable> can be either sw (software) or hw (hardware).
           </para>
         </listitem>
       </varlistentry>
@@ -459,10 +459,10 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--plugin</term>
+        <term>--plugin <replaceable class="parameter">pluginname</replaceable></term>
         <listitem>
           <para>
-            load a plugin
+            load <replaceable class="parameter">pluginname</replaceable>
           </para>
         </listitem>
       </varlistentry>
