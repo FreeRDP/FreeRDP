@@ -74,4 +74,3 @@ add_subdirectory(include)
 add_subdirectory(libwinpr)
 
 add_subdirectory(tools)
-
