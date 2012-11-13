@@ -661,7 +661,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += cookie_length + 19;
 	}
 
-	DEBUG_NEGO("requested_protocols: %d", nego->RequestedProtocols);
+	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
 	if (nego->requested_protocols > PROTOCOL_RDP)
 	{
@@ -702,7 +702,7 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 	stream_read_UINT16(s, length);
 	stream_read_UINT32(s, nego->requested_protocols);
 
-	DEBUG_NEGO("requested_protocols: %d", nego->RequestedProtocols);
+	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
 	nego->state = NEGO_STATE_FINAL;
 }

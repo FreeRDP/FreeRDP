@@ -148,7 +148,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	if (!fp)
 		return;
 	
-	// Read the current contents of the file.
+	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -164,7 +164,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		return;
 	}
 	
-	// Write the file back out, with appropriate fingerprint substitutions
+	/* Write the file back out, with appropriate fingerprint substitutions */
 	fp = fopen(certificate_store->file, "w+");
 	data[size] = '\n';
 	data[size + 1] = '\0';

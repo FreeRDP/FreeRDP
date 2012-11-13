@@ -68,6 +68,7 @@ BOOL tpkt_verify_header(STREAM* s)
 	BYTE version;
 
 	stream_peek_BYTE(s, version);
+
 	if (version == 3)
 		return TRUE;
 	else

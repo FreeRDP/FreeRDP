@@ -66,8 +66,7 @@
  * @return TPDU length indicator (LI)
  */
 
-BYTE
-tpdu_read_header(STREAM* s, BYTE* code)
+BYTE tpdu_read_header(STREAM* s, BYTE* code)
 {
 	BYTE li;
 
@@ -97,8 +96,7 @@ tpdu_read_header(STREAM* s, BYTE* code)
  * @param code TPDU code
  */
 
-void
-tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
+void tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
 {
 	stream_write_BYTE(s, length); /* LI */
 	stream_write_BYTE(s, code); /* code */
@@ -143,8 +141,7 @@ BYTE tpdu_read_connection_request(STREAM* s)
  * @param length TPDU length
  */
 
-void
-tpdu_write_connection_request(STREAM* s, UINT16 length)
+void tpdu_write_connection_request(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
 }
@@ -155,8 +152,7 @@ tpdu_write_connection_request(STREAM* s, UINT16 length)
  * @return length indicator (LI)
  */
 
-BYTE
-tpdu_read_connection_confirm(STREAM* s)
+BYTE tpdu_read_connection_confirm(STREAM* s)
 {
 	BYTE li;
 	BYTE code;
@@ -178,8 +174,7 @@ tpdu_read_connection_confirm(STREAM* s)
  * @param length TPDU length
  */
 
-void
-tpdu_write_connection_confirm(STREAM* s, UINT16 length)
+void tpdu_write_connection_confirm(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_CONFIRM);
 }
@@ -190,8 +185,7 @@ tpdu_write_connection_confirm(STREAM* s, UINT16 length)
  * @param length TPDU length
  */
 
-void
-tpdu_write_disconnect_request(STREAM* s, UINT16 length)
+void tpdu_write_disconnect_request(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_DISCONNECT_REQUEST);
 }
@@ -201,8 +195,7 @@ tpdu_write_disconnect_request(STREAM* s, UINT16 length)
  * @param s stream
  */
 
-void
-tpdu_write_data(STREAM* s)
+void tpdu_write_data(STREAM* s)
 {
 	tpdu_write_header(s, 2, X224_TPDU_DATA);
 }
@@ -212,8 +205,7 @@ tpdu_write_data(STREAM* s)
  * @param s stream
  */
 
-UINT16
-tpdu_read_data(STREAM* s)
+UINT16 tpdu_read_data(STREAM* s)
 {
 	BYTE code;
 	UINT16 li;
