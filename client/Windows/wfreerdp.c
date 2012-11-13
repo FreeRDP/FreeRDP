@@ -25,6 +25,9 @@
 
 #include <winpr/windows.h>
 
+#include <winpr/crt.h>
+#include <winpr/credui.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -412,6 +415,59 @@ BOOL wf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
+static const char wfTargetName[] = "TARGET";
+
+static CREDUI_INFOA wfUiInfo =
+{
+	sizeof(CREDUI_INFOA),
+	NULL,
+	"Enter your credentials",
+	"Remote Desktop Security",
+	NULL
+};
+
+BOOL wf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	BOOL fSave;
+	DWORD status;
+	DWORD dwFlags;
+	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1];
+	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1];
+	char User[CREDUI_MAX_USERNAME_LENGTH + 1];
+	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1];
+
+	fSave = FALSE;
+	ZeroMemory(UserName, sizeof(UserName));
+	ZeroMemory(Password, sizeof(Password));
+	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
+
+	status = CredUIPromptForCredentialsA(&wfUiInfo, wfTargetName, NULL, 0,
+		UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+		Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+
+	if (status != NO_ERROR)
+	{
+		printf("CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
+		return FALSE;
+	}
+
+	ZeroMemory(User, sizeof(User));
+	ZeroMemory(Domain, sizeof(Domain));
+
+	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
+
+	//printf("User: %s Domain: %s Password: %s\n", User, Domain, Password);
+
+	*username = _strdup(User);
+
+	if (strlen(Domain) > 0)
+		*domain = _strdup(Domain);
+
+	*password = _strdup(Password);
+
+	return TRUE;
+}
+
 BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 #if 0
@@ -713,6 +769,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
+	instance->Authenticate = wf_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
