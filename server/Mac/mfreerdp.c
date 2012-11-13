@@ -29,15 +29,22 @@
 #include <signal.h>
 #include <sys/time.h>
 
+#include <CoreGraphics/CGEvent.h>
+
 #include <winpr/crt.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/server/rdpsnd.h>
 
-#include "mf_audin.h"
+#ifdef CHANNEL_RDPSND_SERVER
+#include <freerdp/server/rdpsnd.h>
 #include "mf_rdpsnd.h"
+#endif
+
+#ifdef CHANNEL_AUDIN_SERVER
+#include "mf_audin.h"
+#endif  
 
 #include "mfreerdp.h"
 
@@ -54,7 +61,9 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 
 	context->s = stream_new(0xFFFF);
 
+#ifdef WITH_SERVER_CHANNELS
 	context->vcm = WTSCreateVirtualChannelManager(client);
+#endif
 }
 
 void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
@@ -66,13 +75,19 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 		rfx_context_free(context->rfx_context);
 		nsc_context_free(context->nsc_context);
 
+#ifdef CHANNEL_AUDIN_SERVER
 		if (context->audin)
 			audin_server_context_free(context->audin);
-
+#endif
+        
+#ifdef CHANNEL_RDPSND_SERVER
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
-
+#endif
+        
+#ifdef WITH_SERVER_CHANNELS
 		WTSDestroyVirtualChannelManager(context->vcm);
+#endif
 	}
 }
 
@@ -104,23 +119,29 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
+#ifdef WITH_SERVER_CHANNELS
 	/* Iterate all channel names requested by the client and activate those supported by the server */
 
 	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
 		if (client->settings->ChannelDefArray[i].joined)
 		{
+#ifdef CHANNEL_RDPSND_SERVER
 			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
 			{
 				mf_peer_rdpsnd_init(context); /* Audio Output */
 			}
+#endif
 		}
 	}
 
 	/* Dynamic Virtual Channels */
-
+#endif
+    
+#ifdef CHANNEL_AUDIN_SERVER
 	mf_peer_audin_init(context); /* Audio Input */
-
+#endif
+    
 	return TRUE;
 }
 
@@ -142,6 +163,21 @@ void mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	printf("Client sent a keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
+    
+    UINT16 down = 0x4000;
+    //UINT16 up = 0x8000;
+    
+    bool state_down = FALSE;
+    
+    if (flags == down)
+    {
+        state_down = TRUE;
+    }
+    
+    CGEventRef event;
+    event = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)code, state_down);
+    CGEventPost(kCGHIDEventTap, event);
+    CFRelease(event);
 }
 
 void mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -232,8 +268,11 @@ static void* mf_peer_main_loop(void* arg)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+        
+#ifdef WITH_SERVER_CHANNELS
 		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-
+#endif
+        
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
 
@@ -265,8 +304,12 @@ static void* mf_peer_main_loop(void* arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+        
+#ifdef WITH_SERVER_CHANNELS
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
+#endif
+        
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
