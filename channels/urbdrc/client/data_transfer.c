@@ -715,18 +715,19 @@ static int urb_control_transfer(URBDRC_CHANNEL_CALLBACK* callback, BYTE* data,
 static int urb_bulk_or_interrupt_transfer(URBDRC_CHANNEL_CALLBACK* callback, BYTE* data,
 	UINT32 data_sizem, UINT32 MessageId, IUDEVMAN* udevman, UINT32 UsbDevice, int transferDir)
 {
-	IUDEVICE *	pdev;
-	UINT32		out_size, RequestId, InterfaceId, EndpointAddress, PipeHandle;
-	UINT32		TransferFlags, OutputBufferSize, usbd_status = 0;
-	BYTE *		Buffer;
-	BYTE *		out_data;
-	int			offset;
+	int offset;
+	BYTE* Buffer;
+	IUDEVICE* pdev;
+	BYTE* out_data;
+	UINT32 out_size, RequestId, InterfaceId, EndpointAddress, PipeHandle;
+	UINT32 TransferFlags, OutputBufferSize, usbd_status = 0;
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
+
 	if (pdev == NULL)
 		return 0;
 
-	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
+	InterfaceId = ((STREAM_ID_PROXY << 30) | pdev->get_ReqCompletion(pdev));
 
 	data_read_UINT32(data + 0, RequestId);
 	data_read_UINT32(data + 4, PipeHandle);
@@ -740,7 +741,8 @@ static int urb_bulk_or_interrupt_transfer(URBDRC_CHANNEL_CALLBACK* callback, BYT
 	else
 		out_size = 36 + OutputBufferSize;
 
-	out_data = (BYTE *) malloc(out_size);
+	Buffer = NULL;
+	out_data = (BYTE*) malloc(out_size);
 	memset(out_data, 0, out_size);
 
 	switch (transferDir)
@@ -748,10 +750,12 @@ static int urb_bulk_or_interrupt_transfer(URBDRC_CHANNEL_CALLBACK* callback, BYT
 		case USBD_TRANSFER_DIRECTION_OUT:
 			Buffer = data + offset;
 			break;
+
 		case USBD_TRANSFER_DIRECTION_IN:
 			Buffer = out_data + 36;
 			break;
 	}
+
 	/**  process URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER */
 	pdev->bulk_or_interrupt_transfer(
 		pdev, RequestId, EndpointAddress,
