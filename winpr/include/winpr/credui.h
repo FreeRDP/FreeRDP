@@ -24,9 +24,14 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/sspi.h>
+#include <winpr/error.h>
 #include <winpr/credentials.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <wincred.h>
+
+#else
 
 #define CREDUI_MAX_MESSAGE_LENGTH			32767
 #define CREDUI_MAX_CAPTION_LENGTH			128

@@ -134,7 +134,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"\n"
 				"Usage: %s [file] [options] server:port\n"
 				"  -0: connect to console session\n"
-				"  -a: set color depth in bit, default is 16\n"
+				"  -a: set color depth in bits, default is 16\n"
 				"  -c: shell working directory\n"
 				"  -D: hide window decorations\n"
 				"  -T: window title\n"
