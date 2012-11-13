@@ -29,6 +29,10 @@
 
 #else
 
+#ifndef NO_ERROR
+#define NO_ERROR    0
+#endif
+
 #define FACILITY_WINDOWSUPDATE		36
 #define FACILITY_WINDOWS_CE		24
 #define FACILITY_WINDOWS		8
