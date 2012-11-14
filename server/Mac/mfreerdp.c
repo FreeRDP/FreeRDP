@@ -169,6 +169,8 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 {
 	if (context)
 	{
+        dispatch_suspend(info_timer);
+        
 		stream_free(context->s);
 
 		rfx_context_free(context->rfx_context);
