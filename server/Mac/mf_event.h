@@ -31,8 +31,8 @@ typedef struct mf_event_region mfEventRegion;
 
 enum mf_event_type
 {
-	mf_EVENT_TYPE_REGION,
-	mf_EVENT_TYPE_FRAME_TICK
+	MF_EVENT_TYPE_REGION,
+	MF_EVENT_TYPE_FRAME_TICK
 };
 
 struct mf_event

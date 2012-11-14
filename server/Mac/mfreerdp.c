@@ -3,6 +3,7 @@
  * FreeRDP Mac OS X Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +49,73 @@
 
 #include "mfreerdp.h"
 
+#include "mf_event.h"
+
 #include <mach/clock.h>
 #include <mach/mach.h>
 
 //refactor these
 int info_last_sec = 0;
 int info_last_nsec = 0;
+
+mfEventQueue* info_event_queue;
+
+BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+{
+	if (info_event_queue->pipe_fd[0] == -1)
+		return TRUE;
+    
+	rfds[*rcount] = (void *)(long) info_event_queue->pipe_fd[0];
+	(*rcount)++;
+    
+	return TRUE;
+}
+
+BOOL mf_peer_check_fds(freerdp_peer* client)
+{
+    mfPeerContext* context = (mfPeerContext*) client->context;
+	mfEvent* event;
+    //HGDI_RGN invalid_region;
+    
+	if (context->activated == FALSE)
+		return TRUE;
+    
+	event = mf_event_peek(info_event_queue);
+    
+	if (event != NULL)
+	{
+		if (event->type == MF_EVENT_TYPE_REGION)
+		{
+            printf("unhandled event\n");
+			/*mfEventRegion* region = (mfEventRegion*) mf_event_pop(info_event_queue);
+			gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
+			xf_event_region_free(region);*/
+		}
+		else if (event->type == MF_EVENT_TYPE_FRAME_TICK)
+		{
+			event = mf_event_pop(info_event_queue);
+            
+            printf("Tick\n");
+			
+            /*invalid_region = xfp->hdc->hwnd->invalid;
+            
+			if (invalid_region->null == FALSE)
+			{
+				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
+                                   invalid_region->w, invalid_region->h);
+			}
+            
+			invalid_region->null = 1;
+			xfp->hdc->hwnd->ninvalid = 0;
+            */
+            
+            
+			mf_event_free(event);
+		}
+	}
+    
+	return TRUE;
+}
 
 void mf_peer_rfx_update(freerdp_peer* client)
 {
@@ -129,6 +191,8 @@ static void mf_peer_init(freerdp_peer* client)
 	client->ContextNew = (psPeerContextNew) mf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) mf_peer_context_free;
 	freerdp_peer_context_new(client);
+    
+    info_event_queue = mf_event_queue_new();
 }
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
