@@ -74,7 +74,6 @@ void wf_peer_init(freerdp_peer* client)
 BOOL wf_peer_post_connect(freerdp_peer* client)
 {
 	int i;
-	HDC hdc;
 	wfInfo* wfi;
 	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -82,20 +81,24 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	hdc = GetDC(NULL);
-	wfi->width = GetDeviceCaps(hdc, HORZRES);
-	wfi->height = GetDeviceCaps(hdc, VERTRES);
-	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
-	ReleaseDC(NULL, hdc);
+	if ( 
+		(get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
+		(wfi->servscreen_width == 0) ||
+		(wfi->servscreen_height == 0) ||
+		(wfi->bitsPerPixel == 0) )
+	{
+		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
+		return FALSE;
+	}
 
-	if ((settings->DesktopWidth != wfi->width) || (settings->DesktopHeight != wfi->height))
+	if ((settings->width != wfi->servscreen_width) || (settings->height != wfi->servscreen_height))
 	{
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
-			settings->DesktopWidth, settings->DesktopHeight, wfi->width, wfi->height);
+			settings->width, settings->height, wfi->servscreen_width, wfi->servscreen_height);
 
-		settings->DesktopWidth = wfi->width;
-		settings->DesktopHeight = wfi->height;
-		settings->ColorDepth = wfi->bitsPerPixel;
+		settings->width = wfi->servscreen_width;
+		settings->height = wfi->servscreen_height;
+		settings->color_depth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
 	}

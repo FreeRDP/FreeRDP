@@ -200,11 +200,11 @@ typedef struct
 	ULONG nColorBmPalEntries;
 } Esc_dmf_pointer_shape_get_OUT;
 
-BOOL wf_mirror_driver_find_display_device(wfInfo* context);
-BOOL wf_mirror_driver_display_device_attach(wfInfo* context, DWORD mode);
-BOOL wf_mirror_driver_update(wfInfo* context, int unload);
-BOOL wf_mirror_driver_map_memory(wfInfo* context);
-BOOL wf_mirror_driver_cleanup(wfInfo* context);
+BOOL wf_mirror_driver_find_display_device(wfInfo* wfi);
+BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode);
+BOOL wf_mirror_driver_update(wfInfo* wfi, int unload);
+BOOL wf_mirror_driver_map_memory(wfInfo* wfi);
+BOOL wf_mirror_driver_cleanup(wfInfo* wfi);
 
 void wf_mirror_driver_activate(wfInfo* wfi);
 void wf_mirror_driver_deactivate(wfInfo* wfi);
