@@ -48,6 +48,38 @@
 
 #include "mfreerdp.h"
 
+#include <mach/clock.h>
+#include <mach/mach.h>
+
+//refactor these
+int info_last_sec = 0;
+int info_last_nsec = 0;
+
+void mf_peer_rfx_update(freerdp_peer* client)
+{
+    
+    //limit rate
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    
+    if ( (mts.tv_sec - info_last_sec > 0) && (mts.tv_nsec - info_last_nsec > 500000000) ) {
+        printf("rfx_update\n");
+        
+        info_last_nsec = mts.tv_nsec;
+        info_last_sec = mts.tv_sec;
+    }
+    
+    
+    //capture entire screen
+    
+    //encode
+    
+    //send
+}
+
 void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
@@ -101,8 +133,7 @@ static void mf_peer_init(freerdp_peer* client)
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
 {
-	int i;
-	mfPeerContext* context = (mfPeerContext*) client->context;
+	//mfPeerContext* context = (mfPeerContext*) client->context;
 
 	printf("Client %s is activated\n", client->hostname);
 
@@ -121,7 +152,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 
 #ifdef WITH_SERVER_CHANNELS
 	/* Iterate all channel names requested by the client and activate those supported by the server */
-
+    int i;
 	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
 		if (client->settings->ChannelDefArray[i].joined)
@@ -304,6 +335,8 @@ static void* mf_peer_main_loop(void* arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+        
+        mf_peer_rfx_update(client);
         
 #ifdef WITH_SERVER_CHANNELS
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)

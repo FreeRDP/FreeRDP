@@ -23,7 +23,9 @@ FIND_LIBRARY(APP_SERVICES ApplicationServices)
 
 set(${MODULE_PREFIX}_SRCS
 	mfreerdp.c
-	mfreerdp.h)
+	mfreerdp.h
+	mf_event.c
+	mf_event.h)
 
 if(CHANNEL_AUDIN_SERVER)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
