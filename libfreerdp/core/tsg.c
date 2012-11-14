@@ -1101,6 +1101,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	int copyLength;
 	RPC_PDU_HEADER* header;
 	rdpRpc* rpc = tsg->rpc;
+    BYTE buffer[RPC_PDU_HEADER_MAX_LENGTH];
 
 	printf("tsg_read: %d, pending: %d\n", length, tsg->pendingPdu);
 
@@ -1121,9 +1122,8 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	}
 	else
 	{
-		status = rpc_recv_pdu(rpc);
-
-		header = (RPC_PDU_HEADER*) rpc->buffer;
+		status = rpc_recv_pdu_header(rpc, buffer);
+		header = (RPC_PDU_HEADER*) buffer;
 
 		if (header->frag_length == 64)
 		{

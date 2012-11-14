@@ -60,6 +60,16 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 	UINT16 auth_length; \
 	UINT32 call_id
 
+#define RPC_COMMON_FIELDS_LENGTH    20
+
+/**
+ * The PDU maximum header length is enough
+ * to contain either the RPC common fields
+ * or all fields up to the stub data in PDUs
+ * that use it (request, response, fault)
+ */
+#define RPC_PDU_HEADER_MAX_LENGTH   32
+
 struct _rpc_pdu_header
 {
 	DEFINE_RPC_COMMON_FIELDS();
@@ -420,7 +430,7 @@ typedef struct
 
 	/* optional field for request, only present if the PFC_OBJECT_UUID field is non-zero */
 
-	p_uuid_t object; /* 24:16 object UID */
+	p_uuid_t object; /* 24:16 object UUID */
 
 	/* stub data, 8-octet aligned */
 
@@ -611,6 +621,8 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
+
+int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
 int rpc_recv_pdu(rdpRpc* rpc);
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);

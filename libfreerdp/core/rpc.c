@@ -960,33 +960,77 @@ int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
 	return 0;
 }
 
+int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
+{
+	int status;
+	int bytesRead;
+    UINT32 offset;
+    RPC_PDU_HEADER* pCommonFields;
+    
+	/* read first 20 bytes to get RPC common fields */
+    
+    bytesRead = 0;
+    
+	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
+	{
+		status = tls_read(rpc->tls_out, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
+        
+		if (status < 0)
+		{
+			printf("rpc_recv_pdu_header: error reading header\n");
+			return status;
+		}
+        
+		bytesRead += status;
+	}
+    
+	rpc_pdu_header_print((RPC_PDU_HEADER*) header);
+    pCommonFields = ((RPC_PDU_HEADER*) header);
+    
+    offset = RPC_COMMON_FIELDS_LENGTH;
+    
+    if (pCommonFields->ptype == PTYPE_RESPONSE)
+    {
+        offset += 4;
+        rpc_offset_align(&offset, 8);
+    }
+    else if (pCommonFields->ptype == PTYPE_REQUEST)
+    {
+        offset += 4;
+        rpc_offset_align(&offset, 8);
+    }
+
+    while (bytesRead < offset)
+    {
+        status = tls_read(rpc->tls_out, &header[bytesRead], offset - bytesRead);
+        
+        if (status < 0)
+            return status;
+        
+        bytesRead += status;
+    }
+    
+    return bytesRead;
+}
+
 int rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
+    int headerLength;
 	int bytesRead = 0;
-	int totalBytesRead = 0;
 	RPC_PDU_HEADER* header;
-	RPC_PDU_HEADER fragHeader;
 
-	/* read first 20 bytes to get RPC PDU Header */
-
-	ZeroMemory(rpc->buffer, 20);
-
-	while (bytesRead < 20)
-	{
-		status = tls_read(rpc->tls_out, &rpc->buffer[bytesRead], 20 - bytesRead);
-
-		if (status < 0)
-		{
-			printf("rpc_recv_pdu: error reading header\n");
-			return status;
-		}
-
-		bytesRead += status;
-	}
-
-	header = (RPC_PDU_HEADER*) rpc->buffer;
-	rpc_pdu_header_print(header);
+    status = rpc_recv_pdu_header(rpc, rpc->buffer);
+    
+    if (status < 1)
+    {
+        printf("rpc_recv_pdu_header: error reading header\n");
+        return status;
+    }
+    
+    headerLength = status;
+    header = (RPC_PDU_HEADER*) rpc->buffer;
+    bytesRead += status;
 
 	if (header->frag_length > rpc->length)
 	{
@@ -1007,55 +1051,16 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 		bytesRead += status;
 	}
+    
+    if (headerLength > RPC_COMMON_FIELDS_LENGTH)
+    {
+        printf("RPC Stub Data:\n");
+        freerdp_hexdump(&rpc->buffer[headerLength], header->frag_length - headerLength);
+    }
 
 	if (!(header->pfc_flags & PFC_LAST_FRAG))
 	{
-		totalBytesRead = bytesRead;
-		CopyMemory(&fragHeader, header, sizeof(RPC_PDU_HEADER));
-
 		printf("Fragmented PDU\n");
-
-#if 0
-		while (!(fragHeader.pfc_flags & PFC_LAST_FRAG))
-		{
-			bytesRead = 0;
-
-			printf("Reading Fragment Header\n");
-
-			while (bytesRead < 20)
-			{
-				status = tls_read(rpc->tls_out, &((BYTE*) &fragHeader)[bytesRead], 20 - bytesRead);
-
-				if (status < 0)
-				{
-					printf("rpc_recv_pdu: error reading fragment header\n");
-					return status;
-				}
-
-				bytesRead += status;
-			}
-
-			if (fragHeader.frag_length > rpc->length)
-			{
-				rpc->length = header->frag_length;
-				rpc->buffer = (BYTE*) realloc(rpc->buffer, rpc->length);
-				header = (RPC_PDU_HEADER*) rpc->buffer;
-			}
-
-			while (totalBytesRead < (fragHeader.frag_length - 20))
-			{
-				status = tls_read(rpc->tls_out, &rpc->buffer[totalBytesRead], fragHeader.frag_length - totalBytesRead);
-
-				if (status < 0)
-				{
-					printf("rpc_recv_pdu: error reading fragment\n");
-					return status;
-				}
-
-				totalBytesRead += status;
-			}
-		}
-#endif
 	}
 
 	if (header->ptype == PTYPE_RTS) /* RTS PDU */
