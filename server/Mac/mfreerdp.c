@@ -53,10 +53,14 @@
 
 #include <mach/clock.h>
 #include <mach/mach.h>
+#include <dispatch/dispatch.h>
 
 //refactor these
 int info_last_sec = 0;
 int info_last_nsec = 0;
+
+dispatch_source_t info_timer;
+dispatch_queue_t info_queue;
 
 mfEventQueue* info_event_queue;
 
@@ -121,6 +125,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 {
     
     //limit rate
+    /*
     clock_serv_t cclock;
     mach_timespec_t mts;
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
@@ -133,7 +138,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
         info_last_nsec = mts.tv_nsec;
         info_last_sec = mts.tv_sec;
     }
-    
+    */
     
     //capture entire screen
     
@@ -193,6 +198,21 @@ static void mf_peer_init(freerdp_peer* client)
 	freerdp_peer_context_new(client);
     
     info_event_queue = mf_event_queue_new();
+    
+    info_queue = dispatch_queue_create("testing.101", DISPATCH_QUEUE_SERIAL);
+    info_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, info_queue);
+    
+    if(info_timer)
+    {
+        //printf("created timer\n");
+        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 1ull * NSEC_PER_SEC, 100ull * NSEC_PER_MSEC);
+        dispatch_source_set_event_handler(info_timer, ^{
+            printf("dispatch\n");
+            mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
+            mf_event_push(info_event_queue, (mfEvent*) event);}
+                                          );
+        dispatch_resume(info_timer);
+    }
 }
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
