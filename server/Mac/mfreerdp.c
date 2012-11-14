@@ -363,6 +363,11 @@ static void* mf_peer_main_loop(void* arg)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+        if (mf_peer_get_fds(client, rfds, &rcount) != TRUE)
+		{
+			printf("Failed to get mfreerdp file descriptor\n");
+			break;
+		}
         
 #ifdef WITH_SERVER_CHANNELS
 		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
@@ -396,11 +401,18 @@ static void* mf_peer_main_loop(void* arg)
 				break;
 			}
 		}
-
-		if (client->CheckFileDescriptor(client) != TRUE)
-			break;
         
-        mf_peer_rfx_update(client);
+        if (client->CheckFileDescriptor(client) != TRUE)
+		{
+			printf("Failed to check freerdp file descriptor\n");
+			break;
+		}
+		if ((mf_peer_check_fds(client)) != TRUE)
+		{
+			printf("Failed to check mfreerdp file descriptor\n");
+			break;
+		}
+        
         
 #ifdef WITH_SERVER_CHANNELS
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
