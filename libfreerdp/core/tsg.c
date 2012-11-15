@@ -1115,14 +1115,14 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
 	int CopyLength;
-	RPC_PDU_HEADER* header;
+	rpcconn_common_hdr_t* header;
 	rdpRpc* rpc = tsg->rpc;
 
 	printf("tsg_read: %d, pending: %d\n", length, tsg->PendingPdu);
 
 	if (tsg->PendingPdu)
 	{
-		header = (RPC_PDU_HEADER*) rpc->buffer;
+		header = (rpcconn_common_hdr_t*) rpc->buffer;
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 

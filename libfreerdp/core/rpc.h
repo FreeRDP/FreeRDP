@@ -24,6 +24,18 @@
 
 typedef struct rdp_rpc rdpRpc;
 
+#define DEFINE_RPC_COMMON_FIELDS() \
+	BYTE rpc_vers; \
+	BYTE rpc_vers_minor; \
+	BYTE ptype; \
+	BYTE pfc_flags; \
+	BYTE packed_drep[4]; \
+	UINT16 frag_length; \
+	UINT16 auth_length; \
+	UINT32 call_id
+
+#define RPC_COMMON_FIELDS_LENGTH    20
+
 #include "tcp.h"
 #include "rts.h"
 #include "http.h"
@@ -50,17 +62,40 @@ typedef struct rdp_rpc rdpRpc;
  * http://pubs.opengroup.org/onlinepubs/9629399/
  */
 
-#define DEFINE_RPC_COMMON_FIELDS() \
-	BYTE rpc_vers; \
-	BYTE rpc_vers_minor; \
-	BYTE ptype; \
-	BYTE pfc_flags; \
-	BYTE packed_drep[4]; \
-	UINT16 frag_length; \
-	UINT16 auth_length; \
-	UINT32 call_id
+#define PTYPE_REQUEST				0x00
+#define PTYPE_PING				0x01
+#define PTYPE_RESPONSE				0x02
+#define PTYPE_FAULT				0x03
+#define PTYPE_WORKING				0x04
+#define PTYPE_NOCALL				0x05
+#define PTYPE_REJECT				0x06
+#define PTYPE_ACK				0x07
+#define PTYPE_CL_CANCEL				0x08
+#define PTYPE_FACK				0x09
+#define PTYPE_CANCEL_ACK			0x0A
+#define PTYPE_BIND				0x0B
+#define PTYPE_BIND_ACK				0x0C
+#define PTYPE_BIND_NAK				0x0D
+#define PTYPE_ALTER_CONTEXT			0x0E
+#define PTYPE_ALTER_CONTEXT_RESP		0x0F
+#define PTYPE_RPC_AUTH_3			0x10
+#define PTYPE_SHUTDOWN				0x11
+#define PTYPE_CO_CANCEL				0x12
+#define PTYPE_ORPHANED				0x13
+#define PTYPE_RTS				0x14
 
-#define RPC_COMMON_FIELDS_LENGTH    20
+#define PFC_FIRST_FRAG				0x01
+#define PFC_LAST_FRAG				0x02
+#define PFC_PENDING_CANCEL			0x04
+#define PFC_RESERVED_1				0x08
+#define PFC_CONC_MPX				0x10
+#define PFC_DID_NOT_EXECUTE			0x20
+#define PFC_MAYBE				0x40
+#define PFC_OBJECT_UUID				0x80
+
+/* Minimum fragment sizes */
+#define RPC_CO_MUST_RECV_FRAG_SIZE		1432
+#define RPC_CL_MUST_RECV_FRAG_SIZE		1464
 
 /**
  * The PDU maximum header length is enough
@@ -70,11 +105,10 @@ typedef struct rdp_rpc rdpRpc;
  */
 #define RPC_PDU_HEADER_MAX_LENGTH   32
 
-struct _rpc_pdu_header
+typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
-};
-typedef struct _rpc_pdu_header RPC_PDU_HEADER;
+} rpcconn_common_hdr_t;
 
 typedef UINT16 p_context_id_t;
 typedef UINT16 p_reject_reason_t;
@@ -464,6 +498,23 @@ typedef struct
 	DEFINE_RPC_COMMON_FIELDS();
 } rpcconn_shutdown_hdr_t;
 
+typedef union
+{
+	rpcconn_common_hdr_t common;
+	rpcconn_alter_context_hdr_t alter_context;
+	rpcconn_alter_context_response_hdr_t alter_context_response;
+	rpcconn_bind_hdr_t bind;
+	rpcconn_bind_ack_hdr_t bind_ack;
+	rpcconn_rpc_auth_3_hdr_t rpc_auth_3;
+	rpcconn_bind_nak_hdr_t bind_nak;
+	rpcconn_cancel_hdr_t cancel;
+	rpcconn_fault_hdr_t fault;
+	rpcconn_orphaned_hdr_t orphaned;
+	rpcconn_request_hdr_t request;
+	rpcconn_response_hdr_t response;
+	rpcconn_shutdown_hdr_t shutdown;
+} rpcconn_hdr_t;
+
 enum _TSG_CHANNEL
 {
 	TSG_CHANNEL_IN,
@@ -566,6 +617,9 @@ struct rdp_rpc
 	BYTE rpc_vers_minor;
 	BYTE packed_drep[4];
 
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
+
 	UINT32 ReceiveWindow;
 
 	RpcVirtualConnection* VirtualConnection;
@@ -576,7 +630,7 @@ BOOL rpc_connect(rdpRpc* rpc);
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
-void rpc_pdu_header_init(rdpRpc* rpc, RPC_PDU_HEADER* header);
+void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
 UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
@@ -591,7 +645,6 @@ int rpc_recv_pdu(rdpRpc* rpc);
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
-int rpc_read(rdpRpc* rpc, BYTE* data, int length);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

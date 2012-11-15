@@ -77,6 +77,8 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm);
 BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password);
 void ntlm_client_uninit(rdpNtlm* ntlm);
 
+BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname);
+
 rdpNtlm* ntlm_new();
 void ntlm_free(rdpNtlm* ntlm);
 

@@ -214,50 +214,47 @@ const RPC_FAULT_CODE RPC_FAULT_CODES[] =
 	{ 0, NULL }
 };
 
-void rpc_pdu_header_print(RPC_PDU_HEADER* header)
+void rpc_pdu_header_print(rpcconn_hdr_t* header)
 {
-	printf("rpc_vers: %d\n", header->rpc_vers);
-	printf("rpc_vers_minor: %d\n", header->rpc_vers_minor);
+	printf("rpc_vers: %d\n", header->common.rpc_vers);
+	printf("rpc_vers_minor: %d\n", header->common.rpc_vers_minor);
 
-	if (header->ptype > PTYPE_RTS)
-		printf("ptype: %s (%d)\n", "PTYPE_UNKNOWN", header->ptype);
+	if (header->common.ptype > PTYPE_RTS)
+		printf("ptype: %s (%d)\n", "PTYPE_UNKNOWN", header->common.ptype);
 	else
-		printf("ptype: %s (%d)\n", PTYPE_STRINGS[header->ptype], header->ptype);
+		printf("ptype: %s (%d)\n", PTYPE_STRINGS[header->common.ptype], header->common.ptype);
 
-	printf("pfc_flags (0x%02X) = {", header->pfc_flags);
-	if (header->pfc_flags & PFC_FIRST_FRAG)
+	printf("pfc_flags (0x%02X) = {", header->common.pfc_flags);
+	if (header->common.pfc_flags & PFC_FIRST_FRAG)
 		printf(" PFC_FIRST_FRAG");
-	if (header->pfc_flags & PFC_LAST_FRAG)
+	if (header->common.pfc_flags & PFC_LAST_FRAG)
 		printf(" PFC_LAST_FRAG");
-	if (header->pfc_flags & PFC_PENDING_CANCEL)
+	if (header->common.pfc_flags & PFC_PENDING_CANCEL)
 		printf(" PFC_PENDING_CANCEL");
-	if (header->pfc_flags & PFC_RESERVED_1)
+	if (header->common.pfc_flags & PFC_RESERVED_1)
 		printf(" PFC_RESERVED_1");
-	if (header->pfc_flags & PFC_CONC_MPX)
+	if (header->common.pfc_flags & PFC_CONC_MPX)
 		printf(" PFC_CONC_MPX");
-	if (header->pfc_flags & PFC_DID_NOT_EXECUTE)
+	if (header->common.pfc_flags & PFC_DID_NOT_EXECUTE)
 		printf(" PFC_DID_NOT_EXECUTE");
-	if (header->pfc_flags & PFC_OBJECT_UUID)
+	if (header->common.pfc_flags & PFC_OBJECT_UUID)
 		printf(" PFC_OBJECT_UUID");
 	printf(" }\n");
 
 	printf("packed_drep[4]: %02X %02X %02X %02X\n",
-			header->packed_drep[0], header->packed_drep[1],
-			header->packed_drep[2], header->packed_drep[3]);
+			header->common.packed_drep[0], header->common.packed_drep[1],
+			header->common.packed_drep[2], header->common.packed_drep[3]);
 
-	printf("frag_length: %d\n", header->frag_length);
-	printf("auth_length: %d\n", header->auth_length);
-	printf("call_id: %d\n", header->call_id);
+	printf("frag_length: %d\n", header->common.frag_length);
+	printf("auth_length: %d\n", header->common.auth_length);
+	printf("call_id: %d\n", header->common.call_id);
 
-	if (header->ptype == PTYPE_RESPONSE)
+	if (header->common.ptype == PTYPE_RESPONSE)
 	{
-		rpcconn_response_hdr_t* response;
-
-		response = (rpcconn_response_hdr_t*) header;
-		printf("alloc_hint: %d\n", response->alloc_hint);
-		printf("p_cont_id: %d\n", response->p_cont_id);
-		printf("cancel_count: %d\n", response->cancel_count);
-		printf("reserved: %d\n", response->reserved);
+		printf("alloc_hint: %d\n", header->response.alloc_hint);
+		printf("p_cont_id: %d\n", header->response.p_cont_id);
+		printf("cancel_count: %d\n", header->response.cancel_count);
+		printf("reserved: %d\n", header->response.reserved);
 	}
 }
 
@@ -426,21 +423,21 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-void rpc_pdu_header_init(rdpRpc* rpc, RPC_PDU_HEADER* header)
+void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header)
 {
-	header->rpc_vers = rpc->rpc_vers;
-	header->rpc_vers_minor = rpc->rpc_vers_minor;
-	header->packed_drep[0] = rpc->packed_drep[0];
-	header->packed_drep[1] = rpc->packed_drep[1];
-	header->packed_drep[2] = rpc->packed_drep[2];
-	header->packed_drep[3] = rpc->packed_drep[3];
+	header->common.rpc_vers = rpc->rpc_vers;
+	header->common.rpc_vers_minor = rpc->rpc_vers_minor;
+	header->common.packed_drep[0] = rpc->packed_drep[0];
+	header->common.packed_drep[1] = rpc->packed_drep[1];
+	header->common.packed_drep[2] = rpc->packed_drep[2];
+	header->common.packed_drep[3] = rpc->packed_drep[3];
 }
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
-	rpc_pdu_header_print((RPC_PDU_HEADER*) data);
+	rpc_pdu_header_print((rpcconn_hdr_t*) data);
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_out_write(): length: %d\n", length);
@@ -457,7 +454,7 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
-	rpc_pdu_header_print((RPC_PDU_HEADER*) data);
+	rpc_pdu_header_print((rpcconn_hdr_t*) data);
 
 #ifdef WITH_DEBUG_RPC
 	printf("rpc_in_write() length: %d\n", length);
@@ -509,7 +506,7 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu = (rpcconn_bind_hdr_t*) malloc(sizeof(rpcconn_bind_hdr_t));
 	ZeroMemory(bind_pdu, sizeof(rpcconn_bind_hdr_t));
 
-	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) bind_pdu);
+	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 
 	bind_pdu->auth_length = rpc->ntlm->outputBuffer.cbBuffer;
 	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer.pvBuffer;
@@ -518,8 +515,8 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_PENDING_CANCEL | PFC_CONC_MPX;
 	bind_pdu->call_id = 2;
 
-	bind_pdu->max_xmit_frag = 0x0FF8;
-	bind_pdu->max_recv_frag = 0x0FF8;
+	bind_pdu->max_xmit_frag = rpc->max_xmit_frag;
+	bind_pdu->max_recv_frag = rpc->max_recv_frag;
 	bind_pdu->assoc_group_id = 0;
 
 	bind_pdu->p_context_elem.n_context_elem = 2;
@@ -594,19 +591,19 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 {
 	int status;
 	BYTE* auth_data;
-	RPC_PDU_HEADER* header;
+	rpcconn_hdr_t* header;
 
 	status = rpc_recv_pdu(rpc);
 
 	if (status > 0)
 	{
-		header = (RPC_PDU_HEADER*) rpc->buffer;
+		header = (rpcconn_hdr_t*) rpc->buffer;
 
-		rpc->ntlm->inputBuffer.cbBuffer = header->auth_length;
-		rpc->ntlm->inputBuffer.pvBuffer = malloc(header->auth_length);
+		rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
+		rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
 
-		auth_data = rpc->buffer + (header->frag_length - header->auth_length);
-		CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->auth_length);
+		auth_data = rpc->buffer + (header->common.frag_length - header->common.auth_length);
+		CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
 
 		ntlm_authenticate(rpc->ntlm);
 	}
@@ -625,7 +622,7 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) malloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
 	ZeroMemory(auth_3_pdu, sizeof(rpcconn_rpc_auth_3_hdr_t));
 
-	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) auth_3_pdu);
+	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
 	auth_3_pdu->auth_length = rpc->ntlm->outputBuffer.cbBuffer;
 	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer.pvBuffer;
@@ -636,8 +633,8 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	offset = 20;
 
-	auth_3_pdu->max_xmit_frag = 0x0FF8;
-	auth_3_pdu->max_recv_frag = 0x0FF8;
+	auth_3_pdu->max_xmit_frag = rpc->max_xmit_frag;
+	auth_3_pdu->max_recv_frag = rpc->max_recv_frag;
 
 	offset += 4;
 	auth_3_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
@@ -672,7 +669,7 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
-	RPC_PDU_HEADER* header;
+	rpcconn_hdr_t* header;
 
 	//if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
 	//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
@@ -683,16 +680,16 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	if (status <= 0)
 		return status;
 
-	header = (RPC_PDU_HEADER*) data;
+	header = (rpcconn_hdr_t*) data;
 
 	rpc_pdu_header_print(header);
 
-	status = tls_read(rpc->TlsOut, &data[20], header->frag_length - 20);
+	status = tls_read(rpc->TlsOut, &data[20], header->common.frag_length - 20);
 
 	if (status < 0)
 		return status;
 
-	if (header->ptype == PTYPE_RTS) /* RTS PDU */
+	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		printf("rpc_out_read error: Unexpected RTS PDU\n");
 		return -1;
@@ -700,76 +697,74 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	else
 	{
 		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
 	}
 
-	if (length < header->frag_length)
+	if (length < header->common.frag_length)
 	{
-		printf("rpc_out_read error! receive buffer is not large enough: %d < %d\n", length, header->frag_length);
+		printf("rpc_out_read error! receive buffer is not large enough: %d < %d\n",
+				length, header->common.frag_length);
 		return -1;
 	}
 
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_out_read(): length: %d\n", header->frag_length);
-	freerdp_hexdump(data, header->frag_length);
+	printf("rpc_out_read(): length: %d\n", header->common.frag_length);
+	freerdp_hexdump(data, header->common.frag_length);
 	printf("\n");
 #endif
 
-	return header->frag_length;
+	return header->common.frag_length;
 }
 
-int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
+int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 {
 	int index;
-	rpcconn_fault_hdr_t* fault_pdu;
-
-	fault_pdu = (rpcconn_fault_hdr_t*) header;
 
 	printf("RPC Fault PDU:\n");
 
 	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
 	{
-		if (RPC_FAULT_CODES[index].code == fault_pdu->status)
+		if (RPC_FAULT_CODES[index].code == header->fault.status)
 		{
-			printf("status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, fault_pdu->status);
+			printf("status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, header->fault.status);
 			return 0;
 		}
 	}
 
 	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
 	{
-		if (RPC_TSG_FAULT_CODES[index].code == fault_pdu->status)
+		if (RPC_TSG_FAULT_CODES[index].code == header->fault.status)
 		{
-			printf("status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, fault_pdu->status);
+			printf("status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, header->fault.status);
 			return 0;
 		}
 	}
 
-	printf("status: %s (0x%08X)\n", "UNKNOWN", fault_pdu->status);
+	printf("status: %s (0x%08X)\n", "UNKNOWN", header->fault.status);
 
 	return 0;
 }
 
-BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length)
+BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
 {
 	UINT32 alloc_hint = 0;
-	RPC_PDU_HEADER* pCommonFields;
+	rpcconn_hdr_t* header;
 
 	*offset = RPC_COMMON_FIELDS_LENGTH;
-	pCommonFields = ((RPC_PDU_HEADER*) header);
+	header = ((rpcconn_hdr_t*) buffer);
 
-	if (pCommonFields->ptype == PTYPE_RESPONSE)
+	if (header->common.ptype == PTYPE_RESPONSE)
 	{
 		*offset += 4;
 		rpc_offset_align(offset, 8);
-		alloc_hint = *((UINT32*) &header[16]);
+		alloc_hint = header->response.alloc_hint;
 	}
-	else if (pCommonFields->ptype == PTYPE_REQUEST)
+	else if (header->common.ptype == PTYPE_REQUEST)
 	{
 		*offset += 4;
 		rpc_offset_align(offset, 8);
-		alloc_hint = *((UINT32*) &header[16]);
+		alloc_hint = header->request.alloc_hint;
 	}
 	else
 	{
@@ -778,15 +773,10 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 
 	if (length)
 	{
-		UINT16 frag_length;
-		UINT16 auth_length;
 		BYTE auth_pad_length;
 
-		frag_length = pCommonFields->frag_length;
-		auth_length = pCommonFields->auth_length;
-		auth_pad_length = *(header + frag_length - auth_length - 6);
-
-		*length = frag_length - (auth_length + *offset + 8 + auth_pad_length);
+		auth_pad_length = *(buffer + header->common.frag_length - header->common.auth_length - 6);
+		*length = header->common.frag_length - (header->common.auth_length + *offset + 8 + auth_pad_length);
 	}
 
 	return TRUE;
@@ -815,7 +805,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 		bytesRead += status;
 	}
     
-	rpc_pdu_header_print((RPC_PDU_HEADER*) header);
+	rpc_pdu_header_print((rpcconn_hdr_t*) header);
 
 	rpc_get_stub_data_info(rpc, header, &offset, NULL);
 
@@ -837,7 +827,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	int status;
 	int headerLength;
 	int bytesRead = 0;
-	RPC_PDU_HEADER* header;
+	rpcconn_hdr_t* header;
 
 	status = rpc_recv_pdu_header(rpc, rpc->buffer);
     
@@ -848,19 +838,19 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	}
     
 	headerLength = status;
-	header = (RPC_PDU_HEADER*) rpc->buffer;
+	header = (rpcconn_hdr_t*) rpc->buffer;
 	bytesRead += status;
 
-	if (header->frag_length > rpc->length)
+	if (header->common.frag_length > rpc->length)
 	{
-		rpc->length = header->frag_length;
+		rpc->length = header->common.frag_length;
 		rpc->buffer = (BYTE*) realloc(rpc->buffer, rpc->length);
-		header = (RPC_PDU_HEADER*) rpc->buffer;
+		header = (rpcconn_hdr_t*) rpc->buffer;
 	}
 
-	while (bytesRead < header->frag_length)
+	while (bytesRead < header->common.frag_length)
 	{
-		status = tls_read(rpc->TlsOut, &rpc->buffer[bytesRead], header->frag_length - bytesRead);
+		status = tls_read(rpc->TlsOut, &rpc->buffer[bytesRead], header->common.frag_length - bytesRead);
 
 		if (status < 0)
 		{
@@ -871,17 +861,17 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		bytesRead += status;
 	}
 
-	if (!(header->pfc_flags & PFC_LAST_FRAG))
+	if (!(header->common.pfc_flags & PFC_LAST_FRAG))
 	{
 		printf("Fragmented PDU\n");
 	}
 
-	if (header->ptype == PTYPE_RTS) /* RTS PDU */
+	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		printf("rpc_recv_pdu error: Unexpected RTS PDU\n");
 		return -1;
 	}
-	else if (header->ptype == PTYPE_FAULT)
+	else if (header->common.ptype == PTYPE_FAULT)
 	{
 		rpc_recv_fault_pdu(header);
 		return -1;
@@ -889,17 +879,17 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	else
 	{
 		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
+		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
 	}
 
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_recv_pdu: length: %d\n", header->frag_length);
-	freerdp_hexdump(rpc->buffer, header->frag_length);
+	printf("rpc_recv_pdu: length: %d\n", header->common.frag_length);
+	freerdp_hexdump(rpc->buffer, header->common.frag_length);
 	printf("\n");
 #endif
 
-	return header->frag_length;
+	return header->common.frag_length;
 }
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
@@ -925,7 +915,7 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu = (rpcconn_request_hdr_t*) malloc(sizeof(rpcconn_request_hdr_t));
 	ZeroMemory(request_pdu, sizeof(rpcconn_request_hdr_t));
 
-	rpc_pdu_header_init(rpc, (RPC_PDU_HEADER*) request_pdu);
+	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
 
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
@@ -1011,22 +1001,6 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	free(buffer);
 
 	return length;
-}
-
-int rpc_read(rdpRpc* rpc, BYTE* data, int length)
-{
-	int status;
-	RPC_PDU_HEADER header;
-
-	status = rpc_out_read(rpc, data, length);
-
-	if (status > 0)
-	{
-		CopyMemory(&header, data, 20);
-		status = rpc_out_read(rpc, data, header.frag_length - 20);
-	}
-
-	return status;
 }
 
 BOOL rpc_connect(rdpRpc* rpc)
@@ -1182,6 +1156,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->packed_drep[1] = 0x00;
 		rpc->packed_drep[2] = 0x00;
 		rpc->packed_drep[3] = 0x00;
+
+		rpc->max_xmit_frag = 0x0FF8;
+		rpc->max_recv_frag = 0x0FF8;
 
 		rpc->ReceiveWindow = 0x00010000;
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);

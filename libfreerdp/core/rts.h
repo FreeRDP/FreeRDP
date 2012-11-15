@@ -20,47 +20,19 @@
 #ifndef FREERDP_CORE_RTS_H
 #define FREERDP_CORE_RTS_H
 
-#include "rpc.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+typedef struct _rts_pdu RTS_PDU;
+typedef struct _rts_pdu_header RTS_PDU_HEADER;
+
+#include "rpc.h"
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
-
-#define PTYPE_REQUEST				0x00
-#define PTYPE_PING				0x01
-#define PTYPE_RESPONSE				0x02
-#define PTYPE_FAULT				0x03
-#define PTYPE_WORKING				0x04
-#define PTYPE_NOCALL				0x05
-#define PTYPE_REJECT				0x06
-#define PTYPE_ACK				0x07
-#define PTYPE_CL_CANCEL				0x08
-#define PTYPE_FACK				0x09
-#define PTYPE_CANCEL_ACK			0x0A
-#define PTYPE_BIND				0x0B
-#define PTYPE_BIND_ACK				0x0C
-#define PTYPE_BIND_NAK				0x0D
-#define PTYPE_ALTER_CONTEXT			0x0E
-#define PTYPE_ALTER_CONTEXT_RESP		0x0F
-#define PTYPE_RPC_AUTH_3			0x10
-#define PTYPE_SHUTDOWN				0x11
-#define PTYPE_CO_CANCEL				0x12
-#define PTYPE_ORPHANED				0x13
-#define PTYPE_RTS				0x14
-
-#define PFC_FIRST_FRAG				0x01
-#define PFC_LAST_FRAG				0x02
-#define PFC_PENDING_CANCEL			0x04
-#define PFC_RESERVED_1				0x08
-#define PFC_CONC_MPX				0x10
-#define PFC_DID_NOT_EXECUTE			0x20
-#define PFC_MAYBE				0x40
-#define PFC_OBJECT_UUID				0x80
 
 #define RTS_FLAG_NONE				0x0000
 #define RTS_FLAG_PING				0x0001
@@ -94,58 +66,64 @@
 
 struct _rts_pdu_header
 {
-	BYTE rpc_vers;
-	BYTE rpc_vers_minor;
-	BYTE ptype;
-	BYTE pfc_flags;
-	BYTE packed_drep[4];
-	UINT16 frag_length;
-	UINT16 auth_length;
-	UINT32 call_id;
+	DEFINE_RPC_COMMON_FIELDS();
+
 	UINT16 flags;
 	UINT16 numberOfCommands;
 };
-typedef struct _rts_pdu_header RTS_PDU_HEADER;
 
 struct _rts_pdu
 {
 	RTS_PDU_HEADER header;
 	BYTE* content;
 };
-typedef struct _rts_pdu RTS_PDU;
 
 BOOL rts_connect(rdpRpc* rpc);
 
 void rts_receive_window_size_command_read(rdpRpc* rpc, STREAM* s);
-void rts_receive_window_size_command_write(STREAM* s, UINT32 ReceiveWindowSize);
+int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize);
+
 void rts_flow_control_ack_command_read(rdpRpc* rpc, STREAM* s);
-void rts_flow_control_ack_command_write(STREAM* s, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
+int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
+
 void rts_connection_timeout_command_read(rdpRpc* rpc, STREAM* s);
-void rts_connection_timeout_command_write(STREAM* s, UINT32 ConnectionTimeout);
+int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout);
+
 void rts_cookie_command_read(rdpRpc* rpc, STREAM* s);
-void rts_cookie_command_write(STREAM* s, BYTE* Cookie);
+int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie);
+
 void rts_channel_lifetime_command_read(rdpRpc* rpc, STREAM* s);
-void rts_channel_lifetime_command_write(STREAM* s, UINT32 ChannelLifetime);
+int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifetime);
+
 void rts_client_keepalive_command_read(rdpRpc* rpc, STREAM* s);
-void rts_client_keepalive_command_write(STREAM* s, UINT32 ClientKeepalive);
+int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive);
+
 void rts_version_command_read(rdpRpc* rpc, STREAM* s);
-void rts_version_command_write(STREAM* s);
+int rts_version_command_write(BYTE* buffer);
+
 void rts_empty_command_read(rdpRpc* rpc, STREAM* s);
-void rts_empty_command_write(STREAM* s);
+int rts_empty_command_write(BYTE* buffer);
+
 void rts_padding_command_read(rdpRpc* rpc, STREAM* s);
-void rts_padding_command_write(STREAM* s, UINT32 ConformanceCount);
+int rts_padding_command_write(BYTE* buffer, UINT32 ConformanceCount);
+
 void rts_negative_ance_command_read(rdpRpc* rpc, STREAM* s);
-void rts_negative_ance_command_write(STREAM* s);
+int rts_negative_ance_command_write(BYTE* buffer);
+
 void rts_ance_command_read(rdpRpc* rpc, STREAM* s);
-void rts_ance_command_write(STREAM* s);
+int rts_ance_command_write(BYTE* buffer);
+
 void rts_client_address_command_read(rdpRpc* rpc, STREAM* s);
-void rts_client_address_command_write(STREAM* s, UINT32 AddressType, BYTE* ClientAddress);
+int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* ClientAddress);
+
 void rts_association_group_id_command_read(rdpRpc* rpc, STREAM* s);
-void rts_association_group_id_command_write(STREAM* s, BYTE* AssociationGroupId);
+int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId);
+
 void rts_destination_command_read(rdpRpc* rpc, STREAM* s);
-void rts_destination_command_write(STREAM* s, UINT32 Destination);
+int rts_destination_command_write(BYTE* buffer, UINT32 Destination);
+
 void rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, STREAM* s);
-void rts_ping_traffic_sent_notify_command_write(STREAM* s, UINT32 PingTrafficSent);
+int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficSent);
 
 BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc);
 BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc);
