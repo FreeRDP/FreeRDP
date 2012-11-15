@@ -27,7 +27,6 @@
 #include <unistd.h>
 #endif
 
-#include <freerdp/crypto/nla.h>
 #include <freerdp/crypto/tls.h>
 
 #include <winpr/crt.h>
@@ -36,6 +35,8 @@
 #include <winpr/tchar.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
+
+#include "nla.h"
 
 /**
  * TSRequest ::= SEQUENCE {

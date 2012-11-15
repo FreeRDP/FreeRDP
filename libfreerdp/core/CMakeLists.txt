@@ -32,6 +32,8 @@ set(${MODULE_PREFIX}_SRCS
 	gcc.h
 	mcs.c
 	mcs.h
+	nla.c
+	nla.h
 	nego.c
 	nego.h
 	info.c

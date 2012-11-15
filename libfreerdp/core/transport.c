@@ -47,8 +47,6 @@
 #include "fastpath.h"
 #include "transport.h"
 
-#include <freerdp/crypto/nla.h>
-
 #define BUFFER_SIZE 16384
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
@@ -89,24 +87,27 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
-	if (transport->TlsIn == NULL)
-		transport->TlsIn = tls_new(transport->settings);
-
-	if (transport->TlsOut == NULL)
-		transport->TlsOut = transport->TlsIn;
-
-	transport->layer = TRANSPORT_LAYER_TLS;
-	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
-
-	if (tls_connect(transport->TlsIn) != TRUE)
+	if (transport->layer != TRANSPORT_LAYER_TSG)
 	{
-		if (!connectErrorCode)
-			connectErrorCode = TLSCONNECTERROR;
+		if (transport->TlsIn == NULL)
+			transport->TlsIn = tls_new(transport->settings);
 
-		tls_free(transport->TlsIn);
-		transport->TlsIn = NULL;
+		if (transport->TlsOut == NULL)
+			transport->TlsOut = transport->TlsIn;
 
-		return FALSE;
+		transport->layer = TRANSPORT_LAYER_TLS;
+		transport->TlsIn->sockfd = transport->TcpIn->sockfd;
+
+		if (tls_connect(transport->TlsIn) != TRUE)
+		{
+			if (!connectErrorCode)
+				connectErrorCode = TLSCONNECTERROR;
+
+			tls_free(transport->TlsIn);
+			transport->TlsIn = NULL;
+
+			return FALSE;
+		}
 	}
 
 	return TRUE;
