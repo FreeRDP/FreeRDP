@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SSPI_CREDSSP_H
-#define FREERDP_SSPI_CREDSSP_H
+#ifndef FREERDP_CORE_CREDSSP_H
+#define FREERDP_CORE_CREDSSP_H
 
 typedef struct rdp_credssp rdpCredssp;
 
@@ -33,17 +33,18 @@ typedef struct rdp_credssp rdpCredssp;
 #include <freerdp/crypto/der.h>
 #include <freerdp/crypto/crypto.h>
 
+#include "transport.h"
+
 struct rdp_credssp
 {
 	BOOL server;
-	rdpTls* TlsIn;
-	rdpTls* TlsOut;
 	int send_seq_num;
 	int recv_seq_num;
 	freerdp* instance;
 	CtxtHandle context;
 	LPTSTR SspiModule;
 	rdpSettings* settings;
+	rdpTransport* transport;
 	SecBuffer negoToken;
 	SecBuffer pubKeyAuth;
 	SecBuffer authInfo;
@@ -56,9 +57,9 @@ struct rdp_credssp
 	SecPkgContext_Sizes ContextSizes;
 };
 
-FREERDP_API int credssp_authenticate(rdpCredssp* credssp);
+int credssp_authenticate(rdpCredssp* credssp);
 
-FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* TlsIn, rdpTls* TlsOut, rdpSettings* settings);
-FREERDP_API void credssp_free(rdpCredssp* credssp);
+rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings);
+void credssp_free(rdpCredssp* credssp);
 
-#endif /* FREERDP_SSPI_CREDSSP_H */
+#endif /* FREERDP_CORE_CREDSSP_H */

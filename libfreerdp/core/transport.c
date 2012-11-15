@@ -130,7 +130,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	instance = (freerdp*) settings->instance;
 
 	if (transport->credssp == NULL)
-		transport->credssp = credssp_new(instance, transport->TlsIn, transport->TlsOut, settings);
+		transport->credssp = credssp_new(instance, transport, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
@@ -252,7 +252,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	instance = (freerdp*) settings->instance;
 
 	if (transport->credssp == NULL)
-		transport->credssp = credssp_new(instance, transport->TlsIn, transport->TlsOut, settings);
+		transport->credssp = credssp_new(instance, transport, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{

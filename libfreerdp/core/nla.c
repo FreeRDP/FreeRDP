@@ -134,8 +134,8 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->TlsIn->PublicKeyLength);
-	CopyMemory(credssp->PublicKey.pvBuffer, credssp->TlsIn->PublicKey, credssp->TlsIn->PublicKeyLength);
+	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
+	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 
 	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
@@ -165,8 +165,8 @@ int credssp_ntlm_server_init(rdpCredssp* credssp)
 	rdpSettings* settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->TlsIn->PublicKeyLength);
-	CopyMemory(credssp->PublicKey.pvBuffer, credssp->TlsIn->PublicKey, credssp->TlsIn->PublicKeyLength);
+	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
+	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 
 	return 1;
 }
@@ -1128,7 +1128,7 @@ void credssp_send(rdpCredssp* credssp)
 		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, length);
 	}
 
-	tls_write(credssp->TlsOut, s->data, stream_get_length(s));
+	transport_write(credssp->transport, s);
 	stream_free(s);
 }
 
@@ -1147,7 +1147,7 @@ int credssp_recv(rdpCredssp* credssp)
 
 	s = stream_new(4096);
 
-	status = tls_read_all(credssp->TlsIn, s->p, stream_get_left(s));
+	status = transport_read(credssp->transport, s);
 	s->size = status;
 
 	if (status < 0)
@@ -1231,7 +1231,7 @@ void credssp_buffer_free(rdpCredssp* credssp)
  * @return new CredSSP state machine.
  */
 
-rdpCredssp* credssp_new(freerdp* instance, rdpTls* TlsIn, rdpTls* TlsOut, rdpSettings* settings)
+rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
 	rdpCredssp* credssp;
 
@@ -1248,8 +1248,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTls* TlsIn, rdpTls* TlsOut, rdpSet
 		credssp->instance = instance;
 		credssp->settings = settings;
 		credssp->server = settings->ServerMode;
-		credssp->TlsIn = TlsIn;
-		credssp->TlsOut = TlsOut;
+		credssp->transport = transport;
 		credssp->send_seq_num = 0;
 		credssp->recv_seq_num = 0;
 		ZeroMemory(&credssp->negoToken, sizeof(SecBuffer));
