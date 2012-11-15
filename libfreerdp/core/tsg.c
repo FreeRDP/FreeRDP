@@ -966,6 +966,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	DEBUG_TSG("rpc_connect success");
 
+	tsg->state = TSG_STATE_INITIAL;
+
 	/*
 	 *     Sequential processing rules for connection process:
 	 *
@@ -1009,7 +1011,12 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+	{
+		tsg->state = TSG_STATE_FINAL;
 		return FALSE;
+	}
+
+	tsg->state = TSG_STATE_CONNECTED;
 
 	/**
 	 *     Sequential processing rules for connection process (continued):
@@ -1042,7 +1049,12 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	if (!TsProxyAuthorizeTunnel(tsg, NULL, NULL, NULL))
+	{
+		tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 		return FALSE;
+	}
+
+	tsg->state = TSG_STATE_AUTHORIZED;
 
 	/**
 	 *     Sequential processing rules for connection process (continued):
@@ -1074,6 +1086,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	if (!TsProxyCreateChannel(tsg, NULL, NULL, NULL, NULL))
 		return FALSE;
 
+	tsg->state = TSG_STATE_CHANNEL_CREATED;
+
 	/**
 	 *  Sequential processing rules for data transfer:
 	 *
@@ -1091,6 +1105,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
 		return FALSE;
+
+	tsg->state = TSG_STATE_PIPE_CREATED;
 
 	return TRUE;
 }
@@ -1122,13 +1138,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	else
 	{
 		status = rpc_recv_pdu(rpc);
-		header = (RPC_PDU_HEADER*) rpc->buffer;
-
-		if (header->frag_length == 64)
-		{
-			printf("Ignoring 64-byte length PDU (probably TsProxySetupReceivePipe return code)\n");
-			return tsg_read(tsg, data, length);
-		}
+		rpcconn_response_hdr_t* header = (rpcconn_response_hdr_t*) rpc->buffer;
 
 		if (!rpc_get_stub_data_info(rpc, rpc->buffer, &tsg->StubOffset, &tsg->StubLength))
 		{
@@ -1136,18 +1146,27 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 			return -1;
 		}
 
+		printf("RPC Stub (offset: %d length: %d):\n", tsg->StubOffset, tsg->StubLength);
+		freerdp_hexdump(&rpc->buffer[tsg->StubOffset], tsg->StubLength);
+
+		if (header->alloc_hint == 4)
+		{
+			printf("Ignoring TsProxySetupReceivePipe Response\n");
+			return tsg_read(tsg, data, length);
+		}
+
 		tsg->PendingPdu = TRUE;
 		tsg->BytesAvailable = tsg->StubLength;
 		tsg->BytesRead = 0;
-
-		printf("RPC Stub (offset: %d length: %d):\n", tsg->StubOffset, tsg->StubLength);
-		freerdp_hexdump(&rpc->buffer[tsg->StubOffset], tsg->StubLength);
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 
 		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
+
+		if (tsg->BytesAvailable < 1)
+			tsg->PendingPdu = FALSE;
 
 		return CopyLength;
 	}
@@ -1162,7 +1181,8 @@ rdpTsg* tsg_new(rdpTransport* transport)
 {
 	rdpTsg* tsg;
 
-	tsg = xnew(rdpTsg);
+	tsg = (rdpTsg*) malloc(sizeof(rdpTsg));
+	ZeroMemory(tsg, sizeof(rdpTsg));
 
 	if (tsg != NULL)
 	{

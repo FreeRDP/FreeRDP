@@ -39,12 +39,26 @@ typedef struct rdp_tsg rdpTsg;
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/debug.h>
 
+enum _TSG_STATE
+{
+	TSG_STATE_INITIAL,
+	TSG_STATE_CONNECTED,
+	TSG_STATE_AUTHORIZED,
+	TSG_STATE_CHANNEL_CREATED,
+	TSG_STATE_PIPE_CREATED,
+	TSG_STATE_TUNNEL_CLOSE_PENDING,
+	TSG_STATE_CHANNEL_CLOSE_PENDING,
+	TSG_STATE_FINAL
+};
+typedef enum _TSG_STATE TSG_STATE;
+
 struct rdp_tsg
 {
 	rdpRpc* rpc;
 	UINT16 Port;
 	LPWSTR Hostname;
 	LPWSTR MachineName;
+	TSG_STATE state;
 	BOOL PendingPdu;
 	BOOL BytesRead;
 	BOOL BytesAvailable;
