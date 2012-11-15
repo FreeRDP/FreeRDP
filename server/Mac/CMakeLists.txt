@@ -32,7 +32,9 @@ set(${MODULE_PREFIX}_SRCS
     mf_peer.c
     mf_peer.h
     mf_info.c
-    mf_info.h)
+    mf_info.h
+    mf_mountain_lion.c
+    mf_mountain_lion.h)
 
 if(CHANNEL_AUDIN_SERVER)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}

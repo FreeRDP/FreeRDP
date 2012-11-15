@@ -26,6 +26,7 @@
 #include <errno.h>
 
 #include "mf_info.h"
+#include "mf_mountain_lion.h"
 //#include "mf_update.h"
 
 static mfInfo* mfInfoInstance = NULL;
@@ -244,23 +245,30 @@ void mf_info_update_changes(mfInfo* mfi)
 
 void mf_info_find_invalid_region(mfInfo* mfi)
 {
-    //fixme
+    mf_mlion_get_dirty_region(&mfi->invalid);
 }
 
 void mf_info_clear_invalid_region(mfInfo* mfi)
 {
-	//mfi->lastUpdate = mfi->nextUpdate;
-	//SetRectEmpty(&mfi->invalid);
+    mf_mlion_clear_dirty_region();
+    mfi->invalid.height = 0;
+    mfi->invalid.width = 0;
 }
 
 void mf_info_invalidate_full_screen(mfInfo* mfi)
 {
-	//SetRect(&mfi->invalid, 0, 0, mfi->servscreen_width, mfi->servscreen_height);
+    mfi->invalid.x = 0;
+    mfi->invalid.y = 0;
+    mfi->invalid.height = mfi->servscreen_height;
+    mfi->invalid.height = mfi->servscreen_width;
 }
 
 BOOL mf_info_have_invalid_region(mfInfo* mfi)
 {
-	//return IsRectEmpty(&mfi->invalid);
+    if (mfi->invalid.width * mfi->invalid.height == 0) {
+        return FALSE;
+    }
+    return TRUE;
 }
 
 void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits, int* pitch)
