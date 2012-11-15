@@ -987,10 +987,15 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 
 	if (length)
 	{
-		if (alloc_hint > 0)
-			*length = alloc_hint;
-		else
-			*length = pCommonFields->frag_length - (pCommonFields->auth_length + *offset);
+		UINT16 frag_length;
+		UINT16 auth_length;
+		BYTE auth_pad_length;
+
+		frag_length = pCommonFields->frag_length;
+		auth_length = pCommonFields->auth_length;
+		auth_pad_length = *(header + frag_length - auth_length - 6);
+
+		*length = frag_length - (auth_length + *offset + 8 + auth_pad_length);
 	}
 
 	return TRUE;
