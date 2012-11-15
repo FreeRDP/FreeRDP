@@ -391,7 +391,7 @@ void rts_generate_cookie(BYTE* cookie)
 
 BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
-	STREAM* s;
+	BYTE* buffer;
 	RTS_PDU_HEADER header;
 	UINT32 ReceiveWindowSize;
 	BYTE* OUTChannelCookie;
@@ -409,8 +409,6 @@ BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending CONN_A1 RTS PDU");
 
-	s = stream_new(header.frag_length);
-
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
 
@@ -418,23 +416,24 @@ BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 
-	stream_write(s, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	s->p += rts_version_command_write(s->p); /* Version (8 bytes) */
-	s->p += rts_cookie_command_write(s->p, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	s->p += rts_cookie_command_write(s->p, OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
-	s->p += rts_receive_window_size_command_write(s->p, ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
-	stream_seal(s);
+	buffer = (BYTE*) malloc(header.frag_length);
 
-	rpc_out_write(rpc, s->data, s->size);
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
+	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[48], OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
+	rts_receive_window_size_command_write(&buffer[68], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	stream_free(s);
+	rpc_out_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
 
 	return TRUE;
 }
 
 BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
-	STREAM* s;
+	BYTE* buffer;
 	RTS_PDU_HEADER header;
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
@@ -452,8 +451,6 @@ BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending CONN_B1 RTS PDU");
 
-	s = stream_new(header.frag_length);
-
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
 
@@ -461,25 +458,27 @@ BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
 	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
 
-	stream_write(s, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	s->p += rts_version_command_write(s->p); /* Version (8 bytes) */
-	s->p += rts_cookie_command_write(s->p, VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
-	s->p += rts_cookie_command_write(s->p, INChannelCookie); /* INChannelCookie (20 bytes) */
-	s->p += rts_channel_lifetime_command_write(s->p, 0x40000000); /* ChannelLifetime (8 bytes) */
-	s->p += rts_client_keepalive_command_write(s->p, 0x000493E0); /* ClientKeepalive (8 bytes) */
-	s->p += rts_association_group_id_command_write(s->p, AssociationGroupId); /* AssociationGroupId (20 bytes) */
-	stream_seal(s);
+	/* TODO: fix hardcoded values */
 
-	rpc_in_write(rpc, s->data, s->size);
+	buffer = (BYTE*) malloc(header.frag_length);
 
-	stream_free(s);
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
+	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[48], INChannelCookie); /* INChannelCookie (20 bytes) */
+	rts_channel_lifetime_command_write(&buffer[68], 0x40000000); /* ChannelLifetime (8 bytes) */
+	rts_client_keepalive_command_write(&buffer[76], 0x000493E0); /* ClientKeepalive (8 bytes) */
+	rts_association_group_id_command_write(&buffer[84], AssociationGroupId); /* AssociationGroupId (20 bytes) */
+
+	rpc_in_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
 
 	return TRUE;
 }
 
 BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
-	STREAM* s;
 	BYTE* buffer;
 	RTS_PDU_HEADER header;
 
@@ -495,6 +494,8 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending Keep-Alive RTS PDU");
 
+	/* TODO: fix hardcoded value */
+
 	buffer = (BYTE*) malloc(header.frag_length);
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_client_keepalive_command_write(&buffer[20], 0x00007530); /* ClientKeepalive (8 bytes) */
@@ -508,7 +509,7 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
-	STREAM* s;
+	BYTE* buffer;
 	RTS_PDU_HEADER header;
 	UINT32 BytesReceived;
 	UINT32 AvailableWindow;
@@ -530,25 +531,24 @@ BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
 	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 
-	s = stream_new(header.frag_length);
-	stream_write(s, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	s->p += rts_destination_command_write(s->p, FDOutProxy); /* Destination Command (8 bytes) */
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_destination_command_write(&buffer[20], FDOutProxy); /* Destination Command (8 bytes) */
 
 	/* FlowControlAck Command (28 bytes) */
-	s->p += rts_flow_control_ack_command_write(s->p, BytesReceived, AvailableWindow, ChannelCookie);
+	rts_flow_control_ack_command_write(&buffer[28], BytesReceived, AvailableWindow, ChannelCookie);
 
-	stream_seal(s);
+	rpc_in_write(rpc, buffer, header.frag_length);
 
-	rpc_in_write(rpc, s->data, s->size);
-
-	stream_free(s);
+	free(buffer);
 
 	return TRUE;
 }
 
 BOOL rts_send_ping_pdu(rdpRpc* rpc)
 {
-	STREAM* s;
+	BYTE* buffer;
 	RTS_PDU_HEADER header;
 
 	rts_pdu_header_init(rpc, &header);
@@ -563,13 +563,13 @@ BOOL rts_send_ping_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending Ping RTS PDU");
 
-	s = stream_new(header.frag_length);
-	stream_write(s, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	stream_seal(s);
+	buffer = (BYTE*) malloc(header.frag_length);
 
-	rpc_in_write(rpc, s->data, s->size);
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 
-	stream_free(s);
+	rpc_in_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
 
 	return TRUE;
 }
@@ -661,8 +661,8 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 
 			default:
 				printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
-				stream_detach(s) ;
-				stream_free(s) ;
+				stream_detach(s);
+				stream_free(s);
 				return -1;
 				break;
 		}
