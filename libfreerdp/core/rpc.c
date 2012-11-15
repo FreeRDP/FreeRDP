@@ -1229,8 +1229,8 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 
 BOOL rpc_connect(rdpRpc* rpc)
 {
-	rpc->tls_in = rpc->transport->tls_in;
-	rpc->tls_out = rpc->transport->tls_out;
+	rpc->tls_in = rpc->transport->TlsIn;
+	rpc->tls_out = rpc->transport->TlsOut;
 
 	if (!rts_connect(rpc))
 	{

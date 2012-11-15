@@ -35,8 +35,9 @@ typedef struct rdp_credssp rdpCredssp;
 
 struct rdp_credssp
 {
-	rdpTls* tls;
 	BOOL server;
+	rdpTls* TlsIn;
+	rdpTls* TlsOut;
 	int send_seq_num;
 	int recv_seq_num;
 	freerdp* instance;
@@ -57,7 +58,7 @@ struct rdp_credssp
 
 FREERDP_API int credssp_authenticate(rdpCredssp* credssp);
 
-FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* tls, rdpSettings* settings);
+FREERDP_API rdpCredssp* credssp_new(freerdp* instance, rdpTls* TlsIn, rdpTls* TlsOut, rdpSettings* settings);
 FREERDP_API void credssp_free(rdpCredssp* credssp);
 
 #endif /* FREERDP_SSPI_CREDSSP_H */

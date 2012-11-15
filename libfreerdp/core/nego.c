@@ -152,7 +152,7 @@ BOOL nego_connect(rdpNego* nego)
 	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
 	nego->transport->settings->NegotiationFlags = nego->flags;
 
-	if(nego->selected_protocol == PROTOCOL_RDP)
+	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
 		nego->transport->settings->DisableEncryption = TRUE;
 		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
@@ -160,7 +160,7 @@ BOOL nego_connect(rdpNego* nego)
 	}
 
 	/* finally connect security layer (if not already done) */
-	if(!nego_security_connect(nego))
+	if (!nego_security_connect(nego))
 	{
 		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 		return FALSE;

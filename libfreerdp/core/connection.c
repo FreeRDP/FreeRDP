@@ -153,7 +153,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	rdp->transport->process_single_pdu = TRUE;
+	rdp->transport->ProcessSinglePdu = TRUE;
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
@@ -161,7 +161,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	rdp->transport->process_single_pdu = FALSE;
+	rdp->transport->ProcessSinglePdu = FALSE;
 
 	return TRUE;
 }

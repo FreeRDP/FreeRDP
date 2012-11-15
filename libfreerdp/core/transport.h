@@ -50,22 +50,21 @@ struct rdp_transport
 	STREAM* recv_stream;
 	STREAM* send_stream;
 	TRANSPORT_LAYER layer;
-	struct rdp_tcp* tcp;
-	struct rdp_tls* tls;
-	struct rdp_tsg* tsg;
-	struct rdp_tcp* tcp_in;
-	struct rdp_tcp* tcp_out;
-	struct rdp_tls* tls_in;
-	struct rdp_tls* tls_out;
-	struct rdp_credssp* credssp;
-	struct rdp_settings* settings;
+	rdpTsg* tsg;
+	rdpTcp* TcpIn;
+	rdpTcp* TcpOut;
+	rdpTls* TlsIn;
+	rdpTls* TlsOut;
+	rdpCredssp* credssp;
+	rdpSettings* settings;
 	UINT32 usleep_interval;
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
 	struct wait_obj* recv_event;
 	BOOL blocking;
-	BOOL process_single_pdu; /* process single pdu in transport_check_fds */
+	BOOL ProcessSinglePdu;
+	BOOL SplitInputOutput;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
