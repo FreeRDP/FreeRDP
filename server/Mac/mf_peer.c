@@ -27,7 +27,7 @@
 #include <freerdp/utils/stream.h>
 
 #include "mf_peer.h"
-
+#include "mf_info.h"
 #include "mf_event.h"
 
 #include <mach/clock.h>
@@ -118,12 +118,19 @@ void mf_peer_rfx_update(freerdp_peer* client)
 {
     
     //check
-    /*if (servscreen_height * servscreen_width == 0)
-     return;
-     
-     if(cnt++ < 10)
-     return;
-     */
+    
+    mfInfo* mfi = mf_info_get_instance();
+    
+    mf_info_find_invalid_region(mfi);
+    
+    printf("\tinvalid -> (%d,%d), (%d,%d)\n",
+           mfi->invalid.x,
+           mfi->invalid.y,
+           mfi->invalid.x + mfi->invalid.width,
+           mfi->invalid.y + mfi->invalid.height);
+    
+    mf_info_clear_invalid_region(mfi);
+    
     //capture entire screen
     
     int bytewidth;
@@ -244,6 +251,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 /* Called when we have a new peer connecting */
 void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
+    context->info = mf_info_get_instance();
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->DesktopWidth;
@@ -258,6 +266,8 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 #ifdef WITH_SERVER_CHANNELS
 	context->vcm = WTSCreateVirtualChannelManager(client);
 #endif
+    
+    mf_info_peer_register(context->info, context);
 }
 
 
@@ -266,6 +276,8 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 {
 	if (context)
 	{
+        mf_info_peer_unregister(context->info, context);
+        
         dispatch_suspend(info_timer);
         
 		stream_free(context->s);

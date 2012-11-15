@@ -107,6 +107,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 
 int mf_mlion_screen_updates_init()
 {
+    printf("mf_mlion_screen_updates_init()\n");
     CGDirectDisplayID display_id;
     
     display_id = CGMainDisplayID();

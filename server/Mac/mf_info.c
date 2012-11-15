@@ -177,8 +177,11 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 
         //initialize screen capture
 		if (mfi->peerCount == 0)
-			//mf_dxgi_init(mfi);
-
+        {
+            mf_mlion_screen_updates_init();
+            mf_mlion_start_getting_screen_updates();
+        }
+			
 		//look trhough the array of peers until an empty slot
 		for(i=0; i<MF_INFO_MAXPEERS; ++i)
 		{
@@ -215,8 +218,9 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 
         //screen capture cleanup
 		if (mfi->peerCount == 0)
-			//mf_dxgi_cleanup(mfi);
-
+        {
+            mf_mlion_stop_getting_screen_updates();
+        }
 		mf_info_unlock(mfi);
 
 		//mfreerdp_server_peer_callback_event(peerId, MF_SRV_CALLBACK_EVENT_DISCONNECT);
