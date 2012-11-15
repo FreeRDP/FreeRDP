@@ -81,13 +81,13 @@ BOOL rts_connect(rdpRpc* rpc)
 	}
 
 	/* Receive OUT Channel Response */
-	http_response = http_response_recv(rpc->tls_out);
+	http_response = http_response_recv(rpc->TlsOut);
 
 	if (http_response->StatusCode != 200)
 	{
 		printf("rts_connect error! Status Code: %d\n", http_response->StatusCode);
 		http_response_print(http_response);
-		http_response_free(http_response) ;
+		http_response_free(http_response);
 		return FALSE;
 	}
 
@@ -627,7 +627,7 @@ int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
 {
 	int status;
 	int length;
-	rdpTls* tls_out = rpc->tls_out;
+	rdpTls* tls_out = rpc->TlsOut;
 
 	/* read first 20 bytes to get RTS PDU Header */
 	status = tls_read(tls_out, (BYTE*) &(rts_pdu->header), 20);

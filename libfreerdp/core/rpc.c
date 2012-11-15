@@ -34,6 +34,7 @@
 #include <openssl/rand.h>
 
 #include "http.h"
+#include "ntlm.h"
 
 #include "rpc.h"
 
@@ -260,216 +261,6 @@ void rpc_pdu_header_print(RPC_PDU_HEADER* header)
 	}
 }
 
-/**
- * The Security Support Provider Interface:
- * http://technet.microsoft.com/en-us/library/bb742535/
- */
-
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password)
-{
-	SECURITY_STATUS status;
-
-	sspi_GlobalInit();
-
-#ifdef WITH_NATIVE_SSPI
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE InitSecurityInterface;
-		PSecurityFunctionTable pSecurityInterface = NULL;
-
-		hSSPI = LoadLibrary(_T("secur32.dll"));
-
-#ifdef UNICODE
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-#endif
-		ntlm->table = (*InitSecurityInterface)();
-	}
-#else
-	ntlm->table = InitSecurityInterface();
-#endif
-
-	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
-
-	if (http)
-	{
-		DWORD status;
-		DWORD SpnLength;
-
-		SpnLength = 0;
-		status = DsMakeSpn(_T("HTTP"), _T("LAB1-W2K8R2-GW.lab1.awake.local"), NULL, 0, NULL, &SpnLength, NULL);
-
-		if (status != ERROR_BUFFER_OVERFLOW)
-		{
-			_tprintf(_T("DsMakeSpn: expected ERROR_BUFFER_OVERFLOW\n"));
-			return -1;
-		}
-
-		ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
-
-		status = DsMakeSpn(_T("HTTP"), _T("LAB1-W2K8R2-GW.lab1.awake.local"), NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
-	}
-
-	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
-
-	if (status != SEC_E_OK)
-	{
-		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
-		return FALSE;
-	}
-
-	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
-			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
-
-	if (status != SEC_E_OK)
-	{
-		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
-		return FALSE;
-	}
-
-	ntlm->haveContext = FALSE;
-	ntlm->haveInputBuffer = FALSE;
-	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
-
-	ntlm->fContextReq = 0;
-
-	if (http)
-	{
-		/* flags for HTTP authentication */
-		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
-	}
-	else
-	{
-		/** 
-		 * flags for RPC authentication:
-		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
-		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
-		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
-		 */
-
-		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
-		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
-		ntlm->fContextReq |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT;
-	}
-
-	return TRUE;
-}
-
-BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
-{
-	int length;
-	DWORD status;
-	DWORD SpnLength;
-	LPTSTR hostnameX;
-
-	length = 0;
-
-#ifdef UNICODE
-	length = strlen(hostname);
-	hostnameX = (LPWSTR) malloc(length * sizeof(TCHAR));
-	MultiByteToWideChar(CP_ACP, 0, hostname, length, hostnameX, length);
-	hostnameX[length] = 0;
-#else
-	hostnameX = hostname;
-#endif
-
-	SpnLength = 0;
-	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
-
-	if (status != ERROR_BUFFER_OVERFLOW)
-		return FALSE;
-
-	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
-
-	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
-
-	if (status != ERROR_SUCCESS)
-		return -1;
-
-	return TRUE;
-}
-
-BOOL ntlm_authenticate(rdpNtlm* ntlm)
-{
-	SECURITY_STATUS status;
-
-	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
-	ntlm->outputBufferDesc.cBuffers = 1;
-	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
-	ntlm->outputBuffer.BufferType = SECBUFFER_TOKEN;
-	ntlm->outputBuffer.cbBuffer = ntlm->cbMaxToken;
-	ntlm->outputBuffer.pvBuffer = malloc(ntlm->outputBuffer.cbBuffer);
-
-	if (ntlm->haveInputBuffer)
-	{
-		ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
-		ntlm->inputBufferDesc.cBuffers = 1;
-		ntlm->inputBufferDesc.pBuffers = &ntlm->inputBuffer;
-		ntlm->inputBuffer.BufferType = SECBUFFER_TOKEN;
-	}
-
-	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
-			(ntlm->haveContext) ? &ntlm->context : NULL,
-			(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
-			ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
-			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
-			0, &ntlm->context, &ntlm->outputBufferDesc,
-			&ntlm->pfContextAttr, &ntlm->expiration);
-
-	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
-	{
-		if (ntlm->table->CompleteAuthToken != NULL)
-			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
-
-		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
-		{
-			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
-			return FALSE ;
-		}
-
-		if (status == SEC_I_COMPLETE_NEEDED)
-			status = SEC_E_OK;
-		else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-			status = SEC_I_CONTINUE_NEEDED;
-	}
-
-	ntlm->haveInputBuffer = TRUE;
-	ntlm->haveContext = TRUE;
-
-	return TRUE;
-}
-
-void ntlm_client_uninit(rdpNtlm* ntlm)
-{
-	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-}
-
-rdpNtlm* ntlm_new()
-{
-	rdpNtlm* ntlm = (rdpNtlm*) malloc(sizeof(rdpNtlm));
-
-	if (ntlm != NULL)
-	{
-		ZeroMemory(ntlm, sizeof(rdpNtlm));
-	}
-
-	return ntlm;
-}
-
-void ntlm_free(rdpNtlm* ntlm)
-{
-	if (ntlm != NULL)
-	{
-
-	}
-}
-
 STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
 	STREAM* s;
@@ -482,12 +273,12 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 
 	if (channel == TSG_CHANNEL_IN)
 	{
-		http_context = rpc->ntlm_http_in->context;
+		http_context = rpc->NtlmHttpIn->context;
 		http_request_set_method(http_request, "RPC_IN_DATA");
 	}
 	else if (channel == TSG_CHANNEL_OUT)
 	{
-		http_context = rpc->ntlm_http_out->context;
+		http_context = rpc->NtlmHttpOut->context;
 		http_request_set_method(http_request, "RPC_OUT_DATA");
 	}
 	else
@@ -516,7 +307,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	int ntlm_token_length;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
-	rdpNtlm* ntlm = rpc->ntlm_http_out->ntlm;
+	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
 	settings = rpc->settings;
 
@@ -540,12 +331,12 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->tls_out, s->data, s->size);
+	tls_write_all(rpc->TlsOut, s->data, s->size);
 	stream_free(s);
 
 	/* Receive OUT Channel Response */
 
-	http_response = http_response_recv(rpc->tls_out);
+	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
 	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
@@ -563,7 +354,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->tls_out, s->data, s->size);
+	tls_write_all(rpc->TlsOut, s->data, s->size);
 	stream_free(s);
 
 	ntlm_client_uninit(ntlm);
@@ -579,7 +370,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	int ntlm_token_length;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
-	rdpNtlm* ntlm = rpc->ntlm_http_in->ntlm;
+	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
 	settings = rpc->settings;
 
@@ -603,12 +394,12 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	/* Send IN Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->tls_in, s->data, s->size);
+	tls_write_all(rpc->TlsIn, s->data, s->size);
 	stream_free(s);
 
 	/* Receive IN Channel Response */
 
-	http_response = http_response_recv(rpc->tls_in);
+	http_response = http_response_recv(rpc->TlsIn);
 
 	ntlm_token_data = NULL;
 	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
@@ -626,7 +417,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	/* Send IN Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->tls_in, s->data, s->size);
+	tls_write_all(rpc->TlsIn, s->data, s->size);
 	stream_free(s);
 
 	ntlm_client_uninit(ntlm);
@@ -657,7 +448,7 @@ int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 	printf("\n");
 #endif
 
-	status = tls_write_all(rpc->tls_out, data, length);
+	status = tls_write_all(rpc->TlsOut, data, length);
 
 	return status;
 }
@@ -674,7 +465,7 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	printf("\n");
 #endif
 
-	status = tls_write_all(rpc->tls_in, data, length);
+	status = tls_write_all(rpc->TlsIn, data, length);
 
 	if (status > 0)
 		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
@@ -887,7 +678,7 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
 	/* read first 20 bytes to get RPC PDU Header */
-	status = tls_read(rpc->tls_out, data, 20);
+	status = tls_read(rpc->TlsOut, data, 20);
 
 	if (status <= 0)
 		return status;
@@ -896,7 +687,7 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 
 	rpc_pdu_header_print(header);
 
-	status = tls_read(rpc->tls_out, &data[20], header->frag_length - 20);
+	status = tls_read(rpc->TlsOut, &data[20], header->frag_length - 20);
 
 	if (status < 0)
 		return status;
@@ -1013,7 +804,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
     
 	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
 	{
-		status = tls_read(rpc->tls_out, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
+		status = tls_read(rpc->TlsOut, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
         
 		if (status < 0)
 		{
@@ -1030,7 +821,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 
 	while (bytesRead < offset)
 	{
-		status = tls_read(rpc->tls_out, &header[bytesRead], offset - bytesRead);
+		status = tls_read(rpc->TlsOut, &header[bytesRead], offset - bytesRead);
         
 		if (status < 0)
 			return status;
@@ -1069,7 +860,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	while (bytesRead < header->frag_length)
 	{
-		status = tls_read(rpc->tls_out, &rpc->buffer[bytesRead], header->frag_length - bytesRead);
+		status = tls_read(rpc->TlsOut, &rpc->buffer[bytesRead], header->frag_length - bytesRead);
 
 		if (status < 0)
 		{
@@ -1240,8 +1031,8 @@ int rpc_read(rdpRpc* rpc, BYTE* data, int length)
 
 BOOL rpc_connect(rdpRpc* rpc)
 {
-	rpc->tls_in = rpc->transport->TlsIn;
-	rpc->tls_out = rpc->transport->TlsOut;
+	rpc->TlsIn = rpc->transport->TlsIn;
+	rpc->TlsOut = rpc->transport->TlsOut;
 
 	if (!rts_connect(rpc))
 	{
@@ -1374,11 +1165,11 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->send_seq_num = 0;
 		rpc->ntlm = ntlm_new();
 
-		rpc->ntlm_http_in = ntlm_http_new();
-		rpc->ntlm_http_out = ntlm_http_new();
+		rpc->NtlmHttpIn = ntlm_http_new();
+		rpc->NtlmHttpOut = ntlm_http_new();
 
-		rpc_ntlm_http_init_channel(rpc, rpc->ntlm_http_in, TSG_CHANNEL_IN);
-		rpc_ntlm_http_init_channel(rpc, rpc->ntlm_http_out, TSG_CHANNEL_OUT);
+		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
+		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
 		rpc->length = 20;
 		rpc->buffer = (BYTE*) malloc(rpc->length);
@@ -1405,8 +1196,8 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
-		ntlm_http_free(rpc->ntlm_http_in);
-		ntlm_http_free(rpc->ntlm_http_out);
+		ntlm_http_free(rpc->NtlmHttpIn);
+		ntlm_http_free(rpc->NtlmHttpOut);
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		free(rpc);
 	}

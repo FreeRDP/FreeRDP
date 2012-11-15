@@ -23,11 +23,11 @@
 #define FREERDP_CORE_RPC_H
 
 typedef struct rdp_rpc rdpRpc;
-typedef struct rdp_ntlm_http rdpNtlmHttp;
 
 #include "tcp.h"
 #include "rts.h"
 #include "http.h"
+#include "ntlm.h"
 #include "transport.h"
 
 #include <time.h>
@@ -464,42 +464,12 @@ typedef struct
 	DEFINE_RPC_COMMON_FIELDS();
 } rpcconn_shutdown_hdr_t;
 
-struct rdp_ntlm
-{
-	CtxtHandle context;
-	ULONG cbMaxToken;
-	ULONG fContextReq;
-	ULONG pfContextAttr;
-	TimeStamp expiration;
-	PSecBuffer pBuffer;
-	SecBuffer inputBuffer;
-	SecBuffer outputBuffer;
-	BOOL haveContext;
-	BOOL haveInputBuffer;
-	LPTSTR ServicePrincipalName;
-	SecBufferDesc inputBufferDesc;
-	SecBufferDesc outputBufferDesc;
-	CredHandle credentials;
-	BOOL confidentiality;
-	SecPkgInfo* pPackageInfo;
-	SecurityFunctionTable* table;
-	SEC_WINNT_AUTH_IDENTITY identity;
-	SecPkgContext_Sizes ContextSizes;
-};
-typedef struct rdp_ntlm rdpNtlm;
-
 enum _TSG_CHANNEL
 {
 	TSG_CHANNEL_IN,
 	TSG_CHANNEL_OUT
 };
 typedef enum _TSG_CHANNEL TSG_CHANNEL;
-
-struct rdp_ntlm_http
-{
-	rdpNtlm* ntlm;
-	HttpContext* context;
-};
 
 /* Ping Originator */
 
@@ -574,14 +544,14 @@ typedef struct rpc_virtual_connection RpcVirtualConnection;
 
 struct rdp_rpc
 {
-	rdpTls* tls_in;
-	rdpTls* tls_out;
+	rdpTls* TlsIn;
+	rdpTls* TlsOut;
 
 	rdpNtlm* ntlm;
 	int send_seq_num;
 
-	rdpNtlmHttp* ntlm_http_in;
-	rdpNtlmHttp* ntlm_http_out;
+	rdpNtlmHttp* NtlmHttpIn;
+	rdpNtlmHttp* NtlmHttpOut;
 
 	rdpSettings* settings;
 	rdpTransport* transport;
@@ -600,14 +570,6 @@ struct rdp_rpc
 
 	RpcVirtualConnection* VirtualConnection;
 };
-
-BOOL ntlm_authenticate(rdpNtlm* ntlm);
-
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password);
-void ntlm_client_uninit(rdpNtlm* ntlm);
-
-rdpNtlm* ntlm_new();
-void ntlm_free(rdpNtlm* ntlm);
 
 BOOL rpc_connect(rdpRpc* rpc);
 
