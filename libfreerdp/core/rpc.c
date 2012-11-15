@@ -766,6 +766,10 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 		rpc_offset_align(offset, 8);
 		alloc_hint = header->request.alloc_hint;
 	}
+	else if (header->common.ptype == PTYPE_RTS)
+	{
+		*offset += 4;
+	}
 	else
 	{
 		return FALSE;
@@ -868,8 +872,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
-		printf("rpc_recv_pdu error: Unexpected RTS PDU\n");
-		return -1;
+		return header->common.frag_length;
 	}
 	else if (header->common.ptype == PTYPE_FAULT)
 	{

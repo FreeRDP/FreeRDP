@@ -24,9 +24,6 @@
 #include "config.h"
 #endif
 
-typedef struct _rts_pdu RTS_PDU;
-typedef struct _rts_pdu_header RTS_PDU_HEADER;
-
 #include "rpc.h"
 
 #include <freerdp/api.h>
@@ -63,20 +60,6 @@ typedef struct _rts_pdu_header RTS_PDU_HEADER;
 #define FDInProxy				0x00000001
 #define FDServer				0x00000002
 #define FDOutProxy				0x00000003
-
-struct _rts_pdu_header
-{
-	DEFINE_RPC_COMMON_FIELDS();
-
-	UINT16 flags;
-	UINT16 numberOfCommands;
-};
-
-struct _rts_pdu
-{
-	RTS_PDU_HEADER header;
-	BYTE* content;
-};
 
 BOOL rts_connect(rdpRpc* rpc);
 
@@ -131,7 +114,7 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc);
 BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 BOOL rts_send_ping_pdu(rdpRpc* rpc);
 
-int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu);
+int rts_recv_pdu(rdpRpc* rpc);
 
 #ifdef WITH_DEBUG_TSG
 #define WITH_DEBUG_RTS

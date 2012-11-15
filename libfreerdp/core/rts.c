@@ -55,7 +55,6 @@
 BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
-	RTS_PDU rts_pdu;
 	HttpResponse* http_response;
 
 	if (!rpc_ntlm_http_out_connect(rpc))
@@ -98,10 +97,16 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response_free(http_response);
 
 	/* Receive CONN_A3 RTS PDU */
-	status = rts_recv_pdu(rpc, &rts_pdu);
+	status = rts_recv_pdu(rpc);
+
+	if (status < 1)
+		return FALSE;
 
 	/* Receive CONN_C2 RTS PDU */
-	status = rts_recv_pdu(rpc, &rts_pdu);
+	status = rts_recv_pdu(rpc);
+
+	if (status < 1)
+		return FALSE;
 
 	return TRUE;
 }
@@ -160,14 +165,18 @@ static const char* const RTS_CMD_STRINGS[] =
  *
  */
 
-void rts_pdu_header_init(rdpRpc* rpc, RTS_PDU_HEADER* header)
+void rts_pdu_header_init(rpcconn_rts_hdr_t* header)
 {
-	header->rpc_vers = rpc->rpc_vers;
-	header->rpc_vers_minor = rpc->rpc_vers_minor;
-	header->packed_drep[0] = rpc->packed_drep[0];
-	header->packed_drep[1] = rpc->packed_drep[1];
-	header->packed_drep[2] = rpc->packed_drep[2];
-	header->packed_drep[3] = rpc->packed_drep[3];
+	header->rpc_vers = 5;
+	header->rpc_vers_minor = 0;
+	header->ptype = PTYPE_RTS;
+	header->packed_drep[0] = 0x10;
+	header->packed_drep[1] = 0x00;
+	header->packed_drep[2] = 0x00;
+	header->packed_drep[3] = 0x00;
+	header->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	header->auth_length = 0;
+	header->call_id = 0;
 }
 
 void rts_receive_window_size_command_read(rdpRpc* rpc, STREAM* s)
@@ -392,20 +401,15 @@ void rts_generate_cookie(BYTE* cookie)
 BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	RTS_PDU_HEADER header;
+	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
 	BYTE* OUTChannelCookie;
 	BYTE* VirtualConnectionCookie;
 
-	rts_pdu_header_init(rpc, &header);
-
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	rts_pdu_header_init(&header);
 	header.frag_length = 76;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 0;
-	header.numberOfCommands = 4;
+	header.Flags = RTS_FLAG_NONE;
+	header.NumberOfCommands = 4;
 
 	DEBUG_RPC("Sending CONN_A1 RTS PDU");
 
@@ -434,20 +438,15 @@ BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	RTS_PDU_HEADER header;
+	rpcconn_rts_hdr_t header;
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
 	BYTE* VirtualConnectionCookie;
 
-	rts_pdu_header_init(rpc, &header);
-
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	rts_pdu_header_init(&header);
 	header.frag_length = 104;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 0;
-	header.numberOfCommands = 6;
+	header.Flags = RTS_FLAG_NONE;
+	header.NumberOfCommands = 6;
 
 	DEBUG_RPC("Sending CONN_B1 RTS PDU");
 
@@ -480,17 +479,12 @@ BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	RTS_PDU_HEADER header;
+	rpcconn_rts_hdr_t header;
 
-	rts_pdu_header_init(rpc, &header);
-
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	rts_pdu_header_init(&header);
 	header.frag_length = 28;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 2;
-	header.numberOfCommands = 1;
+	header.Flags = RTS_FLAG_OTHER_CMD;
+	header.NumberOfCommands = 1;
 
 	DEBUG_RPC("Sending Keep-Alive RTS PDU");
 
@@ -510,20 +504,15 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	RTS_PDU_HEADER header;
+	rpcconn_rts_hdr_t header;
 	UINT32 BytesReceived;
 	UINT32 AvailableWindow;
 	BYTE* ChannelCookie;
 
-	rts_pdu_header_init(rpc, &header);
-
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	rts_pdu_header_init(&header);
 	header.frag_length = 56;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 2;
-	header.numberOfCommands = 2;
+	header.Flags = RTS_FLAG_OTHER_CMD;
+	header.NumberOfCommands = 2;
 
 	DEBUG_RPC("Sending FlowControlAck RTS PDU");
 
@@ -549,17 +538,12 @@ BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 BOOL rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	RTS_PDU_HEADER header;
+	rpcconn_rts_hdr_t header;
 
-	rts_pdu_header_init(rpc, &header);
-
-	header.ptype = PTYPE_RTS;
-	header.pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
+	rts_pdu_header_init(&header);
 	header.frag_length = 20;
-	header.auth_length = 0;
-	header.call_id = 0;
-	header.flags = 1;
-	header.numberOfCommands = 0;
+	header.Flags = RTS_FLAG_PING;
+	header.NumberOfCommands = 0;
 
 	DEBUG_RPC("Sending Ping RTS PDU");
 
@@ -574,24 +558,24 @@ BOOL rts_send_ping_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
+int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 {
 	int i;
 	STREAM* s;
 	UINT32 CommandType;
 
-	DEBUG_RTS("numberOfCommands:%d", rts_pdu->header.numberOfCommands);
+	DEBUG_RTS("numberOfCommands:%d", rts->NumberOfCommands);
 
-	if (rts_pdu->header.flags & RTS_FLAG_PING)
+	if (rts->Flags & RTS_FLAG_PING)
 	{
 		rts_send_keep_alive_pdu(rpc);
 		return 0;
 	}
 
 	s = stream_new(0);
-	stream_attach(s, rts_pdu->content, rts_pdu->header.frag_length);
+	stream_attach(s, &((BYTE*) rts)[24], rts->frag_length);
 
-	for (i = 0; i < rts_pdu->header.numberOfCommands; i++)
+	for (i = 0; i < rts->NumberOfCommands; i++)
 	{
 		stream_read_UINT32(s, CommandType); /* CommandType (4 bytes) */
 
@@ -674,45 +658,26 @@ int rts_recv_pdu_commands(rdpRpc* rpc, RTS_PDU* rts_pdu)
 	return 0;
 }
 
-int rts_recv_pdu(rdpRpc* rpc, RTS_PDU* rts_pdu)
+int rts_recv_pdu(rdpRpc* rpc)
 {
 	int status;
-	int length;
-	rdpTls* tls_out = rpc->TlsOut;
+	rpcconn_rts_hdr_t* rts;
 
-	/* read first 20 bytes to get RTS PDU Header */
-	status = tls_read(tls_out, (BYTE*) &(rts_pdu->header), 20);
+	status = rpc_recv_pdu(rpc);
 
-	if (status <= 0)
+	if (status > 0)
 	{
-		printf("rts_recv_pdu error\n");
-		return status;
+		rts = (rpcconn_rts_hdr_t*) rpc->buffer;
+
+		if (rts->ptype != PTYPE_RTS)
+		{
+			printf("rts_recv_pdu: Unexpected type 0x%02X, Expected: PTYPE_RTS (0x%02X)\n",
+					rts->ptype, PTYPE_RTS);
+			return -1;
+		}
 	}
 
-	length = rts_pdu->header.frag_length - 20;
-	rts_pdu->content = (BYTE*) malloc(length);
+	rts_recv_pdu_commands(rpc, rts);
 
-	status = tls_read(tls_out, rts_pdu->content, length);
-
-	if (status < 0)
-	{
-		printf("rts_recv_pdu error\n");
-		return status;
-	}
-
-	if (rts_pdu->header.ptype != PTYPE_RTS)
-	{
-		printf("rts_recv_pdu error: unexpected ptype: %d\n", rts_pdu->header.ptype);
-		return -1;
-	}
-
-#ifdef WITH_DEBUG_RTS
-	printf("rts_recv_pdu: length: %d\n", length);
-	freerdp_hexdump(rts_pdu->content, length);
-	printf("\n");
-#endif
-
-	rts_recv_pdu_commands(rpc, rts_pdu);
-
-	return rts_pdu->header.frag_length;
+	return status;
 }

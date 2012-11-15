@@ -498,6 +498,14 @@ typedef struct
 	DEFINE_RPC_COMMON_FIELDS();
 } rpcconn_shutdown_hdr_t;
 
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
+
+	UINT16 Flags;
+	UINT16 NumberOfCommands;
+} rpcconn_rts_hdr_t;
+
 typedef union
 {
 	rpcconn_common_hdr_t common;
@@ -513,6 +521,7 @@ typedef union
 	rpcconn_request_hdr_t request;
 	rpcconn_response_hdr_t response;
 	rpcconn_shutdown_hdr_t shutdown;
+	rpcconn_rts_hdr_t rts;
 } rpcconn_hdr_t;
 
 enum _TSG_CHANNEL
