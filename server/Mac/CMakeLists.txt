@@ -25,6 +25,8 @@ FIND_LIBRARY(APP_SERVICES ApplicationServices)
 set(${MODULE_PREFIX}_SRCS
 	mfreerdp.c
 	mfreerdp.h
+    mf_interface.c
+    mf_interface.h
 	mf_event.c
 	mf_event.h
     mf_peer.c

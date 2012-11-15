@@ -542,7 +542,7 @@ void wf_peer_read_settings(freerdp_peer* client)
 		client->settings->PrivateKeyFile = _strdup("server.key");
 }*/
 
-static void* mf_peer_main_loop(void* arg)
+void* mf_peer_main_loop(void* arg)
 {
 	int i;
 	int fds;

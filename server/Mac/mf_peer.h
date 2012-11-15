@@ -20,47 +20,7 @@
 #ifndef WF_PEER_H
 #define WF_PEER_H
 
-#include <freerdp/codec/nsc.h>
-
-#include <freerdp/listener.h>
-
-#ifdef WITH_SERVER_CHANNELS
-#include <freerdp/channels/wtsvc.h>
-#endif
-
-#ifdef CHANNEL_RDPSND_SERVER
-#include <freerdp/server/rdpsnd.h>
-#include "mf_rdpsnd.h"
-#endif
-
-#ifdef CHANNEL_AUDIN_SERVER
-#include "mf_audin.h"
-#endif
-
-
-struct mf_peer_context
-{
-	rdpContext _p;
-    
-	STREAM* s;
-	BOOL activated;
-	UINT32 frame_id;
-	BOOL audin_open;
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
-
-#ifdef WITH_SERVER_CHANNELS
-	WTSVirtualChannelManager* vcm;
-#endif
-#ifdef CHANNEL_AUDIN_SERVER
-	audin_server_context* audin;
-#endif
-
-#ifdef CHANNEL_RDPSND_SERVER
-	rdpsnd_server_context* rdpsnd;
-#endif
-};
-typedef struct mf_peer_context mfPeerContext;
+#include "mf_interface.h"
 
 BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount);
 BOOL mf_peer_check_fds(freerdp_peer* client);
@@ -79,6 +39,6 @@ void mf_peer_synchronize_event(rdpInput* input, UINT32 flags);
 
 void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
-static void* mf_peer_main_loop(void* arg);
+void* mf_peer_main_loop(void* arg);
 
 #endif /* MF_PEER_H */

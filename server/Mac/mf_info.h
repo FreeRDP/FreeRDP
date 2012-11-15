@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Windows Server
+ * FreeRDP Mac OS X Server
  *
  * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
@@ -17,29 +17,34 @@
  * limitations under the License.
  */
 
-#ifndef WF_INFO_H
-#define WF_INFO_H
+#ifndef MF_INFO_H
+#define MF_INFO_H
 
-#include "wf_interface.h"
+#define MF_INFO_DEFAULT_FPS 1
+#define MF_INFO_MAXPEERS 1
 
-#define WF_INFO_DEFAULT_FPS 24
-#define WF_INFO_MAXPEERS 32
 
-int wf_info_lock(wfInfo* wfi);
-int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
-int wf_info_unlock(wfInfo* wfi);
 
-wfInfo* wf_info_get_instance();
-void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
-void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
+#include <winpr/wtypes.h>
+#include <freerdp/codec/rfx.h>
 
-BOOL wf_info_have_updates(wfInfo* wfi);
-void wf_info_update_changes(wfInfo* wfi);
-void wf_info_find_invalid_region(wfInfo* wfi);
-void wf_info_clear_invalid_region(wfInfo* wfi);
-void wf_info_invalidate_full_screen(wfInfo* wfi);
-BOOL wf_info_have_invalid_region(wfInfo* wfi);
-void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch);
-BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+#include "mf_interface.h"
 
-#endif /* WF_INFO_H */
+int mf_info_lock(mfInfo* mfi);
+int mf_info_try_lock(mfInfo* mfi, UINT32 ms);
+int mf_info_unlock(mfInfo* mfi);
+
+mfInfo* mf_info_get_instance();
+void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context);
+void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context);
+
+BOOL mf_info_have_updates(mfInfo* mfi);
+void mf_info_update_changes(mfInfo* mfi);
+void mf_info_find_invalid_region(mfInfo* mfi);
+void mf_info_clear_invalid_region(mfInfo* mfi);
+void mf_info_invalidate_full_screen(mfInfo* mfi);
+BOOL mf_info_have_invalid_region(mfInfo* mfi);
+void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits, int* pitch);
+//BOOL CALLBACK mf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+
+#endif /* mf_info_H */
