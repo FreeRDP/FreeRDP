@@ -962,6 +962,7 @@ int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length)
 {
+	UINT32 alloc_hint = 0;
 	RPC_PDU_HEADER* pCommonFields;
 
 	*offset = RPC_COMMON_FIELDS_LENGTH;
@@ -971,11 +972,13 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 	{
 		*offset += 4;
 		rpc_offset_align(offset, 8);
+		alloc_hint = *((UINT32*) &header[16]);
 	}
 	else if (pCommonFields->ptype == PTYPE_REQUEST)
 	{
 		*offset += 4;
 		rpc_offset_align(offset, 8);
+		alloc_hint = *((UINT32*) &header[16]);
 	}
 	else
 	{
@@ -984,7 +987,10 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 
 	if (length)
 	{
-		*length = pCommonFields->frag_length - (pCommonFields->auth_length + *offset);
+		if (alloc_hint > 0)
+			*length = alloc_hint;
+		else
+			*length = pCommonFields->frag_length - (pCommonFields->auth_length + *offset);
 	}
 
 	return TRUE;
