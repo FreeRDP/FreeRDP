@@ -55,6 +55,11 @@
 #include <mach/mach.h>
 #include <dispatch/dispatch.h>
 
+#include "OpenGL/OpenGL.h"
+#include "OpenGL/gl.h"
+
+#include "CoreVideo/CoreVideo.h"
+
 //refactor these
 int info_last_sec = 0;
 int info_last_nsec = 0;
@@ -63,6 +68,62 @@ dispatch_source_t info_timer;
 dispatch_queue_t info_queue;
 
 mfEventQueue* info_event_queue;
+
+
+CGLContextObj glContext;
+CGContextRef bmp;
+CGImageRef img;
+
+//UINT32 servscreen_width;
+//UINT32 servscreen_height;
+//UINT32 bitsPerPixel;
+
+//int cnt = 0;
+/*
+ * perform an in-place swap from Quadrant 1 to Quadrant III format
+ * (upside-down PostScript/GL to right side up QD/CG raster format)
+ * We do this in-place, which requires more copying, but will touch
+ * only half the pages.  (Display grabs are BIG!)
+ *
+ * Pixel reformatting may optionally be done here if needed.
+ */
+static void swizzleBitmap(void * data, int rowBytes, int height)
+{
+    int top, bottom;
+    void * buffer;
+    void * topP;
+    void * bottomP;
+    void * base;
+    
+    
+    top = 0;
+    bottom = height - 1;
+    base = data;
+    buffer = malloc(rowBytes);
+    
+    
+    while ( top < bottom )
+    {
+        topP = (void *)((top * rowBytes) + (intptr_t)base);
+        bottomP = (void *)((bottom * rowBytes) + (intptr_t)base);
+        
+        
+        /*
+         * Save and swap scanlines.
+         *
+         * This code does a simple in-place exchange with a temp buffer.
+         * If you need to reformat the pixels, replace the first two bcopy()
+         * calls with your own custom pixel reformatter.
+         */
+        bcopy( topP, buffer, rowBytes );
+        bcopy( bottomP, topP, rowBytes );
+        bcopy( buffer, bottomP, rowBytes );
+        
+        ++top;
+        --bottom;
+    }
+    free( buffer );
+}
 
 BOOL mf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
@@ -100,6 +161,8 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 			event = mf_event_pop(info_event_queue);
             
             printf("Tick\n");
+            
+            mf_peer_rfx_update(client);
 			
             /*invalid_region = xfp->hdc->hwnd->invalid;
             
@@ -124,27 +187,129 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 void mf_peer_rfx_update(freerdp_peer* client)
 {
     
-    //limit rate
-    /*
-    clock_serv_t cclock;
-    mach_timespec_t mts;
-    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-    clock_get_time(cclock, &mts);
-    mach_port_deallocate(mach_task_self(), cclock);
+    //check
+    /*if (servscreen_height * servscreen_width == 0)
+        return;
     
-    if ( (mts.tv_sec - info_last_sec > 0) && (mts.tv_nsec - info_last_nsec > 500000000) ) {
-        printf("rfx_update\n");
-        
-        info_last_nsec = mts.tv_nsec;
-        info_last_sec = mts.tv_sec;
-    }
+    if(cnt++ < 10)
+        return;
     */
-    
     //capture entire screen
+    
+    int bytewidth;
+    
+    CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
+    
+    CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
+    
+    
+    CFDictionaryRef opts;
+    
+    long ImageCompatibility;
+    long BitmapContextCompatibility;
+    
+    void * keys[3];
+    keys[0] = (void *) kCVPixelBufferCGImageCompatibilityKey;
+    keys[1] = (void *) kCVPixelBufferCGBitmapContextCompatibilityKey;
+    keys[2] = NULL;
+    
+    void * values[3];
+    values[0] = (void *) &ImageCompatibility;
+    values[1] = (void *) &BitmapContextCompatibility;
+    values[2] = NULL;
+    
+    opts = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, NULL, NULL);
+    
+    if (opts == NULL)
+    {
+        printf("failed to create dictionary\n");
+        //return 1;
+    }
+    
+    CVPixelBufferRef pxbuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
+                                          frameSize.height,  kCVPixelFormatType_32ARGB, opts,
+                                          &pxbuffer);
+    
+    if (status != kCVReturnSuccess)
+    {
+        printf("Failed to create pixel buffer! \n");
+        //return 1;
+    }
+    
+    CFRelease(opts);
+    
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
+                                                 frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
+                                                 kCGImageAlphaNoneSkipLast);
+    
+    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
+                                           CGImageGetHeight(image)), image);
+    
+    bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
+    bytewidth = (bytewidth + 3) & ~3; // Align to 4 bytes
+    //swizzleBitmap(pxdata, bytewidth, frameSize.height);     // Solution for ARGB madness
     
     //encode
     
+    STREAM* s;
+	RFX_RECT rect;
+	rdpUpdate* update;
+	mfPeerContext* mfp;
+	SURFACE_BITS_COMMAND* cmd;
+    
+	update = client->update;
+	mfp = (mfPeerContext*) client->context;
+	cmd = &update->surface_bits_command;
+    
+    
+    s = mfp->s;
+    stream_clear(s);
+	stream_set_pos(s, 0);
+    
+    
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = frameSize.width;
+    rect.height = frameSize.height;
+        
+    rfx_compose_message(mfp->rfx_context, s, &rect, 1,
+                        (BYTE*) pxdata, frameSize.width, frameSize.height, frameSize.width * 4);
+    
+    UINT32 x = 0;
+    UINT32 y = 0;
+    
+    cmd->destLeft = x;
+    cmd->destTop = y;
+    cmd->destRight = x + frameSize.width;
+    cmd->destBottom = y + frameSize.height;
+
+    
+	cmd->bpp = 32;
+	cmd->codecID = 3;
+	cmd->width = frameSize.width;
+	cmd->height = frameSize.height;
+	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapData = stream_get_head(s);
+    
     //send
+    printf("send\n");
+    
+	update->SurfaceBits(update->context, cmd);
+    
+    //clean up
+    
+    
+    CGColorSpaceRelease(rgbColorSpace);
+    CGImageRelease(image);
+    CGContextRelease(context);
+    
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+    CVPixelBufferRelease(pxbuffer);
 }
 
 void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
@@ -153,10 +318,10 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
-	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
+	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8A8);
 
 	context->nsc_context = nsc_context_new();
-	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8);
+	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8A8);
 
 	context->s = stream_new(0xFFFF);
 
@@ -220,6 +385,7 @@ static void mf_peer_init(freerdp_peer* client)
 BOOL mf_peer_post_connect(freerdp_peer* client)
 {
 	//mfPeerContext* context = (mfPeerContext*) client->context;
+    rdpSettings* settings = client->settings;
 
 	printf("Client %s is activated\n", client->hostname);
 
@@ -232,10 +398,28 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 	printf("\n");
+    
+    
+    UINT32 servscreen_width = 2880;
+    UINT32 servscreen_height = 1800;
+    UINT32 bitsPerPixel = 32;
+    
+    if ((settings->DesktopWidth != servscreen_width) || (settings->DesktopHeight != servscreen_height))
+	{
+		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
+               settings->DesktopWidth, settings->DesktopHeight, servscreen_width, servscreen_height);
+    }
+    
+    settings->DesktopWidth = servscreen_width;
+    settings->DesktopHeight = servscreen_height;
+    settings->ColorDepth = bitsPerPixel;
+    
+    client->update->DesktopResize(client->update->context);
+	
 
-	printf("Client requested desktop: %dx%dx%d\n",
+	/*printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
-
+     */
 #ifdef WITH_SERVER_CHANNELS
 	/* Iterate all channel names requested by the client and activate those supported by the server */
     int i;

@@ -45,4 +45,6 @@ struct mf_peer_context
 };
 typedef struct mf_peer_context mfPeerContext;
 
+void mf_peer_rfx_update(freerdp_peer* client);
+
 #endif /* MFREERDP_SERVER_H */

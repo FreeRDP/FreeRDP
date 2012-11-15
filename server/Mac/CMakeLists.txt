@@ -18,6 +18,7 @@
 set(MODULE_NAME "mfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_MAC")
 
+FIND_LIBRARY(CORE_VIDEO CoreVideo)
 FIND_LIBRARY(CORE_GRAPHICS CoreGraphics)
 FIND_LIBRARY(APP_SERVICES ApplicationServices)
 
@@ -44,6 +45,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} 
 	freerdp-server
+    ${CORE_VIDEO}
 	${CORE_GRAPHICS}
 	${APP_SERVICES})
 
