@@ -87,27 +87,27 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
-	if (transport->layer != TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG)
+		return TRUE;
+
+	if (transport->TlsIn == NULL)
+		transport->TlsIn = tls_new(transport->settings);
+
+	if (transport->TlsOut == NULL)
+		transport->TlsOut = transport->TlsIn;
+
+	transport->layer = TRANSPORT_LAYER_TLS;
+	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
+
+	if (tls_connect(transport->TlsIn) != TRUE)
 	{
-		if (transport->TlsIn == NULL)
-			transport->TlsIn = tls_new(transport->settings);
+		if (!connectErrorCode)
+			connectErrorCode = TLSCONNECTERROR;
 
-		if (transport->TlsOut == NULL)
-			transport->TlsOut = transport->TlsIn;
+		tls_free(transport->TlsIn);
+		transport->TlsIn = NULL;
 
-		transport->layer = TRANSPORT_LAYER_TLS;
-		transport->TlsIn->sockfd = transport->TcpIn->sockfd;
-
-		if (tls_connect(transport->TlsIn) != TRUE)
-		{
-			if (!connectErrorCode)
-				connectErrorCode = TLSCONNECTERROR;
-
-			tls_free(transport->TlsIn);
-			transport->TlsIn = NULL;
-
-			return FALSE;
-		}
+		return FALSE;
 	}
 
 	return TRUE;
@@ -117,6 +117,9 @@ BOOL transport_connect_nla(rdpTransport* transport)
 {
 	freerdp* instance;
 	rdpSettings* settings;
+
+	if (transport->layer == TRANSPORT_LAYER_TSG)
+		return TRUE;
 
 	if (!transport_connect_tls(transport))
 		return FALSE;

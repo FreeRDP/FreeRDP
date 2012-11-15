@@ -104,6 +104,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
+
+		settings->RdpSecurity = TRUE;
+		settings->TlsSecurity = FALSE;
+		settings->NlaSecurity = FALSE;
+		settings->ExtSecurity = FALSE;
 	}
 	else
 	{
