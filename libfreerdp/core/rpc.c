@@ -960,16 +960,45 @@ int rpc_recv_fault_pdu(RPC_PDU_HEADER* header)
 	return 0;
 }
 
+BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length)
+{
+	RPC_PDU_HEADER* pCommonFields;
+
+	*offset = RPC_COMMON_FIELDS_LENGTH;
+	pCommonFields = ((RPC_PDU_HEADER*) header);
+
+	if (pCommonFields->ptype == PTYPE_RESPONSE)
+	{
+		*offset += 4;
+		rpc_offset_align(offset, 8);
+	}
+	else if (pCommonFields->ptype == PTYPE_REQUEST)
+	{
+		*offset += 4;
+		rpc_offset_align(offset, 8);
+	}
+	else
+	{
+		return FALSE;
+	}
+
+	if (length)
+	{
+		*length = pCommonFields->frag_length - (pCommonFields->auth_length + *offset);
+	}
+
+	return TRUE;
+}
+
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 {
 	int status;
 	int bytesRead;
-    UINT32 offset;
-    RPC_PDU_HEADER* pCommonFields;
+	UINT32 offset;
     
 	/* read first 20 bytes to get RPC common fields */
     
-    bytesRead = 0;
+	bytesRead = 0;
     
 	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
 	{
@@ -985,52 +1014,40 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 	}
     
 	rpc_pdu_header_print((RPC_PDU_HEADER*) header);
-    pCommonFields = ((RPC_PDU_HEADER*) header);
-    
-    offset = RPC_COMMON_FIELDS_LENGTH;
-    
-    if (pCommonFields->ptype == PTYPE_RESPONSE)
-    {
-        offset += 4;
-        rpc_offset_align(&offset, 8);
-    }
-    else if (pCommonFields->ptype == PTYPE_REQUEST)
-    {
-        offset += 4;
-        rpc_offset_align(&offset, 8);
-    }
 
-    while (bytesRead < offset)
-    {
-        status = tls_read(rpc->tls_out, &header[bytesRead], offset - bytesRead);
+	rpc_get_stub_data_info(rpc, header, &offset, NULL);
+
+	while (bytesRead < offset)
+	{
+		status = tls_read(rpc->tls_out, &header[bytesRead], offset - bytesRead);
         
-        if (status < 0)
-            return status;
+		if (status < 0)
+			return status;
         
-        bytesRead += status;
-    }
+		bytesRead += status;
+	}
     
-    return bytesRead;
+	return bytesRead;
 }
 
 int rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
-    int headerLength;
+	int headerLength;
 	int bytesRead = 0;
 	RPC_PDU_HEADER* header;
 
-    status = rpc_recv_pdu_header(rpc, rpc->buffer);
+	status = rpc_recv_pdu_header(rpc, rpc->buffer);
     
-    if (status < 1)
-    {
-        printf("rpc_recv_pdu_header: error reading header\n");
-        return status;
-    }
+	if (status < 1)
+	{
+		printf("rpc_recv_pdu_header: error reading header\n");
+		return status;
+	}
     
-    headerLength = status;
-    header = (RPC_PDU_HEADER*) rpc->buffer;
-    bytesRead += status;
+	headerLength = status;
+	header = (RPC_PDU_HEADER*) rpc->buffer;
+	bytesRead += status;
 
 	if (header->frag_length > rpc->length)
 	{
@@ -1051,12 +1068,6 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 		bytesRead += status;
 	}
-    
-    if (headerLength > RPC_COMMON_FIELDS_LENGTH)
-    {
-        printf("RPC Stub Data:\n");
-        freerdp_hexdump(&rpc->buffer[headerLength], header->frag_length - headerLength);
-    }
 
 	if (!(header->pfc_flags & PFC_LAST_FRAG))
 	{

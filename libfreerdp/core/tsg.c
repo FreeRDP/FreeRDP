@@ -1098,32 +1098,31 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
-	int copyLength;
+	int CopyLength;
 	RPC_PDU_HEADER* header;
 	rdpRpc* rpc = tsg->rpc;
-    BYTE buffer[RPC_PDU_HEADER_MAX_LENGTH];
 
-	printf("tsg_read: %d, pending: %d\n", length, tsg->pendingPdu);
+	printf("tsg_read: %d, pending: %d\n", length, tsg->PendingPdu);
 
-	if (tsg->pendingPdu)
+	if (tsg->PendingPdu)
 	{
 		header = (RPC_PDU_HEADER*) rpc->buffer;
 
-		copyLength = (tsg->bytesAvailable > length) ? length : tsg->bytesAvailable;
+		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 
-		CopyMemory(data, &rpc->buffer[tsg->bytesRead], copyLength);
-		tsg->bytesAvailable -= copyLength;
-		tsg->bytesRead += copyLength;
+		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		tsg->BytesAvailable -= CopyLength;
+		tsg->BytesRead += CopyLength;
 
-		if (tsg->bytesAvailable < 1)
-			tsg->pendingPdu = FALSE;
+		if (tsg->BytesAvailable < 1)
+			tsg->PendingPdu = FALSE;
 
-		return copyLength;
+		return CopyLength;
 	}
 	else
 	{
-		status = rpc_recv_pdu_header(rpc, buffer);
-		header = (RPC_PDU_HEADER*) buffer;
+		status = rpc_recv_pdu(rpc);
+		header = (RPC_PDU_HEADER*) rpc->buffer;
 
 		if (header->frag_length == 64)
 		{
@@ -1131,17 +1130,26 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 			return tsg_read(tsg, data, length);
 		}
 
-		tsg->pendingPdu = TRUE;
-		tsg->bytesAvailable = header->frag_length;
-		tsg->bytesRead = 0;
+		if (!rpc_get_stub_data_info(rpc, rpc->buffer, &tsg->StubOffset, &tsg->StubLength))
+		{
+			printf("tsg_read error: expected stub\n");
+			return -1;
+		}
 
-		copyLength = (tsg->bytesAvailable > length) ? length : tsg->bytesAvailable;
+		tsg->PendingPdu = TRUE;
+		tsg->BytesAvailable = tsg->StubLength;
+		tsg->BytesRead = 0;
 
-		CopyMemory(data, &rpc->buffer[tsg->bytesRead], copyLength);
-		tsg->bytesAvailable -= copyLength;
-		tsg->bytesRead += copyLength;
+		printf("RPC Stub (offset: %d length: %d):\n", tsg->StubOffset, tsg->StubLength);
+		freerdp_hexdump(&rpc->buffer[tsg->StubOffset], tsg->StubLength);
 
-		return copyLength;
+		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+
+		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		tsg->BytesAvailable -= CopyLength;
+		tsg->BytesRead += CopyLength;
+
+		return CopyLength;
 	}
 }
 
@@ -1161,7 +1169,7 @@ rdpTsg* tsg_new(rdpTransport* transport)
 		tsg->transport = transport;
 		tsg->settings = transport->settings;
 		tsg->rpc = rpc_new(tsg->transport);
-		tsg->pendingPdu = FALSE;
+		tsg->PendingPdu = FALSE;
 	}
 
 	return tsg;

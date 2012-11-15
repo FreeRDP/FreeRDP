@@ -45,9 +45,11 @@ struct rdp_tsg
 	UINT16 Port;
 	LPWSTR Hostname;
 	LPWSTR MachineName;
-	BOOL pendingPdu;
-	BOOL bytesRead;
-	BOOL bytesAvailable;
+	BOOL PendingPdu;
+	BOOL BytesRead;
+	BOOL BytesAvailable;
+	UINT32 StubOffset;
+	UINT32 StubLength;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	CONTEXT_HANDLE TunnelContext;
