@@ -171,7 +171,7 @@ int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize
 int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
 
-int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ConnectionTimeout);
 int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout);
 
 int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
@@ -210,11 +210,16 @@ int rts_destination_command_write(BYTE* buffer, UINT32 Destination);
 int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficSent);
 
-BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc);
-BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc);
-BOOL rts_send_keep_alive_pdu(rdpRpc* rpc);
-BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc);
-BOOL rts_send_ping_pdu(rdpRpc* rpc);
+int rts_send_CONN_A1_pdu(rdpRpc* rpc);
+int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+
+int rts_send_CONN_B1_pdu(rdpRpc* rpc);
+
+int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+
+int rts_send_keep_alive_pdu(rdpRpc* rpc);
+int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
+int rts_send_ping_pdu(rdpRpc* rpc);
 
 int rts_recv_pdu(rdpRpc* rpc);
 

@@ -151,7 +151,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	if (!rts_send_CONN_A1_pdu(rpc))
+	if (rts_send_CONN_A1_pdu(rpc) != 0)
 	{
 		printf("rpc_send_CONN_A1_pdu error!\n");
 		return FALSE;
@@ -163,7 +163,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	if (!rts_send_CONN_B1_pdu(rpc))
+	if (rts_send_CONN_B1_pdu(rpc) != 0)
 	{
 		printf("rpc_send_CONN_B1_pdu error!\n");
 		return FALSE;
@@ -245,7 +245,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_pdu_commands(rpc, rts);
+	rts_recv_CONN_A3_pdu(rpc, rpc->buffer, rpc->length);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
@@ -284,7 +284,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_pdu_commands(rpc, rts);
+	rts_recv_CONN_C2_pdu(rpc, rpc->buffer, rpc->length);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
@@ -403,10 +403,10 @@ int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT3
 	return 28;
 }
 
-int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ConnectionTimeout)
 {
-
-	/* ConnectionTimeout (4 bytes) */
+	if (ConnectionTimeout)
+		*ConnectionTimeout = *((UINT32*) &buffer[0]); /* ConnectionTimeout (4 bytes) */
 
 	return 4;
 }
@@ -672,7 +672,9 @@ void rts_generate_cookie(BYTE* cookie)
 	RAND_pseudo_bytes(cookie, 16);
 }
 
-BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
+/* CONN/A Sequence */
+
+int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
@@ -706,10 +708,21 @@ BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
+int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 ConnectionTimeout;
+
+	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
+
+	return 0;
+}
+
+/* CONN/B Sequence */
+
+int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
@@ -747,10 +760,19 @@ BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
+/* CONN/C Sequence */
+
+int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	return 0;
+}
+
+/* Out-of-Sequence PDUs */
+
+int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
@@ -770,10 +792,10 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
+int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
@@ -804,10 +826,10 @@ BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rts_send_ping_pdu(rdpRpc* rpc)
+int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
@@ -827,7 +849,7 @@ BOOL rts_send_ping_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return TRUE;
+	return 0;
 }
 
 static RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
@@ -1182,7 +1204,7 @@ int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 				break;
 
 			case RTS_CMD_CONNECTION_TIMEOUT:
-				offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length);
+				offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length, NULL);
 				break;
 
 			case RTS_CMD_COOKIE:

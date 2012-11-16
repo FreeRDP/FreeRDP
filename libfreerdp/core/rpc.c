@@ -674,8 +674,8 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	//if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
 	//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
 
-	/* read first 20 bytes to get RPC PDU Header */
-	status = tls_read(rpc->TlsOut, data, 20);
+	/* Read common header fields */
+	status = tls_read(rpc->TlsOut, data, RPC_COMMON_FIELDS_LENGTH);
 
 	if (status <= 0)
 		return status;
@@ -684,7 +684,8 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 
 	rpc_pdu_header_print(header);
 
-	status = tls_read(rpc->TlsOut, &data[20], header->common.frag_length - 20);
+	status = tls_read(rpc->TlsOut, &data[RPC_COMMON_FIELDS_LENGTH],
+			header->common.frag_length - RPC_COMMON_FIELDS_LENGTH);
 
 	if (status < 0)
 		return status;
@@ -792,7 +793,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 	int bytesRead;
 	UINT32 offset;
     
-	/* read first 20 bytes to get RPC common fields */
+	/* Read common header fields */
     
 	bytesRead = 0;
     
