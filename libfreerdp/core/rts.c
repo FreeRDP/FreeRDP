@@ -26,6 +26,11 @@
 #include "rts.h"
 
 /**
+ * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
+ * http://msdn.microsoft.com/en-us/library/cc243950/
+ */
+
+/**
  *                                      Connection Establishment\n
  *
  *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
@@ -47,15 +52,36 @@
  *
  */
 
-/**
- * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
- * http://msdn.microsoft.com/en-us/library/cc243950/
- */
-
 BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
 	HttpResponse* http_response;
+
+	/**
+	 * Connection Opening
+	 *
+	 * When opening a virtual connection to the server, an implementation of this protocol MUST perform
+	 * the following sequence of steps:
+	 *
+	 * 1. Send an IN channel request as specified in section 2.1.2.1.1, containing the connection timeout,
+	 *    ResourceType UUID, and Session UUID values, if any, supplied by the higher-layer protocol or application.
+	 *
+	 * 2. Send an OUT channel request as specified in section 2.1.2.1.2.
+	 *
+	 * 3. Send a CONN/A1 RTS PDU as specified in section 2.2.4.2
+	 *
+	 * 4. Send a CONN/B1 RTS PDU as specified in section 2.2.4.5
+	 *
+	 * 5. Wait for the connection establishment protocol sequence as specified in 3.2.1.5.3.1 to complete
+	 *
+	 * An implementation MAY execute steps 1 and 2 in parallel. An implementation SHOULD execute steps
+	 * 3 and 4 in parallel. An implementation MUST execute step 3 after completion of step 1 and execute
+	 * step 4 after completion of step 2.
+	 *
+	 */
+
+	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
+	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_INITIAL");
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
@@ -81,7 +107,37 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	/* Receive OUT Channel Response */
+	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT;
+	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
+
+	/**
+	 * Receive OUT Channel Response
+	 *
+	 * A client implementation MUST NOT accept the OUT channel HTTP response in any state other than
+	 * Out Channel Wait. If received in any other state, this HTTP response is a protocol error. Therefore,
+	 * the client MUST consider the virtual connection opening a failure and indicate this to higher layers
+	 * in an implementation-specific way. The Microsoft Windows® implementation returns
+	 * RPC_S_PROTOCOL_ERROR, as specified in [MS-ERREF], to higher-layer protocols.
+	 *
+	 * If this HTTP response is received in Out Channel Wait state, the client MUST process the fields of
+	 * this response as defined in this section.
+	 *
+	 * First, the client MUST determine whether the response indicates a success or a failure. If the status
+	 * code is set to 200, the client MUST interpret this as a success, and it MUST do the following:
+	 *
+	 * 1. Ignore the values of all other header fields.
+	 *
+	 * 2. Transition to Wait_A3W state.
+	 *
+	 * 3. Wait for network events.
+	 *
+	 * 4. Skip the rest of the processing in this section.
+	 *
+	 * If the status code is not set to 200, the client MUST interpret this as a failure and follow the same
+	 * processing rules as specified in section 3.2.2.5.6.
+	 *
+	 */
+
 	http_response = http_response_recv(rpc->TlsOut);
 
 	if (http_response->StatusCode != 200)
@@ -93,20 +149,62 @@ BOOL rts_connect(rdpRpc* rpc)
 	}
 
 	http_response_print(http_response);
-
 	http_response_free(http_response);
 
-	/* Receive CONN_A3 RTS PDU */
+	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
+	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_A3W");
+
+	/**
+	 * Receive CONN_A3 RTS PDU
+	 *
+	 * A client implementation MUST NOT accept the CONN/A3 RTS PDU in any state other than
+	 * Wait_A3W. If received in any other state, this PDU is a protocol error and the client
+	 * MUST consider the virtual connection opening a failure and indicate this to higher
+	 * layers in an implementation-specific way.
+	 *
+	 * Set the ConnectionTimeout in the Ping Originator of the Client's IN Channel to the
+	 * ConnectionTimeout in the CONN/A3 PDU.
+	 *
+	 * If this RTS PDU is received in Wait_A3W state, the client MUST transition the state
+	 * machine to Wait_C2 state and wait for network events.
+	 *
+	 */
 	status = rts_recv_pdu(rpc);
 
 	if (status < 1)
 		return FALSE;
 
-	/* Receive CONN_C2 RTS PDU */
+	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
+	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
+
+	/**
+	 * Receive CONN_C2 RTS PDU
+	 *
+	 * A client implementation MUST NOT accept the CONN/C2 RTS PDU in any state other than Wait_C2.
+	 * If received in any other state, this PDU is a protocol error and the client MUST consider the virtual
+	 * connection opening a failure and indicate this to higher layers in an implementation-specific way.
+	 *
+	 * If this RTS PDU is received in Wait_C2 state, the client implementation MUST do the following:
+	 *
+	 * 1. Transition the state machine to opened state.
+	 *
+	 * 2. Set the connection time-out protocol variable to the value of the ConnectionTimeout field from
+	 *    the CONN/C2 RTS PDU.
+	 *
+	 * 3. Set the PeerReceiveWindow value in the SendingChannel of the Client IN Channel to the
+	 *    ReceiveWindowSize value in the CONN/C2 PDU.
+	 *
+	 * 4. Indicate to higher-layer protocols that the virtual connection opening is a success.
+	 *
+	 */
+
 	status = rts_recv_pdu(rpc);
 
 	if (status < 1)
 		return FALSE;
+
+	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
+	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
 
 	return TRUE;
 }
@@ -182,13 +280,18 @@ void rts_pdu_header_init(rpcconn_rts_hdr_t* header)
 int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* ReceiveWindowSize (4 bytes) */
+
 	return 4;
 }
 
 int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_RECEIVE_WINDOW_SIZE; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = ReceiveWindowSize; /* ReceiveWindowSize (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_RECEIVE_WINDOW_SIZE; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = ReceiveWindowSize; /* ReceiveWindowSize (4 bytes) */
+	}
+
 	return 8;
 }
 
@@ -198,83 +301,113 @@ int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	/* BytesReceived (4 bytes) */
 	/* AvailableWindow (4 bytes) */
 	/* ChannelCookie (16 bytes) */
+
 	return 24;
 }
 
 int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_FLOW_CONTROL_ACK; /* CommandType (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_FLOW_CONTROL_ACK; /* CommandType (4 bytes) */
 
-	/* Ack (24 bytes) */
-	*((UINT32*) &buffer[4]) = BytesReceived; /* BytesReceived (4 bytes) */
-	*((UINT32*) &buffer[8]) = AvailableWindow; /* AvailableWindow (4 bytes) */
-	CopyMemory(&buffer[12], ChannelCookie, 16); /* ChannelCookie (16 bytes) */
+		/* Ack (24 bytes) */
+		*((UINT32*) &buffer[4]) = BytesReceived; /* BytesReceived (4 bytes) */
+		*((UINT32*) &buffer[8]) = AvailableWindow; /* AvailableWindow (4 bytes) */
+		CopyMemory(&buffer[12], ChannelCookie, 16); /* ChannelCookie (16 bytes) */
+	}
 
 	return 28;
 }
 
 int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+
 	/* ConnectionTimeout (4 bytes) */
+
 	return 4;
 }
 
 int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_CONNECTION_TIMEOUT; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = ConnectionTimeout; /* ConnectionTimeout (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_CONNECTION_TIMEOUT; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = ConnectionTimeout; /* ConnectionTimeout (4 bytes) */
+	}
+
 	return 8;
 }
 
 int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* Cookie (16 bytes) */
+
 	return 16;
 }
 
 int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_COOKIE; /* CommandType (4 bytes) */
-	CopyMemory(&buffer[4], Cookie, 16); /* Cookie (16 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_COOKIE; /* CommandType (4 bytes) */
+		CopyMemory(&buffer[4], Cookie, 16); /* Cookie (16 bytes) */
+	}
+
 	return 20;
 }
 
 int rts_channel_lifetime_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* ChannelLifetime (4 bytes) */
+
 	return 4;
 }
 
 int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifetime)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_CHANNEL_LIFETIME; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = ChannelLifetime; /* ChannelLifetime (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_CHANNEL_LIFETIME; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = ChannelLifetime; /* ChannelLifetime (4 bytes) */
+	}
+
 	return 8;
 }
 
 int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* ClientKeepalive (4 bytes) */
+
 	return 4;
 }
 
 int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_KEEPALIVE; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = ClientKeepalive; /* ClientKeepalive (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_KEEPALIVE; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = ClientKeepalive; /* ClientKeepalive (4 bytes) */
+	}
+
 	return 8;
 }
 
 int rts_version_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* Version (4 bytes) */
+
 	return 4;
 }
 
 int rts_version_command_write(BYTE* buffer)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_VERSION; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = 1; /* Version (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_VERSION; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = 1; /* Version (4 bytes) */
+	}
+
 	return 8;
 }
 
@@ -285,7 +418,11 @@ int rts_empty_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_empty_command_write(BYTE* buffer)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_EMPTY; /* CommandType (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_EMPTY; /* CommandType (4 bytes) */
+	}
+
 	return 4;
 }
 
@@ -301,9 +438,13 @@ int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_padding_command_write(BYTE* buffer, UINT32 ConformanceCount)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_PADDING; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = ConformanceCount; /* ConformanceCount (4 bytes) */
-	ZeroMemory(&buffer[8], ConformanceCount); /* Padding (variable) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_PADDING; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = ConformanceCount; /* ConformanceCount (4 bytes) */
+		ZeroMemory(&buffer[8], ConformanceCount); /* Padding (variable) */
+	}
+
 	return 8 + ConformanceCount;
 }
 
@@ -314,7 +455,11 @@ int rts_negative_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_negative_ance_command_write(BYTE* buffer)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_NEGATIVE_ANCE; /* CommandType (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_NEGATIVE_ANCE; /* CommandType (4 bytes) */
+	}
+
 	return 4;
 }
 
@@ -325,7 +470,11 @@ int rts_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_ance_command_write(BYTE* buffer)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_ANCE; /* CommandType (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_ANCE; /* CommandType (4 bytes) */
+	}
+
 	return 4;
 }
 
@@ -339,31 +488,44 @@ int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		/* ClientAddress (4 bytes) */
 		/* padding (12 bytes) */
+
 		return 4 + 4 + 12;
 	}
 	else
 	{
 		/* ClientAddress (16 bytes) */
 		/* padding (12 bytes) */
+
 		return 4 + 16 + 12;
 	}
 }
 
 int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* ClientAddress)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_ADDRESS; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = AddressType; /* AddressType (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_ADDRESS; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = AddressType; /* AddressType (4 bytes) */
+	}
 
 	if (AddressType == 0)
 	{
-		CopyMemory(&buffer[8], ClientAddress, 4); /* ClientAddress (4 bytes) */
-		ZeroMemory(&buffer[12], 12); /* padding (12 bytes) */
+		if (buffer)
+		{
+			CopyMemory(&buffer[8], ClientAddress, 4); /* ClientAddress (4 bytes) */
+			ZeroMemory(&buffer[12], 12); /* padding (12 bytes) */
+		}
+
 		return 24;
 	}
 	else
 	{
-		CopyMemory(&buffer[8], ClientAddress, 16); /* ClientAddress (16 bytes) */
-		ZeroMemory(&buffer[24], 12); /* padding (12 bytes) */
+		if (buffer)
+		{
+			CopyMemory(&buffer[8], ClientAddress, 16); /* ClientAddress (16 bytes) */
+			ZeroMemory(&buffer[24], 12); /* padding (12 bytes) */
+		}
+
 		return 36;
 	}
 }
@@ -371,39 +533,54 @@ int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* Cli
 int rts_association_group_id_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* AssociationGroupId (16 bytes) */
+
 	return 16;
 }
 
 int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_ASSOCIATION_GROUP_ID; /* CommandType (4 bytes) */
-	CopyMemory(&buffer[4], AssociationGroupId, 16); /* AssociationGroupId (16 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_ASSOCIATION_GROUP_ID; /* CommandType (4 bytes) */
+		CopyMemory(&buffer[4], AssociationGroupId, 16); /* AssociationGroupId (16 bytes) */
+	}
+
 	return 20;
 }
 
 int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* Destination (4 bytes) */
+
 	return 4;
 }
 
 int rts_destination_command_write(BYTE* buffer, UINT32 Destination)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_DESTINATION; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = Destination; /* Destination (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_DESTINATION; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = Destination; /* Destination (4 bytes) */
+	}
+
 	return 8;
 }
 
 int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	/* PingTrafficSent (4 bytes) */
+
 	return 4;
 }
 
 int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficSent)
 {
-	*((UINT32*) &buffer[0]) = RTS_CMD_PING_TRAFFIC_SENT_NOTIFY; /* CommandType (4 bytes) */
-	*((UINT32*) &buffer[4]) = PingTrafficSent; /* PingTrafficSent (4 bytes) */
+	if (buffer)
+	{
+		*((UINT32*) &buffer[0]) = RTS_CMD_PING_TRAFFIC_SENT_NOTIFY; /* CommandType (4 bytes) */
+		*((UINT32*) &buffer[4]) = PingTrafficSent; /* PingTrafficSent (4 bytes) */
+	}
+
 	return 8;
 }
 
@@ -502,11 +679,9 @@ BOOL rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending Keep-Alive RTS PDU");
 
-	/* TODO: fix hardcoded value */
-
 	buffer = (BYTE*) malloc(header.frag_length);
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
-	rts_client_keepalive_command_write(&buffer[20], 0x00007530); /* ClientKeepalive (8 bytes) */
+	rts_client_keepalive_command_write(&buffer[20], rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
 
 	rpc_in_write(rpc, buffer, header.frag_length);
 
@@ -571,6 +746,200 @@ BOOL rts_send_ping_pdu(rdpRpc* rpc)
 
 	return TRUE;
 }
+
+static RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 5,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
+			RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE = { RTS_FLAG_NONE, 6,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
+			RTS_CMD_CLIENT_KEEPALIVE, RTS_CMD_ASSOCIATION_GROUP_ID, 0, 0 } };
+static RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE = { RTS_FLAG_IN_CHANNEL, 7,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE,
+			RTS_CMD_CONNECTION_TIMEOUT, RTS_CMD_ASSOCIATION_GROUP_ID, RTS_CMD_CLIENT_ADDRESS, 0 } };
+static RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE = { RTS_FLAG_NONE, 2,
+		{ RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_VERSION, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE = { RTS_FLAG_NONE, 3,
+		{ RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE = { RTS_FLAG_NONE, 3,
+		{ RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE = { RTS_FLAG_NONE, 4,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
+			RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE = { RTS_FLAG_NONE, 4,
+		{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE,
+			RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE = { RTS_FLAG_NONE, 4,
+		{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_RECEIVE_WINDOW_SIZE,
+			RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_EMPTY, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 4,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
+			RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL | RTS_FLAG_OUT_CHANNEL, 7,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_CHANNEL_LIFETIME,
+			RTS_CMD_RECEIVE_WINDOW_SIZE, RTS_CMD_CONNECTION_TIMEOUT, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
+		{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 3,
+		{ RTS_CMD_DESTINATION, RTS_CMD_VERSION, RTS_CMD_CONNECTION_TIMEOUT, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 1,
+		{ RTS_CMD_DESTINATION, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE = { RTS_FLAG_RECYCLE_CHANNEL, 5,
+		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_COOKIE,
+			RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE = { RTS_FLAG_NONE, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE = { RTS_FLAG_NONE, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE = { RTS_FLAG_NONE, 3,
+		{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, RTS_CMD_VERSION, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE = { RTS_FLAG_OUT_CHANNEL, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_COOKIE, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE = { RTS_FLAG_NONE, 1,
+		{ RTS_CMD_NEGATIVE_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE = { RTS_FLAG_EOF, 1,
+		{ RTS_CMD_ANCE, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE = { RTS_FLAG_PING, 1,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 } };
+
+static RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+		{ RTS_CMD_CLIENT_KEEPALIVE, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+		{ RTS_CMD_PING_TRAFFIC_SENT_NOTIFY, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_ECHO_SIGNATURE = { RTS_FLAG_ECHO, 0,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_PING_SIGNATURE = { RTS_FLAG_PING, 0,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE = { RTS_FLAG_OTHER_CMD, 1,
+		{ RTS_CMD_FLOW_CONTROL_ACK, 0, 0, 0, 0, 0, 0, 0 } };
+static RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE = { RTS_FLAG_OTHER_CMD, 2,
+		{ RTS_CMD_DESTINATION, RTS_CMD_FLOW_CONTROL_ACK, 0, 0, 0, 0, 0, 0 } };
+
+struct _RTS_PDU_SIGNATURE_ENTRY
+{
+	UINT32 SignatureId;
+	RtsPduSignature* Signature;
+	const char* PduName;
+};
+typedef struct _RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
+
+RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] =
+{
+	{ RTS_PDU_CONN_A1, &RTS_PDU_CONN_A1_SIGNATURE, "CONN/A1" },
+	{ RTS_PDU_CONN_A2, &RTS_PDU_CONN_A2_SIGNATURE, "CONN/A2" },
+	{ RTS_PDU_CONN_A3, &RTS_PDU_CONN_A3_SIGNATURE, "CONN/A3" },
+
+	{ RTS_PDU_CONN_B1, &RTS_PDU_CONN_B1_SIGNATURE, "CONN/B1" },
+	{ RTS_PDU_CONN_B2, &RTS_PDU_CONN_B2_SIGNATURE, "CONN/B2" },
+	{ RTS_PDU_CONN_B3, &RTS_PDU_CONN_B3_SIGNATURE, "CONN/B3" },
+
+	{ RTS_PDU_CONN_C1, &RTS_PDU_CONN_C1_SIGNATURE, "CONN/C1" },
+	{ RTS_PDU_CONN_C2, &RTS_PDU_CONN_C2_SIGNATURE, "CONN/C2" },
+
+	{ RTS_PDU_IN_R1_A1, &RTS_PDU_IN_R1_A1_SIGNATURE, "IN_R1/A1" },
+	{ RTS_PDU_IN_R1_A2, &RTS_PDU_IN_R1_A2_SIGNATURE, "IN_R1/A2" },
+	{ RTS_PDU_IN_R1_A3, &RTS_PDU_IN_R1_A3_SIGNATURE, "IN_R1/A3" },
+	{ RTS_PDU_IN_R1_A4, &RTS_PDU_IN_R1_A4_SIGNATURE, "IN_R1/A4" },
+	{ RTS_PDU_IN_R1_A5, &RTS_PDU_IN_R1_A5_SIGNATURE, "IN_R1/A5" },
+	{ RTS_PDU_IN_R1_A6, &RTS_PDU_IN_R1_A6_SIGNATURE, "IN_R1/A6" },
+
+	{ RTS_PDU_IN_R1_B1, &RTS_PDU_IN_R1_B1_SIGNATURE, "IN_R1/B1" },
+	{ RTS_PDU_IN_R1_B2, &RTS_PDU_IN_R1_B2_SIGNATURE, "IN_R1/B2" },
+
+	{ RTS_PDU_IN_R2_A1, &RTS_PDU_IN_R2_A1_SIGNATURE, "IN_R2/A1" },
+	{ RTS_PDU_IN_R2_A2, &RTS_PDU_IN_R2_A2_SIGNATURE, "IN_R2/A2" },
+	{ RTS_PDU_IN_R2_A3, &RTS_PDU_IN_R2_A3_SIGNATURE, "IN_R2/A3" },
+	{ RTS_PDU_IN_R2_A4, &RTS_PDU_IN_R2_A4_SIGNATURE, "IN_R2/A4" },
+	{ RTS_PDU_IN_R2_A5, &RTS_PDU_IN_R2_A5_SIGNATURE, "IN_R2/A5" },
+
+	{ RTS_PDU_OUT_R1_A1, &RTS_PDU_OUT_R1_A1_SIGNATURE, "OUT_R1/A1" },
+	{ RTS_PDU_OUT_R1_A2, &RTS_PDU_OUT_R1_A2_SIGNATURE, "OUT_R1/A2" },
+	{ RTS_PDU_OUT_R1_A3, &RTS_PDU_OUT_R1_A3_SIGNATURE, "OUT_R1/A3" },
+	{ RTS_PDU_OUT_R1_A4, &RTS_PDU_OUT_R1_A4_SIGNATURE, "OUT_R1/A4" },
+	{ RTS_PDU_OUT_R1_A5, &RTS_PDU_OUT_R1_A5_SIGNATURE, "OUT_R1/A5" },
+	{ RTS_PDU_OUT_R1_A6, &RTS_PDU_OUT_R1_A6_SIGNATURE, "OUT_R1/A6" },
+	{ RTS_PDU_OUT_R1_A7, &RTS_PDU_OUT_R1_A7_SIGNATURE, "OUT_R1/A7" },
+	{ RTS_PDU_OUT_R1_A8, &RTS_PDU_OUT_R1_A8_SIGNATURE, "OUT_R1/A8" },
+	{ RTS_PDU_OUT_R1_A9, &RTS_PDU_OUT_R1_A9_SIGNATURE, "OUT_R1/A9" },
+	{ RTS_PDU_OUT_R1_A10, &RTS_PDU_OUT_R1_A10_SIGNATURE, "OUT_R1/A10" },
+	{ RTS_PDU_OUT_R1_A11, &RTS_PDU_OUT_R1_A11_SIGNATURE, "OUT_R1/A11" },
+
+	{ RTS_PDU_OUT_R2_A1, &RTS_PDU_OUT_R2_A1_SIGNATURE, "OUT_R2/A1" },
+	{ RTS_PDU_OUT_R2_A2, &RTS_PDU_OUT_R2_A2_SIGNATURE, "OUT_R2/A2" },
+	{ RTS_PDU_OUT_R2_A3, &RTS_PDU_OUT_R2_A3_SIGNATURE, "OUT_R2/A3" },
+	{ RTS_PDU_OUT_R2_A4, &RTS_PDU_OUT_R2_A4_SIGNATURE, "OUT_R2/A4" },
+	{ RTS_PDU_OUT_R2_A5, &RTS_PDU_OUT_R2_A5_SIGNATURE, "OUT_R2/A5" },
+	{ RTS_PDU_OUT_R2_A6, &RTS_PDU_OUT_R2_A6_SIGNATURE, "OUT_R2/A6" },
+	{ RTS_PDU_OUT_R2_A7, &RTS_PDU_OUT_R2_A7_SIGNATURE, "OUT_R2/A7" },
+	{ RTS_PDU_OUT_R2_A8, &RTS_PDU_OUT_R2_A8_SIGNATURE, "OUT_R2/A8" },
+
+	{ RTS_PDU_OUT_R2_B1, &RTS_PDU_OUT_R2_B1_SIGNATURE, "OUT_R2/B1" },
+	{ RTS_PDU_OUT_R2_B2, &RTS_PDU_OUT_R2_B2_SIGNATURE, "OUT_R2/B2" },
+	{ RTS_PDU_OUT_R2_B3, &RTS_PDU_OUT_R2_B3_SIGNATURE, "OUT_R2/B3" },
+
+	{ RTS_PDU_OUT_R2_C1, &RTS_PDU_OUT_R2_C1_SIGNATURE, "OUT_R2/C1" },
+
+	{ RTS_PDU_KEEP_ALIVE, &RTS_PDU_KEEP_ALIVE_SIGNATURE, "Keep-Alive" },
+	{ RTS_PDU_PING_TRAFFIC_SENT_NOTIFY, &RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE, "Ping Traffic Sent Notify" },
+	{ RTS_PDU_ECHO, &RTS_PDU_ECHO_SIGNATURE, "Echo" },
+	{ RTS_PDU_PING, &RTS_PDU_PING_SIGNATURE, "Ping" },
+	{ RTS_PDU_FLOW_CONTROL_ACK, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, "FlowControlAck" },
+	{ RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION, &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, "FlowControlAckWithDestination" },
+
+	{ 0, NULL }
+};
 
 int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 {

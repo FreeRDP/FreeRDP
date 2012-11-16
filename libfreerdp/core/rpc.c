@@ -1052,20 +1052,20 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtu
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 {
-	RpcVirtualConnection* virtual_connection = (RpcVirtualConnection*) malloc(sizeof(RpcVirtualConnection));
+	RpcVirtualConnection* connection = (RpcVirtualConnection*) malloc(sizeof(RpcVirtualConnection));
 
-	if (virtual_connection != NULL)
+	if (connection != NULL)
 	{
-		ZeroMemory(virtual_connection, sizeof(RpcVirtualConnection));
-		virtual_connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-		virtual_connection->DefaultInChannel = (RpcInChannel*) malloc(sizeof(RpcInChannel));
-		virtual_connection->DefaultOutChannel = (RpcOutChannel*) malloc(sizeof(RpcOutChannel));
-		ZeroMemory(virtual_connection->DefaultInChannel, sizeof(RpcInChannel));
-		ZeroMemory(virtual_connection->DefaultOutChannel, sizeof(RpcOutChannel));
-		rpc_client_virtual_connection_init(rpc, virtual_connection);
+		ZeroMemory(connection, sizeof(RpcVirtualConnection));
+		connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
+		connection->DefaultInChannel = (RpcInChannel*) malloc(sizeof(RpcInChannel));
+		connection->DefaultOutChannel = (RpcOutChannel*) malloc(sizeof(RpcOutChannel));
+		ZeroMemory(connection->DefaultInChannel, sizeof(RpcInChannel));
+		ZeroMemory(connection->DefaultOutChannel, sizeof(RpcOutChannel));
+		rpc_client_virtual_connection_init(rpc, connection);
 	}
 
-	return virtual_connection;
+	return connection;
 }
 
 void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection)
@@ -1075,6 +1075,39 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 		free(virtual_connection);
 	}
 }
+
+/* Virtual Connection Cookie Table */
+
+RpcVirtualConnectionCookieTable* rpc_virtual_connection_cookie_table_new(rdpRpc* rpc)
+{
+	RpcVirtualConnectionCookieTable* table;
+
+	table = (RpcVirtualConnectionCookieTable*) malloc(sizeof(RpcVirtualConnectionCookieTable));
+
+	if (table != NULL)
+	{
+		ZeroMemory(table, sizeof(RpcVirtualConnectionCookieTable));
+
+		table->Count = 0;
+		table->ArraySize = 32;
+
+		table->Entries = (RpcVirtualConnectionCookieEntry*) malloc(sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
+		ZeroMemory(table->Entries, sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
+	}
+
+	return table;
+}
+
+void rpc_virtual_connection_cookie_table_free(RpcVirtualConnectionCookieTable* table)
+{
+	if (table != NULL)
+	{
+		free(table->Entries);
+		free(table);
+	}
+}
+
+/* NTLM over HTTP */
 
 rdpNtlmHttp* ntlm_http_new()
 {
@@ -1128,6 +1161,8 @@ void ntlm_http_free(rdpNtlmHttp* ntlm_http)
 	}
 }
 
+/* RPC Core Module */
+
 rdpRpc* rpc_new(rdpTransport* transport)
 {
 	rdpRpc* rpc = (rdpRpc*) malloc(sizeof(rdpRpc));
@@ -1164,7 +1199,13 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_recv_frag = 0x0FF8;
 
 		rpc->ReceiveWindow = 0x00010000;
+
+		rpc->KeepAliveInterval = 30000;
+		rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
+		rpc->CurrentKeepAliveTime = 0;
+
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
+		rpc->VirtualConnectionCookieTable = rpc_virtual_connection_cookie_table_new(rpc);
 
 		rpc->call_id = 1;
 	}
@@ -1179,6 +1220,7 @@ void rpc_free(rdpRpc* rpc)
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
+		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
 		free(rpc);
 	}
 }

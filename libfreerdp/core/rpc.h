@@ -602,6 +602,24 @@ struct rpc_virtual_connection
 };
 typedef struct rpc_virtual_connection RpcVirtualConnection;
 
+/* Virtual Connection Cookie Table */
+
+struct rpc_virtual_connection_cookie_entry
+{
+	BYTE Cookie[16];
+	UINT32 ReferenceCount;
+	RpcVirtualConnection* Reference;
+};
+typedef struct rpc_virtual_connection_cookie_entry RpcVirtualConnectionCookieEntry;
+
+struct rpc_virtual_connection_cookie_table
+{
+	UINT32 Count;
+	UINT32 ArraySize;
+	RpcVirtualConnectionCookieEntry* Entries;
+};
+typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
+
 struct rdp_rpc
 {
 	rdpTls* TlsIn;
@@ -631,7 +649,12 @@ struct rdp_rpc
 
 	UINT32 ReceiveWindow;
 
+	UINT32 KeepAliveInterval;
+	UINT32 CurrentKeepAliveTime;
+	UINT32 CurrentKeepAliveInterval;
+
 	RpcVirtualConnection* VirtualConnection;
+	RpcVirtualConnectionCookieTable* VirtualConnectionCookieTable;
 };
 
 BOOL rpc_connect(rdpRpc* rpc);
