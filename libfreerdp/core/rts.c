@@ -30,6 +30,67 @@
  * http://msdn.microsoft.com/en-us/library/cc243950/
  */
 
+static RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE;
+static RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE;
+static RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE;
+static RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE;
+static RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE;
+static RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE;
+static RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE;
+static RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE;
+
+static RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE;
+static RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE;
+static RtsPduSignature RTS_PDU_ECHO_SIGNATURE;
+static RtsPduSignature RTS_PDU_PING_SIGNATURE;
+static RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE;
+static RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE;
+
 /**
  *                                      Connection Establishment\n
  *
@@ -55,6 +116,7 @@
 BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
+	rpcconn_rts_hdr_t* rts;
 	HttpResponse* http_response;
 
 	/**
@@ -169,10 +231,21 @@ BOOL rts_connect(rdpRpc* rpc)
 	 * machine to Wait_C2 state and wait for network events.
 	 *
 	 */
+
 	status = rts_recv_pdu(rpc);
 
 	if (status < 1)
 		return FALSE;
+
+	rts = (rpcconn_rts_hdr_t*) rpc->buffer;
+
+	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
+	{
+		printf("Unexpected RTS PDU: Expected CONN/A3\n");
+		return FALSE;
+	}
+
+	rts_recv_pdu_commands(rpc, rts);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
@@ -202,6 +275,16 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (status < 1)
 		return FALSE;
+
+	rts = (rpcconn_rts_hdr_t*) rpc->buffer;
+
+	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
+	{
+		printf("Unexpected RTS PDU: Expected CONN/C2\n");
+		return FALSE;
+	}
+
+	rts_recv_pdu_commands(rpc, rts);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
@@ -941,6 +1024,123 @@ RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] =
 	{ 0, NULL }
 };
 
+int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
+{
+	int CommandLength = 0;
+
+	switch (CommandType)
+	{
+		case RTS_CMD_RECEIVE_WINDOW_SIZE:
+			CommandLength = RTS_CMD_RECEIVE_WINDOW_SIZE_LENGTH;
+			break;
+
+		case RTS_CMD_FLOW_CONTROL_ACK:
+			CommandLength = RTS_CMD_FLOW_CONTROL_ACK_LENGTH;
+			break;
+
+		case RTS_CMD_CONNECTION_TIMEOUT:
+			CommandLength = RTS_CMD_CONNECTION_TIMEOUT_LENGTH;
+			break;
+
+		case RTS_CMD_COOKIE:
+			CommandLength = RTS_CMD_COOKIE_LENGTH;
+			break;
+
+		case RTS_CMD_CHANNEL_LIFETIME:
+			CommandLength = RTS_CMD_CHANNEL_LIFETIME_LENGTH;
+			break;
+
+		case RTS_CMD_CLIENT_KEEPALIVE:
+			CommandLength =  RTS_CMD_CLIENT_KEEPALIVE_LENGTH;
+			break;
+
+		case RTS_CMD_VERSION:
+			CommandLength = RTS_CMD_VERSION_LENGTH;
+			break;
+
+		case RTS_CMD_EMPTY:
+			CommandLength = RTS_CMD_EMPTY_LENGTH;
+			break;
+
+		case RTS_CMD_PADDING: /* variable-size */
+			CommandLength = rts_padding_command_read(rpc, buffer, length);
+			break;
+
+		case RTS_CMD_NEGATIVE_ANCE:
+			CommandLength = RTS_CMD_NEGATIVE_ANCE_LENGTH;
+			break;
+
+		case RTS_CMD_ANCE:
+			CommandLength = RTS_CMD_ANCE_LENGTH;
+			break;
+
+		case RTS_CMD_CLIENT_ADDRESS: /* variable-size */
+			CommandLength = rts_client_address_command_read(rpc, buffer, length);
+			break;
+
+		case RTS_CMD_ASSOCIATION_GROUP_ID:
+			CommandLength = RTS_CMD_ASSOCIATION_GROUP_ID_LENGTH;
+			break;
+
+		case RTS_CMD_DESTINATION:
+			CommandLength = RTS_CMD_DESTINATION_LENGTH;
+			break;
+
+		case RTS_CMD_PING_TRAFFIC_SENT_NOTIFY:
+			CommandLength = RTS_CMD_PING_TRAFFIC_SENT_NOTIFY_LENGTH;
+			break;
+
+		default:
+			printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+			return -1;
+			break;
+	}
+
+	return CommandLength;
+}
+
+BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts)
+{
+	int i;
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 CommandType;
+	UINT32 CommandLength;
+
+	if (rts->Flags != signature->Flags)
+		return FALSE;
+
+	if (rts->NumberOfCommands != signature->NumberOfCommands)
+		return FALSE;
+
+	buffer = (BYTE*) rts;
+	offset = RTS_PDU_HEADER_LENGTH;
+	length = rts->frag_length - offset;
+
+	for (i = 0; i < rts->NumberOfCommands; i++)
+	{
+		CommandType = *((UINT32*) &buffer[offset]); /* CommandType (4 bytes) */
+		offset += 4;
+
+		if (CommandType != signature->CommandTypes[i])
+			return FALSE;
+
+		status = rts_command_length(rpc, CommandType, &buffer[offset], length);
+
+		if (status < 0)
+			return FALSE;
+
+		CommandLength = (UINT32) status;
+		offset += CommandLength;
+
+		length = rts->frag_length - offset;
+	}
+
+	return TRUE;
+}
+
 int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 {
 	int i;
@@ -957,77 +1157,80 @@ int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 		return 0;
 	}
 
-	offset = 24;
-	buffer = &((BYTE*) rts)[offset];
+	buffer = (BYTE*) rts;
+	offset = RTS_PDU_HEADER_LENGTH;
 	length = rts->frag_length - offset;
+
+	freerdp_hexdump(buffer, rts->frag_length);
 
 	for (i = 0; i < rts->NumberOfCommands; i++)
 	{
 		CommandType = *((UINT32*) &buffer[offset]); /* CommandType (4 bytes) */
 		offset += 4;
 
-		DEBUG_RTS("CommandType: %s (0x%08X)", RTS_CMD_STRINGS[CommandType % 14], CommandType);
+		DEBUG_RTS("CommandType: %s (0x%08X)",
+				(CommandType >= RTS_CMD_LAST_ID) ? "UNKNOWN" : RTS_CMD_STRINGS[CommandType], CommandType);
 
 		switch (CommandType)
 		{
 			case RTS_CMD_RECEIVE_WINDOW_SIZE:
-				offset += rts_receive_window_size_command_read(rpc, buffer, length);
+				offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_FLOW_CONTROL_ACK:
-				offset += rts_flow_control_ack_command_read(rpc, buffer, length);
+				offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_CONNECTION_TIMEOUT:
-				offset += rts_connection_timeout_command_read(rpc, buffer, length);
+				offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_COOKIE:
-				offset += rts_cookie_command_read(rpc, buffer, length);
+				offset += rts_cookie_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_CHANNEL_LIFETIME:
-				offset += rts_channel_lifetime_command_read(rpc, buffer, length);
+				offset += rts_channel_lifetime_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_CLIENT_KEEPALIVE:
-				offset += rts_client_keepalive_command_read(rpc, buffer, length);
+				offset += rts_client_keepalive_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_VERSION:
-				offset += rts_version_command_read(rpc, buffer, length);
+				offset += rts_version_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_EMPTY:
-				offset += rts_empty_command_read(rpc, buffer, length);
+				offset += rts_empty_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_PADDING:
-				offset += rts_padding_command_read(rpc, buffer, length);
+				offset += rts_padding_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_NEGATIVE_ANCE:
-				offset += rts_negative_ance_command_read(rpc, buffer, length);
+				offset += rts_negative_ance_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_ANCE:
-				offset += rts_ance_command_read(rpc, buffer, length);
+				offset += rts_ance_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_CLIENT_ADDRESS:
-				offset += rts_client_address_command_read(rpc, buffer, length);
+				offset += rts_client_address_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_ASSOCIATION_GROUP_ID:
-				offset += rts_association_group_id_command_read(rpc, buffer, length);
+				offset += rts_association_group_id_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_DESTINATION:
-				offset += rts_destination_command_read(rpc, buffer, length);
+				offset += rts_destination_command_read(rpc, &buffer[offset], length);
 				break;
 
 			case RTS_CMD_PING_TRAFFIC_SENT_NOTIFY:
-				offset += rts_ping_traffic_sent_notify_command_read(rpc, buffer, length);
+				offset += rts_ping_traffic_sent_notify_command_read(rpc, &buffer[offset], length);
 				break;
 
 			default:
@@ -1036,7 +1239,6 @@ int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 				break;
 		}
 
-		buffer = &((BYTE*) rts)[offset];
 		length = rts->frag_length - offset;
 	}
 
@@ -1061,8 +1263,6 @@ int rts_recv_pdu(rdpRpc* rpc)
 			return -1;
 		}
 	}
-
-	rts_recv_pdu_commands(rpc, rts);
 
 	return status;
 }

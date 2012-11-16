@@ -34,7 +34,17 @@ typedef struct rdp_rpc rdpRpc;
 	UINT16 auth_length; \
 	UINT32 call_id
 
-#define RPC_COMMON_FIELDS_LENGTH    20
+#define RPC_COMMON_FIELDS_LENGTH	16
+
+typedef struct
+{
+	DEFINE_RPC_COMMON_FIELDS();
+
+	UINT16 Flags;
+	UINT16 NumberOfCommands;
+} rpcconn_rts_hdr_t;
+
+#define RTS_PDU_HEADER_LENGTH		20
 
 #include "tcp.h"
 #include "rts.h"
@@ -497,14 +507,6 @@ typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 } rpcconn_shutdown_hdr_t;
-
-typedef struct
-{
-	DEFINE_RPC_COMMON_FIELDS();
-
-	UINT16 Flags;
-	UINT16 NumberOfCommands;
-} rpcconn_rts_hdr_t;
 
 typedef union
 {
