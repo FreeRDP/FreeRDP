@@ -20,15 +20,18 @@
 #include <dispatch/dispatch.h>
 #include <CoreGraphics/CoreGraphics.h>
 
+//#include <pthread.h>
+
 #include "mf_mountain_lion.h"
 
 dispatch_semaphore_t region_sem;
 dispatch_queue_t screen_update_q;
 CGDisplayStreamRef stream;
 
+CGDisplayStreamUpdateRef lastUpdate = NULL;
 
-bool clean;
-CGRect dirtyRegion;
+//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =  ^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
@@ -63,15 +66,15 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
     
     printf("\ttime: %lld\n", displayTime);
     */
-    
-    
+
+/*
     const CGRect * rects;
     
     size_t num_rects;
     
     rects = CGDisplayStreamUpdateGetRects(updateRef, kCGDisplayStreamUpdateDirtyRects, &num_rects);
     
-    //printf("\trectangles: %zd\n", num_rects);
+    printf("\trectangles: %zd\n", num_rects);
     
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
     
@@ -80,29 +83,37 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
     
     for (size_t i = 0; i < num_rects; i++)
     {
-        /*
-        printf("\t\t(%f,%f),(%f,%f)\n\n",
-               (rects+i)->origin.x,
-               (rects+i)->origin.y,
-               (rects+i)->origin.x + (rects+i)->size.width,
-               (rects+i)->origin.y + (rects+i)->size.height);
-         */
         
         dirtyRegion = CGRectUnion(dirtyRegion, *(rects+i));
     }
     
-    /*
-    printf("\t\tUnion: (%f,%f),(%f,%f)\n\n",
-           uRect.origin.x,
-           uRect.origin.y,
-           uRect.origin.x + uRect.size.width,
-           uRect.origin.y + uRect.size.height);
-    */
-    
     clean = FALSE;
     
     dispatch_semaphore_signal(region_sem);
-        
+*/
+    
+    
+    
+    
+    dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
+    //pthread_mutex_lock(&mutex);
+    
+    if (lastUpdate == NULL)
+    {
+        CFRetain(updateRef);
+        lastUpdate = updateRef;
+        //lastUpdate = CGDisplayStreamUpdateCreateMergedUpdate(NULL, updateRef);
+    }
+    else
+    {
+        CGDisplayStreamUpdateRef tmpRef;
+        tmpRef = lastUpdate;
+        lastUpdate = CGDisplayStreamUpdateCreateMergedUpdate(tmpRef, updateRef);
+        CFRelease(tmpRef);
+    }
+    
+    dispatch_semaphore_signal(region_sem);
+    //pthread_mutex_unlock(&mutex);
 };
 
 int mf_mlion_screen_updates_init()
@@ -131,8 +142,6 @@ int mf_mlion_screen_updates_init()
                                                     screen_update_q,
                                                     streamHandler);
     
-    clean = TRUE;
-
     return 0;
     
 }
@@ -153,29 +162,53 @@ int mf_mlion_stop_getting_screen_updates()
 
 int mf_mlion_get_dirty_region(RFX_RECT* invalid)
 {
+    size_t num_rects;
+    CGRect dirtyRegion;
+    
     //it may be faster to copy the cgrect and then convert....
     
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
+    //pthread_mutex_lock(&mutex);
 
+    const CGRect * rects = CGDisplayStreamUpdateGetRects(lastUpdate, kCGDisplayStreamUpdateDirtyRects, &num_rects);
+    
+    printf("\trectangles: %zd\n", num_rects);
+    
+    if (num_rects == 0) {
+        dispatch_semaphore_signal(region_sem);
+        return 0;
+    }
+    
+    dirtyRegion = *rects;
+    for (size_t i = 0; i < num_rects; i++)
+    {        
+        dirtyRegion = CGRectUnion(dirtyRegion, *(rects+i));
+    }
+    
     invalid->x = dirtyRegion.origin.x;
     invalid->y = dirtyRegion.origin.y;
     invalid->height = dirtyRegion.size.height;
     invalid->width = dirtyRegion.size.width;
     
+    CFRelease(lastUpdate);
+    
+    lastUpdate = NULL;
+
     dispatch_semaphore_signal(region_sem);
+    //pthread_mutex_unlock(&mutex);
     
     return 0;
 }
 
 int mf_mlion_clear_dirty_region()
 {
-    dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
+   /* dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
 
     clean = TRUE;
     dirtyRegion.size.width = 0;
     dirtyRegion.size.height = 0;
     
     dispatch_semaphore_signal(region_sem);
-    
+    */
     return 0;
 }
