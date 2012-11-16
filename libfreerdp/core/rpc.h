@@ -545,9 +545,20 @@ typedef struct rpc_ping_originator RpcPingOriginator;
 
 /* Client In Channel */
 
+enum _CLIENT_IN_CHANNEL_STATE
+{
+	CLIENT_IN_CHANNEL_STATE_INITIAL,
+	CLIENT_IN_CHANNEL_STATE_OPENED,
+	CLIENT_IN_CHANNEL_STATE_OPENED_A4W,
+	CLIENT_IN_CHANNEL_STATE_FINAL
+};
+typedef enum _CLIENT_IN_CHANNEL_STATE CLIENT_IN_CHANNEL_STATE;
+
 struct rpc_in_channel
 {
 	/* Sending Channel */
+
+	CLIENT_IN_CHANNEL_STATE State;
 
 	UINT32 PlugState;
 	void* SendQueue;
@@ -563,9 +574,22 @@ typedef struct rpc_in_channel RpcInChannel;
 
 /* Client Out Channel */
 
+enum _CLIENT_OUT_CHANNEL_STATE
+{
+	CLIENT_OUT_CHANNEL_STATE_INITIAL,
+	CLIENT_OUT_CHANNEL_STATE_OPENED,
+	CLIENT_OUT_CHANNEL_STATE_OPENED_A6W,
+	CLIENT_OUT_CHANNEL_STATE_OPENED_A10W,
+	CLIENT_OUT_CHANNEL_STATE_OPENED_B3W,
+	CLIENT_OUT_CHANNEL_STATE_FINAL
+};
+typedef enum _CLIENT_OUT_CHANNEL_STATE CLIENT_OUT_CHANNEL_STATE;
+
 struct rpc_out_channel
 {
 	/* Receiving Channel */
+
+	CLIENT_OUT_CHANNEL_STATE State;
 
 	UINT32 ReceiveWindow;
 	UINT32 ReceiveWindowSize;
@@ -651,6 +675,9 @@ struct rdp_rpc
 
 	UINT32 ReceiveWindow;
 
+	UINT32 ChannelLifetime;
+	UINT32 ChannelLifetimeSet;
+
 	UINT32 KeepAliveInterval;
 	UINT32 CurrentKeepAliveTime;
 	UINT32 CurrentKeepAliveInterval;
@@ -676,7 +703,6 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
 int rpc_recv_pdu(rdpRpc* rpc);
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 

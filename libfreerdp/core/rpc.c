@@ -328,7 +328,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->TlsOut, s->data, s->size);
+	rpc_out_write(rpc, s->data, s->size);
 	stream_free(s);
 
 	/* Receive OUT Channel Response */
@@ -351,7 +351,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	/* Send OUT Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->TlsOut, s->data, s->size);
+	rpc_out_write(rpc, s->data, s->size);
 	stream_free(s);
 
 	ntlm_client_uninit(ntlm);
@@ -391,7 +391,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	/* Send IN Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->TlsIn, s->data, s->size);
+	rpc_in_write(rpc, s->data, s->size);
 	stream_free(s);
 
 	/* Receive IN Channel Response */
@@ -414,7 +414,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	/* Send IN Channel Request */
 
 	DEBUG_RPC("\n%s", s->data);
-	tls_write_all(rpc->TlsIn, s->data, s->size);
+	rpc_in_write(rpc, s->data, s->size);
 	stream_free(s);
 
 	ntlm_client_uninit(ntlm);
@@ -433,17 +433,18 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header)
 	header->common.packed_drep[3] = rpc->packed_drep[3];
 }
 
-int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
+int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
-	rpc_pdu_header_print((rpcconn_hdr_t*) data);
+	status = tls_read(rpc->TlsOut, data, length);
 
-#ifdef WITH_DEBUG_RPC
-	printf("rpc_out_write(): length: %d\n", length);
-	freerdp_hexdump(data, length);
-	printf("\n");
-#endif
+	return status;
+}
+
+int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
+{
+	int status;
 
 	status = tls_write_all(rpc->TlsOut, data, length);
 
@@ -453,14 +454,6 @@ int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
-
-	rpc_pdu_header_print((rpcconn_hdr_t*) data);
-
-#ifdef WITH_DEBUG_RPC
-	printf("rpc_in_write() length: %d\n", length);
-	freerdp_hexdump(data, length);
-	printf("\n");
-#endif
 
 	status = tls_write_all(rpc->TlsIn, data, length);
 
@@ -666,58 +659,6 @@ BOOL rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
-{
-	int status;
-	rpcconn_hdr_t* header;
-
-	//if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < 0x00008FFF) /* Just a simple workaround */
-	//	rts_send_flow_control_ack_pdu(rpc);  /* Send FlowControlAck every time AvailableWindow reaches the half */
-
-	/* Read common header fields */
-	status = tls_read(rpc->TlsOut, data, RPC_COMMON_FIELDS_LENGTH);
-
-	if (status <= 0)
-		return status;
-
-	header = (rpcconn_hdr_t*) data;
-
-	rpc_pdu_header_print(header);
-
-	status = tls_read(rpc->TlsOut, &data[RPC_COMMON_FIELDS_LENGTH],
-			header->common.frag_length - RPC_COMMON_FIELDS_LENGTH);
-
-	if (status < 0)
-		return status;
-
-	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
-	{
-		printf("rpc_out_read error: Unexpected RTS PDU\n");
-		return -1;
-	}
-	else
-	{
-		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
-	}
-
-	if (length < header->common.frag_length)
-	{
-		printf("rpc_out_read error! receive buffer is not large enough: %d < %d\n",
-				length, header->common.frag_length);
-		return -1;
-	}
-
-#ifdef WITH_DEBUG_RPC
-	printf("rpc_out_read(): length: %d\n", header->common.frag_length);
-	freerdp_hexdump(data, header->common.frag_length);
-	printf("\n");
-#endif
-
-	return header->common.frag_length;
-}
-
 int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 {
 	int index;
@@ -799,7 +740,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
     
 	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
 	{
-		status = tls_read(rpc->TlsOut, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
+		status = rpc_out_read(rpc, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
         
 		if (status < 0)
 		{
@@ -809,14 +750,12 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
         
 		bytesRead += status;
 	}
-    
-	rpc_pdu_header_print((rpcconn_hdr_t*) header);
 
 	rpc_get_stub_data_info(rpc, header, &offset, NULL);
 
 	while (bytesRead < offset)
 	{
-		status = tls_read(rpc->TlsOut, &header[bytesRead], offset - bytesRead);
+		status = rpc_out_read(rpc, &header[bytesRead], offset - bytesRead);
         
 		if (status < 0)
 			return status;
@@ -855,7 +794,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	while (bytesRead < header->common.frag_length)
 	{
-		status = tls_read(rpc->TlsOut, &rpc->buffer[bytesRead], header->common.frag_length - bytesRead);
+		status = rpc_out_read(rpc, &rpc->buffer[bytesRead], header->common.frag_length - bytesRead);
 
 		if (status < 0)
 		{
@@ -868,7 +807,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	if (!(header->common.pfc_flags & PFC_LAST_FRAG))
 	{
-		printf("Fragmented PDU\n");
+		DEBUG_RPC("Fragmented PDU");
 	}
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
@@ -941,13 +880,8 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	stub_data_pad = 0;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 
-	printf("stub_data_pad: %d\n", stub_data_pad);
-
 	offset += length;
 	request_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
-
-	printf("auth_pad_length: %d\n", request_pdu->auth_verifier.auth_pad_length);
-
 	request_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
 	request_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	request_pdu->auth_verifier.auth_reserved = 0x00;
@@ -1039,16 +973,19 @@ BOOL rpc_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* virtual_connection)
+void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* connection)
 {
-	virtual_connection->DefaultInChannel->BytesSent = 0;
-	virtual_connection->DefaultOutChannel->BytesReceived = 0;
-	virtual_connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
-	virtual_connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
-	virtual_connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
-	virtual_connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
-	virtual_connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
-	virtual_connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
+	connection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_INITIAL;
+	connection->DefaultInChannel->BytesSent = 0;
+	connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
+	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
+	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
+
+	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
+	connection->DefaultOutChannel->BytesReceived = 0;
+	connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
+	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
+	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
@@ -1201,7 +1138,10 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 		rpc->ReceiveWindow = 0x00010000;
 
-		rpc->KeepAliveInterval = 30000;
+		rpc->ChannelLifetime = 0x40000000;
+		rpc->ChannelLifetimeSet = 0;
+
+		rpc->KeepAliveInterval = 300000;
 		rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 		rpc->CurrentKeepAliveTime = 0;
 

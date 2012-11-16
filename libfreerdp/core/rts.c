@@ -360,9 +360,10 @@ void rts_pdu_header_init(rpcconn_rts_hdr_t* header)
 	header->call_id = 0;
 }
 
-int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize)
 {
-	/* ReceiveWindowSize (4 bytes) */
+	if (ReceiveWindowSize)
+		*ReceiveWindowSize = *((UINT32*) &buffer[0]); /* ReceiveWindowSize (4 bytes) */
 
 	return 4;
 }
@@ -467,6 +468,12 @@ int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive)
 {
+	/**
+	 * An unsigned integer that specifies the keep-alive interval, in milliseconds,
+	 * that this connection is configured to use. This value MUST be 0 or in the inclusive
+	 * range of 60,000 through 4,294,967,295. If it is 0, it MUST be interpreted as 300,000.
+	 */
+
 	if (buffer)
 	{
 		*((UINT32*) &buffer[0]) = RTS_CMD_CLIENT_KEEPALIVE; /* CommandType (4 bytes) */
@@ -717,6 +724,10 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
+	DEBUG_RTS("ConnectionTimeout:%d", ConnectionTimeout);
+
+	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
+
 	return 0;
 }
 
@@ -744,16 +755,14 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
 	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
 
-	/* TODO: fix hardcoded values */
-
 	buffer = (BYTE*) malloc(header.frag_length);
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
 	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
 	rts_cookie_command_write(&buffer[48], INChannelCookie); /* INChannelCookie (20 bytes) */
-	rts_channel_lifetime_command_write(&buffer[68], 0x40000000); /* ChannelLifetime (8 bytes) */
-	rts_client_keepalive_command_write(&buffer[76], 0x000493E0); /* ClientKeepalive (8 bytes) */
+	rts_channel_lifetime_command_write(&buffer[68], rpc->ChannelLifetime); /* ChannelLifetime (8 bytes) */
+	rts_client_keepalive_command_write(&buffer[76], rpc->KeepAliveInterval); /* ClientKeepalive (8 bytes) */
 	rts_association_group_id_command_write(&buffer[84], AssociationGroupId); /* AssociationGroupId (20 bytes) */
 
 	rpc_in_write(rpc, buffer, header.frag_length);
@@ -767,6 +776,26 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	UINT32 offset;
+	UINT32 ReceiveWindowSize;
+	UINT32 ConnectionTimeout;
+
+	offset = 24;
+	offset += rts_version_command_read(rpc, &buffer[offset], length - offset) + 4;
+	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
+	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
+
+	DEBUG_RTS("ConnectionTimeout:%d", ConnectionTimeout);
+	DEBUG_RTS("ReceiveWindowSize:%d", ReceiveWindowSize);
+
+	/* TODO: verify if this is the correct protocol variable */
+	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
+
+	rpc->VirtualConnection->DefaultInChannel->PeerReceiveWindow = ReceiveWindowSize;
+
+	rpc->VirtualConnection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_OPENED;
+	rpc->VirtualConnection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_OPENED;
+
 	return 0;
 }
 
@@ -1196,7 +1225,7 @@ int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 		switch (CommandType)
 		{
 			case RTS_CMD_RECEIVE_WINDOW_SIZE:
-				offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length);
+				offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length, NULL);
 				break;
 
 			case RTS_CMD_FLOW_CONTROL_ACK:

@@ -165,7 +165,7 @@ int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts);
 
 BOOL rts_connect(rdpRpc* rpc);
 
-int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize);
 int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize);
 
 int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);

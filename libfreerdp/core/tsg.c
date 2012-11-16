@@ -287,28 +287,28 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			offset += 4; /* 0x00000001 (4 bytes) */
 		}
 
-        if (packetCapsResponse->pktQuarEncResponse.certChainLen)
-        {
-            Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020014 */
-            offset += 4;
+		if (packetCapsResponse->pktQuarEncResponse.certChainLen)
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020014 */
+			offset += 4;
 
-            offset += 4; /* MaxCount (4 bytes) */
-            offset += 4; /* Offset (4 bytes) */
-            count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
-            offset += 4;
+			offset += 4; /* MaxCount (4 bytes) */
+			offset += 4; /* Offset (4 bytes) */
+			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
+			offset += 4;
 
-            /*
-             * CertChainData is a wide character string, and the count is
-             * given in characters excluding the null terminator, therefore:
-             * size = ((count + 1) * 2)
-             */
-            offset += ((count + 1) * 2); /* CertChainData */
-        }
-        else
-        {
-            Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes) */
-            offset += 4;
-        }
+			/*
+			 * CertChainData is a wide character string, and the count is
+			 * given in characters excluding the null terminator, therefore:
+			 * size = ((count + 1) * 2)
+			 */
+			offset += ((count + 1) * 2); /* CertChainData */
+		}
+		else
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes) */
+			offset += 4;
+		}
 
 		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
 		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
@@ -321,7 +321,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
 			printf("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
-                   versionCaps->tsgHeader.ComponentId);
+					versionCaps->tsgHeader.ComponentId);
 			return FALSE;
 		}
 
@@ -388,28 +388,28 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		CopyMemory(&packetQuarEncResponse->nonce, &buffer[52], 16); /* Nonce */
 		offset = 68;
 
-        if (packetQuarEncResponse->certChainLen > 0)
-        {
-            Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x0002000C */
-            offset += 4;
+		if (packetQuarEncResponse->certChainLen > 0)
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x0002000C */
+			offset += 4;
 
-            offset += 4; /* MaxCount (4 bytes) */
-            offset += 4; /* Offset (4 bytes) */
-            count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
-            offset += 4;
+			offset += 4; /* MaxCount (4 bytes) */
+			offset += 4; /* Offset (4 bytes) */
+			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
+			offset += 4;
             
-            /*
-             * CertChainData is a wide character string, and the count is
-             * given in characters excluding the null terminator, therefore:
-             * size = ((count + 1) * 2)
-             */
-            offset += ((count + 1) * 2); /* CertChainData */
-        }
-        else
-        {
-            Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
-            offset += 4;
-        }
+			/*
+			 * CertChainData is a wide character string, and the count is
+			 * given in characters excluding the null terminator, therefore:
+			 * size = ((count + 1) * 2)
+			 */
+			offset += ((count + 1) * 2); /* CertChainData */
+		}
+		else
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
+			offset += 4;
+		}
         
 		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
 		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
@@ -421,8 +421,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
-            printf("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
-                   versionCaps->tsgHeader.ComponentId);
+			printf("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
+				versionCaps->tsgHeader.ComponentId);
 			return FALSE;
 		}
 
@@ -1118,7 +1118,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	rpcconn_common_hdr_t* header;
 	rdpRpc* rpc = tsg->rpc;
 
-	printf("tsg_read: %d, pending: %d\n", length, tsg->PendingPdu);
+	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);
 
 	if (tsg->PendingPdu)
 	{
@@ -1146,12 +1146,14 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 			return -1;
 		}
 
+#ifdef WITH_DEBUG_TSG
 		printf("RPC Stub (offset: %d length: %d):\n", tsg->StubOffset, tsg->StubLength);
 		freerdp_hexdump(&rpc->buffer[tsg->StubOffset], tsg->StubLength);
+#endif
 
 		if (header->alloc_hint == 4)
 		{
-			printf("Ignoring TsProxySetupReceivePipe Response\n");
+			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
 			return tsg_read(tsg, data, length);
 		}
 
