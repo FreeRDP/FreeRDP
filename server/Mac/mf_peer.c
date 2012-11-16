@@ -118,27 +118,38 @@ void mf_peer_rfx_update(freerdp_peer* client)
 {
     
     //check
-    
     mfInfo* mfi = mf_info_get_instance();
     
     mf_info_find_invalid_region(mfi);
+    
+    if (mf_info_have_invalid_region(mfi) == false) {
+        return;
+    }
     
     printf("\tinvalid -> (%d,%d), (%d,%d)\n",
            mfi->invalid.x,
            mfi->invalid.y,
            mfi->invalid.x + mfi->invalid.width,
            mfi->invalid.y + mfi->invalid.height);
-    
-    mf_info_clear_invalid_region(mfi);
-    
+        
     //capture entire screen
     
     int bytewidth;
     
-    CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
+    CGRect invRect;
     
-    CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
+    invRect.origin.x = mfi->invalid.x;
+    invRect.origin.y = mfi->invalid.y;
+    invRect.size.height = mfi->invalid.height;
+    invRect.size.width = mfi->invalid.width;
     
+    //CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
+    CGImageRef image = CGDisplayCreateImageForRect(kCGDirectMainDisplay, invRect);
+    //CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
+    
+    CGSize frameSize;
+    frameSize.width = 2880;
+    frameSize.height = 1800;
     
     CFDictionaryRef opts;
     
@@ -184,8 +195,9 @@ void mf_peer_rfx_update(freerdp_peer* client)
                                                  frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
                                                  kCGImageAlphaNoneSkipLast);
     
-    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
-                                           CGImageGetHeight(image)), image);
+    CGContextDrawImage(context,
+                       CGRectMake(0, 0, frameSize.width, frameSize.height),
+                       image);
     
     bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
     bytewidth = (bytewidth + 3) & ~3; // Align to 4 bytes
@@ -210,25 +222,25 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     rect.x = 0;
     rect.y = 0;
-    rect.width = frameSize.width;
-    rect.height = frameSize.height;
+    rect.width = mfi->invalid.width;
+    rect.height = mfi->invalid.height;
     
     rfx_compose_message(mfp->rfx_context, s, &rect, 1,
-                        (BYTE*) pxdata, frameSize.width, frameSize.height, frameSize.width * 4);
+                        (BYTE*) pxdata, rect.width, rect.height, frameSize.width * 4);
     
-    UINT32 x = 0;
-    UINT32 y = 0;
+    UINT32 x = mfi->invalid.x;
+    UINT32 y = mfi->invalid.y;
     
     cmd->destLeft = x;
     cmd->destTop = y;
-    cmd->destRight = x + frameSize.width;
-    cmd->destBottom = y + frameSize.height;
+    cmd->destRight = x + rect.width;
+    cmd->destBottom = y + rect.height;
     
     
 	cmd->bpp = 32;
 	cmd->codecID = 3;
-	cmd->width = frameSize.width;
-	cmd->height = frameSize.height;
+	cmd->width = rect.width;
+	cmd->height = rect.height;
 	cmd->bitmapDataLength = stream_get_length(s);
 	cmd->bitmapData = stream_get_head(s);
     
@@ -239,6 +251,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     //clean up
     
+    mf_info_clear_invalid_region(mfi);
+    // note: need to stop getting new dirty rects until here
     
     CGColorSpaceRelease(rgbColorSpace);
     CGImageRelease(image);
