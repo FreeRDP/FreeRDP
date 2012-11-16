@@ -32,7 +32,12 @@ FreeRDP 1.0.2 is a maintenance release which contains several bug and stability 
 * plugin
 	* ignore CHANNEL_FLAG_SUSPEND/CHANNEL_FLAG_RESUME to prevent possible crash
 
-For a detailed list of changes use "git diff 1.0.1..1.0.2"
+For a detailed list of changes use "git log 1.0.1..1.0.2"
+
+Known problems:
+
+* If windows input language is set to german pressing the divde key (/) on the keypad 
+  results in minus (-) (see issue #811)
 
 2012-02-07	Version 1.0.1
 
