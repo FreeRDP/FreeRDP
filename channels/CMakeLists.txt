@@ -118,7 +118,6 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 	set(_channel_module_name "${_channel_name}-client")
 	string(TOUPPER "CHANNEL_${_channel_name}_CLIENT_${_subsystem}" _subsystem_prefix)
 	if(${${_subsystem_prefix}_STATIC})
-		message(STATUS "Static Subsystem: ${_subsystem_prefix} / ${_subsystem}")
 		get_target_property(CHANNEL_SUBSYSTEMS ${_channel_module_name} SUBSYSTEMS)
 		set(SUBSYSTEMS ${SUBSYSTEMS} ${_subsystem})
 		set_target_properties(${_channel_module_name} PROPERTIES SUBSYSTEMS "${SUBSYSTEMS}")

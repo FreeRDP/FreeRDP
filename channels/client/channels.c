@@ -1166,7 +1166,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 {
 	void* entry;
 
-	DEBUG_CHANNELS("%s", Name);
+	DEBUG_CHANNELS("%s", name);
 
 	entry = (PVIRTUALCHANNELENTRY) freerdp_load_plugin(name, CHANNEL_EXPORT_FUNC_NAME);
 
@@ -1244,7 +1244,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	hostname = instance->settings->ServerHostname;
 	hostname_len = strlen(hostname);
 
-	DEBUG_CHANNELS("hostname [%s] channels->num_libs [%d]", Hostname, channels->num_libs_data);
+	DEBUG_CHANNELS("hostname [%s] channels->num_libs [%d]", hostname, channels->num_libs_data);
 
 	for (index = 0; index < channels->num_libs_data; index++)
 	{
@@ -1335,7 +1335,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 
 	if (lchannel_data == NULL)
 	{
-		DEBUG_CHANNELS("could not find channel name %s", Name);
+		DEBUG_CHANNELS("could not find channel name %s", name);
 		freerdp_event_free(event);
 		return 1;
 	}

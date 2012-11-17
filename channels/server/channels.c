@@ -174,12 +174,12 @@ static void wts_read_drdynvc_create_response(rdpPeerChannel* channel, STREAM* s,
 
 	if ((INT32) CreationStatus < 0)
 	{
-		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->ChannelId, (INT32)CreationStatus);
+		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->channel_id, (INT32) CreationStatus);
 		channel->dvc_open_state = DVC_OPEN_STATE_FAILED;
 	}
 	else
 	{
-		DEBUG_DVC("ChannelId %d creation succeeded", channel->ChannelId);
+		DEBUG_DVC("ChannelId %d creation succeeded", channel->channel_id);
 		channel->dvc_open_state = DVC_OPEN_STATE_SUCCEEDED;
 	}
 	wait_obj_set(channel->receive_event);
@@ -231,7 +231,7 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, STREAM* s, UINT32 len
 
 static void wts_read_drdynvc_close_response(rdpPeerChannel* channel)
 {
-	DEBUG_DVC("ChannelId %d close response", channel->ChannelId);
+	DEBUG_DVC("ChannelId %d close response", channel->channel_id);
 	channel->dvc_open_state = DVC_OPEN_STATE_CLOSED;
 }
 
@@ -554,7 +554,7 @@ void* WTSVirtualChannelOpenEx(
 		WTSVirtualChannelWrite(vcm->drdynvc_channel, stream_get_head(s), stream_get_length(s), NULL);
 		stream_free(s);
 
-		DEBUG_DVC("ChannelId %d.%s (total %d)", channel->ChannelId, pVirtualName, list_size(vcm->dvc_channel_list));
+		DEBUG_DVC("ChannelId %d.%s (total %d)", channel->channel_id, pVirtualName, list_size(vcm->dvc_channel_list));
 	}
 	else
 	{
