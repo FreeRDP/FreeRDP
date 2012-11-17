@@ -840,8 +840,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	DEBUG_RPC("Sending FlowControlAck RTS PDU");
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
-	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow;
+	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
 	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+
+	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow =
+			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -1192,6 +1195,74 @@ BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rt
 	return TRUE;
 }
 
+int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts)
+{
+	int i;
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 CommandType;
+	UINT32 CommandLength;
+
+	signature->Flags = rts->Flags;
+	signature->NumberOfCommands = rts->NumberOfCommands;
+
+	buffer = (BYTE*) rts;
+	offset = RTS_PDU_HEADER_LENGTH;
+	length = rts->frag_length - offset;
+
+	for (i = 0; i < rts->NumberOfCommands; i++)
+	{
+		CommandType = *((UINT32*) &buffer[offset]); /* CommandType (4 bytes) */
+		offset += 4;
+
+		signature->CommandTypes[i] = CommandType;
+
+		status = rts_command_length(rpc, CommandType, &buffer[offset], length);
+
+		if (status < 0)
+			return FALSE;
+
+		CommandLength = (UINT32) status;
+		offset += CommandLength;
+
+		length = rts->frag_length - offset;
+	}
+
+	return 0;
+}
+
+int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
+{
+	int i, j;
+	RtsPduSignature* pSignature;
+
+	printf("RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
+			signature->Flags, signature->NumberOfCommands);
+
+	for (i = 0; RTS_PDU_SIGNATURE_TABLE[i].SignatureId != 0; i++)
+	{
+		pSignature = RTS_PDU_SIGNATURE_TABLE[i].Signature;
+
+		if (signature->Flags == pSignature->Flags)
+		{
+			if (signature->NumberOfCommands == pSignature->NumberOfCommands)
+			{
+				for (j = 0; j < signature->NumberOfCommands; j++)
+				{
+					if (signature->CommandTypes[j] != pSignature->CommandTypes[j])
+						continue;
+				}
+
+				printf("Identified %s RTS PDU\n", RTS_PDU_SIGNATURE_TABLE[i].PduName);
+			}
+		}
+	}
+
+	return 0;
+}
+
 int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
 {
 	int i;
@@ -1316,4 +1387,17 @@ int rts_recv_pdu(rdpRpc* rpc)
 	}
 
 	return status;
+}
+
+int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
+{
+	rpcconn_rts_hdr_t* rts;
+	RtsPduSignature signature;
+
+	rts = (rpcconn_rts_hdr_t*) rpc->buffer;
+
+	rts_extract_pdu_signature(rpc, &signature, rts);
+	rts_print_pdu_signature(rpc, &signature);
+
+	return 0;
 }

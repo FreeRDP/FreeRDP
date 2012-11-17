@@ -458,7 +458,10 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	status = tls_write_all(rpc->TlsIn, data, length);
 
 	if (status > 0)
+	{
 		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
+		rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
+	}
 
 	return status;
 }
@@ -812,18 +815,31 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
-		return header->common.frag_length;
+		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
+			return header->common.frag_length;
+
+		printf("Receiving Out-of-Sequence RTS PDU\n");
+		rts_recv_out_of_sequence_pdu(rpc);
+		return rpc_recv_pdu(rpc);
 	}
 	else if (header->common.ptype == PTYPE_FAULT)
 	{
 		rpc_recv_fault_pdu(header);
 		return -1;
 	}
-	else
+
+	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
+	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
+
+	/*printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
+			rpc->VirtualConnection->DefaultOutChannel->BytesReceived,
+			rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow,
+			rpc->ReceiveWindow);*/
+
+	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		/* RTS PDUs are not subject to flow control */
-		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
+		printf("Sending Flow Control Ack PDU\n");
+		rts_send_flow_control_ack_pdu(rpc);
 	}
 
 #ifdef WITH_DEBUG_RPC
@@ -986,6 +1002,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
+	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
