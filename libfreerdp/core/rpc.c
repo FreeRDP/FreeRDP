@@ -38,6 +38,11 @@
 
 #include "rpc.h"
 
+/* Security Verification Trailer Signature */
+
+rpc_sec_verification_trailer RPC_SEC_VERIFICATION_TRAILER =
+	{ { 0x8a, 0xe3, 0x13, 0x71, 0x02, 0xf4, 0x36, 0x71 } };
+
 /* Syntax UUIDs */
 
 const p_uuid_t TSGU_UUID =
@@ -658,6 +663,37 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	return 0;
 }
 
+/**
+ * PDU Structure with verification trailer
+ *
+ * MUST only appear in a request PDU!
+ *  ________________________________
+ * |                                |
+ * |           PDU Header           |
+ * |________________________________| _______
+ * |                                |   /|\
+ * |                                |    |
+ * |           Stub Data            |    |
+ * |                                |    |
+ * |________________________________|    |
+ * |                                | PDU Body
+ * |            Stub Pad            |    |
+ * |________________________________|    |
+ * |                                |    |
+ * |      Verification Trailer      |    |
+ * |________________________________|    |
+ * |                                |    |
+ * |       Authentication Pad       |    |
+ * |________________________________| __\|/__
+ * |                                |
+ * |        Security Trailer        |
+ * |________________________________|
+ * |                                |
+ * |      Authentication Token      |
+ * |________________________________|
+ *
+ */
+
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
 {
 	UINT32 alloc_hint = 0;
@@ -689,10 +725,27 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if (length)
 	{
-		BYTE auth_pad_length;
+		if (header->common.ptype == PTYPE_REQUEST)
+		{
+			UINT32 sec_trailer_offset;
 
-		auth_pad_length = *(buffer + header->common.frag_length - header->common.auth_length - 6);
-		*length = header->common.frag_length - (header->common.auth_length + *offset + 8 + auth_pad_length);
+			/**
+			 * All PDUs that carry sec_trailer information share certain common fields:
+			 * frag_length and auth_length. The beginning of the sec_trailer structure
+			 * for each PDU MUST be calculated to start from offset
+			 * (frag_length – auth_length – 8) from the beginning of the PDU.
+			 */
+
+			sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
+			*length = sec_trailer_offset - *offset;
+		}
+		else
+		{
+			BYTE auth_pad_length;
+
+			auth_pad_length = *(buffer + header->common.frag_length - header->common.auth_length - 6);
+			*length = header->common.frag_length - (header->common.auth_length + *offset + 8 + auth_pad_length);
+		}
 	}
 
 	return TRUE;
@@ -861,10 +914,10 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
 	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
 
-	/*printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
+	printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
 			rpc->VirtualConnection->DefaultOutChannel->BytesReceived,
 			rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow,
-			rpc->ReceiveWindow);*/
+			rpc->ReceiveWindow);
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{

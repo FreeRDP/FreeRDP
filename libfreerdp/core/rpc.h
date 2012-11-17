@@ -268,6 +268,11 @@ typedef struct
 
 typedef struct
 {
+	BYTE signature[8];
+} rpc_sec_verification_trailer;
+
+typedef struct
+{
 	/* restore 4-byte alignment */
 
 	BYTE* auth_pad; /* align(4); [size_is(auth_pad_length)] */
