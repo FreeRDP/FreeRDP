@@ -433,39 +433,6 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header)
 	header->common.packed_drep[3] = rpc->packed_drep[3];
 }
 
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
-{
-	int status;
-
-	status = tls_read(rpc->TlsOut, data, length);
-
-	return status;
-}
-
-int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
-{
-	int status;
-
-	status = tls_write_all(rpc->TlsOut, data, length);
-
-	return status;
-}
-
-int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
-{
-	int status;
-
-	status = tls_write_all(rpc->TlsIn, data, length);
-
-	if (status > 0)
-	{
-		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
-		rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
-	}
-
-	return status;
-}
-
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment)
 {
 	UINT32 pad;
@@ -731,6 +698,46 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	return TRUE;
 }
 
+int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
+{
+	int status;
+
+	status = tls_read(rpc->TlsOut, data, length);
+
+	return status;
+}
+
+int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
+{
+	int status;
+
+	status = tls_write_all(rpc->TlsOut, data, length);
+
+	return status;
+}
+
+int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
+{
+	int status;
+
+	status = tls_write_all(rpc->TlsIn, data, length);
+
+	if (status > 0)
+	{
+		/*
+		 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
+		 * data model. RTS PDUs and the HTTP request and response headers are not subject to flow control.
+		 * Implementations of this protocol MUST NOT include them when computing any of the variables
+		 * specified by this abstract data model.
+		 */
+
+		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
+		rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
+	}
+
+	return status;
+}
+
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 {
 	int status;
@@ -810,7 +817,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	if (!(header->common.pfc_flags & PFC_LAST_FRAG))
 	{
-		DEBUG_RPC("Fragmented PDU");
+		printf("Fragmented PDU\n");
 	}
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */

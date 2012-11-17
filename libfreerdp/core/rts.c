@@ -900,6 +900,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 
 	printf("Destination: %d BytesReceived: %d AvailableWindow: %d\n",
 			Destination, BytesReceived, AvailableWindow);
+	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 
 	return 0;
 }

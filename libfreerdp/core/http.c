@@ -406,39 +406,39 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	while (TRUE)
 	{
-        while (nbytes < 5)
-        {
-            status = tls_read(tls, p, length - nbytes);
+		while (nbytes < 5)
+		{
+			status = tls_read(tls, p, length - nbytes);
             
-            if (status > 0)
-            {
-                nbytes += status;
-                p = (BYTE*) &buffer[nbytes];
-            }
-            else if (status == 0)
-            {
-                continue;
-            }
-            else
-            {
-                http_response_free(http_response);
-                return NULL;
-            }
-        }
+			if (status > 0)
+			{
+				nbytes += status;
+				p = (BYTE*) &buffer[nbytes];
+			}
+			else if (status == 0)
+			{
+				continue;
+			}
+			else
+			{
+				http_response_free(http_response);
+				return NULL;
+			}
+		}
 
 		header_end = strstr((char*) buffer, "\r\n\r\n");
         
-        if (header_end)
-        {
-            header_end += 2;
-        }
-        else
-        {
-            printf("http_response_recv: invalid response:\n");
-            winpr_HexDump(buffer, status);
+		if (header_end)
+		{
+			header_end += 2;
+		}
+		else
+		{
+			printf("http_response_recv: invalid response:\n");
+			winpr_HexDump(buffer, status);
 			http_response_free(http_response);
 			return NULL;
-        }
+		}
 
 		if (header_end != NULL)
 		{

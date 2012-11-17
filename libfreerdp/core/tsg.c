@@ -1146,11 +1146,6 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 			return -1;
 		}
 
-#ifdef WITH_DEBUG_TSG
-		printf("RPC Stub (offset: %d length: %d):\n", tsg->StubOffset, tsg->StubLength);
-		freerdp_hexdump(&rpc->buffer[tsg->StubOffset], tsg->StubLength);
-#endif
-
 		if (header->alloc_hint == 4)
 		{
 			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");

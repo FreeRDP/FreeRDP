@@ -630,6 +630,11 @@ typedef struct rpc_virtual_connection RpcVirtualConnection;
 
 /* Virtual Connection Cookie Table */
 
+#define RPC_UUID_FORMAT_STRING 	"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x"
+#define RPC_UUID_FORMAT_ARGUMENTS(_rpc_uuid) \
+	_rpc_uuid[0], _rpc_uuid[1], _rpc_uuid[2], _rpc_uuid[3], _rpc_uuid[4], _rpc_uuid[5], _rpc_uuid[6], _rpc_uuid[7], \
+	_rpc_uuid[8], _rpc_uuid[9], _rpc_uuid[10], _rpc_uuid[11], _rpc_uuid[12], _rpc_uuid[13], _rpc_uuid[14], _rpc_uuid[15]
+
 struct rpc_virtual_connection_cookie_entry
 {
 	BYTE Cookie[16];
