@@ -698,6 +698,42 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	return TRUE;
 }
 
+int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	RPC_PDU_ENTRY* PduEntry;
+
+	PduEntry = (RPC_PDU_ENTRY*) _aligned_malloc(sizeof(RPC_PDU_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
+	PduEntry->Buffer = buffer;
+	PduEntry->Length = length;
+
+	InterlockedPushEntrySList(rpc->SendQueue, &(PduEntry->ItemEntry));
+
+	return 0;
+}
+
+int rpc_send_dequeue_pdu(rdpRpc* rpc)
+{
+	int status;
+	RPC_PDU_ENTRY* PduEntry;
+
+	PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue);
+
+	status = rpc_in_write(rpc, PduEntry->Buffer, PduEntry->Length);
+
+	/*
+	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
+	 * data model. RTS PDUs and the HTTP request and response headers are not subject to flow control.
+	 * Implementations of this protocol MUST NOT include them when computing any of the variables
+	 * specified by this abstract data model.
+	 */
+	rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
+	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
+
+	_aligned_free(PduEntry);
+
+	return status;
+}
+
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
@@ -721,19 +757,6 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	int status;
 
 	status = tls_write_all(rpc->TlsIn, data, length);
-
-	if (status > 0)
-	{
-		/*
-		 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
-		 * data model. RTS PDUs and the HTTP request and response headers are not subject to flow control.
-		 * Implementations of this protocol MUST NOT include them when computing any of the variables
-		 * specified by this abstract data model.
-		 */
-
-		rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
-		rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
-	}
 
 	return status;
 }
@@ -951,15 +974,13 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;
 
-	status = rpc_in_write(rpc, buffer, request_pdu->frag_length);
-
-	if (status < 0)
-	{
-		printf("rpc_tsg_write(): Error! rpc_tsg_write returned negative value.\n");
-		return -1;
-	}
+	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
+	status = rpc_send_dequeue_pdu(rpc);
 
 	free(buffer);
+
+	if (status < 0)
+		return -1;
 
 	return length;
 }
@@ -1160,6 +1181,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_xmit_frag = 0x0FF8;
 		rpc->max_recv_frag = 0x0FF8;
 
+		rpc->SendQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(rpc->SendQueue);
+
 		rpc->ReceiveWindow = 0x00010000;
 
 		rpc->ChannelLifetime = 0x40000000;
@@ -1182,8 +1206,16 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
+		RPC_PDU_ENTRY* PduEntry;
+
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
+
+		while ((PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue)) != NULL)
+			_aligned_free(PduEntry);
+
+		_aligned_free(rpc->SendQueue);
+
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
 		free(rpc);

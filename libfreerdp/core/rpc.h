@@ -53,7 +53,10 @@ typedef struct
 #include "transport.h"
 
 #include <time.h>
+
 #include <winpr/sspi.h>
+#include <winpr/interlocked.h>
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
@@ -651,6 +654,13 @@ struct rpc_virtual_connection_cookie_table
 };
 typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
 
+typedef struct _RPC_PDU_ENTRY
+{
+	SLIST_ENTRY ItemEntry;
+	BYTE* Buffer;
+	UINT32 Length;
+} RPC_PDU_ENTRY, *PRPC_PDU_ENTRY;
+
 struct rdp_rpc
 {
 	rdpTls* TlsIn;
@@ -677,6 +687,8 @@ struct rdp_rpc
 
 	UINT16 max_xmit_frag;
 	UINT16 max_recv_frag;
+
+	PSLIST_HEADER SendQueue;
 
 	UINT32 ReceiveWindow;
 
