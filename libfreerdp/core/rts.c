@@ -379,12 +379,19 @@ int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize
 	return 8;
 }
 
-int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length,
+		UINT32* BytesReceived, UINT32* AvailableWindow, BYTE* ChannelCookie)
 {
 	/* Ack (24 bytes) */
-	/* BytesReceived (4 bytes) */
-	/* AvailableWindow (4 bytes) */
-	/* ChannelCookie (16 bytes) */
+
+	if (BytesReceived)
+		*BytesReceived = *((UINT32*) &buffer[0]); /* BytesReceived (4 bytes) */
+
+	if (AvailableWindow)
+		*AvailableWindow = *((UINT32*) &buffer[4]); /* AvailableWindow (4 bytes) */
+
+	if (ChannelCookie)
+		CopyMemory(ChannelCookie, &buffer[8], 16); /* ChannelCookie (16 bytes) */
 
 	return 24;
 }
@@ -638,9 +645,10 @@ int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupI
 	return 20;
 }
 
-int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* Destination)
 {
-	/* Destination (4 bytes) */
+	if (Destination)
+		*Destination = *((UINT32*) &buffer[0]); /* Destination (4 bytes) */
 
 	return 4;
 }
@@ -724,7 +732,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
-	DEBUG_RTS("ConnectionTimeout:%d", ConnectionTimeout);
+	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
@@ -785,8 +793,8 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
 	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
-	DEBUG_RTS("ConnectionTimeout:%d", ConnectionTimeout);
-	DEBUG_RTS("ReceiveWindowSize:%d", ReceiveWindowSize);
+	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
+	DEBUG_RTS("ReceiveWindowSize: %d", ReceiveWindowSize);
 
 	/* TODO: verify if this is the correct protocol variable */
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
@@ -857,6 +865,41 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	rpc_in_write(rpc, buffer, header.frag_length);
 
 	free(buffer);
+
+	return 0;
+}
+
+int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 offset;
+	UINT32 Destination;
+	UINT32 BytesReceived;
+	UINT32 AvailableWindow;
+	BYTE ChannelCookie[16];
+
+	/**
+	 * When the sender receives a FlowControlAck RTS PDU, it MUST use the following formula to
+	 * recalculate its Sender AvailableWindow variable:
+	 *
+	 * Sender AvailableWindow = Receiver AvailableWindow_from_ack - (BytesSent - BytesReceived_from_ack)
+	 *
+	 * Where:
+	 *
+	 * Receiver AvailableWindow_from_ack is the Available Window field in the Flow Control
+	 * Acknowledgement Structure (section 2.2.3.4) in the PDU received.
+	 *
+	 * BytesReceived_from_ack is the Bytes Received field in the Flow Control Acknowledgement structure
+	 * in the PDU received.
+	 *
+	 */
+
+	offset = 24;
+	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
+			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
+
+	printf("Destination: %d BytesReceived: %d AvailableWindow: %d\n",
+			Destination, BytesReceived, AvailableWindow);
 
 	return 0;
 }
@@ -1233,13 +1276,10 @@ int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_r
 	return 0;
 }
 
-int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
+UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, RTS_PDU_SIGNATURE_ENTRY** entry)
 {
 	int i, j;
 	RtsPduSignature* pSignature;
-
-	printf("RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
-			signature->Flags, signature->NumberOfCommands);
 
 	for (i = 0; RTS_PDU_SIGNATURE_TABLE[i].SignatureId != 0; i++)
 	{
@@ -1255,7 +1295,10 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 						continue;
 				}
 
-				printf("Identified %s RTS PDU\n", RTS_PDU_SIGNATURE_TABLE[i].PduName);
+				if (entry)
+					*entry = &RTS_PDU_SIGNATURE_TABLE[i];
+
+				return RTS_PDU_SIGNATURE_TABLE[i].SignatureId;
 			}
 		}
 	}
@@ -1263,106 +1306,18 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 	return 0;
 }
 
-int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts)
+int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 {
-	int i;
-	BYTE* buffer;
-	UINT32 length;
-	UINT32 offset;
-	UINT32 CommandType;
+	UINT32 SignatureId;
+	RTS_PDU_SIGNATURE_ENTRY* entry;
 
-	DEBUG_RTS("numberOfCommands:%d", rts->NumberOfCommands);
+	printf("RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
+			signature->Flags, signature->NumberOfCommands);
 
-	if (rts->Flags & RTS_FLAG_PING)
-	{
-		rts_send_keep_alive_pdu(rpc);
-		return 0;
-	}
+	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
 
-	buffer = (BYTE*) rts;
-	offset = RTS_PDU_HEADER_LENGTH;
-	length = rts->frag_length - offset;
-
-	freerdp_hexdump(buffer, rts->frag_length);
-
-	for (i = 0; i < rts->NumberOfCommands; i++)
-	{
-		CommandType = *((UINT32*) &buffer[offset]); /* CommandType (4 bytes) */
-		offset += 4;
-
-		DEBUG_RTS("CommandType: %s (0x%08X)",
-				(CommandType >= RTS_CMD_LAST_ID) ? "UNKNOWN" : RTS_CMD_STRINGS[CommandType], CommandType);
-
-		switch (CommandType)
-		{
-			case RTS_CMD_RECEIVE_WINDOW_SIZE:
-				offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length, NULL);
-				break;
-
-			case RTS_CMD_FLOW_CONTROL_ACK:
-				offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_CONNECTION_TIMEOUT:
-				offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length, NULL);
-				break;
-
-			case RTS_CMD_COOKIE:
-				offset += rts_cookie_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_CHANNEL_LIFETIME:
-				offset += rts_channel_lifetime_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_CLIENT_KEEPALIVE:
-				offset += rts_client_keepalive_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_VERSION:
-				offset += rts_version_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_EMPTY:
-				offset += rts_empty_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_PADDING:
-				offset += rts_padding_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_NEGATIVE_ANCE:
-				offset += rts_negative_ance_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_ANCE:
-				offset += rts_ance_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_CLIENT_ADDRESS:
-				offset += rts_client_address_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_ASSOCIATION_GROUP_ID:
-				offset += rts_association_group_id_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_DESTINATION:
-				offset += rts_destination_command_read(rpc, &buffer[offset], length);
-				break;
-
-			case RTS_CMD_PING_TRAFFIC_SENT_NOTIFY:
-				offset += rts_ping_traffic_sent_notify_command_read(rpc, &buffer[offset], length);
-				break;
-
-			default:
-				printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
-				return -1;
-				break;
-		}
-
-		length = rts->frag_length - offset;
-	}
+	if (SignatureId)
+		printf("Identified %s RTS PDU\n", entry->PduName);
 
 	return 0;
 }
@@ -1391,6 +1346,7 @@ int rts_recv_pdu(rdpRpc* rpc)
 
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
 {
+	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
 
@@ -1398,6 +1354,16 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
 
 	rts_extract_pdu_signature(rpc, &signature, rts);
 	rts_print_pdu_signature(rpc, &signature);
+	SignatureId = rts_identify_pdu_signature(rpc, &signature, NULL);
+
+	if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK)
+	{
+
+	}
+	else if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION)
+	{
+		return rts_recv_flow_control_ack_with_destination_pdu(rpc, rpc->buffer, rpc->length);
+	}
 
 	return 0;
 }

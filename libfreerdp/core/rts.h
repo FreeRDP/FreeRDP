@@ -168,7 +168,8 @@ BOOL rts_connect(rdpRpc* rpc);
 int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize);
 int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize);
 
-int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length,
+		UINT32* BytesReceived, UINT32* AvailableWindow, BYTE* ChannelCookie);
 int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
 
 int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ConnectionTimeout);
@@ -204,7 +205,7 @@ int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* Cli
 int rts_association_group_id_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId);
 
-int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* Destination);
 int rts_destination_command_write(BYTE* buffer, UINT32 Destination);
 
 int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
