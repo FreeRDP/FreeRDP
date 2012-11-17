@@ -91,14 +91,14 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if ((settings->width != wfi->servscreen_width) || (settings->height != wfi->servscreen_height))
+	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
-			settings->width, settings->height, wfi->servscreen_width, wfi->servscreen_height);
+			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
 
-		settings->width = wfi->servscreen_width;
-		settings->height = wfi->servscreen_height;
-		settings->color_depth = wfi->bitsPerPixel;
+		settings->DesktopWidth = wfi->servscreen_width;
+		settings->DesktopHeight = wfi->servscreen_height;
+		settings->ColorDepth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
 	}
