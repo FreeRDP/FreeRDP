@@ -130,6 +130,10 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 
 	library = LoadLibraryA(pszFilePath);
 
+	free(pszAddinInstallPath);
+	free(pszAddinFile);
+	free(pszFilePath);
+
 	if (!library)
 		return NULL;
 
@@ -137,10 +141,6 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 
 	if (entry)
 		return entry;
-
-	free(pszAddinInstallPath);
-	free(pszAddinFile);
-	free(pszFilePath);
 
 	return entry;
 }

@@ -305,17 +305,15 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params)
 {
 	int index;
-	RDP_STATIC_CHANNEL* channel;
+	ADDIN_ARGV* channel;
 
-	channel = (RDP_STATIC_CHANNEL*) malloc(sizeof(RDP_STATIC_CHANNEL));
+	channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
-	strncpy(channel->Name, params[0], 8);
-
-	channel->argc = count - 1;
+	channel->argc = count;
 	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
 
 	for (index = 0; index < channel->argc; index++)
-		channel->argv[index] = _strdup(params[index + 1]);
+		channel->argv[index] = _strdup(params[index]);
 
 	freerdp_static_channel_collection_add(settings, channel);
 
@@ -325,17 +323,15 @@ int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** p
 int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params)
 {
 	int index;
-	RDP_DYNAMIC_CHANNEL* channel;
+	ADDIN_ARGV* channel;
 
-	channel = (RDP_DYNAMIC_CHANNEL*) malloc(sizeof(RDP_DYNAMIC_CHANNEL));
+	channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
-	strncpy(channel->Name, params[0], 8);
-
-	channel->argc = count - 1;
+	channel->argc = count;
 	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
 
 	for (index = 0; index < channel->argc; index++)
-		channel->argv[index] = _strdup(params[index + 1]);
+		channel->argv[index] = _strdup(params[index]);
 
 	freerdp_dynamic_channel_collection_add(settings, channel);
 
@@ -355,11 +351,11 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 	for (index = 0; list[index]; index++)
 		nCommas += (list[index] == ',') ? 1 : 0;
 
-	p = (char**) malloc(sizeof(char*) * (nCommas + 1));
-	ZeroMemory(p, sizeof(char*) * (nCommas + 1));
-
 	nArgs = nCommas + 1;
-	str = _strdup(list);
+	p = (char**) malloc(sizeof(char*) * (nArgs + 1));
+	ZeroMemory(p, sizeof(char*) * (nArgs + 1));
+
+	str = (char*) list;
 
 	p[0] = str;
 
@@ -800,6 +796,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
+	int index;
 	void* entry = NULL;
 
 	if (settings->DeviceRedirection)
@@ -810,6 +807,32 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{
 			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
 				printf("loading channel %s\n", "rdpdr");
+		}
+	}
+
+	for (index = 0; index < settings->StaticChannelCount; index++)
+	{
+		ADDIN_ARGV* args;
+
+		args = settings->StaticChannelArray[index];
+
+		entry = freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, args) == 0)
+				printf("loading channel %s\n", args->argv[0]);
+		}
+	}
+
+	if (settings->DynamicChannelCount)
+	{
+		entry = freerdp_load_channel_addin_entry("drdynvc", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
+				printf("loading channel %s\n", "drdynvc");
 		}
 	}
 

@@ -38,24 +38,24 @@ void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
-void freerdp_static_channel_collection_add(rdpSettings* settings, RDP_STATIC_CHANNEL* channel)
+void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
 	{
 		settings->StaticChannelArraySize *= 2;
-		settings->StaticChannelArray = (RDP_STATIC_CHANNEL**)
+		settings->StaticChannelArray = (ADDIN_ARGV**)
 				realloc(settings->StaticChannelArray, settings->StaticChannelArraySize);
 	}
 
 	settings->StaticChannelArray[settings->StaticChannelCount++] = channel;
 }
 
-void freerdp_dynamic_channel_collection_add(rdpSettings* settings, RDP_DYNAMIC_CHANNEL* channel)
+void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
 	{
 		settings->DynamicChannelArraySize *= 2;
-		settings->DynamicChannelArray = (RDP_DYNAMIC_CHANNEL**)
+		settings->DynamicChannelArray = (ADDIN_ARGV**)
 				realloc(settings->DynamicChannelArray, settings->DynamicChannelArraySize);
 	}
 

@@ -401,14 +401,14 @@ rdpSettings* freerdp_settings_new(void* instance)
 		ZeroMemory(settings->DeviceArray, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 
 		settings->StaticChannelArraySize = 16;
-		settings->StaticChannelArray = (RDP_STATIC_CHANNEL**)
-				malloc(sizeof(RDP_STATIC_CHANNEL*) * settings->StaticChannelArraySize);
-		ZeroMemory(settings->StaticChannelArray, sizeof(RDP_STATIC_CHANNEL*) * settings->StaticChannelArraySize);
+		settings->StaticChannelArray = (ADDIN_ARGV**)
+				malloc(sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+		ZeroMemory(settings->StaticChannelArray, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
 
 		settings->DynamicChannelArraySize = 16;
-		settings->DynamicChannelArray = (RDP_DYNAMIC_CHANNEL**)
-				malloc(sizeof(RDP_DYNAMIC_CHANNEL*) * settings->DynamicChannelArraySize);
-		ZeroMemory(settings->DynamicChannelArray, sizeof(RDP_DYNAMIC_CHANNEL*) * settings->DynamicChannelArraySize);
+		settings->DynamicChannelArray = (ADDIN_ARGV**)
+				malloc(sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+		ZeroMemory(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
 
 		freerdp_detect_paths(settings);
 

@@ -316,21 +316,12 @@ struct rdp_channel
 };
 typedef struct rdp_channel rdpChannel;
 
-struct _RDP_STATIC_CHANNEL
+struct _ADDIN_ARGV
 {
-	char Name[8];
 	int argc;
 	char** argv;
 };
-typedef struct _RDP_STATIC_CHANNEL RDP_STATIC_CHANNEL;
-
-struct _RDP_DYNAMIC_CHANNEL
-{
-	char Name[8];
-	int argc;
-	char** argv;
-};
-typedef struct _RDP_DYNAMIC_CHANNEL RDP_DYNAMIC_CHANNEL;
+typedef struct _ADDIN_ARGV ADDIN_ARGV;
 
 /* Extensions */
 
@@ -944,7 +935,7 @@ struct rdp_settings
 
 	ALIGN64 UINT32 StaticChannelCount;
 	ALIGN64 UINT32 StaticChannelArraySize;
-	ALIGN64 RDP_STATIC_CHANNEL** StaticChannelArray;
+	ALIGN64 ADDIN_ARGV** StaticChannelArray;
 
 	/**
 	 * Dynamic Virtual Channels
@@ -952,7 +943,7 @@ struct rdp_settings
 
 	ALIGN64 UINT32 DynamicChannelCount;
 	ALIGN64 UINT32 DynamicChannelArraySize;
-	ALIGN64 RDP_DYNAMIC_CHANNEL** DynamicChannelArray;
+	ALIGN64 ADDIN_ARGV** DynamicChannelArray;
 
 	/*
 	 * Extensions
@@ -968,7 +959,7 @@ FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
-FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, RDP_STATIC_CHANNEL* channel);
-FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, RDP_DYNAMIC_CHANNEL* channel);
+FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 
 #endif /* FREERDP_SETTINGS_H */

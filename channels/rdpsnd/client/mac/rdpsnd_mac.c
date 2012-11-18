@@ -203,8 +203,8 @@ static void aq_playback_cb(void* user_data, AudioQueueRef aq_ref, AudioQueueBuff
 
 int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+	ADDIN_ARGV* args;
 	rdpsndAudioQPlugin* aqPlugin;
-	RDP_PLUGIN_DATA* data;
     
 	aqPlugin = xnew(rdpsndAudioQPlugin);
 
@@ -217,14 +217,11 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	aqPlugin->device.Close = rdpsnd_audio_close;
 	aqPlugin->device.Free = rdpsnd_audio_free;
 
-	data = pEntryPoints->plugin_data;
+	args = pEntryPoints->args;
     
-	if (data && strcmp((char *)data->data[0], "macaudio") == 0)
+	if (args->argc > 2)
 	{
-		if(strlen((char *)data->data[1]) > 0)
-			aqPlugin->device_name = strdup((char *)data->data[1]);
-		else
-			aqPlugin->device_name = NULL;
+		/* TODO: parse device name */
 	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) aqPlugin);

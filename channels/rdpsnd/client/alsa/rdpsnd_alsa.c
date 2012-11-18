@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/cmdline.h>
 
 #include <alsa/asoundlib.h>
 
@@ -416,14 +417,50 @@ static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
 	snd_pcm_start(alsa->out_handle);
 }
 
+COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
+{
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static void rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
+
+	arg = rdpsnd_alsa_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "dev")
+		{
+			alsa->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+	ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
-	RDP_PLUGIN_DATA* data;
 
 	alsa = xnew(rdpsndAlsaPlugin);
 
@@ -436,17 +473,8 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.Close = rdpsnd_alsa_close;
 	alsa->device.Free = rdpsnd_alsa_free;
 
-	data = pEntryPoints->plugin_data;
-
-	if (data && strcmp((char*) data->data[0], "alsa") == 0)
-	{
-		alsa->device_name = _strdup((char*) data->data[1]);
-	}
-
-	if (alsa->device_name == NULL)
-	{
-		alsa->device_name = _strdup("default");
-	}
+	args = pEntryPoints->args;
+	rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args);
 
 	alsa->out_handle = 0;
 	alsa->source_rate = 22050;

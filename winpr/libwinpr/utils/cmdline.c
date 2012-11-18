@@ -128,12 +128,16 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			sigil_length = 1;
 		}
+		else if (flags & COMMAND_LINE_SIGIL_NONE)
+		{
+			sigil_length = 0;
+		}
 		else
 		{
 			continue;
 		}
 
-		if (sigil_length > 0)
+		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE))
 		{
 			if (length < (sigil_length + 1))
 				return COMMAND_LINE_ERROR_NO_KEYWORD;

@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/cmdline.h>
 
 #include <pulse/pulseaudio.h>
 
@@ -523,14 +524,51 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 	pa_stream_trigger(pulse->stream, NULL, NULL);
 }
 
+COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
+{
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+			rdpsnd_pulse_args, flags, pulse, NULL, NULL);
+
+	arg = rdpsnd_pulse_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "dev")
+		{
+			pulse->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
-	RDP_PLUGIN_DATA* data;
 
 	pulse = xnew(rdpsndPulsePlugin);
 
@@ -543,15 +581,8 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	pulse->device.Close = rdpsnd_pulse_close;
 	pulse->device.Free = rdpsnd_pulse_free;
 
-	data = pEntryPoints->plugin_data;
-
-	if (data && strcmp((char*)data->data[0], "pulse") == 0)
-	{
-		if(data->data[1] && strlen((char*)data->data[1]) > 0) 
-			pulse->device_name = _strdup((char*)data->data[1]);
-		else
-			pulse->device_name = NULL;
-	}
+	args = pEntryPoints->args;
+	rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
 
 	pulse->dsp_context = freerdp_dsp_context_new();
 
