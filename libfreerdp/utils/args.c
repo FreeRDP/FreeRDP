@@ -45,17 +45,6 @@
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/passphrase.h>
 
-void local_freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
-{
-	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
-	{
-		settings->DeviceArraySize *= 2;
-		settings->DeviceArray = (RDPDR_DEVICE**) realloc(settings->DeviceArray, settings->DeviceArraySize);
-	}
-
-	settings->DeviceArray[settings->DeviceCount++] = device;
-}
-
 void freerdp_parse_hostname(rdpSettings* settings, char* hostname)
 {
 	char* p;
@@ -790,7 +779,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 							drive->Name = _strdup(data->data[1]);
 							drive->Path = _strdup(data->data[2]);
 
-							local_freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
 						}
 						else if (strcmp(data->data[0], "printer") == 0)
 						{
@@ -805,7 +794,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 							if (data->data[2])
 								printer->DriverName = _strdup(data->data[2]);
 
-							local_freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
 						}
 						else if (strcmp(data->data[0], "smartcard") == 0)
 						{
@@ -818,7 +807,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 							smartcard->Name = _strdup(data->data[1]);
 							smartcard->Path = _strdup(data->data[2]);
 
-							local_freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
 						}
 						else if (strcmp(data->data[0], "serial") == 0)
 						{
@@ -831,7 +820,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 							serial->Name = _strdup(data->data[1]);
 							serial->Path = _strdup(data->data[2]);
 
-							local_freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 						}
 						else if (strcmp(data->data[0], "parallel") == 0)
 						{
@@ -844,7 +833,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 							parallel->Name = _strdup(data->data[1]);
 							parallel->Path = _strdup(data->data[2]);
 
-							local_freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
+							freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
 						}
 						else
 						{

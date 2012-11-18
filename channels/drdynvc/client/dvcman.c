@@ -231,6 +231,8 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 
 	while (data && data->size > 0)
 	{
+		printf("Loading Dynamic Virtual Channel %s\n", data->data[0]);
+
 		pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry((char*) data->data[0],
 				NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 

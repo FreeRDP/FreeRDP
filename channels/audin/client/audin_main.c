@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/addin.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-
-#include <freerdp/addin.h>
 
 #include "audin_main.h"
 
@@ -439,22 +439,10 @@ static void audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
 
 static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, RDP_PLUGIN_DATA* data)
 {
-	char* fullname;
 	PFREERDP_AUDIN_DEVICE_ENTRY entry;
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
 
-	if (strrchr(name, '.') != NULL)
-	{
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_dynamic_addin(name, NULL, AUDIN_DEVICE_EXPORT_FUNC_NAME);
-	}
-	else
-	{
-		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, "audin_");
-		strcat(fullname, name);
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_dynamic_addin(fullname, NULL, AUDIN_DEVICE_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_channel_addin_entry("audin", (LPSTR) name, NULL, 0);
 
 	if (entry == NULL)
 		return FALSE;

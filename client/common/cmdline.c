@@ -45,11 +45,13 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "window decorations" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "addin" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\|@]<user>", NULL, NULL, -1, NULL, "username" },
+	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "static virtual channel" },
+	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "dynamic virtual channel" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "domain" },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "gateway" },
-	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\|@]<user>", NULL, NULL, -1, NULL, "gateway username" },
+	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "gateway domain" },
 	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "compression" },
@@ -202,27 +204,6 @@ int freerdp_client_command_line_pre_filter(void* context, int index, LPCSTR arg)
 	return 1;
 }
 
-int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params)
-{
-	RDP_PLUGIN_DATA* data;
-
-	data = (RDP_PLUGIN_DATA*) malloc(sizeof(RDP_PLUGIN_DATA));
-	ZeroMemory(data, sizeof(RDP_PLUGIN_DATA));
-
-	data->size = sizeof(RDP_PLUGIN_DATA);
-
-	if (count > 0)
-		data->data[0] = params[0];
-	if (count > 1)
-		data->data[1] = params[1];
-	if (count > 2)
-		data->data[2] = params[2];
-	if (count > 3)
-		data->data[3] = params[3];
-
-	return 1;
-}
-
 int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params)
 {
 	if (strcmp(params[0], "drive") == 0)
@@ -321,6 +302,81 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	return 0;
 }
 
+int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params)
+{
+	int index;
+	RDP_STATIC_CHANNEL* channel;
+
+	channel = (RDP_STATIC_CHANNEL*) malloc(sizeof(RDP_STATIC_CHANNEL));
+
+	strncpy(channel->Name, params[0], 8);
+
+	channel->argc = count - 1;
+	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+
+	for (index = 0; index < channel->argc; index++)
+		channel->argv[index] = _strdup(params[index + 1]);
+
+	freerdp_static_channel_collection_add(settings, channel);
+
+	return 0;
+}
+
+int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params)
+{
+	int index;
+	RDP_DYNAMIC_CHANNEL* channel;
+
+	channel = (RDP_DYNAMIC_CHANNEL*) malloc(sizeof(RDP_DYNAMIC_CHANNEL));
+
+	strncpy(channel->Name, params[0], 8);
+
+	channel->argc = count - 1;
+	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+
+	for (index = 0; index < channel->argc; index++)
+		channel->argv[index] = _strdup(params[index + 1]);
+
+	freerdp_dynamic_channel_collection_add(settings, channel);
+
+	return 0;
+}
+
+char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
+{
+	char** p;
+	char* str;
+	int nArgs;
+	int index;
+	int nCommas;
+
+	nArgs = nCommas = 0;
+
+	for (index = 0; list[index]; index++)
+		nCommas += (list[index] == ',') ? 1 : 0;
+
+	p = (char**) malloc(sizeof(char*) * (nCommas + 1));
+	ZeroMemory(p, sizeof(char*) * (nCommas + 1));
+
+	nArgs = nCommas + 1;
+	str = _strdup(list);
+
+	p[0] = str;
+
+	for (index = 1; index < nArgs; index++)
+	{
+		p[index] = strchr(p[index - 1], ',');
+		*p[index] = '\0';
+		p[index]++;
+	}
+
+	p[index] = str + strlen(str);
+
+	*count = nArgs;
+
+	return p;
+}
+
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings;
@@ -329,64 +385,46 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 	CommandLineSwitchCase(arg, "a")
 	{
-		int nArgs;
-		char* str;
-		char* p[4];
-		int index;
-		int nCommas;
-
-		nCommas = 0;
+		char** p;
+		int count;
 		settings = (rdpSettings*) context;
 
-		for (index = 0; arg->Value[index]; index++)
-			nCommas += (arg->Value[index] == ',') ? 1 : 0;
+		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
-		if (nCommas >= 1)
+		if (freerdp_client_add_device_channel(settings, count, p) > 0)
 		{
-			nArgs = nCommas + 1;
-			str = _strdup(arg->Value);
-
-			p[0] = str;
-			p[1] = p[2] = p[3] = NULL;
-
-			if (nCommas >= 1)
-			{
-				p[1] = strchr(p[0], ',');
-				*p[1] = '\0';
-				p[1]++;
-			}
-
-			if (nCommas >= 2)
-			{
-				p[2] = strchr(p[1], ',');
-				*p[2] = '\0';
-				p[2]++;
-			}
-			else
-			{
-				p[2] = str + strlen(str);
-			}
-
-			if (nCommas >= 3)
-			{
-				p[3] = strchr(p[2], ',');
-				*p[3] = '\0';
-				p[3]++;
-			}
-			else
-			{
-				p[3] = str + strlen(str);
-			}
-
-			printf("addin: %s %s %s\n", p[0], p[1], p[2]);
-
-			if (freerdp_client_add_device_channel(settings, nArgs, p) > 0)
-			{
-				settings->DeviceRedirection = TRUE;
-			}
-
-			free(str);
+			settings->DeviceRedirection = TRUE;
 		}
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "vc")
+	{
+		char** p;
+		int count;
+		settings = (rdpSettings*) context;
+
+		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+		printf("addin: %s %s %s\n", p[0], p[1], p[2]);
+
+		freerdp_client_add_static_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "dvc")
+	{
+		char** p;
+		int count;
+		settings = (rdpSettings*) context;
+
+		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+		printf("addin: %s %s %s\n", p[0], p[1], p[2]);
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+
+		free(p);
 	}
 
 	CommandLineSwitchEnd(arg)

@@ -19,7 +19,8 @@ set(MODULE_NAME "freerdp-common")
 set(MODULE_PREFIX "FREERDP_COMMON")
 
 set(${MODULE_PREFIX}_SRCS
-	addin.c)
+	addin.c
+	settings.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
@@ -39,3 +40,4 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+

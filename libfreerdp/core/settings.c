@@ -400,6 +400,16 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 		ZeroMemory(settings->DeviceArray, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 
+		settings->StaticChannelArraySize = 16;
+		settings->StaticChannelArray = (RDP_STATIC_CHANNEL**)
+				malloc(sizeof(RDP_STATIC_CHANNEL*) * settings->StaticChannelArraySize);
+		ZeroMemory(settings->StaticChannelArray, sizeof(RDP_STATIC_CHANNEL*) * settings->StaticChannelArraySize);
+
+		settings->DynamicChannelArraySize = 16;
+		settings->DynamicChannelArray = (RDP_DYNAMIC_CHANNEL**)
+				malloc(sizeof(RDP_DYNAMIC_CHANNEL*) * settings->DynamicChannelArraySize);
+		ZeroMemory(settings->DynamicChannelArray, sizeof(RDP_DYNAMIC_CHANNEL*) * settings->DynamicChannelArraySize);
+
 		freerdp_detect_paths(settings);
 
 		settings_load_hkey_local_machine(settings);
@@ -443,19 +453,10 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->ConfigPath);
 		free(settings->CurrentPath);
 		free(settings->DeviceArray);
+		free(settings->StaticChannelArray);
+		free(settings->DynamicChannelArray);
 		free(settings);
 	}
-}
-
-void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
-{
-	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
-	{
-		settings->DeviceArraySize *= 2;
-		settings->DeviceArray = (RDPDR_DEVICE**) realloc(settings->DeviceArray, settings->DeviceArraySize);
-	}
-
-	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
 #ifdef _WIN32

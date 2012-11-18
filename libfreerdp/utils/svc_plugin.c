@@ -330,7 +330,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	freerdp_thread_free(plugin->priv->thread);
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
-	free(plugin->channel_entry_points.pExtendedData);
+	//free(plugin->channel_entry_points.pExtendedData);
 
 	svc_plugin_remove(plugin);
 

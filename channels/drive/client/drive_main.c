@@ -640,6 +640,7 @@ static void drive_free(DEVICE* device)
 		drive_file_free(file);
 
 	list_free(disk->files);
+
 	free(disk);
 }
 

@@ -1,0 +1,63 @@
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Settings Management
+ *
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <freerdp/settings.h>
+
+void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
+{
+	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
+	{
+		settings->DeviceArraySize *= 2;
+		settings->DeviceArray = (RDPDR_DEVICE**) realloc(settings->DeviceArray, settings->DeviceArraySize);
+	}
+
+	settings->DeviceArray[settings->DeviceCount++] = device;
+}
+
+void freerdp_static_channel_collection_add(rdpSettings* settings, RDP_STATIC_CHANNEL* channel)
+{
+	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
+	{
+		settings->StaticChannelArraySize *= 2;
+		settings->StaticChannelArray = (RDP_STATIC_CHANNEL**)
+				realloc(settings->StaticChannelArray, settings->StaticChannelArraySize);
+	}
+
+	settings->StaticChannelArray[settings->StaticChannelCount++] = channel;
+}
+
+void freerdp_dynamic_channel_collection_add(rdpSettings* settings, RDP_DYNAMIC_CHANNEL* channel)
+{
+	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
+	{
+		settings->DynamicChannelArraySize *= 2;
+		settings->DynamicChannelArray = (RDP_DYNAMIC_CHANNEL**)
+				realloc(settings->DynamicChannelArray, settings->DynamicChannelArraySize);
+	}
+
+	settings->DynamicChannelArray[settings->DynamicChannelCount++] = channel;
+}
