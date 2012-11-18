@@ -491,7 +491,33 @@ HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
 
 HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 {
-	return 0;
+	char* p = (char*) pszPath;
+
+	/* find end of string */
+
+	while (*p && cchPath)
+	{
+		cchPath--;
+		p++;
+	}
+
+	/* search backwards for '.' */
+
+	while (p > pszPath)
+	{
+		if (*p == '.')
+		{
+			*ppszExt = (PCSTR) p;
+			return S_OK;
+		}
+
+		if ((*p == '\\') || (*p == '/') || (*p == ':'))
+			return S_FALSE;
+
+		p--;
+	}
+
+	return S_FALSE;
 }
 
 HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)

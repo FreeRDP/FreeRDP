@@ -24,6 +24,7 @@ endif()
 
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
+	common
 	gdi
 	rail
 	cache
@@ -54,3 +55,4 @@ if(MONOLITHIC_BUILD)
 	
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 endif()
+

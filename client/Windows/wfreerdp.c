@@ -792,6 +792,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		data = (thread_data*) xzalloc(sizeof(thread_data)); 
 		data->instance = instance;
 
+		freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
 		if (freerdp_detect_new_command_line_syntax(__argc, __argv))
 		{
 			printf("Using new command-line syntax\n");

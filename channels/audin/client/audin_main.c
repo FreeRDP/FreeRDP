@@ -27,7 +27,8 @@
 
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/load_plugin.h>
+
+#include <freerdp/addin.h>
 
 #include "audin_main.h"
 
@@ -444,14 +445,14 @@ static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, RDP_
 
 	if (strrchr(name, '.') != NULL)
 	{
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(name, AUDIN_DEVICE_EXPORT_FUNC_NAME);
+		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_dynamic_addin(name, NULL, AUDIN_DEVICE_EXPORT_FUNC_NAME);
 	}
 	else
 	{
 		fullname = xzalloc(strlen(name) + 8);
 		strcpy(fullname, "audin_");
 		strcat(fullname, name);
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(fullname, AUDIN_DEVICE_EXPORT_FUNC_NAME);
+		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_dynamic_addin(fullname, NULL, AUDIN_DEVICE_EXPORT_FUNC_NAME);
 		free(fullname);
 	}
 

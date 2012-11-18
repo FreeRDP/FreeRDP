@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
+#include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
 
@@ -402,6 +403,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
+	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
 
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
@@ -763,7 +766,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->DeviceRedirection)
 	{
-		entry = freerdp_channels_client_find_entry("VirtualChannelEntry", "rdpdr");
+		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
 		if (entry)
 		{

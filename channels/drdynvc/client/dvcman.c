@@ -28,6 +28,8 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
+#include <freerdp/addin.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -229,7 +231,8 @@ int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* 
 
 	while (data && data->size > 0)
 	{
-		pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_plugin((char*) data->data[0], "DVCPluginEntry");
+		pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry((char*) data->data[0],
+				NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 
 		if (pDVCPluginEntry != NULL)
 		{

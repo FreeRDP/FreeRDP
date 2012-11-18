@@ -32,8 +32,9 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/constants.h>
 #include <freerdp/types.h>
+#include <freerdp/addin.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
@@ -446,26 +447,13 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 
 static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RDP_PLUGIN_DATA* data)
 {
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
-	char* fullname;
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 
-	if (strrchr(name, '.') != NULL)
-	{
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
-	}
-	else
-	{
-		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, "rdpsnd-client-");
-		strcat(fullname, name);
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);
+
 	if (entry == NULL)
-	{
 		return FALSE;
-	}
 
 	entryPoints.rdpsnd = rdpsnd;
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;

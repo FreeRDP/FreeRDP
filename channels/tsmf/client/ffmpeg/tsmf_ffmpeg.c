@@ -507,10 +507,9 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 
 static BOOL initialized = FALSE;
 
-ITSMFDecoder*
-TSMFDecoderEntry(void)
+ITSMFDecoder* TSMFDecoderEntry(void)
 {
-	TSMFFFmpegDecoder * decoder;
+	TSMFFFmpegDecoder* decoder;
 
 	if (!initialized)
 	{

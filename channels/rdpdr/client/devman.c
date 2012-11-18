@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -99,7 +100,8 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	if (!ServiceName)
 		return FALSE;
 
-	entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_client_find_static_entry("DeviceServiceEntry", ServiceName);
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
+	//entry = (PDEVICE_SERVICE_ENTRY) freerdp_channels_client_find_static_entry("DeviceServiceEntry", ServiceName);
 
 	if (!entry)
 	{
