@@ -38,6 +38,48 @@ void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
+void freerdp_device_collection_free(rdpSettings* settings)
+{
+	int index;
+	RDPDR_DEVICE* device;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+
+		free(device->Name);
+
+		if (settings->DeviceArray[index]->Type == RDPDR_DTYP_FILESYSTEM)
+		{
+			free(((RDPDR_DRIVE*) device)->Path);
+		}
+		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PRINT)
+		{
+
+		}
+		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SMARTCARD)
+		{
+			free(((RDPDR_SMARTCARD*) device)->Path);
+		}
+		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SERIAL)
+		{
+			free(((RDPDR_SERIAL*) device)->Path);
+		}
+		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PARALLEL)
+		{
+			free(((RDPDR_PARALLEL*) device)->Path);
+		}
+
+		free(device);
+	}
+
+	free(settings->DeviceArray);
+
+	settings->DeviceArraySize = 0;
+	settings->DeviceArray = NULL;
+	settings->DeviceCount = 0;
+}
+
 void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
@@ -50,6 +92,22 @@ void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	settings->StaticChannelArray[settings->StaticChannelCount++] = channel;
 }
 
+void freerdp_static_channel_collection_free(rdpSettings* settings)
+{
+	int index;
+
+	for (index = 0; index < settings->StaticChannelCount; index++)
+	{
+		free(settings->StaticChannelArray[index]);
+	}
+
+	free(settings->StaticChannelArray);
+
+	settings->StaticChannelArraySize = 0;
+	settings->StaticChannelArray = NULL;
+	settings->StaticChannelCount = 0;
+}
+
 void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
@@ -60,4 +118,20 @@ void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 	}
 
 	settings->DynamicChannelArray[settings->DynamicChannelCount++] = channel;
+}
+
+void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
+{
+	int index;
+
+	for (index = 0; index < settings->DynamicChannelCount; index++)
+	{
+		free(settings->DynamicChannelArray[index]);
+	}
+
+	free(settings->DynamicChannelArray);
+
+	settings->DynamicChannelArraySize = 0;
+	settings->DynamicChannelArray = NULL;
+	settings->DynamicChannelCount = 0;
 }

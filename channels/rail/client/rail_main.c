@@ -80,7 +80,7 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	rail->rail_order = rail_order_new();
-	rail->rail_order->plugin_data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	rail->rail_order->settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
 	rail->rail_order->plugin = rail;
 }
 
@@ -96,11 +96,11 @@ static void rail_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	stream_free(s);
 }
 
-static void rail_process_plugin_data(rdpRailOrder* rail_order, RDP_PLUGIN_DATA* data)
+static void rail_process_addin_args(rdpRailOrder* rail_order, rdpSettings* settings)
 {
 	char* exeOrFile;
 
-	exeOrFile = (char*) data->data[0];
+	exeOrFile = settings->RemoteApplicationProgram;
 
 	if (strlen(exeOrFile) >= 2)
 	{
@@ -108,21 +108,20 @@ static void rail_process_plugin_data(rdpRailOrder* rail_order, RDP_PLUGIN_DATA* 
 			rail_order->exec.flags |= RAIL_EXEC_FLAG_FILE;
 	}
 
-	rail_string_to_unicode_string(rail_order, (char*) data->data[0], &rail_order->exec.exeOrFile);
-	rail_string_to_unicode_string(rail_order, (char*) data->data[1], &rail_order->exec.workingDir);
-	rail_string_to_unicode_string(rail_order, (char*) data->data[2], &rail_order->exec.arguments);
+	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationProgram, &rail_order->exec.exeOrFile);
+	rail_string_to_unicode_string(rail_order, settings->ShellWorkingDirectory, &rail_order->exec.workingDir);
+	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationCmdLine, &rail_order->exec.arguments);
 
 	rail_send_client_exec_order(rail_order);
 }
 
 static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* event)
 {
-	RDP_PLUGIN_DATA* data;
 	RAIL_SYSPARAM_ORDER* sysparam;
 
 	/* Send System Parameters */
 
-	sysparam = (RAIL_SYSPARAM_ORDER*)event->user_data;
+	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
 	memmove(&rail_order->sysparam, sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 
 	rail_send_client_sysparams_order(rail_order);
@@ -131,19 +130,18 @@ static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* e
 
 	rail_order->exec.flags = RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
 
-	data = rail_order->plugin_data;
-	while (data && data->size > 0)
-	{
-		rail_process_plugin_data(rail_order, data);
-		data = (RDP_PLUGIN_DATA*)((char *)(data) + data->size);
-	}
+	rail_process_addin_args(rail_order, rail_order->settings);
 }
 
 static void rail_recv_exec_remote_app_event(rdpRailOrder* rail_order, RDP_EVENT* event)
 {
-	RDP_PLUGIN_DATA* data = (RDP_PLUGIN_DATA*) event->user_data;
+	/**
+	 * TODO: replace event system by an API to allow the execution
+	 * of multiple remote apps over the same connection. RAIL is
+	 * always built-in, so clients can safely link to it.
+	 */
 
-	rail_process_plugin_data(rail_order, data);
+	//rail_process_addin_args(rail_order, data);
 }
 
 static void rail_recv_activate_event(rdpRailOrder* rail_order, RDP_EVENT* event)
@@ -279,4 +277,3 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
-

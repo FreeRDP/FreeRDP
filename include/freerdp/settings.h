@@ -725,14 +725,15 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationIcon; /* 2114 */
 	ALIGN64 char* RemoteApplicationProgram; /* 2115 */
 	ALIGN64 char* RemoteApplicationFile; /* 2116 */
-	ALIGN64 char* RemoteApplicationCmdLine; /* 2117 */
-	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2118 */
-	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2119 */
-	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2120 */
-	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2121 */
-	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2122 */
-	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2123 */
-	UINT64 padding2176[2176 - 2124]; /* 2124 */
+	ALIGN64 char* RemoteApplicationGuid; /* 2117 */
+	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
+	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
+	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
+	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2121 */
+	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
+	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
+	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2124 */
+	UINT64 padding2176[2176 - 2125]; /* 2125 */
 	UINT64 padding2240[2240 - 2124]; /* 2176 */
 
 	/**
@@ -959,7 +960,12 @@ FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
+
 FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
+
 FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 #endif /* FREERDP_SETTINGS_H */

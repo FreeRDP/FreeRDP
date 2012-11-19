@@ -106,6 +106,7 @@ struct rdp_file
 	LPSTR RemoteApplicationIcon; /* remoteapplicationicon */
 	LPSTR RemoteApplicationProgram; /* remoteapplicationprogram */
 	LPSTR RemoteApplicationFile; /* remoteapplicationfile */
+	LPSTR RemoteApplicationGuid; /* remoteapplicationguid */
 	LPSTR RemoteApplicationCmdLine; /* remoteapplicationcmdline */
 	DWORD RemoteApplicationExpandCmdLine; /* remoteapplicationexpandcmdline */
 	DWORD RemoteApplicationExpandWorkingDir; /* remoteapplicationexpandworkingdir */

@@ -452,9 +452,9 @@ void freerdp_settings_free(rdpSettings* settings)
 		key_free(settings->RdpServerRsaKey);
 		free(settings->ConfigPath);
 		free(settings->CurrentPath);
-		free(settings->DeviceArray);
-		free(settings->StaticChannelArray);
-		free(settings->DynamicChannelArray);
+		freerdp_device_collection_free(settings);
+		freerdp_static_channel_collection_free(settings);
+		freerdp_dynamic_channel_collection_free(settings);
 		free(settings);
 	}
 }

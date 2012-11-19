@@ -244,6 +244,8 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 		file->RemoteApplicationProgram = value;
 	else if (_stricmp(name, "remoteapplicationfile") == 0)
 		file->RemoteApplicationFile = value;
+	else if (_stricmp(name, "remoteapplicationguid") == 0)
+		file->RemoteApplicationGuid = value;
 	else if (_stricmp(name, "remoteapplicationcmdline") == 0)
 		file->RemoteApplicationCmdLine = value;
 	else if (_stricmp(name, "alternate shell") == 0)
@@ -537,6 +539,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	
 	if (~file->RemoteApplicationMode)
 		settings->RemoteApplicationMode = file->RemoteApplicationMode;
+	if (~((size_t) file->RemoteApplicationProgram))
+		settings->RemoteApplicationProgram = file->RemoteApplicationProgram;
+	if (~((size_t) file->RemoteApplicationName))
+		settings->RemoteApplicationName = file->RemoteApplicationName;
+	if (~((size_t) file->RemoteApplicationIcon))
+		settings->RemoteApplicationIcon = file->RemoteApplicationIcon;
+	if (~((size_t) file->RemoteApplicationFile))
+		settings->RemoteApplicationFile = file->RemoteApplicationFile;
+	if (~((size_t) file->RemoteApplicationGuid))
+		settings->RemoteApplicationGuid = file->RemoteApplicationGuid;
+	if (~((size_t) file->RemoteApplicationCmdLine))
+		settings->RemoteApplicationCmdLine = file->RemoteApplicationCmdLine;
 
 	return TRUE;
 }

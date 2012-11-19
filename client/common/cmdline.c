@@ -32,39 +32,45 @@
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
-	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL, "destination server" },
-	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "server port" },
-	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "width" },
-	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "height" },
-	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "screen size" },
-	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "fullscreen" },
-	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "session bpp (color depth)" },
-	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "admin (or console) session" },
-	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "multi-monitor" },
-	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "work area" },
-	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "window title" },
-	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "window decorations" },
-	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "addin" },
-	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "static virtual channel" },
-	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "dynamic virtual channel" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "username" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "password" },
-	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "domain" },
-	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "gateway" },
-	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "gateway username" },
-	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "gateway password" },
-	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "gateway domain" },
-	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "compression" },
-	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "alternate shell" },
-	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "shell working directory" },
-	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "audio output mode" },
-	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "audio input (microphone)" },
-	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "smooth fonts (cleartype)" },
-	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "desktop composition" },
-	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "full window drag" },
-	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "menu animations" },
-	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "themes" },
-	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "wallpaper" },
+	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL, "Server hostname" },
+	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
+	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "Width" },
+	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "Height" },
+	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "Screen size" },
+	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Fullscreen mode" },
+	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "Session bpp (color depth)" },
+	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
+	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
+	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
+	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
+	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Window decorations" },
+	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
+	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
+	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Username" },
+	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
+	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
+	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Gateway username" },
+	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
+	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "app", COMMAND_LINE_VALUE_REQUIRED, "||<alias> or <executable path>", NULL, NULL, -1, NULL, "Remote application program" },
+	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
+	{ "app-icon", COMMAND_LINE_VALUE_REQUIRED, "<icon path>", NULL, NULL, -1, NULL, "Remote application icon for user interface" },
+	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL, "Remote application command-line parameters" },
+	{ "app-file", COMMAND_LINE_VALUE_REQUIRED, "<file name>", NULL, NULL, -1, NULL, "File to open with remote application" },
+	{ "app-guid", COMMAND_LINE_VALUE_REQUIRED, "<app guid>", NULL, NULL, -1, NULL, "Remote application GUID" },
+	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Compression" },
+	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Alternate shell" },
+	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
+	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
+	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
+	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
+	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
+	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Full window drag" },
+	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Menu animations" },
+	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Themes" },
+	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Wallpaper" },
 	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "<sw|hw>", NULL, NULL, -1, NULL, "GDI rendering" },
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
@@ -305,17 +311,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params)
 {
 	int index;
-	ADDIN_ARGV* channel;
+	ADDIN_ARGV* args;
 
-	channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
-	channel->argc = count;
-	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+	args->argc = count;
+	args->argv = (char**) malloc(sizeof(char*) * args->argc);
 
-	for (index = 0; index < channel->argc; index++)
-		channel->argv[index] = _strdup(params[index]);
+	for (index = 0; index < args->argc; index++)
+		args->argv[index] = _strdup(params[index]);
 
-	freerdp_static_channel_collection_add(settings, channel);
+	freerdp_static_channel_collection_add(settings, args);
 
 	return 0;
 }
@@ -323,17 +329,17 @@ int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** p
 int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params)
 {
 	int index;
-	ADDIN_ARGV* channel;
+	ADDIN_ARGV* args;
 
-	channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
-	channel->argc = count;
-	channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+	args->argc = count;
+	args->argv = (char**) malloc(sizeof(char*) * args->argc);
 
-	for (index = 0; index < channel->argc; index++)
-		channel->argv[index] = _strdup(params[index]);
+	for (index = 0; index < args->argc; index++)
+		args->argv[index] = _strdup(params[index]);
 
-	freerdp_dynamic_channel_collection_add(settings, channel);
+	freerdp_dynamic_channel_collection_add(settings, args);
 
 	return 0;
 }
@@ -402,8 +408,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
-		printf("addin: %s %s %s\n", p[0], p[1], p[2]);
-
 		freerdp_client_add_static_channel(settings, count, p);
 
 		free(p);
@@ -415,8 +419,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
-
-		printf("addin: %s %s %s\n", p[0], p[1], p[2]);
 
 		freerdp_client_add_dynamic_channel(settings, count, p);
 
@@ -607,6 +609,36 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->GatewayPassword = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "app")
+		{
+			settings->RemoteApplicationProgram = _strdup(arg->Value);
+
+			settings->RemoteApplicationMode = TRUE;
+			settings->RemoteAppLanguageBarSupported = TRUE;
+			settings->Workarea = TRUE;
+			settings->DisableWallpaper = TRUE;
+			settings->DisableFullWindowDrag = TRUE;
+		}
+		CommandLineSwitchCase(arg, "app-name")
+		{
+			settings->RemoteApplicationName = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "app-icon")
+		{
+			settings->RemoteApplicationIcon = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "app-cmd")
+		{
+			settings->RemoteApplicationCmdLine = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "app-file")
+		{
+			settings->RemoteApplicationFile = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "app-guid")
+		{
+			settings->RemoteApplicationGuid = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "z")
 		{
@@ -799,17 +831,6 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	int index;
 	void* entry = NULL;
 
-	if (settings->DeviceRedirection)
-	{
-		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
-
-		if (entry)
-		{
-			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
-				printf("loading channel %s\n", "rdpdr");
-		}
-	}
-
 	for (index = 0; index < settings->StaticChannelCount; index++)
 	{
 		ADDIN_ARGV* args;
@@ -822,6 +843,28 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{
 			if (freerdp_channels_client_load(channels, settings, entry, args) == 0)
 				printf("loading channel %s\n", args->argv[0]);
+		}
+	}
+
+	if (settings->DeviceRedirection)
+	{
+		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
+				printf("loading channel %s\n", "rdpdr");
+		}
+	}
+
+	if (settings->RemoteApplicationMode)
+	{
+		entry = freerdp_load_channel_addin_entry("rail", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
+				printf("loading channel %s\n", "rail");
 		}
 	}
 

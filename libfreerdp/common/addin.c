@@ -193,6 +193,9 @@ void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 
 		entry = freerdp_load_dynamic_addin(pszFileName, NULL, pszEntryName);
 
+		free(pszEntryName);
+		free(pszFileName);
+
 		if (entry)
 			return entry;
 	}
@@ -208,6 +211,8 @@ void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 			entry = freerdp_load_dynamic_addin(pszFileName, NULL, "DeviceServiceEntry");
 		else
 			entry = freerdp_load_dynamic_addin(pszFileName, NULL, pszType);
+
+		free(pszFileName);
 
 		if (entry)
 			return entry;

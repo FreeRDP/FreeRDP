@@ -561,6 +561,8 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		free(certificate_data);
 	}
 
+	free(common_name);
+
 	return verification_status;
 }
 

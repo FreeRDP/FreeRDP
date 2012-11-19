@@ -620,6 +620,12 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	}
 	list_free(rdpsnd->data_out_list);
 
+	if (rdpsnd->subsystem)
+		free(rdpsnd->subsystem);
+
+	if (rdpsnd->device_name)
+		free(rdpsnd->device_name);
+
 	rdpsnd_free_supported_formats(rdpsnd);
 
 	free(plugin);

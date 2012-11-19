@@ -102,6 +102,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	int value_length;
 	int value_index;
 
+	if (!argv)
+		return 0;
+
 	for (i = 1; i < argc; i++)
 	{
 		if (preFilter)

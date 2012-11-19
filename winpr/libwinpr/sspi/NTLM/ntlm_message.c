@@ -430,6 +430,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (context->NTLMv2)
 	{
 		ntlm_construct_authenticate_target_info(context);
+		sspi_SecBufferFree(&context->ChallengeTargetInfo);
 		context->ChallengeTargetInfo.pvBuffer = context->AuthenticateTargetInfo.pvBuffer;
 		context->ChallengeTargetInfo.cbBuffer = context->AuthenticateTargetInfo.cbBuffer;
 	}
@@ -513,6 +514,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 #endif
 
 	context->state = NTLM_STATE_AUTHENTICATE;
+
+	ntlm_free_message_fields_buffer(&(message.TargetName));
 
 	PStreamFreeDetach(s);
 

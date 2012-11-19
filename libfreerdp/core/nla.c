@@ -1299,6 +1299,8 @@ void credssp_free(rdpCredssp* credssp)
 		sspi_SecBufferFree(&credssp->PublicKey);
 		sspi_SecBufferFree(&credssp->ts_credentials);
 
+		free(credssp->ServicePrincipalName);
+
 		free(credssp->identity.User);
 		free(credssp->identity.Domain);
 		free(credssp->identity.Password);
