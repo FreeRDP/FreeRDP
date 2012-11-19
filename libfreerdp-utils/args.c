@@ -664,7 +664,10 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 		}
 		else if (strcmp("--version", argv[index]) == 0)
 		{
-			printf("This is FreeRDP version %s\n", FREERDP_VERSION_FULL);
+			if (strlen(FREERDP_VERSION_SUFFIX))
+				printf("This is FreeRDP version %s-%s\n", FREERDP_VERSION_FULL, FREERDP_VERSION_SUFFIX);
+			else
+				printf("This is FreeRDP version %s\n", FREERDP_VERSION_FULL);
 			return FREERDP_ARGS_PARSE_VERSION;
 		}
 		else if (argv[index][0] != '-')
