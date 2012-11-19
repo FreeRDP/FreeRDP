@@ -261,6 +261,7 @@ void xf_SetWindowStyle(xfInfo* xfi, xfWindow* window, uint32 style, uint32 ex_st
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, boolean decorations)
 {
 	xfWindow* window;
+	XEvent xevent;
 
 	window = (xfWindow*) xzalloc(sizeof(xfWindow));
 
@@ -306,8 +307,19 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
 				PropModeReplace, (uint8*) xf_icon_prop, sizeof(xf_icon_prop) / sizeof(long));
 
+		if (xfi->parent_window)
+                        XReparentWindow(xfi->display, window->handle, xfi->parent_window, 0, 0);
+
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XMapWindow(xfi->display, window->handle);
+
+		//NOTE: This must be done here to handle reparenting the window, so that we dont miss the event and hang waiting for the next one
+        	/* wait for VisibilityNotify */
+        	do
+        	{
+        	      XMaskEvent(xfi->display, VisibilityChangeMask, &xevent);
+        	}
+        	while (xevent.type != VisibilityNotify);
 	}
 
 	XStoreName(xfi->display, window->handle, name);
