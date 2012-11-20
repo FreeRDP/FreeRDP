@@ -33,6 +33,8 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/XShm.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
@@ -77,7 +79,9 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	XvAttribute* attr;
 	XvImageFormatValues* fo;
 
-	xv = xnew(xfXvContext);
+	xv = (xfXvContext*) malloc(sizeof(xfXvContext));
+	ZeroMemory(xv, sizeof(xfXvContext));
+
 	xfi->xv_context = xv;
 
 	xv->xv_colorkey_atom = None;
@@ -142,7 +146,9 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	fo = XvListImageFormats(xfi->display, xv->xv_port, &ret);
 	if (ret > 0)
 	{
-		xv->xv_pixfmts = (UINT32*) xzalloc((ret + 1) * sizeof(UINT32));
+		xv->xv_pixfmts = (UINT32*) malloc((ret + 1) * sizeof(UINT32));
+		ZeroMemory(xv->xv_pixfmts, (ret + 1) * sizeof(UINT32));
+
 		for (i = 0; i < ret; i++)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;

@@ -23,6 +23,8 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
@@ -159,14 +161,18 @@ rdpPointerCache* pointer_cache_new(rdpSettings* settings)
 {
 	rdpPointerCache* pointer_cache;
 
-	pointer_cache = (rdpPointerCache*) xzalloc(sizeof(rdpPointerCache));
+	pointer_cache = (rdpPointerCache*) malloc(sizeof(rdpPointerCache));
 
 	if (pointer_cache != NULL)
 	{
+		ZeroMemory(pointer_cache, sizeof(rdpPointerCache));
+
 		pointer_cache->settings = settings;
 		pointer_cache->cacheSize = settings->PointerCacheSize;
 		pointer_cache->update = ((freerdp*) settings->instance)->update;
-		pointer_cache->entries = (rdpPointer**) xzalloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
+
+		pointer_cache->entries = (rdpPointer**) malloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
+		ZeroMemory(pointer_cache->entries, sizeof(rdpPointer*) * pointer_cache->cacheSize);
 	}
 
 	return pointer_cache;

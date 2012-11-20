@@ -188,10 +188,13 @@ static void* audin_alsa_thread_func(void* arg)
 
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
-	alsa->buffer = (BYTE*) xzalloc(tbytes_per_frame * alsa->frames_per_packet);
+	alsa->buffer = (BYTE*) malloc(tbytes_per_frame * alsa->frames_per_packet);
+	ZeroMemory(alsa->buffer, tbytes_per_frame * alsa->frames_per_packet);
 	alsa->buffer_frames = 0;
-	buffer = (BYTE*) xzalloc(rbytes_per_frame * alsa->frames_per_packet);
+	buffer = (BYTE*) malloc(rbytes_per_frame * alsa->frames_per_packet);
+	ZeroMemory(buffer, rbytes_per_frame * alsa->frames_per_packet);
 	freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
+
 	do
 	{
 		if ((error = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0)) < 0)

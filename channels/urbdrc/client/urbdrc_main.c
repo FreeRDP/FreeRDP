@@ -25,6 +25,8 @@
 #include <time.h>
 #include <libudev.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/dvc.h>
 #include <freerdp/utils/load_plugin.h>
 
@@ -1006,7 +1008,8 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 	}
 	else
 	{
-		fullname = xzalloc(strlen(name) + 8);
+		fullname = malloc(strlen(name) + 8);
+		ZeroMemory(fullname, strlen(name) + 8);
 		strcpy(fullname, name);
 		strcat(fullname, "_udevman");
 		entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_plugin(fullname, URBDRC_UDEVMAN_EXPORT_FUNC_NAME);

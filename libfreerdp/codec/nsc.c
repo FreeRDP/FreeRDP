@@ -25,9 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+
+#include <winpr/crt.h>
 
 #include <freerdp/codec/nsc.h>
 #include <freerdp/utils/memory.h>
@@ -194,7 +197,8 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	length = context->width * context->height * 4;
 	if (context->bmpdata == NULL)
 	{
-		context->bmpdata = xzalloc(length + 16);
+		context->bmpdata = malloc(length + 16);
+		ZeroMemory(context->bmpdata, length + 16);
 		context->bmpdata_length = length;
 	}
 	else if (length > context->bmpdata_length)

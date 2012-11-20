@@ -27,7 +27,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 #include <libavcodec/avcodec.h>
@@ -146,7 +145,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			/* The extradata format that FFmpeg uses is following CodecPrivate in Matroska.
 			   See http://haali.su/mkv/codecs.pdf */
 			mdecoder->codec_context->extradata_size = media_type->ExtraDataSize + 8;
-			mdecoder->codec_context->extradata = xzalloc(mdecoder->codec_context->extradata_size);
+			mdecoder->codec_context->extradata = malloc(mdecoder->codec_context->extradata_size);
+			ZeroMemory(mdecoder->codec_context->extradata, mdecoder->codec_context->extradata_size);
 			p = mdecoder->codec_context->extradata;
 			*p++ = 1; /* Reserved? */
 			*p++ = media_type->ExtraData[8]; /* Profile */
@@ -167,7 +167,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		{
 			/* Add a padding to avoid invalid memory read in some codec */
 			mdecoder->codec_context->extradata_size = media_type->ExtraDataSize + 8;
-			mdecoder->codec_context->extradata = xzalloc(mdecoder->codec_context->extradata_size);
+			mdecoder->codec_context->extradata = malloc(mdecoder->codec_context->extradata_size);
+			ZeroMemory(mdecoder->codec_context->extradata, mdecoder->codec_context->extradata_size);
 			memcpy(mdecoder->codec_context->extradata, media_type->ExtraData, media_type->ExtraDataSize);
 			memset(mdecoder->codec_context->extradata + media_type->ExtraDataSize, 0, 8);
 		}
@@ -307,13 +308,14 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 
 		mdecoder->decoded_size = avpicture_get_size(mdecoder->codec_context->pix_fmt,
 			mdecoder->codec_context->width, mdecoder->codec_context->height);
-		mdecoder->decoded_data = xzalloc(mdecoder->decoded_size);
+		mdecoder->decoded_data = malloc(mdecoder->decoded_size);
+		ZeroMemory(mdecoder->decoded_data, mdecoder->decoded_size);
 		frame = avcodec_alloc_frame();
-		avpicture_fill((AVPicture *) frame, mdecoder->decoded_data,
+		avpicture_fill((AVPicture*) frame, mdecoder->decoded_data,
 			mdecoder->codec_context->pix_fmt,
 			mdecoder->codec_context->width, mdecoder->codec_context->height);
 
-		av_picture_copy((AVPicture *) frame, (AVPicture *) mdecoder->frame,
+		av_picture_copy((AVPicture*) frame, (AVPicture*) mdecoder->frame,
 			mdecoder->codec_context->pix_fmt,
 			mdecoder->codec_context->width, mdecoder->codec_context->height);
 
@@ -347,7 +349,8 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 
 	if (mdecoder->decoded_size_max == 0)
 		mdecoder->decoded_size_max = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
-	mdecoder->decoded_data = xzalloc(mdecoder->decoded_size_max);
+	mdecoder->decoded_data = malloc(mdecoder->decoded_size_max);
+	ZeroMemory(mdecoder->decoded_data, mdecoder->decoded_size_max);
 	/* align the memory for SSE2 needs */
 	dst = (BYTE*) (((uintptr_t) mdecoder->decoded_data + 15) & ~ 0x0F);
 	dst_offset = dst - mdecoder->decoded_data;

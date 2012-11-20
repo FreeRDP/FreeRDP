@@ -501,7 +501,9 @@ BOOL xf_pre_connect(freerdp* instance)
 	BOOL bitmap_cache;
 	rdpSettings* settings;
 	
-	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
+
 	((xfContext*) instance->context)->xfi = xfi;
 
 	xfi->_context = instance->context;
@@ -1373,7 +1375,9 @@ int main(int argc, char* argv[])
 	instance->context->argv = argv;
 	instance->settings->SoftwareGdi = FALSE;
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(struct thread_data));
+
 	data->instance = instance;
 
 	g_thread_count++;

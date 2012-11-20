@@ -425,7 +425,8 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	if (state == PA_STREAM_READY)
 	{
 		freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
-		pulse->buffer = xzalloc(pulse->bytes_per_frame * pulse->frames_per_packet);
+		pulse->buffer = malloc(pulse->bytes_per_frame * pulse->frames_per_packet);
+		ZeroMemory(pulse->buffer, pulse->bytes_per_frame * pulse->frames_per_packet);
 		pulse->buffer_frames = 0;
 		DEBUG_DVC("connected");
 	}

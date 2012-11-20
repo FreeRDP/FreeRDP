@@ -43,6 +43,7 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 struct tf_info
@@ -151,7 +152,10 @@ BOOL tf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 
 	context = (tfContext*) instance->context;
-	tfi = (tfInfo*) xzalloc(sizeof(tfInfo));
+
+	tfi = (tfInfo*) malloc(sizeof(tfInfo));
+	ZeroMemory(tfi, sizeof(tfInfo));
+
 	context->tfi = tfi;
 
 	settings = instance->settings;
@@ -328,7 +332,9 @@ int main(int argc, char* argv[])
 	channels = instance->context->channels;
 	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, channels, NULL, NULL);
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+
 	data->instance = instance;
 
 	g_thread_count++;

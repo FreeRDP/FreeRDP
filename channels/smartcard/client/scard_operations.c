@@ -37,6 +37,8 @@
 #include <PCSC/winscard.h>
 #undef BOOL
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/memory.h>
@@ -438,10 +440,11 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		     (unsigned) hContext, (unsigned) dwTimeout, (int) readerCount);
 	if (readerCount > 0)
 	{
-		readerStates = xzalloc(readerCount * sizeof(SCARD_READERSTATE));
+		readerStates = malloc(readerCount * sizeof(SCARD_READERSTATE));
+		ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
+
 		if (!readerStates)
 			return sc_output_return(irp, SCARD_E_NO_MEMORY);
-
 
 		for (i = 0; i < readerCount; i++)
 		{
@@ -1226,7 +1229,8 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 
 	stream_read_UINT32(irp->input, readerCount);
 
-	readerStates = xzalloc(readerCount * sizeof(SCARD_READERSTATE));
+	readerStates = malloc(readerCount * sizeof(SCARD_READERSTATE));
+	ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
 	if (!readerStates)
 		return sc_output_return(irp, SCARD_E_NO_MEMORY);

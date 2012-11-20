@@ -29,6 +29,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cliprdr.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "df_event.h"
@@ -120,7 +121,9 @@ BOOL df_pre_connect(freerdp* instance)
 	dfContext* context;
 	rdpSettings* settings;
 
-	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
+	dfi = (dfInfo*) malloc(sizeof(dfInfo));
+	ZeroMemory(dfi, sizeof(dfInfo));
+
 	context = ((dfContext*) instance->context);
 	context->dfi = dfi;
 
@@ -474,7 +477,9 @@ int main(int argc, char* argv[])
 	DirectFBInit(&argc, &argv);
 	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+
 	data->instance = instance;
 
 	g_thread_count++;

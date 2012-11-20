@@ -138,7 +138,8 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, S
 	}
 	stream_seek_UINT32(s); /* cbSizeFormatsPacket */
 
-	callback->formats = (audinFormat*) xzalloc(NumFormats * sizeof(audinFormat));
+	callback->formats = (audinFormat*) malloc(NumFormats * sizeof(audinFormat));
+	ZeroMemory(callback->formats, NumFormats * sizeof(audinFormat));
 
 	out = stream_new(9);
 	stream_seek(out, 9);

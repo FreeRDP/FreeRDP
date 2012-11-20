@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
@@ -467,31 +469,40 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 {
 	SERIAL_TTY* tty;
 
-	tty = xnew(SERIAL_TTY);
+	tty = (SERIAL_TTY*) malloc(sizeof(SERIAL_TTY));
+	ZeroMemory(tty, sizeof(SERIAL_TTY));
+
 	tty->id = id;
 	tty->fd = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
 	if (tty->fd < 0)
 	{
 		perror("open");
 		DEBUG_WARN("failed to open device %s", path);
-		serial_tty_free(tty) ;
+		serial_tty_free(tty);
 		return NULL;
 	}
 	else
+	{
 		DEBUG_SVC("tty fd %d successfully opened", tty->fd);
+	}
 
-	tty->ptermios = (struct termios*) xzalloc(sizeof(struct termios));
+	tty->ptermios = (struct termios*) malloc(sizeof(struct termios));
+	ZeroMemory(tty->ptermios, sizeof(struct termios));
+
 	if (tty->ptermios == NULL)
 	{
-		serial_tty_free(tty) ;
+		serial_tty_free(tty);
 		return NULL ;
 	}
 
-	tty->pold_termios = (struct termios*) xzalloc(sizeof(struct termios));
+	tty->pold_termios = (struct termios*) malloc(sizeof(struct termios));
+	ZeroMemory(tty->pold_termios, sizeof(struct termios));
+
 	if (tty->pold_termios == NULL)
 	{
-		serial_tty_free(tty) ;
-		return NULL ;
+		serial_tty_free(tty);
+		return NULL;
 	}
 	tcgetattr(tty->fd, tty->pold_termios);
 
@@ -499,7 +510,7 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 	{
 		DEBUG_WARN("%s access denied", path);
 		fflush(stdout);
-		serial_tty_free(tty) ;
+		serial_tty_free(tty);
 		return NULL;
 	}
 
@@ -976,6 +987,7 @@ static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 	DEBUG_SVC("in");
 
 	r = write(tty->fd, data, len);
+
 	if (r < 0)
 		return tty_get_error_status();
 

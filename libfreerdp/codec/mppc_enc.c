@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
@@ -447,22 +449,31 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 			free(enc);
 			return NULL;
 	}
+
 	enc->first_pkt = 1;
-	enc->historyBuffer = (char*) xzalloc(enc->buf_len);
+	enc->historyBuffer = (char*) malloc(enc->buf_len);
+	ZeroMemory(enc->historyBuffer, enc->buf_len);
+
 	if (enc->historyBuffer == NULL)
 	{
 		free(enc);
 		return NULL;
 	}
-	enc->outputBufferPlus = (char*) xzalloc(enc->buf_len + 64);
+
+	enc->outputBufferPlus = (char*) malloc(enc->buf_len + 64);
+	ZeroMemory(enc->outputBufferPlus, enc->buf_len + 64);
+
 	if (enc->outputBufferPlus == NULL)
 	{
 		free(enc->historyBuffer);
 		free(enc);
 		return NULL;
 	}
+
 	enc->outputBuffer = enc->outputBufferPlus + 64;
-	enc->hash_table = (UINT16*) xzalloc(enc->buf_len * 2);
+	enc->hash_table = (UINT16*) malloc(enc->buf_len * 2);
+	ZeroMemory(enc->hash_table, enc->buf_len * 2);
+
 	if (enc->hash_table == NULL)
 	{
 		free(enc->historyBuffer);
@@ -470,6 +481,7 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 		free(enc);
 		return NULL;
 	}
+
 	return enc;
 }
 

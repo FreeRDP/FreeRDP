@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/codec/mppc_dec.h>
@@ -1421,8 +1423,12 @@ struct rdp_mppc_dec* mppc_dec_new(void)
 		return NULL;
 	}
 
-	ptr->history_buf = (BYTE *) xzalloc(RDP6_HISTORY_BUF_SIZE);
-	ptr->offset_cache = (UINT16 *) xzalloc(RDP6_OFFSET_CACHE_SIZE);
+	ptr->history_buf = (BYTE*) malloc(RDP6_HISTORY_BUF_SIZE);
+	ZeroMemory(ptr->history_buf, RDP6_HISTORY_BUF_SIZE);
+
+	ptr->offset_cache = (UINT16*) malloc(RDP6_OFFSET_CACHE_SIZE);
+	ZeroMemory(ptr->offset_cache, RDP6_OFFSET_CACHE_SIZE);
+
 	if (!ptr->history_buf)
 	{
 		printf("mppc_new(): system out of memory\n");

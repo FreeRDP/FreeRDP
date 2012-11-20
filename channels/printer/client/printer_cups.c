@@ -242,13 +242,16 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	int i;
 
 	num_dests = cupsGetDests(&dests);
-	printers = (rdpPrinter**)xzalloc(sizeof(rdpPrinter*) * (num_dests + 1));
+	printers = (rdpPrinter**) malloc(sizeof(rdpPrinter*) * (num_dests + 1));
+	ZeroMemory(printers, sizeof(rdpPrinter*) * (num_dests + 1));
+
 	num_printers = 0;
+
 	for (i = 0, dest = dests; i < num_dests; i++, dest++)
 	{
 		if (dest->instance == NULL)
 		{
-			printers[num_printers++] = printer_cups_new_printer((rdpCupsPrinterDriver*)driver,
+			printers[num_printers++] = printer_cups_new_printer((rdpCupsPrinterDriver*) driver,
 				dest->name, dest->is_default);
 		}
 	}

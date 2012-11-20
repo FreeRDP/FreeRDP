@@ -25,9 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/load_plugin.h>
-
 #include "tsmf_audio.h"
 
 static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const char* device)

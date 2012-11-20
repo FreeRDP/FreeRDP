@@ -195,7 +195,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		return;
 	}
 
-	out_formats = (rdpsndFormat*)xzalloc(wNumberOfFormats * sizeof(rdpsndFormat));
+	out_formats = (rdpsndFormat*) malloc(wNumberOfFormats * sizeof(rdpsndFormat));
+	ZeroMemory(out_formats, wNumberOfFormats * sizeof(rdpsndFormat));
 	n_out_formats = 0;
 
 	data_out = stream_new(24);

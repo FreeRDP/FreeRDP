@@ -154,7 +154,9 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfContext* context;
 	rdpSettings* settings;
 
-	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
 	context = (wfContext*) instance->context;
 	wfi->instance = instance;
 	context->wfi = wfi;
@@ -206,7 +208,9 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfi->fs_toggle = wfi->fullscreen;
 	wfi->sw_gdi = settings->SoftwareGdi;
 
-	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
+	wfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	ZeroMemory(wfi->clrconv, sizeof(CLRCONV));
+
 	wfi->clrconv->palette = NULL;
 	wfi->clrconv->alpha = FALSE;
 
@@ -677,7 +681,9 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	data = (thread_data*) lpParam;
 	instance = data->instance;
 
-	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
 	((wfContext*) instance->context)->wfi = wfi;
 	wfi->instance = instance;
 
@@ -789,7 +795,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		int status;
 		int arg_parse_result;
 
-		data = (thread_data*) xzalloc(sizeof(thread_data)); 
+		data = (thread_data*) malloc(sizeof(thread_data));
+		ZeroMemory(data, sizeof(thread_data));
+
 		data->instance = instance;
 
 		freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
