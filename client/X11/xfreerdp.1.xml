@@ -443,22 +443,6 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--pcb <replaceable class="parameter">blob</replaceable></term>
-        <listitem>
-          <para>
-            Use preconnection <replaceable class="parameter">blob</replaceable>.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--pcid <replaceable class="parameter">id</replaceable></term>
-        <listitem>
-          <para>
-            Use preconnection <replaceable class="parameter">id</replaceable>.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term>--plugin <replaceable class="parameter">pluginname</replaceable></term>
         <listitem>
           <para>
@@ -487,14 +471,6 @@
         <listitem>
           <para>
             RemoteFX operational flags. <replaceable class="parameter">flags</replaceable> can be either v[ideo], i[mage]), default is video.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--no-salted-checksum</term>
-        <listitem>
-          <para>
-            disable salted checksums with Standard RDP encryption.
           </para>
         </listitem>
       </varlistentry>
