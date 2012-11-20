@@ -361,7 +361,10 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 		}
 		else
 		{
-			return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+			if (strcmp(CLIENT_STATIC_ADDIN_TABLE[i].name, pszName) == 0)
+			{
+				return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+			}
 		}
 	}
 
@@ -990,7 +993,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (channels->num_libs_data + 1 >= CHANNEL_MAX_COUNT)
 	{
-		DEBUG_CHANNELS("too many channels");
+		printf("error: too many channels\n");
 		return 1;
 	}
 
@@ -1024,7 +1027,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (!status)
 	{
-		DEBUG_CHANNELS("export function call failed");
+		printf("error: channel export function call failed\n");
 		return 1;
 	}
 

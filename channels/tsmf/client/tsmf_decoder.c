@@ -25,10 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/addin.h>
+#include <freerdp/client/channels.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
-
-#include <freerdp/client/channels.h>
 
 #include "tsmf_types.h"
 #include "tsmf_constants.h"
@@ -36,20 +37,10 @@
 
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name, TS_AM_MEDIA_TYPE* media_type)
 {
-	char* fullname;
 	ITSMFDecoder* decoder;
 	TSMF_DECODER_ENTRY entry;
 
-	if (strrchr(name, '.') != NULL)
-		entry = (TSMF_DECODER_ENTRY) freerdp_load_plugin(name, TSMF_DECODER_EXPORT_FUNC_NAME);
-	else
-	{
-		fullname = xzalloc(strlen(name) + 6);
-		strcpy(fullname, "tsmf_");
-		strcat(fullname, name);
-		entry = (TSMF_DECODER_ENTRY) freerdp_load_plugin(fullname, TSMF_DECODER_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (TSMF_DECODER_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "decoder", 0);
 
 	if (entry == NULL)
 		return NULL;
@@ -86,4 +77,3 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 
 	return decoder;
 }
-

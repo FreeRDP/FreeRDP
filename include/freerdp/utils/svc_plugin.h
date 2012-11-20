@@ -25,6 +25,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
@@ -51,8 +52,6 @@ struct rdp_svc_plugin
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
 FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
-
-#define svc_plugin_get_data(_p) (RDP_PLUGIN_DATA*)(((rdpSvcPlugin*)_p)->channel_entry_points.pExtendedData)
 
 #ifdef WITH_DEBUG_SVC
 #define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)

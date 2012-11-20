@@ -43,7 +43,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-utils)
+	MODULES freerdp-utils freerdp-common)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -54,19 +54,19 @@ endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 if(WITH_FFMPEG)
-	add_subdirectory(ffmpeg)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
 endif()
 
 if(WITH_XRANDR)
 	if(GSTREAMER_FOUND)
-		add_subdirectory(gstreamer)
+		add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "gstreamer" "decoder")
 	endif()
 endif()
 
 if(WITH_ALSA)
-	add_subdirectory(alsa)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "audio")
 endif()
 
 if(WITH_PULSE)
-	add_subdirectory(pulse)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "audio")
 endif()

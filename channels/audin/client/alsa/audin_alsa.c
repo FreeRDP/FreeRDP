@@ -25,7 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+#include <winpr/cmdline.h>
+
 #include <alsa/asoundlib.h>
+
+#include <freerdp/addin.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/dsp.h>
@@ -36,7 +41,7 @@ typedef struct _AudinALSADevice
 {
 	IAudinDevice iface;
 
-	char device_name[32];
+	char* device_name;
 	UINT32 frames_per_packet;
 	UINT32 target_rate;
 	UINT32 actual_rate;
@@ -236,6 +241,9 @@ static void audin_alsa_free(IAudinDevice* device)
 
 	freerdp_thread_free(alsa->thread);
 	freerdp_dsp_context_free(alsa->dsp_context);
+
+	free(alsa->device_name);
+
 	free(alsa);
 }
 
@@ -328,40 +336,66 @@ static void audin_alsa_close(IAudinDevice* device)
 	alsa->user_data = NULL;
 }
 
+COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
+{
+	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	AudinALSADevice* alsa = (AudinALSADevice*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_alsa_args, flags, alsa, NULL, NULL);
+
+	arg = audin_alsa_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "audio-dev")
+		{
+			alsa->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	alsa_freerdp_audin_client_subsystem_entry
 #endif
 
 int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+	ADDIN_ARGV* args;
 	AudinALSADevice* alsa;
-	RDP_PLUGIN_DATA* data;
 
-	alsa = xnew(AudinALSADevice);
+	alsa = (AudinALSADevice*) malloc(sizeof(AudinALSADevice));
+	ZeroMemory(alsa, sizeof(AudinALSADevice));
 
 	alsa->iface.Open = audin_alsa_open;
 	alsa->iface.FormatSupported = audin_alsa_format_supported;
 	alsa->iface.SetFormat = audin_alsa_set_format;
 	alsa->iface.Close = audin_alsa_close;
 	alsa->iface.Free = audin_alsa_free;
-	alsa->device_name[0] = '\0';
 
-	data = pEntryPoints->plugin_data;
-	if (data)
-	{
-		char *data2 = (char *) (data->data[2]);
-		if (data->data[0] && (strcmp(data->data[0], "audin") == 0) &&
-			data->data[1] && (strcmp(data->data[1], "alsa") == 0) &&
-			data2 && (*data2 != '\0'))
-		{
-			strncpy(alsa->device_name, data2, sizeof(alsa->device_name));
-		}
-	}
+	args = pEntryPoints->args;
 
-	if (alsa->device_name[0] == '\0')
-	{
-		strcpy(alsa->device_name, "default");
-	}
+	audin_alsa_parse_addin_args(alsa, args);
+
+	if (!alsa->device_name)
+		alsa->device_name = _strdup("default");
 
 	alsa->frames_per_packet = 128;
 	alsa->target_rate = 22050;
@@ -378,4 +412,3 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 
 	return 0;
 }
-

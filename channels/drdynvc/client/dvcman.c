@@ -74,7 +74,7 @@ struct _DVCMAN_ENTRY_POINTS
 	IDRDYNVC_ENTRY_POINTS iface;
 
 	DVCMAN* dvcman;
-	RDP_PLUGIN_DATA* plugin_data;
+	ADDIN_ARGV* args;
 };
 
 typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;
@@ -183,14 +183,14 @@ IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* n
 	return NULL;
 }
 
-RDP_PLUGIN_DATA* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->plugin_data;
+	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->args;
 }
 
 UINT32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
 {
-	return ((DVCMAN_CHANNEL*)channel)->channel_id;
+	return ((DVCMAN_CHANNEL*) channel)->channel_id;
 }
 
 IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
@@ -202,7 +202,7 @@ IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChanne
 	{
 		if (((DVCMAN_CHANNEL*) curr->data)->channel_id == ChannelId)
 		{
-			return (IWTSVirtualChannel*)curr->data;
+			return (IWTSVirtualChannel*) curr->data;
 		}
 	}
 
@@ -224,29 +224,24 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	return (IWTSVirtualChannelManager*) dvcman;
 }
 
-int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* data)
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
 
-	while (data && data->size > 0)
+	printf("Loading Dynamic Virtual Channel %s\n", args->argv[0]);
+
+	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
+			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+
+	if (pDVCPluginEntry != NULL)
 	{
-		printf("Loading Dynamic Virtual Channel %s\n", data->data[0]);
-
-		pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry((char*) data->data[0],
-				NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
-
-		if (pDVCPluginEntry != NULL)
-		{
-			entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
-			entryPoints.iface.GetPlugin = dvcman_get_plugin;
-			entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
-			entryPoints.dvcman = (DVCMAN*) pChannelMgr;
-			entryPoints.plugin_data = data;
-			pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
-		}
-		
-		data = (RDP_PLUGIN_DATA*)(((BYTE*) data) + data->size);
+		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
+		entryPoints.iface.GetPlugin = dvcman_get_plugin;
+		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
+		entryPoints.dvcman = (DVCMAN*) pChannelMgr;
+		entryPoints.args = args;
+		pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 	}
 
 	return 0;
@@ -346,7 +341,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
-		listener = (DVCMAN_LISTENER*)dvcman->listeners[i];
+		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
@@ -381,7 +376,6 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 
 	return 1;
 }
-
 
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {

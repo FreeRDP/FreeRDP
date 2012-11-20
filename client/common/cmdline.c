@@ -837,7 +837,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		args = settings->StaticChannelArray[index];
 
-		entry = freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+		entry = freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, 0);
 
 		if (entry)
 		{
@@ -848,7 +848,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->DeviceRedirection)
 	{
-		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, 0);
 
 		if (entry)
 		{
@@ -859,7 +859,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RemoteApplicationMode)
 	{
-		entry = freerdp_load_channel_addin_entry("rail", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+		entry = freerdp_load_channel_addin_entry("rail", NULL, NULL, 0);
 
 		if (entry)
 		{
@@ -870,7 +870,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->DynamicChannelCount)
 	{
-		entry = freerdp_load_channel_addin_entry("drdynvc", NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+		entry = freerdp_load_channel_addin_entry("drdynvc", NULL, NULL, 0);
 
 		if (entry)
 		{

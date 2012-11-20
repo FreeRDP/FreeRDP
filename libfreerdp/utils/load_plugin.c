@@ -111,37 +111,6 @@ void* freerdp_load_library_symbol(const char* file, const char* name)
  */
 void* freerdp_load_plugin(const char* name, const char* entry_name)
 {
-#if 0
-	char* path;
-	void* entry;
-	char* suffixed_name;
-
-	suffixed_name = freerdp_append_shared_library_suffix((char*) name);
-
-	if (!freerdp_path_contains_separator(suffixed_name))
-	{
-		/* no explicit path given, use default path */
-		path = freerdp_construct_path(FREERDP_PLUGIN_PATH, suffixed_name);
-	}
-	else
-	{
-		/* explicit path given, use it instead of default path */
-		path = _strdup(suffixed_name);
-	}
-
-	entry = freerdp_load_library_symbol(path, entry_name);
-
-	free(suffixed_name);
-	free(path);
-
-	if (entry == NULL)
-	{
-		printf("freerdp_load_plugin: failed to load %s/%s\n", name, entry_name);
-		return NULL;
-	}
-
-	return entry;
-#endif
 	return freerdp_load_dynamic_addin(name, NULL, entry_name);
 }
 

@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
@@ -60,6 +62,7 @@ static BOOL tsmf_ffmpeg_init_context(ITSMFDecoder* decoder)
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
 	mdecoder->codec_context = avcodec_alloc_context3(NULL);
+
 	if (!mdecoder->codec_context)
 	{
 		DEBUG_WARN("avcodec_alloc_context failed.");
@@ -108,12 +111,13 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 
 static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYPE* media_type)
 {
-	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
+	BYTE* p;
 	UINT32 size;
 	const BYTE* s;
-	BYTE* p;
+	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
+
 	if (!mdecoder->codec)
 	{
 		DEBUG_WARN("avcodec_find_decoder failed.");
@@ -345,7 +349,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 		mdecoder->decoded_size_max = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
 	mdecoder->decoded_data = xzalloc(mdecoder->decoded_size_max);
 	/* align the memory for SSE2 needs */
-	dst = (BYTE*) (((uintptr_t)mdecoder->decoded_data + 15) & ~ 0x0F);
+	dst = (BYTE*) (((uintptr_t) mdecoder->decoded_data + 15) & ~ 0x0F);
 	dst_offset = dst - mdecoder->decoded_data;
 	src = data;
 	src_size = data_size;
@@ -373,7 +377,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			(int16_t*) dst, &frame_size, src, src_size);
 #else
 		{
-            AVFrame* decoded_frame = avcodec_alloc_frame();
+			AVFrame* decoded_frame = avcodec_alloc_frame();
 			int got_frame = 0;
 			AVPacket pkt;
 			av_init_packet(&pkt);
@@ -383,7 +387,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			
 			if (len >= 0 && got_frame)
 			{
-	            frame_size = av_samples_get_buffer_size(NULL, mdecoder->codec_context->channels,
+				frame_size = av_samples_get_buffer_size(NULL, mdecoder->codec_context->channels,
 					decoded_frame->nb_samples, mdecoder->codec_context->sample_fmt, 1);
 				memcpy(dst, decoded_frame->data[0], frame_size);
 			}
@@ -396,6 +400,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			DEBUG_WARN("error decoding");
 			break;
 		}
+
 		src += len;
 		src_size -= len;
 		mdecoder->decoded_size += frame_size;
@@ -444,13 +449,14 @@ static BOOL tsmf_ffmpeg_decode(ITSMFDecoder* decoder, const BYTE* data, UINT32 d
 
 static BYTE* tsmf_ffmpeg_get_decoded_data(ITSMFDecoder* decoder, UINT32* size)
 {
-	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	BYTE* buf;
+	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 
 	*size = mdecoder->decoded_size;
 	buf = mdecoder->decoded_data;
 	mdecoder->decoded_data = NULL;
 	mdecoder->decoded_size = 0;
+
 	return buf;
 }
 
@@ -492,8 +498,10 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 
 	if (mdecoder->frame)
 		av_free(mdecoder->frame);
+
 	if (mdecoder->decoded_data)
 		free(mdecoder->decoded_data);
+
 	if (mdecoder->codec_context)
 	{
 		if (mdecoder->prepared)
@@ -502,12 +510,17 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 			free(mdecoder->codec_context->extradata);
 		av_free(mdecoder->codec_context);
 	}
+
 	free(decoder);
 }
 
 static BOOL initialized = FALSE;
 
-ITSMFDecoder* TSMFDecoderEntry(void)
+#ifdef STATIC_CHANNELS
+#define freerdp_tsmf_client_decoder_subsystem_entry	ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry
+#endif
+
+ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 {
 	TSMFFFmpegDecoder* decoder;
 
@@ -517,7 +530,10 @@ ITSMFDecoder* TSMFDecoderEntry(void)
 		initialized = TRUE;
 	}
 
-	decoder = xnew(TSMFFFmpegDecoder);
+	printf("TSMFDecoderEntry FFMPEG\n");
+
+	decoder = (TSMFFFmpegDecoder*) malloc(sizeof(TSMFFFmpegDecoder));
+	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));
 
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;
 	decoder->iface.Decode = tsmf_ffmpeg_decode;
@@ -528,4 +544,3 @@ ITSMFDecoder* TSMFDecoderEntry(void)
 
 	return (ITSMFDecoder*) decoder;
 }
-

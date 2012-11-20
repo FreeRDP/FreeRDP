@@ -462,7 +462,8 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
 
-	alsa = xnew(rdpsndAlsaPlugin);
+	alsa = (rdpsndAlsaPlugin*) malloc(sizeof(rdpsndAlsaPlugin));
+	ZeroMemory(alsa, sizeof(rdpsndAlsaPlugin));
 
 	alsa->device.Open = rdpsnd_alsa_open;
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;

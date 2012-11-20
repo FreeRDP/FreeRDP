@@ -1565,10 +1565,13 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 
 static int initialized = 0;
 
-ITSMFDecoder *
-TSMFDecoderEntry(void)
+#ifdef STATIC_CHANNELS
+#define freerdp_tsmf_client_decoder_subsystem_entry	gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
+#endif
+
+ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 {
-	TSMFGstreamerDecoder * decoder;
+	TSMFGstreamerDecoder* decoder;
 
 	if (!initialized)
 	{
