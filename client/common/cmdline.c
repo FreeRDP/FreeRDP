@@ -255,7 +255,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SMARTCARD* smartcard;
 
-		if (count < 3)
+		if (count < 2)
 			return -1;
 
 		smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
@@ -263,7 +263,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 
 		smartcard->Type = RDPDR_DTYP_SMARTCARD;
 		smartcard->Name = _strdup(params[1]);
-		smartcard->Path = _strdup(params[2]);
+
+		if (count > 2)
+			smartcard->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
 
@@ -273,7 +275,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SERIAL* serial;
 
-		if (count < 3)
+		if (count < 2)
 			return -1;
 
 		serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
@@ -291,7 +293,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_PARALLEL* parallel;
 
-		if (count < 3)
+		if (count < 2)
 			return -1;
 
 		parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
@@ -869,15 +871,22 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
+	if (settings->RedirectClipboard)
+	{
+		if (!freerdp_static_channel_collection_find(settings, "cliprdr"))
+		{
+			char* params[1];
+
+			params[0] = "cliprdr";
+
+			freerdp_client_add_static_channel(settings, 1, (char**) params);
+		}
+	}
+
 	for (index = 0; index < settings->StaticChannelCount; index++)
 	{
 		args = settings->StaticChannelArray[index];
 		freerdp_client_load_static_channel_addin(channels, settings, args->argv[0], args);
-	}
-
-	if (settings->RedirectClipboard)
-	{
-		freerdp_client_load_static_channel_addin(channels, settings, "cliprdr", settings);
 	}
 
 	if (settings->RemoteApplicationMode)

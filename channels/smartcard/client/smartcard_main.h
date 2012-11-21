@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __SCARD_MAIN_H
-#define __SCARD_MAIN_H
+#ifndef FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 
 #include <inttypes.h>
 
@@ -81,6 +81,7 @@
  * This structure tracks outstanding Terminal Services server "CompletionIDs"
  * used by the redirected smart card device.
  */
+
 struct _COMPLETIONIDINFO
 {
         UINT32 ID;              /* CompletionID */
@@ -89,11 +90,9 @@ struct _COMPLETIONIDINFO
                                  * earlier, outstanding, CompletionID.
                                  */
 };
-
 typedef struct _COMPLETIONIDINFO COMPLETIONIDINFO;
 
-
-struct _SCARD_DEVICE
+struct _SMARTCARD_DEVICE
 {
 	DEVICE device;
 
@@ -107,7 +106,7 @@ struct _SCARD_DEVICE
         LIST* CompletionIds;
         HANDLE CompletionIdsMutex;
 };
-typedef struct _SCARD_DEVICE SCARD_DEVICE;
+typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
 #ifdef WITH_DEBUG_SCARD
 #define DEBUG_SCARD(fmt, ...) DEBUG_CLASS(SCARD, fmt, ## __VA_ARGS__)
@@ -115,7 +114,7 @@ typedef struct _SCARD_DEVICE SCARD_DEVICE;
 #define DEBUG_SCARD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-BOOL scard_async_op(IRP*);
-void scard_device_control(SCARD_DEVICE*, IRP*);
+BOOL smartcard_async_op(IRP*);
+void smartcard_device_control(SMARTCARD_DEVICE*, IRP*);
 
-#endif
+#endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */

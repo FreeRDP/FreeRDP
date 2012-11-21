@@ -27,19 +27,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/rdpdr.h>
 
-#include "scard_main.h"
+#include "smartcard_main.h"
 
-static void scard_free(DEVICE* dev)
+static void smartcard_free(DEVICE* dev)
 {
 	IRP* irp;
 	COMPLETIONIDINFO* CompletionIdInfo;
-	SCARD_DEVICE* scard = (SCARD_DEVICE*) dev;
+	SMARTCARD_DEVICE* scard = (SMARTCARD_DEVICE*) dev;
 
 	freerdp_thread_stop(scard->thread);
 	freerdp_thread_free(scard->thread);
@@ -62,12 +64,12 @@ static void scard_free(DEVICE* dev)
 	return;
 }
 
-static void scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
+static void smartcard_process_irp(SMARTCARD_DEVICE* scard, IRP* irp)
 {
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_DEVICE_CONTROL:
-			scard_device_control(scard, irp);
+			smartcard_device_control(scard, irp);
 			break;
 
 		default:
@@ -79,7 +81,7 @@ static void scard_process_irp(SCARD_DEVICE* scard, IRP* irp)
 	}
 }
 
-static void scard_process_irp_list(SCARD_DEVICE* scard)
+static void smartcard_process_irp_list(SMARTCARD_DEVICE* scard)
 {
 	IRP* irp;
 
@@ -90,28 +92,28 @@ static void scard_process_irp_list(SCARD_DEVICE* scard)
 		if (irp == NULL)
 			break;
 
-		scard_process_irp(scard, irp);
+		smartcard_process_irp(scard, irp);
 	}
 }
 
-struct scard_irp_thread_args
+struct smartcard_irp_thread_args
 {
-	SCARD_DEVICE* scard;
+	SMARTCARD_DEVICE* scard;
 	IRP* irp;
 	freerdp_thread* thread;
 };
  
-static void scard_process_irp_thread_func(struct scard_irp_thread_args* args)
+static void smartcard_process_irp_thread_func(struct smartcard_irp_thread_args* args)
 {
-	scard_process_irp(args->scard, args->irp);
+	smartcard_process_irp(args->scard, args->irp);
 
 	freerdp_thread_free(args->thread);
 	free(args);
 }
 
-static void* scard_thread_func(void* arg)
+static void* smartcard_thread_func(void* arg)
 {
-	SCARD_DEVICE* scard = (SCARD_DEVICE*) arg;
+	SMARTCARD_DEVICE* scard = (SMARTCARD_DEVICE*) arg;
 
 	while (1)
 	{
@@ -121,7 +123,7 @@ static void* scard_thread_func(void* arg)
 			break;
 
 		freerdp_thread_reset(scard->thread);
-		scard_process_irp_list(scard);
+		smartcard_process_irp_list(scard);
 	}
 
 	freerdp_thread_quit(scard->thread);
@@ -130,19 +132,21 @@ static void* scard_thread_func(void* arg)
 }
 
 /* Begin TS Client defect workaround. */
-static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, UINT32 CompletionId)
+static COMPLETIONIDINFO* smartcard_mark_duplicate_id(SMARTCARD_DEVICE* scard, UINT32 CompletionId)
 {
+	LIST_ITEM* item;
+	COMPLETIONIDINFO* CompletionIdInfo;
+
 	/*
 	 * Search from the beginning of the LIST for one outstanding "CompletionID"
 	 * that matches the one passed in.  If there is one, mark it as a duplicate
 	 * if it is not already marked.
 	 */
-	LIST_ITEM* item;
-	COMPLETIONIDINFO* CompletionIdInfo;
 
 	for (item = scard->CompletionIds->head; item; item = item->next)
 	{
-	        CompletionIdInfo = (COMPLETIONIDINFO*)item->data;
+	        CompletionIdInfo = (COMPLETIONIDINFO*) item->data;
+
 	        if (CompletionIdInfo->ID == CompletionId)
 	        {
 	                if (FALSE == CompletionIdInfo->duplicate)
@@ -150,6 +154,7 @@ static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, UINT32 Com
 	                        CompletionIdInfo->duplicate = TRUE;
 	                        DEBUG_WARN("CompletionID number %u is now marked as a duplicate.", CompletionId);
 	                }
+
 	                return CompletionIdInfo;
 	        }
 	}
@@ -157,30 +162,35 @@ static COMPLETIONIDINFO* scard_mark_duplicate_id(SCARD_DEVICE* scard, UINT32 Com
 	return NULL;    /* Either no items in the list or no match. */
 }
 
-static BOOL  scard_check_for_duplicate_id(SCARD_DEVICE* scard, UINT32 CompletionId)
+static BOOL smartcard_check_for_duplicate_id(SMARTCARD_DEVICE* scard, UINT32 CompletionId)
 {
+	LIST_ITEM* item;
+	COMPLETIONIDINFO* CompletionIdInfo;
+	BOOL duplicate;
+
 	/*
 	 * Search from the end of the LIST for one outstanding "CompletionID"
 	 * that matches the one passed in.  Remove it from the list and free the
 	 * memory associated with it.  Return whether or not it was marked
 	 * as a duplicate.
 	 */
-	LIST_ITEM* item;
-	COMPLETIONIDINFO* CompletionIdInfo;
-	BOOL duplicate;
 
 	for (item = scard->CompletionIds->tail; item; item = item->prev)
 	{
-	        CompletionIdInfo = (COMPLETIONIDINFO*)item->data;
+	        CompletionIdInfo = (COMPLETIONIDINFO*) item->data;
+
 	        if (CompletionIdInfo->ID == CompletionId)
 	        {
 	                duplicate = CompletionIdInfo->duplicate;
+
 	                if (TRUE == duplicate)
 	                {
 	                        DEBUG_WARN("CompletionID number %u was previously marked as a duplicate.  The response to the command is removed.", CompletionId);
 	                }
+
 	                list_remove(scard->CompletionIds, CompletionIdInfo);
 	                free(CompletionIdInfo);
+
 	                return duplicate;
 	        }
 	}
@@ -193,7 +203,7 @@ static BOOL  scard_check_for_duplicate_id(SCARD_DEVICE* scard, UINT32 Completion
 	return FALSE;
 }
 
-static void  scard_irp_complete(IRP* irp)
+static void smartcard_irp_complete(IRP* irp)
 {
 	/* This function is (mostly) a copy of the statically-declared "irp_complete()"
 	 * function except that this function adds extra operations for the
@@ -202,7 +212,7 @@ static void  scard_irp_complete(IRP* irp)
 	 */
 	int pos;
 	BOOL duplicate;
-	SCARD_DEVICE* scard = (SCARD_DEVICE*)irp->device;
+	SMARTCARD_DEVICE* scard = (SMARTCARD_DEVICE*) irp->device;
 
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
@@ -216,7 +226,7 @@ static void  scard_irp_complete(IRP* irp)
 	/* Remove from the list the item identified by the CompletionID.
 	 * The function returns whether or not it was a duplicate CompletionID.
 	 */
-	duplicate = scard_check_for_duplicate_id(scard, irp->CompletionId);
+	duplicate = smartcard_check_for_duplicate_id(scard, irp->CompletionId);
 	ReleaseMutex(scard->CompletionIdsMutex);
 
 	if (FALSE == duplicate)
@@ -237,42 +247,42 @@ static void  scard_irp_complete(IRP* irp)
 }
 /* End TS Client defect workaround. */
 
-static void scard_irp_request(DEVICE* device, IRP* irp)
+static void smartcard_irp_request(DEVICE* device, IRP* irp)
 {
 	COMPLETIONIDINFO* CompletionIdInfo;
-	SCARD_DEVICE* scard = (SCARD_DEVICE*) device;
+	SMARTCARD_DEVICE* scard = (SMARTCARD_DEVICE*) device;
 
 	/* Begin TS Client defect workaround. */
-	CompletionIdInfo= xnew(COMPLETIONIDINFO);
-	CompletionIdInfo->ID = irp->CompletionId;/* "duplicate" member is set 
-	                                          * to FALSE by "xnew()"
-	                                          */
+
+	CompletionIdInfo = (COMPLETIONIDINFO*) malloc(sizeof(COMPLETIONIDINFO));
+	ZeroMemory(CompletionIdInfo, sizeof(COMPLETIONIDINFO));
+
+	CompletionIdInfo->ID = irp->CompletionId;
+
 	WaitForSingleObject(scard->CompletionIdsMutex, INFINITE);
-	scard_mark_duplicate_id(scard, irp->CompletionId);
+	smartcard_mark_duplicate_id(scard, irp->CompletionId);
 	list_enqueue(scard->CompletionIds, CompletionIdInfo);
 	ReleaseMutex(scard->CompletionIdsMutex);
 
-	irp->Complete = scard_irp_complete;	/* Overwrite the previous
+	irp->Complete = smartcard_irp_complete;	/* Overwrite the previous
 						 * assignment made in 
 						 * "irp_new()".
 						 */
 	/* End TS Client defect workaround. */
 
-	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL &&
-			scard_async_op(irp))
+	if ((irp->MajorFunction == IRP_MJ_DEVICE_CONTROL) && smartcard_async_op(irp))
 	{
 		/*
 		 * certain potentially long running operations
 		 * get their own thread
 		 * TODO: revise this mechanism.. maybe worker pool
 		 */
-		struct scard_irp_thread_args *args = malloc(sizeof(struct scard_irp_thread_args));
-
+		struct smartcard_irp_thread_args* args = malloc(sizeof(struct smartcard_irp_thread_args));
 
 		args->thread = freerdp_thread_new();
 		args->scard = scard;
 		args->irp = irp;
-		freerdp_thread_start(args->thread, scard_process_irp_thread_func, args);
+		freerdp_thread_start(args->thread, smartcard_process_irp_thread_func, args);
 
 		return;
 	}
@@ -292,7 +302,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* path;
 	int i, length;
 	RDPDR_SMARTCARD* device;
-	SCARD_DEVICE* scard;
+	SMARTCARD_DEVICE* smartcard;
 
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 	name = device->Name;
@@ -302,33 +312,35 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	{
 		/* TODO: check if server supports sc redirect (version 5.1) */
 
-		scard = xnew(SCARD_DEVICE);
+		smartcard = (SMARTCARD_DEVICE*) malloc(sizeof(SMARTCARD_DEVICE));
+		ZeroMemory(smartcard, sizeof(SMARTCARD_DEVICE));
 
-		scard->device.type = RDPDR_DTYP_SMARTCARD;
-		scard->device.name = "SCARD";
-		scard->device.IRPRequest = scard_irp_request;
-		scard->device.Free = scard_free;
+		smartcard->device.type = RDPDR_DTYP_SMARTCARD;
+		smartcard->device.name = "SCARD";
+		smartcard->device.IRPRequest = smartcard_irp_request;
+		smartcard->device.Free = smartcard_free;
 
-		length = strlen(scard->device.name);
-		scard->device.data = stream_new(length + 1);
+		length = strlen(smartcard->device.name);
+		smartcard->device.data = stream_new(length + 1);
 
 		for (i = 0; i <= length; i++)
-			stream_write_BYTE(scard->device.data, name[i] < 0 ? '_' : name[i]);
+			stream_write_BYTE(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
 
-		scard->path = path;
+		smartcard->path = path;
 
-		scard->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(scard->pIrpList);
+		smartcard->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(smartcard->pIrpList);
 
-		scard->thread = freerdp_thread_new();
+		smartcard->thread = freerdp_thread_new();
 
-		scard->CompletionIds = list_new();
-		scard->CompletionIdsMutex = CreateMutex(NULL, FALSE, NULL);
+		smartcard->CompletionIds = list_new();
+		smartcard->CompletionIdsMutex = CreateMutex(NULL, FALSE, NULL);
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE *)scard);
+		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) smartcard);
 
-		freerdp_thread_start(scard->thread, scard_thread_func, scard);
+		freerdp_thread_start(smartcard->thread, smartcard_thread_func, smartcard);
 	}
 
 	return 0;
 }
+

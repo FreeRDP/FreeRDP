@@ -47,7 +47,7 @@
 #include <freerdp/utils/thread.h>
 #include <freerdp/channels/rdpdr.h>
 
-#include "scard_main.h"
+#include "smartcard_main.h"
 
 /* [MS-RDPESC] 3.1.4 */
 #define SCARD_IOCTL_ESTABLISH_CONTEXT		0x00090014	/* EstablishContext */
@@ -86,7 +86,7 @@
 #define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
 
-static UINT32 sc_output_string(IRP* irp, char *src, BOOL wide)
+static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 {
 	BYTE* p;
 	UINT32 len;
@@ -115,7 +115,7 @@ static UINT32 sc_output_string(IRP* irp, char *src, BOOL wide)
 	return len;
 }
 
-static void sc_output_alignment(IRP *irp, UINT32 seed)
+static void smartcard_output_alignment(IRP* irp, UINT32 seed)
 {
 	const UINT32 field_lengths = 20;/* Remove the lengths of the fields
 					 * RDPDR_HEADER, DeviceID,
@@ -129,7 +129,7 @@ static void sc_output_alignment(IRP *irp, UINT32 seed)
 		stream_write_zero(irp->output, add);
 }
 
-static void sc_output_repos(IRP* irp, UINT32 written)
+static void smartcard_output_repos(IRP* irp, UINT32 written)
 {
 	UINT32 add = (4 - (written % 4)) % 4;
 
@@ -137,13 +137,13 @@ static void sc_output_repos(IRP* irp, UINT32 written)
 		stream_write_zero(irp->output, add);
 }
 
-static UINT32 sc_output_return(IRP* irp, UINT32 rv)
+static UINT32 smartcard_output_return(IRP* irp, UINT32 status)
 {
 	stream_write_zero(irp->output, 256);
-	return rv;
+	return status;
 }
 
-static void sc_output_buffer_limit(IRP* irp, char *buffer, unsigned int length, unsigned int highLimit)
+static void smartcard_output_buffer_limit(IRP* irp, char* buffer, unsigned int length, unsigned int highLimit)
 {
 	int header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
 
@@ -159,16 +159,16 @@ static void sc_output_buffer_limit(IRP* irp, char *buffer, unsigned int length, 
 			length = header;
 
 		stream_write(irp->output, buffer, length);
-		sc_output_repos(irp, length);
+		smartcard_output_repos(irp, length);
 	}
 }
 
-static void sc_output_buffer(IRP* irp, char *buffer, unsigned int length)
+static void smartcard_output_buffer(IRP* irp, char* buffer, unsigned int length)
 {
-	sc_output_buffer_limit(irp, buffer, length, 0x7FFFFFFF);
+	smartcard_output_buffer_limit(irp, buffer, length, 0x7FFFFFFF);
 }
 
-static void sc_output_buffer_start_limit(IRP *irp, int length, int highLimit)
+static void smartcard_output_buffer_start_limit(IRP* irp, int length, int highLimit)
 {
 	int header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
 
@@ -176,12 +176,12 @@ static void sc_output_buffer_start_limit(IRP *irp, int length, int highLimit)
 	stream_write_UINT32(irp->output, 0x00000001);	/* Magic DWORD - any non zero */
 }
 
-static void sc_output_buffer_start(IRP *irp, int length)
+static void smartcard_output_buffer_start(IRP* irp, int length)
 {
-	sc_output_buffer_start_limit(irp, length, 0x7FFFFFFF);
+	smartcard_output_buffer_start_limit(irp, length, 0x7FFFFFFF);
 }
 
-static UINT32 sc_input_string(IRP* irp, char **dest, UINT32 dataLength, BOOL wide)
+static UINT32 smartcard_input_string(IRP* irp, char** dest, UINT32 dataLength, BOOL wide)
 {
 	char* buffer;
 	int bufferSize;
@@ -209,7 +209,7 @@ static UINT32 sc_input_string(IRP* irp, char **dest, UINT32 dataLength, BOOL wid
 	return bufferSize;
 }
 
-static void sc_input_repos(IRP* irp, UINT32 read)
+static void smartcard_input_repos(IRP* irp, UINT32 read)
 {
 	UINT32 add = 4 - (read % 4);
 
@@ -217,7 +217,7 @@ static void sc_input_repos(IRP* irp, UINT32 read)
 		stream_seek(irp->input, add);
 }
 
-static void sc_input_reader_name(IRP* irp, char **dest, BOOL wide)
+static void smartcard_input_reader_name(IRP* irp, char** dest, BOOL wide)
 {
 	UINT32 dataLength;
 
@@ -225,10 +225,10 @@ static void sc_input_reader_name(IRP* irp, char **dest, BOOL wide)
 	stream_read_UINT32(irp->input, dataLength);
 
 	DEBUG_SCARD("datalength %d", dataLength);
-	sc_input_repos(irp, sc_input_string(irp, dest, dataLength, wide));
+	smartcard_input_repos(irp, smartcard_input_string(irp, dest, dataLength, wide));
 }
 
-static void sc_input_skip_linked(IRP* irp)
+static void smartcard_input_skip_linked(IRP* irp)
 {
 	UINT32 len;
 	stream_read_UINT32(irp->input, len);
@@ -236,11 +236,11 @@ static void sc_input_skip_linked(IRP* irp)
 	if (len > 0)
 	{
 		stream_seek(irp->input, len);
-		sc_input_repos(irp, len);
+		smartcard_input_repos(irp, len);
 	}
 }
 
-static UINT32 sc_map_state(UINT32 state)
+static UINT32 smartcard_map_state(UINT32 state)
 {
 	/* is this mapping still needed? */
 
@@ -264,7 +264,8 @@ static UINT32 sc_map_state(UINT32 state)
 
 static UINT32 handle_EstablishContext(IRP* irp)
 {
-	UINT32 len, rv;
+	UINT32 len;
+	UINT32 status;
 	UINT32 scope;
 	SCARDCONTEXT hContext = -1;
 
@@ -277,7 +278,7 @@ static UINT32 handle_EstablishContext(IRP* irp)
 	stream_seek_UINT32(irp->input);
 	stream_read_UINT32(irp->input, scope);
 
-	rv = SCardEstablishContext(scope, NULL, NULL, &hContext);
+	status = SCardEstablishContext(scope, NULL, NULL, &hContext);
 
 	stream_write_UINT32(irp->output, 4);	// cbContext
 	stream_write_UINT32(irp->output, -1);	// ReferentID
@@ -287,13 +288,13 @@ static UINT32 handle_EstablishContext(IRP* irp)
 
 	/* TODO: store hContext in allowed context list */
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 	return SCARD_S_SUCCESS;
 }
 
 static UINT32 handle_ReleaseContext(IRP* irp)
 {
-	UINT32 len, rv;
+	UINT32 len, status;
 	SCARDCONTEXT hContext = -1;
 
 	stream_seek(irp->input, 8);
@@ -302,39 +303,41 @@ static UINT32 handle_ReleaseContext(IRP* irp)
 	stream_seek(irp->input, 0x10);
 	stream_read_UINT32(irp->input, hContext);
 
-	rv = SCardReleaseContext(hContext);
-	if (rv)
-		DEBUG_SCARD("%s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	status = SCardReleaseContext(hContext);
+
+	if (status)
+		DEBUG_SCARD("%s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("success 0x%08lx", hContext);
 
-	sc_output_alignment(irp, 8);
-	return rv;
+	smartcard_output_alignment(irp, 8);
+
+	return status;
 }
 
 static UINT32 handle_IsValidContext(IRP* irp)
 {
-	UINT32 rv;
+	UINT32 status;
 	SCARDCONTEXT hContext;
 
 	stream_seek(irp->input, 0x1C);
 	stream_read_UINT32(irp->input, hContext);
 
-	rv = SCardIsValidContext(hContext);
+	status = SCardIsValidContext(hContext);
 
-	if (rv)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 {
-	UINT32 len, rv;
+	UINT32 len, status;
 	SCARDCONTEXT hContext;
 	DWORD dwReaders;
 	char *readerList = NULL, *walker;
@@ -354,20 +357,20 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 
 	/* ignore rest of [MS-RDPESC] 2.2.2.4 ListReaders_Call */
 
-	rv = SCARD_S_SUCCESS;
+	status = SCARD_S_SUCCESS;
 #ifdef SCARD_AUTOALLOCATE
 	dwReaders = SCARD_AUTOALLOCATE;
-	rv = SCardListReaders(hContext, NULL, (LPSTR) &readerList, &dwReaders);
+	status = SCardListReaders(hContext, NULL, (LPSTR) &readerList, &dwReaders);
 #else
-	rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
+	status = SCardListReaders(hContext, NULL, NULL, &dwReaders);
 
 	readerList = malloc(dwReaders);
-	rv = SCardListReaders(hContext, NULL, readerList, &dwReaders);
+	status = SCardListReaders(hContext, NULL, readerList, &dwReaders);
 #endif
-	if (rv != SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
-		return rv;
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		return status;
 	}
 
 /*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
@@ -389,12 +392,12 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 		if (elemLength == 0)
 			break;
 
-		dataLength += sc_output_string(irp, walker, wide);
+		dataLength += smartcard_output_string(irp, walker, wide);
 		walker += elemLength + 1;
 		elemLength = strlen(walker);
 	}
 
-	dataLength += sc_output_string(irp, "\0", wide);
+	dataLength += smartcard_output_string(irp, "\0", wide);
 
 	pos = stream_get_pos(irp->output);
 
@@ -405,8 +408,8 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 
 	stream_set_pos(irp->output, pos);
 
-	sc_output_repos(irp, dataLength);
-	sc_output_alignment(irp, 8);
+	smartcard_output_repos(irp, dataLength);
+	smartcard_output_alignment(irp, 8);
 
 #ifdef SCARD_AUTOALLOCATE
 	SCardFreeMemory(hContext, readerList);
@@ -414,17 +417,17 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 	free(readerList);
 #endif
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 {
-	LONG rv;
+	int i;
+	LONG status;
 	SCARDCONTEXT hContext;
 	DWORD dwTimeout = 0;
 	DWORD readerCount = 0;
 	SCARD_READERSTATE *readerStates, *cur;
-	int i;
 
 	stream_seek(irp->input, 0x18);
 	stream_read_UINT32(irp->input, dwTimeout);
@@ -444,7 +447,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
 		if (!readerStates)
-			return sc_output_return(irp, SCARD_E_NO_MEMORY);
+			return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
 		for (i = 0; i < readerCount; i++)
 		{
@@ -476,7 +479,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 
 			stream_seek(irp->input, 8);
 			stream_read_UINT32(irp->input, dataLength);
-			sc_input_repos(irp, sc_input_string(irp, (char **) &cur->szReader, dataLength, wide));
+			smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
 			DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
 			DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
@@ -492,10 +495,10 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		readerStates = NULL;
 	}
 
-	rv = SCardGetStatusChange(hContext, (DWORD) dwTimeout, readerStates, (DWORD) readerCount);
+	status = SCardGetStatusChange(hContext, (DWORD) dwTimeout, readerStates, (DWORD) readerCount);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success");
 
@@ -523,37 +526,37 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		free((void *)cur->szReader);
 	}
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(readerStates);
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Cancel(IRP *irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hContext;
 
 	stream_seek(irp->input, 0x1C);
 	stream_read_UINT32(irp->input, hContext);
 
-	rv = SCardCancel(hContext);
+	status = SCardCancel(hContext);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
-		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, pcsc_stringify_error(rv));
+		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, pcsc_stringify_error(status));
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Connect(IRP* irp, BOOL wide)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hContext;
-	char *readerName = NULL;
+	char* readerName = NULL;
 	DWORD dwShareMode = 0;
 	DWORD dwPreferredProtocol = 0;
 	DWORD dwActiveProtocol = 0;
@@ -563,7 +566,7 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 	stream_read_UINT32(irp->input, dwShareMode);
 	stream_read_UINT32(irp->input, dwPreferredProtocol);
 
-	sc_input_reader_name(irp, &readerName, wide);
+	smartcard_input_reader_name(irp, &readerName, wide);
 
 	stream_seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hContext);
@@ -572,11 +575,11 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 		(unsigned) hContext, (unsigned) dwShareMode,
 		(unsigned) dwPreferredProtocol, readerName ? readerName : "NULL");
 
-	rv = SCardConnect(hContext, readerName, (DWORD) dwShareMode,
+	status = SCardConnect(hContext, readerName, (DWORD) dwShareMode,
 		(DWORD) dwPreferredProtocol, &hCard, (DWORD *) &dwActiveProtocol);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s 0x%08x", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s 0x%08x", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success 0x%08x", (unsigned) hCard);
 
@@ -588,15 +591,15 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 	stream_write_UINT32(irp->output, 0x00000004);
 	stream_write_UINT32(irp->output, hCard);
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(readerName);
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Reconnect(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	DWORD dwShareMode = 0;
@@ -618,23 +621,23 @@ static UINT32 handle_Reconnect(IRP* irp)
 		(unsigned) hContext, (unsigned) hCard,
 		(unsigned) dwShareMode, (unsigned) dwPreferredProtocol, (unsigned) dwInitialization);
 
-	rv = SCardReconnect(hCard, (DWORD) dwShareMode, (DWORD) dwPreferredProtocol,
+	status = SCardReconnect(hCard, (DWORD) dwShareMode, (DWORD) dwPreferredProtocol,
 	    (DWORD) dwInitialization, (LPDWORD) &dwActiveProtocol);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success (proto: 0x%08x)", (unsigned) dwActiveProtocol);
 
 	stream_write_UINT32(irp->output, dwActiveProtocol);
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Disconnect(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	DWORD dwDisposition = 0;
@@ -649,41 +652,41 @@ static UINT32 handle_Disconnect(IRP* irp)
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, disposition: 0x%08x)",
 		(unsigned) hContext, (unsigned) hCard, (unsigned) dwDisposition);
 
-	rv = SCardDisconnect(hCard, (DWORD) dwDisposition);
+	status = SCardDisconnect(hCard, (DWORD) dwDisposition);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success");
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_BeginTransaction(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hCard;
 
 	stream_seek(irp->input, 0x30);
 	stream_read_UINT32(irp->input, hCard);
 
-	rv = SCardBeginTransaction(hCard);
+	status = SCardBeginTransaction(hCard);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_EndTransaction(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hCard;
 	DWORD dwDisposition = 0;
 
@@ -693,26 +696,26 @@ static UINT32 handle_EndTransaction(IRP* irp)
 	stream_seek(irp->input, 0x0C);
 	stream_read_UINT32(irp->input, hCard);
 
-	rv = SCardEndTransaction(hCard, dwDisposition);
+	status = SCardEndTransaction(hCard, dwDisposition);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_State(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDHANDLE hCard;
 	DWORD state = 0, protocol = 0;
 	DWORD readerLen;
 	DWORD atrLen = MAX_ATR_SIZE;
-	char * readerName;
+	char* readerName;
 	BYTE pbAtr[MAX_ATR_SIZE];
 
 #ifdef WITH_DEBUG_SCARD
@@ -729,18 +732,18 @@ static UINT32 handle_State(IRP* irp)
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
 
-	rv = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #else
 	readerLen = 256;
 	readerName = malloc(readerLen);
 
-	rv = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	status = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #endif
 
-	if (rv != SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
-		return sc_output_return(irp, rv);
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		return smartcard_output_return(irp, status);
 	}
 
 	DEBUG_SCARD("Success (hcard: 0x%08x len: %d state: 0x%08x, proto: 0x%08x)",
@@ -753,7 +756,7 @@ static UINT32 handle_State(IRP* irp)
 	printf("\n");
 #endif
 
-	state = sc_map_state(state);
+	state = smartcard_map_state(state);
 
 	stream_write_UINT32(irp->output, state);
 	stream_write_UINT32(irp->output, protocol);
@@ -762,8 +765,8 @@ static UINT32 handle_State(IRP* irp)
 	stream_write_UINT32(irp->output, atrLen);
 	stream_write(irp->output, pbAtr, atrLen);
 
-	sc_output_repos(irp, atrLen);
-	sc_output_alignment(irp, 8);
+	smartcard_output_repos(irp, atrLen);
+	smartcard_output_alignment(irp, 8);
 
 #ifdef SCARD_AUTOALLOCATE
 	free(readerName);
@@ -771,17 +774,17 @@ static UINT32 handle_State(IRP* irp)
 	free(readerName);
 #endif
 
-	return rv;
+	return status;
 }
 
 static DWORD handle_Status(IRP *irp, BOOL wide)
 {
-	LONG rv;
+	LONG status;
 	SCARDHANDLE hCard;
 	DWORD state, protocol;
 	DWORD readerLen = 0;
 	DWORD atrLen = 0;
-	char * readerName;
+	char* readerName;
 	BYTE pbAtr[MAX_ATR_SIZE];
 	UINT32 dataLength;
 	int pos, poslen1, poslen2;
@@ -802,18 +805,18 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
 
-	rv = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #else
 	readerLen = 256;
 	readerName = malloc(readerLen);
 
-	rv = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	status = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 #endif
 
-	if (rv != SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
-		return sc_output_return(irp, rv);
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		return smartcard_output_return(irp, status);
 	}
 
 	DEBUG_SCARD("Success (state: 0x%08x, proto: 0x%08x)", (unsigned) state, (unsigned) protocol);
@@ -826,7 +829,7 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	printf("\n");
 #endif
 
-	state = sc_map_state(state);
+	state = smartcard_map_state(state);
 
 	poslen1 = stream_get_pos(irp->output);
 	stream_write_UINT32(irp->output, readerLen);
@@ -842,9 +845,9 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	poslen2 = stream_get_pos(irp->output);
 	stream_write_UINT32(irp->output, readerLen);
 
-	dataLength = sc_output_string(irp, readerName, wide);
-	dataLength += sc_output_string(irp, "\0", wide);
-	sc_output_repos(irp, dataLength);
+	dataLength = smartcard_output_string(irp, readerName, wide);
+	dataLength += smartcard_output_string(irp, "\0", wide);
+	smartcard_output_repos(irp, dataLength);
 
 	pos = stream_get_pos(irp->output);
 	stream_set_pos(irp->output, poslen1);
@@ -853,7 +856,7 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	stream_write_UINT32(irp->output,dataLength);
 	stream_set_pos(irp->output, pos);
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 #ifdef SCARD_AUTOALLOCATE
 	/* SCardFreeMemory(NULL, readerName); */
@@ -862,12 +865,12 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	free(readerName);
 #endif
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Transmit(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hCard;
 	UINT32 map[7], linkedLen;
 	SCARD_IO_REQUEST pioSendPci, pioRecvPci, *pPioRecvPci;
@@ -890,7 +893,7 @@ static UINT32 handle_Transmit(IRP* irp)
 	stream_read_UINT32(irp->input, cbRecvLength);
 
 	if (map[0] & SCARD_INPUT_LINKED)
-		sc_input_skip_linked(irp);
+		smartcard_input_skip_linked(irp);
 
 	stream_seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hCard);
@@ -903,7 +906,7 @@ static UINT32 handle_Transmit(IRP* irp)
 		stream_read_UINT32(irp->input, pioSendPci.dwProtocol);
 		stream_seek(irp->input, linkedLen - 4);
 
-		sc_input_repos(irp, linkedLen);
+		smartcard_input_repos(irp, linkedLen);
 	}
 	pioSendPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
 
@@ -914,7 +917,7 @@ static UINT32 handle_Transmit(IRP* irp)
 
 		sendBuf = malloc(linkedLen);
 		stream_read(irp->input, sendBuf, linkedLen);
-		sc_input_repos(irp, linkedLen);
+		smartcard_input_repos(irp, linkedLen);
 	}
 
 	if (cbRecvLength)
@@ -928,7 +931,7 @@ static UINT32 handle_Transmit(IRP* irp)
 		stream_read_UINT32(irp->input, pioRecvPci.dwProtocol);
 		stream_seek(irp->input, linkedLen - 4);
 
-		sc_input_repos(irp, linkedLen);
+		smartcard_input_repos(irp, linkedLen);
 
 		stream_read_UINT32(irp->input, map[6]);
 		if (map[6] & SCARD_INPUT_LINKED)
@@ -937,7 +940,7 @@ static UINT32 handle_Transmit(IRP* irp)
 			stream_read_UINT32(irp->input, linkedLen);
 			stream_seek(irp->input, linkedLen);
 
-			sc_input_repos(irp, linkedLen);
+			smartcard_input_repos(irp, linkedLen);
 		}
 		pioRecvPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
 		pPioRecvPci = &pioRecvPci;
@@ -951,12 +954,12 @@ static UINT32 handle_Transmit(IRP* irp)
 	DEBUG_SCARD("SCardTransmit(hcard: 0x%08lx, send: %d bytes, recv: %d bytes)",
 		(long unsigned) hCard, (int) cbSendLength, (int) cbRecvLength);
 
-	rv = SCardTransmit(hCard, &pioSendPci, sendBuf, cbSendLength,
+	status = SCardTransmit(hCard, &pioSendPci, sendBuf, cbSendLength,
 			   pPioRecvPci, recvBuf, &cbRecvLength);
 
-	if (rv != SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	}
 	else
 	{
@@ -964,28 +967,29 @@ static UINT32 handle_Transmit(IRP* irp)
 
 		stream_write_UINT32(irp->output, 0); 	/* pioRecvPci 0x00; */
 
-		sc_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
+		smartcard_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
 
-		sc_output_buffer(irp, (char *) recvBuf, cbRecvLength);
+		smartcard_output_buffer(irp, (char*) recvBuf, cbRecvLength);
 	}
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(sendBuf);
 	free(recvBuf);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_Control(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	UINT32 map[3];
 	UINT32 controlCode;
 	UINT32 controlFunction;
-	BYTE *recvBuffer = NULL, *sendBuffer = NULL;
+	BYTE* recvBuffer = NULL;
+	BYTE* sendBuffer = NULL;
 	UINT32 recvLength;
 	DWORD nBytesReturned;
 	DWORD outBufferSize;
@@ -1020,7 +1024,7 @@ static UINT32 handle_Control(IRP* irp)
 		recvBuffer = malloc(recvLength);
 
 		if (!recvBuffer)
-			return sc_output_return(irp, SCARD_E_NO_MEMORY);
+			return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
 		stream_read(irp->input, recvBuffer, recvLength);
 	}
@@ -1029,13 +1033,13 @@ static UINT32 handle_Control(IRP* irp)
 	sendBuffer = malloc(outBufferSize);
 
 	if (!sendBuffer)
-		return sc_output_return(irp, SCARD_E_NO_MEMORY);
+		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
-	rv = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
+	status = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
 		sendBuffer, (DWORD) outBufferSize, &nBytesReturned);
 
-	if (rv != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned) rv);
+	if (status != SCARD_S_SUCCESS)
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success (out: %u bytes)", (unsigned) nBytesReturned);
 
@@ -1046,22 +1050,23 @@ static UINT32 handle_Control(IRP* irp)
 	if (nBytesReturned > 0)
 	{
 		stream_write(irp->output, sendBuffer, nBytesReturned);
-		sc_output_repos(irp, nBytesReturned);
+		smartcard_output_repos(irp, nBytesReturned);
 	}
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(recvBuffer);
 	free(sendBuffer);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_GetAttrib(IRP* irp)
 {
-	LONG rv;
+	LONG status;
 	SCARDHANDLE hCard;
-	DWORD dwAttrId = 0, dwAttrLen = 0;
+	DWORD dwAttrId = 0;
+	DWORD dwAttrLen = 0;
 	DWORD attrLen = 0;
 	BYTE* pbAttr = NULL;
 
@@ -1076,7 +1081,7 @@ static UINT32 handle_GetAttrib(IRP* irp)
 		(unsigned) hCard, (unsigned) dwAttrId, (int) dwAttrLen);
 
 #ifdef SCARD_AUTOALLOCATE
-	if(dwAttrLen == 0)
+	if (dwAttrLen == 0)
 	{
 		attrLen = 0;
 	}
@@ -1086,65 +1091,59 @@ static UINT32 handle_GetAttrib(IRP* irp)
 	}
 #endif
 
-	rv = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
-	if( rv != SCARD_S_SUCCESS ) {
+	status = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
+
+	if (status != SCARD_S_SUCCESS)
+	{
 #ifdef SCARD_AUTOALLOCATE
-		if(dwAttrLen == 0)
-		{
+		if (dwAttrLen == 0)
 			attrLen = 0;
-		}
 		else
-		{
 			attrLen = SCARD_AUTOALLOCATE;
-		}
 #endif
 	}
 
-	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A && rv == SCARD_E_UNSUPPORTED_FEATURE)
+	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A && status == SCARD_E_UNSUPPORTED_FEATURE)
 	{
-		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
+		status = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
 			attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
-		if( rv != SCARD_S_SUCCESS ) {
+
+		if (status != SCARD_S_SUCCESS)
+		{
 #ifdef SCARD_AUTOALLOCATE
-			if(dwAttrLen == 0)
-			{
+			if (dwAttrLen == 0)
 				attrLen = 0;
-			}
 			else
-			{
 				attrLen = SCARD_AUTOALLOCATE;
-			}
 #endif
 		}
 	}
-	if(dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && rv == SCARD_E_UNSUPPORTED_FEATURE)
+	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && status == SCARD_E_UNSUPPORTED_FEATURE)
 	{
-		rv = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
+		status = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
 			attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
-		if( rv != SCARD_S_SUCCESS ) {
+
+		if (status != SCARD_S_SUCCESS)
+		{
 #ifdef SCARD_AUTOALLOCATE
-			if(dwAttrLen == 0)
-			{
+			if (dwAttrLen == 0)
 				attrLen = 0;
-			}
 			else
-			{
 				attrLen = SCARD_AUTOALLOCATE;
-			}
 #endif
 		}
 	}
-	if(attrLen > dwAttrLen && pbAttr != NULL)
+	if (attrLen > dwAttrLen && pbAttr != NULL)
 	{
-		rv = SCARD_E_INSUFFICIENT_BUFFER;
+		status = SCARD_E_INSUFFICIENT_BUFFER;
 	}
 	dwAttrLen = attrLen;
 
-	if (rv != SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(rv), (unsigned int) rv);
+		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned int) status);
 		free(pbAttr);
-		return sc_output_return(irp, rv);
+		return smartcard_output_return(irp, status);
 	}
 	else
 	{
@@ -1162,24 +1161,24 @@ static UINT32 handle_GetAttrib(IRP* irp)
 		{
 			stream_write(irp->output, pbAttr, dwAttrLen);
 		}
-		sc_output_repos(irp, dwAttrLen);
+		smartcard_output_repos(irp, dwAttrLen);
 		/* align to multiple of 4 */
 		stream_write_UINT32(irp->output, 0);
 	}
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(pbAttr);
 
-	return rv;
+	return status;
 }
 
 static UINT32 handle_AccessStartedEvent(IRP* irp)
 {
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 	return SCARD_S_SUCCESS;
 }
 
-void scard_error(SCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
+void scard_error(SMARTCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
 {
 	/* [MS-RDPESC] 3.1.4.4 */
 	printf("scard processing error %x\n", ntstatus);
@@ -1200,7 +1199,7 @@ SERVER_SCARD_ATRMASK;
 
 static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 {
-	LONG rv;
+	LONG status;
 	int i, j, k;
 	SCARDCONTEXT hContext;
 	UINT32 atrMaskCount = 0;
@@ -1218,7 +1217,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	pAtrMasks = malloc(atrMaskCount * sizeof(SERVER_SCARD_ATRMASK));
 
 	if (!pAtrMasks)
-		return sc_output_return(irp, SCARD_E_NO_MEMORY);
+		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
 	for (i = 0; i < atrMaskCount; i++)
 	{
@@ -1233,7 +1232,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
 	if (!readerStates)
-		return sc_output_return(irp, SCARD_E_NO_MEMORY);
+		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
 	for (i = 0; i < readerCount; i++)
 	{
@@ -1266,7 +1265,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 
 		stream_seek(irp->input, 8);
 		stream_read_UINT32(irp->input, dataLength);
-		sc_input_repos(irp, sc_input_string(irp, (char **) &cur->szReader, dataLength, wide));
+		smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
 		DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
 		DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
@@ -1277,13 +1276,13 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 			cur->dwCurrentState |= SCARD_STATE_IGNORE;
 	}
 
-	rv = SCardGetStatusChange(hContext, 0x00000001, readerStates, readerCount);
-	if (rv != SCARD_S_SUCCESS)
+	status = SCardGetStatusChange(hContext, 0x00000001, readerStates, readerCount);
+	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)",
-			pcsc_stringify_error(rv), (unsigned) rv);
+			pcsc_stringify_error(status), (unsigned) status);
 
-		return sc_output_return(irp, rv);
+		return smartcard_output_return(irp, status);
 	}
 
 	DEBUG_SCARD("Success");
@@ -1324,14 +1323,14 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		free((void*) cur->szReader);
 	}
 
-	sc_output_alignment(irp, 8);
+	smartcard_output_alignment(irp, 8);
 
 	free(readerStates);
 
-	return rv;
+	return status;
 }
 
-BOOL scard_async_op(IRP* irp)
+BOOL smartcard_async_op(IRP* irp)
 {
 	UINT32 ioctl_code;
 
@@ -1371,7 +1370,7 @@ BOOL scard_async_op(IRP* irp)
 	return TRUE;
 }
 
-void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
+void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 {
 	UINT32 pos;
 	UINT32 result;
@@ -1382,9 +1381,9 @@ void scard_device_control(SCARD_DEVICE* scard, IRP* irp)
 	UINT32 stream_len;
 	UINT32 irp_result_pos;
 	UINT32 output_len_pos;
-	const UINT32 header_lengths = 16;	/* MS-RPCE, Sections 2.2.6.1
-						 * and 2.2.6.2.
-						 */
+	const UINT32 header_lengths = 16;
+
+	/* MS-RPCE, Sections 2.2.6.1 and 2.2.6.2. */
 
 	stream_read_UINT32(irp->input, output_len);
 	stream_read_UINT32(irp->input, input_len);
