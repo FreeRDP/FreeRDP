@@ -41,7 +41,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/thread.h>
@@ -441,6 +440,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 
 	DEBUG_SCARD("context: 0x%08x, timeout: 0x%08x, count: %d",
 		     (unsigned) hContext, (unsigned) dwTimeout, (int) readerCount);
+
 	if (readerCount > 0)
 	{
 		readerStates = malloc(readerCount * sizeof(SCARD_READERSTATE));

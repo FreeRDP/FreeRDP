@@ -665,7 +665,8 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 
 	if (name[0] && path[0])
 	{
-		disk = xnew(DRIVE_DEVICE);
+		disk = (DRIVE_DEVICE*) malloc(sizeof(DRIVE_DEVICE));
+		ZeroMemory(disk, sizeof(DRIVE_DEVICE));
 
 		disk->device.type = RDPDR_DTYP_FILESYSTEM;
 		disk->device.name = name;

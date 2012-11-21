@@ -27,6 +27,7 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/rdpdr.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 /* 
@@ -101,7 +102,9 @@ struct _SMARTCARD_DEVICE
 
 	PSLIST_HEADER pIrpList;
 
-	freerdp_thread* thread;
+	HANDLE thread;
+	HANDLE irpEvent;
+	HANDLE stopEvent;
 
         LIST* CompletionIds;
         HANDLE CompletionIdsMutex;
