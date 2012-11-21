@@ -65,6 +65,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
 	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
 	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
+	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Full window drag" },
@@ -644,6 +645,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "clipboard")
+		{
+			settings->RedirectClipboard = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "shell")
 		{
 			settings->AlternateShell = _strdup(arg->Value);
@@ -854,6 +859,17 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{
 			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
 				printf("loading channel %s\n", "rdpdr");
+		}
+	}
+
+	if (settings->RedirectClipboard)
+	{
+		entry = freerdp_load_channel_addin_entry("cliprdr", NULL, NULL, 0);
+
+		if (entry)
+		{
+			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
+				printf("loading channel %s\n", "cliprdr");
 		}
 	}
 

@@ -931,6 +931,12 @@ struct rdp_settings
 	ALIGN64 BOOL RedirectParallelPorts; /*  */
 
 	/**
+	 * Other Redirection
+	 */
+
+	ALIGN64 BOOL RedirectClipboard; /*  */
+
+	/**
 	 * Static Virtual Channels
 	 */
 

@@ -37,9 +37,11 @@ endif()
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set(${MODULE_PREFIX}_LIBS
+	${CMAKE_THREAD_LIBS_INIT})
+
+set(${MODULE_PREFIX}_LIBS
 	dbus-glib-1
 	usb-1.0
-	pthread
 	udev)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
