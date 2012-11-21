@@ -2443,5 +2443,3 @@ void* urbdrc_process_udev_data_transfer(void* arg)
 	udevman->push_urb(udevman);
 	return 0;
 }
-
-

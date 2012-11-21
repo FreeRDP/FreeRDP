@@ -35,7 +35,7 @@ add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE 
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} libusb-devman)
+#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} libusb-devman)
 
 set(${MODULE_PREFIX}_LIBS
 	dbus-glib-1
@@ -60,3 +60,5 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
+# libusb subsystem
+add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "libusb" "")

@@ -1217,23 +1217,21 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 			| LIBUSB_REQUEST_TYPE_CLASS 
 			| LIBUSB_RECIPIENT_OTHER, 
 			LIBUSB_REQUEST_GET_STATUS, 
-			0, 
-			pdev->port_number, 
-			UsbdStatus, 
-			BufferSize, 
-			Buffer, 
-			1000);
+			0, pdev->port_number, UsbdStatus, BufferSize, Buffer, 1000);
 
-		if (ret < 0){
+		if (ret < 0)
+		{
 			LLOGLN(libusb_debug, ("libusb_control_transfer: error num %d", ret));
 			*BufferSize = 0;
 		}
-		else{
+		else
+		{
 			LLOGLN(libusb_debug, ("PORT STATUS:0x%02x%02x%02x%02x", 
 				Buffer[3], Buffer[2], Buffer[1], Buffer[0]));
 			success = 1;
 		}
 	}
+
 	return success;
 }
 
@@ -1248,77 +1246,70 @@ static int libusb_udev_request_queue_is_none(IUDEVICE* idev)
 }
 
 static int libusb_udev_isoch_transfer(IUDEVICE* idev, UINT32 RequestId, UINT32 EndpointAddress,
-	UINT32 TransferFlags, 
-	int NoAck, 
-	UINT32 *ErrorCount, 
-	UINT32 *UrbdStatus, 
-	UINT32 *StartFrame,
-	UINT32 NumberOfPackets, 
-	BYTE *IsoPacket, 
-	UINT32 *BufferSize, 
-	BYTE *Buffer, 
-	int Timeout)
+	UINT32 TransferFlags, int NoAck, UINT32* ErrorCount,
+	UINT32* UrbdStatus, UINT32* StartFrame, UINT32 NumberOfPackets,
+	BYTE* IsoPacket, UINT32* BufferSize, BYTE* Buffer, int Timeout)
 {
+	UINT32 iso_packet_size;
 	UDEVICE* pdev = (UDEVICE*) idev;
 	ISO_USER_DATA iso_user_data;
-	struct libusb_transfer *  iso_transfer = NULL;
-	UINT32 iso_packet_size;
-	int error = 0, ret = 0, submit = 0;
-
+	struct libusb_transfer* iso_transfer = NULL;
+	int status = 0, ret = 0, submit = 0;
 
 	iso_packet_size = *BufferSize / NumberOfPackets;
 
 	iso_transfer = libusb_alloc_transfer(NumberOfPackets);
-	if (iso_transfer == NULL) {
+
+	if (iso_transfer == NULL)
+	{
 		printf("Error: libusb_alloc_transfer.\n");
-		error = -1;
+		status = -1;
 	}
 
 	/**  process URB_FUNCTION_IOSCH_TRANSFER */
-	func_iso_data_init(&iso_user_data, NumberOfPackets, *BufferSize, 
-		NoAck, IsoPacket, Buffer);
+	func_iso_data_init(&iso_user_data, NumberOfPackets, *BufferSize, NoAck, IsoPacket, Buffer);
+
 	/** fill setting */
 	libusb_fill_iso_transfer(iso_transfer, 
-		pdev->libusb_handle, 
-		EndpointAddress, 
-		Buffer, 
-		*BufferSize, 
-		NumberOfPackets, 
-		func_iso_callback, 
-		&iso_user_data,
-		2000);
+		pdev->libusb_handle, EndpointAddress, Buffer, *BufferSize,
+		NumberOfPackets, func_iso_callback, &iso_user_data, 2000);
 
 	libusb_set_iso_packet_lengths(iso_transfer, iso_packet_size);
 
-	if(pdev->status & (URBDRC_DEVICE_SIGNAL_END | URBDRC_DEVICE_NOT_FOUND))
-		error = -1;
+	if (pdev->status & (URBDRC_DEVICE_SIGNAL_END | URBDRC_DEVICE_NOT_FOUND))
+		status = -1;
+
 	iso_user_data.iso_status = 0;
-	if (!(error < 0))
+
+	if (!(status < 0))
 	{
 		submit = libusb_submit_transfer(iso_transfer);
-		if (submit < 0) {
+
+		if (submit < 0)
+		{
 			LLOGLN(libusb_debug, ("Error: Failed to submit transfer (ret = %d).", submit));
-			error = -1;
+			status = -1;
 			func_set_usbd_status(pdev, UrbdStatus, ret);  
 		}
 	}
 
 #if ISOCH_FIFO
-	if(!NoAck){ 
+	if (!NoAck)
+	{
 		idev->unlock_fifo_isoch(idev);
 	}
 #endif
 
-	while(pdev && iso_user_data.iso_status == 0 && error >= 0 && submit >= 0)
+	while(pdev && iso_user_data.iso_status == 0 && status >= 0 && submit >= 0)
 	{
 		if (pdev->status & URBDRC_DEVICE_NOT_FOUND){
-			error = -1;
+			status = -1;
 			break;
 		}
 		ret = handle_events_completed(NULL, &iso_user_data.completed);
 		if (ret < 0) {
 			LLOGLN(libusb_debug, ("Error: libusb_handle_events (ret = %d).", ret));
-			error = -1;
+			status = -1;
 			break;
 		}
 #if WAIT_COMPLETE_SLEEP
@@ -1330,32 +1321,32 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, UINT32 RequestId, UINT32 E
 	} 
 
 	if (iso_user_data.iso_status < 0)
-		error = -1;
+		status = -1;
 
 	*ErrorCount = iso_user_data.error_count;
 	*StartFrame = iso_user_data.start_frame;
 	*BufferSize = iso_transfer->actual_length;
 	libusb_free_transfer(iso_transfer);
 
-	return error;
+	return status;
 }
 
 static int libusb_udev_control_transfer(IUDEVICE* idev, UINT32 RequestId, UINT32 EndpointAddress,
 	UINT32 TransferFlags, BYTE bmRequestType, BYTE Request, UINT16 Value, UINT16 Index,
 	UINT32* UrbdStatus, UINT32* BufferSize, BYTE* Buffer, UINT32 Timeout)
 {
-	int error = 0;
+	int status = 0;
 	UDEVICE* pdev = (UDEVICE*) idev;
 
-	error = libusb_control_transfer(pdev->libusb_handle, 
+	status = libusb_control_transfer(pdev->libusb_handle, 
 		bmRequestType, Request, Value, Index, Buffer, *BufferSize, Timeout);
 
-	if (!(error < 0))
-		*BufferSize = error;
+	if (!(status < 0))
+		*BufferSize = status;
 
-	func_set_usbd_status(pdev, UrbdStatus, error);   
+	func_set_usbd_status(pdev, UrbdStatus, status);   
 
-	return error;
+	return status;
 }
 
 static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 RequestId,
@@ -1366,10 +1357,10 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 	const LIBUSB_ENDPOINT_DESCEIPTOR* ep_desc;
 	struct libusb_transfer* transfer = NULL;
 	TRANSFER_REQUEST* request = NULL;
-	int completed = 0, ret = 0, submit = 0;
+	int completed = 0, status = 0, submit = 0;
 	int transferDir = EndpointAddress & 0x80;
 
-	/** alloc memory for urb transfer */
+	/* alloc memory for urb transfer */
 	transfer = libusb_alloc_transfer(0);   
 		
 	ep_desc = func_get_ep_desc(pdev->LibusbConfig, pdev->MsConfig, EndpointAddress);
@@ -1426,8 +1417,8 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 
 	if (submit < 0)
 	{
-		LLOGLN(libusb_debug, ("libusb_bulk_transfer: error num %d", ret));
-		func_set_usbd_status(pdev, UsbdStatus, ret);
+		LLOGLN(libusb_debug, ("libusb_bulk_transfer: error num %d", status));
+		func_set_usbd_status(pdev, UsbdStatus, status);
 		*BufferSize = 0;
 	}
 	else
@@ -1442,11 +1433,11 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 	{
 		while (!completed)
 		{
-			ret = handle_events_completed(NULL, &completed);
+			status = handle_events_completed(NULL, &completed);
 
-			if (ret < 0)
+			if (status < 0)
 			{
-				if (ret == LIBUSB_ERROR_INTERRUPTED)
+				if (status == LIBUSB_ERROR_INTERRUPTED)
 					continue;
 
 				libusb_cancel_transfer(transfer);
@@ -1512,7 +1503,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 
 static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 {
-	int ret;
+	int status;
 	UDEVICE* pdev = (UDEVICE*) idev;
 	REQUEST_QUEUE* request_queue = pdev->request_queue;
 	TRANSFER_REQUEST* request = NULL;
@@ -1532,11 +1523,11 @@ static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 			continue;
 		}
 
-		ret = libusb_cancel_transfer(request->transfer);
+		status = libusb_cancel_transfer(request->transfer);
 
-		if (ret < 0)
+		if (status < 0)
 		{
-			LLOGLN(libusb_debug, ("libusb_cancel_transfer: error num %d!!\n", ret));
+			LLOGLN(libusb_debug, ("libusb_cancel_transfer: error num %d!!\n", status));
 		}
 		else
 		{
@@ -1550,7 +1541,7 @@ static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 
 static int func_cancel_xact_request(TRANSFER_REQUEST *request)
 {
-	int ret;
+	int status;
 
 	if ((!request->transfer) || (request->endpoint != request->transfer->endpoint) ||
 		(request->transfer->endpoint == 0) || (request->submit != 1))
@@ -1558,13 +1549,13 @@ static int func_cancel_xact_request(TRANSFER_REQUEST *request)
 		return 0;
 	}
 
-	ret = libusb_cancel_transfer(request->transfer);
+	status = libusb_cancel_transfer(request->transfer);
 
-	if (ret < 0)
+	if (status < 0)
 	{
-		LLOGLN(0, ("libusb_cancel_transfer: error num %d!!", ret));
+		LLOGLN(0, ("libusb_cancel_transfer: error num %d!!", status));
 
-		if (ret == LIBUSB_ERROR_NOT_FOUND)
+		if (status == LIBUSB_ERROR_NOT_FOUND)
 			return -1;   
 	}
 	else
@@ -1580,44 +1571,44 @@ static int func_cancel_xact_request(TRANSFER_REQUEST *request)
 static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 {
 	UDEVICE* pdev = (UDEVICE*) idev;
-	REQUEST_QUEUE * request_queue = pdev->request_queue;
-	TRANSFER_REQUEST * request = NULL;
-	int success = 0, retry_times = 0;
+	REQUEST_QUEUE* request_queue = pdev->request_queue;
+	TRANSFER_REQUEST* request = NULL;
+	int status = 0, retry_times = 0;
 
 cancel_retry:
 	pthread_mutex_lock(&request_queue->request_loading);
 
-	request_queue->rewind (request_queue);
+	request_queue->rewind(request_queue);
 
-	while (request_queue->has_next (request_queue))
+	while (request_queue->has_next(request_queue))
 	{
-		request = request_queue->get_next (request_queue);
+		request = request_queue->get_next(request_queue);
 
 		LLOGLN(libusb_debug, ("%s: CancelId:0x%x RequestId:0x%x endpoint 0x%x!!", 
 			__func__, RequestId, request->RequestId, request->endpoint)); 
 
-		if (request && request->RequestId == RequestId && retry_times <= 10 ) 
+		if ((request && request->RequestId) == (RequestId && retry_times <= 10))
 		{
-			success = func_cancel_xact_request(request);
+			status = func_cancel_xact_request(request);
 			break;
 		}
-		else if(request->transfer && retry_times > 10)
+		else if ((request->transfer) && (retry_times > 10))
 		{
-			success = -1;
+			status = -1;
 			break;
 		}
 	}
 
 	pthread_mutex_unlock(&request_queue->request_loading);
 
-	if (success == 0 && retry_times < 10)
+	if ((status == 0) && (retry_times < 10))
 	{
 		retry_times++;
 		usleep(100000);
 		LLOGLN(10, ("urbdrc_process_cancel_request: go retry!!")); 
 		goto cancel_retry;
 	}
-	else if(success < 0 || retry_times >= 10)
+	else if ((status < 0) || (retry_times >= 10))
 	{
 		/** END */
 		LLOGLN(libusb_debug, ("urbdrc_process_cancel_request: error go exit!!")); 
@@ -1697,15 +1688,15 @@ static void udev_load_interface(UDEVICE* pdev)
 
 static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 {
-	int ret, num;
+	int status, num;
 	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
 	LIBUSB_CONFIG_DESCRIPTOR* config_temp;
 	LIBUSB_INTERFACE_DESCRIPTOR interface_temp;
 
 	/* Get HUB handle */
-	ret = udev_get_hub_handle(pdev, bus_number, dev_number);
+	status = udev_get_hub_handle(pdev, bus_number, dev_number);
 
-	if (ret < 0)
+	if (status < 0)
 	{
 		printf("USB init: Error to get HUB handle!!\n"); 
 		pdev->hub_handle = NULL;
@@ -1722,11 +1713,11 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 
 	num = pdev->devDescriptor->bNumConfigurations;
 
-	ret = libusb_get_active_config_descriptor (pdev->libusb_dev, &pdev->LibusbConfig);
+	status = libusb_get_active_config_descriptor (pdev->libusb_dev, &pdev->LibusbConfig);
 
-	if (ret < 0)
+	if (status < 0)
 	{
-		printf("libusb_get_descriptor: ERROR!!ret:%d\n", ret); 
+		printf("libusb_get_descriptor: ERROR!!ret:%d\n", status); 
 		zfree(pdev);
 		return NULL;
 	}
@@ -1819,9 +1810,11 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 	UINT16 bus_number;
 	UINT16 dev_number;
 	ssize_t total_device;
-	int i, ret, num = 0;
+	int i, status, num = 0;
 
-	array = (UDEVICE**) malloc(16 * sizeof (UDEVICE *));
+	printf("VID: 0x%04X PID: 0x%04X\n", idVendor, idProduct);
+
+	array = (UDEVICE**) malloc(16 * sizeof(UDEVICE*));
 
 	total_device = libusb_get_device_list(NULL, &libusb_list); 
 
@@ -1836,11 +1829,11 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 			array[num] = (PUDEVICE) malloc(sizeof(UDEVICE));
 			array[num]->libusb_dev = libusb_list[i];
 
-			ret = libusb_open(libusb_list[i], &array[num]->libusb_handle);
+			status = libusb_open(libusb_list[i], &array[num]->libusb_handle);
 
-			if (ret < 0)
+			if (status < 0)
 			{
-				printf("libusb_open: ERROR!!\n"); 
+				printf("libusb_open: (by id) error: 0x%08X (%d)\n", status, status);
 				zfree(descriptor);
 				zfree(array[num]);
 				continue;
@@ -1886,7 +1879,7 @@ IUDEVICE* udev_new_by_addr(int bus_number, int dev_number)
 
 	if (status < 0)
 	{
-		printf("libusb_open: ERROR!!\n"); 
+		printf("libusb_open: (by addr) ERROR!!\n");
 		zfree(pDev);
 		return NULL;
 	}

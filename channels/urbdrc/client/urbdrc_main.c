@@ -30,7 +30,6 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/load_plugin.h>
 
 #include "urbdrc_types.h"
 #include "urbdrc_main.h"
@@ -657,9 +656,9 @@ static void* urbdrc_search_usb_device(void* arg)
 	return 0;
 }
 
-void* urbdrc_new_device_create(void * arg)
+void* urbdrc_new_device_create(void* arg)
 {
-	TRANSFER_DATA*  transfer_data = (TRANSFER_DATA*) arg;
+	TRANSFER_DATA* transfer_data = (TRANSFER_DATA*) arg;
 	URBDRC_CHANNEL_CALLBACK* callback = transfer_data->callback;
 	IWTSVirtualChannelManager* channel_mgr;
 	URBDRC_PLUGIN* urbdrc = transfer_data->urbdrc;

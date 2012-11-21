@@ -298,25 +298,29 @@ static int udevman_unregister_udevice(IUDEVMAN* idevman, int bus_number, int dev
 	return 0;
 }
 
-static void udevman_parse_device_addr(char *str, int *id1, int *id2, char sign)
+static void udevman_parse_device_addr(char* str, int* id1, int* id2, char sign)
 {
-	char  s1[8], *s2; 
-	memset(s1, 0, sizeof(s1));
+	char s1[8];
+	char* s2;
+
+	ZeroMemory(s1, sizeof(s1));
 
 	s2 = (strchr(str, sign)) + 1; 
-	strncpy(s1, str, strlen(str) - (strlen(s2)+1)); 
+	strncpy(s1, str, strlen(str) - (strlen(s2) + 1));
 
 	*id1 = atoi(s1);
 	*id2 = atoi(s2);
 }
 
-static void udevman_parse_device_pid_vid(char *str, int *id1, int *id2, char sign)
+static void udevman_parse_device_pid_vid(char* str, int* id1, int* id2, char sign)
 {
-	char s1[8], *s2;
-	memset(s1, 0, sizeof(s1));
+	char s1[8];
+	char* s2;
+
+	ZeroMemory(s1, sizeof(s1));
 
 	s2 = (strchr(str, sign)) + 1; 
-	strncpy(s1, str, strlen(str) - (strlen(s2)+1)); 
+	strncpy(s1, str, strlen(str) - (strlen(s2) + 1));
 
 	*id1 = (int) strtol(s1, NULL, 16);
 	*id2 = (int) strtol(s2, NULL, 16);
@@ -324,7 +328,7 @@ static void udevman_parse_device_pid_vid(char *str, int *id1, int *id2, char sig
 
 static int udevman_check_device_exist_by_id(IUDEVMAN* idevman, UINT16 idVendor, UINT16 idProduct)
 {
-	if (libusb_open_device_with_vid_pid (NULL, idVendor, idProduct)) 
+	if (libusb_open_device_with_vid_pid(NULL, idVendor, idProduct))
 		return 1;
 
 	return 0;
@@ -438,6 +442,7 @@ static void udevman_load_interface(UDEVMAN * udevman)
 {
 	/* standard */
 	udevman->iface.free = udevman_free;
+
 	/* manage devices */
 	udevman->iface.rewind = udevman_rewind;
 	udevman->iface.get_next = udevman_get_next;
@@ -447,13 +452,16 @@ static void udevman_load_interface(UDEVMAN * udevman)
 	udevman->iface.get_udevice_by_UsbDevice = udevman_get_udevice_by_UsbDevice;
 	udevman->iface.get_udevice_by_UsbDevice_try_again = 
 		udevman_get_udevice_by_UsbDevice_try_again;
+
 	/* Extension */
 	udevman->iface.check_device_exist_by_id = udevman_check_device_exist_by_id;
 	udevman->iface.isAutoAdd = udevman_is_auto_add;
+
 	/* Basic state */
 	BASIC_STATE_FUNC_REGISTER(defUsbDevice, udevman);
 	BASIC_STATE_FUNC_REGISTER(device_num, udevman);
 	BASIC_STATE_FUNC_REGISTER(sem_timeout, udevman);
+
 	/* control semaphore or mutex lock */
 	udevman->iface.loading_lock = udevman_loading_lock;
 	udevman->iface.loading_unlock = udevman_loading_unlock;
@@ -501,13 +509,13 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 
 		if (udevman->flags & UDEVMAN_FLAG_ADD_BY_VID_PID)
 		{
-			udevman_parse_device_pid_vid(hardware_id, &idVendor, &idProduct, '_');
+			udevman_parse_device_pid_vid(hardware_id, &idVendor, &idProduct, ':');
 			success = udevman->iface.register_udevice((IUDEVMAN*) udevman,
 				0, 0, UsbDevice, (UINT16) idVendor, (UINT16) idProduct, UDEVMAN_FLAG_ADD_BY_VID_PID);
 		}
 		else if (udevman->flags & UDEVMAN_FLAG_ADD_BY_ADDR)
 		{
-			udevman_parse_device_addr(hardware_id, &bus_number, &dev_number, '_');
+			udevman_parse_device_addr(hardware_id, &bus_number, &dev_number, ':');
 
 			success = udevman->iface.register_udevice((IUDEVMAN*) udevman,
 				bus_number, dev_number, UsbDevice, 0, 0, UDEVMAN_FLAG_ADD_BY_ADDR);
@@ -570,7 +578,11 @@ static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
-int FreeRDPUDEVMANEntry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_urbdrc_client_subsystem_entry	libusb_freerdp_urbdrc_client_subsystem_entry
+#endif
+
+int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	UDEVMAN* udevman;
 	ADDIN_ARGV* args = pEntryPoints->args;

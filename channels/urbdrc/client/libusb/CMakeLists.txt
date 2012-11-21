@@ -16,8 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "libusb-devman")
-set(MODULE_PREFIX "CHANNEL_URBDRC_LIBUSB_DEVMAN")
+define_channel_client_subsystem("urbdrc" "libusb" "")
 
 set(${MODULE_PREFIX}_SRCS
 	libusb_udevman.c
@@ -26,27 +25,27 @@ set(${MODULE_PREFIX}_SRCS
 	request_queue.c
 	request_queue.h)
 
-include_directories(../client)
+include_directories(..)
 
-if(STATIC_CHANNELS)
-	add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set(${MODULE_PREFIX}_LIBS
 	${CMAKE_THREAD_LIBS_INIT})
 
-set(${MODULE_PREFIX}_LIBS
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	dbus-glib-1
 	usb-1.0
 	udev)
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-utils)
+
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
 endif()
-

@@ -78,8 +78,6 @@ struct _URBDRC_PLUGIN
 	char* subsystem;
 };
 
-#define URBDRC_UDEVMAN_EXPORT_FUNC_NAME "FreeRDPUDEVMANEntry"
-
 typedef void (*PREGISTERURBDRCSERVICE)(IWTSPlugin* plugin, IUDEVMAN* udevman);
 
 struct _FREERDP_URBDRC_SERVICE_ENTRY_POINTS
