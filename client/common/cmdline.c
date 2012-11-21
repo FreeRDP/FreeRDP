@@ -831,68 +831,63 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	return 1;
 }
 
-int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
+int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings, char* name, void* data)
 {
-	int index;
-	void* entry = NULL;
+	void* entry;
 
-	for (index = 0; index < settings->StaticChannelCount; index++)
+	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, 0);
+
+	if (entry)
 	{
-		ADDIN_ARGV* args;
-
-		args = settings->StaticChannelArray[index];
-
-		entry = freerdp_load_channel_addin_entry(args->argv[0], NULL, NULL, 0);
-
-		if (entry)
+		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			if (freerdp_channels_client_load(channels, settings, entry, args) == 0)
-				printf("loading channel %s\n", args->argv[0]);
+			printf("loading channel %s\n", name);
+			return 0;
 		}
 	}
 
+	return -1;
+}
+
+int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
+{
+	int index;
+	ADDIN_ARGV* args;
+
 	if (settings->DeviceRedirection)
 	{
-		entry = freerdp_load_channel_addin_entry("rdpdr", NULL, NULL, 0);
+		freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings);
 
-		if (entry)
+		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
 		{
-			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
-				printf("loading channel %s\n", "rdpdr");
+			char* params[2];
+
+			params[0] = "rdpsnd";
+			params[1] = "sys:fake";
+
+			freerdp_client_add_static_channel(settings, 2, (char**) params);
 		}
+	}
+
+	for (index = 0; index < settings->StaticChannelCount; index++)
+	{
+		args = settings->StaticChannelArray[index];
+		freerdp_client_load_static_channel_addin(channels, settings, args->argv[0], args);
 	}
 
 	if (settings->RedirectClipboard)
 	{
-		entry = freerdp_load_channel_addin_entry("cliprdr", NULL, NULL, 0);
-
-		if (entry)
-		{
-			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
-				printf("loading channel %s\n", "cliprdr");
-		}
+		freerdp_client_load_static_channel_addin(channels, settings, "cliprdr", settings);
 	}
 
 	if (settings->RemoteApplicationMode)
 	{
-		entry = freerdp_load_channel_addin_entry("rail", NULL, NULL, 0);
-
-		if (entry)
-		{
-			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
-				printf("loading channel %s\n", "rail");
-		}
+		freerdp_client_load_static_channel_addin(channels, settings, "rail", settings);
 	}
 
 	if (settings->DynamicChannelCount)
 	{
-		entry = freerdp_load_channel_addin_entry("drdynvc", NULL, NULL, 0);
-
-		if (entry)
-		{
-			if (freerdp_channels_client_load(channels, settings, entry, settings) == 0)
-				printf("loading channel %s\n", "drdynvc");
-		}
+		freerdp_client_load_static_channel_addin(channels, settings, "drdynvc", settings);
 	}
 
 	return 1;

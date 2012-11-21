@@ -92,6 +92,22 @@ void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	settings->StaticChannelArray[settings->StaticChannelCount++] = channel;
 }
 
+ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const char* name)
+{
+	int index;
+	ADDIN_ARGV* channel;
+
+	for (index = 0; index < settings->StaticChannelCount; index++)
+	{
+		channel = settings->StaticChannelArray[index];
+
+		if (strcmp(channel->argv[0], name) == 0)
+			return channel;
+	}
+
+	return NULL;
+}
+
 void freerdp_static_channel_collection_free(rdpSettings* settings)
 {
 	int index;
@@ -118,6 +134,22 @@ void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 	}
 
 	settings->DynamicChannelArray[settings->DynamicChannelCount++] = channel;
+}
+
+ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name)
+{
+	int index;
+	ADDIN_ARGV* channel;
+
+	for (index = 0; index < settings->DynamicChannelCount; index++)
+	{
+		channel = settings->DynamicChannelArray[index];
+
+		if (strcmp(channel->argv[0], name) == 0)
+			return channel;
+	}
+
+	return NULL;
 }
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)

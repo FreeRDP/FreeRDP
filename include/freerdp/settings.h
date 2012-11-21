@@ -969,9 +969,11 @@ FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVI
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 #endif /* FREERDP_SETTINGS_H */

@@ -572,7 +572,12 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		rdpsnd_process_addin_args(rdpsnd, args);
 
 	if (rdpsnd->subsystem)
+	{
+		if (strcmp(rdpsnd->subsystem, "fake") == 0)
+			return;
+
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
 
 	if (!rdpsnd->device)
 	{
