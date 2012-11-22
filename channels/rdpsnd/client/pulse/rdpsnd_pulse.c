@@ -31,7 +31,6 @@
 #include <pulse/pulseaudio.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 

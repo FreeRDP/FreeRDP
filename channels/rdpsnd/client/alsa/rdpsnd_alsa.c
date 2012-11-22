@@ -32,13 +32,13 @@
 #include <alsa/asoundlib.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
 
 typedef struct rdpsnd_alsa_plugin rdpsndAlsaPlugin;
+
 struct rdpsnd_alsa_plugin
 {
 	rdpsndDevicePlugin device;

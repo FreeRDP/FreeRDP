@@ -36,7 +36,6 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/load_plugin.h>

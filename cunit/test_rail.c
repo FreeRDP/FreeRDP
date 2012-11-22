@@ -29,7 +29,6 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 

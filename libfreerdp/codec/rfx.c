@@ -32,7 +32,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/codec/rfx.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/constants.h>
 
 #include "rfx_constants.h"

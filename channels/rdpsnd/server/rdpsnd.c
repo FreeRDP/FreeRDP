@@ -27,9 +27,8 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>

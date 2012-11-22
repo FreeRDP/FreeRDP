@@ -30,7 +30,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/string.h>
 
 #ifndef _WIN32

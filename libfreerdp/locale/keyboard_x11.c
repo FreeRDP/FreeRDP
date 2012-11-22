@@ -29,7 +29,6 @@
 
 #include "liblocale.h"
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
 

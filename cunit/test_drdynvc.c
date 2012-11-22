@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 
 #include "test_drdynvc.h"
 

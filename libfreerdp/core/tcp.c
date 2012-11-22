@@ -55,7 +55,6 @@
 #include <freerdp/utils/uds.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "tcp.h"
 

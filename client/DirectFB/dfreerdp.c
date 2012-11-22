@@ -23,7 +23,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/client/channels.h>

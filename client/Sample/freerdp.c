@@ -39,7 +39,6 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 

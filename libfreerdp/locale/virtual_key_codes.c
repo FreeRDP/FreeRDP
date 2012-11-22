@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/locale/vkcodes.h>
+#include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
+#include <freerdp/locale/vkcodes.h>
 
 struct _VIRTUAL_KEY_CODE
 {

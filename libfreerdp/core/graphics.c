@@ -23,8 +23,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
-
 #include <freerdp/graphics.h>
 
 /* Bitmap Class */

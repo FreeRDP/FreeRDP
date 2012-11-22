@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <freerdp/types.h>
+#include <winpr/crt.h>
 
+#include <freerdp/types.h>
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/rail.h>
 

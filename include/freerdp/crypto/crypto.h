@@ -44,7 +44,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/memory.h>
 
 struct crypto_sha1_struct
 {

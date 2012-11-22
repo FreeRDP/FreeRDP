@@ -21,9 +21,9 @@
 #define __LIST_UTILS_H
 
 #include <freerdp/api.h>
-#include <freerdp/utils/memory.h>
 
 typedef struct _LIST_ITEM LIST_ITEM;
+
 struct _LIST_ITEM
 {
 	void* data;
@@ -32,6 +32,7 @@ struct _LIST_ITEM
 };
 
 typedef struct _LIST LIST;
+
 struct _LIST
 {
 	int count;

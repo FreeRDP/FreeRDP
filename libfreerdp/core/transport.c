@@ -30,7 +30,6 @@
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/errorcodes.h>
 

@@ -43,7 +43,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 

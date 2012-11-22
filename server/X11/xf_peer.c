@@ -39,7 +39,6 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 extern char* xf_pcap_file;

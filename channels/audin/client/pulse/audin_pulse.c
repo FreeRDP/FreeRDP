@@ -32,7 +32,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 
 #include "audin_main.h"

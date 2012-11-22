@@ -36,7 +36,6 @@
 #endif
 
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 freerdp_thread* freerdp_thread_new(void)

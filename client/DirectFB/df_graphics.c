@@ -19,8 +19,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
-
 #include "df_graphics.h"
 
 /* Pointer Class */

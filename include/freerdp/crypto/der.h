@@ -21,7 +21,6 @@
 #define FREERDP_CRYPTO_DER_H
 
 #include <freerdp/crypto/er.h>
-#include <freerdp/utils/memory.h>
 
 FREERDP_API int _der_skip_length(int length);
 FREERDP_API int der_write_length(STREAM* s, int length);

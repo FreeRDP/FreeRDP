@@ -30,7 +30,6 @@
 
 #include <freerdp/addin.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/load_plugin.h>
@@ -41,6 +40,7 @@
 #define MAX_PLUGINS 10
 
 typedef struct _DVCMAN DVCMAN;
+
 struct _DVCMAN
 {
 	IWTSVirtualChannelManager iface;

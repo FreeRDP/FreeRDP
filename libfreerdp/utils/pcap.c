@@ -45,8 +45,6 @@ int gettimeofday(struct timeval* tp, void* tz)
 #endif
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
-
 #include <freerdp/utils/pcap.h>
 
 #define PCAP_MAGIC	0xA1B2C3D4

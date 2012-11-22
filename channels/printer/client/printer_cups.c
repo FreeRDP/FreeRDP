@@ -31,7 +31,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 

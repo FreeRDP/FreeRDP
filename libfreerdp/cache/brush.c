@@ -28,7 +28,6 @@
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/brush.h>
 

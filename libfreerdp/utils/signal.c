@@ -22,8 +22,10 @@
 #endif
 
 #include <stddef.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/utils/signal.h>
-#include <freerdp/utils/memory.h>
 
 #ifdef _WIN32
 

@@ -25,7 +25,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 
 #include "window.h"
 

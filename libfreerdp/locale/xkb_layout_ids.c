@@ -25,7 +25,8 @@
 
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/locale/keyboard.h>
 
 #include "liblocale.h"

@@ -27,8 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/utils/memory.h>
 
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"

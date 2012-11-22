@@ -30,8 +30,6 @@
 
 #include <pulse/pulseaudio.h>
 
-#include <freerdp/utils/memory.h>
-
 #include "tsmf_audio.h"
 
 typedef struct _TSMFPulseAudioDevice

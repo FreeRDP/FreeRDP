@@ -33,7 +33,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/errorcodes.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/

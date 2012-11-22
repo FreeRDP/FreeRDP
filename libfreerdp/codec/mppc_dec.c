@@ -28,8 +28,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
-
 #include <freerdp/codec/mppc_dec.h>
 
 static BYTE HuffLenLEC[] = {

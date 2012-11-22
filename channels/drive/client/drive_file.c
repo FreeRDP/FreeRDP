@@ -41,7 +41,6 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/channels/rdpdr.h>

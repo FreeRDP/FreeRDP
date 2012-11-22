@@ -25,9 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 
 struct _SYSTEM_LOCALE

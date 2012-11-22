@@ -31,9 +31,8 @@
 #include <alsa/asoundlib.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/thread.h>
 #include <freerdp/utils/dsp.h>
+#include <freerdp/utils/thread.h>
 
 #include "audin_main.h"
 

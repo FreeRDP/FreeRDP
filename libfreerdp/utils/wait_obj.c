@@ -28,7 +28,6 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
 
 #ifndef _WIN32

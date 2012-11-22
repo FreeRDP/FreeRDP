@@ -32,7 +32,6 @@
 
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/load_plugin.h>
 
 #ifdef _WIN32

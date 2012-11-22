@@ -28,7 +28,6 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 

@@ -28,7 +28,6 @@
 
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 

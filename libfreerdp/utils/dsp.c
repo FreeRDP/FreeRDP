@@ -28,7 +28,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 
 static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,

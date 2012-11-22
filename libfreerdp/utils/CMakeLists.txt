@@ -27,7 +27,6 @@ set(${MODULE_PREFIX}_SRCS
 	list.c
 	file.c
 	load_plugin.c
-	memory.c
 	passphrase.c
 	pcap.c
 	profiler.c

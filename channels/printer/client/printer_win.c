@@ -30,7 +30,6 @@
 #include <string.h>
 #include <winspool.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "printer_main.h"

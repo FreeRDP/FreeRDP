@@ -31,7 +31,6 @@
 #include "liblocale.h"
 
 #include <freerdp/utils/time.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/locale/timezone.h>
 

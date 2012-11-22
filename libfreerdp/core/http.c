@@ -24,8 +24,6 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/memory.h>
-
 #include "http.h"
 
 HttpContext* http_context_new()

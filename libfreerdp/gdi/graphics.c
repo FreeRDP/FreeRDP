@@ -34,7 +34,6 @@
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/cache/glyph.h>
 

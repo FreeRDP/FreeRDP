@@ -35,7 +35,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 

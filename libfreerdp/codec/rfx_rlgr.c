@@ -32,8 +32,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
-
 #include "rfx_bitstream.h"
 
 #include "rfx_rlgr.h"

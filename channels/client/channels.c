@@ -35,7 +35,6 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/file.h>

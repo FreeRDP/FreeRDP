@@ -34,7 +34,6 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"

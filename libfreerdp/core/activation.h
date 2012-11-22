@@ -23,7 +23,6 @@
 #include "rdp.h"
 
 #include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
 
 #define SYNCMSGTYPE_SYNC		0x0001
 

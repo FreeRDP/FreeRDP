@@ -28,7 +28,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
 

@@ -22,6 +22,9 @@
 #endif
 
 #include "window.h"
+
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>

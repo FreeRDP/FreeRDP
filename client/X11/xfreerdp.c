@@ -50,13 +50,14 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+
 #include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
+
 #include <freerdp/rail.h>
 
 #include <freerdp/client/file.h>

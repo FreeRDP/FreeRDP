@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/scancode.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 
 /*

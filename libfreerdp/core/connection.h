@@ -28,7 +28,6 @@
 #include "activation.h"
 
 #include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
 
 enum CONNECTION_STATE
 {

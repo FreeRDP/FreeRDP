@@ -28,10 +28,9 @@
 #include <winpr/crt.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
 #include "drdynvc_types.h"
