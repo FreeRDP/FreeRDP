@@ -798,7 +798,7 @@ static void xf_cliprdr_append_target(clipboardContext* cb, Atom target)
 {
 	int i;
 
-	if (cb->num_targets >= ARRAY_SIZE(cb->targets))
+	if (cb->num_targets >= ARRAYSIZE(cb->targets))
 		return;
 
 	for (i = 0; i < cb->num_targets; i++)

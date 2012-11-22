@@ -102,7 +102,7 @@ void print_window_styles(UINT32 style)
 	int i;
 
 	printf("Window Styles:\n{\n");
-	for (i = 0; i < ARRAY_SIZE(WINDOW_STYLES); i++)
+	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
 		if (style & WINDOW_STYLES[i].style)
 		{
@@ -123,7 +123,7 @@ void print_extended_window_styles(UINT32 style)
 	int i;
 
 	printf("Extended Window Styles:\n{\n");
-	for (i = 0; i < ARRAY_SIZE(EXTENDED_WINDOW_STYLES); i++)
+	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
 		if (style & EXTENDED_WINDOW_STYLES[i].style)
 		{

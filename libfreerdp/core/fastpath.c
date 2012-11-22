@@ -197,7 +197,7 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 #ifdef WITH_DEBUG_RDP
 	DEBUG_RDP("recv Fast-Path %s Update (0x%X), length:%d",
-		updateCode < ARRAY_SIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
+		updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
 #endif
 
 	switch (updateCode)

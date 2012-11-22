@@ -64,7 +64,7 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 	int keycode;
 	RDP_SCANCODE rdp_scancode;
 
-	for (keycode = 0; keycode < ARRAY_SIZE(xfi->pressed_keys); keycode++)
+	for (keycode = 0; keycode < ARRAYSIZE(xfi->pressed_keys); keycode++)
 	{
 		if (xfi->pressed_keys[keycode] != NoSymbol)
 		{

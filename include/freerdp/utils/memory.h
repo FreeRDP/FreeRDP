@@ -26,6 +26,6 @@
 
 #include <freerdp/api.h>
 
-#define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
+#include <winpr/crt.h>
 
 #endif /* __MEMORY_UTILS_H */

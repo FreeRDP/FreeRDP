@@ -866,7 +866,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing extension name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			if (num_extensions >= ARRAY_SIZE(settings->extensions))
+			if (num_extensions >= ARRAYSIZE(settings->extensions))
 			{
 				printf("maximum extensions reached\n");
 				return FREERDP_ARGS_PARSE_FAILURE;

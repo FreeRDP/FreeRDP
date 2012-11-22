@@ -1609,9 +1609,9 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 	if (tzid == NULL)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
+	for (i = 0; i < ARRAYSIZE(TimeZoneTable); i++)
 	{
-		for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
+		for (j = 0; j < ARRAYSIZE(WindowsTimeZoneIdTable); j++)
 		{
 			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
 				continue;

@@ -254,7 +254,7 @@ void test_rlgr(void)
 {
 	int n;
 
-	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAY_SIZE(buffer));
+	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAYSIZE(buffer));
 
 	//printf("RLGR decode %d bytes to %d values.", sizeof(y_data), n);
 	//dump_buffer(buffer, n);

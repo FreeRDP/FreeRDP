@@ -350,11 +350,11 @@ BOOL wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->WindowTitle);
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->ServerHostname);
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S", settings->ServerHostname);
 	else
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
 	if (wfi->hwnd == 0)
 	{
