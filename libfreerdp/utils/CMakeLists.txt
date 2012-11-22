@@ -26,7 +26,6 @@ set(${MODULE_PREFIX}_SRCS
 	hexdump.c
 	list.c
 	file.c
-	load_plugin.c
 	passphrase.c
 	pcap.c
 	profiler.c

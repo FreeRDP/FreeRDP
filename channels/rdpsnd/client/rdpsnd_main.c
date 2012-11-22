@@ -38,7 +38,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"

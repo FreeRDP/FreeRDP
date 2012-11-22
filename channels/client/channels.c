@@ -36,7 +36,6 @@
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
 #include <freerdp/utils/wait_obj.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>

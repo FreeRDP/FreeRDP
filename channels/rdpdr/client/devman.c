@@ -33,7 +33,6 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"

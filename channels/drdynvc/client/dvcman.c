@@ -32,7 +32,6 @@
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/load_plugin.h>
 
 #include "drdynvc_types.h"
 #include "dvcman.h"
