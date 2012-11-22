@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/locale/vkcodes.h>
+#include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
+#include <freerdp/locale/vkcodes.h>
 
 struct _VIRTUAL_KEY_CODE
 {
@@ -304,7 +304,7 @@ const char* freerdp_keyboard_get_virtual_key_code_name(UINT32 vkcode)
 UINT32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name)
 {
 	int i = 0;
-	for (i = 0; i < ARRAY_SIZE(VIRTUAL_KEY_CODE_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE); i++)
 	{
 		if (VIRTUAL_KEY_CODE_TABLE[i].name)
 		{

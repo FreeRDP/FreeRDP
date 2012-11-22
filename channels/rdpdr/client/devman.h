@@ -21,9 +21,10 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
 
+BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device);
+DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
+
 DEVMAN* devman_new(rdpSvcPlugin* plugin);
 void devman_free(DEVMAN* devman);
-BOOL devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data);
-DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H */

@@ -33,6 +33,8 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/rail.h>
 #include <freerdp/utils/rail.h>
 
@@ -309,7 +311,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 	xfWindow* window;
 	XEvent xevent;
 
-	window = (xfWindow*) xzalloc(sizeof(xfWindow));
+	window = (xfWindow*) malloc(sizeof(xfWindow));
+	ZeroMemory(window, sizeof(xfWindow));
 
 	if (window != NULL)
 	{
@@ -373,7 +376,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 			input_mask |= EnterWindowMask | LeaveWindowMask;
 
 		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
-				PropModeReplace, (BYTE*) xf_icon_prop, ARRAY_SIZE(xf_icon_prop));
+				PropModeReplace, (BYTE*) xf_icon_prop, ARRAYSIZE(xf_icon_prop));
 
 		if (xfi->parent_window)
                         XReparentWindow(xfi->display, window->handle, xfi->parent_window, 0, 0);
@@ -398,7 +401,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		 * This extra call after the window is mapped will position the login window correctly
 		 */
 
-		if (xfi->instance->settings->remote_app)
+		if (xfi->instance->settings->RemoteApplicationMode)
                         XMoveWindow(xfi->display, window->handle, 0, 0);
 
 	}
@@ -471,7 +474,8 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	XWMHints* InputModeHint;
 	XClassHint* class_hints;
 
-	window = (xfWindow*) xzalloc(sizeof(xfWindow));
+	window = (xfWindow*) malloc(sizeof(xfWindow));
+	ZeroMemory(window, sizeof(xfWindow));
 
 	xf_FixWindowCoordinates(xfi, &x, &y, &width, &height);
 

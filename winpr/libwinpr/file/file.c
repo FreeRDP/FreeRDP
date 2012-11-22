@@ -30,6 +30,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 /**
  * api-ms-win-core-file-l1-2-0.dll:
  * 
@@ -120,6 +124,20 @@
  */
 
 #ifndef _WIN32
+
+#include <time.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -265,11 +283,86 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 	return TRUE;
 }
 
+struct _WIN32_FILE_SEARCH
+{
+	DIR* pDir;
+	LPSTR lpPath;
+	LPSTR lpPattern;
+	struct dirent* pDirent;
+};
+typedef struct _WIN32_FILE_SEARCH WIN32_FILE_SEARCH;
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
+	char* p;
+	int index;
+	int length;
+	struct stat fileStat;
+	WIN32_FILE_SEARCH* pFileSearch;
+
 	ZeroMemory(lpFindFileData, sizeof(LPWIN32_FIND_DATAA));
 
-	return NULL;
+	pFileSearch = (WIN32_FILE_SEARCH*) malloc(sizeof(WIN32_FILE_SEARCH));
+	ZeroMemory(pFileSearch, sizeof(WIN32_FILE_SEARCH));
+
+	/* Separate lpFileName into path and pattern components */
+
+	p = strrchr(lpFileName, '/');
+
+	if (!p)
+		p = strrchr(lpFileName, '\\');
+
+	index = (p - lpFileName);
+	length = (p - lpFileName);
+	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
+	CopyMemory(pFileSearch->lpPath, lpFileName, length);
+	pFileSearch->lpPath[length] = '\0';
+
+	length = strlen(lpFileName) - index;
+	pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+	CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
+	pFileSearch->lpPattern[length] = '\0';
+
+	/* Check if the path is a directory */
+
+	if (lstat(pFileSearch->lpPath, &fileStat) < 0)
+	{
+		free(pFileSearch);
+		return INVALID_HANDLE_VALUE; /* stat error */
+	}
+
+	if (S_ISDIR(fileStat.st_mode) == 0)
+	{
+		free(pFileSearch);
+		return INVALID_HANDLE_VALUE; /* not a directory */
+	}
+
+	/* Open directory for reading */
+
+	pFileSearch->pDir = opendir(pFileSearch->lpPath);
+
+	if (!pFileSearch->pDir)
+	{
+		free(pFileSearch);
+		return INVALID_HANDLE_VALUE; /* failed to open directory */
+	}
+
+	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
+	{
+		if ((strcmp(pFileSearch->pDirent->d_name, ".") == 0) || (strcmp(pFileSearch->pDirent->d_name, "..") == 0))
+		{
+			/* skip "." and ".." */
+			continue;
+		}
+
+		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
+		{
+			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
+			return (HANDLE) pFileSearch;
+		}
+	}
+
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
@@ -291,6 +384,25 @@ HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPV
 
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
+	WIN32_FILE_SEARCH* pFileSearch;
+
+	if (!hFindFile)
+		return FALSE;
+
+	if (hFindFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+
+	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
+	{
+		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
+		{
+			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
+			return TRUE;
+		}
+	}
+
 	return FALSE;
 }
 
@@ -301,7 +413,17 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 
 BOOL FindClose(HANDLE hFindFile)
 {
-	return FALSE;
+	WIN32_FILE_SEARCH* pFileSearch;
+
+	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+
+	free(pFileSearch->lpPath);
+	free(pFileSearch->lpPattern);
+	closedir(pFileSearch->pDir);
+
+	free(pFileSearch);
+
+	return TRUE;
 }
 
 #endif

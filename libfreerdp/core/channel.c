@@ -28,7 +28,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
 #include "rdp.h"
@@ -42,11 +41,11 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 	int chunk_size;
 	rdpChannel* channel = NULL;
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		if (rdp->settings->channels[i].channel_id == channel_id)
+		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
 		{
-			channel = &rdp->settings->channels[i];
+			channel = &rdp->settings->ChannelDefArray[i];
 			break;
 		}
 	}
@@ -63,9 +62,9 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 	{
 		s = rdp_send_stream_init(rdp);
 
-		if (left > (int) rdp->settings->vc_chunk_size)
+		if (left > (int) rdp->settings->VirtualChannelChunkSize)
 		{
-			chunk_size = rdp->settings->vc_chunk_size;
+			chunk_size = rdp->settings->VirtualChannelChunkSize;
 		}
 		else
 		{

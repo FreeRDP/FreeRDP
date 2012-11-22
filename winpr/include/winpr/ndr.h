@@ -34,8 +34,6 @@ typedef union _CLIENT_CALL_RETURN
 	LONG_PTR Simple;
 } CLIENT_CALL_RETURN;
 
-typedef void* RPC_IF_HANDLE;
-
 typedef struct _RPC_VERSION
 {
 	unsigned short MajorVersion;

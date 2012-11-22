@@ -25,10 +25,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
@@ -704,7 +705,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		surface_bits_command->width, surface_bits_command->height,
 		surface_bits_command->bitmapDataLength);
 
-	tile_bitmap = (char*) xzalloc(32);
+	tile_bitmap = (char*) malloc(32);
+	ZeroMemory(tile_bitmap, 32);
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{
@@ -880,14 +882,15 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	rdpGdi* gdi;
 	rdpCache* cache;
 
-	gdi = (rdpGdi*) xzalloc(sizeof(rdpGdi));
+	gdi = (rdpGdi*) malloc(sizeof(rdpGdi));
+	ZeroMemory(gdi, sizeof(rdpGdi));
 
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;
 
-	gdi->width = instance->settings->width;
-	gdi->height = instance->settings->height;
-	gdi->srcBpp = instance->settings->color_depth;
+	gdi->width = instance->settings->DesktopWidth;
+	gdi->height = instance->settings->DesktopHeight;
+	gdi->srcBpp = instance->settings->ColorDepth;
 	gdi->primary_buffer = buffer;
 
 	/* default internal buffer format */

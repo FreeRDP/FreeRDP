@@ -53,7 +53,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
@@ -316,14 +315,17 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* name;
 	char* path;
 	int i, length;
+	RDPDR_PARALLEL* device;
 	PARALLEL_DEVICE* parallel;
 
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
+	device = (RDPDR_PARALLEL*) pEntryPoints->device;
+	name = device->Name;
+	path = device->Path;
 
 	if (name[0] && path[0])
 	{
-		parallel = xnew(PARALLEL_DEVICE);
+		parallel = (PARALLEL_DEVICE*) malloc(sizeof(PARALLEL_DEVICE));
+		ZeroMemory(parallel, sizeof(PARALLEL_DEVICE));
 
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;

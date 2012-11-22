@@ -9,6 +9,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestFileDeleteFile.c
 	TestFileReadFile.c
 	TestFileWriteFile.c
+	TestFilePatternMatch.c
 	TestFileFindFirstFile.c
 	TestFileFindFirstFileEx.c
 	TestFileFindNextFile.c)

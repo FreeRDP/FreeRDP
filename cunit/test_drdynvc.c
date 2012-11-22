@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 
 #include "test_drdynvc.h"
 
@@ -71,7 +71,7 @@ void test_drdynvc(void)
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 

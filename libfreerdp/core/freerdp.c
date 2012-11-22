@@ -29,9 +29,10 @@
 #include "connection.h"
 #include "extension.h"
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/errorcodes.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
@@ -61,11 +62,11 @@ BOOL freerdp_connect(freerdp* instance)
 
 	IFCALLRET(instance->PreConnect, status, instance);
 
-	if (settings->kbd_layout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
+	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
-		settings->kbd_type = 7;
-		settings->kbd_subtype = 2;
-		settings->kbd_fn_keys = 12;
+		settings->KeyboardType = 7;
+		settings->KeyboardSubType = 2;
+		settings->KeyboardFunctionKey = 12;
 	}
 
 	extension_load_and_init_plugins(rdp->extension);
@@ -83,7 +84,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	status = rdp_client_connect(rdp);
 	/* --authonly tests the connection without a UI */
-	if (instance->settings->authentication_only)
+	if (instance->settings->AuthenticationOnly)
 	{
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		return status;
@@ -91,9 +92,9 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status)
 	{
-		if (instance->settings->dump_rfx)
+		if (instance->settings->DumpRemoteFx)
 		{
-			instance->update->pcap_rfx = pcap_open(instance->settings->dump_rfx_file, TRUE);
+			instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile, TRUE);
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = TRUE;
 		}
@@ -114,14 +115,14 @@ BOOL freerdp_connect(freerdp* instance)
 			return FALSE;
 		}
 
-		if (instance->settings->play_rfx)
+		if (instance->settings->PlayRemoteFx)
 		{
 			STREAM* s;
 			rdpUpdate* update;
 			pcap_record record;
 
 			s = stream_new(1024);
-			instance->update->pcap_rfx = pcap_open(instance->settings->play_rfx_file, FALSE);
+			instance->update->pcap_rfx = pcap_open(instance->settings->PlayRemoteFxFile, FALSE);
 
 			if (instance->update->pcap_rfx)
 				instance->update->play_rfx = TRUE;
@@ -233,7 +234,9 @@ void freerdp_context_new(freerdp* instance)
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
-	instance->context = (rdpContext*) xzalloc(instance->context_size);
+	instance->context = (rdpContext*) malloc(instance->context_size);
+	ZeroMemory(instance->context, instance->context_size);
+
 	instance->context->graphics = graphics_new(instance->context);
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
@@ -285,7 +288,8 @@ freerdp* freerdp_new()
 {
 	freerdp* instance;
 
-	instance = (freerdp*) xzalloc(sizeof(freerdp));
+	instance = (freerdp*) malloc(sizeof(freerdp));
+	ZeroMemory(instance, sizeof(freerdp));
 
 	if (instance != NULL)
 	{

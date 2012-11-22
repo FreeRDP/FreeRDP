@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "connection.h"
 
 #include "redirection.h"
@@ -147,7 +149,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 		stream_read_UINT32(s, redirection->targetNetAddressesCount);
 		count = redirection->targetNetAddressesCount;
 
-		redirection->targetNetAddresses = (rdpString*) xzalloc(count * sizeof(rdpString));
+		redirection->targetNetAddresses = (rdpString*) malloc(count * sizeof(rdpString));
+		ZeroMemory(redirection->targetNetAddresses, count * sizeof(rdpString));
 
 		for (i = 0; i < (int) count; i++)
 		{
@@ -182,11 +185,11 @@ rdpRedirection* redirection_new()
 {
 	rdpRedirection* redirection;
 
-	redirection = (rdpRedirection*) xzalloc(sizeof(rdpRedirection));
+	redirection = (rdpRedirection*) malloc(sizeof(rdpRedirection));
 
 	if (redirection != NULL)
 	{
-
+		ZeroMemory(redirection, sizeof(rdpRedirection));
 	}
 
 	return redirection;

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/bitmap.h>
 
 #include "wf_gdi.h"

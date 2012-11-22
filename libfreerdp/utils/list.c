@@ -25,7 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/list.h>
 
 /**
@@ -40,9 +41,12 @@ static LIST_ITEM* list_item_new(void* data)
 {
 	LIST_ITEM* item;
 
-	item = xnew(LIST_ITEM);
+	item = (LIST_ITEM*) malloc(sizeof(LIST_ITEM));
+	ZeroMemory(item, sizeof(LIST_ITEM));
+
 	if (item)
 		item->data = data;
+
 	return item;
 }
 
@@ -83,8 +87,11 @@ LIST* list_new(void)
 {
 	LIST* list;
 
-	list = xnew(LIST);
+	list = (LIST*) malloc(sizeof(LIST));
+	ZeroMemory(list, sizeof(LIST));
+
 	list->count = 0;
+
 	return list;
 }
 
@@ -98,6 +105,7 @@ void list_free(LIST* list)
 {
 	while (list->head)
 		list_dequeue(list);
+
 	free(list);
 }
 
@@ -112,6 +120,7 @@ void list_enqueue(LIST* list, void* data)
 	LIST_ITEM* item;
 
 	item = list_item_new(data);
+
 	if (list->tail == NULL)
 	{
 		list->head = item;
@@ -123,6 +132,7 @@ void list_enqueue(LIST* list, void* data)
 		list->tail->next = item;
 		list->tail = item;
 	}
+
 	list->count++;
 }
 
@@ -140,9 +150,11 @@ void* list_dequeue(LIST* list)
 	void* data = NULL;
 
 	item = list->head;
+
 	if (item != NULL)
 	{
 		list->head = item->next;
+
 		if (list->head == NULL)
 			list->tail = NULL;
 		else
@@ -152,6 +164,7 @@ void* list_dequeue(LIST* list)
 		free(item);
 		list->count--;
 	}
+
 	return data;
 }
 
@@ -189,11 +202,13 @@ void* list_next(LIST* list, void* data)
 
 	item = list_item_find(list, data);
 	data = NULL;
+
 	if (item != NULL)
 	{
 		if (item->next != NULL)
 			data = item->next->data;
 	}
+
 	return data;
 }
 
@@ -211,6 +226,7 @@ void* list_remove(LIST* list, void* data)
 	LIST_ITEM* item;
 
 	item = list_item_find(list, data);
+
 	if (item != NULL)
 	{
 		if (item->prev != NULL)
@@ -225,7 +241,10 @@ void* list_remove(LIST* list, void* data)
 		list->count--;
 	}
 	else
+	{
 		data = NULL;
+	}
+
 	return data;
 }
 

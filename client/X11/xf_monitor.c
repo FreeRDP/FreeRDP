@@ -27,6 +27,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <winpr/crt.h>
+
 #ifdef WITH_XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -55,23 +57,23 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		xfi->workArea.height = HeightOfScreen(xfi->screen);
 	}
 
-	if (settings->fullscreen)
+	if (settings->Fullscreen)
 	{
-		settings->width = WidthOfScreen(xfi->screen);
-		settings->height = HeightOfScreen(xfi->screen);	
+		settings->DesktopWidth = WidthOfScreen(xfi->screen);
+		settings->DesktopHeight = HeightOfScreen(xfi->screen);
 	}
-	else if (settings->workarea)
+	else if (settings->Workarea)
 	{
-		settings->width = xfi->workArea.width;
-		settings->height = xfi->workArea.height;
+		settings->DesktopWidth = xfi->workArea.width;
+		settings->DesktopHeight = xfi->workArea.height;
 	}
-	else if (settings->percent_screen)
+	else if (settings->PercentScreen)
 	{
-		settings->width = (xfi->workArea.width * settings->percent_screen) / 100;
-		settings->height = (xfi->workArea.height * settings->percent_screen) / 100;
+		settings->DesktopWidth = (xfi->workArea.width * settings->PercentScreen) / 100;
+		settings->DesktopHeight = (xfi->workArea.height * settings->PercentScreen) / 100;
 	}
 
-	if (settings->fullscreen != TRUE && settings->workarea != TRUE)
+	if (settings->Fullscreen != TRUE && settings->Workarea != TRUE)
 		return TRUE;
 
 #ifdef WITH_XINERAMA
@@ -84,7 +86,8 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 			if (vscreen->nmonitors > 16)
 				vscreen->nmonitors = 0;
 
-			vscreen->monitors = xzalloc(sizeof(MONITOR_INFO) * vscreen->nmonitors);
+			vscreen->monitors = malloc(sizeof(MONITOR_INFO) * vscreen->nmonitors);
+			ZeroMemory(vscreen->monitors, sizeof(MONITOR_INFO) * vscreen->nmonitors);
 
 			if (vscreen->nmonitors)
 			{
@@ -105,15 +108,15 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	}
 #endif
 
-	settings->num_monitors = vscreen->nmonitors;
+	settings->MonitorCount = vscreen->nmonitors;
 
 	for (i = 0; i < vscreen->nmonitors; i++)
 	{
-		settings->monitors[i].x = vscreen->monitors[i].area.left;
-		settings->monitors[i].y = vscreen->monitors[i].area.top;
-		settings->monitors[i].width = vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1;
-		settings->monitors[i].height = vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1;
-		settings->monitors[i].is_primary = vscreen->monitors[i].primary;
+		settings->MonitorDefArray[i].x = vscreen->monitors[i].area.left;
+		settings->MonitorDefArray[i].y = vscreen->monitors[i].area.top;
+		settings->MonitorDefArray[i].width = vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1;
+		settings->MonitorDefArray[i].height = vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1;
+		settings->MonitorDefArray[i].is_primary = vscreen->monitors[i].primary;
 
 		vscreen->area.left = MIN(vscreen->monitors[i].area.left, vscreen->area.left);
 		vscreen->area.right = MAX(vscreen->monitors[i].area.right, vscreen->area.right);
@@ -121,20 +124,20 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 		vscreen->area.bottom = MAX(vscreen->monitors[i].area.bottom, vscreen->area.bottom);
 	}
 
-	//if no monitor information is present then make sure variables are set accordingly
-	if (settings->num_monitors == 0)
+	/* if no monitor information is present then make sure variables are set accordingly */
+	if (settings->MonitorCount == 0)
 	{
 	        vscreen->area.left = 0;
-	        vscreen->area.right = settings->width -1;
+	        vscreen->area.right = settings->DesktopWidth -1;
                 vscreen->area.top = 0;
-                vscreen->area.bottom = settings->height - 1;
+                vscreen->area.bottom = settings->DesktopHeight - 1;
 	}
 	
 
-	if (settings->num_monitors)
+	if (settings->MonitorCount)
 	{
-		settings->width = vscreen->area.right - vscreen->area.left + 1;
-		settings->height = vscreen->area.bottom - vscreen->area.top + 1;
+		settings->DesktopWidth = vscreen->area.right - vscreen->area.left + 1;
+		settings->DesktopHeight = vscreen->area.bottom - vscreen->area.top + 1;
 	}
 
 	return TRUE;

@@ -8,10 +8,6 @@ if(WITH_PCSC)
 	set(OPTION_SERVER_DEFAULT OFF)
 endif()
 
-if(${OPTION_CLIENT_DEFAULT} OR ${OPTION_SERVER_DEFAULT})
-	set(OPTION_DEFAULT ON)
-endif()
-
 define_channel_options(NAME "smartcard" TYPE "device"
 	DESCRIPTION "Smart Card Virtual Channel Extension"
 	SPECIFICATIONS "[MS-RDPESC]"

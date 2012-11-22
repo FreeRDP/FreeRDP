@@ -28,20 +28,19 @@
 #include <winpr/crt.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
 #include "drdynvc_types.h"
 #include "drdynvc_main.h"
 
-#define CREATE_REQUEST_PDU     0x01
-#define DATA_FIRST_PDU         0x02
-#define DATA_PDU               0x03
-#define CLOSE_REQUEST_PDU      0x04
-#define CAPABILITY_REQUEST_PDU 0x05
+#define CREATE_REQUEST_PDU		0x01
+#define DATA_FIRST_PDU			0x02
+#define DATA_PDU			0x03
+#define CLOSE_REQUEST_PDU		0x04
+#define CAPABILITY_REQUEST_PDU		0x05
 
 struct drdynvc_plugin
 {
@@ -76,6 +75,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, UINT32 val)
 		cb = 2;
 		stream_write_UINT32(stream, val);
 	}
+
 	return cb;
 }
 
@@ -97,13 +97,13 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	stream_set_pos(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
-	if(data_size == 0)
+	if (data_size == 0)
 	{
 		pos = stream_get_pos(data_out);
 		stream_set_pos(data_out, 0);
 		stream_write_BYTE(data_out, 0x40 | cbChId);
 		stream_set_pos(data_out, pos);
-		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+		error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 	}
 	else if (data_size <= CHANNEL_CHUNK_LENGTH - pos)
 	{
@@ -112,7 +112,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		stream_write_BYTE(data_out, 0x30 | cbChId);
 		stream_set_pos(data_out, pos);
 		stream_write(data_out, data, data_size);
-		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+		error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 	}
 	else
 	{
@@ -126,7 +126,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		stream_write(data_out, data, chunk_len);
 		data += chunk_len;
 		data_size -= chunk_len;
-		error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+		error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 
 		while (error == CHANNEL_RC_OK && data_size > 0)
 		{
@@ -148,12 +148,14 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 			error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
 		}
 	}
+
 	if (error != CHANNEL_RC_OK)
 	{
 		drdynvc->channel_error = error;
 		DEBUG_WARN("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -161,12 +163,14 @@ int drdynvc_push_event(drdynvcPlugin* drdynvc, RDP_EVENT* event)
 {
 	int error;
 
-	error = svc_plugin_send_event((rdpSvcPlugin*)drdynvc, event);
+	error = svc_plugin_send_event((rdpSvcPlugin*) drdynvc, event);
+
 	if (error != CHANNEL_RC_OK)
 	{
 		DEBUG_WARN("pVirtualChannelEventPush failed %d", error);
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -178,6 +182,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
 	stream_seek(s, 1); /* pad */
 	stream_read_UINT16(s, drdynvc->version);
+
 	if (drdynvc->version == 2)
 	{
 		stream_read_UINT16(s, drdynvc->PriorityCharge0);
@@ -185,15 +190,18 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 		stream_read_UINT16(s, drdynvc->PriorityCharge2);
 		stream_read_UINT16(s, drdynvc->PriorityCharge3);
 	}
+
 	data_out = stream_new(4);
 	stream_write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	stream_write_UINT16(data_out, drdynvc->version);
-	error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+
 	if (error != CHANNEL_RC_OK)
 	{
 		DEBUG_WARN("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
+
 	drdynvc->channel_error = error;
 
 	return 0;
@@ -208,28 +216,31 @@ static UINT32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
 		case 0:
 			stream_read_BYTE(stream, val);
 			break;
+
 		case 1:
 			stream_read_UINT16(stream, val);
 			break;
+
 		default:
 			stream_read_UINT32(stream, val);
 			break;
 	}
+
 	return val;
 }
 
 static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
 {
-	STREAM* data_out;
 	int pos;
 	int error;
 	UINT32 ChannelId;
+	STREAM* data_out;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = stream_get_pos(s);
 	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, stream_get_tail(s));
 
-	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*)stream_get_tail(s));
+	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) stream_get_tail(s));
 
 	data_out = stream_new(pos + 4);
 	stream_write_BYTE(data_out, 0x10 | cbChId);
@@ -247,26 +258,29 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 		stream_write_UINT32(data_out, (UINT32)(-1));
 	}
 
-	error = svc_plugin_send((rdpSvcPlugin*)drdynvc, data_out);
+	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+
 	if (error != CHANNEL_RC_OK)
 	{
 		DEBUG_WARN("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
+
 	return 0;
 }
 
 static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
 {
-	UINT32 ChannelId;
-	UINT32 Length;
 	int error;
+	UINT32 Length;
+	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
 	DEBUG_DVC("ChannelId=%d Length=%d", ChannelId, Length);
 
 	error = dvcman_receive_channel_data_first(drdynvc->channel_mgr, ChannelId, Length);
+
 	if (error)
 		return error;
 
@@ -298,11 +312,11 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 
 static void drdynvc_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 {
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*)plugin;
 	int value;
 	int Cmd;
 	int Sp;
 	int cbChId;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*) plugin;
 
 	stream_read_BYTE(s, value);
 	Cmd = (value & 0xf0) >> 4;
@@ -338,13 +352,24 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 
 static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 {
+	int index;
+	ADDIN_ARGV* args;
+	rdpSettings* settings;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*)plugin;
 
 	DEBUG_DVC("connecting");
 
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
 	drdynvc->channel_error = 0;
-	dvcman_load_plugin(drdynvc->channel_mgr, svc_plugin_get_data(plugin));
+
+	settings = (rdpSettings*) ((rdpSvcPlugin*) plugin)->channel_entry_points.pExtendedData;
+
+	for (index = 0; index < settings->DynamicChannelCount; index++)
+	{
+		args = settings->DynamicChannelArray[index];
+		dvcman_load_addin(drdynvc->channel_mgr, args);
+	}
+
 	dvcman_init(drdynvc->channel_mgr);
 }
 
@@ -355,7 +380,7 @@ static void drdynvc_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 {
-	drdynvcPlugin* drdynvc = (drdynvcPlugin*)plugin;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*) plugin;
 
 	DEBUG_DVC("terminating");
 
@@ -368,7 +393,7 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 /* drdynvc is always built-in */
 #define VirtualChannelEntry	drdynvc_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	drdynvcPlugin* _p;
 
@@ -391,4 +416,3 @@ const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
-

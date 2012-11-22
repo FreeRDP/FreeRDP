@@ -25,17 +25,18 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/utils/memory.h>
 
-int freerdp_get_pixel(BYTE * data, int x, int y, int width, int height, int bpp)
+int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
 {
 	int start;
 	int shift;
-	UINT16 *src16;
-	UINT32 *src32;
+	UINT16* src16;
+	UINT32* src32;
 	int red, green, blue;
 
 	switch (bpp)
@@ -1076,12 +1077,17 @@ void freerdp_image_swap_color_order(BYTE* data, int width, int height)
 
 HCLRCONV freerdp_clrconv_new(UINT32 flags)
 {
-	HCLRCONV clrconv = xnew(CLRCONV);
+	HCLRCONV clrconv;
+
+	clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+	ZeroMemory(clrconv, sizeof(CLRCONV));
 
 	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
 	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
 	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
-	clrconv->palette = xnew(rdpPalette);
+
+	clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	ZeroMemory(clrconv->palette, sizeof(rdpPalette));
 
 	return clrconv;
 }

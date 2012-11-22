@@ -55,6 +55,8 @@
 
 #define DUMMYSTRUCTNAME		s
 
+#define DECLSPEC_NORETURN
+
 #endif
 
 #endif /* WINPR_SPEC_H */

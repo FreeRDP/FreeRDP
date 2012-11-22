@@ -397,49 +397,6 @@ static void serial_free(DEVICE* device)
 	free(serial);
 }
 
-#ifdef STATIC_CHANNELS
-#define DeviceServiceEntry	serial_DeviceServiceEntry
-#endif
-
-int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
-{
-	int i, len;
-	char* name;
-	char* path;
-	SERIAL_DEVICE* serial;
-
-	name = (char*) pEntryPoints->plugin_data->data[1];
-	path = (char*) pEntryPoints->plugin_data->data[2];
-
-	if (name[0] && path[0])
-	{
-		serial = xnew(SERIAL_DEVICE);
-
-		serial->device.type = RDPDR_DTYP_SERIAL;
-		serial->device.name = name;
-		serial->device.IRPRequest = serial_irp_request;
-		serial->device.Free = serial_free;
-
-		len = strlen(name);
-		serial->device.data = stream_new(len + 1);
-
-		for (i = 0; i <= len; i++)
-			stream_write_BYTE(serial->device.data, name[i] < 0 ? '_' : name[i]);
-
-		serial->path = path;
-		serial->irp_list = list_new();
-		serial->pending_irps = list_new();
-		serial->thread = freerdp_thread_new();
-		serial->in_event = wait_obj_new();
-
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)serial);
-
-		freerdp_thread_start(serial->thread, serial_thread_func, serial);
-	}
-
-	return 0;
-}
-
 static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32 abort_io, UINT32 io_status)
 {
 	IRP* irp = NULL;
@@ -731,4 +688,50 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 	__serial_check_fds(serial);
 
 	return 1;
+}
+
+#ifdef STATIC_CHANNELS
+#define DeviceServiceEntry	serial_DeviceServiceEntry
+#endif
+
+int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+{
+	int i, len;
+	char* name;
+	char* path;
+	RDPDR_SERIAL* device;
+	SERIAL_DEVICE* serial;
+
+	device = (RDPDR_SERIAL*) pEntryPoints->device;
+	name = device->Name;
+	path = device->Path;
+
+	if (name[0] && path[0])
+	{
+		serial = (SERIAL_DEVICE*) malloc(sizeof(SERIAL_DEVICE));
+		ZeroMemory(serial, sizeof(SERIAL_DEVICE));
+
+		serial->device.type = RDPDR_DTYP_SERIAL;
+		serial->device.name = name;
+		serial->device.IRPRequest = serial_irp_request;
+		serial->device.Free = serial_free;
+
+		len = strlen(name);
+		serial->device.data = stream_new(len + 1);
+
+		for (i = 0; i <= len; i++)
+			stream_write_BYTE(serial->device.data, name[i] < 0 ? '_' : name[i]);
+
+		serial->path = path;
+		serial->irp_list = list_new();
+		serial->pending_irps = list_new();
+		serial->thread = freerdp_thread_new();
+		serial->in_event = wait_obj_new();
+
+		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)serial);
+
+		freerdp_thread_start(serial->thread, serial_thread_func, serial);
+	}
+
+	return 0;
 }

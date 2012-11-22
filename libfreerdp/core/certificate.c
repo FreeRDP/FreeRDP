@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -221,7 +223,8 @@ rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 	x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
 
 	x509_cert_chain->count = count;
-	x509_cert_chain->array = (rdpCertBlob*) xzalloc(sizeof(rdpCertBlob) * count);
+	x509_cert_chain->array = (rdpCertBlob*) malloc(sizeof(rdpCertBlob) * count);
+	ZeroMemory(x509_cert_chain->array, sizeof(rdpCertBlob) * count);
 
 	return x509_cert_chain;
 }
@@ -493,13 +496,14 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	return TRUE;
 }
 
-rdpKey* key_new(const char* keyfile)
+rdpRsaKey* key_new(const char* keyfile)
 {
 	FILE* fp;
 	RSA* rsa;
-	rdpKey* key;
+	rdpRsaKey* key;
 
-	key = (rdpKey*) xzalloc(sizeof(rdpKey));
+	key = (rdpRsaKey*) malloc(sizeof(rdpRsaKey));
+	ZeroMemory(key, sizeof(rdpRsaKey));
 
 	if (key == NULL)
 		return NULL;
@@ -571,7 +575,7 @@ rdpKey* key_new(const char* keyfile)
 	return key;
 }
 
-void key_free(rdpKey* key)
+void key_free(rdpRsaKey* key)
 {
 	if (key != NULL)
 	{
@@ -591,7 +595,8 @@ rdpCertificate* certificate_new()
 {
 	rdpCertificate* certificate;
 
-	certificate = (rdpCertificate*) xzalloc(sizeof(rdpCertificate));
+	certificate = (rdpCertificate*) malloc(sizeof(rdpCertificate));
+	ZeroMemory(certificate, sizeof(rdpCertificate));
 
 	if (certificate != NULL)
 	{

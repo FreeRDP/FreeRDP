@@ -29,7 +29,6 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
@@ -380,13 +379,13 @@ static BYTE server_app_get_resp_app_id[] =
 
 
 #define EMULATE_SERVER_SEND_CHANNEL_DATA(inst, byte_array) \
-	emulate_server_send_channel_data(inst, byte_array, ARRAY_SIZE(byte_array))
+	emulate_server_send_channel_data(inst, byte_array, ARRAYSIZE(byte_array))
 
 #define STREAM_EQUAL_TO_DUMP(stream, dump) \
-	(stream_equal_dump((stream)->data, (stream)->size, dump, ARRAY_SIZE(dump)))
+	(stream_equal_dump((stream)->data, (stream)->size, dump, ARRAYSIZE(dump)))
 
 #define UNICODE_STRING_EQUAL_TO_DUMP(ustring, dump) \
-	(stream_equal_dump((ustring)->string, (ustring)->length, dump, ARRAY_SIZE(dump)))
+	(stream_equal_dump((ustring)->string, (ustring)->length, dump, ARRAYSIZE(dump)))
 
 typedef struct
 {
@@ -521,7 +520,7 @@ static void emulate_server_send_channel_data(
 static void save_dump(void* data, size_t size)
 {
 	thread_param * p = global_thread_params;
-	if (p->in_streams_number < ARRAY_SIZE(p->in_streams))
+	if (p->in_streams_number < ARRAYSIZE(p->in_streams))
 	{
 		STREAM* s = &p->in_streams[p->in_streams_number];
 		s->data = malloc(size);
@@ -631,7 +630,7 @@ static void process_events_and_channel_data_from_plugin(thread_param* param)
 					counter);
 
 			// add to global event list
-			if (param->in_events_number < ARRAY_SIZE(param->in_events))
+			if (param->in_events_number < ARRAYSIZE(param->in_events))
 			{
 				save_event(event, &param->in_events[param->in_events_number]);
 				param->in_events_number++;
@@ -669,7 +668,7 @@ void test_rail_plugin(void)
 
 	printf("\n");
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	inst->settings = &settings;
 	inst->SendChannelData = emulate_client_send_channel_data;
 

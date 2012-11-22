@@ -22,8 +22,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 
 #include "window.h"
 
@@ -179,7 +180,9 @@ void update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 
 void update_read_window_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
-	window_icon->iconInfo = (ICON_INFO*) xzalloc(sizeof(ICON_INFO));
+	window_icon->iconInfo = (ICON_INFO*) malloc(sizeof(ICON_INFO));
+	ZeroMemory(window_icon->iconInfo, sizeof(ICON_INFO));
+
 	update_read_icon_info(s, window_icon->iconInfo); /* iconInfo (ICON_INFO) */
 }
 

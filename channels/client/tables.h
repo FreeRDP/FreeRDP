@@ -32,3 +32,19 @@ struct _STATIC_ENTRY_TABLE
 	const STATIC_ENTRY* table;
 };
 typedef struct _STATIC_ENTRY_TABLE STATIC_ENTRY_TABLE;
+
+struct _STATIC_SUBSYSTEM_ENTRY
+{
+	const char* name;
+	const char* type;
+	const void* entry;
+};
+typedef struct _STATIC_SUBSYSTEM_ENTRY STATIC_SUBSYSTEM_ENTRY;
+
+struct _STATIC_ADDIN_TABLE
+{
+	const char* name;
+	const void* entry;
+	const STATIC_SUBSYSTEM_ENTRY* table;
+};
+typedef struct _STATIC_ADDIN_TABLE STATIC_ADDIN_TABLE;

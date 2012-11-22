@@ -20,7 +20,6 @@
 #define __WF_WINDOW_H
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/memory.h>
 
 #include "wfreerdp.h"
 

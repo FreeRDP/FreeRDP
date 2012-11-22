@@ -595,6 +595,28 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 #ifdef WINPR_SSPI
 
+typedef struct _SEC_WINNT_AUTH_IDENTITY_W
+{
+	UINT16* User;
+	UINT32 UserLength;
+	UINT16* Domain;
+	UINT32 DomainLength;
+	UINT16* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+} SEC_WINNT_AUTH_IDENTITY_W,*PSEC_WINNT_AUTH_IDENTITY_W;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_A
+{
+	BYTE* User;
+	UINT32 UserLength;
+	BYTE* Domain;
+	UINT32 DomainLength;
+	BYTE* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+} SEC_WINNT_AUTH_IDENTITY_A,*PSEC_WINNT_AUTH_IDENTITY_A;
+
 struct _SEC_WINNT_AUTH_IDENTITY
 {
 	UINT16* User;

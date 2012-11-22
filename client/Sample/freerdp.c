@@ -39,10 +39,10 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 struct tf_info
@@ -151,33 +151,36 @@ BOOL tf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 
 	context = (tfContext*) instance->context;
-	tfi = (tfInfo*) xzalloc(sizeof(tfInfo));
+
+	tfi = (tfInfo*) malloc(sizeof(tfInfo));
+	ZeroMemory(tfi, sizeof(tfInfo));
+
 	context->tfi = tfi;
 
 	settings = instance->settings;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = TRUE;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = TRUE;
-	settings->order_support[NEG_LINETO_INDEX] = TRUE;
-	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
-	settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MEM3BLT_INDEX] = TRUE;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = TRUE;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = TRUE;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = TRUE;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = TRUE;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = TRUE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = TRUE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = TRUE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = TRUE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
@@ -328,7 +331,9 @@ int main(int argc, char* argv[])
 	channels = instance->context->channels;
 	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, channels, NULL, NULL);
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+
 	data->instance = instance;
 
 	g_thread_count++;

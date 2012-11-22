@@ -26,9 +26,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 
 #include "extension.h"
 
@@ -211,7 +212,8 @@ rdpExtension* extension_new(freerdp* instance)
 
 	if (instance != NULL)
 	{
-		extension = xnew(rdpExtension);
+		extension = (rdpExtension*) malloc(sizeof(rdpExtension));
+		ZeroMemory(extension, sizeof(rdpExtension));
 
 		extension->instance = instance;
 	}

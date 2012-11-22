@@ -20,6 +20,7 @@ set(MODULE_PREFIX "FREERDP_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
 	client.c
+	cmdline.c
 	file.c)
 
 set(FREERDP_CHANNELS_CLIENT_PATH "../../channels/client")
@@ -37,10 +38,14 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} 
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${FREERDP_CHANNELS_CLIENT_LIBS})
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt)
+	MODULES winpr-crt winpr-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

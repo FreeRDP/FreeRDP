@@ -30,7 +30,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/channels/rdpdr.h>
@@ -49,25 +48,20 @@
 
 static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 {
+	int index;
+	RDPDR_DEVICE* device;
+	rdpSettings* settings;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
-	RDP_PLUGIN_DATA* data;
 
 	rdpdr->devman = devman_new(plugin);
-	data = (RDP_PLUGIN_DATA*) plugin->channel_entry_points.pExtendedData;
+	settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
 
-	while (data && data->size > 0)
+	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
+
+	for (index = 0; index < settings->DeviceCount; index++)
 	{
-		if (strcmp((char*) data->data[0], "clientname") == 0)
-		{
-			strncpy(rdpdr->computerName, (char*) data->data[1], sizeof(rdpdr->computerName) - 1);
-			DEBUG_SVC("computerName %s", rdpdr->computerName);
-		}
-		else
-		{
-			devman_load_device_service(rdpdr->devman, data);
-		}
-
-		data = (RDP_PLUGIN_DATA*) (((BYTE*) data) + data->size);
+		device = settings->DeviceArray[index];
+		devman_load_device_service(rdpdr->devman, device);
 	}
 }
 
@@ -178,8 +172,9 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 * 2. smartcard devices should be always sent
 		 * 3. other devices are sent only after user_loggedon
 		 */
-		if (rdpdr->versionMinor == 0x0005 ||
-			device->type == RDPDR_DTYP_SMARTCARD || user_loggedon)
+
+		if ((rdpdr->versionMinor == 0x0005) ||
+			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
 		{
 			data_len = (device->data == NULL ? 0 : stream_get_length(device->data));
 			stream_check_size(data_out, 20 + data_len);
@@ -319,7 +314,7 @@ static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 /* rdpdr is always built-in */
 #define VirtualChannelEntry	rdpdr_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpdrPlugin* _p;
 

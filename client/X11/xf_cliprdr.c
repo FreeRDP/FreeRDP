@@ -25,6 +25,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/unicode.h>
@@ -80,7 +82,9 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 	UINT32 id;
 	clipboardContext* cb;
 
-	cb = xnew(clipboardContext);
+	cb = (clipboardContext*) malloc(sizeof(clipboardContext));
+	ZeroMemory(cb, sizeof(clipboardContext));
+
 	xfi->clipboard_context = cb;
 
 	cb->channels = chanman;
@@ -168,7 +172,9 @@ static BYTE* lf2crlf(BYTE* data, int* size)
 	int out_size;
 
 	out_size = (*size) * 2 + 1;
-	outbuf = (BYTE*) xzalloc(out_size);
+	outbuf = (BYTE*) malloc(out_size);
+	ZeroMemory(outbuf, out_size);
+
 	out = outbuf;
 	in = data;
 	in_end = data + (*size);
@@ -561,7 +567,9 @@ static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 	}
 
 	*size -= 14;
-	outbuf = (BYTE*) xzalloc(*size);
+	outbuf = (BYTE*) malloc(*size);
+	ZeroMemory(outbuf, *size);
+
 	memcpy(outbuf, data + 14, *size);
 
 	return outbuf;
@@ -591,11 +599,15 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 
 	if (inbuf == NULL)
 	{
-		inbuf = xzalloc(*size + 1);
+		inbuf = malloc(*size + 1);
+		ZeroMemory(inbuf, *size + 1);
+
 		memcpy(inbuf, data, *size);
 	}
 
-	outbuf = (BYTE*) xzalloc(*size + 200);
+	outbuf = (BYTE*) malloc(*size + 200);
+	ZeroMemory(outbuf, *size + 200);
+
 	strcpy((char*) outbuf,
 		"Version:0.9\r\n"
 		"StartHTML:0000000000\r\n"
@@ -604,6 +616,7 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 		"EndFragment:0000000000\r\n");
 
 	in = (BYTE*) strstr((char*) inbuf, "<body");
+
 	if (in == NULL)
 	{
 		in = (BYTE*) strstr((char*) inbuf, "<BODY");
@@ -785,7 +798,7 @@ static void xf_cliprdr_append_target(clipboardContext* cb, Atom target)
 {
 	int i;
 
-	if (cb->num_targets >= ARRAY_SIZE(cb->targets))
+	if (cb->num_targets >= ARRAYSIZE(cb->targets))
 		return;
 
 	for (i = 0; i < cb->num_targets; i++)
@@ -1085,7 +1098,10 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 	}
 
 	delay_respond = FALSE;
-	respond = xnew(XEvent);
+
+	respond = (XEvent*) malloc(sizeof(XEvent));
+	ZeroMemory(respond, sizeof(XEvent));
+
 	respond->xselection.property = None;
 	respond->xselection.type = SelectionNotify;
 	respond->xselection.display = xevent->xselectionrequest.display;

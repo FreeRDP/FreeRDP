@@ -25,7 +25,8 @@
 
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/locale/keyboard.h>
 
 #include "liblocale.h"
@@ -904,7 +905,7 @@ UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
-	for (i = 0; i < ARRAY_SIZE(xkbLayouts); i++)
+	for (i = 0; i < ARRAYSIZE(xkbLayouts); i++)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{

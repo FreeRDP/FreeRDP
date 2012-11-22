@@ -26,20 +26,16 @@ else()
 		add_subdirectory(Sample)
 	endif()
 
-	find_optional_package(DirectFB)
 	if(WITH_DIRECTFB)
 		add_subdirectory(DirectFB)
 	endif()
 endif()
 
-if(NOT WIN32 AND (NOT ANDROID))
-	find_suggested_package(X11)
-	if(WITH_X11)
-		add_subdirectory(X11)
-	endif()
+if(WITH_X11)
+	add_subdirectory(X11)
 endif()
 
-if(APPLE)
+if(APPLE AND (NOT IOS))
 	add_subdirectory(Mac)
 endif()
 

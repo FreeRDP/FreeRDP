@@ -25,11 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/codec/rfx.h>
+
 #include "rfx_types.h"
 #include "rfx_bitstream.h"
 #include "rfx_rlgr.h"
@@ -191,8 +194,11 @@ void test_bitstream(void)
 	UINT16 b;
 	RFX_BITSTREAM* bs;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	rfx_bitstream_attach(bs, (BYTE*) y_data, sizeof(y_data));
+
 	while (!rfx_bitstream_eos(bs))
 	{
 		rfx_bitstream_get_bits(bs, 3, b);
@@ -210,7 +216,9 @@ void test_bitstream_enc(void)
 	RFX_BITSTREAM* bs;
 	int i;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	memset(buffer, 0, sizeof(buffer));
 	rfx_bitstream_attach(bs, buffer, sizeof(buffer));
 	for (i = 0; i < 16; i++)
@@ -245,7 +253,7 @@ void test_rlgr(void)
 {
 	int n;
 
-	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAY_SIZE(buffer));
+	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAYSIZE(buffer));
 
 	//printf("RLGR decode %d bytes to %d values.", sizeof(y_data), n);
 	//dump_buffer(buffer, n);

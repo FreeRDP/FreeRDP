@@ -34,10 +34,8 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "sample_main.h"
@@ -136,7 +134,7 @@ static void sample_process_terminate(rdpSvcPlugin* plugin)
 
 #define VirtualChannelEntry	sample_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	samplePlugin* _p;
 

@@ -26,6 +26,7 @@
 #include <string.h>
 #include <time.h>
 
+#include <winpr/crt.h>
 #include <winpr/windows.h>
 
 #ifdef _WIN32
@@ -35,14 +36,15 @@
 #endif
 
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 freerdp_thread* freerdp_thread_new(void)
 {
 	freerdp_thread* thread;
 
-	thread = xnew(freerdp_thread);
+	thread = (freerdp_thread*) malloc(sizeof(freerdp_thread));
+	ZeroMemory(thread, sizeof(freerdp_thread));
+
 	thread->mutex = CreateMutex(NULL, FALSE, NULL);
 	thread->signals[0] = wait_obj_new();
 	thread->signals[1] = wait_obj_new();

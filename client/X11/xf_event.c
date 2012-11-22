@@ -134,7 +134,7 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		{
 			return TRUE;
 		}
-		// Translate to desktop coordinates
+		/* Translate to desktop coordinates */
 		XTranslateCoordinates(xfi->display, event->xmotion.window,
 			RootWindowOfScreen(xfi->screen),
 			x, y, &x, &y, &childWindow);
@@ -197,18 +197,18 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 			break;
 
-		case 6:		// wheel left or back
-		case 8:		// back
-		case 97:	// Xming
+		case 6:		/* wheel left or back */
+		case 8:		/* back */
+		case 97:	/* Xming */
 			extended = TRUE;
 			x = event->xbutton.x;
 			y = event->xbutton.y;
 			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON1;
 			break;
 
-		case 7:		// wheel right or forward
-		case 9:		// forward
-		case 112:	// Xming
+		case 7:		/* wheel right or forward */
+		case 9:		/* forward */
+		case 112:	/* Xming */
 			extended = TRUE;
 			x = event->xbutton.x;
 			y = event->xbutton.y;
@@ -237,7 +237,7 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 				{
 					return TRUE;
 				}
-				// Translate to desktop coordinates
+				/* Translate to desktop coordinates */
 				XTranslateCoordinates(xfi->display, event->xbutton.window,
 					RootWindowOfScreen(xfi->screen),
 					x, y, &x, &y, &childWindow);
@@ -320,7 +320,7 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 			{
 				return TRUE;
 			}
-			// Translate to desktop coordinates
+			/* Translate to desktop coordinates */
 			XTranslateCoordinates(xfi->display, event->xbutton.window,
 				RootWindowOfScreen(xfi->screen),
 				x, y, &x, &y, &childWindow);
@@ -393,7 +393,7 @@ static BOOL xf_event_FocusIn(xfInfo* xfi, XEvent* event, BOOL app)
                
                window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
        
-               //Update the server with any window changes that occured while the window was not focused.
+               /* Update the server with any window changes that occured while the window was not focused. */
                if (window != NULL)
                        xf_rail_adjust_position(xfi, window);
 	}
@@ -537,10 +537,12 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
 			(UINT32) xfw->handle, xfw->left, xfw->top, xfw->right, xfw->bottom,
 			xfw->width, xfw->height, event->xconfigure.send_event);
 
-		/* additonal checks for not in a local move and not ignoring configure to send
+		/*
+		 * Additonal checks for not in a local move and not ignoring configure to send
 		 * position update to server, also should the window not be focused then do not
 		 * send to server yet(ie. resizing using window decoration).
-		 * The server will be updated when the window gets refocused. */
+		 * The server will be updated when the window gets refocused.
+		 */
 		if (app && xfw->decorations)
 		{
 			/* moving resizing using window decoration */
@@ -590,9 +592,12 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		if (window != NULL)
 		{
 			/* local restore event */
-			//This is now handled as part of the PropertyNotify
-               		//Doing this here would inhibit the ability to restore a maximized window
-               		//that is minimized back to the maximized state
+
+			/* This is now handled as part of the PropertyNotify
+			 * Doing this here would inhibit the ability to restore a maximized window
+			 * that is minimized back to the maximized state
+			 */
+
 			//xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
 			xfWindow *xfw = (xfWindow*) window->extra;
 			xfw->is_mapped = TRUE;
@@ -667,9 +672,12 @@ static BOOL xf_event_SelectionClear(xfInfo* xfi, XEvent* event, BOOL app)
 
 static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
-	//This section handles sending the appropriate commands to the rail server
-	//when the window has been minimized, maximized, restored locally 
-	//ie. not using the buttons on the rail window itself
+	/*
+	 * This section handles sending the appropriate commands to the rail server
+	 * when the window has been minimized, maximized, restored locally
+	 * ie. not using the buttons on the rail window itself
+	 */
+
 	if (app == TRUE)
 	{
 	        rdpWindow* window;
@@ -699,7 +707,7 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	                               DEBUG_X11_LMS("No return _NET_WM_STATE, window is not maximized");
 	                }               
 	
-	                for (i=0;i<nitems;i++)
+	                for (i = 0; i < nitems; i++)
 	                {
 	                        if ((Atom) ((UINT16 **) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
 	                        {
@@ -722,11 +730,9 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	                }
 	                else
 	                {
-	                        //If the window is in the iconic state
+	                        /* If the window is in the iconic state */
 	                        if (((UINT32) *prop == 3))
-	                        {
 	                                minimized = TRUE;
-	                        }
 	                        else
 	                                minimized = FALSE;
 	                       
@@ -773,9 +779,10 @@ static BOOL xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*even
 	switch (xfi->window->local_move.state)
 	{
 		case LMS_NOT_ACTIVE:
-			// No local move in progress, nothing to do
+			/* No local move in progress, nothing to do */
 
-			//Prevent Configure from happening during indeterminant state of Horz or Vert Max only
+			/* Prevent Configure from happening during indeterminant state of Horz or Vert Max only */
+
 		        if ( (event->type == ConfigureNotify) && xfi->window->rail_ignore_configure)
                         {
                                DEBUG_X11_LMS("ConfigureNotify Event Ignored");
@@ -784,45 +791,41 @@ static BOOL xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*even
                         }
 
 			break;
+
 		case LMS_STARTING:
-			// Local move initiated by RDP server, but we
-			// have not yet seen any updates from the X server
+			/* Local move initiated by RDP server, but we have not yet seen any updates from the X server */
 			switch(event->type)
 			{
 				case ConfigureNotify:
-					// Starting to see move events 
-					// from the X server. Local 
-					// move is now in progress.
+					/* Starting to see move events from the X server. Local move is now in progress. */
 					xfi->window->local_move.state = LMS_ACTIVE;
 
-					// Allow these events to be processed during move to keep
-					// our state up to date.
+					/* Allow these events to be processed during move to keep our state up to date. */
 					break;
 				case ButtonPress:
 				case ButtonRelease:
 				case KeyPress:
 				case KeyRelease:
 				case UnmapNotify:
-                	        	// A button release event means the X 
-					// window server did not grab the
-                        		// mouse before the user released it.  
-					// In this case we must cancel the 
-					// local move. The event will be 
-					// processed below as normal, below.
+                	        	/*
+                	        	 * A button release event means the X window server did not grab the
+                	        	 * mouse before the user released it. In this case we must cancel the
+                	        	 * local move. The event will be processed below as normal, below.
+                	        	 */
 	                        	break;
 				case VisibilityNotify:
 				case PropertyNotify:
 				case Expose:
-					// Allow these events to pass
+					/* Allow these events to pass */
 					break;
 				default:
-					// Eat any other events 
+					/* Eat any other events */
 					return TRUE;
 			}
 			break;
 
 		case LMS_ACTIVE:
-			// Local move is in progress
+			/* Local move is in progress */
 			switch(event->type)
 			{
 				case ConfigureNotify:
@@ -830,19 +833,18 @@ static BOOL xf_event_suppress_events(xfInfo *xfi, rdpWindow *window, XEvent*even
 				case PropertyNotify:
 				case Expose:
 				case GravityNotify:
-					// Keep us up to date on position
+					/* Keep us up to date on position */
 					break;
 				default:
 					DEBUG_X11_LMS("Event Type to break LMS: %s", X11_EVENT_STRINGS[event->type]);
-					// Any other event terminates move
+					/* Any other event terminates move */
 					xf_rail_end_local_move(xfi, window);
 					break;
 			}
 			break;
 
 		case LMS_TERMINATING:
-			// Already sent RDP end move to sever
-			// Allow events to pass.
+			/* Already sent RDP end move to server. Allow events to pass. */
 			break;
 	}	
 
@@ -859,11 +861,11 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 
 	if (xfi->remote_app)
 	{
-		window = window_list_get_by_extra_id(
-			rail->list, (void*) event->xexpose.window);
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+
 		if (window) 
 		{
-			// Update "current" window for cursor change orders
+			/* Update "current" window for cursor change orders */
 			xfi->window = (xfWindow *) window->extra;
 
 			if (xf_event_suppress_events(xfi, window, event))

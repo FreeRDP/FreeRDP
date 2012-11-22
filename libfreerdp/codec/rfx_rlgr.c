@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
 
 #include "rfx_bitstream.h"
 
@@ -134,7 +134,9 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buff
 	int vk;
 	UINT16 mag16;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	rfx_bitstream_attach(bs, data, data_size);
 	dst = buffer;
 
@@ -306,7 +308,9 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buff
 	RFX_BITSTREAM* bs;
 	int processed_size;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	rfx_bitstream_attach(bs, buffer, buffer_size);
 
 	/* initialize the parameters */

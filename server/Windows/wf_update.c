@@ -180,7 +180,7 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 			wfi->frame_idx, context->frame_idx + 1);
 	}
 
-	wfi->cmd.codecID = client->settings->rfx_codec_id;
+	wfi->cmd.codecID = client->settings->RemoteFxCodecId;
 	client->update->SurfaceBits(client->update->context, &wfi->cmd);
 	context->frame_idx++;
 }

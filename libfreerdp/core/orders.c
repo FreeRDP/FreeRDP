@@ -22,6 +22,9 @@
 #endif
 
 #include "window.h"
+
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>
@@ -72,7 +75,7 @@ static const char* const SECONDARY_DRAWING_ORDER_STRINGS[] =
 	"Cache Bitmap V3"
 };
 
-#define SECONDARY_DRAWING_ORDER_COUNT	(ARRAY_SIZE(SECONDARY_DRAWING_ORDER_STRINGS))
+#define SECONDARY_DRAWING_ORDER_COUNT	(ARRAYSIZE(SECONDARY_DRAWING_ORDER_STRINGS))
 
 static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
 {
@@ -92,7 +95,7 @@ static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
 	"Frame Marker"
 };
 
-#define ALTSEC_DRAWING_ORDER_COUNT	(ARRAY_SIZE(ALTSEC_DRAWING_ORDER_STRINGS))
+#define ALTSEC_DRAWING_ORDER_COUNT	(ARRAYSIZE(ALTSEC_DRAWING_ORDER_STRINGS))
 
 #endif /* WITH_DEBUG_ORDERS */
 
@@ -125,7 +128,7 @@ static const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 	GLYPH_INDEX_ORDER_FIELD_BYTES
 };
 
-#define PRIMARY_DRAWING_ORDER_COUNT	(ARRAY_SIZE(PRIMARY_DRAWING_ORDER_FIELD_BYTES))
+#define PRIMARY_DRAWING_ORDER_COUNT	(ARRAYSIZE(PRIMARY_DRAWING_ORDER_FIELD_BYTES))
 
 static const BYTE CBR2_BPP[] =
 {

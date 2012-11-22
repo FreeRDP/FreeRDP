@@ -30,7 +30,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
@@ -274,7 +273,7 @@ static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 /* cliprdr is always built-in */
 #define VirtualChannelEntry	cliprdr_VirtualChannelEntry
 
-const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* _p;
 
@@ -298,5 +297,3 @@ const int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
-
-

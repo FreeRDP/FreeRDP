@@ -26,6 +26,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/print.h>
 
 #ifndef _WIN32
@@ -312,14 +314,18 @@ freerdp_listener* freerdp_listener_new(void)
 	freerdp_listener* instance;
 	rdpListener* listener;
 
-	instance = xnew(freerdp_listener);
+	instance = (freerdp_listener*) malloc(sizeof(freerdp_listener));
+	ZeroMemory(instance, sizeof(freerdp_listener));
+
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
 	instance->GetFileDescriptor = freerdp_listener_get_fds;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
 	instance->Close = freerdp_listener_close;
 
-	listener = xnew(rdpListener);
+	listener = (rdpListener*) malloc(sizeof(rdpListener));
+	ZeroMemory(listener, sizeof(rdpListener));
+
 	listener->instance = instance;
 
 	instance->listener = (void*) listener;

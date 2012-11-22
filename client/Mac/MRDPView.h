@@ -71,7 +71,7 @@
     int                is_connected;   // true when connected to RDP server
 }
 
-- (void) rdpConnectEror;
+- (void) rdpConnectError;
 - (void) rdpRemoteAppError;
 - (void) saveStateInfo :(freerdp *) instance :(rdpContext *) context;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;

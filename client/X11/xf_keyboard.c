@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -33,9 +36,9 @@
 void xf_kbd_init(xfInfo* xfi)
 {
 	xf_kbd_clear(xfi);
-	xfi->keyboard_layout_id = xfi->instance->settings->kbd_layout;
+	xfi->keyboard_layout_id = xfi->instance->settings->KeyboardLayout;
 	xfi->keyboard_layout_id = freerdp_keyboard_init(xfi->keyboard_layout_id);
-	xfi->instance->settings->kbd_layout = xfi->keyboard_layout_id;
+	xfi->instance->settings->KeyboardLayout = xfi->keyboard_layout_id;
 }
 
 void xf_kbd_clear(xfInfo* xfi)
@@ -64,7 +67,7 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 	int keycode;
 	RDP_SCANCODE rdp_scancode;
 
-	for (keycode = 0; keycode < ARRAY_SIZE(xfi->pressed_keys); keycode++)
+	for (keycode = 0; keycode < ARRAYSIZE(xfi->pressed_keys); keycode++)
 	{
 		if (xfi->pressed_keys[keycode] != NoSymbol)
 		{

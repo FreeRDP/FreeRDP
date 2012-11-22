@@ -23,12 +23,12 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cliprdr.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "df_event.h"
@@ -120,43 +120,49 @@ BOOL df_pre_connect(freerdp* instance)
 	dfContext* context;
 	rdpSettings* settings;
 
-	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
+	dfi = (dfInfo*) malloc(sizeof(dfInfo));
+	ZeroMemory(dfi, sizeof(dfInfo));
+
 	context = ((dfContext*) instance->context);
 	context->dfi = dfi;
 
 	settings = instance->settings;
-	bitmap_cache = settings->bitmap_cache;
+	bitmap_cache = settings->BitmapCacheEnabled;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_LINETO_INDEX] = TRUE;
-	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
-	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
-	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	dfi->clrconv = xnew(CLRCONV);
+	dfi->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+	ZeroMemory(dfi->clrconv, sizeof(CLRCONV));
+
 	dfi->clrconv->alpha = 1;
 	dfi->clrconv->invert = 0;
 	dfi->clrconv->rgb555 = 0;
-	dfi->clrconv->palette = xnew(rdpPalette);
+
+	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
@@ -474,7 +480,9 @@ int main(int argc, char* argv[])
 	DirectFBInit(&argc, &argv);
 	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+
 	data->instance = instance;
 
 	g_thread_count++;

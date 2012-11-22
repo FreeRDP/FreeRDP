@@ -22,6 +22,10 @@
 #endif
 
 #include <X11/Xlib.h>
+
+#include <sys/select.h>
+#include <sys/signal.h>
+
 #include <freerdp/utils/sleep.h>
 
 #include "xf_encode.h"

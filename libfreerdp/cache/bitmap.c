@@ -23,10 +23,11 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/bitmap.h>
 
@@ -107,7 +108,7 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	if (cache_bitmap_v2->bitmapBpp == 0)
 	{
 		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cache_bitmap_v2->bitmapBpp = context->instance->settings->color_depth;
+		cache_bitmap_v2->bitmapBpp = context->instance->settings->ColorDepth;
 	}
 
 	bitmap->Decompress(context, bitmap,
@@ -139,7 +140,7 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 	if (cache_bitmap_v3->bitmapData.bpp == 0)
 	{
 		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->color_depth;
+		cache_bitmap_v3->bitmapData.bpp = context->instance->settings->ColorDepth;
 	}
 
 	bitmap->Decompress(context, bitmap,
@@ -272,7 +273,8 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 	int i;
 	rdpBitmapCache* bitmap_cache;
 
-	bitmap_cache = (rdpBitmapCache*) xzalloc(sizeof(rdpBitmapCache));
+	bitmap_cache = (rdpBitmapCache*) malloc(sizeof(rdpBitmapCache));
+	ZeroMemory(bitmap_cache, sizeof(rdpBitmapCache));
 
 	if (bitmap_cache != NULL)
 	{
@@ -280,15 +282,17 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		bitmap_cache->update = ((freerdp*) settings->instance)->update;
 		bitmap_cache->context = bitmap_cache->update->context;
 
-		bitmap_cache->maxCells = settings->bitmapCacheV2NumCells;
+		bitmap_cache->maxCells = settings->BitmapCacheV2NumCells;
 
-		bitmap_cache->cells = (BITMAP_V2_CELL*) xzalloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
+		bitmap_cache->cells = (BITMAP_V2_CELL*) malloc(sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
+		ZeroMemory(bitmap_cache->cells, sizeof(BITMAP_V2_CELL) * bitmap_cache->maxCells);
 
 		for (i = 0; i < (int) bitmap_cache->maxCells; i++)
 		{
-			bitmap_cache->cells[i].number = settings->bitmapCacheV2CellInfo[i].numEntries;
+			bitmap_cache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
 			/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
-			bitmap_cache->cells[i].entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * (bitmap_cache->cells[i].number + 1));
+			bitmap_cache->cells[i].entries = (rdpBitmap**) malloc(sizeof(rdpBitmap*) * (bitmap_cache->cells[i].number + 1));
+			ZeroMemory(bitmap_cache->cells[i].entries, sizeof(rdpBitmap*) * (bitmap_cache->cells[i].number + 1));
 		}
 	}
 

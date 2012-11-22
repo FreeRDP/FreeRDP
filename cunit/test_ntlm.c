@@ -220,7 +220,8 @@ void test_ntlm_compute_ntlm_v2_response(void)
 	ntlm_set_username(ntlm, username);
 	ntlm_set_domain(ntlm, domain);
 
-	ntlm->av_pairs->Timestamp.value = xzalloc(8);
+	ntlm->av_pairs->Timestamp.value = malloc(8);
+	memset(ntlm->av_pairs->Timestamp.value, 0, 8);
 	ntlm->av_pairs->Timestamp.length = 8;
 
 	memcpy(ntlm->timestamp, timestamp, 8);

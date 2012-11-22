@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/crypto/crypto.h>
 
 CryptoSha1 crypto_sha1_init(void)
@@ -318,7 +320,9 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-	fp_buffer = (char*) xzalloc(3 * fp_len);
+	fp_buffer = (char*) malloc(3 * fp_len);
+	ZeroMemory(fp_buffer, 3 * fp_len);
+
 	p = fp_buffer;
 
 	for (i = 0; i < (int) (fp_len - 1); i++)
@@ -339,15 +343,16 @@ char* crypto_print_name(X509_NAME* name)
 	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
 	{
 		unsigned long size = BIO_number_written(outBIO);
-		buffer = xzalloc(size + 1);
+		buffer = malloc(size + 1);
+		ZeroMemory(buffer, size + 1);
 		memset(buffer, 0, size + 1);
 		BIO_read(outBIO, buffer, size);
 	}
 
 	BIO_free(outBIO);
+
 	return buffer;
 }
-
 
 char* crypto_cert_subject(X509* xcert)
 {

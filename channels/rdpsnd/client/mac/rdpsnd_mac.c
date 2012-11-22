@@ -29,8 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -192,19 +193,22 @@ static void rdpsnd_audio_start(rdpsndDevicePlugin* device)
  * our job here is to fill aq_buf_ref with audio data and enqueue it
  */
 
-static void aq_playback_cb(void *user_data,
-			   AudioQueueRef aq_ref,
-			   AudioQueueBufferRef aq_buf_ref
-			  )
+static void aq_playback_cb(void* user_data, AudioQueueRef aq_ref, AudioQueueBufferRef aq_buf_ref)
 {
+
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	mac_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+	ADDIN_ARGV* args;
 	rdpsndAudioQPlugin* aqPlugin;
-	RDP_PLUGIN_DATA* data;
     
-	aqPlugin = xnew(rdpsndAudioQPlugin);
+	aqPlugin = (rdpsndAudioQPlugin*) malloc(sizeof(rdpsndAudioQPlugin));
+	ZeroMemory(aqPlugin, sizeof(rdpsndAudioQPlugin));
 
 	aqPlugin->device.Open = rdpsnd_audio_open;
 	aqPlugin->device.FormatSupported = rdpsnd_audio_format_supported;
@@ -215,15 +219,14 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	aqPlugin->device.Close = rdpsnd_audio_close;
 	aqPlugin->device.Free = rdpsnd_audio_free;
 
-	data = pEntryPoints->plugin_data;
+	args = pEntryPoints->args;
     
-	if (data && strcmp((char *)data->data[0], "macaudio") == 0) {
-		if(strlen((char *)data->data[1]) > 0)
-			aqPlugin->device_name = strdup((char *)data->data[1]);
-		else
-			aqPlugin->device_name = NULL;
+	if (args->argc > 2)
+	{
+		/* TODO: parse device name */
 	}
-	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)aqPlugin);
+
+	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) aqPlugin);
+
 	return 0;
 }
-

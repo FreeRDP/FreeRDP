@@ -55,7 +55,6 @@
 #include <freerdp/utils/uds.h>
 #include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "tcp.h"
 
@@ -80,8 +79,8 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
-	tcp->settings->ipv6 = 0;
-	tcp->settings->ip_address = _strdup(tcp->ip_address);
+	tcp->settings->IPv6Enabled = 0;
+	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
 void tcp_get_mac_address(rdpTcp * tcp)
@@ -244,10 +243,12 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
+		ZeroMemory(tcp, sizeof(rdpTcp));
+
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}
