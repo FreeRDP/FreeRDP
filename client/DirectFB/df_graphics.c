@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 
 #include "df_graphics.h"
@@ -123,7 +125,8 @@ void df_register_graphics(rdpGraphics* graphics)
 {
 	rdpPointer* pointer;
 
-	pointer = xnew(rdpPointer);
+	pointer = (rdpPointer*) malloc(sizeof(rdpPointer));
+	ZeroMemory(pointer, sizeof(rdpPointer));
 	pointer->size = sizeof(dfPointer);
 
 	pointer->New = df_Pointer_New;

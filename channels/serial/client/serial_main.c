@@ -708,7 +708,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (name[0] && path[0])
 	{
-		serial = xnew(SERIAL_DEVICE);
+		serial = (SERIAL_DEVICE*) malloc(sizeof(SERIAL_DEVICE));
+		ZeroMemory(serial, sizeof(SERIAL_DEVICE));
 
 		serial->device.type = RDPDR_DTYP_SERIAL;
 		serial->device.name = name;

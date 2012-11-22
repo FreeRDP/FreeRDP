@@ -30,11 +30,11 @@
 
 HttpContext* http_context_new()
 {
-	HttpContext* http_context = xnew(HttpContext);
+	HttpContext* http_context = (HttpContext*) malloc(sizeof(HttpContext));
 
 	if (http_context != NULL)
 	{
-
+		ZeroMemory(http_context, sizeof(HttpContext));
 	}
 
 	return http_context;
@@ -255,11 +255,11 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 
 HttpRequest* http_request_new()
 {
-	HttpRequest* http_request = xnew(HttpRequest);
+	HttpRequest* http_request = (HttpRequest*) malloc(sizeof(HttpRequest));
 
 	if (http_request != NULL)
 	{
-
+		ZeroMemory(http_request, sizeof(HttpRequest));
 	}
 
 	return http_request;
@@ -496,11 +496,13 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 HttpResponse* http_response_new()
 {
-	HttpResponse* http_response = xnew(HttpResponse);
+	HttpResponse* http_response;
+
+	http_response = (HttpResponse*) malloc(sizeof(HttpResponse));
 
 	if (http_response != NULL)
 	{
-
+		ZeroMemory(http_response, sizeof(HttpResponse));
 	}
 
 	return http_response;

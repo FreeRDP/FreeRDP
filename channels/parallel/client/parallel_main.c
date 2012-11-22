@@ -325,7 +325,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (name[0] && path[0])
 	{
-		parallel = xnew(PARALLEL_DEVICE);
+		parallel = (PARALLEL_DEVICE*) malloc(sizeof(PARALLEL_DEVICE));
+		ZeroMemory(parallel, sizeof(PARALLEL_DEVICE));
 
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;

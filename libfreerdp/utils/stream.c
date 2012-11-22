@@ -51,7 +51,8 @@ STREAM* stream_new(int size)
 {
 	STREAM* stream;
 
-	stream = xnew(STREAM);
+	stream = malloc(sizeof(STREAM));
+	ZeroMemory(stream, sizeof(STREAM));
 
 	if (stream != NULL)
 	{

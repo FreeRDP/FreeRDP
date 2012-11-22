@@ -27,32 +27,3 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
-
-/**
- * Allocate memory initialized to zero.
- * This function is used to secure a calloc call.
- * It verifies its return value, and logs an error if the allocation failed.
- *
- * @param size - number of bytes to allocate. If the size is < 1, it will default to 1.
- *
- * @return a pointer to the allocated and zeroed buffer. NULL if the allocation failed.
- */
-void* xzalloc(size_t size)
-{
-	void* mem;
-
-	if (size < 1)
-		size = 1;
-
-	mem = calloc(1, size);
-
-	if (mem == NULL)
-	{
-		perror("xzalloc");
-		printf("xzalloc: failed to allocate memory of size: %d\n", (int) size);
-	}
-
-	return mem;
-}
-

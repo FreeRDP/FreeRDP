@@ -363,7 +363,9 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	DEBUG_SVC("data_size %d delay_ms %u process_ms %u",
 		stream_get_size(data_in), delay_ms, process_ms);
 
-	item = xnew(struct data_out_item);
+	item = (struct data_out_item*) malloc(sizeof(struct data_out_item));
+	ZeroMemory(item, sizeof(struct data_out_item));
+
 	item->data_out = stream_new(8);
 	stream_write_BYTE(item->data_out, SNDC_WAVECONFIRM);
 	stream_write_BYTE(item->data_out, 0);

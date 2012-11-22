@@ -432,19 +432,24 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 {
 	struct rdp_mppc_enc* enc;
 
-	enc = xnew(struct rdp_mppc_enc);
+	enc = (struct rdp_mppc_enc*) malloc(sizeof(struct rdp_mppc_enc));
+	ZeroMemory(enc, sizeof(struct rdp_mppc_enc));
+
 	if (enc == NULL)
 		return NULL;
+
 	switch (protocol_type)
 	{
 		case PROTO_RDP_40:
 			enc->protocol_type = PROTO_RDP_40;
 			enc->buf_len = RDP_40_HIST_BUF_LEN;
 			break;
+
 		case PROTO_RDP_50:
 			enc->protocol_type = PROTO_RDP_50;
 			enc->buf_len = RDP_50_HIST_BUF_LEN;
 			break;
+
 		default:
 			free(enc);
 			return NULL;
@@ -515,15 +520,18 @@ BOOL compress_rdp(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
 		return FALSE;
+
 	switch (enc->protocol_type)
 	{
 		case PROTO_RDP_40:
 			return compress_rdp_4(enc, srcData, len);
 			break;
+
 		case PROTO_RDP_50:
 			return compress_rdp_5(enc, srcData, len);
 			break;
 	}
+
 	return FALSE;
 }
 

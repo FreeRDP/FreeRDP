@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/shape.h>
@@ -264,7 +266,8 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	rdpBitmap* bitmap;
 	rdpGlyph* glyph;
 
-	bitmap = xnew(rdpBitmap);
+	bitmap = (rdpBitmap*) malloc(sizeof(rdpBitmap));
+	ZeroMemory(bitmap, sizeof(rdpBitmap));
 	bitmap->size = sizeof(gdiBitmap);
 
 	bitmap->New = gdi_Bitmap_New;
@@ -276,7 +279,8 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	graphics_register_bitmap(graphics, bitmap);
 	free(bitmap);
 
-	glyph = xnew(rdpGlyph);
+	glyph = (rdpGlyph*) malloc(sizeof(rdpGlyph));
+	ZeroMemory(glyph, sizeof(rdpGlyph));
 	glyph->size = sizeof(gdiGlyph);
 
 	glyph->New = gdi_Glyph_New;

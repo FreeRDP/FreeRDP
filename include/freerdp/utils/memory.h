@@ -26,10 +26,6 @@
 
 #include <freerdp/api.h>
 
-FREERDP_API void* xzalloc(size_t size);
-
-#define xnew(_type) (_type*)xzalloc(sizeof(_type))
-
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
 
 #endif /* __MEMORY_UTILS_H */

@@ -32,6 +32,8 @@
 #include <X11/Xutil.h>
 #include <sys/select.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
@@ -177,7 +179,8 @@ xfInfo* xf_info_init()
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 
-	xfi = xnew(xfInfo);
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
 
 	//xfi->use_xshm = TRUE;
 	xfi->display = XOpenDisplay(NULL);

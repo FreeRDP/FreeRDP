@@ -267,8 +267,8 @@ NSC_CONTEXT* nsc_context_new(void)
 {
 	NSC_CONTEXT* nsc_context;
 
-	nsc_context = xnew(NSC_CONTEXT);
-	nsc_context->priv = xnew(NSC_CONTEXT_PRIV);
+	nsc_context = (NSC_CONTEXT*) malloc(sizeof(NSC_CONTEXT));
+	nsc_context->priv = (NSC_CONTEXT_PRIV*) malloc(sizeof(NSC_CONTEXT_PRIV));
 
 	nsc_context->decode = nsc_decode;
 	nsc_context->encode = nsc_encode;

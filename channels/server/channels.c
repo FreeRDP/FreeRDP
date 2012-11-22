@@ -30,6 +30,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/server/channels.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "channels.h"
@@ -99,7 +100,9 @@ static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* buffer, 
 {
 	wts_data_item* item;
 
-	item = xnew(wts_data_item);
+	item = (wts_data_item*) malloc(sizeof(wts_data_item));
+	ZeroMemory(item, sizeof(wts_data_item));
+
 	item->length = length;
 	item->buffer = malloc(length);
 	memcpy(item->buffer, buffer, length);
@@ -411,10 +414,12 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 {
 	WTSVirtualChannelManager* vcm;
 
-	vcm = xnew(WTSVirtualChannelManager);
+	vcm = (WTSVirtualChannelManager*) malloc(sizeof(WTSVirtualChannelManager));
 
 	if (vcm != NULL)
 	{
+		ZeroMemory(vcm, sizeof(WTSVirtualChannelManager));
+
 		vcm->client = client;
 		vcm->send_event = wait_obj_new();
 		vcm->send_queue = list_new();
@@ -535,7 +540,9 @@ void* WTSVirtualChannelOpenEx(
 			return NULL;
 		}
 
-		channel = xnew(rdpPeerChannel);
+		channel = (rdpPeerChannel*) malloc(sizeof(rdpPeerChannel));
+		ZeroMemory(channel, sizeof(rdpPeerChannel));
+
 		channel->vcm = vcm;
 		channel->client = client;
 		channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
@@ -579,7 +586,9 @@ void* WTSVirtualChannelOpenEx(
 
 		if (channel == NULL)
 		{
-			channel = xnew(rdpPeerChannel);
+			channel = (rdpPeerChannel*) malloc(sizeof(rdpPeerChannel));
+			ZeroMemory(channel, sizeof(rdpPeerChannel));
+
 			channel->vcm = vcm;
 			channel->client = client;
 			channel->channel_id = client->settings->ChannelDefArray[i].ChannelId;
@@ -718,7 +727,9 @@ BOOL WTSVirtualChannelWrite(
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
-		item = xnew(wts_data_item);
+		item = (wts_data_item*) malloc(sizeof(wts_data_item));
+		ZeroMemory(item, sizeof(wts_data_item));
+
 		item->buffer = malloc(Length);
 		item->length = Length;
 		memcpy(item->buffer, Buffer, Length);
@@ -737,7 +748,9 @@ BOOL WTSVirtualChannelWrite(
 
 		while (Length > 0)
 		{
-			item = xnew(wts_data_item);
+			item = (wts_data_item*) malloc(sizeof(wts_data_item));
+			ZeroMemory(item, sizeof(wts_data_item));
+
 			item->buffer = malloc(channel->client->settings->VirtualChannelChunkSize);
 			stream_attach(s, item->buffer, channel->client->settings->VirtualChannelChunkSize);
 

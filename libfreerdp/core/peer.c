@@ -396,7 +396,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	freerdp_peer* client;
 
-	client = xnew(freerdp_peer);
+	client = (freerdp_peer*) malloc(sizeof(freerdp_peer));
+	ZeroMemory(client, sizeof(freerdp_peer));
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 

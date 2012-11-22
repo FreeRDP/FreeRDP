@@ -930,7 +930,8 @@ rdpChannels* freerdp_channels_new(void)
 	rdpChannels* channels;
 	rdpChannelsList* channels_list;
 
-	channels = xnew(rdpChannels);
+	channels = (rdpChannels*) malloc(sizeof(rdpChannels));
+	ZeroMemory(channels, sizeof(rdpChannels));
 
 	channels->pSyncDataList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 	InitializeSListHead(channels->pSyncDataList);
@@ -939,7 +940,8 @@ rdpChannels* freerdp_channels_new(void)
 	channels->signal = wait_obj_new();
 
 	/* Add it to the global list */
-	channels_list = xnew(rdpChannelsList);
+	channels_list = (rdpChannelsList*) malloc(sizeof(rdpChannelsList));
+	ZeroMemory(channels_list, sizeof(rdpChannelsList));
 	channels_list->channels = channels;
 
 	WaitForSingleObject(g_mutex_list, INFINITE);

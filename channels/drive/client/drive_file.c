@@ -291,7 +291,9 @@ DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 {
 	DRIVE_FILE* file;
 
-	file = xnew(DRIVE_FILE);
+	file = (DRIVE_FILE*) malloc(sizeof(DRIVE_FILE));
+	ZeroMemory(file, sizeof(DRIVE_FILE));
+
 	file->id = id;
 	file->basepath = (char*) base_path;
 	drive_file_set_fullpath(file, drive_file_combine_fullpath(base_path, path));

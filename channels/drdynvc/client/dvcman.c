@@ -102,13 +102,16 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	const char* pszChannelName, UINT32 ulFlags,
 	IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
 {
-	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 	DVCMAN_LISTENER* listener;
 
 	if (dvcman->num_listeners < MAX_PLUGINS)
 	{
 		DEBUG_DVC("%d.%s.", dvcman->num_listeners, pszChannelName);
-		listener = xnew(DVCMAN_LISTENER);
+
+		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
+		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
+
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->dvcman = dvcman;
 		listener->channel_name = _strdup(pszChannelName);
@@ -213,7 +216,9 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	DVCMAN* dvcman;
 
-	dvcman = xnew(DVCMAN);
+	dvcman = (DVCMAN*) malloc(sizeof(DVCMAN));
+	ZeroMemory(dvcman, sizeof(DVCMAN));
+
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.PushEvent = dvcman_push_event;
 	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
@@ -345,7 +350,9 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
-			channel = xnew(DVCMAN_CHANNEL);
+			channel = (DVCMAN_CHANNEL*) malloc(sizeof(DVCMAN_CHANNEL));
+			ZeroMemory(channel, sizeof(DVCMAN_CHANNEL));
+
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
 			channel->dvcman = dvcman;

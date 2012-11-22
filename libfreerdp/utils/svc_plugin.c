@@ -196,7 +196,9 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		plugin->priv->data_in = NULL;
 		stream_set_pos(data_in, 0);
 
-		item = xnew(svc_data_in_item);
+		item = (svc_data_in_item*) malloc(sizeof(svc_data_in_item));
+		ZeroMemory(item, sizeof(svc_data_in_item));
+
 		item->data_in = data_in;
 
 		freerdp_thread_lock(plugin->priv->thread);

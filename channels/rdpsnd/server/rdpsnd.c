@@ -109,6 +109,8 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	}
 
 	RDPSND_PDU_FINISH(s);
+
+	return TRUE;
 }
 
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
@@ -451,7 +453,9 @@ rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
 {
 	rdpsnd_server* rdpsnd;
 
-	rdpsnd = xnew(rdpsnd_server);
+	rdpsnd = (rdpsnd_server*) malloc(sizeof(rdpsnd_server));
+	ZeroMemory(rdpsnd, sizeof(rdpsnd_server));
+
 	rdpsnd->context.vcm = vcm;
 	rdpsnd->context.selected_client_format = -1;
 	rdpsnd->context.Initialize = rdpsnd_server_initialize;

@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
 #include <freerdp/utils/stream.h>
@@ -764,7 +766,9 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
 	rdpFastPath* fastpath;
 
-	fastpath = xnew(rdpFastPath);
+	fastpath = (rdpFastPath*) malloc(sizeof(rdpFastPath));
+	ZeroMemory(fastpath, sizeof(rdpFastPath));
+
 	fastpath->rdp = rdp;
 	fastpath->updateData = stream_new(4096);
 

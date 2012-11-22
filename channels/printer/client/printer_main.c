@@ -247,7 +247,8 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	port = malloc(10);
 	snprintf(port, 10, "PRN%d", printer->id);
 
-	printer_dev = xnew(PRINTER_DEVICE);
+	printer_dev = (PRINTER_DEVICE*) malloc(sizeof(PRINTER_DEVICE));
+	ZeroMemory(printer_dev, sizeof(PRINTER_DEVICE));
 
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
 	printer_dev->device.name = port;

@@ -25,6 +25,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -1076,12 +1078,17 @@ void freerdp_image_swap_color_order(BYTE* data, int width, int height)
 
 HCLRCONV freerdp_clrconv_new(UINT32 flags)
 {
-	HCLRCONV clrconv = xnew(CLRCONV);
+	HCLRCONV clrconv;
+
+	clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+	ZeroMemory(clrconv, sizeof(CLRCONV));
 
 	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
 	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
 	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
-	clrconv->palette = xnew(rdpPalette);
+
+	clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	ZeroMemory(clrconv->palette, sizeof(rdpPalette));
 
 	return clrconv;
 }

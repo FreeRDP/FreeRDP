@@ -155,11 +155,15 @@ BOOL df_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	dfi->clrconv = xnew(CLRCONV);
+	dfi->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+	ZeroMemory(dfi->clrconv, sizeof(CLRCONV));
+
 	dfi->clrconv->alpha = 1;
 	dfi->clrconv->invert = 0;
 	dfi->clrconv->rgb555 = 0;
-	dfi->clrconv->palette = xnew(rdpPalette);
+
+	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 

@@ -570,7 +570,8 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
 
-	pulse = xnew(rdpsndPulsePlugin);
+	pulse = (rdpsndPulsePlugin*) malloc(sizeof(rdpsndPulsePlugin));
+	ZeroMemory(pulse, sizeof(rdpsndPulsePlugin));
 
 	pulse->device.Open = rdpsnd_pulse_open;
 	pulse->device.FormatSupported = rdpsnd_pulse_format_supported;

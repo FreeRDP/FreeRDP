@@ -380,7 +380,8 @@ static int audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 
 	DEBUG_DVC("");
 
-	callback = xnew(AUDIN_CHANNEL_CALLBACK);
+	callback = (AUDIN_CHANNEL_CALLBACK*) malloc(sizeof(AUDIN_CHANNEL_CALLBACK));
+	ZeroMemory(callback, sizeof(AUDIN_CHANNEL_CALLBACK));
 
 	callback->iface.OnDataReceived = audin_on_data_received;
 	callback->iface.OnClose = audin_on_close;
@@ -399,7 +400,8 @@ static int audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 
 	DEBUG_DVC("");
 
-	audin->listener_callback = xnew(AUDIN_LISTENER_CALLBACK);
+	audin->listener_callback = (AUDIN_LISTENER_CALLBACK*) malloc(sizeof(AUDIN_LISTENER_CALLBACK));
+	ZeroMemory(audin->listener_callback, sizeof(AUDIN_LISTENER_CALLBACK));
 
 	audin->listener_callback->iface.OnNewChannelConnection = audin_on_new_channel_connection;
 	audin->listener_callback->plugin = pPlugin;

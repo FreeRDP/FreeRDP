@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
@@ -206,7 +208,8 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	ADDIN_ARGV* args;
 	rdpsndAudioQPlugin* aqPlugin;
     
-	aqPlugin = xnew(rdpsndAudioQPlugin);
+	aqPlugin = (rdpsndAudioQPlugin*) malloc(sizeof(rdpsndAudioQPlugin));
+	ZeroMemory(aqPlugin, sizeof(rdpsndAudioQPlugin));
 
 	aqPlugin->device.Open = rdpsnd_audio_open;
 	aqPlugin->device.FormatSupported = rdpsnd_audio_format_supported;
