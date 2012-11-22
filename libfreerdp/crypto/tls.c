@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/crypto/tls.h>
 
@@ -140,7 +141,7 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->hostname))
+	if (!tls_verify_certificate(tls, cert, tls->settings->ServerHostname))
 	{
 		printf("tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
@@ -349,7 +350,6 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 	return status;
 }
 
-
 int tls_write_all(rdpTls* tls, BYTE* data, int length)
 {
 	int status;
@@ -429,12 +429,12 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	rdpCertificateData* certificate_data;
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
-	if (tls->settings->ignore_certificate)
+	if (tls->settings->IgnoreCertificate)
 		return TRUE;  /* success! */
 
 	/* if user explicitly specified a certificate name, use it instead of the hostname */
-	if (tls->settings->certificate_name)
-		hostname = tls->settings->certificate_name;
+	if (tls->settings->CertificateName)
+		hostname = tls->settings->CertificateName;
 
 	/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
 	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
@@ -562,6 +562,10 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		free(certificate_data);
 	}
 
+#ifndef _WIN32
+	free(common_name);
+#endif
+
 	return verification_status;
 }
 
@@ -615,10 +619,12 @@ rdpTls* tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 
-	tls = (rdpTls*) xzalloc(sizeof(rdpTls));
+	tls = (rdpTls*) malloc(sizeof(rdpTls));
 
 	if (tls != NULL)
 	{
+		ZeroMemory(tls, sizeof(rdpTls));
+
 		SSL_load_error_strings();
 		SSL_library_init();
 

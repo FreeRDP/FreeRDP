@@ -5,7 +5,8 @@ set(MODULE_PREFIX "TEST_CLIENT")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestClientRdpFile.c)
+	TestClientRdpFile.c
+	TestClientChannels.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

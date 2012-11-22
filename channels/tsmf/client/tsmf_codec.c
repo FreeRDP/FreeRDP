@@ -526,4 +526,3 @@ BOOL tsmf_codec_check_media_type(STREAM* s)
 
 	return ret;
 }
-

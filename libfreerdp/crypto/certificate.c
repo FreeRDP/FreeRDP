@@ -148,7 +148,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	if (!fp)
 		return;
 	
-	// Read the current contents of the file.
+	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -164,7 +164,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		return;
 	}
 	
-	// Write the file back out, with appropriate fingerprint substitutions
+	/* Write the file back out, with appropriate fingerprint substitutions */
 	fp = fopen(certificate_store->file, "w+");
 	data[size] = '\n';
 	data[size + 1] = '\0';
@@ -215,10 +215,12 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 {
 	rdpCertificateData* certdata;
 
-	certdata = (rdpCertificateData*) xzalloc(sizeof(rdpCertificateData));
+	certdata = (rdpCertificateData*) malloc(sizeof(rdpCertificateData));
 
 	if (certdata != NULL)
 	{
+		ZeroMemory(certdata, sizeof(rdpCertificateData));
+
 		certdata->hostname = _strdup(hostname);
 		certdata->fingerprint = _strdup(fingerprint);
 	}
@@ -240,10 +242,12 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 {
 	rdpCertificateStore* certificate_store;
 
-	certificate_store = (rdpCertificateStore*) xzalloc(sizeof(rdpCertificateStore));
+	certificate_store = (rdpCertificateStore*) malloc(sizeof(rdpCertificateStore));
 
 	if (certificate_store != NULL)
 	{
+		ZeroMemory(certificate_store, sizeof(rdpCertificateStore));
+
 		certificate_store->settings = settings;
 		certificate_store_init(certificate_store);
 	}

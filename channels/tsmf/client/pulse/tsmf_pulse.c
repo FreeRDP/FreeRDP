@@ -26,8 +26,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <winpr/crt.h>
+
 #include <pulse/pulseaudio.h>
-#include <freerdp/utils/memory.h>
 
 #include "tsmf_audio.h"
 
@@ -389,11 +390,16 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 	free(pulse);
 }
 
-ITSMFAudioDevice* TSMFAudioDeviceEntry(void)
+#ifdef STATIC_CHANNELS
+#define freerdp_tsmf_client_audio_subsystem_entry	pulse_freerdp_tsmf_client_audio_subsystem_entry
+#endif
+
+ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFPulseAudioDevice* pulse;
 
-	pulse = xnew(TSMFPulseAudioDevice);
+	pulse = (TSMFPulseAudioDevice*) malloc(sizeof(TSMFPulseAudioDevice));
+	ZeroMemory(pulse, sizeof(TSMFPulseAudioDevice));
 
 	pulse->iface.Open = tsmf_pulse_open;
 	pulse->iface.SetFormat = tsmf_pulse_set_format;

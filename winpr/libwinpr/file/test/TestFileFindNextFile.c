@@ -52,9 +52,13 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	_tprintf(_T("FindFirstFile: %s"), FindData.cFileName);
 
-	if (_tcscmp(FindData.cFileName, testDirectory2File1) != 0)
+	/**
+	 * The current implementation does not enforce a particular order
+	 */
+
+	if ((_tcscmp(FindData.cFileName, testDirectory2File1) != 0) && (_tcscmp(FindData.cFileName, testDirectory2File2) != 0))
 	{
-		_tprintf(_T("FindFirstFile failure: Expected: %d, Actual: %s\n"),
+		_tprintf(_T("FindFirstFile failure: Expected: %s, Actual: %s\n"),
 				testDirectory2File1, FindData.cFileName);
 		return -1;
 	}
@@ -67,7 +71,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 		return -1;
 	}
 
-	if (_tcscmp(FindData.cFileName, testDirectory2File2) != 0)
+	if ((_tcscmp(FindData.cFileName, testDirectory2File1) != 0) && (_tcscmp(FindData.cFileName, testDirectory2File2) != 0))
 	{
 		_tprintf(_T("FindNextFile failure: Expected: %d, Actual: %s\n"),
 				testDirectory2File2, FindData.cFileName);

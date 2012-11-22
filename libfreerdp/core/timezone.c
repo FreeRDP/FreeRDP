@@ -82,7 +82,7 @@ BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	if (stream_get_left(s) < 172)
 		return FALSE;
 
-	clientTimeZone = settings->client_time_zone;
+	clientTimeZone = settings->ClientTimeZone;
 
 	stream_read_UINT32(s, clientTimeZone->bias); /* Bias */
 
@@ -125,7 +125,7 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	int daylightNameLength;
 	TIME_ZONE_INFO* clientTimeZone;
 
-	clientTimeZone = settings->client_time_zone;
+	clientTimeZone = settings->ClientTimeZone;
 	freerdp_time_zone_detect(clientTimeZone);
 
 	standardNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->standardName, &standardName, 0) * 2;

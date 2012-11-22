@@ -106,7 +106,7 @@ extern struct kkey g_keys[];
 }
 
 /** *********************************************************************
- * called when a mouse move event occurrs
+ * called when a mouse move event occurs
  * 
  * ideally we want to be called when the mouse moves over NSView client area,
  * but in reality we get called any time the mouse moves anywhere on the screen;
@@ -130,7 +130,7 @@ extern struct kkey g_keys[];
     
     y = height - y;
            
-    // send mouse motion event to RDP server
+    /* send mouse motion event to RDP server */
     rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
@@ -149,7 +149,6 @@ extern struct kkey g_keys[];
     int yPos = (int) (winFrame.size.height - loc.y);
 
     y = height - y;
-
 
     if ((yPos >= 4) && (yPos <= 20))
         titleBarClicked = YES;

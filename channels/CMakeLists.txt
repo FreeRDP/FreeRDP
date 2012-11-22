@@ -22,14 +22,35 @@ include(CMakeDependentOption)
 
 macro(define_channel_options)
 	set(PREFIX "CHANNEL")
-	
+
 	cmake_parse_arguments(${PREFIX}
 		""
 		"NAME;TYPE;DESCRIPTION;SPECIFICATIONS;DEFAULT"
 		""
 		${ARGN})
-		
+
 	string(TOUPPER "CHANNEL_${CHANNEL_NAME}" CHANNEL_OPTION)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_CLIENT_OPTION)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_SERVER" CHANNEL_SERVER_OPTION)
+	
+	if(${${CHANNEL_CLIENT_OPTION}})
+		set(OPTION_CLIENT_DEFAULT ${${CHANNEL_CLIENT_OPTION}})
+	endif()
+	
+	if(${${CHANNEL_SERVER_OPTION}})
+		set(OPTION_SERVER_DEFAULT ${${CHANNEL_SERVER_OPTION}})
+	endif()
+	
+	if(${${CHANNEL_OPTION}})
+		set(OPTION_DEFAULT ${${CHANNEL_OPTION}})
+	endif()
+	
+	if(${OPTION_CLIENT_DEFAULT} OR ${OPTION_SERVER_DEFAULT})
+		set(OPTION_DEFAULT "ON")
+	endif()
+	
+	set(CHANNEL_DEFAULT ${OPTION_DEFAULT})
+		
 	set(CHANNEL_OPTION_DOC "Build ${CHANNEL_NAME} ${CHANNEL_TYPE} channel")
 	option(${CHANNEL_OPTION} "${CHANNEL_OPTION_DOC}" ${CHANNEL_DEFAULT})
 
@@ -73,10 +94,11 @@ macro(define_channel_client_subsystem _channel_name _subsystem _type)
 	set(CHANNEL_NAME ${_channel_name})
 	set(CHANNEL_SUBSYSTEM ${_subsystem})
 	string(LENGTH "${_type}" _type_length)
+	string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT" CHANNEL_PREFIX)
 	if(_type_length GREATER 0)
 		set(SUBSYSTEM_TYPE ${_type})
 		set(MODULE_NAME "${CHANNEL_NAME}-client-${CHANNEL_SUBSYSTEM}-${SUBSYSTEM_TYPE}")
-		string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT_${CHANNEL_SUBSYSTEM}-${SUBSYSTEM_TYPE}" MODULE_PREFIX)
+		string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT_${CHANNEL_SUBSYSTEM}_${SUBSYSTEM_TYPE}" MODULE_PREFIX)
 	else()
 		set(MODULE_NAME "${CHANNEL_NAME}-client-${CHANNEL_SUBSYSTEM}")
 		string(TOUPPER "CHANNEL_${CHANNEL_NAME}_CLIENT_${CHANNEL_SUBSYSTEM}" MODULE_PREFIX)
@@ -112,13 +134,31 @@ macro(add_channel_server _channel_prefix _channel_name)
 	endif()
 endmacro(add_channel_server)
 
-macro(add_channel_client_library _module_prefix _module_name _channel_name _plugin _entry)
+macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _type)
+	add_subdirectory(${_subsystem})
+	set(_channel_module_name "${_channel_name}-client")
+	string(LENGTH "${_type}" _type_length)
+	if(_type_length GREATER 0)
+		string(TOUPPER "CHANNEL_${_channel_name}_CLIENT_${_subsystem}_${_type}" _subsystem_prefix)
+	else()
+		string(TOUPPER "CHANNEL_${_channel_name}_CLIENT_${_subsystem}" _subsystem_prefix)
+	endif()
+	if(${${_subsystem_prefix}_STATIC})
+		get_target_property(CHANNEL_SUBSYSTEMS ${_channel_module_name} SUBSYSTEMS)
+		if(_type_length GREATER 0)
+			set(SUBSYSTEMS ${SUBSYSTEMS} "${_subsystem}-${_type}")
+		else()
+			set(SUBSYSTEMS ${SUBSYSTEMS} ${_subsystem})
+		endif()
+		set_target_properties(${_channel_module_name} PROPERTIES SUBSYSTEMS "${SUBSYSTEMS}")
+	endif()
+endmacro(add_channel_client_subsystem)
 
-	if(${_plugin} AND MSVC AND (NOT STATIC_CHANNELS))
+macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
+	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
 		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
 	endif()
-	
-	if(${_plugin} AND (NOT STATIC_CHANNELS))
+	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
@@ -127,16 +167,27 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _plug
 		set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 		add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
 	endif()
-	
 endmacro(add_channel_client_library)
 
-macro(add_channel_server_library _module_prefix _module_name _channel_name _plugin _entry)
-
-	if(${_plugin} AND MSVC AND (NOT STATIC_CHANNELS))
+macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_name _type _dynamic _entry)
+	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
 		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
 	endif()
-	
-	if(${_plugin} AND (NOT STATIC_CHANNELS))
+	if(${_dynamic} AND (NOT STATIC_CHANNELS))
+		add_library(${_module_name} ${${_module_prefix}_SRCS})
+	else()
+		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
+		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
+		set(${_module_prefix}_TYPE ${_type} PARENT_SCOPE)
+		add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+	endif()
+endmacro(add_channel_client_subsystem_library)
+
+macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
+	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
+		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
+	endif()
+	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
@@ -145,7 +196,6 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _plug
 		set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 		add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
 	endif()
-	
 endmacro(add_channel_server_library)
 
 set(FILENAME "ChannelOptions.cmake")

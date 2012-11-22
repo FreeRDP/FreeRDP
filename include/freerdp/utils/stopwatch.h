@@ -21,9 +21,9 @@
 #define __UTILS_STOPWATCH_H
 
 #include <time.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 
 struct _STOPWATCH
 {

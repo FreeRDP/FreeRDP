@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "update.h"
 #include "surface.h"
 
@@ -369,7 +371,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->refresh_rect)
+	if (rdp->settings->RefreshRect)
 	{
 		s = rdp_data_pdu_init(rdp);
 		update_write_refresh_rect(s, count, areas);
@@ -397,7 +399,7 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	if (rdp->settings->suppress_output)
+	if (rdp->settings->SuppressOutput)
 	{
 		s = rdp_data_pdu_init(rdp);
 		update_write_suppress_output(s, allow, area);
@@ -622,20 +624,32 @@ rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
 
-	update = (rdpUpdate*) xzalloc(sizeof(rdpUpdate));
+	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
 
 	if (update != NULL)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
 
-		update->bitmap_update.count = 64;
-		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		ZeroMemory(update, sizeof(rdpUpdate));
 
-		update->pointer = xnew(rdpPointerUpdate);
-		update->primary = xnew(rdpPrimaryUpdate);
-		update->secondary = xnew(rdpSecondaryUpdate);
-		update->altsec = xnew(rdpAltSecUpdate);
-		update->window = xnew(rdpWindowUpdate);
+		update->bitmap_update.count = 64;
+		update->bitmap_update.rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		ZeroMemory(update->bitmap_update.rectangles, sizeof(BITMAP_DATA) * update->bitmap_update.count);
+
+		update->pointer = (rdpPointerUpdate*) malloc(sizeof(rdpPointerUpdate));
+		ZeroMemory(update->pointer, sizeof(rdpPointerUpdate));
+
+		update->primary = (rdpPrimaryUpdate*) malloc(sizeof(rdpPrimaryUpdate));
+		ZeroMemory(update->primary, sizeof(rdpPrimaryUpdate));
+
+		update->secondary = (rdpSecondaryUpdate*) malloc(sizeof(rdpSecondaryUpdate));
+		ZeroMemory(update->secondary, sizeof(rdpSecondaryUpdate));
+
+		update->altsec = (rdpAltSecUpdate*) malloc(sizeof(rdpAltSecUpdate));
+		ZeroMemory(update->altsec, sizeof(rdpAltSecUpdate));
+
+		update->window = (rdpWindowUpdate*) malloc(sizeof(rdpWindowUpdate));
+		ZeroMemory(update->window, sizeof(rdpWindowUpdate));
 
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		deleteList->sIndices = 64;
@@ -653,6 +667,7 @@ void update_free(rdpUpdate* update)
 	if (update != NULL)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
+
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		free(deleteList->indices);
 

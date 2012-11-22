@@ -25,8 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 
 static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
@@ -595,7 +596,8 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void)
 {
 	FREERDP_DSP_CONTEXT* context;
 
-	context = xnew(FREERDP_DSP_CONTEXT);
+	context = (FREERDP_DSP_CONTEXT*) malloc(sizeof(FREERDP_DSP_CONTEXT));
+	ZeroMemory(context, sizeof(FREERDP_DSP_CONTEXT));
 
 	context->resample = freerdp_dsp_resample;
 	context->decode_ima_adpcm = freerdp_dsp_decode_ima_adpcm;

@@ -26,7 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 
 #include "tsmf_types.h"
@@ -65,11 +66,13 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 
 	stream_set_pos(ifman->output, pos);
 	stream_read_UINT32(ifman->output, numHostCapabilities);
+
 	for (i = 0; i < numHostCapabilities; i++)
 	{
 		stream_read_UINT32(ifman->output, CapabilityType);
 		stream_read_UINT32(ifman->output, cbCapabilityLength);
 		pos = stream_get_pos(ifman->output);
+
 		switch (CapabilityType)
 		{
 			case 1: /* Protocol version request */
@@ -128,10 +131,11 @@ static TSMF_PRESENTATION* pexisted = 0;
 
 int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 {
-	int error = 0;
+	int status = 0;
 	TSMF_PRESENTATION* presentation;
 
 	DEBUG_DVC("");
+
 	if (pexisted)
 	{
 		ifman->output_pending = FALSE;
@@ -141,18 +145,21 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 
 	presentation = tsmf_presentation_new(stream_get_tail(ifman->input), ifman->channel_callback);
 	pexisted = presentation;
+
 	if (presentation == NULL)
-		error = 1;
+		status = 1;
 	else
 		tsmf_presentation_set_audio_device(presentation, ifman->audio_name, ifman->audio_device);
+
 	ifman->output_pending = TRUE;
-	return error;
+
+	return status;
 }
 
 int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId;
-	int error = 0;
+	int status = 0;
 	TSMF_STREAM* stream;
 	TSMF_PRESENTATION* presentation;
 
@@ -162,17 +169,22 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 	stream_seek(ifman->input, 16);
 
 	if (presentation == NULL)
-		error = 1;
+	{
+		status = 1;
+	}
 	else
 	{
 		stream_read_UINT32(ifman->input, StreamId);
 		stream_seek_UINT32(ifman->input); /* numMediaType */
 		stream = tsmf_stream_new(presentation, StreamId);
+
 		if (stream)
 			tsmf_stream_set_format(stream, ifman->decoder_name, ifman->input);
 	}
+
 	ifman->output_pending = TRUE;
-	return error;
+
+	return status;
 }
 
 int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
@@ -183,12 +195,13 @@ int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 	stream_write_UINT32(ifman->output, 1); /* TopologyReady */
 	stream_write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
+
 	return 0;
 }
 
 int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 {
-	int error = 0;
+	int status = 0;
 	UINT32 StreamId;
 	TSMF_STREAM* stream;
 	TSMF_PRESENTATION* presentation;
@@ -199,7 +212,9 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 	stream_seek(ifman->input, 16);
 
 	if (presentation == NULL)
-		error = 1;
+	{
+		status = 1;
+	}
 	else
 	{
 		stream_read_UINT32(ifman->input, StreamId);
@@ -207,10 +222,12 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 		if (stream)
 			tsmf_stream_free(stream);
 		else
-			error = 1;
+			status = 1;
 	}
+
 	ifman->output_pending = TRUE;
-	return error;
+
+	return status;
 }
 
 int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
@@ -220,6 +237,7 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 	DEBUG_DVC("");
 
 	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+
 	if (presentation)
 		tsmf_presentation_free(presentation);
 
@@ -228,6 +246,7 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 	stream_check_size(ifman->output, 4);
 	stream_write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
+
 	return 0;
 }
 
@@ -335,7 +354,9 @@ int tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	{
 		if (num_rects > 0)
 		{
-			rects = (RDP_RECT*) xzalloc(sizeof(RDP_RECT) * num_rects);
+			rects = (RDP_RECT*) malloc(sizeof(RDP_RECT) * num_rects);
+			ZeroMemory(rects, sizeof(RDP_RECT) * num_rects);
+
 			for (i = 0; i < num_rects; i++)
 			{
 				stream_read_UINT16(ifman->input, rects[i].y); /* Top */
@@ -402,35 +423,41 @@ int tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 		(int)ThrottleDuration, SampleExtensions, cbData);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
+
 	if (presentation == NULL)
 	{
 		DEBUG_WARN("unknown presentation id");
 		return 1;
 	}
+
 	stream = tsmf_stream_find_by_id(presentation, StreamId);
+
 	if (stream == NULL)
 	{
 		DEBUG_WARN("unknown stream id");
 		return 1;
 	}
+
 	tsmf_stream_push_sample(stream, ifman->channel_callback,
 		ifman->message_id, SampleStartTime, SampleEndTime, ThrottleDuration, SampleExtensions,
 		cbData, stream_get_tail(ifman->input));
 
 	ifman->output_pending = TRUE;
+
 	return 0;
 }
 
 int tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation;
 	UINT32 StreamId;
+	TSMF_PRESENTATION* presentation;
 
 	stream_seek(ifman->input, 16);
 	stream_read_UINT32(ifman->input, StreamId);
 	DEBUG_DVC("StreamId %d", StreamId);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
+
 	if (presentation == NULL)
 	{
 		DEBUG_WARN("unknown presentation id");
@@ -440,18 +467,20 @@ int tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 	tsmf_presentation_flush(presentation);
 
 	ifman->output_pending = TRUE;
+
 	return 0;
 }
 
 int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation;
-	TSMF_STREAM* stream;
 	UINT32 StreamId;
+	TSMF_STREAM* stream;
+	TSMF_PRESENTATION* presentation;
 
 	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
 	stream_seek(ifman->input, 16);
 	stream_read_UINT32(ifman->input, StreamId);
+
 	if (presentation)
 	{
 		stream = tsmf_stream_find_by_id(presentation, StreamId);
@@ -477,6 +506,7 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 	DEBUG_DVC("");
 
 	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+
 	if (presentation)
 		tsmf_presentation_start(presentation);
 	else
@@ -502,10 +532,12 @@ int tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 	/* Added pause control so gstreamer pipeline can be paused accordingly */
 
 	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+
 	if (presentation)
 		tsmf_presentation_paused(presentation);
 	else
 		DEBUG_WARN("unknown presentation id");
+
 	return 0;
 }
 
@@ -564,4 +596,3 @@ int tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN * ifman)
 
 	return 0;
 }
-

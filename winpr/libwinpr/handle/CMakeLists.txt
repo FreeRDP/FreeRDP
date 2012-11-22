@@ -18,9 +18,6 @@
 set(MODULE_NAME "winpr-handle")
 set(MODULE_PREFIX "WINPR_HANDLE")
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_required_package(Threads)
-
 set(${MODULE_PREFIX}_SRCS
 	handle.c
 	table.c)

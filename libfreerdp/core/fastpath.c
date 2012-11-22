@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
 #include <freerdp/utils/stream.h>
@@ -195,7 +197,7 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 #ifdef WITH_DEBUG_RDP
 	DEBUG_RDP("recv Fast-Path %s Update (0x%X), length:%d",
-		updateCode < ARRAY_SIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
+		updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
 #endif
 
 	switch (updateCode)
@@ -537,7 +539,7 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	if (rdp->do_crypt)
 	{
 		sec_bytes = 8;
-		if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 	else
@@ -664,7 +666,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
 	totalLength = stream_get_length(s) - (6 + sec_bytes);
 	stream_set_pos(s, 0);
 	update = stream_new(0);
-	try_comp = rdp->settings->compression;
+	try_comp = rdp->settings->CompressionEnabled;
 	comp_update = stream_new(0);
 
 	for (fragment = 0; totalLength > 0 || fragment == 0; fragment++)
@@ -764,7 +766,9 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
 	rdpFastPath* fastpath;
 
-	fastpath = xnew(rdpFastPath);
+	fastpath = (rdpFastPath*) malloc(sizeof(rdpFastPath));
+	ZeroMemory(fastpath, sizeof(rdpFastPath));
+
 	fastpath->rdp = rdp;
 	fastpath->updateData = stream_new(4096);
 

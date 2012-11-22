@@ -32,7 +32,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
@@ -422,7 +421,8 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) wfi->rfx_context;
 	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) wfi->nsc_context;
 
-	tile_bitmap = (char*) xzalloc(32);
+	tile_bitmap = (char*) malloc(32);
+	ZeroMemory(tile_bitmap, 32);
 
 	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
 	{

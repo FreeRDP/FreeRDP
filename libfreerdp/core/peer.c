@@ -21,22 +21,25 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "certificate.h"
+
 #include <freerdp/utils/tcp.h>
 
 #include "peer.h"
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	client->context->rdp->settings->server_mode = TRUE;
-	client->context->rdp->settings->frame_acknowledge = 0;
-	client->context->rdp->settings->local = client->local;
+	client->context->rdp->settings->ServerMode = TRUE;
+	client->context->rdp->settings->FrameAcknowledge = 0;
+	client->context->rdp->settings->LocalConnection = client->local;
 	client->context->rdp->state = CONNECTION_STATE_INITIAL;
 
-	if (client->context->rdp->settings->rdp_key_file != NULL)
+	if (client->context->rdp->settings->RdpKeyFile != NULL)
 	{
-		client->context->rdp->settings->server_key =
-		    key_new(client->context->rdp->settings->rdp_key_file);
+		client->context->rdp->settings->RdpServerRsaKey =
+		    key_new(client->context->rdp->settings->RdpKeyFile);
 	}
 
 	return TRUE;
@@ -44,7 +47,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
-	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->tcp->sockfd);
+	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->TcpIn->sockfd);
 	(*rcount)++;
 
 	return TRUE;
@@ -171,7 +174,7 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		return FALSE;
 	}
 
-	if (rdp->settings->encryption)
+	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
 
@@ -194,7 +197,7 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			return FALSE;
 
-		client->settings->pdu_source = pduSource;
+		client->settings->PduSource = pduSource;
 
 		switch (pduType)
 		{
@@ -289,7 +292,7 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
-			if (rdp->settings->encryption)
+			if (rdp->settings->DisableEncryption)
 			{
 				if (!rdp_server_accept_client_keys(rdp, s))
 					return FALSE;
@@ -364,7 +367,9 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 
-	client->context = (rdpContext*) xzalloc(client->context_size);
+	client->context = (rdpContext*) malloc(client->context_size);
+	ZeroMemory(client->context, client->context_size);
+
 	client->context->rdp = rdp;
 	client->context->peer = client;
 
@@ -391,7 +396,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	freerdp_peer* client;
 
-	client = xnew(freerdp_peer);
+	client = (freerdp_peer*) malloc(sizeof(freerdp_peer));
+	ZeroMemory(client, sizeof(freerdp_peer));
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 

@@ -3,10 +3,6 @@ set(OPTION_DEFAULT OFF)
 set(OPTION_CLIENT_DEFAULT ON)
 set(OPTION_SERVER_DEFAULT OFF)
 
-if(${OPTION_CLIENT_DEFAULT} OR ${OPTION_SERVER_DEFAULT})
-	set(OPTION_DEFAULT ON)
-endif()
-
 define_channel_options(NAME "cliprdr" TYPE "static"
 	DESCRIPTION "Clipboard Virtual Channel Extension"
 	SPECIFICATIONS "[MS-RDPECLIP]"

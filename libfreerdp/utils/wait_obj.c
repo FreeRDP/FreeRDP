@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/wait_obj.h>
 
 #ifndef _WIN32
@@ -48,12 +48,12 @@ struct wait_obj
 	int attached;
 };
 
-struct wait_obj*
-wait_obj_new(void)
+struct wait_obj* wait_obj_new(void)
 {
 	struct wait_obj* obj;
 
-	obj = xnew(struct wait_obj);
+	obj = (struct wait_obj*) malloc(sizeof(struct wait_obj));
+	ZeroMemory(obj, sizeof(struct wait_obj));
 
 	obj->attached = 0;
 #ifdef _WIN32
@@ -61,6 +61,7 @@ wait_obj_new(void)
 #else
 	obj->pipe_fd[0] = -1;
 	obj->pipe_fd[1] = -1;
+
 	if (pipe(obj->pipe_fd) < 0)
 	{
 		printf("wait_obj_new: pipe failed\n");
@@ -76,7 +77,8 @@ struct wait_obj* wait_obj_new_with_fd(void* fd)
 {
 	struct wait_obj* obj;
 
-	obj = xnew(struct wait_obj);
+	obj = (struct wait_obj*) malloc(sizeof(struct wait_obj));
+	ZeroMemory(obj, sizeof(struct wait_obj));
 
 	obj->attached = 1;
 #ifdef _WIN32
@@ -89,12 +91,10 @@ struct wait_obj* wait_obj_new_with_fd(void* fd)
 	return obj;
 }
 
-void
-wait_obj_free(struct wait_obj* obj)
+void wait_obj_free(struct wait_obj* obj)
 {
 	if (obj)
 	{
-
 		if (obj->attached == 0)
 		{
 #ifdef _WIN32
@@ -121,8 +121,7 @@ wait_obj_free(struct wait_obj* obj)
 	}
 }
 
-int
-wait_obj_is_set(struct wait_obj* obj)
+int wait_obj_is_set(struct wait_obj* obj)
 {
 #ifdef _WIN32
 	return (WaitForSingleObject(obj->event, 0) == WAIT_OBJECT_0);
@@ -139,8 +138,7 @@ wait_obj_is_set(struct wait_obj* obj)
 #endif
 }
 
-void
-wait_obj_set(struct wait_obj* obj)
+void wait_obj_set(struct wait_obj* obj)
 {
 #ifdef _WIN32
 	SetEvent(obj->event);
@@ -149,14 +147,15 @@ wait_obj_set(struct wait_obj* obj)
 
 	if (wait_obj_is_set(obj))
 		return;
+
 	len = write(obj->pipe_fd[1], "sig", 4);
+
 	if (len != 4)
 		printf("wait_obj_set: error\n");
 #endif
 }
 
-void
-wait_obj_clear(struct wait_obj* obj)
+void wait_obj_clear(struct wait_obj* obj)
 {
 #ifdef _WIN32
 	ResetEvent(obj->event);
@@ -172,8 +171,7 @@ wait_obj_clear(struct wait_obj* obj)
 #endif
 }
 
-int
-wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
+int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 {
 	int index;
 	int status;
@@ -207,9 +205,11 @@ wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
 	}
 	status = select(max + 1, &fds, 0, 0, ptime);
 #else
-	HANDLE *hnds;
+	HANDLE* hnds;
 
-	hnds = (HANDLE *) xzalloc(sizeof(HANDLE) * (numobj + 1));
+	hnds = (HANDLE*) malloc(sizeof(HANDLE) * (numobj + 1));
+	ZeroMemory(hnds, sizeof(HANDLE) * (numobj + 1));
+
 	for (index = 0; index < numobj; index++)
 	{
 		hnds[index] = listobj[index]->event;

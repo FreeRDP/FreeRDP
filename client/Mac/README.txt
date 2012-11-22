@@ -103,7 +103,7 @@ This is what your AppDelegate.m file should like like
  Modifying your MainMenu.xib file
 ----------------------------------
 
-In your project select MainMenu.xib and drag a NSView  object intot the main window
+In your project select MainMenu.xib and drag a NSView  object into the main window
 Name the class MRDPView
 In Interface Builder, select the Application Delegate and tie the mrdpview outlet to the NSView 
 Set the default size of the main window to 1024x768. This is FreeRDP's default resolution

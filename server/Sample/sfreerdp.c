@@ -34,7 +34,6 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
@@ -149,7 +148,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	testPeerContext* context = (testPeerContext*) client->context;
 
-	if (!client->settings->rfx_codec && !client->settings->ns_codec)
+	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
 		return;
 
 	test_peer_begin_frame(client);
@@ -165,17 +164,17 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rgb_data = malloc(size);
 	memset(rgb_data, 0xA0, size);
 
-	if (client->settings->rfx_codec)
+	if (client->settings->RemoteFxCodec)
 	{
 		rfx_compose_message(context->rfx_context, s,
 			&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->rfx_codec_id;
+		cmd->codecID = client->settings->RemoteFxCodecId;
 	}
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
 			rgb_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->ns_codec_id;
+		cmd->codecID = client->settings->NSCodecId;
 	}
 
 	cmd->destLeft = 0;
@@ -203,7 +202,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 	BYTE* rgb_data;
 	int c;
 
-	if (!client->settings->rfx_codec && !client->settings->ns_codec)
+	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
 		return;
 
 	if ((fp = fopen("test_icon.ppm", "r")) == NULL)
@@ -264,17 +263,17 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	if (context->icon_x >= 0)
 	{
 		s = test_peer_stream_init(context);
-		if (client->settings->rfx_codec)
+		if (client->settings->RemoteFxCodec)
 		{
 			rfx_compose_message(context->rfx_context, s,
 				&rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
-			cmd->codecID = client->settings->rfx_codec_id;
+			cmd->codecID = client->settings->RemoteFxCodecId;
 		}
 		else
 		{
 			nsc_compose_message(context->nsc_context, s,
 				context->bg_data, rect.width, rect.height, rect.width * 3);
-			cmd->codecID = client->settings->ns_codec_id;
+			cmd->codecID = client->settings->NSCodecId;
 		}
 
 		cmd->destLeft = context->icon_x;
@@ -291,17 +290,17 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 
 	s = test_peer_stream_init(context);
 
-	if (client->settings->rfx_codec)
+	if (client->settings->RemoteFxCodec)
 	{
 		rfx_compose_message(context->rfx_context, s,
 			&rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->rfx_codec_id;
+		cmd->codecID = client->settings->RemoteFxCodecId;
 	}
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
 			context->icon_data, rect.width, rect.height, rect.width * 3);
-		cmd->codecID = client->settings->ns_codec_id;
+		cmd->codecID = client->settings->NSCodecId;
 	}
 
 	cmd->destLeft = x;
@@ -465,13 +464,13 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	 */
 
 	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
-			client->settings->os_major_type, client->settings->os_minor_type);
+			client->settings->OsMajorType, client->settings->OsMinorType);
 
-	if (client->settings->autologon)
+	if (client->settings->AutoLogonEnabled)
 	{
 		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
+			client->settings->Domain ? client->settings->Domain : "",
+			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
@@ -485,11 +484,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
 
-	for (i = 0; i < client->settings->num_channels; i++)
+	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
-		if (client->settings->channels[i].joined)
+		if (client->settings->ChannelDefArray[i].joined)
 		{
-			if (strncmp(client->settings->channels[i].name, "rdpdbg", 6) == 0)
+			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
 			{
 				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
 
@@ -501,7 +500,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 						tf_debug_channel_thread_func, context);
 				}
 			}
-			else if (strncmp(client->settings->channels[i].name, "rdpsnd", 6) == 0)
+			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
 			{
 				sf_peer_rdpsnd_init(context); /* Audio Output */
 			}
@@ -652,12 +651,12 @@ static void* test_peer_mainloop(void* arg)
 	test_peer_init(client);
 
 	/* Initialize the real server settings here */
-	client->settings->cert_file = _strdup("server.crt");
-	client->settings->privatekey_file = _strdup("server.key");
-	client->settings->nla_security = FALSE;
-	client->settings->rfx_codec = TRUE;
-	client->settings->suppress_output = TRUE;
-	client->settings->refresh_rect = TRUE;
+	client->settings->CertificateFile = _strdup("server.crt");
+	client->settings->PrivateKeyFile = _strdup("server.key");
+	client->settings->NlaSecurity = FALSE;
+	client->settings->RemoteFxCodec = TRUE;
+	client->settings->SuppressOutput = TRUE;
+	client->settings->RefreshRect = TRUE;
 
 	client->PostConnect = tf_peer_post_connect;
 	client->Activate = tf_peer_activate;

@@ -24,6 +24,7 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/io.h>
+#include <winpr/error.h>
 
 #ifndef _WIN32
 
@@ -271,6 +272,18 @@ WINPR_API BOOL FindClose(HANDLE hFindFile);
 #endif
 
 #endif
+
+/* Extra Functions */
+
+#define WILDCARD_STAR		0x00000001
+#define WILDCARD_QM		0x00000002
+#define WILDCARD_DOS		0x00000100
+#define WILDCARD_DOS_STAR	0x00000110
+#define WILDCARD_DOS_QM		0x00000120
+#define WILDCARD_DOS_DOT	0x00000140
+
+WINPR_API BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern);
+WINPR_API LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags);
 
 #endif /* WINPR_FILE_H */
 

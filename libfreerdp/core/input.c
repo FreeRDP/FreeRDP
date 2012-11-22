@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/input.h>
 
 #include "input.h"
@@ -368,7 +370,7 @@ void input_register_client_callbacks(rdpInput* input)
 {
 	rdpRdp* rdp = input->context->rdp;
 
-	if (rdp->settings->fastpath_input)
+	if (rdp->settings->FastPathInput)
 	{
 		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
 		input->KeyboardEvent = input_send_fastpath_keyboard_event;
@@ -423,11 +425,11 @@ rdpInput* input_new(rdpRdp* rdp)
 {
 	rdpInput* input;
 
-	input = (rdpInput*) xzalloc(sizeof(rdpInput));
+	input = (rdpInput*) malloc(sizeof(rdpInput));
 
 	if (input != NULL)
 	{
-
+		ZeroMemory(input, sizeof(rdpInput));
 	}
 
 	return input;

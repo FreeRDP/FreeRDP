@@ -25,7 +25,6 @@
 #include <wctype.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/utils/unicode.h>
 

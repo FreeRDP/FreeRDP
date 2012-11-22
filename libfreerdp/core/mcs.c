@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "gcc.h"
 
 #include "mcs.h"
@@ -675,7 +677,7 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
 
 	per_write_enumerated(s, 0, MCS_Result_enum_length); /* result */
-	mcs->user_id = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->transport->settings->num_channels;
+	mcs->user_id = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->transport->settings->ChannelCount;
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 
 	transport_write(mcs->transport, s);
@@ -814,10 +816,12 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	mcs = (rdpMcs*) xzalloc(sizeof(rdpMcs));
+	mcs = (rdpMcs*) malloc(sizeof(rdpMcs));
 
 	if (mcs != NULL)
 	{
+		ZeroMemory(mcs, sizeof(rdpMcs));
+
 		mcs->transport = transport;
 		mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
 		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);

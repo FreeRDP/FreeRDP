@@ -35,7 +35,8 @@
 #include <sys/time.h>
 #endif
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
@@ -259,7 +260,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	
 	if (fout)
 	{
-		fprintf(fout, "%d\n", (int) thid);
+		fprintf(fout, "%d\n", (int) (size_t) thid);
 		fclose(fout);
 	}
 
@@ -271,7 +272,8 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 		return NULL;
 	}
 
-	presentation = xnew(TSMF_PRESENTATION);
+	presentation = (TSMF_PRESENTATION*) malloc(sizeof(TSMF_PRESENTATION));
+	ZeroMemory(presentation, sizeof(TSMF_PRESENTATION));
 
 	memcpy(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
@@ -364,10 +366,14 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 				free(presentation->last_rects);
 				presentation->last_rects = NULL;
 			}
+
 			presentation->last_num_rects = presentation->output_num_rects;
+
 			if (presentation->last_num_rects > 0)
 			{
-				presentation->last_rects = xzalloc(presentation->last_num_rects * sizeof(RDP_RECT));
+				presentation->last_rects = malloc(presentation->last_num_rects * sizeof(RDP_RECT));
+				ZeroMemory(presentation->last_rects, presentation->last_num_rects * sizeof(RDP_RECT));
+
 				memcpy(presentation->last_rects, presentation->output_rects,
 					presentation->last_num_rects * sizeof(RDP_RECT));
 			}
@@ -384,10 +390,14 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		vevent->y = presentation->output_y;
 		vevent->width = presentation->output_width;
 		vevent->height = presentation->output_height;
+
 		if (presentation->output_num_rects > 0)
 		{
 			vevent->num_visible_rects = presentation->output_num_rects;
-			vevent->visible_rects = (RDP_RECT*) xzalloc(presentation->output_num_rects * sizeof(RDP_RECT));
+
+			vevent->visible_rects = (RDP_RECT*) malloc(presentation->output_num_rects * sizeof(RDP_RECT));
+			ZeroMemory(vevent->visible_rects, presentation->output_num_rects * sizeof(RDP_RECT));
+
 			memcpy(vevent->visible_rects, presentation->output_rects,
 				presentation->output_num_rects * sizeof(RDP_RECT));
 		}
@@ -567,10 +577,13 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 						free(presentation->last_rects);
 						presentation->last_rects = NULL;
 					}
+
 					presentation->last_num_rects = presentation->output_num_rects;
+
 					if (presentation->last_num_rects > 0)
 					{
-						presentation->last_rects = xzalloc(presentation->last_num_rects * sizeof(RDP_RECT));
+						presentation->last_rects = malloc(presentation->last_num_rects * sizeof(RDP_RECT));
+						ZeroMemory(presentation->last_rects, presentation->last_num_rects * sizeof(RDP_RECT));
 						memcpy(presentation->last_rects, presentation->output_rects, presentation->last_num_rects * sizeof(RDP_RECT));
 					}
 					if(stream->decoder->UpdateRenderingArea)
@@ -921,7 +934,8 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 		return NULL;
 	}
 
-	stream = xnew(TSMF_STREAM);
+	stream = (TSMF_STREAM*) malloc(sizeof(TSMF_STREAM));
+	ZeroMemory(stream, sizeof(TSMF_STREAM));
 
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
@@ -1035,7 +1049,8 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	
 	ReleaseMutex(tsmf_mutex);
 
-	sample = xnew(TSMF_SAMPLE);
+	sample = (TSMF_SAMPLE*) malloc(sizeof(TSMF_SAMPLE));
+	ZeroMemory(sample, sizeof(TSMF_SAMPLE));
 
 	sample->sample_id = sample_id;
 	sample->start_time = start_time;
@@ -1045,7 +1060,8 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	sample->stream = stream;
 	sample->channel_callback = pChannelCallback;
 	sample->data_size = data_size;
-	sample->data = xzalloc(data_size + TSMF_BUFFER_PADDING_SIZE);
+	sample->data = malloc(data_size + TSMF_BUFFER_PADDING_SIZE);
+	ZeroMemory(sample->data, data_size + TSMF_BUFFER_PADDING_SIZE);
 	memcpy(sample->data, data, data_size);
 
 	freerdp_thread_lock(stream->thread);

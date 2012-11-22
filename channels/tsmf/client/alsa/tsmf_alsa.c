@@ -26,9 +26,12 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+
+#include <winpr/crt.h>
+
 #include <alsa/asoundlib.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 
 #include "tsmf_audio.h"
@@ -248,11 +251,16 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 	free(alsa);
 }
 
-ITSMFAudioDevice* TSMFAudioDeviceEntry(void)
+#ifdef STATIC_CHANNELS
+#define freerdp_tsmf_client_audio_subsystem_entry	alsa_freerdp_tsmf_client_audio_subsystem_entry
+#endif
+
+ITSMFAudioDevice* freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFALSAAudioDevice* alsa;
 
-	alsa = xnew(TSMFALSAAudioDevice);
+	alsa = (TSMFALSAAudioDevice*) malloc(sizeof(TSMFALSAAudioDevice));
+	ZeroMemory(alsa, sizeof(TSMFALSAAudioDevice));
 
 	alsa->iface.Open = tsmf_alsa_open;
 	alsa->iface.SetFormat = tsmf_alsa_set_format;
@@ -265,4 +273,3 @@ ITSMFAudioDevice* TSMFAudioDeviceEntry(void)
 
 	return (ITSMFAudioDevice*) alsa;
 }
-

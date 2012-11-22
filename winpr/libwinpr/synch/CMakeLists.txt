@@ -18,9 +18,6 @@
 set(MODULE_NAME "winpr-synch")
 set(MODULE_PREFIX "WINPR_SYNCH")
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_required_package(Threads)
-
 set(${MODULE_PREFIX}_SRCS
 	address.c
 	barrier.c

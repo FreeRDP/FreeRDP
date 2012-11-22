@@ -1020,38 +1020,38 @@ BOOL mac_pre_connect(freerdp *inst)
     int  len;
     int  i;
     
-    inst->settings->offscreen_bitmap_cache = FALSE;
-    inst->settings->glyphSupportLevel = GLYPH_SUPPORT_FULL;
-    inst->settings->order_support[NEG_GLYPH_INDEX_INDEX] = TRUE;
-    inst->settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
-    inst->settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
-    inst->settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-    inst->settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
+    inst->settings->OffscreenSupportLevel = FALSE;
+    inst->settings->GlyphSupportLevel = GLYPH_SUPPORT_FULL;
+    inst->settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+    inst->settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+    inst->settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
     
-    inst->settings->bitmap_cache = TRUE;
-    inst->settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
-    inst->settings->order_support[NEG_MEMBLT_V2_INDEX] = TRUE;
-    inst->settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
-    inst->settings->order_support[NEG_MEM3BLT_V2_INDEX] = FALSE;
-    inst->settings->bitmapCacheV2NumCells = 3; // 5;
-    inst->settings->bitmapCacheV2CellInfo[0].numEntries = 0x78; // 600;
-    inst->settings->bitmapCacheV2CellInfo[0].persistent = FALSE;
-    inst->settings->bitmapCacheV2CellInfo[1].numEntries = 0x78; // 600;
-    inst->settings->bitmapCacheV2CellInfo[1].persistent = FALSE;
-    inst->settings->bitmapCacheV2CellInfo[2].numEntries = 0x150; // 2048;
-    inst->settings->bitmapCacheV2CellInfo[2].persistent = FALSE;
-    inst->settings->bitmapCacheV2CellInfo[3].numEntries = 0; // 4096;
-    inst->settings->bitmapCacheV2CellInfo[3].persistent = FALSE;
-    inst->settings->bitmapCacheV2CellInfo[4].numEntries = 0; // 2048;
-    inst->settings->bitmapCacheV2CellInfo[4].persistent = FALSE;
+    inst->settings->BitmapCacheEnabled = TRUE;
+    inst->settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
+    inst->settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = TRUE;
+    inst->settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+    inst->settings->BitmapCacheV2NumCells = 3; // 5;
+    inst->settings->BitmapCacheV2CellInfo[0].numEntries = 0x78; // 600;
+    inst->settings->BitmapCacheV2CellInfo[0].persistent = FALSE;
+    inst->settings->BitmapCacheV2CellInfo[1].numEntries = 0x78; // 600;
+    inst->settings->BitmapCacheV2CellInfo[1].persistent = FALSE;
+    inst->settings->BitmapCacheV2CellInfo[2].numEntries = 0x150; // 2048;
+    inst->settings->BitmapCacheV2CellInfo[2].persistent = FALSE;
+    inst->settings->BitmapCacheV2CellInfo[3].numEntries = 0; // 4096;
+    inst->settings->BitmapCacheV2CellInfo[3].persistent = FALSE;
+    inst->settings->BitmapCacheV2CellInfo[4].numEntries = 0; // 2048;
+    inst->settings->BitmapCacheV2CellInfo[4].persistent = FALSE;
     
-    inst->settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
-    inst->settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
-    inst->settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
-    inst->settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = FALSE;
-    inst->settings->order_support[NEG_POLYLINE_INDEX] = FALSE;
-    inst->settings->color_depth = 24;
-    inst->settings->sw_gdi = 1;
+    inst->settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = FALSE;
+    inst->settings->OrderSupport[NEG_POLYLINE_INDEX] = FALSE;
+    inst->settings->ColorDepth = 24;
+    inst->settings->SoftwareGdi = 1;
     
     // setup callbacks
     inst->update->BeginPaint = mac_begin_paint;
@@ -1177,10 +1177,10 @@ BOOL mac_pre_connect(freerdp *inst)
         
         // get dimensions of screen that has keyboard focus;
         // we use these dimensions when connecting to RDP server
-        inst->settings->width = [[NSScreen mainScreen] frame].size.width;
-        inst->settings->height = [[NSScreen mainScreen] frame].size.height - g_mrdpview->titleBarHeight;
-        g_mrdpview->width = inst->settings->width;
-        g_mrdpview->height = inst->settings->height;
+        inst->settings->DesktopWidth = [[NSScreen mainScreen] frame].size.width;
+        inst->settings->DesktopHeight = [[NSScreen mainScreen] frame].size.height - g_mrdpview->titleBarHeight;
+        g_mrdpview->width = inst->settings->DesktopWidth;
+        g_mrdpview->height = inst->settings->DesktopHeight;
         
         for (NSString * str in args)
         {
@@ -1220,7 +1220,7 @@ BOOL mac_pre_connect(freerdp *inst)
         return TRUE;
     }
 
-    [g_mrdpview setViewSize:inst->settings->width :inst->settings->height];
+    [g_mrdpview setViewSize:inst->settings->DesktopWidth :inst->settings->DesktopHeight];
 
     freerdp_channels_pre_connect(inst->context->channels, inst);
     return TRUE;

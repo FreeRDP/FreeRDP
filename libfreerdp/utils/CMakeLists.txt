@@ -18,9 +18,6 @@
 set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_required_package(Threads)
-
 set(${MODULE_PREFIX}_SRCS
 	args.c
 	dsp.c
@@ -29,8 +26,6 @@ set(${MODULE_PREFIX}_SRCS
 	hexdump.c
 	list.c
 	file.c
-	load_plugin.c
-	memory.c
 	passphrase.c
 	pcap.c
 	profiler.c
@@ -69,6 +64,11 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE freerdp
+	MODULES freerdp-common)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}

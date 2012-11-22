@@ -19,11 +19,8 @@ set(MODULE_NAME "winpr-file")
 set(MODULE_PREFIX "WINPR_FILE")
 
 set(${MODULE_PREFIX}_SRCS
-	file.c)
-
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
+	file.c
+	pattern.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
@@ -34,7 +31,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-handle)
+	MODULES winpr-crt winpr-handle)
 
 if(MONOLITHIC_BUILD)
 

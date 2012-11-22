@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #ifndef _WIN32
 #include <sys/time.h>
 #else
@@ -43,8 +45,6 @@ int gettimeofday(struct timeval* tp, void* tz)
 #endif
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
-
 #include <freerdp/utils/pcap.h>
 
 #define PCAP_MAGIC	0xA1B2C3D4
@@ -90,14 +90,18 @@ void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 
 	if (pcap->tail == NULL)
 	{
-		pcap->tail = (pcap_record*) xzalloc(sizeof(pcap_record));
+		pcap->tail = (pcap_record*) malloc(sizeof(pcap_record));
+		ZeroMemory(pcap->tail, sizeof(pcap_record));
+
 		pcap->head = pcap->tail;
 		pcap->record = pcap->head;
 		record = pcap->tail;
 	}
 	else
 	{
-		record = (pcap_record*) xzalloc(sizeof(pcap_record));
+		record = (pcap_record*) malloc(sizeof(pcap_record));
+		ZeroMemory(record, sizeof(pcap_record));
+
 		pcap->tail->next = record;
 		pcap->tail = record;
 	}
@@ -154,17 +158,20 @@ rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
-	FILE *pcap_fp = fopen(name, write ? "w+" : "r");
+	FILE* pcap_fp = fopen(name, write ? "w+" : "r");
+
 	if (pcap_fp == NULL)
 	{
 		perror("opening pcap dump");
 		return NULL;
 	}
 
-	pcap = (rdpPcap*) xzalloc(sizeof(rdpPcap));
+	pcap = (rdpPcap*) malloc(sizeof(rdpPcap));
 
 	if (pcap != NULL)
 	{
+		ZeroMemory(pcap, sizeof(rdpPcap));
+
 		pcap->name = name;
 		pcap->write = write;
 		pcap->record_count = 0;

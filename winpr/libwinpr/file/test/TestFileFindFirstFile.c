@@ -41,7 +41,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		_tprintf(_T("FindFirstFile failure: %s\n"), FilePath);
+		_tprintf(_T("FindFirstFile failure: %s (%d)\n"), FilePath, hFind);
 		return -1;
 	}
 

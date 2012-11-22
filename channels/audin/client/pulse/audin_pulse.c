@@ -25,9 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+#include <winpr/cmdline.h>
+
 #include <pulse/pulseaudio.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/dsp.h>
 
 #include "audin_main.h"
@@ -36,7 +40,7 @@ typedef struct _AudinPulseDevice
 {
 	IAudinDevice iface;
 
-	char device_name[32];
+	char* device_name;
 	UINT32 frames_per_packet;
 	pa_threaded_mainloop* mainloop;
 	pa_context* context;
@@ -420,7 +424,8 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	if (state == PA_STREAM_READY)
 	{
 		freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
-		pulse->buffer = xzalloc(pulse->bytes_per_frame * pulse->frames_per_packet);
+		pulse->buffer = malloc(pulse->bytes_per_frame * pulse->frames_per_packet);
+		ZeroMemory(pulse->buffer, pulse->bytes_per_frame * pulse->frames_per_packet);
 		pulse->buffer_frames = 0;
 		DEBUG_DVC("connected");
 	}
@@ -430,12 +435,53 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	}
 }
 
-int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
 {
-	AudinPulseDevice* pulse;
-	RDP_PLUGIN_DATA * data;
+	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
 
-	pulse = xnew(AudinPulseDevice);
+static void audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_pulse_args, flags, pulse, NULL, NULL);
+
+	arg = audin_pulse_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "audio-dev")
+		{
+			pulse->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
+#ifdef STATIC_CHANNELS
+#define freerdp_audin_client_subsystem_entry	pulse_freerdp_audin_client_subsystem_entry
+#endif
+
+int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+{
+	ADDIN_ARGV* args;
+	AudinPulseDevice* pulse;
+
+	pulse = (AudinPulseDevice*) malloc(sizeof(AudinPulseDevice));
+	ZeroMemory(pulse, sizeof(AudinPulseDevice));
 
 	pulse->iface.Open = audin_pulse_open;
 	pulse->iface.FormatSupported = audin_pulse_format_supported;
@@ -443,30 +489,35 @@ int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 	pulse->iface.Close = audin_pulse_close;
 	pulse->iface.Free = audin_pulse_free;
 
-	data = pEntryPoints->plugin_data;
-	if (data && data->data[0] && strcmp(data->data[0], "audin") == 0 &&
-		data->data[1] && strcmp(data->data[1], "pulse") == 0)
-	{
-		strncpy(pulse->device_name, (char*)data->data[2], sizeof(pulse->device_name));
-	}
+	args = pEntryPoints->args;
+
+	audin_pulse_parse_addin_args(pulse, args);
+
+	if (!pulse->device_name)
+		pulse->device_name = _strdup("default");
 
 	pulse->dsp_context = freerdp_dsp_context_new();
 
 	pulse->mainloop = pa_threaded_mainloop_new();
+
 	if (!pulse->mainloop)
 	{
 		DEBUG_WARN("pa_threaded_mainloop_new failed");
 		audin_pulse_free((IAudinDevice*) pulse);
 		return 1;
 	}
+
 	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+
 	if (!pulse->context)
 	{
 		DEBUG_WARN("pa_context_new failed");
 		audin_pulse_free((IAudinDevice*) pulse);
 		return 1;
 	}
+
 	pa_context_set_state_callback(pulse->context, audin_pulse_context_state_callback, pulse);
+
 	if (!audin_pulse_connect((IAudinDevice*) pulse))
 	{
 		audin_pulse_free((IAudinDevice*) pulse);
@@ -477,4 +528,3 @@ int FreeRDPAudinDeviceEntry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	return 0;
 }
-

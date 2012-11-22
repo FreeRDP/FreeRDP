@@ -23,10 +23,11 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/brush.h>
 
@@ -170,7 +171,8 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
 	rdpBrushCache* brush;
 
-	brush = (rdpBrushCache*) xzalloc(sizeof(rdpBrushCache));
+	brush = (rdpBrushCache*) malloc(sizeof(rdpBrushCache));
+	ZeroMemory(brush, sizeof(rdpBrushCache));
 
 	if (brush != NULL)
 	{
@@ -179,8 +181,11 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 		brush->maxEntries = 64;
 		brush->maxMonoEntries = 64;
 
-		brush->entries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
-		brush->monoEntries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
+		brush->entries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
+		ZeroMemory(brush->entries, sizeof(BRUSH_ENTRY) * brush->maxEntries);
+
+		brush->monoEntries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
+		ZeroMemory(brush->monoEntries, sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
 	}
 
 	return brush;

@@ -27,9 +27,9 @@
 #include <string.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/server/channels.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "channels.h"
@@ -99,7 +99,9 @@ static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* buffer, 
 {
 	wts_data_item* item;
 
-	item = xnew(wts_data_item);
+	item = (wts_data_item*) malloc(sizeof(wts_data_item));
+	ZeroMemory(item, sizeof(wts_data_item));
+
 	item->length = length;
 	item->buffer = malloc(length);
 	memcpy(item->buffer, buffer, length);
@@ -174,7 +176,7 @@ static void wts_read_drdynvc_create_response(rdpPeerChannel* channel, STREAM* s,
 
 	if ((INT32) CreationStatus < 0)
 	{
-		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->channel_id, (INT32)CreationStatus);
+		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->channel_id, (INT32) CreationStatus);
 		channel->dvc_open_state = DVC_OPEN_STATE_FAILED;
 	}
 	else
@@ -388,14 +390,14 @@ static int WTSReceiveChannelData(freerdp_peer* client, int channelId, BYTE* data
 	BOOL result = FALSE;
 	rdpPeerChannel* channel;
 
-	for (i = 0; i < client->settings->num_channels; i++)
+	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
-		if (client->settings->channels[i].channel_id == channelId)
+		if (client->settings->ChannelDefArray[i].ChannelId == channelId)
 			break;
 	}
-	if (i < client->settings->num_channels)
+	if (i < client->settings->ChannelCount)
 	{
-		channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+		channel = (rdpPeerChannel*) client->settings->ChannelDefArray[i].handle;
 
 		if (channel != NULL)
 		{
@@ -411,10 +413,12 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 {
 	WTSVirtualChannelManager* vcm;
 
-	vcm = xnew(WTSVirtualChannelManager);
+	vcm = (WTSVirtualChannelManager*) malloc(sizeof(WTSVirtualChannelManager));
 
 	if (vcm != NULL)
 	{
+		ZeroMemory(vcm, sizeof(WTSVirtualChannelManager));
+
 		vcm->client = client;
 		vcm->send_event = wait_obj_new();
 		vcm->send_queue = list_new();
@@ -535,11 +539,13 @@ void* WTSVirtualChannelOpenEx(
 			return NULL;
 		}
 
-		channel = xnew(rdpPeerChannel);
+		channel = (rdpPeerChannel*) malloc(sizeof(rdpPeerChannel));
+		ZeroMemory(channel, sizeof(rdpPeerChannel));
+
 		channel->vcm = vcm;
 		channel->client = client;
 		channel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
-		channel->receive_data = stream_new(client->settings->vc_chunk_size);
+		channel->receive_data = stream_new(client->settings->VirtualChannelChunkSize);
 		channel->receive_event = wait_obj_new();
 		channel->receive_queue = list_new();
 		channel->mutex = CreateMutex(NULL, FALSE, NULL);
@@ -563,34 +569,36 @@ void* WTSVirtualChannelOpenEx(
 		if (len > 8)
 			return NULL;
 
-		for (i = 0; i < client->settings->num_channels; i++)
+		for (i = 0; i < client->settings->ChannelCount; i++)
 		{
-			if (client->settings->channels[i].joined &&
-				strncmp(client->settings->channels[i].name, pVirtualName, len) == 0)
+			if (client->settings->ChannelDefArray[i].joined &&
+				strncmp(client->settings->ChannelDefArray[i].Name, pVirtualName, len) == 0)
 			{
 				break;
 			}
 		}
 
-		if (i >= client->settings->num_channels)
+		if (i >= client->settings->ChannelCount)
 			return NULL;
 
-		channel = (rdpPeerChannel*) client->settings->channels[i].handle;
+		channel = (rdpPeerChannel*) client->settings->ChannelDefArray[i].handle;
 
 		if (channel == NULL)
 		{
-			channel = xnew(rdpPeerChannel);
+			channel = (rdpPeerChannel*) malloc(sizeof(rdpPeerChannel));
+			ZeroMemory(channel, sizeof(rdpPeerChannel));
+
 			channel->vcm = vcm;
 			channel->client = client;
-			channel->channel_id = client->settings->channels[i].channel_id;
+			channel->channel_id = client->settings->ChannelDefArray[i].ChannelId;
 			channel->index = i;
 			channel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
-			channel->receive_data = stream_new(client->settings->vc_chunk_size);
+			channel->receive_data = stream_new(client->settings->VirtualChannelChunkSize);
 			channel->receive_event = wait_obj_new();
 			channel->receive_queue = list_new();
 			channel->mutex = CreateMutex(NULL, FALSE, NULL);
 
-			client->settings->channels[i].handle = channel;
+			client->settings->ChannelDefArray[i].handle = channel;
 		}
 	}
 
@@ -718,7 +726,9 @@ BOOL WTSVirtualChannelWrite(
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
-		item = xnew(wts_data_item);
+		item = (wts_data_item*) malloc(sizeof(wts_data_item));
+		ZeroMemory(item, sizeof(wts_data_item));
+
 		item->buffer = malloc(Length);
 		item->length = Length;
 		memcpy(item->buffer, Buffer, Length);
@@ -737,9 +747,11 @@ BOOL WTSVirtualChannelWrite(
 
 		while (Length > 0)
 		{
-			item = xnew(wts_data_item);
-			item->buffer = malloc(channel->client->settings->vc_chunk_size);
-			stream_attach(s, item->buffer, channel->client->settings->vc_chunk_size);
+			item = (wts_data_item*) malloc(sizeof(wts_data_item));
+			ZeroMemory(item, sizeof(wts_data_item));
+
+			item->buffer = malloc(channel->client->settings->VirtualChannelChunkSize);
+			stream_attach(s, item->buffer, channel->client->settings->VirtualChannelChunkSize);
 
 			stream_seek_BYTE(s);
 			cbChId = wts_write_variable_uint(s, channel->channel_id);
@@ -791,8 +803,8 @@ BOOL WTSVirtualChannelClose(
 
 		if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
 		{
-			if (channel->index < channel->client->settings->num_channels)
-				channel->client->settings->channels[channel->index].handle = NULL;
+			if (channel->index < channel->client->settings->ChannelCount)
+				channel->client->settings->ChannelDefArray[channel->index].handle = NULL;
 		}
 		else
 		{

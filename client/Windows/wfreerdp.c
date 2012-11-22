@@ -25,6 +25,9 @@
 
 #include <winpr/windows.h>
 
+#include <winpr/crt.h>
+#include <winpr/credui.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,13 +41,11 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
@@ -150,7 +151,9 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfContext* context;
 	rdpSettings* settings;
 
-	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
 	context = (wfContext*) instance->context;
 	wfi->instance = instance;
 	context->wfi = wfi;
@@ -159,50 +162,52 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (settings->connection_file)
+	if (settings->ConnectionFile)
 	{
 		file = freerdp_client_rdp_file_new();
 
-		printf("Using connection file: %s\n", settings->connection_file);
+		printf("Using connection file: %s\n", settings->ConnectionFile);
 
-		freerdp_client_parse_rdp_file(file, settings->connection_file);
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
 	}
 
-	settings->os_major_type = OSMAJORTYPE_WINDOWS;
-	settings->os_minor_type = OSMINORTYPE_WINDOWS_NT;
-	settings->order_support[NEG_DSTBLT_INDEX] = TRUE;
-	settings->order_support[NEG_PATBLT_INDEX] = TRUE;
-	settings->order_support[NEG_SCRBLT_INDEX] = TRUE;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->order_support[NEG_LINETO_INDEX] = TRUE;
-	settings->order_support[NEG_POLYLINE_INDEX] = TRUE;
-	settings->order_support[NEG_MEMBLT_INDEX] = TRUE;
-	settings->order_support[NEG_MEM3BLT_INDEX] = FALSE;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = FALSE;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = FALSE;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
+	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	settings->glyphSupportLevel = GLYPH_SUPPORT_NONE;
+	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfi->cursor = g_default_cursor;
 
-	wfi->fullscreen = settings->fullscreen;
+	wfi->fullscreen = settings->Fullscreen;
 	wfi->fs_toggle = wfi->fullscreen;
-	wfi->sw_gdi = settings->sw_gdi;
+	wfi->sw_gdi = settings->SoftwareGdi;
 
-	wfi->clrconv = (HCLRCONV) xzalloc(sizeof(CLRCONV));
+	wfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	ZeroMemory(wfi->clrconv, sizeof(CLRCONV));
+
 	wfi->clrconv->palette = NULL;
 	wfi->clrconv->alpha = FALSE;
 
@@ -211,30 +216,30 @@ BOOL wf_pre_connect(freerdp* instance)
 	if (wfi->percentscreen > 0)
 	{
 		i1 = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
-		settings->width = i1;
+		settings->DesktopWidth = i1;
 
 		i1 = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
-		settings->height = i1;
+		settings->DesktopHeight = i1;
 	}
 
 	if (wfi->fs_toggle)
 	{
-		settings->width = GetSystemMetrics(SM_CXSCREEN);
-		settings->height = GetSystemMetrics(SM_CYSCREEN);
+		settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
+		settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
 	}
 
-	i1 = settings->width;
+	i1 = settings->DesktopWidth;
 	i1 = (i1 + 3) & (~3);
-	settings->width = i1;
+	settings->DesktopWidth = i1;
 
-	if ((settings->width < 64) || (settings->height < 64) ||
-		(settings->width > 4096) || (settings->height > 4096))
+	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
+		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
-		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->width, settings->height);
+		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
 		return 1;
 	}
 
-	settings->kbd_layout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
+	settings->KeyboardLayout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return TRUE;
@@ -294,8 +299,8 @@ BOOL wf_post_connect(freerdp* instance)
 	wfi = context->wfi;
 
 	wfi->dstBpp = 32;
-	width = settings->width;
-	height = settings->height;
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
 
 	if (wfi->sw_gdi)
 	{
@@ -304,12 +309,12 @@ BOOL wf_post_connect(freerdp* instance)
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
 
-		rfx_context_set_cpu_opt(gdi->rfx_context, wfi_detect_cpu());
+		rfx_context_set_cpu_opt((RFX_CONTEXT*) gdi->rfx_context, wfi_detect_cpu());
 	}
 	else
 	{
 		wf_gdi_register_update_callbacks(instance->update);
-		wfi->srcBpp = instance->settings->color_depth;
+		wfi->srcBpp = instance->settings->ColorDepth;
 		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, NULL);
 
 		wfi->hdc = gdi_GetDC();
@@ -330,23 +335,23 @@ BOOL wf_post_connect(freerdp* instance)
 		wfi->image = wf_image_new(wfi, 64, 64, 32, NULL);
 		wfi->image->_bitmap.data = NULL;
 
-		if (settings->rfx_codec)
+		if (settings->RemoteFxCodec)
 		{
 			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);
 			wfi->rfx_context = rfx_context_new();
 			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
 		}
 
-		if (settings->ns_codec)
+		if (settings->NSCodec)
 			wfi->nsc_context = nsc_context_new();
 	}
 
-	if (settings->window_title != NULL)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"%S", settings->window_title);
-	else if (settings->port == 3389)
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S", settings->hostname);
+	if (settings->WindowTitle != NULL)
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"%S", settings->WindowTitle);
+	else if (settings->ServerPort == 3389)
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S", settings->ServerHostname);
 	else
-		_snwprintf(win_title, ARRAY_SIZE(win_title), L"FreeRDP: %S:%d", settings->hostname, settings->port);
+		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
 	if (wfi->hwnd == 0)
 	{
@@ -411,6 +416,59 @@ BOOL wf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
+static const char wfTargetName[] = "TARGET";
+
+static CREDUI_INFOA wfUiInfo =
+{
+	sizeof(CREDUI_INFOA),
+	NULL,
+	"Enter your credentials",
+	"Remote Desktop Security",
+	NULL
+};
+
+BOOL wf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	BOOL fSave;
+	DWORD status;
+	DWORD dwFlags;
+	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1];
+	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1];
+	char User[CREDUI_MAX_USERNAME_LENGTH + 1];
+	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1];
+
+	fSave = FALSE;
+	ZeroMemory(UserName, sizeof(UserName));
+	ZeroMemory(Password, sizeof(Password));
+	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
+
+	status = CredUIPromptForCredentialsA(&wfUiInfo, wfTargetName, NULL, 0,
+		UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+		Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+
+	if (status != NO_ERROR)
+	{
+		printf("CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
+		return FALSE;
+	}
+
+	ZeroMemory(User, sizeof(User));
+	ZeroMemory(Domain, sizeof(Domain));
+
+	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
+
+	//printf("User: %s Domain: %s Password: %s\n", User, Domain, Password);
+
+	*username = _strdup(User);
+
+	if (strlen(Domain) > 0)
+		*domain = _strdup(Domain);
+
+	*password = _strdup(Password);
+
+	return TRUE;
+}
+
 BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 #if 0
@@ -465,33 +523,6 @@ BOOL wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* w
 BOOL wf_check_fds(freerdp* instance)
 {
 	return TRUE;
-}
-
-int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	void* entry = NULL;
-	rdpChannels* channels = (rdpChannels*) user_data;
-
-	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
-
-	if (entry)
-	{
-		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
-		{
-			printf("loading channel %s (static)\n", name);
-			return 1;
-		}
-	}
-
-	printf("loading channel %s (plugin)\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
-	return 1;
-}
-
-int wf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
-{
-	return 0;
 }
 
 int wfreerdp_run(freerdp* instance)
@@ -620,7 +651,9 @@ static DWORD WINAPI thread_func(LPVOID lpParam)
 	data = (thread_data*) lpParam;
 	instance = data->instance;
 
-	wfi = (wfInfo*) xzalloc(sizeof(wfInfo));
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
 	((wfContext*) instance->context)->wfi = wfi;
 	wfi->instance = instance;
 
@@ -712,6 +745,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
+	instance->Authenticate = wf_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
@@ -728,19 +762,29 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//while (1)
 	{
-		int arg_parse_result;
+		int status;
 
-		data = (thread_data*) xzalloc(sizeof(thread_data)); 
+		data = (thread_data*) malloc(sizeof(thread_data));
+		ZeroMemory(data, sizeof(thread_data));
+
 		data->instance = instance;
 
-		arg_parse_result = freerdp_parse_args(instance->settings, __argc, __argv,
-			wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
+		freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
-		if (arg_parse_result < 0)
+		if (freerdp_detect_new_command_line_syntax(__argc, __argv))
 		{
-			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-				printf("failed to parse arguments.\n");
+			status = freerdp_client_parse_command_line_arguments(__argc, __argv, instance->settings);
 
+			freerdp_client_load_addins(instance->context->channels, instance->settings);
+		}
+		else
+		{
+			freerdp_client_print_command_line_help(__argc, __argv);
+		}
+
+		if (status < 0)
+		{
+			printf("failed to parse arguments.\n");
 #ifdef _DEBUG
 			system("pause");
 #endif

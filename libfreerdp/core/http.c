@@ -22,18 +22,17 @@
 #endif
 
 #include <winpr/crt.h>
-
-#include <freerdp/utils/memory.h>
+#include <winpr/print.h>
 
 #include "http.h"
 
 HttpContext* http_context_new()
 {
-	HttpContext* http_context = xnew(HttpContext);
+	HttpContext* http_context = (HttpContext*) malloc(sizeof(HttpContext));
 
 	if (http_context != NULL)
 	{
-
+		ZeroMemory(http_context, sizeof(HttpContext));
 	}
 
 	return http_context;
@@ -254,11 +253,11 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 
 HttpRequest* http_request_new()
 {
-	HttpRequest* http_request = xnew(HttpRequest);
+	HttpRequest* http_request = (HttpRequest*) malloc(sizeof(HttpRequest));
 
 	if (http_request != NULL)
 	{
-
+		ZeroMemory(http_request, sizeof(HttpRequest));
 	}
 
 	return http_request;
@@ -405,25 +404,39 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	while (TRUE)
 	{
-		status = tls_read(tls, p, length - nbytes);
-
-		if (status > 0)
+		while (nbytes < 5)
 		{
-			nbytes += status;
-			p = (BYTE*) &buffer[nbytes];
+			status = tls_read(tls, p, length - nbytes);
+            
+			if (status > 0)
+			{
+				nbytes += status;
+				p = (BYTE*) &buffer[nbytes];
+			}
+			else if (status == 0)
+			{
+				continue;
+			}
+			else
+			{
+				http_response_free(http_response);
+				return NULL;
+			}
 		}
-		else if (status == 0)
+
+		header_end = strstr((char*) buffer, "\r\n\r\n");
+        
+		if (header_end)
 		{
-			continue;
+			header_end += 2;
 		}
 		else
 		{
-			http_response_free(http_response) ;
+			printf("http_response_recv: invalid response:\n");
+			winpr_HexDump(buffer, status);
+			http_response_free(http_response);
 			return NULL;
-			break;
 		}
-
-		header_end = strstr((char*) buffer, "\r\n\r\n") + 2;
 
 		if (header_end != NULL)
 		{
@@ -481,11 +494,13 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 HttpResponse* http_response_new()
 {
-	HttpResponse* http_response = xnew(HttpResponse);
+	HttpResponse* http_response;
+
+	http_response = (HttpResponse*) malloc(sizeof(HttpResponse));
 
 	if (http_response != NULL)
 	{
-
+		ZeroMemory(http_response, sizeof(HttpResponse));
 	}
 
 	return http_response;

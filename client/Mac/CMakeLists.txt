@@ -4,26 +4,18 @@ project(MacFreeRDP)
 set(MODULE_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC")
 
-find_required_package(OpenSSL)
-
 set(FRAMEWORK_HEADERS_PATH /System/Library/Frameworks/Cocoa.framework/Versions/A/Headers/)
 include_directories(${FRAMEWORK_HEADERS_PATH} /System/Library/Frameworks) 
 	
-# set(CMAKE_OSX_SYSROOT MacOSX10.7.sdk) # uncomment to specify SDK version
+# set(CMAKE_OSX_SYSROOT MacOSX10.7.sdk)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
 set(GUI_TYPE MACOSX_BUNDLE)
 	
 # Import libraries
 find_library(FOUNDATION_LIBRARY Foundation)
-message("+ Using foundation library ${FOUNDATION_LIBRARY}")
 find_library(COCOA_LIBRARY Cocoa)
-message("+ Using cocoa library ${COCOA_LIBRARY}")
 find_library(APPKIT_LIBRARY AppKit)
-message("+ Using appkit library ${APPKIT_LIBRARY}")
-	
-message(" Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-# Set the OS X Bundle specific CMake variables which will be used to populate the plist for
-# the application bundle
+
 set(MACOSX_BUNDLE_INFO_STRING "MacFreeRDP")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.mac")
 set(MACOSX_BUNDLE_BUNDLE_IDENTIFIER "FreeRDP.Mac")
@@ -33,7 +25,6 @@ set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.0.1)
 set(MACOSX_BUNDLE_BUNDLE_VERSION 1.0.1)
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2012. All Rights Reserved.")
 
-# Specific plist and NOT standard CMake variables
 set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "MainMenu")
 set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
 	
@@ -81,8 +72,6 @@ set_target_properties(MacFreeRDP PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH
 # Set the info plist to the custom instance
 set_target_properties(MacFreeRDP PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
-#find_optional_package(MacAudio)
-
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
@@ -90,6 +79,10 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
 	MODULES freerdp-core freerdp-cache freerdp-gdi freerdp-codec freerdp-rail freerdp-utils)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

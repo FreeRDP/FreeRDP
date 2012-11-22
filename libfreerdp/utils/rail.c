@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <freerdp/types.h>
+#include <winpr/crt.h>
 
+#include <freerdp/types.h>
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/rail.h>
 
@@ -119,7 +119,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 	size_t order_size = 0;
 	void*  new_order = NULL;
 
-	for (i = 0; i < ARRAY_SIZE(ordersize_table); i++)
+	for (i = 0; i < ARRAYSIZE(ordersize_table); i++)
 	{
 		if (event_type == ordersize_table[i].type)
 		{

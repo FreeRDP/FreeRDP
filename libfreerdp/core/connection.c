@@ -73,9 +73,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 
 	nego_init(rdp->nego);
-	nego_set_target(rdp->nego, settings->hostname, settings->port);
+	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
-	if (settings->ts_gateway)
+	if (settings->GatewayUsageMethod)
 	{
 		char* user;
 		char* domain;
@@ -84,13 +84,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		int domain_length;
 		int cookie_length;
 
-		user = settings->username;
-		user_length = strlen(settings->username);
+		user = settings->Username;
+		user_length = strlen(settings->Username);
 
-		if (settings->domain)
-			domain = settings->domain;
+		if (settings->Domain)
+			domain = settings->Domain;
 		else
-			domain = settings->computer_name;
+			domain = settings->ComputerName;
 
 		domain_length = strlen(domain);
 
@@ -104,22 +104,32 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
-		//nego_set_cookie_max_length(rdp->nego, MSTSC_COOKIE_MAX_LENGTH);
+
+		settings->RdpSecurity = TRUE;
+		settings->TlsSecurity = FALSE;
+		settings->NlaSecurity = FALSE;
+		settings->ExtSecurity = FALSE;
 	}
 	else
 	{
-		nego_set_cookie(rdp->nego, settings->username);
+		nego_set_cookie(rdp->nego, settings->Username);
 	}
 
-	nego_set_send_preconnection_pdu(rdp->nego, settings->send_preconnection_pdu);
-	nego_set_preconnection_id(rdp->nego, settings->preconnection_id);
-	nego_set_preconnection_blob(rdp->nego, settings->preconnection_blob);
+	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
+	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
+	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
 
-	nego_set_negotiation_enabled(rdp->nego, settings->security_layer_negotiation);
+	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
 
-	nego_enable_rdp(rdp->nego, settings->rdp_security);
-	nego_enable_tls(rdp->nego, settings->tls_security);
-	nego_enable_nla(rdp->nego, settings->nla_security);
+	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
+	nego_enable_tls(rdp->nego, settings->TlsSecurity);
+	nego_enable_nla(rdp->nego, settings->NlaSecurity);
+	nego_enable_ext(rdp->nego, settings->ExtSecurity);
+
+	if (settings->MstscCookieMode)
+		settings->CookieMaxLength = MSTSC_COOKIE_MAX_LENGTH;
+
+	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
 	if (!nego_connect(rdp->nego))
 	{
@@ -129,9 +139,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
-		if ((settings->username != NULL) && ((settings->password != NULL) ||
-				(settings->password_cookie != NULL && settings->password_cookie_length > 0)))
-			settings->autologon = TRUE;
+		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
+				(settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
+			settings->AutoLogonEnabled = TRUE;
 	}
 
 	rdp_set_blocking_mode(rdp, FALSE);
@@ -148,13 +158,15 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	rdp->transport->process_single_pdu = TRUE;
+	rdp->transport->ProcessSinglePdu = TRUE;
+
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 	}
-	rdp->transport->process_single_pdu = FALSE;
+
+	rdp->transport->ProcessSinglePdu = FALSE;
 
 	return TRUE;
 }
@@ -182,9 +194,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 
-	free(settings->server_random);
-	free(settings->server_certificate);
-	free(settings->ip_address);
+	free(settings->ServerRandom);
+	free(settings->ServerCertificate);
+	free(settings->ClientAddress);
 
 	rdp->transport = transport_new(settings);
 	rdp->license = license_new(rdp);
@@ -192,7 +204,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdp->mcs = mcs_new(rdp->transport);
 
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	settings->redirected_session_id = redirection->sessionID;
+	settings->RedirectedSessionId = redirection->sessionID;
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
@@ -202,37 +214,37 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	{
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetNetAddress.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetNetAddress.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetFQDN.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetFQDN.ascii);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
-			free(settings->hostname);
-			settings->hostname = _strdup(redirection->targetNetBiosName.ascii);
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(redirection->targetNetBiosName.ascii);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		free(settings->username);
-		settings->username = _strdup(redirection->username.ascii);
+		free(settings->Username);
+		settings->Username = _strdup(redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		free(settings->domain);
-		settings->domain = _strdup(redirection->domain.ascii);
+		free(settings->Domain);
+		settings->Domain = _strdup(redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		settings->password_cookie = redirection->PasswordCookie;
-		settings->password_cookie_length = redirection->PasswordCookieLength;
+		settings->RedirectionPassword = redirection->PasswordCookie;
+		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
 	}
 
 	return rdp_client_connect(rdp);
@@ -240,15 +252,15 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
-	BYTE client_random[CLIENT_RANDOM_LENGTH];
-	BYTE crypt_client_random[256 + 8];
-	UINT32 key_len;
 	BYTE* mod;
 	BYTE* exp;
-	UINT32 length;
 	STREAM* s;
+	UINT32 length;
+	UINT32 key_len;
+	BYTE crypt_client_random[256 + 8];
+	BYTE client_random[CLIENT_RANDOM_LENGTH];
 
-	if (rdp->settings->encryption == FALSE)
+	if (rdp->settings->DisableEncryption == FALSE)
 	{
 		/* no RDP encryption */
 		return TRUE;
@@ -257,19 +269,22 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	/* encrypt client random */
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
-	key_len = rdp->settings->server_cert->cert_info.ModulusLength;
-	mod = rdp->settings->server_cert->cert_info.Modulus;
-	exp = rdp->settings->server_cert->cert_info.exponent;
+	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
+	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
+	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
 	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = transport_send_stream_init(rdp->mcs->transport, length);
+
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
+
 	stream_write_UINT32(s, length);
 	stream_write(s, crypt_client_random, length);
+
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
 		return FALSE;
@@ -282,10 +297,10 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = TRUE;
-	if (rdp->settings->salted_checksum)
+	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -310,7 +325,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	BYTE* mod;
 	BYTE* priv_exp;
 
-	if (rdp->settings->encryption == FALSE)
+	if (rdp->settings->DisableEncryption == FALSE)
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -331,7 +346,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	stream_read_UINT32(s, rand_len);
-	key_len = rdp->settings->server_key->ModulusLength;
+	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
 
 	if (rand_len != key_len + 8)
 	{
@@ -343,8 +358,8 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	stream_read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
 	stream_seek(s, 8);
-	mod = rdp->settings->server_key->Modulus;
-	priv_exp = rdp->settings->server_key->PrivateExponent;
+	mod = rdp->settings->RdpServerRsaKey->Modulus;
+	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
 
 	/* now calculate encrypt / decrypt and update keys */
@@ -354,10 +369,10 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	}
 
 	rdp->do_crypt = TRUE;
-	if (rdp->settings->salted_checksum)
+	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->encryption_method == ENCRYPTION_METHOD_FIPS)
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
@@ -429,9 +444,9 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 			return FALSE;
 		rdp->mcs->global_channel_joined = TRUE;
 
-		if (rdp->settings->num_channels > 0)
+		if (rdp->settings->ChannelCount > 0)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[0].channel_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
 				return FALSE;
 
 			all_joined = FALSE;
@@ -439,20 +454,20 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		for (i = 0; i < rdp->settings->num_channels; i++)
+		for (i = 0; i < rdp->settings->ChannelCount; i++)
 		{
-			if (rdp->settings->channels[i].joined)
+			if (rdp->settings->ChannelDefArray[i].joined)
 				continue;
 
-			if (rdp->settings->channels[i].channel_id != channel_id)
+			if (rdp->settings->ChannelDefArray[i].ChannelId != channel_id)
 				return FALSE;
 
-			rdp->settings->channels[i].joined = TRUE;
+			rdp->settings->ChannelDefArray[i].joined = TRUE;
 			break;
 		}
-		if (i + 1 < rdp->settings->num_channels)
+		if (i + 1 < rdp->settings->ChannelCount)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->channels[i + 1].channel_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[i + 1].ChannelId))
 				return FALSE;
 
 			all_joined = FALSE;
@@ -496,8 +511,8 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	UINT16 width;
 	UINT16 height;
 
-	width = rdp->settings->width;
-	height = rdp->settings->height;
+	width = rdp->settings->DesktopWidth;
+	height = rdp->settings->DesktopHeight;
 
 	stream_get_mark(s, mark);
 
@@ -524,7 +539,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
 	 * In this case, the UI should be informed and do actual window resizing at this point.
 	 */
-	if (width != rdp->settings->width || height != rdp->settings->height)
+	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
 	{
 		IFCALL(rdp->update->DesktopResize, rdp->update->context);
 	}
@@ -577,17 +592,17 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 			(rdp->nego->requested_protocols == PROTOCOL_RDP) ? 1: 0);
 
 	printf("Server Security: NLA:%d TLS:%d RDP:%d\n",
-			settings->nla_security, settings->tls_security, settings->rdp_security);
+			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	if ((settings->nla_security) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_NLA;
 	}
-	else if ((settings->tls_security) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_TLS;
 	}
-	else if ((settings->rdp_security) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		rdp->nego->selected_protocol = PROTOCOL_RDP;
 	}
@@ -629,12 +644,12 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	if (!mcs_recv_connect_initial(rdp->mcs, s))
 		return FALSE;
 
-	printf("Accepted client: %s\n", rdp->settings->client_hostname);
+	printf("Accepted client: %s\n", rdp->settings->ClientHostname);
 	printf("Accepted channels:");
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		printf(" %s", rdp->settings->channels[i].name);
+		printf(" %s", rdp->settings->ChannelDefArray[i].Name);
 	}
 	printf("\n");
 
@@ -686,12 +701,12 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	else if (channel_id == MCS_GLOBAL_CHANNEL_ID)
 		rdp->mcs->global_channel_joined = TRUE;
 
-	for (i = 0; i < rdp->settings->num_channels; i++)
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		if (rdp->settings->channels[i].channel_id == channel_id)
-			rdp->settings->channels[i].joined = TRUE;
+		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
+			rdp->settings->ChannelDefArray[i].joined = TRUE;
 
-		if (!rdp->settings->channels[i].joined)
+		if (!rdp->settings->ChannelDefArray[i].joined)
 			all_joined = FALSE;
 	}
 

@@ -173,6 +173,8 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->NtChallengeResponse);
 	sspi_SecBufferFree(&context->LmChallengeResponse);
 
+	free(context->ServicePrincipalName.Buffer);
+
 	free(context->identity.User);
 	free(context->identity.Password);
 	free(context->identity.Domain);

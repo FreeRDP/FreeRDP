@@ -28,7 +28,6 @@
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/codec/nsc.h>
 

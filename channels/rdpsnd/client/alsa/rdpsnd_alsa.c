@@ -27,17 +27,18 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/cmdline.h>
 
 #include <alsa/asoundlib.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
 
 typedef struct rdpsnd_alsa_plugin rdpsndAlsaPlugin;
+
 struct rdpsnd_alsa_plugin
 {
 	rdpsndDevicePlugin device;
@@ -416,12 +417,53 @@ static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
 	snd_pcm_start(alsa->out_handle);
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
 {
-	rdpsndAlsaPlugin* alsa;
-	RDP_PLUGIN_DATA* data;
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
 
-	alsa = xnew(rdpsndAlsaPlugin);
+static void rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
+
+	arg = rdpsnd_alsa_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "dev")
+		{
+			alsa->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+{
+	ADDIN_ARGV* args;
+	rdpsndAlsaPlugin* alsa;
+
+	alsa = (rdpsndAlsaPlugin*) malloc(sizeof(rdpsndAlsaPlugin));
+	ZeroMemory(alsa, sizeof(rdpsndAlsaPlugin));
 
 	alsa->device.Open = rdpsnd_alsa_open;
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;
@@ -432,17 +474,8 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	alsa->device.Close = rdpsnd_alsa_close;
 	alsa->device.Free = rdpsnd_alsa_free;
 
-	data = pEntryPoints->plugin_data;
-
-	if (data && strcmp((char*) data->data[0], "alsa") == 0)
-	{
-		alsa->device_name = _strdup((char*) data->data[1]);
-	}
-
-	if (alsa->device_name == NULL)
-	{
-		alsa->device_name = _strdup("default");
-	}
+	args = pEntryPoints->args;
+	rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args);
 
 	alsa->out_handle = 0;
 	alsa->source_rate = 22050;
@@ -458,4 +491,3 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 
 	return 0;
 }
-

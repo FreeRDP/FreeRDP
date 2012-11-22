@@ -32,12 +32,13 @@
 #include <X11/Xutil.h>
 #include <sys/select.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 extern char* xf_pcap_file;
@@ -177,7 +178,8 @@ xfInfo* xf_info_init()
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 
-	xfi = xnew(xfInfo);
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
 
 	//xfi->use_xshm = TRUE;
 	xfi->display = XOpenDisplay(NULL);
@@ -461,7 +463,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	}
 
 	cmd->bpp = 32;
-	cmd->codecID = client->settings->rfx_codec_id;
+	cmd->codecID = client->settings->RemoteFxCodecId;
 	cmd->width = width;
 	cmd->height = height;
 	cmd->bitmapDataLength = stream_get_length(s);
@@ -547,29 +549,29 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 	printf("Client %s is activated", client->hostname);
-	if (client->settings->autologon)
+	if (client->settings->AutoLogonEnabled)
 	{
 		printf(" and wants to login automatically as %s\\%s",
-			client->settings->domain ? client->settings->domain : "",
-			client->settings->username);
+			client->settings->Domain ? client->settings->Domain : "",
+			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 	printf("\n");
 
 	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
+		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
-	if (!client->settings->rfx_codec)
+	if (!client->settings->RemoteFxCodec)
 	{
 		printf("Client does not support RemoteFX\n");
 		return 0;
 	}
 
-	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
+	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 
-	client->settings->width = xfi->width;
-	client->settings->height = xfi->height;
+	client->settings->DesktopWidth = xfi->width;
+	client->settings->DesktopHeight = xfi->height;
 
 	client->update->DesktopResize(client->update->context);
 	xfp->activated = FALSE;
@@ -623,26 +625,19 @@ void* xf_peer_main_loop(void* arg)
 
 	/* Initialize the real server settings here */
 
-	if (settings->development_mode)
-	{
-		server_file_path = freerdp_construct_path(settings->development_path, "server/X11");
-	}
-	else
-	{
-		server_file_path = freerdp_construct_path(settings->config_path, "server");
+	server_file_path = freerdp_construct_path(settings->ConfigPath, "server");
 
-		if (!freerdp_check_file_exists(server_file_path))
-			freerdp_mkdir(server_file_path);
-	}
+	if (!freerdp_check_file_exists(server_file_path))
+		freerdp_mkdir(server_file_path);
 
-	settings->cert_file = freerdp_construct_path(server_file_path, "server.crt");
-	settings->privatekey_file = freerdp_construct_path(server_file_path, "server.key");
+	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
+	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
 
-	settings->nla_security = TRUE;
-	settings->tls_security = FALSE;
-	settings->rdp_security = FALSE;
+	settings->NlaSecurity = TRUE;
+	settings->TlsSecurity = FALSE;
+	settings->RdpSecurity = FALSE;
 
-	settings->rfx_codec = TRUE;
+	settings->RemoteFxCodec = TRUE;
 
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;

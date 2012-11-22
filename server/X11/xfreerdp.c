@@ -30,8 +30,6 @@
 #include <sys/select.h>
 #include <sys/signal.h>
 
-#include <freerdp/utils/memory.h>
-
 #include "xf_peer.h"
 #include "xfreerdp.h"
 

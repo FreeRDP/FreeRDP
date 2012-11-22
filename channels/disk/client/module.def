@@ -1,3 +1,0 @@
-LIBRARY		"disk"
-EXPORTS
-	DeviceServiceEntry		@1

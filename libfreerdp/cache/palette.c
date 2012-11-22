@@ -23,8 +23,9 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/palette.h>
 
@@ -75,13 +76,15 @@ rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
 	rdpPaletteCache* palette_cache;
 
-	palette_cache = (rdpPaletteCache*) xzalloc(sizeof(rdpPaletteCache));
+	palette_cache = (rdpPaletteCache*) malloc(sizeof(rdpPaletteCache));
+	ZeroMemory(palette_cache, sizeof(rdpPaletteCache));
 
 	if (palette_cache != NULL)
 	{
 		palette_cache->settings = settings;
 		palette_cache->maxEntries = 6;
-		palette_cache->entries = (PALETTE_TABLE_ENTRY*) xzalloc(sizeof(PALETTE_TABLE_ENTRY) * palette_cache->maxEntries);
+		palette_cache->entries = (PALETTE_TABLE_ENTRY*) malloc(sizeof(PALETTE_TABLE_ENTRY) * palette_cache->maxEntries);
+		ZeroMemory(palette_cache->entries, sizeof(PALETTE_TABLE_ENTRY) * palette_cache->maxEntries);
 	}
 
 	return palette_cache;

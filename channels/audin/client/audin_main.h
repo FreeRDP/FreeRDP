@@ -26,6 +26,7 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_DVC
@@ -58,7 +59,7 @@ struct _IAudinDevice
 	void (*Free) (IAudinDevice* devplugin);
 };
 
-#define AUDIN_DEVICE_EXPORT_FUNC_NAME "FreeRDPAudinDeviceEntry"
+#define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
 typedef void (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
@@ -66,7 +67,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 {
 	IWTSPlugin* plugin;
 	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	RDP_PLUGIN_DATA* plugin_data;
+	ADDIN_ARGV* args;
 };
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;

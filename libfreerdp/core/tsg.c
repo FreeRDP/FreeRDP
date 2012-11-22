@@ -25,13 +25,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
 #include <freerdp/utils/unicode.h>
 
+#include <winpr/crt.h>
 #include <winpr/ndr.h>
+#include <winpr/error.h>
 
 #include "tsg.h"
 
@@ -41,335 +43,49 @@
  * RPC NDR Interface Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802752/
  */
 
-BYTE tsg_packet1[108] =
+const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[] =
 {
-	0x43, 0x56, 0x00, 0x00, 0x43, 0x56, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x52, 0x54, 0x43, 0x56,
-	0x04, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00,
+	DEFINE_RPC_FAULT_CODE(ERROR_SUCCESS)
+	DEFINE_RPC_FAULT_CODE(ERROR_ACCESS_DENIED)
+	DEFINE_RPC_FAULT_CODE(ERROR_ONLY_IF_CONNECTED)
+	DEFINE_RPC_FAULT_CODE(ERROR_INVALID_PARAMETER)
+	DEFINE_RPC_FAULT_CODE(ERROR_GRACEFUL_DISCONNECT)
+	DEFINE_RPC_FAULT_CODE(ERROR_OPERATION_ABORTED)
+	DEFINE_RPC_FAULT_CODE(ERROR_BAD_ARGUMENTS)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_INTERNALERROR)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_RAP_ACCESSDENIED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_NAP_ACCESSDENIED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_TS_CONNECTFAILED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_ALREADYDISCONNECTED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_QUARANTINE_ACCESSDENIED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_NOCERTAVAILABLE)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_COOKIE_BADPACKET)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_COOKIE_AUTHENTICATION_ACCESS_DENIED)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_UNSUPPORTED_AUTHENTICATION_METHOD)
+	DEFINE_RPC_FAULT_CODE(E_PROXY_CAPABILITYMISMATCH)
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_NOTSUPPORTED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_TS_CONNECTFAILED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_MAXCONNECTIONSREACHED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_INTERNALERROR))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_SESSIONTIMEOUT))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_REAUTH_AUTHN_FAILED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_REAUTH_CAP_FAILED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_REAUTH_RAP_FAILED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_SDR_NOT_SUPPORTED_BY_TS))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_REAUTH_NAP_FAILED))
+	DEFINE_RPC_FAULT_CODE(HRESULT_CODE(E_PROXY_CONNECTIONABORTED))
+	DEFINE_RPC_FAULT_CODE(__HRESULT_FROM_WIN32(RPC_S_CALL_CANCELLED))
+	{ 0, NULL }
+};
+
+/* this might be a verification trailer */
+
+BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
+{
 	0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
 	0x02, 0x40, 0x28, 0x00, 0xDD, 0x65, 0xE2, 0x44, 0xAF, 0x7D, 0xCD, 0x42, 0x85, 0x60, 0x3C, 0xDB,
 	0x6E, 0x7A, 0x27, 0x29, 0x01, 0x00, 0x03, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11,
 	0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00
-};
-
-/**
-	TsProxyCreateTunnel
-
-	0x43, 0x56, 0x00, 0x00, packetId (TSG_PACKET_TYPE_VERSIONCAPS)
-
-	TSG_PACKET
-	0x43, 0x56, 0x00, 0x00, SwitchValue (TSG_PACKET_TYPE_VERSIONCAPS)
-
-	0x00, 0x00, 0x02, 0x00, NdrPtr
-
-	0x52, 0x54, componentId
-	0x43, 0x56, packetId
-
-	0x04, 0x00, 0x02, 0x00, NdrPtr TsgCapsPtr
-	0x01, 0x00, 0x00, 0x00, numCapabilities
-
-	0x01, 0x00, MajorVersion
-	0x01, 0x00, MinorVersion
-	0x00, 0x00, QuarantineCapabilities
-
-	0x00, 0x00, alignment pad?
-
-	0x01, 0x00, 0x00, 0x00, MaximumCount
-	0x01, 0x00, 0x00, 0x00, TSG_CAPABILITY_TYPE_NAP
-
-	0x01, 0x00, 0x00, 0x00, SwitchValue (TSG_NAP_CAPABILITY_QUAR_SOH)
-	0x1F, 0x00, 0x00, 0x00, idle value in minutes?
-
-	0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-	0x02, 0x40, 0x28, 0x00, 0xDD, 0x65, 0xE2, 0x44, 0xAF, 0x7D, 0xCD, 0x42, 0x85, 0x60, 0x3C, 0xDB,
-	0x6E, 0x7A, 0x27, 0x29, 0x01, 0x00, 0x03, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11,
-	0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00
- */
-
-/**
- * TsProxyCreateTunnelResponse
- *
-	05 00 02 03 10 00 00 00 50 09 10 00 01 00 00 00
-	14 09 00 00 00 00 00 00 00 00 02 00
-
-	50 43 00 00 TSG_PACKET_TYPE_CAPS_RESPONSE
-	50 43 00 00 TSG_PACKET_TYPE_CAPS_RESPONSE
-	Ptr:		04 00 02 00
-	flags:		00 00 00 00
-	certChainLen:	39 04 00 00 (1081 * 2 = 2162)
-	certChainDataPtr: 08 00 02 00
-
-	GUID?
-	95 87 a1 e6 51 6e 6e 4f 90 66 49 4f 9b c2 40 ff
-	0c 00 02 00 01 00 00 00 01 00 00 00 00 00 00 00
-	01 00 00 00
-
-	Ptr:		14 00 02 00
-	MaxCount:	39 04 00 00
-	Offset:		00 00 00 00
-	ActualCount:	39 04 00 00
-
-	end offset = 105 + 2162 = 2267 (0x08DB)
-
-	                             2d 00 2d 00 2d 00 2d 00 ....9...-.-.-.-.
-	0070 2d 00 42 00 45 00 47 00 49 00 4e 00 20 00 43 00 -.B.E.G.I.N. .C.
-	0080 45 00 52 00 54 00 49 00 46 00 49 00 43 00 41 00 E.R.T.I.F.I.C.A.
-	0090 54 00 45 00 2d 00 2d 00 2d 00 2d 00 2d 00 0d 00 T.E.-.-.-.-.-...
-	00a0 0a 00 4d 00 49 00 49 00 43 00 34 00 6a 00 43 00 ..M.I.I.C.4.j.C.
-	00b0 43 00 41 00 63 00 71 00 67 00 41 00 77 00 49 00 C.A.c.q.g.A.w.I.
-	00c0 42 00 41 00 67 00 49 00 51 00 4a 00 38 00 4f 00 B.A.g.I.Q.J.8.O.
-	00d0 48 00 6a 00 65 00 66 00 37 00 4e 00 34 00 78 00 H.j.e.f.7.N.4.x.
-	00e0 43 00 39 00 30 00 36 00 49 00 53 00 33 00 34 00 C.9.0.6.I.S.3.4.
-	00f0 75 00 76 00 54 00 41 00 4e 00 42 00 67 00 6b 00 u.v.T.A.N.B.g.k.
-	0100 71 00 68 00 6b 00 69 00 47 00 39 00 77 00 30 00 q.h.k.i.G.9.w.0.
-	0110 42 00 41 00 51 00 55 00 46 00 41 00 44 00 41 00 B.A.Q.U.F.A.D.A.
-	0120 61 00 0d 00 0a 00 4d 00 52 00 67 00 77 00 46 00 a.....M.R.g.w.F.
-	0130 67 00 59 00 44 00 56 00 51 00 51 00 44 00 45 00 g.Y.D.V.Q.Q.D.E.
-	0140 77 00 39 00 58 00 53 00 55 00 34 00 74 00 4e 00 w.9.X.S.U.4.t.N.
-	0150 7a 00 56 00 46 00 52 00 45 00 4e 00 51 00 52 00 z.V.F.R.E.N.Q.R.
-	0160 30 00 64 00 4e 00 52 00 7a 00 6b 00 77 00 48 00 0.d.N.R.z.k.w.H.
-	0170 68 00 63 00 4e 00 4d 00 54 00 49 00 77 00 4d 00 h.c.N.M.T.I.w.M.
-	0180 7a 00 49 00 34 00 4d 00 44 00 4d 00 77 00 4d 00 z.I.4.M.D.M.w.M.
-	0190 54 00 45 00 32 00 57 00 68 00 63 00 4e 00 4d 00 T.E.2.W.h.c.N.M.
-	01a0 6a 00 49 00 77 00 0d 00 0a 00 4d 00 7a 00 49 00 j.I.w.....M.z.I.
-	01b0 33 00 4d 00 44 00 41 00 77 00 4d 00 44 00 41 00 3.M.D.A.w.M.D.A.
-	01c0 77 00 57 00 6a 00 41 00 61 00 4d 00 52 00 67 00 w.W.j.A.a.M.R.g.
-	01d0 77 00 46 00 67 00 59 00 44 00 56 00 51 00 51 00 w.F.g.Y.D.V.Q.Q.
-	01e0 44 00 45 00 77 00 39 00 58 00 53 00 55 00 34 00 D.E.w.9.X.S.U.4.
-	01f0 74 00 4e 00 7a 00 56 00 46 00 52 00 45 00 4e 00 t.N.z.V.F.R.E.N.
-	0200 51 00 52 00 30 00 64 00 4e 00 52 00 7a 00 6b 00 Q.R.0.d.N.R.z.k.
-	0210 77 00 67 00 67 00 45 00 69 00 4d 00 41 00 30 00 w.g.g.E.i.M.A.0.
-	0220 47 00 43 00 53 00 71 00 47 00 0d 00 0a 00 53 00 G.C.S.q.G.....S.
-	0230 49 00 62 00 33 00 44 00 51 00 45 00 42 00 41 00 I.b.3.D.Q.E.B.A.
-	0240 51 00 55 00 41 00 41 00 34 00 49 00 42 00 44 00 Q.U.A.A.4.I.B.D.
-	0250 77 00 41 00 77 00 67 00 67 00 45 00 4b 00 41 00 w.A.w.g.g.E.K.A.
-	0260 6f 00 49 00 42 00 41 00 51 00 43 00 6e 00 78 00 o.I.B.A.Q.C.n.x.
-	0270 55 00 63 00 32 00 68 00 2b 00 4c 00 5a 00 64 00 U.c.2.h.+.L.Z.d.
-	0280 42 00 65 00 56 00 61 00 79 00 35 00 52 00 36 00 B.e.V.a.y.5.R.6.
-	0290 68 00 70 00 36 00 47 00 31 00 2b 00 75 00 2f 00 h.p.6.G.1.+.u./.
-	02a0 59 00 33 00 7a 00 63 00 33 00 33 00 47 00 0d 00 Y.3.z.c.3.3.G...
-	02b0 0a 00 66 00 4c 00 62 00 4f 00 53 00 62 00 48 00 ..f.L.b.O.S.b.H.
-	02c0 71 00 6d 00 4e 00 31 00 42 00 4e 00 57 00 79 00 q.m.N.1.B.N.W.y.
-	02d0 44 00 7a 00 51 00 66 00 5a 00 71 00 30 00 54 00 D.z.Q.f.Z.q.0.T.
-	02e0 35 00 30 00 4b 00 70 00 54 00 61 00 49 00 71 00 5.0.K.p.T.a.I.q.
-	02f0 65 00 33 00 58 00 65 00 51 00 4f 00 45 00 63 00 e.3.X.e.Q.O.E.c.
-	0300 42 00 33 00 4b 00 78 00 56 00 6a 00 78 00 46 00 B.3.K.x.V.j.x.F.
-	0310 46 00 75 00 47 00 67 00 6d 00 57 00 4d 00 55 00 F.u.G.g.m.W.M.U.
-	0320 6d 00 7a 00 37 00 79 00 77 00 49 00 49 00 75 00 m.z.7.y.w.I.I.u.
-	0330 38 00 0d 00 0a 00 33 00 52 00 56 00 44 00 39 00 8.....3.R.V.D.9.
-	0340 36 00 73 00 42 00 30 00 6b 00 31 00 6a 00 37 00 6.s.B.0.k.1.j.7.
-	0350 70 00 30 00 4d 00 54 00 6f 00 4a 00 6a 00 71 00 p.0.M.T.o.J.j.q.
-	0360 4a 00 45 00 78 00 51 00 56 00 6d 00 48 00 44 00 J.E.x.Q.V.m.H.D.
-	0370 72 00 56 00 46 00 2f 00 63 00 4f 00 77 00 6a 00 r.V.F./.c.O.w.j.
-	0380 35 00 59 00 69 00 35 00 42 00 33 00 47 00 57 00 5.Y.i.5.B.3.G.W.
-	0390 38 00 65 00 65 00 37 00 5a 00 45 00 52 00 30 00 8.e.e.7.Z.E.R.0.
-	03a0 76 00 63 00 62 00 4f 00 34 00 59 00 70 00 4c 00 v.c.b.O.4.Y.p.L.
-	03b0 64 00 58 00 41 00 0d 00 0a 00 65 00 6f 00 6f 00 d.X.A.....e.o.o.
-	03c0 62 00 48 00 6f 00 37 00 7a 00 73 00 65 00 59 00 b.H.o.7.z.s.e.Y.
-	03d0 57 00 31 00 37 00 72 00 54 00 4b 00 79 00 73 00 W.1.7.r.T.K.y.s.
-	03e0 65 00 59 00 52 00 69 00 6a 00 32 00 6a 00 76 00 e.Y.R.i.j.2.j.v.
-	03f0 63 00 6e 00 75 00 6f 00 52 00 72 00 4a 00 48 00 c.n.u.o.R.r.J.H.
-	0400 58 00 78 00 36 00 41 00 44 00 64 00 6f 00 57 00 X.x.6.A.D.d.o.W.
-	0410 37 00 58 00 4e 00 69 00 39 00 59 00 75 00 55 00 7.X.N.i.9.Y.u.U.
-	0420 4a 00 46 00 35 00 6b 00 51 00 46 00 34 00 64 00 J.F.5.k.Q.F.4.d.
-	0430 6b 00 73 00 6c 00 5a 00 72 00 0d 00 0a 00 49 00 k.s.l.Z.r.....I.
-	0440 44 00 50 00 50 00 6b 00 30 00 68 00 44 00 78 00 D.P.P.k.0.h.D.x.
-	0450 6d 00 61 00 49 00 6c 00 5a 00 6a 00 47 00 6a 00 m.a.I.l.Z.j.G.j.
-	0460 70 00 55 00 65 00 69 00 47 00 50 00 2b 00 57 00 p.U.e.i.G.P.+.W.
-	0470 46 00 68 00 72 00 4d 00 6d 00 6f 00 6b 00 6f 00 F.h.r.M.m.o.k.o.
-	0480 46 00 78 00 7a 00 2f 00 70 00 7a 00 61 00 38 00 F.x.z./.p.z.a.8.
-	0490 5a 00 4c 00 50 00 4f 00 4a 00 64 00 51 00 76 00 Z.L.P.O.J.d.Q.v.
-	04a0 6c 00 31 00 52 00 78 00 34 00 61 00 6e 00 64 00 l.1.R.x.4.a.n.d.
-	04b0 43 00 38 00 4d 00 79 00 59 00 47 00 2b 00 0d 00 C.8.M.y.Y.G.+...
-	04c0 0a 00 50 00 57 00 62 00 74 00 62 00 44 00 43 00 ..P.W.b.t.b.D.C.
-	04d0 31 00 33 00 41 00 71 00 2f 00 44 00 4d 00 4c 00 1.3.A.q./.D.M.L.
-	04e0 49 00 56 00 6b 00 6c 00 41 00 65 00 4e 00 6f 00 I.V.k.l.A.e.N.o.
-	04f0 78 00 32 00 43 00 61 00 4a 00 65 00 67 00 30 00 x.2.C.a.J.e.g.0.
-	0500 56 00 2b 00 48 00 6d 00 46 00 6b 00 70 00 59 00 V.+.H.m.F.k.p.Y.
-	0510 68 00 75 00 34 00 6f 00 33 00 6b 00 38 00 6e 00 h.u.4.o.3.k.8.n.
-	0520 58 00 5a 00 37 00 7a 00 35 00 41 00 67 00 4d 00 X.Z.7.z.5.A.g.M.
-	0530 42 00 41 00 41 00 47 00 6a 00 4a 00 44 00 41 00 B.A.A.G.j.J.D.A.
-	0540 69 00 0d 00 0a 00 4d 00 41 00 73 00 47 00 41 00 i.....M.A.s.G.A.
-	0550 31 00 55 00 64 00 44 00 77 00 51 00 45 00 41 00 1.U.d.D.w.Q.E.A.
-	0560 77 00 49 00 45 00 4d 00 44 00 41 00 54 00 42 00 w.I.E.M.D.A.T.B.
-	0570 67 00 4e 00 56 00 48 00 53 00 55 00 45 00 44 00 g.N.V.H.S.U.E.D.
-	0580 44 00 41 00 4b 00 42 00 67 00 67 00 72 00 42 00 D.A.K.B.g.g.r.B.
-	0590 67 00 45 00 46 00 42 00 51 00 63 00 44 00 41 00 g.E.F.B.Q.c.D.A.
-	05a0 54 00 41 00 4e 00 42 00 67 00 6b 00 71 00 68 00 T.A.N.B.g.k.q.h.
-	05b0 6b 00 69 00 47 00 39 00 77 00 30 00 42 00 41 00 k.i.G.9.w.0.B.A.
-	05c0 51 00 55 00 46 00 0d 00 0a 00 41 00 41 00 4f 00 Q.U.F.....A.A.O.
-	05d0 43 00 41 00 51 00 45 00 41 00 52 00 33 00 74 00 C.A.Q.E.A.R.3.t.
-	05e0 67 00 2f 00 6e 00 41 00 69 00 73 00 41 00 46 00 g./.n.A.i.s.A.F.
-	05f0 42 00 50 00 66 00 5a 00 42 00 68 00 5a 00 31 00 B.P.f.Z.B.h.Z.1.
-	0600 71 00 55 00 53 00 74 00 55 00 52 00 32 00 5a 00 q.U.S.t.U.R.2.Z.
-	0610 32 00 5a 00 6a 00 55 00 49 00 42 00 70 00 64 00 2.Z.j.U.I.B.p.d.
-	0620 68 00 5a 00 4e 00 32 00 64 00 50 00 6b 00 6f 00 h.Z.N.2.d.P.k.o.
-	0630 4d 00 6c 00 32 00 4b 00 4f 00 6b 00 66 00 4d 00 M.l.2.K.O.k.f.M.
-	0640 4e 00 6d 00 45 00 44 00 45 00 0d 00 0a 00 68 00 N.m.E.D.E.....h.
-	0650 72 00 6e 00 56 00 74 00 71 00 54 00 79 00 65 00 r.n.V.t.q.T.y.e.
-	0660 50 00 32 00 4e 00 52 00 71 00 78 00 67 00 48 00 P.2.N.R.q.x.g.H.
-	0670 46 00 2b 00 48 00 2f 00 6e 00 4f 00 78 00 37 00 F.+.H./.n.O.x.7.
-	0680 78 00 6d 00 66 00 49 00 72 00 4c 00 31 00 77 00 x.m.f.I.r.L.1.w.
-	0690 45 00 6a 00 63 00 37 00 41 00 50 00 6c 00 37 00 E.j.c.7.A.P.l.7.
-	06a0 4b 00 61 00 39 00 4b 00 6a 00 63 00 65 00 6f 00 K.a.9.K.j.c.e.o.
-	06b0 4f 00 4f 00 6f 00 68 00 31 00 32 00 6c 00 2f 00 O.O.o.h.1.2.l./.
-	06c0 39 00 48 00 53 00 70 00 38 00 30 00 37 00 0d 00 9.H.S.p.8.0.7...
-	06d0 0a 00 4f 00 57 00 4d 00 69 00 48 00 41 00 4a 00 ..O.W.M.i.H.A.J.
-	06e0 6e 00 66 00 47 00 32 00 46 00 46 00 37 00 6e 00 n.f.G.2.F.F.7.n.
-	06f0 51 00 61 00 74 00 63 00 35 00 4e 00 53 00 42 00 Q.a.t.c.5.N.S.B.
-	0700 38 00 4e 00 75 00 4f 00 5a 00 67 00 64 00 62 00 8.N.u.O.Z.g.d.b.
-	0710 67 00 51 00 2b 00 43 00 42 00 62 00 39 00 76 00 g.Q.+.C.B.b.9.v.
-	0720 2b 00 4d 00 56 00 55 00 33 00 43 00 67 00 39 00 +.M.V.U.3.C.g.9.
-	0730 4c 00 57 00 65 00 54 00 53 00 2b 00 51 00 78 00 L.W.e.T.S.+.Q.x.
-	0740 79 00 59 00 6c 00 37 00 4f 00 30 00 4c 00 43 00 y.Y.l.7.O.0.L.C.
-	0750 4d 00 0d 00 0a 00 76 00 45 00 37 00 77 00 4a 00 M.....v.E.7.w.J.
-	0760 58 00 53 00 70 00 70 00 4a 00 4c 00 42 00 6b 00 X.S.p.p.J.L.B.k.
-	0770 69 00 52 00 72 00 63 00 73 00 51 00 6e 00 34 00 i.R.r.c.s.Q.n.4.
-	0780 61 00 39 00 62 00 64 00 67 00 56 00 67 00 6b 00 a.9.b.d.g.V.g.k.
-	0790 57 00 32 00 78 00 70 00 7a 00 56 00 4e 00 6d 00 W.2.x.p.z.V.N.m.
-	07a0 6e 00 62 00 42 00 35 00 73 00 49 00 49 00 38 00 n.b.B.5.s.I.I.8.
-	07b0 35 00 75 00 7a 00 37 00 78 00 76 00 46 00 47 00 5.u.z.7.x.v.F.G.
-	07c0 50 00 47 00 65 00 70 00 4c 00 55 00 55 00 55 00 P.G.e.p.L.U.U.U.
-	07d0 76 00 66 00 66 00 0d 00 0a 00 36 00 76 00 68 00 v.f.f.....6.v.h.
-	07e0 56 00 46 00 5a 00 76 00 62 00 53 00 47 00 73 00 V.F.Z.v.b.S.G.s.
-	07f0 77 00 6f 00 72 00 32 00 5a 00 6c 00 54 00 6c 00 w.o.r.2.Z.l.T.l.
-	0800 79 00 57 00 70 00 79 00 67 00 5a 00 67 00 71 00 y.W.p.y.g.Z.g.q.
-	0810 49 00 46 00 56 00 6f 00 73 00 43 00 4f 00 33 00 I.F.V.o.s.C.O.3.
-	0820 34 00 39 00 53 00 65 00 2b 00 55 00 45 00 72 00 4.9.S.e.+.U.E.r.
-	0830 72 00 54 00 48 00 46 00 7a 00 71 00 38 00 63 00 r.T.H.F.z.q.8.c.
-	0840 76 00 7a 00 4b 00 76 00 63 00 6b 00 4f 00 75 00 v.z.K.v.c.k.O.u.
-	0850 4f 00 6b 00 42 00 72 00 42 00 0d 00 0a 00 6c 00 O.k.B.r.B.....l.
-	0860 69 00 79 00 4e 00 32 00 47 00 42 00 41 00 6f 00 i.y.N.2.G.B.A.o.
-	0870 50 00 45 00 67 00 79 00 4d 00 48 00 41 00 35 00 P.E.g.y.M.H.A.5.
-	0880 53 00 78 00 39 00 5a 00 39 00 37 00 35 00 75 00 S.x.9.Z.9.7.5.u.
-	0890 6e 00 7a 00 50 00 74 00 77 00 3d 00 3d 00 0d 00 n.z.P.t.w.=.=...
-	08a0 0a 00 2d 00 2d 00 2d 00 2d 00 2d 00 45 00 4e 00 ..-.-.-.-.-.E.N.
-	08b0 44 00 20 00 43 00 45 00 52 00 54 00 49 00 46 00 D. .C.E.R.T.I.F.
-	08c0 49 00 43 00 41 00 54 00 45 00 2d 00 2d 00 2d 00 I.C.A.T.E.-.-.-.
-	08d0 2d 00 2d 00 0d 00 0a 00 00 00
-
-	00 00 alignment pad?
-
-	52 54 componentId
-	43 56 packetId (TSG_PACKET_TYPE_VERSIONCAPS)
-	TsgCapsPtr:		10 00 02 00
-	NumCapabilities:	01 00 00 00
-	MajorVersion:		01 00
-	MinorVersion:		01 00
-	quarantineCapabilities:	01 00
-	pad:			00 00
-	NumCapabilitiesConf:
-	MaxCount: 01 00 00 00
-
-		tsgCaps:	01 00 00 00 (TSG_CAPABILITY_TYPE_NAP)
-		SwitchValue:	01 00 00 00 (TSG_CAPABILITY_TYPE_NAP)
-			capabilities: 1f 00 00 00 =
-				TSG_NAP_CAPABILITY_QUAR_SOH |
-				TSG_NAP_CAPABILITY_IDLE_TIMEOUT |
-				TSG_MESSAGING_CAP_CONSENT_SIGN |
-				TSG_MESSAGING_CAP_SERVICE_MSG |
-				TSG_MESSAGING_CAP_REAUTH
-
-	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ??
-
-	TunnelContext:
-		ContextType: 00 00 00 00
-		ContextUuid: 81 1d 32 9f 3f ff 8d 41 ae 54 ba e4 7b b7 ef 43
-
-	30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ??
-	00 00 00 00 0a 05 0c 00 00 00 00 00 01 00 00 00
-	9d 13 89 41
-
-	UINT32 TunnelId:	2e 85 76 3f
-	HRESULT ReturnValue:	00 00 00 00
- */
-
-BYTE tsg_packet2[112] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x52, 0x51, 0x00, 0x00, 0x52, 0x51, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00, 0x15, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00,
-	0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x2D, 0x00, 0x4E, 0x00, 0x48, 0x00, 0x35, 0x00, 0x37, 0x00,
-	0x30, 0x00, 0x2E, 0x00, 0x43, 0x00, 0x53, 0x00, 0x4F, 0x00, 0x44, 0x00, 0x2E, 0x00, 0x6C, 0x00,
-	0x6F, 0x00, 0x63, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-/**
-	TsProxyAuthorizeTunnel
-
-	TunnelContext:
-		ContextType:	0x00, 0x00, 0x00, 0x00,
-		ContextUuid:	0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44,
-				0x8D, 0x99, 0x29, 0x30, 0x53, 0x6C, 0x04, 0x33,
-
-	TsgPacket:
-		PacketId:	0x52, 0x51, 0x00, 0x00,
-		SwitchValue:	0x52, 0x51, 0x00, 0x00,
-
-		PacketQuarRequestPtr: 0x00, 0x00, 0x02, 0x00,
-		PacketQuarRequest:
-			Flags:	0x00, 0x00, 0x00, 0x00,
-			MachineNamePtr: 0x04, 0x00, 0x02, 0x00,
-			NameLength:	0x15, 0x00, 0x00, 0x00,
-			DataPtr:	0x08, 0x00, 0x02, 0x00,
-			DataLen:	0x00, 0x00, 0x00, 0x00,
-			MachineName:
-				MaxCount:	0x15, 0x00, 0x00, 0x00, (21 elements)
-				Offset:		0x00, 0x00, 0x00, 0x00,
-				ActualCount:	0x15, 0x00, 0x00, 0x00, (21 elements)
-				Array:		0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x2D, 0x00,
-						0x4E, 0x00, 0x48, 0x00, 0x35, 0x00, 0x37, 0x00,
-						0x30, 0x00, 0x2E, 0x00, 0x43, 0x00, 0x53, 0x00,
-						0x4F, 0x00, 0x44, 0x00, 0x2E, 0x00, 0x6C, 0x00,
-						0x6F, 0x00, 0x63, 0x00, 0x61, 0x00, 0x6C, 0x00,
-						0x00, 0x00,
-
-			DataLenConf:
-				MaxCount: 0x00, 0x00, 0x00, 0x00,
-						0x00, 0x00
- */
-
-BYTE tsg_packet3[40] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x01, 0x00, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00, 0x52, 0x47, 0x00, 0x00,
-	0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00
-};
-
-/**
-	TsProxyMakeTunnelCall
-
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x01, 0x00, 0x00, 0x00,
-
-	0x52, 0x47, 0x00, 0x00,
-	0x52, 0x47, 0x00, 0x00,
-	0x00, 0x00, 0x02, 0x00,
-	0x01, 0x00, 0x00, 0x00
- */
-
-BYTE tsg_packet4[48] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00
-};
-
-/**
-	TsProxyCreateChannel
-
-	0x00, 0x00, 0x00, 0x00, 0x6A, 0x78, 0xE9, 0xAB, 0x02, 0x90, 0x1C, 0x44, 0x8D, 0x99, 0x29, 0x30,
-	0x53, 0x6C, 0x04, 0x33, 0x00, 0x00, 0x02, 0x00,
-
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-	0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x00
- */
-
-BYTE tsg_packet5[20] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00
 };
 
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
@@ -378,9 +94,9 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	int status;
 	int length;
 	rdpTsg* tsg;
-	byte* buffer1 = NULL ;
-	byte* buffer2 = NULL ;
-	byte* buffer3 = NULL ;
+	byte* buffer1 = NULL;
+	byte* buffer2 = NULL;
+	byte* buffer3 = NULL;
 	UINT32 buffer1Length;
 	UINT32 buffer2Length;
 	UINT32 buffer3Length;
@@ -417,8 +133,8 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	s = stream_new(28 + totalDataBytes);
 
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
-	stream_write_UINT32(s, 0); /* ContextType (4 bytes) */
-	stream_write(s, tsg->ChannelContext, 16); /* ContextUuid (4 bytes) */
+	stream_write(s, &tsg->ChannelContext.ContextType, 4); /* ContextType (4 bytes) */
+	stream_write(s, tsg->ChannelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */
 
 	stream_write_UINT32_be(s, totalDataBytes); /* totalDataBytes (4 bytes) */
 	stream_write_UINT32_be(s, numBuffers); /* numBuffers (4 bytes) */
@@ -440,7 +156,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	stream_seal(s);
 
 	length = s->size;
-	status = rpc_tsg_write(tsg->rpc, s->data, s->size, 9);
+	status = rpc_tsg_write(tsg->rpc, s->data, s->size, TsProxySendToServerOpnum);
 
 	stream_free(s);
 
@@ -453,24 +169,309 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	return length;
 }
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 {
-	BYTE* data;
+	int status;
+	BYTE* buffer;
 	UINT32 length;
-	STREAM* s_p4;
-	int status = -1;
+	UINT32 NapCapabilities;
 	rdpRpc* rpc = tsg->rpc;
-	WCHAR* dest_addr_unic;
-	int dest_addr_unic_len;
 
-	if (!rpc_connect(rpc))
+	length = 108;
+	buffer = (BYTE*) malloc(length);
+
+	*((UINT32*) &buffer[0]) = TSG_PACKET_TYPE_VERSIONCAPS; /* PacketId */
+	*((UINT32*) &buffer[4]) = TSG_PACKET_TYPE_VERSIONCAPS; /* SwitchValue */
+
+	*((UINT32*) &buffer[8]) = 0x00020000; /* PacketVersionCapsPtr */
+
+	*((UINT16*) &buffer[12]) = TS_GATEWAY_TRANSPORT; /* ComponentId */
+	*((UINT16*) &buffer[14]) = TSG_PACKET_TYPE_VERSIONCAPS; /* PacketId */
+
+	*((UINT32*) &buffer[16]) = 0x00020004; /* TsgCapsPtr */
+	*((UINT32*) &buffer[20]) = 0x00000001; /* NumCapabilities */
+
+	*((UINT16*) &buffer[24]) = 0x0001; /* MajorVersion */
+	*((UINT16*) &buffer[26]) = 0x0001; /* MinorVersion */
+	*((UINT16*) &buffer[28]) = 0x0000; /* QuarantineCapabilities */
+
+	/* 4-byte alignment (30 + 2) */
+	*((UINT16*) &buffer[30]) = 0x0000; /* 2-byte pad */
+
+	*((UINT32*) &buffer[32]) = 0x00000001; /* MaxCount */
+	*((UINT32*) &buffer[36]) = TSG_CAPABILITY_TYPE_NAP; /* CapabilityType */
+	*((UINT32*) &buffer[40]) = TSG_CAPABILITY_TYPE_NAP; /* SwitchValue */
+
+	NapCapabilities =
+			TSG_NAP_CAPABILITY_QUAR_SOH |
+			TSG_NAP_CAPABILITY_IDLE_TIMEOUT |
+			TSG_MESSAGING_CAP_CONSENT_SIGN |
+			TSG_MESSAGING_CAP_SERVICE_MSG |
+			TSG_MESSAGING_CAP_REAUTH;
+
+	/*
+	 * FIXME: Alternate Code Path
+	 *
+	 * Using reduced capabilities appears to trigger
+	 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
+	 */
+	NapCapabilities = TSG_NAP_CAPABILITY_IDLE_TIMEOUT;
+
+	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
+
+	CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 count;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 Pointer;
+	PTSG_PACKET packet;
+	UINT32 SwitchValue;
+	rdpRpc* rpc = tsg->rpc;
+	PTSG_PACKET_CAPABILITIES tsgCaps;
+	PTSG_PACKET_VERSIONCAPS versionCaps;
+	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
+	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
+
+	status = rpc_recv_pdu(rpc);
+
+	if (status <= 0)
+		return FALSE;
+
+	length = status;
+	buffer = rpc->buffer;
+
+	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
+	ZeroMemory(packet, sizeof(TSG_PACKET));
+
+	packet->packetId = *((UINT32*) &buffer[28]); /* PacketId */
+	SwitchValue = *((UINT32*) &buffer[32]); /* SwitchValue */
+
+	if ((packet->packetId == TSG_PACKET_TYPE_CAPS_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_CAPS_RESPONSE))
 	{
-		printf("rpc_connect failed!\n");
+		packetCapsResponse = (PTSG_PACKET_CAPS_RESPONSE) malloc(sizeof(TSG_PACKET_CAPS_RESPONSE));
+		ZeroMemory(packetCapsResponse, sizeof(TSG_PACKET_CAPS_RESPONSE));
+		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
+
+		/* PacketQuarResponsePtr (4 bytes) */
+		packetCapsResponse->pktQuarEncResponse.flags = *((UINT32*) &buffer[40]); /* Flags */
+		packetCapsResponse->pktQuarEncResponse.certChainLen = *((UINT32*) &buffer[44]); /* CertChainLength */
+		/* CertChainDataPtr (4 bytes) */
+		CopyMemory(&packetCapsResponse->pktQuarEncResponse.nonce, &buffer[52], 16); /* Nonce */
+		offset = 68;
+
+		Pointer = *((UINT32*) &buffer[offset]); /* Ptr */
+		offset += 4;
+
+		if (Pointer == 0x0002000C)
+		{
+			/* Not sure exactly what this is */
+			offset += 4; /* 0x00000001 (4 bytes) */
+			offset += 4; /* 0x00000001 (4 bytes) */
+			offset += 4; /* 0x00000000 (4 bytes) */
+			offset += 4; /* 0x00000001 (4 bytes) */
+		}
+
+		if (packetCapsResponse->pktQuarEncResponse.certChainLen)
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020014 */
+			offset += 4;
+
+			offset += 4; /* MaxCount (4 bytes) */
+			offset += 4; /* Offset (4 bytes) */
+			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
+			offset += 4;
+
+			/*
+			 * CertChainData is a wide character string, and the count is
+			 * given in characters excluding the null terminator, therefore:
+			 * size = ((count + 1) * 2)
+			 */
+			offset += ((count + 1) * 2); /* CertChainData */
+		}
+		else
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes) */
+			offset += 4;
+		}
+
+		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
+		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
+		packetCapsResponse->pktQuarEncResponse.versionCaps = versionCaps;
+
+		versionCaps->tsgHeader.ComponentId = *((UINT16*) &buffer[offset]); /* ComponentId */
+		versionCaps->tsgHeader.PacketId = *((UINT16*) &buffer[offset + 2]); /* PacketId */
+		offset += 4;
+
+		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
+		{
+			printf("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
+					versionCaps->tsgHeader.ComponentId);
+			return FALSE;
+		}
+
+		Pointer = *((UINT32*) &buffer[offset]); /* TsgCapsPtr */
+		versionCaps->numCapabilities = *((UINT32*) &buffer[offset + 4]); /* NumCapabilities */
+		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 8]); /* MajorVersion */
+		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 10]); /* MinorVersion */
+		versionCaps->quarantineCapabilities = *((UINT16*) &buffer[offset + 12]); /* QuarantineCapabilities */
+		offset += 14;
+
+		/* 4-byte alignment */
+		rpc_offset_align(&offset, 4);
+
+		tsgCaps = (PTSG_PACKET_CAPABILITIES) malloc(sizeof(TSG_PACKET_CAPABILITIES));
+		ZeroMemory(tsgCaps, sizeof(TSG_PACKET_CAPABILITIES));
+		versionCaps->tsgCaps = tsgCaps;
+
+		offset += 4; /* MaxCount (4 bytes) */
+		tsgCaps->capabilityType = *((UINT32*) &buffer[offset]); /* CapabilityType */
+		SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
+		offset += 8;
+
+		if ((SwitchValue != TSG_CAPABILITY_TYPE_NAP) ||
+				(tsgCaps->capabilityType != TSG_CAPABILITY_TYPE_NAP))
+		{
+			printf("Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP\n",
+					tsgCaps->capabilityType);
+			return FALSE;
+		}
+
+		tsgCaps->tsgPacket.tsgCapNap.capabilities = *((UINT32*) &buffer[offset]); /* Capabilities */
+		offset += 4;
+
+		/* ??? (16 bytes): all zeros */
+		offset += 16;
+
+		/* TunnelContext (20 bytes) */
+		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType */
+		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
+		offset += 20;
+
+		/* TODO: trailing bytes */
+
+#ifdef WITH_DEBUG_TSG
+		printf("TSG TunnelContext:\n");
+		freerdp_hexdump((void*) &tsg->TunnelContext, 20);
+		printf("\n");
+#endif
+
+		free(tsgCaps);
+		free(versionCaps);
+		free(packetCapsResponse);
+	}
+	else if ((packet->packetId == TSG_PACKET_TYPE_QUARENC_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_QUARENC_RESPONSE))
+	{
+		packetQuarEncResponse = (PTSG_PACKET_QUARENC_RESPONSE) malloc(sizeof(TSG_PACKET_QUARENC_RESPONSE));
+		ZeroMemory(packetQuarEncResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
+		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
+
+		/* PacketQuarResponsePtr (4 bytes) */
+		packetQuarEncResponse->flags = *((UINT32*) &buffer[40]); /* Flags */
+		packetQuarEncResponse->certChainLen = *((UINT32*) &buffer[44]); /* CertChainLength */
+		/* CertChainDataPtr (4 bytes) */
+		CopyMemory(&packetQuarEncResponse->nonce, &buffer[52], 16); /* Nonce */
+		offset = 68;
+
+		if (packetQuarEncResponse->certChainLen > 0)
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x0002000C */
+			offset += 4;
+
+			offset += 4; /* MaxCount (4 bytes) */
+			offset += 4; /* Offset (4 bytes) */
+			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
+			offset += 4;
+            
+			/*
+			 * CertChainData is a wide character string, and the count is
+			 * given in characters excluding the null terminator, therefore:
+			 * size = ((count + 1) * 2)
+			 */
+			offset += ((count + 1) * 2); /* CertChainData */
+		}
+		else
+		{
+			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
+			offset += 4;
+		}
+        
+		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
+		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
+		packetQuarEncResponse->versionCaps = versionCaps;
+
+		versionCaps->tsgHeader.ComponentId = *((UINT16*) &buffer[offset]); /* ComponentId */
+		versionCaps->tsgHeader.PacketId = *((UINT16*) &buffer[offset + 2]); /* PacketId */
+		offset += 4;
+
+		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
+		{
+			printf("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
+				versionCaps->tsgHeader.ComponentId);
+			return FALSE;
+		}
+
+		Pointer = *((UINT32*) &buffer[offset]); /* TsgCapsPtr */
+		versionCaps->numCapabilities = *((UINT32*) &buffer[offset + 4]); /* NumCapabilities */
+		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 8]); /* MajorVersion */
+		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 10]); /* MinorVersion */
+		versionCaps->quarantineCapabilities = *((UINT16*) &buffer[offset + 12]); /* QuarantineCapabilities */
+		offset += 14;
+
+		/* 4-byte alignment */
+		rpc_offset_align(&offset, 4);
+
+		/* Not sure exactly what this is */
+		offset += 4; /* 0x00000001 (4 bytes) */
+		offset += 4; /* 0x00000001 (4 bytes) */
+		offset += 4; /* 0x00000001 (4 bytes) */
+		offset += 4; /* 0x00000002 (4 bytes) */
+
+		/* TunnelContext (20 bytes) */
+		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType */
+		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
+		offset += 20;
+
+		/* TODO: trailing bytes */
+
+#ifdef WITH_DEBUG_TSG
+		printf("TSG TunnelContext:\n");
+		freerdp_hexdump((void*) &tsg->TunnelContext, 20);
+		printf("\n");
+#endif
+
+		free(versionCaps);
+		free(packetQuarEncResponse);
+	}
+	else
+	{
+		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
+				"or TSG_PACKET_TYPE_QUARENC_RESPONSE\n", packet->packetId);
 		return FALSE;
 	}
 
-	DEBUG_TSG("rpc_connect success");
+	free(packet);
 
+	return TRUE;
+}
+
+BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
+		PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId)
+{
 	/**
 	 * OpNum = 1
 	 *
@@ -483,40 +484,169 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateTunnel");
-	status = rpc_tsg_write(rpc, tsg_packet1, sizeof(tsg_packet1), 1);
 
-	if (status <= 0)
+	if (!TsProxyCreateTunnelWriteRequest(tsg))
 	{
-		printf("rpc_write opnum=1 failed!\n");
+		printf("TsProxyCreateTunnel: error writing request\n");
 		return FALSE;
 	}
 
-	length = 0x8FFF;
-	data = malloc(length);
-	if (data == NULL)
+	if (!TsProxyCreateTunnelReadResponse(tsg))
 	{
-		printf("rpc_recv - memory allocation error\n") ;
-		return FALSE ;
-	}
-	status = rpc_read(rpc, data, length);
-
-	if (status <= 0)
-	{
-		printf("rpc_recv failed!\n");
-		free(data) ;
+		printf("TsProxyCreateTunnel: error reading response\n");
 		return FALSE;
 	}
 
-	memcpy(tsg->TunnelContext, data + (status - 24), 16);
+	return TRUE;
+}
 
-#ifdef WITH_DEBUG_TSG
-	printf("TSG TunnelContext:\n");
-	freerdp_hexdump(tsg->TunnelContext, 16);
-	printf("\n");
-#endif
+BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg)
+{
+	UINT32 pad;
+	int status;
+	BYTE* buffer;
+	UINT32 count;
+	UINT32 length;
+	UINT32 offset;
+	rdpRpc* rpc = tsg->rpc;
 
-	memcpy(tsg_packet2 + 4, tsg->TunnelContext, 16);
+	count = _wcslen(tsg->MachineName) + 1;
 
+	offset = 64 + (count * 2);
+	rpc_offset_align(&offset, 4);
+	offset += 4;
+
+	length = offset;
+	buffer = (BYTE*) malloc(length);
+
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
+
+	/* 4-byte alignment */
+
+	*((UINT32*) &buffer[20]) = TSG_PACKET_TYPE_QUARREQUEST; /* PacketId */
+	*((UINT32*) &buffer[24]) = TSG_PACKET_TYPE_QUARREQUEST; /* SwitchValue */
+
+	*((UINT32*) &buffer[28]) = 0x00020000; /* PacketQuarRequestPtr */
+
+	*((UINT32*) &buffer[32]) = 0x00000000; /* Flags */
+
+	*((UINT32*) &buffer[36]) = 0x00020004; /* MachineNamePtr */
+
+	*((UINT32*) &buffer[40]) = count; /* NameLength */
+
+	*((UINT32*) &buffer[44]) = 0x00020008; /* DataPtr */
+	*((UINT32*) &buffer[48]) = 0; /* DataLength */
+
+	/* MachineName */
+	*((UINT32*) &buffer[52]) = count; /* MaxCount */
+	*((UINT32*) &buffer[56]) = 0; /* Offset */
+	*((UINT32*) &buffer[60]) = count; /* ActualCount */
+	CopyMemory(&buffer[64], tsg->MachineName, count * 2); /* Array */
+	offset = 64 + (count * 2);
+
+	/* 4-byte alignment */
+	pad = rpc_offset_align(&offset, 4);
+	ZeroMemory(&buffer[offset - pad], pad);
+
+	*((UINT32*) &buffer[offset]) = 0x00000000; /* MaxCount */
+	offset += 4;
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 Pointer;
+	UINT32 SizeValue;
+	UINT32 SwitchValue;
+	PTSG_PACKET packet;
+	rdpRpc* rpc = tsg->rpc;
+	PTSG_PACKET_RESPONSE packetResponse;
+
+	status = rpc_recv_pdu(rpc);
+
+	if (status <= 0)
+		return FALSE;
+
+	length = status;
+	buffer = rpc->buffer;
+
+	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
+	ZeroMemory(packet, sizeof(TSG_PACKET));
+
+	packet->packetId = *((UINT32*) &buffer[28]); /* PacketId */
+	SwitchValue = *((UINT32*) &buffer[32]); /* SwitchValue */
+
+	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) ||
+			(SwitchValue != TSG_PACKET_TYPE_RESPONSE))
+	{
+		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n", packet->packetId);
+		return FALSE;
+	}
+
+	packetResponse = (PTSG_PACKET_RESPONSE) malloc(sizeof(TSG_PACKET_RESPONSE));
+	ZeroMemory(packetResponse, sizeof(TSG_PACKET_RESPONSE));
+	packet->tsgPacket.packetResponse = packetResponse;
+
+	Pointer = *((UINT32*) &buffer[36]); /* PacketResponsePtr */
+	packetResponse->flags = *((UINT32*) &buffer[40]); /* Flags */
+
+	if (packetResponse->flags != TSG_PACKET_TYPE_QUARREQUEST)
+	{
+		printf("Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST\n",
+				packetResponse->flags);
+		return FALSE;
+	}
+
+	/* Reserved (4 bytes) */
+	Pointer = *((UINT32*) &buffer[48]); /* ResponseDataPtr */
+	packetResponse->responseDataLen = *((UINT32*) &buffer[52]); /* ResponseDataLength */
+
+	packetResponse->redirectionFlags.enableAllRedirections = *((UINT32*) &buffer[56]); /* EnableAllRedirections */
+	packetResponse->redirectionFlags.disableAllRedirections = *((UINT32*) &buffer[60]); /* DisableAllRedirections */
+	packetResponse->redirectionFlags.driveRedirectionDisabled = *((UINT32*) &buffer[64]); /* DriveRedirectionDisabled */
+	packetResponse->redirectionFlags.printerRedirectionDisabled = *((UINT32*) &buffer[68]); /* PrinterRedirectionDisabled */
+	packetResponse->redirectionFlags.portRedirectionDisabled = *((UINT32*) &buffer[72]); /* PortRedirectionDisabled */
+	packetResponse->redirectionFlags.reserved = *((UINT32*) &buffer[76]); /* Reserved */
+	packetResponse->redirectionFlags.clipboardRedirectionDisabled = *((UINT32*) &buffer[80]); /* ClipboardRedirectionDisabled */
+	packetResponse->redirectionFlags.pnpRedirectionDisabled = *((UINT32*) &buffer[84]); /* PnpRedirectionDisabled */
+	offset = 88;
+
+	SizeValue = *((UINT32*) &buffer[offset]);
+	offset += 4;
+
+	if (SizeValue != packetResponse->responseDataLen)
+	{
+		printf("Unexpected size value: %d, expected: %d\n", SizeValue, packetResponse->responseDataLen);
+		return FALSE;
+	}
+
+	offset += SizeValue; /* ResponseData */
+
+	/* TODO: trailing bytes */
+
+	free(packetResponse);
+	free(packet);
+
+	return TRUE;
+}
+
+BOOL TsProxyAuthorizeTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+		PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
+{
 	/**
 	 * OpNum = 2
 	 *
@@ -529,26 +659,67 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyAuthorizeTunnel");
-	status = rpc_tsg_write(rpc, tsg_packet2, sizeof(tsg_packet2), 2);
 
-	if (status <= 0)
+	if (!TsProxyAuthorizeTunnelWriteRequest(tsg))
 	{
-		printf("rpc_write opnum=2 failed!\n");
-		free(data) ;
+		printf("TsProxyAuthorizeTunnel: error writing request\n");
 		return FALSE;
 	}
 
-	status = rpc_read(rpc, data, length);
-
-	if (status <= 0)
+	if (!TsProxyAuthorizeTunnelReadResponse(tsg))
 	{
-		printf("rpc_recv failed!\n");
-		free(data) ;
+		printf("TsProxyAuthorizeTunnel: error reading response\n");
 		return FALSE;
 	}
 
-	memcpy(tsg_packet3 + 4, tsg->TunnelContext, 16);
+	return TRUE;
+}
 
+BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	length = 40;
+	buffer = (BYTE*) malloc(length);
+
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
+
+	*((UINT32*) &buffer[20]) = TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST; /* ProcId */
+
+	/* 4-byte alignment */
+
+	*((UINT32*) &buffer[24]) = TSG_PACKET_TYPE_MSGREQUEST_PACKET; /* PacketId */
+	*((UINT32*) &buffer[28]) = TSG_PACKET_TYPE_MSGREQUEST_PACKET; /* SwitchValue */
+
+	*((UINT32*) &buffer[32]) = 0x00020000; /* PacketMsgRequestPtr */
+
+	*((UINT32*) &buffer[36]) = 0x00000001; /* MaxMessagesPerBatch */
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg)
+{
+	/* ??? */
+
+	return TRUE;
+}
+
+BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+		UINT32 procId, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
+{
 	/**
 	 * OpNum = 3
 	 *
@@ -561,31 +732,108 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
-	status = rpc_tsg_write(rpc, tsg_packet3, sizeof(tsg_packet3), 3);
 
-	if (status <= 0)
+	if (!TsProxyMakeTunnelCallWriteRequest(tsg))
 	{
-		printf("rpc_write opnum=3 failed!\n");
-		free(data) ;
+		printf("TsProxyMakeTunnelCall: error writing request\n");
 		return FALSE;
 	}
-	status = -1;
 
-	dest_addr_unic_len = freerdp_AsciiToUnicodeAlloc(hostname, &dest_addr_unic, 0) * 2;
+	if (!TsProxyMakeTunnelCallReadResponse(tsg))
+	{
+		printf("TsProxyMakeTunnelCall: error reading response\n");
+		return FALSE;
+	}
 
-	memcpy(tsg_packet4 + 4, tsg->TunnelContext, 16);
-	memcpy(tsg_packet4 + 38, &port, 2);
+	return TRUE;
+}
 
-	s_p4 = stream_new(60 + dest_addr_unic_len + 2);
-	stream_write(s_p4, tsg_packet4, 48);
-	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* MaximumCount */
-	stream_write_UINT32(s_p4, 0x00000000); /* Offset */
-	stream_write_UINT32(s_p4, (dest_addr_unic_len / 2) + 1); /* ActualCount */
-	stream_write(s_p4, dest_addr_unic, dest_addr_unic_len);
-	stream_write_UINT16(s_p4, 0x0000); /* unicode zero to terminate hostname string */
+BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg)
+{
+	int status;
+	UINT32 count;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
 
-	free(dest_addr_unic);
+	count = _wcslen(tsg->Hostname) + 1;
 
+#ifdef WITH_DEBUG_TSG
+	printf("ResourceName:\n");
+	freerdp_hexdump((BYTE*) tsg->Hostname, (count - 1) * 2);
+	printf("\n");
+#endif
+
+	length = 60 + (count * 2);
+
+	buffer = (BYTE*) malloc(length);
+
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
+
+	/* TSENDPOINTINFO */
+
+	*((UINT32*) &buffer[20]) = 0x00020000; /* ResourceNamePtr */
+	*((UINT32*) &buffer[24]) = 0x00000001; /* NumResourceNames */
+	*((UINT32*) &buffer[28]) = 0x00000000; /* AlternateResourceNamesPtr */
+	*((UINT32*) &buffer[32]) = 0x00000000; /* NumAlternateResourceNames */
+
+	*((UINT16*) &buffer[36]) = 0x0003; /* ??? */
+
+	*((UINT16*) &buffer[38]) = tsg->Port; /* Port */
+
+	*((UINT32*) &buffer[40]) = 0x00000001; /* ??? */
+
+	*((UINT32*) &buffer[44]) = 0x00020004; /* ResourceNamePtr */
+	*((UINT32*) &buffer[48]) = count; /* MaxCount */
+	*((UINT32*) &buffer[52]) = 0; /* Offset */
+	*((UINT32*) &buffer[56]) = count; /* ActualCount */
+	CopyMemory(&buffer[60], tsg->Hostname, count * 2); /* Array */
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	status = rpc_recv_pdu(rpc);
+
+	if (status < 0)
+		return FALSE;
+
+	length = status;
+	buffer = rpc->buffer;
+
+	/* ChannelContext (20 bytes) */
+	CopyMemory(&tsg->ChannelContext.ContextType, &rpc->buffer[24], 4); /* ContextType (4 bytes) */
+	CopyMemory(tsg->ChannelContext.ContextUuid, &rpc->buffer[28], 16); /* ContextUuid (16 bytes) */
+
+	/* TODO: trailing bytes */
+
+#ifdef WITH_DEBUG_TSG
+	printf("ChannelContext:\n");
+	freerdp_hexdump((void*) &tsg->ChannelContext, 20);
+	printf("\n");
+#endif
+
+	return TRUE;
+}
+
+BOOL TsProxyCreateChannel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext, PTSENDPOINTINFO tsEndPointInfo,
+		PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, UINT32* channelId)
+{
 	/**
 	 * OpNum = 4
 	 *
@@ -598,35 +846,80 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 */
 
 	DEBUG_TSG("TsProxyCreateChannel");
-	status = rpc_tsg_write(rpc, s_p4->data, s_p4->size, 4);
+
+	if (!TsProxyCreateChannelWriteRequest(tsg))
+	{
+		printf("TsProxyCreateChannel: error writing request\n");
+		return FALSE;
+	}
+
+	if (!TsProxyCreateChannelReadResponse(tsg))
+	{
+		printf("TsProxyCreateChannel: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
+{
+	return 0;
+}
+
+HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
+{
+	return 0;
+}
+
+BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	length = 20;
+
+	buffer = (BYTE*) malloc(length);
+
+	/* ChannelContext */
+	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
+
+	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
-	{
-		printf("rpc_write opnum=4 failed!\n");
-		stream_free(s_p4);
-		free(data);
 		return FALSE;
-	}
 
-	status = rpc_read(rpc, data, length);
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg)
+{
+#if 0
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	status = rpc_recv_pdu(rpc);
 
 	if (status < 0)
-	{
-		printf("rpc_recv failed!\n");
-		stream_free(s_p4);
-		free(data);
 		return FALSE;
-	}
 
-	memcpy(tsg->ChannelContext, data + 4, 16);
-
-#ifdef WITH_DEBUG_TSG
-	printf("TSG ChannelContext:\n");
-	freerdp_hexdump(tsg->ChannelContext, 16);
-	printf("\n");
+	length = status;
+	buffer = rpc->buffer;
 #endif
 
-	memcpy(tsg_packet5 + 4, tsg->ChannelContext, 16);
+	return TRUE;
+}
+
+BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
+{
+	rdpTsg* tsg;
 
 	/**
 	 * OpNum = 8
@@ -636,19 +929,183 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 * );
 	 */
 
-	DEBUG_TSG("TsProxySetupReceivePipe");
-	status = rpc_tsg_write(rpc, tsg_packet5, sizeof(tsg_packet5), 8);
+	tsg = (rdpTsg*) IDL_handle;
 
-	if (status <= 0)
+	DEBUG_TSG("TsProxySetupReceivePipe");
+
+	if (!TsProxySetupReceivePipeWriteRequest(tsg))
 	{
-		printf("rpc_write opnum=8 failed!\n");
-		stream_free(s_p4);
-		free(data);
+		printf("TsProxySetupReceivePipe: error writing request\n");
 		return FALSE;
 	}
 
-	stream_free(s_p4);
-	free(data);
+	if (!TsProxySetupReceivePipeReadResponse(tsg))
+	{
+		printf("TsProxySetupReceivePipe: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+{
+	rdpRpc* rpc = tsg->rpc;
+	rdpSettings* settings = rpc->settings;
+
+	tsg->Port = port;
+	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->Hostname, 0);
+	freerdp_AsciiToUnicodeAlloc(settings->ComputerName, &tsg->MachineName, 0);
+
+	if (!rpc_connect(rpc))
+	{
+		printf("rpc_connect failed!\n");
+		return FALSE;
+	}
+
+	DEBUG_TSG("rpc_connect success");
+
+	tsg->state = TSG_STATE_INITIAL;
+
+	/*
+	 *     Sequential processing rules for connection process:
+	 *
+	 *  1. The RDG client MUST call TsProxyCreateTunnel to create a tunnel to the gateway.
+	 *
+	 *  2. If the call fails, the RDG client MUST end the protocol and MUST NOT perform the following steps.
+	 *
+	 *  3. The RDG client MUST initialize the following ADM elements using TsProxyCreateTunnel out parameters:
+	 *
+	 * 	a. The RDG client MUST initialize the ADM element Tunnel id with the tunnelId out parameter.
+	 *
+	 * 	b. The RDG client MUST initialize the ADM element Tunnel Context Handle with the tunnelContext
+	 * 	   out parameter. This Tunnel Context Handle is used for subsequent tunnel-related calls.
+	 *
+	 * 	c. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_CAPS_RESPONSE, where TSGPacketResponse is an out parameter,
+	 *
+	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
+	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.nonce.
+	 *
+	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
+	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
+	 *
+	 * 	d. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_QUARENC_RESPONSE, where TSGPacketResponse is an out parameter,
+	 *
+	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
+	 * 		    TSGPacket.packetQuarEncResponse->nonce.
+	 *
+	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
+	 * 		    TSGPacket.packetQuarEncResponse->versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
+	 *
+	 *  4. The RDG client MUST get its statement of health (SoH) by calling NAP EC API.<49> Details of the SoH format are
+	 *     specified in [TNC-IF-TNCCSPBSoH]. If the SoH is received successfully, then the RDG client MUST encrypt the SoH
+	 *     using the Triple Data Encryption Standard algorithm and encode it using one of PKCS #7 or X.509 encoding types,
+	 *     whichever is supported by the RDG server certificate context available in the ADM element CertChainData.
+	 *
+	 *  5. The RDG client MUST copy the ADM element Nonce to TSGPacket.packetQuarRequest->data and append the encrypted SoH
+	 *     message into TSGPacket.packetQuarRequest->data. The RDG client MUST set the TSGPacket.packetQuarRequest->dataLen
+	 *     to the sum of the number of bytes in the encrypted SoH message and number of bytes in the ADM element Nonce, where
+	 *     TSGpacket is an input parameter of TsProxyAuthorizeTunnel. The format of the packetQuarRequest field is specified
+	 *     in section 2.2.9.2.1.4.
+	 */
+
+	if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+	{
+		tsg->state = TSG_STATE_FINAL;
+		return FALSE;
+	}
+
+	tsg->state = TSG_STATE_CONNECTED;
+
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 *  6. The RDG client MUST call TsProxyAuthorizeTunnel to authorize the tunnel.
+	 *
+	 *  7. If the call succeeds or fails with error E_PROXY_QUARANTINE_ACCESSDENIED, follow the steps later in this section.
+	 *     Else, the RDG client MUST end the protocol and MUST NOT follow the steps later in this section.
+	 *
+	 *  8. If the ADM element Negotiated Capabilities contains TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
+	 *     Timeout Value SHOULD be initialized with first 4 bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData
+	 *     and the Statement of health response variable should be initialized with the remaining bytes of responseData, where
+	 *     TSGPacketResponse is an out parameter of TsProxyAuthorizeTunnel. The format of the responseData member is specified
+	 *     in section 2.2.9.2.1.5.1.
+	 *
+	 *  9. If the ADM element Negotiated Capabilities doesn't contain TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
+	 *     Timeout Value SHOULD be initialized to zero and the Statement of health response variable should be initialized with all
+	 *     the bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData.
+	 *
+	 * 10. Verify the signature of the Statement of health response variable using SHA-1 hash and decode it using the RDG server
+	 *     certificate context available in the ADM element CertChainData using one of PKCS #7 or X.509 encoding types, whichever
+	 *     is supported by the RDG Server certificate. The SoHR is processed by calling the NAP EC API
+	 *     INapEnforcementClientConnection::GetSoHResponse.
+	 *
+	 * 11. If the call TsProxyAuthorizeTunnel fails with error E_PROXY_QUARANTINE_ACCESSDENIED, the RDG client MUST end the protocol
+	 *     and MUST NOT follow the steps later in this section.
+	 *
+	 * 12. If the ADM element Idle Timeout Value is nonzero, the RDG client SHOULD start the idle time processing as specified in
+	 *     section 3.6.2.1.1 and SHOULD end the protocol when the connection has been idle for the specified Idle Timeout Value.
+	 */
+
+	if (!TsProxyAuthorizeTunnel(tsg, NULL, NULL, NULL))
+	{
+		tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
+		return FALSE;
+	}
+
+	tsg->state = TSG_STATE_AUTHORIZED;
+
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 * 13. If the ADM element Negotiated Capabilities contains TSG_MESSAGING_CAP_SERVICE_MSG, a TsProxyMakeTunnelCall call MAY be
+	 *     made by the client, with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter, to receive messages from the RDG server.
+	 *
+	 */
+
+	if (!TsProxyMakeTunnelCall(tsg, NULL, 0, NULL, NULL))
+		return FALSE;
+
+	/**
+	 *     Sequential processing rules for connection process (continued):
+	 *
+	 * 14. The RDG client MUST call TsProxyCreateChannel to create a channel to the target server name as specified by the ADM
+	 *     element Target Server Name (section 3.5.1).
+	 *
+	 * 15. If the call fails, the RDG client MUST end the protocol and MUST not follow the below steps.
+	 *
+	 * 16. The RDG client MUST initialize the following ADM elements using TsProxyCreateChannel out parameters.
+	 *
+	 * 	a. The RDG client MUST initialize the ADM element Channel id with the channelId out parameter.
+	 *
+	 * 	b. The RDG client MUST initialize the ADM element Channel Context Handle with the channelContext
+	 * 	   out parameter. This Channel Context Handle is used for subsequent channel-related calls.
+	 */
+
+	if (!TsProxyCreateChannel(tsg, NULL, NULL, NULL, NULL))
+		return FALSE;
+
+	tsg->state = TSG_STATE_CHANNEL_CREATED;
+
+	/**
+	 *  Sequential processing rules for data transfer:
+	 *
+	 *  1. The RDG client MUST call TsProxySetupReceivePipe to receive data from the target server, via the RDG server.
+	 *
+	 *  2. The RDG client MUST call TsProxySendToServer to send data to the target server via the RDG server, and if
+	 *     the Idle Timeout Timer is started, the RDG client SHOULD reset the Idle Timeout Timer.
+	 *
+	 *  3. If TsProxyMakeTunnelCall is returned, the RDG client MUST process the message and MAY call TsProxyMakeTunnelCall
+	 *     again with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter.
+	 *
+	 *  4. The RDG client MUST end the protocol after it receives the final response to TsProxySetupReceivePipe.
+	 *     The final response format is specified in section 2.2.9.4.3.
+	 */
+
+	if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
+		return FALSE;
+
+	tsg->state = TSG_STATE_PIPE_CREATED;
 
 	return TRUE;
 }
@@ -656,10 +1113,63 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
+	int CopyLength;
+	rdpRpc* rpc = tsg->rpc;
 
-	status = rpc_read(tsg->rpc, data, length);
+	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);
 
-	return status;
+	if (tsg->PendingPdu)
+	{
+		rpcconn_common_hdr_t* header;
+
+		header = (rpcconn_common_hdr_t*) rpc->buffer;
+
+		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+
+		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		tsg->BytesAvailable -= CopyLength;
+		tsg->BytesRead += CopyLength;
+
+		if (tsg->BytesAvailable < 1)
+			tsg->PendingPdu = FALSE;
+
+		return CopyLength;
+	}
+	else
+	{
+		rpcconn_response_hdr_t* header;
+
+		status = rpc_recv_pdu(rpc);
+		
+		header = (rpcconn_response_hdr_t*) rpc->buffer;
+
+		if (!rpc_get_stub_data_info(rpc, rpc->buffer, &tsg->StubOffset, &tsg->StubLength))
+		{
+			printf("tsg_read error: expected stub\n");
+			return -1;
+		}
+
+		if (header->alloc_hint == 4)
+		{
+			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
+			return tsg_read(tsg, data, length);
+		}
+
+		tsg->PendingPdu = TRUE;
+		tsg->BytesAvailable = tsg->StubLength;
+		tsg->BytesRead = 0;
+
+		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+
+		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		tsg->BytesAvailable -= CopyLength;
+		tsg->BytesRead += CopyLength;
+
+		if (tsg->BytesAvailable < 1)
+			tsg->PendingPdu = FALSE;
+
+		return CopyLength;
+	}
 }
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
@@ -671,13 +1181,15 @@ rdpTsg* tsg_new(rdpTransport* transport)
 {
 	rdpTsg* tsg;
 
-	tsg = xnew(rdpTsg);
+	tsg = (rdpTsg*) malloc(sizeof(rdpTsg));
+	ZeroMemory(tsg, sizeof(rdpTsg));
 
 	if (tsg != NULL)
 	{
 		tsg->transport = transport;
 		tsg->settings = transport->settings;
 		tsg->rpc = rpc_new(tsg->transport);
+		tsg->PendingPdu = FALSE;
 	}
 
 	return tsg;
