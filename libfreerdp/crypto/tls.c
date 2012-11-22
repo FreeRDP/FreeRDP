@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
@@ -616,10 +618,12 @@ rdpTls* tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 
-	tls = (rdpTls*) xzalloc(sizeof(rdpTls));
+	tls = (rdpTls*) malloc(sizeof(rdpTls));
 
 	if (tls != NULL)
 	{
+		ZeroMemory(tls, sizeof(rdpTls));
+
 		SSL_load_error_strings();
 		SSL_library_init();
 

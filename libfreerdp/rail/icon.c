@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/hexdump.h>
@@ -76,21 +78,25 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 {
 	rdpIconCache* cache;
 
-	cache = (rdpIconCache*) xzalloc(sizeof(rdpIconCache));
+	cache = (rdpIconCache*) malloc(sizeof(rdpIconCache));
 
 	if (cache != NULL)
 	{
 		int i;
 
+		ZeroMemory(cache, sizeof(rdpIconCache));
+
 		cache->rail = rail;
 		cache->numCaches = (BYTE) rail->settings->RemoteAppNumIconCacheEntries;
 		cache->numCacheEntries = rail->settings->RemoteAppNumIconCacheEntries;
 
-		cache->caches = xzalloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));
+		cache->caches = malloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));
+		ZeroMemory(cache->caches, cache->numCaches * sizeof(WINDOW_ICON_CACHE));
 
 		for (i = 0; i < cache->numCaches; i++)
 		{
-			cache->caches[i].entries = xzalloc(cache->numCacheEntries * sizeof(rdpIconCache));
+			cache->caches[i].entries = malloc(cache->numCacheEntries * sizeof(rdpIconCache));
+			ZeroMemory(cache->caches[i].entries, cache->numCacheEntries * sizeof(rdpIconCache));
 		}
 	}
 

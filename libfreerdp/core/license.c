@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "redirection.h"
 #include "certificate.h"
 
@@ -899,10 +901,12 @@ rdpLicense* license_new(rdpRdp* rdp)
 {
 	rdpLicense* license;
 
-	license = (rdpLicense*) xzalloc(sizeof(rdpLicense));
+	license = (rdpLicense*) malloc(sizeof(rdpLicense));
 
 	if (license != NULL)
 	{
+		ZeroMemory(license, sizeof(rdpLicense));
+
 		license->rdp = rdp;
 		license->state = LICENSE_STATE_AWAIT;
 		//license->certificate = certificate_new(rdp);

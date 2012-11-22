@@ -21,7 +21,10 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "certificate.h"
+
 #include <freerdp/utils/tcp.h>
 
 #include "peer.h"
@@ -364,7 +367,9 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 
-	client->context = (rdpContext*) xzalloc(client->context_size);
+	client->context = (rdpContext*) malloc(client->context_size);
+	ZeroMemory(client->context, client->context_size);
+
 	client->context->rdp = rdp;
 	client->context->peer = client;
 

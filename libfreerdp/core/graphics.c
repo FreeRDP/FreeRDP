@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 
 #include <freerdp/graphics.h>
@@ -201,23 +203,28 @@ rdpGraphics* graphics_new(rdpContext* context)
 {
 	rdpGraphics* graphics;
 
-	graphics = (rdpGraphics*) xzalloc(sizeof(rdpGraphics));
+	graphics = (rdpGraphics*) malloc(sizeof(rdpGraphics));
 
 	if (graphics != NULL)
 	{
+		ZeroMemory(graphics, sizeof(rdpGraphics));
+
 		graphics->context = context;
 
-		graphics->Bitmap_Prototype = (rdpBitmap*) xzalloc(sizeof(rdpBitmap));
+		graphics->Bitmap_Prototype = (rdpBitmap*) malloc(sizeof(rdpBitmap));
+		ZeroMemory(graphics->Bitmap_Prototype, sizeof(rdpBitmap));
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
 		graphics->Bitmap_Prototype->Free = Bitmap_Free;
 
-		graphics->Pointer_Prototype = (rdpPointer*) xzalloc(sizeof(rdpPointer));
+		graphics->Pointer_Prototype = (rdpPointer*) malloc(sizeof(rdpPointer));
+		ZeroMemory(graphics->Pointer_Prototype, sizeof(rdpPointer));
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
 		graphics->Pointer_Prototype->Free = Pointer_Free;
 
-		graphics->Glyph_Prototype = (rdpGlyph*) xzalloc(sizeof(rdpGlyph));
+		graphics->Glyph_Prototype = (rdpGlyph*) malloc(sizeof(rdpGlyph));
+		ZeroMemory(graphics->Glyph_Prototype, sizeof(rdpGlyph));
 		graphics->Glyph_Prototype->size = sizeof(rdpGlyph);
 		graphics->Glyph_Prototype->New = Glyph_New;
 		graphics->Glyph_Prototype->Free = Glyph_Free;

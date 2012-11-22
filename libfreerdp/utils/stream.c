@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
@@ -56,7 +58,8 @@ STREAM* stream_new(int size)
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (BYTE*) xzalloc(size);
+			stream->data = (BYTE*) malloc(size);
+			ZeroMemory(stream->data, size);
 			stream->p = stream->data;
 			stream->size = size;
 		}

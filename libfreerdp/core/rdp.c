@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "rdp.h"
 
 #include "info.h"
@@ -914,10 +916,12 @@ rdpRdp* rdp_new(freerdp* instance)
 {
 	rdpRdp* rdp;
 
-	rdp = (rdpRdp*) xzalloc(sizeof(rdpRdp));
+	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
 
 	if (rdp != NULL)
 	{
+		ZeroMemory(rdp, sizeof(rdpRdp));
+
 		rdp->instance = instance;
 		rdp->settings = freerdp_settings_new((void*) instance);
 

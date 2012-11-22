@@ -29,6 +29,8 @@
 #include "connection.h"
 #include "extension.h"
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/errorcodes.h>
 #include <freerdp/utils/memory.h>
@@ -233,7 +235,9 @@ void freerdp_context_new(freerdp* instance)
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
-	instance->context = (rdpContext*) xzalloc(instance->context_size);
+	instance->context = (rdpContext*) malloc(instance->context_size);
+	ZeroMemory(instance->context, instance->context_size);
+
 	instance->context->graphics = graphics_new(instance->context);
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
@@ -285,7 +289,8 @@ freerdp* freerdp_new()
 {
 	freerdp* instance;
 
-	instance = (freerdp*) xzalloc(sizeof(freerdp));
+	instance = (freerdp*) malloc(sizeof(freerdp));
+	ZeroMemory(instance, sizeof(freerdp));
 
 	if (instance != NULL)
 	{

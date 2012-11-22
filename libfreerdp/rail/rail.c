@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/memory.h>
 
@@ -62,7 +64,9 @@ static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, W
 	if (!window)
 		return ;
 
-	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
+	icon = (rdpIcon*) malloc(sizeof(rdpIcon));
+	ZeroMemory(icon, sizeof(rdpIcon));
+
 	icon->entry = window_icon->iconInfo;
 	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 
@@ -141,14 +145,18 @@ rdpRail* rail_new(rdpSettings* settings)
 {
 	rdpRail* rail;
 
-	rail = (rdpRail*) xzalloc(sizeof(rdpRail));
+	rail = (rdpRail*) malloc(sizeof(rdpRail));
 
 	if (rail != NULL)
 	{
+		ZeroMemory(rail, sizeof(rdpRail));
+
 		rail->settings = settings;
 		rail->cache = icon_cache_new(rail);
 		rail->list = window_list_new(rail);
-		rail->clrconv = (CLRCONV*) xzalloc(sizeof(CLRCONV));
+
+		rail->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+		ZeroMemory(rail->clrconv, sizeof(CLRCONV));
 	}
 
 	return rail;

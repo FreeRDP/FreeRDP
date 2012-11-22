@@ -244,10 +244,12 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
+		ZeroMemory(tcp, sizeof(rdpTcp));
+
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}

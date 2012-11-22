@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/input.h>
 
 #include "input.h"
@@ -423,11 +425,11 @@ rdpInput* input_new(rdpRdp* rdp)
 {
 	rdpInput* input;
 
-	input = (rdpInput*) xzalloc(sizeof(rdpInput));
+	input = (rdpInput*) malloc(sizeof(rdpInput));
 
 	if (input != NULL)
 	{
-
+		ZeroMemory(input, sizeof(rdpInput));
 	}
 
 	return input;

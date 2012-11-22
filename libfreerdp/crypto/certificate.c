@@ -215,10 +215,12 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 {
 	rdpCertificateData* certdata;
 
-	certdata = (rdpCertificateData*) xzalloc(sizeof(rdpCertificateData));
+	certdata = (rdpCertificateData*) malloc(sizeof(rdpCertificateData));
 
 	if (certdata != NULL)
 	{
+		ZeroMemory(certdata, sizeof(rdpCertificateData));
+
 		certdata->hostname = _strdup(hostname);
 		certdata->fingerprint = _strdup(fingerprint);
 	}
@@ -240,10 +242,12 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 {
 	rdpCertificateStore* certificate_store;
 
-	certificate_store = (rdpCertificateStore*) xzalloc(sizeof(rdpCertificateStore));
+	certificate_store = (rdpCertificateStore*) malloc(sizeof(rdpCertificateStore));
 
 	if (certificate_store != NULL)
 	{
+		ZeroMemory(certificate_store, sizeof(rdpCertificateStore));
+
 		certificate_store->settings = settings;
 		certificate_store_init(certificate_store);
 	}

@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include "gcc.h"
 
 #include "mcs.h"
@@ -814,10 +816,12 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	mcs = (rdpMcs*) xzalloc(sizeof(rdpMcs));
+	mcs = (rdpMcs*) malloc(sizeof(rdpMcs));
 
 	if (mcs != NULL)
 	{
+		ZeroMemory(mcs, sizeof(rdpMcs));
+
 		mcs->transport = transport;
 		mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
 		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
