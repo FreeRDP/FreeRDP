@@ -374,8 +374,14 @@ int transport_write(rdpTransport* transport, STREAM* s)
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 #ifdef _WIN32
-	rfds[*rcount] = transport->tcp->wsa_event;
+	rfds[*rcount] = transport->TcpIn->wsa_event;
 	(*rcount)++;
+
+	if (transport->SplitInputOutput)
+	{
+		rfds[*rcount] = transport->TcpOut->wsa_event;
+		(*rcount)++;
+	}
 #else
 	rfds[*rcount] = (void*)(long)(transport->TcpIn->sockfd);
 	(*rcount)++;
@@ -398,7 +404,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	rdpTransport* transport = *ptransport;
 
 #ifdef _WIN32
-	WSAResetEvent(transport->tcp->wsa_event);
+	WSAResetEvent(transport->TcpIn->wsa_event);
 #endif
 	wait_obj_clear(transport->recv_event);
 

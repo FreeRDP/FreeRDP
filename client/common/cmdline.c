@@ -112,7 +112,7 @@ int freerdp_client_print_version()
 	return 1;
 }
 
-int freerdp_client_print_command_line_help()
+int freerdp_client_print_command_line_help(int argc, char** argv)
 {
 	char* str;
 	int length;
@@ -123,7 +123,7 @@ int freerdp_client_print_command_line_help()
 	printf("See www.freerdp.com for more information\n");
 	printf("\n");
 
-	printf("Usage: xfreerdp [file] [options] [/v:<server>[:port]]\n");
+	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
 	printf("\n");
 
 	printf("Syntax:\n");
@@ -451,7 +451,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{
-		freerdp_client_print_command_line_help();
+		freerdp_client_print_command_line_help(argc, argv);
 		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT_VERSION)

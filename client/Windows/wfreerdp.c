@@ -41,7 +41,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -526,33 +525,6 @@ BOOL wf_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-int wf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	void* entry = NULL;
-	rdpChannels* channels = (rdpChannels*) user_data;
-
-	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
-
-	if (entry)
-	{
-		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
-		{
-			printf("loading channel %s (static)\n", name);
-			return 1;
-		}
-	}
-
-	printf("loading channel %s (plugin)\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
-	return 1;
-}
-
-int wf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
-{
-	return 0;
-}
-
 int wfreerdp_run(freerdp* instance)
 {
 	MSG msg;
@@ -791,7 +763,6 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//while (1)
 	{
 		int status;
-		int arg_parse_result;
 
 		data = (thread_data*) malloc(sizeof(thread_data));
 		ZeroMemory(data, sizeof(thread_data));
@@ -802,24 +773,18 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if (freerdp_detect_new_command_line_syntax(__argc, __argv))
 		{
-			printf("Using new command-line syntax\n");
-
-			status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
-			arg_parse_result = status;
+			status = freerdp_client_parse_command_line_arguments(__argc, __argv, instance->settings);
 
 			freerdp_client_load_addins(instance->context->channels, instance->settings);
 		}
 		else
 		{
-			arg_parse_result = freerdp_parse_args(instance->settings, __argc, __argv,
-				wf_process_plugin_args, instance->context->channels, wf_process_client_args, NULL);
+			freerdp_client_print_command_line_help(__argc, __argv);
 		}
 
-		if (arg_parse_result < 0)
+		if (status < 0)
 		{
-			if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-				printf("failed to parse arguments.\n");
-
+			printf("failed to parse arguments.\n");
 #ifdef _DEBUG
 			system("pause");
 #endif

@@ -562,7 +562,9 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		free(certificate_data);
 	}
 
+#ifndef _WIN32
 	free(common_name);
+#endif
 
 	return verification_status;
 }

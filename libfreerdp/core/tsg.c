@@ -1114,13 +1114,14 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
 	int CopyLength;
-	rpcconn_common_hdr_t* header;
 	rdpRpc* rpc = tsg->rpc;
 
 	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);
 
 	if (tsg->PendingPdu)
 	{
+		rpcconn_common_hdr_t* header;
+
 		header = (rpcconn_common_hdr_t*) rpc->buffer;
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
@@ -1136,8 +1137,11 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	}
 	else
 	{
+		rpcconn_response_hdr_t* header;
+
 		status = rpc_recv_pdu(rpc);
-		rpcconn_response_hdr_t* header = (rpcconn_response_hdr_t*) rpc->buffer;
+		
+		header = (rpcconn_response_hdr_t*) rpc->buffer;
 
 		if (!rpc_get_stub_data_info(rpc, rpc->buffer, &tsg->StubOffset, &tsg->StubLength))
 		{
