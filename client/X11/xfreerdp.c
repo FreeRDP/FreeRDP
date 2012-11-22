@@ -51,7 +51,6 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
-#include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
@@ -470,23 +469,9 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
-BOOL xf_detect_new_command_line_syntax(int argc, char* argv[])
-{
-	int index;
-
-	for (index = 1; index < argc; index++)
-	{
-		if (argv[index][0] == '/')
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
- * It will parse the command line parameters given to xfreerdp (using freerdp_parse_args())
- * and fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
+ * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
  *
  * @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
  * be filled with the appropriate informations.
@@ -512,30 +497,19 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	
-	if (xf_detect_new_command_line_syntax(instance->context->argc,instance->context->argv))
+	if (freerdp_detect_old_command_line_syntax(instance->context->argc,instance->context->argv))
 	{
-		printf("Using new command-line syntax\n");
-
-		status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
-
-		if (status < 0)
-			exit(XF_EXIT_PARSE_ARGUMENTS);
-
-		freerdp_client_load_addins(instance->context->channels, instance->settings);
+		printf("warning: deprecated command-line syntax detected!\n");
+		freerdp_client_print_command_line_help(instance->context->argc,instance->context->argv);
+		exit(XF_EXIT_PARSE_ARGUMENTS);
 	}
-	else
-	{
-		status = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
-				xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi);
-	
-		if (status < 0)
-		{
-			if (status == FREERDP_ARGS_PARSE_FAILURE)
-				fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
 
-			exit(XF_EXIT_PARSE_ARGUMENTS);
-		}
-	}
+	status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+
+	if (status < 0)
+		exit(XF_EXIT_PARSE_ARGUMENTS);
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	settings = instance->settings;
 
@@ -893,6 +867,7 @@ BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	{
 		printf("Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
+
 		if (feof(stdin))
 		{
 			printf("\nError: Could not read answer from stdin.");
@@ -914,109 +889,6 @@ BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	}
 
 	return FALSE;
-}
-
-/** Used to parse xfreerdp-specific commandline parameters.
- *  This function is provided as a parameter to freerdp_parse_args(), that will call it
- *  each time a parameter is not recognized by the library.
- *  @see xf_pre_connect(), where freerdp_parse_args() is called.
- *
- *  @param settings
- *  @param opt
- *  @param val
- *  @param user_data
- *  @return the number of parameters that where taken into account.
- *  0 means no options recognized.
- *  freerdp_parse_args() will use this number to move forward in the parameters parsing.
- */
-int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
-{
-	int argc = 0;
-	xfInfo* xfi = (xfInfo*) user_data;
-
-	if (strcmp("--kbd-list", opt) == 0)
-	{
-		int i;
-		RDP_KEYBOARD_LAYOUT* layouts;
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
-
-		printf("\nKeyboard Layouts\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			free(layouts[i].name);
-		}
-		free(layouts);
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
-
-		printf("\nKeyboard Layout Variants\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			free(layouts[i].name);
-		}
-		free(layouts);
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
-
-		printf("\nKeyboard Input Method Editors (IMEs)\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			free(layouts[i].name);
-		}
-		free(layouts);
-
-		exit(0);
-	}
-	else if (strcmp("--xv-port", opt) == 0)
-	{
-		xv_port = atoi(val);
-		argc = 2;
-	}
-	else if (strcmp("--dbg-x11", opt) == 0)
-	{
-		xfi->debug = TRUE;
-		argc = 1;
-	}
-
-	return argc;
-}
-
-/** Used to load plugins based on the commandline parameters.
- *  This function is provided as a parameter to freerdp_parse_args(), that will call it
- *  each time a plugin name is found on the command line.
- *  This function just calls freerdp_channels_load_plugin() for the given plugin, and always returns 1.
- *  @see xf_pre_connect(), where freerdp_parse_args() is called.
- *
- *  @param settings
- *  @param name
- *  @param plugin_data
- *  @param user_data
- *  @return 1
- */
-int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	void* entry = NULL;
-	rdpChannels* channels = (rdpChannels*) user_data;
-
-	entry = freerdp_channels_client_find_static_entry("VirtualChannelEntry", name);
-
-	if (entry)
-	{
-		if (freerdp_channels_client_load(channels, settings, entry, plugin_data) == 0)
-		{
-			printf("loading channel %s (static)\n", name);
-			return 1;
-		}
-	}
-
-	printf("loading channel %s (plugin)\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
-	return 1;
 }
 
 int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
@@ -1172,7 +1044,8 @@ int xfreerdp_run(freerdp* instance)
 
 	BOOL status = freerdp_connect(instance);
 	/* Connection succeeded. --authonly ? */
-	if (instance->settings->AuthenticationOnly) {
+	if (instance->settings->AuthenticationOnly)
+	{
 		freerdp_disconnect(instance);
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		exit(!status);

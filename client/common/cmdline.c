@@ -106,6 +106,11 @@ BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[])
 	return FALSE;
 }
 
+BOOL freerdp_detect_old_command_line_syntax(int argc, char* argv[])
+{
+	return (!freerdp_detect_new_command_line_syntax(argc, argv));
+}
+
 int freerdp_client_print_version()
 {
 	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
@@ -184,6 +189,28 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
 	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
 	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
+	printf("\n");
+
+	printf("Clipboard Redirection: +clipboard\n");
+	printf("\n");
+
+	printf("Drive Redirection: /a:drive,home,/home\n");
+	printf("Smartcard Redirection: /a:smartcard,<device>\n");
+	printf("Printer Redirection: /a:printer,<device>,<driver>\n");
+	printf("Serial Port Redirection: /a:serial,<device>\n");
+	printf("Parallel Port Redirection: /a:parallel,<device>\n");
+	printf("Printer Redirection: /a:printer,<device>,<driver>\n");
+	printf("\n");
+
+	printf("Audio Input Redirection: /dvc:audin,sys:alsa\n");
+	printf("Audio Output Redirection: /vc:rdpsnd,sys:alsa\n");
+	printf("\n");
+
+	printf("Multimedia Redirection: /dvc:tsmf,sys:alsa\n");
+	printf("USB Device Redirection: /dvc:urbdrc,id,dev:054c:0268\n");
+	printf("\n");
+
+	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 
 	return 1;

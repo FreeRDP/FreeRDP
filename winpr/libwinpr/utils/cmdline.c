@@ -105,6 +105,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	if (!argv)
 		return 0;
 
+	if (argc == 1)
+		return COMMAND_LINE_STATUS_PRINT_HELP;
+
 	for (i = 1; i < argc; i++)
 	{
 		if (preFilter)
