@@ -24,6 +24,12 @@ project(FreeRDP C)
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+# Include our extra modules
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
+
+# Check for cmake compatibility (enable/disable features)
+include(CheckCmakeCompat)
+
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -31,12 +37,6 @@ include(CheckStructHasMember)
 include(CMakeDetermineSystem)
 include(FindPkgConfig)
 include(TestBigEndian)
-
-# Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
-
-# Check for cmake compatibility (enable/disable features)
-include(CheckCmakeCompat)
 
 include(FindFeature)
 include(AutoVersioning)
