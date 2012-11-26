@@ -47,11 +47,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Username" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
-	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Gateway username" },
+	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "||<alias> or <executable path>", NULL, NULL, -1, NULL, "Remote application program" },
@@ -60,11 +60,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL, "Remote application command-line parameters" },
 	{ "app-file", COMMAND_LINE_VALUE_REQUIRED, "<file name>", NULL, NULL, -1, NULL, "File to open with remote application" },
 	{ "app-guid", COMMAND_LINE_VALUE_REQUIRED, "<app guid>", NULL, NULL, -1, NULL, "Remote application GUID" },
-	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Compression" },
+	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "z", "Compression" },
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Alternate shell" },
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
-	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
+	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
 	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
+	{ "network", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Network connection type" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
@@ -88,6 +89,10 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "authentication (hack!)" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "grab keyboard" },
+	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "bitmap cache" },
+	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "offscreen bitmap cache" },
+	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "glyph cache" },
+	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "fast-path input/output" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -460,6 +465,114 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	return 1;
 }
 
+int freerdp_parse_username(char* username, char** user, char** domain)
+{
+	char* p;
+	int length;
+
+	p = strchr(username, '\\');
+
+	if (p)
+	{
+		length = p - username;
+		*domain = (char*) malloc(length + 1);
+		strncpy(*domain, username, length);
+		(*domain)[length] = '\0';
+		*user = _strdup(&p[1]);
+	}
+	else
+	{
+		p = strchr(username, '@');
+
+		if (p)
+		{
+			length = p - username;
+			*user = (char*) malloc(length + 1);
+			strncpy(*user, username, length);
+			(*user)[length] = '\0';
+			*domain = _strdup(&p[1]);
+		}
+		else
+		{
+			*user = _strdup(username);
+			*domain = NULL;
+		}
+	}
+
+	return 0;
+}
+
+int freerdp_set_connection_type(rdpSettings* settings, int type)
+{
+	if (type == CONNECTION_TYPE_MODEM)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = FALSE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = TRUE;
+	}
+	else if (type == CONNECTION_TYPE_BROADBAND_LOW)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = FALSE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_SATELLITE)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_BROADBAND_HIGH)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_WAN)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_LAN)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_AUTODETECT)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+
+		settings->NetworkAutoDetect = TRUE;
+	}
+
+	return 0;
+}
+
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
@@ -485,6 +598,14 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
+
+	arg = CommandLineFindArgumentA(args, "v");
+
+	if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	{
+		printf("error: server hostname was not specified with /v:<server>[:port]\n");
+		return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
 	}
 
 	arg = args;
@@ -562,23 +683,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			p = strchr(arg->Value, '\\');
+			char* user;
+			char* domain;
 
-			if (!p)
-				p = strchr(arg->Value, '@');
+			freerdp_parse_username(arg->Value, &user, &domain);
 
-			if (p)
-			{
-				length = p - arg->Value;
-				settings->Domain = (char*) malloc(length + 1);
-				strncpy(settings->Domain, arg->Value, length);
-				settings->Domain[length] = '\0';
-				settings->Username = _strdup(&p[1]);
-			}
-			else
-			{
-				settings->Username = _strdup(arg->Value);
-			}
+			settings->Username = user;
+			settings->Domain = domain;
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -610,23 +721,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			p = strchr(arg->Value, '\\');
+			char* user;
+			char* domain;
 
-			if (!p)
-				p = strchr(arg->Value, '@');
+			freerdp_parse_username(arg->Value, &user, &domain);
 
-			if (p)
-			{
-				length = p - arg->Value;
-				settings->GatewayDomain = (char*) malloc(length + 1);
-				strncpy(settings->GatewayDomain, arg->Value, length);
-				settings->GatewayDomain[length] = '\0';
-				settings->GatewayUsername = _strdup(&p[1]);
-			}
-			else
-			{
-				settings->GatewayUsername = _strdup(arg->Value);
-			}
+			settings->GatewayUsername = user;
+			settings->GatewayDomain = domain;
 
 			settings->GatewayUseSameCredentials = FALSE;
 		}
@@ -670,7 +771,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->RemoteApplicationGuid = _strdup(arg->Value);
 		}
-		CommandLineSwitchCase(arg, "z")
+		CommandLineSwitchCase(arg, "compression")
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
@@ -685,6 +786,53 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "shell-dir")
 		{
 			settings->ShellWorkingDirectory = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "audio-mode")
+		{
+			int mode;
+
+			mode = atoi(arg->Value);
+
+			if (mode == AUDIO_MODE_REDIRECT)
+			{
+				settings->AudioPlayback = TRUE;
+			}
+			else if (mode == AUDIO_MODE_PLAY_ON_SERVER)
+			{
+				settings->RemoteConsoleAudio = TRUE;
+			}
+			else if (mode == AUDIO_MODE_NONE)
+			{
+				settings->AudioPlayback = FALSE;
+				settings->RemoteConsoleAudio = FALSE;
+			}
+		}
+		CommandLineSwitchCase(arg, "network")
+		{
+			int type;
+			char* pEnd;
+
+			type = strtol(arg->Value, &pEnd, 10);
+
+			if (type == 0)
+			{
+				if (_stricmp(arg->Value, "modem") == 0)
+					type = CONNECTION_TYPE_MODEM;
+				else if (_stricmp(arg->Value, "broadband") == 0)
+					type = CONNECTION_TYPE_BROADBAND_HIGH;
+				else if (_stricmp(arg->Value, "broadband-low") == 0)
+					type = CONNECTION_TYPE_BROADBAND_LOW;
+				else if (_stricmp(arg->Value, "broadband-high") == 0)
+					type = CONNECTION_TYPE_BROADBAND_HIGH;
+				else if (_stricmp(arg->Value, "wan") == 0)
+					type = CONNECTION_TYPE_WAN;
+				else if (_stricmp(arg->Value, "lan") == 0)
+					type = CONNECTION_TYPE_LAN;
+				else if (_stricmp(arg->Value, "auto") == 0)
+					type = CONNECTION_TYPE_AUTODETECT;
+			}
+
+			freerdp_set_connection_type(settings, type);
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -827,6 +975,19 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "grab-keyboard")
 		{
 			settings->GrabKeyboard = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "bitmap-cache")
+		{
+			settings->BitmapCacheEnabled = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "offscreen-cache")
+		{
+			settings->OffscreenSupportLevel = arg->Value ? GLYPH_SUPPORT_FULL : GLYPH_SUPPORT_NONE;
+		}
+		CommandLineSwitchCase(arg, "fast-path")
+		{
+			settings->FastPathInput = arg->Value ? TRUE : FALSE;
+			settings->FastPathOutput = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{

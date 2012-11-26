@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 
 /**
  * Remote Desktop Plus - Overview of .rdp file settings:
@@ -484,27 +485,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t) file->Username))
 	{
-		char* p;
-		size_t size;
+		char* user;
+		char* domain;
 
-		p = strchr(file->Username, '\\');
+		freerdp_parse_username(file->Username, &user, &domain);
 
-		if (p)
-		{
-			size = p - file->Username;
-			settings->Domain = (char*) malloc(size + 1);
-			CopyMemory(settings->Domain, file->Username, size);
-			settings->Domain[size] = 0;
-
-			size = strlen(file->Username) - size - 1;
-			settings->Username = (char*) malloc(size + 1);
-			CopyMemory(settings->Username, &file->Username[p - file->Username + 1], size);
-			settings->Username[size] = 0;
-		}
-		else
-		{
-			settings->Username = file->Username;
-		}
+		settings->Username = user;
+		settings->Domain = domain;
 	}
 
 	if (~file->ServerPort)
@@ -530,6 +517,28 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
 	
+	if (~file->ConnectionType)
+	{
+		freerdp_set_connection_type(settings, file->ConnectionType);
+	}
+
+	if (~file->AudioMode)
+	{
+		if (file->AudioMode == AUDIO_MODE_REDIRECT)
+		{
+			settings->AudioPlayback = TRUE;
+		}
+		else if (file->AudioMode == AUDIO_MODE_PLAY_ON_SERVER)
+		{
+			settings->RemoteConsoleAudio = TRUE;
+		}
+		else if (file->AudioMode == AUDIO_MODE_NONE)
+		{
+			settings->AudioPlayback = FALSE;
+			settings->RemoteConsoleAudio = FALSE;
+		}
+	}
+
 	if (~((size_t) file->GatewayHostname))
 		settings->GatewayHostname = file->GatewayHostname;
 	if (~file->GatewayUsageMethod)
