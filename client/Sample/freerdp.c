@@ -35,10 +35,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/args.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 
@@ -67,9 +69,6 @@ struct thread_data
 	freerdp* instance;
 };
 
-#include <freerdp/freerdp.h>
-#include <freerdp/utils/args.h>
-
 void tf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
@@ -97,16 +96,6 @@ void tf_end_paint(rdpContext* context)
 int tf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
-int tf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	rdpChannels* channels = (rdpChannels*) user_data;
-
-	printf("Load plugin %s\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
-	return 1;
 }
 
 void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
@@ -309,10 +298,11 @@ void* thread_func(void* param)
 
 int main(int argc, char* argv[])
 {
+	int status;
 	pthread_t thread;
 	freerdp* instance;
-	struct thread_data* data;
 	rdpChannels* channels;
+	struct thread_data* data;
 
 	freerdp_channels_global_init();
 
@@ -329,7 +319,20 @@ int main(int argc, char* argv[])
 	freerdp_context_new(instance);
 
 	channels = instance->context->channels;
-	freerdp_parse_args(instance->settings, argc, argv, tf_process_plugin_args, channels, NULL, NULL);
+
+	if (freerdp_detect_old_command_line_syntax(instance->context->argc,instance->context->argv))
+	{
+		printf("warning: deprecated command-line syntax detected!\n");
+		freerdp_client_print_command_line_help(argc, argv);
+		exit(0);
+	}
+
+	status = freerdp_client_parse_command_line_arguments(argc, argv, instance->settings);
+
+	if (status < 0)
+		exit(0);
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	data = (struct thread_data*) malloc(sizeof(struct thread_data));
 	ZeroMemory(data, sizeof(sizeof(struct thread_data)));

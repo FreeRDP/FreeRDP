@@ -1663,7 +1663,7 @@ void rdp_write_bitmap_cache_v3_codec_id_capability_set(STREAM* s, rdpSettings* s
 
 	header = rdp_capability_set_start(s);
 	stream_write_BYTE(s, settings->BitmapCacheV3CodecId);
-	rdp_capability_set_finish(s, header, 6);
+	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID);
 }
 
 
@@ -2133,7 +2133,7 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 		}
 	}
 
-	if (settings->ReceivedCapabilities[6])
+	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
 	{
 		if (settings->BitmapCacheV3CodecId != 0)
 		{
