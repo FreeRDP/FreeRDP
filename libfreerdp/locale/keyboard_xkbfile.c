@@ -183,7 +183,8 @@ void* freerdp_keyboard_xkb_init()
 UINT32 freerdp_keyboard_init_xkbfile(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
-	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
+	
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
 
 	display = freerdp_keyboard_xkb_init();
 

@@ -319,20 +319,27 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 	DEBUG_SVC("waveDataSize %d wFormatNo %d", rdpsnd->waveDataSize, wFormatNo);
 
 	rdpsnd->close_timestamp = 0;
+
 	if (!rdpsnd->is_open)
 	{
 		rdpsnd->current_format = wFormatNo;
 		rdpsnd->is_open = TRUE;
+
 		if (rdpsnd->device)
+		{
 			IFCALL(rdpsnd->device->Open, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
 				rdpsnd->latency);
+		}
 	}
 	else if (wFormatNo != rdpsnd->current_format)
 	{
 		rdpsnd->current_format = wFormatNo;
+
 		if (rdpsnd->device)
+		{
 			IFCALL(rdpsnd->device->SetFormat, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
 				rdpsnd->latency);
+		}
 	}
 }
 
@@ -345,14 +352,19 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	struct data_out_item* item;
 
 	rdpsnd->expectingWave = 0;
+
 	memcpy(stream_get_head(data_in), rdpsnd->waveData, 4);
+
 	if (stream_get_size(data_in) != rdpsnd->waveDataSize)
 	{
 		DEBUG_WARN("size error");
 		return;
 	}
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(data_in), stream_get_size(data_in));
+	}
 
 	process_ms = get_mstime() - rdpsnd->wave_timestamp;
 	delay_ms = 250;
@@ -380,8 +392,12 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 {
 	DEBUG_SVC("server closes.");
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->Start, rdpsnd->device);
+	}
+
 	rdpsnd->close_timestamp = get_mstime() + 2000;
 	rdpsnd->plugin.interval_ms = 10;
 }
@@ -392,8 +408,11 @@ static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_
 
 	stream_read_UINT32(data_in, dwVolume);
 	DEBUG_SVC("dwVolume 0x%X", dwVolume);
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
+	}
 }
 
 static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
@@ -420,18 +439,23 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 		case SNDC_FORMATS:
 			rdpsnd_process_message_formats(rdpsnd, data_in);
 			break;
+
 		case SNDC_TRAINING:
 			rdpsnd_process_message_training(rdpsnd, data_in);
 			break;
+
 		case SNDC_WAVE:
 			rdpsnd_process_message_wave_info(rdpsnd, data_in, BodySize);
 			break;
+
 		case SNDC_CLOSE:
 			rdpsnd_process_message_close(rdpsnd);
 			break;
+
 		case SNDC_SETVOLUME:
 			rdpsnd_process_message_setvolume(rdpsnd, data_in);
 			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
