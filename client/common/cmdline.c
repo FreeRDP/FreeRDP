@@ -27,6 +27,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/locale/keyboard.h>
 
 #include <freerdp/client/cmdline.h>
 
@@ -39,6 +40,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "Screen size" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Fullscreen mode" },
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "Session bpp (color depth)" },
+	{ "kbd", COMMAND_LINE_VALUE_REQUIRED, "0x<layout id> or <layout name>", NULL, NULL, -1, NULL, "Keyboard layout" },
+	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List keyboard layouts" },
+	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<type id>", NULL, NULL, -1, NULL, "Keyboard type" },
+	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<subtype id>", NULL, NULL, -1, NULL, "Keyboard subtype" },
+	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<function key count>", NULL, NULL, -1, NULL, "Keyboard function key count" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
 	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
@@ -47,11 +53,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Username" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
-	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user>", NULL, NULL, -1, NULL, "Gateway username" },
+	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "||<alias> or <executable path>", NULL, NULL, -1, NULL, "Remote application program" },
@@ -60,11 +66,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL, "Remote application command-line parameters" },
 	{ "app-file", COMMAND_LINE_VALUE_REQUIRED, "<file name>", NULL, NULL, -1, NULL, "File to open with remote application" },
 	{ "app-guid", COMMAND_LINE_VALUE_REQUIRED, "<app guid>", NULL, NULL, -1, NULL, "Remote application GUID" },
-	{ "z", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Compression" },
+	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "z", "Compression" },
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Alternate shell" },
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
-	{ "audio", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
+	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
 	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
+	{ "network", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Network connection type" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
@@ -77,6 +84,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Frame acknowledgement" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "NSCodec" },
+	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "JPEG codec" },
+	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "protocol security negotiation" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
@@ -88,6 +97,13 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "authentication (hack!)" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "grab keyboard" },
+	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "mouse-motion" },
+	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window id>", NULL, NULL, -1, NULL, "Parent window id" },
+	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "bitmap cache" },
+	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "offscreen bitmap cache" },
+	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "glyph cache" },
+	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "<rfx|nsc|jpeg>", NULL, NULL, -1, NULL, "bitmap codec cache" },
+	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "fast-path input/output" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -460,6 +476,156 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	return 1;
 }
 
+int freerdp_parse_username(char* username, char** user, char** domain)
+{
+	char* p;
+	int length;
+
+	p = strchr(username, '\\');
+
+	if (p)
+	{
+		length = p - username;
+		*domain = (char*) malloc(length + 1);
+		strncpy(*domain, username, length);
+		(*domain)[length] = '\0';
+		*user = _strdup(&p[1]);
+	}
+	else
+	{
+		p = strchr(username, '@');
+
+		if (p)
+		{
+			length = p - username;
+			*user = (char*) malloc(length + 1);
+			strncpy(*user, username, length);
+			(*user)[length] = '\0';
+			*domain = _strdup(&p[1]);
+		}
+		else
+		{
+			*user = _strdup(username);
+			*domain = NULL;
+		}
+	}
+
+	return 0;
+}
+
+int freerdp_set_connection_type(rdpSettings* settings, int type)
+{
+	if (type == CONNECTION_TYPE_MODEM)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = FALSE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = TRUE;
+	}
+	else if (type == CONNECTION_TYPE_BROADBAND_LOW)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = FALSE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_SATELLITE)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_BROADBAND_HIGH)
+	{
+		settings->DisableWallpaper = TRUE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_WAN)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_LAN)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+	}
+	else if (type == CONNECTION_TYPE_AUTODETECT)
+	{
+		settings->DisableWallpaper = FALSE;
+		settings->AllowFontSmoothing = TRUE;
+		settings->AllowDesktopComposition = TRUE;
+		settings->DisableFullWindowDrag = FALSE;
+		settings->DisableMenuAnims = FALSE;
+		settings->DisableThemes = FALSE;
+
+		settings->NetworkAutoDetect = TRUE;
+	}
+
+	return 0;
+}
+
+int freerdp_map_keyboard_layout_name_to_id(char* name)
+{
+	int i;
+	int id = 0;
+	RDP_KEYBOARD_LAYOUT* layouts;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	return 0;
+}
+
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
@@ -485,6 +651,46 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT)
+	{
+		arg = CommandLineFindArgumentA(args, "kbd-list");
+
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			int i;
+			RDP_KEYBOARD_LAYOUT* layouts;
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+			printf("\nKeyboard Layouts\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+			printf("\nKeyboard Layout Variants\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+			printf("\nKeyboard Input Method Editors (IMEs)\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			printf("\n");
+		}
+
+		return COMMAND_LINE_STATUS_PRINT;
+	}
+
+	arg = CommandLineFindArgumentA(args, "v");
+
+	if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	{
+		printf("error: server hostname was not specified with /v:<server>[:port]\n");
+		return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
 	}
 
 	arg = args;
@@ -560,25 +766,49 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->ColorDepth = atoi(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "kbd")
+		{
+			int id;
+			char* pEnd;
+
+			id = strtol(arg->Value, &pEnd, 16);
+
+			if (pEnd != (arg->Value + strlen(arg->Value)))
+				id = 0;
+
+			if (id == 0)
+			{
+				id = freerdp_map_keyboard_layout_name_to_id(arg->Value);
+
+				if (!id)
+				{
+					printf("Could not identify keyboard layout: %s\n", arg->Value);
+				}
+			}
+
+			settings->KeyboardLayout = id;
+		}
+		CommandLineSwitchCase(arg, "kbd-type")
+		{
+			settings->KeyboardType = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "kbd-subtype")
+		{
+			settings->KeyboardSubType = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "kbd-fn-key")
+		{
+			settings->KeyboardFunctionKey = atoi(arg->Value);
+		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			p = strchr(arg->Value, '\\');
+			char* user;
+			char* domain;
 
-			if (!p)
-				p = strchr(arg->Value, '@');
+			freerdp_parse_username(arg->Value, &user, &domain);
 
-			if (p)
-			{
-				length = p - arg->Value;
-				settings->Domain = (char*) malloc(length + 1);
-				strncpy(settings->Domain, arg->Value, length);
-				settings->Domain[length] = '\0';
-				settings->Username = _strdup(&p[1]);
-			}
-			else
-			{
-				settings->Username = _strdup(arg->Value);
-			}
+			settings->Username = user;
+			settings->Domain = domain;
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -610,23 +840,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			p = strchr(arg->Value, '\\');
+			char* user;
+			char* domain;
 
-			if (!p)
-				p = strchr(arg->Value, '@');
+			freerdp_parse_username(arg->Value, &user, &domain);
 
-			if (p)
-			{
-				length = p - arg->Value;
-				settings->GatewayDomain = (char*) malloc(length + 1);
-				strncpy(settings->GatewayDomain, arg->Value, length);
-				settings->GatewayDomain[length] = '\0';
-				settings->GatewayUsername = _strdup(&p[1]);
-			}
-			else
-			{
-				settings->GatewayUsername = _strdup(arg->Value);
-			}
+			settings->GatewayUsername = user;
+			settings->GatewayDomain = domain;
 
 			settings->GatewayUseSameCredentials = FALSE;
 		}
@@ -670,7 +890,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->RemoteApplicationGuid = _strdup(arg->Value);
 		}
-		CommandLineSwitchCase(arg, "z")
+		CommandLineSwitchCase(arg, "compression")
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
@@ -685,6 +905,53 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "shell-dir")
 		{
 			settings->ShellWorkingDirectory = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "audio-mode")
+		{
+			int mode;
+
+			mode = atoi(arg->Value);
+
+			if (mode == AUDIO_MODE_REDIRECT)
+			{
+				settings->AudioPlayback = TRUE;
+			}
+			else if (mode == AUDIO_MODE_PLAY_ON_SERVER)
+			{
+				settings->RemoteConsoleAudio = TRUE;
+			}
+			else if (mode == AUDIO_MODE_NONE)
+			{
+				settings->AudioPlayback = FALSE;
+				settings->RemoteConsoleAudio = FALSE;
+			}
+		}
+		CommandLineSwitchCase(arg, "network")
+		{
+			int type;
+			char* pEnd;
+
+			type = strtol(arg->Value, &pEnd, 10);
+
+			if (type == 0)
+			{
+				if (_stricmp(arg->Value, "modem") == 0)
+					type = CONNECTION_TYPE_MODEM;
+				else if (_stricmp(arg->Value, "broadband") == 0)
+					type = CONNECTION_TYPE_BROADBAND_HIGH;
+				else if (_stricmp(arg->Value, "broadband-low") == 0)
+					type = CONNECTION_TYPE_BROADBAND_LOW;
+				else if (_stricmp(arg->Value, "broadband-high") == 0)
+					type = CONNECTION_TYPE_BROADBAND_HIGH;
+				else if (_stricmp(arg->Value, "wan") == 0)
+					type = CONNECTION_TYPE_WAN;
+				else if (_stricmp(arg->Value, "lan") == 0)
+					type = CONNECTION_TYPE_LAN;
+				else if (_stricmp(arg->Value, "auto") == 0)
+					type = CONNECTION_TYPE_AUTODETECT;
+			}
+
+			freerdp_set_connection_type(settings, type);
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
@@ -739,6 +1006,15 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "nsc")
 		{
 			settings->NSCodec = TRUE;
+		}
+		CommandLineSwitchCase(arg, "jpeg")
+		{
+			settings->JpegCodec = TRUE;
+			settings->JpegQuality = 75;
+		}
+		CommandLineSwitchCase(arg, "jpeg-quality")
+		{
+			settings->JpegQuality = atoi(arg->Value) % 100;
 		}
 		CommandLineSwitchCase(arg, "nego")
 		{
@@ -827,6 +1103,51 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "grab-keyboard")
 		{
 			settings->GrabKeyboard = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "mouse-motion")
+		{
+			settings->MouseMotion = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "parent-window")
+		{
+			settings->ParentWindowId = strtol(arg->Value, NULL, 0);
+		}
+		CommandLineSwitchCase(arg, "bitmap-cache")
+		{
+			settings->BitmapCacheEnabled = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "offscreen-cache")
+		{
+			settings->OffscreenSupportLevel = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "glyph-cache")
+		{
+			settings->GlyphSupportLevel = arg->Value ? GLYPH_SUPPORT_FULL : GLYPH_SUPPORT_NONE;
+		}
+		CommandLineSwitchCase(arg, "codec-cache")
+		{
+			settings->BitmapCacheV3Enabled = TRUE;
+
+			if (strcmp(arg->Value, "rfx") == 0)
+			{
+				settings->RemoteFxCodec = TRUE;
+			}
+			else if (strcmp(arg->Value, "nsc") == 0)
+			{
+				settings->NSCodec = TRUE;
+			}
+			else if (strcmp(arg->Value, "jpeg") == 0)
+			{
+				settings->JpegCodec = TRUE;
+
+				if (settings->JpegQuality == 0)
+					settings->JpegQuality = 75;
+			}
+		}
+		CommandLineSwitchCase(arg, "fast-path")
+		{
+			settings->FastPathInput = arg->Value ? TRUE : FALSE;
+			settings->FastPathOutput = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{

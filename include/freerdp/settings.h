@@ -79,6 +79,11 @@
 #define RNS_UD_15BPP_SUPPORT	0x0004
 #define RNS_UD_32BPP_SUPPORT	0x0008
 
+/* Audio Mode */
+#define AUDIO_MODE_REDIRECT		0 /* Bring to this computer */
+#define AUDIO_MODE_PLAY_ON_SERVER	1 /* Leave at remote computer */
+#define AUDIO_MODE_NONE			2 /* Do not play */
+
 /* Early Capability Flags (Client to Server) */
 #define RNS_UD_CS_SUPPORT_ERRINFO_PDU		0x0001
 #define RNS_UD_CS_WANT_32BPP_SESSION		0x0002

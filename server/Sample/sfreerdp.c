@@ -54,8 +54,8 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->width;
-	context->rfx_context->height = client->settings->height;
+	context->rfx_context->width = client->settings->DesktopWidth;
+	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->nsc_context = nsc_context_new();
@@ -157,8 +157,8 @@ static void test_peer_draw_background(freerdp_peer* client)
 
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = client->settings->width;
-	rect.height = client->settings->height;
+	rect.width = client->settings->DesktopWidth;
+	rect.height = client->settings->DesktopHeight;
 
 	size = rect.width * rect.height * 3;
 	rgb_data = malloc(size);
@@ -477,9 +477,9 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	printf("\n");
 
 	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
+		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
-	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
+	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
@@ -551,15 +551,15 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
-		if (client->settings->width != 800)
+		if (client->settings->DesktopWidth != 800)
 		{
-			client->settings->width = 800;
-			client->settings->height = 600;
+			client->settings->DesktopWidth = 800;
+			client->settings->DesktopHeight = 600;
 		}
 		else
 		{
-			client->settings->width = 640;
-			client->settings->height = 480;
+			client->settings->DesktopWidth = 640;
+			client->settings->DesktopHeight = 480;
 		}
 		update->DesktopResize(update->context);
 		context->activated = FALSE;
