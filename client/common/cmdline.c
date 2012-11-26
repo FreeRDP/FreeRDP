@@ -27,6 +27,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/locale/keyboard.h>
 
 #include <freerdp/client/cmdline.h>
 
@@ -39,6 +40,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "Screen size" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Fullscreen mode" },
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "Session bpp (color depth)" },
+	{ "kbd", COMMAND_LINE_VALUE_REQUIRED, "0x<layout id> or <layout name>", NULL, NULL, -1, NULL, "Keyboard layout" },
+	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List keyboard layouts" },
+	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<type id>", NULL, NULL, -1, NULL, "Keyboard type" },
+	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<subtype id>", NULL, NULL, -1, NULL, "Keyboard subtype" },
+	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<function key count>", NULL, NULL, -1, NULL, "Keyboard function key count" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
 	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
@@ -78,6 +84,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Frame acknowledgement" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "NSCodec" },
+	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "JPEG codec" },
+	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "protocol security negotiation" },
 	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
 	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
@@ -89,9 +97,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "authentication (hack!)" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "grab keyboard" },
+	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "mouse-motion" },
+	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window id>", NULL, NULL, -1, NULL, "Parent window id" },
 	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "bitmap cache" },
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "offscreen bitmap cache" },
 	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "glyph cache" },
+	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "<rfx|nsc|jpeg>", NULL, NULL, -1, NULL, "bitmap codec cache" },
 	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "fast-path input/output" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
@@ -573,6 +584,48 @@ int freerdp_set_connection_type(rdpSettings* settings, int type)
 	return 0;
 }
 
+int freerdp_map_keyboard_layout_name_to_id(char* name)
+{
+	int i;
+	int id = 0;
+	RDP_KEYBOARD_LAYOUT* layouts;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+	for (i = 0; layouts[i].code; i++)
+	{
+		if (_stricmp(layouts[i].name, name) == 0)
+			id = layouts[i].code;
+	}
+	free(layouts);
+
+	if (id)
+		return id;
+
+	return 0;
+}
+
 int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
 {
 	char* p;
@@ -598,6 +651,38 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT)
+	{
+		arg = CommandLineFindArgumentA(args, "kbd-list");
+
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			int i;
+			RDP_KEYBOARD_LAYOUT* layouts;
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+			printf("\nKeyboard Layouts\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+			printf("\nKeyboard Layout Variants\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+			printf("\nKeyboard Input Method Editors (IMEs)\n");
+			for (i = 0; layouts[i].code; i++)
+				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+			free(layouts);
+
+			printf("\n");
+		}
+
+		return COMMAND_LINE_STATUS_PRINT;
 	}
 
 	arg = CommandLineFindArgumentA(args, "v");
@@ -680,6 +765,40 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "bpp")
 		{
 			settings->ColorDepth = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "kbd")
+		{
+			int id;
+			char* pEnd;
+
+			id = strtol(arg->Value, &pEnd, 16);
+
+			if (pEnd != (arg->Value + strlen(arg->Value)))
+				id = 0;
+
+			if (id == 0)
+			{
+				id = freerdp_map_keyboard_layout_name_to_id(arg->Value);
+
+				if (!id)
+				{
+					printf("Could not identify keyboard layout: %s\n", arg->Value);
+				}
+			}
+
+			settings->KeyboardLayout = id;
+		}
+		CommandLineSwitchCase(arg, "kbd-type")
+		{
+			settings->KeyboardType = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "kbd-subtype")
+		{
+			settings->KeyboardSubType = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "kbd-fn-key")
+		{
+			settings->KeyboardFunctionKey = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
@@ -888,6 +1007,15 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->NSCodec = TRUE;
 		}
+		CommandLineSwitchCase(arg, "jpeg")
+		{
+			settings->JpegCodec = TRUE;
+			settings->JpegQuality = 75;
+		}
+		CommandLineSwitchCase(arg, "jpeg-quality")
+		{
+			settings->JpegQuality = atoi(arg->Value) % 100;
+		}
 		CommandLineSwitchCase(arg, "nego")
 		{
 			settings->NegotiateSecurityLayer = arg->Value ? TRUE : FALSE;
@@ -976,13 +1104,45 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->GrabKeyboard = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "mouse-motion")
+		{
+			settings->MouseMotion = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "parent-window")
+		{
+			settings->ParentWindowId = strtol(arg->Value, NULL, 0);
+		}
 		CommandLineSwitchCase(arg, "bitmap-cache")
 		{
 			settings->BitmapCacheEnabled = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "offscreen-cache")
 		{
-			settings->OffscreenSupportLevel = arg->Value ? GLYPH_SUPPORT_FULL : GLYPH_SUPPORT_NONE;
+			settings->OffscreenSupportLevel = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "glyph-cache")
+		{
+			settings->GlyphSupportLevel = arg->Value ? GLYPH_SUPPORT_FULL : GLYPH_SUPPORT_NONE;
+		}
+		CommandLineSwitchCase(arg, "codec-cache")
+		{
+			settings->BitmapCacheV3Enabled = TRUE;
+
+			if (strcmp(arg->Value, "rfx") == 0)
+			{
+				settings->RemoteFxCodec = TRUE;
+			}
+			else if (strcmp(arg->Value, "nsc") == 0)
+			{
+				settings->NSCodec = TRUE;
+			}
+			else if (strcmp(arg->Value, "jpeg") == 0)
+			{
+				settings->JpegCodec = TRUE;
+
+				if (settings->JpegQuality == 0)
+					settings->JpegQuality = 75;
+			}
 		}
 		CommandLineSwitchCase(arg, "fast-path")
 		{
