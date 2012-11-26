@@ -809,6 +809,12 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
+#ifdef WITH_DEBUG_TSG
+	rpc_pdu_header_print((rpcconn_hdr_t*) data);
+	printf("Sending PDU (length: %d)\n", length);
+	freerdp_hexdump(data, length);
+#endif
+	
 	status = tls_write_all(rpc->TlsIn, data, length);
 
 	return status;
@@ -871,6 +877,8 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	header = (rpcconn_hdr_t*) rpc->buffer;
 	bytesRead += status;
 
+	rpc_pdu_header_print(header);
+	
 	if (header->common.frag_length > rpc->length)
 	{
 		rpc->length = header->common.frag_length;

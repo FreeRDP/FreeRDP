@@ -477,6 +477,9 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	args = pEntryPoints->args;
 	rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args);
 
+	if (!alsa->device_name)
+		alsa->device_name = _strdup("default");
+
 	alsa->out_handle = 0;
 	alsa->source_rate = 22050;
 	alsa->actual_rate = 22050;
