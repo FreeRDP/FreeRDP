@@ -88,9 +88,6 @@ struct thread_data
 	freerdp* instance;
 };
 
-int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data);
-int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
-
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
