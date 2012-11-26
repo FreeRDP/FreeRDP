@@ -447,9 +447,9 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 			{
 				printf("setting codec jpeg\n");
 				settings->BitmapCacheV3CodecId = CODEC_ID_JPEG;
-				settings->jpeg_codec = TRUE;
-				if (settings->jpeg_quality == 0)
-					settings->jpeg_quality = 75;
+				settings->JpegCodec = TRUE;
+				if (settings->JpegQuality == 0)
+					settings->JpegQuality = 75;
 			}
 #endif
 			else
@@ -461,8 +461,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 #ifdef WITH_JPEG
 		else if (strcmp("--jpeg", argv[index]) == 0)
 		{
-			settings->jpeg_codec = TRUE;
-			settings->jpeg_quality = 75;
+			settings->JpegCodec = TRUE;
+			settings->JpegQuality = 75;
 		}
 		else if (strcmp("--jpegex", argv[index]) == 0)
 		{
@@ -472,8 +472,8 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				printf("missing codec name\n");
 				return FREERDP_ARGS_PARSE_FAILURE;
 			}
-			settings->jpeg_codec = TRUE;
-			settings->jpeg_quality = atoi(argv[index]);
+			settings->JpegCodec = TRUE;
+			settings->JpegQuality = atoi(argv[index]);
 		}
 #endif
 		else if (strcmp("--rfx", argv[index]) == 0)
