@@ -883,8 +883,11 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	int index;
 	ADDIN_ARGV* args;
 
-	if (freerdp_static_channel_collection_find(settings, "rdpsnd"))
-		settings->AudioPlayback = TRUE;
+	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
+			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
+	{
+		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
+	}
 
 	if (settings->DeviceRedirection)
 	{
