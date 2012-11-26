@@ -57,15 +57,18 @@ BOOL CloseHandle(HANDLE hObject)
 
 		event = (WINPR_EVENT*) Object;
 
-		if (event->pipe_fd[0] != -1)
+		if (!event->bAttached)
 		{
-			close(event->pipe_fd[0]);
-			event->pipe_fd[0] = -1;
-		}
-		if (event->pipe_fd[1] != -1)
-		{
-			close(event->pipe_fd[1]);
-			event->pipe_fd[1] = -1;
+			if (event->pipe_fd[0] != -1)
+			{
+				close(event->pipe_fd[0]);
+				event->pipe_fd[0] = -1;
+			}
+			if (event->pipe_fd[1] != -1)
+			{
+				close(event->pipe_fd[1]);
+				event->pipe_fd[1] = -1;
+			}
 		}
 
 		winpr_Handle_Remove(Object);

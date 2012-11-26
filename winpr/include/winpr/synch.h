@@ -249,5 +249,20 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 
 #endif
 
+/* Extended API */
+
+WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+
+WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
+
+#ifdef UNICODE
+#define CreateFileDescriptorEvent	CreateFileDescriptorEventW
+#else
+#define CreateFileDescriptorEvent	CreateFileDescriptorEventA
+#endif
+
 #endif /* WINPR_SYNCH_H */
 
