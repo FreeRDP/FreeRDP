@@ -21,18 +21,11 @@
 #include "config.h"
 #endif
 
-#include <winpr/synch.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-/**
- * CreateEventA
- * CreateEventW
- * CreateEventExA
- * CreateEventExW
- * OpenEventA
- * OpenEventW
- * SetEvent
- * ResetEvent
- */
+#include <winpr/synch.h>
 
 #ifndef _WIN32
 
@@ -149,6 +142,7 @@ BOOL ResetEvent(HANDLE hEvent)
 
 HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, int FileDescriptor)
 {
+#ifndef _WIN32
 	WINPR_EVENT* event;
 	HANDLE handle = NULL;
 
@@ -171,6 +165,9 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 	}
 
 	return handle;
+#else
+	return NULL;
+#endif
 }
 
 HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, int FileDescriptor)
@@ -180,6 +177,7 @@ HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 
 int GetEventFileDescriptor(HANDLE hEvent)
 {
+#ifndef _WIN32
 	ULONG Type;
 	PVOID Object;
 	WINPR_EVENT* event;
@@ -190,4 +188,7 @@ int GetEventFileDescriptor(HANDLE hEvent)
 	event = (WINPR_EVENT*) Object;
 
 	return event->pipe_fd[0];
+#else
+	return -1;
+#endif
 }
