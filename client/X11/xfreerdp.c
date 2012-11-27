@@ -1098,12 +1098,13 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		timeout.tv_sec = 5;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
 		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
 
 		if (select_status == 0)
 		{
-			//freerdp_send_keep_alive(instance);
 			continue;
 		}
 		else if (select_status == -1)

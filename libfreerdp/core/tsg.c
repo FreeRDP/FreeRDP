@@ -268,6 +268,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		ZeroMemory(packetCapsResponse, sizeof(TSG_PACKET_CAPS_RESPONSE));
 		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
 
+		printf("TSG_PACKET_TYPE_CAPS_RESPONSE\n");
+
 		/* PacketQuarResponsePtr (4 bytes) */
 		packetCapsResponse->pktQuarEncResponse.flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
 		packetCapsResponse->pktQuarEncResponse.certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
@@ -297,15 +299,18 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
 
-			printf("CertChain (%d)\n", ((count + 1) * 2));
-			freerdp_hexdump(&buffer[offset], ((count + 1) * 2));
+			printf("CertChain (%d)\n", (count * 2));
+			freerdp_hexdump(&buffer[offset], (count * 2));
 
 			/*
 			 * CertChainData is a wide character string, and the count is
 			 * given in characters excluding the null terminator, therefore:
 			 * size = ((count + 1) * 2)
 			 */
-			offset += ((count + 1) * 2); /* CertChainData */
+			offset += (count * 2); /* CertChainData */
+
+			/* 4-byte alignment */
+			rpc_offset_align(&offset, 4);
 		}
 		else
 		{
@@ -384,6 +389,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		ZeroMemory(packetQuarEncResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
+		printf("TSG_PACKET_TYPE_QUARENC_RESPONSE\n");
+
 		/* PacketQuarResponsePtr (4 bytes) */
 		packetQuarEncResponse->flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
 		packetQuarEncResponse->certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
@@ -401,15 +408,18 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
             
-			printf("CertChain (%d)\n", ((count + 1) * 2));
-			freerdp_hexdump(&buffer[offset], ((count + 1) * 2));
+			printf("CertChain (%d)\n", (count * 2));
+			freerdp_hexdump(&buffer[offset], (count * 2));
 
 			/*
 			 * CertChainData is a wide character string, and the count is
 			 * given in characters excluding the null terminator, therefore:
 			 * size = ((count + 1) * 2)
 			 */
-			offset += ((count + 1) * 2); /* CertChainData */
+			offset += (count * 2); /* CertChainData */
+
+			/* 4-byte alignment */
+			rpc_offset_align(&offset, 4);
 		}
 		else
 		{

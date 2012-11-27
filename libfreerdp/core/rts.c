@@ -902,6 +902,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			Destination, BytesReceived, AvailableWindow);
 	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 
+	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
+		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
+
 	return 0;
 }
 
