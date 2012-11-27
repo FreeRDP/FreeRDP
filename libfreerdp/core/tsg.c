@@ -247,19 +247,20 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
 
-	status = rpc_recv_pdu_fragment(rpc);
+	status = rpc_recv_pdu(rpc);
 
 	if (status <= 0)
 		return FALSE;
 
-	length = status;
-	buffer = rpc->buffer;
+	length = rpc->StubLength;
+	buffer = rpc->StubBuffer;
 
 	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
 	ZeroMemory(packet, sizeof(TSG_PACKET));
 
-	packet->packetId = *((UINT32*) &buffer[28]); /* PacketId */
-	SwitchValue = *((UINT32*) &buffer[32]); /* SwitchValue */
+	offset = 4;
+	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
+	SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
 
 	if ((packet->packetId == TSG_PACKET_TYPE_CAPS_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_CAPS_RESPONSE))
 	{
@@ -268,11 +269,11 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
 
 		/* PacketQuarResponsePtr (4 bytes) */
-		packetCapsResponse->pktQuarEncResponse.flags = *((UINT32*) &buffer[40]); /* Flags */
-		packetCapsResponse->pktQuarEncResponse.certChainLen = *((UINT32*) &buffer[44]); /* CertChainLength */
+		packetCapsResponse->pktQuarEncResponse.flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
+		packetCapsResponse->pktQuarEncResponse.certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
 		/* CertChainDataPtr (4 bytes) */
-		CopyMemory(&packetCapsResponse->pktQuarEncResponse.nonce, &buffer[52], 16); /* Nonce */
-		offset = 68;
+		CopyMemory(&packetCapsResponse->pktQuarEncResponse.nonce, &buffer[offset + 24], 16); /* Nonce */
+		offset += 40;
 
 		Pointer = *((UINT32*) &buffer[offset]); /* Ptr */
 		offset += 4;
@@ -384,11 +385,11 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
 		/* PacketQuarResponsePtr (4 bytes) */
-		packetQuarEncResponse->flags = *((UINT32*) &buffer[40]); /* Flags */
-		packetQuarEncResponse->certChainLen = *((UINT32*) &buffer[44]); /* CertChainLength */
+		packetQuarEncResponse->flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
+		packetQuarEncResponse->certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
 		/* CertChainDataPtr (4 bytes) */
-		CopyMemory(&packetQuarEncResponse->nonce, &buffer[52], 16); /* Nonce */
-		offset = 68;
+		CopyMemory(&packetQuarEncResponse->nonce, &buffer[offset + 24], 16); /* Nonce */
+		offset += 40;
 
 		if (packetQuarEncResponse->certChainLen > 0)
 		{
