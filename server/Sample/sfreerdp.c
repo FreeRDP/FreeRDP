@@ -31,6 +31,7 @@
 #include <sys/time.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/sleep.h>
@@ -406,9 +407,9 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
 	}
 
 	s = stream_new(4096);

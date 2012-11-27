@@ -25,7 +25,6 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 
 #include <winpr/synch.h>

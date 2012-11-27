@@ -30,7 +30,6 @@
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 
@@ -276,22 +275,27 @@ static void* audin_server_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+
+		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
 	}
 
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
 	while (1)
 	{
 		freerdp_thread_wait(thread);
+
 		if (freerdp_thread_is_stopped(thread))
 			break;
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &bytes_returned) == FALSE)
 			break;
-		ready = *((BOOL*)buffer);
+
+		ready = *((BOOL*) buffer);
+
 		WTSFreeMemory(buffer);
+
 		if (ready)
 			break;
 	}

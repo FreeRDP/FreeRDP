@@ -39,8 +39,7 @@ set(${MODULE_PREFIX}_SRCS
 	thread.c
 	time.c
 	uds.c
-	unicode.c
-	wait_obj.c)
+	unicode.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)

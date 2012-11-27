@@ -61,7 +61,6 @@ typedef struct
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>

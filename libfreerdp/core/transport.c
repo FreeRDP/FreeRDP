@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/sleep.h>
@@ -354,7 +355,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 			{
 				/* and in case we do have buffered some data, we set the event so next loop will get it */
 				if (transport_read_nonblocking(transport) > 0)
-					wait_obj_set(transport->recv_event);
+					SetEvent(transport->recv_event);
 			}
 		}
 
@@ -373,6 +374,8 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
+	int fd;
+
 #ifdef _WIN32
 	rfds[*rcount] = transport->TcpIn->wsa_event;
 	(*rcount)++;
@@ -392,7 +395,14 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 		(*rcount)++;
 	}
 #endif
-	wait_obj_get_fds(transport->recv_event, rfds, rcount);
+
+	fd = GetEventFileDescriptor(transport->recv_event);
+
+	if (fd != -1)
+	{
+		rfds[*rcount] = ((void*) (long) fd);
+		(*rcount)++;
+	}
 }
 
 int transport_check_fds(rdpTransport** ptransport)
@@ -406,7 +416,7 @@ int transport_check_fds(rdpTransport** ptransport)
 #ifdef _WIN32
 	WSAResetEvent(transport->TcpIn->wsa_event);
 #endif
-	wait_obj_clear(transport->recv_event);
+	ResetEvent(transport->recv_event);
 
 	status = transport_read_nonblocking(transport);
 
@@ -496,7 +506,7 @@ int transport_check_fds(rdpTransport** ptransport)
 			/* one at a time but set event if data buffered
 			 * so the main loop will call freerdp_check_fds asap */
 			if (stream_get_pos(transport->recv_buffer) > 0)
-				wait_obj_set(transport->recv_event);
+				SetEvent(transport->recv_event);
 			break;
 		}
 
@@ -529,7 +539,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		/* receive buffer for non-blocking read. */
 		transport->recv_buffer = stream_new(BUFFER_SIZE);
-		transport->recv_event = wait_obj_new();
+		transport->recv_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
 		transport->recv_stream = stream_new(BUFFER_SIZE);
@@ -550,7 +560,7 @@ void transport_free(rdpTransport* transport)
 		stream_free(transport->recv_buffer);
 		stream_free(transport->recv_stream);
 		stream_free(transport->send_stream);
-		wait_obj_free(transport->recv_event);
+		CloseHandle(transport->recv_event);
 
 		if (transport->TlsIn)
 			tls_free(transport->TlsIn);

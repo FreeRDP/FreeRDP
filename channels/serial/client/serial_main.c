@@ -47,7 +47,6 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/unicode.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
@@ -351,10 +350,10 @@ static void* serial_thread_func(void* arg)
 		freerdp_thread_reset(serial->thread);
 		serial_process_irp_list(serial);
 
-		if (wait_obj_is_set(serial->in_event))
+		if (WaitForSingleObject(serial->in_event, 0) == WAIT_OBJECT_0)
 		{
 			if (serial_check_fds(serial))
-				wait_obj_clear(serial->in_event);
+				ResetEvent(serial->in_event);
 		}
 	}
 
@@ -442,7 +441,7 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 		stream_write_UINT32(irp->output, 0);
 		irp->Complete(irp);
 
-		wait_obj_set(serial->in_event);
+		SetEvent(serial->in_event);
 		break;
 	}
 
@@ -480,7 +479,7 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 				irp = (IRP*) list_next(serial->pending_irps, irp);
 				list_remove(serial->pending_irps, prev);
 
-				wait_obj_set(serial->in_event);
+				SetEvent(serial->in_event);
 			}
 		}
 
@@ -556,7 +555,7 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 	irp->IoStatus = STATUS_PENDING;
 	list_enqueue(serial->pending_irps, irp);
-	wait_obj_set(serial->in_event);
+	SetEvent(serial->in_event);
 }
 
 static void __serial_check_fds(SERIAL_DEVICE* serial)
@@ -616,7 +615,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		if (prev->IoStatus == STATUS_SUCCESS)
 		{
 			list_remove(serial->pending_irps, prev);
-			wait_obj_set(serial->in_event);
+			SetEvent(serial->in_event);
 		}
 	}
 }
@@ -726,9 +725,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->irp_list = list_new();
 		serial->pending_irps = list_new();
 		serial->thread = freerdp_thread_new();
-		serial->in_event = wait_obj_new();
+		serial->in_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)serial);
+		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
 		freerdp_thread_start(serial->thread, serial_thread_func, serial);
 	}
