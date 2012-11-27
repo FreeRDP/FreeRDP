@@ -29,7 +29,6 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"

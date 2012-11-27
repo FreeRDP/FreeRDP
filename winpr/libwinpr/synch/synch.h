@@ -40,6 +40,7 @@
 struct winpr_event
 {
 	int pipe_fd[2];
+	BOOL bAttached;
 	BOOL bManualReset;
 };
 typedef struct winpr_event WINPR_EVENT;

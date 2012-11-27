@@ -30,7 +30,6 @@
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
 
@@ -173,9 +172,10 @@ static void* rdpsnd_server_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+
+		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
 	}
 
 	s = stream_new(4096);

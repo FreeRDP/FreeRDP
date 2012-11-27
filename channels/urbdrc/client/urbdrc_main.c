@@ -26,6 +26,7 @@
 #include <libudev.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/dvc.h>
@@ -444,8 +445,8 @@ static void* urbdrc_search_usb_device(void* arg)
 	IWTSVirtualChannel* dvc_channel;
 	USB_SEARCHDEV* sdev;
 	IUDEVICE* pdev = NULL;
-	struct wait_obj* listobj[2];
-	struct wait_obj* mon_fd;
+	HANDLE listobj[2];
+	HANDLE mon_fd;
 	int numobj, timeout;
 	int busnum, devnum;
 	int success = 0, error, on_close = 0, found = 0;
@@ -474,7 +475,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	mon_fd = wait_obj_new_with_fd((void*) (size_t) udev_monitor_get_fd(mon));
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, udev_monitor_get_fd(mon));
 
 	while (1)
 	{
@@ -488,15 +489,16 @@ static void* urbdrc_search_usb_device(void* arg)
 		listobj[0] = searchman->term_event;
 		listobj[1] = mon_fd;
 		numobj = 2;
-		wait_obj_select(listobj, numobj, -1);
 
-		if (wait_obj_is_set(searchman->term_event))
+		WaitForMultipleObjects(numobj, listobj, FALSE, INFINITE);
+
+		if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 		{
 			sem_post(&searchman->sem_term);
 			return 0;
 		}
 
-		if (wait_obj_is_set(mon_fd))
+		if (WaitForSingleObject(mon_fd, 0) == WAIT_OBJECT_0)
 		{
 			dev = udev_monitor_receive_device(mon);
 
@@ -570,11 +572,11 @@ static void* urbdrc_search_usb_device(void* arg)
 						numobj = 1;
 						timeout = 4000; /* milliseconds */
 
-						wait_obj_select(listobj, numobj, timeout);
+						WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-						if (wait_obj_is_set(searchman->term_event))
+						if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 						{
-							wait_obj_free(mon_fd);
+							CloseHandle(mon_fd);
 							sem_post(&searchman->sem_term);
 							return 0;
 						}
@@ -626,16 +628,16 @@ static void* urbdrc_search_usb_device(void* arg)
 					numobj = 1;
 					timeout = 3000; /* milliseconds */
 
-					wait_obj_select(listobj, numobj, timeout);
+					WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-					if (wait_obj_is_set(searchman->term_event))
+					if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 					{
-						wait_obj_free(mon_fd);
+						CloseHandle(mon_fd);
 						sem_post(&searchman->sem_term);
 						return 0;
 					}
 
-					if(pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev)))
+					if (pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev)))
 					{
 						on_close = 0;
 						dvc_channel->Close(dvc_channel);
@@ -644,13 +646,14 @@ static void* urbdrc_search_usb_device(void* arg)
 
 				udev_device_unref(dev);
 			}
-			else {
+			else
+			{
 				printf("No Device from receive_device(). An error occured.\n");
 			}
 		}
 	}
 
-	wait_obj_free(mon_fd);
+	CloseHandle(mon_fd);
 	sem_post(&searchman->sem_term);
 
 	return 0;

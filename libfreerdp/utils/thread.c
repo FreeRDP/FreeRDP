@@ -46,8 +46,8 @@ freerdp_thread* freerdp_thread_new(void)
 	ZeroMemory(thread, sizeof(freerdp_thread));
 
 	thread->mutex = CreateMutex(NULL, FALSE, NULL);
-	thread->signals[0] = wait_obj_new();
-	thread->signals[1] = wait_obj_new();
+	thread->signals[0] = CreateEvent(NULL, TRUE, FALSE, NULL);
+	thread->signals[1] = CreateEvent(NULL, TRUE, FALSE, NULL);
 	thread->num_signals = 2;
 
 	return thread;
@@ -74,9 +74,9 @@ void freerdp_thread_stop(freerdp_thread* thread)
 {
 	int i = 0;
 
-	wait_obj_set(thread->signals[0]);
+	SetEvent(thread->signals[0]);
 
-	while (thread->status > 0 && i < 1000)
+	while ((thread->status > 0) && (i < 1000))
 	{
 		i++;
 		freerdp_usleep(100000);
@@ -88,7 +88,7 @@ void freerdp_thread_free(freerdp_thread* thread)
 	int i;
 
 	for (i = 0; i < thread->num_signals; i++)
-		wait_obj_free(thread->signals[i]);
+		CloseHandle(thread->signals[i]);
 
 	thread->num_signals = 0;
 

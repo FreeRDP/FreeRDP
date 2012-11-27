@@ -41,7 +41,6 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/wait_obj.h>
 
 typedef BOOL (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
@@ -61,7 +60,7 @@ struct rdp_transport
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
-	struct wait_obj* recv_event;
+	HANDLE recv_event;
 	BOOL blocking;
 	BOOL ProcessSinglePdu;
 	BOOL SplitInputOutput;
