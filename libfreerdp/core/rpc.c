@@ -877,7 +877,9 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	header = (rpcconn_hdr_t*) rpc->buffer;
 	bytesRead += status;
 
+#ifdef WITH_DEBUG_RPC
 	rpc_pdu_header_print(header);
+#endif
 	
 	if (header->common.frag_length > rpc->length)
 	{
@@ -899,9 +901,15 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		bytesRead += status;
 	}
 
-	if (!(header->common.pfc_flags & PFC_LAST_FRAG))
+	printf("header->common.pfc_flags: 0x%04X\n", header->common.pfc_flags);
+
+	if (header->common.pfc_flags)
 	{
-		printf("Fragmented PDU\n");
+		if (!(header->common.pfc_flags & PFC_LAST_FRAG))
+		{
+			printf("Fragmented PDU\n");
+			rpc_pdu_header_print(header);
+		}
 	}
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */

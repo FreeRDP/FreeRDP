@@ -512,7 +512,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	sf_peer_audin_init(context); /* Audio Input */
 
-	/* Return FALSE here would stop the execution of the peer mainloop. */
+	/* Return FALSE here would stop the execution of the peer main loop. */
 
 	return TRUE;
 }

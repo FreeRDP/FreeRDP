@@ -88,6 +88,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 {
 	int i, j;
 	int length;
+	int index;
 	BOOL match;
 	char* sigil;
 	int sigil_length;
@@ -110,6 +111,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
+		index = i;
+
 		if (preFilter)
 			preFilter(context, i, argv[i]);
 
@@ -174,7 +177,6 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 			{
 				separator_length = 0;
 				separator_index = -1;
-
 				keyword_length = (length - keyword_index);
 
 				value_index = -1;
@@ -204,10 +206,33 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!match)
 					continue;
 
-				options[j].Index = i;
+				options[j].Index = index;
 
-				if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
+				{
+					i++;
+					value_index = 0;
+					length = strlen(argv[i]);
+
+					value = (char*) &argv[i][value_index];
+					value_length = (length - value_index);
+				}
+
+				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+				else
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					{
+						i--;
+						value_index = -1;
+						value = NULL;
+						value_length = 0;
+					}
+				}
 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
 					return COMMAND_LINE_ERROR_MISSING_VALUE;
