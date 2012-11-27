@@ -317,13 +317,17 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	{
 		ntlm_client_init(ntlm, TRUE, settings->Username,
 			settings->Domain, settings->Password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+
+		ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
+		//ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 	else
 	{
 		ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 			settings->GatewayDomain, settings->GatewayPassword);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+
+		ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
+		//ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 
 	ntlm_authenticate(ntlm);
@@ -380,13 +384,17 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	{
 		ntlm_client_init(ntlm, TRUE, settings->Username,
 			settings->Domain, settings->Password);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+
+		ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
+		//ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 	else
 	{
 		ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 			settings->GatewayDomain, settings->GatewayPassword);
-		ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+
+		ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
+		//ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 	}
 
 	ntlm_authenticate(ntlm);

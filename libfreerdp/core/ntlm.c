@@ -131,6 +131,12 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	hostnameX = hostname;
 #endif
 
+	if (!ServiceClass)
+	{
+		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+		return TRUE;
+	}
+
 	SpnLength = 0;
 	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
 
