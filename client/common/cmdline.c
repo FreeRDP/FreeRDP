@@ -56,7 +56,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
-	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
+	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
@@ -697,7 +697,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -820,19 +820,26 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
-			p = strchr(arg->Value, ':');
-
-			if (p)
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				length = p - arg->Value;
-				settings->GatewayPort = atoi(&p[1]);
-				settings->GatewayHostname = (char*) malloc(length + 1);
-				strncpy(settings->GatewayHostname, arg->Value, length);
-				settings->GatewayHostname[length] = '\0';
+				p = strchr(arg->Value, ':');
+
+				if (p)
+				{
+					length = p - arg->Value;
+					settings->GatewayPort = atoi(&p[1]);
+					settings->GatewayHostname = (char*) malloc(length + 1);
+					strncpy(settings->GatewayHostname, arg->Value, length);
+					settings->GatewayHostname[length] = '\0';
+				}
+				else
+				{
+					settings->GatewayHostname = _strdup(arg->Value);
+				}
 			}
 			else
 			{
-				settings->GatewayHostname = _strdup(arg->Value);
+				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
 			settings->GatewayUsageMethod = TRUE;

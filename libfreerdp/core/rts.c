@@ -1328,7 +1328,7 @@ int rts_recv_pdu(rdpRpc* rpc)
 	int status;
 	rpcconn_rts_hdr_t* rts;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status > 0)
 	{

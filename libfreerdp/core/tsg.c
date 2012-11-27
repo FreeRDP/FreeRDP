@@ -247,7 +247,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status <= 0)
 		return FALSE;
@@ -295,6 +295,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			offset += 4; /* Offset (4 bytes) */
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
+
+			printf("CertChain (%d)\n", ((count + 1) * 2));
+			freerdp_hexdump(&buffer[offset], ((count + 1) * 2));
 
 			/*
 			 * CertChainData is a wide character string, and the count is
@@ -397,6 +400,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
             
+			printf("CertChain (%d)\n", ((count + 1) * 2));
+			freerdp_hexdump(&buffer[offset], ((count + 1) * 2));
+
 			/*
 			 * CertChainData is a wide character string, and the count is
 			 * given in characters excluding the null terminator, therefore:
@@ -406,6 +412,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		}
 		else
 		{
+			printf("CertChain (%d)\n", 0);
+
 			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
 			offset += 4;
 		}
@@ -576,7 +584,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_RESPONSE packetResponse;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status <= 0)
 		return FALSE;
@@ -808,7 +816,7 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status < 0)
 		return FALSE;
@@ -905,7 +913,7 @@ BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg)
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status < 0)
 		return FALSE;
@@ -1120,13 +1128,9 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	if (tsg->PendingPdu)
 	{
-		rpcconn_common_hdr_t* header;
-
-		header = (rpcconn_common_hdr_t*) rpc->buffer;
-
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 
-		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		CopyMemory(data, &rpc->StubBuffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
 
@@ -1137,31 +1141,21 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	}
 	else
 	{
-		rpcconn_response_hdr_t* header;
-
 		status = rpc_recv_pdu(rpc);
-		
-		header = (rpcconn_response_hdr_t*) rpc->buffer;
 
-		if (!rpc_get_stub_data_info(rpc, rpc->buffer, &tsg->StubOffset, &tsg->StubLength))
-		{
-			printf("tsg_read error: expected stub\n");
-			return -1;
-		}
-
-		if (header->alloc_hint == 4)
+		if (rpc->StubLength == 4)
 		{
 			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
 			return tsg_read(tsg, data, length);
 		}
 
 		tsg->PendingPdu = TRUE;
-		tsg->BytesAvailable = tsg->StubLength;
+		tsg->BytesAvailable = rpc->StubLength;
 		tsg->BytesRead = 0;
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 
-		CopyMemory(data, &rpc->buffer[tsg->StubOffset + tsg->BytesRead], CopyLength);
+		CopyMemory(data, &rpc->StubBuffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
 

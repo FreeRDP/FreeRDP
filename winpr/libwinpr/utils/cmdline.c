@@ -237,6 +237,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
 					return COMMAND_LINE_ERROR_MISSING_VALUE;
 
+				options[j].Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
+
 				if (value)
 				{
 					options[j].Value = value;

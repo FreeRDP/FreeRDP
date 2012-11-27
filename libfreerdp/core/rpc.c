@@ -555,17 +555,35 @@ BOOL rpc_send_bind_pdu(rdpRpc* rpc)
 	return TRUE;
 }
 
+/**
+ * Maximum Transmit/Receive Fragment Size Negotiation
+ *
+ * The client determines, and then sends in the bind PDU, its desired maximum size for transmitting fragments,
+ * and its desired maximum receive fragment size. Similarly, the server determines its desired maximum sizes
+ * for transmitting and receiving fragments. Transmit and receive sizes may be different to help preserve buffering.
+ * When the server receives the client’s values, it sets its operational transmit size to the minimum of the client’s
+ * receive size (from the bind PDU) and its own desired transmit size. Then it sets its actual receive size to the
+ * minimum of the client’s transmit size (from the bind) and its own desired receive size. The server then returns its
+ * operational values in the bind_ack PDU. The client then sets its operational values from the received bind_ack PDU.
+ * The received transmit size becomes the client’s receive size, and the received receive size becomes the client’s
+ * transmit size. Either party may use receive buffers larger than negotiated — although this will not provide any
+ * advantage — but may not transmit larger fragments than negotiated.
+ */
+
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 {
 	int status;
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 
-	status = rpc_recv_pdu(rpc);
+	status = rpc_recv_pdu_fragment(rpc);
 
 	if (status > 0)
 	{
 		header = (rpcconn_hdr_t*) rpc->buffer;
+
+		rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
+		rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
 
 		rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
 		rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
@@ -858,7 +876,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 	return bytesRead;
 }
 
-int rpc_recv_pdu(rdpRpc* rpc)
+int rpc_recv_pdu_fragment(rdpRpc* rpc)
 {
 	int status;
 	int headerLength;
@@ -901,17 +919,6 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		bytesRead += status;
 	}
 
-	printf("header->common.pfc_flags: 0x%04X\n", header->common.pfc_flags);
-
-	if (header->common.pfc_flags)
-	{
-		if (!(header->common.pfc_flags & PFC_LAST_FRAG))
-		{
-			printf("Fragmented PDU\n");
-			rpc_pdu_header_print(header);
-		}
-	}
-
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
 		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
@@ -919,7 +926,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 		printf("Receiving Out-of-Sequence RTS PDU\n");
 		rts_recv_out_of_sequence_pdu(rpc);
-		return rpc_recv_pdu(rpc);
+		return rpc_recv_pdu_fragment(rpc);
 	}
 	else if (header->common.ptype == PTYPE_FAULT)
 	{
@@ -930,14 +937,16 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
 	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
 
+#if 0
 	printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
 			rpc->VirtualConnection->DefaultOutChannel->BytesReceived,
 			rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow,
 			rpc->ReceiveWindow);
+#endif
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		printf("Sending Flow Control Ack PDU\n");
+		//printf("Sending Flow Control Ack PDU\n");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -948,6 +957,63 @@ int rpc_recv_pdu(rdpRpc* rpc)
 #endif
 
 	return header->common.frag_length;
+}
+
+int rpc_recv_pdu(rdpRpc* rpc)
+{
+	int status;
+	UINT32 StubOffset;
+	UINT32 StubLength;
+	rpcconn_hdr_t* header;
+
+	status = rpc_recv_pdu_fragment(rpc);
+
+	header = (rpcconn_hdr_t*) rpc->buffer;
+
+	if (header->common.ptype != PTYPE_RESPONSE)
+	{
+		printf("rpc_recv_pdu: unexpected ptype 0x%02X\n", header->common.ptype);
+		return -1;
+	}
+
+	if (!rpc_get_stub_data_info(rpc, rpc->buffer, &StubOffset, &StubLength))
+	{
+		printf("rpc_recv_pdu: expected stub\n");
+		return -1;
+	}
+
+	if (header->response.alloc_hint > rpc->StubSize)
+	{
+		rpc->StubSize = header->response.alloc_hint;
+		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubSize);
+	}
+
+	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->buffer[StubOffset], StubLength);
+	rpc->StubOffset += StubLength;
+	rpc->StubFragCount++;
+
+	/**
+	 * If alloc_hint is set to a nonzero value and a request or a response is fragmented into multiple
+	 * PDUs, implementations of these extensions SHOULD set the alloc_hint field in every PDU to be the
+	 * combined stub data length of all remaining fragment PDUs.
+	 */
+
+	//printf("Receiving Fragment #%d FragStubLength: %d FragLength: %d AllocHint: %d StubOffset: %d\n",
+	//		rpc->StubFragCount, StubLength, header->common.frag_length, header->response.alloc_hint, rpc->StubOffset);
+
+	if ((header->response.alloc_hint == StubLength))
+	{
+		//printf("Reassembled PDU (%d):\n", rpc->StubOffset);
+		//freerdp_hexdump(rpc->StubBuffer, rpc->StubOffset);
+
+		rpc->StubLength = rpc->StubOffset;
+		rpc->StubOffset = 0;
+		rpc->StubFragCount = 0;
+
+		return rpc->StubLength;
+	}
+
+	return rpc_recv_pdu(rpc);
 }
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
@@ -1237,6 +1303,12 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 		rpc->length = 20;
 		rpc->buffer = (BYTE*) malloc(rpc->length);
+
+		rpc->StubOffset = 0;
+		rpc->StubSize = 20;
+		rpc->StubLength = 0;
+		rpc->StubFragCount = 0;
+		rpc->StubBuffer = (BYTE*) malloc(rpc->length);
 
 		rpc->rpc_vers = 5;
 		rpc->rpc_vers_minor = 0;
