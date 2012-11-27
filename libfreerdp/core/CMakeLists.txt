@@ -23,6 +23,23 @@ add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
+set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
+
+include_directories(".")
+include_directories(${${MODULE_PREFIX}_GATEWAY_DIR})
+
+set(${MODULE_PREFIX}_GATEWAY_SRCS
+	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/http.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/http.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h)
+
 set(${MODULE_PREFIX}_SRCS
 	activation.c
 	activation.h
@@ -34,18 +51,10 @@ set(${MODULE_PREFIX}_SRCS
 	mcs.h
 	nla.c
 	nla.h
-	ntlm.c
-	ntlm.h
 	nego.c
 	nego.h
 	info.c
 	info.h
-	http.c
-	http.h
-	rpc.c
-	rpc.h
-	rts.c
-	rts.h
 	input.c
 	input.h
 	license.c
@@ -73,8 +82,6 @@ set(${MODULE_PREFIX}_SRCS
 	rdp.h
 	tcp.c
 	tcp.h
-	tsg.c
-	tsg.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
@@ -95,6 +102,8 @@ set(${MODULE_PREFIX}_SRCS
 	listener.h
 	peer.c
 	peer.h)
+
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
