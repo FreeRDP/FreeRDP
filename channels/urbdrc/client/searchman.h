@@ -44,7 +44,7 @@ struct _USB_SEARCHMAN
 	USB_SEARCHDEV *	tail; /* tail device in linked list */
 
 	pthread_mutex_t mutex;
-	struct wait_obj * term_event;
+	HANDLE term_event;
 	sem_t sem_term;
 	int strated;
 

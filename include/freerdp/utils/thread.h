@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/wait_obj.h>
+
 #ifndef _WIN32
 #include <pthread.h>
 #endif
@@ -35,7 +36,7 @@ struct _freerdp_thread
 {
 	HANDLE mutex;
 
-	struct wait_obj* signals[5];
+	HANDLE signals[5];
 	int num_signals;
 
 	int status;

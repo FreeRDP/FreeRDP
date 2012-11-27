@@ -444,8 +444,8 @@ static void* urbdrc_search_usb_device(void* arg)
 	IWTSVirtualChannel* dvc_channel;
 	USB_SEARCHDEV* sdev;
 	IUDEVICE* pdev = NULL;
-	struct wait_obj* listobj[2];
-	struct wait_obj* mon_fd;
+	HANDLE listobj[2];
+	HANDLE mon_fd;
 	int numobj, timeout;
 	int busnum, devnum;
 	int success = 0, error, on_close = 0, found = 0;

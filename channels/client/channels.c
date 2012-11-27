@@ -433,7 +433,7 @@ struct rdp_channels
 	freerdp* instance;
 
 	/* signal for incoming data or event */
-	struct wait_obj* signal;
+	HANDLE signal;
 
 	/* used for sync write */
 	PSLIST_HEADER pSyncDataList;

@@ -39,82 +39,49 @@
 #include <unistd.h>
 #endif
 
-struct wait_obj
+HANDLE wait_obj_new(void)
 {
-	HANDLE event;
-};
-
-struct wait_obj* wait_obj_new(void)
-{
-	struct wait_obj* obj;
-
-	obj = (struct wait_obj*) malloc(sizeof(struct wait_obj));
-	ZeroMemory(obj, sizeof(struct wait_obj));
-
-	obj->event = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	return obj;
+	return CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
-struct wait_obj* wait_obj_new_with_fd(void* fd)
+HANDLE wait_obj_new_with_fd(void* fd)
 {
-	struct wait_obj* obj;
-
-	obj = (struct wait_obj*) malloc(sizeof(struct wait_obj));
-	ZeroMemory(obj, sizeof(struct wait_obj));
-
-	obj->event = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
-
-	return obj;
+	return CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
 }
 
-void wait_obj_free(struct wait_obj* obj)
+void wait_obj_free(HANDLE event)
 {
-	CloseHandle(obj->event);
+	CloseHandle(event);
 }
 
-int wait_obj_is_set(struct wait_obj* obj)
+int wait_obj_is_set(HANDLE event)
 {
-	return (WaitForSingleObject(obj->event, 0) == WAIT_OBJECT_0);
+	return (WaitForSingleObject(event, 0) == WAIT_OBJECT_0);
 }
 
-void wait_obj_set(struct wait_obj* obj)
+void wait_obj_set(HANDLE event)
 {
-	SetEvent(obj->event);
+	SetEvent(event);
 }
 
-void wait_obj_clear(struct wait_obj* obj)
+void wait_obj_clear(HANDLE event)
 {
-	ResetEvent(obj->event);
+	ResetEvent(event);
 }
 
-int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout)
+int wait_obj_select(HANDLE* events, int count, int timeout)
 {
-	int index;
-	int status;
-	HANDLE* handles;
+	if (WaitForMultipleObjects(count, events, FALSE, timeout) == WAIT_FAILED)
+		return -1;
 
-	handles = (HANDLE*) malloc(sizeof(HANDLE) * (numobj + 1));
-	ZeroMemory(handles, sizeof(HANDLE) * (numobj + 1));
-
-	for (index = 0; index < numobj; index++)
-		handles[index] = listobj[index]->event;
-
-	if (WaitForMultipleObjects(numobj, handles, FALSE, timeout) == WAIT_FAILED)
-		status = -1;
-	else
-		status = 0;
-
-	free(handles);
-
-	return status;
+	return 0;
 }
 
-void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count)
+void wait_obj_get_fds(HANDLE event, void** fds, int* count)
 {
 	int fd;
 
-	fd = GetEventFileDescriptor(obj->event);
+	fd = GetEventFileDescriptor(event);
 
 	if (fd == -1)
 		return;

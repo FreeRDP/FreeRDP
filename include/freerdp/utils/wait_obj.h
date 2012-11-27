@@ -22,13 +22,13 @@
 
 #include <freerdp/api.h>
 
-FREERDP_API struct wait_obj* wait_obj_new(void);
-FREERDP_API struct wait_obj* wait_obj_new_with_fd(void* fd);
-FREERDP_API void wait_obj_free(struct wait_obj* obj);
-FREERDP_API int wait_obj_is_set(struct wait_obj* obj);
-FREERDP_API void wait_obj_set(struct wait_obj* obj);
-FREERDP_API void wait_obj_clear(struct wait_obj* obj);
-FREERDP_API int wait_obj_select(struct wait_obj** listobj, int numobj, int timeout);
-FREERDP_API void wait_obj_get_fds(struct wait_obj* obj, void** fds, int* count);
+FREERDP_API HANDLE wait_obj_new(void);
+FREERDP_API HANDLE wait_obj_new_with_fd(void* fd);
+FREERDP_API void wait_obj_free(HANDLE event);
+FREERDP_API int wait_obj_is_set(HANDLE event);
+FREERDP_API void wait_obj_set(HANDLE event);
+FREERDP_API void wait_obj_clear(HANDLE event);
+FREERDP_API int wait_obj_select(HANDLE* events, int count, int timeout);
+FREERDP_API void wait_obj_get_fds(HANDLE event, void** fds, int* count);
 
 #endif

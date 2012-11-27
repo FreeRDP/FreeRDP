@@ -62,7 +62,7 @@ struct _SERIAL_DEVICE
 	LIST* irp_list;
 	LIST* pending_irps;
 	freerdp_thread* thread;
-	struct wait_obj* in_event;
+	HANDLE in_event;
 
 	fd_set read_fds;
 	fd_set write_fds;

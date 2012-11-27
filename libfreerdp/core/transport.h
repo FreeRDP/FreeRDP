@@ -61,7 +61,7 @@ struct rdp_transport
 	void* recv_extra;
 	STREAM* recv_buffer;
 	TransportRecv recv_callback;
-	struct wait_obj* recv_event;
+	HANDLE recv_event;
 	BOOL blocking;
 	BOOL ProcessSinglePdu;
 	BOOL SplitInputOutput;
