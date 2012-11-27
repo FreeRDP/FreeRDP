@@ -35,7 +35,6 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
@@ -433,7 +432,7 @@ struct rdp_channels
 	freerdp* instance;
 
 	/* signal for incoming data or event */
-	struct wait_obj* signal;
+	HANDLE signal;
 
 	/* used for sync write */
 	PSLIST_HEADER pSyncDataList;
@@ -840,7 +839,7 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 	InterlockedPushEntrySList(channels->pSyncDataList, &(item->ItemEntry));
 
 	/* set the event */
-	wait_obj_set(channels->signal);
+	SetEvent(channels->signal);
 
 	return CHANNEL_RC_OK;
 }
@@ -891,7 +890,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 
 	channels->event = event;
 	/* set the event */
-	wait_obj_set(channels->signal);
+	SetEvent(channels->signal);
 
 	return CHANNEL_RC_OK;
 }
@@ -935,7 +934,7 @@ rdpChannels* freerdp_channels_new(void)
 	InitializeSListHead(channels->pSyncDataList);
 
 	channels->event_sem = CreateSemaphore(NULL, 1, 16, NULL);
-	channels->signal = wait_obj_new();
+	channels->signal = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	/* Add it to the global list */
 	channels_list = (rdpChannelsList*) malloc(sizeof(rdpChannelsList));
@@ -959,7 +958,7 @@ void freerdp_channels_free(rdpChannels* channels)
 	_aligned_free(channels->pSyncDataList);
 
 	CloseHandle(channels->event_sem);
-	wait_obj_free(channels->signal);
+	CloseHandle(channels->signal);
 
 	/* Remove from global list */
 
@@ -1266,7 +1265,16 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
-	wait_obj_get_fds(channels->signal, read_fds, read_count);
+	int fd;
+
+	fd = GetEventFileDescriptor(channels->signal);
+
+	if (fd != -1)
+	{
+		read_fds[*read_count] = ((void*) (long) fd);
+		(*read_count)++;
+	}
+
 	return TRUE;
 }
 
@@ -1275,9 +1283,9 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
  */
 BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 {
-	if (wait_obj_is_set(channels->signal))
+	if (WaitForSingleObject(channels->signal, 0) == WAIT_OBJECT_0)
 	{
-		wait_obj_clear(channels->signal);
+		ResetEvent(channels->signal);
 		freerdp_channels_process_sync(channels, instance);
 	}
 

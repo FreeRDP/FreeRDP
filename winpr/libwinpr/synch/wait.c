@@ -107,7 +107,64 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
-	return 0;
+	int fd;
+	int maxfd;
+	int index;
+	int status;
+	fd_set fds;
+	ULONG Type;
+	PVOID Object;
+	WINPR_EVENT* event;
+	struct timeval timeout;
+
+	maxfd = 0;
+	FD_ZERO(&fds);
+	ZeroMemory(&timeout, sizeof(timeout));
+
+	if (bWaitAll)
+		printf("WaitForMultipleObjects: bWaitAll not yet implemented\n");
+
+	for (index = 0; index < nCount; index++)
+	{
+		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
+			return WAIT_FAILED;
+
+		if (Type != HANDLE_TYPE_EVENT)
+			return WAIT_FAILED;
+
+		event = (WINPR_EVENT*) Object;
+		fd = event->pipe_fd[0];
+
+		FD_SET(fd, &fds);
+
+		if (fd > maxfd)
+			maxfd = fd;
+	}
+
+	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+	{
+		timeout.tv_usec = dwMilliseconds * 1000;
+	}
+
+	status = select(maxfd + 1, &fds, 0, 0,
+			(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+	if (status < 0)
+		return WAIT_FAILED;
+
+	if (status == 0)
+		return WAIT_TIMEOUT;
+
+	for (index = 0; index < nCount; index++)
+	{
+		winpr_Handle_GetInfo(lpHandles[index], &Type, &Object);
+		fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+
+		if (FD_ISSET(fd, &fds))
+			return (WAIT_OBJECT_0 + index);
+	}
+
+	return WAIT_FAILED;
 }
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
