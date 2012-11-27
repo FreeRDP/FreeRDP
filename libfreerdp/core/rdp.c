@@ -678,10 +678,12 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
 	security_decrypt(s->p, length, rdp);
+
 	if (securityFlags & SEC_SECURE_CHECKSUM)
 		security_salted_mac_signature(rdp, s->p, length, FALSE, cmac);
 	else
 		security_mac_signature(rdp, s->p, length, cmac);
+
 	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
 	{
 		printf("WARNING: invalid packet signature\n");
@@ -694,6 +696,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 		 */
 		//return FALSE;
 	}
+
 	return TRUE;
 }
 

@@ -284,29 +284,39 @@ BOOL tls_disconnect(rdpTls* tls)
 {
 	if (tls->ssl)
 		SSL_shutdown(tls->ssl);
+
 	return TRUE;
 }
 
 int tls_read(rdpTls* tls, BYTE* data, int length)
 {
+	int error;
 	int status;
 
 	status = SSL_read(tls->ssl, data, length);
 
-	switch (SSL_get_error(tls->ssl, status))
+	if (status <= 0)
 	{
-		case SSL_ERROR_NONE:
-			break;
+		error = SSL_get_error(tls->ssl, status);
 
-		case SSL_ERROR_WANT_READ:
-		case SSL_ERROR_WANT_WRITE:
-			status = 0;
-			break;
+		//printf("tls_read: length: %d status: %d error: 0x%08X\n",
+		//		length, status, error);
 
-		default:
-			tls_print_error("SSL_read", tls->ssl, status);
-			status = -1;
-			break;
+		switch (error)
+		{
+			case SSL_ERROR_NONE:
+				break;
+
+			case SSL_ERROR_WANT_READ:
+			case SSL_ERROR_WANT_WRITE:
+				status = 0;
+				break;
+
+			default:
+				tls_print_error("SSL_read", tls->ssl, status);
+				status = -1;
+				break;
+		}
 	}
 
 	return status;
@@ -327,24 +337,33 @@ int tls_read_all(rdpTls* tls, BYTE* data, int length)
 
 int tls_write(rdpTls* tls, BYTE* data, int length)
 {
+	int error;
 	int status;
 
 	status = SSL_write(tls->ssl, data, length);
 
-	switch (SSL_get_error(tls->ssl, status))
+	if (status <= 0)
 	{
-		case SSL_ERROR_NONE:
-			break;
+		error = SSL_get_error(tls->ssl, status);
 
-		case SSL_ERROR_WANT_READ:
-		case SSL_ERROR_WANT_WRITE:
-			status = 0;
-			break;
+		//printf("tls_write: length: %d status: %d error: 0x%08X\n",
+		//		length, status, error);
 
-		default:
-			tls_print_error("SSL_write", tls->ssl, status);
-			status = -1;
-			break;
+		switch (error)
+		{
+			case SSL_ERROR_NONE:
+				break;
+
+			case SSL_ERROR_WANT_READ:
+			case SSL_ERROR_WANT_WRITE:
+				status = 0;
+				break;
+
+			default:
+				tls_print_error("SSL_write", tls->ssl, status);
+				status = -1;
+				break;
+		}
 	}
 
 	return status;

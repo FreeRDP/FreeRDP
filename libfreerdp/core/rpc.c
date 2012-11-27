@@ -934,6 +934,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 
 		printf("Receiving Out-of-Sequence RTS PDU\n");
 		rts_recv_out_of_sequence_pdu(rpc);
+
 		return rpc_recv_pdu_fragment(rpc);
 	}
 	else if (header->common.ptype == PTYPE_FAULT)

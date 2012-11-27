@@ -869,6 +869,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	return 0;
 }
 
+int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	return 0;
+}
+
 int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 offset;
@@ -1362,7 +1367,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
 
 	if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK)
 	{
-
+		return rts_recv_flow_control_ack_pdu(rpc, rpc->buffer, rpc->length);
 	}
 	else if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION)
 	{

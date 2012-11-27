@@ -1158,6 +1158,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		{
 			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
 			return tsg_read(tsg, data, length);
+			return 0;
 		}
 
 		tsg->PendingPdu = TRUE;
