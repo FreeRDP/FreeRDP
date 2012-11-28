@@ -29,6 +29,8 @@ include_directories(".")
 include_directories(${${MODULE_PREFIX}_GATEWAY_DIR})
 
 set(${MODULE_PREFIX}_GATEWAY_SRCS
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.c
@@ -37,8 +39,8 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/http.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/http.h
-	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
-	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h)
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
 
 set(${MODULE_PREFIX}_SRCS
 	activation.c
