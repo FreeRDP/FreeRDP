@@ -700,6 +700,19 @@ typedef struct _RPC_PDU_ENTRY
 	UINT32 Length;
 } RPC_PDU_ENTRY, *PRPC_PDU_ENTRY;
 
+struct rpc_client
+{
+	HANDLE Thread;
+	HANDLE StopEvent;
+
+	HANDLE SendEvent;
+	HANDLE SendSemaphore;
+
+	HANDLE ReceiveEvent;
+	HANDLE ReceiveSemaphore;
+};
+typedef struct rpc_client RpcClient;
+
 struct rdp_rpc
 {
 	RPC_CLIENT_STATE State;
@@ -709,6 +722,8 @@ struct rdp_rpc
 
 	rdpNtlm* ntlm;
 	int send_seq_num;
+
+	RpcClient* client;
 
 	rdpNtlmHttp* NtlmHttpIn;
 	rdpNtlmHttp* NtlmHttpOut;

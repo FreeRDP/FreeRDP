@@ -38,6 +38,7 @@
 #include "ncacn_http.h"
 #include "rpc_bind.h"
 #include "rpc_fault.h"
+#include "rpc_client.h"
 
 #include "rpc.h"
 
@@ -240,42 +241,6 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	}
 
 	return TRUE;
-}
-
-int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
-{
-	RPC_PDU_ENTRY* PduEntry;
-
-	PduEntry = (RPC_PDU_ENTRY*) _aligned_malloc(sizeof(RPC_PDU_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
-	PduEntry->Buffer = buffer;
-	PduEntry->Length = length;
-
-	InterlockedPushEntrySList(rpc->SendQueue, &(PduEntry->ItemEntry));
-
-	return 0;
-}
-
-int rpc_send_dequeue_pdu(rdpRpc* rpc)
-{
-	int status;
-	RPC_PDU_ENTRY* PduEntry;
-
-	PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue);
-
-	status = rpc_in_write(rpc, PduEntry->Buffer, PduEntry->Length);
-
-	/*
-	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
-	 * data model. RTS PDUs and the HTTP request and response headers are not subject to flow control.
-	 * Implementations of this protocol MUST NOT include them when computing any of the variables
-	 * specified by this abstract data model.
-	 */
-	rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
-	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
-
-	_aligned_free(PduEntry);
-
-	return status;
 }
 
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)

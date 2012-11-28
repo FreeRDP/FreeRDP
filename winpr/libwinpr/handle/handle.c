@@ -78,10 +78,32 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-#if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) Object));
+		WINPR_SEMAPHORE* semaphore;
+
+		semaphore = (WINPR_SEMAPHORE*) Object;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+
+		if (semaphore->pipe_fd[0] != -1)
+		{
+			close(semaphore->pipe_fd[0]);
+			semaphore->pipe_fd[0] = -1;
+
+			if (semaphore->pipe_fd[1] != -1)
+			{
+				close(semaphore->pipe_fd[1]);
+				semaphore->pipe_fd[1] = -1;
+			}
+		}
+
 #else
-		sem_destroy((winpr_sem_t*) Object);
+
+#if defined __APPLE__
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
+#else
+		sem_destroy((winpr_sem_t*) semaphore->sem);
+#endif
+
 #endif
 		winpr_Handle_Remove(Object);
 		free(Object);

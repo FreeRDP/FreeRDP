@@ -90,10 +90,49 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-#if defined __APPLE__
-		semaphore_wait(*((winpr_sem_t*) Object));
+		WINPR_SEMAPHORE* semaphore;
+
+		semaphore = (WINPR_SEMAPHORE*) Object;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+		if (semaphore->pipe_fd[0] != -1)
+		{
+			int status;
+			int length;
+			fd_set rfds;
+			struct timeval timeout;
+
+			FD_ZERO(&rfds);
+			FD_SET(semaphore->pipe_fd[0], &rfds);
+			ZeroMemory(&timeout, sizeof(timeout));
+
+			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+			{
+				timeout.tv_usec = dwMilliseconds * 1000;
+			}
+
+			status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+			if (status < 0)
+				return WAIT_FAILED;
+
+			if (status != 1)
+				return WAIT_TIMEOUT;
+
+			length = read(semaphore->pipe_fd[0], &length, 1);
+
+			if (length != 1)
+				return FALSE;
+		}
 #else
-		sem_wait((winpr_sem_t*) Object);
+
+#if defined __APPLE__
+		semaphore_wait(*((winpr_sem_t*) semaphore->sem));
+#else
+		sem_wait((winpr_sem_t*) semaphore->sem);
+#endif
+
 #endif
 	}
 
