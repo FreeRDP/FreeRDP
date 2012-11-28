@@ -641,13 +641,14 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 {
-	BYTE cmac[8], wmac[8];
+	BYTE cmac[8];
+	BYTE wmac[8];
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
 		BYTE version, pad;
-		BYTE *sig;
+		BYTE* sig;
 
 		stream_read_UINT16(s, len); /* 0x10 */
 		stream_read_BYTE(s, version); /* 0x1 */
@@ -725,7 +726,8 @@ static BOOL rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 	if (rdp->settings->DisableEncryption)
 	{
 		rdp_read_security_header(s, &securityFlags);
-		if (securityFlags & (SEC_ENCRYPT|SEC_REDIRECTION_PKT))
+
+		if (securityFlags & (SEC_ENCRYPT | SEC_REDIRECTION_PKT))
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
@@ -733,6 +735,7 @@ static BOOL rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 				return FALSE;
 			}
 		}
+
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
 			/*
@@ -797,7 +800,7 @@ static BOOL rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	fastpath = rdp->fastpath;
 	length = fastpath_read_header_rdp(fastpath, s);
 
-	if (length == 0 || length > stream_get_left(s))
+	if ((length == 0) || (length > stream_get_left(s)))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
 		return FALSE;

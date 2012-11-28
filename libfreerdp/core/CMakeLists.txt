@@ -29,10 +29,14 @@ include_directories(".")
 include_directories(${${MODULE_PREFIX}_GATEWAY_DIR})
 
 set(${MODULE_PREFIX}_GATEWAY_SRCS
-	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
-	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_fault.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_fault.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rts_signature.c
