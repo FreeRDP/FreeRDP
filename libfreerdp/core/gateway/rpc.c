@@ -29,6 +29,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
+#include <winpr/synch.h>
 #include <winpr/dsparse.h>
 
 #include <openssl/rand.h>
@@ -457,7 +458,6 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
-	int status;
 	BYTE* buffer;
 	UINT32 offset;
 	rdpNtlm* ntlm;
@@ -549,12 +549,9 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	offset += Buffers[1].cbBuffer;
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
-	status = rpc_send_dequeue_pdu(rpc);
 
-	free(buffer);
-
-	if (status < 0)
-		return -1;
+	WaitForSingleObject(rpc->client->PduSentEvent, INFINITE);
+	ResetEvent(rpc->client->PduSentEvent);
 
 	return length;
 }
@@ -715,6 +712,8 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->VirtualConnectionCookieTable = rpc_virtual_connection_cookie_table_new(rpc);
 
 		rpc->call_id = 1;
+
+		rpc_client_start(rpc);
 	}
 
 	return rpc;

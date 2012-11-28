@@ -40,6 +40,7 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	PduEntry->Length = length;
 
 	InterlockedPushEntrySList(rpc->SendQueue, &(PduEntry->ItemEntry));
+	ReleaseSemaphore(rpc->client->SendSemaphore, 1, NULL);
 
 	return 0;
 }
@@ -50,6 +51,9 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	RPC_PDU_ENTRY* PduEntry;
 
 	PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue);
+
+	if (!PduEntry)
+		return 0;
 
 	status = rpc_in_write(rpc, PduEntry->Buffer, PduEntry->Length);
 
@@ -62,7 +66,10 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
 
+	free(PduEntry->Buffer);
 	_aligned_free(PduEntry);
+
+	SetEvent(rpc->client->PduSentEvent);
 
 	return status;
 }
@@ -71,30 +78,23 @@ static void* rpc_client_thread(void* arg)
 {
 	rdpRpc* rpc;
 	DWORD status;
-	HANDLE events[3];
+	DWORD nCount;
+	HANDLE events[2];
 
 	rpc = (rdpRpc*) arg;
 
-	events[0] = rpc->client->StopEvent;
-	events[1] = rpc->client->SendEvent;
-	events[2] = rpc->client->ReceiveEvent;
+	nCount = 0;
+	events[nCount++] = rpc->client->StopEvent;
+	events[nCount++] = rpc->client->SendSemaphore;
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(3, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if (WaitForSingleObject(rpc->client->SendEvent, 0) == WAIT_OBJECT_0)
-		{
-			rpc_send_dequeue_pdu(rpc);
-		}
-
-		if (WaitForSingleObject(rpc->client->ReceiveEvent, 0) == WAIT_OBJECT_0)
-		{
-
-		}
+		rpc_send_dequeue_pdu(rpc);
 	}
 
 	return NULL;
@@ -108,9 +108,9 @@ int rpc_client_start(rdpRpc* rpc)
 			(LPTHREAD_START_ROUTINE) rpc_client_thread,
 			rpc, CREATE_SUSPENDED, NULL);
 
-	rpc->client->SendEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	rpc->client->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	rpc->client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	rpc->client->SendSemaphore = CreateSemaphore(NULL, 0, 64, NULL);
+	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	ResumeThread(rpc->client->Thread);
 

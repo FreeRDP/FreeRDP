@@ -153,7 +153,6 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	fd_set fds;
 	ULONG Type;
 	PVOID Object;
-	WINPR_EVENT* event;
 	struct timeval timeout;
 
 	maxfd = 0;
@@ -168,11 +167,22 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 			return WAIT_FAILED;
 
-		if (Type != HANDLE_TYPE_EVENT)
+		if (Type == HANDLE_TYPE_EVENT)
+		{
+			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+		}
+		else if (Type == HANDLE_TYPE_SEMAPHORE)
+		{
+#ifdef WINPR_PIPE_SEMAPHORE
+			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
+#else
 			return WAIT_FAILED;
-
-		event = (WINPR_EVENT*) Object;
-		fd = event->pipe_fd[0];
+#endif
+		}
+		else
+		{
+			return WAIT_FAILED;
+		}
 
 		FD_SET(fd, &fds);
 
@@ -197,10 +207,24 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	for (index = 0; index < nCount; index++)
 	{
 		winpr_Handle_GetInfo(lpHandles[index], &Type, &Object);
-		fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+
+		if (Type == HANDLE_TYPE_EVENT)
+			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+		else if (Type == HANDLE_TYPE_SEMAPHORE)
+			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
 
 		if (FD_ISSET(fd, &fds))
+		{
+			if (Type == HANDLE_TYPE_SEMAPHORE)
+			{
+				int length = read(fd, &length, 1);
+
+				if (length != 1)
+					return WAIT_FAILED;
+			}
+
 			return (WAIT_OBJECT_0 + index);
+		}
 	}
 
 	return WAIT_FAILED;

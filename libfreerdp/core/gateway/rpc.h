@@ -705,11 +705,8 @@ struct rpc_client
 	HANDLE Thread;
 	HANDLE StopEvent;
 
-	HANDLE SendEvent;
+	HANDLE PduSentEvent;
 	HANDLE SendSemaphore;
-
-	HANDLE ReceiveEvent;
-	HANDLE ReceiveSemaphore;
 };
 typedef struct rpc_client RpcClient;
 
