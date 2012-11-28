@@ -22,6 +22,8 @@
 #ifndef FREERDP_CORE_RPC_H
 #define FREERDP_CORE_RPC_H
 
+#include <winpr/wtypes.h>
+
 typedef struct rdp_rpc rdpRpc;
 
 #define DEFINE_RPC_COMMON_FIELDS() \
@@ -713,9 +715,6 @@ struct rdp_rpc
 };
 
 BOOL rpc_connect(rdpRpc* rpc);
-
-BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
-BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 

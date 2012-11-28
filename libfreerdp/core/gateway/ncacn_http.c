@@ -227,3 +227,54 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
+void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel)
+{
+	if (channel == TSG_CHANNEL_IN)
+		http_context_set_method(ntlm_http->context, "RPC_IN_DATA");
+	else if (channel == TSG_CHANNEL_OUT)
+		http_context_set_method(ntlm_http->context, "RPC_OUT_DATA");
+
+	http_context_set_uri(ntlm_http->context, "/rpc/rpcproxy.dll?localhost:3388");
+	http_context_set_accept(ntlm_http->context, "application/rpc");
+	http_context_set_cache_control(ntlm_http->context, "no-cache");
+	http_context_set_connection(ntlm_http->context, "Keep-Alive");
+	http_context_set_user_agent(ntlm_http->context, "MSRPC");
+	http_context_set_host(ntlm_http->context, rpc->settings->GatewayHostname);
+
+	if (channel == TSG_CHANNEL_IN)
+	{
+		http_context_set_pragma(ntlm_http->context,
+			"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+	}
+	else if (channel == TSG_CHANNEL_OUT)
+	{
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729" ", "
+				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
+	}
+}
+
+rdpNtlmHttp* ntlm_http_new()
+{
+	rdpNtlmHttp* ntlm_http;
+
+	ntlm_http = (rdpNtlmHttp*) malloc(sizeof(rdpNtlmHttp));
+
+	if (ntlm_http != NULL)
+	{
+		ZeroMemory(ntlm_http, sizeof(rdpNtlmHttp));
+		ntlm_http->ntlm = ntlm_new();
+		ntlm_http->context = http_context_new();
+	}
+
+	return ntlm_http;
+}
+
+void ntlm_http_free(rdpNtlmHttp* ntlm_http)
+{
+	if (ntlm_http != NULL)
+	{
+		ntlm_free(ntlm_http->ntlm);
+		http_context_free(ntlm_http->context);
+	}
+}

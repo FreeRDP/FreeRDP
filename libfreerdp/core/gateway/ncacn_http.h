@@ -31,9 +31,12 @@
 
 #include "rpc.h"
 
-STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel);
-
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
+
+void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel);
+
+rdpNtlmHttp* ntlm_http_new();
+void ntlm_http_free(rdpNtlmHttp* ntlm_http);
 
 #endif
