@@ -132,8 +132,8 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 			settings->GatewayDomain, settings->GatewayPassword);
 	}
 
-	ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
-	//ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+	//ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
+	ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
 
 	return 0;
 }
