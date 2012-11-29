@@ -27,6 +27,8 @@
 
 #include <winpr/crt.h>
 
+#include "rpc_client.h"
+
 #include "rpc_bind.h"
 
 /**
@@ -217,7 +219,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return -1;

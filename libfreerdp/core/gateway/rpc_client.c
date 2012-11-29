@@ -113,21 +113,27 @@ int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 	InterlockedPushEntrySList(rpc->ReceiveQueue, &(pdu->ItemEntry));
 	ReleaseSemaphore(rpc->client->ReceiveSemaphore, 1, NULL);
 
-	if (rpc->client->SynchronousReceive)
-	{
-		WaitForSingleObject(rpc->client->PduReceivedEvent, INFINITE);
-		ResetEvent(rpc->client->PduReceivedEvent);
-	}
-
 	return 0;
 }
 
-int rpc_recv_dequeue_pdu(rdpRpc* rpc)
+RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 {
-	if (rpc->client->SynchronousReceive)
-		SetEvent(rpc->client->PduReceivedEvent);
+	RPC_PDU* pdu;
+	DWORD dwMilliseconds;
 
-	return 0;
+	pdu = NULL;
+	dwMilliseconds = rpc->client->SynchronousReceive ? INFINITE : 0;
+
+	if (rpc->client->SynchronousReceive)
+		rpc_recv_enqueue_pdu(rpc);
+
+	if (WaitForSingleObject(rpc->client->ReceiveSemaphore, dwMilliseconds) == WAIT_OBJECT_0)
+	{
+		pdu = (RPC_PDU*) InterlockedPopEntrySList(rpc->ReceiveQueue);
+		return pdu;
+	}
+
+	return pdu;
 }
 
 static void* rpc_client_thread(void* arg)
@@ -158,7 +164,8 @@ static void* rpc_client_thread(void* arg)
 
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
-
+			if (!rpc->client->SynchronousReceive)
+				rpc_recv_enqueue_pdu(rpc);
 		}
 
 		rpc_send_dequeue_pdu(rpc);

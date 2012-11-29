@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 
 #include "ncacn_http.h"
+#include "rpc_client.h"
 
 #include "rts.h"
 
@@ -56,7 +57,6 @@
 
 BOOL rts_connect(rdpRpc* rpc)
 {
-	int status;
 	RPC_PDU* pdu;
 	rpcconn_rts_hdr_t* rts;
 	HttpResponse* http_response;
@@ -174,7 +174,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -213,7 +213,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;

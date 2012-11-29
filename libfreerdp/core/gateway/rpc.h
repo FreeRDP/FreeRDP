@@ -792,7 +792,6 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
-int rpc_recv_pdu_fragment(rdpRpc* rpc);
 RPC_PDU* rpc_recv_pdu(rdpRpc* rpc);
 
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);

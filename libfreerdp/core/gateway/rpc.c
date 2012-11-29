@@ -738,6 +738,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc_client_new(rpc);
 
 		rpc->client->SynchronousSend = TRUE;
+		rpc->client->SynchronousReceive = TRUE;
 	}
 
 	return rpc;

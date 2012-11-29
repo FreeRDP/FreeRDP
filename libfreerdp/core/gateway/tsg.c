@@ -35,6 +35,8 @@
 #include <winpr/ndr.h>
 #include <winpr/error.h>
 
+#include "rpc_client.h"
+
 #include "tsg.h"
 
 /**
@@ -212,7 +214,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -560,7 +562,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_RESPONSE packetResponse;
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -793,7 +795,7 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
 
-	pdu = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -1104,7 +1106,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	}
 	else
 	{
-		tsg->pdu = rpc_recv_pdu(rpc);
+		tsg->pdu = rpc_recv_dequeue_pdu(rpc);
 
 		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
@@ -1114,7 +1116,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		}
 
 		tsg->PendingPdu = TRUE;
-		tsg->BytesAvailable = rpc->pdu->Length;
+		tsg->BytesAvailable = tsg->pdu->Length;
 		tsg->BytesRead = 0;
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
