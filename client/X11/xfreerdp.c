@@ -288,8 +288,8 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
 	xfi->attribs.override_redirect = xfi->fullscreen;
 	xfi->attribs.colormap = xfi->colormap;
-	xfi->attribs.bit_gravity = ForgetGravity;
-	xfi->attribs.win_gravity = StaticGravity;
+	xfi->attribs.bit_gravity = NorthWestGravity;
+	xfi->attribs.win_gravity = NorthWestGravity;
 
 	if (xfi->instance->settings->window_title != NULL)
 	{
