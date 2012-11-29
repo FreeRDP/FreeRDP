@@ -569,6 +569,11 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	return length;
 }
 
+int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu)
+{
+	return 0;
+}
+
 BOOL rpc_connect(rdpRpc* rpc)
 {
 	rpc->TlsIn = rpc->transport->TlsIn;

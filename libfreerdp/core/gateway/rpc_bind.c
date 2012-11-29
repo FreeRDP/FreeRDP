@@ -213,18 +213,12 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
  * abstract GSS_Init_sec_context call, which returns an auth_token and continue status in this example.
  */
 
-int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
+int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	RPC_PDU* pdu;
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!pdu)
-		return -1;
-
-	header = (rpcconn_hdr_t*) pdu->Buffer;
+	header = (rpcconn_hdr_t*) buffer;
 
 	rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
@@ -232,12 +226,12 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
 	rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
 
-	auth_data = pdu->Buffer + (header->common.frag_length - header->common.auth_length);
+	auth_data = buffer + (header->common.frag_length - header->common.auth_length);
 	CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
 
 	ntlm_authenticate(rpc->ntlm);
 
-	return pdu->Length;
+	return (int) length;
 }
 
 /**
@@ -254,7 +248,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	UINT32 length;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
-	DEBUG_RPC("Sending auth_3 PDU");
+	DEBUG_RPC("Sending rpc_auth_3 PDU");
 
 	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) malloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
 	ZeroMemory(auth_3_pdu, sizeof(rpcconn_rpc_auth_3_hdr_t));
@@ -329,33 +323,59 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 int rpc_secure_bind(rdpRpc* rpc)
 {
-	if (rpc->State != RPC_CLIENT_STATE_ESTABLISHED)
+	int status;
+	RPC_PDU* pdu;
+
+	rpc->client->SynchronousSend = FALSE;
+	rpc->client->SynchronousReceive = TRUE;
+
+	while (rpc->State != RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		printf("rpc_secure_bind: invalid state, expected RPC_CLIENT_STATE_ESTABLISHED\n");
-		return -1;
+		if (rpc->State == RPC_CLIENT_STATE_ESTABLISHED)
+		{
+			status = rpc_send_bind_pdu(rpc);
+
+			if (status <= 0)
+			{
+				printf("rpc_secure_bind: error sending bind pdu!\n");
+				return -1;
+			}
+
+			rpc->State = RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK;
+		}
+		else if (rpc->State ==  RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK)
+		{
+			pdu = rpc_recv_dequeue_pdu(rpc);
+
+			if (!pdu)
+			{
+				printf("rpc_secure_bind: error receiving bind ack pdu!\n");
+				return -1;
+			}
+
+			if (rpc_recv_bind_ack_pdu(rpc, pdu->Buffer, pdu->Length) <= 0)
+			{
+				printf("rpc_secure_bind: error receiving bind ack pdu!\n");
+				return -1;
+			}
+
+			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
+			{
+				printf("rpc_secure_bind: error sending rpc_auth_3 pdu!\n");
+				return -1;
+			}
+
+			rpc->State = RPC_CLIENT_STATE_CONTEXT_NEGOTIATED;
+		}
+		else
+		{
+			printf("rpc_secure_bind: invalid state: %d\n", rpc->State);
+			return -1;
+		}
 	}
 
-	if (rpc_send_bind_pdu(rpc) <= 0)
-	{
-		printf("rpc_send_bind_pdu error!\n");
-		return -1;
-	}
-
-	rpc->State = RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK;
-
-	if (rpc_recv_bind_ack_pdu(rpc) <= 0)
-	{
-		printf("rpc_recv_bind_ack_pdu error!\n");
-		return -1;
-	}
-
-	if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
-	{
-		printf("rpc_send_rpc_auth_3 error!\n");
-		return -1;
-	}
-
-	rpc->State = RPC_CLIENT_STATE_CONTEXT_NEGOTIATED;
+	rpc->client->SynchronousSend = FALSE;
+	rpc->client->SynchronousReceive = FALSE;
 
 	return 0;
 }

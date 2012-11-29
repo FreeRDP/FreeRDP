@@ -793,8 +793,9 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
 RPC_PDU* rpc_recv_pdu(rdpRpc* rpc);
-
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
+
+int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

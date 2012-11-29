@@ -25,7 +25,7 @@
 #include <winpr/wtypes.h>
 
 int rpc_send_bind_pdu(rdpRpc* rpc);
-int rpc_recv_bind_ack_pdu(rdpRpc* rpc);
+int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc);
 
 int rpc_secure_bind(rdpRpc* rpc);

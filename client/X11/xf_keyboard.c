@@ -31,6 +31,8 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
+#include <freerdp/locale/keyboard.h>
+
 #include "xf_keyboard.h"
 
 void xf_kbd_init(xfInfo* xfi)

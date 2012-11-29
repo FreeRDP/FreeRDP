@@ -87,6 +87,9 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_INITIAL");
 
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
+
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
 		printf("rpc_out_connect_http error!\n");
@@ -230,6 +233,9 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
+
+	rpc->client->SynchronousSend = FALSE;
+	rpc->client->SynchronousReceive = FALSE;
 
 	return TRUE;
 }
