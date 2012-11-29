@@ -364,7 +364,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 			return header->common.frag_length;
 
 		printf("Receiving Out-of-Sequence RTS PDU\n");
-		rts_recv_out_of_sequence_pdu(rpc);
+		rts_recv_out_of_sequence_pdu(rpc, rpc->FragBuffer, header->common.frag_length);
 
 		return rpc_recv_pdu_fragment(rpc);
 	}
@@ -400,7 +400,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	return header->common.frag_length;
 }
 
-int rpc_recv_pdu(rdpRpc* rpc)
+RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 {
 	int status;
 	UINT32 StubOffset;
@@ -416,7 +416,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		rpc->pdu->Size = rpc->FragBufferSize;
 		rpc->pdu->Length = status;
 
-		return status;
+		return rpc->pdu;
 	}
 
 	header = (rpcconn_hdr_t*) rpc->FragBuffer;
@@ -424,13 +424,13 @@ int rpc_recv_pdu(rdpRpc* rpc)
 	if (header->common.ptype != PTYPE_RESPONSE)
 	{
 		printf("rpc_recv_pdu: unexpected ptype 0x%02X\n", header->common.ptype);
-		return -1;
+		return NULL;
 	}
 
 	if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
 	{
 		printf("rpc_recv_pdu: expected stub\n");
-		return -1;
+		return NULL;
 	}
 
 	if (header->response.alloc_hint > rpc->StubBufferSize)
@@ -466,7 +466,7 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		rpc->pdu->Size = rpc->StubBufferSize;
 		rpc->pdu->Length = rpc->StubLength;
 
-		return rpc->StubLength;
+		return rpc->pdu;
 	}
 
 	return rpc_recv_pdu(rpc);

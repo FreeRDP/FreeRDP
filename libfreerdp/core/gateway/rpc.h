@@ -23,6 +23,7 @@
 #define FREERDP_CORE_RPC_H
 
 #include <winpr/wtypes.h>
+#include <winpr/interlocked.h>
 
 typedef struct rdp_rpc rdpRpc;
 
@@ -47,6 +48,17 @@ typedef struct
 } rpcconn_rts_hdr_t;
 
 #define RTS_PDU_HEADER_LENGTH		20
+
+#define RPC_PDU_FLAG_STUB		0x00000001
+
+typedef struct _RPC_PDU
+{
+	SLIST_ENTRY ItemEntry;
+	BYTE* Buffer;
+	UINT32 Size;
+	UINT32 Length;
+	DWORD Flags;
+} RPC_PDU, *PRPC_PDU;
 
 #include "tcp.h"
 #include "rts.h"
@@ -697,17 +709,6 @@ struct rpc_virtual_connection_cookie_table
 };
 typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
 
-#define RPC_PDU_FLAG_STUB		0x00000001
-
-typedef struct _RPC_PDU
-{
-	SLIST_ENTRY ItemEntry;
-	BYTE* Buffer;
-	UINT32 Size;
-	UINT32 Length;
-	DWORD Flags;
-} RPC_PDU, *PRPC_PDU;
-
 struct rpc_client
 {
 	HANDLE Thread;
@@ -792,7 +793,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* l
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
 int rpc_recv_pdu_fragment(rdpRpc* rpc);
-int rpc_recv_pdu(rdpRpc* rpc);
+RPC_PDU* rpc_recv_pdu(rdpRpc* rpc);
 
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 

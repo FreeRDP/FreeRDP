@@ -87,18 +87,16 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 
 int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 {
-	int status;
 	RPC_PDU* pdu;
 
-	status = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_pdu(rpc);
 
-	if (status <= 0)
+	if (!pdu)
 	{
 		printf("rpc_recv_enqueue_pdu error\n");
 		return -1;
 	}
 
-	pdu = rpc->pdu;
 	rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (pdu->Flags & RPC_PDU_FLAG_STUB)

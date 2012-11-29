@@ -55,6 +55,7 @@ struct rdp_tsg
 {
 	rdpRpc* rpc;
 	UINT16 Port;
+	RPC_PDU* pdu;
 	LPWSTR Hostname;
 	LPWSTR MachineName;
 	TSG_STATE state;

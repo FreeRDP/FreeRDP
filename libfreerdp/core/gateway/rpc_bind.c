@@ -213,29 +213,29 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 {
-	int status;
+	RPC_PDU* pdu;
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 
-	status = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_pdu(rpc);
 
-	if (status > 0)
-	{
-		header = (rpcconn_hdr_t*) rpc->FragBuffer;
+	if (!pdu)
+		return -1;
 
-		rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
-		rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
+	header = (rpcconn_hdr_t*) pdu->Buffer;
 
-		rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
-		rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
+	rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
+	rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
 
-		auth_data = rpc->FragBuffer + (header->common.frag_length - header->common.auth_length);
-		CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
+	rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
+	rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
 
-		ntlm_authenticate(rpc->ntlm);
-	}
+	auth_data = pdu->Buffer + (header->common.frag_length - header->common.auth_length);
+	CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
 
-	return status;
+	ntlm_authenticate(rpc->ntlm);
+
+	return pdu->Length;
 }
 
 /**

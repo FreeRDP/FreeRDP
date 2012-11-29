@@ -57,6 +57,7 @@
 BOOL rts_connect(rdpRpc* rpc)
 {
 	int status;
+	RPC_PDU* pdu;
 	rpcconn_rts_hdr_t* rts;
 	HttpResponse* http_response;
 
@@ -173,12 +174,12 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	status = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_pdu(rpc);
 
-	if (status < 1)
+	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) rpc->FragBuffer;
+	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
@@ -186,7 +187,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_A3_pdu(rpc, rpc->FragBuffer, rpc->FragBufferSize);
+	rts_recv_CONN_A3_pdu(rpc, pdu->Buffer, pdu->Size);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
@@ -212,12 +213,12 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	status = rpc_recv_pdu(rpc);
+	pdu = rpc_recv_pdu(rpc);
 
-	if (status < 1)
+	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) rpc->FragBuffer;
+	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
@@ -225,7 +226,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_C2_pdu(rpc, rpc->FragBuffer, rpc->FragBufferSize);
+	rts_recv_CONN_C2_pdu(rpc, pdu->Buffer, pdu->Size);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
@@ -952,13 +953,13 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 	return CommandLength;
 }
 
-int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
+int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
 
-	rts = (rpcconn_rts_hdr_t*) rpc->FragBuffer;
+	rts = (rpcconn_rts_hdr_t*) buffer;
 
 	rts_extract_pdu_signature(rpc, &signature, rts);
 	rts_print_pdu_signature(rpc, &signature);
@@ -966,11 +967,11 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc)
 
 	if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK)
 	{
-		return rts_recv_flow_control_ack_pdu(rpc, rpc->FragBuffer, rpc->FragBufferSize);
+		return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
 	}
 	else if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION)
 	{
-		return rts_recv_flow_control_ack_with_destination_pdu(rpc, rpc->FragBuffer, rpc->FragBufferSize);
+		return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
 	}
 
 	return 0;
