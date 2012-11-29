@@ -139,7 +139,6 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc);
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 int rts_send_ping_pdu(rdpRpc* rpc);
 
-int rts_recv_pdu(rdpRpc* rpc);
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc);
 
 #include "rts_signature.h"

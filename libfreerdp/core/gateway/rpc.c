@@ -268,8 +268,8 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 
 #ifdef WITH_DEBUG_TSG
 	rpc_pdu_header_print((rpcconn_hdr_t*) data);
-	printf("Sending PDU (length: %d)\n", length);
-	freerdp_hexdump(data, length);
+	printf("Sending PDU (length: %d)\n", FragBufferSize);
+	freerdp_hexdump(data, FragBufferSize);
 #endif
 	
 	status = tls_write_all(rpc->TlsIn, data, length);
@@ -322,7 +322,9 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	int bytesRead = 0;
 	rpcconn_hdr_t* header;
 
-	status = rpc_recv_pdu_header(rpc, rpc->buffer);
+	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
+
+	status = rpc_recv_pdu_header(rpc, rpc->FragBuffer);
     
 	if (status < 1)
 	{
@@ -331,23 +333,19 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	}
     
 	headerLength = status;
-	header = (rpcconn_hdr_t*) rpc->buffer;
+	header = (rpcconn_hdr_t*) rpc->FragBuffer;
 	bytesRead += status;
-
-#ifdef WITH_DEBUG_RPC
-	rpc_pdu_header_print(header);
-#endif
 	
-	if (header->common.frag_length > rpc->length)
+	if (header->common.frag_length > rpc->FragBufferSize)
 	{
-		rpc->length = header->common.frag_length;
-		rpc->buffer = (BYTE*) realloc(rpc->buffer, rpc->length);
-		header = (rpcconn_hdr_t*) rpc->buffer;
+		rpc->FragBufferSize = header->common.frag_length;
+		rpc->FragBuffer = (BYTE*) realloc(rpc->FragBuffer, rpc->FragBufferSize);
+		header = (rpcconn_hdr_t*) rpc->FragBuffer;
 	}
 
 	while (bytesRead < header->common.frag_length)
 	{
-		status = rpc_out_read(rpc, &rpc->buffer[bytesRead], header->common.frag_length - bytesRead);
+		status = rpc_out_read(rpc, &rpc->FragBuffer[bytesRead], header->common.frag_length - bytesRead);
 
 		if (status < 0)
 		{
@@ -357,6 +355,8 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 
 		bytesRead += status;
 	}
+
+	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
@@ -386,13 +386,14 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		//printf("Sending Flow Control Ack PDU\n");
+		printf("Sending Flow Control Ack PDU\n");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
 #ifdef WITH_DEBUG_RPC
-	printf("rpc_recv_pdu: length: %d\n", header->common.frag_length);
-	freerdp_hexdump(rpc->buffer, header->common.frag_length);
+	rpc_pdu_header_print((rpcconn_hdr_t*) header);
+	printf("rpc_recv_pdu_fragment: length: %d\n", header->common.frag_length);
+	freerdp_hexdump(rpc->FragBuffer, header->common.frag_length);
 	printf("\n");
 #endif
 
@@ -408,7 +409,17 @@ int rpc_recv_pdu(rdpRpc* rpc)
 
 	status = rpc_recv_pdu_fragment(rpc);
 
-	header = (rpcconn_hdr_t*) rpc->buffer;
+	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
+	{
+		rpc->pdu->Flags = 0;
+		rpc->pdu->Buffer = rpc->FragBuffer;
+		rpc->pdu->Size = rpc->FragBufferSize;
+		rpc->pdu->Length = status;
+
+		return status;
+	}
+
+	header = (rpcconn_hdr_t*) rpc->FragBuffer;
 
 	if (header->common.ptype != PTYPE_RESPONSE)
 	{
@@ -416,19 +427,19 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	if (!rpc_get_stub_data_info(rpc, rpc->buffer, &StubOffset, &StubLength))
+	if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
 	{
 		printf("rpc_recv_pdu: expected stub\n");
 		return -1;
 	}
 
-	if (header->response.alloc_hint > rpc->StubSize)
+	if (header->response.alloc_hint > rpc->StubBufferSize)
 	{
-		rpc->StubSize = header->response.alloc_hint;
-		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubSize);
+		rpc->StubBufferSize = header->response.alloc_hint;
+		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubBufferSize);
 	}
 
-	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->buffer[StubOffset], StubLength);
+	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->FragBuffer[StubOffset], StubLength);
 	rpc->StubOffset += StubLength;
 	rpc->StubFragCount++;
 
@@ -450,13 +461,18 @@ int rpc_recv_pdu(rdpRpc* rpc)
 		rpc->StubOffset = 0;
 		rpc->StubFragCount = 0;
 
+		rpc->pdu->Flags = RPC_PDU_FLAG_STUB;
+		rpc->pdu->Buffer = rpc->StubBuffer;
+		rpc->pdu->Size = rpc->StubBufferSize;
+		rpc->pdu->Length = rpc->StubLength;
+
 		return rpc->StubLength;
 	}
 
 	return rpc_recv_pdu(rpc);
 }
 
-int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
+int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	BYTE* buffer;
 	UINT32 offset;
@@ -550,9 +566,6 @@ int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
 
-	WaitForSingleObject(rpc->client->PduSentEvent, INFINITE);
-	ResetEvent(rpc->client->PduSentEvent);
-
 	return length;
 }
 
@@ -560,6 +573,8 @@ BOOL rpc_connect(rdpRpc* rpc)
 {
 	rpc->TlsIn = rpc->transport->TlsIn;
 	rpc->TlsOut = rpc->transport->TlsOut;
+
+	rpc_client_start(rpc);
 
 	if (!rts_connect(rpc))
 	{
@@ -585,6 +600,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
 	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
+	connection->DefaultInChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
 
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
@@ -592,6 +608,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
+	connection->DefaultOutChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
@@ -675,14 +692,14 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
-		rpc->length = 20;
-		rpc->buffer = (BYTE*) malloc(rpc->length);
+		rpc->FragBufferSize = 20;
+		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
 
 		rpc->StubOffset = 0;
-		rpc->StubSize = 20;
+		rpc->StubBufferSize = 20;
 		rpc->StubLength = 0;
 		rpc->StubFragCount = 0;
-		rpc->StubBuffer = (BYTE*) malloc(rpc->length);
+		rpc->StubBuffer = (BYTE*) malloc(rpc->FragBufferSize);
 
 		rpc->rpc_vers = 5;
 		rpc->rpc_vers_minor = 0;
@@ -696,8 +713,13 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_xmit_frag = 0x0FF8;
 		rpc->max_recv_frag = 0x0FF8;
 
+		rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+
 		rpc->SendQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 		InitializeSListHead(rpc->SendQueue);
+
+		rpc->ReceiveQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		InitializeSListHead(rpc->ReceiveQueue);
 
 		rpc->ReceiveWindow = 0x00010000;
 
@@ -713,7 +735,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 		rpc->call_id = 1;
 
-		rpc_client_start(rpc);
+		rpc_client_new(rpc);
+
+		rpc->client->SynchronousSend = TRUE;
 	}
 
 	return rpc;
@@ -723,18 +747,24 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
-		RPC_PDU_ENTRY* PduEntry;
+		RPC_PDU* PduEntry;
 
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
 
-		while ((PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue)) != NULL)
-			_aligned_free(PduEntry);
+		_aligned_free(rpc->pdu);
 
+		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->SendQueue)) != NULL)
+			_aligned_free(PduEntry);
 		_aligned_free(rpc->SendQueue);
+
+		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->ReceiveQueue)) != NULL)
+			_aligned_free(PduEntry);
+		_aligned_free(rpc->ReceiveQueue);
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
+
 		free(rpc);
 	}
 }

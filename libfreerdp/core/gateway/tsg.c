@@ -121,13 +121,13 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	stream_seal(s);
 
 	length = s->size;
-	status = rpc_tsg_write(tsg->rpc, s->data, s->size, TsProxySendToServerOpnum);
+	status = rpc_write(tsg->rpc, s->data, s->size, TsProxySendToServerOpnum);
 
 	stream_free(s);
 
 	if (status <= 0)
 	{
-		printf("rpc_tsg_write failed!\n");
+		printf("rpc_write failed!\n");
 		return -1;
 	}
 
@@ -186,7 +186,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 
 	CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
 
-	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
+	status = rpc_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -537,7 +537,7 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg)
 	*((UINT32*) &buffer[offset]) = 0x00000000; /* MaxCount */
 	offset += 4;
 
-	status = rpc_tsg_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
+	status = rpc_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -566,7 +566,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 		return FALSE;
 
 	length = status;
-	buffer = rpc->buffer;
+	buffer = rpc->FragBuffer;
 
 	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
 	ZeroMemory(packet, sizeof(TSG_PACKET));
@@ -684,7 +684,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg)
 
 	*((UINT32*) &buffer[36]) = 0x00000001; /* MaxMessagesPerBatch */
 
-	status = rpc_tsg_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
+	status = rpc_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -775,7 +775,7 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg)
 	*((UINT32*) &buffer[56]) = count; /* ActualCount */
 	CopyMemory(&buffer[60], tsg->Hostname, count * 2); /* Array */
 
-	status = rpc_tsg_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
+	status = rpc_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -798,11 +798,11 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 		return FALSE;
 
 	length = status;
-	buffer = rpc->buffer;
+	buffer = rpc->FragBuffer;
 
 	/* ChannelContext (20 bytes) */
-	CopyMemory(&tsg->ChannelContext.ContextType, &rpc->buffer[24], 4); /* ContextType (4 bytes) */
-	CopyMemory(tsg->ChannelContext.ContextUuid, &rpc->buffer[28], 16); /* ContextUuid (16 bytes) */
+	CopyMemory(&tsg->ChannelContext.ContextType, &rpc->FragBuffer[24], 4); /* ContextType (4 bytes) */
+	CopyMemory(tsg->ChannelContext.ContextUuid, &rpc->FragBuffer[28], 16); /* ContextUuid (16 bytes) */
 
 	/* TODO: trailing bytes */
 
@@ -871,7 +871,7 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
 
-	status = rpc_tsg_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
+	status = rpc_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -885,7 +885,7 @@ BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg)
 {
 #if 0
 	int status;
-	BYTE* buffer;
+	BYTE* FragBuffer;
 	UINT32 length;
 	rdpRpc* rpc = tsg->rpc;
 
@@ -895,7 +895,7 @@ BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg)
 		return FALSE;
 
 	length = status;
-	buffer = rpc->buffer;
+	FragBuffer = rpc->FragBuffer;
 #endif
 
 	return TRUE;
@@ -950,6 +950,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	DEBUG_TSG("rpc_connect success");
 
 	tsg->state = TSG_STATE_INITIAL;
+
+	rpc->client->SynchronousSend = TRUE;
 
 	/*
 	 *     Sequential processing rules for connection process:
@@ -1090,6 +1092,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 
 	tsg->state = TSG_STATE_PIPE_CREATED;
+
+	rpc->client->SynchronousSend = TRUE;
 
 	return TRUE;
 }

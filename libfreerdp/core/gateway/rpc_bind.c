@@ -217,11 +217,11 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 	BYTE* auth_data;
 	rpcconn_hdr_t* header;
 
-	status = rpc_recv_pdu_fragment(rpc);
+	status = rpc_recv_pdu(rpc);
 
 	if (status > 0)
 	{
-		header = (rpcconn_hdr_t*) rpc->buffer;
+		header = (rpcconn_hdr_t*) rpc->FragBuffer;
 
 		rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
 		rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
@@ -229,7 +229,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc)
 		rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
 		rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
 
-		auth_data = rpc->buffer + (header->common.frag_length - header->common.auth_length);
+		auth_data = rpc->FragBuffer + (header->common.frag_length - header->common.auth_length);
 		CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
 
 		ntlm_authenticate(rpc->ntlm);

@@ -27,6 +27,7 @@
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_send_dequeue_pdu(rdpRpc* rpc);
 
+int rpc_client_new(rdpRpc* rpc);
 int rpc_client_start(rdpRpc* rpc);
 
 #endif /* FREERDP_CORE_RPC_CLIENT_H */

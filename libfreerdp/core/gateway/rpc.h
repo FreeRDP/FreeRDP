@@ -602,6 +602,8 @@ struct rpc_in_channel
 
 	CLIENT_IN_CHANNEL_STATE State;
 
+	HANDLE Mutex;
+
 	UINT32 PlugState;
 	void* SendQueue;
 	UINT32 BytesSent;
@@ -632,6 +634,8 @@ struct rpc_out_channel
 	/* Receiving Channel */
 
 	CLIENT_OUT_CHANNEL_STATE State;
+
+	HANDLE Mutex;
 
 	UINT32 ReceiveWindow;
 	UINT32 ReceiveWindowSize;
@@ -693,12 +697,16 @@ struct rpc_virtual_connection_cookie_table
 };
 typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
 
-typedef struct _RPC_PDU_ENTRY
+#define RPC_PDU_FLAG_STUB		0x00000001
+
+typedef struct _RPC_PDU
 {
 	SLIST_ENTRY ItemEntry;
 	BYTE* Buffer;
+	UINT32 Size;
 	UINT32 Length;
-} RPC_PDU_ENTRY, *PRPC_PDU_ENTRY;
+	DWORD Flags;
+} RPC_PDU, *PRPC_PDU;
 
 struct rpc_client
 {
@@ -707,6 +715,11 @@ struct rpc_client
 
 	HANDLE PduSentEvent;
 	HANDLE SendSemaphore;
+	BOOL SynchronousSend;
+
+	HANDLE PduReceivedEvent;
+	HANDLE ReceiveSemaphore;
+	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;
 
@@ -731,11 +744,13 @@ struct rdp_rpc
 	UINT32 call_id;
 	UINT32 pipe_call_id;
 
-	BYTE* buffer;
-	UINT32 length;
+	RPC_PDU* pdu;
+
+	BYTE* FragBuffer;
+	UINT32 FragBufferSize;
 
 	BYTE* StubBuffer;
-	UINT32 StubSize;
+	UINT32 StubBufferSize;
 	UINT32 StubLength;
 	UINT32 StubOffset;
 	UINT32 StubFragCount;
@@ -748,6 +763,7 @@ struct rdp_rpc
 	UINT16 max_recv_frag;
 
 	PSLIST_HEADER SendQueue;
+	PSLIST_HEADER ReceiveQueue;
 
 	UINT32 ReceiveWindow;
 
@@ -778,7 +794,7 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 int rpc_recv_pdu_fragment(rdpRpc* rpc);
 int rpc_recv_pdu(rdpRpc* rpc);
 
-int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
+int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

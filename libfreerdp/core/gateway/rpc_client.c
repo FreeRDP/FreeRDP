@@ -33,14 +33,20 @@
 
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	RPC_PDU_ENTRY* PduEntry;
+	RPC_PDU* pdu;
 
-	PduEntry = (RPC_PDU_ENTRY*) _aligned_malloc(sizeof(RPC_PDU_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
-	PduEntry->Buffer = buffer;
-	PduEntry->Length = length;
+	pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+	pdu->Buffer = buffer;
+	pdu->Length = length;
 
-	InterlockedPushEntrySList(rpc->SendQueue, &(PduEntry->ItemEntry));
+	InterlockedPushEntrySList(rpc->SendQueue, &(pdu->ItemEntry));
 	ReleaseSemaphore(rpc->client->SendSemaphore, 1, NULL);
+
+	if (rpc->client->SynchronousSend)
+	{
+		WaitForSingleObject(rpc->client->PduSentEvent, INFINITE);
+		ResetEvent(rpc->client->PduSentEvent);
+	}
 
 	return 0;
 }
@@ -48,14 +54,18 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rpc_send_dequeue_pdu(rdpRpc* rpc)
 {
 	int status;
-	RPC_PDU_ENTRY* PduEntry;
+	RPC_PDU* pdu;
 
-	PduEntry = (RPC_PDU_ENTRY*) InterlockedPopEntrySList(rpc->SendQueue);
+	pdu = (RPC_PDU*) InterlockedPopEntrySList(rpc->SendQueue);
 
-	if (!PduEntry)
+	if (!pdu)
 		return 0;
 
-	status = rpc_in_write(rpc, PduEntry->Buffer, PduEntry->Length);
+	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
+
+	status = rpc_in_write(rpc, pdu->Buffer, pdu->Length);
+
+	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
 	/*
 	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
@@ -66,12 +76,60 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
 
-	free(PduEntry->Buffer);
-	_aligned_free(PduEntry);
+	free(pdu->Buffer);
+	_aligned_free(pdu);
 
-	SetEvent(rpc->client->PduSentEvent);
+	if (rpc->client->SynchronousSend)
+		SetEvent(rpc->client->PduSentEvent);
 
 	return status;
+}
+
+int rpc_recv_enqueue_pdu(rdpRpc* rpc)
+{
+	int status;
+	RPC_PDU* pdu;
+
+	status = rpc_recv_pdu(rpc);
+
+	if (status <= 0)
+	{
+		printf("rpc_recv_enqueue_pdu error\n");
+		return -1;
+	}
+
+	pdu = rpc->pdu;
+	rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+
+	if (pdu->Flags & RPC_PDU_FLAG_STUB)
+	{
+		rpc->StubBufferSize = rpc->max_recv_frag;
+		rpc->StubBuffer = (BYTE*) malloc(rpc->StubBufferSize);
+	}
+	else
+	{
+		rpc->FragBufferSize = rpc->max_recv_frag;
+		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
+	}
+
+	InterlockedPushEntrySList(rpc->ReceiveQueue, &(pdu->ItemEntry));
+	ReleaseSemaphore(rpc->client->ReceiveSemaphore, 1, NULL);
+
+	if (rpc->client->SynchronousReceive)
+	{
+		WaitForSingleObject(rpc->client->PduReceivedEvent, INFINITE);
+		ResetEvent(rpc->client->PduReceivedEvent);
+	}
+
+	return 0;
+}
+
+int rpc_recv_dequeue_pdu(rdpRpc* rpc)
+{
+	if (rpc->client->SynchronousReceive)
+		SetEvent(rpc->client->PduReceivedEvent);
+
+	return 0;
 }
 
 static void* rpc_client_thread(void* arg)
@@ -79,28 +137,41 @@ static void* rpc_client_thread(void* arg)
 	rdpRpc* rpc;
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[2];
+	HANDLE events[3];
+	HANDLE ReadEvent;
 
 	rpc = (rdpRpc*) arg;
+
+	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, rpc->TlsOut->sockfd);
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
 	events[nCount++] = rpc->client->SendSemaphore;
+	events[nCount++] = ReadEvent;
 
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
+		{
 			break;
+		}
+
+		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
+		{
+
+		}
 
 		rpc_send_dequeue_pdu(rpc);
 	}
 
+	CloseHandle(ReadEvent);
+
 	return NULL;
 }
 
-int rpc_client_start(rdpRpc* rpc)
+int rpc_client_new(rdpRpc* rpc)
 {
 	rpc->client = (RpcClient*) malloc(sizeof(RpcClient));
 
@@ -112,6 +183,11 @@ int rpc_client_start(rdpRpc* rpc)
 	rpc->client->SendSemaphore = CreateSemaphore(NULL, 0, 64, NULL);
 	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+	return 0;
+}
+
+int rpc_client_start(rdpRpc* rpc)
+{
 	ResumeThread(rpc->client->Thread);
 
 	return 0;
