@@ -27,11 +27,21 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/synch.h>
+
 /* System.Collections.Queue */
 
 struct _wQueue
 {
-	BOOL bSynchronized;
+	int capacity;
+	int growthFactor;
+	BOOL synchronized;
+
+	int head;
+	int tail;
+	int size;
+	void** array;
+	HANDLE mutex;
 };
 typedef struct _wQueue wQueue;
 
@@ -46,7 +56,7 @@ WINPR_API void* Queue_Dequeue(wQueue* queue);
 
 WINPR_API void* Queue_Peek(wQueue* queue);
 
-WINPR_API wQueue* Queue_New(BOOL bSynchronized);
+WINPR_API wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor);
 WINPR_API void Queue_Free(wQueue* queue);
 
 /* System.Collections.Stack */
@@ -68,7 +78,7 @@ WINPR_API void* Stack_Pop(wStack* stack);
 
 WINPR_API void* Stack_Peek(wStack* stack);
 
-WINPR_API wStack* Stack_New(BOOL bSynchronized);
+WINPR_API wStack* Stack_New(BOOL synchronized);
 WINPR_API void Stack_Free(wStack* stack);
 
 /* System.Collections.ArrayList */
@@ -98,7 +108,7 @@ WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj);
 WINPR_API int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 
-WINPR_API wArrayList* ArrayList_New(BOOL bSynchronized);
+WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 WINPR_API void ArrayList_Free(wArrayList* arrayList);
 
 #endif /* WINPR_COLLECTIONS_H */

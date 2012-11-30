@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <winpr/collections.h>
 
 /**
@@ -38,12 +40,7 @@
 
 int Queue_Count(wQueue* queue)
 {
-	if (queue->bSynchronized)
-	{
-
-	}
-
-	return 0;
+	return queue->size;
 }
 
 /**
@@ -52,7 +49,7 @@ int Queue_Count(wQueue* queue)
 
 BOOL Queue_IsSynchronized(wQueue* queue)
 {
-	return queue->bSynchronized;
+	return queue->synchronized;
 }
 
 /**
@@ -65,10 +62,21 @@ BOOL Queue_IsSynchronized(wQueue* queue)
 
 void Queue_Clear(wQueue* queue)
 {
-	if (queue->bSynchronized)
-	{
+	int index;
 
+	if (queue->synchronized)
+		WaitForSingleObject(queue->mutex, INFINITE);
+
+	for (index = 0; index < queue->size; index++)
+	{
+		queue->array[index] = NULL;
 	}
+
+	queue->size = 0;
+	queue->head = queue->tail = 0;
+
+	if (queue->synchronized)
+		ReleaseMutex(queue->mutex);
 }
 
 /**
@@ -77,12 +85,25 @@ void Queue_Clear(wQueue* queue)
 
 BOOL Queue_Contains(wQueue* queue, void* obj)
 {
-	if (queue->bSynchronized)
-	{
+	int index;
+	BOOL found = FALSE;
 
+	if (queue->synchronized)
+		WaitForSingleObject(queue->mutex, INFINITE);
+
+	for (index = 0; index < queue->tail; index++)
+	{
+		if (queue->array[index] == obj)
+		{
+			found = TRUE;
+			break;
+		}
 	}
 
-	return FALSE;
+	if (queue->synchronized)
+		ReleaseMutex(queue->mutex);
+
+	return found;
 }
 
 /**
@@ -91,10 +112,21 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 
 void Queue_Enqueue(wQueue* queue, void* obj)
 {
-	if (queue->bSynchronized)
-	{
+	if (queue->synchronized)
+		WaitForSingleObject(queue->mutex, INFINITE);
 
+	if (queue->size == queue->capacity)
+	{
+		queue->capacity *= queue->growthFactor;
+		queue->array = (void**) realloc(queue->array, sizeof(void*) * queue->capacity);
 	}
+
+	queue->array[queue->tail] = obj;
+	queue->tail = (queue->tail + 1) % queue->capacity;
+	queue->size++;
+
+	if (queue->synchronized)
+		ReleaseMutex(queue->mutex);
 }
 
 /**
@@ -103,12 +135,23 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 
 void* Queue_Dequeue(wQueue* queue)
 {
-	if (queue->bSynchronized)
-	{
+	void* obj = NULL;
 
+	if (queue->synchronized)
+		WaitForSingleObject(queue->mutex, INFINITE);
+
+	if (queue->size > 0)
+	{
+		obj = queue->array[queue->head];
+		queue->array[queue->head] = NULL;
+		queue->head = (queue->head + 1) % queue->size;
+		queue->size--;
 	}
 
-	return NULL;
+	if (queue->synchronized)
+		ReleaseMutex(queue->mutex);
+
+	return obj;
 }
 
 /**
@@ -117,19 +160,25 @@ void* Queue_Dequeue(wQueue* queue)
 
 void* Queue_Peek(wQueue* queue)
 {
-	if (queue->bSynchronized)
-	{
+	void* obj = NULL;
 
-	}
+	if (queue->synchronized)
+		WaitForSingleObject(queue->mutex, INFINITE);
 
-	return NULL;
+	if (queue->size > 0)
+		obj = queue->array[queue->head];
+
+	if (queue->synchronized)
+		ReleaseMutex(queue->mutex);
+
+	return obj;
 }
 
 /**
  * Construction, Destruction
  */
 
-wQueue* Queue_New(BOOL bSynchronized)
+wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
 {
 	wQueue* queue = NULL;
 
@@ -137,7 +186,24 @@ wQueue* Queue_New(BOOL bSynchronized)
 
 	if (queue)
 	{
-		queue->bSynchronized = bSynchronized;
+		queue->head = 0;
+		queue->tail = 0;
+		queue->size = 0;
+
+		queue->capacity = 32;
+		queue->growthFactor = 2;
+
+		queue->synchronized = synchronized;
+
+		if (iCapacity > 0)
+			queue->capacity = iCapacity;
+
+		if (iGrowthFactor > 0)
+			queue->growthFactor = iGrowthFactor;
+
+		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
+
+		queue->mutex = CreateMutex(NULL, FALSE, NULL);
 	}
 
 	return queue;
@@ -145,5 +211,7 @@ wQueue* Queue_New(BOOL bSynchronized)
 
 void Queue_Free(wQueue* queue)
 {
+	CloseHandle(queue->mutex);
+	free(queue->array);
 	free(queue);
 }
