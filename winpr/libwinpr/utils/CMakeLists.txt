@@ -18,12 +18,20 @@
 set(MODULE_NAME "winpr-utils")
 set(MODULE_PREFIX "WINPR_UTILS")
 
+set(${MODULE_PREFIX}_COLLECTIONS_SRCS
+	collections/Queue.c
+	collections/Stack.c
+	collections/ArrayList.c)
+
 set(${MODULE_PREFIX}_SRCS
 	sam.c
 	ntlm.c
 	print.c
 	stream.c
 	cmdline.c)
+
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+	${${MODULE_PREFIX}_COLLECTIONS_SRCS})
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
