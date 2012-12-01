@@ -75,10 +75,11 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>-d</term>
+        <term>-d <replaceable class="parameter">domain</replaceable></term>
         <listitem>
           <para>
-            Domain used in authentication.
+            Set the domain used in authentication to
+	     <replaceable class="parameter">domain</replaceable>.
           </para>
         </listitem>
       </varlistentry>
@@ -146,10 +147,10 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>-m</term>
+        <term>-K</term>
         <listitem>
           <para>
-            Don't send mouse motion events.
+	    Do not interfere with window manager bindings.
           </para>
         </listitem>
       </varlistentry>
@@ -305,13 +306,6 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--bcv3 <replaceable class="parameter">codec</replaceable></term>
-        <listitem>
-          <para>Use <replaceable class="parameter">codec</replaceable> for bitmap cache v3
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term>--no-bmp-cache</term>
         <listitem>
           <para>
@@ -380,6 +374,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>--help</term>
+        <listitem>
+          <para>
+	    Print help.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>--ignore-certificate</term>
         <listitem>
           <para>
@@ -408,13 +410,6 @@
         <listitem>
           <para>
             Don't send mouse motion events.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--no-nego</term>
-        <listitem>
-          <para>disable negotiation of security layer and enforce highest enabled security protocol.
           </para>
         </listitem>
       </varlistentry>
@@ -475,10 +470,11 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>--ntlm</term>
+        <term>--ntlm <replaceable class="parameter">version</replaceable></term>
         <listitem>
           <para>
-            force NTLM protocol version. <replaceable class="parameter">version</replaceable> can be one of 1 or 2.
+            force NTLM protocol version to be <replaceable
+	    class="parameter">version</replaceable>, which can be one of 1 or 2.
           </para>
         </listitem>
       </varlistentry>
@@ -487,6 +483,14 @@
         <listitem>
           <para>
             force protocol security. <replaceable class="parameter">proto</replaceable> can be one of rdp, tls or nla.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>--secure-checksum</term>
+        <listitem>
+          <para>
+	    Use salted checksums with Standard RDP encryption.
           </para>
         </listitem>
       </varlistentry>
@@ -503,20 +507,6 @@
         <listitem>
           <para>
             Disable TLS encryption.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>--tsg
-<replaceable class="parameter">username</replaceable>
-<replaceable class="parameter">password</replaceable>
-<replaceable class="parameter">hostname</replaceable> </term>
-        <listitem>
-          <para>
-            Use Terminal Server Gateway with
-<replaceable class="parameter">username</replaceable>
-<replaceable class="parameter">password</replaceable>
-<replaceable class="parameter">hostname</replaceable>.
           </para>
         </listitem>
       </varlistentry>
