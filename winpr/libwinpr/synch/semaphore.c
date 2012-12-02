@@ -25,29 +25,49 @@
 
 #include "synch.h"
 
-/**
- * CreateSemaphoreExA
- * CreateSemaphoreExW
- * OpenSemaphoreA
- * OpenSemaphoreW
- * ReleaseSemaphore
- */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifndef _WIN32
 
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
 	HANDLE handle;
-	winpr_sem_t* semaphore;
+	WINPR_SEMAPHORE* semaphore;
 
-	semaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
+
+	semaphore->pipe_fd[0] = -1;
+	semaphore->pipe_fd[0] = -1;
+	semaphore->sem = (winpr_sem_t*) NULL;
 
 	if (semaphore)
 	{
-#if defined __APPLE__
-		semaphore_create(mach_task_self(), semaphore, SYNC_POLICY_FIFO, lMaximumCount);
+#ifdef WINPR_PIPE_SEMAPHORE
+
+		if (pipe(semaphore->pipe_fd) < 0)
+		{
+			printf("CreateSemaphoreW: failed to create semaphore\n");
+			return NULL;
+		}
+
+		while (lInitialCount > 0)
+		{
+			if (write(semaphore->pipe_fd[1], "-", 1) != 1)
+				return FALSE;
+
+			lInitialCount--;
+		}
+
 #else
-		sem_init(semaphore, 0, lMaximumCount);
+		semaphore->sem = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+#if defined __APPLE__
+		semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount);
+#else
+		sem_init(semaphore->sem, 0, lMaximumCount);
+#endif
+
 #endif
 	}
 
@@ -75,16 +95,36 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 {
 	ULONG Type;
 	PVOID Object;
+	WINPR_SEMAPHORE* semaphore;
 
 	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-#if defined __APPLE__
-		semaphore_signal(*((winpr_sem_t*) Object));
+		semaphore = (WINPR_SEMAPHORE*) Object;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+
+		if (semaphore->pipe_fd[0] != -1)
+		{
+			while (lReleaseCount > 0)
+			{
+				if (write(semaphore->pipe_fd[1], "-", 1) != 1)
+					return FALSE;
+
+				lReleaseCount--;
+			}
+		}
+
 #else
-		sem_post((winpr_sem_t*) Object);
+
+#if defined __APPLE__
+		semaphore_signal(*((winpr_sem_t*) semaphore->sem));
+#else
+		sem_post((winpr_sem_t*) semaphore->sem);
+#endif
+
 #endif
 		return TRUE;
 	}

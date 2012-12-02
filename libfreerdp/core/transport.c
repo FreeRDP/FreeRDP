@@ -282,7 +282,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, stream_get_tail(s), stream_get_left(s));
 
-		if (status == 0 && transport->blocking)
+		if ((status == 0) && (transport->blocking))
 		{
 			freerdp_usleep(transport->usleep_interval);
 			continue;
@@ -517,8 +517,22 @@ int transport_check_fds(rdpTransport** ptransport)
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
+	BOOL status;
+
+	status = TRUE;
 	transport->blocking = blocking;
-	return tcp_set_blocking_mode(transport->TcpIn, blocking);
+
+	if (transport->SplitInputOutput)
+	{
+		status &= tcp_set_blocking_mode(transport->TcpIn, blocking);
+		status &= tcp_set_blocking_mode(transport->TcpOut, blocking);
+	}
+	else
+	{
+		status &= tcp_set_blocking_mode(transport->TcpIn, blocking);
+	}
+
+	return status;
 }
 
 rdpTransport* transport_new(rdpSettings* settings)

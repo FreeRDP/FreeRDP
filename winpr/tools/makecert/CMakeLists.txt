@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# winpr cmake build script
+# winpr-makecert cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,6 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(hash)
-add_subdirectory(makecert)
+set(MODULE_NAME "winpr-makecert")
+set(MODULE_PREFIX "WINPR_TOOLS_MAKECERT")
+
+set(${MODULE_PREFIX}_SRCS
+	makecert.c)
+
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-utils)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 

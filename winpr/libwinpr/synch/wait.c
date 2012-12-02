@@ -90,10 +90,49 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-#if defined __APPLE__
-		semaphore_wait(*((winpr_sem_t*) Object));
+		WINPR_SEMAPHORE* semaphore;
+
+		semaphore = (WINPR_SEMAPHORE*) Object;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+		if (semaphore->pipe_fd[0] != -1)
+		{
+			int status;
+			int length;
+			fd_set rfds;
+			struct timeval timeout;
+
+			FD_ZERO(&rfds);
+			FD_SET(semaphore->pipe_fd[0], &rfds);
+			ZeroMemory(&timeout, sizeof(timeout));
+
+			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+			{
+				timeout.tv_usec = dwMilliseconds * 1000;
+			}
+
+			status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+			if (status < 0)
+				return WAIT_FAILED;
+
+			if (status != 1)
+				return WAIT_TIMEOUT;
+
+			length = read(semaphore->pipe_fd[0], &length, 1);
+
+			if (length != 1)
+				return FALSE;
+		}
 #else
-		sem_wait((winpr_sem_t*) Object);
+
+#if defined __APPLE__
+		semaphore_wait(*((winpr_sem_t*) semaphore->sem));
+#else
+		sem_wait((winpr_sem_t*) semaphore->sem);
+#endif
+
 #endif
 	}
 
@@ -114,7 +153,6 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	fd_set fds;
 	ULONG Type;
 	PVOID Object;
-	WINPR_EVENT* event;
 	struct timeval timeout;
 
 	maxfd = 0;
@@ -129,11 +167,22 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 			return WAIT_FAILED;
 
-		if (Type != HANDLE_TYPE_EVENT)
+		if (Type == HANDLE_TYPE_EVENT)
+		{
+			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+		}
+		else if (Type == HANDLE_TYPE_SEMAPHORE)
+		{
+#ifdef WINPR_PIPE_SEMAPHORE
+			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
+#else
 			return WAIT_FAILED;
-
-		event = (WINPR_EVENT*) Object;
-		fd = event->pipe_fd[0];
+#endif
+		}
+		else
+		{
+			return WAIT_FAILED;
+		}
 
 		FD_SET(fd, &fds);
 
@@ -158,10 +207,24 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	for (index = 0; index < nCount; index++)
 	{
 		winpr_Handle_GetInfo(lpHandles[index], &Type, &Object);
-		fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+
+		if (Type == HANDLE_TYPE_EVENT)
+			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+		else if (Type == HANDLE_TYPE_SEMAPHORE)
+			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
 
 		if (FD_ISSET(fd, &fds))
+		{
+			if (Type == HANDLE_TYPE_SEMAPHORE)
+			{
+				int length = read(fd, &length, 1);
+
+				if (length != 1)
+					return WAIT_FAILED;
+			}
+
 			return (WAIT_OBJECT_0 + index);
+		}
 	}
 
 	return WAIT_FAILED;

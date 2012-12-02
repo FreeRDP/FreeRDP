@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Client Command-Line Interface
+ * RPC Fault Handling
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,18 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_CMDLINE
-#define FREERDP_CLIENT_CMDLINE
+#ifndef FREERDP_CORE_RPC_FAULT_H
+#define FREERDP_CORE_RPC_FAULT_H
 
-#include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include "rpc.h"
 
-FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
-FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
-FREERDP_API int freerdp_client_print_command_line_help(int argc, char** argv);
+#include <winpr/wtypes.h>
 
-FREERDP_API int freerdp_parse_username(char* username, char** user, char** domain);
-FREERDP_API int freerdp_set_connection_type(rdpSettings* settings, int type);
+int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
 
-#endif /* FREERDP_CLIENT_CMDLINE */
-
+#endif /* FREERDP_CORE_RPC_FAULT_H */

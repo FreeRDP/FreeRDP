@@ -77,93 +77,10 @@
 #define FDServer					0x00000002
 #define FDOutProxy					0x00000003
 
-struct rts_pdu_signature
-{
-	UINT16 Flags;
-	UINT16 NumberOfCommands;
-	UINT32 CommandTypes[8];
-};
-typedef struct rts_pdu_signature RtsPduSignature;
-
-/* RTS PDU Signature IDs */
-
-#define RTS_PDU_CONN_A					0x10000000
-#define RTS_PDU_CONN_A1					(RTS_PDU_CONN_A	| 0x00000001)
-#define RTS_PDU_CONN_A2					(RTS_PDU_CONN_A	| 0x00000002)
-#define RTS_PDU_CONN_A3					(RTS_PDU_CONN_A	| 0x00000003)
-
-#define RTS_PDU_CONN_B					0x20000000
-#define RTS_PDU_CONN_B1					(RTS_PDU_CONN_B | 0x00000001)
-#define RTS_PDU_CONN_B2					(RTS_PDU_CONN_B | 0x00000002)
-#define RTS_PDU_CONN_B3					(RTS_PDU_CONN_B | 0x00000003)
-
-#define RTS_PDU_CONN_C					0x40000000
-#define RTS_PDU_CONN_C1					(RTS_PDU_CONN_C | 0x00000001)
-#define RTS_PDU_CONN_C2					(RTS_PDU_CONN_C | 0x00000002)
-
-#define RTS_PDU_IN_R1_A					0x01000000
-#define RTS_PDU_IN_R1_A1				(RTS_PDU_IN_R1_A | 0x00000001)
-#define RTS_PDU_IN_R1_A2				(RTS_PDU_IN_R1_A | 0x00000002)
-#define RTS_PDU_IN_R1_A3				(RTS_PDU_IN_R1_A | 0x00000003)
-#define RTS_PDU_IN_R1_A4				(RTS_PDU_IN_R1_A | 0x00000004)
-#define RTS_PDU_IN_R1_A5				(RTS_PDU_IN_R1_A | 0x00000005)
-#define RTS_PDU_IN_R1_A6				(RTS_PDU_IN_R1_A | 0x00000006)
-
-#define RTS_PDU_IN_R1_B					0x02000000
-#define RTS_PDU_IN_R1_B1				(RTS_PDU_IN_R1_B | 0x00000001)
-#define RTS_PDU_IN_R1_B2				(RTS_PDU_IN_R1_B | 0x00000002)
-
-#define RTS_PDU_IN_R2_A					0x04000000
-#define RTS_PDU_IN_R2_A1				(RTS_PDU_IN_R2_A | 0x00000001)
-#define RTS_PDU_IN_R2_A2				(RTS_PDU_IN_R2_A | 0x00000002)
-#define RTS_PDU_IN_R2_A3				(RTS_PDU_IN_R2_A | 0x00000003)
-#define RTS_PDU_IN_R2_A4				(RTS_PDU_IN_R2_A | 0x00000004)
-#define RTS_PDU_IN_R2_A5				(RTS_PDU_IN_R2_A | 0x00000005)
-
-#define RTS_PDU_OUT_R1_A				0x00100000
-#define RTS_PDU_OUT_R1_A1				(RTS_PDU_OUT_R1_A | 0x00000001)
-#define RTS_PDU_OUT_R1_A2				(RTS_PDU_OUT_R1_A | 0x00000002)
-#define RTS_PDU_OUT_R1_A3				(RTS_PDU_OUT_R1_A | 0x00000003)
-#define RTS_PDU_OUT_R1_A4				(RTS_PDU_OUT_R1_A | 0x00000004)
-#define RTS_PDU_OUT_R1_A5				(RTS_PDU_OUT_R1_A | 0x00000005)
-#define RTS_PDU_OUT_R1_A6				(RTS_PDU_OUT_R1_A | 0x00000006)
-#define RTS_PDU_OUT_R1_A7				(RTS_PDU_OUT_R1_A | 0x00000007)
-#define RTS_PDU_OUT_R1_A8				(RTS_PDU_OUT_R1_A | 0x00000008)
-#define RTS_PDU_OUT_R1_A9				(RTS_PDU_OUT_R1_A | 0x00000009)
-#define RTS_PDU_OUT_R1_A10				(RTS_PDU_OUT_R1_A | 0x0000000A)
-#define RTS_PDU_OUT_R1_A11				(RTS_PDU_OUT_R1_A | 0x0000000B)
-
-#define RTS_PDU_OUT_R2_A				0x00200000
-#define RTS_PDU_OUT_R2_A1				(RTS_PDU_OUT_R2_A | 0x00000001)
-#define RTS_PDU_OUT_R2_A2				(RTS_PDU_OUT_R2_A | 0x00000002)
-#define RTS_PDU_OUT_R2_A3				(RTS_PDU_OUT_R2_A | 0x00000003)
-#define RTS_PDU_OUT_R2_A4				(RTS_PDU_OUT_R2_A | 0x00000004)
-#define RTS_PDU_OUT_R2_A5				(RTS_PDU_OUT_R2_A | 0x00000005)
-#define RTS_PDU_OUT_R2_A6				(RTS_PDU_OUT_R2_A | 0x00000006)
-#define RTS_PDU_OUT_R2_A7				(RTS_PDU_OUT_R2_A | 0x00000007)
-#define RTS_PDU_OUT_R2_A8				(RTS_PDU_OUT_R2_A | 0x00000008)
-
-#define RTS_PDU_OUT_R2_B				0x00400000
-#define RTS_PDU_OUT_R2_B1				(RTS_PDU_OUT_R2_B | 0x00000001)
-#define RTS_PDU_OUT_R2_B2				(RTS_PDU_OUT_R2_B | 0x00000002)
-#define RTS_PDU_OUT_R2_B3				(RTS_PDU_OUT_R2_B | 0x00000003)
-
-#define RTS_PDU_OUT_R2_C				0x00800000
-#define RTS_PDU_OUT_R2_C1				(RTS_PDU_OUT_R2_C | 0x00000001)
-
-#define RTS_PDU_OUT_OF_SEQUENCE				0x00010000
-#define RTS_PDU_KEEP_ALIVE				(RTS_PDU_OUT_OF_SEQUENCE | 0x00000001)
-#define RTS_PDU_PING_TRAFFIC_SENT_NOTIFY		(RTS_PDU_OUT_OF_SEQUENCE | 0x00000002)
-#define RTS_PDU_ECHO					(RTS_PDU_OUT_OF_SEQUENCE | 0x00000003)
-#define RTS_PDU_PING					(RTS_PDU_OUT_OF_SEQUENCE | 0x00000004)
-#define RTS_PDU_FLOW_CONTROL_ACK			(RTS_PDU_OUT_OF_SEQUENCE | 0x00000005)
-#define RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION	(RTS_PDU_OUT_OF_SEQUENCE | 0x00000006)
+BOOL rts_connect(rdpRpc* rpc);
 
 int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length);
-BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
 int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts);
-
-BOOL rts_connect(rdpRpc* rpc);
 
 int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize);
 int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize);
@@ -222,8 +139,9 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc);
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 int rts_send_ping_pdu(rdpRpc* rpc);
 
-int rts_recv_pdu(rdpRpc* rpc);
-int rts_recv_out_of_sequence_pdu(rdpRpc* rpc);
+int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+
+#include "rts_signature.h"
 
 #ifdef WITH_DEBUG_TSG
 #define WITH_DEBUG_RTS

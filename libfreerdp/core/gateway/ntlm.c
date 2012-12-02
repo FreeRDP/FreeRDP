@@ -131,6 +131,12 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	hostnameX = hostname;
 #endif
 
+	if (!ServiceClass)
+	{
+		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+		return TRUE;
+	}
+
 	SpnLength = 0;
 	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
 
@@ -146,6 +152,44 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 
 	return TRUE;
 }
+
+/**
+ *                                        SSPI Client Ceremony
+ *
+ *                                           --------------
+ *                                          ( Client Begin )
+ *                                           --------------
+ *                                                 |
+ *                                                 |
+ *                                                \|/
+ *                                      -----------+--------------
+ *                                     | AcquireCredentialsHandle |
+ *                                      --------------------------
+ *                                                 |
+ *                                                 |
+ *                                                \|/
+ *                                    -------------+--------------
+ *                 +---------------> / InitializeSecurityContext /
+ *                 |                 ----------------------------
+ *                 |                               |
+ *                 |                               |
+ *                 |                              \|/
+ *     ---------------------------        ---------+-------------            ----------------------
+ *    / Receive blob from server /      < Received security blob? > --Yes-> / Send blob to server /
+ *    -------------+-------------         -----------------------           ----------------------
+ *                /|\                              |                                |
+ *                 |                               No                               |
+ *                Yes                             \|/                               |
+ *                 |                   ------------+-----------                     |
+ *                 +---------------- < Received Continue Needed > <-----------------+
+ *                                     ------------------------
+ *                                                 |
+ *                                                 No
+ *                                                \|/
+ *                                           ------+-------
+ *                                          (  Client End  )
+ *                                           --------------
+ */
 
 BOOL ntlm_authenticate(rdpNtlm* ntlm)
 {
@@ -182,7 +226,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
 			printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
-			return FALSE ;
+			return FALSE;
 		}
 
 		if (status == SEC_I_COMPLETE_NEEDED)
@@ -194,7 +238,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->haveInputBuffer = TRUE;
 	ntlm->haveContext = TRUE;
 
-	return TRUE;
+	return (status == SEC_I_CONTINUE_NEEDED) ? TRUE : FALSE;
 }
 
 void ntlm_client_uninit(rdpNtlm* ntlm)
