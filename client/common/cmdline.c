@@ -652,8 +652,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
 			freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
 
-	printf("status: %d\n", status);
-
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{
 		freerdp_client_print_command_line_help(argc, argv);

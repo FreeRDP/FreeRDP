@@ -320,13 +320,6 @@ int main(int argc, char* argv[])
 
 	channels = instance->context->channels;
 
-	if (freerdp_detect_posix_style_command_line_syntax(instance->context->argc, instance->context->argv))
-	{
-		printf("warning: deprecated command-line syntax detected!\n");
-		freerdp_client_print_command_line_help(argc, argv);
-		exit(0);
-	}
-
 	status = freerdp_client_parse_command_line_arguments(argc, argv, instance->settings);
 
 	if (status < 0)
