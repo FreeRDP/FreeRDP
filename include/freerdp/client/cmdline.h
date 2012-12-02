@@ -23,8 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-FREERDP_API BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[]);
-FREERDP_API BOOL freerdp_detect_old_command_line_syntax(int argc, char* argv[]);
+FREERDP_API BOOL freerdp_detect_windows_style_command_line_syntax(int argc, char** argv);
+FREERDP_API BOOL freerdp_detect_posix_style_command_line_syntax(int argc, char** argv);
 
 FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
 FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);

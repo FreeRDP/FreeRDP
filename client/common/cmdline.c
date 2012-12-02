@@ -109,7 +109,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[])
+BOOL freerdp_detect_windows_style_command_line_syntax(int argc, char** argv)
 {
 	int index;
 
@@ -122,9 +122,9 @@ BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[])
 	return FALSE;
 }
 
-BOOL freerdp_detect_old_command_line_syntax(int argc, char* argv[])
+BOOL freerdp_detect_posix_style_command_line_syntax(int argc, char** argv)
 {
-	return (!freerdp_detect_new_command_line_syntax(argc, argv));
+	return (!freerdp_detect_windows_style_command_line_syntax(argc, argv));
 }
 
 int freerdp_client_print_version()
@@ -637,10 +637,22 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
-	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;
+	if (freerdp_detect_windows_style_command_line_syntax(argc, argv))
+	{
+		flags = COMMAND_LINE_SEPARATOR_COLON;
+		flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
+	}
+	else
+	{
+		flags = COMMAND_LINE_SEPARATOR_SPACE;
+		flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
+		flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
+	}
 
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
 			freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
+
+	printf("status: %d\n", status);
 
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{

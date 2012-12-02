@@ -102,6 +102,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	char* value;
 	int value_length;
 	int value_index;
+	int toggle;
 
 	if (!argv)
 		return 0;
@@ -128,6 +129,12 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		else if ((sigil[0] == '-') && (flags & COMMAND_LINE_SIGIL_DASH))
 		{
 			sigil_length = 1;
+
+			if (length > 2)
+			{
+				if ((sigil[1] == '-') && (flags & COMMAND_LINE_SIGIL_DOUBLE_DASH))
+					sigil_length = 2;
+			}
 		}
 		else if ((sigil[0] == '+') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
 		{
@@ -153,6 +160,24 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
+
+			toggle = -1;
+
+			if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+			{
+				if (strncmp(keyword, "enable-", 7) == 0)
+				{
+					toggle = TRUE;
+					keyword_index += 7;
+					keyword = (char*) &argv[i][keyword_index];
+				}
+				else if (strncmp(keyword, "disable-", 8) == 0)
+				{
+					toggle = FALSE;
+					keyword_index += 8;
+					keyword = (char*) &argv[i][keyword_index];
+				}
+			}
 
 			separator = NULL;
 
@@ -210,12 +235,16 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
 				{
-					i++;
-					value_index = 0;
-					length = strlen(argv[i]);
+					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+						(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					{
+						i++;
+						value_index = 0;
+						length = strlen(argv[i]);
 
-					value = (char*) &argv[i][value_index];
-					value_length = (length - value_index);
+						value = (char*) &argv[i][value_index];
+						value_length = (length - value_index);
+					}
 				}
 
 				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
@@ -253,12 +282,24 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					}
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
 					{
-						if (sigil[0] == '+')
-							options[j].Value = BoolValueTrue;
-						else if (sigil[0] == '-')
-							options[j].Value = BoolValueFalse;
+						if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+						{
+							if (toggle == -1)
+								options[j].Value = BoolValueTrue;
+							else if (!toggle)
+								options[j].Value = BoolValueFalse;
+							else
+								options[j].Value = BoolValueTrue;
+						}
 						else
-							options[j].Value = BoolValueTrue;
+						{
+							if (sigil[0] == '+')
+								options[j].Value = BoolValueTrue;
+							else if (sigil[0] == '-')
+								options[j].Value = BoolValueFalse;
+							else
+								options[j].Value = BoolValueTrue;
+						}
 
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}

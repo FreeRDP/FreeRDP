@@ -771,7 +771,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
-		if (freerdp_detect_new_command_line_syntax(__argc, __argv))
+		if (freerdp_detect_windows_style_command_line_syntax(__argc, __argv))
 		{
 			status = freerdp_client_parse_command_line_arguments(__argc, __argv, instance->settings);
 
