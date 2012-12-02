@@ -494,14 +494,8 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	
-	if (freerdp_detect_old_command_line_syntax(instance->context->argc,instance->context->argv))
-	{
-		printf("warning: deprecated command-line syntax detected!\n");
-		freerdp_client_print_command_line_help(instance->context->argc,instance->context->argv);
-		exit(XF_EXIT_PARSE_ARGUMENTS);
-	}
-
-	status = freerdp_client_parse_command_line_arguments(instance->context->argc,instance->context->argv, instance->settings);
+	status = freerdp_client_parse_command_line_arguments(instance->context->argc,
+				instance->context->argv, instance->settings);
 
 	if (status < 0)
 		exit(XF_EXIT_PARSE_ARGUMENTS);
@@ -1098,12 +1092,13 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		timeout.tv_sec = 5;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
 		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
 
 		if (select_status == 0)
 		{
-			//freerdp_send_keep_alive(instance);
 			continue;
 		}
 		else if (select_status == -1)

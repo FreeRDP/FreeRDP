@@ -22,6 +22,9 @@
 #ifndef FREERDP_CORE_RPC_H
 #define FREERDP_CORE_RPC_H
 
+#include <winpr/wtypes.h>
+#include <winpr/interlocked.h>
+
 typedef struct rdp_rpc rdpRpc;
 
 #define DEFINE_RPC_COMMON_FIELDS() \
@@ -45,6 +48,17 @@ typedef struct
 } rpcconn_rts_hdr_t;
 
 #define RTS_PDU_HEADER_LENGTH		20
+
+#define RPC_PDU_FLAG_STUB		0x00000001
+
+typedef struct _RPC_PDU
+{
+	SLIST_ENTRY ItemEntry;
+	BYTE* Buffer;
+	UINT32 Size;
+	UINT32 Length;
+	DWORD Flags;
+} RPC_PDU, *PRPC_PDU;
 
 #include "tcp.h"
 #include "rts.h"
@@ -98,6 +112,7 @@ typedef struct
 #define PFC_FIRST_FRAG				0x01
 #define PFC_LAST_FRAG				0x02
 #define PFC_PENDING_CANCEL			0x04
+#define PFC_SUPPORT_HEADER_SIGN			0x04
 #define PFC_RESERVED_1				0x08
 #define PFC_CONC_MPX				0x10
 #define PFC_DID_NOT_EXECUTE			0x20
@@ -532,6 +547,39 @@ typedef union
 	rpcconn_rts_hdr_t rts;
 } rpcconn_hdr_t;
 
+struct _RPC_SECURITY_PROVIDER_INFO
+{
+	UINT32 Id;
+	LONG EvenLegs;
+	LONG NumLegs;
+};
+typedef struct _RPC_SECURITY_PROVIDER_INFO RPC_SECURITY_PROVIDER_INFO;
+
+enum _RPC_CLIENT_STATE
+{
+	RPC_CLIENT_STATE_INITIAL,
+	RPC_CLIENT_STATE_ESTABLISHED,
+	RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK,
+	RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK,
+	RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE,
+	RPC_CLIENT_STATE_CONTEXT_NEGOTIATED,
+	RPC_CLIENT_STATE_WAIT_RESPONSE,
+	RPC_CLIENT_STATE_FINAL
+};
+typedef enum _RPC_CLIENT_STATE RPC_CLIENT_STATE;
+
+enum _RPC_CLIENT_CALL_STATE
+{
+	RPC_CLIENT_CALL_STATE_INITIAL,
+	RPC_CLIENT_CALL_STATE_SEND_PDUS,
+	RPC_CLIENT_CALL_STATE_DISPATCHED,
+	RPC_CLIENT_CALL_STATE_RECEIVE_PDU,
+	RPC_CLIENT_CALL_STATE_COMPLETE,
+	RPC_CLIENT_CALL_STATE_FAULT,
+	RPC_CLIENT_CALL_STATE_FINAL
+};
+typedef enum _RPC_CLIENT_CALL_STATE RPC_CLIENT_CALL_STATE;
+
 enum _TSG_CHANNEL
 {
 	TSG_CHANNEL_IN,
@@ -566,6 +614,8 @@ struct rpc_in_channel
 
 	CLIENT_IN_CHANNEL_STATE State;
 
+	HANDLE Mutex;
+
 	UINT32 PlugState;
 	void* SendQueue;
 	UINT32 BytesSent;
@@ -596,6 +646,8 @@ struct rpc_out_channel
 	/* Receiving Channel */
 
 	CLIENT_OUT_CHANNEL_STATE State;
+
+	HANDLE Mutex;
 
 	UINT32 ReceiveWindow;
 	UINT32 ReceiveWindowSize;
@@ -657,20 +709,32 @@ struct rpc_virtual_connection_cookie_table
 };
 typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
 
-typedef struct _RPC_PDU_ENTRY
+struct rpc_client
 {
-	SLIST_ENTRY ItemEntry;
-	BYTE* Buffer;
-	UINT32 Length;
-} RPC_PDU_ENTRY, *PRPC_PDU_ENTRY;
+	HANDLE Thread;
+	HANDLE StopEvent;
+
+	HANDLE PduSentEvent;
+	HANDLE SendSemaphore;
+	BOOL SynchronousSend;
+
+	HANDLE PduReceivedEvent;
+	HANDLE ReceiveSemaphore;
+	BOOL SynchronousReceive;
+};
+typedef struct rpc_client RpcClient;
 
 struct rdp_rpc
 {
+	RPC_CLIENT_STATE State;
+
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
 
 	rdpNtlm* ntlm;
 	int send_seq_num;
+
+	RpcClient* client;
 
 	rdpNtlmHttp* NtlmHttpIn;
 	rdpNtlmHttp* NtlmHttpOut;
@@ -681,8 +745,16 @@ struct rdp_rpc
 	UINT32 call_id;
 	UINT32 pipe_call_id;
 
-	BYTE* buffer;
-	UINT32 length;
+	RPC_PDU* pdu;
+
+	BYTE* FragBuffer;
+	UINT32 FragBufferSize;
+
+	BYTE* StubBuffer;
+	UINT32 StubBufferSize;
+	UINT32 StubLength;
+	UINT32 StubOffset;
+	UINT32 StubFragCount;
 
 	BYTE rpc_vers;
 	BYTE rpc_vers_minor;
@@ -692,6 +764,7 @@ struct rdp_rpc
 	UINT16 max_recv_frag;
 
 	PSLIST_HEADER SendQueue;
+	PSLIST_HEADER ReceiveQueue;
 
 	UINT32 ReceiveWindow;
 
@@ -708,9 +781,6 @@ struct rdp_rpc
 
 BOOL rpc_connect(rdpRpc* rpc);
 
-BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
-BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
-
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
@@ -722,9 +792,10 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
-int rpc_recv_pdu(rdpRpc* rpc);
+RPC_PDU* rpc_recv_pdu(rdpRpc* rpc);
+int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
-int rpc_tsg_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
+int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);
