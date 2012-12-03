@@ -336,32 +336,30 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 
 	for (i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
 	{
-		if (pszSubsystem != NULL)
+		if (strcmp(CLIENT_STATIC_ADDIN_TABLE[i].name, pszName) == 0)
 		{
-			subsystems = (STATIC_SUBSYSTEM_ENTRY*) CLIENT_STATIC_ADDIN_TABLE[i].table;
-
-			for (j = 0; subsystems[j].name != NULL; j++)
+			if (pszSubsystem != NULL)
 			{
-				if (strcmp(subsystems[j].name, pszSubsystem) == 0)
+				subsystems = (STATIC_SUBSYSTEM_ENTRY*) CLIENT_STATIC_ADDIN_TABLE[i].table;
+
+				for (j = 0; subsystems[j].name != NULL; j++)
 				{
-					if (pszType)
+					if (strcmp(subsystems[j].name, pszSubsystem) == 0)
 					{
-						if (strcmp(subsystems[j].type, pszType) == 0)
+						if (pszType)
+						{
+							if (strcmp(subsystems[j].type, pszType) == 0)
+								return (void*) subsystems[j].entry;
+						}
+						else
+						{
 							return (void*) subsystems[j].entry;
-					}
-					else
-					{
-						return (void*) subsystems[j].entry;
+						}
 					}
 				}
 			}
-		}
-		else
-		{
-			if (strcmp(CLIENT_STATIC_ADDIN_TABLE[i].name, pszName) == 0)
-			{
+			else
 				return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
-			}
 		}
 	}
 
@@ -1327,3 +1325,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	}
 }
 
+/* Local variables: */
+/* c-basic-offset: 8 */
+/* c-file-style: "linux" */
+/* End: */
