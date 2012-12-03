@@ -138,18 +138,18 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     CGRect invRect;
     
-    invRect.origin.x = mfi->invalid.x;
-    invRect.origin.y = mfi->invalid.y;
-    invRect.size.height = mfi->invalid.height;
-    invRect.size.width = mfi->invalid.width;
+    invRect.origin.x = mfi->invalid.x /2;
+    invRect.origin.y = mfi->invalid.y / 2;
+    invRect.size.height = mfi->invalid.height / 2;
+    invRect.size.width = mfi->invalid.width / 2;
     
     //CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
     CGImageRef image = CGDisplayCreateImageForRect(kCGDirectMainDisplay, invRect);
     //CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
     
     CGSize frameSize;
-    frameSize.width = 2880;
-    frameSize.height = 1800;
+    frameSize.width = 2880 / 2;
+    frameSize.height = 1800/ 2;
     
     CFDictionaryRef opts;
     
@@ -175,8 +175,12 @@ void mf_peer_rfx_update(freerdp_peer* client)
     }
     
     CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
+    /*CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
                                           frameSize.height,  kCVPixelFormatType_32ARGB, opts,
+                                          &pxbuffer);
+    */
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, invRect.size.width,
+                                          invRect.size.height,  kCVPixelFormatType_32ARGB, opts,
                                           &pxbuffer);
     
     if (status != kCVReturnSuccess)
@@ -191,12 +195,19 @@ void mf_peer_rfx_update(freerdp_peer* client)
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
     
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
+    /*CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
                                                  frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
                                                  kCGImageAlphaNoneSkipLast);
-    
+    */
+    CGContextRef context = CGBitmapContextCreate(pxdata,
+                                                 invRect.size.width,
+                                                 invRect.size.height, 8, 4*frameSize.width, rgbColorSpace,
+                                                 kCGImageAlphaNoneSkipLast);
+
     CGContextDrawImage(context,
-                       CGRectMake(0, 0, frameSize.width, frameSize.height),
+                       CGRectMake(0, 0, invRect.size.width, invRect.size.height),
+                       //CGRectMake(invRect.origin.x, frameSize.height - invRect.origin.y, invRect.size.width, invRect.size.height),
+                       //invRect,
                        image);
     
     bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
@@ -222,14 +233,14 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     rect.x = 0;
     rect.y = 0;
-    rect.width = mfi->invalid.width;
-    rect.height = mfi->invalid.height;
+    rect.width = mfi->invalid.width / 2;
+    rect.height = mfi->invalid.height / 2;
     
     rfx_compose_message(mfp->rfx_context, s, &rect, 1,
                         (BYTE*) pxdata, rect.width, rect.height, frameSize.width * 4);
     
-    UINT32 x = mfi->invalid.x;
-    UINT32 y = mfi->invalid.y;
+    UINT32 x = mfi->invalid.x / 2;
+    UINT32 y = mfi->invalid.y / 2;
     
     cmd->destLeft = x;
     cmd->destTop = y;
