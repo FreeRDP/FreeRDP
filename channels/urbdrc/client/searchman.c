@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.>
+#include <winpr/synch.h>
 
 #include "searchman.h"
 
