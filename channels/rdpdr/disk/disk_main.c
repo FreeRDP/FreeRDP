@@ -622,7 +622,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = (char*)pEntryPoints->plugin_data->data[1];
 	path = (char*)pEntryPoints->plugin_data->data[2];
 
-	if (name[0] && path[0])
+	if (name && name[0] && path && path[0])
 	{
 		disk = xnew(DISK_DEVICE);
 
