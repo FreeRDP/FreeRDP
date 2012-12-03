@@ -150,7 +150,7 @@
         <term>-K</term>
         <listitem>
           <para>
-	    Do not interfere with window manager bindings.
+	    Do not interfere with window manager bindings (don't grab keyboard).
           </para>
         </listitem>
       </varlistentry>

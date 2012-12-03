@@ -94,7 +94,7 @@ int freerdp_parse_args(rdpSettings* settings, int argc, char** argv,
 				"  -g: set geometry, using format WxH or X%% or 'workarea', default is 1024x768\n"
 				"  -h: print this help\n"
 				"  -k: set keyboard layout ID\n"
-				"  -K: do not interfere with window manager bindings\n"
+				"  -K: do not interfere with window manager bindings (don't grab keyboard)\n"
 				"  -n: hostname\n"
 				"  -o: console audio\n"
 				"  -p: password\n"

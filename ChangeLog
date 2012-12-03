@@ -6,6 +6,7 @@ FreeRDP 1.0.2 is a maintenance release which contains several bug and stability 
 	* new parameter --from-stdin - prompts for unspecified arguments username, password, domain and host.
 	* fix compability with x2go
 	* fix keyboard state in remote app
+	* documentation fixes
 
 * libfreerdp-core:
 	* several memory leaks and double frees were fixed
