@@ -1215,15 +1215,6 @@ BOOL mac_pre_connect(freerdp *inst)
     }
 #endif
 	
-	if (freerdp_detect_old_command_line_syntax(inst->context->argc, inst->context->argv))
-	{
-		printf("warning: deprecated command-line syntax detected!\n");
-		freerdp_client_print_command_line_help(inst->context->argc, inst->context->argv);
-
-		[NSApp terminate:nil];
-		return TRUE;
-	}
-	
 	inst->context->argc = g_mrdpview->argc;
 	inst->context->argv = g_mrdpview->argv;
 	
