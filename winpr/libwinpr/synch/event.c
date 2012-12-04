@@ -35,6 +35,8 @@
 #include <unistd.h>
 #endif
 
+CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
+
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
 	WINPR_EVENT* event;
@@ -63,6 +65,9 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
 	}
+
+	if (!cs.LockSemaphore)
+		InitializeCriticalSection(&cs);
 
 	return handle;
 }
@@ -97,22 +102,33 @@ BOOL SetEvent(HANDLE hEvent)
 	ULONG Type;
 	PVOID Object;
 	int length;
+	BOOL status;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
-		return FALSE;
+	status = FALSE;
 
-	event = (WINPR_EVENT*) Object;
+	EnterCriticalSection(&cs);
 
-	if (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
-		return TRUE;
+	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	{
+		event = (WINPR_EVENT*) Object;
 
-	length = write(event->pipe_fd[1], "-", 1);
+		if (!(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0))
+		{
+			length = write(event->pipe_fd[1], "-", 1);
 
-	if (length != 1)
-		return FALSE;
+			if (length == 1)
+				status = TRUE;
+		}
+		else
+		{
+			status = TRUE;
+		}
+	}
 
-	return TRUE;
+	LeaveCriticalSection(&cs);
+
+	return status;
 }
 
 BOOL ResetEvent(HANDLE hEvent)
@@ -120,22 +136,32 @@ BOOL ResetEvent(HANDLE hEvent)
 	ULONG Type;
 	PVOID Object;
 	int length;
+	BOOL status;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
-		return FALSE;
+	status = FALSE;
 
-	event = (WINPR_EVENT*) Object;
+	EnterCriticalSection(&cs);
 
-	while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
-		length = read(event->pipe_fd[0], &length, 1);
+		event = (WINPR_EVENT*) Object;
 
-		if (length != 1)
-			return FALSE;
+		while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+		{
+			length = read(event->pipe_fd[0], &length, 1);
+
+			if (length == 1)
+				status = TRUE;
+
+			if (length != 1)
+				break;
+		}
 	}
 
-	return TRUE;
+	LeaveCriticalSection(&cs);
+
+	return status;
 }
 
 #endif

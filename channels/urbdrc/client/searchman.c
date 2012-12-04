@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 #include "searchman.h"
 
 static void searchman_rewind(USB_SEARCHMAN* searchman)

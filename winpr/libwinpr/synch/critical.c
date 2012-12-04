@@ -23,22 +23,34 @@
 
 #include <winpr/synch.h>
 
-/**
- * InitializeCriticalSection
- * InitializeCriticalSectionAndSpinCount
- * InitializeCriticalSectionEx
- * SetCriticalSectionSpinCount
- * EnterCriticalSection
- * TryEnterCriticalSection
- * LeaveCriticalSection
- * DeleteCriticalSection
- */
+#include "synch.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifndef _WIN32
 
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
+	if (lpCriticalSection)
+	{
+		lpCriticalSection->DebugInfo = NULL;
 
+		lpCriticalSection->LockCount = 0;
+		lpCriticalSection->RecursionCount = 0;
+		lpCriticalSection->SpinCount = 0;
+
+		lpCriticalSection->OwningThread = NULL;
+		lpCriticalSection->LockSemaphore = NULL;
+
+		lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+#if defined __APPLE__
+		semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 1);
+#else
+		sem_init(lpCriticalSection->LockSemaphore, 0, 1);
+#endif
+	}
 }
 
 BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
@@ -58,7 +70,11 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 
 VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-
+#if defined __APPLE__
+	semaphore_wait(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+#else
+	sem_wait((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+#endif
 }
 
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
@@ -68,12 +84,20 @@ BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-
+#if defined __APPLE__
+	semaphore_signal(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+#else
+	sem_post((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+#endif
 }
 
 VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-
+#if defined __APPLE__
+	semaphore_destroy(mach_task_self(), *((winpr_sem_t*) lpCriticalSection->LockSemaphore));
+#else
+	sem_destroy((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+#endif
 }
 
 #endif
