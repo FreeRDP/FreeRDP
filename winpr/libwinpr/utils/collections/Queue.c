@@ -53,6 +53,15 @@ BOOL Queue_IsSynchronized(wQueue* queue)
 }
 
 /**
+ * Gets an object that can be used to synchronize access to the Queue.
+ */
+
+HANDLE Queue_SyncRoot(wQueue* queue)
+{
+	return queue->mutex;
+}
+
+/**
  * Methods
  */
 
@@ -144,7 +153,7 @@ void* Queue_Dequeue(wQueue* queue)
 	{
 		obj = queue->array[queue->head];
 		queue->array[queue->head] = NULL;
-		queue->head = (queue->head + 1) % queue->size;
+		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 	}
 

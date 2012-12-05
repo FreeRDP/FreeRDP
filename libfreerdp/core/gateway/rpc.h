@@ -23,6 +23,7 @@
 #define FREERDP_CORE_RPC_H
 
 #include <winpr/wtypes.h>
+#include <winpr/collections.h>
 #include <winpr/interlocked.h>
 
 typedef struct rdp_rpc rdpRpc;
@@ -763,8 +764,8 @@ struct rdp_rpc
 	UINT16 max_xmit_frag;
 	UINT16 max_recv_frag;
 
-	PSLIST_HEADER SendQueue;
-	PSLIST_HEADER ReceiveQueue;
+	wQueue* SendQueue;
+	wQueue* ReceiveQueue;
 
 	UINT32 ReceiveWindow;
 

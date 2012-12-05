@@ -35,11 +35,11 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	RPC_PDU* pdu;
 
-	pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 	pdu->Buffer = buffer;
 	pdu->Length = length;
 
-	InterlockedPushEntrySList(rpc->SendQueue, &(pdu->ItemEntry));
+	Queue_Enqueue(rpc->SendQueue, pdu);
 	ReleaseSemaphore(rpc->client->SendSemaphore, 1, NULL);
 
 	if (rpc->client->SynchronousSend)
@@ -56,7 +56,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	int status;
 	RPC_PDU* pdu;
 
-	pdu = (RPC_PDU*) InterlockedPopEntrySList(rpc->SendQueue);
+	pdu = (RPC_PDU*) Queue_Dequeue(rpc->SendQueue);
 
 	if (!pdu)
 		return 0;
@@ -77,7 +77,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
 
 	free(pdu->Buffer);
-	_aligned_free(pdu);
+	free(pdu);
 
 	if (rpc->client->SynchronousSend)
 		SetEvent(rpc->client->PduSentEvent);
@@ -97,7 +97,7 @@ int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+	rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 	if (pdu->Flags & RPC_PDU_FLAG_STUB)
 	{
@@ -110,7 +110,7 @@ int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
 	}
 
-	InterlockedPushEntrySList(rpc->ReceiveQueue, &(pdu->ItemEntry));
+	Queue_Enqueue(rpc->ReceiveQueue, pdu);
 	ReleaseSemaphore(rpc->client->ReceiveSemaphore, 1, NULL);
 
 	return 0;
@@ -129,7 +129,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 
 	if (WaitForSingleObject(rpc->client->ReceiveSemaphore, dwMilliseconds) == WAIT_OBJECT_0)
 	{
-		pdu = (RPC_PDU*) InterlockedPopEntrySList(rpc->ReceiveQueue);
+		pdu = (RPC_PDU*) Queue_Dequeue(rpc->ReceiveQueue);
 		return pdu;
 	}
 

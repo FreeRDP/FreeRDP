@@ -718,13 +718,10 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_xmit_frag = 0x0FF8;
 		rpc->max_recv_frag = 0x0FF8;
 
-		rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
+		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
-		rpc->SendQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(rpc->SendQueue);
-
-		rpc->ReceiveQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(rpc->ReceiveQueue);
+		rpc->SendQueue = Queue_New(TRUE, -1, -1);
+		rpc->ReceiveQueue = Queue_New(TRUE, -1, -1);
 
 		rpc->ReceiveWindow = 0x00010000;
 
@@ -753,20 +750,16 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
-		RPC_PDU* PduEntry;
-
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
 
-		_aligned_free(rpc->pdu);
+		free(rpc->pdu);
 
-		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->SendQueue)) != NULL)
-			_aligned_free(PduEntry);
-		_aligned_free(rpc->SendQueue);
+		Queue_Clear(rpc->SendQueue);
+		Queue_Free(rpc->SendQueue);
 
-		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->ReceiveQueue)) != NULL)
-			_aligned_free(PduEntry);
-		_aligned_free(rpc->ReceiveQueue);
+		Queue_Clear(rpc->ReceiveQueue);
+		Queue_Free(rpc->ReceiveQueue);
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);

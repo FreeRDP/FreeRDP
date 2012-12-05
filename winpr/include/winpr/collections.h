@@ -47,6 +47,7 @@ typedef struct _wQueue wQueue;
 
 WINPR_API int Queue_Count(wQueue* queue);
 WINPR_API BOOL Queue_IsSynchronized(wQueue* queue);
+WINPR_API HANDLE Queue_SyncRoot(wQueue* queue);
 
 WINPR_API void Queue_Clear(wQueue* queue);
 WINPR_API BOOL Queue_Contains(wQueue* queue, void* obj);
