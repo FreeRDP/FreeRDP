@@ -116,7 +116,6 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 
 void mf_peer_rfx_update(freerdp_peer* client)
 {
-    
     //check
     mfInfo* mfi = mf_info_get_instance();
     
@@ -125,15 +124,13 @@ void mf_peer_rfx_update(freerdp_peer* client)
     if (mf_info_have_invalid_region(mfi) == false) {
         return;
     }
-    
+    /*
     printf("\tinvalid -> (%d,%d), (%d,%d)\n",
            mfi->invalid.x,
            mfi->invalid.y,
            mfi->invalid.x + mfi->invalid.width,
            mfi->invalid.y + mfi->invalid.height);
-        
-    //capture entire screen
-    
+            
     int bytewidth;
     
     CGRect invRect;
@@ -146,6 +143,10 @@ void mf_peer_rfx_update(freerdp_peer* client)
     //CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
     CGImageRef image = CGDisplayCreateImageForRect(kCGDirectMainDisplay, invRect);
     //CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
+    
+    if (image == NULL) {
+        printf("image = null!!\n\n\n");
+    }
     
     CGSize frameSize;
     frameSize.width = 2880 / 2;
@@ -175,10 +176,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
     }
     
     CVPixelBufferRef pxbuffer = NULL;
-    /*CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
-                                          frameSize.height,  kCVPixelFormatType_32ARGB, opts,
-                                          &pxbuffer);
-    */
+    
     CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, invRect.size.width,
                                           invRect.size.height,  kCVPixelFormatType_32ARGB, opts,
                                           &pxbuffer);
@@ -195,15 +193,22 @@ void mf_peer_rfx_update(freerdp_peer* client)
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
     
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    /*CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
-                                                 frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
-                                                 kCGImageAlphaNoneSkipLast);
-    */
+    
     CGContextRef context = CGBitmapContextCreate(pxdata,
                                                  invRect.size.width,
                                                  invRect.size.height, 8, 4*frameSize.width, rgbColorSpace,
                                                  kCGImageAlphaNoneSkipLast);
-
+    
+    if (context == NULL) {
+        printf("context = null!!!\n\n\n");
+    }
+    
+    printf("context = [%p], image = [%p]\n%fx%f\n",
+           context,
+           image,
+           invRect.size.width,
+           invRect.size.height);
+    
     CGContextDrawImage(context,
                        CGRectMake(0, 0, invRect.size.width, invRect.size.height),
                        //CGRectMake(invRect.origin.x, frameSize.height - invRect.origin.y, invRect.size.width, invRect.size.height),
@@ -212,6 +217,14 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
     bytewidth = (bytewidth + 3) & ~3; // Align to 4 bytes
+    */
+    
+    long width;
+    long height;
+    int pitch;
+    BYTE* dataBits = NULL;
+    
+    mf_info_getScreenData(mfi, &width, &height, &dataBits, &pitch);
     
     //encode
     
@@ -233,11 +246,11 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     rect.x = 0;
     rect.y = 0;
-    rect.width = mfi->invalid.width / 2;
-    rect.height = mfi->invalid.height / 2;
+    rect.width = width;
+    rect.height = height;
     
     rfx_compose_message(mfp->rfx_context, s, &rect, 1,
-                        (BYTE*) pxdata, rect.width, rect.height, frameSize.width * 4);
+                        (BYTE*) dataBits, rect.width, rect.height, pitch);
     
     UINT32 x = mfi->invalid.x / 2;
     UINT32 y = mfi->invalid.y / 2;
@@ -264,13 +277,14 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     mf_info_clear_invalid_region(mfi);
     // note: need to stop getting new dirty rects until here
-    
+    /*
     CGColorSpaceRelease(rgbColorSpace);
     CGImageRelease(image);
     CGContextRelease(context);
     
     CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
     CVPixelBufferRelease(pxbuffer);
+    */
 }
 
 /* Called when we have a new peer connecting */
@@ -342,7 +356,7 @@ void mf_peer_init(freerdp_peer* client)
     if(info_timer)
     {
         //printf("created timer\n");
-        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 1ull * NSEC_PER_SEC, 100ull * NSEC_PER_MSEC);
+        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 500ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
         dispatch_source_set_event_handler(info_timer, ^{
             printf("dispatch\n");
             mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
@@ -371,8 +385,8 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	printf("\n");
     
     
-    UINT32 servscreen_width = 2880;
-    UINT32 servscreen_height = 1800;
+    UINT32 servscreen_width = 2880 / 2;
+    UINT32 servscreen_height = 1800 / 2;
     UINT32 bitsPerPixel = 32;
     
     if ((settings->DesktopWidth != servscreen_width) || (settings->DesktopHeight != servscreen_height))

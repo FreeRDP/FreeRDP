@@ -19,6 +19,7 @@
 
 #include <dispatch/dispatch.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include "CoreVideo/CoreVideo.h"
 
 //#include <pthread.h>
 
@@ -32,7 +33,12 @@ CGDisplayStreamUpdateRef lastUpdate = NULL;
 
 //pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+CVPixelBufferRef pxbuffer = NULL;
+void *baseAddress = NULL;
 
+CGContextRef bitmapcontext = NULL;
+
+CGImageRef image = NULL;
 
 void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =  ^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
 {
@@ -142,6 +148,58 @@ int mf_mlion_screen_updates_init()
                                                     screen_update_q,
                                                     streamHandler);
     
+    
+    CFDictionaryRef opts;
+    
+    long ImageCompatibility;
+    long BitmapContextCompatibility;
+    
+    void * keys[3];
+    keys[0] = (void *) kCVPixelBufferCGImageCompatibilityKey;
+    keys[1] = (void *) kCVPixelBufferCGBitmapContextCompatibilityKey;
+    keys[2] = NULL;
+    
+    void * values[3];
+    values[0] = (void *) &ImageCompatibility;
+    values[1] = (void *) &BitmapContextCompatibility;
+    values[2] = NULL;
+    
+    opts = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, NULL, NULL);
+    
+    if (opts == NULL)
+    {
+        printf("failed to create dictionary\n");
+        //return 1;
+    }
+    
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, pixelWidth,
+                                          pixelHeight,  kCVPixelFormatType_32ARGB, opts,
+                                          &pxbuffer);
+    
+    if (status != kCVReturnSuccess)
+    {
+        printf("Failed to create pixel buffer! \n");
+        //return 1;
+    }
+    
+    CFRelease(opts);
+    
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    baseAddress = CVPixelBufferGetBaseAddress(pxbuffer);
+    
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+
+    bitmapcontext = CGBitmapContextCreate(baseAddress,
+                                                 pixelWidth,
+                                                 pixelHeight, 8, 4*pixelWidth, rgbColorSpace,
+                                                 kCGImageAlphaNoneSkipLast);
+    
+    if (bitmapcontext == NULL) {
+        printf("context = null!!!\n\n\n");
+    }
+    CGColorSpaceRelease(rgbColorSpace);
+    
+    
     return 0;
     
 }
@@ -212,3 +270,23 @@ int mf_mlion_clear_dirty_region()
     */
     return 0;
 }
+
+int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxData)
+{
+    if (image != NULL) {
+        CGImageRelease(image);
+    }
+    image = CGDisplayCreateImageForRect(
+                                                   kCGDirectMainDisplay,
+                                                   CGRectMake(x, y, width, height) );
+    
+    CGContextDrawImage(
+                       bitmapcontext,
+                       CGRectMake(0, 1800 - height, width, height),
+                       image);
+    
+    *pxData = baseAddress;
+    
+    return 0;
+}
+
