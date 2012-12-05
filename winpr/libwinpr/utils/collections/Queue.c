@@ -187,7 +187,7 @@ void* Queue_Peek(wQueue* queue)
  * Construction, Destruction
  */
 
-wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
+wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 {
 	wQueue* queue = NULL;
 
@@ -204,11 +204,11 @@ wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
 
 		queue->synchronized = synchronized;
 
-		if (iCapacity > 0)
-			queue->capacity = iCapacity;
+		if (capacity > 0)
+			queue->capacity = capacity;
 
-		if (iGrowthFactor > 0)
-			queue->growthFactor = iGrowthFactor;
+		if (growthFactor > 0)
+			queue->growthFactor = growthFactor;
 
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
 

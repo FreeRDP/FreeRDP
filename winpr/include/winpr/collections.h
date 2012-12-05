@@ -64,7 +64,7 @@ WINPR_API void Queue_Free(wQueue* queue);
 
 struct _wStack
 {
-	BOOL bSynchronized;
+	BOOL synchronized;
 };
 typedef struct _wStack wStack;
 
@@ -86,7 +86,13 @@ WINPR_API void Stack_Free(wStack* stack);
 
 struct _wArrayList
 {
-	BOOL bSynchronized;
+	int capacity;
+	int growthFactor;
+	BOOL synchronized;
+
+	int size;
+	void** array;
+	HANDLE mutex;
 };
 typedef struct _wArrayList wArrayList;
 
@@ -95,7 +101,9 @@ WINPR_API int ArrayList_Count(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
-WINPR_API void* ArrayList_Item(wArrayList* arrayList, int index, void* obj);
+
+WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, int index);
+WINPR_API void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj);
 
 WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, void* obj);

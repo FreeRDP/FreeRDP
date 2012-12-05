@@ -38,7 +38,7 @@
 
 int Stack_Count(wStack* stack)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -52,7 +52,7 @@ int Stack_Count(wStack* stack)
 
 BOOL Stack_IsSynchronized(wStack* stack)
 {
-	return stack->bSynchronized;
+	return stack->synchronized;
 }
 
 /**
@@ -65,7 +65,7 @@ BOOL Stack_IsSynchronized(wStack* stack)
 
 void Stack_Clear(wStack* stack)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -77,7 +77,7 @@ void Stack_Clear(wStack* stack)
 
 BOOL Stack_Contains(wStack* stack, void* obj)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -91,7 +91,7 @@ BOOL Stack_Contains(wStack* stack, void* obj)
 
 void Stack_Push(wStack* stack, void* obj)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -103,7 +103,7 @@ void Stack_Push(wStack* stack, void* obj)
 
 void* Stack_Pop(wStack* stack)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -117,7 +117,7 @@ void* Stack_Pop(wStack* stack)
 
 void* Stack_Peek(wStack* stack)
 {
-	if (stack->bSynchronized)
+	if (stack->synchronized)
 	{
 
 	}
@@ -137,7 +137,7 @@ wStack* Stack_New(BOOL bSynchronized)
 
 	if (stack)
 	{
-		stack->bSynchronized = bSynchronized;
+		stack->synchronized = bSynchronized;
 	}
 
 	return stack;

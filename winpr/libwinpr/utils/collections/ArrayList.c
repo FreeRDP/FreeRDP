@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <winpr/collections.h>
 
 /**
@@ -38,12 +40,7 @@
 
 int ArrayList_Capacity(wArrayList* arrayList)
 {
-	if (arrayList->bSynchronized)
-	{
-
-	}
-
-	return 0;
+	return arrayList->capacity;
 }
 
 /**
@@ -52,12 +49,7 @@ int ArrayList_Capacity(wArrayList* arrayList)
 
 int ArrayList_Count(wArrayList* arrayList)
 {
-	if (arrayList->bSynchronized)
-	{
-
-	}
-
-	return 0;
+	return arrayList->size;
 }
 
 /**
@@ -84,16 +76,47 @@ BOOL ArrayList_IsReadOnly(wArrayList* arrayList)
 
 BOOL ArrayList_IsSynchronized(wArrayList* arrayList)
 {
-	return arrayList->bSynchronized;
+	return arrayList->synchronized;
 }
 
 /**
- * Gets or sets the element at the specified index.
+ * Gets the element at the specified index.
  */
 
-void* ArrayList_Item(wArrayList* arrayList, int index, void* obj)
+void* ArrayList_GetItem(wArrayList* arrayList, int index)
 {
-	return NULL;
+	void* obj = NULL;
+
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	if ((index >= 0) && (index < arrayList->size))
+	{
+		obj = arrayList->array[index];
+	}
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
+
+	return obj;
+}
+
+/**
+ * Sets the element at the specified index.
+ */
+
+void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
+{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	if ((index >= 0) && (index < arrayList->size))
+	{
+		arrayList->array[index] = obj;
+	}
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -101,15 +124,46 @@ void* ArrayList_Item(wArrayList* arrayList, int index, void* obj)
  */
 
 /**
+ * Shift a section of the list.
+ */
+
+void ArrayList_Shift(wArrayList* arrayList, int index, int count)
+{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	if (count > 0)
+	{
+		if (arrayList->size + count > arrayList->capacity)
+		{
+			arrayList->capacity *= arrayList->growthFactor;
+			arrayList->array = (void**) realloc(arrayList->array, sizeof(void*) * arrayList->capacity);
+		}
+
+		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], count);
+		arrayList->size += count;
+	}
+	else if (count < 0)
+	{
+		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], count);
+		arrayList->size += count;
+	}
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
+}
+
+/**
  * Removes all elements from the ArrayList.
  */
 
 void ArrayList_Clear(wArrayList* arrayList)
 {
-	if (arrayList->bSynchronized)
-	{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
 
-	}
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -118,10 +172,11 @@ void ArrayList_Clear(wArrayList* arrayList)
 
 BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 {
-	if (arrayList->bSynchronized)
-	{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
 
-	}
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 
 	return FALSE;
 }
@@ -132,12 +187,18 @@ BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 
 int ArrayList_Add(wArrayList* arrayList, void* obj)
 {
-	if (arrayList->bSynchronized)
-	{
+	int index;
 
-	}
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
 
-	return FALSE;
+	arrayList->array[arrayList->size++] = obj;
+	index = arrayList->size;
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
+
+	return index;
 }
 
 /*
@@ -146,10 +207,17 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 
 void ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 {
-	if (arrayList->bSynchronized)
-	{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
 
+	if ((index >= 0) && (index < arrayList->size))
+	{
+		ArrayList_Shift(arrayList, index, 1);
+		arrayList->array[index] = obj;
 	}
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -158,10 +226,26 @@ void ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 
 void ArrayList_Remove(wArrayList* arrayList, void* obj)
 {
-	if (arrayList->bSynchronized)
-	{
+	int index;
+	BOOL found = FALSE;
 
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	for (index = 0; index < arrayList->size; index++)
+	{
+		if (arrayList->array[index] == obj)
+		{
+			found = TRUE;
+			break;
+		}
 	}
+
+	if (found)
+		ArrayList_Shift(arrayList, index, -1);
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -170,10 +254,16 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
 
 void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj)
 {
-	if (arrayList->bSynchronized)
-	{
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
 
+	if ((index >= 0) && (index < arrayList->size))
+	{
+		ArrayList_Shift(arrayList, index, -1);
 	}
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -188,12 +278,34 @@ void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj)
 
 int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count)
 {
-	if (arrayList->bSynchronized)
-	{
+	int index;
+	BOOL found = FALSE;
 
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	if (startIndex < 0)
+		startIndex = 0;
+
+	if (count < 0)
+		count = arrayList->size;
+
+	for (index = startIndex; index < startIndex + count; index++)
+	{
+		if (arrayList->array[index] == obj)
+		{
+			found = TRUE;
+			break;
+		}
 	}
 
-	return 0;
+	if (!found)
+		index = -1;
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
+
+	return index;
 }
 
 /**
@@ -208,19 +320,41 @@ int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int coun
 
 int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count)
 {
-	if (arrayList->bSynchronized)
-	{
+	int index;
+	BOOL found = FALSE;
 
+	if (arrayList->synchronized)
+		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	if (startIndex < 0)
+		startIndex = 0;
+
+	if (count < 0)
+		count = arrayList->size;
+
+	for (index = startIndex + count - 1; index >= startIndex; index--)
+	{
+		if (arrayList->array[index] == obj)
+		{
+			found = TRUE;
+			break;
+		}
 	}
 
-	return 0;
+	if (!found)
+		index = -1;
+
+	if (arrayList->synchronized)
+		ReleaseMutex(arrayList->mutex);
+
+	return index;
 }
 
 /**
  * Construction, Destruction
  */
 
-wArrayList* ArrayList_New(BOOL bSynchronized)
+wArrayList* ArrayList_New(BOOL synchronized)
 {
 	wArrayList* arrayList = NULL;
 
@@ -228,7 +362,15 @@ wArrayList* ArrayList_New(BOOL bSynchronized)
 
 	if (arrayList)
 	{
-		arrayList->bSynchronized = bSynchronized;
+		arrayList->synchronized = synchronized;
+
+		arrayList->size = 0;
+		arrayList->capacity = 32;
+		arrayList->growthFactor = 2;
+
+		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
+
+		arrayList->mutex = CreateMutex(NULL, FALSE, NULL);
 	}
 
 	return arrayList;
@@ -236,5 +378,6 @@ wArrayList* ArrayList_New(BOOL bSynchronized)
 
 void ArrayList_Free(wArrayList* arrayList)
 {
+	CloseHandle(arrayList->mutex);
 	free(arrayList);
 }
