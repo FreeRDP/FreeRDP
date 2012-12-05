@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Client Command-Line Interface
+ * FreeRDP Client Compatibility
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,20 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_CMDLINE
-#define FREERDP_CLIENT_CMDLINE
+#ifndef FREERDP_CLIENT_COMPATIBILITY_H
+#define FREERDP_CLIENT_COMPATIBILITY_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
-FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
+int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count);
+int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSettings* settings);
 
-FREERDP_API int freerdp_client_print_version();
-FREERDP_API int freerdp_client_print_command_line_help(int argc, char** argv);
-
-FREERDP_API int freerdp_parse_username(char* username, char** user, char** domain);
-FREERDP_API int freerdp_set_connection_type(rdpSettings* settings, int type);
-
-#endif /* FREERDP_CLIENT_CMDLINE */
+#endif /* FREERDP_CLIENT_COMPATIBILITY */
 

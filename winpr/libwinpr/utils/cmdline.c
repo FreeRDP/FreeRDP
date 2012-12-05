@@ -115,7 +115,10 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		index = i;
 
 		if (preFilter)
-			preFilter(context, i, argv[i]);
+		{
+			if (preFilter(context, i, argc, argv) < 0)
+				return COMMAND_LINE_ERROR;
+		}
 
 		sigil_index = 0;
 		sigil_length = 0;

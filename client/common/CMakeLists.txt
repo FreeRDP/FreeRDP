@@ -21,6 +21,8 @@ set(MODULE_PREFIX "FREERDP_CLIENT")
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
+	compatibility.c
+	compatibility.h
 	file.c)
 
 set(FREERDP_CHANNELS_CLIENT_PATH "../../channels/client")
