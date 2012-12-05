@@ -60,11 +60,13 @@
 
 /* Command-Line Parsing Error Codes */
 
+#define COMMAND_LINE_ERROR			-1000
 #define COMMAND_LINE_ERROR_NO_KEYWORD		-1001
 #define COMMAND_LINE_ERROR_UNEXPECTED_VALUE	-1002
 #define COMMAND_LINE_ERROR_MISSING_VALUE	-1003
 #define COMMAND_LINE_ERROR_MISSING_ARGUMENT	-1004
 #define COMMAND_LINE_ERROR_UNEXPECTED_SIGIL	-1005
+#define COMMAND_LINE_ERROR_LAST			-1006
 
 /* Command-Line Parsing Status Codes */
 
@@ -115,8 +117,8 @@ struct _COMMAND_LINE_ARGUMENT_W
 #define COMMAND_LINE_ARGUMENT	COMMAND_LINE_ARGUMENT_A
 #endif
 
-typedef int (*COMMAND_LINE_PRE_FILTER_FN_A)(void* context, int index, LPCSTR arg);
-typedef int (*COMMAND_LINE_PRE_FILTER_FN_W)(void* context, int index, LPCWSTR arg);
+typedef int (*COMMAND_LINE_PRE_FILTER_FN_A)(void* context, int index, int argc, LPCSTR* argv);
+typedef int (*COMMAND_LINE_PRE_FILTER_FN_W)(void* context, int index, int argc, LPCWSTR* argv);
 
 typedef int (*COMMAND_LINE_POST_FILTER_FN_A)(void* context, COMMAND_LINE_ARGUMENT_A* arg);
 typedef int (*COMMAND_LINE_POST_FILTER_FN_W)(void* context, COMMAND_LINE_ARGUMENT_W* arg);
