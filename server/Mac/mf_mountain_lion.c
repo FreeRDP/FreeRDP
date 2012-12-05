@@ -21,8 +21,6 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include "CoreVideo/CoreVideo.h"
 
-//#include <pthread.h>
-
 #include "mf_mountain_lion.h"
 
 dispatch_semaphore_t region_sem;
@@ -30,8 +28,6 @@ dispatch_queue_t screen_update_q;
 CGDisplayStreamRef stream;
 
 CGDisplayStreamUpdateRef lastUpdate = NULL;
-
-//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 CVPixelBufferRef pxbuffer = NULL;
 void *baseAddress = NULL;
@@ -42,73 +38,13 @@ CGImageRef image = NULL;
 
 void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =  ^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
 {
-    /*
-    if(displayTime - last_time < 500000000)
-        return;
-    
-    last_time = displayTime;
-     */
-    
-    /*
-    printf("\tstatus: ");
-    switch(status)
-    {
-        case kCGDisplayStreamFrameStatusFrameComplete:
-            printf("Complete\n");
-            break;
-            
-        case kCGDisplayStreamFrameStatusFrameIdle:
-            printf("Idle\n");
-            break;
-            
-        case kCGDisplayStreamFrameStatusFrameBlank:
-            printf("Blank\n");
-            break;
-            
-        case kCGDisplayStreamFrameStatusStopped:
-            printf("Stopped\n");
-            break;
-    }
-    
-    printf("\ttime: %lld\n", displayTime);
-    */
-
-/*
-    const CGRect * rects;
-    
-    size_t num_rects;
-    
-    rects = CGDisplayStreamUpdateGetRects(updateRef, kCGDisplayStreamUpdateDirtyRects, &num_rects);
-    
-    printf("\trectangles: %zd\n", num_rects);
     
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
-    
-    if(clean == TRUE)
-        dirtyRegion = *rects;
-    
-    for (size_t i = 0; i < num_rects; i++)
-    {
-        
-        dirtyRegion = CGRectUnion(dirtyRegion, *(rects+i));
-    }
-    
-    clean = FALSE;
-    
-    dispatch_semaphore_signal(region_sem);
-*/
-    
-    
-    
-    
-    dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
-    //pthread_mutex_lock(&mutex);
     
     if (lastUpdate == NULL)
     {
         CFRetain(updateRef);
         lastUpdate = updateRef;
-        //lastUpdate = CGDisplayStreamUpdateCreateMergedUpdate(NULL, updateRef);
     }
     else
     {
@@ -119,7 +55,6 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
     }
     
     dispatch_semaphore_signal(region_sem);
-    //pthread_mutex_unlock(&mutex);
 };
 
 int mf_mlion_screen_updates_init()
@@ -226,7 +161,6 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
     //it may be faster to copy the cgrect and then convert....
     
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
-    //pthread_mutex_lock(&mutex);
 
     const CGRect * rects = CGDisplayStreamUpdateGetRects(lastUpdate, kCGDisplayStreamUpdateDirtyRects, &num_rects);
     
@@ -253,7 +187,6 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
     lastUpdate = NULL;
 
     dispatch_semaphore_signal(region_sem);
-    //pthread_mutex_unlock(&mutex);
     
     return 0;
 }

@@ -283,27 +283,6 @@ void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits,
     
     mf_mlion_get_pixelData(mfi->invalid.x / 2, mfi->invalid.y / 2, *width, *height, pBits);
 
-	/*
-    *width = (mfi->invalid.right - mfi->invalid.left);
-	*height = (mfi->invalid.bottom - mfi->invalid.top);
-
-#ifdef WITH_WIN8
-	mf_dxgi_getPixelData(mfi, pBits, pitch, &mfi->invalid);
-#else
-	{
-		long offset;
-		GETCHANGESBUF* changes;
-		changes = (GETCHANGESBUF*) mfi->changeBuffer;
-
-		*width += 1;
-		*height += 1;
-
-		offset = (4 * mfi->invalid.left) + (mfi->invalid.top * mfi->virtscreen_width * 4);
-		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
-		*pitch = mfi->virtscreen_width * 4;
-	}
-#endif
-     */
 }
 
 /*

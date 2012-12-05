@@ -93,19 +93,6 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
             printf("Tick\n");
             
             mf_peer_rfx_update(client);
-			
-            /*invalid_region = xfp->hdc->hwnd->invalid;
-             
-             if (invalid_region->null == FALSE)
-             {
-             xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
-             invalid_region->w, invalid_region->h);
-             }
-             
-             invalid_region->null = 1;
-             xfp->hdc->hwnd->ninvalid = 0;
-             */
-            
             
 			mf_event_free(event);
 		}
@@ -124,100 +111,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
     if (mf_info_have_invalid_region(mfi) == false) {
         return;
     }
-    /*
-    printf("\tinvalid -> (%d,%d), (%d,%d)\n",
-           mfi->invalid.x,
-           mfi->invalid.y,
-           mfi->invalid.x + mfi->invalid.width,
-           mfi->invalid.y + mfi->invalid.height);
-            
-    int bytewidth;
-    
-    CGRect invRect;
-    
-    invRect.origin.x = mfi->invalid.x /2;
-    invRect.origin.y = mfi->invalid.y / 2;
-    invRect.size.height = mfi->invalid.height / 2;
-    invRect.size.width = mfi->invalid.width / 2;
-    
-    //CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
-    CGImageRef image = CGDisplayCreateImageForRect(kCGDirectMainDisplay, invRect);
-    //CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
-    
-    if (image == NULL) {
-        printf("image = null!!\n\n\n");
-    }
-    
-    CGSize frameSize;
-    frameSize.width = 2880 / 2;
-    frameSize.height = 1800/ 2;
-    
-    CFDictionaryRef opts;
-    
-    long ImageCompatibility;
-    long BitmapContextCompatibility;
-    
-    void * keys[3];
-    keys[0] = (void *) kCVPixelBufferCGImageCompatibilityKey;
-    keys[1] = (void *) kCVPixelBufferCGBitmapContextCompatibilityKey;
-    keys[2] = NULL;
-    
-    void * values[3];
-    values[0] = (void *) &ImageCompatibility;
-    values[1] = (void *) &BitmapContextCompatibility;
-    values[2] = NULL;
-    
-    opts = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, NULL, NULL);
-    
-    if (opts == NULL)
-    {
-        printf("failed to create dictionary\n");
-        //return 1;
-    }
-    
-    CVPixelBufferRef pxbuffer = NULL;
-    
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, invRect.size.width,
-                                          invRect.size.height,  kCVPixelFormatType_32ARGB, opts,
-                                          &pxbuffer);
-    
-    if (status != kCVReturnSuccess)
-    {
-        printf("Failed to create pixel buffer! \n");
-        //return 1;
-    }
-    
-    CFRelease(opts);
-    
-    CVPixelBufferLockBaseAddress(pxbuffer, 0);
-    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
-    
-    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    
-    CGContextRef context = CGBitmapContextCreate(pxdata,
-                                                 invRect.size.width,
-                                                 invRect.size.height, 8, 4*frameSize.width, rgbColorSpace,
-                                                 kCGImageAlphaNoneSkipLast);
-    
-    if (context == NULL) {
-        printf("context = null!!!\n\n\n");
-    }
-    
-    printf("context = [%p], image = [%p]\n%fx%f\n",
-           context,
-           image,
-           invRect.size.width,
-           invRect.size.height);
-    
-    CGContextDrawImage(context,
-                       CGRectMake(0, 0, invRect.size.width, invRect.size.height),
-                       //CGRectMake(invRect.origin.x, frameSize.height - invRect.origin.y, invRect.size.width, invRect.size.height),
-                       //invRect,
-                       image);
-    
-    bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
-    bytewidth = (bytewidth + 3) & ~3; // Align to 4 bytes
-    */
+   
     
     long width;
     long height;
@@ -277,6 +171,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     mf_info_clear_invalid_region(mfi);
     // note: need to stop getting new dirty rects until here
+    
+    
     /*
     CGColorSpaceRelease(rgbColorSpace);
     CGImageRelease(image);
