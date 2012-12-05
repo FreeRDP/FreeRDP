@@ -31,44 +31,6 @@
  */
 
 /**
- * Remote Desktop Connection Usage
- *
- * mstsc [<connection file>] [/v:<server[:port]>] [/admin] [/f[ullscreen]]
- * [/w:<width>] [/h:<height>] [/public] | [/span] [/multimon] [/migrate]
- * [/edit "connection file"] [/?]
- *
- * "connection file" -- Specifies the name of an .RDP for the connection.
- *
- * /v:<server[:port]> -- Specifies the remote computer to which you want
- * to connect.
- *
- * /admin -- Connects you to the session for administering a server.
- *
- * /f -- Starts Remote Desktop in full-screen mode.
- *
- * /w:<width> -- Specifies the width of the Remote Desktop window.
- *
- * /h:<height> -- Specifies the height of the Remote Desktop window.
- *
- * /public -- Runs Remote Desktop in public mode.
- *
- * /span -- Matches the remote desktop width and height with the local
- * virtual desktop, spanning across multiple monitors if necessary. To
- * span across monitors, the monitors must be arranged to form a
- * rectangle.
- *
- * /multimon -- Configures the remote desktop session layout to
- * be identical to the current client-side configuration.
- *
- * /edit -- Opens the specified .RDP connection file for editing.
- *
- * /migrate -- Migrates legacy connection files that were created with
- * Client Connection Manager to new .RDP connection files.
- *
- * /? -- Lists these parameters.
- */
-
-/**
  * Command-Line Syntax:
  *
  * <sigil><keyword><separator><value>
@@ -87,6 +49,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
+	int count;
 	int length;
 	int index;
 	BOOL match;
@@ -116,8 +79,16 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 		if (preFilter)
 		{
-			if (preFilter(context, i, argc, argv) < 0)
+			count = preFilter(context, i, argc, argv);
+
+			if (count < 0)
 				return COMMAND_LINE_ERROR;
+
+			if (count > 0)
+			{
+				i += count;
+				continue;
+			}
 		}
 
 		sigil_index = 0;

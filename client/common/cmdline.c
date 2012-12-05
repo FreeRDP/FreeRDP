@@ -51,7 +51,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "multimon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
-	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Window decorations" },
+	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
@@ -231,11 +231,13 @@ int freerdp_client_command_line_pre_filter(void* context, int index, int argc, L
 			{
 				settings = (rdpSettings*) context;
 				settings->ConnectionFile = _strdup(argv[index]);
+
+				return 1;
 			}
 		}
 	}
 
-	return 1;
+	return 0;
 }
 
 int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params)
@@ -255,6 +257,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		drive->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
+		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -275,6 +278,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 			printer->DriverName = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
+		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -295,6 +299,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 			smartcard->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -313,6 +318,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		serial->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
+		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -331,6 +337,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
+		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -457,7 +464,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 	CommandLineSwitchEnd(arg)
 
-	return 1;
+	return 0;
 }
 
 int freerdp_parse_username(char* username, char** user, char** domain)

@@ -116,9 +116,66 @@ void freerdp_client_old_parse_hostname(char* str, char** ServerHostname, UINT32*
 	}
 }
 
+int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
+{
+	if (strcmp(args->argv[0], "cliprdr") == 0)
+	{
+		settings->RedirectClipboard = TRUE;
+		printf("--plugin cliprdr -> --enable-clipboard\n");
+	}
+	else if (strcmp(args->argv[0], "rdpdr") == 0)
+	{
+		if ((strcmp(args->argv[1], "disk") == 0) ||
+			(strcmp(args->argv[1], "drive") == 0))
+		{
+			freerdp_addin_replace_argument(args, "disk", "drive");
+			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+		}
+		else if (strcmp(args->argv[1], "printer") == 0)
+		{
+			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+		}
+		else if ((strcmp(args->argv[1], "scard") == 0) ||
+				(strcmp(args->argv[1], "smartcard") == 0))
+		{
+			freerdp_addin_replace_argument(args, "scard", "smartcard");
+			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+		}
+		else if (strcmp(args->argv[1], "serial") == 0)
+		{
+			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+		}
+		else if (strcmp(args->argv[1], "parallel") == 0)
+		{
+			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+		}
+	}
+	else if (strcmp(args->argv[0], "drdynvc") == 0)
+	{
+		freerdp_client_add_dynamic_channel(settings, args->argc - 1, &args->argv[1]);
+	}
+	else if (strcmp(args->argv[0], "rdpsnd") == 0)
+	{
+		freerdp_addin_replace_argument_value(args, args->argv[1], "sys", args->argv[1]);
+		freerdp_client_add_static_channel(settings, args->argc, args->argv);
+	}
+	else if (strcmp(args->argv[0], "rail") == 0)
+	{
+		settings->RemoteApplicationProgram = _strdup(args->argv[1]);
+	}
+	else
+	{
+		freerdp_client_add_static_channel(settings, args->argc, args->argv);
+	}
+
+	return 1;
+}
+
 int freerdp_client_old_command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
 {
 	rdpSettings* settings;
+
+	settings = (rdpSettings*) context;
 
 	if (index == (argc - 1))
 	{
@@ -130,16 +187,91 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				return -1;
 			}
 
-			if (context)
-			{
-				settings = (rdpSettings*) context;
-				freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
-			}
+			freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
 		}
 		else
 		{
 			return -1;
 		}
+	}
+
+	if (strcmp("--plugin", argv[index]) == 0)
+	{
+		int length;
+		char *a, *p;
+		int i, j, t;
+		int old_index;
+		ADDIN_ARGV* args;
+
+		old_index = index;
+
+		index++;
+		t = index;
+
+		if (index == argc)
+			return -1;
+
+		args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+		args->argv = (char**) malloc(sizeof(char*) * 5);
+		args->argc = 1;
+
+		args->argv[0] = _strdup(argv[t]);
+
+		if ((index < argc - 1) && strcmp("--data", argv[index + 1]) == 0)
+		{
+			i = 0;
+			index += 2;
+			args->argc = 1;
+
+			while ((index < argc) && (strcmp("--", argv[index]) != 0))
+			{
+				args->argc = 1;
+
+				for (j = 0, p = (char*) argv[index]; (j < 4) && (p != NULL); j++)
+				{
+					if (*p == '\'')
+					{
+						a = p + 1;
+
+						p = strchr(p + 1, '\'');
+
+						if (p)
+							*p++ = 0;
+					}
+					else
+					{
+						a = p;
+					}
+
+					p = strchr(p, ':');
+
+					if (p != NULL)
+					{
+						length = p - a;
+						args->argv[j + 1] = malloc(length + 1);
+						CopyMemory(args->argv[j + 1], a, length);
+						args->argv[j + 1][length] = '\0';
+						p++;
+					}
+					else
+					{
+						args->argv[j + 1] = _strdup(a);
+					}
+
+					args->argc++;
+				}
+
+				if (settings->instance)
+				{
+					freerdp_client_old_process_plugin(settings, args);
+				}
+
+				index++;
+				i++;
+			}
+		}
+
+		return (index - old_index);
 	}
 
 	return 0;

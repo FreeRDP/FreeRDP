@@ -25,7 +25,112 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/settings.h>
+
+int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
+{
+	int i;
+
+	for (i = 0; i < args->argc; i++)
+	{
+		if (strcmp(args->argv[i], argument) == 0)
+		{
+			return 1;
+		}
+	}
+
+	args->argc++;
+	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
+	args->argv[args->argc - 1] = _strdup(argument);
+
+	return 0;
+}
+
+int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument)
+{
+	int i;
+
+	for (i = 0; i < args->argc; i++)
+	{
+		if (strcmp(args->argv[i], previous) == 0)
+		{
+			free(args->argv[i]);
+			args->argv[i] = _strdup(argument);
+
+			return 1;
+		}
+	}
+
+	args->argc++;
+	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
+	args->argv[args->argc - 1] = _strdup(argument);
+
+	return 0;
+}
+
+int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value)
+{
+	int i;
+	char* p;
+	char* str;
+	int length;
+
+	length = strlen(option) + strlen(value) + 1;
+	str = (char*) malloc(length + 1);
+	sprintf_s(str, length + 1, "%s:%s", option, value);
+
+	for (i = 0; i < args->argc; i++)
+	{
+		p = strchr(args->argv[i], ':');
+
+		if (p)
+		{
+			if (strncmp(args->argv[i], option, p - args->argv[i]) == 0)
+			{
+				free(args->argv[i]);
+				args->argv[i] = str;
+
+				return 1;
+			}
+		}
+	}
+
+	args->argc++;
+	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
+	args->argv[args->argc - 1] = str;
+
+	return 0;
+}
+
+int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value)
+{
+	int i;
+	char* str;
+	int length;
+
+	length = strlen(option) + strlen(value) + 1;
+	str = (char*) malloc(length + 1);
+	sprintf_s(str, length + 1, "%s:%s", option, value);
+
+	for (i = 0; i < args->argc; i++)
+	{
+		if (strcmp(args->argv[i], previous) == 0)
+		{
+			free(args->argv[i]);
+			args->argv[i] = str;
+
+			return 1;
+		}
+	}
+
+	args->argc++;
+	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
+	args->argv[args->argc - 1] = str;
+
+	return 0;
+}
 
 void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
