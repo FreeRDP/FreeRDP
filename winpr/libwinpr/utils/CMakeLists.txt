@@ -21,7 +21,10 @@ set(MODULE_PREFIX "WINPR_UTILS")
 set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
-	collections/ArrayList.c)
+	collections/ArrayList.c
+	collections/Dictionary.c
+	collections/ListDictionary.c
+	collections/KeyValuePair.c)
 
 set(${MODULE_PREFIX}_SRCS
 	sam.c

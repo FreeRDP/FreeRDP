@@ -120,4 +120,31 @@ WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startI
 WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 WINPR_API void ArrayList_Free(wArrayList* arrayList);
 
+/* System.Collections.DictionaryBase */
+
+struct _wDictionary
+{
+	BOOL synchronized;
+	HANDLE mutex;
+};
+typedef struct _wDictionary wDictionary;
+
+/* System.Collections.Specialized.ListDictionary */
+
+struct _wListDictionary
+{
+	BOOL synchronized;
+	HANDLE mutex;
+};
+typedef struct _wListDictionary wListDictionary;
+
+/* System.Collections.Generic.KeyValuePair<TKey,TValue> */
+
+struct _wKeyValuePair
+{
+	void* key;
+	void* value;
+};
+typedef struct _wKeyValuePair wKeyValuePair;
+
 #endif /* WINPR_COLLECTIONS_H */
