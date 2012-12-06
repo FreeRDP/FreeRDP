@@ -54,7 +54,6 @@ typedef struct
 
 typedef struct _RPC_PDU
 {
-	SLIST_ENTRY ItemEntry;
 	BYTE* Buffer;
 	UINT32 Size;
 	UINT32 Length;

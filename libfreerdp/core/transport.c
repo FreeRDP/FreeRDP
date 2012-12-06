@@ -532,6 +532,11 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 		status &= tcp_set_blocking_mode(transport->TcpIn, blocking);
 	}
 
+	if (transport->layer == TRANSPORT_LAYER_TSG)
+	{
+		tsg_set_blocking_mode(transport->tsg, blocking);
+	}
+
 	return status;
 }
 

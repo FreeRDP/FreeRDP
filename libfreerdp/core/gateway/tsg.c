@@ -1083,6 +1083,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
+	printf("TS Gateway Connection Success\n");
+
 	return TRUE;
 }
 
@@ -1097,6 +1099,9 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
 
+		//printf("Reading from the same PDU: copy: %d length: %d avail: %d\n",
+		//		CopyLength, length, tsg->BytesAvailable);
+
 		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
@@ -1110,6 +1115,9 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		tsg->pdu = rpc_recv_dequeue_pdu(rpc);
 
+		if (!tsg->pdu)
+			return 0;
+
 		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
 			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
@@ -1122,6 +1130,9 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->BytesRead = 0;
 
 		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+
+		//printf("Reading new PDU: copy: %d length: %d avail: %d\n",
+		//		CopyLength, length, tsg->BytesAvailable);
 
 		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
@@ -1137,6 +1148,14 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
+}
+
+BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
+{
+	tsg->rpc->client->SynchronousSend = TRUE;
+	tsg->rpc->client->SynchronousReceive = blocking;
+
+	return TRUE;
 }
 
 rdpTsg* tsg_new(rdpTransport* transport)
