@@ -261,7 +261,7 @@ typedef struct
 {
 	BYTE rpc_vers;
 	BYTE rpc_vers_minor;
-	BYTE reserved[2]; /* must be zero */
+	BYTE reserved[2];
 	BYTE packed_drep[4];
 	UINT32 reject_status;
 	BYTE reserved2[4];
@@ -269,14 +269,14 @@ typedef struct
 
 typedef struct
 {
-	rpcrt_reason_code_t reason_code; /* 0..65535 */
-	rpcrt_optional_data_t rpc_info; /* may be RPC specific */
+	rpcrt_reason_code_t reason_code;
+	rpcrt_optional_data_t rpc_info;
 } rpcconn_reject_optional_data_t;
 
 typedef struct
 {
-	rpcrt_reason_code_t reason_code; /* 0..65535 */
-	rpcrt_optional_data_t rpc_info; /* may be RPC-specific */
+	rpcrt_reason_code_t reason_code;
+	rpcrt_optional_data_t rpc_info;
 } rpcconn_disc_optional_data_t;
 
 typedef struct
@@ -284,20 +284,21 @@ typedef struct
 	BYTE signature[8];
 } rpc_sec_verification_trailer;
 
-typedef struct
+struct auth_verifier_co_s
 {
 	/* restore 4-byte alignment */
 
-	BYTE* auth_pad; /* align(4); [size_is(auth_pad_length)] */
+	BYTE auth_type;
+	BYTE auth_level;
+	BYTE auth_pad_length;
+	BYTE auth_reserved;
+	UINT32 auth_context_id;
 
-	BYTE auth_type; /* :01  which authent service */
-	BYTE auth_level; /* :01  which level within service */
-	BYTE auth_pad_length; /* :01 */
-	BYTE auth_reserved; /* :01 reserved, m.b.z. */
-	UINT32 auth_context_id; /* :04 */
+	BYTE* auth_value;
+};
 
-	BYTE* auth_value; /* credentials; [size_is(auth_length)] */
-} auth_verifier_co_t;
+typedef struct auth_verifier_co_s rpc_sec_trailer;
+typedef struct auth_verifier_co_s auth_verifier_co_t;
 
 /* Connection-oriented PDU Definitions */
 
@@ -305,17 +306,11 @@ typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	UINT16 max_xmit_frag; /* ignored */
-	UINT16 max_recv_frag; /* ignored */
-	UINT32 assoc_group_id; /* ignored */
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
+	UINT32 assoc_group_id;
 
-	/* presentation context list */
-
-	p_cont_list_t p_context_elem; /* variable size */
-
-	/* optional authentication verifier */
-
-	/* following fields present if auth_length != 0 */
+	p_cont_list_t p_context_elem;
 
 	auth_verifier_co_t auth_verifier;
 
@@ -332,16 +327,9 @@ typedef struct
 
 	/* restore 4-octet alignment */
 
-	BYTE* pad2; /* size_is(align(4)) */
+	p_result_list_t	p_result_list;
 
-	/* presentation context result list, including hints */
-
-	p_result_list_t	p_result_list; /* variable size */
-
-	/* optional authentication verifier */
-	/* following fields present iff auth_length != 0 */
-
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_alter_context_response_hdr_t;
 
 /*  bind header */
@@ -349,16 +337,11 @@ typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	UINT16 max_xmit_frag; /* 16:02 max transmit frag size, bytes */
-	UINT16 max_recv_frag; /* 18:02 max receive  frag size, bytes */
-	UINT32 assoc_group_id; /* 20:04 incarnation of client-server assoc group */
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
+	UINT32 assoc_group_id;
 
-	/* presentation context list */
-
-	p_cont_list_t p_context_elem; /* variable size */
-
-	/* optional authentication verifier */
-	/* following fields present if auth_length != 0 */
+	p_cont_list_t p_context_elem;
 
 	auth_verifier_co_t auth_verifier;
 } rpcconn_bind_hdr_t;
@@ -367,31 +350,27 @@ typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	UINT16 max_xmit_frag; /* 16:02 max transmit frag size */
-	UINT16 max_recv_frag; /* 18:02 max receive  frag size */
-	UINT32 assoc_group_id; /* 20:04 returned assoc_group_id */
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
+	UINT32 assoc_group_id;
 
-	port_any_t sec_addr; /* 24:yy optional secondary address for process incarnation; local port part of address only */
+	port_any_t sec_addr;
 
 	/* restore 4-octet alignment */
 
-	BYTE* pad2; /* size_is(align(4)) */
+	p_result_list_t p_result_list;
 
-	/* presentation context result list, including hints */
-
-	p_result_list_t p_result_list; /* variable size */
-
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_bind_ack_hdr_t;
 
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	UINT16 max_xmit_frag; /* 16:02 max transmit frag size */
-	UINT16 max_recv_frag; /* 18:02 max receive frag size */
+	UINT16 max_xmit_frag;
+	UINT16 max_recv_frag;
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_rpc_auth_3_hdr_t;
 
 typedef struct
@@ -400,14 +379,14 @@ typedef struct
 
 	p_reject_reason_t provider_reject_reason;
 
-	p_rt_versions_supported_t versions; /* 18:yy array of protocol versions supported */
+	p_rt_versions_supported_t versions;
 } rpcconn_bind_nak_hdr_t;
 
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 
 } rpcconn_cancel_hdr_t;
 

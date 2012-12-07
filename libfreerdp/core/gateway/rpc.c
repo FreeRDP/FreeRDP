@@ -157,6 +157,25 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
 }
 
 /**
+ * PDU Segments:
+ *  ________________________________
+ * |                                |
+ * |           PDU Header           |
+ * |________________________________|
+ * |                                |
+ * |                                |
+ * |            PDU Body            |
+ * |                                |
+ * |________________________________|
+ * |                                |
+ * |        Security Trailer        |
+ * |________________________________|
+ * |                                |
+ * |      Authentication Token      |
+ * |________________________________|
+ */
+
+/**
  * PDU Structure with verification trailer
  *
  * MUST only appear in a request PDU!
@@ -187,6 +206,31 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
+/**
+ * Security Trailer:
+ *
+ * The sec_trailer structure MUST be placed at the end of the PDU, including past stub data,
+ * when present. The sec_trailer structure MUST be 4-byte aligned with respect to the beginning
+ * of the PDU. Padding octets MUST be used to align the sec_trailer structure if its natural
+ * beginning is not already 4-byte aligned.
+ *
+ * All PDUs that carry sec_trailer information share certain common fields:
+ * frag_length and auth_length. The beginning of the sec_trailer structure for each PDU MUST be
+ * calculated to start from offset (frag_length – auth_length – 8) from the beginning of the PDU.
+ *
+ * Immediately after the sec_trailer structure, there MUST be a BLOB carrying the authentication
+ * information produced by the security provider. This BLOB is called the authentication token and
+ * MUST be of size auth_length. The size MUST also be equal to the length from the first octet
+ * immediately after the sec_trailer structure all the way to the end of the fragment;
+ * the two values MUST be the same.
+ *
+ * A client or a server that (during composing of a PDU) has allocated more space for the
+ * authentication token than the security provider fills in SHOULD fill in the rest of
+ * the allocated space with zero octets. These zero octets are still considered to belong
+ * to the authentication token part of the PDU.
+ *
+ */
+
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
 {
 	UINT32 alloc_hint = 0;
@@ -197,7 +241,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{
-		*offset += 4;
+		*offset += 8;
 		rpc_offset_align(offset, 8);
 		alloc_hint = header->response.alloc_hint;
 	}
@@ -222,22 +266,46 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 		{
 			UINT32 sec_trailer_offset;
 
-			/**
-			 * All PDUs that carry sec_trailer information share certain common fields:
-			 * frag_length and auth_length. The beginning of the sec_trailer structure
-			 * for each PDU MUST be calculated to start from offset
-			 * (frag_length – auth_length – 8) from the beginning of the PDU.
-			 */
-
 			sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
 			*length = sec_trailer_offset - *offset;
 		}
 		else
 		{
-			BYTE auth_pad_length;
+			UINT32 frag_length;
+			UINT32 auth_length;
+			UINT32 auth_pad_length;
+			UINT32 sec_trailer_offset;
+			rpc_sec_trailer* sec_trailer;
 
-			auth_pad_length = *(buffer + header->common.frag_length - header->common.auth_length - 6);
-			*length = header->common.frag_length - (header->common.auth_length + *offset + 8 + auth_pad_length);
+			frag_length = header->common.frag_length;
+			auth_length = header->common.auth_length;
+
+			sec_trailer_offset = frag_length - auth_length - 8;
+			sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
+			auth_pad_length = sec_trailer->auth_pad_length;
+
+#if 0
+			printf("sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
+					sec_trailer->auth_type,
+					sec_trailer->auth_level,
+					sec_trailer->auth_pad_length,
+					sec_trailer->auth_reserved,
+					sec_trailer->auth_context_id);
+#endif
+
+			/**
+			 * According to [MS-RPCE], auth_pad_length is the number of padding
+			 * octets used to 4-byte align the security trailer, but in practice
+			 * we get values up to 15, which indicates 16-byte alignment.
+			 */
+
+			if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
+			{
+				printf("invalid auth_length: actual: %d, expected: %d\n", auth_length,
+						(frag_length - (sec_trailer_offset + 8)));
+			}
+
+			*length = frag_length - auth_length - 24 - 8 - auth_pad_length;
 		}
 	}
 
@@ -390,7 +458,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
-#ifdef WITH_DEBUG_RPC
+#if 0
 	rpc_pdu_header_print((rpcconn_hdr_t*) header);
 	printf("rpc_recv_pdu_fragment: length: %d\n", header->common.frag_length);
 	freerdp_hexdump(rpc->FragBuffer, header->common.frag_length);

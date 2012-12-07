@@ -222,6 +222,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	length = pdu->Length;
 	buffer = pdu->Buffer;
 
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
 	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
 	ZeroMemory(packet, sizeof(TSG_PACKET));
 
@@ -570,6 +573,9 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	length = pdu->Length;
 	buffer = pdu->Buffer;
 
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
 	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
 	ZeroMemory(packet, sizeof(TSG_PACKET));
 
@@ -793,6 +799,7 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
+	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
@@ -803,9 +810,14 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	length = pdu->Length;
 	buffer = pdu->Buffer;
 
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
+	offset = 0;
+
 	/* ChannelContext (20 bytes) */
-	CopyMemory(&tsg->ChannelContext.ContextType, &rpc->FragBuffer[24], 4); /* ContextType (4 bytes) */
-	CopyMemory(tsg->ChannelContext.ContextUuid, &rpc->FragBuffer[28], 16); /* ContextUuid (16 bytes) */
+	CopyMemory(&tsg->ChannelContext.ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+	CopyMemory(tsg->ChannelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
 
 	/* TODO: trailing bytes */
 
@@ -1097,7 +1109,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	if (tsg->PendingPdu)
 	{
-		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
 
 		//printf("Reading from the same PDU: copy: %d length: %d avail: %d\n",
 		//		CopyLength, length, tsg->BytesAvailable);
@@ -1120,16 +1132,15 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
-			DEBUG_TSG("Ignoring TsProxySetupReceivePipe Response");
+			printf("Ignoring TsProxySetupReceivePipe Response\n");
 			return tsg_read(tsg, data, length);
-			return 0;
 		}
 
 		tsg->PendingPdu = TRUE;
 		tsg->BytesAvailable = tsg->pdu->Length;
 		tsg->BytesRead = 0;
 
-		CopyLength = (tsg->BytesAvailable > length) ? length : tsg->BytesAvailable;
+		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
 
 		//printf("Reading new PDU: copy: %d length: %d avail: %d\n",
 		//		CopyLength, length, tsg->BytesAvailable);
