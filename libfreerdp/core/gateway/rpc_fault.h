@@ -25,5 +25,6 @@
 #include <winpr/wtypes.h>
 
 int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
+UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code);
 
 #endif /* FREERDP_CORE_RPC_FAULT_H */
