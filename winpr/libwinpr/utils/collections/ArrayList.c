@@ -80,6 +80,24 @@ BOOL ArrayList_IsSynchronized(wArrayList* arrayList)
 }
 
 /**
+ * Lock access to the ArrayList
+ */
+
+BOOL ArrayList_Lock(wArrayList* arrayList)
+{
+	return (WaitForSingleObject(arrayList->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
+}
+
+/**
+ * Unlock access to the ArrayList
+ */
+
+BOOL ArrayList_Unlock(wArrayList* arrayList)
+{
+	return ReleaseMutex(arrayList->mutex);
+}
+
+/**
  * Gets the element at the specified index.
  */
 
@@ -87,16 +105,10 @@ void* ArrayList_GetItem(wArrayList* arrayList, int index)
 {
 	void* obj = NULL;
 
-	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
-
 	if ((index >= 0) && (index < arrayList->size))
 	{
 		obj = arrayList->array[index];
 	}
-
-	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
 
 	return obj;
 }
@@ -107,16 +119,10 @@ void* ArrayList_GetItem(wArrayList* arrayList, int index)
 
 void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
 {
-	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
-
 	if ((index >= 0) && (index < arrayList->size))
 	{
 		arrayList->array[index] = obj;
 	}
-
-	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -129,9 +135,6 @@ void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
 
 void ArrayList_Shift(wArrayList* arrayList, int index, int count)
 {
-	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
-
 	if (count > 0)
 	{
 		if (arrayList->size + count > arrayList->capacity)
@@ -140,17 +143,14 @@ void ArrayList_Shift(wArrayList* arrayList, int index, int count)
 			arrayList->array = (void**) realloc(arrayList->array, sizeof(void*) * arrayList->capacity);
 		}
 
-		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], count);
+		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], (arrayList->size - index) * sizeof(void*));
 		arrayList->size += count;
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], count);
+		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], (arrayList->size - index) * sizeof(void*));
 		arrayList->size += count;
 	}
-
-	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
 }
 
 /**
@@ -252,7 +252,7 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
  * Removes the element at the specified index of the ArrayList.
  */
 
-void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj)
+void ArrayList_RemoveAt(wArrayList* arrayList, int index)
 {
 	if (arrayList->synchronized)
 		WaitForSingleObject(arrayList->mutex, INFINITE);

@@ -102,6 +102,9 @@ WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
 
+WINPR_API BOOL ArrayList_Lock(wArrayList* arrayList);
+WINPR_API BOOL ArrayList_Unlock(wArrayList* arrayList);
+
 WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, int index);
 WINPR_API void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj);
 
@@ -112,7 +115,7 @@ WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
 WINPR_API void ArrayList_Insert(wArrayList* arrayList, int index, void* obj);
 
 WINPR_API void ArrayList_Remove(wArrayList* arrayList, void* obj);
-WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj);
+WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index);
 
 WINPR_API int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
