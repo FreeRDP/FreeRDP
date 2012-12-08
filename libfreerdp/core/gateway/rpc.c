@@ -426,7 +426,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 
 	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
-	if (header->common.call_id == rpc->PipeCallId)
+	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
 	{
 		/* TsProxySetupReceivePipe response! */
 	}
@@ -519,7 +519,7 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 	if (rpc->StubFragCount == 0)
 		rpc->StubCallId = header->common.call_id;
 
-	if (rpc->StubCallId == rpc->PipeCallId)
+	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
 	{
 		/* TsProxySetupReceivePipe response! */
 	}
@@ -540,14 +540,8 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 	 * combined stub data length of all remaining fragment PDUs.
 	 */
 
-	//printf("Receiving Fragment #%d FragStubLength: %d FragLength: %d AllocHint: %d StubOffset: %d\n",
-	//		rpc->StubFragCount, StubLength, header->common.frag_length, header->response.alloc_hint, rpc->StubOffset);
-
 	if ((header->response.alloc_hint == StubLength))
 	{
-		//printf("Reassembled PDU (%d):\n", rpc->StubOffset);
-		//freerdp_hexdump(rpc->StubBuffer, rpc->StubOffset);
-
 		rpc->pdu->CallId = rpc->StubCallId;
 		rpc->StubLength = rpc->StubOffset;
 

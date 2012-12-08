@@ -1111,9 +1111,6 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
 
-		//printf("Reading from the same PDU: copy: %d length: %d avail: %d\n",
-		//		CopyLength, length, tsg->BytesAvailable);
-
 		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
@@ -1133,7 +1130,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
 			printf("Ignoring TsProxySetupReceivePipe Response\n");
-			return tsg_read(tsg, data, length);
+			return 0;
 		}
 
 		tsg->PendingPdu = TRUE;
@@ -1141,9 +1138,6 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->BytesRead = 0;
 
 		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
-
-		//printf("Reading new PDU: copy: %d length: %d avail: %d\n",
-		//		CopyLength, length, tsg->BytesAvailable);
 
 		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
