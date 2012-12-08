@@ -31,6 +31,56 @@
 
 #include "rpc_client.h"
 
+/**
+ * [MS-RPCE] Client Call:
+ * http://msdn.microsoft.com/en-us/library/gg593159/
+ */
+
+RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
+{
+	int index;
+	int count;
+	RpcClientCall* client_call;
+
+	ArrayList_Lock(rpc->ClientCalls);
+
+	client_call = NULL;
+	count = ArrayList_Count(rpc->ClientCalls);
+
+	for (index = 0; index < count; index++)
+	{
+		client_call = (RpcClientCall*) ArrayList_GetItem(rpc->ClientCalls, index);
+
+		if (client_call->CallId == CallId)
+			break;
+	}
+
+	ArrayList_Unlock(rpc->ClientCalls);
+
+	return client_call;
+}
+
+RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
+{
+	RpcClientCall* client_call;
+
+	client_call = (RpcClientCall*) malloc(sizeof(RpcClientCall));
+
+	if (client_call)
+	{
+		client_call->CallId = CallId;
+		client_call->OpNum = OpNum;
+		client_call->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
+	}
+
+	return client_call;
+}
+
+void rpc_client_call_free(RpcClientCall* client_call)
+{
+	free(client_call);
+}
+
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	RPC_PDU* pdu;
@@ -55,6 +105,8 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 {
 	int status;
 	RPC_PDU* pdu;
+	RpcClientCall* client_call;
+	rpcconn_common_hdr_t* header;
 
 	pdu = (RPC_PDU*) Queue_Dequeue(rpc->SendQueue);
 
@@ -64,6 +116,10 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
 
 	status = rpc_in_write(rpc, pdu->Buffer, pdu->Length);
+
+	header = (rpcconn_common_hdr_t*) pdu->Buffer;
+	client_call = rpc_client_call_find_by_id(rpc, header->call_id);
+	client_call->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
 	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
@@ -92,10 +148,7 @@ int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 	pdu = rpc_recv_pdu(rpc);
 
 	if (!pdu)
-	{
-		printf("rpc_recv_enqueue_pdu error\n");
-		return -1;
-	}
+		return 0;
 
 	rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 

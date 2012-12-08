@@ -58,6 +58,7 @@ typedef struct _RPC_PDU
 	UINT32 Size;
 	UINT32 Length;
 	DWORD Flags;
+	DWORD CallId;
 } RPC_PDU, *PRPC_PDU;
 
 #include "tcp.h"
@@ -580,6 +581,14 @@ enum _RPC_CLIENT_CALL_STATE
 };
 typedef enum _RPC_CLIENT_CALL_STATE RPC_CLIENT_CALL_STATE;
 
+struct rpc_client_call
+{
+	UINT32 CallId;
+	UINT32 OpNum;
+	RPC_CLIENT_CALL_STATE State;
+};
+typedef struct rpc_client_call RpcClientCall;
+
 enum _TSG_CHANNEL
 {
 	TSG_CHANNEL_IN,
@@ -743,7 +752,7 @@ struct rdp_rpc
 	rdpTransport* transport;
 
 	UINT32 call_id;
-	UINT32 pipe_call_id;
+	UINT32 PipeCallId;
 
 	RPC_PDU* pdu;
 
@@ -755,6 +764,7 @@ struct rdp_rpc
 	UINT32 StubLength;
 	UINT32 StubOffset;
 	UINT32 StubFragCount;
+	UINT32 StubCallId;
 
 	BYTE rpc_vers;
 	BYTE rpc_vers_minor;
@@ -765,6 +775,8 @@ struct rdp_rpc
 
 	wQueue* SendQueue;
 	wQueue* ReceiveQueue;
+
+	wArrayList* ClientCalls;
 
 	UINT32 ReceiveWindow;
 

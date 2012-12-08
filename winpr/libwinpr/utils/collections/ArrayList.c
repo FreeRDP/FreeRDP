@@ -192,6 +192,12 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 	if (arrayList->synchronized)
 		WaitForSingleObject(arrayList->mutex, INFINITE);
 
+	if (arrayList->size + 1 > arrayList->capacity)
+	{
+		arrayList->capacity *= arrayList->growthFactor;
+		arrayList->array = (void**) realloc(arrayList->array, sizeof(void*) * arrayList->capacity);
+	}
+
 	arrayList->array[arrayList->size++] = obj;
 	index = arrayList->size;
 

@@ -403,7 +403,7 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	headerLength = status;
 	header = (rpcconn_hdr_t*) rpc->FragBuffer;
 	bytesRead += status;
-	
+
 	if (header->common.frag_length > rpc->FragBufferSize)
 	{
 		rpc->FragBufferSize = header->common.frag_length;
@@ -425,6 +425,11 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	}
 
 	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
+
+	if (header->common.call_id == rpc->PipeCallId)
+	{
+		/* TsProxySetupReceivePipe response! */
+	}
 
 	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
 	{
@@ -477,17 +482,21 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 
 	status = rpc_recv_pdu_fragment(rpc);
 
+	if (status <= 0)
+		return NULL;
+
+	header = (rpcconn_hdr_t*) rpc->FragBuffer;
+
 	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
 		rpc->pdu->Flags = 0;
 		rpc->pdu->Buffer = rpc->FragBuffer;
 		rpc->pdu->Size = rpc->FragBufferSize;
 		rpc->pdu->Length = status;
+		rpc->pdu->CallId = header->common.call_id;
 
 		return rpc->pdu;
 	}
-
-	header = (rpcconn_hdr_t*) rpc->FragBuffer;
 
 	if (header->common.ptype != PTYPE_RESPONSE)
 	{
@@ -505,6 +514,20 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 	{
 		rpc->StubBufferSize = header->response.alloc_hint;
 		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubBufferSize);
+	}
+
+	if (rpc->StubFragCount == 0)
+		rpc->StubCallId = header->common.call_id;
+
+	if (rpc->StubCallId == rpc->PipeCallId)
+	{
+		/* TsProxySetupReceivePipe response! */
+	}
+
+	if (rpc->StubCallId != header->common.call_id)
+	{
+		printf("invalid call_id: actual: %d, expected: %d, frag_count: %d\n",
+				rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 	}
 
 	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->FragBuffer[StubOffset], StubLength);
@@ -525,9 +548,12 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 		//printf("Reassembled PDU (%d):\n", rpc->StubOffset);
 		//freerdp_hexdump(rpc->StubBuffer, rpc->StubOffset);
 
+		rpc->pdu->CallId = rpc->StubCallId;
 		rpc->StubLength = rpc->StubOffset;
+
 		rpc->StubOffset = 0;
 		rpc->StubFragCount = 0;
+		rpc->StubCallId = 0;
 
 		rpc->pdu->Flags = RPC_PDU_FLAG_STUB;
 		rpc->pdu->Buffer = rpc->StubBuffer;
@@ -548,6 +574,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
+	RpcClientCall* client_call;
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu;
 
@@ -567,16 +594,16 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
 	request_pdu->auth_length = ntlm->ContextSizes.cbMaxSignature;
-	request_pdu->call_id = ++rpc->call_id;
-
-	/* opnum 8 is TsProxySetupReceivePipe, save call_id for checking pipe responses */
-
-	if (opnum == 8)
-		rpc->pipe_call_id = rpc->call_id;
-
+	request_pdu->call_id = rpc->call_id++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
+
+	client_call = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
+	ArrayList_Add(rpc->ClientCalls, client_call);
+
+	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
+		rpc->PipeCallId = request_pdu->call_id;
 
 	request_pdu->stub_data = data;
 
@@ -768,11 +795,14 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->FragBufferSize = 20;
 		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
 
+		rpc->PipeCallId = 0;
+
 		rpc->StubOffset = 0;
 		rpc->StubBufferSize = 20;
 		rpc->StubLength = 0;
 		rpc->StubFragCount = 0;
 		rpc->StubBuffer = (BYTE*) malloc(rpc->FragBufferSize);
+		rpc->StubCallId = 0;
 
 		rpc->rpc_vers = 5;
 		rpc->rpc_vers_minor = 0;
@@ -791,6 +821,8 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->SendQueue = Queue_New(TRUE, -1, -1);
 		rpc->ReceiveQueue = Queue_New(TRUE, -1, -1);
 
+		rpc->ClientCalls = ArrayList_New(TRUE);
+
 		rpc->ReceiveWindow = 0x00010000;
 
 		rpc->ChannelLifetime = 0x40000000;
@@ -803,7 +835,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 		rpc->VirtualConnectionCookieTable = rpc_virtual_connection_cookie_table_new(rpc);
 
-		rpc->call_id = 1;
+		rpc->call_id = 2;
 
 		rpc_client_new(rpc);
 
@@ -828,6 +860,9 @@ void rpc_free(rdpRpc* rpc)
 
 		Queue_Clear(rpc->ReceiveQueue);
 		Queue_Free(rpc->ReceiveQueue);
+
+		ArrayList_Clear(rpc->ClientCalls);
+		ArrayList_Free(rpc->ClientCalls);
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
