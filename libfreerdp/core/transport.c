@@ -269,44 +269,73 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-int transport_read(rdpTransport* transport, STREAM* s)
+static int tr(rdpTransport* transport, UINT8* data, int bytes)
 {
 	int status = -1;
 
-	while (TRUE)
-	{
-		if (transport->layer == TRANSPORT_LAYER_TLS)
-			status = tls_read(transport->TlsIn, stream_get_tail(s), stream_get_left(s));
-		else if (transport->layer == TRANSPORT_LAYER_TCP)
-			status = tcp_read(transport->TcpIn, stream_get_tail(s), stream_get_left(s));
-		else if (transport->layer == TRANSPORT_LAYER_TSG)
-			status = tsg_read(transport->tsg, stream_get_tail(s), stream_get_left(s));
-
-		if ((status == 0) && (transport->blocking))
-		{
-			freerdp_usleep(transport->usleep_interval);
-			continue;
-		}
-
-		break;
-	}
-
-#ifdef WITH_DEBUG_TRANSPORT
-	if (status > 0)
-	{
-		printf("Local < Remote\n");
-		freerdp_hexdump(s->data, status);
-	}
-#endif
-
+	if (transport->layer == TRANSPORT_LAYER_TLS)
+		status = tls_read(transport->TlsIn, data, bytes);
+	else if (transport->layer == TRANSPORT_LAYER_TCP)
+		status = tcp_read(transport->TcpIn, data, bytes);
+	else if (transport->layer == TRANSPORT_LAYER_TSG)
+		status = tsg_read(transport->tsg, data, bytes);
 	return status;
+}
+
+int transport_read(rdpTransport* transport, STREAM* s)
+{
+	int status;
+	int pdu_bytes;
+	int s_bytes;
+	int rv;
+
+	rv = 0;
+	/* first check if we have header */
+	s_bytes = stream_get_length(s);
+	if (s_bytes < 4)
+	{
+		status = tr(transport, s->data + s_bytes, 4 - s_bytes);
+		if (status < 0)
+		{
+			return status;
+		}
+		rv += status;
+		if (status + s_bytes < 4)
+		{
+			return rv;
+		}
+		s_bytes += status;
+	}
+	/* if header is present, read in exactly one PDU */
+	if (s->data[0] == 0x03)
+	{
+		pdu_bytes = (s->data[2] << 8) | s->data[3];
+	}
+	else
+	{
+		if (s->data[1] & 0x80)
+		{
+			pdu_bytes = ((s->data[1] & 0x7f) << 8) | s->data[2];
+		}
+		else
+		{
+			pdu_bytes = s->data[1];
+		}
+	}
+	status = tr(transport, s->data + s_bytes, pdu_bytes - s_bytes);
+	if (status < 0)
+	{
+		return status;
+	}
+	rv += status;
+	return rv;
 }
 
 static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	stream_check_size(transport->recv_buffer, 4096);
+	stream_check_size(transport->recv_buffer, 32 * 1024);
 	status = transport_read(transport, transport->recv_buffer);
 
 	if (status <= 0)
