@@ -269,7 +269,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-static int tr(rdpTransport* transport, UINT8* data, int bytes)
+static int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 {
 	int status = -1;
 
@@ -279,6 +279,7 @@ static int tr(rdpTransport* transport, UINT8* data, int bytes)
 		status = tcp_read(transport->TcpIn, data, bytes);
 	else if (transport->layer == TRANSPORT_LAYER_TSG)
 		status = tsg_read(transport->tsg, data, bytes);
+
 	return status;
 }
 
@@ -286,26 +287,29 @@ int transport_read(rdpTransport* transport, STREAM* s)
 {
 	int status;
 	int pdu_bytes;
-	int s_bytes;
-	int rv;
+	int stream_bytes;
+	int transport_status;
 
-	rv = 0;
+	transport_status = 0;
+
 	/* first check if we have header */
-	s_bytes = stream_get_length(s);
-	if (s_bytes < 4)
+	stream_bytes = stream_get_length(s);
+
+	if (stream_bytes < 4)
 	{
-		status = tr(transport, s->data + s_bytes, 4 - s_bytes);
+		status = transport_read_layer(transport, s->data + stream_bytes, 4 - stream_bytes);
+
 		if (status < 0)
-		{
 			return status;
-		}
-		rv += status;
-		if (status + s_bytes < 4)
-		{
-			return rv;
-		}
-		s_bytes += status;
+
+		transport_status += status;
+
+		if ((status + stream_bytes) < 4)
+			return transport_status;
+
+		stream_bytes += status;
 	}
+
 	/* if header is present, read in exactly one PDU */
 	if (s->data[0] == 0x03)
 	{
@@ -314,21 +318,19 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	else
 	{
 		if (s->data[1] & 0x80)
-		{
 			pdu_bytes = ((s->data[1] & 0x7f) << 8) | s->data[2];
-		}
 		else
-		{
 			pdu_bytes = s->data[1];
-		}
 	}
-	status = tr(transport, s->data + s_bytes, pdu_bytes - s_bytes);
+
+	status = transport_read_layer(transport, s->data + stream_bytes, pdu_bytes - stream_bytes);
+
 	if (status < 0)
-	{
 		return status;
-	}
-	rv += status;
-	return rv;
+
+	transport_status += status;
+
+	return transport_status;
 }
 
 static int transport_read_nonblocking(rdpTransport* transport)

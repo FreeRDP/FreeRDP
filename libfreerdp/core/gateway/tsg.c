@@ -1130,7 +1130,11 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
 			printf("Ignoring TsProxySetupReceivePipe Response\n");
-			return 0;
+
+			if (tsg->rpc->client->SynchronousReceive)
+				return tsg_read(tsg, data, length);
+			else
+				return 0;
 		}
 
 		tsg->PendingPdu = TRUE;
