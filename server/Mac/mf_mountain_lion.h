@@ -29,6 +29,7 @@ int mf_mlion_start_getting_screen_updates();
 int mf_mlion_stop_getting_screen_updates();
 
 int mf_mlion_get_dirty_region(RFX_RECT* invalid);
+int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
 int mf_mlion_clear_dirty_region();
 
 int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE **pxData);
