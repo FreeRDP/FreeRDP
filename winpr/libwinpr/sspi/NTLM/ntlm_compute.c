@@ -66,7 +66,7 @@ void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
  * @param s
  */
 
-void ntlm_read_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
+void ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 {
 	Stream_Read_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
 	Stream_Read_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
@@ -81,7 +81,7 @@ void ntlm_read_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
  * @param s
  */
 
-void ntlm_write_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
+void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 {
 	Stream_Write_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
 	Stream_Write_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
@@ -107,7 +107,7 @@ void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 	printf("\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
 }
 
-void ntlm_read_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* challenge)
+void ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	size_t size;
 
@@ -124,7 +124,7 @@ void ntlm_read_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* chal
 	Stream_Read(s, challenge->AvPairs, size);
 }
 
-void ntlm_write_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* challenge)
+void ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	ULONG length;
 
@@ -140,13 +140,13 @@ void ntlm_write_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* cha
 	Stream_Write(s, challenge->AvPairs, length);
 }
 
-void ntlm_read_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
+void ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response)
 {
 	Stream_Read(s, response->Response, 16);
 	ntlm_read_ntlm_v2_client_challenge(s, &(response->Challenge));
 }
 
-void ntlm_write_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
+void ntlm_write_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response)
 {
 	Stream_Write(s, response->Response, 16);
 	ntlm_write_ntlm_v2_client_challenge(s, &(response->Challenge));
@@ -162,7 +162,7 @@ void ntlm_write_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
 
 void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 {
-	PStream s;
+	wStream* s;
 	AV_PAIR* restrictions = &context->av_pairs->Restrictions;
 
 	BYTE machineID[32] =

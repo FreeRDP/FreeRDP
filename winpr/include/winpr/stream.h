@@ -24,7 +24,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-struct stream
+struct _wStream
 {
 	BYTE* buffer;
 	BYTE* pointer;
@@ -32,14 +32,10 @@ struct stream
 	size_t capacity;
 };
 
-typedef struct stream Stream;
-typedef struct stream* PStream;
+typedef struct _wStream wStream;
 
-WINPR_API PStream Stream_Alloc(size_t size);
-WINPR_API PStream Stream_AllocAttach(BYTE* buffer, size_t size);
-
-WINPR_API void Stream_Free(PStream s);
-WINPR_API void Stream_FreeDetach(PStream s);
+WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
+WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
 #define Stream_Read_UINT8(_s, _v) do { _v = \
 	*_s->pointer++; } while (0)

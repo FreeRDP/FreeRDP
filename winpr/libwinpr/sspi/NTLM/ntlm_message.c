@@ -90,13 +90,13 @@ void ntlm_print_negotiate_flags(UINT32 flags)
 	printf("}\n");
 }
 
-void ntlm_read_message_header(PStream s, NTLM_MESSAGE_HEADER* header)
+void ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 {
 	Stream_Read(s, header->Signature, sizeof(NTLM_SIGNATURE));
 	Stream_Read_UINT32(s, header->MessageType);
 }
 
-void ntlm_write_message_header(PStream s, NTLM_MESSAGE_HEADER* header)
+void ntlm_write_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 {
 	Stream_Write(s, header->Signature, sizeof(NTLM_SIGNATURE));
 	Stream_Write_UINT32(s, header->MessageType);
@@ -108,7 +108,7 @@ void ntlm_populate_message_header(NTLM_MESSAGE_HEADER* header, UINT32 MessageTyp
 	header->MessageType = MessageType;
 }
 
-BOOL ntlm_validate_message_header(PStream s, NTLM_MESSAGE_HEADER* header, UINT32 MessageType)
+BOOL ntlm_validate_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UINT32 MessageType)
 {
 	if (memcmp(header->Signature, NTLM_SIGNATURE, sizeof(NTLM_SIGNATURE)) != 0)
 	{
@@ -125,14 +125,14 @@ BOOL ntlm_validate_message_header(PStream s, NTLM_MESSAGE_HEADER* header, UINT32
 	return TRUE;
 }
 
-void ntlm_read_message_fields(PStream s, NTLM_MESSAGE_FIELDS* fields)
+void ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	Stream_Read_UINT16(s, fields->Len); /* Len (2 bytes) */
 	Stream_Read_UINT16(s, fields->MaxLen); /* MaxLen (2 bytes) */
 	Stream_Read_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
 }
 
-void ntlm_write_message_fields(PStream s, NTLM_MESSAGE_FIELDS* fields)
+void ntlm_write_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->MaxLen < 1)
 		fields->MaxLen = fields->Len;
@@ -142,7 +142,7 @@ void ntlm_write_message_fields(PStream s, NTLM_MESSAGE_FIELDS* fields)
 	Stream_Write_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
 }
 
-void ntlm_read_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
+void ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
@@ -152,7 +152,7 @@ void ntlm_read_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
 	}
 }
 
-void ntlm_write_message_fields_buffer(PStream s, NTLM_MESSAGE_FIELDS* fields)
+void ntlm_write_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
@@ -190,18 +190,18 @@ void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	NTLM_NEGOTIATE_MESSAGE message;
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
 	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_NEGOTIATE))
 	{
-		Stream_FreeDetach(s);
+		Stream_Free(s, FALSE);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -212,7 +212,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 			(message.NegotiateFlags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
 			(message.NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
 	{
-		Stream_FreeDetach(s);
+		Stream_Free(s, FALSE);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -251,19 +251,19 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	context->state = NTLM_STATE_CHALLENGE;
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	return SEC_I_CONTINUE_NEEDED;
 }
 
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	NTLM_NEGOTIATE_MESSAGE message;
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_NEGOTIATE);
 
@@ -331,14 +331,14 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	context->state = NTLM_STATE_CHALLENGE;
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	return SEC_I_CONTINUE_NEEDED;
 }
 
 SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	PBYTE StartOffset;
 	PBYTE PayloadOffset;
@@ -348,7 +348,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_generate_client_challenge(context);
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	StartOffset = Stream_Pointer(s);
 
@@ -356,7 +356,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_CHALLENGE))
 	{
-		Stream_FreeDetach(s);
+		Stream_Free(s, FALSE);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -517,20 +517,20 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	ntlm_free_message_fields_buffer(&(message.TargetName));
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	return SEC_I_CONTINUE_NEEDED;
 }
 
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	UINT32 PayloadOffset;
 	NTLM_CHALLENGE_MESSAGE message;
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	/* Version */
 	ntlm_get_version_info(&(message.Version));
@@ -620,14 +620,14 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 	context->state = NTLM_STATE_AUTHENTICATE;
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	return SEC_I_CONTINUE_NEEDED;
 }
 
 SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	UINT32 flags;
 	UINT32 MicOffset;
@@ -641,13 +641,13 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	AvFlags = NULL;
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
 
 	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_AUTHENTICATE))
 	{
-		Stream_FreeDetach(s);
+		Stream_Free(s, FALSE);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -697,9 +697,9 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message.NtChallengeResponse.Len > 0)
 	{
-		PStream s = Stream_AllocAttach(message.NtChallengeResponse.Buffer, message.NtChallengeResponse.Len);
+		wStream* s = Stream_New(message.NtChallengeResponse.Buffer, message.NtChallengeResponse.Len);
 		ntlm_read_ntlm_v2_response(s, &response);
-		Stream_FreeDetach(s);
+		Stream_Free(s, FALSE);
 
 		context->NtChallengeResponse.pvBuffer = message.NtChallengeResponse.Buffer;
 		context->NtChallengeResponse.cbBuffer = message.NtChallengeResponse.Len;
@@ -864,7 +864,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	context->state = NTLM_STATE_FINAL;
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	ntlm_free_message_fields_buffer(&(message.DomainName));
 	ntlm_free_message_fields_buffer(&(message.UserName));
@@ -885,14 +885,14 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
-	PStream s;
+	wStream* s;
 	int length;
 	UINT32 MicOffset = 0;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE message;
 
 	ZeroMemory(&message, sizeof(message));
-	s = Stream_AllocAttach(buffer->pvBuffer, buffer->cbBuffer);
+	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
 	if (context->NTLMv2)
 	{
@@ -1066,7 +1066,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	context->state = NTLM_STATE_FINAL;
 
-	Stream_FreeDetach(s);
+	Stream_Free(s, FALSE);
 
 	return SEC_I_COMPLETE_NEEDED;
 }

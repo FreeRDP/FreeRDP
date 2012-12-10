@@ -25,39 +25,19 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-PStream Stream_Alloc(size_t size)
+wStream* Stream_New(BYTE* buffer, size_t size)
 {
-	PStream s;
+	wStream* s;
 
-	s = malloc(sizeof(Stream));
+	s = malloc(sizeof(wStream));
 
 	if (s != NULL)
 	{
-		if (size > 0)
-		{
-			s->buffer = (BYTE*) malloc(size);
-			s->pointer = s->buffer;
-			s->capacity = size;
-			s->length = size;
-		}
+		if (buffer)
+			s->buffer = buffer;
 		else
-		{
-			ZeroMemory(s, sizeof(Stream));
-		}
-	}
+			s->buffer = (BYTE*) malloc(size);
 
-	return s;
-}
-
-PStream Stream_AllocAttach(BYTE* buffer, size_t size)
-{
-	PStream s;
-
-	s = malloc(sizeof(Stream));
-
-	if (s != NULL)
-	{
-		s->buffer = buffer;
 		s->pointer = s->buffer;
 		s->capacity = size;
 		s->length = size;
@@ -66,25 +46,22 @@ PStream Stream_AllocAttach(BYTE* buffer, size_t size)
 	return s;
 }
 
-void Stream_Free(PStream s)
+void Stream_Free(wStream* s, BOOL bFreeBuffer)
 {
 	if (s != NULL)
 	{
-		if (s->buffer != NULL)
-			free(s->buffer);
+		if (bFreeBuffer)
+		{
+			if (s->buffer != NULL)
+				free(s->buffer);
+		}
 
 		free(s);
 	}
 }
 
-void Stream_FreeDetach(PStream s)
+void Stream_FreeDetach(wStream* s)
 {
 	if (s != NULL)
-	{
-		s->buffer = NULL;
-		s->pointer = s->buffer;
-		s->capacity = 0;
-		s->length = 0;
 		free(s);
-	}
 }
