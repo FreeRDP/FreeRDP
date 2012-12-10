@@ -49,33 +49,41 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
     
     //may need to move this down
-    if(ready == TRUE);
+    if(ready == TRUE)
     {
+        
         RFX_RECT rect;
         unsigned long offset_beg;
-        unsigned long offset_end;
+        unsigned long surflen;
+        unsigned long stride;
 
         rect.x = 0;
         rect.y = 0;
-        rect.width = 2880;
-        rect.height = 1800;
-        //mf_mlion_peek_dirty_region(&rect);
+        rect.width = 0;
+        rect.height = 0;
+        mf_mlion_peek_dirty_region(&rect);
         
-        //offset_beg = ((rect.width * 4) * rect.y) + rect.x * 4;
-        //offset_end =
         
         //lock surface
         IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, NULL);
         //get pointer
         void* baseAddress = IOSurfaceGetBaseAddress(frameSurface);
         //copy region
-        
-        //offset_beg =
-
-        memcpy(localBuf, baseAddress, rect.width * rect.height * 4);
+   
+        stride = IOSurfaceGetBytesPerRow(frameSurface);
+        //memcpy(localBuf, baseAddress + offset_beg, surflen);
+        for(int i = 0; i < rect.height; i++)
+        {
+            offset_beg = (stride * (rect.y + i) + (rect.x * 4));
+            memcpy(localBuf + offset_beg,
+                   baseAddress + offset_beg,
+                   rect.width * 4);
+        }
         
         //unlock surface
         IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+        
+        ready = FALSE;
         dispatch_semaphore_signal(data_sem);
     }
     
@@ -219,9 +227,9 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
     {
         mf_mlion_peek_dirty_region(invalid);
         
-        CFRelease(lastUpdate);
+        //CFRelease(lastUpdate);
         
-        lastUpdate = NULL;
+        //lastUpdate = NULL;
 
     }
 
@@ -269,21 +277,23 @@ int mf_mlion_clear_dirty_region()
     
     dispatch_semaphore_signal(region_sem);
     */
+    
+    CFRelease(lastUpdate);
+    lastUpdate = NULL;
+    
+    
     return 0;
 }
 
 int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxData)
 {
-    printf("waiting for region semaphore...\n");
     dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
     ready = TRUE;
-    printf("waiting for data semaphore...\n");
     dispatch_semaphore_wait(data_sem, DISPATCH_TIME_FOREVER);
     dispatch_semaphore_signal(region_sem);
     
     //this second wait allows us to block until data is copied... more on this later
     dispatch_semaphore_wait(data_sem, DISPATCH_TIME_FOREVER);
-    printf("got it\n");
     *pxData = localBuf;
     dispatch_semaphore_signal(data_sem);
     

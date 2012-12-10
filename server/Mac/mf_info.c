@@ -277,11 +277,13 @@ BOOL mf_info_have_invalid_region(mfInfo* mfi)
 
 void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits, int* pitch)
 {
-    *width = mfi->invalid.width / 2;
-    *height = mfi->invalid.height / 2;
-    *pitch = 2880 * 4;
+    *width = mfi->invalid.width / mfi->scale;
+    *height = mfi->invalid.height / mfi->scale;
+    *pitch = mfi->servscreen_width * mfi->scale * 4;
     
-    mf_mlion_get_pixelData(mfi->invalid.x / 2, mfi->invalid.y / 2, *width, *height, pBits);
+    mf_mlion_get_pixelData(mfi->invalid.x / mfi->scale, mfi->invalid.y / mfi->scale, *width, *height, pBits);
+    
+    *pBits = *pBits + (mfi->invalid.x * 4) + (*pitch * mfi->invalid.y);
 
 }
 

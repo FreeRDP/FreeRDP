@@ -120,6 +120,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     mf_info_getScreenData(mfi, &width, &height, &dataBits, &pitch);
     
+    mf_info_clear_invalid_region(mfi);
+    
     //encode
     
     STREAM* s;
@@ -137,6 +139,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
     stream_clear(s);
 	stream_set_pos(s, 0);
     
+    UINT32 x = mfi->invalid.x / mfi->scale;
+    UINT32 y = mfi->invalid.y / mfi->scale;
     
     rect.x = 0;
     rect.y = 0;
@@ -145,9 +149,6 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     rfx_compose_message(mfp->rfx_context, s, &rect, 1,
                         (BYTE*) dataBits, rect.width, rect.height, pitch);
-    
-    UINT32 x = mfi->invalid.x / 2;
-    UINT32 y = mfi->invalid.y / 2;
     
     cmd->destLeft = x;
     cmd->destTop = y;
@@ -169,7 +170,6 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     //clean up
     
-    mf_info_clear_invalid_region(mfi);
     // note: need to stop getting new dirty rects until here
     
     
@@ -191,10 +191,10 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
-	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8A8);
+	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
     
 	context->nsc_context = nsc_context_new();
-	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8A8);
+	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
     
 	context->s = stream_new(0xFFFF);
     
@@ -280,19 +280,21 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	}
 	printf("\n");
     
+    mfInfo* mfi = mf_info_get_instance();
+    mfi->scale = 1;
     
-    UINT32 servscreen_width = 2880 / 2;
-    UINT32 servscreen_height = 1800 / 2;
+    mfi->servscreen_width = 2880 / mfi->scale;
+    mfi->servscreen_height = 1800 / mfi->scale;
     UINT32 bitsPerPixel = 32;
     
-    if ((settings->DesktopWidth != servscreen_width) || (settings->DesktopHeight != servscreen_height))
+    if ((settings->DesktopWidth != mfi->servscreen_width) || (settings->DesktopHeight != mfi->servscreen_height))
 	{
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
-               settings->DesktopWidth, settings->DesktopHeight, servscreen_width, servscreen_height);
+               settings->DesktopWidth, settings->DesktopHeight, mfi->servscreen_width, mfi->servscreen_height);
     }
     
-    settings->DesktopWidth = servscreen_width;
-    settings->DesktopHeight = servscreen_height;
+    settings->DesktopWidth = mfi->servscreen_width;
+    settings->DesktopHeight = mfi->servscreen_height;
     settings->ColorDepth = bitsPerPixel;
     
     client->update->DesktopResize(client->update->context);
