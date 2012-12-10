@@ -23,6 +23,7 @@
 #define FREERDP_CORE_RPC_H
 
 #include <winpr/wtypes.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
 

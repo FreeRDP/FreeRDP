@@ -25,7 +25,7 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-PStream PStream_Alloc(size_t size)
+PStream Stream_Alloc(size_t size)
 {
 	PStream s;
 
@@ -49,55 +49,7 @@ PStream PStream_Alloc(size_t size)
 	return s;
 }
 
-void Stream_Alloc(PStream s, size_t size)
-{
-	if (s != NULL)
-	{
-		if (size > 0)
-		{
-			s->buffer = (BYTE*) malloc(size);
-			s->pointer = s->buffer;
-			s->capacity = size;
-			s->length = size;
-		}
-		else
-		{
-			ZeroMemory(s, sizeof(Stream));
-		}
-	}
-}
-
-void Stream_Realloc(PStream s, size_t size)
-{
-	if (s != NULL)
-	{
-		if (size > 0)
-		{
-			size_t old_size;
-			size_t offset_p;
-
-			old_size = s->capacity;
-			offset_p = s->pointer - s->buffer;
-
-			s->buffer = (BYTE*) realloc(s->buffer, size);
-			s->capacity = size;
-
-			if (old_size <= size)
-				s->pointer = s->buffer + offset_p;
-			else
-				s->pointer = s->buffer;
-		}
-		else
-		{
-			if (s->capacity > 0)
-				free(s->buffer);
-
-			ZeroMemory(s, sizeof(Stream));
-		}
-	}
-}
-
-PStream PStream_AllocAttach(BYTE* buffer, size_t size)
+PStream Stream_AllocAttach(BYTE* buffer, size_t size)
 {
 	PStream s;
 
@@ -112,28 +64,6 @@ PStream PStream_AllocAttach(BYTE* buffer, size_t size)
 	}
 
 	return s;
-}
-
-void Stream_AllocAttach(PStream s, BYTE* buffer, size_t size)
-{
-	if (s != NULL)
-	{
-		s->buffer = buffer;
-		s->pointer = s->buffer;
-		s->capacity = size;
-		s->length = size;
-	}
-}
-
-void PStream_Free(PStream s)
-{
-	if (s != NULL)
-	{
-		if (s->buffer != NULL)
-			free(s->buffer);
-
-		free(s);
-	}
 }
 
 void Stream_Free(PStream s)
@@ -142,17 +72,7 @@ void Stream_Free(PStream s)
 	{
 		if (s->buffer != NULL)
 			free(s->buffer);
-	}
-}
 
-void PStream_FreeDetach(PStream s)
-{
-	if (s != NULL)
-	{
-		s->buffer = NULL;
-		s->pointer = s->buffer;
-		s->capacity = 0;
-		s->length = 0;
 		free(s);
 	}
 }
@@ -165,27 +85,6 @@ void Stream_FreeDetach(PStream s)
 		s->pointer = s->buffer;
 		s->capacity = 0;
 		s->length = 0;
-	}
-}
-
-void Stream_Attach(PStream s, BYTE* buffer, size_t size)
-{
-	if (s != NULL)
-	{
-		s->buffer = buffer;
-		s->pointer = s->buffer;
-		s->capacity = size;
-		s->length = size;
-	}
-}
-
-void Stream_Detach(PStream s)
-{
-	if (s != NULL)
-	{
-		s->buffer = NULL;
-		s->pointer = s->buffer;
-		s->capacity = 0;
-		s->length = 0;
+		free(s);
 	}
 }

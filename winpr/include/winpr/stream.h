@@ -35,17 +35,11 @@ struct stream
 typedef struct stream Stream;
 typedef struct stream* PStream;
 
-WINPR_API PStream PStream_Alloc(size_t size);
-WINPR_API void Stream_Alloc(PStream s, size_t size);
-WINPR_API void Stream_Realloc(PStream s, size_t size);
-WINPR_API PStream PStream_AllocAttach(BYTE* buffer, size_t size);
-WINPR_API void Stream_AllocAttach(PStream s, BYTE* buffer, size_t size);
-WINPR_API void PStream_Free(PStream s);
+WINPR_API PStream Stream_Alloc(size_t size);
+WINPR_API PStream Stream_AllocAttach(BYTE* buffer, size_t size);
+
 WINPR_API void Stream_Free(PStream s);
-WINPR_API void PStream_FreeDetach(PStream s);
 WINPR_API void Stream_FreeDetach(PStream s);
-WINPR_API void Stream_Attach(PStream s, BYTE* buffer, size_t size);
-WINPR_API void Stream_Detach(PStream s);
 
 #define Stream_Read_UINT8(_s, _v) do { _v = \
 	*_s->pointer++; } while (0)
