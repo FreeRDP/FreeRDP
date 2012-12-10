@@ -28,8 +28,85 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 
 #include "rpc_client.h"
+
+int rpc_client_frag_recv(rdpRpc* rpc)
+{
+	rpcconn_hdr_t* header;
+
+	header = (rpcconn_hdr_t*) Stream_Buffer(rpc->RecvFrag);
+
+	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
+	{
+		/* TsProxySetupReceivePipe response! */
+	}
+
+	return 0;
+}
+
+int rpc_client_frag_read(rdpRpc* rpc)
+{
+	int position;
+	int status = -1;
+	rpcconn_common_hdr_t* header;
+
+	position = Stream_Position(rpc->RecvFrag);
+
+	if (Stream_Position(rpc->RecvFrag) < RPC_COMMON_FIELDS_LENGTH)
+	{
+		status = rpc_out_read(rpc, Stream_Pointer(rpc->RecvFrag),
+				RPC_COMMON_FIELDS_LENGTH - Stream_Position(rpc->RecvFrag));
+
+		if (status < 0)
+		{
+			printf("rpc_client_frag_read: error reading header\n");
+			return -1;
+		}
+
+		Stream_Seek(rpc->RecvFrag, status);
+	}
+
+	if (Stream_Position(rpc->RecvFrag) >= RPC_COMMON_FIELDS_LENGTH)
+	{
+		header = (rpcconn_common_hdr_t*) Stream_Buffer(rpc->RecvFrag);
+
+		if (header->frag_length > rpc->max_recv_frag)
+		{
+			printf("rpc_client_frag_read: invalid fragment size: %d (max: %d)\n",
+					header->frag_length, rpc->max_recv_frag);
+			return -1;
+		}
+
+		if (Stream_Position(rpc->RecvFrag) < header->frag_length)
+		{
+			status = rpc_out_read(rpc, Stream_Pointer(rpc->RecvFrag),
+					header->frag_length - Stream_Position(rpc->RecvFrag));
+
+			if (status < 0)
+			{
+				printf("rpc_client_frag_read: error reading fragment body\n");
+				return -1;
+			}
+
+			Stream_Seek(rpc->RecvFrag, status);
+		}
+	}
+
+	if (status < 0)
+		return -1;
+
+	status = Stream_Position(rpc->RecvFrag) - position;
+
+	if (Stream_Position(rpc->RecvFrag) >= header->frag_length)
+	{
+		/* complete fragment received */
+		rpc_client_frag_recv(rpc);
+	}
+
+	return status;
+}
 
 /**
  * [MS-RPCE] Client Call:

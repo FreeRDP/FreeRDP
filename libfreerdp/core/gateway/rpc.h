@@ -774,6 +774,8 @@ struct rdp_rpc
 	UINT16 max_xmit_frag;
 	UINT16 max_recv_frag;
 
+	wStream* RecvFrag;
+
 	wQueue* SendQueue;
 	wQueue* ReceiveQueue;
 
@@ -798,6 +800,8 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
 UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
+
+int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
 
 int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);

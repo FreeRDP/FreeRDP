@@ -815,6 +815,8 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->SendQueue = Queue_New(TRUE, -1, -1);
 		rpc->ReceiveQueue = Queue_New(TRUE, -1, -1);
 
+		rpc->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
+
 		rpc->ClientCalls = ArrayList_New(TRUE);
 
 		rpc->ReceiveWindow = 0x00010000;
