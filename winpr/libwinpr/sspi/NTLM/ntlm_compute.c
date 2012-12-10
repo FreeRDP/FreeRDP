@@ -68,11 +68,11 @@ void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 
 void ntlm_read_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
 {
-	StreamRead_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
-	StreamRead_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
-	StreamRead_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
-	StreamRead(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
-	StreamRead_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
+	Stream_Read_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
+	Stream_Read_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
+	Stream_Read_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
+	Stream_Read(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
+	Stream_Read_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
 }
 
 /**
@@ -83,11 +83,11 @@ void ntlm_read_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
 
 void ntlm_write_version_info(PStream s, NTLM_VERSION_INFO* versionInfo)
 {
-	StreamWrite_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
-	StreamWrite_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
-	StreamWrite_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
-	StreamWrite(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
-	StreamWrite_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
+	Stream_Write_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
+	Stream_Write_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
+	Stream_Write_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
+	Stream_Write(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
+	Stream_Write_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
 }
 
 /**
@@ -111,44 +111,44 @@ void ntlm_read_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* chal
 {
 	size_t size;
 
-	StreamRead_UINT8(s, challenge->RespType);
-	StreamRead_UINT8(s, challenge->HiRespType);
-	StreamRead_UINT16(s, challenge->Reserved1);
-	StreamRead_UINT32(s, challenge->Reserved2);
-	StreamRead(s, challenge->Timestamp, 8);
-	StreamRead(s, challenge->ClientChallenge, 8);
-	StreamRead_UINT32(s, challenge->Reserved3);
+	Stream_Read_UINT8(s, challenge->RespType);
+	Stream_Read_UINT8(s, challenge->HiRespType);
+	Stream_Read_UINT16(s, challenge->Reserved1);
+	Stream_Read_UINT32(s, challenge->Reserved2);
+	Stream_Read(s, challenge->Timestamp, 8);
+	Stream_Read(s, challenge->ClientChallenge, 8);
+	Stream_Read_UINT32(s, challenge->Reserved3);
 
-	size = StreamRemainingSize(s);
+	size = Stream_Length(s) - Stream_Position(s);
 	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
-	StreamRead(s, challenge->AvPairs, size);
+	Stream_Read(s, challenge->AvPairs, size);
 }
 
 void ntlm_write_ntlm_v2_client_challenge(PStream s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	ULONG length;
 
-	StreamWrite_UINT8(s, challenge->RespType);
-	StreamWrite_UINT8(s, challenge->HiRespType);
-	StreamWrite_UINT16(s, challenge->Reserved1);
-	StreamWrite_UINT32(s, challenge->Reserved2);
-	StreamWrite(s, challenge->Timestamp, 8);
-	StreamWrite(s, challenge->ClientChallenge, 8);
-	StreamWrite_UINT32(s, challenge->Reserved3);
+	Stream_Write_UINT8(s, challenge->RespType);
+	Stream_Write_UINT8(s, challenge->HiRespType);
+	Stream_Write_UINT16(s, challenge->Reserved1);
+	Stream_Write_UINT32(s, challenge->Reserved2);
+	Stream_Write(s, challenge->Timestamp, 8);
+	Stream_Write(s, challenge->ClientChallenge, 8);
+	Stream_Write_UINT32(s, challenge->Reserved3);
 
 	length = ntlm_av_pair_list_length(challenge->AvPairs);
-	StreamWrite(s, challenge->AvPairs, length);
+	Stream_Write(s, challenge->AvPairs, length);
 }
 
 void ntlm_read_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
 {
-	StreamRead(s, response->Response, 16);
+	Stream_Read(s, response->Response, 16);
 	ntlm_read_ntlm_v2_client_challenge(s, &(response->Challenge));
 }
 
 void ntlm_write_ntlm_v2_response(PStream s, NTLMv2_RESPONSE* response)
 {
-	StreamWrite(s, response->Response, 16);
+	Stream_Write(s, response->Response, 16);
 	ntlm_write_ntlm_v2_client_challenge(s, &(response->Challenge));
 }
 
@@ -174,15 +174,15 @@ void ntlm_output_restriction_encoding(NTLM_CONTEXT* context)
 
 	s = PStreamAllocAttach(restrictions->value, restrictions->length);
 
-	StreamWrite_UINT32(s, 48); /* Size */
-	StreamZero(s, 4); /* Z4 (set to zero) */
+	Stream_Write_UINT32(s, 48); /* Size */
+	Stream_Zero(s, 4); /* Z4 (set to zero) */
 
 	/* IntegrityLevel (bit 31 set to 1) */
-	StreamWrite_UINT8(s, 1);
-	StreamZero(s, 3);
+	Stream_Write_UINT8(s, 1);
+	Stream_Zero(s, 3);
 
-	StreamWrite_UINT32(s, 0x00002000); /* SubjectIntegrityLevel */
-	StreamWrite(s, machineID, 32); /* MachineID */
+	Stream_Write_UINT32(s, 0x00002000); /* SubjectIntegrityLevel */
+	Stream_Write(s, machineID, 32); /* MachineID */
 
 	PStreamFreeDetach(s);
 }
