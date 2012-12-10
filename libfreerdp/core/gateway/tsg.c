@@ -1164,6 +1164,8 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 	tsg->rpc->client->SynchronousSend = TRUE;
 	tsg->rpc->client->SynchronousReceive = blocking;
 
+	printf("tsg_set_blocking_mode: %d\n", blocking);
+
 	return TRUE;
 }
 

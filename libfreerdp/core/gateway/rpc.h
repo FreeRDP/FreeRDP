@@ -724,12 +724,12 @@ struct rpc_client
 	HANDLE Thread;
 	HANDLE StopEvent;
 
+	wQueue* FragmentQueue;
+
 	HANDLE PduSentEvent;
 	HANDLE SendSemaphore;
-	BOOL SynchronousSend;
 
-	HANDLE PduReceivedEvent;
-	HANDLE ReceiveSemaphore;
+	BOOL SynchronousSend;
 	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;

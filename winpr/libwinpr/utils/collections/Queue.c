@@ -62,6 +62,15 @@ HANDLE Queue_SyncRoot(wQueue* queue)
 }
 
 /**
+ * Gets an event which is set when the queue is non-empty
+ */
+
+HANDLE Queue_Event(wQueue* queue)
+{
+	return queue->event;
+}
+
+/**
  * Methods
  */
 
@@ -134,6 +143,8 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
 
+	SetEvent(queue->event);
+
 	if (queue->synchronized)
 		ReleaseMutex(queue->mutex);
 }
@@ -156,6 +167,9 @@ void* Queue_Dequeue(wQueue* queue)
 		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 	}
+
+	if (queue->size < 1)
+		ResetEvent(queue->event);
 
 	if (queue->synchronized)
 		ReleaseMutex(queue->mutex);
@@ -213,6 +227,7 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
+		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	}
 
 	return queue;
@@ -220,6 +235,7 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 
 void Queue_Free(wQueue* queue)
 {
+	CloseHandle(queue->event);
 	CloseHandle(queue->mutex);
 	free(queue->array);
 	free(queue);

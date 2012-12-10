@@ -385,46 +385,24 @@ int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
 
 int rpc_recv_pdu_fragment(rdpRpc* rpc)
 {
-	int status;
-	int headerLength;
-	int bytesRead = 0;
+	wStream* fragment;
+	DWORD dwMilliseconds;
 	rpcconn_hdr_t* header;
 
-	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
+	dwMilliseconds = (rpc->client->SynchronousReceive) ? INFINITE : 0;
 
-	status = rpc_recv_pdu_header(rpc, rpc->FragBuffer);
-    
-	if (status < 1)
+	if (WaitForSingleObject(Queue_Event(rpc->client->FragmentQueue), dwMilliseconds) != WAIT_OBJECT_0)
 	{
-		printf("rpc_recv_pdu_header: error reading header\n");
-		return status;
+		if (dwMilliseconds == INFINITE)
+			return -1;
+
+		return 0;
 	}
-    
-	headerLength = status;
+
+	fragment = Queue_Dequeue(rpc->client->FragmentQueue);
+
+	rpc->FragBuffer = fragment->buffer;
 	header = (rpcconn_hdr_t*) rpc->FragBuffer;
-	bytesRead += status;
-
-	if (header->common.frag_length > rpc->FragBufferSize)
-	{
-		rpc->FragBufferSize = header->common.frag_length;
-		rpc->FragBuffer = (BYTE*) realloc(rpc->FragBuffer, rpc->FragBufferSize);
-		header = (rpcconn_hdr_t*) rpc->FragBuffer;
-	}
-
-	while (bytesRead < header->common.frag_length)
-	{
-		status = rpc_out_read(rpc, &rpc->FragBuffer[bytesRead], header->common.frag_length - bytesRead);
-
-		if (status < 0)
-		{
-			printf("rpc_recv_pdu: error reading fragment\n");
-			return status;
-		}
-
-		bytesRead += status;
-	}
-
-	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
 	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
 	{

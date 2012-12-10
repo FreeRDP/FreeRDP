@@ -32,21 +32,7 @@
 
 #include "rpc_client.h"
 
-int rpc_client_frag_recv(rdpRpc* rpc)
-{
-	rpcconn_hdr_t* header;
-
-	header = (rpcconn_hdr_t*) Stream_Buffer(rpc->RecvFrag);
-
-	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
-	{
-		/* TsProxySetupReceivePipe response! */
-	}
-
-	return 0;
-}
-
-int rpc_client_frag_read(rdpRpc* rpc)
+int rpc_client_on_read_event(rdpRpc* rpc)
 {
 	int position;
 	int status = -1;
@@ -93,6 +79,10 @@ int rpc_client_frag_read(rdpRpc* rpc)
 			Stream_Seek(rpc->RecvFrag, status);
 		}
 	}
+	else
+	{
+		return status;
+	}
 
 	if (status < 0)
 		return -1;
@@ -102,7 +92,12 @@ int rpc_client_frag_read(rdpRpc* rpc)
 	if (Stream_Position(rpc->RecvFrag) >= header->frag_length)
 	{
 		/* complete fragment received */
-		rpc_client_frag_recv(rpc);
+
+		Stream_Length(rpc->RecvFrag) = Stream_Position(rpc->RecvFrag);
+		Stream_SetPosition(rpc->RecvFrag, 0);
+
+		Queue_Enqueue(rpc->client->FragmentQueue, rpc->RecvFrag);
+		rpc->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
 	}
 
 	return status;
@@ -167,7 +162,6 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	pdu->Length = length;
 
 	Queue_Enqueue(rpc->SendQueue, pdu);
-	ReleaseSemaphore(rpc->client->SendSemaphore, 1, NULL);
 
 	if (rpc->client->SynchronousSend)
 	{
@@ -241,7 +235,6 @@ int rpc_recv_enqueue_pdu(rdpRpc* rpc)
 	}
 
 	Queue_Enqueue(rpc->ReceiveQueue, pdu);
-	ReleaseSemaphore(rpc->client->ReceiveSemaphore, 1, NULL);
 
 	return 0;
 }
@@ -257,7 +250,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	if (rpc->client->SynchronousReceive)
 		rpc_recv_enqueue_pdu(rpc);
 
-	if (WaitForSingleObject(rpc->client->ReceiveSemaphore, dwMilliseconds) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(Queue_Event(rpc->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
 	{
 		pdu = (RPC_PDU*) Queue_Dequeue(rpc->ReceiveQueue);
 		return pdu;
@@ -280,7 +273,7 @@ static void* rpc_client_thread(void* arg)
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
-	events[nCount++] = rpc->client->SendSemaphore;
+	events[nCount++] = Queue_Event(rpc->SendQueue);
 	events[nCount++] = ReadEvent;
 
 	while (1)
@@ -294,11 +287,16 @@ static void* rpc_client_thread(void* arg)
 
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
+			rpc_client_on_read_event(rpc);
+
 			if (!rpc->client->SynchronousReceive)
 				rpc_recv_enqueue_pdu(rpc);
 		}
 
-		rpc_send_dequeue_pdu(rpc);
+		if (WaitForSingleObject(Queue_Event(rpc->SendQueue), 0) == WAIT_OBJECT_0)
+		{
+			rpc_send_dequeue_pdu(rpc);
+		}
 	}
 
 	CloseHandle(ReadEvent);
@@ -315,8 +313,9 @@ int rpc_client_new(rdpRpc* rpc)
 			rpc, CREATE_SUSPENDED, NULL);
 
 	rpc->client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	rpc->client->SendSemaphore = CreateSemaphore(NULL, 0, 64, NULL);
 	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	rpc->client->FragmentQueue = Queue_New(TRUE, -1, -1);
 
 	return 0;
 }
