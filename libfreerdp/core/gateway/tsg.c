@@ -1103,6 +1103,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
+	rpcconn_hdr_t* header;
 	rdpRpc* rpc = tsg->rpc;
 
 	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);
@@ -1125,12 +1126,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->pdu = rpc_recv_dequeue_pdu(rpc);
 
 		if (!tsg->pdu)
-			return 0;
-
-		if ((tsg->pdu->Flags & RPC_PDU_FLAG_STUB) && (tsg->pdu->Length == 4))
 		{
-			printf("Ignoring TsProxySetupReceivePipe Response\n");
-
 			if (tsg->rpc->client->SynchronousReceive)
 				return tsg_read(tsg, data, length);
 			else

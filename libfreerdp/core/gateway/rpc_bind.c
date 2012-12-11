@@ -326,7 +326,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 	int status;
 	RPC_PDU* pdu;
 
-	rpc->client->SynchronousSend = FALSE;
+	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
 	while (rpc->State != RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
@@ -374,8 +374,10 @@ int rpc_secure_bind(rdpRpc* rpc)
 		}
 	}
 
-	rpc->client->SynchronousSend = FALSE;
-	rpc->client->SynchronousReceive = FALSE;
+	printf("RPC_CLIENT_STATE_CONTEXT_NEGOTIATED\n");
+
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
 
 	return 0;
 }

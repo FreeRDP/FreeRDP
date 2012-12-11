@@ -485,9 +485,12 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	BYTE li;
 	BYTE type;
+	UINT16 length;
 	rdpNego* nego = (rdpNego*) extra;
 
-	if (tpkt_read_header(s) == 0)
+	length = tpkt_read_header(s);
+
+	if (length == 0)
 		return FALSE;
 
 	li = tpdu_read_connection_confirm(s);
@@ -531,7 +534,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				break;
 		}
 	}
-	else
+	else if (li == 6)
 	{
 		DEBUG_NEGO("no rdpNegData");
 
@@ -539,6 +542,11 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 			nego->state = NEGO_STATE_FAIL;
 		else
 			nego->state = NEGO_STATE_FINAL;
+	}
+	else
+	{
+		printf("invalid negotiation response\n");
+		nego->state = NEGO_STATE_FAIL;
 	}
 
 	return TRUE;

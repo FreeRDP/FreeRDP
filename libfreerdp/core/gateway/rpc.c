@@ -345,44 +345,6 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	return status;
 }
 
-int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
-{
-	int status;
-	int bytesRead;
-	UINT32 offset;
-    
-	/* Read common header fields */
-    
-	bytesRead = 0;
-    
-	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
-	{
-		status = rpc_out_read(rpc, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
-        
-		if (status < 0)
-		{
-			printf("rpc_recv_pdu_header: error reading header\n");
-			return status;
-		}
-        
-		bytesRead += status;
-	}
-
-	rpc_get_stub_data_info(rpc, header, &offset, NULL);
-
-	while (bytesRead < offset)
-	{
-		status = rpc_out_read(rpc, &header[bytesRead], offset - bytesRead);
-        
-		if (status < 0)
-			return status;
-        
-		bytesRead += status;
-	}
-    
-	return bytesRead;
-}
-
 int rpc_recv_pdu_fragment(rdpRpc* rpc)
 {
 	wStream* fragment;
@@ -407,9 +369,41 @@ int rpc_recv_pdu_fragment(rdpRpc* rpc)
 	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
 	{
 		/* TsProxySetupReceivePipe response! */
+
+#if 0
+		printf("ignoring TsProxySetupReceivePipe response\n");
+
+		if (rpc->client->SynchronousReceive)
+			return rpc_recv_pdu_fragment(rpc);
+		else
+			return 0;
+#endif
 	}
 
-	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
+	if (header->common.ptype == PTYPE_RESPONSE)
+	{
+		UINT32 StubOffset;
+		UINT32 StubLength;
+
+		if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
+		{
+			printf("rpc_recv_pdu_fragment: expected stub\n");
+			return -1;
+		}
+
+#if 1
+		if (StubLength == 4)
+		{
+			printf("Ignoring TsProxySendToServer Response\n");
+
+			if (rpc->client->SynchronousReceive)
+				return rpc_recv_pdu_fragment(rpc);
+			else
+				return 0;
+		}
+#endif
+	}
+	else if (header->common.ptype == PTYPE_RTS)
 	{
 		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 			return header->common.frag_length;
@@ -497,11 +491,6 @@ RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 	if (rpc->StubFragCount == 0)
 		rpc->StubCallId = header->common.call_id;
 
-	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
-	{
-		/* TsProxySetupReceivePipe response! */
-	}
-
 	if (rpc->StubCallId != header->common.call_id)
 	{
 		printf("invalid call_id: actual: %d, expected: %d, frag_count: %d\n",
@@ -577,6 +566,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
 
+	printf("Request CallId: %d OpNum: %d\n",
+			request_pdu->call_id, request_pdu->opnum);
+
 	request_pdu->stub_data = data;
 
 	offset = 24;
@@ -646,7 +638,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 	rpc->TlsIn = rpc->transport->TlsIn;
 	rpc->TlsOut = rpc->transport->TlsOut;
 
-	rpc_client_start(rpc);
+	//rpc_client_start(rpc);
 
 	if (!rts_connect(rpc))
 	{

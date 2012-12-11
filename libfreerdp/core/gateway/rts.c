@@ -177,6 +177,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
+	rpc_client_start(rpc);
+
 	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
@@ -234,8 +236,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
 
-	rpc->client->SynchronousSend = FALSE;
-	rpc->client->SynchronousReceive = FALSE;
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
 
 	return TRUE;
 }
