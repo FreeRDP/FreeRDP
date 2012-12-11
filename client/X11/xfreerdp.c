@@ -636,6 +636,9 @@ boolean xf_post_connect(freerdp* instance)
 	cache = instance->context->cache;
 	channels = xfi->_context->channels;
 
+	if (instance->settings->authentication_only)
+		return true;
+
 	if (xf_get_pixmap_info(xfi) != true)
 		return false;
 
@@ -975,6 +978,13 @@ int xfreerdp_run(freerdp* instance)
 
 	if (!freerdp_connect(instance))
 		return XF_EXIT_CONN_FAILED;
+
+	if (instance->settings->authentication_only)
+	{
+		freerdp_disconnect(instance);
+		freerdp_free(instance);
+		return ret;
+	}
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;

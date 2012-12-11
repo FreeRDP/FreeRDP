@@ -300,7 +300,7 @@
         <listitem>
           <para>
             Only authenticates. This is useful to test your credentials (username and password).
-						Returns status code 0 if the client can connect, 1 otherwise. Requires a username,
+						Returns status code 0 if the client can connect. Requires a username,
 						password and connection host at the command line.
           </para>
         </listitem>
