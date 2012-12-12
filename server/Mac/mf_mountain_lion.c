@@ -86,7 +86,29 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
         dispatch_semaphore_signal(data_sem);
     }
     
-    if (lastUpdate == NULL)
+    if (status != kCGDisplayStreamFrameStatusFrameComplete)
+    {
+        //unhandled
+        switch(status)
+        {
+            case kCGDisplayStreamFrameStatusFrameIdle:
+                printf("kCGDisplayStreamFrameStatusFrameIdle\n");
+                break;
+                
+            case kCGDisplayStreamFrameStatusStopped:
+                printf("kCGDisplayStreamFrameStatusStopped\n");
+                break;
+                
+            case kCGDisplayStreamFrameStatusFrameBlank:
+                printf("kCGDisplayStreamFrameStatusFrameBlank\n");
+                break;
+            
+            default:
+                    printf("Unhandled Frame Status!!!\n");
+                
+        }
+    }
+    else if (lastUpdate == NULL)
     {
         CFRetain(updateRef);
         lastUpdate = updateRef;

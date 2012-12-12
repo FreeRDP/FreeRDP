@@ -26,6 +26,8 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 
+#include <winpr/crt.h>
+
 #include "mf_peer.h"
 #include "mf_info.h"
 #include "mf_event.h"
@@ -504,8 +506,8 @@ void* mf_peer_main_loop(void* arg)
 	mf_peer_init(client);
     
 	/* Initialize the real server settings here */
-	client->settings->CertificateFile = "server.crt";
-	client->settings->PrivateKeyFile = "server.key";
+	client->settings->CertificateFile = _strdup("server.crt");
+	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->SuppressOutput = TRUE;
