@@ -1103,7 +1103,6 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
-	rpcconn_hdr_t* header;
 	rdpRpc* rpc = tsg->rpc;
 
 	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);

@@ -345,186 +345,13 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	return status;
 }
 
-int rpc_recv_pdu_fragment(rdpRpc* rpc)
-{
-	wStream* fragment;
-	DWORD dwMilliseconds;
-	rpcconn_hdr_t* header;
-
-	dwMilliseconds = (rpc->client->SynchronousReceive) ? INFINITE : 0;
-
-	if (WaitForSingleObject(Queue_Event(rpc->client->FragmentQueue), dwMilliseconds) != WAIT_OBJECT_0)
-	{
-		if (dwMilliseconds == INFINITE)
-			return -1;
-
-		return 0;
-	}
-
-	fragment = Queue_Dequeue(rpc->client->FragmentQueue);
-
-	rpc->FragBuffer = fragment->buffer;
-	header = (rpcconn_hdr_t*) rpc->FragBuffer;
-
-	if ((rpc->PipeCallId) && (header->common.call_id == rpc->PipeCallId))
-	{
-		/* TsProxySetupReceivePipe response! */
-
-#if 0
-		printf("ignoring TsProxySetupReceivePipe response\n");
-
-		if (rpc->client->SynchronousReceive)
-			return rpc_recv_pdu_fragment(rpc);
-		else
-			return 0;
-#endif
-	}
-
-	if (header->common.ptype == PTYPE_RESPONSE)
-	{
-		UINT32 StubOffset;
-		UINT32 StubLength;
-
-		if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
-		{
-			printf("rpc_recv_pdu_fragment: expected stub\n");
-			return -1;
-		}
-
-#if 1
-		if (StubLength == 4)
-		{
-			printf("Ignoring TsProxySendToServer Response\n");
-
-			if (rpc->client->SynchronousReceive)
-				return rpc_recv_pdu_fragment(rpc);
-			else
-				return 0;
-		}
-#endif
-	}
-	else if (header->common.ptype == PTYPE_RTS)
-	{
-		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
-			return header->common.frag_length;
-
-		printf("Receiving Out-of-Sequence RTS PDU\n");
-		rts_recv_out_of_sequence_pdu(rpc, rpc->FragBuffer, header->common.frag_length);
-
-		return rpc_recv_pdu_fragment(rpc);
-	}
-	else if (header->common.ptype == PTYPE_FAULT)
-	{
-		rpc_recv_fault_pdu(header);
-		return -1;
-	}
-
-	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
-	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
-
-#if 0
-	printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
-			rpc->VirtualConnection->DefaultOutChannel->BytesReceived,
-			rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow,
-			rpc->ReceiveWindow);
-#endif
-
-	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
-	{
-		printf("Sending Flow Control Ack PDU\n");
-		rts_send_flow_control_ack_pdu(rpc);
-	}
-
-#if 0
-	rpc_pdu_header_print((rpcconn_hdr_t*) header);
-	printf("rpc_recv_pdu_fragment: length: %d\n", header->common.frag_length);
-	freerdp_hexdump(rpc->FragBuffer, header->common.frag_length);
-	printf("\n");
-#endif
-
-	return header->common.frag_length;
-}
-
 RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
 {
-	int status;
-	UINT32 StubOffset;
-	UINT32 StubLength;
-	rpcconn_hdr_t* header;
+	RPC_PDU* pdu;
 
-	status = rpc_recv_pdu_fragment(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc);
 
-	if (status <= 0)
-		return NULL;
-
-	header = (rpcconn_hdr_t*) rpc->FragBuffer;
-
-	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
-	{
-		rpc->pdu->Flags = 0;
-		rpc->pdu->Buffer = rpc->FragBuffer;
-		rpc->pdu->Size = rpc->FragBufferSize;
-		rpc->pdu->Length = status;
-		rpc->pdu->CallId = header->common.call_id;
-
-		return rpc->pdu;
-	}
-
-	if (header->common.ptype != PTYPE_RESPONSE)
-	{
-		printf("rpc_recv_pdu: unexpected ptype 0x%02X\n", header->common.ptype);
-		return NULL;
-	}
-
-	if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
-	{
-		printf("rpc_recv_pdu: expected stub\n");
-		return NULL;
-	}
-
-	if (header->response.alloc_hint > rpc->StubBufferSize)
-	{
-		rpc->StubBufferSize = header->response.alloc_hint;
-		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubBufferSize);
-	}
-
-	if (rpc->StubFragCount == 0)
-		rpc->StubCallId = header->common.call_id;
-
-	if (rpc->StubCallId != header->common.call_id)
-	{
-		printf("invalid call_id: actual: %d, expected: %d, frag_count: %d\n",
-				rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
-	}
-
-	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->FragBuffer[StubOffset], StubLength);
-	rpc->StubOffset += StubLength;
-	rpc->StubFragCount++;
-
-	/**
-	 * If alloc_hint is set to a nonzero value and a request or a response is fragmented into multiple
-	 * PDUs, implementations of these extensions SHOULD set the alloc_hint field in every PDU to be the
-	 * combined stub data length of all remaining fragment PDUs.
-	 */
-
-	if ((header->response.alloc_hint == StubLength))
-	{
-		rpc->pdu->CallId = rpc->StubCallId;
-		rpc->StubLength = rpc->StubOffset;
-
-		rpc->StubOffset = 0;
-		rpc->StubFragCount = 0;
-		rpc->StubCallId = 0;
-
-		rpc->pdu->Flags = RPC_PDU_FLAG_STUB;
-		rpc->pdu->Buffer = rpc->StubBuffer;
-		rpc->pdu->Size = rpc->StubBufferSize;
-		rpc->pdu->Length = rpc->StubLength;
-
-		return rpc->pdu;
-	}
-
-	return rpc_recv_pdu(rpc);
+	return pdu;
 }
 
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
@@ -637,8 +464,6 @@ BOOL rpc_connect(rdpRpc* rpc)
 {
 	rpc->TlsIn = rpc->transport->TlsIn;
 	rpc->TlsOut = rpc->transport->TlsOut;
-
-	//rpc_client_start(rpc);
 
 	if (!rts_connect(rpc))
 	{

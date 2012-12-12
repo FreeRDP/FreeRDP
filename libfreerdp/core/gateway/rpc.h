@@ -724,6 +724,7 @@ struct rpc_client
 	HANDLE Thread;
 	HANDLE StopEvent;
 
+	wQueue* FragmentPool;
 	wQueue* FragmentQueue;
 
 	HANDLE PduSentEvent;
