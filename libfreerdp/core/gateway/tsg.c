@@ -219,8 +219,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	if (!pdu)
 		return FALSE;
 
-	length = pdu->Length;
-	buffer = pdu->Buffer;
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 		buffer = &buffer[24];
@@ -571,8 +571,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	if (!pdu)
 		return FALSE;
 
-	length = pdu->Length;
-	buffer = pdu->Buffer;
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 		buffer = &buffer[24];
@@ -809,8 +809,8 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	if (!pdu)
 		return FALSE;
 
-	length = pdu->Length;
-	buffer = pdu->Buffer;
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
 
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 		buffer = &buffer[24];
@@ -1115,7 +1115,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
 
-		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
+		CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
 
@@ -1140,12 +1140,12 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		}
 
 		tsg->PendingPdu = TRUE;
-		tsg->BytesAvailable = tsg->pdu->Length;
+		tsg->BytesAvailable = Stream_Length(tsg->pdu->s);
 		tsg->BytesRead = 0;
 
 		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
 
-		CopyMemory(data, &tsg->pdu->Buffer[tsg->BytesRead], CopyLength);
+		CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
 		tsg->BytesAvailable -= CopyLength;
 		tsg->BytesRead += CopyLength;
 

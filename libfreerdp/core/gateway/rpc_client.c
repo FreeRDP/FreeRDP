@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -63,13 +64,14 @@ RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc)
 	if (!pdu)
 	{
 		pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
-		pdu->Buffer = (BYTE*) malloc(rpc->max_recv_frag);
-		pdu->Size = rpc->max_recv_frag;
+		pdu->s = Stream_New(NULL, rpc->max_recv_frag);
 	}
 
 	pdu->CallId = 0;
 	pdu->Flags = 0;
-	pdu->Length = 0;
+
+	Stream_Length(pdu->s) = 0;
+	Stream_SetPosition(pdu->s, 0);
 
 	return pdu;
 }
@@ -93,17 +95,14 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	buffer = (BYTE*) Stream_Buffer(fragment);
 	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
 
-	//rpc_pdu_header_print(header);
-
 	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
 		rpc->pdu->Flags = 0;
-		rpc->pdu->Size = Stream_Length(fragment);
-		rpc->pdu->Length = Stream_Length(fragment);
 		rpc->pdu->CallId = header->common.call_id;
 
-		rpc->pdu->Buffer = malloc(rpc->pdu->Size);
-		CopyMemory(rpc->pdu->Buffer, buffer, rpc->pdu->Size);
+		Stream_EnsureCapacity(rpc->pdu->s, Stream_Length(fragment));
+		Stream_Write(rpc->pdu->s, buffer, Stream_Length(fragment));
+		Stream_Length(rpc->pdu->s) = Stream_Position(rpc->pdu->s);
 
 		rpc_client_fragment_pool_return(rpc, fragment);
 
@@ -158,11 +157,9 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		return 0;
 	}
 
-	if (header->response.alloc_hint > rpc->StubBufferSize)
-	{
-		rpc->StubBufferSize = header->response.alloc_hint;
-		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubBufferSize);
-	}
+	Stream_EnsureCapacity(rpc->pdu->s, header->response.alloc_hint);
+	buffer = (BYTE*) Stream_Buffer(fragment);
+	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
 
 	if (rpc->StubFragCount == 0)
 		rpc->StubCallId = header->common.call_id;
@@ -173,8 +170,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 				rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 	}
 
-	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &buffer[StubOffset], StubLength);
-	rpc->StubOffset += StubLength;
+	Stream_Write(rpc->pdu->s, &buffer[StubOffset], StubLength);
 	rpc->StubFragCount++;
 
 	rpc_client_fragment_pool_return(rpc, fragment);
@@ -193,20 +189,13 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if ((header->response.alloc_hint == StubLength))
 	{
-		rpc->pdu->CallId = rpc->StubCallId;
-		rpc->StubLength = rpc->StubOffset;
-
-		rpc->StubOffset = 0;
-		rpc->StubFragCount = 0;
 		rpc->StubCallId = 0;
+		rpc->StubFragCount = 0;
 
 		rpc->pdu->Flags = RPC_PDU_FLAG_STUB;
-		rpc->pdu->Buffer = rpc->StubBuffer;
-		rpc->pdu->Size = rpc->StubBufferSize;
-		rpc->pdu->Length = rpc->StubLength;
+		rpc->pdu->CallId = rpc->StubCallId;
 
-		rpc->StubBufferSize = rpc->max_recv_frag;
-		rpc->StubBuffer = (BYTE*) malloc(rpc->StubBufferSize);
+		Stream_Length(rpc->pdu->s) = Stream_Position(rpc->pdu->s);
 
 		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->pdu);
 		rpc->pdu = rpc_client_receive_pool_take(rpc);
@@ -345,8 +334,7 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	RPC_PDU* pdu;
 
 	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
-	pdu->Buffer = buffer;
-	pdu->Length = length;
+	pdu->s = Stream_New(buffer, length);
 
 	Queue_Enqueue(rpc->client->SendQueue, pdu);
 
@@ -373,9 +361,9 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 
 	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
 
-	status = rpc_in_write(rpc, pdu->Buffer, pdu->Length);
+	status = rpc_in_write(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 
-	header = (rpcconn_common_hdr_t*) pdu->Buffer;
+	header = (rpcconn_common_hdr_t*) Stream_Buffer(pdu->s);
 	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
@@ -390,7 +378,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	rpc->VirtualConnection->DefaultInChannel->BytesSent += status;
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow -= status;
 
-	free(pdu->Buffer);
+	Stream_Free(pdu->s, TRUE);
 	free(pdu);
 
 	if (rpc->client->SynchronousSend)
@@ -463,7 +451,7 @@ static void* rpc_client_thread(void* arg)
 
 static void rpc_pdu_free(RPC_PDU* pdu)
 {
-	free(pdu->Buffer);
+	Stream_Free(pdu->s, TRUE);
 	free(pdu);
 }
 

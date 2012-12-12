@@ -235,6 +235,11 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 			status = SEC_I_CONTINUE_NEEDED;
 	}
 
+	if (ntlm->haveInputBuffer)
+	{
+		free(ntlm->inputBuffer.pvBuffer);
+	}
+
 	ntlm->haveInputBuffer = TRUE;
 	ntlm->haveContext = TRUE;
 

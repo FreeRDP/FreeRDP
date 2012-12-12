@@ -55,9 +55,7 @@ typedef struct
 
 typedef struct _RPC_PDU
 {
-	BYTE* Buffer;
-	UINT32 Size;
-	UINT32 Length;
+	wStream* s;
 	DWORD Flags;
 	DWORD CallId;
 } RPC_PDU, *PRPC_PDU;
@@ -741,12 +739,8 @@ struct rdp_rpc
 
 	RPC_PDU* pdu;
 
-	BYTE* StubBuffer;
-	UINT32 StubBufferSize;
-	UINT32 StubLength;
-	UINT32 StubOffset;
-	UINT32 StubFragCount;
 	UINT32 StubCallId;
+	UINT32 StubFragCount;
 
 	BYTE rpc_vers;
 	BYTE rpc_vers_minor;

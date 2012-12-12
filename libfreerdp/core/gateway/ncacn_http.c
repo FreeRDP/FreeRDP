@@ -278,5 +278,7 @@ void ntlm_http_free(rdpNtlmHttp* ntlm_http)
 	{
 		ntlm_free(ntlm_http->ntlm);
 		http_context_free(ntlm_http->context);
+
+		free(ntlm_http);
 	}
 }

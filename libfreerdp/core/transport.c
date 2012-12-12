@@ -68,6 +68,9 @@ STREAM* transport_send_stream_init(rdpTransport* transport, int size)
 void transport_attach(rdpTransport* transport, int sockfd)
 {
 	transport->TcpIn->sockfd = sockfd;
+
+	transport->SplitInputOutput = FALSE;
+	transport->TcpOut = transport->TcpIn;
 }
 
 BOOL transport_disconnect(rdpTransport* transport)
@@ -222,6 +225,9 @@ BOOL transport_accept_tls(rdpTransport* transport)
 {
 	if (transport->TlsIn == NULL)
 		transport->TlsIn = tls_new(transport->settings);
+
+	if (transport->TlsOut == NULL)
+		transport->TlsOut = transport->TlsIn;
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;

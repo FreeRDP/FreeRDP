@@ -540,12 +540,8 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 		rpc->PipeCallId = 0;
 
-		rpc->StubOffset = 0;
-		rpc->StubBufferSize = 20;
-		rpc->StubLength = 0;
-		rpc->StubFragCount = 0;
-		rpc->StubBuffer = (BYTE*) malloc(0x0FF8);
 		rpc->StubCallId = 0;
+		rpc->StubFragCount = 0;
 
 		rpc->rpc_vers = 5;
 		rpc->rpc_vers_minor = 0;
@@ -560,6 +556,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_recv_frag = 0x0FF8;
 
 		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
+		rpc->pdu->s = Stream_New(NULL, rpc->max_recv_frag);
 
 		rpc->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
 

@@ -353,7 +353,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 				return -1;
 			}
 
-			if (rpc_recv_bind_ack_pdu(rpc, pdu->Buffer, pdu->Length) <= 0)
+			if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
 			{
 				printf("rpc_secure_bind: error receiving bind ack pdu!\n");
 				return -1;

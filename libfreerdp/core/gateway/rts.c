@@ -184,7 +184,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
+	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
@@ -192,7 +192,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_A3_pdu(rpc, pdu->Buffer, pdu->Size);
+	rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 
 	rpc_client_receive_pool_return(rpc, pdu);
 
@@ -225,7 +225,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
+	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
@@ -233,7 +233,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_C2_pdu(rpc, pdu->Buffer, pdu->Size);
+	rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 
 	rpc_client_receive_pool_return(rpc, pdu);
 

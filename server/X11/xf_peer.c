@@ -181,7 +181,7 @@ xfInfo* xf_info_init()
 	xfi = (xfInfo*) malloc(sizeof(xfInfo));
 	ZeroMemory(xfi, sizeof(xfInfo));
 
-	//xfi->use_xshm = TRUE;
+	xfi->use_xshm = TRUE;
 	xfi->display = XOpenDisplay(NULL);
 
 	XInitThreads();
@@ -632,10 +632,6 @@ void* xf_peer_main_loop(void* arg)
 
 	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
 	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
-
-	settings->NlaSecurity = TRUE;
-	settings->TlsSecurity = FALSE;
-	settings->RdpSecurity = FALSE;
 
 	settings->RemoteFxCodec = TRUE;
 
