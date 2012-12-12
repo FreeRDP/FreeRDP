@@ -25,6 +25,16 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+void Stream_EnsureCapacity(wStream* s, size_t size)
+{
+	if (s->capacity < size)
+	{
+		s->capacity = size;
+		s->buffer = (BYTE*) realloc(s->buffer, size);
+		s->pointer = s->buffer;
+	}
+}
+
 wStream* Stream_New(BYTE* buffer, size_t size)
 {
 	wStream* s;
@@ -58,10 +68,4 @@ void Stream_Free(wStream* s, BOOL bFreeBuffer)
 
 		free(s);
 	}
-}
-
-void Stream_FreeDetach(wStream* s)
-{
-	if (s != NULL)
-		free(s);
 }

@@ -159,8 +159,20 @@ void ArrayList_Shift(wArrayList* arrayList, int index, int count)
 
 void ArrayList_Clear(wArrayList* arrayList)
 {
+	int index;
+
 	if (arrayList->synchronized)
 		WaitForSingleObject(arrayList->mutex, INFINITE);
+
+	for (index = 0; index < arrayList->size; index++)
+	{
+		if (arrayList->object.fnObjectFree)
+			arrayList->object.fnObjectFree(arrayList->array[index]);
+
+		arrayList->array[index] = NULL;
+	}
+
+	arrayList->size = 0;
 
 	if (arrayList->synchronized)
 		ReleaseMutex(arrayList->mutex);
@@ -387,5 +399,6 @@ wArrayList* ArrayList_New(BOOL synchronized)
 void ArrayList_Free(wArrayList* arrayList)
 {
 	CloseHandle(arrayList->mutex);
+	free(arrayList->array);
 	free(arrayList);
 }

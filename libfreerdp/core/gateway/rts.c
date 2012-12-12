@@ -194,6 +194,8 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	rts_recv_CONN_A3_pdu(rpc, pdu->Buffer, pdu->Size);
 
+	rpc_client_receive_pool_return(rpc, pdu);
+
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
 
@@ -232,6 +234,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	}
 
 	rts_recv_CONN_C2_pdu(rpc, pdu->Buffer, pdu->Size);
+
+	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");

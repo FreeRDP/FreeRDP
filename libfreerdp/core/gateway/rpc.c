@@ -353,7 +353,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
-	RpcClientCall* client_call;
+	RpcClientCall* clientCall;
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu;
 
@@ -378,8 +378,8 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
 
-	client_call = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
-	ArrayList_Add(rpc->client->ClientCallList, client_call);
+	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
@@ -440,9 +440,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;
+	free(Buffers[1].pvBuffer);
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
-
 	free(request_pdu);
 
 	return length;
@@ -510,6 +510,8 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 {
 	if (virtual_connection != NULL)
 	{
+		free(virtual_connection->DefaultInChannel);
+		free(virtual_connection->DefaultOutChannel);
 		free(virtual_connection);
 	}
 }
@@ -588,6 +590,8 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
+		ntlm_free(rpc->ntlm);
+
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
 

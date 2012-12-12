@@ -50,7 +50,33 @@ wStream* rpc_client_fragment_pool_take(rdpRpc* rpc)
 int rpc_client_fragment_pool_return(rdpRpc* rpc, wStream* fragment)
 {
 	Queue_Enqueue(rpc->client->FragmentPool, fragment);
+	return 0;
+}
 
+RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc)
+{
+	RPC_PDU* pdu = NULL;
+
+	if (WaitForSingleObject(Queue_Event(rpc->client->ReceivePool), 0) == WAIT_OBJECT_0)
+		pdu = Queue_Dequeue(rpc->client->ReceivePool);
+
+	if (!pdu)
+	{
+		pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
+		pdu->Buffer = (BYTE*) malloc(rpc->max_recv_frag);
+		pdu->Size = rpc->max_recv_frag;
+	}
+
+	pdu->CallId = 0;
+	pdu->Flags = 0;
+	pdu->Length = 0;
+
+	return pdu;
+}
+
+int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu)
+{
+	Queue_Enqueue(rpc->client->ReceivePool, pdu);
 	return 0;
 }
 
@@ -67,18 +93,23 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	buffer = (BYTE*) Stream_Buffer(fragment);
 	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
 
-	rpc_pdu_header_print(header);
+	//rpc_pdu_header_print(header);
 
 	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
 		rpc->pdu->Flags = 0;
-		rpc->pdu->Buffer = Stream_Buffer(fragment);
 		rpc->pdu->Size = Stream_Length(fragment);
 		rpc->pdu->Length = Stream_Length(fragment);
 		rpc->pdu->CallId = header->common.call_id;
 
+		rpc->pdu->Buffer = malloc(rpc->pdu->Size);
+		CopyMemory(rpc->pdu->Buffer, buffer, rpc->pdu->Size);
+
+		rpc_client_fragment_pool_return(rpc, fragment);
+
 		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->pdu);
-		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
+
+		rpc->pdu = rpc_client_receive_pool_take(rpc);
 
 		return 0;
 	}
@@ -91,6 +122,10 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 
 			rpc_client_fragment_pool_return(rpc, fragment);
+		}
+		else
+		{
+			printf("warning: unhandled RTS PDU\n");
 		}
 
 		return 0;
@@ -174,7 +209,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		rpc->StubBuffer = (BYTE*) malloc(rpc->StubBufferSize);
 
 		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->pdu);
-		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
+		rpc->pdu = rpc_client_receive_pool_take(rpc);
 
 		return 0;
 	}
@@ -264,45 +299,45 @@ RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
 {
 	int index;
 	int count;
-	RpcClientCall* client_call;
+	RpcClientCall* clientCall;
 
 	ArrayList_Lock(rpc->client->ClientCallList);
 
-	client_call = NULL;
+	clientCall = NULL;
 	count = ArrayList_Count(rpc->client->ClientCallList);
 
 	for (index = 0; index < count; index++)
 	{
-		client_call = (RpcClientCall*) ArrayList_GetItem(rpc->client->ClientCallList, index);
+		clientCall = (RpcClientCall*) ArrayList_GetItem(rpc->client->ClientCallList, index);
 
-		if (client_call->CallId == CallId)
+		if (clientCall->CallId == CallId)
 			break;
 	}
 
 	ArrayList_Unlock(rpc->client->ClientCallList);
 
-	return client_call;
+	return clientCall;
 }
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
-	RpcClientCall* client_call;
+	RpcClientCall* clientCall;
 
-	client_call = (RpcClientCall*) malloc(sizeof(RpcClientCall));
+	clientCall = (RpcClientCall*) malloc(sizeof(RpcClientCall));
 
-	if (client_call)
+	if (clientCall)
 	{
-		client_call->CallId = CallId;
-		client_call->OpNum = OpNum;
-		client_call->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
+		clientCall->CallId = CallId;
+		clientCall->OpNum = OpNum;
+		clientCall->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
 	}
 
-	return client_call;
+	return clientCall;
 }
 
-void rpc_client_call_free(RpcClientCall* client_call)
+void rpc_client_call_free(RpcClientCall* clientCall)
 {
-	free(client_call);
+	free(clientCall);
 }
 
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -328,7 +363,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 {
 	int status;
 	RPC_PDU* pdu;
-	RpcClientCall* client_call;
+	RpcClientCall* clientCall;
 	rpcconn_common_hdr_t* header;
 
 	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->SendQueue);
@@ -341,8 +376,8 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	status = rpc_in_write(rpc, pdu->Buffer, pdu->Length);
 
 	header = (rpcconn_common_hdr_t*) pdu->Buffer;
-	client_call = rpc_client_call_find_by_id(rpc, header->call_id);
-	client_call->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
+	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
+	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
 
 	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
 
@@ -449,9 +484,11 @@ int rpc_client_new(rdpRpc* rpc)
 	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	rpc->client->SendQueue = Queue_New(TRUE, -1, -1);
-	rpc->client->ReceiveQueue = Queue_New(TRUE, -1, -1);
-
 	Queue_Object(rpc->client->SendQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+
+	rpc->client->ReceivePool = Queue_New(TRUE, -1, -1);
+	rpc->client->ReceiveQueue = Queue_New(TRUE, -1, -1);
+	Queue_Object(rpc->client->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
 	Queue_Object(rpc->client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
 
 	rpc->client->FragmentPool = Queue_New(TRUE, -1, -1);
@@ -485,11 +522,19 @@ int rpc_client_free(rdpRpc* rpc)
 	Queue_Clear(rpc->client->SendQueue);
 	Queue_Free(rpc->client->SendQueue);
 
+	Queue_Clear(rpc->client->ReceivePool);
+	Queue_Free(rpc->client->ReceivePool);
+
 	Queue_Clear(rpc->client->ReceiveQueue);
 	Queue_Free(rpc->client->ReceiveQueue);
 
 	ArrayList_Clear(rpc->client->ClientCallList);
 	ArrayList_Free(rpc->client->ClientCallList);
+
+	CloseHandle(rpc->client->StopEvent);
+	CloseHandle(rpc->client->PduSentEvent);
+
+	free(rpc->client);
 
 	return 0;
 }

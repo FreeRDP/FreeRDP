@@ -243,6 +243,11 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 void ntlm_client_uninit(rdpNtlm* ntlm)
 {
+	free(ntlm->identity.User);
+	free(ntlm->identity.Domain);
+	free(ntlm->identity.Password);
+	free(ntlm->ServicePrincipalName);
+
 	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
 }
@@ -263,6 +268,6 @@ void ntlm_free(rdpNtlm* ntlm)
 {
 	if (ntlm != NULL)
 	{
-
+		free(ntlm);
 	}
 }

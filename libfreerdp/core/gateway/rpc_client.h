@@ -27,6 +27,9 @@
 wStream* rpc_client_fragment_pool_take(rdpRpc* rpc);
 int rpc_client_fragment_pool_return(rdpRpc* rpc, wStream* fragment);
 
+RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc);
+int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu);
+
 RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId);
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);

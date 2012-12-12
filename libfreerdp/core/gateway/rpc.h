@@ -702,6 +702,8 @@ struct rpc_client
 	HANDLE StopEvent;
 
 	wQueue* SendQueue;
+
+	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
 
 	wQueue* FragmentPool;

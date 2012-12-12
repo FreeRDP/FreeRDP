@@ -159,6 +159,8 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 	ntlm_client_uninit(ntlm);
 	ntlm_free(ntlm);
 
+	rpc->NtlmHttpIn->ntlm = NULL;
+
 	return TRUE;
 }
 

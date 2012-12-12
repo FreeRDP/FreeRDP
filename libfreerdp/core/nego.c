@@ -918,6 +918,7 @@ rdpNego* nego_new(struct rdp_transport * transport)
 
 void nego_free(rdpNego* nego)
 {
+	free(nego->cookie);
 	free(nego);
 }
 
@@ -1015,7 +1016,10 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 
 void nego_set_cookie(rdpNego* nego, char* cookie)
 {
-	nego->cookie = cookie;
+	if (nego->cookie)
+		free(nego->cookie);
+
+	nego->cookie = _strdup(cookie);
 }
 
 /**

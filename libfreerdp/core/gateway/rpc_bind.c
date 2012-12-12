@@ -359,6 +359,8 @@ int rpc_secure_bind(rdpRpc* rpc)
 				return -1;
 			}
 
+			rpc_client_receive_pool_return(rpc, pdu);
+
 			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
 			{
 				printf("rpc_secure_bind: error sending rpc_auth_3 pdu!\n");

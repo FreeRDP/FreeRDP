@@ -108,7 +108,9 @@ void http_context_free(HttpContext* http_context)
 	{
 		free(http_context->UserAgent);
 		free(http_context->Host);
+		free(http_context->URI);
 		free(http_context->Accept);
+		free(http_context->Method);
 		free(http_context->CacheControl);
 		free(http_context->Connection);
 		free(http_context->Pragma);

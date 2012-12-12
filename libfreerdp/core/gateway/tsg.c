@@ -453,6 +453,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		return FALSE;
 	}
 
+	rpc_client_receive_pool_return(rpc, pdu);
 	free(packet);
 
 	return TRUE;
@@ -631,6 +632,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 
 	/* TODO: trailing bytes */
 
+	rpc_client_receive_pool_return(rpc, pdu);
 	free(packetResponse);
 	free(packet);
 
@@ -826,6 +828,8 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
 	freerdp_hexdump((void*) &tsg->ChannelContext, 20);
 	printf("\n");
 #endif
+
+	rpc_client_receive_pool_return(rpc, pdu);
 
 	return TRUE;
 }
@@ -1116,7 +1120,10 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->BytesRead += CopyLength;
 
 		if (tsg->BytesAvailable < 1)
+		{
 			tsg->PendingPdu = FALSE;
+			rpc_client_receive_pool_return(rpc, tsg->pdu);
+		}
 
 		return CopyLength;
 	}
@@ -1143,7 +1150,10 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		tsg->BytesRead += CopyLength;
 
 		if (tsg->BytesAvailable < 1)
+		{
 			tsg->PendingPdu = FALSE;
+			rpc_client_receive_pool_return(rpc, tsg->pdu);
+		}
 
 		return CopyLength;
 	}
@@ -1186,6 +1196,7 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg != NULL)
 	{
+		free(tsg->MachineName);
 		rpc_free(tsg->rpc);
 		free(tsg);
 	}
