@@ -87,6 +87,9 @@ void Queue_Clear(wQueue* queue)
 
 	for (index = 0; index < queue->size; index++)
 	{
+		if (queue->object.fnObjectFree)
+			queue->object.fnObjectFree(queue->array[index]);
+
 		queue->array[index] = NULL;
 	}
 
@@ -228,6 +231,8 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		ZeroMemory(&queue->object, sizeof(wObject));
 	}
 
 	return queue;

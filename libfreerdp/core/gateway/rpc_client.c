@@ -66,7 +66,8 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	buffer = (BYTE*) Stream_Buffer(fragment);
 	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
-	rpc->FragBuffer = fragment->buffer;
+
+	rpc_pdu_header_print(header);
 
 	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
@@ -76,45 +77,21 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		rpc->pdu->Length = Stream_Length(fragment);
 		rpc->pdu->CallId = header->common.call_id;
 
-		Queue_Enqueue(rpc->ReceiveQueue, rpc->pdu);
+		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->pdu);
 		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 		return 0;
 	}
 
-	if (header->common.ptype != PTYPE_RESPONSE)
+	if (header->common.ptype == PTYPE_RTS)
 	{
-		printf("unexpected ptype: %d\n", header->common.ptype);
-		return 0;
-	}
-
-	if (header->common.ptype == PTYPE_RESPONSE)
-	{
-		rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
-		rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
-
-		if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
+		if (rpc->VirtualConnection->State >= VIRTUAL_CONNECTION_STATE_OPENED)
 		{
-			printf("rpc_recv_pdu_fragment: expected stub\n");
-			return -1;
-		}
+			printf("Receiving Out-of-Sequence RTS PDU\n");
+			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 
-		if (StubLength == 4)
-		{
-			printf("Ignoring TsProxySendToServer Response\n");
 			rpc_client_fragment_pool_return(rpc, fragment);
-			return 0;
 		}
-	}
-	else if (header->common.ptype == PTYPE_RTS)
-	{
-		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
-			return header->common.frag_length;
-
-		printf("Receiving Out-of-Sequence RTS PDU\n");
-		rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
-
-		rpc_client_fragment_pool_return(rpc, fragment);
 
 		return 0;
 	}
@@ -122,6 +99,28 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	{
 		rpc_recv_fault_pdu(header);
 		return -1;
+	}
+
+	if (header->common.ptype != PTYPE_RESPONSE)
+	{
+		printf("Unexpected RPC PDU type: %d\n", header->common.ptype);
+		return -1;
+	}
+
+	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
+	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
+
+	if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
+	{
+		printf("rpc_recv_pdu_fragment: expected stub\n");
+		return -1;
+	}
+
+	if (StubLength == 4)
+	{
+		printf("Ignoring TsProxySendToServer Response\n");
+		rpc_client_fragment_pool_return(rpc, fragment);
+		return 0;
 	}
 
 	if (header->response.alloc_hint > rpc->StubBufferSize)
@@ -174,7 +173,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		rpc->StubBufferSize = rpc->max_recv_frag;
 		rpc->StubBuffer = (BYTE*) malloc(rpc->StubBufferSize);
 
-		Queue_Enqueue(rpc->ReceiveQueue, rpc->pdu);
+		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->pdu);
 		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 		return 0;
@@ -267,20 +266,20 @@ RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
 	int count;
 	RpcClientCall* client_call;
 
-	ArrayList_Lock(rpc->ClientCalls);
+	ArrayList_Lock(rpc->client->ClientCallList);
 
 	client_call = NULL;
-	count = ArrayList_Count(rpc->ClientCalls);
+	count = ArrayList_Count(rpc->client->ClientCallList);
 
 	for (index = 0; index < count; index++)
 	{
-		client_call = (RpcClientCall*) ArrayList_GetItem(rpc->ClientCalls, index);
+		client_call = (RpcClientCall*) ArrayList_GetItem(rpc->client->ClientCallList, index);
 
 		if (client_call->CallId == CallId)
 			break;
 	}
 
-	ArrayList_Unlock(rpc->ClientCalls);
+	ArrayList_Unlock(rpc->client->ClientCallList);
 
 	return client_call;
 }
@@ -314,7 +313,7 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	pdu->Buffer = buffer;
 	pdu->Length = length;
 
-	Queue_Enqueue(rpc->SendQueue, pdu);
+	Queue_Enqueue(rpc->client->SendQueue, pdu);
 
 	if (rpc->client->SynchronousSend)
 	{
@@ -332,7 +331,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	RpcClientCall* client_call;
 	rpcconn_common_hdr_t* header;
 
-	pdu = (RPC_PDU*) Queue_Dequeue(rpc->SendQueue);
+	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->SendQueue);
 
 	if (!pdu)
 		return 0;
@@ -373,9 +372,9 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	pdu = NULL;
 	dwMilliseconds = rpc->client->SynchronousReceive ? INFINITE : 0;
 
-	if (WaitForSingleObject(Queue_Event(rpc->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
 	{
-		pdu = (RPC_PDU*) Queue_Dequeue(rpc->ReceiveQueue);
+		pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
 		return pdu;
 	}
 
@@ -396,7 +395,7 @@ static void* rpc_client_thread(void* arg)
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
-	events[nCount++] = Queue_Event(rpc->SendQueue);
+	events[nCount++] = Queue_Event(rpc->client->SendQueue);
 	events[nCount++] = ReadEvent;
 
 	while (1)
@@ -410,10 +409,11 @@ static void* rpc_client_thread(void* arg)
 
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
-			rpc_client_on_read_event(rpc);
+			if (rpc_client_on_read_event(rpc) < 0)
+				break;
 		}
 
-		if (WaitForSingleObject(Queue_Event(rpc->SendQueue), 0) == WAIT_OBJECT_0)
+		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
 		{
 			rpc_send_dequeue_pdu(rpc);
 		}
@@ -421,7 +421,20 @@ static void* rpc_client_thread(void* arg)
 
 	CloseHandle(ReadEvent);
 
+	rpc_client_free(rpc);
+
 	return NULL;
+}
+
+static void rpc_pdu_free(RPC_PDU* pdu)
+{
+	free(pdu->Buffer);
+	free(pdu);
+}
+
+static void rpc_fragment_free(wStream* fragment)
+{
+	Stream_Free(fragment, TRUE);
 }
 
 int rpc_client_new(rdpRpc* rpc)
@@ -435,8 +448,20 @@ int rpc_client_new(rdpRpc* rpc)
 	rpc->client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+	rpc->client->SendQueue = Queue_New(TRUE, -1, -1);
+	rpc->client->ReceiveQueue = Queue_New(TRUE, -1, -1);
+
+	Queue_Object(rpc->client->SendQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+	Queue_Object(rpc->client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+
 	rpc->client->FragmentPool = Queue_New(TRUE, -1, -1);
 	rpc->client->FragmentQueue = Queue_New(TRUE, -1, -1);
+
+	Queue_Object(rpc->client->FragmentPool)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
+	Queue_Object(rpc->client->FragmentQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
+
+	rpc->client->ClientCallList = ArrayList_New(TRUE);
+	ArrayList_Object(rpc->client->ClientCallList)->fnObjectFree = (OBJECT_FREE_FN) rpc_client_call_free;
 
 	return 0;
 }
@@ -444,6 +469,27 @@ int rpc_client_new(rdpRpc* rpc)
 int rpc_client_start(rdpRpc* rpc)
 {
 	ResumeThread(rpc->client->Thread);
+
+	return 0;
+}
+
+int rpc_client_stop(rdpRpc* rpc)
+{
+	SetEvent(rpc->client->StopEvent);
+
+	return 0;
+}
+
+int rpc_client_free(rdpRpc* rpc)
+{
+	Queue_Clear(rpc->client->SendQueue);
+	Queue_Free(rpc->client->SendQueue);
+
+	Queue_Clear(rpc->client->ReceiveQueue);
+	Queue_Free(rpc->client->ReceiveQueue);
+
+	ArrayList_Clear(rpc->client->ClientCallList);
+	ArrayList_Free(rpc->client->ClientCallList);
 
 	return 0;
 }

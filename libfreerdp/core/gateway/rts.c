@@ -981,6 +981,10 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
 	}
+	else
+	{
+		printf("Unimplemented signature id: 0x%08X\n", SignatureId);
+	}
 
 	return 0;
 }

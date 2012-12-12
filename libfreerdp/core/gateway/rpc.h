@@ -453,77 +453,62 @@ typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	/* needed for request, response, fault */
+	UINT32 alloc_hint;
+	p_context_id_t p_cont_id;
 
-	UINT32 alloc_hint; /* 16:04 allocation hint */
-	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
+	BYTE cancel_count;
+	BYTE reserved;
 
-	/* needed for response or fault */
+	UINT32 status;
 
-	BYTE cancel_count; /* 22:01 received cancel count */
-	BYTE reserved; /* 23:01 reserved, m.b.z. */
+	/* align(8) */
 
-	/* fault code */
-
-	UINT32 status; /* 24:04 run-time fault code or zero */
-
-	/* always pad to next 8-octet boundary */
-
-	BYTE reserved2[4]; /* 28:04 reserved padding, m.b.z. */
-
-	/* stub data here, 8-octet aligned */
 	BYTE* stub_data;
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_fault_hdr_t;
 
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_orphaned_hdr_t;
 
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	/* needed on request, response, fault */
+	UINT32 alloc_hint;
 
-	UINT32 alloc_hint; /* 16:04 allocation hint */
-
-	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
-	UINT16 opnum; /* 22:02 operation number within the interface */
+	p_context_id_t p_cont_id;
+	UINT16 opnum;
 
 	/* optional field for request, only present if the PFC_OBJECT_UUID field is non-zero */
+	p_uuid_t object;
 
-	p_uuid_t object; /* 24:16 object UUID */
-
-	/* stub data, 8-octet aligned */
+	/* align(8) */
 
 	BYTE* stub_data;
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_request_hdr_t;
 
 typedef struct
 {
 	DEFINE_RPC_COMMON_FIELDS();
 
-	/* needed for request, response, fault */
+	UINT32 alloc_hint;
+	p_context_id_t p_cont_id;
 
-	UINT32 alloc_hint; /* 16:04 allocation hint */
-	p_context_id_t p_cont_id; /* 20:02 pres context, i.e. data rep */
+	BYTE cancel_count;
+	BYTE reserved;
 
-	/* needed for response or fault */
+	/* align(8) */
 
-	BYTE cancel_count; /* 22:01 cancel count */
-	BYTE reserved; /* 23:01 reserved, m.b.z. */
-
-	/* stub data here, 8-octet aligned */
 	BYTE* stub_data;
 
-	auth_verifier_co_t auth_verifier; /* xx:yy */
+	auth_verifier_co_t auth_verifier;
 } rpcconn_response_hdr_t;
 
 typedef struct
@@ -711,24 +696,20 @@ struct rpc_virtual_connection_cookie_entry
 };
 typedef struct rpc_virtual_connection_cookie_entry RpcVirtualConnectionCookieEntry;
 
-struct rpc_virtual_connection_cookie_table
-{
-	UINT32 Count;
-	UINT32 ArraySize;
-	RpcVirtualConnectionCookieEntry* Entries;
-};
-typedef struct rpc_virtual_connection_cookie_table RpcVirtualConnectionCookieTable;
-
 struct rpc_client
 {
 	HANDLE Thread;
 	HANDLE StopEvent;
 
+	wQueue* SendQueue;
+	wQueue* ReceiveQueue;
+
 	wQueue* FragmentPool;
 	wQueue* FragmentQueue;
 
+	wArrayList* ClientCallList;
+
 	HANDLE PduSentEvent;
-	HANDLE SendSemaphore;
 
 	BOOL SynchronousSend;
 	BOOL SynchronousReceive;
@@ -743,7 +724,7 @@ struct rdp_rpc
 	rdpTls* TlsOut;
 
 	rdpNtlm* ntlm;
-	int send_seq_num;
+	int SendSeqNum;
 
 	RpcClient* client;
 
@@ -753,13 +734,10 @@ struct rdp_rpc
 	rdpSettings* settings;
 	rdpTransport* transport;
 
-	UINT32 call_id;
+	UINT32 CallId;
 	UINT32 PipeCallId;
 
 	RPC_PDU* pdu;
-
-	BYTE* FragBuffer;
-	UINT32 FragBufferSize;
 
 	BYTE* StubBuffer;
 	UINT32 StubBufferSize;
@@ -777,11 +755,6 @@ struct rdp_rpc
 
 	wStream* RecvFrag;
 
-	wQueue* SendQueue;
-	wQueue* ReceiveQueue;
-
-	wArrayList* ClientCalls;
-
 	UINT32 ReceiveWindow;
 
 	UINT32 ChannelLifetime;
@@ -792,11 +765,13 @@ struct rdp_rpc
 	UINT32 CurrentKeepAliveInterval;
 
 	RpcVirtualConnection* VirtualConnection;
-	RpcVirtualConnectionCookieTable* VirtualConnectionCookieTable;
+
+	wArrayList* VirtualConnectionCookieTable;
 };
 
 BOOL rpc_connect(rdpRpc* rpc);
 
+void rpc_pdu_header_print(rpcconn_hdr_t* header);
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
@@ -808,12 +783,8 @@ int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
-int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header);
 
-RPC_PDU* rpc_recv_pdu(rdpRpc* rpc);
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
-
-int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

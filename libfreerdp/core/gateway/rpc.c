@@ -345,15 +345,6 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	return status;
 }
 
-RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
-{
-	RPC_PDU* pdu;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	return pdu;
-}
-
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	BYTE* buffer;
@@ -382,13 +373,13 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
 	request_pdu->auth_length = ntlm->ContextSizes.cbMaxSignature;
-	request_pdu->call_id = rpc->call_id++;
+	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
 
 	client_call = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
-	ArrayList_Add(rpc->ClientCalls, client_call);
+	ArrayList_Add(rpc->client->ClientCallList, client_call);
 
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
@@ -439,7 +430,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->send_seq_num++);
+	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
 
 	if (encrypt_status != SEC_E_OK)
 	{
@@ -452,12 +443,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
 
-	return length;
-}
+	free(request_pdu);
 
-int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu)
-{
-	return 0;
+	return length;
 }
 
 BOOL rpc_connect(rdpRpc* rpc)
@@ -526,39 +514,6 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 	}
 }
 
-/* Virtual Connection Cookie Table */
-
-RpcVirtualConnectionCookieTable* rpc_virtual_connection_cookie_table_new(rdpRpc* rpc)
-{
-	RpcVirtualConnectionCookieTable* table;
-
-	table = (RpcVirtualConnectionCookieTable*) malloc(sizeof(RpcVirtualConnectionCookieTable));
-
-	if (table != NULL)
-	{
-		ZeroMemory(table, sizeof(RpcVirtualConnectionCookieTable));
-
-		table->Count = 0;
-		table->ArraySize = 32;
-
-		table->Entries = (RpcVirtualConnectionCookieEntry*) malloc(sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
-		ZeroMemory(table->Entries, sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
-	}
-
-	return table;
-}
-
-void rpc_virtual_connection_cookie_table_free(RpcVirtualConnectionCookieTable* table)
-{
-	if (table != NULL)
-	{
-		free(table->Entries);
-		free(table);
-	}
-}
-
-/* RPC Core Module */
-
 rdpRpc* rpc_new(rdpTransport* transport)
 {
 	rdpRpc* rpc = (rdpRpc*) malloc(sizeof(rdpRpc));
@@ -572,7 +527,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->transport = transport;
 		rpc->settings = transport->settings;
 
-		rpc->send_seq_num = 0;
+		rpc->SendSeqNum = 0;
 		rpc->ntlm = ntlm_new();
 
 		rpc->NtlmHttpIn = ntlm_http_new();
@@ -581,16 +536,13 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
-		rpc->FragBufferSize = 20;
-		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
-
 		rpc->PipeCallId = 0;
 
 		rpc->StubOffset = 0;
 		rpc->StubBufferSize = 20;
 		rpc->StubLength = 0;
 		rpc->StubFragCount = 0;
-		rpc->StubBuffer = (BYTE*) malloc(rpc->FragBufferSize);
+		rpc->StubBuffer = (BYTE*) malloc(0x0FF8);
 		rpc->StubCallId = 0;
 
 		rpc->rpc_vers = 5;
@@ -607,12 +559,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
-		rpc->SendQueue = Queue_New(TRUE, -1, -1);
-		rpc->ReceiveQueue = Queue_New(TRUE, -1, -1);
-
 		rpc->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
-
-		rpc->ClientCalls = ArrayList_New(TRUE);
 
 		rpc->ReceiveWindow = 0x00010000;
 
@@ -624,9 +571,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->CurrentKeepAliveTime = 0;
 
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
-		rpc->VirtualConnectionCookieTable = rpc_virtual_connection_cookie_table_new(rpc);
+		rpc->VirtualConnectionCookieTable = ArrayList_New(TRUE);
 
-		rpc->call_id = 2;
+		rpc->CallId = 2;
 
 		rpc_client_new(rpc);
 
@@ -646,17 +593,10 @@ void rpc_free(rdpRpc* rpc)
 
 		free(rpc->pdu);
 
-		Queue_Clear(rpc->SendQueue);
-		Queue_Free(rpc->SendQueue);
-
-		Queue_Clear(rpc->ReceiveQueue);
-		Queue_Free(rpc->ReceiveQueue);
-
-		ArrayList_Clear(rpc->ClientCalls);
-		ArrayList_Free(rpc->ClientCalls);
-
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
-		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
+
+		ArrayList_Clear(rpc->VirtualConnectionCookieTable);
+		ArrayList_Free(rpc->VirtualConnectionCookieTable);
 
 		free(rpc);
 	}

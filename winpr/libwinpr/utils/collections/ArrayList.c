@@ -377,6 +377,8 @@ wArrayList* ArrayList_New(BOOL synchronized)
 		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
 
 		arrayList->mutex = CreateMutex(NULL, FALSE, NULL);
+
+		ZeroMemory(&arrayList->object, sizeof(wObject));
 	}
 
 	return arrayList;
