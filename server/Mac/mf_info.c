@@ -178,6 +178,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
         //initialize screen capture
 		if (mfi->peerCount == 0)
         {
+            mf_mlion_display_info(&mfi->servscreen_width, &mfi->servscreen_height, &mfi->scale);
             mf_mlion_screen_updates_init();
             mf_mlion_start_getting_screen_updates();
         }

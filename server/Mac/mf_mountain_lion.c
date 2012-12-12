@@ -54,7 +54,6 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
         
         RFX_RECT rect;
         unsigned long offset_beg;
-        unsigned long surflen;
         unsigned long stride;
 
         rect.x = 0;
@@ -103,6 +102,29 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
     dispatch_semaphore_signal(region_sem);
 };
 
+int mf_mlion_display_info(UINT32* disp_width, UINT32* disp_height, UINT32* scale)
+{
+    CGDirectDisplayID display_id;
+    
+    display_id = CGMainDisplayID();
+    
+    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(display_id);
+    
+    size_t pixelWidth = CGDisplayModeGetPixelWidth(mode);
+    size_t pixelHeight = CGDisplayModeGetPixelHeight(mode);
+    
+    size_t wide = CGDisplayPixelsWide(display_id);
+    size_t high = CGDisplayPixelsHigh(display_id);
+    
+    CGDisplayModeRelease(mode);
+    
+    *disp_width = wide;//pixelWidth;
+    *disp_height = high;//pixelHeight;
+    *scale = pixelWidth / wide;
+    
+    return 0;
+}
+
 int mf_mlion_screen_updates_init()
 {
     printf("mf_mlion_screen_updates_init()\n");
@@ -115,12 +137,11 @@ int mf_mlion_screen_updates_init()
     region_sem = dispatch_semaphore_create(1);
     data_sem = dispatch_semaphore_create(1);
  
-    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(display_id);
+    UINT32 pixelWidth;
+    UINT32 pixelHeight;
+    UINT32 scale;
     
-    size_t pixelWidth = CGDisplayModeGetPixelWidth(mode);
-    size_t pixelHeight = CGDisplayModeGetPixelHeight(mode);
-    
-    CGDisplayModeRelease(mode);
+    mf_mlion_display_info(&pixelWidth, &pixelHeight, &scale);
     
     localBuf = malloc(pixelWidth * pixelHeight * 4);
 
@@ -132,58 +153,7 @@ int mf_mlion_screen_updates_init()
                                                     NULL,
                                                     screen_update_q,
                                                     streamHandler);
-    /*
-    
-    CFDictionaryRef opts;
-    
-    long ImageCompatibility;
-    long BitmapContextCompatibility;
-    
-    void * keys[3];
-    keys[0] = (void *) kCVPixelBufferCGImageCompatibilityKey;
-    keys[1] = (void *) kCVPixelBufferCGBitmapContextCompatibilityKey;
-    keys[2] = NULL;
-    
-    void * values[3];
-    values[0] = (void *) &ImageCompatibility;
-    values[1] = (void *) &BitmapContextCompatibility;
-    values[2] = NULL;
-    
-    opts = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, NULL, NULL);
-    
-    if (opts == NULL)
-    {
-        printf("failed to create dictionary\n");
-        //return 1;
-    }
-    
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, pixelWidth,
-                                          pixelHeight,  kCVPixelFormatType_32ARGB, opts,
-                                          &pxbuffer);
-    
-    if (status != kCVReturnSuccess)
-    {
-        printf("Failed to create pixel buffer! \n");
-        //return 1;
-    }
-    
-    CFRelease(opts);
-    
-    CVPixelBufferLockBaseAddress(pxbuffer, 0);
-    baseAddress = CVPixelBufferGetBaseAddress(pxbuffer);
-    
-    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
 
-    bitmapcontext = CGBitmapContextCreate(baseAddress,
-                                                 pixelWidth,
-                                                 pixelHeight, 8, 4*pixelWidth, rgbColorSpace,
-                                                 kCGImageAlphaNoneSkipLast);
-    
-    if (bitmapcontext == NULL) {
-        printf("context = null!!!\n\n\n");
-    }
-    CGColorSpaceRelease(rgbColorSpace);
-    */
     
     return 0;
     
@@ -246,7 +216,7 @@ int mf_mlion_peek_dirty_region(RFX_RECT* invalid)
     
     const CGRect * rects = CGDisplayStreamUpdateGetRects(lastUpdate, kCGDisplayStreamUpdateDirtyRects, &num_rects);
     
-    printf("\trectangles: %zd\n", num_rects);
+    //printf("\trectangles: %zd\n", num_rects);
     
     if (num_rects == 0) {
         //dispatch_semaphore_signal(region_sem);
@@ -269,17 +239,12 @@ int mf_mlion_peek_dirty_region(RFX_RECT* invalid)
 
 int mf_mlion_clear_dirty_region()
 {
-   /* dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
-
-    clean = TRUE;
-    dirtyRegion.size.width = 0;
-    dirtyRegion.size.height = 0;
-    
-    dispatch_semaphore_signal(region_sem);
-    */
+    dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
     
     CFRelease(lastUpdate);
     lastUpdate = NULL;
+    
+    dispatch_semaphore_signal(region_sem);
     
     
     return 0;

@@ -89,9 +89,7 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 		else if (event->type == MF_EVENT_TYPE_FRAME_TICK)
 		{
 			event = mf_event_pop(info_event_queue);
-            
-            printf("Tick\n");
-            
+                        
             mf_peer_rfx_update(client);
             
 			mf_event_free(event);
@@ -164,7 +162,6 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	cmd->bitmapData = stream_get_head(s);
     
     //send
-    printf("send\n");
     
 	update->SurfaceBits(update->context, cmd);
     
@@ -252,9 +249,9 @@ void mf_peer_init(freerdp_peer* client)
     if(info_timer)
     {
         //printf("created timer\n");
-        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 1ull * NSEC_PER_SEC, 100ull * NSEC_PER_MSEC);
+        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 41ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
         dispatch_source_set_event_handler(info_timer, ^{
-            printf("dispatch\n");
+            //printf("dispatch\n");
             mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
             mf_event_push(info_event_queue, (mfEvent*) event);}
                                           );
@@ -283,8 +280,8 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
     mfInfo* mfi = mf_info_get_instance();
     mfi->scale = 1;
     
-    mfi->servscreen_width = 2880 / mfi->scale;
-    mfi->servscreen_height = 1800 / mfi->scale;
+    //mfi->servscreen_width = 2880 / mfi->scale;
+    //mfi->servscreen_height = 1800 / mfi->scale;
     UINT32 bitsPerPixel = 32;
     
     if ((settings->DesktopWidth != mfi->servscreen_width) || (settings->DesktopHeight != mfi->servscreen_height))

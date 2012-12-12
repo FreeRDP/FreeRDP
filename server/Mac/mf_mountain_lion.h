@@ -23,6 +23,8 @@
 #include <freerdp/codec/rfx.h>
 
 
+int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight, UINT32* scale);
+
 int mf_mlion_screen_updates_init();
 
 int mf_mlion_start_getting_screen_updates();

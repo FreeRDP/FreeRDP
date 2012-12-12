@@ -93,7 +93,7 @@ struct mf_info
 	freerdp_peer** peers;
 	//BOOL mirrorDriverActive;
 	unsigned int framesWaiting;
-    int scale;
+    UINT32 scale;
     
 	//HANDLE snd_mutex;
 	//BOOL snd_stop;
