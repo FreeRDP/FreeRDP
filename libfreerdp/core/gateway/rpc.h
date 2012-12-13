@@ -60,11 +60,12 @@ typedef struct _RPC_PDU
 	DWORD CallId;
 } RPC_PDU, *PRPC_PDU;
 
-#include "tcp.h"
+#include "../tcp.h"
+#include "../transport.h"
+
 #include "rts.h"
 #include "http.h"
 #include "ntlm.h"
-#include "transport.h"
 
 #include <time.h>
 

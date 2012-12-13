@@ -25,10 +25,11 @@
 typedef struct rdp_ntlm rdpNtlm;
 typedef struct rdp_ntlm_http rdpNtlmHttp;
 
-#include "tcp.h"
+#include "../tcp.h"
+#include "../transport.h"
+
 #include "rts.h"
 #include "http.h"
-#include "transport.h"
 
 #include <time.h>
 #include <winpr/sspi.h>

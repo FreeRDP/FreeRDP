@@ -25,9 +25,6 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
 
-include_directories(".")
-include_directories(${${MODULE_PREFIX}_GATEWAY_DIR})
-
 set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
