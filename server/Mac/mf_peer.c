@@ -191,9 +191,10 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+    rfx_context_set_cpu_opt(context->rfx_context, CPU_SSE2);
     
-	context->nsc_context = nsc_context_new();
-	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+	//context->nsc_context = nsc_context_new();
+	//nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
     
 	context->s = stream_new(0xFFFF);
     
@@ -217,7 +218,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 		stream_free(context->s);
         
 		rfx_context_free(context->rfx_context);
-		nsc_context_free(context->nsc_context);
+		//nsc_context_free(context->nsc_context);
         
 #ifdef CHANNEL_AUDIN_SERVER
 		if (context->audin)
@@ -251,7 +252,7 @@ void mf_peer_init(freerdp_peer* client)
     if(info_timer)
     {
         //printf("created timer\n");
-        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 41ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
+        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 33ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
         dispatch_source_set_event_handler(info_timer, ^{
             //printf("dispatch\n");
             mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
@@ -394,7 +395,7 @@ void mf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	//printf("Client sent an extended mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
 }
 
-static void mf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
+/*static void mf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
 	BYTE i;
     
@@ -404,7 +405,7 @@ static void mf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* 
 	{
 		printf("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
 	}
-}
+}*/
 
 static void mf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
@@ -511,7 +512,7 @@ void* mf_peer_main_loop(void* arg)
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->SuppressOutput = TRUE;
-	client->settings->RefreshRect = TRUE;
+	client->settings->RefreshRect = FALSE;
     
 	client->PostConnect = mf_peer_post_connect;
 	client->Activate = mf_peer_activate;
@@ -522,7 +523,7 @@ void* mf_peer_main_loop(void* arg)
 	client->input->MouseEvent = mf_peer_mouse_event;
 	client->input->ExtendedMouseEvent = mf_peer_extended_mouse_event;
     
-	client->update->RefreshRect = mf_peer_refresh_rect;
+	//client->update->RefreshRect = mf_peer_refresh_rect;
 	client->update->SuppressOutput = mf_peer_suppress_output;
     
 	client->Initialize(client);

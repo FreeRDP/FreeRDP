@@ -73,13 +73,13 @@ struct mf_info
 	//STREAM* s;
     
 	//screen and monitor info
-	int screenID;
-	int virtscreen_width;
-	int virtscreen_height;
-	int servscreen_width;
-	int servscreen_height;
-	int servscreen_xoffset;
-	int servscreen_yoffset;
+	UINT32 screenID;
+	UINT32 virtscreen_width;
+	UINT32 virtscreen_height;
+	UINT32 servscreen_width;
+	UINT32 servscreen_height;
+	UINT32 servscreen_xoffset;
+	UINT32 servscreen_yoffset;
     
 	//int frame_idx;
 	int bitsPerPixel;

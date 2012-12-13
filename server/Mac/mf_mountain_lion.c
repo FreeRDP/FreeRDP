@@ -133,7 +133,7 @@ int mf_mlion_display_info(UINT32* disp_width, UINT32* disp_height, UINT32* scale
     CGDisplayModeRef mode = CGDisplayCopyDisplayMode(display_id);
     
     size_t pixelWidth = CGDisplayModeGetPixelWidth(mode);
-    size_t pixelHeight = CGDisplayModeGetPixelHeight(mode);
+    //size_t pixelHeight = CGDisplayModeGetPixelHeight(mode);
     
     size_t wide = CGDisplayPixelsWide(display_id);
     size_t high = CGDisplayPixelsHigh(display_id);
