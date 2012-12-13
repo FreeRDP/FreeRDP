@@ -879,6 +879,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->ColorDepth = atoi(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "admin")
+		{
+			settings->ConsoleSession = TRUE;
+		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
 			int id;
