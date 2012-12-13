@@ -25,7 +25,8 @@
 typedef struct rdp_tsg rdpTsg;
 
 #include "rpc.h"
-#include "transport.h"
+
+#include "../transport.h"
 
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
@@ -35,6 +36,7 @@ typedef struct rdp_tsg rdpTsg;
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
+
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/debug.h>
 
@@ -303,9 +305,12 @@ typedef struct _TSG_PACKET
 DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
+BOOL tsg_disconnect(rdpTsg* tsg);
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
+
+BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);

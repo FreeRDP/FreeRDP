@@ -24,6 +24,17 @@
 
 #include <winpr/interlocked.h>
 
+wStream* rpc_client_fragment_pool_take(rdpRpc* rpc);
+int rpc_client_fragment_pool_return(rdpRpc* rpc, wStream* fragment);
+
+RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc);
+int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu);
+
+RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId);
+
+RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
+void rpc_client_call_free(RpcClientCall* client_call);
+
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_send_dequeue_pdu(rdpRpc* rpc);
 
@@ -32,5 +43,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc);
 
 int rpc_client_new(rdpRpc* rpc);
 int rpc_client_start(rdpRpc* rpc);
+int rpc_client_stop(rdpRpc* rpc);
+int rpc_client_free(rdpRpc* rpc);
 
 #endif /* FREERDP_CORE_RPC_CLIENT_H */

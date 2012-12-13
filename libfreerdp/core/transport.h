@@ -31,8 +31,9 @@ typedef enum
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
-#include "tsg.h"
 #include "nla.h"
+
+#include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
 #include <freerdp/crypto/tls.h>

@@ -22,6 +22,7 @@ set(${MODULE_PREFIX}_SRCS
 	process.c
 	processor.c
 	thread.c
+	thread.h
 	tls.c)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))

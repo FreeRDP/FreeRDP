@@ -93,14 +93,14 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
+	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
 
-	rpc->ntlm = ntlm_new();
-
 	DEBUG_RPC("Sending bind PDU");
 
+	rpc->ntlm = ntlm_new();
 	ntlm_client_init(rpc->ntlm, FALSE, settings->Username, settings->Domain, settings->Password);
 
 	ntlm_authenticate(rpc->ntlm);
@@ -178,14 +178,17 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
 	offset += (8 + bind_pdu->auth_length);
 
-	rpc_in_write(rpc, buffer, bind_pdu->frag_length);
 	length = bind_pdu->frag_length;
+
+	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+
+	rpc_send_enqueue_pdu(rpc, buffer, length);
 
 	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem);
 	free(bind_pdu);
-	free(buffer);
 
 	return length;
 }
@@ -246,6 +249,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
+	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
 	DEBUG_RPC("Sending rpc_auth_3 PDU");
@@ -289,11 +293,14 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value, auth_3_pdu->auth_length);
 	offset += (8 + auth_3_pdu->auth_length);
 
-	rpc_in_write(rpc, buffer, auth_3_pdu->frag_length);
 	length = auth_3_pdu->frag_length;
 
+	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+
+	rpc_send_enqueue_pdu(rpc, buffer, length);
+
 	free(auth_3_pdu);
-	free(buffer);
 
 	return length;
 }
@@ -326,7 +333,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 	int status;
 	RPC_PDU* pdu;
 
-	rpc->client->SynchronousSend = FALSE;
+	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
 	while (rpc->State != RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
@@ -353,11 +360,13 @@ int rpc_secure_bind(rdpRpc* rpc)
 				return -1;
 			}
 
-			if (rpc_recv_bind_ack_pdu(rpc, pdu->Buffer, pdu->Length) <= 0)
+			if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
 			{
 				printf("rpc_secure_bind: error receiving bind ack pdu!\n");
 				return -1;
 			}
+
+			rpc_client_receive_pool_return(rpc, pdu);
 
 			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
 			{
@@ -374,8 +383,8 @@ int rpc_secure_bind(rdpRpc* rpc)
 		}
 	}
 
-	rpc->client->SynchronousSend = FALSE;
-	rpc->client->SynchronousReceive = FALSE;
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
 
 	return 0;
 }

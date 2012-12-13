@@ -53,6 +53,24 @@ BOOL Queue_IsSynchronized(wQueue* queue)
 }
 
 /**
+ * Gets an object that can be used to synchronize access to the Queue.
+ */
+
+HANDLE Queue_SyncRoot(wQueue* queue)
+{
+	return queue->mutex;
+}
+
+/**
+ * Gets an event which is set when the queue is non-empty
+ */
+
+HANDLE Queue_Event(wQueue* queue)
+{
+	return queue->event;
+}
+
+/**
  * Methods
  */
 
@@ -67,8 +85,11 @@ void Queue_Clear(wQueue* queue)
 	if (queue->synchronized)
 		WaitForSingleObject(queue->mutex, INFINITE);
 
-	for (index = 0; index < queue->size; index++)
+	for (index = queue->head; index != queue->tail; index++)
 	{
+		if (queue->object.fnObjectFree)
+			queue->object.fnObjectFree(queue->array[index]);
+
 		queue->array[index] = NULL;
 	}
 
@@ -125,6 +146,8 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
 
+	SetEvent(queue->event);
+
 	if (queue->synchronized)
 		ReleaseMutex(queue->mutex);
 }
@@ -144,9 +167,12 @@ void* Queue_Dequeue(wQueue* queue)
 	{
 		obj = queue->array[queue->head];
 		queue->array[queue->head] = NULL;
-		queue->head = (queue->head + 1) % queue->size;
+		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 	}
+
+	if (queue->size < 1)
+		ResetEvent(queue->event);
 
 	if (queue->synchronized)
 		ReleaseMutex(queue->mutex);
@@ -178,7 +204,7 @@ void* Queue_Peek(wQueue* queue)
  * Construction, Destruction
  */
 
-wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
+wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 {
 	wQueue* queue = NULL;
 
@@ -195,15 +221,18 @@ wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
 
 		queue->synchronized = synchronized;
 
-		if (iCapacity > 0)
-			queue->capacity = iCapacity;
+		if (capacity > 0)
+			queue->capacity = capacity;
 
-		if (iGrowthFactor > 0)
-			queue->growthFactor = iGrowthFactor;
+		if (growthFactor > 0)
+			queue->growthFactor = growthFactor;
 
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
+		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		ZeroMemory(&queue->object, sizeof(wObject));
 	}
 
 	return queue;
@@ -211,6 +240,9 @@ wQueue* Queue_New(BOOL synchronized, int iCapacity, int iGrowthFactor)
 
 void Queue_Free(wQueue* queue)
 {
+	Queue_Clear(queue);
+
+	CloseHandle(queue->event);
 	CloseHandle(queue->mutex);
 	free(queue->array);
 	free(queue);

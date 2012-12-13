@@ -29,6 +29,16 @@
 
 #include <winpr/synch.h>
 
+typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
+typedef void (*OBJECT_FREE_FN)(void* obj);
+
+struct _wObject
+{
+	OBJECT_EQUALS_FN fnObjectEquals;
+	OBJECT_FREE_FN fnObjectFree;
+};
+typedef struct _wObject wObject;
+
 /* System.Collections.Queue */
 
 struct _wQueue
@@ -42,13 +52,21 @@ struct _wQueue
 	int size;
 	void** array;
 	HANDLE mutex;
+	HANDLE event;
+
+	wObject object;
 };
 typedef struct _wQueue wQueue;
 
 WINPR_API int Queue_Count(wQueue* queue);
 WINPR_API BOOL Queue_IsSynchronized(wQueue* queue);
+WINPR_API HANDLE Queue_SyncRoot(wQueue* queue);
+WINPR_API HANDLE Queue_Event(wQueue* queue);
+
+#define Queue_Object(_queue)	(&_queue->object)
 
 WINPR_API void Queue_Clear(wQueue* queue);
+
 WINPR_API BOOL Queue_Contains(wQueue* queue, void* obj);
 
 WINPR_API void Queue_Enqueue(wQueue* queue, void* obj);
@@ -63,12 +81,15 @@ WINPR_API void Queue_Free(wQueue* queue);
 
 struct _wStack
 {
-	BOOL bSynchronized;
+	BOOL synchronized;
+	wObject object;
 };
 typedef struct _wStack wStack;
 
 WINPR_API int Stack_Count(wStack* stack);
 WINPR_API BOOL Stack_IsSynchronized(wStack* stack);
+
+#define Stack_Object(_stack)	(&_stack->object)
 
 WINPR_API void Stack_Clear(wStack* stack);
 WINPR_API BOOL Stack_Contains(wStack* stack, void* obj);
@@ -85,7 +106,15 @@ WINPR_API void Stack_Free(wStack* stack);
 
 struct _wArrayList
 {
-	BOOL bSynchronized;
+	int capacity;
+	int growthFactor;
+	BOOL synchronized;
+
+	int size;
+	void** array;
+	HANDLE mutex;
+
+	wObject object;
 };
 typedef struct _wArrayList wArrayList;
 
@@ -94,7 +123,14 @@ WINPR_API int ArrayList_Count(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
-WINPR_API void* ArrayList_Item(wArrayList* arrayList, int index, void* obj);
+
+WINPR_API BOOL ArrayList_Lock(wArrayList* arrayList);
+WINPR_API BOOL ArrayList_Unlock(wArrayList* arrayList);
+
+WINPR_API void* ArrayList_GetItem(wArrayList* arrayList, int index);
+WINPR_API void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj);
+
+#define ArrayList_Object(_arrayList)	(&_arrayList->object)
 
 WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, void* obj);
@@ -103,12 +139,39 @@ WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
 WINPR_API void ArrayList_Insert(wArrayList* arrayList, int index, void* obj);
 
 WINPR_API void ArrayList_Remove(wArrayList* arrayList, void* obj);
-WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index, void* obj);
+WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index);
 
 WINPR_API int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 
 WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 WINPR_API void ArrayList_Free(wArrayList* arrayList);
+
+/* System.Collections.DictionaryBase */
+
+struct _wDictionary
+{
+	BOOL synchronized;
+	HANDLE mutex;
+};
+typedef struct _wDictionary wDictionary;
+
+/* System.Collections.Specialized.ListDictionary */
+
+struct _wListDictionary
+{
+	BOOL synchronized;
+	HANDLE mutex;
+};
+typedef struct _wListDictionary wListDictionary;
+
+/* System.Collections.Generic.KeyValuePair<TKey,TValue> */
+
+struct _wKeyValuePair
+{
+	void* key;
+	void* value;
+};
+typedef struct _wKeyValuePair wKeyValuePair;
 
 #endif /* WINPR_COLLECTIONS_H */

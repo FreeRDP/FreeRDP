@@ -1,8 +1,7 @@
-/*
+/**
  * WinPR: Windows Portable Runtime
- * Stream Utils
+ * System.Collections.Generic.KeyValuePair<TKey,TValue>
  *
- * Copyright 2011 Vic Lee
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,49 +22,27 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/stream.h>
 
-void Stream_EnsureCapacity(wStream* s, size_t size)
+#include <winpr/collections.h>
+
+/**
+ * C equivalent of the C# KeyValuePair<TKey, TValue> Structure:
+ * http://msdn.microsoft.com/en-us/library/5tbh8a42.aspx
+ */
+
+wKeyValuePair* KeyValuePair_New(void* key, void* value)
 {
-	if (s->capacity < size)
-	{
-		s->capacity = size;
-		s->buffer = (BYTE*) realloc(s->buffer, size);
-		s->pointer = s->buffer;
-	}
+	wKeyValuePair* keyValuePair;
+
+	keyValuePair = (wKeyValuePair*) malloc(sizeof(wKeyValuePair));
+
+	keyValuePair->key = key;
+	keyValuePair->value = value;
+
+	return keyValuePair;
 }
 
-wStream* Stream_New(BYTE* buffer, size_t size)
+void KeyValuePair_Free(wKeyValuePair* keyValuePair)
 {
-	wStream* s;
-
-	s = malloc(sizeof(wStream));
-
-	if (s != NULL)
-	{
-		if (buffer)
-			s->buffer = buffer;
-		else
-			s->buffer = (BYTE*) malloc(size);
-
-		s->pointer = s->buffer;
-		s->capacity = size;
-		s->length = size;
-	}
-
-	return s;
-}
-
-void Stream_Free(wStream* s, BOOL bFreeBuffer)
-{
-	if (s != NULL)
-	{
-		if (bFreeBuffer)
-		{
-			if (s->buffer != NULL)
-				free(s->buffer);
-		}
-
-		free(s);
-	}
+	free(keyValuePair);
 }

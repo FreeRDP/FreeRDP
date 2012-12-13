@@ -1,6 +1,6 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * RPC Fault Handling
+ * WinPR: Windows Portable Runtime
+ * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,14 +17,30 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_RPC_FAULT_H
-#define FREERDP_CORE_RPC_FAULT_H
+#ifndef WINPR_THREAD_PRIVATE_H
+#define WINPR_THREAD_PRIVATE_H
 
-#include "rpc.h"
+#ifndef _WIN32
 
-#include <winpr/wtypes.h>
+#include <winpr/thread.h>
 
-int rpc_recv_fault_pdu(rpcconn_hdr_t* header);
-UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code);
+#include <pthread.h>
 
-#endif /* FREERDP_CORE_RPC_FAULT_H */
+typedef void *(*pthread_start_routine)(void*);
+
+struct winpr_thread
+{
+	BOOL started;
+	pthread_t thread;
+	SIZE_T dwStackSize;
+	LPVOID lpParameter;
+	pthread_mutex_t mutex;
+	LPTHREAD_START_ROUTINE lpStartAddress;
+	LPSECURITY_ATTRIBUTES lpThreadAttributes;
+};
+typedef struct winpr_thread WINPR_THREAD;
+
+#endif
+
+#endif /* WINPR_THREAD_PRIVATE_H */
+

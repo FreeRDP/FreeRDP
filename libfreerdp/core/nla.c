@@ -85,7 +85,7 @@
 #endif
 
 #ifdef WITH_NATIVE_SSPI
-#define NLA_PKG_NAME	NEGOSSP_NAME
+#define NLA_PKG_NAME	NTLMSP_NAME
 #else
 #define NLA_PKG_NAME	NTLMSP_NAME
 #endif

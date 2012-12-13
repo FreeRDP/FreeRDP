@@ -207,6 +207,8 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 
 	SSL_CTX_set_options(tls->ctx, options);
 
+	printf("private key file: %s\n", privatekey_file);
+
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
