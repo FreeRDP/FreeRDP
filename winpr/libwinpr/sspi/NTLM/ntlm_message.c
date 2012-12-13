@@ -350,6 +350,9 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ZeroMemory(&message, sizeof(message));
 	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
+	printf("ChallengeMessage: length:%d\n", buffer->cbBuffer);
+	winpr_HexDump(buffer->pvBuffer, buffer->cbBuffer);
+
 	StartOffset = Stream_Pointer(s);
 
 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
@@ -937,8 +940,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	message.LmChallengeResponse.Len = (UINT16) context->LmChallengeResponse.cbBuffer;
 	message.LmChallengeResponse.Buffer = (BYTE*) context->LmChallengeResponse.pvBuffer;
 
-	if (context->NTLMv2)
-		ZeroMemory(message.LmChallengeResponse.Buffer, message.LmChallengeResponse.Len);
+	//if (context->NTLMv2)
+	//	ZeroMemory(message.LmChallengeResponse.Buffer, message.LmChallengeResponse.Len);
 
 	message.NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
 	message.NtChallengeResponse.Buffer = (BYTE*) context->NtChallengeResponse.pvBuffer;

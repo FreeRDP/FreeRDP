@@ -286,7 +286,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-static int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
+int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 {
 	int status = -1;
 
@@ -338,6 +338,12 @@ static int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 
 #endif
 }
+
+#if 0
+
+/**
+ * FIXME: this breaks NLA in certain cases only, why?
+ */
 
 int transport_read(rdpTransport* transport, STREAM* s)
 {
@@ -397,6 +403,43 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 	return transport_status;
 }
+
+#else
+
+int transport_read(rdpTransport* transport, STREAM* s)
+{
+	int status = -1;
+
+	while (TRUE)
+	{
+		if (transport->layer == TRANSPORT_LAYER_TLS)
+			status = tls_read(transport->TlsIn, stream_get_tail(s), stream_get_left(s));
+		else if (transport->layer == TRANSPORT_LAYER_TCP)
+			status = tcp_read(transport->TcpIn, stream_get_tail(s), stream_get_left(s));
+		else if (transport->layer == TRANSPORT_LAYER_TSG)
+			status = tsg_read(transport->tsg, stream_get_tail(s), stream_get_left(s));
+
+		if ((status == 0) && (transport->blocking))
+		{
+			freerdp_usleep(transport->usleep_interval);
+			continue;
+		}
+
+		break;
+	}
+
+#ifdef WITH_DEBUG_TRANSPORT
+	if (status > 0)
+	{
+		printf("Local < Remote\n");
+		freerdp_hexdump(s->data, status);
+	}
+#endif
+
+	return status;
+}
+
+#endif
 
 static int transport_read_nonblocking(rdpTransport* transport)
 {

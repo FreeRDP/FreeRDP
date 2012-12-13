@@ -382,6 +382,10 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 				printf("Sending multi monitor information anyway (may break connectivity!)\n");
 				gcc_write_client_monitor_data(s, settings);
 			}
+			else
+			{
+				printf("Use /multimon:force to force sending multi monitor information\n");
+			}
 		}
 	}
 }
