@@ -520,7 +520,6 @@ int rpc_client_stop(rdpRpc* rpc)
 {
 	SetEvent(rpc->client->StopEvent);
 
-	printf("rpc_client_stop waiting for thread\n");
 	WaitForSingleObject(rpc->client->Thread, INFINITE);
 
 	return 0;
@@ -531,8 +530,6 @@ int rpc_client_free(rdpRpc* rpc)
 	RpcClient* client;
 
 	client = rpc->client;
-
-	printf("rpc_client_free\n");
 
 	if (client)
 	{

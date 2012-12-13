@@ -238,8 +238,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		ZeroMemory(packetCapsResponse, sizeof(TSG_PACKET_CAPS_RESPONSE));
 		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
 
-		printf("TSG_PACKET_TYPE_CAPS_RESPONSE\n");
-
 		/* PacketQuarResponsePtr (4 bytes) */
 		packetCapsResponse->pktQuarEncResponse.flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
 		packetCapsResponse->pktQuarEncResponse.certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
@@ -269,7 +267,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
 
-			printf("CertChain (%d)\n", (count * 2));
 			freerdp_hexdump(&buffer[offset], (count * 2));
 
 			/*
@@ -359,8 +356,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		ZeroMemory(packetQuarEncResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
-		printf("TSG_PACKET_TYPE_QUARENC_RESPONSE\n");
-
 		/* PacketQuarResponsePtr (4 bytes) */
 		packetQuarEncResponse->flags = *((UINT32*) &buffer[offset + 12]); /* Flags */
 		packetQuarEncResponse->certChainLen = *((UINT32*) &buffer[offset + 16]); /* CertChainLength */
@@ -377,9 +372,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 			offset += 4; /* Offset (4 bytes) */
 			count = *((UINT32*) &buffer[offset]); /* ActualCount (4 bytes) */
 			offset += 4;
-            
-			printf("CertChain (%d)\n", (count * 2));
-			freerdp_hexdump(&buffer[offset], (count * 2));
 
 			/*
 			 * CertChainData is a wide character string, and the count is
@@ -393,8 +385,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		}
 		else
 		{
-			printf("CertChain (%d)\n", 0);
-
 			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
 			offset += 4;
 		}
@@ -1106,8 +1096,6 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 BOOL tsg_disconnect(rdpTsg* tsg)
 {
-	printf("tsg_disconnect\n");
-
 	/**
 	 *                        Gateway Shutdown Phase
 	 *
@@ -1196,8 +1184,6 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 	tsg->rpc->client->SynchronousSend = TRUE;
 	tsg->rpc->client->SynchronousReceive = blocking;
 
-	printf("tsg_set_blocking_mode: %d\n", blocking);
-
 	return TRUE;
 }
 
@@ -1221,8 +1207,6 @@ rdpTsg* tsg_new(rdpTransport* transport)
 
 void tsg_free(rdpTsg* tsg)
 {
-	printf("tsg_free\n");
-
 	if (tsg != NULL)
 	{
 		free(tsg->MachineName);

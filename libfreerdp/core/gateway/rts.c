@@ -155,7 +155,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	http_response_print(http_response);
+	//http_response_print(http_response);
 	http_response_free(http_response);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;

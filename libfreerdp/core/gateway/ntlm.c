@@ -259,12 +259,6 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 	free(ntlm->identity.Password);
 	free(ntlm->ServicePrincipalName);
 
-	if (ntlm->outputBuffer.pvBuffer)
-	{
-		free(ntlm->outputBuffer.pvBuffer);
-		ntlm->outputBuffer.pvBuffer = NULL;
-	}
-
 	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
 	ntlm->table->DeleteSecurityContext(&ntlm->context);

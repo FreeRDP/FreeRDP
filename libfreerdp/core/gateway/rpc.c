@@ -577,22 +577,15 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 void rpc_free(rdpRpc* rpc)
 {
-	printf("rpc_free\n");
-
 	if (rpc != NULL)
 	{
 		rpc_client_stop(rpc);
-
-		printf("rpc_client stopped\n");
 
 		if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 		{
 			ntlm_client_uninit(rpc->ntlm);
 			ntlm_free(rpc->ntlm);
 		}
-
-		ntlm_http_free(rpc->NtlmHttpIn);
-		ntlm_http_free(rpc->NtlmHttpOut);
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 

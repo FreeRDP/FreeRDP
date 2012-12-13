@@ -98,10 +98,9 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
 
-	rpc->ntlm = ntlm_new();
-
 	DEBUG_RPC("Sending bind PDU");
 
+	rpc->ntlm = ntlm_new();
 	ntlm_client_init(rpc->ntlm, FALSE, settings->Username, settings->Domain, settings->Password);
 
 	ntlm_authenticate(rpc->ntlm);
@@ -383,8 +382,6 @@ int rpc_secure_bind(rdpRpc* rpc)
 			return -1;
 		}
 	}
-
-	printf("RPC_CLIENT_STATE_CONTEXT_NEGOTIATED\n");
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
