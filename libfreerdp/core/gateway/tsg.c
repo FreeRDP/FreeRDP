@@ -660,7 +660,7 @@ BOOL TsProxyAuthorizeTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunn
 	return TRUE;
 }
 
-BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg)
+BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, unsigned long procId)
 {
 	int status;
 	BYTE* buffer;
@@ -674,7 +674,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg)
 	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
 
-	*((UINT32*) &buffer[20]) = TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST; /* ProcId */
+	*((UINT32*) &buffer[20]) = procId; /* ProcId */
 
 	/* 4-byte alignment */
 
@@ -718,7 +718,7 @@ BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunne
 
 	DEBUG_TSG("TsProxyMakeTunnelCall");
 
-	if (!TsProxyMakeTunnelCallWriteRequest(tsg))
+	if (!TsProxyMakeTunnelCallWriteRequest(tsg, procId))
 	{
 		printf("TsProxyMakeTunnelCall: error writing request\n");
 		return FALSE;
@@ -855,14 +855,142 @@ BOOL TsProxyCreateChannel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnel
 	return TRUE;
 }
 
-HRESULT TsProxyCloseChannel(PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
+BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
 {
-	return 0;
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	length = 20;
+	buffer = (BYTE*) malloc(length);
+
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
+
+	status = rpc_write(rpc, buffer, length, TsProxyCloseChannelOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
 }
 
-HRESULT TsProxyCloseTunnel(PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
+BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg)
 {
-	return 0;
+	RPC_PDU* pdu;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	rdpRpc* rpc = tsg->rpc;
+
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!pdu)
+		return FALSE;
+
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
+
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
+	offset = 0;
+
+	rpc_client_receive_pool_return(rpc, pdu);
+
+	return TRUE;
+}
+
+HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
+{
+	DEBUG_TSG("TsProxyCloseChannel");
+
+	if (!TsProxyCloseChannelWriteRequest(tsg, context))
+	{
+		printf("TsProxyCloseChannel: error writing request\n");
+		return FALSE;
+	}
+
+	if (!TsProxyCloseChannelReadResponse(tsg))
+	{
+		printf("TsProxyCloseChannel: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
+{
+	int status;
+	BYTE* buffer;
+	UINT32 length;
+	rdpRpc* rpc = tsg->rpc;
+
+	length = 20;
+	buffer = (BYTE*) malloc(length);
+
+	/* TunnelContext */
+	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
+	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
+
+	status = rpc_write(rpc, buffer, length, TsProxyCloseTunnelOpnum);
+
+	if (status <= 0)
+		return FALSE;
+
+	free(buffer);
+
+	return TRUE;
+}
+
+BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg)
+{
+	RPC_PDU* pdu;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	rdpRpc* rpc = tsg->rpc;
+
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!pdu)
+		return FALSE;
+
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
+
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
+	offset = 0;
+
+	rpc_client_receive_pool_return(rpc, pdu);
+
+	return TRUE;
+}
+
+HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
+{
+	DEBUG_TSG("TsProxyCloseTunnel");
+
+	if (!TsProxyCloseTunnelWriteRequest(tsg, context))
+	{
+		printf("TsProxyCloseTunnel: error writing request\n");
+		return FALSE;
+	}
+
+	if (!TsProxyCloseTunnelReadResponse(tsg))
+	{
+		printf("TsProxyCloseTunnel: error reading response\n");
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
@@ -1044,7 +1172,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	 *
 	 */
 
-	if (!TsProxyMakeTunnelCall(tsg, NULL, 0, NULL, NULL))
+	if (!TsProxyMakeTunnelCall(tsg, NULL, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
 		return FALSE;
 
 	/**
@@ -1115,6 +1243,17 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 	 *        |<-------------TsProxyCloseTunnel Response----------|
 	 *        |                                                   |
 	 */
+
+	tsg->rpc->client->SynchronousReceive = TRUE;
+
+	if (!TsProxyCloseChannel(tsg, NULL))
+		return FALSE;
+
+	if (!TsProxyMakeTunnelCall(tsg, NULL, TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST, NULL, NULL))
+		return FALSE;
+
+	if (!TsProxyCloseTunnel(tsg, NULL))
+		return FALSE;
 
 	return TRUE;
 }
