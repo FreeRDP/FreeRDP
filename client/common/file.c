@@ -561,6 +561,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->RemoteApplicationCmdLine))
 		settings->RemoteApplicationCmdLine = file->RemoteApplicationCmdLine;
 
+	if (~file->SpanMonitors)
+		settings->SpanMonitors = file->SpanMonitors;
+	if (~file->UseMultiMon)
+		settings->UseMultimon = file->UseMultiMon;
+
 	return TRUE;
 }
 
