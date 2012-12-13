@@ -25,7 +25,8 @@
 typedef struct rdp_tsg rdpTsg;
 
 #include "rpc.h"
-#include "transport.h"
+
+#include "../transport.h"
 
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>

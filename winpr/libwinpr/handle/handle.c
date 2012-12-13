@@ -44,7 +44,7 @@ BOOL CloseHandle(HANDLE hObject)
 	{
 		WINPR_THREAD* thread;
 
-		thread = (WINPR_THREAD*) thread;
+		thread = (WINPR_THREAD*) Object;
 
 		free(thread);
 
