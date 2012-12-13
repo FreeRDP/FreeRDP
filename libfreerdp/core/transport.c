@@ -632,7 +632,14 @@ void transport_free(rdpTransport* transport)
 		if (transport->TlsIn)
 			tls_free(transport->TlsIn);
 
+		if (transport->TlsOut != transport->TlsIn)
+			tls_free(transport->TlsOut);
+
 		tcp_free(transport->TcpIn);
+
+		if (transport->TcpOut != transport->TcpIn)
+			tcp_free(transport->TcpOut);
+
 		tsg_free(transport->tsg);
 
 		free(transport);

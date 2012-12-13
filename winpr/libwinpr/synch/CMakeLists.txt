@@ -18,6 +18,8 @@
 set(MODULE_NAME "winpr-synch")
 set(MODULE_PREFIX "WINPR_SYNCH")
 
+include_directories(../thread)
+
 set(${MODULE_PREFIX}_SRCS
 	address.c
 	barrier.c
@@ -65,3 +67,4 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+

@@ -85,7 +85,7 @@ void Queue_Clear(wQueue* queue)
 	if (queue->synchronized)
 		WaitForSingleObject(queue->mutex, INFINITE);
 
-	for (index = 0; index < queue->size; index++)
+	for (index = queue->head; index != queue->tail; index++)
 	{
 		if (queue->object.fnObjectFree)
 			queue->object.fnObjectFree(queue->array[index]);
@@ -240,6 +240,8 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 
 void Queue_Free(wQueue* queue)
 {
+	Queue_Clear(queue);
+
 	CloseHandle(queue->event);
 	CloseHandle(queue->mutex);
 	free(queue->array);

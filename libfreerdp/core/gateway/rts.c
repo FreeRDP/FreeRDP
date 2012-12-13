@@ -698,6 +698,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
@@ -727,7 +728,9 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	rts_client_keepalive_command_write(&buffer[76], rpc->KeepAliveInterval); /* ClientKeepalive (8 bytes) */
 	rts_association_group_id_command_write(&buffer[84], AssociationGroupId); /* AssociationGroupId (20 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
+
+	rpc_in_write(rpc, buffer, length);
 
 	free(buffer);
 
@@ -766,6 +769,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 
 	rts_pdu_header_init(&header);
@@ -779,16 +783,18 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_client_keepalive_command_write(&buffer[20], rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
-	return 0;
+	return length;
 }
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 	UINT32 BytesReceived;
 	UINT32 AvailableWindow;
@@ -816,8 +822,9 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	/* FlowControlAck Command (28 bytes) */
 	rts_flow_control_ack_command_write(&buffer[28], BytesReceived, AvailableWindow, ChannelCookie);
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
 	return 0;
@@ -870,6 +877,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 
 	rts_pdu_header_init(&header);
@@ -883,11 +891,12 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
-	return 0;
+	return length;
 }
 
 int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)

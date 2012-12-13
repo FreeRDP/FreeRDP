@@ -26,6 +26,7 @@
 #ifndef _WIN32
 
 #include "../synch/synch.h"
+#include "../thread/thread.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -41,6 +42,12 @@ BOOL CloseHandle(HANDLE hObject)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
+		WINPR_THREAD* thread;
+
+		thread = (WINPR_THREAD*) thread;
+
+		free(thread);
+
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)

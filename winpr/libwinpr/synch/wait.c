@@ -29,6 +29,7 @@
 #include <winpr/synch.h>
 
 #include "synch.h"
+#include "thread.h"
 
 /**
  * WaitForSingleObject
@@ -49,10 +50,14 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
+		WINPR_THREAD* thread;
+
 		if (dwMilliseconds != INFINITE)
 			printf("WaitForSingleObject: timeout not implemented for thread wait\n");
 
-		pthread_join((pthread_t) Object, NULL);
+		thread = (WINPR_THREAD*) Object;
+
+		pthread_join(thread->thread, NULL);
 	}
 	if (Type == HANDLE_TYPE_MUTEX)
 	{

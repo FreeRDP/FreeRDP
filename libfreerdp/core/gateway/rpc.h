@@ -701,9 +701,11 @@ struct rpc_client
 
 	wQueue* SendQueue;
 
+	RPC_PDU* pdu;
 	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
 
+	wStream* RecvFrag;
 	wQueue* FragmentPool;
 	wQueue* FragmentQueue;
 
@@ -737,8 +739,6 @@ struct rdp_rpc
 	UINT32 CallId;
 	UINT32 PipeCallId;
 
-	RPC_PDU* pdu;
-
 	UINT32 StubCallId;
 	UINT32 StubFragCount;
 
@@ -748,8 +748,6 @@ struct rdp_rpc
 
 	UINT16 max_xmit_frag;
 	UINT16 max_recv_frag;
-
-	wStream* RecvFrag;
 
 	UINT32 ReceiveWindow;
 

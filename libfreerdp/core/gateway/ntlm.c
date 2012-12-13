@@ -195,6 +195,12 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 {
 	SECURITY_STATUS status;
 
+	if (ntlm->outputBuffer.pvBuffer)
+	{
+		free(ntlm->outputBuffer.pvBuffer);
+		ntlm->outputBuffer.pvBuffer = NULL;
+	}
+
 	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	ntlm->outputBufferDesc.cBuffers = 1;
 	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
@@ -252,6 +258,12 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 	free(ntlm->identity.Domain);
 	free(ntlm->identity.Password);
 	free(ntlm->ServicePrincipalName);
+
+	if (ntlm->outputBuffer.pvBuffer)
+	{
+		free(ntlm->outputBuffer.pvBuffer);
+		ntlm->outputBuffer.pvBuffer = NULL;
+	}
 
 	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);

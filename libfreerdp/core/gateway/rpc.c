@@ -552,11 +552,6 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_xmit_frag = 0x0FF8;
 		rpc->max_recv_frag = 0x0FF8;
 
-		rpc->pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
-		rpc->pdu->s = Stream_New(NULL, rpc->max_recv_frag);
-
-		rpc->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
-
 		rpc->ReceiveWindow = 0x00010000;
 
 		rpc->ChannelLifetime = 0x40000000;
@@ -598,8 +593,6 @@ void rpc_free(rdpRpc* rpc)
 
 		ntlm_http_free(rpc->NtlmHttpIn);
 		ntlm_http_free(rpc->NtlmHttpOut);
-
-		free(rpc->pdu);
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 

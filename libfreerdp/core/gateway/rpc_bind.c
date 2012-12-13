@@ -93,6 +93,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
+	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
@@ -178,14 +179,17 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], bind_pdu->auth_verifier.auth_value, bind_pdu->auth_length);
 	offset += (8 + bind_pdu->auth_length);
 
-	rpc_in_write(rpc, buffer, bind_pdu->frag_length);
 	length = bind_pdu->frag_length;
+
+	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+
+	rpc_send_enqueue_pdu(rpc, buffer, length);
 
 	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem);
 	free(bind_pdu);
-	free(buffer);
 
 	return length;
 }
@@ -246,6 +250,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
+	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
 	DEBUG_RPC("Sending rpc_auth_3 PDU");
@@ -289,11 +294,14 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value, auth_3_pdu->auth_length);
 	offset += (8 + auth_3_pdu->auth_length);
 
-	rpc_in_write(rpc, buffer, auth_3_pdu->frag_length);
 	length = auth_3_pdu->frag_length;
 
+	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+
+	rpc_send_enqueue_pdu(rpc, buffer, length);
+
 	free(auth_3_pdu);
-	free(buffer);
 
 	return length;
 }

@@ -398,6 +398,8 @@ wArrayList* ArrayList_New(BOOL synchronized)
 
 void ArrayList_Free(wArrayList* arrayList)
 {
+	ArrayList_Clear(arrayList);
+
 	CloseHandle(arrayList->mutex);
 	free(arrayList->array);
 	free(arrayList);
