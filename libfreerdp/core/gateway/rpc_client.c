@@ -241,6 +241,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 		{
 			printf("rpc_client_frag_read: invalid fragment size: %d (max: %d)\n",
 					header->frag_length, rpc->max_recv_frag);
+			winpr_HexDump(Stream_Buffer(rpc->client->RecvFrag), Stream_Position(rpc->client->RecvFrag));
 			return -1;
 		}
 
