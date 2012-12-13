@@ -350,9 +350,6 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ZeroMemory(&message, sizeof(message));
 	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 
-	printf("ChallengeMessage: length:%d\n", buffer->cbBuffer);
-	winpr_HexDump(buffer->pvBuffer, buffer->cbBuffer);
-
 	StartOffset = Stream_Pointer(s);
 
 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
