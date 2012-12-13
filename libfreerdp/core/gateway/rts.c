@@ -832,6 +832,22 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	UINT32 offset;
+	UINT32 BytesReceived;
+	UINT32 AvailableWindow;
+	BYTE ChannelCookie[16];
+
+	offset = 24;
+	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
+			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
+
+	printf("BytesReceived: %d AvailableWindow: %d\n",
+			BytesReceived, AvailableWindow);
+	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+
+	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
+		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
+
 	return 0;
 }
 
@@ -993,6 +1009,10 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	else if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION)
 	{
 		return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+	}
+	else if (SignatureId == RTS_PDU_PING)
+	{
+		rts_send_ping_pdu(rpc);
 	}
 	else
 	{

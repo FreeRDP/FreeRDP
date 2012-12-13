@@ -364,8 +364,30 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 
 	/* extended client data supported */
 
-	if (settings->NegotiationFlags)
-		gcc_write_client_monitor_data(s, settings);
+	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
+	{
+		if (!settings->SpanMonitors)
+		{
+			gcc_write_client_monitor_data(s, settings);
+		}
+	}
+	else
+	{
+		if (settings->UseMultimon)
+		{
+			printf("WARNING: true multi monitor support was not advertised by server!\n");
+
+			if (settings->ForceMultimon)
+			{
+				printf("Sending multi monitor information anyway (may break connectivity!)\n");
+				gcc_write_client_monitor_data(s, settings);
+			}
+			else
+			{
+				printf("Use /multimon:force to force sending multi monitor information\n");
+			}
+		}
+	}
 }
 
 BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)

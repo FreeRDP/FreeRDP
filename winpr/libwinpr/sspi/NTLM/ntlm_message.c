@@ -937,8 +937,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	message.LmChallengeResponse.Len = (UINT16) context->LmChallengeResponse.cbBuffer;
 	message.LmChallengeResponse.Buffer = (BYTE*) context->LmChallengeResponse.pvBuffer;
 
-	if (context->NTLMv2)
-		ZeroMemory(message.LmChallengeResponse.Buffer, message.LmChallengeResponse.Len);
+	//if (context->NTLMv2)
+	//	ZeroMemory(message.LmChallengeResponse.Buffer, message.LmChallengeResponse.Len);
 
 	message.NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
 	message.NtChallengeResponse.Buffer = (BYTE*) context->NtChallengeResponse.pvBuffer;
