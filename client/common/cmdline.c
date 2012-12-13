@@ -1298,6 +1298,20 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	if (settings->DisableThemes)
 		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
 
+	arg = CommandLineFindArgumentA(args, "p");
+
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		FillMemory(arg->Value, strlen(arg->Value), '*');
+	}
+
+	arg = CommandLineFindArgumentA(args, "gp");
+
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		FillMemory(arg->Value, strlen(arg->Value), '*');
+	}
+
 	return 1;
 }
 

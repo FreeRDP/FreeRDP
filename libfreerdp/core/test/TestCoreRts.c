@@ -9,7 +9,7 @@
 #include <winpr/print.h>
 #include <freerdp/freerdp.h>
 
-#include "rts.h"
+#include "gateway/rts.h"
 
 /* mocks */
 

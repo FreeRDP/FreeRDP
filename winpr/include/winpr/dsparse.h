@@ -22,8 +22,8 @@
 
 #ifdef _WIN32
 
-#include <winpr/rpc.h>
 #include <winpr/windows.h>
+#include <winpr/rpc.h>
 
 #include <ntdsapi.h>
 

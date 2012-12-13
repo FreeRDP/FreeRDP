@@ -195,6 +195,12 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 {
 	SECURITY_STATUS status;
 
+	if (ntlm->outputBuffer.pvBuffer)
+	{
+		free(ntlm->outputBuffer.pvBuffer);
+		ntlm->outputBuffer.pvBuffer = NULL;
+	}
+
 	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	ntlm->outputBufferDesc.cBuffers = 1;
 	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
@@ -235,6 +241,11 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 			status = SEC_I_CONTINUE_NEEDED;
 	}
 
+	if (ntlm->haveInputBuffer)
+	{
+		free(ntlm->inputBuffer.pvBuffer);
+	}
+
 	ntlm->haveInputBuffer = TRUE;
 	ntlm->haveContext = TRUE;
 
@@ -243,8 +254,14 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 void ntlm_client_uninit(rdpNtlm* ntlm)
 {
+	free(ntlm->identity.User);
+	free(ntlm->identity.Domain);
+	free(ntlm->identity.Password);
+	free(ntlm->ServicePrincipalName);
+
 	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+	ntlm->table->DeleteSecurityContext(&ntlm->context);
 }
 
 rdpNtlm* ntlm_new()
@@ -263,6 +280,6 @@ void ntlm_free(rdpNtlm* ntlm)
 {
 	if (ntlm != NULL)
 	{
-
+		free(ntlm);
 	}
 }

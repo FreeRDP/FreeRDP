@@ -95,7 +95,7 @@ void* xf_frame_rate_thread(void* param)
 
 	while (1)
 	{
-		// check if we should terminate
+		/* check if we should terminate */
 		pthread_testcancel();
 		
 		event = xf_event_new(XF_EVENT_TYPE_FRAME_TICK);
@@ -132,7 +132,7 @@ void* xf_monitor_updates(void* param)
 
 	while (1)
 	{
-		// check if we should terminate
+		/* check if we should terminate */
 		pthread_testcancel();
 
 		FD_ZERO(&rfds_set);

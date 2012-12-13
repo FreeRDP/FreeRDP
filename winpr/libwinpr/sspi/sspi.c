@@ -370,17 +370,28 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	}
 }
 
+static BOOL sspi_initialized = FALSE;
+
 void sspi_GlobalInit()
 {
-	SSL_load_error_strings();
-	SSL_library_init();
+	if (!sspi_initialized)
+	{
+		SSL_load_error_strings();
+		SSL_library_init();
 
-	sspi_ContextBufferAllocTableNew();
+		sspi_ContextBufferAllocTableNew();
+		sspi_initialized = TRUE;
+	}
 }
 
 void sspi_GlobalFinish()
 {
-	sspi_ContextBufferAllocTableFree();
+	if (sspi_initialized)
+	{
+		sspi_ContextBufferAllocTableFree();
+	}
+
+	sspi_initialized = FALSE;
 }
 
 #ifndef WITH_NATIVE_SSPI

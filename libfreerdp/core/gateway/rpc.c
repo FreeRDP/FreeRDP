@@ -157,6 +157,25 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
 }
 
 /**
+ * PDU Segments:
+ *  ________________________________
+ * |                                |
+ * |           PDU Header           |
+ * |________________________________|
+ * |                                |
+ * |                                |
+ * |            PDU Body            |
+ * |                                |
+ * |________________________________|
+ * |                                |
+ * |        Security Trailer        |
+ * |________________________________|
+ * |                                |
+ * |      Authentication Token      |
+ * |________________________________|
+ */
+
+/**
  * PDU Structure with verification trailer
  *
  * MUST only appear in a request PDU!
@@ -187,6 +206,31 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
  *
  */
 
+/**
+ * Security Trailer:
+ *
+ * The sec_trailer structure MUST be placed at the end of the PDU, including past stub data,
+ * when present. The sec_trailer structure MUST be 4-byte aligned with respect to the beginning
+ * of the PDU. Padding octets MUST be used to align the sec_trailer structure if its natural
+ * beginning is not already 4-byte aligned.
+ *
+ * All PDUs that carry sec_trailer information share certain common fields:
+ * frag_length and auth_length. The beginning of the sec_trailer structure for each PDU MUST be
+ * calculated to start from offset (frag_length – auth_length – 8) from the beginning of the PDU.
+ *
+ * Immediately after the sec_trailer structure, there MUST be a BLOB carrying the authentication
+ * information produced by the security provider. This BLOB is called the authentication token and
+ * MUST be of size auth_length. The size MUST also be equal to the length from the first octet
+ * immediately after the sec_trailer structure all the way to the end of the fragment;
+ * the two values MUST be the same.
+ *
+ * A client or a server that (during composing of a PDU) has allocated more space for the
+ * authentication token than the security provider fills in SHOULD fill in the rest of
+ * the allocated space with zero octets. These zero octets are still considered to belong
+ * to the authentication token part of the PDU.
+ *
+ */
+
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
 {
 	UINT32 alloc_hint = 0;
@@ -197,7 +241,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{
-		*offset += 4;
+		*offset += 8;
 		rpc_offset_align(offset, 8);
 		alloc_hint = header->response.alloc_hint;
 	}
@@ -222,22 +266,46 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 		{
 			UINT32 sec_trailer_offset;
 
-			/**
-			 * All PDUs that carry sec_trailer information share certain common fields:
-			 * frag_length and auth_length. The beginning of the sec_trailer structure
-			 * for each PDU MUST be calculated to start from offset
-			 * (frag_length – auth_length – 8) from the beginning of the PDU.
-			 */
-
 			sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
 			*length = sec_trailer_offset - *offset;
 		}
 		else
 		{
-			BYTE auth_pad_length;
+			UINT32 frag_length;
+			UINT32 auth_length;
+			UINT32 auth_pad_length;
+			UINT32 sec_trailer_offset;
+			rpc_sec_trailer* sec_trailer;
 
-			auth_pad_length = *(buffer + header->common.frag_length - header->common.auth_length - 6);
-			*length = header->common.frag_length - (header->common.auth_length + *offset + 8 + auth_pad_length);
+			frag_length = header->common.frag_length;
+			auth_length = header->common.auth_length;
+
+			sec_trailer_offset = frag_length - auth_length - 8;
+			sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
+			auth_pad_length = sec_trailer->auth_pad_length;
+
+#if 0
+			printf("sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
+					sec_trailer->auth_type,
+					sec_trailer->auth_level,
+					sec_trailer->auth_pad_length,
+					sec_trailer->auth_reserved,
+					sec_trailer->auth_context_id);
+#endif
+
+			/**
+			 * According to [MS-RPCE], auth_pad_length is the number of padding
+			 * octets used to 4-byte align the security trailer, but in practice
+			 * we get values up to 15, which indicates 16-byte alignment.
+			 */
+
+			if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
+			{
+				printf("invalid auth_length: actual: %d, expected: %d\n", auth_length,
+						(frag_length - (sec_trailer_offset + 8)));
+			}
+
+			*length = frag_length - auth_length - 24 - 8 - auth_pad_length;
 		}
 	}
 
@@ -277,201 +345,6 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	return status;
 }
 
-int rpc_recv_pdu_header(rdpRpc* rpc, BYTE* header)
-{
-	int status;
-	int bytesRead;
-	UINT32 offset;
-    
-	/* Read common header fields */
-    
-	bytesRead = 0;
-    
-	while (bytesRead < RPC_COMMON_FIELDS_LENGTH)
-	{
-		status = rpc_out_read(rpc, &header[bytesRead], RPC_COMMON_FIELDS_LENGTH - bytesRead);
-        
-		if (status < 0)
-		{
-			printf("rpc_recv_pdu_header: error reading header\n");
-			return status;
-		}
-        
-		bytesRead += status;
-	}
-
-	rpc_get_stub_data_info(rpc, header, &offset, NULL);
-
-	while (bytesRead < offset)
-	{
-		status = rpc_out_read(rpc, &header[bytesRead], offset - bytesRead);
-        
-		if (status < 0)
-			return status;
-        
-		bytesRead += status;
-	}
-    
-	return bytesRead;
-}
-
-int rpc_recv_pdu_fragment(rdpRpc* rpc)
-{
-	int status;
-	int headerLength;
-	int bytesRead = 0;
-	rpcconn_hdr_t* header;
-
-	WaitForSingleObject(rpc->VirtualConnection->DefaultInChannel->Mutex, INFINITE);
-
-	status = rpc_recv_pdu_header(rpc, rpc->FragBuffer);
-    
-	if (status < 1)
-	{
-		printf("rpc_recv_pdu_header: error reading header\n");
-		return status;
-	}
-    
-	headerLength = status;
-	header = (rpcconn_hdr_t*) rpc->FragBuffer;
-	bytesRead += status;
-	
-	if (header->common.frag_length > rpc->FragBufferSize)
-	{
-		rpc->FragBufferSize = header->common.frag_length;
-		rpc->FragBuffer = (BYTE*) realloc(rpc->FragBuffer, rpc->FragBufferSize);
-		header = (rpcconn_hdr_t*) rpc->FragBuffer;
-	}
-
-	while (bytesRead < header->common.frag_length)
-	{
-		status = rpc_out_read(rpc, &rpc->FragBuffer[bytesRead], header->common.frag_length - bytesRead);
-
-		if (status < 0)
-		{
-			printf("rpc_recv_pdu: error reading fragment\n");
-			return status;
-		}
-
-		bytesRead += status;
-	}
-
-	ReleaseMutex(rpc->VirtualConnection->DefaultInChannel->Mutex);
-
-	if (header->common.ptype == PTYPE_RTS) /* RTS PDU */
-	{
-		if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
-			return header->common.frag_length;
-
-		printf("Receiving Out-of-Sequence RTS PDU\n");
-		rts_recv_out_of_sequence_pdu(rpc, rpc->FragBuffer, header->common.frag_length);
-
-		return rpc_recv_pdu_fragment(rpc);
-	}
-	else if (header->common.ptype == PTYPE_FAULT)
-	{
-		rpc_recv_fault_pdu(header);
-		return -1;
-	}
-
-	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
-	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
-
-#if 0
-	printf("BytesReceived: %d ReceiverAvailableWindow: %d ReceiveWindow: %d\n",
-			rpc->VirtualConnection->DefaultOutChannel->BytesReceived,
-			rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow,
-			rpc->ReceiveWindow);
-#endif
-
-	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
-	{
-		printf("Sending Flow Control Ack PDU\n");
-		rts_send_flow_control_ack_pdu(rpc);
-	}
-
-#ifdef WITH_DEBUG_RPC
-	rpc_pdu_header_print((rpcconn_hdr_t*) header);
-	printf("rpc_recv_pdu_fragment: length: %d\n", header->common.frag_length);
-	freerdp_hexdump(rpc->FragBuffer, header->common.frag_length);
-	printf("\n");
-#endif
-
-	return header->common.frag_length;
-}
-
-RPC_PDU* rpc_recv_pdu(rdpRpc* rpc)
-{
-	int status;
-	UINT32 StubOffset;
-	UINT32 StubLength;
-	rpcconn_hdr_t* header;
-
-	status = rpc_recv_pdu_fragment(rpc);
-
-	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
-	{
-		rpc->pdu->Flags = 0;
-		rpc->pdu->Buffer = rpc->FragBuffer;
-		rpc->pdu->Size = rpc->FragBufferSize;
-		rpc->pdu->Length = status;
-
-		return rpc->pdu;
-	}
-
-	header = (rpcconn_hdr_t*) rpc->FragBuffer;
-
-	if (header->common.ptype != PTYPE_RESPONSE)
-	{
-		printf("rpc_recv_pdu: unexpected ptype 0x%02X\n", header->common.ptype);
-		return NULL;
-	}
-
-	if (!rpc_get_stub_data_info(rpc, rpc->FragBuffer, &StubOffset, &StubLength))
-	{
-		printf("rpc_recv_pdu: expected stub\n");
-		return NULL;
-	}
-
-	if (header->response.alloc_hint > rpc->StubBufferSize)
-	{
-		rpc->StubBufferSize = header->response.alloc_hint;
-		rpc->StubBuffer = (BYTE*) realloc(rpc->StubBuffer, rpc->StubBufferSize);
-	}
-
-	CopyMemory(&rpc->StubBuffer[rpc->StubOffset], &rpc->FragBuffer[StubOffset], StubLength);
-	rpc->StubOffset += StubLength;
-	rpc->StubFragCount++;
-
-	/**
-	 * If alloc_hint is set to a nonzero value and a request or a response is fragmented into multiple
-	 * PDUs, implementations of these extensions SHOULD set the alloc_hint field in every PDU to be the
-	 * combined stub data length of all remaining fragment PDUs.
-	 */
-
-	//printf("Receiving Fragment #%d FragStubLength: %d FragLength: %d AllocHint: %d StubOffset: %d\n",
-	//		rpc->StubFragCount, StubLength, header->common.frag_length, header->response.alloc_hint, rpc->StubOffset);
-
-	if ((header->response.alloc_hint == StubLength))
-	{
-		//printf("Reassembled PDU (%d):\n", rpc->StubOffset);
-		//freerdp_hexdump(rpc->StubBuffer, rpc->StubOffset);
-
-		rpc->StubLength = rpc->StubOffset;
-		rpc->StubOffset = 0;
-		rpc->StubFragCount = 0;
-
-		rpc->pdu->Flags = RPC_PDU_FLAG_STUB;
-		rpc->pdu->Buffer = rpc->StubBuffer;
-		rpc->pdu->Size = rpc->StubBufferSize;
-		rpc->pdu->Length = rpc->StubLength;
-
-		return rpc->pdu;
-	}
-
-	return rpc_recv_pdu(rpc);
-}
-
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
 	BYTE* buffer;
@@ -480,6 +353,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
+	RpcClientCall* clientCall;
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu;
 
@@ -499,16 +373,16 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
 	request_pdu->auth_length = ntlm->ContextSizes.cbMaxSignature;
-	request_pdu->call_id = ++rpc->call_id;
-
-	/* opnum 8 is TsProxySetupReceivePipe, save call_id for checking pipe responses */
-
-	if (opnum == 8)
-		rpc->pipe_call_id = rpc->call_id;
-
+	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
+
+	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
+	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+
+	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
+		rpc->PipeCallId = request_pdu->call_id;
 
 	request_pdu->stub_data = data;
 
@@ -553,7 +427,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->send_seq_num++);
+	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
 
 	if (encrypt_status != SEC_E_OK)
 	{
@@ -563,23 +437,18 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
 	offset += Buffers[1].cbBuffer;
+	free(Buffers[1].pvBuffer);
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
+	free(request_pdu);
 
 	return length;
-}
-
-int rpc_recv(rdpRpc* rpc, RPC_PDU* pdu)
-{
-	return 0;
 }
 
 BOOL rpc_connect(rdpRpc* rpc)
 {
 	rpc->TlsIn = rpc->transport->TlsIn;
 	rpc->TlsOut = rpc->transport->TlsOut;
-
-	rpc_client_start(rpc);
 
 	if (!rts_connect(rpc))
 	{
@@ -638,42 +507,11 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 {
 	if (virtual_connection != NULL)
 	{
+		free(virtual_connection->DefaultInChannel);
+		free(virtual_connection->DefaultOutChannel);
 		free(virtual_connection);
 	}
 }
-
-/* Virtual Connection Cookie Table */
-
-RpcVirtualConnectionCookieTable* rpc_virtual_connection_cookie_table_new(rdpRpc* rpc)
-{
-	RpcVirtualConnectionCookieTable* table;
-
-	table = (RpcVirtualConnectionCookieTable*) malloc(sizeof(RpcVirtualConnectionCookieTable));
-
-	if (table != NULL)
-	{
-		ZeroMemory(table, sizeof(RpcVirtualConnectionCookieTable));
-
-		table->Count = 0;
-		table->ArraySize = 32;
-
-		table->Entries = (RpcVirtualConnectionCookieEntry*) malloc(sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
-		ZeroMemory(table->Entries, sizeof(RpcVirtualConnectionCookieEntry) * table->ArraySize);
-	}
-
-	return table;
-}
-
-void rpc_virtual_connection_cookie_table_free(RpcVirtualConnectionCookieTable* table)
-{
-	if (table != NULL)
-	{
-		free(table->Entries);
-		free(table);
-	}
-}
-
-/* RPC Core Module */
 
 rdpRpc* rpc_new(rdpTransport* transport)
 {
@@ -688,7 +526,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->transport = transport;
 		rpc->settings = transport->settings;
 
-		rpc->send_seq_num = 0;
+		rpc->SendSeqNum = 0;
 		rpc->ntlm = ntlm_new();
 
 		rpc->NtlmHttpIn = ntlm_http_new();
@@ -697,14 +535,10 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
 		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
-		rpc->FragBufferSize = 20;
-		rpc->FragBuffer = (BYTE*) malloc(rpc->FragBufferSize);
+		rpc->PipeCallId = 0;
 
-		rpc->StubOffset = 0;
-		rpc->StubBufferSize = 20;
-		rpc->StubLength = 0;
+		rpc->StubCallId = 0;
 		rpc->StubFragCount = 0;
-		rpc->StubBuffer = (BYTE*) malloc(rpc->FragBufferSize);
 
 		rpc->rpc_vers = 5;
 		rpc->rpc_vers_minor = 0;
@@ -718,14 +552,6 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->max_xmit_frag = 0x0FF8;
 		rpc->max_recv_frag = 0x0FF8;
 
-		rpc->pdu = (RPC_PDU*) _aligned_malloc(sizeof(RPC_PDU), MEMORY_ALLOCATION_ALIGNMENT);
-
-		rpc->SendQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(rpc->SendQueue);
-
-		rpc->ReceiveQueue = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(rpc->ReceiveQueue);
-
 		rpc->ReceiveWindow = 0x00010000;
 
 		rpc->ChannelLifetime = 0x40000000;
@@ -736,9 +562,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		rpc->CurrentKeepAliveTime = 0;
 
 		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
-		rpc->VirtualConnectionCookieTable = rpc_virtual_connection_cookie_table_new(rpc);
+		rpc->VirtualConnectionCookieTable = ArrayList_New(TRUE);
 
-		rpc->call_id = 1;
+		rpc->CallId = 2;
 
 		rpc_client_new(rpc);
 
@@ -753,23 +579,18 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc != NULL)
 	{
-		RPC_PDU* PduEntry;
+		rpc_client_stop(rpc);
 
-		ntlm_http_free(rpc->NtlmHttpIn);
-		ntlm_http_free(rpc->NtlmHttpOut);
-
-		_aligned_free(rpc->pdu);
-
-		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->SendQueue)) != NULL)
-			_aligned_free(PduEntry);
-		_aligned_free(rpc->SendQueue);
-
-		while ((PduEntry = (RPC_PDU*) InterlockedPopEntrySList(rpc->ReceiveQueue)) != NULL)
-			_aligned_free(PduEntry);
-		_aligned_free(rpc->ReceiveQueue);
+		if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
+		{
+			ntlm_client_uninit(rpc->ntlm);
+			ntlm_free(rpc->ntlm);
+		}
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
-		rpc_virtual_connection_cookie_table_free(rpc->VirtualConnectionCookieTable);
+
+		ArrayList_Clear(rpc->VirtualConnectionCookieTable);
+		ArrayList_Free(rpc->VirtualConnectionCookieTable);
 
 		free(rpc);
 	}

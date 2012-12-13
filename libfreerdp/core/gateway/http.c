@@ -108,7 +108,9 @@ void http_context_free(HttpContext* http_context)
 	{
 		free(http_context->UserAgent);
 		free(http_context->Host);
+		free(http_context->URI);
 		free(http_context->Accept);
+		free(http_context->Method);
 		free(http_context->CacheControl);
 		free(http_context->Connection);
 		free(http_context->Pragma);
@@ -267,6 +269,10 @@ void http_request_free(HttpRequest* http_request)
 {
 	if (http_request != NULL)
 	{
+		free(http_request->AuthParam);
+		free(http_request->AuthScheme);
+		free(http_request->Authorization);
+		free(http_request->Content);
 		free(http_request->Method);
 		free(http_request->URI);
 		free(http_request);
@@ -397,10 +403,12 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 	nbytes = 0;
 	length = 10000;
+	content = NULL;
 	buffer = malloc(length);
 	http_response = http_response_new();
 
 	p = buffer;
+	http_response->ContentLength = 0;
 
 	while (TRUE)
 	{

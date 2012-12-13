@@ -155,7 +155,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	http_response_print(http_response);
+	//http_response_print(http_response);
 	http_response_free(http_response);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
@@ -177,12 +177,14 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
+	rpc_client_start(rpc);
+
 	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
+	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
@@ -190,7 +192,9 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_A3_pdu(rpc, pdu->Buffer, pdu->Size);
+	rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
@@ -221,7 +225,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	if (!pdu)
 		return FALSE;
 
-	rts = (rpcconn_rts_hdr_t*) pdu->Buffer;
+	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
@@ -229,13 +233,15 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rts_recv_CONN_C2_pdu(rpc, pdu->Buffer, pdu->Size);
+	rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
 
-	rpc->client->SynchronousSend = FALSE;
-	rpc->client->SynchronousReceive = FALSE;
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
 
 	return TRUE;
 }
@@ -692,6 +698,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
@@ -721,7 +728,9 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	rts_client_keepalive_command_write(&buffer[76], rpc->KeepAliveInterval); /* ClientKeepalive (8 bytes) */
 	rts_association_group_id_command_write(&buffer[84], AssociationGroupId); /* AssociationGroupId (20 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
+
+	rpc_in_write(rpc, buffer, length);
 
 	free(buffer);
 
@@ -760,6 +769,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 
 	rts_pdu_header_init(&header);
@@ -773,16 +783,18 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_client_keepalive_command_write(&buffer[20], rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
-	return 0;
+	return length;
 }
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 	UINT32 BytesReceived;
 	UINT32 AvailableWindow;
@@ -810,8 +822,9 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	/* FlowControlAck Command (28 bytes) */
 	rts_flow_control_ack_command_write(&buffer[28], BytesReceived, AvailableWindow, ChannelCookie);
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
 	return 0;
@@ -864,6 +877,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BYTE* buffer;
+	UINT32 length;
 	rpcconn_rts_hdr_t header;
 
 	rts_pdu_header_init(&header);
@@ -877,11 +891,12 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 
-	rpc_in_write(rpc, buffer, header.frag_length);
+	length = header.frag_length;
 
+	rpc_in_write(rpc, buffer, length);
 	free(buffer);
 
-	return 0;
+	return length;
 }
 
 int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
@@ -978,6 +993,10 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	else if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION)
 	{
 		return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+	}
+	else
+	{
+		printf("Unimplemented signature id: 0x%08X\n", SignatureId);
 	}
 
 	return 0;
