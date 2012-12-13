@@ -191,6 +191,7 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
+	printf("TlsOut: %p\n", rpc->TlsOut);
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;

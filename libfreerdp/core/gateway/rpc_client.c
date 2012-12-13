@@ -152,7 +152,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (StubLength == 4)
 	{
-		printf("Ignoring TsProxySendToServer Response\n");
+		//printf("Ignoring TsProxySendToServer Response\n");
 		rpc_client_fragment_pool_return(rpc, fragment);
 		return 0;
 	}
@@ -177,7 +177,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		printf("Sending Flow Control Ack PDU\n");
+		//printf("Sending Flow Control Ack PDU\n");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -462,31 +462,38 @@ static void rpc_fragment_free(wStream* fragment)
 
 int rpc_client_new(rdpRpc* rpc)
 {
-	rpc->client = (RpcClient*) malloc(sizeof(RpcClient));
+	RpcClient* client = NULL;
 
-	rpc->client->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) rpc_client_thread,
-			rpc, CREATE_SUSPENDED, NULL);
+	client = (RpcClient*) malloc(sizeof(RpcClient));
 
-	rpc->client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	rpc->client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (client)
+	{
+		client->Thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) rpc_client_thread,
+				rpc, CREATE_SUSPENDED, NULL);
 
-	rpc->client->SendQueue = Queue_New(TRUE, -1, -1);
-	Queue_Object(rpc->client->SendQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+		client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	rpc->client->ReceivePool = Queue_New(TRUE, -1, -1);
-	rpc->client->ReceiveQueue = Queue_New(TRUE, -1, -1);
-	Queue_Object(rpc->client->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
-	Queue_Object(rpc->client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+		client->SendQueue = Queue_New(TRUE, -1, -1);
+		Queue_Object(client->SendQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
 
-	rpc->client->FragmentPool = Queue_New(TRUE, -1, -1);
-	rpc->client->FragmentQueue = Queue_New(TRUE, -1, -1);
+		client->ReceivePool = Queue_New(TRUE, -1, -1);
+		client->ReceiveQueue = Queue_New(TRUE, -1, -1);
+		Queue_Object(client->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+		Queue_Object(client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
 
-	Queue_Object(rpc->client->FragmentPool)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
-	Queue_Object(rpc->client->FragmentQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
+		client->FragmentPool = Queue_New(TRUE, -1, -1);
+		client->FragmentQueue = Queue_New(TRUE, -1, -1);
 
-	rpc->client->ClientCallList = ArrayList_New(TRUE);
-	ArrayList_Object(rpc->client->ClientCallList)->fnObjectFree = (OBJECT_FREE_FN) rpc_client_call_free;
+		Queue_Object(client->FragmentPool)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
+		Queue_Object(client->FragmentQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
+
+		client->ClientCallList = ArrayList_New(TRUE);
+		ArrayList_Object(client->ClientCallList)->fnObjectFree = (OBJECT_FREE_FN) rpc_client_call_free;
+	}
+
+	rpc->client = client;
 
 	return 0;
 }
@@ -502,27 +509,39 @@ int rpc_client_stop(rdpRpc* rpc)
 {
 	SetEvent(rpc->client->StopEvent);
 
+	printf("rpc_client_stop waiting for thread\n");
+	WaitForSingleObject(rpc->client->Thread, INFINITE);
+
 	return 0;
 }
 
 int rpc_client_free(rdpRpc* rpc)
 {
-	Queue_Clear(rpc->client->SendQueue);
-	Queue_Free(rpc->client->SendQueue);
+	RpcClient* client;
 
-	Queue_Clear(rpc->client->ReceivePool);
-	Queue_Free(rpc->client->ReceivePool);
+	client = rpc->client;
 
-	Queue_Clear(rpc->client->ReceiveQueue);
-	Queue_Free(rpc->client->ReceiveQueue);
+	printf("rpc_client_free\n");
 
-	ArrayList_Clear(rpc->client->ClientCallList);
-	ArrayList_Free(rpc->client->ClientCallList);
+	if (client)
+	{
+		Queue_Clear(client->SendQueue);
+		Queue_Free(client->SendQueue);
 
-	CloseHandle(rpc->client->StopEvent);
-	CloseHandle(rpc->client->PduSentEvent);
+		Queue_Clear(client->ReceivePool);
+		Queue_Free(client->ReceivePool);
 
-	free(rpc->client);
+		Queue_Clear(client->ReceiveQueue);
+		Queue_Free(client->ReceiveQueue);
+
+		ArrayList_Clear(client->ClientCallList);
+		ArrayList_Free(client->ClientCallList);
+
+		CloseHandle(client->StopEvent);
+		CloseHandle(client->PduSentEvent);
+
+		free(client);
+	}
 
 	return 0;
 }

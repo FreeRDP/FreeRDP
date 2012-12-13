@@ -255,6 +255,7 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+	ntlm->table->DeleteSecurityContext(&ntlm->context);
 }
 
 rdpNtlm* ntlm_new()

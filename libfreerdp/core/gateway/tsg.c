@@ -177,7 +177,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 			TSG_MESSAGING_CAP_REAUTH;
 
 	/*
-	 * FIXME: Alternate Code Path
+	 * Alternate Code Path
 	 *
 	 * Using reduced capabilities appears to trigger
 	 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
@@ -1104,6 +1104,33 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	return TRUE;
 }
 
+BOOL tsg_disconnect(rdpTsg* tsg)
+{
+	printf("tsg_disconnect\n");
+
+	/**
+	 *                        Gateway Shutdown Phase
+	 *
+	 *     Client                                              Server
+	 *        |                                                   |
+	 *        |-------------TsProxyCloseChannel Request---------->|
+	 *        |                                                   |
+	 *        |<-------TsProxySetupReceivePipe Final Response-----|
+	 *        |<-----------TsProxyCloseChannel Response-----------|
+	 *        |                                                   |
+	 *        |----TsProxyMakeTunnelCall Request (cancel async)-->|
+	 *        |                                                   |
+	 *        |<---TsProxyMakeTunnelCall Response (call async)----|
+	 *        |<---TsProxyMakeTunnelCall Response (cancel async)--|
+	 *        |                                                   |
+	 *        |--------------TsProxyCloseTunnel Request---------->|
+	 *        |<-------------TsProxyCloseTunnel Response----------|
+	 *        |                                                   |
+	 */
+
+	return TRUE;
+}
+
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
@@ -1194,6 +1221,8 @@ rdpTsg* tsg_new(rdpTransport* transport)
 
 void tsg_free(rdpTsg* tsg)
 {
+	printf("tsg_free\n");
+
 	if (tsg != NULL)
 	{
 		free(tsg->MachineName);
