@@ -21,6 +21,10 @@
 #include "config.h"
 #endif
 
+#include <winpr/windows.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/utils/tcp.h>
 
 #include <stdio.h>
