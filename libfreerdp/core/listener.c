@@ -95,7 +95,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	if (bind_address == NULL)
 		hints.ai_flags = AI_PASSIVE;
 
-	snprintf(servname, sizeof(servname), "%d", port);
+	sprintf_s(servname, sizeof(servname), "%d", port);
 	status = getaddrinfo(bind_address, servname, &hints, &res);
 
 	if (status != 0)

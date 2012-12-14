@@ -50,6 +50,9 @@
 #else /* ifdef _WIN32 */
 
 #include <winpr/windows.h>
+
+#include <winpr/crt.h>
+
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
 #endif
@@ -72,7 +75,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	snprintf(servname, sizeof(servname), "%d", port);
+	sprintf_s(servname, sizeof(servname), "%d", port);
 	status = getaddrinfo(hostname, servname, &hints, &res);
 
 	if (status != 0)

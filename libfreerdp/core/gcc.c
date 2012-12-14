@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
 #include <freerdp/utils/unicode.h>
 
 #include "gcc.h"
@@ -514,7 +515,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
 	stream_seek(s, 32);
-	snprintf(settings->ClientHostname, 31, "%s", str);
+	sprintf_s(settings->ClientHostname, 31, "%s", str);
 	settings->ClientHostname[31] = 0;
 	free(str);
 
@@ -570,7 +571,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 
 		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
 		stream_seek(s, 64);
-		snprintf(settings->ClientProductId, 32, "%s", str);
+		sprintf_s(settings->ClientProductId, 32, "%s", str);
 		free(str);
 		blockLength -= 64;
 

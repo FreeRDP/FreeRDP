@@ -68,7 +68,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
 		ip = (BYTE*) (&sockaddr.sin_addr);
-		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
+		sprintf_s(tcp->ip_address, sizeof(tcp->ip_address),
 			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
 	else

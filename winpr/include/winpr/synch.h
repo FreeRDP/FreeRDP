@@ -174,10 +174,7 @@ WINPR_API BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 /* Sleep */
 
 WINPR_API VOID Sleep(DWORD dwMilliseconds);
-WINPR_API DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
-
-/* Portable usleep() */
-WINPR_API VOID USleep(DWORD dwMicroseconds);
+WINPR_API DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 
 /* Address */
 
@@ -254,6 +251,8 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 #endif
 
 /* Extended API */
+
+WINPR_API VOID USleep(DWORD dwMicroseconds);
 
 WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
