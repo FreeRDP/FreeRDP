@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_H
-#define __RAIL_H
+#ifndef FREERDP_RAIL_H
+#define FREERDP_RAIL_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -65,4 +65,4 @@ FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update
 FREERDP_API rdpRail* rail_new(rdpSettings* settings);
 FREERDP_API void rail_free(rdpRail* rail);
 
-#endif /* __RAIL_H */
+#endif /* FREERDP_RAIL_H */

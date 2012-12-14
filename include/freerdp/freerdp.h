@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_H
-#define __FREERDP_H
+#ifndef FREERDP_H
+#define FREERDP_H
 
 typedef struct rdp_rdp rdpRdp;
 typedef struct rdp_gdi rdpGdi;
@@ -33,13 +33,13 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/error.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
 #include <freerdp/utils/stream.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
-#include <freerdp/errorcodes.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -202,4 +202,4 @@ FREERDP_API void freerdp_free(freerdp* instance);
 }
 #endif
 
-#endif
+#endif /* FREERDP_H */

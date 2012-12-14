@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __THREAD_UTILS_H
-#define __THREAD_UTILS_H
+#ifndef FREERDP_UTILS_THREAD_H
+#define FREERDP_UTILS_THREAD_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -58,4 +58,4 @@ FREERDP_API void freerdp_thread_free(freerdp_thread* thread);
 #define freerdp_thread_lock(_t) WaitForSingleObject(_t->mutex, INFINITE)
 #define freerdp_thread_unlock(_t) ReleaseMutex(_t->mutex)
 
-#endif /* __THREAD_UTILS_H */
+#endif /* FREERDP_UTILS_THREAD_H */

@@ -17,16 +17,16 @@
  * limitations under the License.
  */
 
-#ifndef __UNICODE_UTILS_H
-#define __UNICODE_UTILS_H
+#ifndef FREERDP_UTILS_UNICODE_H
+#define FREERDP_UTILS_UNICODE_H
 
 #include <stdio.h>
 #include <string.h>
-#include <freerdp/api.h>
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 FREERDP_API int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length);
 FREERDP_API int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length);
 
-#endif /* __UNICODE_UTILS_H */
+#endif /* FREERDP_UTILS_UNICODE_H */

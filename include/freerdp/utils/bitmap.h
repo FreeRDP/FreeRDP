@@ -17,11 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_BITMAP_H
-#define __UTILS_BITMAP_H
+#ifndef FREERDP_UTILS_BITMAP_H
+#define FREERDP_UTILS_BITMAP_H
 
 #include <freerdp/api.h>
 
 FREERDP_API void freerdp_bitmap_write(char* filename, void* data, int width, int height, int bpp);
 
-#endif /* __UTILS_BITMAP_H */
+#endif /* FREERDP_UTILS_BITMAP_H */

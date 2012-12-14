@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_SECONDARY_H
-#define __UPDATE_SECONDARY_H
+#ifndef FREERDP_UPDATE_SECONDARY_H
+#define FREERDP_UPDATE_SECONDARY_H
 
 #include <freerdp/types.h>
 
@@ -221,4 +221,4 @@ struct rdp_secondary_update
 };
 typedef struct rdp_secondary_update rdpSecondaryUpdate;
 
-#endif /* __UPDATE_SECONDARY_H */
+#endif /* FREERDP_UPDATE_SECONDARY_H */

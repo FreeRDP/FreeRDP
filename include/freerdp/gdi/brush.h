@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_BRUSH_H
-#define __GDI_BRUSH_H
+#ifndef FREERDP_GDI_BRUSH_H
+#define FREERDP_GDI_BRUSH_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -29,4 +29,4 @@ FREERDP_API int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int 
 
 typedef int (*p_PatBlt)(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 
-#endif /* __GDI_BRUSH_H */
+#endif /* FREERDP_GDI_BRUSH_H */

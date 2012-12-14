@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __TSMF_PLUGIN
-#define __TSMF_PLUGIN
+#ifndef FREERDP_CHANNEL_CLIENT_TSMF_H
+#define FREERDP_CHANNEL_CLIENT_TSMF_H
 
 /**
  * Event Types
@@ -61,4 +61,4 @@ typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
 #define RDP_PIXFMT_I420		0x30323449
 #define RDP_PIXFMT_YV12		0x32315659
 
-#endif /* __TSMF_PLUGIN */
+#endif /* FREERDP_CHANNEL_CLIENT_TSMF_H */

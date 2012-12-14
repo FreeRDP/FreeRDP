@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CACHE_H
-#define __CACHE_H
+#ifndef FREERDP_CACHE_H
+#define FREERDP_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -51,4 +51,4 @@ struct rdp_cache
 FREERDP_API rdpCache* cache_new(rdpSettings* settings);
 FREERDP_API void cache_free(rdpCache* cache);
 
-#endif /* __CACHE_H */
+#endif /* FREERDP_CACHE_H */

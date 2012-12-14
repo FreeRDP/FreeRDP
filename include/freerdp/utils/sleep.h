@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __SLEEP_UTILS_H
-#define __SLEEP_UTILS_H
+#ifndef FREERDP_UTILS_SLEEP_H
+#define FREERDP_UTILS_SLEEP_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -26,4 +26,4 @@
 FREERDP_API void freerdp_sleep(UINT32 seconds);
 FREERDP_API void freerdp_usleep(UINT32 useconds);
 
-#endif /* __SLEEP_UTILS_H */
+#endif /* FREERDP_UTILS_SLEEP_H */

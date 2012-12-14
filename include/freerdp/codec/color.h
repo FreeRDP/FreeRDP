@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __COLOR_H
-#define __COLOR_H
+#ifndef FREERDP_CODEC_COLOR_H
+#define FREERDP_CODEC_COLOR_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -264,4 +264,4 @@ FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 }
 #endif
 
-#endif /* __COLOR_H */
+#endif /* FREERDP_CODEC_COLOR_H */

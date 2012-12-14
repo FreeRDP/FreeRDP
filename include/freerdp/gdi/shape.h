@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_SHAPE_H
-#define __GDI_SHAPE_H
+#ifndef FREERDP_GDI_SHAPE_H
+#define FREERDP_GDI_SHAPE_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -31,4 +31,4 @@ FREERDP_API int gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRig
 
 typedef int (*p_FillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 
-#endif /* __GDI_SHAPE_H */
+#endif /* FREERDP_GDI_SHAPE_H */

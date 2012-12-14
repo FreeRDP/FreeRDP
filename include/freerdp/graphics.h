@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GRAPHICS_H
-#define __GRAPHICS_H
+#ifndef FREERDP_GRAPHICS_H
+#define FREERDP_GRAPHICS_H
 
 typedef struct rdp_bitmap rdpBitmap;
 typedef struct rdp_pointer rdpPointer;
@@ -166,4 +166,4 @@ FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
 FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 FREERDP_API void graphics_free(rdpGraphics* graphics);
 
-#endif /* __GRAPHICS_H */
+#endif /* FREERDP_GRAPHICS_H */

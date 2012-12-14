@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_UDS_UTILS_H
-#define FREERDP_UDS_UTILS_H
+#ifndef FREERDP_UTILS_UDS_H
+#define FREERDP_UTILS_UDS_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
 FREERDP_API int freerdp_uds_connect(const char* path);
 
-#endif /* FREERDP_UDS_UTILS_H */
+#endif /* FREERDP_UTILS_UDS_H */

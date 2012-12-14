@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __OFFSCREEN_CACHE_H
-#define __OFFSCREEN_CACHE_H
+#ifndef FREERDP_OFFSCREEN_CACHE_H
+#define FREERDP_OFFSCREEN_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -52,4 +52,4 @@ FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings);
 FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
 
-#endif /* __OFFSCREEN_CACHE_H */
+#endif /* FREERDP_OFFSCREEN_CACHE_H */

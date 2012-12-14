@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FILE_UTILS_H
-#define __FILE_UTILS_H
+#ifndef FREERDP_UTILS_FILE_H
+#define FREERDP_UTILS_FILE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -35,4 +35,4 @@ FREERDP_API char* freerdp_get_parent_path(char* base_path, int depth);
 FREERDP_API BOOL freerdp_path_contains_separator(char* path);
 FREERDP_API void freerdp_detect_paths(rdpSettings* settings);
 
-#endif /* __FILE_UTILS_H */
+#endif /* FREERDP_UTILS_FILE_H */

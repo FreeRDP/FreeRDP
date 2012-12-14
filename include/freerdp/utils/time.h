@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_TIME_UTILS_H
-#define FREERDP_TIME_UTILS_H
+#ifndef FREERDP_UTILS_TIME_H
+#define FREERDP_UTILS_TIME_H
 
 #define __USE_XOPEN
 #include <time.h>

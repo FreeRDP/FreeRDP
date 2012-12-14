@@ -48,8 +48,8 @@
  *    Create IWTSVirtualChannelCallback instance if the new channel is accepted
  */
 
-#ifndef __FREERDP_DVC_H
-#define __FREERDP_DVC_H
+#ifndef FREERDP_DVC_H
+#define FREERDP_DVC_H
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
@@ -151,4 +151,4 @@ struct _IDRDYNVC_ENTRY_POINTS
 
 typedef int (*PDVC_PLUGIN_ENTRY) (IDRDYNVC_ENTRY_POINTS*);
 
-#endif
+#endif /* FREERDP_DVC_H */

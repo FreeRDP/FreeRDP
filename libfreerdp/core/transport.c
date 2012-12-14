@@ -27,12 +27,12 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/print.h>
 
+#include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
-#include <winpr/print.h>
-#include <freerdp/errorcodes.h>
 
 #include <time.h>
 #include <errno.h>

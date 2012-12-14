@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __LOCALE_TIMEZONE_H
-#define __LOCALE_TIMEZONE_H
+#ifndef FREERDP_LOCALE_TIMEZONE_H
+#define FREERDP_LOCALE_TIMEZONE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -26,4 +26,4 @@
 
 FREERDP_API void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone);
 
-#endif /* __LOCALE_TIMEZONE_H */
+#endif /* FREERDP_LOCALE_TIMEZONE_H */

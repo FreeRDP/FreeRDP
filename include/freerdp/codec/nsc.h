@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __NSC_H
-#define __NSC_H
+#ifndef FREERDP_CODEC_NSCODEC_H
+#define FREERDP_CODEC_NSCODEC_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -77,4 +77,4 @@ FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 }
 #endif
 
-#endif /* __NSC_H */
+#endif /* FREERDP_CODEC_NSCODEC_H */

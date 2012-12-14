@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __SVC_PLUGIN_UTILS_H
-#define __SVC_PLUGIN_UTILS_H
+#ifndef FREERDP_UTILS_SVC_PLUGIN_H
+#define FREERDP_UTILS_SVC_PLUGIN_H
 
 /* static channel plugin base implementation */
 
@@ -60,4 +60,4 @@ FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
 #define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __SVC_PLUGIN_UTILS_H */
+#endif /* FREERDP_UTILS_SVC_PLUGIN_H */

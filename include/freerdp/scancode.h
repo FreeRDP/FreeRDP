@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H
-#define __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H
+#ifndef FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H
+#define FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H
 
 /* @msdn{cc240584} says:
  * "... (a scancode is an 8-bit value specifying a key location on the keyboard).
@@ -182,4 +182,4 @@ typedef UINT32 RDP_SCANCODE;	/* Our own representation of a RDP protocol scancod
 #define RDP_SCANCODE_NUMLOCK_EXTENDED  MAKE_RDP_SCANCODE(0x45, TRUE)  /* should be RDP_SCANCODE_NUMLOCK */
 #define RDP_SCANCODE_RSHIFT_EXTENDED   MAKE_RDP_SCANCODE(0x36, TRUE)  /* should be RDP_SCANCODE_RSHIFT */
 
-#endif /* __FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H */
+#endif /* FREERDP_LOCALE_KEYBOARD_RDP_SCANCODE_H */
