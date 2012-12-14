@@ -27,7 +27,7 @@
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 /* Certificate Version */
 #define CERT_CHAIN_VERSION_1		0x00000001

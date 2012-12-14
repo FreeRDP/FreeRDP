@@ -33,7 +33,7 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/channels/rdpdr.h>
 
 #ifndef _WIN32

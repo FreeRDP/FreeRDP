@@ -18,7 +18,7 @@
  */
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/pcap.h>
 
 #include "test_pcap.h"

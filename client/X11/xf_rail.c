@@ -25,7 +25,7 @@
 #include <X11/Xutil.h>
 
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 
@@ -657,7 +657,7 @@ void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EV
 		"applicationId=(length=%d dump)\n",
 		appid_resp->windowId, appid_resp->applicationId.length);
 
-	freerdp_hexdump(appid_resp->applicationId.string, appid_resp->applicationId.length);
+	winpr_HexDump(appid_resp->applicationId.string, appid_resp->applicationId.length);
 }
 
 void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)

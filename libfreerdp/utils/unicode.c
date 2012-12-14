@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <wctype.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 #include <freerdp/utils/unicode.h>
 

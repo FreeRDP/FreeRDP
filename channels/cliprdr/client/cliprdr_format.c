@@ -30,7 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>

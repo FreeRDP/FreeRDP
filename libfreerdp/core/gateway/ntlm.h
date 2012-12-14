@@ -40,7 +40,7 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 struct rdp_ntlm
 {

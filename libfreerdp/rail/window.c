@@ -25,7 +25,7 @@
 #include <winpr/windows.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/unicode.h>
 
 #include "librail.h"
@@ -176,7 +176,7 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
 
 #ifdef WITH_DEBUG_RAIL
-		freerdp_hexdump(window->titleInfo.string, window->titleInfo.length);
+		winpr_HexDump(window->titleInfo.string, window->titleInfo.length);
 #endif
 	}
 

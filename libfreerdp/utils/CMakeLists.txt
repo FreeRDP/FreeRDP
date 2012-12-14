@@ -22,7 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 	dsp.c
 	event.c
 	bitmap.c
-	hexdump.c
 	list.c
 	file.c
 	passphrase.c
