@@ -176,6 +176,9 @@ WINPR_API BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 WINPR_API VOID Sleep(DWORD dwMilliseconds);
 WINPR_API DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 
+/* Portable usleep() */
+WINPR_API VOID USleep(DWORD dwMicroseconds);
+
 /* Address */
 
 WINPR_API VOID WakeByAddressAll(PVOID Address);

@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/windows.h>
 
 #ifdef _WIN32
@@ -35,7 +36,6 @@
 #endif
 #endif
 
-#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/thread.h>
 
 freerdp_thread* freerdp_thread_new(void)
@@ -79,7 +79,7 @@ void freerdp_thread_stop(freerdp_thread* thread)
 	while ((thread->status > 0) && (i < 1000))
 	{
 		i++;
-		freerdp_usleep(100000);
+		USleep(100000);
 	}
 }
 

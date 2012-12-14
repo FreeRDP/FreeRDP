@@ -29,7 +29,6 @@ set(${MODULE_PREFIX}_SRCS
 	profiler.c
 	rail.c
 	signal.c
-	sleep.c
 	stopwatch.c
 	stream.c
 	string.c

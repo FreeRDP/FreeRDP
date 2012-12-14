@@ -31,7 +31,6 @@
 
 #include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
 
 #include <time.h>
@@ -320,7 +319,7 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 		{
 			/* instead of sleeping, we should wait timeout on the socket
 			   but this only happens on initial connection */
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 		}
 	}
 
@@ -421,7 +420,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 		if ((status == 0) && (transport->blocking))
 		{
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 			continue;
 		}
 
@@ -487,7 +486,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		if (status == 0)
 		{
 			/* blocking while sending */
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 
 			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
 			if (!transport->blocking)
