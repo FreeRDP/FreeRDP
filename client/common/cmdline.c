@@ -1131,6 +1131,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			settings->ColorDepth = 32;
 			settings->PerformanceFlags = PERF_FLAG_NONE;
 			settings->LargePointerFlag = TRUE;
+			settings->FrameMarkerCommandEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
