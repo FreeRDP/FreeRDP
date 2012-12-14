@@ -22,7 +22,6 @@
 #endif
 
 #include <freerdp/utils/tcp.h>
-#include <freerdp/utils/print.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -29,7 +29,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/print.h>
 
 #include "extension.h"
 

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/print.h>
 #include <freerdp/utils/unicode.h>
 
 #include "gcc.h"

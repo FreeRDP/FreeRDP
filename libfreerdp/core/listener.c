@@ -28,8 +28,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/print.h>
-
 #ifndef _WIN32
 #include <netdb.h>
 #include <unistd.h>
