@@ -37,7 +37,6 @@ typedef struct rdp_tsg rdpTsg;
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/debug.h>
 
 enum _TSG_STATE
