@@ -1,12 +1,8 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/error.h>
 #include <winpr/windows.h>
-
-/*
- * Conversion *to* Unicode
- * MultiByteToWideChar: http://msdn.microsoft.com/en-us/library/windows/desktop/dd319072/
- */
 
 /* Letters */
 
@@ -155,7 +151,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 		return -1;
 	}
 
-	if (wcscmp(lpWideCharStr, (WCHAR*) expected_lpWideCharStr) != 0)
+	if (_wcscmp(lpWideCharStr, (WCHAR*) expected_lpWideCharStr) != 0)
 	{
 		printf("MultiByteToWideChar unexpected string:\n");
 
@@ -183,7 +179,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	int cbMultiByte;
 	LPSTR lpMultiByteStr;
 
-	cchWideChar = wcslen((WCHAR*) lpWideCharStr);
+	cchWideChar = _wcslen((WCHAR*) lpWideCharStr);
 	cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, -1, NULL, 0, NULL, NULL);
 
 	printf("WideCharToMultiByte Input UTF16 String:\n");
@@ -238,7 +234,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	return length;
 }
 
-int TestMultiByteToWideChar(int argc, char* argv[])
+int TestUnicodeConversion(int argc, char* argv[])
 {
 	/* Letters */
 

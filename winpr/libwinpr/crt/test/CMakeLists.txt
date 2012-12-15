@@ -7,8 +7,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 set(${MODULE_PREFIX}_TESTS
 	TestAlignment.c
 	TestString.c
-	TestMultiByteToWideChar.c
-	TestWideCharToMultiByte.c)
+	TestUnicodeConversion.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -19,7 +18,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt)
+	MODULES winpr-crt winpr-error)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
