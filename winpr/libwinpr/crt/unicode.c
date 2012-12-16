@@ -59,19 +59,6 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	if (cbMultiByte == -1)
 		cbMultiByte = strlen((char*) lpMultiByteStr) + 1;
 
-	if (!lpWideCharStr)
-		lpWideCharStr = (LPWSTR) malloc((cbMultiByte + 1) * sizeof(WCHAR) * 4);
-
-	sourceStart = (const BYTE*) lpMultiByteStr;
-	targetStart = lpWideCharStr;
-
-	result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
-			&targetStart, &targetStart[((cbMultiByte + 1) * 4) / sizeof(WCHAR)], strictConversion);
-	length = targetStart - ((WCHAR*) lpWideCharStr);
-	lpWideCharStr[length] = '\0';
-
-	cchWideChar = length;
-
 	/*
 	 * if cchWideChar is 0, the function returns the required buffer size
 	 * in characters for lpWideCharStr and makes no use of the output parameter itself.
@@ -79,8 +66,26 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 	if (cchWideChar == 0)
 	{
-		free(lpWideCharStr);
-		return cchWideChar;
+		sourceStart = (const BYTE*) lpMultiByteStr;
+		targetStart = (WCHAR*) NULL;
+
+		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
+				&targetStart, NULL, strictConversion);
+
+		length = targetStart - ((WCHAR*) NULL);
+		cchWideChar = length;
+	}
+	else
+	{
+		sourceStart = (const BYTE*) lpMultiByteStr;
+		targetStart = lpWideCharStr;
+
+		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
+				&targetStart, &targetStart[cchWideChar], strictConversion);
+
+		length = targetStart - ((WCHAR*) lpWideCharStr);
+		lpWideCharStr[length] = '\0';
+		cchWideChar = length;
 	}
 
 	return cchWideChar;
@@ -109,19 +114,6 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	if (cchWideChar == -1)
 		cchWideChar = _wcslen(lpWideCharStr) + 1;
 
-	if (!lpMultiByteStr)
-		lpMultiByteStr = (LPSTR) malloc((cchWideChar + 1) * 4);
-
-	sourceStart = (WCHAR*) lpWideCharStr;
-	targetStart = (BYTE*) lpMultiByteStr;
-
-	result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
-			&targetStart, &targetStart[(cchWideChar + 1) * 4], strictConversion);
-	length = targetStart - ((BYTE*) lpMultiByteStr);
-	lpMultiByteStr[length] = '\0';
-
-	cbMultiByte = length;
-
 	/*
 	 * if cbMultiByte is 0, the function returns the required buffer size
 	 * in bytes for lpMultiByteStr and makes no use of the output parameter itself.
@@ -129,8 +121,26 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 
 	if (cbMultiByte == 0)
 	{
-		free(lpMultiByteStr);
-		return cbMultiByte;
+		sourceStart = (WCHAR*) lpWideCharStr;
+		targetStart = (BYTE*) NULL;
+
+		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
+				&targetStart, NULL, strictConversion);
+
+		length = targetStart - ((BYTE*) NULL);
+		cbMultiByte = length;
+	}
+	else
+	{
+		sourceStart = (WCHAR*) lpWideCharStr;
+		targetStart = (BYTE*) lpMultiByteStr;
+
+		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
+				&targetStart, &targetStart[cbMultiByte], strictConversion);
+
+		length = targetStart - ((BYTE*) lpMultiByteStr);
+		lpMultiByteStr[length] = '\0';
+		cbMultiByte = length;
 	}
 
 	return cbMultiByte;

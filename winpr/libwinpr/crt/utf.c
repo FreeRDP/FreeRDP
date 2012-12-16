@@ -209,9 +209,16 @@ ConversionResult ConvertUTF16toUTF8(
 	const WCHAR** sourceStart, const WCHAR* sourceEnd,
 	BYTE** targetStart, BYTE* targetEnd, ConversionFlags flags)
 {
-	ConversionResult result = conversionOK;
-	const WCHAR* source = *sourceStart;
-	BYTE* target = *targetStart;
+	BYTE* target;
+	const WCHAR* source;
+	BOOL computeLength;
+	ConversionResult result;
+
+	computeLength = (!targetEnd) ? TRUE : FALSE;
+
+	source = *sourceStart;
+	target = *targetStart;
+	result = conversionOK;
 
 	while (source < sourceEnd)
 	{
@@ -290,7 +297,7 @@ ConversionResult ConvertUTF16toUTF8(
 
 		target += bytesToWrite;
 
-		if (target > targetEnd)
+		if ((target > targetEnd) && (!computeLength))
 		{
 			source = oldSource; /* Back up source pointer! */
 			target -= bytesToWrite;
@@ -298,13 +305,46 @@ ConversionResult ConvertUTF16toUTF8(
 			break;
 		}
 
-		switch (bytesToWrite)
+		if (!computeLength)
 		{
-			/* note: everything falls through. */
-			case 4: *--target = (BYTE)((ch | byteMark) & byteMask); ch >>= 6;
-			case 3: *--target = (BYTE)((ch | byteMark) & byteMask); ch >>= 6;
-			case 2: *--target = (BYTE)((ch | byteMark) & byteMask); ch >>= 6;
-			case 1: *--target =  (BYTE)(ch | firstByteMark[bytesToWrite]);
+			switch (bytesToWrite)
+			{
+				/* note: everything falls through. */
+
+				case 4:
+					*--target = (BYTE)((ch | byteMark) & byteMask);
+					ch >>= 6;
+				case 3:
+					*--target = (BYTE)((ch | byteMark) & byteMask);
+					ch >>= 6;
+				case 2:
+					*--target = (BYTE)((ch | byteMark) & byteMask);
+					ch >>= 6;
+				case 1:
+					*--target = (BYTE)(ch | firstByteMark[bytesToWrite]);
+			}
+		}
+		else
+		{
+			switch (bytesToWrite)
+			{
+				/* note: everything falls through. */
+
+				case 4:
+					--target;
+					ch >>= 6;
+
+				case 3:
+					--target;
+					ch >>= 6;
+
+				case 2:
+					--target;
+					ch >>= 6;
+
+				case 1:
+					--target;
+			}
 		}
 
 		target += bytesToWrite;
@@ -385,16 +425,23 @@ ConversionResult ConvertUTF8toUTF16(
 	const BYTE** sourceStart, const BYTE* sourceEnd,
 	WCHAR** targetStart, WCHAR* targetEnd, ConversionFlags flags)
 {
-	ConversionResult result = conversionOK;
-	const BYTE* source = *sourceStart;
-	WCHAR* target = *targetStart;
+	WCHAR* target;
+	const BYTE* source;
+	BOOL computeLength;
+	ConversionResult result;
+
+	computeLength = (!targetEnd) ? TRUE : FALSE;
+
+	result = conversionOK;
+	source = *sourceStart;
+	target = *targetStart;
 
 	while (source < sourceEnd)
 	{
 		DWORD ch = 0;
 		unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
 
-		if (source + extraBytesToRead >= sourceEnd)
+		if ((source + extraBytesToRead) >= sourceEnd)
 		{
 			result = sourceExhausted;
 			break;
@@ -422,7 +469,7 @@ ConversionResult ConvertUTF8toUTF16(
 
 		ch -= offsetsFromUTF8[extraBytesToRead];
 
-		if (target >= targetEnd)
+		if ((target >= targetEnd) && (!computeLength))
 		{
 			source -= (extraBytesToRead + 1); /* Back up source pointer! */
 			result = targetExhausted;
@@ -444,12 +491,18 @@ ConversionResult ConvertUTF8toUTF16(
 				}
 				else
 				{
-					*target++ = UNI_REPLACEMENT_CHAR;
+					if (!computeLength)
+						*target++ = UNI_REPLACEMENT_CHAR;
+					else
+						target++;
 				}
 			}
 			else
 			{
-				*target++ = (WCHAR) ch; /* normal case */
+				if (!computeLength)
+					*target++ = (WCHAR) ch; /* normal case */
+				else
+					target++;
 			}
 		}
 		else if (ch > UNI_MAX_UTF16)
@@ -462,23 +515,35 @@ ConversionResult ConvertUTF8toUTF16(
 			}
 			else
 			{
-				*target++ = UNI_REPLACEMENT_CHAR;
+				if (!computeLength)
+					*target++ = UNI_REPLACEMENT_CHAR;
+				else
+					target++;
 			}
 		}
 		else
 		{
 			/* target is a character in range 0xFFFF - 0x10FFFF. */
 
-			if (target + 1 >= targetEnd)
+			if ((target + 1 >= targetEnd) && (!computeLength))
 			{
-				source -= (extraBytesToRead+1); /* Back up source pointer! */
+				source -= (extraBytesToRead + 1); /* Back up source pointer! */
 				result = targetExhausted;
 				break;
 			}
 
 			ch -= halfBase;
-			*target++ = (WCHAR)((ch >> halfShift) + UNI_SUR_HIGH_START);
-			*target++ = (WCHAR)((ch & halfMask) + UNI_SUR_LOW_START);
+
+			if (!computeLength)
+			{
+				*target++ = (WCHAR)((ch >> halfShift) + UNI_SUR_HIGH_START);
+				*target++ = (WCHAR)((ch & halfMask) + UNI_SUR_LOW_START);
+			}
+			else
+			{
+				target++;
+				target++;
+			}
 		}
 	}
 
