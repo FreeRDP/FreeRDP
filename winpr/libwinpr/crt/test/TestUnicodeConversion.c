@@ -119,7 +119,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, -1, NULL, 0);
 
 	printf("MultiByteToWideChar Input UTF8 String:\n");
-	string_hexdump(lpMultiByteStr, cbMultiByte);
+	string_hexdump(lpMultiByteStr, cbMultiByte + 1);
 
 	printf("MultiByteToWideChar required cchWideChar: %d\n", cchWideChar);
 
@@ -131,6 +131,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	}
 
 	lpWideCharStr = (LPWSTR) malloc(cchWideChar * sizeof(WCHAR));
+	lpWideCharStr[cchWideChar - 1] = 0xFFFF; /* should be overwritten if null terminator is inserted properly */
 	length = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, cbMultiByte + 1, lpWideCharStr, cchWideChar);
 
 	printf("MultiByteToWideChar converted length (WCHAR): %d\n", length);
@@ -154,7 +155,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 		printf("MultiByteToWideChar unexpected string:\n");
 
 		printf("UTF8 String:\n");
-		string_hexdump(lpMultiByteStr, cbMultiByte);
+		string_hexdump(lpMultiByteStr, cbMultiByte + 1);
 
 		printf("UTF16 String (actual):\n");
 		string_hexdump((BYTE*) lpWideCharStr, length * sizeof(WCHAR));
@@ -164,6 +165,10 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 
 		return -1;
 	}
+
+	printf("MultiByteToWideChar Output UTF16 String:\n");
+	string_hexdump((BYTE*) lpWideCharStr, length * sizeof(WCHAR));
+	printf("\n");
 
 	free(lpWideCharStr);
 
@@ -175,13 +180,13 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	int length;
 	int cchWideChar;
 	int cbMultiByte;
-	LPSTR lpMultiByteStr;
+	LPSTR lpMultiByteStr = NULL;
 
 	cchWideChar = _wcslen((WCHAR*) lpWideCharStr);
 	cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, -1, NULL, 0, NULL, NULL);
 
 	printf("WideCharToMultiByte Input UTF16 String:\n");
-	string_hexdump(lpWideCharStr, cchWideChar * sizeof(WCHAR));
+	string_hexdump(lpWideCharStr, (cchWideChar + 1) * sizeof(WCHAR));
 
 	printf("WideCharToMultiByte required cbMultiByte: %d\n", cbMultiByte);
 
@@ -193,6 +198,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	}
 
 	lpMultiByteStr = (LPSTR) malloc(cbMultiByte);
+	lpMultiByteStr[cbMultiByte - 1] = 0xFF; /* should be overwritten if null terminator is inserted properly */
 	length = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, cchWideChar + 1, lpMultiByteStr, cbMultiByte, NULL, NULL);
 
 	printf("WideCharToMultiByte converted length (BYTE): %d\n", length);
@@ -216,7 +222,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 		printf("WideCharToMultiByte unexpected string:\n");
 
 		printf("UTF16 String:\n");
-		string_hexdump((BYTE*) lpWideCharStr, cchWideChar * sizeof(WCHAR));
+		string_hexdump((BYTE*) lpWideCharStr, (cchWideChar + 1) * sizeof(WCHAR));
 
 		printf("UTF8 String (actual):\n");
 		string_hexdump((BYTE*) lpMultiByteStr, cbMultiByte);
@@ -226,6 +232,10 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 
 		return -1;
 	}
+
+	printf("WideCharToMultiByte Output UTF8 String:\n");
+	string_hexdump((BYTE*) lpMultiByteStr, cbMultiByte);
+	printf("\n");
 
 	free(lpMultiByteStr);
 
@@ -292,8 +302,8 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 	if (convert_utf8_to_utf16(ar_Hello_UTF8, ar_Hello_UTF16, ar_Hello_cchWideChar) < 1)
 		return -1;
-	//if (convert_utf8_to_utf16(ar_HowAreYou_UTF8, ar_HowAreYou_UTF16, ar_HowAreYou_cchWideChar) < 1)
-	//	return -1;
+	if (convert_utf8_to_utf16(ar_HowAreYou_UTF8, ar_HowAreYou_UTF16, ar_HowAreYou_cchWideChar) < 1)
+		return -1;
 
 	if (convert_utf16_to_utf8(ar_Hello_UTF16, ar_Hello_UTF8, ar_Hello_cbMultiByte) < 1)
 		return -1;

@@ -45,8 +45,8 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
 {
 	int length;
-	const BYTE* sourceStart;
 	LPWSTR targetStart;
+	const BYTE* sourceStart;
 	ConversionResult result;
 
 	/* If cbMultiByte is 0, the function fails */
@@ -84,7 +84,6 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 				&targetStart, &targetStart[cchWideChar], strictConversion);
 
 		length = targetStart - ((WCHAR*) lpWideCharStr);
-		lpWideCharStr[length] = '\0';
 		cchWideChar = length;
 	}
 
@@ -100,8 +99,8 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)
 {
 	int length;
-	const WCHAR* sourceStart;
 	BYTE* targetStart;
+	const WCHAR* sourceStart;
 	ConversionResult result;
 
 	/* If cchWideChar is 0, the function fails */
@@ -139,7 +138,6 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 				&targetStart, &targetStart[cbMultiByte], strictConversion);
 
 		length = targetStart - ((BYTE*) lpMultiByteStr);
-		lpMultiByteStr[length] = '\0';
 		cbMultiByte = length;
 	}
 
