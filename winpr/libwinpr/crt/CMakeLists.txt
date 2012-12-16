@@ -23,7 +23,10 @@ set(${MODULE_PREFIX}_SRCS
 	conversion.c
 	buffer.c
 	memory.c
-	string.c)
+	string.c
+	unicode.c
+	utf.c
+	utf.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
