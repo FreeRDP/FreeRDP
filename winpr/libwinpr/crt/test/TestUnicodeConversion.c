@@ -50,8 +50,6 @@ static BYTE ru_HowAreYou_UTF16[] = "\x1A\x04\x30\x04\x3A\x04\x20\x00\x34\x04\x35
 static int ru_HowAreYou_cchWideChar = 10;
 static int ru_HowAreYou_cbMultiByte = 17;
 
-#if 0
-
 /* Arabic */
 
 static BYTE ar_Hello_UTF8[] = "\xD8\xA7\xD9\x84\xD8\xB3\xD9\x84\xD8\xA7\xD9\x85\x20\xD8\xB9\xD9"
@@ -67,8 +65,6 @@ static BYTE ar_HowAreYou_UTF16[] = "\x43\x06\x4A\x06\x41\x06\x20\x00\x2D\x06\x27
 		"\x1F\x06\x00\x00";
 static int ar_HowAreYou_cchWideChar = 10;
 static int ar_HowAreYou_cbMultiByte = 18;
-
-#endif
 
 /* Chinese */
 
@@ -290,21 +286,19 @@ int TestUnicodeConversion(int argc, char* argv[])
 	if (convert_utf16_to_utf8(ru_HowAreYou_UTF16, ru_HowAreYou_UTF8, ru_HowAreYou_cbMultiByte) < 1)
 		return -1;
 
-#if 0
 	/* Arabic */
 
 	printf("Arabic\n");
 
 	if (convert_utf8_to_utf16(ar_Hello_UTF8, ar_Hello_UTF16, ar_Hello_cchWideChar) < 1)
 		return -1;
-	if (convert_utf8_to_utf16(ar_HowAreYou_UTF8, ar_HowAreYou_UTF16, ar_HowAreYou_cchWideChar) < 1)
-		return -1;
+	//if (convert_utf8_to_utf16(ar_HowAreYou_UTF8, ar_HowAreYou_UTF16, ar_HowAreYou_cchWideChar) < 1)
+	//	return -1;
 
 	if (convert_utf16_to_utf8(ar_Hello_UTF16, ar_Hello_UTF8, ar_Hello_cbMultiByte) < 1)
 		return -1;
 	if (convert_utf16_to_utf8(ar_HowAreYou_UTF16, ar_HowAreYou_UTF8, ar_HowAreYou_cbMultiByte) < 1)
 		return -1;
-#endif
 
 	/* Chinese */
 
