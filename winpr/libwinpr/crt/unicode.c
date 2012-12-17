@@ -275,3 +275,79 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 
 #endif
 
+int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar)
+{
+	int status;
+	BOOL allocate = FALSE;
+
+	if (!lpMultiByteStr)
+		return 0;
+
+	if (!lpWideCharStr)
+		return 0;
+
+	if (cbMultiByte == -1)
+		cbMultiByte = strlen(lpMultiByteStr) + 1;
+
+	if (cchWideChar == 0)
+	{
+		cchWideChar = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, NULL, 0);
+		allocate = TRUE;
+	}
+
+	if (cchWideChar < 1)
+		return 0;
+
+	if (!(*lpWideCharStr))
+		allocate = TRUE;
+
+	if (allocate)
+		*lpWideCharStr = (LPWSTR) malloc(cchWideChar * sizeof(WCHAR));
+
+	status = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, *lpWideCharStr, cchWideChar);
+
+	if (status != cchWideChar)
+		status = 0;
+
+	return status;
+}
+
+int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)
+{
+	int status;
+	BOOL allocate = FALSE;
+
+	if (!lpWideCharStr)
+		return 0;
+
+	if (!lpMultiByteStr)
+		return 0;
+
+	if (cchWideChar == -1)
+		cchWideChar = _wcslen(lpWideCharStr) + 1;
+
+	if (cbMultiByte == 0)
+	{
+		cbMultiByte = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
+		allocate = TRUE;
+	}
+
+	if (cbMultiByte < 1)
+		return 0;
+
+	if (!(*lpMultiByteStr))
+		allocate = TRUE;
+
+	if (allocate)
+		*lpMultiByteStr = (LPSTR) malloc(cbMultiByte);
+
+	status = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar,
+			*lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
+
+	if (status != cbMultiByte)
+		status = 0;
+
+	return status;
+}
