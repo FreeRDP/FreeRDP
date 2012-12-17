@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/unicode.h>
+#include <winpr/crt.h>
 
 #include <freerdp/utils/string.h>
 
@@ -34,7 +34,8 @@ void freerdp_string_read_length32(STREAM* s, rdpString* string)
 	stream_read_UINT32(s, string->length);
 	string->unicode = (char*) malloc(string->length);
 	stream_read(s, string->unicode, string->length);
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) string->unicode, &string->ascii, string->length / 2);
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
 }
 
 void freerdp_string_free(rdpString* string)

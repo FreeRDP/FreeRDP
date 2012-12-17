@@ -43,6 +43,8 @@
 #include "serial_tty.h"
 #include "serial_constants.h"
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
@@ -79,6 +81,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial);
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
 	char* path;
+	int status;
 	SERIAL_TTY* tty;
 	UINT32 PathLength;
 	UINT32 FileId;
@@ -87,7 +90,11 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 					/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_UINT32(irp->input, PathLength);
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			PathLength / 2, &path, 0, NULL, NULL);
+
+	if (status < 1)
+		path = (char*) calloc(1, 1);
 
 	FileId = irp->devman->id_sequence++;
 

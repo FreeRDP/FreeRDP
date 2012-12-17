@@ -46,19 +46,3 @@ int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length)
 
 	return status;
 }
-
-int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length)
-{
-	int status;
-
-	if (length < 1)
-	{
-		*str = malloc(1);
-		(*str)[0] = '\0';
-		return 0;
-	}
-
-	status = ConvertFromUnicode(CP_UTF8, 0, wstr, -1, str, 0, NULL, NULL);
-
-	return status;
-}

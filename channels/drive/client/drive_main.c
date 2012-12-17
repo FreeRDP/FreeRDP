@@ -119,6 +119,7 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* disk, UINT32 id)
 static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 {
 	char* path;
+	int status;
 	UINT32 FileId;
 	DRIVE_FILE* file;
 	BYTE Information;
@@ -133,7 +134,11 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	stream_read_UINT32(irp->input, CreateOptions);
 	stream_read_UINT32(irp->input, PathLength);
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			PathLength / 2, &path, 0, NULL, NULL);
+
+	if (status < 1)
+		path = (char*) calloc(1, 1);
 
 	FileId = irp->devman->id_sequence++;
 
@@ -468,6 +473,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 {
 	char* path;
+	int status;
 	DRIVE_FILE* file;
 	BYTE InitialQuery;
 	UINT32 PathLength;
@@ -478,7 +484,11 @@ static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 	stream_read_UINT32(irp->input, PathLength);
 	stream_seek(irp->input, 23); /* Padding */
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			PathLength / 2, &path, 0, NULL, NULL);
+
+	if (status < 1)
+		path = (char*) calloc(1, 1);
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 

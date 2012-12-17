@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/unicode.h>
 
 #include "timezone.h"
@@ -123,7 +125,7 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	if (stream_get_left(s) < cbClientAddress)
 		return FALSE;
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ClientAddress, cbClientAddress / 2);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbClientAddress / 2, &settings->ClientAddress, 0, NULL, NULL);
 	stream_seek(s, cbClientAddress);
 
 	stream_read_UINT16(s, cbClientDir); /* cbClientDir */
@@ -134,7 +136,7 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 	if (settings->ClientDir)
 		free(settings->ClientDir);
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ClientDir, cbClientDir / 2);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbClientDir / 2, &settings->ClientDir, 0, NULL, NULL);
 	stream_seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
@@ -244,7 +246,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (cbDomain > 0)
 	{
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->Domain, cbDomain / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbDomain / 2, &settings->Domain, 0, NULL, NULL);
 		stream_seek(s, cbDomain);
 	}
 	stream_seek(s, 2);
@@ -254,7 +256,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (cbUserName > 0)
 	{
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->Username, cbUserName / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbUserName / 2, &settings->Username, 0, NULL, NULL);
 		stream_seek(s, cbUserName);
 	}
 	stream_seek(s, 2);
@@ -264,7 +266,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (cbPassword > 0)
 	{
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->Password, cbPassword / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbPassword / 2, &settings->Password, 0, NULL, NULL);
 		stream_seek(s, cbPassword);
 	}
 	stream_seek(s, 2);
@@ -274,7 +276,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (cbAlternateShell > 0)
 	{
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->AlternateShell, cbAlternateShell / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbAlternateShell / 2, &settings->AlternateShell, 0, NULL, NULL);
 		stream_seek(s, cbAlternateShell);
 	}
 	stream_seek(s, 2);
@@ -284,7 +286,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (cbWorkingDir > 0)
 	{
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &settings->ShellWorkingDirectory, cbWorkingDir / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbWorkingDir / 2, &settings->ShellWorkingDirectory, 0, NULL, NULL);
 		stream_seek(s, cbWorkingDir);
 	}
 	stream_seek(s, 2);

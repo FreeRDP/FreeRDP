@@ -27,6 +27,5 @@
 #include <freerdp/types.h>
 
 FREERDP_API int freerdp_AsciiToUnicodeAlloc(const CHAR* str, WCHAR** wstr, int length);
-FREERDP_API int freerdp_UnicodeToAsciiAlloc(const WCHAR* wstr, CHAR** str, int length);
 
 #endif /* FREERDP_UTILS_UNICODE_H */
