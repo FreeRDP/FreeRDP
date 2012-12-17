@@ -52,10 +52,9 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
 	}
 
-	context->Workstation.Length = strlen(Workstation) * 2;
-	context->Workstation.Buffer = (PWSTR) malloc(context->Workstation.Length);
-	MultiByteToWideChar(CP_ACP, 0, Workstation, strlen(Workstation),
-			context->Workstation.Buffer, context->Workstation.Length / 2);
+	context->Workstation.Length = ConvertToUnicode(CP_UTF8, 0,
+			Workstation, -1, &context->Workstation.Buffer, 0) - 1;
+	context->Workstation.Length *= 2;
 
 	if (nSize > 0)
 		free(Workstation);
@@ -63,17 +62,16 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 void ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR ServicePrincipalName)
 {
-	context->ServicePrincipalName.Length = lstrlenW(ServicePrincipalName) * 2;
+	context->ServicePrincipalName.Length = _wcslen(ServicePrincipalName) * 2;
 	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length);
 	CopyMemory(context->ServicePrincipalName.Buffer, ServicePrincipalName, context->ServicePrincipalName.Length);
 }
 
 void ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePrincipalName)
 {
-	context->ServicePrincipalName.Length = strlen(ServicePrincipalName) * 2;
-	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length);
-	MultiByteToWideChar(CP_ACP, 0, ServicePrincipalName, strlen(ServicePrincipalName),
-			context->ServicePrincipalName.Buffer, context->ServicePrincipalName.Length / 2);
+	context->ServicePrincipalName.Length = ConvertToUnicode(CP_UTF8, 0,
+			ServicePrincipalName, -1, &context->ServicePrincipalName.Buffer, 0) - 1;
+	context->ServicePrincipalName.Length *= 2;
 }
 
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
@@ -88,10 +86,9 @@ void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 		CharUpperA(TargetName);
 	}
 
-	context->TargetName.cbBuffer = strlen(TargetName) * 2;
-	context->TargetName.pvBuffer = (void*) malloc(context->TargetName.cbBuffer);
-	MultiByteToWideChar(CP_ACP, 0, TargetName, strlen(TargetName),
-			(LPWSTR) context->TargetName.pvBuffer, context->TargetName.cbBuffer / 2);
+	context->TargetName.cbBuffer = ConvertToUnicode(CP_UTF8, 0,
+			TargetName, -1, (LPWSTR*) &context->TargetName.pvBuffer, 0) - 1;
+	context->TargetName.cbBuffer *= 2;
 
 	if (nSize > 0)
 		free(TargetName);
@@ -517,16 +514,12 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	int length;
 	SECURITY_STATUS status;
 	SEC_WCHAR* pszTargetNameW = NULL;
 
 	if (pszTargetName != NULL)
 	{
-		length = strlen(pszTargetName);
-		pszTargetNameW = (PWSTR) malloc((length + 1) * 2);
-		MultiByteToWideChar(CP_ACP, 0, pszTargetName, length, pszTargetNameW, length);
-		pszTargetNameW[length] = 0;
+		ConvertToUnicode(CP_UTF8, 0, pszTargetName, -1, &pszTargetNameW, 0);
 	}
 
 	status = ntlm_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,

@@ -288,10 +288,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (user)
 	{
-		identity->UserLength = MultiByteToWideChar(CP_UTF8, 0, user, strlen(user), NULL, 0);
-		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, user, identity->UserLength, (LPWSTR) identity->User, identity->UserLength * sizeof(WCHAR));
-		identity->User[identity->UserLength] = 0;
+		identity->UserLength = ConvertToUnicode(CP_UTF8, 0, user, -1, &identity->User, 0) - 1;
 	}
 	else
 	{
@@ -301,10 +298,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (domain)
 	{
-		identity->DomainLength = MultiByteToWideChar(CP_UTF8, 0, domain, strlen(domain), NULL, 0);
-		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, domain, identity->DomainLength, (LPWSTR) identity->Domain, identity->DomainLength * sizeof(WCHAR));
-		identity->Domain[identity->DomainLength] = 0;
+		identity->DomainLength = ConvertToUnicode(CP_UTF8, 0, domain, -1, &identity->Domain, 0) - 1;
 	}
 	else
 	{
@@ -314,10 +308,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (password != NULL)
 	{
-		identity->PasswordLength = MultiByteToWideChar(CP_UTF8, 0, password, strlen(password), NULL, 0);
-		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, password, identity->PasswordLength, (LPWSTR) identity->Password, identity->PasswordLength * sizeof(WCHAR));
-		identity->Password[identity->PasswordLength] = 0;
+		identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0, password, -1, &identity->Password, 0) - 1;
 	}
 	else
 	{
@@ -439,14 +430,10 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* N
 
 SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
-	int length;
 	SEC_WCHAR* NameW;
 	SecurityFunctionTableW* table;
 
-	length = strlen(Name);
-	NameW = (SEC_WCHAR*) malloc((length + 1) * 2);
-	MultiByteToWideChar(CP_ACP, 0, Name, length, (LPWSTR) NameW, length);
-	NameW[length] = 0;
+	ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);
 
 	table = sspi_GetSecurityFunctionTableWByNameW(NameW);
 	free(NameW);
