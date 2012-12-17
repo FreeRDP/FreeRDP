@@ -36,8 +36,7 @@ set(${MODULE_PREFIX}_SRCS
 	tcp.c
 	thread.c
 	time.c
-	uds.c
-	unicode.c)
+	uds.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)

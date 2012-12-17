@@ -35,16 +35,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
-#include <freerdp/utils/list.h>
-#include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
-
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
+
+#include <freerdp/utils/list.h>
+#include <freerdp/utils/stream.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/utils/svc_plugin.h>
 
 #include "drive_file.h"
 
@@ -404,7 +403,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			length = freerdp_AsciiToUnicodeAlloc(volumeLabel, &outStr, 0) * 2;
+			length = ConvertToUnicode(CP_UTF8, 0, volumeLabel, -1, &outStr, 0) * 2;
 			stream_write_UINT32(output, 17 + length); /* Length */
 			stream_check_size(output, 17 + length);
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
@@ -428,7 +427,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			length = freerdp_AsciiToUnicodeAlloc(diskType, &outStr, 0) * 2;
+			length = ConvertToUnicode(CP_UTF8, 0, diskType, -1, &outStr, 0) * 2;
 			stream_write_UINT32(output, 12 + length); /* Length */
 			stream_check_size(output, 12 + length);
 			stream_write_UINT32(output,

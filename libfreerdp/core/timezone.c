@@ -23,8 +23,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/unicode.h>
-
 #include "timezone.h"
 
 /**
@@ -130,8 +128,8 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	clientTimeZone = settings->ClientTimeZone;
 	freerdp_time_zone_detect(clientTimeZone);
 
-	standardNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->standardName, &standardName, 0) * 2;
-	daylightNameLength = freerdp_AsciiToUnicodeAlloc(clientTimeZone->daylightName, &daylightName, 0) * 2;
+	standardNameLength = ConvertToUnicode(CP_UTF8, 0, clientTimeZone->standardName, -1, &standardName, 0) * 2;
+	daylightNameLength = ConvertToUnicode(CP_UTF8, 0, clientTimeZone->daylightName, -1, &daylightName, 0) * 2;
 
 	if (standardNameLength > 62)
 		standardNameLength = 62;

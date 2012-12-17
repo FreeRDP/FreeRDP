@@ -22,7 +22,6 @@
 #endif
 
 #include <winpr/crt.h>
-#include <freerdp/utils/unicode.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -669,8 +668,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
-	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->ClientHostname, &clientName, 0);
-	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->ClientProductId, &clientDigProductId, 0);
+	clientNameLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientHostname, -1, &clientName, 0);
+	clientDigProductIdLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientProductId, -1, &clientDigProductId, 0);
 
 	stream_write_UINT32(s, version); /* Version */
 	stream_write_UINT16(s, settings->DesktopWidth); /* DesktopWidth */

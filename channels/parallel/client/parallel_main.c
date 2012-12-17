@@ -54,7 +54,6 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 

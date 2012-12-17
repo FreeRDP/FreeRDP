@@ -48,7 +48,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;

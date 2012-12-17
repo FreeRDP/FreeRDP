@@ -29,7 +29,6 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "xf_cliprdr.h"
@@ -538,7 +537,7 @@ static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 	int out_size;
 
 	inbuf = (char*) lf2crlf(data, size);
-	out_size = freerdp_AsciiToUnicodeAlloc(inbuf, &outbuf, 0);
+	out_size = ConvertToUnicode(CP_UTF8, 0, inbuf, -1, &outbuf, 0);
 	free(inbuf);
 
 	*size = (int) ((out_size + 1) * 2);

@@ -23,8 +23,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/unicode.h>
-
 #include "timezone.h"
 
 #include "info.h"
@@ -174,9 +172,9 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 
 	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
-	cbClientAddress = freerdp_AsciiToUnicodeAlloc(settings->ClientAddress, &clientAddress, 0) * 2;
+	cbClientAddress = ConvertToUnicode(CP_UTF8, 0, settings->ClientAddress, -1, &clientAddress, 0) * 2;
 
-	cbClientDir = freerdp_AsciiToUnicodeAlloc(settings->ClientDir, &clientDir, 0) * 2;
+	cbClientDir = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
 
 	cbAutoReconnectLen = (int) settings->ClientAutoReconnectCookie->cbLen;
 
@@ -307,16 +305,16 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
 void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 {
 	UINT32 flags;
-	WCHAR* domain;
-	int cbDomain;
-	WCHAR* userName;
-	int cbUserName;
-	WCHAR* password;
-	int cbPassword;
-	WCHAR* alternateShell;
-	int cbAlternateShell;
-	WCHAR* workingDir;
-	int cbWorkingDir;
+	WCHAR* domain = NULL;
+	int cbDomain = 0;
+	WCHAR* userName = NULL;
+	int cbUserName = 0;
+	WCHAR* password = NULL;
+	int cbPassword = 0;
+	WCHAR* alternateShell = NULL;
+	int cbAlternateShell = 0;
+	WCHAR* workingDir = NULL;
+	int cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
 
 	flags = INFO_MOUSE |
@@ -347,7 +345,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 
 	if (settings->Domain)
 	{
-		cbDomain = freerdp_AsciiToUnicodeAlloc(settings->Domain, &domain, 0) * 2;
+		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domain, 0) * 2;
 	}
 	else
 	{
@@ -355,7 +353,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 		cbDomain = 0;
 	}
 
-	cbUserName = freerdp_AsciiToUnicodeAlloc(settings->Username, &userName, 0) * 2;
+	cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userName, 0) * 2;
 
 	if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
 	{
@@ -365,12 +363,12 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
 	}
 	else
 	{
-		cbPassword = freerdp_AsciiToUnicodeAlloc(settings->Password, &password, 0) * 2;
+		cbPassword = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &password, 0) * 2;
 	}
 
-	cbAlternateShell = freerdp_AsciiToUnicodeAlloc(settings->AlternateShell, &alternateShell, 0) * 2;
+	cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShell, 0) * 2;
 
-	cbWorkingDir = freerdp_AsciiToUnicodeAlloc(settings->ShellWorkingDirectory, &workingDir, 0) * 2;
+	cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDir, 0) * 2;
 
 	stream_write_UINT32(s, 0); /* CodePage */
 	stream_write_UINT32(s, flags); /* flags */

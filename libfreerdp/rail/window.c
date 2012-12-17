@@ -22,11 +22,10 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/windows.h>
 
 #include <freerdp/utils/stream.h>
-#include <winpr/print.h>
-#include <freerdp/utils/unicode.h>
 
 #include "librail.h"
 

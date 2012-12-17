@@ -26,8 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/unicode.h>
-
 #include <winpr/crt.h>
 #include <winpr/ndr.h>
 #include <winpr/error.h>
@@ -1070,8 +1068,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	rdpSettings* settings = rpc->settings;
 
 	tsg->Port = port;
-	freerdp_AsciiToUnicodeAlloc(hostname, &tsg->Hostname, 0);
-	freerdp_AsciiToUnicodeAlloc(settings->ComputerName, &tsg->MachineName, 0);
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
+	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
 
 	if (!rpc_connect(rpc))
 	{

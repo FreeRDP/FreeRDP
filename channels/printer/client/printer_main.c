@@ -31,7 +31,6 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
@@ -266,8 +265,8 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	if (printer->is_default)
 		Flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
 
-	DriverNameLen = freerdp_AsciiToUnicodeAlloc(printer->driver, &DriverName, 0) * 2;
-	PrintNameLen = freerdp_AsciiToUnicodeAlloc(printer->name, &PrintName, 0) * 2;
+	DriverNameLen = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, &DriverName, 0) * 2;
+	PrintNameLen = ConvertToUnicode(CP_UTF8, 0, printer->name, -1, &PrintName, 0) * 2;
 
 	printer_dev->device.data = stream_new(28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
 

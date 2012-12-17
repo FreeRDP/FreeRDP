@@ -27,11 +27,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <winpr/print.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
