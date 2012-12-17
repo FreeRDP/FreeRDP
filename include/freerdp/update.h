@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_API_H
-#define __UPDATE_API_H
+#ifndef FREERDP_UPDATE_H
+#define FREERDP_UPDATE_H
 
 typedef struct rdp_update rdpUpdate;
 
@@ -193,5 +193,4 @@ struct rdp_update
 	SURFACE_FRAME_MARKER surface_frame_marker;
 };
 
-#endif /* __UPDATE_API_H */
-
+#endif /* FREERDP_UPDATE_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_PRIMARY_H
-#define __UPDATE_PRIMARY_H
+#ifndef FREERDP_UPDATE_PRIMARY_H
+#define FREERDP_UPDATE_PRIMARY_H
 
 #include <freerdp/types.h>
 
@@ -496,4 +496,4 @@ struct rdp_primary_update
 };
 typedef struct rdp_primary_update rdpPrimaryUpdate;
 
-#endif /* __UPDATE_PRIMARY_H */
+#endif /* FREERDP_UPDATE_PRIMARY_H */

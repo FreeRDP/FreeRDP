@@ -30,7 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/codec/rfx.h>
 
 #include "rfx_types.h"
@@ -337,7 +337,7 @@ void test_encode(void)
 	rgb_data = (BYTE *) malloc(64 * 64 * 3);
 	for (i = 0; i < 64; i++)
 		memcpy(rgb_data + i * 64 * 3, rgb_scanline_data, 64 * 3);
-	//freerdp_hexdump(rgb_data, 64 * 64 * 3);
+	//winpr_HexDump(rgb_data, 64 * 64 * 3);
 
 	enc_stream = stream_new(65536);
 	stream_clear(enc_stream);
@@ -352,11 +352,11 @@ void test_encode(void)
 	//dump_buffer(context->priv->cb_g_buffer, 4096);
 
 	/*printf("*** Y ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream), y_size);
+	winpr_HexDump(stream_get_head(enc_stream), y_size);
 	printf("*** Cb ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size, cb_size);
+	winpr_HexDump(stream_get_head(enc_stream) + y_size, cb_size);
 	printf("*** Cr ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
+	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
 
 	stream_set_pos(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,

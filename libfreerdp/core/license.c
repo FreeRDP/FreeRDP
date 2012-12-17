@@ -155,7 +155,7 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
-	freerdp_hexdump(s->p - 4, wMsgSize);
+	winpr_HexDump(s->p - 4, wMsgSize);
 #endif
 
 	stream_set_pos(s, length);
@@ -267,25 +267,25 @@ void license_generate_keys(rdpLicense* license)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("ClientRandom:\n");
-	freerdp_hexdump(license->client_random, CLIENT_RANDOM_LENGTH);
+	winpr_HexDump(license->client_random, CLIENT_RANDOM_LENGTH);
 
 	printf("ServerRandom:\n");
-	freerdp_hexdump(license->server_random, SERVER_RANDOM_LENGTH);
+	winpr_HexDump(license->server_random, SERVER_RANDOM_LENGTH);
 
 	printf("PremasterSecret:\n");
-	freerdp_hexdump(license->premaster_secret, PREMASTER_SECRET_LENGTH);
+	winpr_HexDump(license->premaster_secret, PREMASTER_SECRET_LENGTH);
 
 	printf("MasterSecret:\n");
-	freerdp_hexdump(license->master_secret, MASTER_SECRET_LENGTH);
+	winpr_HexDump(license->master_secret, MASTER_SECRET_LENGTH);
 
 	printf("SessionKeyBlob:\n");
-	freerdp_hexdump(license->session_key_blob, SESSION_KEY_BLOB_LENGTH);
+	winpr_HexDump(license->session_key_blob, SESSION_KEY_BLOB_LENGTH);
 
 	printf("MacSaltKey:\n");
-	freerdp_hexdump(license->mac_salt_key, MAC_SALT_KEY_LENGTH);
+	winpr_HexDump(license->mac_salt_key, MAC_SALT_KEY_LENGTH);
 
 	printf("LicensingEncryptionKey:\n");
-	freerdp_hexdump(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
+	winpr_HexDump(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
 #endif
 }
 
@@ -327,10 +327,10 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("modulus (%d bits):\n", key_length * 8);
-	freerdp_hexdump(modulus, key_length);
+	winpr_HexDump(modulus, key_length);
 
 	printf("exponent:\n");
-	freerdp_hexdump(exponent, 4);
+	winpr_HexDump(exponent, 4);
 #endif
 
 	encrypted_premaster_secret = (BYTE*) malloc(MODULUS_MAX_SIZE);
@@ -369,11 +369,11 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("encrypted_platform challenge:\n");
-	freerdp_hexdump(license->encrypted_platform_challenge->data,
+	winpr_HexDump(license->encrypted_platform_challenge->data,
 			license->encrypted_platform_challenge->length);
 
 	printf("platform challenge:\n");
-	freerdp_hexdump(license->platform_challenge->data, license->platform_challenge->length);
+	winpr_HexDump(license->platform_challenge->data, license->platform_challenge->length);
 #endif
 
 	crypto_rc4_free(rc4);
@@ -851,13 +851,13 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("Licensing Encryption Key:\n");
-	freerdp_hexdump(license->licensing_encryption_key, 16);
+	winpr_HexDump(license->licensing_encryption_key, 16);
 
 	printf("HardwareID:\n");
-	freerdp_hexdump(license->hwid, 20);
+	winpr_HexDump(license->hwid, 20);
 
 	printf("Encrypted HardwareID:\n");
-	freerdp_hexdump(buffer, 20);
+	winpr_HexDump(buffer, 20);
 #endif
 
 	license->encrypted_hwid->type = BB_DATA_BLOB;

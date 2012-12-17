@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_SIGNAL_H
-#define __UTILS_SIGNAL_H
+#ifndef FREERDP_UTILS_SIGNAL_H
+#define FREERDP_UTILS_SIGNAL_H
 
 #include <freerdp/api.h>
 #ifndef _WIN32
@@ -33,4 +33,4 @@ extern struct termios new_flags;
 
 FREERDP_API int freerdp_handle_signals(void);
 
-#endif /* __UTILS_SIGNAL_H */
+#endif /* FREERDP_UTILS_SIGNAL_H */

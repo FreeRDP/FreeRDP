@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CONSTANTS
-#define __FREERDP_CONSTANTS
+#ifndef FREERDP_CONSTANTS_H
+#define FREERDP_CONSTANTS_H
 
 /**
  * Codec IDs
@@ -110,4 +110,4 @@ typedef enum RDP_PIXEL_FORMAT RDP_PIXEL_FORMAT;
 #define OSMINORTYPE_NATIVE_XSERVER		0x0007
 #define OSMINORTYPE_PSEUDO_XSERVER		0x0008
 
-#endif
+#endif /* FREERDP_CONSTANTS_H */

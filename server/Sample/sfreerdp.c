@@ -34,7 +34,6 @@
 #include <winpr/synch.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
@@ -351,10 +350,10 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 	}
 	
 	if (sec > 0)
-		freerdp_sleep(sec);
+		Sleep(sec * 1000);
 	
 	if (usec > 0)
-		freerdp_usleep(usec);
+		USleep(usec);
 	
 	return TRUE;
 }

@@ -28,7 +28,7 @@
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/codec/nsc.h>
 
 #include "test_nsc.h"
@@ -337,7 +337,7 @@ void test_nsc_decode(void)
 	context = nsc_context_new();
 	nsc_context_set_cpu_opt(context, CPU_SSE2);
 	nsc_process_message(context, 32, 15, 10, (BYTE*) nsc_data, sizeof(nsc_data));
-	/*freerdp_hexdump(context->bmpdata, 15 * 10 * 4);*/
+	/*winpr_HexDump(context->bmpdata, 15 * 10 * 4);*/
 	for (i = 0; i < 30000; i++)
 	{
 		nsc_process_message(context, 32, 54, 44, (BYTE*) nsc_stress_data, sizeof(nsc_stress_data));
@@ -368,9 +368,9 @@ void test_nsc_encode(void)
 		stream_set_pos(enc_stream, 0);
 		nsc_compose_message(context, enc_stream, rgb_data, 64, 64, 64 * 3);
 	}
-	/*freerdp_hexdump(stream_get_head(enc_stream), stream_get_length(enc_stream));*/
+	/*winpr_HexDump(stream_get_head(enc_stream), stream_get_length(enc_stream));*/
 	nsc_process_message(context, 32, 64, 64, stream_get_head(enc_stream), stream_get_length(enc_stream));
-	/*freerdp_hexdump(context->bmpdata, 64 * 64 * 4);*/
+	/*winpr_HexDump(context->bmpdata, 64 * 64 * 4);*/
 	stream_free(enc_stream);
 
 	nsc_context_free(context);

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_LOCALE_KEYBOARD_H
-#define __FREERDP_LOCALE_KEYBOARD_H
+#ifndef FREERDP_LOCALE_KEYBOARD_H
+#define FREERDP_LOCALE_KEYBOARD_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -205,4 +205,4 @@ FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT
 FREERDP_API UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL extended);
 FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(UINT32 vkcode);
 
-#endif /* __FREERDP_LOCALE_KEYBOARD_H */
+#endif /* FREERDP_LOCALE_KEYBOARD_H */

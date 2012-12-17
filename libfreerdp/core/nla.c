@@ -144,7 +144,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 
 #ifdef UNICODE
 	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
-	MultiByteToWideChar(CP_ACP, 0, spn, length,
+	MultiByteToWideChar(CP_UTF8, 0, spn, length,
 		(LPWSTR) credssp->ServicePrincipalName, length);
 	free(spn);
 #else

@@ -24,8 +24,8 @@
  * http://www.microsoft.com/globaldev/reference/winxp/xp-lcid.mspx
  */
 
-#ifndef __FREERDP_LOCALE_H
-#define __FREERDP_LOCALE_H
+#ifndef FREERDP_LOCALE_H
+#define FREERDP_LOCALE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -234,4 +234,4 @@ FREERDP_API UINT32 freerdp_get_system_locale_id();
 FREERDP_API UINT32 freerdp_detect_keyboard_layout_from_system_locale();
 FREERDP_API const char* freerdp_get_system_locale_name_from_id(UINT32 localeId);
 
-#endif /* __FREERDP_LOCALE_H */
+#endif /* FREERDP_LOCALE_H */

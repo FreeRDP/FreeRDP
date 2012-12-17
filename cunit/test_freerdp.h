@@ -23,7 +23,7 @@
 #include <CUnit/CUnit.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 #define add_test_suite(name) \
 	CU_pSuite pSuite; \

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __STRING_UTILS_H
-#define __STRING_UTILS_H
+#ifndef FREERDP_UTILS_STRING_H
+#define FREERDP_UTILS_STRING_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -35,4 +35,4 @@ typedef struct rdp_string rdpString;
 FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string);
 FREERDP_API void freerdp_string_free(rdpString* string);
 
-#endif /* __STRING_UTILS_H */
+#endif /* FREERDP_UTILS_STRING_H */

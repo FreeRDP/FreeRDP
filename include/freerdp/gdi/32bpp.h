@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#ifndef FREERDP_GDI_32BPP_H
+#define FREERDP_GDI_32BPP_H
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -29,3 +32,5 @@ FREERDP_API int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 FREERDP_API int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 FREERDP_API int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 FREERDP_API int LineTo_32bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
+
+#endif /* FREERDP_GDI_32BPP_H */

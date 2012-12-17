@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_WINDOW_H
-#define __RAIL_WINDOW_H
+#ifndef FREERDP_RAIL_WINDOW_H
+#define FREERDP_RAIL_WINDOW_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -73,4 +73,4 @@ FREERDP_API void rail_CreateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_UpdateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_DestroyWindow(rdpRail* rail, rdpWindow* window);
 
-#endif /* __RAIL_WINDOW_H */
+#endif /* FREERDP_RAIL_WINDOW_H */

@@ -91,7 +91,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 		stream_read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("loadBalanceInfo:");
-		freerdp_hexdump(redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		winpr_HexDump(redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #endif
 	}
 
@@ -116,7 +116,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, STREAM* s)
 
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("password_cookie:");
-		freerdp_hexdump(redirection->PasswordCookie, redirection->PasswordCookieLength);
+		winpr_HexDump(redirection->PasswordCookie, redirection->PasswordCookieLength);
 #endif
 	}
 

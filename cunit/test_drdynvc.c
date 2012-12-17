@@ -25,7 +25,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 #include "test_drdynvc.h"
 
@@ -60,7 +60,7 @@ static int data_received = 0;
 static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
-	freerdp_hexdump(data, data_size);
+	winpr_HexDump(data, data_size);
 	data_received = 1;
 	return 0;
 }

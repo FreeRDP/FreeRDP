@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_STOPWATCH_H
-#define __UTILS_STOPWATCH_H
+#ifndef FREERDP_UTILS_STOPWATCH_H
+#define FREERDP_UTILS_STOPWATCH_H
 
 #include <time.h>
 
@@ -44,4 +44,4 @@ FREERDP_API void stopwatch_reset(STOPWATCH* stopwatch);
 FREERDP_API double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
 FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec);
 
-#endif /* __UTILS_STOPWATCH_H */
+#endif /* FREERDP_UTILS_STOPWATCH_H */

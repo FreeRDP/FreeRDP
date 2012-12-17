@@ -54,7 +54,6 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
@@ -74,6 +73,7 @@ typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path;
+	int status;
 	UINT32 PathLength;
 
 	stream_seek(irp->input, 28);
@@ -81,7 +81,11 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_UINT32(irp->input, PathLength);
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			PathLength / 2, &path, 0, NULL, NULL);
+
+	if (status < 1)
+		path = (char*) calloc(1, 1);
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);

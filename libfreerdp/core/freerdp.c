@@ -32,7 +32,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/errorcodes.h>
+#include <freerdp/error.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/

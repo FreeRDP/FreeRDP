@@ -22,7 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 	dsp.c
 	event.c
 	bitmap.c
-	hexdump.c
 	list.c
 	file.c
 	passphrase.c
@@ -30,7 +29,6 @@ set(${MODULE_PREFIX}_SRCS
 	profiler.c
 	rail.c
 	signal.c
-	sleep.c
 	stopwatch.c
 	stream.c
 	string.c
@@ -38,8 +36,7 @@ set(${MODULE_PREFIX}_SRCS
 	tcp.c
 	thread.c
 	time.c
-	uds.c
-	unicode.c)
+	uds.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)

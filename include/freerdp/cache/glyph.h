@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GLYPH_CACHE_H
-#define __GLYPH_CACHE_H
+#ifndef FREERDP_GLYPH_CACHE_H
+#define FREERDP_GLYPH_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -70,4 +70,4 @@ FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
 FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
 
-#endif /* __GLYPH_CACHE_H */
+#endif /* FREERDP_GLYPH_CACHE_H */

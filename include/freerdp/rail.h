@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_GLOBAL_H
-#define __RAIL_GLOBAL_H
+#ifndef FREERDP_RAIL_GLOBAL_H
+#define FREERDP_RAIL_GLOBAL_H
 
 #include <freerdp/types.h>
 
@@ -340,5 +340,4 @@ enum RDP_EVENT_TYPE_RAIL
 	RDP_EVENT_TYPE_RAIL_CLIENT_LANGBARINFO
 };
 
-#endif /* __RAIL_GLOBAL_H */
-
+#endif /* FREERDP_RAIL_GLOBAL_H */

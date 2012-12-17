@@ -20,7 +20,7 @@
 #include "license.h"
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/stream.h>
 
 #include "test_license.h"
@@ -327,44 +327,44 @@ void test_license(void)
 	printf("\n");
 
 	printf("client random:\n");
-	freerdp_hexdump(license->client_random, 32);
+	winpr_HexDump(license->client_random, 32);
 	printf("\n");
 
 	printf("server random:\n");
-	freerdp_hexdump(license->server_random, 32);
+	winpr_HexDump(license->server_random, 32);
 	printf("\n");
 
 	printf("premaster secret:\n");
-	freerdp_hexdump(license->premaster_secret, 48);
+	winpr_HexDump(license->premaster_secret, 48);
 	printf("\n");
 
 	printf("master secret:\n");
-	freerdp_hexdump(license->master_secret, 48);
+	winpr_HexDump(license->master_secret, 48);
 	printf("\n");
 
 	printf("session key blob:\n");
-	freerdp_hexdump(license->session_key_blob, 48);
+	winpr_HexDump(license->session_key_blob, 48);
 	printf("\n");
 
 	printf("licensing encryption key:\n");
-	freerdp_hexdump(license->licensing_encryption_key, 16);
+	winpr_HexDump(license->licensing_encryption_key, 16);
 	printf("\n");
 
 	printf("mac salt key:\n");
-	freerdp_hexdump(license->mac_salt_key, 16);
+	winpr_HexDump(license->mac_salt_key, 16);
 	printf("\n");
 
 	printf("modulus:\n");
-	freerdp_hexdump(license->certificate->cert_info.modulus.data,
+	winpr_HexDump(license->certificate->cert_info.modulus.data,
 			license->certificate->cert_info.modulus.length);
 	printf("\n");
 
 	printf("exponent:\n");
-	freerdp_hexdump(license->certificate->cert_info.exponent, 4);
+	winpr_HexDump(license->certificate->cert_info.exponent, 4);
 	printf("\n");
 
 	printf("encrypted premaster secret:\n");
-	freerdp_hexdump(license->encrypted_premaster_secret->data,
+	winpr_HexDump(license->encrypted_premaster_secret->data,
 			license->encrypted_premaster_secret->length);
 	printf("\n");
 #endif

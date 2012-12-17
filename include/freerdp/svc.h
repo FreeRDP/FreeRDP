@@ -23,8 +23,8 @@
  * http://msdn.microsoft.com/en-us/library/aa383580.aspx
  */
 
-#ifndef __FREERDP_SVC_H
-#define __FREERDP_SVC_H
+#ifndef FREERDP_SVC_H
+#define FREERDP_SVC_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -113,4 +113,4 @@ struct _CHANNEL_ENTRY_POINTS_EX
 typedef struct _CHANNEL_ENTRY_POINTS_EX CHANNEL_ENTRY_POINTS_EX;
 typedef CHANNEL_ENTRY_POINTS_EX* PCHANNEL_ENTRY_POINTS_EX;
 
-#endif
+#endif /* FREERDP_SVC_H */

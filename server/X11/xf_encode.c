@@ -26,7 +26,8 @@
 #include <sys/select.h>
 #include <sys/signal.h>
 
-#include <freerdp/utils/sleep.h>
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include "xf_encode.h"
 
@@ -100,7 +101,7 @@ void* xf_frame_rate_thread(void* param)
 		
 		event = xf_event_new(XF_EVENT_TYPE_FRAME_TICK);
 		xf_event_push(xfp->event_queue, (xfEvent*) event);
-		freerdp_usleep(wait_interval);
+		USleep(wait_interval);
 	}
 }
 

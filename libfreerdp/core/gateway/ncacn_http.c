@@ -25,13 +25,14 @@
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
+#include <winpr/stream.h>
 #include <winpr/dsparse.h>
 
 #include <openssl/rand.h>
 
-STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
+wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
-	STREAM* s;
+	wStream* s;
 	char* base64_ntlm_token;
 	HttpContext* http_context;
 	HttpRequest* http_request;
@@ -70,7 +71,7 @@ STREAM* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_le
 
 int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 {
-	STREAM* s;
+	wStream* s;
 	int content_length;
 	BOOL continue_needed;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
@@ -81,9 +82,9 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, content_length, TSG_CHANNEL_IN);
 
-	DEBUG_RPC("\n%s", s->data);
-	rpc_in_write(rpc, s->data, s->size);
-	stream_free(s);
+	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
+	Stream_Free(s, TRUE);
 
 	return 0;
 }
@@ -166,7 +167,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 
 int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 {
-	STREAM* s;
+	wStream* s;
 	int content_length;
 	BOOL continue_needed;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
@@ -177,9 +178,9 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, content_length, TSG_CHANNEL_OUT);
 
-	DEBUG_RPC("\n%s", s->data);
-	rpc_out_write(rpc, s->data, s->size);
-	stream_free(s);
+	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 #include "http.h"
 
@@ -200,10 +201,10 @@ char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
 	return line;
 }
 
-STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
+wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 {
 	int i;
-	STREAM* s;
+	wStream* s;
 	int length = 0;
 
 	http_request->count = 9;
@@ -234,21 +235,21 @@ STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 	length += 2; /* empty line "\r\n" at end of header */
 	length += 1; /* null terminator */
 
-	s = stream_new(length);
+	s = Stream_New(NULL, length);
 
 	for (i = 0; i < http_request->count; i++)
 	{
-		stream_write(s, http_request->lines[i], strlen(http_request->lines[i]));
-		stream_write(s, "\r\n", 2);
+		Stream_Write(s, http_request->lines[i], strlen(http_request->lines[i]));
+		Stream_Write(s, "\r\n", 2);
 		free(http_request->lines[i]);
 	}
-	stream_write(s, "\r\n", 2);
+	Stream_Write(s, "\r\n", 2);
 
 	free(http_request->lines);
 
-	stream_write(s, "\0", 1); /* append null terminator */
-	stream_rewind(s, 1); /* don't include null terminator in length */
-	stream_seal(s);
+	Stream_Write(s, "\0", 1); /* append null terminator */
+	Stream_Rewind(s, 1); /* don't include null terminator in length */
+	Stream_Length(s) = Stream_Position(s);
 
 	return s;
 }

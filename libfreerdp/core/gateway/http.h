@@ -26,7 +26,8 @@ typedef struct _http_response HttpResponse;
 
 #include <freerdp/types.h>
 #include <freerdp/crypto/tls.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 struct _http_context
 {
@@ -71,7 +72,7 @@ void http_request_set_uri(HttpRequest* http_request, char* uri);
 void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme);
 void http_request_set_auth_param(HttpRequest* http_request, char* auth_param);
 
-STREAM* http_request_write(HttpContext* http_context, HttpRequest* http_request);
+wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request);
 
 HttpRequest* http_request_new();
 void http_request_free(HttpRequest* http_request);

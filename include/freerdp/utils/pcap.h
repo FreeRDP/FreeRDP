@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_PCAP_H
-#define __UTILS_PCAP_H
+#ifndef FREERDP_UTILS_PCAP_H
+#define FREERDP_UTILS_PCAP_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -78,4 +78,4 @@ FREERDP_API BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 FREERDP_API BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record);
 FREERDP_API void pcap_flush(rdpPcap* pcap);
 
-#endif /* __UTILS_PCAP_H */
+#endif /* FREERDP_UTILS_PCAP_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_PALETTE_H
-#define __GDI_PALETTE_H
+#ifndef FREERDP_GDI_PALETTE_H
+#define FREERDP_GDI_PALETTE_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -26,4 +26,4 @@
 FREERDP_API HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette);
 FREERDP_API HGDI_PALETTE gdi_GetSystemPalette();
 
-#endif /* __GDI_PALETTE_H */
+#endif /* FREERDP_GDI_PALETTE_H */

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __MPPC_ENC_H
-#define __MPPC_ENC_H
+#ifndef FREERDP_CODEC_MPPC_ENCODER_H
+#define FREERDP_CODEC_MPPC_ENCODER_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -48,4 +48,4 @@ FREERDP_API BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len
 FREERDP_API struct rdp_mppc_enc* mppc_enc_new(int protocol_type);
 FREERDP_API void mppc_enc_free(struct rdp_mppc_enc* enc);
 
-#endif
+#endif /* FREERDP_CODEC_MPPC_ENCODER_H */

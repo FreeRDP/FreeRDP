@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __INPUT_API_H
-#define __INPUT_API_H
+#ifndef FREERDP_INPUT_H
+#define FREERDP_INPUT_H
 
 typedef struct rdp_input rdpInput;
 
@@ -81,4 +81,4 @@ FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT
 FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
-#endif /* __INPUT_API_H */
+#endif /* FREERDP_INPUT_H */

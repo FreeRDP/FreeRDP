@@ -22,7 +22,7 @@
 #endif
 
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 

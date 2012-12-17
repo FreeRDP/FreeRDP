@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_DEBUG_H
-#define __UTILS_DEBUG_H
+#ifndef FREERDP_UTILS_DEBUG_H
+#define FREERDP_UTILS_DEBUG_H
 
 #include <stdio.h>
 
@@ -33,4 +33,4 @@
 #define DEBUG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __UTILS_DEBUG_H */
+#endif /* FREERDP_UTILS_DEBUG_H */

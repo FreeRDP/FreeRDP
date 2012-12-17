@@ -41,9 +41,9 @@
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/client/tsmf.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "tsmf_constants.h"
@@ -341,7 +341,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			(sample->end_time >= presentation->audio_start_time ||
 			sample->end_time < stream->last_end_time))
 		{
-			freerdp_usleep((stream->next_start_time - t) / 10);
+			USleep((stream->next_start_time - t) / 10);
 		}
 		stream->next_start_time = t + sample->duration - 50000;
 
@@ -674,10 +674,11 @@ static void* tsmf_stream_playback_func(void* arg)
 	{
 		tsmf_stream_process_ack(stream);
 		sample = tsmf_stream_pop_sample(stream, 1);
+
 		if (sample)
 			tsmf_sample_playback(sample);
 		else
-			freerdp_usleep(5000);
+			USleep(5000);
 	}
 	if (stream->eos || presentation->eos)
 	{

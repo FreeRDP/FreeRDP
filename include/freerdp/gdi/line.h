@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_LINE_H
-#define __GDI_LINE_H
+#ifndef FREERDP_GDI_LINE_H
+#define FREERDP_GDI_LINE_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -31,4 +31,4 @@ FREERDP_API int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint);
 
 typedef int (*p_LineTo)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
-#endif /* __GDI_LINE_H */
+#endif /* FREERDP_GDI_LINE_H */

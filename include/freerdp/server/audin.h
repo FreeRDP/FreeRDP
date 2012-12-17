@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __SERVER_AUDIN_H
-#define __SERVER_AUDIN_H
+#ifndef FREERDP_CHANNEL_AUDIN_SERVER_H
+#define FREERDP_CHANNEL_AUDIN_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
@@ -92,4 +92,4 @@ struct _audin_server_context
 FREERDP_API audin_server_context* audin_server_context_new(WTSVirtualChannelManager* vcm);
 FREERDP_API void audin_server_context_free(audin_server_context* context);
 
-#endif
+#endif /* FREERDP_CHANNEL_AUDIN_SERVER_H */
