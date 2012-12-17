@@ -176,6 +176,7 @@ NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAv
 void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
 	char* name;
+	int length;
 	DWORD nSize = 0;
 
 	GetComputerNameExA(type, NULL, &nSize);
@@ -185,11 +186,9 @@ void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT t
 	if (type == ComputerNameNetBIOS)
 		CharUpperA(name);
 
-	pName->Length = strlen(name) * 2;
-	pName->Buffer = (PWSTR) malloc(pName->Length);
-	MultiByteToWideChar(CP_ACP, 0, name, strlen(name),
-			(LPWSTR) pName->Buffer, pName->Length / 2);
+	length = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
 
+	pName->Length = (length - 1) / 2;
 	pName->MaximumLength = pName->Length;
 
 	free(name);
