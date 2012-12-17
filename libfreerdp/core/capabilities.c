@@ -57,8 +57,7 @@ static const char* const CAPSET_TYPE_STRINGS[] =
 		"Surface Commands",
 		"Bitmap Codecs",
 		"Frame Acknowledge"
-};
-*/
+};*/
 
 /* CODEC_GUID_REMOTEFX 0x76772F12BD724463AFB3B73C9C6F7886 */
 #define CODEC_GUID_REMOTEFX "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86"
@@ -66,7 +65,13 @@ static const char* const CAPSET_TYPE_STRINGS[] =
 /* CODEC_GUID_NSCODEC  0xCA8D1BB9000F154F589FAE2D1A87E2D6 */
 #define CODEC_GUID_NSCODEC "\xb9\x1b\x8d\xca\x0f\x00\x4f\x15\x58\x9f\xae\x2d\x1a\x87\xe2\xd6"
 
-/* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237*/
+/* CODEC_GUID_IGNORE 0xA651439C3535AE42910CCDFCE5760B58 */
+#define CODEC_GUID_IGNORE "\xa6\x51\x43\x9c\x35\x35\xae\x42\x91\x0c\xcd\xfc\xe5\x76\x0b\x58";
+
+/* CODEC_GUID_IMAGE_REMOTEFX 0xD4CC44278A9D744E803C0ECBEEA9C54 */
+#define CODEC_GUID_IMAGE_REMOTEFX "\xd4\xcc\x44\x27\x8a\x9d\x74\x4e\x80\x3c\x0e\xcb\xee\xa\x9c\x54";
+
+/* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237 */
 #define CODEC_GUID_JPEG "\xE6\x4C\xAF\x1B\xED\x9E\x0C\x43\x86\x9A\xCB\x8B\x37\xB6\x62\x37"
 
 void rdp_read_capability_set_header(STREAM* s, UINT16* length, UINT16* type)
@@ -1439,15 +1444,15 @@ void rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 
 	while (bitmapCodecCount > 0)
 	{
-		if (settings->ServerMode && strncmp((char*)stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
+		if (settings->ServerMode && strncmp((char*) stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
 		{
 			stream_seek(s, 16); /* codecGUID (16 bytes) */
 			stream_read_BYTE(s, settings->RemoteFxCodecId);
 			settings->RemoteFxCodec = TRUE;
 		}
-		else if (settings->ServerMode && strncmp((char*)stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
+		else if (settings->ServerMode && strncmp((char*) stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
 		{
-			stream_seek(s, 16); /*codec GUID (16 bytes) */
+			stream_seek(s, 16); /* codec GUID (16 bytes) */
 			stream_read_BYTE(s, settings->NSCodecId);
 			settings->NSCodec = TRUE;
 		}

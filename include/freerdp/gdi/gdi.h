@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_H
-#define __GDI_H
+#ifndef FREERDP_GDI_H
+#define FREERDP_GDI_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -296,4 +296,4 @@ FREERDP_API void gdi_free(freerdp* instance);
 #define DEBUG_GDI(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __GDI_H */
+#endif /* FREERDP_GDI_H */

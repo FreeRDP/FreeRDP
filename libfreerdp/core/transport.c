@@ -27,12 +27,11 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/print.h>
 
+#include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/errorcodes.h>
 
 #include <time.h>
 #include <errno.h>
@@ -320,7 +319,7 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 		{
 			/* instead of sleeping, we should wait timeout on the socket
 			   but this only happens on initial connection */
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 		}
 	}
 
@@ -397,7 +396,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	if (stream_bytes + status >= pdu_bytes)
 	{
 		printf("Local < Remote\n");
-		freerdp_hexdump(s->data, pdu_bytes);
+		winpr_HexDump(s->data, pdu_bytes);
 	}
 #endif
 
@@ -421,7 +420,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 		if ((status == 0) && (transport->blocking))
 		{
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 			continue;
 		}
 
@@ -432,7 +431,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	if (status > 0)
 	{
 		printf("Local < Remote\n");
-		freerdp_hexdump(s->data, status);
+		winpr_HexDump(s->data, status);
 	}
 #endif
 
@@ -468,7 +467,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 	if (length > 0)
 	{
 		printf("Local > Remote\n");
-		freerdp_hexdump(s->data, length);
+		winpr_HexDump(s->data, length);
 	}
 #endif
 
@@ -487,7 +486,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 		if (status == 0)
 		{
 			/* blocking while sending */
-			freerdp_usleep(transport->usleep_interval);
+			USleep(transport->usleep_interval);
 
 			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
 			if (!transport->blocking)
@@ -601,7 +600,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (length == 0)
 		{
 			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			freerdp_hexdump(stream_get_head(transport->recv_buffer), pos);
+			winpr_HexDump(stream_get_head(transport->recv_buffer), pos);
 			return -1;
 		}
 

@@ -22,10 +22,9 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/unicode.h>
 
 #include <freerdp/rail/icon.h>
 

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_POINTER_H
-#define __UPDATE_POINTER_H
+#ifndef FREERDP_UPDATE_POINTER_H
+#define FREERDP_UPDATE_POINTER_H
 
 #include <freerdp/types.h>
 
@@ -99,4 +99,4 @@ struct rdp_pointer_update
 };
 typedef struct rdp_pointer_update rdpPointerUpdate;
 
-#endif /* __UPDATE_POINTER_H */
+#endif /* FREERDP_UPDATE_POINTER_H */

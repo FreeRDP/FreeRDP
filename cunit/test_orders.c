@@ -18,7 +18,7 @@
  */
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/stream.h>
 
 #include "test_orders.h"

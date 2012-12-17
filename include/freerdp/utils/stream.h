@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __STREAM_UTILS_H
-#define __STREAM_UTILS_H
+#ifndef FREERDP_UTILS_STREAM_H
+#define FREERDP_UTILS_STREAM_H
 
 #include <string.h>
 #include <freerdp/api.h>
@@ -172,5 +172,5 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	_src->p += _n; \
 	} while (0)
 
-#endif /* __STREAM_UTILS_H */
+#endif /* FREERDP_UTILS_STREAM_H */
 

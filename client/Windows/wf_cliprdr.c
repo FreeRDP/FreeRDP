@@ -21,9 +21,10 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "wf_cliprdr.h"

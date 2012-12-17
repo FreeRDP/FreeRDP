@@ -29,7 +29,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/errorcodes.h>
+#include <freerdp/error.h>
 
 /**
  *                                      Connection Sequence\n

@@ -26,9 +26,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/constants.h>
-#include <freerdp/utils/unicode.h>
-
 #include "tpkt.h"
 
 #include "nego.h"
@@ -274,7 +271,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (nego->preconnection_blob)
 	{
-		cchPCB = (UINT16) freerdp_AsciiToUnicodeAlloc(nego->preconnection_blob, &wszPCB, 0);
+		cchPCB = (UINT16) ConvertToUnicode(CP_UTF8, 0, nego->preconnection_blob, -1, &wszPCB, 0);
 		cchPCB += 1; /* zero-termination */
 		cbSize += cchPCB * 2;
 	}

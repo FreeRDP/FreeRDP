@@ -252,6 +252,8 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 
 /* Extended API */
 
+WINPR_API VOID USleep(DWORD dwMicroseconds);
+
 WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,

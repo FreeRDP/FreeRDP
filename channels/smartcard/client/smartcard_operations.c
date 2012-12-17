@@ -40,7 +40,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/thread.h>
@@ -1547,7 +1547,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	stream_set_pos(irp->output, pos);
 
 #ifdef WITH_DEBUG_SCARD
-	freerdp_hexdump(stream_get_data(irp->output), stream_get_length(irp->output));
+	winpr_HexDump(stream_get_data(irp->output), stream_get_length(irp->output));
 #endif
 	irp->IoStatus = 0;
 

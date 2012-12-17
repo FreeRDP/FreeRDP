@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __BRUSH_CACHE_H
-#define __BRUSH_CACHE_H
+#ifndef FREERDP_BRUSH_CACHE_H
+#define FREERDP_BRUSH_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -64,4 +64,4 @@ FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
 FREERDP_API void brush_cache_free(rdpBrushCache* brush);
 
-#endif /* __BRUSH_CACHE_H */
+#endif /* FREERDP_BRUSH_CACHE_H */

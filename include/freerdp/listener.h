@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_LISTENER_H
-#define __FREERDP_LISTENER_H
+#ifndef FREERDP_LISTENER_H
+#define FREERDP_LISTENER_H
 
 typedef struct rdp_freerdp_listener freerdp_listener;
 
@@ -63,5 +63,4 @@ FREERDP_API void freerdp_listener_free(freerdp_listener* instance);
 }
 #endif
 
-#endif
-
+#endif /* FREERDP_LISTENER_H */

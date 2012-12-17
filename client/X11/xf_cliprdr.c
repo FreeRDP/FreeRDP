@@ -29,7 +29,6 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "xf_cliprdr.h"
@@ -538,7 +537,7 @@ static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 	int out_size;
 
 	inbuf = (char*) lf2crlf(data, size);
-	out_size = freerdp_AsciiToUnicodeAlloc(inbuf, &outbuf, 0);
+	out_size = ConvertToUnicode(CP_UTF8, 0, inbuf, -1, &outbuf, 0);
 	free(inbuf);
 
 	*size = (int) ((out_size + 1) * 2);
@@ -593,7 +592,8 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 
 		if ((BYTE) data[0] == 0xFF && (BYTE) data[1] == 0xFE)
 		{
-			freerdp_UnicodeToAsciiAlloc((WCHAR*) (data + 2), &inbuf, (*size - 2) / 2);
+			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) (data + 2),
+					(*size - 2) / 2, &inbuf, 0, NULL, NULL);
 		}
 	}
 
@@ -891,7 +891,7 @@ static void xf_cliprdr_process_text(clipboardContext* cb, BYTE* data, int size)
 
 static void xf_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data, int size)
 {
-	cb->data_length = freerdp_UnicodeToAsciiAlloc((WCHAR*) data, (CHAR**) &(cb->data), size / 2);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) data, size / 2, (CHAR**) &(cb->data), 0, NULL, NULL);
 	crlf2lf(cb->data, &cb->data_length);
 }
 

@@ -42,7 +42,6 @@
 #include <winpr/file.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -432,9 +431,9 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, S
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
 {
 	char* s;
-
         mode_t m;
 	UINT64 size;
+	int status;
 	char* fullpath;
 	struct STAT st;
 	struct timeval tv[2];
@@ -502,7 +501,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			stream_seek_BYTE(input); /* RootDirectory */
 			stream_read_UINT32(input, FileNameLength);
 
-			freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(input), &s, FileNameLength / 2);
+			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(input),
+					FileNameLength / 2, &s, 0, NULL, NULL);
+
+			if (status < 1)
+				s = (char*) calloc(1, 1);
 
 			fullpath = drive_file_combine_fullpath(file->basepath, s);
 			free(s);
@@ -599,7 +602,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 	free(ent_path);
 
-	length = freerdp_AsciiToUnicodeAlloc(ent->d_name, &ent_path, 0) * 2;
+	length = ConvertToUnicode(CP_UTF8, 0, ent->d_name, -1, &ent_path, 0) * 2;
 
 	ret = TRUE;
 

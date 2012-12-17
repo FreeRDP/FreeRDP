@@ -28,7 +28,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
@@ -446,10 +446,10 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 		printf("Stream and dump have different length (%d != %d)\n",
 			(int) sizeS, (int) size);
 		printf("Stream hexdump:\n");
-		freerdp_hexdump(dataS, sizeS);
+		winpr_HexDump(dataS, sizeS);
 
 		printf("Dump hexdump:\n");
-		freerdp_hexdump(data, size);
+		winpr_HexDump(data, size);
 
 		printf("----------------- stream_equal_dump -----------------\n");
 		return 0;
@@ -463,10 +463,10 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 			printf("----------------- stream_equal_dump -----------------\n");
 			printf("Stream and dump have different content from %d offset.\n", (int) i);
 			printf("Stream hexdump:\n");
-			freerdp_hexdump(dataS, sizeS);
+			winpr_HexDump(dataS, sizeS);
 
 			printf("Dump hexdump:\n");
-			freerdp_hexdump(data, size);
+			winpr_HexDump(data, size);
 			printf("----------------- stream_equal_dump -----------------\n");
 			return 0;
 		}
@@ -511,7 +511,7 @@ static void emulate_server_send_channel_data(
 	counter++;
 
 	printf("Emulate server packet (%d packet):\n", counter);
-	freerdp_hexdump(data, size);
+	winpr_HexDump(data, size);
 
 	freerdp_channels_data(instance, 0, (char*)data, size,
 			CHANNEL_FLAG_FIRST | CHANNEL_FLAG_LAST, size);
@@ -539,7 +539,7 @@ static int emulate_client_send_channel_data(
 	counter++;
 
 	printf("Client send to server (%d packet):\n", counter);
-	freerdp_hexdump(data, size);
+	winpr_HexDump(data, size);
 
 	// add to global dumps list
 	save_dump(data, size);

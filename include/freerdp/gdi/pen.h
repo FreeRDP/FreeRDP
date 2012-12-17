@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_PEN_H
-#define __GDI_PEN_H
+#ifndef FREERDP_GDI_PEN_H
+#define FREERDP_GDI_PEN_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -28,4 +28,4 @@ FREERDP_API BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen);
 FREERDP_API UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen);
 FREERDP_API UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen);
 
-#endif /* __GDI_PEN_H */
+#endif /* FREERDP_GDI_PEN_H */

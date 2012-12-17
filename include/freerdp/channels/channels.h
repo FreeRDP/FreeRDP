@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_CHANNELS_H
-#define __FREERDP_CHANNELS_H
+#ifndef FREERDP_CHANNELS_H
+#define FREERDP_CHANNELS_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -52,4 +52,4 @@ FREERDP_API void freerdp_channels_close(rdpChannels* channels, freerdp* instance
 }
 #endif
 
-#endif /* __FREERDP_CHANNELS_H */
+#endif /* FREERDP_CHANNELS_H */

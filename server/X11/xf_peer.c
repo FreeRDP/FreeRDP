@@ -33,12 +33,12 @@
 #include <sys/select.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/utils/thread.h>
 
 extern char* xf_pcap_file;
@@ -364,10 +364,10 @@ static BOOL xf_peer_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_s
 	}
 
 	if (sec > 0)
-		freerdp_sleep(sec);
+		Sleep(sec * 1000);
 
 	if (usec > 0)
-		freerdp_usleep(usec);
+		USleep(usec);
 
 	return TRUE;
 }

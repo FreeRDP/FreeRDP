@@ -28,7 +28,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/unicode.h>
 
 #include "rail_orders.h"
 
@@ -83,7 +82,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 	if (string == NULL || strlen(string) < 1)
 		return;
 
-	length = freerdp_AsciiToUnicodeAlloc(string, &buffer, 0) * 2;
+	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
 
 	unicode_string->string = (BYTE*) buffer;
 	unicode_string->length = (UINT16) length;

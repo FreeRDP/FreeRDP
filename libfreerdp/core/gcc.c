@@ -21,8 +21,7 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/print.h>
-#include <freerdp/utils/unicode.h>
+#include <winpr/crt.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -513,9 +512,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	stream_read_UINT32(s, settings->ClientBuild); /* ClientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 32 / 2, &str, 0, NULL, NULL);
 	stream_seek(s, 32);
-	snprintf(settings->ClientHostname, 31, "%s", str);
+	sprintf_s(settings->ClientHostname, 31, "%s", str);
 	settings->ClientHostname[31] = 0;
 	free(str);
 
@@ -569,9 +568,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 		if (blockLength < 64)
 			break;
 
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
 		stream_seek(s, 64);
-		snprintf(settings->ClientProductId, 32, "%s", str);
+		sprintf_s(settings->ClientProductId, 32, "%s", str);
 		free(str);
 		blockLength -= 64;
 
@@ -669,8 +668,8 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
-	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->ClientHostname, &clientName, 0);
-	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->ClientProductId, &clientDigProductId, 0);
+	clientNameLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientHostname, -1, &clientName, 0);
+	clientDigProductIdLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientProductId, -1, &clientDigProductId, 0);
 
 	stream_write_UINT32(s, version); /* Version */
 	stream_write_UINT16(s, settings->DesktopWidth); /* DesktopWidth */
