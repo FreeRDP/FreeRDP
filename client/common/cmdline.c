@@ -1319,6 +1319,21 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	if (settings->DisableThemes)
 		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
 
+	if (settings->GatewayUsageMethod)
+	{
+		if (settings->GatewayUseSameCredentials)
+		{
+			if (settings->Username)
+				settings->GatewayUsername = _strdup(settings->Username);
+
+			if (settings->Domain)
+				settings->GatewayDomain = _strdup(settings->Domain);
+
+			if (settings->Password)
+				settings->GatewayPassword = _strdup(settings->Password);
+		}
+	}
+
 	arg = CommandLineFindArgumentA(args, "p");
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
