@@ -681,14 +681,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 
-	if (clientNameLength > 15)
+	if (clientNameLength >= 16)
 	{
-		clientNameLength = 15;
-		clientName[clientNameLength] = 0;
+		clientNameLength = 16;
+		clientName[clientNameLength-1] = 0;
 	}
 
-	stream_write(s, clientName, ((clientNameLength + 1) * 2));
-	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
+	stream_write(s, clientName, (clientNameLength * 2));
+	stream_write_zero(s, 32 - (clientNameLength * 2));
 	free(clientName);
 
 	stream_write_UINT32(s, settings->KeyboardType); /* KeyboardType */
@@ -728,15 +728,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	stream_write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
-	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 30 characters) */
-	if (clientDigProductIdLength > 62)
+	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 31 characters) */
+	if (clientDigProductIdLength >= 32)
 	{
-		clientDigProductIdLength = 62;
-		clientDigProductId[clientDigProductIdLength] = 0;
-		clientDigProductId[clientDigProductIdLength + 1] = 0;
+		clientDigProductIdLength = 32;
+		clientDigProductId[clientDigProductIdLength-1] = 0;
 	}
-	stream_write(s, clientDigProductId, clientDigProductIdLength + 2);
-	stream_write_zero(s, 64 - clientDigProductIdLength - 2);
+	stream_write(s, clientDigProductId, (clientDigProductIdLength * 2) );
+	stream_write_zero(s, 64 - (clientDigProductIdLength * 2) );
 	free(clientDigProductId);
 
 	stream_write_BYTE(s, connectionType); /* connectionType */
