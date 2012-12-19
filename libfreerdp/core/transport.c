@@ -512,7 +512,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
-	int fd;
+	void* pfd;
 
 #ifdef _WIN32
 	rfds[*rcount] = transport->TcpIn->wsa_event;
@@ -534,11 +534,11 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	}
 #endif
 
-	fd = GetEventFileDescriptor(transport->recv_event);
+	pfd = GetEventWaitObject(transport->recv_event);
 
-	if (fd != -1)
+	if (pfd)
 	{
-		rfds[*rcount] = ((void*) (long) fd);
+		rfds[*rcount] = pfd;
 		(*rcount)++;
 	}
 }

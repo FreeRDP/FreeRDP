@@ -1263,13 +1263,13 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count)
 {
-	int fd;
+	void* pfd;
 
-	fd = GetEventFileDescriptor(channels->signal);
+	pfd = GetEventWaitObject(channels->signal);
 
-	if (fd != -1)
+	if (pfd)
 	{
-		read_fds[*read_count] = ((void*) (long) fd);
+		read_fds[*read_count] = pfd;
 		(*read_count)++;
 	}
 
