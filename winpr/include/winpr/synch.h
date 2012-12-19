@@ -259,13 +259,14 @@ WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttribu
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
 
-WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
-
 #ifdef UNICODE
 #define CreateFileDescriptorEvent	CreateFileDescriptorEventW
 #else
 #define CreateFileDescriptorEvent	CreateFileDescriptorEventA
 #endif
+
+WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
+WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 
 #endif /* WINPR_SYNCH_H */
 
