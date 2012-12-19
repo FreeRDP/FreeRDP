@@ -341,7 +341,10 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 		allocate = TRUE;
 
 	if (allocate)
-		*lpMultiByteStr = (LPSTR) malloc(cbMultiByte);
+	{
+		*lpMultiByteStr = (LPSTR) malloc(cbMultiByte + 1);
+		ZeroMemory(*lpMultiByteStr, cbMultiByte + 1);
+	}
 
 	status = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar,
 			*lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
