@@ -118,7 +118,10 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			connectErrorCode = TLSCONNECTERROR;
 
 		tls_free(transport->TlsIn);
-		transport->TlsIn = NULL;
+		if (transport->TlsIn == transport->TlsOut)
+			transport->TlsIn = transport->TlsOut = NULL;
+		else
+			transport->TlsIn = NULL;
 
 		return FALSE;
 	}
