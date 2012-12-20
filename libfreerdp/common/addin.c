@@ -31,9 +31,6 @@
 
 #include <freerdp/addin.h>
 
-LPCSTR gAddinPath = FREERDP_ADDIN_PATH;
-LPCSTR gLibraryPath = FREERDP_LIBRARY_PATH;
-LPCSTR gInstallPrefix = FREERDP_INSTALL_PREFIX;
 
 LPSTR freerdp_get_library_install_path()
 {
@@ -41,17 +38,19 @@ LPSTR freerdp_get_library_install_path()
 	size_t cchPath;
 	size_t cchLibraryPath;
 	size_t cchInstallPrefix;
+	LPCSTR pszLibraryPath = FREERDP_LIBRARY_PATH;
+	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 
-	cchLibraryPath = strlen(gLibraryPath);
-	cchInstallPrefix = strlen(gInstallPrefix);
+	cchLibraryPath = strlen(pszLibraryPath);
+	cchInstallPrefix = strlen(pszInstallPrefix);
 
 	cchPath = cchInstallPrefix + cchLibraryPath + 2;
 	pszPath = (LPSTR) malloc(cchPath + 1);
 
-	CopyMemory(pszPath, gInstallPrefix, cchInstallPrefix);
+	CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
 	pszPath[cchInstallPrefix] = '\0';
 
-	NativePathCchAppendA(pszPath, cchPath + 1, gLibraryPath);
+	NativePathCchAppendA(pszPath, cchPath + 1, pszLibraryPath);
 
 	return pszPath;
 }
@@ -62,17 +61,19 @@ LPSTR freerdp_get_dynamic_addin_install_path()
 	size_t cchPath;
 	size_t cchAddinPath;
 	size_t cchInstallPrefix;
+	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
+	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 
-	cchAddinPath = strlen(gAddinPath);
-	cchInstallPrefix = strlen(gInstallPrefix);
+	cchAddinPath = strlen(pszAddinPath);
+	cchInstallPrefix = strlen(pszInstallPrefix);
 
 	cchPath = cchInstallPrefix + cchAddinPath + 2;
 	pszPath = (LPSTR) malloc(cchPath + 1);
 
-	CopyMemory(pszPath, gInstallPrefix, cchInstallPrefix);
+	CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
 	pszPath[cchInstallPrefix] = '\0';
 
-	NativePathCchAppendA(pszPath, cchPath + 1, gAddinPath);
+	NativePathCchAppendA(pszPath, cchPath + 1, pszAddinPath);
 
 	return pszPath;
 }
