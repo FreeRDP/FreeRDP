@@ -208,10 +208,10 @@ void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	}
 	memset(am, 0, 32 * 4);
 	memset(xm, 0, 32 * 4);
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < height; i++)
 	{
 		ii = (bpp == 1) ? i : (height - 1) - i;
-		for (j = 0; j < 32; j++)
+		for (j = 0; j < width; j++)
 		{
 			if (freerdp_get_pixel(pointer->andMaskData, j, i, width, height, 1))
 			{
