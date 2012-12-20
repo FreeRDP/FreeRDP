@@ -183,7 +183,7 @@ endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 if(NOT ANDROID)
-find_package(Threads REQUIRED)
+	find_package(Threads REQUIRED)
 endif()
 
 if(UNIX OR CYGWIN)
