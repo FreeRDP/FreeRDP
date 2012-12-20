@@ -322,7 +322,7 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	 * http://blogs.technet.com/b/srd/archive/2009/12/08/extended-protection-for-authentication.aspx
 	 */
 
-	if (context->SuppressExtendedProtection != FALSE)
+	if (!context->SuppressExtendedProtection)
 	{
 		/**
 		 * SEC_CHANNEL_BINDINGS structure
@@ -373,7 +373,7 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
 	}
 
-	if (context->SuppressExtendedProtection != FALSE)
+	if (!context->SuppressExtendedProtection)
 	{
 		BYTE ChannelBindingToken[16];
 
