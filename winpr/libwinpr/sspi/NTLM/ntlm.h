@@ -240,6 +240,9 @@ struct _NTLM_CONTEXT
 	UNICODE_STRING Workstation;
 	UNICODE_STRING ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY identity;
+	BYTE* ChannelBindingToken;
+	BYTE ChannelBindingsHash[16];
+	SecPkgContext_Bindings EndpointBindings;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;

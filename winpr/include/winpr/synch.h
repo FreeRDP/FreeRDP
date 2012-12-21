@@ -258,6 +258,7 @@ WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttribu
 		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+
 WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, void* pObject);
 

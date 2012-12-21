@@ -102,7 +102,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc->ntlm = ntlm_new();
 
-	ntlm_client_init(rpc->ntlm, FALSE, settings->Username, settings->Domain, settings->Password);
+	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword);
 	ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname);
 
 	ntlm_authenticate(rpc->ntlm);
