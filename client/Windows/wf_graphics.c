@@ -191,40 +191,38 @@ void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
-	unsigned char am[32 * 4];
-	unsigned char xm[32 * 4];
-	int i, j, ii;
-	int width, height, bpp;
+	ICONINFO info;
+	BYTE *data;
 
-	width  = pointer->width;
-	height = pointer->height;
-	bpp    = pointer->xorBpp;
-
-	if ((bpp != 1 && bpp != 8 && bpp != 15 && bpp != 16 && bpp != 24 && bpp != 32) ||
-			width > 32 || height > 32)
+	info.fIcon = FALSE;
+	info.xHotspot = pointer->xPos;
+	info.yHotspot = pointer->yPos;
+	if (pointer->xorBpp == 1)
 	{
-		printf("wf_Pointer_New: Unsupported Cursor width = %u, height = %u, xorBpp = %u\n", width, height, bpp);
-		return;
+		data = (BYTE*) malloc(pointer->lengthAndMask + pointer->lengthXorMask);
+		CopyMemory(data, pointer->andMaskData, pointer->lengthAndMask);
+		CopyMemory(data + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, data);
+		free(data);
+		info.hbmColor = NULL;
 	}
-	memset(am, 0, 32 * 4);
-	memset(xm, 0, 32 * 4);
-	for (i = 0; i < height; i++)
+	else
 	{
-		ii = (bpp == 1) ? i : (height - 1) - i;
-		for (j = 0; j < width; j++)
-		{
-			if (freerdp_get_pixel(pointer->andMaskData, j, i, width, height, 1))
-			{
-				freerdp_set_pixel(am, j, ii, width, height, 1, 1);
-			}
-			if (freerdp_get_pixel(pointer->xorMaskData, j, i, width, height, bpp))
-			{
-				freerdp_set_pixel(xm, j, ii, width, height, 1, 1);
-			}
-		}
+		data = (BYTE*) malloc(pointer->lengthAndMask);
+		freerdp_bitmap_flip(pointer->andMaskData, data, (pointer->width + 7) / 8, pointer->height);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, data);
+		free(data);
+		data = (BYTE*) malloc(pointer->lengthXorMask);
+		freerdp_image_flip(pointer->xorMaskData, data, pointer->width, pointer->height, pointer->xorBpp);
+		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, data);
+		free(data);
 	}
-	hCur = CreateCursor(g_hInstance, pointer->xPos, pointer->yPos, pointer->width, pointer->height, am, xm);
+	hCur = CreateIconIndirect(&info);
 	((wfPointer*) pointer)->cursor = hCur;
+	if (info.hbmMask)
+		DeleteObject(info.hbmMask);
+	if (info.hbmColor)
+		DeleteObject(info.hbmColor);
 }
 
 void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
@@ -233,7 +231,7 @@ void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 
 	hCur = ((wfPointer*) pointer)->cursor;
 	if (hCur != 0)
-		DestroyCursor(hCur);
+		DestroyIcon(hCur);
 }
 
 void wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)

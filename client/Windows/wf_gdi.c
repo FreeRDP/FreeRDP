@@ -416,6 +416,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	int tx, ty;
 	char* tile_bitmap;
 	RFX_MESSAGE* message;
+	BITMAPINFO bitmap_info;
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
 	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) wfi->rfx_context;
@@ -463,46 +464,33 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	{
 		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-		wfi->image->_bitmap.width = surface_bits_command->width;
-		wfi->image->_bitmap.height = surface_bits_command->height;
-		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
-		wfi->image->_bitmap.data = (BYTE*) realloc(wfi->image->_bitmap.data, wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
-		freerdp_image_flip(nsc_context->bmpdata, wfi->image->_bitmap.data, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
-		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, GDI_SRCCOPY);
+		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
+		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bitmap_info.bmiHeader.biWidth = surface_bits_command->width;
+		bitmap_info.bmiHeader.biHeight = surface_bits_command->height;
+		bitmap_info.bmiHeader.biPlanes = 1;
+		bitmap_info.bmiHeader.biBitCount = surface_bits_command->bpp;
+		bitmap_info.bmiHeader.biCompression = BI_RGB;
+		SetDIBitsToDevice(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
+			nsc_context->bmpdata, &bitmap_info, DIB_RGB_COLORS);
+		wf_invalidate_region(wfi, surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
-		wfi->image->_bitmap.width = surface_bits_command->width;
-		wfi->image->_bitmap.height = surface_bits_command->height;
-		wfi->image->_bitmap.bpp = surface_bits_command->bpp;
-
-		wfi->image->_bitmap.data = (BYTE*) realloc(wfi->image->_bitmap.data,
-				wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
-
-		if ((surface_bits_command->bpp != 32) || (wfi->clrconv->alpha == TRUE))
-		{
-			BYTE* temp_image;
-
-			freerdp_image_convert(surface_bits_command->bitmapData, wfi->image->_bitmap.data,
-				wfi->image->_bitmap.width, wfi->image->_bitmap.height,
-				wfi->image->_bitmap.bpp, 32, wfi->clrconv);
-
-			surface_bits_command->bpp = 32;
-			surface_bits_command->bitmapData = wfi->image->_bitmap.data;
-
-			temp_image = (BYTE*) malloc(wfi->image->_bitmap.width * wfi->image->_bitmap.height * 4);
-			freerdp_image_flip(wfi->image->_bitmap.data, temp_image, wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
-			free(wfi->image->_bitmap.data);
-			wfi->image->_bitmap.data = temp_image;
-		}
-		else
-		{
-			freerdp_image_flip(surface_bits_command->bitmapData, wfi->image->_bitmap.data,
-					wfi->image->_bitmap.width, wfi->image->_bitmap.height, 32);
-		}
-
-		BitBlt(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height, wfi->image->hdc, 0, 0, SRCCOPY);
+		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
+		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bitmap_info.bmiHeader.biWidth = surface_bits_command->width;
+		bitmap_info.bmiHeader.biHeight = surface_bits_command->height;
+		bitmap_info.bmiHeader.biPlanes = 1;
+		bitmap_info.bmiHeader.biBitCount = surface_bits_command->bpp;
+		bitmap_info.bmiHeader.biCompression = BI_RGB;
+		SetDIBitsToDevice(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
+			surface_bits_command->bitmapData, &bitmap_info, DIB_RGB_COLORS);
+		wf_invalidate_region(wfi, surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height);
 	}
 	else
 	{

@@ -423,7 +423,12 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 		if ((status == 0) && (transport->blocking))
 		{
-			USleep(transport->usleep_interval);
+			if (transport->layer == TRANSPORT_LAYER_TLS)
+				tls_wait_read(transport->TlsIn);
+			else if (transport->layer == TRANSPORT_LAYER_TCP)
+				tcp_wait_read(transport->TcpIn);
+			else
+				USleep(transport->usleep_interval);
 			continue;
 		}
 
@@ -488,9 +493,6 @@ int transport_write(rdpTransport* transport, STREAM* s)
 
 		if (status == 0)
 		{
-			/* blocking while sending */
-			USleep(transport->usleep_interval);
-
 			/* when sending is blocked in nonblocking mode, the receiving buffer should be checked */
 			if (!transport->blocking)
 			{
@@ -498,6 +500,13 @@ int transport_write(rdpTransport* transport, STREAM* s)
 				if (transport_read_nonblocking(transport) > 0)
 					SetEvent(transport->recv_event);
 			}
+
+			if (transport->layer == TRANSPORT_LAYER_TLS)
+				tls_wait_write(transport->TlsOut);
+			else if (transport->layer == TRANSPORT_LAYER_TCP)
+				tcp_wait_write(transport->TcpOut);
+			else
+				USleep(transport->usleep_interval);
 		}
 
 		length -= status;
