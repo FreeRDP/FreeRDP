@@ -678,7 +678,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		 * for the next packet, we copy it to the new receive buffer.
 		 */
 		received = transport->recv_buffer;
-		transport->recv_buffer = stream_new(BUFFER_SIZE);
+		transport->recv_buffer = transport_receive_pool_take(transport);
 
 		if (pos > length)
 		{
@@ -694,7 +694,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (transport->recv_callback(transport, received, transport->recv_extra) == FALSE)
 			status = -1;
 
-		stream_free(received);
+		transport_receive_pool_return(transport, received);
 
 		if (status < 0)
 			return status;
@@ -741,6 +741,27 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
+STREAM* transport_receive_pool_take(rdpTransport* transport)
+{
+	STREAM* pdu = NULL;
+
+	if (WaitForSingleObject(Queue_Event(transport->ReceivePool), 0) == WAIT_OBJECT_0)
+		pdu = Queue_Dequeue(transport->ReceivePool);
+
+	if (!pdu)
+		pdu = stream_new(BUFFER_SIZE);
+
+	pdu->p = pdu->data;
+
+	return pdu;
+}
+
+int transport_receive_pool_return(rdpTransport* transport, STREAM* pdu)
+{
+	Queue_Enqueue(transport->ReceivePool, pdu);
+	return 0;
+}
+
 rdpTransport* transport_new(rdpSettings* settings)
 {
 	rdpTransport* transport;
@@ -768,6 +789,11 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->blocking = TRUE;
 
 		transport->layer = TRANSPORT_LAYER_TCP;
+
+		transport->ReceivePool = Queue_New(TRUE, -1, -1);
+		transport->ReceiveQueue = Queue_New(TRUE, -1, -1);
+		Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
+		Queue_Object(transport->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
 	}
 
 	return transport;
@@ -794,6 +820,9 @@ void transport_free(rdpTransport* transport)
 			tcp_free(transport->TcpOut);
 
 		tsg_free(transport->tsg);
+
+		Queue_Free(transport->ReceivePool);
+		Queue_Free(transport->ReceiveQueue);
 
 		free(transport);
 	}

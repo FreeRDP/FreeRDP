@@ -36,6 +36,8 @@ typedef struct rdp_transport rdpTransport;
 #include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
+#include <winpr/collections.h>
+
 #include <freerdp/crypto/tls.h>
 
 #include <time.h>
@@ -65,6 +67,9 @@ struct rdp_transport
 	BOOL blocking;
 	BOOL ProcessSinglePdu;
 	BOOL SplitInputOutput;
+
+	wQueue* ReceivePool;
+	wQueue* ReceiveQueue;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
@@ -84,6 +89,10 @@ int transport_write(rdpTransport* transport, STREAM* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+
+STREAM* transport_receive_pool_take(rdpTransport* transport);
+int transport_receive_pool_return(rdpTransport* transport, STREAM* pdu);
+
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
 
