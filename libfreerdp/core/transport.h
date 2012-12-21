@@ -49,8 +49,6 @@ typedef BOOL (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* ex
 
 struct rdp_transport
 {
-	STREAM* recv_stream;
-	STREAM* send_stream;
 	TRANSPORT_LAYER layer;
 	rdpTsg* tsg;
 	rdpTcp* TcpIn;
@@ -59,13 +57,14 @@ struct rdp_transport
 	rdpTls* TlsOut;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
-	UINT32 usleep_interval;
-	void* recv_extra;
-	STREAM* recv_buffer;
-	TransportRecv recv_callback;
-	HANDLE recv_event;
+	UINT32 SleepInterval;
+	STREAM* SendStream;
+	STREAM* ReceiveStream;
+	void* ReceiveExtra;
+	STREAM* ReceiveBuffer;
+	TransportRecv ReceiveCallback;
+	HANDLE ReceiveEvent;
 	BOOL blocking;
-	BOOL ProcessSinglePdu;
 	BOOL SplitInputOutput;
 
 	wQueue* ReceivePool;

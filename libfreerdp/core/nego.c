@@ -882,8 +882,8 @@ void nego_init(rdpNego* nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->requested_protocols = PROTOCOL_RDP;
-	nego->transport->recv_callback = nego_recv;
-	nego->transport->recv_extra = (void*) nego;
+	nego->transport->ReceiveCallback = nego_recv;
+	nego->transport->ReceiveExtra = (void*) nego;
 	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->flags = 0;
 }

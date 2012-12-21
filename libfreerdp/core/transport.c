@@ -50,7 +50,7 @@
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->recv_stream;
+	STREAM* s = transport->ReceiveStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
@@ -58,7 +58,7 @@ STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
 
 STREAM* transport_send_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->send_stream;
+	STREAM* s = transport->SendStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
@@ -380,7 +380,7 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 			 * instead of sleeping, we should wait timeout on the
 			 * socket but this only happens on initial connection
 			 */
-			USleep(transport->usleep_interval);
+			USleep(transport->SleepInterval);
 		}
 	}
 
@@ -481,13 +481,13 @@ static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	stream_check_size(transport->recv_buffer, 32 * 1024);
-	status = transport_read(transport, transport->recv_buffer);
+	stream_check_size(transport->ReceiveBuffer, 32 * 1024);
+	status = transport_read(transport, transport->ReceiveBuffer);
 
 	if (status <= 0)
 		return status;
 
-	stream_seek(transport->recv_buffer, status);
+	stream_seek(transport->ReceiveBuffer, status);
 
 	return status;
 }
@@ -527,7 +527,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 			{
 				/* and in case we do have buffered some data, we set the event so next loop will get it */
 				if (transport_read_nonblocking(transport) > 0)
-					SetEvent(transport->recv_event);
+					SetEvent(transport->ReceiveEvent);
 			}
 
 			if (transport->layer == TRANSPORT_LAYER_TLS)
@@ -535,7 +535,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 			else if (transport->layer == TRANSPORT_LAYER_TCP)
 				tcp_wait_write(transport->TcpOut);
 			else
-				USleep(transport->usleep_interval);
+				USleep(transport->SleepInterval);
 		}
 
 		length -= status;
@@ -575,7 +575,7 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	}
 #endif
 
-	pfd = GetEventWaitObject(transport->recv_event);
+	pfd = GetEventWaitObject(transport->ReceiveEvent);
 
 	if (pfd)
 	{
@@ -595,81 +595,81 @@ int transport_check_fds(rdpTransport** ptransport)
 #ifdef _WIN32
 	WSAResetEvent(transport->TcpIn->wsa_event);
 #endif
-	ResetEvent(transport->recv_event);
+	ResetEvent(transport->ReceiveEvent);
 
 	status = transport_read_nonblocking(transport);
 
 	if (status < 0)
 		return status;
 
-	while ((pos = stream_get_pos(transport->recv_buffer)) > 0)
+	while ((pos = stream_get_pos(transport->ReceiveBuffer)) > 0)
 	{
-		stream_set_pos(transport->recv_buffer, 0);
+		stream_set_pos(transport->ReceiveBuffer, 0);
 
-		if (tpkt_verify_header(transport->recv_buffer)) /* TPKT */
+		if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
 		{
 			/* Ensure the TPKT header is available. */
 			if (pos <= 4)
 			{
-				stream_set_pos(transport->recv_buffer, pos);
+				stream_set_pos(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
-			length = tpkt_read_header(transport->recv_buffer);
+			length = tpkt_read_header(transport->ReceiveBuffer);
 		}
-		else if (nla_verify_header(transport->recv_buffer))
+		else if (nla_verify_header(transport->ReceiveBuffer))
 		{
 			/* TSRequest */
 
 			/* Ensure the TSRequest header is available. */
 			if (pos <= 4)
 			{
-				stream_set_pos(transport->recv_buffer, pos);
+				stream_set_pos(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
 			/* TSRequest header can be 2, 3 or 4 bytes long */
-			length = nla_header_length(transport->recv_buffer);
+			length = nla_header_length(transport->ReceiveBuffer);
 
 			if (pos < length)
 			{
-				stream_set_pos(transport->recv_buffer, pos);
+				stream_set_pos(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
-			length = nla_read_header(transport->recv_buffer);
+			length = nla_read_header(transport->ReceiveBuffer);
 		}
 		else /* Fast Path */
 		{
 			/* Ensure the Fast Path header is available. */
 			if (pos <= 2)
 			{
-				stream_set_pos(transport->recv_buffer, pos);
+				stream_set_pos(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
 			/* Fastpath header can be two or three bytes long. */
-			length = fastpath_header_length(transport->recv_buffer);
+			length = fastpath_header_length(transport->ReceiveBuffer);
 
 			if (pos < length)
 			{
-				stream_set_pos(transport->recv_buffer, pos);
+				stream_set_pos(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
-			length = fastpath_read_header(NULL, transport->recv_buffer);
+			length = fastpath_read_header(NULL, transport->ReceiveBuffer);
 		}
 
 		if (length == 0)
 		{
 			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			winpr_HexDump(stream_get_head(transport->recv_buffer), pos);
+			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
 			return -1;
 		}
 
 		if (pos < length)
 		{
-			stream_set_pos(transport->recv_buffer, pos);
+			stream_set_pos(transport->ReceiveBuffer, pos);
 			return 0; /* Packet is not yet completely received. */
 		}
 
@@ -677,21 +677,14 @@ int transport_check_fds(rdpTransport** ptransport)
 		 * A complete packet has been received. In case there are trailing data
 		 * for the next packet, we copy it to the new receive buffer.
 		 */
-		received = transport->recv_buffer;
-		transport->recv_buffer = transport_receive_pool_take(transport);
-
-		if (pos > length)
-		{
-			stream_set_pos(received, length);
-			stream_check_size(transport->recv_buffer, pos - length);
-			stream_copy(transport->recv_buffer, received, pos - length);
-		}
+		received = transport->ReceiveBuffer;
+		transport->ReceiveBuffer = transport_receive_pool_take(transport);
 
 		stream_set_pos(received, length);
 		stream_seal(received);
 		stream_set_pos(received, 0);
 
-		if (transport->recv_callback(transport, received, transport->recv_extra) == FALSE)
+		if (transport->ReceiveCallback(transport, received, transport->ReceiveExtra) == FALSE)
 			status = -1;
 
 		transport_receive_pool_return(transport, received);
@@ -701,16 +694,6 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
 		transport = *ptransport;
-
-		if (transport->ProcessSinglePdu)
-		{
-			/* one at a time but set event if data buffered
-			 * so the main loop will call freerdp_check_fds asap */
-			if (stream_get_pos(transport->recv_buffer) > 0)
-				SetEvent(transport->recv_event);
-			break;
-		}
-
 	}
 
 	return 0;
@@ -776,15 +759,15 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->settings = settings;
 
 		/* a small 0.1ms delay when transport is blocking. */
-		transport->usleep_interval = 100;
+		transport->SleepInterval = 100;
 
 		/* receive buffer for non-blocking read. */
-		transport->recv_buffer = stream_new(BUFFER_SIZE);
-		transport->recv_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		transport->ReceiveBuffer = stream_new(BUFFER_SIZE);
+		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
-		transport->recv_stream = stream_new(BUFFER_SIZE);
-		transport->send_stream = stream_new(BUFFER_SIZE);
+		transport->ReceiveStream = stream_new(BUFFER_SIZE);
+		transport->SendStream = stream_new(BUFFER_SIZE);
 
 		transport->blocking = TRUE;
 
@@ -803,10 +786,10 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{
-		stream_free(transport->recv_buffer);
-		stream_free(transport->recv_stream);
-		stream_free(transport->send_stream);
-		CloseHandle(transport->recv_event);
+		stream_free(transport->ReceiveBuffer);
+		stream_free(transport->ReceiveStream);
+		stream_free(transport->SendStream);
+		CloseHandle(transport->ReceiveEvent);
 
 		if (transport->TlsIn)
 			tls_free(transport->TlsIn);
