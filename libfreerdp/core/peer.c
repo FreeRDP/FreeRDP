@@ -380,8 +380,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	transport_attach(rdp->transport, client->sockfd);
 
-	rdp->transport->recv_callback = peer_recv_callback;
-	rdp->transport->recv_extra = client;
+	rdp->transport->ReceiveCallback = peer_recv_callback;
+	rdp->transport->ReceiveExtra = client;
 	transport_set_blocking_mode(rdp->transport, FALSE);
 
 	IFCALL(client->ContextNew, client, client->context);
