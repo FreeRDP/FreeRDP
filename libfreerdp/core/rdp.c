@@ -908,8 +908,8 @@ int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size)
  */
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 {
-	rdp->transport->recv_callback = rdp_recv_callback;
-	rdp->transport->recv_extra = rdp;
+	rdp->transport->ReceiveCallback = rdp_recv_callback;
+	rdp->transport->ReceiveExtra = rdp;
 	transport_set_blocking_mode(rdp->transport, blocking);
 }
 
