@@ -122,16 +122,8 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	else if (channel == TSG_CHANNEL_OUT)
 		ntlm = rpc->NtlmHttpOut->ntlm;
 
-	if (settings->GatewayUseSameCredentials)
-	{
-		ntlm_client_init(ntlm, TRUE, settings->Username,
-			settings->Domain, settings->Password);
-	}
-	else
-	{
-		ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
+	ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 			settings->GatewayDomain, settings->GatewayPassword);
-	}
 
 	//ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
 	ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
