@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/tcp.h>
 
 #include <freerdp/crypto/tls.h>
 
@@ -331,6 +332,8 @@ int tls_read_all(rdpTls* tls, BYTE* data, int length)
 	do
 	{
 		status = tls_read(tls, data, length);
+		if (status == 0)
+			tls_wait_read(tls);
 	}
 	while (status == 0);
 
@@ -382,6 +385,8 @@ int tls_write_all(rdpTls* tls, BYTE* data, int length)
 
 		if (status > 0)
 			sent += status;
+		else if (status == 0)
+			tls_wait_write(tls);
 
 		if (sent >= length)
 			break;
@@ -392,6 +397,16 @@ int tls_write_all(rdpTls* tls, BYTE* data, int length)
 		return length;
 	else
 		return status;
+}
+
+int tls_wait_read(rdpTls* tls)
+{
+	return freerdp_tcp_wait_read(tls->sockfd);
+}
+
+int tls_wait_write(rdpTls* tls)
+{
+	return freerdp_tcp_wait_write(tls->sockfd);
 }
 
 static void tls_errors(const char *prefix)

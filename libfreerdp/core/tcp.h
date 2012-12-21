@@ -48,6 +48,8 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
 BOOL tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, BYTE* data, int length);
 int tcp_write(rdpTcp* tcp, BYTE* data, int length);
+int tcp_wait_read(rdpTcp* tcp);
+int tcp_wait_write(rdpTcp* tcp);
 BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
 

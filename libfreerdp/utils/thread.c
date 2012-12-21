@@ -79,7 +79,7 @@ void freerdp_thread_stop(freerdp_thread* thread)
 	while ((thread->status > 0) && (i < 1000))
 	{
 		i++;
-		USleep(100000);
+		Sleep(100);
 	}
 }
 

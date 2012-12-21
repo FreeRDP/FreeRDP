@@ -168,6 +168,16 @@ int tcp_write(rdpTcp* tcp, BYTE* data, int length)
 	return freerdp_tcp_write(tcp->sockfd, data, length);
 }
 
+int tcp_wait_read(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_read(tcp->sockfd);
+}
+
+int tcp_wait_write(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_write(tcp->sockfd);
+}
+
 BOOL tcp_disconnect(rdpTcp* tcp)
 {
 	freerdp_tcp_disconnect(tcp->sockfd);
