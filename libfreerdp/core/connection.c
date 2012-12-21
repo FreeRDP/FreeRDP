@@ -110,6 +110,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		settings->TlsSecurity = FALSE;
 		settings->NlaSecurity = FALSE;
 		settings->ExtSecurity = FALSE;
+
+		//settings->TlsSecurity = TRUE;
+		//settings->NlaSecurity = TRUE;
 	}
 	else
 	{

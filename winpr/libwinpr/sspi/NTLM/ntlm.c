@@ -63,8 +63,8 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 void ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR ServicePrincipalName)
 {
 	context->ServicePrincipalName.Length = _wcslen(ServicePrincipalName) * 2;
-	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length);
-	CopyMemory(context->ServicePrincipalName.Buffer, ServicePrincipalName, context->ServicePrincipalName.Length);
+	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length + 2);
+	CopyMemory(context->ServicePrincipalName.Buffer, ServicePrincipalName, context->ServicePrincipalName.Length + 2);
 }
 
 void ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePrincipalName)

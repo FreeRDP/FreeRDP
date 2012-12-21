@@ -760,14 +760,14 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	*((UINT32*) &buffer[20]) = 0x00020000; /* ResourceNamePtr */
 	*((UINT32*) &buffer[24]) = 0x00000001; /* NumResourceNames */
 	*((UINT32*) &buffer[28]) = 0x00000000; /* AlternateResourceNamesPtr */
-	*((UINT32*) &buffer[32]) = 0x00000000; /* NumAlternateResourceNames */
+	*((UINT16*) &buffer[32]) = 0x0000; /* NumAlternateResourceNames */
+	*((UINT16*) &buffer[34]) = 0x0000; /* Pad (2 bytes) */
 
-	*((UINT16*) &buffer[36]) = 0x0003; /* ??? */
+	/* Port (4 bytes) */
+	*((UINT16*) &buffer[36]) = 0x0003; /* ProtocolId (RDP = 3) */
+	*((UINT16*) &buffer[38]) = tsg->Port; /* PortNumber (0xD3D = 3389) */
 
-	*((UINT16*) &buffer[38]) = tsg->Port; /* Port */
-
-	*((UINT32*) &buffer[40]) = 0x00000001; /* ??? */
-
+	*((UINT32*) &buffer[40]) = 0x00000001; /* NumResourceNames */
 	*((UINT32*) &buffer[44]) = 0x00020004; /* ResourceNamePtr */
 	*((UINT32*) &buffer[48]) = count; /* MaxCount */
 	*((UINT32*) &buffer[52]) = 0; /* Offset */
@@ -1270,8 +1270,6 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
 	rdpRpc* rpc = tsg->rpc;
-
-	DEBUG_TSG("tsg_read: %d, pending: %d", length, tsg->PendingPdu);
 
 	if (tsg->PendingPdu)
 	{
