@@ -278,7 +278,7 @@ static void* audin_server_thread_func(void* arg)
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
 
-		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
+		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */

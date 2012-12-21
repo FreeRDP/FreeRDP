@@ -201,6 +201,28 @@ HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, FileDescriptor);
 }
 
+/**
+ * Returns an event based on the handle returned by GetEventWaitObject()
+ */
+HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	BOOL bManualReset, BOOL bInitialState, void* pObject)
+{
+#ifndef _WIN32
+	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, (int) (ULONG_PTR) pObject);
+#else
+	HANDLE hEvent = NULL;
+
+	DuplicateHandle(GetCurrentProcess(), pObject, GetCurrentProcess(), &hEvent, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+	return hEvent;
+#endif
+}
+
+/*
+ * Returns inner file descriptor for usage with select()
+ * This file descriptor is not usable on Windows
+ */
+
 int GetEventFileDescriptor(HANDLE hEvent)
 {
 #ifndef _WIN32
@@ -216,5 +238,28 @@ int GetEventFileDescriptor(HANDLE hEvent)
 	return event->pipe_fd[0];
 #else
 	return -1;
+#endif
+}
+
+/**
+ * Returns platform-specific wait object as a void pointer
+ *
+ * On Windows, the returned object is the same as the hEvent
+ * argument and is an event HANDLE usable in WaitForMultipleObjects
+ *
+ * On other platforms, the returned object can be cast to an int
+ * to obtain a file descriptor usable in select()
+ */
+
+void* GetEventWaitObject(HANDLE hEvent)
+{
+#ifndef _WIN32
+	int fd;
+
+	fd = GetEventFileDescriptor(hEvent);
+
+	return ((void*) (long) fd);
+#else
+	return hEvent;
 #endif
 }
