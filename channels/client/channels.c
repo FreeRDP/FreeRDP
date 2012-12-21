@@ -161,9 +161,6 @@ FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPSTR pszName, LPSTR 
 	return ppAddins;
 }
 
-LPCSTR gAddinPath = FREERDP_ADDIN_PATH;
-LPCSTR gInstallPrefix = FREERDP_INSTALL_PREFIX;
-
 FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags)
 {
 	int index;
@@ -172,6 +169,8 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	DWORD nAddins;
 	LPSTR pszPattern;
 	size_t cchPattern;
+	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
+	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 	LPCSTR pszExtension;
 	LPSTR pszSearchPath;
 	size_t cchSearchPath;
@@ -180,8 +179,8 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	FREERDP_ADDIN** ppAddins;
 	WIN32_FIND_DATAA FindData;
 
-	cchAddinPath = strlen(gAddinPath);
-	cchInstallPrefix = strlen(gInstallPrefix);
+	cchAddinPath = strlen(pszAddinPath);
+	cchInstallPrefix = strlen(pszInstallPrefix);
 
 	pszExtension = PathGetSharedLibraryExtensionA(0);
 
@@ -210,10 +209,10 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern + 3;
 	pszSearchPath = (LPSTR) malloc(cchSearchPath + 1);
 
-	CopyMemory(pszSearchPath, gInstallPrefix, cchInstallPrefix);
+	CopyMemory(pszSearchPath, pszInstallPrefix, cchInstallPrefix);
 	pszSearchPath[cchInstallPrefix] = '\0';
 
-	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, gAddinPath);
+	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
 	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
 
 	cchSearchPath = strlen(pszSearchPath);

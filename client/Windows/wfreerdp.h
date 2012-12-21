@@ -85,7 +85,6 @@ struct wf_info
 	RECT update_rect;
 
 	wfBitmap* tile;
-	wfBitmap* image;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 

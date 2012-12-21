@@ -201,6 +201,23 @@ HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, FileDescriptor);
 }
 
+/**
+ * Returns an event based on the handle returned by GetEventWaitObject()
+ */
+HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	BOOL bManualReset, BOOL bInitialState, void* pObject)
+{
+#ifndef _WIN32
+	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, (int) (ULONG_PTR) pObject);
+#else
+	HANDLE hEvent = NULL;
+
+	DuplicateHandle(GetCurrentProcess(), pObject, GetCurrentProcess(), &hEvent, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+	return hEvent;
+#endif
+}
+
 /*
  * Returns inner file descriptor for usage with select()
  * This file descriptor is not usable on Windows
@@ -246,3 +263,4 @@ void* GetEventWaitObject(HANDLE hEvent)
 	return hEvent;
 #endif
 }
+

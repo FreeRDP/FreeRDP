@@ -175,7 +175,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
 
-		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
+		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	s = stream_new(4096);

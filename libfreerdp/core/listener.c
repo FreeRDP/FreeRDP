@@ -261,6 +261,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	socklen_t peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*) instance->listener;
+	static const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
 	if (listener->num_sockfds < 1)
 		return FALSE;
@@ -290,9 +291,17 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		sin_addr = NULL;
 		if (peer_addr.ss_family == AF_INET)
+		{
 			sin_addr = &(((struct sockaddr_in*) &peer_addr)->sin_addr);
+			if ((*(UINT32*) sin_addr) == 0x0100007f)
+				client->local = TRUE;
+		}
 		else if (peer_addr.ss_family == AF_INET6)
+		{
 			sin_addr = &(((struct sockaddr_in6*) &peer_addr)->sin6_addr);
+			if (memcmp(sin_addr, localhost6_bytes, 16) == 0)
+				client->local = TRUE;
+		}
 #ifndef _WIN32
 		else if (peer_addr.ss_family == AF_UNIX)
 			client->local = TRUE;
