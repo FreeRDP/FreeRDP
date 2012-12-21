@@ -469,23 +469,23 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
 	void** fds, int* fds_count)
 {
-	int fd;
+	void* fd;
 
-	fd = GetEventFileDescriptor(vcm->send_event);
+	fd = GetEventWaitObject(vcm->send_event);
 
-	if (fd != -1)
+	if (fd)
 	{
-		fds[*fds_count] = ((void*) (long) fd);
+		fds[*fds_count] = fd;
 		(*fds_count)++;
 	}
 
 	if (vcm->drdynvc_channel)
 	{
-		fd = GetEventFileDescriptor(vcm->drdynvc_channel->receive_event);
+		fd = GetEventWaitObject(vcm->drdynvc_channel->receive_event);
 
-		if (fd != -1)
+		if (fd)
 		{
-			fds[*fds_count] = ((void*) (long) fd);
+			fds[*fds_count] = fd;
 			(*fds_count)++;
 		}
 	}
@@ -626,7 +626,7 @@ BOOL WTSVirtualChannelQuery(
 	/* __out */ void** ppBuffer,
 	/* __out */ UINT32* pBytesReturned)
 {
-	int fd;
+	void* pfd;
 	BOOL bval;
 	void* fds[10];
 	int fds_count = 0;
@@ -637,11 +637,11 @@ BOOL WTSVirtualChannelQuery(
 	{
 		case WTSVirtualFileHandle:
 
-			fd = GetEventFileDescriptor(channel->receive_event);
+			pfd = GetEventWaitObject(channel->receive_event);
 
-			if (fd != -1)
+			if (pfd)
 			{
-				fds[fds_count] = ((void*) (long) fd);
+				fds[fds_count] = pfd;
 				(fds_count)++;
 			}
 
