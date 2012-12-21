@@ -288,16 +288,72 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
+BOOL nla_verify_header(STREAM* s)
+{
+	if ((s->p[0] == 0x30) && (s->p[1] & 0x80))
+		return TRUE;
+
+	return FALSE;
+}
+
+UINT32 nla_read_header(STREAM* s)
+{
+	UINT32 length = 0;
+
+	if (s->p[1] & 0x80)
+	{
+		if ((s->p[1] & ~(0x80)) == 1)
+		{
+			length = s->p[2];
+			length += 3;
+			stream_seek(s, 3);
+		}
+		else if ((s->p[1] & ~(0x80)) == 2)
+		{
+			length = (s->p[2] << 8) | s->p[3];
+			length += 4;
+			stream_seek(s, 4);
+		}
+		else
+		{
+			printf("Error reading TSRequest!\n");
+		}
+	}
+	else
+	{
+		length = s->p[1];
+		length += 2;
+		stream_seek(s, 2);
+	}
+
+	return length;
+}
+
+UINT32 nla_header_length(STREAM* s)
+{
+	UINT32 length = 0;
+
+	if (s->p[1] & 0x80)
+	{
+		if ((s->p[1] & ~(0x80)) == 1)
+			length = 3;
+		else if ((s->p[1] & ~(0x80)) == 2)
+			length = 4;
+		else
+			printf("Error reading TSRequest!\n");
+	}
+	else
+	{
+		length = 2;
+	}
+
+	return length;
+}
+
 int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 {
-	int status = -1;
-
-#if 0
 	int read = 0;
-
-	/**
-	 * FIXME: this breaks NLA, since the NLA packet length is improperly detected
-	 */
+	int status = -1;
 
 	while (read < bytes)
 	{
@@ -320,32 +376,16 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 
 		if (status == 0)
 		{
-			/* instead of sleeping, we should wait timeout on the socket
-			   but this only happens on initial connection */
+			/*
+			 * instead of sleeping, we should wait timeout on the
+			 * socket but this only happens on initial connection
+			 */
 			USleep(transport->usleep_interval);
 		}
 	}
 
 	return read;
-#else
-
-	if (transport->layer == TRANSPORT_LAYER_TLS)
-		status = tls_read(transport->TlsIn, data, bytes);
-	else if (transport->layer == TRANSPORT_LAYER_TCP)
-		status = tcp_read(transport->TcpIn, data, bytes);
-	else if (transport->layer == TRANSPORT_LAYER_TSG)
-		status = tsg_read(transport->tsg, data, bytes);
-
-	return status;
-
-#endif
 }
-
-#if 0
-
-/**
- * FIXME: this breaks NLA in certain cases only, why?
- */
 
 int transport_read(rdpTransport* transport, STREAM* s)
 {
@@ -377,10 +417,41 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	/* if header is present, read in exactly one PDU */
 	if (s->data[0] == 0x03)
 	{
+		/* TPKT header */
+
 		pdu_bytes = (s->data[2] << 8) | s->data[3];
+	}
+	else if (s->data[0] == 0x30)
+	{
+		/* TSRequest (NLA) */
+
+		if (s->data[1] & 0x80)
+		{
+			if ((s->data[1] & ~(0x80)) == 1)
+			{
+				pdu_bytes = s->data[2];
+				pdu_bytes += 3;
+			}
+			else if ((s->data[1] & ~(0x80)) == 2)
+			{
+				pdu_bytes = (s->data[2] << 8) | s->data[3];
+				pdu_bytes += 4;
+			}
+			else
+			{
+				printf("Error reading TSRequest!\n");
+			}
+		}
+		else
+		{
+			pdu_bytes = s->data[1];
+			pdu_bytes += 2;
+		}
 	}
 	else
 	{
+		/* Fast-Path Header */
+
 		if (s->data[1] & 0x80)
 			pdu_bytes = ((s->data[1] & 0x7f) << 8) | s->data[2];
 		else
@@ -405,48 +476,6 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 	return transport_status;
 }
-
-#else
-
-int transport_read(rdpTransport* transport, STREAM* s)
-{
-	int status = -1;
-
-	while (TRUE)
-	{
-		if (transport->layer == TRANSPORT_LAYER_TLS)
-			status = tls_read(transport->TlsIn, stream_get_tail(s), stream_get_left(s));
-		else if (transport->layer == TRANSPORT_LAYER_TCP)
-			status = tcp_read(transport->TcpIn, stream_get_tail(s), stream_get_left(s));
-		else if (transport->layer == TRANSPORT_LAYER_TSG)
-			status = tsg_read(transport->tsg, stream_get_tail(s), stream_get_left(s));
-
-		if ((status == 0) && (transport->blocking))
-		{
-			if (transport->layer == TRANSPORT_LAYER_TLS)
-				tls_wait_read(transport->TlsIn);
-			else if (transport->layer == TRANSPORT_LAYER_TCP)
-				tcp_wait_read(transport->TcpIn);
-			else
-				USleep(transport->usleep_interval);
-			continue;
-		}
-
-		break;
-	}
-
-#ifdef WITH_DEBUG_TRANSPORT
-	if (status > 0)
-	{
-		printf("Local < Remote\n");
-		winpr_HexDump(s->data, status);
-	}
-#endif
-
-	return status;
-}
-
-#endif
 
 static int transport_read_nonblocking(rdpTransport* transport)
 {
@@ -587,6 +616,28 @@ int transport_check_fds(rdpTransport** ptransport)
 			}
 
 			length = tpkt_read_header(transport->recv_buffer);
+		}
+		else if (nla_verify_header(transport->recv_buffer))
+		{
+			/* TSRequest */
+
+			/* Ensure the TSRequest header is available. */
+			if (pos <= 4)
+			{
+				stream_set_pos(transport->recv_buffer, pos);
+				return 0;
+			}
+
+			/* TSRequest header can be 2, 3 or 4 bytes long */
+			length = nla_header_length(transport->recv_buffer);
+
+			if (pos < length)
+			{
+				stream_set_pos(transport->recv_buffer, pos);
+				return 0;
+			}
+
+			length = nla_read_header(transport->recv_buffer);
 		}
 		else /* Fast Path */
 		{
