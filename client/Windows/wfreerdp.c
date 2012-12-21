@@ -332,9 +332,6 @@ BOOL wf_post_connect(freerdp* instance)
 		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
 		wfi->hdc->hwnd->ninvalid = 0;
 
-		wfi->image = wf_image_new(wfi, 64, 64, 32, NULL);
-		wfi->image->_bitmap.data = NULL;
-
 		if (settings->RemoteFxCodec)
 		{
 			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);

@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
@@ -176,6 +177,28 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 	}
 
 	return status;
+}
+
+int freerdp_tcp_wait_read(int sockfd)
+{
+	fd_set fds;
+
+	FD_ZERO(&fds);
+	FD_SET(sockfd, &fds);
+	select(1, &fds, NULL, NULL, NULL);
+
+	return 0;
+}
+
+int freerdp_tcp_wait_write(int sockfd)
+{
+	fd_set fds;
+
+	FD_ZERO(&fds);
+	FD_SET(sockfd, &fds);
+	select(1, NULL, &fds, NULL, NULL);
+
+	return 0;
 }
 
 int freerdp_tcp_disconnect(int sockfd)
