@@ -474,6 +474,8 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		SetDIBitsToDevice(wfi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
 			nsc_context->bmpdata, &bitmap_info, DIB_RGB_COLORS);
+		wf_invalidate_region(wfi, surface_bits_command->destLeft, surface_bits_command->destTop,
+			surface_bits_command->width, surface_bits_command->height);
 	}
 	else if (surface_bits_command->codecID == CODEC_ID_NONE)
 	{
