@@ -21,7 +21,7 @@
 #define WINPR_SSPI_SCHANNEL_PRIVATE_H
 
 #include <winpr/sspi.h>
-#include <winpr/wtypes.h>
+#include <winpr/schannel.h>
 
 #include "../sspi.h"
 
