@@ -24,6 +24,24 @@
 #include <winpr/crypto.h>
 
 /**
+ * CertOpenStore
+ * CertCloseStore
+ * CertControlStore
+ * CertDuplicateStore
+ * CertSaveStore
+ * CertRegisterPhysicalStore
+ * CertRegisterSystemStore
+ * CertAddStoreToCollection
+ * CertRemoveStoreFromCollection
+ * CertOpenSystemStoreA
+ * CertOpenSystemStoreW
+ * CertEnumPhysicalStore
+ * CertEnumSystemStore
+ * CertEnumSystemStoreLocation
+ * CertSetStoreProperty
+ * CertUnregisterPhysicalStore
+ * CertUnregisterSystemStore
+ *
  * CertAddCertificateContextToStore
  * CertAddCertificateLinkToStore
  * CertAddCRLContextToStore
@@ -36,20 +54,13 @@
  * CertAddEncodedCRLToStore
  * CertAddEncodedCTLToStore
  * CertAddSerializedElementToStore
- * CertAddStoreToCollection
- * CertControlStore
- * CertCloseStore
  * CertDeleteCertificateFromStore
  * CertDeleteCRLFromStore
  * CertDeleteCTLFromStore
- * CertDuplicateStore
  * CertGetCRLFromStore
  * CertEnumCertificatesInStore
  * CertEnumCRLsInStore
  * CertEnumCTLsInStore
- * CertEnumPhysicalStore
- * CertEnumSystemStore
- * CertEnumSystemStoreLocation
  * CertFindCertificateInStore
  * CertFindChainInStore
  * CertFindCRLInStore
@@ -57,19 +68,9 @@
  * CertGetIssuerCertificateFromStore
  * CertGetStoreProperty
  * CertGetSubjectCertificateFromStore
- * CertOpenStore
- * CertOpenSystemStoreA
- * CertOpenSystemStoreW
- * CertRegisterPhysicalStore
- * CertRegisterSystemStore
- * CertRemoveStoreFromCollection
- * CertSaveStore
  * CertSerializeCertificateStoreElement
  * CertSerializeCRLStoreElement
  * CertSerializeCTLStoreElement
- * CertSetStoreProperty
- * CertUnregisterPhysicalStore
- * CertUnregisterSystemStore
  *
  * CertAddEnhancedKeyUsageIdentifier
  * CertAddRefServerOcspResponse
