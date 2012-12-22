@@ -25,9 +25,17 @@
 
 #include "../sspi.h"
 
+struct _SCHANNEL_CREDENTIALS
+{
+	SCHANNEL_CRED cred;
+	ULONG fCredentialUse;
+};
+typedef struct _SCHANNEL_CREDENTIALS SCHANNEL_CREDENTIALS;
+
 struct _SCHANNEL_CONTEXT
 {
 	BOOL server;
+	SCHANNEL_CRED cred;
 };
 typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
 

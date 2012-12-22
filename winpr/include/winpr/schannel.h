@@ -34,6 +34,27 @@
 #define SCHANNEL_NAME	SCHANNEL_NAME_A
 #endif
 
+#define SECPKG_ATTR_SUPPORTED_ALGS		86
+#define SECPKG_ATTR_CIPHER_STRENGTHS		87
+#define SECPKG_ATTR_SUPPORTED_PROTOCOLS		88
+
+typedef struct _SecPkgCred_SupportedAlgs
+{
+	DWORD cSupportedAlgs;
+	ALG_ID* palgSupportedAlgs;
+} SecPkgCred_SupportedAlgs, *PSecPkgCred_SupportedAlgs;
+
+typedef struct _SecPkgCred_CipherStrengths
+{
+	DWORD dwMinimumCipherStrength;
+	DWORD dwMaximumCipherStrength;
+} SecPkgCred_CipherStrengths, *PSecPkgCred_CipherStrengths;
+
+typedef struct _SecPkgCred_SupportedProtocols
+{
+	DWORD grbitProtocol;
+} SecPkgCred_SupportedProtocols, *PSecPkgCred_SupportedProtocols;
+
 enum eTlsSignatureAlgorithm
 {
 	TlsSignatureAlgorithm_Anonymous = 0,
