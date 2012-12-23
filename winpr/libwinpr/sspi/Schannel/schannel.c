@@ -74,14 +74,23 @@ void schannel_CredentialsFree(SCHANNEL_CREDENTIALS* credentials)
 	free(credentials);
 }
 
+static ALG_ID schannel_SupportedAlgs[] =
+{
+	CALG_AES_128, CALG_AES_256, CALG_RC4, CALG_DES, CALG_3DES,
+	CALG_MD5, CALG_SHA1, CALG_SHA_256, CALG_SHA_384, CALG_SHA_512,
+	CALG_RSA_SIGN, CALG_DH_EPHEM,
+	(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RESERVED7 | 6), /* what is this? */
+	CALG_DSS_SIGN, CALG_ECDSA
+};
+
 SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_ATTR_SUPPORTED_ALGS)
 	{
 		PSecPkgCred_SupportedAlgs SupportedAlgs = (PSecPkgCred_SupportedAlgs) pBuffer;
 
-		SupportedAlgs->cSupportedAlgs = 0;
-		SupportedAlgs->palgSupportedAlgs = NULL;
+		SupportedAlgs->cSupportedAlgs = sizeof(schannel_SupportedAlgs) / sizeof(ALG_ID);
+		SupportedAlgs->palgSupportedAlgs = (ALG_ID*) schannel_SupportedAlgs;
 
 		return SEC_E_OK;
 	}
@@ -89,7 +98,7 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCre
 	{
 		PSecPkgCred_CipherStrengths CipherStrengths = (PSecPkgCred_CipherStrengths) pBuffer;
 
-		CipherStrengths->dwMinimumCipherStrength = 128;
+		CipherStrengths->dwMinimumCipherStrength = 40;
 		CipherStrengths->dwMaximumCipherStrength = 256;
 
 		return SEC_E_OK;
@@ -98,6 +107,7 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCre
 	{
 		PSecPkgCred_SupportedProtocols SupportedProtocols = (PSecPkgCred_SupportedProtocols) pBuffer;
 
+		/* Observed SupportedProtocols: 0x208A0 */
 		SupportedProtocols->grbitProtocol = (SP_PROT_CLIENTS | SP_PROT_SERVERS);
 
 		return SEC_E_OK;

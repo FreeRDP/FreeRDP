@@ -45,7 +45,8 @@ static void* schannel_test_server_thread(void* arg)
 int TestSchannel(int argc, char* argv[])
 {
 	int index;
-	HANDLE ServerThread;
+	ALG_ID algId;
+	HANDLE thread;
 	UINT32 cbMaxToken;
 	SCHANNEL_CRED cred;
 	UINT32 fContextReq;
@@ -65,7 +66,7 @@ int TestSchannel(int argc, char* argv[])
 
 	sspi_GlobalInit();
 
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL);
 
 	table = InitSecurityInterface();
 
@@ -112,7 +113,9 @@ int TestSchannel(int argc, char* argv[])
 
 	for (index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
 	{
-		printf(" 0x%04X", SupportedAlgs.palgSupportedAlgs[index]);
+		algId = SupportedAlgs.palgSupportedAlgs[index];
+		printf("\t0x%04X CLASS: %d TYPE: %d SID: %d\n", algId,
+				((GET_ALG_CLASS(algId)) >> 13), ((GET_ALG_TYPE(algId)) >> 9), GET_ALG_SID(algId));
 	}
 	printf("\n");
 

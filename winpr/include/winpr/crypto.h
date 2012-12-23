@@ -44,6 +44,7 @@
 #define ALG_TYPE_STREAM			(4 << 9)
 #define ALG_TYPE_DH			(5 << 9)
 #define ALG_TYPE_SECURECHANNEL		(6 << 9)
+#define ALG_TYPE_RESERVED7		(7 << 9)
 
 #define ALG_SID_ANY			(0)
 
