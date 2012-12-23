@@ -1,17 +1,39 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/print.h>
 #include <winpr/thread.h>
 #include <winpr/schannel.h>
 
+HANDLE g_ClientReadPipe = NULL;
+HANDLE g_ClientWritePipe = NULL;
+HANDLE g_ServerReadPipe = NULL;
+HANDLE g_ServerWritePipe = NULL;
+
 static void* schannel_test_server_thread(void* arg)
 {
+	BYTE* lpTokenIn;
+	BYTE* lpTokenOut;
 	UINT32 cbMaxToken;
+	UINT32 fContextReq;
+	ULONG fContextAttr;
 	SCHANNEL_CRED cred;
+	CtxtHandle context;
 	CredHandle credentials;
+	PSecBuffer pSecBuffer;
+	SecBuffer SecBuffer_in[2];
+	SecBuffer SecBuffer_out[2];
+	SecBufferDesc SecBufferDesc_in;
+	SecBufferDesc SecBufferDesc_out;
+	DWORD NumberOfBytesRead;
 	SECURITY_STATUS status;
 	PSecPkgInfo pPackageInfo;
 	PSecurityFunctionTable table;
+
+	printf("Starting Server\n");
+
+	SecInvalidateHandle(&context);
+	SecInvalidateHandle(&credentials);
 
 	table = InitSecurityInterface();
 
@@ -39,6 +61,53 @@ static void* schannel_test_server_thread(void* arg)
 		return NULL;
 	}
 
+	lpTokenIn = (BYTE*) malloc(cbMaxToken);
+	lpTokenOut = (BYTE*) malloc(cbMaxToken);
+
+	if (!ReadFile(g_ServerReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))
+	{
+		printf("Failed to read from server pipe\n");
+		return NULL;
+	}
+
+	printf("Server Received:\n");
+	winpr_HexDump(lpTokenIn, NumberOfBytesRead);
+
+	fContextReq = ASC_REQ_STREAM;
+
+	SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
+	SecBuffer_in[0].pvBuffer = lpTokenIn;
+	SecBuffer_in[0].cbBuffer = NumberOfBytesRead;
+
+	SecBuffer_in[1].BufferType = SECBUFFER_EMPTY;
+	SecBuffer_in[1].pvBuffer = NULL;
+	SecBuffer_in[1].cbBuffer = 0;
+
+	SecBufferDesc_in.ulVersion = SECBUFFER_VERSION;
+	SecBufferDesc_in.cBuffers = 2;
+	SecBufferDesc_in.pBuffers = SecBuffer_in;
+
+	SecBuffer_out[0].BufferType = SECBUFFER_TOKEN;
+	SecBuffer_out[0].pvBuffer = lpTokenOut;
+	SecBuffer_out[0].cbBuffer = NumberOfBytesRead;
+
+	SecBuffer_out[1].BufferType = SECBUFFER_EMPTY;
+	SecBuffer_out[1].pvBuffer = NULL;
+	SecBuffer_out[1].cbBuffer = 0;
+
+	SecBufferDesc_out.ulVersion = SECBUFFER_VERSION;
+	SecBufferDesc_out.cBuffers = 2;
+	SecBufferDesc_out.pBuffers = SecBuffer_out;
+
+	status = table->AcceptSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL,
+		&SecBufferDesc_in, fContextReq, 0, &context, &SecBufferDesc_out, &fContextAttr, NULL);
+
+	if (status != SEC_I_CONTINUE_NEEDED)
+	{
+		printf("AcceptSecurityContext unexpected status: 0x%08X\n", status);
+		return NULL;
+	}
+
 	return NULL;
 }
 
@@ -47,6 +116,8 @@ int TestSchannel(int argc, char* argv[])
 	int index;
 	ALG_ID algId;
 	HANDLE thread;
+	BYTE* lpTokenIn;
+	BYTE* lpTokenOut;
 	UINT32 cbMaxToken;
 	SCHANNEL_CRED cred;
 	UINT32 fContextReq;
@@ -55,16 +126,33 @@ int TestSchannel(int argc, char* argv[])
 	CredHandle credentials;
 	SECURITY_STATUS status;
 	PSecPkgInfo pPackageInfo;
+	PSecBuffer pSecBuffer;
 	SecBuffer SecBuffer_in[2];
 	SecBuffer SecBuffer_out[1];
 	SecBufferDesc SecBufferDesc_in;
 	SecBufferDesc SecBufferDesc_out;
 	PSecurityFunctionTable table;
+	DWORD NumberOfBytesWritten;
 	SecPkgCred_SupportedAlgs SupportedAlgs;
 	SecPkgCred_CipherStrengths CipherStrengths;
 	SecPkgCred_SupportedProtocols SupportedProtocols;
 
 	sspi_GlobalInit();
+
+	SecInvalidateHandle(&context);
+	SecInvalidateHandle(&credentials);
+
+	if (!CreatePipe(&g_ClientReadPipe, &g_ClientWritePipe, NULL, 0))
+	{
+		printf("Failed to create client pipe\n");
+		return -1;
+	}
+
+	if (!CreatePipe(&g_ServerReadPipe, &g_ServerWritePipe, NULL, 0))
+	{
+		printf("Failed to create server pipe\n");
+		return -1;
+	}
 
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL);
 
@@ -146,8 +234,10 @@ int TestSchannel(int argc, char* argv[])
 
 	printf("SupportedProtocols: 0x%04X\n", SupportedProtocols.grbitProtocol);
 
-	fContextReq = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_RET_EXTENDED_ERROR |
-			ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM | ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_INTEGRITY;
+	fContextReq = ISC_REQ_STREAM;
+
+	lpTokenIn = (BYTE*) malloc(cbMaxToken);
+	lpTokenOut = (BYTE*) malloc(cbMaxToken);
 
 	ZeroMemory(&SecBuffer_in, sizeof(SecBuffer_in));
 	ZeroMemory(&SecBuffer_out, sizeof(SecBuffer_out));
@@ -155,7 +245,7 @@ int TestSchannel(int argc, char* argv[])
 	ZeroMemory(&SecBufferDesc_out, sizeof(SecBufferDesc));
 
 	SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
-	SecBuffer_in[0].pvBuffer = malloc(cbMaxToken);
+	SecBuffer_in[0].pvBuffer = lpTokenIn;
 	SecBuffer_in[0].cbBuffer = cbMaxToken;
 
 	SecBuffer_in[1].BufferType = SECBUFFER_EMPTY;
@@ -165,12 +255,14 @@ int TestSchannel(int argc, char* argv[])
 	SecBufferDesc_in.pBuffers = SecBuffer_in;
 
 	SecBuffer_out[0].BufferType = SECBUFFER_TOKEN;
+	SecBuffer_out[0].pvBuffer = lpTokenOut;
+	SecBuffer_out[0].cbBuffer = cbMaxToken;
 
 	SecBufferDesc_out.ulVersion = SECBUFFER_VERSION;
 	SecBufferDesc_out.cBuffers = 1;
 	SecBufferDesc_out.pBuffers = SecBuffer_out;
 
-	status = table->InitializeSecurityContext(&credentials, NULL, _T("localhost"),
+	status = table->InitializeSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL, _T("localhost"),
 			fContextReq, 0, 0, NULL, 0, &context, &SecBufferDesc_out, &fContextAttr, NULL);
 
 	if (status != SEC_I_CONTINUE_NEEDED)
@@ -178,6 +270,34 @@ int TestSchannel(int argc, char* argv[])
 		printf("InitializeSecurityContext unexpected status: 0x%08X\n", status);
 		return -1;
 	}
+
+	printf("SecBufferDesc_out.cBuffers: %d\n", SecBufferDesc_out.cBuffers);
+
+	pSecBuffer = &SecBufferDesc_out.pBuffers[0];
+	winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+
+	/**
+	 * 0000 16 03 03 00 96 01 00 00 92 03 03 50 d7 7e 56 dd ...........P.~V.
+	 * 0010 c9 01 59 01 49 d3 2f 99 ef da 77 01 a0 97 06 e7 ..Y.I./...w.....
+	 * 0020 a4 fe 2d 71 46 55 fc 42 dd 2e 58 00 00 2a 00 3c ..-qFU.B..X..*.<
+	 * 0030 00 2f 00 3d 00 35 00 05 00 0a c0 27 c0 13 c0 14 ./.=.5.....'....
+	 * 0040 c0 2b c0 23 c0 2c c0 24 c0 09 c0 0a 00 40 00 32 .+.#.,.$.....@.2
+	 * 0050 00 6a 00 38 00 13 00 04 01 00 00 3f ff 01 00 01 .j.8.......?....
+	 * 0060 00 00 00 00 0e 00 0c 00 00 09 6c 6f 63 61 6c 68 ..........localh
+	 * 0070 6f 73 74 00 0a 00 06 00 04 00 17 00 18 00 0b 00 ost.............
+	 * 0080 02 01 00 00 0d 00 10 00 0e 04 01 05 01 02 01 04 ................
+	 * 0090 03 05 03 02 03 02 02 00 23 00 00                ........#..
+	 */
+
+	if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
+	{
+		printf("failed to write to server pipe\n");
+		return -1;
+	}
+
+	printf("Client wrote %d bytes\n", NumberOfBytesWritten);
+
+	WaitForSingleObject(thread, INFINITE);
 
 	sspi_GlobalFinish();
 
