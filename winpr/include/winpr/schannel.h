@@ -23,7 +23,11 @@
 #include <winpr/sspi.h>
 #include <winpr/crypto.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <schannel.h>
+
+#else
 
 #define SCHANNEL_NAME_A		"Schannel"
 #define SCHANNEL_NAME_W		L"Schannel"

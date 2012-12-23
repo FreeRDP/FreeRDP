@@ -20,7 +20,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (status != SEC_E_OK)
 	{
 		printf("QuerySecurityPackageInfo failure: 0x%08X\n", status);
-		return -1;
+		return NULL;
 	}
 
 	cbMaxToken = pPackageInfo->cbMaxToken;
@@ -36,7 +36,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (status != SEC_E_OK)
 	{
 		printf("AcquireCredentialsHandle failure: 0x%08X\n", status);
-		return -1;
+		return NULL;
 	}
 
 	return NULL;
@@ -44,6 +44,7 @@ static void* schannel_test_server_thread(void* arg)
 
 int TestSchannel(int argc, char* argv[])
 {
+	int index;
 	HANDLE ServerThread;
 	UINT32 cbMaxToken;
 	SCHANNEL_CRED cred;
@@ -101,6 +102,20 @@ int TestSchannel(int argc, char* argv[])
 		return -1;
 	}
 
+	/**
+	 * SupportedAlgs: 15
+	 * 0x660E 0x6610 0x6801 0x6603 0x6601 0x8003 0x8004
+	 * 0x800C 0x800D 0x800E 0x2400 0xAA02 0xAE06 0x2200 0x2203
+	 */
+
+	printf("SupportedAlgs: %d\n", SupportedAlgs.cSupportedAlgs);
+
+	for (index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
+	{
+		printf(" 0x%04X", SupportedAlgs.palgSupportedAlgs[index]);
+	}
+	printf("\n");
+
 	ZeroMemory(&CipherStrengths, sizeof(SecPkgCred_CipherStrengths));
 	status = table->QueryCredentialsAttributes(&credentials, SECPKG_ATTR_CIPHER_STRENGTHS, &CipherStrengths);
 
@@ -110,6 +125,11 @@ int TestSchannel(int argc, char* argv[])
 		return -1;
 	}
 
+	/* CipherStrengths: Minimum: 40 Maximum: 256 */
+
+	printf("CipherStrengths: Minimum: %d Maximum: %d\n",
+		CipherStrengths.dwMinimumCipherStrength, CipherStrengths.dwMaximumCipherStrength);
+
 	ZeroMemory(&SupportedProtocols, sizeof(SecPkgCred_SupportedProtocols));
 	status = table->QueryCredentialsAttributes(&credentials, SECPKG_ATTR_SUPPORTED_PROTOCOLS, &SupportedProtocols);
 
@@ -118,6 +138,10 @@ int TestSchannel(int argc, char* argv[])
 		printf("QueryCredentialsAttributes SECPKG_ATTR_SUPPORTED_PROTOCOLS failure: 0x%08X\n", status);
 		return -1;
 	}
+
+	/* SupportedProtocols: 0x208A0 */
+
+	printf("SupportedProtocols: 0x%04X\n", SupportedProtocols.grbitProtocol);
 
 	fContextReq = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_RET_EXTENDED_ERROR |
 			ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM | ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_INTEGRITY;
