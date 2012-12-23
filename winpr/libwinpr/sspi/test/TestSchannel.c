@@ -1,7 +1,10 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/file.h>
+#include <winpr/pipe.h>
 #include <winpr/print.h>
+#include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/schannel.h>
 
@@ -20,7 +23,7 @@ static void* schannel_test_server_thread(void* arg)
 	SCHANNEL_CRED cred;
 	CtxtHandle context;
 	CredHandle credentials;
-	PSecBuffer pSecBuffer;
+	//PSecBuffer pSecBuffer;
 	SecBuffer SecBuffer_in[2];
 	SecBuffer SecBuffer_out[2];
 	SecBufferDesc SecBufferDesc_in;
