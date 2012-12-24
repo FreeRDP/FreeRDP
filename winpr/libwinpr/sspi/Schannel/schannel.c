@@ -39,6 +39,8 @@ SCHANNEL_CONTEXT* schannel_ContextNew()
 	if (context != NULL)
 	{
 		ZeroMemory(context, sizeof(SCHANNEL_CONTEXT));
+
+		context->openssl = schannel_openssl_new();
 	}
 
 	return context;
@@ -48,6 +50,8 @@ void schannel_ContextFree(SCHANNEL_CONTEXT* context)
 {
 	if (!context)
 		return;
+
+	schannel_openssl_free(context->openssl);
 
 	free(context);
 }
@@ -221,6 +225,8 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCred
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
+
+		schannel_openssl_client_init(context->openssl);
 	}
 
 	return SEC_E_OK;
@@ -401,7 +407,7 @@ const SecPkgInfoA SCHANNEL_SecPkgInfoA =
 	0x000107B3, /* fCapabilities */
 	1, /* wVersion */
 	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
+	SCHANNEL_CB_MAX_TOKEN, /* cbMaxToken */
 	"Schannel", /* Name */
 	"Schannel Security Package" /* Comment */
 };
@@ -420,7 +426,7 @@ const SecPkgInfoW SCHANNEL_SecPkgInfoW =
 	0x000107B3, /* fCapabilities */
 	1, /* wVersion */
 	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
+	SCHANNEL_CB_MAX_TOKEN, /* cbMaxToken */
 	SCHANNEL_SecPkgInfoW_Name, /* Name */
 	SCHANNEL_SecPkgInfoW_Comment /* Comment */
 };

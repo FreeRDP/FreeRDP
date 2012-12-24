@@ -1,9 +1,9 @@
 /**
  * WinPR: Windows Portable Runtime
- * Schannel Security Package
+ * Schannel Security Package (OpenSSL)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,33 +17,32 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_SSPI_SCHANNEL_PRIVATE_H
-#define WINPR_SSPI_SCHANNEL_PRIVATE_H
+#ifndef WINPR_SSPI_SCHANNEL_OPENSSL_H
+#define WINPR_SSPI_SCHANNEL_OPENSSL_H
 
 #include <winpr/sspi.h>
-#include <winpr/schannel.h>
 
 #include "../sspi.h"
 
-#include "schannel_openssl.h"
+/* OpenSSL includes windows.h */
+#include <winpr/windows.h>
 
-struct _SCHANNEL_CREDENTIALS
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+
+struct _SCHANNEL_OPENSSL
 {
-	SCHANNEL_CRED cred;
-	ULONG fCredentialUse;
+	SSL* ssl;
+	SSL_CTX* ctx;
+	BIO* bioRead;
+	BIO* bioWrite;
 };
-typedef struct _SCHANNEL_CREDENTIALS SCHANNEL_CREDENTIALS;
+typedef struct _SCHANNEL_OPENSSL SCHANNEL_OPENSSL;
 
-struct _SCHANNEL_CONTEXT
-{
-	BOOL server;
-	SCHANNEL_CRED cred;
-	SCHANNEL_OPENSSL* openssl;
-};
-typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
+int schannel_openssl_client_init(SCHANNEL_OPENSSL* context);
 
-SCHANNEL_CONTEXT* schannel_ContextNew();
-void schannel_ContextFree(SCHANNEL_CONTEXT* context);
+SCHANNEL_OPENSSL* schannel_openssl_new();
+void schannel_openssl_free(SCHANNEL_OPENSSL* context);
 
-#endif /* WINPR_SSPI_SCHANNEL_PRIVATE_H */
-
+#endif /* WINPR_SSPI_SCHANNEL_OPENSSL_H */

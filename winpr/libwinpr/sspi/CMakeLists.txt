@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.h)
 
 set(${MODULE_PREFIX}_SCHANNEL_SRCS
+	Schannel/schannel_openssl.c
+	Schannel/schannel_openssl.h
 	Schannel/schannel.c
 	Schannel/schannel.h)
 
