@@ -131,6 +131,27 @@ void wf_sw_end_paint(rdpContext* context)
 	}
 }
 
+void wf_sw_desktop_resize(rdpContext* context)
+{
+	wfInfo* wfi;
+	rdpGdi* gdi;
+	rdpSettings* settings;
+
+	wfi = ((wfContext*) context)->wfi;
+	settings = wfi->instance->settings;
+	gdi = context->gdi;
+
+	wfi->width = settings->DesktopWidth;
+	wfi->height = settings->DesktopHeight;
+	gdi_resize(gdi, wfi->width, wfi->height);
+
+	if (wfi->primary)
+	{
+		wf_image_free(wfi->primary);
+		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, gdi->primary_buffer);
+	}
+}
+
 void wf_hw_begin_paint(rdpContext* context)
 {
 	wfInfo* wfi = ((wfContext*) context)->wfi;
@@ -141,6 +162,42 @@ void wf_hw_begin_paint(rdpContext* context)
 void wf_hw_end_paint(rdpContext* context)
 {
 
+}
+
+void wf_hw_desktop_resize(rdpContext* context)
+{
+	wfInfo* wfi;
+	BOOL same;
+	RECT rect;
+	rdpSettings* settings;
+
+	wfi = ((wfContext*) context)->wfi;
+	settings = wfi->instance->settings;
+
+	wfi->width = settings->DesktopWidth;
+	wfi->height = settings->DesktopHeight;
+	if (wfi->primary)
+	{
+		same = (wfi->primary == wfi->drawing) ? TRUE : FALSE;
+
+		wf_image_free(wfi->primary);
+
+		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, NULL);
+
+		if (same)
+			wfi->drawing = wfi->primary;
+	}
+	if (wfi->fullscreen != TRUE)
+	{
+		if (wfi->hwnd)
+			SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE);
+	}
+	else
+	{
+		wf_update_offset(wfi);
+		GetWindowRect(wfi->hwnd, &rect);
+		InvalidateRect(wfi->hwnd, &rect, TRUE);
+	}
 }
 
 BOOL wf_pre_connect(freerdp* instance)
@@ -289,7 +346,6 @@ BOOL wf_post_connect(freerdp* instance)
 	wfInfo* wfi;
 	rdpCache* cache;
 	wfContext* context;
-	int width, height;
 	wchar_t win_title[64];
 	rdpSettings* settings;
 
@@ -299,15 +355,15 @@ BOOL wf_post_connect(freerdp* instance)
 	wfi = context->wfi;
 
 	wfi->dstBpp = 32;
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
+	wfi->width = settings->DesktopWidth;
+	wfi->height = settings->DesktopHeight;
 
 	if (wfi->sw_gdi)
 	{
 		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
-		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, gdi->primary_buffer);
+		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, gdi->primary_buffer);
 
 		rfx_context_set_cpu_opt((RFX_CONTEXT*) gdi->rfx_context, wfi_detect_cpu());
 	}
@@ -315,7 +371,7 @@ BOOL wf_post_connect(freerdp* instance)
 	{
 		wf_gdi_register_update_callbacks(instance->update);
 		wfi->srcBpp = instance->settings->ColorDepth;
-		wfi->primary = wf_image_new(wfi, width, height, wfi->dstBpp, NULL);
+		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, NULL);
 
 		wfi->hdc = gdi_GetDC();
 		wfi->hdc->bitsPerPixel = wfi->dstBpp;
@@ -358,27 +414,9 @@ BOOL wf_post_connect(freerdp* instance)
 		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
 	}
 
-	if (wfi->fullscreen)
-	{
-		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
-		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
-	}
-	else
-	{
-		POINT diff;
-		RECT rc_client, rc_wnd;
+	wf_resize_window(wfi);
 
-		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
-		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, width, height, SWP_FRAMECHANGED);
-		GetClientRect(wfi->hwnd, &rc_client);
-		GetWindowRect(wfi->hwnd, &rc_wnd);
-		diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
-		diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
-		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, width + diff.x, height + diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
-	}
-
-	BitBlt(wfi->primary->hdc, 0, 0, width, height, NULL, 0, 0, BLACKNESS);
+	BitBlt(wfi->primary->hdc, 0, 0, wfi->width, wfi->height, NULL, 0, 0, BLACKNESS);
 	wfi->drawing = wfi->primary;
 
 	ShowWindow(wfi->hwnd, SW_SHOWNORMAL);
@@ -388,11 +426,13 @@ BOOL wf_post_connect(freerdp* instance)
 	{
 		instance->update->BeginPaint = wf_sw_begin_paint;
 		instance->update->EndPaint = wf_sw_end_paint;
+		instance->update->DesktopResize = wf_sw_desktop_resize;
 	}
 	else
 	{
 		instance->update->BeginPaint = wf_hw_begin_paint;
 		instance->update->EndPaint = wf_hw_end_paint;
+		instance->update->DesktopResize = wf_hw_desktop_resize;
 	}
 
 	pointer_cache_register_callbacks(instance->update);
@@ -729,7 +769,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wnd_cls.cbWndExtra    = 0;
 	wnd_cls.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wnd_cls.hCursor       = g_default_cursor;
-	wnd_cls.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+	wnd_cls.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
 	wnd_cls.lpszMenuName  = NULL;
 	wnd_cls.lpszClassName = g_wnd_class_name;
 	wnd_cls.hInstance     = hInstance;
