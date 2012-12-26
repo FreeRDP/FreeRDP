@@ -29,6 +29,7 @@
 
 #include "wfreerdp.h"
 
+#include "wf_gdi.h"
 #include "wf_event.h"
 
 static HWND g_focus_hWnd;
@@ -70,8 +71,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					(GetAsyncKeyState(VK_MENU) & 0x8000)) /* could also use flags & LLKHF_ALTDOWN */
 				{
 					if (wParam == WM_KEYDOWN)
-						//wf_toggle_fullscreen(wfi);
-					return 1;
+					{
+						wf_toggle_fullscreen(wfi);
+						return 1;
+					}
 				}
 
 				if (rdp_scancode == RDP_SCANCODE_NUMLOCK_EXTENDED)
@@ -173,29 +176,29 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				//printf("WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
 
-				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x, y, SRCCOPY);
+				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x - wfi->offset_x, y - wfi->offset_y, SRCCOPY);
 
 				EndPaint(hWnd, &ps);
 				break;
 
 			case WM_LBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_LBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_MOUSEMOVE:
-				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_MOUSEWHEEL:
