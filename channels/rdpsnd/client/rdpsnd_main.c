@@ -624,6 +624,13 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
 
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "winmm");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+
 	if (rdpsnd->device == NULL)
 	{
 		DEBUG_WARN("no sound device.");
