@@ -168,18 +168,61 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, UINT32 color, int bpp)
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
 {
-	wfi->update_rect.left = x;
-	wfi->update_rect.top = y;
-	wfi->update_rect.right = x + width;
-	wfi->update_rect.bottom = y + height;
+	wfi->update_rect.left = x + wfi->offset_x;
+	wfi->update_rect.top = y + wfi->offset_y;
+	wfi->update_rect.right = wfi->update_rect.left + width;
+	wfi->update_rect.bottom = wfi->update_rect.top + height;
 	InvalidateRect(wfi->hwnd, &(wfi->update_rect), FALSE);
 	gdi_InvalidateRegion(wfi->hdc, x, y, width, height);
+}
+
+void wf_update_offset(wfInfo* wfi)
+{
+	if (wfi->fullscreen)
+	{
+		wfi->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfi->width) / 2;
+		if (wfi->offset_x < 0)
+			wfi->offset_x = 0;
+		wfi->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfi->height) / 2;
+		if (wfi->offset_y < 0)
+			wfi->offset_y = 0;
+	}
+	else
+	{
+		wfi->offset_x = 0;
+		wfi->offset_y = 0;
+	}
+}
+
+void wf_resize_window(wfInfo* wfi)
+{
+	if (wfi->fullscreen)
+	{
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
+		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+	}
+	else
+	{
+		RECT rc_client, rc_wnd;
+
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
+		/* Now resize to get full canvas size and room for caption and borders */
+		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, wfi->width, wfi->height, SWP_FRAMECHANGED);
+		GetClientRect(wfi->hwnd, &rc_client);
+		GetWindowRect(wfi->hwnd, &rc_wnd);
+		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
+		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+	}
+	wf_update_offset(wfi);
 }
 
 void wf_toggle_fullscreen(wfInfo* wfi)
 {
 	ShowWindow(wfi->hwnd, SW_HIDE);
 	wfi->fullscreen = !wfi->fullscreen;
+	wf_resize_window(wfi);
+	ShowWindow(wfi->hwnd, SW_SHOW);
 	SetForegroundWindow(wfi->hwnd);
 }
 
