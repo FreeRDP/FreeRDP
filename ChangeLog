@@ -1,4 +1,4 @@
-RELEASEDATE	Version 1.0.2
+2013-01-02 Version 1.0.2
 
 FreeRDP 1.0.2 is a maintenance release which contains several bug and stability fixes.
 
@@ -7,6 +7,7 @@ FreeRDP 1.0.2 is a maintenance release which contains several bug and stability 
 	* fix compability with x2go
 	* fix keyboard state in remote app
 	* documentation fixes
+	* fixed crash when started with --authonly (#843)
 
 * libfreerdp-core:
 	* several memory leaks and double frees were fixed
