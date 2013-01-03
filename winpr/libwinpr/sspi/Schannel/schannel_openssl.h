@@ -35,12 +35,19 @@ struct _SCHANNEL_OPENSSL
 {
 	SSL* ssl;
 	SSL_CTX* ctx;
+	BOOL connected;
 	BIO* bioRead;
 	BIO* bioWrite;
+	BYTE* ReadBuffer;
+	BYTE* WriteBuffer;
 };
 typedef struct _SCHANNEL_OPENSSL SCHANNEL_OPENSSL;
 
 int schannel_openssl_client_init(SCHANNEL_OPENSSL* context);
+int schannel_openssl_server_init(SCHANNEL_OPENSSL* context);
+
+SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput);
+SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput);
 
 SCHANNEL_OPENSSL* schannel_openssl_new();
 void schannel_openssl_free(SCHANNEL_OPENSSL* context);

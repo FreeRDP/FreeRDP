@@ -206,6 +206,7 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCred
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
+	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
 	SCHANNEL_CREDENTIALS* credentials;
 
@@ -227,6 +228,10 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCred
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
 
 		schannel_openssl_client_init(context->openssl);
+
+		status = schannel_openssl_client_process_tokens(context->openssl, pInput, pOutput);
+
+		return status;
 	}
 
 	return SEC_E_OK;
@@ -258,6 +263,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
 {
+	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
 	SCHANNEL_CREDENTIALS* credentials;
 
@@ -276,6 +282,12 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
+
+		schannel_openssl_server_init(context->openssl);
+
+		status = schannel_openssl_server_process_tokens(context->openssl, pInput, pOutput);
+
+		return status;
 	}
 
 	return SEC_E_OK;
