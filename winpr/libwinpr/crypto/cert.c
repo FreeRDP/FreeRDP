@@ -152,7 +152,21 @@
 
 #ifndef _WIN32
 
+HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol)
+{
+	return (HCERTSTORE) 1;
+}
 
+HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProtocol)
+{
+	return CertOpenSystemStoreW(hProv, NULL);
+}
+
+PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD dwCertEncodingType,
+		DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
+{
+	return (PCCERT_CONTEXT) 1;
+}
 
 #endif
 

@@ -6,6 +6,7 @@
 #include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/crypto.h>
 #include <winpr/schannel.h>
 
 HANDLE g_ClientReadPipe = NULL;
