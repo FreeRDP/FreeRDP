@@ -32,6 +32,10 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
+if(WIN32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} crypt32)
+endif()
+
 if(MONOLITHIC_BUILD)
 
 else()
