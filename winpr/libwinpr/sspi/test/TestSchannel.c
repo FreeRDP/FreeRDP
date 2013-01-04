@@ -21,6 +21,7 @@ HANDLE g_ServerWritePipe = NULL;
 
 static void* schannel_test_server_thread(void* arg)
 {
+	BOOL extraData;
 	BYTE* lpTokenIn;
 	BYTE* lpTokenOut;
 	TimeStamp expiry;
@@ -107,6 +108,7 @@ static void* schannel_test_server_thread(void* arg)
 		return NULL;
 	}
 
+	extraData = FALSE;
 	lpTokenIn = (BYTE*) malloc(cbMaxToken);
 	lpTokenOut = (BYTE*) malloc(cbMaxToken);
 
@@ -116,21 +118,25 @@ static void* schannel_test_server_thread(void* arg)
 
 	do
 	{
-		WaitForSingleObject(g_ServerEvent, INFINITE);
-		ResetEvent(g_ServerEvent);
-
-		if (g_ServerWait)
+		if (!extraData)
 		{
-			if (!ReadFile(g_ServerReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))
+			WaitForSingleObject(g_ServerEvent, INFINITE);
+			ResetEvent(g_ServerEvent);
+
+			if (g_ServerWait)
 			{
-				printf("Failed to read from server pipe\n");
-				return NULL;
+				if (!ReadFile(g_ServerReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))
+				{
+					printf("Failed to read from server pipe\n");
+					return NULL;
+				}
+			}
+			else
+			{
+				NumberOfBytesRead = 0;
 			}
 		}
-		else
-		{
-			NumberOfBytesRead = 0;
-		}
+		extraData = FALSE;
 
 		printf("Server Received %d bytes:\n", NumberOfBytesRead);
 		winpr_HexDump(lpTokenIn, NumberOfBytesRead);
@@ -158,6 +164,12 @@ static void* schannel_test_server_thread(void* arg)
 		status = table->AcceptSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL,
 			&SecBufferDesc_in, fContextReq, 0, &context, &SecBufferDesc_out, &fContextAttr, &expiry);
 
+		if (status == SEC_E_OK)
+		{
+			printf("AcceptSecurityContext SEC_E_OK, TLS connection complete\n");
+			break;
+		}
+
 		if ((status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
 			printf("AcceptSecurityContext unexpected status: 0x%08X\n", status);
@@ -175,6 +187,15 @@ static void* schannel_test_server_thread(void* arg)
 			SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
 		printf("Server Input cBuffers: %d pBuffers[1]: %d type: %d\n",
 			SecBufferDesc_in.cBuffers, SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
+
+		if (SecBufferDesc_in.pBuffers[1].BufferType == SECBUFFER_EXTRA)
+		{
+			printf("AcceptSecurityContext SECBUFFER_EXTRA\n");
+			pSecBuffer = &SecBufferDesc_in.pBuffers[1];
+			CopyMemory(lpTokenIn, &lpTokenIn[NumberOfBytesRead - pSecBuffer->cbBuffer], pSecBuffer->cbBuffer);
+			NumberOfBytesRead = pSecBuffer->cbBuffer;
+			continue;
+		}
 
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{
@@ -398,7 +419,7 @@ int TestSchannel(int argc, char* argv[])
 		SecBufferDesc_out.pBuffers = SecBuffer_out;
 
 		status = table->InitializeSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL, _T("localhost"),
-				fContextReq, 0, 0, NULL, 0, &context, &SecBufferDesc_out, &fContextAttr, &expiry);
+				fContextReq, 0, 0, &SecBufferDesc_in, 0, &context, &SecBufferDesc_out, &fContextAttr, &expiry);
 
 		if ((status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
