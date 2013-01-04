@@ -891,7 +891,7 @@ static void xf_cliprdr_process_text(clipboardContext* cb, BYTE* data, int size)
 
 static void xf_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data, int size)
 {
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) data, size / 2, (CHAR**) &(cb->data), 0, NULL, NULL);
+	cb->data_length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) data, size / 2, (CHAR**) &(cb->data), 0, NULL, NULL);
 	crlf2lf(cb->data, &cb->data_length);
 }
 
