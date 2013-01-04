@@ -23,7 +23,11 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <wincrypt.h>
+
+#else
 
 #define GET_ALG_CLASS(x)		(x & (7 << 13))
 #define GET_ALG_TYPE(x)			(x & (15 << 9))
