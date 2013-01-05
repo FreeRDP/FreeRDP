@@ -309,7 +309,7 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.bit_gravity = NorthWestGravity;
 	xfi->attribs.win_gravity = NorthWestGravity;
 	
-	xfi->us_mouse_event_delay = 1000000 / xfi->instance->settings->MouseEventRate;
+    xfi->us_mouse_event_delay = 1000000 / xfi->instance->settings->MouseEventRate;
 
 	if (xfi->instance->settings->WindowTitle != NULL)
 	{
