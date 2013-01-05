@@ -100,6 +100,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "grab keyboard" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "mouse-motion" },
+	{ "mouse-rate", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Mouse events rate (evets/sec)" },
 	{ "parent-window", COMMAND_LINE_VALUE_REQUIRED, "<window id>", NULL, NULL, -1, NULL, "Parent window id" },
 	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "bitmap cache" },
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "offscreen bitmap cache" },
@@ -1249,6 +1250,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->MouseMotion = arg->Value ? TRUE : FALSE;
 		}
+        CommandLineSwitchCase(arg, "mouse-rate")
+        {
+            settings->MouseEventRate = atoi(arg->Value);
+        }
 		CommandLineSwitchCase(arg, "parent-window")
 		{
 			settings->ParentWindowId = strtol(arg->Value, NULL, 0);
