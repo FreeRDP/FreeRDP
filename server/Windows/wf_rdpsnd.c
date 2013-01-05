@@ -26,6 +26,10 @@
 
 #include <winpr/windows.h>
 
+#define INITGUID
+#include <initguid.h>
+#include <objbase.h>
+
 #define CINTERFACE
 #include <mmsystem.h>
 #include <dsound.h>

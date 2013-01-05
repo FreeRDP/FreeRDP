@@ -54,7 +54,6 @@ if(WITH_WIN8)
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dsound)
-
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
