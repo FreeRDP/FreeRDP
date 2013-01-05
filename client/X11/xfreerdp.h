@@ -31,6 +31,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
+#include <sys/time.h>
 
 typedef struct xf_info xfInfo;
 
