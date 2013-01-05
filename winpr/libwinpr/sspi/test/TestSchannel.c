@@ -3,6 +3,7 @@
 #include <winpr/sspi.h>
 #include <winpr/file.h>
 #include <winpr/pipe.h>
+#include <winpr/tchar.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>

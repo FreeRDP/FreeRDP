@@ -340,8 +340,24 @@ typedef const CERT_CONTEXT *PCCERT_CONTEXT;
 #define CERT_FIND_OR_CTL_USAGE_FLAG		CERT_FIND_OR_ENHKEY_USAGE_FLAG
 #define CERT_FIND_VALID_CTL_USAGE_FLAG		CERT_FIND_VALID_ENHKEY_USAGE_FLAG
 
+#define CERT_NAME_EMAIL_TYPE			1
+#define CERT_NAME_RDN_TYPE			2
+#define CERT_NAME_ATTR_TYPE			3
+#define CERT_NAME_SIMPLE_DISPLAY_TYPE		4
+#define CERT_NAME_FRIENDLY_DISPLAY_TYPE		5
+#define CERT_NAME_DNS_TYPE			6
+#define CERT_NAME_URL_TYPE			7
+#define CERT_NAME_UPN_TYPE			8
+
+#define CERT_NAME_ISSUER_FLAG			0x1
+#define CERT_NAME_DISABLE_IE4_UTF8_FLAG		0x00010000
+
+#define CERT_NAME_SEARCH_ALL_NAMES_FLAG		0x2
+
 WINPR_API HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol);
 WINPR_API HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProtocol);
+
+WINPR_API BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags);
 
 #ifdef UNICODE
 #define CertOpenSystemStore	CertOpenSystemStoreW
@@ -351,6 +367,19 @@ WINPR_API HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubs
 
 WINPR_API PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD dwCertEncodingType,
 		DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext);
+
+WINPR_API PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext);
+
+DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString);
+DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString);
+
+#ifdef UNICODE
+#define CertGetNameString	CertGetNameStringW
+#else
+#define CertGetNameString	CertGetNameStringA
+#endif
 
 #endif
 

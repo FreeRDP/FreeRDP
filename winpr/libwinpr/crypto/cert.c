@@ -162,10 +162,32 @@ HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProto
 	return CertOpenSystemStoreW(hProv, NULL);
 }
 
+BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+	return TRUE;
+}
+
 PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD dwCertEncodingType,
 		DWORD dwFindFlags, DWORD dwFindType, const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext)
 {
 	return (PCCERT_CONTEXT) 1;
+}
+
+PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext)
+{
+	return (PCCERT_CONTEXT) NULL;
+}
+
+DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
+{
+	return 0;
+}
+
+DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString)
+{
+	return 0;
 }
 
 #endif
