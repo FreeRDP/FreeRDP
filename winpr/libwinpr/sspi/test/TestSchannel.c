@@ -72,7 +72,7 @@ static void* schannel_test_server_thread(void* arg)
 		//return NULL;
 	}
 
-	pCertContext = CertFindCertificateInStore(hCertStore, X509_ASN_ENCODING, 0, CERT_FIND_HAS_PRIVATE_KEY, NULL, NULL);
+	pCertContext = CertFindCertificateInStore(hCertStore, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL);
 
 	if (!pCertContext)
 	{
