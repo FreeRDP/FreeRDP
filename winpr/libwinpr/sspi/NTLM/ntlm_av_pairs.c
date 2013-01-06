@@ -303,10 +303,29 @@ int test_CertificateHashLength = 32;
 
 char TlsServerEndPointPrefix[] = "tls-server-end-point:";
 
+void ntlm_uint32_to_big_endian(UINT32 num, BYTE be32[4])
+{
+	be32[0] = (num >> 0) & 0xFF;
+	be32[1] = (num >> 8) & 0xFF;
+	be32[2] = (num >> 16) & 0xFF;
+	be32[3] = (num >> 24) & 0xFF;
+}
+
+/*
+typedef struct gss_channel_bindings_struct {
+        OM_uint32 initiator_addrtype;
+        gss_buffer_desc initiator_address;
+        OM_uint32 acceptor_addrtype;
+        gss_buffer_desc acceptor_address;
+        gss_buffer_desc application_data;
+} *gss_channel_bindings_t;
+ */
+
 void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
 #if 0
 	MD5_CTX md5;
+	BYTE be32[4];
 	int HashLength;
 	int PrefixLength;
 	BYTE* pChannelBindingToken;
@@ -340,11 +359,39 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	winpr_HexDump((BYTE*) ChannelBindings, context->EndpointBindings.BindingsLength);
 
 	MD5_Init(&md5);
-	MD5_Update(&md5, (void*) context->EndpointBindings.Bindings, context->EndpointBindings.BindingsLength);
+
+	ntlm_uint32_to_big_endian(ChannelBindings->dwInitiatorAddrType, be32);
+	MD5_Update(&md5, be32, 4);
+
+	ntlm_uint32_to_big_endian(ChannelBindings->cbInitiatorLength, be32);
+	MD5_Update(&md5, be32, 4);
+
+	//ntlm_uint32_to_big_endian(ChannelBindings->dwInitiatorOffset, be32);
+	//MD5_Update(&md5, be32, 4);
+
+	ntlm_uint32_to_big_endian(ChannelBindings->dwAcceptorAddrType, be32);
+	MD5_Update(&md5, be32, 4);
+
+	ntlm_uint32_to_big_endian(ChannelBindings->cbAcceptorLength, be32);
+	MD5_Update(&md5, be32, 4);
+
+	//ntlm_uint32_to_big_endian(ChannelBindings->dwAcceptorOffset, be32);
+	//MD5_Update(&md5, be32, 4);
+
+	ntlm_uint32_to_big_endian(ChannelBindings->cbApplicationDataLength, be32);
+	MD5_Update(&md5, be32, 4);
+
+	//ntlm_uint32_to_big_endian(ChannelBindings->dwApplicationDataOffset, be32);
+	//MD5_Update(&md5, be32, 4);
+
+	MD5_Update(&md5, (void*) pChannelBindingToken, ChannelBindingTokenLength);
+
 	MD5_Final(context->ChannelBindingsHash, &md5);
 
 	printf("ChannelBindingsHash:\n");
 	winpr_HexDump(context->ChannelBindingsHash, 16);
+
+	printf("\n\n");
 #endif
 }
 
