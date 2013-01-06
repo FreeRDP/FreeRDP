@@ -465,9 +465,9 @@ BOOL nego_recv_response(rdpNego* nego)
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
 
 	if (transport_read(nego->transport, s) < 0)
-		return FALSE;
+		return -1;
 
-	return nego_recv(nego->transport, s, nego);
+	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
 }
 
 /**
@@ -478,7 +478,7 @@ BOOL nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	BYTE li;
 	BYTE type;
@@ -488,7 +488,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	length = tpkt_read_header(s);
 
 	if (length == 0)
-		return FALSE;
+		return -1;
 
 	li = tpdu_read_connection_confirm(s);
 
@@ -546,7 +546,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		nego->state = NEGO_STATE_FAIL;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 /**

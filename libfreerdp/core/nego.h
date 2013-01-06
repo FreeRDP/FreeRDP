@@ -117,7 +117,7 @@ void nego_attempt_tls(rdpNego* nego);
 void nego_attempt_rdp(rdpNego* nego);
 
 void nego_send(rdpNego* nego);
-BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
 BOOL nego_recv_response(rdpNego* nego);
 BOOL nego_read_request(rdpNego* nego, STREAM* s);
 

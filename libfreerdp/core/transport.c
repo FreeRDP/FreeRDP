@@ -589,6 +589,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	int pos;
 	int status;
 	UINT16 length;
+	int recv_status;
 	STREAM* received;
 	rdpTransport* transport = *ptransport;
 
@@ -684,10 +685,21 @@ int transport_check_fds(rdpTransport** ptransport)
 		stream_seal(received);
 		stream_set_pos(received, 0);
 
-		if (transport->ReceiveCallback(transport, received, transport->ReceiveExtra) == FALSE)
+		/**
+		 * ReceiveCallback return values:
+		 *
+		 * -1: synchronous failure
+		 *  0: synchronous success
+		 *  1: asynchronous return
+		 */
+
+		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+
+		if (recv_status < 0)
 			status = -1;
 
-		transport_receive_pool_return(transport, received);
+		if (recv_status == 0)
+			transport_receive_pool_return(transport, received);
 
 		if (status < 0)
 			return status;

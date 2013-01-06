@@ -506,7 +506,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
+int fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 {
 	BYTE i;
 
@@ -518,7 +518,7 @@ BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 		 */
 
 		if (stream_get_left(s) < 1)
-			return FALSE;
+			return -1;
 
 		stream_read_BYTE(s, fastpath->numberEvents); /* eventHeader (1 byte) */
 	}
@@ -526,10 +526,10 @@ BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
 	for (i = 0; i < fastpath->numberEvents; i++)
 	{
 		if (!fastpath_recv_input_event(fastpath, s))
-			return FALSE;
+			return -1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)

@@ -41,7 +41,7 @@ int TestCertEnumCertificatesInStore(int argc, char* argv[])
 
 	index = 0;
 
-	while (pCertContext = CertEnumCertificatesInStore(hCertStore, pCertContext))
+	while ((pCertContext = CertEnumCertificatesInStore(hCertStore, pCertContext)))
 	{
 		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0);
 

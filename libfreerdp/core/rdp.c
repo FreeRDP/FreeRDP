@@ -850,50 +850,50 @@ static BOOL rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 	{
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_client_connect_mcs_connect_response(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_client_connect_mcs_attach_user_confirm(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_LICENSE:
 			if (!rdp_client_connect_license(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_client_connect_demand_active(rdp, s))
 			{
 				printf("rdp_client_connect_demand_active failed\n");
-				return FALSE;
+				return -1;
 			}
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
 			if (!rdp_recv_pdu(rdp, s))
-				return FALSE;
+				return -1;
 			if (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE)
 				rdp->state = CONNECTION_STATE_ACTIVE;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			if (!rdp_recv_pdu(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		default:
 			printf("Invalid state %d\n", rdp->state);
-			return FALSE;
+			return -1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size)
