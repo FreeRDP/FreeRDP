@@ -98,6 +98,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
+	{ "vmconnect", COMMAND_LINE_VALUE_OPTIONAL, "<vmid>", NULL, NULL, -1, NULL, "Hyper-V console (use port 2179, disable negotiation)" },
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "authentication (hack!)" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
 	{ "grab-keyboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "grab keyboard" },
@@ -191,6 +192,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
 	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
 	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
+	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n");
 	printf("\n");
 
 	printf("Clipboard Redirection: +clipboard\n");
@@ -834,6 +836,17 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				settings->ServerHostname = _strdup(arg->Value);
 			}
 		}
+		CommandLineSwitchCase(arg, "vmconnect")
+		{
+			settings->ServerPort = 2179;
+			settings->NegotiateSecurityLayer = FALSE;
+
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				settings->SendPreconnectionPdu = TRUE;
+				settings->PreconnectionBlob = _strdup(arg->Value);
+			}
+		}
 		CommandLineSwitchCase(arg, "port")
 		{
 			settings->ServerPort = atoi(arg->Value);
@@ -1163,15 +1176,15 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->NegotiateSecurityLayer = arg->Value ? TRUE : FALSE;
 		}
-		CommandLineSwitchCase(arg, "pcid")
-		{
-			settings->SendPreconnectionPdu = TRUE;
-			settings->PreconnectionId = atoi(arg->Value);
-		}
 		CommandLineSwitchCase(arg, "pcb")
 		{
 			settings->SendPreconnectionPdu = TRUE;
 			settings->PreconnectionBlob = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "pcid")
+		{
+			settings->SendPreconnectionPdu = TRUE;
+			settings->PreconnectionId = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
