@@ -340,7 +340,7 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-BOOL fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
+int fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 
@@ -349,15 +349,12 @@ BOOL fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	while (stream_get_left(s) >= 3)
 	{
 		if (!fastpath_recv_update_data(fastpath, s))
-		{
-			/* XXX: Do we need to call EndPaint? */
-			return FALSE;
-		}
+			return -1;
 	}
 
 	IFCALL(update->EndPaint, update->context);
 
-	return TRUE;
+	return 0;
 }
 
 static BOOL fastpath_read_input_event_header(STREAM* s, BYTE* eventFlags, BYTE* eventCode)
