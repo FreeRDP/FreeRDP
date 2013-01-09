@@ -112,6 +112,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->NTLMv2 = TRUE;
 		context->UseMIC = FALSE;
 		context->SendVersionInfo = TRUE;
+		context->SendSingleHostData = FALSE;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -125,6 +126,9 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 			if (RegQueryValueEx(hKey, _T("SendVersionInfo"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 				context->SendVersionInfo = dwValue ? 1 : 0;
+
+			if (RegQueryValueEx(hKey, _T("SendSingleHostData"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				context->SendSingleHostData = dwValue ? 1 : 0;
 
 			RegCloseKey(hKey);
 		}

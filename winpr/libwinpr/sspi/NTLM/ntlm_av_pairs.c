@@ -279,6 +279,19 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	MD5_Final(context->ChannelBindingsHash, &md5);
 }
 
+BYTE ntlm_MachineID[32] =
+	"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
+	"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF";
+
+void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
+{
+	context->SingleHostData.Size = 48;
+	context->SingleHostData.Z4 = 0;
+	context->SingleHostData.DataPresent = 1;
+	context->SingleHostData.CustomData = 0x2000;
+	CopyMemory(context->SingleHostData.MachineID, ntlm_MachineID, 32);
+}
+
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
@@ -383,9 +396,6 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
-	//AvPairsCount++; /* MsvAvRestrictions */
-	//AvPairsValueLength += 48;
-
 	/**
 	 * Extended Protection for Authentication:
 	 * http://blogs.technet.com/b/srd/archive/2009/12/08/extended-protection-for-authentication.aspx
@@ -406,6 +416,13 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		{
 			AvPairsCount++; /* MsvAvTargetName */
 			AvPairsValueLength += context->ServicePrincipalName.Length;
+		}
+
+		if (context->SendSingleHostData)
+		{
+			AvPairsCount++; /* MsvAvSingleHost */
+			ntlm_compute_single_host_data(context);
+			AvPairsValueLength += context->SingleHostData.Size;
 		}
 	}
 
@@ -452,6 +469,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 			ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvTargetName,
 					(PBYTE) context->ServicePrincipalName.Buffer,
 					context->ServicePrincipalName.Length);
+		}
+
+		if (context->SendSingleHostData)
+		{
+			ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
+					(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
 		}
 	}
 

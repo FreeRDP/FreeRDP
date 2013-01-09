@@ -119,7 +119,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	{
 		if (rpc->VirtualConnection->State >= VIRTUAL_CONNECTION_STATE_OPENED)
 		{
-			printf("Receiving Out-of-Sequence RTS PDU\n");
+			//printf("Receiving Out-of-Sequence RTS PDU\n");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 
 			rpc_client_fragment_pool_return(rpc, fragment);
