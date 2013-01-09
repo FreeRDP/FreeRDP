@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/thread.h>
 
 #include "update.h"
 #include "surface.h"
@@ -620,6 +621,20 @@ void update_register_client_callbacks(rdpUpdate* update)
 	update->SuppressOutput = update_send_suppress_output;
 }
 
+static void* update_thread(void* arg)
+{
+	rdpUpdate* update;
+
+	update = (rdpUpdate*) arg;
+
+	while (WaitForSingleObject(Queue_Event(update->queue), INFINITE) == WAIT_OBJECT_0)
+	{
+
+	}
+
+	return NULL;
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
@@ -657,6 +672,10 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		deleteList->cIndices = 0;
 
 		update->SuppressOutput = update_send_suppress_output;
+
+		update->queue = Queue_New(TRUE, -1, -1);
+
+		update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
 	}
 
 	return update;
@@ -679,7 +698,9 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
+
+		CloseHandle(update->thread);
+
 		free(update);
 	}
 }
-

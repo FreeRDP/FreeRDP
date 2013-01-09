@@ -40,24 +40,31 @@
 
 extern const SecPkgInfoA NTLM_SecPkgInfoA;
 extern const SecPkgInfoW NTLM_SecPkgInfoW;
-extern const SecPkgInfoA CREDSSP_SecPkgInfoA;
-extern const SecPkgInfoW CREDSSP_SecPkgInfoW;
-
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+
+extern const SecPkgInfoA CREDSSP_SecPkgInfoA;
+extern const SecPkgInfoW CREDSSP_SecPkgInfoW;
 extern const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA;
 extern const SecurityFunctionTableW CREDSSP_SecurityFunctionTableW;
+
+extern const SecPkgInfoA SCHANNEL_SecPkgInfoA;
+extern const SecPkgInfoW SCHANNEL_SecPkgInfoW;
+extern const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA;
+extern const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW;
 
 const SecPkgInfoA* SecPkgInfoA_LIST[] =
 {
 	&NTLM_SecPkgInfoA,
-	&CREDSSP_SecPkgInfoA
+	&CREDSSP_SecPkgInfoA,
+	&SCHANNEL_SecPkgInfoA
 };
 
 const SecPkgInfoW* SecPkgInfoW_LIST[] =
 {
 	&NTLM_SecPkgInfoW,
-	&CREDSSP_SecPkgInfoW
+	&CREDSSP_SecPkgInfoW,
+	&SCHANNEL_SecPkgInfoW
 };
 
 SecurityFunctionTableA SSPI_SecurityFunctionTableA;
@@ -80,16 +87,19 @@ typedef struct _SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME;
 const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] =
 {
 	{ "NTLM", &NTLM_SecurityFunctionTableA },
-	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA }
+	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA },
+	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
 WCHAR NTLM_NAME_W[] = { 'N','T','L','M','\0' };
 WCHAR CREDSSP_NAME_W[] = { 'C','r','e','d','S','S','P','\0' };
+WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l','\0' };
 
 const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] =
 {
 	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
-	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW }
+	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
+	{ SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
 };
 
 #endif

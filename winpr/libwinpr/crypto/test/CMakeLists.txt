@@ -1,16 +1,11 @@
 
-set(MODULE_NAME "TestSspi")
-set(MODULE_PREFIX "TEST_SSPI")
+set(MODULE_NAME "TestCrypto")
+set(MODULE_PREFIX "TEST_CRYPTO")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestQuerySecurityPackageInfo.c
-	TestEnumerateSecurityPackages.c
-	TestInitializeSecurityContext.c
-	TestAcquireCredentialsHandle.c
-	TestSchannel.c
-	TestNTLM.c)
+	TestCertEnumCertificatesInStore.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -19,13 +14,13 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 if(WIN32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32 cryptui)
 endif()
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-sspi winpr-thread winpr-pipe winpr-file winpr-crypto winpr-utils)
+	MODULES winpr-crt winpr-crypto winpr-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

@@ -76,7 +76,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 	return 6;
 }
 
-BOOL update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
+int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 {
 	BYTE* mark;
 	UINT16 cmdType;
@@ -102,7 +102,7 @@ BOOL update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 
 			default:
 				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
-				return FALSE;
+				return -1;
 		}
 
 		size -= cmdLength;
@@ -113,7 +113,8 @@ BOOL update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 			pcap_flush(update->pcap_rfx);
 		}
 	}
-	return TRUE;
+
+	return 0;
 }
 
 void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd)

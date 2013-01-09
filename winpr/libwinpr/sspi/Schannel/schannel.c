@@ -30,47 +30,17 @@
 
 char* SCHANNEL_PACKAGE_NAME = "Schannel";
 
-SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
-{
-	return SEC_E_OK;
-}
-
-SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
-{
-	SCHANNEL_CONTEXT* context;
-	CREDENTIALS* credentials;
-
-	context = sspi_SecureHandleGetLowerPointer(phContext);
-
-	if (!context)
-	{
-		context = schannel_ContextNew();
-
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
-	}
-
-	return SEC_E_OK;
-
-}
-
 SCHANNEL_CONTEXT* schannel_ContextNew()
 {
 	SCHANNEL_CONTEXT* context;
 
-	context = (SCHANNEL_CONTEXT*) calloc(1, sizeof(SCHANNEL_CONTEXT));
+	context = (SCHANNEL_CONTEXT*) malloc(sizeof(SCHANNEL_CONTEXT));
 
 	if (context != NULL)
 	{
+		ZeroMemory(context, sizeof(SCHANNEL_CONTEXT));
 
+		context->openssl = schannel_openssl_new();
 	}
 
 	return context;
@@ -81,40 +51,109 @@ void schannel_ContextFree(SCHANNEL_CONTEXT* context)
 	if (!context)
 		return;
 
+	schannel_openssl_free(context->openssl);
+
 	free(context);
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
+SCHANNEL_CREDENTIALS* schannel_CredentialsNew()
 {
-	if (!phContext)
-		return SEC_E_INVALID_HANDLE;
+	SCHANNEL_CREDENTIALS* credentials;
 
-	if (!pBuffer)
-		return SEC_E_INSUFFICIENT_MEMORY;
+	credentials = (SCHANNEL_CREDENTIALS*) malloc(sizeof(SCHANNEL_CREDENTIALS));
+
+	if (credentials != NULL)
+	{
+		ZeroMemory(credentials, sizeof(SCHANNEL_CREDENTIALS));
+	}
+
+	return credentials;
+}
+
+void schannel_CredentialsFree(SCHANNEL_CREDENTIALS* credentials)
+{
+	if (!credentials)
+		return;
+
+	free(credentials);
+}
+
+static ALG_ID schannel_SupportedAlgs[] =
+{
+	CALG_AES_128, CALG_AES_256, CALG_RC4, CALG_DES, CALG_3DES,
+	CALG_MD5, CALG_SHA1, CALG_SHA_256, CALG_SHA_384, CALG_SHA_512,
+	CALG_RSA_SIGN, CALG_DH_EPHEM,
+	(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RESERVED7 | 6), /* what is this? */
+	CALG_DSS_SIGN, CALG_ECDSA
+};
+
+SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+{
+	if (ulAttribute == SECPKG_ATTR_SUPPORTED_ALGS)
+	{
+		PSecPkgCred_SupportedAlgs SupportedAlgs = (PSecPkgCred_SupportedAlgs) pBuffer;
+
+		SupportedAlgs->cSupportedAlgs = sizeof(schannel_SupportedAlgs) / sizeof(ALG_ID);
+		SupportedAlgs->palgSupportedAlgs = (ALG_ID*) schannel_SupportedAlgs;
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_CIPHER_STRENGTHS)
+	{
+		PSecPkgCred_CipherStrengths CipherStrengths = (PSecPkgCred_CipherStrengths) pBuffer;
+
+		CipherStrengths->dwMinimumCipherStrength = 40;
+		CipherStrengths->dwMaximumCipherStrength = 256;
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_SUPPORTED_PROTOCOLS)
+	{
+		PSecPkgCred_SupportedProtocols SupportedProtocols = (PSecPkgCred_SupportedProtocols) pBuffer;
+
+		/* Observed SupportedProtocols: 0x208A0 */
+		SupportedProtocols->grbitProtocol = (SP_PROT_CLIENTS | SP_PROT_SERVERS);
+
+		return SEC_E_OK;
+	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+{
+	return schannel_QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
-}
-
-SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
-{
-	CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
+	SCHANNEL_CREDENTIALS* credentials;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
-		credentials = sspi_CredentialsNew();
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+		SCHANNEL_CRED* cred;
 
-		//CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		credentials = schannel_CredentialsNew();
+		credentials->fCredentialUse = fCredentialUse;
+
+		cred = (SCHANNEL_CRED*) pAuthData;
+
+		if (cred)
+		{
+			CopyMemory(&credentials->cred, cred, sizeof(SCHANNEL_CRED));
+		}
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) SCHANNEL_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
+	else if (fCredentialUse == SECPKG_CRED_INBOUND)
+	{
+		credentials = schannel_CredentialsNew();
+		credentials->fCredentialUse = fCredentialUse;
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) SCHANNEL_PACKAGE_NAME);
@@ -125,18 +164,165 @@ SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(SEC_CHAR* pszPrinci
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
+		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
+	SECURITY_STATUS status;
+	SEC_WCHAR* pszPrincipalW = NULL;
+	SEC_WCHAR* pszPackageW = NULL;
+
+	ConvertToUnicode(CP_UTF8, 0, pszPrincipal, -1, &pszPrincipalW, 0);
+	ConvertToUnicode(CP_UTF8, 0, pszPackage, -1, &pszPackageW, 0);
+
+	status = schannel_AcquireCredentialsHandleW(pszPrincipalW, pszPackageW, fCredentialUse, pvLogonID,
+			pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
+
+	free(pszPrincipalW);
+	free(pszPackageW);
+
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
-	{
-		CREDENTIALS* credentials;
+	SCHANNEL_CREDENTIALS* credentials;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+	if (!phCredential)
+		return SEC_E_INVALID_HANDLE;
+
+	credentials = (SCHANNEL_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+	if (!credentials)
+		return SEC_E_INVALID_HANDLE;
+
+	schannel_CredentialsFree(credentials);
+
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
+{
+	SECURITY_STATUS status;
+	SCHANNEL_CONTEXT* context;
+	SCHANNEL_CREDENTIALS* credentials;
+
+	context = sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+	{
+		context = schannel_ContextNew();
+
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		credentials = (SCHANNEL_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+		context->server = FALSE;
+		CopyMemory(&context->cred, &credentials->cred, sizeof(SCHANNEL_CRED));
+
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
+
+		schannel_openssl_client_init(context->openssl);
+
+		status = schannel_openssl_client_process_tokens(context->openssl, pInput, pOutput);
+
+		return status;
+	}
+
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
+		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
+{
+	SECURITY_STATUS status;
+	SEC_WCHAR* pszTargetNameW = NULL;
+
+	if (pszTargetName != NULL)
+	{
+		ConvertToUnicode(CP_UTF8, 0, pszTargetName, -1, &pszTargetNameW, 0);
+	}
+
+	status = schannel_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,
+		Reserved1, TargetDataRep, pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+	if (pszTargetNameW != NULL)
+		free(pszTargetNameW);
+
+	return status;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
+		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
+{
+	SECURITY_STATUS status;
+	SCHANNEL_CONTEXT* context;
+	SCHANNEL_CREDENTIALS* credentials;
+
+	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+	{
+		context = schannel_ContextNew();
+
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		credentials = (SCHANNEL_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+
+		context->server = TRUE;
+
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
+
+		schannel_openssl_server_init(context->openssl);
+
+		status = schannel_openssl_server_process_tokens(context->openssl, pInput, pOutput);
+
+		return status;
+	}
+
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
+{
+	SCHANNEL_CONTEXT* context;
+
+	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	schannel_ContextFree(context);
+
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
+{
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (ulAttribute == SECPKG_ATTR_SIZES)
+	{
+		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+
+		ContextSizes->cbMaxToken = 0x6000;
+		ContextSizes->cbMaxSignature = 16;
+		ContextSizes->cbBlockSize = 0;
+		ContextSizes->cbSecurityTrailer = 16;
 
 		return SEC_E_OK;
 	}
@@ -144,20 +330,13 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesA(PCredHandle phCre
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
+SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	CREDENTIALS* credentials;
+	return SEC_E_OK;
+}
 
-	if (!phCredential)
-		return SEC_E_INVALID_HANDLE;
-
-	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-	if (!credentials)
-		return SEC_E_INVALID_HANDLE;
-
-	sspi_CredentialsFree(credentials);
-
+SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
+{
 	return SEC_E_OK;
 }
 
@@ -171,16 +350,6 @@ SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext, PSecBuf
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY schannel_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
-{
-	return SEC_E_OK;
-}
-
-SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
-{
-	return SEC_E_OK;
-}
-
 const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA =
 {
 	1, /* dwVersion */
@@ -190,9 +359,9 @@ const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA =
 	schannel_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
 	schannel_InitializeSecurityContextA, /* InitializeSecurityContext */
-	NULL, /* AcceptSecurityContext */
+	schannel_AcceptSecurityContext, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
-	NULL, /* DeleteSecurityContext */
+	schannel_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	schannel_QueryContextAttributes, /* QueryContextAttributes */
 	NULL, /* ImpersonateSecurityContext */
@@ -222,9 +391,9 @@ const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW =
 	schannel_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
 	schannel_InitializeSecurityContextW, /* InitializeSecurityContext */
-	NULL, /* AcceptSecurityContext */
+	schannel_AcceptSecurityContext, /* AcceptSecurityContext */
 	NULL, /* CompleteAuthToken */
-	NULL, /* DeleteSecurityContext */
+	schannel_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	schannel_QueryContextAttributes, /* QueryContextAttributes */
 	NULL, /* ImpersonateSecurityContext */
@@ -250,7 +419,7 @@ const SecPkgInfoA SCHANNEL_SecPkgInfoA =
 	0x000107B3, /* fCapabilities */
 	1, /* wVersion */
 	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
+	SCHANNEL_CB_MAX_TOKEN, /* cbMaxToken */
 	"Schannel", /* Name */
 	"Schannel Security Package" /* Comment */
 };
@@ -269,7 +438,7 @@ const SecPkgInfoW SCHANNEL_SecPkgInfoW =
 	0x000107B3, /* fCapabilities */
 	1, /* wVersion */
 	0x000E, /* wRPCID */
-	0x00006000, /* cbMaxToken */
+	SCHANNEL_CB_MAX_TOKEN, /* cbMaxToken */
 	SCHANNEL_SecPkgInfoW_Name, /* Name */
 	SCHANNEL_SecPkgInfoW_Comment /* Comment */
 };
