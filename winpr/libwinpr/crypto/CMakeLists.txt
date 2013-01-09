@@ -1,5 +1,5 @@
 # WinPR: Windows Portable Runtime
-# libwinpr-pool cmake build script
+# libwinpr-crypto cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,19 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-pool")
-set(MODULE_PREFIX "WINPR_POOL")
+set(MODULE_NAME "winpr-crypto")
+set(MODULE_PREFIX "WINPR_CRYPTO")
 
 set(${MODULE_PREFIX}_SRCS
-	synch.c
-	work.c
-	timer.c
-	io.c
-	cleanup_group.c
-	pool.c
-	callback_environment.c
-	callback.c
-	callback_cleanup.c)
+	crypto.c
+	cert.c)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
@@ -39,22 +32,18 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT}
-	${CMAKE_DL_LIBS})
-
-if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
+if(WIN32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} crypt32)
 endif()
 
 if(MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-thread winpr-synch)
 
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
 
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

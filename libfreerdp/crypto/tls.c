@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/tcp.h>
@@ -56,6 +57,86 @@ static void tls_free_certificate(CryptoCert cert)
 {
 	X509_free(cert->px509);
 	free(cert);
+}
+
+static void tls_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
+{
+	BYTE be32[4];
+
+	be32[0] = (num >> 0) & 0xFF;
+	be32[1] = (num >> 8) & 0xFF;
+	be32[2] = (num >> 16) & 0xFF;
+	be32[3] = (num >> 24) & 0xFF;
+
+	MD5_Update(md5, be32, 4);
+}
+
+BYTE* tls_get_channel_bindings_hash(SecPkgContext_Bindings* Bindings)
+{
+	MD5_CTX md5;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
+	BYTE* ChannelBindingsHash;
+	UINT32 ChannelBindingsHashLength;
+	SEC_CHANNEL_BINDINGS* ChannelBindings;
+
+	ChannelBindings = Bindings->Bindings;
+	ChannelBindingTokenLength = Bindings->BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
+
+	ChannelBindingsHashLength = 16;
+	ChannelBindingsHash = (BYTE*) malloc(ChannelBindingsHashLength);
+	ZeroMemory(ChannelBindingsHash, ChannelBindingsHashLength);
+
+	MD5_Init(&md5);
+
+	tls_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
+	tls_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
+	tls_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
+	tls_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
+	tls_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
+
+	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
+
+	MD5_Final(ChannelBindingsHash, &md5);
+
+	return ChannelBindingsHash;
+}
+
+#define TLS_SERVER_END_POINT	"tls-server-end-point:"
+
+SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
+{
+	int PrefixLength;
+	BYTE CertificateHash[32];
+	UINT32 CertificateHashLength;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
+	SEC_CHANNEL_BINDINGS* ChannelBindings;
+	SecPkgContext_Bindings* ContextBindings;
+
+	ZeroMemory(CertificateHash, sizeof(CertificateHash));
+	X509_digest(cert, EVP_sha256(), CertificateHash, &CertificateHashLength);
+
+	PrefixLength = strlen(TLS_SERVER_END_POINT);
+	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
+
+	ContextBindings = (SecPkgContext_Bindings*) malloc(sizeof(SecPkgContext_Bindings));
+	ZeroMemory(ContextBindings, sizeof(SecPkgContext_Bindings));
+
+	ContextBindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
+	ChannelBindings = (SEC_CHANNEL_BINDINGS*) malloc(ContextBindings->BindingsLength);
+	ZeroMemory(ChannelBindings, ContextBindings->BindingsLength);
+	ContextBindings->Bindings = ChannelBindings;
+
+	ChannelBindings->cbApplicationDataLength = ChannelBindingTokenLength;
+	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
+
+	strcpy((char*) ChannelBindingToken, TLS_SERVER_END_POINT);
+	CopyMemory(&ChannelBindingToken[PrefixLength], CertificateHash, CertificateHashLength);
+
+	return ContextBindings;
 }
 
 BOOL tls_connect(rdpTls* tls)
@@ -134,6 +215,8 @@ BOOL tls_connect(rdpTls* tls)
 		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;
 	}
+
+	tls->Bindings = tls_get_channel_bindings(cert->px509);
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{

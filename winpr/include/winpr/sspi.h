@@ -635,11 +635,19 @@ struct _SecHandle
 	ULONG_PTR dwUpper;
 };
 typedef struct _SecHandle SecHandle;
+typedef SecHandle* PSecHandle;
 
 typedef SecHandle CredHandle;
 typedef CredHandle* PCredHandle;
 typedef SecHandle CtxtHandle;
 typedef CtxtHandle* PCtxtHandle;
+
+#define SecInvalidateHandle(x) \
+	((PSecHandle)(x))->dwLower = ((PSecHandle)(x))->dwUpper = ((ULONG_PTR)((INT_PTR) - 1));
+
+#define SecIsValidHandle(x) \
+	((((PSecHandle)(x))->dwLower != ((ULONG_PTR)((INT_PTR) - 1))) && \
+		(((PSecHandle) (x))->dwUpper != ((ULONG_PTR)((INT_PTR) - 1))))
 
 #endif
 
