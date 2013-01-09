@@ -416,8 +416,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	PSecBuffer input_buffer;
-	PSecBuffer output_buffer;
+	PSecBuffer input_buffer = NULL;
+	PSecBuffer output_buffer = NULL;
+	PSecBuffer channel_bindings = NULL;
 
 	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -477,6 +478,18 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 
 		if (input_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
+
+		if (pInput->cBuffers > 1)
+		{
+			if (pInput->pBuffers[1].BufferType == SECBUFFER_CHANNEL_BINDINGS)
+				channel_bindings = &pInput->pBuffers[1];
+		}
+
+		if (channel_bindings)
+		{
+			context->Bindings.BindingsLength = channel_bindings->cbBuffer;
+			context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
+		}
 
 		if (context->state == NTLM_STATE_CHALLENGE)
 		{

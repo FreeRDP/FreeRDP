@@ -243,7 +243,7 @@ struct _NTLM_CONTEXT
 	SEC_WINNT_AUTH_IDENTITY identity;
 	BYTE* ChannelBindingToken;
 	BYTE ChannelBindingsHash[16];
-	SecPkgContext_Bindings EndpointBindings;
+	SecPkgContext_Bindings Bindings;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;

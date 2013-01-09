@@ -23,6 +23,9 @@
 #include "crypto.h"
 #include "certificate.h"
 
+#include <winpr/crt.h>
+#include <winpr/sspi.h>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
@@ -40,6 +43,7 @@ struct rdp_tls
 	BYTE* PublicKey;
 	DWORD PublicKeyLength;
 	rdpSettings* settings;
+	SecPkgContext_Bindings* Bindings;
 	rdpCertificateStore* certificate_store;
 };
 

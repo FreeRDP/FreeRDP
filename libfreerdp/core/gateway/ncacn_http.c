@@ -80,7 +80,7 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 	content_length = (continue_needed) ? 0 : 0x40000000;
 
-	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, content_length, TSG_CHANNEL_IN);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_IN);
 
 	DEBUG_RPC("\n%s", Stream_Buffer(s));
 	rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
@@ -102,8 +102,8 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
-	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer.cbBuffer = ntlm_token_length;
+	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
 
 	http_response_free(http_response);
 
@@ -123,7 +123,8 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 		ntlm = rpc->NtlmHttpOut->ntlm;
 
 	ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
-			settings->GatewayDomain, settings->GatewayPassword);
+			settings->GatewayDomain, settings->GatewayPassword,
+			rpc->TlsIn->Bindings);
 
 	//ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
 	ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
@@ -168,7 +169,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 	content_length = (continue_needed) ? 0 : 76;
 
-	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer, content_length, TSG_CHANNEL_OUT);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_OUT);
 
 	DEBUG_RPC("\n%s", Stream_Buffer(s));
 	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
@@ -190,8 +191,8 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
 			&ntlm_token_data, &ntlm_token_length);
 
-	ntlm->inputBuffer.pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer.cbBuffer = ntlm_token_length;
+	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
 
 	http_response_free(http_response);
 

@@ -228,66 +228,6 @@ void ntlm_free_unicode_string(PUNICODE_STRING string)
  * https://raw.github.com/mozilla/mozilla-central/master/extensions/auth/nsAuthSSPI.cpp
  */
 
-/* Certificate */
-
-BYTE test_Certificate[525] =
-	"\x30\x82\x02\x09\x30\x82\x01\x76\xa0\x03\x02\x01\x02\x02\x10\xcb"
-	"\x69\x79\xcd\x51\x75\xc5\xb7\x4b\x67\x30\x83\x6c\x78\x44\x27\x30"
-	"\x09\x06\x05\x2b\x0e\x03\x02\x1d\x05\x00\x30\x16\x31\x14\x30\x12"
-	"\x06\x03\x55\x04\x03\x13\x0b\x44\x43\x2d\x57\x53\x32\x30\x30\x38"
-	"\x52\x32\x30\x1e\x17\x0d\x31\x32\x31\x31\x31\x37\x30\x30\x35\x39"
-	"\x32\x31\x5a\x17\x0d\x33\x39\x31\x32\x33\x31\x32\x33\x35\x39\x35"
-	"\x39\x5a\x30\x16\x31\x14\x30\x12\x06\x03\x55\x04\x03\x13\x0b\x44"
-	"\x43\x2d\x57\x53\x32\x30\x30\x38\x52\x32\x30\x81\x9f\x30\x0d\x06"
-	"\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01\x05\x00\x03\x81\x8d\x00"
-	"\x30\x81\x89\x02\x81\x81\x00\x9b\x00\xf8\x1a\x2d\x37\xc6\x8d\xa1"
-	"\x39\x91\x46\xf3\x6a\x1b\xf9\x60\x6c\xb3\x6c\xa0\xac\xed\x85\xe0"
-	"\x3f\xdc\x92\x86\x36\xbd\x64\xbf\x36\x51\xdb\x57\x3a\x8a\x82\x6b"
-	"\xd8\x94\x17\x7b\xd3\x91\x11\x98\xef\x19\x06\x52\x30\x03\x73\x67"
-	"\xc8\xed\x8e\xfa\x0b\x3d\x4c\xc9\x10\x63\x9f\xcf\xb4\xcf\x39\xd8"
-	"\xfe\x99\xeb\x5b\x11\xf2\xfc\xfa\x86\x24\xd9\xff\xd9\x19\xf5\x69"
-	"\xb4\xdf\x5a\x5a\xc4\x94\xb4\xb0\x07\x25\x97\x13\xad\x7e\x38\x14"
-	"\xfb\xd6\x33\x65\x6f\xe6\xf7\x48\x4b\x2d\xb3\x51\x2e\x6d\xc7\xea"
-	"\x11\x76\x9a\x2b\xf0\x00\x4d\x02\x03\x01\x00\x01\xa3\x60\x30\x5e"
-	"\x30\x13\x06\x03\x55\x1d\x25\x04\x0c\x30\x0a\x06\x08\x2b\x06\x01"
-	"\x05\x05\x07\x03\x01\x30\x47\x06\x03\x55\x1d\x01\x04\x40\x30\x3e"
-	"\x80\x10\xeb\x65\x26\x03\x95\x4b\xd6\xc0\x54\x75\x78\x7c\xb6\x2a"
-	"\xa1\xbb\xa1\x18\x30\x16\x31\x14\x30\x12\x06\x03\x55\x04\x03\x13"
-	"\x0b\x44\x43\x2d\x57\x53\x32\x30\x30\x38\x52\x32\x82\x10\xcb\x69"
-	"\x79\xcd\x51\x75\xc5\xb7\x4b\x67\x30\x83\x6c\x78\x44\x27\x30\x09"
-	"\x06\x05\x2b\x0e\x03\x02\x1d\x05\x00\x03\x81\x81\x00\x7b\xfa\xfe"
-	"\xee\x74\x05\xac\xbb\x79\xe9\xda\xca\x00\x44\x96\x94\x71\x92\xb1"
-	"\xdb\xc9\x9b\x71\x29\xc0\xe4\x28\x5e\x6a\x50\x99\xcd\xa8\x17\xe4"
-	"\x56\xb9\xef\x7f\x02\x7d\x96\xa3\x48\x14\x72\x75\x2f\xb0\xb5\x87"
-	"\xee\x55\xe9\x6a\x6d\x28\x3c\xc1\xfd\x00\xe4\x76\xe3\x80\x88\x78"
-	"\x26\x0d\x6c\x8c\xb8\x64\x61\x63\xb7\x13\x3a\xab\xc7\xdd\x1d\x0a"
-	"\xd7\x15\x45\xa1\xd6\xd9\x34\xc7\x21\x48\xfb\x43\x87\x38\xda\x1f"
-	"\x50\x47\xb1\xa5\x5c\x47\xed\x04\x44\x97\xd3\xac\x74\x2d\xeb\x09"
-	"\x77\x59\xbf\xa3\x54\x5b\xde\x42\xd5\x23\x5a\x71\x9f";
-
-BYTE test_CertificateHash_SHA256[] =
-	"\xea\x05\xfe\xfe\xcc\x6b\x0b\xd5\x71\xdb\xbc\x5b\xaa\x3e\xd4\x53"
-	"\x86\xd0\x44\x68\x35\xf7\xb7\x4c\x85\x62\x1b\x99\x83\x47\x5f\x95";
-
-BYTE test_ChannelBindingsHash[] =
-	"\x65\x86\xE9\x9D\x81\xC2\xFC\x98\x4E\x47\x17\x2F\xD4\xDD\x03\x10";
-
-/*
- * Channel Bindings Data:
- *
- * tls-server-end-point:<binary hash>
- */
-
-char TlsServerEndPointPrefix[] = "tls-server-end-point:";
-
-void ntlm_uint32_to_big_endian(UINT32 num, BYTE be32[4])
-{
-	be32[0] = (num >> 0) & 0xFF;
-	be32[1] = (num >> 8) & 0xFF;
-	be32[2] = (num >> 16) & 0xFF;
-	be32[3] = (num >> 24) & 0xFF;
-}
-
 /*
 typedef struct gss_channel_bindings_struct {
 	OM_uint32 initiator_addrtype;
@@ -298,83 +238,45 @@ typedef struct gss_channel_bindings_struct {
 } *gss_channel_bindings_t;
  */
 
+static void ntlm_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
+{
+	BYTE be32[4];
+
+	be32[0] = (num >> 0) & 0xFF;
+	be32[1] = (num >> 8) & 0xFF;
+	be32[2] = (num >> 16) & 0xFF;
+	be32[3] = (num >> 24) & 0xFF;
+
+	MD5_Update(md5, be32, 4);
+}
+
 void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-#if 0
 	MD5_CTX md5;
-	BYTE be32[4];
-	int PrefixLength;
-	SHA256_CTX sha256;
-	BYTE* CertificateHash;
-	int CertificateHashLength;
-	BYTE* pChannelBindingToken;
-	int ChannelBindingTokenLength;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 
 	ZeroMemory(context->ChannelBindingsHash, 16);
+	ChannelBindings = context->Bindings.Bindings;
 
-	CertificateHashLength = 32;
-	CertificateHash = (BYTE*) malloc(CertificateHashLength);
-	ZeroMemory(CertificateHash, CertificateHashLength);
+	if (!ChannelBindings)
+		return;
 
-	SHA256_Init(&sha256);
-	SHA256_Update(&sha256, test_Certificate, sizeof(test_Certificate));
-	SHA256_Final(CertificateHash, &sha256);
-
-	printf("Certificate SHA256 Hash:\n");
-	winpr_HexDump(CertificateHash, CertificateHashLength);
-
-	PrefixLength = strlen(TlsServerEndPointPrefix);
-	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
-	context->ChannelBindingToken = (BYTE*) malloc(ChannelBindingTokenLength + 1);
-	strcpy((char*) context->ChannelBindingToken, TlsServerEndPointPrefix);
-	CopyMemory(&context->ChannelBindingToken[PrefixLength], CertificateHash, CertificateHashLength);
-
-	printf("ChannelBindingToken:\n");
-	winpr_HexDump(context->ChannelBindingToken, ChannelBindingTokenLength);
-
-	context->EndpointBindings.BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
-	context->EndpointBindings.Bindings = (SEC_CHANNEL_BINDINGS*) malloc(context->EndpointBindings.BindingsLength);
-	ZeroMemory(context->EndpointBindings.Bindings, context->EndpointBindings.BindingsLength);
-
-	ChannelBindings = context->EndpointBindings.Bindings;
-	ChannelBindings->cbApplicationDataLength = ChannelBindingTokenLength;
-	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
-
-	pChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	CopyMemory(pChannelBindingToken, context->ChannelBindingToken, ChannelBindingTokenLength);
-
-	printf("ChannelBindings\n");
-	winpr_HexDump((BYTE*) ChannelBindings, context->EndpointBindings.BindingsLength);
+	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
 
 	MD5_Init(&md5);
 
-	ntlm_uint32_to_big_endian(ChannelBindings->dwInitiatorAddrType, be32);
-	MD5_Update(&md5, be32, 4);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
 
-	ntlm_uint32_to_big_endian(ChannelBindings->cbInitiatorLength, be32);
-	MD5_Update(&md5, be32, 4);
-
-	ntlm_uint32_to_big_endian(ChannelBindings->dwAcceptorAddrType, be32);
-	MD5_Update(&md5, be32, 4);
-
-	ntlm_uint32_to_big_endian(ChannelBindings->cbAcceptorLength, be32);
-	MD5_Update(&md5, be32, 4);
-
-	ntlm_uint32_to_big_endian(ChannelBindings->cbApplicationDataLength, be32);
-	MD5_Update(&md5, be32, 4);
-
-	MD5_Update(&md5, (void*) pChannelBindingToken, ChannelBindingTokenLength);
+	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
 
 	MD5_Final(context->ChannelBindingsHash, &md5);
-
-	printf("ChannelBindingsHash:\n");
-	winpr_HexDump(context->ChannelBindingsHash, 16);
-
-	free(CertificateHash);
-
-	printf("\n\n");
-#endif
 }
 
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)

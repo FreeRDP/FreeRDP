@@ -43,14 +43,15 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 
 struct rdp_ntlm
 {
+	BOOL http;
 	CtxtHandle context;
 	ULONG cbMaxToken;
 	ULONG fContextReq;
 	ULONG pfContextAttr;
 	TimeStamp expiration;
 	PSecBuffer pBuffer;
-	SecBuffer inputBuffer;
-	SecBuffer outputBuffer;
+	SecBuffer inputBuffer[2];
+	SecBuffer outputBuffer[2];
 	BOOL haveContext;
 	BOOL haveInputBuffer;
 	LPTSTR ServicePrincipalName;
@@ -62,6 +63,7 @@ struct rdp_ntlm
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecPkgContext_Sizes ContextSizes;
+	SecPkgContext_Bindings* Bindings;
 };
 
 struct rdp_ntlm_http
@@ -72,7 +74,8 @@ struct rdp_ntlm_http
 
 BOOL ntlm_authenticate(rdpNtlm* ntlm);
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user, char* domain, char* password);
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user,
+		char* domain, char* password, SecPkgContext_Bindings* Bindings);
 void ntlm_client_uninit(rdpNtlm* ntlm);
 
 BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname);
