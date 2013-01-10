@@ -92,7 +92,7 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	STREAM* data_out;
-	WCHAR* computerNameW;
+	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
 
 	if (!rdpdr->computerName[0])

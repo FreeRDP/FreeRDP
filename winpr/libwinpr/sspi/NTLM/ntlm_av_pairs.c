@@ -291,9 +291,16 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING DnsDomainName;
 	UNICODE_STRING DnsComputerName;
 
+	NbDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
+
+	NbComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
+
+	DnsDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
+
+	DnsComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
 
 	AvPairsCount = 5;

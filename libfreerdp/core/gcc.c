@@ -655,13 +655,13 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 {
 	UINT32 version;
-	WCHAR* clientName;
+	WCHAR* clientName = NULL;
 	int clientNameLength;
 	BYTE connectionType;
 	UINT16 highColorDepth;
 	UINT16 supportedColorDepths;
 	UINT16 earlyCapabilityFlags;
-	WCHAR* clientDigProductId;
+	WCHAR* clientDigProductId = NULL;
 	int clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
