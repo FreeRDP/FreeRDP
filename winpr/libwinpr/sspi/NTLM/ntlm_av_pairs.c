@@ -279,17 +279,22 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	MD5_Final(context->ChannelBindingsHash, &md5);
 }
 
-BYTE ntlm_MachineID[32] =
-	"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
-	"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF";
-
 void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 {
+	/**
+	 * The Single_Host_Data structure allows a client to send machine-specific information
+	 * within an authentication exchange to services on the same machine. The client can
+	 * produce additional information to be processed in an implementation-specific way when
+	 * the client and server are on the same host. If the server and client platforms are
+	 * different or if they are on different hosts, then the information MUST be ignored.
+	 * Any fields after the MachineID field MUST be ignored on receipt.
+	 */
+
 	context->SingleHostData.Size = 48;
 	context->SingleHostData.Z4 = 0;
 	context->SingleHostData.DataPresent = 1;
-	context->SingleHostData.CustomData = 0x2000;
-	CopyMemory(context->SingleHostData.MachineID, ntlm_MachineID, 32);
+	context->SingleHostData.CustomData = SECURITY_MANDATORY_MEDIUM_RID;
+	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
 }
 
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
@@ -396,6 +401,13 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
+	if (context->SendSingleHostData)
+	{
+		AvPairsCount++; /* MsvAvSingleHost */
+		ntlm_compute_single_host_data(context);
+		AvPairsValueLength += context->SingleHostData.Size;
+	}
+
 	/**
 	 * Extended Protection for Authentication:
 	 * http://blogs.technet.com/b/srd/archive/2009/12/08/extended-protection-for-authentication.aspx
@@ -416,13 +428,6 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		{
 			AvPairsCount++; /* MsvAvTargetName */
 			AvPairsValueLength += context->ServicePrincipalName.Length;
-		}
-
-		if (context->SendSingleHostData)
-		{
-			AvPairsCount++; /* MsvAvSingleHost */
-			ntlm_compute_single_host_data(context);
-			AvPairsValueLength += context->SingleHostData.Size;
 		}
 	}
 
@@ -460,6 +465,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
 	}
 
+	if (context->SendSingleHostData)
+	{
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
+				(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
+	}
+
 	if (!context->SuppressExtendedProtection)
 	{
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvChannelBindings, context->ChannelBindingsHash, 16);
@@ -469,12 +480,6 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 			ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvTargetName,
 					(PBYTE) context->ServicePrincipalName.Buffer,
 					context->ServicePrincipalName.Length);
-		}
-
-		if (context->SendSingleHostData)
-		{
-			ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
-					(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
 		}
 	}
 

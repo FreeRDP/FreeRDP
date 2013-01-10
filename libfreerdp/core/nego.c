@@ -85,7 +85,7 @@ BOOL nego_connect(rdpNego* nego)
 			nego->state = NEGO_STATE_FAIL;
 		}
 
-		if (!nego->NegotiateSecurityLayer_enabled)
+		if (!nego->NegotiateSecurityLayer)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
@@ -222,7 +222,7 @@ BOOL nego_transport_connect(rdpNego* nego)
 {
 	nego_tcp_connect(nego);
 
-	if (nego->tcp_connected && !nego->NegotiateSecurityLayer_enabled)
+	if (nego->tcp_connected && !nego->NegotiateSecurityLayer)
 		return nego_security_connect(nego);
 
 	return nego->tcp_connected;
@@ -938,10 +938,10 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
  * @param enable_rdp whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled)
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 {
-	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer_enabled ? "TRUE" : "FALSE");
-	nego->NegotiateSecurityLayer_enabled = NegotiateSecurityLayer_enabled;
+	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer ? "TRUE" : "FALSE");
+	nego->NegotiateSecurityLayer = NegotiateSecurityLayer;
 }
 
 /**
