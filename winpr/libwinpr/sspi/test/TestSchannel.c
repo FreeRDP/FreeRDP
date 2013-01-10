@@ -139,9 +139,6 @@ static void* schannel_test_server_thread(void* arg)
 		}
 		extraData = FALSE;
 
-		printf("Server Received %d bytes:\n", NumberOfBytesRead);
-		winpr_HexDump(lpTokenIn, NumberOfBytesRead);
-
 		SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
 		SecBuffer_in[0].pvBuffer = lpTokenIn;
 		SecBuffer_in[0].cbBuffer = NumberOfBytesRead;
@@ -201,6 +198,8 @@ static void* schannel_test_server_thread(void* arg)
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{
 			pSecBuffer = &SecBufferDesc_out.pBuffers[0];
+
+			printf("Server > Client (%d)\n", pSecBuffer->cbBuffer);
 			winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 			g_ClientWait = TRUE;
@@ -443,6 +442,8 @@ int TestSchannel(int argc, char* argv[])
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{
 			pSecBuffer = &SecBufferDesc_out.pBuffers[0];
+
+			printf("Client > Server (%d)\n", pSecBuffer->cbBuffer);
 			winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 			g_ServerWait = TRUE;

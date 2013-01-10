@@ -138,7 +138,8 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	int status;
 	long options = 0;
 
-	context->ctx = SSL_CTX_new(SSLv23_server_method());
+	//context->ctx = SSL_CTX_new(SSLv23_server_method());
+	context->ctx = SSL_CTX_new(TLSv1_server_method());
 
 	if (!context->ctx)
 	{
@@ -185,17 +186,17 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	SSL_CTX_set_options(context->ctx, options);
 
+	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
+	{
+		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
+		return -1;
+	}
+
 	context->ssl = SSL_new(context->ctx);
 
 	if (!context->ssl)
 	{
 		printf("SSL_new failed\n");
-		return -1;
-	}
-
-	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
-	{
-		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
 		return -1;
 	}
 
@@ -266,11 +267,6 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
-		if (status >= 0)
-		{
-			winpr_HexDump(context->ReadBuffer, status);
-		}
-
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
@@ -307,7 +303,6 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (pBuffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		printf("Server input: %d\n", pBuffer->cbBuffer);
 		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 
 		status = SSL_accept(context->ssl);
@@ -319,11 +314,6 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		}
 
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
-
-		if (status >= 0)
-		{
-			winpr_HexDump(context->ReadBuffer, status);
-		}
 
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;

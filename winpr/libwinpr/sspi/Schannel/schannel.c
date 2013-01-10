@@ -228,13 +228,11 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(PCredHandle phCred
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
 
 		schannel_openssl_client_init(context->openssl);
-
-		status = schannel_openssl_client_process_tokens(context->openssl, pInput, pOutput);
-
-		return status;
 	}
 
-	return SEC_E_OK;
+	status = schannel_openssl_client_process_tokens(context->openssl, pInput, pOutput);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
