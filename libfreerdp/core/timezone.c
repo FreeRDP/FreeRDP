@@ -119,8 +119,8 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	UINT32 bias;
 	INT32 sbias;
 	UINT32 bias2c;
-	WCHAR* standardName;
-	WCHAR* daylightName;
+	WCHAR* standardName = NULL;
+	WCHAR* daylightName = NULL;
 	int standardNameLength;
 	int daylightNameLength;
 	TIME_ZONE_INFO* clientTimeZone;
