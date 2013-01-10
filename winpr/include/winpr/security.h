@@ -35,11 +35,15 @@ typedef struct _LSA_UNICODE_STRING
  * http://msdn.microsoft.com/en-us/library/bb625963.aspx
  */
 
+#ifndef _WIN32
+
 #define SECURITY_MANDATORY_UNTRUSTED_RID	0x0000
 #define SECURITY_MANDATORY_LOW_RID		0x1000
 #define SECURITY_MANDATORY_MEDIUM_RID		0x2000
 #define SECURITY_MANDATORY_HIGH_RID		0x3000
 #define SECURITY_MANDATORY_SYSTEM_RID		0x4000
+
+#endif
 
 #endif /* WINPR_SECURITY_H */
 
