@@ -79,6 +79,9 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
 		Message.pBuffers[3].cbBuffer, Message.pBuffers[3].BufferType);
 
+	if (status != SEC_E_OK)
+		return -1;
+
 	printf("Client > Server (%d)\n", ioBufferLength);
 	winpr_HexDump(ioBuffer, ioBufferLength);
 
@@ -91,7 +94,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	return 0;
 }
 
-int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
+int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext)
 {
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
@@ -144,6 +147,9 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 		Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
 		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
 		Message.pBuffers[3].cbBuffer, Message.pBuffers[3].BufferType);
+
+	if (status != SEC_E_OK)
+		return -1;
 
 	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
 	winpr_HexDump((BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
@@ -354,7 +360,8 @@ static void* schannel_test_server_thread(void* arg)
 
 	do
 	{
-		schannel_recv(table, g_ServerReadPipe, &context, test_DummyMessage, sizeof(test_DummyMessage));
+		if (schannel_recv(table, g_ServerReadPipe, &context) < 0)
+			break;
 	}
 	while(1);
 
@@ -599,7 +606,26 @@ int TestSchannel(int argc, char* argv[])
 
 	do
 	{
-		schannel_send(table, g_ServerWritePipe, &context, test_DummyMessage, sizeof(test_DummyMessage));
+		if (schannel_send(table, g_ServerWritePipe, &context, test_DummyMessage, sizeof(test_DummyMessage)) < 0)
+			break;
+
+		for (index = 0; index < sizeof(test_DummyMessage); index++)
+		{
+			BYTE b, ln, hn;
+
+			b = test_DummyMessage[index];
+
+			ln = (b & 0x0F);
+			hn = ((b & 0xF0) >> 4);
+
+			ln = (ln + 1) % 0xF;
+			hn = (ln + 1) % 0xF;
+
+			b = (ln | (hn << 4));
+
+			test_DummyMessage[index] = b;
+		}
+
 		Sleep(1000 * 10);
 	}
 	while(1);

@@ -265,6 +265,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 	SCHANNEL_CONTEXT* context;
 	SCHANNEL_CREDENTIALS* credentials;
 
+	status = SEC_E_OK;
 	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -282,13 +283,11 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) SCHANNEL_PACKAGE_NAME);
 
 		schannel_openssl_server_init(context->openssl);
-
-		status = schannel_openssl_server_process_tokens(context->openssl, pInput, pOutput);
-
-		return status;
 	}
 
-	return SEC_E_OK;
+	status = schannel_openssl_server_process_tokens(context->openssl, pInput, pOutput);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
@@ -340,12 +339,12 @@ SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext, PSecBu
 
 SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA =

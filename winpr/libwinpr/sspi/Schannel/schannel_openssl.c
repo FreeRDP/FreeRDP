@@ -275,13 +275,21 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 		if (pBuffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (pBuffer->cbBuffer < status)
-			return SEC_E_INSUFFICIENT_MEMORY;
+		if (status > 0)
+		{
+			if (pBuffer->cbBuffer < status)
+				return SEC_E_INSUFFICIENT_MEMORY;
 
-		CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
-		pBuffer->cbBuffer = status;
+			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
+			pBuffer->cbBuffer = status;
 
-		return SEC_I_CONTINUE_NEEDED;
+			return SEC_I_CONTINUE_NEEDED;
+		}
+		else
+		{
+			pBuffer->cbBuffer = 0;
+			return SEC_E_OK;
+		}
 	}
 
 	return SEC_E_OK;
@@ -323,13 +331,21 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (pBuffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		if (pBuffer->cbBuffer < status)
-			return SEC_E_INSUFFICIENT_MEMORY;
+		if (status > 0)
+		{
+			if (pBuffer->cbBuffer < status)
+				return SEC_E_INSUFFICIENT_MEMORY;
 
-		CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
-		pBuffer->cbBuffer = status;
+			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
+			pBuffer->cbBuffer = status;
 
-		return SEC_I_CONTINUE_NEEDED;
+			return SEC_I_CONTINUE_NEEDED;
+		}
+		else
+		{
+			pBuffer->cbBuffer = 0;
+			return SEC_E_OK;
+		}
 	}
 
 	return SEC_E_OK;
