@@ -164,9 +164,9 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
 void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
 {
 	int clientAddressFamily;
-	WCHAR* clientAddress;
+	WCHAR* clientAddress = NULL;
 	int cbClientAddress;
-	WCHAR* clientDir;
+	WCHAR* clientDir = NULL;
 	int cbClientDir;
 	int cbAutoReconnectLen;
 
