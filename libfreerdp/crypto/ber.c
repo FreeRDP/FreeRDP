@@ -23,25 +23,33 @@
 
 #include <freerdp/crypto/ber.h>
 
-void ber_read_length(STREAM* s, int* length)
+BOOL ber_read_length(STREAM* s, int* length)
 {
 	BYTE byte;
 
+	if(stream_get_left(s) < 1)
+		return FALSE;
 	stream_read_BYTE(s, byte);
 
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
 
+		if(stream_get_left(s) < byte)
+			return FALSE;
+
 		if (byte == 1)
 			stream_read_BYTE(s, *length);
 		if (byte == 2)
 			stream_read_UINT16_be(s, *length);
+		else
+			return FALSE;
 	}
 	else
 	{
 		*length = byte;
 	}
+	return TRUE;
 }
 
 /**
@@ -92,6 +100,8 @@ BOOL ber_read_universal_tag(STREAM* s, BYTE tag, BOOL pc)
 {
 	BYTE byte;
 
+	if(stream_get_left(s) < 1)
+		return FALSE;
 	stream_read_BYTE(s, byte);
 
 	if (byte != (BER_CLASS_UNIV | BER_PC(pc) | (BER_TAG_MASK & tag)))
@@ -125,26 +135,32 @@ BOOL ber_read_application_tag(STREAM* s, BYTE tag, int* length)
 
 	if (tag > 30)
 	{
+		if(stream_get_left(s) < 1)
+			return FALSE;
 		stream_read_BYTE(s, byte);
 
 		if (byte != ((BER_CLASS_APPL | BER_CONSTRUCT) | BER_TAG_MASK))
 			return FALSE;
 
+		if(stream_get_left(s) < 1)
+			return FALSE;
 		stream_read_BYTE(s, byte);
 
 		if (byte != tag)
 			return FALSE;
 
-		ber_read_length(s, length);
+		return ber_read_length(s, length);
 	}
 	else
 	{
+		if(stream_get_left(s) < 1)
+			return FALSE;
 		stream_read_BYTE(s, byte);
 
 		if (byte != ((BER_CLASS_APPL | BER_CONSTRUCT) | (BER_TAG_MASK & tag)))
 			return FALSE;
 
-		ber_read_length(s, length);
+		return ber_read_length(s, length);
 	}
 
 	return TRUE;
@@ -176,6 +192,8 @@ BOOL ber_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc)
 {
 	BYTE byte;
 
+	if(stream_get_left(s) < 1)
+		return FALSE;
 	stream_read_BYTE(s, byte);
 
 	if (byte != ((BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag)))
@@ -184,9 +202,7 @@ BOOL ber_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc)
 		return FALSE;
 	}
 
-	ber_read_length(s, length);
-
-	return TRUE;
+	return ber_read_length(s, length);
 }
 
 int ber_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc)
@@ -204,14 +220,14 @@ BOOL ber_read_sequence_tag(STREAM* s, int* length)
 {
 	BYTE byte;
 
+	if(stream_get_left(s) < 1)
+		return FALSE;
 	stream_read_BYTE(s, byte);
 
 	if (byte != ((BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_SEQUENCE_OF)))
 		return FALSE;
 
-	ber_read_length(s, length);
-
-	return TRUE;
+	return ber_read_length(s, length);
 }
 
 /**
@@ -240,13 +256,14 @@ BOOL ber_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count)
 {
 	int length;
 
-	ber_read_universal_tag(s, BER_TAG_ENUMERATED, FALSE);
-	ber_read_length(s, &length);
-
-	if (length == 1)
-		stream_read_BYTE(s, *enumerated);
-	else
+	if(!ber_read_universal_tag(s, BER_TAG_ENUMERATED, FALSE) ||
+		!ber_read_length(s, &length))
 		return FALSE;
+
+	if (length != 1 || stream_get_left(s) < 1)
+		return FALSE;
+
+	stream_read_BYTE(s, *enumerated);
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
@@ -264,10 +281,13 @@ void ber_write_enumerated(STREAM* s, BYTE enumerated, BYTE count)
 
 BOOL ber_read_bit_string(STREAM* s, int* length, BYTE* padding)
 {
-	ber_read_universal_tag(s, BER_TAG_BIT_STRING, FALSE);
-	ber_read_length(s, length);
-	stream_read_BYTE(s, *padding);
+	if(!ber_read_universal_tag(s, BER_TAG_BIT_STRING, FALSE) ||
+		!ber_read_length(s, length))
+		return FALSE;
 
+	if(stream_get_left(s) < 1)
+		return FALSE;
+	stream_read_BYTE(s, *padding);
 	return TRUE;
 }
 
@@ -287,9 +307,9 @@ void ber_write_octet_string(STREAM* s, const BYTE* oct_str, int length)
 
 BOOL ber_read_octet_string_tag(STREAM* s, int* length)
 {
-	ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
-	ber_read_length(s, length);
-	return TRUE;
+	return
+		ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) &&
+		ber_read_length(s, length);
 }
 
 int ber_write_octet_string_tag(STREAM* s, int length)
@@ -315,11 +335,13 @@ BOOL ber_read_BOOL(STREAM* s, BOOL* value)
 	int length;
 	BYTE v;
 
-	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE))
+	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE) ||
+		!ber_read_length(s, &length))
 		return FALSE;
-	ber_read_length(s, &length);
-	if (length != 1)
+
+	if (length != 1 || stream_get_left(s) < 1)
 		return FALSE;
+
 	stream_read_BYTE(s, v);
 	*value = (v ? TRUE : FALSE);
 	return TRUE;
@@ -342,11 +364,16 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
-	ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE);
-	ber_read_length(s, &length);
+	if(!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
+		!ber_read_length(s, &length) ||
+		stream_get_left(s) < length)
+		return FALSE;
 
 	if (value == NULL)
 	{
+		// even if we don't care the integer value, check the announced size
+		if(length < 1 || length > 4)
+			return FALSE;
 		stream_seek(s, length);
 		return TRUE;
 	}
@@ -429,7 +456,7 @@ int ber_skip_integer(UINT32 value)
 
 BOOL ber_read_integer_length(STREAM* s, int* length)
 {
-	ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE);
-	ber_read_length(s, length);
-	return TRUE;
+	return
+		ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) &&
+		ber_read_length(s, length);
 }

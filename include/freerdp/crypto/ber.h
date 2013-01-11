@@ -51,7 +51,7 @@
 
 #define BER_PC(_pc)	(_pc ? BER_CONSTRUCT : BER_PRIMITIVE)
 
-FREERDP_API void ber_read_length(STREAM* s, int* length);
+FREERDP_API BOOL ber_read_length(STREAM* s, int* length);
 FREERDP_API int ber_write_length(STREAM* s, int length);
 FREERDP_API int _ber_skip_length(int length);
 FREERDP_API int ber_get_content_length(int length);
