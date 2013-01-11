@@ -314,7 +314,8 @@ BOOL gcc_read_client_data_blocks(STREAM* s, rdpSettings* settings, int length)
 	while (length > 0)
 	{
 		pos = stream_get_pos(s);
-		gcc_read_user_data_header(s, &type, &blockLength);
+		if(!gcc_read_user_data_header(s, &type, &blockLength))
+			return FALSE;
 
 		switch (type)
 		{
@@ -452,11 +453,11 @@ void gcc_write_server_data_blocks(STREAM* s, rdpSettings* settings)
 
 BOOL gcc_read_user_data_header(STREAM* s, UINT16* type, UINT16* length)
 {
+	if (stream_get_left(s) < 4)
+		return FALSE;
+
 	stream_read_UINT16(s, *type); /* type */
 	stream_read_UINT16(s, *length); /* length */
-
-	if (*length < 4)
-		return FALSE;
 
 	if (stream_get_left(s) < *length - 4)
 		return FALSE;
@@ -749,6 +750,8 @@ BOOL gcc_read_server_core_data(STREAM* s, rdpSettings* settings)
 	UINT32 version;
 	UINT32 clientRequestedProtocols;
 
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, version); /* version */
 	stream_read_UINT32(s, clientRequestedProtocols); /* clientRequestedProtocols */
 
@@ -822,6 +825,8 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 	BYTE* data;
 	UINT32 length;
 
+	if (stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	stream_read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
@@ -834,8 +839,13 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 		return TRUE;
 	}
 
+	if (stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, settings->ServerRandomLength); /* serverRandomLen */
 	stream_read_UINT32(s, settings->ServerCertificateLength); /* serverCertLen */
+
+	if (stream_get_left(s) < settings->ServerRandomLength + settings->ServerCertificateLength)
+		return FALSE;
 
 	if (settings->ServerRandomLength > 0)
 	{
@@ -1106,6 +1116,8 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 	UINT16 channelCount;
 	UINT16 channelId;
 
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT16(s, MCSChannelId); /* MCSChannelId */
 	stream_read_UINT16(s, channelCount); /* channelCount */
 
@@ -1115,6 +1127,9 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 				settings->ChannelCount, channelCount);
 	}
 
+	if(stream_get_left(s) < channelCount * 2)
+		return FALSE;
+
 	for (i = 0; i < channelCount; i++)
 	{
 		stream_read_UINT16(s, channelId); /* channelId */
@@ -1122,7 +1137,7 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 	}
 
 	if (channelCount % 2 == 1)
-		stream_seek(s, 2); /* padding */
+		return stream_skip(s, 2); /* padding */
 
 	return TRUE;
 }
@@ -1156,13 +1171,17 @@ BOOL gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, UINT16 block
 {
 	UINT32 flags;
 
-	if (blockLength < 8)
+	if (blockLength < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, flags); /* flags */
 
 	if ((flags & REDIRECTED_SESSIONID_FIELD_VALID))
+	{
+		if(blockLength < 8)
+			return FALSE;
 		stream_read_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
+	}
 
 	return TRUE;
 }

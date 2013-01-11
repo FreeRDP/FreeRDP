@@ -172,5 +172,11 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	_src->p += _n; \
 	} while (0)
 
+static INLINE BOOL stream_skip(STREAM* s, int sz) {
+	if (stream_get_left(s) < sz)
+		return FALSE;
+	stream_seek(s, sz);
+	return TRUE;
+}
 #endif /* FREERDP_UTILS_STREAM_H */
 
