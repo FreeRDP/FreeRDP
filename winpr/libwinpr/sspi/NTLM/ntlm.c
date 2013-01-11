@@ -341,9 +341,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
@@ -359,9 +359,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 			if (pOutput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer = &pOutput->pBuffers[0];
+			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-			if (output_buffer->BufferType != SECBUFFER_TOKEN)
+			if (!output_buffer->BufferType)
 				return SEC_E_INVALID_TOKEN;
 
 			if (output_buffer->cbBuffer < 1)
@@ -380,9 +380,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
@@ -454,9 +454,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		output_buffer = &pOutput->pBuffers[0];
+		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-		if (output_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!output_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (output_buffer->cbBuffer < 1)
@@ -475,19 +475,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		if (pInput->cBuffers > 1)
-		{
-			if (pInput->pBuffers[1].BufferType == SECBUFFER_CHANNEL_BINDINGS)
-				channel_bindings = &pInput->pBuffers[1];
-		}
+		channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
 
 		if (channel_bindings)
 		{
@@ -505,9 +501,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 			if (pOutput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer = &pOutput->pBuffers[0];
+			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-			if (output_buffer->BufferType != SECBUFFER_TOKEN)
+			if (!output_buffer)
 				return SEC_E_INVALID_TOKEN;
 
 			if (output_buffer->cbBuffer < 1)

@@ -339,7 +339,17 @@ SECURITY_STATUS SEC_ENTRY schannel_VerifySignature(PCtxtHandle phContext, PSecBu
 
 SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SECURITY_STATUS status;
+	SCHANNEL_CONTEXT* context;
+
+	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	status = schannel_openssl_encrypt_message(context->openssl, pMessage);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)

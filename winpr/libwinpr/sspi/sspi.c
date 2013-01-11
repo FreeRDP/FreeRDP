@@ -371,6 +371,23 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	}
 }
 
+PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
+{
+	int index;
+	PSecBuffer pSecBuffer = NULL;
+
+	for (index = 0; index < pMessage->cBuffers; index++)
+	{
+		if (pMessage->pBuffers[index].BufferType == BufferType)
+		{
+			pSecBuffer = &pMessage->pBuffers[index];
+			break;
+		}
+	}
+
+	return pSecBuffer;
+}
+
 static BOOL sspi_initialized = FALSE;
 
 void sspi_GlobalInit()
