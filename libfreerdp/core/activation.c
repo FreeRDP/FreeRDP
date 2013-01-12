@@ -61,9 +61,7 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 	s = rdp_data_pdu_init(rdp);
 
 	rdp_write_synchronize_pdu(s, rdp->settings);
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
-
-	return TRUE;
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
 }
 
 BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, STREAM* s)
@@ -120,7 +118,8 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, STREAM* s)
 {
 	UINT16 action;
 
-	rdp_recv_control_pdu(s, &action);
+	if(rdp_recv_control_pdu(s, &action) == FALSE)
+		return FALSE;
 
 	switch (action)
 	{
@@ -253,6 +252,8 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, STREAM* s)
 {
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
 
 	stream_seek_UINT16(s); /* numberEntries (2 bytes) */
