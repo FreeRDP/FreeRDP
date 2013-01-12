@@ -157,7 +157,7 @@ struct rdp_rdp
 	BOOL disconnect;
 };
 
-void rdp_read_security_header(STREAM* s, UINT16* flags);
+BOOL rdp_read_security_header(STREAM* s, UINT16* flags);
 void rdp_write_security_header(STREAM* s, UINT16 flags);
 
 BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT16* channel_id);

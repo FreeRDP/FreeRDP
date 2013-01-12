@@ -490,7 +490,8 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	if (length == 0)
 		return -1;
 
-	li = tpdu_read_connection_confirm(s);
+	if(!tpdu_read_connection_confirm(s, &li))
+		return -1;
 
 	if (li > 6)
 	{
@@ -562,7 +563,8 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 	BYTE type;
 
 	tpkt_read_header(s);
-	li = tpdu_read_connection_request(s);
+	if(!tpdu_read_connection_request(s, &li))
+		return FALSE;
 
 	if (li != stream_get_left(s) + 6)
 	{
@@ -722,6 +724,13 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 	UINT16 length;
 
 	DEBUG_NEGO("RDP_NEG_RSP");
+
+	if (stream_get_left(s) < 7)
+	{
+		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
 	stream_read_BYTE(s, nego->flags);
 	stream_read_UINT16(s, length);

@@ -657,8 +657,8 @@ BOOL update_read_multi_patblt_order(STREAM* s, ORDER_INFO* orderInfo, MULTI_PATB
 	ORDER_FIELD_COORD(3, multi_patblt->nWidth);
 	ORDER_FIELD_COORD(4, multi_patblt->nHeight);
 	ORDER_FIELD_BYTE(5, multi_patblt->bRop);
-	ORDER_FIELD_BYTE(6, multi_patblt->backColor);
-	ORDER_FIELD_BYTE(7, multi_patblt->foreColor);
+	ORDER_FIELD_COLOR(6, multi_patblt->backColor);
+	ORDER_FIELD_COLOR(7, multi_patblt->foreColor);
 
 	if(!update_read_brush(s, &multi_patblt->brush, orderInfo->fieldFlags >> 7))
 		return FALSE;
@@ -952,7 +952,7 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
 		phold = s->p;
 
-		if (!stream_skip(1))
+		if (!stream_skip(s, 1))
 			return FALSE;
 		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
 		{
@@ -1218,7 +1218,7 @@ BOOL update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 	if(stream_get_left(s) < 3)
 		return FALSE;
 	stream_read_BYTE(s, cache_color_table_order->cacheIndex); /* cacheIndex (1 byte) */
-	stream_read_BYTE(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
+	stream_read_UINT16(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
 
 	if(stream_get_left(s) < cache_color_table_order->numberColors * 4)
 		return FALSE;
