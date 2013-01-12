@@ -2067,7 +2067,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s)
 	stream_read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 	stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
-	if (!stream_skip(lengthSourceDescriptor) || stream_get_left(s) < 4)
+	if (!stream_skip(s, lengthSourceDescriptor) || stream_get_left(s) < 4)
 		return FALSE;
 	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
 	stream_read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
