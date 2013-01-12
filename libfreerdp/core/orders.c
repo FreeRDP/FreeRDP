@@ -952,7 +952,7 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
 		phold = s->p;
 
-		if (!stream_skip(1))
+		if (!stream_skip(s, 1))
 			return FALSE;
 		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
 		{
