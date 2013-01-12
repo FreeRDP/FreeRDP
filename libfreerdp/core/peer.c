@@ -190,7 +190,8 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		freerdp_channel_peer_process(client, s, channelId);
+		if(!freerdp_channel_peer_process(client, s, channelId))
+			return -1;
 	}
 	else
 	{
@@ -233,7 +234,8 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
+		if(!rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0))
+			return -1;
 	}
 
 	return fastpath_recv_inputs(fastpath, s);

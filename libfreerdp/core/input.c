@@ -300,7 +300,7 @@ static BOOL input_recv_event(rdpInput* input, STREAM* s)
 {
 	UINT16 messageType;
 
-	if (stream_get_left(s) < 4)
+	if (stream_get_left(s) < 6)
 		return FALSE;
 
 	stream_seek(s, 4); /* eventTime (4 bytes), ignored by the server */
