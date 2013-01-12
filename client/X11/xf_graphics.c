@@ -135,10 +135,10 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	switch (codec_id)
 	{
-		case CODEC_ID_NSCODEC:
+		case RDP_CODEC_ID_NSCODEC:
 			printf("xf_Bitmap_Decompress: nsc not done\n");
 			break;
-		case CODEC_ID_REMOTEFX:
+		case RDP_CODEC_ID_REMOTEFX:
 			xfi = ((xfContext*)context)->xfi;
 			rfx_context_set_pixel_format(xfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(xfi->rfx_context, data, length);
@@ -163,7 +163,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 				rfx_message_free(xfi->rfx_context, msg);
 			}
 			break;
-		case CODEC_ID_JPEG:
+		case RDP_CODEC_ID_JPEG:
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
 				printf("xf_Bitmap_Decompress: jpeg Decompression Failed\n");

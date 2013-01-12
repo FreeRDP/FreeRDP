@@ -307,7 +307,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (pBuffer->BufferType != SECBUFFER_TOKEN)
 			return SEC_E_INVALID_TOKEN;
 
-		printf("Server input: %d\n", pBuffer->cbBuffer);
+		printf("Server input: %ld\n", pBuffer->cbBuffer);
 		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 
 		status = SSL_accept(context->ssl);

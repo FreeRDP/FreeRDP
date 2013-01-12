@@ -162,31 +162,36 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 {
 	UINT16 updateType;
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = update->context;
 
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	switch (updateType)
 	{
 		case UPDATE_TYPE_BITMAP:
-			update_read_bitmap(update, s, &update->bitmap_update);
+			if(!update_read_bitmap(update, s, &update->bitmap_update))
+				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			update_read_palette(update, s, &update->palette_update);
+			if(!update_read_palette(update, s, &update->palette_update))
+				return FALSE;
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 	}
+	return TRUE;
 }
 
-static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 {
-	stream_seek_UINT16(s); /* size (2 bytes), must be set to zero */
+	return stream_skip(s, 2); /* size (2 bytes), MUST be set to zero */
 }
 
 static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
@@ -209,16 +214,17 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			fastpath_recv_update_common(fastpath, s);
-			break;
+			return fastpath_recv_update_common(fastpath, s);
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
-			fastpath_recv_update_synchronize(fastpath, s);
+			if (!fastpath_recv_update_synchronize(fastpath, s))
+				return FALSE;
 			IFCALL(update->Synchronize, context);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			update_recv_surfcmds(update, size, s);
+			if (!update_recv_surfcmds(update, size, s))
+				return FALSE;
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
@@ -232,17 +238,20 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			update_read_pointer_position(s, &pointer->pointer_position);
+			if (!update_read_pointer_position(s, &pointer->pointer_position))
+				return FALSE;
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			update_read_pointer_color(s, &pointer->pointer_color);
+			if (!update_read_pointer_color(s, &pointer->pointer_color))
+				return FALSE;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			update_read_pointer_cached(s, &pointer->pointer_cached);
+			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
+				return FALSE;
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 

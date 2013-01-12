@@ -129,7 +129,7 @@
  * @param cert X.509 certificate
  */
 
-void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
+BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
 	STREAM* s;
 	int length;
@@ -141,73 +141,104 @@ void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	s = stream_new(0);
 	stream_attach(s, cert->data, cert->length);
 
-	ber_read_sequence_tag(s, &length); /* Certificate (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
+		goto error1;
 
-	ber_read_sequence_tag(s, &length); /* TBSCertificate (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
+		goto error1;
 
 	/* Explicit Contextual Tag [0] */
-	ber_read_contextual_tag(s, 0, &length, TRUE);
-	ber_read_integer(s, &version); /* version (INTEGER) */
+	if(!ber_read_contextual_tag(s, 0, &length, TRUE))
+		goto error1;
+	if(!ber_read_integer(s, &version)) /* version (INTEGER) */
+		goto error1;
 	version++;
 
 	/* serialNumber */
-	ber_read_integer(s, NULL); /* CertificateSerialNumber (INTEGER) */
+	if(!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
+		goto error1;
 
 	/* signature */
-	ber_read_sequence_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* AlgorithmIdentifier (SEQUENCE) */
+		goto error1;
 	stream_seek(s, length);
 
 	/* issuer */
-	ber_read_sequence_tag(s, &length); /* Name (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Name (SEQUENCE) */
+		goto error1;
 	stream_seek(s, length);
 
 	/* validity */
-	ber_read_sequence_tag(s, &length); /* Validity (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Validity (SEQUENCE) */
+		goto error1;
 	stream_seek(s, length);
 
 	/* subject */
-	ber_read_sequence_tag(s, &length); /* Name (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Name (SEQUENCE) */
+		goto error1;
 	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo */
-	ber_read_sequence_tag(s, &length); /* SubjectPublicKeyInfo (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
+		goto error1;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	ber_read_sequence_tag(s, &length); /* AlgorithmIdentifier (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* AlgorithmIdentifier (SEQUENCE) */
+		goto error1;
 	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
-	ber_read_bit_string(s, &length, &padding); /* BIT_STRING */
+	if(!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
+		goto error1;
 
 	/* RSAPublicKey (SEQUENCE) */
-	ber_read_sequence_tag(s, &length); /* SEQUENCE */
+	if(!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
+		goto error1;
 
-	ber_read_integer_length(s, &modulus_length); /* modulus (INTEGER) */
+	if(!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
+		goto error1;
 
 	/* skip zero padding, if any */
 	do
 	{
+		if(stream_get_left(s) < padding)
+			goto error1;
 		stream_peek_BYTE(s, padding);
 
 		if (padding == 0)
 		{
+			if(stream_get_left(s) < 1)
+				goto error1;
 			stream_seek(s, 1);
 			modulus_length--;
 		}
 	}
 	while (padding == 0);
 
+	if(stream_get_left(s) < modulus_length)
+		goto error1;
 	info->ModulusLength = modulus_length;
 	info->Modulus = (BYTE*) malloc(info->ModulusLength);
 	stream_read(s, info->Modulus, info->ModulusLength);
 
-	ber_read_integer_length(s, &exponent_length); /* publicExponent (INTEGER) */
+	if(!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
+		goto error2;
+	if(stream_get_left(s) < exponent_length)
+		goto error2;
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
 	crypto_reverse(info->Modulus, info->ModulusLength);
 	crypto_reverse(info->exponent, 4);
 
 	stream_detach(s);
 	stream_free(s);
+	return TRUE;
+
+error2:
+	free(info->Modulus);
+error1:
+	stream_detach(s);
+	stream_free(s);
+	return FALSE;
 }
 
 /**
@@ -259,6 +290,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	UINT32 datalen;
 	UINT32 modlen;
 
+	if(stream_get_left(s) < 20)
+		return FALSE;
 	stream_read(s, magic, 4);
 
 	if (memcmp(magic, "RSA1", 4) != 0)
@@ -273,6 +306,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 
+	if(stream_get_left(s) < modlen + 8)
+		return FALSE;
 	certificate->cert_info.ModulusLength = modlen;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
 	stream_read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
@@ -354,6 +389,9 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	BYTE* sigdata;
 	int sigdatalen;
 
+	if(stream_get_left(s) < 12)
+		return FALSE;
+
 	/* -4, because we need to include dwVersion */
 	sigdata = stream_get_tail(s) - 4;
 	stream_read_UINT32(s, dwSigAlgId);
@@ -374,12 +412,17 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	stream_read_UINT16(s, wPublicKeyBlobLen);
+	if(stream_get_left(s) < wPublicKeyBlobLen)
+		return FALSE;
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
 		printf("certificate_read_server_proprietary_certificate: parse error 3\n");
 		return FALSE;
 	}
+
+	if(stream_get_left(s) < 4)
+		return FALSE;
 
 	sigdatalen = stream_get_tail(s) - sigdata;
 	stream_read_UINT16(s, wSignatureBlobType);
@@ -391,6 +434,8 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	stream_read_UINT16(s, wSignatureBlobLen);
+	if(stream_get_left(s) < wSignatureBlobLen)
+		return FALSE;
 
 	if (wSignatureBlobLen != 72)
 	{
@@ -421,13 +466,19 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT32(s, numCertBlobs); /* numCertBlobs */
 
 	certificate->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
 
 	for (i = 0; i < (int) numCertBlobs; i++)
 	{
+		if(stream_get_left(s) < 4)
+			return FALSE;
 		stream_read_UINT32(s, certLength);
+		if(stream_get_left(s) < certLength)
+			return FALSE;
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
 
@@ -465,12 +516,16 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 {
 	STREAM* s;
 	UINT32 dwVersion;
+	BOOL ret = TRUE;
 
 	if (length < 1)
 	{
 		DEBUG_CERTIFICATE("null server certificate\n");
 		return FALSE;
 	}
+
+	if (length < 4)
+		return FALSE;
 
 	s = stream_new(0);
 	stream_attach(s, server_cert, length);
@@ -480,11 +535,11 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
 	{
 		case CERT_CHAIN_VERSION_1:
-			certificate_read_server_proprietary_certificate(certificate, s);
+			ret = certificate_read_server_proprietary_certificate(certificate, s);
 			break;
 
 		case CERT_CHAIN_VERSION_2:
-			certificate_read_server_x509_certificate_chain(certificate, s);
+			ret = certificate_read_server_x509_certificate_chain(certificate, s);
 			break;
 
 		default:
@@ -493,7 +548,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	}
 
 	free(s);
-	return TRUE;
+	return ret;
 }
 
 rdpRsaKey* key_new(const char* keyfile)
