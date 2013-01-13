@@ -159,33 +159,28 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 		goto error1;
 
 	/* signature */
-	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* AlgorithmIdentifier (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
-	stream_seek(s, length);
 
 	/* issuer */
-	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Name (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
 		goto error1;
-	stream_seek(s, length);
 
 	/* validity */
-	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Validity (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Validity (SEQUENCE) */
 		goto error1;
-	stream_seek(s, length);
 
 	/* subject */
-	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* Name (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
 		goto error1;
-	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo */
 	if(!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
 		goto error1;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	if(!ber_read_sequence_tag(s, &length) || stream_get_left(s) < length) /* AlgorithmIdentifier (SEQUENCE) */
+	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
-	stream_seek(s, length);
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
 	if(!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
@@ -235,6 +230,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 error2:
 	free(info->Modulus);
+	info->Modulus = 0;
 error1:
 	stream_detach(s);
 	stream_free(s);
@@ -306,7 +302,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 
-	if(stream_get_left(s) < modlen + 8)
+	if(stream_get_left(s) < modlen + 8)	// count padding
 		return FALSE;
 	certificate->cert_info.ModulusLength = modlen;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
@@ -317,7 +313,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 	return TRUE;
 }
 
-static BOOL certificate_process_server_public_signature(rdpCertificate* certificate, BYTE* sigdata, int sigdatalen, STREAM* s, UINT32 siglen)
+static BOOL certificate_process_server_public_signature(rdpCertificate* certificate,
+		const BYTE* sigdata, int sigdatalen, STREAM* s, UINT32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
@@ -463,6 +460,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 	int i;
 	UINT32 certLength;
 	UINT32 numCertBlobs;
+	BOOL ret;
 
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
@@ -490,14 +488,17 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		{
 			rdpCertInfo cert_info;
 			DEBUG_CERTIFICATE("License Server Certificate");
-			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
+			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
 			free(cert_info.Modulus);
+			if(!ret)
+				return FALSE;
 		}
 		else if (numCertBlobs - i == 1)
 		{
 			DEBUG_CERTIFICATE("Terminal Server Certificate");
-			certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->cert_info);
+			if (!certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->cert_info))
+				return FALSE;
 			DEBUG_CERTIFICATE("modulus length:%d", (int) certificate->cert_info.ModulusLength);
 		}
 	}

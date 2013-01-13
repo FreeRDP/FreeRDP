@@ -213,12 +213,14 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 	switch (bMsgType)
 	{
 		case LICENSE_REQUEST:
-			license_read_license_request_packet(license, s);
+			if (!license_read_license_request_packet(license, s))
+				return FALSE;
 			license_send_new_license_request_packet(license);
 			break;
 
 		case PLATFORM_CHALLENGE:
-			license_read_platform_challenge_packet(license, s);
+			if (!license_read_platform_challenge_packet(license, s))
+				return FALSE;
 			license_send_platform_challenge_response_packet(license);
 			break;
 
@@ -231,7 +233,8 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 			break;
 
 		case ERROR_ALERT:
-			license_read_error_alert_packet(license, s);
+			if (!license_read_error_alert_packet(license, s))
+				return FALSE;
 			break;
 
 		default:
@@ -644,20 +647,25 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 	stream_read(s, license->server_random, 32);
 
 	/* ProductInfo */
-	license_read_product_info(s, license->product_info);
+	if (!license_read_product_info(s, license->product_info))
+		return FALSE;
 
 	/* KeyExchangeList */
-	license_read_binary_blob(s, license->key_exchange_list);
+	if (!license_read_binary_blob(s, license->key_exchange_list))
+		return FALSE;
 
 	/* ServerCertificate */
-	license_read_binary_blob(s, license->server_certificate);
+	if (!license_read_binary_blob(s, license->server_certificate))
+		return FALSE;
 
 	/* ScopeList */
-	license_read_scope_list(s, license->scope_list);
+	if (!license_read_scope_list(s, license->scope_list))
+		return FALSE;
 
 	/* Parse Server Certificate */
-	certificate_read_server_certificate(license->certificate,
-			license->server_certificate->data, license->server_certificate->length);
+	if (!certificate_read_server_certificate(license->certificate,
+			license->server_certificate->data, license->server_certificate->length))
+		return FALSE;
 
 	license_generate_keys(license);
 	license_generate_hwid(license);
@@ -685,9 +693,8 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	license->encrypted_platform_challenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
-	if(stream_get_left(s) < 16)
+	if(!stream_skip(s, 16))
 		return FALSE;
-	stream_seek(s, 16);
 
 	license_decrypt_platform_challenge(license);
 	return TRUE;

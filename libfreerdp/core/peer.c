@@ -224,7 +224,8 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	length = fastpath_read_header_rdp(fastpath, s);
+	if (!fastpath_read_header_rdp(fastpath, s, &length))
+		return -1;
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{

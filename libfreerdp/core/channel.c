@@ -97,7 +97,7 @@ BOOL freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 	UINT32 flags;
 	int chunk_length;
 
-	if(stream_get_left(s) < 4)
+	if(stream_get_left(s) < 8)
 		return FALSE;
 	stream_read_UINT32(s, length);
 	stream_read_UINT32(s, flags);
