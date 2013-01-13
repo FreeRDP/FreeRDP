@@ -127,10 +127,9 @@ static INLINE void fastpath_write_update_header(STREAM* s, BYTE updateCode, BYTE
 	stream_write_BYTE(s, updateHeader);
 }
 
-UINT16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s, UINT16 *length)
 {
 	BYTE header;
-	UINT16 length;
 
 	stream_read_BYTE(s, header);
 
@@ -140,9 +139,11 @@ UINT16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 		fastpath->numberEvents = (header & 0x3C) >> 2;
 	}
 
-	per_read_length(s, &length);
+	if (!per_read_length(s, length))
+		return FALSE;
 
-	return length - stream_get_length(s);
+	*length = *length - stream_get_length(s);
+	return TRUE;
 }
 
 static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
@@ -214,7 +215,9 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			return fastpath_recv_update_common(fastpath, s);
+			if(!fastpath_recv_update_common(fastpath, s))
+				return FALSE;
+			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
@@ -256,7 +259,8 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			update_read_pointer_new(s, &pointer->pointer_new);
+			if (!update_read_pointer_new(s, &pointer->pointer_new))
+				return FALSE;
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
@@ -293,6 +297,8 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		compressionFlags = 0;
 
 	stream_read_UINT16(s, size);
+	if(stream_get_left(s) < size)
+		return FALSE;
 	next_pos = stream_get_pos(s) + size;
 	comp_stream = s;
 
@@ -326,6 +332,7 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 		stream_check_size(fastpath->updateData, size);
 		stream_copy(fastpath->updateData, comp_stream, size);
+		/* TODO: add a limit on the fragmentation buffer size */
 
 		if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{

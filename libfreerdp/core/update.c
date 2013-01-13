@@ -125,7 +125,7 @@ BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 	/* rectangles */
 	for (i = 0; i < (int) bitmap_update->number; i++)
 	{
-		if(!update_read_bitmap_data(s, &bitmap_update->rectangles[i]))
+		if (!update_read_bitmap_data(s, &bitmap_update->rectangles[i]))
 			return FALSE;
 	}
 	return TRUE;
@@ -250,6 +250,8 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
 {
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
 }
@@ -276,31 +278,31 @@ BOOL update_recv_pointer(rdpUpdate* update, STREAM* s)
 	switch (messageType)
 	{
 		case PTR_MSG_TYPE_POSITION:
-			if(update_read_pointer_position(s, &pointer->pointer_position) == FALSE)
+			if (!update_read_pointer_position(s, &pointer->pointer_position))
 				return FALSE;
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case PTR_MSG_TYPE_SYSTEM:
-			if(update_read_pointer_system(s, &pointer->pointer_system) == FALSE)
+			if (!update_read_pointer_system(s, &pointer->pointer_system))
 				return FALSE;
 			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
 			break;
 
 		case PTR_MSG_TYPE_COLOR:
-			if(update_read_pointer_color(s, &pointer->pointer_color) == FALSE)
+			if (!update_read_pointer_color(s, &pointer->pointer_color))
 				return FALSE;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case PTR_MSG_TYPE_POINTER:
-			if(update_read_pointer_new(s, &pointer->pointer_new) == FALSE)
+			if (!update_read_pointer_new(s, &pointer->pointer_new))
 				return FALSE;
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
 		case PTR_MSG_TYPE_CACHED:
-			if(update_read_pointer_cached(s, &pointer->pointer_cached) == FALSE)
+			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
 				return FALSE;
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
@@ -335,12 +337,13 @@ BOOL update_recv(rdpUpdate* update, STREAM* s)
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			update_read_bitmap(update, s, &update->bitmap_update);
+			if (!update_read_bitmap(update, s, &update->bitmap_update))
+				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			if(update_read_palette(update, s, &update->palette_update) == FALSE)
+			if (!update_read_palette(update, s, &update->palette_update))
 				return FALSE;
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
@@ -612,6 +615,8 @@ BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	stream_read_BYTE(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
 
+	if(stream_get_left(s) < numberOfAreas * 4 * 2)
+		return FALSE;
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
 
 	for (index = 0; index < numberOfAreas; index++)

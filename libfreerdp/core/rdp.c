@@ -832,7 +832,8 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	rdpFastPath* fastpath;
 
 	fastpath = rdp->fastpath;
-	length = fastpath_read_header_rdp(fastpath, s);
+	if (!fastpath_read_header_rdp(fastpath, s, &length))
+		return -1;
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{
