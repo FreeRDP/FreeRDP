@@ -520,7 +520,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wf_invalidate_region(wfi, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
 	{
 		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
 		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);

@@ -10,8 +10,6 @@
 #include <winpr/crypto.h>
 #include <winpr/schannel.h>
 
-HANDLE g_ClientEvent = NULL;
-HANDLE g_ServerEvent = NULL;
 BOOL g_ClientWait = FALSE;
 BOOL g_ServerWait = FALSE;
 
@@ -19,6 +17,145 @@ HANDLE g_ClientReadPipe = NULL;
 HANDLE g_ClientWritePipe = NULL;
 HANDLE g_ServerReadPipe = NULL;
 HANDLE g_ServerWritePipe = NULL;
+
+BYTE test_DummyMessage[64] =
+{
+	0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+	0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB,
+	0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+	0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD
+};
+
+int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
+{
+	BYTE* ioBuffer;
+	UINT32 ioBufferLength;
+	BYTE* pMessageBuffer;
+	SecBuffer Buffers[4];
+	SecBufferDesc Message;
+	SECURITY_STATUS status;
+	DWORD NumberOfBytesWritten;
+	SecPkgContext_StreamSizes StreamSizes;
+
+	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
+	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
+
+	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
+	ioBuffer = (BYTE*) malloc(ioBufferLength);
+	ZeroMemory(ioBuffer, ioBufferLength);
+
+	pMessageBuffer = ioBuffer + StreamSizes.cbHeader;
+	CopyMemory(pMessageBuffer, buffer, length);
+
+	Buffers[0].pvBuffer = ioBuffer;
+	Buffers[0].cbBuffer = StreamSizes.cbHeader;
+	Buffers[0].BufferType = SECBUFFER_STREAM_HEADER;
+
+	Buffers[1].pvBuffer = pMessageBuffer;
+	Buffers[1].cbBuffer = length;
+	Buffers[1].BufferType = SECBUFFER_DATA;
+
+	Buffers[2].pvBuffer = pMessageBuffer + length;
+	Buffers[2].cbBuffer = StreamSizes.cbTrailer;
+	Buffers[2].BufferType = SECBUFFER_STREAM_TRAILER;
+
+	Buffers[3].pvBuffer = NULL;
+	Buffers[3].cbBuffer = 0;
+	Buffers[3].BufferType = SECBUFFER_EMPTY;
+
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.cBuffers = 4;
+	Message.pBuffers = Buffers;
+
+	ioBufferLength = Message.pBuffers[0].cbBuffer + Message.pBuffers[1].cbBuffer + Message.pBuffers[2].cbBuffer;
+
+	status = table->EncryptMessage(phContext, 0, &Message, 0);
+
+	printf("EncryptMessage status: 0x%08X\n", status);
+
+	printf("EncryptMessage output: cBuffers: %d [0]: %d / %d [1]: %d / %d [2]: %d / %d [3]: %d / %d\n", Message.cBuffers,
+		Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
+		Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
+		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
+		Message.pBuffers[3].cbBuffer, Message.pBuffers[3].BufferType);
+
+	if (status != SEC_E_OK)
+		return -1;
+
+	printf("Client > Server (%d)\n", ioBufferLength);
+	winpr_HexDump(ioBuffer, ioBufferLength);
+
+	if (!WriteFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesWritten, NULL))
+	{
+		printf("schannel_send: failed to write to pipe\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext)
+{
+	BYTE* ioBuffer;
+	UINT32 ioBufferLength;
+	BYTE* pMessageBuffer;
+	SecBuffer Buffers[4];
+	SecBufferDesc Message;
+	SECURITY_STATUS status;
+	DWORD NumberOfBytesRead;
+	SecPkgContext_StreamSizes StreamSizes;
+
+	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
+	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
+
+	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
+	ioBuffer = (BYTE*) malloc(ioBufferLength);
+	ZeroMemory(ioBuffer, ioBufferLength);
+
+	if (!ReadFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesRead, NULL))
+	{
+		printf("schannel_recv: failed to read from pipe\n");
+		return -1;
+	}
+
+	Buffers[0].pvBuffer = ioBuffer;
+	Buffers[0].cbBuffer = NumberOfBytesRead;
+	Buffers[0].BufferType = SECBUFFER_DATA;
+
+	Buffers[1].pvBuffer = NULL;
+	Buffers[1].cbBuffer = 0;
+	Buffers[1].BufferType = SECBUFFER_EMPTY;
+
+	Buffers[2].pvBuffer = NULL;
+	Buffers[2].cbBuffer = 0;
+	Buffers[2].BufferType = SECBUFFER_EMPTY;
+
+	Buffers[3].pvBuffer = NULL;
+	Buffers[3].cbBuffer = 0;
+	Buffers[3].BufferType = SECBUFFER_EMPTY;
+
+	Message.ulVersion = SECBUFFER_VERSION;
+	Message.cBuffers = 4;
+	Message.pBuffers = Buffers;
+
+	status = table->DecryptMessage(phContext, &Message, 0, NULL);
+
+	printf("DecryptMessage status: 0x%08X\n", status);
+
+	printf("DecryptMessage output: cBuffers: %d [0]: %d / %d [1]: %d / %d [2]: %d / %d [3]: %d / %d\n", Message.cBuffers,
+		Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
+		Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
+		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
+		Message.pBuffers[3].cbBuffer, Message.pBuffers[3].BufferType);
+
+	if (status != SEC_E_OK)
+		return -1;
+
+	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
+	winpr_HexDump((BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
+
+	return 0;
+}
 
 static void* schannel_test_server_thread(void* arg)
 {
@@ -72,7 +209,11 @@ static void* schannel_test_server_thread(void* arg)
 		//return NULL;
 	}
 
+#ifdef CERT_FIND_HAS_PRIVATE_KEY
+	pCertContext = CertFindCertificateInStore(hCertStore, X509_ASN_ENCODING, 0, CERT_FIND_HAS_PRIVATE_KEY, NULL, NULL);
+#else
 	pCertContext = CertFindCertificateInStore(hCertStore, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL);
+#endif
 
 	if (!pCertContext)
 	{
@@ -110,6 +251,8 @@ static void* schannel_test_server_thread(void* arg)
 	}
 
 	extraData = FALSE;
+	g_ServerWait = TRUE;
+
 	lpTokenIn = (BYTE*) malloc(cbMaxToken);
 	lpTokenOut = (BYTE*) malloc(cbMaxToken);
 
@@ -121,9 +264,6 @@ static void* schannel_test_server_thread(void* arg)
 	{
 		if (!extraData)
 		{
-			WaitForSingleObject(g_ServerEvent, INFINITE);
-			ResetEvent(g_ServerEvent);
-
 			if (g_ServerWait)
 			{
 				if (!ReadFile(g_ServerReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))
@@ -137,10 +277,9 @@ static void* schannel_test_server_thread(void* arg)
 				NumberOfBytesRead = 0;
 			}
 		}
-		extraData = FALSE;
 
-		printf("Server Received %d bytes:\n", NumberOfBytesRead);
-		winpr_HexDump(lpTokenIn, NumberOfBytesRead);
+		extraData = FALSE;
+		g_ServerWait = TRUE;
 
 		SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
 		SecBuffer_in[0].pvBuffer = lpTokenIn;
@@ -165,13 +304,7 @@ static void* schannel_test_server_thread(void* arg)
 		status = table->AcceptSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL,
 			&SecBufferDesc_in, fContextReq, 0, &context, &SecBufferDesc_out, &fContextAttr, &expiry);
 
-		if (status == SEC_E_OK)
-		{
-			printf("AcceptSecurityContext SEC_E_OK, TLS connection complete\n");
-			break;
-		}
-
-		if ((status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
+		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
 			printf("AcceptSecurityContext unexpected status: 0x%08X\n", status);
 			return NULL;
@@ -179,7 +312,9 @@ static void* schannel_test_server_thread(void* arg)
 
 		NumberOfBytesWritten = 0;
 
-		if (status == SEC_I_CONTINUE_NEEDED)
+		if (status == SEC_E_OK)
+			printf("AcceptSecurityContext status: SEC_E_OK\n");
+		else if (status == SEC_I_CONTINUE_NEEDED)
 			printf("AcceptSecurityContext status: SEC_I_CONTINUE_NEEDED\n");
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("AcceptSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
@@ -201,26 +336,34 @@ static void* schannel_test_server_thread(void* arg)
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{
 			pSecBuffer = &SecBufferDesc_out.pBuffers[0];
-			winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
-			g_ClientWait = TRUE;
-			SetEvent(g_ClientEvent);
-
-			if (!WriteFile(g_ClientWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
+			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("failed to write to client pipe\n");
-				return NULL;
+				printf("Server > Client (%d)\n", pSecBuffer->cbBuffer);
+				winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+
+				if (!WriteFile(g_ClientWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
+				{
+					printf("failed to write to client pipe\n");
+					return NULL;
+				}
 			}
 		}
-		else
-		{
-			g_ClientWait = FALSE;
-			SetEvent(g_ClientEvent);
-		}
 
-		printf("Server wrote %d bytes\n", NumberOfBytesWritten);
+		if (status == SEC_E_OK)
+		{
+			printf("Server Handshake Complete\n");
+			break;
+		}
 	}
 	while (1);
+
+	do
+	{
+		if (schannel_recv(table, g_ServerReadPipe, &context) < 0)
+			break;
+	}
+	while(1);
 
 	return NULL;
 }
@@ -254,9 +397,6 @@ int TestSchannel(int argc, char* argv[])
 	SecPkgCred_SupportedProtocols SupportedProtocols;
 
 	sspi_GlobalInit();
-
-	g_ClientEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	g_ServerEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	SecInvalidateHandle(&context);
 	SecInvalidateHandle(&credentials);
@@ -377,13 +517,9 @@ int TestSchannel(int argc, char* argv[])
 	ZeroMemory(&SecBufferDesc_out, sizeof(SecBufferDesc));
 
 	g_ClientWait = FALSE;
-	SetEvent(g_ClientEvent);
 
 	do
 	{
-		WaitForSingleObject(g_ClientEvent, INFINITE);
-		ResetEvent(g_ClientEvent);
-
 		if (g_ClientWait)
 		{
 			if (!ReadFile(g_ClientReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))
@@ -397,6 +533,7 @@ int TestSchannel(int argc, char* argv[])
 			NumberOfBytesRead = 0;
 		}
 		
+		g_ClientWait = TRUE;
 		printf("NumberOfBytesRead: %d\n", NumberOfBytesRead);
 
 		SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
@@ -422,7 +559,7 @@ int TestSchannel(int argc, char* argv[])
 		status = table->InitializeSecurityContext(&credentials, SecIsValidHandle(&context) ? &context : NULL, _T("localhost"),
 				fContextReq, 0, 0, &SecBufferDesc_in, 0, &context, &SecBufferDesc_out, &fContextAttr, &expiry);
 
-		if ((status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
+		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
 			printf("InitializeSecurityContext unexpected status: 0x%08X\n", status);
 			return -1;
@@ -430,7 +567,9 @@ int TestSchannel(int argc, char* argv[])
 
 		NumberOfBytesWritten = 0;
 
-		if (status == SEC_I_CONTINUE_NEEDED)
+		if (status == SEC_E_OK)
+			printf("InitializeSecurityContext status: SEC_E_OK\n");
+		else if (status == SEC_I_CONTINUE_NEEDED)
 			printf("InitializeSecurityContext status: SEC_I_CONTINUE_NEEDED\n");
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("InitializeSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
@@ -443,24 +582,51 @@ int TestSchannel(int argc, char* argv[])
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{
 			pSecBuffer = &SecBufferDesc_out.pBuffers[0];
-			winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
-			g_ServerWait = TRUE;
-			SetEvent(g_ServerEvent);
-
-			if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
+			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("failed to write to server pipe\n");
-				return -1;
+				printf("Client > Server (%d)\n", pSecBuffer->cbBuffer);
+				winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+
+				if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
+				{
+					printf("failed to write to server pipe\n");
+					return -1;
+				}
 			}
 		}
-		else
+
+		if (status == SEC_E_OK)
 		{
-			g_ServerWait = FALSE;
-			SetEvent(g_ServerEvent);
+			printf("Client Handshake Complete\n");
+			break;
+		}
+	}
+	while(1);
+
+	do
+	{
+		if (schannel_send(table, g_ServerWritePipe, &context, test_DummyMessage, sizeof(test_DummyMessage)) < 0)
+			break;
+
+		for (index = 0; index < sizeof(test_DummyMessage); index++)
+		{
+			BYTE b, ln, hn;
+
+			b = test_DummyMessage[index];
+
+			ln = (b & 0x0F);
+			hn = ((b & 0xF0) >> 4);
+
+			ln = (ln + 1) % 0xF;
+			hn = (ln + 1) % 0xF;
+
+			b = (ln | (hn << 4));
+
+			test_DummyMessage[index] = b;
 		}
 
-		printf("Client wrote %d bytes\n", NumberOfBytesWritten);
+		Sleep(1000 * 10);
 	}
 	while(1);
 

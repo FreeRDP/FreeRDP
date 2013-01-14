@@ -181,8 +181,11 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	 *
 	 * Using reduced capabilities appears to trigger
 	 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
+	 *
+	 * However, reduced capabilities may break connectivity with servers enforcing features, such as
+	 * "Only allow connections from Remote Desktop Services clients that support RD Gateway messaging"
 	 */
-	NapCapabilities = TSG_NAP_CAPABILITY_IDLE_TIMEOUT;
+	//NapCapabilities = TSG_NAP_CAPABILITY_IDLE_TIMEOUT;
 
 	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
 

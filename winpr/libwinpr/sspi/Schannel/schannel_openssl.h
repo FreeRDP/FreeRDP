@@ -49,6 +49,9 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context);
 SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput);
 SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput);
 
+SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage);
+SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage);
+
 SCHANNEL_OPENSSL* schannel_openssl_new();
 void schannel_openssl_free(SCHANNEL_OPENSSL* context);
 

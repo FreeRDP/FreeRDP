@@ -92,7 +92,7 @@ enum _NTLM_AV_ID
 	MsvAvDnsTreeName,
 	MsvAvFlags,
 	MsvAvTimestamp,
-	MsvAvRestrictions,
+	MsvAvSingleHost,
 	MsvAvTargetName,
 	MsvChannelBindings
 };
@@ -126,15 +126,15 @@ struct _NTLM_VERSION_INFO
 };
 typedef struct _NTLM_VERSION_INFO NTLM_VERSION_INFO;
 
-struct _NTLM_RESTRICTION_ENCODING
+struct _NTLM_SINGLE_HOST_DATA
 {
 	UINT32 Size;
 	UINT32 Z4;
-	UINT32 IntegrityLevel;
-	UINT32 SubjectIntegrityLevel;
+	UINT32 DataPresent;
+	UINT32 CustomData;
 	BYTE MachineID[32];
 };
-typedef struct _NTLM_RESTRICTION_ENCODING NTLM_RESTRICTION_ENCODING;
+typedef struct _NTLM_SINGLE_HOST_DATA NTLM_SINGLE_HOST_DATA;
 
 struct _NTLM_RESPONSE
 {
@@ -244,6 +244,8 @@ struct _NTLM_CONTEXT
 	BYTE* ChannelBindingToken;
 	BYTE ChannelBindingsHash[16];
 	SecPkgContext_Bindings Bindings;
+	BOOL SendSingleHostData;
+	NTLM_SINGLE_HOST_DATA SingleHostData;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;

@@ -279,6 +279,24 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	MD5_Final(context->ChannelBindingsHash, &md5);
 }
 
+void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
+{
+	/**
+	 * The Single_Host_Data structure allows a client to send machine-specific information
+	 * within an authentication exchange to services on the same machine. The client can
+	 * produce additional information to be processed in an implementation-specific way when
+	 * the client and server are on the same host. If the server and client platforms are
+	 * different or if they are on different hosts, then the information MUST be ignored.
+	 * Any fields after the MachineID field MUST be ignored on receipt.
+	 */
+
+	context->SingleHostData.Size = 48;
+	context->SingleHostData.Z4 = 0;
+	context->SingleHostData.DataPresent = 1;
+	context->SingleHostData.CustomData = SECURITY_MANDATORY_MEDIUM_RID;
+	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
+}
+
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
@@ -390,8 +408,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
-	//AvPairsCount++; /* MsvAvRestrictions */
-	//AvPairsValueLength += 48;
+	if (context->SendSingleHostData)
+	{
+		AvPairsCount++; /* MsvAvSingleHost */
+		ntlm_compute_single_host_data(context);
+		AvPairsValueLength += context->SingleHostData.Size;
+	}
 
 	/**
 	 * Extended Protection for Authentication:
@@ -448,6 +470,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	{
 		UINT32 flags = MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK;
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
+	}
+
+	if (context->SendSingleHostData)
+	{
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
+				(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
 	}
 
 	if (!context->SuppressExtendedProtection)

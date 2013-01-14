@@ -153,8 +153,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		if (!connectErrorCode)                    
-			connectErrorCode = AUTHENTICATIONERROR;                      
+		if (!connectErrorCode)
+			connectErrorCode = AUTHENTICATIONERROR;
 
 		printf("Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
