@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Windows Server
+ * OS X Server Event Handling
  *
  * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
@@ -17,26 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef WF_DXGI_H
-#define WF_DXGI_H
+#ifndef MF_MLION_H
+#define MF_MLION_H
 
-#include "wf_interface.h"
+#include <freerdp/codec/rfx.h>
 
-int wf_dxgi_init(wfInfo* context);
 
-int wf_dxgi_createDevice(wfInfo* context);
+int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight, UINT32* scale);
 
-int wf_dxgi_getDuplication(wfInfo* context);
+int mf_mlion_screen_updates_init();
 
-int wf_dxgi_cleanup(wfInfo* context);
+int mf_mlion_start_getting_screen_updates();
+int mf_mlion_stop_getting_screen_updates();
 
-int wf_dxgi_nextFrame(wfInfo* context, UINT timeout);
+int mf_mlion_get_dirty_region(RFX_RECT* invalid);
+int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
+int mf_mlion_clear_dirty_region();
 
-int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid);
-
-int wf_dxgi_releasePixelData(wfInfo* context);
-
-int wf_dxgi_getInvalidRegion(RECT* invalid);
-
+int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE **pxData);
 
 #endif
