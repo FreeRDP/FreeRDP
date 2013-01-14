@@ -192,7 +192,10 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 
 static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 {
-	return stream_skip(s, 2); /* size (2 bytes), MUST be set to zero */
+	/* server 2008 can send invalid synchronize packet with missing padding,
+	  so don't return FALSE even if the packet is invalid */
+	stream_skip(s, 2); /* size (2 bytes), MUST be set to zero */
+	return TRUE;
 }
 
 static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
