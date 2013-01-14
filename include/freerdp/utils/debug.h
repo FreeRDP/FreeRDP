@@ -28,9 +28,9 @@
 #define DEBUG_WARN(fmt, ...) DEBUG_PRINT("Warning %s (%d): ", fmt, ## __VA_ARGS__)
 
 #ifdef WITH_DEBUG
-#define DEBUG(fmt, ...)	DEBUG_PRINT("DBG %s (%d): ", fmt, ## __VA_ARGS__)
+#define DEBUG_MSG(fmt, ...)	DEBUG_PRINT("DBG %s (%d): ", fmt, ## __VA_ARGS__)
 #else
-#define DEBUG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_MSG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* FREERDP_UTILS_DEBUG_H */
