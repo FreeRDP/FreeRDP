@@ -841,9 +841,11 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
+#if 0
 	printf("BytesReceived: %d AvailableWindow: %d\n",
 			BytesReceived, AvailableWindow);
 	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+#endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
@@ -880,9 +882,11 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
+#if 0
 	printf("Destination: %d BytesReceived: %d AvailableWindow: %d\n",
 			Destination, BytesReceived, AvailableWindow);
 	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+#endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
@@ -999,7 +1003,6 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	rts = (rpcconn_rts_hdr_t*) buffer;
 
 	rts_extract_pdu_signature(rpc, &signature, rts);
-	rts_print_pdu_signature(rpc, &signature);
 	SignatureId = rts_identify_pdu_signature(rpc, &signature, NULL);
 
 	if (SignatureId == RTS_PDU_FLOW_CONTROL_ACK)
@@ -1017,6 +1020,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	else
 	{
 		printf("Unimplemented signature id: 0x%08X\n", SignatureId);
+		rts_print_pdu_signature(rpc, &signature);
 	}
 
 	return 0;

@@ -59,50 +59,6 @@ static void tls_free_certificate(CryptoCert cert)
 	free(cert);
 }
 
-static void tls_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
-{
-	BYTE be32[4];
-
-	be32[0] = (num >> 0) & 0xFF;
-	be32[1] = (num >> 8) & 0xFF;
-	be32[2] = (num >> 16) & 0xFF;
-	be32[3] = (num >> 24) & 0xFF;
-
-	MD5_Update(md5, be32, 4);
-}
-
-BYTE* tls_get_channel_bindings_hash(SecPkgContext_Bindings* Bindings)
-{
-	MD5_CTX md5;
-	BYTE* ChannelBindingToken;
-	UINT32 ChannelBindingTokenLength;
-	BYTE* ChannelBindingsHash;
-	UINT32 ChannelBindingsHashLength;
-	SEC_CHANNEL_BINDINGS* ChannelBindings;
-
-	ChannelBindings = Bindings->Bindings;
-	ChannelBindingTokenLength = Bindings->BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
-	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-
-	ChannelBindingsHashLength = 16;
-	ChannelBindingsHash = (BYTE*) malloc(ChannelBindingsHashLength);
-	ZeroMemory(ChannelBindingsHash, ChannelBindingsHashLength);
-
-	MD5_Init(&md5);
-
-	tls_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
-	tls_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
-	tls_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
-	tls_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
-	tls_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
-
-	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
-
-	MD5_Final(ChannelBindingsHash, &md5);
-
-	return ChannelBindingsHash;
-}
-
 #define TLS_SERVER_END_POINT	"tls-server-end-point:"
 
 SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
