@@ -224,8 +224,10 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	if (!fastpath_read_header_rdp(fastpath, s, &length))
-		return -1;
+	//if (!fastpath_read_header_rdp(fastpath, s, &length))
+	//	return -1;
+
+	fastpath_read_header_rdp(fastpath, s, &length);
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{
@@ -254,6 +256,8 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
+
+	printf("peer_recv_callback state = %d\n", rdp->state);
 
 	switch (rdp->state)
 	{
@@ -327,7 +331,7 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!peer_recv_pdu(client, s))
+			if (peer_recv_pdu(client, s) < 0)
 				return -1;
 			break;
 

@@ -32,6 +32,7 @@
 #include "wf_dxgi.h"
 
 static wfInfo* wfInfoInstance = NULL;
+static int _IDcount = 0;
 
 int wf_info_lock(wfInfo* wfi)
 {
@@ -215,6 +216,10 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		context->info = wfi;
 		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+		//get the offset of the top left corner of selected screen
+		EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
+		_IDcount = 0;
+
 #ifdef WITH_WIN8
 		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
@@ -282,7 +287,7 @@ BOOL wf_info_have_updates(wfInfo* wfi)
 void wf_info_update_changes(wfInfo* wfi)
 {
 #ifdef WITH_WIN8
-	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond / 1000);
+	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond * 1000);
 #else
 	GETCHANGESBUF* buf;
 
@@ -303,7 +308,20 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 
 	for (i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
 	{
-		UnionRect(&wfi->invalid, &wfi->invalid, &buf->buffer->pointrect[i].rect);
+		LPRECT lpR = &buf->buffer->pointrect[i].rect;
+
+		//need to make sure we only get updates from the selected screen
+		if (	(lpR->left >= wfi->servscreen_xoffset) &&
+			(lpR->right <= (wfi->servscreen_xoffset + wfi->servscreen_width) ) &&
+			(lpR->top >= wfi->servscreen_yoffset) &&
+			(lpR->bottom <= (wfi->servscreen_yoffset + wfi->servscreen_height) ) )
+		{
+			UnionRect(&wfi->invalid, &wfi->invalid, lpR);
+		}
+		else
+		{
+			continue;
+		}
 	}
 #endif
 
@@ -313,11 +331,13 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	if (wfi->invalid.top < 0)
 		wfi->invalid.top = 0;
 
-	if (wfi->invalid.right >= wfi->width)
-		wfi->invalid.right = wfi->width - 1;
+	if (wfi->invalid.right >= wfi->servscreen_width)
+		wfi->invalid.right = wfi->servscreen_width - 1;
 
-	if (wfi->invalid.bottom >= wfi->height)
-		wfi->invalid.bottom = wfi->height - 1;
+	if (wfi->invalid.bottom >= wfi->servscreen_height)
+		wfi->invalid.bottom = wfi->servscreen_height - 1;
+
+	//printf("invalid region: (%d, %d), (%d, %d)\n", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)
@@ -328,7 +348,7 @@ void wf_info_clear_invalid_region(wfInfo* wfi)
 
 void wf_info_invalidate_full_screen(wfInfo* wfi)
 {
-	SetRect(&wfi->invalid, 0, 0, wfi->width, wfi->height);
+	SetRect(&wfi->invalid, 0, 0, wfi->servscreen_width, wfi->servscreen_height);
 }
 
 BOOL wf_info_have_invalid_region(wfInfo* wfi)
@@ -352,9 +372,26 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 		*width += 1;
 		*height += 1;
 
-		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->width * 4);
+		offset = (4 * wfi->invalid.left) + (wfi->invalid.top * wfi->virtscreen_width * 4);
 		*pBits = ((BYTE*) (changes->Userbuffer)) + offset;
-		*pitch = wfi->width * 4;
+		*pitch = wfi->virtscreen_width * 4;
 	}
 #endif
+}
+
+BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	wfInfo * wfi;
+
+	wfi = wf_info_get_instance();
+
+	if(_IDcount == wfi->screenID)
+	{
+		wfi->servscreen_xoffset = lprcMonitor->left;
+		wfi->servscreen_yoffset = lprcMonitor->top;
+	}
+	
+	_IDcount++;	
+
+	return TRUE;
 }

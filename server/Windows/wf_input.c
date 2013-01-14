@@ -24,6 +24,7 @@
 #include <winpr/windows.h>
 
 #include "wf_input.h"
+#include "wf_info.h"
 
 void wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
@@ -82,8 +83,16 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	}
 	else
 	{
+		wfInfo * wfi;
+		
+		wfi = wf_info_get_instance();
+
+		//width and height of primary screen (even in multimon setups
 		width = (float) GetSystemMetrics(SM_CXSCREEN);
 		height = (float) GetSystemMetrics(SM_CYSCREEN);
+
+		x += wfi->servscreen_xoffset;
+		y += wfi->servscreen_yoffset;
 
 		mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
 		mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
@@ -138,8 +147,21 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			mouse_event.mi.dx = x * (0xFFFF / GetSystemMetrics(SM_CXSCREEN));
-			mouse_event.mi.dy = y * (0xFFFF / GetSystemMetrics(SM_CYSCREEN));
+			float width, height;
+			wfInfo * wfi;
+
+			wfi = wf_info_get_instance();
+			//width and height of primary screen (even in multimon setups
+			width = (float) GetSystemMetrics(SM_CXSCREEN);
+			height = (float) GetSystemMetrics(SM_CYSCREEN);
+
+			x += wfi->servscreen_xoffset;
+			y += wfi->servscreen_yoffset;
+
+			//mouse_event.mi.dx = x * (0xFFFF / width);
+			//mouse_event.mi.dy = y * (0xFFFF / height);
+			mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
+			mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
 			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 
 			SendInput(1, &mouse_event, sizeof(INPUT));
