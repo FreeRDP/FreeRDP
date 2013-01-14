@@ -285,7 +285,7 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data_size, UINT3
 
 	if (lenConfiguration != 0x9 || typeConfiguration != 0x2)
 	{
-		DEBUG("%s: len and type must be 0x9 and 0x2 , but it is 0x%x and 0x%x", 
+		DEBUG_MSG("%s: len and type must be 0x9 and 0x2 , but it is 0x%x and 0x%x", 
 			lenConfiguration, typeConfiguration);
 	}
 

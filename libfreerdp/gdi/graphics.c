@@ -115,10 +115,10 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	switch (codec_id)
 	{
-		case CODEC_ID_NSCODEC:
+		case RDP_CODEC_ID_NSCODEC:
 			printf("gdi_Bitmap_Decompress: nsc not done\n");
 			break;
-		case CODEC_ID_REMOTEFX:
+		case RDP_CODEC_ID_REMOTEFX:
 			gdi = context->gdi;
 			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(gdi->rfx_context, data, length);
@@ -143,7 +143,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 				rfx_message_free(gdi->rfx_context, msg);
 			}
 			break;
-		case CODEC_ID_JPEG:
+		case RDP_CODEC_ID_JPEG:
 #ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{

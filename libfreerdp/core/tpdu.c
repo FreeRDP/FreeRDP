@@ -66,11 +66,12 @@
  * @return TPDU length indicator (LI)
  */
 
-BYTE tpdu_read_header(STREAM* s, BYTE* code)
+BOOL tpdu_read_header(STREAM* s, BYTE* code, BYTE *li)
 {
-	BYTE li;
+	if(stream_get_left(s) < 3)
+		return FALSE;
 
-	stream_read_BYTE(s, li); /* LI */
+	stream_read_BYTE(s, *li); /* LI */
 	stream_read_BYTE(s, *code); /* Code */
 
 	if (*code == X224_TPDU_DATA)
@@ -83,10 +84,9 @@ BYTE tpdu_read_header(STREAM* s, BYTE* code)
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		stream_seek(s, 5);
+		return stream_skip(s, 5);
 	}
-
-	return li;
+	return TRUE;
 }
 
 /**
@@ -119,20 +119,20 @@ void tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
  * @return length indicator (LI)
  */
 
-BYTE tpdu_read_connection_request(STREAM* s)
+BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
 {
-	BYTE li;
 	BYTE code;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, li))
+		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
 		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
-		return 0;
+		return FALSE;
 	}
 
-	return li;
+	return TRUE;
 }
 
 /**
@@ -152,20 +152,20 @@ void tpdu_write_connection_request(STREAM* s, UINT16 length)
  * @return length indicator (LI)
  */
 
-BYTE tpdu_read_connection_confirm(STREAM* s)
+BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
 {
-	BYTE li;
 	BYTE code;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, li))
+		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
 		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
-		return 0;
+		return FALSE;
 	}
 
-	return li;
+	return (stream_get_left(s) >= *li);
 }
 
 /**
@@ -205,15 +205,16 @@ void tpdu_write_data(STREAM* s)
  * @param s stream
  */
 
-UINT16 tpdu_read_data(STREAM* s)
+BOOL tpdu_read_data(STREAM* s, UINT16 *LI)
 {
 	BYTE code;
-	UINT16 li;
+	BYTE li;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, &li))
+		return FALSE;
 
 	if (code != X224_TPDU_DATA)
-		return 0;
-
-	return li;
+		return FALSE;
+	*LI = li;
+	return TRUE;
 }

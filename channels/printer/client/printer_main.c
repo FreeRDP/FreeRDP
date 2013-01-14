@@ -235,9 +235,9 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	char* port;
 	UINT32 Flags;
 	int DriverNameLen;
-	WCHAR* DriverName;
+	WCHAR* DriverName = NULL;
 	int PrintNameLen;
-	WCHAR* PrintName;
+	WCHAR* PrintName = NULL;
 	UINT32 CachedFieldsLen;
 	BYTE* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;

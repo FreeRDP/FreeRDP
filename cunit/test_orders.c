@@ -83,7 +83,7 @@ void test_read_dstblt_order(void)
 	orderInfo->fieldFlags = 0x0C;
 	memset(&dstblt, 0, sizeof(DSTBLT_ORDER));
 
-	update_read_dstblt_order(s, orderInfo, &dstblt);
+	CU_ASSERT(update_read_dstblt_order(s, orderInfo, &dstblt));
 
 	CU_ASSERT(dstblt.nLeftRect == 0);
 	CU_ASSERT(dstblt.nTopRect == 0);
@@ -108,7 +108,7 @@ void test_read_patblt_order(void)
 	orderInfo->fieldFlags = 0x027F;
 	memset(&patblt, 0, sizeof(PATBLT_ORDER));
 
-	update_read_patblt_order(s, orderInfo, &patblt);
+	CU_ASSERT(update_read_patblt_order(s, orderInfo, &patblt));
 
 	CU_ASSERT(patblt.nLeftRect == 26);
 	CU_ASSERT(patblt.nTopRect == 451);
@@ -138,7 +138,7 @@ void test_read_scrblt_order(void)
 	orderInfo->fieldFlags = 0x7D;
 	memset(&scrblt, 0, sizeof(SCRBLT_ORDER));
 
-	update_read_scrblt_order(s, orderInfo, &scrblt);
+	CU_ASSERT(update_read_scrblt_order(s, orderInfo, &scrblt));
 
 	CU_ASSERT(scrblt.nLeftRect == 7);
 	CU_ASSERT(scrblt.nTopRect == 0);
@@ -165,7 +165,7 @@ void test_read_opaque_rect_order(void)
 	orderInfo->fieldFlags = 0x7C;
 	memset(&opaque_rect, 0, sizeof(OPAQUE_RECT_ORDER));
 
-	update_read_opaque_rect_order(s, orderInfo, &opaque_rect);
+	CU_ASSERT(update_read_opaque_rect_order(s, orderInfo, &opaque_rect));
 
 	CU_ASSERT(opaque_rect.nLeftRect == 0);
 	CU_ASSERT(opaque_rect.nTopRect == 0);
@@ -194,7 +194,7 @@ void test_read_draw_nine_grid_order(void)
 	draw_nine_grid.srcRight = 38;
 	draw_nine_grid.srcBottom = 40;
 
-	update_read_draw_nine_grid_order(s, orderInfo, &draw_nine_grid);
+	CU_ASSERT(update_read_draw_nine_grid_order(s, orderInfo, &draw_nine_grid));
 
 	CU_ASSERT(draw_nine_grid.srcLeft == 0);
 	CU_ASSERT(draw_nine_grid.srcTop == 0);
@@ -223,7 +223,7 @@ void test_read_multi_opaque_rect_order(void)
 	orderInfo->fieldFlags = 0x01BF;
 	memset(&multi_opaque_rect, 0, sizeof(MULTI_OPAQUE_RECT_ORDER));
 
-	update_read_multi_opaque_rect_order(s, orderInfo, &multi_opaque_rect);
+	CU_ASSERT(update_read_multi_opaque_rect_order(s, orderInfo, &multi_opaque_rect));
 
 	CU_ASSERT(multi_opaque_rect.nLeftRect == 391);
 	CU_ASSERT(multi_opaque_rect.nTopRect == 284);
@@ -276,7 +276,7 @@ void test_read_line_to_order(void)
 	line_to.nXEnd = 829;
 	line_to.nYEnd = 347;
 
-	update_read_line_to_order(s, orderInfo, &line_to);
+	CU_ASSERT(update_read_line_to_order(s, orderInfo, &line_to));
 
 	CU_ASSERT(line_to.nXStart == 829);
 	CU_ASSERT(line_to.nYStart == 271);
@@ -314,7 +314,7 @@ void test_read_polyline_order(void)
 
 	memset(&polyline, 0, sizeof(POLYLINE_ORDER));
 
-	update_read_polyline_order(s, orderInfo, &polyline);
+	CU_ASSERT(update_read_polyline_order(s, orderInfo, &polyline));
 
 	CU_ASSERT(polyline.xStart == 504);
 	CU_ASSERT(polyline.yStart == 696);
@@ -383,7 +383,7 @@ void test_read_glyph_index_order(void)
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
-	update_read_glyph_index_order(s, orderInfo, &glyph_index);
+	CU_ASSERT(update_read_glyph_index_order(s, orderInfo, &glyph_index));
 
 	CU_ASSERT(glyph_index.bkRight == 618);
 
@@ -397,7 +397,7 @@ void test_read_glyph_index_order(void)
 
 	memset(&glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
 
-	update_read_glyph_index_order(s, orderInfo, &glyph_index);
+	CU_ASSERT(update_read_glyph_index_order(s, orderInfo, &glyph_index));
 
 	CU_ASSERT(glyph_index.fOpRedundant == 0);
 	CU_ASSERT(glyph_index.foreColor == 0x00FFFFFF);
@@ -432,7 +432,7 @@ void test_read_fast_index_order(void)
 	orderInfo->fieldFlags = 0x70FF;
 
 	memset(&fast_index, 0, sizeof(FAST_INDEX_ORDER));
-	update_read_fast_index_order(s, orderInfo, &fast_index);
+	CU_ASSERT(update_read_fast_index_order(s, orderInfo, &fast_index));
 
 	CU_ASSERT(fast_index.cacheId == 7);
 	CU_ASSERT(fast_index.flAccel == 3);
@@ -471,7 +471,7 @@ void test_read_fast_glyph_order(void)
 
 	memset(&fast_glyph, 0, sizeof(FAST_GLYPH_ORDER));
 
-	update_read_fast_glyph_order(s, orderInfo, &fast_glyph);
+	CU_ASSERT(update_read_fast_glyph_order(s, orderInfo, &fast_glyph));
 
 	CU_ASSERT(fast_glyph.backColor == 0);
 	CU_ASSERT(fast_glyph.foreColor == 0x0000FFFF);
@@ -506,7 +506,7 @@ void test_read_polygon_cb_order(void)
 
 	memset(&polygon_cb, 0, sizeof(POLYGON_CB_ORDER));
 
-	update_read_polygon_cb_order(s, orderInfo, &polygon_cb);
+	CU_ASSERT(update_read_polygon_cb_order(s, orderInfo, &polygon_cb));
 
 	CU_ASSERT(polygon_cb.xStart == 234);
 	CU_ASSERT(polygon_cb.yStart == 326);
@@ -537,7 +537,7 @@ void test_read_cache_bitmap_order(void)
 
 	memset(&cache_bitmap, 0, sizeof(CACHE_BITMAP_ORDER));
 
-	update_read_cache_bitmap_order(s, &cache_bitmap, TRUE, extraFlags);
+	CU_ASSERT(update_read_cache_bitmap_order(s, &cache_bitmap, TRUE, extraFlags));
 
 	CU_ASSERT(cache_bitmap.cacheId == 0);
 	CU_ASSERT(cache_bitmap.bitmapWidth == 16);
@@ -578,7 +578,7 @@ void test_read_cache_bitmap_v2_order(void)
 
 	memset(&cache_bitmap_v2, 0, sizeof(CACHE_BITMAP_V2_ORDER));
 
-	update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, TRUE, extraFlags);
+	CB_ASSERT(update_read_cache_bitmap_v2_order(s, &cache_bitmap_v2, TRUE, extraFlags));
 
 	CU_ASSERT(cache_bitmap_v2.cacheId == 1);
 	CU_ASSERT(cache_bitmap_v2.bitmapBpp == 16);
@@ -609,7 +609,7 @@ void test_read_cache_bitmap_v3_order(void)
 
 	memset(&cache_bitmap_v3, 0, sizeof(CACHE_BITMAP_V3_ORDER));
 
-	update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, TRUE, extraFlags);
+	CU_ASSERT(update_read_cache_bitmap_v3_order(s, &cache_bitmap_v3, TRUE, extraFlags));
 
 	CU_ASSERT(cache_bitmap_v3.cacheIndex == 32767);
 	CU_ASSERT(cache_bitmap_v3.key1 == 0xBCEC5035);
@@ -637,7 +637,7 @@ void test_read_cache_brush_order(void)
 
 	memset(&cache_brush, 0, sizeof(CACHE_BRUSH_ORDER));
 
-	update_read_cache_brush_order(s, &cache_brush, 0);
+	CU_ASSERT(update_read_cache_brush_order(s, &cache_brush, 0));
 
 	CU_ASSERT(cache_brush.index == 0);
 	CU_ASSERT(cache_brush.bpp == 1);
@@ -667,7 +667,7 @@ void test_read_create_offscreen_bitmap_order(void)
 	deleteList->sIndices = 16;
 	deleteList->indices = malloc(sizeof(UINT16) * deleteList->sIndices);
 
-	update_read_create_offscreen_bitmap_order(s, &create_offscreen_bitmap);
+	CU_ASSERT(update_read_create_offscreen_bitmap_order(s, &create_offscreen_bitmap));
 
 	CU_ASSERT(create_offscreen_bitmap.id == 0);
 	CU_ASSERT(create_offscreen_bitmap.cx == 352);
@@ -689,7 +689,7 @@ void test_read_switch_surface_order(void)
 
 	memset(&switch_surface, 0, sizeof(SWITCH_SURFACE_ORDER));
 
-	update_read_switch_surface_order(s, &switch_surface);
+	CU_ASSERT(update_read_switch_surface_order(s, &switch_surface));
 
 	CU_ASSERT(switch_surface.bitmapId == 0xFFFF);
 
@@ -754,7 +754,7 @@ void test_update_recv_orders(void)
 	s->p = s->data = orders_update_1;
 	s->size = sizeof(orders_update_1);
 
-	update_recv(update, s);
+	CU_ASSERT(update_recv(update, s));
 
 	CU_ASSERT(opaque_rect_count == 5);
 	CU_ASSERT(polyline_count == 2);
@@ -763,7 +763,7 @@ void test_update_recv_orders(void)
 	s->p = s->data = orders_update_2;
 	s->size = sizeof(orders_update_2);
 
-	update_recv(update, s);
+	CU_ASSERT(update_recv(update, s));
 
 	CU_ASSERT(patblt_count == 3);
 

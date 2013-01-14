@@ -127,10 +127,9 @@ static INLINE void fastpath_write_update_header(STREAM* s, BYTE updateCode, BYTE
 	stream_write_BYTE(s, updateHeader);
 }
 
-UINT16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s, UINT16 *length)
 {
 	BYTE header;
-	UINT16 length;
 
 	stream_read_BYTE(s, header);
 
@@ -140,9 +139,11 @@ UINT16 fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s)
 		fastpath->numberEvents = (header & 0x3C) >> 2;
 	}
 
-	per_read_length(s, &length);
+	if (!per_read_length(s, length))
+		return FALSE;
 
-	return length - stream_get_length(s);
+	*length = *length - stream_get_length(s);
+	return TRUE;
 }
 
 static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
@@ -162,31 +163,39 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static void fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 {
 	UINT16 updateType;
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = update->context;
 
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	switch (updateType)
 	{
 		case UPDATE_TYPE_BITMAP:
-			update_read_bitmap(update, s, &update->bitmap_update);
+			if(!update_read_bitmap(update, s, &update->bitmap_update))
+				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			update_read_palette(update, s, &update->palette_update);
+			if(!update_read_palette(update, s, &update->palette_update))
+				return FALSE;
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 	}
+	return TRUE;
 }
 
-static void fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 {
-	stream_seek_UINT16(s); /* size (2 bytes), must be set to zero */
+	/* server 2008 can send invalid synchronize packet with missing padding,
+	  so don't return FALSE even if the packet is invalid */
+	stream_skip(s, 2); /* size (2 bytes), MUST be set to zero */
+	return TRUE;
 }
 
 static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
@@ -209,16 +218,20 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			fastpath_recv_update_common(fastpath, s);
+			if(!fastpath_recv_update_common(fastpath, s))
+				return FALSE;
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
-			fastpath_recv_update_synchronize(fastpath, s);
-			IFCALL(update->Synchronize, context);
+			if (!fastpath_recv_update_synchronize(fastpath, s))
+				printf("fastpath_recv_update_synchronize failure but we continue\n");				
+			else
+				IFCALL(update->Synchronize, context);			
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			update_recv_surfcmds(update, size, s);
+			if (!update_recv_surfcmds(update, size, s))
+				return FALSE;
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
@@ -232,22 +245,26 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			update_read_pointer_position(s, &pointer->pointer_position);
+			if (!update_read_pointer_position(s, &pointer->pointer_position))
+				return FALSE;
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			update_read_pointer_color(s, &pointer->pointer_color);
+			if (!update_read_pointer_color(s, &pointer->pointer_color))
+				return FALSE;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			update_read_pointer_cached(s, &pointer->pointer_cached);
+			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
+				return FALSE;
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			update_read_pointer_new(s, &pointer->pointer_new);
+			if (!update_read_pointer_new(s, &pointer->pointer_new))
+				return FALSE;
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
@@ -284,6 +301,8 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		compressionFlags = 0;
 
 	stream_read_UINT16(s, size);
+	if(stream_get_left(s) < size)
+		return FALSE;
 	next_pos = stream_get_pos(s) + size;
 	comp_stream = s;
 
@@ -317,6 +336,7 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 		stream_check_size(fastpath->updateData, size);
 		stream_copy(fastpath->updateData, comp_stream, size);
+		/* TODO: add a limit on the fragmentation buffer size */
 
 		if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{

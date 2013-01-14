@@ -391,7 +391,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 	struct STAT st;
 	char* volumeLabel = {"FREERDP"};
 	char* diskType = {"FAT32"};
-	WCHAR* outStr;
+	WCHAR* outStr = NULL;
 	int length;
 
 	stream_read_UINT32(irp->input, FsInformationClass);

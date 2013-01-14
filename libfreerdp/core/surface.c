@@ -25,11 +25,13 @@
 
 #include "surface.h"
 
-static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
+static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
+	if(stream_get_left(s) < 20)
+		return FALSE;
 	stream_read_UINT16(s, cmd->destLeft);
 	stream_read_UINT16(s, cmd->destTop);
 	stream_read_UINT16(s, cmd->destRight);
@@ -40,6 +42,8 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
 	stream_read_UINT16(s, cmd->width);
 	stream_read_UINT16(s, cmd->height);
 	stream_read_UINT32(s, cmd->bitmapDataLength);
+	if(stream_get_left(s) < cmd->bitmapDataLength)
+		return FALSE;
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
 	cmd->bitmapData = stream_get_tail(s);
 
@@ -47,7 +51,8 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
 
 	stream_set_pos(s, pos);
 
-	return 20 + cmd->bitmapDataLength;
+	*length = 20 + cmd->bitmapDataLength;
+	return TRUE;
 }
 
 static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
@@ -59,10 +64,12 @@ static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
 }
 
-static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
+static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
+	if(stream_get_left(s) < 6)
+		return FALSE;
 	stream_read_UINT16(s, marker->frameAction);
 	stream_read_UINT32(s, marker->frameId);
 
@@ -73,7 +80,8 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
 		update_send_frame_acknowledge(update->context->rdp, marker->frameId);
 	}
 
-	return 6;
+	*length = 6;
+	return TRUE;
 }
 
 int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
@@ -93,11 +101,13 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 		{
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
-				cmdLength = update_recv_surfcmd_surface_bits(update, s);
+				if (!update_recv_surfcmd_surface_bits(update, s, &cmdLength))
+					return -1;
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
-				cmdLength = update_recv_surfcmd_frame_marker(update, s);
+				if (!update_recv_surfcmd_frame_marker(update, s, &cmdLength))
+					return -1;
 				break;
 
 			default:

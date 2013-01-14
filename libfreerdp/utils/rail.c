@@ -46,9 +46,13 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 		free(unicode_string->string);
 }
 
-void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	if(stream_get_left(s) < unicode_string->length)
+		return FALSE;
 
 	if (unicode_string->string == NULL)
 		unicode_string->string = (BYTE*) malloc(unicode_string->length);
@@ -56,6 +60,7 @@ void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
+	return TRUE;
 }
 
 void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)

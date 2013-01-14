@@ -457,7 +457,7 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* N
 
 SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
-	SEC_WCHAR* NameW;
+	SEC_WCHAR* NameW = NULL;
 	SecurityFunctionTableW* table;
 
 	ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);

@@ -533,7 +533,7 @@ static BYTE* xf_cliprdr_process_requested_raw(BYTE* data, int* size)
 static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 {
 	char* inbuf;
-	WCHAR* outbuf;
+	WCHAR* outbuf = NULL;
 	int out_size;
 
 	inbuf = (char*) lf2crlf(data, size);
