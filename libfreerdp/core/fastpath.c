@@ -230,7 +230,7 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			if (!update_recv_surfcmds(update, size, s))
+			if (update_recv_surfcmds(update, size, s) < 0)
 				return FALSE;
 			break;
 
