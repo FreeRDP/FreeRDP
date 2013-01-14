@@ -40,7 +40,7 @@ BOOL ber_read_length(STREAM* s, int* length)
 
 		if (byte == 1)
 			stream_read_BYTE(s, *length);
-		if (byte == 2)
+		else if (byte == 2)
 			stream_read_UINT16_be(s, *length);
 		else
 			return FALSE;

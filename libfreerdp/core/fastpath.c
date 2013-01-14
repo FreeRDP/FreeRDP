@@ -221,8 +221,9 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
-				return FALSE;
-			IFCALL(update->Synchronize, context);
+				printf("fastpath_recv_update_synchronize failure but we continue\n");				
+			else
+				IFCALL(update->Synchronize, context);			
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
