@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 #include "searchman.h"
 
 static void searchman_rewind(USB_SEARCHMAN* searchman)
@@ -144,7 +148,7 @@ static void searchman_start(USB_SEARCHMAN* self, void* func)
 /* close thread */
 static void searchman_close(USB_SEARCHMAN* self)
 {
-	wait_obj_set(self->term_event);
+	SetEvent(self->term_event);
 }
 
 static void searchman_list_show(USB_SEARCHMAN* self)
@@ -176,7 +180,7 @@ void searchman_free(USB_SEARCHMAN* self)
 
 	/* free searchman */
 	sem_destroy(&self->sem_term);
-	wait_obj_free(self->term_event);
+	CloseHandle(self->term_event);
 	free(self);
 }
 
@@ -214,7 +218,7 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	searchman->free = searchman_free;
 	
 	searchman->strated = 0;
-	searchman->term_event = wait_obj_new();
+	searchman->term_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	sem_init(&searchman->sem_term, 0, 0);
 	
 	return searchman;

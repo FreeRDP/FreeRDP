@@ -26,9 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 
 #include "extension.h"
 
@@ -119,12 +119,13 @@ static int extension_load_plugins(rdpExtension* extension)
 	for (i = 0; settings->extensions[i].name[0]; i++)
 	{
 		if (strchr(settings->extensions[i].name, PATH_SEPARATOR) == NULL)
-			snprintf(path, sizeof(path), EXT_PATH "/%s." PLUGIN_EXT, settings->extensions[i].name);
+			sprintf_s(path, sizeof(path), EXT_PATH "/%s." PLUGIN_EXT, settings->extensions[i].name);
 		else
-			snprintf(path, sizeof(path), "%s", settings->extensions[i].name);
+			sprintf_s(path, sizeof(path), "%s", settings->extensions[i].name);
 
 		han = DLOPEN(path);
 		printf("extension_load_plugins: %s\n", path);
+
 		if (han == NULL)
 		{
 			printf("extension_load_plugins: failed to load %s\n", path);
@@ -211,7 +212,8 @@ rdpExtension* extension_new(freerdp* instance)
 
 	if (instance != NULL)
 	{
-		extension = xnew(rdpExtension);
+		extension = (rdpExtension*) malloc(sizeof(rdpExtension));
+		ZeroMemory(extension, sizeof(rdpExtension));
 
 		extension->instance = instance;
 	}

@@ -19,17 +19,18 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_MAIN_H
-#define	__RAIL_MAIN_H
+#ifndef FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H
+#define FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H
 
 #include <freerdp/rail.h>
+#include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 struct rdp_rail_order
 {
-	RDP_PLUGIN_DATA* plugin_data;
+	rdpSettings* settings;
 	void* plugin;
 	RAIL_HANDSHAKE_ORDER handshake;
 	RAIL_CLIENT_STATUS_ORDER client_status;
@@ -65,4 +66,4 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length);
 #define DEBUG_RAIL(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __RAIL_MAIN_H */
+#endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */

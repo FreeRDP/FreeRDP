@@ -27,12 +27,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
@@ -146,7 +144,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT3
 		}
 		else
 		{
-			format_name->length = freerdp_UnicodeToAsciiAlloc((WCHAR*) s->p, &format_name->name, 32 / 2);
+			format_name->length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) s->p, 32 / 2, &format_name->name, 0, NULL, NULL);
 		}
 
 		stream_seek(s, 32);
@@ -189,7 +187,8 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT32
 				break;
 		}
 		
-		format_name->length = freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &format_name->name, name_len / 2);
+		format_name->length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), name_len / 2, &format_name->name, 0, NULL, NULL);
+
 		stream_seek(s, name_len + 2);
 	}
 }

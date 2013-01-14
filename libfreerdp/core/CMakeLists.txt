@@ -23,6 +23,30 @@ add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
+set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
+
+set(${MODULE_PREFIX}_GATEWAY_SRCS
+	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_client.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_client.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_fault.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_fault.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts_signature.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rts_signature.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ntlm.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/http.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/http.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
+
 set(${MODULE_PREFIX}_SRCS
 	activation.c
 	activation.h
@@ -32,16 +56,12 @@ set(${MODULE_PREFIX}_SRCS
 	gcc.h
 	mcs.c
 	mcs.h
+	nla.c
+	nla.h
 	nego.c
 	nego.h
 	info.c
 	info.h
-	http.c
-	http.h
-	rpc.c
-	rpc.h
-	rts.c
-	rts.h
 	input.c
 	input.h
 	license.c
@@ -69,8 +89,6 @@ set(${MODULE_PREFIX}_SRCS
 	rdp.h
 	tcp.c
 	tcp.h
-	tsg.c
-	tsg.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
@@ -92,11 +110,13 @@ set(${MODULE_PREFIX}_SRCS
 	peer.c
 	peer.h)
 
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
+
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	SOURCES ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
@@ -109,12 +129,12 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_LIBRARIES})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE freerdp
-	MODULES freerdp-core freerdp-crypto freerdp-codec freerdp-locale freerdp-utils)
+	MODULES freerdp-crypto freerdp-codec freerdp-locale freerdp-common freerdp-utils)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-registry winpr-utils winpr-dsparse winpr-sspi winpr-crt)
+	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-crt)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __POINTER_CACHE_H
-#define __POINTER_CACHE_H
+#ifndef FREERDP_POINTER_CACHE_H
+#define FREERDP_POINTER_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -50,4 +50,4 @@ FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpPointerCache* pointer_cache_new(rdpSettings* settings);
 FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
 
-#endif /* __POINTER_CACHE_H */
+#endif /* FREERDP_POINTER_CACHE_H */

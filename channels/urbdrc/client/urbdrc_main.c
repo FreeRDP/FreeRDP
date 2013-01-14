@@ -25,8 +25,12 @@
 #include <time.h>
 #include <libudev.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/cmdline.h>
+
 #include <freerdp/dvc.h>
-#include <freerdp/utils/load_plugin.h>
+#include <freerdp/addin.h>
 
 #include "urbdrc_types.h"
 #include "urbdrc_main.h"
@@ -54,7 +58,7 @@ static int func_hardware_id_format(IUDEVICE* pdev, char (*HardwareIds)[DEVICE_HA
 	return 0;
 }
 
-static int func_compat_id_format(IUDEVICE *pdev, char (*CompatibilityIds)[DEVICE_COMPATIBILITY_ID_SIZE])
+static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE_COMPATIBILITY_ID_SIZE])
 {
 	char str[DEVICE_COMPATIBILITY_ID_SIZE];
 	int bDeviceClass, bDeviceSubClass, bDeviceProtocol;
@@ -260,8 +264,9 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_CHANNEL_NOTIFICATION);
 
 	out_size = 24;
-	out_data = (char *) malloc(out_size);
+	out_data = (char*) malloc(out_size);
 	memset(out_data, 0, out_size);
+
 	data_write_UINT32(out_data + 0, InterfaceId); /* interface id */
 	data_write_UINT32(out_data + 4, MessageId); /* message id */
 	data_write_UINT32(out_data + 8, CHANNEL_CREATED); /* function id */
@@ -285,8 +290,9 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 M
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_DEVICE_SINK);
 
 	out_size = 12;
-	out_data = (char *) malloc(out_size);
+	out_data = (char*) malloc(out_size);
 	memset(out_data, 0, out_size);
+
 	data_write_UINT32(out_data + 0, InterfaceId); /* interface */
 	data_write_UINT32(out_data + 4, MessageId); /* message id */
 	data_write_UINT32(out_data + 8, ADD_VIRTUAL_CHANNEL); /* function id */
@@ -439,8 +445,8 @@ static void* urbdrc_search_usb_device(void* arg)
 	IWTSVirtualChannel* dvc_channel;
 	USB_SEARCHDEV* sdev;
 	IUDEVICE* pdev = NULL;
-	struct wait_obj* listobj[2];
-	struct wait_obj* mon_fd;
+	HANDLE listobj[2];
+	HANDLE mon_fd;
 	int numobj, timeout;
 	int busnum, devnum;
 	int success = 0, error, on_close = 0, found = 0;
@@ -469,7 +475,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	mon_fd = wait_obj_new_with_fd((void*) (size_t) udev_monitor_get_fd(mon));
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, udev_monitor_get_fd(mon));
 
 	while (1)
 	{
@@ -483,15 +489,16 @@ static void* urbdrc_search_usb_device(void* arg)
 		listobj[0] = searchman->term_event;
 		listobj[1] = mon_fd;
 		numobj = 2;
-		wait_obj_select(listobj, numobj, -1);
 
-		if (wait_obj_is_set(searchman->term_event))
+		WaitForMultipleObjects(numobj, listobj, FALSE, INFINITE);
+
+		if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 		{
 			sem_post(&searchman->sem_term);
 			return 0;
 		}
 
-		if (wait_obj_is_set(mon_fd))
+		if (WaitForSingleObject(mon_fd, 0) == WAIT_OBJECT_0)
 		{
 			dev = udev_monitor_receive_device(mon);
 
@@ -565,11 +572,11 @@ static void* urbdrc_search_usb_device(void* arg)
 						numobj = 1;
 						timeout = 4000; /* milliseconds */
 
-						wait_obj_select(listobj, numobj, timeout);
+						WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-						if (wait_obj_is_set(searchman->term_event))
+						if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 						{
-							wait_obj_free(mon_fd);
+							CloseHandle(mon_fd);
 							sem_post(&searchman->sem_term);
 							return 0;
 						}
@@ -621,16 +628,16 @@ static void* urbdrc_search_usb_device(void* arg)
 					numobj = 1;
 					timeout = 3000; /* milliseconds */
 
-					wait_obj_select(listobj, numobj, timeout);
+					WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-					if (wait_obj_is_set(searchman->term_event))
+					if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
 					{
-						wait_obj_free(mon_fd);
+						CloseHandle(mon_fd);
 						sem_post(&searchman->sem_term);
 						return 0;
 					}
 
-					if(pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev)))
+					if (pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev)))
 					{
 						on_close = 0;
 						dvc_channel->Close(dvc_channel);
@@ -639,21 +646,22 @@ static void* urbdrc_search_usb_device(void* arg)
 
 				udev_device_unref(dev);
 			}
-			else {
+			else
+			{
 				printf("No Device from receive_device(). An error occured.\n");
 			}
 		}
 	}
 
-	wait_obj_free(mon_fd);
+	CloseHandle(mon_fd);
 	sem_post(&searchman->sem_term);
 
 	return 0;
 }
 
-void* urbdrc_new_device_create(void * arg)
+void* urbdrc_new_device_create(void* arg)
 {
-	TRANSFER_DATA*  transfer_data = (TRANSFER_DATA*) arg;
+	TRANSFER_DATA* transfer_data = (TRANSFER_DATA*) arg;
 	URBDRC_CHANNEL_CALLBACK* callback = transfer_data->callback;
 	IWTSVirtualChannelManager* channel_mgr;
 	URBDRC_PLUGIN* urbdrc = transfer_data->urbdrc;
@@ -756,7 +764,7 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 			transfer_data->udevman = urbdrc->udevman;
 			transfer_data->urbdrc = urbdrc;
 			transfer_data->cbSize = cbSize;
-			transfer_data->pBuffer = (BYTE *)malloc((cbSize));
+			transfer_data->pBuffer = (BYTE*) malloc((cbSize));
 
 			for (i = 0; i < (cbSize); i++)
 			{
@@ -919,7 +927,7 @@ static int urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = NULL;
-	USB_SEARCHMAN * searchman = NULL;
+	USB_SEARCHMAN* searchman = NULL;
 
 	LLOGLN(10, ("urbdrc_plugin_initialize:"));
 	urbdrc->listener_callback = (URBDRC_LISTENER_CALLBACK*) malloc(sizeof(URBDRC_LISTENER_CALLBACK));
@@ -935,7 +943,7 @@ static int urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	urbdrc->searchman = searchman;
 
 	return pChannelMgr->CreateListener(pChannelMgr, "URBDRC", 0,
-		(IWTSListenerCallback *) urbdrc->listener_callback, NULL);
+		(IWTSListenerCallback*) urbdrc->listener_callback, NULL);
 }
 
 static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
@@ -979,7 +987,7 @@ static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 	return 0;
 }
 
-static void urbdrc_register_udevman_plugin(IWTSPlugin* pPlugin, IUDEVMAN* udevman)
+static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) pPlugin;
 
@@ -994,31 +1002,19 @@ static void urbdrc_register_udevman_plugin(IWTSPlugin* pPlugin, IUDEVMAN* udevma
 	urbdrc->udevman = udevman;
 }
 
-static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP_PLUGIN_DATA* data)
+static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
 {
-	char* fullname;
 	PFREERDP_URBDRC_DEVICE_ENTRY entry;
 	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints;
 
-	if (strrchr(name, '.') != NULL)
-	{
-		entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_plugin(name, URBDRC_UDEVMAN_EXPORT_FUNC_NAME);
-	}
-	else
-	{
-		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, name);
-		strcat(fullname, "_udevman");
-		entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_plugin(fullname, URBDRC_UDEVMAN_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_channel_addin_entry("urbdrc", (LPSTR) name, NULL, 0);
 
 	if (entry == NULL)
 		return FALSE;
 
 	entryPoints.plugin = pPlugin;
-	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_plugin;
-	entryPoints.plugin_data = data;
+	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_addin;
+	entryPoints.args = args;
 
 	if (entry(&entryPoints) != 0)
 	{
@@ -1029,17 +1025,57 @@ static int urbdrc_load_udevman_plugin(IWTSPlugin* pPlugin, const char* name, RDP
 	return TRUE;
 }
 
-static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
+void urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, char* subsystem)
 {
-	BOOL ret;
+	if (urbdrc->subsystem)
+		free(urbdrc->subsystem);
 
-	if (data->data[0] && (strcmp((char*)data->data[0], "urbdrc") == 0 || strstr((char*) data->data[0], "/urbdrc.") != NULL))
+	urbdrc->subsystem = _strdup(subsystem);
+}
+
+COMMAND_LINE_ARGUMENT_A urbdrc_args[] =
+{
+	{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
+	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+			urbdrc_args, flags, urbdrc, NULL, NULL);
+
+	arg = urbdrc_args;
+
+	do
 	{
-		ret = urbdrc_load_udevman_plugin(pPlugin, "libusb", data);
-		return ret;
-	}
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
 
-	return TRUE;
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "dbg")
+		{
+			urbdrc_debug = 0;
+		}
+		CommandLineSwitchCase(arg, "sys")
+		{
+			urbdrc_set_subsystem(urbdrc, arg->Value);
+		}
+		CommandLineSwitchDefault(arg)
+		{
+
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
 #ifdef STATIC_CHANNELS
@@ -1048,16 +1084,17 @@ static int urbdrc_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data
 
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int error = 0;
+	int status = 0;
+	ADDIN_ARGV* args;
 	URBDRC_PLUGIN* urbdrc;
-	RDP_PLUGIN_DATA* data;
 
 	urbdrc = (URBDRC_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "urbdrc");
-	data = pEntryPoints->GetPluginData(pEntryPoints);
+	args = pEntryPoints->GetPluginData(pEntryPoints);
 
 	if (urbdrc == NULL)
 	{
-		urbdrc = xnew(URBDRC_PLUGIN);
+		urbdrc = (URBDRC_PLUGIN*) malloc(sizeof(URBDRC_PLUGIN));
+		ZeroMemory(urbdrc, sizeof(URBDRC_PLUGIN));
 
 		urbdrc->iface.Initialize = urbdrc_plugin_initialize;
 		urbdrc->iface.Connected = NULL;
@@ -1068,14 +1105,16 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		urbdrc_debug = 10;
 
-		if (data->data[2] && strstr((char *)data->data[2], "debug"))
-			urbdrc_debug = 0;
-
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "urbdrc", (IWTSPlugin *) urbdrc);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "urbdrc", (IWTSPlugin*) urbdrc);
 	}
 
-	if (error == 0)
-		urbdrc_process_plugin_data((IWTSPlugin*) urbdrc, data);
+	if (status == 0)
+		urbdrc_process_addin_args(urbdrc, args);
 
-	return error;
+	if (!urbdrc->subsystem)
+		urbdrc_set_subsystem(urbdrc, "libusb");
+
+	urbdrc_load_udevman_addin((IWTSPlugin*) urbdrc, urbdrc->subsystem, args);
+
+	return status;
 }

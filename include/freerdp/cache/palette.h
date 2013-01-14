@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __PALETTE_CACHE_H
-#define __PALETTE_CACHE_H
+#ifndef FREERDP_PALETTE_CACHE_H
+#define FREERDP_PALETTE_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -54,4 +54,4 @@ FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);
 FREERDP_API void palette_cache_free(rdpPaletteCache* palette_cache);
 
-#endif /* __PALETTE_CACHE_H */
+#endif /* FREERDP_PALETTE_CACHE_H */

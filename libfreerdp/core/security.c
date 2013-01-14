@@ -118,7 +118,8 @@ fips_oddparity_table[256] =
 	0xf8, 0xf8, 0xfb, 0xfb, 0xfd, 0xfd, 0xfe, 0xfe
 };
 
-static void security_salted_hash(BYTE* salt, BYTE* input, int length, BYTE* salt1, BYTE* salt2, BYTE* output)
+static void security_salted_hash(const BYTE* salt, const BYTE* input, int length,
+		const BYTE* salt1, const BYTE* salt2, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -141,13 +142,14 @@ static void security_salted_hash(BYTE* salt, BYTE* input, int length, BYTE* salt
 	crypto_md5_final(md5, output);
 }
 
-static void security_premaster_hash(char* input, int length, BYTE* premaster_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+static void security_premaster_hash(const char* input, int length, const BYTE* premaster_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output)
 {
 	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
 	security_salted_hash(premaster_secret, (BYTE*)input, length, client_random, server_random, output);
 }
 
-void security_master_secret(BYTE* premaster_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+void security_master_secret(const BYTE* premaster_secret, const BYTE* client_random,
+		const BYTE* server_random, BYTE* output)
 {
 	/* MasterSecret = PremasterHash('A') + PremasterHash('BB') + PremasterHash('CCC') */
 	security_premaster_hash("A", 1, premaster_secret, client_random, server_random, &output[0]);
@@ -155,13 +157,15 @@ void security_master_secret(BYTE* premaster_secret, BYTE* client_random, BYTE* s
 	security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32]);
 }
 
-static void security_master_hash(char* input, int length, BYTE* master_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+static void security_master_hash(const char* input, int length, const BYTE* master_secret,
+		const BYTE* client_random, const BYTE* server_random, BYTE* output)
 {
 	/* MasterHash(Input) = SaltedHash(MasterSecret, Input, ServerRandom, ClientRandom) */
-	security_salted_hash(master_secret, (BYTE*)input, length, server_random, client_random, output);
+	security_salted_hash(master_secret, (const BYTE*)input, length, server_random, client_random, output);
 }
 
-void security_session_key_blob(BYTE* master_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+void security_session_key_blob(const BYTE* master_secret, const BYTE* client_random,
+		const BYTE* server_random, BYTE* output)
 {
 	/* MasterHash = MasterHash('A') + MasterHash('BB') + MasterHash('CCC') */
 	security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]);
@@ -169,13 +173,14 @@ void security_session_key_blob(BYTE* master_secret, BYTE* client_random, BYTE* s
 	security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
 }
 
-void security_mac_salt_key(BYTE* session_key_blob, BYTE* client_random, BYTE* server_random, BYTE* output)
+void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_random,
+		const BYTE* server_random, BYTE* output)
 {
 	/* MacSaltKey = First128Bits(SessionKeyBlob) */
 	memcpy(output, session_key_blob, 16);
 }
 
-void security_md5_16_32_32(BYTE* in0, BYTE* in1, BYTE* in2, BYTE* output)
+void security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
 {
 	CryptoMd5 md5;
 
@@ -186,7 +191,8 @@ void security_md5_16_32_32(BYTE* in0, BYTE* in1, BYTE* in2, BYTE* output)
 	crypto_md5_final(md5, output);
 }
 
-void security_licensing_encryption_key(BYTE* session_key_blob, BYTE* client_random, BYTE* server_random, BYTE* output)
+void security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random,
+		const BYTE* server_random, BYTE* output)
 {
 	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
 	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
@@ -200,7 +206,8 @@ void security_UINT32_le(BYTE* output, UINT32 value)
 	output[3] = (value >> 24) & 0xFF;
 }
 
-void security_mac_data(BYTE* mac_salt_key, BYTE* data, UINT32 length, BYTE* output)
+void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length,
+		BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -227,7 +234,7 @@ void security_mac_data(BYTE* mac_salt_key, BYTE* data, UINT32 length, BYTE* outp
 	crypto_md5_final(md5, output);
 }
 
-void security_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BYTE* output)
+void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -255,7 +262,8 @@ void security_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BYTE* output
 	memcpy(output, md5_digest, 8);
 }
 
-void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL encryption, BYTE* output)
+void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
+		BOOL encryption, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -265,6 +273,7 @@ void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL 
 	BYTE sha1_digest[CRYPTO_SHA1_DIGEST_LENGTH];
 
 	security_UINT32_le(length_le, length); /* length must be little-endian */
+
 	if (encryption)
 	{
 		security_UINT32_le(use_count_le, rdp->encrypt_checksum_use_count);
@@ -273,8 +282,7 @@ void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL 
 	{
 		/*
 		 * We calculate checksum on plain text, so we must have already
-		 * decrypt it, which means decrypt_checksum_use_count is
-		 * off by one.
+		 * decrypt it, which means decrypt_checksum_use_count is off by one.
 		 */
 		security_UINT32_le(use_count_le, rdp->decrypt_checksum_use_count - 1);
 	}
@@ -298,14 +306,16 @@ void security_salted_mac_signature(rdpRdp *rdp, BYTE* data, UINT32 length, BOOL 
 	memcpy(output, md5_digest, 8);
 }
 
-static void security_A(BYTE* master_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+static void security_A(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
+		BYTE* output)
 {
 	security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]);
 	security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
 	security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
 }
 
-static void security_X(BYTE* master_secret, BYTE* client_random, BYTE* server_random, BYTE* output)
+static void security_X(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
+		BYTE* output)
 {
 	security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]);
 	security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
@@ -345,7 +355,7 @@ static void fips_expand_key_bits(BYTE* in, BYTE* out)
 		out[i] = fips_oddparity_table[fips_reverse_table[out[i]]];
 }
 
-BOOL security_establish_keys(BYTE* client_random, rdpRdp* rdp)
+BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 {
 	BYTE pre_master_secret[48];
 	BYTE master_secret[48];
@@ -495,7 +505,7 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	return TRUE;
 }
 
-void security_hmac_signature(BYTE* data, int length, BYTE* output, rdpRdp* rdp)
+void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp)
 {
 	BYTE buf[20];
 	BYTE use_count_le[4];
@@ -523,7 +533,7 @@ BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL security_fips_check_signature(BYTE* data, int length, BYTE* sig, rdpRdp* rdp)
+BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)
 {
 	BYTE buf[20];
 	BYTE use_count_le[4];

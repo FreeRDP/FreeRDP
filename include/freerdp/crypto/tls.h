@@ -23,6 +23,9 @@
 #include "crypto.h"
 #include "certificate.h"
 
+#include <winpr/crt.h>
+#include <winpr/sspi.h>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
@@ -40,6 +43,7 @@ struct rdp_tls
 	BYTE* PublicKey;
 	DWORD PublicKeyLength;
 	rdpSettings* settings;
+	SecPkgContext_Bindings* Bindings;
 	rdpCertificateStore* certificate_store;
 };
 
@@ -52,6 +56,9 @@ FREERDP_API int tls_write(rdpTls* tls, BYTE* data, int length);
 
 FREERDP_API int tls_read_all(rdpTls* tls, BYTE* data, int length);
 FREERDP_API int tls_write_all(rdpTls* tls, BYTE* data, int length);
+
+FREERDP_API int tls_wait_read(rdpTls* tls);
+FREERDP_API int tls_wait_write(rdpTls* tls);
 
 FREERDP_API BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname);
 FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint);

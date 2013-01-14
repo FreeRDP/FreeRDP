@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
 
 /**
  * Remote Desktop Plus - Overview of .rdp file settings:
@@ -244,6 +245,8 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 		file->RemoteApplicationProgram = value;
 	else if (_stricmp(name, "remoteapplicationfile") == 0)
 		file->RemoteApplicationFile = value;
+	else if (_stricmp(name, "remoteapplicationguid") == 0)
+		file->RemoteApplicationGuid = value;
 	else if (_stricmp(name, "remoteapplicationcmdline") == 0)
 		file->RemoteApplicationCmdLine = value;
 	else if (_stricmp(name, "alternate shell") == 0)
@@ -482,27 +485,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t) file->Username))
 	{
-		char* p;
-		size_t size;
+		char* user;
+		char* domain;
 
-		p = strchr(file->Username, '\\');
+		freerdp_parse_username(file->Username, &user, &domain);
 
-		if (p)
-		{
-			size = p - file->Username;
-			settings->Domain = (char*) malloc(size + 1);
-			CopyMemory(settings->Domain, file->Username, size);
-			settings->Domain[size] = 0;
-
-			size = strlen(file->Username) - size - 1;
-			settings->Username = (char*) malloc(size + 1);
-			CopyMemory(settings->Username, &file->Username[p - file->Username + 1], size);
-			settings->Username[size] = 0;
-		}
-		else
-		{
-			settings->Username = file->Username;
-		}
+		settings->Username = user;
+		settings->Domain = domain;
 	}
 
 	if (~file->ServerPort)
@@ -528,6 +517,28 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
 	
+	if (~file->ConnectionType)
+	{
+		freerdp_set_connection_type(settings, file->ConnectionType);
+	}
+
+	if (~file->AudioMode)
+	{
+		if (file->AudioMode == AUDIO_MODE_REDIRECT)
+		{
+			settings->AudioPlayback = TRUE;
+		}
+		else if (file->AudioMode == AUDIO_MODE_PLAY_ON_SERVER)
+		{
+			settings->RemoteConsoleAudio = TRUE;
+		}
+		else if (file->AudioMode == AUDIO_MODE_NONE)
+		{
+			settings->AudioPlayback = FALSE;
+			settings->RemoteConsoleAudio = FALSE;
+		}
+	}
+
 	if (~((size_t) file->GatewayHostname))
 		settings->GatewayHostname = file->GatewayHostname;
 	if (~file->GatewayUsageMethod)
@@ -537,6 +548,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	
 	if (~file->RemoteApplicationMode)
 		settings->RemoteApplicationMode = file->RemoteApplicationMode;
+	if (~((size_t) file->RemoteApplicationProgram))
+		settings->RemoteApplicationProgram = file->RemoteApplicationProgram;
+	if (~((size_t) file->RemoteApplicationName))
+		settings->RemoteApplicationName = file->RemoteApplicationName;
+	if (~((size_t) file->RemoteApplicationIcon))
+		settings->RemoteApplicationIcon = file->RemoteApplicationIcon;
+	if (~((size_t) file->RemoteApplicationFile))
+		settings->RemoteApplicationFile = file->RemoteApplicationFile;
+	if (~((size_t) file->RemoteApplicationGuid))
+		settings->RemoteApplicationGuid = file->RemoteApplicationGuid;
+	if (~((size_t) file->RemoteApplicationCmdLine))
+		settings->RemoteApplicationCmdLine = file->RemoteApplicationCmdLine;
+
+	if (~file->SpanMonitors)
+		settings->SpanMonitors = file->SpanMonitors;
+	if (~file->UseMultiMon)
+		settings->UseMultimon = file->UseMultiMon;
 
 	return TRUE;
 }

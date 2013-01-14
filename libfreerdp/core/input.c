@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/input.h>
 
 #include "input.h"
@@ -298,7 +300,7 @@ static BOOL input_recv_event(rdpInput* input, STREAM* s)
 {
 	UINT16 messageType;
 
-	if (stream_get_left(s) < 4)
+	if (stream_get_left(s) < 6)
 		return FALSE;
 
 	stream_seek(s, 4); /* eventTime (4 bytes), ignored by the server */
@@ -423,11 +425,11 @@ rdpInput* input_new(rdpRdp* rdp)
 {
 	rdpInput* input;
 
-	input = (rdpInput*) xzalloc(sizeof(rdpInput));
+	input = (rdpInput*) malloc(sizeof(rdpInput));
 
 	if (input != NULL)
 	{
-
+		ZeroMemory(input, sizeof(rdpInput));
 	}
 
 	return input;

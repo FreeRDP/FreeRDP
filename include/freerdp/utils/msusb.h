@@ -18,11 +18,12 @@
  * limitations under the License.
  */
 
-#ifndef __MSCONFIG_H
-#define __MSCONFIG_H
+#ifndef FREERDP_UTILS_MSCONFIG_H
+#define FREERDP_UTILS_MSCONFIG_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
+
 #include <freerdp/utils/stream.h>
 
 /* a safer free helper */
@@ -134,4 +135,4 @@ FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data
 FREERDP_API int msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, BYTE* data, int * offset);
 FREERDP_API void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfg);
 
-#endif
+#endif /* FREERDP_UTILS_MSCONFIG_H */

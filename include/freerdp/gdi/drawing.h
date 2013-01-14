@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_DRAWING_H
-#define __GDI_DRAWING_H
+#ifndef FREERDP_GDI_DRAWING_H
+#define FREERDP_GDI_DRAWING_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -31,4 +31,4 @@ FREERDP_API int gdi_GetBkMode(HGDI_DC hdc);
 FREERDP_API int gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
 FREERDP_API GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
 
-#endif /* __GDI_DRAWING_H */
+#endif /* FREERDP_GDI_DRAWING_H */

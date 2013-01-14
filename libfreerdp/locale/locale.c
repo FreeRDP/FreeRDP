@@ -25,9 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/locale.h>
 
 struct _SYSTEM_LOCALE
@@ -679,7 +680,7 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 
 	freerdp_get_system_language_and_country_codes(language, country);
 
-	for (i = 0; i < ARRAY_SIZE(SYSTEM_LOCALE_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
 		if ((strcmp(language, SYSTEM_LOCALE_TABLE[i].language) == 0) && (strcmp(country, SYSTEM_LOCALE_TABLE[i].country) == 0))
 		{
@@ -707,7 +708,7 @@ const char* freerdp_get_system_locale_name_from_id(UINT32 localeId)
 {
 	int index;
 
-	for (index = 0; index < ARRAY_SIZE(LOCALE_NAME_TABLE); index++)
+	for (index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
 	{
 		if (localeId == LOCALE_NAME_TABLE[index].localeId)
 			return LOCALE_NAME_TABLE[index].name;
@@ -735,7 +736,7 @@ UINT32 freerdp_detect_keyboard_layout_from_system_locale()
 
 	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
 
-	for (i = 0; i < ARRAY_SIZE(LOCALE_KEYBOARD_LAYOUTS_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(LOCALE_KEYBOARD_LAYOUTS_TABLE); i++)
 	{
 		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
 		{

@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __MPPC_H
-#define __MPPC_H
+#ifndef FREERDP_CODEC_MPPC_DECODER_H
+#define FREERDP_CODEC_MPPC_DECODER_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -53,4 +53,4 @@ FREERDP_API int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len,
 FREERDP_API struct rdp_mppc_dec* mppc_dec_new(void);
 FREERDP_API void mppc_dec_free(struct rdp_mppc_dec* dec);
 
-#endif
+#endif /* FREERDP_CODEC_MPPC_DECODER_H */

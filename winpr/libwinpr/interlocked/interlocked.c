@@ -271,7 +271,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 	return previousValue;
 }
 
-#elif ANDROID
+#elif ANDROID || (defined(__GNUC__) && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
 
 #include <pthread.h>
 

@@ -21,18 +21,11 @@
 #include "config.h"
 #endif
 
-#include <winpr/synch.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-/**
- * CreateEventA
- * CreateEventW
- * CreateEventExA
- * CreateEventExW
- * OpenEventA
- * OpenEventW
- * SetEvent
- * ResetEvent
- */
+#include <winpr/synch.h>
 
 #ifndef _WIN32
 
@@ -41,6 +34,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
@@ -51,6 +46,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	if (event)
 	{
+		event->bAttached = FALSE;
 		event->bManualReset = bManualReset;
 
 		if (!event->bManualReset)
@@ -69,6 +65,9 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
 	}
+
+	if (!cs.LockSemaphore)
+		InitializeCriticalSection(&cs);
 
 	return handle;
 }
@@ -103,22 +102,33 @@ BOOL SetEvent(HANDLE hEvent)
 	ULONG Type;
 	PVOID Object;
 	int length;
+	BOOL status;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
-		return FALSE;
+	status = FALSE;
 
-	event = (WINPR_EVENT*) Object;
+	EnterCriticalSection(&cs);
 
-	if (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
-		return TRUE;
+	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	{
+		event = (WINPR_EVENT*) Object;
 
-	length = write(event->pipe_fd[1], "sig", 4);
+		if (!(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0))
+		{
+			length = write(event->pipe_fd[1], "-", 1);
 
-	if (length != 4)
-		return FALSE;
+			if (length == 1)
+				status = TRUE;
+		}
+		else
+		{
+			status = TRUE;
+		}
+	}
 
-	return TRUE;
+	LeaveCriticalSection(&cs);
+
+	return status;
 }
 
 BOOL ResetEvent(HANDLE hEvent)
@@ -126,22 +136,131 @@ BOOL ResetEvent(HANDLE hEvent)
 	ULONG Type;
 	PVOID Object;
 	int length;
+	BOOL status;
 	WINPR_EVENT* event;
 
-	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
-		return FALSE;
+	status = FALSE;
 
-	event = (WINPR_EVENT*) Object;
+	EnterCriticalSection(&cs);
 
-	while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
-		length = read(event->pipe_fd[0], &length, 4);
+		event = (WINPR_EVENT*) Object;
 
-		if (length != 4)
-			return FALSE;
+		while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+		{
+			length = read(event->pipe_fd[0], &length, 1);
+
+			if (length == 1)
+				status = TRUE;
+
+			if (length != 1)
+				break;
+		}
 	}
 
-	return TRUE;
+	LeaveCriticalSection(&cs);
+
+	return status;
 }
 
 #endif
+
+HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, int FileDescriptor)
+{
+#ifndef _WIN32
+	WINPR_EVENT* event;
+	HANDLE handle = NULL;
+
+	event = (WINPR_EVENT*) malloc(sizeof(WINPR_EVENT));
+
+	if (event)
+	{
+		event->bAttached = TRUE;
+		event->bManualReset = bManualReset;
+
+		if (!event->bManualReset)
+		{
+			printf("CreateFileDescriptorEventW: auto-reset events not yet implemented\n");
+		}
+
+		event->pipe_fd[0] = FileDescriptor;
+		event->pipe_fd[1] = -1;
+
+		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
+	}
+
+	return handle;
+#else
+	return NULL;
+#endif
+}
+
+HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, int FileDescriptor)
+{
+	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, FileDescriptor);
+}
+
+/**
+ * Returns an event based on the handle returned by GetEventWaitObject()
+ */
+HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	BOOL bManualReset, BOOL bInitialState, void* pObject)
+{
+#ifndef _WIN32
+	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, (int) (ULONG_PTR) pObject);
+#else
+	HANDLE hEvent = NULL;
+
+	DuplicateHandle(GetCurrentProcess(), pObject, GetCurrentProcess(), &hEvent, 0, FALSE, DUPLICATE_SAME_ACCESS);
+
+	return hEvent;
+#endif
+}
+
+/*
+ * Returns inner file descriptor for usage with select()
+ * This file descriptor is not usable on Windows
+ */
+
+int GetEventFileDescriptor(HANDLE hEvent)
+{
+#ifndef _WIN32
+	ULONG Type;
+	PVOID Object;
+	WINPR_EVENT* event;
+
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+		return -1;
+
+	event = (WINPR_EVENT*) Object;
+
+	return event->pipe_fd[0];
+#else
+	return -1;
+#endif
+}
+
+/**
+ * Returns platform-specific wait object as a void pointer
+ *
+ * On Windows, the returned object is the same as the hEvent
+ * argument and is an event HANDLE usable in WaitForMultipleObjects
+ *
+ * On other platforms, the returned object can be cast to an int
+ * to obtain a file descriptor usable in select()
+ */
+
+void* GetEventWaitObject(HANDLE hEvent)
+{
+#ifndef _WIN32
+	int fd;
+
+	fd = GetEventFileDescriptor(hEvent);
+
+	return ((void*) (long) fd);
+#else
+	return hEvent;
+#endif
+}
+

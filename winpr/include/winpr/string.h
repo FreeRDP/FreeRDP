@@ -130,12 +130,6 @@ WINPR_API BOOL IsCharLowerW(WCHAR ch);
 #define IsCharLower	IsCharLowerA
 #endif
 
-WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
-
-WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
-		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
-
 WINPR_API int lstrlenA(LPCSTR lpString);
 WINPR_API int lstrlenW(LPCWSTR lpString);
 
@@ -156,6 +150,14 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 
 #define	 sprintf_s	snprintf
 
+/* Unicode Conversion */
+
+WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+
+WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+
 #else
 
 #define _wcscmp		wcscmp
@@ -163,5 +165,13 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 #define _wcschr		wcschr
 
 #endif
+
+/* Extended API */
+
+WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
+
+WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
 #endif /* WINPR_CRT_STRING_H */

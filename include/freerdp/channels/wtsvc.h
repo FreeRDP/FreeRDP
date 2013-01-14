@@ -29,8 +29,8 @@
  * implementation are thread-safe.
  */
 
-#ifndef __FREERDP_WTSVC_H
-#define __FREERDP_WTSVC_H
+#ifndef FREERDP_WTSVC_H
+#define FREERDP_WTSVC_H
 
 #include <freerdp/types.h>
 #include <freerdp/peer.h>
@@ -127,4 +127,4 @@ FREERDP_API BOOL WTSVirtualChannelWrite(
 FREERDP_API BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle);
 
-#endif /* __FREERDP_WTSVC_H */
+#endif /* FREERDP_WTSVC_H */

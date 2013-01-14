@@ -53,9 +53,7 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
-#include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "tcp.h"
 
@@ -70,7 +68,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
 		ip = (BYTE*) (&sockaddr.sin_addr);
-		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
+		sprintf_s(tcp->ip_address, sizeof(tcp->ip_address),
 			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
 	else
@@ -170,6 +168,16 @@ int tcp_write(rdpTcp* tcp, BYTE* data, int length)
 	return freerdp_tcp_write(tcp->sockfd, data, length);
 }
 
+int tcp_wait_read(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_read(tcp->sockfd);
+}
+
+int tcp_wait_write(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_write(tcp->sockfd);
+}
+
 BOOL tcp_disconnect(rdpTcp* tcp)
 {
 	freerdp_tcp_disconnect(tcp->sockfd);
@@ -244,10 +252,12 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
+		ZeroMemory(tcp, sizeof(rdpTcp));
+
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}

@@ -30,6 +30,7 @@ endif()
 
 if(MSVC)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
+	option(WITH_WINMM "Use Windows Multimedia" ON)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
 

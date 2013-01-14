@@ -28,7 +28,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
 #include "rdp.h"
@@ -92,30 +91,36 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 	return TRUE;
 }
 
-void freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
+BOOL freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 {
 	UINT32 length;
 	UINT32 flags;
 	int chunk_length;
 
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, length);
 	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(instance->ReceiveChannelData, instance,
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
+	return TRUE;
 }
 
-void freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, UINT16 channel_id)
+BOOL freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, UINT16 channel_id)
 {
 	UINT32 length;
 	UINT32 flags;
 	int chunk_length;
 
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, length);
 	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(client->ReceiveChannelData, client,
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
+	return TRUE;
 }

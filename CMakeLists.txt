@@ -24,6 +24,12 @@ project(FreeRDP C)
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+# Include our extra modules
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
+
+# Check for cmake compatibility (enable/disable features)
+include(CheckCmakeCompat)
+
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -31,12 +37,6 @@ include(CheckStructHasMember)
 include(CMakeDetermineSystem)
 include(FindPkgConfig)
 include(TestBigEndian)
-
-# Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
-
-# Check for cmake compatibility (enable/disable features)
-include(CheckCmakeCompat)
 
 include(FindFeature)
 include(AutoVersioning)
@@ -50,8 +50,14 @@ include(GNUInstallDirsWrapper)
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "1")
 set(FREERDP_VERSION_REVISION "0")
-set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
-set(FREERDP_VERSION_FULL "${FREERDP_VERSION}.${FREERDP_VERSION_REVISION}")
+set(FREERDP_VERSION_SUFFIX "dev")
+set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
+set(FREERDP_VERSION "${FREERDP_API_VERSION}.${FREERDP_VERSION_REVISION}")
+if (FREERDP_VERSION_SUFFIX)
+	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}-${FREERDP_VERSION_SUFFIX}")
+else()
+	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}")
+endif()
 include(GetGitRevisionDescription)
 git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
 message(STATUS "Git Revision ${GIT_REVISION}")
@@ -73,7 +79,7 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 endif()
 
 if(NOT DEFINED EXPORT_ALL_SYMBOLS)
-	set(EXPORT_ALL_SYMBOLS FALSE)
+	set(EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
 # Configure MSVC Runtime
@@ -92,6 +98,9 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
+	if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ANDROID)
+    	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+	endif()
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
 	if(Wno-unused-result)
@@ -173,7 +182,9 @@ if(APPLE)
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package(Threads REQUIRED)
+if(NOT ANDROID)
+	find_package(Threads REQUIRED)
+endif()
 
 if(UNIX OR CYGWIN)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
@@ -285,6 +296,8 @@ set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
 set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
+
+set(FREERDP_LIBRARY_PATH "${CMAKE_INSTALL_LIBDIR}")
 
 set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/freerdp")
 set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")

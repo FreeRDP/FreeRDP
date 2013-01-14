@@ -66,12 +66,17 @@ typedef struct wf_context wfContext;
 
 struct wf_info
 {
+	int width;
+	int height;
+	int offset_x;
+	int offset_y;
 	int fs_toggle;
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
 
 	HWND hwnd;
+	POINT diff;
 	HGDI_DC hdc;
 	UINT16 srcBpp;
 	UINT16 dstBpp;
@@ -85,7 +90,6 @@ struct wf_info
 	RECT update_rect;
 
 	wfBitmap* tile;
-	wfBitmap* image;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 

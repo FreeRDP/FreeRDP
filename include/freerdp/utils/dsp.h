@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __DSP_UTILS_H
-#define __DSP_UTILS_H
+#ifndef FREERDP_UTILS_DSP_H
+#define FREERDP_UTILS_DSP_H
 
 #include <freerdp/api.h>
 
@@ -73,5 +73,5 @@ FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void);
 FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 #define freerdp_dsp_context_reset_adpcm(_c) memset(&_c->adpcm, 0, sizeof(ADPCM))
 
-#endif /* __DSP_UTILS_H */
+#endif /* FREERDP_UTILS_DSP_H */
 

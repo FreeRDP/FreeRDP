@@ -28,14 +28,12 @@
 #include <string.h>
 
 #include <freerdp/utils/file.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/vkcodes.h>
 #include <freerdp/locale/keyboard.h>
 
 #include "liblocale.h"
 
 #include <stdlib.h>
-
 
 extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
 

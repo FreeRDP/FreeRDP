@@ -23,10 +23,11 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/nine_grid.h>
 
@@ -96,7 +97,8 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 {
 	rdpNineGridCache* nine_grid;
 
-	nine_grid = (rdpNineGridCache*) xzalloc(sizeof(rdpNineGridCache));
+	nine_grid = (rdpNineGridCache*) malloc(sizeof(rdpNineGridCache));
+	ZeroMemory(nine_grid, sizeof(rdpNineGridCache));
 
 	if (nine_grid != NULL)
 	{
@@ -108,7 +110,8 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 		nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
 		nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
 
-		nine_grid->entries = (NINE_GRID_ENTRY*) xzalloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
+		nine_grid->entries = (NINE_GRID_ENTRY*) malloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
+		ZeroMemory(nine_grid->entries, sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
 	}
 
 	return nine_grid;

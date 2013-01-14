@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_PASSPHRASE_H
-#define __UTILS_PASSPHRASE_H
+#ifndef FREERDP_UTILS_PASSPHRASE_H
+#define FREERDP_UTILS_PASSPHRASE_H
 
 #include <stdlib.h>
 #include <freerdp/api.h>
 
 FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin);
 
-#endif /* __UTILS_PASSPHRASE_H */
+#endif /* FREERDP_UTILS_PASSPHRASE_H */

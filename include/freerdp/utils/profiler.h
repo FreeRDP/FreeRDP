@@ -17,11 +17,10 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_PROFILER_H
-#define __UTILS_PROFILER_H
+#ifndef FREERDP_UTILS_PROFILER_H
+#define FREERDP_UTILS_PROFILER_H
 
 #include <freerdp/api.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stopwatch.h>
 
 struct _PROFILER
@@ -63,4 +62,4 @@ FREERDP_API void profiler_print_footer();
 #define PROFILER_PRINT_FOOTER		do { } while (0)
 #endif
 
-#endif /* __UTILS_PROFILER_H */
+#endif /* FREERDP_UTILS_PROFILER_H */

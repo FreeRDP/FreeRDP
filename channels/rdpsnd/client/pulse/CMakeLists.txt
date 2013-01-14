@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 include_directories(..)
 include_directories(${PULSE_INCLUDE_DIR})
 
-add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 

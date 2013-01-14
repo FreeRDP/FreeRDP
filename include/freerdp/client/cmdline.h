@@ -17,16 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_CMDLINE
-#define FREERDP_CLIENT_CMDLINE
+#ifndef FREERDP_CLIENT_CMDLINE_H
+#define FREERDP_CLIENT_CMDLINE_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-FREERDP_API BOOL freerdp_detect_new_command_line_syntax(int argc, char* argv[]);
-
 FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
 FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
-#endif /* FREERDP_CLIENT_CMDLINE */
+FREERDP_API int freerdp_client_print_version();
+FREERDP_API int freerdp_client_print_command_line_help(int argc, char** argv);
 
+FREERDP_API int freerdp_parse_username(char* username, char** user, char** domain);
+FREERDP_API int freerdp_set_connection_type(rdpSettings* settings, int type);
+
+FREERDP_API int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** params);
+FREERDP_API int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** params);
+FREERDP_API int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params);
+
+#endif /* FREERDP_CLIENT_CMDLINE_H */

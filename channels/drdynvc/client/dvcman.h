@@ -21,10 +21,12 @@
 #define __DVCMAN_H
 
 #include <freerdp/dvc.h>
+#include <freerdp/addin.h>
+
 #include "drdynvc_main.h"
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin);
-int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* data);
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args);
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName);

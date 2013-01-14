@@ -79,6 +79,11 @@
 #define RNS_UD_15BPP_SUPPORT	0x0004
 #define RNS_UD_32BPP_SUPPORT	0x0008
 
+/* Audio Mode */
+#define AUDIO_MODE_REDIRECT		0 /* Bring to this computer */
+#define AUDIO_MODE_PLAY_ON_SERVER	1 /* Leave at remote computer */
+#define AUDIO_MODE_NONE			2 /* Do not play */
+
 /* Early Capability Flags (Client to Server) */
 #define RNS_UD_CS_SUPPORT_ERRINFO_PDU		0x0001
 #define RNS_UD_CS_WANT_32BPP_SESSION		0x0002
@@ -316,6 +321,13 @@ struct rdp_channel
 };
 typedef struct rdp_channel rdpChannel;
 
+struct _ADDIN_ARGV
+{
+	int argc;
+	char** argv;
+};
+typedef struct _ADDIN_ARGV ADDIN_ARGV;
+
 /* Extensions */
 
 struct rdp_ext_set
@@ -509,7 +521,10 @@ struct rdp_settings
 	ALIGN64 int MonitorCount; /* 384 */
 	ALIGN64 UINT32 MonitorDefArraySize; /* 385 */
 	ALIGN64 rdpMonitor* MonitorDefArray; /* 386 */
-	UINT64 padding0448[448 - 387]; /* 387 */
+	ALIGN64 BOOL SpanMonitors; /* 387 */
+	ALIGN64 BOOL UseMultimon; /* 388 */
+	ALIGN64 BOOL ForceMultimon; /* 389 */
+	UINT64 padding0448[448 - 390]; /* 390 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
@@ -718,14 +733,15 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationIcon; /* 2114 */
 	ALIGN64 char* RemoteApplicationProgram; /* 2115 */
 	ALIGN64 char* RemoteApplicationFile; /* 2116 */
-	ALIGN64 char* RemoteApplicationCmdLine; /* 2117 */
-	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2118 */
-	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2119 */
-	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2120 */
-	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2121 */
-	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2122 */
-	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2123 */
-	UINT64 padding2176[2176 - 2124]; /* 2124 */
+	ALIGN64 char* RemoteApplicationGuid; /* 2117 */
+	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
+	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
+	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
+	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2121 */
+	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
+	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
+	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2124 */
+	UINT64 padding2176[2176 - 2125]; /* 2125 */
 	UINT64 padding2240[2240 - 2124]; /* 2176 */
 
 	/**
@@ -922,6 +938,28 @@ struct rdp_settings
 	/* Parallel Port Redirection */
 	ALIGN64 BOOL RedirectParallelPorts; /*  */
 
+	/**
+	 * Other Redirection
+	 */
+
+	ALIGN64 BOOL RedirectClipboard; /*  */
+
+	/**
+	 * Static Virtual Channels
+	 */
+
+	ALIGN64 UINT32 StaticChannelCount;
+	ALIGN64 UINT32 StaticChannelArraySize;
+	ALIGN64 ADDIN_ARGV** StaticChannelArray;
+
+	/**
+	 * Dynamic Virtual Channels
+	 */
+
+	ALIGN64 UINT32 DynamicChannelCount;
+	ALIGN64 UINT32 DynamicChannelArraySize;
+	ALIGN64 ADDIN_ARGV** DynamicChannelArray;
+
 	/*
 	 * Extensions
 	 */
@@ -932,9 +970,23 @@ struct rdp_settings
 };
 typedef struct rdp_settings rdpSettings;
 
-FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
-
 FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
+
+FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);
+FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument);
+FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
+FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value);
+
+FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
+
+FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const char* name);
+FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
+
+FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
+FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
+FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
 #endif /* FREERDP_SETTINGS_H */

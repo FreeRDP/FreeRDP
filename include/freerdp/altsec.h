@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_ALTSEC_H
-#define __UPDATE_ALTSEC_H
+#ifndef FREERDP_UPDATE_ALTSEC_H
+#define FREERDP_UPDATE_ALTSEC_H
 
 #include <freerdp/types.h>
 
@@ -214,4 +214,4 @@ struct rdp_altsec_update
 };
 typedef struct rdp_altsec_update rdpAltSecUpdate;
 
-#endif /* __UPDATE_ALTSEC_H */
+#endif /* FREERDP_UPDATE_ALTSEC_H */

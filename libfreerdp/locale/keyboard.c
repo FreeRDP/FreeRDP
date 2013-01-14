@@ -24,8 +24,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
 
@@ -82,7 +83,7 @@ UINT32 freerdp_keyboard_init(UINT32 keyboardLayoutId)
 	keyboardLayoutId = freerdp_detect_keyboard(keyboardLayoutId);
 
 	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
-	for (keycode=0; keycode < ARRAY_SIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+	for (keycode=0; keycode < ARRAYSIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
 		RDP_SCANCODE_TO_X11_KEYCODE
 			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode])]
 			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? 1 : 0] = keycode;

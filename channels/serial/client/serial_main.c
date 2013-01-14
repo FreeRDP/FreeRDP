@@ -43,11 +43,11 @@
 #include "serial_tty.h"
 #include "serial_constants.h"
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/unicode.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
@@ -62,7 +62,7 @@ struct _SERIAL_DEVICE
 	LIST* irp_list;
 	LIST* pending_irps;
 	freerdp_thread* thread;
-	struct wait_obj* in_event;
+	HANDLE in_event;
 
 	fd_set read_fds;
 	fd_set write_fds;
@@ -80,6 +80,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial);
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
 	char* path;
+	int status;
 	SERIAL_TTY* tty;
 	UINT32 PathLength;
 	UINT32 FileId;
@@ -88,7 +89,11 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 					/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_UINT32(irp->input, PathLength);
 
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(irp->input), &path, PathLength / 2);
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			PathLength / 2, &path, 0, NULL, NULL);
+
+	if (status < 1)
+		path = (char*) calloc(1, 1);
 
 	FileId = irp->devman->id_sequence++;
 
@@ -351,10 +356,10 @@ static void* serial_thread_func(void* arg)
 		freerdp_thread_reset(serial->thread);
 		serial_process_irp_list(serial);
 
-		if (wait_obj_is_set(serial->in_event))
+		if (WaitForSingleObject(serial->in_event, 0) == WAIT_OBJECT_0)
 		{
 			if (serial_check_fds(serial))
-				wait_obj_clear(serial->in_event);
+				ResetEvent(serial->in_event);
 		}
 	}
 
@@ -442,7 +447,7 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 		stream_write_UINT32(irp->output, 0);
 		irp->Complete(irp);
 
-		wait_obj_set(serial->in_event);
+		SetEvent(serial->in_event);
 		break;
 	}
 
@@ -480,7 +485,7 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 				irp = (IRP*) list_next(serial->pending_irps, irp);
 				list_remove(serial->pending_irps, prev);
 
-				wait_obj_set(serial->in_event);
+				SetEvent(serial->in_event);
 			}
 		}
 
@@ -556,7 +561,7 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 	irp->IoStatus = STATUS_PENDING;
 	list_enqueue(serial->pending_irps, irp);
-	wait_obj_set(serial->in_event);
+	SetEvent(serial->in_event);
 }
 
 static void __serial_check_fds(SERIAL_DEVICE* serial)
@@ -616,7 +621,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		if (prev->IoStatus == STATUS_SUCCESS)
 		{
 			list_remove(serial->pending_irps, prev);
-			wait_obj_set(serial->in_event);
+			SetEvent(serial->in_event);
 		}
 	}
 }
@@ -708,7 +713,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (name[0] && path[0])
 	{
-		serial = xnew(SERIAL_DEVICE);
+		serial = (SERIAL_DEVICE*) malloc(sizeof(SERIAL_DEVICE));
+		ZeroMemory(serial, sizeof(SERIAL_DEVICE));
 
 		serial->device.type = RDPDR_DTYP_SERIAL;
 		serial->device.name = name;
@@ -725,9 +731,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->irp_list = list_new();
 		serial->pending_irps = list_new();
 		serial->thread = freerdp_thread_new();
-		serial->in_event = wait_obj_new();
+		serial->in_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)serial);
+		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
 		freerdp_thread_start(serial->thread, serial_thread_func, serial);
 	}

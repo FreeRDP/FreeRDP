@@ -31,13 +31,13 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/cmdline.h>
 
-#include <freerdp/constants.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
+#include <freerdp/addin.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/load_plugin.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
@@ -66,6 +66,9 @@ struct rdpsnd_plugin
 	UINT16 fixed_channel;
 	UINT32 fixed_rate;
 	int latency;
+
+	char* subsystem;
+	char* device_name;
 
 	/* Device plugin */
 	rdpsndDevicePlugin* device;
@@ -190,7 +193,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		return;
 	}
 
-	out_formats = (rdpsndFormat*)xzalloc(wNumberOfFormats * sizeof(rdpsndFormat));
+	out_formats = (rdpsndFormat*) malloc(wNumberOfFormats * sizeof(rdpsndFormat));
+	ZeroMemory(out_formats, wNumberOfFormats * sizeof(rdpsndFormat));
 	n_out_formats = 0;
 
 	data_out = stream_new(24);
@@ -315,20 +319,27 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 	DEBUG_SVC("waveDataSize %d wFormatNo %d", rdpsnd->waveDataSize, wFormatNo);
 
 	rdpsnd->close_timestamp = 0;
+
 	if (!rdpsnd->is_open)
 	{
 		rdpsnd->current_format = wFormatNo;
 		rdpsnd->is_open = TRUE;
+
 		if (rdpsnd->device)
+		{
 			IFCALL(rdpsnd->device->Open, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
 				rdpsnd->latency);
+		}
 	}
 	else if (wFormatNo != rdpsnd->current_format)
 	{
 		rdpsnd->current_format = wFormatNo;
+
 		if (rdpsnd->device)
+		{
 			IFCALL(rdpsnd->device->SetFormat, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
 				rdpsnd->latency);
+		}
 	}
 }
 
@@ -341,14 +352,19 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	struct data_out_item* item;
 
 	rdpsnd->expectingWave = 0;
+
 	memcpy(stream_get_head(data_in), rdpsnd->waveData, 4);
+
 	if (stream_get_size(data_in) != rdpsnd->waveDataSize)
 	{
 		DEBUG_WARN("size error");
 		return;
 	}
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(data_in), stream_get_size(data_in));
+	}
 
 	process_ms = get_mstime() - rdpsnd->wave_timestamp;
 	delay_ms = 250;
@@ -357,7 +373,9 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	DEBUG_SVC("data_size %d delay_ms %u process_ms %u",
 		stream_get_size(data_in), delay_ms, process_ms);
 
-	item = xnew(struct data_out_item);
+	item = (struct data_out_item*) malloc(sizeof(struct data_out_item));
+	ZeroMemory(item, sizeof(struct data_out_item));
+
 	item->data_out = stream_new(8);
 	stream_write_BYTE(item->data_out, SNDC_WAVECONFIRM);
 	stream_write_BYTE(item->data_out, 0);
@@ -374,8 +392,12 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 {
 	DEBUG_SVC("server closes.");
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->Start, rdpsnd->device);
+	}
+
 	rdpsnd->close_timestamp = get_mstime() + 2000;
 	rdpsnd->plugin.interval_ms = 10;
 }
@@ -386,8 +408,11 @@ static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_
 
 	stream_read_UINT32(data_in, dwVolume);
 	DEBUG_SVC("dwVolume 0x%X", dwVolume);
+
 	if (rdpsnd->device)
+	{
 		IFCALL(rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
+	}
 }
 
 static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
@@ -414,18 +439,23 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 		case SNDC_FORMATS:
 			rdpsnd_process_message_formats(rdpsnd, data_in);
 			break;
+
 		case SNDC_TRAINING:
 			rdpsnd_process_message_training(rdpsnd, data_in);
 			break;
+
 		case SNDC_WAVE:
 			rdpsnd_process_message_wave_info(rdpsnd, data_in, BodySize);
 			break;
+
 		case SNDC_CLOSE:
 			rdpsnd_process_message_close(rdpsnd);
 			break;
+
 		case SNDC_SETVOLUME:
 			rdpsnd_process_message_setvolume(rdpsnd, data_in);
 			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
@@ -444,32 +474,19 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 	rdpsnd->device = device;
 }
 
-static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RDP_PLUGIN_DATA* data)
+static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
 {
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
-	char* fullname;
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
 
-	if (strrchr(name, '.') != NULL)
-	{
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(name, RDPSND_DEVICE_EXPORT_FUNC_NAME);
-	}
-	else
-	{
-		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, "rdpsnd-client-");
-		strcat(fullname, name);
-		entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_plugin(fullname, RDPSND_DEVICE_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);
+
 	if (entry == NULL)
-	{
 		return FALSE;
-	}
 
 	entryPoints.rdpsnd = rdpsnd;
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;
-	entryPoints.plugin_data = data;
+	entryPoints.args = args;
 
 	if (entry(&entryPoints) != 0)
 	{
@@ -480,35 +497,91 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, RD
 	return TRUE;
 }
 
-static void rdpsnd_process_plugin_data(rdpsndPlugin* rdpsnd, RDP_PLUGIN_DATA* data)
+void rdpsnd_set_subsystem(rdpsndPlugin* rdpsnd, char* subsystem)
 {
-	if (strcmp((char*)data->data[0], "format") == 0)
+	if (rdpsnd->subsystem)
+		free(rdpsnd->subsystem);
+
+	rdpsnd->subsystem = _strdup(subsystem);
+}
+
+void rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, char* device_name)
+{
+	if (rdpsnd->device_name)
+		free(rdpsnd->device_name);
+
+	rdpsnd->device_name = _strdup(device_name);
+}
+
+COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
+{
+	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<format>", NULL, NULL, -1, NULL, "format" },
+	{ "rate", COMMAND_LINE_VALUE_REQUIRED, "<rate>", NULL, NULL, -1, NULL, "rate" },
+	{ "channel", COMMAND_LINE_VALUE_REQUIRED, "<channel>", NULL, NULL, -1, NULL, "channel" },
+	{ "latency", COMMAND_LINE_VALUE_REQUIRED, "<latency>", NULL, NULL, -1, NULL, "latency" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+			rdpsnd_args, flags, rdpsnd, NULL, NULL);
+
+	arg = rdpsnd_args;
+
+	do
 	{
-		rdpsnd->fixed_format = atoi(data->data[1]);
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "sys")
+		{
+			rdpsnd_set_subsystem(rdpsnd, arg->Value);
+		}
+		CommandLineSwitchCase(arg, "dev")
+		{
+			rdpsnd_set_device_name(rdpsnd, arg->Value);
+		}
+		CommandLineSwitchCase(arg, "format")
+		{
+			rdpsnd->fixed_format = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "rate")
+		{
+			rdpsnd->fixed_rate = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "channel")
+		{
+			rdpsnd->fixed_channel = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "latency")
+		{
+			rdpsnd->latency = atoi(arg->Value);
+		}
+		CommandLineSwitchDefault(arg)
+		{
+
+		}
+
+		CommandLineSwitchEnd(arg)
 	}
-	else if (strcmp((char*)data->data[0], "rate") == 0)
-	{
-		rdpsnd->fixed_rate = atoi(data->data[1]);
-	}
-	else if (strcmp((char*)data->data[0], "channel") == 0)
-	{
-		rdpsnd->fixed_channel = atoi(data->data[1]);
-	}
-	else if (strcmp((char*)data->data[0], "latency") == 0)
-	{
-		rdpsnd->latency = atoi(data->data[1]);
-	}
-	else
-	{
-		rdpsnd_load_device_plugin(rdpsnd, (char*) data->data[0], data);
-	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
 static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 {
+	ADDIN_ARGV* args;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
-	RDP_PLUGIN_DATA* data;
-	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
 	DEBUG_SVC("connecting");
 
@@ -517,42 +590,47 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	rdpsnd->data_out_list = list_new();
 	rdpsnd->latency = -1;
 
-	data = (RDP_PLUGIN_DATA*) plugin->channel_entry_points.pExtendedData;
+	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
 
-	while (data && data->size > 0)
+	if (args)
+		rdpsnd_process_addin_args(rdpsnd, args);
+
+	if (rdpsnd->subsystem)
 	{
-		rdpsnd_process_plugin_data(rdpsnd, data);
-		data = (RDP_PLUGIN_DATA*) (((BYTE*) data) + data->size);
+		if (strcmp(rdpsnd->subsystem, "fake") == 0)
+			return;
+
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
 
-	if (rdpsnd->device == NULL)
+	if (!rdpsnd->device)
 	{
-		default_data[0].size = sizeof(RDP_PLUGIN_DATA);
-		default_data[0].data[0] = "pulse";
-		default_data[0].data[1] = "";
-
-		if (!rdpsnd_load_device_plugin(rdpsnd, "pulse", default_data))
-		{
-			default_data[0].data[0] = "alsa";
-			default_data[0].data[1] = "default";
-
-			if (!rdpsnd_load_device_plugin(rdpsnd, "alsa", default_data))
-			{
-				default_data[0].data[0] = "macaudio";
-				default_data[0].data[1] = "default";
-				
-				rdpsnd_load_device_plugin(rdpsnd, "macaudio", default_data);
-			}
-			else
-			{
-				printf("rdpsnd: successfully loaded alsa plugin\n");
-			}
-		}
-		else
-		{
-			printf("rdpsnd: successfully loaded pulseaudio plugin\n");
-		}
+		rdpsnd_set_subsystem(rdpsnd, "pulse");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
+
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "alsa");
+		rdpsnd_set_device_name(rdpsnd, "default");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "macaudio");
+		rdpsnd_set_device_name(rdpsnd, "default");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "winmm");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+
 	if (rdpsnd->device == NULL)
 	{
 		DEBUG_WARN("no sound device.");
@@ -578,6 +656,12 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 		free(item);
 	}
 	list_free(rdpsnd->data_out_list);
+
+	if (rdpsnd->subsystem)
+		free(rdpsnd->subsystem);
+
+	if (rdpsnd->device_name)
+		free(rdpsnd->device_name);
 
 	rdpsnd_free_supported_formats(rdpsnd);
 

@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <freerdp/types.h>
+#include <winpr/crt.h>
 
+#include <freerdp/types.h>
 #include <freerdp/utils/rail.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/rail.h>
 
@@ -46,9 +46,13 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 		free(unicode_string->string);
 }
 
-void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 {
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	if(stream_get_left(s) < unicode_string->length)
+		return FALSE;
 
 	if (unicode_string->string == NULL)
 		unicode_string->string = (BYTE*) malloc(unicode_string->length);
@@ -56,6 +60,7 @@ void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
+	return TRUE;
 }
 
 void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
@@ -119,7 +124,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 	size_t order_size = 0;
 	void*  new_order = NULL;
 
-	for (i = 0; i < ARRAY_SIZE(ordersize_table); i++)
+	for (i = 0; i < ARRAYSIZE(ordersize_table); i++)
 	{
 		if (event_type == ordersize_table[i].type)
 		{

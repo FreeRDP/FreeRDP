@@ -145,6 +145,7 @@ typedef struct _RTL_CRITICAL_SECTION
 	ULONG SpinCount;
 } RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
 
+typedef RTL_CRITICAL_SECTION CRITICAL_SECTION;
 typedef PRTL_CRITICAL_SECTION PCRITICAL_SECTION;
 typedef PRTL_CRITICAL_SECTION LPCRITICAL_SECTION;
 
@@ -248,6 +249,27 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 #endif
 
 #endif
+
+/* Extended API */
+
+WINPR_API VOID USleep(DWORD dwMicroseconds);
+
+WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+
+WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
+		BOOL bManualReset, BOOL bInitialState, void* pObject);
+
+#ifdef UNICODE
+#define CreateFileDescriptorEvent	CreateFileDescriptorEventW
+#else
+#define CreateFileDescriptorEvent	CreateFileDescriptorEventA
+#endif
+
+WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
+WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 
 #endif /* WINPR_SYNCH_H */
 

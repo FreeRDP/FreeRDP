@@ -28,6 +28,8 @@
 #include <X11/Xcursor/Xcursor.h>
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/jpeg.h>
@@ -133,10 +135,10 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	switch (codec_id)
 	{
-		case CODEC_ID_NSCODEC:
+		case RDP_CODEC_ID_NSCODEC:
 			printf("xf_Bitmap_Decompress: nsc not done\n");
 			break;
-		case CODEC_ID_REMOTEFX:
+		case RDP_CODEC_ID_REMOTEFX:
 			xfi = ((xfContext*)context)->xfi;
 			rfx_context_set_pixel_format(xfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(xfi->rfx_context, data, length);
@@ -161,7 +163,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 				rfx_message_free(xfi->rfx_context, msg);
 			}
 			break;
-		case CODEC_ID_JPEG:
+		case RDP_CODEC_ID_JPEG:
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
 				printf("xf_Bitmap_Decompress: jpeg Decompression Failed\n");
@@ -214,7 +216,9 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.height = pointer->height;
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
-	ci.pixels = (XcursorPixel*) xzalloc(ci.width * ci.height * 4);
+
+	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
+	ZeroMemory(ci.pixels, ci.width * ci.height * 4);
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
@@ -378,7 +382,9 @@ void xf_register_graphics(rdpGraphics* graphics)
 	rdpPointer* pointer;
 	rdpGlyph* glyph;
 
-	bitmap = xnew(rdpBitmap);
+	bitmap = (rdpBitmap*) malloc(sizeof(rdpBitmap));
+	ZeroMemory(bitmap, sizeof(rdpBitmap));
+
 	bitmap->size = sizeof(xfBitmap);
 
 	bitmap->New = xf_Bitmap_New;
@@ -390,7 +396,9 @@ void xf_register_graphics(rdpGraphics* graphics)
 	graphics_register_bitmap(graphics, bitmap);
 	free(bitmap);
 
-	pointer = xnew(rdpPointer);
+	pointer = (rdpPointer*) malloc(sizeof(rdpPointer));
+	ZeroMemory(pointer, sizeof(rdpPointer));
+
 	pointer->size = sizeof(xfPointer);
 
 	pointer->New = xf_Pointer_New;
@@ -402,7 +410,9 @@ void xf_register_graphics(rdpGraphics* graphics)
 	graphics_register_pointer(graphics, pointer);
 	free(pointer);
 
-	glyph = xnew(rdpGlyph);
+	glyph = (rdpGlyph*) malloc(sizeof(rdpGlyph));
+	ZeroMemory(glyph, sizeof(rdpGlyph));
+
 	glyph->size = sizeof(xfGlyph);
 
 	glyph->New = xf_Glyph_New;

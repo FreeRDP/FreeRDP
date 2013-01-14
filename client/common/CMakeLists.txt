@@ -21,6 +21,8 @@ set(MODULE_PREFIX "FREERDP_CLIENT")
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
+	compatibility.c
+	compatibility.h
 	file.c)
 
 set(FREERDP_CHANNELS_CLIENT_PATH "../../channels/client")
@@ -34,7 +36,7 @@ endif()
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${FREERDP_CHANNELS_CLIENT_LIBS})

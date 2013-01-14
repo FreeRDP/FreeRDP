@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __CLIPRDR_PLUGIN
-#define __CLIPRDR_PLUGIN
+#ifndef FREERDP_CHANNEL_CLIENT_CLIPRDR_H
+#define FREERDP_CHANNEL_CLIENT_CLIPRDR_H
 
 /**
  * Event Types
@@ -71,4 +71,4 @@ struct _RDP_CB_DATA_RESPONSE_EVENT
 };
 typedef struct _RDP_CB_DATA_RESPONSE_EVENT RDP_CB_DATA_RESPONSE_EVENT;
 
-#endif /* __CLIPRDR_PLUGIN */
+#endif /* FREERDP_CHANNEL_CLIENT_CLIPRDR_H */

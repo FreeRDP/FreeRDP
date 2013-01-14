@@ -30,7 +30,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/string.h>
 
 #ifndef _WIN32
@@ -86,8 +85,16 @@ BOOL freerdp_check_file_exists(char* file)
 
 char* freerdp_get_home_path(rdpSettings* settings)
 {
+	char* home_env = NULL;
+
 	if (settings->HomePath == NULL)
-		settings->HomePath = getenv(HOME_ENV_VARIABLE);
+	{
+		home_env = getenv(HOME_ENV_VARIABLE);
+
+		if (home_env)
+			settings->HomePath = _strdup(home_env);
+	}
+
 	if (settings->HomePath == NULL)
 		settings->HomePath = _strdup("/");
 

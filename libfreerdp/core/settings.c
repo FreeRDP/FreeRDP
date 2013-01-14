@@ -24,8 +24,6 @@
 #include "certificate.h"
 #include "capabilities.h"
 
-#include <freerdp/utils/memory.h>
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -400,6 +398,16 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 		ZeroMemory(settings->DeviceArray, sizeof(RDPDR_DEVICE*) * settings->DeviceArraySize);
 
+		settings->StaticChannelArraySize = 16;
+		settings->StaticChannelArray = (ADDIN_ARGV**)
+				malloc(sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+		ZeroMemory(settings->StaticChannelArray, sizeof(ADDIN_ARGV*) * settings->StaticChannelArraySize);
+
+		settings->DynamicChannelArraySize = 16;
+		settings->DynamicChannelArray = (ADDIN_ARGV**)
+				malloc(sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+		ZeroMemory(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
+
 		freerdp_detect_paths(settings);
 
 		settings_load_hkey_local_machine(settings);
@@ -442,20 +450,12 @@ void freerdp_settings_free(rdpSettings* settings)
 		key_free(settings->RdpServerRsaKey);
 		free(settings->ConfigPath);
 		free(settings->CurrentPath);
-		free(settings->DeviceArray);
+		free(settings->HomePath);
+		freerdp_device_collection_free(settings);
+		freerdp_static_channel_collection_free(settings);
+		freerdp_dynamic_channel_collection_free(settings);
 		free(settings);
 	}
-}
-
-void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
-{
-	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
-	{
-		settings->DeviceArraySize *= 2;
-		settings->DeviceArray = (RDPDR_DEVICE**) realloc(settings->DeviceArray, settings->DeviceArraySize);
-	}
-
-	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
 #ifdef _WIN32

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_UTILS_H
-#define __RAIL_UTILS_H
+#ifndef FREERDP_UTILS_RAIL_H
+#define FREERDP_UTILS_RAIL_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -26,10 +26,10 @@
 
 FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString);
 FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void* rail_clone_order(UINT32 event_type, void* order);
 FREERDP_API void  rail_free_cloned_order(UINT32 event_type, void* order);
 
-#endif /* __RAIL_UTILS_H */
+#endif /* FREERDP_UTILS_RAIL_H */

@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_PEER_H
-#define __FREERDP_PEER_H
+#ifndef FREERDP_PEER_H
+#define FREERDP_PEER_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -87,5 +87,4 @@ FREERDP_API void freerdp_peer_context_free(freerdp_peer* client);
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 FREERDP_API void freerdp_peer_free(freerdp_peer* client);
 
-#endif /* __FREERDP_PEER_H */
-
+#endif /* FREERDP_PEER_H */

@@ -27,8 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/utils/memory.h>
 
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"
@@ -182,7 +183,8 @@ void* freerdp_keyboard_xkb_init()
 UINT32 freerdp_keyboard_init_xkbfile(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
-	memset(x11_keycode_to_rdp_scancode, 0, sizeof(x11_keycode_to_rdp_scancode));
+	
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
 
 	display = freerdp_keyboard_xkb_init();
 
@@ -289,7 +291,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 				if (strlen(xkb_keyname) < 1)
 					continue;
 
-				for (j = 0; j < ARRAY_SIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
+				for (j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
 				{
 
 					if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))

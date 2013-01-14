@@ -25,10 +25,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
@@ -704,9 +705,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		surface_bits_command->width, surface_bits_command->height,
 		surface_bits_command->bitmapDataLength);
 
-	tile_bitmap = (char*) xzalloc(32);
+	tile_bitmap = (char*) malloc(32);
+	ZeroMemory(tile_bitmap, 32);
 
-	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
 		message = rfx_process_message(rfx_context,
 				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
@@ -740,7 +742,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi_SetNullClipRgn(gdi->primary->hdc);
 		rfx_message_free(rfx_context, message);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
 		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
@@ -752,7 +754,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		freerdp_image_flip(nsc_context->bmpdata, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
-	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
 	{
 		gdi->image->bitmap->width = surface_bits_command->width;
 		gdi->image->bitmap->height = surface_bits_command->height;
@@ -880,7 +882,8 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	rdpGdi* gdi;
 	rdpCache* cache;
 
-	gdi = (rdpGdi*) xzalloc(sizeof(rdpGdi));
+	gdi = (rdpGdi*) malloc(sizeof(rdpGdi));
+	ZeroMemory(gdi, sizeof(rdpGdi));
 
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;

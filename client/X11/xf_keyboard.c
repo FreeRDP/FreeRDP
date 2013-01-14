@@ -24,9 +24,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_keyboard.h"
 
@@ -64,7 +69,7 @@ void xf_kbd_release_all_keypress(xfInfo* xfi)
 	int keycode;
 	RDP_SCANCODE rdp_scancode;
 
-	for (keycode = 0; keycode < ARRAY_SIZE(xfi->pressed_keys); keycode++)
+	for (keycode = 0; keycode < ARRAYSIZE(xfi->pressed_keys); keycode++)
 	{
 		if (xfi->pressed_keys[keycode] != NoSymbol)
 		{

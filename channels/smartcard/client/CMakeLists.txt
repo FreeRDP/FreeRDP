@@ -18,8 +18,9 @@
 define_channel_client("smartcard")
 
 set(${MODULE_PREFIX}_SRCS
-	scard_main.c
-	scard_operations.c)
+	smartcard_main.c
+	smartcard_main.h
+	smartcard_operations.c)
 
 include_directories(${PCSC_INCLUDE_DIR})
 
@@ -46,3 +47,4 @@ if(NOT STATIC_CHANNELS)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+

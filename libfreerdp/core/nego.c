@@ -26,10 +26,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/unicode.h>
-
 #include "tpkt.h"
 
 #include "nego.h"
@@ -152,7 +148,7 @@ BOOL nego_connect(rdpNego* nego)
 	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
 	nego->transport->settings->NegotiationFlags = nego->flags;
 
-	if(nego->selected_protocol == PROTOCOL_RDP)
+	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
 		nego->transport->settings->DisableEncryption = TRUE;
 		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
@@ -160,7 +156,7 @@ BOOL nego_connect(rdpNego* nego)
 	}
 
 	/* finally connect security layer (if not already done) */
-	if(!nego_security_connect(nego))
+	if (!nego_security_connect(nego))
 	{
 		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 		return FALSE;
@@ -275,7 +271,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (nego->preconnection_blob)
 	{
-		cchPCB = (UINT16) freerdp_AsciiToUnicodeAlloc(nego->preconnection_blob, &wszPCB, 0);
+		cchPCB = (UINT16) ConvertToUnicode(CP_UTF8, 0, nego->preconnection_blob, -1, &wszPCB, 0);
 		cchPCB += 1; /* zero-termination */
 		cbSize += cchPCB * 2;
 	}
@@ -471,7 +467,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	if (transport_read(nego->transport, s) < 0)
 		return FALSE;
 
-	return nego_recv(nego->transport, s, nego);
+	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
 }
 
 /**
@@ -482,16 +478,20 @@ BOOL nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	BYTE li;
 	BYTE type;
+	UINT16 length;
 	rdpNego* nego = (rdpNego*) extra;
 
-	if (tpkt_read_header(s) == 0)
-		return FALSE;
+	length = tpkt_read_header(s);
 
-	li = tpdu_read_connection_confirm(s);
+	if (length == 0)
+		return -1;
+
+	if(!tpdu_read_connection_confirm(s, &li))
+		return -1;
 
 	if (li > 6)
 	{
@@ -532,7 +532,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				break;
 		}
 	}
-	else
+	else if (li == 6)
 	{
 		DEBUG_NEGO("no rdpNegData");
 
@@ -541,8 +541,13 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		else
 			nego->state = NEGO_STATE_FINAL;
 	}
+	else
+	{
+		printf("invalid negotiation response\n");
+		nego->state = NEGO_STATE_FAIL;
+	}
 
-	return TRUE;
+	return 0;
 }
 
 /**
@@ -558,7 +563,8 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 	BYTE type;
 
 	tpkt_read_header(s);
-	li = tpdu_read_connection_request(s);
+	if(!tpdu_read_connection_request(s, &li))
+		return FALSE;
 
 	if (li != stream_get_left(s) + 6)
 	{
@@ -719,6 +725,13 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
+	if (stream_get_left(s) < 7)
+	{
+		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
 	stream_read_BYTE(s, nego->flags);
 	stream_read_UINT16(s, length);
 	stream_read_UINT32(s, nego->selected_protocol);
@@ -878,8 +891,8 @@ void nego_init(rdpNego* nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->requested_protocols = PROTOCOL_RDP;
-	nego->transport->recv_callback = nego_recv;
-	nego->transport->recv_extra = (void*) nego;
+	nego->transport->ReceiveCallback = nego_recv;
+	nego->transport->ReceiveExtra = (void*) nego;
 	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->flags = 0;
 }
@@ -911,6 +924,7 @@ rdpNego* nego_new(struct rdp_transport * transport)
 
 void nego_free(rdpNego* nego)
 {
+	free(nego->cookie);
 	free(nego);
 }
 
@@ -1008,7 +1022,10 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 
 void nego_set_cookie(rdpNego* nego, char* cookie)
 {
-	nego->cookie = cookie;
+	if (nego->cookie)
+		free(nego->cookie);
+
+	nego->cookie = _strdup(cookie);
 }
 
 /**

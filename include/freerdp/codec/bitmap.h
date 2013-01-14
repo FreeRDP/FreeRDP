@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __BITMAP_H
-#define __BITMAP_H
+#ifndef FREERDP_CODEC_BITMAP_H
+#define FREERDP_CODEC_BITMAP_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
 FREERDP_API BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp);
 
-#endif /* __BITMAP_H */
+#endif /* FREERDP_CODEC_BITMAP_H */

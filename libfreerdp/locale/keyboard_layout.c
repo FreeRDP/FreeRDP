@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/scancode.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/locale/keyboard.h>
 
 /*
@@ -488,7 +487,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
-		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_TABLE);
+		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE);
 		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
@@ -499,7 +498,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
-		length = ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
+		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
 		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
@@ -510,7 +509,7 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
 	{
-		length = ARRAY_SIZE(RDP_KEYBOARD_IME_TABLE);
+		length = ARRAYSIZE(RDP_KEYBOARD_IME_TABLE);
 		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
 
 		for (i = 0; i < length; i++, num++)
@@ -529,19 +528,19 @@ const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutID)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_LAYOUT_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_LAYOUT_TABLE[i].name;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(RDP_KEYBOARD_IME_TABLE); i++)
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
 	{
 		if (RDP_KEYBOARD_IME_TABLE[i].code == keyboardLayoutID)
 			return RDP_KEYBOARD_IME_TABLE[i].name;

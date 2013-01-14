@@ -23,9 +23,10 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/glyph.h>
 
@@ -455,7 +456,8 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 {
 	rdpGlyphCache* glyph;
 
-	glyph = (rdpGlyphCache*) xzalloc(sizeof(rdpGlyphCache));
+	glyph = (rdpGlyphCache*) malloc(sizeof(rdpGlyphCache));
+	ZeroMemory(glyph, sizeof(rdpGlyphCache));
 
 	if (glyph != NULL)
 	{
@@ -468,10 +470,12 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 		{
 			glyph->glyphCache[i].number = settings->GlyphCache[i].cacheEntries;
 			glyph->glyphCache[i].maxCellSize = settings->GlyphCache[i].cacheMaximumCellSize;
-			glyph->glyphCache[i].entries = (rdpGlyph**) xzalloc(sizeof(rdpGlyph*) * glyph->glyphCache[i].number);
+			glyph->glyphCache[i].entries = (rdpGlyph**) malloc(sizeof(rdpGlyph*) * glyph->glyphCache[i].number);
+			ZeroMemory(glyph->glyphCache[i].entries, sizeof(rdpGlyph*) * glyph->glyphCache[i].number);
 		}
 
-		glyph->fragCache.entries = xzalloc(sizeof(FRAGMENT_CACHE_ENTRY) * 256);
+		glyph->fragCache.entries = malloc(sizeof(FRAGMENT_CACHE_ENTRY) * 256);
+		ZeroMemory(glyph->fragCache.entries, sizeof(FRAGMENT_CACHE_ENTRY) * 256);
 	}
 
 	return glyph;

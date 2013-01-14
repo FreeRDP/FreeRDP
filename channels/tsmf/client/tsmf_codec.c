@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_types.h"
@@ -425,7 +425,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	DEBUG_DVC("cbFormat %d", cbFormat);
 
 #ifdef WITH_DEBUG_DVC
-	freerdp_hexdump(stream_get_tail(s), cbFormat);
+	winpr_HexDump(stream_get_tail(s), cbFormat);
 #endif
 
 	switch (mediatype->FormatType)
@@ -526,4 +526,3 @@ BOOL tsmf_codec_check_media_type(STREAM* s)
 
 	return ret;
 }
-

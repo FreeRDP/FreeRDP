@@ -300,7 +300,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
 
-	ZeroMemory(lpFindFileData, sizeof(LPWIN32_FIND_DATAA));
+	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
 	pFileSearch = (WIN32_FILE_SEARCH*) malloc(sizeof(WIN32_FILE_SEARCH));
 	ZeroMemory(pFileSearch, sizeof(WIN32_FILE_SEARCH));

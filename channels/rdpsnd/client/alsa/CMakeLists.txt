@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
 
-add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -31,6 +31,11 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
 	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-utils)
 	
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ALSA_LIBRARIES})
 

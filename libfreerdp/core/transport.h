@@ -31,41 +31,44 @@ typedef enum
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
-#include "tsg.h"
+#include "nla.h"
+
+#include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
+#include <winpr/collections.h>
+
 #include <freerdp/crypto/tls.h>
-#include <freerdp/crypto/nla.h>
 
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/wait_obj.h>
 
 typedef BOOL (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
-	STREAM* recv_stream;
-	STREAM* send_stream;
 	TRANSPORT_LAYER layer;
-	struct rdp_tcp* tcp;
-	struct rdp_tls* tls;
-	struct rdp_tsg* tsg;
-	struct rdp_tcp* tcp_in;
-	struct rdp_tcp* tcp_out;
-	struct rdp_tls* tls_in;
-	struct rdp_tls* tls_out;
-	struct rdp_credssp* credssp;
-	struct rdp_settings* settings;
-	UINT32 usleep_interval;
-	void* recv_extra;
-	STREAM* recv_buffer;
-	TransportRecv recv_callback;
-	struct wait_obj* recv_event;
+	rdpTsg* tsg;
+	rdpTcp* TcpIn;
+	rdpTcp* TcpOut;
+	rdpTls* TlsIn;
+	rdpTls* TlsOut;
+	rdpCredssp* credssp;
+	rdpSettings* settings;
+	UINT32 SleepInterval;
+	STREAM* SendStream;
+	STREAM* ReceiveStream;
+	void* ReceiveExtra;
+	STREAM* ReceiveBuffer;
+	TransportRecv ReceiveCallback;
+	HANDLE ReceiveEvent;
 	BOOL blocking;
-	BOOL process_single_pdu; /* process single pdu in transport_check_fds */
+	BOOL SplitInputOutput;
+
+	wQueue* ReceivePool;
+	wQueue* ReceiveQueue;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
@@ -85,6 +88,10 @@ int transport_write(rdpTransport* transport, STREAM* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+
+STREAM* transport_receive_pool_take(rdpTransport* transport);
+int transport_receive_pool_return(rdpTransport* transport, STREAM* pdu);
+
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
 

@@ -29,7 +29,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/errorcodes.h>
+#include <freerdp/error.h>
 
 /**
  *                                      Connection Sequence\n
@@ -104,6 +104,15 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
+		free(cookie);
+
+		settings->RdpSecurity = TRUE;
+		settings->TlsSecurity = FALSE;
+		settings->NlaSecurity = FALSE;
+		settings->ExtSecurity = FALSE;
+
+		//settings->TlsSecurity = TRUE;
+		//settings->NlaSecurity = TRUE;
 	}
 	else
 	{
@@ -153,15 +162,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	rdp->transport->process_single_pdu = TRUE;
-
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 	}
-
-	rdp->transport->process_single_pdu = FALSE;
 
 	return TRUE;
 }

@@ -30,9 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/unicode.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -94,13 +92,13 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	STREAM* data_out;
-	WCHAR* computerNameW;
+	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
 
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
 
-	computerNameLenW = freerdp_AsciiToUnicodeAlloc(rdpdr->computerName, &computerNameW, 0) * 2;
+	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
 
 	data_out = stream_new(16 + computerNameLenW + 2);
 
@@ -173,8 +171,9 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 * 2. smartcard devices should be always sent
 		 * 3. other devices are sent only after user_loggedon
 		 */
-		if (rdpdr->versionMinor == 0x0005 ||
-			device->type == RDPDR_DTYP_SMARTCARD || user_loggedon)
+
+		if ((rdpdr->versionMinor == 0x0005) ||
+			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
 		{
 			data_len = (device->data == NULL ? 0 : stream_get_length(device->data));
 			stream_check_size(data_out, 20 + data_len);

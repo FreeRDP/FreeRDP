@@ -25,11 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/codec/rfx.h>
+
 #include "rfx_types.h"
 #include "rfx_bitstream.h"
 #include "rfx_rlgr.h"
@@ -191,8 +194,11 @@ void test_bitstream(void)
 	UINT16 b;
 	RFX_BITSTREAM* bs;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	rfx_bitstream_attach(bs, (BYTE*) y_data, sizeof(y_data));
+
 	while (!rfx_bitstream_eos(bs))
 	{
 		rfx_bitstream_get_bits(bs, 3, b);
@@ -210,7 +216,9 @@ void test_bitstream_enc(void)
 	RFX_BITSTREAM* bs;
 	int i;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	memset(buffer, 0, sizeof(buffer));
 	rfx_bitstream_attach(bs, buffer, sizeof(buffer));
 	for (i = 0; i < 16; i++)
@@ -245,7 +253,7 @@ void test_rlgr(void)
 {
 	int n;
 
-	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAY_SIZE(buffer));
+	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAYSIZE(buffer));
 
 	//printf("RLGR decode %d bytes to %d values.", sizeof(y_data), n);
 	//dump_buffer(buffer, n);
@@ -329,7 +337,7 @@ void test_encode(void)
 	rgb_data = (BYTE *) malloc(64 * 64 * 3);
 	for (i = 0; i < 64; i++)
 		memcpy(rgb_data + i * 64 * 3, rgb_scanline_data, 64 * 3);
-	//freerdp_hexdump(rgb_data, 64 * 64 * 3);
+	//winpr_HexDump(rgb_data, 64 * 64 * 3);
 
 	enc_stream = stream_new(65536);
 	stream_clear(enc_stream);
@@ -344,11 +352,11 @@ void test_encode(void)
 	//dump_buffer(context->priv->cb_g_buffer, 4096);
 
 	/*printf("*** Y ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream), y_size);
+	winpr_HexDump(stream_get_head(enc_stream), y_size);
 	printf("*** Cb ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size, cb_size);
+	winpr_HexDump(stream_get_head(enc_stream) + y_size, cb_size);
 	printf("*** Cr ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
+	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
 
 	stream_set_pos(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,

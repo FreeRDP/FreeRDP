@@ -26,7 +26,6 @@
 #include <winpr/windows.h>
 
 #include <freerdp/listener.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 

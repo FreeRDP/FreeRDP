@@ -24,9 +24,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <winpr\windows.h>
+#include <winpr/windows.h>
 
-#include <InitGuid.h>
+#define INITGUID
+#include <initguid.h>
+#include <objbase.h>
+
 #define CINTERFACE
 #include <mmsystem.h>
 #include <dsound.h>
@@ -40,7 +43,7 @@
  * Here are some temp things that shall be moved
  *
  */
-IDirectSoundCapture8 * cap;
+IDirectSoundCapture8* cap;
 IDirectSoundCaptureBuffer8* capBuf;
 DSCBUFFERDESC dscbd;
 DWORD lastPos;

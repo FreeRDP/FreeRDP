@@ -1016,6 +1016,7 @@ int rdp_connect()
 
 BOOL mac_pre_connect(freerdp *inst)
 {
+	int status;
     char *cptr;
     int  len;
     int  i;
@@ -1213,12 +1214,19 @@ BOOL mac_pre_connect(freerdp *inst)
         }
     }
 #endif
-    
-    freerdp_parse_args(inst->settings, g_mrdpview->argc, g_mrdpview->argv, process_plugin_args, inst->context->channels, NULL, NULL);
-    if ((strcmp(g_mrdpview->argv[1], "-h") == 0) || (strcmp(g_mrdpview->argv[1], "--help") == 0)) {
-        [NSApp terminate:nil];
-        return TRUE;
-    }
+	
+	inst->context->argc = g_mrdpview->argc;
+	inst->context->argv = g_mrdpview->argv;
+	
+	status = freerdp_client_parse_command_line_arguments(inst->context->argc, inst->context->argv, inst->settings);
+	
+	if (status < 0)
+	{
+		[NSApp terminate:nil];
+		return TRUE;
+	}
+	
+	freerdp_client_load_addins(inst->context->channels, inst->settings);
 
     [g_mrdpview setViewSize:inst->settings->DesktopWidth :inst->settings->DesktopHeight];
 

@@ -21,8 +21,7 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/print.h>
-#include <freerdp/utils/unicode.h>
+#include <winpr/crt.h>
 
 #include "gcc.h"
 #include "certificate.h"
@@ -315,7 +314,8 @@ BOOL gcc_read_client_data_blocks(STREAM* s, rdpSettings* settings, int length)
 	while (length > 0)
 	{
 		pos = stream_get_pos(s);
-		gcc_read_user_data_header(s, &type, &blockLength);
+		if(!gcc_read_user_data_header(s, &type, &blockLength))
+			return FALSE;
 
 		switch (type)
 		{
@@ -364,8 +364,30 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 
 	/* extended client data supported */
 
-	if (settings->NegotiationFlags)
-		gcc_write_client_monitor_data(s, settings);
+	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
+	{
+		if (!settings->SpanMonitors)
+		{
+			gcc_write_client_monitor_data(s, settings);
+		}
+	}
+	else
+	{
+		if (settings->UseMultimon)
+		{
+			printf("WARNING: true multi monitor support was not advertised by server!\n");
+
+			if (settings->ForceMultimon)
+			{
+				printf("Sending multi monitor information anyway (may break connectivity!)\n");
+				gcc_write_client_monitor_data(s, settings);
+			}
+			else
+			{
+				printf("Use /multimon:force to force sending multi monitor information\n");
+			}
+		}
+	}
 }
 
 BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
@@ -431,11 +453,11 @@ void gcc_write_server_data_blocks(STREAM* s, rdpSettings* settings)
 
 BOOL gcc_read_user_data_header(STREAM* s, UINT16* type, UINT16* length)
 {
+	if (stream_get_left(s) < 4)
+		return FALSE;
+
 	stream_read_UINT16(s, *type); /* type */
 	stream_read_UINT16(s, *length); /* length */
-
-	if (*length < 4)
-		return FALSE;
 
 	if (stream_get_left(s) < *length - 4)
 		return FALSE;
@@ -491,9 +513,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	stream_read_UINT32(s, settings->ClientBuild); /* ClientBuild */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 32 / 2);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 32 / 2, &str, 0, NULL, NULL);
 	stream_seek(s, 32);
-	snprintf(settings->ClientHostname, 31, "%s", str);
+	sprintf_s(settings->ClientHostname, 31, "%s", str);
 	settings->ClientHostname[31] = 0;
 	free(str);
 
@@ -547,9 +569,9 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 		if (blockLength < 64)
 			break;
 
-		freerdp_UnicodeToAsciiAlloc((WCHAR*) stream_get_tail(s), &str, 64 / 2);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
 		stream_seek(s, 64);
-		snprintf(settings->ClientProductId, 32, "%s", str);
+		sprintf_s(settings->ClientProductId, 32, "%s", str);
 		free(str);
 		blockLength -= 64;
 
@@ -634,21 +656,21 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 {
 	UINT32 version;
-	WCHAR* clientName;
+	WCHAR* clientName = NULL;
 	int clientNameLength;
 	BYTE connectionType;
 	UINT16 highColorDepth;
 	UINT16 supportedColorDepths;
 	UINT16 earlyCapabilityFlags;
-	WCHAR* clientDigProductId;
+	WCHAR* clientDigProductId = NULL;
 	int clientDigProductIdLength;
 
 	gcc_write_user_data_header(s, CS_CORE, 216);
 
 	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
-	clientNameLength = freerdp_AsciiToUnicodeAlloc(settings->ClientHostname, &clientName, 0);
-	clientDigProductIdLength = freerdp_AsciiToUnicodeAlloc(settings->ClientProductId, &clientDigProductId, 0);
+	clientNameLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientHostname, -1, &clientName, 0);
+	clientDigProductIdLength = ConvertToUnicode(CP_UTF8, 0, settings->ClientProductId, -1, &clientDigProductId, 0);
 
 	stream_write_UINT32(s, version); /* Version */
 	stream_write_UINT16(s, settings->DesktopWidth); /* DesktopWidth */
@@ -660,14 +682,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 
-	if (clientNameLength > 15)
+	if (clientNameLength >= 16)
 	{
-		clientNameLength = 15;
-		clientName[clientNameLength] = 0;
+		clientNameLength = 16;
+		clientName[clientNameLength-1] = 0;
 	}
 
-	stream_write(s, clientName, ((clientNameLength + 1) * 2));
-	stream_write_zero(s, 32 - ((clientNameLength + 1) * 2));
+	stream_write(s, clientName, (clientNameLength * 2));
+	stream_write_zero(s, 32 - (clientNameLength * 2));
 	free(clientName);
 
 	stream_write_UINT32(s, settings->KeyboardType); /* KeyboardType */
@@ -707,15 +729,14 @@ void gcc_write_client_core_data(STREAM* s, rdpSettings* settings)
 
 	stream_write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
-	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 30 characters) */
-	if (clientDigProductIdLength > 62)
+	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 31 characters) */
+	if (clientDigProductIdLength >= 32)
 	{
-		clientDigProductIdLength = 62;
-		clientDigProductId[clientDigProductIdLength] = 0;
-		clientDigProductId[clientDigProductIdLength + 1] = 0;
+		clientDigProductIdLength = 32;
+		clientDigProductId[clientDigProductIdLength-1] = 0;
 	}
-	stream_write(s, clientDigProductId, clientDigProductIdLength + 2);
-	stream_write_zero(s, 64 - clientDigProductIdLength - 2);
+	stream_write(s, clientDigProductId, (clientDigProductIdLength * 2) );
+	stream_write_zero(s, 64 - (clientDigProductIdLength * 2) );
 	free(clientDigProductId);
 
 	stream_write_BYTE(s, connectionType); /* connectionType */
@@ -729,6 +750,8 @@ BOOL gcc_read_server_core_data(STREAM* s, rdpSettings* settings)
 	UINT32 version;
 	UINT32 clientRequestedProtocols;
 
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, version); /* version */
 	stream_read_UINT32(s, clientRequestedProtocols); /* clientRequestedProtocols */
 
@@ -802,6 +825,8 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 	BYTE* data;
 	UINT32 length;
 
+	if (stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	stream_read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
@@ -814,8 +839,13 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 		return TRUE;
 	}
 
+	if (stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, settings->ServerRandomLength); /* serverRandomLen */
 	stream_read_UINT32(s, settings->ServerCertificateLength); /* serverCertLen */
+
+	if (stream_get_left(s) < settings->ServerRandomLength + settings->ServerCertificateLength)
+		return FALSE;
 
 	if (settings->ServerRandomLength > 0)
 	{
@@ -1086,6 +1116,8 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 	UINT16 channelCount;
 	UINT16 channelId;
 
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT16(s, MCSChannelId); /* MCSChannelId */
 	stream_read_UINT16(s, channelCount); /* channelCount */
 
@@ -1095,6 +1127,9 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 				settings->ChannelCount, channelCount);
 	}
 
+	if(stream_get_left(s) < channelCount * 2)
+		return FALSE;
+
 	for (i = 0; i < channelCount; i++)
 	{
 		stream_read_UINT16(s, channelId); /* channelId */
@@ -1102,7 +1137,7 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 	}
 
 	if (channelCount % 2 == 1)
-		stream_seek(s, 2); /* padding */
+		return stream_skip(s, 2); /* padding */
 
 	return TRUE;
 }
@@ -1136,13 +1171,17 @@ BOOL gcc_read_client_cluster_data(STREAM* s, rdpSettings* settings, UINT16 block
 {
 	UINT32 flags;
 
-	if (blockLength < 8)
+	if (blockLength < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, flags); /* flags */
 
 	if ((flags & REDIRECTED_SESSIONID_FIELD_VALID))
+	{
+		if(blockLength < 8)
+			return FALSE;
 		stream_read_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
+	}
 
 	return TRUE;
 }

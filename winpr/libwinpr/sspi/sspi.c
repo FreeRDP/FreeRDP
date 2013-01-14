@@ -40,24 +40,31 @@
 
 extern const SecPkgInfoA NTLM_SecPkgInfoA;
 extern const SecPkgInfoW NTLM_SecPkgInfoW;
-extern const SecPkgInfoA CREDSSP_SecPkgInfoA;
-extern const SecPkgInfoW CREDSSP_SecPkgInfoW;
-
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;
+
+extern const SecPkgInfoA CREDSSP_SecPkgInfoA;
+extern const SecPkgInfoW CREDSSP_SecPkgInfoW;
 extern const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA;
 extern const SecurityFunctionTableW CREDSSP_SecurityFunctionTableW;
+
+extern const SecPkgInfoA SCHANNEL_SecPkgInfoA;
+extern const SecPkgInfoW SCHANNEL_SecPkgInfoW;
+extern const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA;
+extern const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW;
 
 const SecPkgInfoA* SecPkgInfoA_LIST[] =
 {
 	&NTLM_SecPkgInfoA,
-	&CREDSSP_SecPkgInfoA
+	&CREDSSP_SecPkgInfoA,
+	&SCHANNEL_SecPkgInfoA
 };
 
 const SecPkgInfoW* SecPkgInfoW_LIST[] =
 {
 	&NTLM_SecPkgInfoW,
-	&CREDSSP_SecPkgInfoW
+	&CREDSSP_SecPkgInfoW,
+	&SCHANNEL_SecPkgInfoW
 };
 
 SecurityFunctionTableA SSPI_SecurityFunctionTableA;
@@ -80,16 +87,19 @@ typedef struct _SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME;
 const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] =
 {
 	{ "NTLM", &NTLM_SecurityFunctionTableA },
-	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA }
+	{ "CREDSSP", &CREDSSP_SecurityFunctionTableA },
+	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
 WCHAR NTLM_NAME_W[] = { 'N','T','L','M','\0' };
 WCHAR CREDSSP_NAME_W[] = { 'C','r','e','d','S','S','P','\0' };
+WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l','\0' };
 
 const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] =
 {
 	{ NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
-	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW }
+	{ CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
+	{ SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
 };
 
 #endif
@@ -288,10 +298,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (user)
 	{
-		identity->UserLength = MultiByteToWideChar(CP_UTF8, 0, user, strlen(user), NULL, 0);
-		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, user, identity->UserLength, (LPWSTR) identity->User, identity->UserLength * sizeof(WCHAR));
-		identity->User[identity->UserLength] = 0;
+		identity->UserLength = ConvertToUnicode(CP_UTF8, 0, user, -1, &identity->User, 0) - 1;
 	}
 	else
 	{
@@ -301,10 +308,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (domain)
 	{
-		identity->DomainLength = MultiByteToWideChar(CP_UTF8, 0, domain, strlen(domain), NULL, 0);
-		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, domain, identity->DomainLength, (LPWSTR) identity->Domain, identity->DomainLength * sizeof(WCHAR));
-		identity->Domain[identity->DomainLength] = 0;
+		identity->DomainLength = ConvertToUnicode(CP_UTF8, 0, domain, -1, &identity->Domain, 0) - 1;
 	}
 	else
 	{
@@ -314,10 +318,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 
 	if (password != NULL)
 	{
-		identity->PasswordLength = MultiByteToWideChar(CP_UTF8, 0, password, strlen(password), NULL, 0);
-		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
-		MultiByteToWideChar(CP_UTF8, 0, password, identity->PasswordLength, (LPWSTR) identity->Password, identity->PasswordLength * sizeof(WCHAR));
-		identity->Password[identity->PasswordLength] = 0;
+		identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0, password, -1, &identity->Password, 0) - 1;
 	}
 	else
 	{
@@ -370,17 +371,28 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	}
 }
 
+static BOOL sspi_initialized = FALSE;
+
 void sspi_GlobalInit()
 {
-	SSL_load_error_strings();
-	SSL_library_init();
+	if (!sspi_initialized)
+	{
+		SSL_load_error_strings();
+		SSL_library_init();
 
-	sspi_ContextBufferAllocTableNew();
+		sspi_ContextBufferAllocTableNew();
+		sspi_initialized = TRUE;
+	}
 }
 
 void sspi_GlobalFinish()
 {
-	sspi_ContextBufferAllocTableFree();
+	if (sspi_initialized)
+	{
+		sspi_ContextBufferAllocTableFree();
+	}
+
+	sspi_initialized = FALSE;
 }
 
 #ifndef WITH_NATIVE_SSPI
@@ -428,14 +440,10 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* N
 
 SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
-	int length;
-	SEC_WCHAR* NameW;
+	SEC_WCHAR* NameW = NULL;
 	SecurityFunctionTableW* table;
 
-	length = strlen(Name);
-	NameW = (SEC_WCHAR*) malloc((length + 1) * 2);
-	MultiByteToWideChar(CP_ACP, 0, Name, length, (LPWSTR) NameW, length);
-	NameW[length] = 0;
+	ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);
 
 	table = sspi_GetSecurityFunctionTableWByNameW(NameW);
 	free(NameW);

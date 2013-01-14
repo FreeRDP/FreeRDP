@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
 
 #include "rfx_pool.h"
 
@@ -33,10 +33,12 @@ RFX_POOL* rfx_pool_new()
 {
 	RFX_POOL* pool;
 
-	pool = xnew(RFX_POOL);
+	pool = (RFX_POOL*) malloc(sizeof(RFX_POOL));
+	ZeroMemory(pool, sizeof(RFX_POOL));
 
 	pool->size = 64;
-	pool->tiles = (RFX_TILE**) xzalloc(sizeof(RFX_TILE*) * pool->size);
+	pool->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * pool->size);
+	ZeroMemory(pool->tiles, sizeof(RFX_TILE*) * pool->size);
 
 	return pool;
 }
@@ -80,7 +82,9 @@ RFX_TILE* rfx_pool_get_tile(RFX_POOL* pool)
 
 	if (pool->count < 1)
 	{
-		tile = xnew(RFX_TILE);
+		tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
+		ZeroMemory(tile, sizeof(RFX_TILE));
+
 		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
 	}
 	else

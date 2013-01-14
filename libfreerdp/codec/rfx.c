@@ -24,12 +24,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/codec/rfx.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/constants.h>
 
 #include "rfx_constants.h"
@@ -140,8 +142,12 @@ RFX_CONTEXT* rfx_context_new(void)
 {
 	RFX_CONTEXT* context;
 
-	context = xnew(RFX_CONTEXT);
-	context->priv = xnew(RFX_CONTEXT_PRIV);
+	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
+	ZeroMemory(context, sizeof(RFX_CONTEXT));
+
+	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
+	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
+
 	context->priv->pool = rfx_pool_new();
 
 	/* initialize the default pixel format */
@@ -517,8 +523,10 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 	UINT32 blockType;
 	RFX_MESSAGE* message;
 
+	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
+	ZeroMemory(message, sizeof(RFX_MESSAGE));
+
 	s = stream_new(0);
-	message = xnew(RFX_MESSAGE);
 	stream_attach(s, data, length);
 
 	while (stream_get_left(s) > 6)

@@ -38,6 +38,12 @@
 typedef int errno_t;
 #endif
 
+#define RTL_NUMBER_OF_V1(A)	(sizeof(A) / sizeof((A)[0]))
+#define RTL_NUMBER_OF_V2(A)	RTL_NUMBER_OF_V1(A)
+
+#define ARRAYSIZE(A)		RTL_NUMBER_OF_V2(A)
+#define _ARRAYSIZE(A)		RTL_NUMBER_OF_V1(A)
+
 WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
 WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
 WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);

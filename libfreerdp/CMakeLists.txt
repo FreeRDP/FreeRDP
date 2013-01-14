@@ -24,6 +24,7 @@ endif()
 
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
+	common
 	gdi
 	rail
 	cache
@@ -44,7 +45,7 @@ if(MONOLITHIC_BUILD)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_OBJECTS})
 
 	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -54,3 +55,4 @@ if(MONOLITHIC_BUILD)
 	
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 endif()
+

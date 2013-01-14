@@ -25,9 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+#include <winpr/cmdline.h>
+
+#include <freerdp/addin.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/load_plugin.h>
 
 #include "audin_main.h"
 
@@ -77,6 +80,8 @@ struct _AUDIN_PLUGIN
 	UINT16 fixed_format;
 	UINT16 fixed_channel;	
 	UINT32 fixed_rate;
+	char* subsystem;
+	char* device_name;
 
 	/* Device interface */
 	IAudinDevice* device;
@@ -132,7 +137,8 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, S
 	}
 	stream_seek_UINT32(s); /* cbSizeFormatsPacket */
 
-	callback->formats = (audinFormat*) xzalloc(NumFormats * sizeof(audinFormat));
+	callback->formats = (audinFormat*) malloc(NumFormats * sizeof(audinFormat));
+	ZeroMemory(callback->formats, NumFormats * sizeof(audinFormat));
 
 	out = stream_new(9);
 	stream_seek(out, 9);
@@ -373,7 +379,8 @@ static int audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 
 	DEBUG_DVC("");
 
-	callback = xnew(AUDIN_CHANNEL_CALLBACK);
+	callback = (AUDIN_CHANNEL_CALLBACK*) malloc(sizeof(AUDIN_CHANNEL_CALLBACK));
+	ZeroMemory(callback, sizeof(AUDIN_CHANNEL_CALLBACK));
 
 	callback->iface.OnDataReceived = audin_on_data_received;
 	callback->iface.OnClose = audin_on_close;
@@ -392,7 +399,8 @@ static int audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 
 	DEBUG_DVC("");
 
-	audin->listener_callback = xnew(AUDIN_LISTENER_CALLBACK);
+	audin->listener_callback = (AUDIN_LISTENER_CALLBACK*) malloc(sizeof(AUDIN_LISTENER_CALLBACK));
+	ZeroMemory(audin->listener_callback, sizeof(AUDIN_LISTENER_CALLBACK));
 
 	audin->listener_callback->iface.OnNewChannelConnection = audin_on_new_channel_connection;
 	audin->listener_callback->plugin = pPlugin;
@@ -436,31 +444,19 @@ static void audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
 	audin->device = device;
 }
 
-static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, RDP_PLUGIN_DATA* data)
+static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
 {
-	char* fullname;
 	PFREERDP_AUDIN_DEVICE_ENTRY entry;
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
 
-	if (strrchr(name, '.') != NULL)
-	{
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(name, AUDIN_DEVICE_EXPORT_FUNC_NAME);
-	}
-	else
-	{
-		fullname = xzalloc(strlen(name) + 8);
-		strcpy(fullname, "audin_");
-		strcat(fullname, name);
-		entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_plugin(fullname, AUDIN_DEVICE_EXPORT_FUNC_NAME);
-		free(fullname);
-	}
+	entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_channel_addin_entry("audin", (LPSTR) name, NULL, 0);
 
 	if (entry == NULL)
 		return FALSE;
 
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterAudinDevice = audin_register_device_plugin;
-	entryPoints.plugin_data = data;
+	entryPoints.args = args;
 
 	if (entry(&entryPoints) != 0)
 	{
@@ -471,54 +467,81 @@ static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, RDP_
 	return TRUE;
 }
 
-static BOOL audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data)
+void audin_set_subsystem(AUDIN_PLUGIN* audin, char* subsystem)
 {
-	BOOL ret;
+	if (audin->subsystem)
+		free(audin->subsystem);
+
+	audin->subsystem = _strdup(subsystem);
+}
+
+void audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
+{
+	if (audin->device_name)
+		free(audin->device_name);
+
+	audin->device_name = _strdup(device_name);
+}
+
+COMMAND_LINE_ARGUMENT_A audin_args[] =
+{
+	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<format>", NULL, NULL, -1, NULL, "format" },
+	{ "rate", COMMAND_LINE_VALUE_REQUIRED, "<rate>", NULL, NULL, -1, NULL, "rate" },
+	{ "channel", COMMAND_LINE_VALUE_REQUIRED, "<channel>", NULL, NULL, -1, NULL, "channel" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
+
+static BOOL audin_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
-	RDP_PLUGIN_DATA default_data[2] = { { 0 }, { 0 } };
 
-	if (data->data[0] && (strcmp((char*)data->data[0], "audin") == 0 || strstr((char*) data->data[0], "/audin.") != NULL))
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+			audin_args, flags, audin, NULL, NULL);
+
+	arg = audin_args;
+
+	do
 	{
-		if (data->data[1] && strcmp((char*)data->data[1], "format") == 0)
-		{
-			audin->fixed_format = atoi(data->data[2]);
-			return TRUE;
-		}
-		else if (data->data[1] && strcmp((char*)data->data[1], "rate") == 0)
-		{
-			audin->fixed_rate = atoi(data->data[2]);
-			return TRUE;
-		}
-		else if (data->data[1] && strcmp((char*)data->data[1], "channel") == 0)
-		{
-			audin->fixed_channel = atoi(data->data[2]);
-			return TRUE;
-		}
-		else if (data->data[1] && ((char*)data->data[1])[0])
-		{
-			return audin_load_device_plugin(pPlugin, (char*) data->data[1], data);
-		}
-		else
-		{
-			default_data[0].size = sizeof(RDP_PLUGIN_DATA);
-			default_data[0].data[0] = "audin";
-			default_data[0].data[1] = "pulse";
-			default_data[0].data[2] = "";
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
 
-			ret = audin_load_device_plugin(pPlugin, "pulse", default_data);
+		CommandLineSwitchStart(arg)
 
-			if (!ret)
-			{
-				default_data[0].size = sizeof(RDP_PLUGIN_DATA);
-				default_data[0].data[0] = "audin";
-				default_data[0].data[1] = "alsa";
-				default_data[0].data[2] = "default";
-				ret = audin_load_device_plugin(pPlugin, "alsa", default_data);
-			}
-
-			return ret;
+		CommandLineSwitchCase(arg, "sys")
+		{
+			audin_set_subsystem(audin, arg->Value);
 		}
+		CommandLineSwitchCase(arg, "dev")
+		{
+			audin_set_device_name(audin, arg->Value);
+		}
+		CommandLineSwitchCase(arg, "format")
+		{
+			audin->fixed_format = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "rate")
+		{
+			audin->fixed_rate = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "channel")
+		{
+			audin->fixed_channel = atoi(arg->Value);
+		}
+		CommandLineSwitchDefault(arg)
+		{
+
+		}
+
+		CommandLineSwitchEnd(arg)
 	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return TRUE;
 }
@@ -530,23 +553,50 @@ static BOOL audin_process_plugin_data(IWTSPlugin* pPlugin, RDP_PLUGIN_DATA* data
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int error = 0;
+	ADDIN_ARGV* args;
 	AUDIN_PLUGIN* audin;
 
 	audin = (AUDIN_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "audin");
 
 	if (audin == NULL)
 	{
-		audin = xnew(AUDIN_PLUGIN);
+		audin = (AUDIN_PLUGIN*) malloc(sizeof(AUDIN_PLUGIN));
+		ZeroMemory(audin, sizeof(AUDIN_PLUGIN));
 
 		audin->iface.Initialize = audin_plugin_initialize;
 		audin->iface.Connected = NULL;
 		audin->iface.Disconnected = NULL;
 		audin->iface.Terminated = audin_plugin_terminated;
+
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", (IWTSPlugin*) audin);
 	}
 
+	args = pEntryPoints->GetPluginData(pEntryPoints);
+
 	if (error == 0)
-		audin_process_plugin_data((IWTSPlugin*) audin, pEntryPoints->GetPluginData(pEntryPoints));
+		audin_process_addin_args((IWTSPlugin*) audin, args);
+
+	if (audin->subsystem)
+		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
+
+	if (!audin->device)
+	{
+		audin_set_subsystem(audin, "pulse");
+		audin_set_device_name(audin, "");
+		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
+	}
+
+	if (!audin->device)
+	{
+		audin_set_subsystem(audin, "alsa");
+		audin_set_device_name(audin, "default");
+		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
+	}
+
+	if (audin->device == NULL)
+	{
+		DEBUG_WARN("no sound device.");
+	}
 
 	return error;
 }

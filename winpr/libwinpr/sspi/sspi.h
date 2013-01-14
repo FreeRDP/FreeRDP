@@ -22,6 +22,8 @@
 
 #include <winpr/sspi.h>
 
+#define SCHANNEL_CB_MAX_TOKEN	0x00006000
+
 struct _CREDENTIALS
 {
 	SEC_WINNT_AUTH_IDENTITY identity;

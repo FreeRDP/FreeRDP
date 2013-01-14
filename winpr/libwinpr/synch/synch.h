@@ -24,6 +24,8 @@
 
 #ifndef _WIN32
 
+#define WINPR_PIPE_SEMAPHORE	1
+
 #if defined __APPLE__
 #include <pthread.h>
 #include <semaphore.h>
@@ -37,9 +39,17 @@
 #define winpr_sem_t sem_t
 #endif
 
+struct winpr_semaphore
+{
+	int pipe_fd[2];
+	winpr_sem_t* sem;
+};
+typedef struct winpr_semaphore WINPR_SEMAPHORE;
+
 struct winpr_event
 {
 	int pipe_fd[2];
+	BOOL bAttached;
 	BOOL bManualReset;
 };
 typedef struct winpr_event WINPR_EVENT;

@@ -28,7 +28,6 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
@@ -954,7 +953,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) xfi->rfx_context;
 	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) xfi->nsc_context;
 
-	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
 		message = rfx_process_message(rfx_context,
 				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
@@ -991,7 +990,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		XSetClipMask(xfi->display, xfi->gc, None);
 		rfx_message_free(rfx_context, message);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
 		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
@@ -1018,7 +1017,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 		XSetClipMask(xfi->display, xfi->gc, None);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
 	{
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);

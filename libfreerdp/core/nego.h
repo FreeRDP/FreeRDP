@@ -72,6 +72,8 @@ enum RDP_NEG_MSG
 };
 
 #define EXTENDED_CLIENT_DATA_SUPPORTED				0x01
+#define DYNVC_GFX_PROTOCOL_SUPPORTED				0x02
+#define RDP_NEGRSP_RESERVED					0x04
 
 #define PRECONNECTION_PDU_V1_SIZE				16
 #define PRECONNECTION_PDU_V2_MIN_SIZE				(PRECONNECTION_PDU_V1_SIZE + 2)
@@ -115,7 +117,7 @@ void nego_attempt_tls(rdpNego* nego);
 void nego_attempt_rdp(rdpNego* nego);
 
 void nego_send(rdpNego* nego);
-BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
 BOOL nego_recv_response(rdpNego* nego);
 BOOL nego_read_request(rdpNego* nego, STREAM* s);
 

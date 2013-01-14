@@ -8,7 +8,6 @@
 int TestClientChannels(int argc, char* argv[])
 {
 	int index;
-	void* entry;
 	DWORD dwFlags;
 	FREERDP_ADDIN* pAddin;
 	FREERDP_ADDIN** ppAddins;
@@ -16,7 +15,7 @@ int TestClientChannels(int argc, char* argv[])
 	dwFlags = FREERDP_ADDIN_DYNAMIC;
 
 	printf("Enumerate all\n");
-	ppAddins = freerdp_channels_list_client_addins(NULL, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(NULL, NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -29,7 +28,7 @@ int TestClientChannels(int argc, char* argv[])
 	freerdp_channels_addin_list_free(ppAddins);
 
 	printf("Enumerate rdpsnd\n");
-	ppAddins = freerdp_channels_list_client_addins("rdpsnd", NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins("rdpsnd", NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -42,7 +41,7 @@ int TestClientChannels(int argc, char* argv[])
 	freerdp_channels_addin_list_free(ppAddins);
 
 	printf("Enumerate tsmf video\n");
-	ppAddins = freerdp_channels_list_client_addins("tsmf", NULL, "video", dwFlags);
+	ppAddins = freerdp_channels_list_addins("tsmf", NULL, "video", dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -54,7 +53,7 @@ int TestClientChannels(int argc, char* argv[])
 
 	freerdp_channels_addin_list_free(ppAddins);
 
-	ppAddins = freerdp_channels_list_client_addins("unknown", NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins("unknown", NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -69,7 +68,7 @@ int TestClientChannels(int argc, char* argv[])
 	printf("Enumerate static addins\n");
 
 	dwFlags = FREERDP_ADDIN_STATIC;
-	ppAddins = freerdp_channels_list_client_addins(NULL, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(NULL, NULL, NULL, dwFlags);
 
 	for (index = 0; ppAddins[index] != NULL; index++)
 	{
@@ -80,16 +79,6 @@ int TestClientChannels(int argc, char* argv[])
 	}
 
 	freerdp_channels_addin_list_free(ppAddins);
-
-	dwFlags = FREERDP_ADDIN_DYNAMIC;
-
-	entry = freerdp_channels_load_addin_entry("drive", NULL, "DeviceServiceEntry", dwFlags);
-
-	printf("drive entry: %s\n", entry ? "non-null" : "null");
-
-	entry = freerdp_channels_load_addin_entry("rdpsnd", "alsa", NULL, dwFlags);
-
-	printf("rdpsnd-alsa entry: %s\n", entry ? "non-null" : "null");
 
 	return 0;
 }

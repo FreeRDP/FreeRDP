@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "librail.h"
 
@@ -111,10 +112,12 @@ void window_list_create(rdpWindowList* list, WINDOW_ORDER_INFO* orderInfo, WINDO
 	        return;
 	}
 
-	window = (rdpWindow*) xzalloc(sizeof(rdpWindow));
+	window = (rdpWindow*) malloc(sizeof(rdpWindow));
 
 	if (window == NULL)
 		return;
+
+	ZeroMemory(window, sizeof(rdpWindow));
 
 	window->windowId = orderInfo->windowId;
 
@@ -207,10 +210,12 @@ rdpWindowList* window_list_new(rdpRail* rail)
 {
 	rdpWindowList* list;
 
-	list = (rdpWindowList*) xzalloc(sizeof(rdpWindowList));
+	list = (rdpWindowList*) malloc(sizeof(rdpWindowList));
 
 	if (list != NULL)
 	{
+		ZeroMemory(list, sizeof(rdpWindowList));
+
 		list->head = NULL;
 		list->tail = NULL;
 		list->rail = rail;

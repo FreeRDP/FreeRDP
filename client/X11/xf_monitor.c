@@ -27,6 +27,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <winpr/crt.h>
+
 #ifdef WITH_XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -84,7 +86,8 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 			if (vscreen->nmonitors > 16)
 				vscreen->nmonitors = 0;
 
-			vscreen->monitors = xzalloc(sizeof(MONITOR_INFO) * vscreen->nmonitors);
+			vscreen->monitors = malloc(sizeof(MONITOR_INFO) * vscreen->nmonitors);
+			ZeroMemory(vscreen->monitors, sizeof(MONITOR_INFO) * vscreen->nmonitors);
 
 			if (vscreen->nmonitors)
 			{

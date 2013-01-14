@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __BITMAP_V2_CACHE_H
-#define __BITMAP_V2_CACHE_H
+#ifndef FREERDP_BITMAP_V2_CACHE_H
+#define FREERDP_BITMAP_V2_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -67,4 +67,4 @@ FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);
 FREERDP_API void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
-#endif /* __BITMAP_V2_CACHE_H */
+#endif /* FREERDP_BITMAP_V2_CACHE_H */

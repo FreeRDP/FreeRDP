@@ -31,10 +31,9 @@
 #include <sys/time.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
@@ -55,8 +54,8 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->width;
-	context->rfx_context->height = client->settings->height;
+	context->rfx_context->width = client->settings->DesktopWidth;
+	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->nsc_context = nsc_context_new();
@@ -158,8 +157,8 @@ static void test_peer_draw_background(freerdp_peer* client)
 
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = client->settings->width;
-	rect.height = client->settings->height;
+	rect.width = client->settings->DesktopWidth;
+	rect.height = client->settings->DesktopHeight;
 
 	size = rect.width * rect.height * 3;
 	rgb_data = malloc(size);
@@ -351,10 +350,10 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 	}
 	
 	if (sec > 0)
-		freerdp_sleep(sec);
+		Sleep(sec * 1000);
 	
 	if (usec > 0)
-		freerdp_usleep(usec);
+		USleep(usec);
 	
 	return TRUE;
 }
@@ -407,9 +406,9 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
 	}
 
 	s = stream_new(4096);
@@ -478,9 +477,9 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	printf("\n");
 
 	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->width, client->settings->height, client->settings->color_depth);
+		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
-	/* A real server should tag the peer as activated here and start sending updates in mainloop. */
+	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
 	/* Iterate all channel names requested by the client and activate those supported by the server */
@@ -512,7 +511,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	sf_peer_audin_init(context); /* Audio Input */
 
-	/* Return FALSE here would stop the execution of the peer mainloop. */
+	/* Return FALSE here would stop the execution of the peer main loop. */
 
 	return TRUE;
 }
@@ -552,15 +551,15 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
-		if (client->settings->width != 800)
+		if (client->settings->DesktopWidth != 800)
 		{
-			client->settings->width = 800;
-			client->settings->height = 600;
+			client->settings->DesktopWidth = 800;
+			client->settings->DesktopHeight = 600;
 		}
 		else
 		{
-			client->settings->width = 640;
-			client->settings->height = 480;
+			client->settings->DesktopWidth = 640;
+			client->settings->DesktopHeight = 480;
 		}
 		update->DesktopResize(update->context);
 		context->activated = FALSE;

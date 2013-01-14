@@ -19,21 +19,16 @@ set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
-	args.c
 	dsp.c
 	event.c
 	bitmap.c
-	hexdump.c
 	list.c
 	file.c
-	load_plugin.c
-	memory.c
 	passphrase.c
 	pcap.c
 	profiler.c
 	rail.c
 	signal.c
-	sleep.c
 	stopwatch.c
 	stream.c
 	string.c
@@ -41,9 +36,7 @@ set(${MODULE_PREFIX}_SRCS
 	tcp.c
 	thread.c
 	time.c
-	uds.c
-	unicode.c
-	wait_obj.c)
+	uds.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)
@@ -53,7 +46,7 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	SOURCES ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS
 	${CMAKE_THREAD_LIBS_INIT}
@@ -70,7 +63,7 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt winpr-synch)
+	MODULES winpr-crt winpr-synch winpr-thread)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

@@ -27,11 +27,9 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
 
@@ -109,6 +107,8 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	}
 
 	RDPSND_PDU_FINISH(s);
+
+	return TRUE;
 }
 
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
@@ -172,9 +172,10 @@ static void* rdpsnd_server_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+
+		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	s = stream_new(4096);
@@ -451,7 +452,9 @@ rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
 {
 	rdpsnd_server* rdpsnd;
 
-	rdpsnd = xnew(rdpsnd_server);
+	rdpsnd = (rdpsnd_server*) malloc(sizeof(rdpsnd_server));
+	ZeroMemory(rdpsnd, sizeof(rdpsnd_server));
+
 	rdpsnd->context.vcm = vcm;
 	rdpsnd->context.selected_client_format = -1;
 	rdpsnd->context.Initialize = rdpsnd_server_initialize;

@@ -29,7 +29,6 @@
 #endif
 
 #include <freerdp/codec/nsc.h>
-#include <freerdp/utils/memory.h>
 
 #include "nsc_types.h"
 #include "nsc_encode.h"

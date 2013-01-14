@@ -26,7 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
 
@@ -430,39 +431,53 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 {
 	struct rdp_mppc_enc* enc;
 
-	enc = xnew(struct rdp_mppc_enc);
+	enc = (struct rdp_mppc_enc*) malloc(sizeof(struct rdp_mppc_enc));
+	ZeroMemory(enc, sizeof(struct rdp_mppc_enc));
+
 	if (enc == NULL)
 		return NULL;
+
 	switch (protocol_type)
 	{
 		case PROTO_RDP_40:
 			enc->protocol_type = PROTO_RDP_40;
 			enc->buf_len = RDP_40_HIST_BUF_LEN;
 			break;
+
 		case PROTO_RDP_50:
 			enc->protocol_type = PROTO_RDP_50;
 			enc->buf_len = RDP_50_HIST_BUF_LEN;
 			break;
+
 		default:
 			free(enc);
 			return NULL;
 	}
+
 	enc->first_pkt = 1;
-	enc->historyBuffer = (char*) xzalloc(enc->buf_len);
+	enc->historyBuffer = (char*) malloc(enc->buf_len);
+	ZeroMemory(enc->historyBuffer, enc->buf_len);
+
 	if (enc->historyBuffer == NULL)
 	{
 		free(enc);
 		return NULL;
 	}
-	enc->outputBufferPlus = (char*) xzalloc(enc->buf_len + 64);
+
+	enc->outputBufferPlus = (char*) malloc(enc->buf_len + 64);
+	ZeroMemory(enc->outputBufferPlus, enc->buf_len + 64);
+
 	if (enc->outputBufferPlus == NULL)
 	{
 		free(enc->historyBuffer);
 		free(enc);
 		return NULL;
 	}
+
 	enc->outputBuffer = enc->outputBufferPlus + 64;
-	enc->hash_table = (UINT16*) xzalloc(enc->buf_len * 2);
+	enc->hash_table = (UINT16*) malloc(enc->buf_len * 2);
+	ZeroMemory(enc->hash_table, enc->buf_len * 2);
+
 	if (enc->hash_table == NULL)
 	{
 		free(enc->historyBuffer);
@@ -470,6 +485,7 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 		free(enc);
 		return NULL;
 	}
+
 	return enc;
 }
 
@@ -503,15 +519,18 @@ BOOL compress_rdp(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
 		return FALSE;
+
 	switch (enc->protocol_type)
 	{
 		case PROTO_RDP_40:
 			return compress_rdp_4(enc, srcData, len);
 			break;
+
 		case PROTO_RDP_50:
 			return compress_rdp_5(enc, srcData, len);
 			break;
 	}
+
 	return FALSE;
 }
 
@@ -753,7 +772,7 @@ BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 
 		/* encode copy_offset and insert into output buffer */
 
-		if ((copy_offset >= 0) && (copy_offset <= 63))
+		if (copy_offset <= 63) /* (copy_offset >= 0) is always true */
 		{
 			/* insert binary header */
 			data = 0x1f;

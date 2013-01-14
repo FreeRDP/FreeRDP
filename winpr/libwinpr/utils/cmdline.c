@@ -31,44 +31,6 @@
  */
 
 /**
- * Remote Desktop Connection Usage
- *
- * mstsc [<connection file>] [/v:<server[:port]>] [/admin] [/f[ullscreen]]
- * [/w:<width>] [/h:<height>] [/public] | [/span] [/multimon] [/migrate]
- * [/edit "connection file"] [/?]
- *
- * "connection file" -- Specifies the name of an .RDP for the connection.
- *
- * /v:<server[:port]> -- Specifies the remote computer to which you want
- * to connect.
- *
- * /admin -- Connects you to the session for administering a server.
- *
- * /f -- Starts Remote Desktop in full-screen mode.
- *
- * /w:<width> -- Specifies the width of the Remote Desktop window.
- *
- * /h:<height> -- Specifies the height of the Remote Desktop window.
- *
- * /public -- Runs Remote Desktop in public mode.
- *
- * /span -- Matches the remote desktop width and height with the local
- * virtual desktop, spanning across multiple monitors if necessary. To
- * span across monitors, the monitors must be arranged to form a
- * rectangle.
- *
- * /multimon -- Configures the remote desktop session layout to
- * be identical to the current client-side configuration.
- *
- * /edit -- Opens the specified .RDP connection file for editing.
- *
- * /migrate -- Migrates legacy connection files that were created with
- * Client Connection Manager to new .RDP connection files.
- *
- * /? -- Lists these parameters.
- */
-
-/**
  * Command-Line Syntax:
  *
  * <sigil><keyword><separator><value>
@@ -87,7 +49,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
+	int count;
 	int length;
+	int index;
 	BOOL match;
 	char* sigil;
 	int sigil_length;
@@ -101,11 +65,31 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	char* value;
 	int value_length;
 	int value_index;
+	int toggle;
+
+	if (!argv)
+		return 0;
+
+	if (argc == 1)
+		return COMMAND_LINE_STATUS_PRINT_HELP;
 
 	for (i = 1; i < argc; i++)
 	{
+		index = i;
+
 		if (preFilter)
-			preFilter(context, i, argv[i]);
+		{
+			count = preFilter(context, i, argc, argv);
+
+			if (count < 0)
+				return COMMAND_LINE_ERROR;
+
+			if (count > 0)
+			{
+				i += count;
+				continue;
+			}
+		}
 
 		sigil_index = 0;
 		sigil_length = 0;
@@ -119,6 +103,12 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		else if ((sigil[0] == '-') && (flags & COMMAND_LINE_SIGIL_DASH))
 		{
 			sigil_length = 1;
+
+			if (length > 2)
+			{
+				if ((sigil[1] == '-') && (flags & COMMAND_LINE_SIGIL_DOUBLE_DASH))
+					sigil_length = 2;
+			}
 		}
 		else if ((sigil[0] == '+') && (flags & COMMAND_LINE_SIGIL_PLUS_MINUS))
 		{
@@ -128,18 +118,40 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			sigil_length = 1;
 		}
+		else if (flags & COMMAND_LINE_SIGIL_NONE)
+		{
+			sigil_length = 0;
+		}
 		else
 		{
 			continue;
 		}
 
-		if (sigil_length > 0)
+		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE))
 		{
 			if (length < (sigil_length + 1))
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
+
+			toggle = -1;
+
+			if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+			{
+				if (strncmp(keyword, "enable-", 7) == 0)
+				{
+					toggle = TRUE;
+					keyword_index += 7;
+					keyword = (char*) &argv[i][keyword_index];
+				}
+				else if (strncmp(keyword, "disable-", 8) == 0)
+				{
+					toggle = FALSE;
+					keyword_index += 8;
+					keyword = (char*) &argv[i][keyword_index];
+				}
+			}
 
 			separator = NULL;
 
@@ -164,7 +176,6 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 			{
 				separator_length = 0;
 				separator_index = -1;
-
 				keyword_length = (length - keyword_index);
 
 				value_index = -1;
@@ -194,13 +205,42 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!match)
 					continue;
 
-				options[j].Index = i;
+				options[j].Index = index;
 
-				if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
+				{
+					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+						(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					{
+						i++;
+						value_index = 0;
+						length = strlen(argv[i]);
+
+						value = (char*) &argv[i][value_index];
+						value_length = (length - value_index);
+					}
+				}
+
+				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+				else
+				{
+					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					{
+						i--;
+						value_index = -1;
+						value = NULL;
+						value_length = 0;
+					}
+				}
 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
 					return COMMAND_LINE_ERROR_MISSING_VALUE;
+
+				options[j].Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
 
 				if (value)
 				{
@@ -216,12 +256,24 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					}
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
 					{
-						if (sigil[0] == '+')
-							options[j].Value = BoolValueTrue;
-						else if (sigil[0] == '-')
-							options[j].Value = BoolValueFalse;
+						if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
+						{
+							if (toggle == -1)
+								options[j].Value = BoolValueTrue;
+							else if (!toggle)
+								options[j].Value = BoolValueFalse;
+							else
+								options[j].Value = BoolValueTrue;
+						}
 						else
-							options[j].Value = BoolValueTrue;
+						{
+							if (sigil[0] == '+')
+								options[j].Value = BoolValueTrue;
+							else if (sigil[0] == '-')
+								options[j].Value = BoolValueFalse;
+							else
+								options[j].Value = BoolValueTrue;
+						}
 
 						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}

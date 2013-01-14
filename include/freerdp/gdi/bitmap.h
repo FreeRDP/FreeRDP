@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_BITMAP_H
-#define __GDI_BITMAP_H
+#ifndef FREERDP_GDI_BITMAP_H
+#define FREERDP_GDI_BITMAP_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -40,4 +40,4 @@ FREERDP_API int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, 
 
 typedef int (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
-#endif /* __GDI_BITMAP_H */
+#endif /* FREERDP_GDI_BITMAP_H */

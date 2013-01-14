@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __SERVER_RDPSND_H
-#define __SERVER_RDPSND_H
+#ifndef FREERDP_CHANNEL_RDPSND_SERVER_H
+#define FREERDP_CHANNEL_RDPSND_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
@@ -94,4 +94,4 @@ struct _rdpsnd_server_context
 FREERDP_API rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
 FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
 
-#endif
+#endif /* FREERDP_CHANNEL_RDPSND_SERVER_H */

@@ -23,8 +23,9 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/offscreen.h>
 
@@ -134,7 +135,8 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 {
 	rdpOffscreenCache* offscreen_cache;
 
-	offscreen_cache = (rdpOffscreenCache*) xzalloc(sizeof(rdpOffscreenCache));
+	offscreen_cache = (rdpOffscreenCache*) malloc(sizeof(rdpOffscreenCache));
+	ZeroMemory(offscreen_cache, sizeof(rdpOffscreenCache));
 
 	if (offscreen_cache != NULL)
 	{
@@ -148,7 +150,8 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 		settings->OffscreenCacheSize = offscreen_cache->maxSize;
 		settings->OffscreenCacheEntries = offscreen_cache->maxEntries;
 
-		offscreen_cache->entries = (rdpBitmap**) xzalloc(sizeof(rdpBitmap*) * offscreen_cache->maxEntries);
+		offscreen_cache->entries = (rdpBitmap**) malloc(sizeof(rdpBitmap*) * offscreen_cache->maxEntries);
+		ZeroMemory(offscreen_cache->entries, sizeof(rdpBitmap*) * offscreen_cache->maxEntries);
 	}
 
 	return offscreen_cache;

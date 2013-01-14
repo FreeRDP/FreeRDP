@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/wait_obj.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 
@@ -134,7 +134,9 @@ static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, UINT32 len
 	if (audin->context.num_client_formats <= 0)
 		return FALSE;
 
-	audin->context.client_formats = xzalloc(audin->context.num_client_formats * sizeof(rdpsndFormat));
+	audin->context.client_formats = malloc(audin->context.num_client_formats * sizeof(rdpsndFormat));
+	ZeroMemory(audin->context.client_formats, audin->context.num_client_formats * sizeof(rdpsndFormat));
+
 	for (i = 0; i < audin->context.num_client_formats; i++)
 	{
 		if (length < 18)
@@ -273,22 +275,27 @@ static void* audin_server_thread_func(void* arg)
 
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+
+		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
 	while (1)
 	{
 		freerdp_thread_wait(thread);
+
 		if (freerdp_thread_is_stopped(thread))
 			break;
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &bytes_returned) == FALSE)
 			break;
-		ready = *((BOOL*)buffer);
+
+		ready = *((BOOL*) buffer);
+
 		WTSFreeMemory(buffer);
+
 		if (ready)
 			break;
 	}
@@ -410,7 +417,9 @@ audin_server_context* audin_server_context_new(WTSVirtualChannelManager* vcm)
 {
 	audin_server* audin;
 
-	audin = xnew(audin_server);
+	audin = (audin_server*) malloc(sizeof(audin_server));
+	ZeroMemory(audin, sizeof(audin_server));
+
 	audin->context.vcm = vcm;
 	audin->context.selected_client_format = -1;
 	audin->context.frames_per_packet = 4096;
@@ -428,9 +437,12 @@ void audin_server_context_free(audin_server_context* context)
 	audin_server* audin = (audin_server*) context;
 
 	audin_server_close(context);
+
 	if (audin->dsp_context)
 		freerdp_dsp_context_free(audin->dsp_context);
+
 	if (audin->context.client_formats)
 		free(audin->context.client_formats);
+
 	free(audin);
 }

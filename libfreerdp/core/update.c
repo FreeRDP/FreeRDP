@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/thread.h>
+
 #include "update.h"
 #include "surface.h"
 
@@ -41,6 +44,8 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	UINT16 numberOrders;
 
+	if(stream_get_left(s) < 6)
+		return FALSE;
 	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 	stream_read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
@@ -55,8 +60,10 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
+BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
+	if(stream_get_left(s) < 18)
+		return FALSE;
 	stream_read_UINT16(s, bitmap_data->destLeft);
 	stream_read_UINT16(s, bitmap_data->destTop);
 	stream_read_UINT16(s, bitmap_data->destRight);
@@ -84,16 +91,20 @@ void update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
+		if(stream_get_left(s) < bitmap_data->bitmapLength)
+			return FALSE;
 		bitmap_data->compressed = FALSE;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
 		stream_seek(s, bitmap_data->bitmapLength);
 	}
+	return TRUE;
 }
 
-void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)
+BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
-
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
 	if (bitmap_update->number > bitmap_update->count)
@@ -114,20 +125,27 @@ void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 	/* rectangles */
 	for (i = 0; i < (int) bitmap_update->number; i++)
 	{
-		update_read_bitmap_data(s, &bitmap_update->rectangles[i]);
+		if (!update_read_bitmap_data(s, &bitmap_update->rectangles[i]))
+			return FALSE;
 	}
+	return TRUE;
 }
 
-void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update)
+BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update)
 {
 	int i;
 	PALETTE_ENTRY* entry;
 
+	if(stream_get_left(s) < 6)
+		return FALSE;
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 	stream_read_UINT32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
 
 	if (palette_update->number > 256)
 		palette_update->number = 256;
+
+	if(stream_get_left(s) < palette_update->number * 3)
+		return FALSE;
 
 	/* paletteEntries */
 	for (i = 0; i < (int) palette_update->number; i++)
@@ -138,6 +156,7 @@ void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 		stream_read_BYTE(s, entry->green);
 		stream_read_BYTE(s, entry->red);
 	}
+	return TRUE;
 }
 
 void update_read_synchronize(rdpUpdate* update, STREAM* s)
@@ -150,31 +169,45 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 	 */
 }
 
-void update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
+BOOL update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
 {
+	if(stream_get_left(s) < 8)
+		return FALSE;
 	stream_read_UINT32(s, play_sound->duration); /* duration (4 bytes) */
 	stream_read_UINT32(s, play_sound->frequency); /* frequency (4 bytes) */
+	return TRUE;
 }
 
-void update_recv_play_sound(rdpUpdate* update, STREAM* s)
+BOOL update_recv_play_sound(rdpUpdate* update, STREAM* s)
 {
-	update_read_play_sound(s, &update->play_sound);
+	if(!update_read_play_sound(s, &update->play_sound))
+		return FALSE;
 	IFCALL(update->PlaySound, update->context, &update->play_sound);
+	return TRUE;
 }
 
-void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
+BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
 {
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT16(s, pointer_position->xPos); /* xPos (2 bytes) */
 	stream_read_UINT16(s, pointer_position->yPos); /* yPos (2 bytes) */
+	return TRUE;
 }
 
-void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
+BOOL update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
 {
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT32(s, pointer_system->type); /* systemPointerType (4 bytes) */
+	return TRUE;
 }
 
-void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
+BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 {
+	if(stream_get_left(s) < 14)
+		return FALSE;
+
 	stream_read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
 	stream_read_UINT16(s, pointer_color->xPos); /* xPos (2 bytes) */
 	stream_read_UINT16(s, pointer_color->yPos); /* yPos (2 bytes) */
@@ -196,70 +229,88 @@ void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthXorMask > 0)
 	{
+		if(stream_get_left(s) < pointer_color->lengthXorMask)
+			return FALSE;
 		pointer_color->xorMaskData = (BYTE*) malloc(pointer_color->lengthXorMask);
 		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
 	}
 
 	if (pointer_color->lengthAndMask > 0)
 	{
+		if(stream_get_left(s) < pointer_color->lengthAndMask)
+			return FALSE;
 		pointer_color->andMaskData = (BYTE*) malloc(pointer_color->lengthAndMask);
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
 	if (stream_get_left(s) > 0)
 		stream_seek_BYTE(s); /* pad (1 byte) */
+	return TRUE;
 }
 
-void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
+BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
 {
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
-	update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
+	return update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
 }
 
-void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
+BOOL update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
 {
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
+	return TRUE;
 }
 
-void update_recv_pointer(rdpUpdate* update, STREAM* s)
+BOOL update_recv_pointer(rdpUpdate* update, STREAM* s)
 {
 	UINT16 messageType;
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
+	if(stream_get_left(s) < 2+2)
+		return FALSE;
 	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	switch (messageType)
 	{
 		case PTR_MSG_TYPE_POSITION:
-			update_read_pointer_position(s, &pointer->pointer_position);
+			if (!update_read_pointer_position(s, &pointer->pointer_position))
+				return FALSE;
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case PTR_MSG_TYPE_SYSTEM:
-			update_read_pointer_system(s, &pointer->pointer_system);
+			if (!update_read_pointer_system(s, &pointer->pointer_system))
+				return FALSE;
 			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
 			break;
 
 		case PTR_MSG_TYPE_COLOR:
-			update_read_pointer_color(s, &pointer->pointer_color);
+			if (!update_read_pointer_color(s, &pointer->pointer_color))
+				return FALSE;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case PTR_MSG_TYPE_POINTER:
-			update_read_pointer_new(s, &pointer->pointer_new);
+			if (!update_read_pointer_new(s, &pointer->pointer_new))
+				return FALSE;
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
 		case PTR_MSG_TYPE_CACHED:
-			update_read_pointer_cached(s, &pointer->pointer_cached);
+			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
+				return FALSE;
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 
 		default:
 			break;
 	}
+	return TRUE;
 }
 
 BOOL update_recv(rdpUpdate* update, STREAM* s)
@@ -267,6 +318,8 @@ BOOL update_recv(rdpUpdate* update, STREAM* s)
 	UINT16 updateType;
 	rdpContext* context = update->context;
 
+	if(stream_get_left(s) < 2)
+		return FALSE;
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
@@ -284,12 +337,14 @@ BOOL update_recv(rdpUpdate* update, STREAM* s)
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			update_read_bitmap(update, s, &update->bitmap_update);
+			if (!update_read_bitmap(update, s, &update->bitmap_update))
+				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			update_read_palette(update, s, &update->palette_update);
+			if (!update_read_palette(update, s, &update->palette_update))
+				return FALSE;
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 
@@ -560,6 +615,8 @@ BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	stream_read_BYTE(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
 
+	if(stream_get_left(s) < numberOfAreas * 4 * 2)
+		return FALSE;
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
 
 	for (index = 0; index < numberOfAreas; index++)
@@ -618,24 +675,50 @@ void update_register_client_callbacks(rdpUpdate* update)
 	update->SuppressOutput = update_send_suppress_output;
 }
 
+static void* update_thread(void* arg)
+{
+	rdpUpdate* update;
+
+	update = (rdpUpdate*) arg;
+
+	while (WaitForSingleObject(Queue_Event(update->queue), INFINITE) == WAIT_OBJECT_0)
+	{
+
+	}
+
+	return NULL;
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
 
-	update = (rdpUpdate*) xzalloc(sizeof(rdpUpdate));
+	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
 
 	if (update != NULL)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
 
-		update->bitmap_update.count = 64;
-		update->bitmap_update.rectangles = (BITMAP_DATA*) xzalloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		ZeroMemory(update, sizeof(rdpUpdate));
 
-		update->pointer = xnew(rdpPointerUpdate);
-		update->primary = xnew(rdpPrimaryUpdate);
-		update->secondary = xnew(rdpSecondaryUpdate);
-		update->altsec = xnew(rdpAltSecUpdate);
-		update->window = xnew(rdpWindowUpdate);
+		update->bitmap_update.count = 64;
+		update->bitmap_update.rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		ZeroMemory(update->bitmap_update.rectangles, sizeof(BITMAP_DATA) * update->bitmap_update.count);
+
+		update->pointer = (rdpPointerUpdate*) malloc(sizeof(rdpPointerUpdate));
+		ZeroMemory(update->pointer, sizeof(rdpPointerUpdate));
+
+		update->primary = (rdpPrimaryUpdate*) malloc(sizeof(rdpPrimaryUpdate));
+		ZeroMemory(update->primary, sizeof(rdpPrimaryUpdate));
+
+		update->secondary = (rdpSecondaryUpdate*) malloc(sizeof(rdpSecondaryUpdate));
+		ZeroMemory(update->secondary, sizeof(rdpSecondaryUpdate));
+
+		update->altsec = (rdpAltSecUpdate*) malloc(sizeof(rdpAltSecUpdate));
+		ZeroMemory(update->altsec, sizeof(rdpAltSecUpdate));
+
+		update->window = (rdpWindowUpdate*) malloc(sizeof(rdpWindowUpdate));
+		ZeroMemory(update->window, sizeof(rdpWindowUpdate));
 
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		deleteList->sIndices = 64;
@@ -643,6 +726,10 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		deleteList->cIndices = 0;
 
 		update->SuppressOutput = update_send_suppress_output;
+
+		update->queue = Queue_New(TRUE, -1, -1);
+
+		update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
 	}
 
 	return update;
@@ -653,6 +740,7 @@ void update_free(rdpUpdate* update)
 	if (update != NULL)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
+
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		free(deleteList->indices);
 
@@ -664,7 +752,9 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
+
+		CloseHandle(update->thread);
+
 		free(update);
 	}
 }
-

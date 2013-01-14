@@ -38,15 +38,8 @@
 #include <freerdp/utils/sleep.h>
 #include <freerdp/utils/memory.h>
 
-
-
 #include "mfreerdp.h"
-
 #include "mf_peer.h"
-
-//UINT32 servscreen_width;
-//UINT32 servscreen_height;
-//UINT32 bitsPerPixel;
 
 static void mf_server_main_loop(freerdp_listener* instance)
 {

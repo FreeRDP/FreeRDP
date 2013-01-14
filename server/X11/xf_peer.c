@@ -32,12 +32,13 @@
 #include <X11/Xutil.h>
 #include <sys/select.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
-#include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 extern char* xf_pcap_file;
@@ -59,20 +60,23 @@ void xf_xdamage_init(xfInfo* xfi)
 	int major, minor;
 	XGCValues values;
 
-	if (XShmQueryExtension(xfi->display) != False)
+	if (xfi->use_xshm)
 	{
-		XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
-
-		if (pixmaps != True)
+		if (XShmQueryExtension(xfi->display) != False)
 		{
-			printf("XShmQueryVersion failed\n");
+			XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
+
+			if (pixmaps != True)
+			{
+				printf("XShmQueryVersion failed\n");
+				return;
+			}
+		}
+		else
+		{
+			printf("XShmQueryExtension failed\n");
 			return;
 		}
-	}
-	else
-	{
-		printf("XShmQueryExtension failed\n");
-		return;
 	}
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
@@ -160,6 +164,9 @@ void xf_xshm_init(xfInfo* xfi)
 
 	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
 
+	printf("display: %p root_window: %p width: %d height: %d depth: %d\n",
+			xfi->display, xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
 			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
 			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
@@ -177,9 +184,16 @@ xfInfo* xf_info_init()
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 
-	xfi = xnew(xfInfo);
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
 
-	//xfi->use_xshm = TRUE;
+	/**
+	 * Recent X11 servers drop support for shared pixmaps
+	 * To see if your X11 server supports shared pixmaps, use:
+	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
+	 */
+	xfi->use_xshm = FALSE;
+
 	xfi->display = XOpenDisplay(NULL);
 
 	XInitThreads();
@@ -251,7 +265,8 @@ xfInfo* xf_info_init()
 	xf_xdamage_init(xfi);
 #endif
 
-	xf_xshm_init(xfi);
+	if (xfi->use_xshm)
+		xf_xshm_init(xfi);
 
 	xfi->bytesPerPixel = 4;
 
@@ -316,8 +331,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	if (xfp->activations == 1)
-		pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
+	pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
 }
 
 static BOOL xf_peer_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec, UINT32 new_usec)
@@ -350,10 +364,10 @@ static BOOL xf_peer_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_s
 	}
 
 	if (sec > 0)
-		freerdp_sleep(sec);
+		Sleep(sec * 1000);
 
 	if (usec > 0)
-		freerdp_usleep(usec);
+		USleep(usec);
 
 	return TRUE;
 }
@@ -449,8 +463,11 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 		image = xf_snapshot(xfp, x, y, width, height);
 
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1,
-				(BYTE*) image->data, width, height, width * xfi->bytesPerPixel);
+		data = (BYTE*) image->data;
+		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
+
+		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
+				width, height, image->bytes_per_line);
 
 		cmd->destLeft = x;
 		cmd->destTop = y;
@@ -563,7 +580,7 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	if (!client->settings->RemoteFxCodec)
 	{
 		printf("Client does not support RemoteFX\n");
-		return 0;
+		return FALSE;
 	}
 
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
@@ -572,9 +589,8 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	client->settings->DesktopHeight = xfi->height;
 
 	client->update->DesktopResize(client->update->context);
-	xfp->activated = FALSE;
 
-	/* Return FALSE here would stop the execution of the peer mainloop. */
+	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }
 
@@ -593,7 +609,6 @@ BOOL xf_peer_activate(freerdp_peer* client)
 	else
 	{
 		xf_peer_live_rfx(client);
-		xfp->activations++;
 	}
 
 	return TRUE;
@@ -630,10 +645,6 @@ void* xf_peer_main_loop(void* arg)
 
 	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
 	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
-
-	settings->NlaSecurity = TRUE;
-	settings->TlsSecurity = FALSE;
-	settings->RdpSecurity = FALSE;
 
 	settings->RemoteFxCodec = TRUE;
 

@@ -48,10 +48,11 @@
  *    Create IWTSVirtualChannelCallback instance if the new channel is accepted
  */
 
-#ifndef __FREERDP_DVC_H
-#define __FREERDP_DVC_H
+#ifndef FREERDP_DVC_H
+#define FREERDP_DVC_H
 
 #include <freerdp/types.h>
+#include <freerdp/addin.h>
 
 typedef struct _IWTSVirtualChannelManager IWTSVirtualChannelManager;
 typedef struct _IWTSListener IWTSListener;
@@ -145,9 +146,9 @@ struct _IDRDYNVC_ENTRY_POINTS
 		const char* name, IWTSPlugin* pPlugin);
 	IWTSPlugin* (*GetPlugin) (IDRDYNVC_ENTRY_POINTS* pEntryPoints,
 		const char* name);
-	RDP_PLUGIN_DATA* (*GetPluginData) (IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	ADDIN_ARGV* (*GetPluginData) (IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 };
 
 typedef int (*PDVC_PLUGIN_ENTRY) (IDRDYNVC_ENTRY_POINTS*);
 
-#endif
+#endif /* FREERDP_DVC_H */
