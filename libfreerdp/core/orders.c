@@ -1441,7 +1441,7 @@ BOOL update_read_create_offscreen_bitmap_order(STREAM* s, CREATE_OFFSCREEN_BITMA
 	BOOL deleteListPresent;
 	OFFSCREEN_DELETE_LIST* deleteList;
 
-	if(stream_get_left(s) < 4)
+	if(stream_get_left(s) < 6)
 		return FALSE;
 	stream_read_UINT16(s, flags); /* flags (2 bytes) */
 	create_offscreen_bitmap->id = flags & 0x7FFF;

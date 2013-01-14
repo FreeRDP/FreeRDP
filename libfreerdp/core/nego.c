@@ -465,7 +465,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
 
 	if (transport_read(nego->transport, s) < 0)
-		return -1;
+		return FALSE;
 
 	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
 }
