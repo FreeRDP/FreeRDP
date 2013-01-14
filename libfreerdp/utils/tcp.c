@@ -182,10 +182,14 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 int freerdp_tcp_wait_read(int sockfd)
 {
 	fd_set fds;
-
+	if(sockfd<1)
+	{
+	    printf("Invalid socket to watch: %d\n",sockfd);
+	    return 0 ;	    
+	}
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
-	select(1, &fds, NULL, NULL, NULL);
+	select(sockfd+1, &fds, NULL, NULL, NULL);
 
 	return 0;
 }
@@ -193,10 +197,15 @@ int freerdp_tcp_wait_read(int sockfd)
 int freerdp_tcp_wait_write(int sockfd)
 {
 	fd_set fds;
+	if(sockfd<1)
+	{
+	    printf("Invalid socket to watch: %d\n",sockfd);
+	    return 0;
+	}
 
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
-	select(1, NULL, &fds, NULL, NULL);
+	select(sockfd+1, NULL, &fds, NULL, NULL);
 
 	return 0;
 }
