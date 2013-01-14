@@ -532,6 +532,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 {
 	STREAM* s;
 	int length;
+	int ret;
 	BYTE *bm, *em;
 	STREAM* gcc_CCrsp;
 	STREAM* server_data;
@@ -556,12 +557,12 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	tpdu_write_data(s);
 	stream_set_mark(s, em);
 
-	transport_write(mcs->transport, s);
+	ret = transport_write(mcs->transport, s);
 
 	stream_free(gcc_CCrsp);
 	stream_free(server_data);
 
-	return TRUE;
+	return (ret < 0) ? FALSE : TRUE;
 }
 
 /**

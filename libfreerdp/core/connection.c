@@ -337,7 +337,8 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
-	rdp_read_security_header(s, &sec_flags);
+	if (!rdp_read_security_header(s, &sec_flags))
+		return FALSE;
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
@@ -345,7 +346,12 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	}
 
+	if(stream_get_left(s) < 4)
+		return FALSE;
 	stream_read_UINT32(s, rand_len);
+	if(stream_get_left(s) < rand_len + 8)  /* include 8 bytes of padding */
+		return FALSE;
+
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
 
 	if (rand_len != key_len + 8)
@@ -547,9 +553,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
 	rdp->state = CONNECTION_STATE_FINALIZATION;
 	update_reset_state(rdp->update);
 
-	rdp_client_connect_finalize(rdp);
-
-	return TRUE;
+	return rdp_client_connect_finalize(rdp);
 }
 
 BOOL rdp_client_connect_finalize(rdpRdp* rdp)

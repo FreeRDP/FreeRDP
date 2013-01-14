@@ -2147,9 +2147,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 	rdp_write_demand_active(s, rdp->settings);
 
-	rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
-
-	return TRUE;
+	return rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
 }
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
