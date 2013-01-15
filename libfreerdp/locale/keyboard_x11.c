@@ -232,14 +232,17 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 #else
 	{
 		char* keymap;
-		char* xkb_layout;
-		char* xkb_variant;
+		char* xkb_layout = 0;
+		char* xkb_variant = 0;
 
 		if (keyboardLayoutId == 0)
 		{
 			keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
-			free(xkb_layout);
-			free(xkb_variant);
+			if (xkb_layout)
+				free(xkb_layout);
+			if (xkb_variant)
+				free(xkb_variant);
+
 		}
 
 		keymap = freerdp_detect_keymap_from_xkb();
