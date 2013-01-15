@@ -34,7 +34,7 @@ UINT64 freerdp_windows_gmtime()
 	time_t unix_time;
 	UINT64 windows_time;
 
-	gmtime(&unix_time);
+	time(&unix_time);
 	windows_time = freerdp_get_windows_time_from_unix_time(unix_time);
 
 	return windows_time;
