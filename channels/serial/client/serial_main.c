@@ -79,7 +79,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial);
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
-	char* path;
+	char* path = NULL;
 	int status;
 	SERIAL_TTY* tty;
 	UINT32 PathLength;
