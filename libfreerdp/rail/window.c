@@ -325,7 +325,10 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		if (window->title != NULL)
+		{
 			free(window->title);
+			window->title = NULL;
+		}
 
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) window->titleInfo.string, window->titleInfo.length / 2,
 				&window->title, 0, NULL, NULL);

@@ -72,7 +72,7 @@ typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
 static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	char* path;
+	char* path = NULL;
 	int status;
 	UINT32 PathLength;
 

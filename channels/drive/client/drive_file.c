@@ -430,7 +430,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, S
 
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
 {
-	char* s;
+	char* s = NULL;
         mode_t m;
 	UINT64 size;
 	int status;
