@@ -140,6 +140,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 	s = stream_new(0);
 	stream_attach(s, cert->data, cert->length);
+	info->Modulus = 0;
 
 	if(!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
 		goto error1;
@@ -490,7 +491,8 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			DEBUG_CERTIFICATE("License Server Certificate");
 			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
-			free(cert_info.Modulus);
+			if(cert_info.Modulus)
+				free(cert_info.Modulus);
 			if(!ret)
 				return FALSE;
 		}
