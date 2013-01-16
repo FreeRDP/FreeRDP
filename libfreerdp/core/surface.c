@@ -25,13 +25,14 @@
 
 #include "surface.h"
 
-static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32 *length)
+static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
-	if(stream_get_left(s) < 20)
-		return FALSE;
+	if (stream_get_left(s) < 20)
+		return -1;
+
 	stream_read_UINT16(s, cmd->destLeft);
 	stream_read_UINT16(s, cmd->destTop);
 	stream_read_UINT16(s, cmd->destRight);
@@ -42,17 +43,19 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT3
 	stream_read_UINT16(s, cmd->width);
 	stream_read_UINT16(s, cmd->height);
 	stream_read_UINT32(s, cmd->bitmapDataLength);
-	if(stream_get_left(s) < cmd->bitmapDataLength)
-		return FALSE;
+
+	if (stream_get_left(s) < cmd->bitmapDataLength)
+		return -1;
+
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
 	cmd->bitmapData = stream_get_tail(s);
 
 	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	stream_set_pos(s, pos);
-
 	*length = 20 + cmd->bitmapDataLength;
-	return TRUE;
+
+	return 0;
 }
 
 static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
@@ -64,24 +67,28 @@ static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
 }
 
-static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32 *length)
+static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
-	if(stream_get_left(s) < 6)
-		return FALSE;
+	if (stream_get_left(s) < 6)
+		return -1;
+
 	stream_read_UINT16(s, marker->frameAction);
 	stream_read_UINT32(s, marker->frameId);
 
 	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 
-	if (update->context->rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE] && update->context->rdp->settings->FrameAcknowledge > 0 && marker->frameAction == SURFACECMD_FRAMEACTION_END)
+	if (update->context->rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE] &&
+			(update->context->rdp->settings->FrameAcknowledge > 0) &&
+			(marker->frameAction == SURFACECMD_FRAMEACTION_END))
 	{
 		update_send_frame_acknowledge(update->context->rdp, marker->frameId);
 	}
 
 	*length = 6;
-	return TRUE;
+
+	return 0;
 }
 
 int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
@@ -101,12 +108,12 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 		{
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
-				if (!update_recv_surfcmd_surface_bits(update, s, &cmdLength))
+				if (update_recv_surfcmd_surface_bits(update, s, &cmdLength) < 0)
 					return -1;
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
-				if (!update_recv_surfcmd_frame_marker(update, s, &cmdLength))
+				if (update_recv_surfcmd_frame_marker(update, s, &cmdLength) < 0)
 					return -1;
 				break;
 

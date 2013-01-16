@@ -198,8 +198,9 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
+static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
 {
+	int status = 0;
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = fastpath->rdp->update->context;
 	rdpPointerUpdate* pointer = update->pointer;
@@ -213,13 +214,13 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
 			if (!fastpath_recv_orders(fastpath, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			if(!fastpath_recv_update_common(fastpath, s))
-				return FALSE;
+			if (!fastpath_recv_update_common(fastpath, s))
+				return -1;
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
@@ -230,8 +231,7 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			if (update_recv_surfcmds(update, size, s) < 0)
-				return FALSE;
+			status = update_recv_surfcmds(update, size, s);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
@@ -246,25 +246,25 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
 			if (!update_read_pointer_position(s, &pointer->pointer_position))
-				return FALSE;
+				return -1;
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
 			if (!update_read_pointer_color(s, &pointer->pointer_color))
-				return FALSE;
+				return -1;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
 			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
-				return FALSE;
+				return -1;
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
 			if (!update_read_pointer_new(s, &pointer->pointer_new))
-				return FALSE;
+				return -1;
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
 			break;
 
@@ -273,11 +273,12 @@ static BOOL fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 
 			break;
 	}
 
-	return TRUE;
+	return status;
 }
 
 static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
+	int status;
 	UINT16 size;
 	int next_pos;
 	UINT32 totalSize;
@@ -287,10 +288,11 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	BYTE compressionFlags;
 	STREAM* update_stream;
 	STREAM* comp_stream;
-	rdpRdp  *rdp;
+	rdpRdp* rdp;
 	UINT32 roff;
 	UINT32 rlen;
 
+	status = 0;
 	rdp = fastpath->rdp;
 
 	fastpath_read_update_header(s, &updateCode, &fragmentation, &compression);
@@ -301,8 +303,10 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 		compressionFlags = 0;
 
 	stream_read_UINT16(s, size);
-	if(stream_get_left(s) < size)
-		return FALSE;
+
+	if (stream_get_left(s) < size)
+		return -1;
+
 	next_pos = stream_get_pos(s) + size;
 	comp_stream = s;
 
@@ -348,8 +352,10 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	if (update_stream)
 	{
-		if (!fastpath_recv_update(fastpath, updateCode, totalSize, update_stream))
-			return FALSE;
+		status = fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
+
+		if (status < 0)
+			return -1;
 	}
 
 	stream_set_pos(s, next_pos);
@@ -357,24 +363,25 @@ static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	if (comp_stream != s)
 		free(comp_stream);
 
-	return TRUE;
+	return status;
 }
 
 int fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 {
+	int status = 0;
 	rdpUpdate* update = fastpath->rdp->update;
 
 	IFCALL(update->BeginPaint, update->context);
 
 	while (stream_get_left(s) >= 3)
 	{
-		if (!fastpath_recv_update_data(fastpath, s))
+		if (fastpath_recv_update_data(fastpath, s) < 0)
 			return -1;
 	}
 
 	IFCALL(update->EndPaint, update->context);
 
-	return 0;
+	return status;
 }
 
 static BOOL fastpath_read_input_event_header(STREAM* s, BYTE* eventFlags, BYTE* eventCode)
