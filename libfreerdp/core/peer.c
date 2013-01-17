@@ -260,8 +260,6 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
 
-	printf("peer_recv_callback state = %d\n", rdp->state);
-
 	switch (rdp->state)
 	{
 		case CONNECTION_STATE_INITIAL:
