@@ -880,8 +880,11 @@ void xf_gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 
 void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
-	xfInfo* xfi = ((xfContext*) context)->xfi;
+	xfInfo* xfi;
+	rdpSettings* settings;
 
+	xfi = ((xfContext*) context)->xfi;
+	settings = xfi->instance->settings;
 	switch (surface_frame_marker->frameAction)
 	{
 		case SURFACECMD_FRAMEACTION_BEGIN:
@@ -905,6 +908,10 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 					xfi->frame_x1, xfi->frame_y1);
 				gdi_InvalidateRegion(xfi->hdc, xfi->frame_x1, xfi->frame_y1,
 					xfi->frame_x2 - xfi->frame_x1, xfi->frame_y2 - xfi->frame_y1);
+			}
+			if (settings->FrameAcknowledge > 0)
+			{
+				IFCALL(xfi->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
 			}
 			break;
 	}
