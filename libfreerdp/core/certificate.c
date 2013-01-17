@@ -196,15 +196,14 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	/* skip zero padding, if any */
 	do
 	{
-		if(stream_get_left(s) < padding)
+		if(stream_get_left(s) < 1)
 			goto error1;
 		stream_peek_BYTE(s, padding);
 
 		if (padding == 0)
 		{
-			if(stream_get_left(s) < 1)
+			if(!stream_skip(s, 1))
 				goto error1;
-			stream_seek(s, 1);
 			modulus_length--;
 		}
 	}
