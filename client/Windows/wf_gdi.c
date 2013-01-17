@@ -544,6 +544,19 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		free(tile_bitmap);
 }
 
+void wf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+	wfInfo* wfi;
+	rdpSettings* settings;
+
+	wfi = ((wfContext*) context)->wfi;
+	settings = wfi->instance->settings;
+	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END && settings->FrameAcknowledge > 0)
+	{
+		IFCALL(wfi->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+	}
+}
+
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
@@ -575,4 +588,5 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = wf_gdi_surface_bits;
+	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
 }

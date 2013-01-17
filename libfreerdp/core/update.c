@@ -494,6 +494,16 @@ static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 }
 
+static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
+{
+	STREAM* s;
+	rdpRdp* rdp = context->rdp;
+
+	s = rdp_data_pdu_init(rdp);
+	stream_write_UINT32(s, frameId);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+}
+
 static void update_send_synchronize(rdpContext* context)
 {
 	STREAM* s;
@@ -673,6 +683,7 @@ void update_register_client_callbacks(rdpUpdate* update)
 {
 	update->RefreshRect = update_send_refresh_rect;
 	update->SuppressOutput = update_send_suppress_output;
+	update->SurfaceFrameAcknowledge = update_send_frame_acknowledge;
 }
 
 static void* update_thread(void* arg)
