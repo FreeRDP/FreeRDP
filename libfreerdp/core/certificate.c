@@ -123,6 +123,29 @@
  *
  */
 
+static const char *certificate_read_errors[] = {
+	"Certificate tag",
+	"TBSCertificate",
+	"Explicit Contextual Tag [0]",
+	"version",
+	"CertificateSerialNumber",
+	"AlgorithmIdentifier",
+	"Issuer Name",
+	"Validity",
+	"Subject Name",
+	"SubjectPublicKeyInfo Tag",
+	"subjectPublicKeyInfo::AlgorithmIdentifier",
+	"subjectPublicKeyInfo::subjectPublicKey",
+	"RSAPublicKey Tag",
+	"modulusLength",
+	"zero padding",
+	"modulusLength",
+	"modulus",
+	"publicExponent length",
+	"publicExponent"
+};
+
+
 /**
  * Read X.509 Certificate
  * @param certificate certificate module
@@ -137,6 +160,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	UINT32 version;
 	int modulus_length;
 	int exponent_length;
+	int error = 0;
 
 	s = stream_new(0);
 	stream_attach(s, cert->data, cert->length);
@@ -144,55 +168,68 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 	if(!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
 		goto error1;
+	error++;
 
 	if(!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
 		goto error1;
+	error++;
 
-	/* Explicit Contextual Tag [0] */
-	if(!ber_read_contextual_tag(s, 0, &length, TRUE))
+	if(!ber_read_contextual_tag(s, 0, &length, TRUE))	/* Explicit Contextual Tag [0] */
 		goto error1;
+	error++;
 	if(!ber_read_integer(s, &version)) /* version (INTEGER) */
 		goto error1;
+	error++;
 	version++;
 
 	/* serialNumber */
 	if(!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
 		goto error1;
+	error++;
 
 	/* signature */
 	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* issuer */
 	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* validity */
 	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Validity (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* subject */
 	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* subjectPublicKeyInfo */
 	if(!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
 	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
+	error++;
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
 	if(!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
 		goto error1;
+	error++;
 
 	/* RSAPublicKey (SEQUENCE) */
 	if(!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
 		goto error1;
+	error++;
 
 	if(!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
 		goto error1;
+	error++;
 
 	/* skip zero padding, if any */
 	do
@@ -209,16 +246,19 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 		}
 	}
 	while (padding == 0);
+	error++;
 
 	if(stream_get_left(s) < modulus_length)
 		goto error1;
 	info->ModulusLength = modulus_length;
 	info->Modulus = (BYTE*) malloc(info->ModulusLength);
 	stream_read(s, info->Modulus, info->ModulusLength);
+	error++;
 
 	if(!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
 		goto error2;
-	if(stream_get_left(s) < exponent_length)
+	error++;
+	if(stream_get_left(s) < exponent_length || exponent_length > 4)
 		goto error2;
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
 	crypto_reverse(info->Modulus, info->ModulusLength);
@@ -232,6 +272,7 @@ error2:
 	free(info->Modulus);
 	info->Modulus = 0;
 error1:
+	printf("error reading when reading certificate: part=%s error=%d\n", certificate_read_errors[error], error);
 	stream_detach(s);
 	stream_free(s);
 	return FALSE;
