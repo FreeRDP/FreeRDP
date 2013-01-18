@@ -265,7 +265,7 @@ if(NOT IPP_FOUND)
     # Note, if several IPP installations found the newest version will be
     # selected
     # ------------------------------------------------------------------------
-    foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH})
+    foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH} /opt)
         set(curdir ${curdir}/intel)
         file(TO_CMAKE_PATH ${curdir} CURDIR)
 
@@ -336,3 +336,33 @@ if(WIN32 AND MINGW AND NOT IPP_LATEST_VERSION_MAJOR LESS 7)
     set(MSV_NTDLL    "ntdll")
     set(IPP_LIBRARIES ${IPP_LIBRARIES} ${MSV_NTDLL}${IPP_LIB_SUFFIX})
 endif()
+
+# ------------------------------------------------------------------------
+# This section will look for the IPP "compiler" dependent library
+# libiomp5.
+# ------------------------------------------------------------------------
+foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH} /opt)
+    set(curdir ${curdir}/intel)
+
+    if(EXISTS ${curdir})
+       file(GLOB_RECURSE liblist FOLLOW_SYMLINKS ${curdir}/libiomp5.*)
+       foreach(lib ${liblist})
+           get_filename_component(libdir ${lib} REALPATH)
+           get_filename_component(libdir ${libdir} PATH)
+           set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+           set(IPP_COMPILER_LIBRARIES iomp5)
+       endforeach(lib)
+    endif()
+endforeach(curdir)
+
+# ------------------------------------------------------------------------
+# Build fullpath library list.
+# ------------------------------------------------------------------------
+find_library(LIB_IPPI ippi PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPI})
+find_library(LIB_IPPS ipps PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPS})
+find_library(LIB_IPPCORE ippcore PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPCORE})
+find_library(LIB_IOMP5 iomp5 PATHS ${IPP_COMPILER_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IOMP5})
