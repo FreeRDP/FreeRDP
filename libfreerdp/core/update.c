@@ -701,6 +701,8 @@ void update_free(rdpUpdate* update)
 
 		CloseHandle(update->thread);
 
+		Queue_Free(update->queue);
+
 		free(update);
 	}
 }

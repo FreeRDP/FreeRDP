@@ -51,6 +51,10 @@
 
 #ifndef _WIN32
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <pthread.h>
 
 typedef void *(*pthread_start_routine)(void*);
@@ -95,7 +99,7 @@ HANDLE GetCurrentProcess(VOID)
 
 DWORD GetCurrentProcessId(VOID)
 {
-	return 0;
+	return ((DWORD) getpid());
 }
 
 DWORD GetProcessId(HANDLE Process)

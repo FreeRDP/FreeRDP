@@ -693,13 +693,14 @@ int transport_check_fds(rdpTransport** ptransport)
 		 *  1: asynchronous return
 		 */
 
+		ReferenceTable_Add(transport->ReceiveReferences, received);
+
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+
+		ReferenceTable_Release(transport->ReceiveReferences, received);
 
 		if (recv_status < 0)
 			status = -1;
-
-		if (recv_status == 0)
-			transport_receive_pool_return(transport, received);
 
 		if (status < 0)
 			return status;
@@ -789,6 +790,9 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->ReceiveQueue = Queue_New(TRUE, -1, -1);
 		Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
 		Queue_Object(transport->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
+
+		transport->ReceiveReferences = ReferenceTable_New(TRUE,
+				(void*) transport, (REFERENCE_FREE) transport_receive_pool_return);
 	}
 
 	return transport;
@@ -818,6 +822,8 @@ void transport_free(rdpTransport* transport)
 
 		Queue_Free(transport->ReceivePool);
 		Queue_Free(transport->ReceiveQueue);
+
+		ReferenceTable_Free(transport->ReceiveReferences);
 
 		free(transport);
 	}
