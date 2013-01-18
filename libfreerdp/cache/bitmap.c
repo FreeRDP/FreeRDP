@@ -83,7 +83,7 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitm
 	bitmap->Decompress(context, bitmap,
 			cache_bitmap->bitmapDataStream, cache_bitmap->bitmapWidth, cache_bitmap->bitmapHeight,
 			cache_bitmap->bitmapBpp, cache_bitmap->bitmapLength,
-			cache_bitmap->compressed, CODEC_ID_NONE);
+			cache_bitmap->compressed, RDP_CODEC_ID_NONE);
 
 	bitmap->New(context, bitmap);
 
@@ -114,7 +114,7 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	bitmap->Decompress(context, bitmap,
 			cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapWidth, cache_bitmap_v2->bitmapHeight,
 			cache_bitmap_v2->bitmapBpp, cache_bitmap_v2->bitmapLength,
-			cache_bitmap_v2->compressed, CODEC_ID_NONE);
+			cache_bitmap_v2->compressed, RDP_CODEC_ID_NONE);
 
 	bitmap->New(context, bitmap);
 
@@ -192,7 +192,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap_update)
 		bitmap->Decompress(context, bitmap,
 				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
 				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength,
-				bitmap_data->compressed, CODEC_ID_NONE);
+				bitmap_data->compressed, RDP_CODEC_ID_NONE);
 
 		if (reused)
 			bitmap->Free(context, bitmap);
