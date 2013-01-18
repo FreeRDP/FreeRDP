@@ -44,8 +44,9 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 {
 	UINT16 numberOrders;
 
-	if(stream_get_left(s) < 6)
+	if (stream_get_left(s) < 6)
 		return FALSE;
+
 	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 	stream_read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
@@ -62,8 +63,9 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 
 BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 {
-	if(stream_get_left(s) < 18)
+	if (stream_get_left(s) < 18)
 		return FALSE;
+
 	stream_read_UINT16(s, bitmap_data->destLeft);
 	stream_read_UINT16(s, bitmap_data->destTop);
 	stream_read_UINT16(s, bitmap_data->destRight);
@@ -91,7 +93,7 @@ BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	}
 	else
 	{
-		if(stream_get_left(s) < bitmap_data->bitmapLength)
+		if (stream_get_left(s) < bitmap_data->bitmapLength)
 			return FALSE;
 		bitmap_data->compressed = FALSE;
 		stream_get_mark(s, bitmap_data->bitmapDataStream);
@@ -103,8 +105,10 @@ BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
-	if(stream_get_left(s) < 2)
+
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
 
 	if (bitmap_update->number > bitmap_update->count)
@@ -136,15 +140,16 @@ BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	int i;
 	PALETTE_ENTRY* entry;
 
-	if(stream_get_left(s) < 6)
+	if (stream_get_left(s) < 6)
 		return FALSE;
+
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 	stream_read_UINT32(s, palette_update->number); /* numberColors (4 bytes), must be set to 256 */
 
 	if (palette_update->number > 256)
 		palette_update->number = 256;
 
-	if(stream_get_left(s) < palette_update->number * 3)
+	if (stream_get_left(s) < palette_update->number * 3)
 		return FALSE;
 
 	/* paletteEntries */
@@ -171,25 +176,29 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 
 BOOL update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
 {
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
+
 	stream_read_UINT32(s, play_sound->duration); /* duration (4 bytes) */
 	stream_read_UINT32(s, play_sound->frequency); /* frequency (4 bytes) */
+
 	return TRUE;
 }
 
 BOOL update_recv_play_sound(rdpUpdate* update, STREAM* s)
 {
-	if(!update_read_play_sound(s, &update->play_sound))
+	if (!update_read_play_sound(s, &update->play_sound))
 		return FALSE;
+
 	IFCALL(update->PlaySound, update->context, &update->play_sound);
 	return TRUE;
 }
 
 BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_UINT16(s, pointer_position->xPos); /* xPos (2 bytes) */
 	stream_read_UINT16(s, pointer_position->yPos); /* yPos (2 bytes) */
 	return TRUE;
@@ -197,15 +206,16 @@ BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_po
 
 BOOL update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_UINT32(s, pointer_system->type); /* systemPointerType (4 bytes) */
 	return TRUE;
 }
 
 BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 {
-	if(stream_get_left(s) < 14)
+	if (stream_get_left(s) < 14)
 		return FALSE;
 
 	stream_read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
@@ -229,7 +239,7 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthXorMask > 0)
 	{
-		if(stream_get_left(s) < pointer_color->lengthXorMask)
+		if (stream_get_left(s) < pointer_color->lengthXorMask)
 			return FALSE;
 		pointer_color->xorMaskData = (BYTE*) malloc(pointer_color->lengthXorMask);
 		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
@@ -237,7 +247,7 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthAndMask > 0)
 	{
-		if(stream_get_left(s) < pointer_color->lengthAndMask)
+		if (stream_get_left(s) < pointer_color->lengthAndMask)
 			return FALSE;
 		pointer_color->andMaskData = (BYTE*) malloc(pointer_color->lengthAndMask);
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
@@ -250,16 +260,18 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 
 BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
 {
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
 }
 
 BOOL update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
 {
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
 	return TRUE;
 }
@@ -270,8 +282,9 @@ BOOL update_recv_pointer(rdpUpdate* update, STREAM* s)
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
-	if(stream_get_left(s) < 2+2)
+	if (stream_get_left(s) < 2 + 2)
 		return FALSE;
+
 	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 
@@ -318,8 +331,9 @@ BOOL update_recv(rdpUpdate* update, STREAM* s)
 	UINT16 updateType;
 	rdpContext* context = update->context;
 
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
@@ -615,7 +629,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	stream_read_BYTE(s, numberOfAreas);
 	stream_seek(s, 3); /* pad3Octects */
 
-	if(stream_get_left(s) < numberOfAreas * 4 * 2)
+	if (stream_get_left(s) < numberOfAreas * 4 * 2)
 		return FALSE;
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
 

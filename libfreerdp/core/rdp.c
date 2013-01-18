@@ -503,7 +503,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	UINT32 rlen;
 	STREAM* comp_stream;
 
-	if(!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
+	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return -1;
 
 	comp_stream = s;
@@ -552,7 +552,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if(!rdp_recv_synchronize_pdu(rdp, comp_stream))
+			if (!rdp_recv_synchronize_pdu(rdp, comp_stream))
 				return -1;
 			break;
 
