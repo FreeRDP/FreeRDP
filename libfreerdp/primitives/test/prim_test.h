@@ -27,7 +27,9 @@
 #include <measure.h>
 #include <string.h>
 #include <stdio.h>
+
 #include <freerdp/primitives.h>
+
 #ifdef WITH_IPP
 #include <ipps.h>
 #include <ippi.h>

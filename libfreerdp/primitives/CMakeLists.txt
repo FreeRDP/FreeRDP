@@ -13,24 +13,20 @@
 # and limitations under the License.
 #
 
-set(FREERDP_PRIMITIVE_CFILES
-    prim_add.c
-    prim_andor.c
-    prim_alphaComp.c
-    prim_colors.c
-    prim_copy.c
-    prim_set.c
-    prim_shift.c
-    prim_sign.c
+set(MODULE_NAME "freerdp-primitives")
+set(MODULE_PREFIX "FREERDP_PRIMITIVES")
+
+set(${MODULE_PREFIX}_SRCS
+	prim_add.c
+	prim_andor.c
+	prim_alphaComp.c
+	prim_colors.c
+	prim_copy.c
+	prim_set.c
+	prim_shift.c
+	prim_sign.c
 	primitives.c
-    )
-set(FREERDP_PRIMITIVE_HEADERS
-    prim_internal.h
-    )
-set(FREERDP_PRIMITIVE_SRCS
-    ${FREERDP_PRIMITIVE_CFILES}
-    ${FREERDP_PRIMITIVE_HEADERS}
-    )
+	prim_internal.h)
 
 add_definitions(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
@@ -53,29 +49,28 @@ if(WITH_SSE2)
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-	    set(OPTIMZATION "${OPTIMIZATION} -mfpu=neon -mfloat-abi=softfp")
+	    set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon -mfloat-abi=softfp")
 	endif()
 	# TODO: Add MSVC equivalent
 endif()
-set_property(SOURCE ${FREERDP_PRIMITIVE_CFILES} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(freerdp-primitives OBJECT ${FREERDP_PRIMITIVE_SRCS})
+set_property(SOURCE ${${MODULE_PREFIX}_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
+
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
+
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+
+if(MONOLITHIC_BUILD)
+	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	add_library(freerdp-primitives ${FREERDP_PRIMITIVE_SRCS})
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-set_target_properties(freerdp-primitives PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
-#set(FREERDP_PRIMITIVE_LIBS, rt)
-
-if(WITH_MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${FREERDP_PRIMITIVE_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(freerdp-primitives ${FREERDP_PRIMITIVE_LIBS})
-	install(TARGETS freerdp-primitives DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if(BUILD_TESTING)
+if(BUILD_TESTING AND (NOT WIN32))
 	add_subdirectory(test)
-endif(BUILD_TESTING)
+endif()

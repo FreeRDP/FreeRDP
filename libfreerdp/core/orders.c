@@ -502,7 +502,7 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 1) {\
-				printf("%s: error reading %s\n", __func__, #TARGET); \
+				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_BYTE(s, TARGET); \
@@ -514,7 +514,7 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 2) { \
-				printf("%s: error reading %s or %s\n", __func__, #TARGET1, #TARGET2); \
+				printf("%s: error reading %s or %s\n", __FUNCTION__, #TARGET1, #TARGET2); \
 				return FALSE; \
 			} \
 			stream_read_BYTE(s, TARGET1); \
@@ -527,7 +527,7 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 2) { \
-				printf("%s: error reading %s\n", __func__, #TARGET); \
+				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_UINT16(s, TARGET); \
@@ -538,7 +538,7 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 4) { \
-				printf("%s: error reading %s\n", __func__, #TARGET); \
+				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_UINT32(s, TARGET); \
@@ -548,14 +548,14 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 #define ORDER_FIELD_COORD(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_coord(s, &TARGET, orderInfo->deltaCoordinates)) { \
-			printf("%s: error reading %s\n", __func__, #TARGET); \
+			printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
 #define ORDER_FIELD_COLOR(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_color(s, &TARGET)) { \
-			printf("%s: error reading %s\n", __func__, #TARGET); \
+			printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
@@ -564,12 +564,12 @@ static INLINE BOOL update_read_delta_points(STREAM* s, DELTA_POINT* points, int 
 #define FIELD_SKIP_BUFFER16(s, TARGET_LEN) \
 	do { \
 		if (stream_get_left(s) < 2) {\
-			printf("%s: error reading length %s\n", __func__, #TARGET_LEN); \
+			printf("%s: error reading length %s\n", __FUNCTION__, #TARGET_LEN); \
 			return FALSE; \
 		}\
 		stream_read_UINT16(s, TARGET_LEN); \
 		if (!stream_skip(s, TARGET_LEN)) { \
-			printf("%s: error skipping %d bytes\n", __func__, TARGET_LEN); \
+			printf("%s: error skipping %d bytes\n", __FUNCTION__, TARGET_LEN); \
 			return FALSE; \
 		} \
 	} while(0)

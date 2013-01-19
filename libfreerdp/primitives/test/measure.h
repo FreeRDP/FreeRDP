@@ -30,7 +30,11 @@
 #define __MEASURE_H_INCLUDED__
 
 #include <time.h>
+
+#ifndef _WIN32
 #include <sys/param.h>
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

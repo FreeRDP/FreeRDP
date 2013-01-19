@@ -137,3 +137,5 @@ if(NOT TESTING_OUTPUT_DIRECTORY)
 	set(TESTING_OUTPUT_DIRECTORY .)
 endif()
 add_test(prim_test ${TESTING_OUTPUT_DIRECTORY}/prim_test functionality)
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
