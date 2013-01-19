@@ -25,15 +25,19 @@
 #endif
 
 #include <string.h>
+
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+
 #include "prim_internal.h"
+
 #ifdef WITH_SSE2
-# include <emmintrin.h>
-# include <pmmintrin.h>
+#include <emmintrin.h>
+#include <pmmintrin.h>
 #endif /* WITH_SSE2 */
+
 #ifdef WITH_IPP
-# include <ippi.h>
+#include <ippi.h>
 #endif /* WITH_IPP */
 
 #define ALPHA(_k_)	(((_k_) & 0xFF000000U) >> 24)

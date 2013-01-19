@@ -64,6 +64,7 @@ extern int test_copy8u_speed(void);
 
 extern int test_set8u_func(void);
 extern int test_set32s_func(void);
+extern int test_set32u_func(void);
 extern int test_set8u_speed(void);
 extern int test_set32s_speed(void);
 extern int test_set32u_speed(void);

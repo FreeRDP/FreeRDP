@@ -18,15 +18,19 @@
 #endif
 
 #include <string.h>
+
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+
 #ifdef WITH_SSE2
-# include <emmintrin.h>
-# include <pmmintrin.h>
+#include <emmintrin.h>
+#include <pmmintrin.h>
 #endif /* WITH_SSE2 */
+
 #ifdef WITH_IPP
-# include <ipps.h>
+#include <ipps.h>
 #endif /* WITH_IPP */
+
 #include "prim_internal.h"
 #include "prim_templates.h"
 
@@ -39,8 +43,12 @@ PRIM_STATIC pstatus_t general_andC_32u(
 	UINT32 *pDst,
 	INT32 len)
 {
-	if (val == 0) return PRIMITIVES_SUCCESS;
-	while (len--) *pDst++ = *pSrc++ & val;
+	if (val == 0)
+		return PRIMITIVES_SUCCESS;
+
+	while (len--)
+		*pDst++ = *pSrc++ & val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
@@ -53,8 +61,12 @@ PRIM_STATIC pstatus_t general_orC_32u(
 	UINT32 *pDst,
 	INT32 len)
 {
-	if (val == 0) return PRIMITIVES_SUCCESS;
-	while (len--) *pDst++ = *pSrc++ | val;
+	if (val == 0)
+		return PRIMITIVES_SUCCESS;
+
+	while (len--)
+		*pDst++ = *pSrc++ | val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
@@ -76,6 +88,7 @@ void primitives_init_andor(
 	/* Start with the default. */
 	prims->andC_32u = general_andC_32u;
 	prims->orC_32u  = general_orC_32u;
+
 #if defined(WITH_IPP)
 	prims->andC_32u = (__andC_32u_t) ippsAndC_32u;
 	prims->orC_32u  = (__orC_32u_t) ippsOrC_32u;

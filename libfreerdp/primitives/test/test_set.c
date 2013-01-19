@@ -219,9 +219,9 @@ int test_set32u_func(void)
 		int len;
 		for (len=1; len<512-off; ++len)
 		{
+			int i;
 			memset(dest, 0, sizeof(dest));
 			ipp_wrapper_set_32u(0xdeadbeefU, dest+off, len);
-			int i;
 			for (i=0; i<len; ++i)
 			{
 				if (dest[off+i] != 0xdeadbeefU)

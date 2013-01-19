@@ -397,6 +397,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	int stream_bytes;
 	int transport_status;
 
+	pdu_bytes = 0;
 	transport_status = 0;
 
 	/* first check if we have header */

@@ -133,77 +133,83 @@ void _floatprint(
 #define TEST_SET8			(1<<1)
 #define TEST_SET32S			(1<<2)
 #define TEST_SET32U			(1<<3)
-#define TEST_SIGN16S		(1<<4)
+#define TEST_SIGN16S			(1<<4)
 #define TEST_ADD16S			(1<<5)
-#define TEST_LSHIFT16S		(1<<6)
-#define TEST_LSHIFT16U		(1<<7)
-#define TEST_RSHIFT16S		(1<<8)
-#define TEST_RSHIFT16U		(1<<9)
+#define TEST_LSHIFT16S			(1<<6)
+#define TEST_LSHIFT16U			(1<<7)
+#define TEST_RSHIFT16S			(1<<8)
+#define TEST_RSHIFT16U			(1<<9)
 #define TEST_RGB			(1<<10)
 #define TEST_ALPHA			(1<<11)
 #define TEST_AND			(1<<12)
 #define TEST_OR				(1<<13)
 
 /* Specific types of testing: */
-#define TEST_FUNCTIONALITY	(1<<0)
-#define TEST_PERFORMANCE	(1<<1)
+#define TEST_FUNCTIONALITY		(1<<0)
+#define TEST_PERFORMANCE		(1<<1)
 
 /* ------------------------------------------------------------------------- */
-int main(
-    int argc,
-    char **argv)
+
+typedef struct
 {
-	typedef struct
-	{
-		const char *testStr;
-		UINT32 bits;
-	} test_t;
-	static const test_t testList[] =
-	{
-		{ "all",		0xFFFFFFFFU },
-		{ "copy",		TEST_COPY8 },
-		{ "copy8",		TEST_COPY8 },
-		{ "set",		TEST_SET8|TEST_SET32S|TEST_SET32U },
-		{ "set8",		TEST_SET8 },
-		{ "set32",		TEST_SET32S|TEST_SET32U },
-		{ "set32s",		TEST_SET32S },
-		{ "set32u",		TEST_SET32U },
-		{ "sign",		TEST_SIGN16S },
-		{ "sign16s",	TEST_SIGN16S },
-		{ "add",		TEST_ADD16S },
-		{ "add16s",		TEST_ADD16S },
-		{ "lshift",		TEST_LSHIFT16S|TEST_LSHIFT16U },
-		{ "rshift",		TEST_RSHIFT16S|TEST_RSHIFT16U },
-		{ "shift",		TEST_LSHIFT16S|TEST_LSHIFT16U|TEST_RSHIFT16S|TEST_RSHIFT16U },
-		{ "lshift16s",	TEST_LSHIFT16S },
-		{ "lshift16u",	TEST_LSHIFT16U },
-		{ "rshift16s",	TEST_RSHIFT16S },
-		{ "rshift16u",	TEST_RSHIFT16U },
-		{ "rgb",		TEST_RGB },
-		{ "color",		TEST_RGB },
-		{ "colors",		TEST_RGB },
-		{ "alpha",		TEST_ALPHA },
-		{ "and",		TEST_AND },
-		{ "or",			TEST_OR },
-	};
+	const char *testStr;
+	UINT32 bits;
+} test_t;
+
+static const test_t testList[] =
+{
+	{ "all",		0xFFFFFFFFU },
+	{ "copy",		TEST_COPY8 },
+	{ "copy8",		TEST_COPY8 },
+	{ "set",		TEST_SET8|TEST_SET32S|TEST_SET32U },
+	{ "set8",		TEST_SET8 },
+	{ "set32",		TEST_SET32S|TEST_SET32U },
+	{ "set32s",		TEST_SET32S },
+	{ "set32u",		TEST_SET32U },
+	{ "sign",		TEST_SIGN16S },
+	{ "sign16s",		TEST_SIGN16S },
+	{ "add",		TEST_ADD16S },
+	{ "add16s",		TEST_ADD16S },
+	{ "lshift",		TEST_LSHIFT16S|TEST_LSHIFT16U },
+	{ "rshift",		TEST_RSHIFT16S|TEST_RSHIFT16U },
+	{ "shift",		TEST_LSHIFT16S|TEST_LSHIFT16U|TEST_RSHIFT16S|TEST_RSHIFT16U },
+	{ "lshift16s",		TEST_LSHIFT16S },
+	{ "lshift16u",		TEST_LSHIFT16U },
+	{ "rshift16s",		TEST_RSHIFT16S },
+	{ "rshift16u",		TEST_RSHIFT16U },
+	{ "rgb",		TEST_RGB },
+	{ "color",		TEST_RGB },
+	{ "colors",		TEST_RGB },
+	{ "alpha",		TEST_ALPHA },
+	{ "and",		TEST_AND },
+	{ "or",			TEST_OR }
+};
+
 #define NUMTESTS (sizeof(testList)/sizeof(test_t))
-	static const test_t testTypeList[] =
-	{
-		{ "functionality",	TEST_FUNCTIONALITY },
-		{ "performance",	TEST_PERFORMANCE },
-	};
+
+static const test_t testTypeList[] =
+{
+	{ "functionality",	TEST_FUNCTIONALITY },
+	{ "performance",	TEST_PERFORMANCE },
+};
+
 #define NUMTESTTYPES (sizeof(testTypeList)/sizeof(test_t))
+
+int main(int argc, char** argv)
+{
+	int i;
 	char hints[256];
 	UINT32 testSet = 0;
 	UINT32 testTypes = 0;
-	int i;
 	int results = SUCCESS;
 
 	/* Parse command line for the test set. */
-	for (i=1; i<argc; ++i)
+
+	for (i = 1; i < argc; ++i)
 	{
-		BOOL found = 0;
 		int j;
+		BOOL found = 0;
+
 		for (j=0; j<NUMTESTS; ++j)
 		{
 			if (strcasecmp(argv[i], testList[j].testStr) == 0)
@@ -239,8 +245,11 @@ int main(
 			else fprintf(stderr, "Unknown parameter '%s'!\n", argv[i]);
 		}
 	}
-	if (testSet == 0) testSet = 0xffffffff;
-	if (testTypes == 0) testTypes = 0xffffffff;
+
+	if (testSet == 0)
+		testSet = 0xffffffff;
+	if (testTypes == 0)
+		testTypes = 0xffffffff;
 
 	primitives_init();
 

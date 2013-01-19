@@ -18,12 +18,15 @@
 #endif
 
 #include <string.h>
+
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+
 #ifdef WITH_SSE2
-# include <emmintrin.h>
-# include <tmmintrin.h>
+#include <emmintrin.h>
+#include <tmmintrin.h>
 #endif /* WITH_SSE2 */
+
 #include "prim_internal.h"
 
 /* ----------------------------------------------------------------------------

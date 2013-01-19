@@ -225,5 +225,6 @@ int test_alphaComp_speed(void)
 	alphaComp_speed("alphaComp", "unaligned",
 		(BYTE *) src1+1, (BYTE *) src2, 0, (BYTE *) dst,
 		block_size, NUM_BLOCK_SIZES, ALPHA_PRETEST_ITERATIONS, TEST_TIME);
+
 	return SUCCESS;
 }
