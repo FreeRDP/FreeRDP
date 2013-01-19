@@ -96,7 +96,6 @@ if(WITH_IPP)
 	if(NOT DEFINED IPP_FOUND)
 		include(../../../cmake/FindIPP.cmake)
 	endif()
-	add_definitions(-DWITH_IPP)
 
 	# IPP PATH debugging messages
     message(IPP_FOUND=${IPP_FOUND})

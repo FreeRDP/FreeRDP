@@ -12,6 +12,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "prim_test.h"
 
 static const int ALPHA_PRETEST_ITERATIONS = 5000000;

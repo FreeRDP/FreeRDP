@@ -12,6 +12,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "prim_test.h"
 
 static const int MEMSET8_PRETEST_ITERATIONS = 100000000;

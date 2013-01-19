@@ -12,6 +12,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "prim_test.h"
 
 #define FUNC_TEST_SIZE 65536

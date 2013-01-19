@@ -60,7 +60,16 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	SOURCES ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+
+if(IPP_FOUND)
+	include_directories(${IPP_INCLUDE_DIRS})
+    foreach(ipp_lib ${IPP_LIBRARIES})
+		add_library("${ipp_lib}_imported" STATIC IMPORTED)
+		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
+		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} "${ipp_lib}_imported")
+	endforeach()
+endif()
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
@@ -74,3 +83,4 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 if(BUILD_TESTING AND (NOT WIN32))
 	add_subdirectory(test)
 endif()
+

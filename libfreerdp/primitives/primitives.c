@@ -15,8 +15,13 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include <stdlib.h>
+
 #include <freerdp/primitives.h>
 #include "prim_internal.h"
 #ifdef ANDROID

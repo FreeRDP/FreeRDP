@@ -46,7 +46,7 @@ set(IPPVM      "vm")   # vector math
 
 
 set(IPP_X64 0)
-if (CMAKE_CXX_SIZEOF_DATA_PTR EQUAL 8)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(IPP_X64 1)
 endif()
 if (CMAKE_CL_64)
@@ -67,6 +67,11 @@ function(get_ipp_version _ROOT_DIR)
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR1 REGEX "IPP_VERSION_MAJOR")
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR2 REGEX "IPP_VERSION_MINOR")
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR3 REGEX "IPP_VERSION_BUILD")
+
+    if(NOT STR3)
+	file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR3 REGEX "IPP_VERSION_UPDATE")
+    endif()
+
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR4 REGEX "IPP_VERSION_STR")
 
     # extract info and assign to variables
@@ -349,8 +354,21 @@ foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH} /opt)
        foreach(lib ${liblist})
            get_filename_component(libdir ${lib} REALPATH)
            get_filename_component(libdir ${libdir} PATH)
-           set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
-           set(IPP_COMPILER_LIBRARIES iomp5)
+
+           if(${IPP_VERSION_MAJOR} VERSION_LESS "7")
+               set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+               set(IPP_COMPILER_LIBRARIES iomp5)
+           else()
+               if(IPP_X64)
+                   if(("${libdir}" MATCHES "intel64"))
+                       set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                       set(IPP_COMPILER_LIBRARIES iomp5)
+                   endif()
+               else()
+                   set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                   set(IPP_COMPILER_LIBRARIES iomp5)
+               endif()
+           endif()
        endforeach(lib)
     endif()
 endforeach(curdir)
@@ -366,3 +384,5 @@ find_library(LIB_IPPCORE ippcore PATHS ${IPP_LIBRARY_DIRS})
 set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPCORE})
 find_library(LIB_IOMP5 iomp5 PATHS ${IPP_COMPILER_LIBRARY_DIRS})
 set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IOMP5})
+
+
