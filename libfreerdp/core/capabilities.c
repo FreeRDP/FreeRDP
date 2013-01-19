@@ -2303,6 +2303,10 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 			rdp_write_frame_acknowledge_capability_set(s, settings);
 		}
 	}
+	else
+	{
+		settings->FrameAcknowledge = 0;
+	}
 
 	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
 	{
