@@ -138,13 +138,11 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, context->priv->cr_b_buffer); /* CrData */
 	stream_seek(data_in, cr_size);
 
-	PROFILER_ENTER(context->priv->prof_rfx_decode_ycbcr_to_rgb);
-		pSrcDst[0] = context->priv->y_r_buffer;
-		pSrcDst[1] = context->priv->cb_g_buffer;
-		pSrcDst[2] = context->priv->cr_b_buffer;
-		prims->yCbCrToRGB_16s16s_P3P3((const INT16 **) pSrcDst, 64*sizeof(INT16),
+	pSrcDst[0] = context->priv->y_r_buffer;
+	pSrcDst[1] = context->priv->cb_g_buffer;
+	pSrcDst[2] = context->priv->cr_b_buffer;
+	prims->yCbCrToRGB_16s16s_P3P3((const INT16 **) pSrcDst, 64*sizeof(INT16),
 			pSrcDst, 64*sizeof(INT16), &roi_64x64);
-	PROFILER_EXIT(context->priv->prof_rfx_decode_ycbcr_to_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_format_rgb);
 		rfx_decode_format_rgb(context->priv->y_r_buffer, context->priv->cb_g_buffer, context->priv->cr_b_buffer,

@@ -97,7 +97,7 @@ set(${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE freerdp
-	MODULES freerdp-utils)
+	MODULES freerdp-primitives freerdp-utils)
 
 message(STATUS "libfreerdp-codec libs: ${${MODULE_PREFIX}_LIBS}")
 
