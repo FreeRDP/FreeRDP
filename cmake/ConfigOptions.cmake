@@ -9,6 +9,7 @@ endif()
 
 option(WITH_MANPAGES "Generate manpages." ON)
 option(WITH_PROFILER "Compile profiler." OFF)
+option(WITH_IPP "Use Intel Performance Primitives." OFF)
 
 if((TARGET_ARCH MATCHES "x86|x64") AND (NOT DEFINED WITH_SSE2))
 	option(WITH_SSE2 "Enable SSE2 optimization." ON)
