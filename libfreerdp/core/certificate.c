@@ -531,10 +531,13 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			DEBUG_CERTIFICATE("License Server Certificate");
 			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
-			if(cert_info.Modulus)
+			if (cert_info.Modulus)
 				free(cert_info.Modulus);
-			if(!ret)
+			if (!ret) {
+				printf("failed to read License Server, content follows:\n");
+				winpr_HexDump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
 				return FALSE;
+			}
 		}
 		else if (numCertBlobs - i == 1)
 		{
