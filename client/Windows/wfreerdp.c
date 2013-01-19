@@ -259,7 +259,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfi->cursor = g_default_cursor;
 
 	wfi->fullscreen = settings->Fullscreen;
-	wfi->fs_toggle = wfi->fullscreen;
+	wfi->fs_toggle = 1;
 	wfi->sw_gdi = settings->SoftwareGdi;
 
 	wfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
@@ -279,7 +279,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		settings->DesktopHeight = i1;
 	}
 
-	if (wfi->fs_toggle)
+	if (wfi->fullscreen)
 	{
 		settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
 		settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);

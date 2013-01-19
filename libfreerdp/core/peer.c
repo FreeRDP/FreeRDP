@@ -135,6 +135,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
+			if(stream_get_left(s) < 4)
+				return FALSE;
 			stream_read_UINT32(s, client->ack_frame_id);
 			break;
 
@@ -176,7 +178,8 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 	if (rdp->settings->DisableEncryption)
 	{
-		rdp_read_security_header(s, &securityFlags);
+		if (!rdp_read_security_header(s, &securityFlags))
+			return -1;
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
@@ -224,8 +227,10 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	if (!fastpath_read_header_rdp(fastpath, s, &length))
-		return -1;
+	//if (!fastpath_read_header_rdp(fastpath, s, &length))
+	//	return -1;
+
+	fastpath_read_header_rdp(fastpath, s, &length);
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{
@@ -235,7 +240,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		if(!rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0))
+		if (!rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0))
 			return -1;
 	}
 
@@ -327,7 +332,7 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!peer_recv_pdu(client, s))
+			if (peer_recv_pdu(client, s) < 0)
 				return -1;
 			break;
 

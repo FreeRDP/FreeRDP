@@ -40,5 +40,6 @@ void wf_info_clear_invalid_region(wfInfo* wfi);
 void wf_info_invalidate_full_screen(wfInfo* wfi);
 BOOL wf_info_have_invalid_region(wfInfo* wfi);
 void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch);
+BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
 #endif /* WF_INFO_H */

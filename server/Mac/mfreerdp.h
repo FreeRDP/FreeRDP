@@ -3,6 +3,7 @@
  * FreeRDP Mac OS X Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,25 +24,5 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/channels/wtsvc.h>
-#include <freerdp/server/audin.h>
-#include <freerdp/server/rdpsnd.h>
-
-struct mf_peer_context
-{
-	rdpContext _p;
-
-	STREAM* s;
-	BOOL activated;
-	UINT32 frame_id;
-	BOOL audin_open;
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
-	WTSVirtualChannelManager* vcm;
-	audin_server_context* audin;
-	rdpsnd_server_context* rdpsnd;
-};
-typedef struct mf_peer_context mfPeerContext;
 
 #endif /* MFREERDP_SERVER_H */

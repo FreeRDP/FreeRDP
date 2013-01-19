@@ -161,4 +161,3 @@ void update_write_surfcmd_frame_marker(STREAM* s, UINT16 frameAction, UINT32 fra
 	stream_write_UINT16(s, frameAction);
 	stream_write_UINT32(s, frameId);
 }
-

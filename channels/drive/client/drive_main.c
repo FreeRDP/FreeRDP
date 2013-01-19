@@ -471,7 +471,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 
 static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 {
-	char* path;
+	char* path = NULL;
 	int status;
 	DRIVE_FILE* file;
 	BYTE InitialQuery;

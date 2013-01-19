@@ -36,6 +36,45 @@
 
 cbCallback cbEvent;
 
+int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
+{
+	DISPLAY_DEVICE dd;
+
+	memset(&dd, 0, sizeof(DISPLAY_DEVICE));
+	dd.cb = sizeof(DISPLAY_DEVICE);
+
+	if (EnumDisplayDevices(NULL, id, &dd, 0) != 0)
+	{
+		HDC dc;
+
+		if (name != NULL)
+			_stprintf(name, _T("%s (%s)"), dd.DeviceName, dd.DeviceString);
+
+		dc = CreateDC(NULL, dd.DeviceName, NULL, NULL);
+		*width = GetDeviceCaps(dc, HORZRES);
+		*height = GetDeviceCaps(dc, VERTRES);
+		*bpp = GetDeviceCaps(dc, BITSPIXEL);
+		ReleaseDC(NULL, dc);
+
+	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+void set_screen_id(int id)
+{
+	wfInfo* wfi;
+
+	wfi = wf_info_get_instance();
+	wfi->screenID = id;
+
+	return;
+}
+
 DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 {
 	int i, fds;
