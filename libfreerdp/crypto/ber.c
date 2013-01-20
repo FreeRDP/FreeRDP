@@ -373,10 +373,7 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 	if (value == NULL)
 	{
 		// even if we don't care the integer value, check the announced size
-		if(length < 1 || length > 8)
-			return FALSE;
-		stream_seek(s, length);
-		return TRUE;
+		return stream_skip(s, length);
 	}
 
 	if (length == 1)
@@ -405,6 +402,7 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 	}
 	else
 	{
+		printf("%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
 		return FALSE;
 	}
 
