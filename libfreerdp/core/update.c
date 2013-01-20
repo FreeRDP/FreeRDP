@@ -513,9 +513,12 @@ static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 	STREAM* s;
 	rdpRdp* rdp = context->rdp;
 
-	s = rdp_data_pdu_init(rdp);
-	stream_write_UINT32(s, frameId);
-	//rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	{
+		s = rdp_data_pdu_init(rdp);
+		stream_write_UINT32(s, frameId);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+	}
 }
 
 static void update_send_synchronize(rdpContext* context)
