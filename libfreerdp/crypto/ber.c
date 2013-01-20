@@ -365,7 +365,7 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
-	if(!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
+	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
 		!ber_read_length(s, &length) ||
 		stream_get_left(s) < length)
 		return FALSE;
@@ -380,9 +380,13 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 	}
 
 	if (length == 1)
+	{
 		stream_read_BYTE(s, *value);
+	}
 	else if (length == 2)
+	{
 		stream_read_UINT16_be(s, *value);
+	}
 	else if (length == 3)
 	{
 		BYTE byte;
@@ -391,14 +395,18 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 		*value += (byte << 16);
 	}
 	else if (length == 4)
+	{
 		stream_read_UINT32_be(s, *value);
+	}
 	else if (length == 8)
 	{
-		printf("%s: should implement reading an 8 bytes integer\n", __func__);
+		printf("%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
 		return FALSE;
 	}
 	else
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
