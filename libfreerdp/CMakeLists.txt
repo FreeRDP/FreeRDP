@@ -31,6 +31,7 @@ set(${MODULE_PREFIX}_SUBMODULES
 	codec
 	crypto
 	locale
+	primitives
 	core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
