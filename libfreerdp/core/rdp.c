@@ -503,7 +503,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 	UINT32 rlen;
 	STREAM* comp_stream;
 
-	if(!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
+	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return -1;
 
 	comp_stream = s;
@@ -552,7 +552,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if(!rdp_recv_synchronize_pdu(rdp, comp_stream))
+			if (!rdp_recv_synchronize_pdu(rdp, comp_stream))
 				return -1;
 			break;
 
@@ -677,6 +677,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 
 		if (stream_get_left(s) < 12)
 			return FALSE;
+
 		stream_read_UINT16(s, len); /* 0x10 */
 		stream_read_BYTE(s, version); /* 0x1 */
 		stream_read_BYTE(s, pad);
@@ -781,7 +782,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		if(!freerdp_channel_process(rdp->instance, s, channelId))
+		if (!freerdp_channel_process(rdp->instance, s, channelId))
 			return -1;
 	}
 	else
@@ -789,8 +790,10 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 		while (stream_get_left(s) > 3)
 		{
 			stream_get_mark(s, nextp);
+
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 				return -1;
+
 			nextp += pduLength;
 
 			rdp->settings->PduSource = pduSource;
@@ -832,6 +835,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	rdpFastPath* fastpath;
 
 	fastpath = rdp->fastpath;
+
 	if (!fastpath_read_header_rdp(fastpath, s, &length))
 		return -1;
 
@@ -844,6 +848,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, STREAM* s)
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
 		UINT16 flags = (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0;
+
 		if (!rdp_decrypt(rdp, s, length, flags))
 			return -1;
 	}

@@ -174,4 +174,32 @@ struct _wKeyValuePair
 };
 typedef struct _wKeyValuePair wKeyValuePair;
 
+/* Reference Table */
+
+struct _wReference
+{
+	UINT32 Count;
+	void* Pointer;
+};
+typedef struct _wReference wReference;
+
+typedef int (*REFERENCE_FREE)(void* context, void* ptr);
+
+struct _wReferenceTable
+{
+	UINT32 size;
+	HANDLE mutex;
+	void* context;
+	BOOL synchronized;
+	wReference* array;
+	REFERENCE_FREE ReferenceFree;
+};
+typedef struct _wReferenceTable wReferenceTable;
+
+WINPR_API UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr);
+WINPR_API UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr);
+
+WINPR_API wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_FREE ReferenceFree);
+WINPR_API void ReferenceTable_Free(wReferenceTable* referenceTable);
+
 #endif /* WINPR_COLLECTIONS_H */
