@@ -107,7 +107,7 @@ WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LP
 
 WINPR_API VOID ExitProcess(UINT uExitCode);
 
-WINPR_API HANDLE GetCurrentProcess(VOID);
+WINPR_API HANDLE _GetCurrentProcess(VOID);
 WINPR_API DWORD GetCurrentProcessId(VOID);
 
 WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
@@ -125,7 +125,7 @@ WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThr
 
 WINPR_API VOID ExitThread(DWORD dwExitCode);
 
-WINPR_API HANDLE GetCurrentThread(VOID);
+WINPR_API HANDLE _GetCurrentThread(VOID);
 WINPR_API DWORD GetCurrentThreadId(VOID);
 
 WINPR_API DWORD ResumeThread(HANDLE hThread);
@@ -146,6 +146,14 @@ WINPR_API DWORD TlsAlloc(VOID);
 WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);
 WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue);
 WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
+
+#else
+
+/*
+ * GetCurrentProcess / GetCurrentThread cause a conflict on Mac OS X
+ */
+#define _GetCurrentProcess	GetCurrentProcess
+#define _GetCurrentThread	GetCurrentThread
 
 #endif
 

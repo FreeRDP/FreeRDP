@@ -92,7 +92,7 @@ VOID ExitProcess(UINT uExitCode)
 
 }
 
-HANDLE GetCurrentProcess(VOID)
+HANDLE _GetCurrentProcess(VOID)
 {
 	return NULL;
 }

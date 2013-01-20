@@ -61,10 +61,12 @@ static primitives_t* pPrimitives = NULL;
 #endif
 
 /* If GCC */
-# ifdef __GNUC__
+#ifdef __GNUC__
 
-# define xgetbv(_func_, _lo_, _hi_) \
+#ifdef __AVX__
+#define xgetbv(_func_, _lo_, _hi_) \
 	__asm__ __volatile__ ("xgetbv" : "=a" (_lo_), "=d" (_hi_) : "c" (_func_))
+#endif
 
 static void cpuid(
 	unsigned info, 
@@ -118,6 +120,7 @@ static void set_hints(primitives_hints_t* hints)
 	if (c & C_BIT_SSE42)
 		hints->x86_flags |= PRIM_X86_SSE42_AVAILABLE;
 
+#ifdef __AVX__
 	if ((c & C_BITS_AVX) == C_BITS_AVX)
 	{
 		int e, f;
@@ -134,14 +137,20 @@ static void set_hints(primitives_hints_t* hints)
 		}
 	}
 	/* TODO: AVX2: set eax=7, ecx=0, cpuid, check ebx-bit5 */
+#endif
 }
-# else
+
+#else
+
 static void set_hints(primitives_hints_t* hints)
 {
 	/* x86 non-GCC:  TODO */
 }
-# endif /* __GNUC__ */
+
+#endif /* __GNUC__ */
+
 /* ------------------------------------------------------------------------- */
+
 #elif defined(__arm__) || defined(__ARM_ARCH_7A__) \
 	|| defined(__ARM_EABI__) || defined(__ARMEL__) || defined(ANDROID)
 #ifndef __arm__

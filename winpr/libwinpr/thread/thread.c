@@ -128,7 +128,7 @@ VOID ExitThread(DWORD dwExitCode)
 	pthread_exit((void*) dwExitCode);
 }
 
-HANDLE GetCurrentThread(VOID)
+HANDLE _GetCurrentThread(VOID)
 {
 	return NULL;
 }
