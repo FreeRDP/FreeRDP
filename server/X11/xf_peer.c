@@ -165,7 +165,7 @@ void xf_xshm_init(xfInfo* xfi)
 	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
 
 	printf("display: %p root_window: %p width: %d height: %d depth: %d\n",
-			xfi->display, xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+			xfi->display, (void*) xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
 
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
 			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),

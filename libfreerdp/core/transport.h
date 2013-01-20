@@ -69,6 +69,8 @@ struct rdp_transport
 
 	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
+
+	wReferenceTable* ReceiveReferences;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);

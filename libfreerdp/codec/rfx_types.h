@@ -60,7 +60,7 @@ struct _RFX_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_rfx_differential_decode);
 	PROFILER_DEFINE(prof_rfx_quantization_decode);
 	PROFILER_DEFINE(prof_rfx_dwt_2d_decode);
-	PROFILER_DEFINE(prof_rfx_decode_ycbcr_to_rgb);
+	PROFILER_DEFINE(prof_rfx_ycbcr_to_rgb);
 	PROFILER_DEFINE(prof_rfx_decode_format_rgb);
 
 	PROFILER_DEFINE(prof_rfx_encode_rgb);
@@ -69,7 +69,7 @@ struct _RFX_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_rfx_differential_encode);
 	PROFILER_DEFINE(prof_rfx_quantization_encode);
 	PROFILER_DEFINE(prof_rfx_dwt_2d_encode);
-	PROFILER_DEFINE(prof_rfx_encode_rgb_to_ycbcr);
+	PROFILER_DEFINE(prof_rfx_rgb_to_ycbcr);
 	PROFILER_DEFINE(prof_rfx_encode_format_rgb);
 };
 
