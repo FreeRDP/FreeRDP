@@ -11,7 +11,7 @@ int TestPoolWork(int argc, char* argv[])
 {
 	TP_WORK * work;
 
-	work = CreateThreadpoolWork(test_WorkCallback, "world", NULL);
+	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", NULL);
 
 	if (!work)
 	{
