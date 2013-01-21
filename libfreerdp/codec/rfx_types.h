@@ -24,6 +24,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/collections.h>
+
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/profiler.h>
 
@@ -33,13 +36,12 @@
 #define DEBUG_RFX(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#include "rfx_pool.h"
-
 struct _RFX_CONTEXT_PRIV
 {
 	/* pre-allocated buffers */
 
-	RFX_POOL* pool; /* memory pool */
+	wQueue* TilePool;
+	wQueue* TileQueue;
 
 	INT16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
 	INT16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */

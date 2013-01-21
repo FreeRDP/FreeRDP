@@ -36,7 +36,6 @@
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
-#include "rfx_pool.h"
 #include "rfx_decode.h"
 #include "rfx_encode.h"
 #include "rfx_quantization.h"
@@ -148,7 +147,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
-	context->priv->pool = rfx_pool_new();
+	context->priv->TilePool = Queue_New(TRUE, -1, -1);
+	context->priv->TileQueue = Queue_New(TRUE, -1, -1);
 
 	/* initialize the default pixel format */
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
@@ -183,7 +183,8 @@ void rfx_context_free(RFX_CONTEXT* context)
 {
 	free(context->quants);
 
-	rfx_pool_free(context->priv->pool);
+	Queue_Free(context->priv->TilePool);
+	Queue_Free(context->priv->TileQueue);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
@@ -195,6 +196,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
 {
 	context->pixel_format = pixel_format;
+
 	switch (pixel_format)
 	{
 		case RDP_PIXEL_FORMAT_B8G8R8A8:
@@ -225,6 +227,30 @@ void rfx_context_reset(RFX_CONTEXT* context)
 {
 	context->header_processed = FALSE;
 	context->frame_idx = 0;
+}
+
+RFX_TILE* rfx_tile_pool_take(RFX_CONTEXT* context)
+{
+	RFX_TILE* tile = NULL;
+
+	if (WaitForSingleObject(Queue_Event(context->priv->TilePool), 0) == WAIT_OBJECT_0)
+		tile = Queue_Dequeue(context->priv->TilePool);
+
+	if (!tile)
+	{
+		tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
+
+		tile->x = tile->y = 0;
+		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
+	}
+
+	return tile;
+}
+
+int rfx_tile_pool_return(RFX_CONTEXT* context, RFX_TILE* tile)
+{
+	Queue_Enqueue(context->priv->TilePool, tile);
+	return 0;
 }
 
 static void rfx_process_message_sync(RFX_CONTEXT* context, STREAM* s)
@@ -412,7 +438,7 @@ static void rfx_process_message_tile(RFX_CONTEXT* context, RFX_TILE* tile, STREA
 		YLen, context->quants + (quantIdxY * 10),
 		CbLen, context->quants + (quantIdxCb * 10),
 		CrLen, context->quants + (quantIdxCr * 10),
-		tile->data, 64*sizeof(UINT32));
+		tile->data, 64 * sizeof(UINT32));
 }
 
 static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, STREAM* s)
@@ -490,7 +516,8 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			context->quants[i * 10 + 8], context->quants[i * 10 + 9]);
 	}
 
-	message->tiles = rfx_pool_get_tiles(context->priv->pool, message->num_tiles);
+	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->num_tiles);
+	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->num_tiles);
 
 	/* tiles */
 	for (i = 0; i < message->num_tiles; i++)
@@ -507,6 +534,7 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
+		message->tiles[i] = rfx_tile_pool_take(context);
 		rfx_process_message_tile(context, message->tiles[i], s);
 
 		stream_set_pos(s, pos);
@@ -621,13 +649,17 @@ RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index)
 
 void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 {
+	int i;
+
 	if (message != NULL)
 	{
 		free(message->rects);
 
-		if (message->tiles != NULL)
+		if (message->tiles)
 		{
-			rfx_pool_put_tiles(context->priv->pool, message->tiles, message->num_tiles);
+			for (i = 0; i < message->num_tiles; i++)
+				rfx_tile_pool_return(context, message->tiles[i]);
+
 			free(message->tiles);
 		}
 
@@ -790,9 +822,9 @@ static void rfx_compose_message_tile(RFX_CONTEXT* context, STREAM* s,
 static void rfx_compose_message_tileset(RFX_CONTEXT* context, STREAM* s,
 	BYTE* image_data, int width, int height, int rowstride)
 {
+	int i;
 	int size;
 	int start_pos, end_pos;
-	int i;
 	int numQuants;
 	const UINT32* quantVals;
 	const UINT32* quantValsPtr;
