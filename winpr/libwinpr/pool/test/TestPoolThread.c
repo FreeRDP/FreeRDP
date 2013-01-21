@@ -6,6 +6,9 @@
  * Improve Scalability With New Thread Pool APIs:
  * http://msdn.microsoft.com/en-us/magazine/cc16332.aspx
  *
+ * Developing with Thread Pool Enhancements:
+ * http://msdn.microsoft.com/en-us/library/cc308561.aspx
+ *
  * Introduction to the Windows Threadpool:
  * http://blogs.msdn.com/b/harip/archive/2010/10/11/introduction-to-the-windows-threadpool-part-1.aspx
  * http://blogs.msdn.com/b/harip/archive/2010/10/12/introduction-to-the-windows-threadpool-part-2.aspx

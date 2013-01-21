@@ -24,11 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
-#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
-
 BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
 {
 	return FALSE;
 }
-
-#endif

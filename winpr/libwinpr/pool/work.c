@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
+#include "pool.h"
+
 #ifdef _WIN32
 
 static BOOL module_initialized = FALSE;
@@ -59,14 +61,29 @@ static void module_init()
 
 PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
+	PTP_WORK work = NULL;
+
 #ifdef _WIN32
 	module_init();
 
 	if (pCreateThreadpoolWork)
 		return pCreateThreadpoolWork(pfnwk, pv, pcbe);
+#else
+	work = (PTP_WORK) malloc(sizeof(TP_WORK));
+
+	if (work)
+	{
+		work->WorkCallback = pfnwk;
+		work->CallbackParameter = pv;
+
+		if (!pcbe)
+			pcbe = GetDefaultThreadpoolEnvironment();
+
+		work->CallbackEnvironment = pcbe;
+	}
 #endif
 
-	return NULL;
+	return work;
 }
 
 VOID CloseThreadpoolWork(PTP_WORK pwk)
@@ -76,6 +93,8 @@ VOID CloseThreadpoolWork(PTP_WORK pwk)
 
 	if (pCloseThreadpoolWork)
 		pCloseThreadpoolWork(pwk);
+#else
+	free(pwk);
 #endif
 }
 
@@ -86,6 +105,19 @@ VOID SubmitThreadpoolWork(PTP_WORK pwk)
 
 	if (pSubmitThreadpoolWork)
 		pSubmitThreadpoolWork(pwk);
+#else
+	PTP_POOL pool;
+	PTP_CALLBACK_INSTANCE callbackInstance;
+
+	pool = pwk->CallbackEnvironment->Pool;
+
+	callbackInstance = (PTP_CALLBACK_INSTANCE) malloc(sizeof(TP_CALLBACK_INSTANCE));
+
+	if (callbackInstance)
+	{
+		callbackInstance->Work = pwk;
+		Queue_Enqueue(pool->PendingQueue, callbackInstance);
+	}
 #endif
 }
 
@@ -96,8 +128,8 @@ BOOL TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBAC
 
 	if (pTrySubmitThreadpoolCallback)
 		return pTrySubmitThreadpoolCallback(pfns, pv, pcbe);
+#else
 #endif
-
 	return FALSE;
 }
 
@@ -108,7 +140,11 @@ VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 
 	if (pWaitForThreadpoolWorkCallbacks)
 		pWaitForThreadpoolWorkCallbacks(pwk, fCancelPendingCallbacks);
+#else
+	PTP_POOL pool;
+
+	pool = pwk->CallbackEnvironment->Pool;
+
+
 #endif
 }
-
-

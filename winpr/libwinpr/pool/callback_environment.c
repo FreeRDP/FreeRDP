@@ -24,42 +24,94 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
-#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
+#include "pool.h"
 
-VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+#ifdef _WIN32
+
+#else
+
+static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT =
 {
+	1, /* Version */
+	NULL, /* Pool */
+	NULL, /* CleanupGroup */
+	NULL, /* CleanupGroupCancelCallback */
+	NULL, /* RaceDll */
+	NULL, /* ActivationContext */
+	NULL, /* FinalizationCallback */
+	{ 0 } /* Flags */
+};
 
-}
-
-VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment()
 {
+	PTP_CALLBACK_ENVIRON environment = &DEFAULT_CALLBACK_ENVIRONMENT;
 
-}
+	environment->Pool = GetDefaultThreadpool();
 
-VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
-{
-
-}
-
-VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
-{
-
-}
-
-VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
-{
-
-}
-
-VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
-{
-
-}
-
-VOID SetThreadpoolCallbackPriority(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORITY Priority)
-{
-
+	return environment;
 }
 
 #endif
 
+VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+#ifdef _WIN32
+#else
+	pcbe->Version = 1;
+	pcbe->Pool = NULL;
+	pcbe->CleanupGroup = NULL;
+	pcbe->CleanupGroupCancelCallback = NULL;
+	pcbe->RaceDll = NULL;
+	pcbe->ActivationContext = NULL;
+	pcbe->FinalizationCallback = NULL;
+	pcbe->u.s.LongFunction = FALSE;
+	pcbe->u.s.Persistent = FALSE;
+	pcbe->u.s.Private = 0;
+#endif
+}
+
+VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+#ifdef _WIN32
+#else
+#endif
+}
+
+VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
+{
+#ifdef _WIN32
+#else
+	pcbe->Pool = ptpp;
+#endif
+}
+
+VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
+{
+#ifdef _WIN32
+#else
+	pcbe->CleanupGroup = ptpcg;
+	pcbe->CleanupGroupCancelCallback = pfng;
+#endif
+}
+
+VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
+{
+#ifdef _WIN32
+#else
+	pcbe->u.s.LongFunction = TRUE;
+#endif
+}
+
+VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
+{
+#ifdef _WIN32
+#else
+#endif
+}
+
+VOID SetThreadpoolCallbackPriority(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORITY Priority)
+{
+#ifdef _WIN32
+#else
+#endif
+}

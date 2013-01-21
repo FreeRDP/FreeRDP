@@ -135,7 +135,9 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
-	return 0;
+	pthread_t tid;
+	tid = pthread_self();
+	return (DWORD) tid;
 }
 
 DWORD ResumeThread(HANDLE hThread)

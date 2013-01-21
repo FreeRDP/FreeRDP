@@ -26,8 +26,6 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-//#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
-
 #ifndef _WIN32
 
 typedef DWORD TP_VERSION, *PTP_VERSION;
@@ -176,8 +174,8 @@ VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg);
 
 WINPR_API PTP_POOL CreateThreadpool(PVOID reserved);
 WINPR_API VOID CloseThreadpool(PTP_POOL ptpp);
-WINPR_API VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 WINPR_API BOOL SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic);
+WINPR_API VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 
 /* Callback Environment */
 
@@ -202,8 +200,6 @@ WINPR_API VOID ReleaseMutexWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE
 WINPR_API VOID LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, PCRITICAL_SECTION pcs);
 WINPR_API VOID FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
 WINPR_API VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
-
-//#endif
 
 WINPR_API void winpr_pool_dummy();
 
