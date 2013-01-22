@@ -150,6 +150,15 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv->TilePool = Queue_New(TRUE, -1, -1);
 	context->priv->TileQueue = Queue_New(TRUE, -1, -1);
 
+	context->priv->parallel = FALSE;
+
+	if (context->priv->parallel)
+	{
+		context->priv->ThreadPool = CreateThreadpool(NULL);
+		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
+	}
+
 	/* initialize the default pixel format */
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
@@ -188,6 +197,12 @@ void rfx_context_free(RFX_CONTEXT* context)
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
+
+	if (context->priv->parallel)
+	{
+		CloseThreadpool(context->priv->ThreadPool);
+		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+	}
 
 	free(context->priv);
 	free(context);
@@ -441,16 +456,32 @@ static void rfx_process_message_tile(RFX_CONTEXT* context, RFX_TILE* tile, STREA
 		tile->data, 64 * sizeof(UINT32));
 }
 
+struct _RFX_TILE_WORK_PARAM
+{
+	STREAM s;
+	RFX_TILE* tile;
+	RFX_CONTEXT* context;
+};
+typedef struct _RFX_TILE_WORK_PARAM RFX_TILE_WORK_PARAM;
+
+void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
+{
+	RFX_TILE_WORK_PARAM* param = (RFX_TILE_WORK_PARAM*) context;
+	rfx_process_message_tile(param->context, param->tile, &(param->s));
+}
+
 static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, STREAM* s)
 {
 	int i;
+	int pos;
+	BYTE quant;
+	UINT32* quants;
 	UINT16 subtype;
 	UINT32 blockLen;
 	UINT32 blockType;
 	UINT32 tilesDataSize;
-	UINT32* quants;
-	BYTE quant;
-	int pos;
+	PTP_WORK* work_objects = NULL;
+	RFX_TILE_WORK_PARAM* params = NULL;
 
 	stream_read_UINT16(s, subtype); /* subtype (2 bytes) must be set to CBT_TILESET (0xCAC2) */
 
@@ -519,6 +550,12 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->num_tiles);
 	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->num_tiles);
 
+	if (context->priv->parallel)
+	{
+		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->num_tiles);
+		params = (RFX_TILE_WORK_PARAM*) malloc(sizeof(RFX_TILE_WORK_PARAM) * message->num_tiles);
+	}
+
 	/* tiles */
 	for (i = 0; i < message->num_tiles; i++)
 	{
@@ -535,9 +572,33 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		}
 
 		message->tiles[i] = rfx_tile_pool_take(context);
-		rfx_process_message_tile(context, message->tiles[i], s);
+
+		if (context->priv->parallel)
+		{
+			params[i].context = context;
+			params[i].tile = message->tiles[i];
+			CopyMemory(&(params[i].s), s, sizeof(STREAM));
+
+			work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_process_message_tile_work_callback,
+					(void*) &params[i], &context->priv->ThreadPoolEnv);
+
+			SubmitThreadpoolWork(work_objects[i]);
+		}
+		else
+		{
+			rfx_process_message_tile(context, message->tiles[i], s);
+		}
 
 		stream_set_pos(s, pos);
+	}
+
+	if (context->priv->parallel)
+	{
+		for (i = 0; i < message->num_tiles; i++)
+			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+
+		free(work_objects);
+		free(params);
 	}
 }
 

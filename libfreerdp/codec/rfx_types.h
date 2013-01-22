@@ -25,6 +25,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/pool.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/debug.h>
@@ -42,6 +43,10 @@ struct _RFX_CONTEXT_PRIV
 
 	wQueue* TilePool;
 	wQueue* TileQueue;
+
+	BOOL parallel;
+	PTP_POOL ThreadPool;
+	TP_CALLBACK_ENVIRON ThreadPoolEnv;
 
 	INT16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
 	INT16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */

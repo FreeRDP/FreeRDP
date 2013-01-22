@@ -121,13 +121,13 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 
 /* stride is bytes between rows in the output buffer. */
 void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
-	int y_size, const UINT32 * y_quants,
-	int cb_size, const UINT32 * cb_quants,
-	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer, int stride)
+	int y_size, const UINT32* y_quants,
+	int cb_size, const UINT32* cb_quants,
+	int cr_size, const UINT32* cr_quants, BYTE* rgb_buffer, int stride)
 {
+	INT16* pSrcDst[3];
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t *prims = primitives_get();
-	INT16 *pSrcDst[3];
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb);
 
@@ -141,8 +141,8 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	pSrcDst[0] = context->priv->y_r_buffer;
 	pSrcDst[1] = context->priv->cb_g_buffer;
 	pSrcDst[2] = context->priv->cr_b_buffer;
-	prims->yCbCrToRGB_16s16s_P3P3((const INT16 **) pSrcDst, 64*sizeof(INT16),
-			pSrcDst, 64*sizeof(INT16), &roi_64x64);
+	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
+			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_format_rgb);
 		rfx_decode_format_rgb(context->priv->y_r_buffer, context->priv->cb_g_buffer, context->priv->cr_b_buffer,
