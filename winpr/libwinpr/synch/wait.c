@@ -160,6 +160,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	PVOID Object;
 	struct timeval timeout;
 
+	if (!nCount)
+		return WAIT_FAILED;
 	maxfd = 0;
 	FD_ZERO(&fds);
 	ZeroMemory(&timeout, sizeof(timeout));
