@@ -81,6 +81,7 @@ static void* thread_pool_work_func(void* arg)
 		{
 			work = callbackInstance->Work;
 			work->WorkCallback(callbackInstance, work->CallbackParameter, work);
+			CountdownEvent_Signal(pool->WorkComplete, 1);
 			free(callbackInstance);
 		}
 	}
@@ -101,6 +102,7 @@ PTP_POOL GetDefaultThreadpool()
 		pool->Threads = (HANDLE*) malloc(pool->ThreadCount * sizeof(HANDLE));
 
 		pool->PendingQueue = Queue_New(TRUE, -1, -1);
+		pool->WorkComplete = CountdownEvent_New(0);
 
 		for (index = 0; index < pool->ThreadCount; index++)
 		{

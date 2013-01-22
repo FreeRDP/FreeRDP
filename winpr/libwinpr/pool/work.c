@@ -116,6 +116,7 @@ VOID SubmitThreadpoolWork(PTP_WORK pwk)
 	if (callbackInstance)
 	{
 		callbackInstance->Work = pwk;
+		CountdownEvent_AddCount(pool->WorkComplete, 1);
 		Queue_Enqueue(pool->PendingQueue, callbackInstance);
 	}
 #endif
@@ -141,10 +142,13 @@ VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 	if (pWaitForThreadpoolWorkCallbacks)
 		pWaitForThreadpoolWorkCallbacks(pwk, fCancelPendingCallbacks);
 #else
+	HANDLE event;
 	PTP_POOL pool;
 
 	pool = pwk->CallbackEnvironment->Pool;
+	event = CountdownEvent_WaitHandle(pool->WorkComplete);
 
-
+	if (WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0)
+		printf("WaitForThreadpoolWorkCallbacks: error waiting on work completion\n");
 #endif
 }

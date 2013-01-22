@@ -37,6 +37,7 @@ struct _TP_POOL
 	HANDLE* Threads;
 	DWORD ThreadCount;
 	wQueue* PendingQueue;
+	wCountdownEvent* WorkComplete;
 };
 
 struct _TP_WORK
