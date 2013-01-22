@@ -34,9 +34,9 @@ struct _TP_POOL
 {
 	DWORD Minimum;
 	DWORD Maximum;
-	HANDLE* Threads;
-	DWORD ThreadCount;
+	wArrayList* Threads;
 	wQueue* PendingQueue;
+	HANDLE TerminateEvent;
 	wCountdownEvent* WorkComplete;
 };
 
@@ -58,6 +58,11 @@ struct _TP_WAIT
 };
 
 struct _TP_IO
+{
+	void* dummy;
+};
+
+struct _TP_CLEANUP_GROUP
 {
 	void* dummy;
 };

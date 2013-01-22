@@ -68,14 +68,27 @@ static TP_POOL DEFAULT_POOL =
 
 static void* thread_pool_work_func(void* arg)
 {
+	DWORD status;
 	PTP_POOL pool;
 	PTP_WORK work;
+	HANDLE events[2];
 	PTP_CALLBACK_INSTANCE callbackInstance;
 
 	pool = (PTP_POOL) arg;
 
-	while (WaitForSingleObject(Queue_Event(pool->PendingQueue), INFINITE) == WAIT_OBJECT_0)
+	events[0] = pool->TerminateEvent;
+	events[1] = Queue_Event(pool->PendingQueue);
+
+	while (1)
 	{
+		status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+
+		if (status == WAIT_OBJECT_0)
+			break;
+
+		if (status != (WAIT_OBJECT_0 + 1))
+			break;
+
 		callbackInstance = (PTP_CALLBACK_INSTANCE) Queue_Dequeue(pool->PendingQueue);
 
 		if (callbackInstance)
@@ -90,28 +103,41 @@ static void* thread_pool_work_func(void* arg)
 	return NULL;
 }
 
-PTP_POOL GetDefaultThreadpool()
+void InitializeThreadpool(PTP_POOL pool)
 {
 	int index;
-	PTP_POOL pool = NULL;
-
-	pool = &DEFAULT_POOL;
+	HANDLE thread;
 
 	if (!pool->Threads)
 	{
-		pool->ThreadCount = 4;
-		pool->Threads = (HANDLE*) malloc(pool->ThreadCount * sizeof(HANDLE));
+		pool->Minimum = 0;
+		pool->Maximum = 500;
+
+		pool->Threads = ArrayList_New(TRUE);
 
 		pool->PendingQueue = Queue_New(TRUE, -1, -1);
 		pool->WorkComplete = CountdownEvent_New(0);
 
-		for (index = 0; index < pool->ThreadCount; index++)
+		pool->TerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		for (index = 0; index < 4; index++)
 		{
-			pool->Threads[index] = CreateThread(NULL, 0,
+			thread = CreateThread(NULL, 0,
 					(LPTHREAD_START_ROUTINE) thread_pool_work_func,
 					(void*) pool, 0, NULL);
+
+			ArrayList_Add(pool->Threads, thread);
 		}
 	}
+}
+
+PTP_POOL GetDefaultThreadpool()
+{
+	PTP_POOL pool = NULL;
+
+	pool = &DEFAULT_POOL;
+
+	InitializeThreadpool(pool);
 
 	return pool;
 }
@@ -131,10 +157,7 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 	pool = (PTP_POOL) malloc(sizeof(TP_POOL));
 
 	if (pool)
-	{
-		pool->Minimum = 0;
-		pool->Maximum = 500;
-	}
+		InitializeThreadpool(pool);
 #endif
 
 	return pool;
@@ -148,6 +171,25 @@ VOID CloseThreadpool(PTP_POOL ptpp)
 	if (pCloseThreadpool)
 		pCloseThreadpool(ptpp);
 #else
+	int index;
+	HANDLE thread;
+
+	SetEvent(ptpp->TerminateEvent);
+
+	index = ArrayList_Count(ptpp->Threads) - 1;
+
+	while (index >= 0)
+	{
+		thread = (HANDLE) ArrayList_GetItem(ptpp->Threads, index);
+		WaitForSingleObject(thread, INFINITE);
+		index--;
+	}
+
+	ArrayList_Free(ptpp->Threads);
+	Queue_Free(ptpp->PendingQueue);
+	CountdownEvent_Free(ptpp->WorkComplete);
+	CloseHandle(ptpp->TerminateEvent);
+
 	free(ptpp);
 #endif
 }

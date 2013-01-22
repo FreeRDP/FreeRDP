@@ -81,7 +81,7 @@ void winpr_StartThread(WINPR_THREAD* thread)
 	pthread_attr_t attr;
 
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);

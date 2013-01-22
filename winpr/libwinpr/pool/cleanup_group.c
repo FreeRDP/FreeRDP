@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
+#include "pool.h"
+
 #ifdef _WIN32
 
 static BOOL module_initialized = FALSE;
@@ -56,14 +58,16 @@ static void module_init()
 
 PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup()
 {
+	PTP_CLEANUP_GROUP cleanupGroup = NULL;
 #ifdef _WIN32
 	module_init();
 
 	if (pCreateThreadpoolCleanupGroup)
 		return pCreateThreadpoolCleanupGroup();
 #else
+	cleanupGroup = (PTP_CLEANUP_GROUP) malloc(sizeof(TP_CLEANUP_GROUP));
 #endif
-	return NULL;
+	return cleanupGroup;
 }
 
 VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext)
@@ -74,6 +78,7 @@ VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPen
 	if (pCloseThreadpoolCleanupGroupMembers)
 		pCloseThreadpoolCleanupGroupMembers(ptpcg, fCancelPendingCallbacks, pvCleanupContext);
 #else
+
 #endif
 }
 
@@ -85,6 +90,7 @@ VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 	if (pCloseThreadpoolCleanupGroup)
 		pCloseThreadpoolCleanupGroup(ptpcg);
 #else
+	free(ptpcg);
 #endif
 }
 

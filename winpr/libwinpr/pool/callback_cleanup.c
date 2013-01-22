@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
+#include "pool.h"
+
 #ifdef _WIN32
 
 static BOOL module_initialized = FALSE;

@@ -6,7 +6,23 @@ static int count = 0;
 
 void test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
-	printf("Hello %s: %d\n", context, count++);
+	int index;
+	BYTE a[1024];
+	BYTE b[1024];
+	BYTE c[1024];
+
+	printf("Hello %s: %d (thread: %d)\n", context, count++, GetCurrentThreadId());
+
+	for (index = 0; index < 100; index++)
+	{
+		ZeroMemory(a, 1024);
+		ZeroMemory(b, 1024);
+		ZeroMemory(c, 1024);
+		FillMemory(a, 1024, 0xAA);
+		FillMemory(b, 1024, 0xBB);
+		CopyMemory(c, a, 1024);
+		CopyMemory(c, b, 1024);
+	}
 }
 
 int TestPoolWork(int argc, char* argv[])
