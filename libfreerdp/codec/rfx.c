@@ -163,11 +163,10 @@ RFX_CONTEXT* rfx_context_new(void)
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
 	/* align buffers to 16 byte boundary (needed for SSE/SSE2 instructions) */
-	context->priv->y_r_buffer = (INT16*)(((uintptr_t)context->priv->y_r_mem + 16) & ~ 0x0F);
-	context->priv->cb_g_buffer = (INT16*)(((uintptr_t)context->priv->cb_g_mem + 16) & ~ 0x0F);
-	context->priv->cr_b_buffer = (INT16*)(((uintptr_t)context->priv->cr_b_mem + 16) & ~ 0x0F);
-
-	context->priv->dwt_buffer = (INT16*)(((uintptr_t)context->priv->dwt_mem + 16) & ~ 0x0F);
+	context->priv->y_r_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
+	context->priv->cb_g_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
+	context->priv->cr_b_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
+	context->priv->dwt_buffer = _aligned_malloc(32 * 32 * 4 * 2 * 2, 16); /* maximum sub-band width is 32 */
 
 	/* create profilers for default decoding routines */
 	rfx_profiler_create(context);
@@ -203,6 +202,12 @@ void rfx_context_free(RFX_CONTEXT* context)
 		CloseThreadpool(context->priv->ThreadPool);
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
 	}
+
+	_aligned_free(context->priv->y_r_buffer);
+	_aligned_free(context->priv->cb_g_buffer);
+	_aligned_free(context->priv->cr_b_buffer);
+
+	_aligned_free(context->priv->dwt_buffer);
 
 	free(context->priv);
 	free(context);

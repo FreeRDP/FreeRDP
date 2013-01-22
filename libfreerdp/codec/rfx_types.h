@@ -47,16 +47,10 @@ struct _RFX_CONTEXT_PRIV
 	BOOL parallel;
 	PTP_POOL ThreadPool;
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
-
-	INT16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	INT16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	INT16 cr_b_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
  
  	INT16* y_r_buffer;
 	INT16* cb_g_buffer;
 	INT16* cr_b_buffer;
- 
-	INT16 dwt_mem[32 * 32 * 2 * 2 + 8]; /* maximum sub-band width is 32 */
 
 	INT16* dwt_buffer;
 
