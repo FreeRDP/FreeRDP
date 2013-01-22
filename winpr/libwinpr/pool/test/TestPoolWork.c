@@ -12,7 +12,12 @@ void test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK w
 int TestPoolWork(int argc, char* argv[])
 {
 	int index;
-	TP_WORK * work;
+	PTP_POOL pool;
+	PTP_WORK work;
+	PTP_CLEANUP_GROUP cleanupGroup;
+	TP_CALLBACK_ENVIRON environment;
+
+	printf("Global Thread Pool\n");
 
 	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", NULL);
 
@@ -32,6 +37,47 @@ int TestPoolWork(int argc, char* argv[])
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);
 	CloseThreadpoolWork(work);
+
+	printf("Private Thread Pool\n");
+
+	pool = CreateThreadpool(NULL);
+
+	SetThreadpoolThreadMinimum(pool, 4);
+	SetThreadpoolThreadMaximum(pool, 8);
+
+	InitializeThreadpoolEnvironment(&environment);
+	SetThreadpoolCallbackPool(&environment, pool);
+
+	cleanupGroup = CreateThreadpoolCleanupGroup();
+
+	if (!cleanupGroup)
+	{
+		printf("CreateThreadpoolCleanupGroup failure\n");
+		return -1;
+	}
+
+	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, NULL);
+
+	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", &environment);
+
+	if (!work)
+	{
+		printf("CreateThreadpoolWork failure\n");
+		return -1;
+	}
+
+	for (index = 0; index < 10; index++)
+		SubmitThreadpoolWork(work);
+
+	WaitForThreadpoolWorkCallbacks(work, FALSE);
+
+	CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
+
+	CloseThreadpoolCleanupGroup(cleanupGroup);
+
+	DestroyThreadpoolEnvironment(&environment);
+
+	CloseThreadpool(pool);
 
 	return 0;
 }

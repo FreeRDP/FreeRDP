@@ -44,6 +44,7 @@ static void module_init()
 		return;
 
 	kernel32_module = LoadLibraryA("kernel32.dll");
+	module_initialized = TRUE;
 
 	if (!kernel32_module)
 		return;

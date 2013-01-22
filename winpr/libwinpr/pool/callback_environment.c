@@ -28,6 +28,41 @@
 
 #ifdef _WIN32
 
+static BOOL module_initialized = FALSE;
+static BOOL module_available = FALSE;
+static HMODULE kernel32_module = NULL;
+
+static VOID (WINAPI * pInitializeThreadpoolEnvironment)(PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI * pDestroyThreadpoolEnvironment)(PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI * pSetThreadpoolCallbackPool)(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp);
+static VOID (WINAPI * pSetThreadpoolCallbackCleanupGroup)(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
+static VOID (WINAPI * pSetThreadpoolCallbackRunsLong)(PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI * pSetThreadpoolCallbackLibrary)(PTP_CALLBACK_ENVIRON pcbe, PVOID mod);
+static VOID (WINAPI * pSetThreadpoolCallbackPriority)(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORITY Priority);
+
+static void module_init()
+{
+	if (module_initialized)
+		return;
+
+	kernel32_module = LoadLibraryA("kernel32.dll");
+	module_initialized = TRUE;
+
+	if (!kernel32_module)
+		return;
+
+	module_available = TRUE;
+
+	pInitializeThreadpoolEnvironment = (void*) GetProcAddress(kernel32_module, "InitializeThreadpoolEnvironment");
+	pDestroyThreadpoolEnvironment = (void*) GetProcAddress(kernel32_module, "DestroyThreadpoolEnvironment");
+	pSetThreadpoolCallbackPool = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackPool");
+	pSetThreadpoolCallbackCleanupGroup = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackCleanupGroup");
+	pSetThreadpoolCallbackRunsLong = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackRunsLong");
+	pSetThreadpoolCallbackRunsLong = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackRunsLong");
+	pSetThreadpoolCallbackLibrary = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackLibrary");
+	pSetThreadpoolCallbackPriority = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackPriority");
+}
+
 #else
 
 static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT =
@@ -56,6 +91,10 @@ PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment()
 VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pInitializeThreadpoolEnvironment)
+		pInitializeThreadpoolEnvironment(pcbe);
 #else
 	pcbe->Version = 1;
 	pcbe->Pool = NULL;
@@ -73,6 +112,10 @@ VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pDestroyThreadpoolEnvironment)
+		pDestroyThreadpoolEnvironment(pcbe);
 #else
 #endif
 }
@@ -80,6 +123,10 @@ VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pSetThreadpoolCallbackPool)
+		pSetThreadpoolCallbackPool(pcbe, ptpp);
 #else
 	pcbe->Pool = ptpp;
 #endif
@@ -88,6 +135,10 @@ VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
 VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pSetThreadpoolCallbackCleanupGroup)
+		pSetThreadpoolCallbackCleanupGroup(pcbe, ptpcg, pfng);
 #else
 	pcbe->CleanupGroup = ptpcg;
 	pcbe->CleanupGroupCancelCallback = pfng;
@@ -97,6 +148,10 @@ VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GR
 VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pSetThreadpoolCallbackRunsLong)
+		pSetThreadpoolCallbackRunsLong(pcbe);
 #else
 	pcbe->u.s.LongFunction = TRUE;
 #endif
@@ -105,6 +160,10 @@ VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
 VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pSetThreadpoolCallbackLibrary)
+		pSetThreadpoolCallbackLibrary(pcbe, mod);
 #else
 #endif
 }
@@ -112,6 +171,10 @@ VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
 VOID SetThreadpoolCallbackPriority(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORITY Priority)
 {
 #ifdef _WIN32
+	module_init();
+
+	if (pSetThreadpoolCallbackPriority)
+		pSetThreadpoolCallbackPriority(pcbe, Priority);
 #else
 #endif
 }
