@@ -55,7 +55,32 @@ typedef struct _TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;
 
 typedef VOID (*PTP_CLEANUP_GROUP_CANCEL_CALLBACK)(PVOID ObjectContext, PVOID CleanupContext);
 
-#if 0
+typedef struct _TP_CALLBACK_ENVIRON_V1
+{
+	TP_VERSION Version;
+	PTP_POOL Pool;
+	PTP_CLEANUP_GROUP CleanupGroup;
+	PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
+	PVOID RaceDll;
+	struct _ACTIVATION_CONTEXT* ActivationContext;
+	PTP_SIMPLE_CALLBACK FinalizationCallback;
+
+	union
+	{
+		DWORD Flags;
+		struct
+		{
+			DWORD LongFunction:1;
+			DWORD Persistent:1;
+			DWORD Private:30;
+		} s;
+	} u;
+} TP_CALLBACK_ENVIRON_V1;
+
+#endif
+
+/* Non-Windows and pre Windows 7 */
+#if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)))
 
 typedef struct _TP_CALLBACK_ENVIRON_V3
 {
@@ -83,33 +108,7 @@ typedef struct _TP_CALLBACK_ENVIRON_V3
 	DWORD Size;
 } TP_CALLBACK_ENVIRON_V3;
 
-typedef TP_CALLBACK_ENVIRON_V3 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
-
-#else
-
-typedef struct _TP_CALLBACK_ENVIRON_V1
-{
-	TP_VERSION Version;
-	PTP_POOL Pool;
-	PTP_CLEANUP_GROUP CleanupGroup;
-	PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
-	PVOID RaceDll;
-	struct _ACTIVATION_CONTEXT* ActivationContext;
-	PTP_SIMPLE_CALLBACK FinalizationCallback;
-
-	union
-	{
-		DWORD Flags;
-		struct
-		{
-			DWORD LongFunction:1;
-			DWORD Persistent:1;
-			DWORD Private:30;
-		} s;
-	} u;
-} TP_CALLBACK_ENVIRON_V1;
-
-#endif
+//typedef TP_CALLBACK_ENVIRON_V3 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
 
 #endif
 

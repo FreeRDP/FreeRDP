@@ -26,13 +26,41 @@
 
 #include "pool.h"
 
+VOID InitializeCallbackEnvironment_V1(TP_CALLBACK_ENVIRON_V1* pcbe)
+{
+	pcbe->Version = 1;
+
+	pcbe->Pool = NULL;
+	pcbe->CleanupGroup = NULL;
+	pcbe->CleanupGroupCancelCallback = NULL;
+	pcbe->RaceDll = NULL;
+	pcbe->ActivationContext = NULL;
+	pcbe->FinalizationCallback = NULL;
+	pcbe->u.Flags = 0;
+}
+
+VOID InitializeCallbackEnvironment_V3(TP_CALLBACK_ENVIRON_V3* pcbe)
+{
+	pcbe->Version = 3;
+
+	pcbe->Pool = NULL;
+	pcbe->CleanupGroup = NULL;
+	pcbe->CleanupGroupCancelCallback = NULL;
+	pcbe->RaceDll = NULL;
+	pcbe->ActivationContext = NULL;
+	pcbe->FinalizationCallback = NULL;
+	pcbe->u.Flags = 0;
+
+	pcbe->CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
+	pcbe->Size = sizeof(TP_CALLBACK_ENVIRON);
+}
+
 #ifdef _WIN32
 
 static BOOL module_initialized = FALSE;
 static BOOL module_available = FALSE;
 static HMODULE kernel32_module = NULL;
 
-static VOID (WINAPI * pInitializeThreadpoolEnvironment)(PTP_CALLBACK_ENVIRON pcbe);
 static VOID (WINAPI * pDestroyThreadpoolEnvironment)(PTP_CALLBACK_ENVIRON pcbe);
 static VOID (WINAPI * pSetThreadpoolCallbackPool)(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp);
 static VOID (WINAPI * pSetThreadpoolCallbackCleanupGroup)(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
@@ -53,7 +81,7 @@ static void module_init()
 
 	module_available = TRUE;
 
-	pInitializeThreadpoolEnvironment = (void*) GetProcAddress(kernel32_module, "InitializeThreadpoolEnvironment");
+	/* InitializeThreadpoolEnvironment is an inline function */
 	pDestroyThreadpoolEnvironment = (void*) GetProcAddress(kernel32_module, "DestroyThreadpoolEnvironment");
 	pSetThreadpoolCallbackPool = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackPool");
 	pSetThreadpoolCallbackCleanupGroup = (void*) GetProcAddress(kernel32_module, "SetThreadpoolCallbackCleanupGroup");
@@ -90,23 +118,10 @@ PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment()
 
 VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 {
-#ifdef _WIN32
-	module_init();
-
-	if (pInitializeThreadpoolEnvironment)
-		pInitializeThreadpoolEnvironment(pcbe);
-#else
-	pcbe->Version = 1;
-	pcbe->Pool = NULL;
-	pcbe->CleanupGroup = NULL;
-	pcbe->CleanupGroupCancelCallback = NULL;
-	pcbe->RaceDll = NULL;
-	pcbe->ActivationContext = NULL;
-	pcbe->FinalizationCallback = NULL;
-	pcbe->u.s.LongFunction = FALSE;
-	pcbe->u.s.Persistent = FALSE;
-	pcbe->u.s.Private = 0;
-#endif
+	if (pcbe->Version == 3)
+		InitializeCallbackEnvironment_V3((TP_CALLBACK_ENVIRON_V3*) pcbe);
+	else
+		InitializeCallbackEnvironment_V1(pcbe);
 }
 
 VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)

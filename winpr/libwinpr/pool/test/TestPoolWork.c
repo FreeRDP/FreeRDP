@@ -1,17 +1,19 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/interlocked.h>
 
-static int count = 0;
+static LONG count = 0;
 
-void test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
+void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	int index;
 	BYTE a[1024];
 	BYTE b[1024];
 	BYTE c[1024];
 
-	printf("Hello %s: %d (thread: %d)\n", context, count++, GetCurrentThreadId());
+	printf("Hello %s: %d (thread: %d)\n", context,
+		InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)
 	{
@@ -93,6 +95,7 @@ int TestPoolWork(int argc, char* argv[])
 
 	DestroyThreadpoolEnvironment(&environment);
 
+	CloseThreadpoolWork(work);
 	CloseThreadpool(pool);
 
 	return 0;
