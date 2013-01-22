@@ -81,10 +81,18 @@ struct rdp_freerdp_peer
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);
 FREERDP_API void freerdp_peer_context_free(freerdp_peer* client);
 
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 FREERDP_API void freerdp_peer_free(freerdp_peer* client);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_PEER_H */

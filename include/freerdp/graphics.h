@@ -29,6 +29,10 @@ typedef struct rdp_glyph rdpGlyph;
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Bitmap Class */
 
 typedef void (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
@@ -165,5 +169,9 @@ FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
 
 FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 FREERDP_API void graphics_free(rdpGraphics* graphics);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_GRAPHICS_H */
