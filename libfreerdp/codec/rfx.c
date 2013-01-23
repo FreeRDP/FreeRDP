@@ -30,6 +30,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/registry.h>
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
@@ -139,6 +140,11 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 
 RFX_CONTEXT* rfx_context_new(void)
 {
+	HKEY hKey;
+	LONG status;
+	DWORD dwType;
+	DWORD dwSize;
+	DWORD dwValue;
 	RFX_CONTEXT* context;
 
 	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
@@ -159,14 +165,37 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	context->priv->BufferPool = BufferPool_New(TRUE, 16384, 16);
 
-	context->priv->parallel = FALSE;
-	//context->priv->parallel = TRUE;
+	context->priv->UseThreads = FALSE;
+	context->priv->MinThreadCount = 4;
+	context->priv->MaxThreadCount = 0;
 
-	if (context->priv->parallel)
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\RemoteFX"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->UseThreads = dwValue ? 1 : 0;
+
+		if (RegQueryValueEx(hKey, _T("MinThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->MinThreadCount = dwValue;
+
+		if (RegQueryValueEx(hKey, _T("MaxThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->MaxThreadCount = dwValue;
+
+		RegCloseKey(hKey);
+	}
+
+	if (context->priv->UseThreads)
 	{
 		context->priv->ThreadPool = CreateThreadpool(NULL);
 		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
 		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
+
+		if (context->priv->MinThreadCount)
+			SetThreadpoolThreadMinimum(context->priv->ThreadPool, context->priv->MinThreadCount);
+
+		if (context->priv->MaxThreadCount)
+			SetThreadpoolThreadMaximum(context->priv->ThreadPool, context->priv->MaxThreadCount);
 	}
 
 	/* initialize the default pixel format */
@@ -201,7 +230,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
 
-	if (context->priv->parallel)
+	if (context->priv->UseThreads)
 	{
 		CloseThreadpool(context->priv->ThreadPool);
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
@@ -555,7 +584,7 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->num_tiles);
 	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->num_tiles);
 
-	if (context->priv->parallel)
+	if (context->priv->UseThreads)
 	{
 		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->num_tiles);
 		params = (RFX_TILE_WORK_PARAM*) malloc(sizeof(RFX_TILE_WORK_PARAM) * message->num_tiles);
@@ -578,7 +607,7 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		message->tiles[i] = rfx_tile_pool_take(context);
 
-		if (context->priv->parallel)
+		if (context->priv->UseThreads)
 		{
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
@@ -597,7 +626,7 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		stream_set_pos(s, pos);
 	}
 
-	if (context->priv->parallel)
+	if (context->priv->UseThreads)
 	{
 		for (i = 0; i < message->num_tiles; i++)
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);

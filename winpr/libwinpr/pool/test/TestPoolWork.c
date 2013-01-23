@@ -66,7 +66,6 @@ int TestPoolWork(int argc, char* argv[])
 	InitializeThreadpoolEnvironment(&environment);
 	SetThreadpoolCallbackPool(&environment, pool);
 
-#if 0
 	cleanupGroup = CreateThreadpoolCleanupGroup();
 
 	if (!cleanupGroup)
@@ -76,7 +75,6 @@ int TestPoolWork(int argc, char* argv[])
 	}
 
 	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, NULL);
-#endif
 
 	work = CreateThreadpoolWork((PTP_WORK_CALLBACK) test_WorkCallback, "world", &environment);
 
@@ -91,9 +89,9 @@ int TestPoolWork(int argc, char* argv[])
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);
 
-	//CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
+	CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
 
-	//CloseThreadpoolCleanupGroup(cleanupGroup);
+	CloseThreadpoolCleanupGroup(cleanupGroup);
 
 	DestroyThreadpoolEnvironment(&environment);
 

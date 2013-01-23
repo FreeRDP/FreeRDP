@@ -42,7 +42,10 @@ struct _RFX_CONTEXT_PRIV
 	wQueue* TilePool;
 	wQueue* TileQueue;
 
-	BOOL parallel;
+	BOOL UseThreads;
+	DWORD MinThreadCount;
+	DWORD MaxThreadCount;
+
 	PTP_POOL ThreadPool;
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
  

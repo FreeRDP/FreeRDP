@@ -202,7 +202,18 @@ BOOL SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 	if (pSetThreadpoolThreadMinimum)
 		return pSetThreadpoolThreadMinimum(ptpp, cthrdMic);
 #else
+	HANDLE thread;
+
 	ptpp->Minimum = cthrdMic;
+
+	while (ArrayList_Count(ptpp->Threads) < ptpp->Minimum)
+	{
+		thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) thread_pool_work_func,
+				(void*) ptpp, 0, NULL);
+
+		ArrayList_Add(ptpp->Threads, thread);
+	}
 #endif
 	return TRUE;
 }
