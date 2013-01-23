@@ -150,7 +150,17 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv->TilePool = Queue_New(TRUE, -1, -1);
 	context->priv->TileQueue = Queue_New(TRUE, -1, -1);
 
+	/*
+	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
+	 *
+	 * y_r_buffer, cb_g_buffer, cr_b_buffer: 64 * 64 * 4 = 16384 (0x4000)
+	 * dwt_buffer: 32 * 32 * 2 * 2 * 4 = 16384, maximum sub-band width is 32
+	 */
+
+	context->priv->BufferPool = BufferPool_New(TRUE, 16384, 16);
+
 	context->priv->parallel = FALSE;
+	//context->priv->parallel = TRUE;
 
 	if (context->priv->parallel)
 	{
@@ -161,15 +171,6 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	/* initialize the default pixel format */
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
-
-	/* align buffers to 16 byte boundary (needed for SSE/SSE2 instructions) */
-
-	context->priv->y_r_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384 (0x4000) */
-	context->priv->cb_g_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384 (0x4000) */
-	context->priv->cr_b_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384  (0x4000) */
-
-	/* maximum sub-band width is 32 */
-	context->priv->dwt_buffer = _aligned_malloc(16384, 16); /* 32 * 32 * 2 * 2 * 4 = 16384 (0x4000) */
 
 	/* create profilers for default decoding routines */
 	rfx_profiler_create(context);
@@ -206,11 +207,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
 	}
 
-	_aligned_free(context->priv->y_r_buffer);
-	_aligned_free(context->priv->cb_g_buffer);
-	_aligned_free(context->priv->cr_b_buffer);
-
-	_aligned_free(context->priv->dwt_buffer);
+	BufferPool_Free(context->priv->BufferPool);
 
 	free(context->priv);
 	free(context);
@@ -461,7 +458,7 @@ static void rfx_process_message_tile(RFX_CONTEXT* context, RFX_TILE* tile, STREA
 		YLen, context->quants + (quantIdxY * 10),
 		CbLen, context->quants + (quantIdxCb * 10),
 		CrLen, context->quants + (quantIdxCr * 10),
-		tile->data, 64 * sizeof(UINT32));
+		tile->data, 64 * 4);
 }
 
 struct _RFX_TILE_WORK_PARAM

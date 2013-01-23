@@ -96,6 +96,10 @@ static void rfx_decode_format_rgb(INT16* r_buf, INT16* g_buf, INT16* b_buf,
 static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
 	const BYTE* data, int size, INT16* buffer)
 {
+	INT16* dwt_buffer;
+
+	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
+
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode);
@@ -111,10 +115,12 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	PROFILER_EXIT(context->priv->prof_rfx_quantization_decode);
 
 	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_decode);
-		context->dwt_2d_decode(buffer, context->priv->dwt_buffer);
+		context->dwt_2d_decode(buffer, dwt_buffer);
 	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_decode);
 
 	PROFILER_EXIT(context->priv->prof_rfx_decode_component);
+
+	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
 /* rfx_decode_ycbcr_to_rgb code now resides in the primitives library. */
@@ -131,23 +137,28 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb);
 
-	rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, context->priv->y_r_buffer); /* YData */
+	pSrcDst[0] = BufferPool_Take(context->priv->BufferPool, -1); /* y_r_buffer */
+	pSrcDst[1] = BufferPool_Take(context->priv->BufferPool, -1); /* cb_g_buffer */
+	pSrcDst[2] = BufferPool_Take(context->priv->BufferPool, -1); /* cr_b_buffer */
+
+	rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, pSrcDst[0]); /* YData */
 	stream_seek(data_in, y_size);
-	rfx_decode_component(context, cb_quants, stream_get_tail(data_in), cb_size, context->priv->cb_g_buffer); /* CbData */
+	rfx_decode_component(context, cb_quants, stream_get_tail(data_in), cb_size, pSrcDst[1]); /* CbData */
 	stream_seek(data_in, cb_size);
-	rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, context->priv->cr_b_buffer); /* CrData */
+	rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, pSrcDst[2]); /* CrData */
 	stream_seek(data_in, cr_size);
 
-	pSrcDst[0] = context->priv->y_r_buffer;
-	pSrcDst[1] = context->priv->cb_g_buffer;
-	pSrcDst[2] = context->priv->cr_b_buffer;
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_format_rgb);
-		rfx_decode_format_rgb(context->priv->y_r_buffer, context->priv->cb_g_buffer, context->priv->cr_b_buffer,
+		rfx_decode_format_rgb(pSrcDst[0], pSrcDst[1], pSrcDst[2],
 			context->pixel_format, rgb_buffer, stride);
 	PROFILER_EXIT(context->priv->prof_rfx_decode_format_rgb);
 	
 	PROFILER_EXIT(context->priv->prof_rfx_decode_rgb);
+
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[0]);
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[1]);
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[2]);
 }

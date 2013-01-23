@@ -239,11 +239,11 @@ struct _wBufferPool
 };
 typedef struct _wBufferPool wBufferPool;
 
-void* BufferPool_Take(wBufferPool* pool, int bufferSize);
-void BufferPool_Return(wBufferPool* pool, void* buffer);
-void BufferPool_Clear(wBufferPool* pool);
+WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
+WINPR_API void BufferPool_Return(wBufferPool* pool, void* buffer);
+WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
-wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
-void BufferPool_Free(wBufferPool* pool);
+WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
+WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 #endif /* WINPR_COLLECTIONS_H */

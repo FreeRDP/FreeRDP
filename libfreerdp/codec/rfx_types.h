@@ -39,8 +39,6 @@
 
 struct _RFX_CONTEXT_PRIV
 {
-	/* pre-allocated buffers */
-
 	wQueue* TilePool;
 	wQueue* TileQueue;
 
@@ -48,11 +46,7 @@ struct _RFX_CONTEXT_PRIV
 	PTP_POOL ThreadPool;
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
  
- 	INT16* y_r_buffer;
-	INT16* cb_g_buffer;
-	INT16* cr_b_buffer;
-
-	INT16* dwt_buffer;
+	wBufferPool* BufferPool;
 
 	/* profilers */
 	PROFILER_DEFINE(prof_rfx_decode_rgb);

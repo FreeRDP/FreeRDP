@@ -26,6 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+#include <winpr/collections.h>
+
 #include <freerdp/primitives.h>
 
 #include "rfx_types.h"
@@ -187,10 +190,14 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
 	INT16* data, BYTE* buffer, int buffer_size, int* size)
 {
+	INT16* dwt_buffer;
+
+	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
+
 	PROFILER_ENTER(context->priv->prof_rfx_encode_component);
 
 	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_encode);
-		context->dwt_2d_encode(data, context->priv->dwt_buffer);
+		context->dwt_2d_encode(data, dwt_buffer);
 	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_encode);
 
 	PROFILER_ENTER(context->priv->prof_rfx_quantization_encode);
@@ -206,49 +213,54 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_encode);
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_component);
+
+	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
 void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int height, int rowstride,
 	const UINT32* y_quants, const UINT32* cb_quants, const UINT32* cr_quants,
 	STREAM* data_out, int* y_size, int* cb_size, int* cr_size)
 {
-	primitives_t *prims = primitives_get();
 	INT16* pSrcDst[3];
+	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
-	INT16* y_r_buffer = context->priv->y_r_buffer;
-	INT16* cb_g_buffer = context->priv->cb_g_buffer;
-	INT16* cr_b_buffer = context->priv->cr_b_buffer;
+
+	pSrcDst[0] = BufferPool_Take(context->priv->BufferPool, -1); /* y_r_buffer */
+	pSrcDst[1] = BufferPool_Take(context->priv->BufferPool, -1); /* cb_g_buffer */
+	pSrcDst[2] = BufferPool_Take(context->priv->BufferPool, -1); /* cr_b_buffer */
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb);
 		rfx_encode_format_rgb(rgb_data, width, height, rowstride,
-			context->pixel_format, context->palette, y_r_buffer, cb_g_buffer, cr_b_buffer);
+			context->pixel_format, context->palette, pSrcDst[0], pSrcDst[1], pSrcDst[2]);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_rgb_to_ycbcr);
-		pSrcDst[0] = context->priv->y_r_buffer;
-		pSrcDst[1] = context->priv->cb_g_buffer;
-		pSrcDst[2] = context->priv->cr_b_buffer;
-		prims->RGBToYCbCr_16s16s_P3P3((const INT16 **) pSrcDst, 64*sizeof(INT16),
-			pSrcDst, 64*sizeof(INT16), &roi_64x64);
+		prims->RGBToYCbCr_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
+			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
 	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr);
 
 	/* Ensure the buffer is reasonably large enough */
 	stream_check_size(data_out, 4096);
-	rfx_encode_component(context, y_quants, context->priv->y_r_buffer,
+
+	rfx_encode_component(context, y_quants, pSrcDst[0],
 		stream_get_tail(data_out), stream_get_left(data_out), y_size);
 	stream_seek(data_out, *y_size);
 
 	stream_check_size(data_out, 4096);
-	rfx_encode_component(context, cb_quants, context->priv->cb_g_buffer,
+	rfx_encode_component(context, cb_quants, pSrcDst[1],
 		stream_get_tail(data_out), stream_get_left(data_out), cb_size);
 	stream_seek(data_out, *cb_size);
 
 	stream_check_size(data_out, 4096);
-	rfx_encode_component(context, cr_quants, context->priv->cr_b_buffer,
+	rfx_encode_component(context, cr_quants, pSrcDst[2],
 		stream_get_tail(data_out), stream_get_left(data_out), cr_size);
 	stream_seek(data_out, *cr_size);
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
+
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[0]);
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[1]);
+	BufferPool_Return(context->priv->BufferPool, pSrcDst[2]);
 }
