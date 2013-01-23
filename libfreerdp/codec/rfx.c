@@ -30,13 +30,13 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/registry.h>
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
-#include "rfx_pool.h"
 #include "rfx_decode.h"
 #include "rfx_encode.h"
 #include "rfx_quantization.h"
@@ -140,6 +140,11 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 
 RFX_CONTEXT* rfx_context_new(void)
 {
+	HKEY hKey;
+	LONG status;
+	DWORD dwType;
+	DWORD dwSize;
+	DWORD dwValue;
 	RFX_CONTEXT* context;
 
 	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
@@ -148,17 +153,53 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
-	context->priv->pool = rfx_pool_new();
+	context->priv->TilePool = Queue_New(TRUE, -1, -1);
+	context->priv->TileQueue = Queue_New(TRUE, -1, -1);
+
+	/*
+	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
+	 *
+	 * y_r_buffer, cb_g_buffer, cr_b_buffer: 64 * 64 * 4 = 16384 (0x4000)
+	 * dwt_buffer: 32 * 32 * 2 * 2 * 4 = 16384, maximum sub-band width is 32
+	 */
+
+	context->priv->BufferPool = BufferPool_New(TRUE, 16384, 16);
+
+	context->priv->UseThreads = FALSE;
+	context->priv->MinThreadCount = 4;
+	context->priv->MaxThreadCount = 0;
+
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\RemoteFX"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->UseThreads = dwValue ? 1 : 0;
+
+		if (RegQueryValueEx(hKey, _T("MinThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->MinThreadCount = dwValue;
+
+		if (RegQueryValueEx(hKey, _T("MaxThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+			context->priv->MaxThreadCount = dwValue;
+
+		RegCloseKey(hKey);
+	}
+
+	if (context->priv->UseThreads)
+	{
+		context->priv->ThreadPool = CreateThreadpool(NULL);
+		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
+
+		if (context->priv->MinThreadCount)
+			SetThreadpoolThreadMinimum(context->priv->ThreadPool, context->priv->MinThreadCount);
+
+		if (context->priv->MaxThreadCount)
+			SetThreadpoolThreadMaximum(context->priv->ThreadPool, context->priv->MaxThreadCount);
+	}
 
 	/* initialize the default pixel format */
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
-
-	/* align buffers to 16 byte boundary (needed for SSE/SSE2 instructions) */
-	context->priv->y_r_buffer = (INT16*)(((uintptr_t)context->priv->y_r_mem + 16) & ~ 0x0F);
-	context->priv->cb_g_buffer = (INT16*)(((uintptr_t)context->priv->cb_g_mem + 16) & ~ 0x0F);
-	context->priv->cr_b_buffer = (INT16*)(((uintptr_t)context->priv->cr_b_mem + 16) & ~ 0x0F);
-
-	context->priv->dwt_buffer = (INT16*)(((uintptr_t)context->priv->dwt_mem + 16) & ~ 0x0F);
 
 	/* create profilers for default decoding routines */
 	rfx_profiler_create(context);
@@ -183,10 +224,19 @@ void rfx_context_free(RFX_CONTEXT* context)
 {
 	free(context->quants);
 
-	rfx_pool_free(context->priv->pool);
+	Queue_Free(context->priv->TilePool);
+	Queue_Free(context->priv->TileQueue);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
+
+	if (context->priv->UseThreads)
+	{
+		CloseThreadpool(context->priv->ThreadPool);
+		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+	}
+
+	BufferPool_Free(context->priv->BufferPool);
 
 	free(context->priv);
 	free(context);
@@ -195,6 +245,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
 {
 	context->pixel_format = pixel_format;
+
 	switch (pixel_format)
 	{
 		case RDP_PIXEL_FORMAT_B8G8R8A8:
@@ -225,6 +276,30 @@ void rfx_context_reset(RFX_CONTEXT* context)
 {
 	context->header_processed = FALSE;
 	context->frame_idx = 0;
+}
+
+RFX_TILE* rfx_tile_pool_take(RFX_CONTEXT* context)
+{
+	RFX_TILE* tile = NULL;
+
+	if (WaitForSingleObject(Queue_Event(context->priv->TilePool), 0) == WAIT_OBJECT_0)
+		tile = Queue_Dequeue(context->priv->TilePool);
+
+	if (!tile)
+	{
+		tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
+
+		tile->x = tile->y = 0;
+		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
+	}
+
+	return tile;
+}
+
+int rfx_tile_pool_return(RFX_CONTEXT* context, RFX_TILE* tile)
+{
+	Queue_Enqueue(context->priv->TilePool, tile);
+	return 0;
 }
 
 static void rfx_process_message_sync(RFX_CONTEXT* context, STREAM* s)
@@ -412,19 +487,35 @@ static void rfx_process_message_tile(RFX_CONTEXT* context, RFX_TILE* tile, STREA
 		YLen, context->quants + (quantIdxY * 10),
 		CbLen, context->quants + (quantIdxCb * 10),
 		CrLen, context->quants + (quantIdxCr * 10),
-		tile->data, 64*sizeof(UINT32));
+		tile->data, 64 * 4);
+}
+
+struct _RFX_TILE_WORK_PARAM
+{
+	STREAM s;
+	RFX_TILE* tile;
+	RFX_CONTEXT* context;
+};
+typedef struct _RFX_TILE_WORK_PARAM RFX_TILE_WORK_PARAM;
+
+void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
+{
+	RFX_TILE_WORK_PARAM* param = (RFX_TILE_WORK_PARAM*) context;
+	rfx_process_message_tile(param->context, param->tile, &(param->s));
 }
 
 static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, STREAM* s)
 {
 	int i;
+	int pos;
+	BYTE quant;
+	UINT32* quants;
 	UINT16 subtype;
 	UINT32 blockLen;
 	UINT32 blockType;
 	UINT32 tilesDataSize;
-	UINT32* quants;
-	BYTE quant;
-	int pos;
+	PTP_WORK* work_objects = NULL;
+	RFX_TILE_WORK_PARAM* params = NULL;
 
 	stream_read_UINT16(s, subtype); /* subtype (2 bytes) must be set to CBT_TILESET (0xCAC2) */
 
@@ -490,7 +581,14 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			context->quants[i * 10 + 8], context->quants[i * 10 + 9]);
 	}
 
-	message->tiles = rfx_pool_get_tiles(context->priv->pool, message->num_tiles);
+	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->num_tiles);
+	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->num_tiles);
+
+	if (context->priv->UseThreads)
+	{
+		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->num_tiles);
+		params = (RFX_TILE_WORK_PARAM*) malloc(sizeof(RFX_TILE_WORK_PARAM) * message->num_tiles);
+	}
 
 	/* tiles */
 	for (i = 0; i < message->num_tiles; i++)
@@ -507,9 +605,34 @@ static void rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
-		rfx_process_message_tile(context, message->tiles[i], s);
+		message->tiles[i] = rfx_tile_pool_take(context);
+
+		if (context->priv->UseThreads)
+		{
+			params[i].context = context;
+			params[i].tile = message->tiles[i];
+			CopyMemory(&(params[i].s), s, sizeof(STREAM));
+
+			work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_process_message_tile_work_callback,
+					(void*) &params[i], &context->priv->ThreadPoolEnv);
+
+			SubmitThreadpoolWork(work_objects[i]);
+		}
+		else
+		{
+			rfx_process_message_tile(context, message->tiles[i], s);
+		}
 
 		stream_set_pos(s, pos);
+	}
+
+	if (context->priv->UseThreads)
+	{
+		for (i = 0; i < message->num_tiles; i++)
+			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+
+		free(work_objects);
+		free(params);
 	}
 }
 
@@ -621,13 +744,17 @@ RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index)
 
 void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 {
+	int i;
+
 	if (message != NULL)
 	{
 		free(message->rects);
 
-		if (message->tiles != NULL)
+		if (message->tiles)
 		{
-			rfx_pool_put_tiles(context->priv->pool, message->tiles, message->num_tiles);
+			for (i = 0; i < message->num_tiles; i++)
+				rfx_tile_pool_return(context, message->tiles[i]);
+
 			free(message->tiles);
 		}
 
@@ -790,9 +917,9 @@ static void rfx_compose_message_tile(RFX_CONTEXT* context, STREAM* s,
 static void rfx_compose_message_tileset(RFX_CONTEXT* context, STREAM* s,
 	BYTE* image_data, int width, int height, int rowstride)
 {
+	int i;
 	int size;
 	int start_pos, end_pos;
-	int i;
 	int numQuants;
 	const UINT32* quantVals;
 	const UINT32* quantValsPtr;

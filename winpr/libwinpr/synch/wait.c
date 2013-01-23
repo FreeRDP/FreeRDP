@@ -50,14 +50,19 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
+		int status;
 		WINPR_THREAD* thread;
+		void* thread_status = NULL;
 
 		if (dwMilliseconds != INFINITE)
 			printf("WaitForSingleObject: timeout not implemented for thread wait\n");
 
 		thread = (WINPR_THREAD*) Object;
 
-		pthread_join(thread->thread, NULL);
+		status = pthread_join(thread->thread, &thread_status);
+
+		if (status != 0)
+			printf("WaitForSingleObject: pthread_join failure: %d\n", status);
 	}
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
