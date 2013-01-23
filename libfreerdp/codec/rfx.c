@@ -163,10 +163,13 @@ RFX_CONTEXT* rfx_context_new(void)
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
 	/* align buffers to 16 byte boundary (needed for SSE/SSE2 instructions) */
-	context->priv->y_r_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
-	context->priv->cb_g_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
-	context->priv->cr_b_buffer = _aligned_malloc(4096 * 4, 16); /* 4096 = 64x64 */
-	context->priv->dwt_buffer = _aligned_malloc(32 * 32 * 4 * 2 * 2, 16); /* maximum sub-band width is 32 */
+
+	context->priv->y_r_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384 (0x4000) */
+	context->priv->cb_g_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384 (0x4000) */
+	context->priv->cr_b_buffer = _aligned_malloc(16384, 16); /* 64 * 64 * 4 = 16384  (0x4000) */
+
+	/* maximum sub-band width is 32 */
+	context->priv->dwt_buffer = _aligned_malloc(16384, 16); /* 32 * 32 * 2 * 2 * 4 = 16384 (0x4000) */
 
 	/* create profilers for default decoding routines */
 	rfx_profiler_create(context);

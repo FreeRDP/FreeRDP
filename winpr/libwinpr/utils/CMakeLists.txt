@@ -26,7 +26,8 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Dictionary.c
 	collections/ListDictionary.c
 	collections/KeyValuePair.c
-	collections/CountdownEvent.c)
+	collections/CountdownEvent.c
+	collections/BufferPool.c)
 
 set(${MODULE_PREFIX}_SRCS
 	sam.c
