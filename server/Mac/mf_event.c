@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <freerdp/utils/memory.h>
+//#include <util.h>
 
 #include "mf_event.h"
 
@@ -144,7 +144,7 @@ mfEvent* mf_event_pop(mfEventQueue* event_queue)
 
 mfEventRegion* mf_event_region_new(int x, int y, int width, int height)
 {
-	mfEventRegion* event_region = xnew(mfEventRegion);
+	mfEventRegion* event_region = malloc(sizeof(mfEventRegion));
     
 	if (event_region != NULL)
 	{
@@ -164,7 +164,7 @@ void mf_event_region_free(mfEventRegion* event_region)
 
 mfEvent* mf_event_new(int type)
 {
-	mfEvent* event = xnew(mfEvent);
+	mfEvent* event = malloc(sizeof(mfEvent));
 	event->type = type;
 	return event;
 }
@@ -176,7 +176,7 @@ void mf_event_free(mfEvent* event)
 
 mfEventQueue* mf_event_queue_new()
 {
-	mfEventQueue* event_queue = xnew(mfEventQueue);
+	mfEventQueue* event_queue = malloc(sizeof(mfEventQueue));
     
 	if (event_queue != NULL)
 	{
@@ -185,7 +185,7 @@ mfEventQueue* mf_event_queue_new()
         
 		event_queue->size = 16;
 		event_queue->count = 0;
-		event_queue->events = (mfEvent**) xzalloc(sizeof(mfEvent*) * event_queue->size);
+		event_queue->events = (mfEvent**) malloc(sizeof(mfEvent*) * event_queue->size);
         
 		if (pipe(event_queue->pipe_fd) < 0)
 			printf("mf_event_queue_new: pipe failed\n");
