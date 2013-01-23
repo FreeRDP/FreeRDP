@@ -33,12 +33,12 @@
  * GetLocalTime
  * GetLogicalProcessorInformation
  * GetLogicalProcessorInformationEx
+ * GetSystemInfo
  * GetNativeSystemInfo
  * GetProductInfo
  * GetSystemDirectoryA
  * GetSystemDirectoryW
  * GetSystemFirmwareTable
- * GetSystemInfo
  * GetSystemTime
  * GetSystemTimeAdjustment
  * GetSystemTimeAsFileTime
@@ -69,7 +69,32 @@
 
 #include <time.h>
 #include <unistd.h>
+
 #include <winpr/crt.h>
+
+void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
+{
+	lpSystemInfo->wProcessorArchitecture = 0;
+	lpSystemInfo->wReserved = 0;
+
+	lpSystemInfo->dwPageSize = 0;
+	lpSystemInfo->lpMinimumApplicationAddress = NULL;
+	lpSystemInfo->lpMaximumApplicationAddress = NULL;
+	lpSystemInfo->dwActiveProcessorMask = NULL;
+
+	lpSystemInfo->dwNumberOfProcessors = 0;
+	lpSystemInfo->dwProcessorType = 0;
+
+	lpSystemInfo->dwAllocationGranularity = 0;
+
+	lpSystemInfo->wProcessorLevel = 0;
+	lpSystemInfo->wProcessorRevision = 0;
+}
+
+void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
+{
+	GetSystemInfo(lpSystemInfo);
+}
 
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD nSize)
 {

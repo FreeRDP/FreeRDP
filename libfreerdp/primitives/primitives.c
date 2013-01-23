@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/platform.h>
+
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
