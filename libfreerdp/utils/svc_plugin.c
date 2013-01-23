@@ -338,16 +338,22 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 {
 	svc_data_in_item* item;
 
-	freerdp_thread_stop(plugin->priv->thread);
-	freerdp_thread_free(plugin->priv->thread);
+	if (plugin->priv->thread)
+	{
+		freerdp_thread_stop(plugin->priv->thread);
+		freerdp_thread_free(plugin->priv->thread);
+	}
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->priv->open_handle);
 
 	svc_plugin_remove(plugin);
 
-	while ((item = list_dequeue(plugin->priv->data_in_list)) != NULL)
-		svc_data_in_item_free(item);
-	list_free(plugin->priv->data_in_list);
+	if (plugin->priv->data_in_list)
+	{
+		while ((item = list_dequeue(plugin->priv->data_in_list)) != NULL)
+			svc_data_in_item_free(item);
+		list_free(plugin->priv->data_in_list);
+	}
 
 	if (plugin->priv->data_in != NULL)
 	{

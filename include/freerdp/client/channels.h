@@ -24,11 +24,19 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/channels.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name, const char* identifier);
 FREERDP_API void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
 
 FREERDP_API FREERDP_ADDIN** freerdp_channels_list_addins(LPSTR lpName, LPSTR lpSubsystem, LPSTR lpType, DWORD dwFlags);
 FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNELS_CLIENT */
 

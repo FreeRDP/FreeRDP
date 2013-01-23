@@ -193,6 +193,10 @@ typedef struct
 	void *hints;
 } primitives_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Prototypes for the externally-visible entrypoints. */
 FREERDP_API void primitives_init(void);
 FREERDP_API primitives_t *primitives_get(void);
@@ -203,5 +207,9 @@ FREERDP_API void primitives_flags_str(
 	char *str,
 	size_t len);
 FREERDP_API void primitives_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !__PRIMITIVES_H_INCLUDED__ */

@@ -74,7 +74,9 @@ void wf_context_new(freerdp* instance, rdpContext* context)
 
 void wf_context_free(freerdp* instance, rdpContext* context)
 {
-
+	if (context->cache)
+		cache_free(context->cache);
+	freerdp_channels_free(context->channels);
 }
 
 int wf_create_console(void)
@@ -227,6 +229,8 @@ BOOL wf_pre_connect(freerdp* instance)
 
 		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
+
+		freerdp_client_rdp_file_free(file);
 	}
 
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
@@ -673,7 +677,6 @@ int wfreerdp_run(freerdp* instance)
 	/* cleanup */
 
 	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	
 	return 0;

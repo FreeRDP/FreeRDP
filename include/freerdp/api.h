@@ -32,6 +32,10 @@
 #define INLINE	inline
 #endif
 
+#ifdef _WIN32
+#define __func__ __FUNCTION__
+#endif
+
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef FREERDP_EXPORTS
     #ifdef __GNUC__

@@ -48,6 +48,10 @@ typedef struct _FREERDP_ADDIN FREERDP_ADDIN;
 
 typedef void* (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API LPSTR freerdp_get_library_install_path();
 FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path();
 
@@ -56,6 +60,10 @@ FREERDP_API int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY
 FREERDP_API void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszEntryName);
 FREERDP_API void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
 FREERDP_API void* freerdp_load_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_COMMON_ADDIN_H */
 
