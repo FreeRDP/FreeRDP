@@ -30,6 +30,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/tchar.h>
 #include <winpr/registry.h>
 
 #include <freerdp/codec/rfx.h>

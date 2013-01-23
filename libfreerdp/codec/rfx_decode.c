@@ -138,9 +138,6 @@ typedef struct _RFX_COMPONENT_WORK_PARAM RFX_COMPONENT_WORK_PARAM;
 void CALLBACK rfx_decode_component_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	RFX_COMPONENT_WORK_PARAM* param = (RFX_COMPONENT_WORK_PARAM*) context;
-
-	printf("rfx_decode_component_work_callback\n");
-
 	rfx_decode_component(param->context, param->quantization_values, param->data, param->size, param->buffer);
 }
 
