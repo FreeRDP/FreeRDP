@@ -24,6 +24,7 @@
 #include <freerdp/listener.h>
 #include <freerdp/server/rdpsnd.h>
 
+#include "mf_interface.h"
 #include "mfreerdp.h"
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
