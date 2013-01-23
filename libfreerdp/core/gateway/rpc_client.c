@@ -189,7 +189,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	 * combined stub data length of all remaining fragment PDUs.
 	 */
 
-	if ((header->response.alloc_hint == StubLength))
+	if (header->response.alloc_hint == StubLength)
 	{
 		rpc->StubCallId = 0;
 		rpc->StubFragCount = 0;
