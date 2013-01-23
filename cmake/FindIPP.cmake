@@ -46,7 +46,7 @@ set(IPPVM      "vm")   # vector math
 
 
 set(IPP_X64 0)
-if (CMAKE_CXX_SIZEOF_DATA_PTR EQUAL 8)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(IPP_X64 1)
 endif()
 if (CMAKE_CL_64)
@@ -67,6 +67,11 @@ function(get_ipp_version _ROOT_DIR)
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR1 REGEX "IPP_VERSION_MAJOR")
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR2 REGEX "IPP_VERSION_MINOR")
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR3 REGEX "IPP_VERSION_BUILD")
+
+    if(NOT STR3)
+	file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR3 REGEX "IPP_VERSION_UPDATE")
+    endif()
+
     file(STRINGS ${_ROOT_DIR}/include/ippversion.h STR4 REGEX "IPP_VERSION_STR")
 
     # extract info and assign to variables
@@ -198,16 +203,20 @@ function(set_ipp_variables _LATEST_VERSION)
         # set INCLUDE and LIB folders
         set(IPP_INCLUDE_DIRS ${IPP_ROOT_DIR}/include PARENT_SCOPE)
 
-        if (IPP_X64)
-            if(NOT EXISTS ${IPP_ROOT_DIR}/lib/intel64)
-                message(SEND_ERROR "IPP EM64T libraries not found")
-            endif()
-            set(IPP_LIBRARY_DIRS ${IPP_ROOT_DIR}/lib/intel64 PARENT_SCOPE)
+        if(APPLE)
+            set(IPP_LIBRARY_DIRS ${IPP_ROOT_DIR}/lib PARENT_SCOPE)
         else()
-            if(NOT EXISTS ${IPP_ROOT_DIR}/lib/ia32)
-                message(SEND_ERROR "IPP IA32 libraries not found")
+            if(IPP_X64)
+                if(NOT EXISTS ${IPP_ROOT_DIR}/lib/intel64)
+                    message(SEND_ERROR "IPP EM64T libraries not found")
+                endif()
+                set(IPP_LIBRARY_DIRS ${IPP_ROOT_DIR}/lib/intel64 PARENT_SCOPE)
+            else()
+                if(NOT EXISTS ${IPP_ROOT_DIR}/lib/ia32)
+                    message(SEND_ERROR "IPP IA32 libraries not found")
+                endif()
+                set(IPP_LIBRARY_DIRS ${IPP_ROOT_DIR}/lib/ia32 PARENT_SCOPE)
             endif()
-            set(IPP_LIBRARY_DIRS ${IPP_ROOT_DIR}/lib/ia32 PARENT_SCOPE)
         endif()
 
         # set IPP_LIBRARIES variable (7.x lib names)
@@ -265,7 +274,7 @@ if(NOT IPP_FOUND)
     # Note, if several IPP installations found the newest version will be
     # selected
     # ------------------------------------------------------------------------
-    foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH})
+    foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH} /opt)
         set(curdir ${curdir}/intel)
         file(TO_CMAKE_PATH ${curdir} CURDIR)
 
@@ -336,3 +345,53 @@ if(WIN32 AND MINGW AND NOT IPP_LATEST_VERSION_MAJOR LESS 7)
     set(MSV_NTDLL    "ntdll")
     set(IPP_LIBRARIES ${IPP_LIBRARIES} ${MSV_NTDLL}${IPP_LIB_SUFFIX})
 endif()
+
+# ------------------------------------------------------------------------
+# This section will look for the IPP "compiler" dependent library
+# libiomp5.
+# ------------------------------------------------------------------------
+foreach(curdir ${CMAKE_SYSTEM_PREFIX_PATH} /opt)
+    set(curdir ${curdir}/intel)
+
+    if(EXISTS ${curdir})
+        file(GLOB_RECURSE liblist FOLLOW_SYMLINKS ${curdir}/libiomp5.*)
+        foreach(lib ${liblist})
+            get_filename_component(libdir ${lib} REALPATH)
+            get_filename_component(libdir ${libdir} PATH)
+
+            if(${IPP_VERSION_MAJOR} VERSION_LESS "7")
+                set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                set(IPP_COMPILER_LIBRARIES iomp5)
+            else()
+                if(APPLE)
+                    set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                    set(IPP_COMPILER_LIBRARIES iomp5)
+                else()
+                    if(IPP_X64)
+                        if(("${libdir}" MATCHES "intel64"))
+                            set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                            set(IPP_COMPILER_LIBRARIES iomp5)
+                        endif()
+                    else()
+                        set(IPP_COMPILER_LIBRARY_DIRS ${libdir})
+                        set(IPP_COMPILER_LIBRARIES iomp5)
+                    endif()
+                endif()
+            endif()
+        endforeach(lib)
+    endif()
+endforeach(curdir)
+
+# ------------------------------------------------------------------------
+# Build fullpath library list.
+# ------------------------------------------------------------------------
+find_library(LIB_IPPI ippi PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPI})
+find_library(LIB_IPPS ipps PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPS})
+find_library(LIB_IPPCORE ippcore PATHS ${IPP_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IPPCORE})
+find_library(LIB_IOMP5 iomp5 PATHS ${IPP_COMPILER_LIBRARY_DIRS})
+set(IPP_LIBRARY_LIST ${IPP_LIBRARY_LIST} ${LIB_IOMP5})
+
+

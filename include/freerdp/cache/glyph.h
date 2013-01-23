@@ -59,6 +59,10 @@ struct rdp_glyph_cache
 	rdpSettings* settings;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index);
 FREERDP_API void glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index, rdpGlyph* entry);
 
@@ -69,5 +73,9 @@ FREERDP_API void glyph_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpGlyphCache* glyph_cache_new(rdpSettings* settings);
 FREERDP_API void glyph_cache_free(rdpGlyphCache* glyph);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_GLYPH_CACHE_H */

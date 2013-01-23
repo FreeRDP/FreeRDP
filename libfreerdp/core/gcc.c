@@ -488,7 +488,7 @@ void gcc_write_user_data_header(STREAM* s, UINT16 type, UINT16 length)
 
 BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
-	char* str;
+	char* str = NULL;
 	UINT32 version;
 	UINT32 color_depth;
 	UINT16 colorDepth = 0;
@@ -518,6 +518,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	sprintf_s(settings->ClientHostname, 31, "%s", str);
 	settings->ClientHostname[31] = 0;
 	free(str);
+	str = NULL;
 
 	stream_read_UINT32(s, settings->KeyboardType); /* KeyboardType */
 	stream_read_UINT32(s, settings->KeyboardSubType); /* KeyboardSubType */

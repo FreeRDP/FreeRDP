@@ -25,6 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 	io.c
 	cleanup_group.c
 	pool.c
+	pool.h
 	callback_environment.c
 	callback.c
 	callback_cleanup.c)
@@ -47,14 +48,22 @@ if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-thread winpr-synch winpr-utils)
+
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-thread winpr-synch)
-
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+
 

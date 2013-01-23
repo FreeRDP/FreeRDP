@@ -439,7 +439,9 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
 
-	rdp_read_security_header(s, &securityFlags);
+	if (!rdp_read_security_header(s, &securityFlags))
+		return FALSE;
+
 	if ((securityFlags & SEC_INFO_PKT) == 0)
 		return FALSE;
 

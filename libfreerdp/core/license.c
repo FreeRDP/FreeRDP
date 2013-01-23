@@ -932,9 +932,7 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license)
 
 	license_write_binary_blob(s, license->error_info);
 
-	license_send(license, s, ERROR_ALERT);
-
-	return TRUE;
+	return license_send(license, s, ERROR_ALERT);
 }
 
 /**

@@ -24,11 +24,40 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
-#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
+#ifdef _WIN32
 
-BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
+static BOOL module_initialized = FALSE;
+static BOOL module_available = FALSE;
+static HMODULE kernel32_module = NULL;
+
+static BOOL (WINAPI * pCallbackMayRunLong)(PTP_CALLBACK_INSTANCE pci);
+
+static void module_init()
 {
-	return FALSE;
+	if (module_initialized)
+		return;
+
+	kernel32_module = LoadLibraryA("kernel32.dll");
+	module_initialized = TRUE;
+
+	if (!kernel32_module)
+		return;
+
+	module_available = TRUE;
+
+	pCallbackMayRunLong = (void*) GetProcAddress(kernel32_module, "CallbackMayRunLong");
 }
 
 #endif
+
+BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
+{
+#ifdef _WIN32
+	module_init();
+
+	if (pCallbackMayRunLong)
+		return pCallbackMayRunLong(pci);
+#else
+#endif
+	return FALSE;
+}

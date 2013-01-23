@@ -52,177 +52,8 @@ _mm_prefetch_buffer(char * buffer, int num_bytes)
 	}
 }
 
-static void rfx_decode_ycbcr_to_rgb_sse2(INT16* y_r_buffer, INT16* cb_g_buffer, INT16* cr_b_buffer)
-{	
-	__m128i zero = _mm_setzero_si128();
-	__m128i max = _mm_set1_epi16(255);
-
-	__m128i* y_r_buf = (__m128i*) y_r_buffer;
-	__m128i* cb_g_buf = (__m128i*) cb_g_buffer;
-	__m128i* cr_b_buf = (__m128i*) cr_b_buffer;
-
-	__m128i y;
-	__m128i cr;
-	__m128i cb;
-	__m128i r;
-	__m128i g;
-	__m128i b;
-
-	int i;
-
-	__m128i r_cr = _mm_set1_epi16(22986);	//  1.403 << 14
-	__m128i g_cb = _mm_set1_epi16(-5636);	// -0.344 << 14
-	__m128i g_cr = _mm_set1_epi16(-11698);	// -0.714 << 14
-	__m128i b_cb = _mm_set1_epi16(28999);	//  1.770 << 14
-	__m128i c4096 = _mm_set1_epi16(4096);
-
-	for (i = 0; i < (4096 * sizeof(INT16) / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-	{
-		_mm_prefetch((char*)(&y_r_buf[i]), _MM_HINT_NTA);
-		_mm_prefetch((char*)(&cb_g_buf[i]), _MM_HINT_NTA);
-		_mm_prefetch((char*)(&cr_b_buf[i]), _MM_HINT_NTA);
-	}
-	for (i = 0; i < (4096 * sizeof(INT16) / sizeof(__m128i)); i++)
-	{
-		/*
-		In order to use SSE2 signed 16-bit integer multiplication we need to convert
-		the floating point factors to signed int without loosing information.
-		The result of this multiplication is 32 bit and we have two SSE instructions
-		that return either the hi or lo word.
-		Thus we will multiply the factors by the highest possible 2^n, take the 
-		upper 16 bits of the signed 32-bit result (_mm_mulhi_epi16) and correct	this
-		result by multiplying it by 2^(16-n).
-		For the given factors in the conversion matrix the best possible n is 14.
-
-		Example for calculating r:
-		r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
-		r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
-		r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
-		r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
-		*/
-
-		/* y = (y_r_buf[i] + 4096) >> 2 */
-		y = _mm_load_si128(&y_r_buf[i]);
-		y = _mm_add_epi16(y, c4096);
-		y = _mm_srai_epi16(y, 2);
-		/* cb = cb_g_buf[i]; */
-		cb = _mm_load_si128(&cb_g_buf[i]);
-		/* cr = cr_b_buf[i]; */
-		cr = _mm_load_si128(&cr_b_buf[i]);
-
-		/* (y + HIWORD(cr*22986)) >> 3 */
-		r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
-		r = _mm_srai_epi16(r, 3);
-		/* y_r_buf[i] = MINMAX(r, 0, 255); */
-		_mm_between_epi16(r, zero, max);
-		_mm_store_si128(&y_r_buf[i], r);
-
-		/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
-		g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
-		g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
-		g = _mm_srai_epi16(g, 3);
-		/* cb_g_buf[i] = MINMAX(g, 0, 255); */
-		_mm_between_epi16(g, zero, max);
-		_mm_store_si128(&cb_g_buf[i], g);
-
-		/* (y + HIWORD(cb*28999)) >> 3 */
-		b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
-		b = _mm_srai_epi16(b, 3);
-		/* cr_b_buf[i] = MINMAX(b, 0, 255); */
-		_mm_between_epi16(b, zero, max);
-		_mm_store_si128(&cr_b_buf[i], b);
-	}
-}
-
-/* The encodec YCbCr coeffectients are represented as 11.5 fixed-point numbers. See rfx_encode.c */
-static void rfx_encode_rgb_to_ycbcr_sse2(INT16* y_r_buffer, INT16* cb_g_buffer, INT16* cr_b_buffer)
-{
-	__m128i min = _mm_set1_epi16(-128 << 5);
-	__m128i max = _mm_set1_epi16(127 << 5);
-
-	__m128i* y_r_buf = (__m128i*) y_r_buffer;
-	__m128i* cb_g_buf = (__m128i*) cb_g_buffer;
-	__m128i* cr_b_buf = (__m128i*) cr_b_buffer;
-
-	__m128i y;
-	__m128i cr;
-	__m128i cb;
-	__m128i r;
-	__m128i g;
-	__m128i b;
-
-	__m128i y_r  = _mm_set1_epi16(9798);   //  0.299000 << 15
-	__m128i y_g  = _mm_set1_epi16(19235);  //  0.587000 << 15
-	__m128i y_b  = _mm_set1_epi16(3735);   //  0.114000 << 15
-	__m128i cb_r = _mm_set1_epi16(-5535);  // -0.168935 << 15
-	__m128i cb_g = _mm_set1_epi16(-10868); // -0.331665 << 15
-	__m128i cb_b = _mm_set1_epi16(16403);  //  0.500590 << 15
-	__m128i cr_r = _mm_set1_epi16(16377);  //  0.499813 << 15
-	__m128i cr_g = _mm_set1_epi16(-13714); // -0.418531 << 15
-	__m128i cr_b = _mm_set1_epi16(-2663);  // -0.081282 << 15
-
-	int i;
-
-	for (i = 0; i < (4096 * sizeof(INT16) / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
-	{
-		_mm_prefetch((char*)(&y_r_buf[i]), _MM_HINT_NTA);
-		_mm_prefetch((char*)(&cb_g_buf[i]), _MM_HINT_NTA);
-		_mm_prefetch((char*)(&cr_b_buf[i]), _MM_HINT_NTA);
-	}
-	for (i = 0; i < (4096 * sizeof(INT16) / sizeof(__m128i)); i++)
-	{
-		/*
-		In order to use SSE2 signed 16-bit integer multiplication we need to convert
-		the floating point factors to signed int without loosing information.
-		The result of this multiplication is 32 bit and using SSE2 we get either the
-		product's hi or lo word.
-		Thus we will multiply the factors by the highest possible 2^n and take the
-		upper 16 bits of the signed 32-bit result (_mm_mulhi_epi16).
-		Since the final result needs to be scaled by << 5 and also in in order to keep
-		the precision within the upper 16 bits we will also have to scale the RGB
-		values used in the multiplication by << 5+(16-n).
-		*/
-
-		/* r = y_r_buf[i]; */
-		r = _mm_load_si128(&y_r_buf[i]);
-
-		/* g = cb_g_buf[i]; */
-		g = _mm_load_si128(&cb_g_buf[i]);
-
-		/* b = cr_b_buf[i]; */
-		b = _mm_load_si128(&cr_b_buf[i]);
-
-		/* r<<6; g<<6; b<<6 */
-		r = _mm_slli_epi16(r, 6);
-		g = _mm_slli_epi16(g, 6);
-		b = _mm_slli_epi16(b, 6);
-
-		/* y = HIWORD(r*y_r) + HIWORD(g*y_g) + HIWORD(b*y_b) + min */
-		y = _mm_mulhi_epi16(r, y_r);
-		y = _mm_add_epi16(y, _mm_mulhi_epi16(g, y_g));
-		y = _mm_add_epi16(y, _mm_mulhi_epi16(b, y_b));
-		y = _mm_add_epi16(y, min);
-		/* y_r_buf[i] = MINMAX(y, 0, (255 << 5)) - (128 << 5); */
-		_mm_between_epi16(y, min, max);
-		_mm_store_si128(&y_r_buf[i], y);
-
-		/* cb = HIWORD(r*cb_r) + HIWORD(g*cb_g) + HIWORD(b*cb_b) */
-		cb = _mm_mulhi_epi16(r, cb_r);
-		cb = _mm_add_epi16(cb, _mm_mulhi_epi16(g, cb_g));
-		cb = _mm_add_epi16(cb, _mm_mulhi_epi16(b, cb_b));
-		/* cb_g_buf[i] = MINMAX(cb, (-128 << 5), (127 << 5)); */
-		_mm_between_epi16(cb, min, max);
-		_mm_store_si128(&cb_g_buf[i], cb);
-
-		/* cr = HIWORD(r*cr_r) + HIWORD(g*cr_g) + HIWORD(b*cr_b) */
-		cr = _mm_mulhi_epi16(r, cr_r);
-		cr = _mm_add_epi16(cr, _mm_mulhi_epi16(g, cr_g));
-		cr = _mm_add_epi16(cr, _mm_mulhi_epi16(b, cr_b));
-		/* cr_b_buf[i] = MINMAX(cr, (-128 << 5), (127 << 5)); */
-		_mm_between_epi16(cr, min, max);
-		_mm_store_si128(&cr_b_buf[i], cr);
-	}
-}
+/* rfx_decode_ycbcr_to_rgb_sse2 code now resides in the primitives library. */
+/* rfx_encode_rgb_to_ycbcr_sse2 code now resides in the primitives library. */
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_decode_block_sse2(INT16* buffer, const int buffer_size, const UINT32 factor)
@@ -658,15 +489,11 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 {
 	DEBUG_RFX("Using SSE2 optimizations");
 
-	IF_PROFILER(context->priv->prof_rfx_decode_ycbcr_to_rgb->name = "rfx_decode_ycbcr_to_rgb_sse2");
-	IF_PROFILER(context->priv->prof_rfx_encode_rgb_to_ycbcr->name = "rfx_encode_rgb_to_ycbcr_sse2");
 	IF_PROFILER(context->priv->prof_rfx_quantization_decode->name = "rfx_quantization_decode_sse2");
 	IF_PROFILER(context->priv->prof_rfx_quantization_encode->name = "rfx_quantization_encode_sse2");
 	IF_PROFILER(context->priv->prof_rfx_dwt_2d_decode->name = "rfx_dwt_2d_decode_sse2");
 	IF_PROFILER(context->priv->prof_rfx_dwt_2d_encode->name = "rfx_dwt_2d_encode_sse2");
 
-	context->decode_ycbcr_to_rgb = rfx_decode_ycbcr_to_rgb_sse2;
-	context->encode_rgb_to_ycbcr = rfx_encode_rgb_to_ycbcr_sse2;
 	context->quantization_decode = rfx_quantization_decode_sse2;
 	context->quantization_encode = rfx_quantization_encode_sse2;
 	context->dwt_2d_decode = rfx_dwt_2d_decode_sse2;

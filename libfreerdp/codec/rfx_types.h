@@ -24,6 +24,10 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/pool.h>
+#include <winpr/collections.h>
+
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/profiler.h>
 
@@ -33,25 +37,19 @@
 #define DEBUG_RFX(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#include "rfx_pool.h"
-
 struct _RFX_CONTEXT_PRIV
 {
-	/* pre-allocated buffers */
+	wQueue* TilePool;
+	wQueue* TileQueue;
 
-	RFX_POOL* pool; /* memory pool */
+	BOOL UseThreads;
+	DWORD MinThreadCount;
+	DWORD MaxThreadCount;
 
-	INT16 y_r_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	INT16 cb_g_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
-	INT16 cr_b_mem[4096 + 8]; /* 4096 = 64x64 (+ 8x2 = 16 for mem align) */
+	PTP_POOL ThreadPool;
+	TP_CALLBACK_ENVIRON ThreadPoolEnv;
  
- 	INT16* y_r_buffer;
-	INT16* cb_g_buffer;
-	INT16* cr_b_buffer;
- 
-	INT16 dwt_mem[32 * 32 * 2 * 2 + 8]; /* maximum sub-band width is 32 */
-
-	INT16* dwt_buffer;
+	wBufferPool* BufferPool;
 
 	/* profilers */
 	PROFILER_DEFINE(prof_rfx_decode_rgb);
@@ -60,7 +58,7 @@ struct _RFX_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_rfx_differential_decode);
 	PROFILER_DEFINE(prof_rfx_quantization_decode);
 	PROFILER_DEFINE(prof_rfx_dwt_2d_decode);
-	PROFILER_DEFINE(prof_rfx_decode_ycbcr_to_rgb);
+	PROFILER_DEFINE(prof_rfx_ycbcr_to_rgb);
 	PROFILER_DEFINE(prof_rfx_decode_format_rgb);
 
 	PROFILER_DEFINE(prof_rfx_encode_rgb);
@@ -69,7 +67,7 @@ struct _RFX_CONTEXT_PRIV
 	PROFILER_DEFINE(prof_rfx_differential_encode);
 	PROFILER_DEFINE(prof_rfx_quantization_encode);
 	PROFILER_DEFINE(prof_rfx_dwt_2d_encode);
-	PROFILER_DEFINE(prof_rfx_encode_rgb_to_ycbcr);
+	PROFILER_DEFINE(prof_rfx_rgb_to_ycbcr);
 	PROFILER_DEFINE(prof_rfx_encode_format_rgb);
 };
 

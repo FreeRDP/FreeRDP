@@ -74,7 +74,9 @@ void wf_context_new(freerdp* instance, rdpContext* context)
 
 void wf_context_free(freerdp* instance, rdpContext* context)
 {
-
+	if (context->cache)
+		cache_free(context->cache);
+	freerdp_channels_free(context->channels);
 }
 
 int wf_create_console(void)
@@ -227,6 +229,8 @@ BOOL wf_pre_connect(freerdp* instance)
 
 		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
+
+		freerdp_client_rdp_file_free(file);
 	}
 
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
@@ -259,7 +263,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfi->cursor = g_default_cursor;
 
 	wfi->fullscreen = settings->Fullscreen;
-	wfi->fs_toggle = wfi->fullscreen;
+	wfi->fs_toggle = 1;
 	wfi->sw_gdi = settings->SoftwareGdi;
 
 	wfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
@@ -279,7 +283,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		settings->DesktopHeight = i1;
 	}
 
-	if (wfi->fs_toggle)
+	if (wfi->fullscreen)
 	{
 		settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
 		settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -673,7 +677,6 @@ int wfreerdp_run(freerdp* instance)
 	/* cleanup */
 
 	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	
 	return 0;

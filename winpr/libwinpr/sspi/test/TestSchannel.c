@@ -98,7 +98,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 {
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
-	BYTE* pMessageBuffer;
+	//BYTE* pMessageBuffer;
 	SecBuffer Buffers[4];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;

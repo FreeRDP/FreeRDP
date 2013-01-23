@@ -31,8 +31,6 @@ set(${MODULE_PREFIX}_SRCS
 	rfx_dwt.h
 	rfx_encode.c
 	rfx_encode.h
-	rfx_pool.c
-	rfx_pool.h
 	rfx_quantization.c
 	rfx_quantization.h
 	rfx_rlgr.c
@@ -97,9 +95,12 @@ set(${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE freerdp
-	MODULES freerdp-utils)
-
-message(STATUS "libfreerdp-codec libs: ${${MODULE_PREFIX}_LIBS}")
+	MODULES freerdp-primitives freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-pool winpr-registry winpr-utils)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

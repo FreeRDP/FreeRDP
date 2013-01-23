@@ -970,6 +970,10 @@ struct rdp_settings
 };
 typedef struct rdp_settings rdpSettings;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
@@ -988,5 +992,9 @@ FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SETTINGS_H */

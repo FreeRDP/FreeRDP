@@ -2147,9 +2147,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 	rdp_write_demand_active(s, rdp->settings);
 
-	rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
-
-	return TRUE;
+	return rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
 }
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s)
@@ -2304,6 +2302,10 @@ void rdp_write_confirm_active(STREAM* s, rdpSettings* settings)
 			numberCapabilities++;
 			rdp_write_frame_acknowledge_capability_set(s, settings);
 		}
+	}
+	else
+	{
+		settings->FrameAcknowledge = 0;
 	}
 
 	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])

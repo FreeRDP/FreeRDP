@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
 #include <freerdp/crypto/ber.h>
 
 BOOL ber_read_length(STREAM* s, int* length)
@@ -364,7 +365,7 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 {
 	int length;
 
-	if(!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
+	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
 		!ber_read_length(s, &length) ||
 		stream_get_left(s) < length)
 		return FALSE;
@@ -372,16 +373,17 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 	if (value == NULL)
 	{
 		// even if we don't care the integer value, check the announced size
-		if(length < 1 || length > 4)
-			return FALSE;
-		stream_seek(s, length);
-		return TRUE;
+		return stream_skip(s, length);
 	}
 
 	if (length == 1)
+	{
 		stream_read_BYTE(s, *value);
+	}
 	else if (length == 2)
+	{
 		stream_read_UINT16_be(s, *value);
+	}
 	else if (length == 3)
 	{
 		BYTE byte;
@@ -390,9 +392,19 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 		*value += (byte << 16);
 	}
 	else if (length == 4)
+	{
 		stream_read_UINT32_be(s, *value);
-	else
+	}
+	else if (length == 8)
+	{
+		printf("%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
 		return FALSE;
+	}
+	else
+	{
+		printf("%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
+		return FALSE;
+	}
 
 	return TRUE;
 }

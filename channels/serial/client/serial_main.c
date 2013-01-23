@@ -79,7 +79,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial);
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
-	char* path;
+	char* path = NULL;
 	int status;
 	SERIAL_TTY* tty;
 	UINT32 PathLength;
@@ -570,6 +570,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 	IRP* prev;
 	SERIAL_TTY* tty;
 	UINT32 result = 0;
+	BOOL irp_completed = FALSE;
 
 	memset(&serial->tv, 0, sizeof(struct timeval));
 	tty = serial->tty;
@@ -588,6 +589,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 				{
 					irp->IoStatus = STATUS_SUCCESS;
 					serial_process_irp_read(serial, irp);
+					irp_completed = TRUE;
 				}
 				break;
 
@@ -596,6 +598,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 				{
 					irp->IoStatus = STATUS_SUCCESS;
 					serial_process_irp_write(serial, irp);
+					irp_completed = TRUE;
 				}
 				break;
 
@@ -607,6 +610,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 					irp->IoStatus = STATUS_SUCCESS;
 					stream_write_UINT32(irp->output, result);
 					irp->Complete(irp);
+					irp_completed = TRUE;
 				}
 				break;
 
@@ -618,7 +622,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		prev = irp;
 		irp = (IRP*) list_next(serial->pending_irps, irp);
 
-		if (prev->IoStatus == STATUS_SUCCESS)
+		if (irp_completed || prev->IoStatus == STATUS_SUCCESS)
 		{
 			list_remove(serial->pending_irps, prev);
 			SetEvent(serial->in_event);
