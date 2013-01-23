@@ -35,6 +35,11 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_EVENTFD_H
+#include <sys/eventfd.h>
+#include <errno.h>
+#endif
+
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
@@ -57,11 +62,20 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		event->pipe_fd[0] = -1;
 		event->pipe_fd[1] = -1;
 
+#ifdef HAVE_EVENTFD_H
+		event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
+		if (event->pipe_fd[0] < 0)
+		{
+			printf("CreateEventW: failed to create event\n");
+			return NULL;
+		}
+#else
 		if (pipe(event->pipe_fd) < 0)
 		{
 			printf("CreateEventW: failed to create event\n");
 			return NULL;
 		}
+#endif
 
 		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
 	}
@@ -115,10 +129,20 @@ BOOL SetEvent(HANDLE hEvent)
 
 		if (!(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0))
 		{
+#ifdef HAVE_EVENTFD_H
+			eventfd_t val = 1;
+			do 
+			{
+				length = eventfd_write(event->pipe_fd[0], val);
+			}
+			while(length < 0 && errno == EINTR);
+			status = (length == 0) ? TRUE : FALSE;
+#else
 			length = write(event->pipe_fd[1], "-", 1);
 
 			if (length == 1)
 				status = TRUE;
+#endif
 		}
 		else
 		{
@@ -149,13 +173,23 @@ BOOL ResetEvent(HANDLE hEvent)
 
 		while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
 		{
-			length = read(event->pipe_fd[0], &length, 1);
+#ifdef HAVE_EVENTFD_H
+			eventfd_t value;
+			do
+			{
+				length = eventfd_read(event->pipe_fd[0], &value);
+			}
+			while(length < 0 && errno == EINTR);
 
+			status = (length > 0) ? TRUE : FALSE;
+#else
+			length = read(event->pipe_fd[0], &length, 1);
 			if (length == 1)
 				status = TRUE;
 
 			if (length != 1)
 				break;
+#endif
 		}
 	}
 
