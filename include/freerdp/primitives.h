@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/platform.h>
+
 typedef INT32 pstatus_t;				/* match IppStatus. */
 #define PRIMITIVES_SUCCESS		(0)		/* match ippStsNoErr */
 

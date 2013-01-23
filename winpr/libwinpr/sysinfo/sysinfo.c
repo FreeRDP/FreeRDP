@@ -80,7 +80,7 @@ void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 	lpSystemInfo->dwPageSize = 0;
 	lpSystemInfo->lpMinimumApplicationAddress = NULL;
 	lpSystemInfo->lpMaximumApplicationAddress = NULL;
-	lpSystemInfo->dwActiveProcessorMask = NULL;
+	lpSystemInfo->dwActiveProcessorMask = 0;
 
 	lpSystemInfo->dwNumberOfProcessors = 0;
 	lpSystemInfo->dwProcessorType = 0;

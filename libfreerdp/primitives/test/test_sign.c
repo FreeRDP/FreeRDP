@@ -37,7 +37,7 @@ int test_sign16s_func(void)
 	testStr[0] = '\0';
 	get_random_data(src, sizeof(src));
 	general_sign_16s(src+1, d1+1, 65535);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSSE3_AVAILABLE)
 	{
 		strcat(testStr, " SSSE3");
@@ -57,7 +57,7 @@ int test_sign16s_func(void)
 	/* Test when we cannot reach 16-byte alignment */
 	get_random_data(src, sizeof(src));
 	general_sign_16s(src+1, d1+2, 65535);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSSE3_AVAILABLE)
 	{
 		ssse3_sign_16s(src+1, d2+2, 65535);

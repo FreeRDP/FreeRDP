@@ -132,7 +132,7 @@ int test_alphaComp_func(void)
 	general_alphaComp_argb((const BYTE *) src1, 4*SRC1_WIDTH, 
 		(const BYTE *) src2, 4*SRC2_WIDTH,
 		(BYTE *) dst1, 4*DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{
 		strcat(testStr, " SSE2");
@@ -165,7 +165,7 @@ int test_alphaComp_func(void)
 					x, y, s1, s2, c0, c1);
 				error = 1;
 			}
-#ifdef i386
+#ifdef _M_IX86_AMD64
 			if (pflags & PRIM_X86_SSE2_AVAILABLE)
 			{
 				UINT32 c2 = *PIXEL(dst2a, 4*DST_WIDTH, x, y);
@@ -185,12 +185,14 @@ int test_alphaComp_func(void)
 			}
 #endif /* i386 */
 #ifdef WITH_IPP
-			UINT32 c3 = *PIXEL(dst3, 4*DST_WIDTH, x, y);
-			if (colordist(c0, c3) > TOLERANCE)
 			{
-				printf("alphaComp-IPP: [%d,%d] 0x%08x+0x%08x=0x%08x, got 0x%08x\n", 
-					x, y, s1, s2, c0, c3);
-				error = 1;
+				UINT32 c3 = *PIXEL(dst3, 4*DST_WIDTH, x, y);
+				if (colordist(c0, c3) > TOLERANCE)
+				{
+					printf("alphaComp-IPP: [%d,%d] 0x%08x+0x%08x=0x%08x, got 0x%08x\n",
+						x, y, s1, s2, c0, c3);
+					error = 1;
+				}
 			}
 #endif
 		}

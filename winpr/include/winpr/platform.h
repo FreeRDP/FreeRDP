@@ -53,6 +53,14 @@
 #endif
 #endif
 
+/* Intel x86 or AMD64 (_M_IX86_AMD64) */
+
+#if defined(_M_IX86) || defined(_M_AMD64)
+#ifndef _M_IX86_AMD64
+#define _M_IX86_AMD64	1
+#endif
+#endif
+
 /* ARM (_M_ARM) */
 
 #if defined(__arm__) || defined(__thumb__) || \
