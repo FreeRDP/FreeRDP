@@ -202,4 +202,48 @@ WINPR_API UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* p
 WINPR_API wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_FREE ReferenceFree);
 WINPR_API void ReferenceTable_Free(wReferenceTable* referenceTable);
 
+/* Countdown Event */
+
+struct _wCountdownEvent
+{
+	DWORD count;
+	HANDLE mutex;
+	HANDLE event;
+	DWORD initialCount;
+};
+typedef struct _wCountdownEvent wCountdownEvent;
+
+WINPR_API DWORD CountdownEvent_CurrentCount(wCountdownEvent* countdown);
+WINPR_API DWORD CountdownEvent_InitialCount(wCountdownEvent* countdown);
+WINPR_API BOOL CountdownEvent_IsSet(wCountdownEvent* countdown);
+WINPR_API HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown);
+
+WINPR_API void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount);
+WINPR_API BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount);
+WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count);
+
+WINPR_API wCountdownEvent* CountdownEvent_New(DWORD initialCount);
+WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
+
+/* BufferPool */
+
+struct _wBufferPool
+{
+	int size;
+	int capacity;
+	void** array;
+	HANDLE mutex;
+	int fixedSize;
+	DWORD alignment;
+	BOOL synchronized;
+};
+typedef struct _wBufferPool wBufferPool;
+
+WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
+WINPR_API void BufferPool_Return(wBufferPool* pool, void* buffer);
+WINPR_API void BufferPool_Clear(wBufferPool* pool);
+
+WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
+WINPR_API void BufferPool_Free(wBufferPool* pool);
+
 #endif /* WINPR_COLLECTIONS_H */

@@ -138,8 +138,21 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 
 	if (queue->size == queue->capacity)
 	{
-		queue->capacity *= queue->growthFactor;
+		int old_capacity;
+		int new_capacity;
+
+		old_capacity = queue->capacity;
+		new_capacity = queue->capacity * queue->growthFactor;
+
+		queue->capacity = new_capacity;
 		queue->array = (void**) realloc(queue->array, sizeof(void*) * queue->capacity);
+		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(void*));
+
+		if (queue->tail < (old_capacity - 1))
+		{
+			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
+			queue->tail += old_capacity;
+		}
 	}
 
 	queue->array[queue->tail] = obj;
