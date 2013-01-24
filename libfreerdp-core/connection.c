@@ -128,6 +128,8 @@ boolean rdp_client_redirect(rdpRdp* rdp)
 
 	rdp_client_disconnect(rdp);
 
+	rdp_clear_joined_channels(rdp);
+
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
@@ -341,6 +343,22 @@ boolean rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
 	rdp->state = CONNECTION_STATE_MCS_CHANNEL_JOIN;
 
 	return true;
+}
+
+void rdp_clear_joined_channels(rdpRdp* rdp)
+{
+	int i;
+	if (rdp->mcs->user_channel_joined)
+		rdp->mcs->user_channel_joined = false;
+	
+	if (rdp->mcs->global_channel_joined)
+		rdp->mcs->global_channel_joined = false;
+	
+	for (i = 0; i < rdp->settings->num_channels; i++)
+	{
+		if (rdp->settings->channels[i].joined)
+			rdp->settings->channels[i].joined = false;
+	}
 }
 
 boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
