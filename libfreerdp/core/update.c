@@ -378,29 +378,29 @@ void update_reset_state(rdpUpdate* update)
 	rdpPrimaryUpdate* primary = update->primary;
 	rdpAltSecUpdate* altsec = update->altsec;
 
-	memset(&primary->order_info, 0, sizeof(ORDER_INFO));
-	memset(&primary->dstblt, 0, sizeof(DSTBLT_ORDER));
-	memset(&primary->patblt, 0, sizeof(PATBLT_ORDER));
-	memset(&primary->scrblt, 0, sizeof(SCRBLT_ORDER));
-	memset(&primary->opaque_rect, 0, sizeof(OPAQUE_RECT_ORDER));
-	memset(&primary->draw_nine_grid, 0, sizeof(DRAW_NINE_GRID_ORDER));
-	memset(&primary->multi_dstblt, 0, sizeof(MULTI_DSTBLT_ORDER));
-	memset(&primary->multi_patblt, 0, sizeof(MULTI_PATBLT_ORDER));
-	memset(&primary->multi_scrblt, 0, sizeof(MULTI_SCRBLT_ORDER));
-	memset(&primary->multi_opaque_rect, 0, sizeof(MULTI_OPAQUE_RECT_ORDER));
-	memset(&primary->multi_draw_nine_grid, 0, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
-	memset(&primary->line_to, 0, sizeof(LINE_TO_ORDER));
-	memset(&primary->polyline, 0, sizeof(POLYLINE_ORDER));
-	memset(&primary->memblt, 0, sizeof(MEMBLT_ORDER));
-	memset(&primary->mem3blt, 0, sizeof(MEM3BLT_ORDER));
-	memset(&primary->save_bitmap, 0, sizeof(SAVE_BITMAP_ORDER));
-	memset(&primary->glyph_index, 0, sizeof(GLYPH_INDEX_ORDER));
-	memset(&primary->fast_index, 0, sizeof(FAST_INDEX_ORDER));
-	memset(&primary->fast_glyph, 0, sizeof(FAST_GLYPH_ORDER));
-	memset(&primary->polygon_sc, 0, sizeof(POLYGON_SC_ORDER));
-	memset(&primary->polygon_cb, 0, sizeof(POLYGON_CB_ORDER));
-	memset(&primary->ellipse_sc, 0, sizeof(ELLIPSE_SC_ORDER));
-	memset(&primary->ellipse_cb, 0, sizeof(ELLIPSE_CB_ORDER));
+	ZeroMemory(&primary->order_info, sizeof(ORDER_INFO));
+	ZeroMemory(&primary->dstblt, sizeof(DSTBLT_ORDER));
+	ZeroMemory(&primary->patblt, sizeof(PATBLT_ORDER));
+	ZeroMemory(&primary->scrblt, sizeof(SCRBLT_ORDER));
+	ZeroMemory(&primary->opaque_rect, sizeof(OPAQUE_RECT_ORDER));
+	ZeroMemory(&primary->draw_nine_grid, sizeof(DRAW_NINE_GRID_ORDER));
+	ZeroMemory(&primary->multi_dstblt, sizeof(MULTI_DSTBLT_ORDER));
+	ZeroMemory(&primary->multi_patblt, sizeof(MULTI_PATBLT_ORDER));
+	ZeroMemory(&primary->multi_scrblt, sizeof(MULTI_SCRBLT_ORDER));
+	ZeroMemory(&primary->multi_opaque_rect, sizeof(MULTI_OPAQUE_RECT_ORDER));
+	ZeroMemory(&primary->multi_draw_nine_grid, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
+	ZeroMemory(&primary->line_to, sizeof(LINE_TO_ORDER));
+	ZeroMemory(&primary->polyline, sizeof(POLYLINE_ORDER));
+	ZeroMemory(&primary->memblt, sizeof(MEMBLT_ORDER));
+	ZeroMemory(&primary->mem3blt, sizeof(MEM3BLT_ORDER));
+	ZeroMemory(&primary->save_bitmap, sizeof(SAVE_BITMAP_ORDER));
+	ZeroMemory(&primary->glyph_index, sizeof(GLYPH_INDEX_ORDER));
+	ZeroMemory(&primary->fast_index, sizeof(FAST_INDEX_ORDER));
+	ZeroMemory(&primary->fast_glyph, sizeof(FAST_GLYPH_ORDER));
+	ZeroMemory(&primary->polygon_sc, sizeof(POLYGON_SC_ORDER));
+	ZeroMemory(&primary->polygon_cb, sizeof(POLYGON_CB_ORDER));
+	ZeroMemory(&primary->ellipse_sc, sizeof(ELLIPSE_SC_ORDER));
+	ZeroMemory(&primary->ellipse_cb, sizeof(ELLIPSE_CB_ORDER));
 
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
@@ -755,9 +755,11 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		update->SuppressOutput = update_send_suppress_output;
 
-		update->queue = Queue_New(TRUE, -1, -1);
-
-		update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
+		if (update->asynchronous)
+		{
+			update->queue = Queue_New(TRUE, -1, -1);
+			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
+		}
 	}
 
 	return update;
@@ -781,9 +783,11 @@ void update_free(rdpUpdate* update)
 		free(update->altsec);
 		free(update->window);
 
-		CloseHandle(update->thread);
-
-		Queue_Free(update->queue);
+		if (update->asynchronous)
+		{
+			CloseHandle(update->thread);
+			Queue_Free(update->queue);
+		}
 
 		free(update);
 	}

@@ -201,6 +201,7 @@ struct rdp_update
 
 	HANDLE thread;
 	wQueue* queue;
+	BOOL asynchronous;
 };
 
 #endif /* FREERDP_UPDATE_H */
