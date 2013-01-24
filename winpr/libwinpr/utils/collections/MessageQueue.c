@@ -47,21 +47,14 @@ HANDLE MessageQueue_Event(wMessageQueue* queue)
  * Methods
  */
 
-void MessageQueue_Clear(wMessageQueue* queue)
+BOOL MessageQueue_Wait(wMessageQueue* queue)
 {
-	int index;
+	BOOL status = FALSE;
 
-	WaitForSingleObject(queue->mutex, INFINITE);
+	if (WaitForSingleObject(queue->event, INFINITE) == WAIT_OBJECT_0)
+		status = TRUE;
 
-	for (index = queue->head; index != queue->tail; index = (index + 1) % queue->capacity)
-	{
-		queue->array[index] = NULL;
-	}
-
-	queue->size = 0;
-	queue->head = queue->tail = 0;
-
-	ReleaseMutex(queue->mutex);
+	return status;
 }
 
 void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
@@ -77,17 +70,17 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 		new_capacity = queue->capacity * 2;
 
 		queue->capacity = new_capacity;
-		queue->array = (wMessage**) realloc(queue->array, sizeof(wMessage*) * queue->capacity);
-		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(wMessage*));
+		queue->array = (wMessage*) realloc(queue->array, sizeof(wMessage) * queue->capacity);
+		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(wMessage));
 
 		if (queue->tail < (old_capacity - 1))
 		{
-			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage*));
+			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
 			queue->tail += old_capacity;
 		}
 	}
 
-	queue->array[queue->tail] = message;
+	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
 
@@ -98,33 +91,38 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam)
 {
-	wMessage* message;
+	wMessage message;
 
-	message = (wMessage*) malloc(sizeof(wMessage));
+	message.context = context;
+	message.type = type;
+	message.wParam = wParam;
+	message.lParam = lParam;
 
-	if (message)
-	{
-		message->context = context;
-		message->type = type;
-		message->wParam = wParam;
-		message->lParam = lParam;
-
-		MessageQueue_Dispatch(queue, message);
-	}
+	MessageQueue_Dispatch(queue, &message);
 }
 
-wMessage* MessageQueue_Get(wMessageQueue* queue)
+void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode)
 {
-	wMessage* message = NULL;
+	MessageQueue_Post(queue, NULL, WMQ_QUIT, (void*) (size_t) nExitCode, NULL);
+}
+
+int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
+{
+	int status = -1;
+
+	if (!MessageQueue_Wait(queue))
+		return status;
 
 	WaitForSingleObject(queue->mutex, INFINITE);
 
 	if (queue->size > 0)
 	{
-		message = queue->array[queue->head];
-		queue->array[queue->head] = NULL;
+		CopyMemory(message, &(queue->array[queue->head]), sizeof(wMessage));
+		ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
 		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
+
+		status = (message->type != WMQ_QUIT) ? 1 : 0;
 	}
 
 	if (queue->size < 1)
@@ -132,21 +130,31 @@ wMessage* MessageQueue_Get(wMessageQueue* queue)
 
 	ReleaseMutex(queue->mutex);
 
-	return message;
+	return status;
 }
 
-wMessage* MessageQueue_Peek(wMessageQueue* queue)
+int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 {
-	wMessage* message = NULL;
+	int status = 0;
 
 	WaitForSingleObject(queue->mutex, INFINITE);
 
 	if (queue->size > 0)
-		message = queue->array[queue->head];
+	{
+		CopyMemory(message, &(queue->array[queue->head]), sizeof(wMessage));
+		status = 1;
+
+		if (remove)
+		{
+			ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
+			queue->head = (queue->head + 1) % queue->capacity;
+			queue->size--;
+		}
+	}
 
 	ReleaseMutex(queue->mutex);
 
-	return message;
+	return status;
 }
 
 /**
@@ -166,7 +174,7 @@ wMessageQueue* MessageQueue_New()
 		queue->size = 0;
 
 		queue->capacity = 32;
-		queue->array = (wMessage**) malloc(sizeof(wMessage*) * queue->capacity);
+		queue->array = (wMessage*) malloc(sizeof(wMessage) * queue->capacity);
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -177,8 +185,6 @@ wMessageQueue* MessageQueue_New()
 
 void MessageQueue_Free(wMessageQueue* queue)
 {
-	MessageQueue_Clear(queue);
-
 	CloseHandle(queue->event);
 	CloseHandle(queue->mutex);
 

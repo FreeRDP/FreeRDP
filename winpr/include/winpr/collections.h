@@ -263,19 +263,23 @@ struct _wMessageQueue
 	int tail;
 	int size;
 	int capacity;
-	wMessage** array;
+	wMessage* array;
 	HANDLE mutex;
 	HANDLE event;
 };
 typedef struct _wMessageQueue wMessageQueue;
 
+#define WMQ_QUIT	0xFFFF
+
 WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
+WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
 
 WINPR_API void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
 WINPR_API void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
+WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 
-WINPR_API wMessage* MessageQueue_Get(wMessageQueue* queue);
-WINPR_API wMessage* MessageQueue_Peek(wMessageQueue* queue);
+WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
+WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
 
 WINPR_API wMessageQueue* MessageQueue_New();
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
