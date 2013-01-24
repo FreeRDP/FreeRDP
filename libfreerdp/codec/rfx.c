@@ -30,6 +30,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/tchar.h>
+#include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 
 #include <freerdp/codec/rfx.h>
@@ -145,6 +147,7 @@ RFX_CONTEXT* rfx_context_new(void)
 	DWORD dwType;
 	DWORD dwSize;
 	DWORD dwValue;
+	SYSTEM_INFO sysinfo;
 	RFX_CONTEXT* context;
 
 	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
@@ -165,8 +168,26 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	context->priv->BufferPool = BufferPool_New(TRUE, 16384, 16);
 
-	context->priv->UseThreads = FALSE;
-	context->priv->MinThreadCount = 4;
+#ifdef _WIN32
+	{
+		BOOL isVistaOrLater;
+		OSVERSIONINFOA verinfo;
+
+		ZeroMemory(&verinfo, sizeof(OSVERSIONINFOA));
+		verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+		GetVersionExA(&verinfo);
+		isVistaOrLater = ((verinfo.dwMajorVersion >= 6) && (verinfo.dwMinorVersion >= 0)) ? TRUE : FALSE;
+
+		context->priv->UseThreads = isVistaOrLater;
+	}
+#else
+	context->priv->UseThreads = TRUE;
+#endif
+
+	GetNativeSystemInfo(&sysinfo);
+
+	context->priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
 	context->priv->MaxThreadCount = 0;
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\RemoteFX"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);

@@ -61,7 +61,7 @@ int test_RGBToRGB_16s8u_P3AC4R_func(void)
 
 	general_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
 		(BYTE *) out1, 64*4, &roi);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{
 		strcat(testStr, " SSE2");
@@ -167,7 +167,7 @@ int test_yCbCrToRGB_16s16s_P3P3_func(void)
 	out2[2] = b2;
 
 	general_yCbCrToRGB_16s16s_P3P3(in, 64*2, out1, 64*2, &roi);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{
 		strcat(testStr, " SSE2");
