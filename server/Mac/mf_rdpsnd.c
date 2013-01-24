@@ -46,6 +46,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 {
+    printf("RDPSND INIT\n");
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 
