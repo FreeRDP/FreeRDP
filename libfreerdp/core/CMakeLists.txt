@@ -101,6 +101,8 @@ set(${MODULE_PREFIX}_SRCS
 	transport.h
 	update.c
 	update.h
+	message.c
+	message.h
 	channel.c
 	channel.h
 	window.c

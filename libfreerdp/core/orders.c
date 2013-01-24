@@ -1560,7 +1560,7 @@ BOOL update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER*
 	return TRUE;
 }
 
-BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_next)
+BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_NEXT_ORDER* stream_bitmap_next)
 {
 	if (stream_get_left(s) < 5)
 		return FALSE;

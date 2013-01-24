@@ -170,7 +170,7 @@ typedef void (*pSwitchSurface)(rdpContext* context, SWITCH_SURFACE_ORDER* switch
 typedef void (*pCreateNineGridBitmap)(rdpContext* context, CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap);
 typedef void (*pFrameMarker)(rdpContext* context, FRAME_MARKER_ORDER* frame_marker);
 typedef void (*pStreamBitmapFirst)(rdpContext* context, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first);
-typedef void (*pStreamBitmapNext)(rdpContext* context, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_next);
+typedef void (*pStreamBitmapNext)(rdpContext* context, STREAM_BITMAP_NEXT_ORDER* stream_bitmap_next);
 typedef void (*pDrawGdiPlusFirst)(rdpContext* context, DRAW_GDIPLUS_FIRST_ORDER* draw_gdiplus_first);
 typedef void (*pDrawGdiPlusNext)(rdpContext* context, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next);
 typedef void (*pDrawGdiPlusEnd)(rdpContext* context, DRAW_GDIPLUS_END_ORDER* draw_gdiplus_end);
@@ -204,7 +204,7 @@ struct rdp_altsec_update
 	CREATE_NINE_GRID_BITMAP_ORDER create_nine_grid_bitmap;
 	FRAME_MARKER_ORDER frame_marker;
 	STREAM_BITMAP_FIRST_ORDER stream_bitmap_first;
-	STREAM_BITMAP_FIRST_ORDER stream_bitmap_next;
+	STREAM_BITMAP_NEXT_ORDER stream_bitmap_next;
 	DRAW_GDIPLUS_CACHE_FIRST_ORDER draw_gdiplus_cache_first;
 	DRAW_GDIPLUS_CACHE_NEXT_ORDER draw_gdiplus_cache_next;
 	DRAW_GDIPLUS_CACHE_END_ORDER draw_gdiplus_cache_end;

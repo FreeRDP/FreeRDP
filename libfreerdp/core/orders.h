@@ -222,7 +222,7 @@ BOOL update_read_switch_surface_order(STREAM* s, SWITCH_SURFACE_ORDER* switch_su
 BOOL update_read_create_nine_grid_bitmap_order(STREAM* s, CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap);
 BOOL update_read_frame_marker_order(STREAM* s, FRAME_MARKER_ORDER* frame_marker);
 BOOL update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first);
-BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_next);
+BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_NEXT_ORDER* stream_bitmap_next);
 BOOL update_read_draw_gdiplus_first_order(STREAM* s, DRAW_GDIPLUS_FIRST_ORDER* draw_gdiplus_first);
 BOOL update_read_draw_gdiplus_next_order(STREAM* s, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next);
 BOOL update_read_draw_gdiplus_end_order(STREAM* s, DRAW_GDIPLUS_END_ORDER* draw_gdiplus_end);

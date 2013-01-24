@@ -269,7 +269,7 @@ struct _wMessageQueue
 };
 typedef struct _wMessageQueue wMessageQueue;
 
-#define WMQ_QUIT	0xFFFF
+#define WMQ_QUIT	0xFFFFFFFF
 
 WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
