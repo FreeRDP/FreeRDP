@@ -212,7 +212,7 @@
 #endif
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || \
-	defined(__OpenBSD__) || defined(__DragonFly__)
+	defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
 #include <sys/param.h>
 #endif
 
@@ -228,7 +228,7 @@
 
 #else
 
-#if defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) \
+#if defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
 	defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
 #ifndef __BIG_ENDIAN__
 #define __BIG_ENDIAN__		1
@@ -249,7 +249,7 @@
 
 #else
 
-#if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) \
+#if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || \
 	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
 #ifndef __LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__	1

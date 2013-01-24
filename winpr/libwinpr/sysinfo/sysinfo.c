@@ -68,10 +68,19 @@
 #ifndef _WIN32
 
 #include <time.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
+
+#if defined(__MACOSX__) || \
+defined(__FreeBSD__) || defined(__NetBSD__) || \
+defined(__OpenBSD__) || defined(__DragonFly__)
+#include <sys/sysctl.h>
+#endif
 
 DWORD GetProcessorArchitecture()
 {
@@ -104,11 +113,12 @@ DWORD GetNumberOfProcessors()
 
 #if defined(__linux__) || defined(__sun) || defined(_AIX)
 	numCPUs = (DWORD) sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || \
-	defined(__OpenBSD__) || defined(__DragonFly__) || defined(__MACOSX__)
+#elif defined(__MACOSX__) || \
+	defined(__FreeBSD__) || defined(__NetBSD__) || \
+	defined(__OpenBSD__) || defined(__DragonFly__)
 	{
 		int mib[4];
-		size_t length = sizeof(numCPU);
+		size_t length = sizeof(numCPUs);
 
 		mib[0] = CTL_HW;
 		mib[1] = HW_AVAILCPU;
