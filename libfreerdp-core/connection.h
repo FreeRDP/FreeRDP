@@ -50,6 +50,7 @@ boolean rdp_client_connect(rdpRdp* rdp);
 boolean rdp_client_redirect(rdpRdp* rdp);
 boolean rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s);
 boolean rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s);
+void rdp_clear_joined_channels(rdpRdp* rdp);
 boolean rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s);
 boolean rdp_client_connect_license(rdpRdp* rdp, STREAM* s);
 boolean rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s);
