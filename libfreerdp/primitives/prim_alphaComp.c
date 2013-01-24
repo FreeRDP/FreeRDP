@@ -52,9 +52,9 @@ PRIM_STATIC pstatus_t general_alphaComp_argb(
 	BYTE *pDst,  INT32 dstStep,
 	INT32 width,  INT32 height)
 {
-    const UINT32 *sptr1 = (const UINT32 *) pSrc1;
-    const UINT32 *sptr2 = (const UINT32 *) pSrc2;
-    UINT32 *dptr = (UINT32 *) pDst;
+	const UINT32 *sptr1 = (const UINT32 *) pSrc1;
+	const UINT32 *sptr2 = (const UINT32 *) pSrc2;
+	UINT32 *dptr = (UINT32 *) pDst;
 	int linebytes = width * sizeof(UINT32);
 	int src1Jump = (src1Step - linebytes) / sizeof(UINT32);
 	int src2Jump = (src2Step - linebytes) / sizeof(UINT32);
@@ -113,7 +113,7 @@ PRIM_STATIC pstatus_t general_alphaComp_argb(
 
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
-# if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
+#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 
 PRIM_STATIC pstatus_t sse2_alphaComp_argb(
 	const BYTE *pSrc1,  INT32 src1Step,
@@ -124,7 +124,7 @@ PRIM_STATIC pstatus_t sse2_alphaComp_argb(
 	const UINT32 *sptr1 = (const UINT32 *) pSrc1;
 	const UINT32 *sptr2 = (const UINT32 *) pSrc2;
 	UINT32 *dptr;
-    int linebytes, src1Jump, src2Jump, dstJump, y;
+	int linebytes, src1Jump, src2Jump, dstJump, y;
 	__m128i xmm0, xmm1;
 
 	if ((width <= 0) || (height <= 0)) return PRIMITIVES_SUCCESS;
@@ -135,7 +135,7 @@ PRIM_STATIC pstatus_t sse2_alphaComp_argb(
 			pDst, dstStep, width, height);
 	}
 	dptr = (UINT32 *) pDst;
-    linebytes = width * sizeof(UINT32);
+	linebytes = width * sizeof(UINT32);
 	src1Jump = (src1Step - linebytes) / sizeof(UINT32);
 	src2Jump = (src2Step - linebytes) / sizeof(UINT32);
 	dstJump  = (dstStep  - linebytes) / sizeof(UINT32);
@@ -261,7 +261,7 @@ PRIM_STATIC pstatus_t sse2_alphaComp_argb(
 
 	return PRIMITIVES_SUCCESS;
 }
-# endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
+#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif
 
 #ifdef WITH_IPP
@@ -281,9 +281,7 @@ PRIM_STATIC pstatus_t ipp_alphaComp_argb(
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp(
-	const primitives_hints_t *hints,
-	primitives_t *prims)
+void primitives_init_alphaComp(const primitives_hints_t* hints, primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
 #ifdef WITH_IPP
@@ -298,8 +296,7 @@ void primitives_init_alphaComp(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_deinit_alphaComp(
-	primitives_t *prims)
+void primitives_deinit_alphaComp(primitives_t *prims)
 {
 	/* Nothing to do. */
 }

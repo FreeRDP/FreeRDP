@@ -22,11 +22,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <winpr/platform.h>
+
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
 
-#ifdef ANDROID
+#ifdef __ANDROID__
 #include "cpu-features.h"
 #endif
 
@@ -52,13 +54,7 @@ static primitives_t* pPrimitives = NULL;
 #define C_BIT_AVX_AES		(1<<24)
 
 /* If x86 */
-#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64) \
-	|| defined(__amd64__) || defined(_M_AMD64) || defined(_M_X64) \
-	|| defined(i386) || defined(__i386) || defined(__i386__) \
-	|| defined(_M_IX86) || defined(_X86_)
-#ifndef i386
-#define i386
-#endif
+#if defined(_M_IX86_AMD64)
 
 /* If GCC */
 #ifdef __GNUC__
@@ -76,12 +72,13 @@ static void cpuid(
 	unsigned *edx)
 {
 	*eax = *ebx = *ecx = *edx = 0;
+
 	__asm volatile
 	(
 		/* The EBX (or RBX register on x86_64) is used for the PIC base address
 		 * and must not be corrupted by our inline assembly.
 		 */
-#  if defined(__i386__)
+#ifdef _M_IX86
 		"mov %%ebx, %%esi;"
 		"cpuid;"
 		"xchg %%ebx, %%esi;"
@@ -151,15 +148,11 @@ static void set_hints(primitives_hints_t* hints)
 
 /* ------------------------------------------------------------------------- */
 
-#elif defined(__arm__) || defined(__ARM_ARCH_7A__) \
-	|| defined(__ARM_EABI__) || defined(__ARMEL__) || defined(ANDROID)
-#ifndef __arm__
-#define __arm__
-#endif
+#elif defined(_M_ARM)
 
 static UINT32 androidNeon(void)
 {
-#if ANDROID
+#ifdef __ANDROID__
 	if (android_getCpuFamily() != ANDROID_CPU_FAMILY_ARM) return 0;
 
 	UINT64 features = android_getCpuFeatures();
@@ -176,8 +169,7 @@ static UINT32 androidNeon(void)
 	return 0;
 }
 
-static void set_hints(
-	primitives_hints_t *hints)
+static void set_hints(primitives_hints_t* hints)
 {
 	/* ARM:  TODO */
 	hints->arm_flags |= androidNeon();
@@ -232,9 +224,9 @@ UINT32 primitives_get_flags(const primitives_t* prims)
 {
 	primitives_hints_t* hints = (primitives_hints_t*) (prims->hints);
 
-#ifdef i386
+#if defined(_M_IX86_AMD64)
 	return hints->x86_flags;
-#elif defined(__arm__)
+#elif defined(_M_ARM)
 	return hints->arm_flags;
 #else
 	return 0;

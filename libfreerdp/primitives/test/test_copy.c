@@ -77,7 +77,6 @@ STD_SPEED_TEST(copy8u_speed_test, BYTE, BYTE, dst=dst,
 int test_copy8u_speed(void)
 {
 	BYTE ALIGN(src[MAX_TEST_SIZE+4]);
-	BYTE ALIGN(intervening[MAX_TEST_SIZE*7]);
 	BYTE ALIGN(dst[MAX_TEST_SIZE+4]);
 	copy8u_speed_test("copy8u", "aligned", src, NULL, 0, dst,
 		test_sizes, NUM_TEST_SIZES, MEMCPY_PRETEST_ITERATIONS, TEST_TIME);

@@ -55,7 +55,7 @@ int test_and_32u_func(void)
 			++failed;
 		}
 	}
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE3_AVAILABLE)
 	{
 		strcat(testStr, " SSE3");
@@ -129,7 +129,7 @@ int test_or_32u_func(void)
 		++failed;
 		}
 	}
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE3_AVAILABLE)
 	{
 		strcat(testStr, " SSE3");
