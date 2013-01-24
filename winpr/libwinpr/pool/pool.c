@@ -154,7 +154,7 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 	if (pCreateThreadpool)
 		return pCreateThreadpool(reserved);
 #else
-	pool = (PTP_POOL) malloc(sizeof(TP_POOL));
+	pool = (PTP_POOL) calloc(1, sizeof(TP_POOL));
 
 	if (pool)
 		InitializeThreadpool(pool);
