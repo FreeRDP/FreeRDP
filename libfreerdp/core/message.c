@@ -42,8 +42,13 @@ static void message_EndPaint(rdpContext* context)
 
 static void message_SetBounds(rdpContext* context, rdpBounds* bounds)
 {
+	rdpBounds* wParam;
+
+	wParam = (rdpBounds*) malloc(sizeof(rdpBounds));
+	CopyMemory(wParam, bounds, sizeof(rdpBounds));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, SetBounds), (void*) bounds, NULL);
+			MakeMessageId(Update, SetBounds), (void*) wParam, NULL);
 }
 
 static void message_Synchronize(rdpContext* context)
@@ -60,50 +65,111 @@ static void message_DesktopResize(rdpContext* context)
 
 static void message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitmap)
 {
+	int index;
+	BITMAP_UPDATE* wParam;
+
+	wParam = (BITMAP_UPDATE*) malloc(sizeof(BITMAP_UPDATE));
+
+	wParam->number = bitmap->number;
+	wParam->count = wParam->number;
+
+	wParam->rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * wParam->number);
+	CopyMemory(wParam->rectangles, bitmap->rectangles, sizeof(BITMAP_DATA) * wParam->number);
+
+	/* TODO: increment reference count to original stream instead of copying */
+
+	for (index = 0; index < wParam->number; index++)
+	{
+		wParam->rectangles[index].bitmapDataStream = (BYTE*) malloc(wParam->rectangles[index].bitmapLength);
+		CopyMemory(wParam->rectangles[index].bitmapDataStream, bitmap->rectangles[index].bitmapDataStream,
+				wParam->rectangles[index].bitmapLength);
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, BitmapUpdate), (void*) bitmap, NULL);
+			MakeMessageId(Update, BitmapUpdate), (void*) wParam, NULL);
 }
 
 static void message_Palette(rdpContext* context, PALETTE_UPDATE* palette)
 {
+	PALETTE_UPDATE* wParam;
+
+	wParam = (PALETTE_UPDATE*) malloc(sizeof(PALETTE_UPDATE));
+	CopyMemory(wParam, palette, sizeof(PALETTE_UPDATE));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, Palette), (void*) palette, NULL);
+			MakeMessageId(Update, Palette), (void*) wParam, NULL);
 }
 
 static void message_PlaySound(rdpContext* context, PLAY_SOUND_UPDATE* playSound)
 {
+	PLAY_SOUND_UPDATE* wParam;
+
+	wParam = (PLAY_SOUND_UPDATE*) malloc(sizeof(PLAY_SOUND_UPDATE));
+	CopyMemory(wParam, playSound, sizeof(PLAY_SOUND_UPDATE));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, PlaySound), (void*) playSound, NULL);
+			MakeMessageId(Update, PlaySound), (void*) wParam, NULL);
 }
 
 static void message_RefreshRect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
+	RECTANGLE_16* lParam;
+
+	lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * count);
+	CopyMemory(lParam, areas, sizeof(RECTANGLE_16) * count);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, RefreshRect), (void*) (size_t) count, (void*) areas);
+			MakeMessageId(Update, RefreshRect), (void*) (size_t) count, (void*) lParam);
 }
 
 static void message_SuppressOutput(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
+	RECTANGLE_16* lParam;
+
+	lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16));
+	CopyMemory(lParam, area, sizeof(RECTANGLE_16));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, SuppressOutput), (void*) (size_t) allow, (void*) area);
+			MakeMessageId(Update, SuppressOutput), (void*) (size_t) allow, (void*) lParam);
 }
 
 static void message_SurfaceCommand(rdpContext* context, STREAM* s)
 {
+	STREAM* wParam;
+
+	wParam = (STREAM*) malloc(sizeof(STREAM));
+
+	wParam->size = s->size;
+	wParam->data = (BYTE*) malloc(wParam->size);
+	wParam->p = wParam->data;
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, SurfaceCommand), (void*) s, NULL);
+			MakeMessageId(Update, SurfaceCommand), (void*) wParam, NULL);
 }
 
 static void message_SurfaceBits(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
+	SURFACE_BITS_COMMAND* wParam;
+
+	wParam = (SURFACE_BITS_COMMAND*) malloc(sizeof(SURFACE_BITS_COMMAND));
+	CopyMemory(wParam, surfaceBitsCommand, sizeof(SURFACE_BITS_COMMAND));
+
+	wParam->bitmapData = (BYTE*) malloc(wParam->bitmapDataLength);
+	CopyMemory(wParam->bitmapData, surfaceBitsCommand->bitmapData, wParam->bitmapDataLength);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, SurfaceBits), (void*) surfaceBitsCommand, NULL);
+			MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
 }
 
 static void message_SurfaceFrameMarker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
+	SURFACE_FRAME_MARKER* wParam;
+
+	wParam = (SURFACE_FRAME_MARKER*) malloc(sizeof(SURFACE_FRAME_MARKER));
+	CopyMemory(wParam, surfaceFrameMarker, sizeof(SURFACE_FRAME_MARKER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(Update, SurfaceFrameMarker), (void*) surfaceFrameMarker, NULL);
+			MakeMessageId(Update, SurfaceFrameMarker), (void*) wParam, NULL);
 }
 
 static void message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 frameId)
@@ -116,346 +182,751 @@ static void message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 frameId)
 
 static void message_DstBlt(rdpContext* context, DSTBLT_ORDER* dstBlt)
 {
+	DSTBLT_ORDER* wParam;
+
+	wParam = (DSTBLT_ORDER*) malloc(sizeof(DSTBLT_ORDER));
+	CopyMemory(wParam, dstBlt, sizeof(DSTBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, DstBlt), (void*) dstBlt, NULL);
+			MakeMessageId(PrimaryUpdate, DstBlt), (void*) wParam, NULL);
 }
 
 static void message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 {
+	PATBLT_ORDER* wParam;
+
+	wParam = (PATBLT_ORDER*) malloc(sizeof(PATBLT_ORDER));
+	CopyMemory(wParam, patBlt, sizeof(PATBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, PatBlt), (void*) patBlt, NULL);
+			MakeMessageId(PrimaryUpdate, PatBlt), (void*) wParam, NULL);
 }
 
 static void message_ScrBlt(rdpContext* context, SCRBLT_ORDER* scrBlt)
 {
+	SCRBLT_ORDER* wParam;
+
+	wParam = (SCRBLT_ORDER*) malloc(sizeof(SCRBLT_ORDER));
+	CopyMemory(wParam, scrBlt, sizeof(SCRBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, ScrBlt), (void*) scrBlt, NULL);
+			MakeMessageId(PrimaryUpdate, ScrBlt), (void*) wParam, NULL);
 }
 
 static void message_OpaqueRect(rdpContext* context, OPAQUE_RECT_ORDER* opaqueRect)
 {
+	OPAQUE_RECT_ORDER* wParam;
+
+	wParam = (OPAQUE_RECT_ORDER*) malloc(sizeof(OPAQUE_RECT_ORDER));
+	CopyMemory(wParam, opaqueRect, sizeof(OPAQUE_RECT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, OpaqueRect), (void*) opaqueRect, NULL);
+			MakeMessageId(PrimaryUpdate, OpaqueRect), (void*) wParam, NULL);
 }
 
 static void message_DrawNineGrid(rdpContext* context, DRAW_NINE_GRID_ORDER* drawNineGrid)
 {
+	DRAW_NINE_GRID_ORDER* wParam;
+
+	wParam = (DRAW_NINE_GRID_ORDER*) malloc(sizeof(DRAW_NINE_GRID_ORDER));
+	CopyMemory(wParam, drawNineGrid, sizeof(DRAW_NINE_GRID_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, DrawNineGrid), (void*) drawNineGrid, NULL);
+			MakeMessageId(PrimaryUpdate, DrawNineGrid), (void*) wParam, NULL);
 }
 
 static void message_MultiDstBlt(rdpContext* context, MULTI_DSTBLT_ORDER* multiDstBlt)
 {
+	MULTI_DSTBLT_ORDER* wParam;
+
+	wParam = (MULTI_DSTBLT_ORDER*) malloc(sizeof(MULTI_DSTBLT_ORDER));
+	CopyMemory(wParam, multiDstBlt, sizeof(MULTI_DSTBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MultiDstBlt), (void*) multiDstBlt, NULL);
+			MakeMessageId(PrimaryUpdate, MultiDstBlt), (void*) wParam, NULL);
 }
 
 static void message_MultiPatBlt(rdpContext* context, MULTI_PATBLT_ORDER* multiPatBlt)
 {
+	MULTI_PATBLT_ORDER* wParam;
+
+	wParam = (MULTI_PATBLT_ORDER*) malloc(sizeof(MULTI_PATBLT_ORDER));
+	CopyMemory(wParam, multiPatBlt, sizeof(MULTI_PATBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MultiPatBlt), (void*) multiPatBlt, NULL);
+			MakeMessageId(PrimaryUpdate, MultiPatBlt), (void*) wParam, NULL);
 }
 
 static void message_MultiScrBlt(rdpContext* context, MULTI_SCRBLT_ORDER* multiScrBlt)
 {
+	MULTI_SCRBLT_ORDER* wParam;
+
+	wParam = (MULTI_SCRBLT_ORDER*) malloc(sizeof(MULTI_SCRBLT_ORDER));
+	CopyMemory(wParam, multiScrBlt, sizeof(MULTI_SCRBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MultiScrBlt), (void*) multiScrBlt, NULL);
+			MakeMessageId(PrimaryUpdate, MultiScrBlt), (void*) wParam, NULL);
 }
 
 static void message_MultiOpaqueRect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multiOpaqueRect)
 {
+	MULTI_OPAQUE_RECT_ORDER* wParam;
+
+	wParam = (MULTI_OPAQUE_RECT_ORDER*) malloc(sizeof(MULTI_OPAQUE_RECT_ORDER));
+	CopyMemory(wParam, multiOpaqueRect, sizeof(MULTI_OPAQUE_RECT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MultiOpaqueRect), (void*) multiOpaqueRect, NULL);
+			MakeMessageId(PrimaryUpdate, MultiOpaqueRect), (void*) wParam, NULL);
 }
 
 static void message_MultiDrawNineGrid(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multiDrawNineGrid)
 {
+	MULTI_DRAW_NINE_GRID_ORDER* wParam;
+
+	wParam = (MULTI_DRAW_NINE_GRID_ORDER*) malloc(sizeof(MULTI_DRAW_NINE_GRID_ORDER));
+	CopyMemory(wParam, multiDrawNineGrid, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MultiDrawNineGrid), (void*) multiDrawNineGrid, NULL);
+			MakeMessageId(PrimaryUpdate, MultiDrawNineGrid), (void*) wParam, NULL);
 }
 
 static void message_LineTo(rdpContext* context, LINE_TO_ORDER* lineTo)
 {
+	LINE_TO_ORDER* wParam;
+
+	wParam = (LINE_TO_ORDER*) malloc(sizeof(LINE_TO_ORDER));
+	CopyMemory(wParam, lineTo, sizeof(LINE_TO_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, LineTo), (void*) lineTo, NULL);
+			MakeMessageId(PrimaryUpdate, LineTo), (void*) wParam, NULL);
 }
 
 static void message_Polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
+	POLYLINE_ORDER* wParam;
+
+	wParam = (POLYLINE_ORDER*) malloc(sizeof(POLYLINE_ORDER));
+	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
+
+	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	CopyMemory(wParam->points, polyline->points, sizeof(DELTA_POINT) * wParam->numPoints);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, Polyline), (void*) polyline, NULL);
+			MakeMessageId(PrimaryUpdate, Polyline), (void*) wParam, NULL);
 }
 
 static void message_MemBlt(rdpContext* context, MEMBLT_ORDER* memBlt)
 {
+	MEMBLT_ORDER* wParam;
+
+	wParam = (MEMBLT_ORDER*) malloc(sizeof(MEMBLT_ORDER));
+	CopyMemory(wParam, memBlt, sizeof(MEMBLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, MemBlt), (void*) memBlt, NULL);
+			MakeMessageId(PrimaryUpdate, MemBlt), (void*) wParam, NULL);
 }
 
 static void message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 {
+	MEM3BLT_ORDER* wParam;
+
+	wParam = (MEM3BLT_ORDER*) malloc(sizeof(MEM3BLT_ORDER));
+	CopyMemory(wParam, mem3Blt, sizeof(MEM3BLT_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, Mem3Blt), (void*) mem3Blt, NULL);
+			MakeMessageId(PrimaryUpdate, Mem3Blt), (void*) wParam, NULL);
 }
 
 static void message_SaveBitmap(rdpContext* context, SAVE_BITMAP_ORDER* saveBitmap)
 {
+	SAVE_BITMAP_ORDER* wParam;
+
+	wParam = (SAVE_BITMAP_ORDER*) malloc(sizeof(SAVE_BITMAP_ORDER));
+	CopyMemory(wParam, saveBitmap, sizeof(SAVE_BITMAP_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, SaveBitmap), (void*) saveBitmap, NULL);
+			MakeMessageId(PrimaryUpdate, SaveBitmap), (void*) wParam, NULL);
 }
 
 static void message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 {
+	GLYPH_INDEX_ORDER* wParam;
+
+	wParam = (GLYPH_INDEX_ORDER*) malloc(sizeof(GLYPH_INDEX_ORDER));
+	CopyMemory(wParam, glyphIndex, sizeof(GLYPH_INDEX_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, GlyphIndex), (void*) glyphIndex, NULL);
+			MakeMessageId(PrimaryUpdate, GlyphIndex), (void*) wParam, NULL);
 }
 
 static void message_FastIndex(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
 {
+	FAST_INDEX_ORDER* wParam;
+
+	wParam = (FAST_INDEX_ORDER*) malloc(sizeof(FAST_INDEX_ORDER));
+	CopyMemory(wParam, fastIndex, sizeof(FAST_INDEX_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, FastIndex), (void*) fastIndex, NULL);
+			MakeMessageId(PrimaryUpdate, FastIndex), (void*) wParam, NULL);
 }
 
 static void message_FastGlyph(rdpContext* context, FAST_GLYPH_ORDER* fastGlyph)
 {
+	FAST_GLYPH_ORDER* wParam;
+
+	wParam = (FAST_GLYPH_ORDER*) malloc(sizeof(FAST_GLYPH_ORDER));
+	CopyMemory(wParam, fastGlyph, sizeof(FAST_GLYPH_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, FastGlyph), (void*) fastGlyph, NULL);
+			MakeMessageId(PrimaryUpdate, FastGlyph), (void*) wParam, NULL);
 }
 
 static void message_PolygonSC(rdpContext* context, POLYGON_SC_ORDER* polygonSC)
 {
+	POLYGON_SC_ORDER* wParam;
+
+	wParam = (POLYGON_SC_ORDER*) malloc(sizeof(POLYGON_SC_ORDER));
+	CopyMemory(wParam, polygonSC, sizeof(POLYGON_SC_ORDER));
+
+	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	CopyMemory(wParam->points, polygonSC, sizeof(DELTA_POINT) * wParam->numPoints);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, PolygonSC), (void*) polygonSC, NULL);
+			MakeMessageId(PrimaryUpdate, PolygonSC), (void*) wParam, NULL);
 }
 
 static void message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* polygonCB)
 {
+	POLYGON_CB_ORDER* wParam;
+
+	wParam = (POLYGON_CB_ORDER*) malloc(sizeof(POLYGON_CB_ORDER));
+	CopyMemory(wParam, polygonCB, sizeof(POLYGON_CB_ORDER));
+
+	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
+	CopyMemory(wParam->points, polygonCB, sizeof(DELTA_POINT) * wParam->numPoints);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, PolygonCB), (void*) polygonCB, NULL);
+			MakeMessageId(PrimaryUpdate, PolygonCB), (void*) wParam, NULL);
 }
 
 static void message_EllipseSC(rdpContext* context, ELLIPSE_SC_ORDER* ellipseSC)
 {
+	ELLIPSE_SC_ORDER* wParam;
+
+	wParam = (ELLIPSE_SC_ORDER*) malloc(sizeof(ELLIPSE_SC_ORDER));
+	CopyMemory(wParam, ellipseSC, sizeof(ELLIPSE_SC_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, EllipseSC), (void*) ellipseSC, NULL);
+			MakeMessageId(PrimaryUpdate, EllipseSC), (void*) wParam, NULL);
 }
 
 static void message_EllipseCB(rdpContext* context, ELLIPSE_CB_ORDER* ellipseCB)
 {
+	ELLIPSE_CB_ORDER* wParam;
+
+	wParam = (ELLIPSE_CB_ORDER*) malloc(sizeof(ELLIPSE_CB_ORDER));
+	CopyMemory(wParam, ellipseCB, sizeof(ELLIPSE_CB_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PrimaryUpdate, EllipseCB), (void*) ellipseCB, NULL);
+			MakeMessageId(PrimaryUpdate, EllipseCB), (void*) wParam, NULL);
 }
 
 /* Secondary Update */
 
 static void message_CacheBitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitmapOrder)
 {
+	CACHE_BITMAP_ORDER* wParam;
+
+	wParam = (CACHE_BITMAP_ORDER*) malloc(sizeof(CACHE_BITMAP_ORDER));
+	CopyMemory(wParam, cacheBitmapOrder, sizeof(CACHE_BITMAP_ORDER));
+
+	wParam->bitmapDataStream = (BYTE*) malloc(wParam->bitmapLength);
+	CopyMemory(wParam->bitmapDataStream, cacheBitmapOrder, wParam->bitmapLength);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheBitmap), (void*) cacheBitmapOrder, NULL);
+			MakeMessageId(SecondaryUpdate, CacheBitmap), (void*) wParam, NULL);
 }
 
 static void message_CacheBitmapV2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cacheBitmapV2Order)
 {
+	CACHE_BITMAP_V2_ORDER* wParam;
+
+	wParam = (CACHE_BITMAP_V2_ORDER*) malloc(sizeof(CACHE_BITMAP_V2_ORDER));
+	CopyMemory(wParam, cacheBitmapV2Order, sizeof(CACHE_BITMAP_V2_ORDER));
+
+	wParam->bitmapDataStream = (BYTE*) malloc(wParam->bitmapLength);
+	CopyMemory(wParam->bitmapDataStream, cacheBitmapV2Order, wParam->bitmapLength);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheBitmapV2), (void*) cacheBitmapV2Order, NULL);
+			MakeMessageId(SecondaryUpdate, CacheBitmapV2), (void*) wParam, NULL);
 }
 
 static void message_CacheBitmapV3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cacheBitmapV3Order)
 {
+	CACHE_BITMAP_V3_ORDER* wParam;
+
+	wParam = (CACHE_BITMAP_V3_ORDER*) malloc(sizeof(CACHE_BITMAP_V3_ORDER));
+	CopyMemory(wParam, cacheBitmapV3Order, sizeof(CACHE_BITMAP_V3_ORDER));
+
+	wParam->bitmapData.data = (BYTE*) malloc(wParam->bitmapData.length);
+	CopyMemory(wParam->bitmapData.data, cacheBitmapV3Order->bitmapData.data, wParam->bitmapData.length);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheBitmapV3), (void*) cacheBitmapV3Order, NULL);
+			MakeMessageId(SecondaryUpdate, CacheBitmapV3), (void*) wParam, NULL);
 }
 
 static void message_CacheColorTable(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cacheColorTableOrder)
 {
+	CACHE_COLOR_TABLE_ORDER* wParam;
+
+	wParam = (CACHE_COLOR_TABLE_ORDER*) malloc(sizeof(CACHE_COLOR_TABLE_ORDER));
+	CopyMemory(wParam, cacheColorTableOrder, sizeof(CACHE_COLOR_TABLE_ORDER));
+
+	wParam->colorTable = (UINT32*) malloc(sizeof(UINT32) * wParam->numberColors);
+	CopyMemory(wParam->colorTable, cacheColorTableOrder->colorTable, wParam->numberColors);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheColorTable), (void*) cacheColorTableOrder, NULL);
+			MakeMessageId(SecondaryUpdate, CacheColorTable), (void*) wParam, NULL);
 }
 
 static void message_CacheGlyph(rdpContext* context, CACHE_GLYPH_ORDER* cacheGlyphOrder)
 {
+	int index;
+	CACHE_GLYPH_ORDER* wParam;
+
+	wParam = (CACHE_GLYPH_ORDER*) malloc(sizeof(CACHE_GLYPH_ORDER));
+	CopyMemory(wParam, cacheGlyphOrder, sizeof(CACHE_GLYPH_ORDER));
+
+	for (index = 0; index < wParam->cGlyphs; index++)
+	{
+		wParam->glyphData[index] = (GLYPH_DATA*) malloc(sizeof(GLYPH_DATA));
+		CopyMemory(wParam->glyphData[index], cacheGlyphOrder->glyphData[index], sizeof(GLYPH_DATA));
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheGlyph), (void*) cacheGlyphOrder, NULL);
+			MakeMessageId(SecondaryUpdate, CacheGlyph), (void*) wParam, NULL);
 }
 
 static void message_CacheGlyphV2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
 {
+	int index;
+	CACHE_GLYPH_V2_ORDER* wParam;
+
+	wParam = (CACHE_GLYPH_V2_ORDER*) malloc(sizeof(CACHE_GLYPH_V2_ORDER));
+	CopyMemory(wParam, cacheGlyphV2Order, sizeof(CACHE_GLYPH_V2_ORDER));
+
+	for (index = 0; index < wParam->cGlyphs; index++)
+	{
+		wParam->glyphData[index] = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
+		CopyMemory(wParam->glyphData[index], cacheGlyphV2Order->glyphData[index], sizeof(GLYPH_DATA_V2));
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheGlyphV2), (void*) cacheGlyphV2Order, NULL);
+			MakeMessageId(SecondaryUpdate, CacheGlyphV2), (void*) wParam, NULL);
 }
 
 static void message_CacheBrush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrushOrder)
 {
+	CACHE_BRUSH_ORDER* wParam;
+
+	wParam = (CACHE_BRUSH_ORDER*) malloc(sizeof(CACHE_BRUSH_ORDER));
+	CopyMemory(wParam, cacheBrushOrder, sizeof(CACHE_BRUSH_ORDER));
+
+	wParam->data = (BYTE*) malloc(wParam->length);
+	CopyMemory(wParam->data, cacheBrushOrder->data, wParam->length);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(SecondaryUpdate, CacheBrush), (void*) cacheBrushOrder, NULL);
+			MakeMessageId(SecondaryUpdate, CacheBrush), (void*) wParam, NULL);
 }
 
 /* Alternate Secondary Update */
 
 static void message_CreateOffscreenBitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
+	CREATE_OFFSCREEN_BITMAP_ORDER* wParam;
+
+	wParam = (CREATE_OFFSCREEN_BITMAP_ORDER*) malloc(sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
+	CopyMemory(wParam, createOffscreenBitmap, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
+
+	wParam->deleteList.cIndices = createOffscreenBitmap->deleteList.cIndices;
+	wParam->deleteList.sIndices = wParam->deleteList.cIndices;
+	wParam->deleteList.indices = (UINT16*) malloc(sizeof(UINT16) * wParam->deleteList.cIndices);
+	CopyMemory(wParam->deleteList.indices, createOffscreenBitmap->deleteList.indices, wParam->deleteList.cIndices);
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, CreateOffscreenBitmap), (void*) createOffscreenBitmap, NULL);
+			MakeMessageId(AltSecUpdate, CreateOffscreenBitmap), (void*) wParam, NULL);
 }
 
 static void message_SwitchSurface(rdpContext* context, SWITCH_SURFACE_ORDER* switchSurface)
 {
+	SWITCH_SURFACE_ORDER* wParam;
+
+	wParam = (SWITCH_SURFACE_ORDER*) malloc(sizeof(SWITCH_SURFACE_ORDER));
+	CopyMemory(wParam, switchSurface, sizeof(SWITCH_SURFACE_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, SwitchSurface), (void*) switchSurface, NULL);
+			MakeMessageId(AltSecUpdate, SwitchSurface), (void*) wParam, NULL);
 }
 
 static void message_CreateNineGridBitmap(rdpContext* context, CREATE_NINE_GRID_BITMAP_ORDER* createNineGridBitmap)
 {
+	CREATE_NINE_GRID_BITMAP_ORDER* wParam;
+
+	wParam = (CREATE_NINE_GRID_BITMAP_ORDER*) malloc(sizeof(CREATE_NINE_GRID_BITMAP_ORDER));
+	CopyMemory(wParam, createNineGridBitmap, sizeof(CREATE_NINE_GRID_BITMAP_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, CreateNineGridBitmap), (void*) createNineGridBitmap, NULL);
+			MakeMessageId(AltSecUpdate, CreateNineGridBitmap), (void*) wParam, NULL);
 }
 
 static void message_FrameMarker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
 {
+	FRAME_MARKER_ORDER* wParam;
+
+	wParam = (FRAME_MARKER_ORDER*) malloc(sizeof(FRAME_MARKER_ORDER));
+	CopyMemory(wParam, frameMarker, sizeof(FRAME_MARKER_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, FrameMarker), (void*) frameMarker, NULL);
+			MakeMessageId(AltSecUpdate, FrameMarker), (void*) wParam, NULL);
 }
 
 static void message_StreamBitmapFirst(rdpContext* context, STREAM_BITMAP_FIRST_ORDER* streamBitmapFirst)
 {
+	STREAM_BITMAP_FIRST_ORDER* wParam;
+
+	wParam = (STREAM_BITMAP_FIRST_ORDER*) malloc(sizeof(STREAM_BITMAP_FIRST_ORDER));
+	CopyMemory(wParam, streamBitmapFirst, sizeof(STREAM_BITMAP_FIRST_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, StreamBitmapFirst), (void*) streamBitmapFirst, NULL);
+			MakeMessageId(AltSecUpdate, StreamBitmapFirst), (void*) wParam, NULL);
 }
 
 static void message_StreamBitmapNext(rdpContext* context, STREAM_BITMAP_NEXT_ORDER* streamBitmapNext)
 {
+	STREAM_BITMAP_NEXT_ORDER* wParam;
+
+	wParam = (STREAM_BITMAP_NEXT_ORDER*) malloc(sizeof(STREAM_BITMAP_NEXT_ORDER));
+	CopyMemory(wParam, streamBitmapNext, sizeof(STREAM_BITMAP_NEXT_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, StreamBitmapNext), (void*) streamBitmapNext, NULL);
+			MakeMessageId(AltSecUpdate, StreamBitmapNext), (void*) wParam, NULL);
 }
 
 static void message_DrawGdiPlusFirst(rdpContext* context, DRAW_GDIPLUS_FIRST_ORDER* drawGdiPlusFirst)
 {
+	DRAW_GDIPLUS_FIRST_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_FIRST_ORDER*) malloc(sizeof(DRAW_GDIPLUS_FIRST_ORDER));
+	CopyMemory(wParam, drawGdiPlusFirst, sizeof(DRAW_GDIPLUS_FIRST_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusFirst), (void*) drawGdiPlusFirst, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusFirst), (void*) wParam, NULL);
 }
 
 static void message_DrawGdiPlusNext(rdpContext* context, DRAW_GDIPLUS_NEXT_ORDER* drawGdiPlusNext)
 {
+	DRAW_GDIPLUS_NEXT_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_NEXT_ORDER*) malloc(sizeof(DRAW_GDIPLUS_NEXT_ORDER));
+	CopyMemory(wParam, drawGdiPlusNext, sizeof(DRAW_GDIPLUS_NEXT_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusNext), (void*) drawGdiPlusNext, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusNext), (void*) wParam, NULL);
 }
 
 static void message_DrawGdiPlusEnd(rdpContext* context, DRAW_GDIPLUS_END_ORDER* drawGdiPlusEnd)
 {
+	DRAW_GDIPLUS_END_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_END_ORDER*) malloc(sizeof(DRAW_GDIPLUS_END_ORDER));
+	CopyMemory(wParam, drawGdiPlusEnd, sizeof(DRAW_GDIPLUS_END_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusEnd), (void*) drawGdiPlusEnd, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusEnd), (void*) wParam, NULL);
 }
 
 static void message_DrawGdiPlusCacheFirst(rdpContext* context, DRAW_GDIPLUS_CACHE_FIRST_ORDER* drawGdiPlusCacheFirst)
 {
+	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_CACHE_FIRST_ORDER*) malloc(sizeof(DRAW_GDIPLUS_CACHE_FIRST_ORDER));
+	CopyMemory(wParam, drawGdiPlusCacheFirst, sizeof(DRAW_GDIPLUS_CACHE_FIRST_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheFirst), (void*) drawGdiPlusCacheFirst, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheFirst), (void*) wParam, NULL);
 }
 
 static void message_DrawGdiPlusCacheNext(rdpContext* context, DRAW_GDIPLUS_CACHE_NEXT_ORDER* drawGdiPlusCacheNext)
 {
+	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_CACHE_NEXT_ORDER*) malloc(sizeof(DRAW_GDIPLUS_CACHE_NEXT_ORDER));
+	CopyMemory(wParam, drawGdiPlusCacheNext, sizeof(DRAW_GDIPLUS_CACHE_NEXT_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheNext), (void*) drawGdiPlusCacheNext, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheNext), (void*) wParam, NULL);
 }
 
-static void message_DrawGdiPlusCacheEnd(rdpContext* context, DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiplusCacheEnd)
+static void message_DrawGdiPlusCacheEnd(rdpContext* context, DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiPlusCacheEnd)
 {
+	DRAW_GDIPLUS_CACHE_END_ORDER* wParam;
+
+	wParam = (DRAW_GDIPLUS_CACHE_END_ORDER*) malloc(sizeof(DRAW_GDIPLUS_CACHE_END_ORDER));
+	CopyMemory(wParam, drawGdiPlusCacheEnd, sizeof(DRAW_GDIPLUS_CACHE_END_ORDER));
+
+	/* TODO: complete copy */
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheEnd), (void*) drawGdiplusCacheEnd, NULL);
+			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheEnd), (void*) wParam, NULL);
 }
 
 /* Window Update */
 
 static void message_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
+	WINDOW_ORDER_INFO* wParam;
+	WINDOW_STATE_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (WINDOW_STATE_ORDER*) malloc(sizeof(WINDOW_STATE_ORDER));
+	CopyMemory(lParam, windowState, sizeof(WINDOW_STATE_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, WindowCreate), (void*) orderInfo, (void*) windowState);
+			MakeMessageId(WindowUpdate, WindowCreate), (void*) wParam, (void*) lParam);
 }
 
 static void message_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
+	WINDOW_ORDER_INFO* wParam;
+	WINDOW_STATE_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (WINDOW_STATE_ORDER*) malloc(sizeof(WINDOW_STATE_ORDER));
+	CopyMemory(lParam, windowState, sizeof(WINDOW_STATE_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, WindowUpdate), (void*) orderInfo, (void*) windowState);
+			MakeMessageId(WindowUpdate, WindowUpdate), (void*) wParam, (void*) lParam);
 }
 
 static void message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
+	WINDOW_ORDER_INFO* wParam;
+	WINDOW_ICON_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (WINDOW_ICON_ORDER*) malloc(sizeof(WINDOW_ICON_ORDER));
+	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, WindowIcon), (void*) orderInfo, (void*) windowIcon);
+			MakeMessageId(WindowUpdate, WindowIcon), (void*) wParam, (void*) lParam);
 }
 
 static void message_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
+	WINDOW_ORDER_INFO* wParam;
+	WINDOW_CACHED_ICON_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (WINDOW_CACHED_ICON_ORDER*) malloc(sizeof(WINDOW_CACHED_ICON_ORDER));
+	CopyMemory(lParam, windowCachedIcon, sizeof(WINDOW_CACHED_ICON_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, WindowCachedIcon), (void*) orderInfo, (void*) windowCachedIcon);
+			MakeMessageId(WindowUpdate, WindowCachedIcon), (void*) wParam, (void*) lParam);
 }
 
 static void message_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
+	WINDOW_ORDER_INFO* wParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, WindowDelete), (void*) orderInfo, NULL);
+			MakeMessageId(WindowUpdate, WindowDelete), (void*) wParam, NULL);
 }
 
 static void message_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
+	WINDOW_ORDER_INFO* wParam;
+	NOTIFY_ICON_STATE_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (NOTIFY_ICON_STATE_ORDER*) malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
+	CopyMemory(lParam, notifyIconState, sizeof(NOTIFY_ICON_STATE_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, NotifyIconCreate), (void*) orderInfo, (void*) notifyIconState);
+			MakeMessageId(WindowUpdate, NotifyIconCreate), (void*) wParam, (void*) lParam);
 }
 
 static void message_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
+	WINDOW_ORDER_INFO* wParam;
+	NOTIFY_ICON_STATE_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (NOTIFY_ICON_STATE_ORDER*) malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
+	CopyMemory(lParam, notifyIconState, sizeof(NOTIFY_ICON_STATE_ORDER));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, NotifyIconUpdate), (void*) orderInfo, (void*) notifyIconState);
+			MakeMessageId(WindowUpdate, NotifyIconUpdate), (void*) wParam, (void*) lParam);
 }
 
 static void message_NotifyIconDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
+	WINDOW_ORDER_INFO* wParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, NotifyIconDelete), (void*) orderInfo, NULL);
+			MakeMessageId(WindowUpdate, NotifyIconDelete), (void*) wParam, NULL);
 }
 
 static void message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
+	WINDOW_ORDER_INFO* wParam;
+	MONITORED_DESKTOP_ORDER* lParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
+	lParam = (MONITORED_DESKTOP_ORDER*) malloc(sizeof(MONITORED_DESKTOP_ORDER));
+	CopyMemory(lParam, monitoredDesktop, sizeof(MONITORED_DESKTOP_ORDER));
+
+	lParam->windowIds = NULL;
+
+	if (lParam->numWindowIds)
+	{
+		lParam->windowIds = (UINT32*) malloc(sizeof(UINT32) * lParam->numWindowIds);
+		CopyMemory(lParam->windowIds, monitoredDesktop->windowIds, lParam->numWindowIds);
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, MonitoredDesktop), (void*) orderInfo, (void*) monitoredDesktop);
+			MakeMessageId(WindowUpdate, MonitoredDesktop), (void*) wParam, (void*) lParam);
 }
 
 static void message_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
+	WINDOW_ORDER_INFO* wParam;
+
+	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
+	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(WindowUpdate, NonMonitoredDesktop), (void*) orderInfo, NULL);
+			MakeMessageId(WindowUpdate, NonMonitoredDesktop), (void*) wParam, NULL);
 }
 
 /* Pointer Update */
 
 static void message_PointerPosition(rdpContext* context, POINTER_POSITION_UPDATE* pointerPosition)
 {
+	POINTER_POSITION_UPDATE* wParam;
+
+	wParam = (POINTER_POSITION_UPDATE*) malloc(sizeof(POINTER_POSITION_UPDATE));
+	CopyMemory(wParam, pointerPosition, sizeof(POINTER_POSITION_UPDATE));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PointerUpdate, PointerPosition), (void*) pointerPosition, NULL);
+			MakeMessageId(PointerUpdate, PointerPosition), (void*) wParam, NULL);
 }
 
 static void message_PointerSystem(rdpContext* context, POINTER_SYSTEM_UPDATE* pointerSystem)
 {
+	POINTER_SYSTEM_UPDATE* wParam;
+
+	wParam = (POINTER_SYSTEM_UPDATE*) malloc(sizeof(POINTER_SYSTEM_UPDATE));
+	CopyMemory(wParam, pointerSystem, sizeof(POINTER_SYSTEM_UPDATE));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PointerUpdate, PointerSystem), (void*) pointerSystem, NULL);
+			MakeMessageId(PointerUpdate, PointerSystem), (void*) wParam, NULL);
 }
 
 static void message_PointerColor(rdpContext* context, POINTER_COLOR_UPDATE* pointerColor)
 {
+	POINTER_COLOR_UPDATE* wParam;
+
+	wParam = (POINTER_COLOR_UPDATE*) malloc(sizeof(POINTER_COLOR_UPDATE));
+	CopyMemory(wParam, pointerColor, sizeof(POINTER_COLOR_UPDATE));
+
+	wParam->andMaskData = wParam->xorMaskData = NULL;
+
+	if (wParam->lengthAndMask)
+	{
+		wParam->andMaskData = (BYTE*) malloc(wParam->lengthAndMask);
+		CopyMemory(wParam->andMaskData, pointerColor->andMaskData, wParam->lengthAndMask);
+	}
+
+	if (wParam->lengthXorMask)
+	{
+		wParam->xorMaskData = (BYTE*) malloc(wParam->lengthXorMask);
+		CopyMemory(wParam->xorMaskData, pointerColor->xorMaskData, wParam->lengthXorMask);
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PointerUpdate, PointerColor), (void*) pointerColor, NULL);
+			MakeMessageId(PointerUpdate, PointerColor), (void*) wParam, NULL);
 }
 
 static void message_PointerNew(rdpContext* context, POINTER_NEW_UPDATE* pointerNew)
 {
+	POINTER_NEW_UPDATE* wParam;
+
+	wParam = (POINTER_NEW_UPDATE*) malloc(sizeof(POINTER_NEW_UPDATE));
+	CopyMemory(wParam, pointerNew, sizeof(POINTER_NEW_UPDATE));
+
+	wParam->colorPtrAttr.andMaskData = wParam->colorPtrAttr.xorMaskData = NULL;
+
+	if (wParam->colorPtrAttr.lengthAndMask)
+	{
+		wParam->colorPtrAttr.andMaskData = (BYTE*) malloc(wParam->colorPtrAttr.lengthAndMask);
+		CopyMemory(wParam->colorPtrAttr.andMaskData, pointerNew->colorPtrAttr.andMaskData, wParam->colorPtrAttr.lengthAndMask);
+	}
+
+	if (wParam->colorPtrAttr.lengthXorMask)
+	{
+		wParam->colorPtrAttr.xorMaskData = (BYTE*) malloc(wParam->colorPtrAttr.lengthXorMask);
+		CopyMemory(wParam->colorPtrAttr.xorMaskData, pointerNew->colorPtrAttr.xorMaskData, wParam->colorPtrAttr.lengthXorMask);
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PointerUpdate, PointerNew), (void*) pointerNew, NULL);
+			MakeMessageId(PointerUpdate, PointerNew), (void*) wParam, NULL);
 }
 
 static void message_PointerCached(rdpContext* context, POINTER_CACHED_UPDATE* pointerCached)
 {
+	POINTER_CACHED_UPDATE* wParam;
+
+	wParam = (POINTER_CACHED_UPDATE*) malloc(sizeof(POINTER_CACHED_UPDATE));
+	CopyMemory(wParam, pointerCached, sizeof(POINTER_CACHED_UPDATE));
+
 	MessageQueue_Post(context->update->queue, (void*) context,
-			MakeMessageId(PointerUpdate, PointerCached), (void*) pointerCached, NULL);
+			MakeMessageId(PointerUpdate, PointerCached), (void*) wParam, NULL);
 }
 
 /* Message Queue */
