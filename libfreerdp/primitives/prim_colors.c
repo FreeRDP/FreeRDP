@@ -26,7 +26,7 @@
 #include <freerdp/primitives.h>
 #ifdef WITH_SSE2
 #include <emmintrin.h>
-#elif WITH_NEON
+#elif defined(WITH_NEON)
 #include <arm_neon.h>
 #endif /* WITH_SSE2 else WITH_NEON */
 #include "prim_internal.h"
