@@ -42,10 +42,13 @@ static void message_EndPaint(rdpContext* context)
 
 static void message_SetBounds(rdpContext* context, rdpBounds* bounds)
 {
-	rdpBounds* wParam;
+	rdpBounds* wParam = NULL;
 
-	wParam = (rdpBounds*) malloc(sizeof(rdpBounds));
-	CopyMemory(wParam, bounds, sizeof(rdpBounds));
+	if (bounds)
+	{
+		wParam = (rdpBounds*) malloc(sizeof(rdpBounds));
+		CopyMemory(wParam, bounds, sizeof(rdpBounds));
+	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SetBounds), (void*) wParam, NULL);
@@ -534,8 +537,8 @@ static void message_CacheBrush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrus
 	wParam = (CACHE_BRUSH_ORDER*) malloc(sizeof(CACHE_BRUSH_ORDER));
 	CopyMemory(wParam, cacheBrushOrder, sizeof(CACHE_BRUSH_ORDER));
 
-	wParam->data = (BYTE*) malloc(wParam->length);
-	CopyMemory(wParam->data, cacheBrushOrder->data, wParam->length);
+	//wParam->data = (BYTE*) malloc(wParam->length);
+	//CopyMemory(wParam->data, cacheBrushOrder->data, wParam->length);
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheBrush), (void*) wParam, NULL);
@@ -1126,7 +1129,8 @@ int message_process_update_class(rdpMessage* update, wMessage* msg, int type)
 
 		case Update_SetBounds:
 			IFCALL(update->SetBounds, msg->context, (rdpBounds*) msg->wParam);
-			free(msg->wParam);
+			if (msg->wParam)
+				free(msg->wParam);
 			break;
 
 		case Update_Synchronize:
@@ -1367,7 +1371,7 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 			{
 				CACHE_BITMAP_V2_ORDER* wParam = (CACHE_BITMAP_V2_ORDER*) msg->wParam;
 
-				free(wParam->bitmapDataStream);
+				//free(wParam->bitmapDataStream);
 				free(wParam);
 			}
 			break;
@@ -1423,7 +1427,7 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 			{
 				CACHE_BRUSH_ORDER* wParam = (CACHE_BRUSH_ORDER*) msg->wParam;
 
-				free(wParam->data);
+				//free(wParam->data);
 				free(wParam);
 			}
 			break;

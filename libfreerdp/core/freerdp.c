@@ -309,10 +309,10 @@ freerdp* freerdp_new()
 	freerdp* instance;
 
 	instance = (freerdp*) malloc(sizeof(freerdp));
-	ZeroMemory(instance, sizeof(freerdp));
 
-	if (instance != NULL)
+	if (instance)
 	{
+		ZeroMemory(instance, sizeof(freerdp));
 		instance->context_size = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}

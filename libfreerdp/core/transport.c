@@ -678,10 +678,6 @@ int transport_check_fds(rdpTransport** ptransport)
 			return 0; /* Packet is not yet completely received. */
 		}
 
-		/*
-		 * A complete packet has been received. In case there are trailing data
-		 * for the next packet, we copy it to the new receive buffer.
-		 */
 		received = transport->ReceiveBuffer;
 		transport->ReceiveBuffer = transport_receive_pool_take(transport);
 
@@ -697,11 +693,9 @@ int transport_check_fds(rdpTransport** ptransport)
 		 *  1: asynchronous return
 		 */
 
-		ReferenceTable_Add(transport->ReceiveReferences, received);
-
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		ReferenceTable_Release(transport->ReceiveReferences, received);
+		transport_receive_pool_return(transport, received);
 
 		if (recv_status < 0)
 			status = -1;
@@ -749,7 +743,9 @@ STREAM* transport_receive_pool_take(rdpTransport* transport)
 		pdu = Queue_Dequeue(transport->ReceivePool);
 
 	if (!pdu)
+	{
 		pdu = stream_new(BUFFER_SIZE);
+	}
 
 	pdu->p = pdu->data;
 
@@ -778,8 +774,13 @@ rdpTransport* transport_new(rdpSettings* settings)
 		/* a small 0.1ms delay when transport is blocking. */
 		transport->SleepInterval = 100;
 
+		transport->ReceivePool = Queue_New(TRUE, -1, -1);
+		transport->ReceiveQueue = Queue_New(TRUE, -1, -1);
+		Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
+		Queue_Object(transport->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
+
 		/* receive buffer for non-blocking read. */
-		transport->ReceiveBuffer = stream_new(BUFFER_SIZE);
+		transport->ReceiveBuffer = transport_receive_pool_take(transport);
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
@@ -789,14 +790,6 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->blocking = TRUE;
 
 		transport->layer = TRANSPORT_LAYER_TCP;
-
-		transport->ReceivePool = Queue_New(TRUE, -1, -1);
-		transport->ReceiveQueue = Queue_New(TRUE, -1, -1);
-		Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-		Queue_Object(transport->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-
-		transport->ReceiveReferences = ReferenceTable_New(TRUE,
-				(void*) transport, (REFERENCE_FREE) transport_receive_pool_return);
 	}
 
 	return transport;
@@ -806,7 +799,9 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{
-		stream_free(transport->ReceiveBuffer);
+		if (transport->ReceiveBuffer)
+			stream_free(transport->ReceiveBuffer);
+
 		stream_free(transport->ReceiveStream);
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
@@ -826,8 +821,6 @@ void transport_free(rdpTransport* transport)
 
 		Queue_Free(transport->ReceivePool);
 		Queue_Free(transport->ReceiveQueue);
-
-		ReferenceTable_Free(transport->ReceiveReferences);
 
 		free(transport);
 	}
