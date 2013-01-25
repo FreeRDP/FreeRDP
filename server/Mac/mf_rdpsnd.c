@@ -85,7 +85,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
                           &dataFormatSize);
     
     
-    mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.5, &recorderState.bufferByteSize);
+    mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05, &recorderState.bufferByteSize);
     
     
     printf("Preparing a set of buffers...");
