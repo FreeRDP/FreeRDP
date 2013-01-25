@@ -86,7 +86,6 @@
 #define SecondaryUpdate_CacheGlyphV2			6
 #define SecondaryUpdate_CacheBrush			7
 
-
 /* Alternate Secondary Update */
 
 #define AltSecUpdate_Class				4
@@ -227,6 +226,8 @@ struct rdp_message
 };
 
 void message_register_interface(rdpMessage* message, rdpUpdate* update);
+
+void* message_update_thread(void* arg);
 
 rdpMessage* message_new();
 void message_free(rdpMessage* message);

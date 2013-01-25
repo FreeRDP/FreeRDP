@@ -102,6 +102,7 @@ BOOL freerdp_connect(freerdp* instance)
 		extension_post_connect(rdp->extension);
 
 		IFCALLRET(instance->PostConnect, status, instance);
+		update_post_connect(instance->update);
 
 		if (status != TRUE)
 		{

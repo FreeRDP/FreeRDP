@@ -194,6 +194,7 @@ struct rdp_update
 	BOOL dump_rfx;
 	BOOL play_rfx;
 	rdpPcap* pcap_rfx;
+	BOOL initialState;
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;

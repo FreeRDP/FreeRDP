@@ -405,8 +405,23 @@ void update_reset_state(rdpUpdate* update)
 	ZeroMemory(&primary->ellipse_cb, sizeof(ELLIPSE_CB_ORDER));
 
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
-	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-	IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
+
+	if (!update->initialState)
+	{
+		altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+		IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
+	}
+}
+
+void update_post_connect(rdpUpdate* update)
+{
+	if (update->asynchronous)
+		message_register_interface(update->message, update);
+
+	update->altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
+	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
+
+	update->initialState = FALSE;
 }
 
 static void update_begin_paint(rdpContext* context)
@@ -705,15 +720,6 @@ void update_register_client_callbacks(rdpUpdate* update)
 	update->SurfaceFrameAcknowledge = update_send_frame_acknowledge;
 }
 
-static void* update_thread(void* arg)
-{
-	rdpUpdate* update;
-
-	update = (rdpUpdate*) arg;
-
-	return NULL;
-}
-
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
@@ -752,11 +758,14 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		update->SuppressOutput = update_send_suppress_output;
 
+		update->initialState = TRUE;
+		//update->asynchronous = TRUE;
+
 		if (update->asynchronous)
 		{
 			update->queue = MessageQueue_New();
 			update->message = message_new();
-			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
+			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_update_thread, update, 0, NULL);
 		}
 	}
 
