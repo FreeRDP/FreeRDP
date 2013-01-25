@@ -703,6 +703,7 @@ PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 		g_buf += dstbump;
 		b_buf += dstbump;
 	}
+	return PRIMITIVES_SUCCESS;
 }
 #endif /* WITH_NEON */
 
