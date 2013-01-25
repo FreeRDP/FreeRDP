@@ -764,7 +764,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->SuppressOutput = update_send_suppress_output;
 
 		update->initialState = TRUE;
-		update->asynchronous = TRUE;
+		//update->asynchronous = TRUE;
 
 		if (update->asynchronous)
 		{
