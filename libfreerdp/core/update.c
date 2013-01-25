@@ -27,6 +27,7 @@
 
 #include "update.h"
 #include "surface.h"
+#include "message.h"
 
 #include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
@@ -754,7 +755,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		if (update->asynchronous)
 		{
 			update->queue = MessageQueue_New();
-			update->context->queue = (void*) update->queue;
+			update->message = message_new();
 			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
 		}
 	}
@@ -783,6 +784,7 @@ void update_free(rdpUpdate* update)
 		if (update->asynchronous)
 		{
 			CloseHandle(update->thread);
+			message_free(update->message);
 			MessageQueue_Free(update->queue);
 		}
 

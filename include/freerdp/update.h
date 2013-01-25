@@ -134,6 +134,9 @@ enum SURFCMD_FRAMEACTION
 	SURFACECMD_FRAMEACTION_END = 0x0001
 };
 
+/* defined inside libfreerdp-core */
+typedef struct rdp_message rdpMessage;
+
 /* Update Interface */
 
 typedef void (*pBeginPaint)(rdpContext* context);
@@ -201,6 +204,7 @@ struct rdp_update
 
 	HANDLE thread;
 	BOOL asynchronous;
+	rdpMessage* message;
 	wMessageQueue* queue;
 };
 

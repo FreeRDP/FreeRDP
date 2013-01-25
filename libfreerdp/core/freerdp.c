@@ -241,6 +241,10 @@ void freerdp_context_new(freerdp* instance)
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
 
+	instance->context->input = instance->input;
+	instance->context->update = instance->update;
+	instance->context->settings = instance->settings;
+
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;

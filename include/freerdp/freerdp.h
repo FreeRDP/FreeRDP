@@ -83,9 +83,7 @@ struct rdp_context
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
 
-	void* queue; /**< (offset 18) asynchronous message queue */
-
-	UINT32 paddingB[32 - 19]; /* 19 */
+	UINT32 paddingB[32 - 18]; /* 18 */
 
 	rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
@@ -99,7 +97,10 @@ struct rdp_context
 	rdpCache* cache; /* 35 */
 	rdpChannels* channels; /* 36 */
 	rdpGraphics* graphics; /* 37 */
-	UINT32 paddingC[64 - 38]; /* 38 */
+	rdpInput* input; /* 38 */
+	rdpUpdate* update; /* 39 */
+	rdpSettings* settings; /* 40 */
+	UINT32 paddingC[64 - 41]; /* 41 */
 };
 
 /** Defines the options for a given instance of RDP connection.
