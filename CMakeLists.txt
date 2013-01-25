@@ -98,8 +98,10 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
-	if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ANDROID)
-    	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
+		if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+		endif()
 	endif()
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
