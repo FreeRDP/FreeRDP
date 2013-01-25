@@ -226,6 +226,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 #endif
         
 //#ifdef CHANNEL_RDPSND_SERVER
+        mf_peer_rdpsnd_stop();
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
 //#endif

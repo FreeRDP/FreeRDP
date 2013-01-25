@@ -139,6 +139,14 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	return TRUE;
 }
 
+BOOL mf_peer_rdpsnd_stop()
+{
+    recorderState.isRunning = false;
+    AudioQueueStop(recorderState.queue, true);
+    
+    return TRUE;
+}
+
 void mf_peer_rdpsnd_input_callback (void                                *inUserData,
                                     AudioQueueRef                       inAQ,
                                     AudioQueueBufferRef                 inBuffer,
@@ -156,30 +164,13 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
         inNumberPacketDescriptions = inBuffer->mAudioDataByteSize / rState->dataFormat.mBytesPerPacket;
     }
     
-    /*write to disc
-    
-    status = AudioFileWritePackets(
-                                   rState->audioFile,
-                                   false,
-                                   rState->bufferByteSize,
-                                   NULL,
-                                   rState->currentPacket,
-                                   &inNumberPacketDescriptions,
-                                   inBuffer->mAudioData);
-    
-    if (status == noErr) {
-        rState->currentPacket += inNumberPacketDescriptions;
-    }
-     */
-    
-    //rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData, rState->bufferByteSize/4);
-    
-    rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData, inBuffer->mAudioDataByteSize/4);
     
     if (rState->isRunning == 0)
     {
         return ;
     }
+    
+    rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData, inBuffer->mAudioDataByteSize/4);
     
     status = AudioQueueEnqueueBuffer(
                                      rState->queue,

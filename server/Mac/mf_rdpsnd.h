@@ -42,7 +42,6 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
                     UInt32                              inNumberPacketDescriptions,
                     const AudioStreamPacketDescription  *inPacketDescs);
 
-BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
 
 static const int snd_numBuffers = 3;
 struct _AQRecorderState
@@ -59,6 +58,9 @@ struct _AQRecorderState
 };
 
 typedef struct _AQRecorderState AQRecorderState;
+
+BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
+BOOL mf_peer_rdpsnd_stop();
 
 #endif /* MF_RDPSND_H */
 
