@@ -20,6 +20,9 @@
 #ifndef MF_RDPSND_H
 #define MF_RDPSND_H
 
+#include <CoreAudio/CoreAudio.h>
+#include <AudioToolbox/AudioToolbox.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 #include <freerdp/server/rdpsnd.h>
@@ -27,7 +30,35 @@
 #include "mf_interface.h"
 #include "mfreerdp.h"
 
+void mf_rdpsnd_derive_buffer_size (AudioQueueRef                audioQueue,
+                                   AudioStreamBasicDescription  *ASBDescription,
+                                   Float64                      seconds,
+                                   UInt32                       *outBufferSize);
+
+void mf_peer_rdpsnd_input_callback (void                                *inUserData,
+                    AudioQueueRef                       inAQ,
+                    AudioQueueBufferRef                 inBuffer,
+                    const AudioTimeStamp                *inStartTime,
+                    UInt32                              inNumberPacketDescriptions,
+                    const AudioStreamPacketDescription  *inPacketDescs);
+
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
+
+static const int snd_numBuffers = 3;
+struct _AQRecorderState
+{
+    AudioStreamBasicDescription  dataFormat;
+    AudioQueueRef                queue;
+    AudioQueueBufferRef          buffers[snd_numBuffers];
+    AudioFileID                  audioFile;
+    UInt32                       bufferByteSize;
+    SInt64                       currentPacket;
+    bool                         isRunning;
+    rdpsnd_server_context*       snd_context;
+    
+};
+
+typedef struct _AQRecorderState AQRecorderState;
 
 #endif /* MF_RDPSND_H */
 
