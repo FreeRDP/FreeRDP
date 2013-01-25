@@ -870,7 +870,7 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 		data = settings->ServerCertificate;
 		length = settings->ServerCertificateLength;
 
-		if (!certificate_read_server_certificate(settings->RdpServerCertificate, data, length))
+		if (certificate_read_server_certificate(settings->RdpServerCertificate, data, length) < 1)
 			return FALSE;
 	}
 	else
