@@ -720,6 +720,11 @@ void update_register_client_callbacks(rdpUpdate* update)
 	update->SurfaceFrameAcknowledge = update_send_frame_acknowledge;
 }
 
+int update_process_messages(rdpUpdate* update)
+{
+	return message_process_pending_updates(update);
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	rdpUpdate* update;
@@ -759,13 +764,12 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->SuppressOutput = update_send_suppress_output;
 
 		update->initialState = TRUE;
-		//update->asynchronous = TRUE;
+		update->asynchronous = TRUE;
 
 		if (update->asynchronous)
 		{
 			update->queue = MessageQueue_New();
 			update->message = message_new();
-			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_update_thread, update, 0, NULL);
 		}
 	}
 
@@ -792,7 +796,6 @@ void update_free(rdpUpdate* update)
 
 		if (update->asynchronous)
 		{
-			CloseHandle(update->thread);
 			message_free(update->message);
 			MessageQueue_Free(update->queue);
 		}

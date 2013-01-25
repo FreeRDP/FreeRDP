@@ -1483,65 +1483,74 @@ int message_process_pointer_update_class(rdpMessage* update, wMessage* msg, int 
 	return status;
 }
 
-void* message_update_thread(void* arg)
+int message_process_class(rdpMessage* update, wMessage* msg, int msgClass, int msgType)
+{
+	int status = 0;
+
+	switch (msgClass)
+	{
+		case Update_Class:
+			status = message_process_update_class(update, msg, msgType);
+			break;
+
+		case PrimaryUpdate_Class:
+			status = message_process_primary_update_class(update, msg, msgType);
+			break;
+
+		case SecondaryUpdate_Class:
+			status = message_process_secondary_update_class(update, msg, msgType);
+			break;
+
+		case AltSecUpdate_Class:
+			status = message_process_altsec_update_class(update, msg, msgType);
+			break;
+
+		case WindowUpdate_Class:
+			status = message_process_window_update_class(update, msg, msgType);
+			break;
+
+		case PointerUpdate_Class:
+			status = message_process_pointer_update_class(update, msg, msgType);
+			break;
+
+		default:
+			status = -1;
+			break;
+	}
+
+	if (status < 0)
+		printf("Unknown message: class: %d type: %d\n", msgClass, msgType);
+
+	return status;
+}
+
+int message_process_pending_updates(rdpUpdate* update)
 {
 	int status;
 	int msgClass;
 	int msgType;
 	wMessage message;
 	wMessageQueue* queue;
-	rdpUpdate* update = (rdpUpdate*) arg;
 
 	queue = update->queue;
 
-	while (MessageQueue_Wait(queue))
+	while (1)
 	{
 		status = MessageQueue_Peek(queue, &message, TRUE);
 
 		if (!status)
-			continue;
+			break;
 
 		if (message.type == WMQ_QUIT)
 			break;
 
-		status = -1;
 		msgClass = GetMessageClass(message.type);
 		msgType = GetMessageType(message.type);
 
-		printf("Message Class: %d Type: %d\n", msgClass, msgType);
-
-		switch (msgClass)
-		{
-			case Update_Class:
-				status = message_process_update_class(update->message, &message, msgType);
-				break;
-
-			case PrimaryUpdate_Class:
-				status = message_process_primary_update_class(update->message, &message, msgType);
-				break;
-
-			case SecondaryUpdate_Class:
-				status = message_process_secondary_update_class(update->message, &message, msgType);
-				break;
-
-			case AltSecUpdate_Class:
-				status = message_process_altsec_update_class(update->message, &message, msgType);
-				break;
-
-			case WindowUpdate_Class:
-				status = message_process_window_update_class(update->message, &message, msgType);
-				break;
-
-			case PointerUpdate_Class:
-				status = message_process_pointer_update_class(update->message, &message, msgType);
-				break;
-		}
-
-		if (status < 0)
-			printf("Unknown message: class: %d type: %d\n", msgClass, msgType);
+		status = message_process_class(update->message, &message, msgClass, msgType);
 	}
 
-	return NULL;
+	return 0;
 }
 
 rdpMessage* message_new()

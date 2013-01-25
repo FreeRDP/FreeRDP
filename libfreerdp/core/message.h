@@ -225,9 +225,8 @@ struct rdp_message
 	rdpUpdate* update;
 };
 
+int message_process_pending_updates(rdpUpdate* update);
 void message_register_interface(rdpMessage* message, rdpUpdate* update);
-
-void* message_update_thread(void* arg);
 
 rdpMessage* message_new();
 void message_free(rdpMessage* message);

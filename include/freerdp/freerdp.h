@@ -195,6 +195,9 @@ FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
+FREERDP_API int freerdp_process_messages(freerdp* instance);
+FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance);
+
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);

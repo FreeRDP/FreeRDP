@@ -35,7 +35,7 @@
 #include <freerdp/error.h>
 #include <freerdp/locale/keyboard.h>
 
-/* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
+/* connectErrorCode is 'extern' in error.h. See comment there.*/
 
 /** Creates a new connection based on the settings found in the "instance" parameter
  *  It will use the callbacks registered on the structure to process the pre/post connect operations
@@ -182,6 +182,21 @@ BOOL freerdp_check_fds(freerdp* instance)
 		return FALSE;
 
 	return TRUE;
+}
+
+HANDLE freerdp_get_message_queue_event_handle(freerdp* instance)
+{
+	HANDLE event = NULL;
+
+	if (instance->update->queue)
+		event = MessageQueue_Event(instance->update->queue);
+
+	return event;
+}
+
+int freerdp_process_messages(freerdp* instance)
+{
+	return update_process_messages(instance->update);
 }
 
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)
