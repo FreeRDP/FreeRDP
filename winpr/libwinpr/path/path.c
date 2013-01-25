@@ -57,7 +57,7 @@
 
 #ifdef _WIN32
 #define SHARED_LIBRARY_EXT		SHARED_LIBRARY_EXT_DLL
-#elif __APPLE__
+#elif defined(__APPLE__)
 #define SHARED_LIBRARY_EXT		SHARED_LIBRARY_EXT_DYLIB
 #else
 #define SHARED_LIBRARY_EXT		SHARED_LIBRARY_EXT_SO
@@ -881,7 +881,7 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 	{
 #ifdef _WIN32
 		return SharedLibraryExtensionDotDllA;
-#elif __APPLE__
+#elif defined(__APPLE__)
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionDotSoA;
 		else
@@ -894,7 +894,7 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 	{
 #ifdef _WIN32
 		return SharedLibraryExtensionDllA;
-#elif __APPLE__
+#elif defined(__APPLE__)
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionSoA;
 		else
@@ -939,7 +939,7 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 	{
 #ifdef _WIN32
 		return SharedLibraryExtensionDotDllW;
-#elif __APPLE__
+#elif defined(__APPLE__)
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionDotSoW;
 		else
@@ -952,7 +952,7 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 	{
 #ifdef _WIN32
 		return SharedLibraryExtensionDllW;
-#elif __APPLE__
+#elif defined(__APPLE__)
 		if (dwFlags & PATH_SHARED_LIB_EXT_APPLE_SO)
 			return SharedLibraryExtensionSoW;
 		else

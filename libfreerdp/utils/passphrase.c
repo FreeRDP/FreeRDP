@@ -32,7 +32,7 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 	return NULL;
 }
 
-#elif (!ANDROID)
+#elif !defined(ANDROID)
 
 #include <fcntl.h>
 #include <stdio.h>
