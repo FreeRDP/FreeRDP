@@ -200,8 +200,8 @@ struct rdp_update
 	SURFACE_FRAME_MARKER surface_frame_marker;
 
 	HANDLE thread;
-	wQueue* queue;
 	BOOL asynchronous;
+	wMessageQueue* queue;
 };
 
 #endif /* FREERDP_UPDATE_H */

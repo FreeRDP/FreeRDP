@@ -82,7 +82,10 @@ struct rdp_context
 					List of arguments given to the program at launch time.
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
-	UINT32 paddingB[32 - 18]; /* 18 */
+
+	void* queue; /**< (offset 18) asynchronous message queue */
+
+	UINT32 paddingB[32 - 19]; /* 19 */
 
 	rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.

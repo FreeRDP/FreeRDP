@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/thread.h>
+#include <winpr/collections.h>
 
 #include "update.h"
 #include "surface.h"
@@ -709,11 +710,6 @@ static void* update_thread(void* arg)
 
 	update = (rdpUpdate*) arg;
 
-	while (WaitForSingleObject(Queue_Event(update->queue), INFINITE) == WAIT_OBJECT_0)
-	{
-
-	}
-
 	return NULL;
 }
 
@@ -757,7 +753,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		if (update->asynchronous)
 		{
-			update->queue = Queue_New(TRUE, -1, -1);
+			update->queue = MessageQueue_New();
+			update->context->queue = (void*) update->queue;
 			update->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_thread, update, 0, NULL);
 		}
 	}
@@ -786,7 +783,7 @@ void update_free(rdpUpdate* update)
 		if (update->asynchronous)
 		{
 			CloseHandle(update->thread);
-			Queue_Free(update->queue);
+			MessageQueue_Free(update->queue);
 		}
 
 		free(update);
