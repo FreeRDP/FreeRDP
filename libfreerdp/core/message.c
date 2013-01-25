@@ -1126,6 +1126,7 @@ int message_process_update_class(rdpMessage* update, wMessage* msg, int type)
 
 		case Update_SetBounds:
 			IFCALL(update->SetBounds, msg->context, (rdpBounds*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_Synchronize:
@@ -1138,36 +1139,60 @@ int message_process_update_class(rdpMessage* update, wMessage* msg, int type)
 
 		case Update_BitmapUpdate:
 			IFCALL(update->BitmapUpdate, msg->context, (BITMAP_UPDATE*) msg->wParam);
+			{
+				int index;
+				BITMAP_UPDATE* wParam = (BITMAP_UPDATE*) msg->wParam;
+
+				for (index = 0; index < wParam->number; index++)
+					free(wParam->rectangles[index].bitmapDataStream);
+
+				free(wParam);
+			}
 			break;
 
 		case Update_Palette:
 			IFCALL(update->Palette, msg->context, (PALETTE_UPDATE*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_PlaySound:
 			IFCALL(update->PlaySound, msg->context, (PLAY_SOUND_UPDATE*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_RefreshRect:
 			IFCALL(update->RefreshRect, msg->context,
 					(BYTE) (size_t) msg->wParam, (RECTANGLE_16*) msg->lParam);
+			free(msg->lParam);
 			break;
 
 		case Update_SuppressOutput:
 			IFCALL(update->SuppressOutput, msg->context,
 					(BYTE) (size_t) msg->wParam, (RECTANGLE_16*) msg->lParam);
+			free(msg->lParam);
 			break;
 
 		case Update_SurfaceCommand:
 			IFCALL(update->SurfaceCommand, msg->context, (STREAM*) msg->wParam);
+			{
+				STREAM* s = (STREAM*) msg->wParam;
+				free(s->data);
+				free(s);
+			}
 			break;
 
 		case Update_SurfaceBits:
 			IFCALL(update->SurfaceBits, msg->context, (SURFACE_BITS_COMMAND*) msg->wParam);
+			{
+				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
+				free(wParam->bitmapData);
+				free(wParam);
+			}
 			break;
 
 		case Update_SurfaceFrameMarker:
 			IFCALL(update->SurfaceFrameMarker, msg->context, (SURFACE_FRAME_MARKER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_SurfaceFrameAcknowledge:
@@ -1190,90 +1215,127 @@ int message_process_primary_update_class(rdpMessage* update, wMessage* msg, int 
 	{
 		case PrimaryUpdate_DstBlt:
 			IFCALL(update->DstBlt, msg->context, (DSTBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_PatBlt:
 			IFCALL(update->PatBlt, msg->context, (PATBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_ScrBlt:
 			IFCALL(update->ScrBlt, msg->context, (SCRBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_OpaqueRect:
 			IFCALL(update->OpaqueRect, msg->context, (OPAQUE_RECT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_DrawNineGrid:
 			IFCALL(update->DrawNineGrid, msg->context, (DRAW_NINE_GRID_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_MultiDstBlt:
 			IFCALL(update->MultiDstBlt, msg->context, (MULTI_DSTBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_MultiPatBlt:
 			IFCALL(update->MultiPatBlt, msg->context, (MULTI_PATBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_MultiScrBlt:
 			IFCALL(update->MultiScrBlt, msg->context, (MULTI_SCRBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_MultiOpaqueRect:
 			IFCALL(update->MultiOpaqueRect, msg->context, (MULTI_OPAQUE_RECT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_MultiDrawNineGrid:
 			IFCALL(update->MultiDrawNineGrid, msg->context, (MULTI_DRAW_NINE_GRID_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_LineTo:
 			IFCALL(update->LineTo, msg->context, (LINE_TO_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_Polyline:
 			IFCALL(update->Polyline, msg->context, (POLYLINE_ORDER*) msg->wParam);
+			{
+				POLYLINE_ORDER* wParam = (POLYLINE_ORDER*) msg->wParam;
+
+				free(wParam->points);
+				free(wParam);
+			}
 			break;
 
 		case PrimaryUpdate_MemBlt:
 			IFCALL(update->MemBlt, msg->context, (MEMBLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_Mem3Blt:
 			IFCALL(update->Mem3Blt, msg->context, (MEM3BLT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_SaveBitmap:
 			IFCALL(update->SaveBitmap, msg->context, (SAVE_BITMAP_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_GlyphIndex:
 			IFCALL(update->GlyphIndex, msg->context, (GLYPH_INDEX_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_FastIndex:
 			IFCALL(update->FastIndex, msg->context, (FAST_INDEX_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_FastGlyph:
 			IFCALL(update->FastGlyph, msg->context, (FAST_GLYPH_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_PolygonSC:
 			IFCALL(update->PolygonSC, msg->context, (POLYGON_SC_ORDER*) msg->wParam);
+			{
+				POLYGON_SC_ORDER* wParam = (POLYGON_SC_ORDER*) msg->wParam;
+
+				free(wParam->points);
+				free(wParam);
+			}
 			break;
 
 		case PrimaryUpdate_PolygonCB:
 			IFCALL(update->PolygonCB, msg->context, (POLYGON_CB_ORDER*) msg->wParam);
+			{
+				POLYGON_CB_ORDER* wParam = (POLYGON_CB_ORDER*) msg->wParam;
+
+				free(wParam->points);
+				free(wParam);
+			}
 			break;
 
 		case PrimaryUpdate_EllipseSC:
 			IFCALL(update->EllipseSC, msg->context, (ELLIPSE_SC_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PrimaryUpdate_EllipseCB:
 			IFCALL(update->EllipseCB, msg->context, (ELLIPSE_CB_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		default:
@@ -1292,30 +1354,78 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 	{
 		case SecondaryUpdate_CacheBitmap:
 			IFCALL(update->CacheBitmap, msg->context, (CACHE_BITMAP_ORDER*) msg->wParam);
+			{
+				CACHE_BITMAP_ORDER* wParam = (CACHE_BITMAP_ORDER*) msg->wParam;
+
+				free(wParam->bitmapDataStream);
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheBitmapV2:
 			IFCALL(update->CacheBitmapV2, msg->context, (CACHE_BITMAP_V2_ORDER*) msg->wParam);
+			{
+				CACHE_BITMAP_V2_ORDER* wParam = (CACHE_BITMAP_V2_ORDER*) msg->wParam;
+
+				free(wParam->bitmapDataStream);
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheBitmapV3:
 			IFCALL(update->CacheBitmapV3, msg->context, (CACHE_BITMAP_V3_ORDER*) msg->wParam);
+			{
+				CACHE_BITMAP_V3_ORDER* wParam = (CACHE_BITMAP_V3_ORDER*) msg->wParam;
+
+				free(wParam->bitmapData.data);
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheColorTable:
 			IFCALL(update->CacheColorTable, msg->context, (CACHE_COLOR_TABLE_ORDER*) msg->wParam);
+			{
+				CACHE_COLOR_TABLE_ORDER* wParam = (CACHE_COLOR_TABLE_ORDER*) msg->wParam;
+
+				free(wParam->colorTable);
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheGlyph:
 			IFCALL(update->CacheGlyph, msg->context, (CACHE_GLYPH_ORDER*) msg->wParam);
+			{
+				int index;
+				CACHE_GLYPH_ORDER* wParam = (CACHE_GLYPH_ORDER*) msg->wParam;
+
+				for (index = 0; index < wParam->cGlyphs; index++)
+					free(wParam->glyphData[index]);
+
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheGlyphV2:
 			IFCALL(update->CacheGlyphV2, msg->context, (CACHE_GLYPH_V2_ORDER*) msg->wParam);
+			{
+				int index;
+				CACHE_GLYPH_V2_ORDER* wParam = (CACHE_GLYPH_V2_ORDER*) msg->wParam;
+
+				for (index = 0; index < wParam->cGlyphs; index++)
+					free(wParam->glyphData[index]);
+
+				free(wParam);
+			}
 			break;
 
 		case SecondaryUpdate_CacheBrush:
 			IFCALL(update->CacheBrush, msg->context, (CACHE_BRUSH_ORDER*) msg->wParam);
+			{
+				CACHE_BRUSH_ORDER* wParam = (CACHE_BRUSH_ORDER*) msg->wParam;
+
+				free(wParam->data);
+				free(wParam);
+			}
 			break;
 
 		default:
@@ -1334,50 +1444,67 @@ int message_process_altsec_update_class(rdpMessage* update, wMessage* msg, int t
 	{
 		case AltSecUpdate_CreateOffscreenBitmap:
 			IFCALL(update->CreateOffscreenBitmap, msg->context, (CREATE_OFFSCREEN_BITMAP_ORDER*) msg->wParam);
+			{
+				CREATE_OFFSCREEN_BITMAP_ORDER* wParam = (CREATE_OFFSCREEN_BITMAP_ORDER*) msg->wParam;
+
+				free(wParam->deleteList.indices);
+				free(wParam);
+			}
 			break;
 
 		case AltSecUpdate_SwitchSurface:
 			IFCALL(update->SwitchSurface, msg->context, (SWITCH_SURFACE_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_CreateNineGridBitmap:
 			IFCALL(update->CreateNineGridBitmap, msg->context, (CREATE_NINE_GRID_BITMAP_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_FrameMarker:
 			IFCALL(update->FrameMarker, msg->context, (FRAME_MARKER_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_StreamBitmapFirst:
 			IFCALL(update->StreamBitmapFirst, msg->context, (STREAM_BITMAP_FIRST_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_StreamBitmapNext:
 			IFCALL(update->StreamBitmapNext, msg->context, (STREAM_BITMAP_NEXT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusFirst:
 			IFCALL(update->DrawGdiPlusFirst, msg->context, (DRAW_GDIPLUS_FIRST_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusNext:
 			IFCALL(update->DrawGdiPlusNext, msg->context, (DRAW_GDIPLUS_NEXT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusEnd:
 			IFCALL(update->DrawGdiPlusEnd, msg->context, (DRAW_GDIPLUS_END_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusCacheFirst:
 			IFCALL(update->DrawGdiPlusCacheFirst, msg->context, (DRAW_GDIPLUS_CACHE_FIRST_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusCacheNext:
 			IFCALL(update->DrawGdiPlusCacheNext, msg->context, (DRAW_GDIPLUS_CACHE_NEXT_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case AltSecUpdate_DrawGdiPlusCacheEnd:
 			IFCALL(update->DrawGdiPlusCacheEnd, msg->context, (DRAW_GDIPLUS_CACHE_END_ORDER*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		default:
@@ -1397,48 +1524,71 @@ int message_process_window_update_class(rdpMessage* update, wMessage* msg, int t
 		case WindowUpdate_WindowCreate:
 			IFCALL(update->WindowCreate, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(WINDOW_STATE_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowUpdate:
 			IFCALL(update->WindowCreate, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(WINDOW_STATE_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowIcon:
 			IFCALL(update->WindowIcon, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(WINDOW_ICON_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowCachedIcon:
 			IFCALL(update->WindowCachedIcon, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(WINDOW_CACHED_ICON_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowDelete:
 			IFCALL(update->WindowDelete, msg->context, (WINDOW_ORDER_INFO*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case WindowUpdate_NotifyIconCreate:
 			IFCALL(update->NotifyIconCreate, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(NOTIFY_ICON_STATE_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_NotifyIconUpdate:
 			IFCALL(update->NotifyIconUpdate, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(NOTIFY_ICON_STATE_ORDER*) msg->lParam);
+			free(msg->wParam);
+			free(msg->lParam);
 			break;
 
 		case WindowUpdate_NotifyIconDelete:
 			IFCALL(update->NotifyIconDelete, msg->context, (WINDOW_ORDER_INFO*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case WindowUpdate_MonitoredDesktop:
 			IFCALL(update->MonitoredDesktop, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
 					(MONITORED_DESKTOP_ORDER*) msg->lParam);
+			{
+				MONITORED_DESKTOP_ORDER* lParam = (MONITORED_DESKTOP_ORDER*) msg->lParam;
+
+				free(msg->wParam);
+
+				free(lParam->windowIds);
+				free(lParam);
+			}
 			break;
 
 		case WindowUpdate_NonMonitoredDesktop:
 			IFCALL(update->NonMonitoredDesktop, msg->context, (WINDOW_ORDER_INFO*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		default:
@@ -1457,22 +1607,39 @@ int message_process_pointer_update_class(rdpMessage* update, wMessage* msg, int 
 	{
 		case PointerUpdate_PointerPosition:
 			IFCALL(update->PointerPosition, msg->context, (POINTER_POSITION_UPDATE*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PointerUpdate_PointerSystem:
 			IFCALL(update->PointerSystem, msg->context, (POINTER_SYSTEM_UPDATE*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case PointerUpdate_PointerColor:
 			IFCALL(update->PointerColor, msg->context, (POINTER_COLOR_UPDATE*) msg->wParam);
+			{
+				POINTER_COLOR_UPDATE* wParam = (POINTER_COLOR_UPDATE*) msg->wParam;
+
+				//free(wParam->andMaskData);
+				//free(wParam->xorMaskData);
+				free(wParam);
+			}
 			break;
 
 		case PointerUpdate_PointerNew:
 			IFCALL(update->PointerNew, msg->context, (POINTER_NEW_UPDATE*) msg->wParam);
+			{
+				POINTER_NEW_UPDATE* wParam = (POINTER_NEW_UPDATE*) msg->wParam;
+
+				//free(wParam->colorPtrAttr.andMaskData);
+				//free(wParam->colorPtrAttr.xorMaskData);
+				free(wParam);
+			}
 			break;
 
 		case PointerUpdate_PointerCached:
 			IFCALL(update->PointerCached, msg->context, (POINTER_CACHED_UPDATE*) msg->wParam);
+			free(msg->wParam);
 			break;
 
 		default:
