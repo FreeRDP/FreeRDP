@@ -135,6 +135,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
+			if(stream_get_left(s) < 4)
+				return FALSE;
 			stream_read_UINT32(s, client->ack_frame_id);
 			break;
 
@@ -156,7 +158,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 	return TRUE;
 }
 
-static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
 	UINT16 length;
@@ -171,31 +173,33 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
 		printf("Incorrect RDP header.\n");
-		return FALSE;
+		return -1;
 	}
 
 	if (rdp->settings->DisableEncryption)
 	{
-		rdp_read_security_header(s, &securityFlags);
+		if (!rdp_read_security_header(s, &securityFlags))
+			return -1;
 
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
 				printf("rdp_decrypt failed\n");
-				return FALSE;
+				return -1;
 			}
 		}
 	}
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		freerdp_channel_peer_process(client, s, channelId);
+		if(!freerdp_channel_peer_process(client, s, channelId))
+			return -1;
 	}
 	else
 	{
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
-			return FALSE;
+			return -1;
 
 		client->settings->PduSource = pduSource;
 
@@ -203,19 +207,19 @@ static BOOL peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		{
 			case PDU_TYPE_DATA:
 				if (!peer_recv_data_pdu(client, s))
-					return FALSE;
+					return -1;
 				break;
 
 			default:
 				printf("Client sent pduType %d\n", pduType);
-				return FALSE;
+				return -1;
 		}
 	}
 
-	return TRUE;
+	return 0;
 }
 
-static BOOL peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 {
 	rdpRdp* rdp;
 	UINT16 length;
@@ -223,23 +227,27 @@ static BOOL peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	length = fastpath_read_header_rdp(fastpath, s);
+	//if (!fastpath_read_header_rdp(fastpath, s, &length))
+	//	return -1;
 
-	if (length == 0 || length > stream_get_left(s))
+	fastpath_read_header_rdp(fastpath, s, &length);
+
+	if ((length == 0) || (length > stream_get_left(s)))
 	{
 		printf("incorrect FastPath PDU header length %d\n", length);
-		return FALSE;
+		return -1;
 	}
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
 	{
-		rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0);
+		if (!rdp_decrypt(rdp, s, length, (fastpath->encryptionFlags & FASTPATH_OUTPUT_SECURE_CHECKSUM) ? SEC_SECURE_CHECKSUM : 0))
+			return -1;
 	}
 
 	return fastpath_recv_inputs(fastpath, s);
 }
 
-static BOOL peer_recv_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_pdu(freerdp_peer* client, STREAM* s)
 {
 	if (tpkt_verify_header(s))
 		return peer_recv_tpkt_pdu(client, s);
@@ -256,7 +264,7 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 	{
 		case CONNECTION_STATE_INITIAL:
 			if (!rdp_server_accept_nego(rdp, s))
-				return FALSE;
+				return -1;
 
 			if (rdp->nego->selected_protocol & PROTOCOL_NLA)
 			{
@@ -273,29 +281,29 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_mcs_connect_initial(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
 			if (!rdp_server_accept_mcs_erect_domain_request(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_attach_user_request(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_server_accept_mcs_channel_join_request(rdp, s))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (rdp->settings->DisableEncryption)
 			{
 				if (!rdp_server_accept_client_keys(rdp, s))
-					return FALSE;
+					return -1;
 				break;
 			}
 			rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
@@ -303,12 +311,12 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_ESTABLISH_KEYS:
 			if (!rdp_server_accept_client_info(rdp, s))
-				return FALSE;
+				return -1;
 
 			IFCALL(client->Capabilities, client);
 
 			if (!rdp_send_demand_active(rdp))
-				return FALSE;
+				return -1;
 			break;
 
 		case CONNECTION_STATE_LICENSE:
@@ -324,16 +332,16 @@ static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
-			if (!peer_recv_pdu(client, s))
-				return FALSE;
+			if (peer_recv_pdu(client, s) < 0)
+				return -1;
 			break;
 
 		default:
 			printf("Invalid state %d\n", rdp->state);
-			return FALSE;
+			return -1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 static BOOL freerdp_peer_close(freerdp_peer* client)

@@ -468,7 +468,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	tile_bitmap = (char*) malloc(32);
 	ZeroMemory(tile_bitmap, 32);
 
-	if (surface_bits_command->codecID == CODEC_ID_REMOTEFX)
+	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
 		message = rfx_process_message(rfx_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
@@ -503,7 +503,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 		rfx_message_free(rfx_context, message);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NSCODEC)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
 		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
@@ -520,7 +520,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		wf_invalidate_region(wfi, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}
-	else if (surface_bits_command->codecID == CODEC_ID_NONE)
+	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
 	{
 		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
 		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -542,6 +542,19 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 	if (tile_bitmap != NULL)
 		free(tile_bitmap);
+}
+
+void wf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+	wfInfo* wfi;
+	rdpSettings* settings;
+
+	wfi = ((wfContext*) context)->wfi;
+	settings = wfi->instance->settings;
+	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END && settings->FrameAcknowledge > 0)
+	{
+		IFCALL(wfi->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+	}
 }
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
@@ -575,4 +588,5 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = NULL;
 
 	update->SurfaceBits = wf_gdi_surface_bits;
+	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
 }

@@ -18,22 +18,53 @@
 set(MODULE_NAME "mfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_MAC")
 
+FIND_LIBRARY(CORE_VIDEO CoreVideo)
+FIND_LIBRARY(CORE_GRAPHICS CoreGraphics)
+FIND_LIBRARY(APP_SERVICES ApplicationServices)
+FIND_LIBRARY(IOKIT IOKit)
+FIND_LIBRARY(IOSURFACE IOSurface)
+
 set(${MODULE_PREFIX}_SRCS
 	mfreerdp.c
 	mfreerdp.h
-	mf_audin.c
-	mf_audin.h
-	mf_rdpsnd.c
-	mf_rdpsnd.h)
+    mf_interface.c
+    mf_interface.h
+	mf_event.c
+	mf_event.h
+    mf_peer.c
+    mf_peer.h
+    mf_info.c
+    mf_info.h
+    mf_mountain_lion.c
+    mf_mountain_lion.h)
 
+if(CHANNEL_AUDIN_SERVER)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+		mf_audin.c
+		mf_audin.h)
+endif()
+
+if(CHANNEL_RDPSND_SERVER)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+		mf_rdpsnd.c
+		mf_rdpsnd.h)
+
+endif()	
+	
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} 
+	freerdp-server
+    	${CORE_VIDEO}
+	${CORE_GRAPHICS}
+	${APP_SERVICES}
+	${IOKIT}
+	${IOSURFACE})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-core freerdp-utils freerdp-codec)
+	MODULES freerdp-core freerdp-utils freerdp-codec freerdp-primitives)
 	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}

@@ -112,6 +112,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->NTLMv2 = TRUE;
 		context->UseMIC = FALSE;
 		context->SendVersionInfo = TRUE;
+		context->SendSingleHostData = FALSE;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -126,6 +127,9 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			if (RegQueryValueEx(hKey, _T("SendVersionInfo"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 				context->SendVersionInfo = dwValue ? 1 : 0;
 
+			if (RegQueryValueEx(hKey, _T("SendSingleHostData"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				context->SendSingleHostData = dwValue ? 1 : 0;
+
 			RegCloseKey(hKey);
 		}
 
@@ -133,7 +137,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		 * Extended Protection is enabled by default in Windows 7,
 		 * but enabling it in WinPR breaks TS Gateway at this point
 		 */
-		context->SuppressExtendedProtection = TRUE;
+		context->SuppressExtendedProtection = FALSE;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -337,9 +341,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
@@ -355,9 +359,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 			if (pOutput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer = &pOutput->pBuffers[0];
+			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-			if (output_buffer->BufferType != SECBUFFER_TOKEN)
+			if (!output_buffer->BufferType)
 				return SEC_E_INVALID_TOKEN;
 
 			if (output_buffer->cbBuffer < 1)
@@ -376,9 +380,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
@@ -416,8 +420,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	CREDENTIALS* credentials;
-	PSecBuffer input_buffer;
-	PSecBuffer output_buffer;
+	PSecBuffer input_buffer = NULL;
+	PSecBuffer output_buffer = NULL;
+	PSecBuffer channel_bindings = NULL;
 
 	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -449,9 +454,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (pOutput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		output_buffer = &pOutput->pBuffers[0];
+		output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-		if (output_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!output_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (output_buffer->cbBuffer < 1)
@@ -470,13 +475,21 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (pInput->cBuffers < 1)
 			return SEC_E_INVALID_TOKEN;
 
-		input_buffer = &pInput->pBuffers[0];
+		input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
 
-		if (input_buffer->BufferType != SECBUFFER_TOKEN)
+		if (!input_buffer)
 			return SEC_E_INVALID_TOKEN;
 
 		if (input_buffer->cbBuffer < 1)
 			return SEC_E_INVALID_TOKEN;
+
+		channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+
+		if (channel_bindings)
+		{
+			context->Bindings.BindingsLength = channel_bindings->cbBuffer;
+			context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
+		}
 
 		if (context->state == NTLM_STATE_CHALLENGE)
 		{
@@ -488,9 +501,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 			if (pOutput->cBuffers < 1)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer = &pOutput->pBuffers[0];
+			output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
 
-			if (output_buffer->BufferType != SECBUFFER_TOKEN)
+			if (!output_buffer)
 				return SEC_E_INVALID_TOKEN;
 
 			if (output_buffer->cbBuffer < 1)

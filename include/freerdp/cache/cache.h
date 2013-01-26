@@ -48,7 +48,15 @@ struct rdp_cache
 	rdpSettings* settings;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API rdpCache* cache_new(rdpSettings* settings);
 FREERDP_API void cache_free(rdpCache* cache);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CACHE_H */

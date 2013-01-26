@@ -102,7 +102,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc->ntlm = ntlm_new();
 
-	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword);
+	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL);
 	ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname);
 
 	ntlm_authenticate(rpc->ntlm);
@@ -112,8 +112,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 
-	bind_pdu->auth_length = rpc->ntlm->outputBuffer.cbBuffer;
-	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer.pvBuffer;
+	bind_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	bind_pdu->ptype = PTYPE_BIND;
 	bind_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_SUPPORT_HEADER_SIGN | PFC_CONC_MPX;
@@ -228,11 +228,11 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
 
-	rpc->ntlm->inputBuffer.cbBuffer = header->common.auth_length;
-	rpc->ntlm->inputBuffer.pvBuffer = malloc(header->common.auth_length);
+	rpc->ntlm->inputBuffer[0].cbBuffer = header->common.auth_length;
+	rpc->ntlm->inputBuffer[0].pvBuffer = malloc(header->common.auth_length);
 
 	auth_data = buffer + (header->common.frag_length - header->common.auth_length);
-	CopyMemory(rpc->ntlm->inputBuffer.pvBuffer, auth_data, header->common.auth_length);
+	CopyMemory(rpc->ntlm->inputBuffer[0].pvBuffer, auth_data, header->common.auth_length);
 
 	ntlm_authenticate(rpc->ntlm);
 
@@ -261,8 +261,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
-	auth_3_pdu->auth_length = rpc->ntlm->outputBuffer.cbBuffer;
-	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer.pvBuffer;
+	auth_3_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
 	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;

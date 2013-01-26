@@ -76,7 +76,7 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
 
 BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 {
-	char* str;
+	char* str = NULL;
 	TIME_ZONE_INFO* clientTimeZone;
 
 	if (stream_get_left(s) < 172)
@@ -91,6 +91,7 @@ BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
 	stream_seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
 	free(str);
+	str = NULL;
 
 	rdp_read_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
 	stream_read_UINT32(s, clientTimeZone->standardBias); /* StandardBias */
@@ -119,8 +120,8 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	UINT32 bias;
 	INT32 sbias;
 	UINT32 bias2c;
-	WCHAR* standardName;
-	WCHAR* daylightName;
+	WCHAR* standardName = NULL;
+	WCHAR* daylightName = NULL;
 	int standardNameLength;
 	int daylightNameLength;
 	TIME_ZONE_INFO* clientTimeZone;

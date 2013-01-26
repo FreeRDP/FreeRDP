@@ -24,6 +24,10 @@
 
 int wf_dxgi_init(wfInfo* context);
 
+int wf_dxgi_createDevice(wfInfo* context);
+
+int wf_dxgi_getDuplication(wfInfo* context);
+
 int wf_dxgi_cleanup(wfInfo* context);
 
 int wf_dxgi_nextFrame(wfInfo* context, UINT timeout);

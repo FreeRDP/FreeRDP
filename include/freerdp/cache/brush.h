@@ -56,6 +56,10 @@ struct rdp_brush_cache
 	rdpSettings* settings;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp);
 FREERDP_API void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp);
 
@@ -63,5 +67,9 @@ FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpBrushCache* brush_cache_new(rdpSettings* settings);
 FREERDP_API void brush_cache_free(rdpBrushCache* brush);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_BRUSH_CACHE_H */

@@ -247,7 +247,10 @@ void nsc_context_free(NSC_CONTEXT* context)
 	for (i = 0; i < 4; i++)
 	{
 		if (context->priv->plane_buf[i])
+		{
 			free(context->priv->plane_buf[i]);
+			context->priv->plane_buf[i] = NULL;
+		}
 	}
 	if (context->bmpdata)
 		free(context->bmpdata);
@@ -260,14 +263,21 @@ void nsc_context_free(NSC_CONTEXT* context)
 
 	free(context->priv);
 	free(context);
+	context = NULL;
 }
 
 NSC_CONTEXT* nsc_context_new(void)
 {
 	NSC_CONTEXT* nsc_context;
+	UINT8 i;
 
 	nsc_context = (NSC_CONTEXT*) malloc(sizeof(NSC_CONTEXT));
 	nsc_context->priv = (NSC_CONTEXT_PRIV*) malloc(sizeof(NSC_CONTEXT_PRIV));
+	for (i=0; i < 5; ++i)
+	{
+		nsc_context->priv->plane_buf[i] = NULL;
+	}
+	nsc_context->bmpdata = NULL;
 
 	nsc_context->decode = nsc_decode;
 	nsc_context->encode = nsc_encode;

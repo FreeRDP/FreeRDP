@@ -144,6 +144,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT3
 		}
 		else
 		{
+			format_name->name = NULL;
 			format_name->length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) s->p, 32 / 2, &format_name->name, 0, NULL, NULL);
 		}
 

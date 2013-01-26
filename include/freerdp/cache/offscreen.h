@@ -43,6 +43,10 @@ struct rdp_offscreen_cache
 	rdpSettings* settings;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
 FREERDP_API void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index, rdpBitmap* bitmap);
 FREERDP_API void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index);
@@ -51,5 +55,9 @@ FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings);
 FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_OFFSCREEN_CACHE_H */

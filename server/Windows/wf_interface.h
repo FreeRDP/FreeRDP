@@ -29,6 +29,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+
 #include <freerdp/server/rdpsnd.h>
 
 #define WF_SRV_CALLBACK_EVENT_CONNECT 1
@@ -42,8 +43,18 @@ typedef struct wf_peer_context wfPeerContext;
 struct wf_info
 {
 	STREAM* s;
-	int width;
-	int height;
+
+	//screen and monitor info
+	int screenID;
+	int virtscreen_width;
+	int virtscreen_height;
+	int servscreen_width;
+	int servscreen_height;
+	int servscreen_xoffset;
+	int servscreen_yoffset;
+	//int width;
+	//int height;
+
 	int frame_idx;
 	int bitsPerPixel;
 	HDC driverDC;
@@ -100,6 +111,9 @@ struct wf_server
 typedef struct wf_server wfServer;
 
 typedef void (__stdcall* cbCallback) (int, UINT32);
+
+FREERDP_API int get_screen_info(int id, _TCHAR* name, int* w, int* h, int* b);
+FREERDP_API void set_screen_id(int id);
 
 FREERDP_API BOOL wfreerdp_server_start(wfServer* server);
 FREERDP_API BOOL wfreerdp_server_stop(wfServer* server);

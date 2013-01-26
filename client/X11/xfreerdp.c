@@ -667,7 +667,7 @@ UINT32 xf_detect_cpu()
 
 	if (edx & (1<<26)) 
 	{
-		DEBUG("SSE2 detected");
+		DEBUG_MSG("SSE2 detected");
 		cpu_opt |= CPU_SSE2;
 	}
 

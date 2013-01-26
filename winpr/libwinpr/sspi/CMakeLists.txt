@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.h)
 
 set(${MODULE_PREFIX}_SCHANNEL_SRCS
+	Schannel/schannel_openssl.c
+	Schannel/schannel_openssl.h
 	Schannel/schannel.c
 	Schannel/schannel.h)
 
@@ -79,7 +81,7 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-sysinfo winpr-registry winpr-utils)
+	MODULES winpr-crt winpr-sysinfo winpr-registry winpr-crypto winpr-utils)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

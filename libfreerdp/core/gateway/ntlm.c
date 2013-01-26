@@ -37,11 +37,14 @@
 
 #include "ntlm.h"
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password)
+BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password, SecPkgContext_Bindings* Bindings)
 {
 	SECURITY_STATUS status;
 
 	sspi_GlobalInit();
+
+	ntlm->http = http;
+	ntlm->Bindings = Bindings;
 
 #ifdef WITH_NATIVE_SSPI
 	{
@@ -91,7 +94,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	ntlm->fContextReq = 0;
 
-	if (http)
+	if (ntlm->http)
 	{
 		/* flags for HTTP authentication */
 		ntlm->fContextReq |= ISC_REQ_CONFIDENTIALITY;
@@ -195,25 +198,33 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 {
 	SECURITY_STATUS status;
 
-	if (ntlm->outputBuffer.pvBuffer)
+	if (ntlm->outputBuffer[0].pvBuffer)
 	{
-		free(ntlm->outputBuffer.pvBuffer);
-		ntlm->outputBuffer.pvBuffer = NULL;
+		free(ntlm->outputBuffer[0].pvBuffer);
+		ntlm->outputBuffer[0].pvBuffer = NULL;
 	}
 
 	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	ntlm->outputBufferDesc.cBuffers = 1;
-	ntlm->outputBufferDesc.pBuffers = &ntlm->outputBuffer;
-	ntlm->outputBuffer.BufferType = SECBUFFER_TOKEN;
-	ntlm->outputBuffer.cbBuffer = ntlm->cbMaxToken;
-	ntlm->outputBuffer.pvBuffer = malloc(ntlm->outputBuffer.cbBuffer);
+	ntlm->outputBufferDesc.pBuffers = ntlm->outputBuffer;
+	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
+	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
+	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
 
 	if (ntlm->haveInputBuffer)
 	{
 		ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
 		ntlm->inputBufferDesc.cBuffers = 1;
-		ntlm->inputBufferDesc.pBuffers = &ntlm->inputBuffer;
-		ntlm->inputBuffer.BufferType = SECBUFFER_TOKEN;
+		ntlm->inputBufferDesc.pBuffers = ntlm->inputBuffer;
+		ntlm->inputBuffer[0].BufferType = SECBUFFER_TOKEN;
+
+		if (ntlm->Bindings)
+		{
+			ntlm->inputBufferDesc.cBuffers++;
+			ntlm->inputBuffer[1].BufferType = SECBUFFER_CHANNEL_BINDINGS;
+			ntlm->inputBuffer[1].cbBuffer = ntlm->Bindings->BindingsLength;
+			ntlm->inputBuffer[1].pvBuffer = (void*) ntlm->Bindings->Bindings;
+		}
 	}
 
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
@@ -243,7 +254,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	if (ntlm->haveInputBuffer)
 	{
-		free(ntlm->inputBuffer.pvBuffer);
+		free(ntlm->inputBuffer[0].pvBuffer);
 	}
 
 	ntlm->haveInputBuffer = TRUE;

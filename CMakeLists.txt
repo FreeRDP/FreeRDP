@@ -98,8 +98,10 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
-	if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ANDROID)
-    	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
+		if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686")
+		endif()
 	endif()
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
@@ -231,6 +233,10 @@ set(GSTREAMER_FEATURE_TYPE "RECOMMENDED")
 set(GSTREAMER_FEATURE_PURPOSE "multimedia")
 set(GSTREAMER_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
 
+set(IPP_FEATURE_TYPE "OPTIONAL")
+set(IPP_FEATURE_PURPOSE "performance")
+set(IPP_FEATURE_DESCRIPTION "Intel Integrated Performance Primitives library")
+
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(ZLIB_FEATURE_TYPE "DISABLED")
@@ -284,6 +290,9 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 
 find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FEATURE_DESCRIPTION})
 find_feature(Gstreamer ${GSTREAMER_FEATURE_TYPE} ${GSTREAMER_FEATURE_PURPOSE} ${GSTREAMER_FEATURE_DESCRIPTION})
+
+# Intel Performance Primitives
+find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
 
 # Installation Paths
 if(WIN32)
@@ -426,10 +435,25 @@ if(MSVC)
 		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
 			DESTINATION ${CMAKE_INSTALL_BINDIR}
 			COMPONENT libraries)
+			
+			
+		set(EXTRA_DATA_DIR "pre-requisites/")
+		file(GLOB EXTRA_FILES "${CMAKE_SOURCE_DIR}/extra/*")
+		install(FILES ${EXTRA_FILES}
+			DESTINATION ${EXTRA_DATA_DIR}
+			COMPONENT extra)
+			
+		set(REV_DATA_DIR "REV/")
+		file(GLOB REV_FILES "${CMAKE_SOURCE_DIR}/REV/*")
+		install(FILES ${REV_FILES}
+			DESTINATION ${REV_DATA_DIR}
+			COMPONENT rev)
 	endif()
 endif()
 
-set(CPACK_COMPONENTS_ALL client server libraries headers)
+
+set(CPACK_COMPONENTS_ALL client server libraries headers extra rev)
+
 
 set(CPACK_COMPONENT_CLIENT_DISPLAY_NAME "Client")
 set(CPACK_COMPONENT_CLIENT_GROUP "Applications")

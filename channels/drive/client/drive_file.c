@@ -430,7 +430,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, S
 
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
 {
-	char* s;
+	char* s = NULL;
         mode_t m;
 	UINT64 size;
 	int status;
@@ -601,6 +601,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 
 	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 	free(ent_path);
+	ent_path = NULL;
 
 	length = ConvertToUnicode(CP_UTF8, 0, ent->d_name, -1, &ent_path, 0) * 2;
 

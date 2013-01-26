@@ -22,6 +22,11 @@
 
 typedef struct rdp_update rdpUpdate;
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
+
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -147,6 +152,7 @@ typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* a
 typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
 typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker);
+typedef void (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
 struct rdp_update
 {
@@ -177,7 +183,8 @@ struct rdp_update
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */
 	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
-	UINT32 paddingE[80 - 67]; /* 67 */
+	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 67 */
+	UINT32 paddingE[80 - 68]; /* 68 */
 
 	/* internal */
 
@@ -191,6 +198,9 @@ struct rdp_update
 
 	SURFACE_BITS_COMMAND surface_bits_command;
 	SURFACE_FRAME_MARKER surface_frame_marker;
+
+	HANDLE thread;
+	wQueue* queue;
 };
 
 #endif /* FREERDP_UPDATE_H */

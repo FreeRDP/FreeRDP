@@ -24,8 +24,6 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
-#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
-
 PTP_WAIT CreateThreadpoolWait(PTP_WAIT_CALLBACK pfnwa, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 	return NULL;
@@ -46,5 +44,4 @@ VOID WaitForThreadpoolWaitCallbacks(PTP_WAIT pwa, BOOL fCancelPendingCallbacks)
 
 }
 
-#endif
 

@@ -650,12 +650,15 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	while ((item = list_dequeue(rdpsnd->data_out_list)) != NULL)
+	if (rdpsnd->data_out_list)
 	{
-		stream_free(item->data_out);
-		free(item);
+		while ((item = list_dequeue(rdpsnd->data_out_list)) != NULL)
+		{
+			stream_free(item->data_out);
+			free(item);
+		}
+		list_free(rdpsnd->data_out_list);
 	}
-	list_free(rdpsnd->data_out_list);
 
 	if (rdpsnd->subsystem)
 		free(rdpsnd->subsystem);

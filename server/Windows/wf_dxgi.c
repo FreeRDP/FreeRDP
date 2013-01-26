@@ -65,26 +65,38 @@ ID3D11Texture2D* sStage;
 
 DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
-int wf_dxgi_init(wfInfo* context)
+int wf_dxgi_init(wfInfo* wfi)
+{
+	//not sure if needed
+	gAcquiredDesktopImage = NULL;
+
+	if (wf_dxgi_createDevice(wfi) != 0)
+	{
+		return 1;
+	}
+
+	if (wf_dxgi_getDuplication(wfi) != 0)
+	{
+		return 1;
+	}
+
+	return 0;
+	
+}
+
+int wf_dxgi_createDevice(wfInfo* wfi)
 {
 	HRESULT status;
-	UINT dTop, i = 0;
-	DXGI_OUTPUT_DESC desc;
-	IDXGIOutput * pOutput;
 	UINT DriverTypeIndex;
-	IDXGIDevice* DxgiDevice = NULL;
-	IDXGIAdapter* DxgiAdapter = NULL;
-	IDXGIOutput* DxgiOutput = NULL;
-	IDXGIOutput1* DxgiOutput1 = NULL;
-
-	gAcquiredDesktopImage = NULL;
 
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
-		status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, D3D11_CREATE_DEVICE_DEBUG, FeatureLevels, NumFeatureLevels,
+		status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, 0, FeatureLevels, NumFeatureLevels,
 								D3D11_SDK_VERSION, &gDevice, &FeatureLevel, &gContext);
 		if (SUCCEEDED(status))
 			break;
+
+		_tprintf(_T("D3D11CreateDevice returned [%d] for Driver Type %d\n"), status, DriverTypes[DriverTypeIndex]);
 	}
 
 	if (FAILED(status))
@@ -92,7 +104,21 @@ int wf_dxgi_init(wfInfo* context)
 		_tprintf(_T("Failed to create device in InitializeDx\n"));
 		return 1;
 	}
-		
+
+	return 0;
+}
+
+int wf_dxgi_getDuplication(wfInfo* wfi)
+{
+	HRESULT status;
+	UINT dTop, i = 0;
+	DXGI_OUTPUT_DESC desc;
+	IDXGIOutput * pOutput;
+	IDXGIDevice* DxgiDevice = NULL;
+	IDXGIAdapter* DxgiAdapter = NULL;
+	IDXGIOutput* DxgiOutput = NULL;
+	IDXGIOutput1* DxgiOutput1 = NULL;
+
 	status = gDevice->lpVtbl->QueryInterface(gDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
 
 	if (FAILED(status))
@@ -135,7 +161,7 @@ int wf_dxgi_init(wfInfo* context)
 		++i;
 	}
 
-	dTop = 0;
+	dTop = wfi->screenID;
 
 	status = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
 	DxgiAdapter->lpVtbl->Release(DxgiAdapter);
@@ -169,12 +195,13 @@ int wf_dxgi_init(wfInfo* context)
 			return 1;
 		}
 		
-		_tprintf(_T("Failed to get duplicate output\n"));
+		_tprintf(_T("Failed to get duplicate output. Status = %#X\n"), status);
 		return 1;
 	}
 
 	return 0;
 }
+
 
 int wf_dxgi_cleanup(wfInfo* wfi)
 {
@@ -212,7 +239,7 @@ int wf_dxgi_cleanup(wfInfo* wfi)
 
 int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 {
-	HRESULT status;
+	HRESULT status = 0;
 	UINT i = 0;
 	UINT DataBufferSize = 0;
 	BYTE* DataBuffer = NULL;
@@ -238,16 +265,39 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	if (FAILED(status))
 	{
-		//_tprintf(_T("Failed to acquire next frame\n"));
-
-		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
-
-		if (FAILED(status))
+		if (status == DXGI_ERROR_ACCESS_LOST)
 		{
-			//_tprintf(_T("Failed to release frame\n"));
+			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
+			_tprintf(_T("Trying to reinitialize due to ACCESS LOST..."));
+			if (gAcquiredDesktopImage)
+			{
+				gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
+				gAcquiredDesktopImage = NULL;
+			}
+
+			if (gOutputDuplication)
+			{
+				gOutputDuplication->lpVtbl->Release(gOutputDuplication);
+				gOutputDuplication = NULL;
+			} 
+
+			wf_dxgi_getDuplication(wfi);
+
+			return 1;
 		}
+		else
+		{
+			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
+
+			status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
+
+			if (FAILED(status))
+			{
+				_tprintf(_T("Failed to release frame with status=%d\n"), status);
+			}
 		
-		return 1;
+			return 1;
+		}
 	}
 		
 	status = DesktopResource->lpVtbl->QueryInterface(DesktopResource, &IID_ID3D11Texture2D, (void**) &gAcquiredDesktopImage);
@@ -261,10 +311,20 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 	wfi->framesWaiting = FrameInfo.AccumulatedFrames;
 
+	if (FrameInfo.AccumulatedFrames == 0)
+	{
+		status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
+
+		if (FAILED(status))
+		{
+			_tprintf(_T("Failed to release frame with status=%d\n"), status);
+		}
+	}
+
 	return 0;
 }
 
-int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid)
+int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 {
 	HRESULT status;
 	D3D11_BOX Box;

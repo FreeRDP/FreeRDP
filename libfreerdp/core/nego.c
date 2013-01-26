@@ -85,7 +85,7 @@ BOOL nego_connect(rdpNego* nego)
 			nego->state = NEGO_STATE_FAIL;
 		}
 
-		if (!nego->NegotiateSecurityLayer_enabled)
+		if (!nego->NegotiateSecurityLayer)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
@@ -222,7 +222,7 @@ BOOL nego_transport_connect(rdpNego* nego)
 {
 	nego_tcp_connect(nego);
 
-	if (nego->tcp_connected && !nego->NegotiateSecurityLayer_enabled)
+	if (nego->tcp_connected && !nego->NegotiateSecurityLayer)
 		return nego_security_connect(nego);
 
 	return nego->tcp_connected;
@@ -467,7 +467,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	if (transport_read(nego->transport, s) < 0)
 		return FALSE;
 
-	return nego_recv(nego->transport, s, nego);
+	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
 }
 
 /**
@@ -478,7 +478,7 @@ BOOL nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
 	BYTE li;
 	BYTE type;
@@ -488,9 +488,10 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	length = tpkt_read_header(s);
 
 	if (length == 0)
-		return FALSE;
+		return -1;
 
-	li = tpdu_read_connection_confirm(s);
+	if(!tpdu_read_connection_confirm(s, &li))
+		return -1;
 
 	if (li > 6)
 	{
@@ -546,7 +547,7 @@ BOOL nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		nego->state = NEGO_STATE_FAIL;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 /**
@@ -562,7 +563,8 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 	BYTE type;
 
 	tpkt_read_header(s);
-	li = tpdu_read_connection_request(s);
+	if(!tpdu_read_connection_request(s, &li))
+		return FALSE;
 
 	if (li != stream_get_left(s) + 6)
 	{
@@ -722,6 +724,13 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 	UINT16 length;
 
 	DEBUG_NEGO("RDP_NEG_RSP");
+
+	if (stream_get_left(s) < 7)
+	{
+		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
 
 	stream_read_BYTE(s, nego->flags);
 	stream_read_UINT16(s, length);
@@ -938,10 +947,10 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
  * @param enable_rdp whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled)
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 {
-	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer_enabled ? "TRUE" : "FALSE");
-	nego->NegotiateSecurityLayer_enabled = NegotiateSecurityLayer_enabled;
+	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer ? "TRUE" : "FALSE");
+	nego->NegotiateSecurityLayer = NegotiateSecurityLayer;
 }
 
 /**

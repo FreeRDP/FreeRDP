@@ -37,7 +37,7 @@ int freerdp_handle_signals(void)
 	return -1;
 }
 
-#elif (!ANDROID)
+#elif !defined(ANDROID)
 
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;

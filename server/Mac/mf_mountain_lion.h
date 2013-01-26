@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * RemoteFX Codec Library - Memory Pool
+ * OS X Server Event Handling
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef __RFX_POOL_H
-#define __RFX_POOL_H
+#ifndef MF_MLION_H
+#define MF_MLION_H
 
 #include <freerdp/codec/rfx.h>
 
-struct _RFX_POOL
-{
-	int size;
-	int count;
-	RFX_TILE** tiles;
-};
-typedef struct _RFX_POOL RFX_POOL;
 
-RFX_POOL* rfx_pool_new();
-void rfx_pool_free(RFX_POOL* pool);
-void rfx_pool_put_tile(RFX_POOL* pool, RFX_TILE* tile);
-RFX_TILE* rfx_pool_get_tile(RFX_POOL* pool);
-void rfx_pool_put_tiles(RFX_POOL* pool, RFX_TILE** tiles, int count);
-RFX_TILE** rfx_pool_get_tiles(RFX_POOL* pool, int count);
+int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight, UINT32* scale);
 
-#endif /* __RFX_POOL_H */
+int mf_mlion_screen_updates_init();
+
+int mf_mlion_start_getting_screen_updates();
+int mf_mlion_stop_getting_screen_updates();
+
+int mf_mlion_get_dirty_region(RFX_RECT* invalid);
+int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
+int mf_mlion_clear_dirty_region();
+
+int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE **pxData);
+
+#endif

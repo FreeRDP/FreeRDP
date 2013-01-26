@@ -54,7 +54,7 @@
 
 #ifdef _WIN32
 #define SHARED_LIB_SUFFIX	".dll"
-#elif __APPLE__
+#elif defined(__APPLE__)
 #define SHARED_LIB_SUFFIX	".dylib"
 #else
 #define SHARED_LIB_SUFFIX	".so"

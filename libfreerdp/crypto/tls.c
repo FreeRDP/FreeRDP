@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/tcp.h>
@@ -56,6 +57,42 @@ static void tls_free_certificate(CryptoCert cert)
 {
 	X509_free(cert->px509);
 	free(cert);
+}
+
+#define TLS_SERVER_END_POINT	"tls-server-end-point:"
+
+SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
+{
+	int PrefixLength;
+	BYTE CertificateHash[32];
+	UINT32 CertificateHashLength;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
+	SEC_CHANNEL_BINDINGS* ChannelBindings;
+	SecPkgContext_Bindings* ContextBindings;
+
+	ZeroMemory(CertificateHash, sizeof(CertificateHash));
+	X509_digest(cert, EVP_sha256(), CertificateHash, &CertificateHashLength);
+
+	PrefixLength = strlen(TLS_SERVER_END_POINT);
+	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
+
+	ContextBindings = (SecPkgContext_Bindings*) malloc(sizeof(SecPkgContext_Bindings));
+	ZeroMemory(ContextBindings, sizeof(SecPkgContext_Bindings));
+
+	ContextBindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
+	ChannelBindings = (SEC_CHANNEL_BINDINGS*) malloc(ContextBindings->BindingsLength);
+	ZeroMemory(ChannelBindings, ContextBindings->BindingsLength);
+	ContextBindings->Bindings = ChannelBindings;
+
+	ChannelBindings->cbApplicationDataLength = ChannelBindingTokenLength;
+	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
+
+	strcpy((char*) ChannelBindingToken, TLS_SERVER_END_POINT);
+	CopyMemory(&ChannelBindingToken[PrefixLength], CertificateHash, CertificateHashLength);
+
+	return ContextBindings;
 }
 
 BOOL tls_connect(rdpTls* tls)
@@ -134,6 +171,8 @@ BOOL tls_connect(rdpTls* tls)
 		printf("tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;
 	}
+
+	tls->Bindings = tls_get_channel_bindings(cert->px509);
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{

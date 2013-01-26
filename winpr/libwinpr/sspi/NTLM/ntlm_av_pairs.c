@@ -228,124 +228,73 @@ void ntlm_free_unicode_string(PUNICODE_STRING string)
  * https://raw.github.com/mozilla/mozilla-central/master/extensions/auth/nsAuthSSPI.cpp
  */
 
-/* Certificate (TBSCertificate) */
-
-BYTE test_Certificate[] =
-	"\x30\x82\x02\xfa\xa0\x03\x02\x01\x02\x02\x10\x33\x1d\x91\x3b\x2b"
-	"\x0a\xc8\x90\x4a\x19\x35\xed\x79\x65\xb8\xe3\x30\x09\x06\x05\x2b"
-	"\x0e\x03\x02\x1d\x05\x00\x30\x16\x31\x14\x30\x12\x06\x03\x55\x04"
-	"\x03\x13\x0b\x4c\x41\x42\x33\x2d\x57\x32\x4b\x38\x52\x32\x30\x1e"
-	"\x17\x0d\x31\x32\x31\x32\x31\x37\x31\x37\x33\x33\x31\x32\x5a\x17"
-	"\x0d\x33\x39\x31\x32\x33\x31\x32\x33\x35\x39\x35\x39\x5a\x30\x16"
-	"\x31\x14\x30\x12\x06\x03\x55\x04\x03\x13\x0b\x4c\x41\x42\x33\x2d"
-	"\x57\x32\x4b\x38\x52\x32\x30\x82\x02\x22\x30\x0d\x06\x09\x2a\x86"
-	"\x48\x86\xf7\x0d\x01\x01\x01\x05\x00\x03\x82\x02\x0f\x00\x30\x82"
-	"\x02\x0a\x02\x82\x02\x01\x00\xbf\x99\x68\x59\x41\x06\x5a\xd0\x3a"
-	"\x38\x7a\xca\x7a\x1e\x85\xee\x21\x7e\xa3\x01\xca\xf5\xdd\x2f\xbc"
-	"\xf7\x05\x87\x12\x89\x22\xd7\x37\xc1\xe1\x5d\x41\x02\xd8\x60\xc5"
-	"\x07\xec\x26\x6f\x13\x48\xe1\xf3\xc3\x42\x1e\x71\x5d\x31\x8e\x83"
-	"\x74\xac\x23\x84\x88\x02\xf4\xa2\x0a\xa8\x41\xfd\x16\x27\x31\x9c"
-	"\xb6\x78\x08\x84\xfe\x5f\xa1\x9f\x9b\x5c\xe4\x41\xf0\x7f\xb2\x41"
-	"\xe8\xd7\xf1\xcc\xb5\xd4\x38\x38\x5c\x0b\x64\x4b\x10\x6a\x62\x55"
-	"\xc1\x4f\xa3\x22\x58\x01\x92\x1c\x09\x68\xec\xe4\xf1\x01\xda\xe3"
-	"\x6d\x4b\xec\xc2\x9e\xc4\x8e\xc0\x00\x0f\x6e\x07\x7b\xec\x87\x0e"
-	"\x17\x46\xc7\x84\x78\x78\xd0\x9b\xeb\x86\xca\xd4\x30\x09\xe4\xd5"
-	"\xb7\x54\xab\xc0\x86\x2c\x7f\x0e\x8f\x00\xda\xd9\xdf\xb3\x56\xbe"
-	"\xce\xd5\x65\x1b\xe0\xe2\x55\x5a\xd1\xef\xfc\xe6\x20\x3f\x22\xc0"
-	"\xa6\x88\x63\x00\xa7\x0a\xcb\x73\xf1\x0d\x73\xba\x79\x39\x45\x8d"
-	"\xa8\x1f\x32\x58\xb1\xb5\x23\xe7\x68\x7d\xc4\x3a\x8f\x44\xa8\x36"
-	"\xc1\x5d\x0d\xcf\x4a\x21\x0f\x33\x8c\xb4\x57\x9a\x9f\xcb\xc6\xcb"
-	"\x04\x25\x74\x3a\x91\xaf\xd6\xb5\x35\x94\xa5\xe3\xe1\xa4\x92\x87"
-	"\xb5\xc7\xd9\x23\x07\xe2\x37\xf3\xb9\x6d\x01\x55\xa2\x39\x65\x8e"
-	"\xee\xcc\x53\x29\xcb\x1f\x1c\x7e\x7d\x4e\xd6\xfc\xe7\x02\x0a\xba"
-	"\xdb\xa9\x2d\x74\x9a\xeb\xe0\x95\x50\x23\xcd\xff\xe7\xc4\x47\xc2"
-	"\x55\x08\xdb\x1b\x0f\xb8\xd4\x4d\x4f\xd7\xd7\x13\x4c\x66\xed\x0f"
-	"\x78\x7d\x9a\xd5\xb5\xc0\x9e\xf3\xff\xe6\xef\xb7\xea\xd1\xff\xd4"
-	"\xf7\x09\x92\x15\x3e\x44\xb4\x3e\x01\x29\x06\xf1\x73\xa3\x61\xe8"
-	"\x84\x7b\x3e\x0d\x12\x44\x73\x4a\x29\x4b\x82\xe3\xac\x64\x81\xa5"
-	"\xa5\x1d\xa6\xb5\xd6\xc2\xe5\x6f\x98\x3b\x7c\x70\x82\xda\xf9\xf1"
-	"\xde\x46\x7b\xe8\x9e\x03\xbf\xc7\xb2\xe6\x26\x24\x21\x6c\xb3\x67"
-	"\xde\xe0\x8c\x17\x93\xf2\x32\xe5\xae\x5e\xfd\x4f\x77\x40\x3e\x25"
-	"\xfe\xfe\xc0\xd5\xc9\xcd\xff\x8b\xa2\x4e\xae\x89\x12\x0f\x05\xdb"
-	"\xc5\xba\xc2\x02\x6f\x60\xf8\x91\x23\x99\x29\xb4\x22\x5e\x62\x43"
-	"\x5e\xde\xb3\x56\x02\x3c\xa2\xf8\x2a\xbf\x82\xf7\x7a\xcc\x2c\x26"
-	"\x96\x88\x0e\x8d\x65\xb6\x7f\xda\x3c\x52\x6a\x25\xc1\xb2\x89\x5e"
-	"\x3d\x30\x39\x5f\x11\x74\x3c\x00\xa2\xef\x2c\xff\x3e\xaa\x04\x34"
-	"\x93\xbd\x55\xc2\x8b\x98\x5b\x66\x9c\x53\x8b\x27\x7c\x4c\x87\x0b"
-	"\x5b\x24\x72\x08\x06\xf9\x11\x02\x03\x01\x00\x01\xa3\x60\x30\x5e"
-	"\x30\x13\x06\x03\x55\x1d\x25\x04\x0c\x30\x0a\x06\x08\x2b\x06\x01"
-	"\x05\x05\x07\x03\x01\x30\x47\x06\x03\x55\x1d\x01\x04\x40\x30\x3e"
-	"\x80\x10\x8c\x90\xe6\x16\x1e\x1e\xa9\xf3\xbf\x03\x93\x22\xe1\x0c"
-	"\x3b\xfe\xa1\x18\x30\x16\x31\x14\x30\x12\x06\x03\x55\x04\x03\x13"
-	"\x0b\x4c\x41\x42\x33\x2d\x57\x32\x4b\x38\x52\x32\x82\x10\x33\x1d"
-	"\x91\x3b\x2b\x0a\xc8\x90\x4a\x19\x35\xed\x79\x65\xb8\xe3";
-
-/* 544D5750776A7533334736516B4D76694762777548516B41 (MD5 hash of SEC_CHANNEL_BINDINGS) */
-BYTE test_ChannelBindingsHash[] = "\x54\x4D\x57\x50\x77\x6A\x75\x33\x33\x47\x36\x51\x6B\x4D\x76\x69\x47\x62\x77\x75\x48\x51\x6B\x41";
-
-/* 63d3533695bf1bd0de203fee9691a2515e2e7bfe75bb8ab09da08911e157847c (SHA-256 hash of Certificate, length = 32) */
-BYTE test_CertificateHash_SHA256[] = "\x63\xd3\x53\x36\x95\xbf\x1b\xd0\xde\x20\x3f\xee\x96\x91\xa2\x51\x5e\x2e\x7b\xfe\x75\xbb\x8a\xb0\x9d\xa0\x89\x11\xe1\x57\x84\x7c";
-
-/* c0ef35911b5ba641c4b67f4b32c7efc4c1d82e2b (SHA1 hash of Certificate, length = 20) */
-BYTE test_CertificateHash_SHA1[] = "\xc0\xef\x35\x91\x1b\x5b\xa6\x41\xc4\xb6\x7f\x4b\x32\xc7\xef\xc4\xc1\xd8\x2e\x2b";
-
-/* d2b4df88a54faf95590cd336987a97a5 (MD5 hash of Certificate, length = 16) */
-BYTE test_CertificateHash_MD5[] = "\xd2\xb4\xdf\x88\xa5\x4f\xaf\x95\x59\x0c\xd3\x36\x98\x7a\x97\xa5";
-
-BYTE* test_CertificateHash = test_CertificateHash_SHA256;
-int test_CertificateHashLength = 32;
-
 /*
- * Channel Bindings Data:
- *
- * tls-server-end-point:<binary hash>
+typedef struct gss_channel_bindings_struct {
+	OM_uint32 initiator_addrtype;
+	gss_buffer_desc initiator_address;
+	OM_uint32 acceptor_addrtype;
+	gss_buffer_desc acceptor_address;
+	gss_buffer_desc application_data;
+} *gss_channel_bindings_t;
  */
 
-char TlsServerEndPointPrefix[] = "tls-server-end-point:";
+static void ntlm_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
+{
+	BYTE be32[4];
+
+	be32[0] = (num >> 0) & 0xFF;
+	be32[1] = (num >> 8) & 0xFF;
+	be32[2] = (num >> 16) & 0xFF;
+	be32[3] = (num >> 24) & 0xFF;
+
+	MD5_Update(md5, be32, 4);
+}
 
 void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-#if 0
 	MD5_CTX md5;
-	int HashLength;
-	int PrefixLength;
-	BYTE* pChannelBindingToken;
-	int ChannelBindingTokenLength;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 
 	ZeroMemory(context->ChannelBindingsHash, 16);
+	ChannelBindings = context->Bindings.Bindings;
 
-	HashLength = test_CertificateHashLength;
-	PrefixLength = strlen(TlsServerEndPointPrefix);
-	ChannelBindingTokenLength = PrefixLength + HashLength;
-	context->ChannelBindingToken = (BYTE*) malloc(ChannelBindingTokenLength + 1);
-	strcpy((char*) context->ChannelBindingToken, TlsServerEndPointPrefix);
-	CopyMemory(&context->ChannelBindingToken[PrefixLength], test_CertificateHash, HashLength);
+	if (!ChannelBindings)
+		return;
 
-	printf("ChannelBindingToken:\n");
-	winpr_HexDump(context->ChannelBindingToken, ChannelBindingTokenLength);
-
-	context->EndpointBindings.BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
-	context->EndpointBindings.Bindings = (SEC_CHANNEL_BINDINGS*) malloc(context->EndpointBindings.BindingsLength);
-	ZeroMemory(context->EndpointBindings.Bindings, context->EndpointBindings.BindingsLength);
-
-	ChannelBindings = context->EndpointBindings.Bindings;
-	ChannelBindings->cbApplicationDataLength = ChannelBindingTokenLength;
-	ChannelBindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
-
-	pChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	CopyMemory(pChannelBindingToken, context->ChannelBindingToken, ChannelBindingTokenLength);
-
-	printf("ChannelBindings\n");
-	winpr_HexDump((BYTE*) ChannelBindings, context->EndpointBindings.BindingsLength);
+	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
 
 	MD5_Init(&md5);
-	MD5_Update(&md5, (void*) context->EndpointBindings.Bindings, context->EndpointBindings.BindingsLength);
-	MD5_Final(context->ChannelBindingsHash, &md5);
 
-	printf("ChannelBindingsHash:\n");
-	winpr_HexDump(context->ChannelBindingsHash, 16);
-#endif
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
+
+	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
+
+	MD5_Final(context->ChannelBindingsHash, &md5);
+}
+
+void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
+{
+	/**
+	 * The Single_Host_Data structure allows a client to send machine-specific information
+	 * within an authentication exchange to services on the same machine. The client can
+	 * produce additional information to be processed in an implementation-specific way when
+	 * the client and server are on the same host. If the server and client platforms are
+	 * different or if they are on different hosts, then the information MUST be ignored.
+	 * Any fields after the MachineID field MUST be ignored on receipt.
+	 */
+
+	context->SingleHostData.Size = 48;
+	context->SingleHostData.Z4 = 0;
+	context->SingleHostData.DataPresent = 1;
+	context->SingleHostData.CustomData = SECURITY_MANDATORY_MEDIUM_RID;
+	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
 }
 
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
@@ -360,9 +309,16 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING DnsDomainName;
 	UNICODE_STRING DnsComputerName;
 
+	NbDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
+
+	NbComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
+
+	DnsDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
+
+	DnsComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
 
 	AvPairsCount = 5;
@@ -452,8 +408,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
-	//AvPairsCount++; /* MsvAvRestrictions */
-	//AvPairsValueLength += 48;
+	if (context->SendSingleHostData)
+	{
+		AvPairsCount++; /* MsvAvSingleHost */
+		ntlm_compute_single_host_data(context);
+		AvPairsValueLength += context->SingleHostData.Size;
+	}
 
 	/**
 	 * Extended Protection for Authentication:
@@ -510,6 +470,12 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	{
 		UINT32 flags = MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK;
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
+	}
+
+	if (context->SendSingleHostData)
+	{
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
+				(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
 	}
 
 	if (!context->SuppressExtendedProtection)

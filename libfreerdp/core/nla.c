@@ -1158,17 +1158,20 @@ int credssp_recv(rdpCredssp* credssp)
 	}
 
 	/* TSRequest */
-	ber_read_sequence_tag(s, &length);
-	ber_read_contextual_tag(s, 0, &length, TRUE);
-	ber_read_integer(s, &version);
+	if(!ber_read_sequence_tag(s, &length) ||
+		!ber_read_contextual_tag(s, 0, &length, TRUE) ||
+		!ber_read_integer(s, &version))
+		return -1;
 
 	/* [1] negoTokens (NegoData) */
 	if (ber_read_contextual_tag(s, 1, &length, TRUE) != FALSE)
 	{
-		ber_read_sequence_tag(s, &length); /* SEQUENCE OF NegoDataItem */
-		ber_read_sequence_tag(s, &length); /* NegoDataItem */
-		ber_read_contextual_tag(s, 0, &length, TRUE); /* [0] negoToken */
-		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
+		if (!ber_read_sequence_tag(s, &length) || /* SEQUENCE OF NegoDataItem */
+			!ber_read_sequence_tag(s, &length) || /* NegoDataItem */
+			!ber_read_contextual_tag(s, 0, &length, TRUE) || /* [0] negoToken */
+			!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
+			stream_get_left(s) < length)
+			return -1;
 		sspi_SecBufferAlloc(&credssp->negoToken, length);
 		stream_read(s, credssp->negoToken.pvBuffer, length);
 		credssp->negoToken.cbBuffer = length;
@@ -1177,7 +1180,9 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [2] authInfo (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 2, &length, TRUE) != FALSE)
 	{
-		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
+		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
+			stream_get_left(s) < length)
+			return -1;
 		sspi_SecBufferAlloc(&credssp->authInfo, length);
 		stream_read(s, credssp->authInfo.pvBuffer, length);
 		credssp->authInfo.cbBuffer = length;
@@ -1186,7 +1191,9 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 3, &length, TRUE) != FALSE)
 	{
-		ber_read_octet_string_tag(s, &length); /* OCTET STRING */
+		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
+			stream_get_left(s) < length)
+			return -1;
 		sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
 		stream_read(s, credssp->pubKeyAuth.pvBuffer, length);
 		credssp->pubKeyAuth.cbBuffer = length;

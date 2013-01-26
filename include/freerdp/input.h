@@ -74,11 +74,19 @@ struct rdp_input
 	UINT32 paddingB[32 - 21]; /* 21 */
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
 FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
 FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode);
 FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
 FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_INPUT_H */

@@ -26,7 +26,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#if (!(defined _WIN32 && (_WIN32_WINNT < 0x0600)))
+#ifndef _WIN32
 
 typedef DWORD TP_VERSION, *PTP_VERSION;
 
@@ -55,6 +55,33 @@ typedef struct _TP_CLEANUP_GROUP TP_CLEANUP_GROUP, *PTP_CLEANUP_GROUP;
 
 typedef VOID (*PTP_CLEANUP_GROUP_CANCEL_CALLBACK)(PVOID ObjectContext, PVOID CleanupContext);
 
+typedef struct _TP_CALLBACK_ENVIRON_V1
+{
+	TP_VERSION Version;
+	PTP_POOL Pool;
+	PTP_CLEANUP_GROUP CleanupGroup;
+	PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
+	PVOID RaceDll;
+	struct _ACTIVATION_CONTEXT* ActivationContext;
+	PTP_SIMPLE_CALLBACK FinalizationCallback;
+
+	union
+	{
+		DWORD Flags;
+		struct
+		{
+			DWORD LongFunction:1;
+			DWORD Persistent:1;
+			DWORD Private:30;
+		} s;
+	} u;
+} TP_CALLBACK_ENVIRON_V1;
+
+#endif
+
+/* Non-Windows and pre Windows 7 */
+#if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)))
+
 typedef struct _TP_CALLBACK_ENVIRON_V3
 {
 	TP_VERSION Version;
@@ -81,26 +108,29 @@ typedef struct _TP_CALLBACK_ENVIRON_V3
 	DWORD Size;
 } TP_CALLBACK_ENVIRON_V3;
 
-typedef TP_CALLBACK_ENVIRON_V3 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
+//typedef TP_CALLBACK_ENVIRON_V3 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
+
+#endif
 
 typedef struct _TP_WORK TP_WORK, *PTP_WORK;
-
-typedef VOID (*PTP_WORK_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work);
-
 typedef struct _TP_TIMER TP_TIMER, *PTP_TIMER;
 
-typedef VOID (*PTP_TIMER_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_TIMER Timer);
-
 typedef DWORD TP_WAIT_RESULT;
-
 typedef struct _TP_WAIT TP_WAIT, *PTP_WAIT;
-
-typedef VOID (*PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WAIT Wait, TP_WAIT_RESULT WaitResult);
 
 typedef struct _TP_IO TP_IO, *PTP_IO;
 
+typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
+
+#ifndef _WIN32
+
+typedef VOID (*PTP_WORK_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work);
+typedef VOID (*PTP_TIMER_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_TIMER Timer);
+typedef VOID (*PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WAIT Wait, TP_WAIT_RESULT WaitResult);
 typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PVOID Overlapped,
 		ULONG IoResult, ULONG_PTR NumberOfBytesTransferred, PTP_IO Io);
+
+#endif
 
 /* Synch */
 
@@ -136,15 +166,15 @@ WINPR_API VOID WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendingCallb
 /* Clean-up Group */
 
 WINPR_API PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup();
-VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
-VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg);
+WINPR_API VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
+WINPR_API VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg);
 
 /* Pool */
 
 WINPR_API PTP_POOL CreateThreadpool(PVOID reserved);
 WINPR_API VOID CloseThreadpool(PTP_POOL ptpp);
-WINPR_API VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 WINPR_API BOOL SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic);
+WINPR_API VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 
 /* Callback Environment */
 
@@ -170,7 +200,7 @@ WINPR_API VOID LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci
 WINPR_API VOID FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
 WINPR_API VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
 
-#endif
+/* Dummy */
 
 WINPR_API void winpr_pool_dummy();
 
