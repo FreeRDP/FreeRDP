@@ -676,7 +676,9 @@ struct rdp_settings
 	ALIGN64 BOOL MouseMotion; /* 1541 */
 	ALIGN64 char* WindowTitle; /* 1542 */
 	ALIGN64 UINT64 ParentWindowId; /* 1543 */
-	UINT64 padding1600[1600 - 1544]; /* 1544 */
+	ALIGN64 BOOL AsyncInput; /* 1544 */
+	ALIGN64 BOOL AsyncUpdate; /* 1545 */
+	UINT64 padding1600[1600 - 1546]; /* 1546 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */

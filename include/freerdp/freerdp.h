@@ -103,8 +103,6 @@ struct rdp_context
 	UINT32 paddingC[64 - 41]; /* 41 */
 };
 
-#define FREERDP_FLAG_ASYNC_UPDATE	0x00000001
-
 /** Defines the options for a given instance of RDP connection.
  *  This is built by the client and given to the FreeRDP library to create the connection
  *  with the expected options.
@@ -122,9 +120,7 @@ struct rdp_freerdp
 							  Can be allocated by a call to freerdp_context_new().
 							  Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
 
-	UINT32 flags; /**< (offset 1) context flags, can be set prior to freerdp_context_new() */
-
-	UINT32 paddingA[16 - 2]; /* 2 */
+	UINT32 paddingA[16 - 1]; /* 1 */
 
 	rdpInput* input; /* (offset 16)
 						Input handle for the connection.

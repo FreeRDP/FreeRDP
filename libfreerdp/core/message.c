@@ -934,185 +934,6 @@ static void message_PointerCached(rdpContext* context, POINTER_CACHED_UPDATE* po
 
 /* Message Queue */
 
-void message_register_interface(rdpMessage* message, rdpUpdate* update)
-{
-	rdpPrimaryUpdate* primary;
-	rdpSecondaryUpdate* secondary;
-	rdpAltSecUpdate* altsec;
-	rdpWindowUpdate* window;
-	rdpPointerUpdate* pointer;
-
-	primary = update->primary;
-	secondary = update->secondary;
-	altsec = update->altsec;
-	window = update->window;
-	pointer = update->pointer;
-
-	/* Update */
-
-	message->BeginPaint = update->BeginPaint;
-	message->EndPaint = update->EndPaint;
-	message->SetBounds = update->SetBounds;
-	message->Synchronize = update->Synchronize;
-	message->DesktopResize = update->DesktopResize;
-	message->BitmapUpdate = update->BitmapUpdate;
-	message->Palette = update->Palette;
-	message->PlaySound = update->PlaySound;
-	message->RefreshRect = update->RefreshRect;
-	message->SuppressOutput = update->SuppressOutput;
-	message->SurfaceCommand = update->SurfaceCommand;
-	message->SurfaceBits = update->SurfaceBits;
-	message->SurfaceFrameMarker = update->SurfaceFrameMarker;
-	message->SurfaceFrameAcknowledge = update->SurfaceFrameAcknowledge;
-
-	update->BeginPaint = message_BeginPaint;
-	update->EndPaint = message_EndPaint;
-	update->SetBounds = message_SetBounds;
-	update->Synchronize = message_Synchronize;
-	update->DesktopResize = message_DesktopResize;
-	update->BitmapUpdate = message_BitmapUpdate;
-	update->Palette = message_Palette;
-	update->PlaySound = message_PlaySound;
-	update->RefreshRect = message_RefreshRect;
-	update->SuppressOutput = message_SuppressOutput;
-	update->SurfaceCommand = message_SurfaceCommand;
-	update->SurfaceBits = message_SurfaceBits;
-	update->SurfaceFrameMarker = message_SurfaceFrameMarker;
-	update->SurfaceFrameAcknowledge = message_SurfaceFrameAcknowledge;
-
-	/* Primary Update */
-
-	message->DstBlt = primary->DstBlt;
-	message->PatBlt = primary->PatBlt;
-	message->ScrBlt = primary->ScrBlt;
-	message->OpaqueRect = primary->OpaqueRect;
-	message->DrawNineGrid = primary->DrawNineGrid;
-	message->MultiDstBlt = primary->MultiDstBlt;
-	message->MultiPatBlt = primary->MultiPatBlt;
-	message->MultiScrBlt = primary->MultiScrBlt;
-	message->MultiOpaqueRect = primary->MultiOpaqueRect;
-	message->MultiDrawNineGrid = primary->MultiDrawNineGrid;
-	message->LineTo = primary->LineTo;
-	message->Polyline = primary->Polyline;
-	message->MemBlt = primary->MemBlt;
-	message->Mem3Blt = primary->Mem3Blt;
-	message->SaveBitmap = primary->SaveBitmap;
-	message->GlyphIndex = primary->GlyphIndex;
-	message->FastIndex = primary->FastIndex;
-	message->FastGlyph = primary->FastGlyph;
-	message->PolygonSC = primary->PolygonSC;
-	message->PolygonCB = primary->PolygonCB;
-	message->EllipseSC = primary->EllipseSC;
-	message->EllipseCB = primary->EllipseCB;
-
-	primary->DstBlt = message_DstBlt;
-	primary->PatBlt = message_PatBlt;
-	primary->ScrBlt = message_ScrBlt;
-	primary->OpaqueRect = message_OpaqueRect;
-	primary->DrawNineGrid = message_DrawNineGrid;
-	primary->MultiDstBlt = message_MultiDstBlt;
-	primary->MultiPatBlt = message_MultiPatBlt;
-	primary->MultiScrBlt = message_MultiScrBlt;
-	primary->MultiOpaqueRect = message_MultiOpaqueRect;
-	primary->MultiDrawNineGrid = message_MultiDrawNineGrid;
-	primary->LineTo = message_LineTo;
-	primary->Polyline = message_Polyline;
-	primary->MemBlt = message_MemBlt;
-	primary->Mem3Blt = message_Mem3Blt;
-	primary->SaveBitmap = message_SaveBitmap;
-	primary->GlyphIndex = message_GlyphIndex;
-	primary->FastIndex = message_FastIndex;
-	primary->FastGlyph = message_FastGlyph;
-	primary->PolygonSC = message_PolygonSC;
-	primary->PolygonCB = message_PolygonCB;
-	primary->EllipseSC = message_EllipseSC;
-	primary->EllipseCB = message_EllipseCB;
-
-	/* Secondary Update */
-
-	message->CacheBitmap = secondary->CacheBitmap;
-	message->CacheBitmapV2 = secondary->CacheBitmapV2;
-	message->CacheBitmapV3 = secondary->CacheBitmapV3;
-	message->CacheColorTable = secondary->CacheColorTable;
-	message->CacheGlyph = secondary->CacheGlyph;
-	message->CacheGlyphV2 = secondary->CacheGlyphV2;
-	message->CacheBrush = secondary->CacheBrush;
-
-	secondary->CacheBitmap = message_CacheBitmap;
-	secondary->CacheBitmapV2 = message_CacheBitmapV2;
-	secondary->CacheBitmapV3 = message_CacheBitmapV3;
-	secondary->CacheColorTable = message_CacheColorTable;
-	secondary->CacheGlyph = message_CacheGlyph;
-	secondary->CacheGlyphV2 = message_CacheGlyphV2;
-	secondary->CacheBrush = message_CacheBrush;
-
-	/* Alternate Secondary Update */
-
-	message->CreateOffscreenBitmap = altsec->CreateOffscreenBitmap;
-	message->SwitchSurface = altsec->SwitchSurface;
-	message->CreateNineGridBitmap = altsec->CreateNineGridBitmap;
-	message->FrameMarker = altsec->FrameMarker;
-	message->StreamBitmapFirst = altsec->StreamBitmapFirst;
-	message->StreamBitmapNext = altsec->StreamBitmapNext;
-	message->DrawGdiPlusFirst = altsec->DrawGdiPlusFirst;
-	message->DrawGdiPlusNext = altsec->DrawGdiPlusNext;
-	message->DrawGdiPlusEnd = altsec->DrawGdiPlusEnd;
-	message->DrawGdiPlusCacheFirst = altsec->DrawGdiPlusCacheFirst;
-	message->DrawGdiPlusCacheNext = altsec->DrawGdiPlusCacheNext;
-	message->DrawGdiPlusCacheEnd = altsec->DrawGdiPlusCacheEnd;
-
-	altsec->CreateOffscreenBitmap = message_CreateOffscreenBitmap;
-	altsec->SwitchSurface = message_SwitchSurface;
-	altsec->CreateNineGridBitmap = message_CreateNineGridBitmap;
-	altsec->FrameMarker = message_FrameMarker;
-	altsec->StreamBitmapFirst = message_StreamBitmapFirst;
-	altsec->StreamBitmapNext = message_StreamBitmapNext;
-	altsec->DrawGdiPlusFirst = message_DrawGdiPlusFirst;
-	altsec->DrawGdiPlusNext = message_DrawGdiPlusNext;
-	altsec->DrawGdiPlusEnd = message_DrawGdiPlusEnd;
-	altsec->DrawGdiPlusCacheFirst = message_DrawGdiPlusCacheFirst;
-	altsec->DrawGdiPlusCacheNext = message_DrawGdiPlusCacheNext;
-	altsec->DrawGdiPlusCacheEnd = message_DrawGdiPlusCacheEnd;
-
-	/* Window Update */
-
-	message->WindowCreate = window->WindowCreate;
-	message->WindowUpdate = window->WindowUpdate;
-	message->WindowIcon = window->WindowIcon;
-	message->WindowCachedIcon = window->WindowCachedIcon;
-	message->WindowDelete = window->WindowDelete;
-	message->NotifyIconCreate = window->NotifyIconCreate;
-	message->NotifyIconUpdate = window->NotifyIconUpdate;
-	message->NotifyIconDelete = window->NotifyIconDelete;
-	message->MonitoredDesktop = window->MonitoredDesktop;
-	message->NonMonitoredDesktop = window->NonMonitoredDesktop;
-
-	window->WindowCreate = message_WindowCreate;
-	window->WindowUpdate = message_WindowUpdate;
-	window->WindowIcon = message_WindowIcon;
-	window->WindowCachedIcon = message_WindowCachedIcon;
-	window->WindowDelete = message_WindowDelete;
-	window->NotifyIconCreate = message_NotifyIconCreate;
-	window->NotifyIconUpdate = message_NotifyIconUpdate;
-	window->NotifyIconDelete = message_NotifyIconDelete;
-	window->MonitoredDesktop = message_MonitoredDesktop;
-	window->NonMonitoredDesktop = message_NonMonitoredDesktop;
-
-	/* Pointer Update */
-
-	message->PointerPosition = pointer->PointerPosition;
-	message->PointerSystem = pointer->PointerSystem;
-	message->PointerColor = pointer->PointerColor;
-	message->PointerNew = pointer->PointerNew;
-	message->PointerCached = pointer->PointerCached;
-
-	pointer->PointerPosition = message_PointerPosition;
-	pointer->PointerSystem = message_PointerSystem;
-	pointer->PointerColor = message_PointerColor;
-	pointer->PointerNew = message_PointerNew;
-	pointer->PointerCached = message_PointerCached;
-}
-
 int message_process_update_class(rdpMessage* update, wMessage* msg, int type)
 {
 	int status = 0;
@@ -1724,11 +1545,197 @@ int message_process_pending_updates(rdpUpdate* update)
 	return 0;
 }
 
-rdpMessage* message_new()
+void message_register_interface(rdpMessage* message, rdpUpdate* update)
+{
+	rdpPrimaryUpdate* primary;
+	rdpSecondaryUpdate* secondary;
+	rdpAltSecUpdate* altsec;
+	rdpWindowUpdate* window;
+	rdpPointerUpdate* pointer;
+
+	primary = update->primary;
+	secondary = update->secondary;
+	altsec = update->altsec;
+	window = update->window;
+	pointer = update->pointer;
+
+	/* Update */
+
+	message->BeginPaint = update->BeginPaint;
+	message->EndPaint = update->EndPaint;
+	message->SetBounds = update->SetBounds;
+	message->Synchronize = update->Synchronize;
+	message->DesktopResize = update->DesktopResize;
+	message->BitmapUpdate = update->BitmapUpdate;
+	message->Palette = update->Palette;
+	message->PlaySound = update->PlaySound;
+	message->RefreshRect = update->RefreshRect;
+	message->SuppressOutput = update->SuppressOutput;
+	message->SurfaceCommand = update->SurfaceCommand;
+	message->SurfaceBits = update->SurfaceBits;
+	message->SurfaceFrameMarker = update->SurfaceFrameMarker;
+	message->SurfaceFrameAcknowledge = update->SurfaceFrameAcknowledge;
+
+	update->BeginPaint = message_BeginPaint;
+	update->EndPaint = message_EndPaint;
+	update->SetBounds = message_SetBounds;
+	update->Synchronize = message_Synchronize;
+	update->DesktopResize = message_DesktopResize;
+	update->BitmapUpdate = message_BitmapUpdate;
+	update->Palette = message_Palette;
+	update->PlaySound = message_PlaySound;
+	update->RefreshRect = message_RefreshRect;
+	update->SuppressOutput = message_SuppressOutput;
+	update->SurfaceCommand = message_SurfaceCommand;
+	update->SurfaceBits = message_SurfaceBits;
+	update->SurfaceFrameMarker = message_SurfaceFrameMarker;
+	update->SurfaceFrameAcknowledge = message_SurfaceFrameAcknowledge;
+
+	/* Primary Update */
+
+	message->DstBlt = primary->DstBlt;
+	message->PatBlt = primary->PatBlt;
+	message->ScrBlt = primary->ScrBlt;
+	message->OpaqueRect = primary->OpaqueRect;
+	message->DrawNineGrid = primary->DrawNineGrid;
+	message->MultiDstBlt = primary->MultiDstBlt;
+	message->MultiPatBlt = primary->MultiPatBlt;
+	message->MultiScrBlt = primary->MultiScrBlt;
+	message->MultiOpaqueRect = primary->MultiOpaqueRect;
+	message->MultiDrawNineGrid = primary->MultiDrawNineGrid;
+	message->LineTo = primary->LineTo;
+	message->Polyline = primary->Polyline;
+	message->MemBlt = primary->MemBlt;
+	message->Mem3Blt = primary->Mem3Blt;
+	message->SaveBitmap = primary->SaveBitmap;
+	message->GlyphIndex = primary->GlyphIndex;
+	message->FastIndex = primary->FastIndex;
+	message->FastGlyph = primary->FastGlyph;
+	message->PolygonSC = primary->PolygonSC;
+	message->PolygonCB = primary->PolygonCB;
+	message->EllipseSC = primary->EllipseSC;
+	message->EllipseCB = primary->EllipseCB;
+
+	primary->DstBlt = message_DstBlt;
+	primary->PatBlt = message_PatBlt;
+	primary->ScrBlt = message_ScrBlt;
+	primary->OpaqueRect = message_OpaqueRect;
+	primary->DrawNineGrid = message_DrawNineGrid;
+	primary->MultiDstBlt = message_MultiDstBlt;
+	primary->MultiPatBlt = message_MultiPatBlt;
+	primary->MultiScrBlt = message_MultiScrBlt;
+	primary->MultiOpaqueRect = message_MultiOpaqueRect;
+	primary->MultiDrawNineGrid = message_MultiDrawNineGrid;
+	primary->LineTo = message_LineTo;
+	primary->Polyline = message_Polyline;
+	primary->MemBlt = message_MemBlt;
+	primary->Mem3Blt = message_Mem3Blt;
+	primary->SaveBitmap = message_SaveBitmap;
+	primary->GlyphIndex = message_GlyphIndex;
+	primary->FastIndex = message_FastIndex;
+	primary->FastGlyph = message_FastGlyph;
+	primary->PolygonSC = message_PolygonSC;
+	primary->PolygonCB = message_PolygonCB;
+	primary->EllipseSC = message_EllipseSC;
+	primary->EllipseCB = message_EllipseCB;
+
+	/* Secondary Update */
+
+	message->CacheBitmap = secondary->CacheBitmap;
+	message->CacheBitmapV2 = secondary->CacheBitmapV2;
+	message->CacheBitmapV3 = secondary->CacheBitmapV3;
+	message->CacheColorTable = secondary->CacheColorTable;
+	message->CacheGlyph = secondary->CacheGlyph;
+	message->CacheGlyphV2 = secondary->CacheGlyphV2;
+	message->CacheBrush = secondary->CacheBrush;
+
+	secondary->CacheBitmap = message_CacheBitmap;
+	secondary->CacheBitmapV2 = message_CacheBitmapV2;
+	secondary->CacheBitmapV3 = message_CacheBitmapV3;
+	secondary->CacheColorTable = message_CacheColorTable;
+	secondary->CacheGlyph = message_CacheGlyph;
+	secondary->CacheGlyphV2 = message_CacheGlyphV2;
+	secondary->CacheBrush = message_CacheBrush;
+
+	/* Alternate Secondary Update */
+
+	message->CreateOffscreenBitmap = altsec->CreateOffscreenBitmap;
+	message->SwitchSurface = altsec->SwitchSurface;
+	message->CreateNineGridBitmap = altsec->CreateNineGridBitmap;
+	message->FrameMarker = altsec->FrameMarker;
+	message->StreamBitmapFirst = altsec->StreamBitmapFirst;
+	message->StreamBitmapNext = altsec->StreamBitmapNext;
+	message->DrawGdiPlusFirst = altsec->DrawGdiPlusFirst;
+	message->DrawGdiPlusNext = altsec->DrawGdiPlusNext;
+	message->DrawGdiPlusEnd = altsec->DrawGdiPlusEnd;
+	message->DrawGdiPlusCacheFirst = altsec->DrawGdiPlusCacheFirst;
+	message->DrawGdiPlusCacheNext = altsec->DrawGdiPlusCacheNext;
+	message->DrawGdiPlusCacheEnd = altsec->DrawGdiPlusCacheEnd;
+
+	altsec->CreateOffscreenBitmap = message_CreateOffscreenBitmap;
+	altsec->SwitchSurface = message_SwitchSurface;
+	altsec->CreateNineGridBitmap = message_CreateNineGridBitmap;
+	altsec->FrameMarker = message_FrameMarker;
+	altsec->StreamBitmapFirst = message_StreamBitmapFirst;
+	altsec->StreamBitmapNext = message_StreamBitmapNext;
+	altsec->DrawGdiPlusFirst = message_DrawGdiPlusFirst;
+	altsec->DrawGdiPlusNext = message_DrawGdiPlusNext;
+	altsec->DrawGdiPlusEnd = message_DrawGdiPlusEnd;
+	altsec->DrawGdiPlusCacheFirst = message_DrawGdiPlusCacheFirst;
+	altsec->DrawGdiPlusCacheNext = message_DrawGdiPlusCacheNext;
+	altsec->DrawGdiPlusCacheEnd = message_DrawGdiPlusCacheEnd;
+
+	/* Window Update */
+
+	message->WindowCreate = window->WindowCreate;
+	message->WindowUpdate = window->WindowUpdate;
+	message->WindowIcon = window->WindowIcon;
+	message->WindowCachedIcon = window->WindowCachedIcon;
+	message->WindowDelete = window->WindowDelete;
+	message->NotifyIconCreate = window->NotifyIconCreate;
+	message->NotifyIconUpdate = window->NotifyIconUpdate;
+	message->NotifyIconDelete = window->NotifyIconDelete;
+	message->MonitoredDesktop = window->MonitoredDesktop;
+	message->NonMonitoredDesktop = window->NonMonitoredDesktop;
+
+	window->WindowCreate = message_WindowCreate;
+	window->WindowUpdate = message_WindowUpdate;
+	window->WindowIcon = message_WindowIcon;
+	window->WindowCachedIcon = message_WindowCachedIcon;
+	window->WindowDelete = message_WindowDelete;
+	window->NotifyIconCreate = message_NotifyIconCreate;
+	window->NotifyIconUpdate = message_NotifyIconUpdate;
+	window->NotifyIconDelete = message_NotifyIconDelete;
+	window->MonitoredDesktop = message_MonitoredDesktop;
+	window->NonMonitoredDesktop = message_NonMonitoredDesktop;
+
+	/* Pointer Update */
+
+	message->PointerPosition = pointer->PointerPosition;
+	message->PointerSystem = pointer->PointerSystem;
+	message->PointerColor = pointer->PointerColor;
+	message->PointerNew = pointer->PointerNew;
+	message->PointerCached = pointer->PointerCached;
+
+	pointer->PointerPosition = message_PointerPosition;
+	pointer->PointerSystem = message_PointerSystem;
+	pointer->PointerColor = message_PointerColor;
+	pointer->PointerNew = message_PointerNew;
+	pointer->PointerCached = message_PointerCached;
+}
+
+rdpMessage* message_new(rdpUpdate* update)
 {
 	rdpMessage* message;
 
 	message = (rdpMessage*) malloc(sizeof(rdpMessage));
+
+	if (message)
+	{
+		message->update = update;
+		update->queue = MessageQueue_New();
+		message_register_interface(message, update);
+	}
 
 	return message;
 }
@@ -1737,6 +1744,7 @@ void message_free(rdpMessage* message)
 {
 	if (message)
 	{
+		MessageQueue_Free(message->update->queue);
 		free(message);
 	}
 }

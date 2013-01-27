@@ -1249,7 +1249,6 @@ int main(int argc, char* argv[])
 	instance->context_size = sizeof(xfContext);
 	instance->ContextNew = (pContextNew) xf_context_new;
 	instance->ContextFree = (pContextFree) xf_context_free;
-	//instance->flags = FREERDP_FLAG_ASYNC_UPDATE;
 	freerdp_context_new(instance);
 
 	instance->context->argc = argc;

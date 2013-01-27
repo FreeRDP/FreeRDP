@@ -415,8 +415,10 @@ void update_reset_state(rdpUpdate* update)
 
 void update_post_connect(rdpUpdate* update)
 {
+	update->asynchronous = update->context->settings->AsyncUpdate;
+
 	if (update->asynchronous)
-		message_register_interface(update->message, update);
+		update->message = message_new(update);
 
 	update->altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
@@ -764,13 +766,6 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->SuppressOutput = update_send_suppress_output;
 
 		update->initialState = TRUE;
-		update->asynchronous = (rdp->instance->flags & FREERDP_FLAG_ASYNC_UPDATE) ? TRUE : FALSE;
-
-		if (update->asynchronous)
-		{
-			update->queue = MessageQueue_New();
-			update->message = message_new();
-		}
 	}
 
 	return update;
@@ -795,10 +790,7 @@ void update_free(rdpUpdate* update)
 		free(update->window);
 
 		if (update->asynchronous)
-		{
 			message_free(update->message);
-			MessageQueue_Free(update->queue);
-		}
 
 		free(update);
 	}
