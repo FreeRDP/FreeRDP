@@ -212,8 +212,9 @@ BOOL rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	UINT16 desktopResizeFlag;
 	UINT16 preferredBitsPerPixel;
 
-	if(length < 28)
+	if (length < 28)
 		return FALSE;
+
 	stream_read_UINT16(s, preferredBitsPerPixel); /* preferredBitsPerPixel (2 bytes) */
 	stream_seek_UINT16(s); /* receive1BitPerPixel (2 bytes) */
 	stream_seek_UINT16(s); /* receive4BitsPerPixel (2 bytes) */
@@ -228,7 +229,7 @@ BOOL rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 	stream_seek_UINT16(s); /* multipleRectangleSupport (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
 
-	if (!settings->ServerMode && preferredBitsPerPixel != settings->ColorDepth)
+	if (!settings->ServerMode && (preferredBitsPerPixel != settings->ColorDepth))
 	{
 		/* The client must respect the actual color depth used by the server */
 		settings->ColorDepth = preferredBitsPerPixel;
@@ -243,6 +244,7 @@ BOOL rdp_read_bitmap_capability_set(STREAM* s, UINT16 length, rdpSettings* setti
 		settings->DesktopWidth = desktopWidth;
 		settings->DesktopHeight = desktopHeight;
 	}
+
 	return TRUE;
 }
 
@@ -1546,8 +1548,9 @@ BOOL rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
 
-	if(length < 5)
+	if (length < 5)
 		return FALSE;
+
 	stream_read_BYTE(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
 
@@ -1560,8 +1563,9 @@ BOOL rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 
 	while (bitmapCodecCount > 0)
 	{
-		if(remainingLength < 19)
+		if (remainingLength < 19)
 			return FALSE;
+
 		if (settings->ServerMode && strncmp((char*) stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
 		{
 			stream_seek(s, 16); /* codecGUID (16 bytes) */
@@ -1582,7 +1586,8 @@ BOOL rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 
 		stream_read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
 		remainingLength -= 19;
-		if(remainingLength < codecPropertiesLength)
+
+		if (remainingLength < codecPropertiesLength)
 			return FALSE;
 
 		stream_seek(s, codecPropertiesLength); /* codecProperties */
