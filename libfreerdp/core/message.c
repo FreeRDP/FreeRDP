@@ -460,7 +460,7 @@ static void message_CacheBitmapV2(rdpContext* context, CACHE_BITMAP_V2_ORDER* ca
 	CopyMemory(wParam, cacheBitmapV2Order, sizeof(CACHE_BITMAP_V2_ORDER));
 
 	wParam->bitmapDataStream = (BYTE*) malloc(wParam->bitmapLength);
-	CopyMemory(wParam->bitmapDataStream, cacheBitmapV2Order, wParam->bitmapLength);
+	CopyMemory(wParam->bitmapDataStream, cacheBitmapV2Order->bitmapDataStream, wParam->bitmapLength);
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheBitmapV2), (void*) wParam, NULL);
@@ -496,17 +496,10 @@ static void message_CacheColorTable(rdpContext* context, CACHE_COLOR_TABLE_ORDER
 
 static void message_CacheGlyph(rdpContext* context, CACHE_GLYPH_ORDER* cacheGlyphOrder)
 {
-	int index;
 	CACHE_GLYPH_ORDER* wParam;
 
 	wParam = (CACHE_GLYPH_ORDER*) malloc(sizeof(CACHE_GLYPH_ORDER));
 	CopyMemory(wParam, cacheGlyphOrder, sizeof(CACHE_GLYPH_ORDER));
-
-	for (index = 0; index < wParam->cGlyphs; index++)
-	{
-		wParam->glyphData[index] = (GLYPH_DATA*) malloc(sizeof(GLYPH_DATA));
-		CopyMemory(wParam->glyphData[index], cacheGlyphOrder->glyphData[index], sizeof(GLYPH_DATA));
-	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheGlyph), (void*) wParam, NULL);
@@ -514,17 +507,10 @@ static void message_CacheGlyph(rdpContext* context, CACHE_GLYPH_ORDER* cacheGlyp
 
 static void message_CacheGlyphV2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
 {
-	int index;
 	CACHE_GLYPH_V2_ORDER* wParam;
 
 	wParam = (CACHE_GLYPH_V2_ORDER*) malloc(sizeof(CACHE_GLYPH_V2_ORDER));
 	CopyMemory(wParam, cacheGlyphV2Order, sizeof(CACHE_GLYPH_V2_ORDER));
-
-	for (index = 0; index < wParam->cGlyphs; index++)
-	{
-		wParam->glyphData[index] = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
-		CopyMemory(wParam->glyphData[index], cacheGlyphV2Order->glyphData[index], sizeof(GLYPH_DATA_V2));
-	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheGlyphV2), (void*) wParam, NULL);
@@ -536,9 +522,6 @@ static void message_CacheBrush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrus
 
 	wParam = (CACHE_BRUSH_ORDER*) malloc(sizeof(CACHE_BRUSH_ORDER));
 	CopyMemory(wParam, cacheBrushOrder, sizeof(CACHE_BRUSH_ORDER));
-
-	//wParam->data = (BYTE*) malloc(wParam->length);
-	//CopyMemory(wParam->data, cacheBrushOrder->data, wParam->length);
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheBrush), (void*) wParam, NULL);
@@ -1192,7 +1175,7 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 			{
 				CACHE_BITMAP_V2_ORDER* wParam = (CACHE_BITMAP_V2_ORDER*) msg->wParam;
 
-				//free(wParam->bitmapDataStream);
+				free(wParam->bitmapDataStream);
 				free(wParam);
 			}
 			break;
@@ -1220,12 +1203,7 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 		case SecondaryUpdate_CacheGlyph:
 			IFCALL(update->CacheGlyph, msg->context, (CACHE_GLYPH_ORDER*) msg->wParam);
 			{
-				int index;
 				CACHE_GLYPH_ORDER* wParam = (CACHE_GLYPH_ORDER*) msg->wParam;
-
-				for (index = 0; index < wParam->cGlyphs; index++)
-					free(wParam->glyphData[index]);
-
 				free(wParam);
 			}
 			break;
@@ -1233,12 +1211,7 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 		case SecondaryUpdate_CacheGlyphV2:
 			IFCALL(update->CacheGlyphV2, msg->context, (CACHE_GLYPH_V2_ORDER*) msg->wParam);
 			{
-				int index;
 				CACHE_GLYPH_V2_ORDER* wParam = (CACHE_GLYPH_V2_ORDER*) msg->wParam;
-
-				for (index = 0; index < wParam->cGlyphs; index++)
-					free(wParam->glyphData[index]);
-
 				free(wParam);
 			}
 			break;
@@ -1247,8 +1220,6 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 			IFCALL(update->CacheBrush, msg->context, (CACHE_BRUSH_ORDER*) msg->wParam);
 			{
 				CACHE_BRUSH_ORDER* wParam = (CACHE_BRUSH_ORDER*) msg->wParam;
-
-				//free(wParam->data);
 				free(wParam);
 			}
 			break;
@@ -1445,8 +1416,8 @@ int message_process_pointer_update_class(rdpMessage* update, wMessage* msg, int 
 			{
 				POINTER_COLOR_UPDATE* wParam = (POINTER_COLOR_UPDATE*) msg->wParam;
 
-				//free(wParam->andMaskData);
-				//free(wParam->xorMaskData);
+				free(wParam->andMaskData);
+				free(wParam->xorMaskData);
 				free(wParam);
 			}
 			break;
@@ -1456,8 +1427,8 @@ int message_process_pointer_update_class(rdpMessage* update, wMessage* msg, int 
 			{
 				POINTER_NEW_UPDATE* wParam = (POINTER_NEW_UPDATE*) msg->wParam;
 
-				//free(wParam->colorPtrAttr.andMaskData);
-				//free(wParam->colorPtrAttr.xorMaskData);
+				free(wParam->colorPtrAttr.andMaskData);
+				free(wParam->colorPtrAttr.xorMaskData);
 				free(wParam);
 			}
 			break;

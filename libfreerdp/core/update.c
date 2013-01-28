@@ -243,7 +243,12 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 	{
 		if (stream_get_left(s) < pointer_color->lengthXorMask)
 			return FALSE;
-		pointer_color->xorMaskData = (BYTE*) malloc(pointer_color->lengthXorMask);
+
+		if (!pointer_color->xorMaskData)
+			pointer_color->xorMaskData = malloc(pointer_color->lengthXorMask);
+		else
+			pointer_color->xorMaskData = realloc(pointer_color->xorMaskData, pointer_color->lengthXorMask);
+
 		stream_read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
 	}
 
@@ -251,12 +256,18 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 	{
 		if (stream_get_left(s) < pointer_color->lengthAndMask)
 			return FALSE;
-		pointer_color->andMaskData = (BYTE*) malloc(pointer_color->lengthAndMask);
+
+		if (!pointer_color->andMaskData)
+			pointer_color->andMaskData = malloc(pointer_color->lengthAndMask);
+		else
+			pointer_color->andMaskData = realloc(pointer_color->andMaskData, pointer_color->lengthAndMask);
+
 		stream_read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
 
 	if (stream_get_left(s) > 0)
 		stream_seek_BYTE(s); /* pad (1 byte) */
+
 	return TRUE;
 }
 
