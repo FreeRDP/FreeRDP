@@ -199,6 +199,21 @@ int freerdp_process_messages(freerdp* instance)
 	return update_process_messages(instance->update);
 }
 
+HANDLE freerdp_get_input_queue_event_handle(freerdp* instance)
+{
+	HANDLE event = NULL;
+
+	if (instance->input->queue)
+		event = MessageQueue_Event(instance->input->queue);
+
+	return event;
+}
+
+int freerdp_process_input(freerdp* instance)
+{
+	return input_process_events(instance->input);
+}
+
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);

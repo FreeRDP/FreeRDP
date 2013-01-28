@@ -1545,7 +1545,7 @@ int message_process_pending_updates(rdpUpdate* update)
 	return 0;
 }
 
-void message_register_interface(rdpMessage* message, rdpUpdate* update)
+void message_register_update(rdpMessage* message, rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary;
 	rdpSecondaryUpdate* secondary;
@@ -1732,9 +1732,11 @@ rdpMessage* message_new(rdpUpdate* update)
 
 	if (message)
 	{
+		ZeroMemory(message, sizeof(rdpMessage));
+
 		message->update = update;
 		update->queue = MessageQueue_New();
-		message_register_interface(message, update);
+		message_register_update(message, update);
 	}
 
 	return message;
