@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="separator_frame_color">#9AB6CD</color>
+    <color name="separator_background_color">#C2D6E6</color>
+    <color name="separator_text_color">#164E76</color>
+    <color name="button_text_color">@android:color/black</color>
+
+    <declare-styleable name="IntEditTextPreference">
+		<attr name="bounds_min" format="integer" />
+		<attr name="bounds_max" format="integer" />
+		<attr name="bounds_default" format="integer" />
+	</declare-styleable>    
+    
+</resources>

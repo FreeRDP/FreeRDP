@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Special Keys Keyboard Layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<!--
+
+  Special Keys Keyboard layout
+  
+  Button Arrangement 
+  
+  F1  F2  F3  F4  F5  F6    
+  F7  F8  F9  F10 F11 F12
+  cur TAB INS HOM PgUp Win
+  123 Prt DEL END PgDn Ctx
+    
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="16.6%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    <Row>
+        <Key android:codes="@integer/keycode_F1" android:keyLabel="F1" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_F2" android:keyLabel="F2"/>
+        <Key android:codes="@integer/keycode_F3" android:keyLabel="F3"/>
+        <Key android:codes="@integer/keycode_F4" android:keyLabel="F4"/>
+        <Key android:codes="@integer/keycode_F5" android:keyLabel="F5"/>
+        <Key android:codes="@integer/keycode_F6" android:keyLabel="F6"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="@integer/keycode_F7" android:keyLabel="F7" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_F8" android:keyLabel="F8"/>
+        <Key android:codes="@integer/keycode_F9" android:keyLabel="F9"/>
+        <Key android:codes="@integer/keycode_F10" android:keyLabel="F10"/>
+        <Key android:codes="@integer/keycode_F11" android:keyLabel="F11"/>
+        <Key android:codes="@integer/keycode_F12" android:keyLabel="F12" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>        
+        <Key android:codes="@integer/keycode_cursor_keyboard" android:keyIcon="@drawable/sym_keyboard_arrows" android:iconPreview="@drawable/sym_keyboard_arrows_black" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_tab" android:keyLabel="Tab"/>
+        <Key android:codes="@integer/keycode_insert" android:keyLabel="Ins"/>
+        <Key android:codes="@integer/keycode_home" android:keyLabel="Hom"/>
+        <Key android:codes="@integer/keycode_pgup" android:keyLabel="PgUp"/>
+        <Key android:codes="@integer/keycode_win" android:keyIcon="@drawable/sym_keyboard_winkey" android:iconPreview="@drawable/sym_keyboard_winkey_black" android:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row android:rowEdgeFlags="bottom">        
+        <Key android:codes="@integer/keycode_numpad_keyboard" android:keyLabel="123" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_print" android:keyLabel="Print"/>
+        <Key android:codes="@integer/keycode_delete" android:keyLabel="Del"/>
+        <Key android:codes="@integer/keycode_end" android:keyLabel="End"/>
+        <Key android:codes="@integer/keycode_pgdn" android:keyLabel="PgDn"/>
+        <Key android:codes="@integer/keycode_menu" android:keyIcon="@drawable/sym_keyboard_menu" android:iconPreview="@drawable/sym_keyboard_menu_black" android:keyEdgeFlags="right"/>
+    </Row>
+</Keyboard>
+    

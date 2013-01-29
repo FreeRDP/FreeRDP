@@ -1,0 +1,158 @@
+Overview
+========
+
+The FreeRDP Android port consists of two parts: the Android Java GUI (client/Android) 
+and the JNI bindings (client/Android/jni) which are written in C and wrap FreeRDP to 
+be used with Java. The JNI is directly integrated within FreeRDPs build system.
+For building the GUI part there are three possibilities: 
+* integrated ant build - have cmake to operate ant and build everything
+* manual ant build - build JNI with cmake and invoke ant manually for the GUI
+* IDE builds using your favourite IDE - use cmake for building JNI and your IDE for GUI
+
+Manual build and IDE build are mostly used for development.
+
+
+Build requirements
+=================
+
+For the Android port some additional dependencies need to be fulfilled:
+
+* for JNI
+- Android NDK (>= r8d)
+- prebuild static openssl libraries (see below)
+
+* for the Java GUI (if build with ant)
+- ant
+- Android SDK - version >= 21
+
+FreeRDP requires openssl libraries for building but they are not part of the 
+Android NDK and therefore they need to be prebuild manually.
+Multiple source versions and builds of static openssl libraries are floating around.
+At the time of writing we have tested and used:
+https://github.com/bmiklautz/Android-external-openssl-ndk-static.
+However, any other static build should work as well.
+
+To build openssl:
+
+git clone git@github.com:bmiklautz/Android-external-openssl-ndk-static.git
+cd Android-external-openssl-ndk-static
+ndk-build # found in the Android NDK
+
+
+Building
+========
+
+Integrated build
+----------------
+
+Run the following commands in the top level freerdp directory. Don't
+forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_ANDROID_EXTERNAL_SSL_PATH
+to the absolut paths on your machine:
+
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
+-DANDROID_NDK="_your_ndk_path_here_" \
+-DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DANDROID_SDK="_your_sdk_path_here_"
+make
+
+After that you should have a client/Android/bin/aFreeRDP-debug.apk.
+
+Manual ant builds
+-----------------
+First run cmake to prepare the build and build JNI.
+Don't forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_ANDROID_EXTERNAL_SSL_PATH
+to the absolut paths on your machine:
+
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
+-DANDROID_NDK="_your_ndk_path_here_" \
+-DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DANDROID_SDK="_your_sdk_path_here_" -DANDROID_BUILD_JAVA=OFF
+make
+
+Now you can run your favourite ant command in client/Android like this:
+
+cd client/Android
+ant debug install
+
+Using an IDE
+------------
+Here is an example on how to use Eclipse for developing/building the Java GUI.
+For this the "Android development tools for Eclipse" are required (available via
+the eclipse marketplace).
+
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
+-DANDROID_NDK="_your_ndk_path_here_" \
+-DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DANDROID_BUILD_JAVA=OFF
+make
+
+Open Eclipse and choose:
+File -> Import -> General -> Existing Projects into Workspace
+
+Browse to the client/Android directory in your FreeRDP folder and click finish.
+If you get something like "Project 'aFreeRDP' is missing required source 
+folder: 'gen'" just build the project once and you are good to go.
+
+Side note: If you add -G "Eclipse CDT4 - Unix Makefiles" when running cmake
+you can also import FreeRDP into Eclipse too. Then you have one Java project and one c/c++
+project you can work on. This requires CDT to be installed in Eclipse.
+
+
+cmake variables
+===============
+
+JNI related
+-----------
+
+CMAKE_TOOLCHAIN_FILE
+* the toolchain file to use must be cmake/AndroidToolchain.cmake
+
+ANDROID_NDK (used from toolchain file)
+* absolute path to the NDK
+
+ANDROID_ABI (used from toolchain file)
+* Android ABI to build for (default is armeabi-v7a)
+
+FREERDP_ANDROID_EXTERNAL_SSL_PATH (used by FindOpenSSL)
+* absolut root path to the prebuild static openssl libraries
+
+WITH_DEBUG_ANDROID_JNI
+- enable debugging for JNI
+
+The libraries must be located in obj/local/armeabi/ or obj/local/armeabi-v7a/.
+Cmake searches in armeabi first then armeabi-v7a. It is possible to build FreeRDP
+for armeabi-v7a and link against armeabi openssl but not the other way around.
+Therefore it is suggested to build openssl for armeabi.
+
+Java GUI related
+----------------
+
+ANDROID_BUILD_JAVA (used by client/Android/CMakeLists.txt)
+* can be ON/OFF (default OFF) whether or not to build the GUI with cmake
+
+ANDROID_SDK (used by client/Android/CMakeLists.txt)
+* absolute path to the Android SDK to use
+
+This is used to generate local.properties needed by ant. Needs to be set
+if you build manually with ant or do integrated builds.
+
+
+Development
+===========
+
+Updating JNI headers
+--------------------
+
+Whenever the FreeRDP API changes or you need some extra functionality in your Java
+GUI the JNI needs to be updated. The JNI headers are generated from the compiled
+Java classes:
+
+* edit client/Android/src/com/freerdp/afreerdp/services/LibFreeRDP.Java to 
+  reflect your changes
+* build the Android Java project as described above
+* run ./scripts/regenerate_JNI_headers.sh from your FreeRDP checkout top level
+  directory
+
+After that you need to implement the functionality in client/Android/jni/android_freerdp.c and add
+the call to client/Android/jni/generated/android_freerdp_jni.c.
+After that FreeRDP and the Android package need to be rebuilt to include the latest libfreerdp-android in the package.

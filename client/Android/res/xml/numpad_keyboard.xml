@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Numpad keyboard layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<!--
+
+  Numpad Keyboard layout
+  
+  Button Arrangement 
+  
+  (   )   7   8   9   -     
+  /   *   4   5   6   +
+  Fn  Num 1   2   3   BackSp
+  Cur =   0       .   Enter
+    
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="16.6%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    <Row>
+        <Key android:codes="@integer/keycode_numpad_left_paren" android:keyLabel="(" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_numpad_right_paren" android:keyLabel=")"/>
+        <Key android:codes="@integer/keycode_numpad_7" android:keyLabel="7"/>
+        <Key android:codes="@integer/keycode_numpad_8" android:keyLabel="8"/>
+        <Key android:codes="@integer/keycode_numpad_9" android:keyLabel="9"/>
+        <Key android:codes="@integer/keycode_numpad_subtract" android:keyLabel="-"/>
+    </Row>
+    
+    <Row>
+        <Key android:codes="@integer/keycode_numpad_divide" android:keyLabel="/" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_numpad_multiply" android:keyLabel="*"/>
+        <Key android:codes="@integer/keycode_numpad_4" android:keyLabel="4"/>
+        <Key android:codes="@integer/keycode_numpad_5" android:keyLabel="5"/>
+        <Key android:codes="@integer/keycode_numpad_6" android:keyLabel="6"/>
+        <Key android:codes="@integer/keycode_numpad_add" android:keyLabel="+" android:keyEdgeFlags="right"/>
+    </Row>
+    
+    <Row>        
+        <Key android:codes="@integer/keycode_specialkeys_keyboard" android:keyLabel="Fn" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_numpad_numlock" android:keyLabel="Num"/>
+        <Key android:codes="@integer/keycode_numpad_1" android:keyLabel="1"/>
+        <Key android:codes="@integer/keycode_numpad_2" android:keyLabel="2"/>
+        <Key android:codes="@integer/keycode_numpad_3" android:keyLabel="3"/>
+        <Key android:codes="@integer/keycode_backspace" android:keyIcon="@drawable/sym_keyboard_delete" android:keyEdgeFlags="right"/>
+    </Row>
+
+    <Row android:rowEdgeFlags="bottom">        
+        <Key android:codes="@integer/keycode_cursor_keyboard" android:keyIcon="@drawable/sym_keyboard_arrows" android:iconPreview="@drawable/sym_keyboard_arrows_black" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_numpad_equals" android:keyLabel="="/>
+        <Key android:codes="@integer/keycode_numpad_0" android:keyLabel="0" android:keyWidth="33.3%p"/>
+        <Key android:codes="@integer/keycode_numpad_comma" android:keyLabel="."/>
+        <Key android:codes="@integer/keycode_numpad_enter" android:keyIcon="@drawable/sym_keyboard_return" android:keyEdgeFlags="right"/>
+    </Row>
+</Keyboard>
+    
