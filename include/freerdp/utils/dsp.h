@@ -69,9 +69,17 @@ struct _FREERDP_DSP_CONTEXT
 		const BYTE* src, int size, int channels, int block_size);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void);
 FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 #define freerdp_dsp_context_reset_adpcm(_c) memset(&_c->adpcm, 0, sizeof(ADPCM))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_DSP_H */
 

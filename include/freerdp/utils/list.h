@@ -40,6 +40,10 @@ struct _LIST
 	LIST_ITEM* tail;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API LIST* list_new(void);
 FREERDP_API void list_free(LIST* list);
 FREERDP_API void list_enqueue(LIST* list, void* data);
@@ -49,5 +53,9 @@ FREERDP_API void* list_next(LIST* list, void* data);
 #define list_add(_l, _d) list_enqueue(_l, _d)
 FREERDP_API void* list_remove(LIST* list, void* data);
 FREERDP_API int list_size(LIST* list);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_LIST_H */

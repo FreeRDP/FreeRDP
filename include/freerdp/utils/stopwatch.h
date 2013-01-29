@@ -34,6 +34,10 @@ struct _STOPWATCH
 };
 typedef struct _STOPWATCH STOPWATCH;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API STOPWATCH* stopwatch_create();
 FREERDP_API void stopwatch_free(STOPWATCH* stopwatch);
 
@@ -43,5 +47,9 @@ FREERDP_API void stopwatch_reset(STOPWATCH* stopwatch);
 
 FREERDP_API double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch);
 FREERDP_API void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_STOPWATCH_H */
