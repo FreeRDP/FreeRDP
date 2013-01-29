@@ -792,10 +792,17 @@ void update_free(rdpUpdate* update)
 		free(deleteList->indices);
 
 		free(update->bitmap_update.rectangles);
+
+		free(update->pointer->pointer_color.andMaskData);
+		free(update->pointer->pointer_color.xorMaskData);
+		free(update->pointer->pointer_new.colorPtrAttr.andMaskData);
+		free(update->pointer->pointer_new.colorPtrAttr.xorMaskData);
 		free(update->pointer);
+
 		free(update->primary->polyline.points);
 		free(update->primary->polygon_sc.points);
 		free(update->primary);
+
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
