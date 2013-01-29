@@ -33,6 +33,10 @@ struct _STREAM
 };
 typedef struct _STREAM STREAM;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API STREAM* stream_new(int size);
 FREERDP_API void stream_free(STREAM* stream);
 
@@ -178,5 +182,10 @@ static INLINE BOOL stream_skip(STREAM* s, int sz) {
 	stream_seek(s, sz);
 	return TRUE;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* FREERDP_UTILS_STREAM_H */
 

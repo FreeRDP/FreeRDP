@@ -32,7 +32,15 @@ struct rdp_string
 };
 typedef struct rdp_string rdpString;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API BOOL freerdp_string_read_length32(STREAM* s, rdpString* string);
 FREERDP_API void freerdp_string_free(rdpString* string);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_STRING_H */

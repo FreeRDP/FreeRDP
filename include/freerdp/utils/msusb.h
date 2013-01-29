@@ -120,6 +120,10 @@ struct _MSUSB_CONFIG_DESCRIPTOR
 	int MsOutSize;
 } __attribute__((packed));
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* MSUSB_PIPE exported functions */
 FREERDP_API void msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, MSUSB_PIPE_DESCRIPTOR** NewMsPipes, UINT32 NewNumberOfPipes);
 
@@ -134,5 +138,9 @@ FREERDP_API void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data_size, UINT32 NumInterfaces);
 FREERDP_API int msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, BYTE* data, int * offset);
 FREERDP_API void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_MSCONFIG_H */

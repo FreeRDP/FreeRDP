@@ -31,6 +31,14 @@ extern struct termios orig_flags;
 extern struct termios new_flags;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API int freerdp_handle_signals(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_SIGNAL_H */

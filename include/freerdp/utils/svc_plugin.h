@@ -50,9 +50,17 @@ struct rdp_svc_plugin
 	rdpSvcPluginPrivate* priv;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
 FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef WITH_DEBUG_SVC
 #define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
