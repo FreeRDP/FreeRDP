@@ -72,4 +72,5 @@
 #cmakedefine WITH_DEBUG_X11_CLIPRDR
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
 #cmakedefine WITH_DEBUG_XV
+#cmakedefine WITH_DEBUG_ANDROID_JNI
 #endif

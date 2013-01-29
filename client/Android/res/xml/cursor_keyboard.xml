@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Cursor Keyboard Layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<!--
+
+  Cursor Keyboard layout
+  
+  Button Arrangement 
+
+  
+                 
+  Fn      Up      Backsp
+  123 Le  Dn  Ri  Enter
+    
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="20%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    <Row>        
+        <Key android:codes="@integer/keycode_specialkeys_keyboard" android:keyLabel="Fn" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_up" android:keyIcon="@drawable/sym_keyboard_up_arrow" android:iconPreview="@drawable/sym_keyboard_up_arrow_black" android:horizontalGap="20%p"/>
+        <Key android:codes="@integer/keycode_backspace" android:keyIcon="@drawable/sym_keyboard_delete" android:keyEdgeFlags="right" android:horizontalGap="20%p" />
+    </Row>
+
+    <Row android:rowEdgeFlags="bottom">        
+        <Key android:codes="@integer/keycode_numpad_keyboard" android:keyLabel="123"/>
+        <Key android:codes="@integer/keycode_left" android:keyIcon="@drawable/sym_keyboard_left_arrow" android:iconPreview="@drawable/sym_keyboard_left_arrow_black" />
+        <Key android:codes="@integer/keycode_down" android:keyIcon="@drawable/sym_keyboard_down_arrow" android:iconPreview="@drawable/sym_keyboard_down_arrow_black" />
+        <Key android:codes="@integer/keycode_right" android:keyIcon="@drawable/sym_keyboard_right_arrow" android:iconPreview="@drawable/sym_keyboard_right_arrow_black" />
+        <Key android:codes="@integer/keycode_enter" android:keyIcon="@drawable/sym_keyboard_return" android:keyEdgeFlags="right" />
+    </Row>
+</Keyboard>
+    

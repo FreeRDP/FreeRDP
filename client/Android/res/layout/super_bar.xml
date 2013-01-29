@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Super bar/Quick connect bar layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<!-- Inner layout contains the button and EditText -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ 	android:id="@+id/search_plate"
+	android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="12dip"
+    android:paddingRight="6dip"
+    android:paddingTop="7dip"
+    android:paddingBottom="16dip"
+    android:background="@drawable/search_plate"
+    android:gravity="center_vertical"
+    android:focusable="true"
+  	android:descendantFocusability="afterDescendants">
+
+    <EditText
+    	android:id="@+id/superBarEditText"
+        android:hint="@string/search_hint"
+        android:layout_height="wrap_content"
+        android:layout_width="0dip"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
+        android:paddingLeft="8dip"
+        android:paddingRight="6dip"
+        android:drawablePadding="2dip"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:inputType="text"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textColorHint="?android:attr/textColorHint"
+        android:drawableLeft="@drawable/icon_edittext_search"
+        android:drawableRight="@drawable/icon_edittext_clear"
+        />
+     
+	<Button
+        android:id="@+id/clear_search_btn"      
+        android:layout_width="40dip"
+        android:layout_height="40dip"
+        android:layout_marginRight="10dip"
+        android:layout_gravity="right|center_vertical"
+        android:background="@android:color/transparent"
+        android:layout_alignParentRight="true"
+        />    
+ 
+</RelativeLayout>

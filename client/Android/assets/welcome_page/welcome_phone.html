@@ -1,0 +1,121 @@
+<html>
+	<head>
+		<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;' />
+        
+   <style type="text/css">
+   
+   @charset "utf-8";
+body {
+	font: 100%/1 Helvetica;
+	background-color:#E9EBF8;
+	height: 100%; width: 100%; margin: 0;
+	background-image:url(back.jpg);
+}
+
+
+/* ~~ Element/tag selectors ~~ */
+
+h1, h2, h3, h4, h5, h6, p {
+	margin-top: 0;	 /* removing the top margin gets around an issue where margins can escape from their containing div. The remaining bottom margin will hold it away from any elements that follow. */
+	padding-right: 1px;
+	padding-left: 1px; /* adding the padding to the sides of the elements within the divs, instead of the divs themselves, gets rid of any box model math. A nested div with side padding can also be used as an alternate method. */
+}
+a img { /* this selector removes the default blue border displayed in some browsers around an image when it is surrounded by a link */
+	border: none;
+	alignment: right;}
+
+
+/* ~~ Styling for your site's links must remain in this order - including the group of selectors that create the hover effect. ~~ */
+/*a:link {
+	color:#414958;
+	text-decoration: underline;  unless you style your links to look extremely unique, it's best to provide underlines for quick visual identification */
+
+
+a:hover, a:active, a:focus { /* this group of selectors will give a keyboard navigator the same hover experience as the person using a mouse. */
+	text-decoration: none;}
+	
+#number
+{
+margin-left:0%;
+opacity:0.9;
+background:#DDD;
+}
+
+#content 
+
+{
+	margin-left: auto;
+	margin-right: auto;
+	width:300px;
+	
+}
+#headline{
+  width:inherit;
+  background-color:#353639;
+
+border-radius: 15px;
+  color:FFF;
+  text-align:center;
+  border-bottom-left-radius:0px;
+  border-bottom-right-radius:0px;
+
+
+	}
+#article{
+
+
+background-color:#FFFFFF;
+opacity: 0.8;
+z-index:0;
+margin-bottom:3%;
+padding-bottom:0.1%;
+border-radius: 18px;
+
+
+position:relative;
+
+
+	}
+	
+#text{
+	
+	margin-left:30px;
+	position:static;
+	margin-bottom:3%;
+	margin-top:3%;	
+	}
+#button{
+	
+	padding-top:10px;
+	padding-bottom:10px;
+	}
+
+
+	
+a:link { color:#0000FF; }
+	
+	
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none; /* Disable selection/Copy of UIWebView */
+}
+
+
+   
+   </style>
+	</head>
+    
+	<body>
+    <div id="content">
+    	<div id="article">
+		<div id="headline">
+		<h2>New Connection</h2>
+        </div><div id="text">
+		You can specify your own connection settings - just hit the button below or choose "New Connection" from the application menu.</div>
+		<div id="button">
+		<center><a href="new_connection"><img src="new_connection.png"></a><center></a>
+		</div>
+   </div>
+</div>
+	</body>
+</html>
