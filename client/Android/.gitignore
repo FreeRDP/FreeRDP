@@ -1,0 +1,10 @@
+# Ignore directories
+bin/
+obj/
+gen/
+jni/external/*
+!libs
+libs/armeabi*
+AndroidManifest.xml
+local.properties
+!.project

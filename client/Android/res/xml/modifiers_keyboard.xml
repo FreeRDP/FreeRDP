@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Modifier Keys Layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<!--
+
+  Modifiers Keyboard layout
+  
+  Button Arrangement 
+
+  
+  ESC  SHIFT  CTRL  Win  ALT
+    
+-->
+
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:keyWidth="14%p"
+    android:horizontalGap="0px"
+    android:verticalGap="0px"
+    android:keyHeight="@dimen/key_height"
+    >
+
+    <Row>        
+        <Key android:codes="@integer/keycode_esc" android:keyLabel="Esc" android:keyEdgeFlags="left"/>
+        <Key android:codes="@integer/keycode_toggle_shift" android:keyLabel="Shift" android:isModifier="true" android:isSticky="true" />
+        <Key android:codes="@integer/keycode_toggle_ctrl" android:keyLabel="Ctrl" android:isModifier="true" android:isSticky="true" />
+        <Key android:codes="@integer/keycode_toggle_win" android:keyIcon="@drawable/sym_keyboard_winkey" android:iconPreview="@drawable/sym_keyboard_winkey_black" android:isModifier="true" android:isSticky="true"/>
+        <Key android:codes="@integer/keycode_toggle_alt" android:keyLabel="Alt" android:isModifier="true" android:isSticky="true" android:keyEdgeFlags="right"/>
+    </Row>
+    
+<!--     
+    <Row>
+        <Key android:codes="-1" android:keyIcon="@drawable/sym_keyboard_shift" 
+                android:keyWidth="15%p" android:isModifier="true"
+                android:isSticky="true" android:keyEdgeFlags="left"/>
+        <Key android:codes="122" android:keyLabel="z"/>
+        <Key android:codes="120" android:keyLabel="x"/>
+        <Key android:codes="99" android:keyLabel="c"/>
+        <Key android:codes="118" android:keyLabel="v"/>
+        <Key android:codes="98" android:keyLabel="b"/>
+        <Key android:codes="110" android:keyLabel="n"/>
+        <Key android:codes="109" android:keyLabel="m"/>
+        <Key android:codes="-5" android:keyIcon="@drawable/sym_keyboard_delete" 
+                android:keyWidth="15%p" android:keyEdgeFlags="right"
+                android:isRepeatable="true"/>
+    </Row>
+    
+    <Row android:rowEdgeFlags="bottom">
+        <Key android:codes="-3" android:keyIcon="@drawable/sym_keyboard_done" 
+                android:keyWidth="20%p" android:keyEdgeFlags="left"/>
+        <Key android:codes="-2" android:keyLabel="123" android:keyWidth="15%p"/>
+        <Key android:codes="32" android:keyIcon="@drawable/sym_keyboard_space" 
+                android:keyWidth="30%p" android:isRepeatable="true"/>
+        <Key android:codes="46,44" android:keyLabel=". ,"
+                android:keyWidth="15%p"/>
+        <Key android:codes="10" android:keyIcon="@drawable/sym_keyboard_return" 
+                android:keyWidth="20%p" android:keyEdgeFlags="right"/>
+    </Row>
+ -->    
+</Keyboard>
+    

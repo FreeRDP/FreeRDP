@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Layout for dialogs with a "Don't show again" checkbox
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+	android:layout_height="fill_parent" android:orientation="vertical">
+
+	<TextView
+	    android:id="@+id/message"
+        android:textAppearance="?android:attr/textAppearanceMediumInverse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"         
+        android:padding="5dip"
+        android:singleLine="false"
+	    android:maxLines="3"
+	    android:scrollbars="vertical"/>
+	<CheckBox 
+        style="?android:attr/textAppearanceMediumInverse"
+	    android:id="@+id/checkBox"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:text="@string/dlg_dont_show_again">
+	</CheckBox> 
+
+</LinearLayout>

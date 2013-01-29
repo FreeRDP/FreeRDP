@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- key codes to switch between keyboards -->
+	<integer name="keycode_cursor_keyboard">0xF1</integer>    
+	<integer name="keycode_numpad_keyboard">0xF2</integer>    
+	<integer name="keycode_specialkeys_keyboard">0xF3</integer>    
+	
+	<!-- common keys - maps to Android KeyEvent.KeyCode consts -->
+	<integer name="keycode_enter">0x01</integer>
+	<integer name="keycode_backspace">0x02</integer>
+	
+	<!-- shared keys -->
+	<integer name="keycode_win">0x03</integer>
+	<integer name="keycode_menu">0x04</integer>
+	<integer name="keycode_esc">0x05</integer>
+
+	<integer name="keycode_toggle_win">0x06</integer>
+	<integer name="keycode_toggle_ctrl">0x07</integer>
+	<integer name="keycode_toggle_shift">0x08</integer>
+	<integer name="keycode_toggle_alt">0x09</integer>
+
+	<!-- numpad key codes -->
+	<integer name="keycode_numpad_0">0x0A</integer>    
+	<integer name="keycode_numpad_1">0x0B</integer>    
+	<integer name="keycode_numpad_2">0x0C</integer>    
+	<integer name="keycode_numpad_3">0x0D</integer>    
+	<integer name="keycode_numpad_4">0x0E</integer>    
+	<integer name="keycode_numpad_5">0x0F</integer>    
+	<integer name="keycode_numpad_6">0x10</integer>    
+	<integer name="keycode_numpad_7">0x11</integer>    
+	<integer name="keycode_numpad_8">0x12</integer>    
+	<integer name="keycode_numpad_9">0x13</integer>    
+	<integer name="keycode_numpad_add">0x14</integer>    
+	<integer name="keycode_numpad_comma">0x15</integer>    
+	<integer name="keycode_numpad_divide">0x16</integer>    
+	<integer name="keycode_numpad_enter">0x17</integer>    
+	<integer name="keycode_numpad_multiply">0x18</integer>    
+	<integer name="keycode_numpad_subtract">0x19</integer>    
+	<integer name="keycode_numpad_equals">0x1A</integer>    
+	<integer name="keycode_numpad_numlock">0x1B</integer>    
+	<integer name="keycode_numpad_left_paren">0x1C</integer>    
+	<integer name="keycode_numpad_right_paren">0x1D</integer>    
+
+	<!-- special key codes -->
+	<integer name="keycode_F1">0x1E</integer>    
+	<integer name="keycode_F2">0x1F</integer>    
+	<integer name="keycode_F3">0x20</integer>    
+	<integer name="keycode_F4">0x21</integer>    
+	<integer name="keycode_F5">0x22</integer>    
+	<integer name="keycode_F6">0x23</integer>    
+	<integer name="keycode_F7">0x24</integer>    
+	<integer name="keycode_F8">0x25</integer>    
+	<integer name="keycode_F9">0x26</integer>    
+	<integer name="keycode_F10">0x27</integer>    
+	<integer name="keycode_F11">0x28</integer>    
+	<integer name="keycode_F12">0x29</integer>    
+	<integer name="keycode_tab">0x2A</integer>    
+	<integer name="keycode_print">0x2B</integer>    
+	<integer name="keycode_insert">0x2C</integer>    
+	<integer name="keycode_delete">0x2D</integer>    
+	<integer name="keycode_home">0x2E</integer>    
+	<integer name="keycode_end">0x2F</integer>    
+	<integer name="keycode_pgup">0x30</integer>    
+	<integer name="keycode_pgdn">0x31</integer>    
+
+	<!-- cursor key codes -->
+	<integer name="keycode_up">0x32</integer>    
+	<integer name="keycode_down">0x33</integer>    
+	<integer name="keycode_left">0x34</integer>    
+	<integer name="keycode_right">0x45</integer>    
+    		
+</resources>
