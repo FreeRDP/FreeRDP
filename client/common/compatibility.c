@@ -269,6 +269,11 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				index++;
 				i++;
 			}
+		} else {
+				if (settings->instance)
+				{
+					freerdp_client_old_process_plugin(settings, args);
+				}
 		}
 
 		return (index - old_index);
