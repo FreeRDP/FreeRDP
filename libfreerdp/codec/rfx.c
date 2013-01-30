@@ -31,6 +31,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/registry.h>
+#include <winpr\tchar.h>
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
