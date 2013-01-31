@@ -29,7 +29,8 @@
 #include <winpr/synch.h>
 
 #include "synch.h"
-#include "thread.h"
+#include "../thread/thread.h"
+#include <winpr/thread.h>
 
 /**
  * WaitForSingleObject
