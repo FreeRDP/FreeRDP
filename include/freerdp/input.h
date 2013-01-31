@@ -26,6 +26,9 @@ typedef struct rdp_input rdpInput;
 #include <freerdp/freerdp.h>
 #include <freerdp/scancode.h>
 
+#include <winpr/crt.h>
+#include <winpr/collections.h>
+
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED		0x0100
 #define KBD_FLAGS_DOWN			0x4000
@@ -54,6 +57,11 @@ typedef struct rdp_input rdpInput;
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
+/* defined inside libfreerdp-core */
+typedef struct rdp_event rdpEvent;
+
+/* Input Interface */
+
 typedef void (*pSynchronizeEvent)(rdpInput* input, UINT32 flags);
 typedef void (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
 typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
@@ -72,6 +80,12 @@ struct rdp_input
 	pMouseEvent MouseEvent; /* 19 */
 	pExtendedMouseEvent ExtendedMouseEvent; /* 20 */
 	UINT32 paddingB[32 - 21]; /* 21 */
+
+	/* Internal */
+
+	BOOL asynchronous;
+	rdpEvent* event;
+	wMessageQueue* queue;
 };
 
 #ifdef __cplusplus

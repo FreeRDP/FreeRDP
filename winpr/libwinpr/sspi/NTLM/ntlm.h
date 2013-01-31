@@ -238,6 +238,7 @@ struct _NTLM_CONTEXT
 	UINT32 NegotiateFlags;
 	int LmCompatibilityLevel;
 	int SuppressExtendedProtection;
+	BOOL SendWorkstationName;
 	UNICODE_STRING Workstation;
 	UNICODE_STRING ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY identity;
@@ -246,6 +247,9 @@ struct _NTLM_CONTEXT
 	SecPkgContext_Bindings Bindings;
 	BOOL SendSingleHostData;
 	NTLM_SINGLE_HOST_DATA SingleHostData;
+	NTLM_NEGOTIATE_MESSAGE NEGOTIATE_MESSAGE;
+	NTLM_CHALLENGE_MESSAGE CHALLENGE_MESSAGE;
+	NTLM_AUTHENTICATE_MESSAGE AUTHENTICATE_MESSAGE;
 	SecBuffer NegotiateMessage;
 	SecBuffer ChallengeMessage;
 	SecBuffer AuthenticateMessage;

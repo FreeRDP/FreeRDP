@@ -980,7 +980,9 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->tile);
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
-		rfx_context_free((RFX_CONTEXT*)gdi->rfx_context);
+		rfx_context_free((RFX_CONTEXT*) gdi->rfx_context);
+		nsc_context_free((NSC_CONTEXT*) gdi->nsc_context);
+		free(gdi->clrconv->palette);
 		free(gdi->clrconv);
 		free(gdi);
 	}

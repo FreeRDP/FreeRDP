@@ -723,6 +723,12 @@ void tls_free(rdpTls* tls)
 		if (tls->PublicKey)
 			free(tls->PublicKey);
 
+		if (tls->Bindings)
+		{
+			free(tls->Bindings->Bindings);
+			free(tls->Bindings);
+		}
+
 		certificate_store_free(tls->certificate_store);
 
 		free(tls);

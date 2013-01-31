@@ -99,7 +99,7 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList)
 ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength)
 {
 	/* size of headers + value lengths + terminating MsvAvEOL AV_PAIR */
-	return (AvPairsCount + 1) * sizeof(NTLM_AV_PAIR) + AvPairsValueLength;
+	return ((AvPairsCount + 1) * 4) + AvPairsValueLength;
 }
 
 PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair)

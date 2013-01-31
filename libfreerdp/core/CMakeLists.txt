@@ -64,6 +64,8 @@ set(${MODULE_PREFIX}_SRCS
 	info.h
 	input.c
 	input.h
+	event.c
+	event.h
 	license.c
 	license.h
 	errinfo.c
@@ -101,6 +103,8 @@ set(${MODULE_PREFIX}_SRCS
 	transport.h
 	update.c
 	update.h
+	message.c
+	message.h
 	channel.c
 	channel.h
 	window.c

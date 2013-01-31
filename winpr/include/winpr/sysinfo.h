@@ -135,8 +135,8 @@ typedef enum _COMPUTER_NAME_FORMAT
 	ComputerNameMax
 } COMPUTER_NAME_FORMAT;
 
-WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD nSize);
-WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize);
+WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
+WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
 
 #ifdef UNICODE
 #define GetComputerNameEx	GetComputerNameExW
