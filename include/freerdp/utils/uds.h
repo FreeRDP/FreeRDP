@@ -23,6 +23,14 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API int freerdp_uds_connect(const char* path);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_UDS_H */

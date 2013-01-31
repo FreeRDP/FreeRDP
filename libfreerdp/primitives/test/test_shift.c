@@ -47,7 +47,7 @@ extern pstatus_t sse2_rShiftC_16u(
 extern pstatus_t sse2_shiftC_16u(
 	const UINT16 *pSrc, int val, UINT16 *pDst, int len);
 
-#ifdef i386
+#ifdef _M_IX86_AMD64
 #define SHIFT_TEST_FUNC(_name_, _type_, _str_, _f1_, _f2_) \
 int _name_(void) \
 { \

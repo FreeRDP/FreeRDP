@@ -23,6 +23,10 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API int freerdp_tcp_connect(const char* hostname, int port);
 FREERDP_API int freerdp_tcp_read(int sockfd, BYTE* data, int length);
 FREERDP_API int freerdp_tcp_write(int sockfd, BYTE* data, int length);
@@ -34,5 +38,9 @@ FREERDP_API int freerdp_tcp_set_no_delay(int sockfd, BOOL no_delay);
 
 FREERDP_API int freerdp_wsa_startup();
 FREERDP_API int freerdp_wsa_cleanup();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_TCP_UTILS_H */

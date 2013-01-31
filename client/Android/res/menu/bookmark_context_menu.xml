@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android" >
+
+	<item android:id="@+id/bookmark_connect"
+		  android:title="@string/menu_connect"
+	/>
+
+	<item android:id="@+id/bookmark_edit"
+		  android:title="@string/menu_edit"
+	/>
+
+	<item android:id="@+id/bookmark_delete"
+		  android:title="@string/menu_delete"
+	/>
+	    
+</menu>

@@ -30,8 +30,16 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API UINT64 freerdp_windows_gmtime();
 FREERDP_API UINT64 freerdp_get_windows_time_from_unix_time(time_t unix_time);
 FREERDP_API time_t freerdp_get_unix_time_from_windows_time(UINT64 windows_time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_TIME_UTILS_H */

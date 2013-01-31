@@ -22,6 +22,14 @@
 
 #include <freerdp/api.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void freerdp_bitmap_write(char* filename, void* data, int width, int height, int bpp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UTILS_BITMAP_H */

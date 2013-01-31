@@ -41,10 +41,18 @@ struct _freerdp_thread
 	int status;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API freerdp_thread* freerdp_thread_new(void);
 FREERDP_API void freerdp_thread_start(freerdp_thread* thread, void* func, void* arg);
 FREERDP_API void freerdp_thread_stop(freerdp_thread* thread);
 FREERDP_API void freerdp_thread_free(freerdp_thread* thread);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define freerdp_thread_wait(_t) ((WaitForMultipleObjects(_t->num_signals, _t->signals, FALSE, INFINITE) == WAIT_FAILED) ? -1 : 0)
 #define freerdp_thread_wait_timeout(_t, _timeout) ((WaitForMultipleObjects(_t->num_signals, _t->signals, FALSE, _timeout) == WAIT_FAILED) ? -1 : 0)

@@ -43,7 +43,7 @@ int test_set8u_func(void)
 	UINT32 pflags = primitives_get_flags(primitives_get());
 	testStr[0] = '\0';
 
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	/* Test SSE under various alignments */
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{
@@ -116,15 +116,15 @@ int test_set8u_speed(void)
 /* ------------------------------------------------------------------------- */
 int test_set32s_func(void)
 {
-	primitives_t *prims = primitives_get();
+	primitives_t* prims = primitives_get();
 	INT32 ALIGN(dest[512]);
 	int failed = 0;
 	int off;
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(primitives_get());
+	UINT32 pflags = primitives_get_flags(prims);
 	testStr[0] = '\0';
 
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	/* Test SSE under various alignments */
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{
@@ -179,15 +179,15 @@ int test_set32s_func(void)
 /* ------------------------------------------------------------------------- */
 int test_set32u_func(void)
 {
-	primitives_t *prims = primitives_get();
+	primitives_t* prims = primitives_get();
 	UINT32 ALIGN(dest[512]);
 	int failed = 0;
 	int off;
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(primitives_get());
+	UINT32 pflags = primitives_get_flags(prims);
 	testStr[0] = '\0';
 
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	/* Test SSE under various alignments */
 	if (pflags & PRIM_X86_SSE2_AVAILABLE)
 	{

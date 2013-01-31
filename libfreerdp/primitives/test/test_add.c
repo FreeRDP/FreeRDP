@@ -43,7 +43,7 @@ int test_add16s_func(void)
 	memset(d1, 0, sizeof(d1));
 	memset(d2, 0, sizeof(d2));
 	general_add_16s(src1+1, src2+1, d1+1, FUNC_TEST_SIZE);
-#ifdef i386
+#ifdef _M_IX86_AMD64
 	if (pflags & PRIM_X86_SSE3_AVAILABLE)
 	{
 		strcat(testStr, " SSE3");

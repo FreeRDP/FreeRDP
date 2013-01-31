@@ -125,6 +125,22 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 
 /* rfx_decode_ycbcr_to_rgb code now resides in the primitives library. */
 
+struct _RFX_COMPONENT_WORK_PARAM
+{
+	int size;
+	INT16* buffer;
+	const BYTE* data;
+	RFX_CONTEXT* context;
+	const UINT32* quantization_values;
+};
+typedef struct _RFX_COMPONENT_WORK_PARAM RFX_COMPONENT_WORK_PARAM;
+
+void CALLBACK rfx_decode_component_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
+{
+	RFX_COMPONENT_WORK_PARAM* param = (RFX_COMPONENT_WORK_PARAM*) context;
+	rfx_decode_component(param->context, param->quantization_values, param->data, param->size, param->buffer);
+}
+
 /* stride is bytes between rows in the output buffer. */
 void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	int y_size, const UINT32* y_quants,
@@ -141,12 +157,60 @@ void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	pSrcDst[1] = BufferPool_Take(context->priv->BufferPool, -1); /* cb_g_buffer */
 	pSrcDst[2] = BufferPool_Take(context->priv->BufferPool, -1); /* cr_b_buffer */
 
-	rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, pSrcDst[0]); /* YData */
-	stream_seek(data_in, y_size);
-	rfx_decode_component(context, cb_quants, stream_get_tail(data_in), cb_size, pSrcDst[1]); /* CbData */
-	stream_seek(data_in, cb_size);
-	rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, pSrcDst[2]); /* CrData */
-	stream_seek(data_in, cr_size);
+#if 0
+	if (context->priv->UseThreads)
+	{
+		PTP_WORK work_objects[3];
+		RFX_COMPONENT_WORK_PARAM params[3];
+
+		params[0].context = context;
+		params[0].quantization_values = y_quants;
+		params[0].data = stream_get_tail(data_in);
+		params[0].size = y_size;
+		params[0].buffer = pSrcDst[0];
+		stream_seek(data_in, y_size);
+
+		params[1].context = context;
+		params[1].quantization_values = cb_quants;
+		params[1].data = stream_get_tail(data_in);
+		params[1].size = cb_size;
+		params[1].buffer = pSrcDst[1];
+		stream_seek(data_in, cb_size);
+
+		params[2].context = context;
+		params[2].quantization_values = cr_quants;
+		params[2].data = stream_get_tail(data_in);
+		params[2].size = cr_size;
+		params[2].buffer = pSrcDst[2];
+		stream_seek(data_in, cr_size);
+
+		work_objects[0] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_decode_component_work_callback,
+				(void*) &params[0], &context->priv->ThreadPoolEnv);
+		work_objects[1] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_decode_component_work_callback,
+				(void*) &params[1], &context->priv->ThreadPoolEnv);
+		work_objects[2] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_decode_component_work_callback,
+				(void*) &params[2], &context->priv->ThreadPoolEnv);
+
+		SubmitThreadpoolWork(work_objects[0]);
+		SubmitThreadpoolWork(work_objects[1]);
+		SubmitThreadpoolWork(work_objects[2]);
+
+		WaitForThreadpoolWorkCallbacks(work_objects[0], FALSE);
+		WaitForThreadpoolWorkCallbacks(work_objects[1], FALSE);
+		WaitForThreadpoolWorkCallbacks(work_objects[2], FALSE);
+	}
+	else
+#endif
+	{
+		rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, pSrcDst[0]); /* YData */
+		stream_seek(data_in, y_size);
+
+		rfx_decode_component(context, cb_quants, stream_get_tail(data_in), cb_size, pSrcDst[1]); /* CbData */
+		stream_seek(data_in, cb_size);
+
+		rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, pSrcDst[2]); /* CrData */
+		stream_seek(data_in, cr_size);
+	}
 
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);

@@ -26,7 +26,7 @@
 #include <freerdp/primitives.h>
 #ifdef WITH_SSE2
 #include <emmintrin.h>
-#elif WITH_NEON
+#elif defined(WITH_NEON)
 #include <arm_neon.h>
 #endif /* WITH_SSE2 else WITH_NEON */
 #include "prim_internal.h"
@@ -703,6 +703,7 @@ PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 		g_buf += dstbump;
 		b_buf += dstbump;
 	}
+	return PRIMITIVES_SUCCESS;
 }
 #endif /* WITH_NEON */
 

@@ -30,6 +30,10 @@ struct _PROFILER
 };
 typedef struct _PROFILER PROFILER;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API PROFILER* profiler_create(char* name);
 FREERDP_API void profiler_free(PROFILER* profiler);
 
@@ -39,6 +43,10 @@ FREERDP_API void profiler_exit(PROFILER* profiler);
 FREERDP_API void profiler_print_header();
 FREERDP_API void profiler_print(PROFILER* profiler);
 FREERDP_API void profiler_print_footer();
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef WITH_PROFILER
 #define IF_PROFILER(then)			then
