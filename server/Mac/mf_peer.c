@@ -514,7 +514,7 @@ void* mf_peer_main_loop(void* arg)
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
-    client->settings->ColorDepth = 32;
+	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = FALSE;
     

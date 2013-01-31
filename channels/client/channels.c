@@ -358,7 +358,9 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 				}
 			}
 			else
+			{
 				return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+			}
 		}
 	}
 

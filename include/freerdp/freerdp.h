@@ -82,6 +82,7 @@ struct rdp_context
 					List of arguments given to the program at launch time.
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
+
 	UINT32 paddingB[32 - 18]; /* 18 */
 
 	rdpRdp* rdp; /**< (offset 32)
@@ -96,7 +97,10 @@ struct rdp_context
 	rdpCache* cache; /* 35 */
 	rdpChannels* channels; /* 36 */
 	rdpGraphics* graphics; /* 37 */
-	UINT32 paddingC[64 - 38]; /* 38 */
+	rdpInput* input; /* 38 */
+	rdpUpdate* update; /* 39 */
+	rdpSettings* settings; /* 40 */
+	UINT32 paddingC[64 - 41]; /* 41 */
 };
 
 /** Defines the options for a given instance of RDP connection.
@@ -114,7 +118,8 @@ struct rdp_freerdp
 							  When using this capability, client application should ALWAYS declare their structure with the
 							  rdpContext field first, and any additional content following it.
 							  Can be allocated by a call to freerdp_context_new().
-							  Must be dealocated by a call to freerdp_context_free() before deallocating the current instance. */
+							  Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
+
 	UINT32 paddingA[16 - 1]; /* 1 */
 
 	rdpInput* input; /* (offset 16)
@@ -190,6 +195,12 @@ FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
+
+FREERDP_API int freerdp_process_messages(freerdp* instance);
+FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance);
+
+FREERDP_API HANDLE freerdp_get_input_queue_event_handle(freerdp* instance);
+FREERDP_API int freerdp_process_input(freerdp* instance);
 
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 

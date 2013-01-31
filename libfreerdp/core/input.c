@@ -26,6 +26,7 @@
 #include <freerdp/input.h>
 
 #include "input.h"
+#include "event.h"
 
 void rdp_write_client_input_pdu_header(STREAM* s, UINT16 number)
 {
@@ -368,9 +369,9 @@ BOOL input_recv(rdpInput* input, STREAM* s)
 
 void input_register_client_callbacks(rdpInput* input)
 {
-	rdpRdp* rdp = input->context->rdp;
+	rdpSettings* settings = input->context->settings;
 
-	if (rdp->settings->FastPathInput)
+	if (settings->FastPathInput)
 	{
 		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
 		input->KeyboardEvent = input_send_fastpath_keyboard_event;
@@ -385,6 +386,13 @@ void input_register_client_callbacks(rdpInput* input)
 		input->UnicodeKeyboardEvent = input_send_unicode_keyboard_event;
 		input->MouseEvent = input_send_mouse_event;
 		input->ExtendedMouseEvent = input_send_extended_mouse_event;
+	}
+
+	input->asynchronous = settings->AsyncInput;
+
+	if (input->asynchronous)
+	{
+		input->event = event_new(input);
 	}
 }
 
@@ -421,6 +429,11 @@ void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 	IFCALL(input->ExtendedMouseEvent, input, flags, x, y);
 }
 
+int input_process_events(rdpInput* input)
+{
+	return event_process_pending_input(input);
+}
+
 rdpInput* input_new(rdpRdp* rdp)
 {
 	rdpInput* input;
@@ -439,6 +452,9 @@ void input_free(rdpInput* input)
 {
 	if (input != NULL)
 	{
+		if (input->asynchronous)
+			event_free(input->event);
+
 		free(input);
 	}
 }

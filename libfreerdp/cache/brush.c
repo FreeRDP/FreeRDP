@@ -75,8 +75,16 @@ void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
+	int length;
+	void* data = NULL;
 	rdpCache* cache = context->cache;
-	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+
+	length = cache_brush->bpp * 64 / 8;
+
+	data = malloc(length);
+	CopyMemory(data, cache_brush->data, length);
+
+	brush_cache_put(cache->brush, cache_brush->index, data, cache_brush->bpp);
 }
 
 void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)

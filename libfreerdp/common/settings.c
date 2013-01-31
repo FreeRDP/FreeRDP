@@ -215,11 +215,15 @@ ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const 
 
 void freerdp_static_channel_collection_free(rdpSettings* settings)
 {
-	int index;
+	int i, j;
 
-	for (index = 0; index < settings->StaticChannelCount; index++)
+	for (i = 0; i < settings->StaticChannelCount; i++)
 	{
-		free(settings->StaticChannelArray[index]);
+		for (j = 0; j < settings->StaticChannelArray[i]->argc; j++)
+			free(settings->StaticChannelArray[i]->argv[j]);
+
+		free(settings->StaticChannelArray[i]->argv);
+		free(settings->StaticChannelArray[i]);
 	}
 
 	free(settings->StaticChannelArray);

@@ -192,8 +192,9 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 		return FALSE;
 	}
 
-	if(!rdp_read_security_header(s, &sec_flags))
+	if (!rdp_read_security_header(s, &sec_flags))
 		return FALSE;
+
 	if (!(sec_flags & SEC_LICENSE_PKT))
 	{
 		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
@@ -205,7 +206,7 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 		return TRUE;
 	}
 
-	if(!license_read_preamble(s, &bMsgType, &flags, &wMsgSize)) /* preamble (4 bytes) */
+	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize)) /* preamble (4 bytes) */
 		return FALSE;
 
 	DEBUG_LICENSE("Receiving %s Packet", LICENSE_MESSAGE_STRINGS[bMsgType & 0x1F]);
@@ -642,8 +643,9 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 {
 	/* ServerRandom (32 bytes) */
-	if(stream_get_left(s) < 32)
+	if (stream_get_left(s) < 32)
 		return FALSE;
+
 	stream_read(s, license->server_random, 32);
 
 	/* ProductInfo */
@@ -664,12 +666,13 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 	/* Parse Server Certificate */
 	if (!certificate_read_server_certificate(license->certificate,
-			license->server_certificate->data, license->server_certificate->length))
+			license->server_certificate->data, license->server_certificate->length) < 0)
 		return FALSE;
 
 	license_generate_keys(license);
 	license_generate_hwid(license);
 	license_encrypt_premaster_secret(license);
+
 	return TRUE;
 }
 

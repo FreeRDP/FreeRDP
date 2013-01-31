@@ -109,6 +109,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "glyph-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "glyph cache" },
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "<rfx|nsc|jpeg>", NULL, NULL, -1, NULL, "bitmap codec cache" },
 	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "fast-path input/output" },
+	{ "async-input", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "asynchronous input" },
+	{ "async-update", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "asynchronous update" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -1304,6 +1306,14 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->FastPathInput = arg->Value ? TRUE : FALSE;
 			settings->FastPathOutput = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "async-input")
+		{
+			settings->AsyncInput = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "async-update")
+		{
+			settings->AsyncUpdate = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{

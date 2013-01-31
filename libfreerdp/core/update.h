@@ -37,8 +37,11 @@
 
 rdpUpdate* update_new(rdpRdp* rdp);
 void update_free(rdpUpdate* update);
+
 void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
+
 void update_reset_state(rdpUpdate* update);
+void update_post_connect(rdpUpdate* update);
 
 BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update);
 BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update);
@@ -57,5 +60,7 @@ BOOL update_read_suppress_output(rdpUpdate* update, STREAM* s);
 
 void update_register_server_callbacks(rdpUpdate* update);
 void update_register_client_callbacks(rdpUpdate* update);
+
+int update_process_messages(rdpUpdate* update);
 
 #endif /* __UPDATE_H */

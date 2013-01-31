@@ -339,8 +339,11 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	BYTE nt_proof_str[16];
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
+	PSecBuffer TargetInfo;
 
-	sspi_SecBufferAlloc(&ntlm_v2_temp, context->ChallengeTargetInfo.cbBuffer + 28);
+	TargetInfo = &context->ChallengeTargetInfo;
+
+	sspi_SecBufferAlloc(&ntlm_v2_temp, TargetInfo->cbBuffer + 28);
 
 	ZeroMemory(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	blob = (BYTE*) ntlm_v2_temp.pvBuffer;
@@ -378,7 +381,7 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(&blob[8], context->Timestamp, 8); /* Timestamp (8 bytes) */
 	CopyMemory(&blob[16], context->ClientChallenge, 8); /* ClientChallenge (8 bytes) */
 	/* Reserved3 (4 bytes) */
-	CopyMemory(&blob[28], context->ChallengeTargetInfo.pvBuffer, context->ChallengeTargetInfo.cbBuffer);
+	CopyMemory(&blob[28], TargetInfo->pvBuffer, TargetInfo->cbBuffer);
 
 #ifdef WITH_DEBUG_NTLM
 	printf("NTLMv2 Response Temp Blob\n");

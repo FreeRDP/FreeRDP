@@ -167,44 +167,75 @@ void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 	GetSystemInfo(lpSystemInfo);
 }
 
-BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD nSize)
+BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
+	char* dot;
+	int length;
 	char hostname[256];
-	int hostname_length;
 
 	gethostname(hostname, sizeof(hostname));
-	hostname_length = strlen(hostname);
+	length = strlen(hostname);
+
+	dot = strchr(hostname, '.');
+
+	if (dot)
+		length = dot - hostname;
+
+	if (*lpnSize <= length)
+	{
+		*lpnSize = length + 1;
+		return 0;
+	}
+
+	if (!lpBuffer)
+		return 0;
+
+	CopyMemory(lpBuffer, hostname, length);
+	lpBuffer[length] = '\0';
+
+	return TRUE;
+}
+
+BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
+{
+	int length;
+	char hostname[256];
+
+	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
+		return GetComputerNameA(lpBuffer, lpnSize);
+
+	gethostname(hostname, sizeof(hostname));
+	length = strlen(hostname);
 
 	switch (NameType)
 	{
-		case ComputerNameNetBIOS:
 		case ComputerNameDnsHostname:
 		case ComputerNameDnsDomain:
 		case ComputerNameDnsFullyQualified:
-		case ComputerNamePhysicalNetBIOS:
 		case ComputerNamePhysicalDnsHostname:
 		case ComputerNamePhysicalDnsDomain:
 		case ComputerNamePhysicalDnsFullyQualified:
 
-			if (*nSize <= hostname_length)
+			if (*lpnSize <= length)
 			{
-				*nSize = hostname_length + 1;
-				return 0;
+				*lpnSize = length + 1;
+				return FALSE;
 			}
 
 			if (!lpBuffer)
-				return 0;
+				return FALSE;
 
-			CopyMemory(lpBuffer, hostname, hostname_length + 1);
+			CopyMemory(lpBuffer, hostname, length);
+			lpBuffer[length] = '\0';
 
 			break;
 
 		default:
-			return 0;
+			return FALSE;
 			break;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)

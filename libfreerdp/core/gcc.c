@@ -597,7 +597,10 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 
 	if (highColorDepth > 0)
 	{
-		color_depth = highColorDepth;
+		if (earlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
+			color_depth = 32;
+		else
+			color_depth = highColorDepth;
 	}
 	else if (postBeta2ColorDepth > 0)
 	{
@@ -641,7 +644,7 @@ BOOL gcc_read_client_core_data(STREAM* s, rdpSettings* settings, UINT16 blockLen
 	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
-	if (color_depth < settings->ColorDepth || !settings->ServerMode)
+	if ((color_depth < settings->ColorDepth) || !settings->ServerMode)
 		settings->ColorDepth = color_depth;
 
 	return TRUE;
@@ -870,7 +873,7 @@ BOOL gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 		data = settings->ServerCertificate;
 		length = settings->ServerCertificateLength;
 
-		if (!certificate_read_server_certificate(settings->RdpServerCertificate, data, length))
+		if (certificate_read_server_certificate(settings->RdpServerCertificate, data, length) < 1)
 			return FALSE;
 	}
 	else

@@ -69,6 +69,12 @@
 #define GDI_DPa				0x00A000C9 /* D = D & P */
 #define GDI_PDxn			0x00A50065 /* D = D ^ ~P */
 
+#define GDI_DSxn			0x00990066
+#define GDI_PSDnox			0x002D060A
+#define GDI_PDSona			0x00100C85
+#define GDI_DSPDxox			0x00740646
+#define GDI_DPSDonox			0x005B18A9
+
 #define GDI_DPon			0x000500A9
 #define GDI_DPna			0x000A0329
 #define GDI_Pn				0x000F0001

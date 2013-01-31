@@ -1025,6 +1025,10 @@ int xfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int fd_msg_event;
+	HANDLE msg_event;
+	int fd_evt_event;
+	HANDLE evt_event;
 	int select_status;
 	rdpChannels* channels;
 	struct timeval timeout;
@@ -1051,6 +1055,18 @@ int xfreerdp_run(freerdp* instance)
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 
+	fd_msg_event = -1;
+	msg_event = freerdp_get_message_queue_event_handle(instance);
+
+	if (msg_event)
+		fd_msg_event = GetEventFileDescriptor(msg_event);
+
+	fd_evt_event = -1;
+	evt_event = freerdp_get_input_queue_event_handle(instance);
+
+	if (evt_event)
+		fd_evt_event = GetEventFileDescriptor(evt_event);
+
 	while (!xfi->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
@@ -1074,6 +1090,12 @@ int xfreerdp_run(freerdp* instance)
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
+
+		if (fd_msg_event > 0)
+			rfds[rcount++] = (void*) (long) fd_msg_event;
+
+		if (fd_evt_event > 0)
+			rfds[rcount++] = (void*) (long) fd_evt_event;
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -1130,6 +1152,12 @@ int xfreerdp_run(freerdp* instance)
 			break;
 		}
 		xf_process_channel_event(channels, instance);
+
+		if (fd_msg_event > 0)
+			freerdp_process_messages(instance);
+
+		if (fd_evt_event > 0)
+			freerdp_process_input(instance);
 	}
 
 	FILE *fin = fopen("/tmp/tsmf.tid", "rt");

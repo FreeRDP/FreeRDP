@@ -48,6 +48,7 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 
 		default:
 			printf("Unknown system pointer type (0x%08X)\n", pointer_system->type);
+			break;
 	}
 }
 
@@ -92,8 +93,20 @@ void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 		pointer->height = pointer_new->colorPtrAttr.height;
 		pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
 		pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
-		pointer->xorMaskData = pointer_new->colorPtrAttr.xorMaskData;
-		pointer->andMaskData = pointer_new->colorPtrAttr.andMaskData;
+
+		pointer->andMaskData = pointer->xorMaskData = NULL;
+
+		if (pointer->lengthAndMask)
+		{
+			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+			CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData, pointer->lengthAndMask);
+		}
+
+		if (pointer->lengthXorMask)
+		{
+			pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
+			CopyMemory(pointer->xorMaskData, pointer_new->colorPtrAttr.xorMaskData, pointer->lengthXorMask);
+		}
 
 		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
