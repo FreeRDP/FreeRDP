@@ -23,6 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 	der.c
 	ber.c
 	per.c
+	base64.c
 	certificate.c
 	crypto.c
 	tls.c)
