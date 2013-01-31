@@ -33,7 +33,7 @@
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
-#include <winpr\tchar.h>
+#include <winpr/tchar.h>
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
