@@ -35,6 +35,7 @@
 #include <unistd.h>
 #endif
 
+
 #ifdef HAVE_EVENTFD_H
 #include <sys/eventfd.h>
 #include <errno.h>
@@ -127,27 +128,27 @@ BOOL SetEvent(HANDLE hEvent)
 	{
 		event = (WINPR_EVENT*) Object;
 
-		if (!(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0))
-		{
 #ifdef HAVE_EVENTFD_H
-			eventfd_t val = 1;
-			do 
-			{
-				length = eventfd_write(event->pipe_fd[0], val);
-			}
-			while(length < 0 && errno == EINTR);
-			status = (length == 0) ? TRUE : FALSE;
+		eventfd_t val = 1;
+		do
+		{
+			length = eventfd_write(event->pipe_fd[0], val);
+		}
+		while(length < 0 && errno == EINTR);
+		status = (length == 0) ? TRUE : FALSE;
 #else
+		if (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
+		{
 			length = write(event->pipe_fd[1], "-", 1);
 
 			if (length == 1)
 				status = TRUE;
-#endif
 		}
 		else
 		{
 			status = TRUE;
 		}
+#endif
 	}
 
 	LeaveCriticalSection(&cs);
