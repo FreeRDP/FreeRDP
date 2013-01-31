@@ -532,44 +532,48 @@ void crypto_cert_print_info(X509* xcert)
 
 char* crypto_base64_encode(BYTE* data, int length)
 {
-	BIO* bmem;
+	BIO* bio;
 	BIO* b64;
-	BUF_MEM *bptr;
+	int length4;
+	FILE* stream;
+	int encoded_size;
 	char* base64_string;
 
-	b64 = BIO_new(BIO_f_base64());
-	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-	bmem = BIO_new(BIO_s_mem());
-	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, data, length);
+	length4 = (4 * length);
+	encoded_size = (length4 + (3 - (length4 % 3))) / 3;
 
-	if (BIO_flush(b64) < 1)
+	base64_string = (char*) malloc(encoded_size + 1);
+	stream = fmemopen(base64_string, encoded_size + 1, "w");
+
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_new_fp(stream, BIO_NOCLOSE);
+	bio = BIO_push(b64, bio);
+
+	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+	BIO_write(bio, data, length);
+
+	if (BIO_flush(bio) < 0)
 		return NULL;
 
-	BIO_get_mem_ptr(b64, &bptr);
-
-	base64_string = malloc(bptr->length);
-	memcpy(base64_string, bptr->data, bptr->length - 1);
-	base64_string[bptr->length - 1] = '\0';
-
-	BIO_free_all(b64);
+	BIO_free_all(bio);
+	fclose(stream);
 
 	return base64_string;
 }
 
 void crypto_base64_decode(BYTE* enc_data, int length, BYTE** dec_data, int* res_length)
 {
-      BIO *b64, *bmem;
+	BIO *b64, *bmem;
 
-      *dec_data = malloc(length);
-      memset(*dec_data, 0, length);
+	*dec_data = malloc(length);
+	memset(*dec_data, 0, length);
 
-      b64 = BIO_new(BIO_f_base64());
-      BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-      bmem = BIO_new_mem_buf(enc_data, length);
-      bmem = BIO_push(b64, bmem);
+	b64 = BIO_new(BIO_f_base64());
+	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+	bmem = BIO_new_mem_buf(enc_data, length);
+	bmem = BIO_push(b64, bmem);
 
-      *res_length = BIO_read(bmem, *dec_data, length);
+	*res_length = BIO_read(bmem, *dec_data, length);
 
-      BIO_free_all(bmem);
+	BIO_free_all(bmem);
 }
