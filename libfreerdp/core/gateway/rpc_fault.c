@@ -312,7 +312,7 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 		}
 	}
 
-	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
+	for (index = 0; RPC_TSG_FAULT_CODES[index].name != NULL; index++)
 	{
 		if (RPC_TSG_FAULT_CODES[index].code == code)
 		{

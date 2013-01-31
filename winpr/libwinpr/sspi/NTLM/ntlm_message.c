@@ -897,12 +897,16 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->NTLMv2)
 	{
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
-		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
-		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+
+		if (context->SendVersionInfo)
+			message.NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
 	}
 
 	if (context->UseMIC)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+
+	if (context->SendWorkstationName)
+		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
 
 	if (context->confidentiality)
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
@@ -925,11 +929,12 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		message.Workstation.Buffer = (BYTE*) context->Workstation.Buffer;
 	}
 
-	message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
-	message.DomainName.Buffer = (BYTE*) context->identity.Domain;
-
-	if (message.DomainName.Len > 0)
+	if (context->identity.DomainLength > 0)
+	{
 		message.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+		message.DomainName.Len = (UINT16) context->identity.DomainLength * 2;
+		message.DomainName.Buffer = (BYTE*) context->identity.Domain;
+	}
 
 	message.UserName.Len = (UINT16) context->identity.UserLength * 2;
 	message.UserName.Buffer = (BYTE*) context->identity.User;
@@ -943,16 +948,19 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	message.NtChallengeResponse.Len = (UINT16) context->NtChallengeResponse.cbBuffer;
 	message.NtChallengeResponse.Buffer = (BYTE*) context->NtChallengeResponse.pvBuffer;
 
-	message.EncryptedRandomSessionKey.Len = 16;
-	message.EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)
+	{
+		message.EncryptedRandomSessionKey.Len = 16;
+		message.EncryptedRandomSessionKey.Buffer = context->EncryptedRandomSessionKey;
+	}
 
 	PayloadBufferOffset = 64;
 
-	if (context->UseMIC)
-		PayloadBufferOffset += 16; /* Message Integrity Check */
-
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		PayloadBufferOffset += 8;
+		PayloadBufferOffset += 8; /* Version (8 bytes) */
+
+	if (context->UseMIC)
+		PayloadBufferOffset += 16; /* Message Integrity Check (16 bytes) */
 
 	message.DomainName.BufferOffset = PayloadBufferOffset;
 	message.UserName.BufferOffset = message.DomainName.BufferOffset + message.DomainName.Len;
@@ -963,60 +971,45 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) &message, MESSAGE_TYPE_AUTHENTICATE);
 
-	/* Message Header (12 bytes) */
-	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) &message);
+	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) &message); /* Message Header (12 bytes) */
 
-	/* LmChallengeResponseFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.LmChallengeResponse));
+	ntlm_write_message_fields(s, &(message.LmChallengeResponse)); /* LmChallengeResponseFields (8 bytes) */
 
-	/* NtChallengeResponseFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.NtChallengeResponse));
+	ntlm_write_message_fields(s, &(message.NtChallengeResponse)); /* NtChallengeResponseFields (8 bytes) */
 
-	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+	ntlm_write_message_fields(s, &(message.DomainName)); /* DomainNameFields (8 bytes) */
 
-	/* DomainNameFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.DomainName));
+	ntlm_write_message_fields(s, &(message.UserName)); /* UserNameFields (8 bytes) */
 
-	/* UserNameFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.UserName));
+	ntlm_write_message_fields(s, &(message.Workstation)); /* WorkstationFields (8 bytes) */
 
-	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
-
-	/* WorkstationFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.Workstation));
-
-	/* EncryptedRandomSessionKeyFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message.EncryptedRandomSessionKey));
+	ntlm_write_message_fields(s, &(message.EncryptedRandomSessionKey)); /* EncryptedRandomSessionKeyFields (8 bytes) */
 
 	Stream_Write_UINT32(s, message.NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		ntlm_write_version_info(s, &(message.Version));
+		ntlm_write_version_info(s, &(message.Version)); /* Version (8 bytes) */
 
 	if (context->UseMIC)
 	{
-		/* Message Integrity Check */
 		MicOffset = Stream_Position(s);
-		Stream_Zero(s, 16);
+		Stream_Zero(s, 16); /* Message Integrity Check (16 bytes) */
 	}
 
-	/* DomainName */
-	ntlm_write_message_fields_buffer(s, &(message.DomainName));
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
+		ntlm_write_message_fields_buffer(s, &(message.DomainName)); /* DomainName */
 
-	/* UserName */
-	ntlm_write_message_fields_buffer(s, &(message.UserName));
+	ntlm_write_message_fields_buffer(s, &(message.UserName)); /* UserName */
 
-	/* Workstation */
-	ntlm_write_message_fields_buffer(s, &(message.Workstation));
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
+		ntlm_write_message_fields_buffer(s, &(message.Workstation)); /* Workstation */
 
-	/* LmChallengeResponse */
-	ntlm_write_message_fields_buffer(s, &(message.LmChallengeResponse));
+	ntlm_write_message_fields_buffer(s, &(message.LmChallengeResponse)); /* LmChallengeResponse */
 
-	/* NtChallengeResponse */
-	ntlm_write_message_fields_buffer(s, &(message.NtChallengeResponse));
+	ntlm_write_message_fields_buffer(s, &(message.NtChallengeResponse)); /* NtChallengeResponse */
 
-	/* EncryptedRandomSessionKey */
-	ntlm_write_message_fields_buffer(s, &(message.EncryptedRandomSessionKey));
+	if (message.NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)
+		ntlm_write_message_fields_buffer(s, &(message.EncryptedRandomSessionKey)); /* EncryptedRandomSessionKey */
 
 	length = Stream_Position(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
