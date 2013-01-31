@@ -532,6 +532,7 @@ void crypto_cert_print_info(X509* xcert)
 
 char* crypto_base64_encode(BYTE* data, int length)
 {
+#ifndef _WIN32
 	BIO* bio;
 	BIO* b64;
 	int length4;
@@ -559,6 +560,32 @@ char* crypto_base64_encode(BYTE* data, int length)
 	fclose(stream);
 
 	return base64_string;
+#else
+	BIO* bio;
+	BIO* b64;
+	BUF_MEM* bptr;
+	char* base64_string;
+
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_new(BIO_s_mem());
+	b64 = BIO_push(b64, bio);
+
+	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+	BIO_write(b64, data, length);
+
+	if (BIO_flush(b64) < 1)
+		return NULL;
+
+	BIO_get_mem_ptr(b64, &bptr);
+
+	base64_string = (char*) malloc(bptr->length);
+	memcpy(base64_string, bptr->data, bptr->length - 1);
+	base64_string[bptr->length - 1] = '\0';
+
+	BIO_free_all(b64);
+
+	return base64_string;
+#endif
 }
 
 void crypto_base64_decode(BYTE* enc_data, int length, BYTE** dec_data, int* res_length)
