@@ -22,7 +22,6 @@
 #endif
 
 #include <freerdp/listener.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 
@@ -31,6 +30,7 @@
 #include "mf_peer.h"
 #include "mf_info.h"
 #include "mf_event.h"
+#include "mf_rdpsnd.h"
 
 #include <mach/clock.h>
 #include <mach/mach.h>
@@ -147,6 +147,9 @@ void mf_peer_rfx_update(freerdp_peer* client)
     rect.width = width;
     rect.height = height;
     
+    mfp->rfx_context->width = mfi->servscreen_width;
+    mfp->rfx_context->height = mfi->servscreen_height;
+    
     rfx_compose_message(mfp->rfx_context, s, &rect, 1,
                         (BYTE*) dataBits, rect.width, rect.height, pitch);
     
@@ -165,7 +168,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
     
     //send
     
-	update->SurfaceBits(update->context, cmd);
+    update->SurfaceBits(update->context, cmd);
     
     //clean up
     
@@ -198,9 +201,9 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
     
 	context->s = stream_new(0xFFFF);
     
-#ifdef WITH_SERVER_CHANNELS
+//#ifdef WITH_SERVER_CHANNELS
 	context->vcm = WTSCreateVirtualChannelManager(client);
-#endif
+//#endif
     
     mf_info_peer_register(context->info, context);
 }
@@ -225,14 +228,15 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 			audin_server_context_free(context->audin);
 #endif
         
-#ifdef CHANNEL_RDPSND_SERVER
+//#ifdef CHANNEL_RDPSND_SERVER
+        mf_peer_rdpsnd_stop();
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
-#endif
+//#endif
         
-#ifdef WITH_SERVER_CHANNELS
+//#ifdef WITH_SERVER_CHANNELS
 		WTSDestroyVirtualChannelManager(context->vcm);
-#endif
+//#endif
 	}
 }
 
@@ -252,7 +256,7 @@ void mf_peer_init(freerdp_peer* client)
     if(info_timer)
     {
         //printf("created timer\n");
-        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 33ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
+        dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 42ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
         dispatch_source_set_event_handler(info_timer, ^{
             //printf("dispatch\n");
             mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
@@ -265,10 +269,10 @@ void mf_peer_init(freerdp_peer* client)
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
 {
-	//mfPeerContext* context = (mfPeerContext*) client->context;
+	mfPeerContext* context = (mfPeerContext*) client->context;
     rdpSettings* settings = client->settings;
     
-	printf("Client %s is activated\n", client->hostname);
+	printf("Client %s post connect\n", client->hostname);
     
 	if (client->settings->AutoLogonEnabled)
 	{
@@ -300,27 +304,24 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
     client->update->DesktopResize(client->update->context);
 	
     
-	/*printf("Client requested desktop: %dx%dx%d\n",
-     client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
-     */
-#ifdef WITH_SERVER_CHANNELS
+//#ifdef WITH_SERVER_CHANNELS
 	/* Iterate all channel names requested by the client and activate those supported by the server */
     int i;
 	for (i = 0; i < client->settings->ChannelCount; i++)
 	{
 		if (client->settings->ChannelDefArray[i].joined)
 		{
-#ifdef CHANNEL_RDPSND_SERVER
+//#ifdef CHANNEL_RDPSND_SERVER
 			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
 			{
 				mf_peer_rdpsnd_init(context); /* Audio Output */
 			}
-#endif
+//#endif
 		}
 	}
     
 	/* Dynamic Virtual Channels */
-#endif
+//#endif
     
 #ifdef CHANNEL_AUDIN_SERVER
 	mf_peer_audin_init(context); /* Audio Input */
@@ -333,7 +334,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 BOOL mf_peer_activate(freerdp_peer* client)
 {
 	mfPeerContext* context = (mfPeerContext*) client->context;
-    
+
 	rfx_context_reset(context->rfx_context);
 	context->activated = TRUE;
     
@@ -374,10 +375,12 @@ void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
         state_down = TRUE;
     }
     
+    /*
     CGEventRef event;
     event = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)code, state_down);
     CGEventPost(kCGHIDEventTap, event);
     CFRelease(event);
+    */
 }
 
 void mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -511,6 +514,7 @@ void* mf_peer_main_loop(void* arg)
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
+    client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = FALSE;
     
@@ -546,9 +550,9 @@ void* mf_peer_main_loop(void* arg)
 			break;
 		}
         
-#ifdef WITH_SERVER_CHANNELS
+//#ifdef WITH_SERVER_CHANNELS
 		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-#endif
+//#endif
         
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -591,10 +595,10 @@ void* mf_peer_main_loop(void* arg)
 		}
         
         
-#ifdef WITH_SERVER_CHANNELS
+//#ifdef WITH_SERVER_CHANNELS
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
-#endif
+//#endif
         
 	}
     

@@ -410,13 +410,28 @@ endif()
 
 # Packaging
 
+SET(CPACK_BINARY_ZIP "ON")
+
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
 
 if(NOT WIN32)
-	set(CPACK_PACKAGE_EXECUTABLES "xfreerdp")
-	if(WITH_SERVER)
-		set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "xfreerdp-server")
+    if(APPLE AND (NOT IOS))
+    #set(CPACK_PACKAGE_EXECUTABLES "mfreerdp")
+
+        if(WITH_SERVER)
+            set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "mfreerdp-server")
+        endif()
 	endif()
+    
+    if(WITH_X11)
+        set(CPACK_PACKAGE_EXECUTABLES "xfreerdp")
+
+        if(WITH_SERVER)
+            set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "xfreerdp-server")
+        endif()
+    endif()
+
+
 endif()
 
 set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
@@ -447,6 +462,8 @@ set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
 set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
 set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
 
+set(CPACK_COMPONENTS_ALL client server libraries headers)
+
 if(MSVC)
 	if(MSVC_RUNTIME STREQUAL "dynamic")
 		set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
@@ -454,24 +471,22 @@ if(MSVC)
 		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
 			DESTINATION ${CMAKE_INSTALL_BINDIR}
 			COMPONENT libraries)
+    endif()
 			
+    set(EXTRA_DATA_DIR "extra/")
+    file(GLOB EXTRA_FILES "${CMAKE_SOURCE_DIR}/extra/*")
+    install(FILES ${EXTRA_FILES}
+        DESTINATION ${EXTRA_DATA_DIR}
+        COMPONENT extra)
 			
-		set(EXTRA_DATA_DIR "pre-requisites/")
-		file(GLOB EXTRA_FILES "${CMAKE_SOURCE_DIR}/extra/*")
-		install(FILES ${EXTRA_FILES}
-			DESTINATION ${EXTRA_DATA_DIR}
-			COMPONENT extra)
-			
-		set(REV_DATA_DIR "REV/")
-		file(GLOB REV_FILES "${CMAKE_SOURCE_DIR}/REV/*")
-		install(FILES ${REV_FILES}
-			DESTINATION ${REV_DATA_DIR}
-			COMPONENT rev)
-	endif()
+    set(REV_DATA_DIR "REV/")
+    file(GLOB REV_FILES "${CMAKE_SOURCE_DIR}/REV/*")
+    install(FILES ${REV_FILES}
+        DESTINATION ${REV_DATA_DIR}
+        COMPONENT rev)
+	
+    set(CPACK_COMPONENTS_AL ${CPACK_COMPONENTS_ALL} extra rev)
 endif()
-
-
-set(CPACK_COMPONENTS_ALL client server libraries headers extra rev)
 
 
 set(CPACK_COMPONENT_CLIENT_DISPLAY_NAME "Client")
