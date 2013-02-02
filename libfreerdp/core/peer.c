@@ -255,7 +255,7 @@ static int peer_recv_pdu(freerdp_peer* client, STREAM* s)
 		return peer_recv_fastpath_pdu(client, s);
 }
 
-static BOOL peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
+static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;

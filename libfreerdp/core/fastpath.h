@@ -105,8 +105,8 @@ struct rdp_fastpath
 UINT16 fastpath_header_length(STREAM* s);
 UINT16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s);
 BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s, UINT16 *length);
-BOOL fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
-BOOL fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
+int fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s);
+int fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s);
 
 STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode);
 BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s);

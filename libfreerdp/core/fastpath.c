@@ -276,7 +276,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	return status;
 }
 
-static BOOL fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
+static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 {
 	int status;
 	UINT16 size;

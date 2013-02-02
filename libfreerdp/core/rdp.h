@@ -178,7 +178,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, STREAM* s, UINT16 type, UINT16 channel_id);
 
 STREAM* rdp_data_pdu_init(rdpRdp* rdp);
 BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, BYTE type, UINT16 channel_id);
-BOOL rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s);
+int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s);
 
 BOOL rdp_send(rdpRdp* rdp, STREAM* s, UINT16 channel_id);
 void rdp_recv(rdpRdp* rdp);
