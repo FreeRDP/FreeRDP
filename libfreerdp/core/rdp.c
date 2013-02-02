@@ -510,6 +510,11 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (compressed_type & PACKET_COMPRESSED)
 	{
+		if (stream_get_left(s) < compressed_len - 18)
+		{
+			printf("decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
+			return -1;	
+		}
 		if (decompress_rdp(rdp->mppc_dec, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
@@ -575,7 +580,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
 			if(!rdp_recv_save_session_info(rdp, comp_stream))
-				return FALSE;
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
