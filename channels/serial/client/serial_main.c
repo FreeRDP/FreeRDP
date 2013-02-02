@@ -340,13 +340,13 @@ static void* serial_thread_func(void* arg)
 
 	while (1)
 	{
-		freerdp_thread_wait(serial->thread);
+		freerdp_thread_wait_timeout(serial->thread, 500);
 
 		serial->nfds = 1;
 		FD_ZERO(&serial->read_fds);
 		FD_ZERO(&serial->write_fds);
 
-		serial->tv.tv_sec = 20;
+		serial->tv.tv_sec = 1;
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
@@ -356,10 +356,13 @@ static void* serial_thread_func(void* arg)
 		freerdp_thread_reset(serial->thread);
 		serial_process_irp_list(serial);
 
-		if (WaitForSingleObject(serial->in_event, 0) == WAIT_OBJECT_0)
-		{
-			if (serial_check_fds(serial))
-				ResetEvent(serial->in_event);
+		switch (WaitForSingleObject(serial->in_event, 0)) {
+			case WAIT_OBJECT_0:
+			case WAIT_TIMEOUT:
+				{
+					if (serial_check_fds(serial))
+						ResetEvent(serial->in_event);
+				}
 		}
 	}
 
@@ -683,6 +686,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 		case 0:
 			if (serial->select_timeout)
 			{
+				__serial_check_fds(serial);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_NONE, STATUS_TIMEOUT);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_READ, STATUS_TIMEOUT);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_WRITE, STATUS_TIMEOUT);
