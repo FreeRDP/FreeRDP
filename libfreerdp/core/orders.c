@@ -909,8 +909,6 @@ BOOL update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 	return TRUE;
 }
 
-
-
 BOOL update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
 	ORDER_FIELD_BYTE(1, fast_index->cacheId);
@@ -942,12 +940,10 @@ BOOL update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 	return TRUE;
 }
 
-
-
 BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
 {
-	GLYPH_DATA_V2* glyph;
 	BYTE* phold;
+	GLYPH_DATA_V2* glyph;
 
 	ORDER_FIELD_BYTE(1, fast_glyph->cacheId);
 	ORDER_FIELD_2BYTE(2, fast_glyph->ulCharInc, fast_glyph->flAccel);
@@ -968,32 +964,40 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 	{
 		if (stream_get_left(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, fast_glyph->cbData);
+
 		if (stream_get_left(s) < fast_glyph->cbData)
 			return FALSE;
+
 		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
 		phold = s->p;
 
 		if (!stream_skip(s, 1))
 			return FALSE;
-		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
+
+		if (fast_glyph->cbData > 1)
 		{
 			/* parse optional glyph data */
-			glyph = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
+			glyph = &fast_glyph->glyphData;
 			glyph->cacheIndex = fast_glyph->data[0];
+
 			if (!update_read_2byte_signed(s, &glyph->x) ||
 				!update_read_2byte_signed(s, &glyph->y) ||
 				!update_read_2byte_unsigned(s, &glyph->cx) ||
 				!update_read_2byte_unsigned(s, &glyph->cy))
 				return FALSE;
+
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
+
 			if (stream_get_left(s) < glyph->cb)
 				return FALSE;
+
 			glyph->aj = (BYTE*) malloc(glyph->cb);
 			stream_read(s, glyph->aj, glyph->cb);
-			fast_glyph->glyph_data = glyph;
 		}
+
 		s->p = phold + fast_glyph->cbData;
 	}
 	return TRUE;

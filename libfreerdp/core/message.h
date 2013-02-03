@@ -22,11 +22,11 @@
 
 #include <freerdp/freerdp.h>
 
-#define GetMessageType(_id) 	(_id & 0xF)
-#define GetMessageClass(_id)	((_id >> 8) & 0xF)
+#define GetMessageType(_id) 	(_id & 0xFF)
+#define GetMessageClass(_id)	((_id >> 16) & 0xFF)
 
 #define MakeMessageId(_class, _type) \
-	(((_class ##_Class) << 8) | (_class ## _ ## _type))
+	(((_class ##_Class) << 16) | (_class ## _ ## _type))
 
 /* Update */
 

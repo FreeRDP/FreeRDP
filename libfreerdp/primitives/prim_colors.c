@@ -714,13 +714,12 @@ PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors(
-	const primitives_hints_t *hints,
-	primitives_t *prims)
+void primitives_init_colors(const primitives_hints_t* hints, primitives_t* prims)
 {
 	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
+
 #if defined(WITH_SSE2)
 	if (hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
 	{
@@ -737,8 +736,7 @@ void primitives_init_colors(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_deinit_colors(
-	primitives_t *prims)
+void primitives_deinit_colors(primitives_t* prims)
 {
 	/* Nothing to do. */
 }

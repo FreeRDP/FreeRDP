@@ -22,6 +22,30 @@
 
 #include <freerdp/types.h>
 
+struct _GLYPH_DATA
+{
+	UINT32 cacheIndex;
+	INT32 x;
+	INT32 y;
+	UINT32 cx;
+	UINT32 cy;
+	UINT32 cb;
+	BYTE* aj;
+};
+typedef struct _GLYPH_DATA GLYPH_DATA;
+
+struct _GLYPH_DATA_V2
+{
+	UINT32 cacheIndex;
+	INT32 x;
+	INT32 y;
+	UINT32 cx;
+	UINT32 cy;
+	UINT32 cb;
+	BYTE* aj;
+};
+typedef struct _GLYPH_DATA_V2 GLYPH_DATA_V2;
+
 #define BACKMODE_TRANSPARENT	0x0001
 #define BACKMODE_OPAQUE		0x0002
 
@@ -357,7 +381,7 @@ struct _FAST_GLYPH_ORDER
 	INT32 y;
 	UINT32 cbData;
 	BYTE data[256];
-	void* glyph_data;
+	GLYPH_DATA_V2 glyphData;
 };
 typedef struct _FAST_GLYPH_ORDER FAST_GLYPH_ORDER;
 
