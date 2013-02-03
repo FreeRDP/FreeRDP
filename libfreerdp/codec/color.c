@@ -773,7 +773,7 @@ BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height,
 		return 0;
 }
 
-void   freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
+void freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
 {
 	int i;
 

@@ -487,9 +487,6 @@ static void message_CacheColorTable(rdpContext* context, CACHE_COLOR_TABLE_ORDER
 	wParam = (CACHE_COLOR_TABLE_ORDER*) malloc(sizeof(CACHE_COLOR_TABLE_ORDER));
 	CopyMemory(wParam, cacheColorTableOrder, sizeof(CACHE_COLOR_TABLE_ORDER));
 
-	wParam->colorTable = (UINT32*) malloc(sizeof(UINT32) * wParam->numberColors);
-	CopyMemory(wParam->colorTable, cacheColorTableOrder->colorTable, wParam->numberColors);
-
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(SecondaryUpdate, CacheColorTable), (void*) wParam, NULL);
 }
@@ -1194,8 +1191,6 @@ int message_process_secondary_update_class(rdpMessage* update, wMessage* msg, in
 			IFCALL(update->CacheColorTable, msg->context, (CACHE_COLOR_TABLE_ORDER*) msg->wParam);
 			{
 				CACHE_COLOR_TABLE_ORDER* wParam = (CACHE_COLOR_TABLE_ORDER*) msg->wParam;
-
-				free(wParam->colorTable);
 				free(wParam);
 			}
 			break;

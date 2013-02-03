@@ -1243,25 +1243,26 @@ BOOL update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 
 	if (stream_get_left(s) < 3)
 		return FALSE;
+
 	stream_read_BYTE(s, cache_color_table_order->cacheIndex); /* cacheIndex (1 byte) */
 	stream_read_UINT16(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
+
+	if (cache_color_table_order->numberColors != 256)
+	{
+		/* This field MUST be set to 256 */
+		return FALSE;
+	}
 
 	if (stream_get_left(s) < cache_color_table_order->numberColors * 4)
 		return FALSE;
 
-	colorTable = cache_color_table_order->colorTable;
-
-	if (colorTable == NULL)
-		colorTable = (UINT32*) malloc(cache_color_table_order->numberColors * 4);
-	else
-		colorTable = (UINT32*) realloc(colorTable, cache_color_table_order->numberColors * 4);
+	colorTable = (UINT32*) &cache_color_table_order->colorTable;
 
 	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
 	{
 		update_read_color_quad(s, &colorTable[i]);
 	}
 
-	cache_color_table_order->colorTable = colorTable;
 	return TRUE;
 }
 

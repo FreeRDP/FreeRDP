@@ -439,8 +439,7 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->clrconv->palette->count = palette->number;
-	gdi->clrconv->palette->entries = palette->entries;
+	CopyMemory(gdi->clrconv->palette, palette, sizeof(rdpPalette));
 }
 
 void gdi_set_bounds(rdpContext* context, rdpBounds* bounds)

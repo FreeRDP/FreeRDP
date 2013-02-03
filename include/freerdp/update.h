@@ -90,7 +90,7 @@ typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 struct rdp_palette
 {
 	UINT32 count;
-	PALETTE_ENTRY* entries;
+	PALETTE_ENTRY entries[256];
 };
 typedef struct rdp_palette rdpPalette;
 

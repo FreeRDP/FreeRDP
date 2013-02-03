@@ -128,7 +128,7 @@ struct _CACHE_COLOR_TABLE_ORDER
 {
 	UINT32 cacheIndex;
 	UINT32 numberColors;
-	UINT32* colorTable;
+	UINT32 colorTable[256];
 };
 typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
 
