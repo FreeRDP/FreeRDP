@@ -928,7 +928,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 			gdi->bytesPerPixel = 4;
 		}
 	}
-	
+
 	gdi->hdc = gdi_GetDC();
 	gdi->hdc->bitsPerPixel = gdi->dstBpp;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
