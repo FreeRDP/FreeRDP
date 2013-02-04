@@ -81,6 +81,10 @@ WINPR_API void Queue_Free(wQueue* queue);
 
 struct _wStack
 {
+	int size;
+	int capacity;
+	void** array;
+	HANDLE mutex;
 	BOOL synchronized;
 	wObject object;
 };

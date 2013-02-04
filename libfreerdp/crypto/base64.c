@@ -104,6 +104,7 @@ static void* base64_decode(BYTE* s, int length, int* data_len)
 	if (length % 4)
 		return NULL;
 
+	n[0] = n[1] = n[2] = n[3] = 0;
 	q = data = (BYTE*) malloc(length / 4 * 3);
 
 	for (p = (char*) s; *p; )

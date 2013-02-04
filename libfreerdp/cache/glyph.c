@@ -173,6 +173,7 @@ void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 	rdpGlyphCache* glyph_cache;
 
 	glyph_cache = context->cache->glyph;
+
 	update_process_glyph_fragments(context, glyph_index->data, glyph_index->cbData,
 			glyph_index->cacheId, glyph_index->ulCharInc, glyph_index->flAccel,
 			glyph_index->backColor, glyph_index->foreColor, glyph_index->x, glyph_index->y,
@@ -184,8 +185,9 @@ void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 
 void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 {
-	INT32 opLeft, opTop, opRight, opBottom;
 	INT32 x, y;
+	INT32 opLeft, opTop;
+	INT32 opRight, opBottom;
 	rdpGlyphCache* glyph_cache;
 
 	glyph_cache = context->cache->glyph;
@@ -234,12 +236,13 @@ void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fast_index)
 
 void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 {
-	INT32 opLeft, opTop, opRight, opBottom;
 	INT32 x, y;
-	GLYPH_DATA_V2* glyph_data;
 	rdpGlyph* glyph;
-	rdpCache* cache = context->cache;
 	BYTE text_data[2];
+	INT32 opLeft, opTop;
+	INT32 opRight, opBottom;
+	GLYPH_DATA_V2* glyph_data;
+	rdpCache* cache = context->cache;
 
 	opLeft = fast_glyph->opLeft;
 	opTop = fast_glyph->opTop;
@@ -274,21 +277,21 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 	if (y == -32768)
 		y = fast_glyph->bkTop;
 
-	if (fast_glyph->glyph_data != NULL)
+	if (fast_glyph->cbData > 1)
 	{
 		/* got option font that needs to go into cache */
-		glyph_data = (GLYPH_DATA_V2*) (fast_glyph->glyph_data);
+		glyph_data = &fast_glyph->glyphData;
+
 		glyph = Glyph_Alloc(context);
 		glyph->x = glyph_data->x;
 		glyph->y = glyph_data->y;
 		glyph->cx = glyph_data->cx;
 		glyph->cy = glyph_data->cy;
-		glyph->aj = glyph_data->aj;
 		glyph->cb = glyph_data->cb;
+		glyph->aj = glyph_data->aj;
 		Glyph_New(context, glyph);
+
 		glyph_cache_put(cache->glyph, fast_glyph->cacheId, fast_glyph->data[0], glyph);
-		free(fast_glyph->glyph_data);
-		fast_glyph->glyph_data = NULL;
 	}
 
 	text_data[0] = fast_glyph->data[0];
@@ -320,8 +323,8 @@ void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 		glyph->y = glyph_data->y;
 		glyph->cx = glyph_data->cx;
 		glyph->cy = glyph_data->cy;
-		glyph->aj = glyph_data->aj;
 		glyph->cb = glyph_data->cb;
+		glyph->aj = glyph_data->aj;
 		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, cache_glyph->cacheId, glyph_data->cacheIndex, glyph);
@@ -345,8 +348,8 @@ void update_gdi_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_
 		glyph->y = glyph_data->y;
 		glyph->cx = glyph_data->cx;
 		glyph->cy = glyph_data->cy;
-		glyph->aj = glyph_data->aj;
 		glyph->cb = glyph_data->cb;
+		glyph->aj = glyph_data->aj;
 		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, cache_glyph_v2->cacheId, glyph_data->cacheIndex, glyph);

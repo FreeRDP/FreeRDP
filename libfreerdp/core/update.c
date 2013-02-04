@@ -429,7 +429,7 @@ void update_post_connect(rdpUpdate* update)
 	update->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (update->asynchronous)
-		update->message = message_new(update);
+		update->proxy = update_message_proxy_new(update);
 
 	update->altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
@@ -735,7 +735,7 @@ void update_register_client_callbacks(rdpUpdate* update)
 
 int update_process_messages(rdpUpdate* update)
 {
-	return message_process_pending_updates(update);
+	return update_message_process_pending_updates(update);
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)
@@ -808,7 +808,7 @@ void update_free(rdpUpdate* update)
 		free(update->window);
 
 		if (update->asynchronous)
-			message_free(update->message);
+			update_message_proxy_free(update->proxy);
 
 		free(update);
 	}
