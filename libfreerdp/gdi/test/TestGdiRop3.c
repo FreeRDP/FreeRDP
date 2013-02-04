@@ -204,6 +204,7 @@ static char* test_ROP3[] =
 	"PDSona",
 	"DSPDxox",
 	"DPSDonox",
+	"SPDSxax",
 	"DPon",
 	"DPna",
 	"Pn",

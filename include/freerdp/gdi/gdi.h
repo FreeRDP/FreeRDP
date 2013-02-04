@@ -74,6 +74,7 @@
 #define GDI_PDSona			0x00100C85 /* D = P & ~(D | S) */
 #define GDI_DSPDxox			0x00740646 /* D = D ^ (S | ( P ^ D)) */
 #define GDI_DPSDonox			0x005B18A9 /* D = D ^ (P | ~(S | D)) */
+#define GDI_SPDSxax			0x00AC0744 /* D = S ^ (P & (D ^ S)) */
 
 #define GDI_DPon			0x000500A9 /* D = ~(D | P) */
 #define GDI_DPna			0x000A0329 /* D = D & ~P */

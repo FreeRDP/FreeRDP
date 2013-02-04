@@ -661,6 +661,7 @@ void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
+	BYTE* data;
 	rdpBrush* brush;
 	UINT32 foreColor;
 	UINT32 backColor;
@@ -678,6 +679,32 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	{
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
+
+		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
+				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+				mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop));
+
+		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
+		gdi->drawing->hdc->brush = originalBrush;
+	}
+	else if (brush->style == GDI_BS_PATTERN)
+	{
+		HGDI_BITMAP hBmp;
+
+		if (brush->bpp > 1)
+		{
+			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+		}
+		else
+		{
+			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
+					mem3blt->backColor, mem3blt->foreColor, gdi->clrconv);
+		}
+
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+
+		originalBrush = gdi->drawing->hdc->brush;
+		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
 
 		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
