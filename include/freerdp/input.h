@@ -58,7 +58,7 @@ typedef struct rdp_input rdpInput;
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
 /* defined inside libfreerdp-core */
-typedef struct rdp_event rdpEvent;
+typedef struct rdp_input_proxy rdpInputProxy;
 
 /* Input Interface */
 
@@ -84,7 +84,7 @@ struct rdp_input
 	/* Internal */
 
 	BOOL asynchronous;
-	rdpEvent* event;
+	rdpInputProxy* proxy;
 	wMessageQueue* queue;
 };
 

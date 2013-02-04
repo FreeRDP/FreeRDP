@@ -22,7 +22,7 @@
 
 #include "rdp.h"
 #include "fastpath.h"
-#include "event.h"
+#include "message.h"
 
 #include <freerdp/input.h>
 #include <freerdp/freerdp.h>
