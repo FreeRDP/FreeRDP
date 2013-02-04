@@ -664,7 +664,7 @@ static int BitBlt_MERGEPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 
 static int BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
-	int x, y;
+	int x, y, xOffset, yOffset;
 	UINT32* dstp;
 	UINT32* patp;
 	UINT32 color32;
@@ -689,6 +689,19 @@ static int BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	}
 	else
 	{
+		/* align pattern to 8x8 grid to make sure transition
+		between different pattern blocks are smooth */
+
+		if (hdcDest->brush->style == GDI_BS_HATCHED)
+		{
+			xOffset = nXDest % 8;
+			yOffset = nYDest % 8 + 2; // +2 added after comparison to mstsc
+		}
+		else
+		{
+			xOffset = 0;
+			yOffset = 0;
+		}
 		for (y = 0; y < nHeight; y++)
 		{
 			dstp = (UINT32*) gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
@@ -697,7 +710,7 @@ static int BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x+xOffset, y+yOffset);
 					*dstp = *patp;
 					dstp++;
 				}
