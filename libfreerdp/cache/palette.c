@@ -25,14 +25,17 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
-
 #include <freerdp/cache/palette.h>
 
 void update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
+	UINT32* colorTable;
 	rdpCache* cache = context->cache;
-	palette_cache_put(cache->palette, cache_color_table->cacheIndex, (void*) cache_color_table->colorTable);
+
+	colorTable = (UINT32*) malloc(sizeof(UINT32) * 256);
+	CopyMemory(colorTable, cache_color_table->colorTable, sizeof(UINT32) * 256);
+
+	palette_cache_put(cache->palette, cache_color_table->cacheIndex, (void*) colorTable);
 }
 
 void* palette_cache_get(rdpPaletteCache* palette_cache, UINT32 index)
@@ -98,4 +101,3 @@ void palette_cache_free(rdpPaletteCache* palette_cache)
 		free(palette_cache);
 	}
 }
-

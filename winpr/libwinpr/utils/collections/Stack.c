@@ -65,10 +65,7 @@ BOOL Stack_IsSynchronized(wStack* stack)
 
 void Stack_Clear(wStack* stack)
 {
-	if (stack->synchronized)
-	{
 
-	}
 }
 
 /**
@@ -77,11 +74,6 @@ void Stack_Clear(wStack* stack)
 
 BOOL Stack_Contains(wStack* stack, void* obj)
 {
-	if (stack->synchronized)
-	{
-
-	}
-
 	return FALSE;
 }
 
@@ -92,9 +84,18 @@ BOOL Stack_Contains(wStack* stack, void* obj)
 void Stack_Push(wStack* stack, void* obj)
 {
 	if (stack->synchronized)
-	{
+		WaitForSingleObject(stack->mutex, INFINITE);
 
+	if ((stack->size + 1) >= stack->capacity)
+	{
+		stack->capacity *= 2;
+		stack->array = (void**) realloc(stack->array, sizeof(void*) * stack->capacity);
 	}
+
+	stack->array[(stack->size)++] = obj;
+
+	if (stack->synchronized)
+		ReleaseMutex(stack->mutex);
 }
 
 /**
@@ -103,12 +104,18 @@ void Stack_Push(wStack* stack, void* obj)
 
 void* Stack_Pop(wStack* stack)
 {
+	void* obj = NULL;
+
 	if (stack->synchronized)
-	{
+		WaitForSingleObject(stack->mutex, INFINITE);
 
-	}
+	if (stack->size > 0)
+		obj = stack->array[--(stack->size)];
 
-	return NULL;
+	if (stack->synchronized)
+		ReleaseMutex(stack->mutex);
+
+	return obj;
 }
 
 /**
@@ -117,19 +124,25 @@ void* Stack_Pop(wStack* stack)
 
 void* Stack_Peek(wStack* stack)
 {
+	void* obj = NULL;
+
 	if (stack->synchronized)
-	{
+		WaitForSingleObject(stack->mutex, INFINITE);
 
-	}
+	if (stack->size > 0)
+		obj = stack->array[stack->size];
 
-	return NULL;
+	if (stack->synchronized)
+		ReleaseMutex(stack->mutex);
+
+	return obj;
 }
 
 /**
  * Construction, Destruction
  */
 
-wStack* Stack_New(BOOL bSynchronized)
+wStack* Stack_New(BOOL synchronized)
 {
 	wStack* stack = NULL;
 
@@ -137,7 +150,14 @@ wStack* Stack_New(BOOL bSynchronized)
 
 	if (stack)
 	{
-		stack->synchronized = bSynchronized;
+		stack->synchronized = synchronized;
+
+		if (stack->synchronized)
+			stack->mutex = CreateMutex(NULL, FALSE, NULL);
+
+		stack->size = 0;
+		stack->capacity = 32;
+		stack->array = (void**) malloc(sizeof(void*) * stack->capacity);
 	}
 
 	return stack;
@@ -145,5 +165,13 @@ wStack* Stack_New(BOOL bSynchronized)
 
 void Stack_Free(wStack* stack)
 {
-	free(stack);
+	if (stack)
+	{
+		if (stack->synchronized)
+			CloseHandle(stack->mutex);
+
+		free(stack->array);
+
+		free(stack);
+	}
 }

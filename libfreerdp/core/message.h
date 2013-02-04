@@ -22,11 +22,15 @@
 
 #include <freerdp/freerdp.h>
 
-#define GetMessageType(_id) 	(_id & 0xF)
-#define GetMessageClass(_id)	((_id >> 8) & 0xF)
+#define GetMessageType(_id) 	(_id & 0xFF)
+#define GetMessageClass(_id)	((_id >> 16) & 0xFF)
 
 #define MakeMessageId(_class, _type) \
-	(((_class ##_Class) << 8) | (_class ## _ ## _type))
+	(((_class ##_Class) << 16) | (_class ## _ ## _type))
+
+/**
+ * Update Message Queue
+ */
 
 /* Update */
 
@@ -128,10 +132,12 @@
 #define PointerUpdate_PointerNew			4
 #define PointerUpdate_PointerCached			5
 
-/* Message Queue */
+/* Update Proxy Interface */
 
-struct rdp_message
+struct rdp_update_proxy
 {
+	rdpUpdate* update;
+
 	/* Update */
 
 	pBeginPaint BeginPaint;
@@ -219,15 +225,45 @@ struct rdp_message
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
-
-	/* Internal */
-
-	rdpUpdate* update;
 };
 
-int message_process_pending_updates(rdpUpdate* update);
+int update_message_process_pending_updates(rdpUpdate* update);
 
-rdpMessage* message_new(rdpUpdate* update);
-void message_free(rdpMessage* message);
+rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
+void update_message_proxy_free(rdpUpdateProxy* message);
+
+/**
+ * Input Message Queue
+ */
+
+/* Input */
+
+#define Input_Class					1
+
+#define Input_SynchronizeEvent				1
+#define Input_KeyboardEvent				2
+#define Input_UnicodeKeyboardEvent			3
+#define Input_MouseEvent				4
+#define Input_ExtendedMouseEvent			5
+
+/* Input Proxy Interface */
+
+struct rdp_input_proxy
+{
+	rdpInput* input;
+
+	/* Input */
+
+	pSynchronizeEvent SynchronizeEvent;
+	pKeyboardEvent KeyboardEvent;
+	pUnicodeKeyboardEvent UnicodeKeyboardEvent;
+	pMouseEvent MouseEvent;
+	pExtendedMouseEvent ExtendedMouseEvent;
+};
+
+int input_message_process_pending_input(rdpInput* input);
+
+rdpInputProxy* input_message_proxy_new(rdpInput* input);
+void input_message_proxy_free(rdpInputProxy* proxy);
 
 #endif /* FREERDP_CORE_MESSAGE_PRIVATE_H */

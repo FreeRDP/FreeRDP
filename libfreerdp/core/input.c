@@ -25,8 +25,9 @@
 
 #include <freerdp/input.h>
 
+#include "message.h"
+
 #include "input.h"
-#include "event.h"
 
 void rdp_write_client_input_pdu_header(STREAM* s, UINT16 number)
 {
@@ -392,7 +393,7 @@ void input_register_client_callbacks(rdpInput* input)
 
 	if (input->asynchronous)
 	{
-		input->event = event_new(input);
+		input->proxy = input_message_proxy_new(input);
 	}
 }
 
@@ -431,7 +432,7 @@ void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 
 int input_process_events(rdpInput* input)
 {
-	return event_process_pending_input(input);
+	return input_message_process_pending_input(input);
 }
 
 rdpInput* input_new(rdpRdp* rdp)
@@ -453,7 +454,7 @@ void input_free(rdpInput* input)
 	if (input != NULL)
 	{
 		if (input->asynchronous)
-			event_free(input->event);
+			input_message_proxy_free(input->proxy);
 
 		free(input);
 	}
