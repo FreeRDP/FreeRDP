@@ -312,6 +312,16 @@ static const UINT32 rop3_code_table[] =
 	0x00FF0062  /* 1 */
 };
 
+/* Hatch Patterns as monochrome data */
+static BYTE GDI_BS_HACHTED_PATTERNS[] = {
+	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
+	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
+	0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F, /* HS_FDIAGONAL */
+	0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE, /* HS_BDIAGONAL */
+	0xF7, 0xF7, 0xF7, 0x00, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_CROSS */
+	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E /* HS_DIACROSS */
+};
+
 /* GDI Helper Functions */
 
 INLINE UINT32 gdi_rop3_code(BYTE code)
@@ -342,7 +352,7 @@ INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 
 	if (hdcBrush->brush != NULL)
 	{
-		if (hdcBrush->brush->style == GDI_BS_PATTERN)
+		if ((hdcBrush->brush->style == GDI_BS_PATTERN) || (hdcBrush->brush->style == GDI_BS_HATCHED))
 		{
 			HGDI_BITMAP hBmpBrush = hdcBrush->brush->pattern;
 	
@@ -484,6 +494,24 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+
+		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
+		gdi->drawing->hdc->brush = originalBrush;
+	}
+	else if (brush->style == GDI_BS_HATCHED)
+	{
+		HGDI_BITMAP hBmp;
+
+		data = freerdp_mono_image_convert(GDI_BS_HACHTED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
+		gdi->dstBpp, patblt->backColor, patblt->foreColor, gdi->clrconv);
+
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+
+		originalBrush = gdi->drawing->hdc->brush;
+		gdi->drawing->hdc->brush = gdi_CreateHatchBrush(hBmp);
+
+		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
