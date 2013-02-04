@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Palette Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -29,7 +29,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/palette.h>
 
@@ -71,9 +70,9 @@ static const GDI_PALETTEENTRY default_system_palette[20] =
 
 HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette)
 {
-	HGDI_PALETTE hPalette = (HGDI_PALETTE) xmalloc(sizeof(GDI_PALETTE));
+	HGDI_PALETTE hPalette = (HGDI_PALETTE) malloc(sizeof(GDI_PALETTE));
 	hPalette->count = palette->count;
-	hPalette->entries = (GDI_PALETTEENTRY*) xmalloc(sizeof(GDI_PALETTEENTRY) * hPalette->count);
+	hPalette->entries = (GDI_PALETTEENTRY*) malloc(sizeof(GDI_PALETTEENTRY) * hPalette->count);
 	memcpy(hPalette->entries, palette->entries, sizeof(GDI_PALETTEENTRY) * hPalette->count);
 	return hPalette;
 }
@@ -85,10 +84,10 @@ HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette)
 
 HGDI_PALETTE CreateSystemPalette()
 {
-	HGDI_PALETTE palette = (HGDI_PALETTE) xmalloc(sizeof(GDI_PALETTE));
+	HGDI_PALETTE palette = (HGDI_PALETTE) malloc(sizeof(GDI_PALETTE));
 
 	palette->count = 256;
-	palette->entries = (GDI_PALETTEENTRY*) xmalloc(sizeof(GDI_PALETTEENTRY) * 256);
+	palette->entries = (GDI_PALETTEENTRY*) malloc(sizeof(GDI_PALETTEENTRY) * 256);
 	memset(palette->entries, 0, sizeof(GDI_PALETTEENTRY) * 256);
 
 	memcpy(&palette->entries[0], &default_system_palette[0], 10 * sizeof(GDI_PALETTEENTRY));

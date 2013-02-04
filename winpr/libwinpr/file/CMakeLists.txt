@@ -19,25 +19,29 @@ set(MODULE_NAME "winpr-file")
 set(MODULE_PREFIX "WINPR_FILE")
 
 set(${MODULE_PREFIX}_SRCS
-	file.c)
+	file.c
+	pattern.c)
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-crt winpr-handle)
+
+if(MONOLITHIC_BUILD)
 
 else()
-	if(NOT WIN32)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-handle)
-	endif()
-
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

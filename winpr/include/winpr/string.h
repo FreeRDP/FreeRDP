@@ -48,8 +48,15 @@ WINPR_API char* _strdup(const char* strSource);
 WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
 
 WINPR_API int _stricmp(const char* string1, const char* string2);
+WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
+
+WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
+
+WINPR_API size_t _wcslen(const WCHAR* str);
+WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 
 WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
+WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
 
 WINPR_API LPSTR CharUpperA(LPSTR lpsz);
 WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);
@@ -123,12 +130,6 @@ WINPR_API BOOL IsCharLowerW(WCHAR ch);
 #define IsCharLower	IsCharLowerA
 #endif
 
-WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
-
-WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
-		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
-
 WINPR_API int lstrlenA(LPCSTR lpString);
 WINPR_API int lstrlenW(LPCWSTR lpString);
 
@@ -149,6 +150,28 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 
 #define	 sprintf_s	snprintf
 
+/* Unicode Conversion */
+
+WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+
+WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+
+#else
+
+#define _wcscmp		wcscmp
+#define _wcslen		wcslen
+#define _wcschr		wcschr
+
 #endif
+
+/* Extended API */
+
+WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
+		int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
+
+WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
 #endif /* WINPR_CRT_STRING_H */

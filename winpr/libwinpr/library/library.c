@@ -87,7 +87,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (library == NULL)
 	{
-		printf("LoadLibraryA: failed to open %s: %s\n", lpLibFileName, dlerror());
+		printf("LoadLibraryA: %s\n", dlerror());
 		return NULL;
 	}
 
@@ -140,11 +140,8 @@ BOOL FreeLibrary(HMODULE hLibModule)
 
 	status = dlclose(hLibModule);
 
-	if (status == 0)
-	{
-		printf("FreeLibrary() failure: %s\n", dlerror());
+	if (status != 0)
 		return FALSE;
-	}
 
 	return TRUE;
 }

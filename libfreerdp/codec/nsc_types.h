@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NSCodec Library
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
@@ -33,8 +33,8 @@
 
 struct _NSC_CONTEXT_PRIV
 {
-	uint8* plane_buf[5];		/* Decompressed Plane Buffers in the respective order */
-	uint32 plane_buf_length;	/* Lengths of each plane buffer */
+	BYTE* plane_buf[5];		/* Decompressed Plane Buffers in the respective order */
+	UINT32 plane_buf_length;	/* Lengths of each plane buffer */
 
 	/* profilers */
 	PROFILER_DEFINE(prof_nsc_rle_decompress_data);

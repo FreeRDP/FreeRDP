@@ -16,4 +16,5 @@
 # limitations under the License.
 
 add_subdirectory(hash)
+add_subdirectory(makecert)
 

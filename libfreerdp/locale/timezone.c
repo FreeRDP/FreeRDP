@@ -26,10 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include "liblocale.h"
 
 #include <freerdp/utils/time.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/locale/timezone.h>
 
@@ -38,22 +39,22 @@
 
 struct _SYSTEM_TIME_ENTRY
 {
-	uint16 wYear;
-	uint16 wMonth;
-	uint16 wDayOfWeek;
-	uint16 wDay;
-	uint16 wHour;
-	uint16 wMinute;
-	uint16 wSecond;
-	uint16 wMilliseconds;
+	UINT16 wYear;
+	UINT16 wMonth;
+	UINT16 wDayOfWeek;
+	UINT16 wDay;
+	UINT16 wHour;
+	UINT16 wMinute;
+	UINT16 wSecond;
+	UINT16 wMilliseconds;
 };
 typedef struct _SYSTEM_TIME_ENTRY SYSTEM_TIME_ENTRY;
 
 struct _TIME_ZONE_RULE_ENTRY
 {
-	uint64 TicksStart;
-	uint64 TicksEnd;
-	sint32 DaylightDelta;
+	UINT64 TicksStart;
+	UINT64 TicksEnd;
+	INT32 DaylightDelta;
 	SYSTEM_TIME_ENTRY StandardDate;
 	SYSTEM_TIME_ENTRY DaylightDate;
 };
@@ -62,13 +63,13 @@ typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;
 struct _TIME_ZONE_ENTRY
 {
 	const char* Id;
-	uint32 Bias;
-	boolean SupportsDST;
+	UINT32 Bias;
+	BOOL SupportsDST;
 	const char* DisplayName;
 	const char* StandardName;
 	const char* DaylightName;
 	TIME_ZONE_RULE_ENTRY* RuleTable;
-	uint32 RuleTableCount;
+	UINT32 RuleTableCount;
 };
 typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
 
@@ -594,507 +595,507 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_100[] =
 static const TIME_ZONE_ENTRY TimeZoneTable[] =
 {
 	{
-		"Dateline Standard Time", 720, false, "(UTC-12:00) International Date Line West",
+		"Dateline Standard Time", 720, FALSE, "(UTC-12:00) International Date Line West",
 		"Dateline Standard Time", "Dateline Daylight Time",
 		NULL, 0
 	},
 	{
-		"UTC-11", 780, false, "(UTC-11:00) Coordinated Universal Time-11",
+		"UTC-11", 780, FALSE, "(UTC-11:00) Coordinated Universal Time-11",
 		"UTC-11", "UTC-11",
 		NULL, 0
 	},
 	{
-		"Hawaiian Standard Time", 840, false, "(UTC-10:00) Hawaii",
+		"Hawaiian Standard Time", 840, FALSE, "(UTC-10:00) Hawaii",
 		"Hawaiian Standard Time", "Hawaiian Daylight Time",
 		NULL, 0
 	},
 	{
-		"Alaskan Standard Time", 900, true, "(UTC-09:00) Alaska",
+		"Alaskan Standard Time", 900, TRUE, "(UTC-09:00) Alaska",
 		"Alaskan Standard Time", "Alaskan Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_3, 2
 	},
 	{
-		"Pacific Standard Time (Mexico)", 960, true, "(UTC-08:00) Baja California",
+		"Pacific Standard Time (Mexico)", 960, TRUE, "(UTC-08:00) Baja California",
 		"Pacific Standard Time (Mexico)", "Pacific Daylight Time (Mexico)",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_4, 1
 	},
 	{
-		"Pacific Standard Time", 960, true, "(UTC-08:00) Pacific Time (US & Canada)",
+		"Pacific Standard Time", 960, TRUE, "(UTC-08:00) Pacific Time (US & Canada)",
 		"Pacific Standard Time", "Pacific Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_5, 2
 	},
 	{
-		"US Mountain Standard Time", 1020, false, "(UTC-07:00) Arizona",
+		"US Mountain Standard Time", 1020, FALSE, "(UTC-07:00) Arizona",
 		"US Mountain Standard Time", "US Mountain Daylight Time",
 		NULL, 0
 	},
 	{
-		"Mountain Standard Time (Mexico)", 1020, true, "(UTC-07:00) Chihuahua, La Paz, Mazatlan",
+		"Mountain Standard Time (Mexico)", 1020, TRUE, "(UTC-07:00) Chihuahua, La Paz, Mazatlan",
 		"Mountain Standard Time (Mexico)", "Mountain Daylight Time (Mexico)",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_7, 1
 	},
 	{
-		"Mountain Standard Time", 1020, true, "(UTC-07:00) Mountain Time (US & Canada)",
+		"Mountain Standard Time", 1020, TRUE, "(UTC-07:00) Mountain Time (US & Canada)",
 		"Mountain Standard Time", "Mountain Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_8, 2
 	},
 	{
-		"Central America Standard Time", 1080, false, "(UTC-06:00) Central America",
+		"Central America Standard Time", 1080, FALSE, "(UTC-06:00) Central America",
 		"Central America Standard Time", "Central America Daylight Time",
 		NULL, 0
 	},
 	{
-		"Central Standard Time", 1080, true, "(UTC-06:00) Central Time (US & Canada)",
+		"Central Standard Time", 1080, TRUE, "(UTC-06:00) Central Time (US & Canada)",
 		"Central Standard Time", "Central Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_10, 2
 	},
 	{
-		"Central Standard Time (Mexico)", 1080, true, "(UTC-06:00) Guadalajara, Mexico City, Monterrey",
+		"Central Standard Time (Mexico)", 1080, TRUE, "(UTC-06:00) Guadalajara, Mexico City, Monterrey",
 		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_11, 1
 	},
 	{
-		"Canada Central Standard Time", 1080, false, "(UTC-06:00) Saskatchewan",
+		"Canada Central Standard Time", 1080, FALSE, "(UTC-06:00) Saskatchewan",
 		"Canada Central Standard Time", "Canada Central Daylight Time",
 		NULL, 0
 	},
 	{
-		"SA Pacific Standard Time", 1140, false, "(UTC-05:00) Bogota, Lima, Quito",
+		"SA Pacific Standard Time", 1140, FALSE, "(UTC-05:00) Bogota, Lima, Quito",
 		"SA Pacific Standard Time", "SA Pacific Daylight Time",
 		NULL, 0
 	},
 	{
-		"Eastern Standard Time", 1140, true, "(UTC-05:00) Eastern Time (US & Canada)",
+		"Eastern Standard Time", 1140, TRUE, "(UTC-05:00) Eastern Time (US & Canada)",
 		"Eastern Standard Time", "Eastern Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_14, 2
 	},
 	{
-		"US Eastern Standard Time", 1140, true, "(UTC-05:00) Indiana (East)",
+		"US Eastern Standard Time", 1140, TRUE, "(UTC-05:00) Indiana (East)",
 		"US Eastern Standard Time", "US Eastern Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_15, 2
 	},
 	{
-		"Venezuela Standard Time", 1170, false, "(UTC-04:30) Caracas",
+		"Venezuela Standard Time", 1170, FALSE, "(UTC-04:30) Caracas",
 		"Venezuela Standard Time", "Venezuela Daylight Time",
 		NULL, 0
 	},
 	{
-		"Paraguay Standard Time", 1200, true, "(UTC-04:00) Asuncion",
+		"Paraguay Standard Time", 1200, TRUE, "(UTC-04:00) Asuncion",
 		"Paraguay Standard Time", "Paraguay Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_17, 14
 	},
 	{
-		"Atlantic Standard Time", 1200, true, "(UTC-04:00) Atlantic Time (Canada)",
+		"Atlantic Standard Time", 1200, TRUE, "(UTC-04:00) Atlantic Time (Canada)",
 		"Atlantic Standard Time", "Atlantic Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_18, 2
 	},
 	{
-		"Central Brazilian Standard Time", 1200, true, "(UTC-04:00) Cuiaba",
+		"Central Brazilian Standard Time", 1200, TRUE, "(UTC-04:00) Cuiaba",
 		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_19, 35
 	},
 	{
-		"SA Western Standard Time", 1200, false, "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
+		"SA Western Standard Time", 1200, FALSE, "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
 		"SA Western Standard Time", "SA Western Daylight Time",
 		NULL, 0
 	},
 	{
-		"Pacific SA Standard Time", 1200, true, "(UTC-04:00) Santiago",
+		"Pacific SA Standard Time", 1200, TRUE, "(UTC-04:00) Santiago",
 		"Pacific SA Standard Time", "Pacific SA Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_21, 6
 	},
 	{
-		"Newfoundland Standard Time", 1230, true, "(UTC-03:30) Newfoundland",
+		"Newfoundland Standard Time", 1230, TRUE, "(UTC-03:30) Newfoundland",
 		"Newfoundland Standard Time", "Newfoundland Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_22, 7
 	},
 	{
-		"E. South America Standard Time", 1260, true, "(UTC-03:00) Brasilia",
+		"E. South America Standard Time", 1260, TRUE, "(UTC-03:00) Brasilia",
 		"E. South America Standard Time", "E. South America Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_23, 35
 	},
 	{
-		"Argentina Standard Time", 1260, true, "(UTC-03:00) Buenos Aires",
+		"Argentina Standard Time", 1260, TRUE, "(UTC-03:00) Buenos Aires",
 		"Argentina Standard Time", "Argentina Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_24, 3
 	},
 	{
-		"SA Eastern Standard Time", 1260, false, "(UTC-03:00) Cayenne, Fortaleza",
+		"SA Eastern Standard Time", 1260, FALSE, "(UTC-03:00) Cayenne, Fortaleza",
 		"SA Eastern Standard Time", "SA Eastern Daylight Time",
 		NULL, 0
 	},
 	{
-		"Greenland Standard Time", 1260, true, "(UTC-03:00) Greenland",
+		"Greenland Standard Time", 1260, TRUE, "(UTC-03:00) Greenland",
 		"Greenland Standard Time", "Greenland Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_26, 14
 	},
 	{
-		"Montevideo Standard Time", 1260, true, "(UTC-03:00) Montevideo",
+		"Montevideo Standard Time", 1260, TRUE, "(UTC-03:00) Montevideo",
 		"Montevideo Standard Time", "Montevideo Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_27, 2
 	},
 	{
-		"Bahia Standard Time", 1260, true, "(UTC-03:00) Salvador",
+		"Bahia Standard Time", 1260, TRUE, "(UTC-03:00) Salvador",
 		"Bahia Standard Time", "Bahia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_28, 30
 	},
 	{
-		"UTC-02", 1320, false, "(UTC-02:00) Coordinated Universal Time-02",
+		"UTC-02", 1320, FALSE, "(UTC-02:00) Coordinated Universal Time-02",
 		"UTC-02", "UTC-02",
 		NULL, 0
 	},
 	{
-		"Mid-Atlantic Standard Time", 1320, true, "(UTC-02:00) Mid-Atlantic",
+		"Mid-Atlantic Standard Time", 1320, TRUE, "(UTC-02:00) Mid-Atlantic",
 		"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_30, 1
 	},
 	{
-		"Azores Standard Time", 1380, true, "(UTC-01:00) Azores",
+		"Azores Standard Time", 1380, TRUE, "(UTC-01:00) Azores",
 		"Azores Standard Time", "Azores Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_31, 1
 	},
 	{
-		"Cape Verde Standard Time", 1380, false, "(UTC-01:00) Cape Verde Is.",
+		"Cape Verde Standard Time", 1380, FALSE, "(UTC-01:00) Cape Verde Is.",
 		"Cape Verde Standard Time", "Cape Verde Daylight Time",
 		NULL, 0
 	},
 	{
-		"Morocco Standard Time", 0, true, "(UTC) Casablanca",
+		"Morocco Standard Time", 0, TRUE, "(UTC) Casablanca",
 		"Morocco Standard Time", "Morocco Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_33, 4
 	},
 	{
-		"UTC", 0, false, "(UTC) Coordinated Universal Time",
+		"UTC", 0, FALSE, "(UTC) Coordinated Universal Time",
 		"Coordinated Universal Time", "Coordinated Universal Time",
 		NULL, 0
 	},
 	{
-		"GMT Standard Time", 0, true, "(UTC) Dublin, Edinburgh, Lisbon, London",
+		"GMT Standard Time", 0, TRUE, "(UTC) Dublin, Edinburgh, Lisbon, London",
 		"GMT Standard Time", "GMT Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_35, 1
 	},
 	{
-		"Greenwich Standard Time", 0, false, "(UTC) Monrovia, Reykjavik",
+		"Greenwich Standard Time", 0, FALSE, "(UTC) Monrovia, Reykjavik",
 		"Greenwich Standard Time", "Greenwich Daylight Time",
 		NULL, 0
 	},
 	{
-		"W. Europe Standard Time", 60, true, "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
+		"W. Europe Standard Time", 60, TRUE, "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
 		"W. Europe Standard Time", "W. Europe Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_37, 1
 	},
 	{
-		"Central Europe Standard Time", 60, true, "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
+		"Central Europe Standard Time", 60, TRUE, "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
 		"Central Europe Standard Time", "Central Europe Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_38, 1
 	},
 	{
-		"Romance Standard Time", 60, true, "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
+		"Romance Standard Time", 60, TRUE, "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
 		"Romance Standard Time", "Romance Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_39, 1
 	},
 	{
-		"Central European Standard Time", 60, true, "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+		"Central European Standard Time", 60, TRUE, "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
 		"Central European Standard Time", "Central European Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_40, 1
 	},
 	{
-		"W. Central Africa Standard Time", 60, false, "(UTC+01:00) West Central Africa",
+		"W. Central Africa Standard Time", 60, FALSE, "(UTC+01:00) West Central Africa",
 		"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
 		NULL, 0
 	},
 	{
-		"Namibia Standard Time", 60, true, "(UTC+01:00) Windhoek",
+		"Namibia Standard Time", 60, TRUE, "(UTC+01:00) Windhoek",
 		"Namibia Standard Time", "Namibia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_42, 2
 	},
 	{
-		"Jordan Standard Time", 120, true, "(UTC+02:00) Amman",
+		"Jordan Standard Time", 120, TRUE, "(UTC+02:00) Amman",
 		"Jordan Standard Time", "Jordan Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_43, 2
 	},
 	{
-		"GTB Standard Time", 120, true, "(UTC+02:00) Athens, Bucharest, Istanbul",
+		"GTB Standard Time", 120, TRUE, "(UTC+02:00) Athens, Bucharest, Istanbul",
 		"GTB Standard Time", "GTB Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_44, 1
 	},
 	{
-		"Middle East Standard Time", 120, true, "(UTC+02:00) Beirut",
+		"Middle East Standard Time", 120, TRUE, "(UTC+02:00) Beirut",
 		"Middle East Standard Time", "Middle East Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_45, 13
 	},
 	{
-		"Egypt Standard Time", 120, true, "(UTC+02:00) Cairo",
+		"Egypt Standard Time", 120, TRUE, "(UTC+02:00) Cairo",
 		"Egypt Standard Time", "Egypt Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 6
 	},
 	{
-		"Syria Standard Time", 120, true, "(UTC+02:00) Damascus",
+		"Syria Standard Time", 120, TRUE, "(UTC+02:00) Damascus",
 		"Syria Standard Time", "Syria Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_47, 12
 	},
 	{
-		"South Africa Standard Time", 120, false, "(UTC+02:00) Harare, Pretoria",
+		"South Africa Standard Time", 120, FALSE, "(UTC+02:00) Harare, Pretoria",
 		"South Africa Standard Time", "South Africa Daylight Time",
 		NULL, 0
 	},
 	{
-		"FLE Standard Time", 120, true, "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
+		"FLE Standard Time", 120, TRUE, "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
 		"FLE Standard Time", "FLE Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_49, 1
 	},
 	{
-		"Turkey Standard Time", 120, true, "(UTC+02:00) Istanbul",
+		"Turkey Standard Time", 120, TRUE, "(UTC+02:00) Istanbul",
 		"Turkey Standard Time", "Turkey Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_50, 3
 	},
 	{
-		"Israel Standard Time", 120, true, "(UTC+02:00) Jerusalem",
+		"Israel Standard Time", 120, TRUE, "(UTC+02:00) Jerusalem",
 		"Jerusalem Standard Time", "Jerusalem Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_51, 18
 	},
 	{
-		"E. Europe Standard Time", 120, true, "(UTC+02:00) Nicosia",
+		"E. Europe Standard Time", 120, TRUE, "(UTC+02:00) Nicosia",
 		"E. Europe Standard Time", "E. Europe Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_52, 1
 	},
 	{
-		"Arabic Standard Time", 180, true, "(UTC+03:00) Baghdad",
+		"Arabic Standard Time", 180, TRUE, "(UTC+03:00) Baghdad",
 		"Arabic Standard Time", "Arabic Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_53, 2
 	},
 	{
-		"Kaliningrad Standard Time", 180, true, "(UTC+03:00) Kaliningrad, Minsk",
+		"Kaliningrad Standard Time", 180, TRUE, "(UTC+03:00) Kaliningrad, Minsk",
 		"Kaliningrad Standard Time", "Kaliningrad Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_54, 1
 	},
 	{
-		"Arab Standard Time", 180, false, "(UTC+03:00) Kuwait, Riyadh",
+		"Arab Standard Time", 180, FALSE, "(UTC+03:00) Kuwait, Riyadh",
 		"Arab Standard Time", "Arab Daylight Time",
 		NULL, 0
 	},
 	{
-		"E. Africa Standard Time", 180, false, "(UTC+03:00) Nairobi",
+		"E. Africa Standard Time", 180, FALSE, "(UTC+03:00) Nairobi",
 		"E. Africa Standard Time", "E. Africa Daylight Time",
 		NULL, 0
 	},
 	{
-		"Iran Standard Time", 210, true, "(UTC+03:30) Tehran",
+		"Iran Standard Time", 210, TRUE, "(UTC+03:30) Tehran",
 		"Iran Standard Time", "Iran Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_57, 3
 	},
 	{
-		"Arabian Standard Time", 240, false, "(UTC+04:00) Abu Dhabi, Muscat",
+		"Arabian Standard Time", 240, FALSE, "(UTC+04:00) Abu Dhabi, Muscat",
 		"Arabian Standard Time", "Arabian Daylight Time",
 		NULL, 0
 	},
 	{
-		"Azerbaijan Standard Time", 240, true, "(UTC+04:00) Baku",
+		"Azerbaijan Standard Time", 240, TRUE, "(UTC+04:00) Baku",
 		"Azerbaijan Standard Time", "Azerbaijan Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_59, 1
 	},
 	{
-		"Russian Standard Time", 240, true, "(UTC+04:00) Moscow, St. Petersburg, Volgograd",
+		"Russian Standard Time", 240, TRUE, "(UTC+04:00) Moscow, St. Petersburg, Volgograd",
 		"Russian Standard Time", "Russian Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_60, 1
 	},
 	{
-		"Mauritius Standard Time", 240, true, "(UTC+04:00) Port Louis",
+		"Mauritius Standard Time", 240, TRUE, "(UTC+04:00) Port Louis",
 		"Mauritius Standard Time", "Mauritius Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_61, 2
 	},
 	{
-		"Georgian Standard Time", 240, false, "(UTC+04:00) Tbilisi",
+		"Georgian Standard Time", 240, FALSE, "(UTC+04:00) Tbilisi",
 		"Georgian Standard Time", "Georgian Daylight Time",
 		NULL, 0
 	},
 	{
-		"Caucasus Standard Time", 240, true, "(UTC+04:00) Yerevan",
+		"Caucasus Standard Time", 240, TRUE, "(UTC+04:00) Yerevan",
 		"Caucasus Standard Time", "Caucasus Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_63, 1
 	},
 	{
-		"Afghanistan Standard Time", 270, false, "(UTC+04:30) Kabul",
+		"Afghanistan Standard Time", 270, FALSE, "(UTC+04:30) Kabul",
 		"Afghanistan Standard Time", "Afghanistan Daylight Time",
 		NULL, 0
 	},
 	{
-		"Pakistan Standard Time", 300, true, "(UTC+05:00) Islamabad, Karachi",
+		"Pakistan Standard Time", 300, TRUE, "(UTC+05:00) Islamabad, Karachi",
 		"Pakistan Standard Time", "Pakistan Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_65, 2
 	},
 	{
-		"West Asia Standard Time", 300, false, "(UTC+05:00) Tashkent",
+		"West Asia Standard Time", 300, FALSE, "(UTC+05:00) Tashkent",
 		"West Asia Standard Time", "West Asia Daylight Time",
 		NULL, 0
 	},
 	{
-		"India Standard Time", 330, false, "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
+		"India Standard Time", 330, FALSE, "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
 		"India Standard Time", "India Daylight Time",
 		NULL, 0
 	},
 	{
-		"Sri Lanka Standard Time", 330, false, "(UTC+05:30) Sri Jayawardenepura",
+		"Sri Lanka Standard Time", 330, FALSE, "(UTC+05:30) Sri Jayawardenepura",
 		"Sri Lanka Standard Time", "Sri Lanka Daylight Time",
 		NULL, 0
 	},
 	{
-		"Nepal Standard Time", 345, false, "(UTC+05:45) Kathmandu",
+		"Nepal Standard Time", 345, FALSE, "(UTC+05:45) Kathmandu",
 		"Nepal Standard Time", "Nepal Daylight Time",
 		NULL, 0
 	},
 	{
-		"Central Asia Standard Time", 360, false, "(UTC+06:00) Astana",
+		"Central Asia Standard Time", 360, FALSE, "(UTC+06:00) Astana",
 		"Central Asia Standard Time", "Central Asia Daylight Time",
 		NULL, 0
 	},
 	{
-		"Bangladesh Standard Time", 360, true, "(UTC+06:00) Dhaka",
+		"Bangladesh Standard Time", 360, TRUE, "(UTC+06:00) Dhaka",
 		"Bangladesh Standard Time", "Bangladesh Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_71, 1
 	},
 	{
-		"Ekaterinburg Standard Time", 360, true, "(UTC+06:00) Ekaterinburg",
+		"Ekaterinburg Standard Time", 360, TRUE, "(UTC+06:00) Ekaterinburg",
 		"Ekaterinburg Standard Time", "Ekaterinburg Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_72, 1
 	},
 	{
-		"Myanmar Standard Time", 390, false, "(UTC+06:30) Yangon (Rangoon)",
+		"Myanmar Standard Time", 390, FALSE, "(UTC+06:30) Yangon (Rangoon)",
 		"Myanmar Standard Time", "Myanmar Daylight Time",
 		NULL, 0
 	},
 	{
-		"SE Asia Standard Time", 420, false, "(UTC+07:00) Bangkok, Hanoi, Jakarta",
+		"SE Asia Standard Time", 420, FALSE, "(UTC+07:00) Bangkok, Hanoi, Jakarta",
 		"SE Asia Standard Time", "SE Asia Daylight Time",
 		NULL, 0
 	},
 	{
-		"N. Central Asia Standard Time", 420, true, "(UTC+07:00) Novosibirsk",
+		"N. Central Asia Standard Time", 420, TRUE, "(UTC+07:00) Novosibirsk",
 		"N. Central Asia Standard Time", "N. Central Asia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_75, 1
 	},
 	{
-		"China Standard Time", 480, false, "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
+		"China Standard Time", 480, FALSE, "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
 		"China Standard Time", "China Daylight Time",
 		NULL, 0
 	},
 	{
-		"North Asia Standard Time", 480, true, "(UTC+08:00) Krasnoyarsk",
+		"North Asia Standard Time", 480, TRUE, "(UTC+08:00) Krasnoyarsk",
 		"North Asia Standard Time", "North Asia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_77, 1
 	},
 	{
-		"Singapore Standard Time", 480, false, "(UTC+08:00) Kuala Lumpur, Singapore",
+		"Singapore Standard Time", 480, FALSE, "(UTC+08:00) Kuala Lumpur, Singapore",
 		"Malay Peninsula Standard Time", "Malay Peninsula Daylight Time",
 		NULL, 0
 	},
 	{
-		"W. Australia Standard Time", 480, true, "(UTC+08:00) Perth",
+		"W. Australia Standard Time", 480, TRUE, "(UTC+08:00) Perth",
 		"W. Australia Standard Time", "W. Australia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_79, 4
 	},
 	{
-		"Taipei Standard Time", 480, false, "(UTC+08:00) Taipei",
+		"Taipei Standard Time", 480, FALSE, "(UTC+08:00) Taipei",
 		"Taipei Standard Time", "Taipei Daylight Time",
 		NULL, 0
 	},
 	{
-		"Ulaanbaatar Standard Time", 480, false, "(UTC+08:00) Ulaanbaatar",
+		"Ulaanbaatar Standard Time", 480, FALSE, "(UTC+08:00) Ulaanbaatar",
 		"Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time",
 		NULL, 0
 	},
 	{
-		"North Asia East Standard Time", 540, true, "(UTC+09:00) Irkutsk",
+		"North Asia East Standard Time", 540, TRUE, "(UTC+09:00) Irkutsk",
 		"North Asia East Standard Time", "North Asia East Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_82, 1
 	},
 	{
-		"Tokyo Standard Time", 540, false, "(UTC+09:00) Osaka, Sapporo, Tokyo",
+		"Tokyo Standard Time", 540, FALSE, "(UTC+09:00) Osaka, Sapporo, Tokyo",
 		"Tokyo Standard Time", "Tokyo Daylight Time",
 		NULL, 0
 	},
 	{
-		"Korea Standard Time", 540, false, "(UTC+09:00) Seoul",
+		"Korea Standard Time", 540, FALSE, "(UTC+09:00) Seoul",
 		"Korea Standard Time", "Korea Daylight Time",
 		NULL, 0
 	},
 	{
-		"Cen. Australia Standard Time", 570, true, "(UTC+09:30) Adelaide",
+		"Cen. Australia Standard Time", 570, TRUE, "(UTC+09:30) Adelaide",
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_85, 2
 	},
 	{
-		"AUS Central Standard Time", 570, false, "(UTC+09:30) Darwin",
+		"AUS Central Standard Time", 570, FALSE, "(UTC+09:30) Darwin",
 		"AUS Central Standard Time", "AUS Central Daylight Time",
 		NULL, 0
 	},
 	{
-		"E. Australia Standard Time", 600, false, "(UTC+10:00) Brisbane",
+		"E. Australia Standard Time", 600, FALSE, "(UTC+10:00) Brisbane",
 		"E. Australia Standard Time", "E. Australia Daylight Time",
 		NULL, 0
 	},
 	{
-		"AUS Eastern Standard Time", 600, true, "(UTC+10:00) Canberra, Melbourne, Sydney",
+		"AUS Eastern Standard Time", 600, TRUE, "(UTC+10:00) Canberra, Melbourne, Sydney",
 		"AUS Eastern Standard Time", "AUS Eastern Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_88, 2
 	},
 	{
-		"West Pacific Standard Time", 600, false, "(UTC+10:00) Guam, Port Moresby",
+		"West Pacific Standard Time", 600, FALSE, "(UTC+10:00) Guam, Port Moresby",
 		"West Pacific Standard Time", "West Pacific Daylight Time",
 		NULL, 0
 	},
 	{
-		"Tasmania Standard Time", 600, true, "(UTC+10:00) Hobart",
+		"Tasmania Standard Time", 600, TRUE, "(UTC+10:00) Hobart",
 		"Tasmania Standard Time", "Tasmania Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_90, 2
 	},
 	{
-		"Yakutsk Standard Time", 600, true, "(UTC+10:00) Yakutsk",
+		"Yakutsk Standard Time", 600, TRUE, "(UTC+10:00) Yakutsk",
 		"Yakutsk Standard Time", "Yakutsk Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_91, 1
 	},
 	{
-		"Central Pacific Standard Time", 660, false, "(UTC+11:00) Solomon Is., New Caledonia",
+		"Central Pacific Standard Time", 660, FALSE, "(UTC+11:00) Solomon Is., New Caledonia",
 		"Central Pacific Standard Time", "Central Pacific Daylight Time",
 		NULL, 0
 	},
 	{
-		"Vladivostok Standard Time", 660, true, "(UTC+11:00) Vladivostok",
+		"Vladivostok Standard Time", 660, TRUE, "(UTC+11:00) Vladivostok",
 		"Vladivostok Standard Time", "Vladivostok Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_93, 1
 	},
 	{
-		"New Zealand Standard Time", 720, true, "(UTC+12:00) Auckland, Wellington",
+		"New Zealand Standard Time", 720, TRUE, "(UTC+12:00) Auckland, Wellington",
 		"New Zealand Standard Time", "New Zealand Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_94, 3
 	},
 	{
-		"UTC+12", 720, false, "(UTC+12:00) Coordinated Universal Time+12",
+		"UTC+12", 720, FALSE, "(UTC+12:00) Coordinated Universal Time+12",
 		"UTC+12", "UTC+12",
 		NULL, 0
 	},
 	{
-		"Fiji Standard Time", 720, true, "(UTC+12:00) Fiji",
+		"Fiji Standard Time", 720, TRUE, "(UTC+12:00) Fiji",
 		"Fiji Standard Time", "Fiji Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_96, 5
 	},
 	{
-		"Magadan Standard Time", 720, true, "(UTC+12:00) Magadan",
+		"Magadan Standard Time", 720, TRUE, "(UTC+12:00) Magadan",
 		"Magadan Standard Time", "Magadan Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_97, 1
 	},
 	{
-		"Kamchatka Standard Time", 720, true, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
+		"Kamchatka Standard Time", 720, TRUE, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_98, 1
 	},
 	{
-		"Tonga Standard Time", 780, false, "(UTC+13:00) Nuku'alofa",
+		"Tonga Standard Time", 780, FALSE, "(UTC+13:00) Nuku'alofa",
 		"Tonga Standard Time", "Tonga Daylight Time",
 		NULL, 0
 	},
 	{
-		"Samoa Standard Time", 780, true, "(UTC+13:00) Samoa",
+		"Samoa Standard Time", 780, TRUE, "(UTC+13:00) Samoa",
 		"Samoa Standard Time", "Samoa Daylight Time",
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_100, 2
 	}
@@ -1502,7 +1503,7 @@ char* freerdp_get_unix_timezone_identifier()
 
 	if (tz_env != NULL)
 	{
-		tzid = xstrdup(tz_env);
+		tzid = _strdup(tz_env);
 		return tzid;
 	}
 
@@ -1520,7 +1521,7 @@ char* freerdp_get_unix_timezone_identifier()
 			return NULL;
 		}
 
-		tzid = (char*) xmalloc(length + 1);
+		tzid = (char*) malloc(length + 1);
 		fread(tzid, length, 1, fp);
 		tzid[length] = '\0';
 
@@ -1558,7 +1559,7 @@ char* freerdp_get_unix_timezone_identifier()
 				num++;
 		}
 
-		tzid = (char*) xmalloc(len - pos + 1);
+		tzid = (char*) malloc(len - pos + 1);
 		strncpy(tzid, buf + pos + 1, len - pos);
 
 		return tzid;	
@@ -1571,12 +1572,12 @@ char* freerdp_get_unix_timezone_identifier()
 #endif
 }
 
-boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
+BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
 {
 	char* p;
 	char* list_copy;
 
-	list_copy = xstrdup(list);
+	list_copy = _strdup(list);
 
 	p = strtok(list_copy, " ");
 
@@ -1584,19 +1585,19 @@ boolean freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const
 	{
 		if (strcmp(p, tzid) == 0)
 		{
-			xfree(list_copy);
-			return true;
+			free(list_copy);
+			return TRUE;
 		}
 
 		p = strtok(NULL, " ");
 	}
 
-	xfree(list_copy);
+	free(list_copy);
 
-	return false;
+	return FALSE;
 }
 
-TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
+TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 {
 	int i, j;
 	char* tzid;
@@ -1607,33 +1608,33 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(uint32 bias)
 	if (tzid == NULL)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(TimeZoneTable); i++)
+	for (i = 0; i < ARRAYSIZE(TimeZoneTable); i++)
 	{
-		for (j = 0; j < ARRAY_SIZE(WindowsTimeZoneIdTable); j++)
+		for (j = 0; j < ARRAYSIZE(WindowsTimeZoneIdTable); j++)
 		{
 			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
 				continue;
 
 			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 			{
-				timezone = (TIME_ZONE_ENTRY*) xmalloc(sizeof(TIME_ZONE_ENTRY));
+				timezone = (TIME_ZONE_ENTRY*) malloc(sizeof(TIME_ZONE_ENTRY));
 				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
 				timezone->Bias = bias;
-				xfree(tzid);
+				free(tzid);
 				return timezone;
 			}
 		}
 	}
 
 	printf("Unable to find a match for unix timezone: %s\n", tzid);
-	xfree(tzid);
+	free(tzid);
 	return NULL;
 }
 
-TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, uint32 count)
+TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
 	int i;
-	uint64 windows_time;
+	UINT64 windows_time;
 
 	windows_time = freerdp_windows_gmtime();
 
@@ -1661,14 +1662,14 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 
 #ifdef HAVE_TM_GMTOFF
 	if (local_time->tm_gmtoff >= 0)
-		clientTimeZone->bias = (uint32) (local_time->tm_gmtoff / 60);
+		clientTimeZone->bias = (UINT32) (local_time->tm_gmtoff / 60);
 	else
-		clientTimeZone->bias = (uint32) (1440 + (sint32) (local_time->tm_gmtoff / 60));
-#elif sun
+		clientTimeZone->bias = (UINT32) (1440 + (INT32) (local_time->tm_gmtoff / 60));
+#elif defined(sun)
 	if (local_time->tm_isdst > 0)
-		clientTimeZone->bias = (uint32) (altzone / 3600);
+		clientTimeZone->bias = (UINT32) (altzone / 3600);
 	else
-		clientTimeZone->bias = (uint32) (timezone / 3600);
+		clientTimeZone->bias = (UINT32) (timezone / 3600);
 #else
 	clientTimeZone->bias = 0;
 #endif
@@ -1730,7 +1731,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 			*/
 		}
 
-		xfree(tz);
+		free(tz);
 	}
 	else
 	{

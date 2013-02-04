@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * File System Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Device Redirection Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,10 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
-#include "rdpdr_types.h"
-#include "rdpdr_constants.h"
+#include "rdpdr_main.h"
 #include "devman.h"
 #include "irp.h"
 
@@ -55,7 +53,7 @@ static void irp_complete(IRP* irp)
 
 	pos = stream_get_pos(irp->output);
 	stream_set_pos(irp->output, 12);
-	stream_write_uint32(irp->output, irp->IoStatus);
+	stream_write_UINT32(irp->output, irp->IoStatus);
 	stream_set_pos(irp->output, pos);
 
 	svc_plugin_send(irp->devman->plugin, irp->output);
@@ -67,10 +65,10 @@ static void irp_complete(IRP* irp)
 IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 {
 	IRP* irp;
-	uint32 DeviceId;
+	UINT32 DeviceId;
 	DEVICE* device;
 
-	stream_read_uint32(data_in, DeviceId);
+	stream_read_UINT32(data_in, DeviceId);
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (device == NULL)
@@ -84,18 +82,18 @@ IRP* irp_new(DEVMAN* devman, STREAM* data_in)
 
 	irp->device = device;
 	irp->devman = devman;
-	stream_read_uint32(data_in, irp->FileId);
-	stream_read_uint32(data_in, irp->CompletionId);
-	stream_read_uint32(data_in, irp->MajorFunction);
-	stream_read_uint32(data_in, irp->MinorFunction);
+	stream_read_UINT32(data_in, irp->FileId);
+	stream_read_UINT32(data_in, irp->CompletionId);
+	stream_read_UINT32(data_in, irp->MajorFunction);
+	stream_read_UINT32(data_in, irp->MinorFunction);
 	irp->input = data_in;
 
 	irp->output = stream_new(256);
-	stream_write_uint16(irp->output, RDPDR_CTYP_CORE);
-	stream_write_uint16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
-	stream_write_uint32(irp->output, DeviceId);
-	stream_write_uint32(irp->output, irp->CompletionId);
-	stream_seek_uint32(irp->output); /* IoStatus */
+	stream_write_UINT16(irp->output, RDPDR_CTYP_CORE);
+	stream_write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
+	stream_write_UINT32(irp->output, DeviceId);
+	stream_write_UINT32(irp->output, irp->CompletionId);
+	stream_seek_UINT32(irp->output); /* IoStatus */
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;

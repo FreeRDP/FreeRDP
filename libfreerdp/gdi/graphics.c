@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/shape.h>
@@ -32,7 +34,6 @@
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/cache/glyph.h>
 
@@ -40,9 +41,9 @@
 
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
 {
-	uint8* bmpData;
+	BYTE* bmpData;
 	HGDI_BITMAP bitmap;
 
 	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
@@ -93,31 +94,31 @@ void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length,
-		boolean compressed, int codec_id)
+		BYTE* data, int width, int height, int bpp, int length,
+		BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 	RFX_MESSAGE* msg;
-	uint8* src;
-	uint8* dst;
+	BYTE* src;
+	BYTE* dst;
 	int yindex;
 	int xindex;
 	rdpGdi* gdi;
-	boolean status;
+	BOOL status;
 
 	size = width * height * (bpp + 7) / 8;
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	switch (codec_id)
 	{
-		case CODEC_ID_NSCODEC:
+		case RDP_CODEC_ID_NSCODEC:
 			printf("gdi_Bitmap_Decompress: nsc not done\n");
 			break;
-		case CODEC_ID_REMOTEFX:
+		case RDP_CODEC_ID_REMOTEFX:
 			gdi = context->gdi;
 			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(gdi->rfx_context, data, length);
@@ -142,7 +143,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 				rfx_message_free(gdi->rfx_context, msg);
 			}
 			break;
-		case CODEC_ID_JPEG:
+		case RDP_CODEC_ID_JPEG:
 #ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
@@ -155,7 +156,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			{
 				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-				if (status == false)
+				if (status == FALSE)
 				{
 					printf("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
@@ -169,12 +170,12 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	bitmap->width = width;
 	bitmap->height = height;
-	bitmap->compressed = false;
+	bitmap->compressed = FALSE;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }
 
-void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	rdpGdi* gdi = context->gdi;
 
@@ -188,7 +189,7 @@ void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean prima
 
 void gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
-	uint8* data;
+	BYTE* data;
 	gdiGlyph* gdi_glyph;
 
 	gdi_glyph = (gdiGlyph*) glyph;
@@ -231,7 +232,7 @@ void gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax);
 }
 
-void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH brush;
@@ -243,13 +244,13 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	gdi_CRgnToRect(x, y, width, height, &rect);
 
 	brush = gdi_CreateSolidBrush(fgcolor);
-
 	gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+	gdi_DeleteObject((HGDIOBJECT) brush);
 
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 
-void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	rdpGdi* gdi = context->gdi;
 
@@ -264,7 +265,8 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	rdpBitmap* bitmap;
 	rdpGlyph* glyph;
 
-	bitmap = xnew(rdpBitmap);
+	bitmap = (rdpBitmap*) malloc(sizeof(rdpBitmap));
+	ZeroMemory(bitmap, sizeof(rdpBitmap));
 	bitmap->size = sizeof(gdiBitmap);
 
 	bitmap->New = gdi_Bitmap_New;
@@ -274,9 +276,10 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	bitmap->SetSurface = gdi_Bitmap_SetSurface;
 
 	graphics_register_bitmap(graphics, bitmap);
-	xfree(bitmap);
+	free(bitmap);
 
-	glyph = xnew(rdpGlyph);
+	glyph = (rdpGlyph*) malloc(sizeof(rdpGlyph));
+	ZeroMemory(glyph, sizeof(rdpGlyph));
 	glyph->size = sizeof(gdiGlyph);
 
 	glyph->New = gdi_Glyph_New;
@@ -286,5 +289,5 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	glyph->EndDraw = gdi_Glyph_EndDraw;
 
 	graphics_register_glyph(graphics, glyph);
-	xfree(glyph);
+	free(glyph);
 }

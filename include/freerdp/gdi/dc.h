@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Device Context Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_DC_H
-#define __GDI_DC_H
+#ifndef FREERDP_GDI_DC_H
+#define FREERDP_GDI_DC_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -30,4 +30,4 @@ FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
 FREERDP_API int gdi_DeleteObject(HGDIOBJECT hgdiobject);
 FREERDP_API int gdi_DeleteDC(HGDI_DC hdc);
 
-#endif /* __GDI_DC_H */
+#endif /* FREERDP_GDI_DC_H */

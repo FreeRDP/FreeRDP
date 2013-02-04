@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(WITH_CLIENT_CHANNELS)
-	add_subdirectory(client)
-endif()
+define_channel("rdpdr")
 
+if(WITH_CLIENT_CHANNELS)
+	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+endif()

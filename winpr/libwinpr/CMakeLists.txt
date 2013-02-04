@@ -15,71 +15,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(MODULE_NAME "winpr")
+set(MODULE_PREFIX "WINPR")
+
 if (APPLE)
 	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
 	# a lot of undefined symbols in use, use this hack until they're filled out.
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")	
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-add_subdirectory(crt)
-add_subdirectory(utils)
-add_subdirectory(heap)
-add_subdirectory(path)
-add_subdirectory(io)
-add_subdirectory(file)
-add_subdirectory(error)
-add_subdirectory(environment)
-add_subdirectory(interlocked)
-add_subdirectory(handle)
-add_subdirectory(synch)
-add_subdirectory(thread)
-add_subdirectory(sysinfo)
-add_subdirectory(bcrypt)
-add_subdirectory(dsparse)
-add_subdirectory(asn1)
-add_subdirectory(rpc)
-add_subdirectory(sspicli)
-add_subdirectory(sspi)
-add_subdirectory(registry)
-add_subdirectory(library)
-add_subdirectory(timezone)
-add_subdirectory(winsock)
-add_subdirectory(winhttp)
+set(FILENAME "ModuleOptions.cmake")
+file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(winpr
-		$<TARGET_OBJECTS:winpr-crt>
-		$<TARGET_OBJECTS:winpr-utils>
-		$<TARGET_OBJECTS:winpr-heap>
-		$<TARGET_OBJECTS:winpr-path>
-		$<TARGET_OBJECTS:winpr-io>
-		$<TARGET_OBJECTS:winpr-file>
-		$<TARGET_OBJECTS:winpr-error>
-		$<TARGET_OBJECTS:winpr-environment>
-		$<TARGET_OBJECTS:winpr-interlocked>
-		$<TARGET_OBJECTS:winpr-handle>
-		$<TARGET_OBJECTS:winpr-synch>
-		$<TARGET_OBJECTS:winpr-thread>
-		$<TARGET_OBJECTS:winpr-sysinfo>
-		$<TARGET_OBJECTS:winpr-bcrypt>
-		$<TARGET_OBJECTS:winpr-dsparse>
-		$<TARGET_OBJECTS:winpr-asn1>
-		$<TARGET_OBJECTS:winpr-rpc>
-		$<TARGET_OBJECTS:winpr-sspicli>
-		$<TARGET_OBJECTS:winpr-sspi>
-		$<TARGET_OBJECTS:winpr-registry>
-		$<TARGET_OBJECTS:winpr-library>
-		$<TARGET_OBJECTS:winpr-timezone>
-		$<TARGET_OBJECTS:winpr-winsock>
-		$<TARGET_OBJECTS:winpr-winhttp>)
-	
-	set_target_properties(winpr PROPERTIES VERSION ${FREERDP_VERSION_FULL} SOVERSION ${FREERDP_VERSION} PREFIX "lib")
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" ${MODULE_PREFIX}_SUBMODULE ${FILEPATH})
+		set(${MODULE_PREFIX}_SUBMODULES ${${MODULE_PREFIX}_SUBMODULES} ${${MODULE_PREFIX}_SUBMODULE})
+	endif()
+endforeach(FILEPATH)
 
-	target_link_libraries(winpr ${WINPR_LIBS})
-	install(TARGETS winpr DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
+	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
+endforeach()
+
+if(MONOLITHIC_BUILD)
+
+	foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
+		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_NAME}-${${MODULE_PREFIX}_SUBMODULE}>")
+	endforeach()
+
+	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_OBJECTS})
+
+	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+
+	target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+
+	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")
 endif()
-

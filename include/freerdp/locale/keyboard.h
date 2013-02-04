@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_LOCALE_KEYBOARD_H
-#define __FREERDP_LOCALE_KEYBOARD_H
+#ifndef FREERDP_LOCALE_KEYBOARD_H
+#define FREERDP_LOCALE_KEYBOARD_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -31,7 +31,7 @@
 
 struct _RDP_KEYBOARD_LAYOUT
 {
-	uint32 code; /* Keyboard layout code */
+	UINT32 code; /* Keyboard layout code */
 	char* name; /* Keyboard layout name */
 };
 typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
@@ -198,11 +198,11 @@ typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
 #define KBD_TYPE_NOKIA_9140					0x00000006 /* Nokia 9140 and similar keyboards */
 #define KBD_TYPE_JAPANESE					0x00000007 /* Japanese keyboard */
 
-FREERDP_API uint32 freerdp_keyboard_init(uint32 keyboardLayoutId);
-FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(uint32 types);
-FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(uint32 keyboardLayoutId);
-FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(uint32 keycode);
-FREERDP_API uint32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(uint32 scancode, boolean extended);
-FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(uint32 vkcode);
+FREERDP_API UINT32 freerdp_keyboard_init(UINT32 keyboardLayoutId);
+FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types);
+FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutId);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT32 keycode);
+FREERDP_API UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL extended);
+FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(UINT32 vkcode);
 
-#endif /* __FREERDP_LOCALE_KEYBOARD_H */
+#endif /* FREERDP_LOCALE_KEYBOARD_H */

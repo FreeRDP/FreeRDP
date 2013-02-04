@@ -1,9 +1,7 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,17 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(SKEL_SRCS
-	skel_main.c
-	skel_main.h)
+define_channel_client("sample")
 
-add_library(skel ${SKEL_SRCS})
-set_target_properties(skel PROPERTIES PREFIX "")
+set(${MODULE_PREFIX}_SRCS
+	sample_main.c
+	sample_main.h)
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(skel freerdp)
-else()
-	target_link_libraries(skel freerdp-utils)
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "VirtualChannelEntry")
+
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
 
-install(TARGETS skel DESTINATION ${FREERDP_PLUGIN_PATH})
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

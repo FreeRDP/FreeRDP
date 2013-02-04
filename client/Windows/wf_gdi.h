@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows GDI
  *
  * Copyright 2009-2011 Jay Sorg
@@ -25,8 +25,10 @@
 #include "wfreerdp.h"
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height);
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data);
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);
 void wf_image_free(wfBitmap* image);
+void wf_update_offset(wfInfo* wfi);
+void wf_resize_window(wfInfo* wfi);
 void wf_toggle_fullscreen(wfInfo* wfi);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);

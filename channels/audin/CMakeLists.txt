@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -15,17 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "audin")
-set(MODULE_PREFIX "CHANNEL_AUDIN")
+define_channel("audin")
 
 if(WITH_CLIENT_CHANNELS)
-	add_subdirectory(client)
+	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
 
 if(WITH_SERVER_CHANNELS)
-	add_subdirectory(server)
-	set(${MODULE_PREFIX}_SERVER_SRCS ${${MODULE_PREFIX}_SERVER_SRCS} PARENT_SCOPE)
-	set(${MODULE_PREFIX}_SERVER_LIBS ${${MODULE_PREFIX}_SERVER_LIBS} PARENT_SCOPE)
-	set(CHANNEL_BUILTIN_SERVER_MODULES ${CHANNEL_BUILTIN_SERVER_MODULES} ${MODULE_NAME} PARENT_SCOPE)
+	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
-

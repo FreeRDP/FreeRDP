@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Extensions
  *
  * Copyright 2010-2011 Vic Lee
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RDP_EXTENSION_H
-#define __RDP_EXTENSION_H
+#ifndef FREERDP_EXTENSION_H
+#define FREERDP_EXTENSION_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -35,11 +35,11 @@ struct rdp_ext_plugin
 	int (*uninit) (rdpExtPlugin* plugin, freerdp* instance);
 };
 
-typedef uint32 (FREERDP_CC* PFREERDP_EXTENSION_HOOK)(rdpExtPlugin* plugin, freerdp* instance);
+typedef UINT32 (FREERDP_CC* PFREERDP_EXTENSION_HOOK)(rdpExtPlugin* plugin, freerdp* instance);
 
-typedef uint32 (FREERDP_CC* PREGISTEREXTENSION)(rdpExtPlugin* plugin);
-typedef uint32 (FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
-typedef uint32 (FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef UINT32 (FREERDP_CC* PREGISTEREXTENSION)(rdpExtPlugin* plugin);
+typedef UINT32 (FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
+typedef UINT32 (FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
 
 struct _FREERDP_EXTENSION_ENTRY_POINTS
 {
@@ -55,5 +55,4 @@ typedef FREERDP_EXTENSION_ENTRY_POINTS* PFREERDP_EXTENSION_ENTRY_POINTS;
 
 typedef int (FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
 
-#endif /* __RDP_EXTENSION_H */
-
+#endif /* FREERDP_EXTENSION_H */

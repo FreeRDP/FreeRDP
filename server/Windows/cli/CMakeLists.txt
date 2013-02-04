@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Windows Server (CLI) cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "wfreerdp-server")
+set(MODULE_NAME "wfreerdp-server-cli")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
 
 include_directories(..)
@@ -32,6 +32,6 @@ set(${MODULE_PREFIX}_LIBS wfreerdp-server)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Windows")

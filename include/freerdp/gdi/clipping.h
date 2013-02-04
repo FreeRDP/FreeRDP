@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Clipping Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_CLIPPING_H
-#define __GDI_CLIPPING_H
+#ifndef FREERDP_GDI_CLIPPING_H
+#define FREERDP_GDI_CLIPPING_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -28,4 +28,4 @@ FREERDP_API HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);
 FREERDP_API int gdi_SetNullClipRgn(HGDI_DC hdc);
 FREERDP_API int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy);
 
-#endif /* __GDI_CLIPPING_H */
+#endif /* FREERDP_GDI_CLIPPING_H */

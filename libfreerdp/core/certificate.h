@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Certificate Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,7 +27,7 @@
 
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 /* Certificate Version */
 #define CERT_CHAIN_VERSION_1		0x00000001
@@ -42,20 +42,20 @@
 #define BB_RSA_KEY_BLOB        		6
 #define BB_RSA_SIGNATURE_BLOB  		8
 
-void certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
+BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 
-rdpX509CertChain* certificate_new_x509_certificate_chain(uint32 count);
+rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count);
 void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain);
 
-boolean certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s);
-boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
-boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length);
+BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s);
+BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
+int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length);
 
 rdpCertificate* certificate_new();
 void certificate_free(rdpCertificate* certificate);
 
-rdpKey* key_new(const char *keyfile);
-void key_free(rdpKey* key);
+rdpRsaKey* key_new(const char *keyfile);
+void key_free(rdpRsaKey* key);
 
 #ifdef WITH_DEBUG_CERTIFICATE
 #define DEBUG_CERTIFICATE(fmt, ...) DEBUG_CLASS(CERTIFICATE, fmt, ## __VA_ARGS__)

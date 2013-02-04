@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Implements Microsoft Point to Point Compression (MPPC) protocol
  *
  * Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __MPPC_H
-#define __MPPC_H
+#ifndef FREERDP_CODEC_MPPC_DECODER_H
+#define FREERDP_CODEC_MPPC_DECODER_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -39,18 +39,18 @@
 
 struct rdp_mppc_dec
 {
-	uint8* history_buf;
-	uint16* offset_cache;
-	uint8* history_buf_end;
-	uint8* history_ptr;
+	BYTE* history_buf;
+	UINT16* offset_cache;
+	BYTE* history_buf_end;
+	BYTE* history_ptr;
 };
 
-FREERDP_API int decompress_rdp(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen);
-FREERDP_API int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen);
-FREERDP_API int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen);
-FREERDP_API int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen);
-FREERDP_API int decompress_rdp_61(struct rdp_mppc_dec* dec, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen);
+FREERDP_API int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
+FREERDP_API int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
+FREERDP_API int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
+FREERDP_API int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
+FREERDP_API int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
 FREERDP_API struct rdp_mppc_dec* mppc_dec_new(void);
 FREERDP_API void mppc_dec_free(struct rdp_mppc_dec* dec);
 
-#endif
+#endif /* FREERDP_CODEC_MPPC_DECODER_H */

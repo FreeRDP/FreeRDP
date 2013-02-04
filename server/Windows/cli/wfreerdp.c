@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -32,14 +32,100 @@
 
 #include "wfreerdp.h"
 
+int IDcount = 0;
+
+BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	
+	printf("%d\t(%d, %d), (%d, %d)\n",
+		IDcount,
+		lprcMonitor->left,
+		lprcMonitor->top,
+		lprcMonitor->right,
+		lprcMonitor->bottom);
+
+
+	IDcount++;
+
+	return TRUE;
+}
+
 int main(int argc, char* argv[])
 {
+	int index;
 	wfServer* server;
 
 	server = wfreerdp_server_new();
 
-	if (argc == 2)
-		server->port = (DWORD) atoi(argv[1]);
+	set_screen_id(0);
+
+	//handle args
+	index = 1;
+	while (index < argc)
+	{
+		//first the args that will cause the program to terminate
+		if (strcmp("--list-screens", argv[index]) == 0)
+		{
+			_TCHAR name[128];
+			int width;
+			int height;
+			int bpp;
+			int i;
+
+			_tprintf(_T("Detecting screens...\n"));
+			_tprintf(_T("\nID\tResolution\t\tName (Interface)\n\n"));
+		
+			for (i=0; ; i++)
+			{
+				if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+				{
+					if ( (width * height * bpp) == 0 )
+						continue;
+
+					_tprintf(_T("%d\t%dx%dx%d\t"), i, width, height, bpp);
+					_tprintf(_T("%s\n"), name);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			{
+				int vscreen_w;
+				int vscreen_h;
+				vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+				vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+				printf("\n");
+				EnumDisplayMonitors(NULL, NULL, moncb, 0);
+				IDcount = 0;
+				printf("\nVirtual Screen = %dx%d\n", vscreen_w, vscreen_h);
+			}
+
+			return 0;
+		}
+	
+		if (strcmp("--screen", argv[index]) == 0)
+		{
+			index++;
+			if (index == argc)
+			{
+				printf("missing screen id parameter\n");
+				return 0;
+			}
+
+			set_screen_id(atoi(argv[index]));
+			index++;
+		}
+
+
+		if (index == argc - 1)
+		{
+			server->port = (DWORD) atoi(argv[index]);
+			break;
+		}
+	}
 
 	printf("Starting server\n");
 

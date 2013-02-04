@@ -595,6 +595,28 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 
 #ifdef WINPR_SSPI
 
+typedef struct _SEC_WINNT_AUTH_IDENTITY_W
+{
+	UINT16* User;
+	UINT32 UserLength;
+	UINT16* Domain;
+	UINT32 DomainLength;
+	UINT16* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+} SEC_WINNT_AUTH_IDENTITY_W,*PSEC_WINNT_AUTH_IDENTITY_W;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_A
+{
+	BYTE* User;
+	UINT32 UserLength;
+	BYTE* Domain;
+	UINT32 DomainLength;
+	BYTE* Password;
+	UINT32 PasswordLength;
+	UINT32 Flags;
+} SEC_WINNT_AUTH_IDENTITY_A,*PSEC_WINNT_AUTH_IDENTITY_A;
+
 struct _SEC_WINNT_AUTH_IDENTITY
 {
 	UINT16* User;
@@ -613,11 +635,19 @@ struct _SecHandle
 	ULONG_PTR dwUpper;
 };
 typedef struct _SecHandle SecHandle;
+typedef SecHandle* PSecHandle;
 
 typedef SecHandle CredHandle;
 typedef CredHandle* PCredHandle;
 typedef SecHandle CtxtHandle;
 typedef CtxtHandle* PCtxtHandle;
+
+#define SecInvalidateHandle(x) \
+	((PSecHandle)(x))->dwLower = ((PSecHandle)(x))->dwUpper = ((ULONG_PTR)((INT_PTR) - 1));
+
+#define SecIsValidHandle(x) \
+	((((PSecHandle)(x))->dwLower != ((ULONG_PTR)((INT_PTR) - 1))) && \
+		(((PSecHandle) (x))->dwUpper != ((ULONG_PTR)((INT_PTR) - 1))))
 
 #endif
 
@@ -905,8 +935,8 @@ typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_W)(void);
 WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
 WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo);
 
-PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void);
-PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void);
+WINPR_API PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void);
+WINPR_API PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void);
 
 WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
 WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);

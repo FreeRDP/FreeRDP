@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Type Definitions
  *
  * Copyright 2009-2011 Jay Sorg
@@ -23,94 +23,6 @@
 
 #include <winpr/wtypes.h>
 
-#include <freerdp/config.h>
-
-#ifdef _WIN32
-#include <windef.h>
-#endif
-
-#ifdef FREERDP_HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
-#ifdef FREERDP_HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
-#ifdef FREERDP_HAVE_INTTYPES_H
-
-#include <inttypes.h>
-typedef uint8_t uint8;
-typedef int8_t sint8;
-typedef uint16_t uint16;
-typedef int16_t sint16;
-typedef uint32_t uint32;
-typedef int32_t sint32;
-typedef uint64_t uint64;
-typedef int64_t sint64;
-
-#else
-
-typedef unsigned char uint8;
-typedef signed char sint8;
-typedef unsigned short uint16;
-typedef signed short sint16;
-typedef unsigned int uint32;
-typedef signed int sint32;
-#ifdef _WIN32
-typedef unsigned __int64 uint64;
-typedef signed __int64 sint64;
-#else
-typedef unsigned long long uint64;
-typedef signed long long sint64;
-#endif
-
-#endif /* HAVE_INTTYPES_H */
-
-#ifdef FREERDP_HAVE_STDBOOL_H
-
-#include <stdbool.h>
-
-#ifdef _WIN32
-#define boolean BOOLEAN
-#else
-typedef int boolean;
-#endif
-
-#else
-
-#ifndef __cplusplus
-
-#ifndef __bool_true_false_are_defined
-#define __bool_true_false_are_defined	1
-
-#define true	1
-#define false	0
-
-#ifdef _WIN32
-#define boolean BOOLEAN
-#else
-typedef int boolean;
-#endif
-
-#endif /* __bool_true_false_are_defined */
-
-#else /* ifdef __cplusplus */
-
-#ifndef true
-#define true	1
-#endif
-
-#ifndef false
-#define false 	0
-#endif
-
-typedef int boolean;
-
-#endif /* __cplusplus */
-
-#endif /* FREERDP_HAVE_STDBOOL_H */
-
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
 #endif
@@ -121,38 +33,28 @@ typedef int boolean;
 
 #include <freerdp/settings.h>
 
-typedef struct
-{
-	uint32 time_low;
-	uint16 time_mid;
-	uint16 time_hi_and_version;
-	uint8 clock_seq_hi_and_reserved;
-	uint8 clock_seq_low;
-	uint8 node[6];
-} uuid;
-
 struct _RDP_PLUGIN_DATA
 {
-	uint16 size;
+	DWORD size;
 	void* data[4];
 };
 typedef struct _RDP_PLUGIN_DATA RDP_PLUGIN_DATA;
 
 struct _RDP_RECT
 {
-	sint16 x;
-	sint16 y;
-	sint16 width;
-	sint16 height;
+	INT16 x;
+	INT16 y;
+	INT16 width;
+	INT16 height;
 };
 typedef struct _RDP_RECT RDP_RECT;
 
 struct _RECTANGLE_16
 {
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	UINT16 left;
+	UINT16 top;
+	UINT16 right;
+	UINT16 bottom;
 };
 typedef struct _RECTANGLE_16 RECTANGLE_16;
 
@@ -163,8 +65,8 @@ typedef void (*RDP_EVENT_CALLBACK) (RDP_EVENT* event);
 
 struct _RDP_EVENT
 {
-	uint16 event_class;
-	uint16 event_type;
+	UINT16 event_class;
+	UINT16 event_type;
 	RDP_EVENT_CALLBACK on_event_free_callback;
 	void* user_data;
 };

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Extension Plugin Interface
  *
  * Copyright 2010-2011 Vic Lee
@@ -26,9 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
 
 #include "extension.h"
 
@@ -53,7 +53,7 @@
 
 #endif
 
-static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
+static UINT32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
@@ -67,7 +67,7 @@ static uint32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 	return 0;
 }
 
-static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static UINT32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
@@ -83,7 +83,7 @@ static uint32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugi
 	return 0;
 }
 
-static uint32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
+static UINT32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook)
 {
 	rdpExtension* ext = (rdpExtension*) plugin->ext;
 
@@ -119,12 +119,13 @@ static int extension_load_plugins(rdpExtension* extension)
 	for (i = 0; settings->extensions[i].name[0]; i++)
 	{
 		if (strchr(settings->extensions[i].name, PATH_SEPARATOR) == NULL)
-			snprintf(path, sizeof(path), EXT_PATH "/%s." PLUGIN_EXT, settings->extensions[i].name);
+			sprintf_s(path, sizeof(path), EXT_PATH "/%s." PLUGIN_EXT, settings->extensions[i].name);
 		else
-			snprintf(path, sizeof(path), "%s", settings->extensions[i].name);
+			sprintf_s(path, sizeof(path), "%s", settings->extensions[i].name);
 
 		han = DLOPEN(path);
 		printf("extension_load_plugins: %s\n", path);
+
 		if (han == NULL)
 		{
 			printf("extension_load_plugins: failed to load %s\n", path);
@@ -211,7 +212,8 @@ rdpExtension* extension_new(freerdp* instance)
 
 	if (instance != NULL)
 	{
-		extension = xnew(rdpExtension);
+		extension = (rdpExtension*) malloc(sizeof(rdpExtension));
+		ZeroMemory(extension, sizeof(rdpExtension));
 
 		extension->instance = instance;
 	}
@@ -224,6 +226,6 @@ void extension_free(rdpExtension* extension)
 	if (extension != NULL)
 	{
 		extension_uninit_plugins(extension);
-		xfree(extension);
+		free(extension);
 	}
 }

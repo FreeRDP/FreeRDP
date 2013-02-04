@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Library
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_H
-#define __GDI_H
+#ifndef FREERDP_GDI_H
+#define FREERDP_GDI_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -69,6 +69,12 @@
 #define GDI_DPa				0x00A000C9 /* D = D & P */
 #define GDI_PDxn			0x00A50065 /* D = D ^ ~P */
 
+#define GDI_DSxn			0x00990066
+#define GDI_PSDnox			0x002D060A
+#define GDI_PDSona			0x00100C85
+#define GDI_DSPDxox			0x00740646
+#define GDI_DPSDonox			0x005B18A9
+
 #define GDI_DPon			0x000500A9
 #define GDI_DPna			0x000A0329
 #define GDI_Pn				0x000F0001
@@ -116,7 +122,7 @@
 
 struct _GDIOBJECT
 {
-	uint8 objectType;
+	BYTE objectType;
 };
 typedef struct _GDIOBJECT GDIOBJECT;
 typedef GDIOBJECT* HGDIOBJECT;
@@ -127,7 +133,7 @@ typedef GDI_COLOR* LPGDI_COLOR;
 
 struct _GDI_RECT
 {
-	uint8 objectType;
+	BYTE objectType;
 	int left;
 	int top;
 	int right;
@@ -138,7 +144,7 @@ typedef GDI_RECT* HGDI_RECT;
 
 struct _GDI_RGN
 {
-	uint8 objectType;
+	BYTE objectType;
 	int x; /* left */
 	int y; /* top */
 	int w; /* width */
@@ -150,20 +156,20 @@ typedef GDI_RGN* HGDI_RGN;
 
 struct _GDI_BITMAP
 {
-	uint8 objectType;
+	BYTE objectType;
 	int bytesPerPixel;
 	int bitsPerPixel;
 	int width;
 	int height;
 	int scanline;
-	uint8* data;
+	BYTE* data;
 };
 typedef struct _GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
 
 struct _GDI_PEN
 {
-	uint8 objectType;
+	BYTE objectType;
 	int style;
 	int width;
 	int posX;
@@ -175,15 +181,15 @@ typedef GDI_PEN* HGDI_PEN;
 
 struct _GDI_PALETTEENTRY
 {
-	uint8 red;
-	uint8 green;
-	uint8 blue;
+	BYTE red;
+	BYTE green;
+	BYTE blue;
 };
 typedef struct _GDI_PALETTEENTRY GDI_PALETTEENTRY;
 
 struct _GDI_PALETTE
 {
-	uint16 count;
+	UINT16 count;
 	GDI_PALETTEENTRY *entries;
 };
 typedef struct _GDI_PALETTE GDI_PALETTE;
@@ -199,7 +205,7 @@ typedef GDI_POINT* HGDI_POINT;
 
 struct _GDI_BRUSH
 {
-	uint8 objectType;
+	BYTE objectType;
 	int style;
 	HGDI_BITMAP pattern;
 	GDI_COLOR color;
@@ -273,7 +279,7 @@ struct rdp_gdi
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
-	uint8* primary_buffer;
+	BYTE* primary_buffer;
 	GDI_COLOR textColor;
 	void* rfx_context;
 	void* nsc_context;
@@ -281,13 +287,13 @@ struct rdp_gdi
 	gdiBitmap* image;
 };
 
-FREERDP_API uint32 gdi_rop3_code(uint8 code);
-FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
-FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
-FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
+FREERDP_API UINT32 gdi_rop3_code(BYTE code);
+FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
+FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
+FREERDP_API int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
-FREERDP_API int gdi_init(freerdp* instance, uint32 flags, uint8* buffer);
+FREERDP_API int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef WITH_DEBUG_GDI
@@ -296,4 +302,4 @@ FREERDP_API void gdi_free(freerdp* instance);
 #define DEBUG_GDI(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-#endif /* __GDI_H */
+#endif /* FREERDP_GDI_H */

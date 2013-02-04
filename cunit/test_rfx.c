@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library Unit Tests
  *
  * Copyright 2011 Vic Lee
@@ -25,11 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
 #include <freerdp/utils/print.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 #include <freerdp/codec/rfx.h>
+
 #include "rfx_types.h"
 #include "rfx_bitstream.h"
 #include "rfx_rlgr.h"
@@ -41,7 +44,7 @@
 
 #include "test_rfx.h"
 
-static const uint8 y_data[] =
+static const BYTE y_data[] =
 {
 	                  0x19, 0x82, 0x1d, 0x10, 0x62, 0x9d, 0x28, 0x85, 0x2c, 0xa2, 0x14, 0xb2, 0x88,
 	0x52, 0xca, 0x21, 0x4b, 0x28, 0x85, 0x2c, 0xa2, 0x14, 0xb2, 0x88, 0x52, 0xca, 0x21, 0x4b, 0x28,
@@ -64,7 +67,7 @@ static const uint8 y_data[] =
 	0x4d, 0x43, 0x46, 0xd7, 0xe9, 0xe2, 0x20, 0x30, 0x00
 };
 
-static const uint8 cb_data[] =
+static const BYTE cb_data[] =
 {
 	                                                      0x1b, 0x04, 0x7f, 0x04, 0x31, 0x5f, 0xc2,
 	0x94, 0xaf, 0x05, 0x29, 0x5e, 0x0a, 0x52, 0xbc, 0x14, 0xa5, 0x78, 0x29, 0x25, 0x78, 0x29, 0x25,
@@ -89,7 +92,7 @@ static const uint8 cb_data[] =
 	0x77, 0x82, 0xbc, 0x00, 0x18, 0x00
 };
 
-static const uint8 cr_data[] =
+static const BYTE cr_data[] =
 {
 	                                    0x1b, 0xfc, 0x11, 0xc1, 0x0f, 0x4a, 0xc1, 0x4f, 0x4a, 0xc1,
 	0x4f, 0x4a, 0xa1, 0x4d, 0x95, 0x42, 0x9e, 0x95, 0x42, 0x9e, 0x95, 0x42, 0x9b, 0x2a, 0x85, 0x3d,
@@ -120,7 +123,7 @@ static const unsigned int test_quantization_values[] =
 	6, 6, 6, 6, 7, 7, 8, 8, 8, 9
 };
 
-static const uint8 rgb_scanline_data[] =
+static const BYTE rgb_scanline_data[] =
 {
 	0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00,
 	0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00,
@@ -157,7 +160,7 @@ static const uint8 rgb_scanline_data[] =
 	0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF
 };
 
-static uint8* rgb_data;
+static BYTE* rgb_data;
 
 int init_rfx_suite(void)
 {
@@ -188,29 +191,34 @@ int add_rfx_suite(void)
 
 void test_bitstream(void)
 {
-	uint16 b;
+	UINT16 b;
 	RFX_BITSTREAM* bs;
 
-	bs = xnew(RFX_BITSTREAM);
-	rfx_bitstream_attach(bs, (uint8*) y_data, sizeof(y_data));
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
+	rfx_bitstream_attach(bs, (BYTE*) y_data, sizeof(y_data));
+
 	while (!rfx_bitstream_eos(bs))
 	{
 		rfx_bitstream_get_bits(bs, 3, b);
 		(void) b;
 		//printf("%u ", b);
 	}
-	xfree(bs);
+	free(bs);
 
 	//printf("\n");
 }
 
 void test_bitstream_enc(void)
 {
-	uint8 buffer[10];
+	BYTE buffer[10];
 	RFX_BITSTREAM* bs;
 	int i;
 
-	bs = xnew(RFX_BITSTREAM);
+	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
+	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+
 	memset(buffer, 0, sizeof(buffer));
 	rfx_bitstream_attach(bs, buffer, sizeof(buffer));
 	for (i = 0; i < 16; i++)
@@ -221,14 +229,14 @@ void test_bitstream_enc(void)
 	{
 		printf("%X ", buffer[i]);
 	}*/
-	xfree(bs);
+	free(bs);
 
 	//printf("\n");
 }
 
-static sint16 buffer[4096];
+static INT16 buffer[4096];
 
-void dump_buffer(sint16* buf, int n)
+void dump_buffer(INT16* buf, int n)
 {
 	int i;
 
@@ -245,7 +253,7 @@ void test_rlgr(void)
 {
 	int n;
 
-	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAY_SIZE(buffer));
+	n = rfx_rlgr_decode(RLGR3, y_data, sizeof(y_data), buffer, ARRAYSIZE(buffer));
 
 	//printf("RLGR decode %d bytes to %d values.", sizeof(y_data), n);
 	//dump_buffer(buffer, n);
@@ -274,7 +282,7 @@ void test_dwt(void)
 }
 
 /* Dump a .ppm image. */
-static void dump_ppm_image(uint8* image_buf)
+static void dump_ppm_image(BYTE* image_buf)
 {
 	static int frame_id = 0;
 	char buf[100];
@@ -295,7 +303,7 @@ static void dump_ppm_image(uint8* image_buf)
 void test_decode(void)
 {
 	RFX_CONTEXT* context;
-	uint8 decode_buffer[4096 * 3];
+	BYTE decode_buffer[4096 * 3];
 	STREAM* s;
 
 	s = stream_new(sizeof(y_data) + sizeof(cb_data) + sizeof(cr_data));
@@ -324,12 +332,12 @@ void test_encode(void)
 	STREAM* enc_stream;
 	int y_size, cb_size, cr_size;
 	int i;
-	uint8 decode_buffer[4096 * 3];
+	BYTE decode_buffer[4096 * 3];
 
-	rgb_data = (uint8 *) malloc(64 * 64 * 3);
+	rgb_data = (BYTE *) malloc(64 * 64 * 3);
 	for (i = 0; i < 64; i++)
 		memcpy(rgb_data + i * 64 * 3, rgb_scanline_data, 64 * 3);
-	//freerdp_hexdump(rgb_data, 64 * 64 * 3);
+	//winpr_HexDump(rgb_data, 64 * 64 * 3);
 
 	enc_stream = stream_new(65536);
 	stream_clear(enc_stream);
@@ -344,11 +352,11 @@ void test_encode(void)
 	//dump_buffer(context->priv->cb_g_buffer, 4096);
 
 	/*printf("*** Y ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream), y_size);
+	winpr_HexDump(stream_get_head(enc_stream), y_size);
 	printf("*** Cb ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size, cb_size);
+	winpr_HexDump(stream_get_head(enc_stream) + y_size, cb_size);
 	printf("*** Cr ***\n");
-	freerdp_hexdump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
+	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
 
 	stream_set_pos(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,
@@ -371,7 +379,7 @@ void test_message(void)
 	RFX_RECT rect = {0, 0, 100, 80};
 	RFX_MESSAGE * message;
 
-	rgb_data = (uint8 *) malloc(100 * 80 * 3);
+	rgb_data = (BYTE *) malloc(100 * 80 * 3);
 	for (i = 0; i < 80; i++)
 		memcpy(rgb_data + i * 100 * 3, rgb_scanline_data, 100 * 3);
 

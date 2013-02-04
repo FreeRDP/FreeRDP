@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_H
-#define __RAIL_H
+#ifndef FREERDP_RAIL_H
+#define FREERDP_RAIL_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -35,7 +35,7 @@
 typedef void (*railCreateWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railDestroyWindow)(rdpRail* rail, rdpWindow* window);
 typedef void (*railMoveWindow)(rdpRail* rail, rdpWindow* window);
-typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, uint8 state);
+typedef void (*railShowWindow)(rdpRail* rail, rdpWindow* window, BYTE state);
 typedef void (*railSetWindowText)(rdpRail* rail, rdpWindow* window);
 typedef void (*railSetWindowIcon)(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
 typedef void (*railSetWindowRects)(rdpRail* rail, rdpWindow* window);
@@ -65,4 +65,4 @@ FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update
 FREERDP_API rdpRail* rail_new(rdpSettings* settings);
 FREERDP_API void rail_free(rdpRail* rail);
 
-#endif /* __RAIL_H */
+#endif /* FREERDP_RAIL_H */

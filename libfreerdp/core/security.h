@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Security
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -26,22 +26,22 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
 
-void security_master_secret(uint8* premaster_secret, uint8* client_random, uint8* server_random, uint8* output);
-void security_session_key_blob(uint8* master_secret, uint8* client_random, uint8* server_random, uint8* output);
-void security_mac_salt_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
-void security_licensing_encryption_key(uint8* session_key_blob, uint8* client_random, uint8* server_random, uint8* output);
-void security_mac_data(uint8* mac_salt_key, uint8* data, uint32 length, uint8* output);
+void security_master_secret(const BYTE* premaster_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);
+void security_session_key_blob(const BYTE* master_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);
+void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_random, const BYTE* server_random, BYTE* output);
+void security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random, const BYTE* server_random, BYTE* output);
+void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length, BYTE* output);
 
-void security_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, uint8* output);
-void security_salted_mac_signature(rdpRdp *rdp, uint8* data, uint32 length, boolean encryption, uint8* output);
-boolean security_establish_keys(uint8* client_random, rdpRdp* rdp);
+void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output);
+void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BOOL encryption, BYTE* output);
+BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp);
 
-boolean security_encrypt(uint8* data, int length, rdpRdp* rdp);
-boolean security_decrypt(uint8* data, int length, rdpRdp* rdp);
+BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);
+BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp);
 
-void security_hmac_signature(uint8* data, int length, uint8* output, rdpRdp* rdp);
-boolean security_fips_encrypt(uint8* data, int length, rdpRdp* rdp);
-boolean security_fips_decrypt(uint8* data, int length, rdpRdp* rdp);
-boolean security_fips_check_signature(uint8* data, int length, uint8* sig, rdpRdp* rdp);
+void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp);
+BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp);
+BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp);
+BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp);
 
 #endif /* __SECURITY_H */

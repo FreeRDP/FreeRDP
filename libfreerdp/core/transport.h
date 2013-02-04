@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Network Transport Layer
  *
  * Copyright 2011 Vic Lee
@@ -31,60 +31,67 @@ typedef enum
 typedef struct rdp_transport rdpTransport;
 
 #include "tcp.h"
-#include "tsg.h"
+#include "nla.h"
+
+#include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
+#include <winpr/collections.h>
+
 #include <freerdp/crypto/tls.h>
-#include <freerdp/crypto/nla.h>
 
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/wait_obj.h>
 
-typedef boolean (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
+typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
-	STREAM* recv_stream;
-	STREAM* send_stream;
 	TRANSPORT_LAYER layer;
-	struct rdp_tcp* tcp;
-	struct rdp_tls* tls;
-	struct rdp_tsg* tsg;
-	struct rdp_tcp* tcp_in;
-	struct rdp_tcp* tcp_out;
-	struct rdp_tls* tls_in;
-	struct rdp_tls* tls_out;
-	struct rdp_credssp* credssp;
-	struct rdp_settings* settings;
-	uint32 usleep_interval;
-	void* recv_extra;
-	STREAM* recv_buffer;
-	TransportRecv recv_callback;
-	struct wait_obj* recv_event;
-	boolean blocking;
-	boolean process_single_pdu; /* process single pdu in transport_check_fds */
+	rdpTsg* tsg;
+	rdpTcp* TcpIn;
+	rdpTcp* TcpOut;
+	rdpTls* TlsIn;
+	rdpTls* TlsOut;
+	rdpCredssp* credssp;
+	rdpSettings* settings;
+	UINT32 SleepInterval;
+	STREAM* SendStream;
+	STREAM* ReceiveStream;
+	void* ReceiveExtra;
+	STREAM* ReceiveBuffer;
+	TransportRecv ReceiveCallback;
+	HANDLE ReceiveEvent;
+	BOOL blocking;
+	BOOL SplitInputOutput;
+
+	wQueue* ReceivePool;
+	wQueue* ReceiveQueue;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
 STREAM* transport_send_stream_init(rdpTransport* transport, int size);
-boolean transport_connect(rdpTransport* transport, const char* hostname, uint16 port);
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
 void transport_attach(rdpTransport* transport, int sockfd);
-boolean transport_disconnect(rdpTransport* transport);
-boolean transport_connect_rdp(rdpTransport* transport);
-boolean transport_connect_tls(rdpTransport* transport);
-boolean transport_connect_nla(rdpTransport* transport);
-boolean transport_connect_tsg(rdpTransport* transport);
-boolean transport_accept_rdp(rdpTransport* transport);
-boolean transport_accept_tls(rdpTransport* transport);
-boolean transport_accept_nla(rdpTransport* transport);
+BOOL transport_disconnect(rdpTransport* transport);
+BOOL transport_connect_rdp(rdpTransport* transport);
+BOOL transport_connect_tls(rdpTransport* transport);
+BOOL transport_connect_nla(rdpTransport* transport);
+BOOL transport_connect_tsg(rdpTransport* transport);
+BOOL transport_accept_rdp(rdpTransport* transport);
+BOOL transport_accept_tls(rdpTransport* transport);
+BOOL transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, STREAM* s);
 int transport_write(rdpTransport* transport, STREAM* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
-boolean transport_set_blocking_mode(rdpTransport* transport, boolean blocking);
+BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+
+STREAM* transport_receive_pool_take(rdpTransport* transport);
+int transport_receive_pool_return(rdpTransport* transport, STREAM* pdu);
+
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);
 

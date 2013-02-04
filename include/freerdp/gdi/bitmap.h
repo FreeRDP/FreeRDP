@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Bitmap Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,27 +17,27 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_BITMAP_H
-#define __GDI_BITMAP_H
+#ifndef FREERDP_GDI_BITMAP_H
+#define FREERDP_GDI_BITMAP_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
 FREERDP_API GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos);
 FREERDP_API GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor);
-FREERDP_API uint8 gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API uint16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API uint32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API uint8* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API uint16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API uint32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, uint8 pixel);
-FREERDP_API void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, uint16 pixel);
-FREERDP_API void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, uint32 pixel);
-FREERDP_API HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, uint8* data);
+FREERDP_API BYTE gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API UINT16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API UINT32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API BYTE* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API UINT16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API UINT32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y);
+FREERDP_API void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, BYTE pixel);
+FREERDP_API void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, UINT16 pixel);
+FREERDP_API void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel);
+FREERDP_API HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data);
 FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight);
 FREERDP_API int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
 typedef int (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
-#endif /* __GDI_BITMAP_H */
+#endif /* FREERDP_GDI_BITMAP_H */

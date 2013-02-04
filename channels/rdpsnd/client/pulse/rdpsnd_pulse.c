@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2011 Vic Lee
@@ -25,9 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+#include <winpr/cmdline.h>
+
 #include <pulse/pulseaudio.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -77,18 +80,18 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 	}
 }
 
-static boolean rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
+static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 {
 	pa_context_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->context)
-		return false;
+		return FALSE;
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
 		DEBUG_WARN("pa_context_connect failed (%d)", pa_context_errno(pulse->context));
-		return false;
+		return FALSE;
 	}
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
@@ -97,7 +100,7 @@ static boolean rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		DEBUG_WARN("pa_threaded_mainloop_start failed (%d)", pa_context_errno(pulse->context));
-		return false;
+		return FALSE;
 	}
 
 	for (;;)
@@ -118,12 +121,12 @@ static boolean rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	if (state == PA_CONTEXT_READY)
 	{
 		DEBUG_SVC("connected");
-		return true;
+		return TRUE;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return false;
+		return FALSE;
 	}
 }
 
@@ -285,9 +288,9 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	{
 		buffer_attr.maxlength = pa_usec_to_bytes(pulse->latency * 2 * 1000, &pulse->sample_spec);
 		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
-		buffer_attr.prebuf = (uint32_t) -1;
-		buffer_attr.minreq = (uint32_t) -1;
-		buffer_attr.fragsize = (uint32_t) -1;
+		buffer_attr.prebuf = (UINT32) -1;
+		buffer_attr.minreq = (UINT32) -1;
+		buffer_attr.fragsize = (UINT32) -1;
 		flags |= PA_STREAM_ADJUST_LATENCY;
 	}
 
@@ -357,17 +360,17 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 		pulse->mainloop = NULL;
 	}
 
-	xfree(pulse->device_name);
+	free(pulse->device_name);
 	freerdp_dsp_context_free(pulse->dsp_context);
-	xfree(pulse);
+	free(pulse);
 }
 
-static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!pulse->context)
-		return false;
+		return FALSE;
 
 	switch (format->wFormatTag)
 	{
@@ -377,7 +380,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -388,7 +391,7 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 8) &&
 				(format->nChannels >= 1 && format->nChannels <= PA_CHANNELS_MAX))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 
@@ -398,11 +401,11 @@ static boolean rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndF
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
-				return true;
+				return TRUE;
 			}
 			break;
 	}
-	return false;
+	return FALSE;
 }
 
 static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
@@ -421,7 +424,7 @@ static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 	rdpsnd_pulse_open(device, format, latency);
 }
 
-static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
+static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	pa_cvolume cv;
 	pa_volume_t left;
@@ -450,11 +453,11 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, uint32 value)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
-static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, uint8* data, int size)
+static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
 	int len;
 	int ret;
-	uint8* src;
+	BYTE* src;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->stream)
@@ -520,12 +523,54 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 	pa_stream_trigger(pulse->stream, NULL, NULL);
 }
 
-int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
 {
-	rdpsndPulsePlugin* pulse;
-	RDP_PLUGIN_DATA* data;
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+};
 
-	pulse = xnew(rdpsndPulsePlugin);
+static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
+
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+			rdpsnd_pulse_args, flags, pulse, NULL, NULL);
+
+	arg = rdpsnd_pulse_args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		CommandLineSwitchCase(arg, "dev")
+		{
+			pulse->device_name = _strdup(arg->Value);
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+}
+
+#ifdef STATIC_CHANNELS
+#define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
+#endif
+
+int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+{
+	ADDIN_ARGV* args;
+	rdpsndPulsePlugin* pulse;
+
+	pulse = (rdpsndPulsePlugin*) malloc(sizeof(rdpsndPulsePlugin));
+	ZeroMemory(pulse, sizeof(rdpsndPulsePlugin));
 
 	pulse->device.Open = rdpsnd_pulse_open;
 	pulse->device.FormatSupported = rdpsnd_pulse_format_supported;
@@ -536,15 +581,8 @@ int FreeRDPRdpsndDeviceEntry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 	pulse->device.Close = rdpsnd_pulse_close;
 	pulse->device.Free = rdpsnd_pulse_free;
 
-	data = pEntryPoints->plugin_data;
-
-	if (data && strcmp((char*)data->data[0], "pulse") == 0)
-	{
-		if(data->data[1] && strlen((char*)data->data[1]) > 0) 
-			pulse->device_name = xstrdup((char*)data->data[1]);
-		else
-			pulse->device_name = NULL;
-	}
+	args = pEntryPoints->args;
+	rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
 
 	pulse->dsp_context = freerdp_dsp_context_new();
 

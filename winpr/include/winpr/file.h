@@ -24,8 +24,18 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/io.h>
+#include <winpr/error.h>
 
 #ifndef _WIN32
+
+#ifndef MAX_PATH
+#define MAX_PATH				260
+#endif
+
+#define INVALID_HANDLE_VALUE			((HANDLE) (LONG_PTR) - 1)
+#define INVALID_FILE_SIZE			((DWORD) 0xFFFFFFFF)
+#define INVALID_SET_FILE_POINTER		((DWORD) - 1)
+#define INVALID_FILE_ATTRIBUTES			((DWORD) - 1)
 
 #define FILE_READ_DATA				0x0001
 #define FILE_LIST_DIRECTORY			0x0001
@@ -121,13 +131,68 @@
 #define OPEN_ALWAYS				4
 #define TRUNCATE_EXISTING			5
 
+#define FIND_FIRST_EX_CASE_SENSITIVE		0x1
+#define FIND_FIRST_EX_LARGE_FETCH		0x2
+
 typedef union _FILE_SEGMENT_ELEMENT
 {
 	PVOID64 Buffer;
 	ULONGLONG Alignment;
 } FILE_SEGMENT_ELEMENT, *PFILE_SEGMENT_ELEMENT;
 
+typedef struct _WIN32_FIND_DATAA
+{
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
+	DWORD dwReserved0;
+	DWORD dwReserved1;
+	CHAR cFileName[MAX_PATH];
+	CHAR cAlternateFileName[14];
+} WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
+
+typedef struct _WIN32_FIND_DATAW
+{
+	DWORD dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD nFileSizeHigh;
+	DWORD nFileSizeLow;
+	DWORD dwReserved0;
+	DWORD dwReserved1;
+	WCHAR cFileName[MAX_PATH];
+	WCHAR cAlternateFileName[14];
+} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
+
+typedef enum _FINDEX_INFO_LEVELS
+{
+	FindExInfoStandard,
+	FindExInfoMaxInfoLevel
+} FINDEX_INFO_LEVELS;
+
+typedef enum _FINDEX_SEARCH_OPS
+{
+	FindExSearchNameMatch,
+	FindExSearchLimitToDirectories,
+	FindExSearchLimitToDevices,
+	FindExSearchMaxSearchOp
+} FINDEX_SEARCH_OPS;
+
 typedef VOID (*LPOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped);
+
+#ifdef UNICODE
+#define WIN32_FIND_DATA		WIN32_FIND_DATAW
+#define PWIN32_FIND_DATA	PWIN32_FIND_DATAW
+#define LPWIN32_FIND_DATA	LPWIN32_FIND_DATAW
+#else
+#define WIN32_FIND_DATA		WIN32_FIND_DATAA
+#define PWIN32_FIND_DATA	PWIN32_FIND_DATAA
+#define LPWIN32_FIND_DATA	LPWIN32_FIND_DATAA
+#endif
 
 WINPR_API HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
@@ -179,15 +244,46 @@ WINPR_API BOOL UnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffse
 WINPR_API BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
 		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
 
+WINPR_API HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
+WINPR_API HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
+
+WINPR_API HANDLE FindFirstFileExA(LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData,
+		FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
+WINPR_API HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData,
+		FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
+
+WINPR_API BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
+WINPR_API BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData);
+
+WINPR_API BOOL FindClose(HANDLE hFindFile);
+
 #ifdef UNICODE
-#define CreateFile	CreateFileW
-#define DeleteFile	DeleteFileW
+#define CreateFile		CreateFileW
+#define DeleteFile		DeleteFileW
+#define FindFirstFile		FindFirstFileW
+#define FindFirstFileEx		FindFirstFileExW
+#define FindNextFile		FindNextFileW
 #else
-#define CreateFile	CreateFileA
-#define DeleteFile	DeleteFileA
+#define CreateFile		CreateFileA
+#define DeleteFile		DeleteFileA
+#define FindFirstFile		FindFirstFileA
+#define FindFirstFileEx		FindFirstFileExA
+#define FindNextFile		FindNextFileA
 #endif
 
 #endif
+
+/* Extra Functions */
+
+#define WILDCARD_STAR		0x00000001
+#define WILDCARD_QM		0x00000002
+#define WILDCARD_DOS		0x00000100
+#define WILDCARD_DOS_STAR	0x00000110
+#define WILDCARD_DOS_QM		0x00000120
+#define WILDCARD_DOS_DOT	0x00000140
+
+WINPR_API BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern);
+WINPR_API LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags);
 
 #endif /* WINPR_FILE_H */
 

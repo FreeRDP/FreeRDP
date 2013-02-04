@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Implements Microsoft Point to Point Compression (MPPC) protocol
  *
  * Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
@@ -26,7 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
 
@@ -41,7 +42,7 @@
 #define CRC(crcval, newchar) crcval = (crcval >> 8) ^ crc_table[(crcval ^ newchar) & 0x00ff]
 
 /* CRC16 defs */
-static const uint16 crc_table[256] =
+static const UINT16 crc_table[256] =
 {
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
@@ -430,46 +431,61 @@ struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
 {
 	struct rdp_mppc_enc* enc;
 
-	enc = xnew(struct rdp_mppc_enc);
+	enc = (struct rdp_mppc_enc*) malloc(sizeof(struct rdp_mppc_enc));
+	ZeroMemory(enc, sizeof(struct rdp_mppc_enc));
+
 	if (enc == NULL)
 		return NULL;
+
 	switch (protocol_type)
 	{
 		case PROTO_RDP_40:
 			enc->protocol_type = PROTO_RDP_40;
 			enc->buf_len = RDP_40_HIST_BUF_LEN;
 			break;
+
 		case PROTO_RDP_50:
 			enc->protocol_type = PROTO_RDP_50;
 			enc->buf_len = RDP_50_HIST_BUF_LEN;
 			break;
+
 		default:
-			xfree(enc);
+			free(enc);
 			return NULL;
 	}
+
 	enc->first_pkt = 1;
-	enc->historyBuffer = (char*) xzalloc(enc->buf_len);
+	enc->historyBuffer = (char*) malloc(enc->buf_len);
+	ZeroMemory(enc->historyBuffer, enc->buf_len);
+
 	if (enc->historyBuffer == NULL)
 	{
-		xfree(enc);
+		free(enc);
 		return NULL;
 	}
-	enc->outputBufferPlus = (char*) xzalloc(enc->buf_len + 64);
+
+	enc->outputBufferPlus = (char*) malloc(enc->buf_len + 64);
+	ZeroMemory(enc->outputBufferPlus, enc->buf_len + 64);
+
 	if (enc->outputBufferPlus == NULL)
 	{
-		xfree(enc->historyBuffer);
-		xfree(enc);
+		free(enc->historyBuffer);
+		free(enc);
 		return NULL;
 	}
+
 	enc->outputBuffer = enc->outputBufferPlus + 64;
-	enc->hash_table = (uint16*) xzalloc(enc->buf_len * 2);
+	enc->hash_table = (UINT16*) malloc(enc->buf_len * 2);
+	ZeroMemory(enc->hash_table, enc->buf_len * 2);
+
 	if (enc->hash_table == NULL)
 	{
-		xfree(enc->historyBuffer);
-		xfree(enc->outputBufferPlus);
-		xfree(enc);
+		free(enc->historyBuffer);
+		free(enc->outputBufferPlus);
+		free(enc);
 		return NULL;
 	}
+
 	return enc;
 }
 
@@ -483,10 +499,10 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
 {
 	if (enc == NULL)
 		return;
-	xfree(enc->historyBuffer);
-	xfree(enc->outputBufferPlus);
-	xfree(enc->hash_table);
-	xfree(enc);
+	free(enc->historyBuffer);
+	free(enc->outputBufferPlus);
+	free(enc->hash_table);
+	free(enc);
 }
 
 /**
@@ -496,23 +512,26 @@ void mppc_enc_free(struct rdp_mppc_enc* enc)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	if ((enc == NULL) || (srcData == NULL) || (len <= 0) || (len > enc->buf_len))
-		return false;
+		return FALSE;
+
 	switch (enc->protocol_type)
 	{
 		case PROTO_RDP_40:
 			return compress_rdp_4(enc, srcData, len);
 			break;
+
 		case PROTO_RDP_50:
 			return compress_rdp_5(enc, srcData, len);
 			break;
 	}
-	return false;
+
+	return FALSE;
 }
 
 /**
@@ -522,13 +541,13 @@ boolean compress_rdp(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_4(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	/* RDP 4.0 encoding not yet implemented */
-	return false;
+	return FALSE;
 }
 
 /**
@@ -538,10 +557,10 @@ boolean compress_rdp_4(struct rdp_mppc_enc* enc, uint8* srcData, int len)
  * @param   srcData       uncompressed data
  * @param   len           length of srcData
  *
- * @return  true on success, false on failure
+ * @return  TRUE on success, FALSE on failure
  */
 
-boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
+BOOL compress_rdp_5(struct rdp_mppc_enc* enc, BYTE* srcData, int len)
 {
 	char* outputBuffer;     /* points to enc->outputBuffer */
 	char* hptr_end;         /* points to end of history data */
@@ -551,23 +570,23 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	char* cptr2;
 	int opb_index;          /* index into outputBuffer */
 	int bits_left;          /* unused bits in current byte in outputBuffer */
-	uint32 copy_offset;     /* pattern match starts here... */
-	uint32 lom;             /* ...and matches this many bytes */
+	UINT32 copy_offset;     /* pattern match starts here... */
+	UINT32 lom;             /* ...and matches this many bytes */
 	int last_crc_index;     /* don't compute CRC beyond this index */
-	uint16 *hash_table;     /* hash table for pattern matching */
+	UINT16 *hash_table;     /* hash table for pattern matching */
 
-	uint32 i;
-	uint32 j;
-	uint32 k;
-	uint32 x;
-	uint8  data;
-	uint16 data16;
-	uint32 historyOffset;
-	uint16 crc;
-	uint32 ctr;
-	uint32 saved_ctr;
-	uint32 data_end;
-	uint8 byte_val;
+	UINT32 i;
+	UINT32 j;
+	UINT32 k;
+	UINT32 x;
+	BYTE  data;
+	UINT16 data16;
+	UINT32 historyOffset;
+	UINT16 crc;
+	UINT32 ctr;
+	UINT32 saved_ctr;
+	UINT32 data_end;
+	BYTE byte_val;
 
 	crc = 0;
 	opb_index = 0;
@@ -753,7 +772,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 
 		/* encode copy_offset and insert into output buffer */
 
-		if ((copy_offset >= 0) && (copy_offset <= 63))
+		if (copy_offset <= 63) /* (copy_offset >= 0) is always true */
 		{
 			/* insert binary header */
 			data = 0x1f;
@@ -980,7 +999,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 	else if (opb_index + 1 > len)
 	{
@@ -990,7 +1009,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 
 	/* if bits_left != 8, increment opb_index, which is zero indexed */
@@ -1006,7 +1025,7 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 		memset(hash_table, 0, enc->buf_len * 2);
 		enc->flagsHold |= PACKET_FLUSHED;
 		enc->first_pkt = 1;
-		return true;
+		return TRUE;
 	}
 	enc->flags |= PACKET_COMPRESSED;
 	enc->bytes_in_opb = opb_index;
@@ -1015,5 +1034,5 @@ boolean compress_rdp_5(struct rdp_mppc_enc* enc, uint8* srcData, int len)
 	enc->flagsHold = 0;
 	DLOG(("\n"));
 
-	return true;
+	return TRUE;
 }

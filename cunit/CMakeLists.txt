@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # cunit cmake build script
 #
 # Copyright 2011 O.S. Systems Software Ltda.
@@ -68,7 +68,6 @@ target_link_libraries(test_freerdp ${CUNIT_LIBRARIES})
 target_link_libraries(test_freerdp freerdp-core)
 target_link_libraries(test_freerdp freerdp-gdi)
 target_link_libraries(test_freerdp freerdp-utils)
-target_link_libraries(test_freerdp freerdp-channels)
 target_link_libraries(test_freerdp freerdp-codec)
 target_link_libraries(test_freerdp freerdp-crypto)
 

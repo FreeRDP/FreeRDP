@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * DirectFB Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
 
 #include "df_graphics.h"
 
@@ -44,7 +44,7 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if (result == DFB_OK)
 	{
 		int pitch;
-		uint8* point = NULL;
+		BYTE* point = NULL;
 
 		df_pointer->xhot = pointer->xPos;
 		df_pointer->yhot = pointer->yPos;
@@ -123,7 +123,8 @@ void df_register_graphics(rdpGraphics* graphics)
 {
 	rdpPointer* pointer;
 
-	pointer = xnew(rdpPointer);
+	pointer = (rdpPointer*) malloc(sizeof(rdpPointer));
+	ZeroMemory(pointer, sizeof(rdpPointer));
 	pointer->size = sizeof(dfPointer);
 
 	pointer->New = df_Pointer_New;
@@ -133,6 +134,6 @@ void df_register_graphics(rdpGraphics* graphics)
 	pointer->SetDefault = df_Pointer_SetDefault;
 
 	graphics_register_pointer(graphics, pointer);
-	xfree(pointer);
+	free(pointer);
 }
 

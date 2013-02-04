@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Brush Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -29,7 +29,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/gdi/32bpp.h>
 #include <freerdp/gdi/16bpp.h>
@@ -55,7 +54,7 @@ p_PatBlt PatBlt_[5] =
 
 HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 {
-	HGDI_BRUSH hBrush = (HGDI_BRUSH) xmalloc(sizeof(GDI_BRUSH));
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_SOLID;
 	hBrush->color = crColor;
@@ -71,7 +70,7 @@ HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 {
-	HGDI_BRUSH hBrush = (HGDI_BRUSH) xmalloc(sizeof(GDI_BRUSH));
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_PATTERN;
 	hBrush->pattern = hbmp;

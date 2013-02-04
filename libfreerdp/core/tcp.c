@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Transmission Control Protocol (TCP)
  *
  * Copyright 2011 Vic Lee
@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <winpr/crt.h>
+
 #ifndef _WIN32
 #include <netdb.h>
 #include <unistd.h>
@@ -51,15 +53,13 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
-#include <freerdp/utils/print.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "tcp.h"
 
 void tcp_get_ip_address(rdpTcp * tcp)
 {
-	uint8* ip;
+	BYTE* ip;
 	socklen_t length;
 	struct sockaddr_in sockaddr;
 
@@ -67,8 +67,8 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
-		ip = (uint8*) (&sockaddr.sin_addr);
-		snprintf(tcp->ip_address, sizeof(tcp->ip_address),
+		ip = (BYTE*) (&sockaddr.sin_addr);
+		sprintf_s(tcp->ip_address, sizeof(tcp->ip_address),
 			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
 	else
@@ -78,14 +78,14 @@ void tcp_get_ip_address(rdpTcp * tcp)
 
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
-	tcp->settings->ipv6 = 0;
-	tcp->settings->ip_address = xstrdup(tcp->ip_address);
+	tcp->settings->IPv6Enabled = 0;
+	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
 void tcp_get_mac_address(rdpTcp * tcp)
 {
 #ifdef LINUX
-	uint8* mac;
+	BYTE* mac;
 	struct ifreq if_req;
 	struct if_nameindex* ni;
 
@@ -115,9 +115,9 @@ void tcp_get_mac_address(rdpTcp * tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 {
-	uint32 option_value;
+	UINT32 option_value;
 	socklen_t option_len;
 
 	if (hostname[0] == '/')
@@ -125,14 +125,14 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 		tcp->sockfd = freerdp_uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
-			return false;
+			return FALSE;
 	}
 	else
 	{
 		tcp->sockfd = freerdp_tcp_connect(hostname, port);
 
 		if (tcp->sockfd < 0)
-			return false;
+			return FALSE;
 
 		tcp_get_ip_address(tcp);
 		tcp_get_mac_address(tcp);
@@ -155,28 +155,38 @@ boolean tcp_connect(rdpTcp* tcp, const char* hostname, uint16 port)
 		tcp_set_keep_alive_mode(tcp);
 	}
 
-	return true;
+	return TRUE;
 }
 
-int tcp_read(rdpTcp* tcp, uint8* data, int length)
+int tcp_read(rdpTcp* tcp, BYTE* data, int length)
 {
 	return freerdp_tcp_read(tcp->sockfd, data, length);
 }
 
-int tcp_write(rdpTcp* tcp, uint8* data, int length)
+int tcp_write(rdpTcp* tcp, BYTE* data, int length)
 {
 	return freerdp_tcp_write(tcp->sockfd, data, length);
 }
 
-boolean tcp_disconnect(rdpTcp* tcp)
+int tcp_wait_read(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_read(tcp->sockfd);
+}
+
+int tcp_wait_write(rdpTcp* tcp)
+{
+	return freerdp_tcp_wait_write(tcp->sockfd);
+}
+
+BOOL tcp_disconnect(rdpTcp* tcp)
 {
 	freerdp_tcp_disconnect(tcp->sockfd);
 	tcp->sockfd = -1;
 
-	return true;
+	return TRUE;
 }
 
-boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
+BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 {
 #ifndef _WIN32
 	int flags;
@@ -185,10 +195,10 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	if (flags == -1)
 	{
 		printf("tcp_set_blocking_mode: fcntl failed.\n");
-		return false;
+		return FALSE;
 	}
 
-	if (blocking == true)
+	if (blocking == TRUE)
 		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
 	else
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
@@ -205,13 +215,13 @@ boolean tcp_set_blocking_mode(rdpTcp* tcp, boolean blocking)
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
 #endif
 
-	return true;
+	return TRUE;
 }
 
-boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
+BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 {
 #ifndef _WIN32
-	uint32 option_value;
+	UINT32 option_value;
 	socklen_t option_len;
 
 	option_value = 1;
@@ -220,7 +230,7 @@ boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
 	{
 		perror("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
-		return false;
+		return FALSE;
 	}
 
 #ifdef TCP_KEEPIDLE
@@ -230,22 +240,24 @@ boolean tcp_set_keep_alive_mode(rdpTcp* tcp)
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
 		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
-		return false;
+		return FALSE;
 	}
 #endif
 #endif
 
-	return true;
+	return TRUE;
 }
 
 rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp*) xzalloc(sizeof(rdpTcp));
+	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
 	if (tcp != NULL)
 	{
+		ZeroMemory(tcp, sizeof(rdpTcp));
+
 		tcp->sockfd = -1;
 		tcp->settings = settings;
 	}
@@ -257,6 +269,6 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (tcp != NULL)
 	{
-		xfree(tcp);
+		free(tcp);
 	}
 }

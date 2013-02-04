@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
- * File System Virtual Channel
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Device Redirection Virtual Channel
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/load_plugin.h>
+#include <freerdp/client/channels.h>
 
-#include "rdpdr_types.h"
+#include "rdpdr_main.h"
+
 #include "devman.h"
 
 DEVMAN* devman_new(rdpSvcPlugin* plugin)
 {
 	DEVMAN* devman;
 
-	devman = xnew(DEVMAN);
+	devman = (DEVMAN*) malloc(sizeof(DEVMAN));
+	ZeroMemory(devman, sizeof(DEVMAN));
+
 	devman->plugin = plugin;
 	devman->id_sequence = 1;
 	devman->devices = list_new();
@@ -57,7 +62,7 @@ void devman_free(DEVMAN* devman)
 
 	list_free(devman->devices);
 
-	xfree(devman);
+	free(devman);
 }
 
 static void devman_register_device(DEVMAN* devman, DEVICE* device)
@@ -68,26 +73,48 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
-boolean devman_load_device_service(DEVMAN* devman, RDP_PLUGIN_DATA* plugin_data)
-{
-	DEVICE_SERVICE_ENTRY_POINTS ep;
-	PDEVICE_SERVICE_ENTRY entry;
+static char DRIVE_SERVICE_NAME[] = "drive";
+static char PRINTER_SERVICE_NAME[] = "printer";
+static char SMARTCARD_SERVICE_NAME[] = "smartcard";
+static char SERIAL_SERVICE_NAME[] = "serial";
+static char PARALLEL_SERVICE_NAME[] = "parallel";
 
-	entry = freerdp_load_plugin((char*) plugin_data->data[0], "DeviceServiceEntry");
+BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
+{
+	char* ServiceName = NULL;
+	DEVICE_SERVICE_ENTRY_POINTS ep;
+	PDEVICE_SERVICE_ENTRY entry = NULL;
+
+	if (device->Type == RDPDR_DTYP_FILESYSTEM)
+		ServiceName = DRIVE_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_PRINT)
+		ServiceName = PRINTER_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_SMARTCARD)
+		ServiceName = SMARTCARD_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_SERIAL)
+		ServiceName = SERIAL_SERVICE_NAME;
+	else if (device->Type == RDPDR_DTYP_PARALLEL)
+		ServiceName = PARALLEL_SERVICE_NAME;
+
+	if (!ServiceName)
+		return FALSE;
+
+	printf("Loading device service %s (static)\n", ServiceName);
+	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
 	if (entry == NULL)
-		return false;
+		return FALSE;
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
-	ep.plugin_data = plugin_data;
+	ep.device = device;
 
 	entry(&ep);
 
-	return true;
+	return TRUE;
 }
 
-DEVICE* devman_get_device_by_id(DEVMAN* devman, uint32 id)
+DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
 	LIST_ITEM* item;
 	DEVICE* device;

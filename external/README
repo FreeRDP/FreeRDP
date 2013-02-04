@@ -1,0 +1,5 @@
+* External Directory
+
+Use this directory for all external dependencies (OpenSSL, etc)
+All files within this directory are ignored by git
+

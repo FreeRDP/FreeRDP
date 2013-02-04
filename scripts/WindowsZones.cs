@@ -1,5 +1,5 @@
 ﻿/**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * TZID to Windows TimeZone Identifier Table Generator
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>

@@ -22,6 +22,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat);
 
 void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL_STUB_MESSAGE pStubMsg);
@@ -33,5 +35,7 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 
 void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+
+#endif
 
 #endif /* WINPR_RPC_NDR_POINTER_H */

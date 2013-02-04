@@ -1,5 +1,5 @@
 /*
-   FreeRDP: A Remote Desktop Protocol client.
+   FreeRDP: A Remote Desktop Protocol Implementation
    RAIL(TS RemoteApp) Virtual Channel Unit Tests
 
    Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>

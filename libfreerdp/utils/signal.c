@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Signal handling
  *
  * Copyright 2011 Shea Levy <shea@shealevy.com>
@@ -22,16 +22,23 @@
 #endif
 
 #include <stddef.h>
+
+#include <winpr/crt.h>
+
 #include <freerdp/utils/signal.h>
-#include <freerdp/utils/memory.h>
+
 #ifdef _WIN32
+
 #include <errno.h>
+
 int freerdp_handle_signals(void)
 {
 	errno = ENOSYS;
 	return -1;
 }
-#else
+
+#elif !defined(ANDROID)
+
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;
 struct termios orig_flags;
@@ -106,7 +113,7 @@ int freerdp_handle_signals(void)
 	fatal_sigaction.sa_flags  = 0;
 
 	for (signal_index = 0;
-		signal_index < ARRAY_SIZE(fatal_signals);
+		signal_index < ARRAYSIZE(fatal_signals);
 		signal_index++)
 		if (sigaction(fatal_signals[signal_index],
 			NULL, &orig_sigaction) == 0)
@@ -117,4 +124,12 @@ int freerdp_handle_signals(void)
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
 	return 0;
 }
+
+#else
+
+int freerdp_handle_signals(void)
+{
+	return -1;
+}
+
 #endif

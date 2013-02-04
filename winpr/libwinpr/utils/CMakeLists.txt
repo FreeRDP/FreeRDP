@@ -18,36 +18,56 @@
 set(MODULE_NAME "winpr-utils")
 set(MODULE_PREFIX "WINPR_UTILS")
 
+set(${MODULE_PREFIX}_COLLECTIONS_SRCS
+	collections/Queue.c
+	collections/Stack.c
+	collections/Reference.c
+	collections/ArrayList.c
+	collections/Dictionary.c
+	collections/ListDictionary.c
+	collections/KeyValuePair.c
+	collections/CountdownEvent.c
+	collections/BufferPool.c
+	collections/MessageQueue.c)
+
 set(${MODULE_PREFIX}_SRCS
+	sam.c
 	ntlm.c
 	print.c
-	sam.c
-	stream.c)
+	stream.c
+	cmdline.c)
+
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+	${${MODULE_PREFIX}_COLLECTIONS_SRCS})
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS
 	${ZLIB_LIBRARIES}
 	${OPENSSL_LIBRARIES})
-
-if(WITH_MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	if (NOT WIN32)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-crt)
-	endif()
 	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-crt winpr-synch)
+
+if(MONOLITHIC_BUILD)
+	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
+else()	
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+

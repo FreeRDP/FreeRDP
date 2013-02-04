@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NineGrid Cache
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __NINE_GRID_CACHE_H
-#define __NINE_GRID_CACHE_H
+#ifndef FREERDP_NINE_GRID_CACHE_H
+#define FREERDP_NINE_GRID_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -40,24 +40,32 @@ struct rdp_nine_grid_cache
 {
 	pDrawNineGrid DrawNineGrid; /* 0 */
 	pMultiDrawNineGrid MultiDrawNineGrid; /* 1 */
-	uint32 paddingA[16 - 2]; /* 2 */
+	UINT32 paddingA[16 - 2]; /* 2 */
 
-	uint32 maxEntries; /* 16 */
-	uint32 maxSize; /* 17 */
+	UINT32 maxEntries; /* 16 */
+	UINT32 maxSize; /* 17 */
 	NINE_GRID_ENTRY* entries; /* 18 */
-	uint32 paddingB[32 - 19]; /* 19 */
+	UINT32 paddingB[32 - 19]; /* 19 */
 
 	/* internal */
 
 	rdpSettings* settings;
 };
 
-FREERDP_API void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index);
-FREERDP_API void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+FREERDP_API void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
+FREERDP_API void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
 
 FREERDP_API void nine_grid_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings);
 FREERDP_API void nine_grid_cache_free(rdpNineGridCache* nine_grid);
 
-#endif /* __NINE_GRID_CACHE_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_NINE_GRID_CACHE_H */

@@ -1,9 +1,7 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(AUDIN_ALSA_SRCS
+define_channel_client_subsystem("audin" "alsa" "")
+
+set(${MODULE_PREFIX}_SRCS
 	audin_alsa.c)
 
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
 
-add_library(audin_alsa ${AUDIN_ALSA_SRCS})
-set_target_properties(audin_alsa PROPERTIES PREFIX "")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(audin_alsa freerdp)
-else()
-	target_link_libraries(audin_alsa freerdp-utils)
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ALSA_LIBRARIES})
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
 endif()
-
-target_link_libraries(audin_alsa ${ALSA_LIBRARIES})
-
-install(TARGETS audin_alsa DESTINATION ${FREERDP_PLUGIN_PATH})

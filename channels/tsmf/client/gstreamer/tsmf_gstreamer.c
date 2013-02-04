@@ -1,5 +1,5 @@
 /*
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - GStreamer Decoder
  *
  * (C) Copyright 2012 HP Development Company, LLC 
@@ -24,16 +24,19 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/shape.h>
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
 #include <gst/interfaces/xoverlay.h>
+
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <sys/mman.h>
@@ -43,8 +46,12 @@
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
 
-#define SHARED_MEM_KEY 7777
-#define TRY_DECODEBIN 0
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#define SHARED_MEM_KEY	7777
+#define TRY_DECODEBIN	0
 
 typedef struct _TSMFGstreamerDecoder
 {
@@ -69,18 +76,18 @@ typedef struct _TSMFGstreamerDecoder
 	GstElement *outsink;
 	GstElement *aVolume;
 
-	boolean paused;
-	uint64 last_sample_end_time;
+	BOOL paused;
+	UINT64 last_sample_end_time;
 
 	Display *disp;
 	int *xfwin;
 	Window subwin;
 	int xOffset;
 	int yOffset;
-	bool offsetObtained;
+	BOOL offsetObtained;
 	int linked;
 	double gstVolume;
-	bool gstMuted;
+	BOOL gstMuted;
 
 	int pipeline_start_time_valid; /* We've set the start time and have not reset the pipeline */
 	int shutdown; /* The decoder stream is shutting down */
@@ -95,7 +102,7 @@ const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
 const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
 const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
 
-static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(uint64 ms_timestamp)
+static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
 {
 	/* 
 	 * Convert Microsoft 100ns timestamps to Gstreamer 1ns units.
@@ -319,11 +326,11 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 	return 0;
 }
 
-static boolean tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE * media_type)
+static BOOL tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE * media_type)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
-			return false;
+			return FALSE;
 	GstBuffer *gst_buf_cap_codec_data; /* Buffer to hold extra descriptive codec-specific caps data */
 
 	DEBUG_DVC("tsmf_gstreamer_set_format: ");
@@ -680,9 +687,9 @@ static void tsmf_gstreamer_pipeline_send_end_of_stream(TSMFGstreamerDecoder * md
 
 #ifdef __arm__
 /* code from TI to check whether OMX is being lock or not */
-static boolean tsmf_gstreamer_pipeline_omx_available()
+static BOOL tsmf_gstreamer_pipeline_omx_available()
 {
-	bool ret = TRUE;
+	BOOL ret = TRUE;
 	int shm_fd = 0;
 	struct shm_info
 	{
@@ -772,10 +779,10 @@ static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder * mdecoder)
 }
 
 
-static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
+static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 {
 	if (!mdecoder)
-		return false;
+		return FALSE;
 
 	GstPad *out_pad;
 	mdecoder->pipe = gst_pipeline_new (NULL);
@@ -785,7 +792,7 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 		return FALSE;
 	}
 
-	bool OMXavailable = FALSE;
+	BOOL OMXavailable = FALSE;
 
 #ifdef __arm__
 	OMXavailable = tsmf_gstreamer_pipeline_omx_available();
@@ -797,8 +804,8 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	const char *blank = ""; 
 	printf("%s", blank);
 
-	bool hwaccelflu = FALSE;
-	bool hwaccelomx = FALSE;
+	BOOL hwaccelflu = FALSE;
+	BOOL hwaccelomx = FALSE;
 
 	switch (mdecoder->tsmf_media_type.SubType)
 	{
@@ -1094,17 +1101,19 @@ static boolean tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	return TRUE;
 }
 
-static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * data, uint32 data_size, uint32 extensions,
-        			uint64 start_time, uint64 end_time, uint64 duration)
+static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
+        			UINT64 start_time, UINT64 end_time, UINT64 duration)
 {
-	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
+	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder*) decoder;
+
 	if (!mdecoder)
 	{
 		return FALSE;
 	}
 
 	int mutexret = pthread_mutex_lock(&mdecoder->gst_mutex);
-	if(mutexret != 0)
+
+	if (mutexret != 0)
 		return FALSE;
 
 	if (mdecoder->shutdown)
@@ -1123,9 +1132,15 @@ static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * dat
          */
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)", start_time, end_time, duration, mdecoder->last_sample_end_time);
+	{
+		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+				start_time, end_time, duration, mdecoder->last_sample_end_time);
+	}
 	else
-		DEBUG_DVC("tsmf_gstreamer_decodeEX_AUDIO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)", start_time, end_time, duration, mdecoder->last_sample_end_time);
+	{
+		DEBUG_DVC("tsmf_gstreamer_decodeEX_AUDIO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+				start_time, end_time, duration, mdecoder->last_sample_end_time);
+	}
 
 	if (mdecoder->gst_caps == NULL) 
 	{
@@ -1190,7 +1205,7 @@ static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * dat
 
 			if (fout)
 			{
-				fprintf(fout, "%"PRIu64"\n", start_time);
+				fprintf(fout, "%"PRIu64"\n", (long unsigned int) start_time);
 				fclose(fout);
 			}
 
@@ -1215,12 +1230,12 @@ static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * dat
 			FILE *fin = fopen("/tmp/tsmf_aseek.info", "rt");
 			if (fin)
 			{
-				uint64 AStartTime = 0;
-				fscanf(fin, "%"PRIu64, &AStartTime);
+				UINT64 AStartTime = 0;
+				fscanf(fin, "%"PRIu64, (long unsigned int*) &AStartTime);
 				fclose(fin);
 				if (start_time > AStartTime)
 				{
-					uint64 streamDelay = (start_time - AStartTime) / 10;
+					UINT64 streamDelay = (start_time - AStartTime) / 10;
 					usleep(streamDelay);
 				}
 				unlink("/tmp/tsmf_aseek.info");
@@ -1249,12 +1264,12 @@ static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * dat
 			fin = fopen("/tmp/tsmf_vseek.info", "rt");
 			if (fin)
 			{
-				uint64 VStartTime = 0;
-				fscanf(fin, "%"PRIu64, &VStartTime);
+				UINT64 VStartTime = 0;
+				fscanf(fin, "%"PRIu64, (long unsigned int*) &VStartTime);
 				fclose(fin);
 				if (start_time > VStartTime)
 				{
-					uint64 streamDelay = (start_time - VStartTime) / 10;
+					UINT64 streamDelay = (start_time - VStartTime) / 10;
 					usleep(streamDelay);
 				}
 				unlink("/tmp/tsmf_vseek.info");
@@ -1301,7 +1316,7 @@ static boolean tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const uint8 * dat
 	return TRUE;
 }
 
-static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, uint32 newVolume, uint32 muted)
+static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, UINT32 newVolume, UINT32 muted)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1319,7 +1334,7 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, uint32 newVolum
 	if (!G_IS_OBJECT(mdecoder->aVolume))
 		return;
 
-	mdecoder->gstMuted = (bool) muted;
+	mdecoder->gstMuted = (BOOL) muted;
 	DEBUG_DVC("tsmf_gstreamer_change_volume: mute=[%d]", mdecoder->gstMuted);
 	g_object_set(mdecoder->aVolume, "mute", mdecoder->gstMuted, NULL);
 	mdecoder->gstVolume = (double) newVolume / (double) 10000;
@@ -1327,7 +1342,7 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, uint32 newVolum
 	g_object_set(mdecoder->aVolume, "volume", mdecoder->gstVolume, NULL);
 }
 
-static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg control_msg, uint32 *arg)
+static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg control_msg, UINT32 *arg)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1453,7 +1468,7 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 	}
 }
 
-static uint64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
+static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
 {
 	TSMFGstreamerDecoder *mdecoder = (TSMFGstreamerDecoder *) decoder;
 	if (!mdecoder)
@@ -1550,10 +1565,13 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 
 static int initialized = 0;
 
-ITSMFDecoder *
-TSMFDecoderEntry(void)
+#ifdef STATIC_CHANNELS
+#define freerdp_tsmf_client_decoder_subsystem_entry	gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
+#endif
+
+ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 {
-	TSMFGstreamerDecoder * decoder;
+	TSMFGstreamerDecoder* decoder;
 
 	if (!initialized)
 	{

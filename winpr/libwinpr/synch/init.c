@@ -23,13 +23,6 @@
 
 #include <winpr/synch.h>
 
-/**
- * InitOnceBeginInitialize
- * InitOnceComplete
- * InitOnceExecuteOnce
- * InitOnceInitialize
- */
-
 #ifndef _WIN32
 
 BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)

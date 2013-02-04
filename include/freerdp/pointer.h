@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Pointer Updates Interface API
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UPDATE_POINTER_H
-#define __UPDATE_POINTER_H
+#ifndef FREERDP_UPDATE_POINTER_H
+#define FREERDP_UPDATE_POINTER_H
 
 #include <freerdp/types.h>
 
@@ -33,41 +33,41 @@
 
 struct _POINTER_POSITION_UPDATE
 {
-	uint32 xPos;
-	uint32 yPos;
+	UINT32 xPos;
+	UINT32 yPos;
 };
 typedef struct _POINTER_POSITION_UPDATE POINTER_POSITION_UPDATE;
 
 struct _POINTER_SYSTEM_UPDATE
 {
-	uint32 type;
+	UINT32 type;
 };
 typedef struct _POINTER_SYSTEM_UPDATE POINTER_SYSTEM_UPDATE;
 
 struct _POINTER_COLOR_UPDATE
 {
-	uint32 cacheIndex;
-	uint32 xPos;
-	uint32 yPos;
-	uint32 width;
-	uint32 height;
-	uint32 lengthAndMask;
-	uint32 lengthXorMask;
-	uint8* xorMaskData;
-	uint8* andMaskData;
+	UINT32 cacheIndex;
+	UINT32 xPos;
+	UINT32 yPos;
+	UINT32 width;
+	UINT32 height;
+	UINT32 lengthAndMask;
+	UINT32 lengthXorMask;
+	BYTE* xorMaskData;
+	BYTE* andMaskData;
 };
 typedef struct _POINTER_COLOR_UPDATE POINTER_COLOR_UPDATE;
 
 struct _POINTER_NEW_UPDATE
 {
-	uint32 xorBpp;
+	UINT32 xorBpp;
 	POINTER_COLOR_UPDATE colorPtrAttr;
 };
 typedef struct _POINTER_NEW_UPDATE POINTER_NEW_UPDATE;
 
 struct _POINTER_CACHED_UPDATE
 {
-	uint32 cacheIndex;
+	UINT32 cacheIndex;
 };
 typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
 
@@ -80,14 +80,14 @@ typedef void (*pPointerCached)(rdpContext* context, POINTER_CACHED_UPDATE* point
 struct rdp_pointer_update
 {
 	rdpContext* context; /* 0 */
-	uint32 paddingA[16 - 1]; /* 1 */
+	UINT32 paddingA[16 - 1]; /* 1 */
 
 	pPointerPosition PointerPosition; /* 16 */
 	pPointerSystem PointerSystem; /* 17 */
 	pPointerColor PointerColor; /* 18 */
 	pPointerNew PointerNew; /* 19 */
 	pPointerCached PointerCached; /* 20 */
-	uint32 paddingB[32 - 21]; /* 21 */
+	UINT32 paddingB[32 - 21]; /* 21 */
 
 	/* internal */
 
@@ -99,4 +99,4 @@ struct rdp_pointer_update
 };
 typedef struct rdp_pointer_update rdpPointerUpdate;
 
-#endif /* __UPDATE_POINTER_H */
+#endif /* FREERDP_UPDATE_POINTER_H */

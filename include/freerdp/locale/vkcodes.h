@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __FREERDP_VIRTUAL_KEY_CODES_H
-#define __FREERDP_VIRTUAL_KEY_CODES_H
+#ifndef FREERDP_VIRTUAL_KEY_CODES_H
+#define FREERDP_VIRTUAL_KEY_CODES_H
 
 #include <freerdp/types.h>
 #include <freerdp/api.h>
@@ -303,7 +303,7 @@
 #define VK_PA1		0xFD /* PA1 key */
 #define VK_OEM_CLEAR	0xFE /* Clear key */
 
-FREERDP_API const char* freerdp_keyboard_get_virtual_key_code_name(uint32 vkcode);
-FREERDP_API uint32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name);
+FREERDP_API const char* freerdp_keyboard_get_virtual_key_code_name(UINT32 vkcode);
+FREERDP_API UINT32 freerdp_keyboard_get_virtual_key_code_from_name(const char* vkcode_name);
 
-#endif /* __FREERDP_VIRTUAL_KEY_CODES_H */
+#endif /* FREERDP_VIRTUAL_KEY_CODES_H */

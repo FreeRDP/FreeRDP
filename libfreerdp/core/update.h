@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Update Data PDUs
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -37,25 +37,30 @@
 
 rdpUpdate* update_new(rdpRdp* rdp);
 void update_free(rdpUpdate* update);
+
 void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
+
 void update_reset_state(rdpUpdate* update);
+void update_post_connect(rdpUpdate* update);
 
-void update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update);
-void update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update);
-void update_recv_play_sound(rdpUpdate* update, STREAM* s);
-void update_recv_pointer(rdpUpdate* update, STREAM* s);
-boolean update_recv(rdpUpdate* update, STREAM* s);
+BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update);
+BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update);
+BOOL update_recv_play_sound(rdpUpdate* update, STREAM* s);
+BOOL update_recv_pointer(rdpUpdate* update, STREAM* s);
+BOOL update_recv(rdpUpdate* update, STREAM* s);
 
-void update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position);
-void update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system);
-void update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color);
-void update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new);
-void update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached);
+BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position);
+BOOL update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system);
+BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color);
+BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new);
+BOOL update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached);
 
-boolean update_read_refresh_rect(rdpUpdate* update, STREAM* s);
-boolean update_read_suppress_output(rdpUpdate* update, STREAM* s);
+BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s);
+BOOL update_read_suppress_output(rdpUpdate* update, STREAM* s);
 
 void update_register_server_callbacks(rdpUpdate* update);
 void update_register_client_callbacks(rdpUpdate* update);
+
+int update_process_messages(rdpUpdate* update);
 
 #endif /* __UPDATE_H */

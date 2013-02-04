@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Unit Tests
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -63,11 +63,11 @@ void dump_data(unsigned char * p, int len, int width, char* name)
 	printf("\n");
 }
 
-void assert_stream(STREAM* s, uint8* data, int length, const char* func, int line)
+void assert_stream(STREAM* s, BYTE* data, int length, const char* func, int line)
 {
 	int i;
 	int actual_length;
-	uint8* actual_data;
+	BYTE* actual_data;
 
 	actual_data = s->data;
 	actual_length = stream_get_length(s);
@@ -77,10 +77,10 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 		printf("\n %s (%d): length mismatch, actual:%d, expected:%d\n", func, line, actual_length, length);
 
 		printf("\nActual:\n");
-		freerdp_hexdump(actual_data, actual_length);
+		winpr_HexDump(actual_data, actual_length);
 
 		printf("Expected:\n");
-		freerdp_hexdump(data, length);
+		winpr_HexDump(data, length);
 
 		CU_FAIL("assert_stream, length mismatch");
 		return;
@@ -93,10 +93,10 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 			printf("\n %s (%d): buffer mismatch:\n", func, line);
 
 			printf("\nActual:\n");
-			freerdp_hexdump(actual_data, length);
+			winpr_HexDump(actual_data, length);
 
 			printf("Expected:\n");
-			freerdp_hexdump(data, length);
+			winpr_HexDump(data, length);
 
 			CU_FAIL("assert_stream, buffer mismatch");
 			return;
@@ -104,7 +104,7 @@ void assert_stream(STREAM* s, uint8* data, int length, const char* func, int lin
 	}
 }
 
-typedef boolean (*pInitTestSuite)(void);
+typedef BOOL (*pInitTestSuite)(void);
 
 struct _test_suite
 {

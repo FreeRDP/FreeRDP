@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Server Redirection
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,25 +27,10 @@
 #include <freerdp/utils/stream.h>
 #include <freerdp/utils/string.h>
 
-/* Redirection Flags */
-#define LB_TARGET_NET_ADDRESS		0x00000001
-#define LB_LOAD_BALANCE_INFO		0x00000002
-#define LB_USERNAME			0x00000004
-#define LB_DOMAIN			0x00000008
-#define LB_PASSWORD			0x00000010
-#define LB_DONTSTOREUSERNAME		0x00000020
-#define LB_SMARTCARD_LOGON		0x00000040
-#define LB_NOREDIRECT			0x00000080
-#define LB_TARGET_FQDN			0x00000100
-#define LB_TARGET_NETBIOS_NAME		0x00000200
-#define LB_TARGET_NET_ADDRESSES		0x00000800
-#define LB_CLIENT_TSV_URL		0x00001000
-#define LB_SERVER_TSV_CAPABLE		0x00002000
-
 struct rdp_redirection
 {
-	uint32 flags;
-	uint32 sessionID;
+	UINT32 flags;
+	UINT32 sessionID;
 	rdpString tsvUrl;
 	rdpString username;
 	rdpString domain;
@@ -56,13 +41,13 @@ struct rdp_redirection
 	DWORD LoadBalanceInfoLength;
 	rdpString targetNetBiosName;
 	rdpString targetNetAddress;
-	uint32 targetNetAddressesCount;
+	UINT32 targetNetAddressesCount;
 	rdpString* targetNetAddresses;
 };
 typedef struct rdp_redirection rdpRedirection;
 
-boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
-boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
 
 rdpRedirection* redirection_new();
 void redirection_free(rdpRedirection* redirection);

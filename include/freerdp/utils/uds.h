@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Unix Domain Socket Utils
  *
  * Copyright 2012 Vic Lee
@@ -17,12 +17,20 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_UDS_UTILS_H
-#define FREERDP_UDS_UTILS_H
+#ifndef FREERDP_UTILS_UDS_H
+#define FREERDP_UTILS_UDS_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API int freerdp_uds_connect(const char* path);
 
-#endif /* FREERDP_UDS_UTILS_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_UDS_H */

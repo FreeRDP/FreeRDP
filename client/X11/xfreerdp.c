@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -50,14 +50,19 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
+
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/channels.h>
+
 #include <freerdp/rail.h>
 
+#include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
+
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "xf_gdi.h"
@@ -73,7 +78,7 @@
 
 static HANDLE g_sem;
 static int g_thread_count = 0;
-static uint8 g_disconnect_reason = 0;
+static BYTE g_disconnect_reason = 0;
 
 static long xv_port = 0;
 static const size_t password_size = 512;
@@ -82,9 +87,6 @@ struct thread_data
 {
 	freerdp* instance;
 };
-
-int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data);
-int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
@@ -107,15 +109,15 @@ void xf_sw_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	xfInfo* xfi;
-	sint32 x, y;
-	uint32 w, h;
+	INT32 x, y;
+	UINT32 w, h;
 
 	xfi = ((xfContext*) context)->xfi;
 	gdi = context->gdi;
 
-	if (xfi->remote_app != true)
+	if (xfi->remote_app != TRUE)
 	{
-		if (xfi->complex_regions != true)
+		if (xfi->complex_regions != TRUE)
 		{
 			if (gdi->primary->hdc->hwnd->invalid->null)
 				return;
@@ -176,7 +178,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	if (xfi->fullscreen != true)
+	if (xfi->fullscreen != TRUE)
 	{
 		rdpGdi* gdi = context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
@@ -202,8 +204,8 @@ void xf_hw_begin_paint(rdpContext* context)
 void xf_hw_end_paint(rdpContext* context)
 {
 	xfInfo* xfi;
-	sint32 x, y;
-	uint32 w, h;
+	INT32 x, y;
+	UINT32 w, h;
 
 	xfi = ((xfContext*) context)->xfi;
 
@@ -224,23 +226,23 @@ void xf_hw_end_paint(rdpContext* context)
 void xf_hw_desktop_resize(rdpContext* context)
 {
 	xfInfo* xfi;
-	boolean same;
+	BOOL same;
 	rdpSettings* settings;
 
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	if (xfi->fullscreen != true)
+	if (xfi->fullscreen != TRUE)
 	{
-		xfi->width = settings->width;
-		xfi->height = settings->height;
+		xfi->width = settings->DesktopWidth;
+		xfi->height = settings->DesktopHeight;
 
 		if (xfi->window)
-			xf_ResizeDesktopWindow(xfi, xfi->window, settings->width, settings->height);
+			xf_ResizeDesktopWindow(xfi, xfi->window, settings->DesktopWidth, settings->DesktopHeight);
 
 		if (xfi->primary)
 		{
-			same = (xfi->primary == xfi->drawing) ? true : false;
+			same = (xfi->primary == xfi->drawing) ? TRUE : FALSE;
 
 			XFreePixmap(xfi->display, xfi->primary);
 
@@ -261,17 +263,17 @@ void xf_hw_desktop_resize(rdpContext* context)
 	}
 }
 
-boolean xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
 	rfds[*rcount] = (void*)(long)(xfi->xfds);
 	(*rcount)++;
 
-	return true;
+	return TRUE;
 }
 
-boolean xf_process_x_events(freerdp* instance)
+BOOL xf_process_x_events(freerdp* instance)
 {
 	XEvent xevent;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
@@ -281,11 +283,11 @@ boolean xf_process_x_events(freerdp* instance)
 		memset(&xevent, 0, sizeof(xevent));
 		XNextEvent(xfi->display, &xevent);
 
-		if (xf_event_process(instance, &xevent) != true)
-			return false;
+		if (xf_event_process(instance, &xevent) != TRUE)
+			return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 void xf_create_window(xfInfo* xfi)
@@ -307,23 +309,23 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.bit_gravity = NorthWestGravity;
 	xfi->attribs.win_gravity = NorthWestGravity;
 
-	if (xfi->instance->settings->window_title != NULL)
+	if (xfi->instance->settings->WindowTitle != NULL)
 	{
-		win_title = xstrdup(xfi->instance->settings->window_title);
+		win_title = _strdup(xfi->instance->settings->WindowTitle);
 	}
-	else if (xfi->instance->settings->port == 3389)
+	else if (xfi->instance->settings->ServerPort == 3389)
 	{
-		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname));
-		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->hostname);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->ServerHostname));
+		sprintf(win_title, "FreeRDP: %s", xfi->instance->settings->ServerHostname);
 	}
 	else
 	{
-		win_title = xmalloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->hostname) + sizeof(":00000"));
-		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->hostname, xfi->instance->settings->port);
+		win_title = malloc(1 + sizeof("FreeRDP: ") + strlen(xfi->instance->settings->ServerHostname) + sizeof(":00000"));
+		sprintf(win_title, "FreeRDP: %s:%i", xfi->instance->settings->ServerHostname, xfi->instance->settings->ServerPort);
 	}
 
 	xfi->window = xf_CreateDesktopWindow(xfi, win_title, width, height, xfi->decorations);
-	xfree(win_title);
+	free(win_title);
 
 	if (xfi->fullscreen)
 		xf_SetWindowFullscreen(xfi, xfi->window, xfi->fullscreen);
@@ -342,14 +344,14 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
 	XDestroyWindow(xfi->display, xfi->window->handle);
-	xfi->fullscreen = (xfi->fullscreen) ? false : true;
+	xfi->fullscreen = (xfi->fullscreen) ? FALSE : TRUE;
 	xf_create_window(xfi);
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
 }
 
-boolean xf_get_pixmap_info(xfInfo* xfi)
+BOOL xf_get_pixmap_info(xfInfo* xfi)
 {
 	int i;
 	int vi_count;
@@ -389,7 +391,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	if (XGetWindowAttributes(xfi->display, RootWindowOfScreen(xfi->screen), &window_attributes) == 0)
 	{
 		printf("xf_get_pixmap_info: XGetWindowAttributes failed\n");
-		return false;
+		return FALSE;
 	}
 
 	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
@@ -397,7 +399,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 	if (vis == NULL)
 	{
 		printf("xf_get_pixmap_info: XGetVisualInfo failed\n");
-		return false;
+		return FALSE;
 	}
 
 	vi = NULL;
@@ -421,7 +423,7 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 		if (vi->red_mask & 0xFF) 
 		{
-			xfi->clrconv->invert = true;
+			xfi->clrconv->invert = TRUE;
 		}
 	}
 
@@ -429,10 +431,10 @@ boolean xf_get_pixmap_info(xfInfo* xfi)
 
 	if ((xfi->visual == NULL) || (xfi->scanline_pad == 0))
 	{
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 static int (*_def_error_handler)(Display*, XErrorEvent*);
@@ -440,7 +442,7 @@ static int (*_def_error_handler)(Display*, XErrorEvent*);
 int xf_error_handler(Display* d, XErrorEvent* ev)
 {
 	char buf[256];
-	int do_abort = true;
+	int do_abort = TRUE;
 
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
 	printf("%s", buf);
@@ -450,7 +452,7 @@ int xf_error_handler(Display* d, XErrorEvent* ev)
 
 	_def_error_handler(d, ev);
 
-	return false;
+	return FALSE;
 }
 
 int _xf_error_handler(Display* d, XErrorEvent* ev)
@@ -466,23 +468,25 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
- * It will parse the command line parameters given to xfreerdp (using freerdp_parse_args())
- * and fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
+ * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
  *
  * @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
  * be filled with the appropriate informations.
  *
- * @return true if successful. false otherwise.
+ * @return TRUE if successful. FALSE otherwise.
  * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
  */
-boolean xf_pre_connect(freerdp* instance)
+BOOL xf_pre_connect(freerdp* instance)
 {
+	int status;
 	xfInfo* xfi;
-	boolean bitmap_cache;
+	rdpFile* file;
+	BOOL bitmap_cache;
 	rdpSettings* settings;
-	int arg_parse_result;
 	
-	xfi = (xfInfo*) xzalloc(sizeof(xfInfo));
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
+
 	((xfContext*) instance->context)->xfi = xfi;
 
 	xfi->_context = instance->context;
@@ -490,70 +494,78 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	
-	arg_parse_result = freerdp_parse_args(instance->settings, instance->context->argc,instance->context->argv,
-				xf_process_plugin_args, instance->context->channels, xf_process_client_args, xfi);
-	
-	if (arg_parse_result < 0)
-	{
-		if (arg_parse_result == FREERDP_ARGS_PARSE_FAILURE)
-			fprintf(stderr, "%s:%d: failed to parse arguments.\n", __FILE__, __LINE__);
-		
+	status = freerdp_client_parse_command_line_arguments(instance->context->argc,
+				instance->context->argv, instance->settings);
+
+	if (status < 0)
 		exit(XF_EXIT_PARSE_ARGUMENTS);
-	}
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	settings = instance->settings;
-	bitmap_cache = settings->bitmap_cache;
 
-	settings->os_major_type = OSMAJORTYPE_UNIX;
-	settings->os_minor_type = OSMINORTYPE_NATIVE_XSERVER;
+	if (settings->ConnectionFile)
+	{
+		file = freerdp_client_rdp_file_new();
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
-	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
+		printf("Using connection file: %s\n", settings->ConnectionFile);
 
-	settings->order_support[NEG_MEM3BLT_INDEX] = (settings->sw_gdi) ? true : false;
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
+	}
 
-	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = true;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = true;
+	bitmap_cache = settings->BitmapCacheEnabled;
 
-	settings->order_support[NEG_POLYGON_SC_INDEX] = (settings->sw_gdi) ? false : true;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = (settings->sw_gdi) ? false : true;
+	settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
 
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
+
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
+
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_channels_pre_connect(xfi->_context->channels, instance);
 
-	if (settings->authentication_only)
+	if (settings->AuthenticationOnly)
 	{
 		/* Check --authonly has a username and password. */
-		if (settings->username == NULL )
+		if (settings->Username == NULL )
 		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
 			exit(1);
 		}
-		if (settings->password == NULL )
+		if (settings->Password == NULL )
 		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
 		}
-		fprintf(stderr, "%s:%d: Authenication only. Don't connect to X.\n", __FILE__, __LINE__);
+		fprintf(stderr, "%s:%d: Authentication only. Don't connect to X.\n", __FILE__, __LINE__);
 		/* Avoid XWindows initialization and configuration below. */
-		return true;
+		return TRUE;
 	}
 
 	xfi->display = XOpenDisplay(NULL);
@@ -562,13 +574,13 @@ boolean xf_pre_connect(freerdp* instance)
 	{
 		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
 		printf("Please check that the $DISPLAY environment variable is properly set.\n");
-		return false;
+		return FALSE;
 	}
 
 	if (xfi->debug)
 	{
 		printf("Enabling X11 debug mode.\n");
-		XSynchronize(xfi->display, true);
+		XSynchronize(xfi->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
@@ -606,18 +618,18 @@ boolean xf_pre_connect(freerdp* instance)
 	xfi->depth = DefaultDepthOfScreen(xfi->screen);
 	xfi->big_endian = (ImageByteOrder(xfi->display) == MSBFirst);
 
-	xfi->mouse_motion = settings->mouse_motion;
-	xfi->complex_regions = true;
-	xfi->decorations = settings->decorations;
-	xfi->fullscreen = settings->fullscreen;
-	xfi->grab_keyboard = settings->grab_keyboard;
-	xfi->fullscreen_toggle = true;
-	xfi->sw_gdi = settings->sw_gdi;
-	xfi->parent_window = (Window) settings->parent_window_xid;
+	xfi->mouse_motion = settings->MouseMotion;
+	xfi->complex_regions = TRUE;
+	xfi->decorations = settings->Decorations;
+	xfi->fullscreen = settings->Fullscreen;
+	xfi->grab_keyboard = settings->GrabKeyboard;
+	xfi->fullscreen_toggle = TRUE;
+	xfi->sw_gdi = settings->SoftwareGdi;
+	xfi->parent_window = (Window) settings->ParentWindowId;
 
 	xf_detect_monitors(xfi, settings);
 
-	return true;
+	return TRUE;
 }
 
 void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
@@ -644,16 +656,16 @@ void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned 
 #endif
 }
 
-uint32 xf_detect_cpu()
+UINT32 xf_detect_cpu()
 {
 	unsigned int eax, ebx, ecx, edx = 0;
-	uint32 cpu_opt = 0;
+	UINT32 cpu_opt = 0;
 
 	cpuid(1, &eax, &ebx, &ecx, &edx);
 
 	if (edx & (1<<26)) 
 	{
-		DEBUG("SSE2 detected");
+		DEBUG_MSG("SSE2 detected");
 		cpu_opt |= CPU_SSE2;
 	}
 
@@ -665,10 +677,10 @@ uint32 xf_detect_cpu()
  * It will be called only if the connection was initialized properly, and will continue the initialization based on the
  * newly created connection.
  */
-boolean xf_post_connect(freerdp* instance)
+BOOL xf_post_connect(freerdp* instance)
 {
 #ifdef WITH_SSE2
-	uint32 cpu;
+	UINT32 cpu;
 #endif
 	xfInfo* xfi;
 	XGCValues gcv;
@@ -681,15 +693,15 @@ boolean xf_post_connect(freerdp* instance)
 	cache = instance->context->cache;
 	channels = xfi->_context->channels;
 
-	if (xf_get_pixmap_info(xfi) != true)
-		return false;
+	if (xf_get_pixmap_info(xfi) != TRUE)
+		return FALSE;
 
 	xf_register_graphics(instance->context->graphics);
 
 	if (xfi->sw_gdi)
 	{
 		rdpGdi* gdi;
-		uint32 flags;
+		UINT32 flags;
 
 		flags = CLRCONV_ALPHA;
 
@@ -706,18 +718,18 @@ boolean xf_post_connect(freerdp* instance)
 	}
 	else
 	{
-		xfi->srcBpp = instance->settings->color_depth;
+		xfi->srcBpp = instance->settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 
 		xfi->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
-		if (instance->settings->rfx_codec)
+		if (instance->settings->RemoteFxCodec)
 		{
 			rfx_context = (void*) rfx_context_new();
 			xfi->rfx_context = rfx_context;
 		}
 
-		if (instance->settings->ns_codec)
+		if (instance->settings->NSCodec)
 		{
 			nsc_context = (void*) nsc_context_new();
 			xfi->nsc_context = nsc_context;
@@ -733,8 +745,8 @@ boolean xf_post_connect(freerdp* instance)
 		nsc_context_set_cpu_opt(nsc_context, cpu);
 #endif
 
-	xfi->width = instance->settings->width;
-	xfi->height = instance->settings->height;
+	xfi->width = instance->settings->DesktopWidth;
+	xfi->height = instance->settings->DesktopHeight;
 
 	xf_create_window(xfi);
 
@@ -757,7 +769,7 @@ boolean xf_post_connect(freerdp* instance)
 	xfi->image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
 			(char*) xfi->primary_buffer, xfi->width, xfi->height, xfi->scanline_pad, 0);
 
-	xfi->bmp_codec_none = (uint8*) xmalloc(64 * 64 * 4);
+	xfi->bmp_codec_none = (BYTE*) malloc(64 * 64 * 4);
 
 	if (xfi->sw_gdi)
 	{
@@ -774,7 +786,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (xfi->sw_gdi != true)
+	if (xfi->sw_gdi != TRUE)
 	{
 		glyph_cache_register_callbacks(instance->update);
 		brush_cache_register_callbacks(instance->update);
@@ -793,7 +805,7 @@ boolean xf_post_connect(freerdp* instance)
 
 	xf_cliprdr_init(xfi, channels);
 
-	return true;
+	return TRUE;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
@@ -804,20 +816,20 @@ boolean xf_post_connect(freerdp* instance)
  *  @param username - unused
  *  @param password - on return: pointer to a character string that will be filled by the password entered by the user.
  *  				  Note that this character string will be allocated inside the function, and needs to be deallocated by the caller
- *  				  using xfree(), even in case this function fails.
+ *  				  using free(), even in case this function fails.
  *  @param domain - unused
- *  @return true if a password was successfully entered. See freerdp_passphrase_read() for more details.
+ *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more details.
  */
-boolean xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
 	// FIXME: seems this callback may be called when 'username' is not known.
 	// But it doesn't do anything to fix it...
-	*password = xmalloc(password_size * sizeof(char));
+	*password = malloc(password_size * sizeof(char));
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->from_stdin) == NULL)
-		return false;
+	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->CredentialsFromStdin) == NULL)
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -828,9 +840,9 @@ boolean xf_authenticate(freerdp* instance, char** username, char** password, cha
  *  @param subject
  *  @param issuer
  *  @param fingerprint
- *  @return true if the certificate is trusted. false otherwise.
+ *  @return TRUE if the certificate is trusted. FALSE otherwise.
  */
-boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	char answer;
 
@@ -847,9 +859,18 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		printf("Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
 
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (instance->settings->CredentialsFromStdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return FALSE;
+		}
+
 		if (answer == 'y' || answer == 'Y')
 		{
-			return true;
+			return TRUE;
 		}
 		else if (answer == 'n' || answer == 'N')
 		{
@@ -858,104 +879,10 @@ boolean xf_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		printf("\n");
 	}
 
-	return false;
+	return FALSE;
 }
 
-/** Used to parse xfreerdp-specific commandline parameters.
- *  This function is provided as a parameter to freerdp_parse_args(), that will call it
- *  each time a parameter is not recognized by the library.
- *  @see xf_pre_connect(), where freerdp_parse_args() is called.
- *
- *  @param settings
- *  @param opt
- *  @param val
- *  @param user_data
- *  @return the number of parameters that where taken into account.
- *  0 means no options recognized.
- *  freerdp_parse_args() will use this number to move forward in the parameters parsing.
- */
-int xf_process_client_args(rdpSettings* settings, const char* opt, const char* val, void* user_data)
-{
-	int argc = 0;
-	xfInfo* xfi = (xfInfo*) user_data;
-
-	if (strcmp("--kbd-list", opt) == 0)
-	{
-		int i;
-		RDP_KEYBOARD_LAYOUT* layouts;
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
-
-		printf("\nKeyboard Layouts\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
-		}
-		xfree(layouts);
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
-
-		printf("\nKeyboard Layout Variants\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
-		}
-		xfree(layouts);
-
-		layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
-
-		printf("\nKeyboard Input Method Editors (IMEs)\n");
-		for (i = 0; layouts[i].code; i++)
-		{
-			printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
-			xfree(layouts[i].name);
-		}
-		xfree(layouts);
-
-		exit(0);
-	}
-	else if (strcmp("--xv-port", opt) == 0)
-	{
-		xv_port = atoi(val);
-		argc = 2;
-	}
-	else if (strcmp("--dbg-x11", opt) == 0)
-	{
-		xfi->debug = true;
-		argc = 1;
-	}
-
-	return argc;
-}
-
-/** Used to load plugins based on the commandline parameters.
- *  This function is provided as a parameter to freerdp_parse_args(), that will call it
- *  each time a plugin name is found on the command line.
- *  This function just calls freerdp_channels_load_plugin() for the given plugin, and always returns 1.
- *  @see xf_pre_connect(), where freerdp_parse_args() is called.
- *
- *  @param settings
- *  @param name
- *  @param plugin_data
- *  @param user_data
- *  @return 1
- */
-int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	rdpChannels* channels = (rdpChannels*) user_data;
-
-	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-	// FIXME we should check the return code for freerdp_channels_load_plugin()
-	// and report any error to the caller. freerdp_parse_args() actually expect to get
-	// an error code when there is a loading error.
-	// Is it as easy as "return freerdp_channels_load_plugin()" ?
-	return 1;
-}
-
-int xf_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
@@ -1071,11 +998,11 @@ void xf_free(xfInfo* xfi)
 {
 	xf_window_free(xfi);
 
-	xfree(xfi->bmp_codec_none);
+	free(xfi->bmp_codec_none);
 
 	XCloseDisplay(xfi->display);
 
-	xfree(xfi);
+	free(xfi);
 }
 
 /** Main loop for the rdp connection.
@@ -1098,6 +1025,10 @@ int xfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int fd_msg_event;
+	HANDLE msg_event;
+	int fd_evt_event;
+	HANDLE evt_event;
 	int select_status;
 	rdpChannels* channels;
 	struct timeval timeout;
@@ -1106,9 +1037,10 @@ int xfreerdp_run(freerdp* instance)
 	memset(wfds, 0, sizeof(wfds));
 	memset(&timeout, 0, sizeof(struct timeval));
 
-	boolean status = freerdp_connect(instance);
+	BOOL status = freerdp_connect(instance);
 	/* Connection succeeded. --authonly ? */
-	if (instance->settings->authentication_only) {
+	if (instance->settings->AuthenticationOnly)
+	{
 		freerdp_disconnect(instance);
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
 		exit(!status);
@@ -1123,29 +1055,47 @@ int xfreerdp_run(freerdp* instance)
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 
+	fd_msg_event = -1;
+	msg_event = freerdp_get_message_queue_event_handle(instance);
+
+	if (msg_event)
+		fd_msg_event = GetEventFileDescriptor(msg_event);
+
+	fd_evt_event = -1;
+	evt_event = freerdp_get_input_queue_event_handle(instance);
+
+	if (evt_event)
+		fd_evt_event = GetEventFileDescriptor(evt_event);
+
 	while (!xfi->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
-		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get xfreerdp file descriptor\n");
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
+
+		if (fd_msg_event > 0)
+			rfds[rcount++] = (void*) (long) fd_msg_event;
+
+		if (fd_evt_event > 0)
+			rfds[rcount++] = (void*) (long) fd_evt_event;
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -1164,12 +1114,13 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		timeout.tv_sec = 5;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
 		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
 
 		if (select_status == 0)
 		{
-			//freerdp_send_keep_alive(instance);
 			continue;
 		}
 		else if (select_status == -1)
@@ -1185,22 +1136,28 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (xf_process_x_events(instance) != true)
+		if (xf_process_x_events(instance) != TRUE)
 		{
 			printf("Closed from X\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
 		xf_process_channel_event(channels, instance);
+
+		if (fd_msg_event > 0)
+			freerdp_process_messages(instance);
+
+		if (fd_evt_event > 0)
+			freerdp_process_input(instance);
 	}
 
 	FILE *fin = fopen("/tmp/tsmf.tid", "rt");
@@ -1209,7 +1166,7 @@ int xfreerdp_run(freerdp* instance)
 		int thid = 0;
 		fscanf(fin, "%d", &thid);
 		fclose(fin);
-		pthread_kill((pthread_t) thid, SIGUSR1);
+		pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
 
 		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
 		int timeout = 5;
@@ -1221,7 +1178,7 @@ int xfreerdp_run(freerdp* instance)
 			if (timeout <= 0)
 			{
 				unlink("/tmp/tsmf.tid");
-				pthread_kill((pthread_t) thid, SIGKILL);
+				pthread_kill((pthread_t) (size_t) thid, SIGKILL);
 				break;
 			}
 			fin1 = fopen("/tmp/tsmf.tid", "rt");
@@ -1251,7 +1208,7 @@ void* thread_func(void* param)
 
 	g_disconnect_reason = xfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	g_thread_count--;
 
@@ -1261,7 +1218,7 @@ void* thread_func(void* param)
 	pthread_exit(NULL);
 }
 
-static uint8 exit_code_from_disconnect_reason(uint32 reason)
+static BYTE exit_code_from_disconnect_reason(UINT32 reason)
 {
 	if (reason == 0 ||
 	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
@@ -1310,9 +1267,11 @@ int main(int argc, char* argv[])
 
 	instance->context->argc = argc;
 	instance->context->argv = argv;
-	instance->settings->sw_gdi = false;
+	instance->settings->SoftwareGdi = FALSE;
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(struct thread_data));
+
 	data->instance = instance;
 
 	g_thread_count++;

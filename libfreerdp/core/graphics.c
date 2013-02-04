@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
 
 #include <freerdp/graphics.h>
 
@@ -33,7 +33,7 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	bitmap = (rdpBitmap*) xmalloc(graphics->Bitmap_Prototype->size);
+	bitmap = (rdpBitmap*) malloc(graphics->Bitmap_Prototype->size);
 
 	if (bitmap != NULL)
 	{
@@ -56,13 +56,13 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		bitmap->Free(context, bitmap);
 
 		if (bitmap->data != NULL)
-			xfree(bitmap->data);
+			free(bitmap->data);
 
-		xfree(bitmap);
+		free(bitmap);
 	}
 }
 
-void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, uint16 left, uint16 top, uint16 right, uint16 bottom)
+void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 right, UINT16 bottom)
 {
 	bitmap->left = left;
 	bitmap->top = top;
@@ -70,14 +70,14 @@ void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, uint16 left, ui
 	bitmap->bottom = bottom;
 }
 
-void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, uint16 width, uint16 height)
+void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, UINT16 height)
 {
 	bitmap->width = width;
 	bitmap->height = height;
 }
 
 /* static method */
-void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	context->graphics->Bitmap_Prototype->SetSurface(context, bitmap, primary);
 }
@@ -95,7 +95,7 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	pointer = (rdpPointer*) xmalloc(graphics->Pointer_Prototype->size);
+	pointer = (rdpPointer*) malloc(graphics->Pointer_Prototype->size);
 
 	if (pointer != NULL)
 	{
@@ -117,12 +117,12 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 		pointer->Free(context, pointer);
 
 		if (pointer->xorMaskData)
-			xfree(pointer->xorMaskData);
+			free(pointer->xorMaskData);
 
 		if (pointer->andMaskData)
-			xfree(pointer->andMaskData);
+			free(pointer->andMaskData);
 
-		xfree(pointer);
+		free(pointer);
 	}
 }
 
@@ -155,7 +155,7 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	glyph = (rdpGlyph*) xmalloc(graphics->Glyph_Prototype->size);
+	glyph = (rdpGlyph*) malloc(graphics->Glyph_Prototype->size);
 
 	if (glyph != NULL)
 	{
@@ -180,12 +180,12 @@ void Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 	context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
 }
 
-void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width, height, bgcolor, fgcolor);
 }
 
-void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, uint32 bgcolor, uint32 fgcolor)
+void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height, bgcolor, fgcolor);
 }
@@ -201,23 +201,28 @@ rdpGraphics* graphics_new(rdpContext* context)
 {
 	rdpGraphics* graphics;
 
-	graphics = (rdpGraphics*) xzalloc(sizeof(rdpGraphics));
+	graphics = (rdpGraphics*) malloc(sizeof(rdpGraphics));
 
 	if (graphics != NULL)
 	{
+		ZeroMemory(graphics, sizeof(rdpGraphics));
+
 		graphics->context = context;
 
-		graphics->Bitmap_Prototype = (rdpBitmap*) xzalloc(sizeof(rdpBitmap));
+		graphics->Bitmap_Prototype = (rdpBitmap*) malloc(sizeof(rdpBitmap));
+		ZeroMemory(graphics->Bitmap_Prototype, sizeof(rdpBitmap));
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
 		graphics->Bitmap_Prototype->Free = Bitmap_Free;
 
-		graphics->Pointer_Prototype = (rdpPointer*) xzalloc(sizeof(rdpPointer));
+		graphics->Pointer_Prototype = (rdpPointer*) malloc(sizeof(rdpPointer));
+		ZeroMemory(graphics->Pointer_Prototype, sizeof(rdpPointer));
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
 		graphics->Pointer_Prototype->Free = Pointer_Free;
 
-		graphics->Glyph_Prototype = (rdpGlyph*) xzalloc(sizeof(rdpGlyph));
+		graphics->Glyph_Prototype = (rdpGlyph*) malloc(sizeof(rdpGlyph));
+		ZeroMemory(graphics->Glyph_Prototype, sizeof(rdpGlyph));
 		graphics->Glyph_Prototype->size = sizeof(rdpGlyph);
 		graphics->Glyph_Prototype->New = Glyph_New;
 		graphics->Glyph_Prototype->Free = Glyph_Free;
@@ -230,9 +235,9 @@ void graphics_free(rdpGraphics* graphics)
 {
 	if (graphics != NULL)
 	{
-		xfree(graphics->Bitmap_Prototype);
-		xfree(graphics->Pointer_Prototype);
-		xfree(graphics->Glyph_Prototype);
-		xfree(graphics);
+		free(graphics->Bitmap_Prototype);
+		free(graphics->Pointer_Prototype);
+		free(graphics->Glyph_Prototype);
+		free(graphics);
 	}
 }

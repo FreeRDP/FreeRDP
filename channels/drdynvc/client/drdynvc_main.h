@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Dynamic Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -24,7 +24,7 @@
 
 typedef struct drdynvc_plugin drdynvcPlugin;
 
-int drdynvc_write_data(drdynvcPlugin* plugin, uint32 ChannelId, uint8* data, uint32 data_size);
+int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
 int drdynvc_push_event(drdynvcPlugin* plugin, RDP_EVENT* event);
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Window Icon Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,14 +21,14 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/print.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/unicode.h>
 
 #include <freerdp/rail/icon.h>
 
-ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** extra)
+ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra)
 {
 	ICON_INFO* entry;
 
@@ -52,7 +52,7 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** ex
 	return entry;
 }
 
-void icon_cache_put(rdpIconCache* cache, uint8 id, uint16 index, ICON_INFO* entry, void* extra)
+void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry, void* extra)
 {
 	if (id >= cache->numCaches)
 	{
@@ -76,21 +76,25 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 {
 	rdpIconCache* cache;
 
-	cache = (rdpIconCache*) xzalloc(sizeof(rdpIconCache));
+	cache = (rdpIconCache*) malloc(sizeof(rdpIconCache));
 
 	if (cache != NULL)
 	{
 		int i;
 
-		cache->rail = rail;
-		cache->numCaches = (uint8) rail->settings->num_icon_cache_entries;
-		cache->numCacheEntries = rail->settings->num_icon_cache_entries;
+		ZeroMemory(cache, sizeof(rdpIconCache));
 
-		cache->caches = xzalloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));
+		cache->rail = rail;
+		cache->numCaches = (BYTE) rail->settings->RemoteAppNumIconCacheEntries;
+		cache->numCacheEntries = rail->settings->RemoteAppNumIconCacheEntries;
+
+		cache->caches = malloc(cache->numCaches * sizeof(WINDOW_ICON_CACHE));
+		ZeroMemory(cache->caches, cache->numCaches * sizeof(WINDOW_ICON_CACHE));
 
 		for (i = 0; i < cache->numCaches; i++)
 		{
-			cache->caches[i].entries = xzalloc(cache->numCacheEntries * sizeof(rdpIconCache));
+			cache->caches[i].entries = malloc(cache->numCacheEntries * sizeof(rdpIconCache));
+			ZeroMemory(cache->caches[i].entries, cache->numCacheEntries * sizeof(rdpIconCache));
 		}
 	}
 
@@ -105,12 +109,12 @@ void icon_cache_free(rdpIconCache* cache)
 
 		for (i = 0; i < cache->numCaches; i++)
 		{
-			xfree(cache->caches[i].entries);
+			free(cache->caches[i].entries);
 		}
 
-		xfree(cache->caches);
+		free(cache->caches);
 
-		xfree(cache);
+		free(cache);
 	}
 }
 

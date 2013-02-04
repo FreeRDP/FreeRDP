@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RAIL Virtual Channel Plugin
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,9 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/constants.h>
+#include <winpr/crt.h>
+
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
@@ -56,7 +57,7 @@ static void on_free_rail_channel_event(RDP_EVENT* event)
 	}
 }
 
-void rail_send_channel_event(void* rail_object, uint16 event_type, void* param)
+void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param)
 {
 	void * payload = NULL;
 	RDP_EVENT* out_event = NULL;
@@ -78,7 +79,7 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	rail->rail_order = rail_order_new();
-	rail->rail_order->plugin_data = (RDP_PLUGIN_DATA*)plugin->channel_entry_points.pExtendedData;
+	rail->rail_order->settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
 	rail->rail_order->plugin = rail;
 }
 
@@ -94,11 +95,11 @@ static void rail_process_receive(rdpSvcPlugin* plugin, STREAM* s)
 	stream_free(s);
 }
 
-static void rail_process_plugin_data(rdpRailOrder* rail_order, RDP_PLUGIN_DATA* data)
+static void rail_process_addin_args(rdpRailOrder* rail_order, rdpSettings* settings)
 {
 	char* exeOrFile;
 
-	exeOrFile = (char*) data->data[0];
+	exeOrFile = settings->RemoteApplicationProgram;
 
 	if (strlen(exeOrFile) >= 2)
 	{
@@ -106,21 +107,20 @@ static void rail_process_plugin_data(rdpRailOrder* rail_order, RDP_PLUGIN_DATA* 
 			rail_order->exec.flags |= RAIL_EXEC_FLAG_FILE;
 	}
 
-	rail_string_to_unicode_string(rail_order, (char*) data->data[0], &rail_order->exec.exeOrFile);
-	rail_string_to_unicode_string(rail_order, (char*) data->data[1], &rail_order->exec.workingDir);
-	rail_string_to_unicode_string(rail_order, (char*) data->data[2], &rail_order->exec.arguments);
+	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationProgram, &rail_order->exec.exeOrFile);
+	rail_string_to_unicode_string(rail_order, settings->ShellWorkingDirectory, &rail_order->exec.workingDir);
+	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationCmdLine, &rail_order->exec.arguments);
 
 	rail_send_client_exec_order(rail_order);
 }
 
 static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* event)
 {
-	RDP_PLUGIN_DATA* data;
 	RAIL_SYSPARAM_ORDER* sysparam;
 
 	/* Send System Parameters */
 
-	sysparam = (RAIL_SYSPARAM_ORDER*)event->user_data;
+	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
 	memmove(&rail_order->sysparam, sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 
 	rail_send_client_sysparams_order(rail_order);
@@ -129,19 +129,18 @@ static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* e
 
 	rail_order->exec.flags = RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
 
-	data = rail_order->plugin_data;
-	while (data && data->size > 0)
-	{
-		rail_process_plugin_data(rail_order, data);
-		data = (RDP_PLUGIN_DATA*)((char *)(data) + data->size);
-	}
+	rail_process_addin_args(rail_order, rail_order->settings);
 }
 
 static void rail_recv_exec_remote_app_event(rdpRailOrder* rail_order, RDP_EVENT* event)
 {
-	RDP_PLUGIN_DATA* data = (RDP_PLUGIN_DATA*) event->user_data;
+	/**
+	 * TODO: replace event system by an API to allow the execution
+	 * of multiple remote apps over the same connection. RAIL is
+	 * always built-in, so clients can safely link to it.
+	 */
 
-	rail_process_plugin_data(rail_order, data);
+	//rail_process_addin_args(rail_order, data);
 }
 
 static void rail_recv_activate_event(rdpRailOrder* rail_order, RDP_EVENT* event)
@@ -250,7 +249,30 @@ static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	freerdp_event_free(event);
 }
 
-DEFINE_SVC_PLUGIN(rail, "rail", 
-	CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP |
-	CHANNEL_OPTION_COMPRESS_RDP | CHANNEL_OPTION_SHOW_PROTOCOL)
+/* rail is always built-in */
+#define VirtualChannelEntry	rail_VirtualChannelEntry
 
+int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+{
+	railPlugin* _p;
+
+	_p = (railPlugin*) malloc(sizeof(railPlugin));
+	ZeroMemory(_p, sizeof(railPlugin));
+
+	_p->plugin.channel_def.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP |
+			CHANNEL_OPTION_COMPRESS_RDP |
+			CHANNEL_OPTION_SHOW_PROTOCOL;
+
+	strcpy(_p->plugin.channel_def.name, "rail");
+
+	_p->plugin.connect_callback = rail_process_connect;
+	_p->plugin.receive_callback = rail_process_receive;
+	_p->plugin.event_callback = rail_process_event;
+	_p->plugin.terminate_callback = rail_process_terminate;
+
+	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+
+	return 1;
+}

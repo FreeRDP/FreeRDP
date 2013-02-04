@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Server Audio Virtual Channel
  *
  * Copyright 2012 Vic Lee
@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/dsp.h>
+#include <freerdp/utils/stream.h>
 #include <freerdp/utils/thread.h>
-#include <freerdp/utils/wait_obj.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
 
@@ -42,61 +42,64 @@ typedef struct _rdpsnd_server
 	STREAM* rdpsnd_pdu;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
-	uint8* out_buffer;
+	BYTE* out_buffer;
 	int out_buffer_size;
 	int out_frames;
 	int out_pending_frames;
 
-	uint32 src_bytes_per_sample;
-	uint32 src_bytes_per_frame;
+	UINT32 src_bytes_per_sample;
+	UINT32 src_bytes_per_frame;
 } rdpsnd_server;
 
 #define RDPSND_PDU_INIT(_s, _msgType) \
 { \
-	stream_write_uint8(_s, _msgType); \
-	stream_write_uint8(_s, 0); \
-	stream_seek_uint16(_s); \
+	stream_write_BYTE(_s, _msgType); \
+	stream_write_BYTE(_s, 0); \
+	stream_seek_UINT16(_s); \
 }
 
 #define RDPSND_PDU_FINISH(_s) \
 { \
-	boolean _r; \
+	BOOL _r; \
 	int _pos; \
 	_pos = stream_get_pos(_s); \
 	stream_set_pos(_s, 2); \
-	stream_write_uint16(_s, _pos - 4); \
+	stream_write_UINT16(_s, _pos - 4); \
 	stream_set_pos(_s, _pos); \
 	_r = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(_s), stream_get_length(_s), NULL); \
 	stream_set_pos(_s, 0); \
 	return _r; \
 }
 
-static boolean rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
-	uint16 i;
+	UINT16 i;
 
 	RDPSND_PDU_INIT(s, SNDC_FORMATS);
 
-	stream_write_uint32(s, 0); /* dwFlags */
-	stream_write_uint32(s, 0); /* dwVolume */
-	stream_write_uint32(s, 0); /* dwPitch */
-	stream_write_uint16(s, 0); /* wDGramPort */
-	stream_write_uint16(s, rdpsnd->context.num_server_formats); /* wNumberOfFormats */
-	stream_write_uint8(s, rdpsnd->context.block_no); /* cLastBlockConfirmed */
-	stream_write_uint16(s, 0x06); /* wVersion */
-	stream_write_uint8(s, 0); /* bPad */
+	stream_write_UINT32(s, 0); /* dwFlags */
+	stream_write_UINT32(s, 0); /* dwVolume */
+	stream_write_UINT32(s, 0); /* dwPitch */
+	stream_write_UINT16(s, 0); /* wDGramPort */
+	stream_write_UINT16(s, rdpsnd->context.num_server_formats); /* wNumberOfFormats */
+	stream_write_BYTE(s, rdpsnd->context.block_no); /* cLastBlockConfirmed */
+	stream_write_UINT16(s, 0x06); /* wVersion */
+	stream_write_BYTE(s, 0); /* bPad */
 
 	for (i = 0; i < rdpsnd->context.num_server_formats; i++)
 	{
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
-		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
-		stream_write_uint32(s, rdpsnd->context.server_formats[i].nSamplesPerSec *
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
+		stream_write_UINT32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
+
+		stream_write_UINT32(s, rdpsnd->context.server_formats[i].nSamplesPerSec *
 			rdpsnd->context.server_formats[i].nChannels *
 			rdpsnd->context.server_formats[i].wBitsPerSample / 8); /* nAvgBytesPerSec */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].nBlockAlign); /* nBlockAlign */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].wBitsPerSample); /* wBitsPerSample */
-		stream_write_uint16(s, rdpsnd->context.server_formats[i].cbSize); /* cbSize */
+
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nBlockAlign); /* nBlockAlign */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wBitsPerSample); /* wBitsPerSample */
+		stream_write_UINT16(s, rdpsnd->context.server_formats[i].cbSize); /* cbSize */
+
 		if (rdpsnd->context.server_formats[i].cbSize > 0)
 		{
 			stream_write(s, rdpsnd->context.server_formats[i].data, rdpsnd->context.server_formats[i].cbSize);
@@ -104,44 +107,47 @@ static boolean rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	}
 
 	RDPSND_PDU_FINISH(s);
+
+	return TRUE;
 }
 
-static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	int i;
 
 	if (stream_get_left(s) < 20)
-		return false;
+		return FALSE;
 
-	stream_seek_uint32(s); /* dwFlags */
-	stream_seek_uint32(s); /* dwVolume */
-	stream_seek_uint32(s); /* dwPitch */
-	stream_seek_uint16(s); /* wDGramPort */
-	stream_read_uint16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
-	stream_seek_uint8(s); /* cLastBlockConfirmed */
-	stream_seek_uint16(s); /* wVersion */
-	stream_seek_uint8(s); /* bPad */
+	stream_seek_UINT32(s); /* dwFlags */
+	stream_seek_UINT32(s); /* dwVolume */
+	stream_seek_UINT32(s); /* dwPitch */
+	stream_seek_UINT16(s); /* wDGramPort */
+	stream_read_UINT16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
+	stream_seek_BYTE(s); /* cLastBlockConfirmed */
+	stream_seek_UINT16(s); /* wVersion */
+	stream_seek_BYTE(s); /* bPad */
 
 	if (rdpsnd->context.num_client_formats > 0)
 	{
-		rdpsnd->context.client_formats = xzalloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
+		rdpsnd->context.client_formats = (rdpsndFormat*) malloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
+		ZeroMemory(rdpsnd->context.client_formats, sizeof(rdpsndFormat));
 
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
 			if (stream_get_left(s) < 18)
 			{
-				xfree(rdpsnd->context.client_formats);
+				free(rdpsnd->context.client_formats);
 				rdpsnd->context.client_formats = NULL;
-				return false;
+				return FALSE;
 			}
 
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].wFormatTag);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].nChannels);
-			stream_read_uint32(s, rdpsnd->context.client_formats[i].nSamplesPerSec);
-			stream_seek_uint32(s); /* nAvgBytesPerSec */
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].nBlockAlign);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].wBitsPerSample);
-			stream_read_uint16(s, rdpsnd->context.client_formats[i].cbSize);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wFormatTag);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nChannels);
+			stream_read_UINT32(s, rdpsnd->context.client_formats[i].nSamplesPerSec);
+			stream_seek_UINT32(s); /* nAvgBytesPerSec */
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nBlockAlign);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wBitsPerSample);
+			stream_read_UINT16(s, rdpsnd->context.client_formats[i].cbSize);
 
 			if (rdpsnd->context.client_formats[i].cbSize > 0)
 			{
@@ -150,7 +156,7 @@ static boolean rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		}
 	}
 
-	return true;
+	return TRUE;
 }
 
 static void* rdpsnd_server_thread_func(void* arg)
@@ -158,17 +164,18 @@ static void* rdpsnd_server_thread_func(void* arg)
 	void* fd;
 	STREAM* s;
 	void* buffer;
-	uint8 msgType;
-	uint16 BodySize;
-	uint32 bytes_returned = 0;
+	BYTE msgType;
+	UINT16 BodySize;
+	UINT32 bytes_returned = 0;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) arg;
 	freerdp_thread* thread = rdpsnd->rdpsnd_channel_thread;
 
-	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == true)
+	if (WTSVirtualChannelQuery(rdpsnd->rdpsnd_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
-		fd = *((void**)buffer);
+		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = wait_obj_new_with_fd(fd);
+
+		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	s = stream_new(4096);
@@ -185,7 +192,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		stream_set_pos(s, 0);
 
 		if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
-			stream_get_size(s), &bytes_returned) == false)
+			stream_get_size(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
 				break;
@@ -193,13 +200,13 @@ static void* rdpsnd_server_thread_func(void* arg)
 			stream_check_size(s, (int) bytes_returned);
 
 			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
-				stream_get_size(s), &bytes_returned) == false)
+				stream_get_size(s), &bytes_returned) == FALSE)
 				break;
 		}
 
-		stream_read_uint8(s, msgType);
-		stream_seek_uint8(s); /* bPad */
-		stream_read_uint16(s, BodySize);
+		stream_read_BYTE(s, msgType);
+		stream_seek_BYTE(s); /* bPad */
+		stream_read_UINT16(s, BodySize);
 
 		if (BodySize + 4 > (int) bytes_returned)
 			continue;
@@ -223,7 +230,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 	return 0;
 }
 
-static boolean rdpsnd_server_initialize(rdpsnd_server_context* context)
+static BOOL rdpsnd_server_initialize(rdpsnd_server_context* context)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
@@ -235,11 +242,11 @@ static boolean rdpsnd_server_initialize(rdpsnd_server_context* context)
 		rdpsnd->rdpsnd_channel_thread = freerdp_thread_new();
 		freerdp_thread_start(rdpsnd->rdpsnd_channel_thread, rdpsnd_server_thread_func, rdpsnd);
 
-		return true;
+		return TRUE;
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 }
 
@@ -287,28 +294,29 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	
 	if (rdpsnd->out_buffer_size < out_buffer_size)
 	{
-		rdpsnd->out_buffer = xrealloc(rdpsnd->out_buffer, out_buffer_size);
+		rdpsnd->out_buffer = (BYTE*) realloc(rdpsnd->out_buffer, out_buffer_size);
 		rdpsnd->out_buffer_size = out_buffer_size;
 	}
 
 	freerdp_dsp_context_reset_adpcm(rdpsnd->dsp_context);
 }
 
-static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
+static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 {
-	STREAM* s = rdpsnd->rdpsnd_pdu;
-	rdpsndFormat* format;
-	int tbytes_per_frame;
-	uint8* src;
 	int size;
+	BOOL r;
+	BYTE* src;
 	int frames;
 	int fill_size;
-	boolean r;
+	rdpsndFormat* format;
+	int tbytes_per_frame;
+	STREAM* s = rdpsnd->rdpsnd_pdu;
 
 	format = &rdpsnd->context.client_formats[rdpsnd->context.selected_client_format];
 	tbytes_per_frame = format->nChannels * rdpsnd->src_bytes_per_sample;
 
-	if (format->nSamplesPerSec == rdpsnd->context.src_format.nSamplesPerSec && format->nChannels == rdpsnd->context.src_format.nChannels)
+	if ((format->nSamplesPerSec == rdpsnd->context.src_format.nSamplesPerSec) &&
+			(format->nChannels == rdpsnd->context.src_format.nChannels))
 	{
 		src = rdpsnd->out_buffer;
 		frames = rdpsnd->out_pending_frames;
@@ -349,13 +357,13 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 
 	/* WaveInfo PDU */
 	stream_set_pos(s, 0);
-	stream_write_uint8(s, SNDC_WAVE); /* msgType */
-	stream_write_uint8(s, 0); /* bPad */
-	stream_write_uint16(s, size + fill_size + 8); /* BodySize */
+	stream_write_BYTE(s, SNDC_WAVE); /* msgType */
+	stream_write_BYTE(s, 0); /* bPad */
+	stream_write_UINT16(s, size + fill_size + 8); /* BodySize */
 
-	stream_write_uint16(s, 0); /* wTimeStamp */
-	stream_write_uint16(s, rdpsnd->context.selected_client_format); /* wFormatNo */
-	stream_write_uint8(s, rdpsnd->context.block_no); /* cBlockNo */
+	stream_write_UINT16(s, 0); /* wTimeStamp */
+	stream_write_UINT16(s, rdpsnd->context.selected_client_format); /* wFormatNo */
+	stream_write_BYTE(s, rdpsnd->context.block_no); /* cBlockNo */
 	stream_seek(s, 3); /* bPad */
 	stream_write(s, src, 4);
 
@@ -364,8 +372,9 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 
 	/* Wave PDU */
 	stream_check_size(s, size + fill_size);
-	stream_write_uint32(s, 0); /* bPad */
+	stream_write_UINT32(s, 0); /* bPad */
 	stream_write(s, src + 4, size - 4);
+
 	if (fill_size > 0)
 		stream_write_zero(s, fill_size);
 
@@ -377,60 +386,60 @@ static boolean rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	return r;
 }
 
-static boolean rdpsnd_server_send_samples(rdpsnd_server_context* context, const void* buf, int nframes)
+static BOOL rdpsnd_server_send_samples(rdpsnd_server_context* context, const void* buf, int nframes)
 {
 	int cframes;
 	int cframesize;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
 	if (rdpsnd->context.selected_client_format < 0)
-		return false;
+		return FALSE;
 
 	while (nframes > 0)
 	{
 		cframes = MIN(nframes, rdpsnd->out_frames - rdpsnd->out_pending_frames);
 		cframesize = cframes * rdpsnd->src_bytes_per_frame;
-		memcpy(rdpsnd->out_buffer + (rdpsnd->out_pending_frames * rdpsnd->src_bytes_per_frame),
-			buf, cframesize);
-		buf = (uint8*)buf + cframesize;
+
+		memcpy(rdpsnd->out_buffer + (rdpsnd->out_pending_frames * rdpsnd->src_bytes_per_frame), buf, cframesize);
+		buf = (BYTE*) buf + cframesize;
 		nframes -= cframes;
 		rdpsnd->out_pending_frames += cframes;
 
 		if (rdpsnd->out_pending_frames >= rdpsnd->out_frames)
 		{
 			if (!rdpsnd_server_send_audio_pdu(rdpsnd))
-				return false;
+				return FALSE;
 		}
 	}
 
-	return true;
+	return TRUE;
 }
 
-static boolean rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
+static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 
 	RDPSND_PDU_INIT(s, SNDC_SETVOLUME);
 
-	stream_write_uint16(s, left);
-	stream_write_uint16(s, right);
+	stream_write_UINT16(s, left);
+	stream_write_UINT16(s, right);
 	
 	RDPSND_PDU_FINISH(s);
 }
 
-static boolean rdpsnd_server_close(rdpsnd_server_context* context)
+static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 {
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 
 	if (rdpsnd->context.selected_client_format < 0)
-		return false;
+		return FALSE;
 
 	if (rdpsnd->out_pending_frames > 0)
 	{
 		if (!rdpsnd_server_send_audio_pdu(rdpsnd))
-			return false;
+			return FALSE;
 	}
 
 	rdpsnd->context.selected_client_format = -1;
@@ -443,7 +452,9 @@ rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
 {
 	rdpsnd_server* rdpsnd;
 
-	rdpsnd = xnew(rdpsnd_server);
+	rdpsnd = (rdpsnd_server*) malloc(sizeof(rdpsnd_server));
+	ZeroMemory(rdpsnd, sizeof(rdpsnd_server));
+
 	rdpsnd->context.vcm = vcm;
 	rdpsnd->context.selected_client_format = -1;
 	rdpsnd->context.Initialize = rdpsnd_server_initialize;
@@ -466,15 +477,21 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 		freerdp_thread_stop(rdpsnd->rdpsnd_channel_thread);
 		freerdp_thread_free(rdpsnd->rdpsnd_channel_thread);
 	}
+
 	if (rdpsnd->rdpsnd_channel)
 		WTSVirtualChannelClose(rdpsnd->rdpsnd_channel);
+
 	if (rdpsnd->rdpsnd_pdu)
 		stream_free(rdpsnd->rdpsnd_pdu);
+
 	if (rdpsnd->out_buffer)
-		xfree(rdpsnd->out_buffer);
+		free(rdpsnd->out_buffer);
+
 	if (rdpsnd->dsp_context)
 		freerdp_dsp_context_free(rdpsnd->dsp_context);
+
 	if (rdpsnd->context.client_formats)
-		xfree(rdpsnd->context.client_formats);
-	xfree(rdpsnd);
+		free(rdpsnd->context.client_formats);
+
+	free(rdpsnd);
 }

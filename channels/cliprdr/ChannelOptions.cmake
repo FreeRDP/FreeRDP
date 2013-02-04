@@ -1,10 +1,13 @@
 
-set(CHANNEL_TYPE "static")
-set(CHANNEL_SHORT_NAME "cliprdr")
-set(CHANNEL_LONG_NAME "Clipboard Virtual Channel Extension")
-set(CHANNEL_SPECIFICATIONS "[MS-RDPECLIP]")
+set(OPTION_DEFAULT OFF)
+set(OPTION_CLIENT_DEFAULT ON)
+set(OPTION_SERVER_DEFAULT OFF)
 
-string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
-option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" ON)
+define_channel_options(NAME "cliprdr" TYPE "static"
+	DESCRIPTION "Clipboard Virtual Channel Extension"
+	SPECIFICATIONS "[MS-RDPECLIP]"
+	DEFAULT ${OPTION_DEFAULT})
 
+define_channel_client_options(${OPTION_CLIENT_DEFAULT})
+define_channel_server_options(${OPTION_SERVER_DEFAULT})
 

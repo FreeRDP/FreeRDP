@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include "librail.h"
 
@@ -62,9 +63,11 @@ static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, W
 	if (!window)
 		return ;
 
-	icon = (rdpIcon*) xzalloc(sizeof(rdpIcon));
+	icon = (rdpIcon*) malloc(sizeof(rdpIcon));
+	ZeroMemory(icon, sizeof(rdpIcon));
+
 	icon->entry = window_icon->iconInfo;
-	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? true : false;
+	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 
 	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
 			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
@@ -141,14 +144,18 @@ rdpRail* rail_new(rdpSettings* settings)
 {
 	rdpRail* rail;
 
-	rail = (rdpRail*) xzalloc(sizeof(rdpRail));
+	rail = (rdpRail*) malloc(sizeof(rdpRail));
 
 	if (rail != NULL)
 	{
+		ZeroMemory(rail, sizeof(rdpRail));
+
 		rail->settings = settings;
 		rail->cache = icon_cache_new(rail);
 		rail->list = window_list_new(rail);
-		rail->clrconv = (CLRCONV*) xzalloc(sizeof(CLRCONV));
+
+		rail->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+		ZeroMemory(rail->clrconv, sizeof(CLRCONV));
 	}
 
 	return rail;
@@ -160,7 +167,7 @@ void rail_free(rdpRail* rail)
 	{
 		icon_cache_free(rail->cache);
 		window_list_free(rail->list);
-		xfree(rail->clrconv);
-		xfree(rail);
+		free(rail->clrconv);
+		free(rail);
 	}
 }

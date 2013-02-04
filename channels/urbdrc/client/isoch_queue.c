@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -149,9 +149,11 @@ void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 	while (queue->has_next(queue))
 	{
 		isoch = queue->get_next(queue);
+
 		if (isoch != NULL)
 			queue->unregister_data(queue, isoch);
 	}
+
 	pthread_mutex_unlock(&queue->isoch_loading);
 
 	pthread_mutex_destroy(&queue->isoch_loading);

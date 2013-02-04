@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Dynamic Virtual Channel Unit Tests
  *
  * Copyright 2011 Vic Lee
@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
+#include <winpr/print.h>
 
 #include "test_drdynvc.h"
 
@@ -50,17 +50,17 @@ int add_drdynvc_suite(void)
 	return 0;
 }
 
-static const uint8 test_capability_request_data[] =
+static const BYTE test_capability_request_data[] =
 {
 	"\x58\x00\x02\x00\x33\x33\x11\x11\x3D\x0A\xA7\x04"
 };
 
 static int data_received = 0;
 
-static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, int data_size)
+static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
-	freerdp_hexdump(data, data_size);
+	winpr_HexDump(data, data_size);
 	data_received = 1;
 	return 0;
 }
@@ -71,7 +71,7 @@ void test_drdynvc(void)
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 

@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP Servers
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,15 +17,19 @@
 
 # Servers
 
+add_subdirectory(common)
+
 if(NOT WIN32)
+	if(WITH_SAMPLE)
+		add_subdirectory(Sample)
+	endif()
 
-	# Build Test Server
-	add_subdirectory(Sample)
-
-	# Build X11 Server
-	find_suggested_package(X11)
 	if(WITH_X11)
 		add_subdirectory(X11)
+	endif()
+
+	if(APPLE AND (NOT IOS))
+		add_subdirectory(Mac)
 	endif()
 else()
 	add_subdirectory(Windows)

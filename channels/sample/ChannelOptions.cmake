@@ -1,9 +1,18 @@
 
-set(CHANNEL_TYPE "static")
-set(CHANNEL_SHORT_NAME "sample")
-set(CHANNEL_LONG_NAME "Sample Virtual Channel Extension")
-set(CHANNEL_SPECIFICATIONS "")
+set(OPTION_DEFAULT OFF)
+set(OPTION_CLIENT_DEFAULT OFF)
+set(OPTION_SERVER_DEFAULT OFF)
 
-string(TOUPPER "WITH_${CHANNEL_SHORT_NAME}" CHANNEL_OPTION)
-option(${CHANNEL_OPTION} "Build ${CHANNEL_SHORT_NAME}" OFF)
+if(WITH_SAMPLE)
+	set(OPTION_CLIENT_DEFAULT ON)
+	set(OPTION_SERVER_DEFAULT OFF)
+endif()
+
+define_channel_options(NAME "sample" TYPE "static"
+	DESCRIPTION "Sample Virtual Channel Extension"
+	SPECIFICATIONS ""
+	DEFAULT ${OPTION_DEFAULT})
+
+define_channel_client_options(${OPTION_CLIENT_DEFAULT})
+define_channel_server_options(${OPTION_SERVER_DEFAULT})
 

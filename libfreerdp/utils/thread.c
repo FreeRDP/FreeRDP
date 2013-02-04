@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Thread Utils
  *
  * Copyright 2011 Vic Lee
@@ -26,6 +26,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/windows.h>
 
 #ifdef _WIN32
@@ -34,18 +36,18 @@
 #endif
 #endif
 
-#include <freerdp/utils/sleep.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/utils/thread.h>
 
 freerdp_thread* freerdp_thread_new(void)
 {
 	freerdp_thread* thread;
 
-	thread = xnew(freerdp_thread);
+	thread = (freerdp_thread*) malloc(sizeof(freerdp_thread));
+	ZeroMemory(thread, sizeof(freerdp_thread));
+
 	thread->mutex = CreateMutex(NULL, FALSE, NULL);
-	thread->signals[0] = wait_obj_new();
-	thread->signals[1] = wait_obj_new();
+	thread->signals[0] = CreateEvent(NULL, TRUE, FALSE, NULL);
+	thread->signals[1] = CreateEvent(NULL, TRUE, FALSE, NULL);
 	thread->num_signals = 2;
 
 	return thread;
@@ -72,12 +74,12 @@ void freerdp_thread_stop(freerdp_thread* thread)
 {
 	int i = 0;
 
-	wait_obj_set(thread->signals[0]);
+	SetEvent(thread->signals[0]);
 
-	while (thread->status > 0 && i < 1000)
+	while ((thread->status > 0) && (i < 1000))
 	{
 		i++;
-		freerdp_usleep(100000);
+		Sleep(100);
 	}
 }
 
@@ -86,12 +88,12 @@ void freerdp_thread_free(freerdp_thread* thread)
 	int i;
 
 	for (i = 0; i < thread->num_signals; i++)
-		wait_obj_free(thread->signals[i]);
+		CloseHandle(thread->signals[i]);
 
 	thread->num_signals = 0;
 
 	CloseHandle(thread->mutex);
 	thread->mutex = NULL;
 
-	xfree(thread);
+	free(thread);
 }

@@ -8,7 +8,9 @@ set(${MODULE_PREFIX}_TESTS
 	TestQuerySecurityPackageInfo.c
 	TestEnumerateSecurityPackages.c
 	TestInitializeSecurityContext.c
-	TestAcquireCredentialsHandle.c)
+	TestAcquireCredentialsHandle.c
+	TestSchannel.c
+	TestNTLM.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -17,14 +19,22 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 if(WIN32)
-	target_link_libraries(${MODULE_NAME} secur32)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32)
 endif()
 
-target_link_libraries(${MODULE_NAME} winpr-sspi)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-sspi winpr-thread winpr-pipe winpr-file winpr-crypto winpr-utils)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
-	add_test(${TestName} ${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME} ${TestName})
+	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+

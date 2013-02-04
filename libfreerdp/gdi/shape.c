@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Shape Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -52,9 +52,9 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	int a, b, c;
 
 	HGDI_BITMAP bmp;
-	uint8 pixel8;
-	uint16 pixel16;
-	uint32 pixel32;
+	BYTE pixel8;
+	UINT16 pixel16;
+	UINT32 pixel32;
 	int bpp = hdc->bitsPerPixel;
 
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;

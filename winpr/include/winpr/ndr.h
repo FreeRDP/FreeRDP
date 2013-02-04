@@ -23,6 +23,8 @@
 #include <winpr/rpc.h>
 #include <winpr/wtypes.h>
 
+#ifndef _WIN32
+
 #define __RPC_WIN32__			1
 #define TARGET_IS_NT50_OR_LATER		1
 
@@ -31,8 +33,6 @@ typedef union _CLIENT_CALL_RETURN
 	void* Pointer;
 	LONG_PTR Simple;
 } CLIENT_CALL_RETURN;
-
-typedef void* RPC_IF_HANDLE;
 
 typedef struct _RPC_VERSION
 {
@@ -524,5 +524,7 @@ typedef void (*NDR_TYPE_UNMARSHALL_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigne
 typedef void (*NDR_TYPE_FREE_ROUTINE)(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
 
 WINPR_API CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ...);
+
+#endif
 
 #endif /* WINPR_RPC_NDR_H */

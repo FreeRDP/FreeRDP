@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Output Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -26,11 +26,11 @@ typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef boolean (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
+typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
 typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
 typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, uint32 value);
-typedef void (*pcPlay) (rdpsndDevicePlugin* device, uint8* data, int size);
+typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
+typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
@@ -47,7 +47,7 @@ struct rdpsnd_device_plugin
 	pcFree Free;
 };
 
-#define RDPSND_DEVICE_EXPORT_FUNC_NAME "FreeRDPRdpsndDeviceEntry"
+#define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
 
 typedef void (*PREGISTERRDPSNDDEVICE)(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device);
 
@@ -55,7 +55,7 @@ struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS
 {
 	rdpsndPlugin* rdpsnd;
 	PREGISTERRDPSNDDEVICE pRegisterRdpsndDevice;
-	RDP_PLUGIN_DATA* plugin_data;
+	ADDIN_ARGV* args;
 };
 typedef struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
@@ -63,4 +63,3 @@ typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef int (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* __RDPSND_MAIN_H */
-

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * ASN.1 Basic Encoding Rules (DER)
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
@@ -21,7 +21,6 @@
 #define FREERDP_CRYPTO_DER_H
 
 #include <freerdp/crypto/er.h>
-#include <freerdp/utils/memory.h>
 
 FREERDP_API int _der_skip_length(int length);
 FREERDP_API int der_write_length(STREAM* s, int length);
@@ -30,7 +29,7 @@ FREERDP_API int der_skip_octet_string(int length);
 FREERDP_API int der_skip_sequence_tag(int length);
 FREERDP_API int der_write_sequence_tag(STREAM* s, int length);
 FREERDP_API int der_skip_contextual_tag(int length);
-FREERDP_API int der_write_contextual_tag(STREAM* s, uint8 tag, int length, boolean pc);
-FREERDP_API void der_write_octet_string(STREAM* s, uint8* oct_str, int length);
+FREERDP_API int der_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc);
+FREERDP_API void der_write_octet_string(STREAM* s, BYTE* oct_str, int length);
 
 #endif /* FREERDP_CRYPTO_DER_H */

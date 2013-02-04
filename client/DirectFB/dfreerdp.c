@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * DirectFB Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -22,12 +22,14 @@
 #include <locale.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/args.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <freerdp/utils/event.h>
+#include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include "df_event.h"
@@ -85,7 +87,7 @@ void df_end_paint(rdpContext* context)
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 }
 
-boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	dfInfo* dfi;
 
@@ -94,77 +96,83 @@ boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 	rfds[*rcount] = (void*)(long)(dfi->read_fds);
 	(*rcount)++;
 
-	return true;
+	return TRUE;
 }
 
-boolean df_check_fds(freerdp* instance, fd_set* set)
+BOOL df_check_fds(freerdp* instance, fd_set* set)
 {
 	dfInfo* dfi;
 
 	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
-		return true;
+		return TRUE;
 
 	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
 		df_event_process(instance, &(dfi->event));
 
-	return true;
+	return TRUE;
 }
 
-boolean df_pre_connect(freerdp* instance)
+BOOL df_pre_connect(freerdp* instance)
 {
 	dfInfo* dfi;
-	boolean bitmap_cache;
+	BOOL bitmap_cache;
 	dfContext* context;
 	rdpSettings* settings;
 
-	dfi = (dfInfo*) xzalloc(sizeof(dfInfo));
+	dfi = (dfInfo*) malloc(sizeof(dfInfo));
+	ZeroMemory(dfi, sizeof(dfInfo));
+
 	context = ((dfContext*) instance->context);
 	context->dfi = dfi;
 
 	settings = instance->settings;
-	bitmap_cache = settings->bitmap_cache;
+	bitmap_cache = settings->BitmapCacheEnabled;
 
-	settings->order_support[NEG_DSTBLT_INDEX] = true;
-	settings->order_support[NEG_PATBLT_INDEX] = true;
-	settings->order_support[NEG_SCRBLT_INDEX] = true;
-	settings->order_support[NEG_OPAQUE_RECT_INDEX] = true;
-	settings->order_support[NEG_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_MULTIDSTBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIPATBLT_INDEX] = false;
-	settings->order_support[NEG_MULTISCRBLT_INDEX] = false;
-	settings->order_support[NEG_MULTIOPAQUERECT_INDEX] = true;
-	settings->order_support[NEG_MULTI_DRAWNINEGRID_INDEX] = false;
-	settings->order_support[NEG_LINETO_INDEX] = true;
-	settings->order_support[NEG_POLYLINE_INDEX] = true;
-	settings->order_support[NEG_MEMBLT_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_INDEX] = false;
-	settings->order_support[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->order_support[NEG_MEM3BLT_V2_INDEX] = false;
-	settings->order_support[NEG_SAVEBITMAP_INDEX] = false;
-	settings->order_support[NEG_GLYPH_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_INDEX_INDEX] = false;
-	settings->order_support[NEG_FAST_GLYPH_INDEX] = false;
-	settings->order_support[NEG_POLYGON_SC_INDEX] = false;
-	settings->order_support[NEG_POLYGON_CB_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_SC_INDEX] = false;
-	settings->order_support[NEG_ELLIPSE_CB_INDEX] = false;
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	dfi->clrconv = xnew(CLRCONV);
+	dfi->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
+	ZeroMemory(dfi->clrconv, sizeof(CLRCONV));
+
 	dfi->clrconv->alpha = 1;
 	dfi->clrconv->invert = 0;
 	dfi->clrconv->rgb555 = 0;
-	dfi->clrconv->palette = xnew(rdpPalette);
+
+	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
-    
-    instance->context->cache = cache_new(instance->settings);
 
-	return true;
+	instance->context->cache = cache_new(instance->settings);
+
+	return TRUE;
 }
 
-boolean df_post_connect(freerdp* instance)
+BOOL df_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
@@ -217,22 +225,13 @@ boolean df_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	return true;
+	return TRUE;
 }
 
-static int df_process_plugin_args(rdpSettings* settings, const char* name,
-	RDP_PLUGIN_DATA* plugin_data, void* user_data)
+BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
-	rdpChannels* channels = (rdpChannels*) user_data;
+	char answer;
 
-	printf("loading plugin %s\n", name);
-	freerdp_channels_load_plugin(channels, settings, name, plugin_data);
-
-	return 1;
-}
-
-boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
-{
 	printf("Certificate details:\n");
 	printf("\tSubject: %s\n", subject);
 	printf("\tIssuer: %s\n", issuer);
@@ -241,7 +240,6 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		"the CA certificate in your certificate store, or the certificate has expired. "
 		"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	char answer;
 	while (1)
 	{
 		printf("Do you trust the above certificate? (Y/N) ");
@@ -249,7 +247,7 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 
 		if (answer == 'y' || answer == 'Y')
 		{
-			return true;
+			return TRUE;
 		}
 		else if (answer == 'n' || answer == 'N')
 		{
@@ -257,17 +255,15 @@ boolean df_verify_certificate(freerdp* instance, char* subject, char* issuer, ch
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
-static int
-df_receive_channel_data(freerdp* instance, int channelId, uint8* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-static void
-df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
+static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
@@ -280,8 +276,7 @@ df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 	freerdp_channels_send_event(channels, event);
 }
 
-static void
-df_process_channel_event(rdpChannels* channels, freerdp* instance)
+static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	RDP_EVENT* event;
 
@@ -306,7 +301,7 @@ df_process_channel_event(rdpChannels* channels, freerdp* instance)
 static void df_free(dfInfo* dfi)
 {
 	dfi->dfb->Release(dfi->dfb);
-	xfree(dfi);
+	free(dfi);
 }
 
 int dfreerdp_run(freerdp* instance)
@@ -340,17 +335,17 @@ int dfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != true)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
-		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
+		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get dfreerdp file descriptor\n");
 			break;
@@ -386,17 +381,17 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != true)
+		if (freerdp_check_fds(instance) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (df_check_fds(instance, &rfds_set) != true)
+		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != true)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
@@ -421,7 +416,7 @@ void* thread_func(void* param)
 
 	dfreerdp_run(data->instance);
 
-	xfree(data);
+	free(data);
 
 	pthread_detach(pthread_self());
 
@@ -435,6 +430,7 @@ void* thread_func(void* param)
 
 int main(int argc, char* argv[])
 {
+	int status;
 	pthread_t thread;
 	freerdp* instance;
 	dfContext* context;
@@ -462,9 +458,20 @@ int main(int argc, char* argv[])
 	channels = instance->context->channels;
 
 	DirectFBInit(&argc, &argv);
-	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
 
-	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
+	instance->context->argc = argc;
+	instance->context->argv = argv;
+
+	status = freerdp_client_parse_command_line_arguments(argc, argv, instance->settings);
+
+	if (status < 0)
+		exit(0);
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
+
+	data = (struct thread_data*) malloc(sizeof(struct thread_data));
+	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+
 	data->instance = instance;
 
 	g_thread_count++;

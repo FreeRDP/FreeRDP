@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Passphrase Handling Utils
  *
  * Copyright 2011 Shea Levy <shea@shealevy.com>
@@ -17,12 +17,20 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_PASSPHRASE_H
-#define __UTILS_PASSPHRASE_H
+#ifndef FREERDP_UTILS_PASSPHRASE_H
+#define FREERDP_UTILS_PASSPHRASE_H
 
 #include <stdlib.h>
 #include <freerdp/api.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin);
 
-#endif /* __UTILS_PASSPHRASE_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_PASSPHRASE_H */

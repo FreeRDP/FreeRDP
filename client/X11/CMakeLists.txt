@@ -1,4 +1,4 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP X11 Client
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -16,7 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "xfreerdp")
-set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
+set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 
 include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
@@ -64,28 +64,50 @@ if(WITH_MANPAGES)
 	endif(XMLTO_FOUND)
 endif(WITH_MANPAGES)
 
-find_suggested_package(Xinerama)
+set(XSHM_FEATURE_TYPE "REQUIRED")
+set(XSHM_FEATURE_PURPOSE "X11 shared memory")
+set(XSHM_FEATURE_DESCRIPTION "X11 shared memory extension")
+
+set(XINERAMA_FEATURE_TYPE "RECOMMENDED")
+set(XINERAMA_FEATURE_PURPOSE "multi-monitor")
+set(XINERAMA_FEATURE_DESCRIPTION "X11 multi-monitor extension")
+
+set(XEXT_FEATURE_TYPE "RECOMMENDED")
+set(XEXT_FEATURE_PURPOSE "X11 extension")
+set(XEXT_FEATURE_DESCRIPTION "X11 core extensions")
+
+set(XCURSOR_FEATURE_TYPE "RECOMMENDED")
+set(XCURSOR_FEATURE_PURPOSE "cursor")
+set(XCURSOR_FEATURE_DESCRIPTION "X11 cursor extension")
+
+set(XV_FEATURE_TYPE "RECOMMENDED")
+set(XV_FEATURE_PURPOSE "video")
+set(XV_FEATURE_DESCRIPTION "X11 video extension")
+
+find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
+find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
+find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
+find_feature(Xcursor ${XCURSOR_FEATURE_TYPE} ${XCURSOR_FEATURE_PURPOSE} ${XCURSOR_FEATURE_DESCRIPTION})
+find_feature(Xv ${XV_FEATURE_TYPE} ${XV_FEATURE_PURPOSE} ${XV_FEATURE_DESCRIPTION})
+
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA)
 	include_directories(${XINERAMA_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XINERAMA_LIBRARIES})
 endif()
 
-find_suggested_package(Xext)
 if(WITH_XEXT)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XEXT_LIBRARIES})
 endif()
 
-find_suggested_package(Xcursor)
 if(WITH_XCURSOR)
 	add_definitions(-DWITH_XCURSOR)
 	include_directories(${XCURSOR_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XCURSOR_LIBRARIES})
 endif()
 
-find_suggested_package(Xv)
 if(WITH_XV)
 	add_definitions(-DWITH_XV)
 	include_directories(${XV_INCLUDE_DIRS})
@@ -94,19 +116,18 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-if(WITH_MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-		freerdp-core
-		freerdp-gdi
-		freerdp-locale
-		freerdp-rail
-		freerdp-channels
-		freerdp-utils)
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-primitives freerdp-rail freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+if(WITH_IPP)
+    target_link_libraries(xfreerdp ${IPP_LIBRARY_LIST})
+endif()
+
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")

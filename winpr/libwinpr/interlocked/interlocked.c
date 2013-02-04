@@ -21,24 +21,12 @@
 #include "config.h"
 #endif
 
+#include <winpr/synch.h>
+#include <winpr/handle.h>
+
 #include <winpr/interlocked.h>
 
-/**
- * api-ms-win-core-interlocked-l1-2-0.dll:
- *
- * InitializeSListHead
- * InterlockedPopEntrySList
- * InterlockedPushEntrySList
- * InterlockedPushListSListEx
- * InterlockedFlushSList
- * QueryDepthSList
- * InterlockedIncrement
- * InterlockedDecrement
- * InterlockedExchange
- * InterlockedExchangeAdd
- * InterlockedCompareExchange
- * InterlockedCompareExchange64
- */
+/* Singly-Linked List */
 
 #ifndef _WIN32
 
@@ -246,6 +234,67 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
+#endif /* _WIN32 */
+
+#if (_WIN32 && (_WIN32_WINNT < 0x0502))
+
+static volatile HANDLE mutex = NULL;
+
+int static_mutex_lock(volatile HANDLE* static_mutex)
+{
+	if (*static_mutex == NULL)
+	{
+		HANDLE handle = CreateMutex(NULL, FALSE, NULL);
+		
+		if (InterlockedCompareExchangePointer((PVOID*) static_mutex, (PVOID) handle, NULL) != NULL)
+			CloseHandle(handle);
+	}
+
+	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED);
+}
+
+/* Not available in XP */
+
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+{
+	LONGLONG previousValue = 0;
+
+	static_mutex_lock(&mutex);
+
+	previousValue = *Destination;
+
+	if (*Destination == Comperand)
+		*Destination = Exchange;
+
+	ReleaseMutex(mutex);
+
+	return previousValue;
+}
+
+#elif ANDROID || (defined(__GNUC__) && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
+
+#include <pthread.h>
+
+static pthread_mutex_t mutex;
+
+LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
+{
+	LONGLONG previousValue = 0;
+
+	pthread_mutex_lock(&mutex);
+
+	previousValue = *Destination;
+
+	if (*Destination == Comperand)
+		*Destination = Exchange;
+
+	pthread_mutex_unlock(&mutex);
+
+	return previousValue;
+}
+
+#else
+
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
 #ifdef __GNUC__
@@ -256,3 +305,113 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 }
 
 #endif
+
+/* Doubly-Linked List */
+
+/**
+ * Kernel-Mode Basics: Windows Linked Lists:
+ * http://www.osronline.com/article.cfm?article=499
+ *
+ * Singly and Doubly Linked Lists:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff563802/
+ */
+
+VOID InitializeListHead(PLIST_ENTRY ListHead)
+{
+	ListHead->Flink = ListHead->Blink = ListHead;
+}
+
+BOOL IsListEmpty(const LIST_ENTRY* ListHead)
+{
+	return (BOOL) (ListHead->Flink == ListHead);
+}
+
+BOOL RemoveEntryList(PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldFlink;
+	PLIST_ENTRY OldBlink;
+
+	OldFlink = Entry->Flink;
+	OldBlink = Entry->Blink;
+	OldFlink->Blink = OldBlink;
+	OldBlink->Flink = OldFlink;
+
+	return (BOOL) (OldFlink == OldBlink);
+}
+
+VOID InsertHeadList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldFlink;
+
+	OldFlink = ListHead->Flink;
+	Entry->Flink = OldFlink;
+	Entry->Blink = ListHead;
+	OldFlink->Blink = Entry;
+	ListHead->Flink = Entry;
+}
+
+PLIST_ENTRY RemoveHeadList(PLIST_ENTRY ListHead)
+{
+	PLIST_ENTRY Flink;
+	PLIST_ENTRY Entry;
+
+	Entry = ListHead->Flink;
+	Flink = Entry->Flink;
+	ListHead->Flink = Flink;
+	Flink->Blink = ListHead;
+
+	return Entry;
+}
+
+VOID InsertTailList(PLIST_ENTRY ListHead, PLIST_ENTRY Entry)
+{
+	PLIST_ENTRY OldBlink;
+
+	OldBlink = ListHead->Blink;
+	Entry->Flink = ListHead;
+	Entry->Blink = OldBlink;
+	OldBlink->Flink = Entry;
+	ListHead->Blink = Entry;
+}
+
+PLIST_ENTRY RemoveTailList(PLIST_ENTRY ListHead)
+{
+	PLIST_ENTRY Blink;
+	PLIST_ENTRY Entry;
+
+	Entry = ListHead->Blink;
+	Blink = Entry->Blink;
+	ListHead->Blink = Blink;
+	Blink->Flink = ListHead;
+
+	return Entry;
+}
+
+VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend)
+{
+	PLIST_ENTRY ListEnd = ListHead->Blink;
+
+	ListHead->Blink->Flink = ListToAppend;
+	ListHead->Blink = ListToAppend->Blink;
+	ListToAppend->Blink->Flink = ListHead;
+	ListToAppend->Blink = ListEnd;
+}
+
+VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry)
+{
+	Entry->Next = ListHead->Next;
+	ListHead->Next = Entry;
+}
+
+PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead)
+{
+	PSINGLE_LIST_ENTRY FirstEntry;
+
+	FirstEntry = ListHead->Next;
+
+	if (FirstEntry != NULL)
+		ListHead->Next = FirstEntry->Next;
+
+	return FirstEntry;
+}
+

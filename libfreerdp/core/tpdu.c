@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X.224 Transport Protocol Data Units (TPDUs)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -66,13 +66,13 @@
  * @return TPDU length indicator (LI)
  */
 
-uint8
-tpdu_read_header(STREAM* s, uint8* code)
+BOOL tpdu_read_header(STREAM* s, BYTE* code, BYTE *li)
 {
-	uint8 li;
+	if(stream_get_left(s) < 3)
+		return FALSE;
 
-	stream_read_uint8(s, li); /* LI */
-	stream_read_uint8(s, *code); /* Code */
+	stream_read_BYTE(s, *li); /* LI */
+	stream_read_BYTE(s, *code); /* Code */
 
 	if (*code == X224_TPDU_DATA)
 	{
@@ -84,10 +84,9 @@ tpdu_read_header(STREAM* s, uint8* code)
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		stream_seek(s, 5);
+		return stream_skip(s, 5);
 	}
-
-	return li;
+	return TRUE;
 }
 
 /**
@@ -97,21 +96,20 @@ tpdu_read_header(STREAM* s, uint8* code)
  * @param code TPDU code
  */
 
-void
-tpdu_write_header(STREAM* s, uint16 length, uint8 code)
+void tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
 {
-	stream_write_uint8(s, length); /* LI */
-	stream_write_uint8(s, code); /* code */
+	stream_write_BYTE(s, length); /* LI */
+	stream_write_BYTE(s, code); /* code */
 
 	if (code == X224_TPDU_DATA)
 	{
-		stream_write_uint8(s, 0x80); /* EOT */
+		stream_write_BYTE(s, 0x80); /* EOT */
 	}
 	else
 	{
-		stream_write_uint16(s, 0); /* DST-REF */
-		stream_write_uint16(s, 0); /* SRC-REF */
-		stream_write_uint8(s, 0); /* Class 0 */
+		stream_write_UINT16(s, 0); /* DST-REF */
+		stream_write_UINT16(s, 0); /* SRC-REF */
+		stream_write_BYTE(s, 0); /* Class 0 */
 	}
 }
 
@@ -121,20 +119,20 @@ tpdu_write_header(STREAM* s, uint16 length, uint8 code)
  * @return length indicator (LI)
  */
 
-uint8 tpdu_read_connection_request(STREAM* s)
+BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
 {
-	uint8 li;
-	uint8 code;
+	BYTE code;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, li))
+		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
 		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
-		return 0;
+		return FALSE;
 	}
 
-	return li;
+	return TRUE;
 }
 
 /**
@@ -143,8 +141,7 @@ uint8 tpdu_read_connection_request(STREAM* s)
  * @param length TPDU length
  */
 
-void
-tpdu_write_connection_request(STREAM* s, uint16 length)
+void tpdu_write_connection_request(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
 }
@@ -155,21 +152,20 @@ tpdu_write_connection_request(STREAM* s, uint16 length)
  * @return length indicator (LI)
  */
 
-uint8
-tpdu_read_connection_confirm(STREAM* s)
+BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
 {
-	uint8 li;
-	uint8 code;
+	BYTE code;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, li))
+		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
 		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
-		return 0;
+		return FALSE;
 	}
 
-	return li;
+	return (stream_get_left(s) >= *li);
 }
 
 /**
@@ -178,8 +174,7 @@ tpdu_read_connection_confirm(STREAM* s)
  * @param length TPDU length
  */
 
-void
-tpdu_write_connection_confirm(STREAM* s, uint16 length)
+void tpdu_write_connection_confirm(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_CONFIRM);
 }
@@ -190,8 +185,7 @@ tpdu_write_connection_confirm(STREAM* s, uint16 length)
  * @param length TPDU length
  */
 
-void
-tpdu_write_disconnect_request(STREAM* s, uint16 length)
+void tpdu_write_disconnect_request(STREAM* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_DISCONNECT_REQUEST);
 }
@@ -201,8 +195,7 @@ tpdu_write_disconnect_request(STREAM* s, uint16 length)
  * @param s stream
  */
 
-void
-tpdu_write_data(STREAM* s)
+void tpdu_write_data(STREAM* s)
 {
 	tpdu_write_header(s, 2, X224_TPDU_DATA);
 }
@@ -212,16 +205,16 @@ tpdu_write_data(STREAM* s)
  * @param s stream
  */
 
-uint16
-tpdu_read_data(STREAM* s)
+BOOL tpdu_read_data(STREAM* s, UINT16 *LI)
 {
-	uint8 code;
-	uint16 li;
+	BYTE code;
+	BYTE li;
 
-	li = tpdu_read_header(s, &code);
+	if(!tpdu_read_header(s, &code, &li))
+		return FALSE;
 
 	if (code != X224_TPDU_DATA)
-		return 0;
-
-	return li;
+		return FALSE;
+	*LI = li;
+	return TRUE;
 }

@@ -26,6 +26,7 @@
 #ifndef _WIN32
 
 #include "../synch/synch.h"
+#include "../thread/thread.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -41,6 +42,12 @@ BOOL CloseHandle(HANDLE hObject)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
+		WINPR_THREAD* thread;
+
+		thread = (WINPR_THREAD*) Object;
+
+		free(thread);
+
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
@@ -57,15 +64,18 @@ BOOL CloseHandle(HANDLE hObject)
 
 		event = (WINPR_EVENT*) Object;
 
-		if (event->pipe_fd[0] != -1)
+		if (!event->bAttached)
 		{
-			close(event->pipe_fd[0]);
-			event->pipe_fd[0] = -1;
-		}
-		if (event->pipe_fd[1] != -1)
-		{
-			close(event->pipe_fd[1]);
-			event->pipe_fd[1] = -1;
+			if (event->pipe_fd[0] != -1)
+			{
+				close(event->pipe_fd[0]);
+				event->pipe_fd[0] = -1;
+			}
+			if (event->pipe_fd[1] != -1)
+			{
+				close(event->pipe_fd[1]);
+				event->pipe_fd[1] = -1;
+			}
 		}
 
 		winpr_Handle_Remove(Object);
@@ -75,13 +85,50 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-#if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) Object));
+		WINPR_SEMAPHORE* semaphore;
+
+		semaphore = (WINPR_SEMAPHORE*) Object;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+
+		if (semaphore->pipe_fd[0] != -1)
+		{
+			close(semaphore->pipe_fd[0]);
+			semaphore->pipe_fd[0] = -1;
+
+			if (semaphore->pipe_fd[1] != -1)
+			{
+				close(semaphore->pipe_fd[1]);
+				semaphore->pipe_fd[1] = -1;
+			}
+		}
+
 #else
-		sem_destroy((winpr_sem_t*) Object);
+
+#if defined __APPLE__
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
+#else
+		sem_destroy((winpr_sem_t*) semaphore->sem);
+#endif
+
 #endif
 		winpr_Handle_Remove(Object);
 		free(Object);
+
+		return TRUE;
+	}
+	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		int pipe_fd;
+
+		pipe_fd = (int) ((ULONG_PTR) Object);
+
+		if (pipe_fd != -1)
+		{
+			close(pipe_fd);
+		}
+
+		winpr_Handle_Remove(Object);
 
 		return TRUE;
 	}

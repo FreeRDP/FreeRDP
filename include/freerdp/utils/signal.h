@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Signal handling
  *
  * Copyright 2011 Shea Levy <shea@shealevy.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_SIGNAL_H
-#define __UTILS_SIGNAL_H
+#ifndef FREERDP_UTILS_SIGNAL_H
+#define FREERDP_UTILS_SIGNAL_H
 
 #include <freerdp/api.h>
 #ifndef _WIN32
@@ -31,6 +31,14 @@ extern struct termios orig_flags;
 extern struct termios new_flags;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API int freerdp_handle_signals(void);
 
-#endif /* __UTILS_SIGNAL_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_SIGNAL_H */

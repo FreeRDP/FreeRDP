@@ -1,21 +1,22 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
- * FreeRDP Windows Server
- *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* FreeRDP: A Remote Desktop Protocol Client
+* FreeRDP Windows Server
+*
+* Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+* Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,7 +26,6 @@
 #include <winpr/windows.h>
 
 #include <freerdp/listener.h>
-#include <freerdp/utils/sleep.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/utils/stream.h>
 
@@ -34,18 +34,31 @@
 #include "wf_mirage.h"
 #include "wf_update.h"
 #include "wf_settings.h"
+#include "wf_rdpsnd.h"
 
 #include "wf_peer.h"
 
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();
+	context->vcm = WTSCreateVirtualChannelManager(client);
 	wf_info_peer_register(context->info, context);
 }
 
 void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 {
 	wf_info_peer_unregister(context->info, context);
+
+	if (context->rdpsnd)
+	{
+		printf("snd_free\n");
+		wf_rdpsnd_lock();
+		context->info->snd_stop = TRUE;
+		rdpsnd_server_context_free(context->rdpsnd);
+		wf_rdpsnd_unlock();
+	}
+
+	WTSDestroyVirtualChannelManager(context->vcm);
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -53,13 +66,13 @@ void wf_peer_init(freerdp_peer* client)
 	client->context_size = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
-	
+
 	freerdp_peer_context_new(client);
 }
 
-boolean wf_peer_post_connect(freerdp_peer* client)
+BOOL wf_peer_post_connect(freerdp_peer* client)
 {
-	HDC hdc;
+	int i;
 	wfInfo* wfi;
 	rdpSettings* settings;
 	wfPeerContext* context = (wfPeerContext*) client->context;
@@ -67,42 +80,59 @@ boolean wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	hdc = GetDC(NULL);
-	wfi->width = GetDeviceCaps(hdc, HORZRES);
-	wfi->height = GetDeviceCaps(hdc, VERTRES);
-	wfi->bitsPerPixel = GetDeviceCaps(hdc, BITSPIXEL);
-	ReleaseDC(NULL, hdc);
+	if ( 
+		(get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
+		(wfi->servscreen_width == 0) ||
+		(wfi->servscreen_height == 0) ||
+		(wfi->bitsPerPixel == 0) )
+	{
+		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
+		return FALSE;
+	}
 
-	if ((settings->width != wfi->width) || (settings->height != wfi->height))
+	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
-			settings->width, settings->height, wfi->width, wfi->height);
+			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
 
-		settings->width = wfi->width;
-		settings->height = wfi->height;
-		settings->color_depth = wfi->bitsPerPixel;
+		settings->DesktopWidth = wfi->servscreen_width;
+		settings->DesktopHeight = wfi->servscreen_height;
+		settings->ColorDepth = wfi->bitsPerPixel;
 
 		client->update->DesktopResize(client->update->context);
 	}
 
-	return true;
+	for (i = 0; i < client->settings->ChannelCount; i++)
+	{
+		if (client->settings->ChannelDefArray[i].joined)
+		{
+			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
+			{
+				wf_peer_rdpsnd_init(context); /* Audio Output */
+			}
+		}
+	}
+
+	return TRUE;
 }
 
-boolean wf_peer_activate(freerdp_peer* client)
+BOOL wf_peer_activate(freerdp_peer* client)
 {
 	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
-	
+
 	printf("PeerActivate\n");
 
 	wfi = context->info;
-	client->activated = true;
+	client->activated = TRUE;
 	wf_update_peer_activate(wfi, context);
 
-	return true;
+	wfreerdp_server_peer_callback_event(((rdpContext*) context)->peer->pId, WF_SRV_CALLBACK_EVENT_ACTIVATE);
+
+	return TRUE;
 }
 
-boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, boolean automatic)
+BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
 {
 	printf("PeerLogon\n");
 
@@ -112,10 +142,12 @@ boolean wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, b
 			identity->User, identity->Domain, identity->Password);
 	}
 
-	return true;
+
+	wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
+	return TRUE;
 }
 
-void wf_peer_synchronize_event(rdpInput* input, uint32 flags)
+void wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 
 }
@@ -144,7 +176,7 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	{
 		rcount = 0;
 
-		if (client->GetFileDescriptor(client, rfds, &rcount) != true)
+		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get peer file descriptor\n");
 			break;
@@ -162,10 +194,10 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 			FD_SET(fds, &rfds_set);
 		}
-		
+
 		if (max_fds == 0)
 			break;
-		
+
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		SetEvent(context->socketEvent);
@@ -182,11 +214,11 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 void wf_peer_read_settings(freerdp_peer* client)
 {
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->cert_file)))
-		client->settings->cert_file = _strdup("server.crt");
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->CertificateFile)))
+		client->settings->CertificateFile = _strdup("server.crt");
 
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->privatekey_file)))
-		client->settings->privatekey_file = _strdup("server.key");
+	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->PrivateKeyFile)))
+		client->settings->PrivateKeyFile = _strdup("server.key");
 }
 
 DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
@@ -202,9 +234,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	wf_peer_init(client);
 
 	settings = client->settings;
-	settings->rfx_codec = true;
-	settings->ns_codec = false;
-	settings->jpeg_codec = false;
+	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = 32;
+	settings->NSCodec = FALSE;
+	settings->JpegCodec = FALSE;
 	wf_peer_read_settings(client);
 
 	client->PostConnect = wf_peer_post_connect;
@@ -220,7 +253,20 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	client->Initialize(client);
 	context = (wfPeerContext*) client->context;
 
+	if (context->socketClose)
+		return 0;
+
 	wfi = context->info;
+
+	if (wfi->input_disabled == TRUE)
+	{
+		printf("client input is disabled\n");
+		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
+		client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
+		client->input->MouseEvent = wf_peer_mouse_event_dummy;
+		client->input->ExtendedMouseEvent = wf_peer_extended_mouse_event_dummy;
+	}
+
 	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	printf("socketEvent created\n");
 
@@ -256,7 +302,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 		if (WaitForSingleObject(context->socketEvent, 0) == 0)
 		{
-			if (client->CheckFileDescriptor(client) != true)
+			if (client->CheckFileDescriptor(client) != TRUE)
 			{
 				printf("Failed to check peer file descriptor\n");
 				context->socketClose = TRUE;
@@ -268,6 +314,17 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			if (context->socketClose)
 				break;
 		}
+
+		//force disconnect
+		if(wfi->force_all_disconnect == TRUE)
+		{
+			printf("Forcing Disconnect -> ");
+			break;
+		}
+
+		/* FIXME: we should wait on this, instead of calling it every time */
+		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+			break;
 	}
 
 	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);

@@ -260,7 +260,7 @@ LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpRese
 LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
-	return 0;
+	return ERROR_FILE_NOT_FOUND;
 }
 
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
@@ -306,13 +306,15 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 				}
 
 				*lpcbData = length;
+
+				return ERROR_SUCCESS;
 			}
 		}
 
 		pValue = pValue->next;
 	}
 
-	return 0;
+	return ERROR_FILE_NOT_FOUND;
 }
 
 LONG RegRestoreKeyW(HKEY hKey, LPCWSTR lpFile, DWORD dwFlags)

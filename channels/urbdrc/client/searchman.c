@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX USB Redirection
  *
  * Copyright 2012 Atrust corp.
@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 #include "searchman.h"
 
 static void searchman_rewind(USB_SEARCHMAN* searchman)
@@ -48,7 +52,7 @@ static USB_SEARCHDEV* searchman_get_next(USB_SEARCHMAN* searchman)
 	return search;
 }
 
-static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_add(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV*	search;
 	
@@ -77,7 +81,7 @@ static int searchman_list_add(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 
 	return 1;
 }
 
-static int searchman_list_remove(USB_SEARCHMAN* searchman, uint16 idVendor, uint16 idProduct)
+static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct)
 {
 	USB_SEARCHDEV* search;
 	USB_SEARCHDEV* point;
@@ -144,7 +148,7 @@ static void searchman_start(USB_SEARCHMAN* self, void* func)
 /* close thread */
 static void searchman_close(USB_SEARCHMAN* self)
 {
-	wait_obj_set(self->term_event);
+	SetEvent(self->term_event);
 }
 
 static void searchman_list_show(USB_SEARCHMAN* self)
@@ -176,11 +180,11 @@ void searchman_free(USB_SEARCHMAN* self)
 
 	/* free searchman */
 	sem_destroy(&self->sem_term);
-	wait_obj_free(self->term_event);
+	CloseHandle(self->term_event);
 	free(self);
 }
 
-USB_SEARCHMAN* searchman_new(void * urbdrc, uint32 UsbDevice)
+USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 {
 	int ret;
 	USB_SEARCHMAN* searchman;
@@ -214,7 +218,7 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, uint32 UsbDevice)
 	searchman->free = searchman_free;
 	
 	searchman->strated = 0;
-	searchman->term_event = wait_obj_new();
+	searchman->term_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	sem_init(&searchman->sem_term, 0, 0);
 	
 	return searchman;

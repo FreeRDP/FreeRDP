@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows Graphical Objects
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,19 +21,20 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/bitmap.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, uint8** pdata)
+extern HINSTANCE g_hInstance; /* in wfreerdp.c */
+
+HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
 	HDC hdc;
 	int negHeight;
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
-	uint8* cdata = NULL;
+	BYTE* cdata = NULL;
 
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
@@ -65,20 +66,20 @@ HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, uint8* data, 
 	return bitmap;
 }
 
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, uint8* data)
+wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data)
 {
 	HDC hdc;
 	wfBitmap* image;
 
 	hdc = GetDC(NULL);
-	image = (wfBitmap*) xmalloc(sizeof(wfBitmap));
+	image = (wfBitmap*) malloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
 
 	image->bitmap = wf_create_dib(wfi, width, height, bpp, data, &(image->pdata));
 
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
-	
+
 	return image;
 }
 
@@ -118,7 +119,7 @@ void wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
-	
+
 	if (wf_bitmap != 0)
 	{
 		SelectObject(wf_bitmap->hdc, wf_bitmap->org_bitmap);
@@ -143,24 +144,24 @@ void wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		uint8* data, int width, int height, int bpp, int length, boolean compressed, int codec_id)
+		BYTE* data, int width, int height, int bpp, int length, BOOL compressed, int codec_id)
 {
-	uint16 size;
+	UINT16 size;
 
 	size = width * height * (bpp / 8);
 
 	if (bitmap->data == NULL)
-		bitmap->data = (uint8*) xmalloc(size);
+		bitmap->data = (BYTE*) malloc(size);
 	else
-		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
+		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
 	if (compressed)
 	{
-		boolean status;
+		BOOL status;
 
 		status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-		if (status != true)
+		if (status != TRUE)
 		{
 			printf("Bitmap Decompression Failed\n");
 		}
@@ -170,12 +171,12 @@ void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		freerdp_image_flip(data, bitmap->data, width, height, bpp);
 	}
 
-	bitmap->compressed = false;
+	bitmap->compressed = FALSE;
 	bitmap->length = size;
 	bitmap->bpp = bpp;
 }
 
-void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primary)
+void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	wfInfo* wfi = ((wfContext*) context)->wfi;
 
@@ -189,17 +190,62 @@ void wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, boolean primar
 
 void wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
+	ICONINFO info;
+	BYTE *data;
 
+	info.fIcon = FALSE;
+	info.xHotspot = pointer->xPos;
+	info.yHotspot = pointer->yPos;
+	if (pointer->xorBpp == 1)
+	{
+		data = (BYTE*) malloc(pointer->lengthAndMask + pointer->lengthXorMask);
+		CopyMemory(data, pointer->andMaskData, pointer->lengthAndMask);
+		CopyMemory(data + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, data);
+		free(data);
+		info.hbmColor = NULL;
+	}
+	else
+	{
+		data = (BYTE*) malloc(pointer->lengthAndMask);
+		freerdp_bitmap_flip(pointer->andMaskData, data, (pointer->width + 7) / 8, pointer->height);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, data);
+		free(data);
+		data = (BYTE*) malloc(pointer->lengthXorMask);
+		freerdp_image_flip(pointer->xorMaskData, data, pointer->width, pointer->height, pointer->xorBpp);
+		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, data);
+		free(data);
+	}
+	hCur = CreateIconIndirect(&info);
+	((wfPointer*) pointer)->cursor = hCur;
+	if (info.hbmMask)
+		DeleteObject(info.hbmMask);
+	if (info.hbmColor)
+		DeleteObject(info.hbmColor);
 }
 
 void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+	HCURSOR hCur;
 
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != 0)
+		DestroyIcon(hCur);
 }
 
 void wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
+	wfInfo* wfi;
+	HCURSOR hCur;
 
+	wfi = ((wfContext*) context)->wfi;
+	hCur = ((wfPointer*) pointer)->cursor;
+	if (hCur != NULL)
+	{
+		SetCursor(hCur);
+		wfi->cursor = hCur;
+	}
 }
 
 void wf_Pointer_SetNull(rdpContext* context)

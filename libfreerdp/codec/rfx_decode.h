@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RemoteFX Codec Library - Decode
  *
  * Copyright 2011 Vic Lee
@@ -22,12 +22,12 @@
 
 #include <freerdp/codec/rfx.h>
 
-void rfx_decode_ycbcr_to_rgb(sint16* y_r_buf, sint16* cb_g_buf, sint16* cr_b_buf);
-
-void rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
-	int y_size, const uint32 * y_quants,
-	int cb_size, const uint32 * cb_quants,
-	int cr_size, const uint32 * cr_quants, uint8* rgb_buffer);
+/* stride is bytes between rows in the output buffer. */
+BOOL rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
+	int y_size, const UINT32 * y_quants,
+	int cb_size, const UINT32 * cb_quants,
+	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer,
+	int stride);
 
 #endif /* __RFX_DECODE_H */
 

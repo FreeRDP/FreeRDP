@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Audio Input Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
@@ -26,6 +26,7 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
+#include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_DVC
@@ -34,31 +35,31 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-typedef boolean (*AudinReceive) (uint8* data, int size, void* user_data);
+typedef BOOL (*AudinReceive) (BYTE* data, int size, void* user_data);
 
 typedef struct audin_format audinFormat;
 struct audin_format
 {
-	uint16 wFormatTag;
-	uint16 nChannels;
-	uint32 nSamplesPerSec;
-	uint16 nBlockAlign;
-	uint16 wBitsPerSample;
-	uint16 cbSize;
-	uint8* data;
+	UINT16 wFormatTag;
+	UINT16 nChannels;
+	UINT32 nSamplesPerSec;
+	UINT16 nBlockAlign;
+	UINT16 wBitsPerSample;
+	UINT16 cbSize;
+	BYTE* data;
 };
 
 typedef struct _IAudinDevice IAudinDevice;
 struct _IAudinDevice
 {
 	void (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* user_data);
-	boolean (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
-	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, uint32 FramesPerPacket);
+	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
+	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
 	void (*Close) (IAudinDevice* devplugin);
 	void (*Free) (IAudinDevice* devplugin);
 };
 
-#define AUDIN_DEVICE_EXPORT_FUNC_NAME "FreeRDPAudinDeviceEntry"
+#define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
 typedef void (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
@@ -66,7 +67,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 {
 	IWTSPlugin* plugin;
 	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	RDP_PLUGIN_DATA* plugin_data;
+	ADDIN_ARGV* args;
 };
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;

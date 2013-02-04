@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Region Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __GDI_REGION_H
-#define __GDI_REGION_H
+#ifndef FREERDP_GDI_REGION_H
+#define FREERDP_GDI_REGION_H
 
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
@@ -42,4 +42,4 @@ FREERDP_API int gdi_CopyRect(HGDI_RECT dst, HGDI_RECT src);
 FREERDP_API int gdi_PtInRect(HGDI_RECT rc, int x, int y);
 FREERDP_API int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h);
 
-#endif /* __GDI_REGION_H */
+#endif /* FREERDP_GDI_REGION_H */

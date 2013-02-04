@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -24,7 +24,7 @@
 
 #include "xfreerdp.h"
 
-boolean xf_event_process(freerdp* instance, XEvent* event);
+BOOL xf_event_process(freerdp* instance, XEvent* event);
 void xf_event_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_EVENT_H */

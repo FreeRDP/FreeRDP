@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Compressed Bitmap
  *
  * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>
@@ -22,7 +22,6 @@
 #endif
 
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 #include <freerdp/codec/color.h>
 
 #include <freerdp/codec/bitmap.h>
@@ -58,28 +57,28 @@
 #define BLACK_PIXEL 0x000000
 #define WHITE_PIXEL 0xFFFFFF
 
-typedef uint32 PIXEL;
+typedef UINT32 PIXEL;
 
-static const uint8 g_MaskBit0 = 0x01; /* Least significant bit */
-static const uint8 g_MaskBit1 = 0x02;
-static const uint8 g_MaskBit2 = 0x04;
-static const uint8 g_MaskBit3 = 0x08;
-static const uint8 g_MaskBit4 = 0x10;
-static const uint8 g_MaskBit5 = 0x20;
-static const uint8 g_MaskBit6 = 0x40;
-static const uint8 g_MaskBit7 = 0x80; /* Most significant bit */
+static const BYTE g_MaskBit0 = 0x01; /* Least significant bit */
+static const BYTE g_MaskBit1 = 0x02;
+static const BYTE g_MaskBit2 = 0x04;
+static const BYTE g_MaskBit3 = 0x08;
+static const BYTE g_MaskBit4 = 0x10;
+static const BYTE g_MaskBit5 = 0x20;
+static const BYTE g_MaskBit6 = 0x40;
+static const BYTE g_MaskBit7 = 0x80; /* Most significant bit */
 
-static const uint8 g_MaskSpecialFgBg1 = 0x03;
-static const uint8 g_MaskSpecialFgBg2 = 0x05;
+static const BYTE g_MaskSpecialFgBg1 = 0x03;
+static const BYTE g_MaskSpecialFgBg2 = 0x05;
 
-static const uint8 g_MaskRegularRunLength = 0x1F;
-static const uint8 g_MaskLiteRunLength = 0x0F;
+static const BYTE g_MaskRegularRunLength = 0x1F;
+static const BYTE g_MaskLiteRunLength = 0x0F;
 
 /**
  * Reads the supplied order header and extracts the compression
  * order code ID.
  */
-static uint32 ExtractCodeId(uint8 bOrderHdr)
+static UINT32 ExtractCodeId(BYTE bOrderHdr)
 {
 	int code;
 
@@ -115,10 +114,10 @@ static uint32 ExtractCodeId(uint8 bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
-static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
+static UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
 {
-	uint32 runLength;
-	uint32 ladvance;
+	UINT32 runLength;
+	UINT32 ladvance;
 
 	ladvance = 1;
 	runLength = 0;
@@ -178,7 +177,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
-			runLength = ((uint16) pbOrderHdr[1]) | ((uint16) (pbOrderHdr[2] << 8));
+			runLength = ((UINT16) pbOrderHdr[1]) | ((UINT16) (pbOrderHdr[2] << 8));
 			ladvance += 2;
 			break;
 	}
@@ -198,7 +197,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (uint8)(_pix)
+#define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (BYTE)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define DESTNEXTPIXEL(_buf) _buf += 1
@@ -218,9 +217,9 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) ((uint16*)(_buf))[0] = (uint16)(_pix)
-#define DESTREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
+#define DESTWRITEPIXEL(_buf, _pix) ((UINT16*)(_buf))[0] = (UINT16)(_pix)
+#define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
+#define SRCREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
 #define DESTNEXTPIXEL(_buf) _buf += 2
 #define SRCNEXTPIXEL(_buf) _buf += 2
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
@@ -238,8 +237,8 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
-#define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (uint8)(_pix);  \
-  (_buf)[1] = (uint8)((_pix) >> 8); (_buf)[2] = (uint8)((_pix) >> 16); } while (0)
+#define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (BYTE)(_pix);  \
+  (_buf)[1] = (BYTE)((_pix) >> 8); (_buf)[2] = (BYTE)((_pix) >> 16); } while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
   ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
@@ -258,7 +257,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
  * decompress an RLE color plane
  * RDP6_BITMAP_STREAM
  */
-static int process_rle_plane(uint8* in, int width, int height, uint8* out, int size)
+static int process_rle_plane(BYTE* in, int width, int height, BYTE* out, int size)
 {
 	int indexw;
 	int indexh;
@@ -268,10 +267,10 @@ static int process_rle_plane(uint8* in, int width, int height, uint8* out, int s
 	int color;
 	int x;
 	int revcode;
-	uint8* last_line;
-	uint8* this_line;
-	uint8* org_in;
-	uint8* org_out;
+	BYTE* last_line;
+	BYTE* this_line;
+	BYTE* org_in;
+	BYTE* org_out;
 
 	org_in = in;
 	org_out = out;
@@ -365,7 +364,7 @@ static int process_rle_plane(uint8* in, int width, int height, uint8* out, int s
 /**
  * process a raw color plane
  */
-static int process_raw_plane(uint8* srcData, int width, int height, uint8* dstData, int size)
+static int process_raw_plane(BYTE* srcData, int width, int height, BYTE* dstData, int size)
 {
 	int x, y;
 
@@ -384,7 +383,7 @@ static int process_raw_plane(uint8* srcData, int width, int height, uint8* dstDa
  * 4 byte bitmap decompress
  * RDP6_BITMAP_STREAM
  */
-static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int height, int size)
+static BOOL bitmap_decompress4(BYTE* srcData, BYTE* dstData, int width, int height, int size)
 {
 	int RLE;
 	int code;
@@ -432,54 +431,54 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
 		total_processed += bytes_processed + 1;
 	}
 
-	return (size == total_processed) ? true : false;
+	return (size == total_processed) ? TRUE : FALSE;
 }
 
 
 /**
  * bitmap decompression routine
  */
-boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
+BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-        uint8 * TmpBfr;
+        BYTE * TmpBfr;
 
 	if (srcBpp == 16 && dstBpp == 16)
 	{
-	        TmpBfr = (uint8*) xmalloc(width * height * 2);
+	        TmpBfr = (BYTE*) malloc(width * height * 2);
 	        RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
 	        freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-	        xfree(TmpBfr);
+	        free(TmpBfr);
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
 		if (!bitmap_decompress4(srcData, dstData, width, height, size))
-			return false;
+			return FALSE;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height * 2);
+                TmpBfr = (BYTE*) malloc(width * height * 2);
                 RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
                 freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-                xfree(TmpBfr);
+                free(TmpBfr);
 	}
 	else if (srcBpp == 8 && dstBpp == 8)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height);
+                TmpBfr = (BYTE*) malloc(width * height);
                 RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
                 freerdp_bitmap_flip(TmpBfr, dstData, width, height);
-                xfree(TmpBfr);
+                free(TmpBfr);
 	}
 	else if (srcBpp == 24 && dstBpp == 24)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height * 3);
+                TmpBfr = (BYTE*) malloc(width * height * 3);
                 RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
                 freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
-                xfree(TmpBfr);
+                free(TmpBfr);
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }

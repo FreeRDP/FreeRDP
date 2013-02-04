@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows RAIL
  *
  * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>
@@ -20,7 +20,6 @@
 #define __WF_WINDOW_H
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/memory.h>
 
 #include "wfreerdp.h"
 

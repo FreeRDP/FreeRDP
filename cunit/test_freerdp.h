@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Unit Tests
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,7 +23,7 @@
 #include <CUnit/CUnit.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/hexdump.h>
+#include <winpr/print.h>
 
 #define add_test_suite(name) \
 	CU_pSuite pSuite; \
@@ -38,6 +38,6 @@
 	}
 
 void dump_data(unsigned char * p, int len, int width, char* name);
-void assert_stream(STREAM* s, uint8* data, int length, const char* func, int line);
+void assert_stream(STREAM* s, BYTE* data, int length, const char* func, int line);
 
 #define ASSERT_STREAM(_s, _data, _length) assert_stream(_s, _data, _length, __FUNCTION__, __LINE__)

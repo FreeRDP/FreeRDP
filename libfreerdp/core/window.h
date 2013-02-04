@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windowing Alternate Secondary Orders
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -25,7 +25,7 @@
 
 #include <freerdp/utils/stream.h>
 
-void update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
+BOOL update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
 
 #ifdef WITH_DEBUG_WND
 #define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)

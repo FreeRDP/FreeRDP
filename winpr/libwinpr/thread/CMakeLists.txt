@@ -18,20 +18,20 @@
 set(MODULE_NAME "winpr-thread")
 set(MODULE_PREFIX "WINPR_THREAD")
 
-set(CMAKE_THREAD_PREFER_PTHREAD)
-find_required_package(Threads)
-
 set(${MODULE_PREFIX}_SRCS
 	process.c
 	processor.c
 	thread.c
+	thread.h
 	tls.c)
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(MSVC AND (NOT MONOLITHIC_BUILD))
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
+
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
@@ -43,12 +43,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()
-	if(NOT WIN32)
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-handle)
-	endif()
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-handle)
 
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -1,9 +1,7 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,30 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(TSMF_FFMPEG_SRCS
-	tsmf_ffmpeg.c
-)
+define_channel_client_subsystem("tsmf" "ffmpeg" "decoder")
+
+set(${MODULE_PREFIX}_SRCS
+	tsmf_ffmpeg.c)
 
 include_directories(..)
 include_directories(${FFMPEG_INCLUDE_DIRS})
 
-add_library(tsmf_ffmpeg ${TSMF_FFMPEG_SRCS})
-set_target_properties(tsmf_ffmpeg PROPERTIES PREFIX "")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-if(CMAKE_COMPILER_IS_GNUCC)
-	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
-	if(Wno-deprecated-declarations)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
-	endif()
-endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(tsmf_ffmpeg freerdp)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+
+if(APPLE)
+    # For this to work on apple, we need to add some frameworks
+    FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation )
+    FIND_LIBRARY(COREVIDEO_LIBRARY CoreVideo )
+    FIND_LIBRARY(COREVIDEODECODE_LIBRARY VideoDecodeAcceleration )
+    set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FFMPEG_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY} ${COREVIDEODECODE_LIBRARY} )
+    target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 else()
-	target_link_libraries(tsmf_ffmpeg freerdp-utils)
+    set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FFMPEG_LIBRARIES})
+    target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 endif()
 
-target_link_libraries(tsmf_ffmpeg ${FFMPEG_LIBRARIES})
-
-install(TARGETS tsmf_ffmpeg DESTINATION ${FREERDP_PLUGIN_PATH})
-
+if(NOT STATIC_CHANNELS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
+endif()

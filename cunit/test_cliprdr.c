@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Clipboard Virtual Channel Unit Tests
  *
  * Copyright 2011 Vic Lee
@@ -24,9 +24,8 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/hexdump.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/plugins/cliprdr.h>
+#include <winpr/print.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "test_cliprdr.h"
 
@@ -51,18 +50,18 @@ int add_cliprdr_suite(void)
 	return 0;
 }
 
-static const uint8 test_clip_caps_data[] =
+static const BYTE test_clip_caps_data[] =
 {
 	"\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0C\x00"
 	"\x02\x00\x00\x00\x0E\x00\x00\x00"
 };
 
-static const uint8 test_monitor_ready_data[] =
+static const BYTE test_monitor_ready_data[] =
 {
 	"\x01\x00\x00\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_format_list_data[] =
+static const BYTE test_format_list_data[] =
 {
 	"\x02\x00\x00\x00\x48\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -71,26 +70,26 @@ static const uint8 test_format_list_data[] =
 	"\x6D\x00\x61\x00\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_format_list_response_data[] =
+static const BYTE test_format_list_response_data[] =
 {
 	"\x03\x00\x01\x00\x00\x00\x00\x00"
 };
 
-static const uint8 test_data_request_data[] =
+static const BYTE test_data_request_data[] =
 {
 	"\x04\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
 };
 
-static const uint8 test_data_response_data[] =
+static const BYTE test_data_response_data[] =
 {
 	"\x05\x00\x01\x00\x18\x00\x00\x00\x68\x00\x65\x00\x6C\x00\x6C\x00"
 	"\x6F\x00\x20\x00\x77\x00\x6F\x00\x72\x00\x6c\x00\x64\x00\x00\x00"
 };
 
-static int test_rdp_channel_data(freerdp* instance, int chan_id, uint8* data, int data_size)
+static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int data_size)
 {
 	printf("chan_id %d data_size %d\n", chan_id, data_size);
-	freerdp_hexdump(data, data_size);
+	winpr_HexDump(data, data_size);
 	return 0;
 }
 
@@ -113,7 +112,7 @@ void test_cliprdr(void)
 	RDP_CB_DATA_REQUEST_EVENT* data_request_event;
 	RDP_CB_DATA_RESPONSE_EVENT* data_response_event;
 
-	settings.hostname = "testhost";
+	settings.Hostname = "testhost";
 	instance.settings = &settings;
 	instance.SendChannelData = test_rdp_channel_data;
 
@@ -143,7 +142,7 @@ void test_cliprdr(void)
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, event_process_callback, NULL);
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 2;
-	format_list_event->formats = (uint32*) xmalloc(sizeof(uint32) * 2);
+	format_list_event->formats = (UINT32*) malloc(sizeof(UINT32) * 2);
 	format_list_event->formats[0] = CB_FORMAT_TEXT;
 	format_list_event->formats[1] = CB_FORMAT_HTML;
 	event_processed = 0;
@@ -199,7 +198,7 @@ void test_cliprdr(void)
 	/* UI sends data response event to cliprdr */
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_RESPONSE, event_process_callback, NULL);
 	data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
-	data_response_event->data = (uint8*)xmalloc(6);
+	data_response_event->data = (BYTE*)malloc(6);
 	strcpy((char*)data_response_event->data, "hello");
 	data_response_event->size = 6;
 	event_processed = 0;
@@ -239,7 +238,7 @@ void test_cliprdr(void)
 	{
 		data_response_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
 		printf("Data response size: %d\n", data_response_event->size);
-		freerdp_hexdump(data_response_event->data, data_response_event->size);
+		winpr_HexDump(data_response_event->data, data_response_event->size);
 	}
 	freerdp_event_free(event);
 

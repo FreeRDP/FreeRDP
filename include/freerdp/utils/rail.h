@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL) Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,19 +17,27 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_UTILS_H
-#define __RAIL_UTILS_H
+#ifndef FREERDP_UTILS_RAIL_H
+#define FREERDP_UTILS_RAIL_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
 #include <freerdp/utils/stream.h>
 
-FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, uint16 cbString);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString);
 FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API void rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API void* rail_clone_order(uint32 event_type, void* order);
-FREERDP_API void  rail_free_cloned_order(uint32 event_type, void* order);
+FREERDP_API void* rail_clone_order(UINT32 event_type, void* order);
+FREERDP_API void  rail_free_cloned_order(UINT32 event_type, void* order);
 
-#endif /* __RAIL_UTILS_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_RAIL_H */

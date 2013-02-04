@@ -69,33 +69,19 @@
 
 #include <winpr/crt.h>
 
-#include <pthread.h>
+#include "thread.h"
 
 /**
  * TODO: implement thread suspend/resume using pthreads
  * http://stackoverflow.com/questions/3140867/suspend-pthreads-without-using-condition
  */
 
-typedef void *(*pthread_start_routine)(void*);
-
-struct winpr_thread
-{
-	BOOL started;
-	pthread_t thread;
-	SIZE_T dwStackSize;
-	LPVOID lpParameter;
-	pthread_mutex_t mutex;
-	LPTHREAD_START_ROUTINE lpStartAddress;
-	LPSECURITY_ATTRIBUTES lpThreadAttributes;
-};
-typedef struct winpr_thread WINPR_THREAD;
-
 void winpr_StartThread(WINPR_THREAD* thread)
 {
 	pthread_attr_t attr;
 
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
@@ -142,14 +128,16 @@ VOID ExitThread(DWORD dwExitCode)
 	pthread_exit((void*) dwExitCode);
 }
 
-HANDLE GetCurrentThread(VOID)
+HANDLE _GetCurrentThread(VOID)
 {
 	return NULL;
 }
 
 DWORD GetCurrentThreadId(VOID)
 {
-	return 0;
+	pthread_t tid;
+	tid = pthread_self();
+	return (DWORD) tid;
 }
 
 DWORD ResumeThread(HANDLE hThread)
@@ -196,7 +184,9 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 
 	pthread_mutex_lock(&thread->mutex);
 
+#ifndef ANDROID
 	pthread_cancel(thread->thread);
+#endif
 
 	pthread_mutex_unlock(&thread->mutex);
 

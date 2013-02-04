@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Window Icon Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_ICON_CACHE_H
-#define __RAIL_ICON_CACHE_H
+#ifndef FREERDP_RAIL_ICON_CACHE_H
+#define FREERDP_RAIL_ICON_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
@@ -34,7 +34,7 @@ typedef struct rdp_icon_cache rdpIconCache;
 struct rdp_icon
 {
 	ICON_INFO* entry;
-	boolean big;
+	BOOL big;
 	void* extra;
 };
 
@@ -47,15 +47,15 @@ typedef struct _WINDOW_ICON_CACHE WINDOW_ICON_CACHE;
 struct rdp_icon_cache
 {
 	rdpRail* rail;
-	uint8 numCaches;
-	uint16 numCacheEntries;
+	BYTE numCaches;
+	UINT16 numCacheEntries;
 	WINDOW_ICON_CACHE* caches;
 };
 
-ICON_INFO* icon_cache_get(rdpIconCache* cache, uint8 id, uint16 index, void** extra);
-void icon_cache_put(rdpIconCache* cache, uint8 id, uint16 index, ICON_INFO* entry, void* extra);
+ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra);
+void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry, void* extra);
 
 rdpIconCache* icon_cache_new(rdpRail* rail);
 void icon_cache_free(rdpIconCache* cache);
 
-#endif /* __RAIL_ICON_H */
+#endif /* FREERDP_RAIL_ICON_CACHE_H */

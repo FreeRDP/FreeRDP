@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Dynamic Virtual Channel Manager
  *
  * Copyright 2010-2011 Vic Lee
@@ -21,16 +21,18 @@
 #define __DVCMAN_H
 
 #include <freerdp/dvc.h>
+#include <freerdp/addin.h>
+
 #include "drdynvc_main.h"
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin);
-int dvcman_load_plugin(IWTSVirtualChannelManager* pChannelMgr, RDP_PLUGIN_DATA* data);
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args);
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
-int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, const char* ChannelName);
-int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId);
-int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint32 length);
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, uint32 ChannelId, uint8* data, uint32 data_size);
+int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName);
+int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
+int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length);
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size);
 
 #endif
 

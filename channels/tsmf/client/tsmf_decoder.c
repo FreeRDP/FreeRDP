@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Video Redirection Virtual Channel - Decoder
  *
  * Copyright 2010-2011 Vic Lee
@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/load_plugin.h>
+#include <freerdp/addin.h>
+#include <freerdp/client/channels.h>
 
 #include "tsmf_types.h"
 #include "tsmf_constants.h"
@@ -36,34 +36,26 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name, TS_AM_MEDIA_TYP
 {
 	ITSMFDecoder* decoder;
 	TSMF_DECODER_ENTRY entry;
-	char* fullname;
 
-	if (strrchr(name, '.') != NULL)
-		entry = (TSMF_DECODER_ENTRY) freerdp_load_plugin(name, TSMF_DECODER_EXPORT_FUNC_NAME);
-	else
-	{
-		fullname = xzalloc(strlen(name) + 6);
-		strcpy(fullname, "tsmf_");
-		strcat(fullname, name);
-		entry = (TSMF_DECODER_ENTRY) freerdp_load_plugin(fullname, TSMF_DECODER_EXPORT_FUNC_NAME);
-		xfree(fullname);
-	}
+	entry = (TSMF_DECODER_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "decoder", 0);
+
 	if (entry == NULL)
-	{
 		return NULL;
-	}
 
 	decoder = entry();
+
 	if (decoder == NULL)
 	{
 		DEBUG_WARN("failed to call export function in %s", name);
 		return NULL;
 	}
+
 	if (!decoder->SetFormat(decoder, media_type))
 	{
 		decoder->Free(decoder);
 		decoder = NULL;
 	}
+
 	return decoder;
 }
 
@@ -82,4 +74,3 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 
 	return decoder;
 }
-

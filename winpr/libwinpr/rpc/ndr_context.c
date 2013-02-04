@@ -25,6 +25,9 @@
 #include <stdlib.h>
 
 #include <winpr/rpc.h>
+
+#ifndef _WIN32
+
 #include "ndr_context.h"
 #include "ndr_private.h"
 
@@ -68,3 +71,5 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		NdrpIncrementLength(&(pStubMsg->BufferLength), 20);
 	}
 }
+
+#endif

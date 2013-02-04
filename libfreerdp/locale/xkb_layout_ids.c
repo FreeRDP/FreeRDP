@@ -25,7 +25,8 @@
 
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/locale/keyboard.h>
 
 #include "liblocale.h"
@@ -33,14 +34,14 @@
 struct _XKB_VARIANT
 {
 	const char* variant; /* XKB Keyboard layout variant */
-	uint32 keyboardLayoutID; /* Keyboard Layout ID */
+	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
 };
 typedef struct _XKB_VARIANT XKB_VARIANT;
 
 struct _XKB_LAYOUT
 {
 	const char* layout; /* XKB Keyboard layout */
-	uint32 keyboardLayoutID; /* Keyboard Layout ID */
+	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
 	const XKB_VARIANT* variants;
 };
 typedef struct _XKB_LAYOUT XKB_LAYOUT;
@@ -895,7 +896,7 @@ static const XKB_LAYOUT xkbLayouts[] =
 	{ "tm",		 KBD_TURKISH_Q, tm_variants }, /* Turkmenistan */
 };
 
-uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
+UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 {
 	int i, j;
 
@@ -904,7 +905,7 @@ uint32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
-	for (i = 0; i < ARRAY_SIZE(xkbLayouts); i++)
+	for (i = 0; i < ARRAYSIZE(xkbLayouts); i++)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{

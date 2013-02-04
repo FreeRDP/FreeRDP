@@ -21,18 +21,16 @@ set(MODULE_PREFIX "WINPR_PATH")
 set(${MODULE_PREFIX}_SRCS
 	path.c)
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+if(MONOLITHIC_BUILD)
 
 else()
-	target_link_libraries(${MODULE_NAME} winpr-heap)
+	target_link_libraries(${MODULE_NAME} winpr-crt winpr-heap)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 

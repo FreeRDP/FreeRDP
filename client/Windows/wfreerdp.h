@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Windows Client
  *
  * Copyright 2009-2011 Jay Sorg
@@ -43,13 +43,14 @@ struct wf_bitmap
 	HDC hdc;
 	HBITMAP bitmap;
 	HBITMAP org_bitmap;
-	uint8* pdata;
+	BYTE* pdata;
 };
 typedef struct wf_bitmap wfBitmap;
 
 struct wf_pointer
 {
 	rdpPointer pointer;
+	HCURSOR cursor;
 };
 typedef struct wf_pointer wfPointer;
 
@@ -65,15 +66,20 @@ typedef struct wf_context wfContext;
 
 struct wf_info
 {
+	int width;
+	int height;
+	int offset_x;
+	int offset_y;
 	int fs_toggle;
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
 
 	HWND hwnd;
+	POINT diff;
 	HGDI_DC hdc;
-	uint16 srcBpp;
-	uint16 dstBpp;
+	UINT16 srcBpp;
+	UINT16 dstBpp;
 	freerdp* instance;
 	wfBitmap* primary;
 	wfBitmap* drawing;
@@ -84,11 +90,10 @@ struct wf_info
 	RECT update_rect;
 
 	wfBitmap* tile;
-	wfBitmap* image;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
-	boolean sw_gdi;
+	BOOL sw_gdi;
 };
 
 #endif

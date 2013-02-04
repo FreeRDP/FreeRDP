@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Glyph Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,8 +23,9 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/pointer.h>
 
@@ -47,6 +48,7 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 
 		default:
 			printf("Unknown system pointer type (0x%08X)\n", pointer_system->type);
+			break;
 	}
 }
 
@@ -91,8 +93,20 @@ void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 		pointer->height = pointer_new->colorPtrAttr.height;
 		pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
 		pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
-		pointer->xorMaskData = pointer_new->colorPtrAttr.xorMaskData;
-		pointer->andMaskData = pointer_new->colorPtrAttr.andMaskData;
+
+		pointer->andMaskData = pointer->xorMaskData = NULL;
+
+		if (pointer->lengthAndMask)
+		{
+			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+			CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData, pointer->lengthAndMask);
+		}
+
+		if (pointer->lengthXorMask)
+		{
+			pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
+			CopyMemory(pointer->xorMaskData, pointer_new->colorPtrAttr.xorMaskData, pointer->lengthXorMask);
+		}
 
 		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
@@ -111,7 +125,7 @@ void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 		Pointer_Set(context, pointer);
 }
 
-rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
+rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
 	rdpPointer* pointer;
 
@@ -126,7 +140,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, uint32 index)
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, uint32 index, rdpPointer* pointer)
+void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer)
 {
 	rdpPointer* prevPointer;
 
@@ -159,14 +173,18 @@ rdpPointerCache* pointer_cache_new(rdpSettings* settings)
 {
 	rdpPointerCache* pointer_cache;
 
-	pointer_cache = (rdpPointerCache*) xzalloc(sizeof(rdpPointerCache));
+	pointer_cache = (rdpPointerCache*) malloc(sizeof(rdpPointerCache));
 
 	if (pointer_cache != NULL)
 	{
+		ZeroMemory(pointer_cache, sizeof(rdpPointerCache));
+
 		pointer_cache->settings = settings;
-		pointer_cache->cacheSize = settings->pointer_cache_size;
+		pointer_cache->cacheSize = settings->PointerCacheSize;
 		pointer_cache->update = ((freerdp*) settings->instance)->update;
-		pointer_cache->entries = (rdpPointer**) xzalloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
+
+		pointer_cache->entries = (rdpPointer**) malloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
+		ZeroMemory(pointer_cache->entries, sizeof(rdpPointer*) * pointer_cache->cacheSize);
 	}
 
 	return pointer_cache;
@@ -187,7 +205,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 				Pointer_Free(pointer_cache->update->context, pointer);
 		}
 
-		xfree(pointer_cache->entries);
-		xfree(pointer_cache);
+		free(pointer_cache->entries);
+		free(pointer_cache);
 	}
 }

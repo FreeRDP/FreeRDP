@@ -1,9 +1,7 @@
-# FreeRDP: A Remote Desktop Protocol Client
+# FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,36 +15,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(RDPDR_SRCS
-	rdpdr_constants.h
-	rdpdr_types.h
-	rdpdr_capabilities.c
-	rdpdr_capabilities.h
-	devman.c
-	devman.h
+define_channel_client("rdpdr")
+
+set(${MODULE_PREFIX}_SRCS
 	irp.c
 	irp.h
+	devman.c
+	devman.h
 	rdpdr_main.c
-	rdpdr_main.h)
+	rdpdr_main.h
+	rdpdr_capabilities.c
+	rdpdr_capabilities.h)
 
-add_library(rdpdr ${RDPDR_SRCS})
-set_target_properties(rdpdr PROPERTIES PREFIX "")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
-if(WITH_MONOLITHIC_BUILD)
-	target_link_libraries(rdpdr freerdp)
-else()
-	target_link_libraries(rdpdr freerdp-utils)
-endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-install(TARGETS rdpdr DESTINATION ${FREERDP_PLUGIN_PATH})
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
+	
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE winpr
+	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
 
-add_subdirectory(disk)
-add_subdirectory(printer)
-if(NOT WIN32)
-	add_subdirectory(parallel)
-	add_subdirectory(serial)
-endif()
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-if(WITH_PCSC)
-	add_subdirectory(smartcard)
-endif()
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

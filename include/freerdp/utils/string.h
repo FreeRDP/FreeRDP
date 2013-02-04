@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * String Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __STRING_UTILS_H
-#define __STRING_UTILS_H
+#ifndef FREERDP_UTILS_STRING_H
+#define FREERDP_UTILS_STRING_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -28,11 +28,19 @@ struct rdp_string
 {
 	char* ascii;
 	char* unicode;
-	uint32 length;
+	UINT32 length;
 };
 typedef struct rdp_string rdpString;
 
-FREERDP_API void freerdp_string_read_length32(STREAM* s, rdpString* string);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+FREERDP_API BOOL freerdp_string_read_length32(STREAM* s, rdpString* string);
 FREERDP_API void freerdp_string_free(rdpString* string);
 
-#endif /* __STRING_UTILS_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_STRING_H */

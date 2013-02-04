@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Double-linked List Utils
  *
  * Copyright 2011 Vic Lee
@@ -17,13 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef __LIST_UTILS_H
-#define __LIST_UTILS_H
+#ifndef FREERDP_UTILS_LIST_H
+#define FREERDP_UTILS_LIST_H
 
 #include <freerdp/api.h>
-#include <freerdp/utils/memory.h>
 
 typedef struct _LIST_ITEM LIST_ITEM;
+
 struct _LIST_ITEM
 {
 	void* data;
@@ -32,12 +32,17 @@ struct _LIST_ITEM
 };
 
 typedef struct _LIST LIST;
+
 struct _LIST
 {
 	int count;
 	LIST_ITEM* head;
 	LIST_ITEM* tail;
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 FREERDP_API LIST* list_new(void);
 FREERDP_API void list_free(LIST* list);
@@ -49,4 +54,8 @@ FREERDP_API void* list_next(LIST* list, void* data);
 FREERDP_API void* list_remove(LIST* list, void* data);
 FREERDP_API int list_size(LIST* list);
 
-#endif /* __LIST_UTILS_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_UTILS_LIST_H */

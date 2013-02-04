@@ -23,7 +23,7 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 
 	printf("\nEnumerateSecurityPackages (%d):\n", (unsigned int)cPackages);
 
-	for (index = 0; index < cPackages; index++)
+	for (index = 0; index < (int) cPackages; index++)
 	{
 		printf("\"%s\", \"%s\"\n", pPackageInfo[index].Name, pPackageInfo[index].Comment);
 	}

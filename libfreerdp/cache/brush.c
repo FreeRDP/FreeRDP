@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Brush Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,16 +23,17 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/brush.h>
 
 void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	uint8 style;
+	BYTE style;
 	rdpBrush* brush = &patblt->brush;
 	rdpCache* cache = context->cache;
 
@@ -56,7 +57,7 @@ void update_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 
 void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	uint8 style;
+	BYTE style;
 	rdpBrush* brush = &polygon_cb->brush;
 	rdpCache* cache = context->cache;
 
@@ -74,11 +75,19 @@ void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
+	int length;
+	void* data = NULL;
 	rdpCache* cache = context->cache;
-	brush_cache_put(cache->brush, cache_brush->index, cache_brush->data, cache_brush->bpp);
+
+	length = cache_brush->bpp * 64 / 8;
+
+	data = malloc(length);
+	CopyMemory(data, cache_brush->data, length);
+
+	brush_cache_put(cache->brush, cache_brush->index, data, cache_brush->bpp);
 }
 
-void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
+void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)
 {
 	void* entry;
 
@@ -114,7 +123,7 @@ void* brush_cache_get(rdpBrushCache* brush, uint32 index, uint32* bpp)
 	return entry;
 }
 
-void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp)
+void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp)
 {
 	void* prevEntry;
 
@@ -129,7 +138,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 		prevEntry = brush->monoEntries[index].entry;
 
 		if (prevEntry != NULL)
-			xfree(prevEntry);
+			free(prevEntry);
 
 		brush->monoEntries[index].bpp = bpp;
 		brush->monoEntries[index].entry = entry;
@@ -145,7 +154,7 @@ void brush_cache_put(rdpBrushCache* brush, uint32 index, void* entry, uint32 bpp
 		prevEntry = brush->entries[index].entry;
 
 		if (prevEntry != NULL)
-			xfree(prevEntry);
+			free(prevEntry);
 
 		brush->entries[index].bpp = bpp;
 		brush->entries[index].entry = entry;
@@ -170,7 +179,8 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
 	rdpBrushCache* brush;
 
-	brush = (rdpBrushCache*) xzalloc(sizeof(rdpBrushCache));
+	brush = (rdpBrushCache*) malloc(sizeof(rdpBrushCache));
+	ZeroMemory(brush, sizeof(rdpBrushCache));
 
 	if (brush != NULL)
 	{
@@ -179,8 +189,11 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 		brush->maxEntries = 64;
 		brush->maxMonoEntries = 64;
 
-		brush->entries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
-		brush->monoEntries = (BRUSH_ENTRY*) xzalloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
+		brush->entries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
+		ZeroMemory(brush->entries, sizeof(BRUSH_ENTRY) * brush->maxEntries);
+
+		brush->monoEntries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
+		ZeroMemory(brush->monoEntries, sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
 	}
 
 	return brush;
@@ -197,10 +210,10 @@ void brush_cache_free(rdpBrushCache* brush)
 			for (i = 0; i < (int) brush->maxEntries; i++)
 			{
 				if (brush->entries[i].entry != NULL)
-					xfree(brush->entries[i].entry);
+					free(brush->entries[i].entry);
 			}
 
-			xfree(brush->entries);
+			free(brush->entries);
 		}
 
 		if (brush->monoEntries != NULL)
@@ -208,12 +221,12 @@ void brush_cache_free(rdpBrushCache* brush)
 			for (i = 0; i < (int) brush->maxMonoEntries; i++)
 			{
 				if (brush->monoEntries[i].entry != NULL)
-					xfree(brush->monoEntries[i].entry);
+					free(brush->monoEntries[i].entry);
 			}
 
-			xfree(brush->monoEntries);
+			free(brush->monoEntries);
 		}
 
-		xfree(brush);
+		free(brush);
 	}
 }

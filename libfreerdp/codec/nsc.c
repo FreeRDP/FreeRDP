@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NSCodec Codec
  *
  * Copyright 2011 Samsung, Author Jiten Pathy
@@ -25,12 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/codec/nsc.h>
-#include <freerdp/utils/memory.h>
 
 #include "nsc_types.h"
 #include "nsc_encode.h"
@@ -45,21 +47,21 @@
 
 static void nsc_decode(NSC_CONTEXT* context)
 {
-	uint16 x;
-	uint16 y;
-	uint16 rw;
-	uint8 shift;
-	uint8* yplane;
-	uint8* coplane;
-	uint8* cgplane;
-	uint8* aplane;
-	sint16 y_val;
-	sint16 co_val;
-	sint16 cg_val;
-	sint16 r_val;
-	sint16 g_val;
-	sint16 b_val;
-	uint8* bmpdata;
+	UINT16 x;
+	UINT16 y;
+	UINT16 rw;
+	BYTE shift;
+	BYTE* yplane;
+	BYTE* coplane;
+	BYTE* cgplane;
+	BYTE* aplane;
+	INT16 y_val;
+	INT16 co_val;
+	INT16 cg_val;
+	INT16 r_val;
+	INT16 g_val;
+	INT16 b_val;
+	BYTE* bmpdata;
 
 	bmpdata = context->bmpdata;
 	rw = ROUND_UP_TO(context->width, 8);
@@ -82,9 +84,9 @@ static void nsc_decode(NSC_CONTEXT* context)
 		aplane = context->priv->plane_buf[3] + y * context->width; /* A */
 		for (x = 0; x < context->width; x++)
 		{
-			y_val = (sint16) *yplane;
-			co_val = (sint16) (sint8) (*coplane << shift);
-			cg_val = (sint16) (sint8) (*cgplane << shift);
+			y_val = (INT16) *yplane;
+			co_val = (INT16) (INT8) (*coplane << shift);
+			cg_val = (INT16) (INT8) (*cgplane << shift);
 			r_val = y_val + co_val - cg_val;
 			g_val = y_val + cg_val;
 			b_val = y_val - co_val - cg_val;
@@ -100,11 +102,11 @@ static void nsc_decode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
+static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 origsz)
 {
-	uint32 len;
-	uint32 left;
-	uint8 value;
+	UINT32 len;
+	UINT32 left;
+	BYTE value;
 
 	left = origsz;
 	while (left > 4)
@@ -121,13 +123,13 @@ static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
 			in++;
 			if (*in < 0xFF)
 			{
-				len = (uint32) *in++;
+				len = (UINT32) *in++;
 				len += 2;
 			}
 			else
 			{
 				in++;
-				len = *((uint32*) in);
+				len = *((UINT32*) in);
 				in += 4;
 			}
 			memset(out, value, len);
@@ -141,15 +143,15 @@ static void nsc_rle_decode(uint8* in, uint8* out, uint32 origsz)
 		}
 	}
 
-	*((uint32*)out) = *((uint32*)in);
+	*((UINT32*)out) = *((UINT32*)in);
 }
 
 static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
-	uint16 i;
-	uint8* rle;
-	uint32 origsize;
-	uint32 planesize;
+	UINT16 i;
+	BYTE* rle;
+	UINT32 origsize;
+	UINT32 planesize;
 
 	rle = context->nsc_stream.Planes;
 
@@ -174,10 +176,10 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 	int i;
 
 	for (i = 0; i < 4; i++)
-		stream_read_uint32(s, context->nsc_stream.PlaneByteCount[i]);
+		stream_read_UINT32(s, context->nsc_stream.PlaneByteCount[i]);
 
-	stream_read_uint8(s, context->nsc_stream.ColorLossLevel);
-	stream_read_uint8(s, context->nsc_stream.ChromaSubSamplingLevel);
+	stream_read_BYTE(s, context->nsc_stream.ColorLossLevel);
+	stream_read_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel);
 	stream_seek(s, 2);
 
 	context->nsc_stream.Planes = stream_get_tail(s);
@@ -186,20 +188,21 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 {
 	int i;
-	uint32 length;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 length;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	nsc_stream_initialize(context, s);
 	length = context->width * context->height * 4;
 	if (context->bmpdata == NULL)
 	{
-		context->bmpdata = xzalloc(length + 16);
+		context->bmpdata = malloc(length + 16);
+		ZeroMemory(context->bmpdata, length + 16);
 		context->bmpdata_length = length;
 	}
 	else if (length > context->bmpdata_length)
 	{
-		context->bmpdata = xrealloc(context->bmpdata, length + 16);
+		context->bmpdata = realloc(context->bmpdata, length + 16);
 		context->bmpdata_length = length;
 	}
 
@@ -210,7 +213,7 @@ static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 4; i++)
-			context->priv->plane_buf[i] = (uint8*) xrealloc(context->priv->plane_buf[i], length);
+			context->priv->plane_buf[i] = (BYTE*) realloc(context->priv->plane_buf[i], length);
 		context->priv->plane_buf_length = length;
 	}
 
@@ -244,10 +247,13 @@ void nsc_context_free(NSC_CONTEXT* context)
 	for (i = 0; i < 4; i++)
 	{
 		if (context->priv->plane_buf[i])
-			xfree(context->priv->plane_buf[i]);
+		{
+			free(context->priv->plane_buf[i]);
+			context->priv->plane_buf[i] = NULL;
+		}
 	}
 	if (context->bmpdata)
-		xfree(context->bmpdata);
+		free(context->bmpdata);
 
 	nsc_profiler_print(context);
 	PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data);
@@ -255,16 +261,23 @@ void nsc_context_free(NSC_CONTEXT* context)
 	PROFILER_FREE(context->priv->prof_nsc_rle_compress_data);
 	PROFILER_FREE(context->priv->prof_nsc_encode);
 
-	xfree(context->priv);
-	xfree(context);
+	free(context->priv);
+	free(context);
+	context = NULL;
 }
 
 NSC_CONTEXT* nsc_context_new(void)
 {
 	NSC_CONTEXT* nsc_context;
+	UINT8 i;
 
-	nsc_context = xnew(NSC_CONTEXT);
-	nsc_context->priv = xnew(NSC_CONTEXT_PRIV);
+	nsc_context = (NSC_CONTEXT*) malloc(sizeof(NSC_CONTEXT));
+	nsc_context->priv = (NSC_CONTEXT_PRIV*) malloc(sizeof(NSC_CONTEXT_PRIV));
+	for (i=0; i < 5; ++i)
+	{
+		nsc_context->priv->plane_buf[i] = NULL;
+	}
+	nsc_context->bmpdata = NULL;
 
 	nsc_context->decode = nsc_decode;
 	nsc_context->encode = nsc_encode;
@@ -281,7 +294,7 @@ NSC_CONTEXT* nsc_context_new(void)
 	return nsc_context;
 }
 
-void nsc_context_set_cpu_opt(NSC_CONTEXT* context, uint32 cpu_opt)
+void nsc_context_set_cpu_opt(NSC_CONTEXT* context, UINT32 cpu_opt)
 {
 	if (cpu_opt)
 		NSC_INIT_SIMD(context);
@@ -316,8 +329,8 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void nsc_process_message(NSC_CONTEXT* context, uint16 bpp,
-	uint16 width, uint16 height, uint8* data, uint32 length)
+void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
+	UINT16 width, UINT16 height, BYTE* data, UINT32 length)
 {
 	STREAM* s;
 

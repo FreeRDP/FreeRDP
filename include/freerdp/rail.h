@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef __RAIL_GLOBAL_H
-#define __RAIL_GLOBAL_H
+#ifndef FREERDP_RAIL_GLOBAL_H
+#define FREERDP_RAIL_GLOBAL_H
 
 #include <freerdp/types.h>
 
@@ -152,15 +152,15 @@ enum SPI_MASK
 
 struct _RAIL_UNICODE_STRING
 {
-	uint16 length;
-	uint8* string;
+	UINT16 length;
+	BYTE* string;
 };
 typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
 
 struct _HIGH_CONTRAST
 {
-	uint32 flags;
-	uint32 colorSchemeLength;
+	UINT32 flags;
+	UINT32 colorSchemeLength;
 	RAIL_UNICODE_STRING colorScheme;
 };
 typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
@@ -169,19 +169,19 @@ typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
 
 struct _RAIL_HANDSHAKE_ORDER
 {
-	uint32 buildNumber;
+	UINT32 buildNumber;
 };
 typedef struct _RAIL_HANDSHAKE_ORDER RAIL_HANDSHAKE_ORDER;
 
 struct _RAIL_CLIENT_STATUS_ORDER
 {
-	uint32 flags;
+	UINT32 flags;
 };
 typedef struct _RAIL_CLIENT_STATUS_ORDER RAIL_CLIENT_STATUS_ORDER;
 
 struct _RAIL_EXEC_ORDER
 {
-	uint16 flags;
+	UINT16 flags;
 	RAIL_UNICODE_STRING exeOrFile;
 	RAIL_UNICODE_STRING workingDir;
 	RAIL_UNICODE_STRING arguments;
@@ -190,111 +190,111 @@ typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
 
 struct _RAIL_EXEC_RESULT_ORDER
 {
-	uint16 flags;
-	uint16 execResult;
-	uint32 rawResult;
+	UINT16 flags;
+	UINT16 execResult;
+	UINT32 rawResult;
 	RAIL_UNICODE_STRING exeOrFile;
 };
 typedef struct _RAIL_EXEC_RESULT_ORDER RAIL_EXEC_RESULT_ORDER;
 
 struct _RAIL_SYSPARAM_ORDER
 {
-	uint32 param;
-	uint32 params;
-	boolean dragFullWindows;
-	boolean keyboardCues;
-	boolean keyboardPref;
-	boolean mouseButtonSwap;
+	UINT32 param;
+	UINT32 params;
+	BOOL dragFullWindows;
+	BOOL keyboardCues;
+	BOOL keyboardPref;
+	BOOL mouseButtonSwap;
 	RECTANGLE_16 workArea;
 	RECTANGLE_16 displayChange;
 	RECTANGLE_16 taskbarPos;
 	HIGH_CONTRAST highContrast;
-	boolean setScreenSaveActive;
-	boolean setScreenSaveSecure;
+	BOOL setScreenSaveActive;
+	BOOL setScreenSaveSecure;
 };
 typedef struct _RAIL_SYSPARAM_ORDER RAIL_SYSPARAM_ORDER;
 
 struct _RAIL_ACTIVATE_ORDER
 {
-	uint32 windowId;
-	boolean enabled;
+	UINT32 windowId;
+	BOOL enabled;
 };
 typedef struct _RAIL_ACTIVATE_ORDER RAIL_ACTIVATE_ORDER;
 
 struct _RAIL_SYSMENU_ORDER
 {
-	uint32 windowId;
-	uint16 left;
-	uint16 top;
+	UINT32 windowId;
+	UINT16 left;
+	UINT16 top;
 };
 typedef struct _RAIL_SYSMENU_ORDER RAIL_SYSMENU_ORDER;
 
 struct _RAIL_SYSCOMMAND_ORDER
 {
-	uint32 windowId;
-	uint16 command;
+	UINT32 windowId;
+	UINT16 command;
 };
 typedef struct _RAIL_SYSCOMMAND_ORDER RAIL_SYSCOMMAND_ORDER;
 
 struct _RAIL_NOTIFY_EVENT_ORDER
 {
-	uint32 windowId;
-	uint32 notifyIconId;
-	uint32 message;
+	UINT32 windowId;
+	UINT32 notifyIconId;
+	UINT32 message;
 };
 typedef struct _RAIL_NOTIFY_EVENT_ORDER RAIL_NOTIFY_EVENT_ORDER;
 
 struct _RAIL_MINMAXINFO_ORDER
 {
-	uint32 windowId;
-	uint16 maxWidth;
-	uint16 maxHeight;
-	uint16 maxPosX;
-	uint16 maxPosY;
-	uint16 minTrackWidth;
-	uint16 minTrackHeight;
-	uint16 maxTrackWidth;
-	uint16 maxTrackHeight;
+	UINT32 windowId;
+	UINT16 maxWidth;
+	UINT16 maxHeight;
+	UINT16 maxPosX;
+	UINT16 maxPosY;
+	UINT16 minTrackWidth;
+	UINT16 minTrackHeight;
+	UINT16 maxTrackWidth;
+	UINT16 maxTrackHeight;
 };
 typedef struct _RAIL_MINMAXINFO_ORDER RAIL_MINMAXINFO_ORDER;
 
 struct _RAIL_LOCALMOVESIZE_ORDER
 {
-	uint32 windowId;
-	boolean isMoveSizeStart;
-	uint16 moveSizeType;
-	uint16 posX;
-	uint16 posY;
+	UINT32 windowId;
+	BOOL isMoveSizeStart;
+	UINT16 moveSizeType;
+	UINT16 posX;
+	UINT16 posY;
 };
 typedef struct _RAIL_LOCALMOVESIZE_ORDER RAIL_LOCALMOVESIZE_ORDER;
 
 struct _RAIL_WINDOWMOVE_ORDER
 {
-	uint32 windowId;
-	uint16 left;
-	uint16 top;
-	uint16 right;
-	uint16 bottom;
+	UINT32 windowId;
+	UINT16 left;
+	UINT16 top;
+	UINT16 right;
+	UINT16 bottom;
 };
 typedef struct _RAIL_WINDOWMOVE_ORDER RAIL_WINDOW_MOVE_ORDER;
 
 struct _RAIL_GET_APPID_REQ_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 };
 typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
 
 struct _RAIL_GET_APPID_RESP_ORDER
 {
-	uint32 windowId;
+	UINT32 windowId;
 	RAIL_UNICODE_STRING applicationId;
-	uint8 applicationIdBuffer[512];
+	BYTE applicationIdBuffer[512];
 };
 typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
 
 struct _RAIL_LANGBARINFO_ORDER
 {
-	uint32 languageBarStatus;
+	UINT32 languageBarStatus;
 };
 typedef struct _RAIL_LANGBARINFO_ORDER RAIL_LANGBAR_INFO_ORDER;
 
@@ -340,5 +340,4 @@ enum RDP_EVENT_TYPE_RAIL
 	RDP_EVENT_TYPE_RAIL_CLIENT_LANGBARINFO
 };
 
-#endif /* __RAIL_GLOBAL_H */
-
+#endif /* FREERDP_RAIL_GLOBAL_H */

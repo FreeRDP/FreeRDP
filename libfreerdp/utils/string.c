@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * String Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,24 +21,33 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/unicode.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <winpr/crt.h>
 
 #include <freerdp/utils/string.h>
 
-void freerdp_string_read_length32(STREAM* s, rdpString* string)
+BOOL freerdp_string_read_length32(STREAM* s, rdpString* string)
 {
-	stream_read_uint32(s, string->length);
-	string->unicode = (char*) xmalloc(string->length);
+	if(stream_get_left(s) < 4)
+		return FALSE;
+	stream_read_UINT32(s, string->length);
+	if(stream_get_left(s) < string->length)
+		return FALSE;
+	string->unicode = (char*) malloc(string->length);
 	stream_read(s, string->unicode, string->length);
-	freerdp_UnicodeToAsciiAlloc((WCHAR*) string->unicode, &string->ascii, string->length / 2);
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
+	return TRUE;
 }
 
 void freerdp_string_free(rdpString* string)
 {
 	if (string->unicode != NULL)
-		xfree(string->unicode);
+		free(string->unicode);
 
 	if (string->ascii != NULL)
-		xfree(string->ascii);
+		free(string->ascii);
 }

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Server Input
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -27,21 +27,21 @@
 
 #include "xf_input.h"
 
-void xf_input_synchronize_event(rdpInput* input, uint32 flags)
+void xf_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
-void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 #ifdef WITH_XTEST
 	unsigned int keycode;
-	boolean extended = false;
+	BOOL extended = FALSE;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
 
 	if (flags & KBD_FLAGS_EXTENDED)
-		extended = true;
+		extended = TRUE;
 
 	keycode = freerdp_keyboard_get_x11_keycode_from_rdp_scancode(code, extended);
 
@@ -63,17 +63,17 @@ void xf_input_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
 #endif
 }
 
-void xf_input_unicode_keyboard_event(rdpInput* input, uint16 flags, uint16 code)
+void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
-void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
-	boolean down = false;
+	BOOL down = FALSE;
 	xfInfo* xfi = xfp->info;
 
 	pthread_mutex_lock(&(xfp->mutex));
@@ -81,10 +81,10 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 
 	if (flags & PTR_FLAGS_WHEEL)
 	{
-		boolean negative = false;
+		BOOL negative = FALSE;
 
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-			negative = true;
+			negative = TRUE;
 
 		button = (negative) ? 5 : 4;
 
@@ -104,7 +104,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 			button = 2;
 
 		if (flags & PTR_FLAGS_DOWN)
-			down = true;
+			down = TRUE;
 
 		if (button != 0)
 			XTestFakeButtonEvent(xfi->display, button, down, 0);
@@ -115,7 +115,7 @@ void xf_input_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
 #endif
 }
 
-void xf_input_extended_mouse_event(rdpInput* input, uint16 flags, uint16 x, uint16 y)
+void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;

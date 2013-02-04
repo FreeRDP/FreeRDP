@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NSCodec Encoder
  *
  * Copyright 2012 Vic Lee
@@ -29,7 +29,6 @@
 #endif
 
 #include <freerdp/codec/nsc.h>
-#include <freerdp/utils/memory.h>
 
 #include "nsc_types.h"
 #include "nsc_encode.h"
@@ -37,9 +36,9 @@
 static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
 	int i;
-	uint32 length;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT32 length;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -48,7 +47,7 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 5; i++)
-			context->priv->plane_buf[i] = (uint8*) xrealloc(context->priv->plane_buf[i], length);
+			context->priv->plane_buf[i] = (BYTE*) realloc(context->priv->plane_buf[i], length);
 		context->priv->plane_buf_length = length;
 	}
 
@@ -68,23 +67,23 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int rowstride)
+static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
-	uint16 x;
-	uint16 y;
-	uint16 rw;
-	uint8 ccl;
-	uint8* src;
-	uint8* yplane;
-	uint8* coplane;
-	uint8* cgplane;
-	uint8* aplane;
-	sint16 r_val;
-	sint16 g_val;
-	sint16 b_val;
-	uint8 a_val;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT16 x;
+	UINT16 y;
+	UINT16 rw;
+	BYTE ccl;
+	BYTE* src;
+	BYTE* yplane;
+	BYTE* coplane;
+	BYTE* cgplane;
+	BYTE* aplane;
+	INT16 r_val;
+	INT16 g_val;
+	INT16 b_val;
+	BYTE a_val;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -131,23 +130,23 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int 
 					a_val = 0xFF;
 					break;
 				case RDP_PIXEL_FORMAT_B5G6R5_LE:
-					b_val = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					g_val = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					r_val = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					b_val = (INT16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					g_val = (INT16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					r_val = (INT16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					a_val = 0xFF;
 					src += 2;
 					break;
 				case RDP_PIXEL_FORMAT_R5G6B5_LE:
-					r_val = (sint16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					g_val = (sint16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					b_val = (sint16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					r_val = (INT16) (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
+					g_val = (INT16) ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
+					b_val = (INT16) ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
 					a_val = 0xFF;
 					src += 2;
 					break;
 				case RDP_PIXEL_FORMAT_P4_PLANER:
 					{
 						int shift;
-						uint8 idx;
+						BYTE idx;
 
 						shift = (7 - (x % 8));
 						idx = ((*src) >> shift) & 1;
@@ -155,9 +154,9 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int 
 						idx |= (((*(src + 2)) >> shift) & 1) << 2;
 						idx |= (((*(src + 3)) >> shift) & 1) << 3;
 						idx *= 3;
-						r_val = (sint16) context->palette[idx];
-						g_val = (sint16) context->palette[idx + 1];
-						b_val = (sint16) context->palette[idx + 2];
+						r_val = (INT16) context->palette[idx];
+						g_val = (INT16) context->palette[idx + 1];
+						b_val = (INT16) context->palette[idx + 2];
 						if (shift == 0)
 							src += 4;
 					}
@@ -167,9 +166,9 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int 
 					{
 						int idx = (*src) * 3;
 
-						r_val = (sint16) context->palette[idx];
-						g_val = (sint16) context->palette[idx + 1];
-						b_val = (sint16) context->palette[idx + 2];
+						r_val = (INT16) context->palette[idx];
+						g_val = (INT16) context->palette[idx + 1];
+						b_val = (INT16) context->palette[idx + 2];
 						src++;
 					}
 					a_val = 0xFF;
@@ -178,10 +177,10 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int 
 					r_val = g_val = b_val = a_val = 0;
 					break;
 			}
-			*yplane++ = (uint8) ((r_val >> 2) + (g_val >> 1) + (b_val >> 2));
+			*yplane++ = (BYTE) ((r_val >> 2) + (g_val >> 1) + (b_val >> 2));
 			/* Perform color loss reduction here */
-			*coplane++ = (uint8) ((r_val - b_val) >> ccl);
-			*cgplane++ = (uint8) ((-(r_val >> 1) + g_val - (b_val >> 1)) >> ccl);
+			*coplane++ = (BYTE) ((r_val - b_val) >> ccl);
+			*cgplane++ = (BYTE) ((-(r_val >> 1) + g_val - (b_val >> 1)) >> ccl);
 			*aplane++ = a_val;
 		}
 		if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (x % 2) == 1)
@@ -201,16 +200,16 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, uint8* bmpdata, int 
 
 static void nsc_encode_subsampling(NSC_CONTEXT* context)
 {
-	uint16 x;
-	uint16 y;
-	uint8* co_dst;
-	uint8* cg_dst;
-	sint8* co_src0;
-	sint8* co_src1;
-	sint8* cg_src0;
-	sint8* cg_src1;
-	uint32 tempWidth;
-	uint32 tempHeight;
+	UINT16 x;
+	UINT16 y;
+	BYTE* co_dst;
+	BYTE* cg_dst;
+	INT8* co_src0;
+	INT8* co_src1;
+	INT8* cg_src0;
+	INT8* cg_src1;
+	UINT32 tempWidth;
+	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
@@ -219,16 +218,16 @@ static void nsc_encode_subsampling(NSC_CONTEXT* context)
 	{
 		co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
 		cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
-		co_src0 = (sint8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
+		co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
 		co_src1 = co_src0 + tempWidth;
-		cg_src0 = (sint8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
+		cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
 		cg_src1 = cg_src0 + tempWidth;
 		for (x = 0; x < tempWidth >> 1; x++)
 		{
-			*co_dst++ = (uint8) (((sint16) *co_src0 + (sint16) *(co_src0 + 1) +
-				(sint16) *co_src1 + (sint16) *(co_src1 + 1)) >> 2);
-			*cg_dst++ = (uint8) (((sint16) *cg_src0 + (sint16) *(cg_src0 + 1) +
-				(sint16) *cg_src1 + (sint16) *(cg_src1 + 1)) >> 2);
+			*co_dst++ = (BYTE) (((INT16) *co_src0 + (INT16) *(co_src0 + 1) +
+				(INT16) *co_src1 + (INT16) *(co_src1 + 1)) >> 2);
+			*cg_dst++ = (BYTE) (((INT16) *cg_src0 + (INT16) *(cg_src0 + 1) +
+				(INT16) *cg_src1 + (INT16) *(cg_src1 + 1)) >> 2);
 			co_src0 += 2;
 			co_src1 += 2;
 			cg_src0 += 2;
@@ -237,7 +236,7 @@ static void nsc_encode_subsampling(NSC_CONTEXT* context)
 	}
 }
 
-void nsc_encode(NSC_CONTEXT* context, uint8* bmpdata, int rowstride)
+void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
 	nsc_encode_argb_to_aycocg(context, bmpdata, rowstride);
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
@@ -246,11 +245,11 @@ void nsc_encode(NSC_CONTEXT* context, uint8* bmpdata, int rowstride)
 	}
 }
 
-static uint32 nsc_rle_encode(uint8* in, uint8* out, uint32 origsz)
+static UINT32 nsc_rle_encode(BYTE* in, BYTE* out, UINT32 origsz)
 {
-	uint32 left;
-	uint32 runlength = 1;
-	uint32 planesize = 0;
+	UINT32 left;
+	UINT32 runlength = 1;
+	UINT32 planesize = 0;
 
 	left = origsz;
 	/**
@@ -302,10 +301,10 @@ static uint32 nsc_rle_encode(uint8* in, uint8* out, uint32 origsz)
 
 static void nsc_rle_compress_data(NSC_CONTEXT* context)
 {
-	uint16 i;
-	uint8* rle;
-	uint32 origsize;
-	uint32 planesize;
+	UINT16 i;
+	BYTE* rle;
+	UINT32 origsize;
+	UINT32 planesize;
 
 	rle = context->nsc_stream.Planes;
 
@@ -331,7 +330,7 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 }
 
 void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
-	uint8* bmpdata, int width, int height, int rowstride)
+	BYTE* bmpdata, int width, int height, int rowstride)
 {
 	int i;
 
@@ -351,13 +350,13 @@ void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
 
 	/* Assemble the NSCodec message into stream */
 	stream_check_size(s, 20);
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
-	stream_write_uint32(s, context->nsc_stream.PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
-	stream_write_uint8(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
-	stream_write_uint8(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
-	stream_write_uint16(s, 0); /* Reserved (2 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
+	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
+	stream_write_BYTE(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
+	stream_write_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
+	stream_write_UINT16(s, 0); /* Reserved (2 bytes) */
 
 	for (i = 0; i < 4; i++)
 	{

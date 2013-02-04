@@ -1,0 +1,3 @@
+LIBRARY		"drive"
+EXPORTS
+	DeviceServiceEntry		@1

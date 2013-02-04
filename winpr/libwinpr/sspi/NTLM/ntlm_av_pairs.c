@@ -99,7 +99,7 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList)
 ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength)
 {
 	/* size of headers + value lengths + terminating MsvAvEOL AV_PAIR */
-	return (AvPairsCount + 1) * sizeof(NTLM_AV_PAIR) + AvPairsValueLength;
+	return ((AvPairsCount + 1) * 4) + AvPairsValueLength;
 }
 
 PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair)
@@ -176,6 +176,7 @@ NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAv
 void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
 	char* name;
+	int length;
 	DWORD nSize = 0;
 
 	GetComputerNameExA(type, NULL, &nSize);
@@ -185,11 +186,9 @@ void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT t
 	if (type == ComputerNameNetBIOS)
 		CharUpperA(name);
 
-	pName->Length = strlen(name) * 2;
-	pName->Buffer = (PWSTR) malloc(pName->Length);
-	MultiByteToWideChar(CP_ACP, 0, name, strlen(name),
-			(LPWSTR) pName->Buffer, pName->Length / 2);
+	length = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
 
+	pName->Length = (length - 1) / 2;
 	pName->MaximumLength = pName->Length;
 
 	free(name);
@@ -211,6 +210,93 @@ void ntlm_free_unicode_string(PUNICODE_STRING string)
 	}
 }
 
+/**
+ * From http://www.ietf.org/proceedings/72/slides/sasl-2.pdf:
+ *
+ * tls-server-end-point:
+ *
+ * The hash of the TLS server's end entity certificate as it appears, octet for octet,
+ * in the server's Certificate message (note that the Certificate message contains a
+ * certificate_list, the first element of which is the server's end entity certificate.)
+ * The hash function to be selected is as follows: if the certificate's signature hash
+ * algorithm is either MD5 or SHA-1, then use SHA-256, otherwise use the certificate's
+ * signature hash algorithm.
+ */
+
+/**
+ * Channel Bindings sample usage:
+ * https://raw.github.com/mozilla/mozilla-central/master/extensions/auth/nsAuthSSPI.cpp
+ */
+
+/*
+typedef struct gss_channel_bindings_struct {
+	OM_uint32 initiator_addrtype;
+	gss_buffer_desc initiator_address;
+	OM_uint32 acceptor_addrtype;
+	gss_buffer_desc acceptor_address;
+	gss_buffer_desc application_data;
+} *gss_channel_bindings_t;
+ */
+
+static void ntlm_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
+{
+	BYTE be32[4];
+
+	be32[0] = (num >> 0) & 0xFF;
+	be32[1] = (num >> 8) & 0xFF;
+	be32[2] = (num >> 16) & 0xFF;
+	be32[3] = (num >> 24) & 0xFF;
+
+	MD5_Update(md5, be32, 4);
+}
+
+void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
+{
+	MD5_CTX md5;
+	BYTE* ChannelBindingToken;
+	UINT32 ChannelBindingTokenLength;
+	SEC_CHANNEL_BINDINGS* ChannelBindings;
+
+	ZeroMemory(context->ChannelBindingsHash, 16);
+	ChannelBindings = context->Bindings.Bindings;
+
+	if (!ChannelBindings)
+		return;
+
+	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
+	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
+
+	MD5_Init(&md5);
+
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
+	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
+
+	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
+
+	MD5_Final(context->ChannelBindingsHash, &md5);
+}
+
+void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
+{
+	/**
+	 * The Single_Host_Data structure allows a client to send machine-specific information
+	 * within an authentication exchange to services on the same machine. The client can
+	 * produce additional information to be processed in an implementation-specific way when
+	 * the client and server are on the same host. If the server and client platforms are
+	 * different or if they are on different hosts, then the information MUST be ignored.
+	 * Any fields after the MachineID field MUST be ignored on receipt.
+	 */
+
+	context->SingleHostData.Size = 48;
+	context->SingleHostData.Z4 = 0;
+	context->SingleHostData.DataPresent = 1;
+	context->SingleHostData.CustomData = SECURITY_MANDATORY_MEDIUM_RID;
+	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
+}
+
 void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
@@ -223,9 +309,16 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING DnsDomainName;
 	UNICODE_STRING DnsComputerName;
 
+	NbDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
+
+	NbComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
+
+	DnsDomainName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
+
+	DnsComputerName.Buffer = NULL;
 	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
 
 	AvPairsCount = 5;
@@ -265,7 +358,8 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	NTLM_AV_PAIR* ChallengeTargetInfo;
 	NTLM_AV_PAIR* AuthenticateTargetInfo;
 
-	AvPairsCount = AvPairsValueLength = 0;
+	AvPairsCount = 1;
+	AvPairsValueLength = 0;
 	ChallengeTargetInfo = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
 
 	AvNbDomainName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvNbDomainName);
@@ -314,13 +408,28 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 4;
 	}
 
-	//AvPairsCount++; /* MsvAvRestrictions */
-	//AvPairsValueLength += 48;
+	if (context->SendSingleHostData)
+	{
+		AvPairsCount++; /* MsvAvSingleHost */
+		ntlm_compute_single_host_data(context);
+		AvPairsValueLength += context->SingleHostData.Size;
+	}
+
+	/**
+	 * Extended Protection for Authentication:
+	 * http://blogs.technet.com/b/srd/archive/2009/12/08/extended-protection-for-authentication.aspx
+	 */
 
 	if (!context->SuppressExtendedProtection)
 	{
+		/**
+		 * SEC_CHANNEL_BINDINGS structure
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/dd919963/
+		 */
+
 		AvPairsCount++; /* MsvChannelBindings */
 		AvPairsValueLength += 16;
+		ntlm_compute_channel_bindings(context);
 
 		if (context->ServicePrincipalName.Length > 0)
 		{
@@ -363,14 +472,15 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvFlags, (PBYTE) &flags, 4);
 	}
 
+	if (context->SendSingleHostData)
+	{
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvAvSingleHost,
+				(PBYTE) &context->SingleHostData, context->SingleHostData.Size);
+	}
+
 	if (!context->SuppressExtendedProtection)
 	{
-		BYTE ChannelBindingToken[16];
-
-		ZeroMemory(ChannelBindingToken, 16);
-
-		ntlm_av_pair_add(AuthenticateTargetInfo, MsvChannelBindings,
-				ChannelBindingToken, sizeof(ChannelBindingToken));
+		ntlm_av_pair_add(AuthenticateTargetInfo, MsvChannelBindings, context->ChannelBindingsHash, 16);
 
 		if (context->ServicePrincipalName.Length > 0)
 		{

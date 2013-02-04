@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Event Handling
  *
  * Copyright 2009-2011 Jay Sorg
@@ -29,6 +29,7 @@
 
 #include "wfreerdp.h"
 
+#include "wf_gdi.h"
 #include "wf_event.h"
 
 static HWND g_focus_hWnd;
@@ -59,10 +60,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfi || !p)
 					return 1;
 				input = wfi->instance->input;
-				rdp_scancode = MAKE_RDP_SCANCODE((uint8) p->scanCode, p->flags & LLKHF_EXTENDED);
+				rdp_scancode = MAKE_RDP_SCANCODE((BYTE) p->scanCode, p->flags & LLKHF_EXTENDED);
 
 				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
-					(wParam == WM_KEYDOWN), (uint8) p->scanCode, p->flags, p->vkCode);
+					(wParam == WM_KEYDOWN), (BYTE) p->scanCode, p->flags, p->vkCode);
 
 				if (wfi->fs_toggle &&
 					((p->vkCode == VK_RETURN) || (p->vkCode == VK_CANCEL)) &&
@@ -70,8 +71,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					(GetAsyncKeyState(VK_MENU) & 0x8000)) /* could also use flags & LLKHF_ALTDOWN */
 				{
 					if (wParam == WM_KEYDOWN)
-						//wf_toggle_fullscreen(wfi);
-					return 1;
+					{
+						wf_toggle_fullscreen(wfi);
+						return 1;
+					}
 				}
 
 				if (rdp_scancode == RDP_SCANCODE_NUMLOCK_EXTENDED)
@@ -87,10 +90,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (wParam == WM_KEYDOWN)
 					{
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, true, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, false, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
@@ -119,6 +122,30 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
+static int wf_event_process_WM_MOUSEWHEEL(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	int delta;
+	int flags;
+	rdpInput* input;
+
+	DefWindowProc(hWnd, Msg, wParam, lParam);
+	input = wfi->instance->input;
+	delta = ((signed short) HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam); */
+
+	if (delta > 0)
+	{
+		flags = PTR_FLAGS_WHEEL | 0x0078;
+	}
+	else
+	{
+		flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
+	}
+
+	input->MouseEvent(input, flags, 0, 0);
+	
+	return 0;
+}
+
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
@@ -127,9 +154,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
-	boolean processed;
+	BOOL processed;
 
-	processed = true;
+	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
 
@@ -141,7 +168,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		{
 			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
-				
+
 				x = ps.rcPaint.left;
 				y = ps.rcPaint.top;
 				w = ps.rcPaint.right - ps.rcPaint.left + 1;
@@ -149,43 +176,50 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				//printf("WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
 
-				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x, y, SRCCOPY);
+				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x - wfi->offset_x, y - wfi->offset_y, SRCCOPY);
 
 				EndPaint(hWnd, &ps);
 				break;
 
 			case WM_LBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_LBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_MOUSEMOVE:
-				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam), Y_POS(lParam));
+				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				break;
+
+			case WM_MOUSEWHEEL:
+				wf_event_process_WM_MOUSEWHEEL(wfi, hWnd, Msg, wParam, lParam);
 				break;
 
 			case WM_SETCURSOR:
-				SetCursor(wfi->cursor);
+				if (LOWORD(lParam) == HTCLIENT)
+					SetCursor(wfi->cursor);
+				else
+					DefWindowProc(hWnd, Msg, wParam, lParam);
 				break;
 
 			default:
-				processed = false;
+				processed = FALSE;
 				break;
 		}
 	}
 	else
 	{
-		processed = false;
+		processed = FALSE;
 	}
 
 	if (processed)
@@ -198,7 +232,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_SETCURSOR:
-			SetCursor(g_default_cursor);
+			if (LOWORD(lParam) == HTCLIENT)
+				SetCursor(g_default_cursor);
+			else
+				DefWindowProc(hWnd, Msg, wParam, lParam);
 			break;
 
 		case WM_SETFOCUS:

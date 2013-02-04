@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * pcap File Format Utils
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -22,7 +22,10 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <winpr/crt.h>
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -42,8 +45,6 @@ int gettimeofday(struct timeval* tp, void* tz)
 #endif
 
 #include <freerdp/types.h>
-#include <freerdp/utils/memory.h>
-
 #include <freerdp/utils/pcap.h>
 
 #define PCAP_MAGIC	0xA1B2C3D4
@@ -72,7 +73,7 @@ void pcap_read_record(rdpPcap* pcap, pcap_record* record)
 {
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
-	record->data = xmalloc(record->length);
+	record->data = malloc(record->length);
 	fread(record->data, record->length, 1, pcap->fp);
 }
 
@@ -82,21 +83,25 @@ void pcap_write_record(rdpPcap* pcap, pcap_record* record)
 	fwrite(record->data, record->length, 1, pcap->fp);
 }
 
-void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
+void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;
 
 	if (pcap->tail == NULL)
 	{
-		pcap->tail = (pcap_record*) xzalloc(sizeof(pcap_record));
+		pcap->tail = (pcap_record*) malloc(sizeof(pcap_record));
+		ZeroMemory(pcap->tail, sizeof(pcap_record));
+
 		pcap->head = pcap->tail;
 		pcap->record = pcap->head;
 		record = pcap->tail;
 	}
 	else
 	{
-		record = (pcap_record*) xzalloc(sizeof(pcap_record));
+		record = (pcap_record*) malloc(sizeof(pcap_record));
+		ZeroMemory(record, sizeof(pcap_record));
+
 		pcap->tail->next = record;
 		pcap->tail = record;
 	}
@@ -114,56 +119,59 @@ void pcap_add_record(rdpPcap* pcap, void* data, uint32 length)
 	record->header.ts_usec = tp.tv_usec;
 }
 
-boolean pcap_has_next_record(rdpPcap* pcap)
+BOOL pcap_has_next_record(rdpPcap* pcap)
 {
 	if (pcap->file_size - (ftell(pcap->fp)) <= 16)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != true)
-		return false;
+	if (pcap_has_next_record(pcap) != TRUE)
+		return FALSE;
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
 
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
 {
 	fread(record->data, record->length, 1, pcap->fp);
-	return true;
+	return TRUE;
 }
 
-boolean pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
+BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != true)
-		return false;
+	if (pcap_has_next_record(pcap) != TRUE)
+		return FALSE;
 
 	pcap_read_record(pcap, record);
 
-	return true;
+	return TRUE;
 }
 
-rdpPcap* pcap_open(char* name, boolean write)
+rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
-	FILE *pcap_fp = fopen(name, write ? "w+" : "r");
+	FILE* pcap_fp = fopen(name, write ? "w+" : "r");
+
 	if (pcap_fp == NULL)
 	{
 		perror("opening pcap dump");
 		return NULL;
 	}
 
-	pcap = (rdpPcap*) xzalloc(sizeof(rdpPcap));
+	pcap = (rdpPcap*) malloc(sizeof(rdpPcap));
 
 	if (pcap != NULL)
 	{
+		ZeroMemory(pcap, sizeof(rdpPcap));
+
 		pcap->name = name;
 		pcap->write = write;
 		pcap->record_count = 0;

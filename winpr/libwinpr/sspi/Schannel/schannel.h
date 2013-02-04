@@ -21,12 +21,24 @@
 #define WINPR_SSPI_SCHANNEL_PRIVATE_H
 
 #include <winpr/sspi.h>
+#include <winpr/schannel.h>
 
 #include "../sspi.h"
+
+#include "schannel_openssl.h"
+
+struct _SCHANNEL_CREDENTIALS
+{
+	SCHANNEL_CRED cred;
+	ULONG fCredentialUse;
+};
+typedef struct _SCHANNEL_CREDENTIALS SCHANNEL_CREDENTIALS;
 
 struct _SCHANNEL_CONTEXT
 {
 	BOOL server;
+	SCHANNEL_CRED cred;
+	SCHANNEL_OPENSSL* openssl;
 };
 typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
 

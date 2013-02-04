@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Server Audio Virtual Channel
  *
  * Copyright 2012 Vic Lee
@@ -17,19 +17,19 @@
  * limitations under the License.
  */
 
-#ifndef __SERVER_RDPSND_H
-#define __SERVER_RDPSND_H
+#ifndef FREERDP_CHANNEL_RDPSND_SERVER_H
+#define FREERDP_CHANNEL_RDPSND_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
 
 typedef struct _rdpsnd_server_context rdpsnd_server_context;
 
-typedef boolean (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
+typedef BOOL (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
 typedef void (*psRdpsndServerSelectFormat)(rdpsnd_server_context* context, int client_format_index);
-typedef boolean (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
-typedef boolean (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
-typedef boolean (*psRdpsndServerClose)(rdpsnd_server_context* context);
+typedef BOOL (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
+typedef BOOL (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
+typedef BOOL (*psRdpsndServerClose)(rdpsnd_server_context* context);
 
 typedef void (*psRdpsndServerActivated)(rdpsnd_server_context* context);
 
@@ -94,4 +94,4 @@ struct _rdpsnd_server_context
 FREERDP_API rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
 FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
 
-#endif
+#endif /* FREERDP_CHANNEL_RDPSND_SERVER_H */

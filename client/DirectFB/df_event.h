@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * DirectFB Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,6 +23,6 @@
 #include "dfreerdp.h"
 
 void df_keyboard_init();
-boolean df_event_process(freerdp* instance, DFBEvent* event);
+BOOL df_event_process(freerdp* instance, DFBEvent* event);
 
 #endif /* __DF_EVENT_H */

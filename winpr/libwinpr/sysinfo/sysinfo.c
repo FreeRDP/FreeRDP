@@ -33,12 +33,12 @@
  * GetLocalTime
  * GetLogicalProcessorInformation
  * GetLogicalProcessorInformationEx
+ * GetSystemInfo
  * GetNativeSystemInfo
  * GetProductInfo
  * GetSystemDirectoryA
  * GetSystemDirectoryW
  * GetSystemFirmwareTable
- * GetSystemInfo
  * GetSystemTime
  * GetSystemTimeAdjustment
  * GetSystemTimeAsFileTime
@@ -68,47 +68,174 @@
 #ifndef _WIN32
 
 #include <time.h>
-#include <unistd.h>
-#include <winpr/crt.h>
 
-BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD nSize)
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <winpr/crt.h>
+#include <winpr/platform.h>
+
+#if defined(__MACOSX__) || \
+defined(__FreeBSD__) || defined(__NetBSD__) || \
+defined(__OpenBSD__) || defined(__DragonFly__)
+#include <sys/sysctl.h>
+#endif
+
+DWORD GetProcessorArchitecture()
 {
+	DWORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
+
+#if defined(_M_AMD64)
+	cpuArch = PROCESSOR_ARCHITECTURE_AMD64;
+#elif defined(_M_IX86)
+	cpuArch = PROCESSOR_ARCHITECTURE_INTEL;
+#elif defined(_M_ARM)
+	cpuArch = PROCESSOR_ARCHITECTURE_ARM;
+#elif defined(_M_IA64)
+	cpuArch = PROCESSOR_ARCHITECTURE_IA64;
+#elif defined(_M_MIPS)
+	cpuArch = PROCESSOR_ARCHITECTURE_MIPS;
+#elif defined(_M_PPC)
+	cpuArch = PROCESSOR_ARCHITECTURE_PPC;
+#elif defined(_M_ALPHA)
+	cpuArch = PROCESSOR_ARCHITECTURE_ALPHA;
+#endif
+
+	return cpuArch;
+}
+
+DWORD GetNumberOfProcessors()
+{
+	DWORD numCPUs = 1;
+
+	/* TODO: Android and iOS */
+
+#if defined(__linux__) || defined(__sun) || defined(_AIX)
+	numCPUs = (DWORD) sysconf(_SC_NPROCESSORS_ONLN);
+#elif defined(__MACOSX__) || \
+	defined(__FreeBSD__) || defined(__NetBSD__) || \
+	defined(__OpenBSD__) || defined(__DragonFly__)
+	{
+		int mib[4];
+		size_t length = sizeof(numCPUs);
+
+		mib[0] = CTL_HW;
+		mib[1] = HW_AVAILCPU;
+
+		sysctl(mib, 2, &numCPUs, &length, NULL, 0);
+
+		if (numCPUs < 1)
+		{
+			mib[1] = HW_NCPU;
+			sysctl(mib, 2, &numCPUs, &length, NULL, 0);
+
+			if (numCPUs < 1)
+				numCPUs = 1;
+		}
+	}
+#elif defined(__hpux)
+	numCPUs = (DWORD) mpctl(MPC_GETNUMSPUS, NULL, NULL);
+#elif defined(__sgi)
+	numCPUs = (DWORD) sysconf(_SC_NPROC_ONLN);
+#endif
+
+	return numCPUs;
+}
+
+void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
+{
+	lpSystemInfo->wProcessorArchitecture = GetProcessorArchitecture();
+	lpSystemInfo->wReserved = 0;
+
+	lpSystemInfo->dwPageSize = 0;
+	lpSystemInfo->lpMinimumApplicationAddress = NULL;
+	lpSystemInfo->lpMaximumApplicationAddress = NULL;
+	lpSystemInfo->dwActiveProcessorMask = 0;
+
+	lpSystemInfo->dwNumberOfProcessors = GetNumberOfProcessors();
+	lpSystemInfo->dwProcessorType = 0;
+
+	lpSystemInfo->dwAllocationGranularity = 0;
+
+	lpSystemInfo->wProcessorLevel = 0;
+	lpSystemInfo->wProcessorRevision = 0;
+}
+
+void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
+{
+	GetSystemInfo(lpSystemInfo);
+}
+
+BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
+{
+	char* dot;
+	int length;
 	char hostname[256];
-	int hostname_length;
 
 	gethostname(hostname, sizeof(hostname));
-	hostname_length = strlen(hostname);
+	length = strlen(hostname);
+
+	dot = strchr(hostname, '.');
+
+	if (dot)
+		length = dot - hostname;
+
+	if (*lpnSize <= length)
+	{
+		*lpnSize = length + 1;
+		return 0;
+	}
+
+	if (!lpBuffer)
+		return 0;
+
+	CopyMemory(lpBuffer, hostname, length);
+	lpBuffer[length] = '\0';
+
+	return TRUE;
+}
+
+BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
+{
+	int length;
+	char hostname[256];
+
+	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
+		return GetComputerNameA(lpBuffer, lpnSize);
+
+	gethostname(hostname, sizeof(hostname));
+	length = strlen(hostname);
 
 	switch (NameType)
 	{
-		case ComputerNameNetBIOS:
 		case ComputerNameDnsHostname:
 		case ComputerNameDnsDomain:
 		case ComputerNameDnsFullyQualified:
-		case ComputerNamePhysicalNetBIOS:
 		case ComputerNamePhysicalDnsHostname:
 		case ComputerNamePhysicalDnsDomain:
 		case ComputerNamePhysicalDnsFullyQualified:
 
-			if (*nSize <= hostname_length)
+			if (*lpnSize <= length)
 			{
-				*nSize = hostname_length + 1;
-				return 0;
+				*lpnSize = length + 1;
+				return FALSE;
 			}
 
 			if (!lpBuffer)
-				return 0;
+				return FALSE;
 
-			CopyMemory(lpBuffer, hostname, hostname_length + 1);
+			CopyMemory(lpBuffer, hostname, length);
+			lpBuffer[length] = '\0';
 
 			break;
 
 		default:
-			return 0;
+			return FALSE;
 			break;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)

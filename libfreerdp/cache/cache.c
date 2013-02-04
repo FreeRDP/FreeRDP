@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Caches
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/cache.h>
 
@@ -30,7 +31,8 @@ rdpCache* cache_new(rdpSettings* settings)
 {
 	rdpCache* cache;
 
-	cache = (rdpCache*) xzalloc(sizeof(rdpCache));
+	cache = (rdpCache*) malloc(sizeof(rdpCache));
+	ZeroMemory(cache, sizeof(rdpCache));
 
 	if (cache != NULL)
 	{
@@ -58,6 +60,6 @@ void cache_free(rdpCache* cache)
 		offscreen_cache_free(cache->offscreen);
 		palette_cache_free(cache->palette);
 		nine_grid_cache_free(cache->nine_grid);
-		xfree(cache);
+		free(cache);
 	}
 }

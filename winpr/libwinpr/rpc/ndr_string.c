@@ -26,6 +26,8 @@
 
 #include <winpr/rpc.h>
 
+#ifndef _WIN32
+
 #include "ndr_string.h"
 
 void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -37,3 +39,6 @@ void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char
 {
 	printf("warning: NdrNonConformantStringBufferSize unimplemented\n");
 }
+
+#endif
+

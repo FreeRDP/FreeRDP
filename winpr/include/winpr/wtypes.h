@@ -39,11 +39,11 @@
 #define __int3264 __int32
 #endif
 
-#ifdef OBJC_BOOL_DEFINED
-typedef OBJC_BOOL BOOL, *PBOOL, *LPBOOL;
-#else
-typedef int BOOL, *PBOOL, *LPBOOL;
+#ifndef __OBJC__
+typedef int BOOL;
 #endif
+
+typedef BOOL *PBOOL, *LPBOOL;
 
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
@@ -70,7 +70,10 @@ typedef short SHORT;
 #define CONST const
 #define CALLBACK
 
-typedef void* HANDLE, *LPHANDLE;
+typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+typedef HANDLE HINSTANCE;
+typedef HANDLE HMODULE;
+
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
 typedef signed char INT8;
@@ -81,7 +84,6 @@ typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef long LONG, *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
-typedef LONG HRESULT;
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
 typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
@@ -104,6 +106,9 @@ typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
 typedef unsigned long ULONG, *PULONG;
+
+typedef ULONG HRESULT;
+typedef ULONG SCODE;
 
 typedef ULONG_PTR DWORD_PTR;
 typedef ULONG_PTR SIZE_T;
@@ -145,10 +150,12 @@ typedef struct _LUID
 #endif
 
 #ifdef UNICODE
+typedef LPWSTR PTSTR;
 typedef LPWSTR LPTCH;
 typedef LPWSTR LPTSTR;
 typedef LPCWSTR LPCTSTR;
 #else
+typedef LPSTR PTSTR;
 typedef LPSTR LPTCH;
 typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
@@ -259,7 +266,6 @@ typedef struct _PROCESS_INFORMATION
 typedef DWORD (*PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
 typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
-typedef void* HMODULE;
 typedef void* FARPROC;
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Surface Commands
  *
  * Copyright 2011 Vic Lee
@@ -25,84 +25,101 @@
 
 #include "surface.h"
 
-static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s)
+static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
-	stream_read_uint16(s, cmd->destLeft);
-	stream_read_uint16(s, cmd->destTop);
-	stream_read_uint16(s, cmd->destRight);
-	stream_read_uint16(s, cmd->destBottom);
-	stream_read_uint8(s, cmd->bpp);
+	if (stream_get_left(s) < 20)
+		return -1;
+
+	stream_read_UINT16(s, cmd->destLeft);
+	stream_read_UINT16(s, cmd->destTop);
+	stream_read_UINT16(s, cmd->destRight);
+	stream_read_UINT16(s, cmd->destBottom);
+	stream_read_BYTE(s, cmd->bpp);
 	stream_seek(s, 2); /* reserved1, reserved2 */
-	stream_read_uint8(s, cmd->codecID);
-	stream_read_uint16(s, cmd->width);
-	stream_read_uint16(s, cmd->height);
-	stream_read_uint32(s, cmd->bitmapDataLength);
+	stream_read_BYTE(s, cmd->codecID);
+	stream_read_UINT16(s, cmd->width);
+	stream_read_UINT16(s, cmd->height);
+	stream_read_UINT32(s, cmd->bitmapDataLength);
+
+	if (stream_get_left(s) < cmd->bitmapDataLength)
+		return -1;
+
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
 	cmd->bitmapData = stream_get_tail(s);
 
 	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	stream_set_pos(s, pos);
+	*length = 20 + cmd->bitmapDataLength;
 
-	return 20 + cmd->bitmapDataLength;
+	return 0;
 }
 
-static void update_send_frame_acknowledge(rdpRdp* rdp, uint32 frameId)
+static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
 {
 	STREAM* s;
 
 	s = rdp_data_pdu_init(rdp);
-	stream_write_uint32(s, frameId);
+	stream_write_UINT32(s, frameId);
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
 }
 
-static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s)
+static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32 *length)
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
-	stream_read_uint16(s, marker->frameAction);
-	stream_read_uint32(s, marker->frameId);
+	if (stream_get_left(s) < 6)
+		return -1;
+
+	stream_read_UINT16(s, marker->frameAction);
+	stream_read_UINT32(s, marker->frameId);
 
 	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 
-	if (update->context->rdp->settings->received_caps[CAPSET_TYPE_FRAME_ACKNOWLEDGE] && update->context->rdp->settings->frame_acknowledge > 0 && marker->frameAction == SURFACECMD_FRAMEACTION_END)
+	if (update->context->rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE] &&
+			(update->context->rdp->settings->FrameAcknowledge > 0) &&
+			(marker->frameAction == SURFACECMD_FRAMEACTION_END))
 	{
 		update_send_frame_acknowledge(update->context->rdp, marker->frameId);
 	}
 
-	return 6;
+	*length = 6;
+
+	return 0;
 }
 
-boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
+int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 {
-	uint8* mark;
-	uint16 cmdType;
-	uint32 cmdLength;
+	BYTE* mark;
+	UINT16 cmdType;
+	UINT32 cmdLength;
 
 	while (size > 2)
 	{
 		stream_get_mark(s, mark);
 
-		stream_read_uint16(s, cmdType);
+		stream_read_UINT16(s, cmdType);
 		size -= 2;
 
 		switch (cmdType)
 		{
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
-				cmdLength = update_recv_surfcmd_surface_bits(update, s);
+				if (update_recv_surfcmd_surface_bits(update, s, &cmdLength) < 0)
+					return -1;
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
-				cmdLength = update_recv_surfcmd_frame_marker(update, s);
+				if (update_recv_surfcmd_frame_marker(update, s, &cmdLength) < 0)
+					return -1;
 				break;
 
 			default:
 				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
-				return false;
+				return -1;
 		}
 
 		size -= cmdLength;
@@ -113,34 +130,34 @@ boolean update_recv_surfcmds(rdpUpdate* update, uint32 size, STREAM* s)
 			pcap_flush(update->pcap_rfx);
 		}
 	}
-	return true;
+
+	return 0;
 }
 
 void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd)
 {
 	stream_check_size(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
 
-	stream_write_uint16(s, CMDTYPE_STREAM_SURFACE_BITS);
+	stream_write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
 
-	stream_write_uint16(s, cmd->destLeft);
-	stream_write_uint16(s, cmd->destTop);
-	stream_write_uint16(s, cmd->destRight);
-	stream_write_uint16(s, cmd->destBottom);
-	stream_write_uint8(s, cmd->bpp);
-	stream_write_uint16(s, 0); /* reserved1, reserved2 */
-	stream_write_uint8(s, cmd->codecID);
-	stream_write_uint16(s, cmd->width);
-	stream_write_uint16(s, cmd->height);
-	stream_write_uint32(s, cmd->bitmapDataLength);
+	stream_write_UINT16(s, cmd->destLeft);
+	stream_write_UINT16(s, cmd->destTop);
+	stream_write_UINT16(s, cmd->destRight);
+	stream_write_UINT16(s, cmd->destBottom);
+	stream_write_BYTE(s, cmd->bpp);
+	stream_write_UINT16(s, 0); /* reserved1, reserved2 */
+	stream_write_BYTE(s, cmd->codecID);
+	stream_write_UINT16(s, cmd->width);
+	stream_write_UINT16(s, cmd->height);
+	stream_write_UINT32(s, cmd->bitmapDataLength);
 }
 
-void update_write_surfcmd_frame_marker(STREAM* s, uint16 frameAction, uint32 frameId)
+void update_write_surfcmd_frame_marker(STREAM* s, UINT16 frameAction, UINT32 frameId)
 {
 	stream_check_size(s, SURFCMD_FRAME_MARKER_LENGTH);
 
-	stream_write_uint16(s, CMDTYPE_FRAME_MARKER);
+	stream_write_UINT16(s, CMDTYPE_FRAME_MARKER);
 
-	stream_write_uint16(s, frameAction);
-	stream_write_uint32(s, frameId);
+	stream_write_UINT16(s, frameAction);
+	stream_write_UINT32(s, frameId);
 }
-

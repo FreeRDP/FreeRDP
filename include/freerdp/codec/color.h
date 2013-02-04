@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Color Conversion Routines
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __COLOR_H
-#define __COLOR_H
+#ifndef FREERDP_CODEC_COLOR_H
+#define FREERDP_CODEC_COLOR_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -235,30 +235,33 @@ typedef CLRCONV* HCLRCONV;
 
 #define IBPP(_bpp) (((_bpp + 1)/ 8) % 5)
 
-typedef uint8* (*p_freerdp_image_convert)(uint8* srcData, uint8* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
+typedef BYTE* (*p_freerdp_image_convert)(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
-FREERDP_API uint8* freerdp_image_convert(uint8* srcData, uint8 *dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint8* freerdp_glyph_convert(int width, int height, uint8* data);
-FREERDP_API void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height);
-FREERDP_API uint8* freerdp_image_flip(uint8* srcData, uint8* dstData, int width, int height, int bpp);
-FREERDP_API uint8* freerdp_icon_convert(uint8* srcData, uint8* dstData, uint8* mask, int width, int height, int bpp, HCLRCONV clrconv);
-FREERDP_API uint8* freerdp_mono_image_convert(uint8* srcData, int width, int height, int srcBpp, int dstBpp, uint32 bgcolor, uint32 fgcolor, HCLRCONV clrconv);
-FREERDP_API void freerdp_alpha_cursor_convert(uint8* alphaData, uint8* xorMask, uint8* andMask, int width, int height, int bpp, HCLRCONV clrconv);
-FREERDP_API void freerdp_image_swap_color_order(uint8* data, int width, int height);
+FREERDP_API int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
+FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel);
 
-FREERDP_API uint32 freerdp_color_convert_var(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_rgb_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_bgr_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_var_rgb(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API uint32 freerdp_color_convert_var_bgr(uint32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API BYTE* freerdp_image_convert(BYTE* srcData, BYTE *dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API BYTE* freerdp_glyph_convert(int width, int height, BYTE* data);
+FREERDP_API void   freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height);
+FREERDP_API BYTE* freerdp_image_flip(BYTE* srcData, BYTE* dstData, int width, int height, int bpp);
+FREERDP_API BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, int height, int bpp, HCLRCONV clrconv);
+FREERDP_API BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBpp, int dstBpp, UINT32 bgcolor, UINT32 fgcolor, HCLRCONV clrconv);
+FREERDP_API void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask, int width, int height, int bpp, HCLRCONV clrconv);
+FREERDP_API void freerdp_image_swap_color_order(BYTE* data, int width, int height);
 
-FREERDP_API HCLRCONV freerdp_clrconv_new(uint32 flags);
+FREERDP_API UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+
+FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __COLOR_H */
+#endif /* FREERDP_CODEC_COLOR_H */

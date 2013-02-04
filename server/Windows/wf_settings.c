@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -92,7 +92,7 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 		strA[length] = '\0';
 		free(strX);
 #else
-		strA = (char*) str;
+		strA = (char*) strX;
 #endif
 		*value = strA;
 		return TRUE;

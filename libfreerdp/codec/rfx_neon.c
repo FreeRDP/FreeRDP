@@ -1,5 +1,5 @@
 /*
-   FreeRDP: A Remote Desktop Protocol client.
+   FreeRDP: A Remote Desktop Protocol Implementation
    RemoteFX Codec Library - NEON Optimizations
 
    Copyright 2011 Martin Fleisz <mfleisz@thinstuff.com>
@@ -31,64 +31,14 @@
 #include "rfx_types.h"
 #include "rfx_neon.h"
 
-#if defined(ANDROID)
-#include <cpu-features.h>
+#if ANDROID
+#include "cpu-features.h"
 #endif
 
-
-void rfx_decode_YCbCr_to_RGB_NEON(sint16 * y_r_buffer, sint16 * cb_g_buffer, sint16 * cr_b_buffer)
-{
-	int16x8_t zero = vdupq_n_s16(0);
-	int16x8_t max = vdupq_n_s16(255);
-	int16x8_t y_add = vdupq_n_s16(128);
-
-	int16x8_t* y_r_buf = (int16x8_t*)y_r_buffer;
-	int16x8_t* cb_g_buf = (int16x8_t*)cb_g_buffer;
-	int16x8_t* cr_b_buf = (int16x8_t*)cr_b_buffer;
-
-	int i;
-	for (i = 0; i < 4096 / 8; i++)
-	{
-		int16x8_t y = vld1q_s16((sint16*)&y_r_buf[i]);
-		y = vaddq_s16(y, y_add);
-
-		int16x8_t cr = vld1q_s16((sint16*)&cr_b_buf[i]);
-
-		// r = between((y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5)), 0, 255);
-		int16x8_t r = vaddq_s16(y, cr);
-		r = vaddq_s16(r, vshrq_n_s16(cr, 2));
-		r = vaddq_s16(r, vshrq_n_s16(cr, 3));
-		r = vaddq_s16(r, vshrq_n_s16(cr, 5));
-		r = vminq_s16(vmaxq_s16(r, zero), max);
-		vst1q_s16((sint16*)&y_r_buf[i], r);
-
-		// cb = cb_g_buf[i];
-		int16x8_t cb = vld1q_s16((sint16*)&cb_g_buf[i]);
-
-		// g = between(y - (cb >> 2) - (cb >> 4) - (cb >> 5) - (cr >> 1) - (cr >> 3) - (cr >> 4) - (cr >> 5), 0, 255);
-		int16x8_t g = vsubq_s16(y, vshrq_n_s16(cb, 2));
-		g = vsubq_s16(g, vshrq_n_s16(cb, 4));
-		g = vsubq_s16(g, vshrq_n_s16(cb, 5));
-		g = vsubq_s16(g, vshrq_n_s16(cr, 1));
-		g = vsubq_s16(g, vshrq_n_s16(cr, 3));
-		g = vsubq_s16(g, vshrq_n_s16(cr, 4));
-		g = vsubq_s16(g, vshrq_n_s16(cr, 5));
-		g = vminq_s16(vmaxq_s16(g, zero), max);
-		vst1q_s16((sint16*)&cb_g_buf[i], g);
-
-		// b = between((y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6)), 0, 255);
-		int16x8_t b = vaddq_s16(y, cb);
-		b = vaddq_s16(b, vshrq_n_s16(cb, 1));
-		b = vaddq_s16(b, vshrq_n_s16(cb, 2));
-		b = vaddq_s16(b, vshrq_n_s16(cb, 6));
-		b = vminq_s16(vmaxq_s16(b, zero), max);
-		vst1q_s16((sint16*)&cr_b_buf[i], b);
-	}
-
-}
+/* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_decode_block_NEON(sint16 * buffer, const int buffer_size, const uint32 factor)
+rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const UINT32 factor)
 {
 	if (factor <= 6)
 		return;
@@ -98,16 +48,16 @@ rfx_quantization_decode_block_NEON(sint16 * buffer, const int buffer_size, const
 
 	do
 	{
-		int16x8_t val = vld1q_s16((sint16*)buf);
+		int16x8_t val = vld1q_s16((INT16*)buf);
 		val = vshlq_s16(val, quantFactors);
-		vst1q_s16((sint16*)buf, val);
+		vst1q_s16((INT16*)buf, val);
 		buf++;
 	}
 	while(buf < buf_end);
 }
 
 void
-rfx_quantization_decode_NEON(sint16 * buffer, const uint32 * quantization_values)
+rfx_quantization_decode_NEON(INT16 * buffer, const UINT32 * quantization_values)
 {
 	rfx_quantization_decode_block_NEON(buffer, 1024, quantization_values[8]); /* HL1 */
 	rfx_quantization_decode_block_NEON(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
@@ -124,12 +74,12 @@ rfx_quantization_decode_NEON(sint16 * buffer, const uint32 * quantization_values
 
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_horiz_NEON(sint16 * l, sint16 * h, sint16 * dst, int subband_width)
+rfx_dwt_2d_decode_block_horiz_NEON(INT16 * l, INT16 * h, INT16 * dst, int subband_width)
 {
 	int y, n;
-	sint16 * l_ptr = l;
-	sint16 * h_ptr = h;
-	sint16 * dst_ptr = dst;
+	INT16 * l_ptr = l;
+	INT16 * h_ptr = h;
+	INT16 * dst_ptr = dst;
 
 	for (y = 0; y < subband_width; y++)
 	{
@@ -195,12 +145,12 @@ rfx_dwt_2d_decode_block_horiz_NEON(sint16 * l, sint16 * h, sint16 * dst, int sub
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_vert_NEON(sint16 * l, sint16 * h, sint16 * dst, int subband_width)
+rfx_dwt_2d_decode_block_vert_NEON(INT16 * l, INT16 * h, INT16 * dst, int subband_width)
 {
 	int x, n;
-	sint16 * l_ptr = l;
-	sint16 * h_ptr = h;
-	sint16 * dst_ptr = dst;
+	INT16 * l_ptr = l;
+	INT16 * h_ptr = h;
+	INT16 * dst_ptr = dst;
 
 	int total_width = subband_width + subband_width;
 
@@ -269,10 +219,10 @@ rfx_dwt_2d_decode_block_vert_NEON(sint16 * l, sint16 * h, sint16 * dst, int subb
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_NEON(sint16 * buffer, sint16 * idwt, int subband_width)
+rfx_dwt_2d_decode_block_NEON(INT16 * buffer, INT16 * idwt, int subband_width)
 {
-	sint16 * hl, * lh, * hh, * ll;
-	sint16 * l_dst, * h_dst;
+	INT16 * hl, * lh, * hh, * ll;
+	INT16 * l_dst, * h_dst;
 
 	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt. */
 	/* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
@@ -295,58 +245,54 @@ rfx_dwt_2d_decode_block_NEON(sint16 * buffer, sint16 * idwt, int subband_width)
 	rfx_dwt_2d_decode_block_vert_NEON(l_dst, h_dst, buffer, subband_width);
 }
 
-void
-rfx_dwt_2d_decode_NEON(sint16 * buffer, sint16 * dwt_buffer)
+void rfx_dwt_2d_decode_NEON(INT16 * buffer, INT16 * dwt_buffer)
 {
 	rfx_dwt_2d_decode_block_NEON(buffer + 3840, dwt_buffer, 8);
 	rfx_dwt_2d_decode_block_NEON(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_decode_block_NEON(buffer, dwt_buffer, 32);
 }
 
-
-
 int isNeonSupported()
 {
-#if defined(ANDROID)
+#if ANDROID
 	if (android_getCpuFamily() != ANDROID_CPU_FAMILY_ARM)
 	{
 		DEBUG_RFX("NEON optimization disabled - No ARM CPU found");
 		return 0;
 	}
 
-	uint64_t features = android_getCpuFeatures();
+	UINT64 features = android_getCpuFeatures();
+
 	if ((features & ANDROID_CPU_ARM_FEATURE_ARMv7))
 	{
 		if (features & ANDROID_CPU_ARM_FEATURE_NEON)
 		{
 			DEBUG_RFX("NEON optimization enabled!");
-			return 1;
+			return FALSE;
 		}
 		DEBUG_RFX("NEON optimization disabled - CPU not NEON capable");
 	}
 	else
+	{
 		DEBUG_RFX("NEON optimization disabled - No ARMv7 CPU found");
+	}
 
-	return 0;
+	return FALSE;
 #else
-	return 1;
+	return TRUE;
 #endif
 }
 
-
 void rfx_init_neon(RFX_CONTEXT * context)
 {
-
-
-	if(isNeonSupported())
+	if (isNeonSupported())
 	{
 		DEBUG_RFX("Using NEON optimizations");
 
-		IF_PROFILER(context->priv->prof_rfx_decode_ycbcr_to_rgb->name = "rfx_decode_YCbCr_to_RGB_NEON");
+		IF_PROFILER(context->priv->prof_rfx_ycbcr_to_rgb->name = "rfx_decode_YCbCr_to_RGB_NEON");
 		IF_PROFILER(context->priv->prof_rfx_quantization_decode->name = "rfx_quantization_decode_NEON");
 		IF_PROFILER(context->priv->prof_rfx_dwt_2d_decode->name = "rfx_dwt_2d_decode_NEON");
 
-		context->decode_ycbcr_to_rgb = rfx_decode_YCbCr_to_RGB_NEON;
 		context->quantization_decode = rfx_quantization_decode_NEON;
 		context->dwt_2d_decode = rfx_dwt_2d_decode_NEON;
 	}

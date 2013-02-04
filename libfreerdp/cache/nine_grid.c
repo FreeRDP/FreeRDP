@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * NineGrid Cache
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -23,10 +23,11 @@
 
 #include <stdio.h>
 
+#include <winpr/crt.h>
+
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/memory.h>
 
 #include <freerdp/cache/nine_grid.h>
 
@@ -53,7 +54,7 @@ void nine_grid_cache_register_callbacks(rdpUpdate* update)
 	update->primary->MultiDrawNineGrid = update_gdi_multi_draw_nine_grid;
 }
 
-void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index)
+void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 {
 	void* entry;
 
@@ -74,7 +75,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, uint32 index)
 	return entry;
 }
 
-void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry)
+void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 {
 	void* prevEntry;
 
@@ -87,7 +88,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, uint32 index, void* entry)
 	prevEntry = nine_grid->entries[index].entry;
 
 	if (prevEntry != NULL)
-		xfree(prevEntry);
+		free(prevEntry);
 
 	nine_grid->entries[index].entry = entry;
 }
@@ -96,7 +97,8 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 {
 	rdpNineGridCache* nine_grid;
 
-	nine_grid = (rdpNineGridCache*) xzalloc(sizeof(rdpNineGridCache));
+	nine_grid = (rdpNineGridCache*) malloc(sizeof(rdpNineGridCache));
+	ZeroMemory(nine_grid, sizeof(rdpNineGridCache));
 
 	if (nine_grid != NULL)
 	{
@@ -105,10 +107,11 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 		nine_grid->maxSize = 2560;
 		nine_grid->maxEntries = 256;
 
-		nine_grid->settings->draw_nine_grid_cache_size = nine_grid->maxSize;
-		nine_grid->settings->draw_nine_grid_cache_entries = nine_grid->maxEntries;
+		nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
+		nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
 
-		nine_grid->entries = (NINE_GRID_ENTRY*) xzalloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
+		nine_grid->entries = (NINE_GRID_ENTRY*) malloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
+		ZeroMemory(nine_grid->entries, sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
 	}
 
 	return nine_grid;
@@ -125,12 +128,12 @@ void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 			for (i = 0; i < (int) nine_grid->maxEntries; i++)
 			{
 				if (nine_grid->entries[i].entry != NULL)
-					xfree(nine_grid->entries[i].entry);
+					free(nine_grid->entries[i].entry);
 			}
 
-			xfree(nine_grid->entries);
+			free(nine_grid->entries);
 		}
 
-		xfree(nine_grid);
+		free(nine_grid);
 	}
 }

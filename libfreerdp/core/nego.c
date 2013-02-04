@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Protocol Security Negotiation
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -24,9 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <freerdp/constants.h>
-#include <freerdp/utils/memory.h>
-#include <freerdp/utils/unicode.h>
+#include <winpr/crt.h>
 
 #include "tpkt.h"
 
@@ -37,6 +35,7 @@
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
+	"NEGO_STATE_EXT",
 	"NEGO_STATE_NLA",
 	"NEGO_STATE_TLS",
 	"NEGO_STATE_RDP",
@@ -44,14 +43,15 @@ static const char* const NEGO_STATE_STRINGS[] =
 	"NEGO_STATE_FINAL"
 };
 
-static const char PROTOCOL_SECURITY_STRINGS[3][4] =
+static const char PROTOCOL_SECURITY_STRINGS[4][4] =
 {
 	"RDP",
 	"TLS",
-	"NLA"
+	"NLA",
+	"EXT"
 };
 
-boolean nego_security_connect(rdpNego* nego);
+BOOL nego_security_connect(rdpNego* nego);
 
 /**
  * Negotiate protocol security and connect.
@@ -59,51 +59,70 @@ boolean nego_security_connect(rdpNego* nego);
  * @return
  */
 
-boolean nego_connect(rdpNego* nego)
+BOOL nego_connect(rdpNego* nego)
 {
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
-		if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+		if (nego->enabled_protocols[PROTOCOL_EXT])
+		{
+			nego->state = NEGO_STATE_EXT;
+		}
+		else if (nego->enabled_protocols[PROTOCOL_NLA])
+		{
 			nego->state = NEGO_STATE_NLA;
-		else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_TLS])
+		{
 			nego->state = NEGO_STATE_TLS;
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		}
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
+		{
 			nego->state = NEGO_STATE_RDP;
+		}
 		else
 		{
 			DEBUG_NEGO("No security protocol is enabled");
 			nego->state = NEGO_STATE_FAIL;
 		}
 
-		if (!nego->security_layer_negotiation_enabled)
+		if (!nego->NegotiateSecurityLayer)
 		{
 			DEBUG_NEGO("Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
-			nego->enabled_protocols[PROTOCOL_NLA] = 0;
-			nego->enabled_protocols[PROTOCOL_TLS] = 0;
-			nego->enabled_protocols[PROTOCOL_RDP] = 0;
-			if(nego->state == NEGO_STATE_NLA)
+
+			nego->enabled_protocols[PROTOCOL_NLA] = FALSE;
+			nego->enabled_protocols[PROTOCOL_TLS] = FALSE;
+			nego->enabled_protocols[PROTOCOL_RDP] = FALSE;
+			nego->enabled_protocols[PROTOCOL_EXT] = FALSE;
+
+			if (nego->state == NEGO_STATE_EXT)
 			{
-				nego->enabled_protocols[PROTOCOL_NLA] = 1;
+				nego->enabled_protocols[PROTOCOL_EXT] = TRUE;
+				nego->enabled_protocols[PROTOCOL_NLA] = TRUE;
+				nego->selected_protocol = PROTOCOL_EXT;
+			}
+			else if (nego->state == NEGO_STATE_NLA)
+			{
+				nego->enabled_protocols[PROTOCOL_NLA] = TRUE;
 				nego->selected_protocol = PROTOCOL_NLA;
 			}
 			else if (nego->state == NEGO_STATE_TLS)
 			{
-				nego->enabled_protocols[PROTOCOL_TLS] = 1;
+				nego->enabled_protocols[PROTOCOL_TLS] = TRUE;
 				nego->selected_protocol = PROTOCOL_TLS;
 			}
 			else if (nego->state == NEGO_STATE_RDP)
 			{
-				nego->enabled_protocols[PROTOCOL_RDP] = 1;
+				nego->enabled_protocols[PROTOCOL_RDP] = TRUE;
 				nego->selected_protocol = PROTOCOL_RDP;
 			}
 		}
 
-		if(!nego_send_preconnection_pdu(nego))
+		if (!nego_send_preconnection_pdu(nego))
 		{
-			DEBUG_NEGO("Failed to send preconnection information");
+			DEBUG_NEGO("Failed to send preconnection pdu");
 			nego->state = NEGO_STATE_FINAL;
-			return false;
+			return FALSE;
 		}
 	}
 
@@ -117,7 +136,7 @@ boolean nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("Protocol Security Negotiation Failure");
 			nego->state = NEGO_STATE_FINAL;
-			return false;
+			return FALSE;
 		}
 	}
 	while (nego->state != NEGO_STATE_FINAL);
@@ -125,33 +144,33 @@ boolean nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
-	nego->transport->settings->requested_protocols = nego->requested_protocols;
-	nego->transport->settings->selected_protocol = nego->selected_protocol;
-	nego->transport->settings->negotiationFlags = nego->flags;
+	nego->transport->settings->RequestedProtocols = nego->requested_protocols;
+	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
+	nego->transport->settings->NegotiationFlags = nego->flags;
 
-	if(nego->selected_protocol == PROTOCOL_RDP)
+	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->encryption = true;
-		nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		nego->transport->settings->DisableEncryption = TRUE;
+		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
 	/* finally connect security layer (if not already done) */
-	if(!nego_security_connect(nego))
+	if (!nego_security_connect(nego))
 	{
 		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
-		return false;
+		return FALSE;
 	}
 
-	return true;
+	return TRUE;
 }
 
 /* connect to selected security layer */
-boolean nego_security_connect(rdpNego* nego)
+BOOL nego_security_connect(rdpNego* nego)
 {
-	if(!nego->tcp_connected)
+	if (!nego->tcp_connected)
 	{
-		nego->security_connected = false;
+		nego->security_connected = FALSE;
 	}
 	else if (!nego->security_connected)
 	{
@@ -160,7 +179,7 @@ boolean nego_security_connect(rdpNego* nego)
 			DEBUG_NEGO("nego_security_connect with PROTOCOL_NLA");
 			nego->security_connected = transport_connect_nla(nego->transport);
 		}
-		else if (nego->selected_protocol == PROTOCOL_TLS )
+		else if (nego->selected_protocol == PROTOCOL_TLS)
 		{
 			DEBUG_NEGO("nego_security_connect with PROTOCOL_TLS");
 			nego->security_connected = transport_connect_tls(nego->transport);
@@ -175,6 +194,7 @@ boolean nego_security_connect(rdpNego* nego)
 			DEBUG_NEGO("cannot connect security layer because no protocol has been selected yet.");
 		}
 	}
+
 	return nego->security_connected;
 }
 
@@ -184,7 +204,7 @@ boolean nego_security_connect(rdpNego* nego)
  * @return
  */
 
-boolean nego_tcp_connect(rdpNego* nego)
+BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
 		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
@@ -198,11 +218,11 @@ boolean nego_tcp_connect(rdpNego* nego)
  * @return
  */
 
-boolean nego_transport_connect(rdpNego* nego)
+BOOL nego_transport_connect(rdpNego* nego)
 {
 	nego_tcp_connect(nego);
 
-	if (nego->tcp_connected && !nego->security_layer_negotiation_enabled)
+	if (nego->tcp_connected && !nego->NegotiateSecurityLayer)
 		return nego_security_connect(nego);
 
 	return nego->tcp_connected;
@@ -219,8 +239,8 @@ int nego_transport_disconnect(rdpNego* nego)
 	if (nego->tcp_connected)
 		transport_disconnect(nego->transport);
 
-	nego->tcp_connected = 0;
-	nego->security_connected = 0;
+	nego->tcp_connected = FALSE;
+	nego->security_connected = FALSE;
 
 	return 1;
 }
@@ -231,48 +251,94 @@ int nego_transport_disconnect(rdpNego* nego)
  * @return
  */
 
-boolean nego_send_preconnection_pdu(rdpNego* nego)
+BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
 	STREAM* s;
-	uint32 cbSize;
-	uint16 cchPCB = 0;
+	UINT32 cbSize;
+	UINT16 cchPCB = 0;
 	WCHAR* wszPCB = NULL;
 
 	if (!nego->send_preconnection_pdu)
-		return true;
+		return TRUE;
 
 	DEBUG_NEGO("Sending preconnection PDU");
 
 	if (!nego_tcp_connect(nego))
-		return false;
+		return FALSE;
 
 	/* it's easier to always send the version 2 PDU, and it's just 2 bytes overhead */
 	cbSize = PRECONNECTION_PDU_V2_MIN_SIZE;
 
 	if (nego->preconnection_blob)
 	{
-		cchPCB = (uint16) freerdp_AsciiToUnicodeAlloc(nego->preconnection_blob, &wszPCB, 0);
+		cchPCB = (UINT16) ConvertToUnicode(CP_UTF8, 0, nego->preconnection_blob, -1, &wszPCB, 0);
 		cchPCB += 1; /* zero-termination */
 		cbSize += cchPCB * 2;
 	}
 
 	s = transport_send_stream_init(nego->transport, cbSize);
-	stream_write_uint32(s, cbSize); /* cbSize */
-	stream_write_uint32(s, 0); /* Flags */
-	stream_write_uint32(s, PRECONNECTION_PDU_V2); /* Version */
-	stream_write_uint32(s, nego->preconnection_id); /* Id */
-	stream_write_uint16(s, cchPCB); /* cchPCB */
+	stream_write_UINT32(s, cbSize); /* cbSize */
+	stream_write_UINT32(s, 0); /* Flags */
+	stream_write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
+	stream_write_UINT32(s, nego->preconnection_id); /* Id */
+	stream_write_UINT16(s, cchPCB); /* cchPCB */
 
 	if (wszPCB)
 	{
 		stream_write(s, wszPCB, cchPCB * 2); /* wszPCB */
-		xfree(wszPCB);
+		free(wszPCB);
 	}
 
 	if (transport_write(nego->transport, s) < 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
+}
+
+/**
+ * Attempt negotiating NLA + TLS extended security.
+ * @param nego
+ */
+
+void nego_attempt_ext(rdpNego* nego)
+{
+	nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS | PROTOCOL_EXT;
+
+	DEBUG_NEGO("Attempting NLA extended security");
+
+	if (!nego_transport_connect(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	if (!nego_recv_response(nego))
+	{
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
+
+	if (nego->state != NEGO_STATE_FINAL)
+	{
+		nego_transport_disconnect(nego);
+
+		if (nego->enabled_protocols[PROTOCOL_NLA])
+			nego->state = NEGO_STATE_NLA;
+		else if (nego->enabled_protocols[PROTOCOL_TLS])
+			nego->state = NEGO_STATE_TLS;
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
+			nego->state = NEGO_STATE_RDP;
+		else
+			nego->state = NEGO_STATE_FAIL;
+	}
 }
 
 /**
@@ -305,13 +371,14 @@ void nego_attempt_nla(rdpNego* nego)
 	}
 
 	DEBUG_NEGO("state: %s", NEGO_STATE_STRINGS[nego->state]);
+
 	if (nego->state != NEGO_STATE_FINAL)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+		if (nego->enabled_protocols[PROTOCOL_TLS])
 			nego->state = NEGO_STATE_TLS;
-		else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		else if (nego->enabled_protocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
 		else
 			nego->state = NEGO_STATE_FAIL;
@@ -351,7 +418,7 @@ void nego_attempt_tls(rdpNego* nego)
 	{
 		nego_transport_disconnect(nego);
 
-		if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+		if (nego->enabled_protocols[PROTOCOL_RDP])
 			nego->state = NEGO_STATE_RDP;
 		else
 			nego->state = NEGO_STATE_FAIL;
@@ -393,14 +460,14 @@ void nego_attempt_rdp(rdpNego* nego)
  * @param nego
  */
 
-boolean nego_recv_response(rdpNego* nego)
+BOOL nego_recv_response(rdpNego* nego)
 {
 	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
 
 	if (transport_read(nego->transport, s) < 0)
-		return false;
+		return FALSE;
 
-	return nego_recv(nego->transport, s, nego);
+	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
 }
 
 /**
@@ -411,22 +478,26 @@ boolean nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 {
-	uint8 li;
-	uint8 type;
+	BYTE li;
+	BYTE type;
+	UINT16 length;
 	rdpNego* nego = (rdpNego*) extra;
 
-	if (tpkt_read_header(s) == 0)
-		return false;
+	length = tpkt_read_header(s);
 
-	li = tpdu_read_connection_confirm(s);
+	if (length == 0)
+		return -1;
+
+	if(!tpdu_read_connection_confirm(s, &li))
+		return -1;
 
 	if (li > 6)
 	{
 		/* rdpNegData (optional) */
 
-		stream_read_uint8(s, type); /* Type */
+		stream_read_BYTE(s, type); /* Type */
 
 		switch (type)
 		{
@@ -440,7 +511,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				if (nego->selected_protocol)
 				{
 					if ((nego->selected_protocol == PROTOCOL_NLA) &&
-							(!nego->enabled_protocols[PROTOCOL_NLA]))
+						(!nego->enabled_protocols[PROTOCOL_NLA]))
 					{
 						nego->state = NEGO_STATE_FAIL;
 					}
@@ -461,7 +532,7 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 				break;
 		}
 	}
-	else
+	else if (li == 6)
 	{
 		DEBUG_NEGO("no rdpNegData");
 
@@ -470,8 +541,13 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 		else
 			nego->state = NEGO_STATE_FINAL;
 	}
+	else
+	{
+		printf("invalid negotiation response\n");
+		nego->state = NEGO_STATE_FAIL;
+	}
 
-	return true;
+	return 0;
 }
 
 /**
@@ -480,19 +556,20 @@ boolean nego_recv(rdpTransport* transport, STREAM* s, void* extra)
  * @param s stream
  */
 
-boolean nego_read_request(rdpNego* nego, STREAM* s)
+BOOL nego_read_request(rdpNego* nego, STREAM* s)
 {
-	uint8 li;
-	uint8 c;
-	uint8 type;
+	BYTE li;
+	BYTE c;
+	BYTE type;
 
 	tpkt_read_header(s);
-	li = tpdu_read_connection_request(s);
+	if(!tpdu_read_connection_request(s, &li))
+		return FALSE;
 
 	if (li != stream_get_left(s) + 6)
 	{
 		printf("Incorrect TPDU length indicator.\n");
-		return false;
+		return FALSE;
 	}
 
 	if (stream_get_left(s) > 8)
@@ -500,17 +577,17 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 		/* Optional routingToken or cookie, ending with CR+LF */
 		while (stream_get_left(s) > 0)
 		{
-			stream_read_uint8(s, c);
+			stream_read_BYTE(s, c);
 
 			if (c != '\x0D')
 				continue;
 
-			stream_peek_uint8(s, c);
+			stream_peek_BYTE(s, c);
 
 			if (c != '\x0A')
 				continue;
 
-			stream_seek_uint8(s);
+			stream_seek_BYTE(s);
 			break;
 		}
 	}
@@ -519,18 +596,18 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 	{
 		/* rdpNegData (optional) */
 
-		stream_read_uint8(s, type); /* Type */
+		stream_read_BYTE(s, type); /* Type */
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
 			printf("Incorrect negotiation request type %d\n", type);
-			return false;
+			return FALSE;
 		}
 
 		nego_process_negotiation_request(nego, s);
 	}
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -540,7 +617,9 @@ boolean nego_read_request(rdpNego* nego, STREAM* s)
 
 void nego_send(rdpNego* nego)
 {
-	if (nego->state == NEGO_STATE_NLA)
+	if (nego->state == NEGO_STATE_EXT)
+		nego_attempt_ext(nego);
+	else if (nego->state == NEGO_STATE_NLA)
 		nego_attempt_nla(nego);
 	else if (nego->state == NEGO_STATE_TLS)
 		nego_attempt_tls(nego);
@@ -557,11 +636,12 @@ void nego_send(rdpNego* nego)
  * @param nego
  */
 
-boolean nego_send_negotiation_request(rdpNego* nego)
+BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	STREAM* s;
 	int length;
-	uint8 *bm, *em;
+	BYTE *bm, *em;
+	int cookie_length;
 
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
@@ -575,11 +655,15 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	}
 	else if (nego->cookie != NULL)
 	{
-		int cookie_length = strlen(nego->cookie);
+		cookie_length = strlen(nego->cookie);
+
+		if (cookie_length > (int) nego->cookie_max_length)
+			cookie_length = nego->cookie_max_length;
+
 		stream_write(s, "Cookie: mstshash=", 17);
-		stream_write(s, (uint8*) nego->cookie, cookie_length);
-		stream_write_uint8(s, 0x0D); /* CR */
-		stream_write_uint8(s, 0x0A); /* LF */
+		stream_write(s, (BYTE*) nego->cookie, cookie_length);
+		stream_write_BYTE(s, 0x0D); /* CR */
+		stream_write_BYTE(s, 0x0A); /* LF */
 		length += cookie_length + 19;
 	}
 
@@ -588,10 +672,10 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	if (nego->requested_protocols > PROTOCOL_RDP)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
-		stream_write_uint8(s, TYPE_RDP_NEG_REQ);
-		stream_write_uint8(s, 0); /* flags, must be set to zero */
-		stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_uint32(s, nego->requested_protocols); /* requestedProtocols */
+		stream_write_BYTE(s, TYPE_RDP_NEG_REQ);
+		stream_write_BYTE(s, 0); /* flags, must be set to zero */
+		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		stream_write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
 		length += 8;
 	}
 
@@ -602,9 +686,9 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	stream_set_mark(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
-		return false;
+		return FALSE;
 
-	return true;
+	return TRUE;
 }
 
 /**
@@ -615,14 +699,14 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 
 void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 {
-	uint8 flags;
-	uint16 length;
+	BYTE flags;
+	UINT16 length;
 
 	DEBUG_NEGO("RDP_NEG_REQ");
 
-	stream_read_uint8(s, flags);
-	stream_read_uint16(s, length);
-	stream_read_uint32(s, nego->requested_protocols);
+	stream_read_BYTE(s, flags);
+	stream_read_UINT16(s, length);
+	stream_read_UINT32(s, nego->requested_protocols);
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
@@ -637,13 +721,20 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
 
 void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 {
-	uint16 length;
+	UINT16 length;
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
-	stream_read_uint8(s, nego->flags);
-	stream_read_uint16(s, length);
-	stream_read_uint32(s, nego->selected_protocol);
+	if (stream_get_left(s) < 7)
+	{
+		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
+		nego->state = NEGO_STATE_FAIL;
+		return;
+	}
+
+	stream_read_BYTE(s, nego->flags);
+	stream_read_UINT16(s, length);
+	stream_read_UINT32(s, nego->selected_protocol);
 
 	nego->state = NEGO_STATE_FINAL;
 }
@@ -656,15 +747,15 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
 
 void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 {
-	uint8 flags;
-	uint16 length;
-	uint32 failureCode;
+	BYTE flags;
+	UINT16 length;
+	UINT32 failureCode;
 
 	DEBUG_NEGO("RDP_NEG_FAILURE");
 
-	stream_read_uint8(s, flags);
-	stream_read_uint16(s, length);
-	stream_read_uint32(s, failureCode);
+	stream_read_BYTE(s, flags);
+	stream_read_UINT16(s, length);
+	stream_read_UINT32(s, failureCode);
 
 	switch (failureCode)
 	{
@@ -696,16 +787,16 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
  * @param nego
  */
 
-boolean nego_send_negotiation_response(rdpNego* nego)
+BOOL nego_send_negotiation_response(rdpNego* nego)
 {
 	STREAM* s;
-	uint8* bm;
-	uint8* em;
+	BYTE* bm;
+	BYTE* em;
 	int length;
-	boolean status;
+	BOOL status;
 	rdpSettings* settings;
 
-	status = true;
+	status = TRUE;
 	settings = nego->transport->settings;
 
 	s = transport_send_stream_init(nego->transport, 256);
@@ -716,25 +807,25 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 	if (nego->selected_protocol > PROTOCOL_RDP)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
-		stream_write_uint8(s, TYPE_RDP_NEG_RSP);
-		stream_write_uint8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
-		stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
+		stream_write_BYTE(s, TYPE_RDP_NEG_RSP);
+		stream_write_BYTE(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
+		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		stream_write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
-	else if (!settings->rdp_security)
+	else if (!settings->RdpSecurity)
 	{
-		stream_write_uint8(s, TYPE_RDP_NEG_FAILURE);
-		stream_write_uint8(s, 0); /* flags */
-		stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+		stream_write_BYTE(s, TYPE_RDP_NEG_FAILURE);
+		stream_write_BYTE(s, 0); /* flags */
+		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		/*
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
 		printf("nego_send_negotiation_response: client supports only Standard RDP Security\n");
-		stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
+		stream_write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
-		status = false;
+		status = FALSE;
 	}
 
 	stream_get_mark(s, em);
@@ -744,47 +835,47 @@ boolean nego_send_negotiation_response(rdpNego* nego)
 	stream_set_mark(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
-		return false;
+		return FALSE;
 
 	if (status)
 	{
 		/* update settings with negotiated protocol security */
-		settings->requested_protocols = nego->requested_protocols;
-		settings->selected_protocol = nego->selected_protocol;
+		settings->RequestedProtocols = nego->requested_protocols;
+		settings->SelectedProtocol = nego->selected_protocol;
 
-		if (settings->selected_protocol == PROTOCOL_RDP)
+		if (settings->SelectedProtocol == PROTOCOL_RDP)
 		{
-			settings->tls_security = false;
-			settings->nla_security = false;
-			settings->rdp_security = true;
+			settings->TlsSecurity = FALSE;
+			settings->NlaSecurity = FALSE;
+			settings->RdpSecurity = TRUE;
 
-			if (!settings->local)
+			if (!settings->LocalConnection)
 			{
-				settings->encryption = true;
-				settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->DisableEncryption = TRUE;
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->encryption && settings->server_key == NULL && settings->rdp_key_file == NULL)
-				return false;
+			if (settings->DisableEncryption && settings->RdpServerRsaKey == NULL && settings->RdpKeyFile == NULL)
+				return FALSE;
 		}
-		else if (settings->selected_protocol == PROTOCOL_TLS)
+		else if (settings->SelectedProtocol == PROTOCOL_TLS)
 		{
-			settings->tls_security = true;
-			settings->nla_security = false;
-			settings->rdp_security = false;
-			settings->encryption = false;
-			settings->encryption_method = ENCRYPTION_METHOD_NONE;
-			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+			settings->TlsSecurity = TRUE;
+			settings->NlaSecurity = FALSE;
+			settings->RdpSecurity = FALSE;
+			settings->DisableEncryption = FALSE;
+			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
-		else if (settings->selected_protocol == PROTOCOL_NLA)
+		else if (settings->SelectedProtocol == PROTOCOL_NLA)
 		{
-			settings->tls_security = true;
-			settings->nla_security = true;
-			settings->rdp_security = false;
-			settings->encryption = false;
-			settings->encryption_method = ENCRYPTION_METHOD_NONE;
-			settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+			settings->TlsSecurity = TRUE;
+			settings->NlaSecurity = TRUE;
+			settings->RdpSecurity = FALSE;
+			settings->DisableEncryption = FALSE;
+			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 	}
 
@@ -800,8 +891,9 @@ void nego_init(rdpNego* nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->requested_protocols = PROTOCOL_RDP;
-	nego->transport->recv_callback = nego_recv;
-	nego->transport->recv_extra = (void*) nego;
+	nego->transport->ReceiveCallback = nego_recv;
+	nego->transport->ReceiveExtra = (void*) nego;
+	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->flags = 0;
 }
 
@@ -813,10 +905,11 @@ void nego_init(rdpNego* nego)
 
 rdpNego* nego_new(struct rdp_transport * transport)
 {
-	rdpNego* nego = (rdpNego*) xzalloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
 
 	if (nego != NULL)
 	{
+		ZeroMemory(nego, sizeof(rdpNego));
 		nego->transport = transport;
 		nego_init(nego);
 	}
@@ -831,7 +924,8 @@ rdpNego* nego_new(struct rdp_transport * transport)
 
 void nego_free(rdpNego* nego)
 {
-	xfree(nego);
+	free(nego->cookie);
+	free(nego);
 }
 
 /**
@@ -850,35 +944,35 @@ void nego_set_target(rdpNego* nego, char* hostname, int port)
 /**
  * Enable security layer negotiation.
  * @param nego pointer to the negotiation structure
- * @param enable_rdp whether to enable security layer negotiation (true for enabled, false for disabled)
+ * @param enable_rdp whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_set_negotiation_enabled(rdpNego* nego, boolean security_layer_negotiation_enabled)
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 {
-	DEBUG_NEGO("Enabling security layer negotiation: %s", security_layer_negotiation_enabled ? "true" : "false");
-	nego->security_layer_negotiation_enabled = security_layer_negotiation_enabled;
+	DEBUG_NEGO("Enabling security layer negotiation: %s", NegotiateSecurityLayer ? "TRUE" : "FALSE");
+	nego->NegotiateSecurityLayer = NegotiateSecurityLayer;
 }
 
 /**
  * Enable RDP security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_rdp whether to enable normal RDP protocol (true for enabled, false for disabled)
+ * @param enable_rdp whether to enable normal RDP protocol (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_enable_rdp(rdpNego* nego, boolean enable_rdp)
+void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
 {
-	DEBUG_NEGO("Enabling RDP security: %s", enable_rdp ? "true" : "false");
+	DEBUG_NEGO("Enabling RDP security: %s", enable_rdp ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_RDP] = enable_rdp;
 }
 
 /**
  * Enable TLS security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_tls whether to enable TLS + RDP protocol (true for enabled, false for disabled)
+ * @param enable_tls whether to enable TLS + RDP protocol (TRUE for enabled, FALSE for disabled)
  */
-void nego_enable_tls(rdpNego* nego, boolean enable_tls)
+void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 {
-	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "true" : "false");
+	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_TLS] = enable_tls;
 }
 
@@ -886,13 +980,25 @@ void nego_enable_tls(rdpNego* nego, boolean enable_tls)
 /**
  * Enable NLA security protocol.
  * @param nego pointer to the negotiation structure
- * @param enable_nla whether to enable network level authentication protocol (true for enabled, false for disabled)
+ * @param enable_nla whether to enable network level authentication protocol (TRUE for enabled, FALSE for disabled)
  */
 
-void nego_enable_nla(rdpNego* nego, boolean enable_nla)
+void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 {
-	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "true" : "false");
+	DEBUG_NEGO("Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_NLA] = enable_nla;
+}
+
+/**
+ * Enable NLA extended security protocol.
+ * @param nego pointer to the negotiation structure
+ * @param enable_ext whether to enable network level authentication extended protocol (TRUE for enabled, FALSE for disabled)
+ */
+
+void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
+{
+	DEBUG_NEGO("Enabling NLA extended security: %s", enable_ext ? "TRUE" : "FALSE");
+	nego->enabled_protocols[PROTOCOL_EXT] = enable_ext;
 }
 
 /**
@@ -916,7 +1022,21 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 
 void nego_set_cookie(rdpNego* nego, char* cookie)
 {
-	nego->cookie = cookie;
+	if (nego->cookie)
+		free(nego->cookie);
+
+	nego->cookie = _strdup(cookie);
+}
+
+/**
+ * Set cookie maximum length
+ * @param nego
+ * @param cookie_max_length
+ */
+
+void nego_set_cookie_max_length(rdpNego* nego, UINT32 cookie_max_length)
+{
+	nego->cookie_max_length = cookie_max_length;
 }
 
 /**
@@ -925,7 +1045,7 @@ void nego_set_cookie(rdpNego* nego, char* cookie)
  * @param send_pcpdu
  */
 
-void nego_set_send_preconnection_pdu(rdpNego* nego, boolean send_pcpdu)
+void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu)
 {
 	nego->send_preconnection_pdu = send_pcpdu;
 }
@@ -936,7 +1056,7 @@ void nego_set_send_preconnection_pdu(rdpNego* nego, boolean send_pcpdu)
  * @param id
  */
 
-void nego_set_preconnection_id(rdpNego* nego, uint32 id)
+void nego_set_preconnection_id(rdpNego* nego, UINT32 id)
 {
 	nego->preconnection_id = id;
 }

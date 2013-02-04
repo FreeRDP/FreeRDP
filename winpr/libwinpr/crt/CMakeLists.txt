@@ -20,22 +20,30 @@ set(MODULE_PREFIX "WINPR_CRT")
 
 set(${MODULE_PREFIX}_SRCS
 	alignment.c
+	conversion.c
+	buffer.c
 	memory.c
-	string.c)
+	string.c
+	unicode.c
+	utf.c
+	utf.h)
 
-if(MSVC)
+if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-if(WITH_MONOLITHIC_BUILD)
-	add_library(${MODULE_NAME} OBJECT ${${MODULE_PREFIX}_SRCS})
-else()
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-endif()
+add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
-if(WITH_MONOLITHIC_BUILD)
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-error)
+
+if(MONOLITHIC_BUILD)
 
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})

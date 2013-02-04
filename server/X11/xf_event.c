@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * X11 Server Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
 
 #include "xf_event.h"
 
@@ -96,7 +96,7 @@ void xf_event_push(xfEventQueue* event_queue, xfEvent* event)
 	if (event_queue->count >= event_queue->size)
 	{
 		event_queue->size *= 2;
-		event_queue->events = (xfEvent**) xrealloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
+		event_queue->events = (xfEvent**) realloc((void*) event_queue->events, sizeof(xfEvent*) * event_queue->size);
 	}
 
 	event_queue->events[(event_queue->count)++] = event;
@@ -146,7 +146,10 @@ xfEvent* xf_event_pop(xfEventQueue* event_queue)
 
 xfEventRegion* xf_event_region_new(int x, int y, int width, int height)
 {
-	xfEventRegion* event_region = xnew(xfEventRegion);
+	xfEventRegion* event_region;
+
+	event_region = (xfEventRegion*) malloc(sizeof(xfEventRegion));
+	ZeroMemory(event_region, sizeof(xfEventRegion));
 
 	if (event_region != NULL)
 	{
@@ -161,24 +164,29 @@ xfEventRegion* xf_event_region_new(int x, int y, int width, int height)
 
 void xf_event_region_free(xfEventRegion* event_region)
 {
-	xfree(event_region);
+	free(event_region);
 }
 
 xfEvent* xf_event_new(int type)
 {
-	xfEvent* event = xnew(xfEvent);
+	xfEvent* event;
+	event = (xfEvent*) malloc(sizeof(xfEvent));
+	ZeroMemory(event, sizeof(xfEvent));
 	event->type = type;
 	return event;
 }
 
 void xf_event_free(xfEvent* event)
 {
-	xfree(event);
+	free(event);
 }
 
 xfEventQueue* xf_event_queue_new()
 {
-	xfEventQueue* event_queue = xnew(xfEventQueue);
+	xfEventQueue* event_queue;
+
+	event_queue = (xfEventQueue*) malloc(sizeof(xfEventQueue));
+	ZeroMemory(event_queue, sizeof(xfEventQueue));
 
 	if (event_queue != NULL)
 	{
@@ -187,7 +195,8 @@ xfEventQueue* xf_event_queue_new()
 
 		event_queue->size = 16;
 		event_queue->count = 0;
-		event_queue->events = (xfEvent**) xzalloc(sizeof(xfEvent*) * event_queue->size);
+		event_queue->events = (xfEvent**) malloc(sizeof(xfEvent*) * event_queue->size);
+		ZeroMemory(event_queue->events, sizeof(xfEvent*) * event_queue->size);
 
 		if (pipe(event_queue->pipe_fd) < 0)
 			printf("xf_event_queue_new: pipe failed\n");

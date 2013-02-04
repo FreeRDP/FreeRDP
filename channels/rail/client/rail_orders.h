@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol client.
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2009 Marc-Andre Moreau <marcandre.moreau@gmail.com>
@@ -56,13 +56,13 @@
 
 void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string);
 
-void rail_read_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
-void rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_result);
-void rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam);
-void rail_read_server_minmaxinfo_order(STREAM* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
-void rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize);
-void rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
-void rail_read_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
+BOOL rail_read_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
+BOOL rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_result);
+BOOL rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam);
+BOOL rail_read_server_minmaxinfo_order(STREAM* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
+BOOL rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize);
+BOOL rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
+BOOL rail_read_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
 void rail_write_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_client_status_order(STREAM* s, RAIL_CLIENT_STATUS_ORDER* client_status);
@@ -76,7 +76,7 @@ void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* wind
 void rail_write_client_get_appid_req_order(STREAM* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
 void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-void rail_order_recv(rdpRailOrder* rail_order, STREAM* s);
+BOOL rail_order_recv(rdpRailOrder* rail_order, STREAM* s);
 
 void rail_send_handshake_order(rdpRailOrder* rail_order);
 void rail_send_client_status_order(rdpRailOrder* rail_order);

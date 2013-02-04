@@ -1,5 +1,5 @@
 /*
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * Stream Utils
  *
  * Copyright 2011 Vic Lee
@@ -25,7 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/memory.h>
+#include <winpr/crt.h>
+
 #include <freerdp/utils/stream.h>
 
 /**
@@ -49,14 +50,16 @@ STREAM* stream_new(int size)
 {
 	STREAM* stream;
 
-	stream = xnew(STREAM);
+	stream = malloc(sizeof(STREAM));
+	ZeroMemory(stream, sizeof(STREAM));
 
 	if (stream != NULL)
 	{
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (uint8*) xzalloc(size);
+			stream->data = (BYTE*) malloc(size);
+			ZeroMemory(stream->data, size);
 			stream->p = stream->data;
 			stream->size = size;
 		}
@@ -79,9 +82,9 @@ void stream_free(STREAM* stream)
 	if (stream != NULL)
 	{
 		if (stream->data != NULL)
-			xfree(stream->data);
+			free(stream->data);
 
-		xfree(stream);
+		free(stream);
 	}
 }
 
@@ -107,9 +110,9 @@ void stream_extend(STREAM* stream, int request_size)
 	stream->size += increased_size;
 
 	if (original_size == 0)
-		stream->data = (uint8*) xmalloc(stream->size);
+		stream->data = (BYTE*) malloc(stream->size);
 	else
-		stream->data = (uint8*) xrealloc(stream->data, stream->size);
+		stream->data = (BYTE*) realloc(stream->data, stream->size);
 
 	memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);

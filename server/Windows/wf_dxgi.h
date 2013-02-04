@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Windows Server
  *
  * Copyright 2012 Corey Clayton <can.of.tuna@gmail.com>
@@ -23,6 +23,10 @@
 #include "wf_interface.h"
 
 int wf_dxgi_init(wfInfo* context);
+
+int wf_dxgi_createDevice(wfInfo* context);
+
+int wf_dxgi_getDuplication(wfInfo* context);
 
 int wf_dxgi_cleanup(wfInfo* context);
 
