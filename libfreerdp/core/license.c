@@ -179,12 +179,12 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 
 BOOL license_recv(rdpLicense* license, STREAM* s)
 {
-	UINT16 length;
-	UINT16 channelId;
-	UINT16 sec_flags;
 	BYTE flags;
 	BYTE bMsgType;
 	UINT16 wMsgSize;
+	UINT16 length;
+	UINT16 channelId;
+	UINT16 securityFlags;
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
@@ -192,17 +192,29 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 		return FALSE;
 	}
 
-	if (!rdp_read_security_header(s, &sec_flags))
+	if (!rdp_read_security_header(s, &securityFlags))
 		return FALSE;
 
-	if (!(sec_flags & SEC_LICENSE_PKT))
+	if (securityFlags & SEC_ENCRYPT)
 	{
-		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
+		{
+			printf("rdp_decrypt failed\n");
+			return FALSE;
+		}
+	}
+
+	if (!(securityFlags & SEC_LICENSE_PKT))
+	{
+		if (!(securityFlags & SEC_ENCRYPT))
+			stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+
 		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != TRUE)
 		{
 			printf("Unexpected license packet.\n");
 			return FALSE;
 		}
+
 		return TRUE;
 	}
 
@@ -686,8 +698,10 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 {
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
-	if(stream_get_left(s) < 4)
+
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
@@ -696,10 +710,11 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	license->encrypted_platform_challenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
-	if(!stream_skip(s, 16))
+	if (!stream_skip(s, 16))
 		return FALSE;
 
 	license_decrypt_platform_challenge(license);
+
 	return TRUE;
 }
 
@@ -741,11 +756,13 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 	UINT32 dwErrorCode;
 	UINT32 dwStateTransition;
 
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
+
 	stream_read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
 	stream_read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
-	if(!license_read_binary_blob(s, license->error_info)) /* bbErrorInfo */
+
+	if (!license_read_binary_blob(s, license->error_info)) /* bbErrorInfo */
 		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
@@ -779,6 +796,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 		default:
 			break;
 	}
+
 	return TRUE;
 }
 
@@ -956,7 +974,6 @@ rdpLicense* license_new(rdpRdp* rdp)
 
 		license->rdp = rdp;
 		license->state = LICENSE_STATE_AWAIT;
-		//license->certificate = certificate_new(rdp);
 		license->certificate = certificate_new();
 		license->product_info = license_new_product_info();
 		license->error_info = license_new_binary_blob(BB_ERROR_BLOB);
