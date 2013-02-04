@@ -254,7 +254,7 @@ WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 struct _wMessage
 {
-	UINT32 type;
+	UINT32 id;
 	void* context;
 	void* wParam;
 	void* lParam;

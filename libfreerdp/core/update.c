@@ -735,7 +735,7 @@ void update_register_client_callbacks(rdpUpdate* update)
 
 int update_process_messages(rdpUpdate* update)
 {
-	return update_message_process_pending_updates(update);
+	return update_message_queue_process_pending_messages(update);
 }
 
 rdpUpdate* update_new(rdpRdp* rdp)

@@ -94,7 +94,7 @@ void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* w
 	wMessage message;
 
 	message.context = context;
-	message.type = type;
+	message.id = type;
 	message.wParam = wParam;
 	message.lParam = lParam;
 
@@ -122,7 +122,7 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 
-		status = (message->type != WMQ_QUIT) ? 1 : 0;
+		status = (message->id != WMQ_QUIT) ? 1 : 0;
 	}
 
 	if (queue->size < 1)

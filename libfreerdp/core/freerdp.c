@@ -28,6 +28,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "extension.h"
+#include "message.h"
 
 #include <winpr/crt.h>
 

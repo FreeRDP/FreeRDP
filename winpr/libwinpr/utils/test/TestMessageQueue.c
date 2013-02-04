@@ -14,10 +14,10 @@ static void* message_queue_consumer_thread(void* arg)
 	{
 		if (MessageQueue_Peek(queue, &message, TRUE))
 		{
-			if (message.type == WMQ_QUIT)
+			if (message.id == WMQ_QUIT)
 				break;
 
-			printf("Message.Type: %d\n", message.type);
+			printf("Message.Type: %d\n", message.id);
 		}
 	}
 

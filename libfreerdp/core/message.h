@@ -32,105 +32,183 @@
  * Update Message Queue
  */
 
+#define Update_Base						0
+
 /* Update */
 
-#define Update_Class					1
+#define Update_Class						(Update_Base + 1)
 
-#define Update_BeginPaint				1
-#define Update_EndPaint					2
-#define Update_SetBounds				3
-#define Update_Synchronize				4
-#define Update_DesktopResize				5
-#define Update_BitmapUpdate				6
-#define Update_Palette					7
-#define Update_PlaySound				8
-#define Update_RefreshRect				9
-#define Update_SuppressOutput				10
-#define Update_SurfaceCommand				11
-#define Update_SurfaceBits				12
-#define Update_SurfaceFrameMarker			13
-#define Update_SurfaceFrameAcknowledge			14
+#define Update_BeginPaint					1
+#define Update_EndPaint						2
+#define Update_SetBounds					3
+#define Update_Synchronize					4
+#define Update_DesktopResize					5
+#define Update_BitmapUpdate					6
+#define Update_Palette						7
+#define Update_PlaySound					8
+#define Update_RefreshRect					9
+#define Update_SuppressOutput					10
+#define Update_SurfaceCommand					11
+#define Update_SurfaceBits					12
+#define Update_SurfaceFrameMarker				13
+#define Update_SurfaceFrameAcknowledge				14
+
+#define FREERDP_UPDATE_BEGIN_PAINT				MakeMessageId(Update, BeginPaint)
+#define FREERDP_UPDATE_	END_PAINT				MakeMessageId(Update, EndPaint)
+#define FREERDP_UPDATE_SET_BOUNDS				MakeMessageId(Update, SetBounds)
+#define FREERDP_UPDATE_SYNCHRONIZE				MakeMessageId(Update, Synchronize)
+#define FREERDP_UPDATE_DESKTOP_RESIZE				MakeMessageId(Update, DesktopResize)
+#define FREERDP_UPDATE_BITMAP_UPDATE				MakeMessageId(Update, BitmapUpdate)
+#define FREERDP_UPDATE_PALETTE					MakeMessageId(Update, Palette)
+#define FREERDP_UPDATE_PLAY_SOUND				MakeMessageId(Update, PlaySound)
+#define FREERDP_UPDATE_REFRESH_RECT				MakeMessageId(Update, RefreshRect)
+#define FREERDP_UPDATE_SUPPRESS_OUTPUT				MakeMessageId(Update, SuppressOutput)
+#define FREERDP_UPDATE_SURFACE_COMMAND				MakeMessageId(Update, SurfaceCommand)
+#define FREERDP_UPDATE_SURFACE_BITS				MakeMessageId(Update, SurfaceBits)
+#define FREERDP_UPDATE_SURFACE_FRAME_MARKER			MakeMessageId(Update, SurfaceFrameMarker)
+#define FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE		MakeMessageId(Update, SurfaceFrameAcknowledge)
 
 /* Primary Update */
 
-#define PrimaryUpdate_Class				2
+#define PrimaryUpdate_Class					(Update_Base + 2)
 
-#define PrimaryUpdate_DstBlt				1
-#define PrimaryUpdate_PatBlt				2
-#define PrimaryUpdate_ScrBlt				3
-#define PrimaryUpdate_OpaqueRect			4
-#define PrimaryUpdate_DrawNineGrid			5
-#define PrimaryUpdate_MultiDstBlt			6
-#define PrimaryUpdate_MultiPatBlt			7
-#define PrimaryUpdate_MultiScrBlt			8
-#define PrimaryUpdate_MultiOpaqueRect			9
-#define PrimaryUpdate_MultiDrawNineGrid			10
-#define PrimaryUpdate_LineTo				11
-#define PrimaryUpdate_Polyline				12
-#define PrimaryUpdate_MemBlt				13
-#define PrimaryUpdate_Mem3Blt				14
-#define PrimaryUpdate_SaveBitmap			15
-#define PrimaryUpdate_GlyphIndex			16
-#define PrimaryUpdate_FastIndex				17
-#define PrimaryUpdate_FastGlyph				18
-#define PrimaryUpdate_PolygonSC				19
-#define PrimaryUpdate_PolygonCB				20
-#define PrimaryUpdate_EllipseSC				21
-#define PrimaryUpdate_EllipseCB				22
+#define PrimaryUpdate_DstBlt					1
+#define PrimaryUpdate_PatBlt					2
+#define PrimaryUpdate_ScrBlt					3
+#define PrimaryUpdate_OpaqueRect				4
+#define PrimaryUpdate_DrawNineGrid				5
+#define PrimaryUpdate_MultiDstBlt				6
+#define PrimaryUpdate_MultiPatBlt				7
+#define PrimaryUpdate_MultiScrBlt				8
+#define PrimaryUpdate_MultiOpaqueRect				9
+#define PrimaryUpdate_MultiDrawNineGrid				10
+#define PrimaryUpdate_LineTo					11
+#define PrimaryUpdate_Polyline					12
+#define PrimaryUpdate_MemBlt					13
+#define PrimaryUpdate_Mem3Blt					14
+#define PrimaryUpdate_SaveBitmap				15
+#define PrimaryUpdate_GlyphIndex				16
+#define PrimaryUpdate_FastIndex					17
+#define PrimaryUpdate_FastGlyph					18
+#define PrimaryUpdate_PolygonSC					19
+#define PrimaryUpdate_PolygonCB					20
+#define PrimaryUpdate_EllipseSC					21
+#define PrimaryUpdate_EllipseCB					22
+
+#define FREERDP_PRIMARY_UPDATE_DSTBLT				MakeMessageId(PrimaryUpdate, DstBlt)
+#define FREERDP_PRIMARY_UPDATE_PATBLT				MakeMessageId(PrimaryUpdate, PatBlt)
+#define FREERDP_PRIMARY_UPDATE_SCRBLT				MakeMessageId(PrimaryUpdate, ScrBlt)
+#define FREERDP_PRIMARY_UPDATE_OPAQUE_RECT			MakeMessageId(PrimaryUpdate, OpaqueRect)
+#define FREERDP_PRIMARY_UPDATE_DRAW_NINE_GRID			MakeMessageId(PrimaryUpdate, DrawNineGrid)
+#define FREERDP_PRIMARY_UPDATE_MULTI_DSTBLT			MakeMessageId(PrimaryUpdate, MultiDstBlt)
+#define FREERDP_PRIMARY_UPDATE_MULTI_PATBLT			MakeMessageId(PrimaryUpdate, MultiPatBlt)
+#define FREERDP_PRIMARY_UPDATE_MULTI_SCRBLT			MakeMessageId(PrimaryUpdate, MultiScrBlt)
+#define FREERDP_PRIMARY_UPDATE_MULTI_OPAQUE_RECT		MakeMessageId(PrimaryUpdate, MultiOpaqueRect)
+#define FREERDP_PRIMARY_UPDATE_MULTI_DRAW_NINE_GRID		MakeMessageId(PrimaryUpdate, MultiDrawNineGrid)
+#define FREERDP_PRIMARY_UPDATE_LINE_TO				MakeMessageId(PrimaryUpdate, LineTo)
+#define FREERDP_PRIMARY_UPDATE_POLYLINE				MakeMessageId(PrimaryUpdate, Polyline)
+#define FREERDP_PRIMARY_UPDATE_MEMBLT				MakeMessageId(PrimaryUpdate, MemBlt)
+#define FREERDP_PRIMARY_UPDATE_MEM3BLT				MakeMessageId(PrimaryUpdate, Mem3Blt)
+#define FREERDP_PRIMARY_UPDATE_SAVE_BITMAP			MakeMessageId(PrimaryUpdate, SaveBitmap)
+#define FREERDP_PRIMARY_UPDATE_GLYPH_INDEX			MakeMessageId(PrimaryUpdate, GlyphIndex)
+#define FREERDP_PRIMARY_UPDATE_FAST_INDEX			MakeMessageId(PrimaryUpdate, FastIndex)
+#define FREERDP_PRIMARY_UPDATE_FAST_GLYPH			MakeMessageId(PrimaryUpdate, FastGlyph)
+#define FREERDP_PRIMARY_UPDATE_POLYGON_SC			MakeMessageId(PrimaryUpdate, PolygonSC)
+#define FREERDP_PRIMARY_UPDATE_POLYGON_CB			MakeMessageId(PrimaryUpdate, PolygonCB)
+#define FREERDP_PRIMARY_UPDATE_ELLIPSE_SC			MakeMessageId(PrimaryUpdate, EllipseSC)
+#define FREERDP_PRIMARY_UPDATE_ELLIPSE_CB			MakeMessageId(PrimaryUpdate, EllipseCB)
 
 /* Secondary Update */
 
-#define SecondaryUpdate_Class				3
+#define SecondaryUpdate_Class					(Update_Base + 3)
 
-#define SecondaryUpdate_CacheBitmap			1
-#define SecondaryUpdate_CacheBitmapV2			2
-#define SecondaryUpdate_CacheBitmapV3			3
-#define SecondaryUpdate_CacheColorTable			4
-#define SecondaryUpdate_CacheGlyph			5
-#define SecondaryUpdate_CacheGlyphV2			6
-#define SecondaryUpdate_CacheBrush			7
+#define SecondaryUpdate_CacheBitmap				1
+#define SecondaryUpdate_CacheBitmapV2				2
+#define SecondaryUpdate_CacheBitmapV3				3
+#define SecondaryUpdate_CacheColorTable				4
+#define SecondaryUpdate_CacheGlyph				5
+#define SecondaryUpdate_CacheGlyphV2				6
+#define SecondaryUpdate_CacheBrush				7
+
+#define FREERDP_SECONDARY_UPDATE_CACHE_BITMAP			MakeMessageId(SecondaryUpdate, CacheBitmap)
+#define FREERDP_SECONDARY_UPDATE_CACHE_BITMAP_V2		MakeMessageId(SecondaryUpdate, CacheBitmapV2)
+#define FREERDP_SECONDARY_UPDATE_CACHE_BITMAP_V3		MakeMessageId(SecondaryUpdate, CacheBitmapV3)
+#define FREERDP_SECONDARY_UPDATE_CACHE_COLOR_TABLE		MakeMessageId(SecondaryUpdate, CacheColorTable)
+#define FREERDP_SECONDARY_UPDATE_CACHE_GLYPH			MakeMessageId(SecondaryUpdate, CacheGlyph)
+#define FREERDP_SECONDARY_UPDATE_CACHE_GLYPH_V2			MakeMessageId(SecondaryUpdate, CacheGlyphV2)
+#define FREERDP_SECONDARY_UPDATE_CACHE_BRUSH			MakeMessageId(SecondaryUpdate, CacheBrush)
 
 /* Alternate Secondary Update */
 
-#define AltSecUpdate_Class				4
+#define AltSecUpdate_Class					(Update_Base + 4)
 
-#define AltSecUpdate_CreateOffscreenBitmap		1
-#define AltSecUpdate_SwitchSurface			2
-#define AltSecUpdate_CreateNineGridBitmap		3
-#define AltSecUpdate_FrameMarker			4
-#define AltSecUpdate_StreamBitmapFirst			5
-#define AltSecUpdate_StreamBitmapNext			6
-#define AltSecUpdate_DrawGdiPlusFirst			7
-#define AltSecUpdate_DrawGdiPlusNext			8
-#define AltSecUpdate_DrawGdiPlusEnd			9
-#define AltSecUpdate_DrawGdiPlusCacheFirst		10
-#define AltSecUpdate_DrawGdiPlusCacheNext		11
-#define AltSecUpdate_DrawGdiPlusCacheEnd		12
+#define AltSecUpdate_CreateOffscreenBitmap			1
+#define AltSecUpdate_SwitchSurface				2
+#define AltSecUpdate_CreateNineGridBitmap			3
+#define AltSecUpdate_FrameMarker				4
+#define AltSecUpdate_StreamBitmapFirst				5
+#define AltSecUpdate_StreamBitmapNext				6
+#define AltSecUpdate_DrawGdiPlusFirst				7
+#define AltSecUpdate_DrawGdiPlusNext				8
+#define AltSecUpdate_DrawGdiPlusEnd				9
+#define AltSecUpdate_DrawGdiPlusCacheFirst			10
+#define AltSecUpdate_DrawGdiPlusCacheNext			11
+#define AltSecUpdate_DrawGdiPlusCacheEnd			12
+
+#define FREERDP_ALTSEC_UPDATE_CREATE_OFFSCREEN_BITMAP		MakeMessageId(AltSecUpdate, CreateOffscreenBitmap)
+#define FREERDP_ALTSEC_UPDATE_SWITCH_SURFACE			MakeMessageId(AltSecUpdate, SwitchSurface)
+#define FREERDP_ALTSEC_UPDATE_CREATE_NINE_GRID_BITMAP		MakeMessageId(AltSecUpdate, CreateNineGridBitmap)
+#define FREERDP_ALTSEC_UPDATE_FRAME_MARKER			MakeMessageId(AltSecUpdate, FrameMarker)
+#define FREERDP_ALTSEC_UPDATE_STREAM_BITMAP_FIRST		MakeMessageId(AltSecUpdate, StreamBitmapFirst)
+#define FREERDP_ALTSEC_UPDATE_STREAM_BITMAP_NEXT		MakeMessageId(AltSecUpdate, StreamBitmapNext)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_FIRST		MakeMessageId(AltSecUpdate, DrawGdiPlusFirst)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_NEXT		MakeMessageId(AltSecUpdate, DrawGdiPlusNext)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_END			MakeMessageId(AltSecUpdate, DrawGdiPlusEnd)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_CACHE_FIRST		MakeMessageId(AltSecUpdate, DrawGdiPlusCacheFirst)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_CACHE_NEXT		MakeMessageId(AltSecUpdate, DrawGdiPlusCacheNext)
+#define FREERDP_ALTSEC_UPDATE_DRAW_GDI_PLUS_CACHE_END		MakeMessageId(AltSecUpdate, DrawGdiPlusCacheEnd)
 
 /* Window Update */
 
-#define WindowUpdate_Class				5
+#define WindowUpdate_Class					(Update_Base + 5)
 
-#define WindowUpdate_WindowCreate			1
-#define WindowUpdate_WindowUpdate			2
-#define WindowUpdate_WindowIcon				3
-#define WindowUpdate_WindowCachedIcon			4
-#define WindowUpdate_WindowDelete			5
-#define WindowUpdate_NotifyIconCreate			6
-#define WindowUpdate_NotifyIconUpdate			7
-#define WindowUpdate_NotifyIconDelete			8
-#define WindowUpdate_MonitoredDesktop			9
-#define WindowUpdate_NonMonitoredDesktop		10
+#define WindowUpdate_WindowCreate				1
+#define WindowUpdate_WindowUpdate				2
+#define WindowUpdate_WindowIcon					3
+#define WindowUpdate_WindowCachedIcon				4
+#define WindowUpdate_WindowDelete				5
+#define WindowUpdate_NotifyIconCreate				6
+#define WindowUpdate_NotifyIconUpdate				7
+#define WindowUpdate_NotifyIconDelete				8
+#define WindowUpdate_MonitoredDesktop				9
+#define WindowUpdate_NonMonitoredDesktop			10
+
+#define FREERDP_WINDOW_UPDATE_WINDOW_CREATE			MakeMessageId(WindowUpdate, WindowCreate)
+#define FREERDP_WINDOW_UPDATE_WINDOW_UPDATE			MakeMessageId(WindowUpdate, WindowUpdate)
+#define FREERDP_WINDOW_UPDATE_WINDOW_ICON			MakeMessageId(WindowUpdate, WindowIcon)
+#define FREERDP_WINDOW_UPDATE_WINDOW_CACHED_ICON		MakeMessageId(WindowUpdate, WindowCachedIcon)
+#define FREERDP_WINDOW_UPDATE_WINDOW_DELETE			MakeMessageId(WindowUpdate, WindowDelete)
+#define FREERDP_WINDOW_UPDATE_NOTIFY_ICON_CREATE		MakeMessageId(WindowUpdate, NotifyIconCreate)
+#define FREERDP_WINDOW_UPDATE_NOTIFY_ICON_UPDATE		MakeMessageId(WindowUpdate, NotifyIconUpdate)
+#define FREERDP_WINDOW_UPDATE_NOTIFY_ICON_DELETE		MakeMessageId(WindowUpdate, NotifyIconDelete)
+#define FREERDP_WINDOW_UPDATE_MONITORED_DESKTOP			MakeMessageId(WindowUpdate, MonitoredDesktop)
+#define FREERDP_WINDOW_UPDATE_NON_MONITORED_DESKTOP		MakeMessageId(WindowUpdate, NonMonitoredDesktop)
 
 /* Pointer Update */
 
-#define PointerUpdate_Class				6
+#define PointerUpdate_Class					(Update_Base + 6)
 
-#define PointerUpdate_PointerPosition			1
-#define PointerUpdate_PointerSystem			2
-#define PointerUpdate_PointerColor			3
-#define PointerUpdate_PointerNew			4
-#define PointerUpdate_PointerCached			5
+#define PointerUpdate_PointerPosition				1
+#define PointerUpdate_PointerSystem				2
+#define PointerUpdate_PointerColor				3
+#define PointerUpdate_PointerNew				4
+#define PointerUpdate_PointerCached				5
+
+#define FREERDP_POINTER_UPDATE_	POINTER_POSITION		MakeMessageId(PointerUpdate, PointerPosition)
+#define FREERDP_POINTER_UPDATE_POINTER_SYSTEM			MakeMessageId(PointerUpdate, PointerSystem)
+#define FREERDP_POINTER_UPDATE_POINTER_COLOR			MakeMessageId(PointerUpdate, PointerColor)
+#define FREERDP_POINTER_UPDATE_POINTER_NEW			MakeMessageId(PointerUpdate, PointerNew)
+#define FREERDP_POINTER_UPDATE_POINTER_CACHED			MakeMessageId(PointerUpdate, PointerCached)
 
 /* Update Proxy Interface */
 
@@ -227,7 +305,7 @@ struct rdp_update_proxy
 	pPointerCached PointerCached;
 };
 
-int update_message_process_pending_updates(rdpUpdate* update);
+int update_message_queue_process_pending_messages(rdpUpdate* update);
 
 rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
 void update_message_proxy_free(rdpUpdateProxy* message);
@@ -236,15 +314,23 @@ void update_message_proxy_free(rdpUpdateProxy* message);
  * Input Message Queue
  */
 
+#define Input_Base						0
+
 /* Input */
 
-#define Input_Class					1
+#define Input_Class						(Input_Base + 1)
 
-#define Input_SynchronizeEvent				1
-#define Input_KeyboardEvent				2
-#define Input_UnicodeKeyboardEvent			3
-#define Input_MouseEvent				4
-#define Input_ExtendedMouseEvent			5
+#define Input_SynchronizeEvent					1
+#define Input_KeyboardEvent					2
+#define Input_UnicodeKeyboardEvent				3
+#define Input_MouseEvent					4
+#define Input_ExtendedMouseEvent				5
+
+#define FREERDP_INPUT_SYNCHRONIZE_EVENT				MakeMessageId(Input, SynchronizeEvent)
+#define FREERDP_INPUT_KEYBOARD_EVENT				MakeMessageId(Input, KeyboardEvent)
+#define FREERDP_INPUT_UNICODE_KEYBOARD_EVENT			MakeMessageId(Input, UnicodeKeyboardEvent)
+#define FREERDP_INPUT_MOUSE_EVENT				MakeMessageId(Input, MouseEvent)
+#define FREERDP_INPUT_EXTENDED_MOUSE_EVENT			MakeMessageId(Input, ExtendedMouseEvent)
 
 /* Input Proxy Interface */
 
@@ -261,7 +347,7 @@ struct rdp_input_proxy
 	pExtendedMouseEvent ExtendedMouseEvent;
 };
 
-int input_message_process_pending_input(rdpInput* input);
+int input_message_queue_process_pending_messages(rdpInput* input);
 
 rdpInputProxy* input_message_proxy_new(rdpInput* input);
 void input_message_proxy_free(rdpInputProxy* proxy);
