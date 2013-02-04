@@ -25,6 +25,7 @@
 
 FREERDP_API HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor);
 FREERDP_API HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
+FREERDP_API HGDI_BRUSH gdi_CreateHatchedBrush(HGDI_BITMAP hbmp);
 FREERDP_API int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 
 typedef int (*p_PatBlt)(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
