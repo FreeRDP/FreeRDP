@@ -33,6 +33,15 @@
 
 #include "xf_gdi.h"
 
+static UINT8 GDI_BS_HACHTED_PATTERNS[] = {
+	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
+	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
+	0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F, /* HS_FDIAGONAL */
+	0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE, /* HS_BDIAGONAL */
+	0xF7, 0xF7, 0xF7, 0x00, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_CROSS */
+	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E /* HS_DIACROSS */
+};
+
 static const BYTE xf_rop2_table[] =
 {
 	0,
@@ -348,6 +357,21 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 		XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
 				patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
+	}
+	else if (brush->style == GDI_BS_HATCHED)
+	{
+		pattern = xf_mono_bitmap_new(xfi, 8, 8, GDI_BS_HACHTED_PATTERNS + 8 * brush->hatch);
+
+		XSetForeground(xfi->display, xfi->gc, backColor);
+		XSetBackground(xfi->display, xfi->gc, foreColor);
+		XSetFillStyle(xfi->display, xfi->gc, FillOpaqueStippled);
+		XSetStipple(xfi->display, xfi->gc, pattern);
+		XSetTSOrigin(xfi->display, xfi->gc, brush->x, brush->y);
+
+		XFillRectangle(xfi->display, xfi->drawing, xfi->gc,
+		patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
+
+		XFreePixmap(xfi->display, pattern);
 	}
 	else if (brush->style == GDI_BS_PATTERN)
 	{
