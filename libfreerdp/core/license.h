@@ -118,6 +118,27 @@ typedef struct rdp_license rdpLicense;
 #define LICENSE_DETAIL_MODERATE			0x0002
 #define LICENSE_DETAIL_DETAIL			0x0003
 
+/*
+ * PlatformId:
+ *
+ * The most significant byte of the PlatformId field contains the operating system version of the client.
+ * The second most significant byte of the PlatformId field identifies the ISV that provided the client image.
+ * The remaining two bytes in the PlatformId field are used by the ISV to identify the build number of the operating system.
+ *
+ * 0x04010000:
+ *
+ * CLIENT_OS_ID_WINNT_POST_52	(0x04000000)
+ * CLIENT_IMAGE_ID_MICROSOFT	(0x00010000)
+ */
+
+#define CLIENT_OS_ID_WINNT_351			0x01000000
+#define CLIENT_OS_ID_WINNT_40			0x02000000
+#define CLIENT_OS_ID_WINNT_50			0x03000000
+#define CLIENT_OS_ID_WINNT_POST_52		0x04000000
+
+#define CLIENT_IMAGE_ID_MICROSOFT		0x00010000
+#define CLIENT_IMAGE_ID_CITRIX			0x00020000
+
 typedef struct
 {
 	UINT32 dwVersion;
