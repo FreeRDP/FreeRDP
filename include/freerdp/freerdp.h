@@ -40,6 +40,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
+#include <freerdp/message.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -196,11 +197,10 @@ FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
-FREERDP_API int freerdp_process_messages(freerdp* instance);
-FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance);
-
-FREERDP_API HANDLE freerdp_get_input_queue_event_handle(freerdp* instance);
-FREERDP_API int freerdp_process_input(freerdp* instance);
+FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id);
+FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id);
+FREERDP_API int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message);
+FREERDP_API int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id);
 
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 

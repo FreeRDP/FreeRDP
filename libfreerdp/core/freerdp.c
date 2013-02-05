@@ -28,6 +28,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "extension.h"
+#include "message.h"
 
 #include <winpr/crt.h>
 
@@ -74,7 +75,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status != TRUE)
 	{
-		if(!connectErrorCode)
+		if (!connectErrorCode)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
@@ -184,34 +185,71 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-HANDLE freerdp_get_message_queue_event_handle(freerdp* instance)
+wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
+{
+	wMessageQueue* queue = NULL;
+
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			queue = instance->update->queue;
+			break;
+
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			queue = instance->input->queue;
+			break;
+	}
+
+	return queue;
+}
+
+HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id)
 {
 	HANDLE event = NULL;
+	wMessageQueue* queue = NULL;
 
-	if (instance->update->queue)
-		event = MessageQueue_Event(instance->update->queue);
+	queue = freerdp_get_message_queue(instance, id);
+
+	if (queue)
+		event = MessageQueue_Event(queue);
 
 	return event;
 }
 
-int freerdp_process_messages(freerdp* instance)
+int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message)
 {
-	return update_process_messages(instance->update);
+	int status = -1;
+
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			status = update_message_queue_process_message(instance->update, message);
+			break;
+
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			status = input_message_queue_process_message(instance->input, message);
+			break;
+	}
+
+	return status;
 }
 
-HANDLE freerdp_get_input_queue_event_handle(freerdp* instance)
+int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 {
-	HANDLE event = NULL;
+	int status = -1;
 
-	if (instance->input->queue)
-		event = MessageQueue_Event(instance->input->queue);
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			status = update_message_queue_process_pending_messages(instance->update);
+			break;
 
-	return event;
-}
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			status = input_message_queue_process_pending_messages(instance->input);
+			break;
+	}
 
-int freerdp_process_input(freerdp* instance)
-{
-	return input_process_events(instance->input);
+	return status;
 }
 
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)

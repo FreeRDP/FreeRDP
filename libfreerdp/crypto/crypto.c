@@ -146,6 +146,7 @@ void crypto_hmac_free(CryptoHmac hmac)
 {
 	if (hmac == NULL)
 		return;
+
 	HMAC_CTX_cleanup(&hmac->hmac_ctx);
 	free(hmac);
 }
@@ -258,37 +259,31 @@ static void crypto_rsa_public(const BYTE* input, int length, UINT32 key_length, 
 
 static void crypto_rsa_private(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
-
 	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
 }
 
 void crypto_rsa_public_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
-
 	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
 void crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, BYTE* output)
 {
-
 	crypto_rsa_public(input, length, key_length, modulus, exponent, output);
 }
 
 void crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
-
 	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
 void crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
-
 	crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
 }
 
 void crypto_rsa_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
 {
-
 	crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length, output);
 }
 

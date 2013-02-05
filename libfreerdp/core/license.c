@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * RDP Licensing
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,11 @@
 
 #include "license.h"
 
+//#define LICENSE_NULL_CLIENT_RANDOM		1
+#define LICENSE_NULL_PREMASTER_SECRET		1
+
 #ifdef WITH_DEBUG_LICENSE
+
 static const char* const LICENSE_MESSAGE_STRINGS[] =
 {
 		"",
@@ -72,6 +76,41 @@ static const char* const  state_transitions[] =
 	"ST_RESET_PHASE_TO_START",
 	"ST_RESEND_LAST_MESSAGE"
 };
+
+void license_print_product_info(PRODUCT_INFO* productInfo)
+{
+	char* CompanyName = NULL;
+	char* ProductId = NULL;
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) productInfo->pbCompanyName,
+			productInfo->cbCompanyName / 2, &CompanyName, 0, NULL, NULL);
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) productInfo->pbProductId,
+			productInfo->cbProductId / 2, &ProductId, 0, NULL, NULL);
+
+	printf("ProductInfo:\n");
+	printf("\tdwVersion: 0x%08X\n", productInfo->dwVersion);
+	printf("\tCompanyName: %s\n", CompanyName);
+	printf("\tProductId: %s\n", ProductId);
+
+	free(CompanyName);
+	free(ProductId);
+}
+
+void license_print_scope_list(SCOPE_LIST* scopeList)
+{
+	int index;
+	LICENSE_BLOB* scope;
+
+	printf("ScopeList (%d):\n", scopeList->count);
+
+	for (index = 0; index < scopeList->count; index++)
+	{
+		scope = &scopeList->array[index];
+		printf("\t%s\n", (char*) scope->data);
+	}
+}
+
 #endif
 
 /**
@@ -87,11 +126,13 @@ static const char* const  state_transitions[] =
 BOOL license_read_preamble(STREAM* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
 {
 	/* preamble (4 bytes) */
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_BYTE(s, *bMsgType); /* bMsgType (1 byte) */
 	stream_read_BYTE(s, *flags); /* flags (1 byte) */
 	stream_read_UINT16(s, *wMsgSize); /* wMsgSize (2 bytes) */
+
 	return TRUE;
 }
 
@@ -121,8 +162,10 @@ void license_write_preamble(STREAM* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSiz
 STREAM* license_send_stream_init(rdpLicense* license)
 {
 	STREAM* s;
+
 	s = transport_send_stream_init(license->rdp->transport, 4096);
 	stream_seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
+
 	return s;
 }
 
@@ -147,6 +190,7 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 
 	sec_flags = SEC_LICENSE_PKT;
 	wMsgSize = length - LICENSE_PACKET_HEADER_MAX_LENGTH + 4;
+
 	/**
 	 * Using EXTENDED_ERROR_MSG_SUPPORTED here would cause mstsc to crash when
 	 * running in server mode! This flag seems to be incorrectly documented.
@@ -163,6 +207,7 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 #endif
 
 	stream_set_pos(s, length);
+
 	if (transport_write(license->rdp->transport, s) < 0)
 		return FALSE;
 
@@ -179,12 +224,12 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 
 BOOL license_recv(rdpLicense* license, STREAM* s)
 {
-	UINT16 length;
-	UINT16 channelId;
-	UINT16 sec_flags;
 	BYTE flags;
 	BYTE bMsgType;
 	UINT16 wMsgSize;
+	UINT16 length;
+	UINT16 channelId;
+	UINT16 securityFlags;
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
@@ -192,17 +237,29 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 		return FALSE;
 	}
 
-	if (!rdp_read_security_header(s, &sec_flags))
+	if (!rdp_read_security_header(s, &securityFlags))
 		return FALSE;
 
-	if (!(sec_flags & SEC_LICENSE_PKT))
+	if (securityFlags & SEC_ENCRYPT)
 	{
-		stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
+		{
+			printf("rdp_decrypt failed\n");
+			return FALSE;
+		}
+	}
+
+	if (!(securityFlags & SEC_LICENSE_PKT))
+	{
+		if (!(securityFlags & SEC_ENCRYPT))
+			stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+
 		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != TRUE)
 		{
 			printf("Unexpected license packet.\n");
 			return FALSE;
 		}
+
 		return TRUE;
 	}
 
@@ -248,12 +305,15 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 
 void license_generate_randoms(rdpLicense* license)
 {
-#if 0
-	crypto_nonce(license->client_random, CLIENT_RANDOM_LENGTH); /* ClientRandom */
-	crypto_nonce(license->premaster_secret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
-#else
-	memset(license->client_random, 0, CLIENT_RANDOM_LENGTH); /* ClientRandom */
-	memset(license->premaster_secret, 0, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+	ZeroMemory(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+	ZeroMemory(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+
+#ifndef LICENSE_NULL_CLIENT_RANDOM
+	crypto_nonce(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+#endif
+
+#ifndef LICENSE_NULL_PREMASTER_SECRET
+	crypto_nonce(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
 #endif
 }
 
@@ -264,39 +324,46 @@ void license_generate_randoms(rdpLicense* license)
 
 void license_generate_keys(rdpLicense* license)
 {
-	security_master_secret(license->premaster_secret, license->client_random,
-			license->server_random, license->master_secret); /* MasterSecret */
+	security_master_secret(license->PremasterSecret, license->ClientRandom,
+			license->ServerRandom, license->MasterSecret); /* MasterSecret */
 
-	security_session_key_blob(license->master_secret, license->client_random,
-			license->server_random, license->session_key_blob); /* SessionKeyBlob */
+	security_session_key_blob(license->MasterSecret, license->ClientRandom,
+			license->ServerRandom, license->SessionKeyBlob); /* SessionKeyBlob */
 
-	security_mac_salt_key(license->session_key_blob, license->client_random,
-			license->server_random, license->mac_salt_key); /* MacSaltKey */
+	security_mac_salt_key(license->SessionKeyBlob, license->ClientRandom,
+			license->ServerRandom, license->MacSaltKey); /* MacSaltKey */
 
-	security_licensing_encryption_key(license->session_key_blob, license->client_random,
-			license->server_random, license->licensing_encryption_key); /* LicensingEncryptionKey */
+	security_licensing_encryption_key(license->SessionKeyBlob, license->ClientRandom,
+			license->ServerRandom, license->LicensingEncryptionKey); /* LicensingEncryptionKey */
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("ClientRandom:\n");
-	winpr_HexDump(license->client_random, CLIENT_RANDOM_LENGTH);
+	winpr_HexDump(license->ClientRandom, CLIENT_RANDOM_LENGTH);
+	printf("\n");
 
 	printf("ServerRandom:\n");
-	winpr_HexDump(license->server_random, SERVER_RANDOM_LENGTH);
+	winpr_HexDump(license->ServerRandom, SERVER_RANDOM_LENGTH);
+	printf("\n");
 
 	printf("PremasterSecret:\n");
-	winpr_HexDump(license->premaster_secret, PREMASTER_SECRET_LENGTH);
+	winpr_HexDump(license->PremasterSecret, PREMASTER_SECRET_LENGTH);
+	printf("\n");
 
 	printf("MasterSecret:\n");
-	winpr_HexDump(license->master_secret, MASTER_SECRET_LENGTH);
+	winpr_HexDump(license->MasterSecret, MASTER_SECRET_LENGTH);
+	printf("\n");
 
 	printf("SessionKeyBlob:\n");
-	winpr_HexDump(license->session_key_blob, SESSION_KEY_BLOB_LENGTH);
+	winpr_HexDump(license->SessionKeyBlob, SESSION_KEY_BLOB_LENGTH);
+	printf("\n");
 
 	printf("MacSaltKey:\n");
-	winpr_HexDump(license->mac_salt_key, MAC_SALT_KEY_LENGTH);
+	winpr_HexDump(license->MacSaltKey, MAC_SALT_KEY_LENGTH);
+	printf("\n");
 
 	printf("LicensingEncryptionKey:\n");
-	winpr_HexDump(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
+	winpr_HexDump(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	printf("\n");
 #endif
 }
 
@@ -310,82 +377,79 @@ void license_generate_hwid(rdpLicense* license)
 	CryptoMd5 md5;
 	BYTE* mac_address;
 
-	memset(license->hwid, 0, HWID_LENGTH);
+	ZeroMemory(license->HardwareId, HWID_LENGTH);
 	mac_address = license->rdp->transport->TcpIn->mac_address;
 
 	md5 = crypto_md5_init();
 	crypto_md5_update(md5, mac_address, 6);
-	crypto_md5_final(md5, &license->hwid[HWID_PLATFORM_ID_LENGTH]);
+	crypto_md5_final(md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
+}
+
+void license_get_server_rsa_public_key(rdpLicense* license)
+{
+	BYTE* Exponent;
+	BYTE* Modulus;
+	int ModulusLength;
+
+	if (license->ServerCertificate->length < 1)
+	{
+		certificate_read_server_certificate(license->certificate,
+				license->rdp->settings->ServerCertificate,
+				license->rdp->settings->ServerCertificateLength);
+	}
+
+	Exponent = license->certificate->cert_info.exponent;
+	Modulus = license->certificate->cert_info.Modulus;
+	ModulusLength = license->certificate->cert_info.ModulusLength;
+
+	CopyMemory(license->Exponent, Exponent, 4);
+
+	license->ModulusLength = ModulusLength;
+	license->Modulus = (BYTE*) malloc(ModulusLength);
+	ZeroMemory(license->Modulus, ModulusLength);
 }
 
 void license_encrypt_premaster_secret(rdpLicense* license)
 {
-	BYTE* encrypted_premaster_secret;
-#if 0
-	int key_length;
-	BYTE* modulus;
-	BYTE* exponent;
-	rdpCertificate *certificate;
+	BYTE* EncryptedPremasterSecret;
 
-	if (license->server_certificate->length)
-		certificate = license->certificate;
-	else
-		certificate = license->rdp->settings->server_cert;
-
-	exponent = certificate->cert_info.exponent;
-	modulus = certificate->cert_info.modulus.data;
-	key_length = certificate->cert_info.modulus.length;
+	license_get_server_rsa_public_key(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("modulus (%d bits):\n", key_length * 8);
-	winpr_HexDump(modulus, key_length);
+	printf("Modulus (%d bits):\n", license->ModulusLength * 8);
+	winpr_HexDump(license->Modulus, license->ModulusLength);
+	printf("\n");
 
-	printf("exponent:\n");
-	winpr_HexDump(exponent, 4);
+	printf("Exponent:\n");
+	winpr_HexDump(license->Exponent, 4);
+	printf("\n");
 #endif
 
-	encrypted_premaster_secret = (BYTE*) malloc(MODULUS_MAX_SIZE);
-	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
+	EncryptedPremasterSecret = (BYTE*) malloc(license->ModulusLength);
+	ZeroMemory(EncryptedPremasterSecret, license->ModulusLength);
 
-	crypto_rsa_public_encrypt(license->premaster_secret, PREMASTER_SECRET_LENGTH,
-			key_length, modulus, exponent, encrypted_premaster_secret);
-
-	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
-	license->encrypted_premaster_secret->length = PREMASTER_SECRET_LENGTH;
-	license->encrypted_premaster_secret->data = encrypted_premaster_secret;
-#else
-	encrypted_premaster_secret = (BYTE*) malloc(MODULUS_MAX_SIZE);
-	memset(encrypted_premaster_secret, 0, MODULUS_MAX_SIZE);
-
-	license->encrypted_premaster_secret->type = BB_RANDOM_BLOB;
-	license->encrypted_premaster_secret->length = PREMASTER_SECRET_LENGTH;
-	license->encrypted_premaster_secret->data = encrypted_premaster_secret;
+#ifndef LICENSE_NULL_PREMASTER_SECRET
+	crypto_rsa_public_encrypt(license->PremasterSecret, PREMASTER_SECRET_LENGTH,
+			license->ModulusLength, license->Modulus, license->Exponent, EncryptedPremasterSecret);
 #endif
+
+	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
+	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
+	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
 }
 
 void license_decrypt_platform_challenge(rdpLicense* license)
 {
 	CryptoRc4 rc4;
 
-	license->platform_challenge->data =
-			(BYTE*) malloc(license->encrypted_platform_challenge->length);
-	license->platform_challenge->length =
-			license->encrypted_platform_challenge->length;
+	license->PlatformChallenge->data = (BYTE*) malloc(license->EncryptedPlatformChallenge->length);
+	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	rc4 = crypto_rc4_init(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
+	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
 
-	crypto_rc4(rc4, license->encrypted_platform_challenge->length,
-			license->encrypted_platform_challenge->data,
-			license->platform_challenge->data);
-
-#ifdef WITH_DEBUG_LICENSE
-	printf("encrypted_platform challenge:\n");
-	winpr_HexDump(license->encrypted_platform_challenge->data,
-			license->encrypted_platform_challenge->length);
-
-	printf("platform challenge:\n");
-	winpr_HexDump(license->platform_challenge->data, license->platform_challenge->length);
-#endif
+	crypto_rc4(rc4, license->EncryptedPlatformChallenge->length,
+			license->EncryptedPlatformChallenge->data,
+			license->PlatformChallenge->data);
 
 	crypto_rc4_free(rc4);
 }
@@ -399,19 +463,22 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 
 BOOL license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo)
 {
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
+
 	stream_read_UINT32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
 
 	stream_read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
-	if(stream_get_left(s) < productInfo->cbCompanyName + 4)
+
+	if (stream_get_left(s) < productInfo->cbCompanyName + 4)
 		return FALSE;
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
 	stream_read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
 	stream_read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
-	if(stream_get_left(s) < productInfo->cbProductId)
+
+	if (stream_get_left(s) < productInfo->cbProductId)
 	{
 		free(productInfo->pbCompanyName);
 		productInfo->pbCompanyName = NULL;
@@ -420,6 +487,7 @@ BOOL license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo)
 
 	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
 	stream_read(s, productInfo->pbProductId, productInfo->cbProductId);
+
 	return TRUE;
 }
 
@@ -472,22 +540,23 @@ BOOL license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 {
 	UINT16 wBlobType;
 
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_UINT16(s, wBlobType); /* wBlobType (2 bytes) */
 	stream_read_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
-	if(stream_get_left(s) < blob->length)
+	if (stream_get_left(s) < blob->length)
 		return FALSE;
 
 	/*
- 	 * Server can choose to not send data by setting len to 0.
+ 	 * Server can choose to not send data by setting length to 0.
  	 * If so, it may not bother to set the type, so shortcut the warning
  	 */
-	if (blob->type != BB_ANY_BLOB && blob->length == 0)
+	if ((blob->type != BB_ANY_BLOB) && (blob->length == 0))
 		return TRUE;
 
-	if (blob->type != wBlobType && blob->type != BB_ANY_BLOB)
+	if ((blob->type != wBlobType) && (blob->type != BB_ANY_BLOB))
 	{
 		printf("license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
 	}
@@ -515,18 +584,25 @@ void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 		stream_write(s, blob->data, blob->length); /* blobData */
 }
 
-void license_write_padded_binary_blob(STREAM* s, LICENSE_BLOB* blob)
+void license_write_encrypted_premaster_secret_blob(STREAM* s, LICENSE_BLOB* blob, UINT32 ModulusLength)
 {
-	UINT16 pad_len;
+	UINT32 length;
 
-	pad_len = 72 % blob->length;
+	length = ModulusLength + 8;
+
+	if (blob->length > ModulusLength)
+	{
+		printf("license_write_encrypted_premaster_secret_blob: invalid blob\n");
+		return;
+	}
+
 	stream_write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
-	stream_write_UINT16(s, blob->length + pad_len); /* wBlobLen (2 bytes) */
+	stream_write_UINT16(s, length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
 		stream_write(s, blob->data, blob->length); /* blobData */
 
-	stream_write_zero(s, pad_len);
+	stream_write_zero(s, length - blob->length);
 }
 
 /**
@@ -573,8 +649,9 @@ BOOL license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
 	UINT32 i;
 	UINT32 scopeCount;
 
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
 	scopeList->count = scopeCount;
@@ -584,9 +661,11 @@ BOOL license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
 	for (i = 0; i < scopeCount; i++)
 	{
 		scopeList->array[i].type = BB_SCOPE_BLOB;
-		if(!license_read_binary_blob(s, &scopeList->array[i]))
+
+		if (!license_read_binary_blob(s, &scopeList->array[i]))
 			return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -629,7 +708,7 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 		free(scopeList->array[i].data);
 	}
 
-	free(scopeList->array) ;
+	free(scopeList->array);
 	free(scopeList);
 }
 
@@ -646,32 +725,44 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 	if (stream_get_left(s) < 32)
 		return FALSE;
 
-	stream_read(s, license->server_random, 32);
+	stream_read(s, license->ServerRandom, 32);
 
 	/* ProductInfo */
-	if (!license_read_product_info(s, license->product_info))
+	if (!license_read_product_info(s, license->ProductInfo))
 		return FALSE;
 
 	/* KeyExchangeList */
-	if (!license_read_binary_blob(s, license->key_exchange_list))
+	if (!license_read_binary_blob(s, license->KeyExchangeList))
 		return FALSE;
 
 	/* ServerCertificate */
-	if (!license_read_binary_blob(s, license->server_certificate))
+	if (!license_read_binary_blob(s, license->ServerCertificate))
 		return FALSE;
 
 	/* ScopeList */
-	if (!license_read_scope_list(s, license->scope_list))
+	if (!license_read_scope_list(s, license->ScopeList))
 		return FALSE;
 
 	/* Parse Server Certificate */
 	if (!certificate_read_server_certificate(license->certificate,
-			license->server_certificate->data, license->server_certificate->length) < 0)
+			license->ServerCertificate->data, license->ServerCertificate->length) < 0)
 		return FALSE;
 
 	license_generate_keys(license);
 	license_generate_hwid(license);
 	license_encrypt_premaster_secret(license);
+
+#ifdef WITH_DEBUG_LICENSE
+	printf("ServerRandom:\n");
+	winpr_HexDump(license->ServerRandom, 32);
+	printf("\n");
+
+	license_print_product_info(license->ProductInfo);
+	printf("\n");
+
+	license_print_scope_list(license->ScopeList);
+	printf("\n");
+#endif
 
 	return TRUE;
 }
@@ -685,21 +776,45 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 {
+	BYTE MacData[16];
+	UINT32 ConnectFlags = 0;
+
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
-	if(stream_get_left(s) < 4)
+
+	if (stream_get_left(s) < 4)
 		return FALSE;
-	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
+
+	stream_read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
-	license->encrypted_platform_challenge->type = BB_ANY_BLOB;
-	license_read_binary_blob(s, license->encrypted_platform_challenge);
-	license->encrypted_platform_challenge->type = BB_ENCRYPTED_DATA_BLOB;
+	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;
+	license_read_binary_blob(s, license->EncryptedPlatformChallenge);
+	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
-	/* MACData (16 bytes) */
-	if(!stream_skip(s, 16))
+	if (stream_get_left(s) < 16)
 		return FALSE;
 
+	stream_read(s, MacData, 16); /* MACData (16 bytes) */
+
 	license_decrypt_platform_challenge(license);
+
+#ifdef WITH_DEBUG_LICENSE
+	printf("ConnectFlags: 0x%08X\n", ConnectFlags);
+	printf("\n");
+
+	printf("EncryptedPlatformChallenge:\n");
+	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
+	printf("\n");
+
+	printf("PlatformChallenge:\n");
+	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
+	printf("\n");
+
+	printf("MacData:\n");
+	winpr_HexDump(MacData, 16);
+	printf("\n");
+#endif
+
 	return TRUE;
 }
 
@@ -741,11 +856,13 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 	UINT32 dwErrorCode;
 	UINT32 dwStateTransition;
 
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
+
 	stream_read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
 	stream_read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
-	if(!license_read_binary_blob(s, license->error_info)) /* bbErrorInfo */
+
+	if (!license_read_binary_blob(s, license->ErrorInfo)) /* bbErrorInfo */
 		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
@@ -779,21 +896,8 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 		default:
 			break;
 	}
+
 	return TRUE;
-}
-
-/**
- * Write Platform ID.\n
- * @msdn{cc241918}
- * @param license license module
- * @param s stream
- */
-
-void license_write_platform_id(rdpLicense* license, STREAM* s)
-{
-	stream_write_BYTE(s, 0); /* Client Operating System Version */
-	stream_write_BYTE(s, 0); /* Independent Software Vendor (ISV) */
-	stream_write_UINT16(s, 0); /* Client Software Build */
 }
 
 /**
@@ -805,12 +909,36 @@ void license_write_platform_id(rdpLicense* license, STREAM* s)
 
 void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 {
-	stream_write_UINT32(s, KEY_EXCHANGE_ALG_RSA); /* PreferredKeyExchangeAlg (4 bytes) */
-	license_write_platform_id(license, s); /* PlatformId (4 bytes) */
-	stream_write(s, license->client_random, 32); /* ClientRandom (32 bytes) */
-	license_write_padded_binary_blob(s, license->encrypted_premaster_secret); /* EncryptedPremasterSecret */
-	license_write_binary_blob(s, license->client_user_name); /* ClientUserName */
-	license_write_binary_blob(s, license->client_machine_name); /* ClientMachineName */
+	UINT32 PlatformId;
+	UINT32 PreferredKeyExchangeAlg = KEY_EXCHANGE_ALG_RSA;
+
+	PlatformId = CLIENT_OS_ID_WINNT_POST_52 | CLIENT_IMAGE_ID_MICROSOFT;
+
+	stream_write_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
+	stream_write_UINT32(s, PlatformId); /* PlatformId (4 bytes) */
+	stream_write(s, license->ClientRandom, 32); /* ClientRandom (32 bytes) */
+	license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret, license->ModulusLength); /* EncryptedPremasterSecret */
+	license_write_binary_blob(s, license->ClientUserName); /* ClientUserName */
+	license_write_binary_blob(s, license->ClientMachineName); /* ClientMachineName */
+
+#ifdef WITH_DEBUG_LICENSE
+	printf("PreferredKeyExchangeAlg: 0x%08X\n", PreferredKeyExchangeAlg);
+	printf("\n");
+
+	printf("ClientRandom:\n");
+	winpr_HexDump(license->ClientRandom, 32);
+	printf("\n");
+
+	printf("EncryptedPremasterSecret\n");
+	winpr_HexDump(license->EncryptedPremasterSecret->data, license->EncryptedPremasterSecret->length);
+	printf("\n");
+
+	printf("ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
+	printf("\n");
+
+	printf("ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
+	printf("\n");
+#endif
 }
 
 /**
@@ -824,6 +952,8 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	STREAM* s;
 	char* username;
 
+	DEBUG_LICENSE("Sending New License Packet");
+
 	s = license_send_stream_init(license);
 
 	if (license->rdp->settings->Username != NULL)
@@ -831,21 +961,21 @@ void license_send_new_license_request_packet(rdpLicense* license)
 	else
 		username = "username";
 
-	license->client_user_name->data = (BYTE*) username;
-	license->client_user_name->length = strlen(username) + 1;
+	license->ClientUserName->data = (BYTE*) username;
+	license->ClientUserName->length = strlen(username) + 1;
 
-	license->client_machine_name->data = (BYTE*) license->rdp->settings->ClientHostname;
-	license->client_machine_name->length = strlen(license->rdp->settings->ClientHostname) + 1;
+	license->ClientMachineName->data = (BYTE*) license->rdp->settings->ClientHostname;
+	license->ClientMachineName->length = strlen(license->rdp->settings->ClientHostname) + 1;
 
 	license_write_new_license_request_packet(license, s);
 
 	license_send(license, s, NEW_LICENSE_REQUEST);
 
-	license->client_user_name->data = NULL;
-	license->client_user_name->length = 0;
+	license->ClientUserName->data = NULL;
+	license->ClientUserName->length = 0;
 
-	license->client_machine_name->data = NULL;
-	license->client_machine_name->length = 0;
+	license->ClientMachineName->data = NULL;
+	license->ClientMachineName->length = 0;
 }
 
 /**
@@ -856,16 +986,11 @@ void license_send_new_license_request_packet(rdpLicense* license)
  * @param mac_data signature
  */
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, BYTE* mac_data)
+void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, BYTE* macData)
 {
-	/* EncryptedPlatformChallengeResponse */
-	license_write_binary_blob(s, license->encrypted_platform_challenge);
-
-	/* EncryptedHWID */
-	license_write_binary_blob(s, license->encrypted_hwid);
-
-	/* MACData */
-	stream_write(s, mac_data, 16);
+	license_write_binary_blob(s, license->EncryptedPlatformChallenge); /* EncryptedPlatformChallengeResponse */
+	license_write_binary_blob(s, license->EncryptedHardwareId); /* EncryptedHWID */
+	stream_write(s, macData, 16); /* MACData */
 }
 
 /**
@@ -882,36 +1007,41 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	CryptoRc4 rc4;
 	BYTE mac_data[16];
 
-	s = license_send_stream_init(license);
 	DEBUG_LICENSE("Sending Platform Challenge Response Packet");
 
-	license->encrypted_platform_challenge->type = BB_DATA_BLOB;
-	length = license->platform_challenge->length + HWID_LENGTH;
+	s = license_send_stream_init(license);
+
+	license->EncryptedPlatformChallenge->type = BB_DATA_BLOB;
+	length = license->PlatformChallenge->length + HWID_LENGTH;
+
 	buffer = (BYTE*) malloc(length);
-	memcpy(buffer, license->platform_challenge->data, license->platform_challenge->length);
-	memcpy(&buffer[license->platform_challenge->length], license->hwid, HWID_LENGTH);
-	security_mac_data(license->mac_salt_key, buffer, length, mac_data);
+	CopyMemory(buffer, license->PlatformChallenge->data, license->PlatformChallenge->length);
+	CopyMemory(&buffer[license->PlatformChallenge->length], license->HardwareId, HWID_LENGTH);
+	security_mac_data(license->MacSaltKey, buffer, length, mac_data);
 	free(buffer);
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
-	rc4 = crypto_rc4_init(license->licensing_encryption_key, LICENSING_ENCRYPTION_KEY_LENGTH);
-	crypto_rc4(rc4, HWID_LENGTH, license->hwid, buffer);
+	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
 	crypto_rc4_free(rc4);
 
+	license->EncryptedHardwareId->type = BB_DATA_BLOB;
+	license->EncryptedHardwareId->data = buffer;
+	license->EncryptedHardwareId->length = HWID_LENGTH;
+
 #ifdef WITH_DEBUG_LICENSE
-	printf("Licensing Encryption Key:\n");
-	winpr_HexDump(license->licensing_encryption_key, 16);
+	printf("LicensingEncryptionKey:\n");
+	winpr_HexDump(license->LicensingEncryptionKey, 16);
+	printf("\n");
 
-	printf("HardwareID:\n");
-	winpr_HexDump(license->hwid, 20);
+	printf("HardwareId:\n");
+	winpr_HexDump(license->HardwareId, 20);
+	printf("\n");
 
-	printf("Encrypted HardwareID:\n");
-	winpr_HexDump(buffer, 20);
+	printf("EncryptedHardwareId:\n");
+	winpr_HexDump(license->EncryptedHardwareId->data, 20);
+	printf("\n");
 #endif
-
-	license->encrypted_hwid->type = BB_DATA_BLOB;
-	license->encrypted_hwid->data = buffer;
-	license->encrypted_hwid->length = HWID_LENGTH;
 
 	license_write_platform_challenge_response_packet(license, s, mac_data);
 
@@ -930,10 +1060,12 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license)
 
 	s = license_send_stream_init(license);
 
+	DEBUG_LICENSE("Sending Error Alert Packet");
+
 	stream_write_UINT32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
 	stream_write_UINT32(s, ST_NO_TRANSITION); /* dwStateTransition */
 
-	license_write_binary_blob(s, license->error_info);
+	license_write_binary_blob(s, license->ErrorInfo);
 
 	return license_send(license, s, ERROR_ALERT);
 }
@@ -956,19 +1088,18 @@ rdpLicense* license_new(rdpRdp* rdp)
 
 		license->rdp = rdp;
 		license->state = LICENSE_STATE_AWAIT;
-		//license->certificate = certificate_new(rdp);
 		license->certificate = certificate_new();
-		license->product_info = license_new_product_info();
-		license->error_info = license_new_binary_blob(BB_ERROR_BLOB);
-		license->key_exchange_list = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB);
-		license->server_certificate = license_new_binary_blob(BB_CERTIFICATE_BLOB);
-		license->client_user_name = license_new_binary_blob(BB_CLIENT_USER_NAME_BLOB);
-		license->client_machine_name = license_new_binary_blob(BB_CLIENT_MACHINE_NAME_BLOB);
-		license->platform_challenge = license_new_binary_blob(BB_ANY_BLOB);
-		license->encrypted_platform_challenge = license_new_binary_blob(BB_ANY_BLOB);
-		license->encrypted_premaster_secret = license_new_binary_blob(BB_ANY_BLOB);
-		license->encrypted_hwid = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB);
-		license->scope_list = license_new_scope_list();
+		license->ProductInfo = license_new_product_info();
+		license->ErrorInfo = license_new_binary_blob(BB_ERROR_BLOB);
+		license->KeyExchangeList = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB);
+		license->ServerCertificate = license_new_binary_blob(BB_CERTIFICATE_BLOB);
+		license->ClientUserName = license_new_binary_blob(BB_CLIENT_USER_NAME_BLOB);
+		license->ClientMachineName = license_new_binary_blob(BB_CLIENT_MACHINE_NAME_BLOB);
+		license->PlatformChallenge = license_new_binary_blob(BB_ANY_BLOB);
+		license->EncryptedPlatformChallenge = license_new_binary_blob(BB_ANY_BLOB);
+		license->EncryptedPremasterSecret = license_new_binary_blob(BB_ANY_BLOB);
+		license->EncryptedHardwareId = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB);
+		license->ScopeList = license_new_scope_list();
 		license_generate_randoms(license);
 	}
 
@@ -982,21 +1113,21 @@ rdpLicense* license_new(rdpRdp* rdp)
 
 void license_free(rdpLicense* license)
 {
-	if (license != NULL)
+	if (license)
 	{
+		free(license->Modulus);
 		certificate_free(license->certificate);
-		license_free_product_info(license->product_info);
-		license_free_binary_blob(license->error_info);
-		license_free_binary_blob(license->key_exchange_list);
-		license_free_binary_blob(license->server_certificate);
-		license_free_binary_blob(license->client_user_name);
-		license_free_binary_blob(license->client_machine_name);
-		license_free_binary_blob(license->platform_challenge);
-		license_free_binary_blob(license->encrypted_platform_challenge);
-		license_free_binary_blob(license->encrypted_premaster_secret);
-		license_free_binary_blob(license->encrypted_hwid);
-		license_free_scope_list(license->scope_list);
+		license_free_product_info(license->ProductInfo);
+		license_free_binary_blob(license->ErrorInfo);
+		license_free_binary_blob(license->KeyExchangeList);
+		license_free_binary_blob(license->ServerCertificate);
+		license_free_binary_blob(license->ClientUserName);
+		license_free_binary_blob(license->ClientMachineName);
+		license_free_binary_blob(license->PlatformChallenge);
+		license_free_binary_blob(license->EncryptedPlatformChallenge);
+		license_free_binary_blob(license->EncryptedPremasterSecret);
+		license_free_binary_blob(license->EncryptedHardwareId);
+		license_free_scope_list(license->ScopeList);
 		free(license);
 	}
 }
-

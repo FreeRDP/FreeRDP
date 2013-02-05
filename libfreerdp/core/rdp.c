@@ -103,7 +103,7 @@ void rdp_write_security_header(STREAM* s, UINT16 flags)
 
 BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT16* channel_id)
 {
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
 
 	/* Share Control Header */
@@ -117,8 +117,8 @@ BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT
 
 	if (*length > 4)
 		stream_read_UINT16(s, *channel_id); /* pduSource */
-	else /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
-		*channel_id = 0;
+	else
+		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
 
 	return TRUE;
 }
@@ -645,7 +645,7 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 	UINT16 length;
 	UINT16 channelId;
 
-	if(!rdp_read_share_control_header(s, &length, &type, &channelId))
+	if (!rdp_read_share_control_header(s, &length, &type, &channelId))
 		return FALSE;
 
 	if (type == PDU_TYPE_DATA)

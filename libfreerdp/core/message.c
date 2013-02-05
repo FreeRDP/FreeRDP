@@ -1482,11 +1482,29 @@ int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, int msgCl
 	return status;
 }
 
-int update_message_process_pending_updates(rdpUpdate* update)
+int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 {
 	int status;
 	int msgClass;
 	int msgType;
+
+	if (message->id == WMQ_QUIT)
+		return 0;
+
+	msgClass = GetMessageClass(message->id);
+	msgType = GetMessageType(message->id);
+
+	status = update_message_process_class(update->proxy, message, msgClass, msgType);
+
+	if (status < 0)
+		return -1;
+
+	return 1;
+}
+
+int update_message_queue_process_pending_messages(rdpUpdate* update)
+{
+	int status;
 	wMessage message;
 	wMessageQueue* queue;
 
@@ -1499,16 +1517,13 @@ int update_message_process_pending_updates(rdpUpdate* update)
 		if (!status)
 			break;
 
-		if (message.type == WMQ_QUIT)
+		status = update_message_queue_process_message(update, &message);
+
+		if (!status)
 			break;
-
-		msgClass = GetMessageClass(message.type);
-		msgType = GetMessageType(message.type);
-
-		status = update_message_process_class(update->proxy, &message, msgClass, msgType);
 	}
 
-	return 0;
+	return status;
 }
 
 void update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* update)
@@ -1807,7 +1822,6 @@ int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg, int t
 	return status;
 }
 
-
 int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int msgClass, int msgType)
 {
 	int status = 0;
@@ -1829,11 +1843,29 @@ int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int msgClas
 	return status;
 }
 
-int input_message_process_pending_input(rdpInput* input)
+int input_message_queue_process_message(rdpInput* input, wMessage* message)
 {
 	int status;
 	int msgClass;
 	int msgType;
+
+	if (message->id == WMQ_QUIT)
+		return 0;
+
+	msgClass = GetMessageClass(message->id);
+	msgType = GetMessageType(message->id);
+
+	status = input_message_process_class(input->proxy, message, msgClass, msgType);
+
+	if (status < 0)
+		return -1;
+
+	return 1;
+}
+
+int input_message_queue_process_pending_messages(rdpInput* input)
+{
+	int status;
 	wMessage message;
 	wMessageQueue* queue;
 
@@ -1846,13 +1878,10 @@ int input_message_process_pending_input(rdpInput* input)
 		if (!status)
 			break;
 
-		if (message.type == WMQ_QUIT)
+		status = input_message_queue_process_message(input, &message);
+
+		if (!status)
 			break;
-
-		msgClass = GetMessageClass(message.type);
-		msgType = GetMessageType(message.type);
-
-		status = input_message_process_class(input->proxy, &message, msgClass, msgType);
 	}
 
 	return 0;

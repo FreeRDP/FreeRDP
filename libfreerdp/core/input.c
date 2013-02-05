@@ -432,7 +432,7 @@ void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 
 int input_process_events(rdpInput* input)
 {
-	return input_message_process_pending_input(input);
+	return input_message_queue_process_pending_messages(input);
 }
 
 rdpInput* input_new(rdpRdp* rdp)
