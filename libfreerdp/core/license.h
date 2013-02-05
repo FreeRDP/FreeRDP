@@ -174,9 +174,10 @@ struct rdp_license
 	LICENSE_STATE state;
 	struct rdp_rdp* rdp;
 	struct rdp_certificate* certificate;
+	BYTE* Modulus;
+	UINT32 ModulusLength;
+	BYTE Exponent[4];
 	BYTE HardwareId[HWID_LENGTH];
-	BYTE Modulus[MODULUS_MAX_SIZE];
-	BYTE Exponent[EXPONENT_MAX_SIZE];
 	BYTE ClientRandom[CLIENT_RANDOM_LENGTH];
 	BYTE ServerRandom[SERVER_RANDOM_LENGTH];
 	BYTE MasterSecret[MASTER_SECRET_LENGTH];

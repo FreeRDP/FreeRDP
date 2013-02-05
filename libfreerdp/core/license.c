@@ -383,21 +383,12 @@ void license_generate_hwid(rdpLicense* license)
 
 void license_encrypt_premaster_secret(rdpLicense* license)
 {
-	BYTE* EncryptedPremasterSecret;
-
-#ifdef LICENSE_NULL_RANDOM
-	EncryptedPremasterSecret = (BYTE*) malloc(MODULUS_MAX_SIZE);
-	ZeroMemory(EncryptedPremasterSecret, MODULUS_MAX_SIZE);
-
-	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
-	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
-	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
-#else
-	BYTE* modulus;
-	BYTE* exponent;
-	int key_length;
+	BYTE* Exponent;
+	BYTE* Modulus;
+	int ModulusLength;
 	rdpSettings* settings;
-	rdpCertificate *certificate;
+	rdpCertificate* certificate;
+	BYTE* EncryptedPremasterSecret;
 
 	if (license->ServerCertificate->length)
 	{
@@ -410,25 +401,39 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 		certificate_read_server_certificate(certificate, settings->ServerCertificate, settings->ServerCertificateLength);
 	}
 
-	exponent = certificate->cert_info.exponent;
-	modulus = certificate->cert_info.Modulus;
-	key_length = certificate->cert_info.ModulusLength;
+	Exponent = certificate->cert_info.exponent;
+	Modulus = certificate->cert_info.Modulus;
+	ModulusLength = certificate->cert_info.ModulusLength;
+
+	CopyMemory(license->Exponent, Exponent, 4);
+
+	license->ModulusLength = ModulusLength;
+	license->Modulus = (BYTE*) malloc(ModulusLength);
+	ZeroMemory(license->Modulus, ModulusLength);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("Modulus (%d bits):\n", key_length * 8);
-	winpr_HexDump(modulus, key_length);
+	printf("Modulus (%d bits):\n", ModulusLength * 8);
+	winpr_HexDump(Modulus, ModulusLength);
 	printf("\n");
 
 	printf("Exponent:\n");
-	winpr_HexDump(exponent, 4);
+	winpr_HexDump(Exponent, 4);
 	printf("\n");
 #endif
 
+#ifdef LICENSE_NULL_RANDOM
+	EncryptedPremasterSecret = (BYTE*) malloc(MODULUS_MAX_SIZE);
+	ZeroMemory(EncryptedPremasterSecret, MODULUS_MAX_SIZE);
+
+	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
+	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
+	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
+#else
 	EncryptedPremasterSecret = (BYTE*) malloc(MODULUS_MAX_SIZE);
 	ZeroMemory(EncryptedPremasterSecret, MODULUS_MAX_SIZE);
 
 	crypto_rsa_public_encrypt(license->PremasterSecret, PREMASTER_SECRET_LENGTH,
-			key_length, modulus, exponent, EncryptedPremasterSecret);
+			ModulusLength, Modulus, Exponent, EncryptedPremasterSecret);
 
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
@@ -582,18 +587,25 @@ void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 		stream_write(s, blob->data, blob->length); /* blobData */
 }
 
-void license_write_padded_binary_blob(STREAM* s, LICENSE_BLOB* blob)
+void license_write_encrypted_premaster_secret_blob(STREAM* s, LICENSE_BLOB* blob, UINT32 ModulusLength)
 {
-	UINT16 pad_len;
+	UINT32 length;
 
-	pad_len = 72 % blob->length;
+	length = ModulusLength + 8;
+
+	if (blob->length > ModulusLength)
+	{
+		printf("license_write_encrypted_premaster_secret_blob: invalid blob\n");
+		return;
+	}
+
 	stream_write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
-	stream_write_UINT16(s, blob->length + pad_len); /* wBlobLen (2 bytes) */
+	stream_write_UINT16(s, length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
 		stream_write(s, blob->data, blob->length); /* blobData */
 
-	stream_write_zero(s, pad_len);
+	stream_write_zero(s, length - blob->length);
 }
 
 /**
@@ -908,7 +920,7 @@ void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 	stream_write_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
 	stream_write_UINT32(s, PlatformId); /* PlatformId (4 bytes) */
 	stream_write(s, license->ClientRandom, 32); /* ClientRandom (32 bytes) */
-	license_write_padded_binary_blob(s, license->EncryptedPremasterSecret); /* EncryptedPremasterSecret */
+	license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret, license->ModulusLength); /* EncryptedPremasterSecret */
 	license_write_binary_blob(s, license->ClientUserName); /* ClientUserName */
 	license_write_binary_blob(s, license->ClientMachineName); /* ClientMachineName */
 
@@ -1106,6 +1118,7 @@ void license_free(rdpLicense* license)
 {
 	if (license)
 	{
+		free(license->Modulus);
 		certificate_free(license->certificate);
 		license_free_product_info(license->ProductInfo);
 		license_free_binary_blob(license->ErrorInfo);
