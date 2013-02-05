@@ -385,52 +385,52 @@ void license_generate_hwid(rdpLicense* license)
 	crypto_md5_final(md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
 }
 
-void license_encrypt_premaster_secret(rdpLicense* license)
+void license_get_server_rsa_public_key(rdpLicense* license)
 {
 	BYTE* Exponent;
 	BYTE* Modulus;
 	int ModulusLength;
-	rdpSettings* settings;
-	rdpCertificate* certificate;
-	BYTE* EncryptedPremasterSecret;
 
-	if (license->ServerCertificate->length)
+	if (license->ServerCertificate->length < 1)
 	{
-		certificate = license->certificate;
-	}
-	else
-	{
-		settings = license->rdp->settings;
-		certificate = license->certificate;
-		certificate_read_server_certificate(certificate, settings->ServerCertificate, settings->ServerCertificateLength);
+		certificate_read_server_certificate(license->certificate,
+				license->rdp->settings->ServerCertificate,
+				license->rdp->settings->ServerCertificateLength);
 	}
 
-	Exponent = certificate->cert_info.exponent;
-	Modulus = certificate->cert_info.Modulus;
-	ModulusLength = certificate->cert_info.ModulusLength;
+	Exponent = license->certificate->cert_info.exponent;
+	Modulus = license->certificate->cert_info.Modulus;
+	ModulusLength = license->certificate->cert_info.ModulusLength;
 
 	CopyMemory(license->Exponent, Exponent, 4);
 
 	license->ModulusLength = ModulusLength;
 	license->Modulus = (BYTE*) malloc(ModulusLength);
 	ZeroMemory(license->Modulus, ModulusLength);
+}
+
+void license_encrypt_premaster_secret(rdpLicense* license)
+{
+	BYTE* EncryptedPremasterSecret;
+
+	license_get_server_rsa_public_key(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("Modulus (%d bits):\n", ModulusLength * 8);
-	winpr_HexDump(Modulus, ModulusLength);
+	printf("Modulus (%d bits):\n", license->ModulusLength * 8);
+	winpr_HexDump(license->Modulus, license->ModulusLength);
 	printf("\n");
 
 	printf("Exponent:\n");
-	winpr_HexDump(Exponent, 4);
+	winpr_HexDump(license->Exponent, 4);
 	printf("\n");
 #endif
 
-	EncryptedPremasterSecret = (BYTE*) malloc(ModulusLength);
-	ZeroMemory(EncryptedPremasterSecret, ModulusLength);
+	EncryptedPremasterSecret = (BYTE*) malloc(license->ModulusLength);
+	ZeroMemory(EncryptedPremasterSecret, license->ModulusLength);
 
 #ifndef LICENSE_NULL_PREMASTER_SECRET
 	crypto_rsa_public_encrypt(license->PremasterSecret, PREMASTER_SECRET_LENGTH,
-			ModulusLength, Modulus, Exponent, EncryptedPremasterSecret);
+			license->ModulusLength, license->Modulus, license->Exponent, EncryptedPremasterSecret);
 #endif
 
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
