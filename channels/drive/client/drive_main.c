@@ -469,6 +469,62 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 	irp->Complete(irp);
 }
 
+/* http://msdn.microsoft.com/en-us/library/cc241518.aspx */
+static void drive_process_irp_set_volume_information(DRIVE_DEVICE* disk, IRP* irp)
+{
+	UINT32 FsInformationClass;
+	UINT32 pad;
+	STREAM* output = irp->output;
+	char* volumeLabel;
+	int length;
+	int status;
+
+	stream_read_UINT32(irp->input, FsInformationClass);
+
+	DEBUG_SVC("FsInformationClass %d in drive_process_irp_set_volume_information", FsInformationClass);
+
+	switch (FsInformationClass)
+	{
+		case FileFsLabelInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232105.aspx */
+	        stream_read_UINT32(irp->input, length);
+	        stream_read_UINT32(irp->input, pad);
+	        stream_read_UINT32(irp->input, pad);
+	        stream_read_UINT32(irp->input, pad);
+	        stream_read_UINT32(irp->input, pad);
+	        stream_read_UINT32(irp->input, pad);
+	        stream_read_UINT32(irp->input, pad);
+	        
+	        status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+			length / 2, &volumeLabel, 0, NULL, NULL);
+
+    	    if (status < 1)
+		        volumeLabel = (char*) calloc(1, 1);
+			DEBUG_SVC("Set VolumeLabel %s", volumeLabel);
+
+			irp->IoStatus = STATUS_ACCESS_DENIED;
+			stream_write_UINT32(output, 0); /* Length */
+
+			free(volumeLabel);
+			break;
+
+		case FileFsObjectIdInformation:
+			/* http://msdn.microsoft.com/en-us/library/cc232106.aspx */
+			irp->IoStatus = STATUS_INVALID_PARAMETER;
+			stream_write_UINT32(output, 0); /* Length */
+			DEBUG_SVC("FS does not support ObjectIdInformation");
+			break;
+
+		default:
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
+			stream_write_UINT32(output, 0); /* Length */
+			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
+			break;
+	}
+
+	irp->Complete(irp);
+}
+
 static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 {
 	char* path = NULL;
@@ -566,6 +622,10 @@ static void drive_process_irp(DRIVE_DEVICE* disk, IRP* irp)
 
 		case IRP_MJ_QUERY_VOLUME_INFORMATION:
 			drive_process_irp_query_volume_information(disk, irp);
+			break;
+
+		case IRP_MJ_SET_VOLUME_INFORMATION:
+			drive_process_irp_set_volume_information(disk, irp);
 			break;
 
 		case IRP_MJ_DIRECTORY_CONTROL:
