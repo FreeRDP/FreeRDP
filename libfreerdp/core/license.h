@@ -31,6 +31,7 @@ typedef struct rdp_license rdpLicense;
 #include <freerdp/utils/stream.h>
 
 /* Licensing Packet Types */
+
 #define LICENSE_REQUEST				0x01
 #define PLATFORM_CHALLENGE			0x02
 #define NEW_LICENSE				0x03
@@ -40,14 +41,15 @@ typedef struct rdp_license rdpLicense;
 #define PLATFORM_CHALLENGE_RESPONSE		0x15
 #define ERROR_ALERT				0xFF
 
-#define LICENSE_PKT_CS_MASK	(LICENSE_INFO | NEW_LICENSE_REQUEST | PLATFORM_CHALLENGE_RESPONSE | ERROR_ALERT)
-#define LICENSE_PKT_SC_MASK	(LICENSE_REQUEST | PLATFORM_CHALLENGE | NEW_LICENSE | UPGRADE_LICENSE | ERROR_ALERT)
-#define LICENSE_PKT_MASK	(LICENSE_PKT_CS_MASK | LICENSE_PKT_SC_MASK)
+#define LICENSE_PKT_CS_MASK			(LICENSE_INFO | NEW_LICENSE_REQUEST | PLATFORM_CHALLENGE_RESPONSE | ERROR_ALERT)
+#define LICENSE_PKT_SC_MASK			(LICENSE_REQUEST | PLATFORM_CHALLENGE | NEW_LICENSE | UPGRADE_LICENSE | ERROR_ALERT)
+#define LICENSE_PKT_MASK			(LICENSE_PKT_CS_MASK | LICENSE_PKT_SC_MASK)
 
 #define LICENSE_PREAMBLE_LENGTH			4
 #define LICENSE_PACKET_HEADER_MAX_LENGTH	(RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + LICENSE_PREAMBLE_LENGTH)
 
 /* Cryptographic Lengths */
+
 #define CLIENT_RANDOM_LENGTH			32
 #define SERVER_RANDOM_LENGTH			32
 #define MASTER_SECRET_LENGTH			48
@@ -60,13 +62,15 @@ typedef struct rdp_license rdpLicense;
 #define HWID_LENGTH				20
 #define LICENSING_PADDING_SIZE			8
 
-/* Licensing Preamble Flags */
+/* Preamble Flags */
+
 #define PREAMBLE_VERSION_2_0			0x02
 #define PREAMBLE_VERSION_3_0			0x03
 #define LicenseProtocolVersionMask		0x0F
 #define EXTENDED_ERROR_MSG_SUPPORTED		0x80
 
-/* Licensing Binary Blob Types */
+/* Binary Blob Types */
+
 #define BB_ANY_BLOB				0x0000
 #define BB_DATA_BLOB				0x0001
 #define BB_RANDOM_BLOB				0x0002
@@ -78,10 +82,12 @@ typedef struct rdp_license rdpLicense;
 #define BB_CLIENT_USER_NAME_BLOB		0x000F
 #define BB_CLIENT_MACHINE_NAME_BLOB		0x0010
 
-/* Key Exchange Algorithms */
+/* License Key Exchange Algorithms */
+
 #define KEY_EXCHANGE_ALG_RSA			0x00000001
 
-/* Licensing Error Codes */
+/* License Error Codes */
+
 #define ERR_INVALID_SERVER_CERTIFICATE		0x00000001
 #define ERR_NO_LICENSE				0x00000002
 #define ERR_INVALID_MAC				0x00000003
@@ -92,11 +98,25 @@ typedef struct rdp_license rdpLicense;
 #define ERR_INVALID_PRODUCT_ID			0x0000000B
 #define ERR_INVALID_MESSAGE_LENGTH		0x0000000C
 
-/* Licensing State Transition Codes */
+/* State Transition Codes */
+
 #define ST_TOTAL_ABORT				0x00000001
 #define ST_NO_TRANSITION			0x00000002
 #define ST_RESET_PHASE_TO_START			0x00000003
 #define ST_RESEND_LAST_MESSAGE			0x00000004
+
+/* Platform Challenge Types */
+
+#define WIN32_PLATFORM_CHALLENGE_TYPE		0x0100
+#define WIN16_PLATFORM_CHALLENGE_TYPE		0x0200
+#define WINCE_PLATFORM_CHALLENGE_TYPE		0x0300
+#define OTHER_PLATFORM_CHALLENGE_TYPE		0xFF00
+
+/* License Detail Levels */
+
+#define LICENSE_DETAIL_SIMPLE			0x0001
+#define LICENSE_DETAIL_MODERATE			0x0002
+#define LICENSE_DETAIL_DETAIL			0x0003
 
 typedef struct
 {

@@ -96,6 +96,20 @@ void license_print_product_info(PRODUCT_INFO* productInfo)
 	free(ProductId);
 }
 
+void license_print_scope_list(SCOPE_LIST* scopeList)
+{
+	int index;
+	LICENSE_BLOB* scope;
+
+	printf("ScopeList (%d):\n", scopeList->count);
+
+	for (index = 0; index < scopeList->count; index++)
+	{
+		scope = &scopeList->array[index];
+		printf("\t%s\n", (char*) scope->data);
+	}
+}
+
 #endif
 
 /**
@@ -435,16 +449,6 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 			license->EncryptedPlatformChallenge->data,
 			license->PlatformChallenge->data);
 
-#ifdef WITH_DEBUG_LICENSE
-	printf("EncryptedPlatformChallenge:\n");
-	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
-	printf("\n");
-
-	printf("PlatformChallenge:\n");
-	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
-	printf("\n");
-#endif
-
 	crypto_rc4_free(rc4);
 }
 
@@ -746,6 +750,9 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 	license_print_product_info(license->ProductInfo);
 	printf("\n");
+
+	license_print_scope_list(license->ScopeList);
+	printf("\n");
 #endif
 
 	return TRUE;
@@ -760,23 +767,44 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 
 BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 {
+	BYTE MacData[16];
+	UINT32 ConnectFlags = 0;
+
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
 	if (stream_get_left(s) < 4)
 		return FALSE;
 
-	stream_seek(s, 4); /* ConnectFlags, Reserved (4 bytes) */
+	stream_read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
 	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;
 	license_read_binary_blob(s, license->EncryptedPlatformChallenge);
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
-	/* MACData (16 bytes) */
-	if (!stream_skip(s, 16))
+	if (stream_get_left(s) < 16)
 		return FALSE;
 
+	stream_read(s, MacData, 16); /* MACData (16 bytes) */
+
 	license_decrypt_platform_challenge(license);
+
+#ifdef WITH_DEBUG_LICENSE
+	printf("ConnectFlags: 0x%08X\n", ConnectFlags);
+	printf("\n");
+
+	printf("EncryptedPlatformChallenge:\n");
+	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
+	printf("\n");
+
+	printf("PlatformChallenge:\n");
+	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
+	printf("\n");
+
+	printf("MacData:\n");
+	winpr_HexDump(MacData, 16);
+	printf("\n");
+#endif
 
 	return TRUE;
 }
@@ -963,9 +991,10 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	license->EncryptedPlatformChallenge->type = BB_DATA_BLOB;
 	length = license->PlatformChallenge->length + HWID_LENGTH;
+
 	buffer = (BYTE*) malloc(length);
-	memcpy(buffer, license->PlatformChallenge->data, license->PlatformChallenge->length);
-	memcpy(&buffer[license->PlatformChallenge->length], license->HardwareId, HWID_LENGTH);
+	CopyMemory(buffer, license->PlatformChallenge->data, license->PlatformChallenge->length);
+	CopyMemory(&buffer[license->PlatformChallenge->length], license->HardwareId, HWID_LENGTH);
 	security_mac_data(license->MacSaltKey, buffer, length, mac_data);
 	free(buffer);
 
@@ -974,23 +1003,23 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
 	crypto_rc4_free(rc4);
 
-#ifdef WITH_DEBUG_LICENSE
-	printf("Licensing Encryption Key:\n");
-	winpr_HexDump(license->LicensingEncryptionKey, 16);
-	printf("\n");
-
-	printf("HardwareID:\n");
-	winpr_HexDump(license->HardwareId, 20);
-	printf("\n");
-
-	printf("Encrypted HardwareID:\n");
-	winpr_HexDump(buffer, 20);
-	printf("\n");
-#endif
-
 	license->EncryptedHardwareId->type = BB_DATA_BLOB;
 	license->EncryptedHardwareId->data = buffer;
 	license->EncryptedHardwareId->length = HWID_LENGTH;
+
+#ifdef WITH_DEBUG_LICENSE
+	printf("LicensingEncryptionKey:\n");
+	winpr_HexDump(license->LicensingEncryptionKey, 16);
+	printf("\n");
+
+	printf("HardwareId:\n");
+	winpr_HexDump(license->HardwareId, 20);
+	printf("\n");
+
+	printf("EncryptedHardwareId:\n");
+	winpr_HexDump(license->EncryptedHardwareId->data, 20);
+	printf("\n");
+#endif
 
 	license_write_platform_challenge_response_packet(license, s, mac_data);
 
@@ -1060,7 +1089,7 @@ rdpLicense* license_new(rdpRdp* rdp)
 
 void license_free(rdpLicense* license)
 {
-	if (license != NULL)
+	if (license)
 	{
 		certificate_free(license->certificate);
 		license_free_product_info(license->ProductInfo);
