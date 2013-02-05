@@ -172,8 +172,8 @@ typedef enum
 struct rdp_license
 {
 	LICENSE_STATE state;
-	struct rdp_rdp* rdp;
-	struct rdp_certificate* certificate;
+	rdpRdp* rdp;
+	rdpCertificate* certificate;
 	BYTE* Modulus;
 	UINT32 ModulusLength;
 	BYTE Exponent[4];

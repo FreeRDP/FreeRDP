@@ -28,7 +28,8 @@
 
 #include "license.h"
 
-#define LICENSE_NULL_RANDOM	1
+//#define LICENSE_NULL_CLIENT_RANDOM		1
+#define LICENSE_NULL_PREMASTER_SECRET		1
 
 #ifdef WITH_DEBUG_LICENSE
 
@@ -304,11 +305,14 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 
 void license_generate_randoms(rdpLicense* license)
 {
-#ifdef LICENSE_NULL_RANDOM
 	ZeroMemory(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
 	ZeroMemory(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
-#else
+
+#ifndef LICENSE_NULL_CLIENT_RANDOM
 	crypto_nonce(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+#endif
+
+#ifndef LICENSE_NULL_PREMASTER_SECRET
 	crypto_nonce(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
 #endif
 }
@@ -421,24 +425,17 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	printf("\n");
 #endif
 
-#ifdef LICENSE_NULL_RANDOM
-	EncryptedPremasterSecret = (BYTE*) malloc(MODULUS_MAX_SIZE);
-	ZeroMemory(EncryptedPremasterSecret, MODULUS_MAX_SIZE);
+	EncryptedPremasterSecret = (BYTE*) malloc(ModulusLength);
+	ZeroMemory(EncryptedPremasterSecret, ModulusLength);
 
-	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
-	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
-	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
-#else
-	EncryptedPremasterSecret = (BYTE*) malloc(MODULUS_MAX_SIZE);
-	ZeroMemory(EncryptedPremasterSecret, MODULUS_MAX_SIZE);
-
+#ifndef LICENSE_NULL_PREMASTER_SECRET
 	crypto_rsa_public_encrypt(license->PremasterSecret, PREMASTER_SECRET_LENGTH,
 			ModulusLength, Modulus, Exponent, EncryptedPremasterSecret);
+#endif
 
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
 	license->EncryptedPremasterSecret->data = EncryptedPremasterSecret;
-#endif
 }
 
 void license_decrypt_platform_challenge(rdpLicense* license)
