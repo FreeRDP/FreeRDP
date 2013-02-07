@@ -1110,6 +1110,28 @@ void* xf_input_thread(void* arg)
 	return NULL;
 }
 
+void* xf_channels_thread(void* arg)
+{
+	int status;
+	xfInfo* xfi;
+	HANDLE event;
+	rdpChannels* channels;
+	freerdp* instance = (freerdp*) arg;
+
+	xfi = ((xfContext*) instance->context)->xfi;
+
+	channels = instance->context->channels;
+	event = freerdp_channels_get_event_handle(instance);
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	{
+		status = freerdp_channels_process_pending_messages(instance);
+		xf_process_channel_event(channels, instance);
+	}
+
+	return NULL;
+}
+
 /** Main loop for the rdp connection.
  *  It will be run from the thread's entry point (thread_func()).
  *  It initiates the connection, and will continue to run until the session ends,
@@ -1136,8 +1158,10 @@ int xfreerdp_run(freerdp* instance)
 	int select_status;
 	BOOL async_update;
 	BOOL async_input;
+	BOOL async_channels;
 	HANDLE update_thread;
 	HANDLE input_thread;
+	HANDLE channels_thread;
 	rdpChannels* channels;
 	rdpSettings* settings;
 	struct timeval timeout;
@@ -1184,6 +1208,13 @@ int xfreerdp_run(freerdp* instance)
 		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
 	}
 
+	async_channels = FALSE;
+
+	if (async_channels)
+	{
+		channels_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_channels_thread, instance, 0, NULL);
+	}
+
 	while (!xfi->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
@@ -1196,11 +1227,14 @@ int xfreerdp_run(freerdp* instance)
 			break;
 		}
 
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (!async_channels)
 		{
-			printf("Failed to get channel manager file descriptor\n");
-			ret = XF_EXIT_CONN_FAILED;
-			break;
+			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				printf("Failed to get channel manager file descriptor\n");
+				ret = XF_EXIT_CONN_FAILED;
+				break;
+			}
 		}
 
 		if (!async_input)
@@ -1260,13 +1294,16 @@ int xfreerdp_run(freerdp* instance)
 			break;
 		}
 
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
+		if (!async_channels)
 		{
-			printf("Failed to check channel manager file descriptor\n");
-			break;
-		}
+			if (freerdp_channels_check_fds(channels, instance) != TRUE)
+			{
+				printf("Failed to check channel manager file descriptor\n");
+				break;
+			}
 
-		xf_process_channel_event(channels, instance);
+			xf_process_channel_event(channels, instance);
+		}
 
 		if (!async_input)
 		{
