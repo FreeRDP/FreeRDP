@@ -194,9 +194,10 @@ xfInfo* xf_info_init()
 	 */
 	xfi->use_xshm = FALSE;
 
-	xfi->display = XOpenDisplay(NULL);
+	if (!XInitThreads())
+		printf("warning: XInitThreads() failure\n");
 
-	XInitThreads();
+	xfi->display = XOpenDisplay(NULL);
 
 	if (xfi->display == NULL)
 	{
