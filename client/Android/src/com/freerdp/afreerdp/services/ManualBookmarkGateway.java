@@ -13,13 +13,14 @@ import java.util.ArrayList;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteOpenHelper;
 
 import com.freerdp.afreerdp.domain.BookmarkBase;
 import com.freerdp.afreerdp.domain.ManualBookmark;
 
 public class ManualBookmarkGateway extends BookmarkBaseGateway {
 
-	public ManualBookmarkGateway(BookmarkDB bookmarkDB) {
+	public ManualBookmarkGateway(SQLiteOpenHelper bookmarkDB) {
 		super(bookmarkDB);
 	}
 	

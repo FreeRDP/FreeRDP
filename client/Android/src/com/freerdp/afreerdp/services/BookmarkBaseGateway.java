@@ -18,13 +18,14 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.util.Log;
 
 public abstract class BookmarkBaseGateway
 {
 	private final static String TAG = "BookmarkBaseGateway";
-	private BookmarkDB bookmarkDB;
+	private SQLiteOpenHelper bookmarkDB;
 
 	protected abstract BookmarkBase createBookmark();
 	protected abstract String getBookmarkTableName();
@@ -32,7 +33,7 @@ public abstract class BookmarkBaseGateway
 	protected abstract void addBookmarkSpecificColumns(BookmarkBase bookmark, ContentValues columns);
 	protected abstract void readBookmarkSpecificColumns(BookmarkBase bookmark, Cursor cursor);
 	
-	public BookmarkBaseGateway(BookmarkDB bookmarkDB)
+	public BookmarkBaseGateway(SQLiteOpenHelper bookmarkDB)
 	{
 		this.bookmarkDB = bookmarkDB;
 	}
