@@ -48,6 +48,9 @@ FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* inst
 FREERDP_API RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels);
 FREERDP_API void freerdp_channels_close(rdpChannels* channels, freerdp* instance);
 
+FREERDP_API HANDLE freerdp_channels_get_event_handle(freerdp* instance);
+FREERDP_API int freerdp_channels_process_pending_messages(freerdp* instance);
+
 #ifdef __cplusplus
 }
 #endif
