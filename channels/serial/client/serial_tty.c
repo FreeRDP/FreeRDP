@@ -64,11 +64,12 @@
 #define CRTSCTS 0
 #endif
 
-/* FIONREAD should really do the same thing as TIOCINQ, where it is
- * not available */
+/* FIONREAD should really do the same thing as TIOCINQ, where it is not available */
+
 #if !defined(TIOCINQ) && defined(FIONREAD)
 #define TIOCINQ FIONREAD
 #endif
+
 #if !defined(TIOCOUTQ) && defined(FIONWRITE)
 #define TIOCOUTQ FIONWRITE
 #endif
@@ -371,9 +372,9 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, 
 
 BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 {
+	ssize_t r;
 	long timeout = 90;
 	struct termios *ptermios;
-	ssize_t r;
 
 	DEBUG_SVC("in");
 	ptermios = tty->ptermios;
@@ -407,8 +408,10 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 	tcsetattr(tty->fd, TCSANOW, ptermios);
 
-	memset(buffer, 0, *Length);
+	ZeroMemory(buffer, *Length);
+
 	r = read(tty->fd, buffer, *Length);
+
 	if (r < 0)
 		return FALSE;
 
@@ -420,20 +423,24 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 {
-	ssize_t r;
+	ssize_t status;
 	UINT32 event_txempty = Length;
 
 	DEBUG_SVC("in");
 
 	while (Length > 0)
 	{
-		r = write(tty->fd, buffer, Length);
-		if (r < 0)
-			return FALSE;
+		status = write(tty->fd, buffer, Length);
 
-		Length -= r;
-		buffer += r;
+		if (status < 0)
+		{
+			return FALSE;
+		}
+
+		Length -= status;
+		buffer += status;
 	}
+
 	tty->event_txempty = event_txempty;
 
 	return TRUE;
@@ -454,6 +461,7 @@ void serial_tty_free(SERIAL_TTY* tty)
 	{
 		if (tty->pold_termios)
 			tcsetattr(tty->fd, TCSANOW, tty->pold_termios);
+
 		close(tty->fd);
 	}
 
@@ -461,7 +469,6 @@ void serial_tty_free(SERIAL_TTY* tty)
 	free(tty->pold_termios);
 	free(tty);
 }
-
 
 SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 {
@@ -567,6 +574,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 		if (bytes > tty->event_rlsd)
 		{
 			tty->event_rlsd = bytes;
+
 			if (tty->wait_mask & SERIAL_EV_RLSD)
 			{
 				DEBUG_SVC("SERIAL_EV_RLSD");
@@ -582,6 +590,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 			*result |= SERIAL_EV_RXFLAG;
 			ret = TRUE;
 		}
+
 		if ((tty->wait_mask & SERIAL_EV_RXCHAR))
 		{
 			DEBUG_SVC("SERIAL_EV_RXCHAR bytes %d", bytes);
@@ -598,8 +607,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 
 #ifdef TIOCOUTQ
 	ioctl(tty->fd, TIOCOUTQ, &bytes);
-	if ((bytes == 0)
-	    && (tty->event_txempty > 0) && (tty->wait_mask & SERIAL_EV_TXEMPTY))
+	if ((bytes == 0) && (tty->event_txempty > 0) && (tty->wait_mask & SERIAL_EV_TXEMPTY))
 	{
 		DEBUG_SVC("SERIAL_EV_TXEMPTY");
 		*result |= SERIAL_EV_TXEMPTY;
@@ -640,14 +648,16 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 static BOOL tty_get_termios(SERIAL_TTY* tty)
 {
 	speed_t speed;
-	struct termios *ptermios;
+	struct termios* ptermios;
 	ptermios = tty->ptermios;
 
 	DEBUG_SVC("tcgetattr? %d", tcgetattr(tty->fd, ptermios) >= 0);
+
 	if (tcgetattr(tty->fd, ptermios) < 0)
 		return FALSE;
 
 	speed = cfgetispeed(ptermios);
+
 	switch (speed)
 	{
 #ifdef B75
@@ -773,6 +783,7 @@ static BOOL tty_get_termios(SERIAL_TTY* tty)
 	}
 
 	tty->xonoff = SERIAL_DSR_SENSITIVITY;
+
 	if (ptermios->c_iflag & IXON)
 		tty->xonoff |= SERIAL_XON_HANDSHAKE;
 
@@ -898,11 +909,13 @@ static void tty_set_termios(SERIAL_TTY* tty)
 #endif
 
 	ptermios->c_cflag &= ~(CSTOPB | PARENB | PARODD | CSIZE | CRTSCTS);
+
 	switch (tty->stop_bits)
 	{
 		case SERIAL_STOP_BITS_2:
 			ptermios->c_cflag |= CSTOPB;
 			break;
+
 		default:
 			ptermios->c_cflag &= ~CSTOPB;
 			break;
@@ -913,9 +926,11 @@ static void tty_set_termios(SERIAL_TTY* tty)
 		case SERIAL_EVEN_PARITY:
 			ptermios->c_cflag |= PARENB;
 			break;
+
 		case SERIAL_ODD_PARITY:
 			ptermios->c_cflag |= PARENB | PARODD;
 			break;
+
 		case SERIAL_NO_PARITY:
 			ptermios->c_cflag &= ~(PARENB | PARODD);
 			break;
@@ -980,16 +995,16 @@ static void tty_set_termios(SERIAL_TTY* tty)
 
 static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 {
-	ssize_t r;
+	ssize_t status;
 
 	DEBUG_SVC("in");
 
-	r = write(tty->fd, data, len);
+	status = write(tty->fd, data, len);
 
-	if (r < 0)
+	if (status < 0)
 		return tty_get_error_status();
 
-	tty->event_txempty = r;
+	tty->event_txempty = status;
 
 	return STATUS_SUCCESS;
 }

@@ -873,6 +873,8 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
                         height = (wnd->visibleOffsetY + wnd->windowHeight - 1) - ay;
 	}
 	
+	WaitForSingleObject(xfi->mutex, INFINITE);
+
 	if (xfi->sw_gdi)
 	{
 		XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,
@@ -883,6 +885,8 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 			ax, ay, width, height, x, y);
 
 	XFlush(xfi->display);
+
+	ReleaseMutex(xfi->mutex);
 }
 
 BOOL xf_IsWindowBorder(xfInfo* xfi, xfWindow* xfw, int x, int y)
