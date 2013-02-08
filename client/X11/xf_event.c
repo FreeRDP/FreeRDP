@@ -358,7 +358,7 @@ static BOOL xf_event_KeyRelease(xfInfo* xfi, XEvent* event, BOOL app)
 
 	if (XPending(xfi->display))
 	{
-		memset(&next_event, 0, sizeof(next_event));
+		ZeroMemory(&next_event, sizeof(next_event));
 		XPeekEvent(xfi->display, &next_event);
 
 		if (next_event.type == KeyPress)
