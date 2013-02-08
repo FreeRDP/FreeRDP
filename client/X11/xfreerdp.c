@@ -608,8 +608,8 @@ BOOL xf_pre_connect(freerdp* instance)
 		return TRUE;
 	}
 
-	//if (!XInitThreads())
-	//	printf("warning: XInitThreads() failure\n");
+	if (!XInitThreads())
+		printf("warning: XInitThreads() failure\n");
 
 	xfi->display = XOpenDisplay(NULL);
 
