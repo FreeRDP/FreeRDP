@@ -44,6 +44,15 @@ HANDLE MessageQueue_Event(wMessageQueue* queue)
 }
 
 /**
+ * Gets the queue size
+ */
+
+int MessageQueue_Size(wMessageQueue* queue)
+{
+	return queue->size;
+}
+
+/**
  * Methods
  */
 
@@ -73,7 +82,7 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 		queue->array = (wMessage*) realloc(queue->array, sizeof(wMessage) * queue->capacity);
 		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(wMessage));
 
-		if (queue->tail < (old_capacity - 1))
+		if (queue->tail < old_capacity)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
 			queue->tail += old_capacity;
@@ -82,9 +91,11 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
 	queue->tail = (queue->tail + 1) % queue->capacity;
-	queue->size++;
 
-	SetEvent(queue->event);
+	if (queue->size == 0)
+		SetEvent(queue->event);
+
+	queue->size++;
 
 	ReleaseMutex(queue->mutex);
 }
@@ -120,13 +131,14 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 		CopyMemory(message, &(queue->array[queue->head]), sizeof(wMessage));
 		ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
 		queue->head = (queue->head + 1) % queue->capacity;
+
+		if (queue->size == 1)
+			ResetEvent(queue->event);
+
 		queue->size--;
 
 		status = (message->id != WMQ_QUIT) ? 1 : 0;
 	}
-
-	if (queue->size < 1)
-		ResetEvent(queue->event);
 
 	ReleaseMutex(queue->mutex);
 
@@ -148,6 +160,10 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 		{
 			ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
 			queue->head = (queue->head + 1) % queue->capacity;
+
+			if (queue->size == 1)
+				ResetEvent(queue->event);
+
 			queue->size--;
 		}
 	}
@@ -175,6 +191,7 @@ wMessageQueue* MessageQueue_New()
 
 		queue->capacity = 32;
 		queue->array = (wMessage*) malloc(sizeof(wMessage) * queue->capacity);
+		ZeroMemory(queue->array, sizeof(wMessage) * queue->capacity);
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);

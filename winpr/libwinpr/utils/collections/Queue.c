@@ -148,7 +148,7 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 		queue->array = (void**) realloc(queue->array, sizeof(void*) * queue->capacity);
 		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(void*));
 
-		if (queue->tail < (old_capacity - 1))
+		if (queue->tail < old_capacity)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
 			queue->tail += old_capacity;
@@ -241,6 +241,7 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 			queue->growthFactor = growthFactor;
 
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
+		ZeroMemory(queue->array, sizeof(void*) * queue->capacity);
 
 		queue->mutex = CreateMutex(NULL, FALSE, NULL);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);

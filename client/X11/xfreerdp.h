@@ -115,6 +115,7 @@ struct xf_info
 	HCLRCONV clrconv;
 	Window parent_window;
 	HANDLE mutex;
+	BOOL UseXThreads;
 
 	HGDI_DC hdc;
 	BOOL sw_gdi;
@@ -213,6 +214,9 @@ enum XF_EXIT_CODE
 
 	XF_EXIT_UNKNOWN = 255,
 };
+
+void xf_lock_x11(xfInfo* xfi);
+void xf_unlock_x11(xfInfo* xfi);
 
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)

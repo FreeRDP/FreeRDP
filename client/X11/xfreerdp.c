@@ -127,12 +127,12 @@ void xf_sw_end_paint(rdpContext* context)
 			w = gdi->primary->hdc->hwnd->invalid->w;
 			h = gdi->primary->hdc->hwnd->invalid->h;
 
-			WaitForSingleObject(xfi->mutex, INFINITE);
+			xf_lock_x11(xfi);
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
-			ReleaseMutex(xfi->mutex);
+			xf_unlock_x11(xfi);
 		}
 		else
 		{
@@ -146,7 +146,7 @@ void xf_sw_end_paint(rdpContext* context)
 			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
-			WaitForSingleObject(xfi->mutex, INFINITE);
+			xf_lock_x11(xfi);
 
 			for (i = 0; i < ninvalid; i++)
 			{
@@ -161,7 +161,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XFlush(xfi->display);
 
-			ReleaseMutex(xfi->mutex);
+			xf_unlock_x11(xfi);
 		}
 	}
 	else
@@ -174,11 +174,11 @@ void xf_sw_end_paint(rdpContext* context)
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
 
-		WaitForSingleObject(xfi->mutex, INFINITE);
+		xf_lock_x11(xfi);
 
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 
-		ReleaseMutex(xfi->mutex);
+		xf_unlock_x11(xfi);
 	}
 }
 
@@ -190,7 +190,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -206,7 +206,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 		}
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_hw_begin_paint(rdpContext* context)
@@ -236,11 +236,11 @@ void xf_hw_end_paint(rdpContext* context)
 		w = xfi->hdc->hwnd->invalid->w;
 		h = xfi->hdc->hwnd->invalid->h;
 
-		WaitForSingleObject(xfi->mutex, INFINITE);
+		xf_lock_x11(xfi);
 
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 
-		ReleaseMutex(xfi->mutex);
+		xf_unlock_x11(xfi);
 	}
 }
 
@@ -253,7 +253,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -284,7 +284,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 		XFillRectangle(xfi->display, xfi->drawable, xfi->gc, 0, 0, xfi->width, xfi->height);
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -309,11 +309,11 @@ BOOL xf_process_x_events(freerdp* instance)
 
 	while (pending_status)
 	{
-		WaitForSingleObject(xfi->mutex, INFINITE);
+		xf_lock_x11(xfi);
 
 		pending_status = XPending(xfi->display);
 
-		ReleaseMutex(xfi->mutex);
+		xf_unlock_x11(xfi);
 
 		if (pending_status)
 		{
@@ -389,6 +389,18 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
+}
+
+void xf_lock_x11(xfInfo* xfi)
+{
+	if (!xfi->UseXThreads)
+		WaitForSingleObject(xfi->mutex, INFINITE);
+}
+
+void xf_unlock_x11(xfInfo* xfi)
+{
+	if (!xfi->UseXThreads)
+		ReleaseMutex(xfi->mutex);
 }
 
 BOOL xf_get_pixmap_info(xfInfo* xfi)
@@ -608,8 +620,16 @@ BOOL xf_pre_connect(freerdp* instance)
 		return TRUE;
 	}
 
-	if (!XInitThreads())
-		printf("warning: XInitThreads() failure\n");
+	xfi->UseXThreads = FALSE;
+
+	if (xfi->UseXThreads)
+	{
+		if (!XInitThreads())
+		{
+			printf("warning: XInitThreads() failure\n");
+			xfi->UseXThreads = FALSE;
+		}
+	}
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -1058,7 +1078,7 @@ void* xf_update_thread(void* arg)
 
 	while (MessageQueue_Wait(queue))
 	{
-		if (MessageQueue_Peek(queue, &message, TRUE))
+		while (MessageQueue_Peek(queue, &message, TRUE))
 		{
 			if (!freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message))
 				break;
@@ -1078,29 +1098,28 @@ void* xf_input_thread(void* arg)
 
 	xfi = ((xfContext*) instance->context)->xfi;
 
-	event = CreateFileDescriptorEvent(NULL, TRUE, FALSE, xfi->xfds);
+	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfi->xfds);
 
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
-		WaitForSingleObject(xfi->mutex, INFINITE);
+		xf_lock_x11(xfi);
 
 		status = XPending(xfi->display);
 
-		ReleaseMutex(xfi->mutex);
+		xf_unlock_x11(xfi);
 
-		if (status)
+		while (status > 0)
 		{
 			ZeroMemory(&xevent, sizeof(xevent));
 
-			WaitForSingleObject(xfi->mutex, INFINITE);
+			xf_lock_x11(xfi);
 
 			XNextEvent(xfi->display, &xevent);
 			status = xf_event_process(instance, &xevent);
 
-			ReleaseMutex(xfi->mutex);
+			xf_unlock_x11(xfi);
 
-			if (!status)
-				break;
+			status--;
 		}
 	}
 
@@ -1202,6 +1221,9 @@ int xfreerdp_run(freerdp* instance)
 
 	if (async_input)
 	{
+		/**
+		 * FIXME: the input event file descriptor doesn't seem to work well with select(), why?
+		 */
 		input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 		fd_input_event = GetEventFileDescriptor(input_event);
 
@@ -1237,19 +1259,19 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (!async_input)
-		{
+		//if (!async_input)
+		//{
 			if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
 				printf("Failed to get xfreerdp file descriptor\n");
 				ret = XF_EXIT_CONN_FAILED;
 				break;
 			}
-		}
-		else
-		{
-			rfds[rcount++] = (void*) (long) fd_input_event;
-		}
+		//}
+		//else
+		//{
+		//	rfds[rcount++] = (void*) (long) fd_input_event;
+		//}
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -1268,14 +1290,14 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		timeout.tv_sec = 1;
+		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
 
-		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
+		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
 
 		if (select_status == 0)
 		{
-			continue;
+			continue; /* select timeout */
 		}
 		else if (select_status == -1)
 		{
@@ -1315,7 +1337,8 @@ int xfreerdp_run(freerdp* instance)
 		}
 		else
 		{
-			freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			//if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+				freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 		}
 	}
 

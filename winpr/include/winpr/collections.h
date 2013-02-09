@@ -277,6 +277,7 @@ typedef struct _wMessageQueue wMessageQueue;
 
 WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
+WINPR_API int MessageQueue_Size(wMessageQueue* queue);
 
 WINPR_API void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
 WINPR_API void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);

@@ -1865,23 +1865,22 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 
 int input_message_queue_process_pending_messages(rdpInput* input)
 {
+	int count;
 	int status;
 	wMessage message;
 	wMessageQueue* queue;
 
+	count = 0;
 	queue = input->queue;
 
-	while (1)
+	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
-		status = MessageQueue_Peek(queue, &message, TRUE);
-
-		if (!status)
-			break;
-
 		status = input_message_queue_process_message(input, &message);
 
 		if (!status)
 			break;
+
+		count++;
 	}
 
 	return 0;

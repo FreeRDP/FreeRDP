@@ -267,11 +267,11 @@ void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	CopyMemory(xfi->clrconv->palette, palette, sizeof(rdpPalette));
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
@@ -279,7 +279,7 @@ void xf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 	XRectangle clip;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	if (bounds != NULL)
 	{
@@ -294,14 +294,14 @@ void xf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 		XSetClipMask(xfi->display, xfi->gc, None);
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	xf_set_rop3(xfi, gdi_rop3_code(dstblt->bRop));
 
@@ -323,7 +323,7 @@ void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -335,7 +335,7 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	brush = &patblt->brush;
 	xf_set_rop3(xfi, gdi_rop3_code(patblt->bRop));
@@ -419,14 +419,14 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	xf_set_rop3(xfi, gdi_rop3_code(scrblt->bRop));
 
@@ -457,7 +457,7 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
@@ -466,7 +466,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	color = freerdp_color_convert_var(opaque_rect->color, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
 
@@ -490,7 +490,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 				opaque_rect->nWidth, opaque_rect->nHeight);
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
@@ -501,7 +501,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	color = freerdp_color_convert_var(multi_opaque_rect->color, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
 
@@ -529,7 +529,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 		}
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
@@ -543,7 +543,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	xf_set_rop2(xfi, line_to->bRop2);
 	color = freerdp_color_convert_var(line_to->penColor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
@@ -579,7 +579,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
@@ -595,7 +595,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	xf_set_rop2(xfi, polyline->bRop2);
 	color = freerdp_color_convert_var(polyline->penColor, context_->settings->ColorDepth, xfi->bpp, xfi->clrconv);
@@ -646,7 +646,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	free(points);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
@@ -654,7 +654,7 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	xfBitmap* bitmap;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	bitmap = (xfBitmap*) memblt->bitmap;
 	xf_set_rop3(xfi, gdi_rop3_code(memblt->bRop));
@@ -677,7 +677,7 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
@@ -690,7 +690,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	xfContext* context_ = (xfContext*) context;
 	xfInfo* xfi = context_->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	brush = &mem3blt->brush;
 	bitmap = (xfBitmap*) mem3blt->bitmap;
@@ -756,7 +756,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
@@ -766,7 +766,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	UINT32 brush_color;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	xf_set_rop2(xfi, polygon_sc->bRop2);
 	brush_color = freerdp_color_convert_var(polygon_sc->brushColor, ((xfContext*)context)->settings->ColorDepth, xfi->bpp, xfi->clrconv);
@@ -813,7 +813,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	free(points);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
@@ -826,7 +826,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	UINT32 backColor;
 	xfInfo* xfi = ((xfContext*) context)->xfi;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfi, polygon_cb->bRop2);
@@ -920,7 +920,7 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	XSetFunction(xfi->display, xfi->gc, GXcopy);
 	free(points);
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
@@ -941,7 +941,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	switch (surface_frame_marker->frameAction)
 	{
@@ -974,7 +974,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 			break;
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 static void xf_gdi_surface_update_frame(xfInfo* xfi, UINT16 tx, UINT16 ty, UINT16 width, UINT16 height)
@@ -1020,7 +1020,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) xfi->rfx_context;
 	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) xfi->nsc_context;
 
-	WaitForSingleObject(xfi->mutex, INFINITE);
+	xf_lock_x11(xfi);
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
@@ -1125,7 +1125,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
-	ReleaseMutex(xfi->mutex);
+	xf_unlock_x11(xfi);
 }
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update)

@@ -130,11 +130,13 @@ BOOL SetEvent(HANDLE hEvent)
 
 #ifdef HAVE_EVENTFD_H
 		eventfd_t val = 1;
+
 		do
 		{
 			length = eventfd_write(event->pipe_fd[0], val);
 		}
-		while(length < 0 && errno == EINTR);
+		while ((length < 0) && (errno == EINTR));
+
 		status = (length == 0) ? TRUE : FALSE;
 #else
 		if (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
@@ -176,15 +178,17 @@ BOOL ResetEvent(HANDLE hEvent)
 		{
 #ifdef HAVE_EVENTFD_H
 			eventfd_t value;
+
 			do
 			{
 				length = eventfd_read(event->pipe_fd[0], &value);
 			}
-			while(length < 0 && errno == EINTR);
+			while ((length < 0) && (errno == EINTR));
 
 			status = (length > 0) ? TRUE : FALSE;
 #else
 			length = read(event->pipe_fd[0], &length, 1);
+
 			if (length == 1)
 				status = TRUE;
 
@@ -213,11 +217,6 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 	{
 		event->bAttached = TRUE;
 		event->bManualReset = bManualReset;
-
-		if (!event->bManualReset)
-		{
-			printf("CreateFileDescriptorEventW: auto-reset events not yet implemented\n");
-		}
 
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;

@@ -725,7 +725,8 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	                status = xf_GetWindowProperty(xfi, event->xproperty.window,
 	                xfi->WM_STATE, 1, &nitems, &bytes, &prop);
 	
-	                if (status != TRUE) {
+	                if (status != TRUE)
+	                {
 	                        DEBUG_X11_LMS("No return WM_STATE, window is not minimized");
 	                }
 	                else
