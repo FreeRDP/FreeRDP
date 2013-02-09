@@ -226,7 +226,54 @@ void xf_hw_end_paint(rdpContext* context)
 
 	xfi = ((xfContext*) context)->xfi;
 
-	if (xfi->remote_app)
+	if (!xfi->remote_app)
+	{
+		if (!xfi->complex_regions)
+		{
+			if (xfi->hdc->hwnd->invalid->null)
+				return;
+
+			x = xfi->hdc->hwnd->invalid->x;
+			y = xfi->hdc->hwnd->invalid->y;
+			w = xfi->hdc->hwnd->invalid->w;
+			h = xfi->hdc->hwnd->invalid->h;
+
+			xf_lock_x11(xfi);
+
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+
+			xf_unlock_x11(xfi);
+		}
+		else
+		{
+			int i;
+			int ninvalid;
+			HGDI_RGN cinvalid;
+
+			if (xfi->hdc->hwnd->ninvalid < 1)
+				return;
+
+			ninvalid = xfi->hdc->hwnd->ninvalid;
+			cinvalid = xfi->hdc->hwnd->cinvalid;
+
+			xf_lock_x11(xfi);
+
+			for (i = 0; i < ninvalid; i++)
+			{
+				x = cinvalid[i].x;
+				y = cinvalid[i].y;
+				w = cinvalid[i].w;
+				h = cinvalid[i].h;
+
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			}
+
+			XFlush(xfi->display);
+
+			xf_unlock_x11(xfi);
+		}
+	}
+	else
 	{
 		if (xfi->hdc->hwnd->invalid->null)
 			return;

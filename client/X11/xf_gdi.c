@@ -33,7 +33,7 @@
 
 #include "xf_gdi.h"
 
-static UINT8 GDI_BS_HACHTED_PATTERNS[] =
+static UINT8 GDI_BS_HATCHED_PATTERNS[] =
 {
 	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
 	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
@@ -312,12 +312,6 @@ void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
-				dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
 	}
 
@@ -353,7 +347,7 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else if (brush->style == GDI_BS_HATCHED)
 	{
-		pattern = xf_mono_bitmap_new(xfi, 8, 8, GDI_BS_HACHTED_PATTERNS + 8 * brush->hatch);
+		pattern = xf_mono_bitmap_new(xfi, 8, 8, GDI_BS_HATCHED_PATTERNS + 8 * brush->hatch);
 
 		XSetForeground(xfi->display, xfi->gc, backColor);
 		XSetBackground(xfi->display, xfi->gc, foreColor);
@@ -406,14 +400,6 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		XSetFunction(xfi->display, xfi->gc, GXcopy);
-
-		if (xfi->remote_app != TRUE)
-		{
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 	}
 
@@ -435,23 +421,6 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			if (xfi->unobscured)
-			{
-				XCopyArea(xfi->display, xfi->drawable, xfi->drawable, xfi->gc,
-						scrblt->nXSrc, scrblt->nYSrc, scrblt->nWidth, scrblt->nHeight,
-						scrblt->nLeftRect, scrblt->nTopRect);
-			}
-			else
-			{
-				XSetFunction(xfi->display, xfi->gc, GXcopy);
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-						scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight,
-						scrblt->nLeftRect, scrblt->nTopRect);
-			}
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight);
 	}
 
@@ -480,12 +449,6 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
-				opaque_rect->nLeftRect, opaque_rect->nTopRect, opaque_rect->nWidth, opaque_rect->nHeight);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, opaque_rect->nLeftRect, opaque_rect->nTopRect,
 				opaque_rect->nWidth, opaque_rect->nHeight);
 	}
@@ -519,12 +482,6 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 		if (xfi->drawing == xfi->primary)
 		{
-			if (xfi->remote_app != TRUE)
-			{
-				XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
-					rectangle->left, rectangle->top, rectangle->width, rectangle->height);
-			}
-
 			gdi_InvalidateRegion(xfi->hdc, rectangle->left, rectangle->top, rectangle->width, rectangle->height);
 		}
 	}
@@ -557,12 +514,6 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	if (xfi->drawing == xfi->primary)
 	{
 		int width, height;
-
-		if (xfi->remote_app != TRUE)
-		{
-			XDrawLine(xfi->display, xfi->drawable, xfi->gc,
-				line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
-		}
 
 		width = line_to->nXStart - line_to->nXEnd;
 		height = line_to->nYStart - line_to->nYEnd;
@@ -619,9 +570,6 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, npoints, CoordModePrevious);
-
 		x1 = points[0].x;
 		y1 = points[0].y;
 
@@ -665,13 +613,6 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
-				memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
-				memblt->nLeftRect, memblt->nTopRect);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
 
@@ -738,13 +679,6 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
-				mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
-				mem3blt->nLeftRect, mem3blt->nTopRect);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, mem3blt->nLeftRect, mem3blt->nTopRect, mem3blt->nWidth, mem3blt->nHeight);
 	}
 
@@ -955,15 +889,8 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 
 		case SURFACECMD_FRAMEACTION_END:
 			xfi->frame_begin = FALSE;
-			if (xfi->frame_x2 > xfi->frame_x1 && xfi->frame_y2 > xfi->frame_y1)
+			if ((xfi->frame_x2 > xfi->frame_x1) && (xfi->frame_y2 > xfi->frame_y1))
 			{
-				XSetFunction(xfi->display, xfi->gc, GXcopy);
-				XSetFillStyle(xfi->display, xfi->gc, FillSolid);
-
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-					xfi->frame_x1, xfi->frame_y1,
-					xfi->frame_x2 - xfi->frame_x1, xfi->frame_y2 - xfi->frame_y1,
-					xfi->frame_x1, xfi->frame_y1);
 				gdi_InvalidateRegion(xfi->hdc, xfi->frame_x1, xfi->frame_y1,
 					xfi->frame_x2 - xfi->frame_x1, xfi->frame_y2 - xfi->frame_y1);
 			}
@@ -979,7 +906,7 @@ void xf_gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surf
 
 static void xf_gdi_surface_update_frame(xfInfo* xfi, UINT16 tx, UINT16 ty, UINT16 width, UINT16 height)
 {
-	if (xfi->remote_app != TRUE)
+	if (!xfi->remote_app)
 	{
 		if (xfi->frame_begin)
 		{
@@ -1000,8 +927,6 @@ static void xf_gdi_surface_update_frame(xfInfo* xfi, UINT16 tx, UINT16 ty, UINT1
 		}
 		else
 		{
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-				tx, ty, width, height, tx, ty);
 			gdi_InvalidateRegion(xfi->hdc, tx, ty, width, height);
 		}
 	}

@@ -114,12 +114,6 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XFree(image);
 
-	if (xfi->remote_app != TRUE)
-	{
-		XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc,
-				bitmap->left, bitmap->top, width, height, bitmap->left, bitmap->top);
-	}
-
 	gdi_InvalidateRegion(xfi->hdc, bitmap->left, bitmap->top, width, height);
 
 	ReleaseMutex(xfi->mutex);
@@ -424,11 +418,6 @@ void xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, 
 
 	if (xfi->drawing == xfi->primary)
 	{
-		if (xfi->remote_app != TRUE)
-		{
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, width, height, x, y);
-		}
-
 		gdi_InvalidateRegion(xfi->hdc, x, y, width, height);
 	}
 
