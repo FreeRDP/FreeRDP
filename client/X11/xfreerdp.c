@@ -1137,10 +1137,11 @@ void* xf_update_thread(void* arg)
 
 void* xf_input_thread(void* arg)
 {
-	int status;
 	xfInfo* xfi;
 	HANDLE event;
 	XEvent xevent;
+	int pending_status = 1;
+	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
 
 	xfi = ((xfContext*) instance->context)->xfi;
@@ -1149,25 +1150,32 @@ void* xf_input_thread(void* arg)
 
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
-		xf_lock_x11(xfi);
-
-		status = XPending(xfi->display);
-
-		xf_unlock_x11(xfi);
-
-		while (status > 0)
+		do
 		{
-			ZeroMemory(&xevent, sizeof(xevent));
-
 			xf_lock_x11(xfi);
 
-			XNextEvent(xfi->display, &xevent);
-			status = xf_event_process(instance, &xevent);
+			pending_status = XPending(xfi->display);
 
 			xf_unlock_x11(xfi);
 
-			status--;
+			if (pending_status)
+			{
+				xf_lock_x11(xfi);
+
+				ZeroMemory(&xevent, sizeof(xevent));
+				XNextEvent(xfi->display, &xevent);
+				process_status = xf_event_process(instance, &xevent);
+
+				xf_unlock_x11(xfi);
+
+				if (!process_status)
+					break;
+			}
 		}
+		while (pending_status);
+
+		if (!process_status)
+			break;
 	}
 
 	printf("Closed from X\n");
@@ -1338,9 +1346,9 @@ int xfreerdp_run(freerdp* instance)
 			break;
 
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
+		timeout.tv_usec = 100;
 
-		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
+		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
 
 		if (select_status == 0)
 		{

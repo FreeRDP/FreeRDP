@@ -45,7 +45,7 @@ void xf_kbd_init(xfInfo* xfi)
 
 void xf_kbd_clear(xfInfo* xfi)
 {
-	memset(xfi->pressed_keys, 0, 256 * sizeof(BOOL));
+	ZeroMemory(xfi->pressed_keys, 256 * sizeof(BOOL));
 }
 
 void xf_kbd_set_keypress(xfInfo* xfi, BYTE keycode, KeySym keysym)
@@ -129,7 +129,7 @@ int xf_kbd_read_keyboard_state(xfInfo* xfi)
 	Window wdummy;
 	UINT32 state = 0;
 
-	if (xfi->remote_app != TRUE)
+	if (!xfi->remote_app)
 	{
 		XQueryPointer(xfi->display, xfi->window->handle,
 			&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
@@ -154,6 +154,7 @@ BOOL xf_kbd_get_key_state(xfInfo* xfi, int state, int keysym)
 	for (modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
 		offset = xfi->modifier_map->max_keypermod * modifierpos;
+
 		for (key = 0; key < xfi->modifier_map->max_keypermod; key++)
 		{
 			if (xfi->modifier_map->modifiermap[offset + key] == keycode)
