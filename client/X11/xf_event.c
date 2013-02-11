@@ -969,5 +969,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			break;
 	}
 
+	XSync(xfi->display, FALSE);
+
 	return status;
 }

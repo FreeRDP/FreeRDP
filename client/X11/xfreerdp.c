@@ -667,7 +667,7 @@ BOOL xf_pre_connect(freerdp* instance)
 		return TRUE;
 	}
 
-	xfi->UseXThreads = FALSE;
+	xfi->UseXThreads = TRUE;
 
 	if (xfi->UseXThreads)
 	{
@@ -1178,8 +1178,8 @@ void* xf_input_thread(void* arg)
 			break;
 	}
 
-	printf("Closed from X\n");
 	xfi->disconnect = TRUE;
+	printf("Closed from X\n");
 
 	return NULL;
 }
@@ -1348,7 +1348,7 @@ int xfreerdp_run(freerdp* instance)
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 100;
 
-		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &timeout);
+		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
 
 		if (select_status == 0)
 		{
