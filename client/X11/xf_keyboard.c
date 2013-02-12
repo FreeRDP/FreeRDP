@@ -41,6 +41,7 @@ void xf_kbd_init(xfInfo* xfi)
 	xfi->keyboard_layout_id = xfi->instance->settings->KeyboardLayout;
 	xfi->keyboard_layout_id = freerdp_keyboard_init(xfi->keyboard_layout_id);
 	xfi->instance->settings->KeyboardLayout = xfi->keyboard_layout_id;
+	xfi->modifier_map = XGetModifierMapping(xfi->display);
 }
 
 void xf_kbd_clear(xfInfo* xfi)
@@ -173,6 +174,7 @@ int xf_kbd_get_toggle_keys_state(xfInfo* xfi)
 	int toggle_keys_state = 0;
 
 	state = xf_kbd_read_keyboard_state(xfi);
+
 	if (xf_kbd_get_key_state(xfi, state, XK_Scroll_Lock))
 		toggle_keys_state |= KBD_SYNC_SCROLL_LOCK;
 	if (xf_kbd_get_key_state(xfi, state, XK_Num_Lock))

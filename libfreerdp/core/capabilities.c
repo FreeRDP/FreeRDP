@@ -123,8 +123,9 @@ BOOL rdp_read_general_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 	BYTE refreshRectSupport;
 	BYTE suppressOutputSupport;
 
-	if(length < 24)
+	if (length < 24)
 		return FALSE;
+
 	if (settings->ServerMode)
 	{
 		stream_read_UINT16(s, settings->OsMajorType); /* osMajorType (2 bytes) */
@@ -135,6 +136,7 @@ BOOL rdp_read_general_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 		stream_seek_UINT16(s); /* osMajorType (2 bytes) */
 		stream_seek_UINT16(s); /* osMinorType (2 bytes) */
 	}
+
 	stream_seek_UINT16(s); /* protocolVersion (2 bytes) */
 	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 	stream_seek_UINT16(s); /* generalCompressionTypes (2 bytes) */
@@ -153,6 +155,7 @@ BOOL rdp_read_general_capability_set(STREAM* s, UINT16 length, rdpSettings* sett
 
 	if (suppressOutputSupport == FALSE)
 		settings->SuppressOutput = FALSE;
+
 	return TRUE;
 }
 

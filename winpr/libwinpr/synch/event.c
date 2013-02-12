@@ -185,15 +185,13 @@ BOOL ResetEvent(HANDLE hEvent)
 			}
 			while ((length < 0) && (errno == EINTR));
 
-			status = (length > 0) ? TRUE : FALSE;
+			if ((length > 0) && (!status))
+				status = TRUE;
 #else
 			length = read(event->pipe_fd[0], &length, 1);
 
-			if (length == 1)
+			if ((length == 1) && (!status))
 				status = TRUE;
-
-			if (length != 1)
-				break;
 #endif
 		}
 	}

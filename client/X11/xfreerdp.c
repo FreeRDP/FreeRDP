@@ -588,6 +588,8 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	((xfContext*) instance->context)->xfi = xfi;
 
+	xfi->mutex = CreateMutex(NULL, FALSE, NULL);
+
 	xfi->_context = instance->context;
 	xfi->context = (xfContext*) instance->context;
 	xfi->context->settings = instance->settings;
@@ -1117,19 +1119,26 @@ void xf_free(xfInfo* xfi)
 
 void* xf_update_thread(void* arg)
 {
+	int status;
 	wMessage message;
 	wMessageQueue* queue;
 	freerdp* instance = (freerdp*) arg;
 
+	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
 
 	while (MessageQueue_Wait(queue))
 	{
 		while (MessageQueue_Peek(queue, &message, TRUE))
 		{
-			if (!freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message))
+			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
+
+			if (!status)
 				break;
 		}
+
+		if (!status)
+			break;
 	}
 
 	return NULL;
@@ -1140,6 +1149,7 @@ void* xf_input_thread(void* arg)
 	xfInfo* xfi;
 	HANDLE event;
 	XEvent xevent;
+	wMessageQueue* queue;
 	int pending_status = 1;
 	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
@@ -1178,8 +1188,8 @@ void* xf_input_thread(void* arg)
 			break;
 	}
 
-	xfi->disconnect = TRUE;
-	printf("Closed from X\n");
+	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	MessageQueue_PostQuit(queue, 0);
 
 	return NULL;
 }
@@ -1246,6 +1256,8 @@ int xfreerdp_run(freerdp* instance)
 
 	status = freerdp_connect(instance);
 
+	xfi = ((xfContext*) instance->context)->xfi;
+
 	/* Connection succeeded. --authonly ? */
 	if (instance->settings->AuthenticationOnly)
 	{
@@ -1256,18 +1268,15 @@ int xfreerdp_run(freerdp* instance)
 
 	if (!status)
 	{
-		xf_free(((xfContext*) instance->context)->xfi);
+		xf_free(xfi);
 		return XF_EXIT_CONN_FAILED;
 	}
 
-	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
 	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
-
-	xfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
 	if (async_update)
 	{
@@ -1276,12 +1285,6 @@ int xfreerdp_run(freerdp* instance)
 
 	if (async_input)
 	{
-		/**
-		 * FIXME: the input event file descriptor doesn't seem to work well with select(), why?
-		 */
-		input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		fd_input_event = GetEventFileDescriptor(input_event);
-
 		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
 	}
 
@@ -1314,19 +1317,21 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		//if (!async_input)
-		//{
+		if (!async_input)
+		{
 			if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
 				printf("Failed to get xfreerdp file descriptor\n");
 				ret = XF_EXIT_CONN_FAILED;
 				break;
 			}
-		//}
-		//else
-		//{
-		//	rfds[rcount++] = (void*) (long) fd_input_event;
-		//}
+		}
+		else
+		{
+			input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			fd_input_event = GetEventFileDescriptor(input_event);
+			rfds[rcount++] = (void*) (long) fd_input_event;
+		}
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -1345,10 +1350,10 @@ int xfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 100;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 
-		select_status = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
+		select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
 
 		if (select_status == 0)
 		{
@@ -1386,14 +1391,21 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (xf_process_x_events(instance) != TRUE)
 			{
-				printf("Closed from X\n");
+				printf("Closed from X11\n");
 				break;
 			}
 		}
 		else
 		{
-			//if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
-				freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+			{
+				if (!freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE))
+				{
+					printf("User Disconnect\n");
+					xfi->disconnect = TRUE;
+					break;
+				}
+			}
 		}
 	}
 

@@ -29,8 +29,6 @@ int TestMessageQueue(int argc, char* argv[])
 	HANDLE thread;
 	wMessageQueue* queue;
 
-	printf("Message Queue\n");
-
 	queue = MessageQueue_New();
 
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_queue_consumer_thread, (void*) queue, 0, NULL);

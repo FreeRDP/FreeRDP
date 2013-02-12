@@ -91,11 +91,10 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
 	queue->tail = (queue->tail + 1) % queue->capacity;
-
-	if (queue->size == 0)
-		SetEvent(queue->event);
-
 	queue->size++;
+
+	if (queue->size > 0)
+		SetEvent(queue->event);
 
 	ReleaseMutex(queue->mutex);
 }
@@ -131,11 +130,10 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 		CopyMemory(message, &(queue->array[queue->head]), sizeof(wMessage));
 		ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
 		queue->head = (queue->head + 1) % queue->capacity;
-
-		if (queue->size == 1)
-			ResetEvent(queue->event);
-
 		queue->size--;
+
+		if (queue->size < 1)
+			ResetEvent(queue->event);
 
 		status = (message->id != WMQ_QUIT) ? 1 : 0;
 	}
@@ -160,11 +158,10 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 		{
 			ZeroMemory(&(queue->array[queue->head]), sizeof(wMessage));
 			queue->head = (queue->head + 1) % queue->capacity;
-
-			if (queue->size == 1)
-				ResetEvent(queue->event);
-
 			queue->size--;
+
+			if (queue->size < 1)
+				ResetEvent(queue->event);
 		}
 	}
 

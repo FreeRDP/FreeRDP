@@ -381,7 +381,7 @@ static BOOL xf_event_FocusIn(xfInfo* xfi, XEvent* event, BOOL app)
 
 	xfi->focused = TRUE;
 
-	if (xfi->mouse_active && (app != TRUE))
+	if (xfi->mouse_active && (!app))
 		XGrabKeyboard(xfi->display, xfi->window->handle, TRUE, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	if (app)
@@ -397,6 +397,7 @@ static BOOL xf_event_FocusIn(xfInfo* xfi, XEvent* event, BOOL app)
                if (window != NULL)
                        xf_rail_adjust_position(xfi, window);
 	}
+
 	xf_kbd_focus_in(xfi);
 
 	if (!app)
@@ -570,20 +571,17 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	RECTANGLE_16 rect;
 	rdpWindow* window;
-	rdpUpdate* update = xfi->instance->update;
+	//rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	if (!app)
 	{
-		if (xfi->suppress_output == TRUE)
-		{
-			xfi->suppress_output = FALSE;
-			rect.left = 0;
-			rect.top = 0;
-			rect.right = xfi->width;
-			rect.bottom = xfi->height;
-			update->SuppressOutput((rdpContext*) xfi->context, 1, &rect);
-		}
+		rect.left = 0;
+		rect.top = 0;
+		rect.right = xfi->width;
+		rect.bottom = xfi->height;
+
+		//update->SuppressOutput((rdpContext*) xfi->context, 1, &rect);
 	}
 	else
 	{
@@ -610,18 +608,14 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 static BOOL xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	rdpWindow* window;
-	rdpUpdate* update = xfi->instance->update;
+	//rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	xf_kbd_release_all_keypress(xfi);
 
 	if (!app)
 	{
-		if (xfi->suppress_output == FALSE)
-		{
-			xfi->suppress_output = TRUE;
-			update->SuppressOutput((rdpContext*) xfi->context, 0, NULL);
-		}
+		//update->SuppressOutput((rdpContext*) xfi->context, 0, NULL);
 	}
 	else
 	{
@@ -629,7 +623,7 @@ static BOOL xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 
 		if (window != NULL)
 		{
-			xfWindow *xfw = (xfWindow*) window->extra;
+			xfWindow* xfw = (xfWindow*) window->extra;
 			xfw->is_mapped = FALSE;
 		}
 	}
@@ -678,7 +672,7 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	 * ie. not using the buttons on the rail window itself
 	 */
 
-	if (app == TRUE)
+	if (app)
 	{
 	        rdpWindow* window;
 		
@@ -761,9 +755,7 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
                          }
                }       
         }
-	
-
-	if (!app)
+	else
 	{
 		if (xf_cliprdr_process_property_notify(xfi, event))
 			return TRUE;
@@ -867,7 +859,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		if (window) 
 		{
 			/* Update "current" window for cursor change orders */
-			xfi->window = (xfWindow *) window->extra;
+			xfi->window = (xfWindow*) window->extra;
 
 			if (xf_event_suppress_events(xfi, window, event))
 				return TRUE;
