@@ -469,6 +469,24 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 	irp->Complete(irp);
 }
 
+/* http://msdn.microsoft.com/en-us/library/cc241518.aspx */
+static void drive_process_irp_silent_ignore(DRIVE_DEVICE* disk, IRP* irp)
+{
+	UINT32 FsInformationClass;
+	UINT32 pad;
+	STREAM* output = irp->output;
+	char* volumeLabel;
+	int length;
+	int status;
+
+	stream_read_UINT32(irp->input, FsInformationClass);
+
+	DEBUG_SVC("FsInformationClass %d in drive_process_irp_silent_ignore", FsInformationClass);
+	stream_write_UINT32(output, 0); /* Length */
+
+	irp->Complete(irp);
+}
+
 static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 {
 	char* path = NULL;
@@ -566,6 +584,11 @@ static void drive_process_irp(DRIVE_DEVICE* disk, IRP* irp)
 
 		case IRP_MJ_QUERY_VOLUME_INFORMATION:
 			drive_process_irp_query_volume_information(disk, irp);
+			break;
+
+		case IRP_MJ_LOCK_CONTROL :
+			DEBUG_WARN("MajorFunction IRP_MJ_LOCK_CONTROL silent ignored");
+			drive_process_irp_silent_ignore(disk, irp);
 			break;
 
 		case IRP_MJ_DIRECTORY_CONTROL:
