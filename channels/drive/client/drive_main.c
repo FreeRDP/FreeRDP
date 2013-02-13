@@ -470,7 +470,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 }
 
 /* http://msdn.microsoft.com/en-us/library/cc241518.aspx */
-static void drive_process_irp_set_volume_information(DRIVE_DEVICE* disk, IRP* irp)
+static void drive_process_irp_silent_ignore(DRIVE_DEVICE* disk, IRP* irp)
 {
 	UINT32 FsInformationClass;
 	UINT32 pad;
@@ -481,46 +481,8 @@ static void drive_process_irp_set_volume_information(DRIVE_DEVICE* disk, IRP* ir
 
 	stream_read_UINT32(irp->input, FsInformationClass);
 
-	DEBUG_SVC("FsInformationClass %d in drive_process_irp_set_volume_information", FsInformationClass);
-
-	switch (FsInformationClass)
-	{
-		case FileFsLabelInformation:
-			/* http://msdn.microsoft.com/en-us/library/cc232105.aspx */
-	        stream_read_UINT32(irp->input, length);
-	        stream_read_UINT32(irp->input, pad);
-	        stream_read_UINT32(irp->input, pad);
-	        stream_read_UINT32(irp->input, pad);
-	        stream_read_UINT32(irp->input, pad);
-	        stream_read_UINT32(irp->input, pad);
-	        stream_read_UINT32(irp->input, pad);
-	        
-	        status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
-			length / 2, &volumeLabel, 0, NULL, NULL);
-
-    	    if (status < 1)
-		        volumeLabel = (char*) calloc(1, 1);
-			DEBUG_SVC("Set VolumeLabel %s", volumeLabel);
-
-			irp->IoStatus = STATUS_ACCESS_DENIED;
-			stream_write_UINT32(output, 0); /* Length */
-
-			free(volumeLabel);
-			break;
-
-		case FileFsObjectIdInformation:
-			/* http://msdn.microsoft.com/en-us/library/cc232106.aspx */
-			irp->IoStatus = STATUS_INVALID_PARAMETER;
-			stream_write_UINT32(output, 0); /* Length */
-			DEBUG_SVC("FS does not support ObjectIdInformation");
-			break;
-
-		default:
-			irp->IoStatus = STATUS_UNSUCCESSFUL;
-			stream_write_UINT32(output, 0); /* Length */
-			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
-			break;
-	}
+	DEBUG_SVC("FsInformationClass %d in drive_process_irp_silent_ignore", FsInformationClass);
+	stream_write_UINT32(output, 0); /* Length */
 
 	irp->Complete(irp);
 }
@@ -624,8 +586,9 @@ static void drive_process_irp(DRIVE_DEVICE* disk, IRP* irp)
 			drive_process_irp_query_volume_information(disk, irp);
 			break;
 
-		case IRP_MJ_SET_VOLUME_INFORMATION:
-			drive_process_irp_set_volume_information(disk, irp);
+		case IRP_MJ_LOCK_CONTROL :
+			DEBUG_WARN("MajorFunction IRP_MJ_LOCK_CONTROL silent ignored");
+			drive_process_irp_silent_ignore(disk, irp);
 			break;
 
 		case IRP_MJ_DIRECTORY_CONTROL:
