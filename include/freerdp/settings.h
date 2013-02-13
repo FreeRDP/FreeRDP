@@ -874,7 +874,8 @@ struct rdp_settings
 	ALIGN64 BOOL RemoteFxCodec; /* 3649 */
 	ALIGN64 UINT32 RemoteFxCodecId; /* 3650 */
 	ALIGN64 UINT32 RemoteFxCodecMode; /* 3651 */
-	UINT64 padding3712[3712 - 3652]; /* 3652 */
+	ALIGN64 BOOL RemoteFxImageCodec; /* 3652 */
+	UINT64 padding3712[3712 - 3653]; /* 3653 */
 
 	/* NSCodec */
 	ALIGN64 BOOL NSCodec; /* 3712 */

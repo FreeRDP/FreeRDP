@@ -23,7 +23,8 @@
 
 #include "capabilities.h"
 
-//#define WITH_DEBUG_CAPABILITIES		1
+#include <winpr/crt.h>
+#include <winpr/rpc.h>
 
 #ifdef WITH_DEBUG_CAPABILITIES
 
@@ -66,20 +67,50 @@ const char* const CAPSET_TYPE_STRINGS[] =
 
 BOOL rdp_print_capability_sets(STREAM* s, UINT16 numberCapabilities, BOOL receiving);
 
-/* CODEC_GUID_REMOTEFX 0x76772F12BD724463AFB3B73C9C6F7886 */
-#define CODEC_GUID_REMOTEFX "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86"
+/* CODEC_GUID_REMOTEFX: 0x76772F12BD724463AFB3B73C9C6F7886 */
 
-/* CODEC_GUID_NSCODEC  0xCA8D1BB9000F154F589FAE2D1A87E2D6 */
-#define CODEC_GUID_NSCODEC "\xb9\x1b\x8d\xca\x0f\x00\x4f\x15\x58\x9f\xae\x2d\x1a\x87\xe2\xd6"
+GUID CODEC_GUID_REMOTEFX =
+{
+	0x76772F12,
+	0xBD72, 0x4463,
+	{ 0xAF, 0xB3, 0xB7, 0x3C, 0x9C, 0x6F, 0x78, 0x86 }
+};
 
-/* CODEC_GUID_IGNORE 0xA651439C3535AE42910CCDFCE5760B58 */
-#define CODEC_GUID_IGNORE "\xa6\x51\x43\x9c\x35\x35\xae\x42\x91\x0c\xcd\xfc\xe5\x76\x0b\x58";
+/* CODEC_GUID_NSCODEC 0xCA8D1BB9000F154F589FAE2D1A87E2D6 */
 
-/* CODEC_GUID_IMAGE_REMOTEFX 0xD4CC44278A9D744E803C0ECBEEA9C54 */
-#define CODEC_GUID_IMAGE_REMOTEFX "\xd4\xcc\x44\x27\x8a\x9d\x74\x4e\x80\x3c\x0e\xcb\xee\xa\x9c\x54";
+GUID CODEC_GUID_NSCODEC =
+{
+	0xCA8D1BB9,
+	0x000F, 0x154F,
+	{ 0x58, 0x9F, 0xAE, 0x2D, 0x1A, 0x87, 0xE2, 0xD6 }
+};
+
+/* CODEC_GUID_IGNORE 0x9C4351A6353542AE910CCDFCE5760B58 */
+
+GUID CODEC_GUID_IGNORE =
+{
+	0x9C4351A6,
+	0x3535, 0x42AE,
+	{ 0x91, 0x0C, 0xCD, 0xFC, 0xE5, 0x76, 0x0B, 0x58 }
+};
+
+/* CODEC_GUID_IMAGE_REMOTEFX 0x2744CCD49D8A4E74803C0ECBEEA19C54 */
+
+GUID CODEC_GUID_IMAGE_REMOTEFX =
+{
+	0x2744CCD4,
+	0x9D8A, 0x4E74,
+	{ 0x80, 0x3C, 0x0E, 0xCB, 0xEE, 0xA1, 0x9C, 0x54 }
+};
 
 /* CODEC_GUID_JPEG 0x430C9EED1BAF4CE6869ACB8B37B66237 */
-#define CODEC_GUID_JPEG "\xE6\x4C\xAF\x1B\xED\x9E\x0C\x43\x86\x9A\xCB\x8B\x37\xB6\x62\x37"
+
+GUID CODEC_GUID_JPEG =
+{
+	0x430C9EED,
+	0x1BAF, 0x4CE6,
+	{ 0x86, 0x9A, 0xCB, 0x8B, 0x37, 0xB6, 0x62, 0x37 }
+};
 
 void rdp_read_capability_set_header(STREAM* s, UINT16* length, UINT16* type)
 {
@@ -1595,6 +1626,21 @@ BOOL rdp_print_bitmap_cache_host_support_capability_set(STREAM* s, UINT16 length
 	return TRUE;
 }
 
+void rdp_read_bitmap_cache_cell_info(STREAM* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
+{
+	UINT32 info;
+
+	/**
+	 * numEntries is in the first 31 bits, while the last bit (k)
+	 * is used to indicate a persistent bitmap cache.
+	 */
+
+	stream_read_UINT32(s, info);
+
+	cellInfo->numEntries = (info & 0x7FFFFFFF);
+	cellInfo->persistent = (info & 0x80000000) ? 1 : 0;
+}
+
 void rdp_write_bitmap_cache_cell_info(STREAM* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
 {
 	UINT32 info;
@@ -1668,20 +1714,34 @@ void rdp_write_bitmap_cache_v2_capability_set(STREAM* s, rdpSettings* settings)
 
 BOOL rdp_print_bitmap_cache_v2_capability_set(STREAM* s, UINT16 length)
 {
+	UINT16 cacheFlags;
+	BYTE pad2;
+	BYTE numCellCaches;
+	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5];
+
 	printf("BitmapCacheV2CapabilitySet (length %d):\n", length);
 
 	if (length < 40)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* cacheFlags (2 bytes) */
-	stream_seek_BYTE(s); /* pad2 (1 byte) */
-	stream_seek_BYTE(s); /* numCellCaches (1 byte) */
-	stream_seek(s, 4); /* bitmapCache0CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache1CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache2CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache3CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache4CellInfo (4 bytes) */
+	stream_read_UINT16(s, cacheFlags); /* cacheFlags (2 bytes) */
+	stream_read_BYTE(s, pad2); /* pad2 (1 byte) */
+	stream_read_BYTE(s, numCellCaches); /* numCellCaches (1 byte) */
+	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
+	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
+	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
+	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
+	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	stream_seek(s, 12); /* pad3 (12 bytes) */
+
+	printf("\tcacheFlags: 0x%04X\n", cacheFlags);
+	printf("\tpad2: 0x%02X\n", pad2);
+	printf("\tnumCellCaches: 0x%02X\n", numCellCaches);
+	printf("\tbitmapCache0CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
+	printf("\tbitmapCache1CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
+	printf("\tbitmapCache2CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
+	printf("\tbitmapCache3CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
+	printf("\tbitmapCache4CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
 
 	return TRUE;
 }
@@ -2291,6 +2351,75 @@ BOOL rdp_print_surface_commands_capability_set(STREAM* s, UINT16 length)
 	return TRUE;
 }
 
+void rdp_read_bitmap_codec_guid(STREAM* s, GUID* guid)
+{
+	BYTE g[16];
+
+	stream_read(s, g, 16);
+
+	guid->Data1 = (g[3] << 24) | (g[2] << 16) | (g[1] << 8) | g[0];
+	guid->Data2 = (g[5] << 8) | g[4];
+	guid->Data3 = (g[7] << 8) | g[6];
+	guid->Data4[0] = g[8];
+	guid->Data4[1] = g[9];
+	guid->Data4[2] = g[10];
+	guid->Data4[3] = g[11];
+	guid->Data4[4] = g[12];
+	guid->Data4[5] = g[13];
+	guid->Data4[6] = g[14];
+	guid->Data4[7] = g[15];
+}
+
+void rdp_write_bitmap_codec_guid(STREAM* s, GUID* guid)
+{
+	BYTE g[16];
+
+	g[0] = guid->Data1 & 0xFF;
+	g[1] = (guid->Data1 >> 8) & 0xFF;
+	g[2] = (guid->Data1 >> 16) & 0xFF;
+	g[3] = (guid->Data1 >> 24) & 0xFF;
+	g[4] = (guid->Data2) & 0xFF;
+	g[5] = (guid->Data2 >> 8) & 0xFF;
+	g[6] = (guid->Data3) & 0xFF;
+	g[7] = (guid->Data3 >> 8) & 0xFF;
+	g[8] = guid->Data4[0];
+	g[9] = guid->Data4[1];
+	g[10] = guid->Data4[2];
+	g[11] = guid->Data4[3];
+	g[12] = guid->Data4[4];
+	g[13] = guid->Data4[5];
+	g[14] = guid->Data4[6];
+	g[15] = guid->Data4[7];
+
+	stream_write(s, g, 16);
+}
+
+void rdp_print_bitmap_codec_guid(GUID* guid)
+{
+	printf("%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
+		guid->Data1, guid->Data2, guid->Data3,
+		guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+		guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
+char* rdp_get_bitmap_codec_guid_name(GUID* guid)
+{
+	RPC_STATUS rpc_status;
+
+	if (UuidEqual(guid, &CODEC_GUID_REMOTEFX, &rpc_status))
+		return "CODEC_GUID_REMOTEFX";
+	else if (UuidEqual(guid, &CODEC_GUID_NSCODEC, &rpc_status))
+		return "CODEC_GUID_NSCODEC";
+	else if (UuidEqual(guid, &CODEC_GUID_IGNORE, &rpc_status))
+		return "CODEC_GUID_IGNORE";
+	else if (UuidEqual(guid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
+		return "CODEC_GUID_IMAGE_REMOTEFX";
+	else if (UuidEqual(guid, &CODEC_GUID_JPEG, &rpc_status))
+		return "CODEC_GUID_JPEG";
+
+	return "CODEC_GUID_UNKNOWN";
+}
+
 /**
  * Read bitmap codecs capability set.\n
  * @msdn{dd891377}
@@ -2301,6 +2430,8 @@ BOOL rdp_print_surface_commands_capability_set(STREAM* s, UINT16 length)
 
 BOOL rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings* settings)
 {
+	GUID codecGuid;
+	RPC_STATUS rpc_status;
 	BYTE bitmapCodecCount;
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
@@ -2323,21 +2454,27 @@ BOOL rdp_read_bitmap_codecs_capability_set(STREAM* s, UINT16 length, rdpSettings
 		if (remainingLength < 19)
 			return FALSE;
 
-		if (settings->ServerMode && strncmp((char*) stream_get_tail(s), CODEC_GUID_REMOTEFX, 16) == 0)
+		rdp_read_bitmap_codec_guid(s, &codecGuid); /* codecGuid (16 bytes) */
+
+		if (settings->ServerMode)
 		{
-			stream_seek(s, 16); /* codecGUID (16 bytes) */
-			stream_read_BYTE(s, settings->RemoteFxCodecId);
-			settings->RemoteFxCodec = TRUE;
-		}
-		else if (settings->ServerMode && strncmp((char*) stream_get_tail(s), CODEC_GUID_NSCODEC, 16) == 0)
-		{
-			stream_seek(s, 16); /* codec GUID (16 bytes) */
-			stream_read_BYTE(s, settings->NSCodecId);
-			settings->NSCodec = TRUE;
+			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
+			{
+				stream_read_BYTE(s, settings->RemoteFxCodecId);
+				settings->RemoteFxCodec = TRUE;
+			}
+			else if (UuidEqual(&codecGuid, &CODEC_GUID_NSCODEC, &rpc_status))
+			{
+				stream_read_BYTE(s, settings->NSCodecId);
+				settings->NSCodec = TRUE;
+			}
+			else
+			{
+				stream_seek_BYTE(s); /* codecID (1 byte) */
+			}
 		}
 		else
 		{
-			stream_seek(s, 16); /* codecGUID (16 bytes) */
 			stream_seek_BYTE(s); /* codecID (1 byte) */
 		}
 
@@ -2472,17 +2609,22 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 	bitmapCodecCount = 0;
 
 	if (settings->RemoteFxCodec)
+		settings->RemoteFxImageCodec = TRUE;
+
+	if (settings->RemoteFxCodec)
 		bitmapCodecCount++;
 	if (settings->NSCodec)
 		bitmapCodecCount++;
 	if (settings->JpegCodec)
+		bitmapCodecCount++;
+	if (settings->RemoteFxImageCodec)
 		bitmapCodecCount++;
 
 	stream_write_BYTE(s, bitmapCodecCount);
 
 	if (settings->RemoteFxCodec)
 	{
-		stream_write(s, CODEC_GUID_REMOTEFX, 16); /* codecGUID */
+		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_REMOTEFX); /* codecGUID */
 
 		if (settings->ServerMode)
 		{
@@ -2495,9 +2637,11 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			rdp_write_rfx_client_capability_container(s, settings);
 		}
 	}
+
 	if (settings->NSCodec)
 	{
-		stream_write(s, CODEC_GUID_NSCODEC, 16);
+		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_NSCODEC); /* codecGUID */
+
 		if (settings->ServerMode)
 		{
 			stream_write_BYTE(s, 0); /* codecID is defined by the client */
@@ -2509,9 +2653,11 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			rdp_write_nsc_client_capability_container(s, settings);
 		}
 	}
+
 	if (settings->JpegCodec)
 	{
-		stream_write(s, CODEC_GUID_JPEG, 16);
+		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_JPEG); /* codecGUID */
+
 		if (settings->ServerMode)
 		{
 			stream_write_BYTE(s, 0); /* codecID is defined by the client */
@@ -2523,12 +2669,31 @@ void rdp_write_bitmap_codecs_capability_set(STREAM* s, rdpSettings* settings)
 			rdp_write_jpeg_client_capability_container(s, settings);
 		}
 	}
+
+	if (settings->RemoteFxImageCodec)
+	{
+		rdp_write_bitmap_codec_guid(s, &CODEC_GUID_IMAGE_REMOTEFX); /* codecGUID */
+
+		if (settings->ServerMode)
+		{
+			stream_write_BYTE(s, 0); /* codecID is defined by the client */
+			rdp_write_rfx_server_capability_container(s, settings);
+		}
+		else
+		{
+			stream_write_BYTE(s, RDP_CODEC_ID_IMAGE_REMOTEFX); /* codecID */
+			rdp_write_rfx_client_capability_container(s, settings);
+		}
+	}
+
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CODECS);
 }
 
 BOOL rdp_print_bitmap_codecs_capability_set(STREAM* s, UINT16 length)
 {
+	GUID codecGuid;
 	BYTE bitmapCodecCount;
+	BYTE codecId;
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
 
@@ -2540,15 +2705,25 @@ BOOL rdp_print_bitmap_codecs_capability_set(STREAM* s, UINT16 length)
 	stream_read_BYTE(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
 
+	printf("\tbitmapCodecCount: %d\n", bitmapCodecCount);
+
 	while (bitmapCodecCount > 0)
 	{
 		if (remainingLength < 19)
 			return FALSE;
 
-		stream_seek(s, 16); /* codecGUID (16 bytes) */
-		stream_seek_BYTE(s);
+		rdp_read_bitmap_codec_guid(s, &codecGuid); /* codecGuid (16 bytes) */
+		stream_read_BYTE(s, codecId); /* codecId (1 byte) */
+
+		printf("\tcodecGuid: 0x");
+		rdp_print_bitmap_codec_guid(&codecGuid);
+		printf(" (%s)\n", rdp_get_bitmap_codec_guid_name(&codecGuid));
+
+		printf("\tcodecId: %d\n", codecId);
 
 		stream_read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
+		printf("\tcodecPropertiesLength: %d\n", codecPropertiesLength);
+
 		remainingLength -= 19;
 
 		if (remainingLength < codecPropertiesLength)

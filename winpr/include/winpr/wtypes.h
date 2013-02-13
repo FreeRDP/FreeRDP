@@ -131,9 +131,9 @@ typedef unsigned int UINT_PTR;
 
 typedef struct _GUID
 {
-	unsigned long Data1;
-	unsigned short Data2;
-	unsigned short Data3;
+	UINT32 Data1;
+	UINT16 Data2;
+	UINT16 Data3;
 	BYTE Data4[8];
 } GUID, UUID, *PGUID;
 
