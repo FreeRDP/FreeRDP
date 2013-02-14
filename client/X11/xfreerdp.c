@@ -127,12 +127,12 @@ void xf_sw_end_paint(rdpContext* context)
 			w = gdi->primary->hdc->hwnd->invalid->w;
 			h = gdi->primary->hdc->hwnd->invalid->h;
 
-			xf_lock_x11(xfi);
+			xf_lock_x11(xfi, FALSE);
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
-			xf_unlock_x11(xfi);
+			xf_unlock_x11(xfi, FALSE);
 		}
 		else
 		{
@@ -146,7 +146,7 @@ void xf_sw_end_paint(rdpContext* context)
 			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
-			xf_lock_x11(xfi);
+			xf_lock_x11(xfi, FALSE);
 
 			for (i = 0; i < ninvalid; i++)
 			{
@@ -161,7 +161,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XFlush(xfi->display);
 
-			xf_unlock_x11(xfi);
+			xf_unlock_x11(xfi, FALSE);
 		}
 	}
 	else
@@ -174,11 +174,11 @@ void xf_sw_end_paint(rdpContext* context)
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
 
-		xf_lock_x11(xfi);
+		xf_lock_x11(xfi, FALSE);
 
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 
-		xf_unlock_x11(xfi);
+		xf_unlock_x11(xfi, FALSE);
 	}
 }
 
@@ -190,7 +190,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	xf_lock_x11(xfi);
+	xf_lock_x11(xfi, TRUE);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -206,7 +206,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 		}
 	}
 
-	xf_unlock_x11(xfi);
+	xf_unlock_x11(xfi, TRUE);
 }
 
 void xf_hw_begin_paint(rdpContext* context)
@@ -238,11 +238,11 @@ void xf_hw_end_paint(rdpContext* context)
 			w = xfi->hdc->hwnd->invalid->w;
 			h = xfi->hdc->hwnd->invalid->h;
 
-			xf_lock_x11(xfi);
+			xf_lock_x11(xfi, FALSE);
 
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 
-			xf_unlock_x11(xfi);
+			xf_unlock_x11(xfi, FALSE);
 		}
 		else
 		{
@@ -256,7 +256,7 @@ void xf_hw_end_paint(rdpContext* context)
 			ninvalid = xfi->hdc->hwnd->ninvalid;
 			cinvalid = xfi->hdc->hwnd->cinvalid;
 
-			xf_lock_x11(xfi);
+			xf_lock_x11(xfi, FALSE);
 
 			for (i = 0; i < ninvalid; i++)
 			{
@@ -270,7 +270,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 			XFlush(xfi->display);
 
-			xf_unlock_x11(xfi);
+			xf_unlock_x11(xfi, FALSE);
 		}
 	}
 	else
@@ -283,11 +283,11 @@ void xf_hw_end_paint(rdpContext* context)
 		w = xfi->hdc->hwnd->invalid->w;
 		h = xfi->hdc->hwnd->invalid->h;
 
-		xf_lock_x11(xfi);
+		xf_lock_x11(xfi, FALSE);
 
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
 
-		xf_unlock_x11(xfi);
+		xf_unlock_x11(xfi, FALSE);
 	}
 }
 
@@ -300,7 +300,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
 
-	xf_lock_x11(xfi);
+	xf_lock_x11(xfi, TRUE);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -331,7 +331,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 		XFillRectangle(xfi->display, xfi->drawable, xfi->gc, 0, 0, xfi->width, xfi->height);
 	}
 
-	xf_unlock_x11(xfi);
+	xf_unlock_x11(xfi, TRUE);
 }
 
 BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -356,11 +356,11 @@ BOOL xf_process_x_events(freerdp* instance)
 
 	while (pending_status)
 	{
-		xf_lock_x11(xfi);
+		xf_lock_x11(xfi, FALSE);
 
 		pending_status = XPending(xfi->display);
 
-		xf_unlock_x11(xfi);
+		xf_unlock_x11(xfi, FALSE);
 
 		if (pending_status)
 		{
@@ -427,6 +427,8 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 {
 	Pixmap contents = 0;
 
+	xf_lock_x11(xfi, TRUE);
+
 	contents = XCreatePixmap(xfi->display, xfi->window->handle, xfi->width, xfi->height, xfi->depth);
 	XCopyArea(xfi->display, xfi->primary, contents, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 
@@ -436,18 +438,34 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 
 	XCopyArea(xfi->display, contents, xfi->primary, xfi->gc, 0, 0, xfi->width, xfi->height, 0, 0);
 	XFreePixmap(xfi->display, contents);
+
+	xf_unlock_x11(xfi, TRUE);
 }
 
-void xf_lock_x11(xfInfo* xfi)
+void xf_lock_x11(xfInfo* xfi, BOOL display)
 {
 	if (!xfi->UseXThreads)
+	{
 		WaitForSingleObject(xfi->mutex, INFINITE);
+	}
+	else
+	{
+		if (display)
+			XLockDisplay(xfi->display);
+	}
 }
 
-void xf_unlock_x11(xfInfo* xfi)
+void xf_unlock_x11(xfInfo* xfi, BOOL display)
 {
 	if (!xfi->UseXThreads)
+	{
 		ReleaseMutex(xfi->mutex);
+	}
+	else
+	{
+		if (display)
+			XUnlockDisplay(xfi->display);
+	}
 }
 
 BOOL xf_get_pixmap_info(xfInfo* xfi)
@@ -1162,21 +1180,21 @@ void* xf_input_thread(void* arg)
 	{
 		do
 		{
-			xf_lock_x11(xfi);
+			xf_lock_x11(xfi, FALSE);
 
 			pending_status = XPending(xfi->display);
 
-			xf_unlock_x11(xfi);
+			xf_unlock_x11(xfi, FALSE);
 
 			if (pending_status)
 			{
-				xf_lock_x11(xfi);
+				xf_lock_x11(xfi, FALSE);
 
 				ZeroMemory(&xevent, sizeof(xevent));
 				XNextEvent(xfi->display, &xevent);
 				process_status = xf_event_process(instance, &xevent);
 
-				xf_unlock_x11(xfi);
+				xf_unlock_x11(xfi, FALSE);
 
 				if (!process_status)
 					break;

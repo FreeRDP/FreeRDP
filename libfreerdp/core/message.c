@@ -1495,6 +1495,22 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 	if (message->id == WMQ_QUIT)
 		return 0;
 
+	/**
+	 * FIXME:
+	 *
+	 * Certain messages like RefreshRect, SuppressOutput and SurfaceFrameAcknowledge
+	 * and not really output but really input events that send a message to the server.
+	 * Right now they will race with other code making use of the transport layer.
+	 */
+
+	switch (message->id)
+	{
+		case FREERDP_UPDATE_REFRESH_RECT:
+		case FREERDP_UPDATE_SUPPRESS_OUTPUT:
+		case FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE:
+			return 1;
+	}
+
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
 

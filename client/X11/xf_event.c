@@ -571,7 +571,7 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	RECTANGLE_16 rect;
 	rdpWindow* window;
-	//rdpUpdate* update = xfi->instance->update;
+	rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	if (!app)
@@ -581,7 +581,7 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		rect.right = xfi->width;
 		rect.bottom = xfi->height;
 
-		//update->SuppressOutput((rdpContext*) xfi->context, 1, &rect);
+		update->SuppressOutput((rdpContext*) xfi->context, 1, &rect);
 	}
 	else
 	{
@@ -608,14 +608,14 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 static BOOL xf_event_UnmapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	rdpWindow* window;
-	//rdpUpdate* update = xfi->instance->update;
+	rdpUpdate* update = xfi->instance->update;
 	rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 	xf_kbd_release_all_keypress(xfi);
 
 	if (!app)
 	{
-		//update->SuppressOutput((rdpContext*) xfi->context, 0, NULL);
+		update->SuppressOutput((rdpContext*) xfi->context, 0, NULL);
 	}
 	else
 	{
