@@ -285,7 +285,7 @@ WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
 WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
 
-WINPR_API wMessageQueue* MessageQueue_New();
+WINPR_API wMessageQueue* MessageQueue_New(void);
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
 #endif /* WINPR_COLLECTIONS_H */

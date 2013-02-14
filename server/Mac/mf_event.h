@@ -69,7 +69,7 @@ void mf_event_region_free(mfEventRegion* event_region);
 mfEvent* mf_event_new(int type);
 void mf_event_free(mfEvent* event);
 
-mfEventQueue* mf_event_queue_new();
+mfEventQueue* mf_event_queue_new(void);
 void mf_event_queue_free(mfEventQueue* event_queue);
 
 #endif /* __MF_EVENT_H */

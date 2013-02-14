@@ -508,7 +508,7 @@ WINPR_API RPC_STATUS RpcServerUseProtseqIfA(RPC_CSTR Protseq, unsigned int MaxCa
 WINPR_API RPC_STATUS RpcServerUseProtseqIfExA(RPC_CSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec, void* SecurityDescriptor, PRPC_POLICY Policy);
 WINPR_API RPC_STATUS RpcServerUseProtseqIfW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec, void* SecurityDescriptor);
 WINPR_API RPC_STATUS RpcServerUseProtseqIfExW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC_IF_HANDLE IfSpec, void* SecurityDescriptor, PRPC_POLICY Policy);
-WINPR_API void RpcServerYield();
+WINPR_API void RpcServerYield(void);
 WINPR_API RPC_STATUS RpcMgmtStatsVectorFree(RPC_STATS_VECTOR** StatsVector);
 WINPR_API RPC_STATUS RpcMgmtInqStats(RPC_BINDING_HANDLE Binding, RPC_STATS_VECTOR** Statistics);
 WINPR_API RPC_STATUS RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding);
@@ -529,7 +529,7 @@ WINPR_API RPC_STATUS RpcNsBindingInqEntryNameW(RPC_BINDING_HANDLE Binding, unsig
 
 WINPR_API RPC_STATUS RpcImpersonateClient(RPC_BINDING_HANDLE BindingHandle);
 WINPR_API RPC_STATUS RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle);
-WINPR_API RPC_STATUS RpcRevertToSelf();
+WINPR_API RPC_STATUS RpcRevertToSelf(void);
 WINPR_API RPC_STATUS RpcBindingInqAuthClientA(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
 		RPC_CSTR* ServerPrincName, unsigned long* AuthnLevel, unsigned long* AuthnSvc, unsigned long* AuthzSvc);
 WINPR_API RPC_STATUS RpcBindingInqAuthClientW(RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE* Privs,
@@ -562,7 +562,7 @@ WINPR_API RPC_STATUS RpcServerRegisterAuthInfoW(RPC_WSTR ServerPrincName, unsign
 
 WINPR_API RPC_STATUS RpcBindingServerFromClient(RPC_BINDING_HANDLE ClientBinding, RPC_BINDING_HANDLE* ServerBinding);
 WINPR_API DECLSPEC_NORETURN void RpcRaiseException(RPC_STATUS exception);
-WINPR_API RPC_STATUS RpcTestCancel();
+WINPR_API RPC_STATUS RpcTestCancel(void);
 WINPR_API RPC_STATUS RpcServerTestCancel(RPC_BINDING_HANDLE BindingHandle);
 WINPR_API RPC_STATUS RpcCancelThread(void* Thread);
 WINPR_API RPC_STATUS RpcCancelThreadEx(void* Thread, long Timeout);

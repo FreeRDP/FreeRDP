@@ -51,7 +51,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
 int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length);
 
-rdpCertificate* certificate_new();
+rdpCertificate* certificate_new(void);
 void certificate_free(rdpCertificate* certificate);
 
 rdpRsaKey* key_new(const char *keyfile);
