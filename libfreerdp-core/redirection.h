@@ -63,7 +63,7 @@ typedef struct rdp_redirection rdpRedirection;
 boolean rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
 boolean rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
 
-rdpRedirection* redirection_new();
+rdpRedirection* redirection_new(void);
 void redirection_free(rdpRedirection* redirection);
 
 #ifdef WITH_DEBUG_REDIR
