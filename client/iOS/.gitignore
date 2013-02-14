@@ -1,0 +1,7 @@
+# XCode files
+project.xcworkspace/
+xcuserdata/
+bin/
+build/
+project.pbxproj
+!iFreeRDP.xcodeproj/
