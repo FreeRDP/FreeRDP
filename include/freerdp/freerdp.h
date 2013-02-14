@@ -114,7 +114,7 @@ FREERDP_API uint32 freerdp_error_info(freerdp* instance);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 
-FREERDP_API freerdp* freerdp_new();
+FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);
 
 #ifdef __cplusplus
