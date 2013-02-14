@@ -34,7 +34,7 @@ struct _STOPWATCH
 };
 typedef struct _STOPWATCH STOPWATCH;
 
-FREERDP_API STOPWATCH* stopwatch_create();
+FREERDP_API STOPWATCH* stopwatch_create(void);
 FREERDP_API void stopwatch_free(STOPWATCH* stopwatch);
 
 FREERDP_API void stopwatch_start(STOPWATCH* stopwatch);

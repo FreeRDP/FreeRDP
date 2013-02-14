@@ -24,6 +24,6 @@
 #include <freerdp/gdi/gdi.h>
 
 FREERDP_API HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette);
-FREERDP_API HGDI_PALETTE gdi_GetSystemPalette();
+FREERDP_API HGDI_PALETTE gdi_GetSystemPalette(void);
 
 #endif /* __GDI_PALETTE_H */

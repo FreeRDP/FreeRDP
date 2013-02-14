@@ -323,6 +323,6 @@ Time zones, taken from Windows Server 2008
 (GMT +13:00) Nuku'alofa
 */
 
-FREERDP_API uint32 detect_keyboard_layout_from_locale();
+FREERDP_API uint32 detect_keyboard_layout_from_locale(void);
 
 #endif /* __LOCALES_H */

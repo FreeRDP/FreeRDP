@@ -30,7 +30,7 @@ struct _RFX_POOL
 };
 typedef struct _RFX_POOL RFX_POOL;
 
-RFX_POOL* rfx_pool_new();
+RFX_POOL* rfx_pool_new(void);
 void rfx_pool_free(RFX_POOL* pool);
 void rfx_pool_put_tile(RFX_POOL* pool, RFX_TILE* tile);
 RFX_TILE* rfx_pool_get_tile(RFX_POOL* pool);

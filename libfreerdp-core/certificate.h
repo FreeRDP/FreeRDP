@@ -83,7 +83,7 @@ boolean certificate_read_server_proprietary_certificate(rdpCertificate* certific
 boolean certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
 boolean certificate_read_server_certificate(rdpCertificate* certificate, uint8* server_cert, int length);
 
-rdpCertificate* certificate_new();
+rdpCertificate* certificate_new(void);
 void certificate_free(rdpCertificate* certificate);
 
 rdpKey* key_new(const char *keyfile);
