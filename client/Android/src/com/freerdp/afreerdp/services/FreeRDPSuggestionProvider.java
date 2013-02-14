@@ -84,7 +84,7 @@ public class FreeRDPSuggestionProvider extends ContentProvider {
 			row[1] = bookmark.getLabel();
 			row[2] = bookmark.<ManualBookmark>get().getHostname();
 			row[3] = ConnectionReference.getManualBookmarkReference(bookmark.getId());
-			row[4] = "android.resource://com.freerdp.afreerdp/" + R.drawable.icon_star_on;
+			row[4] = "android.resource://" + getContext().getPackageName() + "/" + R.drawable.icon_star_on;
 			resultCursor.addRow(row);			
 		}
 	}
@@ -97,7 +97,7 @@ public class FreeRDPSuggestionProvider extends ContentProvider {
 			row[1] = bookmark.getLabel();
 			row[2] = bookmark.getLabel();
 			row[3] = ConnectionReference.getHostnameReference(bookmark.getLabel());
-			row[4] = "android.resource://com.freerdp.afreerdp/" + R.drawable.icon_star_off;
+			row[4] = "android.resource://" + getContext().getPackageName() + "/" + R.drawable.icon_star_off;
 			resultCursor.addRow(row);			
 		}
 	}
