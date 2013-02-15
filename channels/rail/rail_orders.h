@@ -91,7 +91,7 @@ void rail_send_client_window_move_order(rdpRailOrder* rail_order);
 void rail_send_client_get_appid_req_order(rdpRailOrder* rail_order);
 void rail_send_client_langbar_info_order(rdpRailOrder* rail_order);
 
-rdpRailOrder* rail_order_new();
+rdpRailOrder* rail_order_new(void);
 void rail_order_free(rdpRailOrder* rail_order);
 
 #endif /* __RAIL_ORDERS_H */

@@ -45,7 +45,7 @@ struct _UNICONV
 };
 typedef struct _UNICONV UNICONV;
 
-FREERDP_API UNICONV* freerdp_uniconv_new();
+FREERDP_API UNICONV* freerdp_uniconv_new(void);
 FREERDP_API void freerdp_uniconv_free(UNICONV *uniconv);
 FREERDP_API char* freerdp_uniconv_in(UNICONV *uniconv, unsigned char* pin, size_t in_len);
 FREERDP_API char* freerdp_uniconv_out(UNICONV *uniconv, char *str, size_t *pout_len);
