@@ -41,7 +41,7 @@ void wf_peer_synchronize_event(rdpInput* input, UINT32 flags);
 
 void wf_peer_send_changes(freerdp_peer* client);
 
-void wf_detect_win_ver();
+void wf_detect_win_ver(void);
 
 void wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 

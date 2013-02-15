@@ -18,7 +18,7 @@
 
 jint init_callback_environment(JavaVM* vm);
 jboolean jni_attach_thread(JNIEnv** env);
-void jni_detach_thread();
+void jni_detach_thread(void);
 void freerdp_callback(const char * callback, const char * signature, ...);
 jboolean freerdp_callback_bool_result(const char * callback, const char * signature, ...);
 void tsxconnect_callback(const char * callback, const char * signature, ...);

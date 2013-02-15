@@ -50,7 +50,7 @@ void http_context_set_cache_control(HttpContext* http_context, char* cache_contr
 void http_context_set_connection(HttpContext* http_context, char* connection);
 void http_context_set_pragma(HttpContext* http_context, char* pragma);
 
-HttpContext* http_context_new();
+HttpContext* http_context_new(void);
 void http_context_free(HttpContext* http_context);
 
 struct _http_request
@@ -74,7 +74,7 @@ void http_request_set_auth_param(HttpRequest* http_request, char* auth_param);
 
 wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request);
 
-HttpRequest* http_request_new();
+HttpRequest* http_request_new(void);
 void http_request_free(HttpRequest* http_request);
 
 struct _http_response
@@ -96,7 +96,7 @@ void http_response_print(HttpResponse* http_response);
 
 HttpResponse* http_response_recv(rdpTls* tls);
 
-HttpResponse* http_response_new();
+HttpResponse* http_response_new(void);
 void http_response_free(HttpResponse* http_response);
 
 #endif /* FREERDP_CORE_HTTP_H */

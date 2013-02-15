@@ -69,8 +69,8 @@ struct _TP_CLEANUP_GROUP
 
 #ifndef _WIN32
 
-PTP_POOL GetDefaultThreadpool();
-PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment();
+PTP_POOL GetDefaultThreadpool(void);
+PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment(void);
 
 #endif
 
