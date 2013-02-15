@@ -40,7 +40,11 @@
 #endif
 
 #ifndef __OBJC__
+#if defined(__APPLE__)
+typedef signed char BOOL;
+#else
 typedef int BOOL;
+#endif
 #endif
 
 typedef BOOL *PBOOL, *LPBOOL;

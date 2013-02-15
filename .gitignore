@@ -13,6 +13,8 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 DartConfiguration.tcl
 _CPack_Packages
+external/*
+!external/README
 
 # Packages
 *.zip
