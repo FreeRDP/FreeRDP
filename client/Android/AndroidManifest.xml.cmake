@@ -12,12 +12,12 @@
 	<uses-permission android:name="com.android.vending.BILLING" />
     <supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
 			
-	<application android:name=".application.GlobalApp"
+	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
 		android:icon="@drawable/icon_launcher_freerdp" >
 
 			<!-- Main activity -->
-			<activity android:name=".presentation.HomeActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.HomeActivity"
 				android:label="@string/app_title"
 				android:theme="@style/Theme.Main"
 				android:alwaysRetainTaskState="true"
@@ -34,7 +34,7 @@
                         android:excludeFromRecents="true" android:finishOnTaskLaunch="true" />
 			
 			<!-- Session request handler activity - used for search and internally to start sessions -->
-			<activity android:name=".services.SessionRequestHandlerActivity"
+			<activity android:name="com.freerdp.afreerdp.services.SessionRequestHandlerActivity"
 				android:theme="@android:style/Theme.NoDisplay"
 				android:noHistory="true"
 				android:excludeFromRecents="true">
@@ -46,7 +46,7 @@
 			</activity>
 
 			<!-- Activity to create shortcuts -->
-	        <activity android:name=".presentation.ShortcutsActivity"
+	        <activity android:name="com.freerdp.afreerdp.presentation.ShortcutsActivity"
 	  				  android:theme="@style/Theme.Main"
 	                  android:label="@string/title_create_shortcut">
 	            <intent-filter>
@@ -59,8 +59,8 @@
 	        <!-- It is recommended that you use an activity-alias to provide the "CREATE_SHORTCUT" -->
 	        <!-- intent-filter.  This gives you a way to set the text (and optionally the -->
 	        <!-- icon) that will be seen in the launcher's create-shortcut user interface. -->	
-	        <activity-alias android:name=".presentation.CreateShortcuts"
-	            android:targetActivity=".presentation.ShortcutsActivity"
+	        <activity-alias android:name="com.freerdp.afreerdp.presentation.CreateShortcuts"
+	            android:targetActivity="com.freerdp.afreerdp.presentation.ShortcutsActivity"
 	            android:label="@string/title_create_shortcut">	
 	            <!--  This intent-filter allows your shortcuts to be created in the launcher. -->
 	            <intent-filter>
@@ -69,35 +69,35 @@
 	            </intent-filter>	
 	        </activity-alias>					
 						
-			<activity android:name=".presentation.BookmarkActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.BookmarkActivity"
 				android:label="@string/title_bookmark_settings"
 				android:theme="@style/Theme.Settings">
 			</activity>
-			<activity android:name=".presentation.ApplicationSettingsActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.ApplicationSettingsActivity"
 				android:label="@string/title_application_settings"
 				android:theme="@style/Theme.Settings"
 				android:windowSoftInputMode="stateHidden">
 			</activity>
-			<activity android:name=".presentation.SessionActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.SessionActivity"
 				android:theme="@android:style/Theme.Black.NoTitleBar"
 				android:configChanges="orientation|keyboardHidden|keyboard"
 				android:windowSoftInputMode="adjustResize">
 			</activity>
-			<activity android:name=".presentation.AboutActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.AboutActivity"
 				android:label="@string/title_about"
 				android:theme="@style/Theme.Main">
 			</activity>
-			<activity android:name=".presentation.HelpActivity"
+			<activity android:name="com.freerdp.afreerdp.presentation.HelpActivity"
 				android:label="@string/title_help"
 				android:theme="@style/Theme.Main">
 			</activity>
 									
-			<provider android:name=".services.FreeRDPSuggestionProvider"
+			<provider android:name="com.freerdp.afreerdp.services.FreeRDPSuggestionProvider"
 				android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
 				>
 			</provider>
 	
-			<receiver android:name=".application.NetworkStateReceiver" android:enabled="true">
+			<receiver android:name="com.freerdp.afreerdp.application.NetworkStateReceiver" android:enabled="true">
 			   <intent-filter>
 			      <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
 			   </intent-filter>
