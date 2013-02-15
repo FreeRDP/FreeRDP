@@ -69,7 +69,7 @@ void xf_event_region_free(xfEventRegion* event_region);
 xfEvent* xf_event_new(int type);
 void xf_event_free(xfEvent* event);
 
-xfEventQueue* xf_event_queue_new();
+xfEventQueue* xf_event_queue_new(void);
 void xf_event_queue_free(xfEventQueue* event_queue);
 
 #endif /* __XF_EVENT_H */

@@ -996,8 +996,8 @@ WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecB
 
 /* Custom API */
 
-WINPR_API void sspi_GlobalInit();
-WINPR_API void sspi_GlobalFinish();
+WINPR_API void sspi_GlobalInit(void);
+WINPR_API void sspi_GlobalFinish(void);
 
 WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);

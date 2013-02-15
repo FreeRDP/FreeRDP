@@ -208,7 +208,7 @@ void license_generate_hwid(rdpLicense* license);
 void license_encrypt_premaster_secret(rdpLicense* license);
 void license_decrypt_platform_challenge(rdpLicense* license);
 
-PRODUCT_INFO* license_new_product_info();
+PRODUCT_INFO* license_new_product_info(void);
 void license_free_product_info(PRODUCT_INFO* productInfo);
 BOOL license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo);
 
@@ -217,7 +217,7 @@ void license_free_binary_blob(LICENSE_BLOB* blob);
 BOOL license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob);
 void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob);
 
-SCOPE_LIST* license_new_scope_list();
+SCOPE_LIST* license_new_scope_list(void);
 void license_free_scope_list(SCOPE_LIST* scopeList);
 BOOL license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList);
 

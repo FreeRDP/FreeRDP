@@ -80,7 +80,7 @@ void ntlm_client_uninit(rdpNtlm* ntlm);
 
 BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname);
 
-rdpNtlm* ntlm_new();
+rdpNtlm* ntlm_new(void);
 void ntlm_free(rdpNtlm* ntlm);
 
 #endif /* FREERDP_CORE_NTLM_H */
