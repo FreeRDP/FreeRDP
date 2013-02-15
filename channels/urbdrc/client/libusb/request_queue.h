@@ -59,7 +59,7 @@ struct _REQUEST_QUEUE
 };
 
 
-REQUEST_QUEUE* request_queue_new();
+REQUEST_QUEUE* request_queue_new(void);
 
 
 #endif /* __REQUEST_QUEUE_H */

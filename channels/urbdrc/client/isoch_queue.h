@@ -62,7 +62,7 @@ struct _ISOCH_CALLBACK_QUEUE
 };
 
 
-ISOCH_CALLBACK_QUEUE* isoch_queue_new();
+ISOCH_CALLBACK_QUEUE* isoch_queue_new(void);
 
 	
 

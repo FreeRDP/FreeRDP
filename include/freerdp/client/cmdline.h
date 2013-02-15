@@ -30,7 +30,7 @@ extern "C" {
 FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
 FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
-FREERDP_API int freerdp_client_print_version();
+FREERDP_API int freerdp_client_print_version(void);
 FREERDP_API int freerdp_client_print_command_line_help(int argc, char** argv);
 
 FREERDP_API int freerdp_parse_username(char* username, char** user, char** domain);

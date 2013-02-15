@@ -38,7 +38,7 @@ typedef struct _STOPWATCH STOPWATCH;
 extern "C" {
 #endif
 
-FREERDP_API STOPWATCH* stopwatch_create();
+FREERDP_API STOPWATCH* stopwatch_create(void);
 FREERDP_API void stopwatch_free(STOPWATCH* stopwatch);
 
 FREERDP_API void stopwatch_start(STOPWATCH* stopwatch);

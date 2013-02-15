@@ -34,7 +34,7 @@ int mf_info_lock(mfInfo* mfi);
 int mf_info_try_lock(mfInfo* mfi, UINT32 ms);
 int mf_info_unlock(mfInfo* mfi);
 
-mfInfo* mf_info_get_instance();
+mfInfo* mf_info_get_instance(void);
 void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context);
 void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context);
 

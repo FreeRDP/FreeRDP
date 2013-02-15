@@ -52,8 +52,8 @@ typedef void* (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName, LPSTR pszSu
 extern "C" {
 #endif
 
-FREERDP_API LPSTR freerdp_get_library_install_path();
-FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path();
+FREERDP_API LPSTR freerdp_get_library_install_path(void);
+FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path(void);
 
 FREERDP_API int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider, DWORD dwFlags);
 

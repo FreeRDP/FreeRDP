@@ -45,7 +45,7 @@ struct _NEGOTIATE_CONTEXT
 };
 typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 
-NEGOTIATE_CONTEXT* negotiate_ContextNew();
+NEGOTIATE_CONTEXT* negotiate_ContextNew(void);
 void negotiate_ContextFree(NEGOTIATE_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */

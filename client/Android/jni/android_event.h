@@ -63,7 +63,7 @@ BOOL android_check_fds(freerdp * inst);
 ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
 ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key);
 ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
-ANDROID_EVENT* android_event_disconnect_new();
+ANDROID_EVENT* android_event_disconnect_new(void);
 void android_event_key_free(ANDROID_EVENT_KEY* event);
 void android_event_unicodekey_free(ANDROID_EVENT_KEY* event);
 void android_event_cursor_free(ANDROID_EVENT_CURSOR* event);
