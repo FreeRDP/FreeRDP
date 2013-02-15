@@ -743,9 +743,7 @@ STREAM* transport_receive_pool_take(rdpTransport* transport)
 		pdu = Queue_Dequeue(transport->ReceivePool);
 
 	if (!pdu)
-	{
 		pdu = stream_new(BUFFER_SIZE);
-	}
 
 	pdu->p = pdu->data;
 
@@ -775,9 +773,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->SleepInterval = 100;
 
 		transport->ReceivePool = Queue_New(TRUE, -1, -1);
-		transport->ReceiveQueue = Queue_New(TRUE, -1, -1);
-		Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-		Queue_Object(transport->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
+		//Queue_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
 
 		/* receive buffer for non-blocking read. */
 		transport->ReceiveBuffer = transport_receive_pool_take(transport);
@@ -799,9 +795,6 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{
-		if (transport->ReceiveBuffer)
-			stream_free(transport->ReceiveBuffer);
-
 		stream_free(transport->ReceiveStream);
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
@@ -820,7 +813,6 @@ void transport_free(rdpTransport* transport)
 		tsg_free(transport->tsg);
 
 		Queue_Free(transport->ReceivePool);
-		Queue_Free(transport->ReceiveQueue);
 
 		free(transport);
 	}

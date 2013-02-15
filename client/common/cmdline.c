@@ -71,9 +71,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "z", "Compression" },
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Alternate shell" },
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
+	{ "sound", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "audio", "Audio output (sound)" },
+	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "mic", "Audio input (microphone)" },
 	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
-	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Network connection type" },
+	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect all drives" },
+	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect home drive" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
@@ -1051,6 +1054,14 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "drives")
+		{
+			settings->RedirectDrives = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "home-drive")
+		{
+			settings->RedirectHomeDrive = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
 			settings->RedirectClipboard = arg->Value ? TRUE : FALSE;
@@ -1062,6 +1073,64 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "shell-dir")
 		{
 			settings->ShellWorkingDirectory = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "sound")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char** p;
+				int count;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				p = (char**) realloc(p, sizeof(char*) * (count + 1));
+				MoveMemory(&p[1], p, sizeof(char*) * count);
+				p[0] = "rdpsnd";
+				count++;
+
+				freerdp_client_add_static_channel(settings, count, p);
+
+				free(p);
+			}
+			else
+			{
+				char* p[1];
+				int count;
+
+				count = 1;
+				p[0] = "rdpsnd";
+
+				freerdp_client_add_static_channel(settings, count, p);
+			}
+		}
+		CommandLineSwitchCase(arg, "microphone")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char** p;
+				int count;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				p = (char**) realloc(p, sizeof(char*) * (count + 1));
+				MoveMemory(&p[1], p, sizeof(char*) * count);
+				p[0] = "audin";
+				count++;
+
+				freerdp_client_add_dynamic_channel(settings, count, p);
+
+				free(p);
+			}
+			else
+			{
+				char* p[1];
+				int count;
+
+				count = 1;
+				p[0] = "audin";
+
+				freerdp_client_add_dynamic_channel(settings, count, p);
+			}
 		}
 		CommandLineSwitchCase(arg, "audio-mode")
 		{
@@ -1403,6 +1472,38 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
+	}
+
+	if (settings->RedirectDrives)
+	{
+		settings->DeviceRedirection = TRUE;
+
+		if (!freerdp_device_collection_find(settings, "drive"))
+		{
+			char* params[3];
+
+			params[0] = "drive";
+			params[1] = "media";
+			params[2] = "*";
+
+			freerdp_client_add_device_channel(settings, 3, (char**) params);
+		}
+	}
+
+	if (settings->RedirectHomeDrive)
+	{
+		settings->DeviceRedirection = TRUE;
+
+		if (!freerdp_device_collection_find(settings, "drive"))
+		{
+			char* params[3];
+
+			params[0] = "drive";
+			params[1] = "home";
+			params[2] = "%";
+
+			freerdp_client_add_device_channel(settings, 3, (char**) params);
+		}
 	}
 
 	if (settings->DeviceRedirection)

@@ -929,6 +929,7 @@ struct rdp_settings
 
 	/* Drive Redirection */
 	ALIGN64 BOOL RedirectDrives; /*  */
+	ALIGN64 BOOL RedirectHomeDrive; /*  */
 	ALIGN64 char* DrivesToRedirect; /* */
 
 	/* Smartcard Redirection */
@@ -988,6 +989,7 @@ FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option,
 FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value);
 
 FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);

@@ -662,9 +662,9 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 	 * We cannot enter paths like c:\ because : is an arg separator
 	 * thus, paths are entered as c+\ and the + is substituted here
 	 */
-	if ( path[1] == '+' )
+	if (path[1] == '+')
 	{
-		if ( (path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z') )
+		if ((path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z'))
 		{
 			path[1] = ':';
 		}
@@ -723,16 +723,40 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	path = drive->Path;
 
 #ifndef WIN32
+
+	if (strcmp(path, "*") == 0)
+	{
+		/* all drives */
+
+		free(path);
+		path = _strdup("/");
+	}
+	else if (strcmp(path, "%") == 0)
+	{
+		char* home_env = NULL;
+
+		/* home directory */
+
+		home_env = getenv("HOME");
+		free(path);
+
+		if (home_env)
+			path = _strdup(home_env);
+		else
+			path = _strdup("/");
+	}
+
         drive_register_drive_path(pEntryPoints, name, path);
+
 #else
         /* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
-	if( path[0] == '%' )
+	if (path[0] == '%')
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
 		drive_register_drive_path(pEntryPoints, name, _strdup(buf));
 	}
-	else if( path[0] == '*' )
+	else if (path[0] == '*')
 	{
 		int i;
 
