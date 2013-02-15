@@ -1,4 +1,5 @@
 # XCode files
+DerivedData
 project.xcworkspace/
 xcuserdata/
 bin/
