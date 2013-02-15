@@ -915,10 +915,7 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_client_connect_demand_active(rdp, s))
-			{
-				printf("rdp_client_connect_demand_active failed\n");
 				status = -1;
-			}
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
