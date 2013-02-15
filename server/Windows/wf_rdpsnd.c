@@ -39,6 +39,7 @@
 
 #include "wf_rdpsnd.h"
 #include "wf_directsound.h"
+#include "wf_wasapi.h"
 #include "wf_info.h"
 
 
@@ -66,8 +67,8 @@ static const rdpsndFormat test_audio_formats[] =
 static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
 
-	wf_directsound_activate(context);
-
+	//wf_directsound_activate(context);
+	wf_wasapi_activate(context);
 }
 
 int wf_rdpsnd_lock()
