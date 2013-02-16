@@ -7,8 +7,15 @@
 #include <Functiondiscoverykeys_devpkey.h>
 #include <Audioclient.h>
 
-#define REFTIMES_PER_SEC  10000000
-#define REFTIMES_PER_MILLISEC  10000
+//#define REFTIMES_PER_SEC  10000000
+//#define REFTIMES_PER_MILLISEC  10000
+
+//#define REFTIMES_PER_SEC  100000
+//#define REFTIMES_PER_MILLISEC  100
+
+#define REFTIMES_PER_SEC  50000
+#define REFTIMES_PER_MILLISEC  50
+
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C,
 	    0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E);
@@ -118,8 +125,6 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			_tprintf(_T("Failed to get device friendly name\n"));
 			exit(1);
 		}
-
-		
 
 		//do this a more reliable way
 		if (wcscmp(pattern, nameVar.pwszVal) < 0)
@@ -262,7 +267,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 
 
 		Sleep(hnsActualDuration/REFTIMES_PER_MILLISEC/2);
-
+		
 		hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
 		if (FAILED(hr))
 		{
@@ -281,7 +286,8 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 
 			//write data here
 			//fwrite(pData, 1, packetLength * 4, pFile);
-			context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
+			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
+				context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
 
 			hr = pCaptureClient->lpVtbl->ReleaseBuffer(pCaptureClient, numFramesAvailable);
 			if (FAILED(hr))
