@@ -113,6 +113,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 		context->UseMIC = FALSE;
 		context->SendVersionInfo = TRUE;
 		context->SendSingleHostData = FALSE;
+		context->SendWorkstationName = TRUE;
 
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -129,6 +130,20 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 			if (RegQueryValueEx(hKey, _T("SendSingleHostData"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 				context->SendSingleHostData = dwValue ? 1 : 0;
+
+			if (RegQueryValueEx(hKey, _T("SendWorkstationName"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
+				context->SendWorkstationName = dwValue ? 1 : 0;
+
+			if (RegQueryValueEx(hKey, _T("WorkstationName"), NULL, &dwType, NULL, &dwSize) == ERROR_SUCCESS)
+			{
+				char* workstation = (char*) malloc(dwSize + 1);
+
+				status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*) workstation, &dwSize);
+				workstation[dwSize] = '\0';
+
+				ntlm_SetContextWorkstation(context, workstation);
+				free(workstation);
+			}
 
 			RegCloseKey(hKey);
 		}
@@ -438,7 +453,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
-		ntlm_SetContextWorkstation(context, NULL);
+		if (context->Workstation.Length < 1)
+			ntlm_SetContextWorkstation(context, NULL);
+
 		ntlm_SetContextServicePrincipalNameW(context, pszTargetName);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 

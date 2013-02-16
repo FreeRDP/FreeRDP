@@ -194,9 +194,10 @@ xfInfo* xf_info_init()
 	 */
 	xfi->use_xshm = FALSE;
 
-	xfi->display = XOpenDisplay(NULL);
+	if (!XInitThreads())
+		printf("warning: XInitThreads() failure\n");
 
-	XInitThreads();
+	xfi->display = XOpenDisplay(NULL);
 
 	if (xfi->display == NULL)
 	{
@@ -647,6 +648,7 @@ void* xf_peer_main_loop(void* arg)
 	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
 
 	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = 32;
 
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;

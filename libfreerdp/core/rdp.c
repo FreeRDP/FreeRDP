@@ -103,7 +103,7 @@ void rdp_write_security_header(STREAM* s, UINT16 flags)
 
 BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT16* channel_id)
 {
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
 
 	/* Share Control Header */
@@ -117,8 +117,8 @@ BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT
 
 	if (*length > 4)
 		stream_read_UINT16(s, *channel_id); /* pduSource */
-	else /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
-		*channel_id = 0;
+	else
+		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
 
 	return TRUE;
 }
@@ -510,6 +510,11 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 	if (compressed_type & PACKET_COMPRESSED)
 	{
+		if (stream_get_left(s) < compressed_len - 18)
+		{
+			printf("decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
+			return -1;	
+		}
 		if (decompress_rdp(rdp->mppc_dec, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
@@ -575,7 +580,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
 			if(!rdp_recv_save_session_info(rdp, comp_stream))
-				return FALSE;
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
@@ -640,7 +645,7 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s)
 	UINT16 length;
 	UINT16 channelId;
 
-	if(!rdp_read_share_control_header(s, &length, &type, &channelId))
+	if (!rdp_read_share_control_header(s, &length, &type, &channelId))
 		return FALSE;
 
 	if (type == PDU_TYPE_DATA)

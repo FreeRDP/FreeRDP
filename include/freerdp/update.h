@@ -90,7 +90,7 @@ typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
 struct rdp_palette
 {
 	UINT32 count;
-	PALETTE_ENTRY* entries;
+	PALETTE_ENTRY entries[256];
 };
 typedef struct rdp_palette rdpPalette;
 
@@ -133,6 +133,9 @@ enum SURFCMD_FRAMEACTION
 	SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
 	SURFACECMD_FRAMEACTION_END = 0x0001
 };
+
+/* defined inside libfreerdp-core */
+typedef struct rdp_update_proxy rdpUpdateProxy;
 
 /* Update Interface */
 
@@ -191,6 +194,7 @@ struct rdp_update
 	BOOL dump_rfx;
 	BOOL play_rfx;
 	rdpPcap* pcap_rfx;
+	BOOL initialState;
 
 	BITMAP_UPDATE bitmap_update;
 	PALETTE_UPDATE palette_update;
@@ -199,8 +203,9 @@ struct rdp_update
 	SURFACE_BITS_COMMAND surface_bits_command;
 	SURFACE_FRAME_MARKER surface_frame_marker;
 
-	HANDLE thread;
-	wQueue* queue;
+	BOOL asynchronous;
+	rdpUpdateProxy* proxy;
+	wMessageQueue* queue;
 };
 
 #endif /* FREERDP_UPDATE_H */

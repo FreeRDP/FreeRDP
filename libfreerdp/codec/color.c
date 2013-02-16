@@ -342,6 +342,17 @@ UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCO
 
 UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
+	if (srcBpp == 8)
+	{
+		BYTE alpha = 0xFF;
+		UINT32 dstColor = 0;
+		PALETTE_ENTRY* entry = &clrconv->palette->entries[srcColor & 0xFF];
+
+		freerdp_color_make_bgr(&dstColor, dstBpp, &entry->red, &entry->green, &entry->blue, &alpha, clrconv);
+
+		return dstColor;
+	}
+
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr_rgb(srcColor, srcBpp, dstBpp, clrconv);
 	else
@@ -350,6 +361,17 @@ UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HC
 
 UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
+	if (srcBpp == 8)
+	{
+		BYTE alpha = 0xFF;
+		UINT32 dstColor = 0;
+		PALETTE_ENTRY* entry = &clrconv->palette->entries[srcColor & 0xFF];
+
+		freerdp_color_make_rgb(&dstColor, dstBpp, &entry->red, &entry->green, &entry->blue, &alpha, clrconv);
+
+		return dstColor;
+	}
+
 	if (srcBpp > 16)
 		return freerdp_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
 	else
@@ -751,7 +773,7 @@ BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height,
 		return 0;
 }
 
-void   freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
+void freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
 {
 	int i;
 

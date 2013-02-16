@@ -155,7 +155,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 	for (y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
-		for (n = 0; n < subband_width; n+=8)
+		for (n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
 			
@@ -163,6 +163,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 
 			h_n = _mm_load_si128((__m128i*) h_ptr);
 			h_n_m = _mm_loadu_si128((__m128i*) (h_ptr - 1));
+
 			if (n == 0)
 			{
 				first = _mm_extract_epi16(h_n_m, 1);
@@ -177,14 +178,15 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 			
 			_mm_store_si128((__m128i*) l_ptr, dst_n);
 			
-			l_ptr+=8;
-			h_ptr+=8;
+			l_ptr += 8;
+			h_ptr += 8;
 		}
+
 		l_ptr -= subband_width;
 		h_ptr -= subband_width;
 		
 		/* Odd coefficients */
-		for (n = 0; n < subband_width; n+=8)
+		for (n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
 			
@@ -194,6 +196,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 			
 			dst_n = _mm_load_si128((__m128i*) (l_ptr));
 			dst_n_p = _mm_loadu_si128((__m128i*) (l_ptr + 1));
+
 			if (n == subband_width - 8)
 			{
 				last = _mm_extract_epi16(dst_n_p, 6);
@@ -211,9 +214,9 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 			_mm_store_si128((__m128i*) dst_ptr, dst1);
 			_mm_store_si128((__m128i*) (dst_ptr + 8), dst2);
 			
-			l_ptr+=8;
-			h_ptr+=8;
-			dst_ptr+=16;
+			l_ptr += 8;
+			h_ptr += 8;
+			dst_ptr += 16;
 		}
 	}
 }

@@ -28,6 +28,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "extension.h"
+#include "message.h"
 
 #include <winpr/crt.h>
 
@@ -35,7 +36,7 @@
 #include <freerdp/error.h>
 #include <freerdp/locale/keyboard.h>
 
-/* connectErrorCode is 'extern' in errorcodes.h. See comment there.*/
+/* connectErrorCode is 'extern' in error.h. See comment there.*/
 
 /** Creates a new connection based on the settings found in the "instance" parameter
  *  It will use the callbacks registered on the structure to process the pre/post connect operations
@@ -74,7 +75,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status != TRUE)
 	{
-		if(!connectErrorCode)
+		if (!connectErrorCode)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
@@ -102,6 +103,7 @@ BOOL freerdp_connect(freerdp* instance)
 		extension_post_connect(rdp->extension);
 
 		IFCALLRET(instance->PostConnect, status, instance);
+		update_post_connect(instance->update);
 
 		if (status != TRUE)
 		{
@@ -183,6 +185,73 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
+wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
+{
+	wMessageQueue* queue = NULL;
+
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			queue = instance->update->queue;
+			break;
+
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			queue = instance->input->queue;
+			break;
+	}
+
+	return queue;
+}
+
+HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id)
+{
+	HANDLE event = NULL;
+	wMessageQueue* queue = NULL;
+
+	queue = freerdp_get_message_queue(instance, id);
+
+	if (queue)
+		event = MessageQueue_Event(queue);
+
+	return event;
+}
+
+int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message)
+{
+	int status = -1;
+
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			status = update_message_queue_process_message(instance->update, message);
+			break;
+
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			status = input_message_queue_process_message(instance->input, message);
+			break;
+	}
+
+	return status;
+}
+
+int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
+{
+	int status = -1;
+
+	switch (id)
+	{
+		case FREERDP_UPDATE_MESSAGE_QUEUE:
+			status = update_message_queue_process_pending_messages(instance->update);
+			break;
+
+		case FREERDP_INPUT_MESSAGE_QUEUE:
+			status = input_message_queue_process_pending_messages(instance->input);
+			break;
+	}
+
+	return status;
+}
+
 static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
@@ -241,6 +310,10 @@ void freerdp_context_new(freerdp* instance)
 	instance->context->instance = instance;
 	instance->context->rdp = rdp;
 
+	instance->context->input = instance->input;
+	instance->context->update = instance->update;
+	instance->context->settings = instance->settings;
+
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;
@@ -289,10 +362,10 @@ freerdp* freerdp_new()
 	freerdp* instance;
 
 	instance = (freerdp*) malloc(sizeof(freerdp));
-	ZeroMemory(instance, sizeof(freerdp));
 
-	if (instance != NULL)
+	if (instance)
 	{
+		ZeroMemory(instance, sizeof(freerdp));
 		instance->context_size = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}

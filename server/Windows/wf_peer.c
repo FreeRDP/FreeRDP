@@ -235,6 +235,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	settings = client->settings;
 	settings->RemoteFxCodec = TRUE;
+	settings->ColorDepth = 32;
 	settings->NSCodec = FALSE;
 	settings->JpegCodec = FALSE;
 	wf_peer_read_settings(client);

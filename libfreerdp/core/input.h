@@ -22,6 +22,7 @@
 
 #include "rdp.h"
 #include "fastpath.h"
+#include "message.h"
 
 #include <freerdp/input.h>
 #include <freerdp/freerdp.h>
@@ -50,6 +51,7 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 
 BOOL input_recv(rdpInput* input, STREAM* s);
 
+int input_process_events(rdpInput* input);
 void input_register_client_callbacks(rdpInput* input);
 
 rdpInput* input_new(rdpRdp* rdp);

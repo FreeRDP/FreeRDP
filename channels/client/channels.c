@@ -358,7 +358,9 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 				}
 			}
 			else
+			{
 				return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+			}
 		}
 	}
 
@@ -1270,6 +1272,32 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 	{
 		read_fds[*read_count] = pfd;
 		(*read_count)++;
+	}
+
+	return TRUE;
+}
+
+HANDLE freerdp_channels_get_event_handle(freerdp* instance)
+{
+	HANDLE event = NULL;
+	rdpChannels* channels;
+
+	channels = instance->context->channels;
+	event = channels->signal;
+
+	return event;
+}
+
+int freerdp_channels_process_pending_messages(freerdp* instance)
+{
+	rdpChannels* channels;
+
+	channels = instance->context->channels;
+
+	if (WaitForSingleObject(channels->signal, 0) == WAIT_OBJECT_0)
+	{
+		ResetEvent(channels->signal);
+		freerdp_channels_process_sync(channels, instance);
 	}
 
 	return TRUE;

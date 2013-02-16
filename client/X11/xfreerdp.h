@@ -114,6 +114,7 @@ struct xf_info
 	BOOL disconnect;
 	HCLRCONV clrconv;
 	Window parent_window;
+	HANDLE mutex;
 
 	HGDI_DC hdc;
 	BOOL sw_gdi;

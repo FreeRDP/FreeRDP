@@ -127,8 +127,12 @@ void xf_sw_end_paint(rdpContext* context)
 			w = gdi->primary->hdc->hwnd->invalid->w;
 			h = gdi->primary->hdc->hwnd->invalid->h;
 
+			WaitForSingleObject(xfi->mutex, INFINITE);
+
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+			ReleaseMutex(xfi->mutex);
 		}
 		else
 		{
@@ -142,6 +146,8 @@ void xf_sw_end_paint(rdpContext* context)
 			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
+			WaitForSingleObject(xfi->mutex, INFINITE);
+
 			for (i = 0; i < ninvalid; i++)
 			{
 				x = cinvalid[i].x;
@@ -154,6 +160,8 @@ void xf_sw_end_paint(rdpContext* context)
 			}
 
 			XFlush(xfi->display);
+
+			ReleaseMutex(xfi->mutex);
 		}
 	}
 	else
@@ -166,7 +174,11 @@ void xf_sw_end_paint(rdpContext* context)
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
 
+		WaitForSingleObject(xfi->mutex, INFINITE);
+
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
+
+		ReleaseMutex(xfi->mutex);
 	}
 }
 
@@ -177,6 +189,8 @@ void xf_sw_desktop_resize(rdpContext* context)
 
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
+
+	WaitForSingleObject(xfi->mutex, INFINITE);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -191,12 +205,15 @@ void xf_sw_desktop_resize(rdpContext* context)
 					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfi->scanline_pad, 0);
 		}
 	}
+
+	ReleaseMutex(xfi->mutex);
 }
 
 void xf_hw_begin_paint(rdpContext* context)
 {
 	xfInfo* xfi;
 	xfi = ((xfContext*) context)->xfi;
+
 	xfi->hdc->hwnd->invalid->null = 1;
 	xfi->hdc->hwnd->ninvalid = 0;
 }
@@ -219,7 +236,11 @@ void xf_hw_end_paint(rdpContext* context)
 		w = xfi->hdc->hwnd->invalid->w;
 		h = xfi->hdc->hwnd->invalid->h;
 
+		WaitForSingleObject(xfi->mutex, INFINITE);
+
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
+
+		ReleaseMutex(xfi->mutex);
 	}
 }
 
@@ -231,6 +252,8 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 	xfi = ((xfContext*) context)->xfi;
 	settings = xfi->instance->settings;
+
+	WaitForSingleObject(xfi->mutex, INFINITE);
 
 	if (xfi->fullscreen != TRUE)
 	{
@@ -258,9 +281,10 @@ void xf_hw_desktop_resize(rdpContext* context)
 		XSetFunction(xfi->display, xfi->gc, GXcopy);
 		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
 		XSetForeground(xfi->display, xfi->gc, 0);
-		XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
-			0, 0, xfi->width, xfi->height);
+		XFillRectangle(xfi->display, xfi->drawable, xfi->gc, 0, 0, xfi->width, xfi->height);
 	}
+
+	ReleaseMutex(xfi->mutex);
 }
 
 BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -275,19 +299,35 @@ BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* w
 
 BOOL xf_process_x_events(freerdp* instance)
 {
+	BOOL status;
 	XEvent xevent;
+	int pending_status;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
-	while (XPending(xfi->display))
-	{
-		memset(&xevent, 0, sizeof(xevent));
-		XNextEvent(xfi->display, &xevent);
+	status = TRUE;
+	pending_status = TRUE;
 
-		if (xf_event_process(instance, &xevent) != TRUE)
-			return FALSE;
+	while (pending_status)
+	{
+		WaitForSingleObject(xfi->mutex, INFINITE);
+
+		pending_status = XPending(xfi->display);
+
+		ReleaseMutex(xfi->mutex);
+
+		if (pending_status)
+		{
+			ZeroMemory(&xevent, sizeof(xevent));
+
+			XNextEvent(xfi->display, &xevent);
+			status = xf_event_process(instance, &xevent);
+
+			if (!status)
+				return status;
+		}
 	}
 
-	return TRUE;
+	return status;
 }
 
 void xf_create_window(xfInfo* xfi)
@@ -296,7 +336,7 @@ void xf_create_window(xfInfo* xfi)
 	char* win_title;
 	int width, height;
 
-	memset(&xevent, 0x00, sizeof(xevent));
+	ZeroMemory(&xevent, sizeof(xevent));
 
 	width = xfi->width;
 	height = xfi->height;
@@ -384,7 +424,7 @@ BOOL xf_get_pixmap_info(xfInfo* xfi)
 	}
 	XFree(pfs);
 
-	memset(&template, 0, sizeof(template));
+	ZeroMemory(&template, sizeof(template));
 	template.class = TrueColor;
 	template.screen = xfi->screen_number;
 
@@ -553,12 +593,12 @@ BOOL xf_pre_connect(freerdp* instance)
 	if (settings->AuthenticationOnly)
 	{
 		/* Check --authonly has a username and password. */
-		if (settings->Username == NULL )
+		if (settings->Username == NULL)
 		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
 			exit(1);
 		}
-		if (settings->Password == NULL )
+		if (settings->Password == NULL)
 		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			exit(1);
@@ -567,6 +607,9 @@ BOOL xf_pre_connect(freerdp* instance)
 		/* Avoid XWindows initialization and configuration below. */
 		return TRUE;
 	}
+
+	if (!XInitThreads())
+		printf("warning: XInitThreads() failure\n");
 
 	xfi->display = XOpenDisplay(NULL);
 
@@ -750,7 +793,7 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_create_window(xfi);
 
-	memset(&gcv, 0, sizeof(gcv));
+	ZeroMemory(&gcv, sizeof(gcv));
 	xfi->modifier_map = XGetModifierMapping(xfi->display);
 
 	xfi->gc = XCreateGC(xfi->display, xfi->drawable, GCGraphicsExposures, &gcv);
@@ -966,11 +1009,11 @@ void xf_window_free(xfInfo* xfi)
 
 	if (context != NULL)
 	{
-			cache_free(context->cache);
-			context->cache = NULL;
+		cache_free(context->cache);
+		context->cache = NULL;
 
-			rail_free(context->rail);
-			context->rail = NULL;
+		rail_free(context->rail);
+		context->rail = NULL;
 	}
 
 	if (xfi->rfx_context) 
@@ -1005,12 +1048,96 @@ void xf_free(xfInfo* xfi)
 	free(xfi);
 }
 
+void* xf_update_thread(void* arg)
+{
+	wMessage message;
+	wMessageQueue* queue;
+	freerdp* instance = (freerdp*) arg;
+
+	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+
+	while (MessageQueue_Wait(queue))
+	{
+		if (MessageQueue_Peek(queue, &message, TRUE))
+		{
+			if (!freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message))
+				break;
+		}
+	}
+
+	return NULL;
+}
+
+void* xf_input_thread(void* arg)
+{
+	int status;
+	xfInfo* xfi;
+	HANDLE event;
+	XEvent xevent;
+	freerdp* instance = (freerdp*) arg;
+
+	xfi = ((xfContext*) instance->context)->xfi;
+
+	event = CreateFileDescriptorEvent(NULL, TRUE, FALSE, xfi->xfds);
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	{
+		WaitForSingleObject(xfi->mutex, INFINITE);
+
+		status = XPending(xfi->display);
+
+		ReleaseMutex(xfi->mutex);
+
+		if (status)
+		{
+			ZeroMemory(&xevent, sizeof(xevent));
+
+			WaitForSingleObject(xfi->mutex, INFINITE);
+
+			XNextEvent(xfi->display, &xevent);
+			status = xf_event_process(instance, &xevent);
+
+			ReleaseMutex(xfi->mutex);
+
+			if (!status)
+				break;
+		}
+	}
+
+	printf("Closed from X\n");
+	xfi->disconnect = TRUE;
+
+	return NULL;
+}
+
+void* xf_channels_thread(void* arg)
+{
+	int status;
+	xfInfo* xfi;
+	HANDLE event;
+	rdpChannels* channels;
+	freerdp* instance = (freerdp*) arg;
+
+	xfi = ((xfContext*) instance->context)->xfi;
+
+	channels = instance->context->channels;
+	event = freerdp_channels_get_event_handle(instance);
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	{
+		status = freerdp_channels_process_pending_messages(instance);
+		xf_process_channel_event(channels, instance);
+	}
+
+	return NULL;
+}
+
 /** Main loop for the rdp connection.
  *  It will be run from the thread's entry point (thread_func()).
  *  It initiates the connection, and will continue to run until the session ends,
  *  processing events as they are received.
  *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
- *  @return A code from the enum XF_EXIT_CODE (0 if successfull)
+ *  @return A code from the enum XF_EXIT_CODE (0 if successful)
  */
 int xfreerdp_run(freerdp* instance)
 {
@@ -1021,19 +1148,30 @@ int xfreerdp_run(freerdp* instance)
 	int rcount;
 	int wcount;
 	int ret = 0;
+	BOOL status;
 	void* rfds[32];
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int fd_input_event;
+	HANDLE input_event;
 	int select_status;
+	BOOL async_update;
+	BOOL async_input;
+	BOOL async_channels;
+	HANDLE update_thread;
+	HANDLE input_thread;
+	HANDLE channels_thread;
 	rdpChannels* channels;
+	rdpSettings* settings;
 	struct timeval timeout;
 
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
-	memset(&timeout, 0, sizeof(struct timeval));
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(wfds, sizeof(wfds));
+	ZeroMemory(&timeout, sizeof(struct timeval));
 
-	BOOL status = freerdp_connect(instance);
+	status = freerdp_connect(instance);
+
 	/* Connection succeeded. --authonly ? */
 	if (instance->settings->AuthenticationOnly)
 	{
@@ -1050,6 +1188,32 @@ int xfreerdp_run(freerdp* instance)
 
 	xfi = ((xfContext*) instance->context)->xfi;
 	channels = instance->context->channels;
+	settings = instance->context->settings;
+
+	async_update = settings->AsyncUpdate;
+	async_input = settings->AsyncInput;
+
+	xfi->mutex = CreateMutex(NULL, FALSE, NULL);
+
+	if (async_update)
+	{
+		update_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_update_thread, instance, 0, NULL);
+	}
+
+	if (async_input)
+	{
+		input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		fd_input_event = GetEventFileDescriptor(input_event);
+
+		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
+	}
+
+	async_channels = FALSE;
+
+	if (async_channels)
+	{
+		channels_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_channels_thread, instance, 0, NULL);
+	}
 
 	while (!xfi->disconnect && !freerdp_shall_disconnect(instance))
 	{
@@ -1062,17 +1226,29 @@ int xfreerdp_run(freerdp* instance)
 			ret = XF_EXIT_CONN_FAILED;
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!async_channels)
 		{
-			printf("Failed to get channel manager file descriptor\n");
-			ret = XF_EXIT_CONN_FAILED;
-			break;
+			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				printf("Failed to get channel manager file descriptor\n");
+				ret = XF_EXIT_CONN_FAILED;
+				break;
+			}
 		}
-		if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!async_input)
 		{
-			printf("Failed to get xfreerdp file descriptor\n");
-			ret = XF_EXIT_CONN_FAILED;
-			break;
+			if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				printf("Failed to get xfreerdp file descriptor\n");
+				ret = XF_EXIT_CONN_FAILED;
+				break;
+			}
+		}
+		else
+		{
+			rfds[rcount++] = (void*) (long) fd_input_event;
 		}
 
 		max_fds = 0;
@@ -1104,10 +1280,8 @@ int xfreerdp_run(freerdp* instance)
 		else if (select_status == -1)
 		{
 			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
+			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
+				(errno == EINPROGRESS) || (errno == EINTR))) /* signal occurred */
 			{
 				printf("xfreerdp_run: select failed\n");
 				break;
@@ -1119,40 +1293,69 @@ int xfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (xf_process_x_events(instance) != TRUE)
+
+		if (!async_channels)
 		{
-			printf("Closed from X\n");
-			break;
+			if (freerdp_channels_check_fds(channels, instance) != TRUE)
+			{
+				printf("Failed to check channel manager file descriptor\n");
+				break;
+			}
+
+			xf_process_channel_event(channels, instance);
 		}
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
+
+		if (!async_input)
 		{
-			printf("Failed to check channel manager file descriptor\n");
-			break;
+			if (xf_process_x_events(instance) != TRUE)
+			{
+				printf("Closed from X\n");
+				break;
+			}
 		}
-		xf_process_channel_event(channels, instance);
+		else
+		{
+			freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		}
 	}
 
-	FILE *fin = fopen("/tmp/tsmf.tid", "rt");
-	if(fin)
+	if (async_update)
 	{
+		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(update_queue, 0);
+		WaitForSingleObject(update_thread, INFINITE);
+		CloseHandle(update_thread);
+	}
+
+	FILE* fin = fopen("/tmp/tsmf.tid", "rt");
+
+	if (fin)
+	{
+		FILE* fin1;
 		int thid = 0;
+		int timeout;
+
 		fscanf(fin, "%d", &thid);
 		fclose(fin);
+
 		pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
 
-		FILE *fin1 = fopen("/tmp/tsmf.tid", "rt");
-		int timeout = 5;
+		fin1 = fopen("/tmp/tsmf.tid", "rt");
+		timeout = 5;
+
 		while (fin1)
 		{
 			fclose(fin1);
 			sleep(1);
 			timeout--;
+
 			if (timeout <= 0)
 			{
 				unlink("/tmp/tsmf.tid");
 				pthread_kill((pthread_t) (size_t) thid, SIGKILL);
 				break;
 			}
+
 			fin1 = fopen("/tmp/tsmf.tid", "rt");
 		}
 	}

@@ -45,7 +45,7 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 
-typedef BOOL (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
+typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
 
 struct rdp_transport
 {
@@ -69,8 +69,6 @@ struct rdp_transport
 
 	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
-
-	wReferenceTable* ReceiveReferences;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);

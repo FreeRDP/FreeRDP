@@ -28,15 +28,10 @@
 
 #ifndef _WIN32
 
-#define CopyMemory					RtlCopyMemory
-#define MoveMemory					RtlMoveMemory
-#define FillMemory					RtlFillMemory
-#define ZeroMemory					RtlZeroMemory
-
-#define RtlCopyMemory(Destination, Source, Length)	memcpy((Destination), (Source), (Length))
-#define RtlMoveMemory(Destination, Source, Length)	memmove((Destination), (Source), (Length))
-#define RtlFillMemory(Destination, Length, Fill)	memset((Destination), (Fill), (Length))
-#define RtlZeroMemory(Destination, Length)		memset((Destination), 0, (Length))
+#define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
+#define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))
+#define	 FillMemory(Destination, Length, Fill)		memset((Destination), (Fill), (Length))
+#define ZeroMemory(Destination, Length)			memset((Destination), 0, (Length))
 
 #endif
 

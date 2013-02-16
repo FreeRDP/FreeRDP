@@ -81,6 +81,10 @@ WINPR_API void Queue_Free(wQueue* queue);
 
 struct _wStack
 {
+	int size;
+	int capacity;
+	void** array;
+	HANDLE mutex;
 	BOOL synchronized;
 	wObject object;
 };
@@ -245,5 +249,43 @@ WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
 WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
 WINPR_API void BufferPool_Free(wBufferPool* pool);
+
+/* Message Queue */
+
+struct _wMessage
+{
+	UINT32 id;
+	void* context;
+	void* wParam;
+	void* lParam;
+};
+typedef struct _wMessage wMessage;
+
+struct _wMessageQueue
+{
+	int head;
+	int tail;
+	int size;
+	int capacity;
+	wMessage* array;
+	HANDLE mutex;
+	HANDLE event;
+};
+typedef struct _wMessageQueue wMessageQueue;
+
+#define WMQ_QUIT	0xFFFFFFFF
+
+WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
+WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
+
+WINPR_API void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
+WINPR_API void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
+WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
+
+WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
+WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
+
+WINPR_API wMessageQueue* MessageQueue_New();
+WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
 #endif /* WINPR_COLLECTIONS_H */

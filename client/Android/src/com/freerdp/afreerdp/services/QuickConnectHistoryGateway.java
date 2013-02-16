@@ -18,15 +18,16 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 
 public class QuickConnectHistoryGateway {
 	private final static String TAG = "QuickConnectHistoryGateway";
-	private HistoryDB historyDB;
+	private SQLiteOpenHelper historyDB;
 
 
-	public QuickConnectHistoryGateway(HistoryDB historyDB)
+	public QuickConnectHistoryGateway(SQLiteOpenHelper historyDB)
 	{
 		this.historyDB = historyDB;
 	}

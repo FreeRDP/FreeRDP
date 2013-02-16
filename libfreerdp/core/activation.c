@@ -248,14 +248,14 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, STREAM* s)
 {
-	if(stream_get_left(s) < 8)
-		return FALSE;
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
-
-	stream_seek_UINT16(s); /* numberEntries (2 bytes) */
-	stream_seek_UINT16(s); /* totalNumEntries (2 bytes) */
-	stream_seek_UINT16(s); /* mapFlags (2 bytes) */
-	stream_seek_UINT16(s); /* entrySize (2 bytes) */
+	if(stream_get_left(s) >= 8)
+	{
+		stream_seek_UINT16(s); /* numberEntries (2 bytes) */
+		stream_seek_UINT16(s); /* totalNumEntries (2 bytes) */
+		stream_seek_UINT16(s); /* mapFlags (2 bytes) */
+		stream_seek_UINT16(s); /* entrySize (2 bytes) */
+	}
 
 	return TRUE;
 }

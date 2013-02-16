@@ -306,6 +306,8 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 				}
 
 				*lpcbData = length;
+
+				return ERROR_SUCCESS;
 			}
 		}
 

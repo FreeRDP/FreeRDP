@@ -69,19 +69,26 @@
 #define GDI_DPa				0x00A000C9 /* D = D & P */
 #define GDI_PDxn			0x00A50065 /* D = D ^ ~P */
 
-#define GDI_DPon			0x000500A9
-#define GDI_DPna			0x000A0329
-#define GDI_Pn				0x000F0001
-#define GDI_PDna			0x00500325
-#define GDI_DPan			0x005F00E9
-#define GDI_DSan			0x007700E6
-#define GDI_DSxn			0x00990066
-#define GDI_DPa				0x00A000C9
-#define GDI_D				0x00AA0029
-#define GDI_DPno			0x00AF0229
-#define GDI_SDno			0x00DD0228
-#define GDI_PDno			0x00F50225
-#define GDI_DPo				0x00FA0089
+#define GDI_DSxn			0x00990066 /* D = ~(D ^ S) */
+#define GDI_PSDnox			0x002D060A /* D = P ^ (S | ~D) */
+#define GDI_PDSona			0x00100C85 /* D = P & ~(D | S) */
+#define GDI_DSPDxox			0x00740646 /* D = D ^ (S | ( P ^ D)) */
+#define GDI_DPSDonox			0x005B18A9 /* D = D ^ (P | ~(S | D)) */
+#define GDI_SPDSxax			0x00AC0744 /* D = S ^ (P & (D ^ S)) */
+
+#define GDI_DPon			0x000500A9 /* D = ~(D | P) */
+#define GDI_DPna			0x000A0329 /* D = D & ~P */
+#define GDI_Pn				0x000F0001 /* D = ~P */
+#define GDI_PDna			0x00500325 /* D = P &~D */
+#define GDI_DPan			0x005F00E9 /* D = ~(D & P) */
+#define GDI_DSan			0x007700E6 /* D = ~(D & S) */
+#define GDI_DSxn			0x00990066 /* D = ~(D ^ S) */
+#define GDI_DPa				0x00A000C9 /* D = D & P */
+#define GDI_D				0x00AA0029 /* D = D */
+#define GDI_DPno			0x00AF0229 /* D = D | ~P */
+#define GDI_SDno			0x00DD0228 /* D = S | ~D */
+#define GDI_PDno			0x00F50225 /* D = P | ~D */
+#define GDI_DPo				0x00FA0089 /* D = D | P */
 
 /* Brush Styles */
 #define GDI_BS_SOLID			0x00

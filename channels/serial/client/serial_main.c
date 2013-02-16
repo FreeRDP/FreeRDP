@@ -336,17 +336,18 @@ static void serial_process_irp_list(SERIAL_DEVICE* serial)
 
 static void* serial_thread_func(void* arg)
 {
+	DWORD status;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
 
 	while (1)
 	{
-		freerdp_thread_wait(serial->thread);
+		freerdp_thread_wait_timeout(serial->thread, 500);
 
 		serial->nfds = 1;
 		FD_ZERO(&serial->read_fds);
 		FD_ZERO(&serial->write_fds);
 
-		serial->tv.tv_sec = 20;
+		serial->tv.tv_sec = 1;
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
@@ -356,10 +357,12 @@ static void* serial_thread_func(void* arg)
 		freerdp_thread_reset(serial->thread);
 		serial_process_irp_list(serial);
 
-		if (WaitForSingleObject(serial->in_event, 0) == WAIT_OBJECT_0)
+		status = WaitForSingleObject(serial->in_event, 0);
+
+		if ((status == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
 		{
-			if (serial_check_fds(serial))
-				ResetEvent(serial->in_event);
+				if (serial_check_fds(serial))
+					ResetEvent(serial->in_event);
 		}
 	}
 
@@ -370,7 +373,7 @@ static void* serial_thread_func(void* arg)
 
 static void serial_irp_request(DEVICE* device, IRP* irp)
 {
-	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)device;
+	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	freerdp_thread_lock(serial->thread);
 	list_enqueue(serial->irp_list, irp);
@@ -536,14 +539,14 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 			serial_get_timeouts(serial, irp, &timeout, &itv_timeout);
 
 			/* Check if io request timeout is smaller than current (but not 0). */
-			if (timeout && (serial->select_timeout == 0 || timeout < serial->select_timeout))
+			if (timeout && ((serial->select_timeout == 0) || (timeout < serial->select_timeout)))
 			{
 				serial->select_timeout = timeout;
 				serial->tv.tv_sec = serial->select_timeout / 1000;
 				serial->tv.tv_usec = (serial->select_timeout % 1000) * 1000;
 				serial->timeout_id = tty->id;
 			}
-			if (itv_timeout && (serial->select_timeout == 0 || itv_timeout < serial->select_timeout))
+			if (itv_timeout && ((serial->select_timeout == 0) || (itv_timeout < serial->select_timeout)))
 			{
 				serial->select_timeout = itv_timeout;
 				serial->tv.tv_sec = serial->select_timeout / 1000;
@@ -572,7 +575,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 	UINT32 result = 0;
 	BOOL irp_completed = FALSE;
 
-	memset(&serial->tv, 0, sizeof(struct timeval));
+	ZeroMemory(&serial->tv, sizeof(struct timeval));
 	tty = serial->tty;
 
 	/* scan every pending */
@@ -683,6 +686,7 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 		case 0:
 			if (serial->select_timeout)
 			{
+				__serial_check_fds(serial);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_NONE, STATUS_TIMEOUT);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_READ, STATUS_TIMEOUT);
 				serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_WRITE, STATUS_TIMEOUT);

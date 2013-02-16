@@ -35,6 +35,10 @@ set(${MODULE_PREFIX}_SRCS
 	wf_peer.h
 	wf_rdpsnd.c
 	wf_rdpsnd.h
+	wf_directsound.c
+	wf_directsound.h
+	wf_wasapi.c
+	wf_wasapi.h
 	wf_settings.c
 	wf_settings.h
 	wf_info.c

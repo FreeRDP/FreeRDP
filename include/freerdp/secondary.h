@@ -21,6 +21,7 @@
 #define FREERDP_UPDATE_SECONDARY_H
 
 #include <freerdp/types.h>
+#include <freerdp/primary.h>
 
 #define GLYPH_FRAGMENT_NOP			0x00
 #define GLYPH_FRAGMENT_USE			0xFE
@@ -127,49 +128,25 @@ struct _CACHE_COLOR_TABLE_ORDER
 {
 	UINT32 cacheIndex;
 	UINT32 numberColors;
-	UINT32* colorTable;
+	UINT32 colorTable[256];
 };
 typedef struct _CACHE_COLOR_TABLE_ORDER CACHE_COLOR_TABLE_ORDER;
-
-struct _GLYPH_DATA
-{
-	UINT32 cacheIndex;
-	INT32 x;
-	INT32 y;
-	UINT32 cx;
-	UINT32 cy;
-	UINT32 cb;
-	BYTE* aj;
-};
-typedef struct _GLYPH_DATA GLYPH_DATA;
 
 struct _CACHE_GLYPH_ORDER
 {
 	UINT32 cacheId;
 	UINT32 cGlyphs;
-	GLYPH_DATA* glyphData[255];
+	GLYPH_DATA glyphData[256];
 	BYTE* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_ORDER CACHE_GLYPH_ORDER;
-
-struct _GLYPH_DATA_V2
-{
-	UINT32 cacheIndex;
-	INT32 x;
-	INT32 y;
-	UINT32 cx;
-	UINT32 cy;
-	UINT32 cb;
-	BYTE* aj;
-};
-typedef struct _GLYPH_DATA_V2 GLYPH_DATA_V2;
 
 struct _CACHE_GLYPH_V2_ORDER
 {
 	UINT32 cacheId;
 	UINT32 flags;
 	UINT32 cGlyphs;
-	GLYPH_DATA_V2* glyphData[255];
+	GLYPH_DATA_V2 glyphData[256];
 	BYTE* unicodeCharacters;
 };
 typedef struct _CACHE_GLYPH_V2_ORDER CACHE_GLYPH_V2_ORDER;
@@ -182,7 +159,7 @@ struct _CACHE_BRUSH_ORDER
 	UINT32 cy;
 	UINT32 style;
 	UINT32 length;
-	BYTE* data;
+	BYTE data[256];
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 

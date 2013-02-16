@@ -320,8 +320,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 		SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
 		offset += 8;
 
-		if ((SwitchValue != TSG_CAPABILITY_TYPE_NAP) ||
-				(tsgCaps->capabilityType != TSG_CAPABILITY_TYPE_NAP))
+		if ((SwitchValue != TSG_CAPABILITY_TYPE_NAP) || (tsgCaps->capabilityType != TSG_CAPABILITY_TYPE_NAP))
 		{
 			printf("Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP\n",
 					tsgCaps->capabilityType);
@@ -573,8 +572,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
 	SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
 
-	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) ||
-			(SwitchValue != TSG_PACKET_TYPE_RESPONSE))
+	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
 		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n", packet->packetId);
 		return FALSE;
@@ -696,7 +694,114 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 
 BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg)
 {
-	/* ??? */
+	RPC_PDU* pdu;
+	BYTE* buffer;
+	UINT32 length;
+	UINT32 offset;
+	UINT32 Pointer;
+	UINT32 MaxCount;
+	UINT32 ActualCount;
+	UINT32 SwitchValue;
+	PTSG_PACKET packet;
+	rdpRpc* rpc = tsg->rpc;
+	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
+	PTSG_PACKET_STRING_MESSAGE packetStringMessage = NULL;
+	PTSG_PACKET_REAUTH_MESSAGE packetReauthMessage = NULL;
+
+	/* This is an asynchronous response */
+
+	return TRUE;
+
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!pdu)
+		return FALSE;
+
+	length = Stream_Length(pdu->s);
+	buffer = Stream_Buffer(pdu->s);
+
+	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
+		buffer = &buffer[24];
+
+	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
+	ZeroMemory(packet, sizeof(TSG_PACKET));
+
+	offset = 4;
+	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
+	SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
+
+	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) || (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
+	{
+		printf("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n", packet->packetId);
+		return FALSE;
+	}
+
+	packetMsgResponse = (PTSG_PACKET_MSG_RESPONSE) malloc(sizeof(TSG_PACKET_MSG_RESPONSE));
+	ZeroMemory(packetMsgResponse, sizeof(TSG_PACKET_MSG_RESPONSE));
+	packet->tsgPacket.packetMsgResponse = packetMsgResponse;
+
+	Pointer = *((UINT32*) &buffer[offset + 8]); /* PacketMsgResponsePtr */
+	packetMsgResponse->msgID = *((UINT32*) &buffer[offset + 12]); /* MsgId */
+	packetMsgResponse->msgType = *((UINT32*) &buffer[offset + 16]); /* MsgType */
+	packetMsgResponse->isMsgPresent = *((INT32*) &buffer[offset + 20]); /* IsMsgPresent */
+
+	SwitchValue = *((UINT32*) &buffer[offset + 24]); /* SwitchValue */
+
+	switch (SwitchValue)
+	{
+		case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
+			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
+			ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
+			packetMsgResponse->messagePacket.consentMessage = packetStringMessage;
+
+			Pointer = *((UINT32*) &buffer[offset + 28]); /* ConsentMessagePtr */
+			packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
+			packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
+			packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
+
+			Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
+			MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
+			/* Offset */
+			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
+
+			winpr_HexDump(&buffer[offset + 60], ActualCount * 2);
+
+			break;
+
+		case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
+			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
+			ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
+			packetMsgResponse->messagePacket.serviceMessage = packetStringMessage;
+
+			Pointer = *((UINT32*) &buffer[offset + 28]); /* ServiceMessagePtr */
+			packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
+			packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
+			packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
+
+			Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
+			MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
+			/* Offset */
+			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
+
+			winpr_HexDump(&buffer[offset + 60], ActualCount * 2);
+
+			break;
+
+		case TSG_ASYNC_MESSAGE_REAUTH:
+			packetReauthMessage = (PTSG_PACKET_REAUTH_MESSAGE) malloc(sizeof(TSG_PACKET_REAUTH_MESSAGE));
+			ZeroMemory(packetReauthMessage, sizeof(TSG_PACKET_REAUTH_MESSAGE));
+			packetMsgResponse->messagePacket.reauthMessage = packetReauthMessage;
+
+			Pointer = *((UINT32*) &buffer[offset + 28]); /* ReauthMessagePtr */
+			break;
+
+		default:
+			printf("TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n", SwitchValue);
+			return FALSE;
+			break;
+	}
+
+	exit(0);
 
 	return TRUE;
 }

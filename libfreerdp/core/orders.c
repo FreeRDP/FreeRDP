@@ -909,8 +909,6 @@ BOOL update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 	return TRUE;
 }
 
-
-
 BOOL update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
 	ORDER_FIELD_BYTE(1, fast_index->cacheId);
@@ -942,12 +940,10 @@ BOOL update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 	return TRUE;
 }
 
-
-
 BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
 {
-	GLYPH_DATA_V2* glyph;
 	BYTE* phold;
+	GLYPH_DATA_V2* glyph;
 
 	ORDER_FIELD_BYTE(1, fast_glyph->cacheId);
 	ORDER_FIELD_2BYTE(2, fast_glyph->ulCharInc, fast_glyph->flAccel);
@@ -968,32 +964,40 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 	{
 		if (stream_get_left(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, fast_glyph->cbData);
+
 		if (stream_get_left(s) < fast_glyph->cbData)
 			return FALSE;
+
 		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
 		phold = s->p;
 
 		if (!stream_skip(s, 1))
 			return FALSE;
-		if ((fast_glyph->cbData > 1) && (fast_glyph->glyph_data == NULL))
+
+		if (fast_glyph->cbData > 1)
 		{
 			/* parse optional glyph data */
-			glyph = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
+			glyph = &fast_glyph->glyphData;
 			glyph->cacheIndex = fast_glyph->data[0];
+
 			if (!update_read_2byte_signed(s, &glyph->x) ||
 				!update_read_2byte_signed(s, &glyph->y) ||
 				!update_read_2byte_unsigned(s, &glyph->cx) ||
 				!update_read_2byte_unsigned(s, &glyph->cy))
 				return FALSE;
+
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
+
 			if (stream_get_left(s) < glyph->cb)
 				return FALSE;
+
 			glyph->aj = (BYTE*) malloc(glyph->cb);
 			stream_read(s, glyph->aj, glyph->cb);
-			fast_glyph->glyph_data = glyph;
 		}
+
 		s->p = phold + fast_glyph->cbData;
 	}
 	return TRUE;
@@ -1239,25 +1243,26 @@ BOOL update_read_cache_color_table_order(STREAM* s, CACHE_COLOR_TABLE_ORDER* cac
 
 	if (stream_get_left(s) < 3)
 		return FALSE;
+
 	stream_read_BYTE(s, cache_color_table_order->cacheIndex); /* cacheIndex (1 byte) */
 	stream_read_UINT16(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
+
+	if (cache_color_table_order->numberColors != 256)
+	{
+		/* This field MUST be set to 256 */
+		return FALSE;
+	}
 
 	if (stream_get_left(s) < cache_color_table_order->numberColors * 4)
 		return FALSE;
 
-	colorTable = cache_color_table_order->colorTable;
-
-	if (colorTable == NULL)
-		colorTable = (UINT32*) malloc(cache_color_table_order->numberColors * 4);
-	else
-		colorTable = (UINT32*) realloc(colorTable, cache_color_table_order->numberColors * 4);
+	colorTable = (UINT32*) &cache_color_table_order->colorTable;
 
 	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
 	{
 		update_read_color_quad(s, &colorTable[i]);
 	}
 
-	cache_color_table_order->colorTable = colorTable;
 	return TRUE;
 }
 
@@ -1269,19 +1274,17 @@ BOOL update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 
 	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_BYTE(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
 	stream_read_BYTE(s, cache_glyph_order->cGlyphs); /* cGlyphs (1 byte) */
 
 	for (i = 0; i < (int) cache_glyph_order->cGlyphs; i++)
 	{
-		if (cache_glyph_order->glyphData[i] == NULL)
-		{
-			cache_glyph_order->glyphData[i] = (GLYPH_DATA*) malloc(sizeof(GLYPH_DATA));
-		}
-		glyph = cache_glyph_order->glyphData[i];
+		glyph = &cache_glyph_order->glyphData[i];
 
 		if (stream_get_left(s) < 10)
 			return FALSE;
+
 		stream_read_UINT16(s, glyph->cacheIndex);
 		stream_read_UINT16(s, lsi16);
 		glyph->x = lsi16;
@@ -1295,13 +1298,16 @@ BOOL update_read_cache_glyph_order(STREAM* s, CACHE_GLYPH_ORDER* cache_glyph_ord
 
 		if (stream_get_left(s) < glyph->cb)
 			return FALSE;
+
 		glyph->aj = (BYTE*) malloc(glyph->cb);
 		stream_read(s, glyph->aj, glyph->cb);
 	}
 
-	if (flags & CG_GLYPH_UNICODE_PRESENT) {
+	if (flags & CG_GLYPH_UNICODE_PRESENT)
+	{
 		return stream_skip(s, cache_glyph_order->cGlyphs * 2);
 	}
+
 	return TRUE;
 }
 
@@ -1316,14 +1322,11 @@ BOOL update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 
 	for (i = 0; i < (int) cache_glyph_v2_order->cGlyphs; i++)
 	{
-		if (cache_glyph_v2_order->glyphData[i] == NULL)
-		{
-			cache_glyph_v2_order->glyphData[i] = (GLYPH_DATA_V2*) malloc(sizeof(GLYPH_DATA_V2));
-		}
-		glyph = cache_glyph_v2_order->glyphData[i];
+		glyph = &cache_glyph_v2_order->glyphData[i];
 
 		if (stream_get_left(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, glyph->cacheIndex);
 
 		if (!update_read_2byte_signed(s, &glyph->x) ||
@@ -1339,13 +1342,16 @@ BOOL update_read_cache_glyph_v2_order(STREAM* s, CACHE_GLYPH_V2_ORDER* cache_gly
 
 		if (stream_get_left(s) < glyph->cb)
 			return FALSE;
+
 		glyph->aj = (BYTE*) malloc(glyph->cb);
 		stream_read(s, glyph->aj, glyph->cb);
 	}
 
-	if (flags & CG_GLYPH_UNICODE_PRESENT) {
+	if (flags & CG_GLYPH_UNICODE_PRESENT)
+	{
 		return stream_skip(s, cache_glyph_v2_order->cGlyphs * 2);
 	}
+
 	return TRUE;
 }
 
@@ -1390,6 +1396,7 @@ BOOL update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 
 	if (stream_get_left(s) < 6)
 		return FALSE;
+
 	stream_read_BYTE(s, cache_brush_order->index); /* cacheEntry (1 byte) */
 
 	stream_read_BYTE(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
@@ -1403,8 +1410,6 @@ BOOL update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 	if ((cache_brush_order->cx == 8) && (cache_brush_order->cy == 8))
 	{
 		size = (cache_brush_order->bpp == 1) ? 8 : 8 * 8 * cache_brush_order->bpp;
-
-		cache_brush_order->data = (BYTE*) malloc(size);
 
 		if (cache_brush_order->bpp == 1)
 		{
@@ -1442,6 +1447,7 @@ BOOL update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 			{
 				/* uncompressed brush */
 				int scanline = (cache_brush_order->bpp / 8) * 8;
+
 				if (stream_get_left(s) < scanline * 8)
 					return FALSE;
 
@@ -1452,6 +1458,7 @@ BOOL update_read_cache_brush_order(STREAM* s, CACHE_BRUSH_ORDER* cache_brush_ord
 			}
 		}
 	}
+
 	return TRUE;
 }
 
@@ -1560,7 +1567,7 @@ BOOL update_read_stream_bitmap_first_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER*
 	return TRUE;
 }
 
-BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_next)
+BOOL update_read_stream_bitmap_next_order(STREAM* s, STREAM_BITMAP_NEXT_ORDER* stream_bitmap_next)
 {
 	if (stream_get_left(s) < 5)
 		return FALSE;
