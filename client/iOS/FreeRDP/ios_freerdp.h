@@ -62,9 +62,9 @@ enum MF_EXIT_CODE
 	MF_EXIT_UNKNOWN = 255
 };
 
-void ios_init_freerdp();
-void ios_uninit_freerdp();
-freerdp* ios_freerdp_new();
+void ios_init_freerdp(void);
+void ios_uninit_freerdp(void);
+freerdp* ios_freerdp_new(void);
 int ios_run_freerdp(freerdp* instance);
 void ios_freerdp_free(freerdp* instance);
 

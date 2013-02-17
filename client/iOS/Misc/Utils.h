@@ -23,14 +23,14 @@ BOOL ScanHostNameAndPort(NSString* address, NSString** host, unsigned short* por
 NSString* ScreenResolutionDescription(TSXScreenOptions type, int width, int height);
 BOOL ScanScreenResolution(NSString* description, int* width, int* height, TSXScreenOptions* type);
 
-NSDictionary* SelectionForColorSetting();
-NSArray* ResolutionModes();
+NSDictionary* SelectionForColorSetting(void);
+NSArray* ResolutionModes(void);
 
 #pragma mark Security Protocol
 
 NSString* ProtocolSecurityDescription(TSXProtocolSecurityOptions type);
 BOOL ScanProtocolSecurity(NSString* description, TSXProtocolSecurityOptions* type);
-NSDictionary* SelectionForSecuritySetting();
+NSDictionary* SelectionForSecuritySetting(void);
 
 #pragma mark Bookmarks
 @class BookmarkBase;
@@ -39,11 +39,11 @@ NSMutableArray* FilterHistory(NSArray* history, NSString* filterStr);
 
 #pragma mark iPad/iPhone detection
 
-BOOL IsPad();
-BOOL IsPhone();
+BOOL IsPad(void);
+BOOL IsPhone(void);
 
 #pragma mark Version Info
-NSString* TSXAppFullVersion();
+NSString* TSXAppFullVersion(void);
 
 #pragma mark Touch/Mouse handling
 
@@ -60,20 +60,20 @@ int GetLeftMouseButtonClickEvent(BOOL down);
 int GetRightMouseButtonClickEvent(BOOL down);
 
 // return event value for mouse move event
-int GetMouseMoveEvent();
+int GetMouseMoveEvent(void);
 
 // return mouse wheel event
 int GetMouseWheelEvent(BOOL down);
 
 // scrolling gesture detection delta
-CGFloat GetScrollGestureDelta();
+CGFloat GetScrollGestureDelta(void);
 
 #pragma mark Connectivity tools
 // activates the iphone's WWAN interface in case it is offline
-void WakeUpWWAN();
+void WakeUpWWAN(void);
 
 #pragma mark System Info functions
-NSString* TSXGetPlatform();
-BOOL TSXDeviceHasJailBreak();
+NSString* TSXGetPlatform(void);
+BOOL TSXDeviceHasJailBreak(void);
 NSString* TSXGetPrimaryMACAddress(NSString *sep);
 
