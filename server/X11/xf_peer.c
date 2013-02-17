@@ -44,7 +44,6 @@
 extern char* xf_pcap_file;
 extern BOOL xf_pcap_dump_realtime;
 
-#include "xf_event.h"
 #include "xf_input.h"
 #include "xf_encode.h"
 
@@ -313,7 +312,8 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->fps = 24;
 	xfp->thread = 0;
 	xfp->activations = 0;
-	xfp->event_queue = xf_event_queue_new();
+
+	xfp->queue = MessageQueue_New();
 
 	xfi = xfp->info;
 	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
@@ -490,12 +490,13 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
+	int fds;
+	HANDLE event;
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	if (xfp->event_queue->pipe_fd[0] == -1)
-		return TRUE;
-
-	rfds[*rcount] = (void *)(long) xfp->event_queue->pipe_fd[0];
+	event = MessageQueue_Event(xfp->queue);
+	fds = GetEventFileDescriptor(event);
+	rfds[*rcount] = (void*) (long) fds;
 	(*rcount)++;
 
 	return TRUE;
@@ -504,7 +505,7 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
-	xfEvent* event;
+	wMessage message;
 	xfPeerContext* xfp;
 	HGDI_RGN invalid_region;
 
@@ -514,22 +515,29 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 	if (xfp->activated == FALSE)
 		return TRUE;
 
-	event = xf_event_peek(xfp->event_queue);
-
-	if (event != NULL)
+	if (MessageQueue_Peek(xfp->queue, &message, TRUE))
 	{
-		if (event->type == XF_EVENT_TYPE_REGION)
+		if (message.id == MakeMessageId(PeerEvent, InvalidRegion))
 		{
-			xfEventRegion* region = (xfEventRegion*) xf_event_pop(xfp->event_queue);
-			gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
-			xf_event_region_free(region);
+			UINT32 xy, wh;
+			UINT16 x, y, w, h;
+
+			xy = (UINT32) (size_t) message.wParam;
+			wh = (UINT32) (size_t) message.lParam;
+
+			x = ((xy & 0xFFFF0000) >> 16);
+			y = (xy & 0x0000FFFF);
+
+			w = ((wh & 0xFFFF0000) >> 16);
+			h = (wh & 0x0000FFFF);
+
+			gdi_InvalidateRegion(xfp->hdc, x, y, w, h);
 		}
-		else if (event->type == XF_EVENT_TYPE_FRAME_TICK)
+		else if (message.id == MakeMessageId(PeerEvent, FrameRateTick))
 		{
-			event = xf_event_pop(xfp->event_queue);
 			invalid_region = xfp->hdc->hwnd->invalid;
 
-			if (invalid_region->null == FALSE)
+			if (!invalid_region->null)
 			{
 				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
 					invalid_region->w, invalid_region->h);
@@ -537,8 +545,6 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 
 			invalid_region->null = 1;
 			xfp->hdc->hwnd->ninvalid = 0;
-
-			xf_event_free(event);
 		}
 	}
 
@@ -628,7 +634,7 @@ void* xf_peer_main_loop(void* arg)
 	freerdp_peer* client = (freerdp_peer*) arg;
 	xfPeerContext* xfp;
 
-	memset(rfds, 0, sizeof(rfds));
+	ZeroMemory(rfds, sizeof(rfds));
 
 	printf("We've got a client %s\n", client->hostname);
 

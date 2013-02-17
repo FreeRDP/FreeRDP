@@ -85,7 +85,6 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 void* xf_frame_rate_thread(void* param)
 {
 	xfInfo* xfi;
-	xfEvent* event;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	UINT32 wait_interval;
@@ -100,9 +99,10 @@ void* xf_frame_rate_thread(void* param)
 	{
 		/* check if we should terminate */
 		pthread_testcancel();
-		
-		event = xf_event_new(XF_EVENT_TYPE_FRAME_TICK);
-		xf_event_push(xfp->event_queue, (xfEvent*) event);
+
+		MessageQueue_Post(xfp->queue, (void*) xfp,
+				MakeMessageId(PeerEvent, FrameRateTick), NULL, NULL);
+
 		USleep(wait_interval);
 	}
 }
@@ -121,7 +121,6 @@ void* xf_monitor_updates(void* param)
 	struct timeval timeout;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
-	xfEventRegion* event_region;
 
 	client = (freerdp_peer*) param;
 	xfp = (xfPeerContext*) client->context;
@@ -167,6 +166,7 @@ void* xf_monitor_updates(void* param)
 
 			if (xevent.type == xfi->xdamage_notify_event)
 			{
+				UINT32 xy, wh;
 				notify = (XDamageNotifyEvent*) &xevent;
 
 				x = notify->area.x;
@@ -176,8 +176,12 @@ void* xf_monitor_updates(void* param)
 
 				xf_xdamage_subtract_region(xfp, x, y, width, height);
 
-				event_region = xf_event_region_new(x, y, width, height);
-				xf_event_push(xfp->event_queue, (xfEvent*) event_region);
+				xy = (x << 16) | y;
+				wh = (width << 16) | height;
+
+				MessageQueue_Post(xfp->queue, (void*) xfp,
+						MakeMessageId(PeerEvent, InvalidRegion),
+						(void*) (size_t) xy, (void*) (size_t) wh);
 			}
 		}
 	}

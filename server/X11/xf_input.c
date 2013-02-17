@@ -25,6 +25,8 @@
 
 #include <freerdp/locale/keyboard.h>
 
+#include "xf_peer.h"
+
 #include "xf_input.h"
 
 void xf_input_synchronize_event(rdpInput* input, UINT32 flags)

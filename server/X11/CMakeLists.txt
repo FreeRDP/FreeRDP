@@ -22,7 +22,6 @@ include_directories(${X11_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
 	xf_peer.c
-	xf_event.c
 	xf_input.c
 	xf_encode.c
 	xfreerdp.c)
