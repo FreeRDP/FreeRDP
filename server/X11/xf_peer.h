@@ -39,8 +39,7 @@ typedef struct xf_peer_context xfPeerContext;
 
 #define PeerEvent_Class						(PeerEvent_Base + 1)
 
-#define PeerEvent_InvalidRegion					1
-#define PeerEvent_FrameRateTick					2
+#define PeerEvent_EncodeRegion					1
 
 struct xf_peer_context
 {

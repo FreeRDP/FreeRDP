@@ -309,7 +309,7 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->fps = 24;
+	xfp->fps = 16;
 	xfp->thread = 0;
 	xfp->activations = 0;
 
@@ -507,7 +507,6 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 	xfInfo* xfi;
 	wMessage message;
 	xfPeerContext* xfp;
-	HGDI_RGN invalid_region;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
@@ -517,7 +516,7 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 
 	if (MessageQueue_Peek(xfp->queue, &message, TRUE))
 	{
-		if (message.id == MakeMessageId(PeerEvent, InvalidRegion))
+		if (message.id == MakeMessageId(PeerEvent, EncodeRegion))
 		{
 			UINT32 xy, wh;
 			UINT16 x, y, w, h;
@@ -531,20 +530,8 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 			w = ((wh & 0xFFFF0000) >> 16);
 			h = (wh & 0x0000FFFF);
 
-			gdi_InvalidateRegion(xfp->hdc, x, y, w, h);
-		}
-		else if (message.id == MakeMessageId(PeerEvent, FrameRateTick))
-		{
-			invalid_region = xfp->hdc->hwnd->invalid;
-
-			if (!invalid_region->null)
-			{
-				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
-					invalid_region->w, invalid_region->h);
-			}
-
-			invalid_region->null = 1;
-			xfp->hdc->hwnd->ninvalid = 0;
+			if (w * h > 0)
+				xf_peer_rfx_update(client, x, y, w, h);
 		}
 	}
 

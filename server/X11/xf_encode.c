@@ -85,6 +85,7 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 void* xf_frame_rate_thread(void* param)
 {
 	xfInfo* xfi;
+	HGDI_RGN region;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	UINT32 wait_interval;
@@ -93,6 +94,7 @@ void* xf_frame_rate_thread(void* param)
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
+	region = xfp->hdc->hwnd->invalid;
 	wait_interval = 1000000 / xfp->fps;
 
 	while (1)
@@ -100,11 +102,27 @@ void* xf_frame_rate_thread(void* param)
 		/* check if we should terminate */
 		pthread_testcancel();
 
-		MessageQueue_Post(xfp->queue, (void*) xfp,
-				MakeMessageId(PeerEvent, FrameRateTick), NULL, NULL);
+		if (!region->null)
+		{
+			UINT32 xy, wh;
+
+			pthread_mutex_lock(&(xfp->mutex));
+
+			xy = (region->x << 16) | region->y;
+			wh = (region->w << 16) | region->h;
+			region->null = 1;
+
+			pthread_mutex_unlock(&(xfp->mutex));
+
+			MessageQueue_Post(xfp->queue, (void*) xfp,
+					MakeMessageId(PeerEvent, EncodeRegion),
+					(void*) (size_t) xy, (void*) (size_t) wh);
+		}
 
 		USleep(wait_interval);
 	}
+
+	return NULL;
 }
 
 void* xf_monitor_updates(void* param)
@@ -127,7 +145,7 @@ void* xf_monitor_updates(void* param)
 	xfi = xfp->info;
 
 	fds = xfi->xfds;
-	wait_interval = (1000000 / 2500);
+	wait_interval = 1000000 / xfp->fps;
 	ZeroMemory(&timeout, sizeof(struct timeval));
 
 	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
@@ -150,7 +168,7 @@ void* xf_monitor_updates(void* param)
 		}
 		else if (select_status == 0)
 		{
-			//printf("select timeout\n");
+
 		}
 
 		pthread_mutex_lock(&(xfp->mutex));
@@ -166,7 +184,6 @@ void* xf_monitor_updates(void* param)
 
 			if (xevent.type == xfi->xdamage_notify_event)
 			{
-				UINT32 xy, wh;
 				notify = (XDamageNotifyEvent*) &xevent;
 
 				x = notify->area.x;
@@ -176,12 +193,9 @@ void* xf_monitor_updates(void* param)
 
 				xf_xdamage_subtract_region(xfp, x, y, width, height);
 
-				xy = (x << 16) | y;
-				wh = (width << 16) | height;
-
-				MessageQueue_Post(xfp->queue, (void*) xfp,
-						MakeMessageId(PeerEvent, InvalidRegion),
-						(void*) (size_t) xy, (void*) (size_t) wh);
+				pthread_mutex_lock(&(xfp->mutex));
+				gdi_InvalidateRegion(xfp->hdc, x, y, width, height);
+				pthread_mutex_unlock(&(xfp->mutex));
 			}
 		}
 	}
