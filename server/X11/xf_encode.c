@@ -56,6 +56,8 @@ XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 		image = XGetImage(xfi->display, xfi->root_window,
 				x, y, width, height, AllPlanes, ZPixmap);
 
+		XSync(xfi->display, False);
+
 		pthread_mutex_unlock(&(xfp->mutex));
 	}
 
@@ -127,7 +129,7 @@ void* xf_monitor_updates(void* param)
 
 	fds = xfi->xfds;
 	wait_interval = (1000000 / 2500);
-	memset(&timeout, 0, sizeof(struct timeval));
+	ZeroMemory(&timeout, sizeof(struct timeval));
 
 	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
 
@@ -159,7 +161,7 @@ void* xf_monitor_updates(void* param)
 		if (pending_events > 0)
 		{
 			pthread_mutex_lock(&(xfp->mutex));
-			memset(&xevent, 0, sizeof(xevent));
+			ZeroMemory(&xevent, sizeof(xevent));
 			XNextEvent(xfi->display, &xevent);
 			pthread_mutex_unlock(&(xfp->mutex));
 
