@@ -74,11 +74,18 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "audio", "Audio output (sound)" },
 	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "mic", "Audio input (microphone)" },
 	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
+	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect multimedia (video)" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Network connection type" },
+	{ "drive", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect drive" },
 	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect all drives" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect home drive" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
-	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
+	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
+	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
+	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "printer", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
+	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
+	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (ClearType)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Full window drag" },
 	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Menu animations" },
@@ -421,6 +428,19 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 	p[index] = str + strlen(str);
 
 	*count = nArgs;
+
+	return p;
+}
+
+char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int* count)
+{
+	char** p;
+
+	p = freerdp_command_line_parse_comma_separated_values(list, count);
+
+	p = (char**) realloc(p, sizeof(char*) * (*count + 1));
+	MoveMemory(&p[1], p, sizeof(char*) * *count);
+	(*count)++;
 
 	return p;
 }
@@ -1054,6 +1074,18 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "drive")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "drive";
+
+			freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
 		CommandLineSwitchCase(arg, "drives")
 		{
 			settings->RedirectDrives = arg->Value ? TRUE : FALSE;
@@ -1081,12 +1113,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				char** p;
 				int count;
 
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
-
-				p = (char**) realloc(p, sizeof(char*) * (count + 1));
-				MoveMemory(&p[1], p, sizeof(char*) * count);
+				p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
 				p[0] = "rdpsnd";
-				count++;
 
 				freerdp_client_add_static_channel(settings, count, p);
 
@@ -1110,12 +1138,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				char** p;
 				int count;
 
-				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
-
-				p = (char**) realloc(p, sizeof(char*) * (count + 1));
-				MoveMemory(&p[1], p, sizeof(char*) * count);
+				p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
 				p[0] = "audin";
-				count++;
 
 				freerdp_client_add_dynamic_channel(settings, count, p);
 
@@ -1152,6 +1176,31 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				settings->RemoteConsoleAudio = FALSE;
 			}
 		}
+		CommandLineSwitchCase(arg, "multimedia")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char** p;
+				int count;
+
+				p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+				p[0] = "tsmf";
+
+				freerdp_client_add_dynamic_channel(settings, count, p);
+
+				free(p);
+			}
+			else
+			{
+				char* p[1];
+				int count;
+
+				count = 1;
+				p[0] = "tsmf";
+
+				freerdp_client_add_dynamic_channel(settings, count, p);
+			}
+		}
 		CommandLineSwitchCase(arg, "network")
 		{
 			int type;
@@ -1178,6 +1227,66 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			}
 
 			freerdp_set_connection_type(settings, type);
+		}
+		CommandLineSwitchCase(arg, "serial")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "serial";
+
+			freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
+		CommandLineSwitchCase(arg, "parallel")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "parallel";
+
+			freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
+		CommandLineSwitchCase(arg, "smartcard")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "smartcard";
+
+			freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
+		CommandLineSwitchCase(arg, "printer")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "printer";
+
+			freerdp_client_add_device_channel(settings, count, p);
+
+			free(p);
+		}
+		CommandLineSwitchCase(arg, "usb")
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "urbdrc";
+
+			freerdp_client_add_dynamic_channel(settings, count, p);
+
+			free(p);
 		}
 		CommandLineSwitchCase(arg, "fonts")
 		{
