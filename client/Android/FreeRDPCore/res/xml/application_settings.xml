@@ -21,7 +21,7 @@
     </PreferenceCategory>
        
     <PreferenceCategory android:title="@string/settings_cat_power">
-    	<com.freerdp.afreerdp.utils.IntEditTextPreference android:key="power.disconnect_timeout" android:title="@string/settings_power_disconnect_timeout" android:numeric="integer" android:inputType="number" freerdp:bounds_min="0" freerdp:bounds_max="30" freerdp:bounds_default="5" />                      
+    	<com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="power.disconnect_timeout" android:title="@string/settings_power_disconnect_timeout" android:numeric="integer" android:inputType="number" freerdp:bounds_min="0" freerdp:bounds_max="30" freerdp:bounds_default="5" />                      
     </PreferenceCategory>
     
     <PreferenceCategory android:title="@string/settings_cat_security">

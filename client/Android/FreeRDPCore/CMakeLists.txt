@@ -17,7 +17,7 @@
 # limitations under the License.
 
 set(ANDROID_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(ANDROID_PACKAGE_NAME "aFreeRDP")
+set(ANDROID_PACKAGE_NAME "aFreeRDPCore")
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.cmake ${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml @ONLY)
 
@@ -29,36 +29,16 @@ add_subdirectory(jni)
 
 
 if(ANDROID_BUILD_JAVA)
-	if (NOT ANDROID_SDK)
-		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
-	endif()
-
-	# And isn't shiped with the android ndk/sdk so
-	# we need to find it on the local machine
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, BOTH)
-	find_program(ANT_COMMAND ant)
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, ONLY)
-
-	if(ANT_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
-		message(FATAL_ERROR "ant not found but required to build android java")
-	endif()
-
-  if(ANDROID_BUILD_JAVA_DEBUG)
-		set(ANDROID_BUILD_TYPE "debug")
-		set(APK "${ANDROID_SOURCE_DIR}/bin/${ANDROID_PACKAGE_NAME}-release-unsigned.apk")
-	else()
-		set(ANDROID_BUILD_TYPE "release")
-		set(APK "${ANDROID_SOURCE_DIR}/bin/${ANDROID_PACKAGE_NAME}-debug.apk")
-	endif()
+	set(ANDROIDLIB "${ANDROID_SOURCE_DIR}/bin/classes.jar")
 
   # command to create the android package
 	add_custom_command(
-		OUTPUT "${APK}"
+		OUTPUT "${ANDROIDLIB}"
 		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
 		WORKING_DIRECTORY "${ANDROID_SOURCE_DIR}"
 		MAIN_DEPENDENCY AndroidManifest.xml
 		DEPENDS freerdp-android local.properties
 	)
-	add_custom_target(android-package ALL SOURCES "${APK}")
-	SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "gen;bin")
+	add_custom_target(android-lib ALL SOURCES "${ANDROIDLIB}")
+	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gen;bin")
 endif()

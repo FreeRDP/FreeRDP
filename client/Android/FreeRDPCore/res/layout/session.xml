@@ -24,7 +24,7 @@
 		android:visibility="gone"
         />
 
-	<com.freerdp.afreerdp.presentation.ScrollView2D
+	<com.freerdp.freerdpcore.presentation.ScrollView2D
 		android:id="@+id/sessionScrollView"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
 	    android:isScrollContainer="true"
 		>
 	    
-		<com.freerdp.afreerdp.presentation.SessionView
+		<com.freerdp.freerdpcore.presentation.SessionView
 			android:id="@+id/sessionView"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
@@ -45,9 +45,9 @@
 		    android:drawingCacheQuality="low"
 			/>
 
-	</com.freerdp.afreerdp.presentation.ScrollView2D>		
+	</com.freerdp.freerdpcore.presentation.ScrollView2D>		
 
-	<com.freerdp.afreerdp.presentation.TouchPointerView
+	<com.freerdp.freerdpcore.presentation.TouchPointerView
 		android:id="@+id/touchPointerView"
 		android:layout_width="match_parent"			
 		android:layout_height="match_parent"
