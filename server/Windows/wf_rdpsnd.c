@@ -27,19 +27,6 @@
 
 #include <winpr/windows.h>
 
-/*
-#define INITGUID
-#include <initguid.h>
-#include <objbase.h>
-
-#define CINTERFACE
-#include <mmsystem.h>
-#include <dsound.h>
-
-#include <freerdp/server/rdpsnd.h>
-
-*/
-
 #include "wf_rdpsnd.h"
 #include "wf_info.h"
 
@@ -148,6 +135,8 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd->Activated = wf_peer_rdpsnd_activated;
 
 	context->rdpsnd->Initialize(context->rdpsnd);
+
+	wf_rdpsnd_set_latest_peer(context);
 
 	wfi->snd_stop = FALSE;
 	return TRUE;
