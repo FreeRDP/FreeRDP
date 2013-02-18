@@ -245,7 +245,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	}
 
 
-	hnsActualDuration = (double)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
+	hnsActualDuration = (UINT32)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
 	hr = pAudioClient->lpVtbl->Start(pAudioClient);
 	if (FAILED(hr))
