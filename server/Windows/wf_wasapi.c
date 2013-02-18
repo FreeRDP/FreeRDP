@@ -10,11 +10,11 @@
 //#define REFTIMES_PER_SEC  10000000
 //#define REFTIMES_PER_MILLISEC  10000
 
-//#define REFTIMES_PER_SEC  100000
-//#define REFTIMES_PER_MILLISEC  100
+#define REFTIMES_PER_SEC  100000
+#define REFTIMES_PER_MILLISEC  100
 
-#define REFTIMES_PER_SEC  50000
-#define REFTIMES_PER_MILLISEC  50
+//#define REFTIMES_PER_SEC  50000
+//#define REFTIMES_PER_MILLISEC  50
 
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C,
@@ -278,8 +278,8 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 				exit(1);
 			}
 
-			//write data here
-			//fwrite(pData, 1, packetLength * 4, pFile);
+			//Here we are writing the audio data
+			//not sure if this flag is ever set by the system; msdn is not clear about it
 			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
 				context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
 

@@ -27,6 +27,7 @@
 
 #include <winpr/windows.h>
 
+/*
 #define INITGUID
 #include <initguid.h>
 #include <objbase.h>
@@ -37,18 +38,21 @@
 
 #include <freerdp/server/rdpsnd.h>
 
+*/
+
 #include "wf_rdpsnd.h"
-#include "wf_directsound.h"
-#include "wf_wasapi.h"
 #include "wf_info.h"
 
+#ifdef WITH_RDPSND_DSOUND
 
+#include "wf_directsound.h"
 
+#else
 
-//#define BYTESPERSEC 176400
+#include "wf_wasapi.h"
 
-//FIXME support multiple clients
-//wfPeerContext* latestPeer;
+#endif
+
 
 static const rdpsndFormat test_audio_formats[] =
 {
@@ -66,9 +70,16 @@ static const rdpsndFormat test_audio_formats[] =
 
 static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
+#ifdef WITH_RDPSND_DSOUND
 
-	//wf_directsound_activate(context);
+	wf_directsound_activate(context);
+
+#else
+
 	wf_wasapi_activate(context);
+
+#endif
+	
 }
 
 int wf_rdpsnd_lock()
@@ -137,8 +148,6 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd->Activated = wf_peer_rdpsnd_activated;
 
 	context->rdpsnd->Initialize(context->rdpsnd);
-
-	wf_directsound_set_latest_peer(context);
 
 	wfi->snd_stop = FALSE;
 	return TRUE;

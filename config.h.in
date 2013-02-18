@@ -40,6 +40,7 @@
 #cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
+#cmakedefine WITH_RDPSND_DSOUND
 
 /* Plugins */
 #cmakedefine STATIC_CHANNELS
