@@ -395,6 +395,8 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		cmd->destTop = y;
 		cmd->destRight = x + width;
 		cmd->destBottom = y + height;
+
+		XDestroyImage(image);
 	}
 
 	cmd->bpp = 32;
