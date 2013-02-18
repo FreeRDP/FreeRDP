@@ -99,7 +99,7 @@ void pointer_free(rdpContext* context, rdpPointer* pointer);
 void pointer_set(rdpContext* context, rdpPointer* pointer);
 void pointer_setNull(rdpContext* context);
 void pointer_setDefault(rdpContext* context);
-int rdp_connect();
+int rdp_connect(void);
 BOOL mac_pre_connect(freerdp *inst);
 BOOL mac_post_connect(freerdp *inst);
 void mac_context_new(freerdp *inst, rdpContext *context);
@@ -139,7 +139,7 @@ void mac_send_rail_client_event(rdpChannels *channels, UINT16 event_type, void *
 void mac_on_free_rail_client_event(RDP_EVENT* event);
 void mac_process_rail_server_sysparam_event(rdpChannels* channels, RDP_EVENT* event);
 void mac_process_rail_exec_result_event(rdpChannels* channels, RDP_EVENT* event);
-void mac_rail_enable_remoteapp_mode();
+void mac_rail_enable_remoteapp_mode(void);
 void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, RDP_EVENT* event);
 void mac_process_rail_server_localmovesize_event(freerdp *inst, RDP_EVENT *event);
 void apple_center_window(NSRect * r);

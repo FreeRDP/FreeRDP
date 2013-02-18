@@ -36,7 +36,7 @@ BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel);
 
-rdpNtlmHttp* ntlm_http_new();
+rdpNtlmHttp* ntlm_http_new(void);
 void ntlm_http_free(rdpNtlmHttp* ntlm_http);
 
 #endif

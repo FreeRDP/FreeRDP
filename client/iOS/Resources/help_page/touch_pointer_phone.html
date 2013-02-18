@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;" /> 
+<title>Help</title>
+
+<style type="text/css">
+
+@charset "utf-8";
+
+
+#container{
+	
+	text-align:center;
+	color:#FFFFFF;}
+
+body{
+  margin:0;
+  padding:<length> 0 0 0;
+  font: 100% Helvetica;
+  background-image:url(back.jpg);
+  background-position:center;
+
+ 
+ }
+ 
+ #headline{
+
+  background-color:#353639;
+  opacity:0.9;
+
+  color:FFF;
+  text-align:center;
+
+
+	}
+ 
+ #article{
+
+
+background-color:#FFFFFF;
+opacity: 0.8;
+z-index:0;
+margin-bottom:3%;
+padding-bottom:0.1%;
+border-radius: 15px;
+border-top-left-radius:0px;
+border-top-right-radius:0px;
+color:#000;
+margin: 10px auto;
+position:relative;
+
+
+	}
+ 
+#header{
+
+  
+  width:100%;
+  background-color:#353639;
+  padding-bottom:1px;
+  padding-left:5px;
+  padding-right:5px;
+  padding-top:5px;	
+  position: fixed;
+  top: 0;
+  left: 0;
+  height:30px;
+  
+  min-width:250px;
+  z-index:20;
+  
+  
+ }
+ 
+
+#content{
+	padding-top:40px;
+	z-index:-20;
+	max-width:300px;
+	
+	}
+	
+
+/* ~~ Element/tag selectors ~~ */
+ul, ol, dl { /* Due to variations between browsers, it's best practices to zero padding and margin on lists. For consistency, you can either specify the amounts you want here, or on the list items (LI, DT, DD) they contain. Remember that what you do here will cascade to the .nav list unless you write a more specific selector. */
+	padding: 0;
+	margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+	margin-top: 0;	 /* removing the top margin gets around an issue where margins can escape from their containing div. The remaining bottom margin will hold it away from any elements that follow. */
+	padding-right: 1px;
+	padding-left: 1px; /* adding the padding to the sides of the elements within the divs, instead of the divs themselves, gets rid of any box model math. A nested div with side padding can also be used as an alternate method.
+ */
+color:#000;
+ 
+}
+
+a img { /* this selector removes the default blue border displayed in some browsers around an image when it is surrounded by a link */
+	border: none;
+	
+}
+
+/* ~~ Styling for your site's links must remain in this order - including the group of selectors that create the hover effect. ~~ */
+/*a:link {
+	color:#414958;
+	text-decoration: underline;  unless you style your links to look extremely unique, it's best to provide underlines for quick visual identification */
+
+
+a:hover, a:active, a:focus { /* this group of selectors will give a keyboard navigator the same hover experience as the person using a mouse. */
+	text-decoration: none;}
+
+
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none; /* Disable selection/Copy of UIWebView */
+}
+
+
+
+	
+</style>
+
+
+
+</head>
+
+
+
+
+<body>
+<div id="container">
+
+
+<center>
+
+
+<div id="header">
+
+<a href="gestures_phone.html"><img src="nav_gestures.png" height="90%"></a>
+	<a href="toolbar_phone.html"><img src="nav_toolbar.png" height="90%"></a>
+	<a href="touch_pointer_phone.html"><img src="nav_touch_pointer.png" height="90%""></a>
+
+</div>
+
+<div id="content"> 
+
+<h2>Touch Pointer</h2>
+<p><img src="touch_pointer_phone.png">
+</p>
+</div>
+
+</center>
+</div>
+
+</body>
+</html>

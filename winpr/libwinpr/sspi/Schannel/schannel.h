@@ -42,7 +42,7 @@ struct _SCHANNEL_CONTEXT
 };
 typedef struct _SCHANNEL_CONTEXT SCHANNEL_CONTEXT;
 
-SCHANNEL_CONTEXT* schannel_ContextNew();
+SCHANNEL_CONTEXT* schannel_ContextNew(void);
 void schannel_ContextFree(SCHANNEL_CONTEXT* context);
 
 #endif /* WINPR_SSPI_SCHANNEL_PRIVATE_H */

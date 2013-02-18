@@ -1,0 +1,8 @@
+# XCode files
+DerivedData
+project.xcworkspace/
+xcuserdata/
+bin/
+build/
+project.pbxproj
+!iFreeRDP.xcodeproj/
