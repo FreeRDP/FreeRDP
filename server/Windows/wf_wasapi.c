@@ -27,12 +27,6 @@ DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4,0xde, 0x18
 LPWSTR devStr = NULL;
 wfPeerContext* latestPeer = NULL;
 
-int wf_wasapi_set_latest_peer(wfPeerContext* peer)
-{
-	latestPeer = peer;
-	return 0;
-}
-
 int wf_wasapi_activate(rdpsnd_server_context* context)
 {
 	wchar_t * pattern = L"Stereo Mix";
