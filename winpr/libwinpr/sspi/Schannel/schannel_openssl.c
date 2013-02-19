@@ -265,6 +265,9 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 			printf("SSL_connect error: %s\n", openssl_get_ssl_error_string(ssl_error));
 		}
 
+		if (status == 1)
+			context->connected = TRUE;
+
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
 		if (pOutput->cBuffers < 1)
@@ -283,12 +286,12 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
 			pBuffer->cbBuffer = status;
 
-			return SEC_I_CONTINUE_NEEDED;
+			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
 		{
 			pBuffer->cbBuffer = 0;
-			return SEC_E_OK;
+			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 	}
 
@@ -357,6 +360,8 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
 {
 	int status;
+	int length;
+	int offset;
 	int ssl_error;
 	PSecBuffer pStreamBodyBuffer;
 	PSecBuffer pStreamHeaderBuffer;
@@ -379,13 +384,33 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 
 	status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	if (status > 0)
+	{
+		offset = 0;
+		length = (pStreamHeaderBuffer->cbBuffer > status) ? status : pStreamHeaderBuffer->cbBuffer;
+		CopyMemory(pStreamHeaderBuffer->pvBuffer, &context->ReadBuffer[offset], length);
+		status -= length;
+
+		offset += length;
+		length = (pStreamBodyBuffer->cbBuffer > status) ? status : pStreamBodyBuffer->cbBuffer;
+		CopyMemory(pStreamBodyBuffer->pvBuffer, &context->ReadBuffer[offset], length);
+		status -= length;
+
+		offset += length;
+		length = (pStreamTrailerBuffer->cbBuffer > status) ? status : pStreamTrailerBuffer->cbBuffer;
+		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
+		status -= length;
+	}
+
+	return SEC_E_OK;
 }
 
 SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
 {
-	//int status;
-	//int ssl_error;
+	int status;
+	int length;
+	BYTE* buffer;
+	int ssl_error;
 	PSecBuffer pBuffer;
 
 	pBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
@@ -393,7 +418,33 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (!pBuffer)
 		return SEC_E_INVALID_TOKEN;
 
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+
+	status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
+
+	if (status < 0)
+	{
+		ssl_error = SSL_get_error(context->ssl, status);
+		printf("SSL_read: %s\n", openssl_get_ssl_error_string(ssl_error));
+	}
+
+	length = status;
+	buffer = pBuffer->pvBuffer;
+
+	pMessage->pBuffers[0].BufferType = SECBUFFER_STREAM_HEADER;
+	pMessage->pBuffers[0].cbBuffer = 5;
+
+	pMessage->pBuffers[1].BufferType = SECBUFFER_DATA;
+	pMessage->pBuffers[1].pvBuffer = buffer;
+	pMessage->pBuffers[1].cbBuffer = length;
+
+	pMessage->pBuffers[2].BufferType = SECBUFFER_STREAM_TRAILER;
+	pMessage->pBuffers[2].cbBuffer = 36;
+
+	pMessage->pBuffers[3].BufferType = SECBUFFER_EMPTY;
+	pMessage->pBuffers[3].cbBuffer = 0;
+
+	return SEC_E_OK;
 }
 
 SCHANNEL_OPENSSL* schannel_openssl_new()
