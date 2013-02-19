@@ -55,6 +55,10 @@ struct rdpsnd_alsa_plugin
 	int wformat;
 	int block_size;
 	int latency;
+	BYTE* audio_data;
+	UINT32 audio_data_size;
+	UINT32 audio_data_left;
+	snd_pcm_uframes_t chunk_size;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
@@ -82,6 +86,8 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_hw_params_set_format(alsa->out_handle, hw_params, alsa->format);
 	snd_pcm_hw_params_set_rate_near(alsa->out_handle, hw_params, &alsa->actual_rate, NULL);
 	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params, &alsa->actual_channels);
+	snd_pcm_hw_params_get_period_size(hw_params, &alsa->chunk_size, 0);
+	alsa->audio_data_left = 0;
 
 	if (alsa->latency < 0)
 		frames = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
@@ -257,11 +263,17 @@ static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 
 static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	rdpsnd_alsa_close(device);
+
 	free(alsa->device_name);
+
+	if (alsa->audio_data)
+		free(alsa->audio_data);
+
 	freerdp_dsp_context_free(alsa->dsp_context);
+
 	free(alsa);
 }
 
@@ -367,6 +379,7 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 
 	if ((alsa->source_rate == alsa->actual_rate) && (alsa->source_channels == alsa->actual_channels))
 	{
+
 	}
 	else
 	{
@@ -374,20 +387,30 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 			alsa->source_channels, alsa->source_rate, size / sbytes_per_frame,
 			alsa->actual_channels, alsa->actual_rate);
 		frames = alsa->dsp_context->resampled_frames;
+
 		DEBUG_SVC("resampled %d frames at %d to %d frames at %d",
 			size / sbytes_per_frame, alsa->source_rate, frames, alsa->actual_rate);
+
 		size = frames * rbytes_per_frame;
 		src = alsa->dsp_context->resampled_buffer;
 	}
 
-	pindex = src;
-	end = pindex + size;
+	if (alsa->audio_data_left + size > alsa->audio_data_size)
+	{
+		alsa->audio_data = realloc(alsa->audio_data, alsa->audio_data_left + size);
+		alsa->audio_data_size = alsa->audio_data_left + size;
+	}
 
-	while (pindex < end)
+	memcpy(alsa->audio_data + alsa->audio_data_left, src, size);
+	alsa->audio_data_left += size;
+
+	pindex = alsa->audio_data;
+	end = pindex + alsa->audio_data_left;
+
+	while (pindex + alsa->chunk_size * rbytes_per_frame <= end)
 	{
 		len = end - pindex;
-		frames = len / rbytes_per_frame;
-		status = snd_pcm_writei(alsa->out_handle, pindex, frames);
+		status = snd_pcm_writei(alsa->out_handle, pindex, alsa->chunk_size);
 
 		if (status == -EPIPE)
 		{
@@ -404,6 +427,12 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 		}
 
 		pindex += status * rbytes_per_frame;
+	}
+
+	if ((pindex <= end) && (pindex != alsa->audio_data))
+	{
+		memcpy(alsa->audio_data, pindex, end - pindex);
+		alsa->audio_data_left = end - pindex;
 	}
 }
 
