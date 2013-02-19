@@ -127,10 +127,13 @@ static void update_message_RefreshRect(rdpContext* context, BYTE count, RECTANGL
 
 static void update_message_SuppressOutput(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
-	RECTANGLE_16* lParam;
+	RECTANGLE_16* lParam = NULL;
 
-	lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16));
-	CopyMemory(lParam, area, sizeof(RECTANGLE_16));
+	if (area)
+	{
+		lParam = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16));
+		CopyMemory(lParam, area, sizeof(RECTANGLE_16));
+	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SuppressOutput), (void*) (size_t) allow, (void*) lParam);
@@ -974,7 +977,8 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 		case Update_SuppressOutput:
 			IFCALL(proxy->SuppressOutput, msg->context,
 					(BYTE) (size_t) msg->wParam, (RECTANGLE_16*) msg->lParam);
-			free(msg->lParam);
+			if (msg->lParam)
+				free(msg->lParam);
 			break;
 
 		case Update_SurfaceCommand:
@@ -1491,13 +1495,29 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 	if (message->id == WMQ_QUIT)
 		return 0;
 
+	/**
+	 * FIXME:
+	 *
+	 * Certain messages like RefreshRect, SuppressOutput and SurfaceFrameAcknowledge
+	 * and not really output but really input events that send a message to the server.
+	 * Right now they will race with other code making use of the transport layer.
+	 */
+
+	switch (message->id)
+	{
+		case FREERDP_UPDATE_REFRESH_RECT:
+		case FREERDP_UPDATE_SUPPRESS_OUTPUT:
+		case FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE:
+			return 1;
+	}
+
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
 
 	status = update_message_process_class(update->proxy, message, msgClass, msgType);
 
 	if (status < 0)
-		return -1;
+		status = -1;
 
 	return 1;
 }
@@ -1508,15 +1528,11 @@ int update_message_queue_process_pending_messages(rdpUpdate* update)
 	wMessage message;
 	wMessageQueue* queue;
 
+	status = 1;
 	queue = update->queue;
 
-	while (1)
+	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
-		status = MessageQueue_Peek(queue, &message, TRUE);
-
-		if (!status)
-			break;
-
 		status = update_message_queue_process_message(update, &message);
 
 		if (!status)
@@ -1865,26 +1881,26 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 
 int input_message_queue_process_pending_messages(rdpInput* input)
 {
+	int count;
 	int status;
 	wMessage message;
 	wMessageQueue* queue;
 
+	count = 0;
+	status = 1;
 	queue = input->queue;
 
-	while (1)
+	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
-		status = MessageQueue_Peek(queue, &message, TRUE);
-
-		if (!status)
-			break;
-
 		status = input_message_queue_process_message(input, &message);
 
 		if (!status)
 			break;
+
+		count++;
 	}
 
-	return 0;
+	return status;
 }
 
 void input_message_proxy_register(rdpInputProxy* proxy, rdpInput* input)

@@ -483,12 +483,14 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, BYTE type, UINT16 channel_id)
 
 BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, STREAM* s)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
+
 	stream_read_UINT32(s, rdp->errorInfo); /* errorInfo (4 bytes) */
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 		rdp_print_errinfo(rdp->errorInfo);
+
 	return TRUE;
 }
 
@@ -913,10 +915,7 @@ static int rdp_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 
 		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_client_connect_demand_active(rdp, s))
-			{
-				printf("rdp_client_connect_demand_active failed\n");
 				status = -1;
-			}
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:

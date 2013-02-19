@@ -121,7 +121,7 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 	if (strcmp(args->argv[0], "cliprdr") == 0)
 	{
 		settings->RedirectClipboard = TRUE;
-		printf("--plugin cliprdr -> --enable-clipboard\n");
+		printf("--plugin cliprdr -> +clipboard\n");
 	}
 	else if (strcmp(args->argv[0], "rdpdr") == 0)
 	{
@@ -398,37 +398,37 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "0")
 		{
 			settings->ConsoleSession = TRUE;
-			printf("-0 -> --admin\n");
+			printf("-0 -> /admin\n");
 		}
 		CommandLineSwitchCase(arg, "a")
 		{
 			settings->ColorDepth = atoi(arg->Value);
-			printf("-a %s -> --bpp %s\n", arg->Value, arg->Value);
+			printf("-a %s -> /bpp:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "c")
 		{
 			settings->ShellWorkingDirectory = _strdup(arg->Value);
-			printf("-c %s -> --shell-dir %s\n", arg->Value, arg->Value);
+			printf("-c %s -> /shell-dir:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "D")
 		{
 			settings->Decorations = FALSE;
-			printf("-D -> --disable-decorations\n");
+			printf("-D -> -decorations\n");
 		}
 		CommandLineSwitchCase(arg, "T")
 		{
 			settings->WindowTitle = _strdup(arg->Value);
-			printf("-T %s -> --title %s\n", arg->Value, arg->Value);
+			printf("-T %s -> /title:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
 			settings->Domain = _strdup(arg->Value);
-			printf("-d %s -> -d %s\n", arg->Value, arg->Value);
+			printf("-d %s -> /d:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "f")
 		{
 			settings->Fullscreen = TRUE;
-			printf("-f -> -f\n");
+			printf("-f -> /f\n");
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -445,18 +445,18 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 
 			free(str);
 
-			printf("-g %s -> --size %s or -w %d -h %d\n", arg->Value, arg->Value,
+			printf("-g %s -> /size:%s or /w:%d /h:%d\n", arg->Value, arg->Value,
 					settings->DesktopWidth, settings->DesktopHeight);
 		}
 		CommandLineSwitchCase(arg, "k")
 		{
 			sscanf(arg->Value, "%X", &(settings->KeyboardLayout));
-			printf("-k %s -> --kbd %s\n", arg->Value, arg->Value);
+			printf("-k %s -> /kbd:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "K")
 		{
 			settings->GrabKeyboard = FALSE;
-			printf("-K -> --disable-grab-keyboard\n");
+			printf("-K -> -grab-keyboard\n");
 		}
 		CommandLineSwitchCase(arg, "n")
 		{
@@ -465,27 +465,27 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "o")
 		{
 			settings->RemoteConsoleAudio = TRUE;
-			printf("-o -> --audio-mode 1\n");
+			printf("-o -> /audio-mode:1\n");
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
 			settings->Password = _strdup(arg->Value);
-			printf("-p %s -> -p %s\n", arg->Value, arg->Value);
+			printf("-p %s -> /p:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "s")
 		{
 			settings->AlternateShell = _strdup(arg->Value);
-			printf("-s %s -> --shell %s\n", arg->Value, arg->Value);
+			printf("-s %s -> /shell:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
 			settings->ServerPort = atoi(arg->Value);
-			printf("-t %s -> --port %s\n", arg->Value, arg->Value);
+			printf("-t %s -> /port:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
 			settings->Username = _strdup(arg->Value);
-			printf("-u %s -> -u %s\n", arg->Value, arg->Value);
+			printf("-u %s -> /u:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "x")
 		{
@@ -512,7 +512,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				settings->PerformanceFlags = type;
 			}
 
-			printf("-x %s -> --network ", arg->Value);
+			printf("-x %s -> /network ", arg->Value);
 
 			if (type == CONNECTION_TYPE_MODEM)
 				printf("modem");
@@ -526,17 +526,17 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "X")
 		{
 			settings->ParentWindowId = strtol(arg->Value, NULL, 0);
-			printf("-X %s -> --parent-window %s\n", arg->Value, arg->Value);
+			printf("-X %s -> /parent-window:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "z")
 		{
 			settings->CompressionEnabled = TRUE;
-			printf("-z -> --compression\n");
+			printf("-z -> /compression\n");
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
 			settings->RemoteApplicationMode = TRUE;
-			printf("--app -> --app + program name or alias\n");
+			printf("--app -> /app + program name or alias\n");
 		}
 		CommandLineSwitchCase(arg, "ext")
 		{
@@ -545,7 +545,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "no-auth")
 		{
 			settings->Authentication = FALSE;
-			printf("--no-auth -> --disable-authentication\n");
+			printf("--no-auth -> -authentication\n");
 		}
 		CommandLineSwitchCase(arg, "authonly")
 		{
@@ -559,12 +559,12 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		{
 			settings->FastPathInput = FALSE;
 			settings->FastPathOutput = FALSE;
-			printf("--no-fastpath -> --disable-fast-path\n");
+			printf("--no-fastpath -> -fast-path\n");
 		}
 		CommandLineSwitchCase(arg, "no-motion")
 		{
 			settings->MouseMotion = FALSE;
-			printf("--no-motion -> --disable-mouse-motion\n");
+			printf("--no-motion -> -mouse-motion\n");
 		}
 		CommandLineSwitchCase(arg, "gdi")
 		{
@@ -573,26 +573,26 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 			else if (strcmp(arg->Value, "hw") == 0)
 				settings->SoftwareGdi = FALSE;
 
-			printf("--gdi %s -> --gdi %s\n", arg->Value, arg->Value);
+			printf("--gdi %s -> /gdi:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "no-osb")
 		{
 			settings->OffscreenSupportLevel = FALSE;
-			printf("--no-osb -> --disable-offscreen-cache\n");
+			printf("--no-osb -> -offscreen-cache\n");
 		}
 		CommandLineSwitchCase(arg, "no-bmp-cache")
 		{
 			settings->BitmapCacheEnabled = FALSE;
-			printf("--no-bmp-cache -> --disable-bitmap-cache\n");
+			printf("--no-bmp-cache -> -bitmap-cache\n");
 		}
 		CommandLineSwitchCase(arg, "plugin")
 		{
-			printf("--plugin -> -a, --vc, --dvc and channel-specific options\n");
+			printf("--plugin -> /a, /vc, /dvc and channel-specific options\n");
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{
 			settings->RemoteFxCodec = TRUE;
-			printf("--rfx -> --rfx\n");
+			printf("--rfx -> /rfx\n");
 		}
 		CommandLineSwitchCase(arg, "rfx-mode")
 		{
@@ -600,37 +600,38 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				settings->RemoteFxCodecMode = 0x00;
 			else if (arg->Value[0] == 'i')
 				settings->RemoteFxCodecMode = 0x02;
-			printf("--rfx-mode -> --rfx-mode\n");
+
+			printf("--rfx-mode -> /rfx-mode\n");
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{
 			settings->NSCodec = TRUE;
-			printf("--nsc -> --nsc\n");
+			printf("--nsc -> /nsc\n");
 		}
 		CommandLineSwitchCase(arg, "disable-wallpaper")
 		{
 			settings->DisableWallpaper = TRUE;
-			printf("--disable-wallpaper -> --disable-wallpaper\n");
+			printf("--disable-wallpaper -> -wallpaper\n");
 		}
 		CommandLineSwitchCase(arg, "composition")
 		{
 			settings->AllowDesktopComposition = TRUE;
-			printf("--composition -> --enable-composition\n");
+			printf("--composition -> +composition\n");
 		}
 		CommandLineSwitchCase(arg, "disable-full-window-drag")
 		{
 			settings->DisableFullWindowDrag = TRUE;
-			printf("--disable-full-window-drag -> --disable-window-drag\n");
+			printf("--disable-full-window-drag -> -window-drag\n");
 		}
 		CommandLineSwitchCase(arg, "disable-menu-animations")
 		{
 			settings->DisableMenuAnims = TRUE;
-			printf("--disable-menu-animations -> --disable-menu-anims\n");
+			printf("--disable-menu-animations -> -menu-anims\n");
 		}
 		CommandLineSwitchCase(arg, "disable-theming")
 		{
 			settings->DisableThemes = TRUE;
-			printf("--disable-theming -> --disable-themes\n");
+			printf("--disable-theming -> -themes\n");
 		}
 		CommandLineSwitchCase(arg, "ntlm")
 		{
@@ -639,7 +640,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "ignore-certificate")
 		{
 			settings->IgnoreCertificate = TRUE;
-			printf("--ignore-certificate -> --cert-ignore\n");
+			printf("--ignore-certificate -> /cert-ignore\n");
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
@@ -665,22 +666,22 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				settings->NlaSecurity = TRUE;
 			}
 
-			printf("--sec %s -> --sec %s\n", arg->Value, arg->Value);
+			printf("--sec %s -> /sec:%s\n", arg->Value, arg->Value);
 		}
 		CommandLineSwitchCase(arg, "no-rdp")
 		{
 			settings->RdpSecurity = FALSE;
-			printf("--no-rdp -> --disable-sec-rdp\n");
+			printf("--no-rdp -> -sec-rdp\n");
 		}
 		CommandLineSwitchCase(arg, "no-tls")
 		{
 			settings->TlsSecurity = FALSE;
-			printf("--no-tls -> --disable-sec-tls\n");
+			printf("--no-tls -> -sec-tls\n");
 		}
 		CommandLineSwitchCase(arg, "no-nla")
 		{
 			settings->NlaSecurity = FALSE;
-			printf("--no-nla -> --disable-sec-nla\n");
+			printf("--no-nla -> -sec-nla\n");
 		}
 		CommandLineSwitchCase(arg, "secure-checksum")
 		{
@@ -695,10 +696,10 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	printf("%s -> -v %s", settings->ServerHostname, settings->ServerHostname);
+	printf("%s -> /v:%s", settings->ServerHostname, settings->ServerHostname);
 
 	if (settings->ServerPort != 3389)
-		printf(" --port %d", settings->ServerPort);
+		printf(" /port:%d", settings->ServerPort);
 
 	printf("\n");
 
