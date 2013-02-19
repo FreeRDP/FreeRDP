@@ -223,7 +223,7 @@ static void* schannel_test_server_thread(void* arg)
 
 	cchNameString = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0);
 
-	pszNameString = (LPTSTR) malloc(status * sizeof(TCHAR));
+	pszNameString = (LPTSTR) malloc(cchNameString * sizeof(TCHAR));
 	cchNameString = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, cchNameString);
 
 	_tprintf(_T("Certificate Name: %s\n"), pszNameString);
@@ -321,8 +321,9 @@ static void* schannel_test_server_thread(void* arg)
 
 		printf("Server cBuffers: %d pBuffers[0]: %d type: %d\n",
 			SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Server Input cBuffers: %d pBuffers[1]: %d type: %d\n",
-			SecBufferDesc_in.cBuffers, SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
+		printf("Server Input cBuffers: %d pBuffers[0]: %d type: %d pBuffers[1]: %d type: %d\n", SecBufferDesc_in.cBuffers,
+			SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
+			SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
 		if (SecBufferDesc_in.pBuffers[1].BufferType == SECBUFFER_EXTRA)
 		{
@@ -532,7 +533,7 @@ int TestSchannel(int argc, char* argv[])
 		{
 			NumberOfBytesRead = 0;
 		}
-		
+
 		g_ClientWait = TRUE;
 		printf("NumberOfBytesRead: %d\n", NumberOfBytesRead);
 
@@ -576,8 +577,9 @@ int TestSchannel(int argc, char* argv[])
 
 		printf("Client Output cBuffers: %d pBuffers[0]: %d type: %d\n",
 			SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Client Input cBuffers: %d pBuffers[1]: %d type: %d\n",
-			SecBufferDesc_in.cBuffers, SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
+		printf("Client Input cBuffers: %d pBuffers[0]: %d type: %d pBuffers[1]: %d type: %d\n", SecBufferDesc_in.cBuffers,
+			SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
+			SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
 		if (status != SEC_E_INCOMPLETE_MESSAGE)
 		{

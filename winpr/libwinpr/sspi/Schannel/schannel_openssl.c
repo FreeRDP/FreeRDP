@@ -321,6 +321,9 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 			printf("SSL_accept error: %s\n", openssl_get_ssl_error_string(ssl_error));
 		}
 
+		if (status == 1)
+			context->connected = TRUE;
+
 		status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
 
 		if (pOutput->cBuffers < 1)
@@ -339,12 +342,12 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
 			pBuffer->cbBuffer = status;
 
-			return SEC_I_CONTINUE_NEEDED;
+			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
 		{
 			pBuffer->cbBuffer = 0;
-			return SEC_E_OK;
+			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 	}
 
