@@ -7,8 +7,15 @@
 #include <Functiondiscoverykeys_devpkey.h>
 #include <Audioclient.h>
 
-#define REFTIMES_PER_SEC  10000000
-#define REFTIMES_PER_MILLISEC  10000
+//#define REFTIMES_PER_SEC  10000000
+//#define REFTIMES_PER_MILLISEC  10000
+
+#define REFTIMES_PER_SEC  100000
+#define REFTIMES_PER_MILLISEC  100
+
+//#define REFTIMES_PER_SEC  50000
+//#define REFTIMES_PER_MILLISEC  50
+
 
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C,
 	    0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E);
@@ -20,11 +27,12 @@ DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4,0xde, 0x18
 LPWSTR devStr = NULL;
 wfPeerContext* latestPeer = NULL;
 
-int wf_wasapi_set_latest_peer(wfPeerContext* peer)
+int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 {
 	latestPeer = peer;
 	return 0;
 }
+
 
 int wf_wasapi_activate(rdpsnd_server_context* context)
 {
@@ -118,8 +126,6 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			_tprintf(_T("Failed to get device friendly name\n"));
 			exit(1);
 		}
-
-		
 
 		//do this a more reliable way
 		if (wcscmp(pattern, nameVar.pwszVal) < 0)
@@ -246,7 +252,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	}
 
 
-	hnsActualDuration = (double)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
+	hnsActualDuration = (UINT32)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
 	hr = pAudioClient->lpVtbl->Start(pAudioClient);
 	if (FAILED(hr))
@@ -262,7 +268,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 
 
 		Sleep(hnsActualDuration/REFTIMES_PER_MILLISEC/2);
-
+		
 		hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
 		if (FAILED(hr))
 		{
@@ -279,9 +285,10 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 				exit(1);
 			}
 
-			//write data here
-			//fwrite(pData, 1, packetLength * 4, pFile);
-			context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
+			//Here we are writing the audio data
+			//not sure if this flag is ever set by the system; msdn is not clear about it
+			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
+				context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
 
 			hr = pCaptureClient->lpVtbl->ReleaseBuffer(pCaptureClient, numFramesAvailable);
 			if (FAILED(hr))

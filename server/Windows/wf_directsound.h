@@ -4,7 +4,7 @@
 #include <freerdp/server/rdpsnd.h>
 #include "wf_interface.h"
 
-int wf_directsound_set_latest_peer(wfPeerContext* peer);
+int wf_rdpsnd_set_latest_peer(wfPeerContext* peer);
 
 int wf_directsound_activate(rdpsnd_server_context* context);
 

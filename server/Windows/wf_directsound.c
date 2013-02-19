@@ -20,7 +20,7 @@ DSCBUFFERDESC dscbd;
 DWORD lastPos;
 wfPeerContext* latestPeer;
 
-int wf_directsound_set_latest_peer(wfPeerContext* peer)
+int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 {
 	latestPeer = peer;
 	return 0;
