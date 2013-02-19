@@ -439,6 +439,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	{
 		if (channel_id != rdp->mcs->user_id)
 			return FALSE;
+
 		rdp->mcs->user_channel_joined = TRUE;
 
 		if (!mcs_send_channel_join_request(rdp->mcs, MCS_GLOBAL_CHANNEL_ID))
@@ -448,6 +449,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	{
 		if (channel_id != MCS_GLOBAL_CHANNEL_ID)
 			return FALSE;
+
 		rdp->mcs->global_channel_joined = TRUE;
 
 		if (rdp->settings->ChannelCount > 0)
@@ -471,6 +473,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 			rdp->settings->ChannelDefArray[i].joined = TRUE;
 			break;
 		}
+
 		if (i + 1 < rdp->settings->ChannelCount)
 		{
 			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[i + 1].ChannelId))
@@ -484,8 +487,10 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	{
 		if (!rdp_client_establish_keys(rdp))
 			return FALSE;
+
 		if (!rdp_send_client_info(rdp))
 			return FALSE;
+
 		rdp->state = CONNECTION_STATE_LICENSE;
 	}
 

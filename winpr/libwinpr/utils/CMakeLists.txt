@@ -28,6 +28,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/KeyValuePair.c
 	collections/CountdownEvent.c
 	collections/BufferPool.c
+	collections/ObjectPool.c
 	collections/MessageQueue.c)
 
 set(${MODULE_PREFIX}_SRCS

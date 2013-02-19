@@ -685,9 +685,9 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 	 * We cannot enter paths like c:\ because : is an arg separator
 	 * thus, paths are entered as c+\ and the + is substituted here
 	 */
-	if ( path[1] == '+' )
+	if (path[1] == '+')
 	{
-		if ( (path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z') )
+		if ((path[0]>='a' && path[0]<='z') || (path[0]>='A' && path[0]<='Z'))
 		{
 			path[1] = ':';
 		}
@@ -732,8 +732,6 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	char* name;
-	char* path;
 	RDPDR_DRIVE* drive;
 #ifdef WIN32
 	char* dev;
@@ -742,20 +740,42 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #endif
 
 	drive = (RDPDR_DRIVE*) pEntryPoints->device;
-	name = drive->Name;
-	path = drive->Path;
 
 #ifndef WIN32
-        drive_register_drive_path(pEntryPoints, name, path);
+
+	if (strcmp(drive->Path, "*") == 0)
+	{
+		/* all drives */
+
+		free(drive->Path);
+		drive->Path = _strdup("/");
+	}
+	else if (strcmp(drive->Path, "%") == 0)
+	{
+		char* home_env = NULL;
+
+		/* home directory */
+
+		home_env = getenv("HOME");
+		free(drive->Path);
+
+		if (home_env)
+			drive->Path = _strdup(home_env);
+		else
+			drive->Path = _strdup("/");
+	}
+
+        drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
+
 #else
         /* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
-	if( path[0] == '%' )
+        if (strcmp(drive->Path, "%") == 0)
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
-		drive_register_drive_path(pEntryPoints, name, _strdup(buf));
+		drive_register_drive_path(pEntryPoints, drive->Name, _strdup(buf));
 	}
-	else if( path[0] == '*' )
+	else if (strcmp(drive->Path, "*") == 0)
 	{
 		int i;
 
@@ -767,7 +787,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			if (*dev > 'B')
                         {
 				/* Suppress disk drives A and B to avoid pesty messages */
-				_snprintf(buf, sizeof(buf) - 4, "%s", name);
+				_snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
 				len = strlen(buf);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
@@ -779,7 +799,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
         else
         {
-		drive_register_drive_path(pEntryPoints, name, path);
+		drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 	}
 #endif
 	

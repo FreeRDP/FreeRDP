@@ -40,8 +40,6 @@
 
 typedef struct xf_info xfInfo;
 
-#include "xf_event.h"
-
 struct xf_info
 {
 	int bpp;

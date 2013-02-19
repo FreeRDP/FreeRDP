@@ -112,6 +112,7 @@ void xf_SendClientEvent(xfInfo* xfi, xfWindow* window, Atom atom, unsigned int n
        }
 
        DEBUG_X11("Send ClientMessage Event: wnd=0x%04X", (unsigned int) xevent.xclient.window);
+
        XSendEvent(xfi->display, RootWindowOfScreen(xfi->screen), False, 
 		SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
        XSync(xfi->display, False);
@@ -170,9 +171,8 @@ BOOL xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != TRUE) {
+	if (status != TRUE)
 		return FALSE;
-	}
 
 	xfi->current_desktop = (int) *prop;
 	free(prop);
@@ -199,7 +199,8 @@ BOOL xf_GetWorkArea(xfInfo* xfi)
 	if (status != TRUE)
 		return FALSE;
 
-	if ((xfi->current_desktop * 4 + 3) >= nitems) {
+	if ((xfi->current_desktop * 4 + 3) >= nitems)
+	{
 		free(prop);
 		return FALSE;
 	}
@@ -507,7 +508,7 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 			(UINT32) window->handle, window->left, window->top, window->right, window->bottom,
 			window->width, window->height, wnd->windowId);
 
-	memset(&gcv, 0, sizeof(gcv));
+	ZeroMemory(&gcv, sizeof(gcv));
 	window->gc = XCreateGC(xfi->display, window->handle, GCGraphicsExposures, &gcv);
 
 	class_hints = XAllocClassHint();
@@ -939,12 +940,12 @@ rdpWindow* xf_rdpWindowFromWindow(xfInfo* xfi, Window wnd)
 			if (xfi->_context != NULL)
 			{
 				rail = xfi->_context->rail;
+
 				if (rail != NULL)
-				{
-					return window_list_get_by_extra_id(rail->list, (void*)(long)wnd);
-				}
+					return window_list_get_by_extra_id(rail->list, (void*) (long) wnd);
 			}
 		}
 	}
+
 	return NULL;
 }

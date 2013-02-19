@@ -45,7 +45,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 	void* rfds[32];
 	fd_set rfds_set;
 
-	memset(rfds, 0, sizeof(rfds));
+	ZeroMemory(rfds, sizeof(rfds));
 
 	while (1)
 	{
