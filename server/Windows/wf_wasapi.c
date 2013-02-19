@@ -268,7 +268,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 
 
 		Sleep(hnsActualDuration/REFTIMES_PER_MILLISEC/2);
-		
+
 		hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
 		if (FAILED(hr))
 		{
