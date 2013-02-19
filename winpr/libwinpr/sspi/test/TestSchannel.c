@@ -26,6 +26,14 @@ BYTE test_DummyMessage[64] =
 	0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD
 };
 
+BYTE test_LastDummyMessage[64] =
+{
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
 {
 	BYTE* ioBuffer;
@@ -153,6 +161,9 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 
 	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
 	winpr_HexDump((BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
+
+	if (memcmp(Message.pBuffers[1].pvBuffer, test_LastDummyMessage, sizeof(test_LastDummyMessage)) == 0)
+		return -1;
 
 	return 0;
 }
@@ -371,6 +382,7 @@ static void* schannel_test_server_thread(void* arg)
 
 int TestSchannel(int argc, char* argv[])
 {
+	int count;
 	int index;
 	ALG_ID algId;
 	HANDLE thread;
@@ -606,6 +618,8 @@ int TestSchannel(int argc, char* argv[])
 	}
 	while(1);
 
+	count = 0;
+
 	do
 	{
 		if (schannel_send(table, g_ServerWritePipe, &context, test_DummyMessage, sizeof(test_DummyMessage)) < 0)
@@ -628,9 +642,12 @@ int TestSchannel(int argc, char* argv[])
 			test_DummyMessage[index] = b;
 		}
 
-		Sleep(1000 * 10);
+		Sleep(100);
+		count++;
 	}
-	while(1);
+	while(count < 3);
+
+	schannel_send(table, g_ServerWritePipe, &context, test_LastDummyMessage, sizeof(test_LastDummyMessage));
 
 	WaitForSingleObject(thread, INFINITE);
 

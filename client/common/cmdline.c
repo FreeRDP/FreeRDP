@@ -169,7 +169,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 			if (arg->Format)
 			{
 				length = strlen(arg->Name) + strlen(arg->Format) + 2;
-				str = malloc(length + 1);
+				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s", str);
 				free(str);
@@ -184,7 +184,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
 			length = strlen(arg->Name) + 32;
-			str = malloc(length + 1);
+			str = (char*) malloc(length + 1);
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
@@ -447,7 +447,7 @@ char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int*
 
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = (rdpSettings*) context;
 
 	CommandLineSwitchStart(arg)
 
@@ -455,7 +455,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
@@ -470,7 +469,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
@@ -482,7 +480,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
