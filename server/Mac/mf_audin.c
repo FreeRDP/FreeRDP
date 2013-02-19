@@ -60,15 +60,15 @@ void mf_peer_audin_init(mfPeerContext* context)
 {
 	context->audin = audin_server_context_new(context->vcm);
 	context->audin->data = context;
-
+	
 	context->audin->server_formats = audio_formats;
 	context->audin->num_server_formats = sizeof(audio_formats) / sizeof(audio_formats[0]);
-
+	
 	context->audin->dst_format.wFormatTag = 1;
 	context->audin->dst_format.nChannels = 2;
 	context->audin->dst_format.nSamplesPerSec = 44100;
 	context->audin->dst_format.wBitsPerSample = 16;
-
+	
 	context->audin->Opening = mf_peer_audin_opening;
 	context->audin->OpenResult = mf_peer_audin_open_result;
 	context->audin->ReceiveSamples = mf_peer_audin_receive_samples;
