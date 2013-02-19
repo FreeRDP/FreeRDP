@@ -1295,6 +1295,7 @@ int xfreerdp_run(freerdp* instance)
 
 	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
+	async_channels = settings->AsyncChannels;
 
 	if (async_update)
 	{
@@ -1305,8 +1306,6 @@ int xfreerdp_run(freerdp* instance)
 	{
 		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
 	}
-
-	async_channels = FALSE;
 
 	if (async_channels)
 	{

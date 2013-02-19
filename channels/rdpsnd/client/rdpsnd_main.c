@@ -135,6 +135,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		{
 			if (rdpsnd->device)
 				IFCALL(rdpsnd->device->Close, rdpsnd->device);
+
 			rdpsnd->is_open = FALSE;
 			rdpsnd->close_timestamp = 0;
 
