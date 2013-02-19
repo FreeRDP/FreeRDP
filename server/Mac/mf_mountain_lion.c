@@ -34,13 +34,6 @@ CGDisplayStreamUpdateRef lastUpdate = NULL;
 
 BYTE* localBuf = NULL;
 
-//CVPixelBufferRef pxbuffer = NULL;
-//void *baseAddress = NULL;
-
-//CGContextRef bitmapcontext = NULL;
-
-//CGImageRef image = NULL;
-
 BOOL ready = FALSE;
 
 void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =  ^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
@@ -96,7 +89,8 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 				break;
 				
 			case kCGDisplayStreamFrameStatusStopped:
-				printf("kCGDisplayStreamFrameStatusStopped\n");
+				//we dont need to clean up
+				//printf("kCGDisplayStreamFrameStatusStopped\n");
 				break;
 				
 			case kCGDisplayStreamFrameStatusFrameBlank:
@@ -149,7 +143,6 @@ int mf_mlion_display_info(UINT32* disp_width, UINT32* disp_height, UINT32* scale
 
 int mf_mlion_screen_updates_init()
 {
-	printf("mf_mlion_screen_updates_init()\n");
 	CGDirectDisplayID display_id;
 	
 	display_id = CGMainDisplayID();
@@ -218,11 +211,6 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
 	if (lastUpdate != NULL)
 	{
 		mf_mlion_peek_dirty_region(invalid);
-		
-		//CFRelease(lastUpdate);
-		
-		//lastUpdate = NULL;
-		
 	}
 	
 	
@@ -237,11 +225,8 @@ int mf_mlion_peek_dirty_region(RFX_RECT* invalid)
 	CGRect dirtyRegion;
 	
 	const CGRect * rects = CGDisplayStreamUpdateGetRects(lastUpdate, kCGDisplayStreamUpdateDirtyRects, &num_rects);
-	
-	//printf("\trectangles: %zd\n", num_rects);
-	
+		
 	if (num_rects == 0) {
-		//dispatch_semaphore_signal(region_sem);
 		return 0;
 	}
 	
@@ -283,23 +268,6 @@ int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxDat
 	dispatch_semaphore_wait(data_sem, DISPATCH_TIME_FOREVER);
 	*pxData = localBuf;
 	dispatch_semaphore_signal(data_sem);
-	
-	/*
-	 if (image != NULL) {
-	 CGImageRelease(image);
-	 }
-	 image = CGDisplayCreateImageForRect(
-	 kCGDirectMainDisplay,
-	 CGRectMake(x, y, width, height) );
-	 
-	 CGContextDrawImage(
-	 bitmapcontext,
-	 CGRectMake(0, 1800 - height, width, height),
-	 image);
-	 
-	 *pxData = baseAddress;
-	 
-	 */
 	
 	return 0;
 }

@@ -44,12 +44,7 @@ static const rdpsndFormat audio_formats[] =
 
 static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
-	printf("RDPSND Activated\n");
-	
-	
-	
-	printf("Let's create an audio queue for input!\n");
-	
+
 	OSStatus status;
 	
 	recorderState.dataFormat.mSampleRate = 44100.0;
@@ -87,9 +82,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05, &recorderState.bufferByteSize);
 	
-	
-	printf("Preparing a set of buffers...");
-	
+		
 	for (int i = 0; i < snd_numBuffers; ++i)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue,
@@ -101,11 +94,6 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 					0,
 					NULL);
 	}
-	
-	printf("done\n");
-	
-	printf("recording...\n");
-	
 	
 	
 	recorderState.currentPacket = 0;
@@ -120,7 +108,6 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 {
-	//printf("RDPSND INIT\n");
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 	

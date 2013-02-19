@@ -184,6 +184,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		}
 		
 		//look trhough the array of peers until an empty slot
+		peerId = NULL;
 		for(i=0; i<MF_INFO_MAXPEERS; ++i)
 		{
 			//empty index will be our peer id
@@ -197,7 +198,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = ((rdpContext*) context)->peer;
 		mfi->peers[peerId]->pId = peerId;
 		mfi->peerCount++;
-		printf("Registering Peer: id=%d #=%d\n", peerId, mfi->peerCount);
+		//printf("Registering Peer: id=%d #=%d\n", peerId, mfi->peerCount);
 		
 		mf_info_unlock(mfi);
 		
@@ -215,7 +216,7 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = NULL;
 		mfi->peerCount--;
 		
-		printf("Unregistering Peer: id=%d, #=%d\n", peerId, mfi->peerCount);
+		//printf("Unregistering Peer: id=%d, #=%d\n", peerId, mfi->peerCount);
 		
 		//screen capture cleanup
 		if (mfi->peerCount == 0)

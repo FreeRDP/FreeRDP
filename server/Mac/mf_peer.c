@@ -72,7 +72,6 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 {
 	mfPeerContext* context = (mfPeerContext*) client->context;
 	mfEvent* event;
-	//HGDI_RGN invalid_region;
 	
 	if (context->activated == FALSE)
 		return TRUE;
@@ -84,9 +83,6 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 		if (event->type == MF_EVENT_TYPE_REGION)
 		{
 			printf("unhandled event\n");
-			/*mfEventRegion* region = (mfEventRegion*) mf_event_pop(info_event_queue);
-			 gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
-			 xf_event_region_free(region);*/
 		}
 		else if (event->type == MF_EVENT_TYPE_FRAME_TICK)
 		{
@@ -170,19 +166,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	update->SurfaceBits(update->context, cmd);
 	
-	//clean up
+	//clean up... maybe?
 	
-	// note: need to stop getting new dirty rects until here
-	
-	
-	/*
-	 CGColorSpaceRelease(rgbColorSpace);
-	 CGImageRelease(image);
-	 CGContextRelease(context);
-	 
-	 CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
-	 CVPixelBufferRelease(pxbuffer);
-	 */
 }
 
 /* Called when we have a new peer connecting */
