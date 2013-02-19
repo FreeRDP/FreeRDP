@@ -41,7 +41,7 @@ int wf_directsound_activate(rdpsnd_server_context* context)
 	if (FAILED(hr))
 	{
 		_tprintf(_T("Failed to create sound capture device\n"));
-		return;
+		return 1;
 	}
 	_tprintf(_T("Created sound capture device\n"));
 

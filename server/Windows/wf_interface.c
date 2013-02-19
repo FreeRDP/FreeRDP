@@ -54,7 +54,8 @@ int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
 		*width = GetDeviceCaps(dc, HORZRES);
 		*height = GetDeviceCaps(dc, VERTRES);
 		*bpp = GetDeviceCaps(dc, BITSPIXEL);
-		ReleaseDC(NULL, dc);
+		//ReleaseDC(NULL, dc);
+		DeleteDC(dc);
 
 	}
 	else
