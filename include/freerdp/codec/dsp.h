@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_UTILS_DSP_H
-#define FREERDP_UTILS_DSP_H
+#ifndef FREERDP_CODEC_DSP_H
+#define FREERDP_CODEC_DSP_H
 
 #include <freerdp/api.h>
 
@@ -40,6 +40,7 @@ union _ADPCM
 typedef union _ADPCM ADPCM;
 
 typedef struct _FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
+
 struct _FREERDP_DSP_CONTEXT
 {
 	BYTE* resampled_buffer;
@@ -81,5 +82,5 @@ FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
 }
 #endif
 
-#endif /* FREERDP_UTILS_DSP_H */
+#endif /* FREERDP_CODEC_DSP_H */
 

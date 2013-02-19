@@ -32,7 +32,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/dsp.h>
+#include <freerdp/codec/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include <AudioToolbox/AudioToolbox.h>

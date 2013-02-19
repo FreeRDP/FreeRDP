@@ -188,6 +188,7 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 	stream_seek_BYTE(data_in); /* bPad */
 
 	DEBUG_SVC("wNumberOfFormats %d wVersion %d", wNumberOfFormats, wVersion);
+
 	if (wNumberOfFormats < 1)
 	{
 		DEBUG_WARN("wNumberOfFormats is 0");
@@ -232,26 +233,32 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 
 		if (rdpsnd->fixed_format > 0 && rdpsnd->fixed_format != format->wFormatTag)
 			continue;
+
 		if (rdpsnd->fixed_channel > 0 && rdpsnd->fixed_channel != format->nChannels)
 			continue;
+
 		if (rdpsnd->fixed_rate > 0 && rdpsnd->fixed_rate != format->nSamplesPerSec)
 			continue;
+
 		if (rdpsnd->device && rdpsnd->device->FormatSupported(rdpsnd->device, format))
 		{
 			DEBUG_SVC("format supported.");
 
 			stream_check_size(data_out, 18 + format->cbSize);
 			stream_write(data_out, format_mark, 18 + format->cbSize);
+
 			if (format->cbSize > 0)
 			{
 				format->data = malloc(format->cbSize);
-				memcpy(format->data, data_mark, format->cbSize);
+				CopyMemory(format->data, data_mark, format->cbSize);
 			}
+
 			n_out_formats++;
 		}
 	}
 
 	rdpsnd->n_supported_formats = n_out_formats;
+
 	if (n_out_formats > 0)
 	{
 		rdpsnd->supported_formats = out_formats;
@@ -354,7 +361,7 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 
 	rdpsnd->expectingWave = 0;
 
-	memcpy(stream_get_head(data_in), rdpsnd->waveData, 4);
+	CopyMemory(stream_get_head(data_in), rdpsnd->waveData, 4);
 
 	if (stream_get_size(data_in) != rdpsnd->waveDataSize)
 	{

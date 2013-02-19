@@ -19,6 +19,7 @@ set(MODULE_NAME "freerdp-codec")
 set(MODULE_PREFIX "FREERDP_CODEC")
 
 set(${MODULE_PREFIX}_SRCS
+	dsp.c
 	bitmap.c
 	color.c
 	rfx_bitstream.h
