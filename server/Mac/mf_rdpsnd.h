@@ -60,7 +60,7 @@ struct _AQRecorderState
 typedef struct _AQRecorderState AQRecorderState;
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
-BOOL mf_peer_rdpsnd_stop();
+BOOL mf_peer_rdpsnd_stop(void);
 
 #endif /* MF_RDPSND_H */
 

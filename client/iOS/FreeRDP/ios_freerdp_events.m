@@ -1,0 +1,145 @@
+/*
+ RDP event queuing 
+ 
+ Copyright 2013 Thinstuff Technologies GmbH, Author: Dorian Johnson
+ 
+ This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+ If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+#include "ios_freerdp_events.h"
+
+#pragma mark -
+#pragma mark Sending compacted input events (from main thread)
+
+// While this function may be called from any thread that has an autorelease pool allocated, it is not threadsafe: caller is responsible for synchronization
+BOOL ios_events_send(mfInfo* mfi, NSDictionary * event_description)
+{		
+	NSData * encoded_description = [NSKeyedArchiver archivedDataWithRootObject:event_description];
+	
+	if ([encoded_description length] > 32000 || (mfi->event_pipe_producer == -1) )
+		return FALSE;
+	
+	uint32_t archived_data_len = (uint32_t)[encoded_description length];
+	
+	//NSLog(@"writing %d bytes to input event pipe", archived_data_len);
+	
+	if (write(mfi->event_pipe_producer, &archived_data_len, 4) == -1)
+	{
+		NSLog(@"%s: Failed to write length descriptor to pipe.", __func__);
+		return FALSE;
+	}
+	
+	if (write(mfi->event_pipe_producer, [encoded_description bytes], archived_data_len) == -1)
+	{
+		NSLog(@"%s: Failed to write %d bytes into the event queue (event type: %@).", __func__, (int)[encoded_description length], [event_description objectForKey:@"type"]);
+		return FALSE;
+	}
+	
+	return TRUE;	
+}
+
+
+#pragma mark -
+#pragma mark Processing compacted input events (from connection thread runloop)
+
+static BOOL ios_events_handle_event(mfInfo* mfi, NSDictionary * event_description)
+{
+	NSString * event_type = [event_description objectForKey:@"type"];
+	BOOL should_continue = TRUE;
+	freerdp* instance = mfi->instance;
+	
+	if ([event_type isEqualToString:@"mouse"])
+	{        
+		instance->input->MouseEvent(instance->input, 
+                                    [[event_description objectForKey:@"flags"] unsignedShortValue],
+                                    [[event_description objectForKey:@"coord_x"] unsignedShortValue],
+                                    [[event_description objectForKey:@"coord_y"] unsignedShortValue]);
+	}
+	else if ([event_type isEqualToString:@"keyboard"])
+	{
+		if ([[event_description objectForKey:@"subtype"] isEqualToString:@"scancode"])
+			instance->input->KeyboardEvent(instance->input, 
+                                           [[event_description objectForKey:@"flags"] unsignedShortValue],
+                                           [[event_description objectForKey:@"scancode"] unsignedShortValue]);
+		else if ([[event_description objectForKey:@"subtype"] isEqualToString:@"unicode"])
+			instance->input->UnicodeKeyboardEvent(instance->input,
+                                                  [[event_description objectForKey:@"flags"] unsignedShortValue],
+                                                  [[event_description objectForKey:@"unicode_char"] unsignedShortValue]);
+		else
+			NSLog(@"%s: doesn't know how to send keyboard input with subtype %@", __func__, [event_description objectForKey:@"subtype"]);
+	}
+	else if ([event_type isEqualToString:@"disconnect"])
+		should_continue = FALSE;
+	else
+		NSLog(@"%s: unrecognized event type: %@", __func__, event_type);
+	
+	return should_continue;
+}
+
+BOOL ios_events_check_fds(mfInfo* mfi, fd_set* rfds)
+{	
+	if ( (mfi->event_pipe_consumer == -1) || !FD_ISSET(mfi->event_pipe_consumer, rfds))
+		return TRUE;
+	
+	uint32_t archived_data_length = 0;
+	ssize_t bytes_read;
+	
+	// First, read the length of the blob
+	bytes_read = read(mfi->event_pipe_consumer, &archived_data_length, 4);
+	
+	if (bytes_read == -1 || archived_data_length < 1 || archived_data_length > 32000)
+	{
+		NSLog(@"%s: just read length descriptor. bytes_read=%ld, archived_data_length=%u", __func__, bytes_read, archived_data_length);
+		return FALSE;
+	}
+	
+	//NSLog(@"reading %d bytes from input event pipe", archived_data_length);
+	
+	NSMutableData * archived_object_data = [[NSMutableData alloc] initWithLength:archived_data_length];
+	bytes_read = read(mfi->event_pipe_consumer, [archived_object_data mutableBytes], archived_data_length);
+	
+	if (bytes_read != archived_data_length)
+	{
+		NSLog(@"%s: attempted to read data; read %ld bytes but wanted %d bytes.", __func__, bytes_read, archived_data_length);
+		[archived_object_data release];
+		return FALSE;
+	}
+	
+	id unarchived_object_data = [NSKeyedUnarchiver unarchiveObjectWithData:archived_object_data];
+	[archived_object_data release];
+	
+	return ios_events_handle_event(mfi, unarchived_object_data);
+}
+
+BOOL ios_events_get_fds(mfInfo* mfi, void ** read_fds, int * read_count, void ** write_fds, int * write_count)
+{
+	read_fds[*read_count] = (void *)(long)(mfi->event_pipe_consumer);
+	(*read_count)++;
+	return TRUE;
+}
+
+// Sets up the event pipe
+BOOL ios_events_create_pipe(mfInfo* mfi)
+{
+	int pipe_fds[2];
+	
+	if (pipe(pipe_fds) == -1)
+	{
+		NSLog(@"%s: pipe failed.", __func__);
+		return FALSE;
+	}
+	
+	mfi->event_pipe_consumer = pipe_fds[0];
+	mfi->event_pipe_producer = pipe_fds[1];
+	return TRUE;
+}
+
+void ios_events_free_pipe(mfInfo* mfi)
+{
+	int consumer_fd = mfi->event_pipe_consumer, producer_fd = mfi->event_pipe_producer;
+	
+	mfi->event_pipe_consumer = mfi->event_pipe_producer = -1;
+	close(producer_fd);
+	close(consumer_fd);	
+}

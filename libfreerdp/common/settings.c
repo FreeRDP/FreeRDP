@@ -143,6 +143,22 @@ void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	settings->DeviceArray[settings->DeviceCount++] = device;
 }
 
+RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
+{
+	int index;
+	RDPDR_DEVICE* device;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+
+		if (strcmp(device->Name, name) == 0)
+			return device;
+	}
+
+	return NULL;
+}
+
 void freerdp_device_collection_free(rdpSettings* settings)
 {
 	int index;

@@ -49,6 +49,7 @@
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE
+#cmakedefine WITH_DEBUG_CAPABILITIES
 #cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_CLIPRDR
 #cmakedefine WITH_DEBUG_DVC

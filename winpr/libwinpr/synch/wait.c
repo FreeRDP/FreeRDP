@@ -65,7 +65,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		if (status != 0)
 			printf("WaitForSingleObject: pthread_join failure: %d\n", status);
 	}
-	if (Type == HANDLE_TYPE_MUTEX)
+	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		if (dwMilliseconds != INFINITE)
 			printf("WaitForSingleObject: timeout not implemented for mutex wait\n");
@@ -90,7 +90,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			timeout.tv_usec = dwMilliseconds * 1000;
 		}
 
-		status = select(event->pipe_fd[0] + 1, &rfds, 0, 0,
+		status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
 				(dwMilliseconds == INFINITE) ? NULL : &timeout);
 
 		if (status < 0)
@@ -145,6 +145,10 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 #endif
 
 #endif
+	}
+	else
+	{
+		printf("WaitForSingleObject: unknown handle type %d\n", Type);
 	}
 
 	return WAIT_OBJECT_0;

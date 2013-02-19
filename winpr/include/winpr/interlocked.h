@@ -23,8 +23,14 @@
 #include <winpr/spec.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/platform.h>
 
 #ifndef _WIN32
+
+/* workaround for SLIST_ENTRY conflict */
+
+#include <sys/queue.h>
+#undef SLIST_ENTRY
 
 #ifndef CONTAINING_RECORD
 #define CONTAINING_RECORD(address, type, field) \

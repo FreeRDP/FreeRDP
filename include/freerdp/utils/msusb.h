@@ -133,7 +133,7 @@ FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(BYTE* data, UINT3
 FREERDP_API int msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, BYTE* data, int* offset);
 
 /* MSUSB_CONFIG exported functions */
-FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new();
+FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new(void);
 FREERDP_API void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data_size, UINT32 NumInterfaces);
 FREERDP_API int msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, BYTE* data, int * offset);

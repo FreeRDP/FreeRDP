@@ -59,6 +59,9 @@ int connectErrorCode;
 #define ERRINFO_RPC_INITIATED_DISCONNECT_BY_USER_STRING \
 		"The disconnection was initiated by an administrative tool on the server running in the user's session."
 
+#define ERRINFO_LOGOFF_BY_USER_STRING \
+		"The disconnection was initiated by the user logging off his or her session on the server."
+
 /* Protocol-independent licensing codes */
 
 #define ERRINFO_LICENSE_INTERNAL_STRING \
@@ -351,6 +354,7 @@ static const ERRINFO ERRINFO_CODES[] =
 		ERRINFO_DEFINE(SERVER_INSUFFICIENT_PRIVILEGES),
 		ERRINFO_DEFINE(SERVER_FRESH_CREDENTIALS_REQUIRED),
 		ERRINFO_DEFINE(RPC_INITIATED_DISCONNECT_BY_USER),
+		ERRINFO_DEFINE(LOGOFF_BY_USER),
 
 		/* Protocol-independent licensing codes */
 		ERRINFO_DEFINE(LICENSE_INTERNAL),

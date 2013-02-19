@@ -29,13 +29,15 @@
 
 #include <winpr/synch.h>
 
-typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
+typedef void* (*OBJECT_NEW_FN)();
 typedef void (*OBJECT_FREE_FN)(void* obj);
+typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
 
 struct _wObject
 {
-	OBJECT_EQUALS_FN fnObjectEquals;
+	OBJECT_NEW_FN fnObjectNew;
 	OBJECT_FREE_FN fnObjectFree;
+	OBJECT_EQUALS_FN fnObjectEquals;
 };
 typedef struct _wObject wObject;
 
@@ -250,6 +252,28 @@ WINPR_API void BufferPool_Clear(wBufferPool* pool);
 WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);
 WINPR_API void BufferPool_Free(wBufferPool* pool);
 
+/* ObjectPool */
+
+struct _wObjectPool
+{
+	int size;
+	int capacity;
+	void** array;
+	HANDLE mutex;
+	wObject object;
+	BOOL synchronized;
+};
+typedef struct _wObjectPool wObjectPool;
+
+WINPR_API void* ObjectPool_Take(wObjectPool* pool);
+WINPR_API void ObjectPool_Return(wObjectPool* pool, void* obj);
+WINPR_API void ObjectPool_Clear(wObjectPool* pool);
+
+#define ObjectPool_Object(_pool)	(&_pool->object)
+
+WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
+WINPR_API void ObjectPool_Free(wObjectPool* pool);
+
 /* Message Queue */
 
 struct _wMessage
@@ -277,6 +301,7 @@ typedef struct _wMessageQueue wMessageQueue;
 
 WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
+WINPR_API int MessageQueue_Size(wMessageQueue* queue);
 
 WINPR_API void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
 WINPR_API void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
@@ -285,7 +310,7 @@ WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
 WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
 
-WINPR_API wMessageQueue* MessageQueue_New();
+WINPR_API wMessageQueue* MessageQueue_New(void);
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
 #endif /* WINPR_COLLECTIONS_H */

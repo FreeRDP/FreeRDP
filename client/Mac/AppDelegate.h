@@ -15,5 +15,5 @@
 @property (assign) IBOutlet NSWindow *window;
 
 
-int rdp_connect();
+int rdp_connect(void);
 @end

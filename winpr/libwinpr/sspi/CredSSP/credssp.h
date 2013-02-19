@@ -30,7 +30,7 @@ struct _CREDSSP_CONTEXT
 };
 typedef struct _CREDSSP_CONTEXT CREDSSP_CONTEXT;
 
-CREDSSP_CONTEXT* credssp_ContextNew();
+CREDSSP_CONTEXT* credssp_ContextNew(void);
 void credssp_ContextFree(CREDSSP_CONTEXT* context);
 
 #endif /* WINPR_SSPI_CREDSSP_PRIVATE_H */
