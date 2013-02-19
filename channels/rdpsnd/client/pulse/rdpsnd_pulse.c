@@ -212,7 +212,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat*
 
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			switch (format->wBitsPerSample)
 			{
 				case 8:
@@ -224,17 +224,20 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat*
 			}
 			break;
 
-		case 6: /* A-LAW */
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_DVI_ADPCM: /* IMA ADPCM */
+			sample_spec.format = PA_SAMPLE_S16LE;
+			break;
+
+		case WAVE_FORMAT_ALAW:
 			sample_spec.format = PA_SAMPLE_ALAW;
 			break;
 
-		case 7: /* U-LAW */
+		case WAVE_FORMAT_MULAW:
 			sample_spec.format = PA_SAMPLE_ULAW;
 			break;
 
-		case 2: /* MS ADPCM */
-		case 0x11: /* IMA ADPCM */
-			sample_spec.format = PA_SAMPLE_S16LE;
+		case WAVE_FORMAT_GSM610:
 			break;
 	}
 
@@ -374,7 +377,7 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			if (format->cbSize == 0 &&
 				(format->nSamplesPerSec <= PA_RATE_MAX) &&
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
@@ -384,8 +387,8 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 			}
 			break;
 
-		case 6: /* A-LAW */
-		case 7: /* U-LAW */
+		case WAVE_FORMAT_ALAW:
+		case WAVE_FORMAT_MULAW:
 			if (format->cbSize == 0 &&
 				(format->nSamplesPerSec <= PA_RATE_MAX) &&
 				(format->wBitsPerSample == 8) &&
@@ -395,8 +398,8 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 			}
 			break;
 
-		case 2: /* MS ADPCM */
-		case 0x11: /* IMA ADPCM */
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_DVI_ADPCM:
 			if ((format->nSamplesPerSec <= PA_RATE_MAX) &&
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))

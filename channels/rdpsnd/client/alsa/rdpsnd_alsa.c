@@ -145,7 +145,7 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 
 		switch (format->wFormatTag)
 		{
-			case 1: /* PCM */
+			case WAVE_FORMAT_PCM:
 				switch (format->wBitsPerSample)
 				{
 					case 8:
@@ -159,8 +159,8 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 				}
 				break;
 
-			case 2: /* MS ADPCM */
-			case 0x11: /* IMA ADPCM */
+			case WAVE_FORMAT_ADPCM:
+			case WAVE_FORMAT_DVI_ADPCM:
 				alsa->format = SND_PCM_FORMAT_S16_LE;
 				alsa->bytes_per_channel = 2;
 				break;
@@ -281,7 +281,7 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndForma
 {
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			if (format->cbSize == 0 &&
 				format->nSamplesPerSec <= 48000 &&
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
@@ -291,8 +291,8 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndForma
 			}
 			break;
 
-		case 2: /* MS ADPCM */
-		case 0x11: /* IMA ADPCM */
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_DVI_ADPCM:
 			if (format->nSamplesPerSec <= 48000 &&
 				format->wBitsPerSample == 4 &&
 				(format->nChannels == 1 || format->nChannels == 2))
@@ -300,7 +300,17 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndForma
 				return TRUE;
 			}
 			break;
+
+		case WAVE_FORMAT_ALAW:
+			break;
+
+		case WAVE_FORMAT_MULAW:
+			break;
+
+		case WAVE_FORMAT_GSM610:
+			break;
 	}
+
 	return FALSE;
 }
 
