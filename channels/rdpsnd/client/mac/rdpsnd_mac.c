@@ -97,16 +97,17 @@ static void rdpsnd_audio_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	aq_plugin_p->data_format.mChannelsPerFrame = 2;
 	aq_plugin_p->data_format.mBitsPerChannel = 16;
     
-	rv = AudioQueueNewOutput(&aq_plugin_p->data_format, // audio stream basic desc
-				 aq_playback_cb,            // callback when more data is required
-				 aq_plugin_p,               // data to pass to callback
-				 CFRunLoopGetCurrent(),     // The current run loop, and the one on 
-							    // which the audio queue playback callback 
-							    // will be invoked
-				 kCFRunLoopCommonModes,     // run loop modes in which callbacks can 
-							    // be invoked
-				 0,                         // flags - reserved
-				 &aq_plugin_p->aq_ref
+	rv = AudioQueueNewOutput(
+                             &aq_plugin_p->data_format, // audio stream basic desc
+                             aq_playback_cb,            // callback when more data is required
+                             aq_plugin_p,               // data to pass to callback
+                             CFRunLoopGetCurrent(),     // The current run loop, and the one on 
+                             // which the audio queue playback callback
+                             // will be invoked
+                             kCFRunLoopCommonModes,     // run loop modes in which callbacks can
+                             // be invoked
+                             0,                         // flags - reserved
+                             &aq_plugin_p->aq_ref
 				);
 	if (rv != 0) {
 		printf("rdpsnd_audio_open: AudioQueueNewOutput() failed with error %d\n", rv);
@@ -204,6 +205,8 @@ static void aq_playback_cb(void* user_data, AudioQueueRef aq_ref, AudioQueueBuff
 
 int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
+    printf("freerdp_rdpsnd_client_subsystem_entry()\n\n");
+    
 	ADDIN_ARGV* args;
 	rdpsndAudioQPlugin* aqPlugin;
     
