@@ -41,10 +41,6 @@
 #include <freerdp/utils/file.h>
 #include <freerdp/utils/thread.h>
 
-extern char* xf_pcap_file;
-extern BOOL xf_pcap_dump_realtime;
-
-#include "xf_event.h"
 #include "xf_input.h"
 #include "xf_encode.h"
 
@@ -134,7 +130,7 @@ void xf_xshm_init(xfInfo* xfi)
 	xfi->fb_image = XShmCreateImage(xfi->display, xfi->visual, xfi->depth,
 			ZPixmap, NULL, &(xfi->fb_shm_info), xfi->width, xfi->height);
 
-	if (xfi->fb_image == NULL)
+	if (!xfi->fb_image)
 	{
 		printf("XShmCreateImage failed\n");
 		return;
@@ -199,7 +195,7 @@ xfInfo* xf_info_init()
 
 	xfi->display = XOpenDisplay(NULL);
 
-	if (xfi->display == NULL)
+	if (!xfi->display)
 	{
 		printf("failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
@@ -215,7 +211,7 @@ xfInfo* xf_info_init()
 
 	pfs = XListPixmapFormats(xfi->display, &pf_count);
 
-	if (pfs == NULL)
+	if (!pfs)
 	{
 		printf("XListPixmapFormats failed\n");
 		exit(1);
@@ -234,7 +230,7 @@ xfInfo* xf_info_init()
 	}
 	XFree(pfs);
 
-	memset(&template, 0, sizeof(template));
+	ZeroMemory(&template, sizeof(template));
 	template.class = TrueColor;
 	template.screen = xfi->number;
 
@@ -310,10 +306,11 @@ void xf_peer_init(freerdp_peer* client)
 
 	xfp = (xfPeerContext*) client->context;
 
-	xfp->fps = 24;
+	xfp->fps = 16;
 	xfp->thread = 0;
 	xfp->activations = 0;
-	xfp->event_queue = xf_event_queue_new();
+
+	xfp->queue = MessageQueue_New();
 
 	xfi = xfp->info;
 	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
@@ -331,83 +328,7 @@ STREAM* xf_peer_stream_init(xfPeerContext* context)
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
-
 	pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
-}
-
-static BOOL xf_peer_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec, UINT32 new_usec)
-{
-	INT32 sec, usec;
-
-	if (*old_sec == 0 && *old_usec == 0)
-	{
-		*old_sec = new_sec;
-		*old_usec = new_usec;
-		return TRUE;
-	}
-
-	sec = new_sec - *old_sec;
-	usec = new_usec - *old_usec;
-
-	if (sec < 0 || (sec == 0 && usec < 0))
-	{
-		printf("Invalid time stamp detected.\n");
-		return FALSE;
-	}
-
-	*old_sec = new_sec;
-	*old_usec = new_usec;
-
-	while (usec < 0)
-	{
-		usec += 1000000;
-		sec--;
-	}
-
-	if (sec > 0)
-		Sleep(sec * 1000);
-
-	if (usec > 0)
-		USleep(usec);
-
-	return TRUE;
-}
-
-void xf_peer_dump_rfx(freerdp_peer* client)
-{
-	STREAM* s;
-	UINT32 prev_seconds;
-	UINT32 prev_useconds;
-	rdpUpdate* update;
-	rdpPcap* pcap_rfx;
-	pcap_record record;
-
-	s = stream_new(512);
-	update = client->update;
-	client->update->pcap_rfx = pcap_open(xf_pcap_file, FALSE);
-	pcap_rfx = client->update->pcap_rfx;
-
-	if (pcap_rfx == NULL)
-		return;
-
-	prev_seconds = prev_useconds = 0;
-
-	while (pcap_has_next_record(pcap_rfx))
-	{
-		pcap_get_next_record_header(pcap_rfx, &record);
-
-		s->data = realloc(s->data, record.length);
-		record.data = s->data;
-		s->size = record.length;
-
-		pcap_get_next_record_content(pcap_rfx, &record);
-		s->p = s->data + s->size;
-
-		if (xf_pcap_dump_realtime && xf_peer_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == FALSE)
-                        break;
-
-		update->SurfaceCommand(update->context, s);
-	}
 }
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
@@ -437,6 +358,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		 * Passing an offset source rectangle to rfx_compose_message()
 		 * leads to protocol errors, so offset the data pointer instead.
 		 */
+
 		rect.x = 0;
 		rect.y = 0;
 		rect.width = width;
@@ -465,7 +387,6 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 		image = xf_snapshot(xfp, x, y, width, height);
 
 		data = (BYTE*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
 
 		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
 				width, height, image->bytes_per_line);
@@ -490,12 +411,13 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 
 BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
+	int fds;
+	HANDLE event;
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	if (xfp->event_queue->pipe_fd[0] == -1)
-		return TRUE;
-
-	rfds[*rcount] = (void *)(long) xfp->event_queue->pipe_fd[0];
+	event = MessageQueue_Event(xfp->queue);
+	fds = GetEventFileDescriptor(event);
+	rfds[*rcount] = (void*) (long) fds;
 	(*rcount)++;
 
 	return TRUE;
@@ -504,9 +426,8 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
-	xfEvent* event;
+	wMessage message;
 	xfPeerContext* xfp;
-	HGDI_RGN invalid_region;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
@@ -514,31 +435,24 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 	if (xfp->activated == FALSE)
 		return TRUE;
 
-	event = xf_event_peek(xfp->event_queue);
-
-	if (event != NULL)
+	if (MessageQueue_Peek(xfp->queue, &message, TRUE))
 	{
-		if (event->type == XF_EVENT_TYPE_REGION)
+		if (message.id == MakeMessageId(PeerEvent, EncodeRegion))
 		{
-			xfEventRegion* region = (xfEventRegion*) xf_event_pop(xfp->event_queue);
-			gdi_InvalidateRegion(xfp->hdc, region->x, region->y, region->width, region->height);
-			xf_event_region_free(region);
-		}
-		else if (event->type == XF_EVENT_TYPE_FRAME_TICK)
-		{
-			event = xf_event_pop(xfp->event_queue);
-			invalid_region = xfp->hdc->hwnd->invalid;
+			UINT32 xy, wh;
+			UINT16 x, y, w, h;
 
-			if (invalid_region->null == FALSE)
-			{
-				xf_peer_rfx_update(client, invalid_region->x, invalid_region->y,
-					invalid_region->w, invalid_region->h);
-			}
+			xy = (UINT32) (size_t) message.wParam;
+			wh = (UINT32) (size_t) message.lParam;
 
-			invalid_region->null = 1;
-			xfp->hdc->hwnd->ninvalid = 0;
+			x = ((xy & 0xFFFF0000) >> 16);
+			y = (xy & 0x0000FFFF);
 
-			xf_event_free(event);
+			w = ((wh & 0xFFFF0000) >> 16);
+			h = (wh & 0x0000FFFF);
+
+			if (w * h > 0)
+				xf_peer_rfx_update(client, x, y, w, h);
 		}
 	}
 
@@ -602,15 +516,7 @@ BOOL xf_peer_activate(freerdp_peer* client)
 	rfx_context_reset(xfp->rfx_context);
 	xfp->activated = TRUE;
 
-	if (xf_pcap_file != NULL)
-	{
-		client->update->dump_rfx = TRUE;
-		xf_peer_dump_rfx(client);
-	}
-	else
-	{
-		xf_peer_live_rfx(client);
-	}
+	xf_peer_live_rfx(client);
 
 	return TRUE;
 }
@@ -628,7 +534,7 @@ void* xf_peer_main_loop(void* arg)
 	freerdp_peer* client = (freerdp_peer*) arg;
 	xfPeerContext* xfp;
 
-	memset(rfds, 0, sizeof(rfds));
+	ZeroMemory(rfds, sizeof(rfds));
 
 	printf("We've got a client %s\n", client->hostname);
 

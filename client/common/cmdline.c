@@ -71,11 +71,21 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "z", "Compression" },
 	{ "shell", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Alternate shell" },
 	{ "shell-dir", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Shell working directory" },
+	{ "sound", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "audio", "Audio output (sound)" },
+	{ "microphone", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "mic", "Audio input (microphone)" },
 	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Audio output mode" },
-	{ "mic", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Audio input (microphone)" },
+	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "mmr", "Redirect multimedia (video)" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Network connection type" },
+	{ "drive", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect drive" },
+	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect all drives" },
+	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect home drive" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
-	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (cleartype)" },
+	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
+	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
+	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "printer", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
+	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
+	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (ClearType)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Full window drag" },
 	{ "menu-anims", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Menu animations" },
@@ -85,7 +95,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Frame acknowledgement" },
-	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "NSCodec" },
+	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec" },
 	{ "jpeg", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "JPEG codec" },
 	{ "jpeg-quality", COMMAND_LINE_VALUE_REQUIRED, "<percentage>", NULL, NULL, -1, NULL, "JPEG quality" },
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "protocol security negotiation" },
@@ -159,7 +169,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 			if (arg->Format)
 			{
 				length = strlen(arg->Name) + strlen(arg->Format) + 2;
-				str = malloc(length + 1);
+				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s", str);
 				free(str);
@@ -174,7 +184,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
 			length = strlen(arg->Name) + 32;
-			str = malloc(length + 1);
+			str = (char*) malloc(length + 1);
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
@@ -200,20 +210,20 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
 
-	printf("Drive Redirection: /a:drive,home,/home\n");
-	printf("Smartcard Redirection: /a:smartcard,<device>\n");
-	printf("Printer Redirection: /a:printer,<device>,<driver>\n");
-	printf("Serial Port Redirection: /a:serial,<device>\n");
-	printf("Parallel Port Redirection: /a:parallel,<device>\n");
-	printf("Printer Redirection: /a:printer,<device>,<driver>\n");
+	printf("Drive Redirection: /drive:home,/home/user\n");
+	printf("Smartcard Redirection: /smartcard:<device>\n");
+	printf("Printer Redirection: /printer:<device>,<driver>\n");
+	printf("Serial Port Redirection: /serial:<device>\n");
+	printf("Parallel Port Redirection: /parallel:<device>\n");
+	printf("Printer Redirection: /printer:<device>,<driver>\n");
 	printf("\n");
 
-	printf("Audio Input Redirection: /dvc:audin,sys:alsa\n");
-	printf("Audio Output Redirection: /vc:rdpsnd,sys:alsa\n");
+	printf("Audio Output Redirection: /sound:sys:alsa\n");
+	printf("Audio Input Redirection: /microphone:sys:alsa\n");
 	printf("\n");
 
-	printf("Multimedia Redirection: /dvc:tsmf,sys:alsa\n");
-	printf("USB Device Redirection: /dvc:urbdrc,id,dev:054c:0268\n");
+	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
+	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
 
 	printf("More documentation is coming, in the meantime consult source files\n");
@@ -422,9 +432,22 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 	return p;
 }
 
+char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int* count)
+{
+	char** p;
+
+	p = freerdp_command_line_parse_comma_separated_values(list, count);
+
+	p = (char**) realloc(p, sizeof(char*) * (*count + 1));
+	MoveMemory(&p[1], p, sizeof(char*) * *count);
+	(*count)++;
+
+	return p;
+}
+
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = (rdpSettings*) context;
 
 	CommandLineSwitchStart(arg)
 
@@ -432,7 +455,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
@@ -447,7 +469,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
@@ -459,13 +480,159 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	{
 		char** p;
 		int count;
-		settings = (rdpSettings*) context;
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
 		freerdp_client_add_dynamic_channel(settings, count, p);
 
 		free(p);
+	}
+	CommandLineSwitchCase(arg, "drive")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "drive";
+
+		freerdp_client_add_device_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "serial")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "serial";
+
+		freerdp_client_add_device_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "parallel")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "parallel";
+
+		freerdp_client_add_device_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "smartcard")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "smartcard";
+
+		freerdp_client_add_device_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "printer")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "printer";
+
+		freerdp_client_add_device_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "usb")
+	{
+		char** p;
+		int count;
+
+		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		p[0] = "urbdrc";
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+
+		free(p);
+	}
+	CommandLineSwitchCase(arg, "sound")
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "rdpsnd";
+
+			freerdp_client_add_static_channel(settings, count, p);
+
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+
+			count = 1;
+			p[0] = "rdpsnd";
+
+			freerdp_client_add_static_channel(settings, count, p);
+		}
+	}
+	CommandLineSwitchCase(arg, "microphone")
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "audin";
+
+			freerdp_client_add_dynamic_channel(settings, count, p);
+
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+
+			count = 1;
+			p[0] = "audin";
+
+			freerdp_client_add_dynamic_channel(settings, count, p);
+		}
+	}
+	CommandLineSwitchCase(arg, "multimedia")
+	{
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "tsmf";
+
+			freerdp_client_add_dynamic_channel(settings, count, p);
+
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+
+			count = 1;
+			p[0] = "tsmf";
+
+			freerdp_client_add_dynamic_channel(settings, count, p);
+		}
 	}
 
 	CommandLineSwitchEnd(arg)
@@ -1051,6 +1218,14 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->CompressionEnabled = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "drives")
+		{
+			settings->RedirectDrives = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "home-drive")
+		{
+			settings->RedirectHomeDrive = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "clipboard")
 		{
 			settings->RedirectClipboard = arg->Value ? TRUE : FALSE;
@@ -1403,6 +1578,38 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
+	}
+
+	if (settings->RedirectDrives)
+	{
+		settings->DeviceRedirection = TRUE;
+
+		if (!freerdp_device_collection_find(settings, "drive"))
+		{
+			char* params[3];
+
+			params[0] = "drive";
+			params[1] = "media";
+			params[2] = "*";
+
+			freerdp_client_add_device_channel(settings, 3, (char**) params);
+		}
+	}
+
+	if (settings->RedirectHomeDrive)
+	{
+		settings->DeviceRedirection = TRUE;
+
+		if (!freerdp_device_collection_find(settings, "drive"))
+		{
+			char* params[3];
+
+			params[0] = "drive";
+			params[1] = "home";
+			params[2] = "%";
+
+			freerdp_client_add_device_channel(settings, 3, (char**) params);
+		}
 	}
 
 	if (settings->DeviceRedirection)

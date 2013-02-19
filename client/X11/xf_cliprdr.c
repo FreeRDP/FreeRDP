@@ -713,8 +713,7 @@ static BOOL xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 	unsigned long length, bytes_left, dummy;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	if ((cb->request_index < 0) ||
-		(cb->format_mappings[cb->request_index].target_format != target))
+	if ((cb->request_index < 0) || (cb->format_mappings[cb->request_index].target_format != target))
 	{
 		DEBUG_X11_CLIPRDR("invalid target");
 		xf_cliprdr_send_null_data_response(xfi);
@@ -1132,6 +1131,7 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 		{
 			format = cb->format_mappings[i].format_id;
 			alt_format = format;
+
 			if (format == CB_FORMAT_RAW)
 			{
 				if (XGetWindowProperty(xfi->display, xevent->xselectionrequest.requestor,
@@ -1146,7 +1146,9 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 					XFree(data);
 				}
 			}
+
 			DEBUG_X11_CLIPRDR("provide format 0x%04x alt_format 0x%04x", format, alt_format);
+
 			if ((cb->data != 0) && (format == cb->data_format) && (alt_format == cb->data_alt_format))
 			{
 				/* Cached clipboard data available. Send it now */
@@ -1205,6 +1207,9 @@ BOOL xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent)
 BOOL xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent)
 {
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
+
+	if (!cb)
+		return TRUE;
 
 	if (xevent->xproperty.atom != cb->property_atom)
 		return FALSE; /* Not cliprdr-related */

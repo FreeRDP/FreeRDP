@@ -109,6 +109,8 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
+	//SSL_CTX_set_mode(tls->ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
+
 	/**
 	 * SSL_OP_NO_COMPRESSION:
 	 *
@@ -390,8 +392,7 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 	{
 		error = SSL_get_error(tls->ssl, status);
 
-		//printf("tls_write: length: %d status: %d error: 0x%08X\n",
-		//		length, status, error);
+		//printf("tls_write: length: %d status: %d error: 0x%08X\n", length, status, error);
 
 		switch (error)
 		{

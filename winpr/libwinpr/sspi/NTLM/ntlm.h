@@ -275,7 +275,7 @@ struct _NTLM_CONTEXT
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 
-NTLM_CONTEXT* ntlm_ContextNew();
+NTLM_CONTEXT* ntlm_ContextNew(void);
 void ntlm_ContextFree(NTLM_CONTEXT* context);
 
 #ifdef WITH_DEBUG_NLA

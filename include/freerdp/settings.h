@@ -176,6 +176,7 @@
 #define NEG_POLYGON_SC_INDEX			0x14
 #define NEG_POLYGON_CB_INDEX			0x15
 #define NEG_POLYLINE_INDEX			0x16
+#define NEG_UNUSED23_INDEX			0x17
 #define NEG_FAST_GLYPH_INDEX			0x18
 #define NEG_ELLIPSE_SC_INDEX			0x19
 #define NEG_ELLIPSE_CB_INDEX			0x1A
@@ -183,6 +184,7 @@
 #define NEG_GLYPH_WEXTTEXTOUT_INDEX		0x1C
 #define NEG_GLYPH_WLONGTEXTOUT_INDEX		0x1D
 #define NEG_GLYPH_WLONGEXTTEXTOUT_INDEX		0x1E
+#define NEG_UNUSED31_INDEX			0x1F
 
 /* Glyph Support Level */
 #define GLYPH_SUPPORT_NONE			0x0000
@@ -872,7 +874,8 @@ struct rdp_settings
 	ALIGN64 BOOL RemoteFxCodec; /* 3649 */
 	ALIGN64 UINT32 RemoteFxCodecId; /* 3650 */
 	ALIGN64 UINT32 RemoteFxCodecMode; /* 3651 */
-	UINT64 padding3712[3712 - 3652]; /* 3652 */
+	ALIGN64 BOOL RemoteFxImageCodec; /* 3652 */
+	UINT64 padding3712[3712 - 3653]; /* 3653 */
 
 	/* NSCodec */
 	ALIGN64 BOOL NSCodec; /* 3712 */
@@ -926,6 +929,7 @@ struct rdp_settings
 
 	/* Drive Redirection */
 	ALIGN64 BOOL RedirectDrives; /*  */
+	ALIGN64 BOOL RedirectHomeDrive; /*  */
 	ALIGN64 char* DrivesToRedirect; /* */
 
 	/* Smartcard Redirection */
@@ -985,6 +989,7 @@ FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option,
 FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value);
 
 FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);

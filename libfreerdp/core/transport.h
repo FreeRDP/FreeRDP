@@ -66,9 +66,7 @@ struct rdp_transport
 	HANDLE ReceiveEvent;
 	BOOL blocking;
 	BOOL SplitInputOutput;
-
-	wQueue* ReceivePool;
-	wQueue* ReceiveQueue;
+	wObjectPool* ReceivePool;
 };
 
 STREAM* transport_recv_stream_init(rdpTransport* transport, int size);

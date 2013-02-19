@@ -166,7 +166,7 @@ WINPR_API VOID WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendingCallb
 
 /* Clean-up Group */
 
-WINPR_API PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup();
+WINPR_API PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup(void);
 WINPR_API VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
 WINPR_API VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg);
 
@@ -203,6 +203,6 @@ WINPR_API VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
 
 /* Dummy */
 
-WINPR_API void winpr_pool_dummy();
+WINPR_API void winpr_pool_dummy(void);
 
 #endif /* WINPR_POOL_H */
