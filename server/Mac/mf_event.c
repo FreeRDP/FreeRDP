@@ -35,21 +35,21 @@ int mf_is_event_set(mfEventQueue* event_queue)
 	fd_set rfds;
 	int num_set;
 	struct timeval time;
-    
+	
 	FD_ZERO(&rfds);
 	FD_SET(event_queue->pipe_fd[0], &rfds);
 	memset(&time, 0, sizeof(time));
 	num_set = select(event_queue->pipe_fd[0] + 1, &rfds, 0, 0, &time);
-    
+	
 	return (num_set == 1);
 }
 
 void mf_signal_event(mfEventQueue* event_queue)
 {
 	int length;
-    
+	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
-    
+	
 	if (length != 4)
 		printf("mf_signal_event: error\n");
 }
@@ -57,9 +57,9 @@ void mf_signal_event(mfEventQueue* event_queue)
 void mf_set_event(mfEventQueue* event_queue)
 {
 	int length;
-    
+	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
-    
+	
 	if (length != 4)
 		printf("mf_set_event: error\n");
 }
@@ -67,11 +67,11 @@ void mf_set_event(mfEventQueue* event_queue)
 void mf_clear_events(mfEventQueue* event_queue)
 {
 	int length;
-    
+	
 	while (mf_is_event_set(event_queue))
 	{
 		length = read(event_queue->pipe_fd[0], &length, 4);
-        
+		
 		if (length != 4)
 			printf("mf_clear_event: error\n");
 	}
@@ -80,9 +80,9 @@ void mf_clear_events(mfEventQueue* event_queue)
 void mf_clear_event(mfEventQueue* event_queue)
 {
 	int length;
-    
+	
 	length = read(event_queue->pipe_fd[0], &length, 4);
-    
+	
 	if (length != 4)
 		printf("mf_clear_event: error\n");
 }
@@ -90,62 +90,62 @@ void mf_clear_event(mfEventQueue* event_queue)
 void mf_event_push(mfEventQueue* event_queue, mfEvent* event)
 {
 	pthread_mutex_lock(&(event_queue->mutex));
-    
+	
 	if (event_queue->count >= event_queue->size)
 	{
 		event_queue->size *= 2;
 		event_queue->events = (mfEvent**) realloc((void*) event_queue->events, sizeof(mfEvent*) * event_queue->size);
 	}
-    
+	
 	event_queue->events[(event_queue->count)++] = event;
-    
+	
 	pthread_mutex_unlock(&(event_queue->mutex));
-    
+	
 	mf_set_event(event_queue);
 }
 
 mfEvent* mf_event_peek(mfEventQueue* event_queue)
 {
 	mfEvent* event;
-    
+	
 	pthread_mutex_lock(&(event_queue->mutex));
-    
+	
 	if (event_queue->count < 1)
 		event = NULL;
 	else
 		event = event_queue->events[0];
-    
+	
 	pthread_mutex_unlock(&(event_queue->mutex));
-    
+	
 	return event;
 }
 
 mfEvent* mf_event_pop(mfEventQueue* event_queue)
 {
 	mfEvent* event;
-    
+	
 	pthread_mutex_lock(&(event_queue->mutex));
-    
+	
 	if (event_queue->count < 1)
 		return NULL;
-    
+	
 	/* remove event signal */
 	mf_clear_event(event_queue);
-    
+	
 	event = event_queue->events[0];
 	(event_queue->count)--;
-    
+	
 	memmove(&event_queue->events[0], &event_queue->events[1], event_queue->count * sizeof(void*));
-    
+	
 	pthread_mutex_unlock(&(event_queue->mutex));
-    
+	
 	return event;
 }
 
 mfEventRegion* mf_event_region_new(int x, int y, int width, int height)
 {
 	mfEventRegion* event_region = malloc(sizeof(mfEventRegion));
-    
+	
 	if (event_region != NULL)
 	{
 		event_region->x = x;
@@ -153,7 +153,7 @@ mfEventRegion* mf_event_region_new(int x, int y, int width, int height)
 		event_region->width = width;
 		event_region->height = height;
 	}
-    
+	
 	return event_region;
 }
 
@@ -177,22 +177,22 @@ void mf_event_free(mfEvent* event)
 mfEventQueue* mf_event_queue_new()
 {
 	mfEventQueue* event_queue = malloc(sizeof(mfEventQueue));
-    
+	
 	if (event_queue != NULL)
 	{
 		event_queue->pipe_fd[0] = -1;
 		event_queue->pipe_fd[1] = -1;
-        
+		
 		event_queue->size = 16;
 		event_queue->count = 0;
 		event_queue->events = (mfEvent**) malloc(sizeof(mfEvent*) * event_queue->size);
-        
+		
 		if (pipe(event_queue->pipe_fd) < 0)
 			printf("mf_event_queue_new: pipe failed\n");
-        
+		
 		pthread_mutex_init(&(event_queue->mutex), NULL);
 	}
-    
+	
 	return event_queue;
 }
 
@@ -203,12 +203,12 @@ void mf_event_queue_free(mfEventQueue* event_queue)
 		close(event_queue->pipe_fd[0]);
 		event_queue->pipe_fd[0] = -1;
 	}
-    
+	
 	if (event_queue->pipe_fd[1] != -1)
 	{
 		close(event_queue->pipe_fd[1]);
 		event_queue->pipe_fd[1] = -1;
 	}
-    
+	
 	pthread_mutex_destroy(&(event_queue->mutex));
 }

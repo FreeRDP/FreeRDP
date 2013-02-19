@@ -3,6 +3,7 @@
 #
 # Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,8 +38,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-utils)
 	
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${MAC_AUDIOTOOLBOX_LIBRARY_PATH})
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${MAC_COREFOUNDATION_LIBRARY_PATH})
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} 
     ${AUDIO_TOOL}
     ${CORE_AUDIO}
