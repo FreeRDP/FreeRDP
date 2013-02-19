@@ -30,7 +30,6 @@ int wf_rdpsnd_lock(void);
 int wf_rdpsnd_unlock(void);
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context);
 
-DWORD WINAPI wf_rdpsnd_thread(LPVOID lpParam);
 
 #endif /* WF_RDPSND_H */
 
