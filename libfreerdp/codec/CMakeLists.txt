@@ -76,7 +76,7 @@ if(WITH_NEON)
 			${ANDROID_CPU_FEATURES_PATH}/cpu-features.h)
 	endif()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_NEON_SRCS})
-	set_source_files_properties(${${MODULE_PREFIX}_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -mfloat-abi=softfp -Wno-unused-variable")
+	set_source_files_properties(${${MODULE_PREFIX}_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -mfloat-abi=${ARM_FP_ABI} -Wno-unused-variable")
 endif()
 
 if(WITH_JPEG)
