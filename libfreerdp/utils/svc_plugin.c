@@ -38,31 +38,6 @@
 
 static wArrayList* g_AddinList = NULL;
 
-/* Queue for receiving packets */
-struct _svc_data_in_item
-{
-	STREAM* data_in;
-	RDP_EVENT* event_in;
-};
-typedef struct _svc_data_in_item svc_data_in_item;
-
-void svc_data_in_item_free(svc_data_in_item* item)
-{
-	if (item->data_in)
-	{
-		stream_free(item->data_in);
-		item->data_in = NULL;
-	}
-
-	if (item->event_in)
-	{
-		freerdp_event_free(item->event_in);
-		item->event_in = NULL;
-	}
-
-	free(item);
-}
-
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
 {
 	int index;
@@ -126,7 +101,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	UINT32 totalLength, UINT32 dataFlags)
 {
 	STREAM* data_in;
-	svc_data_in_item* item;
 	
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -143,6 +117,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	{
 		if (plugin->data_in != NULL)
 			stream_free(plugin->data_in);
+
 		plugin->data_in = stream_new(totalLength);
 	}
 
@@ -160,12 +135,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		plugin->data_in = NULL;
 		stream_set_pos(data_in, 0);
 
-		item = (svc_data_in_item*) malloc(sizeof(svc_data_in_item));
-		ZeroMemory(item, sizeof(svc_data_in_item));
-
-		item->data_in = data_in;
-
-		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) item, NULL);
+		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
 
 		freerdp_thread_signal(plugin->thread);
 	}
@@ -173,13 +143,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 static void svc_plugin_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event_in)
 {
-	svc_data_in_item* item;
-
-	item = (svc_data_in_item*) malloc(sizeof(svc_data_in_item));
-	ZeroMemory(item, sizeof(svc_data_in_item));
-	item->event_in = event_in;
-
-	MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) item, NULL);
+	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
 
 	freerdp_thread_signal(plugin->thread);
 }
@@ -218,12 +182,12 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 
 static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 {
+	STREAM* data;
+	RDP_EVENT* event;
 	wMessage message;
-	svc_data_in_item* item;
 
 	while (1)
 	{
-		/* terminate signal */
 		if (freerdp_thread_is_stopped(plugin->thread))
 			break;
 
@@ -232,18 +196,16 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 
 		if (MessageQueue_Peek(plugin->MsgPipe->In, &message, TRUE))
 		{
-			item = (svc_data_in_item*) message.wParam;
-
-			if (!item)
-				break;
-
-			if (item->data_in)
-				IFCALL(plugin->receive_callback, plugin, item->data_in);
-
-			if (item->event_in)
-				IFCALL(plugin->event_callback, plugin, item->event_in);
-
-			free(item);
+			if (message.id == 0)
+			{
+				data = (STREAM*) message.wParam;
+				IFCALL(plugin->receive_callback, plugin, data);
+			}
+			else if (message.id == 1)
+			{
+				event = (RDP_EVENT*) message.wParam;
+				IFCALL(plugin->event_callback, plugin, event);
+			}
 		}
 	}
 }
