@@ -82,12 +82,11 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 {
 	STREAM* data;
 	wMessage message;
-	UINT16 wTimeDiff;
 	UINT16 wTimeStamp;
 	UINT16 wCurrentTime;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 
-	while (MessageQueue_Peek(rdpsnd->OutQueue, &message, TRUE))
+	while (MessageQueue_Peek(rdpsnd->OutQueue, &message, FALSE))
 	{
 		if (message.id == WMQ_QUIT)
 			break;
@@ -95,16 +94,16 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		wTimeStamp = (UINT16) (size_t) message.lParam;
 		wCurrentTime = (UINT16) GetTickCount();
 
-		if (wTimeStamp - wCurrentTime > 0)
+		if (wCurrentTime <= wTimeStamp)
+			break;
+
+		if (MessageQueue_Peek(rdpsnd->OutQueue, &message, TRUE))
 		{
-			wTimeDiff = wTimeStamp - wCurrentTime;
-			//Sleep(wTimeDiff / 16);
+			data = (STREAM*) message.wParam;
+			svc_plugin_send(plugin, data);
+
+			DEBUG_SVC("processed output data");
 		}
-
-		data = (STREAM*) message.wParam;
-		svc_plugin_send(plugin, data);
-
-		DEBUG_SVC("processed output data");
 	}
 
 	if (rdpsnd->is_open && (rdpsnd->close_timestamp > 0))
@@ -121,7 +120,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		}
 	}
 
-	if (!rdpsnd->is_open)
+	if ((MessageQueue_Size(rdpsnd->OutQueue) == 0) && !rdpsnd->is_open)
 		rdpsnd->plugin.interval_ms = 0;
 }
 
