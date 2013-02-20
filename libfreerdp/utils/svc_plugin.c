@@ -27,6 +27,8 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/collections.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/debug.h>
@@ -36,19 +38,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
-/* The list of all plugin instances. */
-typedef struct rdp_svc_plugin_list rdpSvcPluginList;
-
-struct rdp_svc_plugin_list
-{
-	rdpSvcPlugin* plugin;
-	rdpSvcPluginList* next;
-};
-
-static rdpSvcPluginList* g_svc_plugin_list = NULL;
-
-/* For locking the global resources */
-static HANDLE g_mutex = NULL;
+static wArrayList* g_AddinList = NULL;
 
 /* Queue for receiving packets */
 struct _svc_data_in_item
@@ -87,74 +77,61 @@ struct rdp_svc_plugin_private
 
 static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
 {
-	rdpSvcPluginList* list;
+	int index;
+	BOOL found = FALSE;
 	rdpSvcPlugin* plugin;
 
-	WaitForSingleObject(g_mutex, INFINITE);
+	ArrayList_Lock(g_AddinList);
 
-	for (list = g_svc_plugin_list; list; list = list->next)
+	index = 0;
+	plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
+
+	while (plugin)
 	{
-		plugin = list->plugin;
-
 		if (plugin->priv->init_handle == init_handle)
 		{
-			ReleaseMutex(g_mutex);
-			return plugin;
+			found = TRUE;
+			break;
 		}
+
+		plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
 	}
 
-	ReleaseMutex(g_mutex);
+	ArrayList_Unlock(g_AddinList);
 
-	return NULL;
+	return (found) ? plugin : NULL;
 }
 
 static rdpSvcPlugin* svc_plugin_find_by_open_handle(UINT32 open_handle)
 {
-	rdpSvcPluginList* list;
+	int index;
+	BOOL found = FALSE;
 	rdpSvcPlugin* plugin;
 
-	WaitForSingleObject(g_mutex, INFINITE);
+	ArrayList_Lock(g_AddinList);
 
-	for (list = g_svc_plugin_list; list; list = list->next)
+	index = 0;
+	plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
+
+	while (plugin)
 	{
-		plugin = list->plugin;
-
 		if (plugin->priv->open_handle == open_handle)
 		{
-			ReleaseMutex(g_mutex);
-			return plugin;
+			found = TRUE;
+			break;
 		}
+
+		plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
 	}
 
-	ReleaseMutex(g_mutex);
+	ArrayList_Unlock(g_AddinList);
 
-	return NULL;
+	return (found) ? plugin : NULL;
 }
 
 static void svc_plugin_remove(rdpSvcPlugin* plugin)
 {
-	rdpSvcPluginList* list;
-	rdpSvcPluginList* prev;
-
-	/* Remove from global list */
-	WaitForSingleObject(g_mutex, INFINITE);
-
-	for (prev = NULL, list = g_svc_plugin_list; list; prev = list, list = list->next)
-	{
-		if (list->plugin == plugin)
-			break;
-	}
-
-	if (list)
-	{
-		if (prev)
-			prev->next = list->next;
-		else
-			g_svc_plugin_list = list->next;
-		free(list);
-	}
-
-	ReleaseMutex(g_mutex);
+	ArrayList_Remove(g_AddinList, (void*) plugin);
 }
 
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength,
@@ -233,7 +210,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 
 	plugin = (rdpSvcPlugin*) svc_plugin_find_by_open_handle(openHandle);
 
-	if (plugin == NULL)
+	if (!plugin)
 	{
 		printf("svc_plugin_open_event: error no match\n");
 		return;
@@ -397,29 +374,20 @@ static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, 
 
 void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 {
-	rdpSvcPluginList* list;
-
 	/**
 	 * The channel manager will guarantee only one thread can call
 	 * VirtualChannelInit at a time. So this should be safe.
 	 */
-	if (g_mutex == NULL)
-		g_mutex = CreateMutex(NULL, FALSE, NULL);
 
-	memcpy(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
 
 	plugin->priv = (rdpSvcPluginPrivate*) malloc(sizeof(rdpSvcPluginPrivate));
 	ZeroMemory(plugin->priv, sizeof(rdpSvcPluginPrivate));
 
-	/* Add it to the global list */
-	list = (rdpSvcPluginList*) malloc(sizeof(rdpSvcPluginList));
-	ZeroMemory(list, sizeof(rdpSvcPluginList));
-	list->plugin = plugin;
+	if (!g_AddinList)
+		g_AddinList = ArrayList_New(TRUE);
 
-	WaitForSingleObject(g_mutex, INFINITE);
-	list->next = g_svc_plugin_list;
-	g_svc_plugin_list = list;
-	ReleaseMutex(g_mutex);
+	ArrayList_Add(g_AddinList, (void*) plugin);
 
 	plugin->channel_entry_points.pVirtualChannelInit(&plugin->priv->init_handle,
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);

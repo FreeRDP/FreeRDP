@@ -49,7 +49,7 @@ struct rdpsnd_plugin
 {
 	rdpSvcPlugin plugin;
 
-	wMessageQueue* OutQueue;
+	wMessagePipe* MsgPipe;
 
 	BYTE cBlockNo;
 	rdpsndFormat* supported_formats;
@@ -86,7 +86,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 	UINT16 wCurrentTime;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 
-	while (MessageQueue_Peek(rdpsnd->OutQueue, &message, FALSE))
+	while (MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, FALSE))
 	{
 		if (message.id == WMQ_QUIT)
 			break;
@@ -97,7 +97,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		if (wCurrentTime <= wTimeStamp)
 			break;
 
-		if (MessageQueue_Peek(rdpsnd->OutQueue, &message, TRUE))
+		if (MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 		{
 			data = (STREAM*) message.wParam;
 			svc_plugin_send(plugin, data);
@@ -120,7 +120,7 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		}
 	}
 
-	if ((MessageQueue_Size(rdpsnd->OutQueue) == 0) && !rdpsnd->is_open)
+	if ((MessageQueue_Size(rdpsnd->MsgPipe->Out) == 0) && !rdpsnd->is_open)
 		rdpsnd->plugin.interval_ms = 0;
 }
 
@@ -372,7 +372,7 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	stream_write_BYTE(data, 0); /* bPad */
 
 	wTimeStamp = rdpsnd->wave_timestamp + delay_ms;
-	MessageQueue_Post(rdpsnd->OutQueue, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
+	MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
 
 	rdpsnd->plugin.interval_ms = 10;
 }
@@ -577,7 +577,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	rdpsnd->latency = -1;
 
-	rdpsnd->OutQueue = MessageQueue_New();
+	rdpsnd->MsgPipe = MessagePipe_New();
 
 	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
 
@@ -620,7 +620,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
 
-	if (rdpsnd->device == NULL)
+	if (!rdpsnd->device)
 	{
 		DEBUG_WARN("no sound device.");
 	}
@@ -638,7 +638,7 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	MessageQueue_Free(rdpsnd->OutQueue);
+	MessagePipe_Free(rdpsnd->MsgPipe);
 
 	if (rdpsnd->subsystem)
 		free(rdpsnd->subsystem);
