@@ -12,17 +12,6 @@
   <supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
 
 	<application>
-			<!-- Session request handler activity - used for search and internally to start sessions -->
-			<activity android:name=".services.SessionRequestHandlerActivity"
-				android:theme="@android:style/Theme.NoDisplay"
-				android:noHistory="true"
-				android:excludeFromRecents="true">
-				<intent-filter>
-					<action android:name="android.intent.action.SEARCH" />
-				</intent-filter>
-				<meta-data android:name="android.app.searchable" 
-					android:resource="@xml/searchable" />
-			</activity>
 
 			<!-- Activity to create shortcuts -->
 	        <activity android:name=".presentation.ShortcutsActivity"

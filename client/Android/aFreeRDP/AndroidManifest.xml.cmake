@@ -25,6 +25,29 @@
 				</intent-filter>
 			</activity>
 
+			<!-- Session request handler activity - used for search and internally to start sessions -->
+			<!-- This should actually be defined in FreeRDPCore lib but Android manifest merging will -->
+			<!-- append the libs manifest to the apps manifest and therefore aliasing is not possible -->
+			<activity android:name="com.freerdp.freerdpcore.services.SessionRequestHandlerActivity"
+				android:theme="@android:style/Theme.NoDisplay"
+				android:noHistory="true"
+				android:excludeFromRecents="true">
+			</activity>
+
+	       		<activity-alias android:name=".services.SessionRequestHandlerActivity"
+		            android:targetActivity="com.freerdp.freerdpcore.services.SessionRequestHandlerActivity">	
+				<intent-filter>
+					<action android:name="android.intent.action.SEARCH" />
+				</intent-filter>
+				<meta-data android:name="android.app.searchable" 
+					android:resource="@xml/searchable" />
+		        </activity-alias>				
+
+			<provider android:name="com.freerdp.freerdpcore.services.FreeRDPSuggestionProvider"
+				android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
+				>
+			</provider>
+
 	</application>
 	
 </manifest>
