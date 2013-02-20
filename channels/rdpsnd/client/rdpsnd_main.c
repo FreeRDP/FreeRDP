@@ -31,8 +31,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
+#include <winpr/collections.h>
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
@@ -47,7 +49,7 @@ struct rdpsnd_plugin
 {
 	rdpSvcPlugin plugin;
 
-	LIST* data_out_list;
+	wMessageQueue* OutQueue;
 
 	BYTE cBlockNo;
 	rdpsndFormat* supported_formats;
@@ -75,40 +77,39 @@ struct rdpsnd_plugin
 	rdpsndDevicePlugin* device;
 };
 
-struct data_out_item
-{
-	STREAM* data_out;
-	UINT32 out_timestamp;
-};
-
 /* process the linked list of data that has queued to be sent */
 static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 {
+	STREAM* data;
+	wMessage message;
+	UINT16 wTimeDiff;
+	UINT16 wTimeStamp;
+	UINT16 wCurrentTime;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
-	struct data_out_item* item;
-	UINT32 current_time;
 
-	while (list_size(rdpsnd->data_out_list) > 0)
+	while (MessageQueue_Peek(rdpsnd->OutQueue, &message, TRUE))
 	{
-		item = (struct data_out_item*) list_peek(rdpsnd->data_out_list);
-
-		current_time = GetTickCount();
-
-		if (!item || (current_time <= item->out_timestamp))
+		if (message.id == WMQ_QUIT)
 			break;
 
-		item = (struct data_out_item*) list_dequeue(rdpsnd->data_out_list);
-		svc_plugin_send(plugin, item->data_out);
-		free(item);
+		wTimeStamp = (UINT16) (size_t) message.lParam;
+		wCurrentTime = (UINT16) GetTickCount();
 
-		DEBUG_SVC("processed data_out");
+		if (wTimeStamp - wCurrentTime > 0)
+		{
+			wTimeDiff = wTimeStamp - wCurrentTime;
+			//Sleep(wTimeDiff / 16);
+		}
+
+		data = (STREAM*) message.wParam;
+		svc_plugin_send(plugin, data);
+
+		DEBUG_SVC("processed output data");
 	}
 
 	if (rdpsnd->is_open && (rdpsnd->close_timestamp > 0))
 	{
-		current_time = GetTickCount();
-
-		if (current_time > rdpsnd->close_timestamp)
+		if (GetTickCount() > rdpsnd->close_timestamp)
 		{
 			if (rdpsnd->device)
 				IFCALL(rdpsnd->device->Close, rdpsnd->device);
@@ -120,10 +121,8 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 		}
 	}
 
-	if (list_size(rdpsnd->data_out_list) == 0 && !rdpsnd->is_open)
-	{
+	if (!rdpsnd->is_open)
 		rdpsnd->plugin.interval_ms = 0;
-	}
 }
 
 static void rdpsnd_free_supported_formats(rdpsndPlugin* rdpsnd)
@@ -340,10 +339,9 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 /* header is not removed from data in this function */
 static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 {
-	UINT16 wTimeStamp;
+	STREAM* data;
 	UINT32 delay_ms;
-	UINT32 process_ms;
-	struct data_out_item* item;
+	UINT16 wTimeStamp;
 
 	rdpsnd->expectingWave = 0;
 
@@ -360,26 +358,23 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 		IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(data_in), stream_get_size(data_in));
 	}
 
-	process_ms = GetTickCount() - rdpsnd->wave_timestamp;
 	delay_ms = 250;
 	wTimeStamp = rdpsnd->wTimeStamp + delay_ms;
 
 	DEBUG_SVC("data_size %d delay_ms %u process_ms %u",
 		stream_get_size(data_in), delay_ms, process_ms);
 
-	item = (struct data_out_item*) malloc(sizeof(struct data_out_item));
-	ZeroMemory(item, sizeof(struct data_out_item));
+	data = stream_new(8);
+	stream_write_BYTE(data, SNDC_WAVECONFIRM);
+	stream_write_BYTE(data, 0);
+	stream_write_UINT16(data, 4);
+	stream_write_UINT16(data, wTimeStamp);
+	stream_write_BYTE(data, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
+	stream_write_BYTE(data, 0); /* bPad */
 
-	item->data_out = stream_new(8);
-	stream_write_BYTE(item->data_out, SNDC_WAVECONFIRM);
-	stream_write_BYTE(item->data_out, 0);
-	stream_write_UINT16(item->data_out, 4);
-	stream_write_UINT16(item->data_out, wTimeStamp);
-	stream_write_BYTE(item->data_out, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
-	stream_write_BYTE(item->data_out, 0); /* bPad */
-	item->out_timestamp = rdpsnd->wave_timestamp + delay_ms;
+	wTimeStamp = rdpsnd->wave_timestamp + delay_ms;
+	MessageQueue_Post(rdpsnd->OutQueue, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
 
-	list_enqueue(rdpsnd->data_out_list, item);
 	rdpsnd->plugin.interval_ms = 10;
 }
 
@@ -581,8 +576,9 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	plugin->interval_callback = rdpsnd_process_interval;
 
-	rdpsnd->data_out_list = list_new();
 	rdpsnd->latency = -1;
+
+	rdpsnd->OutQueue = MessageQueue_New();
 
 	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
 
@@ -638,21 +634,12 @@ static void rdpsnd_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 {
-	struct data_out_item* item;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	if (rdpsnd->data_out_list)
-	{
-		while ((item = list_dequeue(rdpsnd->data_out_list)) != NULL)
-		{
-			stream_free(item->data_out);
-			free(item);
-		}
-		list_free(rdpsnd->data_out_list);
-	}
+	MessageQueue_Free(rdpsnd->OutQueue);
 
 	if (rdpsnd->subsystem)
 		free(rdpsnd->subsystem);

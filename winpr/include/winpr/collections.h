@@ -282,6 +282,7 @@ struct _wMessage
 	void* context;
 	void* wParam;
 	void* lParam;
+	UINT64 time;
 };
 typedef struct _wMessage wMessage;
 

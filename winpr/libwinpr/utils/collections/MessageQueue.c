@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include <winpr/collections.h>
 
@@ -92,6 +93,9 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
+
+	message = &(queue->array[queue->tail]);
+	message->time = (UINT64) GetTickCount();
 
 	if (queue->size > 0)
 		SetEvent(queue->event);
