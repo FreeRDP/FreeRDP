@@ -623,6 +623,59 @@ PRIM_STATIC pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 }
 #endif /* WITH_SSE2 */
 
+
+void rfx_decode_YCbCr_to_RGB_NEON(INT16 * y_r_buffer, INT16 * cb_g_buffer, INT16 * cr_b_buffer)
+{
+	int16x8_t zero = vdupq_n_s16(0);
+	int16x8_t max = vdupq_n_s16(255);
+
+	int16x8_t r_cr = vdupq_n_s16(22986);	//  1.403 << 14
+	int16x8_t g_cb = vdupq_n_s16(-5636);	// -0.344 << 14
+	int16x8_t g_cr = vdupq_n_s16(-11698);	// -0.714 << 14
+	int16x8_t b_cb = vdupq_n_s16(28999);	//  1.770 << 14
+	int16x8_t c4096 = vdupq_n_s16(4096);
+
+	int16x8_t* y_r_buf = (int16x8_t*) y_r_buffer;
+	int16x8_t* cb_g_buf = (int16x8_t*) cb_g_buffer;
+	int16x8_t* cr_b_buf = (int16x8_t*) cr_b_buffer;
+
+	int i;
+	for (i = 0; i < 4096 / 8; i++)
+	{
+		int16x8_t y = vld1q_s16((INT16*) &y_r_buf[i]);
+		y = vaddq_s16(y, c4096);
+		y = vshrq_n_s16(y, 2);
+
+		// cb = cb_g_buf[i];
+		int16x8_t cb = vld1q_s16((INT16*)&cb_g_buf[i]);
+
+		// cr = cr_b_buf[i];
+		int16x8_t cr = vld1q_s16((INT16*) &cr_b_buf[i]);
+
+
+		// r = between((y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5)), 0, 255);
+		int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
+		r = vshrq_n_s16(r, 3);
+		r = vminq_s16(vmaxq_s16(r, zero), max);
+		vst1q_s16((INT16*)&y_r_buf[i], r);
+
+
+		// g = between(y - (cb >> 2) - (cb >> 4) - (cb >> 5) - (cr >> 1) - (cr >> 3) - (cr >> 4) - (cr >> 5), 0, 255);
+		int16x8_t g = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, g_cb), 1));
+		          g = vaddq_s16(g, vshrq_n_s16(vqdmulhq_s16(cr, g_cr), 1));
+		g = vshrq_n_s16(g, 3);
+		g = vminq_s16(vmaxq_s16(g, zero), max);
+		vst1q_s16((INT16*)&cb_g_buf[i], g);
+
+		// b = between((y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6)), 0, 255);
+		int16x8_t b = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, b_cb), 1));
+		          b = vshrq_n_s16(b, 3);
+		b = vminq_s16(vmaxq_s16(b, zero), max);
+		vst1q_s16((INT16*)&cr_b_buf[i], b);
+	}
+
+}
+
 /*---------------------------------------------------------------------------*/
 #ifdef WITH_NEON
 PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
@@ -632,11 +685,15 @@ PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 	int dstStep,
 	const prim_size_t *roi)	/* region of interest */
 {
-	/* TODO: If necessary, check alignments and call the general version. */
-
+	
 	int16x8_t zero = vdupq_n_s16(0);
 	int16x8_t max = vdupq_n_s16(255);
-	int16x8_t y_add = vdupq_n_s16(128);
+
+	int16x8_t r_cr = vdupq_n_s16(22986);	//  1.403 << 14
+	int16x8_t g_cb = vdupq_n_s16(-5636);	// -0.344 << 14
+	int16x8_t g_cr = vdupq_n_s16(-11698);	// -0.714 << 14
+	int16x8_t b_cb = vdupq_n_s16(28999);	//  1.770 << 14
+	int16x8_t c4096 = vdupq_n_s16(4096);
 
 	int16x8_t* y_buf  = (int16x8_t*) pSrc[0];
 	int16x8_t* cb_buf = (int16x8_t*) pSrc[1];
@@ -655,47 +712,56 @@ PRIM_STATIC pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 		int i;
 		for (i=0; i<imax; i++)
 		{
-			int16x8_t y = vld1q_s16((INT16*) (y_buf+i));
-			y = vaddq_s16(y, y_add);
+			/*
+				In order to use NEON signed 16-bit integer multiplication we need to convert
+				the floating point factors to signed int without loosing information.
+				The result of this multiplication is 32 bit and we have a NEON instruction
+				that returns the hi word of the saturated double.
+				Thus we will multiply the factors by the highest possible 2^n, take the 
+				upper 16 bits of the signed 32-bit result (vqdmulhq_s16 followed by a right
+				shift by 1 to reverse the doubling) and correct	this result by multiplying it 
+				by 2^(16-n).
+				For the given factors in the conversion matrix the best possible n is 14.
 
-			int16x8_t cr = vld1q_s16((INT16*) (cr_buf+i));
+				Example for calculating r:
+				r = (y>>5) + 128 + (cr*1.403)>>5                       // our base formula
+				r = (y>>5) + 128 + (HIWORD(cr*(1.403<<14)<<2))>>5      // see above
+				r = (y+4096)>>5 + (HIWORD(cr*22986)<<2)>>5             // simplification
+				r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
+			*/
+		
+			/* y = (y_buf[i] + 4096) >> 2 */
+			int16x8_t y = vld1q_s16((INT16*) &y_buf[i]);
+			y = vaddq_s16(y, c4096);
+			y = vshrq_n_s16(y, 2);
+			/* cb = cb_buf[i]; */
+			int16x8_t cb = vld1q_s16((INT16*)&cb_buf[i]);
+			/* cr = cr_buf[i]; */
+			int16x8_t cr = vld1q_s16((INT16*) &cr_buf[i]);
 
-			/* r = between((y + cr + (cr >> 2) + (cr >> 3) + (cr >> 5)),
-			 *    0, 255);
-			 */
-			int16x8_t r = vaddq_s16(y, cr);
-			r = vaddq_s16(r, vshrq_n_s16(cr, 2));
-			r = vaddq_s16(r, vshrq_n_s16(cr, 3));
-			r = vaddq_s16(r, vshrq_n_s16(cr, 5));
+			/* (y + HIWORD(cr*22986)) >> 3 */
+			int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
+			r = vshrq_n_s16(r, 3);
+			/* r_buf[i] = MINMAX(r, 0, 255); */
 			r = vminq_s16(vmaxq_s16(r, zero), max);
-			vst1q_s16((INT16*) (r_buf+i), r);
+			vst1q_s16((INT16*)&r_buf[i], r);
 
-			/* cb = cb_g_buf[i]; */
-			int16x8_t cb = vld1q_s16((INT16*) (cb_buf+i));
-
-			/* g = between(y - (cb >> 2) - (cb >> 4) - (cb >> 5) - (cr >> 1)
-			 * - (cr >> 3) - (cr >> 4) - (cr >> 5), 0, 255);
-			 */
-			int16x8_t g = vsubq_s16(y, vshrq_n_s16(cb, 2));
-			g = vsubq_s16(g, vshrq_n_s16(cb, 4));
-			g = vsubq_s16(g, vshrq_n_s16(cb, 5));
-			g = vsubq_s16(g, vshrq_n_s16(cr, 1));
-			g = vsubq_s16(g, vshrq_n_s16(cr, 3));
-			g = vsubq_s16(g, vshrq_n_s16(cr, 4));
-			g = vsubq_s16(g, vshrq_n_s16(cr, 5));
+			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
+			int16x8_t g = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, g_cb), 1));
+			g = vaddq_s16(g, vshrq_n_s16(vqdmulhq_s16(cr, g_cr), 1));
+			g = vshrq_n_s16(g, 3);
+			/* g_buf[i] = MINMAX(g, 0, 255); */
 			g = vminq_s16(vmaxq_s16(g, zero), max);
-			vst1q_s16((INT16*) (g_buf+i), g);
+			vst1q_s16((INT16*)&g_buf[i], g);
 
-			/* b = between((y + cb + (cb >> 1) + (cb >> 2) + (cb >> 6)),
-			 * 0, 255);
-			 */
-			int16x8_t b = vaddq_s16(y, cb);
-			b = vaddq_s16(b, vshrq_n_s16(cb, 1));
-			b = vaddq_s16(b, vshrq_n_s16(cb, 2));
-			b = vaddq_s16(b, vshrq_n_s16(cb, 6));
+			/* (y + HIWORD(cb*28999)) >> 3 */
+			int16x8_t b = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, b_cb), 1));
+			b = vshrq_n_s16(b, 3);
+			/* b_buf[i] = MINMAX(b, 0, 255); */
 			b = vminq_s16(vmaxq_s16(b, zero), max);
-			vst1q_s16((INT16*) (b_buf+i), b);
+			vst1q_s16((INT16*)&b_buf[i], b);
 		}
+
 		y_buf  += srcbump;
 		cb_buf += srcbump;
 		cr_buf += srcbump;
