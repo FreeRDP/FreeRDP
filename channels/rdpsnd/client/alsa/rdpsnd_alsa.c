@@ -76,7 +76,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 
 	snd_pcm_drop(alsa->pcm_handle);
 
-	snd_async_add_pcm_handler(&alsa->pcm_callback, alsa->pcm_handle, rdpsnd_alsa_async_handler, (void*) alsa);
+	//snd_async_add_pcm_handler(&alsa->pcm_callback, alsa->pcm_handle, rdpsnd_alsa_async_handler, (void*) alsa);
 
 	status = snd_pcm_hw_params_malloc(&hw_params);
 
@@ -442,8 +442,6 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 
 	pindex = alsa->audio_data;
 	end = pindex + alsa->audio_data_left;
-
-	printf("audio_data_left: %d\n", alsa->audio_data_left);
 
 	while (pindex + alsa->period_size * rbytes_per_frame <= end)
 	{
