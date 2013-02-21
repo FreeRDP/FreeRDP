@@ -323,6 +323,8 @@ struct _wMessagePipe
 };
 typedef struct _wMessagePipe wMessagePipe;
 
+WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
+
 WINPR_API wMessagePipe* MessagePipe_New(void);
 WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 

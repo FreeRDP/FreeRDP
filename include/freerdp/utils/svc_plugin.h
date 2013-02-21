@@ -32,11 +32,9 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/list.h>
-#include <freerdp/utils/thread.h>
+#include <freerdp/utils/event.h>
+#include <freerdp/utils/stream.h>
 
 typedef struct rdp_svc_plugin rdpSvcPlugin;
 
@@ -53,11 +51,10 @@ struct rdp_svc_plugin
 	void (*interval_callback)(rdpSvcPlugin* plugin);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
+	HANDLE thread;
+	STREAM* data_in;
 	void* init_handle;
 	UINT32 open_handle;
-	STREAM* data_in;
-	freerdp_thread* thread;
-
 	wMessagePipe* MsgPipe;
 };
 

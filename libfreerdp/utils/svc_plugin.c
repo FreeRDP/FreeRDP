@@ -136,16 +136,12 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		stream_set_pos(data_in, 0);
 
 		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
-
-		freerdp_thread_signal(plugin->thread);
 	}
 }
 
 static void svc_plugin_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event_in)
 {
 	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
-
-	freerdp_thread_signal(plugin->thread);
 }
 
 static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, UINT32 dataLength,
@@ -180,22 +176,34 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 	}
 }
 
-static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
+static void* svc_plugin_thread_func(void* arg)
 {
 	STREAM* data;
 	RDP_EVENT* event;
 	wMessage message;
+	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
+
+	DEBUG_SVC("in");
+
+	IFCALL(plugin->connect_callback, plugin);
 
 	while (1)
 	{
-		if (freerdp_thread_is_stopped(plugin->thread))
-			break;
-
-		if (!MessageQueue_Wait(plugin->MsgPipe->In))
-			break;
+		if (plugin->interval_ms > 0)
+		{
+			Sleep(plugin->interval_ms);
+		}
+		else
+		{
+			if (!MessageQueue_Wait(plugin->MsgPipe->In))
+				break;
+		}
 
 		if (MessageQueue_Peek(plugin->MsgPipe->In, &message, TRUE))
 		{
+			if (message.id == WMQ_QUIT)
+				break;
+
 			if (message.id == 0)
 			{
 				data = (STREAM*) message.wParam;
@@ -207,35 +215,10 @@ static void svc_plugin_process_data_in(rdpSvcPlugin* plugin)
 				IFCALL(plugin->event_callback, plugin, event);
 			}
 		}
-	}
-}
-
-static void* svc_plugin_thread_func(void* arg)
-{
-	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
-
-	DEBUG_SVC("in");
-
-	IFCALL(plugin->connect_callback, plugin);
-
-	while (1)
-	{
-		if (plugin->interval_ms > 0)
-			freerdp_thread_wait_timeout(plugin->thread, plugin->interval_ms);
-		else
-			freerdp_thread_wait(plugin->thread);
-
-		if (freerdp_thread_is_stopped(plugin->thread))
-			break;
-
-		freerdp_thread_reset(plugin->thread);
-		svc_plugin_process_data_in(plugin);
 
 		if (plugin->interval_ms > 0)
 			IFCALL(plugin->interval_callback, plugin);
 	}
-
-	freerdp_thread_quit(plugin->thread);
 
 	DEBUG_SVC("out");
 
@@ -244,12 +227,12 @@ static void* svc_plugin_thread_func(void* arg)
 
 static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength)
 {
-	UINT32 error;
+	UINT32 status;
 
-	error = plugin->channel_entry_points.pVirtualChannelOpen(plugin->init_handle,
+	status = plugin->channel_entry_points.pVirtualChannelOpen(plugin->init_handle,
 		&plugin->open_handle, plugin->channel_def.name, svc_plugin_open_event);
 
-	if (error != CHANNEL_RC_OK)
+	if (status != CHANNEL_RC_OK)
 	{
 		printf("svc_plugin_process_connected: open failed\n");
 		return;
@@ -257,18 +240,13 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT
 
 	plugin->MsgPipe = MessagePipe_New();
 
-	plugin->thread = freerdp_thread_new();
-
-	freerdp_thread_start(plugin->thread, svc_plugin_thread_func, plugin);
+	plugin->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) svc_plugin_thread_func, (void*) plugin, 0, NULL);
 }
 
 static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 {
-	if (plugin->thread)
-	{
-		freerdp_thread_stop(plugin->thread);
-		freerdp_thread_free(plugin->thread);
-	}
+	MessagePipe_PostQuit(plugin->MsgPipe, 0);
+	WaitForSingleObject(plugin->thread, INFINITE);
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->open_handle);
 
@@ -276,7 +254,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	MessagePipe_Free(plugin->MsgPipe);
 
-	if (plugin->data_in != NULL)
+	if (plugin->data_in)
 	{
 		stream_free(plugin->data_in);
 		plugin->data_in = NULL;
@@ -334,35 +312,35 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 
 int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 {
-	UINT32 error = 0;
+	UINT32 status = 0;
 
 	DEBUG_SVC("length %d", (int) stream_get_length(data_out));
 
 	if (!plugin)
-		error = CHANNEL_RC_BAD_INIT_HANDLE;
+		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
-		error = plugin->channel_entry_points.pVirtualChannelWrite(plugin->open_handle,
+		status = plugin->channel_entry_points.pVirtualChannelWrite(plugin->open_handle,
 			stream_get_data(data_out), stream_get_length(data_out), data_out);
 
-	if (error != CHANNEL_RC_OK)
+	if (status != CHANNEL_RC_OK)
 	{
 		stream_free(data_out);
-		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", error);
+		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", status);
 	}
 
-	return error;
+	return status;
 }
 
 int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
-	UINT32 error = 0;
+	UINT32 status = 0;
 
 	DEBUG_SVC("event_type %d", event->event_type);
 
-	error = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
+	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
 
-	if (error != CHANNEL_RC_OK)
-		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", error);
+	if (status != CHANNEL_RC_OK)
+		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
 
-	return error;
+	return status;
 }
