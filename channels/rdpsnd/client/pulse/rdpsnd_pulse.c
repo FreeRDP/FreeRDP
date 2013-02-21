@@ -43,10 +43,10 @@ struct rdpsnd_pulse_plugin
 	rdpsndDevicePlugin device;
 
 	char* device_name;
-	pa_threaded_mainloop *mainloop;
-	pa_context *context;
+	pa_threaded_mainloop* mainloop;
+	pa_context* context;
 	pa_sample_spec sample_spec;
-	pa_stream *stream;
+	pa_stream* stream;
 	int format;
 	int block_size;
 	int latency;
@@ -106,13 +106,16 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	for (;;)
 	{
 		state = pa_context_get_state(pulse->context);
+
 		if (state == PA_CONTEXT_READY)
 			break;
+
 		if (!PA_CONTEXT_IS_GOOD(state))
 		{
 			DEBUG_WARN("bad context state (%d)", pa_context_errno(pulse->context));
 			break;
 		}
+
 		pa_threaded_mainloop_wait(pulse->mainloop);
 	}
 
@@ -139,7 +142,7 @@ static void rdpsnd_pulse_stream_success_callback(pa_stream* stream, int success,
 
 static void rdpsnd_pulse_wait_for_operation(rdpsndPulsePlugin* pulse, pa_operation* operation)
 {
-	if (operation == NULL)
+	if (!operation)
 		return;
 
 	while (pa_operation_get_state(operation) == PA_OPERATION_RUNNING)
@@ -225,7 +228,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat*
 			break;
 
 		case WAVE_FORMAT_ADPCM:
-		case WAVE_FORMAT_DVI_ADPCM: /* IMA ADPCM */
+		case WAVE_FORMAT_DVI_ADPCM:
 			sample_spec.format = PA_SAMPLE_S16LE;
 			break;
 
@@ -281,7 +284,7 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 		return;
 	}
 
-	/* install essential callbacks */
+	/* register essential callbacks */
 	pa_stream_set_state_callback(pulse->stream, rdpsnd_pulse_stream_state_callback, pulse);
 	pa_stream_set_write_callback(pulse->stream, rdpsnd_pulse_stream_request_callback, pulse);
 
@@ -466,17 +469,19 @@ static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 	if (!pulse->stream)
 		return;
 
-	if (pulse->format == 2)
+	if (pulse->format == WAVE_FORMAT_ADPCM)
 	{
 		pulse->dsp_context->decode_ms_adpcm(pulse->dsp_context,
 			data, size, pulse->sample_spec.channels, pulse->block_size);
+
 		size = pulse->dsp_context->adpcm_size;
 		src = pulse->dsp_context->adpcm_buffer;
 	}
-	else if (pulse->format == 0x11)
+	else if (pulse->format == WAVE_FORMAT_DVI_ADPCM)
 	{
 		pulse->dsp_context->decode_ima_adpcm(pulse->dsp_context,
 			data, size, pulse->sample_spec.channels, pulse->block_size);
+
 		size = pulse->dsp_context->adpcm_size;
 		src = pulse->dsp_context->adpcm_buffer;
 	}
