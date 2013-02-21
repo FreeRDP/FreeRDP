@@ -45,13 +45,8 @@
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
 
-#ifdef WITH_SSE2
 #include "rfx_sse2.h"
-#endif
-
-#ifdef WITH_NEON
 #include "rfx_neon.h"
-#endif
 
 #ifndef RFX_INIT_SIMD
 #define RFX_INIT_SIMD(_rfx_context) do { } while (0)
@@ -232,6 +227,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 
+	RFX_INIT_SIMD(context);
+	
 	return context;
 }
 
