@@ -376,6 +376,7 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 	int length;
 	int status;
 	int offset;
+	int frames;
 	int frame_size;
 	wMessage message;
 	UINT32 wInitialTime;
@@ -407,6 +408,8 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 		if (message.id == WMQ_QUIT)
 			break;
 
+		frame_size = alsa->actual_channels * alsa->bytes_per_channel;
+
 		if (message.id == 0)
 		{
 			data = (BYTE*) message.wParam;
@@ -414,15 +417,18 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 		}
 		else if (message.id == 1)
 		{
+			UINT16 wAudioLength;
 			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
 
 			data = waveInfo->data;
 			length = waveInfo->length;
+
+			frames = length / frame_size;
+			wAudioLength = frames / (alsa->actual_rate / 1000);
 		}
 
 		offset = 0;
 		available_output = snd_pcm_avail_update(alsa->pcm_handle);
-		frame_size = alsa->actual_channels * alsa->bytes_per_channel;
 
 		while (offset < length)
 		{
@@ -467,12 +473,16 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 		{
 			UINT16 wLatency;
 			UINT16 wTimeStamp;
+			UINT16 wAudioLength;
 			UINT16 wSleepLatency;
 			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
 
 			waveInfo->wTimeB = GetTickCount();
 			wLatency = (UINT16) (waveInfo->wTimeB - waveInfo->wTimeA);
 			wTimeStamp = waveInfo->wTimeStamp + wLatency;
+
+			frames = length / frame_size;
+			wAudioLength = frames / (alsa->actual_rate / 1000);
 
 			wAverageLatency = (wAverageLatency + wLatency) / 2;
 
@@ -488,11 +498,12 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 			wCurrentTime = GetTickCount();
 			wSessionTime = wCurrentTime - wInitialTime;
 
-			printf("[%06d.%03d] FixedLatency: %d ms AverageLatency: %d ms CurrentLatency: %d ms "
-					"SleepLatency: %d ms AverageSleepLatency: %d ms\n",
+			printf("[%06d.%03d] FixedLatency: %d ms AvLatency: %d ms CurrentLatency: %d ms "
+					"SleepLatency: %d ms AvSleepLatency: %d ms Frames: %d Length: %d ms Channels: %d Rate: %d\n",
 					wSessionTime / 1000, wSessionTime % 1000,
 					wFixedLatency, wAverageLatency, wLatency,
-					wSleepLatency, wAverageSleepLatency);
+					wSleepLatency, wAverageSleepLatency,
+					frames, wAudioLength, alsa->actual_channels, alsa->actual_rate);
 
 			wTimeStamp += wSleepLatency;
 
