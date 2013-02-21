@@ -40,6 +40,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/utils/signal.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
@@ -408,9 +409,9 @@ static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_
 
 static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 	BYTE msgType;
 	UINT16 BodySize;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 
 	if (rdpsnd->expectingWave)
 	{
@@ -577,7 +578,6 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	DEBUG_SVC("connecting");
 
 	rdpsnd->latency = -1;
-
 	rdpsnd->MsgPipe = MessagePipe_New();
 	rdpsnd->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread, (void*) plugin, 0, NULL);
 
@@ -673,6 +673,15 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.receive_callback = rdpsnd_process_receive;
 	_p->plugin.event_callback = rdpsnd_process_event;
 	_p->plugin.terminate_callback = rdpsnd_process_terminate;
+
+#ifndef _WIN32
+	{
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGIO);
+		pthread_sigmask(SIG_BLOCK, &mask, NULL);
+	}
+#endif
 
 	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
 
