@@ -58,9 +58,6 @@ struct rdpsnd_alsa_plugin
 	int wformat;
 	int block_size;
 	int latency;
-	BYTE* audio_data;
-	UINT32 audio_data_size;
-	UINT32 audio_data_left;
 	wMessageQueue* queue;
 	snd_pcm_uframes_t period_size;
 	snd_async_handler_t* pcm_callback;
@@ -81,30 +78,58 @@ typedef struct _RDPSND_WAVE_INFO RDPSND_WAVE_INFO;
 
 static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 {
-	int status;
 	snd_pcm_hw_params_t* hw_params;
 	snd_pcm_sw_params_t* sw_params;
 	snd_pcm_uframes_t start_threshold;
 	snd_pcm_uframes_t buffer_size;
+	snd_pcm_uframes_t period_size;
+	snd_pcm_uframes_t period_size_min;
+	snd_pcm_uframes_t period_size_max;
 
 	snd_pcm_drop(alsa->pcm_handle);
 
-	status = snd_pcm_hw_params_malloc(&hw_params);
+	/**
+	 * ALSA Hardware Parameters
+	 *
+	 * http://www.alsa-project.org/main/index.php/FramesPeriods
+	 *
+	 * buffer_size = period_size * periods
+	 * period_bytes = period_size * bytes_per_frame
+	 * bytes_per_frame = channels * bytes_per_sample
+	 *
+	 * A frame is equivalent of one sample being played,
+	 * irrespective of the number of channels or the number of bits
+	 *
+	 * A period is the number of frames in between each hardware interrupt.
+	 *
+	 * The buffer size always has to be greater than one period size.
+	 * Commonly this is (2 * period_size), but some hardware can do 8 periods per buffer.
+	 * It is also possible for the buffer size to not be an integer multiple of the period size.
+	 */
 
-	if (status < 0)
-	{
-		DEBUG_WARN("snd_pcm_hw_params_malloc failed");
+	/* Read Parameters */
+
+	if (snd_pcm_hw_params_malloc(&hw_params) < 0)
 		return;
-	}
 
-	snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
-	snd_pcm_hw_params_set_access(alsa->pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(alsa->pcm_handle, hw_params, alsa->format);
-	snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
-	snd_pcm_hw_params_set_channels_near(alsa->pcm_handle, hw_params, &alsa->actual_channels);
-	snd_pcm_hw_params_get_period_size(hw_params, &alsa->period_size, 0);
+	//snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
+	snd_pcm_hw_params_current(alsa->pcm_handle, hw_params);
 
-	alsa->audio_data_left = 0;
+	snd_pcm_hw_params_get_period_size(hw_params, &period_size, 0);
+	snd_pcm_hw_params_get_period_size_min(hw_params, &period_size_min, 0);
+	snd_pcm_hw_params_get_period_size_max(hw_params, &period_size_max, 0);
+
+	snd_pcm_hw_params_free(hw_params);
+
+	printf("ALSA Hardware Parameters:\n");
+	printf("\tPeriodSize: %d\n", period_size);
+	printf("\tPeriodSizeMin: %d\n", period_size_min);
+	printf("\tPeriodSizeMax: %d\n", period_size_max);
+
+	/* Write Parameters */
+
+	if (snd_pcm_hw_params_malloc(&hw_params) < 0)
+		return;
 
 	if (alsa->latency < 0)
 		buffer_size = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
@@ -114,18 +139,27 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	if (buffer_size < alsa->actual_rate / 2)
 		buffer_size = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
 
+	snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
+	snd_pcm_hw_params_set_access(alsa->pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+	snd_pcm_hw_params_set_format(alsa->pcm_handle, hw_params, alsa->format);
+	snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
+	snd_pcm_hw_params_set_channels_near(alsa->pcm_handle, hw_params, &alsa->actual_channels);
+	snd_pcm_hw_params_get_period_size(hw_params, &alsa->period_size, 0);
+
 	snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &buffer_size);
 	//snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
 	snd_pcm_hw_params(alsa->pcm_handle, hw_params);
 	snd_pcm_hw_params_free(hw_params);
 
-	status = snd_pcm_sw_params_malloc(&sw_params);
+	printf("ALSA: Rate: %d Channels: %d PeriodSize: %d BufferSize: %d\n",
+			alsa->actual_rate, alsa->actual_channels, alsa->period_size, buffer_size);
 
-	if (status < 0)
-	{
-		DEBUG_WARN("snd_pcm_sw_params_malloc failed");
+	/**
+	 * ALSA Software Parameters
+	 */
+
+	if (snd_pcm_sw_params_malloc(&sw_params) < 0)
 		return;
-	}
 
 	snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
 
@@ -139,27 +173,21 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_sw_params_free(sw_params);
 
 	snd_pcm_prepare(alsa->pcm_handle);
-
-	DEBUG_SVC("hardware buffer %d frames, playback buffer %.2g seconds",
-		(int) buffer_size, (double) buffer_size / 2.0 / (double) alsa->actual_rate);
-
-	if ((alsa->actual_rate != alsa->source_rate) || (alsa->actual_channels != alsa->source_channels))
-	{
-		DEBUG_SVC("actual rate %d / channel %d is different from source rate %d / channel %d, resampling required.",
-			alsa->actual_rate, alsa->actual_channels, alsa->source_rate, alsa->source_channels);
-	}
 }
 
 static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	if (format != NULL)
+	if (format)
 	{
 		alsa->source_rate = format->nSamplesPerSec;
 		alsa->actual_rate = format->nSamplesPerSec;
 		alsa->source_channels = format->nChannels;
 		alsa->actual_channels = format->nChannels;
+
+		printf("Format: wBitsPerSample: %d nChannels: %d nSamplesPerSec: %d\n",
+				format->wBitsPerSample, format->nChannels, format->nSamplesPerSec);
 
 		switch (format->wFormatTag)
 		{
@@ -167,6 +195,8 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* for
 				switch (format->wBitsPerSample)
 				{
 					case 4:
+						alsa->format = SND_PCM_FORMAT_S16_LE;
+						alsa->bytes_per_channel = 2;
 						break;
 
 					case 8:
@@ -294,9 +324,6 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 	rdpsnd_alsa_close(device);
 
 	free(alsa->device_name);
-
-	if (alsa->audio_data)
-		free(alsa->audio_data);
 
 	freerdp_dsp_context_free(alsa->dsp_context);
 

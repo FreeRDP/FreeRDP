@@ -23,8 +23,6 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-typedef struct rdpsnd_format rdpsndFormat;
-
 struct rdpsnd_format
 {
 	UINT16 wFormatTag;
@@ -35,6 +33,20 @@ struct rdpsnd_format
 	UINT16 cbSize;
 	BYTE* data;
 };
+typedef struct rdpsnd_format rdpsndFormat;
+
+struct AUDIO_FORMAT
+{
+	UINT16 wFormatTag;
+	UINT16 nChannels;
+	UINT32 nSamplesPerSec;
+	UINT32 nAvgBytesPerSec;
+	UINT16 nBlockAlign;
+	UINT16 wBitsPerSample;
+	UINT16 cbSize;
+	BYTE* data;
+};
+typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 
 #define SNDC_CLOSE		1
 #define SNDC_WAVE		2

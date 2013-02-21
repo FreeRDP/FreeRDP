@@ -55,9 +55,13 @@ struct rdpsnd_plugin
 	HANDLE thread;
 
 	BYTE cBlockNo;
-	rdpsndFormat* supported_formats;
-	int n_supported_formats;
 	int current_format;
+
+	AUDIO_FORMAT* ServerFormats;
+	UINT16 NumberOfServerFormats;
+
+	AUDIO_FORMAT* ClientFormats;
+	UINT16 NumberOfClientFormats;
 
 	BOOL expectingWave;
 	BYTE waveData[4];
@@ -136,19 +140,6 @@ static void* rdpsnd_schedule_thread(void* arg)
 	return NULL;
 }
 
-static void rdpsnd_free_supported_formats(rdpsndPlugin* rdpsnd)
-{
-	UINT16 i;
-
-	for (i = 0; i < rdpsnd->n_supported_formats; i++)
-		free(rdpsnd->supported_formats[i].data);
-
-	free(rdpsnd->supported_formats);
-
-	rdpsnd->supported_formats = NULL;
-	rdpsnd->n_supported_formats = 0;
-}
-
 void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 {
 	STREAM* pdu;
@@ -163,23 +154,151 @@ void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
 }
 
-static void rdpsnd_recv_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 {
-	int pos;
+	int index;
+	AUDIO_FORMAT* format;
+
+	if (formats)
+	{
+		for (index = 0; index < (int) count; index++)
+		{
+			format = &formats[index];
+
+			if (format->cbSize)
+				free(format->data);
+		}
+
+		free(formats);
+	}
+}
+
+void rdpsnd_adapt_audio_formats_new_to_old(rdpsndFormat* oldFormat, AUDIO_FORMAT* newFormat)
+{
+	oldFormat->wFormatTag = newFormat->wFormatTag;
+	oldFormat->nChannels = newFormat->nChannels;
+	oldFormat->nSamplesPerSec = newFormat->nSamplesPerSec;
+	oldFormat->nBlockAlign = newFormat->nBlockAlign;
+	oldFormat->wBitsPerSample = newFormat->wBitsPerSample;
+	oldFormat->cbSize = newFormat->cbSize;
+	oldFormat->data = newFormat->data;
+}
+
+void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
+{
+	int index;
+	rdpsndFormat sndFormat;
+	AUDIO_FORMAT* serverFormat;
+	AUDIO_FORMAT* clientFormat;
+
+	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
+	rdpsnd->NumberOfClientFormats = 0;
+	rdpsnd->ClientFormats = NULL;
+
+	rdpsnd->ClientFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) * rdpsnd->NumberOfServerFormats);
+
+	for (index = 0; index < (int) rdpsnd->NumberOfServerFormats; index++)
+	{
+		serverFormat = &rdpsnd->ServerFormats[index];
+
+		if (rdpsnd->fixed_format > 0 && (rdpsnd->fixed_format != serverFormat->wFormatTag))
+			continue;
+
+		if (rdpsnd->fixed_channel > 0 && (rdpsnd->fixed_channel != serverFormat->nChannels))
+			continue;
+
+		if (rdpsnd->fixed_rate > 0 && (rdpsnd->fixed_rate != serverFormat->nSamplesPerSec))
+			continue;
+
+		/**
+		 * FIXME: temporary adapter to avoid breaking code depending on rdpsndFormat definition
+		 */
+
+		rdpsnd_adapt_audio_formats_new_to_old(&sndFormat, serverFormat);
+
+		if (rdpsnd->device && rdpsnd->device->FormatSupported(rdpsnd->device, &sndFormat))
+		{
+			clientFormat = &rdpsnd->ClientFormats[rdpsnd->NumberOfClientFormats++];
+
+			CopyMemory(clientFormat, serverFormat, sizeof(AUDIO_FORMAT));
+			clientFormat->cbSize = 0;
+
+			if (serverFormat->cbSize > 0)
+			{
+				clientFormat->data = (BYTE*) malloc(serverFormat->cbSize);
+				CopyMemory(clientFormat->data, serverFormat->data, serverFormat->cbSize);
+				clientFormat->cbSize = serverFormat->cbSize;
+			}
+		}
+	}
+}
+
+void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
+{
+	int index;
 	STREAM* pdu;
+	UINT16 length;
 	UINT32 dwVolume;
 	UINT16 dwVolumeLeft;
 	UINT16 dwVolumeRight;
 	UINT16 wNumberOfFormats;
-	UINT16 nFormat;
-	UINT16 wVersion;
-	BYTE* data_mark;
-	BYTE* format_mark;
-	rdpsndFormat* format;
-	UINT16 n_out_formats;
-	rdpsndFormat* out_formats;
+	AUDIO_FORMAT* clientFormat;
 
-	rdpsnd_free_supported_formats(rdpsnd);
+	dwVolumeLeft = (0xFFFF / 2); /* 50% ? */
+	dwVolumeRight = (0xFFFF / 2); /* 50% ? */
+	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
+
+	wNumberOfFormats = rdpsnd->NumberOfClientFormats;
+
+	length = 4 + 20;
+
+	for (index = 0; index < (int) wNumberOfFormats; index++)
+		length += (18 + rdpsnd->ClientFormats[index].cbSize);
+
+	pdu = stream_new(length);
+
+	stream_write_BYTE(pdu, SNDC_FORMATS); /* msgType */
+	stream_write_BYTE(pdu, 0); /* bPad */
+	stream_write_UINT16(pdu, length - 4); /* BodySize */
+
+	stream_write_UINT32(pdu, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
+	stream_write_UINT32(pdu, dwVolume); /* dwVolume */
+	stream_write_UINT32(pdu, 0); /* dwPitch */
+	stream_write_UINT16(pdu, 0); /* wDGramPort */
+	stream_write_UINT16(pdu, wNumberOfFormats); /* wNumberOfFormats */
+	stream_write_BYTE(pdu, 0); /* cLastBlockConfirmed */
+	stream_write_UINT16(pdu, 6); /* wVersion */
+	stream_write_BYTE(pdu, 0); /* bPad */
+
+	for (index = 0; index < (int) wNumberOfFormats; index++)
+	{
+		clientFormat = &rdpsnd->ClientFormats[index];
+
+		stream_write_UINT16(pdu, clientFormat->wFormatTag);
+		stream_write_UINT16(pdu, clientFormat->nChannels);
+		stream_write_UINT32(pdu, clientFormat->nSamplesPerSec);
+		stream_write_UINT32(pdu, clientFormat->nAvgBytesPerSec);
+		stream_write_UINT16(pdu, clientFormat->nBlockAlign);
+		stream_write_UINT16(pdu, clientFormat->wBitsPerSample);
+		stream_write_UINT16(pdu, clientFormat->cbSize);
+
+		if (clientFormat->cbSize > 0)
+			stream_write(pdu, clientFormat->data, clientFormat->cbSize);
+	}
+
+	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
+}
+
+void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+{
+	int index;
+	UINT16 wVersion;
+	AUDIO_FORMAT* format;
+	UINT16 wNumberOfFormats;
+
+	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	rdpsnd->NumberOfServerFormats = 0;
+	rdpsnd->ServerFormats = NULL;
 
 	stream_seek_UINT32(s); /* dwFlags */
 	stream_seek_UINT32(s); /* dwVolume */
@@ -187,103 +306,31 @@ static void rdpsnd_recv_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 	stream_seek_UINT16(s); /* wDGramPort */
 	stream_read_UINT16(s, wNumberOfFormats);
 	stream_read_BYTE(s, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
-	stream_read_UINT16(s, wVersion);
+	stream_read_UINT16(s, wVersion); /* wVersion */
 	stream_seek_BYTE(s); /* bPad */
 
-	DEBUG_SVC("wNumberOfFormats %d wVersion %d", wNumberOfFormats, wVersion);
+	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
+	rdpsnd->ServerFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) * wNumberOfFormats);
 
-	if (wNumberOfFormats < 1)
+	for (index = 0; index < (int) wNumberOfFormats; index++)
 	{
-		DEBUG_WARN("wNumberOfFormats is 0");
-		return;
+		format = &rdpsnd->ServerFormats[index];
+
+		stream_read_UINT16(s, format->wFormatTag); /* wFormatTag */
+		stream_read_UINT16(s, format->nChannels); /* nChannels */
+		stream_read_UINT32(s, format->nSamplesPerSec); /* nSamplesPerSec */
+		stream_read_UINT32(s, format->nAvgBytesPerSec); /* nAvgBytesPerSec */
+		stream_read_UINT16(s, format->nBlockAlign); /* nBlockAlign */
+		stream_read_UINT16(s, format->wBitsPerSample); /* wBitsPerSample */
+		stream_read_UINT16(s, format->cbSize); /* cbSize */
+
+		format->data = (BYTE*) malloc(format->cbSize);
+		stream_read(s, format->data, format->cbSize);
 	}
 
-	out_formats = (rdpsndFormat*) malloc(wNumberOfFormats * sizeof(rdpsndFormat));
-	ZeroMemory(out_formats, wNumberOfFormats * sizeof(rdpsndFormat));
-	n_out_formats = 0;
+	rdpsnd_select_supported_audio_formats(rdpsnd);
 
-	dwVolumeLeft = (0xFFFF / 2); /* 50% ? */
-	dwVolumeRight = (0xFFFF / 2); /* 50% ? */
-	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
-
-	pdu = stream_new(24);
-	stream_write_BYTE(pdu, SNDC_FORMATS); /* msgType */
-	stream_write_BYTE(pdu, 0); /* bPad */
-	stream_seek_UINT16(pdu); /* BodySize */
-	stream_write_UINT32(pdu, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
-	stream_write_UINT32(pdu, dwVolume); /* dwVolume */
-	stream_write_UINT32(pdu, 0); /* dwPitch */
-	stream_write_UINT16_be(pdu, 0); /* wDGramPort */
-	stream_seek_UINT16(pdu); /* wNumberOfFormats */
-	stream_write_BYTE(pdu, 0); /* cLastBlockConfirmed */
-	stream_write_UINT16(pdu, 6); /* wVersion */
-	stream_write_BYTE(pdu, 0); /* bPad */
-
-	for (nFormat = 0; nFormat < wNumberOfFormats; nFormat++)
-	{
-		stream_get_mark(s, format_mark);
-		format = &out_formats[n_out_formats];
-		stream_read_UINT16(s, format->wFormatTag);
-		stream_read_UINT16(s, format->nChannels);
-		stream_read_UINT32(s, format->nSamplesPerSec);
-		stream_seek_UINT32(s); /* nAvgBytesPerSec */
-		stream_read_UINT16(s, format->nBlockAlign);
-		stream_read_UINT16(s, format->wBitsPerSample);
-		stream_read_UINT16(s, format->cbSize);
-		stream_get_mark(s, data_mark);
-		stream_seek(s, format->cbSize);
-		format->data = NULL;
-
-		DEBUG_SVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d nBlockAlign=%d wBitsPerSample=%d",
-			format->wFormatTag, format->nChannels, format->nSamplesPerSec,
-			format->nBlockAlign, format->wBitsPerSample);
-
-		if (rdpsnd->fixed_format > 0 && rdpsnd->fixed_format != format->wFormatTag)
-			continue;
-
-		if (rdpsnd->fixed_channel > 0 && rdpsnd->fixed_channel != format->nChannels)
-			continue;
-
-		if (rdpsnd->fixed_rate > 0 && rdpsnd->fixed_rate != format->nSamplesPerSec)
-			continue;
-
-		if (rdpsnd->device && rdpsnd->device->FormatSupported(rdpsnd->device, format))
-		{
-			DEBUG_SVC("format supported.");
-
-			stream_check_size(pdu, 18 + format->cbSize);
-			stream_write(pdu, format_mark, 18 + format->cbSize);
-
-			if (format->cbSize > 0)
-			{
-				format->data = malloc(format->cbSize);
-				CopyMemory(format->data, data_mark, format->cbSize);
-			}
-
-			n_out_formats++;
-		}
-	}
-
-	rdpsnd->n_supported_formats = n_out_formats;
-
-	if (n_out_formats > 0)
-	{
-		rdpsnd->supported_formats = out_formats;
-	}
-	else
-	{
-		free(out_formats);
-		DEBUG_WARN("no formats supported");
-	}
-
-	pos = stream_get_pos(pdu);
-	stream_set_pos(pdu, 2);
-	stream_write_UINT16(pdu, pos - 4);
-	stream_set_pos(pdu, 18);
-	stream_write_UINT16(pdu, n_out_formats);
-	stream_set_pos(pdu, pos);
-
-	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
+	rdpsnd_send_client_audio_formats(rdpsnd);
 
 	if (wVersion >= 6)
 		rdpsnd_send_quality_mode_pdu(rdpsnd);
@@ -314,33 +361,34 @@ static void rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 	rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
-static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in, UINT16 BodySize)
+static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 BodySize)
 {
 	UINT16 wFormatNo;
+	AUDIO_FORMAT* format;
+	rdpsndFormat sndFormat;
 
-	stream_read_UINT16(data_in, rdpsnd->wTimeStamp);
-	stream_read_UINT16(data_in, wFormatNo);
-	stream_read_BYTE(data_in, rdpsnd->cBlockNo);
-	stream_seek(data_in, 3); /* bPad */
-	stream_read(data_in, rdpsnd->waveData, 4);
+	stream_read_UINT16(s, rdpsnd->wTimeStamp);
+	stream_read_UINT16(s, wFormatNo);
+	stream_read_BYTE(s, rdpsnd->cBlockNo);
+	stream_seek(s, 3); /* bPad */
+	stream_read(s, rdpsnd->waveData, 4);
 
 	rdpsnd->waveDataSize = BodySize - 8;
 	rdpsnd->wave_timestamp = GetTickCount();
 	rdpsnd->expectingWave = TRUE;
-
-	DEBUG_SVC("waveDataSize %d wFormatNo %d", rdpsnd->waveDataSize, wFormatNo);
-
 	rdpsnd->close_timestamp = 0;
+
+	format = &rdpsnd->ClientFormats[wFormatNo];
+	rdpsnd_adapt_audio_formats_new_to_old(&sndFormat, format);
 
 	if (!rdpsnd->is_open)
 	{
-		rdpsnd->current_format = wFormatNo;
 		rdpsnd->is_open = TRUE;
+		rdpsnd->current_format = wFormatNo;
 
 		if (rdpsnd->device)
 		{
-			IFCALL(rdpsnd->device->Open, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
-				rdpsnd->latency);
+			IFCALL(rdpsnd->device->Open, rdpsnd->device, &sndFormat, rdpsnd->latency);
 		}
 	}
 	else if (wFormatNo != rdpsnd->current_format)
@@ -349,8 +397,7 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in, UIN
 
 		if (rdpsnd->device)
 		{
-			IFCALL(rdpsnd->device->SetFormat, rdpsnd->device, &rdpsnd->supported_formats[wFormatNo],
-				rdpsnd->latency);
+			IFCALL(rdpsnd->device->SetFormat, rdpsnd->device, &sndFormat, rdpsnd->latency);
 		}
 	}
 }
@@ -439,11 +486,11 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 	rdpsnd->close_timestamp = GetTickCount() + 2000;
 }
 
-static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in)
+static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 {
 	UINT32 dwVolume;
 
-	stream_read_UINT32(data_in, dwVolume);
+	stream_read_UINT32(s, dwVolume);
 	DEBUG_SVC("dwVolume 0x%X", dwVolume);
 
 	if (rdpsnd->device)
@@ -452,7 +499,7 @@ static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	}
 }
 
-static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* data_in)
+static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* s)
 {
 	BYTE msgType;
 	UINT16 BodySize;
@@ -460,29 +507,29 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* data_in)
 
 	if (rdpsnd->expectingWave)
 	{
-		rdpsnd_recv_wave_pdu(rdpsnd, data_in);
-		stream_free(data_in);
+		rdpsnd_recv_wave_pdu(rdpsnd, s);
+		stream_free(s);
 		return;
 	}
 
-	stream_read_BYTE(data_in, msgType); /* msgType */
-	stream_seek_BYTE(data_in); /* bPad */
-	stream_read_UINT16(data_in, BodySize);
+	stream_read_BYTE(s, msgType); /* msgType */
+	stream_seek_BYTE(s); /* bPad */
+	stream_read_UINT16(s, BodySize);
 
 	DEBUG_SVC("msgType %d BodySize %d", msgType, BodySize);
 
 	switch (msgType)
 	{
 		case SNDC_FORMATS:
-			rdpsnd_recv_formats_pdu(rdpsnd, data_in);
+			rdpsnd_recv_server_audio_formats_pdu(rdpsnd, s);
 			break;
 
 		case SNDC_TRAINING:
-			rdpsnd_recv_training_pdu(rdpsnd, data_in);
+			rdpsnd_recv_training_pdu(rdpsnd, s);
 			break;
 
 		case SNDC_WAVE:
-			rdpsnd_recv_wave_info_pdu(rdpsnd, data_in, BodySize);
+			rdpsnd_recv_wave_info_pdu(rdpsnd, s, BodySize);
 			break;
 
 		case SNDC_CLOSE:
@@ -490,7 +537,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* data_in)
 			break;
 
 		case SNDC_SETVOLUME:
-			rdpsnd_recv_volume_pdu(rdpsnd, data_in);
+			rdpsnd_recv_volume_pdu(rdpsnd, s);
 			break;
 
 		default:
@@ -498,7 +545,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* data_in)
 			break;
 	}
 
-	stream_free(data_in);
+	stream_free(s);
 }
 
 static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device)
@@ -697,8 +744,6 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 
 	if (rdpsnd->device_name)
 		free(rdpsnd->device_name);
-
-	rdpsnd_free_supported_formats(rdpsnd);
 
 	free(plugin);
 }
