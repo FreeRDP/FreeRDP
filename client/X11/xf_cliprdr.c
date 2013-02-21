@@ -34,6 +34,7 @@
 #include "xf_cliprdr.h"
 
 typedef struct clipboard_format_mapping clipboardFormatMapping;
+
 struct clipboard_format_mapping
 {
 	Atom target_format;
@@ -41,6 +42,7 @@ struct clipboard_format_mapping
 };
 
 typedef struct clipboard_context clipboardContext;
+
 struct clipboard_context
 {
 	rdpChannels* channels;

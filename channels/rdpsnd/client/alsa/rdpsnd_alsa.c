@@ -92,6 +92,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
 	snd_pcm_hw_params_set_channels_near(alsa->pcm_handle, hw_params, &alsa->actual_channels);
 	snd_pcm_hw_params_get_period_size(hw_params, &alsa->period_size, 0);
+
 	alsa->audio_data_left = 0;
 
 	if (alsa->latency < 0)
@@ -103,7 +104,7 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 		buffer_size = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
 
 	snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &buffer_size);
-	//snd_pcm_hw_params_set_period_size_near(alsa->out_handle, hw_params, &alsa->period_size, NULL);
+	//snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
 	snd_pcm_hw_params(alsa->pcm_handle, hw_params);
 	snd_pcm_hw_params_free(hw_params);
 

@@ -352,7 +352,7 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	STREAM* data;
 	UINT16 wTimeStamp;
 
-	rdpsnd->expectingWave = 0;
+	rdpsnd->expectingWave = FALSE;
 
 	CopyMemory(stream_get_head(data_in), rdpsnd->waveData, 4);
 
