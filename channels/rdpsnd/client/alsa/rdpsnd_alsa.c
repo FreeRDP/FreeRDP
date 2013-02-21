@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/sysinfo.h>
 #include <winpr/collections.h>
 
 #include <alsa/asoundlib.h>
@@ -73,6 +74,8 @@ struct _RDPSND_WAVE_INFO
 	BYTE cBlockNo;
 	UINT16 wTimeStamp;
 	UINT16 wFormatNo;
+	UINT32 wTimeA;
+	UINT32 wTimeB;
 };
 typedef struct _RDPSND_WAVE_INFO RDPSND_WAVE_INFO;
 
@@ -375,10 +378,23 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 	int offset;
 	int frame_size;
 	wMessage message;
+	UINT32 wInitialTime;
+	UINT32 wCurrentTime;
+	UINT32 wSessionTime;
+	UINT16 wFixedLatency;
+	UINT16 wAverageLatency;
+	UINT16 wAverageSleepLatency;
 	RDPSND_WAVE_INFO* waveInfo;
 	snd_pcm_sframes_t available_input;
 	snd_pcm_sframes_t available_output;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) arg;
+	rdpsndDevicePlugin* device = (rdpsndDevicePlugin*) arg;
+
+	wInitialTime = GetTickCount();
+
+	wFixedLatency = 250;
+	wAverageLatency = wFixedLatency / 2;
+	wAverageSleepLatency = wFixedLatency / 2;
 
 	while (1)
 	{
@@ -446,6 +462,44 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 		}
 
 		free(data);
+
+		if (message.id == 1)
+		{
+			UINT16 wLatency;
+			UINT16 wTimeStamp;
+			UINT16 wSleepLatency;
+			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
+
+			waveInfo->wTimeB = GetTickCount();
+			wLatency = (UINT16) (waveInfo->wTimeB - waveInfo->wTimeA);
+			wTimeStamp = waveInfo->wTimeStamp + wLatency;
+
+			wAverageLatency = (wAverageLatency + wLatency) / 2;
+
+			if (wFixedLatency > wLatency)
+				wSleepLatency = wFixedLatency - wLatency;
+			else
+				wSleepLatency = 0;
+
+			wAverageSleepLatency = (wAverageSleepLatency + wSleepLatency) / 2;
+
+			Sleep(wSleepLatency);
+
+			wCurrentTime = GetTickCount();
+			wSessionTime = wCurrentTime - wInitialTime;
+
+			printf("[%06d.%03d] FixedLatency: %d ms AverageLatency: %d ms CurrentLatency: %d ms "
+					"SleepLatency: %d ms AverageSleepLatency: %d ms\n",
+					wSessionTime / 1000, wSessionTime % 1000,
+					wFixedLatency, wAverageLatency, wLatency,
+					wSleepLatency, wAverageSleepLatency);
+
+			wTimeStamp += wSleepLatency;
+
+			device->WaveConfirm(device, wTimeStamp, waveInfo->cBlockNo);
+
+			free(waveInfo);
+		}
 	}
 
 	return NULL;
@@ -530,6 +584,7 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device,
 
 	waveInfo = (RDPSND_WAVE_INFO*) malloc(sizeof(RDPSND_WAVE_INFO));
 
+	waveInfo->wTimeA = GetTickCount();
 	waveInfo->wTimeStamp = wTimeStamp;
 	waveInfo->wFormatNo = wFormatNo;
 	waveInfo->cBlockNo = cBlockNo;

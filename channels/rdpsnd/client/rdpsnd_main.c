@@ -410,18 +410,21 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 		}
 	}
 
-	wTimeStamp = rdpsnd->wTimeStamp + TIME_DELAY_MS;
+	if (!rdpsnd->device->WavePlay)
+	{
+		wTimeStamp = rdpsnd->wTimeStamp + TIME_DELAY_MS;
 
-	data = stream_new(8);
-	stream_write_BYTE(data, SNDC_WAVECONFIRM);
-	stream_write_BYTE(data, 0);
-	stream_write_UINT16(data, 4);
-	stream_write_UINT16(data, wTimeStamp);
-	stream_write_BYTE(data, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
-	stream_write_BYTE(data, 0); /* bPad */
+		data = stream_new(8);
+		stream_write_BYTE(data, SNDC_WAVECONFIRM);
+		stream_write_BYTE(data, 0);
+		stream_write_UINT16(data, 4);
+		stream_write_UINT16(data, wTimeStamp);
+		stream_write_BYTE(data, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
+		stream_write_BYTE(data, 0); /* bPad */
 
-	wTimeStamp = rdpsnd->wave_timestamp + TIME_DELAY_MS;
-	MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
+		wTimeStamp = rdpsnd->wave_timestamp + TIME_DELAY_MS;
+		MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
+	}
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
