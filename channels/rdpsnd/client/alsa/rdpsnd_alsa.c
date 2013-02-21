@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/collections.h>
 
 #include <alsa/asoundlib.h>
 
@@ -37,15 +38,13 @@
 
 #include "rdpsnd_main.h"
 
-//#define RDPSND_ALSA_ASYNC	1
-
 typedef struct rdpsnd_alsa_plugin rdpsndAlsaPlugin;
 
 struct rdpsnd_alsa_plugin
 {
 	rdpsndDevicePlugin device;
 
-	HANDLE mutex;
+	HANDLE thread;
 	char* device_name;
 	snd_pcm_t* pcm_handle;
 	snd_mixer_t* mixer_handle;
@@ -61,12 +60,11 @@ struct rdpsnd_alsa_plugin
 	BYTE* audio_data;
 	UINT32 audio_data_size;
 	UINT32 audio_data_left;
+	wMessageQueue* queue;
 	snd_pcm_uframes_t period_size;
 	snd_async_handler_t* pcm_callback;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
-
-void rdpsnd_alsa_async_handler(snd_async_handler_t* pcm_callback);
 
 static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 {
@@ -77,10 +75,6 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_uframes_t buffer_size;
 
 	snd_pcm_drop(alsa->pcm_handle);
-
-#ifdef RDPSND_ALSA_ASYNC
-	snd_async_add_pcm_handler(&alsa->pcm_callback, alsa->pcm_handle, rdpsnd_alsa_async_handler, (void*) alsa);
-#endif
 
 	status = snd_pcm_hw_params_malloc(&hw_params);
 
@@ -245,10 +239,7 @@ static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format, i
 	DEBUG_SVC("opening");
 
 	mode = 0;
-
-#ifdef RDPSND_ALSA_ASYNC
-	mode |= SND_PCM_NONBLOCK;
-#endif
+	//mode |= SND_PCM_NONBLOCK;
 
 	status = snd_pcm_open(&alsa->pcm_handle, alsa->device_name, SND_PCM_STREAM_PLAYBACK, mode);
 
@@ -295,8 +286,6 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 		free(alsa->audio_data);
 
 	freerdp_dsp_context_free(alsa->dsp_context);
-
-	CloseHandle(alsa->mutex);
 
 	free(alsa);
 }
@@ -368,71 +357,77 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	}
 }
 
-void rdpsnd_alsa_process_audio_data(rdpsndAlsaPlugin* alsa)
+static void* rdpsnd_alsa_schedule_thread(void* arg)
 {
+	BYTE* data;
 	int length;
 	int status;
-	BYTE* end;
-	BYTE* pindex;
-	int rbytes_per_frame;
-	int sbytes_per_frame;
-	snd_pcm_sframes_t avail;
+	int offset;
+	int frame_size;
+	wMessage message;
+	snd_pcm_sframes_t available_input;
+	snd_pcm_sframes_t available_output;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) arg;
 
-	sbytes_per_frame = alsa->source_channels * alsa->bytes_per_channel;
-	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
-
-	WaitForSingleObject(alsa->mutex, INFINITE);
-
-	pindex = alsa->audio_data;
-	end = pindex + alsa->audio_data_left;
-	avail = snd_pcm_avail_update(alsa->pcm_handle);
-
-	while (pindex + alsa->period_size * rbytes_per_frame <= end)
+	while (1)
 	{
-		length = end - pindex;
-
-		status = snd_pcm_writei(alsa->pcm_handle, pindex, alsa->period_size);
-		avail = snd_pcm_avail_update(alsa->pcm_handle);
-
-		if (status == -EPIPE)
-		{
-			snd_pcm_recover(alsa->pcm_handle, status, 0);
-			status = 0;
-		}
-		else if (status == -EAGAIN)
-		{
+		if (!MessageQueue_Wait(alsa->queue))
 			break;
-		}
-		else if (status < 0)
-		{
-			DEBUG_WARN("snd_pcm_writei status %d", status);
-			snd_pcm_close(alsa->pcm_handle);
-			alsa->pcm_handle = NULL;
-			rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
+
+		if (!MessageQueue_Peek(alsa->queue, &message, TRUE))
 			break;
+
+		if (message.id == WMQ_QUIT)
+			break;
+
+		data = (BYTE*) message.wParam;
+		length = (int) (size_t) message.lParam;
+
+		offset = 0;
+		available_output = snd_pcm_avail_update(alsa->pcm_handle);
+		frame_size = alsa->actual_channels * alsa->bytes_per_channel;
+
+		while (offset < length)
+		{
+			available_input = (length - offset) / frame_size;
+
+			if (available_output < 1)
+			{
+				snd_pcm_wait(alsa->pcm_handle, -1);
+				available_output = snd_pcm_avail_update(alsa->pcm_handle);
+			}
+
+			status = snd_pcm_writei(alsa->pcm_handle, &data[offset],
+					(available_input < available_output) ? available_input : available_output);
+
+			available_output = 0;
+
+			if (status == -EPIPE)
+			{
+				snd_pcm_recover(alsa->pcm_handle, status, 0);
+				status = 0;
+			}
+			else if (status == -EAGAIN)
+			{
+				status = 0;
+			}
+			else if (status < 0)
+			{
+				DEBUG_WARN("snd_pcm_writei status %d", status);
+				snd_pcm_close(alsa->pcm_handle);
+				alsa->pcm_handle = NULL;
+				rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
+				break;
+			}
+
+			available_output = snd_pcm_avail_update(alsa->pcm_handle);
+			offset += status * frame_size;
 		}
 
-		pindex += status * rbytes_per_frame;
+		free(data);
 	}
 
-	if ((pindex <= end) && (pindex != alsa->audio_data))
-	{
-		CopyMemory(alsa->audio_data, pindex, end - pindex);
-		alsa->audio_data_left = end - pindex;
-	}
-
-	ReleaseMutex(alsa->mutex);
-}
-
-void rdpsnd_alsa_async_handler(snd_async_handler_t* pcm_callback)
-{
-	snd_pcm_t* pcm_handle;
-	rdpsndAlsaPlugin* alsa;
-
-	pcm_handle = snd_async_handler_get_pcm(pcm_callback);
-	alsa = (rdpsndAlsaPlugin*) snd_async_handler_get_callback_private(pcm_callback);
-
-	rdpsnd_alsa_process_audio_data(alsa);
+	return NULL;
 }
 
 static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
@@ -494,20 +489,10 @@ static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 		src = alsa->dsp_context->resampled_buffer;
 	}
 
-	WaitForSingleObject(alsa->mutex, INFINITE);
+	data = (BYTE*) malloc(size);
+	CopyMemory(data, src, size);
 
-	if (alsa->audio_data_left + size > alsa->audio_data_size)
-	{
-		alsa->audio_data = realloc(alsa->audio_data, alsa->audio_data_left + size);
-		alsa->audio_data_size = alsa->audio_data_left + size;
-	}
-
-	CopyMemory(alsa->audio_data + alsa->audio_data_left, src, size);
-	alsa->audio_data_left += size;
-
-	ReleaseMutex(alsa->mutex);
-
-	rdpsnd_alsa_process_audio_data(alsa);
+	MessageQueue_Post(alsa->queue, (void*) alsa, 0, (void*) data, (void*) (size_t) size);
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
@@ -580,8 +565,6 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	args = pEntryPoints->args;
 	rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args);
 
-	alsa->mutex = CreateMutex(NULL, FALSE, NULL);
-
 	if (!alsa->device_name)
 		alsa->device_name = _strdup("default");
 
@@ -596,6 +579,9 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->dsp_context = freerdp_dsp_context_new();
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) alsa);
+
+	alsa->queue = MessageQueue_New();
+	alsa->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_alsa_schedule_thread, alsa, 0, NULL);
 
 	return 0;
 }
