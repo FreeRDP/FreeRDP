@@ -164,7 +164,9 @@ static UINT32 androidNeon(void)
 			return PRIM_ARM_NEON_AVAILABLE;
 		}
 	}
-	/* else */
+#elif defined(__APPLE)
+	/* assume NEON support on iOS devices */
+	return PRIM_ARM_NEON_AVAILABLE;
 #endif
 	return 0;
 }

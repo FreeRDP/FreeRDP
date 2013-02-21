@@ -278,8 +278,11 @@ int isNeonSupported()
 	}
 
 	return FALSE;
-#else
+#elif defined(__APPLE)
+	/* assume NEON support on iOS devices */
 	return TRUE;
+#else
+	return FALSE;
 #endif
 }
 
