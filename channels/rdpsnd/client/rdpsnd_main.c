@@ -40,16 +40,18 @@
 #include <freerdp/addin.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
+
+#define TIME_DELAY_MS	250
 
 struct rdpsnd_plugin
 {
 	rdpSvcPlugin plugin;
 
 	wMessagePipe* MsgPipe;
+	HANDLE thread;
 
 	BYTE cBlockNo;
 	rdpsndFormat* supported_formats;
@@ -77,35 +79,44 @@ struct rdpsnd_plugin
 	rdpsndDevicePlugin* device;
 };
 
-/* process the linked list of data that has queued to be sent */
-static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
+static void* rdpsnd_schedule_thread(void* arg)
 {
 	STREAM* data;
 	wMessage message;
+	UINT16 wTimeDiff;
 	UINT16 wTimeStamp;
 	UINT16 wCurrentTime;
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 
-	while (MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, FALSE))
+	while (1)
 	{
+		if (!MessageQueue_Wait(rdpsnd->MsgPipe->Out))
+			break;
+
+		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
+			break;
+
 		if (message.id == WMQ_QUIT)
 			break;
 
 		wTimeStamp = (UINT16) (size_t) message.lParam;
 		wCurrentTime = (UINT16) GetTickCount();
 
+		//printf("wTimeStamp: %d wCurrentTime: %d\n", wTimeStamp, wCurrentTime);
+
 		if (wCurrentTime <= wTimeStamp)
-			break;
-
-		if (MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 		{
-			data = (STREAM*) message.wParam;
-			svc_plugin_send(plugin, data);
-
-			DEBUG_SVC("processed output data");
+			wTimeDiff = wTimeStamp - wCurrentTime;
+			//printf("Sleeping %d ms\n", wTimeDiff);
+			Sleep(wTimeDiff);
 		}
+
+		data = (STREAM*) message.wParam;
+		svc_plugin_send((rdpSvcPlugin*) rdpsnd, data);
+		DEBUG_SVC("processed output data");
 	}
 
+#if 0
 	if (rdpsnd->is_open && (rdpsnd->close_timestamp > 0))
 	{
 		if (GetTickCount() > rdpsnd->close_timestamp)
@@ -119,9 +130,9 @@ static void rdpsnd_process_interval(rdpSvcPlugin* plugin)
 			DEBUG_SVC("processed close");
 		}
 	}
+#endif
 
-	if ((MessageQueue_Size(rdpsnd->MsgPipe->Out) == 0) && !rdpsnd->is_open)
-		rdpsnd->plugin.interval_ms = 0;
+	return NULL;
 }
 
 static void rdpsnd_free_supported_formats(rdpsndPlugin* rdpsnd)
@@ -339,7 +350,6 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 {
 	STREAM* data;
-	UINT32 delay_ms;
 	UINT16 wTimeStamp;
 
 	rdpsnd->expectingWave = 0;
@@ -357,11 +367,7 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 		IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(data_in), stream_get_size(data_in));
 	}
 
-	delay_ms = 250;
-	wTimeStamp = rdpsnd->wTimeStamp + delay_ms;
-
-	DEBUG_SVC("data_size %d delay_ms %u process_ms %u",
-		stream_get_size(data_in), delay_ms, process_ms);
+	wTimeStamp = rdpsnd->wTimeStamp + TIME_DELAY_MS;
 
 	data = stream_new(8);
 	stream_write_BYTE(data, SNDC_WAVECONFIRM);
@@ -371,10 +377,8 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	stream_write_BYTE(data, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
 	stream_write_BYTE(data, 0); /* bPad */
 
-	wTimeStamp = rdpsnd->wave_timestamp + delay_ms;
+	wTimeStamp = rdpsnd->wave_timestamp + TIME_DELAY_MS;
 	MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
-
-	rdpsnd->plugin.interval_ms = 10;
 }
 
 static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
@@ -387,7 +391,6 @@ static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 	}
 
 	rdpsnd->close_timestamp = GetTickCount() + 2000;
-	rdpsnd->plugin.interval_ms = 10;
 }
 
 static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_in)
@@ -405,7 +408,7 @@ static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_
 
 static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
-	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)plugin;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) plugin;
 	BYTE msgType;
 	UINT16 BodySize;
 
@@ -573,11 +576,10 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	DEBUG_SVC("connecting");
 
-	plugin->interval_callback = rdpsnd_process_interval;
-
 	rdpsnd->latency = -1;
 
 	rdpsnd->MsgPipe = MessagePipe_New();
+	rdpsnd->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread, (void*) plugin, 0, NULL);
 
 	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
 

@@ -189,15 +189,8 @@ static void* svc_plugin_thread_func(void* arg)
 
 	while (1)
 	{
-		if (plugin->interval_ms > 0)
-		{
-			Sleep(plugin->interval_ms);
-		}
-		else
-		{
-			if (!MessageQueue_Wait(plugin->MsgPipe->In))
-				break;
-		}
+		if (!MessageQueue_Wait(plugin->MsgPipe->In))
+			break;
 
 		if (MessageQueue_Peek(plugin->MsgPipe->In, &message, TRUE))
 		{
@@ -215,9 +208,6 @@ static void* svc_plugin_thread_func(void* arg)
 				IFCALL(plugin->event_callback, plugin, event);
 			}
 		}
-
-		if (plugin->interval_ms > 0)
-			IFCALL(plugin->interval_callback, plugin);
 	}
 
 	DEBUG_SVC("out");

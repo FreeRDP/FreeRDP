@@ -33,6 +33,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/codec/dsp.h>
 #include <freerdp/utils/thread.h>
+#include <freerdp/channels/rdpsnd.h>
 
 #include "audin_main.h"
 
@@ -73,15 +74,12 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 			 snd_strerror(error));
 		return FALSE;
 	}
+
 	snd_pcm_hw_params_any(capture_handle, hw_params);
-	snd_pcm_hw_params_set_access(capture_handle, hw_params,
-		SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(capture_handle, hw_params,
-		alsa->format);
-	snd_pcm_hw_params_set_rate_near(capture_handle, hw_params,
-		&alsa->actual_rate, NULL);
-	snd_pcm_hw_params_set_channels_near(capture_handle, hw_params,
-		&alsa->actual_channels);
+	snd_pcm_hw_params_set_access(capture_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+	snd_pcm_hw_params_set_format(capture_handle, hw_params, alsa->format);
+	snd_pcm_hw_params_set_rate_near(capture_handle, hw_params, &alsa->actual_rate, NULL);
+	snd_pcm_hw_params_set_channels_near(capture_handle, hw_params, &alsa->actual_channels);
 	snd_pcm_hw_params(capture_handle, hw_params);
 	snd_pcm_hw_params_free(hw_params);
 	snd_pcm_prepare(capture_handle);
@@ -94,6 +92,7 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 			alsa->actual_rate, alsa->actual_channels,
 			alsa->target_rate, alsa->target_channels);
 	}
+
 	return TRUE;
 }
 
@@ -133,20 +132,25 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 			break;
 
 		cframes = alsa->frames_per_packet - alsa->buffer_frames;
+
 		if (cframes > frames)
 			cframes = frames;
-		memcpy(alsa->buffer + alsa->buffer_frames * tbytes_per_frame,
-			src, cframes * tbytes_per_frame);
+
+		CopyMemory(alsa->buffer + alsa->buffer_frames * tbytes_per_frame, src, cframes * tbytes_per_frame);
+
 		alsa->buffer_frames += cframes;
+
 		if (alsa->buffer_frames >= alsa->frames_per_packet)
 		{
-			if (alsa->wformat == 0x11)
+			if (alsa->wformat == WAVE_FORMAT_DVI_ADPCM)
 			{
 				alsa->dsp_context->encode_ima_adpcm(alsa->dsp_context,
 					alsa->buffer, alsa->buffer_frames * tbytes_per_frame,
 					alsa->target_channels, alsa->block_size);
+
 				encoded_data = alsa->dsp_context->adpcm_buffer;
 				encoded_size = alsa->dsp_context->adpcm_size;
+
 				DEBUG_DVC("encoded %d to %d",
 					alsa->buffer_frames * tbytes_per_frame, encoded_size);
 			}
@@ -162,11 +166,16 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 				frames = 0;
 			}
 			else
+			{
 				ret = alsa->receive(encoded_data, encoded_size, alsa->user_data);
+			}
+
 			alsa->buffer_frames = 0;
+
 			if (!ret)
 				break;
 		}
+
 		src += cframes * tbytes_per_frame;
 		frames -= cframes;
 	}
@@ -225,8 +234,10 @@ static void* audin_alsa_thread_func(void* arg)
 	} while (0);
 
 	free(buffer);
+
 	free(alsa->buffer);
 	alsa->buffer = NULL;
+
 	if (capture_handle)
 		snd_pcm_close(capture_handle);
 
@@ -253,7 +264,7 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 {
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			if (format->cbSize == 0 &&
 				(format->nSamplesPerSec <= 48000) &&
 				(format->wBitsPerSample == 8 || format->wBitsPerSample == 16) &&
@@ -263,7 +274,7 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 			}
 			break;
 
-		case 0x11: /* IMA ADPCM */
+		case WAVE_FORMAT_DVI_ADPCM:
 			if ((format->nSamplesPerSec <= 48000) &&
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
@@ -272,6 +283,7 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 			}
 			break;
 	}
+
 	return FALSE;
 }
 
@@ -284,9 +296,10 @@ static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UIN
 	alsa->actual_rate = format->nSamplesPerSec;
 	alsa->target_channels = format->nChannels;
 	alsa->actual_channels = format->nChannels;
+
 	switch (format->wFormatTag)
 	{
-		case 1: /* PCM */
+		case WAVE_FORMAT_PCM:
 			switch (format->wBitsPerSample)
 			{
 				case 8:
@@ -300,7 +313,7 @@ static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UIN
 			}
 			break;
 
-		case 0x11: /* IMA ADPCM */
+		case WAVE_FORMAT_DVI_ADPCM:
 			alsa->format = SND_PCM_FORMAT_S16_LE;
 			alsa->bytes_per_channel = 2;
 			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
@@ -310,6 +323,7 @@ static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UIN
 				alsa->frames_per_packet);
 			break;
 	}
+
 	alsa->wformat = format->wFormatTag;
 	alsa->block_size = format->nBlockAlign;
 }

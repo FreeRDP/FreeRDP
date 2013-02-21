@@ -43,12 +43,9 @@ struct rdp_svc_plugin
 	CHANNEL_ENTRY_POINTS_EX channel_entry_points;
 	CHANNEL_DEF channel_def;
 
-	int interval_ms;
-
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
 	void (*event_callback)(rdpSvcPlugin* plugin, RDP_EVENT* event);
-	void (*interval_callback)(rdpSvcPlugin* plugin);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	HANDLE thread;

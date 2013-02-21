@@ -505,6 +505,7 @@ static rdpChannels* freerdp_channels_find_by_instance(freerdp* instance)
 	for (channels_list = g_channels_list; channels_list; channels_list = channels_list->next)
 	{
 		channels = channels_list->channels;
+
 		if (channels->instance == instance)
 		{
 			ReleaseMutex(g_mutex_list);
@@ -709,13 +710,13 @@ static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHa
 
 	channels = ((rdpInitHandle*) pInitHandle)->channels;
 
-	if (pOpenHandle == 0)
+	if (!pOpenHandle)
 	{
 		DEBUG_CHANNELS("error bad channel handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
-	if (pChannelOpenEventProc == 0)
+	if (!pChannelOpenEventProc)
 	{
 		DEBUG_CHANNELS("error bad proc");
 		return CHANNEL_RC_BAD_PROC;
@@ -729,7 +730,7 @@ static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHa
 
 	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, pChannelName, &index);
 
-	if (lchannel_data == 0)
+	if (!lchannel_data)
 	{
 		DEBUG_CHANNELS("error channel name");
 		return CHANNEL_RC_UNKNOWN_CHANNEL_NAME;
@@ -803,13 +804,13 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	if (pData == 0)
+	if (!pData)
 	{
 		DEBUG_CHANNELS("error bad pData");
 		return CHANNEL_RC_NULL_DATA;
 	}
 
-	if (dataLength == 0)
+	if (!dataLength)
 	{
 		DEBUG_CHANNELS("error bad dataLength");
 		return CHANNEL_RC_ZERO_LENGTH;
@@ -851,7 +852,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
-	if ((channels == NULL) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
+	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
 	{
 		DEBUG_CHANNELS("error bad channels handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -863,7 +864,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	if (event == NULL)
+	if (!event)
 	{
 		DEBUG_CHANNELS("error bad event");
 		return CHANNEL_RC_NULL_DATA;
@@ -888,6 +889,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 	}
 
 	channels->event = event;
+
 	/* set the event */
 	SetEvent(channels->signal);
 
@@ -1144,15 +1146,15 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 
 	channels = freerdp_channels_find_by_instance(instance);
 
-	if (channels == 0)
+	if (!channels)
 	{
 		DEBUG_CHANNELS("could not find channel manager");
 		return 1;
 	}
 
-	lrdp_channel = freerdp_channels_find_channel_by_id(channels, instance->settings,
-		channel_id, &index);
-	if (lrdp_channel == 0)
+	lrdp_channel = freerdp_channels_find_channel_by_id(channels, instance->settings, channel_id, &index);
+
+	if (!lrdp_channel)
 	{
 		DEBUG_CHANNELS("could not find channel id");
 		return 1;
@@ -1160,7 +1162,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 
 	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, lrdp_channel->Name, &index);
 
-	if (lchannel_data == 0)
+	if (!lchannel_data)
 	{
 		DEBUG_CHANNELS("could not find channel name");
 		return 1;
@@ -1245,10 +1247,10 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 		lrdp_channel = freerdp_channels_find_channel_by_name(channels, instance->settings,
 			lchannel_data->name, &item->Index);
 
-		if (lrdp_channel != NULL)
+		if (lrdp_channel)
 			instance->SendChannelData(instance, lrdp_channel->ChannelId, item->Data, item->DataLength);
 
-		if (lchannel_data->open_event_proc != 0)
+		if (lchannel_data->open_event_proc)
 		{
 			lchannel_data->open_event_proc(lchannel_data->open_handle,
 				CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, sizeof(void*), sizeof(void*), 0);
