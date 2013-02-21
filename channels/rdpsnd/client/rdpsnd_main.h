@@ -35,8 +35,13 @@ typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
+typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, UINT16 wFormatNo, BYTE cBlockNo, BYTE* data, int size);
+typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, BYTE cConfirmedBlockNo);
+
 struct rdpsnd_device_plugin
 {
+	rdpsndPlugin* rdpsnd;
+
 	pcFormatSupported FormatSupported;
 	pcOpen Open;
 	pcSetFormat SetFormat;
@@ -45,6 +50,9 @@ struct rdpsnd_device_plugin
 	pcStart Start;
 	pcClose Close;
 	pcFree Free;
+
+	pcWavePlay WavePlay;
+	pcWaveConfirm WaveConfirm;
 };
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"

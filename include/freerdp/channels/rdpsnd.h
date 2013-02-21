@@ -48,6 +48,7 @@ struct rdpsnd_format
 #define SNDC_UDPWAVE		10
 #define SNDC_UDPWAVELAST	11
 #define SNDC_QUALITYMODE	12
+#define SNDC_WAVE2		13
 
 #define TSSNDCAPS_ALIVE		1
 #define TSSNDCAPS_VOLUME	2

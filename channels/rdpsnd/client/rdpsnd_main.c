@@ -149,34 +149,46 @@ static void rdpsnd_free_supported_formats(rdpsndPlugin* rdpsnd)
 	rdpsnd->n_supported_formats = 0;
 }
 
-/* receives a list of server supported formats and returns a list
-   of client supported formats */
-static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in)
+void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 {
+	STREAM* pdu;
+
+	pdu = stream_new(8);
+	stream_write_BYTE(pdu, SNDC_QUALITYMODE); /* msgType */
+	stream_write_BYTE(pdu, 0); /* bPad */
+	stream_write_UINT16(pdu, 4); /* BodySize */
+	stream_write_UINT16(pdu, HIGH_QUALITY); /* wQualityMode */
+	stream_write_UINT16(pdu, 0); /* Reserved */
+
+	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
+}
+
+static void rdpsnd_recv_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+{
+	int pos;
+	STREAM* pdu;
 	UINT32 dwVolume;
 	UINT16 dwVolumeLeft;
 	UINT16 dwVolumeRight;
 	UINT16 wNumberOfFormats;
 	UINT16 nFormat;
 	UINT16 wVersion;
-	STREAM* data_out;
-	rdpsndFormat* out_formats;
-	UINT16 n_out_formats;
-	rdpsndFormat* format;
-	BYTE* format_mark;
 	BYTE* data_mark;
-	int pos;
+	BYTE* format_mark;
+	rdpsndFormat* format;
+	UINT16 n_out_formats;
+	rdpsndFormat* out_formats;
 
 	rdpsnd_free_supported_formats(rdpsnd);
 
-	stream_seek_UINT32(data_in); /* dwFlags */
-	stream_seek_UINT32(data_in); /* dwVolume */
-	stream_seek_UINT32(data_in); /* dwPitch */
-	stream_seek_UINT16(data_in); /* wDGramPort */
-	stream_read_UINT16(data_in, wNumberOfFormats);
-	stream_read_BYTE(data_in, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
-	stream_read_UINT16(data_in, wVersion);
-	stream_seek_BYTE(data_in); /* bPad */
+	stream_seek_UINT32(s); /* dwFlags */
+	stream_seek_UINT32(s); /* dwVolume */
+	stream_seek_UINT32(s); /* dwPitch */
+	stream_seek_UINT16(s); /* wDGramPort */
+	stream_read_UINT16(s, wNumberOfFormats);
+	stream_read_BYTE(s, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
+	stream_read_UINT16(s, wVersion);
+	stream_seek_BYTE(s); /* bPad */
 
 	DEBUG_SVC("wNumberOfFormats %d wVersion %d", wNumberOfFormats, wVersion);
 
@@ -194,32 +206,32 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 	dwVolumeRight = (0xFFFF / 2); /* 50% ? */
 	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
 
-	data_out = stream_new(24);
-	stream_write_BYTE(data_out, SNDC_FORMATS); /* msgType */
-	stream_write_BYTE(data_out, 0); /* bPad */
-	stream_seek_UINT16(data_out); /* BodySize */
-	stream_write_UINT32(data_out, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
-	stream_write_UINT32(data_out, dwVolume); /* dwVolume */
-	stream_write_UINT32(data_out, 0); /* dwPitch */
-	stream_write_UINT16_be(data_out, 0); /* wDGramPort */
-	stream_seek_UINT16(data_out); /* wNumberOfFormats */
-	stream_write_BYTE(data_out, 0); /* cLastBlockConfirmed */
-	stream_write_UINT16(data_out, 6); /* wVersion */
-	stream_write_BYTE(data_out, 0); /* bPad */
+	pdu = stream_new(24);
+	stream_write_BYTE(pdu, SNDC_FORMATS); /* msgType */
+	stream_write_BYTE(pdu, 0); /* bPad */
+	stream_seek_UINT16(pdu); /* BodySize */
+	stream_write_UINT32(pdu, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
+	stream_write_UINT32(pdu, dwVolume); /* dwVolume */
+	stream_write_UINT32(pdu, 0); /* dwPitch */
+	stream_write_UINT16_be(pdu, 0); /* wDGramPort */
+	stream_seek_UINT16(pdu); /* wNumberOfFormats */
+	stream_write_BYTE(pdu, 0); /* cLastBlockConfirmed */
+	stream_write_UINT16(pdu, 6); /* wVersion */
+	stream_write_BYTE(pdu, 0); /* bPad */
 
 	for (nFormat = 0; nFormat < wNumberOfFormats; nFormat++)
 	{
-		stream_get_mark(data_in, format_mark);
+		stream_get_mark(s, format_mark);
 		format = &out_formats[n_out_formats];
-		stream_read_UINT16(data_in, format->wFormatTag);
-		stream_read_UINT16(data_in, format->nChannels);
-		stream_read_UINT32(data_in, format->nSamplesPerSec);
-		stream_seek_UINT32(data_in); /* nAvgBytesPerSec */
-		stream_read_UINT16(data_in, format->nBlockAlign);
-		stream_read_UINT16(data_in, format->wBitsPerSample);
-		stream_read_UINT16(data_in, format->cbSize);
-		stream_get_mark(data_in, data_mark);
-		stream_seek(data_in, format->cbSize);
+		stream_read_UINT16(s, format->wFormatTag);
+		stream_read_UINT16(s, format->nChannels);
+		stream_read_UINT32(s, format->nSamplesPerSec);
+		stream_seek_UINT32(s); /* nAvgBytesPerSec */
+		stream_read_UINT16(s, format->nBlockAlign);
+		stream_read_UINT16(s, format->wBitsPerSample);
+		stream_read_UINT16(s, format->cbSize);
+		stream_get_mark(s, data_mark);
+		stream_seek(s, format->cbSize);
 		format->data = NULL;
 
 		DEBUG_SVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d nBlockAlign=%d wBitsPerSample=%d",
@@ -239,8 +251,8 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		{
 			DEBUG_SVC("format supported.");
 
-			stream_check_size(data_out, 18 + format->cbSize);
-			stream_write(data_out, format_mark, 18 + format->cbSize);
+			stream_check_size(pdu, 18 + format->cbSize);
+			stream_write(pdu, format_mark, 18 + format->cbSize);
 
 			if (format->cbSize > 0)
 			{
@@ -264,49 +276,45 @@ static void rdpsnd_process_message_formats(rdpsndPlugin* rdpsnd, STREAM* data_in
 		DEBUG_WARN("no formats supported");
 	}
 
-	pos = stream_get_pos(data_out);
-	stream_set_pos(data_out, 2);
-	stream_write_UINT16(data_out, pos - 4);
-	stream_set_pos(data_out, 18);
-	stream_write_UINT16(data_out, n_out_formats);
-	stream_set_pos(data_out, pos);
+	pos = stream_get_pos(pdu);
+	stream_set_pos(pdu, 2);
+	stream_write_UINT16(pdu, pos - 4);
+	stream_set_pos(pdu, 18);
+	stream_write_UINT16(pdu, n_out_formats);
+	stream_set_pos(pdu, pos);
 
-	svc_plugin_send((rdpSvcPlugin*) rdpsnd, data_out);
+	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
 
 	if (wVersion >= 6)
-	{
-		data_out = stream_new(8);
-		stream_write_BYTE(data_out, SNDC_QUALITYMODE); /* msgType */
-		stream_write_BYTE(data_out, 0); /* bPad */
-		stream_write_UINT16(data_out, 4); /* BodySize */
-		stream_write_UINT16(data_out, HIGH_QUALITY); /* wQualityMode */
-		stream_write_UINT16(data_out, 0); /* Reserved */
-
-		svc_plugin_send((rdpSvcPlugin*) rdpsnd, data_out);
-	}
+		rdpsnd_send_quality_mode_pdu(rdpsnd);
 }
 
-/* server is getting a feel of the round trip time */
-static void rdpsnd_process_message_training(rdpsndPlugin* rdpsnd, STREAM* data_in)
+void rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, UINT16 wPackSize)
+{
+	STREAM* pdu;
+
+	pdu = stream_new(8);
+	stream_write_BYTE(pdu, SNDC_TRAINING); /* msgType */
+	stream_write_BYTE(pdu, 0); /* bPad */
+	stream_write_UINT16(pdu, 4); /* BodySize */
+	stream_write_UINT16(pdu, wTimeStamp);
+	stream_write_UINT16(pdu, wPackSize);
+
+	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
+}
+
+static void rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 {
 	UINT16 wTimeStamp;
 	UINT16 wPackSize;
-	STREAM* data_out;
 
-	stream_read_UINT16(data_in, wTimeStamp);
-	stream_read_UINT16(data_in, wPackSize);
+	stream_read_UINT16(s, wTimeStamp);
+	stream_read_UINT16(s, wPackSize);
 
-	data_out = stream_new(8);
-	stream_write_BYTE(data_out, SNDC_TRAINING); /* msgType */
-	stream_write_BYTE(data_out, 0); /* bPad */
-	stream_write_UINT16(data_out, 4); /* BodySize */
-	stream_write_UINT16(data_out, wTimeStamp);
-	stream_write_UINT16(data_out, wPackSize);
-
-	svc_plugin_send((rdpSvcPlugin*) rdpsnd, data_out);
+	rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
-static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_in, UINT16 BodySize)
+static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in, UINT16 BodySize)
 {
 	UINT16 wFormatNo;
 
@@ -347,17 +355,43 @@ static void rdpsnd_process_message_wave_info(rdpsndPlugin* rdpsnd, STREAM* data_
 	}
 }
 
-/* header is not removed from data in this function */
-static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
+void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE cConfirmedBlockNo)
+{
+	STREAM* pdu;
+
+	pdu = stream_new(8);
+	stream_write_BYTE(pdu, SNDC_WAVECONFIRM);
+	stream_write_BYTE(pdu, 0);
+	stream_write_UINT16(pdu, 4);
+	stream_write_UINT16(pdu, wTimeStamp);
+	stream_write_BYTE(pdu, cConfirmedBlockNo); /* cConfirmedBlockNo */
+	stream_write_BYTE(pdu, 0); /* bPad */
+
+	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
+}
+
+void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, UINT16 wTimeStamp, BYTE cConfirmedBlockNo)
+{
+	rdpsnd_send_wave_confirm_pdu(device->rdpsnd, wTimeStamp, cConfirmedBlockNo);
+}
+
+static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 {
 	STREAM* data;
 	UINT16 wTimeStamp;
 
 	rdpsnd->expectingWave = FALSE;
 
-	CopyMemory(stream_get_head(data_in), rdpsnd->waveData, 4);
+	/**
+	 * The Wave PDU is a special case: it is always sent after a Wave Info PDU,
+	 * and we do not process its header. Instead, the header is pad that needs
+	 * to be filled with the first four bytes of the audio sample data sent as
+	 * part of the preceding Wave Info PDU.
+	 */
 
-	if (stream_get_size(data_in) != rdpsnd->waveDataSize)
+	CopyMemory(stream_get_head(s), rdpsnd->waveData, 4);
+
+	if (stream_get_size(s) != rdpsnd->waveDataSize)
 	{
 		DEBUG_WARN("size error");
 		return;
@@ -365,7 +399,15 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 
 	if (rdpsnd->device)
 	{
-		IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(data_in), stream_get_size(data_in));
+		if (rdpsnd->device->WavePlay)
+		{
+			IFCALL(rdpsnd->device->WavePlay, rdpsnd->device, rdpsnd->wTimeStamp,
+					rdpsnd->current_format, rdpsnd->cBlockNo, stream_get_head(s), stream_get_size(s));
+		}
+		else
+		{
+			IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(s), stream_get_size(s));
+		}
 	}
 
 	wTimeStamp = rdpsnd->wTimeStamp + TIME_DELAY_MS;
@@ -382,7 +424,7 @@ static void rdpsnd_process_message_wave(rdpsndPlugin* rdpsnd, STREAM* data_in)
 	MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
 }
 
-static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
+static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 {
 	DEBUG_SVC("server closes.");
 
@@ -394,7 +436,7 @@ static void rdpsnd_process_message_close(rdpsndPlugin* rdpsnd)
 	rdpsnd->close_timestamp = GetTickCount() + 2000;
 }
 
-static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_in)
+static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* data_in)
 {
 	UINT32 dwVolume;
 
@@ -407,7 +449,7 @@ static void rdpsnd_process_message_setvolume(rdpsndPlugin* rdpsnd, STREAM* data_
 	}
 }
 
-static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* data_in)
 {
 	BYTE msgType;
 	UINT16 BodySize;
@@ -415,7 +457,7 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 	if (rdpsnd->expectingWave)
 	{
-		rdpsnd_process_message_wave(rdpsnd, data_in);
+		rdpsnd_recv_wave_pdu(rdpsnd, data_in);
 		stream_free(data_in);
 		return;
 	}
@@ -429,23 +471,23 @@ static void rdpsnd_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	switch (msgType)
 	{
 		case SNDC_FORMATS:
-			rdpsnd_process_message_formats(rdpsnd, data_in);
+			rdpsnd_recv_formats_pdu(rdpsnd, data_in);
 			break;
 
 		case SNDC_TRAINING:
-			rdpsnd_process_message_training(rdpsnd, data_in);
+			rdpsnd_recv_training_pdu(rdpsnd, data_in);
 			break;
 
 		case SNDC_WAVE:
-			rdpsnd_process_message_wave_info(rdpsnd, data_in, BodySize);
+			rdpsnd_recv_wave_info_pdu(rdpsnd, data_in, BodySize);
 			break;
 
 		case SNDC_CLOSE:
-			rdpsnd_process_message_close(rdpsnd);
+			rdpsnd_recv_close_pdu(rdpsnd);
 			break;
 
 		case SNDC_SETVOLUME:
-			rdpsnd_process_message_setvolume(rdpsnd, data_in);
+			rdpsnd_recv_volume_pdu(rdpsnd, data_in);
 			break;
 
 		default:
@@ -463,7 +505,11 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 		DEBUG_WARN("existing device, abort.");
 		return;
 	}
+
 	rdpsnd->device = device;
+	device->rdpsnd = rdpsnd;
+
+	device->WaveConfirm = rdpsnd_device_send_wave_confirm_pdu;
 }
 
 static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
@@ -473,7 +519,7 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 
 	entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);
 
-	if (entry == NULL)
+	if (!entry)
 		return FALSE;
 
 	entryPoints.rdpsnd = rdpsnd;
@@ -625,6 +671,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	if (!rdpsnd->device)
 	{
 		DEBUG_WARN("no sound device.");
+		return;
 	}
 }
 
@@ -670,7 +717,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	strcpy(_p->plugin.channel_def.name, "rdpsnd");
 
 	_p->plugin.connect_callback = rdpsnd_process_connect;
-	_p->plugin.receive_callback = rdpsnd_process_receive;
+	_p->plugin.receive_callback = rdpsnd_recv_pdu;
 	_p->plugin.event_callback = rdpsnd_process_event;
 	_p->plugin.terminate_callback = rdpsnd_process_terminate;
 

@@ -66,6 +66,16 @@ struct rdpsnd_alsa_plugin
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
+struct _RDPSND_WAVE_INFO
+{
+	BYTE* data;
+	int length;
+	BYTE cBlockNo;
+	UINT16 wTimeStamp;
+	UINT16 wFormatNo;
+};
+typedef struct _RDPSND_WAVE_INFO RDPSND_WAVE_INFO;
+
 static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 {
 	int status;
@@ -365,6 +375,7 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 	int offset;
 	int frame_size;
 	wMessage message;
+	RDPSND_WAVE_INFO* waveInfo;
 	snd_pcm_sframes_t available_input;
 	snd_pcm_sframes_t available_output;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) arg;
@@ -380,8 +391,18 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 		if (message.id == WMQ_QUIT)
 			break;
 
-		data = (BYTE*) message.wParam;
-		length = (int) (size_t) message.lParam;
+		if (message.id == 0)
+		{
+			data = (BYTE*) message.wParam;
+			length = (int) (size_t) message.lParam;
+		}
+		else if (message.id == 1)
+		{
+			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
+
+			data = waveInfo->data;
+			length = waveInfo->length;
+		}
 
 		offset = 0;
 		available_output = snd_pcm_avail_update(alsa->pcm_handle);
@@ -430,69 +451,96 @@ static void* rdpsnd_alsa_schedule_thread(void* arg)
 	return NULL;
 }
 
-static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+BYTE* rdpsnd_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
 {
-	BYTE* src;
 	int frames;
-	int rbytes_per_frame;
-	int sbytes_per_frame;
+	BYTE* srcData;
+	int srcFrameSize;
+	int dstFrameSize;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (!alsa->pcm_handle)
-		return;
+		return NULL;
 
 	if (alsa->wformat == WAVE_FORMAT_ADPCM)
 	{
 		alsa->dsp_context->decode_ms_adpcm(alsa->dsp_context,
-			data, size, alsa->source_channels, alsa->block_size);
+			data, *size, alsa->source_channels, alsa->block_size);
 
-		size = alsa->dsp_context->adpcm_size;
-		src = alsa->dsp_context->adpcm_buffer;
+		*size = alsa->dsp_context->adpcm_size;
+		srcData = alsa->dsp_context->adpcm_buffer;
 	}
 	else if (alsa->wformat == WAVE_FORMAT_DVI_ADPCM)
 	{
 		alsa->dsp_context->decode_ima_adpcm(alsa->dsp_context,
-			data, size, alsa->source_channels, alsa->block_size);
+			data, *size, alsa->source_channels, alsa->block_size);
 
-		size = alsa->dsp_context->adpcm_size;
-		src = alsa->dsp_context->adpcm_buffer;
+		*size = alsa->dsp_context->adpcm_size;
+		srcData = alsa->dsp_context->adpcm_buffer;
 	}
 	else
 	{
-		src = data;
+		srcData = data;
 	}
 
-	sbytes_per_frame = alsa->source_channels * alsa->bytes_per_channel;
-	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
+	srcFrameSize = alsa->source_channels * alsa->bytes_per_channel;
+	dstFrameSize = alsa->actual_channels * alsa->bytes_per_channel;
 
-	if ((size % sbytes_per_frame) != 0)
-	{
-		DEBUG_WARN("error len mod");
-		return;
-	}
+	if ((*size % srcFrameSize) != 0)
+		return NULL;
 
-	if ((alsa->source_rate == alsa->actual_rate) && (alsa->source_channels == alsa->actual_channels))
+	if (!((alsa->source_rate == alsa->actual_rate) && (alsa->source_channels == alsa->actual_channels)))
 	{
-
-	}
-	else
-	{
-		alsa->dsp_context->resample(alsa->dsp_context, src, alsa->bytes_per_channel,
-			alsa->source_channels, alsa->source_rate, size / sbytes_per_frame,
+		alsa->dsp_context->resample(alsa->dsp_context, srcData, alsa->bytes_per_channel,
+			alsa->source_channels, alsa->source_rate, *size / srcFrameSize,
 			alsa->actual_channels, alsa->actual_rate);
+
 		frames = alsa->dsp_context->resampled_frames;
 
 		DEBUG_SVC("resampled %d frames at %d to %d frames at %d",
-			size / sbytes_per_frame, alsa->source_rate, frames, alsa->actual_rate);
+			length / srcFrameSize, alsa->source_rate, frames, alsa->actual_rate);
 
-		size = frames * rbytes_per_frame;
-		src = alsa->dsp_context->resampled_buffer;
+		*size = frames * dstFrameSize;
+		srcData = alsa->dsp_context->resampled_buffer;
 	}
 
-	data = (BYTE*) malloc(size);
-	CopyMemory(data, src, size);
+	data = srcData;
 
-	MessageQueue_Post(alsa->queue, (void*) alsa, 0, (void*) data, (void*) (size_t) size);
+	return data;
+}
+
+static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+{
+	BYTE* sample;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	data = rdpsnd_process_audio_sample(device, data, &size);
+
+	sample = (BYTE*) malloc(size);
+	CopyMemory(sample, data, size);
+
+	MessageQueue_Post(alsa->queue, (void*) alsa, 0, (void*) sample, (void*) (size_t) size);
+}
+
+static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device,
+		UINT16 wTimeStamp, UINT16 wFormatNo, BYTE cBlockNo, BYTE* data, int size)
+{
+	RDPSND_WAVE_INFO* waveInfo;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	waveInfo = (RDPSND_WAVE_INFO*) malloc(sizeof(RDPSND_WAVE_INFO));
+
+	waveInfo->wTimeStamp = wTimeStamp;
+	waveInfo->wFormatNo = wFormatNo;
+	waveInfo->cBlockNo = cBlockNo;
+
+	data = rdpsnd_process_audio_sample(device, data, &size);
+
+	waveInfo->data = (BYTE*) malloc(size);
+	CopyMemory(waveInfo->data, data, size);
+	waveInfo->length = size;
+
+	MessageQueue_Post(alsa->queue, (void*) alsa, 1, (void*) waveInfo, (void*) (size_t) size);
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
@@ -558,6 +606,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.SetFormat = rdpsnd_alsa_set_format;
 	alsa->device.SetVolume = rdpsnd_alsa_set_volume;
 	alsa->device.Play = rdpsnd_alsa_play;
+	alsa->device.WavePlay = rdpsnd_alsa_wave_play;
 	alsa->device.Start = rdpsnd_alsa_start;
 	alsa->device.Close = rdpsnd_alsa_close;
 	alsa->device.Free = rdpsnd_alsa_free;
