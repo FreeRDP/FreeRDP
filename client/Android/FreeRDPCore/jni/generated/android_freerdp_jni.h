@@ -20,7 +20,7 @@
 #ifndef __ANDROID_FREERDP_JNI_H
 #define __ANDROID_FREERDP_JNI_H
 
-#include "com_freerdp_afreerdp_services_LibFreeRDP.h"
+#include "com_freerdp_freerdpcore_services_LibFreeRDP.h"
 
 #define JAVA_LIBFREERDP_CLASS "com/freerdp/freerdpcore/services/LibFreeRDP"
 
