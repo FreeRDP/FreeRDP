@@ -44,7 +44,7 @@
  * SCD = Source, Constant, Destination
  */
 #define SSE3_SCD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
-PRIM_STATIC pstatus_t _name_(const _type_ *pSrc, INT32 val, _type_ *pDst, INT32 len) \
+pstatus_t _name_(const _type_ *pSrc, INT32 val, _type_ *pDst, INT32 len) \
 { \
 	int shifts; \
 	UINT32 offBeatMask; \
@@ -188,7 +188,7 @@ PRIM_STATIC pstatus_t _name_(const _type_ *pSrc, INT32 val, _type_ *pDst, INT32 
  * PRE = preload xmm0 with the constant.
  */
 #define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
-PRIM_STATIC pstatus_t _name_(const _type_ *pSrc, _type_ val, _type_ *pDst, INT32 len) \
+pstatus_t _name_(const _type_ *pSrc, _type_ val, _type_ *pDst, INT32 len) \
 { \
 	int shifts; \
 	UINT32 offBeatMask; \
@@ -293,7 +293,7 @@ PRIM_STATIC pstatus_t _name_(const _type_ *pSrc, _type_ val, _type_ *pDst, INT32
  * SSD = Source1, Source2, Destination
  */
 #define SSE3_SSD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
-PRIM_STATIC pstatus_t _name_(const _type_ *pSrc1, const _type_ *pSrc2, _type_ *pDst, INT32 len) \
+pstatus_t _name_(const _type_ *pSrc1, const _type_ *pSrc2, _type_ *pDst, INT32 len) \
 { \
 	int shifts; \
 	UINT32 offBeatMask; \
