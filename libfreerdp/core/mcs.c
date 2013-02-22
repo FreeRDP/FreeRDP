@@ -193,9 +193,9 @@ static const char* const mcs_result_enumerated[] =
 
 BOOL mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length)
 {
+	UINT16 li;
 	BYTE choice;
 	enum DomainMCSPDU MCSPDU;
-	UINT16 li;
 
 	*length = tpkt_read_header(s);
 
@@ -203,8 +203,10 @@ BOOL mcs_read_domain_mcspdu_header(STREAM* s, enum DomainMCSPDU* domainMCSPDU, U
 		return FALSE;
 
 	MCSPDU = *domainMCSPDU;
-	if(!per_read_choice(s, &choice))
+
+	if (!per_read_choice(s, &choice))
 		return FALSE;
+
 	*domainMCSPDU = (choice >> 2);
 
 	if (*domainMCSPDU != MCSPDU)
@@ -736,19 +738,23 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id)
 
 BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, STREAM* s, UINT16* channel_id)
 {
+	BOOL status;
 	UINT16 length;
 	BYTE result;
 	UINT16 initiator;
 	UINT16 requested;
 	enum DomainMCSPDU MCSPDU;
 
+	status = TRUE;
 	MCSPDU = DomainMCSPDU_ChannelJoinConfirm;
-	return
-		mcs_read_domain_mcspdu_header(s, &MCSPDU, &length) &&
-		per_read_enumerated(s, &result, MCS_Result_enum_length) && /* result */
-		per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID) && /* initiator (UserId) */
-		per_read_integer16(s, &requested, 0) && /* requested (ChannelId) */
-		per_read_integer16(s, channel_id, 0); /* channelId */
+
+	status &= mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
+	status &= per_read_enumerated(s, &result, MCS_Result_enum_length); /* result */
+	status &= per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
+	status &= per_read_integer16(s, &requested, 0); /* requested (ChannelId) */
+	status &= per_read_integer16(s, channel_id, 0); /* channelId */
+
+	return status;
 }
 
 /**

@@ -48,32 +48,32 @@ typedef struct mf_peer_context mfPeerContext;
 struct mf_peer_context
 {
 	rdpContext _p;
-    
-    mfInfo* info;
+	
+	mfInfo* info;
 	STREAM* s;
 	BOOL activated;
 	UINT32 frame_id;
 	BOOL audin_open;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
-    
-//#ifdef WITH_SERVER_CHANNELS
+	
+	//#ifdef WITH_SERVER_CHANNELS
 	WTSVirtualChannelManager* vcm;
-//#endif
-//#ifdef CHANNEL_AUDIN_SERVER
+	//#endif
+	//#ifdef CHANNEL_AUDIN_SERVER
 	audin_server_context* audin;
-//#endif
-    
-//#ifdef CHANNEL_RDPSND_SERVER
+	//#endif
+	
+	//#ifdef CHANNEL_RDPSND_SERVER
 	rdpsnd_server_context* rdpsnd;
-//#endif
+	//#endif
 };
 
 
 struct mf_info
 {
 	//STREAM* s;
-    
+	
 	//screen and monitor info
 	UINT32 screenID;
 	UINT32 virtscreen_width;
@@ -82,7 +82,7 @@ struct mf_info
 	UINT32 servscreen_height;
 	UINT32 servscreen_xoffset;
 	UINT32 servscreen_yoffset;
-    
+	
 	//int frame_idx;
 	int bitsPerPixel;
 	//HDC driverDC;
@@ -95,11 +95,11 @@ struct mf_info
 	freerdp_peer** peers;
 	//BOOL mirrorDriverActive;
 	unsigned int framesWaiting;
-    UINT32 scale;
-    
+	UINT32 scale;
+	
 	//HANDLE snd_mutex;
 	//BOOL snd_stop;
-    
+	
 	RFX_RECT invalid;
 	pthread_mutex_t mutex;
 	//BOOL updatePending;
@@ -110,7 +110,7 @@ struct mf_info
 	//unsigned long lastUpdate;
 	//unsigned long nextUpdate;
 	//SURFACE_BITS_COMMAND cmd;
-    
+	
 	BOOL input_disabled;
 	BOOL force_all_disconnect;
 };

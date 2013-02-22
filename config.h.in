@@ -40,6 +40,7 @@
 #cmakedefine WITH_NATIVE_SSPI
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
+#cmakedefine WITH_RDPSND_DSOUND
 
 /* Plugins */
 #cmakedefine STATIC_CHANNELS
@@ -48,6 +49,7 @@
 
 /* Debug */
 #cmakedefine WITH_DEBUG_CERTIFICATE
+#cmakedefine WITH_DEBUG_CAPABILITIES
 #cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_CLIPRDR
 #cmakedefine WITH_DEBUG_DVC

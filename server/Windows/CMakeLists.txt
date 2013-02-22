@@ -33,12 +33,30 @@ set(${MODULE_PREFIX}_SRCS
 	wf_mirage.h
 	wf_peer.c
 	wf_peer.h
-	wf_rdpsnd.c
-	wf_rdpsnd.h
 	wf_settings.c
 	wf_settings.h
 	wf_info.c
 	wf_info.h)
+	
+if(CHANNEL_RDPSND AND NOT WITH_RDPSND_DSOUND)
+	set(${MODULE_PREFIX}_SRCS
+		${${MODULE_PREFIX}_SRCS}
+		wf_rdpsnd.c
+		wf_rdpsnd.h
+		wf_wasapi.c
+		wf_wasapi.h
+		)
+endif()
+
+if(CHANNEL_RDPSND AND WITH_RDPSND_DSOUND)
+	set(${MODULE_PREFIX}_SRCS
+		${${MODULE_PREFIX}_SRCS}
+		wf_rdpsnd.c
+		wf_rdpsnd.h
+		wf_directsound.c
+		wf_directsound.h
+		)
+endif()
 
 if(WITH_SERVER_INTERFACE)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

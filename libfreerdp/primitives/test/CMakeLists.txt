@@ -85,7 +85,7 @@ if(WITH_SSE2)
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-	    set(OPTIMZATION "${OPTFLAGS} -mfpu=neon -mfloat-abi=softfp -O2")
+	    set(OPTIMZATION "${OPTFLAGS} -mfpu=neon -mfloat-abi=${ARM_FP_ABI} -O2")
 	endif()
 	# TODO: Add MSVC equivalent
 endif()
