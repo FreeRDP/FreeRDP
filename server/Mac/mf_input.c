@@ -89,6 +89,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	{
 		
 		mfInfo * mfi;
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
 		
@@ -121,11 +122,11 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 				mouseType = kCGEventMouseMoved;
 			}
 			
-			CGEventRef move = CGEventCreateMouseEvent(NULL,
-								   mouseType,
-								   CGPointMake(x, y),
-								   mouseButton // ignored for just movement
-								   );
+			CGEventRef move = CGEventCreateMouseEvent(source,
+								  mouseType,
+								  CGPointMake(x, y),
+								  mouseButton // ignored for just movement
+								  );
 			
 			CGEventPost(kCGHIDEventTap, move);
 			
@@ -138,42 +139,55 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			if (flags & PTR_FLAGS_DOWN)
 			{
 				mouseType = kCGEventLeftMouseDown;
-				mfi->mouse_down = TRUE;
+				mfi->mouse_down_left = TRUE;
 			}
 			else
 			{
 				mouseType = kCGEventLeftMouseUp;
-				mfi->mouse_down = FALSE;
+				mfi->mouse_down_right = FALSE;
 			}
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
 			mouseButton = kCGMouseButtonRight;
 			if (flags & PTR_FLAGS_DOWN)
+			{
 				mouseType = kCGEventRightMouseDown;
+				mfi->mouse_down_right = TRUE;
+			}
 			else
+			{
 				mouseType = kCGEventRightMouseUp;
+				mfi->mouse_down_right = FALSE;
+			}
 
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
 		{
 			mouseButton = kCGMouseButtonCenter;
 			if (flags & PTR_FLAGS_DOWN)
+			{
 				mouseType = kCGEventOtherMouseDown;
+				mfi->mouse_down_other = TRUE;
+			}
 			else
+			{
 				mouseType = kCGEventOtherMouseUp;
-
+				mfi->mouse_down_other = FALSE;
+			}
+			
 		}
 		
 		
-		CGEventRef mouseEvent = CGEventCreateMouseEvent(NULL,
-								 mouseType,
-								 CGPointMake(x, y),
-								 mouseButton
-								 );
+		CGEventRef mouseEvent = CGEventCreateMouseEvent(source,
+								mouseType,
+								CGPointMake(x, y),
+								mouseButton
+								);
 		CGEventPost(kCGHIDEventTap, mouseEvent);
 		
 		CFRelease(mouseEvent);
+		CFRelease(source);
 	}
 }
 
