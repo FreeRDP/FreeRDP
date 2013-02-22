@@ -104,8 +104,23 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		
 		if (flags & PTR_FLAGS_MOVE)
 		{
+			if (mfi->mouse_down_left == TRUE)
+			{
+				mouseType = kCGEventLeftMouseDragged;
+			}
+			else if (mfi->mouse_down_right == TRUE)
+			{
+				mouseType = kCGEventRightMouseDragged;
+			}
+			else if (mfi->mouse_down_other == TRUE)
+			{
+				mouseType = kCGEventOtherMouseDragged;
+			}
+			else
+			{
+				mouseType = kCGEventMouseMoved;
+			}
 			
-			mouseType = kCGEventMouseMoved;
 			CGEventRef move = CGEventCreateMouseEvent(NULL,
 								   mouseType,
 								   CGPointMake(x, y),
@@ -121,10 +136,15 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		{
 			mouseButton = kCGMouseButtonLeft;
 			if (flags & PTR_FLAGS_DOWN)
+			{
 				mouseType = kCGEventLeftMouseDown;
+				mfi->mouse_down = TRUE;
+			}
 			else
+			{
 				mouseType = kCGEventLeftMouseUp;
-			
+				mfi->mouse_down = FALSE;
+			}
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
@@ -144,11 +164,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 				mouseType = kCGEventOtherMouseUp;
 
 		}
-		/*else
-		{
-			return;
-		}
-		*/
+		
 		
 		CGEventRef mouseEvent = CGEventCreateMouseEvent(NULL,
 								 mouseType,

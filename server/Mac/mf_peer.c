@@ -289,6 +289,10 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	
 	client->update->DesktopResize(client->update->context);
 	
+	mfi->mouse_down_left = FALSE;
+	mfi->mouse_down_right = FALSE;
+	mfi->mouse_down_other = FALSE;
+
 	
 	//#ifdef WITH_SERVER_CHANNELS
 	/* Iterate all channel names requested by the client and activate those supported by the server */
