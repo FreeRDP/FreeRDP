@@ -71,7 +71,7 @@ if(WITH_NEON)
 	if(ANDROID)
 		set(ANDROID_CPU_FEATURES_PATH "${ANDROID_NDK}/sources/android/cpufeatures")
 		include_directories(${ANDROID_CPU_FEATURES_PATH})
-		set(${MODULE_PREFIX}_NEON_SRCS ${${MODULE_PREFIX}_NEON_SRCS}
+		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 			${ANDROID_CPU_FEATURES_PATH}/cpu-features.c
 			${ANDROID_CPU_FEATURES_PATH}/cpu-features.h)
 	endif()

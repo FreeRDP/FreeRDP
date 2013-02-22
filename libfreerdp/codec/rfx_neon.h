@@ -22,8 +22,6 @@
 
 #include <freerdp/codec/rfx.h>
 
-#if defined(__ARM_NEON__)
-
 void rfx_init_neon(RFX_CONTEXT * context);
 
 #ifndef RFX_INIT_SIMD
@@ -31,8 +29,6 @@ void rfx_init_neon(RFX_CONTEXT * context);
   #define RFX_INIT_SIMD(_rfx_context) rfx_init_neon(_rfx_context)
  #endif
 #endif
-
-#endif // __ARM_NEON__
 
 #endif /* __RFX_NEON_H */
 

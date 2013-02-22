@@ -37,6 +37,7 @@
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
+#include <freerdp/primitives.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -45,13 +46,8 @@
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
 
-#ifdef WITH_SSE2
 #include "rfx_sse2.h"
-#endif
-
-#ifdef WITH_NEON
 #include "rfx_neon.h"
-#endif
 
 #ifndef RFX_INIT_SIMD
 #define RFX_INIT_SIMD(_rfx_context) do { } while (0)
@@ -209,6 +205,11 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	if (context->priv->UseThreads)
 	{
+		/* Call primitives_get here in order to avoid race conditions when using primitives_get */
+		/* from multiple threads. This call will initialize all function pointers correctly     */
+		/* before any decoding threads are started */
+		primitives_get();
+
 		context->priv->ThreadPool = CreateThreadpool(NULL);
 		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
 		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
@@ -232,6 +233,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 
+	RFX_INIT_SIMD(context);
+	
 	return context;
 }
 
