@@ -17,25 +17,15 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#endif /* WITH_SSE2 */
-
-#ifdef WITH_IPP
-#include <ipps.h>
-#endif /* WITH_IPP */
-
 #include "prim_internal.h"
-#include "prim_templates.h"
+#include "prim_shift.h"
+
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_lShiftC_16s(
+pstatus_t general_lShiftC_16s(
 	const INT16 *pSrc,
 	INT32 val,
 	INT16 *pDst,
@@ -47,7 +37,7 @@ PRIM_STATIC pstatus_t general_lShiftC_16s(
 }
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_rShiftC_16s(
+pstatus_t general_rShiftC_16s(
 	const INT16 *pSrc,
 	INT32 val,
 	INT16 *pDst,
@@ -59,7 +49,7 @@ PRIM_STATIC pstatus_t general_rShiftC_16s(
 }
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_lShiftC_16u(
+pstatus_t general_lShiftC_16u(
 	const UINT16 *pSrc,
 	INT32 val,
 	UINT16 *pDst,
@@ -71,7 +61,7 @@ PRIM_STATIC pstatus_t general_lShiftC_16u(
 }
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_rShiftC_16u(
+pstatus_t general_rShiftC_16u(
 	const UINT16 *pSrc,
 	INT32 val,
 	UINT16 *pDst,
@@ -82,25 +72,8 @@ PRIM_STATIC pstatus_t general_rShiftC_16u(
 	return PRIMITIVES_SUCCESS;
 }
 
-#ifdef WITH_SSE2
-# if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, general_lShiftC_16s,
-	_mm_slli_epi16, *dptr++ = *sptr++ << val)
-/* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, general_rShiftC_16s,
-	_mm_srai_epi16, *dptr++ = *sptr++ >> val)
-/* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, general_lShiftC_16u,
-	_mm_slli_epi16, *dptr++ = *sptr++ << val)
-/* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, general_rShiftC_16u,
-	_mm_srli_epi16, *dptr++ = *sptr++ >> val)
-# endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
-#endif
-
-/* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_shiftC_16s(
+pstatus_t general_shiftC_16s(
 	const INT16 *pSrc,
 	INT32 val,
 	INT16 *pDst,
@@ -115,7 +88,7 @@ PRIM_STATIC pstatus_t general_shiftC_16s(
 }
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_shiftC_16u(
+pstatus_t general_shiftC_16u(
 	const UINT16 *pSrc,
 	INT32 val,
 	UINT16 *pDst,
@@ -129,11 +102,6 @@ PRIM_STATIC pstatus_t general_shiftC_16u(
 	else         return prims->lShiftC_16u(pSrc,  val, pDst, len);
 }
 
-/* Note: the IPP version will have to call ippLShiftC_16s or ippRShiftC_16s
- * depending on the sign of val.  To avoid using the deprecated inplace
- * routines, a wrapper can use the src for the dest.
- */
-
 /* ------------------------------------------------------------------------- */
 void primitives_init_shift(
 	const primitives_hints_t *hints,
@@ -144,24 +112,12 @@ void primitives_init_shift(
 	prims->rShiftC_16s = general_rShiftC_16s;
 	prims->lShiftC_16u = general_lShiftC_16u;
 	prims->rShiftC_16u = general_rShiftC_16u;
-#if defined(WITH_IPP)
-	prims->lShiftC_16s = (__lShiftC_16s_t) ippsLShiftC_16s;
-	prims->rShiftC_16s = (__rShiftC_16s_t) ippsRShiftC_16s;
-	prims->lShiftC_16u = (__lShiftC_16u_t) ippsLShiftC_16u;
-	prims->rShiftC_16u = (__rShiftC_16u_t) ippsRShiftC_16u;
-#elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))
-	{
-		prims->lShiftC_16s = sse2_lShiftC_16s;
-		prims->rShiftC_16s = sse2_rShiftC_16s;
-		prims->lShiftC_16u = sse2_lShiftC_16u;
-		prims->rShiftC_16u = sse2_rShiftC_16u;
-	}
-#endif
+
 	/* Wrappers */
 	prims->shiftC_16s  = general_shiftC_16s;
 	prims->shiftC_16u  = general_shiftC_16u;
+
+	primitives_init_shift_opt(hints, prims);
 }
 
 /* ------------------------------------------------------------------------- */

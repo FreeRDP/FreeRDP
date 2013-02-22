@@ -40,9 +40,7 @@
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const UINT32 factor)
 {
-	if (factor <= 6)
-		return;
-	int16x8_t quantFactors = vdupq_n_s16(factor - 6);
+	int16x8_t quantFactors = vdupq_n_s16(factor);
 	int16x8_t* buf = (int16x8_t*)buffer;
 	int16x8_t* buf_end = (int16x8_t*)(buffer + buffer_size);
 
@@ -59,16 +57,18 @@ rfx_quantization_decode_block_NEON(INT16 * buffer, const int buffer_size, const 
 void
 rfx_quantization_decode_NEON(INT16 * buffer, const UINT32 * quantization_values)
 {
-	rfx_quantization_decode_block_NEON(buffer, 1024, quantization_values[8]); /* HL1 */
-	rfx_quantization_decode_block_NEON(buffer + 1024, 1024, quantization_values[7]); /* LH1 */
-	rfx_quantization_decode_block_NEON(buffer + 2048, 1024, quantization_values[9]); /* HH1 */
-	rfx_quantization_decode_block_NEON(buffer + 3072, 256, quantization_values[5]); /* HL2 */
-	rfx_quantization_decode_block_NEON(buffer + 3328, 256, quantization_values[4]); /* LH2 */
-	rfx_quantization_decode_block_NEON(buffer + 3584, 256, quantization_values[6]); /* HH2 */
-	rfx_quantization_decode_block_NEON(buffer + 3840, 64, quantization_values[2]); /* HL3 */
-	rfx_quantization_decode_block_NEON(buffer + 3904, 64, quantization_values[1]); /* LH3 */
-	rfx_quantization_decode_block_NEON(buffer + 3968, 64, quantization_values[3]); /* HH3 */
-	rfx_quantization_decode_block_NEON(buffer + 4032, 64, quantization_values[0]); /* LL3 */
+	rfx_quantization_decode_block_NEON(buffer, 4096, 5);
+
+	rfx_quantization_decode_block_NEON(buffer, 1024, quantization_values[8] - 6); /* HL1 */
+	rfx_quantization_decode_block_NEON(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
+	rfx_quantization_decode_block_NEON(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
+	rfx_quantization_decode_block_NEON(buffer + 3072, 256, quantization_values[5] - 6); /* HL2 */
+	rfx_quantization_decode_block_NEON(buffer + 3328, 256, quantization_values[4] - 6); /* LH2 */
+	rfx_quantization_decode_block_NEON(buffer + 3584, 256, quantization_values[6] - 6); /* HH2 */
+	rfx_quantization_decode_block_NEON(buffer + 3840, 64, quantization_values[2] - 6); /* HL3 */
+	rfx_quantization_decode_block_NEON(buffer + 3904, 64, quantization_values[1] - 6); /* LH3 */
+	rfx_quantization_decode_block_NEON(buffer + 3968, 64, quantization_values[3] - 6); /* HH3 */
+	rfx_quantization_decode_block_NEON(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
 
@@ -278,8 +278,11 @@ int isNeonSupported()
 	}
 
 	return FALSE;
-#else
+#elif defined(__APPLE)
+	/* assume NEON support on iOS devices */
 	return TRUE;
+#else
+	return FALSE;
 #endif
 }
 
