@@ -37,6 +37,7 @@
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
+#include <freerdp/primitives.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -204,6 +205,11 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	if (context->priv->UseThreads)
 	{
+		/* Call primitives_get here in order to avoid race conditions when using primitives_get */
+		/* from multiple threads. This call will initialize all function pointers correctly     */
+		/* before any decoding threads are started */
+		primitives_get();
+
 		context->priv->ThreadPool = CreateThreadpool(NULL);
 		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
 		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
