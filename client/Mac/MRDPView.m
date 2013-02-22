@@ -2159,9 +2159,8 @@ void mac_process_rail_exec_result_event(rdpChannels* channels, RDP_EVENT* event)
 
 void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, RDP_EVENT* event)
 {
-    RAIL_MINMAXINFO_ORDER * minmax = (RAIL_MINMAXINFO_ORDER*) event->user_data;
-    
 #if 0
+	    RAIL_MINMAXINFO_ORDER * minmax = (RAIL_MINMAXINFO_ORDER*) event->user_data;
     printf("minmax_info: maxPosX=%d maxPosY=%d maxWidth=%d maxHeight=%d minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
            minmax->maxPosX, minmax->maxPosY, minmax->maxWidth, minmax->maxHeight,
            minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
@@ -2224,9 +2223,6 @@ void mac_process_rail_server_localmovesize_event(freerdp *inst, RDP_EVENT *event
             // local move has completed
             [g_mrdpview->currentWindow view]->isMoveSizeInProgress = NO;
             [g_mrdpview->currentWindow view]->saveInitialDragLoc = NO;
-
-            //NSRect rect = [[g_mrdpview->currentWindow view] frame];
-            NSRect rect = [[[g_mrdpview->currentWindow view] window] frame];
 
             // let RDP server know where this window is located
             mac_send_rail_client_event(inst->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);

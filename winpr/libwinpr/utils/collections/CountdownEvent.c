@@ -116,13 +116,10 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
 		oldStatus = TRUE;
 
-	countdown->count -= signalCount;
-
-	if (countdown->count < 0)
-	{
-		printf("CountdownEvent_Signal warning: count is less than zero\n");
+	if (signalCount <= countdown->count)
+		countdown->count -= signalCount;
+	else
 		countdown->count = 0;
-	}
 
 	if (countdown->count == 0)
 		newStatus = TRUE;
