@@ -1251,7 +1251,7 @@ void pointer_new(rdpContext* context, rdpPointer* pointer)
 	rect.origin.x = pointer->xPos;
 	rect.origin.y = pointer->yPos;
 	
-	cursor_data = (uint8 *) malloc(rect.size.width * rect.size.height * 4);
+	cursor_data = (BYTE *) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
@@ -1934,7 +1934,7 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	return;
 }
 
-void mac_rail_MoveWindow(rdpRail *rail, rdpWindow *window)
+void mac_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 {
 	if (g_mrdpview->currentWindow)
 	{
@@ -1943,23 +1943,23 @@ void mac_rail_MoveWindow(rdpRail *rail, rdpWindow *window)
 	}
 }
 
-void mac_rail_ShowWindow(rdpRail *rail, rdpWindow *window, uint8 state)
+void mac_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
 }
 
-void mac_rail_SetWindowText(rdpRail *rail, rdpWindow *window)
+void mac_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 {
 }
 
-void mac_rail_SetWindowIcon(rdpRail *rail, rdpWindow *window, rdpIcon *icon)
+void mac_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 {
 }
 
-void mac_rail_SetWindowRects(rdpRail *rail, rdpWindow *window)
+void mac_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 {
 }
 
-void mac_rail_SetWindowVisibilityRects(rdpRail *rail, rdpWindow *window)
+void mac_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
 {
 }
 
@@ -1967,36 +1967,41 @@ void mac_rail_SetWindowVisibilityRects(rdpRail *rail, rdpWindow *window)
  * destroy window created in mac_rail_CreateWindow()
  ***********************************************************************/
 
-void mac_rail_DestroyWindow(rdpRail *rail, rdpWindow *window)
+void mac_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	int count = 0;
 	
 	for (MRDPWindow * win in g_mrdpview->windows)
 	{
-		if ([win windowID] == window->windowId) {
+		if ([win windowID] == window->windowId)
+		{
 			//[[win window] close];
 			[win setView:nil];
 			[win setWindow:nil];
 			[g_mrdpview->windows removeObject:win];
 			count = [g_mrdpview->windows count];
-			if (count) {
+		
+			if (count)
+			{
 				g_mrdpview->currentWindow = [g_mrdpview->windows objectAtIndex:count - 1];
 				//[[g_mrdpview window] makeKeyAndOrderFront:[g_mrdpview->currentWindow window]];
 				[[g_mrdpview->currentWindow window] makeKeyAndOrderFront:NSApp];
 			}
-			else {
+			else
+			{
 				g_mrdpview->currentWindow = nil;
 				// RAIL_TODO [[g_mrdpview window] makeKeyAndOrderFront:[g_mrdpview window]];
 				[NSApp terminate:nil];
 			}
+			
 			return;
 		}
 	}
 }
 
-void mac_rail_register_callbacks(freerdp *inst, rdpRail *rail)
+void mac_rail_register_callbacks(freerdp* instance, rdpRail* rail)
 {	
-	rail->extra = (void*) inst;
+	rail->extra = (void*) instance;
 	rail->rail_CreateWindow = mac_rail_CreateWindow;
 	rail->rail_MoveWindow = mac_rail_MoveWindow;
 	rail->rail_ShowWindow = mac_rail_ShowWindow;
@@ -2099,35 +2104,35 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 	switch (moveSize->moveSizeType)
 	{
 		case RAIL_WMSZ_LEFT:
-			printf("!!!! RAIL_WMSZ_LEFT\n");
+			printf("RAIL_WMSZ_LEFT\n");
 			break;
 			
 		case RAIL_WMSZ_RIGHT:
-			printf("!!!! RAIL_WMSZ_RIGHT\n");
+			printf("RAIL_WMSZ_RIGHT\n");
 			break;
 			
 		case RAIL_WMSZ_TOP:
-			printf("!!!! RAIL_WMSZ_TOP\n");
+			printf("RAIL_WMSZ_TOP\n");
 			break;
 			
 		case RAIL_WMSZ_TOPLEFT:
-			printf("!!!! RAIL_WMSZ_TOPLEFT\n");
+			printf("RAIL_WMSZ_TOPLEFT\n");
 			break;
 			
 		case RAIL_WMSZ_TOPRIGHT:
-			printf("!!!! RAIL_WMSZ_TOPRIGHT\n");
+			printf("RAIL_WMSZ_TOPRIGHT\n");
 			break;
 			
 		case RAIL_WMSZ_BOTTOM:
-			printf("!!!! RAIL_WMSZ_BOTTOM\n");
+			printf("RAIL_WMSZ_BOTTOM\n");
 			break;
 			
 		case RAIL_WMSZ_BOTTOMLEFT:
-			printf("!!!! RAIL_WMSZ_BOTTOMLEFT\n");
+			printf("RAIL_WMSZ_BOTTOMLEFT\n");
 			break;
 			
 		case RAIL_WMSZ_BOTTOMRIGHT:
-			printf("!!!! RAIL_WMSZ_BOTTOMRIGHT\n");
+			printf("RAIL_WMSZ_BOTTOMRIGHT\n");
 			break;
 			
 		case RAIL_WMSZ_MOVE:
@@ -2153,11 +2158,11 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 			break;
 			
 		case RAIL_WMSZ_KEYMOVE:
-			printf("!!!! RAIL_WMSZ_KEYMOVE\n");
+			printf("RAIL_WMSZ_KEYMOVE\n");
 			break;
 			
 		case RAIL_WMSZ_KEYSIZE:
-			printf("!!!! RAIL_WMSZ_KEYSIZE\n");
+			printf("RAIL_WMSZ_KEYSIZE\n");
 			break;
 			
 		default:
@@ -2169,12 +2174,12 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 
 void mac_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
 {
-	RDP_EVENT* out_event = NULL;
 	void* payload = NULL;
+	RDP_EVENT* out_event = NULL;
 	
 	payload = rail_clone_order(event_type, param);
 	
-	if (payload != NULL)
+	if (payload)
 	{
 		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type, mac_on_free_rail_client_event, payload);
 		freerdp_channels_send_event(channels, out_event);

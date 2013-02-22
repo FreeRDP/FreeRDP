@@ -6,7 +6,7 @@
 
 @synthesize mrdpRailWindow, windowIndex, activateWindow;
 
-MRDPRailView * g_mrdpRailView;
+MRDPRailView* g_mrdpRailView;
 
 struct kkey
 {
@@ -18,11 +18,11 @@ extern struct kkey g_keys[];
 
 - (void) updateDisplay
 {
-	BOOL   moveWindow = NO;
-	NSRect    srcRectOuter;
-	NSRect    destRectOuter;
+	BOOL moveWindow = NO;
+	NSRect srcRectOuter;
+	NSRect destRectOuter;
 	
-	rdpGdi *  gdi;
+	rdpGdi* gdi;
 	
 	if ((context == 0) || (context->gdi == 0))
 		return;
@@ -40,12 +40,15 @@ extern struct kkey g_keys[];
 	
 	// cannot be bigger than our current screen size
 	NSRect screenSize = [[NSScreen mainScreen] frame];
-	if (destRectOuter.size.width > screenSize.size.width) {
+	
+	if (destRectOuter.size.width > screenSize.size.width)
+	{
 		destRectOuter.size.width = screenSize.size.width;
 		moveWindow = YES;
 	}
 	
-	if (destRectOuter.size.height > screenSize.size.height) {
+	if (destRectOuter.size.height > screenSize.size.height)
+	{
 		destRectOuter.size.height = screenSize.size.height;
 		moveWindow = YES;
 	}
@@ -55,7 +58,8 @@ extern struct kkey g_keys[];
 	
 	[self setupBmiRep:destRectOuter.size.width :destRectOuter.size.height];
 	
-	if (moveWindow) {
+	if (moveWindow)
+	{
 		moveWindow = NO;
 		RAIL_WINDOW_MOVE_ORDER newWndLoc;
 		apple_to_windowMove(&destRectOuter, &newWndLoc);
@@ -84,10 +88,12 @@ extern struct kkey g_keys[];
 {
 	[bmiRep drawInRect:dirtyRect fromRect:dirtyRect operation:NSCompositeCopy fraction:1.0 respectFlipped:NO hints:nil];
 	
-	if (pixelData) {
+	if (pixelData)
+	{
 		free(pixelData);
 		pixelData = NULL;
 	}
+	
 	bmiRep = nil;
 }
 
@@ -256,16 +262,20 @@ extern struct kkey g_keys[];
 	// we get more two finger trackpad scroll events
 	// than scrollWheel events, so we drop some
 	
-	if (gestureEventInProgress) {
+	if (gestureEventInProgress)
+	{
 		scrollWheelCount++;
+	
 		if (scrollWheelCount % 8 != 0)
 			return;
 	}
 	
-	if ([event scrollingDeltaY] < 0) {
+	if ([event scrollingDeltaY] < 0)
+	{
 		flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 	}
-	else {
+	else
+	{
 		flags = PTR_FLAGS_WHEEL | 0x78;
 	}
 	
@@ -285,7 +295,8 @@ extern struct kkey g_keys[];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	if (titleBarClicked) {
+	if (titleBarClicked)
+	{
 		// window is being dragged to a new location
 		int newX = x - savedDragLocation.x;
 		int newY = y - savedDragLocation.y;
@@ -300,18 +311,22 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_LEFT) {
+	if (localMoveType == RAIL_WMSZ_LEFT)
+	{
 		// left border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
+		
 		if (diff == 0)
 			return;
 		
-		if (diff < 0) {
+		if (diff < 0)
+		{
 			diff = abs(diff);
 			winFrame.origin.x -= diff;
 			winFrame.size.width += diff;
 		}
-		else {
+		else
+		{
 			winFrame.origin.x += diff;
 			winFrame.size.width -= diff;
 		}
@@ -320,9 +335,11 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_RIGHT) {
+	if (localMoveType == RAIL_WMSZ_RIGHT)
+	{
 		// right border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
+		
 		if (diff == 0)
 			return;
 		
@@ -331,12 +348,15 @@ extern struct kkey g_keys[];
 		
 		winFrame.size.width += diff;
 		[[self window] setFrame:winFrame display:YES];
+		
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_TOP) {
+	if (localMoveType == RAIL_WMSZ_TOP)
+	{
 		// top border resize taking place
 		int diff = (int) (loc.y - savedDragLocation.y);
+		
 		if (diff == 0)
 			return;
 		
@@ -345,21 +365,26 @@ extern struct kkey g_keys[];
 		
 		winFrame.size.height += diff;
 		[[self window] setFrame:winFrame display:YES];
+		
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_BOTTOM) {
+	if (localMoveType == RAIL_WMSZ_BOTTOM)
+	{
 		// bottom border resize taking place
 		int diff = (int) (loc.y - savedDragLocation.y);
+		
 		if (diff == 0)
 			return;
 		
-		if (diff < 0) {
+		if (diff < 0)
+		{
 			diff = abs(diff);
 			winFrame.origin.y -= diff;
 			winFrame.size.height += diff;
 		}
-		else {
+		else
+		{
 			winFrame.origin.y += diff;
 			winFrame.size.height -= diff;
 		}
@@ -368,23 +393,30 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_TOPLEFT) {
+	if (localMoveType == RAIL_WMSZ_TOPLEFT)
+	{
 		// top left border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
-		if (diff != 0) {
-			if (diff < 0) {
+		
+		if (diff != 0)
+		{
+			if (diff < 0)
+			{
 				diff = abs(diff);
 				winFrame.origin.x -= diff;
 				winFrame.size.width += diff;
 			}
-			else {
+			else
+			{
 				winFrame.origin.x += diff;
 				winFrame.size.width -= diff;
 			}
 		}
 		
 		diff = (int) (loc.y - savedDragLocation.y);
-		if (diff != 0) {
+		
+		if (diff != 0)
+		{
 			savedDragLocation.y = loc.y;
 			winFrame.size.height += diff;
 		}
@@ -393,17 +425,18 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_TOPRIGHT) {
+	if (localMoveType == RAIL_WMSZ_TOPRIGHT)
+	{
 		// top right border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
-		if (diff != 0) {
+		
+		if (diff != 0)
 			winFrame.size.width += diff;
-		}
 		
 		diff = (int) (loc.y - savedDragLocation.y);
-		if (diff != 0) {
+		
+		if (diff != 0)
 			winFrame.size.height += diff;
-		}
 		
 		savedDragLocation.x = loc.x;
 		savedDragLocation.y = loc.y;
@@ -412,29 +445,38 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_BOTTOMLEFT) {
+	if (localMoveType == RAIL_WMSZ_BOTTOMLEFT)
+	{
 		// bottom left border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
-		if (diff != 0) {
-			if (diff < 0) {
+		
+		if (diff != 0)
+		{
+			if (diff < 0)
+			{
 				diff = abs(diff);
 				winFrame.origin.x -= diff;
 				winFrame.size.width += diff;
 			}
-			else {
+			else
+			{
 				winFrame.origin.x += diff;
 				winFrame.size.width -= diff;
 			}
 		}
 		
 		diff = (int) (loc.y - savedDragLocation.y);
-		if (diff != 0) {
-			if (diff < 0) {
+		
+		if (diff != 0)
+		{
+			if (diff < 0)
+			{
 				diff = abs(diff);
 				winFrame.origin.y -= diff;
 				winFrame.size.height += diff;
 			}
-			else {
+			else
+			{
 				winFrame.origin.y += diff;
 				winFrame.size.height -= diff;
 			}
@@ -444,23 +486,30 @@ extern struct kkey g_keys[];
 		return;
 	}
 	
-	if (localMoveType == RAIL_WMSZ_BOTTOMRIGHT) {
+	if (localMoveType == RAIL_WMSZ_BOTTOMRIGHT)
+	{
 		// bottom right border resize taking place
 		int diff = (int) (loc.x - savedDragLocation.x);
-		if (diff != 0) {
+	
+		if (diff != 0)
+		{
 			savedDragLocation.x = loc.x;
 			//savedDragLocation.y = loc.y;
 			winFrame.size.width += diff;
 		}
 		
 		diff = (int) (loc.y - savedDragLocation.y);
-		if (diff != 0) {
-			if (diff < 0) {
+		
+		if (diff != 0)
+		{
+			if (diff < 0)
+			{
 				diff = abs(diff);
 				winFrame.origin.y -= diff;
 				winFrame.size.height += diff;
 			}
-			else {
+			else
+			{
 				winFrame.origin.y += diff;
 				winFrame.size.height -= diff;
 			}
@@ -753,15 +802,14 @@ extern struct kkey g_keys[];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-void rail_cvt_from_rect(char *dest, char *src, NSRect destRect, int destWidth, int destHeight, NSRect srcRect)
+void rail_cvt_from_rect(char* dest, char* src, NSRect destRect, int destWidth, int destHeight, NSRect srcRect)
 {
 }
 
 /** *********************************************************************
  * color space conversion used specifically in RAIL
  ***********************************************************************/
-void rail_convert_color_space(char *destBuf, char * srcBuf,
-			      NSRect * destRect, int width, int height)
+void rail_convert_color_space(char* destBuf, char* srcBuf, NSRect* destRect, int width, int height)
 {
 	int     i;
 	int     j;
@@ -780,9 +828,8 @@ void rail_convert_color_space(char *destBuf, char * srcBuf,
 	int destWidth  = destRect->size.width;
 	int destHeight = destRect->size.height;
 	
-	if ((!destBuf) || (!srcBuf)) {
+	if ((!destBuf) || (!srcBuf))
 		return;
-	}
 	
 	numRows = (destRect->origin.y + destHeight > height) ? height - destRect->origin.y : destHeight;
 	pixelsPerRow = destWidth;
@@ -821,11 +868,11 @@ void rail_convert_color_space(char *destBuf, char * srcBuf,
 
 void rail_MoveWindow(rdpRail * rail, rdpWindow * window)
 {
-	if (g_mrdpRailView->isMoveSizeInProgress) {
+	if (g_mrdpRailView->isMoveSizeInProgress)
 		return;
-	}
 	
-	if (g_mrdpRailView->skipMoveWindowOnce) {
+	if (g_mrdpRailView->skipMoveWindowOnce)
+	{
 		g_mrdpRailView->skipMoveWindowOnce = NO;
 		return;
 	}
