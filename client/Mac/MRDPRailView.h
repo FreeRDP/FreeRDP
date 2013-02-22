@@ -7,35 +7,34 @@
 
 @interface MRDPRailView : NSView
 {
-    freerdp* rdp_instance;
-    rdpContext* context;
-    NSBitmapImageRep* bmiRep;
-    NSPoint savedDragLocation;
-    char* pixelData;
-    BOOL mouseInClientArea;
-    BOOL titleBarClicked;
-    BOOL gestureEventInProgress;
-    int width;
-    int height;
-    int savedWindowId;
-    int scrollWheelCount;
-    
-    /* store state info for some keys */
-    int kdlshift;
-    int kdrshift;
-    int kdlctrl;
-    int kdrctrl;
-    int kdlalt;
-    int kdralt;
-    int kdlmeta;
-    int kdrmeta;
-    int kdcapslock;
-    
-    @public
-    BOOL isMoveSizeInProgress;
-    BOOL saveInitialDragLoc;
-    BOOL skipMoveWindowOnce;
-    int localMoveType;
+	freerdp* rdp_instance;
+	rdpContext* context;
+	NSBitmapImageRep* bmiRep;
+	NSPoint savedDragLocation;
+	char* pixelData;
+	BOOL mouseInClientArea;
+	BOOL titleBarClicked;
+	BOOL gestureEventInProgress;
+	int width;
+	int height;
+	int savedWindowId;
+	int scrollWheelCount;
+	
+	int kdlshift;
+	int kdrshift;
+	int kdlctrl;
+	int kdrctrl;
+	int kdlalt;
+	int kdralt;
+	int kdlmeta;
+	int kdrmeta;
+	int kdcapslock;
+	
+@public
+	BOOL isMoveSizeInProgress;
+	BOOL saveInitialDragLoc;
+	BOOL skipMoveWindowOnce;
+	int localMoveType;
 }
 
 @property (assign) MRDPRailWindow* mrdpRailWindow;

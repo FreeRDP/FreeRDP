@@ -24,52 +24,52 @@
 
 @interface MRDPView : NSView
 {
-    CFRunLoopSourceRef run_loop_src;
-    CFRunLoopSourceRef run_loop_src_channels;
-    NSBitmapImageRep   *bmiRep;
-    NSMutableArray     *cursors;
-    NSMutableArray     *windows;
-    NSTimer            *pasteboard_timer;
-    NSRect             rect;
-    NSRect             prevWinPosition;
-    freerdp            *rdp_instance;
-    rdpContext         *rdp_context;
-    char               *pixel_data;
-    int                width;
-    int                height;
-    int                argc;
-    int                titleBarHeight;
-    char               **argv;
-    
-    // RAIL stuff
-    MRDPWindow         *currentWindow;
-    NSPoint            savedDragLocation;
-    BOOL            mouseInClientArea;
-    BOOL            isRemoteApp;
-    BOOL            firstCreateWindow;
-    BOOL            isMoveSizeInProgress;
-    BOOL            skipResizeOnce;
-    BOOL            saveInitialDragLoc;
-    BOOL            skipMoveWindowOnce;
-    
-    // store state info for some keys
-    int                kdlshift;
-    int                kdrshift;
-    int                kdlctrl;
-    int                kdrctrl;
-    int                kdlalt;
-    int                kdralt;
-    int                kdlmeta;
-    int                kdrmeta;
-    int                kdcapslock;
-
+	CFRunLoopSourceRef run_loop_src;
+	CFRunLoopSourceRef run_loop_src_channels;
+	NSBitmapImageRep   *bmiRep;
+	NSMutableArray     *cursors;
+	NSMutableArray     *windows;
+	NSTimer            *pasteboard_timer;
+	NSRect             rect;
+	NSRect             prevWinPosition;
+	freerdp            *rdp_instance;
+	rdpContext         *rdp_context;
+	char               *pixel_data;
+	int                width;
+	int                height;
+	int                argc;
+	int                titleBarHeight;
+	char               **argv;
+	
+	// RAIL stuff
+	MRDPWindow         *currentWindow;
+	NSPoint            savedDragLocation;
+	BOOL            mouseInClientArea;
+	BOOL            isRemoteApp;
+	BOOL            firstCreateWindow;
+	BOOL            isMoveSizeInProgress;
+	BOOL            skipResizeOnce;
+	BOOL            saveInitialDragLoc;
+	BOOL            skipMoveWindowOnce;
+	
+	// store state info for some keys
+	int                kdlshift;
+	int                kdrshift;
+	int                kdlctrl;
+	int                kdrctrl;
+	int                kdlalt;
+	int                kdralt;
+	int                kdlmeta;
+	int                kdrmeta;
+	int                kdcapslock;
+	
 @public
-    NSWindow           *ourMainWindow;
-    NSPasteboard       *pasteboard_rd; // for reading from clipboard
-    NSPasteboard       *pasteboard_wr; // for writing to clipboard
-    int                pasteboard_changecount;
-    int                pasteboard_format;
-    int                is_connected;   // true when connected to RDP server
+	NSWindow           *ourMainWindow;
+	NSPasteboard       *pasteboard_rd; // for reading from clipboard
+	NSPasteboard       *pasteboard_wr; // for writing to clipboard
+	int                pasteboard_changecount;
+	int                pasteboard_format;
+	int                is_connected;   // true when connected to RDP server
 }
 
 - (void) rdpConnectError;
@@ -147,30 +147,30 @@ void apple_to_windowMove(NSRect * r, RAIL_WINDOW_MOVE_ORDER * windowMove);
 
 struct mac_context
 {
-    // *must* have this - do not delete
-    rdpContext _p;
+	// *must* have this - do not delete
+	rdpContext _p;
 };
 
 struct cursor
 {
-    rdpPointer  *pointer;
-    BYTE       *cursor_data;   // bitmapped pixel data
-    void        *bmiRep;        // NSBitmapImageRep
-    void        *nsCursor;      // NSCursor
-    void        *nsImage;       // NSImage
+	rdpPointer  *pointer;
+	BYTE       *cursor_data;   // bitmapped pixel data
+	void        *bmiRep;        // NSBitmapImageRep
+	void        *nsCursor;      // NSCursor
+	void        *nsImage;       // NSImage
 };
 
 struct rgba_data
 {
-    char red;
-    char green;
-    char blue;
-    char alpha;
+	char red;
+	char green;
+	char blue;
+	char alpha;
 };
 
 struct kkey
 {
-    int key_code;
-    int flags;
+	int key_code;
+	int flags;
 };
 

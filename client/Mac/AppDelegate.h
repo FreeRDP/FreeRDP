@@ -14,6 +14,5 @@
 @property (assign) IBOutlet MRDPView *mrdpView;
 @property (assign) IBOutlet NSWindow *window;
 
-
 int rdp_connect(void);
 @end

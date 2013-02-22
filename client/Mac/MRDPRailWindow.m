@@ -12,7 +12,7 @@
 
 - (BOOL) canBecomeKeyWindow
 {
-    return YES;
+	return YES;
 }
 
 @end

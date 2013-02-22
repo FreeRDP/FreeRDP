@@ -21,7 +21,7 @@
 
 - (void) applicationWillTerminate:(NSNotification *)notification
 {
-    //[mrdpView releaseResources];
+	//[mrdpView releaseResources];
 }
 
 @end
