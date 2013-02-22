@@ -21,13 +21,16 @@
 #include "config.h"
 #endif
 
+#include <ApplicationServices/ApplicationServices.h>
+
 #include <winpr/windows.h>
 
-#include "wf_input.h"
-#include "wf_info.h"
+#include "mf_input.h"
+#include "mf_info.h"
 
-void wf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	/*
 	INPUT keyboard_event;
 	
 	keyboard_event.type = INPUT_KEYBOARD;
@@ -44,10 +47,12 @@ void wf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		keyboard_event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 	
 	SendInput(1, &keyboard_event, sizeof(INPUT));
+	 */
 }
 
-void wf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+void mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
+	/*
 	INPUT keyboard_event;
 	
 	keyboard_event.type = INPUT_KEYBOARD;
@@ -61,18 +66,16 @@ void wf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
 	
 	SendInput(1, &keyboard_event, sizeof(INPUT));
+	 */
 }
 
-void wf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	INPUT mouse_event;
 	float width, height;
-	
-	ZeroMemory(&mouse_event, sizeof(INPUT));
-	mouse_event.type = INPUT_MOUSE;
 	
 	if (flags & PTR_FLAGS_WHEEL)
 	{
+		/*
 		mouse_event.mi.dwFlags = MOUSEEVENTF_WHEEL;
 		mouse_event.mi.mouseData = flags & WheelRotationMask;
 		
@@ -80,64 +83,87 @@ void wf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			mouse_event.mi.mouseData *= -1;
 		
 		SendInput(1, &mouse_event, sizeof(INPUT));
+		 */
 	}
 	else
 	{
-		wfInfo * wfi;
 		
-		wfi = wf_info_get_instance();
+		mfInfo * mfi;
+		CGEventType mouseType = kCGEventNull;
+		CGMouseButton mouseButton = kCGMouseButtonLeft;
+		
+		
+		mfi = mf_info_get_instance();
 		
 		//width and height of primary screen (even in multimon setups
-		width = (float) GetSystemMetrics(SM_CXSCREEN);
-		height = (float) GetSystemMetrics(SM_CYSCREEN);
+		width = (float) mfi->servscreen_width;
+		height = (float) mfi->servscreen_height;
 		
-		x += wfi->servscreen_xoffset;
-		y += wfi->servscreen_yoffset;
-		
-		mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-		mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
-		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+		x += mfi->servscreen_xoffset;
+		y += mfi->servscreen_yoffset;
 		
 		if (flags & PTR_FLAGS_MOVE)
 		{
-			mouse_event.mi.dwFlags |= MOUSEEVENTF_MOVE;
-			SendInput(1, &mouse_event, sizeof(INPUT));
+			
+			mouseType = kCGEventMouseMoved;
+			CGEventRef move = CGEventCreateMouseEvent(NULL,
+								   mouseType,
+								   CGPointMake(x, y),
+								   mouseButton // ignored for just movement
+								   );
+			
+			CGEventPost(kCGHIDEventTap, move);
+			
+			CFRelease(move);
 		}
-		
-		mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
-		
+				
 		if (flags & PTR_FLAGS_BUTTON1)
 		{
+			mouseButton = kCGMouseButtonLeft;
 			if (flags & PTR_FLAGS_DOWN)
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+				mouseType = kCGEventLeftMouseDown;
 			else
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+				mouseType = kCGEventLeftMouseUp;
 			
-			SendInput(1, &mouse_event, sizeof(INPUT));
 		}
 		else if (flags & PTR_FLAGS_BUTTON2)
 		{
+			mouseButton = kCGMouseButtonRight;
 			if (flags & PTR_FLAGS_DOWN)
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
+				mouseType = kCGEventRightMouseDown;
 			else
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
-			
-			SendInput(1, &mouse_event, sizeof(INPUT));
+				mouseType = kCGEventRightMouseUp;
+
 		}
 		else if (flags & PTR_FLAGS_BUTTON3)
 		{
+			mouseButton = kCGMouseButtonCenter;
 			if (flags & PTR_FLAGS_DOWN)
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
+				mouseType = kCGEventOtherMouseDown;
 			else
-				mouse_event.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
-			
-			SendInput(1, &mouse_event, sizeof(INPUT));
+				mouseType = kCGEventOtherMouseUp;
+
 		}
+		/*else
+		{
+			return;
+		}
+		*/
+		
+		CGEventRef mouseEvent = CGEventCreateMouseEvent(NULL,
+								 mouseType,
+								 CGPointMake(x, y),
+								 mouseButton
+								 );
+		CGEventPost(kCGHIDEventTap, mouseEvent);
+		
+		CFRelease(mouseEvent);
 	}
 }
 
-void wf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	/*
 	if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	{
 		INPUT mouse_event;
@@ -183,23 +209,24 @@ void wf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 	}
 	else
 	{
-		wf_input_mouse_event(input, flags, x, y);
+		mf_input_mouse_event(input, flags, x, y);
 	}
+	 */
 }
 
 
-void wf_input_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+void mf_input_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
 }
 
-void wf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
+void mf_input_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code)
 {
 }
 
-void wf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_input_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 }
 
-void wf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_input_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 }
