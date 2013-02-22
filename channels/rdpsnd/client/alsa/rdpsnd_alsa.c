@@ -59,7 +59,9 @@ struct rdpsnd_alsa_plugin
 	int block_size;
 	int latency;
 	wMessageQueue* queue;
+	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
+	snd_pcm_uframes_t start_threshold;
 	snd_async_handler_t* pcm_callback;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
@@ -76,20 +78,99 @@ struct _RDPSND_WAVE_INFO
 };
 typedef struct _RDPSND_WAVE_INFO RDPSND_WAVE_INFO;
 
-static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
+#define SND_PCM_CHECK(_func, _status) \
+	if (_status < 0) \
+	{ \
+		printf("%s: %d\n", _func, _status); \
+		return -1; \
+	}
+
+int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 {
+	int status;
 	snd_pcm_hw_params_t* hw_params;
+
+	status = snd_pcm_hw_params_malloc(&hw_params);
+	SND_PCM_CHECK("snd_pcm_hw_params_malloc", status);
+
+	status = snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
+	SND_PCM_CHECK("snd_pcm_hw_params_any", status);
+
+	/* Set interleaved read/write access */
+	status = snd_pcm_hw_params_set_access(alsa->pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_access", status);
+
+	/* Set sample format */
+	status = snd_pcm_hw_params_set_format(alsa->pcm_handle, hw_params, alsa->format);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_format", status);
+
+	/* Set number of channels */
+	status = snd_pcm_hw_params_set_channels(alsa->pcm_handle, hw_params, alsa->actual_channels);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_channels", status);
+
+	status = snd_pcm_hw_params_set_channels_near(alsa->pcm_handle, hw_params, &alsa->actual_channels);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_channels_near", status);
+
+	/* Set sample rate */
+	status = snd_pcm_hw_params_set_rate(alsa->pcm_handle, hw_params, alsa->actual_rate, 0);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_rate", status);
+
+	status = snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_rate_near", status);
+
+	/* Set buffer size */
+	//status = snd_pcm_hw_params_set_buffer_size(alsa->pcm_handle, hw_params, alsa->buffer_size);
+	//SND_PCM_CHECK("snd_pcm_hw_params_set_buffer_size", status);
+
+	status = snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &alsa->buffer_size);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_buffer_size_near", status);
+
+	/* Set period time */
+	status = snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
+	SND_PCM_CHECK("snd_pcm_hw_params_set_period_size_near", status);
+
+	status = snd_pcm_hw_params(alsa->pcm_handle, hw_params);
+	SND_PCM_CHECK("snd_pcm_hw_params", status);
+
+	snd_pcm_hw_params_free(hw_params);
+
+	return 0;
+}
+
+int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
+{
+	int status;
 	snd_pcm_sw_params_t* sw_params;
-	snd_pcm_uframes_t start_threshold;
-	snd_pcm_uframes_t buffer_size;
-	snd_pcm_uframes_t period_size;
-	snd_pcm_uframes_t period_size_min;
-	snd_pcm_uframes_t period_size_max;
 
-	snd_pcm_drop(alsa->pcm_handle);
+	if (alsa->latency == 0)
+		alsa->start_threshold = 0;
+	else
+		alsa->start_threshold = alsa->buffer_size / 2;
 
+	status = snd_pcm_sw_params_malloc(&sw_params);
+	SND_PCM_CHECK("snd_pcm_sw_params_malloc", status);
+
+	status = snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
+	SND_PCM_CHECK("snd_pcm_sw_params_current", status);
+
+	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, alsa->start_threshold);
+	SND_PCM_CHECK("snd_pcm_sw_params_set_start_threshold", status);
+
+	status = snd_pcm_sw_params(alsa->pcm_handle, sw_params);
+	SND_PCM_CHECK("snd_pcm_sw_params", status);
+
+	snd_pcm_sw_params_free(sw_params);
+
+	status = snd_pcm_prepare(alsa->pcm_handle);
+	SND_PCM_CHECK("snd_pcm_prepare", status);
+
+	return 0;
+}
+
+static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
+{
 	/**
-	 * ALSA Hardware Parameters
+	 * ALSA Parameters
 	 *
 	 * http://www.alsa-project.org/main/index.php/FramesPeriods
 	 *
@@ -107,72 +188,26 @@ static void rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	 * It is also possible for the buffer size to not be an integer multiple of the period size.
 	 */
 
-	/* Read Parameters */
-
-	if (snd_pcm_hw_params_malloc(&hw_params) < 0)
-		return;
-
-	//snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
-	snd_pcm_hw_params_current(alsa->pcm_handle, hw_params);
-
-	snd_pcm_hw_params_get_period_size(hw_params, &period_size, 0);
-	snd_pcm_hw_params_get_period_size_min(hw_params, &period_size_min, 0);
-	snd_pcm_hw_params_get_period_size_max(hw_params, &period_size_max, 0);
-
-	snd_pcm_hw_params_free(hw_params);
-
-	printf("ALSA Hardware Parameters:\n");
-	printf("\tPeriodSize: %d\n", period_size);
-	printf("\tPeriodSizeMin: %d\n", period_size_min);
-	printf("\tPeriodSizeMax: %d\n", period_size_max);
-
-	/* Write Parameters */
-
-	if (snd_pcm_hw_params_malloc(&hw_params) < 0)
-		return;
+	snd_pcm_drop(alsa->pcm_handle);
 
 	if (alsa->latency < 0)
-		buffer_size = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
+		alsa->buffer_size = alsa->actual_rate * 4 / 10; /* Default to 400ms buffer */
 	else
-		buffer_size = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
+		alsa->buffer_size = alsa->latency * alsa->actual_rate * 2 / 1000; /* Double of the latency */
 
-	if (buffer_size < alsa->actual_rate / 2)
-		buffer_size = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
+	if (alsa->buffer_size < alsa->actual_rate / 2)
+		alsa->buffer_size = alsa->actual_rate / 2; /* Minimum 0.5-second buffer */
 
-	snd_pcm_hw_params_any(alsa->pcm_handle, hw_params);
-	snd_pcm_hw_params_set_access(alsa->pcm_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
-	snd_pcm_hw_params_set_format(alsa->pcm_handle, hw_params, alsa->format);
-	snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
-	snd_pcm_hw_params_set_channels_near(alsa->pcm_handle, hw_params, &alsa->actual_channels);
-	snd_pcm_hw_params_get_period_size(hw_params, &alsa->period_size, 0);
+	printf("ALSA #1: BufferSize: %d Latency: %d Rate: %d Channels: %d\n",
+			alsa->buffer_size, alsa->latency, alsa->actual_rate, alsa->actual_channels);
 
-	snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &buffer_size);
-	//snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
-	snd_pcm_hw_params(alsa->pcm_handle, hw_params);
-	snd_pcm_hw_params_free(hw_params);
+	if (rdpsnd_alsa_set_hw_params(alsa) < 0)
+		return -1;
 
-	printf("ALSA: Rate: %d Channels: %d PeriodSize: %d BufferSize: %d\n",
-			alsa->actual_rate, alsa->actual_channels, alsa->period_size, buffer_size);
+	if (rdpsnd_alsa_set_sw_params(alsa) < 0)
+		return -1;
 
-	/**
-	 * ALSA Software Parameters
-	 */
-
-	if (snd_pcm_sw_params_malloc(&sw_params) < 0)
-		return;
-
-	snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
-
-	if (alsa->latency == 0)
-		start_threshold = 0;
-	else
-		start_threshold = buffer_size / 2;
-
-	snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, start_threshold);
-	snd_pcm_sw_params(alsa->pcm_handle, sw_params);
-	snd_pcm_sw_params_free(sw_params);
-
-	snd_pcm_prepare(alsa->pcm_handle);
+	return 0;
 }
 
 static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)

@@ -745,6 +745,14 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	if (rdpsnd->device_name)
 		free(rdpsnd->device_name);
 
+	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	rdpsnd->NumberOfServerFormats = 0;
+	rdpsnd->ServerFormats = NULL;
+
+	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
+	rdpsnd->NumberOfClientFormats = 0;
+	rdpsnd->ClientFormats = NULL;
+
 	free(plugin);
 }
 
