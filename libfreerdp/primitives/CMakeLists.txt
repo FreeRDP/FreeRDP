@@ -28,6 +28,15 @@ set(${MODULE_PREFIX}_SRCS
 	primitives.c
 	prim_internal.h)
 
+set(${MODULE_PREFIX}_OPT_SRCS
+	prim_add_opt.c
+	prim_andor_opt.c
+	prim_alphaComp_opt.c
+	prim_colors_opt.c
+	prim_set_opt.c
+	prim_shift_opt.c
+	prim_sign_opt.c)
+
 add_definitions(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
 ### IPP Variable debugging
@@ -63,7 +72,9 @@ if(ANDROID)
 		${ANDROID_CPU_FEATURES_PATH}/cpu-features.h)
 endif()
 
-set_property(SOURCE ${${MODULE_PREFIX}_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
+set_property(SOURCE ${${MODULE_PREFIX}_OPT_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
+
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_OPT_SRCS})
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
