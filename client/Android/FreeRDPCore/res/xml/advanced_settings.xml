@@ -15,13 +15,17 @@
        <CheckBoxPreference android:key="bookmark.enable_3g_settings" android:title="@string/settings_enable_3g_settings" />
        
        <PreferenceScreen android:key="bookmark.screen_3g" android:title="@string/settings_screen_3g">
-            <intent android:action="freerdp.intent.action.BOOKMARK" 
-                	android:data="preferences://screen_settings_3g" />
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://screen_settings_3g" />
         </PreferenceScreen>
         
         <PreferenceScreen android:key="bookmark.performance_3g" android:title="@string/settings_performance_3g">
-            <intent android:action="freerdp.intent.action.BOOKMARK" 
-                	android:data="preferences://performance_flags_3g" />
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://performance_flags_3g" />
         </PreferenceScreen>
         
         <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.security" android:title="@string/settings_security" android:entries="@array/security_array" android:entryValues="@array/security_values_array" />

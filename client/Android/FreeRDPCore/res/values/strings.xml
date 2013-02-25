@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <resources>
-    <string name="app_title">aFreeRDP</string>
-    <string name="app_name"></string>
     <!-- Button labels -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -29,6 +27,8 @@
     <!-- List section headers -->
     <string name="section_bookmarks">Manual Connections</string>
     <string name="section_active_sessions">Active Sessions</string>
+    <!-- Search strings -->
+    <string name="search_hint">Connect to Computer</string>    
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">Login</string>
     <string name="list_placeholder_no_servers">No Servers</string>
@@ -38,10 +38,6 @@
     <string name="list_placeholder_wrong_password">Wrong Password</string>
     <string name="list_placeholder_invalid_username">Invalid Username</string>
     <string name="list_placeholder_add_bookmark">Add Connection</string>
-    <!-- Search strings -->
-    <string name="search_label">aFreeRDP</string>
-    <string name="search_hint">Connect to Computer</string>
-    <string name="search_settings_description">Remote Computers</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">Host</string>
     <string name="settings_label">Label</string>

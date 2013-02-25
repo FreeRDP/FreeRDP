@@ -17,11 +17,13 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.services.BookmarkBaseGateway;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
 public class BookmarkActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener
@@ -137,8 +139,35 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 
 		// register for preferences changed notification
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+		
+		// set the correct component names in our preferencescreen settings 
+		setIntentComponentNames();
 	}
 
+	private void setIntentComponentNames()
+	{
+		// we set the component name for our sub-activity calls here because we don't know the package
+		// name of the main app in our library project. 
+		ComponentName compName = new ComponentName(getPackageName(), BookmarkActivity.class.getName());		
+		String[] prefKeys = {
+			"bookmark.credentials",
+			"bookmark.screen",
+			"bookmark.performance",
+			"bookmark.advanced",
+			"bookmark.screen_3g",
+			"bookmark.performance_3g"
+		};
+		
+		for (int i = 0; i < prefKeys.length; ++i)
+		{
+			Preference pref = findPreference(prefKeys[i]);
+			if (pref != null)
+				pref.getIntent().setComponent(compName);			
+		}
+		
+		
+	}
+	
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		settings_changed = true;

@@ -19,26 +19,34 @@
     
     <PreferenceCategory android:title="@string/settings_cat_credentials">
         <PreferenceScreen android:key="bookmark.credentials" android:title="@string/settings_credentials">
-        	<intent android:action="freerdp.intent.action.BOOKMARK" 
-           		android:data="preferences://credentials_settings" />
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://credentials_settings" />            
         </PreferenceScreen>
     </PreferenceCategory>
     
     <PreferenceCategory android:title="@string/settings_cat_settings">
 
         <PreferenceScreen android:key="bookmark.screen" android:title="@string/settings_screen">
-            <intent android:action="freerdp.intent.action.BOOKMARK" 
-                	android:data="preferences://screen_settings" />
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://screen_settings" />                        
         </PreferenceScreen>
         
-        <PreferenceScreen android:title="@string/settings_performance">
-            <intent android:action="freerdp.intent.action.BOOKMARK" 
-                	android:data="preferences://performance_flags" />
+        <PreferenceScreen android:key="bookmark.performance" android:title="@string/settings_performance">
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://performance_flags" />
         </PreferenceScreen>
         
-        <PreferenceScreen android:title="@string/settings_advanced">
-            <intent android:action="freerdp.intent.action.BOOKMARK" 
-                	android:data="preferences://advanced_settings" />
+        <PreferenceScreen android:key="bookmark.advanced" android:title="@string/settings_advanced">
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://advanced_settings" />
         </PreferenceScreen>
     
     </PreferenceCategory>
