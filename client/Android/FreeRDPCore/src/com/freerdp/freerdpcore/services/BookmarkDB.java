@@ -92,6 +92,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "VALUES ( "
 			+ "32, 1, 1024, 768);";
 		db.execSQL(sqlInsertDefaultScreenEntry);		
+		db.execSQL(sqlInsertDefaultScreenEntry);		
 		
 		String sqlInsertDefaultPerfFlags = 
 			"INSERT INTO tbl_performance_flags ("
@@ -104,6 +105,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "perf_desktop_composition) "
 			+ "VALUES ( "
 			+ "1, 0, 0, 0, 0, 0, 0);";
+		db.execSQL(sqlInsertDefaultPerfFlags);
 		db.execSQL(sqlInsertDefaultPerfFlags);
 
 		String sqlInsertDefaultSessionEntry = 
