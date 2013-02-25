@@ -37,6 +37,7 @@ typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
 typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, UINT16 wFormatNo, BYTE cBlockNo, BYTE* data, int size);
 typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, BYTE cConfirmedBlockNo);
+typedef UINT32 (*pcWaveLength) (rdpsndDevicePlugin* device, int wFormatNo, int size);
 
 struct rdpsnd_device_plugin
 {
@@ -53,6 +54,7 @@ struct rdpsnd_device_plugin
 
 	pcWavePlay WavePlay;
 	pcWaveConfirm WaveConfirm;
+	pcWaveLength WaveLength;
 };
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"

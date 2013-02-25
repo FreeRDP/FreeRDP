@@ -45,7 +45,7 @@
 
 #include "rdpsnd_main.h"
 
-#define TIME_DELAY_MS	250
+#define TIME_DELAY_MS	65
 
 struct rdpsnd_plugin
 {
@@ -55,7 +55,7 @@ struct rdpsnd_plugin
 	HANDLE thread;
 
 	BYTE cBlockNo;
-	int current_format;
+	int wCurrentFormatNo;
 
 	AUDIO_FORMAT* ServerFormats;
 	UINT16 NumberOfServerFormats;
@@ -66,8 +66,9 @@ struct rdpsnd_plugin
 	BOOL expectingWave;
 	BYTE waveData[4];
 	UINT16 waveDataSize;
-	UINT32 wTimeStamp; /* server timestamp */
-	UINT32 wave_timestamp; /* client timestamp */
+	UINT32 wTimeStamp;
+	UINT32 wLastTimeStamp;
+	UINT32 wave_timestamp;
 
 	BOOL is_open;
 	UINT32 close_timestamp;
@@ -182,6 +183,53 @@ void rdpsnd_adapt_audio_formats_new_to_old(rdpsndFormat* oldFormat, AUDIO_FORMAT
 	oldFormat->wBitsPerSample = newFormat->wBitsPerSample;
 	oldFormat->cbSize = newFormat->cbSize;
 	oldFormat->data = newFormat->data;
+}
+
+char* rdpsnd_get_audio_tag_string(UINT16 wFormatTag)
+{
+	switch (wFormatTag)
+	{
+		case WAVE_FORMAT_PCM:
+			return "WAVE_FORMAT_PCM";
+
+		case WAVE_FORMAT_ADPCM:
+			return "WAVE_FORMAT_ADPCM";
+
+		case WAVE_FORMAT_ALAW:
+			return "WAVE_FORMAT_ALAW";
+
+		case WAVE_FORMAT_MULAW:
+			return "WAVE_FORMAT_MULAW";
+
+		case WAVE_FORMAT_DVI_ADPCM:
+			return "WAVE_FORMAT_DVI_ADPCM";
+	}
+
+	return "WAVE_FORMAT_UNKNOWN";
+}
+
+void rdpsnd_print_audio_format(AUDIO_FORMAT* format)
+{
+	printf("%s: wFormatTag: 0x%04X nChannels: %d nSamplesPerSec: %d nAvgBytesPerSec: %d nBlockAlign: %d wBitsPerSample: %d\n",
+			rdpsnd_get_audio_tag_string(format->wFormatTag), format->wFormatTag,
+			format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
+			format->nBlockAlign, format->wBitsPerSample);
+}
+
+UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
+{
+	UINT32 mstime;
+	UINT32 wSamples;
+
+	/**
+	 * [MSDN-AUDIOFORMAT]:
+	 * http://msdn.microsoft.com/en-us/library/ms713497.aspx
+	 */
+
+	wSamples = (size * 8) / format->wBitsPerSample;
+	mstime = ((wSamples * 1000) / format->nSamplesPerSec);
+
+	return mstime;
 }
 
 void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
@@ -384,16 +432,16 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 	if (!rdpsnd->is_open)
 	{
 		rdpsnd->is_open = TRUE;
-		rdpsnd->current_format = wFormatNo;
+		rdpsnd->wCurrentFormatNo = wFormatNo;
 
 		if (rdpsnd->device)
 		{
 			IFCALL(rdpsnd->device->Open, rdpsnd->device, &sndFormat, rdpsnd->latency);
 		}
 	}
-	else if (wFormatNo != rdpsnd->current_format)
+	else if (wFormatNo != rdpsnd->wCurrentFormatNo)
 	{
-		rdpsnd->current_format = wFormatNo;
+		rdpsnd->wCurrentFormatNo = wFormatNo;
 
 		if (rdpsnd->device)
 		{
@@ -422,10 +470,24 @@ void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, UINT16 wTim
 	rdpsnd_send_wave_confirm_pdu(device->rdpsnd, wTimeStamp, cConfirmedBlockNo);
 }
 
+UINT32 rdpsnd_device_wave_length(rdpsndDevicePlugin* device, int wFormatNo, int size)
+{
+	UINT32 wAudioLength;
+	AUDIO_FORMAT* format;
+
+	format = &device->rdpsnd->ClientFormats[wFormatNo];
+	wAudioLength = rdpsnd_compute_audio_time_length(format, size);
+
+	return wAudioLength;
+}
+
 static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 {
-	STREAM* data;
+	int size;
+	BYTE* data;
 	UINT16 wTimeStamp;
+	UINT16 wAudioLength;
+	AUDIO_FORMAT* format;
 
 	rdpsnd->expectingWave = FALSE;
 
@@ -438,39 +500,42 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 
 	CopyMemory(stream_get_head(s), rdpsnd->waveData, 4);
 
-	if (stream_get_size(s) != rdpsnd->waveDataSize)
-	{
-		DEBUG_WARN("size error");
-		return;
-	}
+	data = stream_get_head(s);
+	size = stream_get_size(s);
+
+	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
+	wAudioLength = rdpsnd_compute_audio_time_length(format, size);
+
+	rdpsnd->device->WavePlay = NULL;
 
 	if (rdpsnd->device)
 	{
 		if (rdpsnd->device->WavePlay)
 		{
 			IFCALL(rdpsnd->device->WavePlay, rdpsnd->device, rdpsnd->wTimeStamp,
-					rdpsnd->current_format, rdpsnd->cBlockNo, stream_get_head(s), stream_get_size(s));
+					rdpsnd->wCurrentFormatNo, rdpsnd->cBlockNo, data, size);
 		}
 		else
 		{
-			IFCALL(rdpsnd->device->Play, rdpsnd->device, stream_get_head(s), stream_get_size(s));
+			IFCALL(rdpsnd->device->Play, rdpsnd->device, data, size);
 		}
 	}
 
 	if (!rdpsnd->device->WavePlay)
 	{
-		wTimeStamp = rdpsnd->wTimeStamp + TIME_DELAY_MS;
+		STREAM* pdu;
+		wTimeStamp = rdpsnd->wTimeStamp + wAudioLength + TIME_DELAY_MS;
 
-		data = stream_new(8);
-		stream_write_BYTE(data, SNDC_WAVECONFIRM);
-		stream_write_BYTE(data, 0);
-		stream_write_UINT16(data, 4);
-		stream_write_UINT16(data, wTimeStamp);
-		stream_write_BYTE(data, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
-		stream_write_BYTE(data, 0); /* bPad */
+		pdu = stream_new(8);
+		stream_write_BYTE(pdu, SNDC_WAVECONFIRM);
+		stream_write_BYTE(pdu, 0);
+		stream_write_UINT16(pdu, 4);
+		stream_write_UINT16(pdu, wTimeStamp);
+		stream_write_BYTE(pdu, rdpsnd->cBlockNo); /* cConfirmedBlockNo */
+		stream_write_BYTE(pdu, 0); /* bPad */
 
-		wTimeStamp = rdpsnd->wave_timestamp + TIME_DELAY_MS;
-		MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) data, (void*) (size_t) wTimeStamp);
+		wTimeStamp = rdpsnd->wave_timestamp + wAudioLength + TIME_DELAY_MS;
+		MessageQueue_Post(rdpsnd->MsgPipe->Out, NULL, 0, (void*) pdu, (void*) (size_t) wTimeStamp);
 	}
 }
 
@@ -560,6 +625,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 	device->rdpsnd = rdpsnd;
 
 	device->WaveConfirm = rdpsnd_device_send_wave_confirm_pdu;
+	device->WaveLength = rdpsnd_device_wave_length;
 }
 
 static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
