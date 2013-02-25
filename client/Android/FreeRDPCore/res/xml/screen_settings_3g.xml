@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Bookmark 3G Screen Settings Layout
+
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:freerdp="http://schemas.android.com/apk/res-auto">
+	<PreferenceCategory android:title="@string/settings_cat_screen">
+	    <com.freerdp.freerdpcore.utils.IntListPreference android:key="bookmark.colors_3g" android:entries="@array/colors_array" android:title="@string/settings_colors" android:summary="Color depth" android:entryValues="@array/colors_values_array" />
+	    <ListPreference android:key="bookmark.resolution_3g" android:entries="@array/resolutions_array" android:title="@string/settings_resolution" android:summary="XXX" android:entryValues="@array/resolutions_values_array" />
+	    <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.width_3g" android:title="@string/settings_width" freerdp:bounds_min="640" freerdp:bounds_max="2048" freerdp:bounds_default="640" />
+	    <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.height_3g" android:title="@string/settings_height" freerdp:bounds_min="480" freerdp:bounds_max="2048" freerdp:bounds_default="480" />
+    </PreferenceCategory>    
+</PreferenceScreen>
