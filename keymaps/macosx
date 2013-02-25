@@ -57,6 +57,8 @@ keyboard "macosx"
 	VK_OEM_PERIOD	<55>
 	VK_OEM_2	<52>
 	VK_SPACE	<57>
+        VK_LWIN         <63>
+        VK_RWIN         <69>
 	VK_LCONTROL	<67>
 	VK_LMENU	<66>
 	VK_LSHIFT	<64>
