@@ -341,7 +341,8 @@ static void* serial_thread_func(void* arg)
 
 	while (1)
 	{
-		freerdp_thread_wait_timeout(serial->thread, 500);
+		if (freerdp_thread_wait_timeout(serial->thread, 500) < 0)
+			break;
 
 		serial->nfds = 1;
 		FD_ZERO(&serial->read_fds);

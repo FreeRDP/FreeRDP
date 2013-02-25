@@ -184,7 +184,8 @@ static void* rdpsnd_server_thread_func(void* arg)
 
 	while (1)
 	{
-		freerdp_thread_wait(thread);
+		if (freerdp_thread_wait(thread) < 0)
+			break;
 		
 		if (freerdp_thread_is_stopped(thread))
 			break;

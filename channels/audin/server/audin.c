@@ -284,7 +284,8 @@ static void* audin_server_thread_func(void* arg)
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
 	while (1)
 	{
-		freerdp_thread_wait(thread);
+		if (freerdp_thread_wait(thread) < 0)
+			break;
 
 		if (freerdp_thread_is_stopped(thread))
 			break;
@@ -309,7 +310,8 @@ static void* audin_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		freerdp_thread_wait(thread);
+		if (freerdp_thread_wait(thread) < 0)
+			break;
 		
 		if (freerdp_thread_is_stopped(thread))
 			break;
