@@ -82,8 +82,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 		db.execSQL(sqlManualBookmarks);
 
 			
-		// REMOVE - FOR DEBUGGING ONLY!
-/*
+		// Insert a test entry
 		String sqlInsertDefaultScreenEntry = 
 			"INSERT INTO tbl_screen_settings ("
 			+ "colors, "
@@ -91,8 +90,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "width, "
 			+ "height) "
 			+ "VALUES ( "
-			+ "16, -1, 0, 0);";
-		db.execSQL(sqlInsertDefaultScreenEntry);
+			+ "32, 1, 1024, 768);";
 		db.execSQL(sqlInsertDefaultScreenEntry);		
 		
 		String sqlInsertDefaultPerfFlags = 
@@ -105,8 +103,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "perf_font_smoothing, "
 			+ "perf_desktop_composition) "
 			+ "VALUES ( "
-			+ "0, 0, 0, 0, 0, 0, 0);";
-		db.execSQL(sqlInsertDefaultPerfFlags);
+			+ "1, 0, 0, 0, 0, 0, 0);";
 		db.execSQL(sqlInsertDefaultPerfFlags);
 
 		String sqlInsertDefaultSessionEntry = 
@@ -126,14 +123,14 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "work_dir, "
 			+ "console_mode) "			
 			+ "VALUES ( "
-			+ "'test', "
-			+ "'192.168.50.125', "
-			+ "'demo1', "
-			+ "'qw', "
+			+ "'Test Server', "
+			+ "'testservice.afreerdp.com', "
+			+ "'', "
+			+ "'', "
 			+ "'', "
 			+ "3389, "
 			+ "1, 1, 2, 2, 0, '', '', 0);";
-		db.execSQL(sqlInsertDefaultSessionEntry); */
+		db.execSQL(sqlInsertDefaultSessionEntry);
 	}
 
 	@Override
