@@ -68,4 +68,17 @@
 	return param_copy;
 }
 
+- (ComputerBookmark*)newTestServerBookmark
+{
+    ComputerBookmark* bm = [self newBookmark];
+    [bm setLabel:@"Test Server"];
+    [[bm params] setValue:@"testservice.ifreerdp.com" forKey:@"hostname"];
+    [[bm params] setInt:0 forKey:@"screen_resolution_type"];
+    [[bm params] setInt:1024 forKey:@"width"];
+    [[bm params] setInt:768 forKey:@"height"];
+    [[bm params] setInt:32 forKey:@"colors"];
+    [[bm params] setBool:YES forKey:@"perf_remotefx"];
+	return bm;
+}
+
 @end
