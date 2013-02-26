@@ -659,7 +659,6 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 		settings->FastPathOutput = TRUE;
 		settings->ColorDepth = 32;
 		settings->LargePointerFlag = TRUE;
-		settings->PerformanceFlags = PERF_FLAG_NONE;
 		settings->FrameMarkerCommandEnabled = TRUE;
 	}
 
@@ -684,6 +683,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 
 
 	/* Create performance flags from settings */
+	settings->PerformanceFlags = PERF_FLAG_NONE;
 	if (settings->AllowFontSmoothing)
 		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
 
