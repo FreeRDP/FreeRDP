@@ -25,9 +25,9 @@
 
 int _der_skip_length(int length)
 {
-	if (length > 0x7F && length <= 0xFF)
+	if (length > 0x81 && length <= 0x102)
 		return 2;
-	else if (length > 0xFF)
+	else if (length > 0x102)
 		return 3;
 	else
 		return 1;
