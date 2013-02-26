@@ -432,7 +432,7 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	}
 }
 
-BYTE* rdpsnd_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
+BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
 {
 	int frames;
 	BYTE* srcData;
@@ -496,7 +496,7 @@ static void rdpsnd_alsa_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wav
 	BYTE* data;
 
 	size = wave->length;
-	data = rdpsnd_process_audio_sample(device, wave->data, &size);
+	data = rdpsnd_alsa_process_audio_sample(device, wave->data, &size);
 
 	wave->data = (BYTE*) malloc(size);
 	CopyMemory(wave->data, data, size);

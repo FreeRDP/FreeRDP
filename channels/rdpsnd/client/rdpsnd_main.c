@@ -51,8 +51,8 @@ struct rdpsnd_plugin
 {
 	rdpSvcPlugin plugin;
 
-	wMessagePipe* MsgPipe;
 	HANDLE thread;
+	wMessageQueue* queue;
 
 	BYTE cBlockNo;
 	int wCurrentFormatNo;
@@ -68,13 +68,11 @@ struct rdpsnd_plugin
 	UINT16 waveDataSize;
 	UINT32 wTimeStamp;
 
-	BOOL is_open;
-	UINT32 close_timestamp;
-
-	UINT16 fixed_format;
-	UINT16 fixed_channel;
-	UINT32 fixed_rate;
+	BOOL isOpen;
 	int latency;
+	UINT16 fixedFormat;
+	UINT16 fixedChannel;
+	UINT32 fixedRate;
 
 	char* subsystem;
 	char* device_name;
@@ -87,7 +85,6 @@ void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE 
 
 static void* rdpsnd_schedule_thread(void* arg)
 {
-	STREAM* data;
 	wMessage message;
 	UINT16 wTimeDiff;
 	UINT16 wTimeStamp;
@@ -97,10 +94,10 @@ static void* rdpsnd_schedule_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(rdpsnd->MsgPipe->Out))
+		if (!MessageQueue_Wait(rdpsnd->queue))
 			break;
 
-		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
+		if (!MessageQueue_Peek(rdpsnd->queue, &message, TRUE))
 			break;
 
 		if (message.id == WMQ_QUIT)
@@ -219,13 +216,13 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	{
 		serverFormat = &rdpsnd->ServerFormats[index];
 
-		if (rdpsnd->fixed_format > 0 && (rdpsnd->fixed_format != serverFormat->wFormatTag))
+		if (rdpsnd->fixedFormat > 0 && (rdpsnd->fixedFormat != serverFormat->wFormatTag))
 			continue;
 
-		if (rdpsnd->fixed_channel > 0 && (rdpsnd->fixed_channel != serverFormat->nChannels))
+		if (rdpsnd->fixedChannel > 0 && (rdpsnd->fixedChannel != serverFormat->nChannels))
 			continue;
 
-		if (rdpsnd->fixed_rate > 0 && (rdpsnd->fixed_rate != serverFormat->nSamplesPerSec))
+		if (rdpsnd->fixedRate > 0 && (rdpsnd->fixedRate != serverFormat->nSamplesPerSec))
 			continue;
 
 		if (rdpsnd->device && rdpsnd->device->FormatSupported(rdpsnd->device, serverFormat))
@@ -386,13 +383,12 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 
 	rdpsnd->waveDataSize = BodySize - 8;
 	rdpsnd->expectingWave = TRUE;
-	rdpsnd->close_timestamp = 0;
 
 	format = &rdpsnd->ClientFormats[wFormatNo];
 
-	if (!rdpsnd->is_open)
+	if (!rdpsnd->isOpen)
 	{
-		rdpsnd->is_open = TRUE;
+		rdpsnd->isOpen = TRUE;
 		rdpsnd->wCurrentFormatNo = wFormatNo;
 
 		if (rdpsnd->device)
@@ -428,7 +424,7 @@ void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE 
 
 void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	MessageQueue_Post(device->rdpsnd->MsgPipe->Out, NULL, 0, (void*) wave, NULL);
+	MessageQueue_Post(device->rdpsnd->queue, NULL, 0, (void*) wave, NULL);
 }
 
 static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
@@ -498,8 +494,6 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 	{
 		IFCALL(rdpsnd->device->Start, rdpsnd->device);
 	}
-
-	rdpsnd->close_timestamp = GetTickCount() + 2000;
 }
 
 static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
@@ -658,15 +652,15 @@ static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 		}
 		CommandLineSwitchCase(arg, "format")
 		{
-			rdpsnd->fixed_format = atoi(arg->Value);
+			rdpsnd->fixedFormat = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "rate")
 		{
-			rdpsnd->fixed_rate = atoi(arg->Value);
+			rdpsnd->fixedRate = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "channel")
 		{
-			rdpsnd->fixed_channel = atoi(arg->Value);
+			rdpsnd->fixedChannel = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "latency")
 		{
@@ -690,7 +684,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	DEBUG_SVC("connecting");
 
 	rdpsnd->latency = -1;
-	rdpsnd->MsgPipe = MessagePipe_New();
+	rdpsnd->queue = MessageQueue_New();
 	rdpsnd->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread, (void*) plugin, 0, NULL);
 
 	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
@@ -753,7 +747,11 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	MessagePipe_Free(rdpsnd->MsgPipe);
+	MessageQueue_PostQuit(rdpsnd->queue, 0);
+	WaitForSingleObject(rdpsnd->thread, INFINITE);
+
+	MessageQueue_Free(rdpsnd->queue);
+	CloseHandle(rdpsnd->thread);
 
 	if (rdpsnd->subsystem)
 		free(rdpsnd->subsystem);
@@ -768,8 +766,6 @@ static void rdpsnd_process_terminate(rdpSvcPlugin* plugin)
 	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
 	rdpsnd->NumberOfClientFormats = 0;
 	rdpsnd->ClientFormats = NULL;
-
-	free(plugin);
 }
 
 /* rdpsnd is always built-in */

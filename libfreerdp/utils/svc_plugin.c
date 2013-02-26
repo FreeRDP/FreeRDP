@@ -238,11 +238,12 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	MessagePipe_PostQuit(plugin->MsgPipe, 0);
 	WaitForSingleObject(plugin->thread, INFINITE);
 
+	MessagePipe_Free(plugin->MsgPipe);
+	CloseHandle(plugin->thread);
+
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->open_handle);
 
 	svc_plugin_remove(plugin);
-
-	MessagePipe_Free(plugin->MsgPipe);
 
 	if (plugin->data_in)
 	{
