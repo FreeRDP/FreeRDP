@@ -32,16 +32,19 @@
 				android:theme="@android:style/Theme.NoDisplay"
 				android:noHistory="true"
 				android:excludeFromRecents="true">
+				<intent-filter>
+				    <action android:name="android.intent.action.MAIN"/>
+	            </intent-filter>
 			</activity>
 
-	       		<activity-alias android:name=".services.SessionRequestHandlerActivity"
-		            android:targetActivity="com.freerdp.freerdpcore.services.SessionRequestHandlerActivity">	
+       		<activity-alias android:name=".services.SessionRequestHandlerActivity"
+	            android:targetActivity="com.freerdp.freerdpcore.services.SessionRequestHandlerActivity">	
 				<intent-filter>
 					<action android:name="android.intent.action.SEARCH" />
 				</intent-filter>
 				<meta-data android:name="android.app.searchable" 
 					android:resource="@xml/searchable" />
-		        </activity-alias>				
+	        </activity-alias>				
 
 			<provider android:name="com.freerdp.freerdpcore.services.FreeRDPSuggestionProvider"
 				android:authorities="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
