@@ -32,6 +32,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/print.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/collections.h>
@@ -195,7 +196,7 @@ UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
 	 */
 
 	wSamples = (size * 8) / format->wBitsPerSample;
-	mstime = ((wSamples * 1000) / format->nSamplesPerSec);
+	mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
 
 	return mstime;
 }
@@ -253,8 +254,8 @@ void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	UINT16 wNumberOfFormats;
 	AUDIO_FORMAT* clientFormat;
 
-	dwVolumeLeft = (0xFFFF / 2); /* 50% ? */
-	dwVolumeRight = (0xFFFF / 2); /* 50% ? */
+	dwVolumeLeft = (0xFFFF); /* 100% */
+	dwVolumeRight = (0xFFFF); /* 100% */
 	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
 
 	wNumberOfFormats = rdpsnd->NumberOfClientFormats;
@@ -390,6 +391,8 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 	{
 		rdpsnd->isOpen = TRUE;
 		rdpsnd->wCurrentFormatNo = wFormatNo;
+
+		rdpsnd_print_audio_format(format);
 
 		if (rdpsnd->device)
 		{

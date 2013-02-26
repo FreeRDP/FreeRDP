@@ -506,20 +506,21 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	int offset;
 	int length;
 	int status;
+	int frames;
 	int frame_size;
-	UINT16 wPlaybackDelayA;
-	UINT16 wPlaybackDelayB;
-	snd_pcm_sframes_t delayA;
-	snd_pcm_sframes_t delayB;
+	snd_htimestamp_t tstampA;
+	snd_htimestamp_t tstampB;
+	snd_pcm_uframes_t framesA;
+	snd_pcm_uframes_t framesB;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	offset = 0;
 	data = wave->data;
 	length = wave->length;
 	frame_size = alsa->actual_channels * alsa->bytes_per_channel;
+	frames = (length - offset) / frame_size;
 
-	snd_pcm_delay(alsa->pcm_handle, &delayA);
-	wPlaybackDelayA = ((delayA * 1000) / alsa->actual_rate);
+	snd_pcm_htimestamp(alsa->pcm_handle, &framesA, &tstampA);
 
 	while (offset < length)
 	{
@@ -548,22 +549,16 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	free(data);
 
-	snd_pcm_delay(alsa->pcm_handle, &delayB);
-	wPlaybackDelayB = ((delayB * 1000) / alsa->actual_rate);
+	snd_pcm_htimestamp(alsa->pcm_handle, &framesB, &tstampB);
 
-	printf("wPlaybackDelayA: %d ms, wPlaybackDelayB: %d ms, wAudioLength: %d ms wPlaybackDiff: %d ms\n",
-			wPlaybackDelayA, wPlaybackDelayB, wave->wAudioLength,
-			wPlaybackDelayB - wPlaybackDelayA);
-
-	wave->wPlaybackDelay = (wPlaybackDelayB - wPlaybackDelayA);
-
-	if (wave->wPlaybackDelay > wave->wAudioLength)
-		wave->wPlaybackDelay = wave->wAudioLength;
+	wave->wPlaybackDelay = ((framesB * 1000) / alsa->actual_rate);
 
 	wave->wLocalTimeB = GetTickCount();
+	wave->wLocalTimeB += wave->wPlaybackDelay;
 	wave->wLatency = (UINT16) (wave->wLocalTimeB - wave->wLocalTimeA);
-	wave->wLatency += wave->wPlaybackDelay;
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
+
+	//printf("wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
 
 	device->WaveConfirm(device, wave);
 }
