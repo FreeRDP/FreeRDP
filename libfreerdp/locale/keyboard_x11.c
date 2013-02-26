@@ -283,9 +283,9 @@ const UINT32 KEYCODE_TO_VKCODE_MACOSX[256] =
 	VK_LMENU, /* 66 */
 	VK_LCONTROL, /* 67 */
 	VK_RSHIFT, /* 68 */
-	0, /* 69 */
+	VK_RMENU, /* 69 */
 	0, /* 70 */
-	VK_RMENU, /* 71 */
+	VK_RWIN, /* 71 */
 	0, /* 72 */
 	VK_DECIMAL, /* 73 */
 	0, /* 74 */
