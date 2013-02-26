@@ -56,9 +56,9 @@ int der_write_length(STREAM* s, int length)
 
 int der_get_content_length(int length)
 {
-	if (length > 0x7F && length <= 0xFF)
+	if (length > 0x81 && length <= 0x102)
 		return length - 3;
-	else if (length > 0xFF)
+	else if (length > 0x102)
 		return length - 4;
 	else
 		return length - 2;

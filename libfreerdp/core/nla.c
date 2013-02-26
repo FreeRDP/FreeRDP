@@ -1104,28 +1104,28 @@ void credssp_send(rdpCredssp* credssp)
 	/* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0)
 	{
-		length = der_get_content_length(nego_tokens_length);
-		length -= der_write_contextual_tag(s, 1, length, TRUE); /* NegoData */
-		length -= der_write_sequence_tag(s, length); /* SEQUENCE OF NegoDataItem */
-		length -= der_write_sequence_tag(s, length); /* NegoDataItem */
-		length -= der_write_contextual_tag(s, 0, length, TRUE); /* [0] negoToken */
-		der_write_octet_string(s, (BYTE*) credssp->negoToken.pvBuffer, length); /* OCTET STRING */
+		length = nego_tokens_length;
+		length -= der_write_contextual_tag(s, 1, der_get_content_length(length), TRUE); /* NegoData */
+		length -= der_write_sequence_tag(s, der_get_content_length(length)); /* SEQUENCE OF NegoDataItem */
+		length -= der_write_sequence_tag(s, der_get_content_length(length)); /* NegoDataItem */
+		length -= der_write_contextual_tag(s, 0, der_get_content_length(length), TRUE); /* [0] negoToken */
+		der_write_octet_string(s, (BYTE*) credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer); /* OCTET STRING */
 	}
 
 	/* [2] authInfo (OCTET STRING) */
 	if (auth_info_length > 0)
 	{
-		length = ber_get_content_length(auth_info_length);
-		length -= ber_write_contextual_tag(s, 2, length, TRUE);
+		length = auth_info_length;
+		length -= ber_write_contextual_tag(s, 2, ber_get_content_length(length), TRUE);
 		ber_write_octet_string(s, credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (pub_key_auth_length > 0)
 	{
-		length = ber_get_content_length(pub_key_auth_length);
-		length -= ber_write_contextual_tag(s, 3, length, TRUE);
-		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, length);
+		length = pub_key_auth_length;
+		length -= ber_write_contextual_tag(s, 3, ber_get_content_length(length), TRUE);
+		ber_write_octet_string(s, credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
 	}
 
 	transport_write(credssp->transport, s);
