@@ -221,9 +221,6 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* for
 		alsa->source_channels = format->nChannels;
 		alsa->actual_channels = format->nChannels;
 
-		printf("Format: wBitsPerSample: %d nChannels: %d nSamplesPerSec: %d\n",
-				format->wBitsPerSample, format->nChannels, format->nSamplesPerSec);
-
 		switch (format->wFormatTag)
 		{
 			case WAVE_FORMAT_PCM:
@@ -510,7 +507,10 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	int length;
 	int status;
 	int frame_size;
-	snd_pcm_sframes_t delay;
+	UINT16 wPlaybackDelayA;
+	UINT16 wPlaybackDelayB;
+	snd_pcm_sframes_t delayA;
+	snd_pcm_sframes_t delayB;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	offset = 0;
@@ -518,9 +518,8 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	length = wave->length;
 	frame_size = alsa->actual_channels * alsa->bytes_per_channel;
 
-	snd_pcm_delay(alsa->pcm_handle, &delay);
-	wave->wPlaybackDelay = ((delay * 1000) / alsa->actual_rate);
-	//printf("wPlaybackDelay: %d ms\n", wave->wPlaybackDelay);
+	snd_pcm_delay(alsa->pcm_handle, &delayA);
+	wPlaybackDelayA = ((delayA * 1000) / alsa->actual_rate);
 
 	while (offset < length)
 	{
@@ -549,10 +548,21 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	free(data);
 
+	snd_pcm_delay(alsa->pcm_handle, &delayB);
+	wPlaybackDelayB = ((delayB * 1000) / alsa->actual_rate);
+
+	printf("wPlaybackDelayA: %d ms, wPlaybackDelayB: %d ms, wAudioLength: %d ms wPlaybackDiff: %d ms\n",
+			wPlaybackDelayA, wPlaybackDelayB, wave->wAudioLength,
+			wPlaybackDelayB - wPlaybackDelayA);
+
+	wave->wPlaybackDelay = (wPlaybackDelayB - wPlaybackDelayA);
+
+	if (wave->wPlaybackDelay > wave->wAudioLength)
+		wave->wPlaybackDelay = wave->wAudioLength;
+
 	wave->wLocalTimeB = GetTickCount();
 	wave->wLatency = (UINT16) (wave->wLocalTimeB - wave->wLocalTimeA);
 	wave->wLatency += wave->wPlaybackDelay;
-	wave->wLatency += wave->wAudioLength;
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
 
 	device->WaveConfirm(device, wave);
