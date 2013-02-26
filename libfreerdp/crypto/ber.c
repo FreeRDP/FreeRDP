@@ -84,7 +84,7 @@ int _ber_skip_length(int length)
 
 int ber_get_content_length(int length)
 {
-	if (length - 1 > 0x7F)
+	if (length > 0x81)
 		return length - 4;
 	else
 		return length - 2;
