@@ -271,8 +271,8 @@ NSC_CONTEXT* nsc_context_new(void)
 	NSC_CONTEXT* nsc_context;
 	UINT8 i;
 
-	nsc_context = (NSC_CONTEXT*) malloc(sizeof(NSC_CONTEXT));
-	nsc_context->priv = (NSC_CONTEXT_PRIV*) malloc(sizeof(NSC_CONTEXT_PRIV));
+	nsc_context = (NSC_CONTEXT*) calloc(1, sizeof(NSC_CONTEXT));
+	nsc_context->priv = (NSC_CONTEXT_PRIV*) calloc(1, sizeof(NSC_CONTEXT_PRIV));
 	for (i=0; i < 5; ++i)
 	{
 		nsc_context->priv->plane_buf[i] = NULL;
