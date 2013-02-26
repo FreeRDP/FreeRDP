@@ -134,8 +134,8 @@ static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, UINT32 len
 	if (audin->context.num_client_formats <= 0)
 		return FALSE;
 
-	audin->context.client_formats = malloc(audin->context.num_client_formats * sizeof(rdpsndFormat));
-	ZeroMemory(audin->context.client_formats, audin->context.num_client_formats * sizeof(rdpsndFormat));
+	audin->context.client_formats = malloc(audin->context.num_client_formats * sizeof(AUDIO_FORMAT));
+	ZeroMemory(audin->context.client_formats, audin->context.num_client_formats * sizeof(AUDIO_FORMAT));
 
 	for (i = 0; i < audin->context.num_client_formats; i++)
 	{
@@ -206,7 +206,7 @@ static BOOL audin_server_recv_open_reply(audin_server* audin, STREAM* s, UINT32 
 
 static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, UINT32 length)
 {
-	rdpsndFormat* format;
+	AUDIO_FORMAT* format;
 	int sbytes_per_sample;
 	int sbytes_per_frame;
 	BYTE* src;

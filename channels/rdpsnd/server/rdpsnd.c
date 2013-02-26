@@ -129,8 +129,8 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 
 	if (rdpsnd->context.num_client_formats > 0)
 	{
-		rdpsnd->context.client_formats = (rdpsndFormat*) malloc(rdpsnd->context.num_client_formats * sizeof(rdpsndFormat));
-		ZeroMemory(rdpsnd->context.client_formats, sizeof(rdpsndFormat));
+		rdpsnd->context.client_formats = (AUDIO_FORMAT*) malloc(rdpsnd->context.num_client_formats * sizeof(AUDIO_FORMAT));
+		ZeroMemory(rdpsnd->context.client_formats, sizeof(AUDIO_FORMAT));
 
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
@@ -255,7 +255,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 {
 	int bs;
 	int out_buffer_size;
-	rdpsndFormat *format;
+	AUDIO_FORMAT *format;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
@@ -309,7 +309,7 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	BYTE* src;
 	int frames;
 	int fill_size;
-	rdpsndFormat* format;
+	AUDIO_FORMAT* format;
 	int tbytes_per_frame;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 

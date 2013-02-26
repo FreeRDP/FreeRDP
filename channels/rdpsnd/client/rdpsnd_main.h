@@ -22,22 +22,41 @@
 
 #include <freerdp/channels/rdpsnd.h>
 
+struct _RDPSND_WAVE
+{
+	BYTE* data;
+	int length;
+
+	BYTE cBlockNo;
+	UINT16 wFormatNo;
+	UINT16 wTimeStampA;
+	UINT16 wTimeStampB;
+
+	UINT16 wLatency;
+	UINT16 wAudioLength;
+	UINT16 wPlaybackDelay;
+
+	UINT32 wLocalTimeA;
+	UINT32 wLocalTimeB;
+};
+typedef struct _RDPSND_WAVE RDPSND_WAVE;
+
 typedef struct rdpsnd_plugin rdpsndPlugin;
 
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
-typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, rdpsndFormat* format);
-typedef void (*pcOpen) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
-typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, rdpsndFormat* format, int latency);
+typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format);
+typedef void (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
+typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
 typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
 typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
-typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, UINT16 wFormatNo, BYTE cBlockNo, BYTE* data, int size);
-typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, UINT16 wTimeStamp, BYTE cConfirmedBlockNo);
-typedef UINT32 (*pcWaveLength) (rdpsndDevicePlugin* device, int wFormatNo, int size);
+typedef void (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 
 struct rdpsnd_device_plugin
 {
@@ -52,9 +71,9 @@ struct rdpsnd_device_plugin
 	pcClose Close;
 	pcFree Free;
 
+	pcWaveDecode WaveDecode;
 	pcWavePlay WavePlay;
 	pcWaveConfirm WaveConfirm;
-	pcWaveLength WaveLength;
 };
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"

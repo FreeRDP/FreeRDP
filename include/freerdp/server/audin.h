@@ -41,17 +41,17 @@ struct _audin_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const rdpsndFormat* server_formats;
+	const AUDIO_FORMAT* server_formats;
 	int num_server_formats;
 
 	/* Server destination PCM audio format. Set by server. */
-	rdpsndFormat dst_format;
+	AUDIO_FORMAT dst_format;
 
 	/* Server preferred frames per packet. */
 	int frames_per_packet;
 
 	/* Client supported formats. */
-	rdpsndFormat* client_formats;
+	AUDIO_FORMAT* client_formats;
 	int num_client_formats;
 	int selected_client_format;
 

@@ -203,7 +203,7 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
-static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat* format)
+static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, AUDIO_FORMAT* format)
 {
 	pa_sample_spec sample_spec = { 0 };
 
@@ -249,7 +249,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, rdpsndFormat*
 	pulse->block_size = format->nBlockAlign;
 }
 
-static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	pa_stream_state_t state;
 	pa_stream_flags_t flags;
@@ -371,7 +371,7 @@ static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
 	free(pulse);
 }
 
-static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
@@ -414,7 +414,7 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 	return FALSE;
 }
 
-static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 

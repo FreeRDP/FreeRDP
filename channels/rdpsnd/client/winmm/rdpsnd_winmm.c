@@ -63,7 +63,7 @@ struct rdpsnd_winmm_plugin
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
-static BOOL rdpsnd_winmm_convert_format(const rdpsndFormat* in, WAVEFORMATEX* out)
+static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
 {
 	BOOL result = FALSE;
 
@@ -106,7 +106,7 @@ static void rdpsnd_winmm_clear_datablocks(rdpsndWinmmPlugin* winmm, BOOL drain)
 	}
 }
 
-static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)device;
 
@@ -121,7 +121,7 @@ static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 	winmm->latency = latency;
 }
 
-static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	MMRESULT result;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
@@ -167,7 +167,7 @@ static void rdpsnd_winmm_free(rdpsndDevicePlugin* device)
 	free(winmm);
 }
 
-static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
 	MMRESULT result;
 	WAVEFORMATEX out;

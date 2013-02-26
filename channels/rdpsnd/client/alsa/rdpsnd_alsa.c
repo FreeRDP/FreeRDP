@@ -45,7 +45,6 @@ struct rdpsnd_alsa_plugin
 {
 	rdpsndDevicePlugin device;
 
-	HANDLE thread;
 	char* device_name;
 	snd_pcm_t* pcm_handle;
 	snd_mixer_t* mixer_handle;
@@ -58,25 +57,12 @@ struct rdpsnd_alsa_plugin
 	int wformat;
 	int block_size;
 	int latency;
-	wMessageQueue* queue;
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
 	snd_pcm_uframes_t start_threshold;
 	snd_async_handler_t* pcm_callback;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
-
-struct _RDPSND_WAVE_INFO
-{
-	BYTE* data;
-	int length;
-	BYTE cBlockNo;
-	UINT16 wTimeStamp;
-	UINT16 wFormatNo;
-	UINT32 wTimeA;
-	UINT32 wTimeB;
-};
-typedef struct _RDPSND_WAVE_INFO RDPSND_WAVE_INFO;
 
 #define SND_PCM_CHECK(_func, _status) \
 	if (_status < 0) \
@@ -89,6 +75,7 @@ int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 {
 	int status;
 	snd_pcm_hw_params_t* hw_params;
+	snd_pcm_uframes_t buffer_size_max;
 
 	status = snd_pcm_hw_params_malloc(&hw_params);
 	SND_PCM_CHECK("snd_pcm_hw_params_malloc", status);
@@ -113,8 +100,15 @@ int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	SND_PCM_CHECK("snd_pcm_hw_params_set_channels", status);
 
 	/* Get maximum buffer size */
-	status = snd_pcm_hw_params_get_buffer_size_max(hw_params, &alsa->buffer_size);
+	status = snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_size_max);
 	SND_PCM_CHECK("snd_pcm_hw_params_get_buffer_size_max", status);
+
+	if (alsa->buffer_size > buffer_size_max)
+	{
+		printf("Warning: requested sound buffer size %d, got %d instead\n",
+				(int) alsa->buffer_size, (int) buffer_size_max);
+		alsa->buffer_size = buffer_size_max;
+	}
 
 	/* Set buffer size */
 	status = snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &alsa->buffer_size);
@@ -141,7 +135,7 @@ int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 	int status;
 	snd_pcm_sw_params_t* sw_params;
 
-	alsa->start_threshold = alsa->period_size;
+	alsa->start_threshold = alsa->buffer_size;
 
 	status = snd_pcm_sw_params_malloc(&sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_malloc", status);
@@ -151,9 +145,6 @@ int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 
 	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, alsa->start_threshold);
 	SND_PCM_CHECK("snd_pcm_sw_params_set_start_threshold", status);
-
-	status = snd_pcm_sw_params_set_avail_min(alsa->pcm_handle, sw_params, alsa->buffer_size / 2);
-	SND_PCM_CHECK("snd_pcm_sw_params_set_avail_min", status);
 
 	status = snd_pcm_sw_params(alsa->pcm_handle, sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params", status);
@@ -175,7 +166,7 @@ int rdpsnd_alsa_validate_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_get_params(alsa->pcm_handle, &buffer_size, &period_size);
 	SND_PCM_CHECK("snd_pcm_get_params", status);
 
-	printf("Parameters: BufferSize: %d PeriodSize: %d\n", buffer_size, period_size);
+	printf("Parameters: BufferSize: %d PeriodSize: %d\n", (int) buffer_size, (int) period_size);
 
 	return 0;
 }
@@ -203,6 +194,11 @@ static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 
 	snd_pcm_drop(alsa->pcm_handle);
 
+	if (alsa->latency < 0)
+		alsa->latency = 250;
+
+	alsa->buffer_size = alsa->latency * (alsa->actual_rate / 1000);
+
 	if (rdpsnd_alsa_set_hw_params(alsa) < 0)
 		return -1;
 
@@ -214,7 +210,7 @@ static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	return 0;
 }
 
-static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
@@ -309,7 +305,7 @@ static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 	alsa->mixer_handle = handle;
 }
 
-static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	int mode;
 	int status;
@@ -369,7 +365,7 @@ static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
 	free(alsa);
 }
 
-static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -436,161 +432,6 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	}
 }
 
-static void* rdpsnd_alsa_schedule_thread(void* arg)
-{
-	BYTE* data;
-	int length;
-	int status;
-	int offset;
-	int frames;
-	int frame_size;
-	wMessage message;
-	UINT32 wInitialTime;
-	UINT32 wCurrentTime;
-	UINT32 wSessionTime;
-	UINT16 wFixedLatency;
-	UINT16 wAverageLatency;
-	UINT16 wAverageSleepLatency;
-	RDPSND_WAVE_INFO* waveInfo;
-	snd_pcm_sframes_t available_input;
-	snd_pcm_sframes_t available_output;
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) arg;
-	rdpsndDevicePlugin* device = (rdpsndDevicePlugin*) arg;
-
-	wInitialTime = GetTickCount();
-
-	wFixedLatency = 340;
-	wAverageLatency = wFixedLatency / 2;
-	wAverageSleepLatency = wFixedLatency / 2;
-
-	while (1)
-	{
-		if (!MessageQueue_Wait(alsa->queue))
-			break;
-
-		if (!MessageQueue_Peek(alsa->queue, &message, TRUE))
-			break;
-
-		if (message.id == WMQ_QUIT)
-			break;
-
-		frame_size = alsa->actual_channels * alsa->bytes_per_channel;
-
-		if (message.id == 0)
-		{
-			data = (BYTE*) message.wParam;
-			length = (int) (size_t) message.lParam;
-		}
-		else if (message.id == 1)
-		{
-			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
-
-			data = waveInfo->data;
-			length = waveInfo->length;
-		}
-
-		offset = 0;
-		available_output = snd_pcm_avail_update(alsa->pcm_handle);
-
-		while (offset < length)
-		{
-			available_input = (length - offset) / frame_size;
-
-			while (available_output < (alsa->buffer_size / 4))
-			{
-				snd_pcm_wait(alsa->pcm_handle, -1);
-				available_output = snd_pcm_avail_update(alsa->pcm_handle);
-			}
-
-			if (available_output > alsa->buffer_size)
-			{
-				int gap_ms;
-				int gap_frames;
-
-				gap_frames = available_output - alsa->buffer_size;
-				gap_ms = gap_frames / (alsa->actual_rate / 1000);
-
-				printf("Buffer Underrun Gap: %d ms\n", gap_ms);
-			}
-
-			status = snd_pcm_writei(alsa->pcm_handle, &data[offset],
-					(available_input < available_output) ? available_input : available_output);
-
-			available_output = 0;
-
-			if (status == -EPIPE)
-			{
-				snd_pcm_recover(alsa->pcm_handle, status, 0);
-				status = 0;
-			}
-			else if (status == -EAGAIN)
-			{
-				status = 0;
-			}
-			else if (status < 0)
-			{
-				DEBUG_WARN("snd_pcm_writei status %d", status);
-				snd_pcm_close(alsa->pcm_handle);
-				alsa->pcm_handle = NULL;
-				rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
-				break;
-			}
-
-			available_output = snd_pcm_avail_update(alsa->pcm_handle);
-			offset += status * frame_size;
-		}
-
-		free(data);
-
-		if (message.id == 1)
-		{
-			UINT16 wLatency;
-			UINT16 wTimeStamp;
-			UINT16 wAudioLength;
-			UINT16 wSleepLatency;
-			waveInfo = (RDPSND_WAVE_INFO*) message.wParam;
-
-			waveInfo->wTimeB = GetTickCount();
-			wLatency = (UINT16) (waveInfo->wTimeB - waveInfo->wTimeA);
-			wTimeStamp = waveInfo->wTimeStamp + wLatency;
-
-			frames = length / frame_size;
-			wAudioLength = frames / (alsa->actual_rate / 1000);
-
-			wAverageLatency = (wAverageLatency + wLatency) / 2;
-
-			if (wFixedLatency > wLatency)
-				wSleepLatency = wFixedLatency - wLatency;
-			else
-				wSleepLatency = 0;
-
-			wSleepLatency = 0;
-
-			wAverageSleepLatency = (wAverageSleepLatency + wSleepLatency) / 2;
-
-			Sleep(wSleepLatency);
-
-			wCurrentTime = GetTickCount();
-			wSessionTime = wCurrentTime - wInitialTime;
-
-			printf("[%06d.%03d] FixedLatency: %d ms AvLatency: %d ms CurrentLatency: %d ms "
-					"SleepLatency: %d ms AvSleepLatency: %d ms Frames: %d Length: %d ms Channels: %d Rate: %d\n",
-					wSessionTime / 1000, wSessionTime % 1000,
-					wFixedLatency, wAverageLatency, wLatency,
-					wSleepLatency, wAverageSleepLatency,
-					frames, wAudioLength, alsa->actual_channels, alsa->actual_rate);
-
-			wTimeStamp += wSleepLatency;
-
-			device->WaveConfirm(device, wTimeStamp, waveInfo->cBlockNo);
-
-			free(waveInfo);
-		}
-	}
-
-	return NULL;
-}
-
 BYTE* rdpsnd_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
 {
 	int frames;
@@ -638,7 +479,7 @@ BYTE* rdpsnd_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* s
 		frames = alsa->dsp_context->resampled_frames;
 
 		DEBUG_SVC("resampled %d frames at %d to %d frames at %d",
-			length / srcFrameSize, alsa->source_rate, frames, alsa->actual_rate);
+			size / srcFrameSize, alsa->source_rate, frames, alsa->actual_rate);
 
 		*size = frames * dstFrameSize;
 		srcData = alsa->dsp_context->resampled_buffer;
@@ -649,39 +490,72 @@ BYTE* rdpsnd_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* s
 	return data;
 }
 
-static void rdpsnd_alsa_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+static void rdpsnd_alsa_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	BYTE* sample;
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+	int size;
+	BYTE* data;
 
-	data = rdpsnd_process_audio_sample(device, data, &size);
+	size = wave->length;
+	data = rdpsnd_process_audio_sample(device, wave->data, &size);
 
-	sample = (BYTE*) malloc(size);
-	CopyMemory(sample, data, size);
-
-	MessageQueue_Post(alsa->queue, (void*) alsa, 0, (void*) sample, (void*) (size_t) size);
+	wave->data = (BYTE*) malloc(size);
+	CopyMemory(wave->data, data, size);
+	wave->length = size;
 }
 
-static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device,
-		UINT16 wTimeStamp, UINT16 wFormatNo, BYTE cBlockNo, BYTE* data, int size)
+static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	RDPSND_WAVE_INFO* waveInfo;
+	BYTE* data;
+	int offset;
+	int length;
+	int status;
+	int frame_size;
+	snd_pcm_sframes_t delay;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	waveInfo = (RDPSND_WAVE_INFO*) malloc(sizeof(RDPSND_WAVE_INFO));
+	offset = 0;
+	data = wave->data;
+	length = wave->length;
+	frame_size = alsa->actual_channels * alsa->bytes_per_channel;
 
-	waveInfo->wTimeA = GetTickCount();
-	waveInfo->wTimeStamp = wTimeStamp;
-	waveInfo->wFormatNo = wFormatNo;
-	waveInfo->cBlockNo = cBlockNo;
+	snd_pcm_delay(alsa->pcm_handle, &delay);
+	wave->wPlaybackDelay = ((delay * 1000) / alsa->actual_rate);
+	//printf("wPlaybackDelay: %d ms\n", wave->wPlaybackDelay);
 
-	data = rdpsnd_process_audio_sample(device, data, &size);
+	while (offset < length)
+	{
+		status = snd_pcm_writei(alsa->pcm_handle, &data[offset], (length - offset) / frame_size);
 
-	waveInfo->data = (BYTE*) malloc(size);
-	CopyMemory(waveInfo->data, data, size);
-	waveInfo->length = size;
+		if (status == -EPIPE)
+		{
+			snd_pcm_recover(alsa->pcm_handle, status, 0);
+			status = 0;
+		}
+		else if (status == -EAGAIN)
+		{
+			status = 0;
+		}
+		else if (status < 0)
+		{
+			printf("status: %d\n", status);
+			snd_pcm_close(alsa->pcm_handle);
+			alsa->pcm_handle = NULL;
+			rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
+			break;
+		}
 
-	MessageQueue_Post(alsa->queue, (void*) alsa, 1, (void*) waveInfo, (void*) (size_t) size);
+		offset += status * frame_size;
+	}
+
+	free(data);
+
+	wave->wLocalTimeB = GetTickCount();
+	wave->wLatency = (UINT16) (wave->wLocalTimeB - wave->wLocalTimeA);
+	wave->wLatency += wave->wPlaybackDelay;
+	wave->wLatency += wave->wAudioLength;
+	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
+
+	device->WaveConfirm(device, wave);
 }
 
 static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
@@ -746,7 +620,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;
 	alsa->device.SetFormat = rdpsnd_alsa_set_format;
 	alsa->device.SetVolume = rdpsnd_alsa_set_volume;
-	alsa->device.Play = rdpsnd_alsa_play;
+	alsa->device.WaveDecode = rdpsnd_alsa_wave_decode;
 	alsa->device.WavePlay = rdpsnd_alsa_wave_play;
 	alsa->device.Start = rdpsnd_alsa_start;
 	alsa->device.Close = rdpsnd_alsa_close;
@@ -769,9 +643,6 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->dsp_context = freerdp_dsp_context_new();
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) alsa);
-
-	alsa->queue = MessageQueue_New();
-	alsa->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_alsa_schedule_thread, alsa, 0, NULL);
 
 	return 0;
 }
