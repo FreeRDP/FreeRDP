@@ -3,6 +3,7 @@
  * System Information
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Bernhard Miklautz <bmiklautz@thinstuff.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,13 @@
 #endif
 
 #include <winpr/sysinfo.h>
+#include <winpr/platform.h>
+
+#if defined(__linux__) && defined(__GNUC__)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
 
 /**
  * api-ms-win-core-sysinfo-l1-1-1.dll:
@@ -109,7 +117,7 @@ DWORD GetNumberOfProcessors()
 {
 	DWORD numCPUs = 1;
 
-	/* TODO: Android and iOS */
+	/* TODO: iOS */
 
 #if defined(__linux__) || defined(__sun) || defined(_AIX)
 	numCPUs = (DWORD) sysconf(_SC_NPROCESSORS_ONLN);
@@ -331,4 +339,305 @@ DWORD GetTickCount(void)
 	return ticks;
 }
 
+/* If x86 and gcc*/
+#ifdef _M_IX86_AMD64
+#ifdef __GNUC__
+
+#ifdef __AVX__
+#define xgetbv(_func_, _lo_, _hi_) \
+    __asm__ __volatile__ ("xgetbv" : "=a" (_lo_), "=d" (_hi_) : "c" (_func_))
 #endif
+
+#define D_BIT_MMX       (1<<23)
+#define D_BIT_SSE       (1<<25)
+#define D_BIT_SSE2      (1<<26)
+#define D_BIT_3DN       (1<<30)
+#define C_BIT_SSE3      (1<<0)
+#define C_BIT_3DNP      (1<<8)
+#define C_BIT_SSSE3     (1<<9)
+#define C_BIT_SSE41     (1<<19)
+#define C_BIT_SSE42     (1<<20)
+#define C_BIT_XGETBV        (1<<27)
+#define C_BIT_AVX       (1<<28)
+#define C_BITS_AVX      (C_BIT_XGETBV|C_BIT_AVX)
+#define E_BIT_XMM       (1<<1)
+#define E_BIT_YMM       (1<<2)
+#define E_BITS_AVX      (E_BIT_XMM|E_BIT_YMM)
+#define C_BIT_FMA       (1<<11)
+#define C_BIT_AVX_AES       (1<<24)
+
+static void cpuid(
+    unsigned info,
+    unsigned *eax,
+    unsigned *ebx,
+    unsigned *ecx,
+    unsigned *edx)
+{
+    *eax = *ebx = *ecx = *edx = 0;
+
+    __asm volatile
+    (
+        /* The EBX (or RBX register on x86_64) is used for the PIC base address
+         * and must not be corrupted by our inline assembly.
+         */
+#ifdef _M_IX86
+        "mov %%ebx, %%esi;"
+        "cpuid;"
+        "xchg %%ebx, %%esi;"
+#else
+        "mov %%rbx, %%rsi;"
+        "cpuid;"
+        "xchg %%rbx, %%rsi;"
+#endif
+        : "=a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
+        : "0" (info)
+    );
+}
+#endif // __GNUC__
+#elif defined(_M_ARM)
+#if defined(__linux__)
+// HWCAP flags from linux kernel - uapi/asm/hwcap.h
+#define HWCAP_SWP (1 << 0)
+#define HWCAP_HALF  (1 << 1)
+#define HWCAP_THUMB (1 << 2)
+#define HWCAP_26BIT (1 << 3)  /* Play it safe */
+#define HWCAP_FAST_MULT (1 << 4)
+#define HWCAP_FPA (1 << 5)
+#define HWCAP_VFP (1 << 6)
+#define HWCAP_EDSP  (1 << 7)
+#define HWCAP_JAVA  (1 << 8)
+#define HWCAP_IWMMXT  (1 << 9)
+#define HWCAP_CRUNCH  (1 << 10)
+#define HWCAP_THUMBEE (1 << 11)
+#define HWCAP_NEON  (1 << 12)
+#define HWCAP_VFPv3 (1 << 13)
+#define HWCAP_VFPv3D16  (1 << 14) /* also set for VFPv4-D16 */
+#define HWCAP_TLS (1 << 15)
+#define HWCAP_VFPv4 (1 << 16)
+#define HWCAP_IDIVA (1 << 17)
+#define HWCAP_IDIVT (1 << 18)
+#define HWCAP_VFPD32  (1 << 19) /* set if VFP has 32 regs (not 16) */
+#define HWCAP_IDIV  (HWCAP_IDIVA | HWCAP_IDIVT)
+
+// From linux kernel uapi/linux/auxvec.h
+#define AT_HWCAP 16
+
+static unsigned GetARMCPUCaps(void){
+	unsigned caps = 0;
+
+	int fd = open ("/proc/self/auxv", O_RDONLY);
+
+	if (fd == -1)
+		return 0;
+
+	static struct
+	{
+		unsigned a_type;    /* Entry type */
+		unsigned  a_val;   /* Integer value */
+	} auxvec;
+
+	while (1){
+		int num;
+		num = read(fd, (char *)&auxvec, sizeof(auxvec));
+		if (num < 1 || (auxvec.a_type == 0 && auxvec.a_val == 0))
+				break;
+		if (auxvec.a_type == AT_HWCAP) 
+		{
+			caps = auxvec.a_val;	
+		}
+	}
+	close(fd);
+	return caps;
+}
+
+#endif // defined(__linux__)
+#endif // _M_IX86_AMD64
+
+BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
+{
+	BOOL ret = FALSE;
+#ifdef _M_ARM
+#ifdef __linux__
+	unsigned caps;
+	caps = GetARMCPUCaps();
+
+	switch (ProcessorFeature)
+	{
+		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_NEON:
+			if (caps & HWCAP_NEON)
+				ret = TRUE;
+			break;
+		case PF_ARM_THUMB:
+			if (caps & HWCAP_THUMB)
+				ret = TRUE;
+		case PF_ARM_VFP_32_REGISTERS_AVAILABLE:
+			if (caps & HWCAP_VFPD32)
+				ret = TRUE;
+		case PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE:
+			if ((caps & HWCAP_IDIVA) || (caps & HWCAP_IDIVT))
+				ret = TRUE;
+		case PF_ARM_VFP3:
+			if (caps & HWCAP_VFPv3)
+				ret = TRUE;
+			break;
+		case PF_ARM_JAZELLE:
+			if (caps & HWCAP_JAVA)
+				ret = TRUE;
+			break;
+		case PF_ARM_DSP:
+			if (caps & HWCAP_EDSP)
+				ret = TRUE;
+			break;
+		case PF_ARM_MPU:
+			if (caps & HWCAP_EDSP)
+				ret = TRUE;
+			break;
+		case PF_ARM_THUMB2:
+			if ((caps & HWCAP_IDIVT) || (caps & HWCAP_VFPv4))
+				ret = TRUE;
+			break;
+		case PF_ARM_T2EE:
+			if (caps & HWCAP_THUMBEE)
+				ret = TRUE;
+			break;
+		case PF_ARM_INTEL_WMMX:
+			if (caps & HWCAP_IWMMXT)
+				ret = TRUE;
+			break;
+		default:
+			break;
+	}
+#endif
+#elif defined(_M_IX86_AMD64)
+#ifdef __GNUC__
+	unsigned a, b, c, d;
+
+	cpuid(1, &a, &b, &c, &d);
+
+	switch (ProcessorFeature)
+	{
+		case PF_MMX_INSTRUCTIONS_AVAILABLE: 
+			if (d & D_BIT_MMX)
+				ret = TRUE;
+			break;
+		case PF_XMMI_INSTRUCTIONS_AVAILABLE: 
+			if (d & D_BIT_SSE)
+				ret = TRUE;
+			break;
+		case PF_XMMI64_INSTRUCTIONS_AVAILABLE: 
+			if (d & D_BIT_SSE2)
+				ret = TRUE;
+			break;
+		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+			if (d & D_BIT_3DN)
+				ret = TRUE;
+			break;
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE: 
+			if (c & C_BIT_SSE3)
+				ret = TRUE;
+			break;
+		default:
+			break;
+	}
+
+#endif // __GNUC__
+#endif
+	return ret;
+}
+#endif _WIN32
+
+BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
+{
+	BOOL ret = FALSE;
+#ifdef _M_ARM
+#ifdef __linux__
+	unsigned caps;
+	caps = GetARMCPUCaps();
+
+	switch (ProcessorFeature)
+	{
+		case PF_EX_ARM_VFP1:
+			if (caps & HWCAP_VFP)
+				ret = TRUE;
+			break;
+		case PF_EX_ARM_VFP3D16:
+			if (caps & HWCAP_VFPv3D16)
+				ret = TRUE;
+			break;
+		case PF_EX_ARM_VFP4:
+			if (caps & HWCAP_VFPv4)
+				ret = TRUE;
+			break;
+		case PF_EX_ARM_IDIVA:
+			if (caps & HWCAP_IDIVA)
+				ret = TRUE;
+			break;
+		case PF_EX_ARM_IDIVT:
+			if (caps & HWCAP_IDIVT)
+				ret = TRUE;
+			break;
+	}
+#endif // __linux__
+#elif defined(_M_IX86_AMD64)
+	unsigned a, b, c, d;
+	cpuid(1, &a, &b, &c, &d);
+
+	switch (ProcessorFeature)
+	{
+		case PF_EX_3DNOW_PREFETCH:
+			if (c & C_BIT_3DNP)
+				ret = TRUE;
+			break;
+		case PF_EX_SSSE3:
+			if (c & C_BIT_SSSE3)
+				ret = TRUE;
+			break;
+		case PF_EX_SSE41:
+			if (c & C_BIT_SSE41)
+				ret = TRUE;
+			break;
+		case PF_EX_SSE42:
+			if (c & C_BIT_SSE42)
+				ret = TRUE;
+			break;
+#ifdef __AVX__
+		case PF_EX_AVX:
+		case PF_EX_FMA:
+		case PF_EX_AVX_AES:
+			{
+				if ((c & C_BITS_AVX) != C_BITS_AVX)
+					ret = FALSE;
+
+					int e, f;
+					xgetbv(0, e, f);
+
+					if ((e & E_BITS_AVX) == E_BITS_AVX)
+					{
+						switch (ProcessorFeature)
+						{
+							case: PF_EX_AVX:
+								ret = TRUE;
+								break;
+							case: PF_EX_FMA:
+								if (c & C_BIT_FMA)
+									ret = TRUE;
+								break;
+							case: PF_EX_AVX_AES:
+								if (c & C_BIT_AVX_AES)
+									ret = TRUE;
+								break;
+						{
+							ret = TRUE;
+							break;
+						}
+        }
+			}
+			break;
+#endif //__AVX__
+		default:
+			break;
+	}
+#endif
+	return ret;
+}

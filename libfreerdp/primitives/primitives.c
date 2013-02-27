@@ -247,7 +247,7 @@ static const flagpair_t x86_flags[] =
 {
 	{ PRIM_X86_MMX_AVAILABLE,				"MMX" },
 	{ PRIM_X86_3DNOW_AVAILABLE,				"3DNow" },
-	{ PRIM_X86_3DNOW_PREFETCH_AVAILABLE,			"3DNow-PF" },
+	{ PRIM_X86_3DNOW_PREFETCH_AVAILABLE,	"3DNow-PF" },
 	{ PRIM_X86_SSE_AVAILABLE,				"SSE" },
 	{ PRIM_X86_SSE2_AVAILABLE,				"SSE2" },
 	{ PRIM_X86_SSE3_AVAILABLE,				"SSE3" },
@@ -256,7 +256,7 @@ static const flagpair_t x86_flags[] =
 	{ PRIM_X86_SSE42_AVAILABLE,				"SSE4.2" },
 	{ PRIM_X86_AVX_AVAILABLE,				"AVX" },
 	{ PRIM_X86_FMA_AVAILABLE,				"FMA" },
-	{ PRIM_X86_AVX_AES_AVAILABLE,				"AVX-AES" },
+	{ PRIM_X86_AVX_AES_AVAILABLE,			"AVX-AES" },
 	{ PRIM_X86_AVX2_AVAILABLE,				"AVX2" },
 };
 
@@ -268,7 +268,7 @@ static const flagpair_t arm_flags[] =
 	{ PRIM_ARM_VFP4_AVAILABLE,				"VFP4" },
 	{ PRIM_ARM_FPA_AVAILABLE,				"FPA" },
 	{ PRIM_ARM_FPE_AVAILABLE,				"FPE" },
-	{ PRIM_ARM_IWMMXT_AVAILABLE,				"IWMMXT" },
+	{ PRIM_ARM_IWMMXT_AVAILABLE,			"IWMMXT" },
 	{ PRIM_ARM_NEON_AVAILABLE,				"NEON" },
 };
 

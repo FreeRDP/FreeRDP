@@ -69,14 +69,13 @@
 #define PF_FLOATING_POINT_PRECISION_ERRATA		0
 #define PF_FLOATING_POINT_EMULATED			1
 #define PF_COMPARE_EXCHANGE_DOUBLE			2
-#define PF_MMX_INSTRUCTIONS_AVAILABLE			3
+#define PF_MMX_INSTRUCTIONS_AVAILABLE   3
 #define PF_PPC_MOVEMEM_64BIT_OK				4
-#define PF_ALPHA_BYTE_INSTRUCTIONS			5
-#define PF_XMMI_INSTRUCTIONS_AVAILABLE			6
+#define PF_XMMI_INSTRUCTIONS_AVAILABLE			6 //sse
 #define PF_3DNOW_INSTRUCTIONS_AVAILABLE			7
 #define PF_RDTSC_INSTRUCTION_AVAILABLE			8
 #define PF_PAE_ENABLED					9
-#define PF_XMMI64_INSTRUCTIONS_AVAILABLE		10
+#define PF_XMMI64_INSTRUCTIONS_AVAILABLE		10 //sse2
 #define PF_SSE_DAZ_MODE_AVAILABLE			11
 #define PF_NX_ENABLED					12
 #define PF_SSE3_INSTRUCTIONS_AVAILABLE			13
@@ -94,6 +93,54 @@
 #define PF_ARM_64BIT_LOADSTORE_ATOMIC			25
 #define PF_ARM_EXTERNAL_CACHE_AVAILABLE			26
 #define PF_ARM_FMAC_INSTRUCTIONS_AVAILABLE		27
+
+#define PF_ARM_V4                       0x80000001
+#define PF_ARM_V5                       0x80000002
+#define PF_ARM_V6                       0x80000003
+#define PF_ARM_V7                       0x80000004
+#define PF_ARM_THUMB                    0x80000005
+#define PF_ARM_JAZELLE                  0x80000006
+#define PF_ARM_DSP                      0x80000007
+#define PF_ARM_MOVE_CP                  0x80000008
+#define PF_ARM_VFP10                    0x80000009
+#define PF_ARM_MPU                      0x8000000A
+#define PF_ARM_WRITE_BUFFER             0x8000000B
+#define PF_ARM_MBX                      0x8000000C
+#define PF_ARM_L2CACHE                  0x8000000D
+#define PF_ARM_PHYSICALLY_TAGGED_CACHE  0x8000000E
+#define PF_ARM_VFP_SINGLE_PRECISION     0x8000000F
+#define PF_ARM_VFP_DOUBLE_PRECISION     0x80000010
+#define PF_ARM_ITCM                     0x80000011
+#define PF_ARM_DTCM                     0x80000012
+#define PF_ARM_UNIFIED_CACHE            0x80000013
+#define PF_ARM_WRITE_BACK_CACHE         0x80000014
+#define PF_ARM_CACHE_CAN_BE_LOCKED_DOWN 0x80000015
+#define PF_ARM_L2CACHE_MEMORY_MAPPED    0x80000016
+#define PF_ARM_L2CACHE_COPROC           0x80000017
+#define PF_ARM_THUMB2                   0x80000018
+#define PF_ARM_T2EE                     0x80000019
+#define PF_ARM_VFP3                     0x8000001A
+#define PF_ARM_NEON                     0x8000001B
+#define PF_ARM_UNALIGNED_ACCESS         0x8000001C
+
+#define PF_ARM_INTEL_XSCALE             0x80010001
+#define PF_ARM_INTEL_PMU                0x80010002
+#define PF_ARM_INTEL_WMMX               0x80010003
+
+// extended flags
+#define PF_EX_3DNOW_PREFETCH            1
+#define PF_EX_SSSE3                     2
+#define PF_EX_SSE41                     3
+#define PF_EX_SSE42                     4
+#define PF_EX_AVX   		                5
+#define PF_EX_FMA                       6
+#define PF_EX_AVX_AES		                7
+#define PF_EX_AVX2  		                8
+#define PF_EX_ARM_VFP1 		              9
+#define PF_EX_ARM_VFP3D16               10
+#define PF_EX_ARM_VFP4 		              11
+#define PF_EX_ARM_IDIVA                 12
+#define PF_EX_ARM_IDIVT                 13
 
 typedef struct _SYSTEM_INFO
 {
@@ -243,7 +290,10 @@ WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 
 WINPR_API DWORD GetTickCount(void);
 
+WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 #endif
+
+WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 
 #endif /* WINPR_SYSINFO_H */
 
