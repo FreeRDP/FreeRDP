@@ -88,6 +88,7 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 
 int wf_info_unlock(wfInfo* wfi)
 {
+	
 	if (ReleaseMutex(wfi->mutex) == 0)
 	{
 		printf("wf_info_unlock failed with 0x%08X\n", GetLastError());
@@ -125,8 +126,8 @@ wfInfo* wf_info_init()
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
 
-		wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		printf("updateEvent created\n");
+		//wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		//printf("updateEvent created\n");
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 
