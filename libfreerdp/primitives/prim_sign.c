@@ -42,13 +42,12 @@ pstatus_t general_sign_16s(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_sign(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	/* Start with the default. */
 	prims->sign_16s = general_sign_16s;
 
-	primitives_init_sign_opt(hints, prims);
+	primitives_init_sign_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

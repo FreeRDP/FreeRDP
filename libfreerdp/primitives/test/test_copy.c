@@ -16,6 +16,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/sysinfo.h>
 #include "prim_test.h"
 
 static const int MEMCPY_PRETEST_ITERATIONS = 1000000;
@@ -70,8 +71,7 @@ int test_copy8u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(copy8u_speed_test, BYTE, BYTE, dst=dst,
 	TRUE, memcpy(dst, src1, size),
-	FALSE, NULL, 0,
-	FALSE, NULL, 0,
+	FALSE, NULL, 0, FALSE,
 	TRUE, ippsCopy_8u(src1, dst, size));
 
 int test_copy8u_speed(void)

@@ -19,6 +19,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -58,7 +59,7 @@ SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, general_rShiftC_16u,
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_shift_opt(const primitives_hints_t *hints,	primitives_t *prims)
+void primitives_init_shift_opt(primitives_t *prims)
 {
 #if defined(WITH_IPP)
 	prims->lShiftC_16s = (__lShiftC_16s_t) ippsLShiftC_16s;
@@ -66,8 +67,8 @@ void primitives_init_shift_opt(const primitives_hints_t *hints,	primitives_t *pr
 	prims->lShiftC_16u = (__lShiftC_16u_t) ippsLShiftC_16u;
 	prims->rShiftC_16u = (__rShiftC_16u_t) ippsRShiftC_16u;
 #elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->lShiftC_16s = sse2_lShiftC_16s;
 		prims->rShiftC_16s = sse2_rShiftC_16s;

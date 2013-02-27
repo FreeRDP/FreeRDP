@@ -16,6 +16,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/sysinfo.h>
 #include "prim_test.h"
 
 static const int SIGN_PRETEST_ITERATIONS = 100000;
@@ -30,7 +31,6 @@ int test_sign16s_func(void)
 	INT16 ALIGN(src[65535]), ALIGN(d1[65535]), ALIGN(d2[65535]);
 	int failed = 0;
 	int i;
-	UINT32 pflags = primitives_get_flags(primitives_get());
 	char testStr[256];
 
 	/* Test when we can reach 16-byte alignment */
@@ -38,7 +38,7 @@ int test_sign16s_func(void)
 	get_random_data(src, sizeof(src));
 	general_sign_16s(src+1, d1+1, 65535);
 #ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSSE3_AVAILABLE)
+	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3))
 	{
 		strcat(testStr, " SSSE3");
 		ssse3_sign_16s(src+1, d2+1, 65535);
@@ -58,7 +58,7 @@ int test_sign16s_func(void)
 	get_random_data(src, sizeof(src));
 	general_sign_16s(src+1, d1+2, 65535);
 #ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSSE3_AVAILABLE)
+	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3))
 	{
 		ssse3_sign_16s(src+1, d2+2, 65535);
 		for (i=2; i<65535; ++i)
@@ -79,8 +79,7 @@ int test_sign16s_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(sign16s_speed_test, INT16, INT16, dst=dst,
 	TRUE, general_sign_16s(src1, dst, size),
-	TRUE, ssse3_sign_16s(src1, dst, size), PRIM_X86_SSSE3_AVAILABLE,
-	FALSE, dst=dst, 0,
+	TRUE, ssse3_sign_16s(src1, dst, size), PF_EX_SSSE3, TRUE,
 	FALSE, dst=dst);
 
 int test_sign16s_speed(void)

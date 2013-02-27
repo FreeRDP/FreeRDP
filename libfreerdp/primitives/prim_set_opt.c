@@ -21,6 +21,7 @@
 #include <string.h>
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 # include <emmintrin.h>
@@ -198,7 +199,7 @@ pstatus_t ipp_wrapper_set_32u(
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_set_opt(const primitives_hints_t *hints, primitives_t *prims)
+void primitives_init_set_opt(primitives_t *prims)
 {
 	/* Pick tuned versions if possible. */
 #ifdef WITH_IPP
@@ -207,7 +208,7 @@ void primitives_init_set_opt(const primitives_hints_t *hints, primitives_t *prim
 	prims->set_32u = (__set_32u_t) ipp_wrapper_set_32u;
 	prims->zero = (__zero_t) ippsZero_8u;
 #elif defined(WITH_SSE2)
-	if (hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->set_8u  = sse2_set_8u;
 		prims->set_32s = sse2_set_32s;

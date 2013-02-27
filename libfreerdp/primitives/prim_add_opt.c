@@ -20,6 +20,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -45,18 +46,15 @@ SSE3_SSD_ROUTINE(sse3_add_16s, INT16, general_add_16s,
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_add_opt(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 #ifdef WITH_IPP
 	prims->add_16s = (__add_16s_t) ippsAdd_16s;
 #elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))	/* for LDDQU */
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))	/* for LDDQU */
 	{
 		prims->add_16s = sse3_add_16s;
 	}
 #endif
 }
-
-

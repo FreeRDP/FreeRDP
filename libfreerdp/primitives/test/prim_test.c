@@ -21,6 +21,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -31,6 +33,88 @@
 
 int test_sizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 int Quiet = 0;
+
+
+
+/* ------------------------------------------------------------------------- */
+typedef struct
+{
+	UINT32	flag;
+	const char *str;
+} flagpair_t;
+
+static const flagpair_t flags[] =
+#ifdef _M_IX86_AMD64
+{
+	{ PF_MMX_INSTRUCTIONS_AVAILABLE,		"MMX" },
+	{ PF_3DNOW_INSTRUCTIONS_AVAILABLE,		"3DNow" },
+	{ PF_XMMI_INSTRUCTIONS_AVAILABLE,		"SSE" },
+	{ PF_XMMI64_INSTRUCTIONS_AVAILABLE,		"SSE2" },
+	{ PF_SSE3_INSTRUCTIONS_AVAILABLE,		"SSE3" },
+#elif defined(_M_ARM)
+	{ PF_ARM_VFP3,							"VFP3" },
+	{ PF_ARM_INTEL_WMMX,					"IWMMXT" },
+	{ PF_ARM_NEON_INSTRUCTIONS_AVAILABLE,	"NEON" },
+#endif
+};
+
+static const flagpair_t flags_extended[] =
+{
+#ifdef _M_IX86_AMD64
+	{ PF_EX_3DNOW_PREFETCH,	    "3DNow-PF" },
+	{ PF_EX_SSSE3,				"SSSE3" },
+	{ PF_EX_SSE41,				"SSE4.1" },
+	{ PF_EX_SSE42,				"SSE4.2" },
+	{ PF_EX_AVX,				"AVX" },
+	{ PF_EX_FMA,				"FMA" },
+	{ PF_EX_AVX_AES,			"AVX-AES" },
+	{ PF_EX_AVX2,				"AVX2" },
+#elif defined(_M_ARM)
+	{ PF_EX_ARM_VFP1,			"VFP1"},
+	{ PF_EX_ARM_VFP4,			"VFP4" },
+#endif
+};
+
+void primitives_flags_str(char* str, size_t len)
+{
+	int i;
+
+	*str = '\0';
+	--len;	/* for the '/0' */
+
+	for (i = 0; i < sizeof(flags) / sizeof(flagpair_t); ++i)
+	{
+		if (IsProcessorFeaturePresent(flags[i].flag))
+		{
+			int slen = strlen(flags[i].str) + 1;
+
+			if (len < slen)
+				break;
+
+			if (*str != '\0')
+				strcat(str, " ");
+
+			strcat(str, flags[i].str);
+			len -= slen;
+		}
+	}
+	for (i = 0; i < sizeof(flags_extended) / sizeof(flagpair_t); ++i)
+	{
+		if (IsProcessorFeaturePresent(flags_extended[i].flag))
+		{
+			int slen = strlen(flags_extended[i].str) + 1;
+
+			if (len < slen)
+				break;
+
+			if (*str != '\0')
+				strcat(str, " ");
+
+			strcat(str, flags_extended[i].str);
+			len -= slen;
+		}
+	}
+}
 
 /* ------------------------------------------------------------------------- */
 static void get_random_data_lrand(
@@ -198,7 +282,7 @@ static const test_t testTypeList[] =
 int main(int argc, char** argv)
 {
 	int i;
-	char hints[256];
+	char hints[1024];
 	UINT32 testSet = 0;
 	UINT32 testTypes = 0;
 	int results = SUCCESS;
@@ -253,7 +337,7 @@ int main(int argc, char** argv)
 
 	primitives_init();
 
-	primitives_flags_str(primitives_get(), hints, sizeof(hints));
+	primitives_flags_str(hints, sizeof(hints));
 	printf("Hints: %s\n", hints);
 
 	/* COPY */

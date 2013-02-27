@@ -19,6 +19,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -134,13 +135,13 @@ pstatus_t ssse3_sign_16s(
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign_opt(const primitives_hints_t *hints, primitives_t *prims)
+void primitives_init_sign_opt(primitives_t *prims)
 {
 	/* Pick tuned versions if possible. */
 	/* I didn't spot an IPP version of this. */
 #if defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSSE3_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->sign_16s  = ssse3_sign_16s;
 	}

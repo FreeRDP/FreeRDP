@@ -24,7 +24,7 @@
 
 pstatus_t general_sign_16s(const INT16 *pSrc, INT16 *pDst, INT32 len);
 
-void primitives_init_sign_opt(const primitives_hints_t *hints,	primitives_t *prims);
+void primitives_init_sign_opt(primitives_t *prims);
 
 #endif /* !__PRIM_SIGN_H_INCLUDED__ */
 

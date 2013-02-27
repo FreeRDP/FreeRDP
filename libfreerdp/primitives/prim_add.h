@@ -24,7 +24,7 @@
 
 pstatus_t general_add_16s(const INT16 *pSrc1, const INT16 *pSrc2, INT16 *pDst, INT32 len);
 
-void primitives_init_add_opt(const primitives_hints_t *hints, primitives_t *prims);
+void primitives_init_add_opt(primitives_t *prims);
 
 #endif /* !__PRIM_ADD_H_INCLUDED__ */
 

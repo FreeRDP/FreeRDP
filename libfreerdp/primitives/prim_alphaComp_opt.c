@@ -26,6 +26,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -210,13 +211,13 @@ pstatus_t ipp_alphaComp_argb(
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp_opt(const primitives_hints_t* hints, primitives_t* prims)
+void primitives_init_alphaComp_opt(primitives_t* prims)
 {
 #ifdef WITH_IPP
 	prims->alphaComp_argb = ipp_alphaComp_argb;
 #elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))	/* for LDDQU */
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))    /* for LDDQU */
 	{
 		prims->alphaComp_argb = sse2_alphaComp_argb;
 	}

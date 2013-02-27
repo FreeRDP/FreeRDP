@@ -29,7 +29,7 @@ pstatus_t general_rShiftC_16u(const UINT16 *pSrc, INT32 val, UINT16 *pDst, INT32
 pstatus_t general_shiftC_16s(const INT16 *pSrc, INT32 val, INT16 *pDst, INT32 len);
 pstatus_t general_shiftC_16u(const UINT16 *pSrc, INT32 val, UINT16 *pDst, INT32 len);
 
-void primitives_init_shift_opt(const primitives_hints_t *hints,	primitives_t *prims);
+void primitives_init_shift_opt(primitives_t *prims);
 
 #endif /* !__PRIM_SHIFT_H_INCLUDED__ */
 

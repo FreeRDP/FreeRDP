@@ -16,6 +16,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/sysinfo.h>
 #include "prim_test.h"
 
 #define FUNC_TEST_SIZE 65536
@@ -55,12 +56,11 @@ int _name_(void) \
 		ALIGN(d1[FUNC_TEST_SIZE+3]), ALIGN(d2[FUNC_TEST_SIZE+3]); \
 	int failed = 0; \
 	int i; \
-	UINT32 pflags = primitives_get_flags(primitives_get()); \
 	char testStr[256]; \
 	testStr[0] = '\0'; \
 	get_random_data(src, sizeof(src)); \
 	_f1_(src+1, 3, d1+1, FUNC_TEST_SIZE); \
-	if (pflags & PRIM_X86_SSE3_AVAILABLE) \
+	if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) \
 	{ \
 		strcat(testStr, " SSE3"); \
 		/* Aligned */ \
@@ -109,23 +109,19 @@ SHIFT_TEST_FUNC(test_rShift_16u_func, UINT16, "rshift_16u", general_rShiftC_16u,
 /* ========================================================================= */
 STD_SPEED_TEST(speed_lShift_16s, INT16, INT16, dst=dst,
     TRUE, general_lShiftC_16s(src1, constant, dst, size),
-	TRUE, sse2_lShiftC_16s(src1, constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+	TRUE, sse2_lShiftC_16s(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 	TRUE, ippsLShiftC_16s(src1, constant, dst, size));
 STD_SPEED_TEST(speed_lShift_16u, UINT16, UINT16, dst=dst,
     TRUE, general_lShiftC_16u(src1, constant, dst, size),
-	TRUE, sse2_lShiftC_16u(src1, constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+	TRUE, sse2_lShiftC_16u(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 	TRUE, ippsLShiftC_16u(src1, constant, dst, size));
 STD_SPEED_TEST(speed_rShift_16s, INT16, INT16, dst=dst,
     TRUE, general_rShiftC_16s(src1, constant, dst, size),
-	TRUE, sse2_rShiftC_16s(src1, constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+	TRUE, sse2_rShiftC_16s(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 	TRUE, ippsRShiftC_16s(src1, constant, dst, size));
 STD_SPEED_TEST(speed_rShift_16u, UINT16, UINT16, dst=dst,
     TRUE, general_rShiftC_16u(src1, constant, dst, size),
-	TRUE, sse2_rShiftC_16u(src1, constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+	TRUE, sse2_rShiftC_16u(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 	TRUE, ippsRShiftC_16u(src1, constant, dst, size));
 
 /* ------------------------------------------------------------------------- */

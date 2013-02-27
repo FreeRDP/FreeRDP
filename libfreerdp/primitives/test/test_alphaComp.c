@@ -15,6 +15,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <winpr/sysinfo.h>
 
 #include "prim_test.h"
 
@@ -110,7 +111,6 @@ int test_alphaComp_func(void)
 	UINT32 ALIGN(dst2u[DST_WIDTH*DST_HEIGHT+1]);
 	UINT32 ALIGN(dst3[DST_WIDTH*DST_HEIGHT]);
 	int error = 0;
-	UINT32 pflags = primitives_get_flags(primitives_get());
 	char testStr[256];
 	UINT32 *ptr;
 	int i, x, y;
@@ -133,7 +133,7 @@ int test_alphaComp_func(void)
 		(const BYTE *) src2, 4*SRC2_WIDTH,
 		(BYTE *) dst1, 4*DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
 #ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		sse2_alphaComp_argb((const BYTE *) src1, 4*SRC1_WIDTH, 
@@ -166,7 +166,7 @@ int test_alphaComp_func(void)
 				error = 1;
 			}
 #ifdef _M_IX86_AMD64
-			if (pflags & PRIM_X86_SSE2_AVAILABLE)
+			if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 			{
 				UINT32 c2 = *PIXEL(dst2a, 4*DST_WIDTH, x, y);
 				if (colordist(c0, c2) > TOLERANCE)
@@ -207,8 +207,7 @@ STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes = size*4,
 	TRUE, general_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size),
 	TRUE, sse2_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
-		size, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+		size, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 	TRUE, ipp_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size));
 

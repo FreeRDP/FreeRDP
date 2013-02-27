@@ -215,13 +215,13 @@ pstatus_t general_RGBToRGB_16s8u_P3AC4R(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors(const primitives_hints_t* hints, primitives_t* prims)
+void primitives_init_colors(primitives_t* prims)
 {
 	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
 
-	primitives_init_colors_opt(hints, prims);
+	primitives_init_colors_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

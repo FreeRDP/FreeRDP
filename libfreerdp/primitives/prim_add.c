@@ -46,12 +46,11 @@ pstatus_t general_add_16s(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_add(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	prims->add_16s = general_add_16s;
 
-	primitives_init_add_opt(hints, prims);
+	primitives_init_add_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */
