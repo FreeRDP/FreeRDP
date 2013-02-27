@@ -35,7 +35,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/svc_plugin.h>
+#include <freerdp/utils/debug.h>
 
 #include "rdpsnd_main.h"
 
@@ -311,8 +311,6 @@ static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, i
 	if (alsa->pcm_handle)
 		return;
 
-	DEBUG_SVC("opening");
-
 	mode = 0;
 	//mode |= SND_PCM_NONBLOCK;
 
@@ -336,7 +334,6 @@ static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 
 	if (alsa->pcm_handle)
 	{
-		DEBUG_SVC("close");
 		snd_pcm_drain(alsa->pcm_handle);
 		snd_pcm_close(alsa->pcm_handle);
 		alsa->pcm_handle = 0;
@@ -474,9 +471,6 @@ BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, i
 			alsa->actual_channels, alsa->actual_rate);
 
 		frames = alsa->dsp_context->resampled_frames;
-
-		DEBUG_SVC("resampled %d frames at %d to %d frames at %d",
-			size / srcFrameSize, alsa->source_rate, frames, alsa->actual_rate);
 
 		*size = frames * dstFrameSize;
 		srcData = alsa->dsp_context->resampled_buffer;
