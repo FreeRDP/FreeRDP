@@ -23,6 +23,10 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef _WIN32
+#include <mmreg.h>
+#endif
+
 struct AUDIO_FORMAT
 {
 	UINT16 wFormatTag;
@@ -64,7 +68,11 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
  */
 
 #define WAVE_FORMAT_UNKNOWN			0x0000
+
+#ifndef WAVE_FORMAT_PCM
 #define WAVE_FORMAT_PCM				0x0001
+#endif
+
 #define WAVE_FORMAT_ADPCM			0x0002
 #define WAVE_FORMAT_IEEE_FLOAT			0x0003
 #define WAVE_FORMAT_VSELP			0x0004
@@ -110,7 +118,11 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 #define WAVE_FORMAT_MPEG			0x0050
 #define WAVE_FORMAT_RT24			0x0052
 #define WAVE_FORMAT_PAC				0x0053
+
+#ifndef WAVE_FORMAT_MPEGLAYER3
 #define WAVE_FORMAT_MPEGLAYER3			0x0054
+#endif
+
 #define WAVE_FORMAT_LUCENT_G723			0x0059
 #define WAVE_FORMAT_CIRRUS			0x0060
 #define WAVE_FORMAT_ESPCM			0x0061
