@@ -13,6 +13,7 @@
 #import "RDPSessionViewController.h"
 #import "Toast+UIView.h"
 #import "Reachability.h"
+#import "GlobalDefaults.h"
 
 #define SECTION_SESSIONS    0
 #define SECTION_BOOKMARKS   1
@@ -803,7 +804,10 @@
     _manual_bookmarks = [self arrayFromDataStoreURL:[self manualBookmarksDataStoreURL]];
 
     if(_manual_bookmarks == nil)
+    {
         _manual_bookmarks = [[NSMutableArray alloc] init];
+        [_manual_bookmarks addObject:[[[GlobalDefaults sharedGlobalDefaults] newTestServerBookmark] autorelease]];
+    }
 }
 
 - (void)readConnectionHistoryFromDataStore

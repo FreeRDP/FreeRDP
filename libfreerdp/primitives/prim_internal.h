@@ -27,15 +27,6 @@
 
 #include <freerdp/primitives.h>
 
-/* Normally the internal entrypoints should be static, but a benchmark
- * program may want to access them directly and turn this off.
- */
-#ifndef PRIM_STATIC
-# define PRIM_STATIC static
-#else
-# undef PRIM_STATIC
-# define PRIM_STATIC
-#endif /* !PRIM_STATIC */
 
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_) \

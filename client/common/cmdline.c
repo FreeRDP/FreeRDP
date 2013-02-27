@@ -291,7 +291,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		printer->Type = RDPDR_DTYP_PRINT;
 		printer->Name = _strdup(params[1]);
 
-		if (params[2])
+		if (count > 2)
 			printer->DriverName = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
