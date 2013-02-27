@@ -27,13 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arm_neon.h>
+#include <winpr/sysinfo.h>
 
 #include "rfx_types.h"
 #include "rfx_neon.h"
-
-#if ANDROID
-#include "cpu-features.h"
-#endif
 
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
