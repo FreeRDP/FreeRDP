@@ -261,9 +261,11 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* for
 static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 {
 	int status;
-	snd_mixer_t* handle;
 
-	status = snd_mixer_open(&handle, 0);
+	if (alsa->mixer_handle)
+		return;
+
+	status = snd_mixer_open(&alsa->mixer_handle, 0);
 
 	if (status < 0)
 	{
@@ -271,34 +273,32 @@ static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 		return;
 	}
 
-	status = snd_mixer_attach(handle, alsa->device_name);
+	status = snd_mixer_attach(alsa->mixer_handle, alsa->device_name);
 
 	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_attach failed");
-		snd_mixer_close(handle);
+		snd_mixer_close(alsa->mixer_handle);
 		return;
 	}
 
-	status = snd_mixer_selem_register(handle, NULL, NULL);
+	status = snd_mixer_selem_register(alsa->mixer_handle, NULL, NULL);
 
 	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_selem_register failed");
-		snd_mixer_close(handle);
+		snd_mixer_close(alsa->mixer_handle);
 		return;
 	}
 
-	status = snd_mixer_load(handle);
+	status = snd_mixer_load(alsa->mixer_handle);
 
 	if (status < 0)
 	{
 		DEBUG_WARN("snd_mixer_load failed");
-		snd_mixer_close(handle);
+		snd_mixer_close(alsa->mixer_handle);
 		return;
 	}
-
-	alsa->mixer_handle = handle;
 }
 
 static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
@@ -407,6 +407,49 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMA
 	return FALSE;
 }
 
+static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
+{
+	long volume_min;
+	long volume_max;
+	long volume_left;
+	long volume_right;
+	int percent_left;
+	int percent_right;
+	UINT32 dwVolume;
+	UINT16 dwVolumeLeft;
+	UINT16 dwVolumeRight;
+	snd_mixer_elem_t* elem;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
+	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+
+	if (!alsa->mixer_handle)
+		rdpsnd_alsa_open_mixer(alsa);
+
+	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
+	{
+		if (snd_mixer_selem_has_playback_volume(elem))
+		{
+			snd_mixer_selem_get_playback_volume_range(elem, &volume_min, &volume_max);
+			snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_left);
+			snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_RIGHT, &volume_right);
+
+			dwVolumeLeft = (UINT16) (((volume_left * 0xFFFF) - volume_min) / (volume_max - volume_min));
+			dwVolumeRight = (UINT16) (((volume_right * 0xFFFF) - volume_min) / (volume_max - volume_min));
+
+			percent_left = (dwVolumeLeft * 100) / 0xFFFF;
+			percent_right = (dwVolumeRight * 100) / 0xFFFF;
+
+			break;
+		}
+	}
+
+	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
+
+	return dwVolume;
+}
+
 static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	long left;
@@ -415,15 +458,20 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	long volume_max;
 	long volume_left;
 	long volume_right;
+	int percent_left;
+	int percent_right;
 	snd_mixer_elem_t* elem;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (!alsa->mixer_handle)
-		return;
+		rdpsnd_alsa_open_mixer(alsa);
 
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
 	
+	percent_left = (left * 100) / 0xFFFF;
+	percent_right = (right * 100) / 0xFFFF;
+
 	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
 	{
 		if (snd_mixer_selem_has_playback_volume(elem))
@@ -625,6 +673,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.Open = rdpsnd_alsa_open;
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;
 	alsa->device.SetFormat = rdpsnd_alsa_set_format;
+	alsa->device.GetVolume = rdpsnd_alsa_get_volume;
 	alsa->device.SetVolume = rdpsnd_alsa_set_volume;
 	alsa->device.WaveDecode = rdpsnd_alsa_wave_decode;
 	alsa->device.WavePlay = rdpsnd_alsa_wave_play;
