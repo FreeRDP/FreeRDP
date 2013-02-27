@@ -512,7 +512,7 @@ void* mf_peer_main_loop(void* arg)
 	client->Activate = mf_peer_activate;
 	
 	client->input->SynchronizeEvent = mf_peer_synchronize_event;
-	client->input->KeyboardEvent = mf_peer_keyboard_event;
+	client->input->KeyboardEvent = mf_input_keyboard_event;//mf_peer_keyboard_event;
 	client->input->UnicodeKeyboardEvent = mf_peer_unicode_keyboard_event;
 	client->input->MouseEvent = mf_input_mouse_event;
 	client->input->ExtendedMouseEvent = mf_input_extended_mouse_event;
