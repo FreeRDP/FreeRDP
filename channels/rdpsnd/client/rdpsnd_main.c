@@ -69,8 +69,8 @@ struct rdpsnd_plugin
 	UINT16 waveDataSize;
 	UINT32 wTimeStamp;
 
-	BOOL isOpen;
 	int latency;
+	BOOL isOpen;
 	UINT16 fixedFormat;
 	UINT16 fixedChannel;
 	UINT32 fixedRate;
@@ -376,6 +376,8 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 	UINT16 wFormatNo;
 	AUDIO_FORMAT* format;
 
+	rdpsnd->expectingWave = TRUE;
+
 	stream_read_UINT16(s, rdpsnd->wTimeStamp);
 	stream_read_UINT16(s, wFormatNo);
 	stream_read_BYTE(s, rdpsnd->cBlockNo);
@@ -383,7 +385,6 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 	stream_read(s, rdpsnd->waveData, 4);
 
 	rdpsnd->waveDataSize = BodySize - 8;
-	rdpsnd->expectingWave = TRUE;
 
 	format = &rdpsnd->ClientFormats[wFormatNo];
 
@@ -391,8 +392,6 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 	{
 		rdpsnd->isOpen = TRUE;
 		rdpsnd->wCurrentFormatNo = wFormatNo;
-
-		rdpsnd_print_audio_format(format);
 
 		if (rdpsnd->device)
 		{
@@ -495,8 +494,10 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 
 	if (rdpsnd->device)
 	{
-		IFCALL(rdpsnd->device->Start, rdpsnd->device);
+		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 	}
+
+	rdpsnd->isOpen = FALSE;
 }
 
 static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
@@ -529,7 +530,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* s)
 	stream_seek_BYTE(s); /* bPad */
 	stream_read_UINT16(s, BodySize);
 
-	DEBUG_SVC("msgType %d BodySize %d", msgType, BodySize);
+	//printf("msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{

@@ -45,18 +45,19 @@ struct rdpsnd_alsa_plugin
 {
 	rdpsndDevicePlugin device;
 
+	int latency;
+	int wformat;
+	int block_size;
 	char* device_name;
 	snd_pcm_t* pcm_handle;
 	snd_mixer_t* mixer_handle;
 	UINT32 source_rate;
 	UINT32 actual_rate;
+	UINT32 wLocalTimeClose;
 	snd_pcm_format_t format;
 	UINT32 source_channels;
 	UINT32 actual_channels;
 	int bytes_per_channel;
-	int wformat;
-	int block_size;
-	int latency;
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
 	snd_pcm_uframes_t start_threshold;
@@ -166,8 +167,6 @@ int rdpsnd_alsa_validate_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_get_params(alsa->pcm_handle, &buffer_size, &period_size);
 	SND_PCM_CHECK("snd_pcm_get_params", status);
 
-	printf("Parameters: BufferSize: %d PeriodSize: %d\n", (int) buffer_size, (int) period_size);
-
 	return 0;
 }
 
@@ -195,7 +194,7 @@ static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	snd_pcm_drop(alsa->pcm_handle);
 
 	if (alsa->latency < 0)
-		alsa->latency = 250;
+		alsa->latency = 400;
 
 	alsa->buffer_size = alsa->latency * (alsa->actual_rate / 1000);
 
@@ -330,7 +329,26 @@ static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, i
 
 static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 {
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
+	int status;
+	snd_htimestamp_t tstamp;
+	snd_pcm_uframes_t frames;
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
+
+	if (!alsa->pcm_handle)
+		return;
+
+	status = snd_pcm_htimestamp(alsa->pcm_handle, &frames, &tstamp);
+
+	if (status != 0)
+		frames = 0;
+
+	alsa->wLocalTimeClose = GetTickCount();
+	alsa->wLocalTimeClose += (((frames * 1000) / alsa->actual_rate) / alsa->actual_channels);
+}
+
+static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
+{
+	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->pcm_handle)
 	{
@@ -344,13 +362,6 @@ static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
 		snd_mixer_close(alsa->mixer_handle);
 		alsa->mixer_handle = NULL;
 	}
-}
-
-static void rdpsnd_alsa_free(rdpsndDevicePlugin* device)
-{
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
-
-	rdpsnd_alsa_close(device);
 
 	free(alsa->device_name);
 
@@ -434,9 +445,6 @@ BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, i
 	int dstFrameSize;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	if (!alsa->pcm_handle)
-		return NULL;
-
 	if (alsa->wformat == WAVE_FORMAT_ADPCM)
 	{
 		alsa->dsp_context->decode_ms_adpcm(alsa->dsp_context,
@@ -500,21 +508,30 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	int offset;
 	int length;
 	int status;
-	int frames;
 	int frame_size;
-	snd_htimestamp_t tstampA;
-	snd_htimestamp_t tstampB;
-	snd_pcm_uframes_t framesA;
-	snd_pcm_uframes_t framesB;
+	UINT32 wCurrentTime;
+	snd_htimestamp_t tstamp;
+	snd_pcm_uframes_t frames;
+
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	offset = 0;
 	data = wave->data;
 	length = wave->length;
 	frame_size = alsa->actual_channels * alsa->bytes_per_channel;
-	frames = (length - offset) / frame_size;
 
-	snd_pcm_htimestamp(alsa->pcm_handle, &framesA, &tstampA);
+	if (alsa->wLocalTimeClose)
+	{
+		wCurrentTime = GetTickCount();
+
+		if (snd_pcm_htimestamp(alsa->pcm_handle, &frames, &tstamp) == -EPIPE)
+		{
+			if (wCurrentTime > alsa->wLocalTimeClose)
+				snd_pcm_recover(alsa->pcm_handle, -EPIPE, 1);
+		}
+
+		alsa->wLocalTimeClose = 0;
+	}
 
 	while (offset < length)
 	{
@@ -543,9 +560,9 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	free(data);
 
-	snd_pcm_htimestamp(alsa->pcm_handle, &framesB, &tstampB);
+	snd_pcm_htimestamp(alsa->pcm_handle, &frames, &tstamp);
 
-	wave->wPlaybackDelay = ((framesB * 1000) / alsa->actual_rate);
+	wave->wPlaybackDelay = ((frames * 1000) / alsa->actual_rate);
 
 	wave->wLocalTimeB = GetTickCount();
 	wave->wLocalTimeB += wave->wPlaybackDelay;
@@ -555,16 +572,6 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	//printf("wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
 
 	device->WaveConfirm(device, wave);
-}
-
-static void rdpsnd_alsa_start(rdpsndDevicePlugin* device)
-{
-	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
-
-	if (!alsa->pcm_handle)
-		return;
-
-	snd_pcm_start(alsa->pcm_handle);
 }
 
 COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
@@ -621,7 +628,6 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.SetVolume = rdpsnd_alsa_set_volume;
 	alsa->device.WaveDecode = rdpsnd_alsa_wave_decode;
 	alsa->device.WavePlay = rdpsnd_alsa_wave_play;
-	alsa->device.Start = rdpsnd_alsa_start;
 	alsa->device.Close = rdpsnd_alsa_close;
 	alsa->device.Free = rdpsnd_alsa_free;
 
