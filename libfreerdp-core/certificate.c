@@ -642,7 +642,22 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 				if (strcmp(pline, certificate_data->fingerprint) == 0)
 					match = 0;
 				else
-					match = -1;
+        {
+          if (strlen(pline) == strlen(certificate_data->fingerprint)-3 && strcmp(pline, certificate_data->fingerprint+3) == 0)
+          {
+            printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+            printf("@    WARNING: OLD KEY FORMAT FOUND FOR HOST %s!\n", certificate_data->hostname);
+            printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+            printf("Freerdps known_host file format was updated.\n");
+            printf("The new key is  : %s\n", certificate_data->fingerprint);
+            printf("The old key was :    %s\n", pline);
+            printf("To be secure remove or update the line containing the hostname in ~/.freerdp/known_hosts\n");
+            printf(" and reconnect\n");
+            match = 0;
+          }
+          else
+            match = -1;
+        }
 				break;
 			}
 		}
