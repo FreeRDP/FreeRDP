@@ -24,6 +24,7 @@
 
 #ifndef _WIN32
 #include <sys/time.h>
+#include <signal.h>
 #endif
 
 #include <stdio.h>
@@ -848,7 +849,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.event_callback = rdpsnd_process_event;
 	_p->plugin.terminate_callback = rdpsnd_process_terminate;
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(ANDROID)
 	{
 		sigset_t mask;
 		sigemptyset(&mask);
