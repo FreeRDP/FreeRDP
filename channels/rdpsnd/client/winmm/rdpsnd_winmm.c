@@ -33,7 +33,7 @@
 #include <winpr/cmdline.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/dsp.h>
+#include <freerdp/codec/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
@@ -63,7 +63,7 @@ struct rdpsnd_winmm_plugin
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
-static BOOL rdpsnd_winmm_convert_format(const rdpsndFormat* in, WAVEFORMATEX* out)
+static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* out)
 {
 	BOOL result = FALSE;
 
@@ -71,6 +71,7 @@ static BOOL rdpsnd_winmm_convert_format(const rdpsndFormat* in, WAVEFORMATEX* ou
 	out->wFormatTag = WAVE_FORMAT_PCM;
 	out->nChannels = in->nChannels;
 	out->nSamplesPerSec = in->nSamplesPerSec;
+
 	switch (in->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -78,12 +79,13 @@ static BOOL rdpsnd_winmm_convert_format(const rdpsndFormat* in, WAVEFORMATEX* ou
 			result = TRUE;
 			break;
 
-		case 2: /* MS ADPCM */
-		case 0x11: /* IMA ADPCM */
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_DVI_ADPCM:
 			out->wBitsPerSample = 16;
 			result = TRUE;
 			break;
 	}
+
 	out->nBlockAlign = out->nChannels * out->wBitsPerSample / 8;
 	out->nAvgBytesPerSec = out->nSamplesPerSec * out->nBlockAlign;
 
@@ -98,19 +100,22 @@ static void rdpsnd_winmm_clear_datablocks(rdpsndWinmmPlugin* winmm, BOOL drain)
 	{
 		if (!drain && (datablock->header.dwFlags & WHDR_DONE) == 0)
 			break;
+
 		while ((datablock->header.dwFlags & WHDR_DONE) == 0)
 			WaitForSingleObject(winmm->event, INFINITE);
+		
 		winmm->datablock_head = datablock->next;
+		
 		free(datablock->header.lpData);
 		free(datablock);
 	}
 }
 
-static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)device;
 
-	if (format != NULL)
+	if (format)
 	{
 		rdpsnd_winmm_convert_format(format, &winmm->format);
 
@@ -121,7 +126,7 @@ static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, rdpsndFormat* fo
 	winmm->latency = latency;
 }
 
-static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	MMRESULT result;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
@@ -135,6 +140,7 @@ static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, rdpsndFormat* format, 
 	freerdp_dsp_context_reset_adpcm(winmm->dsp_context);
 
 	result = waveOutOpen(&winmm->out_handle, WAVE_MAPPER, &winmm->format, (DWORD_PTR) winmm->event, 0, CALLBACK_EVENT);
+
 	if (result != MMSYSERR_NOERROR)
 	{
 		DEBUG_WARN("waveOutOpen failed: %d", result);
@@ -145,14 +151,16 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)device;
 
-	if (winmm->out_handle != NULL)
+	if (winmm->out_handle)
 	{
 		DEBUG_SVC("close");
 		rdpsnd_winmm_clear_datablocks(winmm, TRUE);
+
 		if (waveOutClose(winmm->out_handle) != MMSYSERR_NOERROR)
 		{
 			DEBUG_WARN("waveOutClose error");
 		}
+		
 		winmm->out_handle = NULL;
 	}
 }
@@ -167,7 +175,7 @@ static void rdpsnd_winmm_free(rdpsndDevicePlugin* device)
 	free(winmm);
 }
 
-static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
 	MMRESULT result;
 	WAVEFORMATEX out;
@@ -175,6 +183,7 @@ static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 	if (rdpsnd_winmm_convert_format(format, &out))
 	{
 		result = waveOutOpen(NULL, WAVE_MAPPER, &out, 0, 0, WAVE_FORMAT_QUERY);
+
 		if (result == MMSYSERR_NOERROR)
 			return TRUE;
 	}
@@ -182,11 +191,31 @@ static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 	return FALSE;
 }
 
+static UINT32 rdpsnd_winmm_get_volume(rdpsndDevicePlugin* device)
+{
+	DWORD dwVolume;
+	UINT16 dwVolumeLeft;
+	UINT16 dwVolumeRight;
+
+	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
+
+	dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
+	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
+
+	if (!winmm->out_handle)
+		return dwVolume;
+
+	waveOutGetVolume(winmm->out_handle, &dwVolume);
+
+	return dwVolume;
+}
+
 static void rdpsnd_winmm_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
-	if (winmm->out_handle == NULL)
+	if (!winmm->out_handle)
 		return;
 
 	waveOutSetVolume(winmm->out_handle, value);
@@ -200,17 +229,17 @@ static void rdpsnd_winmm_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 	rdpsndWinmmDatablock* datablock;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
-	if (winmm->out_handle == NULL)
+	if (!winmm->out_handle)
 		return;
 
-	if (winmm->wformat == 2)
+	if (winmm->wformat == WAVE_FORMAT_ADPCM)
 	{
 		winmm->dsp_context->decode_ms_adpcm(winmm->dsp_context,
 			data, size, winmm->format.nChannels, winmm->block_size);
 		size = winmm->dsp_context->adpcm_size;
 		src = winmm->dsp_context->adpcm_buffer;
 	}
-	else if (winmm->wformat == 0x11)
+	else if (winmm->wformat == WAVE_FORMAT_DVI_ADPCM)
 	{
 		winmm->dsp_context->decode_ima_adpcm(winmm->dsp_context,
 			data, size, winmm->format.nChannels, winmm->block_size);
@@ -223,25 +252,32 @@ static void rdpsnd_winmm_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 	}
 
 	rdpsnd_winmm_clear_datablocks(winmm, FALSE);
+
 	for (last = winmm->datablock_head; last && last->next; last = last->next)
 	{
+
 	}
+	
 	datablock = (rdpsndWinmmDatablock*) malloc(sizeof(rdpsndWinmmDatablock));
 	ZeroMemory(datablock, sizeof(rdpsndWinmmDatablock));
+	
 	if (last)
 		last->next = datablock;
 	else
 		winmm->datablock_head = datablock;
+	
 	datablock->header.dwBufferLength = size;
 	datablock->header.lpData = (LPSTR) malloc(size);
 	CopyMemory(datablock->header.lpData, src, size);
 
 	result = waveOutPrepareHeader(winmm->out_handle, &datablock->header, sizeof(datablock->header));
+
 	if (result != MMSYSERR_NOERROR)
 	{
 		DEBUG_WARN("waveOutPrepareHeader: %d", result);
 		return;
 	}
+	
 	ResetEvent(winmm->event);
 	waveOutWrite(winmm->out_handle, &datablock->header, sizeof(datablock->header));
 }
@@ -272,6 +308,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	winmm->device.Open = rdpsnd_winmm_open;
 	winmm->device.FormatSupported = rdpsnd_winmm_format_supported;
 	winmm->device.SetFormat = rdpsnd_winmm_set_format;
+	winmm->device.GetVolume = rdpsnd_winmm_get_volume;
 	winmm->device.SetVolume = rdpsnd_winmm_set_volume;
 	winmm->device.Play = rdpsnd_winmm_play;
 	winmm->device.Start = rdpsnd_winmm_start;

@@ -481,7 +481,7 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 	UINT32 keycode_to_vkcode[256];
 
 	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(x11_keycode_to_rdp_scancode));
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
 
 #ifdef __APPLE__
 	/* Apple X11 breaks XKB detection */

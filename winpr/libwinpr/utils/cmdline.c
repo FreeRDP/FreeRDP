@@ -209,8 +209,27 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
 				{
-					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
-						(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					int value_present = 1;
+
+					if (flags & COMMAND_LINE_SIGIL_DASH)
+					{
+						if (strncmp(argv[i + 1], "-", 1) == 0)
+							value_present = 0;
+					}
+
+					if (flags & COMMAND_LINE_SIGIL_DOUBLE_DASH)
+					{
+						if (strncmp(argv[i + 1], "--", 2) == 0)
+							value_present = 0;
+					}
+
+					if (flags & COMMAND_LINE_SIGIL_SLASH)
+					{
+						if (strncmp(argv[i + 1], "/", 1) == 0)
+							value_present = 0;
+					}
+
+					if (value_present)
 					{
 						i++;
 						value_index = 0;

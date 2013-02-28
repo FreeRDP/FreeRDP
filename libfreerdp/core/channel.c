@@ -50,7 +50,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 		}
 	}
 
-	if (channel == NULL)
+	if (!channel)
 	{
 		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
 		return FALSE;
@@ -58,6 +58,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 
 	flags = CHANNEL_FLAG_FIRST;
 	left = size;
+
 	while (left > 0)
 	{
 		s = rdp_send_stream_init(rdp);
@@ -71,6 +72,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 			chunk_size = left;
 			flags |= CHANNEL_FLAG_LAST;
 		}
+
 		if ((channel->options & CHANNEL_OPTION_SHOW_PROTOCOL))
 		{
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -97,14 +99,16 @@ BOOL freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 	UINT32 flags;
 	int chunk_length;
 
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
+
 	stream_read_UINT32(s, length);
 	stream_read_UINT32(s, flags);
 	chunk_length = stream_get_left(s);
 
 	IFCALL(instance->ReceiveChannelData, instance,
 		channel_id, stream_get_tail(s), chunk_length, flags, length);
+
 	return TRUE;
 }
 

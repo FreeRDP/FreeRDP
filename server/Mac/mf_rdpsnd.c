@@ -28,7 +28,7 @@
 
 AQRecorderState recorderState;
 
-static const rdpsndFormat audio_formats[] =
+static const AUDIO_FORMAT audio_formats[] =
 {
 	{ 0x11, 2, 22050, 1024, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 2 channels */
 	{ 0x11, 1, 22050, 512, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 1 channels */

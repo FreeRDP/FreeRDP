@@ -41,14 +41,14 @@ struct _rdpsnd_server_context
 	void* data;
 
 	/* Server supported formats. Set by server. */
-	const rdpsndFormat* server_formats;
+	const AUDIO_FORMAT* server_formats;
 	int num_server_formats;
 
 	/* Server source PCM audio format. Set by server. */
-	rdpsndFormat src_format;
+	AUDIO_FORMAT src_format;
 
 	/* Client supported formats. */
-	rdpsndFormat* client_formats;
+	AUDIO_FORMAT* client_formats;
 	int num_client_formats;
 	int selected_client_format;
 

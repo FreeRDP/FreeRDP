@@ -27,7 +27,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/dsp.h>
+#include <freerdp/codec/dsp.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/stream.h>
 #include <freerdp/channels/wtsvc.h>
@@ -134,8 +134,8 @@ static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, UINT32 len
 	if (audin->context.num_client_formats <= 0)
 		return FALSE;
 
-	audin->context.client_formats = malloc(audin->context.num_client_formats * sizeof(rdpsndFormat));
-	ZeroMemory(audin->context.client_formats, audin->context.num_client_formats * sizeof(rdpsndFormat));
+	audin->context.client_formats = malloc(audin->context.num_client_formats * sizeof(AUDIO_FORMAT));
+	ZeroMemory(audin->context.client_formats, audin->context.num_client_formats * sizeof(AUDIO_FORMAT));
 
 	for (i = 0; i < audin->context.num_client_formats; i++)
 	{
@@ -206,7 +206,7 @@ static BOOL audin_server_recv_open_reply(audin_server* audin, STREAM* s, UINT32 
 
 static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, UINT32 length)
 {
-	rdpsndFormat* format;
+	AUDIO_FORMAT* format;
 	int sbytes_per_sample;
 	int sbytes_per_frame;
 	BYTE* src;
@@ -284,7 +284,8 @@ static void* audin_server_thread_func(void* arg)
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
 	while (1)
 	{
-		freerdp_thread_wait(thread);
+		if (freerdp_thread_wait(thread) < 0)
+			break;
 
 		if (freerdp_thread_is_stopped(thread))
 			break;
@@ -309,7 +310,8 @@ static void* audin_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		freerdp_thread_wait(thread);
+		if (freerdp_thread_wait(thread) < 0)
+			break;
 		
 		if (freerdp_thread_is_stopped(thread))
 			break;

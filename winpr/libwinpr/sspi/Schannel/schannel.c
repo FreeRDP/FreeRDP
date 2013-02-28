@@ -314,12 +314,24 @@ SECURITY_STATUS SEC_ENTRY schannel_QueryContextAttributes(PCtxtHandle phContext,
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+		SecPkgContext_Sizes* Sizes = (SecPkgContext_Sizes*) pBuffer;
 
-		ContextSizes->cbMaxToken = 0x6000;
-		ContextSizes->cbMaxSignature = 16;
-		ContextSizes->cbBlockSize = 0;
-		ContextSizes->cbSecurityTrailer = 16;
+		Sizes->cbMaxToken = 0x6000;
+		Sizes->cbMaxSignature = 16;
+		Sizes->cbBlockSize = 0;
+		Sizes->cbSecurityTrailer = 16;
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_STREAM_SIZES)
+	{
+		SecPkgContext_StreamSizes* StreamSizes = (SecPkgContext_StreamSizes*) pBuffer;
+
+		StreamSizes->cbHeader = 5;
+		StreamSizes->cbTrailer = 36;
+		StreamSizes->cbMaximumMessage = 0x4000;
+		StreamSizes->cBuffers = 4;
+		StreamSizes->cbBlockSize = 16;
 
 		return SEC_E_OK;
 	}
@@ -354,7 +366,17 @@ SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(PCtxtHandle phContext, ULONG f
 
 SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SECURITY_STATUS status;
+	SCHANNEL_CONTEXT* context;
+
+	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	status = schannel_openssl_decrypt_message(context->openssl, pMessage);
+
+	return status;
 }
 
 const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA =
