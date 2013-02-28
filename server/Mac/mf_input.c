@@ -356,27 +356,11 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	CFRelease(kbEvent);
 	CFRelease(source);
 	
+	/*
 	if (flags & KBD_FLAGS_EXTENDED)
 		printf("extended ");
 	printf("keypress: down = %d, SCAN=%#0X, VK=%#0X\n", keyDown, code, keymap[code]);
-	/*
-	 INPUT keyboard_event;
-	 
-	 keyboard_event.type = INPUT_KEYBOARD;
-	 keyboard_event.ki.wVk = 0;
-	 keyboard_event.ki.wScan = code;
-	 keyboard_event.ki.dwFlags = KEYEVENTF_SCANCODE;
-	 keyboard_event.ki.dwExtraInfo = 0;
-	 keyboard_event.ki.time = 0;
-	 
-	 if (flags & KBD_FLAGS_RELEASE)
-	 keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
-	 
-	 if (flags & KBD_FLAGS_EXTENDED)
-	 keyboard_event.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-	 
-	 SendInput(1, &keyboard_event, sizeof(INPUT));
-	 */
+	*/
 }
 
 void mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -566,6 +550,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 
 void mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
+	printf("Unhandled mouse event!!!\n");
 	/*
 	 if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	 {
