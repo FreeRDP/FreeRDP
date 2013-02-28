@@ -287,7 +287,7 @@ STD_SPEED_TEST(set32s_speed_test, INT32, INT32, dst=dst,
 #ifdef WITH_SSE2
 	TRUE, sse2_set_32s(constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
-	FALSE, NULL, 0, FALSE,
+	FALSE, PRIM_NOP, 0, FALSE,
 #endif
 	TRUE, ippsSet_32s(constant, dst, size));
 

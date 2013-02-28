@@ -203,7 +203,7 @@ int test_alphaComp_func(void)
 
 
 /* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes = size*4,
+STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes __attribute__((unused)) = size*4,
 	TRUE, general_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size),
 #ifdef WITH_SSE2
@@ -212,7 +212,6 @@ STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes = size*4,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
-
 	TRUE, ipp_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size));
 
