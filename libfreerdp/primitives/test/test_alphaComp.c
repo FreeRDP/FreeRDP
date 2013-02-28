@@ -132,7 +132,7 @@ int test_alphaComp_func(void)
 	general_alphaComp_argb((const BYTE *) src1, 4*SRC1_WIDTH, 
 		(const BYTE *) src2, 4*SRC2_WIDTH,
 		(BYTE *) dst1, 4*DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
@@ -165,7 +165,7 @@ int test_alphaComp_func(void)
 					x, y, s1, s2, c0, c1);
 				error = 1;
 			}
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 			if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 			{
 				UINT32 c2 = *PIXEL(dst2a, 4*DST_WIDTH, x, y);
@@ -206,8 +206,13 @@ int test_alphaComp_func(void)
 STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes = size*4,
 	TRUE, general_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size),
+#ifdef WITH_SSE2
 	TRUE, sse2_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
+
 	TRUE, ipp_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
 		size, size));
 

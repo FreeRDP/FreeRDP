@@ -44,8 +44,8 @@ typedef struct
 } flagpair_t;
 
 static const flagpair_t flags[] =
-#ifdef _M_IX86_AMD64
 {
+#ifdef _M_IX86_AMD64
 	{ PF_MMX_INSTRUCTIONS_AVAILABLE,		"MMX" },
 	{ PF_3DNOW_INSTRUCTIONS_AVAILABLE,		"3DNow" },
 	{ PF_XMMI_INSTRUCTIONS_AVAILABLE,		"SSE" },

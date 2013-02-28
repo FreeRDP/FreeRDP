@@ -37,13 +37,15 @@ static const int set_sizes[] = { 1, 4, 16, 32, 64, 256, 1024, 4096 };
 /* ------------------------------------------------------------------------- */
 int test_set8u_func(void)
 {
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	BYTE ALIGN(dest[48]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
@@ -101,7 +103,7 @@ int test_set8u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set8u_speed_test, BYTE, BYTE, dst=dst,
 	TRUE, memset(dst, constant, size),
-	FALSE, NULL, 0, FALSE,
+	FALSE, PRIM_NOP, 0, FALSE,
 	TRUE, ippsSet_8u(constant, dst, size));
 
 int test_set8u_speed(void)
@@ -115,13 +117,15 @@ int test_set8u_speed(void)
 /* ------------------------------------------------------------------------- */
 int test_set32s_func(void)
 {
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	INT32 ALIGN(dest[512]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
@@ -176,13 +180,15 @@ int test_set32s_func(void)
 /* ------------------------------------------------------------------------- */
 int test_set32u_func(void)
 {
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	UINT32 ALIGN(dest[512]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
@@ -246,7 +252,11 @@ static inline void memset32u_naive(
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, memset32u_naive(constant, dst, size),
+#ifdef WITH_SSE2
 	TRUE, sse2_set_32u(constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ipp_wrapper_set_32u(constant, dst, size));
 
 int test_set32u_speed(void)
@@ -274,7 +284,11 @@ static inline void memset32s_naive(
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set32s_speed_test, INT32, INT32, dst=dst,
 	TRUE, memset32s_naive(constant, dst, size),
+#ifdef WITH_SSE2
 	TRUE, sse2_set_32s(constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, NULL, 0, FALSE,
+#endif
 	TRUE, ippsSet_32s(constant, dst, size));
 
 int test_set32s_speed(void)

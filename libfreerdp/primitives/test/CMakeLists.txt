@@ -31,11 +31,28 @@ set(PRIMITIVE_TEST_CFILES
 	test_set.c
 	test_shift.c
 	test_sign.c
+	../prim_add.c
+	../prim_andor.c
+	../prim_alphaComp.c
+	../prim_colors.c
+	../prim_copy.c
+	../prim_set.c
+	../prim_shift.c
+	../prim_sign.c
+	../prim_add_opt.c
+	../prim_alphaComp_opt.c
+	../prim_andor_opt.c
+	../prim_colors_opt.c
+	../prim_set_opt.c
+	../prim_shift_opt.c
+	../prim_sign_opt.c
+	../primitives.c
     )
 
 set(PRIMITIVE_TEST_HEADERS
 	measure.h
 	prim_test.h
+	../prim_internal.h
 )
 
 set(PRIMITIVE_TEST_SRCS
@@ -121,7 +138,7 @@ endif()
 
 set_property(SOURCE ${PRIMITIVE_TEST_CFILES} PROPERTY COMPILE_FLAGS ${OPTFLAGS})
 
-target_link_libraries(prim_test freerdp-primitives rt winpr-sysinfo)
+target_link_libraries(prim_test rt winpr-sysinfo)
 if(NOT TESTING_OUTPUT_DIRECTORY)
 	set(TESTING_OUTPUT_DIRECTORY .)
 endif()

@@ -101,7 +101,7 @@ extern int test_or_32u_speed(void);
 /* Since so much of this code is repeated, define a macro to build 
  * functions to do speed tests.
  */
-#ifdef armel
+#ifdef _M_ARM
 #define SIMD_TYPE "Neon"
 #else
 #define SIMD_TYPE "SSE"
@@ -122,7 +122,7 @@ extern int test_or_32u_speed(void);
 		} \
 	} while (0)
 
-#if (defined(_M_IX86_AMD64) && defined(WITH_SSE2)) || (defined(arm) && defined(WITH_NEON))
+#if (defined(_M_IX86_AMD64) && defined(WITH_SSE2)) || (defined(_M_ARM) && defined(WITH_NEON))
 #define DO_OPT_MEASUREMENTS(_funcOpt_, _prework_) \
 	do { \
 		for (s=0; s<num_sizes; ++s) \
@@ -160,6 +160,7 @@ extern int test_or_32u_speed(void);
 #define DO_IPP_MEASUREMENTS(_funcIPP_, _prework_)
 #endif
 
+#define PRIM_NOP do {} while (0)
 /* ------------------------------------------------------------------------- */
 #define STD_SPEED_TEST( \
 	_name_, _srctype_, _dsttype_, _prework_, \

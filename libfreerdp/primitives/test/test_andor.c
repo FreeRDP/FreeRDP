@@ -55,7 +55,7 @@ int test_and_32u_func(void)
 			++failed;
 		}
 	}
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
@@ -92,7 +92,11 @@ int test_and_32u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(andC_32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, general_andC_32u(src1, constant, dst, size),
+#ifdef WITH_SSE2
 	TRUE, sse3_andC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsAndC_32u(src1, constant, dst, size))
 
 int test_and_32u_speed(void)
@@ -127,7 +131,7 @@ int test_or_32u_func(void)
 		++failed;
 		}
 	}
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	if(IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
@@ -164,7 +168,11 @@ int test_or_32u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(orC_32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, general_orC_32u(src1, constant, dst, size),
+#ifdef WITH_SSE2
 	TRUE, sse3_orC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsOrC_32u(src1, constant, dst, size))
 
 int test_or_32u_speed(void)

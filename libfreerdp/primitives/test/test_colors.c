@@ -31,12 +31,17 @@ extern pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
 	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
 extern pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
 	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
+extern pstatus_t neon_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
+	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
 
 /* ------------------------------------------------------------------------- */
 int test_RGBToRGB_16s8u_P3AC4R_func(void)
 {
 	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
-	UINT32 ALIGN(out1[4096]), ALIGN(out2[4096]);
+	UINT32 ALIGN(out1[4096]);
+#ifdef WITH_SSE2
+	UINT32 ALIGN(out2[4096]);
+#endif
 	int i;
 	int failed = 0;
 	char testStr[256];
@@ -61,7 +66,7 @@ int test_RGBToRGB_16s8u_P3AC4R_func(void)
 
 	general_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
 		(BYTE *) out1, 64*4, &roi);
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
@@ -88,9 +93,13 @@ STD_SPEED_TEST(
 	rgb_to_argb_speed, INT16*, UINT32, dst=dst,
 	TRUE, general_RGBToRGB_16s8u_P3AC4R(
 		(const INT16 **) src1, 64*2, (BYTE *) dst, 64*4, &roi64x64),
+#ifdef WITH_SSE2
 	TRUE, sse2_RGBToRGB_16s8u_P3AC4R(
 		(const INT16 **) src1, 64*2, (BYTE *) dst, 64*4, &roi64x64),
 		PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	FALSE, dst=dst);
 
 int test_RGBToRGB_16s8u_P3AC4R_speed(void)
@@ -165,7 +174,7 @@ int test_yCbCrToRGB_16s16s_P3P3_func(void)
 	out2[2] = b2;
 
 	general_yCbCrToRGB_16s16s_P3P3(in, 64*2, out1, 64*2, &roi);
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
@@ -190,8 +199,15 @@ int test_yCbCrToRGB_16s16s_P3P3_func(void)
 STD_SPEED_TEST(
 	ycbcr_to_rgb_speed, INT16*, INT16*, dst=dst,
 	TRUE, general_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
+#ifdef WITH_SSE2
 	TRUE, sse2_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
 		PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+#elif defined(WITH_NEON)
+	TRUE, neon_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
+		PF_ARM_NEON_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	FALSE, dst=dst);
 
 int test_yCbCrToRGB_16s16s_P3P3_speed(void)

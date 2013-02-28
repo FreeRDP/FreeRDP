@@ -71,7 +71,7 @@ int test_copy8u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(copy8u_speed_test, BYTE, BYTE, dst=dst,
 	TRUE, memcpy(dst, src1, size),
-	FALSE, NULL, 0, FALSE,
+	FALSE, PRIM_NOP, 0, FALSE,
 	TRUE, ippsCopy_8u(src1, dst, size));
 
 int test_copy8u_speed(void)
