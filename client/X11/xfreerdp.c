@@ -391,7 +391,7 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
 	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
-	xfi->attribs.override_redirect = xfi->fullscreen;
+	xfi->attribs.override_redirect = xfi->grab_keyboard ? xfi->fullscreen : False;
 	xfi->attribs.colormap = xfi->colormap;
 	xfi->attribs.bit_gravity = NorthWestGravity;
 	xfi->attribs.win_gravity = NorthWestGravity;
