@@ -83,34 +83,20 @@ struct mf_info
 	UINT32 servscreen_xoffset;
 	UINT32 servscreen_yoffset;
 	
-	//int frame_idx;
 	int bitsPerPixel;
-	//HDC driverDC;
 	int peerCount;
 	int activePeerCount;
-	//void* changeBuffer;
 	int framesPerSecond;
-	//LPTSTR deviceKey;
-	//TCHAR deviceName[32];
 	freerdp_peer** peers;
-	//BOOL mirrorDriverActive;
 	unsigned int framesWaiting;
 	UINT32 scale;
 	
-	//HANDLE snd_mutex;
-	//BOOL snd_stop;
-	
 	RFX_RECT invalid;
 	pthread_mutex_t mutex;
-	//BOOL updatePending;
-	//HANDLE updateEvent;
-	//HANDLE updateThread;
-	//HANDLE updateSemaphore;
-	//RFX_CONTEXT* rfx_context;
-	//unsigned long lastUpdate;
-	//unsigned long nextUpdate;
-	//SURFACE_BITS_COMMAND cmd;
 	
+	BOOL mouse_down_left;
+	BOOL mouse_down_right;
+	BOOL mouse_down_other;
 	BOOL input_disabled;
 	BOOL force_all_disconnect;
 };

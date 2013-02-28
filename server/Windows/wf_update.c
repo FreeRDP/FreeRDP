@@ -81,7 +81,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
 						//printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
-						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+						//WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+						WaitForSingleObject(wfi->updateSemaphore, 1000);
 					}
 
 					//printf("End of parallel sending\n");
