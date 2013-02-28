@@ -30,7 +30,6 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
 
-#include "keyboard_keymap.h"
 #include "liblocale.h"
 
 #ifdef WITH_X11

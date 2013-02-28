@@ -31,8 +31,6 @@ set(${MODULE_PREFIX}_X11_SRCS
 	xkb_layout_ids.h)
 
 set(${MODULE_PREFIX}_X11_KEYMAP_SRCS
-	keyboard_keymap.c
-	keyboard_keymap.h
 	keyboard_x11.c
 	keyboard_x11.h)
 

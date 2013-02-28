@@ -33,7 +33,6 @@
 #include <freerdp/locale/keyboard.h>
 
 #include "keyboard_x11.h"
-#include "keyboard_keymap.h"
 #include "xkb_layout_ids.h"
 
 #ifdef WITH_SUN
