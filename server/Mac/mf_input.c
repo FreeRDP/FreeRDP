@@ -291,7 +291,7 @@ static const CGKeyCode keymap[256] = {
 
 void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
+	CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 	
 	BOOL keyDown = TRUE;
 	CGEventRef kbEvent;
@@ -352,7 +352,7 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	}
 	
 	kbEvent = CGEventCreateKeyboardEvent(source, kCode, keyDown);
-	CGEventPost(kCGSessionEventTap, kbEvent);
+	CGEventPost(kCGHIDEventTap, kbEvent);
 	CFRelease(kbEvent);
 	CFRelease(source);
 	
@@ -403,7 +403,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			scroll_y = (flags & WheelRotationMask) / 120;
 		}
 		
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
 								  kCGScrollEventUnitLine,
 								  wheelCount,
@@ -446,7 +446,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	{
 		
 		mfInfo * mfi;
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
 		
@@ -541,7 +541,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 								CGPointMake(x, y),
 								mouseButton
 								);
-		CGEventPost(kCGSessionEventTap, mouseEvent);
+		CGEventPost(kCGHIDEventTap, mouseEvent);
 		
 		CFRelease(mouseEvent);
 		CFRelease(source);
