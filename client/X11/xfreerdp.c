@@ -753,7 +753,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->decorations = settings->Decorations;
 	xfi->fullscreen = settings->Fullscreen;
 	xfi->grab_keyboard = settings->GrabKeyboard;
-	xfi->fullscreen_toggle = TRUE;
+	xfi->fullscreen_toggle = settings->ToggleFullscreen;
 	xfi->sw_gdi = settings->SoftwareGdi;
 	xfi->parent_window = (Window) settings->ParentWindowId;
 
