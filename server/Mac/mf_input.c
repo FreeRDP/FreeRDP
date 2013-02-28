@@ -295,16 +295,69 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	
 	BOOL keyDown = TRUE;
 	CGEventRef kbEvent;
+	CGKeyCode kCode = 0xFF;
 	
 	if (flags & KBD_FLAGS_RELEASE)
 	{
 		keyDown = FALSE;
 	}
-	kbEvent = CGEventCreateKeyboardEvent(source, keymap[code], keyDown);
+	
+	if (flags & KBD_FLAGS_EXTENDED)
+	{
+		switch (code) {
+			//case 0x52: //insert
+			case 0x53:
+				kCode = kVK_ForwardDelete;
+				break;
+				
+			case 0x4B:
+				kCode = kVK_LeftArrow;
+				break;
+				
+			case 0x47:
+				kCode = kVK_Home;
+				break;
+				
+			case 0x4F:
+				kCode = kVK_End;
+				break;
+				
+			case 0x48:
+				kCode = kVK_UpArrow;
+				break;
+				
+			case 0x50:
+				kCode = kVK_DownArrow;
+				break;
+				
+			case 0x49:
+				kCode = kVK_PageUp;
+				break;
+				
+			case 0x51:
+				kCode = kVK_PageDown;
+				break;
+				
+			case 0x4D:
+				kCode = kVK_RightArrow;
+				break;
+				
+			default:
+				break;
+		}
+	}
+	else
+	{
+		kCode = keymap[code];
+	}
+	
+	kbEvent = CGEventCreateKeyboardEvent(source, kCode, keyDown);
 	CGEventPost(kCGSessionEventTap, kbEvent);
 	CFRelease(kbEvent);
 	CFRelease(source);
 	
+	if (flags & KBD_FLAGS_EXTENDED)
+		printf("extended ");
 	printf("keypress: down = %d, SCAN=%#0X, VK=%#0X\n", keyDown, code, keymap[code]);
 	/*
 	 INPUT keyboard_event;
@@ -355,15 +408,6 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	
 	if (flags & PTR_FLAGS_WHEEL)
 	{
-		/*
-		 mouse_event.mi.dwFlags = MOUSEEVENTF_WHEEL;
-		 mouse_event.mi.mouseData = flags & WheelRotationMask;
-		 
-		 if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		 mouse_event.mi.mouseData *= -1;
-		 
-		 SendInput(1, &mouse_event, sizeof(INPUT));
-		 */
 		scroll_y = flags & WheelRotationMask;
 		
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
@@ -386,6 +430,34 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		CFRelease(scroll);
 		CFRelease(source);
 	}
+	/*
+	 ///////////////////////////////////////////////
+	 // We dont support horizontal scrolling yet...
+	 ///////////////////////////////////////////////
+	else if (flags & PTR_FLAGS_)
+	{
+		scroll_y = flags & WheelRotationMask;
+		
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+		{
+			scroll_y = -(flags & WheelRotationMask) / 392;
+		}
+		else
+		{
+			scroll_y = (flags & WheelRotationMask) / 120;
+		}
+		
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
+		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
+								  kCGScrollEventUnitLine,
+								  wheelCount,
+								  scroll_y,
+								  scroll_x);
+		CGEventPost(kCGHIDEventTap, scroll);
+		
+		CFRelease(scroll);
+		CFRelease(source);
+	} */
 	else
 	{
 		
