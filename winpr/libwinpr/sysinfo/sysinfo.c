@@ -508,7 +508,15 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 		default:
 			break;
 	}
-#endif
+#elif defined(__APPLE__) // __linux__
+	switch (ProcessorFeature)
+	{
+		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_NEON:
+			ret = TRUE;
+			break;
+	}
+#endif // __linux__
 #elif defined(_M_IX86_AMD64)
 #ifdef __GNUC__
 	unsigned a, b, c, d;
