@@ -100,7 +100,7 @@ void primitives_flags_str(char* str, size_t len)
 	}
 	for (i = 0; i < sizeof(flags_extended) / sizeof(flagpair_t); ++i)
 	{
-		if (IsProcessorFeaturePresent(flags_extended[i].flag))
+		if (IsProcessorFeaturePresentEx(flags_extended[i].flag))
 		{
 			int slen = strlen(flags_extended[i].str) + 1;
 
