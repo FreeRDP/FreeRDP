@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item android:id="@+id/newBookmark"
+		  android:icon="@drawable/icon_menu_add"
+		  android:title="@string/menu_new_bookmark"
+	/>
+	<item android:id="@+id/appSettings"
+		  android:icon="@drawable/icon_menu_settings"
+		  android:title="@string/menu_app_settings"
+	/>
+	<item android:id="@+id/help"
+		  android:icon="@drawable/icon_menu_help"
+		  android:title="@string/menu_help"
+	/>
+	<item android:id="@+id/about"
+		  android:icon="@drawable/icon_menu_about"
+		  android:title="@string/menu_about"
+	/>
+	<item android:id="@+id/exit"
+		  android:icon="@drawable/icon_menu_exit"
+		  android:title="@string/menu_exit"
+	/>	
+</menu>

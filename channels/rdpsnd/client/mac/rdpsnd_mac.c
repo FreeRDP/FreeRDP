@@ -32,7 +32,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/dsp.h>
+#include <freerdp/codec/dsp.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include <AudioToolbox/AudioToolbox.h>
@@ -72,7 +72,7 @@ static void rdpsnd_audio_close(rdpsndDevicePlugin* device)
 	aq_plugin_p->is_open = 0;
 }
 
-static void rdpsnd_audio_open(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_audio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	int rv;
 	int i;
@@ -127,7 +127,7 @@ static void rdpsnd_audio_free(rdpsndDevicePlugin* device)
 {
 }
 
-static BOOL rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndFormat* format)
+static BOOL rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
 	switch (format->wFormatTag)
 	{
@@ -144,7 +144,7 @@ static BOOL rdpsnd_audio_format_supported(rdpsndDevicePlugin* device, rdpsndForm
 	return 0;
 }
 
-static void rdpsnd_audio_set_format(rdpsndDevicePlugin* device, rdpsndFormat* format, int latency)
+static void rdpsnd_audio_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 }
 

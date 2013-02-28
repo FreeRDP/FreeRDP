@@ -277,7 +277,7 @@ const UINT32 KEYCODE_TO_VKCODE_MACOSX[256] =
 	0, /* 60 */
 	VK_ESCAPE, /* 61 */
 	0, /* 62 */
-	0, /* 63 */
+	VK_LWIN, /* 63 */
 	VK_LSHIFT, /* 64 */
 	VK_CAPITAL, /* 65 */
 	VK_LMENU, /* 66 */
@@ -285,7 +285,7 @@ const UINT32 KEYCODE_TO_VKCODE_MACOSX[256] =
 	VK_RSHIFT, /* 68 */
 	VK_RMENU, /* 69 */
 	0, /* 70 */
-	0, /* 71 */
+	VK_RWIN, /* 71 */
 	0, /* 72 */
 	VK_DECIMAL, /* 73 */
 	0, /* 74 */
@@ -481,7 +481,7 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 	UINT32 keycode_to_vkcode[256];
 
 	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(x11_keycode_to_rdp_scancode));
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
 
 #ifdef __APPLE__
 	/* Apple X11 breaks XKB detection */

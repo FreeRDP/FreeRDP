@@ -31,22 +31,29 @@ set(PRIMITIVE_TEST_CFILES
 	test_set.c
 	test_shift.c
 	test_sign.c
-    ../prim_add.c
-    ../prim_andor.c
-    ../prim_alphaComp.c
-    ../prim_colors.c
-    ../prim_copy.c
-    ../prim_set.c
-    ../prim_shift.c
-    ../prim_sign.c
+	../prim_add.c
+	../prim_andor.c
+	../prim_alphaComp.c
+	../prim_colors.c
+	../prim_copy.c
+	../prim_set.c
+	../prim_shift.c
+	../prim_sign.c
+	../prim_add_opt.c
+	../prim_alphaComp_opt.c
+	../prim_andor_opt.c
+	../prim_colors_opt.c
+	../prim_set_opt.c
+	../prim_shift_opt.c
+	../prim_sign_opt.c
 	../primitives.c
     )
 
 set(PRIMITIVE_TEST_HEADERS
 	measure.h
 	prim_test.h
-    ../prim_internal.h
-    )
+	../prim_internal.h
+)
 
 set(PRIMITIVE_TEST_SRCS
     ${PRIMITIVE_TEST_CFILES}
@@ -85,7 +92,7 @@ if(WITH_SSE2)
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-	    set(OPTIMZATION "${OPTFLAGS} -mfpu=neon -mfloat-abi=softfp -O2")
+	    set(OPTFLAGS "${OPTFLAGS} -mfpu=neon -mfloat-abi=${ARM_FP_ABI} -O2")
 	endif()
 	# TODO: Add MSVC equivalent
 endif()

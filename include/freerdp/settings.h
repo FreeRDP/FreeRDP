@@ -680,7 +680,8 @@ struct rdp_settings
 	ALIGN64 UINT64 ParentWindowId; /* 1543 */
 	ALIGN64 BOOL AsyncInput; /* 1544 */
 	ALIGN64 BOOL AsyncUpdate; /* 1545 */
-	UINT64 padding1600[1600 - 1546]; /* 1546 */
+	ALIGN64 BOOL AsyncChannels; /* 1546 */
+	UINT64 padding1600[1600 - 1547]; /* 1547 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */

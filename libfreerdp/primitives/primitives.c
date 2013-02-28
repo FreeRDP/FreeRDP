@@ -150,7 +150,7 @@ static void set_hints(primitives_hints_t* hints)
 
 #elif defined(_M_ARM)
 
-static UINT32 androidNeon(void)
+static UINT32 getNeonSupport(void)
 {
 #ifdef __ANDROID__
 	if (android_getCpuFamily() != ANDROID_CPU_FAMILY_ARM) return 0;
@@ -164,7 +164,9 @@ static UINT32 androidNeon(void)
 			return PRIM_ARM_NEON_AVAILABLE;
 		}
 	}
-	/* else */
+#elif defined(__APPLE)
+	/* assume NEON support on iOS devices */
+	return PRIM_ARM_NEON_AVAILABLE;
 #endif
 	return 0;
 }
@@ -172,7 +174,7 @@ static UINT32 androidNeon(void)
 static void set_hints(primitives_hints_t* hints)
 {
 	/* ARM:  TODO */
-	hints->arm_flags |= androidNeon();
+	hints->arm_flags |= getNeonSupport();
 }
 
 #else

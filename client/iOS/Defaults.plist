@@ -9,11 +9,11 @@
 		<key>port</key>
 		<integer>3389</integer>
 		<key>screen_resolution_type</key>
-		<integer>0</integer>
+		<integer>1</integer>
 		<key>width</key>
-		<integer>1024</integer>
+		<integer>0</integer>
 		<key>height</key>
-		<integer>768</integer>
+		<integer>0</integer>
 		<key>colors</key>
 		<integer>16</integer>
 		<key>perf_font_smoothing</key>

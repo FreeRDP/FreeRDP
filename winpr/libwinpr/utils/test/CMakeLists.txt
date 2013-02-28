@@ -8,7 +8,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestQueue.c
 	TestArrayList.c
 	TestCmdLine.c
-	TestMessageQueue.c)
+	TestMessageQueue.c
+	TestMessagePipe.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

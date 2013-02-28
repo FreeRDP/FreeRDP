@@ -17,27 +17,16 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#endif /* WITH_SSE2 */
-
-#ifdef WITH_IPP
-#include <ipps.h>
-#endif /* WITH_IPP */
-
 #include "prim_internal.h"
-#include "prim_templates.h"
+#include "prim_andor.h"
 
 /* ----------------------------------------------------------------------------
  * 32-bit AND with a constant.
  */
-PRIM_STATIC pstatus_t general_andC_32u(
+pstatus_t general_andC_32u(
 	const UINT32 *pSrc,
 	UINT32 val,
 	UINT32 *pDst,
@@ -55,7 +44,7 @@ PRIM_STATIC pstatus_t general_andC_32u(
 /* ----------------------------------------------------------------------------
  * 32-bit OR with a constant.
  */
-PRIM_STATIC pstatus_t general_orC_32u(
+pstatus_t general_orC_32u(
 	const UINT32 *pSrc,
 	UINT32 val,
 	UINT32 *pDst,
@@ -70,16 +59,6 @@ PRIM_STATIC pstatus_t general_orC_32u(
 	return PRIMITIVES_SUCCESS;
 }
 
-#ifdef WITH_SSE2
-# if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
-/* ------------------------------------------------------------------------- */
-SSE3_SCD_PRE_ROUTINE(sse3_andC_32u, UINT32, general_andC_32u,
-	_mm_and_si128, *dptr++ = *sptr++ & val)
-SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, general_orC_32u,
-	_mm_or_si128, *dptr++ = *sptr++ | val)
-# endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
-#endif
-
 /* ------------------------------------------------------------------------- */
 void primitives_init_andor(
 	const primitives_hints_t *hints,
@@ -89,17 +68,7 @@ void primitives_init_andor(
 	prims->andC_32u = general_andC_32u;
 	prims->orC_32u  = general_orC_32u;
 
-#if defined(WITH_IPP)
-	prims->andC_32u = (__andC_32u_t) ippsAndC_32u;
-	prims->orC_32u  = (__orC_32u_t) ippsOrC_32u;
-#elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))
-	{
-		prims->andC_32u = sse3_andC_32u;
-		prims->orC_32u  = sse3_orC_32u;
-	}
-#endif
+	primitives_init_andor_opt(hints, prims);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -108,3 +77,4 @@ void primitives_deinit_andor(
 {
 	/* Nothing to do. */
 }
+

@@ -72,7 +72,7 @@ static BOOL memory_regions_overlap_2d(
 }
 
 /* ------------------------------------------------------------------------- */
-PRIM_STATIC pstatus_t general_copy_8u(
+pstatus_t general_copy_8u(
 	const BYTE *pSrc,
 	BYTE *pDst,
 	INT32 len)
@@ -94,7 +94,7 @@ PRIM_STATIC pstatus_t general_copy_8u(
  * The addresses are assumed to have been already offset to the upper-left
  * corners of the source and destination region of interest.
  */
-PRIM_STATIC pstatus_t general_copy_8u_AC4r(
+pstatus_t general_copy_8u_AC4r(
 	const BYTE *pSrc,  INT32 srcStep,
 	BYTE *pDst,  INT32 dstStep,
 	INT32 width,  INT32 height)

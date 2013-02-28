@@ -655,6 +655,7 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
+	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
 	client->settings->RefreshRect = TRUE;
 

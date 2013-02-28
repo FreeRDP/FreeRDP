@@ -241,6 +241,8 @@ WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
 
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 
+WINPR_API DWORD GetTickCount(void);
+
 #endif
 
 #endif /* WINPR_SYSINFO_H */
