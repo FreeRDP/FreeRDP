@@ -470,14 +470,11 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 }
 
 /* http://msdn.microsoft.com/en-us/library/cc241518.aspx */
+
 static void drive_process_irp_silent_ignore(DRIVE_DEVICE* disk, IRP* irp)
 {
 	UINT32 FsInformationClass;
-	UINT32 pad;
 	STREAM* output = irp->output;
-	char* volumeLabel;
-	int length;
-	int status;
 
 	stream_read_UINT32(irp->input, FsInformationClass);
 

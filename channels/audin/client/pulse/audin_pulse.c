@@ -32,7 +32,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/dsp.h>
+#include <freerdp/codec/dsp.h>
 
 #include "audin_main.h"
 

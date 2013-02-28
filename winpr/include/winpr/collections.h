@@ -282,6 +282,7 @@ struct _wMessage
 	void* context;
 	void* wParam;
 	void* lParam;
+	UINT64 time;
 };
 typedef struct _wMessage wMessage;
 
@@ -312,5 +313,19 @@ WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL re
 
 WINPR_API wMessageQueue* MessageQueue_New(void);
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
+
+/* Message Pipe */
+
+struct _wMessagePipe
+{
+	wMessageQueue* In;
+	wMessageQueue* Out;
+};
+typedef struct _wMessagePipe wMessagePipe;
+
+WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
+
+WINPR_API wMessagePipe* MessagePipe_New(void);
+WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
 #endif /* WINPR_COLLECTIONS_H */

@@ -117,7 +117,7 @@ RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 			break;
 	}
 
-	if (event != NULL)
+	if (event)
 	{
 		event->event_class = event_class;
 		event->event_type = event_type;
@@ -168,9 +168,9 @@ static void freerdp_rail_event_free(RDP_EVENT* event)
 
 void freerdp_event_free(RDP_EVENT* event)
 {
-	if (event != NULL)
+	if (event)
 	{
-		if (event->on_event_free_callback != NULL)
+		if (event->on_event_free_callback)
 			event->on_event_free_callback(event);
 
 		switch (event->event_class)
@@ -185,6 +185,7 @@ void freerdp_event_free(RDP_EVENT* event)
 				freerdp_rail_event_free(event);
 				break;
 		}
+
 		free(event);
 	}
 }

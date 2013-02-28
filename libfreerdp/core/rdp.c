@@ -420,6 +420,7 @@ BOOL rdp_send(rdpRdp* rdp, STREAM* s, UINT16 channel_id)
 	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
+
 	if (transport_write(rdp->transport, s) < 0)
 		return FALSE;
 

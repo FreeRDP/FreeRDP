@@ -45,13 +45,7 @@ struct sample_plugin
 	rdpSvcPlugin plugin;
 
 	/* put your private data here */
-
 };
-
-static void sample_process_interval(rdpSvcPlugin* plugin)
-{
-	printf("sample_process_interval:\n");
-}
 
 static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 {
@@ -61,17 +55,18 @@ static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 
 	printf("sample_process_receive:\n");
 
-	if (sample == NULL)
+	if (!sample)
 	{
 		printf("sample_process_receive: sample is nil\n");
 		return;
 	}
 
-	/* process data in(from server) here */
+	/* process data in (from server) here */
 	/* here we just send the same data back */
 
 	bytes = stream_get_size(data_in);
 	printf("sample_process_receive: got bytes %d\n", bytes);
+
 	if (bytes > 0)
 	{
 		data_out = stream_new(bytes);
@@ -95,22 +90,15 @@ static void sample_process_connect(rdpSvcPlugin* plugin)
 
 	printf("sample_process_connect:\n");
 
-	if (sample == NULL)
-	{
+	if (!sample)
 		return;
-	}
-
-	/* if you want a call from channel thread once is a while do this */
-	plugin->interval_ms = 1000;
-	plugin->interval_callback = sample_process_interval;
-
 }
 
 static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
 	printf("sample_process_event:\n");
 
-	/* events comming from main freerdp window to plugin */
+	/* events coming from main freerdp window to plugin */
 	/* send them back with svc_plugin_send_event */
 
 	freerdp_event_free(event);
@@ -118,14 +106,12 @@ static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 
 static void sample_process_terminate(rdpSvcPlugin* plugin)
 {
-	samplePlugin* sample = (samplePlugin*)plugin;
+	samplePlugin* sample = (samplePlugin*) plugin;
 
 	printf("sample_process_terminate:\n");
 
-	if (sample == NULL)
-	{
+	if (!sample)
 		return;
-	}
 
 	/* put your cleanup here */
 

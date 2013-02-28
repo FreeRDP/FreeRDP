@@ -299,4 +299,36 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
 }
 
+#ifndef CLOCK_MONOTONIC_RAW
+#define CLOCK_MONOTONIC_RAW	4
+#endif
+
+DWORD GetTickCount(void)
+{
+	DWORD ticks = 0;
+
+#ifdef __linux__
+
+	struct timespec ts;
+
+	if (!clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+
+#else
+
+	/**
+	 * FIXME: this is relative to the Epoch time, and we
+	 * need to return a value relative to the system uptime.
+	 */
+
+	struct timeval tv;
+
+	if (!gettimeofday(&tv, NULL))
+		ticks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+
+#endif
+
+	return ticks;
+}
+
 #endif

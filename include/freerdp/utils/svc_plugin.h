@@ -27,11 +27,15 @@
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
 
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/event.h>
-#include <freerdp/utils/debug.h>
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
 
-typedef struct rdp_svc_plugin_private rdpSvcPluginPrivate;
+#include <freerdp/utils/debug.h>
+#include <freerdp/utils/event.h>
+#include <freerdp/utils/stream.h>
+
 typedef struct rdp_svc_plugin rdpSvcPlugin;
 
 struct rdp_svc_plugin
@@ -39,15 +43,16 @@ struct rdp_svc_plugin
 	CHANNEL_ENTRY_POINTS_EX channel_entry_points;
 	CHANNEL_DEF channel_def;
 
-	int interval_ms;
-
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
 	void (*event_callback)(rdpSvcPlugin* plugin, RDP_EVENT* event);
-	void (*interval_callback)(rdpSvcPlugin* plugin);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
-	rdpSvcPluginPrivate* priv;
+	HANDLE thread;
+	STREAM* data_in;
+	void* init_handle;
+	UINT32 open_handle;
+	wMessagePipe* MsgPipe;
 };
 
 #ifdef __cplusplus

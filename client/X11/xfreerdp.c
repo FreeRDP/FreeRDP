@@ -1017,21 +1017,21 @@ int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int si
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-void xf_process_channel_event(rdpChannels* chanman, freerdp* instance)
+void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	xfInfo* xfi;
 	RDP_EVENT* event;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 
-	event = freerdp_channels_pop_event(chanman);
+	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
 		switch (event->event_class)
 		{
 			case RDP_EVENT_CLASS_RAIL:
-				xf_process_rail_event(xfi, chanman, event);
+				xf_process_rail_event(xfi, channels, event);
 				break;
 
 			case RDP_EVENT_CLASS_TSMF:
@@ -1295,6 +1295,7 @@ int xfreerdp_run(freerdp* instance)
 
 	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
+	async_channels = settings->AsyncChannels;
 
 	if (async_update)
 	{
@@ -1305,8 +1306,6 @@ int xfreerdp_run(freerdp* instance)
 	{
 		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
 	}
-
-	async_channels = FALSE;
 
 	if (async_channels)
 	{

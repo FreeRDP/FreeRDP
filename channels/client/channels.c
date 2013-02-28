@@ -44,7 +44,7 @@
 #include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
-#include <winpr/interlocked.h>
+#include <winpr/collections.h>
 
 #ifdef WITH_DEBUG_CHANNELS
 #define DEBUG_CHANNELS(fmt, ...) DEBUG_CLASS(CHANNELS, fmt, ## __VA_ARGS__)
@@ -383,15 +383,14 @@ struct channel_data
 	PCHANNEL_OPEN_EVENT_FN open_event_proc;
 };
 
-struct _SYNC_DATA
+struct _CHANNEL_OPEN_EVENT
 {
-	SLIST_ENTRY ItemEntry;
 	void* Data;
 	UINT32 DataLength;
 	void* UserData;
 	int Index;
 };
-typedef struct _SYNC_DATA SYNC_DATA;
+typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
 
 typedef struct rdp_init_handle rdpInitHandle;
 
@@ -430,15 +429,7 @@ struct rdp_channels
 	/* used for locating the channels for a given instance */
 	freerdp* instance;
 
-	/* signal for incoming data or event */
-	HANDLE signal;
-
-	/* used for sync write */
-	PSLIST_HEADER pSyncDataList;
-
-	/* used for sync event */
-	HANDLE event_sem;
-	RDP_EVENT* event;
+	wMessagePipe* MsgPipe;
 };
 
 /**
@@ -505,6 +496,7 @@ static rdpChannels* freerdp_channels_find_by_instance(freerdp* instance)
 	for (channels_list = g_channels_list; channels_list; channels_list = channels_list->next)
 	{
 		channels = channels_list->channels;
+
 		if (channels->instance == instance)
 		{
 			ReleaseMutex(g_mutex_list);
@@ -605,7 +597,7 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	PCHANNEL_DEF lchannel_def;
 	struct channel_data* lchannel_data;
 
-	if (ppInitHandle == NULL)
+	if (!ppInitHandle)
 	{
 		DEBUG_CHANNELS("error bad init handle");
 		return CHANNEL_RC_BAD_INIT_HANDLE;
@@ -630,7 +622,7 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
 	}
 
-	if (pChannel == 0)
+	if (!pChannel)
 	{
 		DEBUG_CHANNELS("error bad channel");
 		return CHANNEL_RC_BAD_CHANNEL;
@@ -709,13 +701,13 @@ static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHa
 
 	channels = ((rdpInitHandle*) pInitHandle)->channels;
 
-	if (pOpenHandle == 0)
+	if (!pOpenHandle)
 	{
 		DEBUG_CHANNELS("error bad channel handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
-	if (pChannelOpenEventProc == 0)
+	if (!pChannelOpenEventProc)
 	{
 		DEBUG_CHANNELS("error bad proc");
 		return CHANNEL_RC_BAD_PROC;
@@ -729,7 +721,7 @@ static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHa
 
 	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, pChannelName, &index);
 
-	if (lchannel_data == 0)
+	if (!lchannel_data)
 	{
 		DEBUG_CHANNELS("error channel name");
 		return CHANNEL_RC_UNKNOWN_CHANNEL_NAME;
@@ -785,13 +777,13 @@ static UINT32 FREERDP_CC MyVirtualChannelClose(UINT32 openHandle)
 static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
 {
 	int index;
-	SYNC_DATA* item;
+	CHANNEL_OPEN_EVENT* item;
 	rdpChannels* channels;
 	struct channel_data* lchannel_data;
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
-	if ((channels == NULL) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
+	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
 	{
 		DEBUG_CHANNELS("error bad channel handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -803,13 +795,13 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	if (pData == 0)
+	if (!pData)
 	{
 		DEBUG_CHANNELS("error bad pData");
 		return CHANNEL_RC_NULL_DATA;
 	}
 
-	if (dataLength == 0)
+	if (!dataLength)
 	{
 		DEBUG_CHANNELS("error bad dataLength");
 		return CHANNEL_RC_ZERO_LENGTH;
@@ -829,16 +821,13 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	item = (SYNC_DATA*) _aligned_malloc(sizeof(SYNC_DATA), MEMORY_ALLOCATION_ALIGNMENT);
+	item = (CHANNEL_OPEN_EVENT*) malloc(sizeof(CHANNEL_OPEN_EVENT));
 	item->Data = pData;
 	item->DataLength = dataLength;
 	item->UserData = pUserData;
 	item->Index = index;
 
-	InterlockedPushEntrySList(channels->pSyncDataList, &(item->ItemEntry));
-
-	/* set the event */
-	SetEvent(channels->signal);
+	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 0, (void*) item, NULL);
 
 	return CHANNEL_RC_OK;
 }
@@ -851,7 +840,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
-	if ((channels == NULL) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
+	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
 	{
 		DEBUG_CHANNELS("error bad channels handle");
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -863,7 +852,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	if (event == NULL)
+	if (!event)
 	{
 		DEBUG_CHANNELS("error bad event");
 		return CHANNEL_RC_NULL_DATA;
@@ -877,19 +866,20 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT*
 		return CHANNEL_RC_NOT_OPEN;
 	}
 
-	 /* lock channels->event */
-	WaitForSingleObject(channels->event_sem, INFINITE);
-
 	if (!channels->is_connected)
 	{
-		ReleaseSemaphore(channels->event_sem, 1, NULL);
 		DEBUG_CHANNELS("error not connected");
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	channels->event = event;
-	/* set the event */
-	SetEvent(channels->signal);
+	/**
+	 * We really intend to use the In queue for events, but we're pushing on both
+	 * to wake up threads waiting on the out queue. Doing this cleanly would require
+	 * breaking freerdp_pop_event() a bit too early in this refactoring.
+	 */
+
+	MessageQueue_Post(channels->MsgPipe->In, (void*) channels, 1, (void*) event, NULL);
+	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 1, (void*) event, NULL);
 
 	return CHANNEL_RC_OK;
 }
@@ -929,11 +919,7 @@ rdpChannels* freerdp_channels_new(void)
 	channels = (rdpChannels*) malloc(sizeof(rdpChannels));
 	ZeroMemory(channels, sizeof(rdpChannels));
 
-	channels->pSyncDataList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-	InitializeSListHead(channels->pSyncDataList);
-
-	channels->event_sem = CreateSemaphore(NULL, 1, 16, NULL);
-	channels->signal = CreateEvent(NULL, TRUE, FALSE, NULL);
+	channels->MsgPipe = MessagePipe_New();
 
 	/* Add it to the global list */
 	channels_list = (rdpChannelsList*) malloc(sizeof(rdpChannelsList));
@@ -953,11 +939,7 @@ void freerdp_channels_free(rdpChannels* channels)
 	rdpChannelsList* list;
 	rdpChannelsList* prev;
 
-	InterlockedFlushSList(channels->pSyncDataList);
-	_aligned_free(channels->pSyncDataList);
-
-	CloseHandle(channels->event_sem);
-	CloseHandle(channels->signal);
+	MessagePipe_Free(channels->MsgPipe);
 
 	/* Remove from global list */
 
@@ -1144,15 +1126,15 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 
 	channels = freerdp_channels_find_by_instance(instance);
 
-	if (channels == 0)
+	if (!channels)
 	{
 		DEBUG_CHANNELS("could not find channel manager");
 		return 1;
 	}
 
-	lrdp_channel = freerdp_channels_find_channel_by_id(channels, instance->settings,
-		channel_id, &index);
-	if (lrdp_channel == 0)
+	lrdp_channel = freerdp_channels_find_channel_by_id(channels, instance->settings, channel_id, &index);
+
+	if (!lrdp_channel)
 	{
 		DEBUG_CHANNELS("could not find channel id");
 		return 1;
@@ -1160,7 +1142,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 
 	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, lrdp_channel->Name, &index);
 
-	if (lchannel_data == 0)
+	if (!lchannel_data)
 	{
 		DEBUG_CHANNELS("could not find channel name");
 		return 1;
@@ -1198,7 +1180,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 
 	name = event_class_to_name_table[event->event_class];
 
-	if (name == NULL)
+	if (!name)
 	{
 		DEBUG_CHANNELS("unknown event_class %d", event->event_class);
 		freerdp_event_free(event);
@@ -1207,17 +1189,16 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 
 	lchannel_data = freerdp_channels_find_channel_data_by_name(channels, name, &index);
 
-	if (lchannel_data == NULL)
+	if (!lchannel_data)
 	{
 		DEBUG_CHANNELS("could not find channel name %s", name);
 		freerdp_event_free(event);
 		return 1;
 	}
 
-	if (lchannel_data->open_event_proc != NULL)
+	if (lchannel_data->open_event_proc)
 	{
-		lchannel_data->open_event_proc(lchannel_data->open_handle,
-			CHANNEL_EVENT_USER,
+		lchannel_data->open_event_proc(lchannel_data->open_handle, CHANNEL_EVENT_USER,
 			event, sizeof(RDP_EVENT), sizeof(RDP_EVENT), 0);
 	}
 
@@ -1229,32 +1210,49 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
  */
 static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
-	SYNC_DATA* item;
+	wMessage message;
+	RDP_EVENT* event;
+	CHANNEL_OPEN_EVENT* item;
 	rdpChannel* lrdp_channel;
 	struct channel_data* lchannel_data;
 
-	while (QueryDepthSList(channels->pSyncDataList) > 0)
+	while (MessageQueue_Peek(channels->MsgPipe->Out, &message, TRUE))
 	{
-		item = (SYNC_DATA*) InterlockedPopEntrySList(channels->pSyncDataList);
-
-		if (!item)
+		if (message.id == WMQ_QUIT)
 			break;
 
-		lchannel_data = channels->channels_data + item->Index;
-
-		lrdp_channel = freerdp_channels_find_channel_by_name(channels, instance->settings,
-			lchannel_data->name, &item->Index);
-
-		if (lrdp_channel != NULL)
-			instance->SendChannelData(instance, lrdp_channel->ChannelId, item->Data, item->DataLength);
-
-		if (lchannel_data->open_event_proc != 0)
+		if (message.id == 0)
 		{
-			lchannel_data->open_event_proc(lchannel_data->open_handle,
-				CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, sizeof(void*), sizeof(void*), 0);
-		}
+			item = (CHANNEL_OPEN_EVENT*) message.wParam;
 
-		_aligned_free(item);
+			if (!item)
+				break;
+
+			lchannel_data = channels->channels_data + item->Index;
+
+			lrdp_channel = freerdp_channels_find_channel_by_name(channels, instance->settings,
+				lchannel_data->name, &item->Index);
+
+			if (lrdp_channel)
+				instance->SendChannelData(instance, lrdp_channel->ChannelId, item->Data, item->DataLength);
+
+			if (lchannel_data->open_event_proc)
+			{
+				lchannel_data->open_event_proc(lchannel_data->open_handle,
+					CHANNEL_EVENT_WRITE_COMPLETE, item->UserData, item->DataLength, item->DataLength, 0);
+			}
+
+			free(item);
+		}
+		else if (message.id == 1)
+		{
+			event = (RDP_EVENT*) message.wParam;
+
+			/**
+			 * Ignore for now, the same event is being pushed on the In queue,
+			 * and we're pushing it on the Out queue just to wake other threads
+			 */
+		}
 	}
 }
 
@@ -1266,7 +1264,7 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 {
 	void* pfd;
 
-	pfd = GetEventWaitObject(channels->signal);
+	pfd = GetEventWaitObject(MessageQueue_Event(channels->MsgPipe->Out));
 
 	if (pfd)
 	{
@@ -1283,7 +1281,7 @@ HANDLE freerdp_channels_get_event_handle(freerdp* instance)
 	rdpChannels* channels;
 
 	channels = instance->context->channels;
-	event = channels->signal;
+	event = MessageQueue_Event(channels->MsgPipe->Out);
 
 	return event;
 }
@@ -1294,9 +1292,8 @@ int freerdp_channels_process_pending_messages(freerdp* instance)
 
 	channels = instance->context->channels;
 
-	if (WaitForSingleObject(channels->signal, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(MessageQueue_Event(channels->MsgPipe->Out), 0) == WAIT_OBJECT_0)
 	{
-		ResetEvent(channels->signal);
 		freerdp_channels_process_sync(channels, instance);
 	}
 
@@ -1308,9 +1305,8 @@ int freerdp_channels_process_pending_messages(freerdp* instance)
  */
 BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 {
-	if (WaitForSingleObject(channels->signal, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(MessageQueue_Event(channels->MsgPipe->Out), 0) == WAIT_OBJECT_0)
 	{
-		ResetEvent(channels->signal);
 		freerdp_channels_process_sync(channels, instance);
 	}
 
@@ -1319,16 +1315,16 @@ BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 
 RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels)
 {
-	RDP_EVENT* event;
+	wMessage message;
+	RDP_EVENT* event = NULL;
 
-	if (channels->event == NULL)
-		return NULL;
-
-	event = channels->event;
-	channels->event = NULL;
-
-	/* release channels->event */
-	ReleaseSemaphore(channels->event_sem, 1, NULL);
+	if (MessageQueue_Peek(channels->MsgPipe->In, &message, TRUE))
+	{
+		if (message.id == 1)
+		{
+			event = (RDP_EVENT*) message.wParam;
+		}
+	}
 
 	return event;
 }
