@@ -43,6 +43,7 @@ SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, general_orC_32u,
 # endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif
 
+
 /* ------------------------------------------------------------------------- */
 void primitives_init_andor_opt(const primitives_hints_t *hints,	primitives_t *prims)
 {
