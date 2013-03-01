@@ -553,7 +553,7 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif
 	return ret;
 }
-#endif _WIN32
+#endif //_WIN32
 
 BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 {
