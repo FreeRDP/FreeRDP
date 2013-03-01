@@ -47,7 +47,7 @@ int test_set8u_func(void)
 
 #ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off)
@@ -127,7 +127,7 @@ int test_set32s_func(void)
 
 #ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off) {
@@ -190,7 +190,7 @@ int test_set32u_func(void)
 
 #ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off) {
@@ -253,7 +253,7 @@ static inline void memset32u_naive(
 STD_SPEED_TEST(set32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, memset32u_naive(constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_set_32u(constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_set_32u(constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
@@ -285,7 +285,7 @@ static inline void memset32s_naive(
 STD_SPEED_TEST(set32s_speed_test, INT32, INT32, dst=dst,
 	TRUE, memset32s_naive(constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_set_32s(constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_set_32s(constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif

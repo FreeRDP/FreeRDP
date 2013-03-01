@@ -67,7 +67,7 @@ void primitives_init_shift_opt(primitives_t *prims)
 	prims->lShiftC_16u = (__lShiftC_16u_t) ippsLShiftC_16u;
 	prims->rShiftC_16u = (__rShiftC_16u_t) ippsRShiftC_16u;
 #elif defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
 			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->lShiftC_16s = sse2_lShiftC_16s;

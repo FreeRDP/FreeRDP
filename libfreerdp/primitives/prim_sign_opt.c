@@ -140,7 +140,7 @@ void primitives_init_sign_opt(primitives_t *prims)
 	/* Pick tuned versions if possible. */
 	/* I didn't spot an IPP version of this. */
 #if defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
 			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->sign_16s  = ssse3_sign_16s;

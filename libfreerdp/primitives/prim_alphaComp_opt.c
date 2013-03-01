@@ -216,7 +216,7 @@ void primitives_init_alphaComp_opt(primitives_t* prims)
 #ifdef WITH_IPP
 	prims->alphaComp_argb = ipp_alphaComp_argb;
 #elif defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
 			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))    /* for LDDQU */
 	{
 		prims->alphaComp_argb = sse2_alphaComp_argb;

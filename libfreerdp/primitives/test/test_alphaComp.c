@@ -133,7 +133,7 @@ int test_alphaComp_func(void)
 		(const BYTE *) src2, 4*SRC2_WIDTH,
 		(BYTE *) dst1, 4*DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
 #ifdef WITH_SSE2
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		sse2_alphaComp_argb((const BYTE *) src1, 4*SRC1_WIDTH, 
@@ -166,7 +166,7 @@ int test_alphaComp_func(void)
 				error = 1;
 			}
 #ifdef WITH_SSE2
-			if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+			if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 			{
 				UINT32 c2 = *PIXEL(dst2a, 4*DST_WIDTH, x, y);
 				if (colordist(c0, c2) > TOLERANCE)
@@ -208,7 +208,7 @@ STD_SPEED_TEST(alphaComp_speed, BYTE, BYTE, int bytes __attribute__((unused)) = 
 		size, size),
 #ifdef WITH_SSE2
 	TRUE, sse2_alphaComp_argb(src1, bytes, src2, bytes, dst, bytes,
-		size, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+		size, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif

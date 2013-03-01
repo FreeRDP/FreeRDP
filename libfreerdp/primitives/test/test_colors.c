@@ -67,7 +67,7 @@ int test_RGBToRGB_16s8u_P3AC4R_func(void)
 	general_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
 		(BYTE *) out1, 64*4, &roi);
 #ifdef WITH_SSE2
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		sse2_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
@@ -96,7 +96,7 @@ STD_SPEED_TEST(
 #ifdef WITH_SSE2
 	TRUE, sse2_RGBToRGB_16s8u_P3AC4R(
 		(const INT16 **) src1, 64*2, (BYTE *) dst, 64*4, &roi64x64),
-		PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+		PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
@@ -175,7 +175,7 @@ int test_yCbCrToRGB_16s16s_P3P3_func(void)
 
 	general_yCbCrToRGB_16s16s_P3P3(in, 64*2, out1, 64*2, &roi);
 #ifdef WITH_SSE2
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		sse2_yCbCrToRGB_16s16s_P3P3(in, 64*2, out2, 64*2, &roi);
@@ -201,7 +201,7 @@ STD_SPEED_TEST(
 	TRUE, general_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
 #ifdef WITH_SSE2
 	TRUE, sse2_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
-		PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+		PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #elif defined(WITH_NEON)
 	TRUE, neon_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
 		PF_ARM_NEON_INSTRUCTIONS_AVAILABLE, FALSE,

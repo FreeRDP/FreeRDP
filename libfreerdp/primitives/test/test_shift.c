@@ -110,7 +110,7 @@ SHIFT_TEST_FUNC(test_rShift_16u_func, UINT16, "rshift_16u", general_rShiftC_16u,
 STD_SPEED_TEST(speed_lShift_16s, INT16, INT16, dst=dst,
     TRUE, general_lShiftC_16s(src1, constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_lShiftC_16s(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_lShiftC_16s(src1, constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
@@ -118,7 +118,7 @@ STD_SPEED_TEST(speed_lShift_16s, INT16, INT16, dst=dst,
 STD_SPEED_TEST(speed_lShift_16u, UINT16, UINT16, dst=dst,
     TRUE, general_lShiftC_16u(src1, constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_lShiftC_16u(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_lShiftC_16u(src1, constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
@@ -126,7 +126,7 @@ STD_SPEED_TEST(speed_lShift_16u, UINT16, UINT16, dst=dst,
 STD_SPEED_TEST(speed_rShift_16s, INT16, INT16, dst=dst,
     TRUE, general_rShiftC_16s(src1, constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_rShiftC_16s(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_rShiftC_16s(src1, constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif
@@ -134,7 +134,7 @@ STD_SPEED_TEST(speed_rShift_16s, INT16, INT16, dst=dst,
 STD_SPEED_TEST(speed_rShift_16u, UINT16, UINT16, dst=dst,
     TRUE, general_rShiftC_16u(src1, constant, dst, size),
 #ifdef WITH_SSE2
-	TRUE, sse2_rShiftC_16u(src1, constant, dst, size), PF_XMMI64_INSTRUCTIONS_AVAILABLE, FALSE,
+	TRUE, sse2_rShiftC_16u(src1, constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
 #else
 	FALSE, PRIM_NOP, 0, FALSE,
 #endif

@@ -546,7 +546,7 @@ pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 void primitives_init_colors_opt(primitives_t* prims)
 {
 #if defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->RGBToRGB_16s8u_P3AC4R  = sse2_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = sse2_yCbCrToRGB_16s16s_P3P3;

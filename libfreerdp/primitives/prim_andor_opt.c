@@ -52,7 +52,7 @@ void primitives_init_andor_opt(primitives_t *prims)
 	prims->andC_32u = (__andC_32u_t) ippsAndC_32u;
 	prims->orC_32u  = (__orC_32u_t) ippsOrC_32u;
 #elif defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
 			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->andC_32u = sse3_andC_32u;

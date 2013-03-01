@@ -208,7 +208,7 @@ void primitives_init_set_opt(primitives_t *prims)
 	prims->set_32u = (__set_32u_t) ipp_wrapper_set_32u;
 	prims->zero = (__zero_t) ippsZero_8u;
 #elif defined(WITH_SSE2)
-	if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->set_8u  = sse2_set_8u;
 		prims->set_32s = sse2_set_32s;
