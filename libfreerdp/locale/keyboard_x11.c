@@ -487,8 +487,6 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 
 	CopyMemory(keycode_to_vkcode, KEYCODE_TO_VKCODE_MACOSX, sizeof(keycode_to_vkcode));
 
-	freerdp_keyboard_load_map(keycode_to_vkcode, "macosx(macosx)");
-
 #elif defined(WITH_SUN)
 	{
 		char sunkeymap[32];
