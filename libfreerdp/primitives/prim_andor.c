@@ -61,14 +61,13 @@ pstatus_t general_orC_32u(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_andor(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	/* Start with the default. */
 	prims->andC_32u = general_andC_32u;
 	prims->orC_32u  = general_orC_32u;
 
-	primitives_init_andor_opt(hints, prims);
+	primitives_init_andor_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

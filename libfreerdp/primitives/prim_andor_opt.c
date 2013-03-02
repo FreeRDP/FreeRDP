@@ -19,6 +19,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -45,14 +46,14 @@ SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, general_orC_32u,
 
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_andor_opt(const primitives_hints_t *hints,	primitives_t *prims)
+void primitives_init_andor_opt(primitives_t *prims)
 {
 #if defined(WITH_IPP)
 	prims->andC_32u = (__andC_32u_t) ippsAndC_32u;
 	prims->orC_32u  = (__orC_32u_t) ippsOrC_32u;
 #elif defined(WITH_SSE2)
-	if ((hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
-			&& (hints->x86_flags & PRIM_X86_SSE3_AVAILABLE))
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
+			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->andC_32u = sse3_andC_32u;
 		prims->orC_32u  = sse3_orC_32u;

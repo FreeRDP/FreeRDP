@@ -111,7 +111,6 @@ pstatus_t general_set_32u(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_set(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	/* Start with the default. */
@@ -120,7 +119,7 @@ void primitives_init_set(
 	prims->set_32u = general_set_32u;
 	prims->zero = general_zero;
 
-	primitives_init_set_opt(hints, prims);
+	primitives_init_set_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

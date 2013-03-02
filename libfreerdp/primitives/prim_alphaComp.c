@@ -102,11 +102,11 @@ pstatus_t general_alphaComp_argb(
 }
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp(const primitives_hints_t* hints, primitives_t* prims)
+void primitives_init_alphaComp(primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
 
-	primitives_init_alphaComp_opt(hints, prims);
+	primitives_init_alphaComp_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

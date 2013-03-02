@@ -238,13 +238,6 @@ RFX_CONTEXT* rfx_context_new(void)
 	return context;
 }
 
-void rfx_context_set_cpu_opt(RFX_CONTEXT* context, UINT32 cpu_opt)
-{
-	/* enable SIMD CPU acceleration if detected */
-	if (cpu_opt & CPU_SSE2)
-		RFX_INIT_SIMD(context);
-}
-
 void rfx_context_free(RFX_CONTEXT* context)
 {
 	free(context->quants);
