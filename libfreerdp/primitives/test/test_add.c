@@ -16,6 +16,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/sysinfo.h>
 #include "prim_test.h"
 
 #define FUNC_TEST_SIZE	65536
@@ -33,9 +34,10 @@ int test_add16s_func(void)
 	INT16 ALIGN(src1[FUNC_TEST_SIZE+3]), ALIGN(src2[FUNC_TEST_SIZE+3]), 
 		ALIGN(d1[FUNC_TEST_SIZE+3]), ALIGN(d2[FUNC_TEST_SIZE+3]);
 	int failed = 0;
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	int i;
+#endif
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(primitives_get());
 
 	testStr[0] = '\0';
 	get_random_data(src1, sizeof(src1));
@@ -43,8 +45,8 @@ int test_add16s_func(void)
 	memset(d1, 0, sizeof(d1));
 	memset(d2, 0, sizeof(d2));
 	general_add_16s(src1+1, src2+1, d1+1, FUNC_TEST_SIZE);
-#ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSE3_AVAILABLE)
+#ifdef WITH_SSE2
+	if(IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
 		/* Aligned */
@@ -70,7 +72,7 @@ int test_add16s_func(void)
 			}
 		}
 	}
-#endif /* i386 */
+#endif
 #ifdef WITH_IPP
 	strcat(testStr, " IPP");
 	ippsAdd_16s(src1+1, src2+1, d2+1, FUNC_TEST_SIZE);
@@ -91,8 +93,11 @@ int test_add16s_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(add16s_speed_test, INT16, INT16, dst=dst,
 	TRUE, general_add_16s(src1, src2, dst, size),
-	TRUE, sse3_add_16s(src1, src2, dst, size), PRIM_X86_SSE3_AVAILABLE,
-	FALSE, dst=dst, 0,
+#ifdef WITH_SSE2
+	TRUE, sse3_add_16s(src1, src2, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsAdd_16s(src1, src2, dst, size));
 
 int test_add16s_speed(void)

@@ -16,6 +16,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/sysinfo.h>
 #include "prim_test.h"
 
 static const int MEMSET8_PRETEST_ITERATIONS = 100000000;
@@ -36,16 +37,17 @@ static const int set_sizes[] = { 1, 4, 16, 32, 64, 256, 1024, 4096 };
 /* ------------------------------------------------------------------------- */
 int test_set8u_func(void)
 {
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	BYTE ALIGN(dest[48]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(primitives_get());
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (pflags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off)
@@ -101,8 +103,7 @@ int test_set8u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set8u_speed_test, BYTE, BYTE, dst=dst,
 	TRUE, memset(dst, constant, size),
-	FALSE, NULL, 0,
-	FALSE, NULL, 0,
+	FALSE, PRIM_NOP, 0, FALSE,
 	TRUE, ippsSet_8u(constant, dst, size));
 
 int test_set8u_speed(void)
@@ -116,17 +117,17 @@ int test_set8u_speed(void)
 /* ------------------------------------------------------------------------- */
 int test_set32s_func(void)
 {
-	primitives_t* prims = primitives_get();
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	INT32 ALIGN(dest[512]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(prims);
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (pflags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off) {
@@ -179,17 +180,17 @@ int test_set32s_func(void)
 /* ------------------------------------------------------------------------- */
 int test_set32u_func(void)
 {
-	primitives_t* prims = primitives_get();
+#if defined(WITH_SSE2) || defined(WITH_IPP)
 	UINT32 ALIGN(dest[512]);
-	int failed = 0;
 	int off;
+#endif
+	int failed = 0;
 	char testStr[256];
-	UINT32 pflags = primitives_get_flags(prims);
 	testStr[0] = '\0';
 
-#ifdef _M_IX86_AMD64
+#ifdef WITH_SSE2
 	/* Test SSE under various alignments */
-	if (pflags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE2");
 		for (off=0; off<16; ++off) {
@@ -251,8 +252,11 @@ static inline void memset32u_naive(
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, memset32u_naive(constant, dst, size),
-	TRUE, sse2_set_32u(constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+#ifdef WITH_SSE2
+	TRUE, sse2_set_32u(constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ipp_wrapper_set_32u(constant, dst, size));
 
 int test_set32u_speed(void)
@@ -280,8 +284,11 @@ static inline void memset32s_naive(
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(set32s_speed_test, INT32, INT32, dst=dst,
 	TRUE, memset32s_naive(constant, dst, size),
-	TRUE, sse2_set_32s(constant, dst, size), PRIM_X86_SSE2_AVAILABLE,
-	FALSE, dst=dst, 0,
+#ifdef WITH_SSE2
+	TRUE, sse2_set_32s(constant, dst, size), PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsSet_32s(constant, dst, size));
 
 int test_set32s_speed(void)

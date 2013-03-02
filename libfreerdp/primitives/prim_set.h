@@ -28,7 +28,7 @@ pstatus_t general_set_32s(INT32 val, INT32 *pDst, INT32 len);
 pstatus_t general_set_32u(UINT32 val, UINT32 *pDst, INT32 len);
 
 
-void primitives_init_set_opt(const primitives_hints_t *hints, primitives_t *prims);
+void primitives_init_set_opt(primitives_t *prims);
 
 #endif /* !__PRIM_SET_H_INCLUDED__ */
 

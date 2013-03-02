@@ -34,61 +34,43 @@
 		? _mm_lddqu_si128((__m128i *) (_ptr_)) \
 		: _mm_load_si128((__m128i *) (_ptr_)))
 
-/* This structure can (eventually) be used to provide hints to the
- * initialization routines, e.g. whether SSE2 or NEON or IPP instructions
- * or calls are available.
- */
-typedef struct
-{
-	UINT32 x86_flags;
-	UINT32 arm_flags;
-} primitives_hints_t;
-
 /* Function prototypes for all the init/deinit routines. */
 extern void primitives_init_copy(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_copy(
 	primitives_t *prims);
 
 extern void primitives_init_set(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_set(
 	primitives_t *prims);
 
 extern void primitives_init_add(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_add(
 	primitives_t *prims);
 
 extern void primitives_init_andor(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_andor(
 	primitives_t *prims);
 
 extern void primitives_init_shift(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_shift(
 	primitives_t *prims);
 
 extern void primitives_init_sign(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_sign(
 	primitives_t *prims);
 
 extern void primitives_init_alphaComp(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_alphaComp(
 	primitives_t *prims);
 
 extern void primitives_init_colors(
-	const primitives_hints_t *hints,
 	primitives_t *prims);
 extern void primitives_deinit_colors(
 	primitives_t *prims);

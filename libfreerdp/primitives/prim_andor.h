@@ -25,7 +25,7 @@
 pstatus_t general_andC_32u(const UINT32 *pSrc, UINT32 val, UINT32 *pDst, INT32 len);
 pstatus_t general_orC_32u(const UINT32 *pSrc, UINT32 val, UINT32 *pDst, INT32 len);
 
-void primitives_init_andor_opt(const primitives_hints_t *hints,	primitives_t *prims);
+void primitives_init_andor_opt(primitives_t *prims);
 
 #endif /* !__PRIM_ANDOR_H_INCLUDED__ */
 

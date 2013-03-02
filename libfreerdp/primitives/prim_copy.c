@@ -148,7 +148,6 @@ static pstatus_t ippiCopy_8u_AC4r(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	/* Start with the default. */
