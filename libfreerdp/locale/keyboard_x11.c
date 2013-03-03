@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/input.h>
 
 #include "liblocale.h"
 
@@ -471,9 +472,9 @@ const DWORD KEYCODE_TO_VKCODE_MACOSX[256] =
 
 UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
 {
-	UINT32 vkcode;
-	UINT32 keycode;
-	UINT32 keycode_to_vkcode[256];
+	DWORD vkcode;
+	DWORD keycode;
+	DWORD keycode_to_vkcode[256];
 
 	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
 	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
@@ -517,5 +518,15 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 	}
 #endif
 
+	for (keycode = 0; keycode < 256; keycode++)
+	{
+		vkcode = keycode_to_vkcode[keycode];
+		
+		if (vkcode >= 0xFF)
+			continue;
+		
+		x11_keycode_to_rdp_scancode[keycode] = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	}
+	
 	return keyboardLayoutId;
 }
