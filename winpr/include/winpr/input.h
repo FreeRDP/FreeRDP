@@ -23,6 +23,19 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+/**
+ * Key Flags
+ */
+
+#define KBDEXT		(USHORT) 0x0100
+#define KBDMULTIVK	(USHORT) 0x0200
+#define KBDSPECIAL	(USHORT) 0x0400
+#define KBDNUMPAD	(USHORT) 0x0800
+#define KBDUNICODE	(USHORT) 0x1000
+#define KBDINJECTEDVK	(USHORT) 0x2000
+#define KBDMAPPEDVK	(USHORT) 0x4000
+#define KBDBREAK	(USHORT) 0x8000
+
 /*
  * Virtual Key Codes (Windows):
  * http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731/
@@ -687,5 +700,15 @@
 #define KBD7_XF2		VK_NONE			/* NE */
 
 #define KBD7_Y1D		VK_PAUSE
+
+/**
+ * Functions
+ */
+
+WINPR_API char* GetVirtualKeyName(DWORD vkcode);
+WINPR_API DWORD GetVirtualKeyCodeFromName(const char* vkname);
+
+WINPR_API DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType);
+WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType);
 
 #endif /* WINPR_INPUT_H */

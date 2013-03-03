@@ -44,8 +44,6 @@
 UINT32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
 RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
 
-extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
-
 UINT32 freerdp_detect_keyboard(UINT32 keyboardLayoutID)
 {
 	if (keyboardLayoutID != 0)
@@ -81,11 +79,14 @@ UINT32 freerdp_keyboard_init(UINT32 keyboardLayoutId)
 #endif
 	keyboardLayoutId = freerdp_detect_keyboard(keyboardLayoutId);
 
-	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
-	for (keycode=0; keycode < ARRAYSIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+	ZeroMemory(RDP_SCANCODE_TO_X11_KEYCODE, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+
+	for (keycode = 0; keycode < ARRAYSIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+	{
 		RDP_SCANCODE_TO_X11_KEYCODE
 			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode])]
 			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? 1 : 0] = keycode;
+	}
 
 	return keyboardLayoutId;
 }
@@ -105,9 +106,4 @@ UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL 
 		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][1];
 	else
 		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][0];
-}
-
-RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(UINT32 vkcode)
-{
-	return VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
 }

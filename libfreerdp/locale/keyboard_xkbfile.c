@@ -286,14 +286,15 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, RDP_SCANCODE x11_keyco
 			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
 			{
 				found = FALSE;
-				memcpy(xkb_keyname, xkb->names->keys[i].name, 4);
+				CopyMemory(xkb_keyname, xkb->names->keys[i].name, 4);
 
 				if (strlen(xkb_keyname) < 1)
 					continue;
 
+				printf("XKB KeyName: %s\n", xkb_keyname);
+
 				for (j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
 				{
-
 					if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
 					{
 						DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%04X",

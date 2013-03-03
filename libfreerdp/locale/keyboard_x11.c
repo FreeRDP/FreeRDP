@@ -39,10 +39,6 @@
 #include "keyboard_sun.h"
 #endif
 
-
-extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
-
-
 UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
 {
 	char* pch;
@@ -67,9 +63,9 @@ UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 	 * "multi" the keyboard layout variant
 	 */
 
-	while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
 	{
-		if((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
+		if ((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
 		{
 			/* "rules" */
 			pch = strchr(&buffer[34], ','); // We assume it is xorg
@@ -113,9 +109,9 @@ UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 
 	xprop = popen("xprop -root _XKB_RULES_NAMES", "r");
 
-	while(fgets(buffer, sizeof(buffer), xprop) != NULL)
+	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
 	{
-		if((pch = strstr(buffer, "_XKB_RULES_NAMES(STRING) = ")) != NULL)
+		if ((pch = strstr(buffer, "_XKB_RULES_NAMES(STRING) = ")) != NULL)
 		{
 			/* "rules" */
 			pch = strchr(&buffer[27], ','); // We assume it is xorg
@@ -211,7 +207,7 @@ char* freerdp_detect_keymap_from_xkb()
 
 #ifdef __APPLE__
 
-const UINT32 KEYCODE_TO_VKCODE_MACOSX[256] =
+const DWORD KEYCODE_TO_VKCODE_MACOSX[256] =
 {
 	0, /* 0 */
 	0, /* 1 */
@@ -503,32 +499,23 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 		if (keyboardLayoutId == 0)
 		{
 			keyboardLayoutId = freerdp_detect_keyboard_layout_from_xkb(&xkb_layout, &xkb_variant);
+
 			if (xkb_layout)
 				free(xkb_layout);
+
 			if (xkb_variant)
 				free(xkb_variant);
-
 		}
 
 		keymap = freerdp_detect_keymap_from_xkb();
 
-		if (keymap != NULL)
+		if (keymap)
 		{
 			freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
 			free(keymap);
 		}
 	}
 #endif
-
-	for (keycode = 0; keycode < 256; keycode++)
-	{
-		vkcode = keycode_to_vkcode[keycode];
-
-		if (!(vkcode > 0 && vkcode < 256))
-			continue;
-
-		x11_keycode_to_rdp_scancode[keycode] = VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
-	}
 
 	return keyboardLayoutId;
 }

@@ -19,7 +19,6 @@ set(MODULE_NAME "freerdp-locale")
 set(MODULE_PREFIX "FREERDP_LOCALE")
 
 set(${MODULE_PREFIX}_SRCS
-	virtual_key_codes.c
 	keyboard_layout.c
 	keyboard.c
 	locale.c
@@ -87,7 +86,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt)
+	MODULES winpr-input winpr-crt)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

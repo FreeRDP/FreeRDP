@@ -20,10 +20,11 @@
 #ifndef FREERDP_LOCALE_KEYBOARD_H
 #define FREERDP_LOCALE_KEYBOARD_H
 
+#include <winpr/input.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/scancode.h>
-#include <freerdp/locale/vkcodes.h>
 
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD   1
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT    2
@@ -203,6 +204,5 @@ FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types);
 FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutId);
 FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT32 keycode);
 FREERDP_API UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL extended);
-FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(UINT32 vkcode);
 
 #endif /* FREERDP_LOCALE_KEYBOARD_H */
