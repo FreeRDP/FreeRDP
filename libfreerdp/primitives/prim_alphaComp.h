@@ -24,7 +24,7 @@
 
 pstatus_t general_alphaComp_argb(const BYTE *pSrc1, INT32 src1Step, const BYTE *pSrc2, INT32 src2Step, BYTE *pDst, INT32 dstStep, INT32 width, INT32 height);
 
-void primitives_init_alphaComp_opt(const primitives_hints_t* hints, primitives_t* prims);
+void primitives_init_alphaComp_opt(primitives_t* prims);
 
 #endif /* !__PRIM_ALPHACOMP_H_INCLUDED__ */
 

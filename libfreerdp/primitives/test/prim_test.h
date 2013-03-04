@@ -29,6 +29,7 @@
 #include <stdio.h>
 
 #include <freerdp/primitives.h>
+#include <winpr/platform.h>
 
 #ifdef WITH_IPP
 #include <ipps.h>
@@ -100,7 +101,7 @@ extern int test_or_32u_speed(void);
 /* Since so much of this code is repeated, define a macro to build 
  * functions to do speed tests.
  */
-#ifdef armel
+#ifdef _M_ARM
 #define SIMD_TYPE "Neon"
 #else
 #define SIMD_TYPE "SSE"
@@ -121,8 +122,8 @@ extern int test_or_32u_speed(void);
 		} \
 	} while (0)
 
-#if defined(i386) && defined(WITH_SSE2)
-#define DO_SSE_MEASUREMENTS(_funcSSE_, _prework_) \
+#if (defined(_M_IX86_AMD64) && defined(WITH_SSE2)) || (defined(_M_ARM) && defined(WITH_NEON))
+#define DO_OPT_MEASUREMENTS(_funcOpt_, _prework_) \
 	do { \
 		for (s=0; s<num_sizes; ++s) \
 		{ \
@@ -132,34 +133,15 @@ extern int test_or_32u_speed(void);
 			_prework_; \
 			iter = iterations/size; \
 			sprintf(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
-			MEASURE_TIMED(label, iter, test_time, resultSSENeon[s],  \
-				_funcSSE_); \
+			MEASURE_TIMED(label, iter, test_time, resultOpt[s],  \
+				_funcOpt_); \
 		} \
 	} while (0)
 #else
-#define DO_SSE_MEASUREMENTS(_funcSSE_, _prework_)
+#define DO_OPT_MEASUREMENTS(_funcSSE_, _prework_)
 #endif
 
-#if defined(armel) && defined(INCLUDE_NEON_MEASUREMENTS)
-#define DO_NEON_MEASUREMENTS(_funcNeon_, _prework_) \
-	do { \
-		for (s=0; s<num_sizes; ++s) \
-		{ \
-			int iter; \
-			char label[256]; \
-			int size = size_array[s]; \
-			_prework_; \
-			iter = iterations/size; \
-			sprintf(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
-			MEASURE_TIMED(label, iter, test_time, resultSSENeon[s],  \
-				_funcNeon_); \
-		} \
-	} while (0)
-#else
-#define DO_NEON_MEASUREMENTS(_funcNeon_, _prework_)
-#endif
-
-#if defined(i386) && defined(WITH_IPP)
+#if defined(_M_IX86_AMD64) && defined(WITH_IPP)
 #define DO_IPP_MEASUREMENTS(_funcIPP_, _prework_) \
 	do { \
 		for (s=0; s<num_sizes; ++s) \
@@ -178,12 +160,12 @@ extern int test_or_32u_speed(void);
 #define DO_IPP_MEASUREMENTS(_funcIPP_, _prework_)
 #endif
 
+#define PRIM_NOP do {} while (0)
 /* ------------------------------------------------------------------------- */
 #define STD_SPEED_TEST( \
 	_name_, _srctype_, _dsttype_, _prework_, \
 	_doNormal_, _funcNormal_, \
-	_doSSE_,    _funcSSE_,  _flagsSSE_, \
-	_doNeon_,   _funcNeon_, _flagsNeon_, \
+	_doOpt_,    _funcOpt_,  _flagOpt_, _flagExt_, \
 	_doIPP_,    _funcIPP_) \
 static void _name_( \
 	const char *oplabel, const char *type, \
@@ -193,24 +175,28 @@ static void _name_( \
 	int iterations, float test_time) \
 { \
 	int s; \
-	float *resultNormal, *resultSSENeon, *resultIPP; \
-	UINT32 pflags = primitives_get_flags(primitives_get()); \
+	float *resultNormal, *resultOpt, *resultIPP; \
 	resultNormal = (float *) calloc(num_sizes, sizeof(float)); \
-	resultSSENeon = (float *) calloc(num_sizes, sizeof(float)); \
+	resultOpt = (float *) calloc(num_sizes, sizeof(float)); \
 	resultIPP = (float *) calloc(num_sizes, sizeof(float)); \
 	printf("******************** %s %s ******************\n",  \
 		oplabel, type); \
 	if (_doNormal_) { DO_NORMAL_MEASUREMENTS(_funcNormal_, _prework_); } \
-	if (_doSSE_) { \
-		if ((pflags & (_flagsSSE_)) == (_flagsSSE_)) \
+	if (_doOpt_)  \
+	{ \
+		if (_flagExt_) \
 		{ \
-			DO_SSE_MEASUREMENTS(_funcSSE_, _prework_); \
+			if (IsProcessorFeaturePresentEx(_flagOpt_)) \
+			{ \
+				DO_OPT_MEASUREMENTS(_funcOpt_, _prework_); \
+			} \
 		} \
-	} \
-	if (_doNeon_) { \
-		if ((pflags & (_flagsNeon_)) == (_flagsNeon_)) \
+		else \
 		{ \
-			DO_NEON_MEASUREMENTS(_funcNeon_, _prework_); \
+			if (IsProcessorFeaturePresent(_flagOpt_)) \
+			{ \
+				DO_OPT_MEASUREMENTS(_funcOpt_, _prework_); \
+			} \
 		} \
 	} \
 	if (_doIPP_)    { DO_IPP_MEASUREMENTS(_funcIPP_, _prework_); } \
@@ -223,13 +209,13 @@ static void _name_( \
 		strcpy(sN, "N/A"); strcpy(sSN, "N/A"); strcpy(sSNp, "N/A"); \
 		strcpy(sIPP, "N/A"); strcpy(sIPPp, "N/A"); \
 		if (resultNormal[s] > 0.0) _floatprint(resultNormal[s], sN); \
-		if (resultSSENeon[s] > 0.0) \
+		if (resultOpt[s] > 0.0) \
 		{ \
-			_floatprint(resultSSENeon[s], sSN); \
+			_floatprint(resultOpt[s], sSN); \
 			if (resultNormal[s] > 0.0) \
 			{ \
 				sprintf(sSNp, "%d%%", \
-					(int) (resultSSENeon[s] / resultNormal[s] * 100.0 + 0.5)); \
+					(int) (resultOpt[s] / resultNormal[s] * 100.0 + 0.5)); \
 			} \
 		} \
 		if (resultIPP[s] > 0.0) \
@@ -244,7 +230,7 @@ static void _name_( \
 		printf("%8d: %15s %15s %5s %15s %5s\n",  \
 			size_array[s], sN, sSN, sSNp, sIPP, sIPPp); \
 	} \
-	free(resultNormal); free(resultSSENeon);  free(resultIPP); \
+	free(resultNormal); free(resultOpt);  free(resultIPP); \
 }
 
 #endif // !__PRIMTEST_H_INCLUDED__

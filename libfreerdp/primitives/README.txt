@@ -62,10 +62,7 @@ New Optimizations
 -----------------
 As the need arises, new optimizations can be added to the library,
 including NEON, AVX, and perhaps OpenCL or other SIMD implementations.
-The initialization routine is free to do any quick run-time test to
-determine which features are available before hooking the operation's
-function pointer, or it can simply look at the processor features list
-from the hints passed to the initialization routine.
+The CPU feature detection is done in winpr/sysinfo.
 
 
 Adding Entrypoints
@@ -84,15 +81,6 @@ be added.
      such as applying a single SSE operation to arrays of data.
      The template functions can frequently be used to extend the
      operations without writing a lot of new code.
-
-
-Flags
------
-The entrypoint primitives_get_flags() returns a bitfield of processor flags
-(as defined in primitives.h) and primitives_flag_str() returns a string
-related to those processor flags, for debugging and information.  The
-bitfield can be used elsewhere in the code as needed.
-
 
 Cache Management
 ----------------

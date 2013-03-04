@@ -391,7 +391,7 @@ void xf_create_window(xfInfo* xfi)
 	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
 	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
 	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
-	xfi->attribs.override_redirect = xfi->fullscreen;
+	xfi->attribs.override_redirect = xfi->grab_keyboard ? xfi->fullscreen : False;
 	xfi->attribs.colormap = xfi->colormap;
 	xfi->attribs.bit_gravity = NorthWestGravity;
 	xfi->attribs.win_gravity = NorthWestGravity;
@@ -753,53 +753,13 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->decorations = settings->Decorations;
 	xfi->fullscreen = settings->Fullscreen;
 	xfi->grab_keyboard = settings->GrabKeyboard;
-	xfi->fullscreen_toggle = TRUE;
+	xfi->fullscreen_toggle = settings->ToggleFullscreen;
 	xfi->sw_gdi = settings->SoftwareGdi;
 	xfi->parent_window = (Window) settings->ParentWindowId;
 
 	xf_detect_monitors(xfi, settings);
 
 	return TRUE;
-}
-
-void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
-{
-#ifdef __GNUC__
-#if defined(__i386__) || defined(__x86_64__)
-	__asm volatile
-	(
-		/* The EBX (or RBX register on x86_64) is used for the PIC base address
-		   and must not be corrupted by our inline assembly. */
-#if defined(__i386__)
-		"mov %%ebx, %%esi;"
-		"cpuid;"
-		"xchg %%ebx, %%esi;"
-#else
-		"mov %%rbx, %%rsi;"
-		"cpuid;"
-		"xchg %%rbx, %%rsi;"
-#endif
-		: "=a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
-		: "0" (info)
-	);
-#endif
-#endif
-}
-
-UINT32 xf_detect_cpu()
-{
-	unsigned int eax, ebx, ecx, edx = 0;
-	UINT32 cpu_opt = 0;
-
-	cpuid(1, &eax, &ebx, &ecx, &edx);
-
-	if (edx & (1<<26)) 
-	{
-		DEBUG_MSG("SSE2 detected");
-		cpu_opt |= CPU_SSE2;
-	}
-
-	return cpu_opt;
 }
 
 /**
@@ -809,9 +769,6 @@ UINT32 xf_detect_cpu()
  */
 BOOL xf_post_connect(freerdp* instance)
 {
-#ifdef WITH_SSE2
-	UINT32 cpu;
-#endif
 	xfInfo* xfi;
 	XGCValues gcv;
 	rdpCache* cache;
@@ -865,15 +822,6 @@ BOOL xf_post_connect(freerdp* instance)
 			xfi->nsc_context = nsc_context;
 		}
 	}
-
-#ifdef WITH_SSE2
-	/* detect only if needed */
-	cpu = xf_detect_cpu();
-	if (rfx_context)
-		rfx_context_set_cpu_opt(rfx_context, cpu);
-	if (nsc_context)
-		nsc_context_set_cpu_opt(nsc_context, cpu);
-#endif
 
 	xfi->width = instance->settings->DesktopWidth;
 	xfi->height = instance->settings->DesktopHeight;

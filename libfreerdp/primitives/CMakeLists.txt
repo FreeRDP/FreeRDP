@@ -63,15 +63,6 @@ elseif(WITH_NEON)
 	# TODO: Add MSVC equivalent
 endif()
 
-# required for android cpu detection
-if(ANDROID)
-	set(ANDROID_CPU_FEATURES_PATH "${ANDROID_NDK}/sources/android/cpufeatures")
-	include_directories(${ANDROID_CPU_FEATURES_PATH})
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
-		${ANDROID_CPU_FEATURES_PATH}/cpu-features.c
-		${ANDROID_CPU_FEATURES_PATH}/cpu-features.h)
-endif()
-
 set_property(SOURCE ${${MODULE_PREFIX}_OPT_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_OPT_SRCS})
@@ -91,6 +82,11 @@ if(IPP_FOUND)
 	endforeach()
 endif()
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+       MONOLITHIC ${MONOLITHIC_BUILD}
+       MODULE winpr
+       MODULES winpr-sysinfo)
+	   
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()

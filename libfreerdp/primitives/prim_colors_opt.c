@@ -23,6 +23,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2
 #include <emmintrin.h>
@@ -542,17 +543,17 @@ pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_colors_opt(const primitives_hints_t* hints, primitives_t* prims)
+void primitives_init_colors_opt(primitives_t* prims)
 {
 #if defined(WITH_SSE2)
-	if (hints->x86_flags & PRIM_X86_SSE2_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->RGBToRGB_16s8u_P3AC4R  = sse2_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = sse2_yCbCrToRGB_16s16s_P3P3;
 		prims->RGBToYCbCr_16s16s_P3P3 = sse2_RGBToYCbCr_16s16s_P3P3;
 	}
 #elif defined(WITH_NEON)
-	if (hints->arm_flags & PRIM_ARM_NEON_AVAILABLE)
+	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
 	}

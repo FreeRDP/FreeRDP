@@ -81,7 +81,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
 						//printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
-						WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+						//WaitForSingleObject(wfi->updateSemaphore, INFINITE);
+						WaitForSingleObject(wfi->updateSemaphore, 1000);
 					}
 
 					//printf("End of parallel sending\n");
@@ -202,7 +203,6 @@ void wf_update_encoder_reset(wfInfo* wfi)
 			wfi->rfx_context->width = wfi->servscreen_width;
 			wfi->rfx_context->height = wfi->servscreen_height;
 			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			rfx_context_set_cpu_opt(wfi->rfx_context, CPU_SSE2);
 			wfi->s = stream_new(0xFFFF);
 		}
 

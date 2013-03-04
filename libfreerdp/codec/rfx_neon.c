@@ -27,13 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arm_neon.h>
+#include <winpr/sysinfo.h>
 
 #include "rfx_types.h"
 #include "rfx_neon.h"
-
-#if ANDROID
-#include "cpu-features.h"
-#endif
 
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
@@ -252,43 +249,9 @@ void rfx_dwt_2d_decode_NEON(INT16 * buffer, INT16 * dwt_buffer)
 	rfx_dwt_2d_decode_block_NEON(buffer, dwt_buffer, 32);
 }
 
-int isNeonSupported()
-{
-#if ANDROID
-	if (android_getCpuFamily() != ANDROID_CPU_FAMILY_ARM)
-	{
-		DEBUG_RFX("NEON optimization disabled - No ARM CPU found");
-		return 0;
-	}
-
-	UINT64 features = android_getCpuFeatures();
-
-	if ((features & ANDROID_CPU_ARM_FEATURE_ARMv7))
-	{
-		if (features & ANDROID_CPU_ARM_FEATURE_NEON)
-		{
-			DEBUG_RFX("NEON optimization enabled!");
-			return FALSE;
-		}
-		DEBUG_RFX("NEON optimization disabled - CPU not NEON capable");
-	}
-	else
-	{
-		DEBUG_RFX("NEON optimization disabled - No ARMv7 CPU found");
-	}
-
-	return FALSE;
-#elif defined(__APPLE)
-	/* assume NEON support on iOS devices */
-	return TRUE;
-#else
-	return FALSE;
-#endif
-}
-
 void rfx_init_neon(RFX_CONTEXT * context)
 {
-	if (isNeonSupported())
+	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
 		DEBUG_RFX("Using NEON optimizations");
 

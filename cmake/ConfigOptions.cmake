@@ -9,7 +9,6 @@ endif()
 
 option(WITH_MANPAGES "Generate manpages." ON)
 option(WITH_PROFILER "Compile profiler." OFF)
-option(WITH_IPP "Use Intel Performance Primitives." OFF)
 
 if((TARGET_ARCH MATCHES "x86|x64") AND (NOT DEFINED WITH_SSE2))
 	option(WITH_SSE2 "Enable SSE2 optimization." ON)
@@ -29,8 +28,11 @@ if(TARGET_ARCH MATCHES "ARM")
 		set(ARM_FP_ABI ${ARM_FP_API} CACHE STRING "Floating point ABI to use on arm")
 	endif()
 	mark_as_advanced(ARM_FP_ABI)
+else()
+	if(NOT APPLE)
+		option(WITH_IPP "Use Intel Performance Primitives." OFF)
+	endif()
 endif()
-
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
 if(APPLE)

@@ -190,9 +190,6 @@ typedef struct
 	__yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
 	__RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
 	__RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
-
-	/* internal use for CPU flags and such. */
-	void *hints;
 } primitives_t;
 
 #ifdef __cplusplus
@@ -202,12 +199,6 @@ extern "C" {
 /* Prototypes for the externally-visible entrypoints. */
 FREERDP_API void primitives_init(void);
 FREERDP_API primitives_t *primitives_get(void);
-FREERDP_API UINT32 primitives_get_flags(
-	const primitives_t *prims);
-FREERDP_API void primitives_flags_str(
-	const primitives_t *prims,
-	char *str,
-	size_t len);
 FREERDP_API void primitives_deinit(void);
 
 #ifdef __cplusplus

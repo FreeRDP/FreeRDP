@@ -104,7 +104,6 @@ pstatus_t general_shiftC_16u(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_shift(
-	const primitives_hints_t *hints,
 	primitives_t *prims)
 {
 	/* Start with the default. */
@@ -117,7 +116,7 @@ void primitives_init_shift(
 	prims->shiftC_16s  = general_shiftC_16s;
 	prims->shiftC_16u  = general_shiftC_16u;
 
-	primitives_init_shift_opt(hints, prims);
+	primitives_init_shift_opt(prims);
 }
 
 /* ------------------------------------------------------------------------- */

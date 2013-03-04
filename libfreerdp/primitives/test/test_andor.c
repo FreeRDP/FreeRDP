@@ -15,6 +15,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <winpr/sysinfo.h>
 
 #include "prim_test.h"
 
@@ -39,7 +40,6 @@ int test_and_32u_func(void)
 	UINT32 ALIGN(src[FUNC_TEST_SIZE+3]), ALIGN(dst[FUNC_TEST_SIZE+3]);
 	int failed = 0;
 	int i;
-	UINT32 pflags = primitives_get_flags(primitives_get());
 	char testStr[256];
 
 	testStr[0] = '\0';
@@ -55,8 +55,8 @@ int test_and_32u_func(void)
 			++failed;
 		}
 	}
-#ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSE3_AVAILABLE)
+#ifdef WITH_SSE2
+	if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
 		/* Aligned */
@@ -92,8 +92,11 @@ int test_and_32u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(andC_32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, general_andC_32u(src1, constant, dst, size),
-	TRUE, sse3_andC_32u(src1, constant, dst, size), PRIM_X86_SSE3_AVAILABLE,
-	FALSE, dst=dst, 0,
+#ifdef WITH_SSE2
+	TRUE, sse3_andC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsAndC_32u(src1, constant, dst, size))
 
 int test_and_32u_speed(void)
@@ -113,7 +116,6 @@ int test_or_32u_func(void)
 	UINT32 ALIGN(src[FUNC_TEST_SIZE+3]), ALIGN(dst[FUNC_TEST_SIZE+3]);
 	int failed = 0;
 	int i;
-	UINT32 pflags = primitives_get_flags(primitives_get());
 	char testStr[256];
 
 	testStr[0] = '\0';
@@ -129,8 +131,8 @@ int test_or_32u_func(void)
 		++failed;
 		}
 	}
-#ifdef _M_IX86_AMD64
-	if (pflags & PRIM_X86_SSE3_AVAILABLE)
+#ifdef WITH_SSE2
+	if(IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
 		/* Aligned */
@@ -166,8 +168,11 @@ int test_or_32u_func(void)
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(orC_32u_speed_test, UINT32, UINT32, dst=dst,
 	TRUE, general_orC_32u(src1, constant, dst, size),
-	TRUE, sse3_orC_32u(src1, constant, dst, size), PRIM_X86_SSE3_AVAILABLE,
-	FALSE, dst=dst, 0,
+#ifdef WITH_SSE2
+	TRUE, sse3_orC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
+#else
+	FALSE, PRIM_NOP, 0, FALSE,
+#endif
 	TRUE, ippsOrC_32u(src1, constant, dst, size))
 
 int test_or_32u_speed(void)

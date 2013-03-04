@@ -26,7 +26,7 @@ pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3], INT32 srcStep, IN
 pstatus_t general_RGBToYCbCr_16s16s_P3P3(const INT16 *pSrc[3], INT32 srcStep, INT16 *pDst[3], INT32 dstStep, const prim_size_t *roi);
 pstatus_t general_RGBToRGB_16s8u_P3AC4R(const INT16 *pSrc[3], int srcStep, BYTE *pDst, int dstStep, const prim_size_t *roi);
 
-void primitives_init_colors_opt(const primitives_hints_t* hints, primitives_t* prims);
+void primitives_init_colors_opt(primitives_t* prims);
 
 #endif /* !__PRIM_COLORS_H_INCLUDED__ */
 

@@ -128,10 +128,17 @@ typedef VOID (*PTP_WORK_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
 typedef VOID (*PTP_TIMER_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_TIMER Timer);
 typedef VOID (*PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WAIT Wait, TP_WAIT_RESULT WaitResult);
 
+#endif
+
+
+/* Non-Windows and pre Vista */
+#if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)))
+
 typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PVOID Overlapped,
-		ULONG IoResult, ULONG_PTR NumberOfBytesTransferred, PTP_IO Io);
+	ULONG IoResult, ULONG_PTR NumberOfBytesTransferred, PTP_IO Io);
 
 #endif
+
 
 /* Synch */
 

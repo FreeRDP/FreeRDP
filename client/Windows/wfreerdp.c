@@ -306,44 +306,6 @@ BOOL wf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-void cpuid(unsigned info, unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
-{
-#if defined(__GNUC__)
-#if defined(__i386__) || defined(__x86_64__)
-	*eax = info;
-	__asm volatile
-		("mov %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
-		 "cpuid;"
-		 "mov %%ebx, %%esi;"
-		 "mov %%edi, %%ebx;"
-		 :"+a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
-		 : :"edi");
-#endif
-#elif defined(_MSC_VER)
-	int a[4];
-	__cpuid(a, info);
-	*eax = a[0];
-	*ebx = a[1];
-	*ecx = a[2];
-	*edx = a[3];
-#endif
-}
- 
-UINT32 wfi_detect_cpu()
-{
-	UINT32 cpu_opt = 0;
-	unsigned int eax, ebx, ecx, edx = 0;
-
-	cpuid(1, &eax, &ebx, &ecx, &edx);
-
-	if (edx & (1<<26))
-	{
-		cpu_opt |= CPU_SSE2;
-	}
-
-	return cpu_opt;
-}
-
 BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -368,8 +330,6 @@ BOOL wf_post_connect(freerdp* instance)
 		gdi = instance->context->gdi;
 		wfi->hdc = gdi->primary->hdc;
 		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, gdi->primary_buffer);
-
-		rfx_context_set_cpu_opt((RFX_CONTEXT*) gdi->rfx_context, wfi_detect_cpu());
 	}
 	else
 	{
@@ -396,7 +356,6 @@ BOOL wf_post_connect(freerdp* instance)
 		{
 			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);
 			wfi->rfx_context = rfx_context_new();
-			rfx_context_set_cpu_opt(wfi->rfx_context, wfi_detect_cpu());
 		}
 
 		if (settings->NSCodec)
