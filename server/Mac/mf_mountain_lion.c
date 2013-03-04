@@ -160,15 +160,26 @@ int mf_mlion_screen_updates_init()
 	
 	localBuf = malloc(pixelWidth * pixelHeight * 4);
 	
+	CFDictionaryRef opts;
+	
+	void * keys[2];
+	void * values[2];
+	
+	keys[0] = (void *) kCGDisplayStreamShowCursor;
+	values[0] = (void *) kCFBooleanFalse;
+	
+	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 1, NULL, NULL);
+	
 	
 	stream = CGDisplayStreamCreateWithDispatchQueue(display_id,
 							pixelWidth,
 							pixelHeight,
 							'BGRA',
-							NULL,
+							opts,
 							screen_update_q,
 							streamHandler);
 	
+	CFRelease(opts);
 	
 	return 0;
 	
