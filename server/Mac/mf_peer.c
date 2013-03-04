@@ -180,7 +180,6 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-	rfx_context_set_cpu_opt(context->rfx_context, CPU_SSE2);
 	
 	//context->nsc_context = nsc_context_new();
 	//nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
