@@ -338,12 +338,12 @@ DWORD GetTickCount(void)
 
 	return ticks;
 }
+#endif // _WIN32
 
-/* If x86 and gcc*/
+/* If x86 */
 #ifdef _M_IX86_AMD64
-#ifdef __GNUC__
 
-#ifdef __AVX__
+#if defined(__GNUC__) && defined(__AVX__)
 #define xgetbv(_func_, _lo_, _hi_) \
     __asm__ __volatile__ ("xgetbv" : "=a" (_lo_), "=d" (_hi_) : "c" (_func_))
 #endif
@@ -373,6 +373,7 @@ static void cpuid(
     unsigned *ecx,
     unsigned *edx)
 {
+#ifdef __GNUC__
     *eax = *ebx = *ecx = *edx = 0;
 
     __asm volatile
@@ -392,8 +393,16 @@ static void cpuid(
         : "=a" (*eax), "=S" (*ebx), "=c" (*ecx), "=d" (*edx)
         : "0" (info)
     );
+
+#elif defined(_MSC_VER)
+	int a[4];
+	__cpuid(a, info);
+	*eax = a[0];
+	*ebx = a[1];
+	*ecx = a[2];
+	*edx = a[3];
+#endif
 }
-#endif // __GNUC__
 #elif defined(_M_ARM)
 #if defined(__linux__)
 // HWCAP flags from linux kernel - uapi/asm/hwcap.h
@@ -452,6 +461,8 @@ static unsigned GetARMCPUCaps(void){
 
 #endif // defined(__linux__)
 #endif // _M_IX86_AMD64
+
+#ifndef _WIN32
 
 BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 {
@@ -609,7 +620,7 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 			if (c & C_BIT_SSE42)
 				ret = TRUE;
 			break;
-#ifdef __AVX__
+#if defined(__GNUC__) && defined(__AVX__)
 		case PF_EX_AVX:
 		case PF_EX_FMA:
 		case PF_EX_AVX_AES:
