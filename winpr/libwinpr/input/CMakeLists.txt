@@ -19,7 +19,9 @@ set(MODULE_NAME "winpr-input")
 set(MODULE_PREFIX "WINPR_INPUT")
 
 set(${MODULE_PREFIX}_SRCS
-	keyboard.c)
+	virtualkey.c
+	scancode.c
+	keycode.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
