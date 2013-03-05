@@ -48,6 +48,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 		RFX_RECT rect;
 		unsigned long offset_beg;
 		unsigned long stride;
+		int i;
 		
 		rect.x = 0;
 		rect.y = 0;
@@ -64,7 +65,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 		
 		stride = IOSurfaceGetBytesPerRow(frameSurface);
 		//memcpy(localBuf, baseAddress + offset_beg, surflen);
-		for(int i = 0; i < rect.height; i++)
+		for(i = 0; i < rect.height; i++)
 		{
 			offset_beg = (stride * (rect.y + i) + (rect.x * 4));
 			memcpy(localBuf + offset_beg,
@@ -232,7 +233,7 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
 
 int mf_mlion_peek_dirty_region(RFX_RECT* invalid)
 {
-	size_t num_rects;
+	size_t num_rects, i;
 	CGRect dirtyRegion;
 	
 	const CGRect * rects = CGDisplayStreamUpdateGetRects(lastUpdate, kCGDisplayStreamUpdateDirtyRects, &num_rects);
@@ -242,7 +243,7 @@ int mf_mlion_peek_dirty_region(RFX_RECT* invalid)
 	}
 	
 	dirtyRegion = *rects;
-	for (size_t i = 0; i < num_rects; i++)
+	for (i = 0; i < num_rects; i++)
 	{
 		dirtyRegion = CGRectUnion(dirtyRegion, *(rects+i));
 	}
