@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/input.h>
 
 #include <freerdp/locale/keyboard.h>
 
@@ -201,6 +202,30 @@ UINT32 freerdp_keyboard_init_xkbfile(UINT32 keyboardLayoutId, RDP_SCANCODE x11_k
 	}
 
 	freerdp_keyboard_load_map_from_xkbfile(display, x11_keycode_to_rdp_scancode);
+
+#if 1
+	//ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
+
+	{
+		DWORD keycode;
+		DWORD vkcode;
+		DWORD scancode;
+
+		for (keycode = 0; keycode < 256; keycode++)
+		{
+			vkcode = GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_EVDEV);
+			scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+
+			if (x11_keycode_to_rdp_scancode[keycode] != scancode)
+			{
+				printf("mismatch keycode 0x%04X (%d) -> vkcode 0x%04X (%s) -> scancode 0x%04X, expected: 0x%04X\n",
+						keycode, keycode, vkcode, GetVirtualKeyName(vkcode & 0xFF), scancode, x11_keycode_to_rdp_scancode[keycode]);
+			}
+
+			x11_keycode_to_rdp_scancode[keycode] = scancode;
+		}
+	}
+#endif
 
 	XCloseDisplay(display);
 

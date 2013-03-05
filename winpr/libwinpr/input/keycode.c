@@ -300,6 +300,8 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
  * http://www.freedesktop.org/wiki/Software/XKeyboardConfig
  */
 
+/* TODO: Finish Japanese Keyboard */
+
 DWORD KEYCODE_TO_VKCODE_EVDEV[256] =
 {
 	0, /* 0 */
@@ -311,117 +313,117 @@ DWORD KEYCODE_TO_VKCODE_EVDEV[256] =
 	0, /* 6 */
 	0, /* 7 */
 	0, /* 8 */
-	0, /* <ESC> 9 */
-	0, /* <AE01> 10 */
-	0, /* <AE02> 11 */
-	0, /* <AE03> 12 */
-	0, /* <AE04> 13 */
-	0, /* <AE05> 14 */
-	0, /* <AE06> 15 */
-	0, /* <AE07> 16 */
-	0, /* <AE08> 17 */
-	0, /* <AE09> 18 */
-	0, /* <AE10> 19 */
-	0, /* <AE11> 20 */
-	0, /* <AE12> 21 */
-	0, /* <BKSP> 22 */
-	0, /* <TAB> 23 */
-	0, /* <AD01> 24 */
-	0, /* <AD02> 25 */
-	0, /* <AD03> 26 */
-	0, /* <AD04> 27 */
-	0, /* <AD05> 28 */
-	0, /* <AD06> 29 */
-	0, /* <AD07> 30 */
-	0, /* <AD08> 31 */
-	0, /* <AD09> 32 */
-	0, /* <AD10> 33 */
-	0, /* <AD11> 34 */
-	0, /* <AD12> 35 */
-	0, /* <RTRN> 36 */
-	0, /* <LCTL> 37 */
-	0, /* <AC01> 38 */
-	0, /* <AC02> 39 */
-	0, /* <AC03> 40 */
-	0, /* <AC04> 41 */
-	0, /* <AC05> 42 */
-	0, /* <AC06> 43 */
-	0, /* <AC07> 44 */
-	0, /* <AC08> 45 */
-	0, /* <AC09> 46 */
-	0, /* <AC10> 47 */
-	0, /* <AC11> 48 */
-	0, /* <TLDE> 49 */
-	0, /* <LFSH> 50 */
-	0, /* <BKSL> <AC12> 51 */
-	0, /* <AB01> 52 */
-	0, /* <AB02> 53 */
-	0, /* <AB03> 54 */
-	0, /* <AB04> 55 */
-	0, /* <AB05> 56 */
-	0, /* <AB06> 57 */
-	0, /* <AB07> 58 */
-	0, /* <AB08> 59 */
-	0, /* <AB09> 60 */
-	0, /* <AB10> 61 */
-	0, /* <RTSH> 62 */
-	0, /* <KPMU> 63 */
-	0, /* <LALT> 64 */
-	0, /* <SPCE> 65 */
-	0, /* <CAPS> 66 */
-	0, /* <FK01> 67 */
-	0, /* <FK02> 68 */
-	0, /* <FK03> 69 */
-	0, /* <FK04> 70 */
-	0, /* <FK05> 71 */
-	0, /* <FK06> 72 */
-	0, /* <FK07> 73 */
-	0, /* <FK08> 74 */
-	0, /* <FK09> 75 */
-	0, /* <FK10> 76 */
-	0, /* <NMLK> 77 */
-	0, /* <SCLK> 78 */
-	0, /* <KP7> 79 */
-	0, /* <KP8> 80 */
-	0, /* <KP9> 81 */
-	0, /* <KPSU> 82 */
-	0, /* <KP4> 83 */
-	0, /* <KP5> 84 */
-	0, /* <KP6> 85 */
-	0, /* <KPAD> 86 */
-	0, /* <KP1> 87 */
-	0, /* <KP2> 88 */
-	0, /* <KP3> 89 */
-	0, /* <KP0> 90 */
-	0, /* <KPDL> 91 */
+	VK_ESCAPE, /* <ESC> 9 */
+	VK_KEY_1, /* <AE01> 10 */
+	VK_KEY_2, /* <AE02> 11 */
+	VK_KEY_3, /* <AE03> 12 */
+	VK_KEY_4, /* <AE04> 13 */
+	VK_KEY_5, /* <AE05> 14 */
+	VK_KEY_6, /* <AE06> 15 */
+	VK_KEY_7, /* <AE07> 16 */
+	VK_KEY_8, /* <AE08> 17 */
+	VK_KEY_9, /* <AE09> 18 */
+	VK_KEY_0, /* <AE10> 19 */
+	VK_OEM_MINUS, /* <AE11> 20 */
+	VK_OEM_PLUS, /* <AE12> 21 */
+	VK_BACK, /* <BKSP> 22 */
+	VK_TAB, /* <TAB> 23 */
+	VK_KEY_Q, /* <AD01> 24 */
+	VK_KEY_W, /* <AD02> 25 */
+	VK_KEY_E, /* <AD03> 26 */
+	VK_KEY_R, /* <AD04> 27 */
+	VK_KEY_T, /* <AD05> 28 */
+	VK_KEY_Y, /* <AD06> 29 */
+	VK_KEY_U, /* <AD07> 30 */
+	VK_KEY_I, /* <AD08> 31 */
+	VK_KEY_O, /* <AD09> 32 */
+	VK_KEY_P, /* <AD10> 33 */
+	VK_OEM_4, /* <AD11> 34 */
+	VK_OEM_6, /* <AD12> 35 */
+	VK_RETURN, /* <RTRN> 36 */
+	VK_LCONTROL, /* <LCTL> 37 */
+	VK_KEY_A, /* <AC01> 38 */
+	VK_KEY_S, /* <AC02> 39 */
+	VK_KEY_D, /* <AC03> 40 */
+	VK_KEY_F, /* <AC04> 41 */
+	VK_KEY_G, /* <AC05> 42 */
+	VK_KEY_H, /* <AC06> 43 */
+	VK_KEY_J, /* <AC07> 44 */
+	VK_KEY_K, /* <AC08> 45 */
+	VK_KEY_L, /* <AC09> 46 */
+	VK_OEM_1, /* <AC10> 47 */
+	VK_OEM_7, /* <AC11> 48 */
+	VK_OEM_3, /* <TLDE> 49 */
+	VK_LSHIFT, /* <LFSH> 50 */
+	VK_OEM_5, /* <BKSL> <AC12> 51 */
+	VK_KEY_Z, /* <AB01> 52 */
+	VK_KEY_X, /* <AB02> 53 */
+	VK_KEY_C, /* <AB03> 54 */
+	VK_KEY_V, /* <AB04> 55 */
+	VK_KEY_B, /* <AB05> 56 */
+	VK_KEY_N, /* <AB06> 57 */
+	VK_KEY_M, /* <AB07> 58 */
+	VK_OEM_COMMA, /* <AB08> 59 */
+	VK_OEM_PERIOD, /* <AB09> 60 */
+	VK_OEM_2, /* <AB10> 61 */
+	VK_RSHIFT, /* <RTSH> 62 */
+	VK_MULTIPLY, /* <KPMU> 63 */
+	VK_LMENU, /* <LALT> 64 */
+	VK_SPACE, /* <SPCE> 65 */
+	VK_CAPITAL, /* <CAPS> 66 */
+	VK_F1, /* <FK01> 67 */
+	VK_F2, /* <FK02> 68 */
+	VK_F3, /* <FK03> 69 */
+	VK_F4, /* <FK04> 70 */
+	VK_F5, /* <FK05> 71 */
+	VK_F6, /* <FK06> 72 */
+	VK_F7, /* <FK07> 73 */
+	VK_F8, /* <FK08> 74 */
+	VK_F9, /* <FK09> 75 */
+	VK_F10, /* <FK10> 76 */
+	VK_NUMLOCK, /* <NMLK> 77 */
+	VK_SCROLL, /* <SCLK> 78 */
+	VK_NUMPAD7, /* <KP7> 79 */
+	VK_NUMPAD8, /* <KP8> 80 */
+	VK_NUMPAD9, /* <KP9> 81 */
+	VK_SUBTRACT, /* <KPSU> 82 */
+	VK_NUMPAD4, /* <KP4> 83 */
+	VK_NUMPAD5, /* <KP5> 84 */
+	VK_NUMPAD6, /* <KP6> 85 */
+	VK_ADD, /* <KPAD> 86 */
+	VK_NUMPAD1, /* <KP1> 87 */
+	VK_NUMPAD2, /* <KP2> 88 */
+	VK_NUMPAD3, /* <KP3> 89 */
+	VK_NUMPAD0, /* <KP0> 90 */
+	VK_DECIMAL, /* <KPDL> 91 */
 	0, /* <LVL3> 92 */
 	0, /* 93 */
-	0, /* <LSGT> 94 */
-	0, /* <FK11> 95 */
-	0, /* <FK12> 96 */
-	0, /* <AB11> 97 */
+	VK_OEM_102, /* <LSGT> 94 */
+	VK_F11, /* <FK11> 95 */
+	VK_F12, /* <FK12> 96 */
+	VK_ABNT_C1, /* <AB11> 97 */
 	0, /* <KATA> 98 */
 	0, /* <HIRA> 99 */
 	0, /* <HENK> 100 */
 	0, /* <HKTG> 101 */
 	0, /* <MUHE> 102 */
 	0, /* <JPCM> 103 */
-	0, /* <KPEN> 104 */
-	0, /* <RCTL> 105 */
-	0, /* <KPDV> 106 */
-	0, /* <PRSC> 107 */
-	0, /* <RALT> <ALGR> 108 */
+	VK_RETURN | KBDEXT, /* <KPEN> 104 */
+	VK_RCONTROL | KBDEXT, /* <RCTL> 105 */
+	VK_DIVIDE | KBDEXT, /* <KPDV> 106 */
+	VK_SNAPSHOT | KBDEXT, /* <PRSC> 107 */
+	VK_RMENU | KBDEXT, /* <RALT> <ALGR> 108 */
 	0, /* <LNFD> KEY_LINEFEED 109 */
-	0, /* <HOME> 110 */
-	0, /* <UP> 111 */
-	0, /* <PGUP> 112 */
-	0, /* <LEFT> 113 */
-	0, /* <RGHT> 114 */
-	0, /* <END> 115 */
-	0, /* <DOWN> 116 */
-	0, /* <PGDN> 117 */
-	0, /* <INS> 118 */
-	0, /* <DELE> 119 */
+	VK_HOME | KBDEXT, /* <HOME> 110 */
+	VK_UP | KBDEXT, /* <UP> 111 */
+	VK_PRIOR | KBDEXT, /* <PGUP> 112 */
+	VK_LEFT | KBDEXT, /* <LEFT> 113 */
+	VK_RIGHT | KBDEXT, /* <RGHT> 114 */
+	VK_END | KBDEXT, /* <END> 115 */
+	VK_DOWN | KBDEXT, /* <DOWN> 116 */
+	VK_NEXT | KBDEXT, /* <PGDN> 117 */
+	VK_INSERT | KBDEXT, /* <INS> 118 */
+	VK_DELETE | KBDEXT, /* <DELE> 119 */
 	0, /* <I120> KEY_MACRO 120 */
 	0, /* <MUTE> 121 */
 	0, /* <VOL-> 122 */
@@ -429,15 +431,15 @@ DWORD KEYCODE_TO_VKCODE_EVDEV[256] =
 	0, /* <POWR> 124 */
 	0, /* <KPEQ> 125 */
 	0, /* <I126> KEY_KPPLUSMINUS 126 */
-	0, /* <PAUS> 127 */
+	VK_PAUSE | KBDEXT, /* <PAUS> 127 */
 	0, /* <I128> KEY_SCALE 128 */
-	0, /* <I129> <KPPT> KEY_KPCOMMA 129 */
+	VK_ABNT_C2, /* <I129> <KPPT> KEY_KPCOMMA 129 */
 	0, /* <HNGL> 130 */
 	0, /* <HJCV> 131 */
 	0, /* <AE13> 132 */
-	0, /* <LWIN> <LMTA> 133 */
-	0, /* <RWIN> <RMTA> 134 */
-	0, /* <COMP> <MENU> 135 */
+	VK_LWIN | KBDEXT, /* <LWIN> <LMTA> 133 */
+	VK_RWIN | KBDEXT, /* <RWIN> <RMTA> 134 */
+	VK_APPS | KBDEXT, /* <COMP> <MENU> 135 */
 	0, /* <STOP> 136 */
 	0, /* <AGAI> 137 */
 	0, /* <PROP> 138 */
@@ -570,6 +572,11 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 	{
 		if (keycode < 0xFF)
 			vkcode = KEYCODE_TO_VKCODE_APPLE[keycode & 0xFF];
+	}
+	else if (dwFlags & KEYCODE_TYPE_EVDEV)
+	{
+		if (keycode < 0xFF)
+			vkcode = KEYCODE_TO_VKCODE_EVDEV[keycode & 0xFF];
 	}
 
 	if (!vkcode)

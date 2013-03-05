@@ -420,19 +420,19 @@
 #define KBD4_T44		VK_F10
 #define KBD4_T45		VK_NUMLOCK
 #define KBD4_T46		VK_SCROLL
-#define KBD4_T47		VK_HOME
-#define KBD4_T48		VK_UP
-#define KBD4_T49		VK_PRIOR
+#define KBD4_T47		VK_NUMPAD7		/* VK_HOME */
+#define KBD4_T48		VK_NUMPAD8		/* VK_UP */
+#define KBD4_T49		VK_NUMPAD9		/* VK_PRIOR */
 #define KBD4_T4A		VK_SUBTRACT
-#define KBD4_T4B		VK_LEFT
-#define KBD4_T4C		VK_CLEAR
-#define KBD4_T4D		VK_RIGHT
+#define KBD4_T4B		VK_NUMPAD4		/* VK_LEFT */
+#define KBD4_T4C		VK_NUMPAD5		/* VK_CLEAR */
+#define KBD4_T4D		VK_NUMPAD6		/* VK_RIGHT */
 #define KBD4_T4E		VK_ADD
-#define KBD4_T4F		VK_END
-#define KBD4_T50		VK_DOWN
-#define KBD4_T51		VK_NEXT
-#define KBD4_T52		VK_INSERT
-#define KBD4_T53		VK_DELETE
+#define KBD4_T4F		VK_NUMPAD1		/* VK_END */
+#define KBD4_T50		VK_NUMPAD2		/* VK_DOWN */
+#define KBD4_T51		VK_NUMPAD3		/* VK_NEXT */
+#define KBD4_T52		VK_NUMPAD0		/* VK_INSERT */
+#define KBD4_T53		VK_DECIMAL		/* VK_DELETE */
 #define KBD4_T54		VK_SNAPSHOT
 #define KBD4_T55		VK_NONE
 #define KBD4_T56		VK_OEM_102		/* NE */
@@ -492,7 +492,7 @@
 #define KBD4_X35		VK_DIVIDE
 #define KBD4_X37		VK_SNAPSHOT
 #define KBD4_X38		VK_RMENU
-#define KBD4_X46		VK_CANCEL
+#define KBD4_X46		VK_PAUSE		/* VK_CANCEL */
 #define KBD4_X47		VK_HOME
 #define KBD4_X48		VK_UP
 #define KBD4_X49		VK_PRIOR
@@ -848,6 +848,7 @@ WINPR_API DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKey
 WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType);
 
 #define KEYCODE_TYPE_APPLE		0x00000001
+#define KEYCODE_TYPE_EVDEV		0x00000002
 
 WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags);
 

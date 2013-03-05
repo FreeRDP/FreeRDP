@@ -294,7 +294,7 @@ DWORD KBD4X[128] =
 	VK_NONE,
 	VK_NONE,
 	VK_NONE,
-	VK_NONE
+	VK_NONE,
 };
 
 /**
@@ -576,18 +576,17 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 
 	if (dwKeyboardType == 4)
 	{
-		if (scancode & KBDEXT)
-			vkcode = KBD4X[scancode & 0x7F];
-		else
-			vkcode = KBD4T[scancode & 0x7F];
+		if (vkcode < 128)
+			vkcode = (scancode & KBDEXT) ? KBD4X[scancode] : KBD4T[scancode];
 	}
 	else if (dwKeyboardType == 7)
 	{
-		if (scancode & KBDEXT)
-			vkcode = KBD7X[scancode & 0x7F];
-		else
-			vkcode = KBD7T[scancode & 0x7F];
+		if (vkcode < 128)
+			vkcode = (scancode & KBDEXT) ? KBD7X[scancode] : KBD7T[scancode];
 	}
+
+	if (!vkcode)
+		vkcode = VK_NONE;
 
 	return vkcode;
 }
@@ -604,20 +603,22 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 
 	if (dwKeyboardType == 4)
 	{
-		for (i = 0; i < 128; i++)
-		{
-			if (KBD4T[i] == vkcode)
-			{
-				scancode = i;
-				break;
-			}
-		}
-
-		if (!scancode)
+		if (vkcode & KBDEXT)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD4X[i] == vkcode)
+				if (KBD4X[i] == (vkcode & 0xFF))
+				{
+					scancode = (i | KBDEXT);
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (i = 0; i < 128; i++)
+			{
+				if (KBD4T[i] == (vkcode & 0xFF))
 				{
 					scancode = i;
 					break;
@@ -627,20 +628,22 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 	}
 	else if (dwKeyboardType == 7)
 	{
-		for (i = 0; i < 128; i++)
-		{
-			if (KBD7T[i] == vkcode)
-			{
-				scancode = i;
-				break;
-			}
-		}
-
-		if (!scancode)
+		if (vkcode & KBDEXT)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD7X[i] == vkcode)
+				if (KBD7X[i] == (vkcode & 0xFF))
+				{
+					scancode = (i | KBDEXT);
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (i = 0; i < 128; i++)
+			{
+				if (KBD7T[i] == (vkcode & 0xFF))
 				{
 					scancode = i;
 					break;
