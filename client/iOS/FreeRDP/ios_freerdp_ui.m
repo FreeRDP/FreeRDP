@@ -148,7 +148,6 @@ void ios_resize_display_buffer(mfInfo* mfi)
 	CGContextRelease(old_context);
 	
 	// Create the new context
-    gdi_resize(mfi->instance->context->gdi, mfi->instance->settings->DesktopWidth, mfi->instance->settings->DesktopHeight);
 	ios_create_bitmap_context(mfi);
 }
 
