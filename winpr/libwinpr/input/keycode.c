@@ -405,7 +405,7 @@ DWORD KEYCODE_TO_VKCODE_EVDEV[256] =
 	0, /* <KATA> 98 */
 	0, /* <HIRA> 99 */
 	0, /* <HENK> 100 */
-	0, /* <HKTG> 101 */
+	VK_DBE_HIRAGANA, /* <HKTG> 101 */
 	0, /* <MUHE> 102 */
 	0, /* <JPCM> 103 */
 	VK_RETURN | KBDEXT, /* <KPEN> 104 */

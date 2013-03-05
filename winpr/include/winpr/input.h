@@ -39,6 +39,7 @@
 /*
  * Virtual Key Codes (Windows):
  * http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731/
+ * http://msdn.microsoft.com/en-us/library/ms927178.aspx
  */
 
 /* Mouse buttons */
@@ -290,7 +291,8 @@
 #define VK_OEM_8	0xDF /* Used for miscellaneous characters; it can vary by keyboard. */
 
 /* 0xE0 is reserved */
-/* 0xE1 is OEM specific */
+
+#define VK_OEM_AX	0xE1 /* AX key on Japanese AX keyboard */
 
 #define VK_OEM_102	0xE2 /* Windows 2000/XP: Either the angle bracket key or */
 			     /* the backslash key on the RT 102-key keyboard */
@@ -317,9 +319,28 @@
 #define VK_ZOOM		0xFB /* Zoom key */
 #define VK_NONAME	0xFC /* Reserved */
 #define VK_PA1		0xFD /* PA1 key */
+#define VK_OEM_PA1	0xFD /* PA1 key */
 #define VK_OEM_CLEAR	0xFE /* Clear key */
 
 #define VK_NONE		0xFF /* no key */
+
+/**
+ * For East Asian Input Method Editors (IMEs)
+ * the following additional virtual keyboard definitions must be observed.
+ */
+
+#define VK_DBE_ALPHANUMERIC		0xF0 /* Changes the mode to alphanumeric. */
+#define VK_DBE_KATAKANA			0xF1 /* Changes the mode to Katakana. */
+#define VK_DBE_HIRAGANA			0xF2 /* Changes the mode to Hiragana. */
+#define VK_DBE_SBCSCHAR			0xF3 /* Changes the mode to single-byte characters. */
+#define VK_DBE_DBCSCHAR			0xF4 /* Changes the mode to double-byte characters. */
+#define VK_DBE_ROMAN			0xF5 /* Changes the mode to Roman characters. */
+#define VK_DBE_NOROMAN			0xF6 /* Changes the mode to non-Roman characters. */
+#define VK_DBE_ENTERWORDREGISTERMODE	0xF7 /* Activates the word registration dialog box. */
+#define VK_DBE_ENTERIMECONFIGMODE	0xF8 /* Activates a dialog box for setting up an IME environment. */
+#define VK_DBE_FLUSHSTRING		0xF9 /* Deletes the undetermined string without determining it. */
+#define VK_DBE_CODEINPUT		0xFA /* Changes the mode to code input. */
+#define VK_DBE_NOCODEINPUT		0xFB /* Changes the mode to no-code input. */
 
 /**
  * TODO: fix the following definitions
@@ -332,14 +353,9 @@
 #define VK_OEM_AUTO		0xFF
 #define VK_OEM_PA3		0xFF
 #define VK_OEM_RESET		0xFF
-#define VK_OEM_PA1		0xFF
 #define VK_OEM_PA2		0xFF
 #define VK_POWER		0xFF
 #define VK_LAUNCH_MEDIA_SELECT	0xFF
-#define VK_DBE_KATAKANA		0xFF
-#define VK_DBE_ALPHANUMERIC	0xFF
-#define VK_DBE_SBCSCHAR		0xFF
-#define VK_DBE_HIRAGANA		0xFF
 
 /*
  * Virtual Scan Codes
