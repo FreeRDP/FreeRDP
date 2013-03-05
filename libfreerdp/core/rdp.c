@@ -717,7 +717,8 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
-	security_decrypt(s->p, length, rdp);
+	if (!security_decrypt(s->p, length, rdp))
+		return FALSE;
 
 	if (securityFlags & SEC_SECURE_CHECKSUM)
 		security_salted_mac_signature(rdp, s->p, length, FALSE, cmac);
