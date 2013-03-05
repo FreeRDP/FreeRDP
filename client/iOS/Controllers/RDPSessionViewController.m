@@ -375,7 +375,10 @@
 - (void)sessionBitmapContextDidChange:(RDPSession*)session
 {
     // associate view with session
-    [_session_view setSession:session];    
+    [_session_view setSession:session];
+
+    // issue an update (this might be needed in case we had a resize for instance)
+    [_session_view setNeedsDisplay];
 }
 
 - (void)session:(RDPSession*)session needsRedrawInRect:(CGRect)rect
