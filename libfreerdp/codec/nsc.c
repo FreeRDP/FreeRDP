@@ -290,7 +290,7 @@ NSC_CONTEXT* nsc_context_new(void)
 	nsc_context->nsc_stream.ChromaSubSamplingLevel = 1;
 
 	/* init optimized methods */
-	NSC_INIT_SIMD(context);
+	NSC_INIT_SIMD(nsc_context);
 
 	return nsc_context;
 }
