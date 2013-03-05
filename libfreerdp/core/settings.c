@@ -238,6 +238,7 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->SaltedChecksum = TRUE;
 		settings->ServerPort = 3389;
 		settings->DesktopResize = TRUE;
+		settings->ToggleFullscreen = TRUE;
 
 		settings->PerformanceFlags =
 				PERF_DISABLE_FULLWINDOWDRAG |
