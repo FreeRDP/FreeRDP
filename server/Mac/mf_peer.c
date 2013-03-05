@@ -235,7 +235,7 @@ void mf_peer_init(freerdp_peer* client)
 	
 	info_event_queue = mf_event_queue_new();
 	
-	info_queue = dispatch_queue_create("testing.101", DISPATCH_QUEUE_SERIAL);
+	info_queue = dispatch_queue_create("FreeRDP.update.timer", DISPATCH_QUEUE_SERIAL);
 	info_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, info_queue);
 	
 	if(info_timer)
