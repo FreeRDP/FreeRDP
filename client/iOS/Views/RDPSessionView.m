@@ -24,7 +24,7 @@
 
 - (void)drawRect:(CGRect)rect 
 {
-	if(_session != nil)
+	if(_session != nil && [_session bitmapContext])
 	{
 		CGContextRef context = UIGraphicsGetCurrentContext();
 		CGImageRef cgImage = CGBitmapContextCreateImage([_session bitmapContext]);
