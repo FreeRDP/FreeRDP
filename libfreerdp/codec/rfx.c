@@ -161,9 +161,14 @@ RFX_CONTEXT* rfx_context_new(void)
 	 *
 	 * y_r_buffer, cb_g_buffer, cr_b_buffer: 64 * 64 * 4 = 16384 (0x4000)
 	 * dwt_buffer: 32 * 32 * 2 * 2 * 4 = 16384, maximum sub-band width is 32
+	 *
+	 * Additionally we add 32 bytes (16 in front and 16 at the back of the buffer)
+	 * in order to allow optimized functions (SEE, NEON) to read from positions 
+	 * that are actually in front/beyond the buffer. Offset calculations are
+	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
 	 */
 
-	context->priv->BufferPool = BufferPool_New(TRUE, 16384, 16);
+	context->priv->BufferPool = BufferPool_New(TRUE, 16384 + 32, 16);
 
 #ifdef _WIN32
 	{
