@@ -37,9 +37,7 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
-#ifdef WITH_SSE2
 #include "nsc_sse2.h"
-#endif
 
 #ifndef NSC_INIT_SIMD
 #define NSC_INIT_SIMD(_nsc_context) do { } while (0)
@@ -291,13 +289,10 @@ NSC_CONTEXT* nsc_context_new(void)
 	nsc_context->nsc_stream.ColorLossLevel = 3;
 	nsc_context->nsc_stream.ChromaSubSamplingLevel = 1;
 
-	return nsc_context;
-}
+	/* init optimized methods */
+	NSC_INIT_SIMD(context);
 
-void nsc_context_set_cpu_opt(NSC_CONTEXT* context, UINT32 cpu_opt)
-{
-	if (cpu_opt)
-		NSC_INIT_SIMD(context);
+	return nsc_context;
 }
 
 void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)

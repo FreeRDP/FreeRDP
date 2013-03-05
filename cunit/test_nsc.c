@@ -335,7 +335,6 @@ void test_nsc_decode(void)
 	NSC_CONTEXT* context;
 
 	context = nsc_context_new();
-	nsc_context_set_cpu_opt(context, CPU_SSE2);
 	nsc_process_message(context, 32, 15, 10, (BYTE*) nsc_data, sizeof(nsc_data));
 	/*winpr_HexDump(context->bmpdata, 15 * 10 * 4);*/
 	for (i = 0; i < 30000; i++)
@@ -357,7 +356,6 @@ void test_nsc_encode(void)
 		memcpy(rgb_data + i * 64 * 3, rgb_scanline_data, 64 * 3);
 
 	context = nsc_context_new();
-	nsc_context_set_cpu_opt(context, CPU_SSE2);
 	nsc_context_set_pixel_format(context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	enc_stream = stream_new(65536);

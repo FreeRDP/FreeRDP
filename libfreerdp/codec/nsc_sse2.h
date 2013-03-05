@@ -24,8 +24,10 @@
 
 void nsc_init_sse2(NSC_CONTEXT* context);
 
-#ifndef NSC_INIT_SIMD
-#define NSC_INIT_SIMD(_context) nsc_init_sse2(_context)
+#ifdef WITH_SSE2
+ #ifndef NSC_INIT_SIMD
+  #define NSC_INIT_SIMD(_context) nsc_init_sse2(_context)
+ #endif
 #endif
 
 #endif /* __NSC_SSE2_H */
