@@ -924,10 +924,13 @@ public class SessionActivity extends Activity
 	}
 
 	@Override
-	public void OnGraphicsResize(int width, int height)
+	public void OnGraphicsResize(int width, int height, int bpp)
 	{
 		// replace bitmap
-		bitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+		if (bpp > 16)
+			bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
+		else
+			bitmap = Bitmap.createBitmap(width, height, Config.RGB_565);
 		session.setSurface(new BitmapDrawable(bitmap));
 		
 		/* since sessionView can only be modified from the UI thread

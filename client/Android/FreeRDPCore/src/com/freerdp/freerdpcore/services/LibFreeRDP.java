@@ -64,7 +64,7 @@ public class LibFreeRDP
 		boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
 		boolean OnVerifiyCertificate(String subject, String issuer, String fingerprint);
 		void OnGraphicsUpdate(int x, int y, int width, int height);		
-		void OnGraphicsResize(int width, int height);		
+		void OnGraphicsResize(int width, int height, int bpp);		
 	}
 
 	private static EventListener listener;
@@ -237,14 +237,14 @@ public class LibFreeRDP
 			uiEventListener.OnGraphicsUpdate(x, y, width, height);
 	}
 
-	private static void OnGraphicsResize(int inst, int width, int height)
+	private static void OnGraphicsResize(int inst, int width, int height, int bpp)
 	{
 		SessionState s = GlobalApp.getSession(inst);
 		if (s == null)
 			return;
 		UIEventListener uiEventListener = s.getUIEventListener();
 		if (uiEventListener != null)
-			uiEventListener.OnGraphicsResize(width, height);
+			uiEventListener.OnGraphicsResize(width, height, bpp);
 	}
 	
 	public static String getVersion()
