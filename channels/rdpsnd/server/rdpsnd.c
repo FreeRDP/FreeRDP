@@ -263,12 +263,19 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 		printf("rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
 		return;
 	}
+	
 
 	rdpsnd->src_bytes_per_sample = context->src_format.wBitsPerSample / 8;
 	rdpsnd->src_bytes_per_frame = rdpsnd->src_bytes_per_sample * context->src_format.nChannels;
 
 	context->selected_client_format = client_format_index;
 	format = &context->client_formats[client_format_index];
+	
+	if (format->nSamplesPerSec == 0)
+	{
+		printf("Invalid Client Sound Format!!\n\n");
+		return;
+	}
 
 	if (format->wFormatTag == 0x11)
 	{
