@@ -202,7 +202,7 @@ typedef struct _RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT;
 FREERDP_API UINT32 freerdp_keyboard_init(UINT32 keyboardLayoutId);
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types);
 FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutId);
-FREERDP_API RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT32 keycode);
+FREERDP_API DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT32 keycode);
 FREERDP_API UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL extended);
 
 #endif /* FREERDP_LOCALE_KEYBOARD_H */

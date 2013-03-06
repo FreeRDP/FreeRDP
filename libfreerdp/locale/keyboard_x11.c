@@ -36,10 +36,6 @@
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"
 
-#ifdef WITH_SUN
-#include "keyboard_sun.h"
-#endif
-
 UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_variant)
 {
 	char* pch;
@@ -69,7 +65,7 @@ UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 		if ((pch = strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ")) != NULL)
 		{
 			/* "rules" */
-			pch = strchr(&buffer[34], ','); // We assume it is xorg
+			pch = strchr(&buffer[34], ','); /* We assume it is xorg */
 			pch += 1;
 
 			/* "type" */
@@ -140,6 +136,7 @@ UINT32 freerdp_detect_keyboard_layout_from_xkb(char** xkb_layout, char** xkb_var
 			variant = beg;
 		}
 	}
+
 	pclose(xprop);
 
 	DEBUG_KBD("_XKB_RULES_NAMES layout: %s, variant: %s", layout, variant);
@@ -206,34 +203,24 @@ char* freerdp_detect_keymap_from_xkb()
 	return keymap;
 }
 
-UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keycode_to_rdp_scancode[256])
+UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
 {
 	DWORD vkcode;
 	DWORD keycode;
 	DWORD keycode_to_vkcode[256];
 
 	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(RDP_SCANCODE) * 256);
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * 256);
 
 #ifdef __APPLE__
-
 	for (keycode = 0; keycode < 256; keycode++)
 	{
 		keycode_to_vkcode[keycode] = GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_APPLE);
 	}
-
-#elif defined(WITH_SUN)
-	{
-		char sunkeymap[32];
-
-		freerdp_detect_keyboard_type_and_layout_solaris(sunkeymap, sizeof(sunkeymap));
-		freerdp_keyboard_load_map(keycode_to_vkcode, sunkeymap);
-	}
 #else
 	{
-		char* keymap;
-		char* xkb_layout = 0;
-		char* xkb_variant = 0;
+		char* xkb_layout = NULL;
+		char* xkb_variant = NULL;
 
 		if (keyboardLayoutId == 0)
 		{
@@ -244,14 +231,6 @@ UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, RDP_SCANCODE x11_keyco
 
 			if (xkb_variant)
 				free(xkb_variant);
-		}
-
-		keymap = freerdp_detect_keymap_from_xkb();
-
-		if (keymap)
-		{
-			freerdp_keyboard_load_maps(keycode_to_vkcode, keymap);
-			free(keymap);
 		}
 	}
 #endif
