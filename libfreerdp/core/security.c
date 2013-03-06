@@ -492,6 +492,8 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 
 BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 {
+	if (rdp->rc4_decrypt_key == NULL)
+		return FALSE;
 	if (rdp->decrypt_use_count >= 4096)
 	{
 		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len);

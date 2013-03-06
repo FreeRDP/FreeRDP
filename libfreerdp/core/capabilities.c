@@ -2190,10 +2190,13 @@ BOOL rdp_print_desktop_composition_capability_set(STREAM* s, UINT16 length)
 
 BOOL rdp_read_multifragment_update_capability_set(STREAM* s, UINT16 length, rdpSettings* settings)
 {
+	UINT32 multifragMaxRequestSize;
 	if (length < 8)
 		return FALSE;
 
-	stream_read_UINT32(s, settings->MultifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
+	stream_read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
+	if (settings->MultifragMaxRequestSize < multifragMaxRequestSize)
+		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
 
 	return TRUE;
 }

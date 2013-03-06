@@ -340,7 +340,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 		stream_check_size(fastpath->updateData, size);
 		stream_copy(fastpath->updateData, comp_stream, size);
-		if (stream_get_size(fastpath->updateData) > rdp->settings->MultifragMaxRequestSize)
+		if (stream_get_length(fastpath->updateData) > rdp->settings->MultifragMaxRequestSize)
 		{
 			printf("fastpath PDU is bigger than MultifragMaxRequestSize\n");
 			return -1;

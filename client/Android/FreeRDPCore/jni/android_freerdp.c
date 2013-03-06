@@ -83,10 +83,7 @@ void android_desktop_resize(rdpContext* context)
 	DEBUG_ANDROID("ui_desktop_resize");
 
 	rdpGdi *gdi = context->gdi;
-	rdpSettings* settings = context->instance->settings;
-
-	gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight);
-	freerdp_callback("OnGraphicsResize", "(III)V", context->instance, settings->DesktopWidth, settings->DesktopHeight);
+	freerdp_callback("OnGraphicsResize", "(IIII)V", context->instance, gdi->width, gdi->height, gdi->dstBpp);
 }
 
 
