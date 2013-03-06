@@ -859,6 +859,7 @@
 
 WINPR_API char* GetVirtualKeyName(DWORD vkcode);
 WINPR_API DWORD GetVirtualKeyCodeFromName(const char* vkname);
+WINPR_API DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname);
 
 WINPR_API DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType);
 WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType);

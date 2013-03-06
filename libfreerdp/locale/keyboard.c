@@ -51,10 +51,10 @@ int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 		freerdp_detect_keyboard_layout_from_xkb(keyboardLayoutId);
 
 	if (*keyboardLayoutId == 0)
-		*keyboardLayoutId = freerdp_detect_keyboard_layout_from_system_locale();
+		freerdp_detect_keyboard_layout_from_system_locale(keyboardLayoutId);
 
 	if (*keyboardLayoutId == 0)
-		*keyboardLayoutId = 0x0409;
+		*keyboardLayoutId = ENGLISH_UNITED_STATES;
 
 	return 0;
 }

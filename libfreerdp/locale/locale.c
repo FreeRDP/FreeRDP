@@ -717,7 +717,7 @@ const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 	return NULL;
 }
 
-DWORD freerdp_detect_keyboard_layout_from_system_locale()
+int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 {
 	int i, j;
 	char language[4];
@@ -727,12 +727,15 @@ DWORD freerdp_detect_keyboard_layout_from_system_locale()
 	freerdp_get_system_language_and_country_codes(language, country);
 
 	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
-		return ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
+	{
+		*keyboardLayoutId = ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
+		return 0;
+	}
 
 	locale = freerdp_detect_system_locale();
 
-	if (locale == NULL)
-		return 0;
+	if (!locale)
+		return -1;
 
 	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
 
@@ -741,6 +744,7 @@ DWORD freerdp_detect_keyboard_layout_from_system_locale()
 		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
+
 			for (j = 0; j < 5; j++)
 			{
 				if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
@@ -753,7 +757,8 @@ DWORD freerdp_detect_keyboard_layout_from_system_locale()
 				}
 				else
 				{
-					return LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
+					*keyboardLayoutId = LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
+					return 0;
 				}
 			}
 
@@ -763,11 +768,16 @@ DWORD freerdp_detect_keyboard_layout_from_system_locale()
 			 */
 
 			if (j >= 1)
-				return ENGLISH_UNITED_STATES;
-			else
+			{
+				*keyboardLayoutId = ENGLISH_UNITED_STATES;
 				return 0;
+			}
+			else
+			{
+				return -1;
+			}
 		}
 	}
 
-	return 0; /* Could not detect the current keyboard layout from locale */
+	return -1; /* Could not detect the current keyboard layout from locale */
 }

@@ -296,6 +296,129 @@ static const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] =
 	{ 0, NULL }
 };
 
+struct _XKB_KEYNAME
+{
+	const char* name;
+	DWORD vkcode;
+};
+typedef struct _XKB_KEYNAME XKB_KEYNAME;
+
+XKB_KEYNAME XKB_KEYNAME_TABLE[] =
+{
+	{ "BKSP",	VK_BACK },
+	{ "TAB",	VK_TAB },
+	{ "RTRN",	VK_RETURN },
+	{ "LFSH",	VK_LSHIFT },
+	{ "LALT",	VK_LMENU },
+	{ "CAPS",	VK_CAPITAL },
+	{ "ESC",	VK_ESCAPE },
+	{ "SPCE",	VK_SPACE },
+	{ "AE10",	VK_KEY_0 },
+	{ "AE01",	VK_KEY_1 },
+	{ "AE02",	VK_KEY_2 },
+	{ "AE03",	VK_KEY_3 },
+	{ "AE04",	VK_KEY_4 },
+	{ "AE05",	VK_KEY_5 },
+	{ "AE06",	VK_KEY_6 },
+	{ "AE07",	VK_KEY_7 },
+	{ "AE08",	VK_KEY_8 },
+	{ "AE09",	VK_KEY_9 },
+	{ "AC01",	VK_KEY_A },
+	{ "AB05",	VK_KEY_B },
+	{ "AB03",	VK_KEY_C },
+	{ "AC03",	VK_KEY_D },
+	{ "AD03",	VK_KEY_E },
+	{ "AC04",	VK_KEY_F },
+	{ "AC05",	VK_KEY_G },
+	{ "AC06",	VK_KEY_H },
+	{ "AD08",	VK_KEY_I },
+	{ "AC07",	VK_KEY_J },
+	{ "AC08",	VK_KEY_K },
+	{ "AC09",	VK_KEY_L },
+	{ "AB07",	VK_KEY_M },
+	{ "AB06",	VK_KEY_N },
+	{ "AD09",	VK_KEY_O },
+	{ "AD10",	VK_KEY_P },
+	{ "AD01",	VK_KEY_Q },
+	{ "AD04",	VK_KEY_R },
+	{ "AC02",	VK_KEY_S },
+	{ "AD05",	VK_KEY_T },
+	{ "AD07",	VK_KEY_U },
+	{ "AB04",	VK_KEY_V },
+	{ "AD02",	VK_KEY_W },
+	{ "AB02",	VK_KEY_X },
+	{ "AD06",	VK_KEY_Y },
+	{ "AB01",	VK_KEY_Z },
+	{ "KP0",	VK_NUMPAD0 },
+	{ "KP1",	VK_NUMPAD1 },
+	{ "KP2",	VK_NUMPAD2 },
+	{ "KP3",	VK_NUMPAD3 },
+	{ "KP4",	VK_NUMPAD4 },
+	{ "KP5",	VK_NUMPAD5 },
+	{ "KP6",	VK_NUMPAD6 },
+	{ "KP7",	VK_NUMPAD7 },
+	{ "KP8",	VK_NUMPAD8 },
+	{ "KP9",	VK_NUMPAD9 },
+	{ "KPMU",	VK_MULTIPLY },
+	{ "KPAD",	VK_ADD },
+	{ "KPSU",	VK_SUBTRACT },
+	{ "KPDL",	VK_DECIMAL },
+	{ "AB10",	VK_OEM_2 },
+	{ "FK01",	VK_F1 },
+	{ "FK02",	VK_F2 },
+	{ "FK03",	VK_F3 },
+	{ "FK04",	VK_F4 },
+	{ "FK05",	VK_F5 },
+	{ "FK06",	VK_F6 },
+	{ "FK07",	VK_F7 },
+	{ "FK08",	VK_F8 },
+	{ "FK09",	VK_F9 },
+	{ "FK10",	VK_F10 },
+	{ "FK11",	VK_F11 },
+	{ "FK12",	VK_F12 },
+	{ "NMLK",	VK_NUMLOCK },
+	{ "SCLK",	VK_SCROLL },
+	{ "RTSH",	VK_RSHIFT },
+	{ "LCTL",	VK_LCONTROL },
+	{ "AC10",	VK_OEM_1 },
+	{ "AE12",	VK_OEM_PLUS },
+	{ "AB08",	VK_OEM_COMMA },
+	{ "AE11",	VK_OEM_MINUS },
+	{ "AB09",	VK_OEM_PERIOD },
+	{ "TLDE",	VK_OEM_3 },
+	{ "AB11",	VK_ABNT_C1 },
+	{ "I129",	VK_ABNT_C2 },
+	{ "AD11",	VK_OEM_4 },
+	{ "BKSL",	VK_OEM_5 },
+	{ "AD12",	VK_OEM_6 },
+	{ "AC11",	VK_OEM_7 },
+	{ "LSGT",	VK_OEM_102 },
+	{ "KPEN",	VK_RETURN | KBDEXT },
+	{ "PAUS",	VK_PAUSE | KBDEXT },
+	{ "PGUP",	VK_PRIOR | KBDEXT },
+	{ "PGDN",	VK_NEXT | KBDEXT },
+	{ "END",	VK_END | KBDEXT },
+	{ "HOME",	VK_HOME | KBDEXT },
+	{ "LEFT",	VK_LEFT | KBDEXT },
+	{ "UP",		VK_UP | KBDEXT },
+	{ "RGHT",	VK_RIGHT | KBDEXT },
+	{ "DOWN",	VK_DOWN | KBDEXT },
+	{ "PRSC",	VK_SNAPSHOT | KBDEXT },
+	{ "INS",	VK_INSERT | KBDEXT },
+	{ "DELE",	VK_DELETE | KBDEXT },
+	{ "LWIN",	VK_LWIN | KBDEXT },
+	{ "RWIN",	VK_RWIN | KBDEXT },
+	{ "COMP",	VK_APPS | KBDEXT },
+	{ "KPDV",	VK_DIVIDE | KBDEXT },
+	{ "RCTL",	VK_RCONTROL | KBDEXT },
+	{ "RALT",	VK_RMENU | KBDEXT }
+//	{ "AE13",	VK_BACKSLASH_JP }, // JP
+//	{ "HKTG",       VK_HIRAGANA }, // JP
+//	{ "HENK",       VK_CONVERT_JP }, // JP
+//	{ "MUHE",       VK_NONCONVERT_JP } // JP
+//	{ "LVL3",	0x54}
+};
+
 char* GetVirtualKeyName(DWORD vkcode)
 {
 	char* vkname;
@@ -324,3 +447,18 @@ DWORD GetVirtualKeyCodeFromName(const char* vkname)
 	return VK_NONE;
 }
 
+DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname)
+{
+	int i;
+
+	for (i = 0; i < ARRAYSIZE(XKB_KEYNAME_TABLE); i++)
+	{
+		if (XKB_KEYNAME_TABLE[i].name)
+		{
+			if (strcmp(xkbname, XKB_KEYNAME_TABLE[i].name) == 0)
+				return XKB_KEYNAME_TABLE[i].vkcode;
+		}
+	}
+
+	return VK_NONE;
+}

@@ -184,7 +184,7 @@ void* freerdp_keyboard_xkb_init()
 int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
-	
+
 	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * 256);
 
 	display = freerdp_keyboard_xkb_init();
@@ -197,7 +197,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 
 	if (*keyboardLayoutId == 0)
 	{
-		*keyboardLayoutId = detect_keyboard_layout_from_xkbfile(display);
+		detect_keyboard_layout_from_xkbfile(display, keyboardLayoutId);
 		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
 	}
 
@@ -211,7 +211,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 /* return substring starting after nth comma, ending at following comma */
 static char* comma_substring(char* s, int n)
 {
-	char *p;
+	char* p;
 
 	if (!s)
 		return "";
@@ -230,15 +230,14 @@ static char* comma_substring(char* s, int n)
 	return s;
 }
 
-DWORD detect_keyboard_layout_from_xkbfile(void* display)
+int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 {
 	char* layout;
 	char* variant;
 	DWORD group = 0;
-	DWORD keyboard_layout = 0;
-	XkbRF_VarDefsRec rules_names;
-	XKeyboardState coreKbdState;
 	XkbStateRec state;
+	XKeyboardState coreKbdState;
+	XkbRF_VarDefsRec rules_names;
 
 	DEBUG_KBD("display: %p", display);
 
@@ -260,7 +259,7 @@ DWORD detect_keyboard_layout_from_xkbfile(void* display)
 		DEBUG_KBD("layout: %s", layout ? layout : "");
 		DEBUG_KBD("variant: %s", variant ? variant : "");
 
-		keyboard_layout = find_keyboard_layout_in_xorg_rules(layout, variant);
+		*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
 
 		free(rules_names.model);
 		free(rules_names.layout);
@@ -268,7 +267,7 @@ DWORD detect_keyboard_layout_from_xkbfile(void* display)
 		free(rules_names.options);
 	}
 
-	return keyboard_layout;
+	return 0;
 }
 
 int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_rdp_scancode[256])
