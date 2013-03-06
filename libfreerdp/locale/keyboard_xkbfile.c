@@ -181,7 +181,7 @@ void* freerdp_keyboard_xkb_init()
 	return (void*) display;
 }
 
-DWORD freerdp_keyboard_init_xkbfile(DWORD keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
+int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
 {
 	void* display;
 	
@@ -192,12 +192,12 @@ DWORD freerdp_keyboard_init_xkbfile(DWORD keyboardLayoutId, DWORD x11_keycode_to
 	if (!display)
 	{
 		DEBUG_KBD("Error initializing xkb");
-		return 0;
+		return -1;
 	}
 
-	if (keyboardLayoutId == 0)
+	if (*keyboardLayoutId == 0)
 	{
-		keyboardLayoutId = detect_keyboard_layout_from_xkbfile(display);
+		*keyboardLayoutId = detect_keyboard_layout_from_xkbfile(display);
 		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", keyboardLayoutId);
 	}
 
@@ -205,7 +205,7 @@ DWORD freerdp_keyboard_init_xkbfile(DWORD keyboardLayoutId, DWORD x11_keycode_to
 
 	XCloseDisplay(display);
 
-	return keyboardLayoutId;
+	return 0;
 }
 
 /* return substring starting after nth comma, ending at following comma */

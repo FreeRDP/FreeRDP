@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef __LOCALE_KEYBOARD_X11_H
-#define __LOCALE_KEYBOARD_X11_H
+#ifndef FREERDP_LOCALE_KEYBOARD_X11_H
+#define FREERDP_LOCALE_KEYBOARD_X11_H
 
-UINT32 freerdp_keyboard_init_x11(UINT32 keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256]);
+int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId);
 
-#endif /* __LOCALE_KEYBOARD_X11_H */
+#endif /* FREERDP_LOCALE_KEYBOARD_X11_H */

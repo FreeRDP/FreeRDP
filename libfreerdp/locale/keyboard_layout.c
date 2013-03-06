@@ -128,8 +128,8 @@ static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] =
 
 struct _RDP_KEYBOARD_LAYOUT_VARIANT
 {
-	UINT32 code; /* Keyboard layout code */
-	UINT32 id; /* Keyboard variant ID */
+	DWORD code; /* Keyboard layout code */
+	DWORD id; /* Keyboard variant ID */
 	const char* name; /* Keyboard layout variant name */
 };
 typedef struct _RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT;
@@ -185,7 +185,7 @@ static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] =
 
 struct _RDP_KEYBOARD_IME
 {
-	UINT32 code; /* Keyboard layout code */
+	DWORD code; /* Keyboard layout code */
 	const char* file; /* IME file */
 	const char* name; /* Keyboard layout name */
 };
@@ -214,7 +214,7 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] =
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC,			"romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
 
-RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
+RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 {
 	int num, length, i;
 	RDP_KEYBOARD_LAYOUT* layouts;
@@ -256,12 +256,12 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(UINT32 types)
 		}
 	}
 
-	memset(&layouts[num], 0, sizeof(RDP_KEYBOARD_LAYOUT));
+	ZeroMemory(&layouts[num], sizeof(RDP_KEYBOARD_LAYOUT));
 
 	return layouts;
 }
 
-const char* freerdp_keyboard_get_layout_name_from_id(UINT32 keyboardLayoutID)
+const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 {
 	int i;
 

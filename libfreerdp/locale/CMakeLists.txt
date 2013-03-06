@@ -26,12 +26,10 @@ set(${MODULE_PREFIX}_SRCS
 	liblocale.h)
 
 set(${MODULE_PREFIX}_X11_SRCS
+	keyboard_x11.c
+	keyboard_x11.h
 	xkb_layout_ids.c
 	xkb_layout_ids.h)
-
-set(${MODULE_PREFIX}_X11_KEYMAP_SRCS
-	keyboard_x11.c
-	keyboard_x11.h)
 
 set(${MODULE_PREFIX}_XKBFILE_SRCS
 	keyboard_xkbfile.c
