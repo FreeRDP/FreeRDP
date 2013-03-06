@@ -153,9 +153,9 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb);
 
-	pSrcDst[0] = BufferPool_Take(context->priv->BufferPool, -1); /* y_r_buffer */
-	pSrcDst[1] = BufferPool_Take(context->priv->BufferPool, -1); /* cb_g_buffer */
-	pSrcDst[2] = BufferPool_Take(context->priv->BufferPool, -1); /* cr_b_buffer */
+	pSrcDst[0] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cr_b_buffer */
 
 #if 0
 	if (context->priv->UseThreads)
@@ -227,8 +227,8 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 	
 	PROFILER_EXIT(context->priv->prof_rfx_decode_rgb);
 
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[0]);
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[1]);
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[2]);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[0] - 16);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[1] - 16);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[2] - 16);
 	return TRUE;
 }

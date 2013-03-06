@@ -225,9 +225,9 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int h
 	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
 
-	pSrcDst[0] = BufferPool_Take(context->priv->BufferPool, -1); /* y_r_buffer */
-	pSrcDst[1] = BufferPool_Take(context->priv->BufferPool, -1); /* cb_g_buffer */
-	pSrcDst[2] = BufferPool_Take(context->priv->BufferPool, -1); /* cr_b_buffer */
+	pSrcDst[0] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cr_b_buffer */
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
 
@@ -260,7 +260,7 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int h
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[0]);
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[1]);
-	BufferPool_Return(context->priv->BufferPool, pSrcDst[2]);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[0] - 16);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[1] - 16);
+	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[2] - 16);
 }
