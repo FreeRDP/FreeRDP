@@ -53,31 +53,15 @@ typedef struct _rdpsnd_server
 	UINT32 src_bytes_per_frame;
 } rdpsnd_server;
 
-#define RDPSND_PDU_INIT(_s, _msgType) \
-{ \
-	stream_write_BYTE(_s, _msgType); \
-	stream_write_BYTE(_s, 0); \
-	stream_seek_UINT16(_s); \
-}
-
-#define RDPSND_PDU_FINISH(_s) \
-{ \
-	BOOL _r; \
-	int _pos; \
-	_pos = stream_get_pos(_s); \
-	stream_set_pos(_s, 2); \
-	stream_write_UINT16(_s, _pos - 4); \
-	stream_set_pos(_s, _pos); \
-	_r = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(_s), stream_get_length(_s), NULL); \
-	stream_set_pos(_s, 0); \
-	return _r; \
-}
-
 static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
+	int pos;
 	UINT16 i;
+	BOOL status;
 
-	RDPSND_PDU_INIT(s, SNDC_FORMATS);
+	stream_write_BYTE(s, SNDC_FORMATS);
+	stream_write_BYTE(s, 0);
+	stream_seek_UINT16(s);
 
 	stream_write_UINT32(s, 0); /* dwFlags */
 	stream_write_UINT32(s, 0); /* dwVolume */
@@ -108,9 +92,14 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		}
 	}
 
-	RDPSND_PDU_FINISH(s);
+	pos = stream_get_pos(s);
+	stream_set_pos(s, 2);
+	stream_write_UINT16(s, pos - 4);
+	stream_set_pos(s, pos);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), stream_get_length(s), NULL);
+	stream_set_pos(s, 0);
 
-	return TRUE;
+	return status;
 }
 
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
@@ -435,19 +424,32 @@ static BOOL rdpsnd_server_send_samples(rdpsnd_server_context* context, const voi
 
 static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, int right)
 {
+	int pos;
+	BOOL status;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 
-	RDPSND_PDU_INIT(s, SNDC_SETVOLUME);
+	stream_write_BYTE(s, SNDC_SETVOLUME);
+	stream_write_BYTE(s, 0);
+	stream_seek_UINT16(s);
 
 	stream_write_UINT16(s, left);
 	stream_write_UINT16(s, right);
-	
-	RDPSND_PDU_FINISH(s);
+
+	pos = stream_get_pos(s);
+	stream_set_pos(s, 2);
+	stream_write_UINT16(s, pos - 4);
+	stream_set_pos(s, pos);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), stream_get_length(s), NULL);
+	stream_set_pos(s, 0);
+
+	return status;
 }
 
 static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 {
+	int pos;
+	BOOL status;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
 	STREAM* s = rdpsnd->rdpsnd_pdu;
 
@@ -462,8 +464,18 @@ static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 
 	rdpsnd->context.selected_client_format = -1;
 
-	RDPSND_PDU_INIT(s, SNDC_CLOSE);
-	RDPSND_PDU_FINISH(s);
+	stream_write_BYTE(s, SNDC_CLOSE);
+	stream_write_BYTE(s, 0);
+	stream_seek_UINT16(s);
+
+	pos = stream_get_pos(s);
+	stream_set_pos(s, 2);
+	stream_write_UINT16(s, pos - 4);
+	stream_set_pos(s, pos);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), stream_get_length(s), NULL);
+	stream_set_pos(s, 0);
+
+	return status;
 }
 
 rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
