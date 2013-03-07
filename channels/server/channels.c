@@ -104,7 +104,7 @@ static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* buffer, 
 
 	item->length = length;
 	item->buffer = malloc(length);
-	memcpy(item->buffer, buffer, length);
+	CopyMemory(item->buffer, buffer, length);
 
 	WaitForSingleObject(channel->mutex, INFINITE);
 	list_enqueue(channel->receive_queue, item);
@@ -128,7 +128,7 @@ static void wts_queue_send_item(rdpPeerChannel* channel, wts_data_item* item)
 	SetEvent(vcm->send_event);
 }
 
-static int wts_read_variable_uint(STREAM* s, int cbLen, UINT32 *val)
+static int wts_read_variable_uint(STREAM* s, int cbLen, UINT32* val)
 {
 	switch (cbLen)
 	{
@@ -137,11 +137,13 @@ static int wts_read_variable_uint(STREAM* s, int cbLen, UINT32 *val)
 				return 0;
 			stream_read_BYTE(s, *val);
 			return 1;
+
 		case 1:
 			if (stream_get_left(s) < 2)
 				return 0;
 			stream_read_UINT16(s, *val);
 			return 2;
+
 		default:
 			if (stream_get_left(s) < 4)
 				return 0;
@@ -396,6 +398,7 @@ static int WTSReceiveChannelData(freerdp_peer* client, int channelId, BYTE* data
 		if (client->settings->ChannelDefArray[i].ChannelId == channelId)
 			break;
 	}
+
 	if (i < client->settings->ChannelCount)
 	{
 		channel = (rdpPeerChannel*) client->settings->ChannelDefArray[i].handle;
@@ -646,7 +649,7 @@ BOOL WTSVirtualChannelQuery(
 			}
 
 			*ppBuffer = malloc(sizeof(void*));
-			memcpy(*ppBuffer, &fds[0], sizeof(void*));
+			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
 			*pBytesReturned = sizeof(void*);
 			result = TRUE;
 			break;
@@ -665,18 +668,21 @@ BOOL WTSVirtualChannelQuery(
 						bval = FALSE;
 						result = TRUE;
 						break;
+
 					case DVC_OPEN_STATE_SUCCEEDED:
 						bval = TRUE;
 						result = TRUE;
 						break;
+
 					default:
 						bval = FALSE;
 						result = FALSE;
 						break;
 				}
 			}
+
 			*ppBuffer = malloc(sizeof(BOOL));
-			memcpy(*ppBuffer, &bval, sizeof(BOOL));
+			CopyMemory(*ppBuffer, &bval, sizeof(BOOL));
 			*pBytesReturned = sizeof(BOOL);
 			break;
 
@@ -725,7 +731,7 @@ BOOL WTSVirtualChannelRead(
 
 	ReleaseMutex(channel->mutex);
 
-	memcpy(Buffer, item->buffer, item->length);
+	CopyMemory(Buffer, item->buffer, item->length);
 	wts_data_item_free(item) ;
 
 	return TRUE;
@@ -755,7 +761,7 @@ BOOL WTSVirtualChannelWrite(
 
 		item->buffer = malloc(Length);
 		item->length = Length;
-		memcpy(item->buffer, Buffer, Length);
+		CopyMemory(item->buffer, Buffer, Length);
 
 		wts_queue_send_item(channel, item);
 	}
