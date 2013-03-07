@@ -154,6 +154,8 @@
 
 /* 0x5E is reserved */
 
+#define VK_POWER	0x5E /* Power key */
+
 #define VK_SLEEP	0x5F /* Computer Sleep key */
 
 /* Numeric keypad digits, the last four bits of the code represent the corresponding digit */
@@ -249,6 +251,7 @@
 
 #define VK_LAUNCH_MAIL		0xB4 /* Windows 2000/XP: Start Mail key */
 #define VK_MEDIA_SELECT		0xB5 /* Windows 2000/XP: Select Media key */
+#define VK_LAUNCH_MEDIA_SELECT	0xB5 /* Windows 2000/XP: Select Media key */
 #define VK_LAUNCH_APP1		0xB6 /* Windows 2000/XP: Start Application 1 key */
 #define VK_LAUNCH_APP2		0xB7 /* Windows 2000/XP: Start Application 2 key */
 
@@ -311,18 +314,31 @@
 /* 0xE8 is unassigned */
 /* 0xE9 to 0xF5 are OEM specific */
 
-#define VK_ATTN		0xF6 /* Attn key */
-#define VK_CRSEL	0xF7 /* CrSel key */
-#define VK_EXSEL	0xF8 /* ExSel key */
-#define VK_EREOF	0xF9 /* Erase EOF key */
-#define VK_PLAY		0xFA /* Play key */
-#define VK_ZOOM		0xFB /* Zoom key */
-#define VK_NONAME	0xFC /* Reserved */
-#define VK_PA1		0xFD /* PA1 key */
-#define VK_OEM_PA1	0xFD /* PA1 key */
-#define VK_OEM_CLEAR	0xFE /* Clear key */
+#define VK_OEM_RESET			0xE9
+#define VK_OEM_JUMP			0xEA
+#define VK_OEM_PA1			0xEB
+#define VK_OEM_PA2			0xEC
+#define VK_OEM_PA3			0xED
+#define VK_OEM_WSCTRL			0xEE
+#define VK_OEM_CUSEL			0xEF
+#define VK_OEM_ATTN			0xF0
+#define VK_OEM_FINISH			0xF1
+#define VK_OEM_COPY			0xF2
+#define VK_OEM_AUTO			0xF3
+#define VK_OEM_ENLW			0xF4
+#define VK_OEM_BACKTAB			0xF5
 
-#define VK_NONE		0xFF /* no key */
+#define VK_ATTN				0xF6 /* Attn key */
+#define VK_CRSEL			0xF7 /* CrSel key */
+#define VK_EXSEL			0xF8 /* ExSel key */
+#define VK_EREOF			0xF9 /* Erase EOF key */
+#define VK_PLAY				0xFA /* Play key */
+#define VK_ZOOM				0xFB /* Zoom key */
+#define VK_NONAME			0xFC /* Reserved */
+#define VK_PA1				0xFD /* PA1 key */
+#define VK_OEM_CLEAR			0xFE /* Clear key */
+
+#define VK_NONE				0xFF /* no key */
 
 /**
  * For East Asian Input Method Editors (IMEs)
@@ -341,21 +357,6 @@
 #define VK_DBE_FLUSHSTRING		0xF9 /* Deletes the undetermined string without determining it. */
 #define VK_DBE_CODEINPUT		0xFA /* Changes the mode to code input. */
 #define VK_DBE_NOCODEINPUT		0xFB /* Changes the mode to no-code input. */
-
-/**
- * TODO: fix the following definitions
- */
-
-#define VK_OEM_WSCTRL		0xFF
-#define VK_OEM_FINISH		0xFF
-#define VK_OEM_JUMP		0xFF
-#define VK_OEM_BACKTAB		0xFF
-#define VK_OEM_AUTO		0xFF
-#define VK_OEM_PA3		0xFF
-#define VK_OEM_RESET		0xFF
-#define VK_OEM_PA2		0xFF
-#define VK_POWER		0xFF
-#define VK_LAUNCH_MEDIA_SELECT	0xFF
 
 /*
  * Virtual Scan Codes

@@ -411,11 +411,15 @@ XKB_KEYNAME XKB_KEYNAME_TABLE[] =
 	{ "COMP",	VK_APPS | KBDEXT },
 	{ "KPDV",	VK_DIVIDE | KBDEXT },
 	{ "RCTL",	VK_RCONTROL | KBDEXT },
-	{ "RALT",	VK_RMENU | KBDEXT }
+	{ "RALT",	VK_RMENU | KBDEXT },
+
+	/* Japanese */
+
+	{ "HENK",       VK_CONVERT },
+	{ "MUHE",       VK_NONCONVERT },
+	{ "HKTG",       VK_DBE_KATAKANA },
+
 //	{ "AE13",	VK_BACKSLASH_JP }, // JP
-//	{ "HKTG",       VK_HIRAGANA }, // JP
-//	{ "HENK",       VK_CONVERT_JP }, // JP
-//	{ "MUHE",       VK_NONCONVERT_JP } // JP
 //	{ "LVL3",	0x54}
 };
 

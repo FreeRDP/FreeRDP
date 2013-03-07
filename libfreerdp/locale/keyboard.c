@@ -42,8 +42,8 @@
 
 #endif
 
-DWORD RDP_SCANCODE_TO_X11_KEYCODE[256][2];
-DWORD X11_KEYCODE_TO_RDP_SCANCODE[256];
+DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2];
+DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 
 int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
@@ -100,30 +100,30 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 
 #ifdef __APPLE__
 	if (status < 0)
-		status = freerdp_keyboard_init_apple(&keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
+		status = freerdp_keyboard_init_apple(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
 #endif
 
 #ifdef WITH_X11
 
 #ifdef WITH_XKBFILE
 	if (status < 0)
-		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
+		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
 #endif
 
 	if (status < 0)
-		status = freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
+		status = freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
 
 #endif
 
 	freerdp_detect_keyboard(&keyboardLayoutId);
 
-	ZeroMemory(RDP_SCANCODE_TO_X11_KEYCODE, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+	ZeroMemory(VIRTUAL_SCANCODE_TO_X11_KEYCODE, sizeof(VIRTUAL_SCANCODE_TO_X11_KEYCODE));
 
-	for (keycode = 0; keycode < ARRAYSIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+	for (keycode = 0; keycode < ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE); keycode++)
 	{
-		RDP_SCANCODE_TO_X11_KEYCODE
-			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode])]
-			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? 1 : 0] = keycode;
+		VIRTUAL_SCANCODE_TO_X11_KEYCODE
+			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode])]
+			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? 1 : 0] = keycode;
 	}
 
 	return keyboardLayoutId;
@@ -132,16 +132,16 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
 {
 	DEBUG_KBD("x11 keycode: %02X -> rdp code: %02X%s", keycode,
-		RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode]),
-		RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? " extended" : "");
+		RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]),
+		RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? " extended" : "");
 
-	return X11_KEYCODE_TO_RDP_SCANCODE[keycode];
+	return X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
 }
 
 DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL extended)
 {
 	if (extended)
-		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][1];
+		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][1];
 	else
-		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][0];
+		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][0];
 }
