@@ -105,10 +105,10 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_write_UINT16(s, 0x06); /* wVersion */
 	stream_write_BYTE(s, 0); /* bPad */
 	
-	printf("Server supports the following formats:\n");
+	//printf("Server supports the following formats:\n");
 	for (i = 0; i < rdpsnd->context.num_server_formats; i++)
 	{
-		rdpsnd_print_audio_format(&rdpsnd->context.server_formats[i]);
+		//rdpsnd_print_audio_format(&rdpsnd->context.server_formats[i]);
 		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
 		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
 		stream_write_UINT32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
@@ -144,16 +144,16 @@ static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
 
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
-	int i, num_known_format;
+	int i, num_known_format = 0;
 	UINT32 flags, vol, pitch;
 	UINT16 udpPort, version;
 	BYTE lastblock;
 
-	if (stream_get_left(s) < 20)
+	/*if (stream_get_left(s) < 20)
 	{
 		printf("vic logic: < 20");
 		return FALSE;
-	}
+	}*/
 		
 
 	stream_read_UINT32(s, flags); /* dwFlags */
@@ -174,17 +174,16 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 		rdpsnd->context.client_formats = (AUDIO_FORMAT*) malloc(rdpsnd->context.num_client_formats * sizeof(AUDIO_FORMAT));
 		ZeroMemory(rdpsnd->context.client_formats, sizeof(AUDIO_FORMAT));
 
-		num_known_format = 0;
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
 			
-			if (stream_get_left(s) < 18)
+			/*if (stream_get_left(s) < 18)
 			{
 				printf("%lu bytes left in stream. Cannot get client sound format!\n\n", stream_get_left(s));
 				free(rdpsnd->context.client_formats);
 				rdpsnd->context.client_formats = NULL;
 				return FALSE;
-			}
+			}*/
 			
 			//winpr_HexDump(s->p, 18);
 
@@ -266,6 +265,8 @@ static void* rdpsnd_server_thread_func(void* arg)
 				break;
 		}
 		
+		printf("rdpsnd: got a message of %d bytes\n", bytes_returned);
+		
 		//winpr_HexDump(s->data, stream_get_size(s));
 
 		stream_read_BYTE(s, msgType);
@@ -275,6 +276,8 @@ static void* rdpsnd_server_thread_func(void* arg)
 		//if (BodySize + 4 > (int) bytes_returned)
 			//continue;
 
+		printf("body size: %d\n", BodySize);
+		
 		switch (msgType)
 		{
 			case SNDC_QUALITYMODE:
@@ -291,6 +294,8 @@ static void* rdpsnd_server_thread_func(void* arg)
 				break;
 		}
 	}
+	
+	printf("stopped parsing rdpsnd virtual channel;");
 
 	stream_free(s);
 	freerdp_thread_quit(thread);
