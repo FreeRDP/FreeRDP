@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/crt.h>
+#include <winpr/input.h>
+
 #include <freerdp/locale/keyboard.h>
 
 #include "df_event.h"
@@ -26,7 +29,7 @@ static BYTE functionmap[128];
 
 void df_keyboard_init()
 {
-	memset(keymap, 0, sizeof(keymap));
+	ZeroMemory(keymap, sizeof(keymap));
 
 	/* Map DirectFB keycodes to Virtual Key Codes */
 
@@ -146,8 +149,7 @@ void df_keyboard_init()
 	keymap[DIKI_META_R - DIKI_UNKNOWN] = VK_RWIN;
 	keymap[DIKI_SUPER_L - DIKI_UNKNOWN] = VK_APPS;
 	
-	
-	memset(functionmap, 0, sizeof(functionmap));
+	ZeroMemory(functionmap, sizeof(functionmap));
 	
 	functionmap[DFB_FUNCTION_KEY(23) - DFB_FUNCTION_KEY(0)] = VK_HANGUL;
 	functionmap[DFB_FUNCTION_KEY(24) - DFB_FUNCTION_KEY(0)] = VK_HANJA;
@@ -190,19 +192,19 @@ void df_send_mouse_wheel_event(rdpInput* input, INT16 axisrel, UINT16 x, UINT16 
 
 void df_send_keyboard_event(rdpInput* input, BOOL down, BYTE keycode, BYTE function)
 {
-	BYTE vkcode;
-	RDP_SCANCODE rdp_scancode;
-	
+	DWORD scancode = 0;
+	BYTE vkcode = VK_NONE;
+
 	if (keycode)
 		vkcode = keymap[keycode];
 	else if (function)
 		vkcode = functionmap[function];
-	else
-		return;
 
-	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(vkcode);
+	if (vkcode != VK_NONE)
+		scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, input->context->settings->KeyboardType);
 
-	freerdp_input_send_keyboard_event_ex(input, down, rdp_scancode);
+	if (scancode)
+		freerdp_input_send_keyboard_event_ex(input, down, scancode);
 }
 
 BOOL df_event_process(freerdp* instance, DFBEvent* event)
