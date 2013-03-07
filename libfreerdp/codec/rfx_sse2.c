@@ -495,6 +495,7 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
+	printf("\n\nIs this causing crashes???\n\n");
 	DEBUG_RFX("Using SSE2 optimizations");
 
 	IF_PROFILER(context->priv->prof_rfx_quantization_decode->name = "rfx_quantization_decode_sse2");

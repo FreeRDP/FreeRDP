@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <freerdp/server/audin.h>
+#include <freerdp/server/rdpsnd.h>
 
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
@@ -42,10 +42,32 @@ static const AUDIO_FORMAT audio_formats[] =
 	{ 0x01, 1, 8000, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
 };
 
+static const AUDIO_FORMAT supported_audio_formats[] =
+{
+	{ 0x01, 2, 44100, 4, 16, 0, NULL }, /* PCM, 44100 Hz, 2 channels, 16 bits */
+};
+
+
 static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
-
 	OSStatus status;
+	int i;
+	//we should actually loop through the list of client formats here
+	//and see if we can send the client something that it supports...
+	
+	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	for(i = 0; i < context->num_client_formats; i++)
+	{
+		printf("\n%d)\nTag: %#0X\nChannels: %d\nSamples per sec: %d\nAvg bytes per sec: %d\nBlockAlign: %d\nBits per sample: %d\ncbSize: %0X\n",
+		       i,
+		       context->client_formats[i].wFormatTag,
+		       context->client_formats[i].nChannels,
+		       context->client_formats[i].nSamplesPerSec,
+		       context->client_formats[i].nAvgBytesPerSec,
+		       context->client_formats[i].nBlockAlign,
+		       context->client_formats[i].wBitsPerSample,
+		       context->client_formats[i].cbSize);
+	}
 	
 	recorderState.dataFormat.mSampleRate = 44100.0;
 	recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
@@ -98,6 +120,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	
 	recorderState.currentPacket = 0;
 	recorderState.isRunning = true;
+	
 	
 	context->SelectFormat(context, 4);
 	context->SetVolume(context, 0x7FFF, 0x7FFF);
