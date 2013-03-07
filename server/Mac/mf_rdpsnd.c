@@ -105,7 +105,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05, &recorderState.bufferByteSize);
 	
 		
-	for (int i = 0; i < snd_numBuffers; ++i)
+	for (i = 0; i < SND_NUMBUFFERS; ++i)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue,
 					 recorderState.bufferByteSize,
