@@ -29,7 +29,7 @@
 
 #include <winpr/synch.h>
 
-typedef void* (*OBJECT_NEW_FN)();
+typedef void* (*OBJECT_NEW_FN)(void);
 typedef void (*OBJECT_FREE_FN)(void* obj);
 typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
 

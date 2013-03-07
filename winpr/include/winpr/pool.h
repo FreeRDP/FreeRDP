@@ -81,6 +81,7 @@ typedef struct _TP_CALLBACK_ENVIRON_V1
 
 /* Non-Windows and pre Windows 7 */
 #if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)))
+//#if !defined(_WIN32_WINNT_VISTA)
 
 typedef struct _TP_CALLBACK_ENVIRON_V3
 {
@@ -130,9 +131,21 @@ typedef VOID (*PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context,
 
 #endif
 
+/* 
+There is a bug in the Win8 header that defines the IO 
+callback unconditionally. Versions of Windows greater
+than XP will conditionally define it. The following 
+logic tries to fix that.
+*/
+#ifdef _THREADPOOLAPISET_H_
+#define PTP_WIN32_IO_CALLBACK_DEFINED 1
+#else
+#if (_WIN32_WINNT >= 0x0600)
+#define PTP_WIN32_IO_CALLBACK_DEFINED 1
+#endif
+#endif
 
-/* Non-Windows and pre Vista */
-#if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)))
+#ifndef PTP_WIN32_IO_CALLBACK_DEFINED
 
 typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PVOID Overlapped,
 	ULONG IoResult, ULONG_PTR NumberOfBytesTransferred, PTP_IO Io);

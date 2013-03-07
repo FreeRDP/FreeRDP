@@ -99,8 +99,12 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 		settings->ColorDepth = 32;
 		settings->LargePointerFlag = TRUE;
         settings->FrameMarkerCommandEnabled = TRUE;
+        settings->FrameAcknowledge = 10;
 	}
     
+    // enable NSCodec
+    settings->NSCodec = TRUE;
+
 	// Performance flags
     settings->DisableWallpaper = ![_params boolForKey:@"perf_show_desktop" with3GEnabled:connected_via_3g];
     settings->DisableFullWindowDrag = ![_params boolForKey:@"perf_window_dragging" with3GEnabled:connected_via_3g];

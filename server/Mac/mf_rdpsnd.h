@@ -43,12 +43,12 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 				    const AudioStreamPacketDescription  *inPacketDescs);
 
 
-static const int snd_numBuffers = 3;
+#define SND_NUMBUFFERS  3
 struct _AQRecorderState
 {
 	AudioStreamBasicDescription  dataFormat;
 	AudioQueueRef                queue;
-	AudioQueueBufferRef          buffers[snd_numBuffers];
+	AudioQueueBufferRef          buffers[SND_NUMBUFFERS];
 	AudioFileID                  audioFile;
 	UInt32                       bufferByteSize;
 	SInt64                       currentPacket;
