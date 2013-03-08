@@ -68,7 +68,7 @@ void xf_kbd_unset_keypress(xfInfo* xfi, BYTE keycode)
 void xf_kbd_release_all_keypress(xfInfo* xfi)
 {
 	int keycode;
-	RDP_SCANCODE rdp_scancode;
+	DWORD rdp_scancode;
 
 	for (keycode = 0; keycode < ARRAYSIZE(xfi->pressed_keys); keycode++)
 	{
@@ -89,7 +89,7 @@ BOOL xf_kbd_key_pressed(xfInfo* xfi, KeySym keysym)
 
 void xf_kbd_send_key(xfInfo* xfi, BOOL down, BYTE keycode)
 {
-	RDP_SCANCODE rdp_scancode;
+	DWORD rdp_scancode;
 	rdpInput* input;
 
 	input = xfi->instance->input;
