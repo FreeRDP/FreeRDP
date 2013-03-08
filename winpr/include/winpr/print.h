@@ -27,4 +27,6 @@
 
 WINPR_API void winpr_HexDump(BYTE* data, int length);
 
+WINPR_API int wprintfx(const char *fmt, ...);
+
 #endif /* WINPR_UTILS_PRINT_H */
