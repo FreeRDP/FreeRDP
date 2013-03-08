@@ -112,13 +112,10 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	{
 		case WAVE_FORMAT_ALAW:
 			recorderState.dataFormat.mFormatID = kAudioFormatDVIIntelIMA;
-			recorderState.dataFormat.mBitsPerChannel = 16;
-
 			break;
 			
 		case WAVE_FORMAT_PCM:
 			recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
-			recorderState.dataFormat.mBitsPerChannel = 4;
 			break;
 			
 		default:
@@ -126,14 +123,13 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 			break;
 	}
 	
-	recorderState.dataFormat.mSampleRate = 22050.0;
-	recorderState.dataFormat.mFormatID = kAudioFormatALaw;
+	recorderState.dataFormat.mSampleRate = agreedFormat->nSamplesPerSec;
 	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;;
 	recorderState.dataFormat.mBytesPerPacket = 4;
 	recorderState.dataFormat.mFramesPerPacket = 1;
 	recorderState.dataFormat.mBytesPerFrame = 4;
-	recorderState.dataFormat.mChannelsPerFrame = 2;
-	recorderState.dataFormat.mBitsPerChannel = 8;
+	recorderState.dataFormat.mChannelsPerFrame = agreedFormat->nChannels;
+	recorderState.dataFormat.mBitsPerChannel = agreedFormat->wBitsPerSample;
 	
 	
 	/*

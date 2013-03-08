@@ -159,12 +159,6 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	UINT32 flags, vol, pitch;
 	UINT16 udpPort, version;
 	BYTE lastblock;
-
-	/*if (stream_get_left(s) < 20)
-	{
-		printf("vic logic: < 20");
-		return FALSE;
-	}*/
 		
 
 	stream_read_UINT32(s, flags); /* dwFlags */
@@ -276,7 +270,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 				break;
 		}
 		
-		printf("rdpsnd: got a message of %d bytes\n", bytes_returned);
+		//printf("rdpsnd: got a message of %d bytes\n", bytes_returned);
 		
 		//winpr_HexDump(s->data, stream_get_size(s));
 
@@ -287,7 +281,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		//if (BodySize + 4 > (int) bytes_returned)
 			//continue;
 
-		printf("body size: %d\n", BodySize);
+		//printf("body size: %d\n", BodySize);
 		
 		switch (msgType)
 		{
