@@ -132,6 +132,17 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	return TRUE;
 }
 
+static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, STREAM* s)
+{
+	//unhandled for now
+	
+	UINT16 timestamp = 0;
+	BYTE confirmBlockNum = 0;
+	stream_read_UINT16(s, timestamp);
+	stream_read_BYTE(s, confirmBlockNum);
+	stream_seek_BYTE(s); // padding
+}
+
 static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	UINT16 quality;
@@ -185,7 +196,7 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 				return FALSE;
 			}*/
 			
-			//winpr_HexDump(s->p, 18);
+			winpr_HexDump(s->p, 18);
 
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wFormatTag);
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nChannels);
@@ -280,6 +291,10 @@ static void* rdpsnd_server_thread_func(void* arg)
 		
 		switch (msgType)
 		{
+			case SNDC_WAVECONFIRM:
+				rdpsnd_server_recv_waveconfirm(rdpsnd, s);
+				break;
+				
 			case SNDC_QUALITYMODE:
 				rdpsnd_server_recv_quality_mode(rdpsnd, s);
 				break;

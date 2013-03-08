@@ -391,6 +391,9 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 		format->data = (BYTE*) malloc(format->cbSize);
 		stream_read(s, format->data, format->cbSize);
 	}
+	
+	printf("server supports the following audio formats:");
+	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, wNumberOfFormats);
 
 	rdpsnd_select_supported_audio_formats(rdpsnd);
 
