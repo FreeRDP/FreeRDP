@@ -38,7 +38,7 @@ if(ANDROID_BUILD_JAVA)
 		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
 		WORKING_DIRECTORY "${ANDROID_SOURCE_DIR}"
 		MAIN_DEPENDENCY AndroidManifest.xml
-		DEPENDS freerdp-android local.properties android-lib
+		DEPENDS freerdp-android local.properties #android-lib
 	)
 	add_custom_target(android-package ALL SOURCES "${APK}")
 	SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "gen;bin")
