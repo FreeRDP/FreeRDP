@@ -26,26 +26,27 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu;
 import android.view.View.OnClickListener;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnCreateContextMenuListener;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class HomeActivity extends Activity
 {	
@@ -86,6 +87,21 @@ public class HomeActivity extends Activity
 		addBookmarkPlaceholder = new PlaceholderBookmark();
 		addBookmarkPlaceholder.setName(ADD_BOOKMARK_PLACEHOLDER);
 		addBookmarkPlaceholder.setLabel(getResources().getString(R.string.list_placeholder_add_bookmark));
+		
+		// check for passed .rdp file and open it in a new bookmark
+		Intent caller = getIntent();
+		Uri callParameter = caller.getData();
+		
+		if (Intent.ACTION_VIEW.equals(caller.getAction()) && callParameter != null)
+		{
+			String refStr = ConnectionReference.getFileReference(callParameter.getPath());
+			Bundle bundle = new Bundle();
+			bundle.putString(BookmarkActivity.PARAM_CONNECTION_REFERENCE, refStr);
+
+			Intent bookmarkIntent = new Intent(this.getApplicationContext(), BookmarkActivity.class);
+			bookmarkIntent.putExtras(bundle);				
+			startActivity(bookmarkIntent);
+		}
 		
 		// load views
 		clearTextButton = (Button) findViewById(R.id.clear_search_btn);
