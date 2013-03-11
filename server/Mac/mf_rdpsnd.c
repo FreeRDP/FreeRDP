@@ -72,16 +72,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	printf("Client supports the following %d formats: \n", context->num_client_formats);
 	for(i = 0; i < context->num_client_formats; i++)
 	{
-		printf("\n%d)\nTag: %#0X\nChannels: %d\nSamples per sec: %d\nAvg bytes per sec: %d\nBlockAlign: %d\nBits per sample: %d\ncbSize: %0X\n",
-		       i,
-		       context->client_formats[i].wFormatTag,
-		       context->client_formats[i].nChannels,
-		       context->client_formats[i].nSamplesPerSec,
-		       context->client_formats[i].nAvgBytesPerSec,
-		       context->client_formats[i].nBlockAlign,
-		       context->client_formats[i].wBitsPerSample,
-		       context->client_formats[i].cbSize);
-		
+		//TODO: improve the way we agree on a format
 		for (j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
@@ -130,18 +121,6 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	recorderState.dataFormat.mBytesPerFrame = 4;
 	recorderState.dataFormat.mChannelsPerFrame = agreedFormat->nChannels;
 	recorderState.dataFormat.mBitsPerChannel = agreedFormat->wBitsPerSample;
-	
-	
-	/*
-	recorderState.dataFormat.mSampleRate = 44100.0;
-	recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
-	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
-	recorderState.dataFormat.mBytesPerPacket = 4;
-	recorderState.dataFormat.mFramesPerPacket = 1;
-	recorderState.dataFormat.mBytesPerFrame = 4;
-	recorderState.dataFormat.mChannelsPerFrame = 2;
-	recorderState.dataFormat.mBitsPerChannel = 16;
-	*/
 	
 	
 	recorderState.snd_context = context;

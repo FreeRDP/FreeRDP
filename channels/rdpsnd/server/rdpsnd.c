@@ -55,24 +55,6 @@ typedef struct _rdpsnd_server
 } rdpsnd_server;
 
 
-void rdpsnd_print_audio_format(AUDIO_FORMAT* format)
-{
-	/*printf("\t wFormatTag: 0x%04X nChannels: %d nSamplesPerSec: %d nAvgBytesPerSec: %d nBlockAlign: %d wBitsPerSample: %d cbSize: %d\n",
-	       format->wFormatTag,
-	       format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
-	       format->nBlockAlign, format->wBitsPerSample, format->cbSize);
-	 */
-	
-	printf("\nTag: %#0X\nChannels: %d\nSamples per sec: %d\nAvg bytes per sec: %d\nBlockAlign: %d\nBits per sample: %d\ncbSize: %0X\n",
-	       format->wFormatTag,
-	       format->nChannels,
-	       format->nSamplesPerSec,
-	       format->nAvgBytesPerSec,
-	       format->nBlockAlign,
-	       format->wBitsPerSample,
-	       format->cbSize);
-}
-
 static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	int pos;
@@ -92,10 +74,8 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_write_UINT16(s, 0x06); /* wVersion */
 	stream_write_BYTE(s, 0); /* bPad */
 	
-	//printf("Server supports the following formats:\n");
 	for (i = 0; i < rdpsnd->context.num_server_formats; i++)
 	{
-		//rdpsnd_print_audio_format(&rdpsnd->context.server_formats[i]);
 		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
 		stream_write_UINT16(s, rdpsnd->context.server_formats[i].nChannels); /* nChannels */
 		stream_write_UINT32(s, rdpsnd->context.server_formats[i].nSamplesPerSec); /* nSamplesPerSec */
@@ -137,6 +117,7 @@ static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, STREAM* s)
 
 static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
 {
+	//unhandled for now
 	UINT16 quality;
 	
 	stream_read_UINT16(s, quality);
@@ -162,10 +143,6 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_read_UINT16(s, version); /* wVersion */
 	stream_seek_BYTE(s); /* bPad */
 
-	printf("recv_formats header:\n\tFlags: %#0X\n\tVol: %#0X\n\tPitch: %#0X\n\tudpPort: %#0X\n\tnumFormats: %#0X\n\tlastBlock: %#0X\n\tVersion: %#0X\n\n",
-	      flags, vol, pitch, udpPort, rdpsnd->context.num_client_formats, lastblock, version);
-	
-	//printf("client supports the following formats: \n");
 	if (rdpsnd->context.num_client_formats > 0)
 	{
 		rdpsnd->context.client_formats = (AUDIO_FORMAT*) malloc(rdpsnd->context.num_client_formats * sizeof(AUDIO_FORMAT));
@@ -173,17 +150,6 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
-			
-			/*if (stream_get_left(s) < 18)
-			{
-				printf("%lu bytes left in stream. Cannot get client sound format!\n\n", stream_get_left(s));
-				free(rdpsnd->context.client_formats);
-				rdpsnd->context.client_formats = NULL;
-				return FALSE;
-			}*/
-			
-			winpr_HexDump(s->p, 18);
-
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wFormatTag);
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nChannels);
 			stream_read_UINT32(s, rdpsnd->context.client_formats[i].nSamplesPerSec);
@@ -196,7 +162,6 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 			{
 				stream_seek(s, rdpsnd->context.client_formats[i].cbSize);
 			}
-			//rdpsnd_print_audio_format(&rdpsnd->context.client_formats[i]);
 			
 			if (rdpsnd->context.client_formats[i].wFormatTag != 0)
 			{
@@ -266,19 +231,10 @@ static void* rdpsnd_server_thread_func(void* arg)
 				break;
 		}
 		
-		//printf("rdpsnd: got a message of %d bytes\n", bytes_returned);
-		
-		//winpr_HexDump(s->data, stream_get_size(s));
-
 		stream_read_BYTE(s, msgType);
 		stream_seek_BYTE(s); /* bPad */
 		stream_read_UINT16(s, BodySize);
 
-		//if (BodySize + 4 > (int) bytes_returned)
-			//continue;
-
-		//printf("body size: %d\n", BodySize);
-		
 		switch (msgType)
 		{
 			case SNDC_WAVECONFIRM:
@@ -300,8 +256,6 @@ static void* rdpsnd_server_thread_func(void* arg)
 		}
 	}
 	
-	printf("stopped parsing rdpsnd virtual channel;");
-
 	stream_free(s);
 
 	return NULL;
