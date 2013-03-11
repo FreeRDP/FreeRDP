@@ -41,18 +41,18 @@
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
-	NSRect rect;
 	NSRect prevWinPosition;
 	int titleBarHeight;
 	freerdp* rdp_instance;
 	rdpContext* rdp_context;
+	CGContextRef bitmap_context;
 	char* pixel_data;
 	int width;
 	int height;
 	int argc;
 	char** argv;
 	
-	// RAIL stuff
+	/* RemoteApp */
 	MRDPWindow* currentWindow;
 	NSPoint savedDragLocation;
 	BOOL mouseInClientArea;
@@ -63,7 +63,7 @@
 	BOOL saveInitialDragLoc;
 	BOOL skipMoveWindowOnce;
 	
-	// store state info for some keys
+	/* store state info for some keys */
 	int kdlshift;
 	int kdrshift;
 	int kdlctrl;
@@ -76,18 +76,17 @@
 	
 @public
 	NSWindow* ourMainWindow;
-	NSPasteboard* pasteboard_rd; // for reading from clipboard
-	NSPasteboard* pasteboard_wr; // for writing to clipboard
+	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
+	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
 	int pasteboard_changecount;
 	int pasteboard_format;
-	int is_connected;   // true when connected to RDP server
+	int is_connected;
 }
 
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
 - (void) saveStateInfo :(freerdp *) instance :(rdpContext *) context;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
-- (void) my_draw_rect :(void *) context;
 - (void) releaseResources;
 - (void) setViewSize : (int) width : (int) height;
 
@@ -113,6 +112,7 @@ void pointer_setDefault(rdpContext* context);
 int rdp_connect(void);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp* instance);
+BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
 void mac_context_new(freerdp* instance, rdpContext* context);
 void mac_context_free(freerdp* instance, rdpContext* context);
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
@@ -165,10 +165,10 @@ struct mac_context
 struct cursor
 {
 	rdpPointer* pointer;
-	BYTE* cursor_data;   // bitmapped pixel data
-	void* bmiRep;        // NSBitmapImageRep
-	void* nsCursor;      // NSCursor
-	void* nsImage;       // NSImage
+	BYTE* cursor_data;
+	void* bmiRep; /* NSBitmapImageRep */
+	void* nsCursor; /* NSCursor */
+	void* nsImage; /* NSImage */
 };
 
 struct rgba_data
@@ -177,11 +177,5 @@ struct rgba_data
 	char green;
 	char blue;
 	char alpha;
-};
-
-struct kkey
-{
-	int key_code;
-	int flags;
 };
 

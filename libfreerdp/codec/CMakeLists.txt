@@ -22,6 +22,7 @@ set(${MODULE_PREFIX}_SRCS
 	dsp.c
 	bitmap.c
 	color.c
+	audio.c
 	rfx_bitstream.h
 	rfx_constants.h
 	rfx_decode.c
