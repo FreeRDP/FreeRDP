@@ -796,15 +796,15 @@ JNIEXPORT jboolean JNICALL jni_freerdp_update_graphics(
 JNIEXPORT void JNICALL jni_freerdp_send_key_event(
 	JNIEnv *env, jclass cls, jint instance, jint keycode, jboolean down)
 {
-	RDP_SCANCODE scancode;
+	DWORD scancode;
 	ANDROID_EVENT* event;
 
 	freerdp* inst = (freerdp*)instance;
 
-	scancode = freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(keycode);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(keycode, 4);
 	int flags = (down == JNI_TRUE) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE;
-	flags |= (RDP_SCANCODE_EXTENDED(scancode)) ? KBD_FLAGS_EXTENDED : 0;
-	event = (ANDROID_EVENT*) android_event_key_new(flags, RDP_SCANCODE_CODE(scancode));
+	flags |= (scancode & KBDEXT) ? KBD_FLAGS_EXTENDED : 0;
+	event = (ANDROID_EVENT*) android_event_key_new(flags, scancode & 0xFF);
 
 	android_push_event(inst, event);
 
