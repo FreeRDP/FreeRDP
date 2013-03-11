@@ -45,6 +45,10 @@
 #import "MRDPView.h"
 #import "MRDPCursor.h"
 #import "PasswordDialog.h"
+
+#include <winpr/crt.h>
+#include <winpr/input.h>
+
 #include <freerdp/constants.h>
 
 // RAIL_TODO DELETE WHEN DONE TESTING
@@ -56,8 +60,6 @@ MRDPView *g_mrdpview;
 
 @synthesize is_connected;
 
-struct kkey g_keys[];
-
 const char* error_code_names[] =
 {
 	"RAIL_EXEC_S_OK",
@@ -67,166 +69,6 @@ const char* error_code_names[] =
 	"RAIL_EXEC_E_FILE_NOT_FOUND",
 	"RAIL_EXEC_E_FAIL",
 	"RAIL_EXEC_E_SESSION_LOCKED"
-};
-
-struct kkey g_keys[256] =
-{
-	{ 0x1e, 0 }, // a           0
-	{ 0x1f, 0 }, // s
-	{ 0x20, 0 }, // d
-	{ 0x21, 0 }, // f
-	{ 0x23, 0 }, // h
-	{ 0x22, 0 }, // g
-	{ 0x2c, 0 }, // z
-	{ 0x2d, 0 }, // x
-	{ 0x2e, 0 }, // c
-	{ 0x2f, 0 }, // v
-	{ 0x00, 0 }, //             10
-	{ 0x30, 0 }, // b
-	{ 0x10, 0 }, // q
-	{ 0x11, 0 }, // w
-	{ 0x12, 0 }, // e
-	{ 0x13, 0 }, // r
-	{ 0x15, 0 }, // y
-	{ 0x14, 0 }, // t
-	{ 0x02, 0 }, // 1
-	{ 0x03, 0 }, // 2
-	{ 0x04, 0 }, // 3           20
-	{ 0x05, 0 }, // 4
-	{ 0x07, 0 }, // 6
-	{ 0x06, 0 }, // 5
-	{ 0x0d, 0 }, // = or +
-	{ 0x0a, 0 }, // 9
-	{ 0x08, 0 }, // 7
-	{ 0x0c, 0 }, // - or _
-	{ 0x09, 0 }, // 8
-	{ 0x0b, 0 }, // 0
-	{ 0x1b, 0 }, // ] or }      30
-	{ 0x18, 0 }, // o
-	{ 0x16, 0 }, // u
-	{ 0x1a, 0 }, // [ or {
-	{ 0x17, 0 }, // i
-	{ 0x19, 0 }, // p
-	{ 0x1c, 0 }, // enter
-	{ 0x26, 0 }, // l
-	{ 0x24, 0 }, // j
-	{ 0x28, 0 }, // ' or "
-	{ 0x25, 0 }, // k           40
-	{ 0x27, 0 }, // ; or :
-	{ 0x2b, 0 }, // \ or |
-	{ 0x33, 0 }, // , or <
-	{ 0x35, 0 }, // / or ?
-	{ 0x31, 0 }, // n
-	{ 0x32, 0 }, // m
-	{ 0x34, 0 }, // . or >
-	{ 0x0f, 0 }, // tab
-	{ 0x39, 0 }, // space
-	{ 0x29, 0 }, // ` or ~      50
-	{ 0x0e, 0 }, // backspace
-	{ 0x00, 0 }, //
-	{ 0x01, 0 }, // esc
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 }, //             60
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x53, 0 }, // KP.
-	{ 0x00, 0 },
-	{ 0x37, 0 }, // KP*
-	{ 0x00, 0 },
-	{ 0x4e, 0 }, // KP+
-	{ 0x00, 0 }, //             70
-	{ 0x45, 0 }, // num lock
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x35, 1 }, // KP/
-	{ 0x1c, 1 }, // KPEnter
-	{ 0x00, 0 },
-	{ 0x4a, 0 }, // KP-
-	{ 0x00, 0 },
-	{ 0x00, 0 }, //             80
-	{ 0x00, 0 },
-	{ 0x52, 0 }, // KP0
-	{ 0x4f, 0 }, // KP1
-	{ 0x50, 0 }, // KP2
-	{ 0x51, 0 }, // KP3
-	{ 0x4b, 0 }, // KP4
-	{ 0x4c, 0 }, // KP5
-	{ 0x4d, 0 }, // KP6
-	{ 0x47, 0 }, // KP7
-	{ 0x00, 0 }, //             90
-	{ 0x48, 0 }, // KP8
-	{ 0x49, 0 }, // KP9
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 }, //             100
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x5d, 1 }, // menu        110
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x52, 1 }, // Insert
-	{ 0x47, 1 }, // Home
-	{ 0x49, 1 }, // PgUp
-	{ 0x53, 1 }, // Delete
-	{ 0x00, 0 },
-	{ 0x4f, 1 }, // End
-	{ 0x00, 0 }, //             120
-	{ 0x51, 1 }, // PgDown
-	{ 0x3b, 0 }, // f1
-	{ 0x4b, 1 }, // left
-	{ 0x4d, 1 }, // right
-	{ 0x50, 1 }, // down
-	{ 0x48, 1 }, // up
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
-	{ 0x00, 0 },
 };
 
 /************************************************************************
@@ -528,12 +370,20 @@ struct kkey g_keys[256] =
 - (void) keyDown:(NSEvent *) event
 {
 	int key;
+	BOOL extended;
+	DWORD vkcode;
+	DWORD scancode;
 	
 	if (!is_connected)
 		return;
 	
-	key = [event keyCode];
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, g_keys[key].flags | KBD_FLAGS_DOWN, g_keys[key].key_code);
+	key = [event keyCode] + 8;
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	
+	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -543,12 +393,20 @@ struct kkey g_keys[256] =
 - (void) keyUp:(NSEvent *) event
 {
 	int key;
+	BOOL extended;
+	DWORD vkcode;
+	DWORD scancode;
 	
 	if (!is_connected)
 		return;
 	
-	key = [event keyCode];
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, g_keys[key].flags | KBD_FLAGS_RELEASE, g_keys[key].key_code);
+	key = [event keyCode] + 8;
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	
+	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
 }
 
 /** *********************************************************************

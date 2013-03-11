@@ -179,9 +179,3 @@ struct rgba_data
 	char alpha;
 };
 
-struct kkey
-{
-	int key_code;
-	int flags;
-};
-
