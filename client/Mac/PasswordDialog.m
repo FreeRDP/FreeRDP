@@ -69,4 +69,16 @@
 	return [NSApp runModalForWindow:self.window];
 }
 
+- (void)dealloc
+{
+	[usernameText release];
+	[passwordText release];
+	[messageLabel release];
+	[serverHostname release];
+	[username release];
+	[password release];
+
+	[super dealloc];
+}
+
 @end
