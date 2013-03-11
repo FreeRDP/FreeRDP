@@ -98,7 +98,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	0, /* APPLE_VK_0x34 (0x34) */
 	VK_ESCAPE, /* APPLE_VK_Escape (0x35) */
 	0, /* APPLE_VK_0x36 (0x36) */
-	VK_LWIN, /* APPLE_VK_Command (0x37) */
+	VK_LWIN | KBDEXT, /* APPLE_VK_Command (0x37) */
 	VK_LSHIFT, /* APPLE_VK_Shift (0x38) */
 	VK_CAPITAL, /* APPLE_VK_CapsLock (0x39) */
 	VK_LMENU, /* APPLE_VK_Option (0x3A) */
@@ -106,7 +106,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_RSHIFT, /* APPLE_VK_RightShift (0x3C) */
 	VK_RMENU, /* APPLE_VK_RightOption (0x3D) */
 	0, /* APPLE_VK_RightControl (0x3E) */
-	VK_RWIN, /* APPLE_VK_Function (0x3F) */
+	VK_RWIN | KBDEXT, /* APPLE_VK_Function (0x3F) */
 	0, /* APPLE_VK_F17 (0x40) */
 	VK_DECIMAL, /* APPLE_VK_ANSI_KeypadDecimal (0x41) */
 	0, /* APPLE_VK_0x42 (0x42) */
@@ -118,8 +118,8 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	0, /* APPLE_VK_VolumeUp (0x48) */
 	0, /* APPLE_VK_VolumeDown (0x49) */
 	0, /* APPLE_VK_Mute (0x4A) */
-	VK_DIVIDE, /* APPLE_VK_ANSI_KeypadDivide (0x4B) */
-	VK_RETURN, /* APPLE_VK_ANSI_KeypadEnter (0x4C) */
+	VK_DIVIDE | KBDEXT, /* APPLE_VK_ANSI_KeypadDivide (0x4B) */
+	VK_RETURN | KBDEXT, /* APPLE_VK_ANSI_KeypadEnter (0x4C) */
 	0, /* APPLE_VK_0x4D (0x4D) */
 	VK_SUBTRACT, /* APPLE_VK_ANSI_KeypadMinus (0x4E) */
 	0, /* APPLE_VK_F18 (0x4F) */
@@ -148,7 +148,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	0, /* APPLE_VK_JIS_Eisu (0x66) */
 	VK_F11, /* APPLE_VK_F11 (0x67) */
 	0, /* APPLE_VK_JIS_Kana (0x68) */
-	VK_SNAPSHOT, /* APPLE_VK_F13 (0x69) */
+	VK_SNAPSHOT | KBDEXT, /* APPLE_VK_F13 (0x69) */
 	0, /* APPLE_VK_F16 (0x6A) */
 	VK_SCROLL, /* APPLE_VK_F14 (0x6B) */
 	0, /* APPLE_VK_0x6C (0x6C) */
@@ -156,20 +156,20 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	0, /* APPLE_VK_0x6E (0x6E) */
 	VK_F12, /* APPLE_VK_F12 (0x6F) */
 	0, /* APPLE_VK_0x70 (0x70) */
-	VK_PAUSE, /* APPLE_VK_F15 (0x71) */
-	VK_INSERT, /* APPLE_VK_Help (0x72) */
-	VK_HOME, /* APPLE_VK_Home (0x73) */
-	VK_PRIOR, /* APPLE_VK_PageUp (0x74) */
-	VK_DELETE, /* APPLE_VK_ForwardDelete (0x75) */
+	VK_PAUSE | KBDEXT, /* APPLE_VK_F15 (0x71) */
+	VK_INSERT | KBDEXT, /* APPLE_VK_Help (0x72) */
+	VK_HOME | KBDEXT, /* APPLE_VK_Home (0x73) */
+	VK_PRIOR | KBDEXT, /* APPLE_VK_PageUp (0x74) */
+	VK_DELETE | KBDEXT, /* APPLE_VK_ForwardDelete (0x75) */
 	VK_F4, /* APPLE_VK_F4 (0x76) */
-	VK_END, /* APPLE_VK_End (0x77) */
+	VK_END | KBDEXT, /* APPLE_VK_End (0x77) */
 	VK_F2, /* APPLE_VK_F2 (0x78) */
-	VK_NEXT, /* APPLE_VK_PageDown (0x79) */
+	VK_NEXT | KBDEXT, /* APPLE_VK_PageDown (0x79) */
 	VK_F1, /* APPLE_VK_F1 (0x7A) */
-	VK_LEFT, /* APPLE_VK_LeftArrow (0x7B) */
-	VK_RIGHT, /* APPLE_VK_RightArrow (0x7C) */
-	VK_DOWN, /* APPLE_VK_DownArrow (0x7D) */
-	VK_UP, /* APPLE_VK_UpArrow (0x7E) */
+	VK_LEFT | KBDEXT, /* APPLE_VK_LeftArrow (0x7B) */
+	VK_RIGHT | KBDEXT, /* APPLE_VK_RightArrow (0x7C) */
+	VK_DOWN | KBDEXT, /* APPLE_VK_DownArrow (0x7D) */
+	VK_UP | KBDEXT, /* APPLE_VK_UpArrow (0x7E) */
 	0, /* 135 */
 	0, /* 136 */
 	0, /* 137 */
