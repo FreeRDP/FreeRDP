@@ -45,14 +45,14 @@
 	int titleBarHeight;
 	freerdp* rdp_instance;
 	rdpContext* rdp_context;
-    CGContextRef bitmap_context;
+	CGContextRef bitmap_context;
 	char* pixel_data;
 	int width;
 	int height;
 	int argc;
 	char** argv;
 	
-	// RAIL stuff
+	/* RemoteApp */
 	MRDPWindow* currentWindow;
 	NSPoint savedDragLocation;
 	BOOL mouseInClientArea;
@@ -63,7 +63,7 @@
 	BOOL saveInitialDragLoc;
 	BOOL skipMoveWindowOnce;
 	
-	// store state info for some keys
+	/* store state info for some keys */
 	int kdlshift;
 	int kdrshift;
 	int kdlctrl;
@@ -76,11 +76,11 @@
 	
 @public
 	NSWindow* ourMainWindow;
-	NSPasteboard* pasteboard_rd; // for reading from clipboard
-	NSPasteboard* pasteboard_wr; // for writing to clipboard
+	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
+	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
 	int pasteboard_changecount;
 	int pasteboard_format;
-	int is_connected;   // true when connected to RDP server
+	int is_connected;
 }
 
 - (void) rdpConnectError;
@@ -165,10 +165,10 @@ struct mac_context
 struct cursor
 {
 	rdpPointer* pointer;
-	BYTE* cursor_data;   // bitmapped pixel data
-	void* bmiRep;        // NSBitmapImageRep
-	void* nsCursor;      // NSCursor
-	void* nsImage;       // NSImage
+	BYTE* cursor_data;
+	void* bmiRep; /* NSBitmapImageRep */
+	void* nsCursor; /* NSCursor */
+	void* nsImage; /* NSImage */
 };
 
 struct rgba_data

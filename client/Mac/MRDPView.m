@@ -996,13 +996,13 @@ BOOL mac_post_connect(freerdp* instance)
 	void* wr_fds[32];
 	rdpPointer rdp_pointer;
 	
-	memset(&rdp_pointer, 0, sizeof(rdpPointer));
+	ZeroMemory(&rdp_pointer, sizeof(rdpPointer));
 	rdp_pointer.size = sizeof(rdpPointer);
-	rdp_pointer.New = pointer_new;
-	rdp_pointer.Free = pointer_free;
-	rdp_pointer.Set = pointer_set;
-	rdp_pointer.SetNull = pointer_setNull;
-	rdp_pointer.SetDefault = pointer_setDefault;
+	rdp_pointer.New = mf_Pointer_New;
+	rdp_pointer.Free = mf_Pointer_Free;
+	rdp_pointer.Set = mf_Pointer_Set;
+	rdp_pointer.SetNull = mf_Pointer_SetNull;
+	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 
 	flags = CLRBUF_32BPP;
 	gdi_init(instance, flags, NULL);
@@ -1014,7 +1014,7 @@ BOOL mac_post_connect(freerdp* instance)
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 	
-	// register file descriptors with the RunLoop
+	/* register file descriptors with the RunLoop */
 	if (!freerdp_get_fds(instance, rd_fds, &rd_count, 0, 0))
 	{
 		printf("mac_post_connect: freerdp_get_fds() failed!\n");
@@ -1026,7 +1026,7 @@ BOOL mac_post_connect(freerdp* instance)
 	}
 	register_fds(fds, rd_count, instance);
 	
-	// register channel manager file descriptors with the RunLoop
+	/* register channel manager file descriptors with the RunLoop */
 	if (!freerdp_channels_get_fds(instance->context->channels, instance, rd_fds, &rd_count, wr_fds, &wr_count))
 	{
 		printf("ERROR: freerdp_channels_get_fds() failed\n");
@@ -1039,20 +1039,20 @@ BOOL mac_post_connect(freerdp* instance)
 	register_channel_fds(fds, rd_count, instance);
 	freerdp_channels_post_connect(instance->context->channels, instance);
 	
-	// setup RAIL (remote app)
+	/* setup RemoteApp */
 	instance->context->rail = rail_new(instance->settings);
 	rail_register_update_callbacks(instance->context->rail, instance->update);
 	mac_rail_register_callbacks(instance, instance->context->rail);
 	
-	// setup pasteboard (aka clipboard) for copy operations (write only)
+	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	g_mrdpview->pasteboard_wr = [NSPasteboard generalPasteboard];
 	
-	// setup pasteboard for read operations
+	/* setup pasteboard for read operations */
 	g_mrdpview->pasteboard_rd = [NSPasteboard generalPasteboard];
 	g_mrdpview->pasteboard_changecount = (int) [g_mrdpview->pasteboard_rd changeCount];
 	g_mrdpview->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:g_mrdpview selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
 	
-	// we want to be notified when window resizes
+	/* we want to be notified when window resizes */
 	[[NSNotificationCenter defaultCenter] addObserver:g_mrdpview selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
 	
 	return TRUE;
@@ -1060,7 +1060,7 @@ BOOL mac_post_connect(freerdp* instance)
 
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
-	PasswordDialog * dialog = [PasswordDialog new];
+	PasswordDialog* dialog = [PasswordDialog new];
 
 	dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
 
@@ -1094,18 +1094,23 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
  *
  ************************************************************************/
 
-void pointer_new(rdpContext* context, rdpPointer* pointer)
+void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
-	BYTE* cursor_data;
-	MRDPCursor *mrdpCursor = [[MRDPCursor alloc] init];
-	
 	NSRect rect;
+	NSImage* image;
+	NSPoint hotSpot;
+	NSCursor* cursor;
+	BYTE* cursor_data;
+	NSMutableArray* ma;
+	NSBitmapImageRep* bmiRep;
+	MRDPCursor* mrdpCursor = [[MRDPCursor alloc] init];
+	
 	rect.size.width = pointer->width;
 	rect.size.height = pointer->height;
 	rect.origin.x = pointer->xPos;
 	rect.origin.y = pointer->yPos;
 	
-	cursor_data = (BYTE *) malloc(rect.size.width * rect.size.height * 4);
+	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
@@ -1114,13 +1119,12 @@ void pointer_new(rdpContext* context, rdpPointer* pointer)
 	// TODO if xorBpp is > 24 need to call freerdp_image_swap_color_order
 	//         see file df_graphics.c
 	
-	// store cursor bitmap image in representation - required by NSImage
-	NSBitmapImageRep *bmiRep;
+	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
-							pixelsWide:rect.size.width
+							 pixelsWide:rect.size.width
 							 pixelsHigh:rect.size.height
 						      bitsPerSample:8
-						    samplesPerPixel:sizeof(struct rgba_data)
+						    samplesPerPixel:4
 							   hasAlpha:YES
 							   isPlanar:NO
 						     colorSpaceName:NSDeviceRGBColorSpace
@@ -1129,23 +1133,22 @@ void pointer_new(rdpContext* context, rdpPointer* pointer)
 						       bitsPerPixel:0];
 	mrdpCursor->bmiRep = bmiRep;
 	
-	// create an image using above representation
-	NSImage *image = [[NSImage alloc] initWithSize:[bmiRep size]];
+	/* create an image using above representation */
+	image = [[NSImage alloc] initWithSize:[bmiRep size]];
 	[image addRepresentation: bmiRep];
 	[image setFlipped:NO];
 	mrdpCursor->nsImage = image;
 	
-	// need hotspot to create cursor
-	NSPoint hotSpot;
+	/* need hotspot to create cursor */
 	hotSpot.x = pointer->xPos;
 	hotSpot.y = pointer->yPos;
 	
-	NSCursor *cursor = [[NSCursor alloc] initWithImage: image hotSpot:hotSpot];
+	cursor = [[NSCursor alloc] initWithImage: image hotSpot:hotSpot];
 	mrdpCursor->nsCursor = cursor;
 	mrdpCursor->pointer = pointer;
 	
-	// save cursor for later use in pointer_set()
-	NSMutableArray *ma = g_mrdpview->cursors;
+	/* save cursor for later use in mf_Pointer_Set() */
+	ma = g_mrdpview->cursors;
 	[ma addObject:mrdpCursor];
 }
 
@@ -1153,7 +1156,7 @@ void pointer_new(rdpContext* context, rdpPointer* pointer)
  * release resources on specified cursor
  ************************************************************************/
 
-void pointer_free(rdpContext* context, rdpPointer* pointer)
+void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	NSMutableArray* ma = g_mrdpview->cursors;
 	
@@ -1175,7 +1178,7 @@ void pointer_free(rdpContext* context, rdpPointer* pointer)
  * set specified cursor as the current cursor
  ************************************************************************/
 
-void pointer_set(rdpContext* context, rdpPointer* pointer)
+void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	NSMutableArray* ma = g_mrdpview->cursors;
 	
@@ -1196,7 +1199,7 @@ void pointer_set(rdpContext* context, rdpPointer* pointer)
  * do not display any mouse cursor
  ***********************************************************************/
 
-void pointer_setNull(rdpContext* context)
+void mf_Pointer_SetNull(rdpContext* context)
 {
 }
 
@@ -1204,7 +1207,7 @@ void pointer_setNull(rdpContext* context)
  * display default mouse cursor
  ***********************************************************************/
 
-void pointer_setDefault(rdpContext* context)
+void mf_Pointer_SetDefault(rdpContext* context)
 {
 }
 
@@ -1301,7 +1304,7 @@ void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 {
 	if (!freerdp_check_fds(info))
 	{
-		// lost connection or did not connect
+		/* lost connection or did not connect */
 		[NSApp terminate:nil];
 	}
 }
@@ -1484,7 +1487,7 @@ void cliprdr_process_cb_monitor_ready_event(freerdp* instance)
 	
 	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
 	
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
 	
 	freerdp_channels_send_event(instance->context->channels, event);
@@ -1547,32 +1550,40 @@ void process_cliprdr_event(freerdp* instance, RDP_EVENT* event)
 	{
 		switch (event->event_type)
 		{
-				// Monitor Ready PDU is sent by server to indicate that it has been
-				// inited and is ready. This PDU is transmitted by the server after it has sent
-				// Clipboard Capabilities PDU
+				/*
+				 * Monitor Ready PDU is sent by server to indicate that it has been
+				 * initialized and is ready. This PDU is transmitted by the server after it has sent
+				 * Clipboard Capabilities PDU
+				 */
 			case RDP_EVENT_TYPE_CB_MONITOR_READY:
 				cliprdr_process_cb_monitor_ready_event(instance);
 				break;
 				
-				// The Format List PDU is sent either by the client or the server when its
-				// local system clipboard is updated with new clipboard data. This PDU
-				// contains the Clipboard Format ID and name pairs of the new Clipboard
-				// Formats on the clipboard
+				/* 
+				 * The Format List PDU is sent either by the client or the server when its
+				 * local system clipboard is updated with new clipboard data. This PDU
+				 * contains the Clipboard Format ID and name pairs of the new Clipboard
+				 * Formats on the clipboard
+				 */
 			case RDP_EVENT_TYPE_CB_FORMAT_LIST:
 				cliprdr_process_cb_format_list_event(instance, (RDP_CB_FORMAT_LIST_EVENT*) event);
 				break;
 				
-				// The Format Data Request PDU is sent by the receipient of the Format List PDU.
-				// It is used to request the data for one of the formats that was listed in the
-				// Format List PDU
+				/*
+				 * The Format Data Request PDU is sent by the receipient of the Format List PDU.
+				 * It is used to request the data for one of the formats that was listed in the
+				 * Format List PDU
+				 */
 			case RDP_EVENT_TYPE_CB_DATA_REQUEST:
 				cliprdr_process_cb_data_request_event(instance);
 				break;
 				
-				// The Format Data Response PDU is sent as a reply to the Format Data Request PDU.
-				// It is used to indicate whether processing of the Format Data Request PDU
-				// was successful. If the processing was successful, the Format Data Response PDU
-				// includes the contents of the requested clipboard data
+				/* 
+				 * The Format Data Response PDU is sent as a reply to the Format Data Request PDU.
+				 * It is used to indicate whether processing of the Format Data Request PDU
+				 * was successful. If the processing was successful, the Format Data Response PDU
+				 * includes the contents of the requested clipboard data
+				 */
 			case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
 				cliprdr_process_cb_data_response_event(instance, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 				break;
@@ -1648,14 +1659,14 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	BOOL displayAsModal = NO;
 	NSMutableArray * ma = g_mrdpview->windows;
 	
-	// make sure window fits resolution
+	/* make sure window fits resolution */
 	if (window->windowWidth > g_mrdpview->width)
 		window->windowWidth = g_mrdpview->width;
 	
 	if (window->windowHeight > g_mrdpview->height)
 		window->windowHeight = g_mrdpview->height;
 	
-	// center main window, which is the first to be created
+	/* center main window, which is the first to be created */
 	if ([ma count] == 0)
 	{
 		centerWindow = YES;
@@ -1677,7 +1688,7 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 		
 	}
 	
-	// create NSWindow
+	/* create NSWindow */
 	NSRect winFrame = NSMakeRect(window->windowOffsetX, window->windowOffsetY,
 				     window->windowWidth, window->windowHeight);
 	if (centerWindow)
@@ -1688,18 +1699,19 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 									 backing:NSBackingStoreBuffered
 									   defer:NO];
 	
-	// this does not work if specified during window creation in above code
+	/* this does not work if specified during window creation in above code */
 	[newWindow setStyleMask:NSBorderlessWindowMask];
 	
-	if (moveWindow) {
-		// let RDP server know that window has moved
+	if (moveWindow)
+	{
+		/* let RDP server know that window has moved */
 		RAIL_WINDOW_MOVE_ORDER windowMove;
 		apple_to_windowMove(&winFrame, &windowMove);
 		windowMove.windowId = window->windowId;
 		mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
 	}
 	
-	// create MRDPRailView and add to above window
+	/* create MRDPRailView and add to above window */
 	NSRect viewFrame = NSMakeRect(window->clientOffsetX, window->clientOffsetY,
 				      window->clientAreaWidth, window->clientAreaHeight);
 	
@@ -1707,30 +1719,33 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	[newView setRdpInstance:g_mrdpview->rdp_instance width:g_mrdpview->width andHeight:g_mrdpview->height windowID: window->windowId];
 	[newWindow setContentView:newView];
 	
-	// save new window
+	/* save new window */
 	MRDPWindow * mrdpWindow = [[MRDPWindow alloc] init];
 	[mrdpWindow setWindowID:window->windowId];
 	[mrdpWindow setWindow:newWindow];
 	[mrdpWindow setView:newView];
 	
-	// add to list of windows
+	/* add to list of windows */
 	[ma addObject:mrdpWindow];
 	
-	// make new window current
+	/* make new window current */
 	g_mrdpview->currentWindow = mrdpWindow;
 	
 	if (displayAsModal)
 	{
-		// display as modal window
+		/* display as modal window */
 		NSModalSession session = [NSApp beginModalSessionForWindow:newWindow];
+		
 		while (1)
 		{
 			if ([NSApp runModalSession:session] != NSRunContinuesResponse)
 				break;
 		}
+		
 		[NSApp endModalSession:session];
 	}
-	else {
+	else
+	{
 		[newWindow makeKeyAndOrderFront:NSApp];
 		[[g_mrdpview window] resignFirstResponder];
 		[g_mrdpview resignFirstResponder];
@@ -1751,22 +1766,27 @@ void mac_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 
 void mac_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
+	
 }
 
 void mac_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 {
+	
 }
 
 void mac_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 {
+	
 }
 
 void mac_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 {
+	
 }
 
 void mac_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
 {
+	
 }
 
 /** *********************************************************************
@@ -1944,21 +1964,21 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 		case RAIL_WMSZ_MOVE:
 			if (moveSize->isMoveSizeStart)
 			{
-				// local window move in progress
+				/* local window move in progress */
 				[g_mrdpview->currentWindow view]->isMoveSizeInProgress = YES;
 				[g_mrdpview->currentWindow view]->saveInitialDragLoc = YES;
 				
 				return;
 			}
 			
-			// local move has completed
+			/* local move has completed */
 			[g_mrdpview->currentWindow view]->isMoveSizeInProgress = NO;
 			[g_mrdpview->currentWindow view]->saveInitialDragLoc = NO;
 			
-			// let RDP server know where this window is located
+			/* let RDP server know where this window is located */
 			mac_send_rail_client_event(instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
 			
-			// the event we just sent will cause an extra MoveWindow() to be invoked which we need to ignore
+			/* the event we just sent will cause an extra MoveWindow() to be invoked which we need to ignore */
 			[g_mrdpview->currentWindow view]->skipMoveWindowOnce = YES;
 			
 			break;
