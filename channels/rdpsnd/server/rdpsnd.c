@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
@@ -53,6 +54,7 @@ typedef struct _rdpsnd_server
 	UINT32 src_bytes_per_frame;
 } rdpsnd_server;
 
+
 static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
 	int pos;
@@ -71,7 +73,7 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_write_BYTE(s, rdpsnd->context.block_no); /* cLastBlockConfirmed */
 	stream_write_UINT16(s, 0x06); /* wVersion */
 	stream_write_BYTE(s, 0); /* bPad */
-
+	
 	for (i = 0; i < rdpsnd->context.num_server_formats; i++)
 	{
 		stream_write_UINT16(s, rdpsnd->context.server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
@@ -102,20 +104,43 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	return status;
 }
 
+static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, STREAM* s)
+{
+	//unhandled for now
+	
+	UINT16 timestamp = 0;
+	BYTE confirmBlockNum = 0;
+	stream_read_UINT16(s, timestamp);
+	stream_read_BYTE(s, confirmBlockNum);
+	stream_seek_BYTE(s); // padding
+}
+
+static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
+{
+	//unhandled for now
+	UINT16 quality;
+	
+	stream_read_UINT16(s, quality);
+	stream_seek_UINT16(s); // reserved
+	
+	printf("Client requested sound quality: %#0X\n", quality);
+}
+
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 {
-	int i;
+	int i, num_known_format = 0;
+	UINT32 flags, vol, pitch;
+	UINT16 udpPort, version;
+	BYTE lastblock;
+		
 
-	if (stream_get_left(s) < 20)
-		return FALSE;
-
-	stream_seek_UINT32(s); /* dwFlags */
-	stream_seek_UINT32(s); /* dwVolume */
-	stream_seek_UINT32(s); /* dwPitch */
-	stream_seek_UINT16(s); /* wDGramPort */
+	stream_read_UINT32(s, flags); /* dwFlags */
+	stream_read_UINT32(s, vol); /* dwVolume */
+	stream_read_UINT32(s, pitch); /* dwPitch */
+	stream_read_UINT16(s, udpPort); /* wDGramPort */
 	stream_read_UINT16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
-	stream_seek_BYTE(s); /* cLastBlockConfirmed */
-	stream_seek_UINT16(s); /* wVersion */
+	stream_read_BYTE(s, lastblock); /* cLastBlockConfirmed */
+	stream_read_UINT16(s, version); /* wVersion */
 	stream_seek_BYTE(s); /* bPad */
 
 	if (rdpsnd->context.num_client_formats > 0)
@@ -125,13 +150,6 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 
 		for (i = 0; i < rdpsnd->context.num_client_formats; i++)
 		{
-			if (stream_get_left(s) < 18)
-			{
-				free(rdpsnd->context.client_formats);
-				rdpsnd->context.client_formats = NULL;
-				return FALSE;
-			}
-
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].wFormatTag);
 			stream_read_UINT16(s, rdpsnd->context.client_formats[i].nChannels);
 			stream_read_UINT32(s, rdpsnd->context.client_formats[i].nSamplesPerSec);
@@ -144,7 +162,20 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 			{
 				stream_seek(s, rdpsnd->context.client_formats[i].cbSize);
 			}
+			
+			if (rdpsnd->context.client_formats[i].wFormatTag != 0)
+			{
+				//lets call this a known format
+				//TODO: actually look through our own list of known formats
+				num_known_format++;
+			}
 		}
+	}
+	
+	if (num_known_format == 0)
+	{
+		printf("Client doesnt support any known formats!\n");
+		return FALSE;
 	}
 
 	return TRUE;
@@ -199,16 +230,20 @@ static void* rdpsnd_server_thread_func(void* arg)
 				stream_get_size(s), &bytes_returned) == FALSE)
 				break;
 		}
-
+		
 		stream_read_BYTE(s, msgType);
 		stream_seek_BYTE(s); /* bPad */
 		stream_read_UINT16(s, BodySize);
 
-		if (BodySize + 4 > (int) bytes_returned)
-			continue;
-
 		switch (msgType)
 		{
+			case SNDC_WAVECONFIRM:
+				rdpsnd_server_recv_waveconfirm(rdpsnd, s);
+				break;
+				
+			case SNDC_QUALITYMODE:
+				rdpsnd_server_recv_quality_mode(rdpsnd, s);
+				break;
 			case SNDC_FORMATS:
 				if (rdpsnd_server_recv_formats(rdpsnd, s))
 				{
@@ -216,10 +251,11 @@ static void* rdpsnd_server_thread_func(void* arg)
 				}
 				break;
 			default:
+				printf("UNKOWN MESSAGE TYPE!! (%#0X)\n\n", msgType);
 				break;
 		}
 	}
-
+	
 	stream_free(s);
 
 	return NULL;
