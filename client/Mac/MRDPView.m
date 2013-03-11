@@ -44,6 +44,7 @@
 
 #import "MRDPView.h"
 #import "MRDPCursor.h"
+#import "PasswordDialog.h"
 
 // RAIL_TODO DELETE WHEN DONE TESTING
 #define MRDP_DRAW_INDIVIDUAL_RECTS
@@ -1012,6 +1013,7 @@ int rdp_connect()
 	instance->ContextNew = mac_context_new;
 	instance->ContextFree = mac_context_free;
 	instance->ReceiveChannelData = receive_channel_data;
+	instance->Authenticate = mac_authenticate;
 	freerdp_context_new(instance);
 	
 	status = freerdp_connect(instance);
@@ -1241,6 +1243,31 @@ BOOL mac_post_connect(freerdp* instance)
 	[[NSNotificationCenter defaultCenter] addObserver:g_mrdpview selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
 	
 	return TRUE;
+}
+
+BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+    PasswordDialog * dialog = [PasswordDialog new];
+
+    dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
+
+    if (*username)
+	 dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
+
+    if (*password)
+	 dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
+
+    BOOL ok = [dialog runModal];
+    if (ok) {
+	 const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
+	 *username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
+	 strcpy(*username, submittedUsername);
+
+	 const char* submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
+	 *password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
+	 strcpy(*password, submittedPassword);
+    }
+    return ok;
 }
 
 /** *********************************************************************

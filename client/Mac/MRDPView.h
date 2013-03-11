@@ -113,6 +113,7 @@ void pointer_setDefault(rdpContext* context);
 int rdp_connect(void);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp* instance);
+BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
 void mac_context_new(freerdp* instance, rdpContext* context);
 void mac_context_free(freerdp* instance, rdpContext* context);
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
