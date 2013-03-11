@@ -45,6 +45,7 @@
 #import "MRDPView.h"
 #import "MRDPCursor.h"
 #import "PasswordDialog.h"
+#include <freerdp/constants.h>
 
 // RAIL_TODO DELETE WHEN DONE TESTING
 #define MRDP_DRAW_INDIVIDUAL_RECTS
@@ -56,8 +57,6 @@ MRDPView *g_mrdpview;
 @synthesize is_connected;
 
 struct kkey g_keys[];
-
-void convert_color_space(char *dest, char *src, NSRect* drawRect, int width, int height);
 
 const char* error_code_names[] =
 {
@@ -704,95 +703,35 @@ struct kkey g_keys[256] =
  * called when our view needs refreshing
  ***********************************************************************/
 
-- (void) drawRect:(NSRect)dirtyRect
+- (void) drawRect:(NSRect)rect
 {
 	if (!rdp_context)
 		return;
-	
+
 	if (g_mrdpview->isRemoteApp && g_mrdpview->currentWindow)
 		return;
-	
-	if (!bmiRep)
-	{
-		pixel_data = (char *) malloc(width * height * sizeof(struct rgba_data));
-		bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &pixel_data
-								 pixelsWide:width
-								 pixelsHigh:height
-							      bitsPerSample:8
-							    samplesPerPixel:sizeof(struct rgba_data)
-								   hasAlpha:YES
-								   isPlanar:NO
-							     colorSpaceName:NSDeviceRGBColorSpace
-							       bitmapFormat:0 //NSAlphaFirstBitmapFormat
-								bytesPerRow:width * sizeof(struct rgba_data)
-							       bitsPerPixel:0];
-	}
-	
-	[bmiRep drawInRect:dirtyRect fromRect:dirtyRect operation:NSCompositeCopy fraction:1.0 respectFlipped:NO hints:nil];
+
+    if(g_mrdpview->bitmap_context)
+    {
+        CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
+        CGImageRef cgImage = CGBitmapContextCreateImage(g_mrdpview->bitmap_context);
+
+        CGContextClipToRect(context, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+        CGContextDrawImage(context, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+
+        CGImageRelease(cgImage);
+    }
+    else
+    {
+        // just clear the screen with black
+        [[NSColor redColor] set];
+        NSRectFill([self bounds]);
+    }
 }
 
 /************************************************************************
  instance methods
  ************************************************************************/
-
-/** *********************************************************************
- * called when RDP server wants us to update a rect with new data
- ***********************************************************************/
-
-- (void) my_draw_rect:(void*)context
-{
-	int w;
-	int h;
-	
-	rdpContext* ctx = (rdpContext*) context;
-	
-	struct rgba_data
-	{
-		char red;
-		char green;
-		char blue;
-		char alpha;
-	};
-	
-	if (isRemoteApp && currentWindow)
-	{
-		NSRect vrect = [ [currentWindow view] frame];
-		[[currentWindow view] setNeedsDisplayInRect:vrect];
-		// actual drawing will be done in MRDPRailView:drawRect()
-		return;
-	}
-	
-	w = width;
-	h = height;
-	rect.origin.x = 0;
-	rect.origin.y = 0;
-	rect.size.width = w;
-	rect.size.height = h;
-	
-	if (!bmiRep)
-	{
-		pixel_data = (char *) malloc(w * h * sizeof(struct rgba_data));
-		bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &pixel_data
-								 pixelsWide:w
-								 pixelsHigh:h
-							      bitsPerSample:8
-							    samplesPerPixel:sizeof(struct rgba_data)
-								   hasAlpha:YES
-								   isPlanar:NO
-							     colorSpaceName:NSDeviceRGBColorSpace
-							       bitmapFormat:0 //NSAlphaFirstBitmapFormat
-								bytesPerRow:w * sizeof(struct rgba_data)
-							       bitsPerPixel:0];
-	}
-	
-#ifdef MRDP_DRAW_INDIVIDUAL_RECTS
-	[self setNeedsDisplayInRect:rect];
-	return;
-#endif
-	
-	convert_color_space(pixel_data, (char *) ctx->gdi->primary_buffer, &rect, w, h);
-	[self setNeedsDisplayInRect:rect];
-}
 
 /** *********************************************************************
  * save state info for use by other methods later on
@@ -855,9 +794,14 @@ struct kkey g_keys[256] =
 
 - (void) rdpConnectError
 {
-	
+    NSString* message = @"Error connecting to server";
+    if (connectErrorCode == AUTHENTICATIONERROR)
+    {
+        message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
+    }
+
 	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:@"Error connecting to server"];
+	[alert setMessageText:message];
 	[alert beginSheetModalForWindow:[g_mrdpview window]
 			  modalDelegate:g_mrdpview
 			 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
@@ -1013,7 +957,7 @@ int rdp_connect()
 	instance->ContextNew = mac_context_new;
 	instance->ContextFree = mac_context_free;
 	instance->ReceiveChannelData = receive_channel_data;
-	instance->Authenticate = mac_authenticate;
+    instance->Authenticate = mac_authenticate;
 	freerdp_context_new(instance);
 	
 	status = freerdp_connect(instance);
@@ -1046,45 +990,14 @@ BOOL mac_pre_connect(freerdp* instance)
 	int len;
 	int status;
 	char* cptr;
-	
-	instance->settings->OffscreenSupportLevel = FALSE;
-	instance->settings->GlyphSupportLevel = GLYPH_SUPPORT_FULL;
-	instance->settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	instance->settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	instance->settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	
-	instance->settings->BitmapCacheEnabled = TRUE;
-	instance->settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
-	instance->settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = TRUE;
-	instance->settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	instance->settings->BitmapCacheV2NumCells = 3; // 5;
-	instance->settings->BitmapCacheV2CellInfo[0].numEntries = 0x78; // 600;
-	instance->settings->BitmapCacheV2CellInfo[0].persistent = FALSE;
-	instance->settings->BitmapCacheV2CellInfo[1].numEntries = 0x78; // 600;
-	instance->settings->BitmapCacheV2CellInfo[1].persistent = FALSE;
-	instance->settings->BitmapCacheV2CellInfo[2].numEntries = 0x150; // 2048;
-	instance->settings->BitmapCacheV2CellInfo[2].persistent = FALSE;
-	instance->settings->BitmapCacheV2CellInfo[3].numEntries = 0; // 4096;
-	instance->settings->BitmapCacheV2CellInfo[3].persistent = FALSE;
-	instance->settings->BitmapCacheV2CellInfo[4].numEntries = 0; // 2048;
-	instance->settings->BitmapCacheV2CellInfo[4].persistent = FALSE;
-	
-	instance->settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = FALSE;
-	instance->settings->OrderSupport[NEG_POLYLINE_INDEX] = FALSE;
-	instance->settings->ColorDepth = 24;
-	instance->settings->SoftwareGdi = 1;
-	
+	rdpSettings* settings;
+	BOOL bitmap_cache;
+
 	// setup callbacks
 	instance->update->BeginPaint = mac_begin_paint;
 	instance->update->EndPaint = mac_end_paint;
 	instance->update->SetBounds = mac_set_bounds;
-	instance->update->BitmapUpdate = mac_bitmap_update;
+	//instance->update->BitmapUpdate = mac_bitmap_update;
 	
 	NSArray *args = [[NSProcessInfo processInfo] arguments];
 	
@@ -1155,9 +1068,49 @@ BOOL mac_pre_connect(freerdp* instance)
 		[NSApp terminate:nil];
 		return TRUE;
 	}
-	
+
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
-	
+
+    settings = instance->settings;
+	bitmap_cache = settings->BitmapCacheEnabled;
+    
+	instance->settings->ColorDepth = 32;
+	instance->settings->SoftwareGdi = TRUE;
+    
+    settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+    
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
+    
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
+    
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+    
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+    
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+    
+
+    
 	[g_mrdpview setViewSize:instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	
 	freerdp_channels_pre_connect(instance->context->channels, instance);
@@ -1193,11 +1146,15 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.Set = pointer_set;
 	rdp_pointer.SetNull = pointer_setNull;
 	rdp_pointer.SetDefault = pointer_setDefault;
-	
-	flags = CLRCONV_ALPHA;
-	flags |= CLRBUF_32BPP;
-	
+
+	flags = CLRBUF_32BPP;
 	gdi_init(instance, flags, NULL);
+
+    rdpGdi* gdi = instance->context->gdi;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    g_mrdpview->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+
+    
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 	
@@ -1252,20 +1209,20 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
     dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
 
     if (*username)
-	 dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
+	dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
 
     if (*password)
-	 dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
+	dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
 
     BOOL ok = [dialog runModal];
     if (ok) {
-	 const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
-	 *username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
-	 strcpy(*username, submittedUsername);
+	const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
+	*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
+	strcpy(*username, submittedUsername);
 
-	 const char* submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
-	 *password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
-	 strcpy(*password, submittedPassword);
+	const char* submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
+	*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
+	strcpy(*password, submittedPassword);
     }
     return ok;
 }
@@ -1469,9 +1426,7 @@ void mac_end_paint(rdpContext* context)
 		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
 		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
 		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
-		
-		convert_color_space(g_mrdpview->pixel_data, (char *) gdi->primary_buffer, &drawRect, g_mrdpview->width, g_mrdpview->height);
-		
+		windows_to_apple_cords(&drawRect);
 		[g_mrdpview setNeedsDisplayInRect:drawRect];
 	}
 	
@@ -1569,52 +1524,6 @@ int register_channel_fds(int* fds, int count, void* instance)
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, chan_id, data, size, flags, total_size);
-}
-
-/** *********************************************************************
- * convert an array containing ARGB data to RGBA
- ***********************************************************************/
-
-void convert_color_space(char* dest, char* src, NSRect* drawRect, int width, int height)
-{
-	int i;
-	int j;
-	int x;
-	int y;
-	int cx;
-	int cy;
-	int pixel;
-	int pixel1;
-	int pixel2;
-	int* src32;
-	int* dst32;
-	
-	if ((!dest) || (!src))
-		return;
-	
-	x = drawRect->origin.x;
-	y = drawRect->origin.y;
-	cx = drawRect->size.width;
-	cy = drawRect->size.height;
-	
-	for (j = 0; j < cy; j++)
-	{
-		src32 = (int*)(src + ((y + j) * width + x) * 4);
-		dst32 = (int*)(dest + ((y + j) * width + x) * 4);
-		
-		for (i = 0; i < cx; i++)
-		{
-			pixel = *src32;
-			pixel1 = (pixel & 0x00ff0000) >> 16;
-			pixel2 = (pixel & 0x000000ff) << 16;
-			pixel = (pixel & 0xff00ff00) | pixel1 | pixel2;
-			*dst32 = pixel;
-			src32++;
-			dst32++;
-		}
-	}
-	
-	drawRect->origin.y = height - drawRect->origin.y - drawRect->size.height;
 }
 
 /**

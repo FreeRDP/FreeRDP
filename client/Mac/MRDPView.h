@@ -41,11 +41,11 @@
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
-	NSRect rect;
 	NSRect prevWinPosition;
 	int titleBarHeight;
 	freerdp* rdp_instance;
 	rdpContext* rdp_context;
+    CGContextRef bitmap_context;
 	char* pixel_data;
 	int width;
 	int height;
@@ -87,7 +87,6 @@
 - (void) rdpRemoteAppError;
 - (void) saveStateInfo :(freerdp *) instance :(rdpContext *) context;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
-- (void) my_draw_rect :(void *) context;
 - (void) releaseResources;
 - (void) setViewSize : (int) width : (int) height;
 
