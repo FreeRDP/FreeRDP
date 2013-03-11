@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string></string>
 	<key>CFBundleIconFile</key>
-	<string></string>
+	<string>FreeRDP</string>
 	<key>CFBundleIdentifier</key>
 	<string>FreeRDP.Mac</string>
 	<key>CFBundleInfoDictionaryVersion</key>

@@ -815,7 +815,7 @@ int rdp_connect()
 	instance->ContextNew = mac_context_new;
 	instance->ContextFree = mac_context_free;
 	instance->ReceiveChannelData = receive_channel_data;
-    instance->Authenticate = mac_authenticate;
+	instance->Authenticate = mac_authenticate;
 	freerdp_context_new(instance);
 	
 	status = freerdp_connect(instance);
@@ -929,13 +929,13 @@ BOOL mac_pre_connect(freerdp* instance)
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
-    settings = instance->settings;
+	settings = instance->settings;
 	bitmap_cache = settings->BitmapCacheEnabled;
     
 	instance->settings->ColorDepth = 32;
 	instance->settings->SoftwareGdi = TRUE;
     
-    settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
     
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
@@ -966,12 +966,11 @@ BOOL mac_pre_connect(freerdp* instance)
     
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-    
-
-    
+        
 	[g_mrdpview setViewSize:instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	
 	freerdp_channels_pre_connect(instance->context->channels, instance);
+	
 	return TRUE;
 }
 
@@ -1008,11 +1007,10 @@ BOOL mac_post_connect(freerdp* instance)
 	flags = CLRBUF_32BPP;
 	gdi_init(instance, flags, NULL);
 
-    rdpGdi* gdi = instance->context->gdi;
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    g_mrdpview->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+	rdpGdi* gdi = instance->context->gdi;
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	g_mrdpview->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
 
-    
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 	
@@ -1062,27 +1060,30 @@ BOOL mac_post_connect(freerdp* instance)
 
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
-    PasswordDialog * dialog = [PasswordDialog new];
+	PasswordDialog * dialog = [PasswordDialog new];
 
-    dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
+	dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
 
-    if (*username)
-	dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
+	if (*username)
+		dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
 
-    if (*password)
-	dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
+	if (*password)
+		dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
 
-    BOOL ok = [dialog runModal];
-    if (ok) {
-	const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
-	*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
-	strcpy(*username, submittedUsername);
+	BOOL ok = [dialog runModal];
+    
+	if (ok)
+	{
+		const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
+		*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
+		strcpy(*username, submittedUsername);
 
-	const char* submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
-	*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
-	strcpy(*password, submittedPassword);
-    }
-    return ok;
+		const char* submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
+		*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
+		strcpy(*password, submittedPassword);
+	}
+
+	return ok;
 }
 
 /** *********************************************************************
