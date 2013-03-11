@@ -104,11 +104,11 @@
 #define PTR_FLAGS_BUTTON3               0x4000
 #define WheelRotationMask               0x01FF
 
-void pointer_new(rdpContext* context, rdpPointer* pointer);
-void pointer_free(rdpContext* context, rdpPointer* pointer);
-void pointer_set(rdpContext* context, rdpPointer* pointer);
-void pointer_setNull(rdpContext* context);
-void pointer_setDefault(rdpContext* context);
+void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_SetNull(rdpContext* context);
+void mf_Pointer_SetDefault(rdpContext* context);
 int rdp_connect(void);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp* instance);
