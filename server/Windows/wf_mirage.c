@@ -50,7 +50,7 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* wfi)
 
 			deviceKeyPrefixLength = _tcslen(DEVICE_KEY_PREFIX);
 
-			if (_tcsncmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
+			if (_tcsnicmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
 			{
 				deviceKeyLength = _tcslen(deviceInfo.DeviceKey) - deviceKeyPrefixLength;
 				wfi->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
