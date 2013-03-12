@@ -206,7 +206,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload);
 BOOL wf_mirror_driver_map_memory(wfInfo* wfi);
 BOOL wf_mirror_driver_cleanup(wfInfo* wfi);
 
-void wf_mirror_driver_activate(wfInfo* wfi);
+BOOL wf_mirror_driver_activate(wfInfo* wfi);
 void wf_mirror_driver_deactivate(wfInfo* wfi);
 
 #endif /* WF_MIRAGE_H */

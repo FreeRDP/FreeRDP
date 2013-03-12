@@ -292,7 +292,7 @@ BOOL wf_mirror_driver_cleanup(wfInfo* wfi)
 	return TRUE;
 }
 
-void wf_mirror_driver_activate(wfInfo* wfi)
+BOOL wf_mirror_driver_activate(wfInfo* wfi)
 {
 	if (!wfi->mirrorDriverActive)
 	{
@@ -301,28 +301,30 @@ void wf_mirror_driver_activate(wfInfo* wfi)
 		if (wf_mirror_driver_find_display_device(wfi) == FALSE)
 		{
 			printf("Could not find dfmirage mirror driver! Is it installed?\n");
-			return;
+			return FALSE;
 		}
 
 		if (wf_mirror_driver_display_device_attach(wfi, 1) == FALSE)
 		{
 			printf("Could not attach display device!\n");
-			return;
+			return FALSE;
 		}
 
 		if (wf_mirror_driver_update(wfi, FALSE) == FALSE)
 		{
 			printf("could not update system with new display settings!\n");
-			return;
+			return FALSE;
 		}
 
 		if (wf_mirror_driver_map_memory(wfi) == FALSE)
 		{
 			printf("Unable to map memory for mirror driver!\n");
-			return;
+			return FALSE;
 		}
 		wfi->mirrorDriverActive = TRUE;
 	}
+
+	return TRUE;
 }
 
 void wf_mirror_driver_deactivate(wfInfo* wfi)
