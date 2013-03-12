@@ -24,6 +24,13 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
+#include <openssl/pem.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
+
+X509* x509 = NULL;
+EVP_PKEY* pkey = NULL;
+
 COMMAND_LINE_ARGUMENT_A args[] =
 {
 	/* Basic Options */
@@ -200,11 +207,160 @@ int makecert_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
+int add_ext(X509* cert, int nid, char* value)
+{
+	X509V3_CTX ctx;
+	X509_EXTENSION* ext;
+
+	X509V3_set_ctx_nodb(&ctx);
+
+	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+	ext = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
+
+	if (!ext)
+		return 0;
+
+	X509_add_ext(cert, ext, -1);
+	X509_EXTENSION_free(ext);
+
+	return 1;
+}
+
+static void generate_callback(int p, int n, void* arg)
+{
+	char c = 'B';
+
+	if (p == 0)
+		c = '.';
+	if (p == 1)
+		c = '+';
+	if (p == 2)
+		c = '*';
+	if (p == 3)
+		c = '\n';
+
+	fputc(c, stderr);
+}
+
+char* x509_name_parse(char* name, char* txt, int* length)
+{
+	char* p;
+	char* entry;
+
+	p = strstr(name, txt);
+
+	if (!p)
+		return NULL;
+
+	entry = p + strlen(txt) + 1;
+
+	p = strchr(entry, '=');
+
+	if (!p)
+		*length = strlen(entry);
+	else
+		*length = p - entry;
+
+	return entry;
+}
+
+int makecert(int bits, int serial, int days)
+{
+	BIO* bio;
+	int length;
+	char* entry;
+	RSA* rsa = NULL;
+	X509_NAME* name = NULL;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+	bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	if (!pkey)
+		pkey = EVP_PKEY_new();
+
+	if (!pkey)
+		return -1;
+
+	if (!x509)
+		x509 = X509_new();
+
+	if (!x509)
+		return -1;
+
+	rsa = RSA_generate_key(bits, RSA_F4, generate_callback, NULL);
+
+	if (!EVP_PKEY_assign_RSA(pkey, rsa))
+		return -1;
+
+	rsa = NULL;
+
+	X509_set_version(x509, 2);
+	ASN1_INTEGER_set(X509_get_serialNumber(x509), serial);
+	X509_gmtime_adj(X509_get_notBefore(x509), 0);
+	X509_gmtime_adj(X509_get_notAfter(x509), (long) 60 * 60 * 24 * days);
+	X509_set_pubkey(x509, pkey);
+
+	name = X509_get_subject_name(x509);
+
+	arg = CommandLineFindArgumentA(args, "n");
+
+	if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	{
+		printf("Error: no certificate name was given\n");
+		return -1;
+	}
+
+	entry = x509_name_parse(arg->Value, "CN", &length);
+
+	if (!entry)
+	{
+		printf("Error: no common name was given\n");
+		return -1;
+	}
+
+	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+	X509_set_issuer_name(x509, name);
+
+	add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
+	add_ext(x509, NID_key_usage, "critical,keyCertSign,cRLSign");
+	add_ext(x509, NID_subject_key_identifier, "hash");
+
+	if (!X509_sign(x509, pkey, EVP_md5()))
+		return -1;
+
+	/**
+	 * Print Certificate
+	 */
+
+	RSA_print_fp(stdout, pkey->pkey.rsa, 0);
+	X509_print_fp(stdout, x509);
+
+	PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
+	PEM_write_X509(stdout, x509);
+
+	X509_free(x509);
+	EVP_PKEY_free(pkey);
+
+	CRYPTO_cleanup_all_ex_data();
+
+	CRYPTO_mem_leaks(bio);
+	BIO_free(bio);
+
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+
+	/**
+	 * makecert -r -pe -n "CN=%COMPUTERNAME%" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr LocalMachine
+	 * -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
+	 */
 
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
@@ -379,6 +535,8 @@ int main(int argc, char* argv[])
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	makecert(512, 0, 365);
 
 	return 0;
 }
