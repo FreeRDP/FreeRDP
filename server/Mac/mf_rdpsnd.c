@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <freerdp/server/audin.h>
+#include <freerdp/server/rdpsnd.h>
 
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
@@ -42,19 +42,86 @@ static const AUDIO_FORMAT audio_formats[] =
 	{ 0x01, 1, 8000, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
 };
 
+/*
+ UINT16 wFormatTag;
+ UINT16 nChannels;
+ UINT32 nSamplesPerSec;
+ UINT32 nAvgBytesPerSec;
+ UINT16 nBlockAlign;
+ UINT16 wBitsPerSample;
+ UINT16 cbSize;
+ BYTE* data;
+ */
+static const AUDIO_FORMAT supported_audio_formats[] =
+{
+	
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
+};
+
+
 static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
-
 	OSStatus status;
+	int i, j;
+	BOOL formatAgreed = FALSE;
+	AUDIO_FORMAT* agreedFormat = NULL;
+	//we should actually loop through the list of client formats here
+	//and see if we can send the client something that it supports...
 	
-	recorderState.dataFormat.mSampleRate = 44100.0;
-	recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
-	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	for(i = 0; i < context->num_client_formats; i++)
+	{
+		//TODO: improve the way we agree on a format
+		for (j = 0; j < context->num_server_formats; j++)
+		{
+			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
+			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
+			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			{
+				printf("agreed on format!\n");
+				formatAgreed = TRUE;
+				agreedFormat = (AUDIO_FORMAT*)&context->server_formats[j];
+				break;
+			}
+		}
+		if (formatAgreed == TRUE)
+			break;
+		
+	}
+	
+	if (formatAgreed == FALSE)
+	{
+		printf("Could not agree on a audio format with the server\n");
+		return;
+	}
+	
+	context->SelectFormat(context, i);
+	context->SetVolume(context, 0x7FFF, 0x7FFF);
+	
+	switch (agreedFormat->wFormatTag)
+	{
+		case WAVE_FORMAT_ALAW:
+			recorderState.dataFormat.mFormatID = kAudioFormatDVIIntelIMA;
+			break;
+			
+		case WAVE_FORMAT_PCM:
+			recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
+			break;
+			
+		default:
+			recorderState.dataFormat.mFormatID = kAudioFormatLinearPCM;
+			break;
+	}
+	
+	recorderState.dataFormat.mSampleRate = agreedFormat->nSamplesPerSec;
+	recorderState.dataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;;
 	recorderState.dataFormat.mBytesPerPacket = 4;
 	recorderState.dataFormat.mFramesPerPacket = 1;
 	recorderState.dataFormat.mBytesPerFrame = 4;
-	recorderState.dataFormat.mChannelsPerFrame = 2;
-	recorderState.dataFormat.mBitsPerChannel = 16;
+	recorderState.dataFormat.mChannelsPerFrame = agreedFormat->nChannels;
+	recorderState.dataFormat.mBitsPerChannel = agreedFormat->wBitsPerSample;
+	
 	
 	recorderState.snd_context = context;
 	
@@ -83,7 +150,7 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05, &recorderState.bufferByteSize);
 	
 		
-	for (int i = 0; i < snd_numBuffers; ++i)
+	for (i = 0; i < SND_NUMBUFFERS; ++i)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue,
 					 recorderState.bufferByteSize,
@@ -99,9 +166,6 @@ static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 	recorderState.currentPacket = 0;
 	recorderState.isRunning = true;
 	
-	context->SelectFormat(context, 4);
-	context->SetVolume(context, 0x7FFF, 0x7FFF);
-	
 	AudioQueueStart (recorderState.queue, NULL);
 	
 }
@@ -111,8 +175,8 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 	
-	context->rdpsnd->server_formats = audio_formats;
-	context->rdpsnd->num_server_formats = sizeof(audio_formats) / sizeof(audio_formats[0]);
+	context->rdpsnd->server_formats = supported_audio_formats;
+	context->rdpsnd->num_server_formats = sizeof(supported_audio_formats) / sizeof(supported_audio_formats[0]);
 	
 	context->rdpsnd->src_format.wFormatTag = 1;
 	context->rdpsnd->src_format.nChannels = 2;

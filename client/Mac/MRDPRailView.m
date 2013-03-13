@@ -27,14 +27,6 @@
 
 MRDPRailView* g_mrdpRailView;
 
-struct kkey
-{
-	int key_code;
-	int flags;
-};
-
-extern struct kkey g_keys[];
-
 - (void) updateDisplay
 {
 	BOOL moveWindow = NO;
@@ -553,9 +545,17 @@ extern struct kkey g_keys[];
 - (void) keyDown:(NSEvent *) event
 {
 	int key;
+	BOOL extended;
+	DWORD vkcode;
+	DWORD scancode;
 	
-	key = [event keyCode];
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, g_keys[key].flags | KBD_FLAGS_DOWN, g_keys[key].key_code);
+	key = [event keyCode] + 8;
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	
+	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -565,9 +565,17 @@ extern struct kkey g_keys[];
 - (void) keyUp:(NSEvent *) event
 {
 	int key;
+	BOOL extended;
+	DWORD vkcode;
+	DWORD scancode;
 	
-	key = [event keyCode];
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, g_keys[key].flags | KBD_FLAGS_RELEASE, g_keys[key].key_code);
+	key = [event keyCode] + 8;
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	
+	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
 }
 
 /** *********************************************************************
