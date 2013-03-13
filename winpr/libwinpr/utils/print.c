@@ -411,7 +411,7 @@ int wsprintfx(char *buf, const char *fmt, ...)
 	if (!buf)
 		status = do_printf(fmt, args, discard, NULL);
 	else
-		status = vsprintf(buf, fmt, args);
+		status = wvsprintfx(buf, fmt, args);
 
 	va_end(args);
 
