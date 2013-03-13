@@ -21,7 +21,14 @@ set(MODULE_PREFIX "WINPR_TOOLS_MAKECERT")
 set(${MODULE_PREFIX}_SRCS
 	makecert.c)
 
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set(${MODULE_PREFIX}_LIBS
+	${ZLIB_LIBRARIES}
+	${OPENSSL_LIBRARIES})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
