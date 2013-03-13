@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * Echo Virtual Channel Extension
  *
  * Copyright 2013 Christian Hofstaedtler
  *
@@ -17,21 +17,23 @@
  * limitations under the License.
  */
 
-#import <Cocoa/Cocoa.h>
+#ifndef __ECHO_MAIN_H
+#define __ECHO_MAIN_H
 
-@interface PasswordDialog : NSWindowController
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-@property (retain) IBOutlet NSTextField* usernameText;
-@property (retain) IBOutlet NSTextField* passwordText;
-@property (retain) IBOutlet NSTextField* messageLabel;
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
+#include <freerdp/addin.h>
+#include <freerdp/utils/debug.h>
 
-- (IBAction)onOK:(NSObject*)sender;
-- (IBAction)onCancel:(NSObject*)sender;
+#ifdef WITH_DEBUG_DVC
+#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
 
-@property (retain) NSString* serverHostname;
-@property (retain) NSString* username;
-@property (retain) NSString* password;
+#endif /* __ECHO_MAIN_H */
 
-- (BOOL) runModal;
-
-@end

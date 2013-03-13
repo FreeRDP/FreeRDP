@@ -1062,10 +1062,10 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
 {
 	PasswordDialog* dialog = [PasswordDialog new];
 
-	dialog.serverName = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
+	dialog.serverHostname = [NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
 
 	if (*username)
-		dialog.userName = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
+		dialog.username = [NSString stringWithCString:*username encoding:NSUTF8StringEncoding];
 
 	if (*password)
 		dialog.password = [NSString stringWithCString:*password encoding:NSUTF8StringEncoding];
@@ -1074,7 +1074,7 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
     
 	if (ok)
 	{
-		const char* submittedUsername = [dialog.userName cStringUsingEncoding:NSUTF8StringEncoding];
+		const char* submittedUsername = [dialog.username cStringUsingEncoding:NSUTF8StringEncoding];
 		*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
 		strcpy(*username, submittedUsername);
 
