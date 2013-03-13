@@ -261,10 +261,10 @@
                 [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
 		}
 	}
-	else
-	{
-		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
-	}
+//	else
+//	{
+//		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
+//	}
 	return NO;
 }
 
