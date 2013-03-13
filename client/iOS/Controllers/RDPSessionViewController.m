@@ -20,6 +20,11 @@
 
 #define AUTOSCROLLDISTANCE 20
 #define AUTOSCROLLTIMEOUT 0.05
+//@interface RDPSessionViewController ()
+//{
+//    UITextInputMode *_mode;
+//}
+//@end
 
 @interface RDPSessionViewController (Private)
 -(void)showSessionToolbar:(BOOL)show;
@@ -77,11 +82,11 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidShow:) name: UIKeyboardDidShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name: UIKeyboardWillHideNotification object:nil];	
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidHide:) name: UIKeyboardDidHideNotification object:nil];
-
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(inputModeDidChange:) name: UITextInputCurrentInputModeDidChangeNotification object:nil];
+    
     // init keyboard toolbar
     _keyboard_toolbar = [[self keyboardToolbar] retain];
     [_dummy_textfield setInputAccessoryView:_keyboard_toolbar];
-    
     // init gesture recognizers
     [self initGestureRecognizers];
     
@@ -89,13 +94,13 @@
     [_session_toolbar setFrame:CGRectMake(0.0, -TOOLBAR_HEIGHT, [[self view] bounds].size.width, TOOLBAR_HEIGHT)];
 }
 
-
+//-(void) inputModeDidChange:(NSNotification *) notification {
+//}
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad 
 {
     [super viewDidLoad];
 }
-
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     return YES;
@@ -224,47 +229,37 @@
 	return YES;
 }
 
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
-// Patched By Zhan Lin
-    
-    
-    
-    if([string length] > 0) {
-        if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]) {
-            if([string characterAtIndex:0] >= 0x4e00 && [string characterAtIndex:0] <= 0x9fa5) {
-                for(int i = 0 ; i < [string length] ; i++) {
-                    unichar curChar = [string characterAtIndex:i];
-                    if(curChar == '\n')
-                        [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-                    else
-                        [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
-                }
-            } else {
-                for(int i = 0 ; i < [string length] ; i++) {
-                    unichar curChar = [string characterAtIndex:i];
-                    if(curChar == '\n')
-                        [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-                }
-            }
-            return YES;
+    // Patched By Zhan Lin
+    if(string == nil || [string length] == 0) { // key touched is backspace
+        if(range.length > 0) {
+            [[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
         }
-		for(int i = 0 ; i < [string length] ; i++)
-		{
-			NSString *characterTyped = [string substringWithRange:NSMakeRange(i, 1)];
-            unichar curChar = [characterTyped characterAtIndex:0];
-            
-            // special handling for return/enter key
-            if(curChar == '\n')
-                [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-            else
-                [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
-		}
-	}
-//	else
-//	{
-//		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
-//	}
+        return NO;
+    }
+    // Handle Chinese Input Method
+    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]
+       && (([string characterAtIndex:0] >= 'a' && [string characterAtIndex:0] <= 'z')
+           || ([string characterAtIndex:0] >= 'A' && [string characterAtIndex:0] <= 'Z'))) {
+           for(int i = 0 ; i < [string length] ; i++) {
+               unichar curChar = [string characterAtIndex:i];
+               if(curChar == '\n')
+                   [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+           }
+           return YES;
+    }
+    
+    // Handle Other Input Method
+    for(int i = 0 ; i < [string length] ; i++) {
+        unichar curChar = [string characterAtIndex:i];
+        if(curChar == '\n')
+            [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+        else
+            [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+    }
+    textField.text = @"UserInput";
 	return NO;
 }
 
