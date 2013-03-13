@@ -225,14 +225,35 @@
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
-{	
-	if([string length] > 0)
+{
+// Patched By Zhan Lin 
+    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]) {
+        if([string characterAtIndex:0] >= 0x4e00 && [string characterAtIndex:0] <= 0x9fa5) {
+            for(int i = 0 ; i < [string length] ; i++) {
+                unichar curChar = [string characterAtIndex:i];
+                if(curChar == '\n')
+                    [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+                else
+                    [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+            }
+        } else {
+            for(int i = 0 ; i < [string length] ; i++) {
+                unichar curChar = [string characterAtIndex:i];
+                if(curChar == '\n')
+                    [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+            }
+        }
+        return YES;
+	}
+    
+    
+    if([string length] > 0)
 	{
 		for(int i = 0 ; i < [string length] ; i++)
 		{
 			NSString *characterTyped = [string substringWithRange:NSMakeRange(i, 1)];
             unichar curChar = [characterTyped characterAtIndex:0];
-
+            
             // special handling for return/enter key
             if(curChar == '\n')
                 [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
@@ -243,8 +264,7 @@
 	else
 	{
 		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
-	}		
-	
+	}
 	return NO;
 }
 

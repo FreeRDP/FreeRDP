@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * RDP Localization
+ * Keyboard Localization - loading of keymap files
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,25 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __LIBLOCALE_H
-#define __LIBLOCALE_H
+#ifndef __KEYBOARD_KEYMAP_H
+#define __KEYBOARD_KEYMAP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <freerdp/types.h>
 
-#include <freerdp/utils/debug.h>
+int freerdp_keyboard_load_map(UINT32 keycode_to_vkcode[256], char* name);
+void freerdp_keyboard_load_maps(UINT32 keycode_to_vkcode[256], char* names);
 
-#ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) DEBUG_CLASS(KBD, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
-#ifdef WITH_DEBUG_TIMEZONE
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_CLASS(TIMEZONE, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
-#endif /* __LIBLOCALE_H */
+#endif /* __KEYBOARD_KEYMAP_H */

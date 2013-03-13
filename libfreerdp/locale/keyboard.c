@@ -30,10 +30,10 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
 
+#include "keyboard_keymap.h"
 #include "liblocale.h"
 
 #ifdef WITH_X11
-
 #include "keyboard_x11.h"
 
 #ifdef WITH_XKBFILE
@@ -42,108 +42,73 @@
 
 #endif
 
-DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2];
-DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
+UINT32 RDP_SCANCODE_TO_X11_KEYCODE[256][2];
+RDP_SCANCODE X11_KEYCODE_TO_RDP_SCANCODE[256];
 
-int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
+extern const RDP_SCANCODE VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[256];
+
+UINT32 freerdp_detect_keyboard(UINT32 keyboardLayoutID)
 {
-#ifdef WITH_X11
-	if (*keyboardLayoutId == 0)
-		freerdp_detect_keyboard_layout_from_xkb(keyboardLayoutId);
-#endif
+	if (keyboardLayoutID != 0)
+		DEBUG_KBD("keyboard layout configuration: %X", keyboardLayoutID);
 
-	if (*keyboardLayoutId == 0)
-		freerdp_detect_keyboard_layout_from_system_locale(keyboardLayoutId);
-
-	if (*keyboardLayoutId == 0)
-		*keyboardLayoutId = ENGLISH_UNITED_STATES;
-
-	return 0;
-}
-
-int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
-{
-	DWORD vkcode;
-	DWORD keycode;
-	DWORD keycode_to_vkcode[256];
-
-	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-
-	for (keycode = 0; keycode < 256; keycode++)
+	if (keyboardLayoutID == 0)
 	{
-		vkcode = keycode_to_vkcode[keycode] = GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_APPLE);
-		x11_keycode_to_rdp_scancode[keycode] = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+		keyboardLayoutID = freerdp_detect_keyboard_layout_from_system_locale();
+		DEBUG_KBD("detect_keyboard_layout_from_locale: %X", keyboardLayoutID);
 	}
 
-	return 0;
-}
-
-int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
-{
-	DWORD vkcode;
-	DWORD keycode;
-	DWORD keycode_to_vkcode[256];
-
-	ZeroMemory(keycode_to_vkcode, sizeof(keycode_to_vkcode));
-
-	for (keycode = 0; keycode < 256; keycode++)
+	if (keyboardLayoutID == 0)
 	{
-		vkcode = keycode_to_vkcode[keycode] = GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_EVDEV);
-		x11_keycode_to_rdp_scancode[keycode] = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+		keyboardLayoutID = 0x0409;
+		DEBUG_KBD("using default keyboard layout: %X", keyboardLayoutID);
 	}
 
-	return 0;
+	return keyboardLayoutID;
 }
 
-DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
+UINT32 freerdp_keyboard_init(UINT32 keyboardLayoutId)
 {
-	DWORD keycode;
-	int status = -1;
-
-#ifdef __APPLE__
-	if (status < 0)
-		status = freerdp_keyboard_init_apple(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
-#endif
+	UINT32 keycode;
 
 #ifdef WITH_X11
 
 #ifdef WITH_XKBFILE
-	if (status < 0)
-		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
+	keyboardLayoutId = freerdp_keyboard_init_xkbfile(keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
+#else
+	keyboardLayoutId = freerdp_keyboard_init_x11(keyboardLayoutId, X11_KEYCODE_TO_RDP_SCANCODE);
 #endif
 
-	if (status < 0)
-		status = freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
-
 #endif
+	keyboardLayoutId = freerdp_detect_keyboard(keyboardLayoutId);
 
-	freerdp_detect_keyboard(&keyboardLayoutId);
-
-	ZeroMemory(VIRTUAL_SCANCODE_TO_X11_KEYCODE, sizeof(VIRTUAL_SCANCODE_TO_X11_KEYCODE));
-
-	for (keycode = 0; keycode < ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE); keycode++)
-	{
-		VIRTUAL_SCANCODE_TO_X11_KEYCODE
-			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode])]
-			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? 1 : 0] = keycode;
-	}
+	memset(RDP_SCANCODE_TO_X11_KEYCODE, 0, sizeof(RDP_SCANCODE_TO_X11_KEYCODE));
+	for (keycode=0; keycode < ARRAYSIZE(RDP_SCANCODE_TO_X11_KEYCODE); keycode++)
+		RDP_SCANCODE_TO_X11_KEYCODE
+			[RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode])]
+			[RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? 1 : 0] = keycode;
 
 	return keyboardLayoutId;
 }
 
-DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
+RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_x11_keycode(UINT32 keycode)
 {
 	DEBUG_KBD("x11 keycode: %02X -> rdp code: %02X%s", keycode,
-		RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]),
-		RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? " extended" : "");
+		RDP_SCANCODE_CODE(X11_KEYCODE_TO_RDP_SCANCODE[keycode]),
+		RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_RDP_SCANCODE[keycode]) ? " extended" : "");
 
-	return X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
+	return X11_KEYCODE_TO_RDP_SCANCODE[keycode];
 }
 
-DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL extended)
+UINT32 freerdp_keyboard_get_x11_keycode_from_rdp_scancode(UINT32 scancode, BOOL extended)
 {
 	if (extended)
-		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][1];
+		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][1];
 	else
-		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][0];
+		return RDP_SCANCODE_TO_X11_KEYCODE[scancode][0];
+}
+
+RDP_SCANCODE freerdp_keyboard_get_rdp_scancode_from_virtual_key_code(UINT32 vkcode)
+{
+	return VIRTUAL_KEY_CODE_TO_DEFAULT_RDP_SCANCODE_TABLE[vkcode];
 }
