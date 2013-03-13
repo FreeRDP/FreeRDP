@@ -207,7 +207,7 @@ int makecert_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
-int add_ext(X509* cert, int nid, char* value)
+int x509_add_ext(X509* cert, int nid, char* value)
 {
 	X509V3_CTX ctx;
 	X509_EXTENSION* ext;
@@ -224,22 +224,6 @@ int add_ext(X509* cert, int nid, char* value)
 	X509_EXTENSION_free(ext);
 
 	return 1;
-}
-
-static void generate_callback(int p, int n, void* arg)
-{
-	char c = 'B';
-
-	if (p == 0)
-		c = '.';
-	if (p == 1)
-		c = '+';
-	if (p == 2)
-		c = '*';
-	if (p == 3)
-		c = '\n';
-
-	fputc(c, stderr);
 }
 
 char* x509_name_parse(char* name, char* txt, int* length)
@@ -269,8 +253,10 @@ int makecert(int bits, int serial, int days)
 	BIO* bio;
 	int length;
 	char* entry;
+	int key_length;
 	RSA* rsa = NULL;
 	X509_NAME* name = NULL;
+	const EVP_MD* md = NULL;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
@@ -288,7 +274,16 @@ int makecert(int bits, int serial, int days)
 	if (!x509)
 		return -1;
 
-	rsa = RSA_generate_key(bits, RSA_F4, generate_callback, NULL);
+	key_length = 2048;
+
+	arg = CommandLineFindArgumentA(args, "len");
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+	{
+		key_length = atoi(arg->Value);
+	}
+
+	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
 
 	if (!EVP_PKEY_assign_RSA(pkey, rsa))
 		return -1;
@@ -311,6 +306,31 @@ int makecert(int bits, int serial, int days)
 		return -1;
 	}
 
+	entry = x509_name_parse(arg->Value, "C", &length);
+
+	if (entry)
+		X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+	entry = x509_name_parse(arg->Value, "ST", &length);
+
+	if (entry)
+		X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+	entry = x509_name_parse(arg->Value, "L", &length);
+
+	if (entry)
+		X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+	entry = x509_name_parse(arg->Value, "O", &length);
+
+	if (entry)
+		X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+	entry = x509_name_parse(arg->Value, "OU", &length);
+
+	if (entry)
+		X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
 	entry = x509_name_parse(arg->Value, "CN", &length);
 
 	if (!entry)
@@ -323,18 +343,34 @@ int makecert(int bits, int serial, int days)
 
 	X509_set_issuer_name(x509, name);
 
-	add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
-	add_ext(x509, NID_key_usage, "critical,keyCertSign,cRLSign");
-	add_ext(x509, NID_subject_key_identifier, "hash");
+	x509_add_ext(x509, NID_ext_key_usage, "serverAuth");
+	x509_add_ext(x509, NID_key_usage, "keyEncipherment,dataEncipherment");
 
-	if (!X509_sign(x509, pkey, EVP_md5()))
+	arg = CommandLineFindArgumentA(args, "a");
+
+	md = EVP_sha1();
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+	{
+		if (strcmp(arg->Value, "md5") == 0)
+			md = EVP_md5();
+		else if (strcmp(arg->Value, "sha1") == 0)
+			md = EVP_sha1();
+		else if (strcmp(arg->Value, "sha256") == 0)
+			md = EVP_sha256();
+		else if (strcmp(arg->Value, "sha384") == 0)
+			md = EVP_sha384();
+		else if (strcmp(arg->Value, "sha512") == 0)
+			md = EVP_sha512();
+	}
+
+	if (!X509_sign(x509, pkey, md))
 		return -1;
 
 	/**
 	 * Print Certificate
 	 */
 
-	RSA_print_fp(stdout, pkey->pkey.rsa, 0);
 	X509_print_fp(stdout, x509);
 
 	PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
