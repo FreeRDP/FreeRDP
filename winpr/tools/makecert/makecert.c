@@ -29,6 +29,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
+#include <openssl/applink.c>
+
 X509* x509 = NULL;
 EVP_PKEY* pkey = NULL;
 char* output_file = NULL;
