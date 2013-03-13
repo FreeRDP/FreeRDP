@@ -386,7 +386,7 @@ static int vsprintf_help(unsigned c, void **ptr)
 	return 0;
 }
 
-int vsprintf(char *buf, const char *fmt, va_list args)
+int wvsprintfx(char *buf, const char *fmt, va_list args)
 {
 	int status;
 
@@ -401,7 +401,7 @@ static int discard(unsigned c_UNUSED, void **ptr_UNUSED)
 	return 0;
 }
 
-int sprintf(char *buf, const char *fmt, ...)
+int wsprintfx(char *buf, const char *fmt, ...)
 {
 	va_list args;
 	int status;
@@ -411,7 +411,7 @@ int sprintf(char *buf, const char *fmt, ...)
 	if (!buf)
 		status = do_printf(fmt, args, discard, NULL);
 	else
-		status = vsprintf(buf, fmt, args);
+		status = wvsprintfx(buf, fmt, args);
 
 	va_end(args);
 
@@ -424,7 +424,7 @@ int vprintf_help(unsigned c, void **ptr_UNUSED)
 	return 0;
 }
 
-int vprintf(const char *fmt, va_list args)
+int wvprintfx(const char *fmt, va_list args)
 {
 	return do_printf(fmt, args, vprintf_help, NULL);
 }
@@ -435,7 +435,7 @@ int wprintfx(const char *fmt, ...)
 	int status;
 
 	va_start(args, fmt);
-	status = vprintf(fmt, args);
+	status = wvprintfx(fmt, args);
 	va_end(args);
 
 	return status;
