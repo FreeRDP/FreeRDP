@@ -226,29 +226,29 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
-// Patched By Zhan Lin 
-    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]) {
-        if([string characterAtIndex:0] >= 0x4e00 && [string characterAtIndex:0] <= 0x9fa5) {
-            for(int i = 0 ; i < [string length] ; i++) {
-                unichar curChar = [string characterAtIndex:i];
-                if(curChar == '\n')
-                    [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-                else
-                    [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+// Patched By Zhan Lin
+    
+    
+    
+    if([string length] > 0) {
+        if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]) {
+            if([string characterAtIndex:0] >= 0x4e00 && [string characterAtIndex:0] <= 0x9fa5) {
+                for(int i = 0 ; i < [string length] ; i++) {
+                    unichar curChar = [string characterAtIndex:i];
+                    if(curChar == '\n')
+                        [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+                    else
+                        [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+                }
+            } else {
+                for(int i = 0 ; i < [string length] ; i++) {
+                    unichar curChar = [string characterAtIndex:i];
+                    if(curChar == '\n')
+                        [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+                }
             }
-        } else {
-            for(int i = 0 ; i < [string length] ; i++) {
-                unichar curChar = [string characterAtIndex:i];
-                if(curChar == '\n')
-                    [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-            }
+            return YES;
         }
-        return YES;
-	}
-    
-    
-    if([string length] > 0)
-	{
 		for(int i = 0 ; i < [string length] ; i++)
 		{
 			NSString *characterTyped = [string substringWithRange:NSMakeRange(i, 1)];
