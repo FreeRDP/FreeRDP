@@ -221,11 +221,11 @@ WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 #define PF_COMPARE_EXCHANGE_DOUBLE			2
 #define PF_MMX_INSTRUCTIONS_AVAILABLE   3
 #define PF_PPC_MOVEMEM_64BIT_OK				4
-#define PF_XMMI_INSTRUCTIONS_AVAILABLE			6 //sse
+#define PF_XMMI_INSTRUCTIONS_AVAILABLE			6 /* SSE */
 #define PF_3DNOW_INSTRUCTIONS_AVAILABLE			7
 #define PF_RDTSC_INSTRUCTION_AVAILABLE			8
 #define PF_PAE_ENABLED					9
-#define PF_XMMI64_INSTRUCTIONS_AVAILABLE		10 //sse2
+#define PF_XMMI64_INSTRUCTIONS_AVAILABLE		10 /* SSE2 */
 #define PF_SSE_DAZ_MODE_AVAILABLE			11
 #define PF_NX_ENABLED					12
 #define PF_SSE3_INSTRUCTIONS_AVAILABLE			13
@@ -279,26 +279,34 @@ WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
 #endif
 
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+
+WINPR_API ULONGLONG GetTickCount64(void);
+
+#endif
+
 WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 
-// extended flags
-#define PF_EX_3DNOW_PREFETCH            1
-#define PF_EX_SSSE3                     2
-#define PF_EX_SSE41                     3
-#define PF_EX_SSE42                     4
-#define PF_EX_AVX   		                5
-#define PF_EX_FMA                       6
-#define PF_EX_AVX_AES		                7
-#define PF_EX_AVX2  		                8
-#define PF_EX_ARM_VFP1 		              9
-#define PF_EX_ARM_VFP3D16               10
-#define PF_EX_ARM_VFP4 		              11
-#define PF_EX_ARM_IDIVA                 12
-#define PF_EX_ARM_IDIVT                 13
+/* extended flags */
+#define PF_EX_3DNOW_PREFETCH		1
+#define PF_EX_SSSE3			2
+#define PF_EX_SSE41			3
+#define PF_EX_SSE42			4
+#define PF_EX_AVX			5
+#define PF_EX_FMA			6
+#define PF_EX_AVX_AES			7
+#define PF_EX_AVX2			8
+#define PF_EX_ARM_VFP1			9
+#define PF_EX_ARM_VFP3D16		10
+#define PF_EX_ARM_VFP4			11
+#define PF_EX_ARM_IDIVA			12
+#define PF_EX_ARM_IDIVT			13
 
-// some "aliases" for the standard defines
-// to be more clear
-#define PF_SSE_INSTRUCTIONS_AVAILABLE PF_XMMI_INSTRUCTIONS_AVAILABLE
-#define PF_SSE2_INSTRUCTIONS_AVAILABLE PF_XMMI64_INSTRUCTIONS_AVAILABLE
+/*
+ * some "aliases" for the standard defines
+ * to be more clear
+ */
+#define PF_SSE_INSTRUCTIONS_AVAILABLE	PF_XMMI_INSTRUCTIONS_AVAILABLE
+#define PF_SSE2_INSTRUCTIONS_AVAILABLE	PF_XMMI64_INSTRUCTIONS_AVAILABLE
 
 #endif /* WINPR_SYSINFO_H */

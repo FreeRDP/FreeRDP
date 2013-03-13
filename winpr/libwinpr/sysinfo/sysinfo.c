@@ -340,6 +340,42 @@ DWORD GetTickCount(void)
 }
 #endif // _WIN32
 
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+
+ULONGLONG GetTickCount64(void)
+{
+	ULONGLONG ticks = 0;
+
+#if defined(__linux__)
+
+	struct timespec ts;
+
+	if (!clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+
+#elif defined(_WIN32)
+
+	ticks = (ULONGLONG) GetTickCount();
+
+#else
+
+	/**
+	 * FIXME: this is relative to the Epoch time, and we
+	 * need to return a value relative to the system uptime.
+	 */
+
+	struct timeval tv;
+
+	if (!gettimeofday(&tv, NULL))
+		ticks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+
+#endif
+
+	return ticks;
+}
+
+#endif
+
 /* If x86 */
 #ifdef _M_IX86_AMD64
 

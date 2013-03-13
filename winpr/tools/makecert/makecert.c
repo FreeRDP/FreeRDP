@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/sysinfo.h>
 
 #include <openssl/pem.h>
 #include <openssl/conf.h>
@@ -30,20 +31,24 @@
 
 X509* x509 = NULL;
 EVP_PKEY* pkey = NULL;
+char* output_file = NULL;
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
 	/* Basic Options */
 
+	{ "rdp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Generate certificate with required options for RDP usage."
+	},
 	{ "n", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
-			"Specifies the subject's certificate name. This name must conform to the X.500 standard."
+			"Specifies the subject's certificate name. This name must conform to the X.500 standard. "
 			"The simplest method is to specify the name in double quotes, preceded by CN=; for example, -n \"CN=myName\"."
 	},
 	{ "pe", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Marks the generated private key as exportable. This allows the private key to be included in the certificate."
 	},
 	{ "sk", COMMAND_LINE_VALUE_REQUIRED, "<keyname>", NULL, NULL, -1, NULL,
-			"Specifies the subject's key container location, which contains the private key."
+			"Specifies the subject's key container location, which contains the private key. "
 			"If a key container does not exist, it will be created."
 	},
 	{ "sr", COMMAND_LINE_VALUE_REQUIRED, "<location>", NULL, NULL, -1, NULL,
@@ -93,7 +98,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 			"Specifies the issuer's key type, which must be one of the following: "
 			"signature (which indicates that the key is used for a digital signature), "
 			"exchange (which indicates that the key is used for key encryption and key exchange), "
-			"or an integer that represents a provider type."
+			"or an integer that represents a provider type. "
 			"By default, you can pass 1 for an exchange key or 2 for a signature key."
 	},
 	{ "in", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
@@ -248,16 +253,34 @@ char* x509_name_parse(char* name, char* txt, int* length)
 	return entry;
 }
 
-int makecert(int bits, int serial, int days)
+char* x509_get_default_name()
+{
+	DWORD nSize = 0;
+	char* ComputerName;
+
+	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+	ComputerName = (char*) malloc(nSize);
+	GetComputerNameExA(ComputerNameNetBIOS, ComputerName, &nSize);
+
+	return ComputerName;
+}
+
+int makecert()
 {
 	BIO* bio;
+	FILE* fp;
 	int length;
 	char* entry;
 	int key_length;
+	char* filename;
 	RSA* rsa = NULL;
+	long serial = 0;
+	char* default_name;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
 	COMMAND_LINE_ARGUMENT_A* arg;
+
+	default_name = x509_get_default_name();
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -291,55 +314,68 @@ int makecert(int bits, int serial, int days)
 	rsa = NULL;
 
 	X509_set_version(x509, 2);
+
+	arg = CommandLineFindArgumentA(args, "#");
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		serial = atoi(arg->Value);
+	else
+		serial = (long) GetTickCount64();
+
 	ASN1_INTEGER_set(X509_get_serialNumber(x509), serial);
+
 	X509_gmtime_adj(X509_get_notBefore(x509), 0);
-	X509_gmtime_adj(X509_get_notAfter(x509), (long) 60 * 60 * 24 * days);
+	X509_gmtime_adj(X509_get_notAfter(x509), (long) 60 * 60 * 24 * 365);
 	X509_set_pubkey(x509, pkey);
 
 	name = X509_get_subject_name(x509);
 
 	arg = CommandLineFindArgumentA(args, "n");
 
-	if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		printf("Error: no certificate name was given\n");
-		return -1;
+		entry = x509_name_parse(arg->Value, "C", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "ST", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "L", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "O", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "OU", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "CN", &length);
+
+		if (!entry)
+		{
+			entry = default_name;
+			length = strlen(entry);
+		}
+
+		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
-
-	entry = x509_name_parse(arg->Value, "C", &length);
-
-	if (entry)
-		X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
-
-	entry = x509_name_parse(arg->Value, "ST", &length);
-
-	if (entry)
-		X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
-
-	entry = x509_name_parse(arg->Value, "L", &length);
-
-	if (entry)
-		X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
-
-	entry = x509_name_parse(arg->Value, "O", &length);
-
-	if (entry)
-		X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
-
-	entry = x509_name_parse(arg->Value, "OU", &length);
-
-	if (entry)
-		X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
-
-	entry = x509_name_parse(arg->Value, "CN", &length);
-
-	if (!entry)
+	else
 	{
-		printf("Error: no common name was given\n");
-		return -1;
-	}
+		entry = default_name;
+		length = strlen(entry);
 
-	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+	}
 
 	X509_set_issuer_name(x509, name);
 
@@ -373,16 +409,65 @@ int makecert(int bits, int serial, int days)
 
 	X509_print_fp(stdout, x509);
 
-	PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
-	PEM_write_X509(stdout, x509);
+	if (!output_file)
+		output_file = default_name;
+
+	/*
+	 * Output Certificate File
+	 */
+
+	length = strlen(output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, output_file);
+	strcpy(&filename[length], ".crt");
+	fp = fopen(filename, "w+");
+
+	if (fp)
+	{
+		PEM_write_X509(fp, x509);
+		fclose(fp);
+	}
+
+	free(filename);
+
+	/**
+	 * Output Private Key File
+	 */
+
+	length = strlen(output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, output_file);
+	strcpy(&filename[length], ".key");
+	fp = fopen(filename, "w+");
+
+	if (fp)
+	{
+		PEM_write_PrivateKey(fp, pkey, NULL, NULL, 0, NULL, NULL);
+		fclose(fp);
+	}
+
+	free(filename);
 
 	X509_free(x509);
 	EVP_PKEY_free(pkey);
+
+	free(default_name);
 
 	CRYPTO_cleanup_all_ex_data();
 
 	CRYPTO_mem_leaks(bio);
 	BIO_free(bio);
+
+	return 0;
+}
+
+int command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
+{
+	if (index == (argc - 1))
+	{
+		if (argv[index][0] != '-')
+			output_file = (char*) argv[index];
+	}
 
 	return 0;
 }
@@ -399,9 +484,9 @@ int main(int argc, char* argv[])
 	 */
 
 	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, command_line_pre_filter, NULL);
 
-	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
+	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
 	{
 		makecert_print_command_line_help(argc, argv);
 		return 0;
@@ -413,11 +498,6 @@ int main(int argc, char* argv[])
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
-
-		if (arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
-			printf("Argument: %s Value: %s\n", arg->Name, arg->Value);
-		else
-			printf("Argument: %s\n", arg->Name);
 
 		CommandLineSwitchStart(arg)
 
@@ -572,7 +652,7 @@ int main(int argc, char* argv[])
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	makecert(512, 0, 365);
+	makecert();
 
 	return 0;
 }
