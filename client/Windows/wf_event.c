@@ -41,7 +41,7 @@ extern HCURSOR g_default_cursor;
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	wfInfo* wfi;
-	RDP_SCANCODE rdp_scancode;
+	DWORD rdp_scancode;
 	rdpInput* input;
 	PKBDLLHOOKSTRUCT p;
 

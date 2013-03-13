@@ -23,6 +23,21 @@
 					<action android:name="android.intent.action.MAIN"/>
 					<category android:name="android.intent.category.LAUNCHER"/>
 				</intent-filter>
+				<intent-filter>
+					<action android:name="android.intent.action.VIEW" />
+					<category android:name="android.intent.category.DEFAULT" />
+					<data 
+						android:scheme="file"
+					    android:mimeType="application/x-rdp" />
+				</intent-filter>
+				<intent-filter>
+					<action android:name="android.intent.action.VIEW" />
+					<category android:name="android.intent.category.DEFAULT" />
+					<data
+				  		android:scheme="file"
+						android:pathPattern=".*\\.rdp"
+						android:mimeType="*/*" />
+				</intent-filter>
 			</activity>
 
 			<!-- Session request handler activity - used for search and internally to start sessions -->

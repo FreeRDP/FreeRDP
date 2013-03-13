@@ -1,9 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# keymaps cmake build script
+# FreeRDP cmake build script
 #
-# Copyright 2011 O.S. Systems Software Ltda.
-# Copyright 2011 Otavio Salvador <otavio@ossystems.com.br>
-# Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(NOT WITH_XKBFILE)
-	install(FILES aliases amiga ataritt empty evdev fujitsu hp ibm macintosh macosx sony sun xfree86 xfree98 DESTINATION ${FREERDP_KEYMAP_PATH})
-	install(DIRECTORY digital_vndr DESTINATION ${FREERDP_KEYMAP_PATH} FILES_MATCHING PATTERN "*")
-	install(DIRECTORY sgi_vndr DESTINATION ${FREERDP_KEYMAP_PATH} FILES_MATCHING PATTERN "*")
+define_channel("echo")
+
+if(WITH_CLIENT_CHANNELS)
+	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
+

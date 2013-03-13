@@ -50,7 +50,7 @@ include(GNUInstallDirsWrapper)
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "1")
 set(FREERDP_VERSION_REVISION "0")
-set(FREERDP_VERSION_SUFFIX "dev")
+set(FREERDP_VERSION_SUFFIX "beta1")
 set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
 set(FREERDP_VERSION "${FREERDP_API_VERSION}.${FREERDP_VERSION_REVISION}")
 if (FREERDP_VERSION_SUFFIX)
@@ -334,7 +334,6 @@ endif()
 
 # Path to put FreeRDP data
 set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
-set(FREERDP_KEYMAP_PATH "${FREERDP_DATA_PATH}/keymaps")
 
 # Path to put plugins
 
@@ -364,9 +363,7 @@ set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
 
 include(CTest)
 
-if(BUILD_TESTING)
-	find_package(Cmockery)
-	
+if(BUILD_TESTING)	
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_TEST_EXPORTS")
 	
 	enable_testing()
@@ -415,10 +412,6 @@ endif()
 
 if(WITH_THIRD_PARTY)
 	add_subdirectory(third-party)
-endif()
-
-if(NOT MSVC)
-	add_subdirectory(keymaps)
 endif()
 
 # Packaging

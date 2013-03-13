@@ -9,12 +9,16 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.services.BookmarkBaseGateway;
+import com.freerdp.freerdpcore.utils.RDPFileParser;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -25,10 +29,13 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.util.Log;
 
 public class BookmarkActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener
 {
 	public static final String PARAM_CONNECTION_REFERENCE = "conRef"; 		
+
+	private static final String TAG = "BookmarkActivity";
 
 	private int current_preferences;
 	private static final int PREFERENCES_BOOKMARK = 1;
@@ -77,6 +84,26 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 						bookmark.<ManualBookmark>get().setLabel(ConnectionReference.getHostname(refStr));
 						bookmark.<ManualBookmark>get().setHostname(ConnectionReference.getHostname(refStr));
 						new_bookmark = true;
+					}
+					else if (ConnectionReference.isFileReference(refStr))
+					{
+						String file = ConnectionReference.getFile(refStr);
+
+						bookmark = new ManualBookmark();
+						bookmark.setLabel(file);
+
+						try
+						{
+							RDPFileParser rdpFile = new RDPFileParser(file);
+							updateBookmarkFromFile((ManualBookmark)bookmark, rdpFile);
+							
+							bookmark.setLabel(new File(file).getName());
+							new_bookmark = true;
+						}
+						catch (IOException e)
+						{
+							Log.e(TAG, "Failed reading RDP file", e);
+						}
 					}
 				}					
 			}			
@@ -142,6 +169,54 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		
 		// set the correct component names in our preferencescreen settings 
 		setIntentComponentNames();
+	}
+
+	private void updateBookmarkFromFile(ManualBookmark bookmark, RDPFileParser rdpFile)
+	{
+		String s;
+		Integer i;
+		
+		s = rdpFile.getString("full address");
+		if (s != null)
+		{
+			// this gets complicated as it can include port
+			if (s.lastIndexOf(":") > s.lastIndexOf("]"))
+			{
+				try
+				{
+					String port = s.substring(s.lastIndexOf(":") + 1);
+					bookmark.setPort(Integer.parseInt(port));
+				}
+				catch (NumberFormatException e)
+				{
+					Log.e(TAG, "Malformed address");
+				}
+				
+				s = s.substring(0, s.lastIndexOf(":"));
+			}
+			
+			// or even be an ipv6 address
+			if (s.startsWith("[") && s.endsWith("]"))
+				s = s.substring(1, s.length() - 1);
+			
+			bookmark.setHostname(s);
+		}
+
+		i = rdpFile.getInteger("server port");
+		if (i != null)
+			bookmark.setPort(i);
+
+		s = rdpFile.getString("username");
+		if (s != null)
+			bookmark.setUsername(s);
+
+		s = rdpFile.getString("domain");
+		if (s != null)
+			bookmark.setDomain(s);
+		
+		i = rdpFile.getInteger("connect to console");
+		if (i != null)
+			bookmark.getAdvancedSettings().setConsoleMode(i == 1);
 	}
 
 	private void setIntentComponentNames()

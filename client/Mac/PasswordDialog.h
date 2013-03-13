@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Keyboard Localization - loading of keymap files
+ * MacFreeRDP
  *
- * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Christian Hofstaedtler
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,21 @@
  * limitations under the License.
  */
 
-#ifndef __KEYBOARD_KEYMAP_H
-#define __KEYBOARD_KEYMAP_H
+#import <Cocoa/Cocoa.h>
 
-#include <freerdp/types.h>
+@interface PasswordDialog : NSWindowController
 
-int freerdp_keyboard_load_map(UINT32 keycode_to_vkcode[256], char* name);
-void freerdp_keyboard_load_maps(UINT32 keycode_to_vkcode[256], char* names);
+@property (retain) IBOutlet NSTextField* usernameText;
+@property (retain) IBOutlet NSTextField* passwordText;
+@property (retain) IBOutlet NSTextField* messageLabel;
 
-#endif /* __KEYBOARD_KEYMAP_H */
+- (IBAction)onOK:(NSObject*)sender;
+- (IBAction)onCancel:(NSObject*)sender;
+
+@property (retain) NSString* serverHostname;
+@property (retain) NSString* username;
+@property (retain) NSString* password;
+
+- (BOOL) runModal;
+
+@end
