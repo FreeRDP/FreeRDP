@@ -1,1 +1,2 @@
 !*.sh
+regenerate_jni_headers.sh
