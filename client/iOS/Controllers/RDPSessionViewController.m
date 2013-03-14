@@ -20,12 +20,6 @@
 
 #define AUTOSCROLLDISTANCE 20
 #define AUTOSCROLLTIMEOUT 0.05
-//@interface RDPSessionViewController ()
-//{
-//    UITextInputMode *_mode;
-//}
-//@end
-
 @interface RDPSessionViewController (Private)
 -(void)showSessionToolbar:(BOOL)show;
 -(UIToolbar*)keyboardToolbar;
@@ -60,9 +54,10 @@
         
         _toggle_mouse_button = NO;
         
+        _keyboard_has_display = NO;
+        
         _autoscroll_with_touchpointer = [[NSUserDefaults standardUserDefaults] boolForKey:@"ui.auto_scroll_touchpointer"];
         _is_autoscrolling = NO;
-        
         [UIView setAnimationDelegate:self];
         [UIView setAnimationDidStopSelector:@selector(animationStopped:finished:context:)];
     }
@@ -82,11 +77,11 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidShow:) name: UIKeyboardDidShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name: UIKeyboardWillHideNotification object:nil];	
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidHide:) name: UIKeyboardDidHideNotification object:nil];
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(inputModeDidChange:) name: UITextInputCurrentInputModeDidChangeNotification object:nil];
-    
+
     // init keyboard toolbar
     _keyboard_toolbar = [[self keyboardToolbar] retain];
     [_dummy_textfield setInputAccessoryView:_keyboard_toolbar];
+    
     // init gesture recognizers
     [self initGestureRecognizers];
     
@@ -94,13 +89,13 @@
     [_session_toolbar setFrame:CGRectMake(0.0, -TOOLBAR_HEIGHT, [[self view] bounds].size.width, TOOLBAR_HEIGHT)];
 }
 
-//-(void) inputModeDidChange:(NSNotification *) notification {
-//}
+
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad 
 {
     [super viewDidLoad];
 }
+
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     return YES;
@@ -229,17 +224,16 @@
 	return YES;
 }
 
-
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
-    // Patched By Zhan Lin
     if(string == nil || [string length] == 0) { // key touched is backspace
-        if(range.length > 0) {
+        if(range.length > 0 && textField.text.length <= [@"UserInput" length]) {
             [[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
+            return NO;
         }
-        return NO;
+        return YES;
     }
-    // Handle Chinese Input Method
+    
     if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]
        && (([string characterAtIndex:0] >= 'a' && [string characterAtIndex:0] <= 'z')
            || ([string characterAtIndex:0] >= 'A' && [string characterAtIndex:0] <= 'Z'))) {
@@ -249,9 +243,8 @@
                    [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
            }
            return YES;
-    }
+       }
     
-    // Handle Other Input Method
     for(int i = 0 ; i < [string length] ; i++) {
         unichar curChar = [string characterAtIndex:i];
         if(curChar == '\n')
@@ -260,8 +253,9 @@
             [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
     }
     textField.text = @"UserInput";
-	return NO;
+    return NO;
 }
+
 
 #pragma mark -
 #pragma mark AdvancedKeyboardDelegate functions
@@ -585,18 +579,23 @@
 #pragma mark iOS Keyboard Notification Handlers
 
 - (void)keyboardWillShow:(NSNotification *)notification
-{   
-	CGRect keyboardEndFrame = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+{
+    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"] && _keyboard_has_display) {
+        return;
+    }
     
+    CGRect keyboardEndFrame = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationCurve:[[[notification userInfo] objectForKey:UIKeyboardAnimationCurveUserInfoKey] intValue]];
     [UIView setAnimationDuration:[[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
-	CGRect frame = [_session_scrollview frame];
-	frame.size.height -= [[self view] convertRect:keyboardEndFrame toView:nil].size.height;
-	[_session_scrollview setFrame:frame];
-    [_touchpointer_view setFrame:frame];    
-	[UIView commitAnimations];
-
+    CGRect frame = [_session_scrollview frame];
+    frame.size.height -= [[self view] convertRect:keyboardEndFrame toView:nil].size.height;
+    [_session_scrollview setFrame:frame];
+    [_touchpointer_view setFrame:frame];
+    [UIView commitAnimations];
+    _keyboard_has_display = YES;
+    
+    //    NSLog(@"Invoke %s", __func__);
     [_touchpointer_view ensurePointerIsVisible];
 }
 
@@ -607,7 +606,7 @@
         [self showAdvancedKeyboardAnimated];
         _advanced_keyboard_visible = YES;
         _requesting_advanced_keyboard = NO;
-    }            
+    }
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification
@@ -622,6 +621,8 @@
     [_session_scrollview setFrame:frame];
     [_touchpointer_view setFrame:frame];
     [UIView commitAnimations];
+    
+    _keyboard_has_display = NO;
 }
 
 - (void)keyboardDidHide:(NSNotification*)notification
