@@ -23,20 +23,36 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/sysinfo.h>
+
+#include <openssl/pem.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
+
+#ifdef _WIN32
+#include <openssl/applink.c>
+#endif
+
+X509* x509 = NULL;
+EVP_PKEY* pkey = NULL;
+char* output_file = NULL;
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
 	/* Basic Options */
 
+	{ "rdp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Generate certificate with required options for RDP usage."
+	},
 	{ "n", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
-			"Specifies the subject's certificate name. This name must conform to the X.500 standard."
+			"Specifies the subject's certificate name. This name must conform to the X.500 standard. "
 			"The simplest method is to specify the name in double quotes, preceded by CN=; for example, -n \"CN=myName\"."
 	},
 	{ "pe", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Marks the generated private key as exportable. This allows the private key to be included in the certificate."
 	},
 	{ "sk", COMMAND_LINE_VALUE_REQUIRED, "<keyname>", NULL, NULL, -1, NULL,
-			"Specifies the subject's key container location, which contains the private key."
+			"Specifies the subject's key container location, which contains the private key. "
 			"If a key container does not exist, it will be created."
 	},
 	{ "sr", COMMAND_LINE_VALUE_REQUIRED, "<location>", NULL, NULL, -1, NULL,
@@ -86,7 +102,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 			"Specifies the issuer's key type, which must be one of the following: "
 			"signature (which indicates that the key is used for a digital signature), "
 			"exchange (which indicates that the key is used for key encryption and key exchange), "
-			"or an integer that represents a provider type."
+			"or an integer that represents a provider type. "
 			"By default, you can pass 1 for an exchange key or 2 for a signature key."
 	},
 	{ "in", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
@@ -200,16 +216,281 @@ int makecert_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
+int x509_add_ext(X509* cert, int nid, char* value)
+{
+	X509V3_CTX ctx;
+	X509_EXTENSION* ext;
+
+	X509V3_set_ctx_nodb(&ctx);
+
+	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+	ext = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
+
+	if (!ext)
+		return 0;
+
+	X509_add_ext(cert, ext, -1);
+	X509_EXTENSION_free(ext);
+
+	return 1;
+}
+
+char* x509_name_parse(char* name, char* txt, int* length)
+{
+	char* p;
+	char* entry;
+
+	p = strstr(name, txt);
+
+	if (!p)
+		return NULL;
+
+	entry = p + strlen(txt) + 1;
+
+	p = strchr(entry, '=');
+
+	if (!p)
+		*length = strlen(entry);
+	else
+		*length = p - entry;
+
+	return entry;
+}
+
+char* x509_get_default_name()
+{
+	DWORD nSize = 0;
+	char* ComputerName;
+
+	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
+	ComputerName = (char*) malloc(nSize);
+	GetComputerNameExA(ComputerNameNetBIOS, ComputerName, &nSize);
+
+	return ComputerName;
+}
+
+int makecert()
+{
+	BIO* bio;
+	FILE* fp;
+	int length;
+	char* entry;
+	int key_length;
+	char* filename;
+	RSA* rsa = NULL;
+	long serial = 0;
+	char* default_name;
+	X509_NAME* name = NULL;
+	const EVP_MD* md = NULL;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	default_name = x509_get_default_name();
+
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+	bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+	if (!pkey)
+		pkey = EVP_PKEY_new();
+
+	if (!pkey)
+		return -1;
+
+	if (!x509)
+		x509 = X509_new();
+
+	if (!x509)
+		return -1;
+
+	key_length = 2048;
+
+	arg = CommandLineFindArgumentA(args, "len");
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+	{
+		key_length = atoi(arg->Value);
+	}
+
+	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+
+	if (!EVP_PKEY_assign_RSA(pkey, rsa))
+		return -1;
+
+	rsa = NULL;
+
+	X509_set_version(x509, 2);
+
+	arg = CommandLineFindArgumentA(args, "#");
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		serial = atoi(arg->Value);
+	else
+		serial = (long) GetTickCount64();
+
+	ASN1_INTEGER_set(X509_get_serialNumber(x509), serial);
+
+	X509_gmtime_adj(X509_get_notBefore(x509), 0);
+	X509_gmtime_adj(X509_get_notAfter(x509), (long) 60 * 60 * 24 * 365);
+	X509_set_pubkey(x509, pkey);
+
+	name = X509_get_subject_name(x509);
+
+	arg = CommandLineFindArgumentA(args, "n");
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+	{
+		entry = x509_name_parse(arg->Value, "C", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "ST", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "L", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "O", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "OU", &length);
+
+		if (entry)
+			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+
+		entry = x509_name_parse(arg->Value, "CN", &length);
+
+		if (!entry)
+		{
+			entry = default_name;
+			length = strlen(entry);
+		}
+
+		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+	}
+	else
+	{
+		entry = default_name;
+		length = strlen(entry);
+
+		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+	}
+
+	X509_set_issuer_name(x509, name);
+
+	x509_add_ext(x509, NID_ext_key_usage, "serverAuth");
+	x509_add_ext(x509, NID_key_usage, "keyEncipherment,dataEncipherment");
+
+	arg = CommandLineFindArgumentA(args, "a");
+
+	md = EVP_sha1();
+
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+	{
+		if (strcmp(arg->Value, "md5") == 0)
+			md = EVP_md5();
+		else if (strcmp(arg->Value, "sha1") == 0)
+			md = EVP_sha1();
+		else if (strcmp(arg->Value, "sha256") == 0)
+			md = EVP_sha256();
+		else if (strcmp(arg->Value, "sha384") == 0)
+			md = EVP_sha384();
+		else if (strcmp(arg->Value, "sha512") == 0)
+			md = EVP_sha512();
+	}
+
+	if (!X509_sign(x509, pkey, md))
+		return -1;
+
+	/**
+	 * Print Certificate
+	 */
+
+	X509_print_fp(stdout, x509);
+
+	if (!output_file)
+		output_file = default_name;
+
+	/*
+	 * Output Certificate File
+	 */
+
+	length = strlen(output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, output_file);
+	strcpy(&filename[length], ".crt");
+	fp = fopen(filename, "w+");
+
+	if (fp)
+	{
+		PEM_write_X509(fp, x509);
+		fclose(fp);
+	}
+
+	free(filename);
+
+	/**
+	 * Output Private Key File
+	 */
+
+	length = strlen(output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, output_file);
+	strcpy(&filename[length], ".key");
+	fp = fopen(filename, "w+");
+
+	if (fp)
+	{
+		PEM_write_PrivateKey(fp, pkey, NULL, NULL, 0, NULL, NULL);
+		fclose(fp);
+	}
+
+	free(filename);
+
+	X509_free(x509);
+	EVP_PKEY_free(pkey);
+
+	free(default_name);
+
+	CRYPTO_cleanup_all_ex_data();
+
+	CRYPTO_mem_leaks(bio);
+	BIO_free(bio);
+
+	return 0;
+}
+
+int command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
+{
+	if (index == (argc - 1))
+	{
+		if (argv[index][0] != '-')
+			output_file = (char*) argv[index];
+	}
+
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+	/**
+	 * makecert -r -pe -n "CN=%COMPUTERNAME%" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr LocalMachine
+	 * -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
+	 */
 
-	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
+	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, command_line_pre_filter, NULL);
+
+	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
 	{
 		makecert_print_command_line_help(argc, argv);
 		return 0;
@@ -221,11 +502,6 @@ int main(int argc, char* argv[])
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
-
-		if (arg->Flags & COMMAND_LINE_VALUE_REQUIRED)
-			printf("Argument: %s Value: %s\n", arg->Name, arg->Value);
-		else
-			printf("Argument: %s\n", arg->Name);
 
 		CommandLineSwitchStart(arg)
 
@@ -379,6 +655,8 @@ int main(int argc, char* argv[])
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	makecert();
 
 	return 0;
 }

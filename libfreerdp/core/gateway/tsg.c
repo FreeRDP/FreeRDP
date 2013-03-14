@@ -201,14 +201,13 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	return TRUE;
 }
 
-BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
+BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BYTE* buffer;
 	UINT32 count;
 	UINT32 length;
 	UINT32 offset;
 	UINT32 Pointer;
-	RPC_PDU* pdu;
 	PTSG_PACKET packet;
 	UINT32 SwitchValue;
 	rdpRpc* rpc = tsg->rpc;
@@ -216,8 +215,6 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg)
 	PTSG_PACKET_VERSIONCAPS versionCaps;
 	PTSG_PACKET_CAPS_RESPONSE packetCapsResponse;
 	PTSG_PACKET_QUARENC_RESPONSE packetQuarEncResponse;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -467,12 +464,6 @@ BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPac
 		return FALSE;
 	}
 
-	if (!TsProxyCreateTunnelReadResponse(tsg))
-	{
-		printf("TsProxyCreateTunnel: error reading response\n");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -541,9 +532,8 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSE
 	return TRUE;
 }
 
-BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
+BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -553,8 +543,6 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg)
 	PTSG_PACKET packet;
 	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_RESPONSE packetResponse;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -646,12 +634,6 @@ BOOL TsProxyAuthorizeTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunn
 		return FALSE;
 	}
 
-	if (!TsProxyAuthorizeTunnelReadResponse(tsg))
-	{
-		printf("TsProxyAuthorizeTunnel: error reading response\n");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -692,9 +674,8 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 	return TRUE;
 }
 
-BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg)
+BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -703,16 +684,11 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg)
 	UINT32 ActualCount;
 	UINT32 SwitchValue;
 	PTSG_PACKET packet;
-	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
 	PTSG_PACKET_STRING_MESSAGE packetStringMessage = NULL;
 	PTSG_PACKET_REAUTH_MESSAGE packetReauthMessage = NULL;
 
 	/* This is an asynchronous response */
-
-	return TRUE;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -828,12 +804,6 @@ BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunne
 		return FALSE;
 	}
 
-	if (!TsProxyMakeTunnelCallReadResponse(tsg))
-	{
-		printf("TsProxyMakeTunnelCall: error reading response\n");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -892,15 +862,12 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	return TRUE;
 }
 
-BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg)
+BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -950,12 +917,6 @@ BOOL TsProxyCreateChannel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnel
 		return FALSE;
 	}
 
-	if (!TsProxyCreateChannelReadResponse(tsg))
-	{
-		printf("TsProxyCreateChannel: error reading response\n");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -983,9 +944,8 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERI
 	return TRUE;
 }
 
-BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg)
+BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -1011,6 +971,8 @@ BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg)
 
 HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
 {
+	RPC_PDU* pdu = NULL;
+
 	/**
 	 * HRESULT TsProxyCloseChannel(
 	 * [in, out] PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context
@@ -1025,7 +987,7 @@ HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* co
 		return FALSE;
 	}
 
-	if (!TsProxyCloseChannelReadResponse(tsg))
+	if (!TsProxyCloseChannelReadResponse(tsg, pdu))
 	{
 		printf("TsProxyCloseChannel: error reading response\n");
 		return FALSE;
@@ -1058,9 +1020,8 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZ
 	return TRUE;
 }
 
-BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg)
+BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
-	RPC_PDU* pdu;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -1086,6 +1047,8 @@ BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg)
 
 HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
 {
+	RPC_PDU* pdu = NULL;
+
 	/**
 	 * HRESULT TsProxyCloseTunnel(
 	 * [in, out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context
@@ -1100,7 +1063,7 @@ HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* contex
 		return FALSE;
 	}
 
-	if (!TsProxyCloseTunnelReadResponse(tsg))
+	if (!TsProxyCloseTunnelReadResponse(tsg, pdu))
 	{
 		printf("TsProxyCloseTunnel: error reading response\n");
 		return FALSE;
@@ -1134,7 +1097,7 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 	return TRUE;
 }
 
-BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg)
+BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	return TRUE;
 }
@@ -1161,17 +1124,12 @@ BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
 		return FALSE;
 	}
 
-	if (!TsProxySetupReceivePipeReadResponse(tsg))
-	{
-		printf("TsProxySetupReceivePipe: error reading response\n");
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
+	RPC_PDU* pdu = NULL;
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
@@ -1240,6 +1198,14 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 	}
 
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
+	{
+		printf("TsProxyCreateTunnel: error reading response\n");
+		return FALSE;
+	}
+
 	tsg->state = TSG_STATE_CONNECTED;
 
 	/**
@@ -1278,6 +1244,14 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 	}
 
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
+	{
+		printf("TsProxyAuthorizeTunnel: error reading response\n");
+		return FALSE;
+	}
+
 	tsg->state = TSG_STATE_AUTHORIZED;
 
 	/**
@@ -1290,6 +1264,16 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
 		return FALSE;
+
+#if 0
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+	{
+		printf("TsProxyMakeTunnelCall: error reading response\n");
+		return FALSE;
+	}
+#endif
 
 	/**
 	 *     Sequential processing rules for connection process (continued):
@@ -1310,6 +1294,14 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	if (!TsProxyCreateChannel(tsg, &tsg->TunnelContext, NULL, NULL, NULL))
 		return FALSE;
 
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!TsProxyCreateChannelReadResponse(tsg, pdu))
+	{
+		printf("TsProxyCreateChannel: error reading response\n");
+		return FALSE;
+	}
+
 	tsg->state = TSG_STATE_CHANNEL_CREATED;
 
 	/**
@@ -1329,6 +1321,16 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
 		return FALSE;
+
+#if 0
+	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!TsProxySetupReceivePipeReadResponse(tsg, pdu))
+	{
+		printf("TsProxySetupReceivePipe: error reading response\n");
+		return FALSE;
+	}
+#endif
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
