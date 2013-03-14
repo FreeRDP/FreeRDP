@@ -662,32 +662,29 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 		case PF_EX_AVX_AES:
 			{
 				if ((c & C_BITS_AVX) != C_BITS_AVX)
-					ret = FALSE;
+					break;
 
-					int e, f;
-					xgetbv(0, e, f);
+				int e, f;
+				xgetbv(0, e, f);
 
-					if ((e & E_BITS_AVX) == E_BITS_AVX)
+				if ((e & E_BITS_AVX) == E_BITS_AVX)
+				{
+					switch (ProcessorFeature)
 					{
-						switch (ProcessorFeature)
-						{
-							case: PF_EX_AVX:
-								ret = TRUE;
-								break;
-							case: PF_EX_FMA:
-								if (c & C_BIT_FMA)
-									ret = TRUE;
-								break;
-							case: PF_EX_AVX_AES:
-								if (c & C_BIT_AVX_AES)
-									ret = TRUE;
-								break;
-						{
+						case PF_EX_AVX:
 							ret = TRUE;
 							break;
-						}
-        }
-			}
+						case PF_EX_FMA:
+							if (c & C_BIT_FMA)
+								ret = TRUE;
+							break;
+						case PF_EX_AVX_AES:
+							if (c & C_BIT_AVX_AES)
+								ret = TRUE;
+							break;
+					}
+				}
+      }
 			break;
 #endif //__AVX__
 		default:
