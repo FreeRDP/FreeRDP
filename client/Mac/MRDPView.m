@@ -370,7 +370,7 @@ const char* error_code_names[] =
 - (void) keyDown:(NSEvent *) event
 {
 	int key;
-	BOOL extended;
+	USHORT extended;
 	DWORD vkcode;
 	DWORD scancode;
 	
@@ -393,7 +393,7 @@ const char* error_code_names[] =
 - (void) keyUp:(NSEvent *) event
 {
 	int key;
-	BOOL extended;
+	USHORT extended;
 	DWORD vkcode;
 	DWORD scancode;
 	
@@ -595,7 +595,7 @@ const char* error_code_names[] =
  * save state info for use by other methods later on
  ***********************************************************************/
 
-- (void) saveStateInfo:(freerdp *) instance:(rdpContext *) context
+- (void) saveStateInfo:(freerdp *) instance :(rdpContext *) context
 {
 	rdp_instance = instance;
 	rdp_context = context;

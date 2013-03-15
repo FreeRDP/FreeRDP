@@ -26,7 +26,7 @@ int TestAlignment(int argc, char* argv[])
 
 	if (((size_t) ptr % alignment) != 0)
 	{
-		printf("This pointer, %d, is not aligned on %d\n", ptr, alignment);
+		printf("This pointer, %p, is not aligned on %lu\n", ptr, alignment);
 		return -1;
 	}
 
@@ -36,7 +36,7 @@ int TestAlignment(int argc, char* argv[])
 	
 	if (((size_t) ptr % alignment) != 0)
 	{
-		printf("This pointer, %d, is not aligned on %d\n", ptr, alignment);
+		printf("This pointer, %p, is not aligned on %lu\n", ptr, alignment);
 		return -1;
 	}
 	
@@ -54,7 +54,7 @@ int TestAlignment(int argc, char* argv[])
 
 	if (((((size_t) ptr) + offset) % alignment) != 0)
 	{
-		printf("This pointer, %d, does not satisfy offset %d and alignment %d\n", ptr, offset, alignment);
+		printf("This pointer, %p, does not satisfy offset %lu and alignment %lu\n", ptr, offset, alignment);
 		return -1;
 	}
 
@@ -70,7 +70,7 @@ int TestAlignment(int argc, char* argv[])
 
 	if (((((size_t) ptr) + offset) % alignment) != 0)
 	{
-		printf("This pointer, %d, does not satisfy offset %d and alignment %d\n", ptr, offset, alignment);
+		printf("This pointer, %p, does not satisfy offset %lu and alignment %lu\n", ptr, offset, alignment);
 		return -1;
 	}
 

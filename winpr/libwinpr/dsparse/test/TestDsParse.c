@@ -74,7 +74,7 @@ int main(int ac, char *av[])
   int testToRun = -1;
 
   
-    
+
   for(count =0; cmakeGeneratedFunctionMapEntries[count].name != 0; count++)
     {
     }
@@ -151,8 +151,8 @@ int main(int ac, char *av[])
 
     return result;
     }
-  
-  
+
+
   /* Nothing was run, display the test names.  */
   printf("Available tests:\n");
   for (i =0; i < NumTests; ++i)
@@ -160,6 +160,6 @@ int main(int ac, char *av[])
     printf("%3d. %s\n", i, cmakeGeneratedFunctionMapEntries[i].name);
     }
   printf("Failed: %s is an invalid test name.\n", av[1]);
-  
+
   return -1;
 }

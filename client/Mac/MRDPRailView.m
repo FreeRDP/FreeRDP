@@ -545,7 +545,7 @@ MRDPRailView* g_mrdpRailView;
 - (void) keyDown:(NSEvent *) event
 {
 	int key;
-	BOOL extended;
+	USHORT extended;
 	DWORD vkcode;
 	DWORD scancode;
 	
@@ -565,7 +565,7 @@ MRDPRailView* g_mrdpRailView;
 - (void) keyUp:(NSEvent *) event
 {
 	int key;
-	BOOL extended;
+	USHORT extended;
 	DWORD vkcode;
 	DWORD scancode;
 	
@@ -573,7 +573,7 @@ MRDPRailView* g_mrdpRailView;
 	
 	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
-	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	extended = (scancode & KBDEXT) ? TRUE : FALSE;
 	
 	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
 }

@@ -153,7 +153,7 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 			}
 			else
 			{
-				printf("invalid operator: %s\n", c[0]);
+				printf("invalid operator: %c\n", c[0]);
 			}
 
 			//printf("Operator: %s\n", c);
