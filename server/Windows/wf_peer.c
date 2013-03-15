@@ -51,7 +51,6 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 	if (context->rdpsnd)
 	{
-		printf("snd_free\n");
 		wf_rdpsnd_lock();
 		context->info->snd_stop = TRUE;
 		rdpsnd_server_context_free(context->rdpsnd);
@@ -80,8 +79,7 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	if ( 
-		(get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
+	if (	(get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
 		(wfi->servscreen_width == 0) ||
 		(wfi->servscreen_height == 0) ||
 		(wfi->bitsPerPixel == 0) )
@@ -92,8 +90,10 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 
 	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
+		/*
 		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
 			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
+			*/
 
 		settings->DesktopWidth = wfi->servscreen_width;
 		settings->DesktopHeight = wfi->servscreen_height;
@@ -121,8 +121,6 @@ BOOL wf_peer_activate(freerdp_peer* client)
 	wfInfo* wfi;
 	wfPeerContext* context = (wfPeerContext*) client->context;
 
-	printf("PeerActivate\n");
-
 	wfi = context->info;
 	client->activated = TRUE;
 	wf_update_peer_activate(wfi, context);
@@ -134,14 +132,13 @@ BOOL wf_peer_activate(freerdp_peer* client)
 
 BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
 {
-	printf("PeerLogon\n");
-
+	/*
 	if (automatic)
 	{
 		_tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
 			identity->User, identity->Domain, identity->Password);
 	}
-
+	*/
 
 	wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
 	return TRUE;
@@ -170,15 +167,13 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	ZeroMemory(rfds, sizeof(rfds));
 	context = (wfPeerContext*) client->context;
 
-	printf("PeerSocketListener\n");
-
 	while (1)
 	{
 		rcount = 0;
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get peer file descriptor\n");
+			//printf("Failed to get peer file descriptor\n");
 			break;
 		}
 
@@ -206,8 +201,6 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 		if (context->socketClose)
 			break;
 	}
-
-	printf("Exiting Peer Socket Listener Thread\n");
 
 	return 0;
 }
@@ -268,14 +261,11 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	}
 
 	context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	printf("socketEvent created\n");
-
+	
 	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
 	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
 	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
-
-	printf("Setting Handles\n");
 
 	nCount = 0;
 	handles[nCount++] = context->updateEvent;
@@ -304,7 +294,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		{
 			if (client->CheckFileDescriptor(client) != TRUE)
 			{
-				printf("Failed to check peer file descriptor\n");
+				//printf("Failed to check peer file descriptor\n");
 				context->socketClose = TRUE;
 			}
 
@@ -341,8 +331,6 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
-
-	printf("Exiting Peer Main Loop Thread\n");
 
 	return 0;
 }
