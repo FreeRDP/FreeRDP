@@ -98,6 +98,9 @@ size_t _wcslen(const WCHAR* str)
 {
 	WCHAR* p = (WCHAR*) str;
 
+	if (!p)
+		return 0;
+
 	while (*p)
 		p++;
 
