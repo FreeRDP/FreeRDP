@@ -21,6 +21,7 @@ int TestCPUFeatures(int argc, char* argv[])
 	printf("\tPF_EX_AVX:  %s\n", IsProcessorFeaturePresentEx(PF_EX_AVX) ? "yes" : "no");
 	printf("\tPF_EX_FMA:  %s\n", IsProcessorFeaturePresentEx(PF_EX_FMA) ? "yes" : "no");
 	printf("\tPF_EX_AVX_AES:  %s\n", IsProcessorFeaturePresentEx(PF_EX_AVX_AES) ? "yes" : "no");
+	printf("\tPF_EX_AVX_PCLMULQDQD:  %s\n", IsProcessorFeaturePresentEx(PF_EX_AVX_PCLMULQDQ) ? "yes" : "no");
 #elif defined(_M_ARM)
 	printf("\tPF_ARM_NEON_INSTRUCTIONS_AVAILABLE:  %s\n", IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE) ? "yes" : "no");
 	printf("\tPF_ARM_THUMB:  %s\n", IsProcessorFeaturePresent(PF_ARM_THUMB) ? "yes" : "no");
