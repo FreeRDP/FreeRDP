@@ -58,6 +58,10 @@
     BOOL _advanced_keyboard_visible;
     BOOL _requesting_advanced_keyboard;
     
+    
+	// flag that indicates whether the keyboard is visible or not
+	BOOL _keyboard_has_display;
+    
     // delayed mouse move event sending
     NSTimer* _mouse_move_event_timer;
     int _mouse_move_events_skipped;

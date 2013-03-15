@@ -25,8 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-
 #include "liblocale.h"
 
 #include <freerdp/locale/keyboard.h>
@@ -204,12 +202,18 @@ static const SOLARIS_KEYBOARD SOLARIS_KEYBOARD_TABLE[] =
 	{ 6,   272,  "sun(type6)",               KBD_PORTUGUESE_BRAZILIAN_ABNT		}  /*  Brazil6_usb */
 };
 
-int freerdp_get_solaris_keyboard_layout_and_type(int* type, int* layout)
+UINT32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length)
 {
 	FILE* kbd;
+
+	int i;
+	int type = 0;
+	int layout = 0;
+
 	char* pch;
 	char* beg;
 	char* end;
+
 	char buffer[1024];
 
 	/*
@@ -222,13 +226,10 @@ int freerdp_get_solaris_keyboard_layout_and_type(int* type, int* layout)
 		rate(ms)=40
 	*/
 
-	*type = 0;
-	*layout = 0;
-
 	kbd = popen("kbd -t -l", "r");
 
 	if (kbd < 0)
-		return -1;
+		return 0;
 
 	while (fgets(buffer, sizeof(buffer), kbd) != NULL)
 	{
@@ -237,37 +238,27 @@ int freerdp_get_solaris_keyboard_layout_and_type(int* type, int* layout)
 			beg = pch + sizeof("type=") - 1;
 			end = strchr(beg, '\n');
 			end[0] = '\0';
-			*type = atoi(beg);
+			type = atoi(beg);
 		}
 		else if ((pch = strstr(buffer, "layout=")) != NULL)
 		{
 			beg = pch + sizeof("layout=") - 1;
 			end = strchr(beg, ' ');
 			end[0] = '\0';
-			*layout = atoi(beg);
+			layout = atoi(beg);
 		}
 	}
-
 	pclose(kbd);
-
-	return 0;
-}
-
-DWORD freerdp_detect_solaris_keyboard_layout()
-{
-	int i;
-	int type;
-	int layout;
-
-	if (freerdp_get_solaris_keyboard_layout_and_type(&type, &layout) < 0)
-		return 0;
 
 	for (i = 0; i < ARRAYSIZE(SOLARIS_KEYBOARD_TABLE); i++)
 	{
 		if (SOLARIS_KEYBOARD_TABLE[i].type == type)
 		{
 			if (SOLARIS_KEYBOARD_TABLE[i].layout == layout)
+			{
+				strncpy(keyboard_type, SOLARIS_KEYBOARD_TABLE[i].xkbType, length);
 				return SOLARIS_KEYBOARD_TABLE[i].keyboardLayoutId;
+			}
 		}
 	}
 

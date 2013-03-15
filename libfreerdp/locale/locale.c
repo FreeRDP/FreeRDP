@@ -35,7 +35,7 @@ struct _SYSTEM_LOCALE
 {
 	char language[4]; /* Two or three letter language code */
 	char country[10]; /* Two or three letter country code (Sometimes with Cyrl_ prefix) */
-	DWORD code; /* 32-bit unsigned integer corresponding to the locale */
+	UINT32 code; /* 32-bit unsigned integer corresponding to the locale */
 };
 typedef struct _SYSTEM_LOCALE SYSTEM_LOCALE;
 
@@ -249,7 +249,7 @@ static const SYSTEM_LOCALE SYSTEM_LOCALE_TABLE[] =
 
 struct _LOCALE_NAME
 {
-	DWORD localeId;
+	UINT32 localeId;
 	const char* name;
 };
 typedef struct _LOCALE_NAME LOCALE_NAME;
@@ -459,8 +459,8 @@ static const LOCALE_NAME LOCALE_NAME_TABLE[] =
 
 struct _LOCALE_KEYBOARD_LAYOUTS
 {
-	DWORD locale; /* Locale ID */
-	DWORD keyboardLayouts[5]; /* array of associated keyboard layouts */
+	UINT32 locale; /* Locale ID */
+	UINT32 keyboardLayouts[5]; /* array of associated keyboard layouts */
 
 };
 typedef struct _LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS;
@@ -692,7 +692,7 @@ SYSTEM_LOCALE* freerdp_detect_system_locale()
 	return locale;
 }
 
-DWORD freerdp_get_system_locale_id()
+UINT32 freerdp_get_system_locale_id()
 {
 	SYSTEM_LOCALE* locale;
 
@@ -704,7 +704,7 @@ DWORD freerdp_get_system_locale_id()
 	return 0;
 }
 
-const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
+const char* freerdp_get_system_locale_name_from_id(UINT32 localeId)
 {
 	int index;
 
@@ -717,7 +717,7 @@ const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 	return NULL;
 }
 
-int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
+UINT32 freerdp_detect_keyboard_layout_from_system_locale()
 {
 	int i, j;
 	char language[4];
@@ -727,15 +727,12 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 	freerdp_get_system_language_and_country_codes(language, country);
 
 	if ((strcmp(language, "C") == 0) || (strcmp(language, "POSIX") == 0))
-	{
-		*keyboardLayoutId = ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
-		return 0;
-	}
+		return ENGLISH_UNITED_STATES; /* U.S. Keyboard Layout */
 
 	locale = freerdp_detect_system_locale();
 
-	if (!locale)
-		return -1;
+	if (locale == NULL)
+		return 0;
 
 	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
 
@@ -744,7 +741,6 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 		if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
-
 			for (j = 0; j < 5; j++)
 			{
 				if (LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j] == ENGLISH_UNITED_STATES)
@@ -757,8 +753,7 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 				}
 				else
 				{
-					*keyboardLayoutId = LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
-					return 0;
+					return LOCALE_KEYBOARD_LAYOUTS_TABLE[i].keyboardLayouts[j];
 				}
 			}
 
@@ -768,16 +763,11 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 			 */
 
 			if (j >= 1)
-			{
-				*keyboardLayoutId = ENGLISH_UNITED_STATES;
-				return 0;
-			}
+				return ENGLISH_UNITED_STATES;
 			else
-			{
-				return -1;
-			}
+				return 0;
 		}
 	}
 
-	return -1; /* Could not detect the current keyboard layout from locale */
+	return 0; /* Could not detect the current keyboard layout from locale */
 }

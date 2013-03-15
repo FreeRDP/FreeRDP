@@ -20,7 +20,6 @@
 
 #define AUTOSCROLLDISTANCE 20
 #define AUTOSCROLLTIMEOUT 0.05
-
 @interface RDPSessionViewController (Private)
 -(void)showSessionToolbar:(BOOL)show;
 -(UIToolbar*)keyboardToolbar;
@@ -55,9 +54,10 @@
         
         _toggle_mouse_button = NO;
         
+        _keyboard_has_display = NO;
+        
         _autoscroll_with_touchpointer = [[NSUserDefaults standardUserDefaults] boolForKey:@"ui.auto_scroll_touchpointer"];
         _is_autoscrolling = NO;
-        
         [UIView setAnimationDelegate:self];
         [UIView setAnimationDidStopSelector:@selector(animationStopped:finished:context:)];
     }
@@ -225,28 +225,37 @@
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
-{	
-	if([string length] > 0)
-	{
-		for(int i = 0 ; i < [string length] ; i++)
-		{
-			NSString *characterTyped = [string substringWithRange:NSMakeRange(i, 1)];
-            unichar curChar = [characterTyped characterAtIndex:0];
-
-            // special handling for return/enter key
-            if(curChar == '\n')
-                [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
-            else
-                [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
-		}
-	}
-	else
-	{
-		[[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
-	}		
-	
-	return NO;
+{
+    if(string == nil || [string length] == 0) { // key touched is backspace
+        if(range.length > 0 && textField.text.length <= [@"UserInput" length]) {
+            [[RDPKeyboard getSharedRDPKeyboard] sendBackspaceKeyStroke];
+            return NO;
+        }
+        return YES;
+    }
+    
+    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"]
+       && (([string characterAtIndex:0] >= 'a' && [string characterAtIndex:0] <= 'z')
+           || ([string characterAtIndex:0] >= 'A' && [string characterAtIndex:0] <= 'Z'))) {
+           for(int i = 0 ; i < [string length] ; i++) {
+               unichar curChar = [string characterAtIndex:i];
+               if(curChar == '\n')
+                   [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+           }
+           return YES;
+       }
+    
+    for(int i = 0 ; i < [string length] ; i++) {
+        unichar curChar = [string characterAtIndex:i];
+        if(curChar == '\n')
+            [[RDPKeyboard getSharedRDPKeyboard] sendEnterKeyStroke];
+        else
+            [[RDPKeyboard getSharedRDPKeyboard] sendUnicode:curChar];
+    }
+    textField.text = @"UserInput";
+    return NO;
 }
+
 
 #pragma mark -
 #pragma mark AdvancedKeyboardDelegate functions
@@ -570,18 +579,23 @@
 #pragma mark iOS Keyboard Notification Handlers
 
 - (void)keyboardWillShow:(NSNotification *)notification
-{   
-	CGRect keyboardEndFrame = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+{
+    if([[UITextInputMode currentInputMode].primaryLanguage isEqualToString:@"zh-Hans"] && _keyboard_has_display) {
+        return;
+    }
     
+    CGRect keyboardEndFrame = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationCurve:[[[notification userInfo] objectForKey:UIKeyboardAnimationCurveUserInfoKey] intValue]];
     [UIView setAnimationDuration:[[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
-	CGRect frame = [_session_scrollview frame];
-	frame.size.height -= [[self view] convertRect:keyboardEndFrame toView:nil].size.height;
-	[_session_scrollview setFrame:frame];
-    [_touchpointer_view setFrame:frame];    
-	[UIView commitAnimations];
-
+    CGRect frame = [_session_scrollview frame];
+    frame.size.height -= [[self view] convertRect:keyboardEndFrame toView:nil].size.height;
+    [_session_scrollview setFrame:frame];
+    [_touchpointer_view setFrame:frame];
+    [UIView commitAnimations];
+    _keyboard_has_display = YES;
+    
+    //    NSLog(@"Invoke %s", __func__);
     [_touchpointer_view ensurePointerIsVisible];
 }
 
@@ -592,7 +606,7 @@
         [self showAdvancedKeyboardAnimated];
         _advanced_keyboard_visible = YES;
         _requesting_advanced_keyboard = NO;
-    }            
+    }
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification
@@ -607,6 +621,8 @@
     [_session_scrollview setFrame:frame];
     [_touchpointer_view setFrame:frame];
     [UIView commitAnimations];
+    
+    _keyboard_has_display = NO;
 }
 
 - (void)keyboardDidHide:(NSNotification*)notification

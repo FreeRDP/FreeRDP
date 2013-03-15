@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LOCALE_KEYBOARD_SUN_H
-#define FREERDP_LOCALE_KEYBOARD_SUN_H
+#ifndef __LOCALE_KEYBOARD_SUN_H
+#define __LOCALE_KEYBOARD_SUN_H
 
-DWORD freerdp_detect_solaris_keyboard_layout();
+UINT32 freerdp_detect_keyboard_type_and_layout_solaris(char* keyboard_type, int length);
 
-#endif /* FREERDP_LOCALE_KEYBOARD_SUN_H */
+#endif /* __LOCALE_KEYBOARD_SUN_H */

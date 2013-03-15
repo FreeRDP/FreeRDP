@@ -230,8 +230,8 @@
 #define YORUBA						0x046A
 #define ZULU						0x0435
 
-FREERDP_API DWORD freerdp_get_system_locale_id(void);
-FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
-FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
+FREERDP_API UINT32 freerdp_get_system_locale_id();
+FREERDP_API UINT32 freerdp_detect_keyboard_layout_from_system_locale();
+FREERDP_API const char* freerdp_get_system_locale_name_from_id(UINT32 localeId);
 
 #endif /* FREERDP_LOCALE_H */
