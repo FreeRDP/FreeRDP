@@ -582,7 +582,7 @@ RPC_STATUS UuidToStringA(UUID* Uuid, RPC_CSTR* StringUuid)
 	 * xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 	 */
 
-	sprintf_s((char*) *StringUuid, 36 + 1, "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	sprintf_s((char*) *StringUuid, 36 + 1, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 			Uuid->Data1, Uuid->Data2, Uuid->Data3,
 			Uuid->Data4[0], Uuid->Data4[1],
 			Uuid->Data4[2], Uuid->Data4[3], Uuid->Data4[4],

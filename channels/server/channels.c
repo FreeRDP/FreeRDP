@@ -635,7 +635,7 @@ BOOL WTSVirtualChannelQuery(
 	int fds_count = 0;
 	BOOL result = FALSE;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
-
+	ZeroMemory(fds, sizeof(fds));
 	switch (WtsVirtualClass)
 	{
 		case WTSVirtualFileHandle:
