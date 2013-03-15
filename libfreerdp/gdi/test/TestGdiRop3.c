@@ -105,6 +105,7 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 	wStack* stack;
 	int al, bl, cl, dl;
 	char *a, *b, *c, *d;
+	al = bl = cl = dl =0;
 
 	stack = Stack_New(FALSE);
 
