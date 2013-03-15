@@ -37,7 +37,7 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	if (dwWrite != sizeof(writeBuffer))
 	{
 		_tprintf(_T("WriteFile: unexpected number of bytes written: Actual: %ld, Expected: %ld\n"),
-			dwWrite, sizeof(writeBuffer));
+			dwWrite, (long int)sizeof(writeBuffer));
 		return -1;
 	}
 
@@ -53,7 +53,7 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	if (dwRead != sizeof(readBuffer))
 	{
 		_tprintf(_T("ReadFile: unexpected number of bytes read: Actual: %ld, Expected: %ld\n"),
-			dwWrite, sizeof(readBuffer));
+			dwWrite, (long int)sizeof(readBuffer));
 		return -1;
 	}
 
