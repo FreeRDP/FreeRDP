@@ -434,7 +434,7 @@ static const virtualKey virtualKeyboard[256 + 2] =
 	{ 0x00, 0, "VK_SEPARATOR"        , NULL   },
 	{ 0x4A, 0, "VK_SUBTRACT"         , "KPSU" },
 	{ 0x53, 0, "VK_DECIMAL"          , "KPDL" },
-	{ 0x35, 0, "VK_DIVIDE"           , "KPDV" },
+	{ 0x35, 1, "VK_DIVIDE"           , "KPDV" },
 	{ 0x3B, 0, "VK_F1"               , "FK01" },
 	{ 0x3C, 0, "VK_F2"               , "FK02" },
 	{ 0x3D, 0, "VK_F3"               , "FK03" },
