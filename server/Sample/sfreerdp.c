@@ -44,12 +44,6 @@
 static char* test_pcap_file = NULL;
 static BOOL test_dump_rfx_realtime = TRUE;
 
-/* HL1, LH1, HH1, HL2, LH2, HH2, HL3, LH3, HH3, LL3 */
-static const unsigned int test_quantization_values[] =
-{
-	6, 6, 6, 6, 7, 7, 8, 8, 8, 9
-};
-
 void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();

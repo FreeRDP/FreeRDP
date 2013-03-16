@@ -60,7 +60,8 @@ int TestCmdLine(int argc, char* argv[])
 {
 	int status;
 	DWORD flags;
-	int width, height;
+	int width = 0;
+	int height = 0;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	flags = COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS;

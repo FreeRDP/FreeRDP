@@ -139,7 +139,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	if (!length)
 	{
 		DWORD error = GetLastError();
-		printf("MultiByteToWideChar error: 0x%08X\n", error);
+		printf("MultiByteToWideChar error: 0x%08lX\n", error);
 		return -1;
 	}
 
@@ -206,7 +206,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	if (!length)
 	{
 		DWORD error = GetLastError();
-		printf("WideCharToMultiByte error: 0x%08X\n", error);
+		printf("WideCharToMultiByte error: 0x%08lX\n", error);
 		return -1;
 	}
 
