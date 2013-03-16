@@ -29,10 +29,11 @@ int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 int wf_directsound_activate(rdpsnd_server_context* context)
 {
 	HRESULT hr;
+	wfInfo* wfi;
 	
 	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
-	WAVEFORMATEX wfx = {WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0};
 
+	wfi = wf_info_get_instance();
 
 	printf("RDPSND (direct sound) Activated\n");
 
@@ -47,9 +48,9 @@ int wf_directsound_activate(rdpsnd_server_context* context)
 
 	dscbd.dwSize = sizeof(DSCBUFFERDESC);
 	dscbd.dwFlags = 0;
-	dscbd.dwBufferBytes = 176400;
+	dscbd.dwBufferBytes = wfi->agreed_format->nAvgBytesPerSec;
 	dscbd.dwReserved = 0;
-	dscbd.lpwfxFormat = &wfx;
+	dscbd.lpwfxFormat = wfi->agreed_format;
 	dscbd.dwFXCount = 0;
 	dscbd.lpDSCFXDesc = NULL;
 
@@ -69,8 +70,6 @@ int wf_directsound_activate(rdpsnd_server_context* context)
 	_tprintf(_T("Created IDirectSoundCaptureBuffer8\n"));
 	pDSCB->lpVtbl->Release(pDSCB); 
 
-	context->SelectFormat(context, 4);
-	context->SetVolume(context, 0x7FFF, 0x7FFF);
 	lastPos = 0;
 
 	CreateThread(NULL, 0, wf_rdpsnd_directsound_thread, latestPeer, 0, NULL);
