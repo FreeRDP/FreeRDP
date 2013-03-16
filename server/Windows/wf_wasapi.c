@@ -48,9 +48,6 @@ int wf_wasapi_activate(rdpsnd_server_context* context)
 
 	printf("RDPSND (WASAPI) Activated\n");
 
-	context->SelectFormat(context, 4);
-	context->SetVolume(context, 0x7FFF, 0x7FFF);
-
 	CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL);
 
 	return 0;
@@ -213,15 +210,14 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 		exit(1);
 	}
 
-	//screw it, use our own format
-	//WAVEFORMATEX wfx = {WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0};
-	pwfx->wFormatTag = WAVE_FORMAT_PCM;
-	pwfx->nChannels = 2;
-	pwfx->nSamplesPerSec = 44100;
-	pwfx->nAvgBytesPerSec = 176400;
-	pwfx->nBlockAlign = 4;
-	pwfx->wBitsPerSample = 16;
-	pwfx->cbSize = 0;
+
+	pwfx->wFormatTag = wfi->agreed_format->wFormatTag;
+	pwfx->nChannels = wfi->agreed_format->nChannels;
+	pwfx->nSamplesPerSec = wfi->agreed_format->nSamplesPerSec;
+	pwfx->nAvgBytesPerSec = wfi->agreed_format->nAvgBytesPerSec;
+	pwfx->nBlockAlign = wfi->agreed_format->nBlockAlign;
+	pwfx->wBitsPerSample = wfi->agreed_format->wBitsPerSample;
+	pwfx->cbSize = wfi->agreed_format->cbSize;
 
 	hr = pAudioClient->lpVtbl->Initialize(
 		pAudioClient,
