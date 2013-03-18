@@ -186,7 +186,10 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			{
 				return -1;
 			}
-
+			if (_stricmp(&(argv[index])[strlen(argv[index])- 4], ".rdp") == 0)
+			{
+				return -1;
+			}
 			freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
 		}
 		else
