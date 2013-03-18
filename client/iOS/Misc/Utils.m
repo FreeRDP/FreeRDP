@@ -223,8 +223,7 @@ NSMutableArray* FilterHistory(NSArray* history, NSString* filterStr)
 #pragma mark Version Info
 NSString* TSXAppFullVersion()
 {
-	NSDictionary* info_dict = [[NSBundle mainBundle] infoDictionary];
-	return [NSString stringWithFormat:@"%@.%@ (%@)", [info_dict objectForKey:@"CFBundleShortVersionString"], [info_dict objectForKey:@"CFBundleVersion"], [NSString stringWithUTF8String:GIT_REVISION]];
+	return [NSString stringWithUTF8String:GIT_REVISION];
 }
 
 #pragma mark iPad/iPhone detection
