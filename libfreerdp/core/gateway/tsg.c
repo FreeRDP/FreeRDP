@@ -684,6 +684,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 ActualCount;
 	UINT32 SwitchValue;
 	PTSG_PACKET packet;
+	char* messageText = NULL;
 	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
 	PTSG_PACKET_STRING_MESSAGE packetStringMessage = NULL;
 	PTSG_PACKET_REAUTH_MESSAGE packetReauthMessage = NULL;
@@ -740,7 +741,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			/* Offset */
 			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 
-			winpr_HexDump(&buffer[offset + 60], ActualCount * 2);
+			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
+			printf("Consent Message: %s\n", messageText);
+			free(messageText);
 
 			break;
 
@@ -759,7 +762,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			/* Offset */
 			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 
-			winpr_HexDump(&buffer[offset + 60], ActualCount * 2);
+			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
+			printf("Service Message: %s\n", messageText);
+			free(messageText);
 
 			break;
 
@@ -776,8 +781,6 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			return FALSE;
 			break;
 	}
-
-	exit(0);
 
 	return TRUE;
 }
@@ -1130,6 +1133,7 @@ BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
 	RPC_PDU* pdu = NULL;
+	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
@@ -1265,16 +1269,6 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
 		return FALSE;
 
-#if 0
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
-	{
-		printf("TsProxyMakeTunnelCall: error reading response\n");
-		return FALSE;
-	}
-#endif
-
 	/**
 	 *     Sequential processing rules for connection process (continued):
 	 *
@@ -1295,6 +1289,19 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	call = rpc_client_call_find_by_id(rpc, pdu->CallId);
+
+	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+	{
+		if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+		{
+			printf("TsProxyMakeTunnelCall: error reading response\n");
+			return FALSE;
+		}
+
+		pdu = rpc_recv_dequeue_pdu(rpc);
+	}
 
 	if (!TsProxyCreateChannelReadResponse(tsg, pdu))
 	{

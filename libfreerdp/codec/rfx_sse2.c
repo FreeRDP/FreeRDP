@@ -497,7 +497,6 @@ static void rfx_dwt_2d_encode_sse2(INT16* buffer, INT16* dwt_buffer)
 
 void rfx_init_sse2(RFX_CONTEXT* context)
 {
-
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 

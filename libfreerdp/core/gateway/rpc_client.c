@@ -191,15 +191,16 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (header->response.alloc_hint == StubLength)
 	{
-		rpc->StubCallId = 0;
-		rpc->StubFragCount = 0;
-
 		rpc->client->pdu->Flags = RPC_PDU_FLAG_STUB;
 		rpc->client->pdu->CallId = rpc->StubCallId;
 
 		Stream_Length(rpc->client->pdu->s) = Stream_Position(rpc->client->pdu->s);
 
+		rpc->StubFragCount = 0;
+		rpc->StubCallId = 0;
+
 		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
+
 		rpc->client->pdu = NULL;
 
 		return 0;
@@ -408,6 +409,16 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	if (WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
 	{
 		pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
+
+#ifdef WITH_DEBUG_TSG
+		if (pdu)
+		{
+			printf("Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
+			winpr_HexDump(pdu->s->buffer, pdu->s->length);
+			printf("\n");
+		}
+#endif
+
 		return pdu;
 	}
 
