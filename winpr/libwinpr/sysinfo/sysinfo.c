@@ -340,6 +340,42 @@ DWORD GetTickCount(void)
 }
 #endif // _WIN32
 
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+
+ULONGLONG GetTickCount64(void)
+{
+	ULONGLONG ticks = 0;
+
+#if defined(__linux__)
+
+	struct timespec ts;
+
+	if (!clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+
+#elif defined(_WIN32)
+
+	ticks = (ULONGLONG) GetTickCount();
+
+#else
+
+	/**
+	 * FIXME: this is relative to the Epoch time, and we
+	 * need to return a value relative to the system uptime.
+	 */
+
+	struct timeval tv;
+
+	if (!gettimeofday(&tv, NULL))
+		ticks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+
+#endif
+
+	return ticks;
+}
+
+#endif
+
 /* If x86 */
 #ifdef _M_IX86_AMD64
 
@@ -353,18 +389,20 @@ DWORD GetTickCount(void)
 #define D_BIT_SSE2      (1<<26)
 #define D_BIT_3DN       (1<<30)
 #define C_BIT_SSE3      (1<<0)
+#define C_BIT_PCLMULQDQ (1<<1)
+#define C_BIT_3DNP      (1<<8)
 #define C_BIT_3DNP      (1<<8)
 #define C_BIT_SSSE3     (1<<9)
 #define C_BIT_SSE41     (1<<19)
 #define C_BIT_SSE42     (1<<20)
-#define C_BIT_XGETBV        (1<<27)
+#define C_BIT_FMA       (1<<12)
+#define C_BIT_AES       (1<<25)
+#define C_BIT_XGETBV    (1<<27)
 #define C_BIT_AVX       (1<<28)
 #define C_BITS_AVX      (C_BIT_XGETBV|C_BIT_AVX)
 #define E_BIT_XMM       (1<<1)
 #define E_BIT_YMM       (1<<2)
 #define E_BITS_AVX      (E_BIT_XMM|E_BIT_YMM)
-#define C_BIT_FMA       (1<<11)
-#define C_BIT_AVX_AES       (1<<24)
 
 static void cpuid(
     unsigned info,
@@ -624,34 +662,38 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 		case PF_EX_AVX:
 		case PF_EX_FMA:
 		case PF_EX_AVX_AES:
+		case PF_EX_AVX_PCLMULQDQ:
 			{
+				/* Check for general AVX support */
 				if ((c & C_BITS_AVX) != C_BITS_AVX)
-					ret = FALSE;
+					break;
 
-					int e, f;
-					xgetbv(0, e, f);
+				int e, f;
+				xgetbv(0, e, f);
 
-					if ((e & E_BITS_AVX) == E_BITS_AVX)
+				/* XGETBV enabled for applications and XMM/YMM states enabled */
+				if ((e & E_BITS_AVX) == E_BITS_AVX)
+				{
+					switch (ProcessorFeature)
 					{
-						switch (ProcessorFeature)
-						{
-							case: PF_EX_AVX:
-								ret = TRUE;
-								break;
-							case: PF_EX_FMA:
-								if (c & C_BIT_FMA)
-									ret = TRUE;
-								break;
-							case: PF_EX_AVX_AES:
-								if (c & C_BIT_AVX_AES)
-									ret = TRUE;
-								break;
-						{
+						case PF_EX_AVX:
 							ret = TRUE;
 							break;
-						}
-        }
-			}
+						case PF_EX_FMA:
+							if (c & C_BIT_FMA)
+								ret = TRUE;
+							break;
+						case PF_EX_AVX_AES:
+							if (c & C_BIT_AES)
+								ret = TRUE;
+							break;
+						case PF_EX_AVX_PCLMULQDQ:
+							if (c & C_BIT_PCLMULQDQ)
+								ret = TRUE;
+							break;
+					}
+				}
+      }
 			break;
 #endif //__AVX__
 		default:

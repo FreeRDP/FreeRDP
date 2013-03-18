@@ -39,10 +39,16 @@
 
 #define CACHE_LINE_BYTES	64
 
+#ifndef __clang__
+#define ATTRIBUTES  __gnu_inline__, __always_inline__, __artificial__
+#else
+#define ATTRIBUTES __gnu_inline__, __always_inline__
+#endif
+
 #define _mm_between_epi16(_val, _min, _max) \
 	do { _val = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); } while (0)
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 _mm_prefetch_buffer(char * buffer, int num_bytes)
 {
 	__m128i * buf = (__m128i*) buffer;
@@ -56,7 +62,7 @@ _mm_prefetch_buffer(char * buffer, int num_bytes)
 /* rfx_decode_ycbcr_to_rgb_sse2 code now resides in the primitives library. */
 /* rfx_encode_rgb_to_ycbcr_sse2 code now resides in the primitives library. */
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_quantization_decode_block_sse2(INT16* buffer, const int buffer_size, const UINT32 factor)
 {
 	__m128i a;
@@ -94,7 +100,7 @@ static void rfx_quantization_decode_sse2(INT16* buffer, const UINT32* quantizati
 	rfx_quantization_decode_block_sse2(buffer + 4032, 64, quantization_values[0] - 6); /* LL3 */
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_quantization_encode_block_sse2(INT16* buffer, const int buffer_size, const UINT32 factor)
 {
 	__m128i a;
@@ -135,7 +141,7 @@ static void rfx_quantization_encode_sse2(INT16* buffer, const UINT32* quantizati
 	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
 	int y, n;
@@ -222,7 +228,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
 	int x, n;
@@ -303,7 +309,7 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_sse2(INT16* buffer, INT16* idwt, int subband_width)
 {
 	INT16 *hl, *lh, *hh, *ll;
@@ -341,7 +347,7 @@ static void rfx_dwt_2d_decode_sse2(INT16* buffer, INT16* dwt_buffer)
 	rfx_dwt_2d_decode_block_sse2(buffer, dwt_buffer, 32);
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
 	int total_width;
@@ -397,7 +403,7 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
 	int y;
@@ -451,7 +457,7 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_w
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_sse2(INT16* buffer, INT16* dwt, int subband_width)
 {
 	INT16 *hl, *lh, *hh, *ll;
@@ -495,7 +501,6 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
-	printf("\n\nIs this causing crashes???\n\n");
 	DEBUG_RFX("Using SSE2 optimizations");
 
 	IF_PROFILER(context->priv->prof_rfx_quantization_decode->name = "rfx_quantization_decode_sse2");

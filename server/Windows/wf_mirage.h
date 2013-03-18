@@ -3,6 +3,7 @@
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2013 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,14 @@
 #define WF_MIRAGE_H
 
 #include "wf_interface.h"
+
+enum
+{
+	MIRROR_LOAD = 0,
+	MIRROR_UNLOAD = 1
+};
+
+
 
 enum
 {
@@ -202,11 +211,11 @@ typedef struct
 
 BOOL wf_mirror_driver_find_display_device(wfInfo* wfi);
 BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode);
-BOOL wf_mirror_driver_update(wfInfo* wfi, int unload);
+BOOL wf_mirror_driver_update(wfInfo* wfi, int mode);
 BOOL wf_mirror_driver_map_memory(wfInfo* wfi);
 BOOL wf_mirror_driver_cleanup(wfInfo* wfi);
 
-void wf_mirror_driver_activate(wfInfo* wfi);
+BOOL wf_mirror_driver_activate(wfInfo* wfi);
 void wf_mirror_driver_deactivate(wfInfo* wfi);
 
 #endif /* WF_MIRAGE_H */

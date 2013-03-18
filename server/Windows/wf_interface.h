@@ -70,6 +70,7 @@ struct wf_info
 
 	HANDLE snd_mutex;
 	BOOL snd_stop;
+	AUDIO_FORMAT* agreed_format;
 
 	RECT invalid;
 	HANDLE mutex;

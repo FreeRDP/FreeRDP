@@ -105,6 +105,7 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 	wStack* stack;
 	int al, bl, cl, dl;
 	char *a, *b, *c, *d;
+	al = bl = cl = dl =0;
 
 	stack = Stack_New(FALSE);
 
@@ -153,7 +154,7 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 			}
 			else
 			{
-				printf("invalid operator: %s\n", c[0]);
+				printf("invalid operator: %c\n", c[0]);
 			}
 
 			//printf("Operator: %s\n", c);

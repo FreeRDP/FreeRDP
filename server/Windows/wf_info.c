@@ -225,7 +225,12 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
 #else
-		wf_mirror_driver_activate(wfi);
+		if (wf_mirror_driver_activate(wfi) == FALSE)
+		{
+			context->socketClose = TRUE;
+			wf_info_unlock(wfi);
+			return;
+		}
 #endif
 		//look trhough the array of peers until an empty slot
 		for(i=0; i<WF_INFO_MAXPEERS; ++i)

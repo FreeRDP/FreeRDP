@@ -40,22 +40,49 @@
 
 #endif
 
-static const AUDIO_FORMAT test_audio_formats[] =
-{
-	{ WAVE_FORMAT_DVI_ADPCM, 2, 22050, 0, 1024, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 2 channels */
-	{ WAVE_FORMAT_DVI_ADPCM, 1, 22050, 0, 512, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 1 channels */
-	{ WAVE_FORMAT_PCM, 2, 22050, 0, 4, 16, 0, NULL }, /* PCM, 22050 Hz, 2 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 1, 22050, 0, 2, 16, 0, NULL }, /* PCM, 22050 Hz, 1 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 2, 44100, 0, 4, 16, 0, NULL }, /* PCM, 44100 Hz, 2 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 1, 44100, 0, 2, 16, 0, NULL }, /* PCM, 44100 Hz, 1 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 2, 11025, 0, 4, 16, 0, NULL }, /* PCM, 11025 Hz, 2 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 1, 11025, 0, 2, 16, 0, NULL }, /* PCM, 11025 Hz, 1 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 2, 8000, 0, 4, 16, 0, NULL }, /* PCM, 8000 Hz, 2 channels, 16 bits */
-	{ WAVE_FORMAT_PCM, 1, 8000, 0, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
+static const AUDIO_FORMAT audio_formats[] =
+{	
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
 static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 {
+	wfInfo* wfi;
+	int i, j;
+
+	wfi = wf_info_get_instance();
+
+	wfi->agreed_format = NULL;
+	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	for(i = 0; i < context->num_client_formats; i++)
+	{
+		//TODO: improve the way we agree on a format
+		for (j = 0; j < context->num_server_formats; j++)
+		{
+			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
+			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
+			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
+			{
+				printf("agreed on format!\n");
+				wfi->agreed_format = (AUDIO_FORMAT*)&context->server_formats[j];
+				break;
+			}
+		}
+		if (wfi->agreed_format != NULL)
+			break;
+		
+	}
+	
+	if (wfi->agreed_format == NULL)
+	{
+		printf("Could not agree on a audio format with the server\n");
+		return;
+	}
+	
+	context->SelectFormat(context, i);
+	context->SetVolume(context, 0x7FFF, 0x7FFF);
+
 #ifdef WITH_RDPSND_DSOUND
 
 	wf_directsound_activate(context);
@@ -122,9 +149,9 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 
-	context->rdpsnd->server_formats = test_audio_formats;
+	context->rdpsnd->server_formats = audio_formats;
 	context->rdpsnd->num_server_formats =
-			sizeof(test_audio_formats) / sizeof(test_audio_formats[0]);
+			sizeof(audio_formats) / sizeof(audio_formats[0]);
 
 	context->rdpsnd->src_format.wFormatTag = 1;
 	context->rdpsnd->src_format.nChannels = 2;

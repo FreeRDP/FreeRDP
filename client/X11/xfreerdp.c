@@ -64,6 +64,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/file.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -1204,7 +1205,7 @@ int xfreerdp_run(freerdp* instance)
 	fd_set rfds_set;
 	fd_set wfds_set;
 	int fd_input_event;
-	HANDLE input_event;
+	HANDLE input_event = INVALID_HANDLE_VALUE;
 	int select_status;
 	BOOL async_update;
 	BOOL async_input;
