@@ -81,7 +81,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 
 	printf("EncryptMessage status: 0x%08X\n", status);
 
-	printf("EncryptMessage output: cBuffers: %d [0]: %d / %d [1]: %d / %d [2]: %d / %d [3]: %d / %d\n", Message.cBuffers,
+	printf("EncryptMessage output: cBuffers: %ld [0]: %lu / %lu [1]: %lu / %lu [2]: %lu / %lu [3]: %lu / %lu\n", Message.cBuffers,
 		Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
 		Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
 		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
@@ -150,7 +150,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 
 	printf("DecryptMessage status: 0x%08X\n", status);
 
-	printf("DecryptMessage output: cBuffers: %d [0]: %d / %d [1]: %d / %d [2]: %d / %d [3]: %d / %d\n", Message.cBuffers,
+	printf("DecryptMessage output: cBuffers: %ld [0]: %lu / %lu [1]: %lu / %lu [2]: %lu / %lu [3]: %lu / %lu\n", Message.cBuffers,
 		Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
 		Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
 		Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
@@ -159,7 +159,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	if (status != SEC_E_OK)
 		return -1;
 
-	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
+	printf("Decrypted Message (%ld)\n", Message.pBuffers[1].cbBuffer);
 	winpr_HexDump((BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
 
 	if (memcmp(Message.pBuffers[1].pvBuffer, test_LastDummyMessage, sizeof(test_LastDummyMessage)) == 0)
@@ -330,9 +330,9 @@ static void* schannel_test_server_thread(void* arg)
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("AcceptSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
 
-		printf("Server cBuffers: %d pBuffers[0]: %d type: %d\n",
+		printf("Server cBuffers: %lu pBuffers[0]: %lu type: %lu\n",
 			SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Server Input cBuffers: %d pBuffers[0]: %d type: %d pBuffers[1]: %d type: %d\n", SecBufferDesc_in.cBuffers,
+		printf("Server Input cBuffers: %ld pBuffers[0]: %lu type: %lu pBuffers[1]: %lu type: %lu\n", SecBufferDesc_in.cBuffers,
 			SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
 			SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
@@ -351,7 +351,7 @@ static void* schannel_test_server_thread(void* arg)
 
 			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("Server > Client (%d)\n", pSecBuffer->cbBuffer);
+				printf("Server > Client (%ld)\n", pSecBuffer->cbBuffer);
 				winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ClientWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
@@ -479,7 +479,7 @@ int TestSchannel(int argc, char* argv[])
 	 * 0x800C 0x800D 0x800E 0x2400 0xAA02 0xAE06 0x2200 0x2203
 	 */
 
-	printf("SupportedAlgs: %d\n", SupportedAlgs.cSupportedAlgs);
+	printf("SupportedAlgs: %ld\n", SupportedAlgs.cSupportedAlgs);
 
 	for (index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
 	{
@@ -500,7 +500,7 @@ int TestSchannel(int argc, char* argv[])
 
 	/* CipherStrengths: Minimum: 40 Maximum: 256 */
 
-	printf("CipherStrengths: Minimum: %d Maximum: %d\n",
+	printf("CipherStrengths: Minimum: %ld Maximum: %ld\n",
 		CipherStrengths.dwMinimumCipherStrength, CipherStrengths.dwMaximumCipherStrength);
 
 	ZeroMemory(&SupportedProtocols, sizeof(SecPkgCred_SupportedProtocols));
@@ -514,7 +514,7 @@ int TestSchannel(int argc, char* argv[])
 
 	/* SupportedProtocols: 0x208A0 */
 
-	printf("SupportedProtocols: 0x%04X\n", SupportedProtocols.grbitProtocol);
+	printf("SupportedProtocols: 0x%04lX\n", SupportedProtocols.grbitProtocol);
 
 	fContextReq = ISC_REQ_STREAM |
 		ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
@@ -547,7 +547,7 @@ int TestSchannel(int argc, char* argv[])
 		}
 
 		g_ClientWait = TRUE;
-		printf("NumberOfBytesRead: %d\n", NumberOfBytesRead);
+		printf("NumberOfBytesRead: %ld\n", NumberOfBytesRead);
 
 		SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
 		SecBuffer_in[0].pvBuffer = lpTokenIn;
@@ -587,9 +587,9 @@ int TestSchannel(int argc, char* argv[])
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("InitializeSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
 
-		printf("Client Output cBuffers: %d pBuffers[0]: %d type: %d\n",
+		printf("Client Output cBuffers: %ld pBuffers[0]: %ld type: %ld\n",
 			SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Client Input cBuffers: %d pBuffers[0]: %d type: %d pBuffers[1]: %d type: %d\n", SecBufferDesc_in.cBuffers,
+		printf("Client Input cBuffers: %ld pBuffers[0]: %ld type: %ld pBuffers[1]: %ld type: %ld\n", SecBufferDesc_in.cBuffers,
 			SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
 			SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
@@ -599,7 +599,7 @@ int TestSchannel(int argc, char* argv[])
 
 			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("Client > Server (%d)\n", pSecBuffer->cbBuffer);
+				printf("Client > Server (%ld)\n", pSecBuffer->cbBuffer);
 				winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))

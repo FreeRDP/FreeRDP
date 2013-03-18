@@ -148,7 +148,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else
 	{
-		printf("WaitForSingleObject: unknown handle type %d\n", Type);
+		printf("WaitForSingleObject: unknown handle type %lu\n", Type);
 	}
 
 	return WAIT_OBJECT_0;

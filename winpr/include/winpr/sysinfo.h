@@ -301,6 +301,7 @@ WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 #define PF_EX_ARM_VFP4			11
 #define PF_EX_ARM_IDIVA			12
 #define PF_EX_ARM_IDIVT			13
+#define PF_EX_AVX_PCLMULQDQ 14
 
 /*
  * some "aliases" for the standard defines

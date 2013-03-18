@@ -3,6 +3,7 @@
  * FreeRDP Windows Server
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2013 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +50,7 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* wfi)
 
 			deviceKeyPrefixLength = _tcslen(DEVICE_KEY_PREFIX);
 
-			if (_tcsncmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
+			if (_tcsnicmp(deviceInfo.DeviceKey, DEVICE_KEY_PREFIX, deviceKeyPrefixLength) == 0)
 			{
 				deviceKeyLength = _tcslen(deviceInfo.DeviceKey) - deviceKeyPrefixLength;
 				wfi->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
@@ -87,7 +88,7 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 	DWORD dwValue;
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, wfi->deviceKey,
-		0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
 		return FALSE;
@@ -99,16 +100,22 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 	if (status != ERROR_SUCCESS)
 		return FALSE;
 
-	if (dwValue == 1)
+	if (dwValue ^ mode) //only if we want to change modes
 	{
 		dwValue = mode;
 		dwSize = sizeof(DWORD);
 
-		status = RegSetValueEx(HKEY_LOCAL_MACHINE, _T("Attach.ToDesktop"),
+		status = RegSetValueEx(hKey, _T("Attach.ToDesktop"),
 			0, REG_DWORD, (BYTE*) &dwValue, dwSize);
 
 		if (status != ERROR_SUCCESS)
+		{	
+			printf("Error writing registry key: %d ", status);
+			if (status == ERROR_ACCESS_DENIED) 
+				printf("access denied. Do you have admin privleges?");
+			printf("\n");
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -167,10 +174,10 @@ void wf_mirror_driver_print_display_change_status(LONG status)
  * This function will attempt to apply the currently configured display settings 
  * in the registry to the display driver. It will return TRUE if successful 
  * otherwise it returns FALSE.
- * If unload is nonzero then the the driver will be asked to remove itself.
+ * If mode is MIRROR_UNLOAD then the the driver will be asked to remove itself.
  */
 
-BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
+BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 {
 	HDC dc;
 	BOOL status;
@@ -180,7 +187,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
 	
-	if (!unload)
+	if (mode == MIRROR_LOAD)
 	{
 		//first let's get the virtual screen dimentions
 		wfi->virtscreen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -196,11 +203,16 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 		ReleaseDC(NULL, dc);*/
 		
 	}
-	else
+	else if (mode == MIRROR_UNLOAD)
 	{
 		wfi->servscreen_width = 0;
 		wfi->servscreen_height = 0;
 		wfi->bitsPerPixel = 0;
+	}
+	else
+	{
+		printf("Invalid mirror mode!\n");
+		return FALSE;
 	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
@@ -238,13 +250,12 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int unload)
 BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 {
 	int status;
-	GETCHANGESBUF* b;
 
 	wfi->driverDC = CreateDC(wfi->deviceName, NULL, NULL, NULL);
 
 	if (wfi->driverDC == NULL)
 	{
-		_tprintf(_T("Could not create device driver wfi!\n"));
+		_tprintf(_T("Could not create device driver context!\n"));
 		return FALSE;
 	}
 
@@ -256,9 +267,8 @@ BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 	if (status <= 0)
 	{
 		_tprintf(_T("Failed to map shared memory from the driver! code %d\n"), status);
+		return FALSE;
 	}
-
-	b = (GETCHANGESBUF*) wfi->changeBuffer;
 
 	return TRUE;
 }
@@ -291,18 +301,39 @@ BOOL wf_mirror_driver_cleanup(wfInfo* wfi)
 	return TRUE;
 }
 
-void wf_mirror_driver_activate(wfInfo* wfi)
+BOOL wf_mirror_driver_activate(wfInfo* wfi)
 {
 	if (!wfi->mirrorDriverActive)
 	{
 		printf("Activating Mirror Driver\n");
 
-		wf_mirror_driver_find_display_device(wfi);
-		wf_mirror_driver_display_device_attach(wfi, 1);
-		wf_mirror_driver_update(wfi, FALSE);
-		wf_mirror_driver_map_memory(wfi);
+		if (wf_mirror_driver_find_display_device(wfi) == FALSE)
+		{
+			printf("Could not find dfmirage mirror driver! Is it installed?\n");
+			return FALSE;
+		}
+
+		if (wf_mirror_driver_display_device_attach(wfi, 1) == FALSE)
+		{
+			printf("Could not attach display device!\n");
+			return FALSE;
+		}
+
+		if (wf_mirror_driver_update(wfi, MIRROR_LOAD) == FALSE)
+		{
+			printf("could not update system with new display settings!\n");
+			return FALSE;
+		}
+
+		if (wf_mirror_driver_map_memory(wfi) == FALSE)
+		{
+			printf("Unable to map memory for mirror driver!\n");
+			return FALSE;
+		}
 		wfi->mirrorDriverActive = TRUE;
 	}
+
+	return TRUE;
 }
 
 void wf_mirror_driver_deactivate(wfInfo* wfi)
@@ -313,7 +344,7 @@ void wf_mirror_driver_deactivate(wfInfo* wfi)
 
 		wf_mirror_driver_cleanup(wfi);
 		wf_mirror_driver_display_device_attach(wfi, 0);
-		wf_mirror_driver_update(wfi, 1);
+		wf_mirror_driver_update(wfi, MIRROR_UNLOAD);
 		wfi->mirrorDriverActive = FALSE;
 	}
 }

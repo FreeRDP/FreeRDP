@@ -52,17 +52,17 @@ struct ButtonItem functionKeysItems[24] =
     
     { @"img:icon_key_arrows", KEY_SHOW_CURSORVIEW },
     { @"Tab", VK_TAB },
-    { @"Ins", VK_INSERT },
-    { @"Home", VK_HOME },
-    { @"PgUp", VK_PRIOR },
-    { @"img:icon_key_win", VK_LWIN },
+    { @"Ins", VK_INSERT | KBDEXT },
+    { @"Home", VK_HOME | KBDEXT },
+    { @"PgUp", VK_PRIOR | KBDEXT },
+    { @"img:icon_key_win", VK_LWIN | KBDEXT },
 
     { @"123", KEY_SHOW_NUMPADVIEW },
     { @"Print", VK_PRINT },
-    { @"Del", VK_DELETE },
-    { @"End", VK_END },
-    { @"PgDn", VK_NEXT },
-    { @"img:icon_key_menu", VK_APPS }
+    { @"Del", VK_DELETE | KBDEXT },
+    { @"End", VK_END | KBDEXT },
+    { @"PgDn", VK_NEXT | KBDEXT },
+    { @"img:icon_key_menu", VK_APPS | KBDEXT }
 };
 
 
@@ -75,7 +75,7 @@ struct ButtonItem numPadKeysItems[24] =
     { @"9", VK_NUMPAD9 },
     { @"-", VK_SUBTRACT },
 
-    { @"/", VK_DIVIDE },
+    { @"/", VK_DIVIDE | KBDEXT },
     { @"*", VK_MULTIPLY },
     { @"4", VK_NUMPAD4 },
     { @"5", VK_NUMPAD5 },
@@ -94,7 +94,7 @@ struct ButtonItem numPadKeysItems[24] =
     { @"", KEY_MERGE_COLUMN },
     { @"0", VK_NUMPAD0 },
     { @".", VK_DECIMAL },
-    { @"img:icon_key_return", VK_RETURN }
+    { @"img:icon_key_return", VK_RETURN | KBDEXT }
 };
 
 
@@ -110,23 +110,23 @@ struct ButtonItem cursorKeysItems[24] =
     { @"", KEY_SKIP },
     { @"", KEY_SKIP },
     { @"", KEY_SKIP },
-    { @"img:icon_key_arrow_up", VK_UP },
+    { @"img:icon_key_arrow_up", VK_UP | KBDEXT },
     { @"", KEY_SKIP },
     { @"", KEY_SKIP },
     
     { @"Fn", KEY_SHOW_FUNCVIEW },
     { @"", KEY_SKIP },
-    { @"img:icon_key_arrow_left", VK_LEFT },
+    { @"img:icon_key_arrow_left", VK_LEFT | KBDEXT },
     { @"", KEY_SKIP },
-    { @"img:icon_key_arrow_right", VK_RIGHT },
+    { @"img:icon_key_arrow_right", VK_RIGHT | KBDEXT },
     { @"img:icon_key_backspace", VK_BACK },
     
     { @"123", KEY_SHOW_NUMPADVIEW },
     { @"", KEY_SKIP },
     { @"", KEY_SKIP },
-    { @"img:icon_key_arrow_down", VK_DOWN },
+    { @"img:icon_key_arrow_down", VK_DOWN | KBDEXT },
     { @"", KEY_SKIP },
-    { @"img:icon_key_return", VK_RETURN }
+    { @"img:icon_key_return", VK_RETURN | KBDEXT }
 };
 
 
