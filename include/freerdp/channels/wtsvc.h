@@ -46,6 +46,10 @@ typedef enum _WTS_VIRTUAL_CLASS
 	WTSVirtualChannelReady
 } WTS_VIRTUAL_CLASS;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
  */
@@ -126,5 +130,9 @@ FREERDP_API BOOL WTSVirtualChannelWrite(
  */
 FREERDP_API BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_WTSVC_H */
