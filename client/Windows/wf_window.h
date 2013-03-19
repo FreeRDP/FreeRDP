@@ -22,6 +22,6 @@
 
 #include <freerdp/freerdp.h>
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 #endif

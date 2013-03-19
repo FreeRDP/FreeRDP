@@ -22,7 +22,7 @@
 #ifndef __WF_GDI_H
 #define __WF_GDI_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height);
 wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);

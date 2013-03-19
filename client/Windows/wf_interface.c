@@ -53,7 +53,7 @@
 #include "wf_graphics.h"
 #include "wf_cliprdr.h"
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_context_new(freerdp* instance, rdpContext* context)
 {

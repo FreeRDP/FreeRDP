@@ -20,7 +20,7 @@
 #ifndef __WF_GRAPHICS_H
 #define __WF_GRAPHICS_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata);
 wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);

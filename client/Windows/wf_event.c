@@ -27,7 +27,7 @@
 
 #include <freerdp/freerdp.h>
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 #include "wf_gdi.h"
 #include "wf_event.h"
