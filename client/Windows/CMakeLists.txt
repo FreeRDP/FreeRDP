@@ -31,6 +31,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_window.h
 	wf_rail.c
 	wf_rail.h
+	wf_interface.c
+	wf_interface.h
 	wfreerdp.c
 	wfreerdp.h)
 
