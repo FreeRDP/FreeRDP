@@ -49,7 +49,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	wf_global_init();
 
-	wfi = wf_new(hInstance, __argc, __argv);
+	wfi = wf_new(hInstance, NULL, __argc, __argv);
 
 	status = wf_start(wfi);
 

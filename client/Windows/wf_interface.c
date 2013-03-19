@@ -307,7 +307,7 @@ BOOL wf_post_connect(freerdp* instance)
 	wfInfo* wfi;
 	rdpCache* cache;
 	wfContext* context;
-	WCHAR win_title[64];
+	WCHAR lpWindowName[64];
 	rdpSettings* settings;
 
 	settings = instance->settings;
@@ -354,20 +354,22 @@ BOOL wf_post_connect(freerdp* instance)
 		}
 
 		if (settings->NSCodec)
+		{
 			wfi->nsc_context = nsc_context_new();
+		}
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf(win_title, ARRAYSIZE(win_title), L"%S", settings->WindowTitle);
+		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S", settings->ServerHostname);
+		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S", settings->ServerHostname);
 	else
-		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
+		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
 	if (!wfi->hwnd)
 	{
-		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, win_title,
-			0, 0, 0, 0, 0, NULL, NULL, wfi->hInstance, NULL);
+		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName,
+			0, 0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
 
 		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
 	}
@@ -710,7 +712,7 @@ int wf_global_uninit()
 	return 0;
 }
 
-wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
+wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
 {
 	wfInfo* wfi;
 	freerdp* instance;
@@ -736,6 +738,7 @@ wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
 	instance->context->argc = argc;
 	instance->context->argv = argv;
 
+	wfi->hWndParent = hWndParent;
 	wfi->hInstance = hInstance;
 	wfi->cursor = LoadCursor(NULL, IDC_ARROW);
 	wfi->icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));

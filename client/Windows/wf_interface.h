@@ -80,6 +80,7 @@ struct wf_info
 	HANDLE keyboardThread;
 
 	HICON icon;
+	HWND hWndParent;
 	HINSTANCE hInstance;
 	WNDCLASSEX wndClass;
 	LPCTSTR wndClassName;
@@ -112,7 +113,7 @@ FREERDP_API int wf_global_uninit();
 FREERDP_API int wf_start(wfInfo* wfi);
 FREERDP_API int wf_stop(wfInfo* wfi);
 
-FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv);
+FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv);
 FREERDP_API int wf_free(wfInfo* wfi);
 
 #endif
