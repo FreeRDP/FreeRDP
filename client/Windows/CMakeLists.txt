@@ -32,7 +32,9 @@ set(${MODULE_PREFIX}_SRCS
 	wf_rail.c
 	wf_rail.h
 	wf_interface.c
-	wf_interface.h)
+	wf_interface.h
+	wfreerdp.rc
+	resource.h)
 
 if(WITH_CLIENT_INTERFACE)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

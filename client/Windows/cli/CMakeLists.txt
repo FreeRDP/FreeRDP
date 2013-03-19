@@ -22,7 +22,8 @@ include_directories(..)
 
 set(${MODULE_PREFIX}_SRCS
 	wfreerdp.c
-	wfreerdp.h)
+	wfreerdp.h
+	../wfreerdp.rc)
 
 add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 

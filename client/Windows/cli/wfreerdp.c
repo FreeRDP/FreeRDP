@@ -38,6 +38,8 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
 
+#include "resource.h"
+
 #include "wf_interface.h"
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

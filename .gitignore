@@ -53,6 +53,7 @@ DerivedData/
 *.suo
 *.ncb
 *.opensdf
+Thumbs.db
 ipch
 Debug
 RelWithDebInfo

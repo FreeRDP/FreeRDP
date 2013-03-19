@@ -55,6 +55,8 @@
 
 #include "wf_interface.h"
 
+#include "resource.h"
+
 void wf_context_new(freerdp* instance, rdpContext* context)
 {
 	wfInfo* wfi;
@@ -187,6 +189,7 @@ void wf_hw_desktop_resize(rdpContext* context)
 		if (same)
 			wfi->drawing = wfi->primary;
 	}
+
 	if (wfi->fullscreen != TRUE)
 	{
 		if (wfi->hwnd)
@@ -517,7 +520,7 @@ BOOL wf_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-int wfreerdp_run(freerdp* instance)
+DWORD WINAPI wf_thread(LPVOID lpParam)
 {
 	MSG msg;
 	int index;
@@ -529,7 +532,10 @@ int wfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	int fds_count;
 	HANDLE fds[64];
+	freerdp* instance;
 	rdpChannels* channels;
+
+	instance = (freerdp*) lpParam;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
@@ -634,18 +640,6 @@ int wfreerdp_run(freerdp* instance)
 	return 0;
 }
 
-DWORD WINAPI wf_thread(LPVOID lpParam)
-{
-	wfInfo* wfi;
-	freerdp* instance;
-
-	instance = (freerdp*) lpParam;
-
-	wfreerdp_run(instance);
-
-	return (DWORD) NULL;
-}
-
 DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 {
 	MSG msg;
@@ -721,6 +715,9 @@ wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
 	wfInfo* wfi;
 	freerdp* instance;
 
+	if (!hInstance)
+		hInstance = GetModuleHandle(NULL);
+
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -741,7 +738,7 @@ wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
 
 	wfi->hInstance = hInstance;
 	wfi->cursor = LoadCursor(NULL, IDC_ARROW);
-	wfi->icon = LoadIcon(NULL, IDI_APPLICATION);
+	wfi->icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
 	wfi->wndClassName = _tcsdup(_T("FreeRDP"));
 
 	wfi->wndClass.cbSize = sizeof(WNDCLASSEX);
@@ -749,12 +746,12 @@ wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
 	wfi->wndClass.lpfnWndProc = wf_event_proc;
 	wfi->wndClass.cbClsExtra = 0;
 	wfi->wndClass.cbWndExtra = 0;
-	wfi->wndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wfi->wndClass.hCursor = wfi->cursor;
 	wfi->wndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
 	wfi->wndClass.lpszMenuName = NULL;
 	wfi->wndClass.lpszClassName = wfi->wndClassName;
 	wfi->wndClass.hInstance = hInstance;
+	wfi->wndClass.hIcon = wfi->icon;
 	wfi->wndClass.hIconSm = wfi->icon;
 	RegisterClassEx(&(wfi->wndClass));
 
