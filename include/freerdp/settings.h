@@ -913,60 +913,66 @@ struct rdp_settings
 	UINT64 padding4160[4160 - 4096]; /* 4096 */
 
 	/**
-	 * WARNING: End of ABI stable zone!
-	 *
-	 * The zone below this point is ABI unstable, and
-	 * is therefore potentially subject to ABI breakage.
-	 */
-
-	/**
 	 * Device Redirection
 	 */
 
 	/* Device Redirection */
-	ALIGN64 BOOL DeviceRedirection; /*  */
-	ALIGN64 UINT32 DeviceCount; /*  */
-	ALIGN64 UINT32 DeviceArraySize; /*  */
-	ALIGN64 RDPDR_DEVICE** DeviceArray; /*  */
+	ALIGN64 BOOL DeviceRedirection; /* 4160 */
+	ALIGN64 UINT32 DeviceCount; /* 4161 */
+	ALIGN64 UINT32 DeviceArraySize; /* 4162 */
+	ALIGN64 RDPDR_DEVICE** DeviceArray; /* 4163 */
+	UINT64 padding4288[4288 - 4164]; /* 4164 */
 
 	/* Drive Redirection */
-	ALIGN64 BOOL RedirectDrives; /*  */
-	ALIGN64 BOOL RedirectHomeDrive; /*  */
-	ALIGN64 char* DrivesToRedirect; /* */
+	ALIGN64 BOOL RedirectDrives; /* 4288 */
+	ALIGN64 BOOL RedirectHomeDrive; /* 4289 */
+	ALIGN64 char* DrivesToRedirect; /* 4290 */
+	UINT64 padding4416[4416 - 4291]; /* 4291 */
 
 	/* Smartcard Redirection */
-	ALIGN64 BOOL RedirectSmartCards; /*  */
+	ALIGN64 BOOL RedirectSmartCards; /* 4416 */
+	UINT64 padding4544[4544 - 4417]; /* 4417 */
 
 	/* Printer Redirection */
-	ALIGN64 BOOL RedirectPrinters; /*  */
+	ALIGN64 BOOL RedirectPrinters; /* 4544 */
+	UINT64 padding4672[4672 - 4545]; /* 4545 */
 
-	/* Serial Port Redirection */
-	ALIGN64 BOOL RedirectSerialPorts; /*  */
-
-	/* Parallel Port Redirection */
-	ALIGN64 BOOL RedirectParallelPorts; /*  */
+	/* Serial and Parallel Port Redirection */
+	ALIGN64 BOOL RedirectSerialPorts; /* 4672 */
+	ALIGN64 BOOL RedirectParallelPorts; /* 4673 */
+	UINT64 padding4800[4800 - 4674]; /* 4674 */
 
 	/**
 	 * Other Redirection
 	 */
 
-	ALIGN64 BOOL RedirectClipboard; /*  */
+	ALIGN64 BOOL RedirectClipboard; /* 4800 */
+	UINT64 padding4928[4928 - 4801]; /* 4801 */
 
 	/**
 	 * Static Virtual Channels
 	 */
 
-	ALIGN64 UINT32 StaticChannelCount;
-	ALIGN64 UINT32 StaticChannelArraySize;
-	ALIGN64 ADDIN_ARGV** StaticChannelArray;
+	ALIGN64 UINT32 StaticChannelCount; /* 4928 */
+	ALIGN64 UINT32 StaticChannelArraySize; /* 4929 */
+	ALIGN64 ADDIN_ARGV** StaticChannelArray; /* 4930 */
+	UINT64 padding5056[5056 - 4931]; /* 4931 */
 
 	/**
 	 * Dynamic Virtual Channels
 	 */
 
-	ALIGN64 UINT32 DynamicChannelCount;
-	ALIGN64 UINT32 DynamicChannelArraySize;
-	ALIGN64 ADDIN_ARGV** DynamicChannelArray;
+	ALIGN64 UINT32 DynamicChannelCount; /* 5056 */
+	ALIGN64 UINT32 DynamicChannelArraySize; /* 5057 */
+	ALIGN64 ADDIN_ARGV** DynamicChannelArray; /* 5058 */
+	UINT64 padding5184[5184 - 5059]; /* 5059 */
+
+	/**
+	 * WARNING: End of ABI stable zone!
+	 *
+	 * The zone below this point is ABI unstable, and
+	 * is therefore potentially subject to ABI breakage.
+	 */
 
 	/*
 	 * Extensions
