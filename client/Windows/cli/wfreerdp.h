@@ -1,7 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows Graphical Objects
+ * Windows Client
  *
+ * Copyright 2009-2011 Jay Sorg
+ * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +19,9 @@
  * limitations under the License.
  */
 
-#ifndef __WF_GRAPHICS_H
-#define __WF_GRAPHICS_H
+#ifndef __WFREERDP_H
+#define __WFREERDP_H
 
 #include "wf_interface.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata);
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);
-void wf_image_free(wfBitmap* image);
-
-void wf_register_graphics(rdpGraphics* graphics);
-
-#endif /* WF_GRAPHICS */
+#endif
