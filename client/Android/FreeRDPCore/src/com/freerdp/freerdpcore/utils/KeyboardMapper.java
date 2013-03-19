@@ -433,12 +433,12 @@ public class KeyboardMapper
 					listener.processVirtualKey(vkcode, true);
 					listener.processVirtualKey(vkcode, false);
 				}
-				else if(Character.isUpperCase((char)event.getUnicodeChar()))
+				else if(event.isShiftPressed() && vkcode != 0)
 				{
-					listener.processVirtualKey(VK_SHIFT, true);
+					listener.processVirtualKey(VK_LSHIFT, true);
 					listener.processVirtualKey(vkcode, true);
 					listener.processVirtualKey(vkcode, false);										
-					listener.processVirtualKey(VK_SHIFT, false);
+					listener.processVirtualKey(VK_LSHIFT, false);
 				}
 				else if(event.getUnicodeChar() != 0) 
 					listener.processUnicodeKey(event.getUnicodeChar());
