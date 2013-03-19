@@ -187,29 +187,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
 	
-	if (mode == MIRROR_LOAD)
-	{
-		//first let's get the virtual screen dimentions
-		wfi->virtscreen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-		wfi->virtscreen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-		/*
-		 * Will have to come back to this for supporting non primary displays and multimonitor setups
-		 */
-		/*dc = GetDC(NULL);
-		wfi->servscreen_width = GetDeviceCaps(dc, HORZRES);
-		wfi->servscreen_height = GetDeviceCaps(dc, VERTRES);
-		wfi->bitsPerPixel = GetDeviceCaps(dc, BITSPIXEL);
-		ReleaseDC(NULL, dc);*/
-		
-	}
-	else if (mode == MIRROR_UNLOAD)
-	{
-		wfi->servscreen_width = 0;
-		wfi->servscreen_height = 0;
-		wfi->bitsPerPixel = 0;
-	}
-	else
+	if ( (mode != MIRROR_LOAD) && (mode != MIRROR_UNLOAD) )
 	{
 		printf("Invalid mirror mode!\n");
 		return FALSE;
@@ -227,11 +205,17 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 	deviceMode->dmSize = sizeof(DEVMODE);
 	deviceMode->dmDriverExtra = drvExtraSaved;
 
-	deviceMode->dmPelsWidth = wfi->virtscreen_width;
-	deviceMode->dmPelsHeight = wfi->virtscreen_height;
-	deviceMode->dmBitsPerPel = wfi->bitsPerPixel;
-	deviceMode->dmPosition.x = wfi->servscreen_xoffset;
-	deviceMode->dmPosition.y = wfi->servscreen_yoffset;
+	if (mode == MIRROR_LOAD)
+	{
+		wfi->virtscreen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		wfi->virtscreen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+		deviceMode->dmPelsWidth = wfi->virtscreen_width;
+		deviceMode->dmPelsHeight = wfi->virtscreen_height;
+		deviceMode->dmBitsPerPel = wfi->bitsPerPixel;
+		deviceMode->dmPosition.x = wfi->servscreen_xoffset;
+		deviceMode->dmPosition.y = wfi->servscreen_yoffset;
+	}
 
 	deviceMode->dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_POSITION;
 
