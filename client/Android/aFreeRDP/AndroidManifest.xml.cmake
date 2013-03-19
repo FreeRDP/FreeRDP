@@ -29,6 +29,7 @@
 	                <category android:name="android.intent.category.BROWSABLE" />
 	                <data android:scheme="http" android:host="*" android:pathPattern=".*\\.rdp" />
     	            <data android:scheme="file" android:host="*" android:pathPattern=".*\\.rdp" />        					
+					<data android:mimeType="*/*" />
 				</intent-filter>
 			</activity>
 
