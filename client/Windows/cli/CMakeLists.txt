@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP cmake build script
+# FreeRDP Windows cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,29 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client_subsystem("rdpsnd" "pulse" "")
-
-set(${MODULE_PREFIX}_SRCS
-	rdpsnd_pulse.c)
+set(MODULE_NAME "wfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS")
 
 include_directories(..)
-include_directories(${PULSE_INCLUDE_DIR})
 
-add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+set(${MODULE_PREFIX}_SRCS
+	wfreerdp.c
+	wfreerdp.h
+	../wfreerdp.rc)
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-utils)
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PULSE_LIBRARY})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} wfreerdp-client)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
-endif()
+install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/Pulse")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")

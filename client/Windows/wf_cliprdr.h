@@ -19,7 +19,7 @@
 #ifndef __WF_CLIPRDR_H
 #define __WF_CLIPRDR_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_cliprdr_init(wfInfo* wfi, rdpChannels* chanman);
 void wf_cliprdr_uninit(wfInfo* wfi);

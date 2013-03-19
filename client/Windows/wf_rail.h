@@ -19,7 +19,7 @@
 #ifndef __WF_RAIL_H
 #define __WF_RAIL_H
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 
 void wf_rail_paint(wfInfo* wfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
 void wf_rail_register_callbacks(wfInfo* wfi, rdpRail* rail);
