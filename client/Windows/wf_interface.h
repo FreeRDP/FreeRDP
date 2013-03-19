@@ -19,11 +19,12 @@
  * limitations under the License.
  */
 
-#ifndef __WFREERDP_H
-#define __WFREERDP_H
+#ifndef __WF_INTERFACE_H
+#define __WF_INTERFACE_H
 
 #include <winpr/windows.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
@@ -75,6 +76,15 @@ struct wf_info
 	int percentscreen;
 	char window_title[64];
 
+	HANDLE thread;
+	HANDLE keyboardThread;
+
+	HICON icon;
+	HINSTANCE hInstance;
+	WNDCLASSEX wndClass;
+	LPCTSTR wndClassName;
+	HCURSOR hDefaultCursor;
+
 	HWND hwnd;
 	POINT diff;
 	HGDI_DC hdc;
@@ -96,28 +106,13 @@ struct wf_info
 	BOOL sw_gdi;
 };
 
-int wf_create_console(void);
+FREERDP_API int wf_global_init();
+FREERDP_API int wf_global_uninit();
 
-void wf_context_new(freerdp* instance, rdpContext* context);
-void wf_context_free(freerdp* instance, rdpContext* context);
+FREERDP_API int wf_start(wfInfo* wfi);
+FREERDP_API int wf_stop(wfInfo* wfi);
 
-void wf_sw_begin_paint(rdpContext* context);
-void wf_sw_end_paint(rdpContext* context);
-void wf_sw_desktop_resize(rdpContext* context);
-
-void wf_hw_begin_paint(rdpContext* context);
-void wf_hw_end_paint(rdpContext* context);
-void wf_hw_desktop_resize(rdpContext* context);
-
-BOOL wf_pre_connect(freerdp* instance);
-BOOL wf_post_connect(freerdp* instance);
-
-BOOL wf_authenticate(freerdp* instance, char** username, char** password, char** domain);
-BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint);
-
-int wf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
-
-DWORD WINAPI kbd_thread_func(LPVOID lpParam);
-DWORD WINAPI thread_func(LPVOID lpParam);
+FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv);
+FREERDP_API int wf_free(wfInfo* wfi);
 
 #endif

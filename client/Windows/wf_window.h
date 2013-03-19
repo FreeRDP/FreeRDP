@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef __WF_WINDOW_H
 #define __WF_WINDOW_H
 

@@ -33,10 +33,9 @@
 #include "wf_event.h"
 
 static HWND g_focus_hWnd;
-extern HCURSOR g_default_cursor;
 
-#define X_POS(lParam) (lParam & 0xffff)
-#define Y_POS(lParam) ((lParam >> 16) & 0xffff)
+#define X_POS(lParam) (lParam & 0xFFFF)
+#define Y_POS(lParam) ((lParam >> 16) & 0xFFFF)
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -57,8 +56,10 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_SYSKEYUP:
 				wfi = (wfInfo*) GetWindowLongPtr(g_focus_hWnd, GWLP_USERDATA);
 				p = (PKBDLLHOOKSTRUCT) lParam;
+
 				if (!wfi || !p)
 					return 1;
+				
 				input = wfi->instance->input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE) p->scanCode, p->flags & LLKHF_EXTENDED);
 
@@ -233,7 +234,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		case WM_SETCURSOR:
 			if (LOWORD(lParam) == HTCLIENT)
-				SetCursor(g_default_cursor);
+				SetCursor(wfi->hDefaultCursor);
 			else
 				DefWindowProc(hWnd, Msg, wParam, lParam);
 			break;

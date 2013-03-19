@@ -55,15 +55,17 @@
 
 #include "wfreerdp.h"
 
-extern HANDLE g_done_event;
-extern HINSTANCE g_hInstance;
-extern HCURSOR g_default_cursor;
-extern int g_thread_count;
-extern LPCTSTR g_wnd_class_name;
-
 void wf_context_new(freerdp* instance, rdpContext* context)
 {
+	wfInfo* wfi;
+
 	context->channels = freerdp_channels_new();
+
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
+	((wfContext*) context)->wfi = wfi;
+	wfi->instance = instance;
 }
 
 void wf_context_free(freerdp* instance, rdpContext* context)
@@ -173,6 +175,7 @@ void wf_hw_desktop_resize(rdpContext* context)
 
 	wfi->width = settings->DesktopWidth;
 	wfi->height = settings->DesktopHeight;
+
 	if (wfi->primary)
 	{
 		same = (wfi->primary == wfi->drawing) ? TRUE : FALSE;
@@ -205,14 +208,10 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfContext* context;
 	rdpSettings* settings;
 
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
-
 	context = (wfContext*) instance->context;
-	wfi->instance = instance;
-	context->wfi = wfi;
 
-	settings = instance->settings;
+	wfi = context->wfi;
+	wfi->instance = instance;
 
 	settings = instance->settings;
 
@@ -254,8 +253,6 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-
-	wfi->cursor = g_default_cursor;
 
 	wfi->fullscreen = settings->Fullscreen;
 	wfi->fs_toggle = 1;
@@ -307,7 +304,7 @@ BOOL wf_post_connect(freerdp* instance)
 	wfInfo* wfi;
 	rdpCache* cache;
 	wfContext* context;
-	wchar_t win_title[64];
+	WCHAR win_title[64];
 	rdpSettings* settings;
 
 	settings = instance->settings;
@@ -364,10 +361,10 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		_snwprintf(win_title, ARRAYSIZE(win_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
-	if (wfi->hwnd == 0)
+	if (!wfi->hwnd)
 	{
-		wfi->hwnd = CreateWindowEx((DWORD) NULL, g_wnd_class_name, win_title,
-				0, 0, 0, 0, 0, NULL, NULL, g_hInstance, NULL);
+		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, win_title,
+			0, 0, 0, 0, 0, NULL, NULL, wfi->hInstance, NULL);
 
 		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
 	}
@@ -534,8 +531,8 @@ int wfreerdp_run(freerdp* instance)
 	HANDLE fds[64];
 	rdpChannels* channels;
 
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(wfds, sizeof(wfds));
 
 	if (freerdp_connect(instance) != TRUE)
 		return 0;
@@ -610,6 +607,7 @@ int wfreerdp_run(freerdp* instance)
 		wf_process_channel_event(channels, instance);
 
 		quit_msg = FALSE;
+
 		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		{
 			msg_ret = GetMessage(&msg, NULL, 0, 0);
@@ -636,40 +634,32 @@ int wfreerdp_run(freerdp* instance)
 	return 0;
 }
 
-DWORD WINAPI thread_func(LPVOID lpParam)
+DWORD WINAPI wf_thread(LPVOID lpParam)
 {
 	wfInfo* wfi;
 	freerdp* instance;
 
 	instance = (freerdp*) lpParam;
 
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
-
-	((wfContext*) instance->context)->wfi = wfi;
-	wfi->instance = instance;
-
 	wfreerdp_run(instance);
-
-	g_thread_count--;
-
-	if (g_thread_count < 1)
-		SetEvent(g_done_event);
 
 	return (DWORD) NULL;
 }
 
-DWORD WINAPI kbd_thread_func(LPVOID lpParam)
+DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 {
 	MSG msg;
 	BOOL status;
+	wfInfo* wfi;
 	HHOOK hook_handle;
 
-	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, g_hInstance, 0);
+	wfi = (wfInfo*) lpParam;
+
+	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfi->hInstance, 0);
 
 	if (hook_handle)
 	{
-		while ((status = GetMessage( &msg, NULL, 0, 0 )) != 0)
+		while ((status = GetMessage(&msg, NULL, 0, 0)) != 0)
 		{
 			if (status == -1)
 			{
@@ -682,6 +672,7 @@ DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 				DispatchMessage(&msg);
 			}
 		}
+
 		UnhookWindowsHookEx(hook_handle);
 	}
 	else
@@ -690,4 +681,119 @@ DWORD WINAPI kbd_thread_func(LPVOID lpParam)
 	}
 
 	return (DWORD) NULL;
+}
+
+int wf_global_init()
+{
+	WSADATA wsaData;
+
+	if (!getenv("HOME"))
+	{
+		char home[MAX_PATH * 2] = "HOME=";
+		strcat(home, getenv("HOMEDRIVE"));
+		strcat(home, getenv("HOMEPATH"));
+		_putenv(home);
+	}
+
+	if (WSAStartup(0x101, &wsaData) != 0)
+		return 1;
+
+#if defined(WITH_DEBUG) || defined(_DEBUG)
+	wf_create_console();
+#endif
+
+	freerdp_channels_global_init();
+
+	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
+	return 0;
+}
+
+int wf_global_uninit()
+{
+	WSACleanup();
+
+	return 0;
+}
+
+wfInfo* wf_new(HINSTANCE hInstance, int argc, char** argv)
+{
+	wfInfo* wfi;
+	freerdp* instance;
+
+	instance = freerdp_new();
+	instance->PreConnect = wf_pre_connect;
+	instance->PostConnect = wf_post_connect;
+	instance->Authenticate = wf_authenticate;
+	instance->VerifyCertificate = wf_verify_certificate;
+	instance->ReceiveChannelData = wf_receive_channel_data;
+
+	instance->context_size = sizeof(wfContext);
+	instance->ContextNew = wf_context_new;
+	instance->ContextFree = wf_context_free;
+	freerdp_context_new(instance);
+
+	wfi = ((wfContext*) (instance->context))->wfi;
+	wfi->instance = instance;
+
+	instance->context->argc = argc;
+	instance->context->argv = argv;
+
+	wfi->hInstance = hInstance;
+	wfi->cursor = LoadCursor(NULL, IDC_ARROW);
+	wfi->icon = LoadIcon(NULL, IDI_APPLICATION);
+	wfi->wndClassName = _tcsdup(_T("FreeRDP"));
+
+	wfi->wndClass.cbSize = sizeof(WNDCLASSEX);
+	wfi->wndClass.style = CS_HREDRAW | CS_VREDRAW;
+	wfi->wndClass.lpfnWndProc = wf_event_proc;
+	wfi->wndClass.cbClsExtra = 0;
+	wfi->wndClass.cbWndExtra = 0;
+	wfi->wndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wfi->wndClass.hCursor = wfi->cursor;
+	wfi->wndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+	wfi->wndClass.lpszMenuName = NULL;
+	wfi->wndClass.lpszClassName = wfi->wndClassName;
+	wfi->wndClass.hInstance = hInstance;
+	wfi->wndClass.hIconSm = wfi->icon;
+	RegisterClassEx(&(wfi->wndClass));
+
+	return wfi;
+}
+
+int wf_start(wfInfo* wfi)
+{
+	int status;
+	freerdp* instance = wfi->instance;
+
+	wfi->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfi, 0, NULL);
+
+	if (!wfi->keyboardThread)
+		return -1;
+
+	status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
+
+	wfi->thread = CreateThread(NULL, 0, wf_thread, (void*) instance, 0, NULL);
+
+	if (!wfi->thread)
+		return -1;
+
+	return 0;
+}
+
+int wf_stop(wfInfo* wfi)
+{
+	return 0;
+}
+
+int wf_free(wfInfo* wfi)
+{
+	freerdp* instance = wfi->instance;
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
+
+	return 0;
 }
