@@ -335,9 +335,10 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	int status;
 
 #ifdef WITH_DEBUG_TSG
-	rpc_pdu_header_print((rpcconn_hdr_t*) data);
 	printf("Sending PDU (length: %d)\n", length);
+	rpc_pdu_header_print((rpcconn_hdr_t*) data);
 	winpr_HexDump(data, length);
+	printf("\n");
 #endif
 	
 	status = tls_write_all(rpc->TlsIn, data, length);

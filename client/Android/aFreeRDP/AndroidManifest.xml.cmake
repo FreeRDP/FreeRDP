@@ -25,18 +25,11 @@
 				</intent-filter>
 				<intent-filter>
 					<action android:name="android.intent.action.VIEW" />
-					<category android:name="android.intent.category.DEFAULT" />
-					<data 
-						android:scheme="file"
-					    android:mimeType="application/x-rdp" />
-				</intent-filter>
-				<intent-filter>
-					<action android:name="android.intent.action.VIEW" />
-					<category android:name="android.intent.category.DEFAULT" />
-					<data
-				  		android:scheme="file"
-						android:pathPattern=".*\\.rdp"
-						android:mimeType="*/*" />
+					<category android:name="android.intent.category.DEFAULT" />              
+	                <category android:name="android.intent.category.BROWSABLE" />
+	                <data android:scheme="http" android:host="*" android:pathPattern=".*\\.rdp" />
+    	            <data android:scheme="file" android:host="*" android:pathPattern=".*\\.rdp" />        					
+					<data android:mimeType="*/*" />
 				</intent-filter>
 			</activity>
 

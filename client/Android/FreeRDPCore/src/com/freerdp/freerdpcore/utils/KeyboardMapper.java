@@ -216,6 +216,7 @@ public class KeyboardMapper
 	final static int VK_PA1	= 0xFD;
 	final static int VK_OEM_CLEAR = 0xFE;
 	final static int VK_UNICODE = 0x80000000;
+	final static int VK_EXT_KEY = 0x00000100;
 
 	// key codes to switch between custom keyboard 
 	private final static int EXTKEY_KBFUNCTIONKEYS = 0x1100; 
@@ -337,12 +338,12 @@ public class KeyboardMapper
 		keymapExt[context.getResources().getInteger(R.integer.keycode_F12)] = VK_F12;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_tab)] = VK_TAB;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_print)] = VK_PRINT;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_insert)] = VK_INSERT;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_delete)] = VK_DELETE;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_home)] = VK_HOME;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_end)] = VK_END;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_pgup)] = VK_PRIOR;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_pgdn)] = VK_NEXT;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_insert)] = VK_INSERT | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_delete)] = VK_DELETE | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_home)] = VK_HOME | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_end)] = VK_END | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_pgup)] = VK_PRIOR | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_pgdn)] = VK_NEXT | VK_EXT_KEY;
 	
 		// numpad mapping
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_0)] = VK_NUMPAD0;
@@ -358,8 +359,8 @@ public class KeyboardMapper
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_numlock)] = VK_NUMLOCK;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_add)] = VK_ADD;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_comma)] = VK_DECIMAL;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_divide)] = VK_DIVIDE;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_enter)] = VK_RETURN;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_divide)] = VK_DIVIDE | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_enter)] = VK_RETURN | VK_EXT_KEY;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_multiply)] = VK_MULTIPLY;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_subtract)] = VK_SUBTRACT;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_equals)] = (KEY_FLAG_UNICODE | 61);
@@ -367,16 +368,16 @@ public class KeyboardMapper
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_right_paren)] = (KEY_FLAG_UNICODE | 41);
 
 		// cursor key codes
-		keymapExt[context.getResources().getInteger(R.integer.keycode_up)] = VK_UP;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_down)] = VK_DOWN;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_left)] = VK_LEFT;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_right)] = VK_RIGHT;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_enter)] = VK_RETURN;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_up)] = VK_UP | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_down)] = VK_DOWN | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_left)] = VK_LEFT | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_right)] = VK_RIGHT | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_enter)] = VK_RETURN | VK_EXT_KEY;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_backspace)] = VK_BACK;
 
 		// shared keys
-		keymapExt[context.getResources().getInteger(R.integer.keycode_win)] = VK_LWIN;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_menu)] = VK_APPS;		
+		keymapExt[context.getResources().getInteger(R.integer.keycode_win)] = VK_LWIN | VK_EXT_KEY;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_menu)] = VK_APPS | VK_EXT_KEY;	
 		keymapExt[context.getResources().getInteger(R.integer.keycode_esc)] = VK_ESCAPE;
 		
 /*		keymapExt[context.getResources().getInteger(R.integer.keycode_modifier_ctrl)] = VK_LCONTROL;		
@@ -432,12 +433,12 @@ public class KeyboardMapper
 					listener.processVirtualKey(vkcode, true);
 					listener.processVirtualKey(vkcode, false);
 				}
-				else if(Character.isUpperCase((char)event.getUnicodeChar()))
+				else if(event.isShiftPressed() && vkcode != 0)
 				{
-					listener.processVirtualKey(VK_SHIFT, true);
+					listener.processVirtualKey(VK_LSHIFT, true);
 					listener.processVirtualKey(vkcode, true);
 					listener.processVirtualKey(vkcode, false);										
-					listener.processVirtualKey(VK_SHIFT, false);
+					listener.processVirtualKey(VK_LSHIFT, false);
 				}
 				else if(event.getUnicodeChar() != 0) 
 					listener.processUnicodeKey(event.getUnicodeChar());
@@ -591,11 +592,11 @@ public class KeyboardMapper
 			}
 			case VK_LWIN:
 			{
-				if(!checkToggleModifierLock(VK_LMENU))
+				if(!checkToggleModifierLock(VK_LWIN))
 				{
 					isWinLocked = false;
 					winPressed = !winPressed;
-					listener.processVirtualKey(VK_LWIN, winPressed);
+					listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, winPressed);
 				}
 				else
 					isWinLocked = true;					
@@ -628,7 +629,7 @@ public class KeyboardMapper
 		}
 		if(winPressed && (!isWinLocked || force))
 		{
-			listener.processVirtualKey(VK_LWIN, false);
+			listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, false);
 			winPressed = false;
 		}
 

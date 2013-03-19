@@ -71,12 +71,8 @@
 	// load default view and set background color and resizing mask
 	[super loadView];
 
-    // init keyboard handling vars and register required notification handlers
+    // init keyboard handling vars
     _keyboard_visible = NO;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name: UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidShow:) name: UIKeyboardDidShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name: UIKeyboardWillHideNotification object:nil];	
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidHide:) name: UIKeyboardDidHideNotification object:nil];
 
     // init keyboard toolbar
     _keyboard_toolbar = [[self keyboardToolbar] retain];
@@ -325,6 +321,12 @@
 
 - (void)sessionDidConnect:(RDPSession*)session
 {
+    // register keyboard notification handlers
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name: UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidShow:) name: UIKeyboardDidShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name: UIKeyboardWillHideNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardDidHide:) name: UIKeyboardDidHideNotification object:nil];
+
     // remove and release connecting view
     [_connecting_indicator_view stopAnimating];
     [_connecting_view removeFromSuperview];
@@ -383,7 +385,7 @@
 
 - (void)session:(RDPSession*)session needsRedrawInRect:(CGRect)rect
 {
-    [_session_view setNeedsDisplayInRect:rect];    
+    [_session_view setNeedsDisplayInRect:rect];
 }
 
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params

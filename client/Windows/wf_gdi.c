@@ -35,7 +35,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
-#include "wfreerdp.h"
+#include "wf_interface.h"
 #include "wf_graphics.h"
 
 const BYTE wf_rop2_table[] =

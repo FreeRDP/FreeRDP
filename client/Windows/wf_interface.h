@@ -19,11 +19,12 @@
  * limitations under the License.
  */
 
-#ifndef __WFREERDP_H
-#define __WFREERDP_H
+#ifndef __WF_INTERFACE_H
+#define __WF_INTERFACE_H
 
 #include <winpr/windows.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
@@ -75,6 +76,16 @@ struct wf_info
 	int percentscreen;
 	char window_title[64];
 
+	HANDLE thread;
+	HANDLE keyboardThread;
+
+	HICON icon;
+	HWND hWndParent;
+	HINSTANCE hInstance;
+	WNDCLASSEX wndClass;
+	LPCTSTR wndClassName;
+	HCURSOR hDefaultCursor;
+
 	HWND hwnd;
 	POINT diff;
 	HGDI_DC hdc;
@@ -95,5 +106,14 @@ struct wf_info
 
 	BOOL sw_gdi;
 };
+
+FREERDP_API int wf_global_init();
+FREERDP_API int wf_global_uninit();
+
+FREERDP_API int wf_start(wfInfo* wfi);
+FREERDP_API int wf_stop(wfInfo* wfi);
+
+FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv);
+FREERDP_API int wf_free(wfInfo* wfi);
 
 #endif

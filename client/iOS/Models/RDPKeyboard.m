@@ -204,7 +204,7 @@
 // toggle windows key, returns true if pressed, otherwise false
 - (void)toggleWinKey
 {
-    [self sendVirtualKey:VK_LWIN up:_win_pressed];
+    [self sendVirtualKey:(VK_LWIN | KBDEXT) up:_win_pressed];
     _win_pressed = !_win_pressed;
     [self notifyDelegateModifiersChanged];
 }
@@ -213,7 +213,7 @@
 
 - (void)sendEnterKeyStroke
 {
-    [self sendVirtualKeyCode:VK_RETURN];
+    [self sendVirtualKeyCode:(VK_RETURN | KBDEXT)];
 }
 
 - (void)sendEscapeKeyStroke

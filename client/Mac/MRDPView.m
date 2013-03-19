@@ -1181,6 +1181,8 @@ void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	NSMutableArray* ma = g_mrdpview->cursors;
+
+	return; /* disable pointer until it is fixed */
 	
 	if (!g_mrdpview->mouseInClientArea)
 		return;
@@ -1201,6 +1203,7 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 void mf_Pointer_SetNull(rdpContext* context)
 {
+	
 }
 
 /** *********************************************************************
@@ -1209,6 +1212,7 @@ void mf_Pointer_SetNull(rdpContext* context)
 
 void mf_Pointer_SetDefault(rdpContext* context)
 {
+	
 }
 
 /** *********************************************************************
@@ -1227,6 +1231,7 @@ void mac_context_new(freerdp* instance, rdpContext* context)
 
 void mac_context_free(freerdp* instance, rdpContext* context)
 {
+	
 }
 
 /** *********************************************************************
@@ -1235,6 +1240,7 @@ void mac_context_free(freerdp* instance, rdpContext* context)
 
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
+	
 }
 
 /** *********************************************************************
@@ -1243,6 +1249,7 @@ void mac_set_bounds(rdpContext* context, rdpBounds* bounds)
 
 void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap)
 {
+	
 }
 
 /** *********************************************************************

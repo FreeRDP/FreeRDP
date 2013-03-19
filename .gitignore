@@ -53,6 +53,7 @@ DerivedData/
 *.suo
 *.ncb
 *.opensdf
+Thumbs.db
 ipch
 Debug
 RelWithDebInfo
@@ -78,6 +79,7 @@ xcode
 *.dir
 Release
 Win32
+build/
 
 default.log
 *Amplifier XE*
