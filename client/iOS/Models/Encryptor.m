@@ -51,6 +51,7 @@
 		if (ret)
 		{
 			NSLog(@"%s: CCKeyDerivationPBKDF ret == %d, indicating some sort of failure.", __func__, ret);
+            free(derived_key);
 			[self autorelease];
 			return nil;
 		}
@@ -64,6 +65,7 @@
 		if (ret != 1)
 		{
 			NSLog(@"%s: PKCS5_PBKDF2_HMAC_SHA1 ret == %lu, indicating some sort of failure.", __func__, ret);
+            free(derived_key);
 			[self release];
 			return nil;
 		}
