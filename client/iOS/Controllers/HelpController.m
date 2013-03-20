@@ -19,7 +19,7 @@
 		// set title and tab-bar image
 		[self setTitle:NSLocalizedString(@"Help", @"Help Controller title")];
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_help" ofType:@"png"]];
-        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Help", @"Tabbar item help") image:tabBarIcon tag:0]];
+        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Help", @"Tabbar item help") image:tabBarIcon tag:0] autorelease]];
     }
     return self;
 }

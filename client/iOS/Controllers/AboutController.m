@@ -19,7 +19,7 @@
 		// set title and tab-bar image
 		[self setTitle:NSLocalizedString(@"About", @"About Controller title")];
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_about" ofType:@"png"]];
-        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"About", @"Tabbar item about") image:tabBarIcon tag:0]];
+        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"About", @"Tabbar item about") image:tabBarIcon tag:0] autorelease]];
         
         last_link_clicked = nil;
     }
