@@ -40,7 +40,7 @@
 
 void rail_send_channel_data(void* rail_object, void* data, size_t length)
 {
-	STREAM* s = NULL;
+	wStream* s = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
 
 	s = stream_new(length);
@@ -88,7 +88,7 @@ static void rail_process_terminate(rdpSvcPlugin* plugin)
 
 }
 
-static void rail_process_receive(rdpSvcPlugin* plugin, STREAM* s)
+static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	railPlugin* rail = (railPlugin*) plugin;
 	rail_order_recv(rail->rail_order, s);

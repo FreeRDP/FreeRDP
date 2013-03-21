@@ -49,7 +49,7 @@ void input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 void input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 void input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
-BOOL input_recv(rdpInput* input, STREAM* s);
+BOOL input_recv(rdpInput* input, wStream* s);
 
 int input_process_events(rdpInput* input);
 void input_register_client_callbacks(rdpInput* input);

@@ -79,7 +79,7 @@ static void tty_set_termios(SERIAL_TTY* tty);
 static BOOL tty_get_termios(SERIAL_TTY* tty);
 static int tty_get_error_status();
 
-UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, STREAM* output, UINT32* abort_io)
+UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input, wStream* output, UINT32* abort_io)
 {
 	int purge_mask;
 	UINT32 result;

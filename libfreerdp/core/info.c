@@ -49,7 +49,7 @@ static const char* const INFO_TYPE_LOGON_STRINGS[] =
  * @param settings settings
  */
 
-BOOL rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
@@ -70,7 +70,7 @@ BOOL rdp_read_server_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-BOOL rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
@@ -93,7 +93,7 @@ BOOL rdp_read_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
+void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
@@ -111,7 +111,7 @@ void rdp_write_client_auto_reconnect_cookie(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 {
 	UINT16 clientAddressFamily;
 	UINT16 cbClientAddress;
@@ -170,7 +170,7 @@ BOOL rdp_read_extended_info_packet(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
+void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 {
 	int clientAddressFamily;
 	WCHAR* clientAddress = NULL;
@@ -225,7 +225,7 @@ void rdp_write_extended_info_packet(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 {
 	UINT32 flags;
 	UINT16 cbDomain;
@@ -314,7 +314,7 @@ BOOL rdp_read_info_packet(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
+void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 {
 	UINT32 flags;
 	WCHAR* domain = NULL;
@@ -430,7 +430,7 @@ void rdp_write_info_packet(STREAM* s, rdpSettings* settings)
  * @param s stream
  */
 
-BOOL rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 {
 	UINT16 length;
 	UINT16 channelId;
@@ -473,7 +473,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
-	STREAM* s;
+	wStream* s;
 
 	//rdp->settings->crypt_flags |= SEC_INFO_PKT;
 	rdp->sec_flags |= SEC_INFO_PKT;
@@ -482,7 +482,7 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
-BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
@@ -497,7 +497,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
@@ -518,7 +518,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 {
 	if(stream_get_left(s) < 576)
 		return FALSE;
@@ -526,7 +526,7 @@ BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_error_info(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 errorNotificationType;
 	UINT32 errorNotificationData;
@@ -538,7 +538,7 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 {
 	UINT32 cbFieldData;
 	UINT32 fieldsPresent;
@@ -576,7 +576,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
+BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType;
 

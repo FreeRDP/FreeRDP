@@ -49,7 +49,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation);
 
 TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id);
 TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id);
-void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, STREAM* s);
+void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s);
 void tsmf_stream_end(TSMF_STREAM* stream);
 void tsmf_stream_free(TSMF_STREAM* stream);
 

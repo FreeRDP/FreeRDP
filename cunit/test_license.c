@@ -313,7 +313,7 @@ BYTE platform_challenge[10] = "\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00";
 
 void test_license(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 
 	s = &_s;
 	memcpy(license->ClientRandom, client_random, sizeof(client_random));
@@ -419,7 +419,7 @@ BYTE test_encrypted_premaster_secret[64] =
 
 void test_license_generate_keys(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 
 	s = &_s;
 	memcpy(license->ClientRandom, client_random, sizeof(client_random));
@@ -455,7 +455,7 @@ void test_license_generate_keys(void)
 
 void test_license_encrypt_premaster_secret(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 
 	s = &_s;
 	memcpy(license->PremasterSecret, premaster_secret, sizeof(premaster_secret));
@@ -476,7 +476,7 @@ BYTE test_platform_challenge[10] =
 
 void test_license_decrypt_platform_challenge(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 
 	s = &_s;
 	memcpy(license->LicensingEncryptionKey, test_licensing_encryption_key,

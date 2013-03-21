@@ -386,7 +386,7 @@ static void drive_process_irp_set_information(DRIVE_DEVICE* disk, IRP* irp)
 static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* irp)
 {
 	UINT32 FsInformationClass;
-	STREAM* output = irp->output;
+	wStream* output = irp->output;
 	struct STATVFS svfst;
 	struct STAT st;
 	char* volumeLabel = {"FREERDP"};
@@ -474,7 +474,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 static void drive_process_irp_silent_ignore(DRIVE_DEVICE* disk, IRP* irp)
 {
 	UINT32 FsInformationClass;
-	STREAM* output = irp->output;
+	wStream* output = irp->output;
 
 	stream_read_UINT32(irp->input, FsInformationClass);
 

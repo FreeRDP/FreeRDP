@@ -101,7 +101,7 @@ static void test_peer_init(freerdp_peer* client)
 	freerdp_peer_context_new(client);
 }
 
-static STREAM* test_peer_stream_init(testPeerContext* context)
+static wStream* test_peer_stream_init(testPeerContext* context)
 {
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
@@ -135,7 +135,7 @@ static void test_peer_end_frame(freerdp_peer* client)
 static void test_peer_draw_background(freerdp_peer* client)
 {
 	int size;
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	BYTE* rgb_data;
 	rdpUpdate* update = client->update;
@@ -232,7 +232,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 {
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
@@ -354,7 +354,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 
 void tf_peer_dump_rfx(freerdp_peer* client)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 prev_seconds;
 	UINT32 prev_useconds;
 	rdpUpdate* update;
@@ -392,7 +392,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 static void* tf_debug_channel_thread_func(void* arg)
 {
 	void* fd;
-	STREAM* s;
+	wStream* s;
 	void* buffer;
 	UINT32 bytes_returned = 0;
 	testPeerContext* context = (testPeerContext*) arg;

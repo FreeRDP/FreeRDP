@@ -68,7 +68,7 @@ static BOOL freerdp_peer_check_fds(freerdp_peer* client)
 	return TRUE;
 }
 
-static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
+static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 {
 	BYTE type;
 	UINT16 length;
@@ -158,7 +158,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 	return TRUE;
 }
 
-static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 {
 	rdpRdp* rdp;
 	UINT16 length;
@@ -219,7 +219,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 	return 0;
 }
 
-static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 {
 	rdpRdp* rdp;
 	UINT16 length;
@@ -247,7 +247,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 	return fastpath_recv_inputs(fastpath, s);
 }
 
-static int peer_recv_pdu(freerdp_peer* client, STREAM* s)
+static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 {
 	if (tpkt_verify_header(s))
 		return peer_recv_tpkt_pdu(client, s);
@@ -255,7 +255,7 @@ static int peer_recv_pdu(freerdp_peer* client, STREAM* s)
 		return peer_recv_fastpath_pdu(client, s);
 }
 
-static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
+static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;

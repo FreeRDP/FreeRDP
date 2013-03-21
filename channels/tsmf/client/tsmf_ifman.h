@@ -31,9 +31,9 @@ struct _TSMF_IFMAN
 	UINT32 stream_id;
 	UINT32 message_id;
 
-	STREAM* input;
+	wStream* input;
 	UINT32 input_size;
-	STREAM* output;
+	wStream* output;
 	BOOL output_pending;
 	UINT32 output_interface_id;
 };

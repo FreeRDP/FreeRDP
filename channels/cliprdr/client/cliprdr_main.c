@@ -53,9 +53,9 @@ static const char* const CB_MSG_TYPE_STRINGS[] =
 	"CB_UNLOCK_CLIPDATA"
 };
 
-STREAM* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
+wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
-	STREAM* s;
+	wStream* s;
 
 	s = stream_new(dataLen + 8);
 	stream_write_UINT16(s, msgType);
@@ -66,7 +66,7 @@ STREAM* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 	return s;
 }
 
-void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* s)
+void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 {
 	int pos;
 	UINT32 dataLen;
@@ -101,7 +101,7 @@ void cliprdr_print_general_capability_flags(UINT32 flags)
 	printf("}\n");
 }
 
-static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s)
+static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
 {
 	UINT32 version;
 	UINT32 generalFlags;
@@ -130,7 +130,7 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, STREAM* s
 	cliprdr->received_caps = TRUE;
 }
 
-static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, UINT16 length, UINT16 flags)
+static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
 	int i;
 	UINT16 lengthCapability;
@@ -162,7 +162,7 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, STREAM* s, UINT16 
 
 static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 flags;
 
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
@@ -181,7 +181,7 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 	cliprdr_packet_send(cliprdr, s);
 }
 
-static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, STREAM* s, UINT16 length, UINT16 flags)
+static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
 	RDP_EVENT* event;
 
@@ -192,7 +192,7 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, STREAM* s, UIN
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
 }
 
-static void cliprdr_process_receive(rdpSvcPlugin* plugin, STREAM* s)
+static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	UINT16 msgType;
 	UINT16 msgFlags;

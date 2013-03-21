@@ -318,7 +318,7 @@ void xf_peer_init(freerdp_peer* client)
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
 
-STREAM* xf_peer_stream_init(xfPeerContext* context)
+wStream* xf_peer_stream_init(xfPeerContext* context)
 {
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
@@ -333,7 +333,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
-	STREAM* s;
+	wStream* s;
 	BYTE* data;
 	xfInfo* xfi;
 	RFX_RECT rect;

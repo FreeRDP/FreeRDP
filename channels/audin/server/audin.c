@@ -66,14 +66,14 @@ static void audin_server_select_format(audin_server_context* context, int client
 	}
 }
 
-static void audin_server_send_version(audin_server* audin, STREAM* s)
+static void audin_server_send_version(audin_server* audin, wStream* s)
 {
 	stream_write_BYTE(s, MSG_SNDIN_VERSION);
 	stream_write_UINT32(s, 1); /* Version (4 bytes) */
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static BOOL audin_server_recv_version(audin_server* audin, STREAM* s, UINT32 length)
+static BOOL audin_server_recv_version(audin_server* audin, wStream* s, UINT32 length)
 {
 	UINT32 Version;
 
@@ -86,7 +86,7 @@ static BOOL audin_server_recv_version(audin_server* audin, STREAM* s, UINT32 len
 	return TRUE;
 }
 
-static void audin_server_send_formats(audin_server* audin, STREAM* s)
+static void audin_server_send_formats(audin_server* audin, wStream* s)
 {
 	int i;
 	UINT32 nAvgBytesPerSec;
@@ -120,7 +120,7 @@ static void audin_server_send_formats(audin_server* audin, STREAM* s)
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, UINT32 length)
+static BOOL audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 length)
 {
 	int i;
 
@@ -164,7 +164,7 @@ static BOOL audin_server_recv_formats(audin_server* audin, STREAM* s, UINT32 len
 	return TRUE;
 }
 
-static void audin_server_send_open(audin_server* audin, STREAM* s)
+static void audin_server_send_open(audin_server* audin, wStream* s)
 {
 	if (audin->context.selected_client_format < 0)
 		return;
@@ -191,7 +191,7 @@ static void audin_server_send_open(audin_server* audin, STREAM* s)
 	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), stream_get_length(s), NULL);
 }
 
-static BOOL audin_server_recv_open_reply(audin_server* audin, STREAM* s, UINT32 length)
+static BOOL audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32 length)
 {
 	UINT32 Result;
 
@@ -204,7 +204,7 @@ static BOOL audin_server_recv_open_reply(audin_server* audin, STREAM* s, UINT32 
 	return TRUE;
 }
 
-static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, UINT32 length)
+static BOOL audin_server_recv_data(audin_server* audin, wStream* s, UINT32 length)
 {
 	AUDIO_FORMAT* format;
 	int sbytes_per_sample;
@@ -265,7 +265,7 @@ static BOOL audin_server_recv_data(audin_server* audin, STREAM* s, UINT32 length
 static void* audin_server_thread_func(void* arg)
 {
 	void* fd;
-	STREAM* s;
+	wStream* s;
 	void* buffer;
 	BYTE MessageId;
 	BOOL ready = FALSE;

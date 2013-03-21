@@ -465,7 +465,7 @@ struct _DEVICE
 
 	UINT32 type;
 	char* name;
-	STREAM* data;
+	wStream* data;
 
 	pcIRPRequest IRPRequest;
 	pcFreeDevice Free;
@@ -483,10 +483,10 @@ struct _IRP
 	UINT32 CompletionId;
 	UINT32 MajorFunction;
 	UINT32 MinorFunction;
-	STREAM* input;
+	wStream* input;
 
 	UINT32 IoStatus;
-	STREAM* output;
+	wStream* output;
 
 	pcIRPResponse Complete;
 	pcIRPResponse Discard;

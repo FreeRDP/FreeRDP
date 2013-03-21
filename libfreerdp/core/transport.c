@@ -48,17 +48,17 @@
 
 #define BUFFER_SIZE 16384
 
-STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
+wStream* transport_recv_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->ReceiveStream;
+	wStream* s = transport->ReceiveStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
 }
 
-STREAM* transport_send_stream_init(rdpTransport* transport, int size)
+wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->SendStream;
+	wStream* s = transport->SendStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
@@ -291,7 +291,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL nla_verify_header(STREAM* s)
+BOOL nla_verify_header(wStream* s)
 {
 	if ((s->pointer[0] == 0x30) && (s->pointer[1] & 0x80))
 		return TRUE;
@@ -299,7 +299,7 @@ BOOL nla_verify_header(STREAM* s)
 	return FALSE;
 }
 
-UINT32 nla_read_header(STREAM* s)
+UINT32 nla_read_header(wStream* s)
 {
 	UINT32 length = 0;
 
@@ -332,7 +332,7 @@ UINT32 nla_read_header(STREAM* s)
 	return length;
 }
 
-UINT32 nla_header_length(STREAM* s)
+UINT32 nla_header_length(wStream* s)
 {
 	UINT32 length = 0;
 
@@ -390,7 +390,7 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 	return read;
 }
 
-int transport_read(rdpTransport* transport, STREAM* s)
+int transport_read(rdpTransport* transport, wStream* s)
 {
 	int status;
 	int pdu_bytes;
@@ -496,7 +496,7 @@ static int transport_read_nonblocking(rdpTransport* transport)
 	return status;
 }
 
-int transport_write(rdpTransport* transport, STREAM* s)
+int transport_write(rdpTransport* transport, wStream* s)
 {
 	int status = -1;
 	int length;
@@ -594,7 +594,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	int status;
 	UINT16 length;
 	int recv_status;
-	STREAM* received;
+	wStream* received;
 	rdpTransport* transport = *ptransport;
 
 #ifdef _WIN32
@@ -736,9 +736,9 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
-STREAM* transport_receive_buffer_pool_new()
+wStream* transport_receive_buffer_pool_new()
 {
-	STREAM* pdu = NULL;
+	wStream* pdu = NULL;
 
 	pdu = stream_new(BUFFER_SIZE);
 	pdu->pointer = pdu->buffer;

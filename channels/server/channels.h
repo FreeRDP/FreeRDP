@@ -66,7 +66,7 @@ struct rdp_peer_channel
 	UINT16 channel_type;
 	UINT16 index;
 
-	STREAM* receive_data;
+	wStream* receive_data;
 	HANDLE receive_event;
 	LIST* receive_queue;
 	HANDLE mutex;

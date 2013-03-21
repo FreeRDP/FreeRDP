@@ -86,7 +86,7 @@ struct _DVCMAN_CHANNEL
 	UINT32 channel_id;
 	IWTSVirtualChannelCallback* channel_callback;
 
-	STREAM* dvc_data;
+	wStream* dvc_data;
 
 	HANDLE dvc_chan_mutex;
 };

@@ -47,10 +47,10 @@ struct sample_plugin
 	/* put your private data here */
 };
 
-static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void sample_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 {
 	int bytes;
-	STREAM* data_out;
+	wStream* data_out;
 	samplePlugin* sample = (samplePlugin*) plugin;
 
 	printf("sample_process_receive:\n");

@@ -805,7 +805,7 @@ int credssp_skip_ts_password_creds(rdpCredssp* credssp)
 	return length;
 }
 
-void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 
@@ -842,7 +842,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	credssp->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 }
 
-void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+void credssp_write_ts_password_creds(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 
@@ -887,7 +887,7 @@ int credssp_skip_ts_credentials(rdpCredssp* credssp)
 
 void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int ts_password_creds_length;
 
@@ -911,7 +911,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 	stream_free(s);
 }
 
-void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
+void credssp_write_ts_credentials(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 	int ts_password_creds_length;
@@ -942,7 +942,7 @@ void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
 
 void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 
 	s = stream_new(0);
@@ -1077,7 +1077,7 @@ int credssp_skip_ts_request(int length)
 
 void credssp_send(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int ts_request_length;
 	int nego_tokens_length;
@@ -1140,7 +1140,7 @@ void credssp_send(rdpCredssp* credssp)
 
 int credssp_recv(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int status;
 	UINT32 version;

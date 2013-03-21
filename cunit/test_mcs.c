@@ -96,9 +96,9 @@ BYTE mcs_connect_initial_expected[409] =
 
 void test_mcs_write_connect_initial(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpMcs* mcs;
-	STREAM _user_data, *user_data;
+	wStream _user_data, *user_data;
 
 	mcs = mcs_new((rdpTransport*) NULL);
 

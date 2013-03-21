@@ -63,7 +63,7 @@
  * @return BOOL
  */
 
-BOOL tpkt_verify_header(STREAM* s)
+BOOL tpkt_verify_header(wStream* s)
 {
 	BYTE version;
 
@@ -81,7 +81,7 @@ BOOL tpkt_verify_header(STREAM* s)
  * @return length
  */
 
-UINT16 tpkt_read_header(STREAM* s)
+UINT16 tpkt_read_header(wStream* s)
 {
 	BYTE version;
 	UINT16 length;
@@ -108,7 +108,7 @@ UINT16 tpkt_read_header(STREAM* s)
  * @param length
  */
 
-void tpkt_write_header(STREAM* s, UINT16 length)
+void tpkt_write_header(wStream* s, UINT16 length)
 {
 	stream_write_BYTE(s, 3); /* version */
 	stream_write_BYTE(s, 0); /* reserved */

@@ -983,7 +983,7 @@ TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stre
 	return NULL;
 }
 
-void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, STREAM* s)
+void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 {
 	TS_AM_MEDIA_TYPE mediatype;
 

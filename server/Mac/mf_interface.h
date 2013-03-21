@@ -50,7 +50,7 @@ struct mf_peer_context
 	rdpContext _p;
 	
 	mfInfo* info;
-	STREAM* s;
+	wStream* s;
 	BOOL activated;
 	UINT32 frame_id;
 	BOOL audin_open;

@@ -29,7 +29,7 @@
 
 #include <freerdp/utils/string.h>
 
-BOOL freerdp_string_read_length32(STREAM* s, rdpString* string)
+BOOL freerdp_string_read_length32(wStream* s, rdpString* string)
 {
 	if(stream_get_left(s) < 4)
 		return FALSE;

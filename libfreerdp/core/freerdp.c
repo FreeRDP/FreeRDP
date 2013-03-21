@@ -119,7 +119,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (instance->settings->PlayRemoteFx)
 		{
-			STREAM* s;
+			wStream* s;
 			rdpUpdate* update;
 			pcap_record record;
 

@@ -117,14 +117,14 @@ void nego_attempt_tls(rdpNego* nego);
 void nego_attempt_rdp(rdpNego* nego);
 
 void nego_send(rdpNego* nego);
-int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+int nego_recv(rdpTransport* transport, wStream* s, void* extra);
 BOOL nego_recv_response(rdpNego* nego);
-BOOL nego_read_request(rdpNego* nego, STREAM* s);
+BOOL nego_read_request(rdpNego* nego, wStream* s);
 
 BOOL nego_send_negotiation_request(rdpNego* nego);
-void nego_process_negotiation_request(rdpNego* nego, STREAM* s);
-void nego_process_negotiation_response(rdpNego* nego, STREAM* s);
-void nego_process_negotiation_failure(rdpNego* nego, STREAM* s);
+void nego_process_negotiation_request(rdpNego* nego, wStream* s);
+void nego_process_negotiation_response(rdpNego* nego, wStream* s);
+void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 BOOL nego_send_negotiation_response(rdpNego* nego);
 
 rdpNego* nego_new(struct rdp_transport * transport);

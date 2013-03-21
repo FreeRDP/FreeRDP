@@ -28,7 +28,7 @@
 
 #include "window.h"
 
-BOOL update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
+BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 {
 	if(stream_get_left(s) < 8)
 		return FALSE;
@@ -78,7 +78,7 @@ BOOL update_read_icon_info(STREAM* s, ICON_INFO* icon_info)
 	return TRUE;
 }
 
-BOOL update_read_cached_icon_info(STREAM* s, CACHED_ICON_INFO* cached_icon_info)
+BOOL update_read_cached_icon_info(wStream* s, CACHED_ICON_INFO* cached_icon_info)
 {
 	if(stream_get_left(s) < 3)
 		return FALSE;
@@ -87,7 +87,7 @@ BOOL update_read_cached_icon_info(STREAM* s, CACHED_ICON_INFO* cached_icon_info)
 	return TRUE;
 }
 
-BOOL update_read_notify_icon_infotip(STREAM* s, NOTIFY_ICON_INFOTIP* notify_icon_infotip)
+BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* notify_icon_infotip)
 {
 	if(stream_get_left(s) < 8)
 		return FALSE;
@@ -97,7 +97,7 @@ BOOL update_read_notify_icon_infotip(STREAM* s, NOTIFY_ICON_INFOTIP* notify_icon
 			rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
 }
 
-BOOL update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
 {
 	int i;
 	int size;
@@ -233,7 +233,7 @@ BOOL update_read_window_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIN
 	return TRUE;
 }
 
-BOOL update_read_window_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
+BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
 	window_icon->iconInfo = (ICON_INFO*) malloc(sizeof(ICON_INFO));
 	ZeroMemory(window_icon->iconInfo, sizeof(ICON_INFO));
@@ -241,17 +241,17 @@ BOOL update_read_window_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WIND
 	return update_read_icon_info(s, window_icon->iconInfo); /* iconInfo (ICON_INFO) */
 }
 
-BOOL update_read_window_cached_icon_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
+BOOL update_read_window_cached_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
 {
 	return update_read_cached_icon_info(s, &window_cached_icon->cachedIcon); /* cachedIcon (CACHED_ICON_INFO) */
 }
 
-void update_read_window_delete_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_read_window_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	/* window deletion event */
 }
 
-BOOL update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -294,7 +294,7 @@ BOOL update_recv_window_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_IN
 	return TRUE;
 }
 
-BOOL update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
 		if(stream_get_left(s) < 4)
@@ -330,12 +330,12 @@ BOOL update_read_notification_icon_state_order(STREAM* s, WINDOW_ORDER_INFO* ord
 	return TRUE;
 }
 
-void update_read_notification_icon_delete_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_read_notification_icon_delete_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	/* notification icon deletion event */
 }
 
-BOOL update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -365,7 +365,7 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, STREAM* s, WIND
 	return TRUE;
 }
 
-BOOL update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
+BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
 	int i;
 	int size;
@@ -401,12 +401,12 @@ BOOL update_read_desktop_actively_monitored_order(STREAM* s, WINDOW_ORDER_INFO* 
 	return TRUE;
 }
 
-void update_read_desktop_non_monitored_order(STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+void update_read_desktop_non_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	/* non-monitored desktop notification event */
 }
 
-BOOL update_recv_desktop_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_INFO* orderInfo)
+BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
@@ -427,7 +427,7 @@ BOOL update_recv_desktop_info_order(rdpUpdate* update, STREAM* s, WINDOW_ORDER_I
 	return TRUE;
 }
 
-BOOL update_recv_altsec_window_order(rdpUpdate* update, STREAM* s)
+BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 {
 	UINT16 orderSize;
 	rdpWindowUpdate* window = update->window;

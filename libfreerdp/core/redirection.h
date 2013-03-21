@@ -46,8 +46,8 @@ struct rdp_redirection
 };
 typedef struct rdp_redirection rdpRedirection;
 
-BOOL rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
-BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
+BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
 
 rdpRedirection* redirection_new(void);
 void redirection_free(rdpRedirection* redirection);

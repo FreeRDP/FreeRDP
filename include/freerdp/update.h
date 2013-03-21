@@ -152,7 +152,7 @@ typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
 typedef void (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
 typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
 
-typedef void (*pSurfaceCommand)(rdpContext* context, STREAM* s);
+typedef void (*pSurfaceCommand)(rdpContext* context, wStream* s);
 typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
 typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker);
 typedef void (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);

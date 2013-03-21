@@ -898,7 +898,7 @@ static void xf_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data, int
 
 static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 {
-	STREAM* s;
+	wStream* s;
 	UINT16 bpp;
 	UINT32 offset;
 	UINT32 ncolors;

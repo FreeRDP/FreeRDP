@@ -100,7 +100,7 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
-	STREAM* data_in;
+	wStream* data_in;
 	
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -167,7 +167,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
-			stream_free((STREAM*) pData);
+			stream_free((wStream*) pData);
 			break;
 
 		case CHANNEL_EVENT_USER:
@@ -178,7 +178,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 
 static void* svc_plugin_thread_func(void* arg)
 {
-	STREAM* data;
+	wStream* data;
 	RDP_EVENT* event;
 	wMessage message;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
@@ -199,7 +199,7 @@ static void* svc_plugin_thread_func(void* arg)
 
 			if (message.id == 0)
 			{
-				data = (STREAM*) message.wParam;
+				data = (wStream*) message.wParam;
 				IFCALL(plugin->receive_callback, plugin, data);
 			}
 			else if (message.id == 1)
@@ -301,7 +301,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
 }
 
-int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
+int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 {
 	UINT32 status = 0;
 

@@ -254,7 +254,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
 	BYTE* mod;
 	BYTE* exp;
-	STREAM* s;
+	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
 	BYTE crypt_client_random[256 + 8];
@@ -316,7 +316,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	return TRUE;
 }
 
-static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
+static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 {
 	BYTE client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
 	BYTE crypt_client_random[256 + 8];
@@ -394,7 +394,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
+BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
 	{
@@ -413,7 +413,7 @@ BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
+BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
 		return FALSE;
@@ -426,7 +426,7 @@ BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
+BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
 	int i;
 	UINT16 channel_id;
@@ -497,7 +497,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
+BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
 	if (!license_recv(rdp->license, s))
 		return FALSE;
@@ -516,7 +516,7 @@ BOOL rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_demand_active(rdpRdp* rdp, STREAM* s)
+BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
 	BYTE* mark;
 	UINT16 width;
@@ -583,7 +583,7 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
@@ -646,7 +646,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 {
 	int i;
 
@@ -670,7 +670,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_erect_domain_request(rdp->mcs, s))
 		return FALSE;
@@ -680,7 +680,7 @@ BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_attach_user_request(rdp->mcs, s))
 		return FALSE;
@@ -693,7 +693,7 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 {
 	int i;
 	UINT16 channel_id;
@@ -725,7 +725,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_client_keys(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_client_keys(rdpRdp* rdp, wStream* s)
 {
 
 	if (!rdp_server_establish_keys(rdp, s))
@@ -736,7 +736,7 @@ BOOL rdp_server_accept_client_keys(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_client_info(rdpRdp* rdp, wStream* s)
 {
 
 	if (!rdp_recv_client_info(rdp, s))
@@ -750,7 +750,7 @@ BOOL rdp_server_accept_client_info(rdpRdp* rdp, STREAM* s)
 	return TRUE;
 }
 
-BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, STREAM* s)
+BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 {
 	if (!rdp_recv_confirm_active(rdp, s))
 		return FALSE;

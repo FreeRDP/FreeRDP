@@ -45,7 +45,7 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/settings.h>
 #include <freerdp/utils/stream.h>
 
-typedef int (*TransportRecv) (rdpTransport* transport, STREAM* stream, void* extra);
+typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* extra);
 
 struct rdp_transport
 {
@@ -58,10 +58,10 @@ struct rdp_transport
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;
-	STREAM* SendStream;
-	STREAM* ReceiveStream;
+	wStream* SendStream;
+	wStream* ReceiveStream;
 	void* ReceiveExtra;
-	STREAM* ReceiveBuffer;
+	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
 	HANDLE ReceiveEvent;
 	BOOL blocking;
@@ -69,8 +69,8 @@ struct rdp_transport
 	wObjectPool* ReceivePool;
 };
 
-STREAM* transport_recv_stream_init(rdpTransport* transport, int size);
-STREAM* transport_send_stream_init(rdpTransport* transport, int size);
+wStream* transport_recv_stream_init(rdpTransport* transport, int size);
+wStream* transport_send_stream_init(rdpTransport* transport, int size);
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
 void transport_attach(rdpTransport* transport, int sockfd);
 BOOL transport_disconnect(rdpTransport* transport);
@@ -81,14 +81,14 @@ BOOL transport_connect_tsg(rdpTransport* transport);
 BOOL transport_accept_rdp(rdpTransport* transport);
 BOOL transport_accept_tls(rdpTransport* transport);
 BOOL transport_accept_nla(rdpTransport* transport);
-int transport_read(rdpTransport* transport, STREAM* s);
-int transport_write(rdpTransport* transport, STREAM* s);
+int transport_read(rdpTransport* transport, wStream* s);
+int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 
-STREAM* transport_receive_pool_take(rdpTransport* transport);
-int transport_receive_pool_return(rdpTransport* transport, STREAM* pdu);
+wStream* transport_receive_pool_take(rdpTransport* transport);
+int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
 rdpTransport* transport_new(rdpSettings* settings);
 void transport_free(rdpTransport* transport);

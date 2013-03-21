@@ -121,7 +121,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	//encode
 	
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update;
 	mfPeerContext* mfp;
