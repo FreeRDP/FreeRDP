@@ -91,14 +91,24 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 		0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
+	{
+		printf("Error opening RegKey: status=%0X\n", status);
+		if (status == ERROR_ACCESS_DENIED) 
+				printf("access denied. Do you have admin privleges?\n");
 		return FALSE;
+	}
 
 	dwSize = sizeof(DWORD);
 	status = RegQueryValueEx(hKey, _T("Attach.ToDesktop"),
 		NULL, &dwType, (BYTE*) &dwValue, &dwSize);
 
 	if (status != ERROR_SUCCESS)
+	{
+		printf("Error querying RegKey: status=%0X\n", status);
+		if (status == ERROR_ACCESS_DENIED) 
+				printf("access denied. Do you have admin privleges?\n");
 		return FALSE;
+	}
 
 	if (dwValue ^ mode) //only if we want to change modes
 	{
