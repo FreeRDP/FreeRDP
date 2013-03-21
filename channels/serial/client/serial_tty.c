@@ -372,9 +372,9 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, 
 
 BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 {
-	ssize_t r;
+	ssize_t status;
 	long timeout = 90;
-	struct termios *ptermios;
+	struct termios* ptermios;
 
 	DEBUG_SVC("in");
 	ptermios = tty->ptermios;
@@ -410,13 +410,13 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 	ZeroMemory(buffer, *Length);
 
-	r = read(tty->fd, buffer, *Length);
+	status = read(tty->fd, buffer, *Length);
 
-	if (r < 0)
+	if (status < 0)
 		return FALSE;
 
-	tty->event_txempty = r;
-	*Length = r;
+	tty->event_txempty = status;
+	*Length = status;
 
 	return TRUE;
 }
@@ -550,7 +550,7 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 {
 	int bytes;
-	BOOL ret = FALSE;
+	BOOL status = FALSE;
 
 	DEBUG_SVC("in");
 
@@ -579,7 +579,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 			{
 				DEBUG_SVC("SERIAL_EV_RLSD");
 				*result |= SERIAL_EV_RLSD;
-				ret = TRUE;
+				status = TRUE;
 			}
 
 		}
@@ -588,14 +588,14 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_RXFLAG bytes %d", bytes);
 			*result |= SERIAL_EV_RXFLAG;
-			ret = TRUE;
+			status = TRUE;
 		}
 
 		if ((tty->wait_mask & SERIAL_EV_RXCHAR))
 		{
 			DEBUG_SVC("SERIAL_EV_RXCHAR bytes %d", bytes);
 			*result |= SERIAL_EV_RXCHAR;
-			ret = TRUE;
+			status = TRUE;
 		}
 
 	}
@@ -611,7 +611,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 	{
 		DEBUG_SVC("SERIAL_EV_TXEMPTY");
 		*result |= SERIAL_EV_TXEMPTY;
-		ret = TRUE;
+		status = TRUE;
 	}
 	tty->event_txempty = bytes;
 #endif
@@ -624,7 +624,7 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_DSR %s", (bytes & TIOCM_DSR) ? "ON" : "OFF");
 			*result |= SERIAL_EV_DSR;
-			ret = TRUE;
+			status = TRUE;
 		}
 	}
 
@@ -635,14 +635,14 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 		{
 			DEBUG_SVC("SERIAL_EV_CTS %s", (bytes & TIOCM_CTS) ? "ON" : "OFF");
 			*result |= SERIAL_EV_CTS;
-			ret = TRUE;
+			status = TRUE;
 		}
 	}
 
-	if (ret)
+	if (status)
 		tty->event_pending = 0;
 
-	return ret;
+	return status;
 }
 
 static BOOL tty_get_termios(SERIAL_TTY* tty)
