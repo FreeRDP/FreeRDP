@@ -31,7 +31,6 @@
 
 #include <winpr/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 

@@ -38,13 +38,12 @@
 #undef BOOL
 
 #include <winpr/crt.h>
-
-#include <freerdp/freerdp.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <freerdp/utils/svc_plugin.h>
-#include <freerdp/utils/thread.h>
+
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/utils/svc_plugin.h>
 
 #include "smartcard_main.h"
 

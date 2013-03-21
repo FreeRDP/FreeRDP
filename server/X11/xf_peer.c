@@ -39,7 +39,6 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/utils/file.h>
-#include <freerdp/utils/thread.h>
 
 #include "xf_input.h"
 #include "xf_encode.h"

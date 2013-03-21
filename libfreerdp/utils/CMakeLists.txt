@@ -32,7 +32,6 @@ set(${MODULE_PREFIX}_SRCS
 	string.c
 	svc_plugin.c
 	tcp.c
-	thread.c
 	time.c
 	uds.c)
 
