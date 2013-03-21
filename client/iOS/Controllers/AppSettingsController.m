@@ -27,7 +27,7 @@
     if ((self = [super initWithStyle:style])) 
 	{                   
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_settings" ofType:@"png"]];
-        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Tabbar item settings") image:tabBarIcon tag:0]];
+        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Tabbar item settings") image:tabBarIcon tag:0] autorelease]];
     }
     return self;
 }
