@@ -50,7 +50,7 @@ int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
 		if (name != NULL)
 			_stprintf(name, _T("%s (%s)"), dd.DeviceName, dd.DeviceString);
 
-		dc = CreateDC(NULL, dd.DeviceName, NULL, NULL);
+		dc = CreateDC(dd.DeviceName, NULL, NULL, NULL);
 		*width = GetDeviceCaps(dc, HORZRES);
 		*height = GetDeviceCaps(dc, VERTRES);
 		*bpp = GetDeviceCaps(dc, BITSPIXEL);
