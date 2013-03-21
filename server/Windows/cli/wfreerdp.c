@@ -52,6 +52,7 @@ BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARA
 
 int main(int argc, char* argv[])
 {
+	BOOL screen_selected = FALSE;
 	int index;
 	wfServer* server;
 
@@ -108,6 +109,7 @@ int main(int argc, char* argv[])
 	
 		if (strcmp("--screen", argv[index]) == 0)
 		{
+			screen_selected = TRUE;
 			index++;
 			if (index == argc)
 			{
@@ -126,6 +128,38 @@ int main(int argc, char* argv[])
 			break;
 		}
 	}
+
+	if (screen_selected == FALSE)
+	{
+		_TCHAR name[128];
+		int width;
+		int height;
+		int bpp;
+		int i;
+
+		_tprintf(_T("screen id not provided. attempting to detect...\n"));
+		_tprintf(_T("Detecting screens...\n"));
+		_tprintf(_T("\nID\tResolution\t\tName (Interface)\n\n"));
+
+		for (i=0; ; i++)
+		{
+			if (get_screen_info(i, name, &width, &height, &bpp) != 0)
+			{
+				if ( (width * height * bpp) == 0 )
+					continue;
+
+				_tprintf(_T("%d\t%dx%dx%d\t"), i, width, height, bpp);
+				_tprintf(_T("%s\n"), name);
+				set_screen_id(i);
+				break;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
 
 	printf("Starting server\n");
 

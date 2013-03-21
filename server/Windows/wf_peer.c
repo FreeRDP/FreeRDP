@@ -85,6 +85,7 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 		(wfi->bitsPerPixel == 0) )
 	{
 		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
+		_tprintf(_T("\t%dx%dx%d\n"), wfi->servscreen_height, wfi->servscreen_width, wfi->bitsPerPixel);
 		return FALSE;
 	}
 
@@ -223,6 +224,14 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	rdpSettings* settings;
 	wfPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) lpParam;
+
+	if (!getenv("HOME"))
+	{
+		char home[MAX_PATH * 2] = "HOME=";
+		strcat(home, getenv("HOMEDRIVE"));
+		strcat(home, getenv("HOMEPATH"));
+		_putenv(home);
+	}
 
 	wf_peer_init(client);
 

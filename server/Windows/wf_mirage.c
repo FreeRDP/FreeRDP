@@ -186,7 +186,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 	DEVMODE* deviceMode;
 	LONG disp_change_status;
 	DWORD dmf_devmodewext_magic_sig = 0xDF20C0DE;
-	
+
 	if ( (mode != MIRROR_LOAD) && (mode != MIRROR_UNLOAD) )
 	{
 		printf("Invalid mirror mode!\n");
