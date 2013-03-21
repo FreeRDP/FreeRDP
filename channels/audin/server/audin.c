@@ -26,31 +26,37 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
 
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/thread.h>
-#include <winpr/stream.h>
+#include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 
-#define MSG_SNDIN_VERSION       0x01
-#define MSG_SNDIN_FORMATS       0x02
-#define MSG_SNDIN_OPEN          0x03
-#define MSG_SNDIN_OPEN_REPLY    0x04
-#define MSG_SNDIN_DATA_INCOMING 0x05
-#define MSG_SNDIN_DATA          0x06
-#define MSG_SNDIN_FORMATCHANGE  0x07
+#define MSG_SNDIN_VERSION		0x01
+#define MSG_SNDIN_FORMATS		0x02
+#define MSG_SNDIN_OPEN			0x03
+#define MSG_SNDIN_OPEN_REPLY		0x04
+#define MSG_SNDIN_DATA_INCOMING		0x05
+#define MSG_SNDIN_DATA			0x06
+#define MSG_SNDIN_FORMATCHANGE		0x07
 
 typedef struct _audin_server
 {
 	audin_server_context context;
 
+	BOOL opened;
+
+	HANDLE event;
+	HANDLE stopEvent;
+
+	HANDLE thread;
 	void* audin_channel;
-	freerdp_thread* audin_channel_thread;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 
-	BOOL opened;
 } audin_server;
 
 static void audin_server_select_format(audin_server_context* context, int client_format_index)
@@ -59,7 +65,9 @@ static void audin_server_select_format(audin_server_context* context, int client
 
 	if (client_format_index >= context->num_client_formats)
 		return;
+
 	context->selected_client_format = client_format_index;
+
 	if (audin->opened)
 	{
 		/* TODO: send MSG_SNDIN_FORMATCHANGE */
@@ -79,7 +87,9 @@ static BOOL audin_server_recv_version(audin_server* audin, wStream* s, UINT32 le
 
 	if (length < 4)
 		return FALSE;
+
 	stream_read_UINT32(s, Version);
+
 	if (Version < 1)
 		return FALSE;
 
@@ -197,6 +207,7 @@ static BOOL audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32
 
 	if (length < 4)
 		return FALSE;
+
 	stream_read_UINT32(s, Result);
 
 	IFCALL(audin->context.OpenResult, &audin->context, Result);
@@ -218,7 +229,7 @@ static BOOL audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 
 	format = &audin->context.client_formats[audin->context.selected_client_format];
 
-	if (format->wFormatTag == 2)
+	if (format->wFormatTag == WAVE_FORMAT_ADPCM)
 	{
 		audin->dsp_context->decode_ms_adpcm(audin->dsp_context,
 			stream_get_tail(s), length, format->nChannels, format->nBlockAlign);
@@ -227,7 +238,7 @@ static BOOL audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 		sbytes_per_sample = 2;
 		sbytes_per_frame = format->nChannels * 2;
 	}
-	else if (format->wFormatTag == 0x11)
+	else if (format->wFormatTag == WAVE_FORMAT_DVI_ADPCM)
 	{
 		audin->dsp_context->decode_ima_adpcm(audin->dsp_context,
 			stream_get_tail(s), length, format->nChannels, format->nBlockAlign);
@@ -271,23 +282,22 @@ static void* audin_server_thread_func(void* arg)
 	BOOL ready = FALSE;
 	UINT32 bytes_returned = 0;
 	audin_server* audin = (audin_server*) arg;
-	freerdp_thread* thread = audin->audin_channel_thread;
 
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
 
-		thread->signals[thread->num_signals++] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
+		audin->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
+
 	while (1)
 	{
-		if (freerdp_thread_wait(thread) < 0)
-			break;
+		WaitForSingleObject(audin->event, INFINITE);
 
-		if (freerdp_thread_is_stopped(thread))
+		if (WaitForSingleObject(audin->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &bytes_returned) == FALSE)
@@ -310,10 +320,9 @@ static void* audin_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		if (freerdp_thread_wait(thread) < 0)
-			break;
-		
-		if (freerdp_thread_is_stopped(thread))
+		WaitForSingleObject(audin->event, INFINITE);
+
+		if (WaitForSingleObject(audin->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		stream_set_pos(s, 0);
@@ -330,11 +339,13 @@ static void* audin_server_thread_func(void* arg)
 				stream_get_size(s), &bytes_returned) == FALSE)
 				break;
 		}
+
 		if (bytes_returned < 1)
 			continue;
 
 		stream_read_BYTE(s, MessageId);
 		bytes_returned--;
+
 		switch (MessageId)
 		{
 			case MSG_SNDIN_VERSION:
@@ -370,7 +381,6 @@ static void* audin_server_thread_func(void* arg)
 	stream_free(s);
 	WTSVirtualChannelClose(audin->audin_channel);
 	audin->audin_channel = NULL;
-	freerdp_thread_quit(thread);
 
 	return NULL;
 }
@@ -379,15 +389,17 @@ static BOOL audin_server_open(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*) context;
 
-	if (audin->audin_channel_thread == NULL)
+	if (!audin->thread)
 	{
 		audin->audin_channel = WTSVirtualChannelOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
 
-		if (audin->audin_channel == NULL)
+		if (!audin->audin_channel)
 			return FALSE;
 
-		audin->audin_channel_thread = freerdp_thread_new();
-		freerdp_thread_start(audin->audin_channel_thread, audin_server_thread_func, audin);
+		audin->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		audin->thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) audin_server_thread_func, (void*) audin, 0, NULL);
 
 		return TRUE;
 	}
@@ -399,17 +411,19 @@ static BOOL audin_server_close(audin_server_context* context)
 {
 	audin_server* audin = (audin_server*) context;
 
-	if (audin->audin_channel_thread)
+	if (audin->thread)
 	{
-		freerdp_thread_stop(audin->audin_channel_thread);
-		freerdp_thread_free(audin->audin_channel_thread);
-		audin->audin_channel_thread = NULL;
+		SetEvent(audin->stopEvent);
+		WaitForSingleObject(audin->thread, INFINITE);
+		audin->thread = NULL;
 	}
+
 	if (audin->audin_channel)
 	{
 		WTSVirtualChannelClose(audin->audin_channel);
 		audin->audin_channel = NULL;
 	}
+
 	audin->context.selected_client_format = -1;
 
 	return TRUE;
