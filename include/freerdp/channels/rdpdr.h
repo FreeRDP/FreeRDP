@@ -25,10 +25,10 @@
 #include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 /* RDPDR_HEADER.Component */

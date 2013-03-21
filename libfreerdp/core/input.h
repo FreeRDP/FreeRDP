@@ -26,7 +26,8 @@
 
 #include <freerdp/input.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Input Events */
 #define INPUT_EVENT_SYNC		0x0000

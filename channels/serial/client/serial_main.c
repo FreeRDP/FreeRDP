@@ -50,7 +50,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;

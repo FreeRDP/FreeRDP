@@ -53,7 +53,7 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "tcp.h"
 

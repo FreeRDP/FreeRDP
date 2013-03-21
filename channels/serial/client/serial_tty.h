@@ -29,7 +29,8 @@
 #endif
 
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct _SERIAL_TTY SERIAL_TTY;
 

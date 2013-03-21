@@ -23,7 +23,8 @@
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Client Address Family */
 #define ADDRESS_FAMILY_INET		0x0002

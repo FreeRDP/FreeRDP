@@ -19,7 +19,7 @@
 
 #include <freerdp/freerdp.h>
 #include <winpr/print.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/codec/bitmap.h>
 
 #include "test_bitmap.h"

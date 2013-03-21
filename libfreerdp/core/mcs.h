@@ -21,10 +21,12 @@
 #define __MCS_H
 
 #include "transport.h"
+
 #include <freerdp/crypto/ber.h>
 
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #define MCS_BASE_CHANNEL_ID	1001
 #define MCS_GLOBAL_CHANNEL_ID	1003

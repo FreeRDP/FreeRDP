@@ -21,7 +21,8 @@
 #define __FASTPATH_H
 
 #include "rdp.h"
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct rdp_fastpath rdpFastPath;
 

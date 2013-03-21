@@ -40,7 +40,7 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
@@ -52,6 +52,8 @@
 #include "tsmf_main.h"
 #include "tsmf_codec.h"
 #include "tsmf_media.h"
+
+#include <pthread.h>
 
 #define AUDIO_TOLERANCE 10000000LL
 
@@ -879,7 +881,7 @@ void tsmf_presentation_set_audio_device(TSMF_PRESENTATION* presentation, const c
 
 static void tsmf_stream_flush(TSMF_STREAM* stream)
 {
-	TSMF_SAMPLE* sample;
+	//TSMF_SAMPLE* sample;
 
 	/* TODO: free lists */
 

@@ -31,7 +31,7 @@
 #include <winpr/thread.h>
 
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
 

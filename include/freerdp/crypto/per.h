@@ -21,7 +21,8 @@
 #define FREERDP_CRYPTO_PER_H
 
 #include <freerdp/api.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 FREERDP_API BOOL per_read_length(wStream* s, UINT16* length);
 FREERDP_API void per_write_length(wStream* s, int length);

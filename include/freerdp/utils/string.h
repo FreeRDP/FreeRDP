@@ -22,7 +22,8 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 struct rdp_string
 {

@@ -21,8 +21,9 @@
 #ifndef __CLIPRDR_MAIN_H
 #define __CLIPRDR_MAIN_H
 
+#include <winpr/stream.h>
+
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 
 struct _CLIPRDR_FORMAT_NAME
 {

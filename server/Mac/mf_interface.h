@@ -26,7 +26,8 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/listener.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/crt.h>
 
 //#ifdef WITH_SERVER_CHANNELS
 #include <freerdp/channels/wtsvc.h>

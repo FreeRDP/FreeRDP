@@ -28,7 +28,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "rdp.h"
 #include "channel.h"

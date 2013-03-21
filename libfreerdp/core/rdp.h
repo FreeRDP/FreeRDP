@@ -44,9 +44,10 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
+
+#include <winpr/stream.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT					0x0001

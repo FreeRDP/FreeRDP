@@ -27,8 +27,9 @@
 #endif
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/locale/timezone.h>
+
+#include <winpr/stream.h>
 
 void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time);
 void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time);

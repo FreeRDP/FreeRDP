@@ -21,9 +21,11 @@
 #define __ORDERS_H
 
 #include "rdp.h"
+
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Order Control Flags */
 #define ORDER_STANDARD				0x01

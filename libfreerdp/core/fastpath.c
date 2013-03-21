@@ -29,7 +29,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "orders.h"
 #include "update.h"

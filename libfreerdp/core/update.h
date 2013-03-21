@@ -22,10 +22,12 @@
 
 #include "rdp.h"
 #include "orders.h"
+
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #define UPDATE_TYPE_ORDERS		0x0000
 #define UPDATE_TYPE_BITMAP		0x0001

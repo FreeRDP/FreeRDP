@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/primitives.h>
 
 #include "rfx_types.h"

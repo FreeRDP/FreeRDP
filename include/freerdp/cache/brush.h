@@ -24,7 +24,8 @@
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/update.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct _BRUSH_ENTRY BRUSH_ENTRY;
 typedef struct rdp_brush_cache rdpBrushCache;

@@ -41,7 +41,7 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 

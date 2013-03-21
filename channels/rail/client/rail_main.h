@@ -25,8 +25,9 @@
 #include <freerdp/rail.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/svc_plugin.h>
+
+#include <winpr/stream.h>
 
 struct rdp_rail_order
 {

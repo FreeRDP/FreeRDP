@@ -30,11 +30,11 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/stream.h>
 
 typedef struct rdp_svc_plugin rdpSvcPlugin;
 

@@ -25,6 +25,7 @@ typedef struct rdp_update rdpUpdate;
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/rail.h>
@@ -32,7 +33,6 @@ typedef struct rdp_update rdpUpdate;
 #include <freerdp/freerdp.h>
 #include <freerdp/graphics.h>
 #include <freerdp/utils/pcap.h>
-#include <freerdp/utils/stream.h>
 
 #include <freerdp/primary.h>
 #include <freerdp/secondary.h>

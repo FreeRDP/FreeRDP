@@ -21,11 +21,13 @@
 #define FREERDP_CORE_GCC_H
 
 #include "mcs.h"
+
 #include <freerdp/crypto/per.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 BOOL gcc_read_conference_create_request(wStream* s, rdpSettings* settings);
 void gcc_write_conference_create_request(wStream* s, wStream* user_data);

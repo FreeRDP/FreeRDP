@@ -22,12 +22,12 @@
 #define __WTSVC_H
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/wtsvc.h>
 
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)

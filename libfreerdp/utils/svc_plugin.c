@@ -32,7 +32,7 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 

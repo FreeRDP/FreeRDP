@@ -23,7 +23,7 @@
 
 #include "update.h"
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s);
 

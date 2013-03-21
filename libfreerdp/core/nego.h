@@ -21,10 +21,12 @@
 #define FREERDP_CORE_NEGO_H
 
 #include "transport.h"
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Protocol Security Negotiation Protocols */
 enum RDP_NEG_PROTOCOLS

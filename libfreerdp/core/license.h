@@ -23,12 +23,14 @@
 typedef struct rdp_license rdpLicense;
 
 #include "rdp.h"
+
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Licensing Packet Types */
 

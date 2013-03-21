@@ -26,8 +26,9 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 /* Certificate Version */
 #define CERT_CHAIN_VERSION_1		0x00000001

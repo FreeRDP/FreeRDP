@@ -20,7 +20,7 @@
 #ifndef __TPDU_H
 #define __TPDU_H
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 enum X224_TPDU_TYPE
 {

@@ -21,6 +21,7 @@
 #define __XF_PEER_H
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/gdi/gdi.h>
@@ -28,7 +29,6 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/stopwatch.h>
 
 typedef struct xf_peer_context xfPeerContext;

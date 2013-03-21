@@ -22,6 +22,8 @@
 #endif
 
 #include <stdio.h>
+#include <winpr/crt.h>
+
 #include <freerdp/crypto/ber.h>
 
 BOOL ber_read_length(wStream* s, int* length)

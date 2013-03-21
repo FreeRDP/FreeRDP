@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/crypto/er.h>
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/der.h>

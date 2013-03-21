@@ -36,7 +36,8 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 #include <freerdp/error.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>

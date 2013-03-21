@@ -31,7 +31,7 @@
 
 #include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <time.h>
 #include <errno.h>

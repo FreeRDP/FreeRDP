@@ -25,7 +25,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Capability Set Types */
 #define CAPSET_TYPE_GENERAL			0x0001

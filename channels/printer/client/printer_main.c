@@ -30,7 +30,7 @@
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/thread.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>

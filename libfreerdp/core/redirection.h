@@ -24,8 +24,9 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/string.h>
+
+#include <winpr/stream.h>
 
 struct rdp_redirection
 {

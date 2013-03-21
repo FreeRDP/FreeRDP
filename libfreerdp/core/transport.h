@@ -43,7 +43,8 @@ typedef struct rdp_transport rdpTransport;
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* extra);
 

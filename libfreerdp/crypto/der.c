@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <freerdp/crypto/der.h>
 
 int _der_skip_length(int length)

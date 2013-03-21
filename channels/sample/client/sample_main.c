@@ -34,7 +34,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 

@@ -29,7 +29,6 @@ set(${MODULE_PREFIX}_SRCS
 	rail.c
 	signal.c
 	stopwatch.c
-	stream.c
 	string.c
 	svc_plugin.c
 	tcp.c

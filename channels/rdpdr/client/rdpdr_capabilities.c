@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_main.h"

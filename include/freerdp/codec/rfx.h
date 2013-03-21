@@ -23,7 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #ifdef __cplusplus
 extern "C" {

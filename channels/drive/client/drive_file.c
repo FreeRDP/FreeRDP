@@ -41,7 +41,7 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
