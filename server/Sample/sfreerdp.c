@@ -69,8 +69,9 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 	{
 		if (context->debug_channel_thread)
 		{
-			freerdp_thread_stop(context->debug_channel_thread);
-			freerdp_thread_free(context->debug_channel_thread);
+			SetEvent(context->stopEvent);
+			WaitForSingleObject(context->debug_channel_thread, INFINITE);
+			CloseHandle(context->debug_channel_thread);
 		}
 
 		stream_free(context->s);
@@ -396,13 +397,13 @@ static void* tf_debug_channel_thread_func(void* arg)
 	void* buffer;
 	UINT32 bytes_returned = 0;
 	testPeerContext* context = (testPeerContext*) arg;
-	freerdp_thread* thread = context->debug_channel_thread;
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
+
+		context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	s = stream_new(4096);
@@ -411,9 +412,9 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	while (1)
 	{
-		freerdp_thread_wait(thread);
+		WaitForSingleObject(context->event, INFINITE);
 
-		if (freerdp_thread_is_stopped(thread))
+		if (WaitForSingleObject(context->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		stream_set_pos(s, 0);
@@ -440,7 +441,6 @@ static void* tf_debug_channel_thread_func(void* arg)
 	}
 
 	stream_free(s);
-	freerdp_thread_quit(thread);
 
 	return 0;
 }
@@ -489,9 +489,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 				if (context->debug_channel != NULL)
 				{
 					printf("Open channel rdpdbg.\n");
-					context->debug_channel_thread = freerdp_thread_new();
-					freerdp_thread_start(context->debug_channel_thread,
-						tf_debug_channel_thread_func, context);
+
+					context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+					context->debug_channel_thread = CreateThread(NULL, 0,
+							(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
 				}
 			}
 			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
@@ -712,6 +714,7 @@ static void* test_peer_mainloop(void* arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
 	}

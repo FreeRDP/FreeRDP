@@ -29,6 +29,10 @@
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+
 struct test_peer_context
 {
 	rdpContext _p;
@@ -43,9 +47,11 @@ struct test_peer_context
 	int icon_x;
 	int icon_y;
 	BOOL activated;
+	HANDLE event;
+	HANDLE stopEvent;
 	WTSVirtualChannelManager* vcm;
 	void* debug_channel;
-	freerdp_thread* debug_channel_thread;
+	HANDLE debug_channel_thread;
 	audin_server_context* audin;
 	BOOL audin_open;
 	UINT32 frame_id;
