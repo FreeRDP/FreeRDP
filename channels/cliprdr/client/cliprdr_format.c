@@ -139,13 +139,13 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, STREAM* s, UINT3
 
 		if (ascii)
 		{
-			format_name->name = _strdup((char*) s->p);
+			format_name->name = _strdup((char*) s->pointer);
 			format_name->length = strlen(format_name->name);
 		}
 		else
 		{
 			format_name->name = NULL;
-			format_name->length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) s->p, 32 / 2, &format_name->name, 0, NULL, NULL);
+			format_name->length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) s->pointer, 32 / 2, &format_name->name, 0, NULL, NULL);
 		}
 
 		stream_seek(s, 32);

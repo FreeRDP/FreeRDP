@@ -409,7 +409,7 @@ void mcs_write_connect_initial(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 	mcs_write_domain_parameters(tmps, &mcs->maximumParameters);
 
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, user_data->data, stream_get_length(user_data));
+	ber_write_octet_string(tmps, user_data->buffer, stream_get_length(user_data));
 
 	length = stream_get_length(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
@@ -437,7 +437,7 @@ void mcs_write_connect_response(STREAM* s, rdpMcs* mcs, STREAM* user_data)
 	mcs->domainParameters = mcs->targetParameters;
 	mcs_write_domain_parameters(tmps, &(mcs->domainParameters));
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, user_data->data, stream_get_length(user_data));
+	ber_write_octet_string(tmps, user_data->buffer, stream_get_length(user_data));
 
 	length = stream_get_length(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);

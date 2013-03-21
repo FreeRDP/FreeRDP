@@ -145,9 +145,9 @@ static void update_message_SurfaceCommand(rdpContext* context, STREAM* s)
 
 	wParam = (STREAM*) malloc(sizeof(STREAM));
 
-	wParam->size = s->size;
-	wParam->data = (BYTE*) malloc(wParam->size);
-	wParam->p = wParam->data;
+	wParam->capacity = s->capacity;
+	wParam->buffer = (BYTE*) malloc(wParam->capacity);
+	wParam->pointer = wParam->buffer;
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SurfaceCommand), (void*) wParam, NULL);
@@ -985,7 +985,7 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 			IFCALL(proxy->SurfaceCommand, msg->context, (STREAM*) msg->wParam);
 			{
 				STREAM* s = (STREAM*) msg->wParam;
-				free(s->data);
+				free(s->buffer);
 				free(s);
 			}
 			break;

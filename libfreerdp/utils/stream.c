@@ -58,10 +58,10 @@ STREAM* stream_new(int size)
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
-			stream->data = (BYTE*) malloc(size);
-			ZeroMemory(stream->data, size);
-			stream->p = stream->data;
-			stream->size = size;
+			stream->buffer = (BYTE*) malloc(size);
+			ZeroMemory(stream->buffer, size);
+			stream->pointer = stream->buffer;
+			stream->capacity = size;
 		}
 	}
 
@@ -81,8 +81,8 @@ void stream_free(STREAM* stream)
 {
 	if (stream != NULL)
 	{
-		if (stream->data != NULL)
-			free(stream->data);
+		if (stream->buffer != NULL)
+			free(stream->buffer);
 
 		free(stream);
 	}
@@ -105,15 +105,15 @@ void stream_extend(STREAM* stream, int request_size)
 	int increased_size;
 
 	pos = stream_get_pos(stream);
-	original_size = stream->size;
+	original_size = stream->capacity;
 	increased_size = (request_size > original_size ? request_size : original_size);
-	stream->size += increased_size;
+	stream->capacity += increased_size;
 
 	if (original_size == 0)
-		stream->data = (BYTE*) malloc(stream->size);
+		stream->buffer = (BYTE*) malloc(stream->capacity);
 	else
-		stream->data = (BYTE*) realloc(stream->data, stream->size);
+		stream->buffer = (BYTE*) realloc(stream->buffer, stream->capacity);
 
-	memset(stream->data + original_size, 0, increased_size);
+	memset(stream->buffer + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);
 }

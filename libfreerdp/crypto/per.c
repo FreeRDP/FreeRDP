@@ -402,7 +402,7 @@ BOOL per_read_octet_string(STREAM* s, BYTE* oct_str, int length, int min)
 	if (stream_get_left(s) < length)
 		return FALSE;
 
-	a_oct_str = s->p;
+	a_oct_str = s->pointer;
 	stream_seek(s, length);
 
 	for (i = 0; i < length; i++)

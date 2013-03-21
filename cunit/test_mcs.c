@@ -103,8 +103,8 @@ void test_mcs_write_connect_initial(void)
 	mcs = mcs_new((rdpTransport*) NULL);
 
 	user_data = &_user_data;
-	user_data->data = gcc_CCrq;
-	user_data->p = user_data->data + sizeof(gcc_CCrq);
+	user_data->buffer = gcc_CCrq;
+	user_data->pointer = user_data->buffer + sizeof(gcc_CCrq);
 
 	s = stream_new(512);
 	mcs_write_connect_initial(s, mcs, user_data);

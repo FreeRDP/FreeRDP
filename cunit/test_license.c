@@ -319,8 +319,8 @@ void test_license(void)
 	memcpy(license->ClientRandom, client_random, sizeof(client_random));
 	memcpy(license->PremasterSecret, premaster_secret, sizeof(premaster_secret));
 
-	s->data = server_license_request;
-	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
+	s->buffer = server_license_request;
+	s->pointer = s->buffer + LICENSE_PREAMBLE_LENGTH;
 	license_read_license_request_packet(license, s);
 
 #if 0
@@ -355,7 +355,7 @@ void test_license(void)
 	printf("\n");
 
 	printf("modulus:\n");
-	winpr_HexDump(license->certificate->cert_info.modulus.data,
+	winpr_HexDump(license->certificate->cert_info.modulus.buffer,
 			license->certificate->cert_info.modulus.length);
 	printf("\n");
 
@@ -364,13 +364,13 @@ void test_license(void)
 	printf("\n");
 
 	printf("encrypted premaster secret:\n");
-	winpr_HexDump(license->EncryptedPremasterSecret->data,
+	winpr_HexDump(license->EncryptedPremasterSecret->buffer,
 			license->EncryptedPremasterSecret->length);
 	printf("\n");
 #endif
 
-	s->data = server_platform_challenge;
-	s->p = s->data + LICENSE_PREAMBLE_LENGTH;
+	s->buffer = server_platform_challenge;
+	s->pointer = s->buffer + LICENSE_PREAMBLE_LENGTH;
 	license_read_platform_challenge_packet(license, s);
 }
 
@@ -432,24 +432,24 @@ void test_license_generate_keys(void)
 	license_generate_keys(license);
 	license_encrypt_premaster_secret(license);
 
-	s->data = license->MasterSecret;
-	s->p = s->data + sizeof(test_master_secret);
+	s->buffer = license->MasterSecret;
+	s->pointer = s->buffer + sizeof(test_master_secret);
 	ASSERT_STREAM(s, test_master_secret, sizeof(test_master_secret));
 
-	s->data = license->SessionKeyBlob;
-	s->p = s->data + sizeof(test_session_key_blob);
+	s->buffer = license->SessionKeyBlob;
+	s->pointer = s->buffer + sizeof(test_session_key_blob);
 	ASSERT_STREAM(s, test_session_key_blob, sizeof(test_session_key_blob));
 
-	s->data = license->MacSaltKey;
-	s->p = s->data + sizeof(test_mac_salt_key);
+	s->buffer = license->MacSaltKey;
+	s->pointer = s->buffer + sizeof(test_mac_salt_key);
 	ASSERT_STREAM(s, test_mac_salt_key, sizeof(test_mac_salt_key));
 
-	s->data = license->LicensingEncryptionKey;
-	s->p = s->data + sizeof(test_licensing_encryption_key);
+	s->buffer = license->LicensingEncryptionKey;
+	s->pointer = s->buffer + sizeof(test_licensing_encryption_key);
 	ASSERT_STREAM(s, test_licensing_encryption_key, sizeof(test_licensing_encryption_key));
 
-	s->data = license->EncryptedPremasterSecret->data;
-	s->p = s->data + sizeof(test_encrypted_premaster_secret);
+	s->buffer = license->EncryptedPremasterSecret->data;
+	s->pointer = s->buffer + sizeof(test_encrypted_premaster_secret);
 	ASSERT_STREAM(s, test_encrypted_premaster_secret, sizeof(test_encrypted_premaster_secret));
 }
 
@@ -463,8 +463,8 @@ void test_license_encrypt_premaster_secret(void)
 	memcpy(license->certificate->cert_info.Modulus, test_modulus, sizeof(test_modulus));
 	license->certificate->cert_info.ModulusLength = sizeof(test_modulus);
 
-	s->data = license->EncryptedPremasterSecret->data;
-	s->p = s->data + sizeof(test_encrypted_premaster_secret);
+	s->buffer = license->EncryptedPremasterSecret->data;
+	s->pointer = s->buffer + sizeof(test_encrypted_premaster_secret);
 	ASSERT_STREAM(s, test_encrypted_premaster_secret, sizeof(test_encrypted_premaster_secret));
 }
 
@@ -492,8 +492,8 @@ void test_license_decrypt_platform_challenge(void)
 
 	license_decrypt_platform_challenge(license);
 
-	s->data = license->PlatformChallenge->data;
-	s->p = s->data + sizeof(test_platform_challenge);
+	s->buffer = license->PlatformChallenge->data;
+	s->pointer = s->buffer + sizeof(test_platform_challenge);
 
 	ASSERT_STREAM(s, test_platform_challenge, sizeof(test_platform_challenge));
 }

@@ -401,7 +401,7 @@ void test_message(void)
 		stream_seal(s);
 		/*hexdump(buffer, size);*/
 		stream_set_pos(s, 0);
-		message = rfx_process_message(context, s->p, s->size);
+		message = rfx_process_message(context, s->pointer, s->capacity);
 		if (i == 0)
 		{
 			for (j = 0; j < message->num_tiles; j++)

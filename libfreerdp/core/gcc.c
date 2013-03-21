@@ -219,7 +219,7 @@ void gcc_write_conference_create_request(STREAM* s, STREAM* user_data)
 	per_write_octet_string(s, h221_cs_key, 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
 
 	/* userData::value (OCTET_STRING) */
-	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of client data blocks */
+	per_write_octet_string(s, user_data->buffer, stream_get_length(user_data), 0); /* array of client data blocks */
 }
 
 BOOL gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
@@ -302,7 +302,7 @@ void gcc_write_conference_create_response(STREAM* s, STREAM* user_data)
 	per_write_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
 
 	/* userData (OCTET_STRING) */
-	per_write_octet_string(s, user_data->data, stream_get_length(user_data), 0); /* array of server data blocks */
+	per_write_octet_string(s, user_data->buffer, stream_get_length(user_data), 0); /* array of server data blocks */
 }
 
 BOOL gcc_read_client_data_blocks(STREAM* s, rdpSettings* settings, int length)
@@ -399,7 +399,7 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 
 	while (offset < length)
 	{
-		holdp = s->p;
+		holdp = s->pointer;
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
@@ -438,7 +438,7 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 				break;
 		}
 		offset += blockLength;
-		s->p = holdp + blockLength;
+		s->pointer = holdp + blockLength;
 	}
 
 	return TRUE;

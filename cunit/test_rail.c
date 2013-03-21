@@ -523,10 +523,10 @@ static void save_dump(void* data, size_t size)
 	if (p->in_streams_number < ARRAYSIZE(p->in_streams))
 	{
 		STREAM* s = &p->in_streams[p->in_streams_number];
-		s->data = malloc(size);
-		s->size = size;
+		s->buffer = malloc(size);
+		s->capacity = size;
 
-		memcpy(s->data, data, size);
+		memcpy(s->buffer, data, size);
 		p->in_streams_number++;
 	}
 }

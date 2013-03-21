@@ -563,7 +563,7 @@ static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
 	if (*size < 54)
 	{
-		DEBUG_X11_CLIPRDR("bmp length %d too short", *size);
+		DEBUG_X11_CLIPRDR("bmp length %d too short", *capacity);
 		return NULL;
 	}
 
@@ -906,7 +906,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	/* size should be at least sizeof(BITMAPINFOHEADER) */
 	if (size < 40)
 	{
-		DEBUG_X11_CLIPRDR("dib size %d too short", size);
+		DEBUG_X11_CLIPRDR("dib size %d too short", capacity);
 		return;
 	}
 
@@ -967,7 +967,7 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 {
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11_CLIPRDR("size=%d", event->size);
+	DEBUG_X11_CLIPRDR("size=%d", event->capacity);
 
 	if (cb->respond == NULL)
 	{

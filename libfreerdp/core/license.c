@@ -107,7 +107,7 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
 	for (index = 0; index < scopeList->count; index++)
 	{
 		scope = &scopeList->array[index];
-		printf("\t%s\n", (char*) scope->data);
+		printf("\t%s\n", (char*) scope->buffer);
 	}
 }
 
@@ -203,7 +203,7 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 
 #ifdef WITH_DEBUG_LICENSE
 	printf("Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
-	winpr_HexDump(s->p - 4, wMsgSize);
+	winpr_HexDump(s->pointer - 4, wMsgSize);
 #endif
 
 	stream_set_pos(s, length);
@@ -803,11 +803,11 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	printf("\n");
 
 	printf("EncryptedPlatformChallenge:\n");
-	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
+	winpr_HexDump(license->EncryptedPlatformChallenge->buffer, license->EncryptedPlatformChallenge->length);
 	printf("\n");
 
 	printf("PlatformChallenge:\n");
-	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
+	winpr_HexDump(license->PlatformChallenge->buffer, license->PlatformChallenge->length);
 	printf("\n");
 
 	printf("MacData:\n");
@@ -930,13 +930,13 @@ void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 	printf("\n");
 
 	printf("EncryptedPremasterSecret\n");
-	winpr_HexDump(license->EncryptedPremasterSecret->data, license->EncryptedPremasterSecret->length);
+	winpr_HexDump(license->EncryptedPremasterSecret->buffer, license->EncryptedPremasterSecret->length);
 	printf("\n");
 
-	printf("ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
+	printf("ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->buffer);
 	printf("\n");
 
-	printf("ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
+	printf("ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->buffer);
 	printf("\n");
 #endif
 }
@@ -1039,7 +1039,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	printf("\n");
 
 	printf("EncryptedHardwareId:\n");
-	winpr_HexDump(license->EncryptedHardwareId->data, 20);
+	winpr_HexDump(license->EncryptedHardwareId->buffer, 20);
 	printf("\n");
 #endif
 

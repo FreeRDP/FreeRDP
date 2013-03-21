@@ -332,9 +332,9 @@ static UINT32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 		{
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
-				data = s->p + 12;
+				data = s->pointer + 12;
 
-				length = length - (data - s->data);
+				length = length - (data - s->buffer);
 				stream_write_UINT16(s, 0x10); /* length */
 				stream_write_BYTE(s, 0x1); /* TSFIPS_VERSION 1*/
 
@@ -348,20 +348,20 @@ static UINT32 rdp_security_stream_out(rdpRdp* rdp, STREAM* s, int length)
 
 				stream_write_BYTE(s, pad);
 
-				security_hmac_signature(data, length, s->p, rdp);
+				security_hmac_signature(data, length, s->pointer, rdp);
 				stream_seek(s, 8);
 				security_fips_encrypt(data, length + pad, rdp);
 			}
 			else
 			{
-				data = s->p + 8;
-				length = length - (data - s->data);
+				data = s->pointer + 8;
+				length = length - (data - s->buffer);
 				if (sec_flags & SEC_SECURE_CHECKSUM)
-					security_salted_mac_signature(rdp, data, length, TRUE, s->p);
+					security_salted_mac_signature(rdp, data, length, TRUE, s->pointer);
 				else
-					security_mac_signature(rdp, data, length, s->p);
+					security_mac_signature(rdp, data, length, s->pointer);
 				stream_seek(s, 8);
-				security_encrypt(s->p, length, rdp);
+				security_encrypt(s->pointer, length, rdp);
 			}
 		}
 
@@ -413,10 +413,10 @@ BOOL rdp_send(rdpRdp* rdp, STREAM* s, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, channel_id);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = s->p;
+	sec_hold = s->pointer;
 	stream_seek(s, sec_bytes);
 
-	s->p = sec_hold;
+	s->pointer = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
@@ -439,12 +439,12 @@ BOOL rdp_send_pdu(rdpRdp* rdp, STREAM* s, UINT16 type, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = s->p;
+	sec_hold = s->pointer;
 	stream_seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 
-	s->p = sec_hold;
+	s->pointer = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
@@ -466,13 +466,13 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, BYTE type, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = s->p;
+	sec_hold = s->pointer;
 	stream_seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId);
 
-	s->p = sec_hold;
+	s->pointer = sec_hold;
 	length += rdp_security_stream_out(rdp, s, length);
 
 	stream_set_pos(s, length);
@@ -518,12 +518,12 @@ int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s)
 			printf("decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
 			return -1;	
 		}
-		if (decompress_rdp(rdp->mppc_dec, s->p, compressed_len - 18, compressed_type, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, s->pointer, compressed_len - 18, compressed_type, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
-			comp_stream->data = rdp->mppc_dec->history_buf + roff;
-			comp_stream->p = comp_stream->data;
-			comp_stream->size = rlen;
+			comp_stream->buffer = rdp->mppc_dec->history_buf + roff;
+			comp_stream->pointer = comp_stream->buffer;
+			comp_stream->capacity = rlen;
 		}
 		else
 		{
@@ -690,25 +690,25 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 		stream_read_BYTE(s, version); /* 0x1 */
 		stream_read_BYTE(s, pad);
 
-		sig = s->p;
+		sig = s->pointer;
 		stream_seek(s, 8);	/* signature */
 
 		length -= 12;
 
-		if (!security_fips_decrypt(s->p, length, rdp))
+		if (!security_fips_decrypt(s->pointer, length, rdp))
 		{
 			printf("FATAL: cannot decrypt\n");
 			return FALSE; /* TODO */
 		}
 
-		if (!security_fips_check_signature(s->p, length - pad, sig, rdp))
+		if (!security_fips_check_signature(s->pointer, length - pad, sig, rdp))
 		{
 			printf("FATAL: invalid packet signature\n");
 			return FALSE; /* TODO */
 		}
 
 		/* is this what needs adjusting? */
-		s->size -= pad;
+		s->capacity -= pad;
 		return TRUE;
 	}
 
@@ -717,13 +717,13 @@ BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags)
 
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
-	if (!security_decrypt(s->p, length, rdp))
+	if (!security_decrypt(s->pointer, length, rdp))
 		return FALSE;
 
 	if (securityFlags & SEC_SECURE_CHECKSUM)
-		security_salted_mac_signature(rdp, s->p, length, FALSE, cmac);
+		security_salted_mac_signature(rdp, s->pointer, length, FALSE, cmac);
 	else
-		security_mac_signature(rdp, s->p, length, cmac);
+		security_mac_signature(rdp, s->pointer, length, cmac);
 
 	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
 	{
@@ -783,7 +783,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, STREAM* s)
 			 * [MS-RDPBCGR] 2.2.13.2.1
 			 *  - no share control header, nor the 2 byte pad
 			 */
-			s->p -= 2;
+			s->pointer -= 2;
 			rdp_recv_enhanced_security_redirection_packet(rdp, s);
 			return -1;
 		}

@@ -293,7 +293,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 BOOL nla_verify_header(STREAM* s)
 {
-	if ((s->p[0] == 0x30) && (s->p[1] & 0x80))
+	if ((s->pointer[0] == 0x30) && (s->pointer[1] & 0x80))
 		return TRUE;
 
 	return FALSE;
@@ -303,17 +303,17 @@ UINT32 nla_read_header(STREAM* s)
 {
 	UINT32 length = 0;
 
-	if (s->p[1] & 0x80)
+	if (s->pointer[1] & 0x80)
 	{
-		if ((s->p[1] & ~(0x80)) == 1)
+		if ((s->pointer[1] & ~(0x80)) == 1)
 		{
-			length = s->p[2];
+			length = s->pointer[2];
 			length += 3;
 			stream_seek(s, 3);
 		}
-		else if ((s->p[1] & ~(0x80)) == 2)
+		else if ((s->pointer[1] & ~(0x80)) == 2)
 		{
-			length = (s->p[2] << 8) | s->p[3];
+			length = (s->pointer[2] << 8) | s->pointer[3];
 			length += 4;
 			stream_seek(s, 4);
 		}
@@ -324,7 +324,7 @@ UINT32 nla_read_header(STREAM* s)
 	}
 	else
 	{
-		length = s->p[1];
+		length = s->pointer[1];
 		length += 2;
 		stream_seek(s, 2);
 	}
@@ -336,11 +336,11 @@ UINT32 nla_header_length(STREAM* s)
 {
 	UINT32 length = 0;
 
-	if (s->p[1] & 0x80)
+	if (s->pointer[1] & 0x80)
 	{
-		if ((s->p[1] & ~(0x80)) == 1)
+		if ((s->pointer[1] & ~(0x80)) == 1)
 			length = 3;
-		else if ((s->p[1] & ~(0x80)) == 2)
+		else if ((s->pointer[1] & ~(0x80)) == 2)
 			length = 4;
 		else
 			printf("Error reading TSRequest!\n");
@@ -405,7 +405,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 	if (stream_bytes < 4)
 	{
-		status = transport_read_layer(transport, s->data + stream_bytes, 4 - stream_bytes);
+		status = transport_read_layer(transport, s->buffer + stream_bytes, 4 - stream_bytes);
 
 		if (status < 0)
 			return status;
@@ -419,26 +419,26 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	}
 
 	/* if header is present, read in exactly one PDU */
-	if (s->data[0] == 0x03)
+	if (s->buffer[0] == 0x03)
 	{
 		/* TPKT header */
 
-		pdu_bytes = (s->data[2] << 8) | s->data[3];
+		pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
 	}
-	else if (s->data[0] == 0x30)
+	else if (s->buffer[0] == 0x30)
 	{
 		/* TSRequest (NLA) */
 
-		if (s->data[1] & 0x80)
+		if (s->buffer[1] & 0x80)
 		{
-			if ((s->data[1] & ~(0x80)) == 1)
+			if ((s->buffer[1] & ~(0x80)) == 1)
 			{
-				pdu_bytes = s->data[2];
+				pdu_bytes = s->buffer[2];
 				pdu_bytes += 3;
 			}
-			else if ((s->data[1] & ~(0x80)) == 2)
+			else if ((s->buffer[1] & ~(0x80)) == 2)
 			{
-				pdu_bytes = (s->data[2] << 8) | s->data[3];
+				pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
 				pdu_bytes += 4;
 			}
 			else
@@ -448,7 +448,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 		}
 		else
 		{
-			pdu_bytes = s->data[1];
+			pdu_bytes = s->buffer[1];
 			pdu_bytes += 2;
 		}
 	}
@@ -456,13 +456,13 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	{
 		/* Fast-Path Header */
 
-		if (s->data[1] & 0x80)
-			pdu_bytes = ((s->data[1] & 0x7f) << 8) | s->data[2];
+		if (s->buffer[1] & 0x80)
+			pdu_bytes = ((s->buffer[1] & 0x7f) << 8) | s->buffer[2];
 		else
-			pdu_bytes = s->data[1];
+			pdu_bytes = s->buffer[1];
 	}
 
-	status = transport_read_layer(transport, s->data + stream_bytes, pdu_bytes - stream_bytes);
+	status = transport_read_layer(transport, s->buffer + stream_bytes, pdu_bytes - stream_bytes);
 
 	if (status < 0)
 		return status;
@@ -474,7 +474,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	if (stream_bytes + status >= pdu_bytes)
 	{
 		printf("Local < Remote\n");
-		winpr_HexDump(s->data, pdu_bytes);
+		winpr_HexDump(s->buffer, pdu_bytes);
 	}
 #endif
 
@@ -508,7 +508,7 @@ int transport_write(rdpTransport* transport, STREAM* s)
 	if (length > 0)
 	{
 		printf("Local > Remote\n");
-		winpr_HexDump(s->data, length);
+		winpr_HexDump(s->buffer, length);
 	}
 #endif
 
@@ -680,7 +680,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		received = transport->ReceiveBuffer;
 		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
-		transport->ReceiveBuffer->p = transport->ReceiveBuffer->data;
+		transport->ReceiveBuffer->pointer = transport->ReceiveBuffer->buffer;
 
 		stream_set_pos(received, length);
 		stream_seal(received);
@@ -741,7 +741,7 @@ STREAM* transport_receive_buffer_pool_new()
 	STREAM* pdu = NULL;
 
 	pdu = stream_new(BUFFER_SIZE);
-	pdu->p = pdu->data;
+	pdu->pointer = pdu->buffer;
 
 	return pdu;
 }

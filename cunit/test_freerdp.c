@@ -69,7 +69,7 @@ void assert_stream(STREAM* s, BYTE* data, int length, const char* func, int line
 	int actual_length;
 	BYTE* actual_data;
 
-	actual_data = s->data;
+	actual_data = s->buffer;
 	actual_length = stream_get_length(s);
 
 	if (actual_length != length)

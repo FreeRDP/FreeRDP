@@ -903,7 +903,7 @@ BOOL update_read_glyph_index_order(STREAM* s, ORDER_INFO* orderInfo, GLYPH_INDEX
 
 		if (stream_get_left(s) < glyph_index->cbData)
 			return FALSE;
-		memcpy(glyph_index->data, s->p, glyph_index->cbData);
+		memcpy(glyph_index->data, s->pointer, glyph_index->cbData);
 		stream_seek(s, glyph_index->cbData);
 	}
 	return TRUE;
@@ -934,7 +934,7 @@ BOOL update_read_fast_index_order(STREAM* s, ORDER_INFO* orderInfo, FAST_INDEX_O
 
 		if (stream_get_left(s) < fast_index->cbData)
 			return FALSE;
-		memcpy(fast_index->data, s->p, fast_index->cbData);
+		memcpy(fast_index->data, s->pointer, fast_index->cbData);
 		stream_seek(s, fast_index->cbData);
 	}
 	return TRUE;
@@ -970,8 +970,8 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 		if (stream_get_left(s) < fast_glyph->cbData)
 			return FALSE;
 
-		memcpy(fast_glyph->data, s->p, fast_glyph->cbData);
-		phold = s->p;
+		memcpy(fast_glyph->data, s->pointer, fast_glyph->cbData);
+		phold = s->pointer;
 
 		if (!stream_skip(s, 1))
 			return FALSE;
@@ -998,7 +998,7 @@ BOOL update_read_fast_glyph_order(STREAM* s, ORDER_INFO* orderInfo, FAST_GLYPH_O
 			stream_read(s, glyph->aj, glyph->cb);
 		}
 
-		s->p = phold + fast_glyph->cbData;
+		s->pointer = phold + fast_glyph->cbData;
 	}
 	return TRUE;
 }
@@ -1363,7 +1363,7 @@ BOOL update_decompress_brush(STREAM* s, BYTE* output, BYTE bpp)
 	BYTE* palette;
 	int bytesPerPixel;
 
-	palette = s->p + 16;
+	palette = s->pointer + 16;
 	bytesPerPixel = ((bpp + 1) / 8);
 
 	if (stream_get_left(s) < 16) // 64 / 4
@@ -1929,7 +1929,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, STREAM* s, BYTE flags)
 	stream_read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	stream_read_BYTE(s, orderType); /* orderType (1 byte) */
 
-	next = s->p + ((INT16) orderLength) + 7;
+	next = s->pointer + ((INT16) orderLength) + 7;
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
@@ -2001,7 +2001,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, STREAM* s, BYTE flags)
 			break;
 	}
 
-	s->p = next;
+	s->pointer = next;
 	return TRUE;
 }
 

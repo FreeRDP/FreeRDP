@@ -139,7 +139,7 @@ void rdp_capability_set_finish(STREAM* s, BYTE* header, UINT16 type)
 	UINT16 length;
 	BYTE* footer;
 
-	footer = s->p;
+	footer = s->pointer;
 	length = footer - header;
 	stream_set_mark(s, header);
 
@@ -3010,10 +3010,10 @@ BOOL rdp_print_capability_sets(STREAM* s, UINT16 numberCapabilities, BOOL receiv
 				break;
 		}
 
-		if (s->p != em)
+		if (s->pointer != em)
 		{
 			printf("incorrect offset, type:0x%02X actual:%d expected:%d\n",
-				type, (int) (s->p - bm), (int) (em - bm));
+				type, (int) (s->pointer - bm), (int) (em - bm));
 		}
 
 		stream_set_mark(s, em);
@@ -3201,10 +3201,10 @@ BOOL rdp_read_capability_sets(STREAM* s, rdpSettings* settings, UINT16 numberCap
 				break;
 		}
 
-		if (s->p != em)
+		if (s->pointer != em)
 		{
 			printf("incorrect offset, type:0x%02X actual:%d expected:%d\n",
-				type, (int) (s->p - bm), (int) (em - bm));
+				type, (int) (s->pointer - bm), (int) (em - bm));
 		}
 
 		stream_set_mark(s, em);
