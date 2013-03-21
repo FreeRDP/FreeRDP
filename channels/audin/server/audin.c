@@ -415,6 +415,7 @@ static BOOL audin_server_close(audin_server_context* context)
 	{
 		SetEvent(audin->stopEvent);
 		WaitForSingleObject(audin->thread, INFINITE);
+		CloseHandle(audin->thread);
 		audin->thread = NULL;
 	}
 
