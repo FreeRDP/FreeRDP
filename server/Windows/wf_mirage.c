@@ -250,6 +250,28 @@ BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 	if (wfi->driverDC == NULL)
 	{
 		_tprintf(_T("Could not create device driver context!\n"));
+
+		{
+			LPVOID lpMsgBuf;
+			DWORD dw = GetLastError(); 
+
+			FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				dw,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0, NULL );
+
+			// Display the error message and exit the process
+
+			_tprintf(_T("CreateDC failed with error %d: %s\n"), dw, lpMsgBuf);
+
+			LocalFree(lpMsgBuf);
+		}
+
 		return FALSE;
 	}
 
