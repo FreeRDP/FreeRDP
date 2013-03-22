@@ -267,7 +267,7 @@ BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 
 			// Display the error message and exit the process
 
-			_tprintf(_T("CreateDC failed with error %d: %s\n"), dw, lpMsgBuf);
+			_tprintf(_T("CreateDC failed on device [%s] with error %d: %s\n"), wfi->deviceName, dw, lpMsgBuf);
 
 			LocalFree(lpMsgBuf);
 		}
