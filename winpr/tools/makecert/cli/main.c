@@ -29,5 +29,13 @@
 
 int main(int argc, char* argv[])
 {
-	return makecert_main(argc, argv);
+	MAKECERT_CONTEXT* context;
+
+	context = makecert_context_new();
+
+	makecert_context_process(context, argc, argv);
+
+	makecert_context_free(context);
+
+	return 0;
 }
