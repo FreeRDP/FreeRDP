@@ -27,6 +27,9 @@ typedef struct _MAKECERT_CONTEXT MAKECERT_CONTEXT;
 
 WINPR_API int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv);
 
+WINPR_API int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path);
+WINPR_API int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path);
+
 WINPR_API MAKECERT_CONTEXT* makecert_context_new();
 WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
 

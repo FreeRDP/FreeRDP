@@ -22,6 +22,8 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
@@ -40,18 +42,34 @@ struct _MAKECERT_CONTEXT
 	int argc;
 	char** argv;
 
+	BIO* bio;
+	RSA* rsa;
 	X509* x509;
 	EVP_PKEY* pkey;
+
+	BOOL live;
+	BOOL silent;
+
 	char* output_file;
+	char* default_name;
 };
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
-	/* Basic Options */
+	/* Custom Options */
 
 	{ "rdp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Generate certificate with required options for RDP usage."
 	},
+	{ "silent", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Silently generate certificate without verbose output."
+	},
+	{ "live", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Generate certificate live in memory when used as a library."
+	},
+
+	/* Basic Options */
+
 	{ "n", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 			"Specifies the subject's certificate name. This name must conform to the X.500 standard. "
 			"The simplest method is to specify the name in double quotes, preceded by CN=; for example, -n \"CN=myName\"."
@@ -292,6 +310,7 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 {
 	int status;
 	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
 
 	/**
 	 * makecert -r -pe -n "CN=%COMPUTERNAME%" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr LocalMachine
@@ -310,20 +329,122 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 		return 0;
 	}
 
+	arg = args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		/* Basic Options */
+
+		CommandLineSwitchCase(arg, "silent")
+		{
+			context->silent = TRUE;
+		}
+		CommandLineSwitchCase(arg, "live")
+		{
+			context->live = TRUE;
+		}
+
+		CommandLineSwitchDefault(arg)
+		{
+
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+
+	return 1;
+}
+
+int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path)
+{
+	FILE* fp;
+	int length;
+	char* filename;
+	char* fullpath;
+
+	if (!context->output_file)
+		context->output_file = context->default_name;
+
+	/*
+	 * Output Certificate File
+	 */
+
+	length = strlen(context->output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, context->output_file);
+	strcpy(&filename[length], ".crt");
+
+	if (path)
+		fullpath = GetCombinedPath(path, filename);
+	else
+		fullpath = _strdup(filename);
+
+	fp = fopen(fullpath, "w+");
+
+	if (fp)
+	{
+		PEM_write_X509(fp, context->x509);
+		fclose(fp);
+	}
+
+	free(filename);
+	free(fullpath);
+
+	return 1;
+}
+
+int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
+{
+	FILE* fp;
+	int length;
+	char* filename;
+	char* fullpath;
+
+	if (!context->output_file)
+		context->output_file = context->default_name;
+
+	/**
+	 * Output Private Key File
+	 */
+
+	length = strlen(context->output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, context->output_file);
+	strcpy(&filename[length], ".key");
+	length = strlen(filename);
+
+	if (path)
+		fullpath = GetCombinedPath(path, filename);
+	else
+		fullpath = _strdup(filename);
+
+	fp = fopen(fullpath, "w+");
+
+	if (fp)
+	{
+		PEM_write_PrivateKey(fp, context->pkey, NULL, NULL, 0, NULL, NULL);
+		fclose(fp);
+	}
+
+	free(filename);
+	free(fullpath);
+
 	return 1;
 }
 
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 {
-	BIO* bio;
-	FILE* fp;
 	int length;
 	char* entry;
 	int key_length;
-	char* filename;
-	RSA* rsa = NULL;
 	long serial = 0;
-	char* default_name;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
 	COMMAND_LINE_ARGUMENT_A* arg;
@@ -331,10 +452,10 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (makecert_context_parse_arguments(context, argc, argv) < 1)
 		return 0;
 
-	default_name = x509_get_default_name();
+	context->default_name = x509_get_default_name();
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-	bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+	context->bio = BIO_new_fp(stderr, BIO_NOCLOSE);
 
 	if (!context->pkey)
 		context->pkey = EVP_PKEY_new();
@@ -357,12 +478,12 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		key_length = atoi(arg->Value);
 	}
 
-	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+	context->rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
 
-	if (!EVP_PKEY_assign_RSA(context->pkey, rsa))
+	if (!EVP_PKEY_assign_RSA(context->pkey, context->rsa))
 		return -1;
 
-	rsa = NULL;
+	context->rsa = NULL;
 
 	X509_set_version(context->x509, 2);
 
@@ -414,7 +535,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		if (!entry)
 		{
-			entry = default_name;
+			entry = context->default_name;
 			length = strlen(entry);
 		}
 
@@ -422,7 +543,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	}
 	else
 	{
-		entry = default_name;
+		entry = context->default_name;
 		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
@@ -455,59 +576,21 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		return -1;
 
 	/**
-	 * Print Certificate
+	 * Print certificate
 	 */
 
-	X509_print_fp(stdout, context->x509);
-
-	if (!context->output_file)
-		context->output_file = default_name;
-
-	/*
-	 * Output Certificate File
-	 */
-
-	length = strlen(context->output_file);
-	filename = malloc(length + 8);
-	strcpy(filename, context->output_file);
-	strcpy(&filename[length], ".crt");
-	fp = fopen(filename, "w+");
-
-	if (fp)
-	{
-		PEM_write_X509(fp, context->x509);
-		fclose(fp);
-	}
-
-	free(filename);
+	if (!context->silent)
+		X509_print_fp(stdout, context->x509);
 
 	/**
-	 * Output Private Key File
+	 * Output certificate and private key to files
 	 */
 
-	length = strlen(context->output_file);
-	filename = malloc(length + 8);
-	strcpy(filename, context->output_file);
-	strcpy(&filename[length], ".key");
-	fp = fopen(filename, "w+");
-
-	if (fp)
+	if (!context->live)
 	{
-		PEM_write_PrivateKey(fp, context->pkey, NULL, NULL, 0, NULL, NULL);
-		fclose(fp);
+		makecert_context_output_certificate_file(context, NULL);
+		makecert_context_output_private_key_file(context, NULL);
 	}
-
-	free(filename);
-
-	X509_free(context->x509);
-	EVP_PKEY_free(context->pkey);
-
-	free(default_name);
-
-	CRYPTO_cleanup_all_ex_data();
-
-	CRYPTO_mem_leaks(bio);
-	BIO_free(bio);
 
 	return 0;
 }
@@ -530,6 +613,16 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 {
 	if (context)
 	{
+		X509_free(context->x509);
+		EVP_PKEY_free(context->pkey);
+
+		free(context->default_name);
+
+		CRYPTO_cleanup_all_ex_data();
+
+		CRYPTO_mem_leaks(context->bio);
+		BIO_free(context->bio);
+
 		free(context);
 	}
 }
