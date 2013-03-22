@@ -228,19 +228,19 @@ char* GetKnownPath(int id)
 			path = GetPath_TEMP();
 			break;
 
-		case KNOWN_PATH_DATA:
+		case KNOWN_PATH_XDG_DATA_HOME:
 			path = GetPath_XDG_DATA_HOME();
 			break;
 
-		case KNOWN_PATH_CONFIG:
+		case KNOWN_PATH_XDG_CONFIG_HOME:
 			path = GetPath_XDG_CONFIG_HOME();
 			break;
 
-		case KNOWN_PATH_CACHE:
+		case KNOWN_PATH_XDG_CACHE_HOME:
 			path = GetPath_XDG_CACHE_HOME();
 			break;
 
-		case KNOWN_PATH_RUNTIME:
+		case KNOWN_PATH_XDG_RUNTIME_DIR:
 			path = GetPath_XDG_RUNTIME_DIR();
 			break;
 

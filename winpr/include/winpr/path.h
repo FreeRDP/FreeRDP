@@ -260,10 +260,10 @@ WINPR_API PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags);
 
 #define KNOWN_PATH_HOME			1
 #define KNOWN_PATH_TEMP			2
-#define KNOWN_PATH_DATA			3
-#define KNOWN_PATH_CONFIG		4
-#define KNOWN_PATH_CACHE		5
-#define KNOWN_PATH_RUNTIME		6
+#define KNOWN_PATH_XDG_DATA_HOME	3
+#define KNOWN_PATH_XDG_CONFIG_HOME	4
+#define KNOWN_PATH_XDG_CACHE_HOME	5
+#define KNOWN_PATH_XDG_RUNTIME_DIR	6
 
 WINPR_API char* GetKnownPath(int id);
 WINPR_API char* GetKnownSubPath(int id, char* path);

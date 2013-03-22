@@ -411,7 +411,7 @@ rdpSettings* freerdp_settings_new(void* instance)
 		ZeroMemory(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
 
 		settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
-		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_CONFIG, "freerdp");
+		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
 		settings_load_hkey_local_machine(settings);
 	}
