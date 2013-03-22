@@ -61,13 +61,40 @@ void rdp_print_redirection_flags(UINT32 flags)
 	printf("}\n");
 }
 
+BOOL rdp_string_read_length32(wStream* s, rdpString* string)
+{
+	if(stream_get_left(s) < 4)
+		return FALSE;
+
+	stream_read_UINT32(s, string->length);
+
+	if(stream_get_left(s) < string->length)
+		return FALSE;
+
+	string->unicode = (char*) malloc(string->length);
+	stream_read(s, string->unicode, string->length);
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
+
+	return TRUE;
+}
+
+void rdp_string_free(rdpString* string)
+{
+	if (string->unicode != NULL)
+		free(string->unicode);
+
+	if (string->ascii != NULL)
+		free(string->ascii);
+}
+
 BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 flags;
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	if(stream_get_left(s) < 12)
+	if (stream_get_left(s) < 12)
 		return FALSE;
 	stream_read_UINT16(s, flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, length); /* length (2 bytes) */
@@ -82,17 +109,17 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->targetNetAddress))
+		if (!rdp_string_read_length32(s, &redirection->targetNetAddress))
 			return FALSE;
 		DEBUG_REDIR("targetNetAddress: %s", redirection->targetNetAddress.ascii);
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		if(stream_get_left(s) < 4)
+		if (stream_get_left(s) < 4)
 			return FALSE;
 		stream_read_UINT32(s, redirection->LoadBalanceInfoLength);
-		if(stream_get_left(s) < redirection->LoadBalanceInfoLength)
+		if (stream_get_left(s) < redirection->LoadBalanceInfoLength)
 			return FALSE;
 
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
@@ -105,14 +132,14 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->username))
+		if (!rdp_string_read_length32(s, &redirection->username))
 			return FALSE;
 		DEBUG_REDIR("username: %s", redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->domain))
+		if (!rdp_string_read_length32(s, &redirection->domain))
 			return FALSE;
 		DEBUG_REDIR("domain: %s", redirection->domain.ascii);
 	}
@@ -120,7 +147,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		/* Note: length (hopefully) includes double zero termination */
-		if(stream_get_left(s) < 4)
+		if (stream_get_left(s) < 4)
 			return FALSE;
 		stream_read_UINT32(s, redirection->PasswordCookieLength);
 		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
@@ -134,21 +161,21 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->targetFQDN))
+		if (!rdp_string_read_length32(s, &redirection->targetFQDN))
 			return FALSE;
 		DEBUG_REDIR("targetFQDN: %s", redirection->targetFQDN.ascii);
 	}
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->targetNetBiosName))
+		if (!rdp_string_read_length32(s, &redirection->targetNetBiosName))
 			return FALSE;
 		DEBUG_REDIR("targetNetBiosName: %s", redirection->targetNetBiosName.ascii);
 	}
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
-		if(!freerdp_string_read_length32(s, &redirection->tsvUrl))
+		if (!rdp_string_read_length32(s, &redirection->tsvUrl))
 			return FALSE;
 		DEBUG_REDIR("tsvUrl: %s", redirection->tsvUrl.ascii);
 	}
@@ -159,7 +186,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
-		if(stream_get_left(s) < 8)
+		if (stream_get_left(s) < 8)
 			return FALSE;
 		stream_read_UINT32(s, targetNetAddressesLength);
 
@@ -171,7 +198,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		for (i = 0; i < (int) count; i++)
 		{
-			if(!freerdp_string_read_length32(s, &redirection->targetNetAddresses[i]))
+			if (!rdp_string_read_length32(s, &redirection->targetNetAddresses[i]))
 				return FALSE;
 			DEBUG_REDIR("targetNetAddresses: %s", (&redirection->targetNetAddresses[i])->ascii);
 		}
@@ -216,12 +243,12 @@ void redirection_free(rdpRedirection* redirection)
 {
 	if (redirection != NULL)
 	{
-		freerdp_string_free(&redirection->tsvUrl);
-		freerdp_string_free(&redirection->username);
-		freerdp_string_free(&redirection->domain);
-		freerdp_string_free(&redirection->targetFQDN);
-		freerdp_string_free(&redirection->targetNetBiosName);
-		freerdp_string_free(&redirection->targetNetAddress);
+		rdp_string_free(&redirection->tsvUrl);
+		rdp_string_free(&redirection->username);
+		rdp_string_free(&redirection->domain);
+		rdp_string_free(&redirection->targetFQDN);
+		rdp_string_free(&redirection->targetNetBiosName);
+		rdp_string_free(&redirection->targetNetAddress);
 
 		if (redirection->LoadBalanceInfo)
 			free(redirection->LoadBalanceInfo);
@@ -234,7 +261,7 @@ void redirection_free(rdpRedirection* redirection)
 			int i;
 
 			for (i = 0; i < (int) redirection->targetNetAddressesCount; i++)
-				freerdp_string_free(&redirection->targetNetAddresses[i]);
+				rdp_string_free(&redirection->targetNetAddresses[i]);
 
 			free(redirection->targetNetAddresses);
 		}

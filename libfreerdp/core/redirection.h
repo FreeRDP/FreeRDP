@@ -24,9 +24,16 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/string.h>
 
 #include <winpr/stream.h>
+
+struct rdp_string
+{
+	char* ascii;
+	char* unicode;
+	UINT32 length;
+};
+typedef struct rdp_string rdpString;
 
 struct rdp_redirection
 {
