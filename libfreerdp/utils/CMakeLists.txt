@@ -22,7 +22,6 @@ set(${MODULE_PREFIX}_SRCS
 	event.c
 	bitmap.c
 	list.c
-	file.c
 	passphrase.c
 	pcap.c
 	profiler.c

@@ -252,6 +252,51 @@ char* GetKnownPath(int id)
 	return path;
 }
 
+char* GetKnownSubPath(int id, char* path)
+{
+	char* subPath;
+	char* knownPath;
+
+	knownPath = GetKnownPath(id);
+	subPath = GetCombinedPath(knownPath, path);
+
+	free(knownPath);
+
+	return subPath;
+}
+
+char* GetCombinedPath(char* basePath, char* subPath)
+{
+	int length;
+	HRESULT status;
+	char* path = NULL;
+	int basePathLength;
+	int subPathLength;
+
+	basePathLength = strlen(basePath);
+	subPathLength = strlen(subPath);
+
+	length = basePathLength + subPathLength + 1;
+	path = (char*) malloc(length + 1);
+
+	CopyMemory(path, basePath, basePathLength);
+	path[basePathLength] = '\0';
+
+	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);
+
+	if (!subPath)
+		return path;
+
+	subPath = _strdup(subPath);
+	PathCchConvertStyleA(subPath, subPathLength, PATH_STYLE_NATIVE);
+
+	status = NativePathCchAppendA(path, length + 1, subPath);
+
+	free(subPath);
+
+	return path;
+}
+
 #ifndef _WIN32
 
 BOOL PathFileExistsA(LPCSTR pszPath)

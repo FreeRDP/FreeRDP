@@ -27,6 +27,9 @@ int TestPathShell(int argc, char* argv[])
 	path = GetKnownPath(KNOWN_PATH_RUNTIME);
 	printf("KNOWN_PATH_RUNTIME: %s\n", path);
 
+	path = GetKnownSubPath(KNOWN_PATH_CONFIG, "freerdp");
+	printf("KNOWN_PATH_CONFIG SubPath: %s\n", path);
+
 	return 0;
 }
 

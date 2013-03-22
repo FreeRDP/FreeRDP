@@ -33,12 +33,13 @@
 #include <sys/select.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/utils/file.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
 #include "xf_encode.h"
@@ -544,13 +545,13 @@ void* xf_peer_main_loop(void* arg)
 
 	/* Initialize the real server settings here */
 
-	server_file_path = freerdp_construct_path(settings->ConfigPath, "server");
+	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
 
 	if (!PathFileExistsA(server_file_path))
-		freerdp_mkdir(server_file_path);
+		CreateDirectoryA(server_file_path, 0);
 
-	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
-	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
+	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
+	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;

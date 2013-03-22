@@ -24,7 +24,6 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/utils/file.h>
 
 #include <android/bitmap.h>
 #include <machine/cpu-features.h>
@@ -533,11 +532,13 @@ JNIEXPORT void JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cls, j
 	rdpSettings * settings = inst->settings;
 
 	const jbyte *directory = (*env)->GetStringUTFChars(env, jdirectory, NULL);
+
 	free(settings->HomePath);
 	free(settings->ConfigPath);
+
 	settings->HomePath = strdup(directory);
 	settings->ConfigPath = NULL;
-	freerdp_detect_paths(settings);
+
 	(*env)->ReleaseStringUTFChars(env, jdirectory, directory);
 }
 

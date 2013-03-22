@@ -31,8 +31,6 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
-#include <freerdp/utils/file.h>
-
 #include "certificate.h"
 
 /**
