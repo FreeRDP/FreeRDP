@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -44,24 +45,12 @@
 #ifndef _WIN32
 #define PATH_SEPARATOR_STR	"/"
 #define PATH_SEPARATOR_CHR	'/'
-#define HOME_ENV_VARIABLE	"HOME"
 #else
 #define PATH_SEPARATOR_STR	"\\"
 #define PATH_SEPARATOR_CHR	'\\'
-#define HOME_ENV_VARIABLE	"HOME"
-#endif
-
-#ifdef _WIN32
-#define SHARED_LIB_SUFFIX	".dll"
-#elif defined(__APPLE__)
-#define SHARED_LIB_SUFFIX	".dylib"
-#else
-#define SHARED_LIB_SUFFIX	".so"
 #endif
 
 #define FREERDP_CONFIG_DIR	".freerdp"
-
-#define PARENT_PATH		".." PATH_SEPARATOR_STR
 
 void freerdp_mkdir(char* path)
 {
@@ -72,31 +61,9 @@ void freerdp_mkdir(char* path)
 #endif
 }
 
-BOOL freerdp_check_file_exists(char* file)
-{
-	struct stat stat_info;
-
-	if (stat(file, &stat_info) != 0)
-		return FALSE;
-
-	return TRUE;
-}
-
 char* freerdp_get_home_path(rdpSettings* settings)
 {
-	char* home_env = NULL;
-
-	if (settings->HomePath == NULL)
-	{
-		home_env = getenv(HOME_ENV_VARIABLE);
-
-		if (home_env)
-			settings->HomePath = _strdup(home_env);
-	}
-
-	if (settings->HomePath == NULL)
-		settings->HomePath = _strdup("/");
-
+	settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
 	return settings->HomePath;
 }
 
@@ -108,18 +75,10 @@ char* freerdp_get_config_path(rdpSettings* settings)
 	settings->ConfigPath = (char*) malloc(strlen(settings->HomePath) + sizeof(FREERDP_CONFIG_DIR) + 2);
 	sprintf(settings->ConfigPath, "%s" PATH_SEPARATOR_STR "%s", settings->HomePath, FREERDP_CONFIG_DIR);
 
-	if (!freerdp_check_file_exists(settings->ConfigPath))
+	if (!PathFileExistsA(settings->ConfigPath))
 		freerdp_mkdir(settings->ConfigPath);
 
 	return settings->ConfigPath;
-}
-
-char* freerdp_get_current_path(rdpSettings* settings)
-{
-	if (settings->CurrentPath == NULL)
-		settings->CurrentPath = getcwd(NULL, 0);
-
-	return settings->CurrentPath;
 }
 
 char* freerdp_construct_path(char* base_path, char* relative_path)
@@ -137,89 +96,6 @@ char* freerdp_construct_path(char* base_path, char* relative_path)
 	sprintf(path, "%s" PATH_SEPARATOR_STR "%s", base_path, relative_path);
 
 	return path;
-}
-
-char* freerdp_append_shared_library_suffix(char* file_path)
-{
-	char* p;
-	char* path = NULL;
-	int file_path_length;
-	int shared_lib_suffix_length;
-
-	if (file_path == NULL)
-		return NULL;
-
-	file_path_length = strlen(file_path);
-	shared_lib_suffix_length = strlen(SHARED_LIB_SUFFIX);
-
-	if (file_path_length >= shared_lib_suffix_length)
-	{
-		p = &file_path[file_path_length - shared_lib_suffix_length];
-
-		if (strcmp(p, SHARED_LIB_SUFFIX) != 0)
-		{
-			path = malloc(file_path_length + shared_lib_suffix_length + 1);
-			sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);
-		}
-		else
-		{
-			path = _strdup(file_path);
-		}
-	}
-	else
-	{
-		path = malloc(file_path_length + shared_lib_suffix_length + 1);
-		sprintf(path, "%s%s", file_path, SHARED_LIB_SUFFIX);	
-	}
-
-	return path;
-}
-
-char* freerdp_get_parent_path(char* base_path, int depth)
-{
-	int i;
-	char* p;
-	char* path;
-	int length;
-	int base_length;
-
-	if (base_path == NULL)
-		return NULL;
-
-	if (depth <= 0)
-		return _strdup(base_path);
-
-	base_length = strlen(base_path);
-
-	p = &base_path[base_length];
-
-	for (i = base_length - 1; ((i >= 0) && (depth > 0)); i--)
-	{
-		if (base_path[i] == PATH_SEPARATOR_CHR)
-		{
-			p = &base_path[i];
-			depth--;
-		}
-	}
-
-	length = (p - base_path);
-
-	path = (char*) malloc(length + 1);
-	memcpy(path, base_path, length);
-	path[length] = '\0';
-
-	return path;
-}
-
-BOOL freerdp_path_contains_separator(char* path)
-{
-	if (path == NULL)
-		return FALSE;
-
-	if (strchr(path, PATH_SEPARATOR_CHR) == NULL)
-		return FALSE;
-
-	return TRUE;
 }
 
 void freerdp_detect_paths(rdpSettings* settings)

@@ -546,7 +546,7 @@ void* xf_peer_main_loop(void* arg)
 
 	server_file_path = freerdp_construct_path(settings->ConfigPath, "server");
 
-	if (!freerdp_check_file_exists(server_file_path))
+	if (!PathFileExistsA(server_file_path))
 		freerdp_mkdir(server_file_path);
 
 	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");

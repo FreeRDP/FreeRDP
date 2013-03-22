@@ -48,7 +48,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	config_path = freerdp_get_config_path(settings);
 	certificate_store->path = freerdp_construct_path(config_path, (char*) certificate_store_dir);
 
-	if (freerdp_check_file_exists(certificate_store->path) == FALSE)
+	if (PathFileExistsA(certificate_store->path) == FALSE)
 	{
 		freerdp_mkdir(certificate_store->path);
 		printf("creating directory %s\n", certificate_store->path);
@@ -56,7 +56,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 	certificate_store->file = freerdp_construct_path(config_path, (char*) certificate_known_hosts_file);
 
-	if (freerdp_check_file_exists(certificate_store->file) == FALSE)
+	if (PathFileExistsA(certificate_store->file) == FALSE)
 	{
 		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
 
