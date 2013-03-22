@@ -33,6 +33,13 @@
 #include <openssl/applink.c>
 #endif
 
+#include "makecert.h"
+
+struct _MAKECERT_CONTEXT
+{
+	void* dummy;
+};
+
 X509* x509 = NULL;
 EVP_PKEY* pkey = NULL;
 char* output_file = NULL;
@@ -476,7 +483,7 @@ int command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
 	return 0;
 }
 
-int main(int argc, char* argv[])
+int makecert_main(int argc, char* argv[])
 {
 	int status;
 	DWORD flags;
