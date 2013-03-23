@@ -126,7 +126,7 @@
 #endif
 
 #if defined(__STDC_ISO_10646__) || defined(MB_LEN_MAX) || defined(USE_MULTIBYTE) || TRIO_FEATURE_WIDECHAR
-# if !defined(TRIO_PLATFORM_WINCE)
+# if (!defined(TRIO_PLATFORM_WINCE) && !defined(ANDROID))
 #  define TRIO_COMPILER_SUPPORTS_MULTIBYTE
 #  if !defined(MB_LEN_MAX)
 #   define MB_LEN_MAX 6
