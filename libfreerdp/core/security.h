@@ -24,7 +24,8 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 void security_master_secret(const BYTE* premaster_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);
 void security_session_key_blob(const BYTE* master_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);

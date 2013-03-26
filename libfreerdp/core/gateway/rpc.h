@@ -77,7 +77,6 @@ typedef struct _RPC_PDU
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <winpr/print.h>
 
 /**

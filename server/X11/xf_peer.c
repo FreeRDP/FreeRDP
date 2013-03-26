@@ -33,13 +33,13 @@
 #include <sys/select.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/utils/file.h>
-#include <freerdp/utils/thread.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
 #include "xf_encode.h"
@@ -318,7 +318,7 @@ void xf_peer_init(freerdp_peer* client)
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
 
-STREAM* xf_peer_stream_init(xfPeerContext* context)
+wStream* xf_peer_stream_init(xfPeerContext* context)
 {
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
@@ -333,7 +333,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
-	STREAM* s;
+	wStream* s;
 	BYTE* data;
 	xfInfo* xfi;
 	RFX_RECT rect;
@@ -545,13 +545,13 @@ void* xf_peer_main_loop(void* arg)
 
 	/* Initialize the real server settings here */
 
-	server_file_path = freerdp_construct_path(settings->ConfigPath, "server");
+	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
 
-	if (!freerdp_check_file_exists(server_file_path))
-		freerdp_mkdir(server_file_path);
+	if (!PathFileExistsA(server_file_path))
+		CreateDirectoryA(server_file_path, 0);
 
-	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
-	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
+	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
+	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;

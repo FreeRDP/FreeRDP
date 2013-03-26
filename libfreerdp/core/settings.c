@@ -29,11 +29,12 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 
 #include <freerdp/settings.h>
-#include <freerdp/utils/file.h>
 
 #ifdef _WIN32
 #pragma warning(push)
@@ -409,7 +410,8 @@ rdpSettings* freerdp_settings_new(void* instance)
 				malloc(sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
 		ZeroMemory(settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * settings->DynamicChannelArraySize);
 
-		freerdp_detect_paths(settings);
+		settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
+		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
 		settings_load_hkey_local_machine(settings);
 	}

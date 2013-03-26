@@ -304,7 +304,7 @@ void test_decode(void)
 {
 	RFX_CONTEXT* context;
 	BYTE decode_buffer[4096 * 3];
-	STREAM* s;
+	wStream* s;
 
 	s = stream_new(sizeof(y_data) + sizeof(cb_data) + sizeof(cr_data));
 	stream_write(s, y_data, sizeof(y_data));
@@ -329,7 +329,7 @@ void test_decode(void)
 void test_encode(void)
 {
 	RFX_CONTEXT* context;
-	STREAM* enc_stream;
+	wStream* enc_stream;
 	int y_size, cb_size, cr_size;
 	int i;
 	BYTE decode_buffer[4096 * 3];
@@ -374,7 +374,7 @@ void test_encode(void)
 void test_message(void)
 {
 	RFX_CONTEXT* context;
-	STREAM* s;
+	wStream* s;
 	int i, j;
 	RFX_RECT rect = {0, 0, 100, 80};
 	RFX_MESSAGE * message;
@@ -401,7 +401,7 @@ void test_message(void)
 		stream_seal(s);
 		/*hexdump(buffer, size);*/
 		stream_set_pos(s, 0);
-		message = rfx_process_message(context, s->p, s->size);
+		message = rfx_process_message(context, s->pointer, s->capacity);
 		if (i == 0)
 		{
 			for (j = 0; j < message->num_tiles; j++)

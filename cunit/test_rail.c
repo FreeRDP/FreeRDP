@@ -426,7 +426,7 @@ typedef struct
 	RAIL_EVENT  in_events[20];
 	size_t      in_events_number;
 
-	STREAM      in_streams[20];
+	wStream      in_streams[20];
 	size_t      in_streams_number;
 
 	RDP_PLUGIN_DATA plugin_data;
@@ -522,11 +522,11 @@ static void save_dump(void* data, size_t size)
 	thread_param * p = global_thread_params;
 	if (p->in_streams_number < ARRAYSIZE(p->in_streams))
 	{
-		STREAM* s = &p->in_streams[p->in_streams_number];
-		s->data = malloc(size);
-		s->size = size;
+		wStream* s = &p->in_streams[p->in_streams_number];
+		s->buffer = malloc(size);
+		s->capacity = size;
 
-		memcpy(s->data, data, size);
+		memcpy(s->buffer, data, size);
 		p->in_streams_number++;
 	}
 }
@@ -663,7 +663,7 @@ void test_rail_plugin(void)
 	freerdp* inst = &s_inst;
 	size_t sn = 0;
 	size_t en = 0;
-	STREAM* ss = NULL;
+	wStream* ss = NULL;
 	RAIL_EVENT* ee = NULL;
 
 	printf("\n");

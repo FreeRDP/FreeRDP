@@ -30,7 +30,7 @@
 
 #include <freerdp/addin.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "echo_main.h"
 

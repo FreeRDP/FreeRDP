@@ -21,7 +21,8 @@
 #define __SURFACE
 
 #include "rdp.h"
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #define SURFCMD_SURFACE_BITS_HEADER_LENGTH 22
 #define SURFCMD_FRAME_MARKER_LENGTH 8
@@ -33,10 +34,10 @@ enum SURFCMD_CMDTYPE
 	CMDTYPE_STREAM_SURFACE_BITS = 0x0006
 };
 
-int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s);
+int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s);
 
-void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd);
-void update_write_surfcmd_frame_marker(STREAM* s, UINT16 frameAction, UINT32 frameId);
+void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd);
+void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId);
 
 #endif /* __SURFACE */
 

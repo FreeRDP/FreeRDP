@@ -303,6 +303,12 @@ set( CMAKE_SYSTEM_NAME Linux )
 # this one not so much
 set( CMAKE_SYSTEM_VERSION 1 )
 
+# Android SDK
+
+if (NOT DEFINED ANDROID_SDK)
+	set(ANDROID_SDK "$ENV{ANDROID_SDK}")
+endif()
+
 # rpath makes low sence for Android
 set( CMAKE_SKIP_RPATH TRUE CACHE BOOL "If set, runtime paths are not added when using shared libraries." )
 

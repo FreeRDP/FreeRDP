@@ -26,7 +26,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestPathCchSkipRoot.c
 	TestPathCchStripToRoot.c
 	TestPathCchStripPrefix.c
-	TestPathCchRemoveFileSpec.c)
+	TestPathCchRemoveFileSpec.c
+	TestPathShell.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

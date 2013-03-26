@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * String Utils
+ * Input Virtual Channel Extension
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_UTILS_STRING_H
-#define FREERDP_UTILS_STRING_H
+#ifndef FREERDP_CHANNEL_RDPEI_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_RDPEI_CLIENT_MAIN_H
 
-#include <freerdp/api.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <freerdp/dvc.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+#include <freerdp/addin.h>
+#include <freerdp/utils/debug.h>
 
-struct rdp_string
-{
-	char* ascii;
-	char* unicode;
-	UINT32 length;
-};
-typedef struct rdp_string rdpString;
-
-#ifdef __cplusplus
-extern "C" {
+#ifdef WITH_DEBUG_DVC
+#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-FREERDP_API BOOL freerdp_string_read_length32(STREAM* s, rdpString* string);
-FREERDP_API void freerdp_string_free(rdpString* string);
+#endif /* FREERDP_CHANNEL_RDPEI_CLIENT_MAIN_H */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* FREERDP_UTILS_STRING_H */

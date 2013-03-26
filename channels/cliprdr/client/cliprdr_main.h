@@ -21,8 +21,9 @@
 #ifndef __CLIPRDR_MAIN_H
 #define __CLIPRDR_MAIN_H
 
+#include <winpr/stream.h>
+
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 
 struct _CLIPRDR_FORMAT_NAME
 {
@@ -45,8 +46,8 @@ struct cliprdr_plugin
 };
 typedef struct cliprdr_plugin cliprdrPlugin;
 
-STREAM* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
-void cliprdr_packet_send(cliprdrPlugin* cliprdr, STREAM* data_out);
+wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
+void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
 
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(CLIPRDR, fmt, ## __VA_ARGS__)

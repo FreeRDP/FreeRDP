@@ -23,7 +23,7 @@
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <winpr/crt.h>
 
@@ -121,7 +121,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	//encode
 	
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update;
 	mfPeerContext* mfp;

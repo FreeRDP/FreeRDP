@@ -132,7 +132,22 @@ BOOL NeedCurrentDirectoryForExePathW(LPCWSTR ExeName)
 
 DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
-	return 0;
+	int length;
+	char* env = NULL;
+
+	env = getenv(lpName);
+
+	if (!env)
+		return 0;
+
+	length = strlen(env);
+
+	if ((length + 1 > nSize) || (!lpBuffer))
+		return length + 1;
+
+	CopyMemory(lpBuffer, env, length + 1);
+
+	return length;
 }
 
 DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)

@@ -21,7 +21,7 @@
 
 #include <freerdp/freerdp.h>
 #include <winpr/print.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "test_gcc.h"
 
@@ -92,12 +92,12 @@ BYTE gcc_conference_create_request_expected[307] =
 
 void test_gcc_write_conference_create_request(void)
 {
-	STREAM* s;
-	STREAM user_data;
+	wStream* s;
+	wStream user_data;
 
-	user_data.data = gcc_user_data;
-	user_data.size = sizeof(gcc_user_data);
-	user_data.p = user_data.data + user_data.size;
+	user_data.buffer = gcc_user_data;
+	user_data.capacity = sizeof(gcc_user_data);
+	user_data.pointer = user_data.buffer + user_data.capacity;
 
 	s = stream_new(sizeof(gcc_conference_create_request_expected));
 
@@ -123,7 +123,7 @@ BYTE gcc_client_core_data_expected[216] =
 
 void test_gcc_write_client_core_data(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpSettings* settings;
 
 	s = stream_new(512);
@@ -150,7 +150,7 @@ BYTE gcc_client_security_data_expected[12] =
 
 void test_gcc_write_client_security_data(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpSettings* settings;
 
 	s = stream_new(12);
@@ -173,7 +173,7 @@ BYTE gcc_client_cluster_data_expected[12] =
 
 void test_gcc_write_client_cluster_data(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpSettings* settings;
 
 	s = stream_new(12);
@@ -191,7 +191,7 @@ BYTE gcc_client_network_data_expected[44] =
 
 void test_gcc_write_client_network_data(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpSettings* settings;
 
 	s = stream_new(44);

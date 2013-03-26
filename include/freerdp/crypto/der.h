@@ -23,13 +23,13 @@
 #include <freerdp/crypto/er.h>
 
 FREERDP_API int _der_skip_length(int length);
-FREERDP_API int der_write_length(STREAM* s, int length);
+FREERDP_API int der_write_length(wStream* s, int length);
 FREERDP_API int der_get_content_length(int length);
 FREERDP_API int der_skip_octet_string(int length);
 FREERDP_API int der_skip_sequence_tag(int length);
-FREERDP_API int der_write_sequence_tag(STREAM* s, int length);
+FREERDP_API int der_write_sequence_tag(wStream* s, int length);
 FREERDP_API int der_skip_contextual_tag(int length);
-FREERDP_API int der_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc);
-FREERDP_API void der_write_octet_string(STREAM* s, BYTE* oct_str, int length);
+FREERDP_API int der_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc);
+FREERDP_API void der_write_octet_string(wStream* s, BYTE* oct_str, int length);
 
 #endif /* FREERDP_CRYPTO_DER_H */

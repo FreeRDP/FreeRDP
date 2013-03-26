@@ -27,7 +27,8 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #include "rpc.h"
 

@@ -426,5 +426,18 @@ BOOL FindClose(HANDLE hFindFile)
 	return TRUE;
 }
 
+BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	if (!mkdir(lpPathName, S_IRUSR | S_IWUSR | S_IXUSR))
+		return TRUE;
+
+	return FALSE;
+}
+
+BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	return TRUE;
+}
+
 #endif
 

@@ -30,7 +30,7 @@
 
 #include <freerdp/addin.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 
 #include "drdynvc_types.h"
@@ -86,7 +86,7 @@ struct _DVCMAN_CHANNEL
 	UINT32 channel_id;
 	IWTSVirtualChannelCallback* channel_callback;
 
-	STREAM* dvc_data;
+	wStream* dvc_data;
 
 	HANDLE dvc_chan_mutex;
 };

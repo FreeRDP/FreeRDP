@@ -27,14 +27,15 @@
 #endif
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/locale/timezone.h>
 
-void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time);
-void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time);
-void rdp_get_client_time_zone(STREAM* s, rdpSettings* settings);
-BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings);
-void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings);
+#include <winpr/stream.h>
+
+void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time);
+void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time);
+void rdp_get_client_time_zone(wStream* s, rdpSettings* settings);
+BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
+void rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
 
 #ifdef WITH_DEBUG_TIMEZONE
 #define DEBUG_TIMEZONE(fmt, ...) DEBUG_CLASS(TIMEZONE, fmt, ## __VA_ARGS__)

@@ -44,10 +44,13 @@
 #include "serial_constants.h"
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/thread.h>
+#include <freerdp/utils/list.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
@@ -59,9 +62,11 @@ struct _SERIAL_DEVICE
 	char* path;
 	SERIAL_TTY* tty;
 
-	LIST* irp_list;
+	HANDLE thread;
+	HANDLE stopEvent;
+
+	wQueue* queue;
 	LIST* pending_irps;
-	freerdp_thread* thread;
 	HANDLE in_event;
 
 	fd_set read_fds;
@@ -253,7 +258,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	tty = serial->tty;
 
-	if (tty == NULL)
+	if (!tty)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		OutputBufferLength = 0;
@@ -314,34 +319,18 @@ static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 	serial_check_for_events(serial);
 }
 
-static void serial_process_irp_list(SERIAL_DEVICE* serial)
-{
-	IRP* irp;
-
-	while (1)
-	{
-		if (freerdp_thread_is_stopped(serial->thread))
-			break;
-
-		freerdp_thread_lock(serial->thread);
-		irp = (IRP*) list_dequeue(serial->irp_list);
-		freerdp_thread_unlock(serial->thread);
-
-		if (irp == NULL)
-			break;
-
-		serial_process_irp(serial, irp);
-	}
-}
-
 static void* serial_thread_func(void* arg)
 {
+	IRP* irp;
 	DWORD status;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
 
 	while (1)
 	{
-		if (freerdp_thread_wait_timeout(serial->thread, 500) < 0)
+		if (WaitForSingleObject(serial->stopEvent, 0) == WAIT_OBJECT_0)
+			break;
+
+		if (WaitForSingleObject(Queue_Event(serial->queue), 10) == WAIT_OBJECT_0)
 			break;
 
 		serial->nfds = 1;
@@ -352,22 +341,19 @@ static void* serial_thread_func(void* arg)
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
-		if (freerdp_thread_is_stopped(serial->thread))
-			break;
+		irp = (IRP*) Queue_Dequeue(serial->queue);
 
-		freerdp_thread_reset(serial->thread);
-		serial_process_irp_list(serial);
+		if (irp)
+			serial_process_irp(serial, irp);
 
 		status = WaitForSingleObject(serial->in_event, 0);
 
 		if ((status == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
 		{
-				if (serial_check_fds(serial))
-					ResetEvent(serial->in_event);
+			if (serial_check_fds(serial))
+				ResetEvent(serial->in_event);
 		}
 	}
-
-	freerdp_thread_quit(serial->thread);
 
 	return NULL;
 }
@@ -376,40 +362,26 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
-	freerdp_thread_lock(serial->thread);
-	list_enqueue(serial->irp_list, irp);
-	freerdp_thread_unlock(serial->thread);
-
-	freerdp_thread_signal(serial->thread);
+	Queue_Enqueue(serial->queue, irp);
 }
 
 static void serial_free(DEVICE* device)
 {
-	IRP* irp;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	DEBUG_SVC("freeing device");
 
-	freerdp_thread_stop(serial->thread);
-	freerdp_thread_free(serial->thread);
+	SetEvent(serial->stopEvent);
 
-	while ((irp = (IRP*) list_dequeue(serial->irp_list)) != NULL)
-		irp->Discard(irp);
-
-	list_free(serial->irp_list);
-
-	while ((irp = (IRP*) list_dequeue(serial->pending_irps)) != NULL)
-		irp->Discard(irp);
-
-	list_free(serial->pending_irps);
+	/* TODO: free lists */
 
 	free(serial);
 }
 
 static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32 abort_io, UINT32 io_status)
 {
-	IRP* irp = NULL;
 	UINT32 major;
+	IRP* irp = NULL;
 	SERIAL_TTY* tty;
 
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
@@ -626,7 +598,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		prev = irp;
 		irp = (IRP*) list_next(serial->pending_irps, irp);
 
-		if (irp_completed || prev->IoStatus == STATUS_SUCCESS)
+		if (irp_completed || (prev->IoStatus == STATUS_SUCCESS))
 		{
 			list_remove(serial->pending_irps, prev);
 			SetEvent(serial->in_event);
@@ -737,14 +709,15 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			stream_write_BYTE(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		serial->path = path;
-		serial->irp_list = list_new();
+		serial->queue = Queue_New(TRUE, -1, -1);
 		serial->pending_irps = list_new();
-		serial->thread = freerdp_thread_new();
 		serial->in_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		serial->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
-		freerdp_thread_start(serial->thread, serial_thread_func, serial);
+		serial->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) serial_thread_func, (void*) serial, 0, NULL);
 	}
 
 	return 0;

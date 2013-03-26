@@ -30,7 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/channels.h>

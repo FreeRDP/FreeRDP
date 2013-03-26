@@ -110,6 +110,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		rpc_client_fragment_pool_return(rpc, fragment);
 
 		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
+		SetEvent(rpc->transport->ReceiveEvent);
 		rpc->client->pdu = NULL;
 
 		return 0;

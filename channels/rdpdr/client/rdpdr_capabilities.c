@@ -26,14 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_main.h"
 #include "rdpdr_capabilities.h"
 
 /* Output device redirection capability set header */
-static void rdpdr_write_capset_header(STREAM* data_out, UINT16 capabilityType, UINT16 capabilityLength, UINT32 version)
+static void rdpdr_write_capset_header(wStream* data_out, UINT16 capabilityType, UINT16 capabilityLength, UINT32 version)
 {
 	stream_write_UINT16(data_out, capabilityType);
 	stream_write_UINT16(data_out, capabilityLength);
@@ -41,7 +41,7 @@ static void rdpdr_write_capset_header(STREAM* data_out, UINT16 capabilityType, U
 }
 
 /* Output device direction general capability set */
-static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
+static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_GENERAL_TYPE, 44, GENERAL_CAPABILITY_VERSION_02);
 
@@ -58,7 +58,7 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
 }
 
 /* Process device direction general capability set */
-static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
@@ -67,13 +67,13 @@ static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
 }
 
 /* Output printer direction capability set */
-static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
+static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_PRINTER_TYPE, 8, PRINT_CAPABILITY_VERSION_01);
 }
 
 /* Process printer direction capability set */
-static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
@@ -82,13 +82,13 @@ static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
 }
 
 /* Output port redirection capability set */
-static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
+static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_PORT_TYPE, 8, PORT_CAPABILITY_VERSION_01);
 }
 
 /* Process port redirection capability set */
-static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
@@ -97,13 +97,13 @@ static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
 }
 
 /* Output drive redirection capability set */
-static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
+static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_DRIVE_TYPE, 8, DRIVE_CAPABILITY_VERSION_02);
 }
 
 /* Process drive redirection capability set */
-static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
@@ -112,13 +112,13 @@ static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
 }
 
 /* Output smart card redirection capability set */
-static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, STREAM* data_out)
+static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_SMARTCARD_TYPE, 8, SMARTCARD_CAPABILITY_VERSION_01);
 }
 
 /* Process smartcard redirection capability set */
-static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
@@ -126,7 +126,7 @@ static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, STREAM* data_in)
 	stream_seek(data_in, capabilityLength - 4);
 }
 
-void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, STREAM* data_in)
+void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 i;
 	UINT16 numCapabilities;
@@ -170,7 +170,7 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, STREAM* data_in)
 
 void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
-	STREAM* data_out;
+	wStream* data_out;
 
 	data_out = stream_new(256);
 

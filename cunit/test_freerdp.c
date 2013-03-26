@@ -63,13 +63,13 @@ void dump_data(unsigned char * p, int len, int width, char* name)
 	printf("\n");
 }
 
-void assert_stream(STREAM* s, BYTE* data, int length, const char* func, int line)
+void assert_stream(wStream* s, BYTE* data, int length, const char* func, int line)
 {
 	int i;
 	int actual_length;
 	BYTE* actual_data;
 
-	actual_data = s->data;
+	actual_data = s->buffer;
 	actual_length = stream_get_length(s);
 
 	if (actual_length != length)

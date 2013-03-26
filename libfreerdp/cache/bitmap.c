@@ -27,7 +27,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/bitmap.h>
 

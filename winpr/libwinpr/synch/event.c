@@ -35,7 +35,6 @@
 #include <unistd.h>
 #endif
 
-
 #ifdef HAVE_EVENTFD_H
 #include <sys/eventfd.h>
 #include <errno.h>

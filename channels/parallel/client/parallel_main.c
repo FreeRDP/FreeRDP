@@ -47,13 +47,12 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/collections.h>
 #include <winpr/interlocked.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/list.h>
-#include <freerdp/utils/thread.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
@@ -65,8 +64,8 @@ struct _PARALLEL_DEVICE
 	char* path;
 	UINT32 id;
 
-	PSLIST_HEADER pIrpList;
-	freerdp_thread* thread;
+	HANDLE thread;
+	wMessageQueue* queue;
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
@@ -138,7 +137,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	buffer = (BYTE*) malloc(Length);
 
-	status = read(parallel->file, irp->output->p, Length);
+	status = read(parallel->file, irp->output->pointer, Length);
 
 	if (status < 0)
 	{
@@ -155,11 +154,13 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	}
 
 	stream_write_UINT32(irp->output, Length);
+
 	if (Length > 0)
 	{
 		stream_check_size(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
+
 	free(buffer);
 
 	irp->Complete(irp);
@@ -167,10 +168,10 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	UINT32 len;
 	UINT32 Length;
 	UINT64 Offset;
 	ssize_t status;
-	UINT32 len;
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
@@ -244,42 +245,27 @@ static void parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 	}
 }
 
-static void parallel_process_irp_list(PARALLEL_DEVICE* parallel)
-{
-	IRP* irp;
-
-	while (1)
-	{
-		if (freerdp_thread_is_stopped(parallel->thread))
-			break;
-
-		irp = (IRP*) InterlockedPopEntrySList(parallel->pIrpList);
-
-		if (irp == NULL)
-			break;
-
-		parallel_process_irp(parallel, irp);
-	}
-}
-
 static void* parallel_thread_func(void* arg)
 {
+	IRP* irp;
+	wMessage message;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) arg;
 
 	while (1)
 	{
-		if (freerdp_thread_wait(parallel->thread) < 0)
+		if (!MessageQueue_Wait(parallel->queue))
 			break;
 
-		if (freerdp_thread_is_stopped(parallel->thread))
+		if (!MessageQueue_Peek(parallel->queue, &message, TRUE))
 			break;
 
-		freerdp_thread_reset(parallel->thread);
+		if (message.id == WMQ_QUIT)
+			break;
 
-		parallel_process_irp_list(parallel);
+		irp = (IRP*) message.wParam;
+
+		parallel_process_irp(parallel, irp);
 	}
-
-	freerdp_thread_quit(parallel->thread);
 
 	return NULL;
 }
@@ -288,25 +274,20 @@ static void parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
-	InterlockedPushEntrySList(parallel->pIrpList, &(irp->ItemEntry));
-
-	freerdp_thread_signal(parallel->thread);
+	MessageQueue_Post(parallel->queue, NULL, 0, (void*) irp, NULL);
 }
 
 static void parallel_free(DEVICE* device)
 {
-	IRP* irp;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
 	DEBUG_SVC("freeing device");
 
-	freerdp_thread_stop(parallel->thread);
-	freerdp_thread_free(parallel->thread);
+	MessageQueue_PostQuit(parallel->queue, 0);
+	WaitForSingleObject(parallel->thread, INFINITE);
 
-	while ((irp = (IRP*) InterlockedPopEntrySList(parallel->pIrpList)) != NULL)
-		irp->Discard(irp);
-
-	_aligned_free(parallel->pIrpList);
+	MessageQueue_Free(parallel->queue);
+	CloseHandle(parallel->thread);
 
 	free(parallel);
 }
@@ -345,14 +326,11 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		parallel->path = path;
 
-		parallel->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(parallel->pIrpList);
-
-		parallel->thread = freerdp_thread_new();
+		parallel->queue = MessageQueue_New();
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel);
 
-		freerdp_thread_start(parallel->thread, parallel_thread_func, parallel);
+		parallel->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) parallel_thread_func, (void*) parallel, 0, NULL);
 	}
 
 	return 0;

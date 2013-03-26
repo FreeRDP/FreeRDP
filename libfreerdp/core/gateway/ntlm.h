@@ -38,8 +38,10 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 struct rdp_ntlm
 {

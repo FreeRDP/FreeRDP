@@ -56,27 +56,27 @@
 
 void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string);
 
-BOOL rail_read_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
-BOOL rail_read_server_exec_result_order(STREAM* s, RAIL_EXEC_RESULT_ORDER* exec_result);
-BOOL rail_read_server_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam);
-BOOL rail_read_server_minmaxinfo_order(STREAM* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
-BOOL rail_read_server_localmovesize_order(STREAM* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize);
-BOOL rail_read_server_get_appid_resp_order(STREAM* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
-BOOL rail_read_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
+BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result);
+BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);
+BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
+BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize);
+BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
+BOOL rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-void rail_write_handshake_order(STREAM* s, RAIL_HANDSHAKE_ORDER* handshake);
-void rail_write_client_status_order(STREAM* s, RAIL_CLIENT_STATUS_ORDER* client_status);
-void rail_write_client_exec_order(STREAM* s, RAIL_EXEC_ORDER* exec);
-void rail_write_client_sysparam_order(STREAM* s, RAIL_SYSPARAM_ORDER* sysparam);
-void rail_write_client_activate_order(STREAM* s, RAIL_ACTIVATE_ORDER* activate);
-void rail_write_client_sysmenu_order(STREAM* s, RAIL_SYSMENU_ORDER* sysmenu);
-void rail_write_client_syscommand_order(STREAM* s, RAIL_SYSCOMMAND_ORDER* syscommand);
-void rail_write_client_notify_event_order(STREAM* s, RAIL_NOTIFY_EVENT_ORDER* notify_event);
-void rail_write_client_window_move_order(STREAM* s, RAIL_WINDOW_MOVE_ORDER* window_move);
-void rail_write_client_get_appid_req_order(STREAM* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
-void rail_write_langbar_info_order(STREAM* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
+void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* client_status);
+void rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec);
+void rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);
+void rail_write_client_activate_order(wStream* s, RAIL_ACTIVATE_ORDER* activate);
+void rail_write_client_sysmenu_order(wStream* s, RAIL_SYSMENU_ORDER* sysmenu);
+void rail_write_client_syscommand_order(wStream* s, RAIL_SYSCOMMAND_ORDER* syscommand);
+void rail_write_client_notify_event_order(wStream* s, RAIL_NOTIFY_EVENT_ORDER* notify_event);
+void rail_write_client_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* window_move);
+void rail_write_client_get_appid_req_order(wStream* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
+void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-BOOL rail_order_recv(rdpRailOrder* rail_order, STREAM* s);
+BOOL rail_order_recv(rdpRailOrder* rail_order, wStream* s);
 
 void rail_send_handshake_order(rdpRailOrder* rail_order);
 void rail_send_client_status_order(rdpRailOrder* rail_order);

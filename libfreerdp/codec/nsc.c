@@ -169,7 +169,7 @@ static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 {
 	int i;
 
@@ -183,7 +183,7 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, STREAM* s)
 	context->nsc_stream.Planes = stream_get_tail(s);
 }
 
-static void nsc_context_initialize(NSC_CONTEXT* context, STREAM* s)
+static void nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 {
 	int i;
 	UINT32 length;
@@ -327,7 +327,7 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 	UINT16 width, UINT16 height, BYTE* data, UINT32 length)
 {
-	STREAM* s;
+	wStream* s;
 
 	s = stream_new(0);
 	stream_attach(s, data, length);

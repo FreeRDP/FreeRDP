@@ -26,7 +26,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/glyph.h>
 

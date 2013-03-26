@@ -69,8 +69,9 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 	{
 		if (context->debug_channel_thread)
 		{
-			freerdp_thread_stop(context->debug_channel_thread);
-			freerdp_thread_free(context->debug_channel_thread);
+			SetEvent(context->stopEvent);
+			WaitForSingleObject(context->debug_channel_thread, INFINITE);
+			CloseHandle(context->debug_channel_thread);
 		}
 
 		stream_free(context->s);
@@ -101,7 +102,7 @@ static void test_peer_init(freerdp_peer* client)
 	freerdp_peer_context_new(client);
 }
 
-static STREAM* test_peer_stream_init(testPeerContext* context)
+static wStream* test_peer_stream_init(testPeerContext* context)
 {
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
@@ -135,7 +136,7 @@ static void test_peer_end_frame(freerdp_peer* client)
 static void test_peer_draw_background(freerdp_peer* client)
 {
 	int size;
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	BYTE* rgb_data;
 	rdpUpdate* update = client->update;
@@ -232,7 +233,7 @@ static void test_peer_load_icon(freerdp_peer* client)
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 {
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
@@ -354,7 +355,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 
 void tf_peer_dump_rfx(freerdp_peer* client)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 prev_seconds;
 	UINT32 prev_useconds;
 	rdpUpdate* update;
@@ -375,12 +376,12 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	{
 		pcap_get_next_record_header(pcap_rfx, &record);
 
-		s->data = realloc(s->data, record.length);
-		record.data = s->data;
-		s->size = record.length;
+		s->buffer = realloc(s->buffer, record.length);
+		record.data = s->buffer;
+		s->capacity = record.length;
 
 		pcap_get_next_record_content(pcap_rfx, &record);
-		s->p = s->data + s->size;
+		s->pointer = s->buffer + s->capacity;
 
 		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == FALSE)
 			break;
@@ -392,17 +393,17 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 static void* tf_debug_channel_thread_func(void* arg)
 {
 	void* fd;
-	STREAM* s;
+	wStream* s;
 	void* buffer;
 	UINT32 bytes_returned = 0;
 	testPeerContext* context = (testPeerContext*) arg;
-	freerdp_thread* thread = context->debug_channel_thread;
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
-		thread->signals[thread->num_signals++] = CreateFileDescriptorEvent(NULL, TRUE, FALSE, ((int) (long) fd));
+
+		context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
 	s = stream_new(4096);
@@ -411,9 +412,9 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	while (1)
 	{
-		freerdp_thread_wait(thread);
+		WaitForSingleObject(context->event, INFINITE);
 
-		if (freerdp_thread_is_stopped(thread))
+		if (WaitForSingleObject(context->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		stream_set_pos(s, 0);
@@ -440,7 +441,6 @@ static void* tf_debug_channel_thread_func(void* arg)
 	}
 
 	stream_free(s);
-	freerdp_thread_quit(thread);
 
 	return 0;
 }
@@ -489,9 +489,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 				if (context->debug_channel != NULL)
 				{
 					printf("Open channel rdpdbg.\n");
-					context->debug_channel_thread = freerdp_thread_new();
-					freerdp_thread_start(context->debug_channel_thread,
-						tf_debug_channel_thread_func, context);
+
+					context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+					context->debug_channel_thread = CreateThread(NULL, 0,
+							(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
 				}
 			}
 			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
@@ -712,6 +714,7 @@ static void* test_peer_mainloop(void* arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
 	}

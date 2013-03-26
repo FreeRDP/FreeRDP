@@ -29,7 +29,10 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
+
 #include <libavcodec/avcodec.h>
+
+#include <pthread.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
