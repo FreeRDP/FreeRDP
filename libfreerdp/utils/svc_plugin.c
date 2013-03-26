@@ -129,7 +129,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	{
 		if (stream_get_size(data_in) != stream_get_length(data_in))
 		{
-			printf("svc_plugin_process_received: read error\n");
+			fprintf(stderr, "svc_plugin_process_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
@@ -156,7 +156,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 
 	if (!plugin)
 	{
-		printf("svc_plugin_open_event: error no match\n");
+		fprintf(stderr, "svc_plugin_open_event: error no match\n");
 		return;
 	}
 

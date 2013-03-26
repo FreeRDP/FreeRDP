@@ -107,7 +107,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (status != TRUE)
 		{
-			printf("freerdp_post_connect failed\n");
+			fprintf(stderr, "freerdp_post_connect failed\n");
 			
 			if (!connectErrorCode)
 			{

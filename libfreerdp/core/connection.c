@@ -137,7 +137,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (!nego_connect(rdp->nego))
 	{
-		printf("Error: protocol security negotiation or connection failure\n");
+		fprintf(stderr, "Error: protocol security negotiation or connection failure\n");
 		return FALSE;
 	}
 
@@ -158,7 +158,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		{
 			connectErrorCode = MCSCONNECTINITIALERROR;                      
 		}
-		printf("Error: unable to send MCS Connect Initial\n");
+		fprintf(stderr, "Error: unable to send MCS Connect Initial\n");
 		return FALSE;
 	}
 
@@ -333,7 +333,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 	{
-		printf("rdp_server_establish_keys: invalid RDP header\n");
+		fprintf(stderr, "rdp_server_establish_keys: invalid RDP header\n");
 		return FALSE;
 	}
 
@@ -342,7 +342,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		printf("rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		fprintf(stderr, "rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
 		return FALSE;
 	}
 
@@ -356,7 +356,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, STREAM* s)
 
 	if (rand_len != key_len + 8)
 	{
-		printf("rdp_server_establish_keys: invalid encrypted client random length\n");
+		fprintf(stderr, "rdp_server_establish_keys: invalid encrypted client random length\n");
 		return FALSE;
 	}
 
@@ -398,7 +398,7 @@ BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, STREAM* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
 	{
-		printf("rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
+		fprintf(stderr, "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
 		return FALSE;
 	}
 
@@ -504,7 +504,7 @@ BOOL rdp_client_connect_license(rdpRdp* rdp, STREAM* s)
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
 	{
-		printf("license connection sequence aborted.\n");
+		fprintf(stderr, "license connection sequence aborted.\n");
 		return FALSE;
 	}
 
@@ -595,12 +595,12 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 
 	rdp->nego->selected_protocol = 0;
 
-	printf("Client Security: NLA:%d TLS:%d RDP:%d\n",
+	fprintf(stderr, "Client Security: NLA:%d TLS:%d RDP:%d\n",
 			(rdp->nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
 			(rdp->nego->requested_protocols & PROTOCOL_TLS)	? 1 : 0,
 			(rdp->nego->requested_protocols == PROTOCOL_RDP) ? 1: 0);
 
-	printf("Server Security: NLA:%d TLS:%d RDP:%d\n",
+	fprintf(stderr, "Server Security: NLA:%d TLS:%d RDP:%d\n",
 			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
 	if ((settings->NlaSecurity) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
@@ -617,10 +617,10 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, STREAM* s)
 	}
 	else
 	{
-		printf("Protocol security negotiation failure\n");
+		fprintf(stderr, "Protocol security negotiation failure\n");
 	}
 
-	printf("Negotiated Security: NLA:%d TLS:%d RDP:%d\n",
+	fprintf(stderr, "Negotiated Security: NLA:%d TLS:%d RDP:%d\n",
 			(rdp->nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
 			(rdp->nego->selected_protocol & PROTOCOL_TLS)	? 1 : 0,
 			(rdp->nego->selected_protocol == PROTOCOL_RDP) ? 1: 0);
@@ -653,14 +653,14 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, STREAM* s)
 	if (!mcs_recv_connect_initial(rdp->mcs, s))
 		return FALSE;
 
-	printf("Accepted client: %s\n", rdp->settings->ClientHostname);
-	printf("Accepted channels:");
+	fprintf(stderr, "Accepted client: %s\n", rdp->settings->ClientHostname);
+	fprintf(stderr, "Accepted channels:");
 
 	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		printf(" %s", rdp->settings->ChannelDefArray[i].Name);
+		fprintf(stderr, " %s", rdp->settings->ChannelDefArray[i].Name);
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 
 	if (!mcs_send_connect_response(rdp->mcs))
 		return FALSE;

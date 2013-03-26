@@ -1481,7 +1481,7 @@ int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, int msgCl
 	}
 
 	if (status < 0)
-		printf("Unknown message: class: %d type: %d\n", msgClass, msgType);
+		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }
@@ -1854,7 +1854,7 @@ int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int msgClas
 	}
 
 	if (status < 0)
-		printf("Unknown event: class: %d type: %d\n", msgClass, msgType);
+		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }

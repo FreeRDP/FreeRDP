@@ -97,7 +97,7 @@ void xf_kbd_send_key(xfInfo* xfi, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		printf("Unknown key with X keycode 0x%02x\n", keycode);
+		fprintf(stderr, "Unknown key with X keycode 0x%02x\n", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_kbd_key_pressed(xfi, XK_Control_L) && !xf_kbd_key_pressed(xfi, XK_Control_R))

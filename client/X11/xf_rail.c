@@ -490,7 +490,7 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{
-		printf("RAIL exec error: execResult=%s NtError=0x%X\n",
+		fprintf(stderr, "RAIL exec error: execResult=%s NtError=0x%X\n",
 			error_code_names[exec_result->execResult], exec_result->rawResult);
 		xfi->disconnect = True;
 	}
@@ -653,7 +653,7 @@ void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EV
 	RAIL_GET_APPID_RESP_ORDER* appid_resp =
 		(RAIL_GET_APPID_RESP_ORDER*) event->user_data;
 
-	printf("Server Application ID Response PDU: windowId=0x%X "
+	fprintf(stderr, "Server Application ID Response PDU: windowId=0x%X "
 		"applicationId=(length=%d dump)\n",
 		appid_resp->windowId, appid_resp->applicationId.length);
 
@@ -665,7 +665,7 @@ void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 	RAIL_LANGBAR_INFO_ORDER* langbar =
 		(RAIL_LANGBAR_INFO_ORDER*) event->user_data;
 
-	printf("Language Bar Information PDU: languageBarStatus=0x%X\n",
+	fprintf(stderr, "Language Bar Information PDU: languageBarStatus=0x%X\n",
 		langbar->languageBarStatus);
 }
 

@@ -533,7 +533,7 @@ ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 		initialized = TRUE;
 	}
 
-	printf("TSMFDecoderEntry FFMPEG\n");
+	fprintf(stderr, "TSMFDecoderEntry FFMPEG\n");
 
 	decoder = (TSMFFFmpegDecoder*) malloc(sizeof(TSMFFFmpegDecoder));
 	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));

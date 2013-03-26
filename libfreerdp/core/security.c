@@ -373,7 +373,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		BYTE client_encrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
 		BYTE client_decrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
 
-		printf("FIPS Compliant encryption level.\n");
+		fprintf(stderr, "FIPS Compliant encryption level.\n");
 
 		/* disable fastpath input; it doesnt handle FIPS encryption yet */
 		rdp->settings->FastPathInput = FALSE;

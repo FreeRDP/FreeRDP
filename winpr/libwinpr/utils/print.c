@@ -35,7 +35,7 @@ void winpr_HexDump(BYTE* data, int length)
 
 	while (offset < length)
 	{
-		printf("%04x ", offset);
+		fprintf(stderr, "%04x ", offset);
 
 		line = length - offset;
 
@@ -43,15 +43,15 @@ void winpr_HexDump(BYTE* data, int length)
 			line = WINPR_HEXDUMP_LINE_LENGTH;
 
 		for (i = 0; i < line; i++)
-			printf("%02x ", p[i]);
+			fprintf(stderr, "%02x ", p[i]);
 
 		for (; i < WINPR_HEXDUMP_LINE_LENGTH; i++)
-			printf("   ");
+			fprintf(stderr, "   ");
 
 		for (i = 0; i < line; i++)
-			printf("%c", (p[i] >= 0x20 && p[i] < 0x7F) ? p[i] : '.');
+			fprintf(stderr, "%c", (p[i] >= 0x20 && p[i] < 0x7F) ? p[i] : '.');
 
-		printf("\n");
+		fprintf(stderr, "\n");
 
 		offset += line;
 		p += line;

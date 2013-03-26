@@ -543,7 +543,7 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
 	}
 	else
 	{
-		printf("invalid negotiation response\n");
+		fprintf(stderr, "invalid negotiation response\n");
 		nego->state = NEGO_STATE_FAIL;
 	}
 
@@ -568,7 +568,7 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 
 	if (li != stream_get_left(s) + 6)
 	{
-		printf("Incorrect TPDU length indicator.\n");
+		fprintf(stderr, "Incorrect TPDU length indicator.\n");
 		return FALSE;
 	}
 
@@ -600,7 +600,7 @@ BOOL nego_read_request(rdpNego* nego, STREAM* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			printf("Incorrect negotiation request type %d\n", type);
+			fprintf(stderr, "Incorrect negotiation request type %d\n", type);
 			return FALSE;
 		}
 
@@ -822,7 +822,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		printf("nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		fprintf(stderr, "nego_send_negotiation_response: client supports only Standard RDP Security\n");
 		stream_write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
