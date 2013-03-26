@@ -264,7 +264,7 @@ BOOL gcc_read_conference_create_response(STREAM* s, rdpSettings* settings)
 	per_read_length(s, &length);
 	if (!gcc_read_server_data_blocks(s, settings, length))
 	{
-		printf("gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
+		fprintf(stderr, "gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
 		return FALSE;
 	}
 
@@ -375,16 +375,16 @@ void gcc_write_client_data_blocks(STREAM* s, rdpSettings* settings)
 	{
 		if (settings->UseMultimon)
 		{
-			printf("WARNING: true multi monitor support was not advertised by server!\n");
+			fprintf(stderr, "WARNING: true multi monitor support was not advertised by server!\n");
 
 			if (settings->ForceMultimon)
 			{
-				printf("Sending multi monitor information anyway (may break connectivity!)\n");
+				fprintf(stderr, "Sending multi monitor information anyway (may break connectivity!)\n");
 				gcc_write_client_monitor_data(s, settings);
 			}
 			else
 			{
-				printf("Use /multimon:force to force sending multi monitor information\n");
+				fprintf(stderr, "Use /multimon:force to force sending multi monitor information\n");
 			}
 		}
 	}
@@ -403,7 +403,7 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
-			printf("gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
+			fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
 			return FALSE;
 		}
 
@@ -412,7 +412,7 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 			case SC_CORE:
 				if (!gcc_read_server_core_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
+					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
 					return FALSE;
 				}
 				break;
@@ -420,7 +420,7 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
+					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
 					return FALSE;
 				}
 				break;
@@ -428,13 +428,13 @@ BOOL gcc_read_server_data_blocks(STREAM* s, rdpSettings* settings, int length)
 			case SC_NET:
 				if (!gcc_read_server_network_data(s, settings))
 				{
-					printf("gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
+					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
 					return FALSE;
 				}
 				break;
 
 			default:
-				printf("gcc_read_server_data_blocks: ignoring type=%hu\n", type);
+				fprintf(stderr, "gcc_read_server_data_blocks: ignoring type=%hu\n", type);
 				break;
 		}
 		offset += blockLength;
@@ -1127,7 +1127,7 @@ BOOL gcc_read_server_network_data(STREAM* s, rdpSettings* settings)
 
 	if (channelCount != settings->ChannelCount)
 	{
-		printf("requested %d channels, got %d instead\n",
+		fprintf(stderr, "requested %d channels, got %d instead\n",
 				settings->ChannelCount, channelCount);
 	}
 
@@ -1221,7 +1221,7 @@ void gcc_write_client_cluster_data(STREAM* s, rdpSettings* settings)
 
 BOOL gcc_read_client_monitor_data(STREAM* s, rdpSettings* settings, UINT16 blockLength)
 {
-	printf("CS_MONITOR\n");
+	fprintf(stderr, "CS_MONITOR\n");
 	return TRUE;
 }
 

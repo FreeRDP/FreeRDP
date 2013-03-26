@@ -140,7 +140,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	XFree(attr);
 
 #ifdef WITH_DEBUG_XV
-	printf("xf_tsmf_init: pixel format ");
+	fprintf(stderr, "xf_tsmf_init: pixel format ");
 #endif
 	fo = XvListImageFormats(xfi->display, xv->xv_port, &ret);
 	if (ret > 0)
@@ -152,7 +152,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
 #ifdef WITH_DEBUG_XV
-			printf("%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
+			fprintf(stderr, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
 				((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
 #endif
 		}
@@ -160,7 +160,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	}
 	XFree(fo);
 #ifdef WITH_DEBUG_XV
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 

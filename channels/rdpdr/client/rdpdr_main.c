@@ -199,7 +199,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 			count++;
 
-			printf("registered device #%d: %s (type=%d id=%d)\n",
+			fprintf(stderr, "registered device #%d: %s (type=%d id=%d)\n",
 				count, device->name, device->type, device->id);
 		}
 	}

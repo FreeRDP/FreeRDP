@@ -216,7 +216,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -227,7 +227,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -278,7 +278,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
-				printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
 				return 0;
 			}
 
@@ -298,7 +298,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 
 #ifdef WITH_DEBUG_CREDSSP
-			printf("Sending Authentication Token\n");
+			fprintf(stderr, "Sending Authentication Token\n");
 			winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
@@ -320,7 +320,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
+		fprintf(stderr, "Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
 		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 
@@ -342,7 +342,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("Could not verify public key echo!\n");
+		fprintf(stderr, "Could not verify public key echo!\n");
 		return -1;
 	}
 
@@ -352,7 +352,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+		fprintf(stderr, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -432,7 +432,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -443,7 +443,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -493,7 +493,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Receiving Authentication Token\n");
+		fprintf(stderr, "Receiving Authentication Token\n");
 		credssp_buffer_print(credssp);
 #endif
 
@@ -502,7 +502,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (credssp->negoToken.cbBuffer < 1)
 		{
-			printf("CredSSP: invalid negoToken!\n");
+			fprintf(stderr, "CredSSP: invalid negoToken!\n");
 			return -1;
 		}
 
@@ -538,13 +538,13 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
-				printf("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
 				return 0;
 			}
 
 			if (credssp_decrypt_public_key_echo(credssp) != SEC_E_OK)
 			{
-				printf("Error: could not verify client's public key echo\n");
+				fprintf(stderr, "Error: could not verify client's public key echo\n");
 				return -1;
 			}
 
@@ -557,14 +557,14 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 		{
-			printf("AcceptSecurityContext status: 0x%08X\n", status);
+			fprintf(stderr, "AcceptSecurityContext status: 0x%08X\n", status);
 			return -1;
 		}
 
 		/* send authentication token */
 
 #ifdef WITH_DEBUG_CREDSSP
-		printf("Sending Authentication Token\n");
+		fprintf(stderr, "Sending Authentication Token\n");
 		credssp_buffer_print(credssp);
 #endif
 
@@ -584,13 +584,13 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (credssp_decrypt_ts_credentials(credssp) != SEC_E_OK)
 	{
-		printf("Could not decrypt TSCredentials status: 0x%08X\n", status);
+		fprintf(stderr, "Could not decrypt TSCredentials status: 0x%08X\n", status);
 		return 0;
 	}
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcceptSecurityContext status: 0x%08X\n", status);
+		fprintf(stderr, "AcceptSecurityContext status: 0x%08X\n", status);
 		return 0;
 	}
 
@@ -598,7 +598,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("ImpersonateSecurityContext status: 0x%08X\n", status);
+		fprintf(stderr, "ImpersonateSecurityContext status: 0x%08X\n", status);
 		return 0;
 	}
 	else
@@ -607,7 +607,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (status != SEC_E_OK)
 		{
-			printf("RevertSecurityContext status: 0x%08X\n", status);
+			fprintf(stderr, "RevertSecurityContext status: 0x%08X\n", status);
 			return 0;
 		}
 	}
@@ -704,7 +704,7 @@ SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("EncryptMessage status: 0x%08X\n", status);
+		fprintf(stderr, "EncryptMessage status: 0x%08X\n", status);
 		return status;
 	}
 
@@ -725,7 +725,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (credssp->PublicKey.cbBuffer + credssp->ContextSizes.cbMaxSignature != credssp->pubKeyAuth.cbBuffer)
 	{
-		printf("unexpected pubKeyAuth buffer size:%d\n", (int) credssp->pubKeyAuth.cbBuffer);
+		fprintf(stderr, "unexpected pubKeyAuth buffer size:%d\n", (int) credssp->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -752,7 +752,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		printf("DecryptMessage failure: 0x%08X\n", status);
+		fprintf(stderr, "DecryptMessage failure: 0x%08X\n", status);
 		return status;
 	}
 
@@ -767,12 +767,12 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (memcmp(public_key1, public_key2, public_key_length) != 0)
 	{
-		printf("Could not verify server's public key echo\n");
+		fprintf(stderr, "Could not verify server's public key echo\n");
 
-		printf("Expected (length = %d):\n", public_key_length);
+		fprintf(stderr, "Expected (length = %d):\n", public_key_length);
 		winpr_HexDump(public_key1, public_key_length);
 
-		printf("Actual (length = %d):\n", public_key_length);
+		fprintf(stderr, "Actual (length = %d):\n", public_key_length);
 		winpr_HexDump(public_key2, public_key_length);
 
 		return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
@@ -1002,7 +1002,7 @@ SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp)
 
 	if (credssp->authInfo.cbBuffer < 1)
 	{
-		printf("credssp_decrypt_ts_credentials missing authInfo buffer\n");
+		fprintf(stderr, "credssp_decrypt_ts_credentials missing authInfo buffer\n");
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -1152,7 +1152,7 @@ int credssp_recv(rdpCredssp* credssp)
 
 	if (status < 0)
 	{
-		printf("credssp_recv() error: %d\n", status);
+		fprintf(stderr, "credssp_recv() error: %d\n", status);
 		stream_free(s);
 		return -1;
 	}
@@ -1208,19 +1208,19 @@ void credssp_buffer_print(rdpCredssp* credssp)
 {
 	if (credssp->negoToken.cbBuffer > 0)
 	{
-		printf("CredSSP.negoToken (length = %d):\n", (int) credssp->negoToken.cbBuffer);
+		fprintf(stderr, "CredSSP.negoToken (length = %d):\n", (int) credssp->negoToken.cbBuffer);
 		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 	}
 
 	if (credssp->pubKeyAuth.cbBuffer > 0)
 	{
-		printf("CredSSP.pubKeyAuth (length = %d):\n", (int) credssp->pubKeyAuth.cbBuffer);
+		fprintf(stderr, "CredSSP.pubKeyAuth (length = %d):\n", (int) credssp->pubKeyAuth.cbBuffer);
 		winpr_HexDump(credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
 	}
 
 	if (credssp->authInfo.cbBuffer > 0)
 	{
-		printf("CredSSP.authInfo (length = %d):\n", (int) credssp->authInfo.cbBuffer);
+		fprintf(stderr, "CredSSP.authInfo (length = %d):\n", (int) credssp->authInfo.cbBuffer);
 		winpr_HexDump(credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
 	}
 }

@@ -163,7 +163,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		else
 			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
 
-		printf("Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
+		fprintf(stderr, "Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
 	}
 
 	freeaddrinfo(res);
@@ -213,7 +213,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	listener->sockfds[listener->num_sockfds++] = sockfd;
 
-	printf("Listening on socket %s.\n", addr.sun_path);
+	fprintf(stderr, "Listening on socket %s.\n", addr.sun_path);
 
 	return TRUE;
 #else

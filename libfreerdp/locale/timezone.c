@@ -1565,7 +1565,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;	
 	}
 
-	printf("Unable to detect time zone\n");
+	fprintf(stderr, "Unable to detect time zone\n");
 	return tzid;
 #else
 	return 0;
@@ -1626,7 +1626,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 		}
 	}
 
-	printf("Unable to find a match for unix timezone: %s\n", tzid);
+	fprintf(stderr, "Unable to find a match for unix timezone: %s\n", tzid);
 	free(tzid);
 	return NULL;
 }
@@ -1642,12 +1642,12 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 	{
 		if ((rules[i].TicksStart <= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
-			/*printf("Got rule %d from table at %p with count %u\n", i, rules, count);*/
+			/*fprintf(stderr, "Got rule %d from table at %p with count %u\n", i, rules, count);*/
 			return &rules[i];
 		}
 	}
 
-	printf("Unable to get current timezone rule\n");
+	fprintf(stderr, "Unable to get current timezone rule\n");
 	return NULL;
 }
 

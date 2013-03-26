@@ -51,7 +51,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (freerdp_check_file_exists(certificate_store->path) == FALSE)
 	{
 		freerdp_mkdir(certificate_store->path);
-		printf("creating directory %s\n", certificate_store->path);
+		fprintf(stderr, "creating directory %s\n", certificate_store->path);
 	}
 
 	certificate_store->file = freerdp_construct_path(config_path, (char*) certificate_known_hosts_file);
@@ -62,7 +62,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 		if (certificate_store->fp == NULL)
 		{
-			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			fprintf(stderr, "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
 			return;
 		}
 

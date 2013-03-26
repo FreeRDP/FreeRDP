@@ -52,11 +52,11 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pM
 
 	if (type != FC_CARRAY)
 	{
-		printf("error: expected FC_CARRAY, got 0x%02X\n", type);
+		fprintf(stderr, "error: expected FC_CARRAY, got 0x%02X\n", type);
 		return;
 	}
 
-	printf("warning: NdrConformantArrayBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrConformantArrayBufferSize unimplemented\n");
 }
 
 void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -72,7 +72,7 @@ void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
 	 * FC_END
 	 */
 
-	printf("warning: NdrConformantVaryingArrayBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrConformantVaryingArrayBufferSize unimplemented\n");
 }
 
 void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -95,7 +95,7 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 	 * FC_END
 	 */
 
-	printf("warning: NdrFixedArrayBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrFixedArrayBufferSize unimplemented\n");
 }
 
 void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -124,7 +124,7 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * FC_END
 	 */
 
-	printf("warning: NdrVaryingArrayBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrVaryingArrayBufferSize unimplemented\n");
 }
 
 void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -139,7 +139,7 @@ void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * FC_END
 	 */
 
-	printf("warning: NdrComplexArrayBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrComplexArrayBufferSize unimplemented\n");
 }
 
 #endif

@@ -946,7 +946,7 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			break;
 	}
 	
-	printf("BitBlt: unknown rop: 0x%08X\n", rop);
+	fprintf(stderr, "BitBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 
@@ -991,8 +991,7 @@ int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 			break;
 	}
 	
-	printf("PatBlt: unknown rop: 0x%08X\n", rop);
-
+	fprintf(stderr, "PatBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 

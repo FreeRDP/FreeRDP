@@ -449,14 +449,14 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, STREAM* s)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
-			printf("Error: SEC_REDIRECTION_PKT unsupported\n");
+			fprintf(stderr, "Error: SEC_REDIRECTION_PKT unsupported\n");
 			return FALSE;
 		}
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				fprintf(stderr, "rdp_decrypt failed\n");
 				return FALSE;
 			}
 		}
@@ -584,7 +584,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, STREAM* s)
 		return FALSE;
 	stream_read_UINT32(s, infoType); /* infoType (4 bytes) */
 
-	//printf("%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
+	//fprintf(stderr, "%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
 
 	switch (infoType)
 	{

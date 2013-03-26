@@ -128,7 +128,7 @@ BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
 		return FALSE;
 	}
 
@@ -161,7 +161,7 @@ BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
 		return FALSE;
 	}
 

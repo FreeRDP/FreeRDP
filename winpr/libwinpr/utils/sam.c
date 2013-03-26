@@ -63,7 +63,7 @@ WINPR_SAM* SamOpen(BOOL read_only)
 		sam->fp = fp;
 	}
 	else
-		printf("Could not open SAM file!\n");
+		fprintf(stderr, "Could not open SAM file!\n");
 
 	return sam;
 }

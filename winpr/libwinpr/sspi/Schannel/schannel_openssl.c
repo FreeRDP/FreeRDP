@@ -60,7 +60,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->ctx)
 	{
-		printf("SSL_CTX_new failed\n");
+		fprintf(stderr, "SSL_CTX_new failed\n");
 		return -1;
 	}
 
@@ -99,7 +99,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->ssl)
 	{
-		printf("SSL_new failed\n");
+		fprintf(stderr, "SSL_new failed\n");
 		return -1;
 	}
 
@@ -107,7 +107,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioRead)
 	{
-		printf("BIO_new failed\n");
+		fprintf(stderr, "BIO_new failed\n");
 		return -1;
 	}
 
@@ -117,7 +117,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioWrite)
 	{
-		printf("BIO_new failed\n");
+		fprintf(stderr, "BIO_new failed\n");
 		return -1;
 	}
 
@@ -143,7 +143,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->ctx)
 	{
-		printf("SSL_CTX_new failed\n");
+		fprintf(stderr, "SSL_CTX_new failed\n");
 		return -1;
 	}
 
@@ -188,7 +188,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_CTX_use_RSAPrivateKey_file failed\n");
+		fprintf(stderr, "SSL_CTX_use_RSAPrivateKey_file failed\n");
 		return -1;
 	}
 
@@ -196,13 +196,13 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->ssl)
 	{
-		printf("SSL_new failed\n");
+		fprintf(stderr, "SSL_new failed\n");
 		return -1;
 	}
 
 	if (SSL_use_certificate_file(context->ssl, "/tmp/localhost.crt", SSL_FILETYPE_PEM) <= 0)
 	{
-		printf("SSL_use_certificate_file failed\n");
+		fprintf(stderr, "SSL_use_certificate_file failed\n");
 		return -1;
 	}
 
@@ -210,7 +210,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioRead)
 	{
-		printf("BIO_new failed\n");
+		fprintf(stderr, "BIO_new failed\n");
 		return -1;
 	}
 
@@ -220,7 +220,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioWrite)
 	{
-		printf("BIO_new failed\n");
+		fprintf(stderr, "BIO_new failed\n");
 		return -1;
 	}
 
@@ -262,7 +262,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			printf("SSL_connect error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			fprintf(stderr, "SSL_connect error: %s\n", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -321,7 +321,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			printf("SSL_accept error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			fprintf(stderr, "SSL_accept error: %s\n", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -379,7 +379,7 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		printf("SSL_write: %s\n", openssl_get_ssl_error_string(ssl_error));
+		fprintf(stderr, "SSL_write: %s\n", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
@@ -425,7 +425,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		printf("SSL_read: %s\n", openssl_get_ssl_error_string(ssl_error));
+		fprintf(stderr, "SSL_read: %s\n", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	length = status;

@@ -151,7 +151,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, STREAM* s)
 			break;
 
 		default:
-			printf("Data PDU type %d\n", type);
+			fprintf(stderr, "Data PDU type %d\n", type);
 			break;
 	}
 
@@ -172,7 +172,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		fprintf(stderr, "Incorrect RDP header.\n");
 		return -1;
 	}
 
@@ -185,7 +185,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				fprintf(stderr, "rdp_decrypt failed\n");
 				return -1;
 			}
 		}
@@ -211,7 +211,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, STREAM* s)
 				break;
 
 			default:
-				printf("Client sent pduType %d\n", pduType);
+				fprintf(stderr, "Client sent pduType %d\n", pduType);
 				return -1;
 		}
 	}
@@ -234,7 +234,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, STREAM* s)
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{
-		printf("incorrect FastPath PDU header length %d\n", length);
+		fprintf(stderr, "incorrect FastPath PDU header length %d\n", length);
 		return -1;
 	}
 
@@ -337,7 +337,7 @@ static int peer_recv_callback(rdpTransport* transport, STREAM* s, void* extra)
 			break;
 
 		default:
-			printf("Invalid state %d\n", rdp->state);
+			fprintf(stderr, "Invalid state %d\n", rdp->state);
 			return -1;
 	}
 

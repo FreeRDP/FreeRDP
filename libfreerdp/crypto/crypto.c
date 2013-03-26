@@ -180,7 +180,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 
 	if (!pkey)
 	{
-		printf("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
+		fprintf(stderr, "crypto_cert_get_public_key: X509_get_pubkey() failed\n");
 		status = FALSE;
 		goto exit;
 	}
@@ -189,7 +189,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 
 	if (length < 1)
 	{
-		printf("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
+		fprintf(stderr, "crypto_cert_get_public_key: i2d_PublicKey() failed\n");
 		status = FALSE;
 		goto exit;
 	}

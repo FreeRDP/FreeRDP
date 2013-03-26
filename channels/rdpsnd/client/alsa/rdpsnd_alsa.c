@@ -68,7 +68,7 @@ struct rdpsnd_alsa_plugin
 #define SND_PCM_CHECK(_func, _status) \
 	if (_status < 0) \
 	{ \
-		printf("%s: %d\n", _func, _status); \
+		fprintf(stderr, "%s: %d\n", _func, _status); \
 		return -1; \
 	}
 
@@ -106,7 +106,7 @@ int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 
 	if (alsa->buffer_size > buffer_size_max)
 	{
-		printf("Warning: requested sound buffer size %d, got %d instead\n",
+		fprintf(stderr, "Warning: requested sound buffer size %d, got %d instead\n",
 				(int) alsa->buffer_size, (int) buffer_size_max);
 		alsa->buffer_size = buffer_size_max;
 	}
@@ -596,7 +596,7 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 		}
 		else if (status < 0)
 		{
-			printf("status: %d\n", status);
+			fprintf(stderr, "status: %d\n", status);
 			snd_pcm_close(alsa->pcm_handle);
 			alsa->pcm_handle = NULL;
 			rdpsnd_alsa_open((rdpsndDevicePlugin*) alsa, NULL, alsa->latency);
@@ -617,7 +617,7 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	wave->wLatency = (UINT16) (wave->wLocalTimeB - wave->wLocalTimeA);
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
 
-	//printf("wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
+	//fprintf(stderr, "wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
 
 	device->WaveConfirm(device, wave);
 }

@@ -307,16 +307,16 @@ void mcs_write_domain_parameters(STREAM* s, DomainParameters* domainParameters)
 
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
-	printf("DomainParameters {\n");
-	printf("\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
-	printf("\tmaxUserIds:%d\n", domainParameters->maxUserIds);
-	printf("\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
-	printf("\tnumPriorities:%d\n", domainParameters->numPriorities);
-	printf("\tminThroughput:%d\n", domainParameters->minThroughput);
-	printf("\tmaxHeight:%d\n", domainParameters->maxHeight);
-	printf("\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
-	printf("\tprotocolVersion:%d\n", domainParameters->protocolVersion);
-	printf("}\n");
+	fprintf(stderr, "DomainParameters {\n");
+	fprintf(stderr, "\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
+	fprintf(stderr, "\tmaxUserIds:%d\n", domainParameters->maxUserIds);
+	fprintf(stderr, "\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
+	fprintf(stderr, "\tnumPriorities:%d\n", domainParameters->numPriorities);
+	fprintf(stderr, "\tminThroughput:%d\n", domainParameters->minThroughput);
+	fprintf(stderr, "\tmaxHeight:%d\n", domainParameters->maxHeight);
+	fprintf(stderr, "\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
+	fprintf(stderr, "\tprotocolVersion:%d\n", domainParameters->protocolVersion);
+	fprintf(stderr, "}\n");
 }
 
 /**
@@ -517,7 +517,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, STREAM* s)
 
 	if (!gcc_read_conference_create_response(s, mcs->transport->settings))
 	{
-		printf("mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
+		fprintf(stderr, "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
 		return FALSE;
 	}
 
