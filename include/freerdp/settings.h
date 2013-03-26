@@ -291,7 +291,8 @@ struct rdp_settings
 	boolean mouse_motion; /* 86 */
 	char* window_title; /* 87 */
 	uint64 parent_window_xid; /* 88 */
-	uint32 paddingD[112 - 89]; /* 89 */
+	char* wm_class; /* 89 */
+	uint32 paddingD[112 - 90]; /* 90 */
 
 	/* Internal Parameters */
 	char* home_path; /* 112 */
