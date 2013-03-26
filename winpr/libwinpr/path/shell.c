@@ -297,7 +297,7 @@ char* GetCombinedPath(char* basePath, char* subPath)
 	return path;
 }
 
-#ifndef _WIN32
+//#ifndef _WIN32
 
 BOOL PathFileExistsA(LPCSTR pszPath)
 {
@@ -314,4 +314,4 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 	return FALSE;
 }
 
-#endif
+//#endif
