@@ -57,7 +57,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		if (!event->bManualReset)
 		{
-			printf("CreateEventW: auto-reset events not yet implemented\n");
+			fprintf(stderr, "CreateEventW: auto-reset events not yet implemented\n");
 		}
 
 		event->pipe_fd[0] = -1;
@@ -67,13 +67,13 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 		if (event->pipe_fd[0] < 0)
 		{
-			printf("CreateEventW: failed to create event\n");
+			fprintf(stderr, "CreateEventW: failed to create event\n");
 			return NULL;
 		}
 #else
 		if (pipe(event->pipe_fd) < 0)
 		{
-			printf("CreateEventW: failed to create event\n");
+			fprintf(stderr, "CreateEventW: failed to create event\n");
 			return NULL;
 		}
 #endif

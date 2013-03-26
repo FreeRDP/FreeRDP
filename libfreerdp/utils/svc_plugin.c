@@ -224,7 +224,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT
 
 	if (status != CHANNEL_RC_OK)
 	{
-		printf("svc_plugin_process_connected: open failed\n");
+		fprintf(stderr, "svc_plugin_process_connected: open failed\n");
 		return;
 	}
 
@@ -264,7 +264,7 @@ static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, 
 
 	if (!plugin)
 	{
-		printf("svc_plugin_init_event: error no match\n");
+		fprintf(stderr, "svc_plugin_init_event: error no match\n");
 		return;
 	}
 
@@ -316,7 +316,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	if (status != CHANNEL_RC_OK)
 	{
 		stream_free(data_out);
-		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", status);
+		fprintf(stderr, "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -331,7 +331,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
 
 	if (status != CHANNEL_RC_OK)
-		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
+		fprintf(stderr, "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
 
 	return status;
 }

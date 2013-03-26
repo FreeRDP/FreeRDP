@@ -789,7 +789,7 @@ BOOL rdp_print_control_capability_set(STREAM* s, UINT16 length)
 	UINT16 controlInterest;
 	UINT16 detachInterest;
 
-	printf("ControlCapabilitySet (length %d):\n", length);
+	fprintf(stderr, "ControlCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -799,10 +799,10 @@ BOOL rdp_print_control_capability_set(STREAM* s, UINT16 length)
 	stream_read_UINT16(s, controlInterest); /* controlInterest (2 bytes) */
 	stream_read_UINT16(s, detachInterest); /* detachInterest (2 bytes) */
 
-	printf("\tcontrolFlags: 0x%04X\n", controlFlags);
-	printf("\tremoteDetachFlag: 0x%04X\n", remoteDetachFlag);
-	printf("\tcontrolInterest: 0x%04X\n", controlInterest);
-	printf("\tdetachInterest: 0x%04X\n", detachInterest);
+	fprintf(stderr, "\tcontrolFlags: 0x%04X\n", controlFlags);
+	fprintf(stderr, "\tremoteDetachFlag: 0x%04X\n", remoteDetachFlag);
+	fprintf(stderr, "\tcontrolInterest: 0x%04X\n", controlInterest);
+	fprintf(stderr, "\tdetachInterest: 0x%04X\n", detachInterest);
 
 	return TRUE;
 }
@@ -856,7 +856,7 @@ BOOL rdp_print_window_activation_capability_set(STREAM* s, UINT16 length)
 	UINT16 helpExtendedKeyFlag;
 	UINT16 windowManagerKeyFlag;
 
-	printf("WindowActivationCapabilitySet (length %d):\n", length);
+	fprintf(stderr, "WindowActivationCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -1450,7 +1450,7 @@ BOOL rdp_print_glyph_cache_capability_set(STREAM* s, UINT16 length)
 	UINT16 glyphSupportLevel;
 	UINT16 pad2Octets;
 
-	printf("GlyphCacheCapabilitySet (length %d):\n", length);
+	fprintf(stderr, "GlyphCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 52)
 		return FALSE;
