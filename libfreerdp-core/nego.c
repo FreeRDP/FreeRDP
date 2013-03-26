@@ -397,7 +397,9 @@ boolean nego_send_negotiation_request(rdpNego* nego)
 	if (nego->routing_token != NULL)
 	{
 		stream_write(s, nego->routing_token->data, nego->routing_token->length);
-		length += nego->routing_token->length;
+		stream_write_uint8(s, 0x0D); /* CR */
+		stream_write_uint8(s, 0x0A); /* LF */
+		length += nego->routing_token->length + 2;
 	}
 	else if (nego->cookie != NULL)
 	{
