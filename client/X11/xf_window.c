@@ -288,7 +288,10 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		if (class_hints != NULL)
 		{
 			class_hints->res_name = "xfreerdp";
-			class_hints->res_class = "xfreerdp";
+			if (xfi->instance->settings->wm_class != NULL)
+				class_hints->res_class = xfi->instance->settings->wm_class;
+			else 
+				class_hints->res_class = "xfreerdp";
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
 		}
@@ -423,14 +426,19 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	if (class_hints != NULL)
 	{
-		char* class;
-		class = xmalloc(sizeof(rail_window_class));
-		snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
+                char* class = NULL;
+                if (xfi->instance->settings->wm_class != NULL)
+                        class_hints->res_class = xfi->instance->settings->wm_class;
+                else {
+                        class = malloc(sizeof(rail_window_class));
+                        snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
+                        class_hints->res_class = class;
+                }
 		class_hints->res_name = "RAIL";
-		class_hints->res_class = class;
 		XSetClassHint(xfi->display, window->handle, class_hints);
 		XFree(class_hints);
-		xfree(class);
+                if (class)
+                        free(class);
 	}
 
 	XSetWMProtocols(xfi->display, window->handle, &(xfi->WM_DELETE_WINDOW), 1);
