@@ -116,6 +116,8 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	rdpInput* input;
 	int x, y;
 	Window childWindow;
+    struct timeval tv;
+    suseconds_t ts;
 
 	input = xfi->instance->input;
 	x = event->xmotion.x;
@@ -139,7 +141,20 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 			RootWindowOfScreen(xfi->screen),
 			x, y, &x, &y, &childWindow);
 	}
-
+	
+    /* Limit event rate */
+    gettimeofday(&tv,NULL);
+    ts = tv.tv_usec;
+    if (ts < xfi->us_last_mouse_event)
+    	ts += 1000000;
+    if ( ts < (xfi->us_last_mouse_event + xfi->us_mouse_event_delay ))
+    {
+        return TRUE;
+    } else
+    {
+        xfi->us_last_mouse_event = tv.tv_usec;
+    }
+    
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
 	if (xfi->fullscreen)

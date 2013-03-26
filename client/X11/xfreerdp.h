@@ -31,6 +31,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
+#include <sys/time.h>
 
 typedef struct xf_info xfInfo;
 
@@ -144,6 +145,9 @@ struct xf_info
 	void* nsc_context;
 	void* xv_context;
 	void* clipboard_context;
+	
+    unsigned int us_mouse_event_delay;
+    suseconds_t us_last_mouse_event;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
