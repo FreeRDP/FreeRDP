@@ -80,6 +80,7 @@ xcode
 Release
 Win32
 build/
+*.orig
 
 default.log
 *Amplifier XE*

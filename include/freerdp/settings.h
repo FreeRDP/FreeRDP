@@ -946,7 +946,8 @@ struct rdp_settings
 	ALIGN64 BOOL AsyncChannels; /* 1546 */
 	ALIGN64 BOOL AsyncTransport; /* 1547 */
 	ALIGN64 BOOL ToggleFullscreen; /* 1548 */
-	UINT64 padding1600[1600 - 1549]; /* 1549 */
+	ALIGN64 char* WmClass; /* 1549 */
+	UINT64 padding1600[1600 - 1550]; /* 1550 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
