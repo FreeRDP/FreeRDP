@@ -257,18 +257,23 @@ WINPR_API BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData
 
 WINPR_API BOOL FindClose(HANDLE hFindFile);
 
+WINPR_API BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+
 #ifdef UNICODE
 #define CreateFile		CreateFileW
 #define DeleteFile		DeleteFileW
 #define FindFirstFile		FindFirstFileW
 #define FindFirstFileEx		FindFirstFileExW
 #define FindNextFile		FindNextFileW
+#define CreateDirectory		CreateDirectoryW
 #else
 #define CreateFile		CreateFileA
 #define DeleteFile		DeleteFileA
 #define FindFirstFile		FindFirstFileA
 #define FindFirstFileEx		FindFirstFileExA
 #define FindNextFile		FindNextFileA
+#define CreateDirectory		CreateDirectoryA
 #endif
 
 #endif

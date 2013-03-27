@@ -119,7 +119,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (instance->settings->PlayRemoteFx)
 		{
-			STREAM* s;
+			wStream* s;
 			rdpUpdate* update;
 			pcap_record record;
 
@@ -135,19 +135,19 @@ BOOL freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->data = (BYTE*) realloc(s->data, record.length);
-				record.data = s->data;
-				s->size = record.length;
+				s->buffer = (BYTE*) realloc(s->buffer, record.length);
+				record.data = s->buffer;
+				s->capacity = record.length;
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
 				stream_set_pos(s, 0);
 
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, s->size, s);
+				update_recv_surfcmds(update, s->capacity, s);
 				update->EndPaint(update->context);
 			}
 
-			free(s->data);
+			free(s->buffer);
 			return TRUE;
 		}
 	}

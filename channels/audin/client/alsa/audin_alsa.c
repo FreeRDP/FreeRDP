@@ -26,13 +26,14 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 #include <winpr/cmdline.h>
 
 #include <alsa/asoundlib.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/thread.h>
 #include <freerdp/channels/rdpsnd.h>
 
 #include "audin_main.h"
@@ -54,7 +55,8 @@ typedef struct _AudinALSADevice
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 
-	freerdp_thread* thread;
+	HANDLE thread;
+	HANDLE stopEvent;
 
 	BYTE* buffer;
 	int buffer_frames;
@@ -128,7 +130,7 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 
 	while (frames > 0)
 	{
-		if (freerdp_thread_is_stopped(alsa->thread))
+		if (WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		cframes = alsa->frames_per_packet - alsa->buffer_frames;
@@ -160,7 +162,7 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 				encoded_size = alsa->buffer_frames * tbytes_per_frame;
 			}
 
-			if (freerdp_thread_is_stopped(alsa->thread))
+			if (WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0)
 			{
 				ret = 0;
 				frames = 0;
@@ -210,14 +212,16 @@ static void* audin_alsa_thread_func(void* arg)
 			DEBUG_WARN("snd_pcm_open (%s)", snd_strerror(error));
 			break;
 		}
+
 		if (!audin_alsa_set_params(alsa, capture_handle))
 		{
 			break;
 		}
 
-		while (!freerdp_thread_is_stopped(alsa->thread))
+		while (!(WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0))
 		{
 			error = snd_pcm_readi(capture_handle, buffer, alsa->frames_per_packet);
+
 			if (error == -EPIPE)
 			{
 				snd_pcm_recover(capture_handle, error, 0);
@@ -228,10 +232,12 @@ static void* audin_alsa_thread_func(void* arg)
 				DEBUG_WARN("snd_pcm_readi (%s)", snd_strerror(error));
 				break;
 			}
+
 			if (!audin_alsa_thread_receive(alsa, buffer, error * rbytes_per_frame))
 				break;
 		}
-	} while (0);
+	}
+	while (0);
 
 	free(buffer);
 
@@ -241,7 +247,7 @@ static void* audin_alsa_thread_func(void* arg)
 	if (capture_handle)
 		snd_pcm_close(capture_handle);
 
-	freerdp_thread_quit(alsa->thread);
+	SetEvent(alsa->stopEvent);
 
 	DEBUG_DVC("out");
 
@@ -252,7 +258,8 @@ static void audin_alsa_free(IAudinDevice* device)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
-	freerdp_thread_free(alsa->thread);
+	SetEvent(alsa->stopEvent);
+
 	freerdp_dsp_context_free(alsa->dsp_context);
 
 	free(alsa->device_name);
@@ -337,7 +344,8 @@ static void audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* us
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 
-	freerdp_thread_start(alsa->thread, audin_alsa_thread_func, alsa);
+	alsa->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	alsa->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL);
 }
 
 static void audin_alsa_close(IAudinDevice* device)
@@ -346,7 +354,7 @@ static void audin_alsa_close(IAudinDevice* device)
 
 	DEBUG_DVC("");
 
-	freerdp_thread_stop(alsa->thread);
+	SetEvent(alsa->stopEvent);
 
 	alsa->receive = NULL;
 	alsa->user_data = NULL;
@@ -420,7 +428,6 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 	alsa->target_channels = 2;
 	alsa->actual_channels = 2;
 	alsa->bytes_per_channel = 2;
-	alsa->thread = freerdp_thread_new();
 
 	alsa->dsp_context = freerdp_dsp_context_new();
 

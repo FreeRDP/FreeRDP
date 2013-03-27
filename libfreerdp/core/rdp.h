@@ -44,9 +44,10 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
+
+#include <winpr/stream.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT					0x0001
@@ -157,35 +158,35 @@ struct rdp_rdp
 	BOOL disconnect;
 };
 
-BOOL rdp_read_security_header(STREAM* s, UINT16* flags);
-void rdp_write_security_header(STREAM* s, UINT16 flags);
+BOOL rdp_read_security_header(wStream* s, UINT16* flags);
+void rdp_write_security_header(wStream* s, UINT16 flags);
 
-BOOL rdp_read_share_control_header(STREAM* s, UINT16* length, UINT16* type, UINT16* channel_id);
-void rdp_write_share_control_header(STREAM* s, UINT16 length, UINT16 type, UINT16 channel_id);
+BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UINT16* channel_id);
+void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id);
 
-BOOL rdp_read_share_data_header(STREAM* s, UINT16* length, BYTE* type, UINT32* share_id, 
+BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* share_id, 
 			BYTE *compressed_type, UINT16 *compressed_len);
 
-void rdp_write_share_data_header(STREAM* s, UINT16 length, BYTE type, UINT32 share_id);
+void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
-STREAM* rdp_send_stream_init(rdpRdp* rdp);
+wStream* rdp_send_stream_init(rdpRdp* rdp);
 
-BOOL rdp_read_header(rdpRdp* rdp, STREAM* s, UINT16* length, UINT16* channel_id);
-void rdp_write_header(rdpRdp* rdp, STREAM* s, UINT16 length, UINT16 channel_id);
+BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
+void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id);
 
-STREAM* rdp_pdu_init(rdpRdp* rdp);
-BOOL rdp_send_pdu(rdpRdp* rdp, STREAM* s, UINT16 type, UINT16 channel_id);
+wStream* rdp_pdu_init(rdpRdp* rdp);
+BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id);
 
-STREAM* rdp_data_pdu_init(rdpRdp* rdp);
-BOOL rdp_send_data_pdu(rdpRdp* rdp, STREAM* s, BYTE type, UINT16 channel_id);
-int rdp_recv_data_pdu(rdpRdp* rdp, STREAM* s);
+wStream* rdp_data_pdu_init(rdpRdp* rdp);
+BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
+int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
-BOOL rdp_send(rdpRdp* rdp, STREAM* s, UINT16 channel_id);
+BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id);
 void rdp_recv(rdpRdp* rdp);
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size);
 
-BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
@@ -199,6 +200,6 @@ void rdp_free(rdpRdp* rdp);
 #define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-BOOL rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, UINT16 securityFlags);
+BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
 
 #endif /* __RDP_H */

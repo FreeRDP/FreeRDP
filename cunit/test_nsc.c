@@ -348,7 +348,7 @@ void test_nsc_encode(void)
 {
 	int i;
 	BYTE* rgb_data;
-	STREAM* enc_stream;
+	wStream* enc_stream;
 	NSC_CONTEXT* context;
 
 	rgb_data = (BYTE *) malloc(64 * 64 * 3);

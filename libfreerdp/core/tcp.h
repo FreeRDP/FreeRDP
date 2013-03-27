@@ -25,7 +25,8 @@
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0

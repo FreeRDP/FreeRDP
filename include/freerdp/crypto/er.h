@@ -23,7 +23,9 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+
+#include <winpr/stream.h>
 
 /* ER type */
 
@@ -54,35 +56,35 @@
 
 #define ER_PC(_pc)	(_pc ? ER_CONSTRUCT : ER_PRIMITIVE)
 
-FREERDP_API void er_read_length(STREAM* s, int* length);
-FREERDP_API int er_write_length(STREAM* s, int length, BOOL flag);
+FREERDP_API void er_read_length(wStream* s, int* length);
+FREERDP_API int er_write_length(wStream* s, int length, BOOL flag);
 FREERDP_API int _er_skip_length(int length);
 FREERDP_API int er_get_content_length(int length);
-FREERDP_API BOOL er_read_universal_tag(STREAM* s, BYTE tag, BOOL pc);
-FREERDP_API void er_write_universal_tag(STREAM* s, BYTE tag, BOOL pc);
-FREERDP_API BOOL er_read_application_tag(STREAM* s, BYTE tag, int* length);
-FREERDP_API void er_write_application_tag(STREAM* s, BYTE tag, int length, BOOL flag);
-FREERDP_API BOOL er_read_application_tag(STREAM* s, BYTE tag, int* length);
-FREERDP_API BOOL er_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count);
-FREERDP_API void er_write_enumerated(STREAM* s, BYTE enumerated, BYTE count, BOOL flag);
-FREERDP_API BOOL er_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc);
-FREERDP_API int er_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc, BOOL flag);
+FREERDP_API BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
+FREERDP_API void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
+FREERDP_API BOOL er_read_application_tag(wStream* s, BYTE tag, int* length);
+FREERDP_API void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag);
+FREERDP_API BOOL er_read_application_tag(wStream* s, BYTE tag, int* length);
+FREERDP_API BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
+FREERDP_API void er_write_enumerated(wStream* s, BYTE enumerated, BYTE count, BOOL flag);
+FREERDP_API BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc);
+FREERDP_API int er_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc, BOOL flag);
 FREERDP_API int er_skip_contextual_tag(int length);
-FREERDP_API BOOL er_read_sequence_tag(STREAM* s, int* length);
-FREERDP_API int er_write_sequence_tag(STREAM* s, int length, BOOL flag);
+FREERDP_API BOOL er_read_sequence_tag(wStream* s, int* length);
+FREERDP_API int er_write_sequence_tag(wStream* s, int length, BOOL flag);
 FREERDP_API int er_skip_sequence(int length);
 FREERDP_API int er_skip_sequence_tag(int length);
-FREERDP_API BOOL er_read_bit_string(STREAM* s, int* length, BYTE* padding);
-FREERDP_API BOOL er_write_bit_string_tag(STREAM* s, UINT32 length, BYTE padding, BOOL flag);
-FREERDP_API BOOL er_read_octet_string(STREAM* s, int* length);
-FREERDP_API void er_write_octet_string(STREAM* s, BYTE* oct_str, int length, BOOL flag);
-FREERDP_API int er_write_octet_string_tag(STREAM* s, int length, BOOL flag);
+FREERDP_API BOOL er_read_bit_string(wStream* s, int* length, BYTE* padding);
+FREERDP_API BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag);
+FREERDP_API BOOL er_read_octet_string(wStream* s, int* length);
+FREERDP_API void er_write_octet_string(wStream* s, BYTE* oct_str, int length, BOOL flag);
+FREERDP_API int er_write_octet_string_tag(wStream* s, int length, BOOL flag);
 FREERDP_API int er_skip_octet_string(int length);
-FREERDP_API BOOL er_read_BOOL(STREAM* s, BOOL* value);
-FREERDP_API void er_write_BOOL(STREAM* s, BOOL value);
-FREERDP_API BOOL er_read_integer(STREAM* s, UINT32* value);
-FREERDP_API int er_write_integer(STREAM* s, INT32 value);
-FREERDP_API BOOL er_read_integer_length(STREAM* s, int* length);
+FREERDP_API BOOL er_read_BOOL(wStream* s, BOOL* value);
+FREERDP_API void er_write_BOOL(wStream* s, BOOL value);
+FREERDP_API BOOL er_read_integer(wStream* s, UINT32* value);
+FREERDP_API int er_write_integer(wStream* s, INT32 value);
+FREERDP_API BOOL er_read_integer_length(wStream* s, int* length);
 FREERDP_API int er_skip_integer(INT32 value);
 
 #endif /* FREERDP_CRYPTO_ER_H */

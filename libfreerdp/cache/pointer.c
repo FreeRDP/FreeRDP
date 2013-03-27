@@ -25,7 +25,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/pointer.h>
 

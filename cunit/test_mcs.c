@@ -21,7 +21,7 @@
 
 #include <freerdp/freerdp.h>
 #include <winpr/print.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "test_mcs.h"
 
@@ -96,15 +96,15 @@ BYTE mcs_connect_initial_expected[409] =
 
 void test_mcs_write_connect_initial(void)
 {
-	STREAM* s;
+	wStream* s;
 	rdpMcs* mcs;
-	STREAM _user_data, *user_data;
+	wStream _user_data, *user_data;
 
 	mcs = mcs_new((rdpTransport*) NULL);
 
 	user_data = &_user_data;
-	user_data->data = gcc_CCrq;
-	user_data->p = user_data->data + sizeof(gcc_CCrq);
+	user_data->buffer = gcc_CCrq;
+	user_data->pointer = user_data->buffer + sizeof(gcc_CCrq);
 
 	s = stream_new(512);
 	mcs_write_connect_initial(s, mcs, user_data);

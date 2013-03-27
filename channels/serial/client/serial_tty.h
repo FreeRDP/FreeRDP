@@ -29,7 +29,8 @@
 #endif
 
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct _SERIAL_TTY SERIAL_TTY;
 
@@ -71,7 +72,7 @@ void serial_tty_free(SERIAL_TTY* tty);
 
 BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length);
 BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length);
-UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, STREAM* input, STREAM* output, UINT32* abort_io);
+UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input, wStream* output, UINT32* abort_io);
 
 BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result);
 

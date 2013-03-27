@@ -23,7 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct _GLYPH_CACHE GLYPH_CACHE;
 typedef struct _FRAGMENT_CACHE_ENTRY FRAGMENT_CACHE_ENTRY;

@@ -22,7 +22,8 @@
 
 #include <freerdp/api.h>
 #include <freerdp/rail.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,9 +31,9 @@ extern "C" {
 
 FREERDP_API void rail_unicode_string_alloc(RAIL_UNICODE_STRING* unicode_string, UINT16 cbString);
 FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
-FREERDP_API void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+FREERDP_API void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string);
 FREERDP_API void* rail_clone_order(UINT32 event_type, void* order);
 FREERDP_API void  rail_free_cloned_order(UINT32 event_type, void* order);
 

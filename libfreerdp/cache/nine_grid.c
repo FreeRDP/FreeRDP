@@ -27,7 +27,7 @@
 
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/nine_grid.h>
 

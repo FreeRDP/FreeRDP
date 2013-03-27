@@ -24,7 +24,8 @@
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 typedef struct rdp_icon rdpIcon;
 typedef struct rdp_icon_cache rdpIconCache;

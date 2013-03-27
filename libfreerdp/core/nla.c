@@ -805,7 +805,7 @@ int credssp_skip_ts_password_creds(rdpCredssp* credssp)
 	return length;
 }
 
-void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 
@@ -817,7 +817,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.DomainLength = (UINT32) length;
 	credssp->identity.Domain = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.Domain, s->p, credssp->identity.DomainLength);
+	CopyMemory(credssp->identity.Domain, s->pointer, credssp->identity.DomainLength);
 	stream_seek(s, credssp->identity.DomainLength);
 	credssp->identity.DomainLength /= 2;
 
@@ -826,7 +826,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.UserLength = (UINT32) length;
 	credssp->identity.User = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.User, s->p, credssp->identity.UserLength);
+	CopyMemory(credssp->identity.User, s->pointer, credssp->identity.UserLength);
 	stream_seek(s, credssp->identity.UserLength);
 	credssp->identity.UserLength /= 2;
 
@@ -835,14 +835,14 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, STREAM* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.PasswordLength = (UINT32) length;
 	credssp->identity.Password = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.Password, s->p, credssp->identity.PasswordLength);
+	CopyMemory(credssp->identity.Password, s->pointer, credssp->identity.PasswordLength);
 	stream_seek(s, credssp->identity.PasswordLength);
 	credssp->identity.PasswordLength /= 2;
 
 	credssp->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 }
 
-void credssp_write_ts_password_creds(rdpCredssp* credssp, STREAM* s)
+void credssp_write_ts_password_creds(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 
@@ -887,7 +887,7 @@ int credssp_skip_ts_credentials(rdpCredssp* credssp)
 
 void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int ts_password_creds_length;
 
@@ -911,7 +911,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 	stream_free(s);
 }
 
-void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
+void credssp_write_ts_credentials(rdpCredssp* credssp, wStream* s)
 {
 	int length;
 	int ts_password_creds_length;
@@ -942,7 +942,7 @@ void credssp_write_ts_credentials(rdpCredssp* credssp, STREAM* s)
 
 void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 
 	s = stream_new(0);
@@ -1077,7 +1077,7 @@ int credssp_skip_ts_request(int length)
 
 void credssp_send(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int ts_request_length;
 	int nego_tokens_length;
@@ -1140,7 +1140,7 @@ void credssp_send(rdpCredssp* credssp)
 
 int credssp_recv(rdpCredssp* credssp)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	int status;
 	UINT32 version;
@@ -1148,7 +1148,7 @@ int credssp_recv(rdpCredssp* credssp)
 	s = stream_new(4096);
 
 	status = transport_read(credssp->transport, s);
-	s->size = status;
+	s->capacity = status;
 
 	if (status < 0)
 	{

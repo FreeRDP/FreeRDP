@@ -29,7 +29,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "orders.h"
 #include "update.h"
@@ -72,7 +72,7 @@ static const char* const FASTPATH_UPDATETYPE_STRINGS[] =
  * This function assumes that at least two bytes are available in the stream
  * and doesn't touch third byte.
  */
-UINT16 fastpath_header_length(STREAM* s)
+UINT16 fastpath_header_length(wStream* s)
 {
 	BYTE length1;
 
@@ -89,7 +89,7 @@ UINT16 fastpath_header_length(STREAM* s)
  * @param encryptionFlags
  * @return length
  */
-UINT16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
+UINT16 fastpath_read_header(rdpFastPath* fastpath, wStream* s)
 {
 	BYTE header;
 	UINT16 length;
@@ -107,7 +107,7 @@ UINT16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	return length;
 }
 
-static INLINE void fastpath_read_update_header(STREAM* s, BYTE* updateCode, BYTE* fragmentation, BYTE* compression)
+static INLINE void fastpath_read_update_header(wStream* s, BYTE* updateCode, BYTE* fragmentation, BYTE* compression)
 {
 	BYTE updateHeader;
 
@@ -117,7 +117,7 @@ static INLINE void fastpath_read_update_header(STREAM* s, BYTE* updateCode, BYTE
 	*compression = (updateHeader >> 6) & 0x03;
 }
 
-static INLINE void fastpath_write_update_header(STREAM* s, BYTE updateCode, BYTE fragmentation, BYTE compression)
+static INLINE void fastpath_write_update_header(wStream* s, BYTE updateCode, BYTE fragmentation, BYTE compression)
 {
 	BYTE updateHeader = 0;
 
@@ -127,7 +127,7 @@ static INLINE void fastpath_write_update_header(STREAM* s, BYTE updateCode, BYTE
 	stream_write_BYTE(s, updateHeader);
 }
 
-BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s, UINT16 *length)
+BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16 *length)
 {
 	BYTE header;
 
@@ -146,7 +146,7 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, STREAM* s, UINT16 *length)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
 {
 	rdpUpdate* update = fastpath->rdp->update;
 	UINT16 numberOrders;
@@ -163,7 +163,7 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 {
 	UINT16 updateType;
 	rdpUpdate* update = fastpath->rdp->update;
@@ -190,7 +190,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, wStream* s)
 {
 	/* server 2008 can send invalid synchronize packet with missing padding,
 	  so don't return FALSE even if the packet is invalid */
@@ -198,7 +198,7 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, STREAM* s)
+static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 size, wStream* s)
 {
 	int status = 0;
 	rdpUpdate* update = fastpath->rdp->update;
@@ -207,7 +207,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 
 #ifdef WITH_DEBUG_RDP
 	DEBUG_RDP("recv Fast-Path %s Update (0x%X), length:%d",
-		updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
+		updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, capacity);
 #endif
 
 	switch (updateCode)
@@ -276,7 +276,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	return status;
 }
 
-static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
+static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 {
 	int status;
 	UINT16 size;
@@ -286,8 +286,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	BYTE fragmentation;
 	BYTE compression;
 	BYTE compressionFlags;
-	STREAM* update_stream;
-	STREAM* comp_stream;
+	wStream* update_stream;
+	wStream* comp_stream;
 	rdpRdp* rdp;
 	UINT32 roff;
 	UINT32 rlen;
@@ -312,13 +312,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp->mppc_dec, s->p, size, compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, s->pointer, size, compressionFlags, &roff, &rlen))
 		{
 			comp_stream = stream_new(0);
-			comp_stream->data = rdp->mppc_dec->history_buf + roff;
-			comp_stream->p = comp_stream->data;
-			comp_stream->size = rlen;
-			size = comp_stream->size;
+			comp_stream->buffer = rdp->mppc_dec->history_buf + roff;
+			comp_stream->pointer = comp_stream->buffer;
+			comp_stream->capacity = rlen;
+			size = comp_stream->capacity;
 		}
 		else
 		{
@@ -370,7 +370,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, STREAM* s)
 	return status;
 }
 
-int fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
+int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 {
 	int status = 0;
 	rdpUpdate* update = fastpath->rdp->update;
@@ -388,7 +388,7 @@ int fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	return status;
 }
 
-static BOOL fastpath_read_input_event_header(STREAM* s, BYTE* eventFlags, BYTE* eventCode)
+static BOOL fastpath_read_input_event_header(wStream* s, BYTE* eventFlags, BYTE* eventCode)
 {
 	BYTE eventHeader;
 
@@ -403,7 +403,7 @@ static BOOL fastpath_read_input_event_header(STREAM* s, BYTE* eventFlags, BYTE* 
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s, BYTE eventFlags)
+static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	UINT16 flags;
 	UINT16 code;
@@ -427,7 +427,7 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, STREAM* s,
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, BYTE eventFlags)
+static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	UINT16 pointerFlags;
 	UINT16 xPos;
@@ -445,7 +445,7 @@ static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, STREAM* s, BY
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, BYTE eventFlags)
+static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	UINT16 pointerFlags;
 	UINT16 xPos;
@@ -463,14 +463,14 @@ static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, STREAM* s, B
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event_sync(rdpFastPath* fastpath, STREAM* s, BYTE eventFlags)
+static BOOL fastpath_recv_input_event_sync(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	IFCALL(fastpath->rdp->input->SynchronizeEvent, fastpath->rdp->input, eventFlags);
 
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, BYTE eventFlags)
+static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	UINT16 unicodeCode;
 	UINT16 flags;
@@ -491,7 +491,7 @@ static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, STREAM* s, 
 	return TRUE;
 }
 
-static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
+static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 {
 	BYTE eventFlags;
 	BYTE eventCode;
@@ -534,7 +534,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-int fastpath_recv_inputs(rdpFastPath* fastpath, STREAM* s)
+int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 {
 	BYTE i;
 
@@ -575,10 +575,10 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	return sec_bytes;
 }
 
-STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
+wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
 {
 	rdpRdp *rdp;
-	STREAM* s;
+	wStream* s;
 
 	rdp = fastpath->rdp;
 
@@ -594,7 +594,7 @@ STREAM* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eve
 	return s;
 }
 
-BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 {
 	rdpRdp *rdp;
 	UINT16 length;
@@ -651,9 +651,9 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, STREAM* s)
 	return TRUE;
 }
 
-STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
+wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 {
-	STREAM* s;
+	wStream* s;
 	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
 	stream_seek(s, 3); /* fpOutputHeader, length1 and length2 */
 	stream_seek(s, fastpath_get_sec_bytes(fastpath->rdp));
@@ -661,7 +661,7 @@ STREAM* fastpath_update_pdu_init(rdpFastPath* fastpath)
 	return s;
 }
 
-BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
+BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	rdpRdp* rdp;
 	BYTE* bm;
@@ -683,9 +683,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
 	UINT32 totalLength;
 	BYTE fragmentation;
 	BYTE header;
-	STREAM* update;
-	STREAM* comp_update;
-	STREAM* ls;
+	wStream* update;
+	wStream* comp_update;
+	wStream* ls;
 
 	result = TRUE;
 	rdp = fastpath->rdp;
@@ -708,7 +708,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, STREAM* s)
 		pdu_data_bytes = dlen;
 		if (try_comp)
 		{
-			if (compress_rdp(rdp->mppc_enc, ls->p + header_bytes, dlen))
+			if (compress_rdp(rdp->mppc_enc, ls->pointer + header_bytes, dlen))
 			{
 				if (rdp->mppc_enc->flags & PACKET_COMPRESSED)
 				{

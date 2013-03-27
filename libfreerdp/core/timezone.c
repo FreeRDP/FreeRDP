@@ -32,7 +32,7 @@
  * @param system_time system time structure
  */
 
-void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
+void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
 	stream_read_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
 	stream_read_UINT16(s, system_time->wMonth); /* wMonth */
@@ -51,7 +51,7 @@ void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
  * @param system_time system time structure
  */
 
-void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
+void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
 	stream_write_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
 	stream_write_UINT16(s, system_time->wMonth); /* wMonth */
@@ -74,7 +74,7 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
  * @param settings settings
  */
 
-BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	char* str = NULL;
 	TIME_ZONE_INFO* clientTimeZone;
@@ -115,7 +115,7 @@ BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
+void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	UINT32 bias;
 	INT32 sbias;

@@ -28,12 +28,13 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/msusb.h>
 
 #include <uuid/uuid.h>
 #include <pthread.h>
 #include <semaphore.h>
+
+#include <winpr/stream.h>
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)

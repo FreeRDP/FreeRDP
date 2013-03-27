@@ -24,7 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/tcp.h>
 
 #include <freerdp/crypto/tls.h>

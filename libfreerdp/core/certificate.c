@@ -31,8 +31,6 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
-#include <freerdp/utils/file.h>
-
 #include "certificate.h"
 
 /**
@@ -154,7 +152,7 @@ static const char *certificate_read_errors[] = {
 
 BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	BYTE padding;
 	UINT32 version;
@@ -319,7 +317,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 	}
 }
 
-static BOOL certificate_process_server_public_key(rdpCertificate* certificate, STREAM* s, UINT32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* certificate, wStream* s, UINT32 length)
 {
 	BYTE magic[4];
 	UINT32 keylen;
@@ -355,7 +353,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, S
 }
 
 static BOOL certificate_process_server_public_signature(rdpCertificate* certificate,
-		const BYTE* sigdata, int sigdatalen, STREAM* s, UINT32 siglen)
+		const BYTE* sigdata, int sigdatalen, wStream* s, UINT32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
@@ -416,7 +414,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
  * @param s stream
  */
 
-BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s)
+BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
 {
 	UINT32 dwSigAlgId;
 	UINT32 dwKeyAlgId;
@@ -496,7 +494,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
  * @param s stream
  */
 
-BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s)
+BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
 	int i;
 	UINT32 certLength;
@@ -560,7 +558,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 dwVersion;
 	int status = 1;
 

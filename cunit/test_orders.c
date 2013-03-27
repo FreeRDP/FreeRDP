@@ -19,7 +19,7 @@
 
 #include <freerdp/freerdp.h>
 #include <winpr/print.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "test_orders.h"
 #include "libfreerdp/core/orders.h"
@@ -73,11 +73,11 @@ BYTE dstblt_order[] = "\x48\x00\x37\x01";
 
 void test_read_dstblt_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	DSTBLT_ORDER dstblt;
 
 	s = &_s;
-	s->p = s->data = dstblt_order;
+	s->pointer = s->buffer = dstblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x0C;
@@ -98,11 +98,11 @@ BYTE patblt_order[] = "\x1a\x00\xc3\x01\x0d\x00\x0d\x00\xf0\xff\xff\x00\x5b\xef\
 
 void test_read_patblt_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	PATBLT_ORDER patblt;
 
 	s = &_s;
-	s->p = s->data = patblt_order;
+	s->pointer = s->buffer = patblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x027F;
@@ -128,11 +128,11 @@ BYTE scrblt_order[] = "\x07\x00\xa1\x01\xf1\x00\xcc\x2f\x01\x8e\x00";
 
 void test_read_scrblt_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	SCRBLT_ORDER scrblt;
 
 	s = &_s;
-	s->p = s->data = scrblt_order;
+	s->pointer = s->buffer = scrblt_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x7D;
@@ -155,11 +155,11 @@ BYTE opaque_rect_order[] = "\x00\x04\x00\x03\x73\x02\x06";
 
 void test_read_opaque_rect_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	OPAQUE_RECT_ORDER opaque_rect;
 
 	s = &_s;
-	s->p = s->data = opaque_rect_order;
+	s->pointer = s->buffer = opaque_rect_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x7C;
@@ -180,11 +180,11 @@ BYTE draw_nine_grid_order[] = "\xfb\xf9\x0d\x00";
 
 void test_read_draw_nine_grid_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	DRAW_NINE_GRID_ORDER draw_nine_grid;
 
 	s = &_s;
-	s->p = s->data = draw_nine_grid_order;
+	s->pointer = s->buffer = draw_nine_grid_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x1C;
@@ -213,11 +213,11 @@ BYTE multi_opaque_rect_order[] =
 
 void test_read_multi_opaque_rect_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	MULTI_OPAQUE_RECT_ORDER multi_opaque_rect;
 
 	s = &_s;
-	s->p = s->data = multi_opaque_rect_order;
+	s->pointer = s->buffer = multi_opaque_rect_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x01BF;
@@ -260,11 +260,11 @@ BYTE line_to_order[] = "\x03\xb1\x0e\xa6\x5b\xef\x00";
 
 void test_read_line_to_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	LINE_TO_ORDER line_to;
 
 	s = &_s;
-	s->p = s->data = line_to_order;
+	s->pointer = s->buffer = line_to_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x021E;
@@ -303,11 +303,11 @@ BYTE polyline_order[] =
 
 void test_read_polyline_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	POLYLINE_ORDER polyline;
 
 	s = &_s;
-	s->p = s->data = polyline_order;
+	s->pointer = s->buffer = polyline_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x73;
@@ -371,11 +371,11 @@ BYTE glyph_index_order_2[] =
 
 void test_read_glyph_index_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	GLYPH_INDEX_ORDER glyph_index;
 
 	s = &_s;
-	s->p = s->data = glyph_index_order_1;
+	s->pointer = s->buffer = glyph_index_order_1;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x200100;
@@ -389,7 +389,7 @@ void test_read_glyph_index_order(void)
 
 	CU_ASSERT(stream_get_length(s) == (sizeof(glyph_index_order_1) - 1));
 
-	s->p = s->data = glyph_index_order_2;
+	s->pointer = s->buffer = glyph_index_order_2;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x383FE8;
@@ -422,11 +422,11 @@ BYTE fast_index_order[] =
 
 void test_read_fast_index_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	FAST_INDEX_ORDER fast_index;
 
 	s = &_s;
-	s->p = s->data = fast_index_order;
+	s->pointer = s->buffer = fast_index_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x70FF;
@@ -460,11 +460,11 @@ BYTE fast_glyph_order[] =
 
 void test_read_fast_glyph_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	FAST_GLYPH_ORDER fast_glyph;
 
 	s = &_s;
-	s->p = s->data = fast_glyph_order;
+	s->pointer = s->buffer = fast_glyph_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x7EFB;
@@ -495,11 +495,11 @@ BYTE polygon_cb_order[] =
 
 void test_read_polygon_cb_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	POLYGON_CB_ORDER polygon_cb;
 
 	s = &_s;
-	s->p = s->data = polygon_cb_order;
+	s->pointer = s->buffer = polygon_cb_order;
 
 	memset(orderInfo, 0, sizeof(ORDER_INFO));
 	orderInfo->fieldFlags = 0x1BEF;
@@ -527,13 +527,13 @@ BYTE cache_bitmap_order[] = "\x00\x00\x10\x01\x08\x01\x00\x00\x00\x10";
 
 void test_read_cache_bitmap_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	UINT16 extraFlags;
 	CACHE_BITMAP_ORDER cache_bitmap;
 
 	s = &_s;
 	extraFlags = 0x0400;
-	s->p = s->data = cache_bitmap_order;
+	s->pointer = s->buffer = cache_bitmap_order;
 
 	memset(&cache_bitmap, 0, sizeof(CACHE_BITMAP_ORDER));
 
@@ -568,13 +568,13 @@ BYTE cache_bitmap_v2_order[] =
 
 void test_read_cache_bitmap_v2_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	UINT16 extraFlags;
 	CACHE_BITMAP_V2_ORDER cache_bitmap_v2;
 
 	s = &_s;
 	extraFlags = 0x0CA1;
-	s->p = s->data = cache_bitmap_v2_order;
+	s->pointer = s->buffer = cache_bitmap_v2_order;
 
 	memset(&cache_bitmap_v2, 0, sizeof(CACHE_BITMAP_V2_ORDER));
 
@@ -599,13 +599,13 @@ BYTE cache_bitmap_v3_order[] =
 
 void test_read_cache_bitmap_v3_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	UINT16 extraFlags;
 	CACHE_BITMAP_V3_ORDER cache_bitmap_v3;
 
 	s = &_s;
 	extraFlags = 0x0C30;
-	s->p = s->data = cache_bitmap_v3_order;
+	s->pointer = s->buffer = cache_bitmap_v3_order;
 
 	memset(&cache_bitmap_v3, 0, sizeof(CACHE_BITMAP_V3_ORDER));
 
@@ -629,11 +629,11 @@ BYTE cache_brush_order[] = "\x00\x01\x08\x08\x81\x08\xaa\x55\xaa\x55\xaa\x55\xaa
 
 void test_read_cache_brush_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	CACHE_BRUSH_ORDER cache_brush;
 
 	s = &_s;
-	s->p = s->data = cache_brush_order;
+	s->pointer = s->buffer = cache_brush_order;
 
 	memset(&cache_brush, 0, sizeof(CACHE_BRUSH_ORDER));
 
@@ -653,12 +653,12 @@ BYTE create_offscreen_bitmap_order[] = "\x00\x80\x60\x01\x10\x00\x01\x00\x02\x00
 
 void test_read_create_offscreen_bitmap_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	OFFSCREEN_DELETE_LIST* deleteList;
 	CREATE_OFFSCREEN_BITMAP_ORDER create_offscreen_bitmap;
 
 	s = &_s;
-	s->p = s->data = create_offscreen_bitmap_order;
+	s->pointer = s->buffer = create_offscreen_bitmap_order;
 
 	memset(&create_offscreen_bitmap, 0, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
 
@@ -681,11 +681,11 @@ BYTE switch_surface_order[] = "\xff\xff";
 
 void test_read_switch_surface_order(void)
 {
-	STREAM _s, *s;
+	wStream _s, *s;
 	SWITCH_SURFACE_ORDER switch_surface;
 
 	s = &_s;
-	s->p = s->data = switch_surface_order;
+	s->pointer = s->buffer = switch_surface_order;
 
 	memset(&switch_surface, 0, sizeof(SWITCH_SURFACE_ORDER));
 
@@ -733,7 +733,7 @@ void test_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 void test_update_recv_orders(void)
 {
 	rdpRdp* rdp;
-	STREAM _s, *s;
+	wStream _s, *s;
 	rdpUpdate* update;
 
 	s = &_s;
@@ -751,8 +751,8 @@ void test_update_recv_orders(void)
 	update->primary->Polyline = test_polyline;
 	update->primary->PatBlt = test_patblt;
 
-	s->p = s->data = orders_update_1;
-	s->size = sizeof(orders_update_1);
+	s->pointer = s->buffer = orders_update_1;
+	s->capacity = sizeof(orders_update_1);
 
 	CU_ASSERT(update_recv(update, s));
 
@@ -760,8 +760,8 @@ void test_update_recv_orders(void)
 	CU_ASSERT(polyline_count == 2);
 
 	update->primary->order_info.orderType = ORDER_TYPE_PATBLT;
-	s->p = s->data = orders_update_2;
-	s->size = sizeof(orders_update_2);
+	s->pointer = s->buffer = orders_update_2;
+	s->capacity = sizeof(orders_update_2);
 
 	CU_ASSERT(update_recv(update, s));
 

@@ -25,7 +25,7 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "librail.h"
 

@@ -253,7 +253,7 @@ int nego_transport_disconnect(rdpNego* nego)
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 cbSize;
 	UINT16 cchPCB = 0;
 	WCHAR* wszPCB = NULL;
@@ -462,7 +462,7 @@ void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	STREAM* s = transport_recv_stream_init(nego->transport, 1024);
+	wStream* s = transport_recv_stream_init(nego->transport, 1024);
 
 	if (transport_read(nego->transport, s) < 0)
 		return FALSE;
@@ -478,7 +478,7 @@ BOOL nego_recv_response(rdpNego* nego)
  * @param extra nego pointer
  */
 
-int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
+int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 {
 	BYTE li;
 	BYTE type;
@@ -556,7 +556,7 @@ int nego_recv(rdpTransport* transport, STREAM* s, void* extra)
  * @param s stream
  */
 
-BOOL nego_read_request(rdpNego* nego, STREAM* s)
+BOOL nego_read_request(rdpNego* nego, wStream* s)
 {
 	BYTE li;
 	BYTE c;
@@ -638,7 +638,7 @@ void nego_send(rdpNego* nego)
 
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	BYTE *bm, *em;
 	int cookie_length;
@@ -697,7 +697,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
  * @param s
  */
 
-void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
+void nego_process_negotiation_request(rdpNego* nego, wStream* s)
 {
 	BYTE flags;
 	UINT16 length;
@@ -719,7 +719,7 @@ void nego_process_negotiation_request(rdpNego* nego, STREAM* s)
  * @param s
  */
 
-void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
+void nego_process_negotiation_response(rdpNego* nego, wStream* s)
 {
 	UINT16 length;
 
@@ -745,7 +745,7 @@ void nego_process_negotiation_response(rdpNego* nego, STREAM* s)
  * @param s
  */
 
-void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
+void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 {
 	BYTE flags;
 	UINT16 length;
@@ -789,7 +789,7 @@ void nego_process_negotiation_failure(rdpNego* nego, STREAM* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	STREAM* s;
+	wStream* s;
 	BYTE* bm;
 	BYTE* em;
 	int length;

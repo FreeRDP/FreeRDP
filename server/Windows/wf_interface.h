@@ -42,7 +42,7 @@ typedef struct wf_peer_context wfPeerContext;
 
 struct wf_info
 {
-	STREAM* s;
+	wStream* s;
 
 	//screen and monitor info
 	int screenID;

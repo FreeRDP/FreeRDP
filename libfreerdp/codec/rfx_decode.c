@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/primitives.h>
 
 #include "rfx_types.h"
@@ -142,7 +142,7 @@ void CALLBACK rfx_decode_component_work_callback(PTP_CALLBACK_INSTANCE instance,
 }
 
 /* stride is bytes between rows in the output buffer. */
-BOOL rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
+BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 	int y_size, const UINT32* y_quants,
 	int cb_size, const UINT32* cb_quants,
 	int cr_size, const UINT32* cr_quants, BYTE* rgb_buffer, int stride)
@@ -165,22 +165,22 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, STREAM* data_in,
 
 		params[0].context = context;
 		params[0].quantization_values = y_quants;
-		params[0].data = stream_get_tail(data_in);
-		params[0].size = y_size;
+		params[0].buffer = stream_get_tail(data_in);
+		params[0].capacity = y_size;
 		params[0].buffer = pSrcDst[0];
 		stream_seek(data_in, y_size);
 
 		params[1].context = context;
 		params[1].quantization_values = cb_quants;
-		params[1].data = stream_get_tail(data_in);
-		params[1].size = cb_size;
+		params[1].buffer = stream_get_tail(data_in);
+		params[1].capacity = cb_size;
 		params[1].buffer = pSrcDst[1];
 		stream_seek(data_in, cb_size);
 
 		params[2].context = context;
 		params[2].quantization_values = cr_quants;
-		params[2].data = stream_get_tail(data_in);
-		params[2].size = cr_size;
+		params[2].buffer = stream_get_tail(data_in);
+		params[2].capacity = cr_size;
 		params[2].buffer = pSrcDst[2];
 		stream_seek(data_in, cr_size);
 

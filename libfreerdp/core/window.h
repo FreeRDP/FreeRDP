@@ -23,9 +23,9 @@
 
 #include "update.h"
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
-BOOL update_recv_altsec_window_order(rdpUpdate* update, STREAM* s);
+BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s);
 
 #ifdef WITH_DEBUG_WND
 #define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)

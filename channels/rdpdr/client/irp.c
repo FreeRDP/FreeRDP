@@ -28,7 +28,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_main.h"
@@ -62,7 +62,7 @@ static void irp_complete(IRP* irp)
 	irp_free(irp);
 }
 
-IRP* irp_new(DEVMAN* devman, STREAM* data_in)
+IRP* irp_new(DEVMAN* devman, wStream* data_in)
 {
 	IRP* irp;
 	UINT32 DeviceId;
