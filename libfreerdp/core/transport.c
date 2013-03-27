@@ -48,6 +48,8 @@
 
 #define BUFFER_SIZE 16384
 
+static void* transport_client_thread(void* arg);
+
 wStream* transport_recv_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s = transport->ReceiveStream;
@@ -118,6 +120,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			connectErrorCode = TLSCONNECTERROR;
 
 		tls_free(transport->TlsIn);
+
 		if (transport->TlsIn == transport->TlsOut)
 			transport->TlsIn = transport->TlsOut = NULL;
 		else
@@ -202,6 +205,16 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
+
+	transport->async = transport->settings->AsyncTransport;
+
+	if (transport->async)
+	{
+		transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		transport->thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+	}
 
 	if (transport->settings->GatewayUsageMethod)
 	{
@@ -734,6 +747,47 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	}
 
 	return status;
+}
+
+static void* transport_client_thread(void* arg)
+{
+	DWORD status;
+	DWORD nCount;
+	HANDLE events[3];
+	HANDLE ReadEvent;
+	freerdp* instance;
+	rdpTransport* transport;
+
+	transport = (rdpTransport*) arg;
+	instance = (freerdp*) transport->settings->instance;
+
+	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, transport->TcpIn->sockfd);
+
+	nCount = 0;
+	events[nCount++] = transport->stopEvent;
+	events[nCount++] = ReadEvent;
+
+	while (1)
+	{
+		printf("transport_client_thread\n");
+
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
+
+		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
+		{
+			if (!freerdp_check_fds(instance))
+				break;
+		}
+	}
+
+	CloseHandle(ReadEvent);
+
+	return NULL;
 }
 
 wStream* transport_receive_buffer_pool_new()

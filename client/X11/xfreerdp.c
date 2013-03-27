@@ -1210,6 +1210,7 @@ int xfreerdp_run(freerdp* instance)
 	BOOL async_update;
 	BOOL async_input;
 	BOOL async_channels;
+	BOOL async_transport;
 	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
@@ -1245,6 +1246,7 @@ int xfreerdp_run(freerdp* instance)
 	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
 	async_channels = settings->AsyncChannels;
+	async_transport = settings->AsyncTransport;
 
 	if (async_update)
 	{
@@ -1266,11 +1268,14 @@ int xfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (!async_transport)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
-			ret = XF_EXIT_CONN_FAILED;
-			break;
+			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				printf("Failed to get FreeRDP file descriptor\n");
+				ret = XF_EXIT_CONN_FAILED;
+				break;
+			}
 		}
 
 		if (!async_channels)
@@ -1336,10 +1341,13 @@ int xfreerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != TRUE)
+		if (!async_transport)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
-			break;
+			if (freerdp_check_fds(instance) != TRUE)
+			{
+				printf("Failed to check FreeRDP file descriptor\n");
+				break;
+			}
 		}
 
 		if (!async_channels)

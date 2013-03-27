@@ -36,6 +36,9 @@ typedef struct rdp_transport rdpTransport;
 #include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/crypto/tls.h>
@@ -43,8 +46,6 @@ typedef struct rdp_transport rdpTransport;
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-
-#include <winpr/stream.h>
 
 typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* extra);
 
@@ -68,6 +69,9 @@ struct rdp_transport
 	BOOL blocking;
 	BOOL SplitInputOutput;
 	wObjectPool* ReceivePool;
+	HANDLE stopEvent;
+	HANDLE thread;
+	BOOL async;
 };
 
 wStream* transport_recv_stream_init(rdpTransport* transport, int size);
