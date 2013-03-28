@@ -201,7 +201,7 @@ static void func_iso_callback(struct libusb_transfer *transfer)
 				}
 				else
 				{
-					//printf("actual length %d \n", act_len);
+					//fprintf(stderr, "actual length %d \n", act_len);
 					//exit(EXIT_FAILURE);
 				}
 			} 
@@ -362,7 +362,7 @@ static int func_config_release_all_interface(LIBUSB_DEVICE_HANDLE* libusb_handle
 
 		if (ret < 0)
 		{
-			printf("config_release_all_interface: error num %d\n", ret);
+			fprintf(stderr, "config_release_all_interface: error num %d\n", ret);
 			return -1;
 		}
 	}
@@ -380,7 +380,7 @@ static int func_claim_all_interface(LIBUSB_DEVICE_HANDLE* libusb_handle, int Num
 
 		if (ret < 0)
 		{
-			printf("claim_all_interface: error num %d\n", ret);
+			fprintf(stderr, "claim_all_interface: error num %d\n", ret);
 			return -1;
 		}
 	}
@@ -394,28 +394,28 @@ static void* print_transfer_status(enum libusb_transfer_status status)
 	switch (status)
 	{
 		case LIBUSB_TRANSFER_COMPLETED:
-			//printf("Transfer Status: LIBUSB_TRANSFER_COMPLETED\n");
+			//fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_COMPLETED\n");
 			break;
 		case LIBUSB_TRANSFER_ERROR:
-			printf("Transfer Status: LIBUSB_TRANSFER_ERROR\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_ERROR\n");
 			break;
 		case LIBUSB_TRANSFER_TIMED_OUT:
-			printf("Transfer Status: LIBUSB_TRANSFER_TIMED_OUT\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_TIMED_OUT\n");
 			break;
 		case LIBUSB_TRANSFER_CANCELLED:
-			printf("Transfer Status: LIBUSB_TRANSFER_CANCELLED\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_CANCELLED\n");
 			break;
 		case LIBUSB_TRANSFER_STALL:
-			printf("Transfer Status: LIBUSB_TRANSFER_STALL\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_STALL\n");
 			break;
 		case LIBUSB_TRANSFER_NO_DEVICE:
-			printf("Transfer Status: LIBUSB_TRANSFER_NO_DEVICE\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_NO_DEVICE\n");
 			break;
 		case LIBUSB_TRANSFER_OVERFLOW:
-			printf("Transfer Status: LIBUSB_TRANSFER_OVERFLOW\n");
+			fprintf(stderr, "Transfer Status: LIBUSB_TRANSFER_OVERFLOW\n");
 			break;
 		default:
-			printf("Transfer Status: Get unknow error num %d (0x%x)\n", 
+			fprintf(stderr, "Transfer Status: Get unknow error num %d (0x%x)\n",
 					status, status);
 	}
 	return 0;
@@ -426,28 +426,28 @@ static void print_status(enum libusb_transfer_status status)
 	switch (status)
 	{
 		case LIBUSB_TRANSFER_COMPLETED:
-			printf("Transfer status: LIBUSB_TRANSFER_COMPLETED\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_COMPLETED\n");
 			break;
 		case LIBUSB_TRANSFER_ERROR:
-			printf("Transfer status: LIBUSB_TRANSFER_ERROR\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_ERROR\n");
 			break;
 		case LIBUSB_TRANSFER_TIMED_OUT:
-			printf("Transfer status: LIBUSB_TRANSFER_TIMED_OUT\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_TIMED_OUT\n");
 			break;
 		case LIBUSB_TRANSFER_CANCELLED:
-			printf("Transfer status: LIBUSB_TRANSFER_CANCELLED\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_CANCELLED\n");
 			break;
 		case LIBUSB_TRANSFER_STALL:
-			printf("Transfer status: LIBUSB_TRANSFER_STALL\n"); 
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_STALL\n");
 			break;
 		case LIBUSB_TRANSFER_NO_DEVICE:
-			printf("Transfer status: LIBUSB_TRANSFER_NO_DEVICE\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_NO_DEVICE\n");
 			break;
 		case LIBUSB_TRANSFER_OVERFLOW: 
-			printf("Transfer status: LIBUSB_TRANSFER_OVERFLOW\n");
+			fprintf(stderr, "Transfer status: LIBUSB_TRANSFER_OVERFLOW\n");
 			break;
 		default:
-			printf("Transfer status: unknow status %d(0x%x)\n", status, status);
+			fprintf(stderr, "Transfer status: unknow status %d(0x%x)\n", status, status);
 			break;
 	}
 }
@@ -484,7 +484,7 @@ static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(LIBUSB_DEVICE* libusb_dev)
 
 	if (ret < 0)
 	{
-		printf("libusb_get_device_descriptor: ERROR!!\n"); 
+		fprintf(stderr, "libusb_get_device_descriptor: ERROR!!\n");
 		return NULL;
 	}
 		
@@ -653,7 +653,7 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 
 		if (error < 0)
 		{
-			printf("%s: Set interface altsetting get error num %d\n", 
+			fprintf(stderr, "%s: Set interface altsetting get error num %d\n",
 				__func__, error);
 		} 
 	}
@@ -680,7 +680,7 @@ static MSUSB_CONFIG_DESCRIPTOR* libusb_udev_complete_msconfig_setup(IUDEVICE* id
 	LibusbConfig = pdev->LibusbConfig;
 	if (LibusbConfig->bNumInterfaces != MsConfig->NumInterfaces)
 	{
-		printf("Select Configuration: Libusb NumberInterfaces(%d) is different "
+		fprintf(stderr, "Select Configuration: Libusb NumberInterfaces(%d) is different "
 			"with MsConfig NumberInterfaces(%d)\n", 
 			LibusbConfig->bNumInterfaces, MsConfig->NumInterfaces);
 	}
@@ -826,7 +826,7 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 		ret = libusb_set_configuration(libusb_handle, bConfigurationValue); 
 
 	if (ret < 0){
-		printf("libusb_set_configuration: ERROR number %d!!\n", ret);
+		fprintf(stderr, "libusb_set_configuration: ERROR number %d!!\n", ret);
 		func_claim_all_interface(libusb_handle, (*LibusbConfig)->bNumInterfaces);
 		return -1;
 	}
@@ -834,7 +834,7 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 	{
 		ret = libusb_get_active_config_descriptor (libusb_dev, LibusbConfig);
 		if (ret < 0){
-			printf("libusb_get_config_descriptor_by_value: ERROR number %d!!\n", ret);
+			fprintf(stderr, "libusb_get_config_descriptor_by_value: ERROR number %d!!\n", ret);
 			func_claim_all_interface(libusb_handle, (*LibusbConfig)->bNumInterfaces);
 			return -1;
 		}
@@ -884,7 +884,7 @@ static int libusb_udev_control_pipe_request(IUDEVICE* idev, UINT32 RequestId,
 	*UsbdStatus = 0;
 	/*
 	if(pdev->request_queue->unregister_request(pdev->request_queue, RequestId))
-		printf("request_queue_unregister_request: not fount request 0x%x\n", RequestId);
+		fprintf(stderr, "request_queue_unregister_request: not fount request 0x%x\n", RequestId);
 	*/
 	return error;
 }
@@ -979,12 +979,12 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev, UINT32 Requ
 		ms_string_desc, 
 		0x12, 
 		Timeout);
-	//printf("Get ms string: result number %d", error);
+	//fprintf(stderr, "Get ms string: result number %d", error);
 	if (error > 0)
 	{
 		BYTE bMS_Vendorcode;
 		data_read_BYTE(ms_string_desc + 16, bMS_Vendorcode);
-		//printf("bMS_Vendorcode:0x%x", bMS_Vendorcode);
+		//fprintf(stderr, "bMS_Vendorcode:0x%x", bMS_Vendorcode);
 		/** get os descriptor */
 		error = libusb_control_transfer(pdev->libusb_handle, 
 			LIBUSB_ENDPOINT_IN |LIBUSB_REQUEST_TYPE_VENDOR | Recipient, 
@@ -1003,7 +1003,7 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev, UINT32 Requ
 		*UsbdStatus = USBD_STATUS_SUCCESS;
 	/*
 	if(pdev->request_queue->unregister_request(pdev->request_queue, RequestId))
-		printf("request_queue_unregister_request: not fount request 0x%x\n", RequestId);
+		fprintf(stderr, "request_queue_unregister_request: not fount request 0x%x\n", RequestId);
 	*/
 	return error;
 }
@@ -1262,7 +1262,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, UINT32 RequestId, UINT32 E
 
 	if (iso_transfer == NULL)
 	{
-		printf("Error: libusb_alloc_transfer.\n");
+		fprintf(stderr, "Error: libusb_alloc_transfer.\n");
 		status = -1;
 	}
 
@@ -1367,7 +1367,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 
 	if (!ep_desc)
 	{
-		printf("func_get_ep_desc: endpoint 0x%x is not found!!\n", EndpointAddress);
+		fprintf(stderr, "func_get_ep_desc: endpoint 0x%x is not found!!\n", EndpointAddress);
 		return -1;
 	}
 	transfer_type = (ep_desc->bmAttributes) & 0x3;
@@ -1493,7 +1493,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 	if (request)
 	{
 		if(pdev->request_queue->unregister_request(pdev->request_queue, RequestId))
-			printf("request_queue_unregister_request: not fount request 0x%x\n", RequestId);
+			fprintf(stderr, "request_queue_unregister_request: not fount request 0x%x\n", RequestId);
 	}
 
 	libusb_free_transfer(transfer);
@@ -1698,7 +1698,7 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 
 	if (status < 0)
 	{
-		printf("USB init: Error to get HUB handle!!\n"); 
+		fprintf(stderr, "USB init: Error to get HUB handle!!\n");
 		pdev->hub_handle = NULL;
 	}
 
@@ -1706,7 +1706,7 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 
 	if (!pdev->devDescriptor)
 	{
-		printf("USB init: Error to get device descriptor!!\n"); 
+		fprintf(stderr, "USB init: Error to get device descriptor!!\n");
 		zfree(pdev);
 		return NULL;
 	}
@@ -1717,7 +1717,7 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 
 	if (status < 0)
 	{
-		printf("libusb_get_descriptor: ERROR!!ret:%d\n", status); 
+		fprintf(stderr, "libusb_get_descriptor: ERROR!!ret:%d\n", status);
 		zfree(pdev);
 		return NULL;
 	}
@@ -1746,7 +1746,7 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 		case CLASS_CONTENT_SECURITY:
 		//case CLASS_WIRELESS_CONTROLLER:
 		//case CLASS_ELSE_DEVICE:
-			printf("    Device is not supported!!\n");
+			fprintf(stderr, "    Device is not supported!!\n");
 			zfree(pdev);
 			return NULL;
 		default:
@@ -1812,7 +1812,7 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 	ssize_t total_device;
 	int i, status, num = 0;
 
-	printf("VID: 0x%04X PID: 0x%04X\n", idVendor, idProduct);
+	fprintf(stderr, "VID: 0x%04X PID: 0x%04X\n", idVendor, idProduct);
 
 	array = (UDEVICE**) malloc(16 * sizeof(UDEVICE*));
 
@@ -1833,7 +1833,7 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 
 			if (status < 0)
 			{
-				printf("libusb_open: (by id) error: 0x%08X (%d)\n", status, status);
+				fprintf(stderr, "libusb_open: (by id) error: 0x%08X (%d)\n", status, status);
 				zfree(descriptor);
 				zfree(array[num]);
 				continue;
@@ -1870,7 +1870,7 @@ IUDEVICE* udev_new_by_addr(int bus_number, int dev_number)
 
 	if (pDev->libusb_dev == NULL)
 	{
-		printf("libusb_device_new: ERROR!!\n"); 
+		fprintf(stderr, "libusb_device_new: ERROR!!\n");
 		zfree(pDev);
 		return NULL;
 	}
@@ -1879,7 +1879,7 @@ IUDEVICE* udev_new_by_addr(int bus_number, int dev_number)
 
 	if (status < 0)
 	{
-		printf("libusb_open: (by addr) ERROR!!\n");
+		fprintf(stderr, "libusb_open: (by addr) ERROR!!\n");
 		zfree(pDev);
 		return NULL;
 	}

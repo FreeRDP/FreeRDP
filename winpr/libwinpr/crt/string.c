@@ -188,7 +188,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 
 LPWSTR CharUpperW(LPWSTR lpsz)
 {
-	printf("CharUpperW unimplemented!\n");
+	fprintf(stderr, "CharUpperW unimplemented!\n");
 
 	return (LPWSTR) NULL;
 }
@@ -270,7 +270,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 
 LPWSTR CharLowerW(LPWSTR lpsz)
 {
-	printf("CharLowerW unimplemented!\n");
+	fprintf(stderr, "CharLowerW unimplemented!\n");
 
 	return (LPWSTR) NULL;
 }
@@ -328,7 +328,7 @@ BOOL IsCharAlphaA(CHAR ch)
 
 BOOL IsCharAlphaW(WCHAR ch)
 {
-	printf("IsCharAlphaW unimplemented!\n");
+	fprintf(stderr, "IsCharAlphaW unimplemented!\n");
 	return 0;
 }
 
@@ -343,7 +343,7 @@ BOOL IsCharAlphaNumericA(CHAR ch)
 
 BOOL IsCharAlphaNumericW(WCHAR ch)
 {
-	printf("IsCharAlphaNumericW unimplemented!\n");
+	fprintf(stderr, "IsCharAlphaNumericW unimplemented!\n");
 	return 0;
 }
 
@@ -357,7 +357,7 @@ BOOL IsCharUpperA(CHAR ch)
 
 BOOL IsCharUpperW(WCHAR ch)
 {
-	printf("IsCharUpperW unimplemented!\n");
+	fprintf(stderr, "IsCharUpperW unimplemented!\n");
 	return 0;
 }
 
@@ -371,7 +371,7 @@ BOOL IsCharLowerA(CHAR ch)
 
 BOOL IsCharLowerW(WCHAR ch)
 {
-	printf("IsCharLowerW unimplemented!\n");
+	fprintf(stderr, "IsCharLowerW unimplemented!\n");
 	return 0;
 }
 

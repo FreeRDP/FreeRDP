@@ -52,7 +52,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 
 	if (!channel)
 	{
-		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
+		fprintf(stderr, "freerdp_channel_send: unknown channel_id %d\n", channel_id);
 		return FALSE;
 	}
 

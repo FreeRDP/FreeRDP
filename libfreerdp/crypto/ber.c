@@ -399,12 +399,12 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 8)
 	{
-		printf("%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
+		fprintf(stderr, "%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
 		return FALSE;
 	}
 	else
 	{
-		printf("%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
+		fprintf(stderr, "%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
 		return FALSE;
 	}
 

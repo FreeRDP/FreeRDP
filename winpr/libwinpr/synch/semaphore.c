@@ -48,7 +48,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 
 		if (pipe(semaphore->pipe_fd) < 0)
 		{
-			printf("CreateSemaphoreW: failed to create semaphore\n");
+			fprintf(stderr, "CreateSemaphoreW: failed to create semaphore\n");
 			return NULL;
 		}
 

@@ -161,7 +161,7 @@ void wf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		if (status != TRUE)
 		{
-			printf("Bitmap Decompression Failed\n");
+			fprintf(stderr, "Bitmap Decompression Failed\n");
 		}
 	}
 	else

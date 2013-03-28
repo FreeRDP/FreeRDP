@@ -349,7 +349,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//fprintf(stderr, "%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 

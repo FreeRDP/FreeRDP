@@ -265,21 +265,21 @@ static void tsmf_print_guid(const BYTE* guid)
 	int i;
 
 	for (i = 3; i >= 0; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 5; i >= 4; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 7; i >= 6; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 8; i < 16; i++)
 	{
-		printf("%02X", guid[i]);
+		fprintf(stderr, "%02X", guid[i]);
 		if (i == 9)
-			printf("-");
+			fprintf(stderr, "-");
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 
