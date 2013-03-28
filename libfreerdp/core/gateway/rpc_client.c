@@ -426,6 +426,23 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	return pdu;
 }
 
+RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
+{
+	RPC_PDU* pdu;
+	DWORD dwMilliseconds;
+
+	pdu = NULL;
+	dwMilliseconds = rpc->client->SynchronousReceive ? INFINITE : 0;
+
+	if (WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
+	{
+		pdu = (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
+		return pdu;
+	}
+
+	return pdu;
+}
+
 static void* rpc_client_thread(void* arg)
 {
 	rdpRpc* rpc;

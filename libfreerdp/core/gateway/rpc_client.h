@@ -40,6 +40,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc);
 
 int rpc_recv_enqueue_pdu(rdpRpc* rpc);
 RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc);
+RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc);
 
 int rpc_client_new(rdpRpc* rpc);
 int rpc_client_start(rdpRpc* rpc);
