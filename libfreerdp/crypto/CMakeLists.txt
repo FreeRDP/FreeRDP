@@ -43,7 +43,7 @@ set(${MODULE_PREFIX}_LIBS
 if(MONOLITHIC_BUILD)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-sspi winpr-library)
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-sspi winpr-library winpr-path winpr-file)
 endif()
 
 if(WIN32)
