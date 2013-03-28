@@ -44,9 +44,15 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 	settings = certificate_store->settings;
 
+	if (!PathFileExistsA(settings->ConfigPath))
+	{
+		CreateDirectoryA(settings->ConfigPath, 0);
+		printf("creating directory %s\n", settings->ConfigPath);
+	}
+
 	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
 
-	if (PathFileExistsA(certificate_store->path) == FALSE)
+	if (!PathFileExistsA(certificate_store->path))
 	{
 		CreateDirectoryA(certificate_store->path, 0);
 		printf("creating directory %s\n", certificate_store->path);

@@ -1399,6 +1399,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (tsg->BytesAvailable < 1)
 		{
 			tsg->PendingPdu = FALSE;
+			rpc_recv_dequeue_pdu(rpc);
 			rpc_client_receive_pool_return(rpc, tsg->pdu);
 		}
 
@@ -1406,7 +1407,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	}
 	else
 	{
-		tsg->pdu = rpc_recv_dequeue_pdu(rpc);
+		tsg->pdu = rpc_recv_peek_pdu(rpc);
 
 		if (!tsg->pdu)
 		{
@@ -1429,6 +1430,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (tsg->BytesAvailable < 1)
 		{
 			tsg->PendingPdu = FALSE;
+			rpc_recv_dequeue_pdu(rpc);
 			rpc_client_receive_pool_return(rpc, tsg->pdu);
 		}
 
@@ -1445,6 +1447,8 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 {
 	tsg->rpc->client->SynchronousSend = TRUE;
 	tsg->rpc->client->SynchronousReceive = blocking;
+
+	tsg->transport->GatewayEvent = Queue_Event(tsg->rpc->client->ReceiveQueue);
 
 	return TRUE;
 }
