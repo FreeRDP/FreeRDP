@@ -1156,15 +1156,6 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 	return 0;
 }
 
-static const char* event_class_to_name_table[] =
-{
-	"rdpdbg",   /* RDP_EVENT_CLASS_DEBUG */
-	"",  /* RDP_EVENT_CLASS_CLIPRDR */
-	"tsmf",     /* RDP_EVENT_CLASS_TSMF */
-	"rail",     /* RDP_EVENT_CLASS_RAIL */
-	NULL
-};
-
 /**
  * Send a plugin-defined event to the plugin.
  * called only from main thread
@@ -1176,8 +1167,6 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 	int index;
 	const char* name = NULL;
 	struct channel_data* lchannel_data;
-
-	name = event_class_to_name_table[event->event_class];
 
 	switch (GetMessageClass(event->id))
 	{

@@ -256,7 +256,7 @@ static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, 
 
 	if (payload != NULL)
 	{
-		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
+		out_event = freerdp_event_new(RailChannel_Class, event_type,
 			xf_on_free_rail_client_event, payload);
 
 		freerdp_channels_send_event(channels, out_event);

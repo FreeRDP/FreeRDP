@@ -64,7 +64,7 @@ void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param)
 
 	if (payload != NULL)
 	{
-		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
+		out_event = freerdp_event_new(RailChannel_Class, event_type,
 			on_free_rail_channel_event, payload);
 
 		svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);

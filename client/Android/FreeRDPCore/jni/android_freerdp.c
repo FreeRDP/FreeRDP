@@ -316,7 +316,7 @@ void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 	{
 /*		switch (event->event_class)
 		{
-			case RDP_EVENT_CLASS_RAIL:
+			case RailChannel_Class:
 				xf_process_rail_event(ai, chanman, event);
 				break;
 

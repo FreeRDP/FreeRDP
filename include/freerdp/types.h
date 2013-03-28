@@ -76,11 +76,4 @@ struct _RDP_EVENT
 	void* user_data;
 };
 
-enum RDP_EVENT_CLASS
-{
-	RDP_EVENT_CLASS_DEBUG = 0,
-	RDP_EVENT_CLASS_TSMF,
-	RDP_EVENT_CLASS_RAIL
-};
-
 #endif /* __RDP_TYPES_H */

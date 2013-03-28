@@ -979,11 +979,11 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 	{
 		switch (GetMessageClass(event->id))
 		{
-			case RDP_EVENT_CLASS_RAIL:
+			case RailChannel_Class:
 				xf_process_rail_event(xfi, channels, event);
 				break;
 
-			case RDP_EVENT_CLASS_TSMF:
+			case TsmfChannel_Class:
 				xf_process_tsmf_event(xfi, event);
 				break;
 

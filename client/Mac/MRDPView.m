@@ -1333,11 +1333,11 @@ void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 	{
 		switch (event->event_class)
 		{
-			case RDP_EVENT_CLASS_RAIL:
+			case RailChannel_Class:
 				mac_process_rail_event(instance, event);
 				break;
 				
-			case RDP_EVENT_CLASS_CLIPRDR:
+			case CliprdrChannel_Class:
 				process_cliprdr_event(instance, event);
 				break;
 		}
@@ -2014,17 +2014,14 @@ void mac_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* 
 	
 	if (payload)
 	{
-		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type, mac_on_free_rail_client_event, payload);
+		out_event = freerdp_event_new(RailChannel_Class, event_type, mac_on_free_rail_client_event, payload);
 		freerdp_channels_send_event(channels, out_event);
 	}
 }
 
 void mac_on_free_rail_client_event(RDP_EVENT* event)
 {	
-	if (event->event_class == RDP_EVENT_CLASS_RAIL)
-	{
 		rail_free_cloned_order(event->event_type, event->user_data);
-	}
 }
 
 void mac_rail_enable_remoteapp_mode()

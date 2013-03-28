@@ -73,12 +73,12 @@ static RDP_EVENT* freerdp_tsmf_event_new(UINT16 event_type)
 
 	switch (event_type)
 	{
-		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+		case TsmfChannel_VideoFrame:
 			event = (RDP_EVENT*) malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
 			ZeroMemory(event, sizeof(RDP_VIDEO_FRAME_EVENT));
 			break;
 
-		case RDP_EVENT_TYPE_TSMF_REDRAW:
+		case TsmfChannel_Redraw:
 			event = (RDP_EVENT*) malloc(sizeof(RDP_REDRAW_EVENT));
 			ZeroMemory(event, sizeof(RDP_REDRAW_EVENT));
 			break;
@@ -104,7 +104,7 @@ RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 
 	switch (event_class)
 	{
-		case RDP_EVENT_CLASS_DEBUG:
+		case DebugChannel_Class:
 			event = (RDP_EVENT*) malloc(sizeof(RDP_EVENT));
 			ZeroMemory(event, sizeof(RDP_EVENT));
 			break;
@@ -113,11 +113,11 @@ RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 			event = freerdp_cliprdr_event_new(event_type);
 			break;
 
-		case RDP_EVENT_CLASS_TSMF:
+		case TsmfChannel_Class:
 			event = freerdp_tsmf_event_new(event_type);
 			break;
 
-		case RDP_EVENT_CLASS_RAIL:
+		case RailChannel_Class:
 			event = freerdp_rail_event_new(event_type);
 			break;
 	}
@@ -158,9 +158,9 @@ static void freerdp_cliprdr_event_free(RDP_EVENT* event)
 
 static void freerdp_tsmf_event_free(RDP_EVENT* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+		case TsmfChannel_VideoFrame:
 			{
 				RDP_VIDEO_FRAME_EVENT* vevent = (RDP_VIDEO_FRAME_EVENT*)event;
 				free(vevent->frame_data);
@@ -188,11 +188,11 @@ void freerdp_event_free(RDP_EVENT* event)
 				freerdp_cliprdr_event_free(event);
 				break;
 
-			case RDP_EVENT_CLASS_TSMF:
+			case TsmfChannel_Class:
 				freerdp_tsmf_event_free(event);
 				break;
 
-			case RDP_EVENT_CLASS_RAIL:
+			case RailChannel_Class:
 				freerdp_rail_event_free(event);
 				break;
 		}

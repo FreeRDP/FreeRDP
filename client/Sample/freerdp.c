@@ -119,13 +119,14 @@ void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 	if (event)
 	{
-		switch (event->event_type)
+		switch (GetMessageType(event->id))
 		{
-			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			case CliprdrChannel_MonitorReady:
 				tf_process_cb_monitor_ready_event(channels, instance);
 				break;
+
 			default:
-				printf("tf_process_channel_event: unknown event type %d\n", event->event_type);
+				printf("tf_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
 				break;
 		}
 
@@ -204,8 +205,8 @@ int tfreerdp_run(freerdp* instance)
 	fd_set wfds_set;
 	rdpChannels* channels;
 
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(wfds, sizeof(wfds));
 
 	channels = instance->context->channels;
 
