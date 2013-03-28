@@ -20,8 +20,10 @@
 #ifndef FREERDP_CORE_MESSAGE_H
 #define FREERDP_CORE_MESSAGE_H
 
-#define GetMessageType(_id) 	(_id & 0xFF)
-#define GetMessageClass(_id)	((_id >> 16) & 0xFF)
+#define GetMessageType(_id) 		(_id & 0xFF)
+#define GetMessageClass(_id)		((_id >> 16) & 0xFF)
+
+#define GetMessageId(_class, _type)	((_class << 16) | _type)
 
 #define MakeMessageId(_class, _type) \
 	(((_class ##_Class) << 16) | (_class ## _ ## _type))
@@ -233,6 +235,90 @@
 #define FREERDP_INPUT_UNICODE_KEYBOARD_EVENT			MakeMessageId(Input, UnicodeKeyboardEvent)
 #define FREERDP_INPUT_MOUSE_EVENT				MakeMessageId(Input, MouseEvent)
 #define FREERDP_INPUT_EXTENDED_MOUSE_EVENT			MakeMessageId(Input, ExtendedMouseEvent)
+
+/**
+ * Static Channel Message Queues
+ */
+
+#define FREERDP_CHANNEL_MESSAGE_QUEUE				3
+
+#define Channel_Base						20
+
+/**
+ * Debug Channel
+ */
+
+#define DebugChannel_Class					(Channel_Base + 1)
+
+/**
+ * Clipboard Channel
+ */
+
+#define CliprdrChannel_Class					(Channel_Base + 2)
+
+#define CliprdrChannel_MonitorReady				1
+#define CliprdrChannel_FormatList				2
+#define CliprdrChannel_DataRequest				3
+#define CliprdrChannel_DataResponse				4
+
+#define FREERDP_CLIPRDR_CHANNEL_MONITOR_READY			MakeMessageId(CliprdrChannel, MonitorReady)
+#define FREERDP_CLIPRDR_CHANNEL_FORMAT_LIST			MakeMessageId(CliprdrChannel, FormatList)
+#define FREERDP_CLIPRDR_CHANNEL_DATA_REQUEST			MakeMessageId(CliprdrChannel, DataRequest)
+#define FREERDP_CLIPRDR_CHANNEL_DATA_RESPONSE			MakeMessageId(CliprdrChannel, DataResponse)
+
+/**
+ * Multimedia Redirection Channel
+ */
+
+#define TsmfChannel_Class					(Channel_Base + 3)
+
+#define TsmfChannel_VideoFrame					1
+#define TsmfChannel_Redraw					2
+
+#define FREERDP_TSMF_CHANNEL_VIDEO_FRAME			MakeMessageId(TsmfChannel, VideoFrame)
+#define FREERDP_TSMF_CHANNEL_REDRAW				MakeMessageId(TsmfChannel, Redraw)
+
+/**
+ * RemoteApp Channel
+ */
+
+#define RailChannel_Class					(Channel_Base + 4)
+
+#define RailChannel_ClientExecute				1
+#define RailChannel_ClientActivate				2
+#define RailChannel_ClientSystemParameters			3
+#define RailChannel_ClientSystemCommand				4
+#define RailChannel_ClientHandshake				5
+#define RailChannel_ServerHandshake				6
+#define RailChannel_ClientNotifyEvent				7
+#define RailChannel_ClientWindowMove				8
+#define RailChannel_ServerLocalMoveSize				9
+#define RailChannel_ServerMinMaxInfo				10
+#define RailChannel_ClientInformation				11
+#define RailChannel_ClientSystemMenu				12
+#define RailChannel_ClientLanguageBarInfo			13
+#define RailChannel_ServerLanguageBarInfo			14
+#define RailChannel_ServerExecuteResult				15
+#define RailChannel_ClientGetAppIdRequest			16
+#define RailChannel_ServerGetAppIdResponse			17
+
+#define FREERDP_RAIL_CHANNEL_CLIENT_EXECUTE			MakeMessageId(RailChannel, ClientExecute)
+#define FREERDP_RAIL_CHANNEL_CLIENT_ACTIVATE			MakeMessageId(RailChannel, ClientActivate)
+#define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_PARAMETERS		MakeMessageId(RailChannel, ClientSystemParameters)
+#define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_COMMAND		MakeMessageId(RailChannel, ClientSystemCommand)
+#define FREERDP_RAIL_CHANNEL_CLIENT_HANDSHAKE			MakeMessageId(RailChannel, ClientHandshake)
+#define FREERDP_RAIL_CHANNEL_SERVER_HANDSHAKE			MakeMessageId(RailChannel, ServerHandshake)
+#define FREERDP_RAIL_CHANNEL_CLIENT_NOTIFY_EVENT		MakeMessageId(RailChannel, ClientNotifyEvent)
+#define FREERDP_RAIL_CHANNEL_CLIENT_WINDOW_MOVE			MakeMessageId(RailChannel, ClientWindowMove)
+#define FREERDP_RAIL_CHANNEL_SERVER_LOCAL_MOVE_SIZE		MakeMessageId(RailChannel, ServerLocalMoveSize)
+#define FREERDP_RAIL_CHANNEL_SERVER_MIN_MAX_INFO		MakeMessageId(RailChannel, ServerMinMaxInfo)
+#define FREERDP_RAIL_CHANNEL_CLIENT_INFORMATION			MakeMessageId(RailChannel, ClientInformation)
+#define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_MENU			MakeMessageId(RailChannel, ClientSystemMenu)
+#define FREERDP_RAIL_CHANNEL_CLIENT_LANGUAGE_BAR_INFO		MakeMessageId(RailChannel, ClientLanguageBarInfo)
+#define FREERDP_RAIL_CHANNEL_SERVER_LANGUAGE_BAR_INFO		MakeMessageId(RailChannel, ServerLanguageBarInfo)
+#define FREERDP_RAIL_CHANNEL_SERVER_EXECUTE_RESULT		MakeMessageId(RailChannel, ServerExecuteResult)
+#define FREERDP_RAIL_CHANNEL_CLIENT_GET_APP_ID_REQUEST		MakeMessageId(RailChannel, ClientGetAppIdRequest)
+#define FREERDP_RAIL_CHANNEL_SERVER_GET_APP_ID_RESPONSE		MakeMessageId(RailChannel, ServerGetAppIdResponse)
 
 #endif /* FREERDP_CORE_MESSAGE_H */
 

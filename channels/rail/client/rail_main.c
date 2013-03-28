@@ -51,10 +51,7 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length)
 
 static void on_free_rail_channel_event(RDP_EVENT* event)
 {
-	if (event->event_class == RDP_EVENT_CLASS_RAIL)
-	{
-		rail_free_cloned_order(event->event_type, event->user_data);
-	}
+	rail_free_cloned_order(event->event_type, event->user_data);
 }
 
 void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param)

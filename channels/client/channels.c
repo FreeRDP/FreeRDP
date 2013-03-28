@@ -1159,7 +1159,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 static const char* event_class_to_name_table[] =
 {
 	"rdpdbg",   /* RDP_EVENT_CLASS_DEBUG */
-	"cliprdr",  /* RDP_EVENT_CLASS_CLIPRDR */
+	"",  /* RDP_EVENT_CLASS_CLIPRDR */
 	"tsmf",     /* RDP_EVENT_CLASS_TSMF */
 	"rail",     /* RDP_EVENT_CLASS_RAIL */
 	NULL
@@ -1174,10 +1174,29 @@ static const char* event_class_to_name_table[] =
 FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* event)
 {
 	int index;
-	const char* name;
+	const char* name = NULL;
 	struct channel_data* lchannel_data;
 
 	name = event_class_to_name_table[event->event_class];
+
+	switch (GetMessageClass(event->id))
+	{
+		case DebugChannel_Class:
+			name = "rdpdbg";
+			break;
+
+		case CliprdrChannel_Class:
+			name = "cliprdr";
+			break;
+
+		case TsmfChannel_Class:
+			name = "tsmf";
+			break;
+
+		case RailChannel_Class:
+			name = "rail";
+			break;
+	}
 
 	if (!name)
 	{

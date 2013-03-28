@@ -23,10 +23,6 @@
 /**
  * Event Types
  */
-#define RDP_EVENT_TYPE_CB_MONITOR_READY		1
-#define RDP_EVENT_TYPE_CB_FORMAT_LIST		2
-#define RDP_EVENT_TYPE_CB_DATA_REQUEST		3
-#define RDP_EVENT_TYPE_CB_DATA_RESPONSE		4
 
 /**
  * Clipboard Formats

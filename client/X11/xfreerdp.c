@@ -977,7 +977,7 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 	if (event)
 	{
-		switch (event->event_class)
+		switch (GetMessageClass(event->id))
 		{
 			case RDP_EVENT_CLASS_RAIL:
 				xf_process_rail_event(xfi, channels, event);
@@ -987,7 +987,7 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 				xf_process_tsmf_event(xfi, event);
 				break;
 
-			case RDP_EVENT_CLASS_CLIPRDR:
+			case CliprdrChannel_Class:
 				xf_process_cliprdr_event(xfi, event);
 				break;
 

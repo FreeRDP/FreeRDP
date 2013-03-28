@@ -244,10 +244,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 
 static void xf_on_free_rail_client_event(RDP_EVENT* event)
 {
-	if (event->event_class == RDP_EVENT_CLASS_RAIL)
-	{
-		rail_free_cloned_order(event->event_type, event->user_data);
-	}
+	rail_free_cloned_order(event->event_type, event->user_data);
 }
 
 static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
@@ -261,6 +258,7 @@ static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, 
 	{
 		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type,
 			xf_on_free_rail_client_event, payload);
+
 		freerdp_channels_send_event(channels, out_event);
 	}
 }

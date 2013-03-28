@@ -329,8 +329,8 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 	}
 	DEBUG_X11_CLIPRDR("format=%d len=%d bytes_left=%d", format, (int) length, (int) bytes_left);
 
-	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FormatList, NULL, NULL);
 
 	event->raw_format_data = (BYTE*) malloc(length);
 	memcpy(event->raw_format_data, format_data, length);
@@ -345,8 +345,8 @@ static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FormatList, NULL, NULL);
 
 	event->num_formats = 0;
 
@@ -359,8 +359,8 @@ static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FormatList, NULL, NULL);
 
 	event->formats = (UINT32*) malloc(sizeof(UINT32) * cb->num_format_mappings);
 	event->num_formats = cb->num_format_mappings;
@@ -396,8 +396,8 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, UINT32 format)
 	RDP_CB_DATA_REQUEST_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+	event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_DataRequest, NULL, NULL);
 
 	event->format = format;
 
@@ -409,8 +409,8 @@ static void xf_cliprdr_send_data_response(xfInfo* xfi, BYTE* data, int size)
 	RDP_CB_DATA_RESPONSE_EVENT* event;
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_DataResponse, NULL, NULL);
 
 	event->data = data;
 	event->size = size;
@@ -481,19 +481,19 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
 	XGetWindowProperty(xfi->display, xfi->drawable, cb->property_atom,
-		0, 200, 0, XA_ATOM,
-		&atom, &format, &length, &bytes_left, &data);
+		0, 200, 0, XA_ATOM, &atom, &format, &length, &bytes_left, &data);
 
 	DEBUG_X11_CLIPRDR("type=%d format=%d length=%d bytes_left=%d",
 		(int) atom, format, (int) length, (int) bytes_left);
 
 	if (length > 0)
 	{
-		event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-			RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+		event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				CliprdrChannel_FormatList, NULL, NULL);
 
 		event->formats = (UINT32*) malloc(sizeof(UINT32) * cb->num_format_mappings);
 		num = 0;
+
 		for (i = 0; i < length; i++)
 		{
 			atom = ((Atom*) data)[i];
@@ -509,6 +509,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 				}
 			}
 		}
+
 		event->num_formats = num;
 		XFree(data);
 
@@ -561,9 +562,10 @@ static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 	BYTE* outbuf;
 
 	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
+
 	if (*size < 54)
 	{
-		DEBUG_X11_CLIPRDR("bmp length %d too short", *capacity);
+		DEBUG_X11_CLIPRDR("bmp length %d too short", *size);
 		return NULL;
 	}
 
@@ -571,7 +573,7 @@ static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 	outbuf = (BYTE*) malloc(*size);
 	ZeroMemory(outbuf, *size);
 
-	memcpy(outbuf, data + 14, *size);
+	CopyMemory(outbuf, data + 14, *size);
 
 	return outbuf;
 }
@@ -904,9 +906,10 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	UINT32 ncolors;
 
 	/* size should be at least sizeof(BITMAPINFOHEADER) */
+
 	if (size < 40)
 	{
-		DEBUG_X11_CLIPRDR("dib size %d too short", capacity);
+		DEBUG_X11_CLIPRDR("dib size %d too short", size);
 		return;
 	}
 
@@ -967,9 +970,9 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 {
 	clipboardContext* cb = (clipboardContext*) xfi->clipboard_context;
 
-	DEBUG_X11_CLIPRDR("size=%d", event->capacity);
+	DEBUG_X11_CLIPRDR("size=%d", event->size);
 
-	if (cb->respond == NULL)
+	if (!cb->respond)
 	{
 		DEBUG_X11_CLIPRDR("unexpected data");
 		return;
@@ -986,6 +989,7 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 			free(cb->data);
 			cb->data = NULL;
 		}
+
 		switch (cb->data_format)
 		{
 			case CB_FORMAT_RAW:
@@ -1029,26 +1033,26 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 
 void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_CB_MONITOR_READY:
+		case CliprdrChannel_MonitorReady:
 			xf_cliprdr_process_cb_monitor_ready_event(xfi);
 			break;
 
-		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+		case CliprdrChannel_FormatList:
 			xf_cliprdr_process_cb_format_list_event(xfi, (RDP_CB_FORMAT_LIST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+		case CliprdrChannel_DataRequest:
 			xf_cliprdr_process_cb_data_request_event(xfi, (RDP_CB_DATA_REQUEST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+		case CliprdrChannel_DataResponse:
 			xf_cliprdr_process_cb_data_response_event(xfi, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 			break;
 
 		default:
-			DEBUG_X11_CLIPRDR("unknown event type %d", event->event_type);
+			DEBUG_X11_CLIPRDR("unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 }

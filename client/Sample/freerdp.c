@@ -103,7 +103,7 @@ void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 	RDP_EVENT* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
 
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;

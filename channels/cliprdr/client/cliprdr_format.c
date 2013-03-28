@@ -202,8 +202,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	CLIPRDR_FORMAT_NAME* format_name;
 	RDP_CB_FORMAT_LIST_EVENT* cb_event;
 
-	cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FormatList, NULL, NULL);
 
 	if (dataLen > 0)
 	{
@@ -304,8 +304,8 @@ void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 {
 	RDP_CB_DATA_REQUEST_EVENT* cb_event;
 
-	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_DataRequest, NULL, NULL);
 
 	stream_read_UINT32(s, cb_event->format);
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
@@ -345,14 +345,14 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 {
 	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
-	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR,
-		RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_DataResponse, NULL, NULL);
 
 	if (dataLen > 0)
 	{
 		cb_event->size = dataLen;
 		cb_event->data = (BYTE*) malloc(dataLen);
-		memcpy(cb_event->data, stream_get_tail(s), dataLen);
+		CopyMemory(cb_event->data, stream_get_tail(s), dataLen);
 	}
 
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (RDP_EVENT*) cb_event);
