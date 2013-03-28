@@ -57,12 +57,12 @@ void profiler_exit(PROFILER* profiler)
 
 void profiler_print_header()
 {
-	printf("\n");
-	printf("                                             |-----------------------|\n" );
-	printf("                PROFILER                     |    elapsed seconds    |\n" );
-	printf("|--------------------------------------------|-----------------------|\n" );
-	printf("| code section                  | iterations |     total |      avg. |\n" );
-	printf("|-------------------------------|------------|-----------|-----------|\n" );
+	fprintf(stderr, "\n");
+	fprintf(stderr, "                                             |-----------------------|\n" );
+	fprintf(stderr, "                PROFILER                     |    elapsed seconds    |\n" );
+	fprintf(stderr, "|--------------------------------------------|-----------------------|\n" );
+	fprintf(stderr, "| code section                  | iterations |     total |      avg. |\n" );
+	fprintf(stderr, "|-------------------------------|------------|-----------|-----------|\n" );
 }
 
 void profiler_print(PROFILER* profiler)
@@ -70,10 +70,10 @@ void profiler_print(PROFILER* profiler)
 	double elapsed_sec = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg_sec = elapsed_sec / (double) profiler->stopwatch->count;
 	
-	printf("| %-30.30s| %'10lu | %'9f | %'9f |\n", profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
+	fprintf(stderr, "| %-30.30s| %'10lu | %'9f | %'9f |\n", profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
 }
 
 void profiler_print_footer()
 {
-	printf("|--------------------------------------------------------------------|\n" );
+	fprintf(stderr, "|--------------------------------------------------------------------|\n" );
 }

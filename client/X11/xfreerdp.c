@@ -485,7 +485,7 @@ BOOL xf_get_pixmap_info(xfInfo* xfi)
 
 	if (pfs == NULL)
 	{
-		printf("xf_get_pixmap_info: XListPixmapFormats failed\n");
+		fprintf(stderr, "xf_get_pixmap_info: XListPixmapFormats failed\n");
 		return 1;
 	}
 
@@ -508,7 +508,7 @@ BOOL xf_get_pixmap_info(xfInfo* xfi)
 
 	if (XGetWindowAttributes(xfi->display, RootWindowOfScreen(xfi->screen), &window_attributes) == 0)
 	{
-		printf("xf_get_pixmap_info: XGetWindowAttributes failed\n");
+		fprintf(stderr, "xf_get_pixmap_info: XGetWindowAttributes failed\n");
 		return FALSE;
 	}
 
@@ -516,7 +516,7 @@ BOOL xf_get_pixmap_info(xfInfo* xfi)
 
 	if (vis == NULL)
 	{
-		printf("xf_get_pixmap_info: XGetVisualInfo failed\n");
+		fprintf(stderr, "xf_get_pixmap_info: XGetVisualInfo failed\n");
 		return FALSE;
 	}
 
@@ -563,7 +563,7 @@ int xf_error_handler(Display* d, XErrorEvent* ev)
 	int do_abort = TRUE;
 
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
-	printf("%s", buf);
+	fprintf(stderr, "%s", buf);
 
 	if (do_abort)
 		abort();
@@ -628,7 +628,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	{
 		file = freerdp_client_rdp_file_new();
 
-		printf("Using connection file: %s\n", settings->ConnectionFile);
+		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
 
 		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
@@ -694,7 +694,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	{
 		if (!XInitThreads())
 		{
-			printf("warning: XInitThreads() failure\n");
+			fprintf(stderr, "warning: XInitThreads() failure\n");
 			xfi->UseXThreads = FALSE;
 		}
 	}
@@ -703,14 +703,14 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	if (xfi->display == NULL)
 	{
-		printf("xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
-		printf("Please check that the $DISPLAY environment variable is properly set.\n");
+		fprintf(stderr, "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		fprintf(stderr, "Please check that the $DISPLAY environment variable is properly set.\n");
 		return FALSE;
 	}
 
 	if (xfi->debug)
 	{
-		printf("Enabling X11 debug mode.\n");
+		fprintf(stderr, "Enabling X11 debug mode.\n");
 		XSynchronize(xfi->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
@@ -1272,7 +1272,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				printf("Failed to get FreeRDP file descriptor\n");
+				fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 				ret = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1282,7 +1282,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				printf("Failed to get channel manager file descriptor\n");
+				fprintf(stderr, "Failed to get channel manager file descriptor\n");
 				ret = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1292,7 +1292,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				printf("Failed to get xfreerdp file descriptor\n");
+				fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
 				ret = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1336,7 +1336,7 @@ int xfreerdp_run(freerdp* instance)
 			if (!((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
 				(errno == EINPROGRESS) || (errno == EINTR))) /* signal occurred */
 			{
-				printf("xfreerdp_run: select failed\n");
+				fprintf(stderr, "xfreerdp_run: select failed\n");
 				break;
 			}
 		}
@@ -1345,7 +1345,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (freerdp_check_fds(instance) != TRUE)
 			{
-				printf("Failed to check FreeRDP file descriptor\n");
+				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 				break;
 			}
 		}
@@ -1354,7 +1354,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (freerdp_channels_check_fds(channels, instance) != TRUE)
 			{
-				printf("Failed to check channel manager file descriptor\n");
+				fprintf(stderr, "Failed to check channel manager file descriptor\n");
 				break;
 			}
 
@@ -1365,7 +1365,7 @@ int xfreerdp_run(freerdp* instance)
 		{
 			if (xf_process_x_events(instance) != TRUE)
 			{
-				printf("Closed from X11\n");
+				fprintf(stderr, "Closed from X11\n");
 				break;
 			}
 		}
@@ -1375,7 +1375,7 @@ int xfreerdp_run(freerdp* instance)
 			{
 				if (!freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE))
 				{
-					printf("User Disconnect\n");
+					fprintf(stderr, "User Disconnect\n");
 					xfi->disconnect = TRUE;
 					break;
 				}

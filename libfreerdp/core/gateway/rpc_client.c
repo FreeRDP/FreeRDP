@@ -120,14 +120,14 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	{
 		if (rpc->VirtualConnection->State >= VIRTUAL_CONNECTION_STATE_OPENED)
 		{
-			//printf("Receiving Out-of-Sequence RTS PDU\n");
+			//fprintf(stderr, "Receiving Out-of-Sequence RTS PDU\n");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 
 			rpc_client_fragment_pool_return(rpc, fragment);
 		}
 		else
 		{
-			printf("warning: unhandled RTS PDU\n");
+			fprintf(stderr, "warning: unhandled RTS PDU\n");
 		}
 
 		return 0;
@@ -140,7 +140,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (header->common.ptype != PTYPE_RESPONSE)
 	{
-		printf("Unexpected RPC PDU type: %d\n", header->common.ptype);
+		fprintf(stderr, "Unexpected RPC PDU type: %d\n", header->common.ptype);
 		return -1;
 	}
 
@@ -149,13 +149,13 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
 	{
-		printf("rpc_recv_pdu_fragment: expected stub\n");
+		fprintf(stderr, "rpc_recv_pdu_fragment: expected stub\n");
 		return -1;
 	}
 
 	if (StubLength == 4)
 	{
-		//printf("Ignoring TsProxySendToServer Response\n");
+		//fprintf(stderr, "Ignoring TsProxySendToServer Response\n");
 		rpc_client_fragment_pool_return(rpc, fragment);
 		return 0;
 	}
@@ -169,7 +169,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->StubCallId != header->common.call_id)
 	{
-		printf("invalid call_id: actual: %d, expected: %d, frag_count: %d\n",
+		fprintf(stderr, "invalid call_id: actual: %d, expected: %d, frag_count: %d\n",
 				rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 	}
 
@@ -180,7 +180,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		//printf("Sending Flow Control Ack PDU\n");
+		//fprintf(stderr, "Sending Flow Control Ack PDU\n");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -228,7 +228,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 		if (status < 0)
 		{
-			printf("rpc_client_frag_read: error reading header\n");
+			fprintf(stderr, "rpc_client_frag_read: error reading header\n");
 			return -1;
 		}
 
@@ -241,7 +241,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 		if (header->frag_length > rpc->max_recv_frag)
 		{
-			printf("rpc_client_frag_read: invalid fragment size: %d (max: %d)\n",
+			fprintf(stderr, "rpc_client_frag_read: invalid fragment size: %d (max: %d)\n",
 					header->frag_length, rpc->max_recv_frag);
 			winpr_HexDump(Stream_Buffer(rpc->client->RecvFrag), Stream_Position(rpc->client->RecvFrag));
 			return -1;
@@ -254,7 +254,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 			if (status < 0)
 			{
-				printf("rpc_client_frag_read: error reading fragment body\n");
+				fprintf(stderr, "rpc_client_frag_read: error reading fragment body\n");
 				return -1;
 			}
 
@@ -414,9 +414,9 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 #ifdef WITH_DEBUG_TSG
 		if (pdu)
 		{
-			printf("Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
+			fprintf(stderr, "Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
 			winpr_HexDump(pdu->s->buffer, pdu->s->length);
-			printf("\n");
+			fprintf(stderr, "\n");
 		}
 #endif
 

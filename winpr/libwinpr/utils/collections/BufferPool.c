@@ -60,7 +60,7 @@ void* BufferPool_Take(wBufferPool* pool, int bufferSize)
 	}
 	else
 	{
-		printf("Variable-size BufferPool not yet implemented\n");
+		fprintf(stderr, "Variable-size BufferPool not yet implemented\n");
 	}
 
 	if (pool->synchronized)
@@ -138,7 +138,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 
 		if (!pool->fixedSize)
 		{
-			printf("Variable-size BufferPool not yet implemented\n");
+			fprintf(stderr, "Variable-size BufferPool not yet implemented\n");
 		}
 
 		pool->size = 0;

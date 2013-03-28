@@ -59,7 +59,7 @@ static UINT32 FREERDP_CC extension_register_plugin(rdpExtPlugin* plugin)
 
 	if (ext->num_plugins >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_extension: maximum number of plugins reached.\n");
+		fprintf(stderr, "extension_register_extension: maximum number of plugins reached.\n");
 		return 1;
 	}
 
@@ -73,7 +73,7 @@ static UINT32 FREERDP_CC extension_register_pre_connect_hook(rdpExtPlugin* plugi
 
 	if (ext->num_pre_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_pre_connect_hook: maximum plugin reached.\n");
+		fprintf(stderr, "extension_register_pre_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -89,7 +89,7 @@ static UINT32 FREERDP_CC extension_register_post_connect_hook(rdpExtPlugin* plug
 
 	if (ext->num_post_connect_hooks >= FREERDP_EXT_MAX_COUNT)
 	{
-		printf("extension_register_post_connect_hook: maximum plugin reached.\n");
+		fprintf(stderr, "extension_register_post_connect_hook: maximum plugin reached.\n");
 		return 1;
 	}
 
@@ -124,11 +124,11 @@ static int extension_load_plugins(rdpExtension* extension)
 			sprintf_s(path, sizeof(path), "%s", settings->extensions[i].name);
 
 		han = DLOPEN(path);
-		printf("extension_load_plugins: %s\n", path);
+		fprintf(stderr, "extension_load_plugins: %s\n", path);
 
 		if (han == NULL)
 		{
-			printf("extension_load_plugins: failed to load %s\n", path);
+			fprintf(stderr, "extension_load_plugins: failed to load %s\n", path);
 			continue;
 		}
 
@@ -136,7 +136,7 @@ static int extension_load_plugins(rdpExtension* extension)
 		if (entry == NULL)
 		{
 			DLCLOSE(han);
-			printf("extension_load_plugins: failed to find export function in %s\n", path);
+			fprintf(stderr, "extension_load_plugins: failed to find export function in %s\n", path);
 			continue;
 		}
 
@@ -144,7 +144,7 @@ static int extension_load_plugins(rdpExtension* extension)
 		if (entry(&entryPoints) != 0)
 		{
 			DLCLOSE(han);
-			printf("extension_load_plugins: %s entry returns error.\n", path);
+			fprintf(stderr, "extension_load_plugins: %s entry returns error.\n", path);
 			continue;
 		}
 	}

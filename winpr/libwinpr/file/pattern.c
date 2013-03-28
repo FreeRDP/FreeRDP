@@ -190,7 +190,7 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 	}
 	else if (*lpWildcard == '~')
 	{
-		printf("warning: unimplemented '~' pattern match\n");
+		fprintf(stderr, "warning: unimplemented '~' pattern match\n");
 
 		return TRUE;
 	}

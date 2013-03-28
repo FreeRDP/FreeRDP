@@ -32,12 +32,12 @@
 
 void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	printf("warning: NdrConformantStringBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrConformantStringBufferSize unimplemented\n");
 }
 
 void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	printf("warning: NdrNonConformantStringBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrNonConformantStringBufferSize unimplemented\n");
 }
 
 #endif

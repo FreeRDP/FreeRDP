@@ -81,7 +81,7 @@ char* rdpsnd_get_audio_tag_string(UINT16 wFormatTag)
 
 void rdpsnd_print_audio_format(AUDIO_FORMAT* format)
 {
-	printf("%s:\t wFormatTag: 0x%04X nChannels: %d nSamplesPerSec: %d nAvgBytesPerSec: %d "
+	fprintf(stderr, "%s:\t wFormatTag: 0x%04X nChannels: %d nSamplesPerSec: %d nAvgBytesPerSec: %d "
 			"nBlockAlign: %d wBitsPerSample: %d cbSize: %d\n",
 			rdpsnd_get_audio_tag_string(format->wFormatTag), format->wFormatTag,
 			format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
@@ -95,17 +95,17 @@ void rdpsnd_print_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 
 	if (formats)
 	{
-		printf("AUDIO_FORMATS (%d) =\n{\n", count);
+		fprintf(stderr, "AUDIO_FORMATS (%d) =\n{\n", count);
 
 		for (index = 0; index < (int) count; index++)
 		{
 			format = &formats[index];
 
-			printf("\t");
+			fprintf(stderr, "\t");
 			rdpsnd_print_audio_format(format);
 		}
 
-		printf("}\n");
+		fprintf(stderr, "}\n");
 	}
 }
 

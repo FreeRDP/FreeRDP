@@ -29,36 +29,36 @@
 
 void rdp_print_redirection_flags(UINT32 flags)
 {
-	printf("redirectionFlags = {\n");
+	fprintf(stderr, "redirectionFlags = {\n");
 
 	if (flags & LB_TARGET_NET_ADDRESS)
-		printf("\tLB_TARGET_NET_ADDRESS\n");
+		fprintf(stderr, "\tLB_TARGET_NET_ADDRESS\n");
 	if (flags & LB_LOAD_BALANCE_INFO)
-		printf("\tLB_LOAD_BALANCE_INFO\n");
+		fprintf(stderr, "\tLB_LOAD_BALANCE_INFO\n");
 	if (flags & LB_USERNAME)
-		printf("\tLB_USERNAME\n");
+		fprintf(stderr, "\tLB_USERNAME\n");
 	if (flags & LB_DOMAIN)
-		printf("\tLB_DOMAIN\n");
+		fprintf(stderr, "\tLB_DOMAIN\n");
 	if (flags & LB_PASSWORD)
-		printf("\tLB_PASSWORD\n");
+		fprintf(stderr, "\tLB_PASSWORD\n");
 	if (flags & LB_DONTSTOREUSERNAME)
-		printf("\tLB_DONTSTOREUSERNAME\n");
+		fprintf(stderr, "\tLB_DONTSTOREUSERNAME\n");
 	if (flags & LB_SMARTCARD_LOGON)
-		printf("\tLB_SMARTCARD_LOGON\n");
+		fprintf(stderr, "\tLB_SMARTCARD_LOGON\n");
 	if (flags & LB_NOREDIRECT)
-		printf("\tLB_NOREDIRECT\n");
+		fprintf(stderr, "\tLB_NOREDIRECT\n");
 	if (flags & LB_TARGET_FQDN)
-		printf("\tLB_TARGET_FQDN\n");
+		fprintf(stderr, "\tLB_TARGET_FQDN\n");
 	if (flags & LB_TARGET_NETBIOS_NAME)
-		printf("\tLB_TARGET_NETBIOS_NAME\n");
+		fprintf(stderr, "\tLB_TARGET_NETBIOS_NAME\n");
 	if (flags & LB_TARGET_NET_ADDRESSES)
-		printf("\tLB_TARGET_NET_ADDRESSES\n");
+		fprintf(stderr, "\tLB_TARGET_NET_ADDRESSES\n");
 	if (flags & LB_CLIENT_TSV_URL)
-		printf("\tLB_CLIENT_TSV_URL\n");
+		fprintf(stderr, "\tLB_CLIENT_TSV_URL\n");
 	if (flags & LB_SERVER_TSV_CAPABLE)
-		printf("\tLB_SERVER_TSV_CAPABLE\n");
+		fprintf(stderr, "\tLB_SERVER_TSV_CAPABLE\n");
 
-	printf("}\n");
+	fprintf(stderr, "}\n");
 }
 
 BOOL rdp_string_read_length32(wStream* s, rdpString* string)

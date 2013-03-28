@@ -515,7 +515,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (stream_get_left(s) < compressed_len - 18)
 		{
-			printf("decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
+			fprintf(stderr, "decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
 			return -1;	
 		}
 		if (decompress_rdp(rdp->mppc_dec, s->pointer, compressed_len - 18, compressed_type, &roff, &rlen))
@@ -527,7 +527,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		}
 		else
 		{
-			printf("decompress_rdp() failed\n");
+			fprintf(stderr, "decompress_rdp() failed\n");
 			return -1;
 		}
 		stream_seek(s, compressed_len - 18);
@@ -697,13 +697,13 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 
 		if (!security_fips_decrypt(s->pointer, length, rdp))
 		{
-			printf("FATAL: cannot decrypt\n");
+			fprintf(stderr, "FATAL: cannot decrypt\n");
 			return FALSE; /* TODO */
 		}
 
 		if (!security_fips_check_signature(s->pointer, length - pad, sig, rdp))
 		{
-			printf("FATAL: invalid packet signature\n");
+			fprintf(stderr, "FATAL: invalid packet signature\n");
 			return FALSE; /* TODO */
 		}
 
@@ -727,7 +727,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 
 	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
 	{
-		printf("WARNING: invalid packet signature\n");
+		fprintf(stderr, "WARNING: invalid packet signature\n");
 		/*
 		 * Because Standard RDP Security is totally broken,
 		 * and cannot protect against MITM, don't treat signature
@@ -759,7 +759,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		fprintf(stderr, "Incorrect RDP header.\n");
 		return -1;
 	}
 
@@ -772,7 +772,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				printf("rdp_decrypt failed\n");
+				fprintf(stderr, "rdp_decrypt failed\n");
 				return -1;
 			}
 		}
@@ -812,7 +812,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				case PDU_TYPE_DATA:
 					if (rdp_recv_data_pdu(rdp, s) < 0)
 					{
-						printf("rdp_recv_data_pdu failed\n");
+						fprintf(stderr, "rdp_recv_data_pdu failed\n");
 						return -1;
 					}
 					break;
@@ -828,7 +828,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				default:
-					printf("incorrect PDU type: 0x%04X\n", pduType);
+					fprintf(stderr, "incorrect PDU type: 0x%04X\n", pduType);
 					break;
 			}
 			stream_set_mark(s, nextp);
@@ -850,7 +850,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 	if ((length == 0) || (length > stream_get_left(s)))
 	{
-		printf("incorrect FastPath PDU header length %d\n", length);
+		fprintf(stderr, "incorrect FastPath PDU header length %d\n", length);
 		return -1;
 	}
 
@@ -931,7 +931,7 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		default:
-			printf("Invalid state %d\n", rdp->state);
+			fprintf(stderr, "Invalid state %d\n", rdp->state);
 			status = -1;
 			break;
 	}

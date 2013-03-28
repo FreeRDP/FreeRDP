@@ -52,7 +52,7 @@ static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value)
 {
 #ifdef DEBUG_CLIENT_FILE
-	printf("%s:i:%d\n", name, value);
+	fprintf(stderr, "%s:i:%d\n", name, value);
 #endif
 
 	if (_stricmp(name, "use multimon") == 0)
@@ -222,7 +222,7 @@ void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, char* name, char
 BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 {
 #ifdef DEBUG_CLIENT_FILE
-	printf("%s:s:%s\n", name, value);
+	fprintf(stderr, "%s:s:%s\n", name, value);
 #endif
 
 	if (_stricmp(name, "username") == 0)

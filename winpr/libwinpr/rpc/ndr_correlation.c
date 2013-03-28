@@ -105,7 +105,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 
 		case FC_CALLBACK:
 			{
-				printf("warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
+				fprintf(stderr, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
 			}
 			break;
 	}

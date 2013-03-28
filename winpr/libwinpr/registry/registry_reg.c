@@ -158,7 +158,7 @@ RegVal* reg_load_value(Reg* reg, RegKey* key)
 	}
 	else
 	{
-		printf("unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	if (!key->values)
@@ -312,7 +312,7 @@ void reg_unload_value(Reg* reg, RegVal* value)
 	}
 	else
 	{
-		printf("unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	free(value);
@@ -406,19 +406,19 @@ void reg_close(Reg* reg)
 
 void reg_print_value(Reg* reg, RegVal* value)
 {
-	printf("\"%s\"=", value->name);
+	fprintf(stderr, "\"%s\"=", value->name);
 
 	if (value->type == REG_DWORD)
 	{
-		printf("dword:%08lX\n", value->data.dword);
+		fprintf(stderr, "dword:%08lX\n", value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{
-		printf("%s\"\n", value->data.string);
+		fprintf(stderr, "%s\"\n", value->data.string);
 	}
 	else
 	{
-		printf("unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 }
 
@@ -428,7 +428,7 @@ void reg_print_key(Reg* reg, RegKey* key)
 
 	pValue = key->values;
 
-	printf("[%s]\n", key->name);
+	fprintf(stderr, "[%s]\n", key->name);
 
 	while (pValue != NULL)
 	{

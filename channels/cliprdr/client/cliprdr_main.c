@@ -87,18 +87,18 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 
 void cliprdr_print_general_capability_flags(UINT32 flags)
 {
-	printf("generalFlags (0x%08X) {\n", flags);
+	fprintf(stderr, "generalFlags (0x%08X) {\n", flags);
 
 	if (flags & CB_USE_LONG_FORMAT_NAMES)
-		printf("\tCB_USE_LONG_FORMAT_NAMES\n");
+		fprintf(stderr, "\tCB_USE_LONG_FORMAT_NAMES\n");
 	if (flags & CB_STREAM_FILECLIP_ENABLED)
-		printf("\tCB_STREAM_FILECLIP_ENABLED\n");
+		fprintf(stderr, "\tCB_STREAM_FILECLIP_ENABLED\n");
 	if (flags & CB_FILECLIP_NO_FILE_PATHS)
-		printf("\tCB_FILECLIP_NO_FILE_PATHS\n");
+		fprintf(stderr, "\tCB_FILECLIP_NO_FILE_PATHS\n");
 	if (flags & CB_CAN_LOCK_CLIPDATA)
-		printf("\tCB_CAN_LOCK_CLIPDATA\n");
+		fprintf(stderr, "\tCB_CAN_LOCK_CLIPDATA\n");
 
-	printf("}\n");
+	fprintf(stderr, "}\n");
 }
 
 static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
