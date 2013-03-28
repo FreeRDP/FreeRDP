@@ -159,7 +159,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
 
-		printf("Authentication failure, check credentials.\n"
+		fprintf(stderr, "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
@@ -294,7 +294,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		printf("client authentication failure\n");
+		fprintf(stderr, "client authentication failure\n");
 		credssp_free(transport->credssp);
 		return FALSE;
 	}
@@ -332,7 +332,7 @@ UINT32 nla_read_header(wStream* s)
 		}
 		else
 		{
-			printf("Error reading TSRequest!\n");
+			fprintf(stderr, "Error reading TSRequest!\n");
 		}
 	}
 	else
@@ -356,7 +356,7 @@ UINT32 nla_header_length(wStream* s)
 		else if ((s->pointer[1] & ~(0x80)) == 2)
 			length = 4;
 		else
-			printf("Error reading TSRequest!\n");
+			fprintf(stderr, "Error reading TSRequest!\n");
 	}
 	else
 	{
@@ -456,7 +456,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 			}
 			else
 			{
-				printf("Error reading TSRequest!\n");
+				fprintf(stderr, "Error reading TSRequest!\n");
 			}
 		}
 		else
@@ -486,7 +486,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 	/* dump when whole PDU is read */
 	if (stream_bytes + status >= pdu_bytes)
 	{
-		printf("Local < Remote\n");
+		fprintf(stderr, "Local < Remote\n");
 		winpr_HexDump(s->buffer, pdu_bytes);
 	}
 #endif
@@ -520,7 +520,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{
-		printf("Local > Remote\n");
+		fprintf(stderr, "Local > Remote\n");
 		winpr_HexDump(s->buffer, length);
 	}
 #endif
@@ -691,7 +691,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		if (length == 0)
 		{
-			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
+			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
 			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
 			return -1;
 		}

@@ -388,7 +388,7 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 	if (hdcSrc->bytesPerPixel != 1)
 	{
-		printf("BitBlt_DSPDxax expects 1 bpp, unimplemented for %d\n", hdcSrc->bytesPerPixel);
+		fprintf(stderr, "BitBlt_DSPDxax expects 1 bpp, unimplemented for %d\n", hdcSrc->bytesPerPixel);
 		return 0;
 	}
 	
@@ -846,7 +846,7 @@ int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			break;
 	}
 	
-	printf("BitBlt: unknown rop: 0x%08X\n", rop);
+	fprintf(stderr, "BitBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 
@@ -891,8 +891,7 @@ int PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 			break;
 	}
 	
-	printf("PatBlt: unknown rop: 0x%08X\n", rop);
-
+	fprintf(stderr, "PatBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 

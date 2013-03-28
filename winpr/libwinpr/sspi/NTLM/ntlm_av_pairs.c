@@ -80,11 +80,11 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList)
 	if (!pAvPair)
 		return;
 
-	printf("AV_PAIRs =\n{\n");
+	fprintf(stderr, "AV_PAIRs =\n{\n");
 
 	while (pAvPair->AvId != MsvAvEOL)
 	{
-		printf("\t%s AvId: %d AvLen: %d\n",
+		fprintf(stderr, "\t%s AvId: %d AvLen: %d\n",
 				AV_PAIR_STRINGS[pAvPair->AvId],
 				pAvPair->AvId, pAvPair->AvLen);
 
@@ -93,7 +93,7 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList)
 		pAvPair = ntlm_av_pair_get_next_pointer(pAvPair);
 	}
 
-	printf("}\n");
+	fprintf(stderr, "}\n");
 }
 
 ULONG ntlm_av_pair_list_size(ULONG AvPairsCount, ULONG AvPairsValueLength)

@@ -178,13 +178,13 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	}
 
 #if 0
-	printf("Server ");
+	fprintf(stderr, "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Client ");
+	fprintf(stderr, "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 
@@ -484,7 +484,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, wStream* s)
 	stream_seek_BYTE(s); /* bPad */
 	stream_read_UINT16(s, BodySize);
 
-	//printf("msgType %d BodySize %d\n", msgType, BodySize);
+	//fprintf(stderr, "msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{

@@ -98,13 +98,13 @@ void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 
 void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 {
-	printf("VERSION =\n{\n");
-	printf("\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
-	printf("\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
-	printf("\tProductBuild: %d\n", versionInfo->ProductBuild);
-	printf("\tReserved: 0x%02X%02X%02X\n", versionInfo->Reserved[0],
+	fprintf(stderr, "VERSION =\n{\n");
+	fprintf(stderr, "\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
+	fprintf(stderr, "\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
+	fprintf(stderr, "\tProductBuild: %d\n", versionInfo->ProductBuild);
+	fprintf(stderr, "\tReserved: 0x%02X%02X%02X\n", versionInfo->Reserved[0],
 			versionInfo->Reserved[1], versionInfo->Reserved[2]);
-	printf("\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
+	fprintf(stderr, "\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
 }
 
 void ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
@@ -240,7 +240,7 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	if (entry != NULL)
 	{
 #ifdef WITH_DEBUG_NTLM
-		printf("NTLM Hash:\n");
+		fprintf(stderr, "NTLM Hash:\n");
 		winpr_HexDump(entry->NtHash, 16);
 #endif
 
@@ -261,7 +261,7 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	if (entry != NULL)
 	{
 #ifdef WITH_DEBUG_NTLM
-		printf("NTLM Hash:\n");
+		fprintf(stderr, "NTLM Hash:\n");
 		winpr_HexDump(entry->NtHash, 16);
 #endif
 
@@ -277,7 +277,7 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	}
 	else
 	{
-		printf("Error: Could not find user in SAM database\n");
+		fprintf(stderr, "Error: Could not find user in SAM database\n");
 	}
 }
 
@@ -352,25 +352,25 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	ntlm_compute_ntlm_v2_hash(context, (char*) ntlm_v2_hash);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Password (length = %d)\n", context->identity.PasswordLength * 2);
+	fprintf(stderr, "Password (length = %d)\n", context->identity.PasswordLength * 2);
 	winpr_HexDump((BYTE*) context->identity.Password, context->identity.PasswordLength * 2);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Username (length = %d)\n", context->identity.UserLength * 2);
+	fprintf(stderr, "Username (length = %d)\n", context->identity.UserLength * 2);
 	winpr_HexDump((BYTE*) context->identity.User, context->identity.UserLength * 2);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Domain (length = %d)\n", context->identity.DomainLength * 2);
+	fprintf(stderr, "Domain (length = %d)\n", context->identity.DomainLength * 2);
 	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength * 2);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Workstation (length = %d)\n", context->Workstation.Length);
+	fprintf(stderr, "Workstation (length = %d)\n", context->Workstation.Length);
 	winpr_HexDump((BYTE*) context->Workstation.Buffer, context->Workstation.Length);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("NTOWFv2, NTLMv2 Hash\n");
+	fprintf(stderr, "NTOWFv2, NTLMv2 Hash\n");
 	winpr_HexDump(ntlm_v2_hash, 16);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	/* Construct temp */
@@ -384,9 +384,9 @@ void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(&blob[28], TargetInfo->pvBuffer, TargetInfo->cbBuffer);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("NTLMv2 Response Temp Blob\n");
+	fprintf(stderr, "NTLMv2 Response Temp Blob\n");
 	winpr_HexDump(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	/* Concatenate server challenge with temp */

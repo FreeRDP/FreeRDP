@@ -43,7 +43,7 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		 * offset<2>
 		 */
 
-		printf("warning: NdrContextHandleBufferSize FC_BIND_PRIMITIVE unimplemented\n");
+		fprintf(stderr, "warning: NdrContextHandleBufferSize FC_BIND_PRIMITIVE unimplemented\n");
 	}
 	else if (type == FC_BIND_GENERIC)
 	{
@@ -55,7 +55,7 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		 * FC_PAD
 		 */
 
-		printf("warning: NdrContextHandleBufferSize FC_BIND_GENERIC unimplemented\n");
+		fprintf(stderr, "warning: NdrContextHandleBufferSize FC_BIND_GENERIC unimplemented\n");
 	}
 	else if (type == FC_BIND_CONTEXT)
 	{

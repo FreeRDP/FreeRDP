@@ -225,7 +225,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
-				printf("fastpath_recv_update_synchronize failure but we continue\n");				
+				fprintf(stderr, "fastpath_recv_update_synchronize failure but we continue\n");
 			else
 				IFCALL(update->Synchronize, context);			
 			break;
@@ -322,7 +322,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		}
 		else
 		{
-			printf("decompress_rdp() failed\n");
+			fprintf(stderr, "decompress_rdp() failed\n");
 			stream_seek(s, size);
 		}
 	}
@@ -342,7 +342,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		stream_copy(fastpath->updateData, comp_stream, size);
 		if (stream_get_length(fastpath->updateData) > rdp->settings->MultifragMaxRequestSize)
 		{
-			printf("fastpath PDU is bigger than MultifragMaxRequestSize\n");
+			fprintf(stderr, "fastpath PDU is bigger than MultifragMaxRequestSize\n");
 			return -1;
 		}
 
@@ -527,7 +527,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 			break;
 
 		default:
-			printf("Unknown eventCode %d\n", eventCode);
+			fprintf(stderr, "Unknown eventCode %d\n", eventCode);
 			break;
 	}
 
@@ -606,7 +606,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 	length = stream_get_length(s);
 	if (length >= (2 << 14))
 	{
-		printf("Maximum FastPath PDU length is 32767\n");
+		fprintf(stderr, "Maximum FastPath PDU length is 32767\n");
 		return FALSE;
 	}
 
@@ -722,7 +722,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 				}
 			}
 			else
-				printf("fastpath_send_update_pdu: mppc_encode failed\n");
+				fprintf(stderr, "fastpath_send_update_pdu: mppc_encode failed\n");
 		}
 
 		totalLength -= dlen;

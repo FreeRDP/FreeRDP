@@ -47,7 +47,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(settings->ConfigPath))
 	{
 		CreateDirectoryA(settings->ConfigPath, 0);
-		printf("creating directory %s\n", settings->ConfigPath);
+		fprintf(stderr, "creating directory %s\n", settings->ConfigPath);
 	}
 
 	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
@@ -55,7 +55,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(certificate_store->path))
 	{
 		CreateDirectoryA(certificate_store->path, 0);
-		printf("creating directory %s\n", certificate_store->path);
+		fprintf(stderr, "creating directory %s\n", certificate_store->path);
 	}
 
 	certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file);
@@ -66,7 +66,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 		if (certificate_store->fp == NULL)
 		{
-			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			fprintf(stderr, "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
 			return;
 		}
 

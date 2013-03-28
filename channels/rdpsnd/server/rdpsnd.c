@@ -123,7 +123,7 @@ static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, wStream* s)
 	stream_read_UINT16(s, quality);
 	stream_seek_UINT16(s); // reserved
 	
-	printf("Client requested sound quality: %#0X\n", quality);
+	fprintf(stderr, "Client requested sound quality: %#0X\n", quality);
 }
 
 static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, wStream* s)
@@ -174,7 +174,7 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, wStream* s)
 	
 	if (num_known_format == 0)
 	{
-		printf("Client doesnt support any known formats!\n");
+		fprintf(stderr, "Client doesnt support any known formats!\n");
 		return FALSE;
 	}
 
@@ -251,7 +251,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 				}
 				break;
 			default:
-				printf("UNKOWN MESSAGE TYPE!! (%#0X)\n\n", msgType);
+				fprintf(stderr, "UNKOWN MESSAGE TYPE!! (%#0X)\n\n", msgType);
 				break;
 		}
 	}
@@ -293,7 +293,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
-		printf("rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
+		fprintf(stderr, "rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
 		return;
 	}
 	
@@ -305,7 +305,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	
 	if (format->nSamplesPerSec == 0)
 	{
-		printf("Invalid Client Sound Format!!\n\n");
+		fprintf(stderr, "Invalid Client Sound Format!!\n\n");
 		return;
 	}
 

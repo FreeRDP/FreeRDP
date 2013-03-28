@@ -139,7 +139,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 	new_order = malloc(order_size);
 	memcpy(new_order, order, order_size);
 
-	//printf("rail_clone_order: type=%d order=%p\n", event_type, new_order);
+	//fprintf(stderr, "rail_clone_order: type=%d order=%p\n", event_type, new_order);
 
 	// Create copy of variable data for some orders
 	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||
@@ -181,7 +181,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 
 void rail_free_cloned_order(UINT32 event_type, void* order)
 {
-	//printf("rail_free_cloned_order: type=%d order=%p\n", event_type, order);
+	//fprintf(stderr, "rail_free_cloned_order: type=%d order=%p\n", event_type, order);
 	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||
 		(event_type == RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS))
 	{

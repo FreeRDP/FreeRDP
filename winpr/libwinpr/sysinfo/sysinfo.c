@@ -248,7 +248,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
 {
-	printf("GetComputerNameExW unimplemented\n");
+	fprintf(stderr, "GetComputerNameExW unimplemented\n");
 	return 0;
 }
 
@@ -288,7 +288,7 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 {
-	printf("GetVersionExW unimplemented\n");
+	fprintf(stderr, "GetVersionExW unimplemented\n");
 	return 1;
 }
 

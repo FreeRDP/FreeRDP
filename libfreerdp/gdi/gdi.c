@@ -341,7 +341,7 @@ INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 	else
 	{
-		printf("gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		fprintf(stderr, "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -543,7 +543,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		printf("unimplemented brush style:%d\n", brush->style);
+		fprintf(stderr, "unimplemented brush style:%d\n", brush->style);
 	}
 }
 
@@ -715,28 +715,28 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		printf("Mem3Blt unimplemented brush style:%d\n", brush->style);
+		fprintf(stderr, "Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
 }
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
-	printf("PolygonSC\n");
+	fprintf(stderr, "PolygonSC\n");
 }
 
 void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	printf("PolygonCB\n");
+	fprintf(stderr, "PolygonCB\n");
 }
 
 void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	printf("EllipseSC\n");
+	fprintf(stderr, "EllipseSC\n");
 }
 
 void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	printf("EllipseCB\n");
+	fprintf(stderr, "EllipseCB\n");
 }
 
 int tilenum = 0;
@@ -845,7 +845,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	}
 	else
 	{
-		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

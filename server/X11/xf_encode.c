@@ -146,7 +146,7 @@ void* xf_monitor_updates(void* param)
 
 		if (select_status == -1)
 		{
-			printf("select failed\n");
+			fprintf(stderr, "select failed\n");
 		}
 		else if (select_status == 0)
 		{

@@ -386,9 +386,9 @@ void http_response_print(HttpResponse* http_response)
 
 	for (i = 0; i < http_response->count; i++)
 	{
-		printf("%s\n", http_response->lines[i]);
+		fprintf(stderr, "%s\n", http_response->lines[i]);
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 }
 
 HttpResponse* http_response_recv(rdpTls* tls)
@@ -441,7 +441,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 		else
 		{
-			printf("http_response_recv: invalid response:\n");
+			fprintf(stderr, "http_response_recv: invalid response:\n");
 			winpr_HexDump(buffer, status);
 			http_response_free(http_response);
 			return NULL;

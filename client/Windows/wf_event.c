@@ -175,7 +175,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				w = ps.rcPaint.right - ps.rcPaint.left + 1;
 				h = ps.rcPaint.bottom - ps.rcPaint.top + 1;
 
-				//printf("WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
+				//fprintf(stderr, "WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
 
 				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x - wfi->offset_x, y - wfi->offset_y, SRCCOPY);
 

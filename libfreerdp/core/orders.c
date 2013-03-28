@@ -502,7 +502,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 1) {\
-				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_BYTE(s, TARGET); \
@@ -514,7 +514,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 2) { \
-				printf("%s: error reading %s or %s\n", __FUNCTION__, #TARGET1, #TARGET2); \
+				fprintf(stderr, "%s: error reading %s or %s\n", __FUNCTION__, #TARGET1, #TARGET2); \
 				return FALSE; \
 			} \
 			stream_read_BYTE(s, TARGET1); \
@@ -527,7 +527,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 2) { \
-				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_UINT16(s, TARGET); \
@@ -538,7 +538,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (stream_get_left(s) < 4) { \
-				printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
 				return FALSE; \
 			} \
 			stream_read_UINT32(s, TARGET); \
@@ -548,14 +548,14 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 #define ORDER_FIELD_COORD(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_coord(s, &TARGET, orderInfo->deltaCoordinates)) { \
-			printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
+			fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
 #define ORDER_FIELD_COLOR(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_color(s, &TARGET)) { \
-			printf("%s: error reading %s\n", __FUNCTION__, #TARGET); \
+			fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
@@ -564,12 +564,12 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 #define FIELD_SKIP_BUFFER16(s, TARGET_LEN) \
 	do { \
 		if (stream_get_left(s) < 2) {\
-			printf("%s: error reading length %s\n", __FUNCTION__, #TARGET_LEN); \
+			fprintf(stderr, "%s: error reading length %s\n", __FUNCTION__, #TARGET_LEN); \
 			return FALSE; \
 		}\
 		stream_read_UINT16(s, TARGET_LEN); \
 		if (!stream_skip(s, TARGET_LEN)) { \
-			printf("%s: error skipping %d bytes\n", __FUNCTION__, TARGET_LEN); \
+			fprintf(stderr, "%s: error skipping %d bytes\n", __FUNCTION__, TARGET_LEN); \
 			return FALSE; \
 		} \
 	} while(0)
@@ -1415,7 +1415,7 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_or
 		{
 			if (cache_brush_order->length != 8)
 			{
-				printf("incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
+				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
 				return TRUE; // should be FALSE ?
 			}
 
@@ -1743,7 +1743,7 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
-		printf("Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+		fprintf(stderr, "Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
 		return FALSE;
 	}
 
@@ -1765,7 +1765,7 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? TRUE : FALSE;
 
 #ifdef WITH_DEBUG_ORDERS
-	printf("%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+	fprintf(stderr, "%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
 #endif
 
 	switch (orderInfo->orderType)
@@ -1933,9 +1933,9 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
-		printf("%s Secondary Drawing Order (0x%02X)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
+		fprintf(stderr, "%s Secondary Drawing Order (0x%02X)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		printf("Unknown Secondary Drawing Order (0x%02X)\n", orderType);
+		fprintf(stderr, "Unknown Secondary Drawing Order (0x%02X)\n", orderType);
 #endif
 
 	switch (orderType)
@@ -2015,9 +2015,9 @@ BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
-		printf("%s Alternate Secondary Drawing Order (0x%02X)\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
+		fprintf(stderr, "%s Alternate Secondary Drawing Order (0x%02X)\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		printf("Unknown Alternate Secondary Drawing Order: 0x%02X\n", orderType);
+		fprintf(stderr, "Unknown Alternate Secondary Drawing Order: 0x%02X\n", orderType);
 #endif
 
 	switch (orderType)
