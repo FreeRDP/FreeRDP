@@ -61,8 +61,10 @@ struct _wQueue
 typedef struct _wQueue wQueue;
 
 WINPR_API int Queue_Count(wQueue* queue);
-WINPR_API BOOL Queue_IsSynchronized(wQueue* queue);
-WINPR_API HANDLE Queue_SyncRoot(wQueue* queue);
+
+WINPR_API BOOL Queue_Lock(wQueue* queue);
+WINPR_API BOOL Queue_Unlock(wQueue* queue);
+
 WINPR_API HANDLE Queue_Event(wQueue* queue);
 
 #define Queue_Object(_queue)	(&_queue->object)

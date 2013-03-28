@@ -66,6 +66,7 @@ struct rdp_transport
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
 	HANDLE ReceiveEvent;
+	HANDLE GatewayEvent;
 	BOOL blocking;
 	BOOL SplitInputOutput;
 	wObjectPool* ReceivePool;

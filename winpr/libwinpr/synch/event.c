@@ -64,6 +64,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 #ifdef HAVE_EVENTFD_H
 		event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
+
 		if (event->pipe_fd[0] < 0)
 		{
 			printf("CreateEventW: failed to create event\n");
@@ -286,10 +287,13 @@ void* GetEventWaitObject(HANDLE hEvent)
 {
 #ifndef _WIN32
 	int fd;
+	void* obj;
 
 	fd = GetEventFileDescriptor(hEvent);
 
-	return ((void*) (long) fd);
+	obj = ((void*) (long) fd);
+
+	return obj;
 #else
 	return hEvent;
 #endif

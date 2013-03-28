@@ -599,6 +599,17 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 		rfds[*rcount] = pfd;
 		(*rcount)++;
 	}
+
+	if (transport->GatewayEvent)
+	{
+		pfd = GetEventWaitObject(transport->GatewayEvent);
+
+		if (pfd)
+		{
+			rfds[*rcount] = pfd;
+			(*rcount)++;
+		}
+	}
 }
 
 int transport_check_fds(rdpTransport** ptransport)
@@ -769,8 +780,6 @@ static void* transport_client_thread(void* arg)
 
 	while (1)
 	{
-		printf("transport_client_thread\n");
-
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
@@ -805,10 +814,11 @@ rdpTransport* transport_new(rdpSettings* settings)
 	rdpTransport* transport;
 
 	transport = (rdpTransport*) malloc(sizeof(rdpTransport));
-	ZeroMemory(transport, sizeof(rdpTransport));
 
 	if (transport != NULL)
 	{
+		ZeroMemory(transport, sizeof(rdpTransport));
+
 		transport->TcpIn = tcp_new(settings);
 
 		transport->settings = settings;
