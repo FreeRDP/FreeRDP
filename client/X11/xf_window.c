@@ -523,13 +523,16 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	class_hints = XAllocClassHint();
 
-	if (class_hints != NULL)
+	if (class_hints)
 	{
 		char* class = NULL;
 
 		if (xfi->instance->settings->WmClass != NULL)
+		{
 			class_hints->res_class = xfi->instance->settings->WmClass;
-		else {
+		}
+		else
+		{
 			class = malloc(sizeof(rail_window_class));
 			snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
 			class_hints->res_class = class;
@@ -756,11 +759,9 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state)
 			if (window->rail_state == WINDOW_SHOW_MAXIMIZED)
                                window->rail_ignore_configure = TRUE;
 		
-
 			if (window->is_transient)
-			{
 				xf_SetWindowUnlisted(xfi, window);
-			}
+
 			break;
 	}
 
@@ -779,7 +780,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	long* dstp;
 	UINT32* srcp;
 
-	if (icon->big != TRUE)
+	if (!icon->big)
 		return;
 
 	pixels = icon->entry->width * icon->entry->height;
@@ -826,8 +827,10 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 #ifdef WITH_XEXT
 	/*
 	 * This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
-	 * XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	 *
+	 * Marc: enabling it works, and is required for round corners.
 	 */
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	free(xrects);
@@ -854,8 +857,10 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 #ifdef WITH_XEXT
 	/*
 	 * This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
-	 * XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	 *
+	 * Marc: enabling it works, and is required for round corners.
 	 */
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	free(xrects);
