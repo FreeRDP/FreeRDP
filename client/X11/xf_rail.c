@@ -34,7 +34,7 @@
 
 void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == FALSE)
+	if (!xfi->remote_app)
 	{
 		xfi->remote_app = TRUE;
 		xfi->drawable = DefaultRootWindow(xfi->display);
@@ -45,7 +45,7 @@ void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 
 void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
 {
-	if (xfi->remote_app == TRUE)
+	if (xfi->remote_app)
 	{
 		xfi->remote_app = FALSE;
 		xf_create_window(xfi);
@@ -101,9 +101,10 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 u
 
 void xf_rail_DesktopNonMonitored(rdpRail *rail, rdpWindow* window)
 {
-       xfInfo* xfi;
-       xfi = (xfInfo*) rail->extra;
-       xf_rail_disable_remoteapp_mode(xfi);
+	xfInfo* xfi;
+
+	xfi = (xfInfo*) rail->extra;
+	xf_rail_disable_remoteapp_mode(xfi);
 }
 
 static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)

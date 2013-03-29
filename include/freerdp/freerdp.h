@@ -56,6 +56,8 @@ typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** passwor
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
 
+typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
+
 typedef int (*pSendChannelData)(freerdp* instance, int channelId, BYTE* data, int size);
 typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
 
@@ -175,7 +177,10 @@ struct rdp_freerdp
 															 Callback for changed certificate validation. 
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
-	UINT32 paddingD[64 - 51]; /* 51 */
+
+	pLogonErrorInfo LogonErrorInfo; /**< (offset 53)  Callback for logon error info, important for logon system messages with RemoteApp */
+
+	UINT32 paddingD[64 - 54]; /* 54 */
 
 	pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.
