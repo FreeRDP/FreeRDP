@@ -861,6 +861,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 	event->num_formats = 0;
 
 	cb->num_targets = 2;
+
 	for (i = 0; i < cb->num_formats; i++)
 	{
 		for (j = 0; j < cb->num_format_mappings; j++)
@@ -874,6 +875,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 	}
 
 	XSetSelectionOwner(xfi->display, cb->clipboard_atom, xfi->drawable, CurrentTime);
+
 	if (event->raw_format_data)
 	{
 		XChangeProperty(xfi->display, cb->root_window, cb->property_atom,

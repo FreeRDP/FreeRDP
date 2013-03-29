@@ -171,7 +171,7 @@ BOOL xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != TRUE)
+	if (!status)
 		return FALSE;
 
 	xfi->current_desktop = (int) *prop;
@@ -490,10 +490,17 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->width = width;
 	window->height = height;
 
-	/* this window need decorations
-	   the WS_EX_APPWINDOW is used to tell the client to use local decorations
-	   only sent from xrdp */
-	window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? TRUE : FALSE;
+	/*
+	 * this window need decorations the WS_EX_APPWINDOW is used to
+	 * tell the client to use local decorations only sent from xrdp
+	 *
+	 * Marc: we need to find another value than WS_EX_APPWINDOW for XRDP
+	 * since it is used by the Microsoft RDP server for programs like cmd.exe
+	 */
+
+	window->decorations = FALSE;
+	//window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? TRUE : FALSE;
+
 	window->fullscreen = FALSE;
 	window->window = wnd;
 	window->local_move.state = LMS_NOT_ACTIVE;

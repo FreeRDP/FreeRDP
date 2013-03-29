@@ -389,16 +389,16 @@ void xf_create_window(xfInfo* xfi)
 	width = xfi->width;
 	height = xfi->height;
 
-	xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
-	xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
-	xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
-	xfi->attribs.override_redirect = xfi->grab_keyboard ? xfi->fullscreen : False;
-	xfi->attribs.colormap = xfi->colormap;
-	xfi->attribs.bit_gravity = NorthWestGravity;
-	xfi->attribs.win_gravity = NorthWestGravity;
-
 	if (!xfi->remote_app)
 	{
+		xfi->attribs.background_pixel = BlackPixelOfScreen(xfi->screen);
+		xfi->attribs.border_pixel = WhitePixelOfScreen(xfi->screen);
+		xfi->attribs.backing_store = xfi->primary ? NotUseful : Always;
+		xfi->attribs.override_redirect = xfi->grab_keyboard ? xfi->fullscreen : False;
+		xfi->attribs.colormap = xfi->colormap;
+		xfi->attribs.bit_gravity = NorthWestGravity;
+		xfi->attribs.win_gravity = NorthWestGravity;
+
 		if (xfi->instance->settings->WindowTitle != NULL)
 		{
 			win_title = _strdup(xfi->instance->settings->WindowTitle);
@@ -732,7 +732,7 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xfi->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfi->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-	xfi->_NET_WM_WINDOW_TYPE_POPUP= XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
+	xfi->_NET_WM_WINDOW_TYPE_POPUP = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_POPUP", False);
 	xfi->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_UTILITY", False);
 	xfi->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfi->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
 	xfi->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfi->display, "_NET_WM_STATE_SKIP_TASKBAR", False);
