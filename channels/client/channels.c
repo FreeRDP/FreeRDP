@@ -985,6 +985,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	ep.pVirtualChannelOpen = MyVirtualChannelOpen;
 	ep.pVirtualChannelClose = MyVirtualChannelClose;
 	ep.pVirtualChannelWrite = MyVirtualChannelWrite;
+
 	ep.pExtendedData = data;
 	ep.pVirtualChannelEventPush = MyVirtualChannelEventPush;
 
@@ -1058,17 +1059,23 @@ int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 	{
 		lchannel_def.options = CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP;
+
 		strcpy(lchannel_def.name, "rdpdr");
+
 		channels->can_call_init = 1;
 		channels->settings = instance->settings;
+
 		WaitForSingleObject(g_mutex_init, INFINITE);
+
 		g_init_channels = channels;
-		MyVirtualChannelInit(&dummy, &lchannel_def, 1,
-			VIRTUAL_CHANNEL_VERSION_WIN2000, 0);
+		MyVirtualChannelInit(&dummy, &lchannel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, 0);
 		g_init_channels = NULL;
+
 		ReleaseMutex(g_mutex_init);
+
 		channels->can_call_init = 0;
 		channels->settings = 0;
+
 		DEBUG_CHANNELS("registered fake rdpdr for rdpsnd.");
 	}
 
@@ -1103,7 +1110,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 	for (index = 0; index < channels->num_libs_data; index++)
 	{
-		llib = channels->libs_data + index;
+		llib = &channels->libs_data[index];
 
 		if (llib->init_event_proc != 0)
 			llib->init_event_proc(llib->init_handle, CHANNEL_EVENT_CONNECTED, hostname, hostname_len);

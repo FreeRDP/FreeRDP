@@ -291,7 +291,7 @@ static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
-				fprintf(stderr, "df_process_channel_event: unknown event type %d\n", event->event_type);
+				fprintf(stderr, "df_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
 				break;
 		}
 
