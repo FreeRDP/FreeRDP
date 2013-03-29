@@ -9,6 +9,7 @@
 
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import "ConnectionParams.h"
 
 @interface ComputerBookmark : NSObject <NSCoding> {

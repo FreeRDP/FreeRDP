@@ -43,6 +43,11 @@ client/X11/xfreerdp.1
 *.xcodeproj/
 DerivedData/
 
+# iOS
+FreeRDP.build
+Debug-*
+Release-*
+
 # Windows
 *.vcxproj
 *.vcxproj.*

@@ -26,6 +26,10 @@
 #include <wchar.h>
 #include <winpr/windows.h>
 
+#if defined(__OBJC__) && defined(__APPLE__)
+#include <objc/objc.h>
+#endif
+
 #ifndef _WIN32
 
 #define __int8	char

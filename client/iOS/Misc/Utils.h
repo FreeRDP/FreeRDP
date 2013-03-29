@@ -8,6 +8,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import "TSXTypes.h"
 
 // helper macro to encode a table path into a tag value (used to identify controls in their delegate handlers)
