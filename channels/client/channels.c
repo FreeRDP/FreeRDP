@@ -67,14 +67,15 @@
  * from the main thread.
  */
 
-struct lib_data
+struct rdp_library_data
 {
 	PVIRTUALCHANNELENTRY entry; /* the one and only exported function */
 	PCHANNEL_INIT_EVENT_FN init_event_proc;
 	void* init_handle;
 };
+typedef struct rdp_library_data rdpLibraryData;
 
-struct channel_data
+struct rdp_channel_data
 {
 	char name[CHANNEL_NAME_LEN + 1];
 	int open_handle;
@@ -82,6 +83,7 @@ struct channel_data
 	int flags; /* 0 nothing 1 init 2 open */
 	PCHANNEL_OPEN_EVENT_FN open_event_proc;
 };
+typedef struct rdp_channel_data rdpChannelData;
 
 struct _CHANNEL_OPEN_EVENT
 {
@@ -110,20 +112,20 @@ struct rdp_channels
 	 * ie, no two threads can access index 0, ...
 	 */
 
-	struct lib_data libs_data[CHANNEL_MAX_COUNT];
-	int num_libs_data;
+	int libraryDataCount;
+	rdpLibraryData libraryDataList[CHANNEL_MAX_COUNT];
 
-	struct channel_data channels_data[CHANNEL_MAX_COUNT];
-	int num_channels_data;
+	int channelDataCount;
+	rdpChannelData channelDataList[CHANNEL_MAX_COUNT];
 
-	rdpInitHandle init_handles[CHANNEL_MAX_COUNT];
-	int num_init_handles;
+	int initHandleCount;
+	rdpInitHandle initHandleList[CHANNEL_MAX_COUNT];
 
 	/* control for entry into MyVirtualChannelInit */
 	int can_call_init;
 	rdpSettings* settings;
 
-	/* true once freerdp_chanman_post_connect is called */
+	/* true once freerdp_channels_post_connect is called */
 	int is_connected;
 
 	/* used for locating the channels for a given instance */
@@ -159,9 +161,9 @@ static rdpChannels* freerdp_channels_find_by_open_handle(int open_handle, int* p
 
 	while (channels)
 	{
-		for (j = 0; j < channels->num_channels_data; j++)
+		for (j = 0; j < channels->channelDataCount; j++)
 		{
-			if (channels->channels_data[j].open_handle == open_handle)
+			if (channels->channelDataList[j].open_handle == open_handle)
 			{
 				*pindex = j;
 				found = TRUE;
@@ -207,20 +209,20 @@ static rdpChannels* freerdp_channels_find_by_instance(freerdp* instance)
 	return (found) ? channels : NULL;
 }
 
-/* returns struct channel_data for the channel name passed in */
-static struct channel_data* freerdp_channels_find_channel_data_by_name(rdpChannels* channels, const char* channel_name, int* pindex)
+/* returns rdpChannelData for the channel name passed in */
+static rdpChannelData* freerdp_channels_find_channel_data_by_name(rdpChannels* channels, const char* channel_name, int* pindex)
 {
-	int lindex;
-	struct channel_data* lchannel_data;
+	int index;
+	rdpChannelData* lchannel_data;
 
-	for (lindex = 0; lindex < channels->num_channels_data; lindex++)
+	for (index = 0; index < channels->channelDataCount; index++)
 	{
-		lchannel_data = channels->channels_data + lindex;
+		lchannel_data = &channels->channelDataList[index];
 
 		if (strcmp(channel_name, lchannel_data->name) == 0)
 		{
 			if (pindex != 0)
-				*pindex = lindex;
+				*pindex = index;
 
 			return lchannel_data;
 		}
@@ -291,9 +293,9 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	int index;
 	rdpChannel* channel;
 	rdpChannels* channels;
-	struct lib_data* llib;
+	rdpLibraryData* llib;
 	PCHANNEL_DEF lchannel_def;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	if (!ppInitHandle)
 	{
@@ -303,10 +305,10 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 	channels = g_init_channels;
 
-	channels->init_handles[channels->num_init_handles].channels = channels;
-	*ppInitHandle = &channels->init_handles[channels->num_init_handles];
+	channels->initHandleList[channels->initHandleCount].channels = channels;
+	*ppInitHandle = &channels->initHandleList[channels->initHandleCount];
 
-	channels->num_init_handles++;
+	channels->initHandleCount++;
 
 	DEBUG_CHANNELS("enter");
 
@@ -316,7 +318,7 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 		return CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY;
 	}
 
-	if (channels->num_channels_data + channelCount >= CHANNEL_MAX_COUNT)
+	if (channels->channelDataCount + channelCount >= CHANNEL_MAX_COUNT)
 	{
 		DEBUG_CHANNELS("error too many channels");
 		return CHANNEL_RC_TOO_MANY_CHANNELS;
@@ -341,7 +343,7 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 	for (index = 0; index < channelCount; index++)
 	{
-		lchannel_def = pChannel + index;
+		lchannel_def = &pChannel[index];
 
 		if (freerdp_channels_find_channel_data_by_name(channels, lchannel_def->name, 0) != 0)
 		{
@@ -350,15 +352,15 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 		}
 	}
 
-	llib = &channels->libs_data[channels->num_libs_data];
+	llib = &channels->libraryDataList[channels->libraryDataCount];
 	llib->init_event_proc = pChannelInitEventProc;
 	llib->init_handle = *ppInitHandle;
-	channels->num_libs_data++;
+	channels->libraryDataCount++;
 
 	for (index = 0; index < channelCount; index++)
 	{
-		lchannel_def = pChannel + index;
-		lchannel_data = &channels->channels_data[channels->num_channels_data];
+		lchannel_def = &pChannel[index];
+		lchannel_data = &channels->channelDataList[channels->channelDataCount];
 
 		lchannel_data->open_handle = g_open_handle_sequence++;
 
@@ -378,7 +380,7 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 			DEBUG_CHANNELS("warning more than 16 channels");
 		}
 
-		channels->num_channels_data++;
+		channels->channelDataCount++;
 	}
 
 	return CHANNEL_RC_OK;
@@ -393,7 +395,7 @@ static UINT32 FREERDP_CC MyVirtualChannelOpen(void* pInitHandle, UINT32* pOpenHa
 {
 	int index;
 	rdpChannels* channels;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	DEBUG_CHANNELS("enter");
 
@@ -446,7 +448,7 @@ static UINT32 FREERDP_CC MyVirtualChannelClose(UINT32 openHandle)
 {
 	int index;
 	rdpChannels* channels;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	DEBUG_CHANNELS("enter");
 
@@ -458,7 +460,7 @@ static UINT32 FREERDP_CC MyVirtualChannelClose(UINT32 openHandle)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	}
 
-	lchannel_data = &channels->channels_data[index];
+	lchannel_data = &channels->channelDataList[index];
 
 	if (lchannel_data->flags != 2)
 	{
@@ -477,7 +479,7 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 	int index;
 	CHANNEL_OPEN_EVENT* item;
 	rdpChannels* channels;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
@@ -505,7 +507,7 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 		return CHANNEL_RC_ZERO_LENGTH;
 	}
 
-	lchannel_data = &channels->channels_data[index];
+	lchannel_data = &channels->channelDataList[index];
 
 	if (lchannel_data->flags != 2)
 	{
@@ -534,7 +536,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, wMessage* 
 {
 	int index;
 	rdpChannels* channels;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
 
@@ -556,7 +558,7 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, wMessage* 
 		return CHANNEL_RC_NULL_DATA;
 	}
 
-	lchannel_data = &channels->channels_data[index];
+	lchannel_data = &channels->channelDataList[index];
 
 	if (lchannel_data->flags != 2)
 	{
@@ -634,16 +636,16 @@ void freerdp_channels_free(rdpChannels* channels)
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
 	int status;
-	struct lib_data* lib;
+	rdpLibraryData* lib;
 	CHANNEL_ENTRY_POINTS_EX ep;
 
-	if (channels->num_libs_data + 1 >= CHANNEL_MAX_COUNT)
+	if (channels->libraryDataCount + 1 >= CHANNEL_MAX_COUNT)
 	{
 		fprintf(stderr, "error: too many channels\n");
 		return 1;
 	}
 
-	lib = &channels->libs_data[channels->num_libs_data];
+	lib = &channels->libraryDataList[channels->libraryDataCount];
 	lib->entry = (PVIRTUALCHANNELENTRY) entry;
 
 	ep.cbSize = sizeof(ep);
@@ -709,14 +711,14 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 {
 	int index;
-	struct lib_data* llib;
+	rdpLibraryData* llib;
 
 	DEBUG_CHANNELS("enter");
 	channels->instance = instance;
 
-	for (index = 0; index < channels->num_libs_data; index++)
+	for (index = 0; index < channels->libraryDataCount; index++)
 	{
-		llib = &channels->libs_data[index];
+		llib = &channels->libraryDataList[index];
 
 		if (llib->init_event_proc != 0)
 			llib->init_event_proc(llib->init_handle, CHANNEL_EVENT_INITIALIZED, 0, 0);
@@ -735,17 +737,17 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	int index;
 	char* hostname;
 	int hostname_len;
-	struct lib_data* llib;
+	rdpLibraryData* llib;
 
 	channels->is_connected = 1;
 	hostname = instance->settings->ServerHostname;
 	hostname_len = strlen(hostname);
 
-	DEBUG_CHANNELS("hostname [%s] channels->num_libs [%d]", hostname, channels->num_libs_data);
+	DEBUG_CHANNELS("hostname [%s] channels->num_libs [%d]", hostname, channels->libraryDataCount);
 
-	for (index = 0; index < channels->num_libs_data; index++)
+	for (index = 0; index < channels->libraryDataCount; index++)
 	{
-		llib = &channels->libs_data[index];
+		llib = &channels->libraryDataList[index];
 
 		if (llib->init_event_proc != 0)
 			llib->init_event_proc(llib->init_handle, CHANNEL_EVENT_CONNECTED, hostname, hostname_len);
@@ -763,7 +765,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 	int index;
 	rdpChannel* channel;
 	rdpChannels* channels;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	channels = freerdp_channels_find_by_instance(instance);
 
@@ -808,7 +810,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
 {
 	int index;
 	const char* name = NULL;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	switch (GetMessageClass(event->id))
 	{
@@ -863,7 +865,7 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 	wMessage* event;
 	rdpChannel* channel;
 	CHANNEL_OPEN_EVENT* item;
-	struct channel_data* lchannel_data;
+	rdpChannelData* lchannel_data;
 
 	while (MessageQueue_Peek(channels->MsgPipe->Out, &message, TRUE))
 	{
@@ -877,7 +879,7 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 			if (!item)
 				break;
 
-			lchannel_data = channels->channels_data + item->Index;
+			lchannel_data = &channels->channelDataList[item->Index];
 
 			channel = freerdp_channels_find_channel_by_name(channels, instance->settings,
 				lchannel_data->name, &item->Index);
@@ -981,16 +983,16 @@ wMessage* freerdp_channels_pop_event(rdpChannels* channels)
 void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 {
 	int index;
-	struct lib_data* llib;
+	rdpLibraryData* llib;
 
 	DEBUG_CHANNELS("closing");
 	channels->is_connected = 0;
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
-	for (index = 0; index < channels->num_libs_data; index++)
+	for (index = 0; index < channels->libraryDataCount; index++)
 	{
-		llib = channels->libs_data + index;
+		llib = &channels->libraryDataList[index];
 
 		if (llib->init_event_proc != 0)
 			llib->init_event_proc(llib->init_handle, CHANNEL_EVENT_TERMINATED, 0, 0);
