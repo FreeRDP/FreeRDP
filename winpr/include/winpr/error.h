@@ -2908,7 +2908,7 @@ WINPR_API UINT GetErrorMode(void);
 
 WINPR_API UINT SetErrorMode(UINT uMode);
 
-WINPR_API DWORD GetLastError(VOID);
+WINPR_API DWORD GetLastError(void);
 
 WINPR_API VOID SetLastError(DWORD dwErrCode);
 
