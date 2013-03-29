@@ -28,11 +28,11 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/debug.h>
-#include <winpr/stream.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -224,7 +224,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "svc_plugin_process_connected: open failed\n");
+		fprintf(stderr, "svc_plugin_process_connected: open failed: status: %d\n", status);
 		return;
 	}
 
