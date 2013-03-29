@@ -30,7 +30,6 @@ AQRecorderState recorderState;
 
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	
 	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
