@@ -84,7 +84,7 @@ int wf_create_console(void)
 		return 1;
 
 	freopen("CONOUT$", "w", stdout);
-	printf("Debug console created.\n");
+	fprintf(stderr, "Debug console created.\n");
 
 	return 0;
 }
@@ -222,7 +222,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	{
 		file = freerdp_client_rdp_file_new();
 
-		printf("Using connection file: %s\n", settings->ConnectionFile);
+		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
 
 		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(file, settings);
@@ -291,7 +291,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
 		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
-		printf("wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
+		fprintf(stderr, "wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
 		return 1;
 	}
 
@@ -445,7 +445,7 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	if (status != NO_ERROR)
 	{
-		printf("CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
+		fprintf(stderr, "CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
 		return FALSE;
 	}
 
@@ -454,7 +454,7 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
 
-	//printf("User: %s Domain: %s Password: %s\n", User, Domain, Password);
+	//fprintf(stderr, "User: %s Domain: %s Password: %s\n", User, Domain, Password);
 
 	*username = _strdup(User);
 
@@ -554,17 +554,17 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get wfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to get wfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			fprintf(stderr, "Failed to get channel manager file descriptor\n");
 			break;
 		}
 
@@ -582,20 +582,20 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 		/* exit if nothing to do */
 		if (fds_count == 0)
 		{
-			printf("wfreerdp_run: fds_count is zero\n");
+			fprintf(stderr, "wfreerdp_run: fds_count is zero\n");
 			break;
 		}
 
 		/* do the wait */
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			printf("wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
+			fprintf(stderr, "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 		if (freerdp_shall_disconnect(instance))	
@@ -604,12 +604,12 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 		}
 		if (wf_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check wfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to check wfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			fprintf(stderr, "Failed to check channel manager file descriptor\n");
 			break;
 		}
 		wf_process_channel_event(channels, instance);
@@ -659,7 +659,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 		{
 			if (status == -1)
 			{
-				printf("keyboard thread error getting message\n");
+				fprintf(stderr, "keyboard thread error getting message\n");
 				break;
 			}
 			else
@@ -673,7 +673,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	}
 	else
 	{
-		printf("failed to install keyboard hook\n");
+		fprintf(stderr, "failed to install keyboard hook\n");
 	}
 
 	return (DWORD) NULL;

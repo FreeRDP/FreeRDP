@@ -67,7 +67,7 @@ void freerdp_bitmap_write(char* filename, void* data, int width, int height, int
 
 	if (fp == NULL)
 	{
-		printf("failed to open file %s\n", filename);
+		fprintf(stderr, "failed to open file %s\n", filename);
 		return;
 	}
 

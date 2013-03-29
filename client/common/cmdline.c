@@ -933,7 +933,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (compatibility)
 	{
-		printf("WARNING: Using deprecated command-line interface!\n");
+		fprintf(stderr, "WARNING: Using deprecated command-line interface!\n");
 		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
 	else
@@ -990,7 +990,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (!settings->ConnectionFile && !(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 	{
-		printf("error: server hostname was not specified with /v:<server>[:port]\n");
+		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
 		return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
 	}
 
@@ -1114,7 +1114,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 				if (!id)
 				{
-					printf("Could not identify keyboard layout: %s\n", arg->Value);
+					fprintf(stderr, "Could not identify keyboard layout: %s\n", arg->Value);
 				}
 			}
 
@@ -1413,7 +1413,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			}
 			else
 			{
-				printf("unknown protocol security: %s\n", arg->Value);
+				fprintf(stderr, "unknown protocol security: %s\n", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
@@ -1592,7 +1592,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			printf("loading channel %s\n", name);
+			fprintf(stderr, "loading channel %s\n", name);
 			return 0;
 		}
 	}

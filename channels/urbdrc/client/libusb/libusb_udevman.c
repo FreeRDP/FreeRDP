@@ -206,7 +206,7 @@ static int udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_n
 	}
 	else
 	{
-		printf("udevman_register_udevice: function error!!");
+		fprintf(stderr, "udevman_register_udevice: function error!!");
 		return 0;
 	}
 

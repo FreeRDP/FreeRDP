@@ -501,7 +501,7 @@ BOOL rail_order_recv(rdpRailOrder* rail_order, wStream* s)
 			return rail_recv_langbar_info_order(rail_order, s);
 
 		default:
-			printf("Unknown RAIL PDU order reveived.");
+			fprintf(stderr, "Unknown RAIL PDU order reveived.");
 			break;
 	}
 	return TRUE;

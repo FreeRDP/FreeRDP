@@ -102,7 +102,7 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 		}
 		else
 		{
-			printf("error: NdrpSkipPointerLayout unexpected 0x%02X\n", *pFormat);
+			fprintf(stderr, "error: NdrpSkipPointerLayout unexpected 0x%02X\n", *pFormat);
 			break;
 		}
 	}
@@ -155,7 +155,7 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 			break;
 
 		case FC_FP: /* Full Pointer */
-			printf("warning: FC_FP unimplemented\n");
+			fprintf(stderr, "warning: FC_FP unimplemented\n");
 			break;
 	}
 
@@ -325,7 +325,7 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 
 void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	printf("warning: NdrByteCountPointerBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrByteCountPointerBufferSize unimplemented\n");
 }
 
 #endif

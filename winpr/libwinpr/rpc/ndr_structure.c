@@ -69,7 +69,7 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	if (*pFormat == FC_PSTRUCT)
 		NdrpEmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 
-	printf("warning: NdrSimpleStructBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrSimpleStructBufferSize unimplemented\n");
 }
 
 void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -90,7 +90,7 @@ void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 	 * member_layout<> FC_END
 	 */
 
-	printf("warning: NdrConformantStructBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrConformantStructBufferSize unimplemented\n");
 }
 
 void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -104,7 +104,7 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 	 * FC_END
 	 */
 
-	printf("warning: NdrConformantVaryingStructBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrConformantVaryingStructBufferSize unimplemented\n");
 }
 
 ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
@@ -195,11 +195,11 @@ ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
 				break;
 
 			case FC_EMBEDDED_COMPLEX:
-				printf("warning: NdrComplexStructMemberSize FC_EMBEDDED_COMPLEX unimplemented\n");
+				fprintf(stderr, "warning: NdrComplexStructMemberSize FC_EMBEDDED_COMPLEX unimplemented\n");
 				break;
 
 			default:
-				printf("warning: NdrComplexStructMemberSize 0x%02X unimplemented\n", *pFormat);
+				fprintf(stderr, "warning: NdrComplexStructMemberSize 0x%02X unimplemented\n", *pFormat);
 				break;
 		}
 
@@ -241,7 +241,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 
 	if (type != FC_BOGUS_STRUCT)
 	{
-		printf("error: expected FC_BOGUS_STRUCT, got 0x%02X\n", type);
+		fprintf(stderr, "error: expected FC_BOGUS_STRUCT, got 0x%02X\n", type);
 		return;
 	}
 
@@ -287,7 +287,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		array_type = conformant_array_description[0];
 		size = NdrComplexStructMemberSize(pStubMsg, pFormat);
 
-		printf("warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
+		fprintf(stderr, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
 
 		NdrpComputeConformance(pStubMsg, pMemory + size, conformant_array_description);
 		NdrpComputeVariance(pStubMsg, pMemory + size, conformant_array_description);
@@ -307,7 +307,7 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		pStubMsg->ActualCount = ActualCount;
 		pStubMsg->Offset = Offset;
 
-		printf("warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
+		fprintf(stderr, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
 	}
 
 	pStubMsg->Memory = pMemoryCopy;

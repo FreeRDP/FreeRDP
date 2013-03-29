@@ -53,7 +53,7 @@ void xf_server_main_loop(freerdp_listener* instance)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
@@ -81,14 +81,14 @@ void xf_server_main_loop(freerdp_listener* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				fprintf(stderr, "select failed\n");
 				break;
 			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}

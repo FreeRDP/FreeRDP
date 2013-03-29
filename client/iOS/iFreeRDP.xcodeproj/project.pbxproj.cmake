@@ -118,6 +118,7 @@
 		C495F01816B937F90041304E /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C495F01616B937F90041304E /* libssl.a */; };
 		C495F01A16B938210041304E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C495F01916B938210041304E /* Security.framework */; };
 		C495F01E16B938CB0041304E /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C495F01D16B938CA0041304E /* SystemConfiguration.framework */; };
+		C4B6A8821701979900AA836E /* libfreerdp-client-combined.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C4B6A8811701979900AA836E /* libfreerdp-client-combined.a */; };
 		C4C31C6F16BAD1890087BB12 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C4C31C6E16BAD1890087BB12 /* Default-568h@2x.png */; };
 /* End PBXBuildFile section */
 
@@ -280,6 +281,7 @@
 		C495F01616B937F90041304E /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = @FREERDP_IOS_EXTERNAL_SSL_PATH@/lib/libssl.a; sourceTree = "<group>"; };
 		C495F01916B938210041304E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		C495F01D16B938CA0041304E /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		C4B6A8811701979900AA836E /* libfreerdp-client-combined.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libfreerdp-client-combined.a"; path = "../common/libfreerdp-client-combined.a"; sourceTree = "<group>"; };
 		C4C31C6E16BAD1890087BB12 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-568h@2x.png"; path = "Resources/Default-568h@2x.png"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -297,6 +299,7 @@
 				C495EE3816B8372D0041304E /* CoreGraphics.framework in Frameworks */,
 				C495F01A16B938210041304E /* Security.framework in Frameworks */,
 				C495F01E16B938CB0041304E /* SystemConfiguration.framework in Frameworks */,
+				C4B6A8821701979900AA836E /* libfreerdp-client-combined.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,6 +326,7 @@
 		C495EE3216B8372D0041304E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C4B6A8811701979900AA836E /* libfreerdp-client-combined.a */,
 				C495EFAA16B912C40041304E /* libfreerdp.a */,
 				C495EFAD16B913980041304E /* libwinpr.a */,
 				C495F01516B937F80041304E /* libcrypto.a */,
@@ -744,9 +748,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;

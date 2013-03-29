@@ -26,7 +26,7 @@ int main()
 	if (!ret)
 	{
 		long err = GetLastError();
-		printf("error 0x%8.8x\n", err);
+		fprintf(stderr, "error 0x%8.8x\n", err);
 		return 1;
 	}
 
@@ -34,12 +34,12 @@ int main()
 	if (!ret)
 	{
 		long err = GetLastError();
-		printf("error 0x%8.8x\n", err);
+		fprintf(stderr, "error 0x%8.8x\n", err);
 		return 1;
 	}
 	if (written != DSIZE)
 	{
-		printf("error read %d\n", written);
+		fprintf(stderr, "error read %d\n", written);
 		return 1;
 	}
 
@@ -49,11 +49,11 @@ int main()
 	}
 	else
 	{
-		printf("error data no match\n");
+		fprintf(stderr, "error data no match\n");
 		return 1;
 	}
 
-	printf("Success!\n");
+	fprintf(stderr, "Success!\n");
 
 	Sleep(2000);
 	return 0;

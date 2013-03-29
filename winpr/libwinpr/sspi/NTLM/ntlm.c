@@ -670,13 +670,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Data Buffer (length = %d)\n", length);
+	fprintf(stderr, "Data Buffer (length = %d)\n", length);
 	winpr_HexDump(data, length);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
+	fprintf(stderr, "Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
 	winpr_HexDump(data_buffer->pvBuffer, data_buffer->cbBuffer);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	free(data);
@@ -693,9 +693,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	context->SendSeqNum++;
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
+	fprintf(stderr, "Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
 	winpr_HexDump(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	return SEC_E_OK;
@@ -754,13 +754,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	HMAC_CTX_cleanup(&hmac);
 
 #ifdef WITH_DEBUG_NTLM
-	printf("Encrypted Data Buffer (length = %d)\n", length);
+	fprintf(stderr, "Encrypted Data Buffer (length = %d)\n", length);
 	winpr_HexDump(data, length);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
+	fprintf(stderr, "Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
 	winpr_HexDump(data_buffer->pvBuffer, data_buffer->cbBuffer);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	free(data);
@@ -777,11 +777,11 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
 	{
 		/* signature verification failed! */
-		printf("signature verification failed, something nasty is going on!\n");
+		fprintf(stderr, "signature verification failed, something nasty is going on!\n");
 
-		printf("Expected Signature:\n");
+		fprintf(stderr, "Expected Signature:\n");
 		winpr_HexDump(expected_signature, 16);
-		printf("Actual Signature:\n");
+		fprintf(stderr, "Actual Signature:\n");
 		winpr_HexDump(signature_buffer->pvBuffer, 16);
 
 		return SEC_E_MESSAGE_ALTERED;

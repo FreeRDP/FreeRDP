@@ -180,7 +180,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 
 	if (!pkey)
 	{
-		printf("crypto_cert_get_public_key: X509_get_pubkey() failed\n");
+		fprintf(stderr, "crypto_cert_get_public_key: X509_get_pubkey() failed\n");
 		status = FALSE;
 		goto exit;
 	}
@@ -189,7 +189,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 
 	if (length < 1)
 	{
-		printf("crypto_cert_get_public_key: i2d_PublicKey() failed\n");
+		fprintf(stderr, "crypto_cert_get_public_key: i2d_PublicKey() failed\n");
 		status = FALSE;
 		goto exit;
 	}
@@ -512,11 +512,11 @@ void crypto_cert_print_info(X509* xcert)
 	issuer = crypto_cert_issuer(xcert);
 	fp = crypto_cert_fingerprint(xcert);
 
-	printf("Certificate details:\n");
-	printf("\tSubject: %s\n", subject);
-	printf("\tIssuer: %s\n", issuer);
-	printf("\tThumbprint: %s\n", fp);
-	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+	fprintf(stderr, "Certificate details:\n");
+	fprintf(stderr, "\tSubject: %s\n", subject);
+	fprintf(stderr, "\tIssuer: %s\n", issuer);
+	fprintf(stderr, "\tThumbprint: %s\n", fp);
+	fprintf(stderr, "The above X.509 certificate could not be verified, possibly because you do not have "
 			"the CA certificate in your certificate store, or the certificate has expired. "
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
