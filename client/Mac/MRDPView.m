@@ -1323,7 +1323,7 @@ void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 			 CFDataRef address, const void* data, void* info)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 	freerdp* instance = (freerdp*) info;
 	
 	freerdp_channels_check_fds(instance->context->channels, instance);
@@ -1331,13 +1331,13 @@ void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 	
 	if (event)
 	{
-		switch (event->event_class)
+		switch (GetMessageClass(event->id))
 		{
-			case RDP_EVENT_CLASS_RAIL:
+			case RailChannel_Class:
 				mac_process_rail_event(instance, event);
 				break;
 				
-			case RDP_EVENT_CLASS_CLIPRDR:
+			case CliprdrChannel_Class:
 				process_cliprdr_event(instance, event);
 				break;
 		}
@@ -1432,7 +1432,7 @@ void cliprdr_process_cb_data_request_event(freerdp* instance)
 	NSArray* types;
 	RDP_CB_DATA_RESPONSE_EVENT* event;
 	
-	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_RESPONSE, NULL, NULL);
+	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_DataResponse, NULL, NULL);
 	
 	types = [NSArray arrayWithObject:NSStringPboardType];
 	NSString* str = [g_mrdpview->pasteboard_rd availableTypeFromArray:types];
@@ -1451,17 +1451,17 @@ void cliprdr_process_cb_data_request_event(freerdp* instance)
 		event->size = len;
 	}
 	
-	freerdp_channels_send_event(instance->context->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
 void cliprdr_send_data_request(freerdp* instance, UINT32 format)
 {
 	RDP_CB_DATA_REQUEST_EVENT* event;
 	
-	event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_DATA_REQUEST, NULL, NULL);
+	event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_DataRequest, NULL, NULL);
 	
 	event->format = format;
-	freerdp_channels_send_event(instance->context->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
 /**
@@ -1489,10 +1489,10 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 
 void cliprdr_process_cb_monitor_ready_event(freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 	
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
 	
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
@@ -1551,18 +1551,18 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 	}
 }
 
-void process_cliprdr_event(freerdp* instance, RDP_EVENT* event)
+void process_cliprdr_event(freerdp* instance, wMessage* event)
 {
 	if (event)
 	{
-		switch (event->event_type)
+		switch (GetMessageType(event->id))
 		{
 				/*
 				 * Monitor Ready PDU is sent by server to indicate that it has been
 				 * initialized and is ready. This PDU is transmitted by the server after it has sent
 				 * Clipboard Capabilities PDU
 				 */
-			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			case CliprdrChannel_MonitorReady:
 				cliprdr_process_cb_monitor_ready_event(instance);
 				break;
 				
@@ -1572,7 +1572,7 @@ void process_cliprdr_event(freerdp* instance, RDP_EVENT* event)
 				 * contains the Clipboard Format ID and name pairs of the new Clipboard
 				 * Formats on the clipboard
 				 */
-			case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+			case CliprdrChannel_FormatList:
 				cliprdr_process_cb_format_list_event(instance, (RDP_CB_FORMAT_LIST_EVENT*) event);
 				break;
 				
@@ -1581,7 +1581,7 @@ void process_cliprdr_event(freerdp* instance, RDP_EVENT* event)
 				 * It is used to request the data for one of the formats that was listed in the
 				 * Format List PDU
 				 */
-			case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+			case CliprdrChannel_DataRequest:
 				cliprdr_process_cb_data_request_event(instance);
 				break;
 				
@@ -1591,12 +1591,12 @@ void process_cliprdr_event(freerdp* instance, RDP_EVENT* event)
 				 * was successful. If the processing was successful, the Format Data Response PDU
 				 * includes the contents of the requested clipboard data
 				 */
-			case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+			case CliprdrChannel_DataResponse:
 				cliprdr_process_cb_data_response_event(instance, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 				break;
 				
 			default:
-				printf("process_cliprdr_event: unknown event type %d\n", event->event_type);
+				printf("process_cliprdr_event: unknown event type %d\n", GetMessageType(event->id));
 				break;
 		}
 		
@@ -1608,13 +1608,13 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 {
 	RDP_CB_FORMAT_LIST_EVENT* event;
 	
-	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
 	
 	event->formats = (UINT32*) malloc(sizeof(UINT32) * 1);
 	event->num_formats = 1;
 	event->formats[0] = CB_FORMAT_UNICODETEXT;
 	
-	freerdp_channels_send_event(instance->context->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
 /****************************************************************************************
@@ -1625,35 +1625,35 @@ void cliprdr_send_supported_format_list(freerdp* instance)
  *                                                                                      *
  ****************************************************************************************/
 
-void mac_process_rail_event(freerdp* instance, RDP_EVENT* event)
+void mac_process_rail_event(freerdp* instance, wMessage* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS:
+		case RailChannel_GetSystemParam:
 			mac_process_rail_get_sysparams_event(instance->context->channels, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS:
+		case RailChannel_ServerExecuteResult:
 			mac_process_rail_exec_result_event(instance->context->channels, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM:
+		case RailChannel_ServerSystemParam:
 			mac_process_rail_server_sysparam_event(instance->context->channels, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO:
+		case RailChannel_ServerMinMaxInfo:
 			mac_process_rail_server_minmaxinfo_event(instance->context->channels, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE:
+		case RailChannel_ServerLocalMoveSize:
 			mac_process_rail_server_localmovesize_event(instance, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP:
+		case RailChannel_ServerGetAppIdResponse:
 			//xf_process_rail_appid_resp_event(xfi, channels, event);
 			break;
 			
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO:
+		case RailChannel_ServerLanguageBarInfo:
 			//xf_process_rail_langbarinfo_event(xfi, channels, event);
 			break;
 	}
@@ -1715,7 +1715,7 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 		RAIL_WINDOW_MOVE_ORDER windowMove;
 		apple_to_windowMove(&winFrame, &windowMove);
 		windowMove.windowId = window->windowId;
-		mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
+		mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RailChannel_ClientWindowMove, &windowMove);
 	}
 	
 	/* create MRDPRailView and add to above window */
@@ -1850,10 +1850,11 @@ void mac_rail_register_callbacks(freerdp* instance, rdpRail* rail)
  * by the system taskbar or by application desktop toolbars
  ************************************************************************/
 
-void mac_process_rail_get_sysparams_event(rdpChannels* channels, RDP_EVENT* event)
+void mac_process_rail_get_sysparams_event(rdpChannels* channels, wMessage* event)
 {
-	RAIL_SYSPARAM_ORDER * sysparam;
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
+	RAIL_SYSPARAM_ORDER* sysparam;
+	
+	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 	
 	sysparam->workArea.left = 0;
 	sysparam->workArea.top = 22;
@@ -1867,12 +1868,12 @@ void mac_process_rail_get_sysparams_event(rdpChannels* channels, RDP_EVENT* even
 	
 	sysparam->dragFullWindows =  FALSE;
 	
-	mac_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
+	mac_send_rail_client_event(channels, RailChannel_ClientSystemParam, sysparam);
 }
 
-void mac_process_rail_server_sysparam_event(rdpChannels* channels, RDP_EVENT* event)
+void mac_process_rail_server_sysparam_event(rdpChannels* channels, wMessage* event)
 {
-	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
+	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 	
 	switch (sysparam->param)
 	{
@@ -1888,11 +1889,11 @@ void mac_process_rail_server_sysparam_event(rdpChannels* channels, RDP_EVENT* ev
  * server returned result of exec'ing remote app on server
  ************************************************************************/
 
-void mac_process_rail_exec_result_event(rdpChannels* channels, RDP_EVENT* event)
+void mac_process_rail_exec_result_event(rdpChannels* channels, wMessage* event)
 {
 	RAIL_EXEC_RESULT_ORDER* exec_result;
 	
-	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->user_data;
+	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->wParam;
 	
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{
@@ -1913,10 +1914,10 @@ void mac_process_rail_exec_result_event(rdpChannels* channels, RDP_EVENT* event)
  * to which the window can be moved or sized
  ************************************************************************/
 
-void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, RDP_EVENT* event)
+void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, wMessage* event)
 {
 #if 0
-	RAIL_MINMAXINFO_ORDER * minmax = (RAIL_MINMAXINFO_ORDER*) event->user_data;
+	RAIL_MINMAXINFO_ORDER * minmax = (RAIL_MINMAXINFO_ORDER*) event->wParam;
 	printf("minmax_info: maxPosX=%d maxPosY=%d maxWidth=%d maxHeight=%d minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d\n",
 	       minmax->maxPosX, minmax->maxPosY, minmax->maxWidth, minmax->maxHeight,
 	       minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
@@ -1929,9 +1930,9 @@ void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, RDP_EVENT* 
  * corresponding local window
  ************************************************************************/
 
-void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *event)
+void mac_process_rail_server_localmovesize_event(freerdp* instance, wMessage *event)
 {
-	RAIL_LOCALMOVESIZE_ORDER* moveSize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
+	RAIL_LOCALMOVESIZE_ORDER* moveSize = (RAIL_LOCALMOVESIZE_ORDER*) event->wParam;
 	RAIL_WINDOW_MOVE_ORDER windowMove;
 	
 	switch (moveSize->moveSizeType)
@@ -1983,7 +1984,7 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 			[g_mrdpview->currentWindow view]->saveInitialDragLoc = NO;
 			
 			/* let RDP server know where this window is located */
-			mac_send_rail_client_event(instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
+			mac_send_rail_client_event(instance->context->channels, RailChannel_ClientWindowMove, &windowMove);
 			
 			/* the event we just sent will cause an extra MoveWindow() to be invoked which we need to ignore */
 			[g_mrdpview->currentWindow view]->skipMoveWindowOnce = YES;
@@ -2008,23 +2009,20 @@ void mac_process_rail_server_localmovesize_event(freerdp* instance, RDP_EVENT *e
 void mac_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
 {
 	void* payload = NULL;
-	RDP_EVENT* out_event = NULL;
+	wMessage* out_event = NULL;
 	
 	payload = rail_clone_order(event_type, param);
 	
 	if (payload)
 	{
-		out_event = freerdp_event_new(RDP_EVENT_CLASS_RAIL, event_type, mac_on_free_rail_client_event, payload);
+		out_event = freerdp_event_new(RailChannel_Class, event_type, mac_on_free_rail_client_event, payload);
 		freerdp_channels_send_event(channels, out_event);
 	}
 }
 
-void mac_on_free_rail_client_event(RDP_EVENT* event)
+void mac_on_free_rail_client_event(wMessage* event)
 {	
-	if (event->event_class == RDP_EVENT_CLASS_RAIL)
-	{
-		rail_free_cloned_order(event->event_type, event->user_data);
-	}
+		rail_free_cloned_order(GetMessageType(event->id), event->wParam);
 }
 
 void mac_rail_enable_remoteapp_mode()

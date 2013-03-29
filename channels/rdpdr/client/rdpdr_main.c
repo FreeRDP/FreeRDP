@@ -297,7 +297,7 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 	stream_free(data_in);
 }
 
-static void rdpdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void rdpdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	freerdp_event_free(event);
 }

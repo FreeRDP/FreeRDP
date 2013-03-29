@@ -375,15 +375,15 @@ static void xf_process_tsmf_redraw_event(xfInfo* xfi, RDP_REDRAW_EVENT* revent)
 		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event)
+void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+		case TsmfChannel_VideoFrame:
 			xf_process_tsmf_video_frame_event(xfi, (RDP_VIDEO_FRAME_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_TSMF_REDRAW:
+		case TsmfChannel_Redraw:
 			xf_process_tsmf_redraw_event(xfi, (RDP_REDRAW_EVENT*) event);
 			break;
 
@@ -400,7 +400,7 @@ void xf_tsmf_uninit(xfInfo* xfi)
 {
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event)
+void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
 {
 }
 

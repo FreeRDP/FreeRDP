@@ -40,10 +40,10 @@
 
 #endif
 
-static const AUDIO_FORMAT audio_formats[] =
-{	
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
+static const AUDIO_FORMAT supported_audio_formats[] =
+{
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
 static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
@@ -65,7 +65,7 @@ static void wf_peer_rdpsnd_activated(rdpsnd_server_context* context)
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
 				printf("agreed on format!\n");
-				wfi->agreed_format = (AUDIO_FORMAT*)&context->server_formats[j];
+				wfi->agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
 			}
 		}
@@ -149,9 +149,9 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
 	context->rdpsnd->data = context;
 
-	context->rdpsnd->server_formats = audio_formats;
+	context->rdpsnd->server_formats = supported_audio_formats;
 	context->rdpsnd->num_server_formats =
-			sizeof(audio_formats) / sizeof(audio_formats[0]);
+			sizeof(supported_audio_formats) / sizeof(supported_audio_formats[0]);
 
 	context->rdpsnd->src_format.wFormatTag = 1;
 	context->rdpsnd->src_format.nChannels = 2;

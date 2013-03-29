@@ -475,7 +475,7 @@ int stream_equal_dump(void * dataS, size_t sizeS, void * data, size_t size)
 	return 1;
 }
 //-----------------------------------------------------------------------------
-static void test_on_free_rail_client_event(RDP_EVENT* event)
+static void test_on_free_rail_client_event(wMessage* event)
 {
 	if (event->event_class == RDP_EVENT_CLASS_RAIL)
 	{
@@ -489,7 +489,7 @@ static void send_ui_event2plugin(
 	void * data
 	)
 {
-	RDP_EVENT* out_event = NULL;
+	wMessage* out_event = NULL;
 	void * payload = NULL;
 
 	payload = rail_clone_order(event_type, data);
@@ -547,7 +547,7 @@ static int emulate_client_send_channel_data(
 	return 0;
 }
 //-----------------------------------------------------------------------------
-void save_event(RDP_EVENT* event, RAIL_EVENT* rail_event)
+void save_event(wMessage* event, RAIL_EVENT* rail_event)
 {
 	rail_event->event_type = event->event_type;
 
@@ -610,7 +610,7 @@ void save_event(RDP_EVENT* event, RAIL_EVENT* rail_event)
 //-----------------------------------------------------------------------------
 static void process_events_and_channel_data_from_plugin(thread_param* param)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	param->th_count++;
 	while (param->th_to_finish == 0)

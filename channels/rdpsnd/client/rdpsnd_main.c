@@ -693,7 +693,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	}
 }
 
-static void rdpsnd_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void rdpsnd_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	freerdp_event_free(event);
 }

@@ -171,7 +171,7 @@ BOOL xf_GetCurrentDesktop(xfInfo* xfi)
 	status = xf_GetWindowProperty(xfi, DefaultRootWindow(xfi->display),
 			xfi->_NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &prop);
 
-	if (status != TRUE)
+	if (!status)
 		return FALSE;
 
 	xfi->current_desktop = (int) *prop;
@@ -490,10 +490,13 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->width = width;
 	window->height = height;
 
-	/* this window need decorations
-	   the WS_EX_APPWINDOW is used to tell the client to use local decorations
-	   only sent from xrdp */
-	window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? TRUE : FALSE;
+	/*
+	 * WS_EX_DECORATIONS is used by XRDP and instructs
+	 * the client to use local window decorations
+	 */
+
+	window->decorations = (wnd->extendedStyle & WS_EX_DECORATIONS) ? TRUE : FALSE;
+
 	window->fullscreen = FALSE;
 	window->window = wnd;
 	window->local_move.state = LMS_NOT_ACTIVE;
@@ -516,13 +519,16 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 
 	class_hints = XAllocClassHint();
 
-	if (class_hints != NULL)
+	if (class_hints)
 	{
 		char* class = NULL;
 
 		if (xfi->instance->settings->WmClass != NULL)
+		{
 			class_hints->res_class = xfi->instance->settings->WmClass;
-		else {
+		}
+		else
+		{
 			class = malloc(sizeof(rail_window_class));
 			snprintf(class, sizeof(rail_window_class), "RAIL:%08X", id);
 			class_hints->res_class = class;
@@ -749,11 +755,9 @@ void xf_ShowWindow(xfInfo* xfi, xfWindow* window, BYTE state)
 			if (window->rail_state == WINDOW_SHOW_MAXIMIZED)
                                window->rail_ignore_configure = TRUE;
 		
-
 			if (window->is_transient)
-			{
 				xf_SetWindowUnlisted(xfi, window);
-			}
+
 			break;
 	}
 
@@ -772,7 +776,7 @@ void xf_SetWindowIcon(xfInfo* xfi, xfWindow* window, rdpIcon* icon)
 	long* dstp;
 	UINT32* srcp;
 
-	if (icon->big != TRUE)
+	if (!icon->big)
 		return;
 
 	pixels = icon->entry->width * icon->entry->height;
@@ -819,8 +823,10 @@ void xf_SetWindowRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* rects, int n
 #ifdef WITH_XEXT
 	/*
 	 * This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
-	 * XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	 *
+	 * Marc: enabling it works, and is required for round corners.
 	 */
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	free(xrects);
@@ -847,8 +853,10 @@ void xf_SetWindowVisibilityRects(xfInfo* xfi, xfWindow* window, RECTANGLE_16* re
 #ifdef WITH_XEXT
 	/*
 	 * This is currently unsupported with the new logic to handle window placement with VisibleOffset variables
-	 * XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	 *
+	 * Marc: enabling it works, and is required for round corners.
 	 */
+	XShapeCombineRectangles(xfi->display, window->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
 #endif
 
 	free(xrects);

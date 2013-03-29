@@ -20,18 +20,9 @@
 #ifndef FREERDP_CHANNEL_CLIENT_TSMF_H
 #define FREERDP_CHANNEL_CLIENT_TSMF_H
 
-/**
- * Event Types
- */
-enum RDP_EVENT_TYPE_TSMF
-{
-	RDP_EVENT_TYPE_TSMF_VIDEO_FRAME = 1,
-	RDP_EVENT_TYPE_TSMF_REDRAW
-};
-
 struct _RDP_VIDEO_FRAME_EVENT
 {
-	RDP_EVENT event;
+	wMessage event;
 	BYTE* frame_data;
 	UINT32 frame_size;
 	UINT32 frame_pixfmt;
@@ -48,7 +39,7 @@ typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
 
 struct _RDP_REDRAW_EVENT
 {
-	RDP_EVENT event;
+	wMessage event;
 	INT16 x;
 	INT16 y;
 	INT16 width;

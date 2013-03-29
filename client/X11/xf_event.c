@@ -134,6 +134,7 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		{
 			return TRUE;
 		}
+
 		/* Translate to desktop coordinates */
 		XTranslateCoordinates(xfi->display, event->xmotion.window,
 			RootWindowOfScreen(xfi->screen),
@@ -597,7 +598,7 @@ static BOOL xf_event_MapNotify(xfInfo* xfi, XEvent* event, BOOL app)
 			 */
 
 			//xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
-			xfWindow *xfw = (xfWindow*) window->extra;
+			xfWindow* xfw = (xfWindow*) window->extra;
 			xfw->is_mapped = TRUE;
 		}
 	}
@@ -681,9 +682,10 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		if (window == NULL)
 			return TRUE;
 	
-	        if ((((Atom)event->xproperty.atom == xfi->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
-	            (((Atom)event->xproperty.atom == xfi->WM_STATE) && (event->xproperty.state != PropertyDelete)))
+	        if ((((Atom) event->xproperty.atom == xfi->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
+	            (((Atom) event->xproperty.atom == xfi->WM_STATE) && (event->xproperty.state != PropertyDelete)))
 	        {
+	        	int i;
 	                BOOL status;
 	                BOOL maxVert = FALSE;
 	                BOOL maxHorz = FALSE;
@@ -691,68 +693,72 @@ static BOOL xf_event_PropertyNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	                unsigned long nitems;
 	                unsigned long bytes;
 	                unsigned char* prop;
-	                int i;
 	
-	                status = xf_GetWindowProperty(xfi, event->xproperty.window,
-	                xfi->_NET_WM_STATE, 12, &nitems, &bytes, &prop);
-	
-	                if (!status)
+	                if ((Atom) event->xproperty.atom == xfi->_NET_WM_STATE)
 	                {
-	                               DEBUG_X11_LMS("No return _NET_WM_STATE, window is not maximized");
-	                }               
-	
-	                for (i = 0; i < nitems; i++)
-	                {
-	                        if ((Atom) ((UINT16 **) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
-	                        {
-	                                maxVert = TRUE;
-	                        }
+				status = xf_GetWindowProperty(xfi, event->xproperty.window,
+						xfi->_NET_WM_STATE, 12, &nitems, &bytes, &prop);
 
-	                        if ((Atom) ((UINT16 **)prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
-	                        {
-	                                maxHorz = TRUE;
-	                        }
+				if (!status)
+				{
+					       DEBUG_X11_LMS("No return _NET_WM_STATE, window is not maximized");
+				}
+
+				for (i = 0; i < nitems; i++)
+				{
+					if ((Atom) ((UINT16**) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
+					{
+						maxVert = TRUE;
+					}
+	
+					if ((Atom) ((UINT16**) prop)[i] == XInternAtom(xfi->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False))
+					{
+						maxHorz = TRUE;
+					}
+				}
+	
+				XFree(prop);
 	                }
-
-	                XFree(prop);            
 	
-	                status = xf_GetWindowProperty(xfi, event->xproperty.window,
-	                xfi->WM_STATE, 1, &nitems, &bytes, &prop);
-	
-	                if (!status)
+	                if ((Atom) event->xproperty.atom == xfi->WM_STATE)
 	                {
-	                        DEBUG_X11_LMS("No return WM_STATE, window is not minimized");
+				status = xf_GetWindowProperty(xfi, event->xproperty.window, xfi->WM_STATE, 1, &nitems, &bytes, &prop);
+
+				if (!status)
+				{
+					DEBUG_X11_LMS("No return WM_STATE, window is not minimized");
+				}
+				else
+				{
+					/* If the window is in the iconic state */
+					if (((UINT32) *prop == 3))
+						minimized = TRUE;
+					else
+						minimized = FALSE;
+
+					XFree(prop);
+				}
 	                }
-	                else
-	                {
-	                        /* If the window is in the iconic state */
-	                        if (((UINT32) *prop == 3))
-	                                minimized = TRUE;
-	                        else
-	                                minimized = FALSE;
-	                       
-	                        XFree(prop);
-	                 }
 	
 
-	                 if (maxVert && maxHorz && !minimized && (xfi->window->rail_state != WINDOW_SHOW_MAXIMIZED))
-                         {
-                                DEBUG_X11_LMS("Send SC_MAXIMIZE command to rail server.");
-                                xfi->window->rail_state = WINDOW_SHOW_MAXIMIZED;        
-                                xf_rail_send_client_system_command(xfi, window->windowId, SC_MAXIMIZE);
-                         }
-                         else if (minimized && (xfi->window->rail_state != WINDOW_SHOW_MINIMIZED))
-                         {
-                                DEBUG_X11_LMS("Send SC_MINIMIZE command to rail server.");
-                                xfi->window->rail_state = WINDOW_SHOW_MINIMIZED;
-                                xf_rail_send_client_system_command(xfi, window->windowId, SC_MINIMIZE);
-                         }
-                         else if (!minimized && !maxVert && !maxHorz && (xfi->window->rail_state != WINDOW_SHOW))
-                         {
-                                DEBUG_X11_LMS("Send SC_RESTORE command to rail server");
-                                xfi->window->rail_state = WINDOW_SHOW;
-                                xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
-                         }
+	                if (maxVert && maxHorz && !minimized && (xfi->window->rail_state != WINDOW_SHOW_MAXIMIZED))
+	                {
+	                	DEBUG_X11_LMS("Send SC_MAXIMIZE command to rail server.");
+	                	xfi->window->rail_state = WINDOW_SHOW_MAXIMIZED;
+	                	xf_rail_send_client_system_command(xfi, window->windowId, SC_MAXIMIZE);
+	                }
+	                else if (minimized && (xfi->window->rail_state != WINDOW_SHOW_MINIMIZED))
+	                {
+	                	DEBUG_X11_LMS("Send SC_MINIMIZE command to rail server.");
+	                	xfi->window->rail_state = WINDOW_SHOW_MINIMIZED;
+	                	xf_rail_send_client_system_command(xfi, window->windowId, SC_MINIMIZE);
+	                }
+	                else if (!minimized && !maxVert && !maxHorz && (xfi->window->rail_state != WINDOW_SHOW))
+	                {
+	                	DEBUG_X11_LMS("Send SC_RESTORE command to rail server");
+	                	xfi->window->rail_state = WINDOW_SHOW;
+	                	xf_rail_send_client_system_command(xfi, window->windowId, SC_RESTORE);
+	                }
                }       
         }
 	else

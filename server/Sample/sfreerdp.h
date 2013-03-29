@@ -24,7 +24,6 @@
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
-#include <freerdp/utils/thread.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>

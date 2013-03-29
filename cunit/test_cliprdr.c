@@ -95,7 +95,7 @@ static int test_rdp_channel_data(freerdp* instance, int chan_id, BYTE* data, int
 
 static int event_processed;
 
-static void event_process_callback(RDP_EVENT* event)
+static void event_process_callback(wMessage* event)
 {
 	printf("Event %d processed.\n", event->event_type);
 	event_processed = 1;
@@ -107,7 +107,7 @@ void test_cliprdr(void)
 	rdpChannels* channels;
 	rdpSettings settings = { 0 };
 	freerdp instance = { 0 };
-	RDP_EVENT* event;
+	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 	RDP_CB_DATA_REQUEST_EVENT* data_request_event;
 	RDP_CB_DATA_RESPONSE_EVENT* data_response_event;

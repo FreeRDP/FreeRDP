@@ -310,16 +310,19 @@ static void tsmf_presentation_restore_last_video_frame(TSMF_PRESENTATION* presen
 
 	if (presentation->last_width && presentation->last_height)
 	{
-		revent = (RDP_REDRAW_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_TSMF, RDP_EVENT_TYPE_TSMF_REDRAW,
+		revent = (RDP_REDRAW_EVENT*) freerdp_event_new(TsmfChannel_Class, TsmfChannel_Redraw,
 			NULL, NULL);
+
 		revent->x = presentation->last_x;
 		revent->y = presentation->last_y;
 		revent->width = presentation->last_width;
 		revent->height = presentation->last_height;
-		if (!tsmf_push_event(presentation->channel_callback, (RDP_EVENT*) revent))
+
+		if (!tsmf_push_event(presentation->channel_callback, (wMessage*) revent))
 		{
-			freerdp_event_free((RDP_EVENT*) revent);
+			freerdp_event_free((wMessage*) revent);
 		}
+
 		presentation->last_x = 0;
 		presentation->last_y = 0;
 		presentation->last_width = 0;
@@ -383,8 +386,9 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			}
 		}
 
-		vevent = (RDP_VIDEO_FRAME_EVENT*) freerdp_event_new(RDP_EVENT_CLASS_TSMF, RDP_EVENT_TYPE_TSMF_VIDEO_FRAME,
+		vevent = (RDP_VIDEO_FRAME_EVENT*) freerdp_event_new(TsmfChannel_Class, TsmfChannel_VideoFrame,
 			NULL, NULL);
+
 		vevent->frame_data = sample->data;
 		vevent->frame_size = sample->decoded_size;
 		vevent->frame_pixfmt = sample->pixfmt;
@@ -410,9 +414,9 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		sample->data = NULL;
 		sample->decoded_size = 0;
 
-		if (!tsmf_push_event(sample->channel_callback, (RDP_EVENT*) vevent))
+		if (!tsmf_push_event(sample->channel_callback, (wMessage*) vevent))
 		{
-			freerdp_event_free((RDP_EVENT*) vevent);
+			freerdp_event_free((wMessage*) vevent);
 		}
 
 #if 0

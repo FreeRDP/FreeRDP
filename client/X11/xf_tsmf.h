@@ -24,6 +24,6 @@
 
 void xf_tsmf_init(xfInfo* xfi, long xv_port);
 void xf_tsmf_uninit(xfInfo* xfi);
-void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event);
+void xf_process_tsmf_event(xfInfo* xfi, wMessage* event);
 
 #endif /* __XF_TSMF_H */

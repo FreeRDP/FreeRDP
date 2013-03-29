@@ -408,6 +408,11 @@ typedef trio_longlong_t trio_int64_t;
  * Internal Definitions
  */
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#endif
+
 #if TRIO_FEATURE_FLOAT
 
 # if !defined(DECIMAL_DIG)
@@ -7846,3 +7851,7 @@ TRIO_ARGS1((errorcode),
   return "Unknown";
 #endif
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
