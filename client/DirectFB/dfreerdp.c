@@ -265,12 +265,12 @@ static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data,
 
 static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
 
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
 
 	freerdp_channels_send_event(channels, event);
@@ -278,17 +278,18 @@ static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* in
 
 static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
-		switch (event->event_type)
+		switch (GetMessageType(event->id))
 		{
-			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			case CliprdrChannel_MonitorReady:
 				df_process_cb_monitor_ready_event(channels, instance);
 				break;
+
 			default:
 				fprintf(stderr, "df_process_channel_event: unknown event type %d\n", event->event_type);
 				break;
@@ -319,8 +320,8 @@ int dfreerdp_run(freerdp* instance)
 	dfContext* context;
 	rdpChannels* channels;
 
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(wfds, sizeof(wfds));
 
 	if (!freerdp_connect(instance))
 		return 0;

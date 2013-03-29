@@ -139,7 +139,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	}
 }
 
-static void svc_plugin_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event_in)
+static void svc_plugin_process_event(rdpSvcPlugin* plugin, wMessage* event_in)
 {
 	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
 }
@@ -171,7 +171,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 			break;
 
 		case CHANNEL_EVENT_USER:
-			svc_plugin_process_event(plugin, (RDP_EVENT*) pData);
+			svc_plugin_process_event(plugin, (wMessage*) pData);
 			break;
 	}
 }
@@ -179,7 +179,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 static void* svc_plugin_thread_func(void* arg)
 {
 	wStream* data;
-	RDP_EVENT* event;
+	wMessage* event;
 	wMessage message;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
 
@@ -204,7 +204,7 @@ static void* svc_plugin_thread_func(void* arg)
 			}
 			else if (message.id == 1)
 			{
-				event = (RDP_EVENT*) message.wParam;
+				event = (wMessage*) message.wParam;
 				IFCALL(plugin->event_callback, plugin, event);
 			}
 		}
@@ -322,7 +322,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 	return status;
 }
 
-int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	UINT32 status = 0;
 

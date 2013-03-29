@@ -45,7 +45,7 @@ struct rdp_svc_plugin
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, wStream* data_in);
-	void (*event_callback)(rdpSvcPlugin* plugin, RDP_EVENT* event);
+	void (*event_callback)(rdpSvcPlugin* plugin, wMessage* event);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	HANDLE thread;
@@ -61,7 +61,7 @@ extern "C" {
 
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out);
-FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
+FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event);
 
 #ifdef __cplusplus
 }

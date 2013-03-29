@@ -59,24 +59,8 @@ struct _RECTANGLE_16
 typedef struct _RECTANGLE_16 RECTANGLE_16;
 
 /* Plugin events */
-typedef struct _RDP_EVENT RDP_EVENT;
 
-typedef void (*RDP_EVENT_CALLBACK) (RDP_EVENT* event);
-
-struct _RDP_EVENT
-{
-	UINT16 event_class;
-	UINT16 event_type;
-	RDP_EVENT_CALLBACK on_event_free_callback;
-	void* user_data;
-};
-
-enum RDP_EVENT_CLASS
-{
-	RDP_EVENT_CLASS_DEBUG = 0,
-	RDP_EVENT_CLASS_CLIPRDR,
-	RDP_EVENT_CLASS_TSMF,
-	RDP_EVENT_CLASS_RAIL
-};
+#include <freerdp/message.h>
+#include <winpr/collections.h>
 
 #endif /* __RDP_TYPES_H */

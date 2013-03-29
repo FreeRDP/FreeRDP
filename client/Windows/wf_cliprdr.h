@@ -23,7 +23,7 @@
 
 void wf_cliprdr_init(wfInfo* wfi, rdpChannels* chanman);
 void wf_cliprdr_uninit(wfInfo* wfi);
-void wf_process_cliprdr_event(wfInfo* wfi, RDP_EVENT* event);
+void wf_process_cliprdr_event(wfInfo* wfi, wMessage* event);
 BOOL wf_cliprdr_process_selection_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL wf_cliprdr_process_selection_request(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL wf_cliprdr_process_selection_clear(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

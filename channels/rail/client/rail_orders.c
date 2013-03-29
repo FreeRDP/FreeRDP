@@ -90,7 +90,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 
 BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
 	stream_read_UINT16(s, *orderType); /* orderType (2 bytes) */
 	stream_read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
@@ -138,7 +138,7 @@ void rail_write_high_contrast(wStream* s, HIGH_CONTRAST* high_contrast)
 
 BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 	return TRUE;
@@ -146,7 +146,7 @@ BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 
 BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result)
 {
-	if(stream_get_left(s) < 8)
+	if (stream_get_left(s) < 8)
 		return FALSE;
 	stream_read_UINT16(s, exec_result->flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, exec_result->execResult); /* execResult (2 bytes) */
@@ -159,7 +159,7 @@ BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
 
-	if(stream_get_left(s) < 5)
+	if (stream_get_left(s) < 5)
 		return FALSE;
 	stream_read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 	stream_read_BYTE(s, body); /* body (1 byte) */
@@ -182,7 +182,7 @@ BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 
 BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
 {
-	if(stream_get_left(s) < 20)
+	if (stream_get_left(s) < 20)
 		return FALSE;
 	stream_read_UINT32(s, minmaxinfo->windowId); /* windowId (4 bytes) */
 	stream_read_UINT16(s, minmaxinfo->maxWidth); /* maxWidth (2 bytes) */
@@ -199,7 +199,7 @@ BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmax
 BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize)
 {
 	UINT16 isMoveSizeStart;
-	if(stream_get_left(s) < 12)
+	if (stream_get_left(s) < 12)
 		return FALSE;
 	stream_read_UINT32(s, localmovesize->windowId); /* windowId (4 bytes) */
 
@@ -214,7 +214,7 @@ BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* 
 
 BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp)
 {
-	if(stream_get_left(s) < 516)
+	if (stream_get_left(s) < 516)
 		return FALSE;
 	stream_read_UINT32(s, get_appid_resp->windowId); /* windowId (4 bytes) */
 	stream_read(s, &get_appid_resp->applicationIdBuffer[0], 512); /* applicationId (256 UNICODE chars) */
@@ -226,7 +226,7 @@ BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER
 
 BOOL rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info)
 {
-	if(stream_get_left(s) < 4)
+	if (stream_get_left(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
 	return TRUE;
@@ -358,7 +358,7 @@ void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_
 
 BOOL rail_recv_handshake_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_handshake_order(s, &rail_order->handshake))
+	if (!rail_read_handshake_order(s, &rail_order->handshake))
 		return FALSE;
 
 	rail_order->handshake.buildNumber = 0x00001DB0;
@@ -395,61 +395,74 @@ BOOL rail_recv_handshake_order(rdpRailOrder* rail_order, wStream* s)
 	rail_order->sysparam.workArea.bottom = 768;
 
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, &rail_order->sysparam);
+			RailChannel_GetSystemParam, &rail_order->sysparam);
+
 	return TRUE;
 }
 
 BOOL rail_recv_exec_result_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_server_exec_result_order(s, &rail_order->exec_result))
+	if (!rail_read_server_exec_result_order(s, &rail_order->exec_result))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, &rail_order->exec_result);
+		RailChannel_ServerExecuteResult, &rail_order->exec_result);
+
 	return TRUE;
 }
 
 BOOL rail_recv_server_sysparam_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_server_sysparam_order(s, &rail_order->sysparam))
+	if (!rail_read_server_sysparam_order(s, &rail_order->sysparam))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM, &rail_order->sysparam);
+		RailChannel_ServerSystemParam, &rail_order->sysparam);
+
 	return TRUE;
 }
 
 BOOL rail_recv_server_minmaxinfo_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_server_minmaxinfo_order(s, &rail_order->minmaxinfo))
+	if (!rail_read_server_minmaxinfo_order(s, &rail_order->minmaxinfo))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO, &rail_order->minmaxinfo);
+		RailChannel_ServerMinMaxInfo, &rail_order->minmaxinfo);
+
 	return TRUE;
 }
 
 BOOL rail_recv_server_localmovesize_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_server_localmovesize_order(s, &rail_order->localmovesize))
+	if (!rail_read_server_localmovesize_order(s, &rail_order->localmovesize))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE, &rail_order->localmovesize);
+		RailChannel_ServerLocalMoveSize, &rail_order->localmovesize);
+
 	return TRUE;
 }
 
 BOOL rail_recv_server_get_appid_resp_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_server_get_appid_resp_order(s, &rail_order->get_appid_resp))
+	if (!rail_read_server_get_appid_resp_order(s, &rail_order->get_appid_resp))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP, &rail_order->get_appid_resp);
+		RailChannel_ServerGetAppIdResponse, &rail_order->get_appid_resp);
+
 	return TRUE;
 }
 
 BOOL rail_recv_langbar_info_order(rdpRailOrder* rail_order, wStream* s)
 {
-	if(!rail_read_langbar_info_order(s, &rail_order->langbar_info))
+	if (!rail_read_langbar_info_order(s, &rail_order->langbar_info))
 		return FALSE;
+
 	rail_send_channel_event(rail_order->plugin,
-		RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO, &rail_order->langbar_info);
+		RailChannel_ServerLanguageBarInfo, &rail_order->langbar_info);
+
 	return TRUE;
 }
 
@@ -458,7 +471,7 @@ BOOL rail_order_recv(rdpRailOrder* rail_order, wStream* s)
 	UINT16 orderType;
 	UINT16 orderLength;
 
-	if(!rail_read_pdu_header(s, &orderType, &orderLength))
+	if (!rail_read_pdu_header(s, &orderType, &orderLength))
 		return FALSE;
 
 	DEBUG_RAIL("Received %s PDU, length:%d",

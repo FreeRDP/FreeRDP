@@ -41,11 +41,11 @@ FREERDP_API int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* ins
 FREERDP_API int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
 FREERDP_API int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int data_size,
 	int flags, int total_size);
-FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* event);
+FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* event);
 FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count);
 FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance);
-FREERDP_API RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels);
+FREERDP_API wMessage* freerdp_channels_pop_event(rdpChannels* channels);
 FREERDP_API void freerdp_channels_close(rdpChannels* channels, freerdp* instance);
 
 FREERDP_API HANDLE freerdp_channels_get_event_handle(freerdp* instance);

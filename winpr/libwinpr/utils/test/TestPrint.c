@@ -37,7 +37,7 @@ int TestPrint(int argc, char* argv[])
 	_printf("%d\n",b);
 	_printf("%3d\n",b);
 	_printf("%03d\n",b);
-	c = 15.3; d = c / 3;
+	c = 15.3f; d = c / 3;
 	_printf("%3.2f\n",d);
 
 	/**

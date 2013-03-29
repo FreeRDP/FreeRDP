@@ -183,12 +183,13 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	if (cliprdr->received_caps)
 		cliprdr_send_clip_caps(cliprdr);
 
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_MONITOR_READY, NULL, NULL);
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
+
 	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
 }
 
@@ -240,24 +241,24 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 	stream_free(s);
 }
 
-static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+		case CliprdrChannel_FormatList:
 			cliprdr_process_format_list_event((cliprdrPlugin*) plugin, (RDP_CB_FORMAT_LIST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+		case CliprdrChannel_DataRequest:
 			cliprdr_process_format_data_request_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_REQUEST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+		case CliprdrChannel_DataResponse:
 			cliprdr_process_format_data_response_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 			break;
 
 		default:
-			DEBUG_WARN("unknown event type %d", event->event_type);
+			DEBUG_WARN("unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 
