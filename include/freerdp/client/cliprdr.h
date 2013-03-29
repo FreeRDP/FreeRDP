@@ -40,11 +40,11 @@
 /**
  * Clipboard Events
  */
-typedef RDP_EVENT RDP_CB_MONITOR_READY_EVENT;
+typedef wMessage RDP_CB_MONITOR_READY_EVENT;
 
 struct _RDP_CB_FORMAT_LIST_EVENT
 {
-	RDP_EVENT event;
+	wMessage event;
 	UINT32* formats;
 	UINT16 num_formats;
 	BYTE* raw_format_data;
@@ -54,14 +54,14 @@ typedef struct _RDP_CB_FORMAT_LIST_EVENT RDP_CB_FORMAT_LIST_EVENT;
 
 struct _RDP_CB_DATA_REQUEST_EVENT
 {
-	RDP_EVENT event;
+	wMessage event;
 	UINT32 format;
 };
 typedef struct _RDP_CB_DATA_REQUEST_EVENT RDP_CB_DATA_REQUEST_EVENT;
 
 struct _RDP_CB_DATA_RESPONSE_EVENT
 {
-	RDP_EVENT event;
+	wMessage event;
 	BYTE* data;
 	UINT32 size;
 };

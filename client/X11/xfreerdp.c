@@ -969,7 +969,7 @@ int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int si
 void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	xfInfo* xfi;
-	RDP_EVENT* event;
+	wMessage* event;
 
 	xfi = ((xfContext*) instance->context)->xfi;
 

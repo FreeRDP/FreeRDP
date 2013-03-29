@@ -100,7 +100,7 @@ int tf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int si
 
 void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
 	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
@@ -113,7 +113,7 @@ void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 
 void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	event = freerdp_channels_pop_event(channels);
 

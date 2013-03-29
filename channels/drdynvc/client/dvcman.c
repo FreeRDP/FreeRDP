@@ -131,7 +131,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 }
 
-static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* pEvent)
+static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, wMessage* pEvent)
 {
 	int status;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;

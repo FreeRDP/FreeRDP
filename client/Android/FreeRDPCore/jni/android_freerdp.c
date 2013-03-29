@@ -308,7 +308,7 @@ int android_receive_channel_data(freerdp* instance, int channelId, UINT8* data, 
 
 void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	event = freerdp_channels_pop_event(channels);
 

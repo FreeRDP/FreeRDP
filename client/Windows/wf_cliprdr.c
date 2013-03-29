@@ -59,7 +59,7 @@ static void wf_cliprdr_process_cb_data_response_event(wfInfo* wfi, RDP_CB_DATA_R
 
 }
 
-void wf_process_cliprdr_event(wfInfo* wfi, RDP_EVENT* event)
+void wf_process_cliprdr_event(wfInfo* wfi, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{

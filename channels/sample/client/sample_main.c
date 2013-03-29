@@ -94,7 +94,7 @@ static void sample_process_connect(rdpSvcPlugin* plugin)
 		return;
 }
 
-static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void sample_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	printf("sample_process_event:\n");
 

@@ -375,7 +375,7 @@ static void xf_process_tsmf_redraw_event(xfInfo* xfi, RDP_REDRAW_EVENT* revent)
 		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event)
+void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
@@ -400,7 +400,7 @@ void xf_tsmf_uninit(xfInfo* xfi)
 {
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, RDP_EVENT* event)
+void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
 {
 }
 

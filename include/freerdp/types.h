@@ -63,15 +63,4 @@ typedef struct _RECTANGLE_16 RECTANGLE_16;
 #include <freerdp/message.h>
 #include <winpr/collections.h>
 
-typedef struct _RDP_EVENT RDP_EVENT;
-
-typedef void (*RDP_EVENT_CALLBACK) (RDP_EVENT* event);
-
-struct _RDP_EVENT
-{
-	UINT32 id;
-	RDP_EVENT_CALLBACK on_event_free_callback;
-	void* user_data;
-};
-
 #endif /* __RDP_TYPES_H */

@@ -183,7 +183,7 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	if (cliprdr->received_caps)
 		cliprdr_send_clip_caps(cliprdr);
@@ -241,7 +241,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 	stream_free(s);
 }
 
-static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{

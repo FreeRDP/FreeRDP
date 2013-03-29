@@ -49,15 +49,15 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length)
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }
 
-static void on_free_rail_channel_event(RDP_EVENT* event)
+static void on_free_rail_channel_event(wMessage* event)
 {
-	rail_free_cloned_order(GetMessageType(event->id), event->user_data);
+	rail_free_cloned_order(GetMessageType(event->id), event->wParam);
 }
 
 void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param)
 {
 	void * payload = NULL;
-	RDP_EVENT* out_event = NULL;
+	wMessage* out_event = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
 
 	payload = rail_clone_order(event_type, param);
@@ -111,13 +111,13 @@ static void rail_process_addin_args(rdpRailOrder* rail_order, rdpSettings* setti
 	rail_send_client_exec_order(rail_order);
 }
 
-static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, wMessage* event)
 {
 	RAIL_SYSPARAM_ORDER* sysparam;
 
 	/* Send System Parameters */
 
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
+	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 	memmove(&rail_order->sysparam, sysparam, sizeof(RAIL_SYSPARAM_ORDER));
 
 	rail_send_client_sysparams_order(rail_order);
@@ -129,7 +129,7 @@ static void rail_recv_set_sysparams_event(rdpRailOrder* rail_order, RDP_EVENT* e
 	rail_process_addin_args(rail_order, rail_order->settings);
 }
 
-static void rail_recv_exec_remote_app_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_exec_remote_app_event(rdpRailOrder* rail_order, wMessage* event)
 {
 	/**
 	 * TODO: replace event system by an API to allow the execution
@@ -140,63 +140,63 @@ static void rail_recv_exec_remote_app_event(rdpRailOrder* rail_order, RDP_EVENT*
 	//rail_process_addin_args(rail_order, data);
 }
 
-static void rail_recv_activate_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_activate_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_ACTIVATE_ORDER* activate = (RAIL_ACTIVATE_ORDER*) event->user_data;
+	RAIL_ACTIVATE_ORDER* activate = (RAIL_ACTIVATE_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->activate, activate, sizeof(RAIL_ACTIVATE_ORDER));
 	rail_send_client_activate_order(rail_order);
 }
 
-static void rail_recv_sysmenu_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_sysmenu_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_SYSMENU_ORDER* sysmenu = (RAIL_SYSMENU_ORDER*) event->user_data;
+	RAIL_SYSMENU_ORDER* sysmenu = (RAIL_SYSMENU_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->sysmenu, sysmenu, sizeof(RAIL_SYSMENU_ORDER));
 	rail_send_client_sysmenu_order(rail_order);
 }
 
-static void rail_recv_syscommand_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_syscommand_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_SYSCOMMAND_ORDER* syscommand = (RAIL_SYSCOMMAND_ORDER*) event->user_data;
+	RAIL_SYSCOMMAND_ORDER* syscommand = (RAIL_SYSCOMMAND_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->syscommand, syscommand, sizeof(RAIL_SYSCOMMAND_ORDER));
 	rail_send_client_syscommand_order(rail_order);
 }
 
-static void rail_recv_notify_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_notify_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_NOTIFY_EVENT_ORDER* notify = (RAIL_NOTIFY_EVENT_ORDER*) event->user_data;
+	RAIL_NOTIFY_EVENT_ORDER* notify = (RAIL_NOTIFY_EVENT_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->notify_event, notify, sizeof(RAIL_NOTIFY_EVENT_ORDER));
 	rail_send_client_notify_event_order(rail_order);
 }
 
-static void rail_recv_window_move_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_window_move_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_WINDOW_MOVE_ORDER* window_move = (RAIL_WINDOW_MOVE_ORDER*) event->user_data;
+	RAIL_WINDOW_MOVE_ORDER* window_move = (RAIL_WINDOW_MOVE_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->window_move, window_move, sizeof(RAIL_WINDOW_MOVE_ORDER));
 	rail_send_client_window_move_order(rail_order);
 }
 
-static void rail_recv_app_req_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_app_req_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_GET_APPID_REQ_ORDER* get_appid_req = (RAIL_GET_APPID_REQ_ORDER*) event->user_data;
+	RAIL_GET_APPID_REQ_ORDER* get_appid_req = (RAIL_GET_APPID_REQ_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->get_appid_req, get_appid_req, sizeof(RAIL_GET_APPID_REQ_ORDER));
 	rail_send_client_get_appid_req_order(rail_order);
 }
 
-static void rail_recv_langbarinfo_event(rdpRailOrder* rail_order, RDP_EVENT* event)
+static void rail_recv_langbarinfo_event(rdpRailOrder* rail_order, wMessage* event)
 {
-	RAIL_LANGBAR_INFO_ORDER* langbar_info = (RAIL_LANGBAR_INFO_ORDER*) event->user_data;
+	RAIL_LANGBAR_INFO_ORDER* langbar_info = (RAIL_LANGBAR_INFO_ORDER*) event->wParam;
 
 	CopyMemory(&rail_order->langbar_info, langbar_info, sizeof(RAIL_LANGBAR_INFO_ORDER));
 	rail_send_client_langbar_info_order(rail_order);
 }
 
-static void rail_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void rail_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	railPlugin* rail = NULL;
 	rail = (railPlugin*) plugin;

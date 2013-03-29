@@ -26,9 +26,9 @@
 #include <X11/Xatom.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/utils/event.h>
-#include <winpr/stream.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "xf_cliprdr.h"
@@ -333,11 +333,11 @@ static void xf_cliprdr_send_raw_format_list(xfInfo* xfi)
 			CliprdrChannel_FormatList, NULL, NULL);
 
 	event->raw_format_data = (BYTE*) malloc(length);
-	memcpy(event->raw_format_data, format_data, length);
+	CopyMemory(event->raw_format_data, format_data, length);
 	event->raw_format_data_size = length;
 	XFree(format_data);
 
-	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (wMessage*) event);
 }
 
 static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
@@ -350,7 +350,7 @@ static void xf_cliprdr_send_null_format_list(xfInfo* xfi)
 
 	event->num_formats = 0;
 
-	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (wMessage*) event);
 }
 
 static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
@@ -368,7 +368,7 @@ static void xf_cliprdr_send_supported_format_list(xfInfo* xfi)
 	for (i = 0; i < cb->num_format_mappings; i++)
 		event->formats[i] = cb->format_mappings[i].format_id;
 
-	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (wMessage*) event);
 }
 
 static void xf_cliprdr_send_format_list(xfInfo* xfi)
@@ -401,7 +401,7 @@ static void xf_cliprdr_send_data_request(xfInfo* xfi, UINT32 format)
 
 	event->format = format;
 
-	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (wMessage*) event);
 }
 
 static void xf_cliprdr_send_data_response(xfInfo* xfi, BYTE* data, int size)
@@ -415,7 +415,7 @@ static void xf_cliprdr_send_data_response(xfInfo* xfi, BYTE* data, int size)
 	event->data = data;
 	event->size = size;
 
-	freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+	freerdp_channels_send_event(cb->channels, (wMessage*) event);
 }
 
 static void xf_cliprdr_send_null_data_response(xfInfo* xfi)
@@ -513,7 +513,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		event->num_formats = num;
 		XFree(data);
 
-		freerdp_channels_send_event(cb->channels, (RDP_EVENT*) event);
+		freerdp_channels_send_event(cb->channels, (wMessage*) event);
 	}
 	else
 	{
@@ -529,7 +529,7 @@ static BYTE* xf_cliprdr_process_requested_raw(BYTE* data, int* size)
 	BYTE* outbuf;
 
 	outbuf = (BYTE*) malloc(*size);
-	memcpy(outbuf, data, *size);
+	CopyMemory(outbuf, data, *size);
 	return outbuf;
 }
 
@@ -606,7 +606,7 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 		inbuf = malloc(*size + 1);
 		ZeroMemory(inbuf, *size + 1);
 
-		memcpy(inbuf, data, *size);
+		CopyMemory(inbuf, data, *size);
 	}
 
 	outbuf = (BYTE*) malloc(*size + 200);
@@ -627,7 +627,7 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 	}
 	/* StartHTML */
 	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 23, num, 10);
+	CopyMemory(outbuf + 23, num, 10);
 	if (in == NULL)
 	{
 		strcat((char*) outbuf, "<HTML><BODY>");
@@ -635,11 +635,11 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 	strcat((char*) outbuf, "<!--StartFragment-->");
 	/* StartFragment */
 	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 69, num, 10);
+	CopyMemory(outbuf + 69, num, 10);
 	strcat((char*) outbuf, (char*) inbuf);
 	/* EndFragment */
 	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 93, num, 10);
+	CopyMemory(outbuf + 93, num, 10);
 	strcat((char*) outbuf, "<!--EndFragment-->");
 	if (in == NULL)
 	{
@@ -647,7 +647,7 @@ static BYTE* xf_cliprdr_process_requested_html(BYTE* data, int* size)
 	}
 	/* EndHTML */
 	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 43, num, 10);
+	CopyMemory(outbuf + 43, num, 10);
 
 	*size = strlen((char*) outbuf) + 1;
 	free(inbuf);
@@ -775,7 +775,7 @@ static BOOL xf_cliprdr_get_requested_data(xfInfo* xfi, Atom target)
 				bytes_left = length * format / 8;
 				DEBUG_X11("%d bytes", (int)bytes_left);
 				cb->incr_data = (BYTE*) realloc(cb->incr_data, cb->incr_data_length + bytes_left);
-				memcpy(cb->incr_data + cb->incr_data_length, data, bytes_left);
+				CopyMemory(cb->incr_data + cb->incr_data_length, data, bytes_left);
 				cb->incr_data_length += bytes_left;
 				XFree(data);
 				data = NULL;
@@ -887,7 +887,7 @@ static void xf_cliprdr_process_cb_format_list_event(xfInfo* xfi, RDP_CB_FORMAT_L
 static void xf_cliprdr_process_text(clipboardContext* cb, BYTE* data, int size)
 {
 	cb->data = (BYTE*) malloc(size);
-	memcpy(cb->data, data, size);
+	CopyMemory(cb->data, data, size);
 	cb->data_length = size;
 	crlf2lf(cb->data, &cb->data_length);
 }
@@ -961,7 +961,7 @@ static void xf_cliprdr_process_html(clipboardContext* cb, BYTE* data, int size)
 	}
 
 	cb->data = (BYTE*) malloc(size - start + 1);
-	memcpy(cb->data, data + start, end - start);
+	CopyMemory(cb->data, data + start, end - start);
 	cb->data_length = end - start;
 	crlf2lf(cb->data, &cb->data_length);
 }
@@ -1031,7 +1031,7 @@ static void xf_cliprdr_process_cb_data_response_event(xfInfo* xfi, RDP_CB_DATA_R
 	cb->respond = NULL;
 }
 
-void xf_process_cliprdr_event(xfInfo* xfi, RDP_EVENT* event)
+void xf_process_cliprdr_event(xfInfo* xfi, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
@@ -1148,7 +1148,7 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent)
 				}
 				if (data)
 				{
-					memcpy(&alt_format, data, 4);
+					CopyMemory(&alt_format, data, 4);
 					XFree(data);
 				}
 			}

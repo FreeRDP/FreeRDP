@@ -278,6 +278,10 @@ WINPR_API void ObjectPool_Free(wObjectPool* pool);
 
 /* Message Queue */
 
+typedef struct _wMessage wMessage;
+
+typedef void (*MESSAGE_FREE_FN)(wMessage* message);
+
 struct _wMessage
 {
 	UINT32 id;
@@ -285,8 +289,8 @@ struct _wMessage
 	void* wParam;
 	void* lParam;
 	UINT64 time;
+	MESSAGE_FREE_FN Free;
 };
-typedef struct _wMessage wMessage;
 
 struct _wMessageQueue
 {

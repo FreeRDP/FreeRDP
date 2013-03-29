@@ -242,14 +242,14 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 	rail->rail_DesktopNonMonitored = xf_rail_DesktopNonMonitored;
 }
 
-static void xf_on_free_rail_client_event(RDP_EVENT* event)
+static void xf_on_free_rail_client_event(wMessage* event)
 {
-	rail_free_cloned_order(GetMessageType(event->id), event->user_data);
+	rail_free_cloned_order(GetMessageType(event->id), event->wParam);
 }
 
 static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
 {
-	RDP_EVENT* out_event = NULL;
+	wMessage* out_event = NULL;
 	void* payload = NULL;
 
 	payload = rail_clone_order(event_type, param);
@@ -447,11 +447,11 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	xfw->local_move.state = LMS_TERMINATING;
 }
 
-void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	RAIL_SYSPARAM_ORDER* sysparam;
 
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
+	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 
 	sysparam->workArea.left = xfi->workArea.x;
 	sysparam->workArea.top = xfi->workArea.y;
@@ -479,11 +479,11 @@ const char* error_code_names[] =
 		"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
-void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	RAIL_EXEC_RESULT_ORDER* exec_result;
 
-	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->user_data;
+	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->wParam;
 
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{
@@ -497,9 +497,9 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 	}
 }
 
-void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
-	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->user_data;
+	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 
 	switch (sysparam->param)
 	{
@@ -511,11 +511,11 @@ void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChannels* channels, R
 	}
 }
 
-void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
-	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*) event->user_data;
+	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*) event->wParam;
 
 	rail = ((rdpContext*) xfi->context)->rail;
 	rail_window = window_list_get_by_id(rail->list, minmax->windowId);
@@ -553,14 +553,14 @@ const char* movetype_names[] =
 	"RAIL_WMSZ_KEYSIZE"
 };
 
-void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	int x, y;
 	rdpRail* rail;
 	int direction = 0;
 	Window child_window;
 	rdpWindow* rail_window = NULL;
-	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->user_data;
+	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->wParam;
 
 	rail = ((rdpContext*) xfi->context)->rail;
 	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
@@ -645,10 +645,10 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 	}
 }
 
-void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	RAIL_GET_APPID_RESP_ORDER* appid_resp =
-		(RAIL_GET_APPID_RESP_ORDER*) event->user_data;
+		(RAIL_GET_APPID_RESP_ORDER*) event->wParam;
 
 	printf("Server Application ID Response PDU: windowId=0x%X "
 		"applicationId=(length=%d dump)\n",
@@ -657,16 +657,16 @@ void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, RDP_EV
 	winpr_HexDump(appid_resp->applicationId.string, appid_resp->applicationId.length);
 }
 
-void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	RAIL_LANGBAR_INFO_ORDER* langbar =
-		(RAIL_LANGBAR_INFO_ORDER*) event->user_data;
+		(RAIL_LANGBAR_INFO_ORDER*) event->wParam;
 
 	printf("Language Bar Information PDU: languageBarStatus=0x%X\n",
 		langbar->languageBarStatus);
 }
 
-void xf_process_rail_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
+void xf_process_rail_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{

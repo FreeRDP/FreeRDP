@@ -831,7 +831,7 @@ static UINT32 FREERDP_CC MyVirtualChannelWrite(UINT32 openHandle, void* pData, U
 	return CHANNEL_RC_OK;
 }
 
-static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, RDP_EVENT* event)
+static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, wMessage* event)
 {
 	int index;
 	rdpChannels* channels;
@@ -1162,7 +1162,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
  * @param channels the channel manager instance
  * @param event an event object created by freerdp_event_new()
  */
-FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* event)
+FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* event)
 {
 	int index;
 	const char* name = NULL;
@@ -1206,7 +1206,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 	if (lchannel_data->open_event_proc)
 	{
 		lchannel_data->open_event_proc(lchannel_data->open_handle, CHANNEL_EVENT_USER,
-			event, sizeof(RDP_EVENT), sizeof(RDP_EVENT), 0);
+			event, sizeof(wMessage), sizeof(wMessage), 0);
 	}
 
 	return 0;
@@ -1218,7 +1218,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, RDP_EVENT* ev
 static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
 	wMessage message;
-	RDP_EVENT* event;
+	wMessage* event;
 	CHANNEL_OPEN_EVENT* item;
 	rdpChannel* lrdp_channel;
 	struct channel_data* lchannel_data;
@@ -1253,7 +1253,7 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 		}
 		else if (message.id == 1)
 		{
-			event = (RDP_EVENT*) message.wParam;
+			event = (wMessage*) message.wParam;
 
 			/**
 			 * Ignore for now, the same event is being pushed on the In queue,
@@ -1320,16 +1320,16 @@ BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 	return TRUE;
 }
 
-RDP_EVENT* freerdp_channels_pop_event(rdpChannels* channels)
+wMessage* freerdp_channels_pop_event(rdpChannels* channels)
 {
 	wMessage message;
-	RDP_EVENT* event = NULL;
+	wMessage* event = NULL;
 
 	if (MessageQueue_Peek(channels->MsgPipe->In, &message, TRUE))
 	{
 		if (message.id == 1)
 		{
-			event = (RDP_EVENT*) message.wParam;
+			event = (wMessage*) message.wParam;
 		}
 	}
 
