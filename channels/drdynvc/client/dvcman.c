@@ -140,11 +140,11 @@ static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* 
 
 	if (status == 0)
 	{
-		DEBUG_DVC("event_type %d pushed.", pEvent->event_type);
+		DEBUG_DVC("event_type %d pushed.", GetMessageType(pEvent->id));
 	}
 	else
 	{
-		DEBUG_WARN("event_type %d push failed.", pEvent->event_type);
+		DEBUG_WARN("event_type %d push failed.", GetMessageType(pEvent->id));
 	}
 
 	return status;

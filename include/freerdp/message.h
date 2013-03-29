@@ -286,25 +286,29 @@
 
 #define RailChannel_ClientExecute				1
 #define RailChannel_ClientActivate				2
-#define RailChannel_ClientSystemParameters			3
-#define RailChannel_ClientSystemCommand				4
-#define RailChannel_ClientHandshake				5
-#define RailChannel_ServerHandshake				6
-#define RailChannel_ClientNotifyEvent				7
-#define RailChannel_ClientWindowMove				8
-#define RailChannel_ServerLocalMoveSize				9
-#define RailChannel_ServerMinMaxInfo				10
-#define RailChannel_ClientInformation				11
-#define RailChannel_ClientSystemMenu				12
-#define RailChannel_ClientLanguageBarInfo			13
-#define RailChannel_ServerLanguageBarInfo			14
-#define RailChannel_ServerExecuteResult				15
-#define RailChannel_ClientGetAppIdRequest			16
-#define RailChannel_ServerGetAppIdResponse			17
+#define RailChannel_GetSystemParam				3
+#define RailChannel_ClientSystemParam				4
+#define RailChannel_ServerSystemParam				5
+#define RailChannel_ClientSystemCommand				6
+#define RailChannel_ClientHandshake				7
+#define RailChannel_ServerHandshake				8
+#define RailChannel_ClientNotifyEvent				9
+#define RailChannel_ClientWindowMove				10
+#define RailChannel_ServerLocalMoveSize				11
+#define RailChannel_ServerMinMaxInfo				12
+#define RailChannel_ClientInformation				13
+#define RailChannel_ClientSystemMenu				14
+#define RailChannel_ClientLanguageBarInfo			15
+#define RailChannel_ServerLanguageBarInfo			16
+#define RailChannel_ServerExecuteResult				17
+#define RailChannel_ClientGetAppIdRequest			18
+#define RailChannel_ServerGetAppIdResponse			19
 
 #define FREERDP_RAIL_CHANNEL_CLIENT_EXECUTE			MakeMessageId(RailChannel, ClientExecute)
 #define FREERDP_RAIL_CHANNEL_CLIENT_ACTIVATE			MakeMessageId(RailChannel, ClientActivate)
-#define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_PARAMETERS		MakeMessageId(RailChannel, ClientSystemParameters)
+#define FREERDP_RAIL_CHANNEL_GET_SYSTEM_PARAM			MakeMessageId(RailChannel, GetSystemParam)
+#define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_PARAM		MakeMessageId(RailChannel, ClientSystemParam)
+#define FREERDP_RAIL_CHANNEL_SERVER_SYSTEM_PARAM		MakeMessageId(RailChannel, ClientSystemParam)
 #define FREERDP_RAIL_CHANNEL_CLIENT_SYSTEM_COMMAND		MakeMessageId(RailChannel, ClientSystemCommand)
 #define FREERDP_RAIL_CHANNEL_CLIENT_HANDSHAKE			MakeMessageId(RailChannel, ClientHandshake)
 #define FREERDP_RAIL_CHANNEL_SERVER_HANDSHAKE			MakeMessageId(RailChannel, ServerHandshake)

@@ -61,21 +61,21 @@ static void wf_cliprdr_process_cb_data_response_event(wfInfo* wfi, RDP_CB_DATA_R
 
 void wf_process_cliprdr_event(wfInfo* wfi, RDP_EVENT* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_CB_MONITOR_READY:
+		case CliprdrChannel_MonitorReady:
 			wf_cliprdr_process_cb_monitor_ready_event(wfi);
 			break;
 
-		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+		case CliprdrChannel_FormatList:
 			wf_cliprdr_process_cb_format_list_event(wfi, (RDP_CB_FORMAT_LIST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
+		case CliprdrChannel_DataRequest:
 			wf_cliprdr_process_cb_data_request_event(wfi, (RDP_CB_DATA_REQUEST_EVENT*) event);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+		case CliprdrChannel_DataResponse:
 			wf_cliprdr_process_cb_data_response_event(wfi, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 			break;
 

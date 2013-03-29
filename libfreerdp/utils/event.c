@@ -124,8 +124,6 @@ RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 
 	if (event)
 	{
-		event->event_class = event_class;
-		event->event_type = event_type;
 		event->on_event_free_callback = on_event_free_callback;
 		event->user_data = user_data;
 

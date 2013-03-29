@@ -243,7 +243,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
 		case CliprdrChannel_FormatList:
 			cliprdr_process_format_list_event((cliprdrPlugin*) plugin, (RDP_CB_FORMAT_LIST_EVENT*) event);
@@ -258,7 +258,7 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 			break;
 
 		default:
-			DEBUG_WARN("unknown event type %d", event->event_type);
+			DEBUG_WARN("unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 

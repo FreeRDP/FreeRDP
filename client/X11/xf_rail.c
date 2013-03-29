@@ -244,7 +244,7 @@ void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
 
 static void xf_on_free_rail_client_event(RDP_EVENT* event)
 {
-	rail_free_cloned_order(event->event_type, event->user_data);
+	rail_free_cloned_order(GetMessageType(event->id), event->user_data);
 }
 
 static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
@@ -281,7 +281,7 @@ void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 	activate.windowId = rail_window->windowId;
 	activate.enabled = enabled;
 
-	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, &activate);
+	xf_send_rail_client_event(channels, RailChannel_ClientActivate, &activate);
 }
 
 void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 command)
@@ -294,7 +294,7 @@ void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 com
 	syscommand.windowId = windowId;
 	syscommand.command = command;
 
-	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, &syscommand);
+	xf_send_rail_client_event(channels, RailChannel_ClientSystemCommand, &syscommand);
 }
 
 /**
@@ -303,7 +303,7 @@ void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 com
  * send an update to the RDP server informing it of the new window position
  * and size.
  */
-void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
+void xf_rail_adjust_position(xfInfo* xfi, rdpWindow* window)
 {
 	xfWindow* xfw;
 	rdpChannels* channels;
@@ -360,7 +360,7 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow *window)
 			window->windowOffsetX, window->windowOffsetY, 
 			window->windowWidth, window->windowHeight);
 
-		xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+		xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
         }
 }
 
@@ -414,8 +414,7 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
         window_move.right = window_move.left + xfw->width; /* In the update to RDP the position is one past the window */
         window_move.bottom = window_move.top + xfw->height;
 
-	xf_send_rail_client_event(channels, 
-		RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &window_move);
+	xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
 	
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
@@ -466,7 +465,7 @@ void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, RDP
 
 	sysparam->dragFullWindows = FALSE;
 
-	xf_send_rail_client_event(channels, RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sysparam);
+	xf_send_rail_client_event(channels, RailChannel_ClientSystemParam, sysparam);
 }
 
 const char* error_code_names[] =
@@ -669,33 +668,33 @@ void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, RDP_E
 
 void xf_process_rail_event(xfInfo* xfi, rdpChannels* channels, RDP_EVENT* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS:
+		case RailChannel_GetSystemParam:
 			xf_process_rail_get_sysparams_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS:
+		case RailChannel_ServerExecuteResult:
 			xf_process_rail_exec_result_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM:
+		case RailChannel_ServerSystemParam:
 			xf_process_rail_server_sysparam_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO:
+		case RailChannel_ServerMinMaxInfo:
 			xf_process_rail_server_minmaxinfo_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE:
+		case RailChannel_ServerLocalMoveSize:
 			xf_process_rail_server_localmovesize_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP:
+		case RailChannel_ServerGetAppIdResponse:
 			xf_process_rail_appid_resp_event(xfi, channels, event);
 			break;
 
-		case RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO:
+		case RailChannel_ServerLanguageBarInfo:
 			xf_process_rail_langbarinfo_event(xfi, channels, event);
 			break;
 
