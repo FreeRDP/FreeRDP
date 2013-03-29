@@ -491,15 +491,11 @@ xfWindow* xf_CreateWindow(xfInfo* xfi, rdpWindow* wnd, int x, int y, int width, 
 	window->height = height;
 
 	/*
-	 * this window need decorations the WS_EX_APPWINDOW is used to
-	 * tell the client to use local decorations only sent from xrdp
-	 *
-	 * Marc: we need to find another value than WS_EX_APPWINDOW for XRDP
-	 * since it is used by the Microsoft RDP server for programs like cmd.exe
+	 * WS_EX_DECORATIONS is used by XRDP and instructs
+	 * the client to use local window decorations
 	 */
 
-	window->decorations = FALSE;
-	//window->decorations = (wnd->extendedStyle & WS_EX_APPWINDOW) ? TRUE : FALSE;
+	window->decorations = (wnd->extendedStyle & WS_EX_DECORATIONS) ? TRUE : FALSE;
 
 	window->fullscreen = FALSE;
 	window->window = wnd;
