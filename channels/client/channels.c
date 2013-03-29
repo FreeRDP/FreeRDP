@@ -138,75 +138,73 @@ struct rdp_channels
  */
 static rdpChannels* g_init_channels;
 
-/* The list of all channel managers. */
-typedef struct rdp_channels_list rdpChannelsList;
-
-struct rdp_channels_list
-{
-	rdpChannels* channels;
-	rdpChannelsList* next;
-};
-
-static rdpChannelsList* g_channels_list;
+static wArrayList* g_ChannelsList = NULL;
 
 /* To generate unique sequence for all open handles */
 static int g_open_handle_sequence;
 
 /* For locking the global resources */
 static HANDLE g_mutex_init;
-static HANDLE g_mutex_list;
 
-/* returns the channels for the open handle passed in */
 static rdpChannels* freerdp_channels_find_by_open_handle(int open_handle, int* pindex)
 {
-	int lindex;
-	rdpChannels* channels;
-	rdpChannelsList* channels_list;
+	int i, j;
+	BOOL found = FALSE;
+	rdpChannels* channels = NULL;
 
-	WaitForSingleObject(g_mutex_list, INFINITE);
+	ArrayList_Lock(g_ChannelsList);
 
-	for (channels_list = g_channels_list; channels_list; channels_list = channels_list->next)
+	i = j = 0;
+	channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, i++);
+
+	while (channels)
 	{
-		channels = channels_list->channels;
-
-		for (lindex = 0; lindex < channels->num_channels_data; lindex++)
+		for (j = 0; j < channels->num_channels_data; j++)
 		{
-			if (channels->channels_data[lindex].open_handle == open_handle)
+			if (channels->channels_data[j].open_handle == open_handle)
 			{
-				ReleaseMutex(g_mutex_list);
-				*pindex = lindex;
-				return channels;
+				*pindex = j;
+				found = TRUE;
+				break;
 			}
 		}
+
+		if (found)
+			break;
+
+		channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, i++);
 	}
 
-	ReleaseMutex(g_mutex_list);
+	ArrayList_Unlock(g_ChannelsList);
 
-	return NULL;
+	return (found) ? channels : NULL;
 }
 
-/* returns the channels for the rdp instance passed in */
 static rdpChannels* freerdp_channels_find_by_instance(freerdp* instance)
 {
-	rdpChannels* channels;
-	rdpChannelsList* channels_list;
+	int index;
+	BOOL found = FALSE;
+	rdpChannels* channels = NULL;
 
-	WaitForSingleObject(g_mutex_list, INFINITE);
+	ArrayList_Lock(g_ChannelsList);
 
-	for (channels_list = g_channels_list; channels_list; channels_list = channels_list->next)
+	index = 0;
+	channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, index++);
+
+	while (channels)
 	{
-		channels = channels_list->channels;
-
 		if (channels->instance == instance)
 		{
-			ReleaseMutex(g_mutex_list);
-			return channels;
+			found = TRUE;
+			break;
 		}
+
+		channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, index++);
 	}
 
-	ReleaseMutex(g_mutex_list);
+	ArrayList_Unlock(g_ChannelsList);
 
-	return NULL;
+	return (found) ? channels : NULL;
 }
 
 /* returns struct channel_data for the channel name passed in */
@@ -291,9 +289,9 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
+	rdpChannel* channel;
 	rdpChannels* channels;
 	struct lib_data* llib;
-	rdpChannel* lrdp_channel;
 	PCHANNEL_DEF lchannel_def;
 	struct channel_data* lchannel_data;
 
@@ -360,11 +358,9 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 	for (index = 0; index < channelCount; index++)
 	{
 		lchannel_def = pChannel + index;
-		lchannel_data = channels->channels_data + channels->num_channels_data;
+		lchannel_data = &channels->channels_data[channels->num_channels_data];
 
-		WaitForSingleObject(g_mutex_list, INFINITE);
 		lchannel_data->open_handle = g_open_handle_sequence++;
-		ReleaseMutex(g_mutex_list);
 
 		lchannel_data->flags = 1; /* init */
 		strncpy(lchannel_data->name, lchannel_def->name, CHANNEL_NAME_LEN);
@@ -372,9 +368,9 @@ static UINT32 FREERDP_CC MyVirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF 
 
 		if (channels->settings->ChannelCount < 16)
 		{
-			lrdp_channel = channels->settings->ChannelDefArray + channels->settings->ChannelCount;
-			strncpy(lrdp_channel->Name, lchannel_def->name, 7);
-			lrdp_channel->options = lchannel_def->options;
+			channel = channels->settings->ChannelDefArray + channels->settings->ChannelCount;
+			strncpy(channel->Name, lchannel_def->name, 7);
+			channel->options = lchannel_def->options;
 			channels->settings->ChannelCount++;
 		}
 		else
@@ -594,21 +590,20 @@ static UINT32 FREERDP_CC MyVirtualChannelEventPush(UINT32 openHandle, wMessage* 
 int freerdp_channels_global_init(void)
 {
 	g_init_channels = NULL;
-	g_channels_list = NULL;
 	g_open_handle_sequence = 1;
 	g_mutex_init = CreateMutex(NULL, FALSE, NULL);
-	g_mutex_list = CreateMutex(NULL, FALSE, NULL);
+
+	if (!g_ChannelsList)
+		g_ChannelsList = ArrayList_New(TRUE);
 
 	return 0;
 }
 
 int freerdp_channels_global_uninit(void)
 {
-	while (g_channels_list)
-		freerdp_channels_free(g_channels_list->channels);
+	/* TODO: free channels list */
 
 	CloseHandle(g_mutex_init);
-	CloseHandle(g_mutex_list);
 
 	return 0;
 }
@@ -616,53 +611,22 @@ int freerdp_channels_global_uninit(void)
 rdpChannels* freerdp_channels_new(void)
 {
 	rdpChannels* channels;
-	rdpChannelsList* channels_list;
 
 	channels = (rdpChannels*) malloc(sizeof(rdpChannels));
 	ZeroMemory(channels, sizeof(rdpChannels));
 
 	channels->MsgPipe = MessagePipe_New();
 
-	/* Add it to the global list */
-	channels_list = (rdpChannelsList*) malloc(sizeof(rdpChannelsList));
-	ZeroMemory(channels_list, sizeof(rdpChannelsList));
-	channels_list->channels = channels;
-
-	WaitForSingleObject(g_mutex_list, INFINITE);
-	channels_list->next = g_channels_list;
-	g_channels_list = channels_list;
-	ReleaseMutex(g_mutex_list);
+	ArrayList_Add(g_ChannelsList, (void*) channels);
 
 	return channels;
 }
 
 void freerdp_channels_free(rdpChannels* channels)
 {
-	rdpChannelsList* list;
-	rdpChannelsList* prev;
-
 	MessagePipe_Free(channels->MsgPipe);
 
-	/* Remove from global list */
-
-	WaitForSingleObject(g_mutex_list, INFINITE);
-
-	for (prev = NULL, list = g_channels_list; list; prev = list, list = list->next)
-	{
-		if (list->channels == channels)
-			break;
-	}
-
-	if (list)
-	{
-		if (prev)
-			prev->next = list->next;
-		else
-			g_channels_list = list->next;
-		free(list);
-	}
-
-	ReleaseMutex(g_mutex_list);
+	/* TODO: remove from channels list */
 
 	free(channels);
 }
@@ -729,7 +693,7 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 
 	entry = (PVIRTUALCHANNELENTRY) freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
-	if (entry == NULL)
+	if (!entry)
 	{
 		DEBUG_CHANNELS("failed to find export function");
 		return 1;
@@ -745,42 +709,10 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 {
 	int index;
-	void* dummy;
 	struct lib_data* llib;
-	CHANNEL_DEF lchannel_def;
 
 	DEBUG_CHANNELS("enter");
 	channels->instance = instance;
-
-	/**
-         * If rdpsnd is registered but not rdpdr, it's necessary to register a fake
-	 * rdpdr channel to make sound work. This is a workaround for Window 7 and
-	 * Windows 2008
-	 */
-	if (freerdp_channels_find_channel_data_by_name(channels, "rdpsnd", 0) != 0 &&
-		freerdp_channels_find_channel_data_by_name(channels, "rdpdr", 0) == 0)
-	{
-		lchannel_def.options = CHANNEL_OPTION_INITIALIZED |
-			CHANNEL_OPTION_ENCRYPT_RDP;
-
-		strcpy(lchannel_def.name, "rdpdr");
-
-		channels->can_call_init = 1;
-		channels->settings = instance->settings;
-
-		WaitForSingleObject(g_mutex_init, INFINITE);
-
-		g_init_channels = channels;
-		MyVirtualChannelInit(&dummy, &lchannel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, 0);
-		g_init_channels = NULL;
-
-		ReleaseMutex(g_mutex_init);
-
-		channels->can_call_init = 0;
-		channels->settings = 0;
-
-		DEBUG_CHANNELS("registered fake rdpdr for rdpsnd.");
-	}
 
 	for (index = 0; index < channels->num_libs_data; index++)
 	{
