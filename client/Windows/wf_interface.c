@@ -305,6 +305,7 @@ BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	wfInfo* wfi;
+	DWORD dwStyle;
 	rdpCache* cache;
 	wfContext* context;
 	WCHAR lpWindowName[64];
@@ -366,10 +367,15 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
+	if (!settings->Decorations)
+		dwStyle = WS_CHILD | WS_BORDER;
+	else
+		dwStyle = 0;
+
 	if (!wfi->hwnd)
 	{
-		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName,
-			0, 0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
+		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName, dwStyle,
+			0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
 
 		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
 	}
@@ -714,6 +720,7 @@ int wf_global_uninit()
 
 wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
 {
+	int index;
 	wfInfo* wfi;
 	freerdp* instance;
 
@@ -737,6 +744,13 @@ wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
 
 	instance->context->argc = argc;
 	instance->context->argv = argv;
+
+	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
+
+	for (index = 0; index < argc; index++)
+	{
+		instance->context->argv[index] = _strdup(argv[index]);
+	}
 
 	wfi->hWndParent = hWndParent;
 	wfi->hInstance = hInstance;
