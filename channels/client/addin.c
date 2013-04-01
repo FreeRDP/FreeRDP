@@ -21,14 +21,15 @@
 #include "config.h"
 #endif
 
-#include <freerdp/addin.h>
-
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
 #include <winpr/collections.h>
+
+#include <freerdp/addin.h>
+#include <freerdp/client/channels.h>
 
 #include "tables.h"
 
