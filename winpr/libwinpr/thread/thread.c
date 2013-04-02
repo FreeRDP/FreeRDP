@@ -125,7 +125,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
-	pthread_exit((void*) dwExitCode);
+	pthread_exit((void*) (size_t) dwExitCode);
 }
 
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)

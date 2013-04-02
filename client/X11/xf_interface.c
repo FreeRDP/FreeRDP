@@ -74,8 +74,6 @@
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
 
-#include "xfreerdp.h"
-
 static long xv_port = 0;
 static const size_t password_size = 512;
 
@@ -1438,6 +1436,8 @@ void* xf_thread(void* param)
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 	xf_free(xfi);
+
+	exit_code = 123;
 
 	ExitThread(exit_code);
 }
