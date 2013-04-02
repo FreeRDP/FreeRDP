@@ -40,6 +40,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_keyboard.h
 	xf_window.c
 	xf_window.h
+	xf_interface.c
+	xf_interface.h
 	xfreerdp.c
 	xfreerdp.h)
 
