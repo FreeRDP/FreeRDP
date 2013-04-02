@@ -1086,17 +1086,6 @@ void xf_window_free(xfInfo* xfi)
 	xf_cliprdr_uninit(xfi);
 }
 
-void xf_free(xfInfo* xfi)
-{
-	xf_window_free(xfi);
-
-	free(xfi->bmp_codec_none);
-
-	XCloseDisplay(xfi->display);
-
-	free(xfi);
-}
-
 void* xf_update_thread(void* arg)
 {
 	int status;
@@ -1474,4 +1463,50 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 		 reason = XF_EXIT_UNKNOWN;
 
 	return reason;
+}
+
+/**
+ * Client Interface
+ */
+
+int xf_global_init()
+{
+	setlocale(LC_ALL, "");
+	freerdp_handle_signals();
+	freerdp_channels_global_init();
+
+	return 0;
+}
+
+int xf_global_uninit()
+{
+	freerdp_channels_global_uninit();
+
+	return 0;
+}
+
+int xf_start(xfInfo* wfi)
+{
+	return 0;
+}
+
+int xf_stop(xfInfo* wfi)
+{
+	return 0;
+}
+
+xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv)
+{
+	return NULL;
+}
+
+void xf_free(xfInfo* xfi)
+{
+	xf_window_free(xfi);
+
+	free(xfi->bmp_codec_none);
+
+	XCloseDisplay(xfi->display);
+
+	free(xfi);
 }

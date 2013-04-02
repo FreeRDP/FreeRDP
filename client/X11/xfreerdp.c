@@ -46,11 +46,7 @@ int main(int argc, char* argv[])
 	DWORD dwExitCode;
 	freerdp* instance;
 
-	freerdp_handle_signals();
-
-	setlocale(LC_ALL, "");
-
-	freerdp_channels_global_init();
+	xf_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
@@ -78,7 +74,7 @@ int main(int argc, char* argv[])
 	freerdp_context_free(instance);
 	freerdp_free(instance);
 
-	freerdp_channels_global_uninit();
+	xf_global_uninit();
 
 	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }
