@@ -107,8 +107,8 @@ WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LP
 
 WINPR_API VOID ExitProcess(UINT uExitCode);
 
-WINPR_API HANDLE _GetCurrentProcess(VOID);
-WINPR_API DWORD GetCurrentProcessId(VOID);
+WINPR_API HANDLE _GetCurrentProcess(void);
+WINPR_API DWORD GetCurrentProcessId(void);
 
 WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 
@@ -125,24 +125,24 @@ WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThr
 
 WINPR_API VOID ExitThread(DWORD dwExitCode);
 
-WINPR_API HANDLE _GetCurrentThread(VOID);
-WINPR_API DWORD GetCurrentThreadId(VOID);
+WINPR_API HANDLE _GetCurrentThread(void);
+WINPR_API DWORD GetCurrentThreadId(void);
 
 WINPR_API DWORD ResumeThread(HANDLE hThread);
 WINPR_API DWORD SuspendThread(HANDLE hThread);
-WINPR_API BOOL SwitchToThread(VOID);
+WINPR_API BOOL SwitchToThread(void);
 
 WINPR_API BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode);
 
 /* Processor */
 
-WINPR_API DWORD GetCurrentProcessorNumber(VOID);
+WINPR_API DWORD GetCurrentProcessorNumber(void);
 
 /* Thread-Local Storage */
 
 #define TLS_OUT_OF_INDEXES	((DWORD) 0xFFFFFFFF)
 
-WINPR_API DWORD TlsAlloc(VOID);
+WINPR_API DWORD TlsAlloc(void);
 WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);
 WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue);
 WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
