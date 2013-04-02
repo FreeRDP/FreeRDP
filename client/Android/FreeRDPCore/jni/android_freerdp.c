@@ -536,8 +536,12 @@ JNIEXPORT void JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cls, j
 	free(settings->HomePath);
 	free(settings->ConfigPath);
 
+	int config_dir_len = strlen(directory) + 10; /* +9 chars for /.freerdp and +1 for \0 */
+	char* config_dir_buf = (char*)malloc(config_dir_len);
+	strcpy(config_dir_buf, directory);
+	strcat(config_dir_buf, "/.freerdp");
 	settings->HomePath = strdup(directory);
-	settings->ConfigPath = NULL;
+	settings->ConfigPath = config_dir_buf;	/* will be freed by freerdp library */
 
 	(*env)->ReleaseStringUTFChars(env, jdirectory, directory);
 }
