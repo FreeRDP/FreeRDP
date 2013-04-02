@@ -8,6 +8,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 #include <freerdp/freerdp.h>
 
