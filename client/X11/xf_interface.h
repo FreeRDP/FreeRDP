@@ -34,8 +34,8 @@ int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
 int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
 
-BYTE xf_exit_code_from_disconnect_reason(UINT32 reason);
+DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
-void* xf_thread_func(void* param);
+void* xf_thread(void* param);
 
 #endif /* __XF_INTERFACE_H */

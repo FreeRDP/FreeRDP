@@ -128,6 +128,22 @@ VOID ExitThread(DWORD dwExitCode)
 	pthread_exit((void*) dwExitCode);
 }
 
+BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
+{
+	ULONG Type;
+	PVOID Object;
+	WINPR_THREAD* thread;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+		return FALSE;
+
+	thread = (WINPR_THREAD*) Object;
+
+	*lpExitCode = thread->dwExitCode;
+
+	return TRUE;
+}
+
 HANDLE _GetCurrentThread(VOID)
 {
 	return NULL;

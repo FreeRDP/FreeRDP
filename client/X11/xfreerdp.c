@@ -40,13 +40,10 @@
 
 #include "xfreerdp.h"
 
-extern HANDLE g_sem;
-extern int g_thread_count;
-extern BYTE g_disconnect_reason;
-
 int main(int argc, char* argv[])
 {
-	pthread_t thread;
+	HANDLE thread;
+	DWORD dwExitCode;
 	freerdp* instance;
 
 	freerdp_handle_signals();
@@ -54,8 +51,6 @@ int main(int argc, char* argv[])
 	setlocale(LC_ALL, "");
 
 	freerdp_channels_global_init();
-
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = xf_pre_connect;
@@ -74,21 +69,16 @@ int main(int argc, char* argv[])
 	instance->context->argv = argv;
 	instance->settings->SoftwareGdi = FALSE;
 
-	g_thread_count++;
-	pthread_create(&thread, 0, xf_thread_func, instance);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) instance, 0, NULL);
 
-	while (g_thread_count > 0)
-	{
-		WaitForSingleObject(g_sem, INFINITE);
-	}
+	WaitForSingleObject(thread, INFINITE);
 
-	pthread_join(thread, NULL);
-	pthread_detach(thread);
+	GetExitCodeThread(thread, &dwExitCode);
 
 	freerdp_context_free(instance);
 	freerdp_free(instance);
 
 	freerdp_channels_global_uninit();
 
-	return xf_exit_code_from_disconnect_reason(g_disconnect_reason);
+	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }

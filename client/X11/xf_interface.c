@@ -76,10 +76,6 @@
 
 #include "xfreerdp.h"
 
-HANDLE g_sem = NULL;
-int g_thread_count = 0;
-BYTE g_disconnect_reason = 0;
-
 static long xv_port = 0;
 static const size_t password_size = 512;
 
@@ -1023,19 +1019,19 @@ void xf_window_free(xfInfo* xfi)
 	XFreeModifiermap(xfi->modifier_map);
 	xfi->modifier_map = 0;
 
-	if (xfi->gc != NULL)
+	if (xfi->gc)
 	{
 		XFreeGC(xfi->display, xfi->gc);
 		xfi->gc = 0;
 	}
 
-	if (xfi->gc_mono != NULL)
+	if (xfi->gc_mono)
 	{
 		XFreeGC(xfi->display, xfi->gc_mono);
 		xfi->gc_mono = 0;
 	}
 
-	if (xfi->window != NULL)
+	if (xfi->window)
 	{
 		xf_DestroyWindow(xfi, xfi->window);
 		xfi->window = NULL;
@@ -1060,7 +1056,7 @@ void xf_window_free(xfInfo* xfi)
 		xfi->image = NULL;
 	}
 
-	if (context != NULL)
+	if (context)
 	{
 		cache_free(context->cache);
 		context->cache = NULL;
@@ -1207,7 +1203,7 @@ void* xf_channels_thread(void* arg)
  *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
  *  @return A code from the enum XF_EXIT_CODE (0 if successful)
  */
-int xfreerdp_run(freerdp* instance)
+void* xf_thread(void* param)
 {
 	int i;
 	int fds;
@@ -1215,14 +1211,15 @@ int xfreerdp_run(freerdp* instance)
 	int max_fds;
 	int rcount;
 	int wcount;
-	int ret = 0;
 	BOOL status;
+	int exit_code;
 	void* rfds[32];
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	freerdp* instance;
 	int fd_input_event;
-	HANDLE input_event = INVALID_HANDLE_VALUE;
+	HANDLE input_event;
 	int select_status;
 	BOOL async_update;
 	BOOL async_input;
@@ -1234,6 +1231,11 @@ int xfreerdp_run(freerdp* instance)
 	rdpChannels* channels;
 	rdpSettings* settings;
 	struct timeval timeout;
+
+	exit_code = 0;
+	input_event = NULL;
+
+	instance = (freerdp*) param;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
@@ -1254,7 +1256,8 @@ int xfreerdp_run(freerdp* instance)
 	if (!status)
 	{
 		xf_free(xfi);
-		return XF_EXIT_CONN_FAILED;
+		exit_code = XF_EXIT_CONN_FAILED;
+		ExitThread(exit_code);
 	}
 
 	channels = instance->context->channels;
@@ -1290,7 +1293,7 @@ int xfreerdp_run(freerdp* instance)
 			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
 				fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
-				ret = XF_EXIT_CONN_FAILED;
+				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
 		}
@@ -1300,7 +1303,7 @@ int xfreerdp_run(freerdp* instance)
 			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
 				fprintf(stderr, "Failed to get channel manager file descriptor\n");
-				ret = XF_EXIT_CONN_FAILED;
+				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
 		}
@@ -1310,7 +1313,7 @@ int xfreerdp_run(freerdp* instance)
 			if (xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
 				fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
-				ret = XF_EXIT_CONN_FAILED;
+				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
 		}
@@ -1441,8 +1444,8 @@ int xfreerdp_run(freerdp* instance)
 		}
 	}
 
-	if (!ret)
-		ret = freerdp_error_info(instance);
+	if (!exit_code)
+		exit_code = freerdp_error_info(instance);
 
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
@@ -1450,27 +1453,12 @@ int xfreerdp_run(freerdp* instance)
 	gdi_free(instance);
 	xf_free(xfi);
 
-	return ret;
+	ExitThread(exit_code);
 }
 
-void* xf_thread_func(void* param)
+DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	freerdp* instance = (freerdp*) param;
-
-	g_disconnect_reason = xfreerdp_run(instance);
-
-	g_thread_count--;
-
-	if (g_thread_count < 1)
-		ReleaseSemaphore(g_sem, 1, NULL);
-
-	pthread_exit(NULL);
-}
-
-BYTE xf_exit_code_from_disconnect_reason(UINT32 reason)
-{
-	if (reason == 0 ||
-	   (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
 		 return reason;
 
 	/* License error set */
