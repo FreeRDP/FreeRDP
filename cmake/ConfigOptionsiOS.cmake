@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(IOS_BUILD_OBJC "Automatically build iOS objective-c code - build type depends on CMAKE_BUILD_TYPE" ON)
-option(IOS_BUILD_OBJC_DEBUG "Create an iOS debug package" ON)
 if (NOT FREERDP_IOS_EXTERNAL_SSL_PATH)
 	set(FREERDP_IOS_EXTERNAL_SSL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/openssl")
 endif()
