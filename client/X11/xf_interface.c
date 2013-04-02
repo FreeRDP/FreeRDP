@@ -599,10 +599,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	BOOL bitmap_cache;
 	rdpSettings* settings;
 
-	xfi = (xfInfo*) malloc(sizeof(xfInfo));
-	ZeroMemory(xfi, sizeof(xfInfo));
-
-	((xfContext*) instance->context)->xfi = xfi;
+	xfi = ((xfContext*) instance->context)->xfi;
 
 	xfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
@@ -1485,28 +1482,66 @@ int xf_global_uninit()
 	return 0;
 }
 
-int xf_start(xfInfo* wfi)
+int xf_start(xfInfo* xfi)
 {
+	xfi->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) xfi->instance, 0, NULL);
+
 	return 0;
 }
 
-int xf_stop(xfInfo* wfi)
+int xf_stop(xfInfo* xfi)
 {
 	return 0;
 }
 
 xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv)
 {
-	return NULL;
+	int index;
+	xfInfo* xfi;
+	freerdp* instance;
+
+	instance = freerdp_new();
+	instance->PreConnect = xf_pre_connect;
+	instance->PostConnect = xf_post_connect;
+	instance->Authenticate = xf_authenticate;
+	instance->VerifyCertificate = xf_verify_certificate;
+	instance->LogonErrorInfo = xf_logon_error_info;
+	instance->ReceiveChannelData = xf_receive_channel_data;
+
+	instance->context_size = sizeof(xfContext);
+	instance->ContextNew = (pContextNew) xf_context_new;
+	instance->ContextFree = (pContextFree) xf_context_free;
+	freerdp_context_new(instance);
+
+	instance->context->argc = argc;
+	instance->context->argv = argv;
+
+	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
+
+	for (index = 0; index < argc; index++)
+	{
+		instance->context->argv[index] = _strdup(argv[index]);
+	}
+
+	xfi = (xfInfo*) malloc(sizeof(xfInfo));
+	ZeroMemory(xfi, sizeof(xfInfo));
+
+	((xfContext*) instance->context)->xfi = xfi;
+	xfi->instance = instance;
+
+	return xfi;
 }
 
 void xf_free(xfInfo* xfi)
 {
-	xf_window_free(xfi);
+	if (xfi)
+	{
+		xf_window_free(xfi);
 
-	free(xfi->bmp_codec_none);
+		free(xfi->bmp_codec_none);
 
-	XCloseDisplay(xfi->display);
+		XCloseDisplay(xfi->display);
 
-	free(xfi);
+		free(xfi);
+	}
 }

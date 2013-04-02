@@ -22,19 +22,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <locale.h>
-
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/signal.h>
-#include <freerdp/client/channels.h>
-
-#include <pthread.h>
 
 #include "xf_interface.h"
 
@@ -42,34 +34,20 @@
 
 int main(int argc, char* argv[])
 {
-	HANDLE thread;
+	xfInfo* xfi;
 	DWORD dwExitCode;
 	freerdp* instance;
 
 	xf_global_init();
 
-	instance = freerdp_new();
-	instance->PreConnect = xf_pre_connect;
-	instance->PostConnect = xf_post_connect;
-	instance->Authenticate = xf_authenticate;
-	instance->VerifyCertificate = xf_verify_certificate;
-	instance->LogonErrorInfo = xf_logon_error_info;
-	instance->ReceiveChannelData = xf_receive_channel_data;
+	xfi = xf_new(NULL, NULL, argc, argv);
+	instance = xfi->instance;
 
-	instance->context_size = sizeof(xfContext);
-	instance->ContextNew = (pContextNew) xf_context_new;
-	instance->ContextFree = (pContextFree) xf_context_free;
-	freerdp_context_new(instance);
+	xf_start(xfi);
 
-	instance->context->argc = argc;
-	instance->context->argv = argv;
-	instance->settings->SoftwareGdi = FALSE;
+	WaitForSingleObject(xfi->thread, INFINITE);
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) instance, 0, NULL);
-
-	WaitForSingleObject(thread, INFINITE);
-
-	GetExitCodeThread(thread, &dwExitCode);
+	GetExitCodeThread(xfi->thread, &dwExitCode);
 
 	freerdp_context_free(instance);
 	freerdp_free(instance);
