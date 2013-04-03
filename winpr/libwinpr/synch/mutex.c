@@ -39,15 +39,18 @@
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
-	HANDLE handle;
+	HANDLE handle = NULL;
 	pthread_mutex_t* pMutex;
 
 	pMutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
 
 	if (pMutex)
+	{
 		pthread_mutex_init(pMutex, 0);
-
-	handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, pMutex);
+		handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, pMutex);
+		if (bInitialOwner)
+			pthread_mutex_lock(pMutex);
+	}
 
 	return handle;
 }
