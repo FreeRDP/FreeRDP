@@ -1520,6 +1520,7 @@ xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv)
 
 	for (index = 0; index < argc; index++)
 	{
+		printf("argv[%d]: %s\n", index, argv[index]);
 		instance->context->argv[index] = _strdup(argv[index]);
 	}
 

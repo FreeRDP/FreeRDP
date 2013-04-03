@@ -39,6 +39,10 @@ typedef struct xf_info xfInfo;
 #include "xf_window.h"
 #include "xf_monitor.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct xf_WorkArea
 {
 	UINT32 x;
@@ -235,5 +239,9 @@ FREERDP_API int xf_stop(xfInfo* xfi);
 
 FREERDP_API xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv);
 FREERDP_API void xf_free(xfInfo* xfi);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __XF_INTERFACE_H */
