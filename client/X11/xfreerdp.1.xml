@@ -526,6 +526,15 @@
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term>--wm-class <replaceable class="parameter">class</replaceable></term>
+        <listitem>
+          <para>
+            Set WM_CLASS hint of xfreerdp to <replaceable class="parameter">class</replaceable>. The
+						resulting hint is then "xfreerdp", "<replaceable class="parameter">class</replaceable>".
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1>
