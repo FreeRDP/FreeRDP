@@ -87,6 +87,13 @@
 	return copy;
 }
 
+- (id)copyWithUUID
+{
+    ComputerBookmark* copy = [self copy];
+    copy->_uuid = [[self uuid] copy];
+    return copy;
+}
+
 - (void)encodeWithCoder:(NSCoder *)coder
 {
 	if (![coder allowsKeyedCoding])

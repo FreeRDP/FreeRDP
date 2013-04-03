@@ -17,7 +17,7 @@
 
 @protocol BookmarkEditorDelegate <NSObject>
 // bookmark editing finsihed
-- (void)commitBookmark:(ComputerBookmark*)bookmark;
+- (void)commitBookmark:(ComputerBookmark*)bookmark replacingBookmark:(ComputerBookmark*)replacingBookmark;
 @end
 
 
