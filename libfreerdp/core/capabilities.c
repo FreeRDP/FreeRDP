@@ -2506,7 +2506,7 @@ void rdp_write_rfx_client_capability_container(wStream* s, rdpSettings* settings
 	UINT32 captureFlags;
 	BYTE codecMode;
 
-	captureFlags = settings->RemoteFxOnly ? CARDP_CAPS_CAPTURE_NON_CAC : 0;
+	captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
 	codecMode = settings->RemoteFxCodecMode;
 
 	stream_write_UINT16(s, 49); /* codecPropertiesLength */
