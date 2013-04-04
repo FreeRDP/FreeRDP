@@ -680,10 +680,20 @@
 
 - (void)commitBookmark:(ComputerBookmark *)bookmark
 {
-    // if we got a manual bookmark that is not in the list yet - add it
-    if (![_manual_bookmarks containsObject:bookmark])
+    // if we got a manual bookmark that is not in the list yet - add it otherwise replace it
+    BOOL found = NO;
+    for (int idx = 0; idx < [_manual_bookmarks count]; ++idx)
+    {
+        if ([[bookmark uuid] isEqualToString:[[_manual_bookmarks objectAtIndex:idx] uuid]])
+        {
+            [_manual_bookmarks replaceObjectAtIndex:idx withObject:bookmark];
+            found = YES;
+            break;
+        }
+    }
+    if (!found)
         [_manual_bookmarks addObject:bookmark];
-        
+    
     // remove any quick connect history entry with the same hostname
     NSString* hostname = [[bookmark params] StringForKey:@"hostname"];
     if ([_connection_history containsObject:hostname])

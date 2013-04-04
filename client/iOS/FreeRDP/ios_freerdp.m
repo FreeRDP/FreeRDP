@@ -99,7 +99,7 @@ static int ios_receive_channel_data(freerdp* instance, int channelId, UINT8* dat
 
 void ios_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-    RDP_EVENT* event = freerdp_channels_pop_event(channels);
+    wMessage* event = freerdp_channels_pop_event(channels);
     if (event)
         freerdp_event_free(event);
 }
