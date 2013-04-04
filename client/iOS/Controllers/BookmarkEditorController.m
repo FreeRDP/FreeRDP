@@ -32,8 +32,11 @@
     if ((self = [super initWithStyle:UITableViewStyleGrouped])) 
 	{
 		// set additional settings state according to bookmark data
-		_bookmark = [bookmark retain];
-        _params = [bookmark params];
+        if ([[bookmark uuid] length] == 0)
+            _bookmark = [bookmark copy];
+        else
+            _bookmark = [bookmark copyWithUUID];
+        _params = [_bookmark params];
 
 		// if this is a TSX Connect bookmark - disable server settings
 		if([_bookmark isKindOfClass:NSClassFromString(@"TSXConnectComputerBookmark")])

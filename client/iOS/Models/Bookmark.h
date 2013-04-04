@@ -30,6 +30,7 @@
 
 // Creates a copy of this object, with a new UUID
 - (id)copy;
+- (id)copyWithUUID;
 
 // Whether user can delete, move, or rename this entry
 - (BOOL)isDeletable;
