@@ -421,6 +421,13 @@ endif()
 
 # Sub-directories
 
+if(WITH_THIRD_PARTY)
+	add_subdirectory(third-party)
+	if (NOT "${THIRD_PARTY_INCLUDES}" STREQUAL "")
+		include_directories(${THIRD_PARTY_INCLUDES})
+	endif()
+endif()
+
 add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
@@ -439,10 +446,6 @@ endif()
 
 if(WITH_SERVER)
 	add_subdirectory(server)
-endif()
-
-if(WITH_THIRD_PARTY)
-	add_subdirectory(third-party)
 endif()
 
 # Packaging

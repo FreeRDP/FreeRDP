@@ -29,3 +29,4 @@ foreach(dir ${all_valid_subdirs})
 	endif()
 endforeach(dir)
 
+set(THIRD_PARTY_INCLUDES ${THIRD_PARTY_INCLUDES} PARENT_SCOPE)
