@@ -601,6 +601,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 
 	/* enable NSCodec */
 	settings->NSCodec = TRUE;
+	settings->BitmapCacheV3Enabled = TRUE;
 
 	switch ((int) security)
 	{
