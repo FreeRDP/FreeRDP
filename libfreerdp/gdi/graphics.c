@@ -30,6 +30,7 @@
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/codec/jpeg.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/gdi/drawing.h>
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
