@@ -165,6 +165,7 @@
 #define CLW_ENTROPY_RLGR1			0x01
 #define CLW_ENTROPY_RLGR3			0x04
 
+BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId);
 BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
 void rdp_write_demand_active(wStream* s, rdpSettings* settings);
 BOOL rdp_send_demand_active(rdpRdp* rdp);
