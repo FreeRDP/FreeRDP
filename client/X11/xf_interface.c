@@ -881,6 +881,9 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_cliprdr_init(xfi, channels);
 
+	if (xfi->ui.OnResizeWindow)
+		xfi->ui.OnResizeWindow(instance, settings->DesktopWidth, settings->DesktopHeight);
+
 	return TRUE;
 }
 
@@ -1519,10 +1522,7 @@ xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv)
 	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
 
 	for (index = 0; index < argc; index++)
-	{
-		printf("argv[%d]: %s\n", index, argv[index]);
 		instance->context->argv[index] = _strdup(argv[index]);
-	}
 
 	xfi = (xfInfo*) malloc(sizeof(xfInfo));
 	ZeroMemory(xfi, sizeof(xfInfo));

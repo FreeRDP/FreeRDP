@@ -1292,6 +1292,9 @@ FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param
 FREERDP_API UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param);
 
+FREERDP_API UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id);
+FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param);
+
 FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, char* param);
 

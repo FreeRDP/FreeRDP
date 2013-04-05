@@ -1785,6 +1785,38 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 	return 0;
 }
 
+UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
+{
+	switch (id)
+	{
+		case FreeRDP_ParentWindowId:
+			return settings->ParentWindowId;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	return 0;
+}
+
+int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
+{
+	switch (id)
+	{
+		case FreeRDP_ParentWindowId:
+			settings->ParentWindowId = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	return 0;
+}
+
 char* freerdp_get_param_string(rdpSettings* settings, int id)
 {
 	switch (id)
