@@ -39,7 +39,7 @@
 // Designated initializer.
 - (id)initWithConnectionParameters:(ConnectionParams*)params
 {
-	if (!(self = [super init]))
+	if (!(self = [self init]))
 		return nil;
 	
 	_connection_params = [params copy];
