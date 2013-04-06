@@ -32,7 +32,7 @@
 
 #include "xf_event.h"
 
-#ifdef WITH_DEBUG_X11
+#if defined(WITH_DEBUG_X11) || defined(WITH_DEBUG_X11_LOCAL_MOVESIZE)
 static const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
