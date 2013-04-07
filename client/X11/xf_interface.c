@@ -1443,6 +1443,17 @@ int xf_start(xfInfo* xfi)
 
 int xf_stop(xfInfo* xfi)
 {
+	if (xfi->instance->settings->AsyncInput)
+	{
+		wMessageQueue* queue;
+		queue = freerdp_get_message_queue(xfi->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(queue, 0);
+	}
+	else
+	{
+		xfi->disconnect = TRUE;
+	}
+
 	return 0;
 }
 
