@@ -14,7 +14,7 @@
 #import "TouchPointerView.h"
 #import "AdvancedKeyboardView.h"
 
-@interface RDPSessionViewController : UIViewController <RDPSessionDelegate, TouchPointerDelegate, AdvancedKeyboardDelegate, RDPKeyboardDelegate, UIScrollViewDelegate, UITextFieldDelegate, UIAlertViewDelegate>
+@interface RDPSessionViewController : UIViewController <RDPSessionDelegate, TouchPointerDelegate, AdvancedKeyboardDelegate, RDPKeyboardDelegate, UIScrollViewDelegate, UITextFieldDelegate>
 {
 	// scrollview that hosts the rdp session view
 	IBOutlet UIScrollView* _session_scrollview;
