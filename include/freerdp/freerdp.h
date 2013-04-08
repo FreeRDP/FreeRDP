@@ -39,6 +39,8 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 
 #include <winpr/stream.h>
 
+#include <freerdp/client.h>
+
 #include <freerdp/input.h>
 #include <freerdp/update.h>
 #include <freerdp/message.h>
@@ -104,7 +106,8 @@ struct rdp_context
 	rdpInput* input; /* 38 */
 	rdpUpdate* update; /* 39 */
 	rdpSettings* settings; /* 40 */
-	UINT32 paddingC[64 - 41]; /* 41 */
+	rdpClient* client; /* 41 */
+	UINT32 paddingC[64 - 42]; /* 42 */
 };
 
 /** Defines the options for a given instance of RDP connection.

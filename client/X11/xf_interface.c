@@ -830,8 +830,8 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_cliprdr_init(xfi, channels);
 
-	if (xfi->ui.OnResizeWindow)
-		xfi->ui.OnResizeWindow(instance, settings->DesktopWidth, settings->DesktopHeight);
+	if (xfi->client->OnResizeWindow)
+		xfi->client->OnResizeWindow(instance, settings->DesktopWidth, settings->DesktopHeight);
 
 	return TRUE;
 }
@@ -1491,8 +1491,10 @@ xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv)
 	ZeroMemory(xfi, sizeof(xfInfo));
 
 	((xfContext*) instance->context)->xfi = xfi;
+
 	xfi->instance = instance;
 	settings = instance->settings;
+	xfi->client = instance->context->client;
 
 	status = freerdp_client_parse_command_line_arguments(instance->context->argc,
 				instance->context->argv, settings);

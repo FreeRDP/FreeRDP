@@ -82,25 +82,13 @@ struct xf_context
 };
 typedef struct xf_context xfContext;
 
-/**
-  * User Interface Events
-  */
-
-typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
-
-struct rdp_ui
-{
-	pOnResizeWindow OnResizeWindow;
-};
-typedef struct rdp_ui rdpUi;
-
 struct xf_info
 {
 	freerdp* instance;
 	xfContext* context;
 	rdpContext* _context;
 
-	rdpUi ui;
+	rdpClient* client;
 
 	GC gc;
 	int bpp;
