@@ -38,6 +38,10 @@
 
 #include "wf_event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct wf_bitmap
 {
 	rdpBitmap _bitmap;
@@ -109,6 +113,10 @@ struct wf_info
 	BOOL sw_gdi;
 };
 
+/**
+ * Client Interface
+ */
+
 #define cfInfo	wfInfo
 
 FREERDP_API int freerdp_client_global_init();
@@ -119,5 +127,9 @@ FREERDP_API int freerdp_client_stop(wfInfo* cfi);
 
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API int freerdp_client_free(wfInfo* cfi);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
