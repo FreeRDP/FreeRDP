@@ -5,10 +5,13 @@
 //  Created by Gustavo Ambrozio on 29/11/11.
 //  Copyright (c) 2011 N/A. All rights reserved.
 //
-#import <math.h>
+
 #import "BlockBackground.h"
 
 @implementation BlockBackground
+
+@synthesize backgroundImage = _backgroundImage;
+@synthesize vignetteBackground = _vignetteBackground;
 
 static BlockBackground *_sharedInstance = nil;
 
@@ -63,66 +66,89 @@ static BlockBackground *_sharedInstance = nil;
     return self;
 }
 
-- (void)sizeToFill
+- (void)setRotation:(NSNotification*)notification
 {
-    UIInterfaceOrientation o = [self orientation];
+    UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
     
-    if(UIInterfaceOrientationIsPortrait(o))
-    {
-        CGRect r = [[UIScreen mainScreen] applicationFrame];
-        
-        CGFloat portraitHeight = [[UIScreen mainScreen] bounds].size.height;
-        CGFloat portraitWidth = [[UIScreen mainScreen] bounds].size.width;
-        
-        CGFloat center_y = (r.size.height / 2) + [self statusBarHeight];
-        CGFloat center_x = (r.size.width / 2);
-        
-        self.bounds = CGRectMake(0, 0, portraitWidth, portraitHeight);        
-        self.center = CGPointMake(center_x, center_y);
+    CGRect orientationFrame = [UIScreen mainScreen].bounds;
+    
+    if(
+       (UIInterfaceOrientationIsLandscape(orientation) && orientationFrame.size.height > orientationFrame.size.width) ||
+       (UIInterfaceOrientationIsPortrait(orientation) && orientationFrame.size.width > orientationFrame.size.height)
+       ) {
+        float temp = orientationFrame.size.width;
+        orientationFrame.size.width = orientationFrame.size.height;
+        orientationFrame.size.height = temp;
     }
-    else if(UIInterfaceOrientationIsLandscape(o))
-    {
-        CGFloat landscapeHeight = [[UIScreen mainScreen] bounds].size.height;
-        CGFloat landscapeWidth = [[UIScreen mainScreen] bounds].size.width;
-        CGFloat center_y = (landscapeHeight/2);
-        CGFloat center_x = (landscapeWidth / 2);
-        
-        self.bounds = CGRectMake(0, 0, landscapeHeight, landscapeWidth);
-        self.center = CGPointMake(center_x, center_y);
+    
+    self.transform = CGAffineTransformIdentity;
+    self.frame = orientationFrame;
+    
+    CGFloat posY = orientationFrame.size.height/2;
+    CGFloat posX = orientationFrame.size.width/2;
+    
+    CGPoint newCenter;
+    CGFloat rotateAngle;
+    
+    switch (orientation) {
+        case UIInterfaceOrientationPortraitUpsideDown:
+            rotateAngle = M_PI;
+            newCenter = CGPointMake(posX, orientationFrame.size.height-posY);
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            rotateAngle = -M_PI/2.0f;
+            newCenter = CGPointMake(posY, posX);
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            rotateAngle = M_PI/2.0f;
+            newCenter = CGPointMake(orientationFrame.size.height-posY, posX);
+            break;
+        default: // UIInterfaceOrientationPortrait
+            rotateAngle = 0.0;
+            newCenter = CGPointMake(posX, posY);
+            break;
     }
+    
+    self.transform = CGAffineTransformMakeRotation(rotateAngle);
+    self.center = newCenter;
+    
+    [self setNeedsLayout];
+    [self layoutSubviews];
 }
 
 - (id)init
 {
-    self = [super initWithFrame:[[UIScreen mainScreen] applicationFrame]];
+    self = [super initWithFrame:[[UIScreen mainScreen] bounds]];
     if (self) {
         self.windowLevel = UIWindowLevelStatusBar;
         self.hidden = YES;
         self.userInteractionEnabled = NO;
         self.backgroundColor = [UIColor colorWithWhite:0.4 alpha:0.5f];
+        self.vignetteBackground = NO;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(setRotation:)
+                                                     name:UIApplicationDidChangeStatusBarOrientationNotification
+                                                   object:nil];
+        [self setRotation:nil];
+
     }
     return self;
 }
 
-- (UIInterfaceOrientation)orientation
-{
-    return [UIApplication sharedApplication].statusBarOrientation;
-}
-
-- (CGFloat)statusBarHeight
-{
-    CGSize statusBarSize =[[UIApplication sharedApplication] statusBarFrame].size;
-    return MIN(statusBarSize.height, statusBarSize.width);
-}
-
 - (void)addToMainWindow:(UIView *)view
 {
+    [self setRotation:nil];
+    
+    if ([self.subviews containsObject:view]) return;
+
     if (self.hidden)
     {
+        _previousKeyWindow = [[[UIApplication sharedApplication] keyWindow] retain];
         self.alpha = 0.0f;
         self.hidden = NO;
         self.userInteractionEnabled = YES;
-        [self makeKeyAndVisible];
+        [self makeKeyWindow];
     }
     
     if (self.subviews.count > 0)
@@ -130,31 +156,72 @@ static BlockBackground *_sharedInstance = nil;
         ((UIView*)[self.subviews lastObject]).userInteractionEnabled = NO;
     }
     
+    if (_backgroundImage)
+    {
+        UIImageView *backgroundView = [[UIImageView alloc] initWithImage:_backgroundImage];
+        backgroundView.frame = self.bounds;
+        backgroundView.contentMode = UIViewContentModeScaleToFill;
+        [self addSubview:backgroundView];
+        [backgroundView release];
+        [_backgroundImage release];
+        _backgroundImage = nil;
+    }
+    
     [self addSubview:view];
 }
 
 - (void)reduceAlphaIfEmpty
 {
-    if (self.subviews.count == 1)
+    if (self.subviews.count == 1 || (self.subviews.count == 2 && [[self.subviews objectAtIndex:0] isKindOfClass:[UIImageView class]]))
     {
         self.alpha = 0.0f;
-//        20120907JY - disabling this user interaction can cause issues with fast taps when showing alerts - thanks for finding Anagd.
-//        self.userInteractionEnabled = NO;
+        self.userInteractionEnabled = NO;
     }
 }
 
 - (void)removeView:(UIView *)view
 {
     [view removeFromSuperview];
+
+    UIView *topView = [self.subviews lastObject];
+    if ([topView isKindOfClass:[UIImageView class]])
+    {
+        // It's a background. Remove it too
+        [topView removeFromSuperview];
+    }
+    
     if (self.subviews.count == 0)
     {
         self.hidden = YES;
-        [self resignKeyWindow];
+        [_previousKeyWindow makeKeyWindow];
+        [_previousKeyWindow release];
+        _previousKeyWindow = nil;
     }
     else
     {
         ((UIView*)[self.subviews lastObject]).userInteractionEnabled = YES;
     }
 }
+
+- (void)drawRect:(CGRect)rect 
+{    
+    if (_backgroundImage || !_vignetteBackground) return;
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+	size_t locationsCount = 2;
+	CGFloat locations[2] = {0.0f, 1.0f};
+	CGFloat colors[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.75f}; 
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	CGGradientRef gradient = CGGradientCreateWithColorComponents(colorSpace, colors, locations, locationsCount);
+	CGColorSpaceRelease(colorSpace);
+	
+	CGPoint center = CGPointMake(self.bounds.size.width/2, self.bounds.size.height/2);
+	float radius = MIN(self.bounds.size.width , self.bounds.size.height) ;
+	CGContextDrawRadialGradient (context, gradient, center, 0, center, radius, kCGGradientDrawsAfterEndLocation);
+	CGGradientRelease(gradient);
+}
+
+
+
 
 @end
