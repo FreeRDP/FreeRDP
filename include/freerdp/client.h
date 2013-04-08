@@ -36,6 +36,25 @@ struct rdp_client
 	pOnResizeWindow OnResizeWindow;
 };
 
+/**
+ * Generic Client Interface
+ */
+
+#if 0
+
+#define cfInfo	void*
+
+FREERDP_API int freerdp_client_global_init();
+FREERDP_API int freerdp_client_global_uninit();
+
+FREERDP_API int freerdp_client_start(cfInfo* cfi);
+FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+
+FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
+FREERDP_API void freerdp_client_free(cfInfo* cfi);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

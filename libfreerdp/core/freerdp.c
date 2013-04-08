@@ -314,7 +314,7 @@ void freerdp_context_new(freerdp* instance)
 	instance->context->update = instance->update;
 	instance->context->settings = instance->settings;
 
-	instance->context->client = (rdpContext*) malloc(sizeof(rdpClient));
+	instance->context->client = (rdpClient*) malloc(sizeof(rdpClient));
 	ZeroMemory(instance->context->client, sizeof(rdpClient));
 
 	instance->update->context = instance->context;

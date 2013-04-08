@@ -310,7 +310,7 @@ static void xf_SetWindowPID(xfInfo* xfi, xfWindow* window, pid_t pid)
 {
 	Atom am_wm_pid;
 
-	if (pid == 0)
+	if (!pid)
 		pid = getpid();
 
 	am_wm_pid = XInternAtom(xfi->display, "_NET_WM_PID", False);
@@ -327,7 +327,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 	window = (xfWindow*) malloc(sizeof(xfWindow));
 	ZeroMemory(window, sizeof(xfWindow));
 
-	if (window != NULL)
+	if (window)
 	{
 		int shmid;
 		int input_mask;
@@ -368,13 +368,15 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		class_hints = XAllocClassHint();
 
-		if (class_hints != NULL)
+		if (class_hints)
 		{
 			class_hints->res_name = "xfreerdp";
-			if (xfi->instance->settings->WmClass != NULL)
+
+			if (xfi->instance->settings->WmClass)
 				class_hints->res_class = xfi->instance->settings->WmClass;
 			else 
 				class_hints->res_class = "xfreerdp";
+
 			XSetClassHint(xfi->display, window->handle, class_hints);
 			XFree(class_hints);
 		}
@@ -394,8 +396,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XChangeProperty(xfi->display, window->handle, xfi->_NET_WM_ICON, XA_CARDINAL, 32,
 				PropModeReplace, (BYTE*) xf_icon_prop, ARRAYSIZE(xf_icon_prop));
 
-		if (xfi->parent_window)
-                        XReparentWindow(xfi->display, window->handle, xfi->parent_window, 0, 0);
+		if (xfi->settings->ParentWindowId)
+                        XReparentWindow(xfi->display, window->handle, (Window) xfi->settings->ParentWindowId, 0, 0);
 
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XClearWindow(xfi->display, window->handle);
@@ -403,7 +405,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		/*
 		 * NOTE: This must be done here to handle reparenting the window, 
-		 * so that we dont miss the event and hang waiting for the next one
+		 * so that we don't miss the event and hang waiting for the next one
 		 */
         	do
         	{
@@ -880,7 +882,7 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	rdpWindow* wnd;
 	wnd = window->window;
 
-	/* Remote app mode uses visibleOffset instead of windowOffset */
+	/* RemoteApp mode uses visibleOffset instead of windowOffset */
 
 	if (!xfi->remote_app)
 	{
@@ -907,7 +909,7 @@ void xf_UpdateWindowArea(xfInfo* xfi, xfWindow* window, int x, int y, int width,
 	
 	WaitForSingleObject(xfi->mutex, INFINITE);
 
-	if (xfi->sw_gdi)
+	if (xfi->settings->SoftwareGdi)
 	{
 		XPutImage(xfi->display, xfi->primary, window->gc, xfi->image,
 			ax, ay, ax, ay, width, height);

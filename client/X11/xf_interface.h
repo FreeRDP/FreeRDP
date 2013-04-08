@@ -89,6 +89,7 @@ struct xf_info
 	rdpContext* _context;
 
 	rdpClient* client;
+	rdpSettings* settings;
 
 	GC gc;
 	int bpp;
@@ -113,7 +114,6 @@ struct xf_info
 	BOOL fullscreen;
 	BOOL grab_keyboard;
 	BOOL unobscured;
-	BOOL decorations;
 	BOOL debug;
 	xfWindow* window;
 	xfWorkArea workArea;
@@ -121,13 +121,11 @@ struct xf_info
 	BOOL remote_app;
 	BOOL disconnect;
 	HCLRCONV clrconv;
-	Window parent_window;
 	HANDLE mutex;
 	HANDLE thread;
 	BOOL UseXThreads;
 
 	HGDI_DC hdc;
-	BOOL sw_gdi;
 	BYTE* primary_buffer;
 
 	BOOL frame_begin;
@@ -138,7 +136,6 @@ struct xf_info
 
 	BOOL focused;
 	BOOL mouse_active;
-	BOOL mouse_motion;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
 	UINT32 keyboard_layout_id;
@@ -233,14 +230,16 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
  * Client Interface
  */
 
-FREERDP_API int xf_global_init();
-FREERDP_API int xf_global_uninit();
+#define cfInfo	xfInfo
 
-FREERDP_API int xf_start(xfInfo* xfi);
-FREERDP_API int xf_stop(xfInfo* xfi);
+FREERDP_API int freerdp_client_global_init();
+FREERDP_API int freerdp_client_global_uninit();
 
-FREERDP_API xfInfo* xf_new(HANDLE hInstance, HANDLE hWndParent, int argc, char** argv);
-FREERDP_API void xf_free(xfInfo* xfi);
+FREERDP_API int freerdp_client_start(cfInfo* cfi);
+FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+
+FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
+FREERDP_API void freerdp_client_free(cfInfo* cfi);
 
 #ifdef __cplusplus
 }

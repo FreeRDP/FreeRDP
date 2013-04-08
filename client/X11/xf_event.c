@@ -131,7 +131,7 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	x = event->xmotion.x;
 	y = event->xmotion.y;
 
-	if (xfi->mouse_motion != TRUE)
+	if (!xfi->settings->MouseMotion)
 	{
 		if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;

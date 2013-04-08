@@ -38,12 +38,12 @@ int main(int argc, char* argv[])
 	DWORD dwExitCode;
 	freerdp* instance;
 
-	xf_global_init();
+	freerdp_client_global_init();
 
-	xfi = xf_new(NULL, NULL, argc, argv);
+	xfi = freerdp_client_new(argc, argv);
 	instance = xfi->instance;
 
-	xf_start(xfi);
+	freerdp_client_start(xfi);
 
 	WaitForSingleObject(xfi->thread, INFINITE);
 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 	freerdp_context_free(instance);
 	freerdp_free(instance);
 
-	xf_global_uninit();
+	freerdp_client_global_uninit();
 
 	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }
