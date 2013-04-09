@@ -178,13 +178,14 @@ if(WIN32)
 endif()
 
 if(IOS)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${CMAKE_IOS_SDK_ROOT}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${CMAKE_IOS_SDK_ROOT} -g")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_EXPORTS")
 
 # Include files
+if(NOT IOS)
 check_include_files(fcntl.h HAVE_FCNTL_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(stdint.h HAVE_STDINT_H)
@@ -192,8 +193,19 @@ check_include_files(inttypes.h HAVE_INTTYPES_H)
 check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
 check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
 check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
+else()
+set(HAVE_FCNTL_H 1)
+set(HAVE_UNISTD_H 1)
+set(HAVE_STDINT_H 1)
+set(HAVE_INTTYPES_H 1)
+set(HAVE_SYS_FILIO_H 1)
+endif()
 
+if(NOT IOS)
 check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+else()
+set(HAVE_TM_GMTOFF 1)
+endif()
 
 # Mac OS X
 if(APPLE)
@@ -202,7 +214,8 @@ if(APPLE)
                         message(STATUS "FREERDP_IOS_EXTERNAL_SSL_PATH not set! Required if openssl is not found in the iOS SDK (which usually isn't")
                 endif()
                 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
-        else()
+        	set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
+	else()
                 if(IS_DIRECTORY /opt/local/include)
                         include_directories(/opt/local/include)
                         link_directories(/opt/local/lib)
@@ -229,7 +242,7 @@ if(ANDROID)
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-if(NOT ANDROID)
+if(NOT IOS AND NOT ANDROID)
 	find_package(Threads REQUIRED)
 endif()
 
@@ -298,6 +311,7 @@ endif()
 if(APPLE)
 	set(DIRECTFB_FEATURE_TYPE "DISABLED")
 	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
+	set(GSTREAMER_FEATURE_TYPE "OPTIONAL")
 	if(IOS)
 		set(X11_FEATURE_TYPE "DISABLED")
 		set(ALSA_FEATURE_TYPE "DISABLED")
@@ -410,6 +424,13 @@ endif()
 
 # Sub-directories
 
+if(WITH_THIRD_PARTY)
+	add_subdirectory(third-party)
+	if (NOT "${THIRD_PARTY_INCLUDES}" STREQUAL "")
+		include_directories(${THIRD_PARTY_INCLUDES})
+	endif()
+endif()
+
 add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
@@ -418,16 +439,16 @@ if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()
 
+if (IOS)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+set(CMAKE_OSX_SYSROOT "iphoneos")
+endif()
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
 
 if(WITH_SERVER)
 	add_subdirectory(server)
-endif()
-
-if(WITH_THIRD_PARTY)
-	add_subdirectory(third-party)
 endif()
 
 # Packaging
@@ -535,5 +556,7 @@ if (ANDROID AND CMAKE_EXTRA_GENERATOR STREQUAL "Eclipse CDT4")
   set(CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_DEFINED_MACROS "")
   message(STATUS "Disabled CXX system defines for eclipse (workaround).")
 endif()
+
+
 
 include(CPack)

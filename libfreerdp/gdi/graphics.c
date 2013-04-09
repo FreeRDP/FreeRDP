@@ -30,6 +30,7 @@
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/codec/jpeg.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/gdi/drawing.h>
 #include <freerdp/gdi/clipping.h>
 #include <freerdp/codec/color.h>
@@ -116,7 +117,9 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	switch (codec_id)
 	{
 		case RDP_CODEC_ID_NSCODEC:
-			fprintf(stderr, "gdi_Bitmap_Decompress: nsc not done\n");
+			gdi = context->gdi;
+			nsc_process_message(gdi->nsc_context, bpp, width, height, data, length);
+			freerdp_image_flip(((NSC_CONTEXT*)gdi->nsc_context)->bmpdata, bitmap->data, width, height, bpp);
 			break;
 		case RDP_CODEC_ID_REMOTEFX:
 			gdi = context->gdi;

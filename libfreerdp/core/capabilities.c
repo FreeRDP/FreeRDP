@@ -2487,6 +2487,21 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 		if (remainingLength < codecPropertiesLength)
 			return FALSE;
 
+		if (settings->ServerMode)
+		{
+			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
+			{
+				stream_seek_UINT32(s); /* length */
+				stream_read_UINT32(s, settings->RemoteFxCaptureFlags); /* captureFlags */
+				stream_rewind(s, 8);
+
+				if (settings->RemoteFxCaptureFlags & CARDP_CAPS_CAPTURE_NON_CAC)
+				{
+					settings->RemoteFxOnly = TRUE;
+				}
+			}
+		}
+
 		stream_seek(s, codecPropertiesLength); /* codecProperties */
 		remainingLength -= codecPropertiesLength;
 
@@ -2506,7 +2521,7 @@ void rdp_write_rfx_client_capability_container(wStream* s, rdpSettings* settings
 	UINT32 captureFlags;
 	BYTE codecMode;
 
-	captureFlags = settings->RemoteFxOnly ? CARDP_CAPS_CAPTURE_NON_CAC : 0;
+	captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
 	codecMode = settings->RemoteFxCodecMode;
 
 	stream_write_UINT16(s, 49); /* codecPropertiesLength */
@@ -3222,19 +3237,12 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 	return TRUE;
 }
 
-BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 {
 	UINT16 length;
-	UINT16 channelId;
-	UINT16 pduType;
-	UINT16 pduLength;
-	UINT16 pduSource;
-	UINT16 numberCapabilities;
-	UINT16 lengthSourceDescriptor;
-	UINT16 lengthCombinedCapabilities;
 	UINT16 securityFlags;
 
-	if (!rdp_read_header(rdp, s, &length, &channelId))
+	if (!rdp_read_header(rdp, s, &length, pChannelId))
 		return FALSE;
 
 	if (rdp->disconnect)
@@ -3255,11 +3263,30 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		fprintf(stderr, "expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, channelId);
+		fprintf(stderr, "expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, *pChannelId);
 		return FALSE;
 	}
+
+	return TRUE;
+}
+
+BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
+{
+	UINT16 channelId;
+	UINT16 pduType;
+	UINT16 pduLength;
+	UINT16 pduSource;
+	UINT16 numberCapabilities;
+	UINT16 lengthSourceDescriptor;
+	UINT16 lengthCombinedCapabilities;
+
+	if (!rdp_recv_get_active_header(rdp, s, &channelId))
+		return FALSE;
+
+	if (rdp->disconnect)
+		return TRUE;
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 	{
@@ -3375,7 +3402,6 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 {
-	UINT16 length;
 	UINT16 channelId;
 	UINT16 pduType;
 	UINT16 pduLength;
@@ -3383,27 +3409,8 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 	UINT16 numberCapabilities;
-	UINT16 securityFlags;
 
-	if (!rdp_read_header(rdp, s, &length, &channelId))
-		return FALSE;
-
-	if (rdp->settings->DisableEncryption)
-	{
-		if (!rdp_read_security_header(s, &securityFlags))
-			return FALSE;
-
-		if (securityFlags & SEC_ENCRYPT)
-		{
-			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
-			{
-				fprintf(stderr, "rdp_decrypt failed\n");
-				return FALSE;
-			}
-		}
-	}
-
-	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+	if (!rdp_recv_get_active_header(rdp, s, &channelId))
 		return FALSE;
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
