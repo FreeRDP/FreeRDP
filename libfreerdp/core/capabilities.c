@@ -2487,6 +2487,21 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 		if (remainingLength < codecPropertiesLength)
 			return FALSE;
 
+		if (settings->ServerMode)
+		{
+			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
+			{
+				stream_seek_UINT32(s); /* length */
+				stream_read_UINT32(s, settings->RemoteFxCaptureFlags); /* captureFlags */
+				stream_rewind(s, 8);
+
+				if (settings->RemoteFxCaptureFlags & CARDP_CAPS_CAPTURE_NON_CAC)
+				{
+					settings->RemoteFxOnly = TRUE;
+				}
+			}
+		}
+
 		stream_seek(s, codecPropertiesLength); /* codecProperties */
 		remainingLength -= codecPropertiesLength;
 

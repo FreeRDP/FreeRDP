@@ -689,6 +689,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RemoteFxCodecId					3650
 #define FreeRDP_RemoteFxCodecMode				3651
 #define FreeRDP_RemoteFxImageCodec				3652
+#define FreeRDP_RemoteFxCaptureFlags				3653
 #define FreeRDP_NSCodec						3712
 #define FreeRDP_NSCodecId					3713
 #define FreeRDP_FrameAcknowledge				3714
@@ -1155,7 +1156,8 @@ struct rdp_settings
 	ALIGN64 UINT32 RemoteFxCodecId; /* 3650 */
 	ALIGN64 UINT32 RemoteFxCodecMode; /* 3651 */
 	ALIGN64 BOOL RemoteFxImageCodec; /* 3652 */
-	UINT64 padding3712[3712 - 3653]; /* 3653 */
+	ALIGN64 UINT32 RemoteFxCaptureFlags; /* 3653 */
+	UINT64 padding3712[3712 - 3654]; /* 3654 */
 
 	/* NSCodec */
 	ALIGN64 BOOL NSCodec; /* 3712 */
