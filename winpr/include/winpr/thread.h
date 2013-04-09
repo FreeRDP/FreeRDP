@@ -26,11 +26,11 @@
 #include <winpr/spec.h>
 #include <winpr/handle.h>
 
-#ifndef _WIN32
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef _WIN32
 
 typedef struct _STARTUPINFOA
 {

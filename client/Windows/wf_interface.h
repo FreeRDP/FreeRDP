@@ -67,6 +67,8 @@ typedef struct wf_context wfContext;
 
 struct wf_info
 {
+	rdpClient* client;
+
 	int width;
 	int height;
 	int offset_x;
@@ -107,13 +109,15 @@ struct wf_info
 	BOOL sw_gdi;
 };
 
-FREERDP_API int wf_global_init();
-FREERDP_API int wf_global_uninit();
+#define cfInfo	wfInfo
 
-FREERDP_API int wf_start(wfInfo* wfi);
-FREERDP_API int wf_stop(wfInfo* wfi);
+FREERDP_API int freerdp_client_global_init();
+FREERDP_API int freerdp_client_global_uninit();
 
-FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv);
-FREERDP_API int wf_free(wfInfo* wfi);
+FREERDP_API int freerdp_client_start(wfInfo* cfi);
+FREERDP_API int freerdp_client_stop(wfInfo* cfi);
+
+FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
+FREERDP_API int freerdp_client_free(wfInfo* cfi);
 
 #endif
