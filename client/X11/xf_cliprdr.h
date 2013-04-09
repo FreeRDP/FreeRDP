@@ -20,7 +20,7 @@
 #ifndef __XF_CLIPRDR_H
 #define __XF_CLIPRDR_H
 
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman);
 void xf_cliprdr_uninit(xfInfo* xfi);
@@ -30,11 +30,5 @@ BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent);
 BOOL xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent);
 BOOL xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent);
 void xf_cliprdr_check_owner(xfInfo* xfi);
-
-#ifdef WITH_DEBUG_X11_CLIPRDR
-#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_CLASS(X11_CLIPRDR, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
 
 #endif /* __XF_CLIPRDR_H */

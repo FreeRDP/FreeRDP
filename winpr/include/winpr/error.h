@@ -29,6 +29,10 @@
 
 #else
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NO_ERROR
 #define NO_ERROR    0
 #endif
@@ -2927,6 +2931,10 @@ WINPR_API ULONG RemoveVectoredExceptionHandler(PVOID Handle);
 WINPR_API PVOID AddVectoredContinueHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
 
 WINPR_API ULONG RemoveVectoredContinueHandler(PVOID Handle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

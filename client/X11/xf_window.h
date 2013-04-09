@@ -27,7 +27,7 @@
 typedef struct xf_localmove xfLocalMove;
 typedef struct xf_window xfWindow;
 
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 // Extended ICCM flags http://standards.freedesktop.org/wm-spec/wm-spec-latest.html
 #define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0

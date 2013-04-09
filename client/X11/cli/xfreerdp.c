@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Monitor Handling
+ * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +18,41 @@
  * limitations under the License.
  */
 
-#ifndef __XF_MONITOR_H
-#define __XF_MONITOR_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/rail/rail.h>
-
-struct _MONITOR_INFO
-{
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	BOOL primary;
-};
-typedef struct _MONITOR_INFO MONITOR_INFO;
-
-struct _VIRTUAL_SCREEN
-{
-	int nmonitors;
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	MONITOR_INFO* monitors;
-};
-typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
 #include "xf_interface.h"
 
-BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
+#include "xfreerdp.h"
 
-#endif /* __XF_MONITOR_H */
+int main(int argc, char* argv[])
+{
+	xfInfo* xfi;
+	DWORD dwExitCode;
+	freerdp* instance;
+
+	freerdp_client_global_init();
+
+	xfi = freerdp_client_new(argc, argv);
+	instance = xfi->instance;
+
+	freerdp_client_start(xfi);
+
+	WaitForSingleObject(xfi->thread, INFINITE);
+
+	GetExitCodeThread(xfi->thread, &dwExitCode);
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
+
+	freerdp_client_global_uninit();
+
+	return xf_exit_code_from_disconnect_reason(dwExitCode);
+}

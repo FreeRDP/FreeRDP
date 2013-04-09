@@ -270,12 +270,37 @@ static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 	free(plugin);
 }
 
+/**
+ * Callback Interface
+ */
+
+int cliprdr_monitor_ready(CliprdrClientContext* context)
+{
+	return 0;
+}
+
+int cliprdr_format_list(CliprdrClientContext* context)
+{
+	return 0;
+}
+
+int cliprdr_data_request(CliprdrClientContext* context)
+{
+	return 0;
+}
+
+int cliprdr_data_response(CliprdrClientContext* context)
+{
+	return 0;
+}
+
 /* cliprdr is always built-in */
 #define VirtualChannelEntry	cliprdr_VirtualChannelEntry
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* _p;
+	CliprdrClientContext* context;
 
 	_p = (cliprdrPlugin*) malloc(sizeof(cliprdrPlugin));
 	ZeroMemory(_p, sizeof(cliprdrPlugin));
@@ -292,6 +317,15 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.receive_callback = cliprdr_process_receive;
 	_p->plugin.event_callback = cliprdr_process_event;
 	_p->plugin.terminate_callback = cliprdr_process_terminate;
+
+	context = (CliprdrClientContext*) malloc(sizeof(CliprdrClientContext));
+
+	context->MonitorReady = cliprdr_monitor_ready;
+	context->FormatList = cliprdr_format_list;
+	context->DataRequest = cliprdr_data_request;
+	context->DataResponse = cliprdr_data_response;
+
+	_p->plugin.channel_entry_points.pInterface = (void*) context;
 
 	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
 

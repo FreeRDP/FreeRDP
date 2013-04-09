@@ -33,6 +33,18 @@
 
 #include "xf_cliprdr.h"
 
+#ifdef WITH_DEBUG_X11
+#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
+#ifdef WITH_DEBUG_X11_CLIPRDR
+#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_CLASS(X11_CLIPRDR, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
 typedef struct clipboard_format_mapping clipboardFormatMapping;
 
 struct clipboard_format_mapping
@@ -498,6 +510,7 @@ static void xf_cliprdr_get_requested_targets(xfInfo* xfi)
 		{
 			atom = ((Atom*) data)[i];
 			DEBUG_X11("atom %d", (int) atom);
+
 			for (j = 0; j < cb->num_format_mappings; j++)
 			{
 				if (cb->format_mappings[j].target_format == atom)

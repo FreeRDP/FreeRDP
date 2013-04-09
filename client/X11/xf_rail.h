@@ -20,7 +20,7 @@
 #ifndef __XF_RAIL_H
 #define __XF_RAIL_H
 
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
 void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail);
