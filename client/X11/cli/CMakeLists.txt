@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP Clients
+# FreeRDP X11 cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,43 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Clients
+set(MODULE_NAME "xfreerdp")
+set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 
-add_subdirectory(common)
+include_directories(..)
 
-if(WIN32)
-	add_subdirectory(Windows)
-else()
-	if(WITH_SAMPLE)
-		add_subdirectory(Sample)
-	endif()
+set(${MODULE_PREFIX}_SRCS
+	xfreerdp.c
+	xfreerdp.h)
 
-	if(WITH_DIRECTFB)
-		add_subdirectory(DirectFB)
-	endif()
-endif()
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-if(WITH_X11)
-	add_subdirectory(X11)
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-client)
 
-if(APPLE)
-	if(IOS)
-		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/iOS")
-			message(STATUS "Adding iOS client")
-			add_subdirectory(iOS)
-		endif()
-	else()
-		add_subdirectory(Mac)
-	endif()
-endif()
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-if(ANDROID)
-	message(STATUS "Adding Android client")
-	add_subdirectory(Android)
-endif()
+install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
-if(WITH_WAYK)
-	add_subdirectory(WaykClient)
-endif()
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")
 

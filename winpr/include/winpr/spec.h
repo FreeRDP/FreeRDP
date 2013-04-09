@@ -20,22 +20,13 @@
 #ifndef WINPR_SPEC_H
 #define WINPR_SPEC_H
 
+#include <winpr/platform.h>
+
 #ifdef _WIN32
 
 #include <specstrings.h>
 
 #else
-
-#if defined(__x86_64) && \
-		!(defined(_X86_) || defined(__i386__) || defined(_IA64_))
-#if !defined(_AMD64_)
-#define _AMD64_
-#endif
-#endif /* _AMD64_ */
-
-#ifdef _AMD64_
-#define _WIN64
-#endif
 
 #ifndef DECLSPEC_ALIGN
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
@@ -47,7 +38,7 @@
 #endif
 #endif /* DECLSPEC_ALIGN */
 
-#ifdef _WIN64
+#ifdef _M_AMD64
 #define MEMORY_ALLOCATION_ALIGNMENT 16
 #else
 #define MEMORY_ALLOCATION_ALIGNMENT 8
@@ -55,7 +46,19 @@
 
 #define DUMMYSTRUCTNAME		s
 
+#ifdef __GNUC__
+#ifndef __declspec
+#define __declspec(e) __attribute__((e))
+#endif
+#endif
+
+#ifndef DECLSPEC_NORETURN
+#if (defined(__GNUC__) || defined(_MSC_VER))
+#define DECLSPEC_NORETURN __declspec(noreturn)
+#else
 #define DECLSPEC_NORETURN
+#endif
+#endif /* DECLSPEC_NORETURN */
 
 #endif
 

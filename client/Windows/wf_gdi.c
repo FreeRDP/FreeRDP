@@ -201,17 +201,38 @@ void wf_resize_window(wfInfo* wfi)
 		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
 		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 	}
+	else if (!wfi->instance->settings->Decorations)
+	{
+		RECT rc_wnd;
+		RECT rc_client;
+		
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CHILD);
+
+		/* Now resize to get full canvas size and room for caption and borders */
+		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, wfi->width, wfi->height, SWP_FRAMECHANGED);
+		GetClientRect(wfi->hwnd, &rc_client);
+		GetWindowRect(wfi->hwnd, &rc_wnd);
+		
+		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
+		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		
+		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+	}
 	else
 	{
-		RECT rc_client, rc_wnd;
+		RECT rc_wnd;
+		RECT rc_client;
 
 		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
+
 		/* Now resize to get full canvas size and room for caption and borders */
 		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, wfi->width, wfi->height, SWP_FRAMECHANGED);
 		GetClientRect(wfi->hwnd, &rc_client);
 		GetWindowRect(wfi->hwnd, &rc_wnd);
+
 		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
 		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		
 		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 	wf_update_offset(wfi);

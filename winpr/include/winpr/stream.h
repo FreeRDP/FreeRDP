@@ -331,7 +331,7 @@ WINPR_API void stream_extend(wStream* stream, int request_size);
 	} while (0)
 
 static INLINE BOOL stream_skip(wStream* s, int sz) {
-	if (stream_get_left(s) < sz)
+    if ((int) stream_get_left(s) < sz)
 		return FALSE;
 	stream_seek(s, sz);
 	return TRUE;

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Monitor Handling
+ * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,31 +17,9 @@
  * limitations under the License.
  */
 
-#ifndef __XF_MONITOR_H
-#define __XF_MONITOR_H
+#ifndef __XFREERDP_H
+#define __XFREERDP_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/rail/rail.h>
 
-struct _MONITOR_INFO
-{
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	BOOL primary;
-};
-typedef struct _MONITOR_INFO MONITOR_INFO;
 
-struct _VIRTUAL_SCREEN
-{
-	int nmonitors;
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	MONITOR_INFO* monitors;
-};
-typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
-
-#include "xf_interface.h"
-
-BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
-
-#endif /* __XF_MONITOR_H */
+#endif /* __XFREERDP_H */

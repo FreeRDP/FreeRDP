@@ -21,8 +21,23 @@
 #define FREERDP_CHANNEL_CLIENT_CLIPRDR_H
 
 /**
- * Event Types
+ * Client Interface
  */
+
+typedef struct _cliprdr_client_context CliprdrClientContext;
+
+typedef int (*pcCliprdrMonitorReady)(CliprdrClientContext* context);
+typedef int (*pcCliprdrFormatList)(CliprdrClientContext* context);
+typedef int (*pcCliprdrDataRequest)(CliprdrClientContext* context);
+typedef int (*pcCliprdrDataResponse)(CliprdrClientContext* context);
+
+struct _cliprdr_client_context
+{
+	pcCliprdrMonitorReady MonitorReady;
+	pcCliprdrFormatList FormatList;
+	pcCliprdrDataRequest DataRequest;
+	pcCliprdrDataResponse DataResponse;
+};
 
 /**
  * Clipboard Formats

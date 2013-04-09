@@ -90,3 +90,6 @@ build/
 default.log
 *Amplifier XE*
 *Inspector XE*
+
+*.cbp
+*.txt.user

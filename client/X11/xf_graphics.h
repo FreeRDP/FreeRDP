@@ -20,7 +20,7 @@
 #ifndef __XF_GRAPHICS_H
 #define __XF_GRAPHICS_H
 
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 void xf_register_graphics(rdpGraphics* graphics);
 

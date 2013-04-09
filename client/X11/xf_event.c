@@ -32,8 +32,7 @@
 
 #include "xf_event.h"
 
-#if defined(WITH_DEBUG_X11) || defined(WITH_DEBUG_X11_LOCAL_MOVESIZE)
-static const char* const X11_EVENT_STRINGS[] =
+const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
 	"KeyPress",
@@ -71,6 +70,17 @@ static const char* const X11_EVENT_STRINGS[] =
 	"MappingNotify",
 	"GenericEvent",
 };
+
+#ifdef WITH_DEBUG_X11
+#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
@@ -121,7 +131,7 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	x = event->xmotion.x;
 	y = event->xmotion.y;
 
-	if (xfi->mouse_motion != TRUE)
+	if (!xfi->settings->MouseMotion)
 	{
 		if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;

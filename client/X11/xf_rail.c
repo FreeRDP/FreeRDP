@@ -32,6 +32,12 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
+#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
 void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
 {
 	if (!xfi->remote_app)
