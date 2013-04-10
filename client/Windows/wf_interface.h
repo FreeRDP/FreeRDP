@@ -81,6 +81,8 @@ struct wf_info
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
+	int client_width;
+	int client_height;
 
 	HANDLE thread;
 	HANDLE keyboardThread;
@@ -105,8 +107,10 @@ struct wf_info
 	HBRUSH brush;
 	HBRUSH org_brush;
 	RECT update_rect;
+	RECT scale_update_rect;
 
 	wfBitmap* tile;
+	DWORD mainThreadId;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
@@ -124,6 +128,11 @@ FREERDP_API int freerdp_client_global_uninit();
 
 FREERDP_API int freerdp_client_start(wfInfo* cfi);
 FREERDP_API int freerdp_client_stop(wfInfo* cfi);
+
+FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
+FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
+
+FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int height);
 
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API int freerdp_client_free(wfInfo* cfi);
