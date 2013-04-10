@@ -30,7 +30,7 @@
     <string name="search_hint">"Connexion à l'ordinateur"</string>    
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">"Se connecter"</string>
-    <string name="list_placeholder_no_servers">"Pas de serveurs"</string>
+    <string name="list_placeholder_no_servers">"Pas de connexion"</string>
     <string name="list_placeholder_connecting">"Connexion..."</string>
     <string name="list_placeholder_disconnecting">"Déconnexion…"</string>
     <string name="list_placeholder_connection_error">"Perte de la connexion"</string>
@@ -46,7 +46,7 @@
     <string name="settings_credentials">"Authentifiant"</string>
     <string name="settings_username">"Nom d'utilisateur"</string>
     <string name="settings_password">"Mot de passe"</string>
-    <string name="settings_domain">"Domaine"</string>
+    <string name="settings_domain">"Nom de domaine"</string>
     <string name="settings_cat_settings">"Paramètres"</string>
     <string name="settings_screen">"Écran"</string>
     <string name="settings_cat_screen">"Paramètres d'écran"</string>
@@ -70,7 +70,7 @@
         <item>"640x480"</item>
         <item>"720x480"</item>
         <item>"800x600"</item>
-        <item>"1024 x 768"</item>
+        <item>"1024x768"</item>
         <item>"1280x1024"</item>
         <item>"1440x900"</item>
         <item>"1920x1080"</item>
@@ -82,7 +82,7 @@
         <item>"640x480"</item>
         <item>"720x480"</item>
         <item>"800x600"</item>
-        <item>"1024 x 768"</item>
+        <item>"1024x768"</item>
         <item>"1280x1024"</item>
         <item>"1440x900"</item>
         <item>"1920x1080"</item>
@@ -94,14 +94,14 @@
     <string name="settings_cat_performance">"Paramètres de performance"</string>
     <string name="settings_perf_remotefx">"RemoteFX"</string>
     <string name="settings_perf_wallpaper">"Fond d'écran"</string>
-    <string name="settings_perf_font_smoothing">"Lissage de polices"</string>
-    <string name="settings_perf_desktop_composition">"Compositeur du bureau"</string>
-    <string name="settings_perf_full_window_drag">"Contenu de la fenêtre tout en faisant glisser"</string>
+    <string name="settings_perf_font_smoothing">"Lissage des polices"</string>
+    <string name="settings_perf_desktop_composition">"Effets visuels Aero"</string>
+    <string name="settings_perf_full_window_drag">"Afficher le contenu des fenêtres en mouvement"</string>
     <string name="settings_perf_menu_animation">"Animations de menu"</string>
     <string name="settings_perf_theming">"Styles visuels"</string>
     <string name="settings_advanced">"Avancé"</string>
     <string name="settings_cat_advanced">"Paramètres avancés"</string>
-    <string name="settings_enable_3g_settings">"Réglages 3G"</string>
+    <string name="settings_enable_3g_settings">"Paramètres 3G"</string>
     <string name="settings_screen_3g">"Écran 3G"</string>
     <string name="settings_performance_3g">"Performance 3G"</string>
     <string name="settings_security">"Securité"</string>
@@ -117,7 +117,7 @@
         <item>"2"</item>
         <item>"3"</item>
     </string-array>
-    <string name="settings_remote_program">"Programme à distance"</string>
+    <string name="settings_remote_program">"Lancement de programme"</string>
     <string name="settings_work_dir">"Répertoire de travail"</string>
     <string name="settings_console_mode">"Mode console"</string>
     <!-- App settings strings -->
@@ -146,7 +146,7 @@
     <string name="title_about">"À propos"</string>
     <!-- Error message strings -->
     <string name="error_bookmark_incomplete_title">"Annuler sans enregistrer?"</string>
-    <string name="error_bookmark_incomplete">"Appuyez sur \"Annuler\" pour abandonner! \ NCliquez sur «Continuer» pour spécifier les champs obligatoires!"</string>
+    <string name="error_bookmark_incomplete">"Appuyez sur \"Annuler\" pour annuler, ou cliquez sur «Continuer» pour spécifier les champs obligatoires."</string>
     <string name="error_connection_failure">"Impossible d'établir une connexion au serveur!"</string>
     <!-- Info message strings -->
     <string name="info_capabilities_changed">"Les paramètres de l'écran ont changé parce que le serveur ne prend pas en charge les paramètres que vous avez spécifiés!"</string>
