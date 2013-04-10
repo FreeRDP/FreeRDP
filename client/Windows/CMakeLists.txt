@@ -37,7 +37,11 @@ set(${MODULE_PREFIX}_SRCS
 	resource.h)
 
 if(WITH_CLIENT_INTERFACE)
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	if(CLIENT_INTERFACE_SHARED)
+		add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
+	else()
+		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	endif()
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
