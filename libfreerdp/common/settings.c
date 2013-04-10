@@ -1209,8 +1209,8 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->ClientBuild;
 			break;
 
-		case FreeRDP_EarlyCapabilitiesFlag:
-			return settings->EarlyCapabilitiesFlag;
+		case FreeRDP_EarlyCapabilityFlags:
+			return settings->EarlyCapabilityFlags;
 			break;
 
 		case FreeRDP_EncryptionMethods:
@@ -1517,8 +1517,8 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->ClientBuild = param;
 			break;
 
-		case FreeRDP_EarlyCapabilitiesFlag:
-			settings->EarlyCapabilitiesFlag = param;
+		case FreeRDP_EarlyCapabilityFlags:
+			settings->EarlyCapabilityFlags = param;
 			break;
 
 		case FreeRDP_EncryptionMethods:

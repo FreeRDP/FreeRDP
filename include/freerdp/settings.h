@@ -483,7 +483,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_ClientBuild					133
 #define FreeRDP_ClientHostname					134
 #define FreeRDP_ClientProductId					135
-#define FreeRDP_EarlyCapabilitiesFlag				136
+#define FreeRDP_EarlyCapabilityFlags				136
 #define FreeRDP_NetworkAutoDetect				137
 #define FreeRDP_SupportAsymetricKeys				138
 #define FreeRDP_SupportErrorInfoPdu				139
@@ -763,7 +763,7 @@ struct rdp_settings
 	ALIGN64 UINT32 ClientBuild; /* 133 */
 	ALIGN64 char* ClientHostname; /* 134 */
 	ALIGN64 char* ClientProductId; /* 135 */
-	ALIGN64 UINT32 EarlyCapabilitiesFlag; /* 136 */
+	ALIGN64 UINT32 EarlyCapabilityFlags; /* 136 */
 	ALIGN64 BOOL NetworkAutoDetect; /* 137 */
 	ALIGN64 BOOL SupportAsymetricKeys; /* 138 */
 	ALIGN64 BOOL SupportErrorInfoPdu; /* 139 */
