@@ -6,12 +6,10 @@ set(MODULE_PREFIX "FREERDP_CLIENT_MAC")
 
 set(FRAMEWORK_HEADERS_PATH /System/Library/Frameworks/Cocoa.framework/Versions/A/Headers/)
 include_directories(${FRAMEWORK_HEADERS_PATH} /System/Library/Frameworks) 
-	
-# set(CMAKE_OSX_SYSROOT MacOSX10.7.sdk)
+
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.4")
 set(GUI_TYPE MACOSX_BUNDLE)
 
-# Import libraries
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(COCOA_LIBRARY Cocoa)
 find_library(APPKIT_LIBRARY AppKit)
@@ -33,16 +31,32 @@ mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
 set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY})
 set(APP_TYPE MACOSX_BUNDLE)
 
-# OS X Interface Builder files
-file(GLOB ${MODULE_NAME}_XIBS *.xib)
+set(${MODULE_NAME}_XIBS
+	MainMenu.xib
+	PasswordDialog.xib)
 
-set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_XIBS} ${MACOSX_BUNDLE_ICON_FILE})
+set(${MODULE_NAME}_RESOURCES
+	${${MODULE_NAME}_XIBS}
+	${MACOSX_BUNDLE_ICON_FILE})
 
-# Headers
-file(GLOB ${MODULE_NAME}_HEADERS *.h)
+set(${MODULE_NAME}_HEADERS
+	AppDelegate.h
+	MRDPCursor.h
+	MRDPRailView.h
+	MRDPRailWindow.h
+	MRDPView.h
+	MRDPWindow.h
+	PasswordDialog.h)
 
-# Source
-file(GLOB ${MODULE_NAME}_SOURCES *.m)
+set(${MODULE_NAME}_SOURCES
+	main.m
+	AppDelegate.m
+	MRDPCursor.m
+	MRDPRailView.m
+	MRDPRailWindow.m
+	MRDPView.m
+	MRDPWindow.m
+	PasswordDialog.m)
 
 add_executable(${MODULE_NAME}
 	${APP_TYPE} 
@@ -63,13 +77,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_NAME}_RESOU
 # Support for automatic reference counting requires non-fragile abi.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
 
-# XCode project architecture to native architecture of build machine
-# -----------------------------------------------------------------------------------------------------
-# Issue: Had some issues with FreeRDP project building only 64 bit and
-# MacFreeRDP attempting to link to both 32 and 64 for dual target.
-# In the future the FreeRDP Xcode project should be pulled in for a couple of reasons:
-# 1) better step-into debugging 2) automatic dependency compilation and multi-arch compilation + linkage
-# If you know the solutions for 1 and 2, please add below.
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH_ACTUAL)")
 
 # Set the info plist to the custom instance
