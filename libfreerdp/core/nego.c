@@ -648,12 +648,14 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
 
-	if (nego->RoutingToken != NULL)
+	if (nego->RoutingToken)
 	{
 		stream_write(s, nego->RoutingToken, nego->RoutingTokenLength);
-		length += nego->RoutingTokenLength;
+		stream_write_BYTE(s, 0x0D); /* CR */
+		stream_write_BYTE(s, 0x0A); /* LF */
+		length += nego->RoutingTokenLength + 2;
 	}
-	else if (nego->cookie != NULL)
+	else if (nego->cookie)
 	{
 		cookie_length = strlen(nego->cookie);
 

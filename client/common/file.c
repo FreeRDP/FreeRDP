@@ -517,6 +517,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
 	
+	if (~((size_t) file->LoadBalanceInfo))
+	{
+		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
+		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+	}
+
 	if (~file->ConnectionType)
 	{
 		freerdp_set_connection_type(settings, file->ConnectionType);

@@ -135,6 +135,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
+	if (settings->LoadBalanceInfo)
+		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+
 	if (!nego_connect(rdp->nego))
 	{
 		fprintf(stderr, "Error: protocol security negotiation or connection failure\n");
