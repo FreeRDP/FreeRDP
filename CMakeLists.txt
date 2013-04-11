@@ -111,6 +111,10 @@ if(MSVC)
 		message(STATUS "Random freeing errors are a common sign of runtime issues")
 	endif()
 	configure_msvc_runtime()
+
+	if(NOT DEFINED CMAKE_SUPPRESS_REGENERATION)
+		set(CMAKE_SUPPRESS_REGENERATION ON)
+	endif()
 endif()
 
 # Compiler-specific flags
