@@ -111,6 +111,7 @@ struct wf_info
 
 	wfBitmap* tile;
 	DWORD mainThreadId;
+	DWORD keyboardThreadId;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
@@ -131,6 +132,8 @@ FREERDP_API int freerdp_client_stop(wfInfo* cfi);
 
 FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
 FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
+
+FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
 
 FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int height);
 

@@ -666,10 +666,10 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
+	((wfContext*) instance->context)->wfi->mainThreadId = 0;
 
 	freerdp_channels_close(channels, instance);
-	freerdp_disconnect(instance);
-	
+	freerdp_disconnect(instance);	
 	return 0;
 }
 
@@ -707,6 +707,8 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 		fprintf(stderr, "failed to install keyboard hook\n");
 	}
 
+	wfi->keyboardThreadId = 0;
+	printf("Keyboard thread exited.\n");
 	return (DWORD) NULL;
 }
 
@@ -778,6 +780,11 @@ wfInfo* freerdp_client_new(int argc, char** argv)
 	return wfi;
 }
 
+rdpSettings* freerdp_client_get_settings(wfInfo* wfi)
+{
+	return wfi->instance->settings;
+}
+
 int freerdp_client_start(wfInfo* wfi)
 {
 	HWND hWndParent;
@@ -808,7 +815,7 @@ int freerdp_client_start(wfInfo* wfi)
 	wfi->wndClass.hIconSm = wfi->icon;
 	RegisterClassEx(&(wfi->wndClass));
 
-	wfi->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfi, 0, NULL);
+	wfi->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfi, 0, &wfi->keyboardThreadId);
 
 	if (!wfi->keyboardThread)
 		return -1;
@@ -820,12 +827,17 @@ int freerdp_client_start(wfInfo* wfi)
 	if (!wfi->thread)
 		return -1;
 
+	printf("Main thread exited.\n");
 	return 0;
 }
 
 int freerdp_client_stop(wfInfo* wfi)
 {
-	PostThreadMessage(wfi->mainThreadId, WM_QUIT, 0, 0);
+	if (wfi->mainThreadId)
+		PostThreadMessage(wfi->mainThreadId, WM_QUIT, 0, 0);
+
+	if (wfi->keyboardThreadId)
+		PostThreadMessage(wfi->keyboardThreadId, WM_QUIT, 0, 0);
 	return 0;
 }
 
@@ -841,7 +853,7 @@ int freerdp_client_focus_out(wfInfo* wfi)
 	return 0;
 }
 
-int wf_set_window_size(wfInfo* wfi, int width, int height)
+int freerdp_client_set_window_size(wfInfo* wfi, int width, int height)
 {
 	if ((width != wfi->client_width) || (height != wfi->client_height))
 	{
