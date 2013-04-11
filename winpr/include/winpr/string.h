@@ -25,6 +25,10 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _WIN32
 
 #define CSTR_LESS_THAN			1
@@ -173,5 +177,9 @@ WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteS
 
 WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
 		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_CRT_STRING_H */
