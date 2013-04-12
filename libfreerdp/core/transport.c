@@ -703,8 +703,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		}
 
 		received = transport->ReceiveBuffer;
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
-		transport->ReceiveBuffer->pointer = transport->ReceiveBuffer->buffer;
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 
 		stream_set_pos(received, length);
 		stream_seal(received);
@@ -720,7 +719,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		ObjectPool_Return(transport->ReceivePool, received);
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
@@ -799,16 +798,6 @@ static void* transport_client_thread(void* arg)
 	return NULL;
 }
 
-wStream* transport_receive_buffer_pool_new()
-{
-	wStream* pdu = NULL;
-
-	pdu = stream_new(BUFFER_SIZE);
-	pdu->pointer = pdu->buffer;
-
-	return pdu;
-}
-
 rdpTransport* transport_new(rdpSettings* settings)
 {
 	rdpTransport* transport;
@@ -826,16 +815,14 @@ rdpTransport* transport_new(rdpSettings* settings)
 		/* a small 0.1ms delay when transport is blocking. */
 		transport->SleepInterval = 100;
 
-		transport->ReceivePool = ObjectPool_New(TRUE);
-		ObjectPool_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-		ObjectPool_Object(transport->ReceivePool)->fnObjectNew = (OBJECT_NEW_FN) transport_receive_buffer_pool_new;
+		transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 		/* receive buffer for non-blocking read. */
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
-		transport->ReceiveStream = stream_new(BUFFER_SIZE);
+		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
 		transport->SendStream = stream_new(BUFFER_SIZE);
 
 		transport->blocking = TRUE;
@@ -851,11 +838,13 @@ void transport_free(rdpTransport* transport)
 	if (transport != NULL)
 	{
 		if (transport->ReceiveBuffer)
-			ObjectPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
+			Stream_Release(transport->ReceiveBuffer);
 
-		ObjectPool_Free(transport->ReceivePool);
+		if (transport->ReceiveStream)
+			Stream_Release(transport->ReceiveStream);
 
-		stream_free(transport->ReceiveStream);
+		StreamPool_Free(transport->ReceivePool);
+
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
 

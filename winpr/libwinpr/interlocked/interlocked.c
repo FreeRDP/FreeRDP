@@ -236,7 +236,11 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 
 #endif /* _WIN32 */
 
-#if (_WIN32 && (_WIN32_WINNT < 0x0502))
+#if defined(_WIN64)
+
+/* InterlockedCompareExchange64 already defined */
+
+#elif (_WIN32 && (_WIN32_WINNT < 0x0502))
 
 static volatile HANDLE mutex = NULL;
 

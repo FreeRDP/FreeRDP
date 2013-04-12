@@ -29,5 +29,4 @@
         <Preference android:key="security.clear_certificate_cache" android:title="@string/settings_security_clear_certificate_cache" />
     </PreferenceCategory>
     
-
 </PreferenceScreen>
