@@ -704,7 +704,6 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		received = transport->ReceiveBuffer;
 		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
-		transport->ReceiveBuffer->pointer = transport->ReceiveBuffer->buffer;
 
 		stream_set_pos(received, length);
 		stream_seal(received);
@@ -720,7 +719,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		StreamPool_Return(transport->ReceivePool, received);
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
@@ -823,7 +822,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
-		transport->ReceiveStream = stream_new(BUFFER_SIZE);
+		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
 		transport->SendStream = stream_new(BUFFER_SIZE);
 
 		transport->blocking = TRUE;
@@ -839,11 +838,13 @@ void transport_free(rdpTransport* transport)
 	if (transport != NULL)
 	{
 		if (transport->ReceiveBuffer)
-			StreamPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
+			Stream_Release(transport->ReceiveBuffer);
+
+		if (transport->ReceiveStream)
+			Stream_Release(transport->ReceiveStream);
 
 		StreamPool_Free(transport->ReceivePool);
 
-		stream_free(transport->ReceiveStream);
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
 
