@@ -102,7 +102,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	if (pool->aSize > 0)
 		s = pool->aArray[--(pool->aSize)];
 
-	if (size < 0)
+	if (size == 0)
 		size = pool->defaultSize;
 
 	if (!s)

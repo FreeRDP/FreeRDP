@@ -340,13 +340,15 @@ void freerdp_context_new(freerdp* instance)
  */
 void freerdp_context_free(freerdp* instance)
 {
-	if (instance->context == NULL)
+	if (!instance->context)
 		return;
 
 	IFCALL(instance->ContextFree, instance, instance->context);
 
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
+
+	free(instance->context->client);
 
 	free(instance->context);
 	instance->context = NULL;

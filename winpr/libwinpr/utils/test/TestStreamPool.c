@@ -12,9 +12,9 @@ int TestStreamPool(int argc, char* argv[])
 
 	pool = StreamPool_New(TRUE, BUFFER_SIZE);
 
-	s[0] = StreamPool_Take(pool, -1);
-	s[1] = StreamPool_Take(pool, -1);
-	s[2] = StreamPool_Take(pool, -1);
+	s[0] = StreamPool_Take(pool, 0);
+	s[1] = StreamPool_Take(pool, 0);
+	s[2] = StreamPool_Take(pool, 0);
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
@@ -24,8 +24,8 @@ int TestStreamPool(int argc, char* argv[])
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
-	s[3] = StreamPool_Take(pool, -1);
-	s[4] = StreamPool_Take(pool, -1);
+	s[3] = StreamPool_Take(pool, 0);
+	s[4] = StreamPool_Take(pool, 0);
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
@@ -34,9 +34,9 @@ int TestStreamPool(int argc, char* argv[])
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
-	s[2] = StreamPool_Take(pool, -1);
-	s[3] = StreamPool_Take(pool, -1);
-	s[4] = StreamPool_Take(pool, -1);
+	s[2] = StreamPool_Take(pool, 0);
+	s[3] = StreamPool_Take(pool, 0);
+	s[4] = StreamPool_Take(pool, 0);
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
@@ -63,9 +63,9 @@ int TestStreamPool(int argc, char* argv[])
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
-	s[2] = StreamPool_Take(pool, -1);
-	s[3] = StreamPool_Take(pool, -1);
-	s[4] = StreamPool_Take(pool, -1);
+	s[2] = StreamPool_Take(pool, 0);
+	s[3] = StreamPool_Take(pool, 0);
+	s[4] = StreamPool_Take(pool, 0);
 
 	printf("StreamPool: aSize: %d uSize: %d\n", pool->aSize, pool->uSize);
 
