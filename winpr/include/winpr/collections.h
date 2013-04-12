@@ -28,6 +28,7 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 
 typedef void* (*OBJECT_NEW_FN)(void);
 typedef void (*OBJECT_FREE_FN)(void* obj);

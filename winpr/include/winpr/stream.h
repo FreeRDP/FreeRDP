@@ -28,12 +28,17 @@
 extern "C" {
 #endif
 
+typedef struct _wStreamPool wStreamPool;
+
 struct _wStream
 {
 	BYTE* buffer;
 	BYTE* pointer;
 	size_t length;
 	size_t capacity;
+
+	DWORD count;
+	wStreamPool* pool;
 };
 typedef struct _wStream wStream;
 
@@ -336,6 +341,28 @@ static INLINE BOOL stream_skip(wStream* s, int sz) {
 	stream_seek(s, sz);
 	return TRUE;
 }
+
+/* StreamPool */
+
+struct _wStreamPool
+{
+	int size;
+	int capacity;
+	wStream** array;
+	HANDLE mutex;
+	BOOL synchronized;
+};
+
+WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
+WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
+
+WINPR_API void Stream_AddRef(wStream* s);
+WINPR_API void Stream_Release(wStream* s);
+
+WINPR_API void StreamPool_Clear(wStreamPool* pool);
+
+WINPR_API wStreamPool* StreamPool_New(BOOL synchronized);
+WINPR_API void StreamPool_Free(wStreamPool* pool);
 
 #ifdef __cplusplus
 }
