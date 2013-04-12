@@ -490,7 +490,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	if (length == 0)
 		return -1;
 
-	if(!tpdu_read_connection_confirm(s, &li))
+	if (!tpdu_read_connection_confirm(s, &li))
 		return -1;
 
 	if (li > 6)
@@ -563,7 +563,8 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 	BYTE type;
 
 	tpkt_read_header(s);
-	if(!tpdu_read_connection_request(s, &li))
+
+	if (!tpdu_read_connection_request(s, &li))
 		return FALSE;
 
 	if (li != stream_get_left(s) + 6)
@@ -648,12 +649,14 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	stream_get_mark(s, bm);
 	stream_seek(s, length);
 
-	if (nego->RoutingToken != NULL)
+	if (nego->RoutingToken)
 	{
 		stream_write(s, nego->RoutingToken, nego->RoutingTokenLength);
-		length += nego->RoutingTokenLength;
+		stream_write_BYTE(s, 0x0D); /* CR */
+		stream_write_BYTE(s, 0x0A); /* LF */
+		length += nego->RoutingTokenLength + 2;
 	}
-	else if (nego->cookie != NULL)
+	else if (nego->cookie)
 	{
 		cookie_length = strlen(nego->cookie);
 
@@ -669,7 +672,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
-	if (nego->requested_protocols > PROTOCOL_RDP)
+	if ((nego->requested_protocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
 		stream_write_BYTE(s, TYPE_RDP_NEG_REQ);
@@ -762,18 +765,24 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 		case SSL_REQUIRED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
 			break;
+
 		case SSL_NOT_ALLOWED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
 			break;
+
 		case SSL_CERT_NOT_ON_SERVER:
 			DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
+			nego->sendNegoData = TRUE;
 			break;
+
 		case INCONSISTENT_FLAGS:
 			DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
 			break;
+
 		case HYBRID_REQUIRED_BY_SERVER:
 			DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
+
 		default:
 			DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
 			break;

@@ -202,11 +202,12 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 	else
 #endif
 	{
-		if (stream_get_left(data_in) < y_size+cb_size+cr_size)
+		if (stream_get_left(data_in) < y_size + cb_size + cr_size)
 		{
 			DEBUG_WARN("rfx_decode_rgb: packet too small for y_size+cb_size+cr_size");
 			return FALSE;
 		}
+
 		rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, pSrcDst[0]); /* YData */
 		stream_seek(data_in, y_size);
 
@@ -230,5 +231,6 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[0] - 16);
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[1] - 16);
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[2] - 16);
+
 	return TRUE;
 }

@@ -602,7 +602,11 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AsyncInput					1544
 #define FreeRDP_AsyncUpdate					1545
 #define FreeRDP_AsyncChannels					1546
-#define FreeRDP_ToggleFullscreen				1547
+#define FreeRDP_AsyncTransport					1547
+#define FreeRDP_ToggleFullscreen				1548
+#define FreeRDP_WmClass						1549
+#define FreeRDP_EmbeddedWindow					1550
+#define FreeRDP_SmartSizing					1551
 #define FreeRDP_SoftwareGdi					1601
 #define FreeRDP_LocalConnection					1602
 #define FreeRDP_AuthenticationOnly				1603
@@ -961,7 +965,9 @@ struct rdp_settings
 	ALIGN64 BOOL AsyncTransport; /* 1547 */
 	ALIGN64 BOOL ToggleFullscreen; /* 1548 */
 	ALIGN64 char* WmClass; /* 1549 */
-	UINT64 padding1600[1600 - 1550]; /* 1550 */
+	ALIGN64 BOOL EmbeddedWindow; /* 1550 */
+	ALIGN64 BOOL SmartSizing; /* 1551 */
+	UINT64 padding1600[1600 - 1552]; /* 1552 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
