@@ -346,11 +346,17 @@ static INLINE BOOL stream_skip(wStream* s, int sz) {
 
 struct _wStreamPool
 {
-	int size;
-	int capacity;
-	wStream** array;
+	int aSize;
+	int aCapacity;
+	wStream** aArray;
+
+	int uSize;
+	int uCapacity;
+	wStream** uArray;
+
 	HANDLE mutex;
 	BOOL synchronized;
+	size_t defaultSize;
 };
 
 WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
@@ -359,9 +365,13 @@ WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
 WINPR_API void Stream_AddRef(wStream* s);
 WINPR_API void Stream_Release(wStream* s);
 
+WINPR_API wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr);
+WINPR_API void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr);
+WINPR_API void StreamPool_Release(wStreamPool* pool, BYTE* ptr);
+
 WINPR_API void StreamPool_Clear(wStreamPool* pool);
 
-WINPR_API wStreamPool* StreamPool_New(BOOL synchronized);
+WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
 WINPR_API void StreamPool_Free(wStreamPool* pool);
 
 #ifdef __cplusplus
