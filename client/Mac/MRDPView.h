@@ -76,8 +76,8 @@
 	
 @public
 	NSWindow* ourMainWindow;
-	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
-	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
+	NSPasteboard* pasteboard_rd;
+	NSPasteboard* pasteboard_wr;
 	int pasteboard_changecount;
 	int pasteboard_format;
 	int is_connected;
@@ -95,20 +95,21 @@
 @end
 
 /* Pointer Flags */
-#define PTR_FLAGS_WHEEL                 0x0200
-#define PTR_FLAGS_WHEEL_NEGATIVE        0x0100
-#define PTR_FLAGS_MOVE                  0x0800
-#define PTR_FLAGS_DOWN                  0x8000
-#define PTR_FLAGS_BUTTON1               0x1000
-#define PTR_FLAGS_BUTTON2               0x2000
-#define PTR_FLAGS_BUTTON3               0x4000
-#define WheelRotationMask               0x01FF
+#define PTR_FLAGS_WHEEL			0x0200
+#define PTR_FLAGS_WHEEL_NEGATIVE	0x0100
+#define PTR_FLAGS_MOVE			0x0800
+#define PTR_FLAGS_DOWN			0x8000
+#define PTR_FLAGS_BUTTON1		0x1000
+#define PTR_FLAGS_BUTTON2		0x2000
+#define PTR_FLAGS_BUTTON3		0x4000
+#define WheelRotationMask		0x01FF
 
 void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_SetNull(rdpContext* context);
 void mf_Pointer_SetDefault(rdpContext* context);
+
 int rdp_connect(void);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
@@ -154,11 +155,10 @@ void mac_rail_enable_remoteapp_mode(void);
 void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, wMessage* event);
 void mac_process_rail_server_localmovesize_event(freerdp* instance, wMessage* event);
 void apple_center_window(NSRect* r);
-void apple_to_windowMove(NSRect* r, RAIL_WINDOW_MOVE_ORDER * windowMove);
+void apple_to_windowMove(NSRect* r, RAIL_WINDOW_MOVE_ORDER* windowMove);
 
 struct mac_context
 {
-	// *must* have this - do not delete
 	rdpContext _p;
 };
 
