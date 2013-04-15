@@ -513,6 +513,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->Decorations;
 			break;
 
+		case FreeRDP_SmartSizing:
+			return settings->SmartSizing;
+			break;
+
 		case FreeRDP_MouseMotion:
 			return settings->MouseMotion;
 			break;
@@ -948,6 +952,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 		case FreeRDP_Decorations:
 			settings->Decorations = param;
 			break;
+
+		case FreeRDP_SmartSizing:
+			settings->SmartSizing = param;
+			break;		
 
 		case FreeRDP_MouseMotion:
 			settings->MouseMotion = param;

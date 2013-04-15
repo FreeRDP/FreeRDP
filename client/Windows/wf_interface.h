@@ -140,6 +140,19 @@ FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int heigh
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API int freerdp_client_free(wfInfo* cfi);
 
+FREERDP_API BOOL freerdp_client_get_param_bool(wfInfo* cfi, int id);
+FREERDP_API int freerdp_client_set_param_bool(wfInfo* cfi, int id, BOOL param);
+
+FREERDP_API UINT32 freerdp_client_get_param_uint32(wfInfo* cfi, int id);
+FREERDP_API int freerdp_client_set_param_uint32(wfInfo* cfi, int id, UINT32 param);
+
+FREERDP_API UINT64 freerdp_client_get_param_uint64(wfInfo* cfi, int id);
+FREERDP_API int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 param);
+
+FREERDP_API char* freerdp_client_get_param_string(wfInfo* cfi, int id);
+FREERDP_API int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param);
+
+
 #ifdef __cplusplus
 }
 #endif
