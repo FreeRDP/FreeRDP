@@ -1262,7 +1262,6 @@ int xfreerdp_run(freerdp* instance)
 		xf_free(xfi);
 		return XF_EXIT_CONN_FAILED;
 	}
-
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
@@ -1290,6 +1289,11 @@ int xfreerdp_run(freerdp* instance)
 	{
 		rcount = 0;
 		wcount = 0;
+
+		if (freerdp_focus_required(instance))
+		{
+			xf_kbd_focus_in(xfi);
+		}
 
 		if (!async_transport)
 		{

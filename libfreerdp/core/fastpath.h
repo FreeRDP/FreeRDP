@@ -109,7 +109,9 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16 *length)
 int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
 int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
 
+wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath);
 wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode);
+BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iEventCount);
 BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);

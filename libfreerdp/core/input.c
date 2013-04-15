@@ -65,6 +65,7 @@ void input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	wStream* s;
 	rdpRdp* rdp = input->context->rdp;
+	printf("In input_send_synchronize_event\n");
 
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SYNC);
 	input_write_synchronize_event(s, flags);
@@ -151,11 +152,28 @@ void input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 	rdp_send_client_input_pdu(rdp, s);
 }
 
+void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+{
+	printf("In input_send_focus_in_event\n");
+
+	/* send a tab up like mstsc.exe */
+	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
+
+	/* send the toggle key states */
+	input_send_synchronize_event(input, (toggleStates & 0x1F));
+
+	/* send another tab up like mstsc.exe */
+	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
+
+	/* finish with a mouse pointer position like mstsc.exe */
+	input_send_extended_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+}
+
 void input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	wStream* s;
 	rdpRdp* rdp = input->context->rdp;
-
+printf("In input_send_fastpath_synchronize_event\n");
 	/* The FastPath Synchronization eventFlags has identical values as SlowPath */
 	s = fastpath_input_pdu_init(rdp->fastpath, (BYTE) flags, FASTPATH_INPUT_EVENT_SYNC);
 	fastpath_send_input_pdu(rdp->fastpath, s);
@@ -204,6 +222,35 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSEX);
 	input_write_extended_mouse_event(s, flags, x, y);
 	fastpath_send_input_pdu(rdp->fastpath, s);
+}
+
+void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+{
+	wStream* s;
+	rdpRdp* rdp = input->context->rdp;
+	BYTE eventFlags = 0;
+
+	s = fastpath_input_pdu_init_header(rdp->fastpath);
+	/* send a tab up like mstsc.exe */
+	eventFlags = FASTPATH_INPUT_KBDFLAGS_RELEASE | FASTPATH_INPUT_EVENT_SCANCODE << 5;
+	stream_write_BYTE(s, eventFlags); /* Key Release event (1 byte) */
+	stream_write_BYTE(s, 0x0f); /* keyCode (1 byte) */
+
+	/* send the toggle key states */
+	eventFlags = (toggleStates & 0x1F) | FASTPATH_INPUT_EVENT_SYNC << 5;
+	stream_write_BYTE(s, eventFlags); /* toggle state (1 byte) */
+
+	/* send another tab up like mstsc.exe */
+	eventFlags = FASTPATH_INPUT_KBDFLAGS_RELEASE | FASTPATH_INPUT_EVENT_SCANCODE << 5;
+	stream_write_BYTE(s, eventFlags); /* Key Release event (1 byte) */
+	stream_write_BYTE(s, 0x0f); /* keyCode (1 byte) */
+
+	/* finish with a mouse pointer position like mstsc.exe */
+	eventFlags = 0 | FASTPATH_INPUT_EVENT_MOUSE << 5;
+	stream_write_BYTE(s, eventFlags); /* Mouse Pointer event (1 byte) */
+	input_write_extended_mouse_event(s, PTR_FLAGS_MOVE, x, y);
+
+	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 4);
 }
 
 static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
@@ -379,6 +426,7 @@ void input_register_client_callbacks(rdpInput* input)
 		input->UnicodeKeyboardEvent = input_send_fastpath_unicode_keyboard_event;
 		input->MouseEvent = input_send_fastpath_mouse_event;
 		input->ExtendedMouseEvent = input_send_fastpath_extended_mouse_event;
+		input->FocusInEvent = input_send_fastpath_focus_in_event;
 	}
 	else
 	{
@@ -387,6 +435,7 @@ void input_register_client_callbacks(rdpInput* input)
 		input->UnicodeKeyboardEvent = input_send_unicode_keyboard_event;
 		input->MouseEvent = input_send_mouse_event;
 		input->ExtendedMouseEvent = input_send_extended_mouse_event;
+		input->FocusInEvent = input_send_focus_in_event;
 	}
 
 	input->asynchronous = settings->AsyncInput;
@@ -428,6 +477,11 @@ void freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UIN
 void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	IFCALL(input->ExtendedMouseEvent, input, flags, x, y);
+}
+
+void freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+{
+	IFCALL(input->FocusInEvent, input, toggleStates, x, y);
 }
 
 int input_process_events(rdpInput* input)

@@ -242,6 +242,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
 			update->pointer->pointer_system.type = SYSPTR_DEFAULT;
 			IFCALL(pointer->PointerSystem, context, &pointer->pointer_system);
+
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
@@ -575,7 +576,7 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	return sec_bytes;
 }
 
-wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
+wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath)
 {
 	rdpRdp *rdp;
 	wStream* s;
@@ -584,17 +585,31 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 
 	s = transport_send_stream_init(rdp->transport, 256);
 	stream_seek(s, 3); /* fpInputHeader, length1 and length2 */
-	if (rdp->do_crypt) {
+
+	if (rdp->do_crypt)
+	{
 		rdp->sec_flags |= SEC_ENCRYPT;
 		if (rdp->do_secure_checksum)
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
 	stream_seek(s, fastpath_get_sec_bytes(rdp));
+
+	return s;
+}
+
+wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
+{
+	rdpRdp *rdp;
+	wStream* s;
+
+	rdp = fastpath->rdp;
+
+	s = fastpath_input_pdu_init_header(fastpath);
 	stream_write_BYTE(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
 	return s;
 }
 
-BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
+BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNumEvents)
 {
 	rdpRdp *rdp;
 	UINT16 length;
@@ -611,7 +626,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 	}
 
 	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
-	eventHeader |= (1 << 2); /* numberEvents */
+	eventHeader |= (iNumEvents << 2); /* numberEvents */
 	if (rdp->sec_flags & SEC_ENCRYPT)
 		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
 	if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
@@ -649,6 +664,11 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 		return FALSE;
 
 	return TRUE;
+}
+
+BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
+{
+	return fastpath_send_multiple_input_pdu(fastpath, s, 1);
 }
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
