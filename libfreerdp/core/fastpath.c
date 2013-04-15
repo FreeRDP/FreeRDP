@@ -169,20 +169,21 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 	rdpUpdate* update = fastpath->rdp->update;
 	rdpContext* context = update->context;
 
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
 	switch (updateType)
 	{
 		case UPDATE_TYPE_BITMAP:
-			if(!update_read_bitmap(update, s, &update->bitmap_update))
+			if (!update_read_bitmap(update, s, &update->bitmap_update))
 				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			if(!update_read_palette(update, s, &update->palette_update))
+			if (!update_read_palette(update, s, &update->palette_update))
 				return FALSE;
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
@@ -329,6 +330,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	}
 
 	update_stream = NULL;
+
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
 		totalSize = size;
@@ -341,6 +343,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 		stream_check_size(fastpath->updateData, size);
 		stream_copy(fastpath->updateData, comp_stream, size);
+
 		if (stream_get_length(fastpath->updateData) > rdp->settings->MultifragMaxRequestSize)
 		{
 			fprintf(stderr, "fastpath PDU is bigger than MultifragMaxRequestSize\n");

@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "xfreerdp")
-set(MODULE_PREFIX "FREERDP_CLIENT_X11")
+set(MODULE_NAME "xfreerdp-client")
+set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
 include(FindXmlto)
 include_directories(${X11_INCLUDE_DIRS})
@@ -40,10 +40,20 @@ set(${MODULE_PREFIX}_SRCS
 	xf_keyboard.h
 	xf_window.c
 	xf_window.h
-	xfreerdp.c
-	xfreerdp.h)
+	xf_interface.c
+	xf_interface.h)
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(WITH_CLIENT_INTERFACE)
+	if(CLIENT_INTERFACE_SHARED)
+		add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
+	else()
+		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	endif()
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+else()
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c cli/xfreerdp.h)
+	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+endif()
 
 set(${MODULE_PREFIX}_LIBS
 	${X11_LIBRARIES}
@@ -128,6 +138,12 @@ if(WITH_IPP)
     target_link_libraries(xfreerdp ${IPP_LIBRARY_LIST})
 endif()
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(WITH_CLIENT_INTERFACE)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+	add_subdirectory(cli)
+else()
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/X11")
+

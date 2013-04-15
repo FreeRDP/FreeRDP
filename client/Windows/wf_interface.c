@@ -305,6 +305,7 @@ BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	wfInfo* wfi;
+	DWORD dwStyle;
 	rdpCache* cache;
 	wfContext* context;
 	WCHAR lpWindowName[64];
@@ -366,10 +367,15 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
+	if (!settings->Decorations)
+		dwStyle = WS_CHILD | WS_BORDER;
+	else
+		dwStyle = 0;
+
 	if (!wfi->hwnd)
 	{
-		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName,
-			0, 0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
+		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName, dwStyle,
+			0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
 
 		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
 	}
@@ -528,6 +534,8 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	int index;
 	int rcount;
 	int wcount;
+	int width;
+	int height;
 	BOOL msg_ret;
 	int quit_msg;
 	void* rfds[32];
@@ -620,7 +628,30 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 		{
 			msg_ret = GetMessage(&msg, NULL, 0, 0);
 
-			if (msg_ret == 0 || msg_ret == -1)
+			if (instance->settings->EmbeddedWindow)
+			{
+				if ((msg.message == WM_SETFOCUS) && (msg.lParam == 1))
+				{
+					PostMessage(((wfContext*) instance->context)->wfi->hwnd, WM_SETFOCUS, 0, 0); 
+				}
+				else if ((msg.message == WM_KILLFOCUS) && (msg.lParam == 1))
+				{
+					PostMessage(((wfContext*) instance->context)->wfi->hwnd, WM_KILLFOCUS, 0, 0); 
+				}
+			}
+
+			if (msg.message == WM_SIZE)
+			{
+				width = LOWORD(msg.lParam);
+				height = HIWORD(msg.lParam);
+
+				((wfContext*) instance->context)->wfi->client_width = width;
+				((wfContext*) instance->context)->wfi->client_height = height;
+
+				SetWindowPos(((wfContext*) instance->context)->wfi->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
+			}
+
+			if ((msg_ret == 0) || (msg_ret == -1))
 			{
 				quit_msg = TRUE;
 				break;
@@ -679,7 +710,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	return (DWORD) NULL;
 }
 
-int wf_global_init()
+int freerdp_client_global_init()
 {
 	WSADATA wsaData;
 
@@ -705,20 +736,19 @@ int wf_global_init()
 	return 0;
 }
 
-int wf_global_uninit()
+int freerdp_client_global_uninit()
 {
 	WSACleanup();
 
 	return 0;
 }
 
-wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
+wfInfo* freerdp_client_new(int argc, char** argv)
 {
+	int index;
+	int status;
 	wfInfo* wfi;
 	freerdp* instance;
-
-	if (!hInstance)
-		hInstance = GetModuleHandle(NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = wf_pre_connect;
@@ -733,10 +763,30 @@ wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
 	freerdp_context_new(instance);
 
 	wfi = ((wfContext*) (instance->context))->wfi;
+
 	wfi->instance = instance;
+	wfi->client = instance->context->client;
 
 	instance->context->argc = argc;
-	instance->context->argv = argv;
+	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
+
+	for (index = 0; index < argc; index++)
+		instance->context->argv[index] = _strdup(argv[index]);
+
+	status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
+
+	return wfi;
+}
+
+int freerdp_client_start(wfInfo* wfi)
+{
+	HWND hWndParent;
+	HINSTANCE hInstance;
+	freerdp* instance = wfi->instance;
+
+	hInstance = GetModuleHandle(NULL);
+	hWndParent = (HWND) instance->settings->ParentWindowId;
+	instance->settings->EmbeddedWindow = (hWndParent) ? TRUE : FALSE;
 
 	wfi->hWndParent = hWndParent;
 	wfi->hInstance = hInstance;
@@ -758,24 +808,14 @@ wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv)
 	wfi->wndClass.hIconSm = wfi->icon;
 	RegisterClassEx(&(wfi->wndClass));
 
-	return wfi;
-}
-
-int wf_start(wfInfo* wfi)
-{
-	int status;
-	freerdp* instance = wfi->instance;
-
 	wfi->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfi, 0, NULL);
 
 	if (!wfi->keyboardThread)
 		return -1;
 
-	status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
-
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
-	wfi->thread = CreateThread(NULL, 0, wf_thread, (void*) instance, 0, NULL);
+	wfi->thread = CreateThread(NULL, 0, wf_thread, (void*) instance, 0, &wfi->mainThreadId);
 
 	if (!wfi->thread)
 		return -1;
@@ -783,12 +823,35 @@ int wf_start(wfInfo* wfi)
 	return 0;
 }
 
-int wf_stop(wfInfo* wfi)
+int freerdp_client_stop(wfInfo* wfi)
 {
+	PostThreadMessage(wfi->mainThreadId, WM_QUIT, 0, 0);
 	return 0;
 }
 
-int wf_free(wfInfo* wfi)
+int freerdp_client_focus_in(wfInfo* wfi)
+{
+	PostThreadMessage(wfi->mainThreadId, WM_SETFOCUS, 0, 1);
+	return 0;
+}
+
+int freerdp_client_focus_out(wfInfo* wfi)
+{
+	PostThreadMessage(wfi->mainThreadId, WM_KILLFOCUS, 0, 1);
+	return 0;
+}
+
+int wf_set_window_size(wfInfo* wfi, int width, int height)
+{
+	if ((width != wfi->client_width) || (height != wfi->client_height))
+	{
+		PostThreadMessage(wfi->mainThreadId, WM_SIZE, SIZE_RESTORED, ((UINT) height << 16) | (UINT) width);
+	}
+
+	return 0;
+}
+
+int freerdp_client_free(wfInfo* wfi)
 {
 	freerdp* instance = wfi->instance;
 

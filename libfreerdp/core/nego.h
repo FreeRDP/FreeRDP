@@ -100,6 +100,7 @@ struct rdp_nego
 	BOOL security_connected;
 	UINT32 cookie_max_length;
 
+	BOOL sendNegoData;
 	UINT32 selected_protocol;
 	UINT32 requested_protocols;
 	BOOL NegotiateSecurityLayer;

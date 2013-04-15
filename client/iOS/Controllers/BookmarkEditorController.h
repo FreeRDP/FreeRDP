@@ -21,7 +21,7 @@
 @end
 
 
-@interface BookmarkEditorController : EditorBaseController <UIAlertViewDelegate>
+@interface BookmarkEditorController : EditorBaseController
 {
 @private
     ComputerBookmark* _bookmark;

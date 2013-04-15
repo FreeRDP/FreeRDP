@@ -10,7 +10,7 @@
 #import <UIKit/UIKit.h>
 
 
-@interface AboutController : UIViewController <UIWebViewDelegate, UIAlertViewDelegate>
+@interface AboutController : UIViewController <UIWebViewDelegate>
 {
     NSString* last_link_clicked;
 	UIWebView* webView;

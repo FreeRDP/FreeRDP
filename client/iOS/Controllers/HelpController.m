@@ -55,27 +55,4 @@
     return YES;
 }
 
-#pragma mark -
-#pragma mark UIWebView callbacks
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{	
-	if([[request URL] isFileURL])
-		return YES;
-	
-	if(navigationType == UIWebViewNavigationTypeLinkClicked)
-	{
-		NSString* lastClickedLink = [[request URL] absoluteString];
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"External Link"
-														message:[NSString stringWithFormat:@"Open [%@] in Browser?", lastClickedLink]
-													   delegate:self 
-											  cancelButtonTitle:@"OK" 
-											  otherButtonTitles:@"No", nil];
-		[alert show];
-		[alert release];
-		
-		return NO;
-	}
-	return YES;
-}
-
 @end

@@ -28,12 +28,17 @@
 extern "C" {
 #endif
 
+typedef struct _wStreamPool wStreamPool;
+
 struct _wStream
 {
 	BYTE* buffer;
 	BYTE* pointer;
 	size_t length;
 	size_t capacity;
+
+	DWORD count;
+	wStreamPool* pool;
 };
 typedef struct _wStream wStream;
 
@@ -331,11 +336,43 @@ WINPR_API void stream_extend(wStream* stream, int request_size);
 	} while (0)
 
 static INLINE BOOL stream_skip(wStream* s, int sz) {
-	if (stream_get_left(s) < sz)
+    if ((int) stream_get_left(s) < sz)
 		return FALSE;
 	stream_seek(s, sz);
 	return TRUE;
 }
+
+/* StreamPool */
+
+struct _wStreamPool
+{
+	int aSize;
+	int aCapacity;
+	wStream** aArray;
+
+	int uSize;
+	int uCapacity;
+	wStream** uArray;
+
+	HANDLE mutex;
+	BOOL synchronized;
+	size_t defaultSize;
+};
+
+WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
+WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
+
+WINPR_API void Stream_AddRef(wStream* s);
+WINPR_API void Stream_Release(wStream* s);
+
+WINPR_API wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr);
+WINPR_API void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr);
+WINPR_API void StreamPool_Release(wStreamPool* pool, BYTE* ptr);
+
+WINPR_API void StreamPool_Clear(wStreamPool* pool);
+
+WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
+WINPR_API void StreamPool_Free(wStreamPool* pool);
 
 #ifdef __cplusplus
 }

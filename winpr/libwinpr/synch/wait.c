@@ -64,6 +64,9 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (status != 0)
 			fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+
+		if (thread_status)
+			thread->dwExitCode = ((DWORD) (size_t) thread_status);
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{

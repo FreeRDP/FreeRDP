@@ -1209,8 +1209,8 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->ClientBuild;
 			break;
 
-		case FreeRDP_EarlyCapabilitiesFlag:
-			return settings->EarlyCapabilitiesFlag;
+		case FreeRDP_EarlyCapabilityFlags:
+			return settings->EarlyCapabilityFlags;
 			break;
 
 		case FreeRDP_EncryptionMethods:
@@ -1517,8 +1517,8 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->ClientBuild = param;
 			break;
 
-		case FreeRDP_EarlyCapabilitiesFlag:
-			settings->EarlyCapabilitiesFlag = param;
+		case FreeRDP_EarlyCapabilityFlags:
+			settings->EarlyCapabilityFlags = param;
 			break;
 
 		case FreeRDP_EncryptionMethods:
@@ -1775,6 +1775,38 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_DynamicChannelArraySize:
 			settings->DynamicChannelArraySize = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	return 0;
+}
+
+UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
+{
+	switch (id)
+	{
+		case FreeRDP_ParentWindowId:
+			return settings->ParentWindowId;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	return 0;
+}
+
+int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
+{
+	switch (id)
+	{
+		case FreeRDP_ParentWindowId:
+			settings->ParentWindowId = param;
 			break;
 
 		default:

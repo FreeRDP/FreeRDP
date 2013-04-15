@@ -52,6 +52,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
+	{ "smart-sizing", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Scale remote desktop to window size" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
@@ -62,6 +63,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "||<alias> or <executable path>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
 	{ "app-icon", COMMAND_LINE_VALUE_REQUIRED, "<icon path>", NULL, NULL, -1, NULL, "Remote application icon for user interface" },
@@ -1090,6 +1092,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->Decorations = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "smart-sizing")
+		{
+			settings->SmartSizing = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
 			settings->ColorDepth = atoi(arg->Value);
@@ -1208,6 +1214,11 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			settings->Workarea = TRUE;
 			settings->DisableWallpaper = TRUE;
 			settings->DisableFullWindowDrag = TRUE;
+		}
+		CommandLineSwitchCase(arg, "load-balance-info")
+		{
+			settings->LoadBalanceInfo = (BYTE*) _strdup(arg->Value);
+			settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{

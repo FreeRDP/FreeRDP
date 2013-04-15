@@ -135,6 +135,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
+	if (settings->LoadBalanceInfo)
+		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+
 	if (!nego_connect(rdp->nego))
 	{
 		fprintf(stderr, "Error: protocol security negotiation or connection failure\n");
@@ -529,8 +532,13 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
+		UINT16 channelId;
 		stream_set_mark(s, mark);
-		stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+		rdp_recv_get_active_header(rdp, s, &channelId);
+		/* Was stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+		 * but the headers aren't always that length,
+		 * so that could result in a bad offset.
+		 */
 
 		if (rdp_recv_out_of_sequence_pdu(rdp, s) != TRUE)
 			return FALSE;
