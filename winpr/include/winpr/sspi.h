@@ -930,6 +930,10 @@ typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_W)(void);
 #define INIT_SECURITY_INTERFACE INIT_SECURITY_INTERFACE_A
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Package Management */
 
 WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
@@ -992,6 +996,15 @@ WINPR_API SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG 
 WINPR_API SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo);
 WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif // WINPR_SSPI
+
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* Custom API */
@@ -1004,5 +1017,9 @@ WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 WINPR_API void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
 WINPR_API void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_SSPI_H */

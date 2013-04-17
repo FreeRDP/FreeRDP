@@ -28,6 +28,10 @@
 
 #else
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -400,6 +404,10 @@ WINPR_API LONG RegUnLoadKeyA(HKEY hKey, LPCSTR lpSubKey);
 #define RegUnLoadKey RegUnLoadKeyW
 #else
 #define RegUnLoadKey RegUnLoadKeyA
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

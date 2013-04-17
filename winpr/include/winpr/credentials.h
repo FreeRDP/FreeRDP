@@ -167,6 +167,10 @@ typedef enum _CRED_PROTECTION_TYPE
 #define PCREDENTIAL_TARGET_INFORMATION	PCREDENTIAL_TARGET_INFORMATIONA
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BOOL CredWriteW(PCREDENTIALW Credential, DWORD Flags);
 WINPR_API BOOL CredWriteA(PCREDENTIALA Credential, DWORD Flags);
 
@@ -219,6 +223,10 @@ WINPR_API BOOL CredFindBestCredentialA(LPCSTR TargetName, DWORD Type, DWORD Flag
 WINPR_API BOOL CredGetSessionTypes(DWORD MaximumPersistCount, LPDWORD MaximumPersist);
 
 WINPR_API VOID CredFree(PVOID Buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef UNICODE
 #define CredWrite			CredWriteW

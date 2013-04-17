@@ -32,6 +32,10 @@ typedef HANDLE DLL_DIRECTORY_COOKIE;
 #define LOAD_LIBRARY_SEARCH_SYSTEM32				0x00000800
 #define LOAD_LIBRARY_SEARCH_USER_DIRS				0x00000400
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory);
 WINPR_API BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie);
 WINPR_API BOOL SetDefaultDllDirectories(DWORD DirectoryFlags);
@@ -53,6 +57,10 @@ WINPR_API HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFl
 WINPR_API FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
 WINPR_API BOOL FreeLibrary(HMODULE hLibModule);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
