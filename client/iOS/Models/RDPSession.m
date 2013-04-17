@@ -190,7 +190,9 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 
 - (CGContextRef)bitmapContext
 {
-	return [self mfi]->bitmap_context;
+    if ([self mfi]->connection_state == TSXConnectionConnected)
+        return [self mfi]->bitmap_context;
+    return NULL;
 }
 
 #pragma mark -
