@@ -25,7 +25,7 @@
 
 #include "surface.h"
 
-static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT32 *length)
+static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT32* length)
 {
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
@@ -50,10 +50,10 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
 	cmd->bitmapData = stream_get_tail(s);
 
-	IFCALL(update->SurfaceBits, update->context, cmd);
-
 	stream_set_pos(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
+
+	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	return 0;
 }

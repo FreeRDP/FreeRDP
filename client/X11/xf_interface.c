@@ -1382,9 +1382,6 @@ void* xf_thread(void* param)
 	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
-	freerdp_client_free(xfi);
-
-	exit_code = 123;
 
 	ExitThread(exit_code);
 }
@@ -1475,8 +1472,6 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 	freerdp_context_new(instance);
 
 	instance->context->argc = argc;
-	instance->context->argv = argv;
-
 	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
 
 	for (index = 0; index < argc; index++)
@@ -1544,11 +1539,24 @@ void freerdp_client_free(xfInfo* xfi)
 {
 	if (xfi)
 	{
+		int index;
+		rdpContext* context;
+
 		xf_window_free(xfi);
 
 		free(xfi->bmp_codec_none);
 
 		XCloseDisplay(xfi->display);
+
+		context = (rdpContext*) xfi->context;
+
+		for (index = 0; index < context->argc; index++)
+			free(context->argv[index]);
+
+		free(context->argv);
+
+		freerdp_context_free(xfi->instance);
+		freerdp_free(xfi->instance);
 
 		free(xfi);
 	}
