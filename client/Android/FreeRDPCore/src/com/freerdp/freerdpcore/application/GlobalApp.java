@@ -194,8 +194,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 	{
 		Log.v("LibFreeRDP", "OnConnectionFailure");
 
-		// free session
-		GlobalApp.freeSession(instance);
+		// send notification to session activity
 		sendRDPNotification(FREERDP_EVENT_CONNECTION_FAILURE, instance);
 	}
 
@@ -210,8 +209,5 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 	public void OnDisconnected(int instance)
 	{
 		Log.v("LibFreeRDP", "OnDisconnected");		
-
-		// free session
-		GlobalApp.freeSession(instance);
 	}	
 }
