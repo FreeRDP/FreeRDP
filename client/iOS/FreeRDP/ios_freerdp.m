@@ -221,7 +221,9 @@ ios_run_freerdp(freerdp * instance)
 
 		[pool release]; pool = nil;
 	}	
-	
+
+	CGContextRelease(mfi->bitmap_context);
+	mfi->bitmap_context = NULL;	
 	mfi->connection_state = TSXConnectionDisconnected;
 	
 	// Cleanup
