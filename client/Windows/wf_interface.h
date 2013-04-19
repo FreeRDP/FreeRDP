@@ -42,6 +42,11 @@
 extern "C" {
 #endif
 
+// Callback type codes. Move elsewhere?
+#define CALLBACK_TYPE_PARAM_CHANGE		0x01
+#define CALLBACK_TYPE_CONNECTED			0x02
+#define CALLBACK_TYPE_DISCONNECTED		0x03
+
 struct wf_bitmap
 {
 	rdpBitmap _bitmap;
@@ -68,6 +73,8 @@ struct wf_context
 	wfInfo* wfi;
 };
 typedef struct wf_context wfContext;
+
+typedef void (CALLBACK * callbackFunc)(wfInfo* wfi, int callback_type, DWORD param1, DWORD param2);
 
 struct wf_info
 {
@@ -116,6 +123,7 @@ struct wf_info
 	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
+	callbackFunc callback_func;
 };
 
 /**
@@ -132,8 +140,6 @@ FREERDP_API int freerdp_client_stop(wfInfo* cfi);
 
 FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
 FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
-
-FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
 
 FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int height);
 
@@ -152,6 +158,7 @@ FREERDP_API int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 para
 FREERDP_API char* freerdp_client_get_param_string(wfInfo* cfi, int id);
 FREERDP_API int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param);
 
+FREERDP_API int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
 
 #ifdef __cplusplus
 }

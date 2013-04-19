@@ -416,6 +416,12 @@ BOOL wf_post_connect(freerdp* instance)
 
 	wf_cliprdr_init(wfi, instance->context->channels);
 
+	// Callback
+	if (wfi->callback_func != NULL)
+	{
+		wfi->callback_func(wfi, CALLBACK_TYPE_CONNECTED, 0, 0);
+	}
+
 	return TRUE;
 }
 
@@ -670,6 +676,13 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 
 	freerdp_channels_close(channels, instance);
 	freerdp_disconnect(instance);	
+
+	// Callback
+	if (((wfContext*) instance->context)->wfi->callback_func != NULL)
+	{
+		((wfContext*) instance->context)->wfi->callback_func(((wfContext*) instance->context)->wfi, CALLBACK_TYPE_DISCONNECTED, 12, 34);
+	}
+
 	return 0;
 }
 
@@ -780,11 +793,6 @@ wfInfo* freerdp_client_new(int argc, char** argv)
 	return wfi;
 }
 
-rdpSettings* freerdp_client_get_settings(wfInfo* wfi)
-{
-	return wfi->instance->settings;
-}
-
 int freerdp_client_start(wfInfo* wfi)
 {
 	HWND hWndParent;
@@ -873,6 +881,35 @@ int freerdp_client_free(wfInfo* wfi)
 	return 0;
 }
 
+void wf_on_param_change(wfInfo* cfi, int id)
+{
+	RECT rect;
+
+	// specific processing here
+	switch(id)
+	{
+		case FreeRDP_SmartSizing:
+			fprintf(stderr, "SmartSizing changed.\n");
+
+			GetWindowRect(cfi->hwnd, &rect);
+			InvalidateRect(cfi->hwnd, &rect, TRUE);
+			break;
+
+		case FreeRDP_ConnectionType:
+			fprintf(stderr, "ConnectionType changed.\n");
+			freerdp_set_connection_type(cfi->instance->settings, cfi->instance->settings->ConnectionType);
+			break;
+	}
+
+	// trigger callback to client
+
+	if (cfi->callback_func != NULL)
+	{
+		fprintf(stderr, "Notifying client...");
+		cfi->callback_func(cfi, CALLBACK_TYPE_PARAM_CHANGE, id, 0);
+	}
+}
+
 BOOL freerdp_client_get_param_bool(wfInfo* cfi, int id)
 {
 	return freerdp_get_param_bool(cfi->instance->settings, id);
@@ -884,7 +921,7 @@ int freerdp_client_set_param_bool(wfInfo* cfi, int id, BOOL param)
 
 	rc = freerdp_set_param_bool(cfi->instance->settings, id, param);
 
-	// Process callbacks here
+	wf_on_param_change(cfi, id);
 
 	return rc;
 }
@@ -900,7 +937,7 @@ int freerdp_client_set_param_uint32(wfInfo* cfi, int id, UINT32 param)
 
 	rc = freerdp_set_param_uint32(cfi->instance->settings, id, param);
 
-	// Process callbacks here
+	wf_on_param_change(cfi, id);
 
 	return rc;
 }
@@ -916,7 +953,7 @@ int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 param)
 
 	rc = freerdp_set_param_uint64(cfi->instance->settings, id, param);
 
-	// Process callbacks here
+	wf_on_param_change(cfi, id);
 
 	return rc;
 }
@@ -924,25 +961,6 @@ int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 param)
 char* freerdp_client_get_param_string(wfInfo* cfi, int id)
 {
 	return freerdp_get_param_string(cfi->instance->settings, id);
-}
-
-void wf_on_param_change(wfInfo* cfi, int id)
-{
-	RECT rect;
-
-	// specific processing here
-	switch(id)
-	{
-		case FreeRDP_SmartSizing:
-			fprintf(stderr, "SmartSizing changed.\n");
-
-			GetWindowRect(cfi->hwnd, &rect);
-			InvalidateRect(cfi->hwnd, &rect, TRUE);
-			break;
-	}
-
-	// trigger callback to client
-
 }
 
 int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param)
@@ -953,4 +971,10 @@ int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param)
 	wf_on_param_change(cfi, id);
 
 	return rc;
+}
+
+int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc)
+{
+	cfi->callback_func = callbackFunc;
+	return 0;
 }
