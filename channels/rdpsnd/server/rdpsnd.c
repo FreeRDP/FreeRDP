@@ -29,9 +29,9 @@
 #include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/rdpsnd.h>
 
@@ -42,7 +42,7 @@ typedef struct _rdpsnd_server
 	HANDLE thread;
 	HANDLE StopEvent;
 	void* rdpsnd_channel;
-	STREAM* rdpsnd_pdu;
+	wStream* rdpsnd_pdu;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
 	BYTE* out_buffer;
@@ -55,7 +55,7 @@ typedef struct _rdpsnd_server
 } rdpsnd_server;
 
 
-static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, wStream* s)
 {
 	int pos;
 	UINT16 i;
@@ -104,7 +104,7 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	return status;
 }
 
-static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, STREAM* s)
+static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, wStream* s)
 {
 	//unhandled for now
 	
@@ -115,7 +115,7 @@ static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_seek_BYTE(s); // padding
 }
 
-static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
+static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, wStream* s)
 {
 	//unhandled for now
 	UINT16 quality;
@@ -123,10 +123,10 @@ static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, STREAM* s)
 	stream_read_UINT16(s, quality);
 	stream_seek_UINT16(s); // reserved
 	
-	printf("Client requested sound quality: %#0X\n", quality);
+	fprintf(stderr, "Client requested sound quality: %#0X\n", quality);
 }
 
-static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
+static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, wStream* s)
 {
 	int i, num_known_format = 0;
 	UINT32 flags, vol, pitch;
@@ -174,7 +174,7 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 	
 	if (num_known_format == 0)
 	{
-		printf("Client doesnt support any known formats!\n");
+		fprintf(stderr, "Client doesnt support any known formats!\n");
 		return FALSE;
 	}
 
@@ -184,7 +184,7 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, STREAM* s)
 static void* rdpsnd_server_thread_func(void* arg)
 {
 	void* fd;
-	STREAM* s;
+	wStream* s;
 	void* buffer;
 	DWORD status;
 	BYTE msgType;
@@ -251,7 +251,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 				}
 				break;
 			default:
-				printf("UNKOWN MESSAGE TYPE!! (%#0X)\n\n", msgType);
+				fprintf(stderr, "UNKOWN MESSAGE TYPE!! (%#0X)\n\n", msgType);
 				break;
 		}
 	}
@@ -293,7 +293,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
-		printf("rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
+		fprintf(stderr, "rdpsnd_server_select_format: index %d is not correct.\n", client_format_index);
 		return;
 	}
 	
@@ -305,7 +305,7 @@ static void rdpsnd_server_select_format(rdpsnd_server_context* context, int clie
 	
 	if (format->nSamplesPerSec == 0)
 	{
-		printf("Invalid Client Sound Format!!\n\n");
+		fprintf(stderr, "Invalid Client Sound Format!!\n\n");
 		return;
 	}
 
@@ -350,7 +350,7 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	BOOL status;
 	AUDIO_FORMAT* format;
 	int tbytes_per_frame;
-	STREAM* s = rdpsnd->rdpsnd_pdu;
+	wStream* s = rdpsnd->rdpsnd_pdu;
 
 	format = &rdpsnd->context.client_formats[rdpsnd->context.selected_client_format];
 	tbytes_per_frame = format->nChannels * rdpsnd->src_bytes_per_sample;
@@ -463,7 +463,7 @@ static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, i
 	int pos;
 	BOOL status;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
-	STREAM* s = rdpsnd->rdpsnd_pdu;
+	wStream* s = rdpsnd->rdpsnd_pdu;
 
 	stream_write_BYTE(s, SNDC_SETVOLUME);
 	stream_write_BYTE(s, 0);
@@ -487,7 +487,7 @@ static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 	int pos;
 	BOOL status;
 	rdpsnd_server* rdpsnd = (rdpsnd_server*) context;
-	STREAM* s = rdpsnd->rdpsnd_pdu;
+	wStream* s = rdpsnd->rdpsnd_pdu;
 
 	if (rdpsnd->context.selected_client_format < 0)
 		return FALSE;

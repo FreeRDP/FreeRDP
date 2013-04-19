@@ -104,6 +104,7 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
     
     // enable NSCodec
     settings->NSCodec = TRUE;
+	settings->BitmapCacheV3Enabled = TRUE;
 
 	// Performance flags
     settings->DisableWallpaper = ![_params boolForKey:@"perf_show_desktop" with3GEnabled:connected_via_3g];
@@ -189,7 +190,7 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 
 - (CGContextRef)bitmapContext
 {
-	return [self mfi]->bitmap_context;
+    return [self mfi]->bitmap_context;
 }
 
 #pragma mark -

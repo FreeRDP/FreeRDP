@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client
+ * X11 Client Interface
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,31 @@
  * limitations under the License.
  */
 
-#ifndef __XFREERDP_H
-#define __XFREERDP_H
+#ifndef __XF_INTERFACE_H
+#define __XF_INTERFACE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/channels/channels.h>
+
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
+#include <freerdp/channels/channels.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 typedef struct xf_info xfInfo;
 
 #include "xf_window.h"
 #include "xf_monitor.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct xf_WorkArea
 {
@@ -82,6 +88,9 @@ struct xf_info
 	xfContext* context;
 	rdpContext* _context;
 
+	rdpClient* client;
+	rdpSettings* settings;
+
 	GC gc;
 	int bpp;
 	int xfds;
@@ -105,7 +114,6 @@ struct xf_info
 	BOOL fullscreen;
 	BOOL grab_keyboard;
 	BOOL unobscured;
-	BOOL decorations;
 	BOOL debug;
 	xfWindow* window;
 	xfWorkArea workArea;
@@ -113,12 +121,11 @@ struct xf_info
 	BOOL remote_app;
 	BOOL disconnect;
 	HCLRCONV clrconv;
-	Window parent_window;
 	HANDLE mutex;
+	HANDLE thread;
 	BOOL UseXThreads;
 
 	HGDI_DC hdc;
-	BOOL sw_gdi;
 	BYTE* primary_buffer;
 
 	BOOL frame_begin;
@@ -129,7 +136,6 @@ struct xf_info
 
 	BOOL focused;
 	BOOL mouse_active;
-	BOOL mouse_motion;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
 	UINT32 keyboard_layout_id;
@@ -218,16 +224,25 @@ enum XF_EXIT_CODE
 void xf_lock_x11(xfInfo* xfi, BOOL display);
 void xf_unlock_x11(xfInfo* xfi, BOOL display);
 
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
+
+/**
+ * Client Interface
+ */
+
+#define cfInfo	xfInfo
+
+FREERDP_API int freerdp_client_global_init();
+FREERDP_API int freerdp_client_global_uninit();
+
+FREERDP_API int freerdp_client_start(cfInfo* cfi);
+FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+
+FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
+FREERDP_API void freerdp_client_free(cfInfo* cfi);
+
+#ifdef __cplusplus
+}
 #endif
 
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
-#endif /* __XFREERDP_H */
+#endif /* __XF_INTERFACE_H */

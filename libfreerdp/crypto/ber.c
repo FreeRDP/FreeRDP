@@ -22,9 +22,11 @@
 #endif
 
 #include <stdio.h>
+#include <winpr/crt.h>
+
 #include <freerdp/crypto/ber.h>
 
-BOOL ber_read_length(STREAM* s, int* length)
+BOOL ber_read_length(wStream* s, int* length)
 {
 	BYTE byte;
 
@@ -59,7 +61,7 @@ BOOL ber_read_length(STREAM* s, int* length)
  * @param length length
  */
 
-int ber_write_length(STREAM* s, int length)
+int ber_write_length(wStream* s, int length)
 {
 	if (length > 0x7F)
 	{
@@ -97,7 +99,7 @@ int ber_get_content_length(int length)
  * @return
  */
 
-BOOL ber_read_universal_tag(STREAM* s, BYTE tag, BOOL pc)
+BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	BYTE byte;
 
@@ -118,7 +120,7 @@ BOOL ber_read_universal_tag(STREAM* s, BYTE tag, BOOL pc)
  * @param pc primitive (FALSE) or constructed (TRUE)
  */
 
-void ber_write_universal_tag(STREAM* s, BYTE tag, BOOL pc)
+void ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	stream_write_BYTE(s, (BER_CLASS_UNIV | BER_PC(pc)) | (BER_TAG_MASK & tag));
 }
@@ -130,7 +132,7 @@ void ber_write_universal_tag(STREAM* s, BYTE tag, BOOL pc)
  * @param length length
  */
 
-BOOL ber_read_application_tag(STREAM* s, BYTE tag, int* length)
+BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length)
 {
 	BYTE byte;
 
@@ -174,7 +176,7 @@ BOOL ber_read_application_tag(STREAM* s, BYTE tag, int* length)
  * @param length length
  */
 
-void ber_write_application_tag(STREAM* s, BYTE tag, int length)
+void ber_write_application_tag(wStream* s, BYTE tag, int length)
 {
 	if (tag > 30)
 	{
@@ -189,7 +191,7 @@ void ber_write_application_tag(STREAM* s, BYTE tag, int length)
 	}
 }
 
-BOOL ber_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc)
+BOOL ber_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 {
 	BYTE byte;
 
@@ -206,7 +208,7 @@ BOOL ber_read_contextual_tag(STREAM* s, BYTE tag, int* length, BOOL pc)
 	return ber_read_length(s, length);
 }
 
-int ber_write_contextual_tag(STREAM* s, BYTE tag, int length, BOOL pc)
+int ber_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc)
 {
 	stream_write_BYTE(s, (BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag));
 	return ber_write_length(s, length) + 1;
@@ -217,7 +219,7 @@ int ber_skip_contextual_tag(int length)
 	return _ber_skip_length(length) + 1;
 }
 
-BOOL ber_read_sequence_tag(STREAM* s, int* length)
+BOOL ber_read_sequence_tag(wStream* s, int* length)
 {
 	BYTE byte;
 
@@ -237,7 +239,7 @@ BOOL ber_read_sequence_tag(STREAM* s, int* length)
  * @param length length
  */
 
-int ber_write_sequence_tag(STREAM* s, int length)
+int ber_write_sequence_tag(wStream* s, int length)
 {
 	stream_write_BYTE(s, (BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_MASK & BER_TAG_SEQUENCE));
 	return ber_write_length(s, length) + 1;
@@ -253,7 +255,7 @@ int ber_skip_sequence_tag(int length)
 	return 1 + _ber_skip_length(length);
 }
 
-BOOL ber_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count)
+BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
 	int length;
 
@@ -273,14 +275,14 @@ BOOL ber_read_enumerated(STREAM* s, BYTE* enumerated, BYTE count)
 	return TRUE;
 }
 
-void ber_write_enumerated(STREAM* s, BYTE enumerated, BYTE count)
+void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 {
 	ber_write_universal_tag(s, BER_TAG_ENUMERATED, FALSE);
 	ber_write_length(s, 1);
 	stream_write_BYTE(s, enumerated);
 }
 
-BOOL ber_read_bit_string(STREAM* s, int* length, BYTE* padding)
+BOOL ber_read_bit_string(wStream* s, int* length, BYTE* padding)
 {
 	if(!ber_read_universal_tag(s, BER_TAG_BIT_STRING, FALSE) ||
 		!ber_read_length(s, length))
@@ -299,21 +301,21 @@ BOOL ber_read_bit_string(STREAM* s, int* length, BYTE* padding)
  * @param length string length
  */
 
-void ber_write_octet_string(STREAM* s, const BYTE* oct_str, int length)
+void ber_write_octet_string(wStream* s, const BYTE* oct_str, int length)
 {
 	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
 	ber_write_length(s, length);
 	stream_write(s, oct_str, length);
 }
 
-BOOL ber_read_octet_string_tag(STREAM* s, int* length)
+BOOL ber_read_octet_string_tag(wStream* s, int* length)
 {
 	return
 		ber_read_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) &&
 		ber_read_length(s, length);
 }
 
-int ber_write_octet_string_tag(STREAM* s, int length)
+int ber_write_octet_string_tag(wStream* s, int length)
 {
 	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
 	ber_write_length(s, length);
@@ -331,7 +333,7 @@ int ber_skip_octet_string(int length)
  * @param value
  */
 
-BOOL ber_read_BOOL(STREAM* s, BOOL* value)
+BOOL ber_read_BOOL(wStream* s, BOOL* value)
 {
 	int length;
 	BYTE v;
@@ -354,14 +356,14 @@ BOOL ber_read_BOOL(STREAM* s, BOOL* value)
  * @param value
  */
 
-void ber_write_BOOL(STREAM* s, BOOL value)
+void ber_write_BOOL(wStream* s, BOOL value)
 {
 	ber_write_universal_tag(s, BER_TAG_BOOLEAN, FALSE);
 	ber_write_length(s, 1);
 	stream_write_BYTE(s, (value == TRUE) ? 0xFF : 0);
 }
 
-BOOL ber_read_integer(STREAM* s, UINT32* value)
+BOOL ber_read_integer(wStream* s, UINT32* value)
 {
 	int length;
 
@@ -397,12 +399,12 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
 	}
 	else if (length == 8)
 	{
-		printf("%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
+		fprintf(stderr, "%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
 		return FALSE;
 	}
 	else
 	{
-		printf("%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
+		fprintf(stderr, "%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
 		return FALSE;
 	}
 
@@ -415,7 +417,7 @@ BOOL ber_read_integer(STREAM* s, UINT32* value)
  * @param value
  */
 
-int ber_write_integer(STREAM* s, UINT32 value)
+int ber_write_integer(wStream* s, UINT32 value)
 {
 	ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
 
@@ -466,7 +468,7 @@ int ber_skip_integer(UINT32 value)
 	return 0;
 }
 
-BOOL ber_read_integer_length(STREAM* s, int* length)
+BOOL ber_read_integer_length(wStream* s, int* length)
 {
 	return
 		ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) &&

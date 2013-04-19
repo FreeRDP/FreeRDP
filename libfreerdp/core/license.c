@@ -88,10 +88,10 @@ void license_print_product_info(PRODUCT_INFO* productInfo)
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) productInfo->pbProductId,
 			productInfo->cbProductId / 2, &ProductId, 0, NULL, NULL);
 
-	printf("ProductInfo:\n");
-	printf("\tdwVersion: 0x%08X\n", productInfo->dwVersion);
-	printf("\tCompanyName: %s\n", CompanyName);
-	printf("\tProductId: %s\n", ProductId);
+	fprintf(stderr, "ProductInfo:\n");
+	fprintf(stderr, "\tdwVersion: 0x%08X\n", productInfo->dwVersion);
+	fprintf(stderr, "\tCompanyName: %s\n", CompanyName);
+	fprintf(stderr, "\tProductId: %s\n", ProductId);
 
 	free(CompanyName);
 	free(ProductId);
@@ -102,12 +102,12 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
 	int index;
 	LICENSE_BLOB* scope;
 
-	printf("ScopeList (%d):\n", scopeList->count);
+	fprintf(stderr, "ScopeList (%d):\n", scopeList->count);
 
 	for (index = 0; index < scopeList->count; index++)
 	{
 		scope = &scopeList->array[index];
-		printf("\t%s\n", (char*) scope->data);
+		fprintf(stderr, "\t%s\n", (char*) scope->buffer);
 	}
 }
 
@@ -123,7 +123,7 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
  * @return if the operation completed successfully
  */
 
-BOOL license_read_preamble(STREAM* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
+BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
 {
 	/* preamble (4 bytes) */
 	if (stream_get_left(s) < 4)
@@ -145,7 +145,7 @@ BOOL license_read_preamble(STREAM* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgS
  * @param wMsgSize message size
  */
 
-void license_write_preamble(STREAM* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSize)
+void license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSize)
 {
 	/* preamble (4 bytes) */
 	stream_write_BYTE(s, bMsgType); /* bMsgType (1 byte) */
@@ -159,9 +159,9 @@ void license_write_preamble(STREAM* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSiz
  * @return stream
  */
 
-STREAM* license_send_stream_init(rdpLicense* license)
+wStream* license_send_stream_init(rdpLicense* license)
 {
-	STREAM* s;
+	wStream* s;
 
 	s = transport_send_stream_init(license->rdp->transport, 4096);
 	stream_seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
@@ -176,7 +176,7 @@ STREAM* license_send_stream_init(rdpLicense* license)
  * @param s stream
  */
 
-BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
+BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 {
 	int length;
 	BYTE flags;
@@ -202,8 +202,8 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
 	license_write_preamble(s, type, flags, wMsgSize);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
-	winpr_HexDump(s->p - 4, wMsgSize);
+	fprintf(stderr, "Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
+	winpr_HexDump(s->pointer - 4, wMsgSize);
 #endif
 
 	stream_set_pos(s, length);
@@ -222,7 +222,7 @@ BOOL license_send(rdpLicense* license, STREAM* s, BYTE type)
  * @return if the operation completed successfully
  */
 
-BOOL license_recv(rdpLicense* license, STREAM* s)
+BOOL license_recv(rdpLicense* license, wStream* s)
 {
 	BYTE flags;
 	BYTE bMsgType;
@@ -233,7 +233,7 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
-		printf("Incorrect RDP header.\n");
+		fprintf(stderr, "Incorrect RDP header.\n");
 		return FALSE;
 	}
 
@@ -244,7 +244,7 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 	{
 		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
 		{
-			printf("rdp_decrypt failed\n");
+			fprintf(stderr, "rdp_decrypt failed\n");
 			return FALSE;
 		}
 	}
@@ -256,7 +256,7 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 
 		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != TRUE)
 		{
-			printf("Unexpected license packet.\n");
+			fprintf(stderr, "Unexpected license packet.\n");
 			return FALSE;
 		}
 
@@ -296,7 +296,7 @@ BOOL license_recv(rdpLicense* license, STREAM* s)
 			break;
 
 		default:
-			printf("invalid bMsgType:%d\n", bMsgType);
+			fprintf(stderr, "invalid bMsgType:%d\n", bMsgType);
 			return FALSE;
 	}
 
@@ -337,33 +337,33 @@ void license_generate_keys(rdpLicense* license)
 			license->ServerRandom, license->LicensingEncryptionKey); /* LicensingEncryptionKey */
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("ClientRandom:\n");
+	fprintf(stderr, "ClientRandom:\n");
 	winpr_HexDump(license->ClientRandom, CLIENT_RANDOM_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("ServerRandom:\n");
+	fprintf(stderr, "ServerRandom:\n");
 	winpr_HexDump(license->ServerRandom, SERVER_RANDOM_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("PremasterSecret:\n");
+	fprintf(stderr, "PremasterSecret:\n");
 	winpr_HexDump(license->PremasterSecret, PREMASTER_SECRET_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("MasterSecret:\n");
+	fprintf(stderr, "MasterSecret:\n");
 	winpr_HexDump(license->MasterSecret, MASTER_SECRET_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("SessionKeyBlob:\n");
+	fprintf(stderr, "SessionKeyBlob:\n");
 	winpr_HexDump(license->SessionKeyBlob, SESSION_KEY_BLOB_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("MacSaltKey:\n");
+	fprintf(stderr, "MacSaltKey:\n");
 	winpr_HexDump(license->MacSaltKey, MAC_SALT_KEY_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("LicensingEncryptionKey:\n");
+	fprintf(stderr, "LicensingEncryptionKey:\n");
 	winpr_HexDump(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 
@@ -416,13 +416,13 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	license_get_server_rsa_public_key(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("Modulus (%d bits):\n", license->ModulusLength * 8);
+	fprintf(stderr, "Modulus (%d bits):\n", license->ModulusLength * 8);
 	winpr_HexDump(license->Modulus, license->ModulusLength);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Exponent:\n");
+	fprintf(stderr, "Exponent:\n");
 	winpr_HexDump(license->Exponent, 4);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	EncryptedPremasterSecret = (BYTE*) malloc(license->ModulusLength);
@@ -461,7 +461,7 @@ void license_decrypt_platform_challenge(rdpLicense* license)
  * @param productInfo product information
  */
 
-BOOL license_read_product_info(STREAM* s, PRODUCT_INFO* productInfo)
+BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 {
 	if (stream_get_left(s) < 8)
 		return FALSE;
@@ -536,7 +536,7 @@ void license_free_product_info(PRODUCT_INFO* productInfo)
  * @param blob license binary blob
  */
 
-BOOL license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
+BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
 	UINT16 wBlobType;
 
@@ -558,7 +558,7 @@ BOOL license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 
 	if ((blob->type != wBlobType) && (blob->type != BB_ANY_BLOB))
 	{
-		printf("license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
+		fprintf(stderr, "license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
 	}
 
 	blob->type = wBlobType;
@@ -575,7 +575,7 @@ BOOL license_read_binary_blob(STREAM* s, LICENSE_BLOB* blob)
  * @param blob license binary blob
  */
 
-void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob)
+void license_write_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
 	stream_write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
 	stream_write_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
@@ -584,7 +584,7 @@ void license_write_binary_blob(STREAM* s, LICENSE_BLOB* blob)
 		stream_write(s, blob->data, blob->length); /* blobData */
 }
 
-void license_write_encrypted_premaster_secret_blob(STREAM* s, LICENSE_BLOB* blob, UINT32 ModulusLength)
+void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blob, UINT32 ModulusLength)
 {
 	UINT32 length;
 
@@ -592,7 +592,7 @@ void license_write_encrypted_premaster_secret_blob(STREAM* s, LICENSE_BLOB* blob
 
 	if (blob->length > ModulusLength)
 	{
-		printf("license_write_encrypted_premaster_secret_blob: invalid blob\n");
+		fprintf(stderr, "license_write_encrypted_premaster_secret_blob: invalid blob\n");
 		return;
 	}
 
@@ -644,7 +644,7 @@ void license_free_binary_blob(LICENSE_BLOB* blob)
  * @param scopeList scope list
  */
 
-BOOL license_read_scope_list(STREAM* s, SCOPE_LIST* scopeList)
+BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 {
 	UINT32 i;
 	UINT32 scopeCount;
@@ -719,7 +719,7 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
  * @param s stream
  */
 
-BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
+BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 {
 	/* ServerRandom (32 bytes) */
 	if (stream_get_left(s) < 32)
@@ -753,15 +753,15 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
 	license_encrypt_premaster_secret(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("ServerRandom:\n");
+	fprintf(stderr, "ServerRandom:\n");
 	winpr_HexDump(license->ServerRandom, 32);
-	printf("\n");
+	fprintf(stderr, "\n");
 
 	license_print_product_info(license->ProductInfo);
-	printf("\n");
+	fprintf(stderr, "\n");
 
 	license_print_scope_list(license->ScopeList);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	return TRUE;
@@ -774,7 +774,7 @@ BOOL license_read_license_request_packet(rdpLicense* license, STREAM* s)
  * @param s stream
  */
 
-BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
+BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 {
 	BYTE MacData[16];
 	UINT32 ConnectFlags = 0;
@@ -799,20 +799,20 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
 	license_decrypt_platform_challenge(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("ConnectFlags: 0x%08X\n", ConnectFlags);
-	printf("\n");
+	fprintf(stderr, "ConnectFlags: 0x%08X\n", ConnectFlags);
+	fprintf(stderr, "\n");
 
-	printf("EncryptedPlatformChallenge:\n");
-	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
-	printf("\n");
+	fprintf(stderr, "EncryptedPlatformChallenge:\n");
+	winpr_HexDump(license->EncryptedPlatformChallenge->buffer, license->EncryptedPlatformChallenge->length);
+	fprintf(stderr, "\n");
 
-	printf("PlatformChallenge:\n");
-	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
-	printf("\n");
+	fprintf(stderr, "PlatformChallenge:\n");
+	winpr_HexDump(license->PlatformChallenge->buffer, license->PlatformChallenge->length);
+	fprintf(stderr, "\n");
 
-	printf("MacData:\n");
+	fprintf(stderr, "MacData:\n");
 	winpr_HexDump(MacData, 16);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 
 	return TRUE;
@@ -825,7 +825,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, STREAM* s)
  * @param s stream
  */
 
-void license_read_new_license_packet(rdpLicense* license, STREAM* s)
+void license_read_new_license_packet(rdpLicense* license, wStream* s)
 {
 	DEBUG_LICENSE("Receiving New License Packet");
 	license->state = LICENSE_STATE_COMPLETED;
@@ -838,7 +838,7 @@ void license_read_new_license_packet(rdpLicense* license, STREAM* s)
  * @param s stream
  */
 
-void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
+void license_read_upgrade_license_packet(rdpLicense* license, wStream* s)
 {
 	DEBUG_LICENSE("Receiving Upgrade License Packet");
 	license->state = LICENSE_STATE_COMPLETED;
@@ -851,7 +851,7 @@ void license_read_upgrade_license_packet(rdpLicense* license, STREAM* s)
  * @param s stream
  */
 
-BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
+BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 {
 	UINT32 dwErrorCode;
 	UINT32 dwStateTransition;
@@ -866,7 +866,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("dwErrorCode: %s, dwStateTransition: %s\n",
+	fprintf(stderr, "dwErrorCode: %s, dwStateTransition: %s\n",
 			error_codes[dwErrorCode], state_transitions[dwStateTransition]);
 #endif
 
@@ -907,7 +907,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, STREAM* s)
  * @param s stream
  */
 
-void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
+void license_write_new_license_request_packet(rdpLicense* license, wStream* s)
 {
 	UINT32 PlatformId;
 	UINT32 PreferredKeyExchangeAlg = KEY_EXCHANGE_ALG_RSA;
@@ -922,22 +922,22 @@ void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 	license_write_binary_blob(s, license->ClientMachineName); /* ClientMachineName */
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("PreferredKeyExchangeAlg: 0x%08X\n", PreferredKeyExchangeAlg);
-	printf("\n");
+	fprintf(stderr, "PreferredKeyExchangeAlg: 0x%08X\n", PreferredKeyExchangeAlg);
+	fprintf(stderr, "\n");
 
-	printf("ClientRandom:\n");
+	fprintf(stderr, "ClientRandom:\n");
 	winpr_HexDump(license->ClientRandom, 32);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("EncryptedPremasterSecret\n");
-	winpr_HexDump(license->EncryptedPremasterSecret->data, license->EncryptedPremasterSecret->length);
-	printf("\n");
+	fprintf(stderr, "EncryptedPremasterSecret\n");
+	winpr_HexDump(license->EncryptedPremasterSecret->buffer, license->EncryptedPremasterSecret->length);
+	fprintf(stderr, "\n");
 
-	printf("ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
-	printf("\n");
+	fprintf(stderr, "ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->buffer);
+	fprintf(stderr, "\n");
 
-	printf("ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
-	printf("\n");
+	fprintf(stderr, "ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->buffer);
+	fprintf(stderr, "\n");
 #endif
 }
 
@@ -949,7 +949,7 @@ void license_write_new_license_request_packet(rdpLicense* license, STREAM* s)
 
 void license_send_new_license_request_packet(rdpLicense* license)
 {
-	STREAM* s;
+	wStream* s;
 	char* username;
 
 	DEBUG_LICENSE("Sending New License Packet");
@@ -986,7 +986,7 @@ void license_send_new_license_request_packet(rdpLicense* license)
  * @param mac_data signature
  */
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, STREAM* s, BYTE* macData)
+void license_write_platform_challenge_response_packet(rdpLicense* license, wStream* s, BYTE* macData)
 {
 	license_write_binary_blob(s, license->EncryptedPlatformChallenge); /* EncryptedPlatformChallengeResponse */
 	license_write_binary_blob(s, license->EncryptedHardwareId); /* EncryptedHWID */
@@ -1001,7 +1001,7 @@ void license_write_platform_challenge_response_packet(rdpLicense* license, STREA
 
 void license_send_platform_challenge_response_packet(rdpLicense* license)
 {
-	STREAM* s;
+	wStream* s;
 	int length;
 	BYTE* buffer;
 	CryptoRc4 rc4;
@@ -1030,17 +1030,17 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	license->EncryptedHardwareId->length = HWID_LENGTH;
 
 #ifdef WITH_DEBUG_LICENSE
-	printf("LicensingEncryptionKey:\n");
+	fprintf(stderr, "LicensingEncryptionKey:\n");
 	winpr_HexDump(license->LicensingEncryptionKey, 16);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("HardwareId:\n");
+	fprintf(stderr, "HardwareId:\n");
 	winpr_HexDump(license->HardwareId, 20);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("EncryptedHardwareId:\n");
-	winpr_HexDump(license->EncryptedHardwareId->data, 20);
-	printf("\n");
+	fprintf(stderr, "EncryptedHardwareId:\n");
+	winpr_HexDump(license->EncryptedHardwareId->buffer, 20);
+	fprintf(stderr, "\n");
 #endif
 
 	license_write_platform_challenge_response_packet(license, s, mac_data);
@@ -1056,7 +1056,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 BOOL license_send_valid_client_error_packet(rdpLicense* license)
 {
-	STREAM* s;
+	wStream* s;
 
 	s = license_send_stream_init(license);
 

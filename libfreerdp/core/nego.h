@@ -21,10 +21,12 @@
 #define FREERDP_CORE_NEGO_H
 
 #include "transport.h"
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Protocol Security Negotiation Protocols */
 enum RDP_NEG_PROTOCOLS
@@ -98,6 +100,7 @@ struct rdp_nego
 	BOOL security_connected;
 	UINT32 cookie_max_length;
 
+	BOOL sendNegoData;
 	UINT32 selected_protocol;
 	UINT32 requested_protocols;
 	BOOL NegotiateSecurityLayer;
@@ -117,14 +120,14 @@ void nego_attempt_tls(rdpNego* nego);
 void nego_attempt_rdp(rdpNego* nego);
 
 void nego_send(rdpNego* nego);
-int nego_recv(rdpTransport* transport, STREAM* s, void* extra);
+int nego_recv(rdpTransport* transport, wStream* s, void* extra);
 BOOL nego_recv_response(rdpNego* nego);
-BOOL nego_read_request(rdpNego* nego, STREAM* s);
+BOOL nego_read_request(rdpNego* nego, wStream* s);
 
 BOOL nego_send_negotiation_request(rdpNego* nego);
-void nego_process_negotiation_request(rdpNego* nego, STREAM* s);
-void nego_process_negotiation_response(rdpNego* nego, STREAM* s);
-void nego_process_negotiation_failure(rdpNego* nego, STREAM* s);
+void nego_process_negotiation_request(rdpNego* nego, wStream* s);
+void nego_process_negotiation_response(rdpNego* nego, wStream* s);
+void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 BOOL nego_send_negotiation_response(rdpNego* nego);
 
 rdpNego* nego_new(struct rdp_transport * transport);

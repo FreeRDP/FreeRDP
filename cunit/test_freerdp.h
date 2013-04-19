@@ -22,8 +22,8 @@
 #include <string.h>
 #include <CUnit/CUnit.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/stream.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 #define add_test_suite(name) \
 	CU_pSuite pSuite; \
@@ -38,6 +38,6 @@
 	}
 
 void dump_data(unsigned char * p, int len, int width, char* name);
-void assert_stream(STREAM* s, BYTE* data, int length, const char* func, int line);
+void assert_stream(wStream* s, BYTE* data, int length, const char* func, int line);
 
 #define ASSERT_STREAM(_s, _data, _length) assert_stream(_s, _data, _length, __FUNCTION__, __LINE__)

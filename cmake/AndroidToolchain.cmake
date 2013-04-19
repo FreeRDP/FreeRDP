@@ -303,10 +303,16 @@ set( CMAKE_SYSTEM_NAME Linux )
 # this one not so much
 set( CMAKE_SYSTEM_VERSION 1 )
 
+# Android SDK
+
+if (NOT DEFINED ANDROID_SDK)
+	set(ANDROID_SDK "$ENV{ANDROID_SDK}")
+endif()
+
 # rpath makes low sence for Android
 set( CMAKE_SKIP_RPATH TRUE CACHE BOOL "If set, runtime paths are not added when using shared libraries." )
 
-set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
+set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
 if(NOT DEFINED ANDROID_NDK_SEARCH_PATHS)
  if( CMAKE_HOST_WIN32 )
   file( TO_CMAKE_PATH "$ENV{PROGRAMFILES}" ANDROID_NDK_SEARCH_PATHS )
@@ -510,7 +516,19 @@ if( ANDROID_NDK )
  endif()
  set( ANDROID_NDK "${ANDROID_NDK}" CACHE INTERNAL "Path of the Android NDK" FORCE )
  set( BUILD_WITH_ANDROID_NDK True )
- file( STRINGS "${ANDROID_NDK}/RELEASE.TXT" ANDROID_NDK_RELEASE LIMIT_COUNT 1 REGEX r[0-9]+[a-z]? )
+ file( STRINGS "${ANDROID_NDK}/RELEASE.TXT" ANDROID_NDK_RELEASE_TXT LIMIT_COUNT 1 REGEX r[0-9]+[a-z]? )
+
+ if(${ANDROID_NDK_RELEASE_TXT} MATCHES "^r[0-9]+[a-z] \([^ ]+\)$")
+  string( REGEX REPLACE "^(r[0-9]+[a-z]) \(([^ ]+)\)$" "\\1" ANDROID_NDK_RELEASE "${ANDROID_NDK_RELEASE_TXT}" )
+  string( REGEX REPLACE "^(r[0-9]+[a-z]) \(([^ ]+)\)$" "\\2" ANDROID_NDK_RELEASE_EXTRA "${ANDROID_NDK_RELEASE_TXT}" )
+
+  set( ANDROID_NDK_64BIT True)
+  set( ANDROID_NDK_HOST_SYSTEM_NAME "${ANDROID_NDK_HOST_SYSTEM_NAME}_64" )
+
+ else()
+  set( ANDROID_NDK_RELEASE "${ANDROID_NDK_RELEASE_TXT}" )
+ endif()
+
 elseif( ANDROID_STANDALONE_TOOLCHAIN )
  get_filename_component( ANDROID_STANDALONE_TOOLCHAIN "${ANDROID_STANDALONE_TOOLCHAIN}" ABSOLUTE )
  # try to detect change
@@ -1535,9 +1553,9 @@ endif()
 #   BUILD_ANDROID : always TRUE
 #   BUILD_WITH_ANDROID_NDK : TRUE if NDK is used
 #   BUILD_WITH_STANDALONE_TOOLCHAIN : TRUE if standalone toolchain is used
-#   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86" or "darwin-x86" depending on host platform
+#   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86", "linux-x86_64" or "darwin-x86" depending on host platform
 #   ANDROID_NDK_ABI_NAME : "armeabi", "armeabi-v7a", "x86" or "mips" depending on ANDROID_ABI
-#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d; set only for NDK
+#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e; set only for NDK
 #   ANDROID_ARCH_NAME : "arm" or "x86" or "mips" depending on ANDROID_ABI
 #   ANDROID_SYSROOT : path to the compiler sysroot
 #   TOOL_OS_SUFFIX : "" or ".exe" depending on host platform

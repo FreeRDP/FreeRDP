@@ -27,54 +27,59 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/message.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/tsmf.h>
 #include <freerdp/rail.h>
 
-static RDP_EVENT* freerdp_cliprdr_event_new(UINT16 event_type)
+static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 {
-	RDP_EVENT* event = NULL;
+	wMessage* event = NULL;
 
 	switch (event_type)
 	{
-		case RDP_EVENT_TYPE_CB_MONITOR_READY:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_CB_MONITOR_READY_EVENT));
+		case CliprdrChannel_MonitorReady:
+			event = (wMessage*) malloc(sizeof(RDP_CB_MONITOR_READY_EVENT));
 			ZeroMemory(event, sizeof(RDP_CB_MONITOR_READY_EVENT));
+			event->id = MakeMessageId(CliprdrChannel, MonitorReady);
 			break;
 
-		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_CB_FORMAT_LIST_EVENT));
+		case CliprdrChannel_FormatList:
+			event = (wMessage*) malloc(sizeof(RDP_CB_FORMAT_LIST_EVENT));
 			ZeroMemory(event, sizeof(RDP_CB_FORMAT_LIST_EVENT));
+			event->id = MakeMessageId(CliprdrChannel, FormatList);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_REQUEST:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_CB_DATA_REQUEST_EVENT));
+		case CliprdrChannel_DataRequest:
+			event = (wMessage*) malloc(sizeof(RDP_CB_DATA_REQUEST_EVENT));
 			ZeroMemory(event, sizeof(RDP_CB_DATA_REQUEST_EVENT));
+			event->id = MakeMessageId(CliprdrChannel, DataRequest);
 			break;
 
-		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_CB_DATA_RESPONSE_EVENT));
+		case CliprdrChannel_DataResponse:
+			event = (wMessage*) malloc(sizeof(RDP_CB_DATA_RESPONSE_EVENT));
 			ZeroMemory(event, sizeof(RDP_CB_DATA_RESPONSE_EVENT));
+			event->id = MakeMessageId(CliprdrChannel, DataResponse);
 			break;
 	}
 
 	return event;
 }
 
-static RDP_EVENT* freerdp_tsmf_event_new(UINT16 event_type)
+static wMessage* freerdp_tsmf_event_new(UINT16 event_type)
 {
-	RDP_EVENT* event = NULL;
+	wMessage* event = NULL;
 
 	switch (event_type)
 	{
-		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
+		case TsmfChannel_VideoFrame:
+			event = (wMessage*) malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
 			ZeroMemory(event, sizeof(RDP_VIDEO_FRAME_EVENT));
 			break;
 
-		case RDP_EVENT_TYPE_TSMF_REDRAW:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_REDRAW_EVENT));
+		case TsmfChannel_Redraw:
+			event = (wMessage*) malloc(sizeof(RDP_REDRAW_EVENT));
 			ZeroMemory(event, sizeof(RDP_REDRAW_EVENT));
 			break;
 	}
@@ -82,77 +87,77 @@ static RDP_EVENT* freerdp_tsmf_event_new(UINT16 event_type)
 	return event;
 }
 
-static RDP_EVENT* freerdp_rail_event_new(UINT16 event_type)
+static wMessage* freerdp_rail_event_new(UINT16 event_type)
 {
-	RDP_EVENT* event = NULL;
+	wMessage* event = NULL;
 
-	event = (RDP_EVENT*) malloc(sizeof(RDP_EVENT));
-	ZeroMemory(event, sizeof(RDP_EVENT));
+	event = (wMessage*) malloc(sizeof(wMessage));
+	ZeroMemory(event, sizeof(wMessage));
 
 	return event;
 }
 
-RDP_EVENT* freerdp_event_new(UINT16 event_class, UINT16 event_type,
-	RDP_EVENT_CALLBACK on_event_free_callback, void* user_data)
+wMessage* freerdp_event_new(UINT16 event_class, UINT16 event_type,
+	MESSAGE_FREE_FN on_event_free_callback, void* user_data)
 {
-	RDP_EVENT* event = NULL;
+	wMessage* event = NULL;
 
 	switch (event_class)
 	{
-		case RDP_EVENT_CLASS_DEBUG:
-			event = (RDP_EVENT*) malloc(sizeof(RDP_EVENT));
-			ZeroMemory(event, sizeof(RDP_EVENT));
+		case DebugChannel_Class:
+			event = (wMessage*) malloc(sizeof(wMessage));
+			ZeroMemory(event, sizeof(wMessage));
 			break;
 
-		case RDP_EVENT_CLASS_CLIPRDR:
+		case CliprdrChannel_Class:
 			event = freerdp_cliprdr_event_new(event_type);
 			break;
 
-		case RDP_EVENT_CLASS_TSMF:
+		case TsmfChannel_Class:
 			event = freerdp_tsmf_event_new(event_type);
 			break;
 
-		case RDP_EVENT_CLASS_RAIL:
+		case RailChannel_Class:
 			event = freerdp_rail_event_new(event_type);
 			break;
 	}
 
 	if (event)
 	{
-		event->event_class = event_class;
-		event->event_type = event_type;
-		event->on_event_free_callback = on_event_free_callback;
-		event->user_data = user_data;
+		event->wParam = user_data;
+		event->Free = (void*) on_event_free_callback;
+		event->id = GetMessageId(event_class, event_type);
 	}
 
 	return event;
 }
 
-static void freerdp_cliprdr_event_free(RDP_EVENT* event)
+static void freerdp_cliprdr_event_free(wMessage* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_CB_FORMAT_LIST:
+		case CliprdrChannel_FormatList:
 			{
-				RDP_CB_FORMAT_LIST_EVENT* cb_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+				RDP_CB_FORMAT_LIST_EVENT* cb_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 				free(cb_event->formats);
 				free(cb_event->raw_format_data);
 			}
 			break;
-		case RDP_EVENT_TYPE_CB_DATA_RESPONSE:
+
+		case CliprdrChannel_DataResponse:
 			{
-				RDP_CB_DATA_RESPONSE_EVENT* cb_event = (RDP_CB_DATA_RESPONSE_EVENT*)event;
+				RDP_CB_DATA_RESPONSE_EVENT* cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) event;
 				free(cb_event->data);
 			}
 			break;
 	}
 }
 
-static void freerdp_tsmf_event_free(RDP_EVENT* event)
+static void freerdp_tsmf_event_free(wMessage* event)
 {
-	switch (event->event_type)
+	switch (GetMessageType(event->id))
 	{
-		case RDP_EVENT_TYPE_TSMF_VIDEO_FRAME:
+		case TsmfChannel_VideoFrame:
 			{
 				RDP_VIDEO_FRAME_EVENT* vevent = (RDP_VIDEO_FRAME_EVENT*)event;
 				free(vevent->frame_data);
@@ -162,26 +167,29 @@ static void freerdp_tsmf_event_free(RDP_EVENT* event)
 	}
 }
 
-static void freerdp_rail_event_free(RDP_EVENT* event)
+static void freerdp_rail_event_free(wMessage* event)
 {
+
 }
 
-void freerdp_event_free(RDP_EVENT* event)
+void freerdp_event_free(wMessage* event)
 {
 	if (event)
 	{
-		if (event->on_event_free_callback)
-			event->on_event_free_callback(event);
+		if (event->Free)
+			event->Free(event);
 
-		switch (event->event_class)
+		switch (GetMessageClass(event->id))
 		{
-			case RDP_EVENT_CLASS_CLIPRDR:
+			case CliprdrChannel_Class:
 				freerdp_cliprdr_event_free(event);
 				break;
-			case RDP_EVENT_CLASS_TSMF:
+
+			case TsmfChannel_Class:
 				freerdp_tsmf_event_free(event);
 				break;
-			case RDP_EVENT_CLASS_RAIL:
+
+			case RailChannel_Class:
 				freerdp_rail_event_free(event);
 				break;
 		}

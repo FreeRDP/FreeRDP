@@ -42,7 +42,7 @@ static const char* const UPDATE_TYPE_STRINGS[] =
 };
 */
 
-BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
+BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 {
 	UINT16 numberOrders;
 
@@ -63,7 +63,7 @@ BOOL update_recv_orders(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
+BOOL update_read_bitmap_data(wStream* s, BITMAP_DATA* bitmap_data)
 {
 	if (stream_get_left(s) < 18)
 		return FALSE;
@@ -104,7 +104,7 @@ BOOL update_read_bitmap_data(STREAM* s, BITMAP_DATA* bitmap_data)
 	return TRUE;
 }
 
-BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_update)
+BOOL update_read_bitmap(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmap_update)
 {
 	int i;
 
@@ -137,7 +137,7 @@ BOOL update_read_bitmap(rdpUpdate* update, STREAM* s, BITMAP_UPDATE* bitmap_upda
 	return TRUE;
 }
 
-BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_update)
+BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_update)
 {
 	int i;
 	PALETTE_ENTRY* entry;
@@ -166,7 +166,7 @@ BOOL update_read_palette(rdpUpdate* update, STREAM* s, PALETTE_UPDATE* palette_u
 	return TRUE;
 }
 
-void update_read_synchronize(rdpUpdate* update, STREAM* s)
+void update_read_synchronize(rdpUpdate* update, wStream* s)
 {
 	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
 
@@ -176,7 +176,7 @@ void update_read_synchronize(rdpUpdate* update, STREAM* s)
 	 */
 }
 
-BOOL update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
+BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 {
 	if (stream_get_left(s) < 8)
 		return FALSE;
@@ -187,7 +187,7 @@ BOOL update_read_play_sound(STREAM* s, PLAY_SOUND_UPDATE* play_sound)
 	return TRUE;
 }
 
-BOOL update_recv_play_sound(rdpUpdate* update, STREAM* s)
+BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 {
 	if (!update_read_play_sound(s, &update->play_sound))
 		return FALSE;
@@ -196,7 +196,7 @@ BOOL update_recv_play_sound(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_position)
+BOOL update_read_pointer_position(wStream* s, POINTER_POSITION_UPDATE* pointer_position)
 {
 	if (stream_get_left(s) < 4)
 		return FALSE;
@@ -206,7 +206,7 @@ BOOL update_read_pointer_position(STREAM* s, POINTER_POSITION_UPDATE* pointer_po
 	return TRUE;
 }
 
-BOOL update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system)
+BOOL update_read_pointer_system(wStream* s, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	if (stream_get_left(s) < 4)
 		return FALSE;
@@ -215,7 +215,7 @@ BOOL update_read_pointer_system(STREAM* s, POINTER_SYSTEM_UPDATE* pointer_system
 	return TRUE;
 }
 
-BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
+BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 {
 	if (stream_get_left(s) < 14)
 		return FALSE;
@@ -271,7 +271,7 @@ BOOL update_read_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
 	return TRUE;
 }
 
-BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
+BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 {
 	if (stream_get_left(s) < 2)
 		return FALSE;
@@ -280,7 +280,7 @@ BOOL update_read_pointer_new(STREAM* s, POINTER_NEW_UPDATE* pointer_new)
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
 }
 
-BOOL update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached)
+BOOL update_read_pointer_cached(wStream* s, POINTER_CACHED_UPDATE* pointer_cached)
 {
 	if (stream_get_left(s) < 2)
 		return FALSE;
@@ -289,7 +289,7 @@ BOOL update_read_pointer_cached(STREAM* s, POINTER_CACHED_UPDATE* pointer_cached
 	return TRUE;
 }
 
-BOOL update_recv_pointer(rdpUpdate* update, STREAM* s)
+BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 {
 	UINT16 messageType;
 	rdpContext* context = update->context;
@@ -339,7 +339,7 @@ BOOL update_recv_pointer(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-BOOL update_recv(rdpUpdate* update, STREAM* s)
+BOOL update_recv(rdpUpdate* update, wStream* s)
 {
 	UINT16 updateType;
 	rdpContext* context = update->context;
@@ -349,7 +349,7 @@ BOOL update_recv(rdpUpdate* update, STREAM* s)
 
 	stream_read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//fprintf(stderr, "%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -447,7 +447,7 @@ static void update_end_paint(rdpContext* context)
 
 }
 
-static void update_write_refresh_rect(STREAM* s, BYTE count, RECTANGLE_16* areas)
+static void update_write_refresh_rect(wStream* s, BYTE count, RECTANGLE_16* areas)
 {
 	int i;
 
@@ -465,7 +465,7 @@ static void update_write_refresh_rect(STREAM* s, BYTE count, RECTANGLE_16* areas
 
 static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->RefreshRect)
@@ -477,7 +477,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 	}
 }
 
-static void update_write_suppress_output(STREAM* s, BYTE allow, RECTANGLE_16* area)
+static void update_write_suppress_output(wStream* s, BYTE allow, RECTANGLE_16* area)
 {
 	stream_write_BYTE(s, allow); /* allowDisplayUpdates (1 byte) */
 	stream_seek(s, 3); /* pad3Octets (3 bytes) */
@@ -493,7 +493,7 @@ static void update_write_suppress_output(STREAM* s, BYTE allow, RECTANGLE_16* ar
 
 static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->SuppressOutput)
@@ -505,9 +505,9 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 	}
 }
 
-static void update_send_surface_command(rdpContext* context, STREAM* s)
+static void update_send_surface_command(rdpContext* context, wStream* s)
 {
-	STREAM* update;
+	wStream* update;
 	rdpRdp* rdp = context->rdp;
 
 	update = fastpath_update_pdu_init(rdp->fastpath);
@@ -518,7 +518,7 @@ static void update_send_surface_command(rdpContext* context, STREAM* s)
 
 static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -530,7 +530,7 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 
 static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -540,7 +540,7 @@ static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_
 
 static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
@@ -553,7 +553,7 @@ static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 
 static void update_send_synchronize(rdpContext* context)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -571,7 +571,7 @@ static void update_send_desktop_resize(rdpContext* context)
 
 static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -594,7 +594,7 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	STREAM* s;
+	wStream* s;
 	BYTE updateCode;
 	rdpRdp* rdp = context->rdp;
 
@@ -608,7 +608,7 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 	fastpath_send_update_pdu(rdp->fastpath, updateCode, s);
 }
 
-static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_color)
+static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 {
 	stream_check_size(s, 15 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
 
@@ -631,7 +631,7 @@ static void update_write_pointer_color(STREAM* s, POINTER_COLOR_UPDATE* pointer_
 
 static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -641,7 +641,7 @@ static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE*
 
 static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -652,7 +652,7 @@ static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* poi
 
 static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
 {
-	STREAM* s;
+	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
@@ -660,7 +660,7 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s);
 }
 
-BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
+BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 {
 	int index;
 	BYTE numberOfAreas;
@@ -691,7 +691,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, STREAM* s)
 	return TRUE;
 }
 
-BOOL update_read_suppress_output(rdpUpdate* update, STREAM* s)
+BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 {
 	BYTE allowDisplayUpdates;
 

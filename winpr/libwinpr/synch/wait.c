@@ -56,19 +56,22 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		void* thread_status = NULL;
 
 		if (dwMilliseconds != INFINITE)
-			printf("WaitForSingleObject: timeout not implemented for thread wait\n");
+			fprintf(stderr, "WaitForSingleObject: timeout not implemented for thread wait\n");
 
 		thread = (WINPR_THREAD*) Object;
 
 		status = pthread_join(thread->thread, &thread_status);
 
 		if (status != 0)
-			printf("WaitForSingleObject: pthread_join failure: %d\n", status);
+			fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+
+		if (thread_status)
+			thread->dwExitCode = ((DWORD) (size_t) thread_status);
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		if (dwMilliseconds != INFINITE)
-			printf("WaitForSingleObject: timeout not implemented for mutex wait\n");
+			fprintf(stderr, "WaitForSingleObject: timeout not implemented for mutex wait\n");
 
 		pthread_mutex_lock((pthread_mutex_t*) Object);
 	}
@@ -148,7 +151,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else
 	{
-		printf("WaitForSingleObject: unknown handle type %lu\n", Type);
+		fprintf(stderr, "WaitForSingleObject: unknown handle type %lu\n", Type);
 	}
 
 	return WAIT_OBJECT_0;
@@ -177,7 +180,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	ZeroMemory(&timeout, sizeof(timeout));
 
 	if (bWaitAll)
-		printf("WaitForMultipleObjects: bWaitAll not yet implemented\n");
+		fprintf(stderr, "WaitForMultipleObjects: bWaitAll not yet implemented\n");
 
 	for (index = 0; index < nCount; index++)
 	{

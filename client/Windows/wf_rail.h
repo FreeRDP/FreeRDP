@@ -25,7 +25,7 @@ void wf_rail_paint(wfInfo* wfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 u
 void wf_rail_register_callbacks(wfInfo* wfi, rdpRail* rail);
 void wf_rail_send_client_system_command(wfInfo* wfi, UINT32 windowId, UINT16 command);
 void wf_rail_send_activate(wfInfo* wfi, HWND window, BOOL enabled);
-void wf_process_rail_event(wfInfo* wfi, rdpChannels* chanman, RDP_EVENT* event);
+void wf_process_rail_event(wfInfo* wfi, rdpChannels* chanman, wMessage* event);
 void wf_rail_adjust_position(wfInfo* wfi, rdpWindow *window);
 void wf_rail_end_local_move(wfInfo* wfi, rdpWindow *window);
 

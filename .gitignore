@@ -43,6 +43,11 @@ client/X11/xfreerdp.1
 *.xcodeproj/
 DerivedData/
 
+# iOS
+FreeRDP.build
+Debug-*
+Release-*
+
 # Windows
 *.vcxproj
 *.vcxproj.*
@@ -80,7 +85,11 @@ xcode
 Release
 Win32
 build/
+*.orig
 
 default.log
 *Amplifier XE*
 *Inspector XE*
+
+*.cbp
+*.txt.user

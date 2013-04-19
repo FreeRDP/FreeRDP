@@ -32,7 +32,7 @@
  * @param system_time system time structure
  */
 
-void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
+void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
 	stream_read_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
 	stream_read_UINT16(s, system_time->wMonth); /* wMonth */
@@ -51,7 +51,7 @@ void rdp_read_system_time(STREAM* s, SYSTEM_TIME* system_time)
  * @param system_time system time structure
  */
 
-void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
+void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
 	stream_write_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
 	stream_write_UINT16(s, system_time->wMonth); /* wMonth */
@@ -74,7 +74,7 @@ void rdp_write_system_time(STREAM* s, SYSTEM_TIME* system_time)
  * @param settings settings
  */
 
-BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
+BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	char* str = NULL;
 	TIME_ZONE_INFO* clientTimeZone;
@@ -115,11 +115,8 @@ BOOL rdp_read_client_time_zone(STREAM* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
+void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
-	UINT32 bias;
-	INT32 sbias;
-	UINT32 bias2c;
 	WCHAR* standardName = NULL;
 	WCHAR* daylightName = NULL;
 	int standardNameLength;
@@ -138,57 +135,34 @@ void rdp_write_client_time_zone(STREAM* s, rdpSettings* settings)
 	if (daylightNameLength > 62)
 		daylightNameLength = 62;
 
-	/* UTC = LocalTime + Bias <-> Bias = UTC - LocalTime */
-
-	/* Translate from biases used throughout libfreerdp-locale/timezone.c
-	 * to what RDP expects, which is minutes *west* of UTC.
-	 * Though MS-RDPBCGR specifies bias as unsigned, two's complement
-	 * (a negative integer) works fine for zones east of UTC.
-	 */
-	
-	if (clientTimeZone->bias <= 720)
-		bias = -1 * clientTimeZone->bias;
-	else
-		bias = 1440 - clientTimeZone->bias;
-
-	stream_write_UINT32(s, bias); /* Bias */
+    /* Bias */
+ 	stream_write_UINT32(s, clientTimeZone->bias);
 
 	/* standardName (64 bytes) */
 	stream_write(s, standardName, standardNameLength);
 	stream_write_zero(s, 64 - standardNameLength);
 
-	rdp_write_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
+    /* StandardDate */
+    rdp_write_system_time(s, &clientTimeZone->standardDate);
 
-	DEBUG_TIMEZONE("bias=%d stdName='%s' dlName='%s'",
-		bias, clientTimeZone->standardName, clientTimeZone->daylightName);
-
-	sbias = clientTimeZone->standardBias - clientTimeZone->bias;
-	
-	if (sbias < 0)
-		bias2c = (UINT32) sbias;
-	else
-		bias2c = ~((UINT32) sbias) + 1;
+	DEBUG_TIMEZONE("bias=%d stdName='%s' dlName='%s'", clientTimeZone->bias, clientTimeZone->standardName, clientTimeZone->daylightName);
 
 	/* Note that StandardBias is ignored if no valid standardDate is provided. */
-	stream_write_UINT32(s, bias2c); /* StandardBias */
-	DEBUG_TIMEZONE("StandardBias=%d", bias2c);
+    /* StandardBias */
+	stream_write_UINT32(s, clientTimeZone->standardBias);
+	DEBUG_TIMEZONE("StandardBias=%d", clientTimeZone->standardBias);
 
 	/* daylightName (64 bytes) */
-	stream_write(s, daylightName, daylightNameLength);
-	stream_write_zero(s, 64 - daylightNameLength);
+    stream_write(s, daylightName, daylightNameLength);
+    stream_write_zero(s, 64 - daylightNameLength);
 
-	rdp_write_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
-
-	sbias = clientTimeZone->daylightBias - clientTimeZone->bias;
-
-	if (sbias < 0)
-		bias2c = (UINT32) sbias;
-	else
-		bias2c = ~((UINT32) sbias) + 1;
+     /* DaylightDate */
+    rdp_write_system_time(s, &clientTimeZone->daylightDate);
 
 	/* Note that DaylightBias is ignored if no valid daylightDate is provided. */
-	stream_write_UINT32(s, bias2c); /* DaylightBias */
-	DEBUG_TIMEZONE("DaylightBias=%d", bias2c);
+    /* DaylightBias */
+	stream_write_UINT32(s, clientTimeZone->daylightBias);
+	DEBUG_TIMEZONE("DaylightBias=%d", clientTimeZone->daylightBias);
 
 	free(standardName);
 	free(daylightName);

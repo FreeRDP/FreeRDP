@@ -92,25 +92,25 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
-		printf("rpc_out_connect_http error!\n");
+		fprintf(stderr, "rpc_out_connect_http error!\n");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_A1_pdu(rpc) != 0)
 	{
-		printf("rpc_send_CONN_A1_pdu error!\n");
+		fprintf(stderr, "rpc_send_CONN_A1_pdu error!\n");
 		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
-		printf("rpc_in_connect_http error!\n");
+		fprintf(stderr, "rpc_in_connect_http error!\n");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_B1_pdu(rpc) != 0)
 	{
-		printf("rpc_send_CONN_B1_pdu error!\n");
+		fprintf(stderr, "rpc_send_CONN_B1_pdu error!\n");
 		return FALSE;
 	}
 
@@ -149,7 +149,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (http_response->StatusCode != 200)
 	{
-		printf("rts_connect error! Status Code: %d\n", http_response->StatusCode);
+		fprintf(stderr, "rts_connect error! Status Code: %d\n", http_response->StatusCode);
 		http_response_print(http_response);
 		http_response_free(http_response);
 		return FALSE;
@@ -188,7 +188,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
-		printf("Unexpected RTS PDU: Expected CONN/A3\n");
+		fprintf(stderr, "Unexpected RTS PDU: Expected CONN/A3\n");
 		return FALSE;
 	}
 
@@ -229,7 +229,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
-		printf("Unexpected RTS PDU: Expected CONN/C2\n");
+		fprintf(stderr, "Unexpected RTS PDU: Expected CONN/C2\n");
 		return FALSE;
 	}
 
@@ -842,9 +842,9 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	printf("BytesReceived: %d AvailableWindow: %d\n",
+	fprintf(stderr, "BytesReceived: %d AvailableWindow: %d\n",
 			BytesReceived, AvailableWindow);
-	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -883,9 +883,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	printf("Destination: %d BytesReceived: %d AvailableWindow: %d\n",
+	fprintf(stderr, "Destination: %d BytesReceived: %d AvailableWindow: %d\n",
 			Destination, BytesReceived, AvailableWindow);
-	printf("ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -986,7 +986,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			printf("Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+			fprintf(stderr, "Error: Unknown RTS Command Type: 0x%x\n", CommandType);
 			return -1;
 			break;
 	}
@@ -1019,7 +1019,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	}
 	else
 	{
-		printf("Unimplemented signature id: 0x%08X\n", SignatureId);
+		fprintf(stderr, "Unimplemented signature id: 0x%08X\n", SignatureId);
 		rts_print_pdu_signature(rpc, &signature);
 	}
 

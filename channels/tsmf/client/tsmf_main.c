@@ -28,7 +28,7 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "tsmf_types.h"
 #include "tsmf_constants.h"
@@ -77,7 +77,7 @@ struct _TSMF_PLUGIN
 void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
-	STREAM* s;
+	wStream* s;
 	int status;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
@@ -100,7 +100,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	stream_free(s);
 }
 
-BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, RDP_EVENT* event)
+BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, wMessage* event)
 {
 	int status;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
@@ -121,8 +121,8 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	BYTE* pBuffer)
 {
 	int length;
-	STREAM* input;
-	STREAM* output;
+	wStream* input;
+	wStream* output;
 	int status = -1;
 	TSMF_IFMAN ifman;
 	UINT32 MessageId;

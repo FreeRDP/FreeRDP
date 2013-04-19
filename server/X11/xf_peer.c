@@ -33,13 +33,13 @@
 #include <sys/select.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/utils/file.h>
-#include <freerdp/utils/thread.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
 #include "xf_encode.h"
@@ -64,20 +64,20 @@ void xf_xdamage_init(xfInfo* xfi)
 
 			if (pixmaps != True)
 			{
-				printf("XShmQueryVersion failed\n");
+				fprintf(stderr, "XShmQueryVersion failed\n");
 				return;
 			}
 		}
 		else
 		{
-			printf("XShmQueryExtension failed\n");
+			fprintf(stderr, "XShmQueryExtension failed\n");
 			return;
 		}
 	}
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
 	{
-		printf("XDamageQueryExtension failed\n");
+		fprintf(stderr, "XDamageQueryExtension failed\n");
 		return;
 	}
 
@@ -85,12 +85,12 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (XDamageQueryVersion(xfi->display, &major, &minor) == 0)
 	{
-		printf("XDamageQueryVersion failed\n");
+		fprintf(stderr, "XDamageQueryVersion failed\n");
 		return;
 	}
 	else if (major < 1)
 	{
-		printf("XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
+		fprintf(stderr, "XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
 		return;
 	}
 
@@ -99,7 +99,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (xfi->xdamage == None)
 	{
-		printf("XDamageCreate failed\n");
+		fprintf(stderr, "XDamageCreate failed\n");
 		return;
 	}
 
@@ -108,7 +108,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (xfi->xdamage_region == None)
 	{
-		printf("XFixesCreateRegion failed\n");
+		fprintf(stderr, "XFixesCreateRegion failed\n");
 		XDamageDestroy(xfi->display, xfi->xdamage);
 		xfi->xdamage = None;
 		return;
@@ -132,7 +132,7 @@ void xf_xshm_init(xfInfo* xfi)
 
 	if (!xfi->fb_image)
 	{
-		printf("XShmCreateImage failed\n");
+		fprintf(stderr, "XShmCreateImage failed\n");
 		return;
 	}
 
@@ -141,7 +141,7 @@ void xf_xshm_init(xfInfo* xfi)
 
 	if (xfi->fb_shm_info.shmid == -1)
 	{
-		printf("shmget failed\n");
+		fprintf(stderr, "shmget failed\n");
 		return;
 	}
 
@@ -151,7 +151,7 @@ void xf_xshm_init(xfInfo* xfi)
 
 	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
 	{
-		printf("shmat failed\n");
+		fprintf(stderr, "shmat failed\n");
 		return;
 	}
 
@@ -160,7 +160,7 @@ void xf_xshm_init(xfInfo* xfi)
 
 	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
 
-	printf("display: %p root_window: %p width: %d height: %d depth: %d\n",
+	fprintf(stderr, "display: %p root_window: %p width: %d height: %d depth: %d\n",
 			xfi->display, (void*) xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
 
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
@@ -191,13 +191,13 @@ xfInfo* xf_info_init()
 	xfi->use_xshm = FALSE;
 
 	if (!XInitThreads())
-		printf("warning: XInitThreads() failure\n");
+		fprintf(stderr, "warning: XInitThreads() failure\n");
 
 	xfi->display = XOpenDisplay(NULL);
 
 	if (!xfi->display)
 	{
-		printf("failed to open display: %s\n", XDisplayName(NULL));
+		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
 	}
 
@@ -213,7 +213,7 @@ xfInfo* xf_info_init()
 
 	if (!pfs)
 	{
-		printf("XListPixmapFormats failed\n");
+		fprintf(stderr, "XListPixmapFormats failed\n");
 		exit(1);
 	}
 
@@ -238,7 +238,7 @@ xfInfo* xf_info_init()
 
 	if (vis == NULL)
 	{
-		printf("XGetVisualInfo failed\n");
+		fprintf(stderr, "XGetVisualInfo failed\n");
 		exit(1);
 	}
 
@@ -318,7 +318,7 @@ void xf_peer_init(freerdp_peer* client)
 	pthread_mutex_init(&(xfp->mutex), NULL);
 }
 
-STREAM* xf_peer_stream_init(xfPeerContext* context)
+wStream* xf_peer_stream_init(xfPeerContext* context)
 {
 	stream_clear(context->s);
 	stream_set_pos(context->s, 0);
@@ -333,7 +333,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
-	STREAM* s;
+	wStream* s;
 	BYTE* data;
 	xfInfo* xfi;
 	RFX_RECT rect;
@@ -478,23 +478,23 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	printf("Client %s is activated", client->hostname);
+	fprintf(stderr, "Client %s is activated", client->hostname);
 	if (client->settings->AutoLogonEnabled)
 	{
-		printf(" and wants to login automatically as %s\\%s",
+		fprintf(stderr, " and wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",
 			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Client requested desktop: %dx%dx%d\n",
+	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
 	if (!client->settings->RemoteFxCodec)
 	{
-		printf("Client does not support RemoteFX\n");
+		fprintf(stderr, "Client does not support RemoteFX\n");
 		return FALSE;
 	}
 
@@ -536,7 +536,7 @@ void* xf_peer_main_loop(void* arg)
 
 	ZeroMemory(rfds, sizeof(rfds));
 
-	printf("We've got a client %s\n", client->hostname);
+	fprintf(stderr, "We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
 	xfp = (xfPeerContext*) client->context;
@@ -545,13 +545,13 @@ void* xf_peer_main_loop(void* arg)
 
 	/* Initialize the real server settings here */
 
-	server_file_path = freerdp_construct_path(settings->ConfigPath, "server");
+	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
 
-	if (!freerdp_check_file_exists(server_file_path))
-		freerdp_mkdir(server_file_path);
+	if (!PathFileExistsA(server_file_path))
+		CreateDirectoryA(server_file_path, 0);
 
-	settings->CertificateFile = freerdp_construct_path(server_file_path, "server.crt");
-	settings->PrivateKeyFile = freerdp_construct_path(server_file_path, "server.key");
+	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
+	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
@@ -570,12 +570,12 @@ void* xf_peer_main_loop(void* arg)
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (xf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get xfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
 			break;
 		}
 
@@ -603,24 +603,24 @@ void* xf_peer_main_loop(void* arg)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				fprintf(stderr, "select failed\n");
 				break;
 			}
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
-			printf("Failed to check freerdp file descriptor\n");
+			fprintf(stderr, "Failed to check freerdp file descriptor\n");
 			break;
 		}
 		if ((xf_peer_check_fds(client)) != TRUE)
 		{
-			printf("Failed to check xfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
 			break;
 		}
 	}
 
-	printf("Client %s disconnected.\n", client->hostname);
+	fprintf(stderr, "Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
 	

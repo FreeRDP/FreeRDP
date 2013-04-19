@@ -22,6 +22,8 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
@@ -33,17 +35,41 @@
 #include <openssl/applink.c>
 #endif
 
-X509* x509 = NULL;
-EVP_PKEY* pkey = NULL;
-char* output_file = NULL;
+#include "makecert.h"
+
+struct _MAKECERT_CONTEXT
+{
+	int argc;
+	char** argv;
+
+	BIO* bio;
+	RSA* rsa;
+	X509* x509;
+	EVP_PKEY* pkey;
+
+	BOOL live;
+	BOOL silent;
+
+	char* output_file;
+	char* default_name;
+};
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
-	/* Basic Options */
+	/* Custom Options */
 
 	{ "rdp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Generate certificate with required options for RDP usage."
 	},
+	{ "silent", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Silently generate certificate without verbose output."
+	},
+	{ "live", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+			"Generate certificate live in memory when used as a library."
+	},
+
+	/* Basic Options */
+
 	{ "n", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 			"Specifies the subject's certificate name. This name must conform to the X.500 standard. "
 			"The simplest method is to specify the name in double quotes, preceded by CN=; for example, -n \"CN=myName\"."
@@ -269,36 +295,178 @@ char* x509_get_default_name()
 	return ComputerName;
 }
 
-int makecert()
+int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCSTR* argv)
 {
-	BIO* bio;
+	if (index == (argc - 1))
+	{
+		if (argv[index][0] != '-')
+			context->output_file = (char*) argv[index];
+	}
+
+	return 0;
+}
+
+int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char** argv)
+{
+	int status;
+	DWORD flags;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	/**
+	 * makecert -r -pe -n "CN=%COMPUTERNAME%" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr LocalMachine
+	 * -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
+	 */
+
+	CommandLineClearArgumentsA(args);
+
+	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, context,
+			(COMMAND_LINE_PRE_FILTER_FN_A) command_line_pre_filter, NULL);
+
+	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
+	{
+		makecert_print_command_line_help(argc, argv);
+		return 0;
+	}
+
+	arg = args;
+
+	do
+	{
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+			continue;
+
+		CommandLineSwitchStart(arg)
+
+		/* Basic Options */
+
+		CommandLineSwitchCase(arg, "silent")
+		{
+			context->silent = TRUE;
+		}
+		CommandLineSwitchCase(arg, "live")
+		{
+			context->live = TRUE;
+		}
+
+		CommandLineSwitchDefault(arg)
+		{
+
+		}
+
+		CommandLineSwitchEnd(arg)
+	}
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+
+	return 1;
+}
+
+int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path)
+{
 	FILE* fp;
+	int length;
+	char* filename;
+	char* fullpath;
+
+	if (!context->output_file)
+		context->output_file = context->default_name;
+
+	/*
+	 * Output Certificate File
+	 */
+
+	length = strlen(context->output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, context->output_file);
+	strcpy(&filename[length], ".crt");
+
+	if (path)
+		fullpath = GetCombinedPath(path, filename);
+	else
+		fullpath = _strdup(filename);
+
+	fp = fopen(fullpath, "w+");
+
+	if (fp)
+	{
+		PEM_write_X509(fp, context->x509);
+		fclose(fp);
+	}
+
+	free(filename);
+	free(fullpath);
+
+	return 1;
+}
+
+int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
+{
+	FILE* fp;
+	int length;
+	char* filename;
+	char* fullpath;
+
+	if (!context->output_file)
+		context->output_file = context->default_name;
+
+	/**
+	 * Output Private Key File
+	 */
+
+	length = strlen(context->output_file);
+	filename = malloc(length + 8);
+	strcpy(filename, context->output_file);
+	strcpy(&filename[length], ".key");
+	length = strlen(filename);
+
+	if (path)
+		fullpath = GetCombinedPath(path, filename);
+	else
+		fullpath = _strdup(filename);
+
+	fp = fopen(fullpath, "w+");
+
+	if (fp)
+	{
+		PEM_write_PrivateKey(fp, context->pkey, NULL, NULL, 0, NULL, NULL);
+		fclose(fp);
+	}
+
+	free(filename);
+	free(fullpath);
+
+	return 1;
+}
+
+int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
+{
 	int length;
 	char* entry;
 	int key_length;
-	char* filename;
-	RSA* rsa = NULL;
 	long serial = 0;
-	char* default_name;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	default_name = x509_get_default_name();
+	if (makecert_context_parse_arguments(context, argc, argv) < 1)
+		return 0;
+
+	context->default_name = x509_get_default_name();
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-	bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+	context->bio = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-	if (!pkey)
-		pkey = EVP_PKEY_new();
+	if (!context->pkey)
+		context->pkey = EVP_PKEY_new();
 
-	if (!pkey)
+	if (!context->pkey)
 		return -1;
 
-	if (!x509)
-		x509 = X509_new();
+	if (!context->x509)
+		context->x509 = X509_new();
 
-	if (!x509)
+	if (!context->x509)
 		return -1;
 
 	key_length = 2048;
@@ -310,14 +478,14 @@ int makecert()
 		key_length = atoi(arg->Value);
 	}
 
-	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+	context->rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
 
-	if (!EVP_PKEY_assign_RSA(pkey, rsa))
+	if (!EVP_PKEY_assign_RSA(context->pkey, context->rsa))
 		return -1;
 
-	rsa = NULL;
+	context->rsa = NULL;
 
-	X509_set_version(x509, 2);
+	X509_set_version(context->x509, 2);
 
 	arg = CommandLineFindArgumentA(args, "#");
 
@@ -326,13 +494,13 @@ int makecert()
 	else
 		serial = (long) GetTickCount64();
 
-	ASN1_INTEGER_set(X509_get_serialNumber(x509), serial);
+	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
 
-	X509_gmtime_adj(X509_get_notBefore(x509), 0);
-	X509_gmtime_adj(X509_get_notAfter(x509), (long) 60 * 60 * 24 * 365);
-	X509_set_pubkey(x509, pkey);
+	X509_gmtime_adj(X509_get_notBefore(context->x509), 0);
+	X509_gmtime_adj(X509_get_notAfter(context->x509), (long) 60 * 60 * 24 * 365);
+	X509_set_pubkey(context->x509, context->pkey);
 
-	name = X509_get_subject_name(x509);
+	name = X509_get_subject_name(context->x509);
 
 	arg = CommandLineFindArgumentA(args, "n");
 
@@ -367,7 +535,7 @@ int makecert()
 
 		if (!entry)
 		{
-			entry = default_name;
+			entry = context->default_name;
 			length = strlen(entry);
 		}
 
@@ -375,16 +543,16 @@ int makecert()
 	}
 	else
 	{
-		entry = default_name;
+		entry = context->default_name;
 		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
 
-	X509_set_issuer_name(x509, name);
+	X509_set_issuer_name(context->x509, name);
 
-	x509_add_ext(x509, NID_ext_key_usage, "serverAuth");
-	x509_add_ext(x509, NID_key_usage, "keyEncipherment,dataEncipherment");
+	x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth");
+	x509_add_ext(context->x509, NID_key_usage, "keyEncipherment,dataEncipherment");
 
 	arg = CommandLineFindArgumentA(args, "a");
 
@@ -404,260 +572,57 @@ int makecert()
 			md = EVP_sha512();
 	}
 
-	if (!X509_sign(x509, pkey, md))
+	if (!X509_sign(context->x509, context->pkey, md))
 		return -1;
 
 	/**
-	 * Print Certificate
+	 * Print certificate
 	 */
 
-	X509_print_fp(stdout, x509);
-
-	if (!output_file)
-		output_file = default_name;
-
-	/*
-	 * Output Certificate File
-	 */
-
-	length = strlen(output_file);
-	filename = malloc(length + 8);
-	strcpy(filename, output_file);
-	strcpy(&filename[length], ".crt");
-	fp = fopen(filename, "w+");
-
-	if (fp)
-	{
-		PEM_write_X509(fp, x509);
-		fclose(fp);
-	}
-
-	free(filename);
+	if (!context->silent)
+		X509_print_fp(stdout, context->x509);
 
 	/**
-	 * Output Private Key File
+	 * Output certificate and private key to files
 	 */
 
-	length = strlen(output_file);
-	filename = malloc(length + 8);
-	strcpy(filename, output_file);
-	strcpy(&filename[length], ".key");
-	fp = fopen(filename, "w+");
-
-	if (fp)
+	if (!context->live)
 	{
-		PEM_write_PrivateKey(fp, pkey, NULL, NULL, 0, NULL, NULL);
-		fclose(fp);
+		makecert_context_output_certificate_file(context, NULL);
+		makecert_context_output_private_key_file(context, NULL);
 	}
-
-	free(filename);
-
-	X509_free(x509);
-	EVP_PKEY_free(pkey);
-
-	free(default_name);
-
-	CRYPTO_cleanup_all_ex_data();
-
-	CRYPTO_mem_leaks(bio);
-	BIO_free(bio);
 
 	return 0;
 }
 
-int command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
+MAKECERT_CONTEXT* makecert_context_new()
 {
-	if (index == (argc - 1))
+	MAKECERT_CONTEXT* context = NULL;
+
+	context = (MAKECERT_CONTEXT*) malloc(sizeof(MAKECERT_CONTEXT));
+
+	if (context)
 	{
-		if (argv[index][0] != '-')
-			output_file = (char*) argv[index];
+		ZeroMemory(context, sizeof(MAKECERT_CONTEXT));
 	}
 
-	return 0;
+	return context;
 }
 
-int main(int argc, char* argv[])
+void makecert_context_free(MAKECERT_CONTEXT* context)
 {
-	int status;
-	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
-
-	/**
-	 * makecert -r -pe -n "CN=%COMPUTERNAME%" -eku 1.3.6.1.5.5.7.3.1 -ss my -sr LocalMachine
-	 * -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12
-	 */
-
-	flags = COMMAND_LINE_SEPARATOR_SPACE | COMMAND_LINE_SIGIL_DASH;
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, command_line_pre_filter, NULL);
-
-	if (status & COMMAND_LINE_STATUS_PRINT_HELP)
+	if (context)
 	{
-		makecert_print_command_line_help(argc, argv);
-		return 0;
+		X509_free(context->x509);
+		EVP_PKEY_free(context->pkey);
+
+		free(context->default_name);
+
+		CRYPTO_cleanup_all_ex_data();
+
+		CRYPTO_mem_leaks(context->bio);
+		BIO_free(context->bio);
+
+		free(context);
 	}
-
-	arg = args;
-
-	do
-	{
-		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
-			continue;
-
-		CommandLineSwitchStart(arg)
-
-		/* Basic Options */
-
-		CommandLineSwitchCase(arg, "n")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "pe")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sk")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sr")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "ss")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "#")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "$")
-		{
-
-		}
-
-		/* Extended Options */
-
-		CommandLineSwitchCase(arg, "a")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "b")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "crl")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "cy")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "e")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "eku")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "h")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "ic")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "ik")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "iky")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "in")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "ip")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "ir")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "is")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "iv")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "iy")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "l")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "l")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "m")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "nscp")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "r")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sc")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sky")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sp")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sv")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "sy")
-		{
-
-		}
-		CommandLineSwitchCase(arg, "tbs")
-		{
-
-		}
-
-		CommandLineSwitchDefault(arg)
-		{
-
-		}
-
-		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
-
-	makecert();
-
-	return 0;
 }
-

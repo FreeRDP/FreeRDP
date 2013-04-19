@@ -25,7 +25,7 @@
 
 #include "surface.h"
 
-static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32 *length)
+static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT32* length)
 {
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
@@ -50,24 +50,24 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, STREAM* s, UINT32
 	pos = stream_get_pos(s) + cmd->bitmapDataLength;
 	cmd->bitmapData = stream_get_tail(s);
 
-	IFCALL(update->SurfaceBits, update->context, cmd);
-
 	stream_set_pos(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
+
+	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	return 0;
 }
 
 static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
 {
-	STREAM* s;
+	wStream* s;
 
 	s = rdp_data_pdu_init(rdp);
 	stream_write_UINT32(s, frameId);
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
 }
 
-static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32 *length)
+static int update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s, UINT32 *length)
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
@@ -91,7 +91,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, STREAM* s, UINT32
 	return 0;
 }
 
-int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
+int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 {
 	BYTE* mark;
 	UINT16 cmdType;
@@ -134,7 +134,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, STREAM* s)
 	return 0;
 }
 
-void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* cmd)
+void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
 {
 	stream_check_size(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
 
@@ -152,7 +152,7 @@ void update_write_surfcmd_surface_bits_header(STREAM* s, SURFACE_BITS_COMMAND* c
 	stream_write_UINT32(s, cmd->bitmapDataLength);
 }
 
-void update_write_surfcmd_frame_marker(STREAM* s, UINT16 frameAction, UINT32 frameId)
+void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
 {
 	stream_check_size(s, SURFCMD_FRAME_MARKER_LENGTH);
 

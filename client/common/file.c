@@ -52,7 +52,7 @@ static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value)
 {
 #ifdef DEBUG_CLIENT_FILE
-	printf("%s:i:%d\n", name, value);
+	fprintf(stderr, "%s:i:%d\n", name, value);
 #endif
 
 	if (_stricmp(name, "use multimon") == 0)
@@ -222,7 +222,7 @@ void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, char* name, char
 BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 {
 #ifdef DEBUG_CLIENT_FILE
-	printf("%s:s:%s\n", name, value);
+	fprintf(stderr, "%s:s:%s\n", name, value);
 #endif
 
 	if (_stricmp(name, "username") == 0)
@@ -308,7 +308,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, siz
 
 	line = strtok_s((char*) buffer, "\r\n", &context);
 
-	while (line != NULL)
+	while (line)
 	{
 		length = strlen(line);
 
@@ -458,8 +458,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 	if (file_size < 1)
 		return FALSE;
 
-	buffer = (BYTE*) malloc(file_size);
-
+	buffer = (BYTE*) malloc(file_size + 2);
 	read_size = fread(buffer, file_size, 1, fp);
 
 	if (!read_size)
@@ -474,6 +473,9 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 		buffer = NULL;
 		return FALSE;
 	}
+
+	buffer[file_size] = '\0';
+	buffer[file_size + 1] = '\0';
 
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
 }
@@ -497,7 +499,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->ServerPort)
 		settings->ServerPort = file->ServerPort;
 	if (~((size_t) file->FullAddress))
-		settings->ServerHostname = file->FullAddress;
+		settings->ServerHostname = _strdup(file->FullAddress);
 	if (~file->DesktopWidth)
 		settings->DesktopWidth = file->DesktopWidth;
 	if (~file->DesktopHeight)
@@ -513,10 +515,16 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->EnableCredSSPSupport)
 		settings->NlaSecurity = file->EnableCredSSPSupport;
 	if (~((size_t) file->AlternateShell))
-		settings->AlternateShell = file->AlternateShell;
+		settings->AlternateShell = _strdup(file->AlternateShell);
 	if (~((size_t) file->ShellWorkingDirectory))
-		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
+		settings->ShellWorkingDirectory = _strdup(file->ShellWorkingDirectory);
 	
+	if (~((size_t) file->LoadBalanceInfo))
+	{
+		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
+		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+	}
+
 	if (~file->ConnectionType)
 	{
 		freerdp_set_connection_type(settings, file->ConnectionType);
@@ -540,7 +548,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	}
 
 	if (~((size_t) file->GatewayHostname))
-		settings->GatewayHostname = file->GatewayHostname;
+		settings->GatewayHostname = _strdup(file->GatewayHostname);
 	if (~file->GatewayUsageMethod)
 		settings->GatewayUsageMethod = TRUE;
 	if (~file->PromptCredentialOnce)
@@ -549,17 +557,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->RemoteApplicationMode)
 		settings->RemoteApplicationMode = file->RemoteApplicationMode;
 	if (~((size_t) file->RemoteApplicationProgram))
-		settings->RemoteApplicationProgram = file->RemoteApplicationProgram;
+		settings->RemoteApplicationProgram = _strdup(file->RemoteApplicationProgram);
 	if (~((size_t) file->RemoteApplicationName))
-		settings->RemoteApplicationName = file->RemoteApplicationName;
+		settings->RemoteApplicationName = _strdup(file->RemoteApplicationName);
 	if (~((size_t) file->RemoteApplicationIcon))
-		settings->RemoteApplicationIcon = file->RemoteApplicationIcon;
+		settings->RemoteApplicationIcon = _strdup(file->RemoteApplicationIcon);
 	if (~((size_t) file->RemoteApplicationFile))
-		settings->RemoteApplicationFile = file->RemoteApplicationFile;
+		settings->RemoteApplicationFile = _strdup(file->RemoteApplicationFile);
 	if (~((size_t) file->RemoteApplicationGuid))
-		settings->RemoteApplicationGuid = file->RemoteApplicationGuid;
+		settings->RemoteApplicationGuid = _strdup(file->RemoteApplicationGuid);
 	if (~((size_t) file->RemoteApplicationCmdLine))
-		settings->RemoteApplicationCmdLine = file->RemoteApplicationCmdLine;
+		settings->RemoteApplicationCmdLine = _strdup(file->RemoteApplicationCmdLine);
 
 	if (~file->SpanMonitors)
 		settings->SpanMonitors = file->SpanMonitors;

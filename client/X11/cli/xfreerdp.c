@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * String Utils
+ * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 HP Development Company, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,33 +22,42 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
-#include <freerdp/utils/string.h>
+#include <freerdp/freerdp.h>
 
-BOOL freerdp_string_read_length32(STREAM* s, rdpString* string)
+#include "xf_interface.h"
+
+#include "xfreerdp.h"
+
+int main(int argc, char* argv[])
 {
-	if(stream_get_left(s) < 4)
-		return FALSE;
-	stream_read_UINT32(s, string->length);
-	if(stream_get_left(s) < string->length)
-		return FALSE;
-	string->unicode = (char*) malloc(string->length);
-	stream_read(s, string->unicode, string->length);
+	xfInfo* xfi;
+	DWORD dwExitCode;
+	freerdp* instance;
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
-	return TRUE;
-}
+	freerdp_client_global_init();
 
-void freerdp_string_free(rdpString* string)
-{
-	if (string->unicode != NULL)
-		free(string->unicode);
+	xfi = freerdp_client_new(argc, argv);
 
-	if (string->ascii != NULL)
-		free(string->ascii);
+	if (xfi == NULL)
+	{
+		return 1;
+	}
+
+	instance = xfi->instance;
+
+	freerdp_client_start(xfi);
+
+	WaitForSingleObject(xfi->thread, INFINITE);
+
+	GetExitCodeThread(xfi->thread, &dwExitCode);
+
+	freerdp_client_free(xfi);
+
+	freerdp_client_global_uninit();
+
+	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }

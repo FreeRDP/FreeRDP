@@ -12,7 +12,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:freerdp="http://schemas.android.com/apk/res-auto" >
 
     <PreferenceCategory android:key="category.host" android:title="@string/settings_cat_host">
-        <EditTextPreference android:key="bookmark.label" android:title="Label" android:summary="@string/settings_label"/>
+        <EditTextPreference android:key="bookmark.label" android:title="@string/settings_label" android:summary="@string/settings_label"/>
         <EditTextPreference android:key="bookmark.hostname" android:title="@string/settings_hostname" android:summary="Name or address of the target computer"/>
         <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.port" android:title="@string/settings_port" android:summary="RDP Port on the target computer" android:numeric="integer" android:inputType="number" freerdp:bounds_min="10" freerdp:bounds_max="65535" freerdp:bounds_default="3389" />                      
     </PreferenceCategory>

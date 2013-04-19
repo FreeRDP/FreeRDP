@@ -329,7 +329,7 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-void nsc_compose_message(NSC_CONTEXT* context, STREAM* s,
+void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	BYTE* bmpdata, int width, int height, int rowstride)
 {
 	int i;

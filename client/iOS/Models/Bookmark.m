@@ -39,7 +39,7 @@
 // Designated initializer.
 - (id)initWithConnectionParameters:(ConnectionParams*)params
 {
-	if (!(self = [super init]))
+	if (!(self = [self init]))
 		return nil;
 	
 	_connection_params = [params copy];
@@ -85,6 +85,13 @@
 	[copy setLabel:[self label]];
 	copy->_connection_params = [_connection_params copy];
 	return copy;
+}
+
+- (id)copyWithUUID
+{
+    ComputerBookmark* copy = [self copy];
+    copy->_uuid = [[self uuid] copy];
+    return copy;
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder

@@ -315,41 +315,41 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 	MSUSB_PIPE_DESCRIPTOR * MsPipe;
 	int inum = 0, pnum = 0;
 
-	printf("=================MsConfig:========================\n");
-	printf("wTotalLength:%d\n", MsConfig->wTotalLength);
-	printf("bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
-	printf("ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
-	printf("InitCompleted:%d\n", MsConfig->InitCompleted);
-	printf("MsOutSize:%d\n", MsConfig->MsOutSize);
-	printf("NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
+	fprintf(stderr, "=================MsConfig:========================\n");
+	fprintf(stderr, "wTotalLength:%d\n", MsConfig->wTotalLength);
+	fprintf(stderr, "bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
+	fprintf(stderr, "ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
+	fprintf(stderr, "InitCompleted:%d\n", MsConfig->InitCompleted);
+	fprintf(stderr, "MsOutSize:%d\n", MsConfig->MsOutSize);
+	fprintf(stderr, "NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
 	MsInterfaces = MsConfig->MsInterfaces;
 	for(inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
 		MsInterface = MsInterfaces[inum];
-		printf("	Interfase: %d\n", MsInterface->InterfaceNumber);
-		printf("	Length: %d\n", MsInterface->Length);
-		printf("	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
-		printf("	AlternateSetting: %d\n", MsInterface->AlternateSetting);
-		printf("	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
-		printf("	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
-		printf("	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
-		printf("	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
-		printf("	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
-		printf("	InitCompleted: %d\n\n", MsInterface->InitCompleted);
+		fprintf(stderr, "	Interfase: %d\n", MsInterface->InterfaceNumber);
+		fprintf(stderr, "	Length: %d\n", MsInterface->Length);
+		fprintf(stderr, "	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
+		fprintf(stderr, "	AlternateSetting: %d\n", MsInterface->AlternateSetting);
+		fprintf(stderr, "	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
+		fprintf(stderr, "	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
+		fprintf(stderr, "	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
+		fprintf(stderr, "	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
+		fprintf(stderr, "	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
+		fprintf(stderr, "	InitCompleted: %d\n\n", MsInterface->InitCompleted);
 		MsPipes = MsInterface->MsPipes;
 		for (pnum = 0; pnum < MsInterface->NumberOfPipes; pnum++)
 		{
 			MsPipe = MsPipes[pnum];
-			printf("		Pipe: %d\n", pnum);
-			printf("		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
-			printf("		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
-			printf("		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
-			printf("		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
-			printf("		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
-			printf("		bInterval: %d\n", MsPipe->bInterval);
-			printf("		PipeType: 0x%x\n", MsPipe->PipeType);
-			printf("		InitCompleted: %d\n\n", MsPipe->InitCompleted);
+			fprintf(stderr, "		Pipe: %d\n", pnum);
+			fprintf(stderr, "		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
+			fprintf(stderr, "		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
+			fprintf(stderr, "		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
+			fprintf(stderr, "		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
+			fprintf(stderr, "		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
+			fprintf(stderr, "		bInterval: %d\n", MsPipe->bInterval);
+			fprintf(stderr, "		PipeType: 0x%x\n", MsPipe->PipeType);
+			fprintf(stderr, "		InitCompleted: %d\n\n", MsPipe->InitCompleted);
 		}
 	}
-	printf("==================================================\n");
+	fprintf(stderr, "==================================================\n");
 }

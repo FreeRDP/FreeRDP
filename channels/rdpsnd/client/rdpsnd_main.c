@@ -41,7 +41,7 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -124,7 +124,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 
 void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 {
-	STREAM* pdu;
+	wStream* pdu;
 
 	pdu = stream_new(8);
 	stream_write_BYTE(pdu, SNDC_QUALITYMODE); /* msgType */
@@ -178,20 +178,20 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	}
 
 #if 0
-	printf("Server ");
+	fprintf(stderr, "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	printf("\n");
+	fprintf(stderr, "\n");
 
-	printf("Client ");
+	fprintf(stderr, "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 
 void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 {
 	int index;
-	STREAM* pdu;
+	wStream* pdu;
 	UINT16 length;
 	UINT32 dwVolume;
 	UINT16 dwVolumeLeft;
@@ -251,7 +251,7 @@ void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
 }
 
-void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	int index;
 	UINT16 wVersion;
@@ -300,7 +300,7 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 
 void rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, UINT16 wPackSize)
 {
-	STREAM* pdu;
+	wStream* pdu;
 
 	pdu = stream_new(8);
 	stream_write_BYTE(pdu, SNDC_TRAINING); /* msgType */
@@ -312,7 +312,7 @@ void rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, U
 	svc_plugin_send((rdpSvcPlugin*) rdpsnd, pdu);
 }
 
-static void rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+static void rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	UINT16 wTimeStamp;
 	UINT16 wPackSize;
@@ -323,7 +323,7 @@ static void rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 	rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
-static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 BodySize)
+static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodySize)
 {
 	UINT16 wFormatNo;
 	AUDIO_FORMAT* format;
@@ -365,7 +365,7 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, STREAM* s, UINT16 Bo
 
 void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE cConfirmedBlockNo)
 {
-	STREAM* pdu;
+	wStream* pdu;
 
 	pdu = stream_new(8);
 	stream_write_BYTE(pdu, SNDC_WAVECONFIRM);
@@ -383,7 +383,7 @@ void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE
 	MessageQueue_Post(device->rdpsnd->queue, NULL, 0, (void*) wave, NULL);
 }
 
-static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	int size;
 	BYTE* data;
@@ -454,7 +454,7 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 	rdpsnd->isOpen = FALSE;
 }
 
-static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
+static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	UINT32 dwVolume;
 
@@ -467,7 +467,7 @@ static void rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, STREAM* s)
 	}
 }
 
-static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* s)
+static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, wStream* s)
 {
 	BYTE msgType;
 	UINT16 BodySize;
@@ -484,7 +484,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, STREAM* s)
 	stream_seek_BYTE(s); /* bPad */
 	stream_read_UINT16(s, BodySize);
 
-	//printf("msgType %d BodySize %d\n", msgType, BodySize);
+	//fprintf(stderr, "msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{
@@ -693,7 +693,7 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 	}
 }
 
-static void rdpsnd_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void rdpsnd_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	freerdp_event_free(event);
 }

@@ -23,7 +23,12 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/spec.h>
 #include <winpr/handle.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef _WIN32
 
@@ -105,10 +110,10 @@ WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LP
 #define CreateProcessAsUser	CreateProcessAsUserA
 #endif
 
-WINPR_API VOID ExitProcess(UINT uExitCode);
+DECLSPEC_NORETURN WINPR_API VOID ExitProcess(UINT uExitCode);
 
-WINPR_API HANDLE _GetCurrentProcess(VOID);
-WINPR_API DWORD GetCurrentProcessId(VOID);
+WINPR_API HANDLE _GetCurrentProcess(void);
+WINPR_API DWORD GetCurrentProcessId(void);
 
 WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 
@@ -123,26 +128,27 @@ WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T d
 WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 
-WINPR_API VOID ExitThread(DWORD dwExitCode);
+DECLSPEC_NORETURN WINPR_API VOID ExitThread(DWORD dwExitCode);
+WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
-WINPR_API HANDLE _GetCurrentThread(VOID);
-WINPR_API DWORD GetCurrentThreadId(VOID);
+WINPR_API HANDLE _GetCurrentThread(void);
+WINPR_API DWORD GetCurrentThreadId(void);
 
 WINPR_API DWORD ResumeThread(HANDLE hThread);
 WINPR_API DWORD SuspendThread(HANDLE hThread);
-WINPR_API BOOL SwitchToThread(VOID);
+WINPR_API BOOL SwitchToThread(void);
 
 WINPR_API BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode);
 
 /* Processor */
 
-WINPR_API DWORD GetCurrentProcessorNumber(VOID);
+WINPR_API DWORD GetCurrentProcessorNumber(void);
 
 /* Thread-Local Storage */
 
 #define TLS_OUT_OF_INDEXES	((DWORD) 0xFFFFFFFF)
 
-WINPR_API DWORD TlsAlloc(VOID);
+WINPR_API DWORD TlsAlloc(void);
 WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);
 WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue);
 WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
@@ -155,6 +161,10 @@ WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
 #define _GetCurrentProcess	GetCurrentProcess
 #define _GetCurrentThread	GetCurrentThread
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_THREAD_H */

@@ -30,7 +30,7 @@
 
 #include <freerdp/addin.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 
 #include "drdynvc_types.h"
@@ -86,7 +86,7 @@ struct _DVCMAN_CHANNEL
 	UINT32 channel_id;
 	IWTSVirtualChannelCallback* channel_callback;
 
-	STREAM* dvc_data;
+	wStream* dvc_data;
 
 	HANDLE dvc_chan_mutex;
 };
@@ -131,7 +131,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 }
 
-static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* pEvent)
+static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, wMessage* pEvent)
 {
 	int status;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
@@ -140,11 +140,11 @@ static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, RDP_EVENT* 
 
 	if (status == 0)
 	{
-		DEBUG_DVC("event_type %d pushed.", pEvent->event_type);
+		DEBUG_DVC("event_type %d pushed.", GetMessageType(pEvent->id));
 	}
 	else
 	{
-		DEBUG_WARN("event_type %d push failed.", pEvent->event_type);
+		DEBUG_WARN("event_type %d push failed.", GetMessageType(pEvent->id));
 	}
 
 	return status;
@@ -233,7 +233,7 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
 
-	printf("Loading Dynamic Virtual Channel %s\n", args->argv[0]);
+	fprintf(stderr, "Loading Dynamic Virtual Channel %s\n", args->argv[0]);
 
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
 			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);

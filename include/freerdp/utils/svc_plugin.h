@@ -30,11 +30,11 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/stream.h>
 
 typedef struct rdp_svc_plugin rdpSvcPlugin;
 
@@ -44,12 +44,12 @@ struct rdp_svc_plugin
 	CHANNEL_DEF channel_def;
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
-	void (*receive_callback)(rdpSvcPlugin* plugin, STREAM* data_in);
-	void (*event_callback)(rdpSvcPlugin* plugin, RDP_EVENT* event);
+	void (*receive_callback)(rdpSvcPlugin* plugin, wStream* data_in);
+	void (*event_callback)(rdpSvcPlugin* plugin, wMessage* event);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	HANDLE thread;
-	STREAM* data_in;
+	wStream* data_in;
 	void* init_handle;
 	UINT32 open_handle;
 	wMessagePipe* MsgPipe;
@@ -60,8 +60,8 @@ extern "C" {
 #endif
 
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
-FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out);
-FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event);
+FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out);
+FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event);
 
 #ifdef __cplusplus
 }

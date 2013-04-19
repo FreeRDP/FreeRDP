@@ -31,7 +31,7 @@
 
 #include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <time.h>
 #include <errno.h>
@@ -48,17 +48,19 @@
 
 #define BUFFER_SIZE 16384
 
-STREAM* transport_recv_stream_init(rdpTransport* transport, int size)
+static void* transport_client_thread(void* arg);
+
+wStream* transport_recv_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->ReceiveStream;
+	wStream* s = transport->ReceiveStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
 }
 
-STREAM* transport_send_stream_init(rdpTransport* transport, int size)
+wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
-	STREAM* s = transport->SendStream;
+	wStream* s = transport->SendStream;
 	stream_check_size(s, size);
 	stream_set_pos(s, 0);
 	return s;
@@ -118,6 +120,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			connectErrorCode = TLSCONNECTERROR;
 
 		tls_free(transport->TlsIn);
+
 		if (transport->TlsIn == transport->TlsOut)
 			transport->TlsIn = transport->TlsOut = NULL;
 		else
@@ -156,7 +159,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
 
-		printf("Authentication failure, check credentials.\n"
+		fprintf(stderr, "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
@@ -202,6 +205,16 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
+
+	transport->async = transport->settings->AsyncTransport;
+
+	if (transport->async)
+	{
+		transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		transport->thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+	}
 
 	if (transport->settings->GatewayUsageMethod)
 	{
@@ -281,7 +294,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		printf("client authentication failure\n");
+		fprintf(stderr, "client authentication failure\n");
 		credssp_free(transport->credssp);
 		return FALSE;
 	}
@@ -291,40 +304,40 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL nla_verify_header(STREAM* s)
+BOOL nla_verify_header(wStream* s)
 {
-	if ((s->p[0] == 0x30) && (s->p[1] & 0x80))
+	if ((s->pointer[0] == 0x30) && (s->pointer[1] & 0x80))
 		return TRUE;
 
 	return FALSE;
 }
 
-UINT32 nla_read_header(STREAM* s)
+UINT32 nla_read_header(wStream* s)
 {
 	UINT32 length = 0;
 
-	if (s->p[1] & 0x80)
+	if (s->pointer[1] & 0x80)
 	{
-		if ((s->p[1] & ~(0x80)) == 1)
+		if ((s->pointer[1] & ~(0x80)) == 1)
 		{
-			length = s->p[2];
+			length = s->pointer[2];
 			length += 3;
 			stream_seek(s, 3);
 		}
-		else if ((s->p[1] & ~(0x80)) == 2)
+		else if ((s->pointer[1] & ~(0x80)) == 2)
 		{
-			length = (s->p[2] << 8) | s->p[3];
+			length = (s->pointer[2] << 8) | s->pointer[3];
 			length += 4;
 			stream_seek(s, 4);
 		}
 		else
 		{
-			printf("Error reading TSRequest!\n");
+			fprintf(stderr, "Error reading TSRequest!\n");
 		}
 	}
 	else
 	{
-		length = s->p[1];
+		length = s->pointer[1];
 		length += 2;
 		stream_seek(s, 2);
 	}
@@ -332,18 +345,18 @@ UINT32 nla_read_header(STREAM* s)
 	return length;
 }
 
-UINT32 nla_header_length(STREAM* s)
+UINT32 nla_header_length(wStream* s)
 {
 	UINT32 length = 0;
 
-	if (s->p[1] & 0x80)
+	if (s->pointer[1] & 0x80)
 	{
-		if ((s->p[1] & ~(0x80)) == 1)
+		if ((s->pointer[1] & ~(0x80)) == 1)
 			length = 3;
-		else if ((s->p[1] & ~(0x80)) == 2)
+		else if ((s->pointer[1] & ~(0x80)) == 2)
 			length = 4;
 		else
-			printf("Error reading TSRequest!\n");
+			fprintf(stderr, "Error reading TSRequest!\n");
 	}
 	else
 	{
@@ -390,7 +403,7 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 	return read;
 }
 
-int transport_read(rdpTransport* transport, STREAM* s)
+int transport_read(rdpTransport* transport, wStream* s)
 {
 	int status;
 	int pdu_bytes;
@@ -405,7 +418,7 @@ int transport_read(rdpTransport* transport, STREAM* s)
 
 	if (stream_bytes < 4)
 	{
-		status = transport_read_layer(transport, s->data + stream_bytes, 4 - stream_bytes);
+		status = transport_read_layer(transport, s->buffer + stream_bytes, 4 - stream_bytes);
 
 		if (status < 0)
 			return status;
@@ -419,36 +432,36 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	}
 
 	/* if header is present, read in exactly one PDU */
-	if (s->data[0] == 0x03)
+	if (s->buffer[0] == 0x03)
 	{
 		/* TPKT header */
 
-		pdu_bytes = (s->data[2] << 8) | s->data[3];
+		pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
 	}
-	else if (s->data[0] == 0x30)
+	else if (s->buffer[0] == 0x30)
 	{
 		/* TSRequest (NLA) */
 
-		if (s->data[1] & 0x80)
+		if (s->buffer[1] & 0x80)
 		{
-			if ((s->data[1] & ~(0x80)) == 1)
+			if ((s->buffer[1] & ~(0x80)) == 1)
 			{
-				pdu_bytes = s->data[2];
+				pdu_bytes = s->buffer[2];
 				pdu_bytes += 3;
 			}
-			else if ((s->data[1] & ~(0x80)) == 2)
+			else if ((s->buffer[1] & ~(0x80)) == 2)
 			{
-				pdu_bytes = (s->data[2] << 8) | s->data[3];
+				pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
 				pdu_bytes += 4;
 			}
 			else
 			{
-				printf("Error reading TSRequest!\n");
+				fprintf(stderr, "Error reading TSRequest!\n");
 			}
 		}
 		else
 		{
-			pdu_bytes = s->data[1];
+			pdu_bytes = s->buffer[1];
 			pdu_bytes += 2;
 		}
 	}
@@ -456,13 +469,13 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	{
 		/* Fast-Path Header */
 
-		if (s->data[1] & 0x80)
-			pdu_bytes = ((s->data[1] & 0x7f) << 8) | s->data[2];
+		if (s->buffer[1] & 0x80)
+			pdu_bytes = ((s->buffer[1] & 0x7f) << 8) | s->buffer[2];
 		else
-			pdu_bytes = s->data[1];
+			pdu_bytes = s->buffer[1];
 	}
 
-	status = transport_read_layer(transport, s->data + stream_bytes, pdu_bytes - stream_bytes);
+	status = transport_read_layer(transport, s->buffer + stream_bytes, pdu_bytes - stream_bytes);
 
 	if (status < 0)
 		return status;
@@ -473,8 +486,8 @@ int transport_read(rdpTransport* transport, STREAM* s)
 	/* dump when whole PDU is read */
 	if (stream_bytes + status >= pdu_bytes)
 	{
-		printf("Local < Remote\n");
-		winpr_HexDump(s->data, pdu_bytes);
+		fprintf(stderr, "Local < Remote\n");
+		winpr_HexDump(s->buffer, pdu_bytes);
 	}
 #endif
 
@@ -496,7 +509,7 @@ static int transport_read_nonblocking(rdpTransport* transport)
 	return status;
 }
 
-int transport_write(rdpTransport* transport, STREAM* s)
+int transport_write(rdpTransport* transport, wStream* s)
 {
 	int status = -1;
 	int length;
@@ -507,8 +520,8 @@ int transport_write(rdpTransport* transport, STREAM* s)
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{
-		printf("Local > Remote\n");
-		winpr_HexDump(s->data, length);
+		fprintf(stderr, "Local > Remote\n");
+		winpr_HexDump(s->buffer, length);
 	}
 #endif
 
@@ -586,6 +599,17 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 		rfds[*rcount] = pfd;
 		(*rcount)++;
 	}
+
+	if (transport->GatewayEvent)
+	{
+		pfd = GetEventWaitObject(transport->GatewayEvent);
+
+		if (pfd)
+		{
+			rfds[*rcount] = pfd;
+			(*rcount)++;
+		}
+	}
 }
 
 int transport_check_fds(rdpTransport** ptransport)
@@ -594,7 +618,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	int status;
 	UINT16 length;
 	int recv_status;
-	STREAM* received;
+	wStream* received;
 	rdpTransport* transport = *ptransport;
 
 #ifdef _WIN32
@@ -667,7 +691,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		if (length == 0)
 		{
-			printf("transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
+			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
 			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
 			return -1;
 		}
@@ -679,8 +703,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		}
 
 		received = transport->ReceiveBuffer;
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
-		transport->ReceiveBuffer->p = transport->ReceiveBuffer->data;
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 
 		stream_set_pos(received, length);
 		stream_seal(received);
@@ -696,7 +719,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		ObjectPool_Return(transport->ReceivePool, received);
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
@@ -736,14 +759,43 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
-STREAM* transport_receive_buffer_pool_new()
+static void* transport_client_thread(void* arg)
 {
-	STREAM* pdu = NULL;
+	DWORD status;
+	DWORD nCount;
+	HANDLE events[3];
+	HANDLE ReadEvent;
+	freerdp* instance;
+	rdpTransport* transport;
 
-	pdu = stream_new(BUFFER_SIZE);
-	pdu->p = pdu->data;
+	transport = (rdpTransport*) arg;
+	instance = (freerdp*) transport->settings->instance;
 
-	return pdu;
+	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, transport->TcpIn->sockfd);
+
+	nCount = 0;
+	events[nCount++] = transport->stopEvent;
+	events[nCount++] = ReadEvent;
+
+	while (1)
+	{
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
+
+		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
+		{
+			if (!freerdp_check_fds(instance))
+				break;
+		}
+	}
+
+	CloseHandle(ReadEvent);
+
+	return NULL;
 }
 
 rdpTransport* transport_new(rdpSettings* settings)
@@ -751,10 +803,11 @@ rdpTransport* transport_new(rdpSettings* settings)
 	rdpTransport* transport;
 
 	transport = (rdpTransport*) malloc(sizeof(rdpTransport));
-	ZeroMemory(transport, sizeof(rdpTransport));
 
 	if (transport != NULL)
 	{
+		ZeroMemory(transport, sizeof(rdpTransport));
+
 		transport->TcpIn = tcp_new(settings);
 
 		transport->settings = settings;
@@ -762,16 +815,14 @@ rdpTransport* transport_new(rdpSettings* settings)
 		/* a small 0.1ms delay when transport is blocking. */
 		transport->SleepInterval = 100;
 
-		transport->ReceivePool = ObjectPool_New(TRUE);
-		ObjectPool_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-		ObjectPool_Object(transport->ReceivePool)->fnObjectNew = (OBJECT_NEW_FN) transport_receive_buffer_pool_new;
+		transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 		/* receive buffer for non-blocking read. */
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
-		transport->ReceiveStream = stream_new(BUFFER_SIZE);
+		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
 		transport->SendStream = stream_new(BUFFER_SIZE);
 
 		transport->blocking = TRUE;
@@ -787,11 +838,13 @@ void transport_free(rdpTransport* transport)
 	if (transport != NULL)
 	{
 		if (transport->ReceiveBuffer)
-			ObjectPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
+			Stream_Release(transport->ReceiveBuffer);
 
-		ObjectPool_Free(transport->ReceivePool);
+		if (transport->ReceiveStream)
+			Stream_Release(transport->ReceiveStream);
 
-		stream_free(transport->ReceiveStream);
+		StreamPool_Free(transport->ReceivePool);
+
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
 

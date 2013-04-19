@@ -265,12 +265,12 @@ static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data,
 
 static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
 
-	event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_FORMAT_LIST, NULL, NULL);
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
 
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*)event;
+	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
 
 	freerdp_channels_send_event(channels, event);
@@ -278,19 +278,20 @@ static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* in
 
 static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	RDP_EVENT* event;
+	wMessage* event;
 
 	event = freerdp_channels_pop_event(channels);
 
 	if (event)
 	{
-		switch (event->event_type)
+		switch (GetMessageType(event->id))
 		{
-			case RDP_EVENT_TYPE_CB_MONITOR_READY:
+			case CliprdrChannel_MonitorReady:
 				df_process_cb_monitor_ready_event(channels, instance);
 				break;
+
 			default:
-				printf("df_process_channel_event: unknown event type %d\n", event->event_type);
+				fprintf(stderr, "df_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
 				break;
 		}
 
@@ -319,8 +320,8 @@ int dfreerdp_run(freerdp* instance)
 	dfContext* context;
 	rdpChannels* channels;
 
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(wfds, sizeof(wfds));
 
 	if (!freerdp_connect(instance))
 		return 0;
@@ -337,17 +338,17 @@ int dfreerdp_run(freerdp* instance)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			fprintf(stderr, "Failed to get channel manager file descriptor\n");
 			break;
 		}
 		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get dfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to get dfreerdp file descriptor\n");
 			break;
 		}
 
@@ -376,24 +377,24 @@ int dfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("dfreerdp_run: select failed\n");
+				fprintf(stderr, "dfreerdp_run: select failed\n");
 				break;
 			}
 		}
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
-			printf("Failed to check dfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to check dfreerdp file descriptor\n");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			fprintf(stderr, "Failed to check channel manager file descriptor\n");
 			break;
 		}
 		df_process_channel_event(channels, instance);

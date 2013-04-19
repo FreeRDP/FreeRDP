@@ -26,8 +26,9 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 /* Certificate Version */
 #define CERT_CHAIN_VERSION_1		0x00000001
@@ -47,8 +48,8 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info);
 rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count);
 void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain);
 
-BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, STREAM* s);
-BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, STREAM* s);
+BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s);
+BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s);
 int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length);
 
 rdpCertificate* certificate_new(void);

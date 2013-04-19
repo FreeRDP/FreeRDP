@@ -53,7 +53,7 @@
 
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "tcp.h"
 
@@ -104,14 +104,14 @@ void tcp_get_mac_address(rdpTcp * tcp)
 
 	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
 	{
-		printf("failed to obtain MAC address\n");
+		fprintf(stderr, "failed to obtain MAC address\n");
 		return;
 	}
 
 	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
 #endif
 
-	/* printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+	/* fprintf(stderr, "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
@@ -194,7 +194,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 
 	if (flags == -1)
 	{
-		printf("tcp_set_blocking_mode: fcntl failed.\n");
+		fprintf(stderr, "tcp_set_blocking_mode: fcntl failed.\n");
 		return FALSE;
 	}
 
@@ -209,7 +209,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
 
 	if (status != NO_ERROR)
-		printf("ioctlsocket() failed with error: %ld\n", status);
+		fprintf(stderr, "ioctlsocket() failed with error: %ld\n", status);
 
 	tcp->wsa_event = WSACreateEvent();
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);

@@ -24,8 +24,16 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
-#include <freerdp/utils/string.h>
+
+#include <winpr/stream.h>
+
+struct rdp_string
+{
+	char* ascii;
+	char* unicode;
+	UINT32 length;
+};
+typedef struct rdp_string rdpString;
 
 struct rdp_redirection
 {
@@ -46,8 +54,8 @@ struct rdp_redirection
 };
 typedef struct rdp_redirection rdpRedirection;
 
-BOOL rdp_recv_redirection_packet(rdpRdp* rdp, STREAM* s);
-BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, STREAM* s);
+BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
+BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
 
 rdpRedirection* redirection_new(void);
 void redirection_free(rdpRedirection* redirection);

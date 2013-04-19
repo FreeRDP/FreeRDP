@@ -46,12 +46,14 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 		free(unicode_string->string);
 }
 
-BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	if(stream_get_left(s) < 2)
+	if (stream_get_left(s) < 2)
 		return FALSE;
+
 	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
-	if(stream_get_left(s) < unicode_string->length)
+
+	if (stream_get_left(s) < unicode_string->length)
 		return FALSE;
 
 	if (unicode_string->string == NULL)
@@ -60,17 +62,18 @@ BOOL rail_read_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
 		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
 	stream_read(s, unicode_string->string, unicode_string->length);
+
 	return TRUE;
 }
 
-void rail_write_unicode_string(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
+void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	stream_check_size(s, 2 + unicode_string->length);
 	stream_write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
-void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_string)
+void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	if (unicode_string->length > 0)
 	{
@@ -79,7 +82,7 @@ void rail_write_unicode_string_value(STREAM* s, RAIL_UNICODE_STRING* unicode_str
 	}
 }
 
-void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
+void rail_read_rectangle_16(wStream* s, RECTANGLE_16* rectangle_16)
 {
 	stream_read_UINT16(s, rectangle_16->left); /* left (2 bytes) */
 	stream_read_UINT16(s, rectangle_16->top); /* top (2 bytes) */
@@ -87,7 +90,7 @@ void rail_read_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
 	stream_read_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
-void rail_write_rectangle_16(STREAM* s, RECTANGLE_16* rectangle_16)
+void rail_write_rectangle_16(wStream* s, RECTANGLE_16* rectangle_16)
 {
 	stream_write_UINT16(s, rectangle_16->left); /* left (2 bytes) */
 	stream_write_UINT16(s, rectangle_16->top); /* top (2 bytes) */
@@ -103,22 +106,22 @@ void* rail_clone_order(UINT32 event_type, void* order)
 		UINT32 size;
 	} ordersize_table[] =
 	{
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS, sizeof(RAIL_SYSPARAM_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS, sizeof(RAIL_EXEC_RESULT_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_SYSPARAM, sizeof(RAIL_SYSPARAM_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_MINMAXINFO, sizeof(RAIL_MINMAXINFO_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_SERVER_LOCALMOVESIZE, sizeof(RAIL_LOCALMOVESIZE_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP, sizeof(RAIL_GET_APPID_RESP_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CHANNEL_LANGBARINFO, sizeof(RAIL_LANGBAR_INFO_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS, sizeof(RAIL_SYSPARAM_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_EXEC_REMOTE_APP, sizeof(RDP_PLUGIN_DATA)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_ACTIVATE, sizeof(RAIL_ACTIVATE_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_SYSMENU, sizeof(RAIL_SYSMENU_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_SYSCOMMAND, sizeof(RAIL_SYSCOMMAND_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_NOTIFY_EVENT, sizeof(RAIL_NOTIFY_EVENT_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, sizeof(RAIL_WINDOW_MOVE_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_APPID_REQ, sizeof(RAIL_GET_APPID_REQ_ORDER)},
-		{RDP_EVENT_TYPE_RAIL_CLIENT_LANGBARINFO, sizeof(RAIL_LANGBAR_INFO_ORDER)},
+		{RailChannel_GetSystemParam, sizeof(RAIL_SYSPARAM_ORDER)},
+		{RailChannel_ServerExecuteResult, sizeof(RAIL_EXEC_RESULT_ORDER)},
+		{RailChannel_ServerSystemParam, sizeof(RAIL_SYSPARAM_ORDER)},
+		{RailChannel_ServerMinMaxInfo, sizeof(RAIL_MINMAXINFO_ORDER)},
+		{RailChannel_ServerLocalMoveSize, sizeof(RAIL_LOCALMOVESIZE_ORDER)},
+		{RailChannel_ServerGetAppIdResponse, sizeof(RAIL_GET_APPID_RESP_ORDER)},
+		{RailChannel_ServerLanguageBarInfo, sizeof(RAIL_LANGBAR_INFO_ORDER)},
+		{RailChannel_ClientSystemParam, sizeof(RAIL_SYSPARAM_ORDER)},
+		{RailChannel_ClientExecute, sizeof(RDP_PLUGIN_DATA)},
+		{RailChannel_ClientActivate, sizeof(RAIL_ACTIVATE_ORDER)},
+		{RailChannel_ClientSystemMenu, sizeof(RAIL_SYSMENU_ORDER)},
+		{RailChannel_ClientSystemCommand, sizeof(RAIL_SYSCOMMAND_ORDER)},
+		{RailChannel_ClientNotifyEvent, sizeof(RAIL_NOTIFY_EVENT_ORDER)},
+		{RailChannel_ClientWindowMove, sizeof(RAIL_WINDOW_MOVE_ORDER)},
+		{RailChannel_ClientGetAppIdRequest, sizeof(RAIL_GET_APPID_REQ_ORDER)},
+		{RailChannel_ClientLanguageBarInfo, sizeof(RAIL_LANGBAR_INFO_ORDER)},
 	};
 	size_t i = 0;
 	size_t order_size = 0;
@@ -134,42 +137,43 @@ void* rail_clone_order(UINT32 event_type, void* order)
 	}
 
 	// Event type not found.
-	if (order_size == 0) return NULL;
+	if (order_size == 0)
+		return NULL;
 
 	new_order = malloc(order_size);
-	memcpy(new_order, order, order_size);
+	CopyMemory(new_order, order, order_size);
 
-	//printf("rail_clone_order: type=%d order=%p\n", event_type, new_order);
+	//fprintf(stderr, "rail_clone_order: type=%d order=%p\n", event_type, new_order);
 
 	// Create copy of variable data for some orders
-	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||
-		(event_type == RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS))
+	if ((event_type == RailChannel_GetSystemParam) ||
+		(event_type == RailChannel_ClientSystemParam))
 	{
-		RAIL_SYSPARAM_ORDER* new_sysparam = (RAIL_SYSPARAM_ORDER*)new_order;
-		RAIL_SYSPARAM_ORDER* old_sysparam = (RAIL_SYSPARAM_ORDER*)order;
+		RAIL_SYSPARAM_ORDER* new_sysparam = (RAIL_SYSPARAM_ORDER*) new_order;
+		RAIL_SYSPARAM_ORDER* old_sysparam = (RAIL_SYSPARAM_ORDER*) order;
 
 		rail_unicode_string_alloc(&new_sysparam->highContrast.colorScheme,
 			old_sysparam->highContrast.colorScheme.length);
 
-		memcpy(new_sysparam->highContrast.colorScheme.string,
+		CopyMemory(new_sysparam->highContrast.colorScheme.string,
 			old_sysparam->highContrast.colorScheme.string,
 			old_sysparam->highContrast.colorScheme.length);
 	}
 
-	if (event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS)
+	if (event_type == RailChannel_ServerExecuteResult)
 	{
-		RAIL_EXEC_RESULT_ORDER* new_exec_result = (RAIL_EXEC_RESULT_ORDER*)new_order;
-		RAIL_EXEC_RESULT_ORDER* old_exec_result = (RAIL_EXEC_RESULT_ORDER*)order;
+		RAIL_EXEC_RESULT_ORDER* new_exec_result = (RAIL_EXEC_RESULT_ORDER*) new_order;
+		RAIL_EXEC_RESULT_ORDER* old_exec_result = (RAIL_EXEC_RESULT_ORDER*) order;
 
 		rail_unicode_string_alloc(&new_exec_result->exeOrFile,
 				old_exec_result->exeOrFile.length);
 
-		memcpy(new_exec_result->exeOrFile.string,
+		CopyMemory(new_exec_result->exeOrFile.string,
 			old_exec_result->exeOrFile.string,
 			old_exec_result->exeOrFile.length);
 	}
 
-	if (event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_APPID_RESP)
+	if (event_type == RailChannel_ServerGetAppIdResponse)
 	{
 		RAIL_GET_APPID_RESP_ORDER* new_app_resp = (RAIL_GET_APPID_RESP_ORDER*)new_order;
 
@@ -181,18 +185,19 @@ void* rail_clone_order(UINT32 event_type, void* order)
 
 void rail_free_cloned_order(UINT32 event_type, void* order)
 {
-	//printf("rail_free_cloned_order: type=%d order=%p\n", event_type, order);
-	if ((event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_GET_SYSPARAMS) ||
-		(event_type == RDP_EVENT_TYPE_RAIL_CLIENT_SET_SYSPARAMS))
+	//fprintf(stderr, "rail_free_cloned_order: type=%d order=%p\n", event_type, order);
+	if ((event_type == RailChannel_GetSystemParam) ||
+		(event_type == RailChannel_ClientSystemParam))
 	{
-		RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*)order;
+		RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) order;
 		rail_unicode_string_free(&sysparam->highContrast.colorScheme);
 	}
 
-	if (event_type == RDP_EVENT_TYPE_RAIL_CHANNEL_EXEC_RESULTS)
+	if (event_type == RailChannel_ServerExecuteResult)
 	{
-		RAIL_EXEC_RESULT_ORDER* exec_result = (RAIL_EXEC_RESULT_ORDER*)order;
+		RAIL_EXEC_RESULT_ORDER* exec_result = (RAIL_EXEC_RESULT_ORDER*) order;
 		rail_unicode_string_free(&exec_result->exeOrFile);
 	}
+
 	free(order);
 }

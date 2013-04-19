@@ -15,6 +15,7 @@
 #import "ConnectionParams.h"
 #import "CredentialsInputController.h"
 #import "VerifyCertificateController.h"
+#import "BlockAlertView.h"
 
 #define TOOLBAR_HEIGHT 30
 
@@ -415,8 +416,12 @@
 
 - (void)showGoProScreen:(RDPSession*)session
 {
-    UIAlertView* alertView = [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Pro Version", @"Pro version dialog title") 
-                                                message:NSLocalizedString(@"Do you want to buy Thinstuff RDC Pro and enable the full RDP Experience", @"Pro version dialog message") delegate:self cancelButtonTitle:NSLocalizedString(@"No", @"No Button title") otherButtonTitles:NSLocalizedString(@"Yes", @"Yes button title"), nil] autorelease];
+    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Unlicensed Client", @"Pro version dialog title") message:NSLocalizedString(@"You are connected to Thinstuff Remote Desktop Host (RDH). Do you want to purchase an access license for this client which allows you to connect to any computer running Thinstuff RDH?", @"Pro version dialog message")];
+    
+    [alertView setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button title") block:nil];
+    [alertView addButtonWithTitle:NSLocalizedString(@"Yes", @"Yes button title") block:^ {
+    }];
+    
     [alertView show];
 }
 
@@ -556,16 +561,20 @@
 
 - (void)onTransactionSuccess:(NSNotification*)notification
 {
-    UIAlertView* alertView = [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Transaction Succeeded", @"Pro version bought dialog title") 
-                                                         message:NSLocalizedString(@"Thanks for buying Thinstuff RDC Pro. In order for the purchase to take effect please reconnect your current session.", @"Pro version bought dialog message") delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"OK Button title") otherButtonTitles:nil] autorelease];
+    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Transaction Succeeded", @"Pro version bought dialog title")
+                                                       message:NSLocalizedString(@"Thanks for buying Thinstuff RDC Pro. In order for the purchase to take effect please reconnect your current session.", @"Pro version bought dialog message")];
+    [alertView setCancelButtonWithTitle:NSLocalizedString(@"OK", @"OK Button title") block:nil];
+    
     [alertView show];        
 }
 
 - (void)onTransactionFailed:(NSNotification*)notification
 {
-    UIAlertView* alertView = [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Transaction Failed", @"Pro version buy failed dialog title") 
-                                                         message:NSLocalizedString(@"The transaction did not complete successfully!", @"Pro version buy failed dialog message") delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"OK Button title") otherButtonTitles:nil] autorelease];
-    [alertView show];            
+    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Transaction Failed", @"Pro version buy failed dialog title")
+                                                       message:NSLocalizedString(@"The transaction did not complete successfully!", @"Pro version buy failed dialog message")];
+    [alertView setCancelButtonWithTitle:NSLocalizedString(@"OK", @"OK Button title") block:nil];
+
+    [alertView show];
 }
 
 #pragma mark -

@@ -28,7 +28,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
@@ -55,7 +55,7 @@ struct drdynvc_plugin
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-static int drdynvc_write_variable_uint(STREAM* stream, UINT32 val)
+static int drdynvc_write_variable_uint(wStream* stream, UINT32 val)
 {
 	int cb;
 
@@ -80,7 +80,7 @@ static int drdynvc_write_variable_uint(STREAM* stream, UINT32 val)
 
 int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UINT32 data_size)
 {
-	STREAM* data_out;
+	wStream* data_out;
 	UINT32 pos = 0;
 	UINT32 cbChId;
 	UINT32 cbLen;
@@ -158,7 +158,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	return 0;
 }
 
-int drdynvc_push_event(drdynvcPlugin* drdynvc, RDP_EVENT* event)
+int drdynvc_push_event(drdynvcPlugin* drdynvc, wMessage* event)
 {
 	int error;
 
@@ -173,9 +173,9 @@ int drdynvc_push_event(drdynvcPlugin* drdynvc, RDP_EVENT* event)
 	return 0;
 }
 
-static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
+static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
-	STREAM* data_out;
+	wStream* data_out;
 	int error;
 
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
@@ -206,7 +206,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 	return 0;
 }
 
-static UINT32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
+static UINT32 drdynvc_read_variable_uint(wStream* stream, int cbLen)
 {
 	UINT32 val;
 
@@ -228,12 +228,12 @@ static UINT32 drdynvc_read_variable_uint(STREAM* stream, int cbLen)
 	return val;
 }
 
-static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
+static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	int pos;
 	int error;
 	UINT32 ChannelId;
-	STREAM* data_out;
+	wStream* data_out;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = stream_get_pos(s);
@@ -268,7 +268,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	return 0;
 }
 
-static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
+static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	int error;
 	UINT32 Length;
@@ -287,7 +287,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 		stream_get_tail(s), stream_get_left(s));
 }
 
-static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
+static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT32 ChannelId;
 
@@ -298,7 +298,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, STRE
 		stream_get_tail(s), stream_get_left(s));
 }
 
-static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, STREAM* s)
+static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT32 ChannelId;
 
@@ -309,7 +309,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	return 0;
 }
 
-static void drdynvc_process_receive(rdpSvcPlugin* plugin, STREAM* s)
+static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	int value;
 	int Cmd;
@@ -372,7 +372,7 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	dvcman_init(drdynvc->channel_mgr);
 }
 
-static void drdynvc_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void drdynvc_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	freerdp_event_free(event);
 }

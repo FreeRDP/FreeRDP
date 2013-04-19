@@ -9,6 +9,7 @@
 
 #import "AboutController.h"
 #import "Utils.h"
+#import "BlockAlertView.h"
 
 @implementation AboutController
 
@@ -76,24 +77,19 @@
 	{
         [last_link_clicked release];
 		last_link_clicked = [[[request URL] absoluteString] retain];
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"External Link", @"External Link Alert Title")
-                                                message:[NSString stringWithFormat:NSLocalizedString(@"Open [%@] in Browser?", @"Open link in browser (with link as parameter)"), last_link_clicked]
-													   delegate:self 
-											  cancelButtonTitle:NSLocalizedString(@"OK", @"OK Button")
-											  otherButtonTitles:NSLocalizedString(@"No", @"No Button"), nil];
-		[alert show];
-		[alert release];
+		BlockAlertView *alert = [BlockAlertView alertWithTitle:NSLocalizedString(@"External Link", @"External Link Alert Title")
+                                                        message:[NSString stringWithFormat:NSLocalizedString(@"Open [%@] in Browser?", @"Open link in browser (with link as parameter)"), last_link_clicked]];
+
+        [alert setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button") block:nil];
+        [alert addButtonWithTitle:NSLocalizedString(@"OK", @"OK Button") block:^{
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:last_link_clicked]];
+        }];
+		
+        [alert show];
 		
 		return NO;
 	}
 	return YES;
-}
-
-#pragma mark UIAlertView delegate
-- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex == 0)
-        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:last_link_clicked]];
 }
 
 @end

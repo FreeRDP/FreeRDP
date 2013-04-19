@@ -87,7 +87,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (library == NULL)
 	{
-		printf("LoadLibraryA: %s\n", dlerror());
+		fprintf(stderr, "LoadLibraryA: %s\n", dlerror());
 		return NULL;
 	}
 
@@ -107,7 +107,7 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 	if (library == NULL)
 	{
-		printf("LoadLibraryA: failed to open %s: %s\n", lpLibFileName, dlerror());
+		fprintf(stderr, "LoadLibraryA: failed to open %s: %s\n", lpLibFileName, dlerror());
 		return NULL;
 	}
 
@@ -127,7 +127,7 @@ FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 
 	if (proc == NULL)
 	{
-		printf("GetProcAddress: could not find procedure %s: %s\n", lpProcName, dlerror());
+		fprintf(stderr, "GetProcAddress: could not find procedure %s: %s\n", lpProcName, dlerror());
 		return (FARPROC) NULL;
 	}
 

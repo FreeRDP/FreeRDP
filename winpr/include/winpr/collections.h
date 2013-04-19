@@ -28,6 +28,7 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 
 typedef void* (*OBJECT_NEW_FN)(void);
 typedef void (*OBJECT_FREE_FN)(void* obj);
@@ -61,8 +62,10 @@ struct _wQueue
 typedef struct _wQueue wQueue;
 
 WINPR_API int Queue_Count(wQueue* queue);
-WINPR_API BOOL Queue_IsSynchronized(wQueue* queue);
-WINPR_API HANDLE Queue_SyncRoot(wQueue* queue);
+
+WINPR_API BOOL Queue_Lock(wQueue* queue);
+WINPR_API BOOL Queue_Unlock(wQueue* queue);
+
 WINPR_API HANDLE Queue_Event(wQueue* queue);
 
 #define Queue_Object(_queue)	(&_queue->object)
@@ -276,6 +279,10 @@ WINPR_API void ObjectPool_Free(wObjectPool* pool);
 
 /* Message Queue */
 
+typedef struct _wMessage wMessage;
+
+typedef void (*MESSAGE_FREE_FN)(wMessage* message);
+
 struct _wMessage
 {
 	UINT32 id;
@@ -283,8 +290,8 @@ struct _wMessage
 	void* wParam;
 	void* lParam;
 	UINT64 time;
+	MESSAGE_FREE_FN Free;
 };
-typedef struct _wMessage wMessage;
 
 struct _wMessageQueue
 {

@@ -110,7 +110,7 @@ static void rdpsnd_audio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
                              &aq_plugin_p->aq_ref
 				);
 	if (rv != 0) {
-		printf("rdpsnd_audio_open: AudioQueueNewOutput() failed with error %d\n", rv);
+		fprintf(stderr, "rdpsnd_audio_open: AudioQueueNewOutput() failed with error %d\n", rv);
 		aq_plugin_p->is_open = 1;
 		return;
 	}
@@ -205,7 +205,7 @@ static void aq_playback_cb(void* user_data, AudioQueueRef aq_ref, AudioQueueBuff
 
 int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
-    printf("freerdp_rdpsnd_client_subsystem_entry()\n\n");
+    fprintf(stderr, "freerdp_rdpsnd_client_subsystem_entry()\n\n");
     
 	ADDIN_ARGV* args;
 	rdpsndAudioQPlugin* aqPlugin;

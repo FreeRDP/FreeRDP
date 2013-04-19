@@ -1565,7 +1565,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;	
 	}
 
-	printf("Unable to detect time zone\n");
+	fprintf(stderr, "Unable to detect time zone\n");
 	return tzid;
 #else
 	return 0;
@@ -1626,7 +1626,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 		}
 	}
 
-	printf("Unable to find a match for unix timezone: %s\n", tzid);
+	fprintf(stderr, "Unable to find a match for unix timezone: %s\n", tzid);
 	free(tzid);
 	return NULL;
 }
@@ -1640,14 +1640,14 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 
 	for (i = 0; i < (int) count; i++)
 	{
-		if ((rules[i].TicksStart <= windows_time) && (windows_time >= rules[i].TicksEnd))
+		if ((rules[i].TicksStart >= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
-			/*printf("Got rule %d from table at %p with count %u\n", i, rules, count);*/
+			/*fprintf(stderr, "Got rule %d from table at %p with count %u\n", i, rules, count);*/
 			return &rules[i];
 		}
 	}
 
-	printf("Unable to get current timezone rule\n");
+	fprintf(stderr, "Unable to get current timezone rule\n");
 	return NULL;
 }
 
@@ -1657,14 +1657,14 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	TIME_ZONE_ENTRY* tz;
 	struct tm* local_time;
 
+	clientTimeZone->standardBias = 0;
+	
 	time(&t);
 	local_time = localtime(&t);
 
 #ifdef HAVE_TM_GMTOFF
-	if (local_time->tm_gmtoff >= 0)
-		clientTimeZone->bias = (UINT32) (local_time->tm_gmtoff / 60);
-	else
-		clientTimeZone->bias = (UINT32) (1440 + (INT32) (local_time->tm_gmtoff / 60));
+    clientTimeZone->bias = timezone / 60;
+	DEBUG_TIMEZONE("tzname[std]: %s, tzname[dst]: %s, timezone: %ld, Daylight: %d", tzname[0], tzname[1], timezone, daylight);
 #elif defined(sun)
 	if (local_time->tm_isdst > 0)
 		clientTimeZone->bias = (UINT32) (altzone / 3600);
@@ -1673,19 +1673,6 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 #else
 	clientTimeZone->bias = 0;
 #endif
-	if (local_time->tm_isdst > 0)
-	{
-		clientTimeZone->standardBias = clientTimeZone->bias - 60;
-		clientTimeZone->daylightBias = clientTimeZone->bias;
-	}
-	else
-	{
-		clientTimeZone->standardBias = clientTimeZone->bias;
-		clientTimeZone->daylightBias = clientTimeZone->bias + 60;
-	}
-	DEBUG_TIMEZONE("Bias: %d, StandardBias: %d, DaylightBias: %d",
-		clientTimeZone->bias, clientTimeZone->standardBias,
-		clientTimeZone->daylightBias);
 
 	tz = freerdp_detect_windows_time_zone(clientTimeZone->bias);
 
@@ -1694,8 +1681,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 		DEBUG_TIMEZONE("tz: Id='%s' Bias=%d DST=%d dn='%s' sn='%s' dln='%s'",
 			tz->Id, tz->Bias, tz->SupportsDST, tz->DisplayName,
 			tz->StandardName, tz->DaylightName);
-		/* Not printed: RuleTable, RuleTableCount */
-		clientTimeZone->bias = tz->Bias;
+
 		sprintf(clientTimeZone->standardName, "%s", tz->StandardName);
 		sprintf(clientTimeZone->daylightName, "%s", tz->DaylightName);
 
@@ -1704,11 +1690,9 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 			TIME_ZONE_RULE_ENTRY* rule;
 			rule = freerdp_get_current_time_zone_rule(tz->RuleTable, tz->RuleTableCount);
 
-			/* issue #574 -- temporarily disabled this block as it seems to be setting the wrong time
 			if (rule != NULL)
 			{
-				clientTimeZone->standardBias = 0;
-				clientTimeZone->daylightBias = rule->DaylightDelta;
+				clientTimeZone->daylightBias = -rule->DaylightDelta;
 
 				clientTimeZone->standardDate.wYear = rule->StandardDate.wYear;
 				clientTimeZone->standardDate.wMonth = rule->StandardDate.wMonth;
@@ -1728,9 +1712,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 				clientTimeZone->daylightDate.wSecond = rule->DaylightDate.wSecond;
 				clientTimeZone->daylightDate.wMilliseconds = rule->DaylightDate.wMilliseconds;
 			}
-			*/
 		}
-
 		free(tz);
 	}
 	else

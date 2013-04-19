@@ -8,6 +8,6 @@ Description: A free remote desktop protocol client
 URL: http://www.freerdp.com/
 Version: @FREERDP_VERSION_FULL@
 Requires: 
-Libs: -L${libdir} -lfreerdp-cache -lfreerdp-codec -lfreerdp-core -lfreerdp-crypto -lfreerdp-gdi -lfreerdp-locale -lfreerdp-rail -lfreerdp-utils -lwinpr-sspi -lwinpr-rpc
+Libs: -L${libdir} -lfreerdp-cache -lfreerdp-codec -lfreerdp-core -lfreerdp-crypto -lfreerdp-gdi -lfreerdp-locale -lfreerdp-rail -lfreerdp-utils -lwinpr-sspi -lwinpr-rpc -lwinpr-utils
 Cflags: -I${includedir}
 

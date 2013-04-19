@@ -250,4 +250,32 @@ WINPR_API PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags);
 
 #endif
 
+/**
+ * Shell Path Functions
+ */
+
+#define KNOWN_PATH_HOME			1
+#define KNOWN_PATH_TEMP			2
+#define KNOWN_PATH_XDG_DATA_HOME	3
+#define KNOWN_PATH_XDG_CONFIG_HOME	4
+#define KNOWN_PATH_XDG_CACHE_HOME	5
+#define KNOWN_PATH_XDG_RUNTIME_DIR	6
+
+WINPR_API char* GetKnownPath(int id);
+WINPR_API char* GetKnownSubPath(int id, char* path);
+WINPR_API char* GetCombinedPath(char* basePath, char* subPath);
+
+//#ifndef _WIN32
+
+WINPR_API BOOL PathFileExistsA(LPCSTR pszPath);
+WINPR_API BOOL PathFileExistsW(LPCWSTR pszPath);
+
+#ifdef UNICODE
+#define PathFileExists	PathFileExistsW
+#else
+#define PathFileExists	PathFileExistsA
+#endif
+
+//#endif
+
 #endif /* WINPR_PATH_H */

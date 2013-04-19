@@ -38,6 +38,10 @@
 
 #include "wf_event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct wf_bitmap
 {
 	rdpBitmap _bitmap;
@@ -67,6 +71,8 @@ typedef struct wf_context wfContext;
 
 struct wf_info
 {
+	rdpClient* client;
+
 	int width;
 	int height;
 	int offset_x;
@@ -75,6 +81,8 @@ struct wf_info
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
+	int client_width;
+	int client_height;
 
 	HANDLE thread;
 	HANDLE keyboardThread;
@@ -99,21 +107,38 @@ struct wf_info
 	HBRUSH brush;
 	HBRUSH org_brush;
 	RECT update_rect;
+	RECT scale_update_rect;
 
 	wfBitmap* tile;
+	DWORD mainThreadId;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
 };
 
-FREERDP_API int wf_global_init();
-FREERDP_API int wf_global_uninit();
+/**
+ * Client Interface
+ */
 
-FREERDP_API int wf_start(wfInfo* wfi);
-FREERDP_API int wf_stop(wfInfo* wfi);
+#define cfInfo	wfInfo
 
-FREERDP_API wfInfo* wf_new(HINSTANCE hInstance, HWND hWndParent, int argc, char** argv);
-FREERDP_API int wf_free(wfInfo* wfi);
+FREERDP_API int freerdp_client_global_init();
+FREERDP_API int freerdp_client_global_uninit();
+
+FREERDP_API int freerdp_client_start(wfInfo* cfi);
+FREERDP_API int freerdp_client_stop(wfInfo* cfi);
+
+FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
+FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
+
+FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int height);
+
+FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
+FREERDP_API int freerdp_client_free(wfInfo* cfi);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

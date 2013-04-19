@@ -27,7 +27,7 @@
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "wf_info.h"
 #include "wf_input.h"

@@ -32,12 +32,12 @@
 
 void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	printf("warning: NdrEncapsulatedUnionBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrEncapsulatedUnionBufferSize unimplemented\n");
 }
 
 void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	printf("warning: NdrNonEncapsulatedUnionBufferSize unimplemented\n");
+	fprintf(stderr, "warning: NdrNonEncapsulatedUnionBufferSize unimplemented\n");
 }
 
 #endif

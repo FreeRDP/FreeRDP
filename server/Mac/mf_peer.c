@@ -23,7 +23,7 @@
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <winpr/crt.h>
 
@@ -83,7 +83,7 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 	{
 		if (event->type == MF_EVENT_TYPE_REGION)
 		{
-			printf("unhandled event\n");
+			fprintf(stderr, "unhandled event\n");
 		}
 		else if (event->type == MF_EVENT_TYPE_FRAME_TICK)
 		{
@@ -121,7 +121,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	//encode
 	
-	STREAM* s;
+	wStream* s;
 	RFX_RECT rect;
 	rdpUpdate* update;
 	mfPeerContext* mfp;
@@ -240,10 +240,10 @@ void mf_peer_init(freerdp_peer* client)
 	
 	if(info_timer)
 	{
-		//printf("created timer\n");
+		//fprintf(stderr, "created timer\n");
 		dispatch_source_set_timer(info_timer, DISPATCH_TIME_NOW, 42ull * NSEC_PER_MSEC, 100ull * NSEC_PER_MSEC);
 		dispatch_source_set_event_handler(info_timer, ^{
-			//printf("dispatch\n");
+			//fprintf(stderr, "dispatch\n");
 			mfEvent* event = mf_event_new(MF_EVENT_TYPE_FRAME_TICK);
 			mf_event_push(info_event_queue, (mfEvent*) event);}
 						  );
@@ -257,17 +257,17 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	mfPeerContext* context = (mfPeerContext*) client->context;
 	rdpSettings* settings = client->settings;
 	
-	printf("Client %s post connect\n", client->hostname);
+	fprintf(stderr, "Client %s post connect\n", client->hostname);
 	
 	if (client->settings->AutoLogonEnabled)
 	{
-		printf(" and wants to login automatically as %s\\%s",
+		fprintf(stderr, " and wants to login automatically as %s\\%s",
 		       client->settings->Domain ? client->settings->Domain : "",
 		       client->settings->Username);
 		
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 	
 	mfInfo* mfi = mf_info_get_instance();
 	mfi->scale = 1;
@@ -278,7 +278,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	
 	if ((settings->DesktopWidth != mfi->servscreen_width) || (settings->DesktopHeight != mfi->servscreen_height))
 	{
-		printf("Client requested resolution %dx%d, but will resize to %dx%d\n",
+		fprintf(stderr, "Client requested resolution %dx%d, but will resize to %dx%d\n",
 		       settings->DesktopWidth, settings->DesktopHeight, mfi->servscreen_width, mfi->servscreen_height);
 	}
 	
@@ -332,7 +332,7 @@ BOOL mf_peer_activate(freerdp_peer* client)
 
 /*BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
  {
- printf("PeerLogon\n");
+ fprintf(stderr, "PeerLogon\n");
  
  if (automatic)
  {
@@ -347,12 +347,12 @@ BOOL mf_peer_activate(freerdp_peer* client)
 
 void mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	printf("Client sent a synchronize event (flags:0x%08X)\n", flags);
+	fprintf(stderr, "Client sent a synchronize event (flags:0x%08X)\n", flags);
 }
 
 void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	printf("Client sent a keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
+	fprintf(stderr, "Client sent a keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
 	
 	UINT16 down = 0x4000;
 	//UINT16 up = 0x8000;
@@ -374,28 +374,28 @@ void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 void mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	printf("Client sent a unicode keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
+	fprintf(stderr, "Client sent a unicode keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
 }
 
 /*void mf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	//printf("Client sent a mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
+	//fprintf(stderr, "Client sent a mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
 }
 
 void mf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	//printf("Client sent an extended mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
+	//fprintf(stderr, "Client sent an extended mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
 }
 */
 /*static void mf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
  {
  BYTE i;
  
- printf("Client requested to refresh:\n");
+ fprintf(stderr, "Client requested to refresh:\n");
  
  for (i = 0; i < count; i++)
  {
- printf("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
+ fprintf(stderr, "  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
  }
  }*/
 
@@ -403,11 +403,11 @@ static void mf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 {
 	if (allow > 0)
 	{
-		printf("Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
+		fprintf(stderr, "Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
 	}
 	else
 	{
-		printf("Client minimized and suppress output.\n");
+		fprintf(stderr, "Client minimized and suppress output.\n");
 	}
 }
 
@@ -432,7 +432,7 @@ void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
  ZeroMemory(rfds, sizeof(rfds));
  context = (wfPeerContext*) client->context;
  
- printf("PeerSocketListener\n");
+ fprintf(stderr, "PeerSocketListener\n");
  
  while (1)
  {
@@ -440,7 +440,7 @@ void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
  
  if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
  {
- printf("Failed to get peer file descriptor\n");
+ fprintf(stderr, "Failed to get peer file descriptor\n");
  break;
  }
  
@@ -469,7 +469,7 @@ void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
  break;
  }
  
- printf("Exiting Peer Socket Listener Thread\n");
+ fprintf(stderr, "Exiting Peer Socket Listener Thread\n");
  
  return 0;
  }
@@ -522,7 +522,7 @@ void* mf_peer_main_loop(void* arg)
 	client->Initialize(client);
 	context = (mfPeerContext*) client->context;
 	
-	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+	fprintf(stderr, "We've got a client %s\n", client->local ? "(local)" : client->hostname);
 	
 	while (1)
 	{
@@ -530,12 +530,12 @@ void* mf_peer_main_loop(void* arg)
 		
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 		if (mf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get mfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to get mfreerdp file descriptor\n");
 			break;
 		}
 		
@@ -567,19 +567,19 @@ void* mf_peer_main_loop(void* arg)
 			      (errno == EINPROGRESS) ||
 			      (errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				fprintf(stderr, "select failed\n");
 				break;
 			}
 		}
 		
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
-			printf("Failed to check freerdp file descriptor\n");
+			fprintf(stderr, "Failed to check freerdp file descriptor\n");
 			break;
 		}
 		if ((mf_peer_check_fds(client)) != TRUE)
 		{
-			printf("Failed to check mfreerdp file descriptor\n");
+			fprintf(stderr, "Failed to check mfreerdp file descriptor\n");
 			break;
 		}
 		
@@ -591,7 +591,7 @@ void* mf_peer_main_loop(void* arg)
 		
 	}
 	
-	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
+	fprintf(stderr, "Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 	
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);

@@ -7,6 +7,8 @@
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#import <CoreGraphics/CoreGraphics.h>
+
 #import <freerdp/freerdp.h>
 #import <freerdp/channels/channels.h>
 #import "TSXTypes.h"

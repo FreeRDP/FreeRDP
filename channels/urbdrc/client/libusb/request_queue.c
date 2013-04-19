@@ -100,7 +100,7 @@ TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* queue, BY
 		}
 	}
 	pthread_mutex_unlock(&queue->request_loading);
-	printf("request_queue_get_request_by_id: ERROR!!\n");
+	fprintf(stderr, "request_queue_get_request_by_id: ERROR!!\n");
 	return NULL;
 }
 

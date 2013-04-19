@@ -42,48 +42,43 @@ typedef struct _CHANNEL_DEF CHANNEL_DEF;
 typedef CHANNEL_DEF* PCHANNEL_DEF;
 typedef CHANNEL_DEF** PPCHANNEL_DEF;
 
-typedef void (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(void* pInitHandle,
-	UINT32 event, void* pData, UINT32 dataLength);
+typedef void (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength);
 
+typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(UINT32 openHandle, UINT32 event,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
 
-typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(UINT32 openHandle,
-	UINT32 event, void* pData, UINT32 dataLength,
-	UINT32 totalLength, UINT32 dataFlags);
+#define CHANNEL_RC_OK					0
+#define CHANNEL_RC_ALREADY_INITIALIZED			1
+#define CHANNEL_RC_NOT_INITIALIZED			2
+#define CHANNEL_RC_ALREADY_CONNECTED			3
+#define CHANNEL_RC_NOT_CONNECTED			4
+#define CHANNEL_RC_TOO_MANY_CHANNELS			5
+#define CHANNEL_RC_BAD_CHANNEL				6
+#define CHANNEL_RC_BAD_CHANNEL_HANDLE			7
+#define CHANNEL_RC_NO_BUFFER				8
+#define CHANNEL_RC_BAD_INIT_HANDLE			9
+#define CHANNEL_RC_NOT_OPEN				10
+#define CHANNEL_RC_BAD_PROC				11
+#define CHANNEL_RC_NO_MEMORY				12
+#define CHANNEL_RC_UNKNOWN_CHANNEL_NAME			13
+#define CHANNEL_RC_ALREADY_OPEN				14
+#define CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY		15
+#define CHANNEL_RC_NULL_DATA				16
+#define CHANNEL_RC_ZERO_LENGTH				17
 
-#define CHANNEL_RC_OK                             0
-#define CHANNEL_RC_ALREADY_INITIALIZED            1
-#define CHANNEL_RC_NOT_INITIALIZED                2
-#define CHANNEL_RC_ALREADY_CONNECTED              3
-#define CHANNEL_RC_NOT_CONNECTED                  4
-#define CHANNEL_RC_TOO_MANY_CHANNELS              5
-#define CHANNEL_RC_BAD_CHANNEL                    6
-#define CHANNEL_RC_BAD_CHANNEL_HANDLE             7
-#define CHANNEL_RC_NO_BUFFER                      8
-#define CHANNEL_RC_BAD_INIT_HANDLE                9
-#define CHANNEL_RC_NOT_OPEN                      10
-#define CHANNEL_RC_BAD_PROC                      11
-#define CHANNEL_RC_NO_MEMORY                     12
-#define CHANNEL_RC_UNKNOWN_CHANNEL_NAME          13
-#define CHANNEL_RC_ALREADY_OPEN                  14
-#define CHANNEL_RC_NOT_IN_VIRTUALCHANNELENTRY    15
-#define CHANNEL_RC_NULL_DATA                     16
-#define CHANNEL_RC_ZERO_LENGTH                   17
+#define VIRTUAL_CHANNEL_VERSION_WIN2000			1
 
-#define VIRTUAL_CHANNEL_VERSION_WIN2000         1
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELINIT)(void** ppInitHandle, PCHANNEL_DEF pChannel,
+		int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELINIT)(void** ppInitHandle,
-	PCHANNEL_DEF pChannel, int channelCount, UINT32 versionRequested,
-	PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELOPEN)(void* pInitHandle,
-	UINT32* pOpenHandle, char* pChannelName,
-	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELOPEN)(void* pInitHandle, UINT32* pOpenHandle,
+		char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
+
 typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELCLOSE)(UINT32 openHandle);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(UINT32 openHandle,
-	void* pData, UINT32 dataLength, void* pUserData);
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(UINT32 openHandle,
-	RDP_EVENT* event);
+typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(UINT32 openHandle, wMessage* event);
 
 struct _CHANNEL_ENTRY_POINTS
 {
@@ -107,7 +102,11 @@ struct _CHANNEL_ENTRY_POINTS_EX
 	PVIRTUALCHANNELOPEN  pVirtualChannelOpen;
 	PVIRTUALCHANNELCLOSE pVirtualChannelClose;
 	PVIRTUALCHANNELWRITE pVirtualChannelWrite;
-	void* pExtendedData; /* extended data field to pass initial parameters */
+
+	/* Extended Fields */
+
+	void* pExtendedData; /* extended initial data */
+	void* pInterface; /* channel callback interface */
 	PVIRTUALCHANNELEVENTPUSH pVirtualChannelEventPush;
 };
 typedef struct _CHANNEL_ENTRY_POINTS_EX CHANNEL_ENTRY_POINTS_EX;

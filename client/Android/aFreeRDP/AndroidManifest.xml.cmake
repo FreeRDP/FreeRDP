@@ -7,7 +7,7 @@
 	android:versionName="@FREERDP_VERSION_FULL@" >
 
 	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
-  <supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
+	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
@@ -26,9 +26,9 @@
 				<intent-filter>
 					<action android:name="android.intent.action.VIEW" />
 					<category android:name="android.intent.category.DEFAULT" />              
-	                <category android:name="android.intent.category.BROWSABLE" />
-	                <data android:scheme="http" android:host="*" android:pathPattern=".*\\.rdp" />
-    	            <data android:scheme="file" android:host="*" android:pathPattern=".*\\.rdp" />        					
+					<category android:name="android.intent.category.BROWSABLE" />
+					<data android:scheme="http" android:host="*" android:pathPattern=".*\\.rdp" />
+					<data android:scheme="file" android:host="*" android:pathPattern=".*\\.rdp" />        					
 					<data android:mimeType="*/*" />
 				</intent-filter>
 			</activity>
@@ -42,7 +42,7 @@
 				android:excludeFromRecents="true">
 				<intent-filter>
 				    <action android:name="android.intent.action.MAIN"/>
-	            </intent-filter>
+				</intent-filter>
 			</activity>
 
        		<activity-alias android:name=".services.SessionRequestHandlerActivity"
@@ -62,3 +62,4 @@
 	</application>
 	
 </manifest>
+

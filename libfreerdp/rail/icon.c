@@ -24,7 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/rail/icon.h>
 
@@ -34,13 +34,13 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** ext
 
 	if (id >= cache->numCaches)
 	{
-		printf("invalid window icon cache id:%d\n", id);
+		fprintf(stderr, "invalid window icon cache id:%d\n", id);
 		return (ICON_INFO*) NULL;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		printf("invalid window icon cache index:%d in cache id:%d\n", index, id);
+		fprintf(stderr, "invalid window icon cache index:%d in cache id:%d\n", index, id);
 		return (ICON_INFO*) NULL;
 	}
 
@@ -56,13 +56,13 @@ void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry
 {
 	if (id >= cache->numCaches)
 	{
-		printf("invalid window icon cache id:%d\n", id);
+		fprintf(stderr, "invalid window icon cache id:%d\n", id);
 		return;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		printf("invalid window icon cache index:%d in cache id:%d\n", index, id);
+		fprintf(stderr, "invalid window icon cache index:%d in cache id:%d\n", index, id);
 		return;
 	}
 

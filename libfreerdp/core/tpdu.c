@@ -66,7 +66,7 @@
  * @return TPDU length indicator (LI)
  */
 
-BOOL tpdu_read_header(STREAM* s, BYTE* code, BYTE *li)
+BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 {
 	if(stream_get_left(s) < 3)
 		return FALSE;
@@ -96,7 +96,7 @@ BOOL tpdu_read_header(STREAM* s, BYTE* code, BYTE *li)
  * @param code TPDU code
  */
 
-void tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
+void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 {
 	stream_write_BYTE(s, length); /* LI */
 	stream_write_BYTE(s, code); /* code */
@@ -119,7 +119,7 @@ void tpdu_write_header(STREAM* s, UINT16 length, BYTE code)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
+BOOL tpdu_read_connection_request(wStream* s, BYTE *li)
 {
 	BYTE code;
 
@@ -128,7 +128,7 @@ BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
 		return FALSE;
 	}
 
@@ -141,7 +141,7 @@ BOOL tpdu_read_connection_request(STREAM* s, BYTE *li)
  * @param length TPDU length
  */
 
-void tpdu_write_connection_request(STREAM* s, UINT16 length)
+void tpdu_write_connection_request(wStream* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_REQUEST);
 }
@@ -152,7 +152,7 @@ void tpdu_write_connection_request(STREAM* s, UINT16 length)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
+BOOL tpdu_read_connection_confirm(wStream* s, BYTE *li)
 {
 	BYTE code;
 
@@ -161,7 +161,7 @@ BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		printf("Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
 		return FALSE;
 	}
 
@@ -174,7 +174,7 @@ BOOL tpdu_read_connection_confirm(STREAM* s, BYTE *li)
  * @param length TPDU length
  */
 
-void tpdu_write_connection_confirm(STREAM* s, UINT16 length)
+void tpdu_write_connection_confirm(wStream* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_CONNECTION_CONFIRM);
 }
@@ -185,7 +185,7 @@ void tpdu_write_connection_confirm(STREAM* s, UINT16 length)
  * @param length TPDU length
  */
 
-void tpdu_write_disconnect_request(STREAM* s, UINT16 length)
+void tpdu_write_disconnect_request(wStream* s, UINT16 length)
 {
 	tpdu_write_header(s, length, X224_TPDU_DISCONNECT_REQUEST);
 }
@@ -195,7 +195,7 @@ void tpdu_write_disconnect_request(STREAM* s, UINT16 length)
  * @param s stream
  */
 
-void tpdu_write_data(STREAM* s)
+void tpdu_write_data(wStream* s)
 {
 	tpdu_write_header(s, 2, X224_TPDU_DATA);
 }
@@ -205,7 +205,7 @@ void tpdu_write_data(STREAM* s)
  * @param s stream
  */
 
-BOOL tpdu_read_data(STREAM* s, UINT16 *LI)
+BOOL tpdu_read_data(wStream* s, UINT16 *LI)
 {
 	BYTE code;
 	BYTE li;

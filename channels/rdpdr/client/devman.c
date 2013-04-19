@@ -30,7 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/channels.h>
@@ -99,7 +99,7 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	if (!ServiceName)
 		return FALSE;
 
-	printf("Loading device service %s (static)\n", ServiceName);
+	fprintf(stderr, "Loading device service %s (static)\n", ServiceName);
 	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
 	if (entry == NULL)

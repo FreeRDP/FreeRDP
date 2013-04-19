@@ -453,13 +453,13 @@ void rdp_print_errinfo(UINT32 code)
 	{
 		if (code == errInfo->code)
 		{
-			printf("%s (0x%08X):\n%s\n", errInfo->name, code, errInfo->info);
+			fprintf(stderr, "%s (0x%08X):\n%s\n", errInfo->name, code, errInfo->info);
 			return;
 		}
 
 		errInfo++;
 	}
 
-	printf("ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
+	fprintf(stderr, "ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
 }
 

@@ -9,7 +9,9 @@
 
 #import <freerdp/utils/event.h>
 #import <freerdp/gdi/gdi.h>
-#import <freerdp/utils/file.h>
+#import <freerdp/channels/channels.h>
+#import <freerdp/client/channels.h>
+#import <freerdp/client/cmdline.h>
 
 #import "ios_freerdp.h"
 #import "ios_freerdp_ui.h"
@@ -64,7 +66,9 @@ ios_pre_connect(freerdp * instance)
 	
     settings->FrameAcknowledge = 10;
 
-//	freerdp_channels_pre_connect(instance->context->channels, instance);
+    freerdp_client_load_addins(instance->context->channels, instance->settings);
+
+	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return TRUE;
 }
@@ -82,10 +86,22 @@ static BOOL ios_post_connect(freerdp* instance)
 	instance->update->DesktopResize = ios_ui_resize_window;
 		
 	// Channel allocation
-//	freerdp_channels_post_connect(instance->context->channels, instance);
+	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect) withObject:nil waitUntilDone:YES];
 	return TRUE;
+}
+
+static int ios_receive_channel_data(freerdp* instance, int channelId, UINT8* data, int size, int flags, int total_size)
+{
+    return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
+}
+
+void ios_process_channel_event(rdpChannels* channels, freerdp* instance)
+{
+    wMessage* event = freerdp_channels_pop_event(channels);
+    if (event)
+        freerdp_event_free(event);
 }
 
 #pragma mark -
@@ -96,7 +112,7 @@ ios_run_freerdp(freerdp * instance)
 {
 	mfContext* context = (mfContext*)instance->context;
 	mfInfo* mfi = context->mfi;
-//	rdpChannels* channels = instance->context->channels;
+	rdpChannels* channels = instance->context->channels;
 		
 	mfi->connection_state = TSXConnectionConnecting;
 	
@@ -138,12 +154,12 @@ ios_run_freerdp(freerdp * instance)
 			break;
 		}
 
-/*		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			NSLog(@"%s: freerdp_chanman_get_fds failed", __func__);
 			break;
 		}
-*/
+
 		if (ios_events_get_fds(mfi, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			NSLog(@"%s: ios_events_get_fds", __func__);
@@ -196,20 +212,22 @@ ios_run_freerdp(freerdp * instance)
 		}
 		
 		// Check channel fds
-/*		if (freerdp_channels_check_fds(channels, instance) != TRUE)
+		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			NSLog(@"%s: freerdp_chanman_check_fds failed", __func__);
 			break;
 		}
-*/
+        ios_process_channel_event(channels, instance);
+
 		[pool release]; pool = nil;
 	}	
-	
+
+	CGContextRelease(mfi->bitmap_context);
+	mfi->bitmap_context = NULL;	
 	mfi->connection_state = TSXConnectionDisconnected;
 	
 	// Cleanup
-//	freerdp_channels_close(channels, instance);
-//	freerdp_channels_free(channels);
+	freerdp_channels_close(channels, instance);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
     cache_free(instance->context->cache);
@@ -225,7 +243,7 @@ void ios_context_new(freerdp* instance, rdpContext* context)
 {
 	mfInfo* mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
 	((mfContext*) context)->mfi = mfi;
-//	context->channels = freerdp_channels_new();
+	context->channels = freerdp_channels_new();
 	ios_events_create_pipe(mfi);
 	
 	mfi->_context = context;
@@ -237,6 +255,7 @@ void ios_context_new(freerdp* instance, rdpContext* context)
 void ios_context_free(freerdp* instance, rdpContext* context)
 {
 	mfInfo* mfi = ((mfContext*) context)->mfi;
+	freerdp_channels_free(context->channels);
 	ios_events_free_pipe(mfi);
 	free(mfi);
 }
@@ -253,19 +272,19 @@ freerdp* ios_freerdp_new()
 	inst->Authenticate = ios_ui_authenticate;
 	inst->VerifyCertificate = ios_ui_check_certificate;
     inst->VerifyChangedCertificate = ios_ui_check_changed_certificate;
-
+    inst->ReceiveChannelData = ios_receive_channel_data;
+    
 	inst->context_size = sizeof(mfContext);
 	inst->ContextNew = ios_context_new;
 	inst->ContextFree = ios_context_free;
 	freerdp_context_new(inst);
-
+    
     // determine new home path
     NSString* home_path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     free(inst->settings->HomePath);
     free(inst->settings->ConfigPath);
     inst->settings->HomePath = strdup([home_path UTF8String]);
-    inst->settings->ConfigPath = NULL;
-    freerdp_detect_paths(inst->settings);
+    inst->settings->ConfigPath = strdup([[home_path stringByAppendingPathComponent:@".freerdp"] UTF8String]);
 
 	return inst;
 }
@@ -279,11 +298,12 @@ void ios_freerdp_free(freerdp* instance)
 void ios_init_freerdp()
 {
 	signal(SIGPIPE, SIG_IGN);
-//	freerdp_channels_global_init();
+	freerdp_channels_global_init();
+    freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 }
 
 void ios_uninit_freerdp()
 {
-//	freerdp_channels_global_uninit();
+	freerdp_channels_global_uninit();
 }
 

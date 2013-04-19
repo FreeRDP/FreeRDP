@@ -28,14 +28,14 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "rdp.h"
 #include "channel.h"
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 {
-	STREAM* s;
+	wStream* s;
 	UINT32 flags;
 	int i, left;
 	int chunk_size;
@@ -52,7 +52,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 
 	if (!channel)
 	{
-		printf("freerdp_channel_send: unknown channel_id %d\n", channel_id);
+		fprintf(stderr, "freerdp_channel_send: unknown channel_id %d\n", channel_id);
 		return FALSE;
 	}
 
@@ -93,7 +93,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 	return TRUE;
 }
 
-BOOL freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
+BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channel_id)
 {
 	UINT32 length;
 	UINT32 flags;
@@ -112,7 +112,7 @@ BOOL freerdp_channel_process(freerdp* instance, STREAM* s, UINT16 channel_id)
 	return TRUE;
 }
 
-BOOL freerdp_channel_peer_process(freerdp_peer* client, STREAM* s, UINT16 channel_id)
+BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channel_id)
 {
 	UINT32 length;
 	UINT32 flags;

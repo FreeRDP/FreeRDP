@@ -567,28 +567,25 @@ DWORD KBD7X[128] =
 
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
-	DWORD vkcode;
+	DWORD code_index;
 
-	vkcode = VK_NONE;
+	code_index = scancode & 0xff;
+	if (code_index > 127)
+		return VK_NONE;
 
 	if ((dwKeyboardType != 4) && (dwKeyboardType != 7))
 		dwKeyboardType = 4;
 
 	if (dwKeyboardType == 4)
 	{
-		if (vkcode < 128)
-			vkcode = (scancode & KBDEXT) ? KBD4X[scancode] : KBD4T[scancode];
+		return (scancode & KBDEXT) ? KBD4X[code_index] : KBD4T[code_index];
 	}
 	else if (dwKeyboardType == 7)
 	{
-		if (vkcode < 128)
-			vkcode = (scancode & KBDEXT) ? KBD7X[scancode] : KBD7T[scancode];
+		return (scancode & KBDEXT) ? KBD7X[code_index] : KBD7T[code_index];
 	}
 
-	if (!vkcode)
-		vkcode = VK_NONE;
-
-	return vkcode;
+	return VK_NONE;
 }
 
 DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)

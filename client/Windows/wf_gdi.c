@@ -62,7 +62,7 @@ BOOL wf_set_rop2(HDC hdc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
-		printf("Unsupported ROP2: %d\n", rop2);
+		fprintf(stderr, "Unsupported ROP2: %d\n", rop2);
 		return FALSE;
 	}
 
@@ -166,14 +166,54 @@ HBRUSH wf_create_brush(wfInfo * wfi, rdpBrush* brush, UINT32 color, int bpp)
 	return br;
 }
 
+void wf_scale_rect(wfInfo* wfi, RECT* source)
+{
+	int ww, wh, dw, dh;
+
+	if (!wfi->client_width)
+		wfi->client_width = wfi->width;
+
+	if (!wfi->client_height)
+		wfi->client_height = wfi->height;
+
+	ww = wfi->client_width;
+	wh = wfi->client_height;
+	dw = wfi->instance->settings->DesktopWidth;
+	dh = wfi->instance->settings->DesktopHeight;
+
+	if (!ww)
+		ww = dw;
+
+	if (!wh)
+		wh = dh;
+
+	if (wfi->instance->settings->SmartSizing && (ww != dw || wh != dh))
+	{
+		source->bottom = MIN(dh, MAX(0, source->bottom * wh / dh + 2));
+		source->top = MIN(dh, MAX(0, source->top * wh / dh - 2));
+		source->left = MIN(dw, MAX(0, source->left * ww / dw - 2));
+		source->right = MIN(dw, MAX(0, source->right * ww / dw + 2));
+	}
+}
+
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
 {
+	RECT rect;
+
 	wfi->update_rect.left = x + wfi->offset_x;
 	wfi->update_rect.top = y + wfi->offset_y;
 	wfi->update_rect.right = wfi->update_rect.left + width;
 	wfi->update_rect.bottom = wfi->update_rect.top + height;
+
+	wf_scale_rect(wfi, &(wfi->update_rect));
 	InvalidateRect(wfi->hwnd, &(wfi->update_rect), FALSE);
-	gdi_InvalidateRegion(wfi->hdc, x, y, width, height);
+
+	rect.left = x;
+	rect.right = width;
+	rect.top = y;
+	rect.bottom = height;
+	wf_scale_rect(wfi, &rect);
+	gdi_InvalidateRegion(wfi->hdc, rect.left, rect.top, rect.right, rect.bottom);
 }
 
 void wf_update_offset(wfInfo* wfi)
@@ -201,17 +241,38 @@ void wf_resize_window(wfInfo* wfi)
 		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
 		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 	}
+	else if (!wfi->instance->settings->Decorations)
+	{
+		RECT rc_wnd;
+		RECT rc_client;
+		
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CHILD);
+
+		/* Now resize to get full canvas size and room for caption and borders */
+		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, wfi->width, wfi->height, SWP_FRAMECHANGED);
+		GetClientRect(wfi->hwnd, &rc_client);
+		GetWindowRect(wfi->hwnd, &rc_wnd);
+		
+		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
+		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		
+		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+	}
 	else
 	{
-		RECT rc_client, rc_wnd;
+		RECT rc_wnd;
+		RECT rc_client;
 
 		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
+
 		/* Now resize to get full canvas size and room for caption and borders */
 		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, wfi->width, wfi->height, SWP_FRAMECHANGED);
 		GetClientRect(wfi->hwnd, &rc_client);
 		GetWindowRect(wfi->hwnd, &rc_wnd);
+
 		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
 		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+		
 		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 	wf_update_offset(wfi);
@@ -537,7 +598,7 @@ void wf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	}
 	else
 	{
-		printf("Unsupported codecID %d\n", surface_bits_command->codecID);
+		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

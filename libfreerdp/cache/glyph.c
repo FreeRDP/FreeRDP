@@ -26,7 +26,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/glyph.h>
 
@@ -362,13 +362,13 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index)
 
 	if (id > 9)
 	{
-		printf("invalid glyph cache id: %d\n", id);
+		fprintf(stderr, "invalid glyph cache id: %d\n", id);
 		return NULL;
 	}
 
 	if (index > glyph_cache->glyphCache[id].number)
 	{
-		printf("invalid glyph cache index: %d in cache id: %d\n", index, id);
+		fprintf(stderr, "invalid glyph cache index: %d in cache id: %d\n", index, id);
 		return NULL;
 	}
 
@@ -376,7 +376,7 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index)
 
 	if (glyph == NULL)
 	{
-		printf("invalid glyph at cache index: %d in cache id: %d\n", index, id);
+		fprintf(stderr, "invalid glyph at cache index: %d in cache id: %d\n", index, id);
 	}
 
 	return glyph;
@@ -388,13 +388,13 @@ void glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index, rdpGly
 
 	if (id > 9)
 	{
-		printf("invalid glyph cache id: %d\n", id);
+		fprintf(stderr, "invalid glyph cache id: %d\n", id);
 		return;
 	}
 
 	if (index > glyph_cache->glyphCache[id].number)
 	{
-		printf("invalid glyph cache index: %d in cache id: %d\n", index, id);
+		fprintf(stderr, "invalid glyph cache index: %d in cache id: %d\n", index, id);
 		return;
 	}
 
@@ -419,7 +419,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, UINT32 index, UINT32*
 
 	if (fragment == NULL)
 	{
-		printf("invalid glyph fragment at index:%d\n", index);
+		fprintf(stderr, "invalid glyph fragment at index:%d\n", index);
 	}
 
 	return fragment;

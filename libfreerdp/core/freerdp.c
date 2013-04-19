@@ -107,7 +107,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (status != TRUE)
 		{
-			printf("freerdp_post_connect failed\n");
+			fprintf(stderr, "freerdp_post_connect failed\n");
 			
 			if (!connectErrorCode)
 			{
@@ -119,7 +119,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (instance->settings->PlayRemoteFx)
 		{
-			STREAM* s;
+			wStream* s;
 			rdpUpdate* update;
 			pcap_record record;
 
@@ -135,19 +135,19 @@ BOOL freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->data = (BYTE*) realloc(s->data, record.length);
-				record.data = s->data;
-				s->size = record.length;
+				s->buffer = (BYTE*) realloc(s->buffer, record.length);
+				record.data = s->buffer;
+				s->capacity = record.length;
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
 				stream_set_pos(s, 0);
 
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, s->size, s);
+				update_recv_surfcmds(update, s->capacity, s);
 				update->EndPaint(update->context);
 			}
 
-			free(s->data);
+			free(s->buffer);
 			return TRUE;
 		}
 	}
@@ -314,6 +314,9 @@ void freerdp_context_new(freerdp* instance)
 	instance->context->update = instance->update;
 	instance->context->settings = instance->settings;
 
+	instance->context->client = (rdpClient*) malloc(sizeof(rdpClient));
+	ZeroMemory(instance->context->client, sizeof(rdpClient));
+
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
 	instance->update->primary->context = instance->context;
@@ -337,13 +340,15 @@ void freerdp_context_new(freerdp* instance)
  */
 void freerdp_context_free(freerdp* instance)
 {
-	if (instance->context == NULL)
+	if (!instance->context)
 		return;
 
 	IFCALL(instance->ContextFree, instance, instance->context);
 
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
+
+	free(instance->context->client);
 
 	free(instance->context);
 	instance->context = NULL;

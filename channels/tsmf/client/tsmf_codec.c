@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <winpr/print.h>
 
 #include "tsmf_constants.h"
@@ -265,26 +265,26 @@ static void tsmf_print_guid(const BYTE* guid)
 	int i;
 
 	for (i = 3; i >= 0; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 5; i >= 4; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 7; i >= 6; i--)
-		printf("%02X", guid[i]);
-	printf("-");
+		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "-");
 	for (i = 8; i < 16; i++)
 	{
-		printf("%02X", guid[i]);
+		fprintf(stderr, "%02X", guid[i]);
 		if (i == 9)
-			printf("-");
+			fprintf(stderr, "-");
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd318229.aspx */
-static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STREAM* s, BOOL bypass)
+static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStream* s, BOOL bypass)
 {
 	UINT32 biSize;
 	UINT32 biWidth;
@@ -308,7 +308,7 @@ static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STR
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd407326.aspx */
-static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
+static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 	UINT64 AvgTimePerFrame;
 
@@ -334,7 +334,7 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, STR
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd390700.aspx */
-static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
+static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 /*
 typedef struct tagVIDEOINFOHEADER {
@@ -367,7 +367,7 @@ typedef struct tagVIDEOINFOHEADER {
 	return 48;
 }
 
-BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
+BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 	int i;
 	UINT32 cbFormat;
@@ -514,7 +514,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, STREAM* s)
 	return ret;
 }
 
-BOOL tsmf_codec_check_media_type(STREAM* s)
+BOOL tsmf_codec_check_media_type(wStream* s)
 {
 	BYTE* m;
 	BOOL ret;

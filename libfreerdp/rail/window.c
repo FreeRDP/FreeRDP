@@ -25,7 +25,7 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include "librail.h"
 
@@ -100,7 +100,7 @@ void print_window_styles(UINT32 style)
 {
 	int i;
 
-	printf("Window Styles:\n{\n");
+	fprintf(stderr, "Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
 		if (style & WINDOW_STYLES[i].style)
@@ -111,17 +111,17 @@ void print_window_styles(UINT32 style)
 						continue;
 			}
 
-			printf("\t%s\n", WINDOW_STYLES[i].name);
+			fprintf(stderr, "\t%s\n", WINDOW_STYLES[i].name);
 		}
 	}
-	printf("}\n");
+	fprintf(stderr, "}\n");
 }
 
 void print_extended_window_styles(UINT32 style)
 {
 	int i;
 
-	printf("Extended Window Styles:\n{\n");
+	fprintf(stderr, "Extended Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
 		if (style & EXTENDED_WINDOW_STYLES[i].style)
@@ -132,10 +132,10 @@ void print_extended_window_styles(UINT32 style)
 						continue;
 			}
 
-			printf("\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
+			fprintf(stderr, "\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
 		}
 	}
-	printf("}\n");
+	fprintf(stderr, "}\n");
 }
 
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)

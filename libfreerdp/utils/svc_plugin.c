@@ -28,11 +28,11 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/stream.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -100,7 +100,7 @@ static void svc_plugin_remove(rdpSvcPlugin* plugin)
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
-	STREAM* data_in;
+	wStream* data_in;
 	
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -129,7 +129,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	{
 		if (stream_get_size(data_in) != stream_get_length(data_in))
 		{
-			printf("svc_plugin_process_received: read error\n");
+			fprintf(stderr, "svc_plugin_process_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
@@ -139,7 +139,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	}
 }
 
-static void svc_plugin_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event_in)
+static void svc_plugin_process_event(rdpSvcPlugin* plugin, wMessage* event_in)
 {
 	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
 }
@@ -156,7 +156,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 
 	if (!plugin)
 	{
-		printf("svc_plugin_open_event: error no match\n");
+		fprintf(stderr, "svc_plugin_open_event: error no match\n");
 		return;
 	}
 
@@ -167,19 +167,19 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
-			stream_free((STREAM*) pData);
+			stream_free((wStream*) pData);
 			break;
 
 		case CHANNEL_EVENT_USER:
-			svc_plugin_process_event(plugin, (RDP_EVENT*) pData);
+			svc_plugin_process_event(plugin, (wMessage*) pData);
 			break;
 	}
 }
 
 static void* svc_plugin_thread_func(void* arg)
 {
-	STREAM* data;
-	RDP_EVENT* event;
+	wStream* data;
+	wMessage* event;
 	wMessage message;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
 
@@ -199,12 +199,12 @@ static void* svc_plugin_thread_func(void* arg)
 
 			if (message.id == 0)
 			{
-				data = (STREAM*) message.wParam;
+				data = (wStream*) message.wParam;
 				IFCALL(plugin->receive_callback, plugin, data);
 			}
 			else if (message.id == 1)
 			{
-				event = (RDP_EVENT*) message.wParam;
+				event = (wMessage*) message.wParam;
 				IFCALL(plugin->event_callback, plugin, event);
 			}
 		}
@@ -224,7 +224,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT
 
 	if (status != CHANNEL_RC_OK)
 	{
-		printf("svc_plugin_process_connected: open failed\n");
+		fprintf(stderr, "svc_plugin_process_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -264,7 +264,7 @@ static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, 
 
 	if (!plugin)
 	{
-		printf("svc_plugin_init_event: error no match\n");
+		fprintf(stderr, "svc_plugin_init_event: error no match\n");
 		return;
 	}
 
@@ -301,7 +301,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
 }
 
-int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
+int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 {
 	UINT32 status = 0;
 
@@ -316,13 +316,13 @@ int svc_plugin_send(rdpSvcPlugin* plugin, STREAM* data_out)
 	if (status != CHANNEL_RC_OK)
 	{
 		stream_free(data_out);
-		printf("svc_plugin_send: VirtualChannelWrite failed %d\n", status);
+		fprintf(stderr, "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
 }
 
-int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	UINT32 status = 0;
 
@@ -331,7 +331,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
 	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
 
 	if (status != CHANNEL_RC_OK)
-		printf("svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
+		fprintf(stderr, "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
 
 	return status;
 }

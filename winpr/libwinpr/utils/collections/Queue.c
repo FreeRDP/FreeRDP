@@ -44,21 +44,21 @@ int Queue_Count(wQueue* queue)
 }
 
 /**
- * Gets a value indicating whether access to the Queue is synchronized (thread safe).
+ * Lock access to the ArrayList
  */
 
-BOOL Queue_IsSynchronized(wQueue* queue)
+BOOL Queue_Lock(wQueue* queue)
 {
-	return queue->synchronized;
+	return (WaitForSingleObject(queue->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
 }
 
 /**
- * Gets an object that can be used to synchronize access to the Queue.
+ * Unlock access to the ArrayList
  */
 
-HANDLE Queue_SyncRoot(wQueue* queue)
+BOOL Queue_Unlock(wQueue* queue)
 {
-	return queue->mutex;
+	return ReleaseMutex(queue->mutex);
 }
 
 /**

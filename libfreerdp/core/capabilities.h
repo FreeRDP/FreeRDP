@@ -25,7 +25,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/stream.h>
+
+#include <winpr/stream.h>
 
 /* Capability Set Types */
 #define CAPSET_TYPE_GENERAL			0x0001
@@ -164,11 +165,12 @@
 #define CLW_ENTROPY_RLGR1			0x01
 #define CLW_ENTROPY_RLGR3			0x04
 
-BOOL rdp_recv_demand_active(rdpRdp* rdp, STREAM* s);
-void rdp_write_demand_active(STREAM* s, rdpSettings* settings);
+BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId);
+BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
+void rdp_write_demand_active(wStream* s, rdpSettings* settings);
 BOOL rdp_send_demand_active(rdpRdp* rdp);
-BOOL rdp_recv_confirm_active(rdpRdp* rdp, STREAM* s);
-void rdp_write_confirm_active(STREAM* s, rdpSettings* settings);
+BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
+void rdp_write_confirm_active(wStream* s, rdpSettings* settings);
 BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
 #endif /* __CAPABILITIES_H */

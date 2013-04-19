@@ -37,6 +37,9 @@ static HWND g_focus_hWnd;
 #define X_POS(lParam) (lParam & 0xFFFF)
 #define Y_POS(lParam) ((lParam >> 16) & 0xFFFF)
 
+BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
+void wf_scale_mouse_event(wfInfo* wfi, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	wfInfo* wfi;
@@ -167,6 +170,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		switch (Msg)
 		{
+			case WM_ERASEBKGND:
+				/* Say we handled it - prevents flickering */
+				return (LRESULT) 1;
+
 			case WM_PAINT:
 				hdc = BeginPaint(hWnd, &ps);
 
@@ -175,31 +182,29 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				w = ps.rcPaint.right - ps.rcPaint.left + 1;
 				h = ps.rcPaint.bottom - ps.rcPaint.top + 1;
 
-				//printf("WM_PAINT: x:%d y:%d w:%d h:%d\n", x, y, w, h);
-
-				BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x - wfi->offset_x, y - wfi->offset_y, SRCCOPY);
+				wf_scale_blt(wfi, hdc, x, y, w, h, wfi->primary->hdc, x - wfi->offset_x, y - wfi->offset_y, SRCCOPY);
 
 				EndPaint(hWnd, &ps);
 				break;
 
 			case WM_LBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				wf_scale_mouse_event(wfi, input,PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_LBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				wf_scale_mouse_event(wfi, input, PTR_FLAGS_BUTTON1, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONDOWN:
-				input->MouseEvent(input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				wf_scale_mouse_event(wfi, input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_RBUTTONUP:
-				input->MouseEvent(input, PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				wf_scale_mouse_event(wfi, input, PTR_FLAGS_BUTTON2, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_MOUSEMOVE:
-				input->MouseEvent(input, PTR_FLAGS_MOVE, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
+				wf_scale_mouse_event(wfi, input, PTR_FLAGS_MOVE, X_POS(lParam) - wfi->offset_x, Y_POS(lParam) - wfi->offset_y);
 				break;
 
 			case WM_MOUSEWHEEL:
@@ -256,4 +261,61 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	}
 
 	return 0;
+}
+
+BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop)
+{
+	int ww, wh, dw, dh;
+
+	if (!wfi->client_width)
+		wfi->client_width = wfi->width;
+
+	if (!wfi->client_height)
+		wfi->client_height = wfi->height;
+
+	ww = wfi->client_width;
+	wh = wfi->client_height;
+	dw = wfi->instance->settings->DesktopWidth;
+	dh = wfi->instance->settings->DesktopHeight;
+
+	if (!ww)
+		ww = dw;
+
+	if (!wh)
+		wh = dh;
+
+	if (!wfi->instance->settings->SmartSizing || (ww == dw && wh == dh))
+	{
+		return BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x1, y1, SRCCOPY);
+	}
+	else
+	{
+		SetStretchBltMode(hdc, HALFTONE);
+		SetBrushOrgEx(hdc, 0, 0, NULL);
+
+		return StretchBlt(hdc, x * ww / dw, y * wh / dh, ww, wh, wfi->primary->hdc, x1, y1, dw, dh, SRCCOPY);
+	}
+
+	return TRUE;
+}
+
+void wf_scale_mouse_event(wfInfo* wfi, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+{
+	int ww, wh, dw, dh;
+
+	if (!wfi->client_width)
+		wfi->client_width = wfi->width;
+
+	if (!wfi->client_height)
+		wfi->client_height = wfi->height;
+
+	ww = wfi->client_width;
+	wh = wfi->client_height;
+	dw = wfi->instance->settings->DesktopWidth;
+	dh = wfi->instance->settings->DesktopHeight;
+
+	if ((ww == dw) && (wh == dh))
+		input->MouseEvent(input, flags, x, y);
+	else
+		input->MouseEvent(input, flags, x * dw / ww, y * dh / wh);
 }

@@ -25,35 +25,28 @@
 
 #include "mf_audin.h"
 
-static const AUDIO_FORMAT audio_formats[] =
+static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	{ 0x11, 2, 22050, 1024, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 2 channels */
-	{ 0x11, 1, 22050, 512, 4, 0, NULL }, /* IMA ADPCM, 22050 Hz, 1 channels */
-	{ 0x01, 2, 22050, 4, 16, 0, NULL }, /* PCM, 22050 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 22050, 2, 16, 0, NULL }, /* PCM, 22050 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 44100, 4, 16, 0, NULL }, /* PCM, 44100 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 44100, 2, 16, 0, NULL }, /* PCM, 44100 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 11025, 4, 16, 0, NULL }, /* PCM, 11025 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 11025, 2, 16, 0, NULL }, /* PCM, 11025 Hz, 1 channels, 16 bits */
-	{ 0x01, 2, 8000, 4, 16, 0, NULL }, /* PCM, 8000 Hz, 2 channels, 16 bits */
-	{ 0x01, 1, 8000, 2, 16, 0, NULL } /* PCM, 8000 Hz, 1 channels, 16 bits */
+	
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
 static void mf_peer_audin_opening(audin_server_context* context)
 {
-	printf("AUDIN opening.\n");
+	fprintf(stderr, "AUDIN opening.\n");
 	/* Simply choose the first format supported by the client. */
 	context->SelectFormat(context, 0);
 }
 
 static void mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-	printf("AUDIN open result %d.\n", result);
+	fprintf(stderr, "AUDIN open result %d.\n", result);
 }
 
 static void mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
-	printf("AUDIN receive %d frames.\n", nframes);
+	fprintf(stderr, "AUDIN receive %d frames.\n", nframes);
 }
 
 void mf_peer_audin_init(mfPeerContext* context)
@@ -61,8 +54,8 @@ void mf_peer_audin_init(mfPeerContext* context)
 	context->audin = audin_server_context_new(context->vcm);
 	context->audin->data = context;
 	
-	context->audin->server_formats = audio_formats;
-	context->audin->num_server_formats = sizeof(audio_formats) / sizeof(audio_formats[0]);
+	context->audin->server_formats = supported_audio_formats;
+	context->audin->num_server_formats = sizeof(supported_audio_formats) / sizeof(supported_audio_formats[0]);
 	
 	context->audin->dst_format.wFormatTag = 1;
 	context->audin->dst_format.nChannels = 2;

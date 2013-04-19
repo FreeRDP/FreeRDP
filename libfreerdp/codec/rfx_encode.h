@@ -24,7 +24,7 @@
 
 void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int height, int rowstride,
 	const UINT32* y_quants, const UINT32* cb_quants, const UINT32* cr_quants,
-	STREAM* data_out, int* y_size, int* cb_size, int* cr_size);
+	wStream* data_out, int* y_size, int* cb_size, int* cr_size);
 
 #endif
 

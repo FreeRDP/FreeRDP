@@ -41,7 +41,7 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -376,7 +376,7 @@ BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
 	return TRUE;
 }
 
-BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, STREAM* output)
+BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, wStream* output)
 {
 	struct STAT st;
 
@@ -428,7 +428,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, S
 	return TRUE;
 }
 
-BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, STREAM* input)
+BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, wStream* input)
 {
 	char* s = NULL;
         mode_t m;
@@ -534,7 +534,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 }
 
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
-	const char* path, STREAM* output)
+	const char* path, wStream* output)
 {
 	int length;
 	BOOL ret;

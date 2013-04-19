@@ -30,7 +30,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -64,7 +64,7 @@ static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 	}
 }
 
-static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	stream_read_UINT16(data_in, rdpdr->versionMajor);
 	stream_read_UINT16(data_in, rdpdr->versionMinor);
@@ -75,7 +75,7 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, STREAM* da
 
 static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
-	STREAM* data_out;
+	wStream* data_out;
 
 	data_out = stream_new(12);
 
@@ -91,7 +91,7 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
-	STREAM* data_out;
+	wStream* data_out;
 	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
 
@@ -116,7 +116,7 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }
 
-static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, STREAM* data_in)
+static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 versionMajor;
 	UINT16 versionMinor;
@@ -148,7 +148,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	UINT32 count;
 	int data_len;
 	int count_pos;
-	STREAM* data_out;
+	wStream* data_out;
 	DEVICE* device;
 	LIST_ITEM* item;
 
@@ -199,7 +199,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 			count++;
 
-			printf("registered device #%d: %s (type=%d id=%d)\n",
+			fprintf(stderr, "registered device #%d: %s (type=%d id=%d)\n",
 				count, device->name, device->type, device->id);
 		}
 	}
@@ -213,7 +213,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }
 
-static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
+static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	IRP* irp;
 
@@ -227,7 +227,7 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, STREAM* data_in)
 	return TRUE;
 }
 
-static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 {
 	UINT16 component;
 	UINT16 packetID;
@@ -297,7 +297,7 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	stream_free(data_in);
 }
 
-static void rdpdr_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void rdpdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	freerdp_event_free(event);
 }

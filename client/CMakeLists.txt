@@ -51,3 +51,7 @@ if(ANDROID)
 	add_subdirectory(Android)
 endif()
 
+if(WITH_WAYK)
+	add_subdirectory(WaykClient)
+endif()
+

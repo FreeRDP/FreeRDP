@@ -21,10 +21,17 @@
 #include "config.h"
 #endif
 
+#include "rdp.h"
 #include "message.h"
+#include "transport.h"
+
+#include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
+
+//#define WITH_STREAM_POOL	1
 
 /* Update */
 
@@ -79,13 +86,15 @@ static void update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitm
 	wParam->rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * wParam->number);
 	CopyMemory(wParam->rectangles, bitmap->rectangles, sizeof(BITMAP_DATA) * wParam->number);
 
-	/* TODO: increment reference count to original stream instead of copying */
-
 	for (index = 0; index < wParam->number; index++)
 	{
+#ifdef WITH_STREAM_POOL
+		StreamPool_AddRef(context->rdp->transport->ReceivePool, bitmap->rectangles[index].bitmapDataStream);
+#else
 		wParam->rectangles[index].bitmapDataStream = (BYTE*) malloc(wParam->rectangles[index].bitmapLength);
 		CopyMemory(wParam->rectangles[index].bitmapDataStream, bitmap->rectangles[index].bitmapDataStream,
 				wParam->rectangles[index].bitmapLength);
+#endif
 	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
@@ -139,15 +148,15 @@ static void update_message_SuppressOutput(rdpContext* context, BYTE allow, RECTA
 			MakeMessageId(Update, SuppressOutput), (void*) (size_t) allow, (void*) lParam);
 }
 
-static void update_message_SurfaceCommand(rdpContext* context, STREAM* s)
+static void update_message_SurfaceCommand(rdpContext* context, wStream* s)
 {
-	STREAM* wParam;
+	wStream* wParam;
 
-	wParam = (STREAM*) malloc(sizeof(STREAM));
+	wParam = (wStream*) malloc(sizeof(wStream));
 
-	wParam->size = s->size;
-	wParam->data = (BYTE*) malloc(wParam->size);
-	wParam->p = wParam->data;
+	wParam->capacity = s->capacity;
+	wParam->buffer = (BYTE*) malloc(wParam->capacity);
+	wParam->pointer = wParam->buffer;
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SurfaceCommand), (void*) wParam, NULL);
@@ -160,8 +169,12 @@ static void update_message_SurfaceBits(rdpContext* context, SURFACE_BITS_COMMAND
 	wParam = (SURFACE_BITS_COMMAND*) malloc(sizeof(SURFACE_BITS_COMMAND));
 	CopyMemory(wParam, surfaceBitsCommand, sizeof(SURFACE_BITS_COMMAND));
 
+#ifdef WITH_STREAM_POOL
+	StreamPool_AddRef(context->rdp->transport->ReceivePool, surfaceBitsCommand->bitmapData);
+#else
 	wParam->bitmapData = (BYTE*) malloc(wParam->bitmapDataLength);
 	CopyMemory(wParam->bitmapData, surfaceBitsCommand->bitmapData, wParam->bitmapDataLength);
+#endif
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
@@ -952,7 +965,14 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 				BITMAP_UPDATE* wParam = (BITMAP_UPDATE*) msg->wParam;
 
 				for (index = 0; index < wParam->number; index++)
+				{
+#ifdef WITH_STREAM_POOL
+					rdpContext* context = (rdpContext*) msg->context;
+					StreamPool_Release(context->rdp->transport->ReceivePool, wParam->rectangles[index].bitmapDataStream);
+#else
 					free(wParam->rectangles[index].bitmapDataStream);
+#endif
+				}
 
 				free(wParam);
 			}
@@ -982,10 +1002,10 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 			break;
 
 		case Update_SurfaceCommand:
-			IFCALL(proxy->SurfaceCommand, msg->context, (STREAM*) msg->wParam);
+			IFCALL(proxy->SurfaceCommand, msg->context, (wStream*) msg->wParam);
 			{
-				STREAM* s = (STREAM*) msg->wParam;
-				free(s->data);
+				wStream* s = (wStream*) msg->wParam;
+				free(s->buffer);
 				free(s);
 			}
 			break;
@@ -993,9 +1013,15 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 		case Update_SurfaceBits:
 			IFCALL(proxy->SurfaceBits, msg->context, (SURFACE_BITS_COMMAND*) msg->wParam);
 			{
+#ifdef WITH_STREAM_POOL
+				rdpContext* context = (rdpContext*) msg->context;
+				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
+				StreamPool_Release(context->rdp->transport->ReceivePool, wParam->bitmapData);
+#else
 				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
 				free(wParam->bitmapData);
 				free(wParam);
+#endif
 			}
 			break;
 
@@ -1481,7 +1507,7 @@ int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, int msgCl
 	}
 
 	if (status < 0)
-		printf("Unknown message: class: %d type: %d\n", msgClass, msgType);
+		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }
@@ -1854,7 +1880,7 @@ int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int msgClas
 	}
 
 	if (status < 0)
-		printf("Unknown event: class: %d type: %d\n", msgClass, msgType);
+		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }

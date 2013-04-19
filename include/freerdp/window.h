@@ -120,6 +120,13 @@
 #define WS_EX_WINDOWEDGE		0x00000100
 #endif
 
+/**
+ * This is a custom extended window style used by XRDP
+ * instructing the client to use local window decorations
+ */
+
+#define WS_EX_DECORATIONS		0x40000000
+
 struct _WINDOW_ORDER_INFO
 {
 	UINT32 windowId;

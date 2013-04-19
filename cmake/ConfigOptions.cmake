@@ -52,7 +52,7 @@ option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	if(ANDROID OR IOS)
+	if(ANDROID)
 		option(MONOLITHIC_BUILD "Use monolithic build" ON)
 	else()
 		option(MONOLITHIC_BUILD "Use monolithic build" OFF)

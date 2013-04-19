@@ -719,7 +719,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 {
 	size_t index;
 
-	if (dwFlags & PATH_STYLE_WINDOWS)
+	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
@@ -727,7 +727,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 				pszPath[index] = PATH_BACKSLASH_CHR;
 		}
 	}
-	else if (dwFlags & PATH_STYLE_UNIX)
+	else if (dwFlags == PATH_STYLE_UNIX)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
@@ -735,7 +735,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 				pszPath[index] = PATH_SLASH_CHR;
 		}
 	}
-	else if (dwFlags & PATH_STYLE_NATIVE)
+	else if (dwFlags == PATH_STYLE_NATIVE)
 	{
 		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		{
@@ -776,7 +776,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 {
 	size_t index;
 
-	if (dwFlags & PATH_STYLE_WINDOWS)
+	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
@@ -784,7 +784,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 				pszPath[index] = PATH_BACKSLASH_CHR;
 		}
 	}
-	else if (dwFlags & PATH_STYLE_UNIX)
+	else if (dwFlags == PATH_STYLE_UNIX)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
@@ -792,7 +792,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 				pszPath[index] = PATH_SLASH_CHR;
 		}
 	}
-	else if (dwFlags & PATH_STYLE_NATIVE)
+	else if (dwFlags == PATH_STYLE_NATIVE)
 	{
 		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		{

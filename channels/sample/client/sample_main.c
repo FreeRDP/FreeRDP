@@ -34,7 +34,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 
@@ -47,17 +47,17 @@ struct sample_plugin
 	/* put your private data here */
 };
 
-static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
+static void sample_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 {
 	int bytes;
-	STREAM* data_out;
+	wStream* data_out;
 	samplePlugin* sample = (samplePlugin*) plugin;
 
-	printf("sample_process_receive:\n");
+	fprintf(stderr, "sample_process_receive:\n");
 
 	if (!sample)
 	{
-		printf("sample_process_receive: sample is nil\n");
+		fprintf(stderr, "sample_process_receive: sample is nil\n");
 		return;
 	}
 
@@ -65,7 +65,7 @@ static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 	/* here we just send the same data back */
 
 	bytes = stream_get_size(data_in);
-	printf("sample_process_receive: got bytes %d\n", bytes);
+	fprintf(stderr, "sample_process_receive: got bytes %d\n", bytes);
 
 	if (bytes > 0)
 	{
@@ -75,7 +75,7 @@ static void sample_process_receive(rdpSvcPlugin* plugin, STREAM* data_in)
 		   we do not free it */
 
 		bytes = stream_get_length(data_in);
-		printf("sample_process_receive: sending bytes %d\n", bytes);
+		fprintf(stderr, "sample_process_receive: sending bytes %d\n", bytes);
 
 		svc_plugin_send(plugin, data_out);
 	}
@@ -88,15 +88,15 @@ static void sample_process_connect(rdpSvcPlugin* plugin)
 	samplePlugin* sample = (samplePlugin*) plugin;
 	DEBUG_SVC("connecting");
 
-	printf("sample_process_connect:\n");
+	fprintf(stderr, "sample_process_connect:\n");
 
 	if (!sample)
 		return;
 }
 
-static void sample_process_event(rdpSvcPlugin* plugin, RDP_EVENT* event)
+static void sample_process_event(rdpSvcPlugin* plugin, wMessage* event)
 {
-	printf("sample_process_event:\n");
+	fprintf(stderr, "sample_process_event:\n");
 
 	/* events coming from main freerdp window to plugin */
 	/* send them back with svc_plugin_send_event */
@@ -108,7 +108,7 @@ static void sample_process_terminate(rdpSvcPlugin* plugin)
 {
 	samplePlugin* sample = (samplePlugin*) plugin;
 
-	printf("sample_process_terminate:\n");
+	fprintf(stderr, "sample_process_terminate:\n");
 
 	if (!sample)
 		return;

@@ -25,7 +25,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/stream.h>
+#include <winpr/stream.h>
 
 #include <freerdp/cache/offscreen.h>
 
@@ -80,7 +80,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index)
 
 	if (index >= offscreen_cache->maxEntries)
 	{
-		printf("invalid offscreen bitmap index: 0x%04X\n", index);
+		fprintf(stderr, "invalid offscreen bitmap index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -88,7 +88,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index)
 
 	if (bitmap == NULL)
 	{
-		printf("invalid offscreen bitmap at index: 0x%04X\n", index);
+		fprintf(stderr, "invalid offscreen bitmap at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -99,7 +99,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreen, UINT32 index, rdpBitmap* 
 {
 	if (index >= offscreen->maxEntries)
 	{
-		printf("invalid offscreen bitmap index: 0x%04X\n", index);
+		fprintf(stderr, "invalid offscreen bitmap index: 0x%04X\n", index);
 		return;
 	}
 
@@ -113,7 +113,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index)
 
 	if (index >= offscreen->maxEntries)
 	{
-		printf("invalid offscreen bitmap index (delete): 0x%04X\n", index);
+		fprintf(stderr, "invalid offscreen bitmap index (delete): 0x%04X\n", index);
 		return;
 	}
 

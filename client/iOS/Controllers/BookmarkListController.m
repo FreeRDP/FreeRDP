@@ -14,6 +14,7 @@
 #import "Toast+UIView.h"
 #import "Reachability.h"
 #import "GlobalDefaults.h"
+#import "BlockAlertView.h"
 
 #define SECTION_SESSIONS    0
 #define SECTION_BOOKMARKS   1
@@ -633,8 +634,17 @@
         // ask the user if he wants to save the bookmark
         NSString* title = NSLocalizedString(@"Save Connection Settings?", @"Save connection settings title");
         NSString* message = NSLocalizedString(@"Your Connection Settings have not been saved. Do you want to save them?", @"Save connection settings message");
-        UIAlertView* alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self 
-                                              cancelButtonTitle:NSLocalizedString(@"Yes", @"Yes Button") otherButtonTitles:NSLocalizedString(@"No", @"No Button"), nil];
+        BlockAlertView* alert = [BlockAlertView alertWithTitle:title message:message];
+        [alert setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button") block:nil];
+        [alert addButtonWithTitle:NSLocalizedString(@"Yes", @"Yes Button") block:^{
+            if (_temporary_bookmark)
+            {
+                [_manual_bookmarks addObject:_temporary_bookmark];
+                [_tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_BOOKMARKS] withRowAnimation:UITableViewRowAnimationNone];
+                [_temporary_bookmark autorelease];
+                _temporary_bookmark = nil;
+            }
+        }];
         [alert show];
     }
 }
@@ -647,21 +657,6 @@
     
     // display error toast
     [[self view] makeToast:NSLocalizedString(@"Failed to connect to session!", @"Failed to connect error message") duration:ToastDurationNormal position:@"center"];
-}
-
-#pragma mark - UIAlertView delegates 
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    // yes clicked?
-    if (buttonIndex == 0 && _temporary_bookmark)
-    {        
-        [_manual_bookmarks addObject:_temporary_bookmark];
-        [_tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_BOOKMARKS] withRowAnimation:UITableViewRowAnimationNone];
-    }
-    
-    [_temporary_bookmark autorelease];
-    _temporary_bookmark = nil;
 }
 
 #pragma mark - Reachability notification
@@ -680,10 +675,20 @@
 
 - (void)commitBookmark:(ComputerBookmark *)bookmark
 {
-    // if we got a manual bookmark that is not in the list yet - add it
-    if (![_manual_bookmarks containsObject:bookmark])
+    // if we got a manual bookmark that is not in the list yet - add it otherwise replace it
+    BOOL found = NO;
+    for (int idx = 0; idx < [_manual_bookmarks count]; ++idx)
+    {
+        if ([[bookmark uuid] isEqualToString:[[_manual_bookmarks objectAtIndex:idx] uuid]])
+        {
+            [_manual_bookmarks replaceObjectAtIndex:idx withObject:bookmark];
+            found = YES;
+            break;
+        }
+    }
+    if (!found)
         [_manual_bookmarks addObject:bookmark];
-        
+    
     // remove any quick connect history entry with the same hostname
     NSString* hostname = [[bookmark params] StringForKey:@"hostname"];
     if ([_connection_history containsObject:hostname])

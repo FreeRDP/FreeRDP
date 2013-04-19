@@ -40,7 +40,7 @@ struct _VIRTUAL_SCREEN
 };
 typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings);
 

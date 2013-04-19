@@ -256,7 +256,6 @@ public class SessionActivity extends Activity
 			if (!connectCancelledByUser)
 				uiHandler.sendMessage(Message.obtain(null, UIHandler.DISPLAY_TOAST, getResources().getText(R.string.error_connection_failure)));
 			
-			session = null;
 			closeSessionActivity(RESULT_CANCELED);
 		}
 
@@ -271,7 +270,6 @@ public class SessionActivity extends Activity
 			}
 			
 			session.setUIEventListener(null);
-			session = null;
 			closeSessionActivity(RESULT_OK);
 		}
 	}
@@ -518,9 +516,13 @@ public class SessionActivity extends Activity
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.v(TAG, "Session.onDestroy");
-
+		
 		// unregister freerdp events broadcast receiver
 		unregisterReceiver(libFreeRDPBroadcastReceiver);
+		
+		// free session
+		GlobalApp.freeSession(session.getInstance());
+		session = null;
 	}
 		
 	@Override

@@ -27,11 +27,11 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-
-#include <freerdp/utils/file.h>
 
 static const char certificate_store_dir[] = "certs";
 static const char certificate_known_hosts_file[] = "known_hosts";
@@ -40,29 +40,33 @@ static const char certificate_known_hosts_file[] = "known_hosts";
 
 void certificate_store_init(rdpCertificateStore* certificate_store)
 {
-	char* config_path;
 	rdpSettings* settings;
 
 	settings = certificate_store->settings;
 
-	config_path = freerdp_get_config_path(settings);
-	certificate_store->path = freerdp_construct_path(config_path, (char*) certificate_store_dir);
-
-	if (freerdp_check_file_exists(certificate_store->path) == FALSE)
+	if (!PathFileExistsA(settings->ConfigPath))
 	{
-		freerdp_mkdir(certificate_store->path);
-		printf("creating directory %s\n", certificate_store->path);
+		CreateDirectoryA(settings->ConfigPath, 0);
+		fprintf(stderr, "creating directory %s\n", settings->ConfigPath);
 	}
 
-	certificate_store->file = freerdp_construct_path(config_path, (char*) certificate_known_hosts_file);
+	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
 
-	if (freerdp_check_file_exists(certificate_store->file) == FALSE)
+	if (!PathFileExistsA(certificate_store->path))
+	{
+		CreateDirectoryA(certificate_store->path, 0);
+		fprintf(stderr, "creating directory %s\n", certificate_store->path);
+	}
+
+	certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file);
+
+	if (PathFileExistsA(certificate_store->file) == FALSE)
 	{
 		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
 
 		if (certificate_store->fp == NULL)
 		{
-			printf("certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			fprintf(stderr, "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
 			return;
 		}
 
