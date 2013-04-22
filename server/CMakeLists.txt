@@ -35,3 +35,7 @@ else()
 	add_subdirectory(Windows)
 endif()
 
+if(WITH_WAYK)
+	add_subdirectory(WaykServer)
+endif()
+
