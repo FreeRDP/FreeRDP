@@ -1267,6 +1267,8 @@ struct rdp_settings
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
+	
+	ALIGN64 BYTE* settings_modified; /* byte array marking fields that have been modified from their default value */
 };
 typedef struct rdp_settings rdpSettings;
 

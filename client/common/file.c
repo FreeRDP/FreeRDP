@@ -478,80 +478,50 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
 }
 
+#define SETTING_MODIFIED(_settings, _field) (_settings->settings_modified[FreeRDP_##_field])
+#define SETTING_MODIFIED_SET(_target, _settings, _field) if SETTING_MODIFIED(_settings, _field) _target = _settings->_field
+
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* settings)
 {
-	if (settings->Domain)
-		file->Domain = settings->Domain;
+	SETTING_MODIFIED_SET(file->Domain, settings, Domain);
+	SETTING_MODIFIED_SET(file->Username, settings, Username);
+	SETTING_MODIFIED_SET(file->ServerPort, settings, ServerPort);
+	SETTING_MODIFIED_SET(file->FullAddress, settings, ServerHostname);
+	SETTING_MODIFIED_SET(file->DesktopWidth, settings, DesktopWidth);
+	SETTING_MODIFIED_SET(file->DesktopHeight, settings, DesktopHeight);
+	SETTING_MODIFIED_SET(file->SessionBpp, settings, ColorDepth);
+	SETTING_MODIFIED_SET(file->ConnectToConsole, settings, ConsoleSession);
+	SETTING_MODIFIED_SET(file->AdministrativeSession, settings, ConsoleSession);
+	SETTING_MODIFIED_SET(file->NegotiateSecurityLayer, settings, NegotiateSecurityLayer);
+	SETTING_MODIFIED_SET(file->EnableCredSSPSupport, settings, NlaSecurity);
+	SETTING_MODIFIED_SET(file->AlternateShell, settings, AlternateShell);
+	SETTING_MODIFIED_SET(file->ShellWorkingDirectory, settings, ShellWorkingDirectory);
+	SETTING_MODIFIED_SET(file->ConnectionType, settings, ConnectionType);
 
-	if (settings->Username)
+	if (SETTING_MODIFIED(settings, AudioPlayback) || SETTING_MODIFIED(settings, RemoteConsoleAudio))
 	{
-		file->Username = settings->Username;
+		if (settings->AudioPlayback)
+			file->AudioMode = AUDIO_MODE_REDIRECT;
+		else if (settings->RemoteConsoleAudio)
+			file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
+		else
+			file->AudioMode = AUDIO_MODE_NONE;
 	}
 
-	if (settings->ServerPort)
-		file->ServerPort = settings->ServerPort;
-	if (settings->ServerHostname)
-		file->FullAddress = settings->ServerHostname;
-	if (settings->DesktopWidth)
-		file->DesktopWidth = settings->DesktopWidth;
-	if (settings->DesktopHeight)
-		file->DesktopHeight = settings->DesktopHeight;
-	if (settings->ColorDepth)
-		file->SessionBpp = settings->ColorDepth;
-	if (settings->ConsoleSession)
-		file->ConnectToConsole = settings->ConsoleSession;
-	if (settings->ConsoleSession)
-		file->AdministrativeSession = settings->ConsoleSession;
-	if (settings->NegotiateSecurityLayer)
-		file->NegotiateSecurityLayer = settings->NegotiateSecurityLayer;
-	if (settings->NlaSecurity)
-		file->EnableCredSSPSupport = settings->NlaSecurity;
-	if (settings->AlternateShell)
-		file->AlternateShell = settings->AlternateShell;
-	if (settings->ShellWorkingDirectory)
-		file->ShellWorkingDirectory = settings->ShellWorkingDirectory;
-	
-	file->ConnectionType = freerdp_get_connection_type(settings);
+	SETTING_MODIFIED_SET(file->GatewayHostname, settings, GatewayHostname);
+	SETTING_MODIFIED_SET(file->GatewayUsageMethod, settings, GatewayUsageMethod);
+	SETTING_MODIFIED_SET(file->PromptCredentialOnce, settings, GatewayUseSameCredentials);
 
-	if (settings->AudioPlayback)
-	{
-		file->AudioMode = AUDIO_MODE_REDIRECT;
-	} 
-	else if (settings->RemoteConsoleAudio)
-	{
-		file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
-	}
-	else
-	{
-		file->AudioMode = AUDIO_MODE_NONE;
-	}
+	SETTING_MODIFIED_SET(file->RemoteApplicationMode, settings, RemoteApplicationMode);
+	SETTING_MODIFIED_SET(file->RemoteApplicationProgram, settings, RemoteApplicationProgram);
+	SETTING_MODIFIED_SET(file->RemoteApplicationName, settings, RemoteApplicationName);
+	SETTING_MODIFIED_SET(file->RemoteApplicationIcon, settings, RemoteApplicationIcon);
+	SETTING_MODIFIED_SET(file->RemoteApplicationFile, settings, RemoteApplicationFile);
+	SETTING_MODIFIED_SET(file->RemoteApplicationGuid, settings, RemoteApplicationGuid);
+	SETTING_MODIFIED_SET(file->RemoteApplicationCmdLine, settings, RemoteApplicationCmdLine);
 
-	if (settings->GatewayHostname)
-		file->GatewayHostname = settings->GatewayHostname;
-	if (settings->GatewayUsageMethod)
-		file->GatewayUsageMethod = TRUE;
-	if (settings->GatewayUseSameCredentials)
-		file->PromptCredentialOnce = TRUE;
-	
-	if (settings->RemoteApplicationMode)
-		file->RemoteApplicationMode = settings->RemoteApplicationMode;
-	if (settings->RemoteApplicationProgram)
-		file->RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	if (settings->RemoteApplicationName)
-		file->RemoteApplicationName = settings->RemoteApplicationName;
-	if (settings->RemoteApplicationIcon)
-		file->RemoteApplicationIcon = settings->RemoteApplicationIcon;
-	if (settings->RemoteApplicationFile)
-		file->RemoteApplicationFile = settings->RemoteApplicationFile;
-	if (settings->RemoteApplicationGuid)
-		file->RemoteApplicationGuid = settings->RemoteApplicationGuid;
-	if (settings->RemoteApplicationCmdLine)
-		file->RemoteApplicationCmdLine = settings->RemoteApplicationCmdLine;
-
-	if (settings->SpanMonitors)
-		file->SpanMonitors = settings->SpanMonitors;
-	if (settings->UseMultimon)
-		file->UseMultiMon = settings->UseMultimon;
+	SETTING_MODIFIED_SET(file->SpanMonitors, settings, SpanMonitors);
+	SETTING_MODIFIED_SET(file->UseMultiMon, settings, UseMultimon);
 
 	return TRUE;
 }
@@ -561,15 +531,9 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, char* name, BOOL unicode)
 {
 	BOOL success = FALSE;
 	char* buffer;
-	char *str;
 	int len, len2;
 	FILE* fp = NULL;
 	WCHAR* unicodestr = NULL;
-
-    len = _snprintf(str, len + 1, "%s %d", "test abcdefg", 123);
-    printf("%s %d\n", str, len);
-
-    free(str);
 
 	len = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
 	if (len <= 0)
@@ -611,110 +575,95 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, char* name, BOOL unicode)
 	return success;
 }
 
+#define WRITE_RDP_FILE_DECLARE(_file, _buffer, _size) \
+	rdpFile* __rdpFile = file; \
+	char* __buffer = _buffer; \
+	size_t __size = _size; \
+	size_t __required_size = 0; \
+	int __current = 0; \
+	int __count = 0;  
+
+#define WRITE_RDP_FILE_VALUE(_format, _field) \
+if (~__rdpFile->_field) \
+	{ \
+		__count = _snprintf(__buffer == NULL ? NULL : __buffer + __current, __buffer == NULL ? 0 : __size - __required_size, _format, __rdpFile->_field); \
+		__required_size += __count; \
+		__current += __count; \
+	}
+
+#define WRITE_RDP_FILE_VALUE_STRING(_format, _field) \
+	if (~((size_t) __rdpFile->_field) && __rdpFile->_field != NULL) \
+	{ \
+		__count = _snprintf(__buffer == NULL ? NULL : __buffer + __current, __buffer == NULL ? 0 : __size - __required_size, _format, __rdpFile->_field); \
+		__required_size += __count; \
+		__current += __count; \
+	}
+
+#define WRITE_RDP_FILE_VALUE_RETURN \
+	return __required_size;
+
 // TODO: Optimize by only writing the fields that have a value i.e ~((size_t) file->FieldName) != 0
 size_t freerdp_client_write_rdp_file_buffer(rdpFile* file, char* buffer, size_t size)
 {
-	return _snprintf(buffer, size,
-		"screen mode id:i:%d\n"
-		"use multimon:i:%d\n"
-		"desktopwidth:i:%d\n"
-		"desktopheight:i:%d\n"
-		"session bpp:i:%d\n"
-		"winposstr:s:%s\n"
-		"compression:i:%d\n"
-		"keyboardhook:i:%d\n"
-		"audiocapturemode:i:%d\n"
-		"videoplaybackmode:i:%d\n"
-		"connection type:i:%d\n"
-		"networkautodetect:i:%d\n"
-		"bandwidthautodetect:i:%d\n"
-		"displayconnectionbar:i:%d\n"
-		"enableworkspacereconnect:i:%d\n"
-		"disable wallpaper:i:%d\n"
-		"allow font smoothing:i:%d\n"
-		"allow desktop composition:i:%d\n"
-		"disable full window drag:i:%d\n"
-		"disable menu anims:i:%d\n"
-		"disable themes:i:%d\n"
-		"disable cursor setting:i:%d\n"
-		"bitmapcachepersistenable:i:%d\n"
-		"full address:s:%s\n"
-		"audiomode:i:%d\n"
-		"redirectprinters:i:%d\n"
-		"redirectcomports:i:%d\n"
-		"redirectsmartcards:i:%d\n"
-		"redirectclipboard:i:%d\n"
-		"redirectposdevices:i:%d\n"
-		"autoreconnection enabled:i:%d\n"
-		"authentication level:i:%d\n"
-		"prompt for credentials:i:%d\n"
-		"negotiate security layer:i:%d\n"
-		"remoteapplicationmode:i:%d\n"
-		"alternate shell:s:%s\n"
-		"shell working directory:s:%s\n"
-		"gatewayhostname:s:%s\n"
-		"gatewayusagemethod:i:%d\n"
-		"gatewaycredentialssource:i:%d\n"
-		"gatewayprofileusagemethod:i:%d\n"
-		"promptcredentialonce:i:%d\n"
-		"use redirection server name:i:%d\n"
-		"rdgiskdcproxy:i:%d\n"
-		"kdcproxyname:s:%s\n"
-		"drivestoredirect:s:%s\n"
-		"username:s:%s\n",
-		file->ScreenModeId,
-		file->UseMultiMon,
-		file->DesktopWidth,
-		file->DesktopHeight,
-		file->SessionBpp,
-		(~((size_t) file->WinPosStr) && file->WinPosStr != NULL) ? file->WinPosStr : "",
-		file->Compression,
-		file->KeyboardHook,
-		file->AudioCaptureMode,
-		file->VideoPlaybackMode,
-		file->ConnectionType,
-		file->NetworkAutoDetect,
-		file->BandwidthAutoDetect,
-		file->DisplayConnectionBar,
-		file->EnableWorkspaceReconnect,
-		file->DisableWallpaper,
-		file->AllowFontSmoothing,
-		file->AllowDesktopComposition,
-		file->DisableFullWindowDrag,
-		file->DisableMenuAnims,
-		file->DisableThemes,
-		file->DisableCursorSetting,
-		file->BitmapCachePersistEnable,
-		(~((size_t) file->FullAddress) && file->FullAddress != NULL) ? file->FullAddress : "",
-		file->AudioMode,
-		file->RedirectPrinters,
-		file->RedirectComPorts,
-		file->RedirectSmartCards,
-		file->RedirectClipboard,
-		file->RedirectPosDevices,
-		file->AutoReconnectionEnabled,
-		file->AuthenticationLevel,
-		file->PromptForCredentials,
-		file->NegotiateSecurityLayer,
-		file->RemoteApplicationMode,
-		(~((size_t) file->AlternateShell) && file->AlternateShell != NULL) ? file->AlternateShell : "",
-		(~((size_t) file->ShellWorkingDirectory) && file->ShellWorkingDirectory != NULL) ? file->ShellWorkingDirectory : "",
-		(~((size_t) file->GatewayHostname) && file->GatewayHostname != NULL) ? file->GatewayHostname : "",
-		file->GatewayUsageMethod,
-		file->GatewayCredentialsSource,
-		file->GatewayProfileUsageMethod,
-		file->PromptCredentialOnce,
-		file->UseRedirectionServerName,
-		file->RdgIsKdcProxy,
-		(~((size_t) file->KdcProxyName) && file->KdcProxyName != NULL) ? file->KdcProxyName : "",
-		(~((size_t) file->DrivesToRedirect) && file->DrivesToRedirect != NULL) ? file->DrivesToRedirect : "",
-		(~((size_t) file->Username) && file->Username != NULL) ? file->Username : "");
+	WRITE_RDP_FILE_DECLARE(file, buffer, size)
+
+	WRITE_RDP_FILE_VALUE("screen mode id:i:%d\n", ScreenModeId);
+	WRITE_RDP_FILE_VALUE("use multimon:i:%d\n", UseMultiMon);
+	WRITE_RDP_FILE_VALUE("desktopwidth:i:%d\n", DesktopWidth);
+	WRITE_RDP_FILE_VALUE("desktopheight:i:%d\n", DesktopHeight);
+	WRITE_RDP_FILE_VALUE("session bpp:i:%d\n", SessionBpp);
+	WRITE_RDP_FILE_VALUE_STRING("winposstr:s:%s\n", WinPosStr);
+	WRITE_RDP_FILE_VALUE("compression:i:%d\n", Compression);
+	WRITE_RDP_FILE_VALUE("keyboardhook:i:%d\n", KeyboardHook);
+	WRITE_RDP_FILE_VALUE("audiocapturemode:i:%d\n", AudioCaptureMode);
+	WRITE_RDP_FILE_VALUE("videoplaybackmode:i:%d\n", VideoPlaybackMode);
+	WRITE_RDP_FILE_VALUE("connection type:i:%d\n", ConnectionType);
+	WRITE_RDP_FILE_VALUE("networkautodetect:i:%d\n", NetworkAutoDetect);
+	WRITE_RDP_FILE_VALUE("bandwidthautodetect:i:%d\n", BandwidthAutoDetect);
+	WRITE_RDP_FILE_VALUE("displayconnectionbar:i:%d\n", DisplayConnectionBar);
+	WRITE_RDP_FILE_VALUE("enableworkspacereconnect:i:%d\n", EnableWorkspaceReconnect);
+	WRITE_RDP_FILE_VALUE("disable wallpaper:i:%d\n", DisableWallpaper);
+	WRITE_RDP_FILE_VALUE("allow font smoothing:i:%d\n", AllowFontSmoothing);
+	WRITE_RDP_FILE_VALUE("allow desktop composition:i:%d\n", AllowDesktopComposition);
+	WRITE_RDP_FILE_VALUE("disable full window drag:i:%d\n", DisableFullWindowDrag);
+	WRITE_RDP_FILE_VALUE("disable menu anims:i:%d\n", DisableMenuAnims);
+	WRITE_RDP_FILE_VALUE("disable themes:i:%d\n", DisableThemes);
+	WRITE_RDP_FILE_VALUE("disable cursor setting:i:%d\n", DisableCursorSetting);
+	WRITE_RDP_FILE_VALUE("bitmapcachepersistenable:i:%d\n", BitmapCachePersistEnable);
+	WRITE_RDP_FILE_VALUE_STRING("full address:s:%s\n", FullAddress);
+	WRITE_RDP_FILE_VALUE("audiomode:i:%d\n", AudioMode);
+	WRITE_RDP_FILE_VALUE("redirectprinters:i:%d\n", RedirectPrinters);
+	WRITE_RDP_FILE_VALUE("redirectcomports:i:%d\n", RedirectComPorts);
+	WRITE_RDP_FILE_VALUE("redirectsmartcards:i:%d\n", RedirectSmartCards);
+	WRITE_RDP_FILE_VALUE("redirectclipboard:i:%d\n", RedirectClipboard);
+	WRITE_RDP_FILE_VALUE("redirectposdevices:i:%d\n", RedirectPosDevices);
+	WRITE_RDP_FILE_VALUE("autoreconnection enabled:i:%d\n", AutoReconnectionEnabled);
+	WRITE_RDP_FILE_VALUE("authentication level:i:%d\n", AuthenticationLevel);
+	WRITE_RDP_FILE_VALUE("prompt for credentials:i:%d\n", PromptForCredentials);
+	WRITE_RDP_FILE_VALUE("negotiate security layer:i:%d\n", NegotiateSecurityLayer);
+	WRITE_RDP_FILE_VALUE("remoteapplicationmode:i:%d\n", RemoteApplicationMode);
+	WRITE_RDP_FILE_VALUE_STRING("alternate shell:s:%s\n", AlternateShell);
+	WRITE_RDP_FILE_VALUE_STRING("shell working directory:s:%s\n", ShellWorkingDirectory);
+	WRITE_RDP_FILE_VALUE_STRING("gatewayhostname:s:%s\n", GatewayHostname);
+	WRITE_RDP_FILE_VALUE("gatewayusagemethod:i:%d\n", GatewayUsageMethod);
+	WRITE_RDP_FILE_VALUE("gatewaycredentialssource:i:%d\n", GatewayCredentialsSource);
+	WRITE_RDP_FILE_VALUE("gatewayprofileusagemethod:i:%d\n", GatewayProfileUsageMethod);
+	WRITE_RDP_FILE_VALUE("promptcredentialonce:i:%d\n", PromptCredentialOnce);
+	WRITE_RDP_FILE_VALUE("use redirection server name:i:%d\n", UseRedirectionServerName);
+	WRITE_RDP_FILE_VALUE("rdgiskdcproxy:i:%d\n", RdgIsKdcProxy);
+	WRITE_RDP_FILE_VALUE_STRING("kdcproxyname:s:%s\n", KdcProxyName);
+	WRITE_RDP_FILE_VALUE_STRING("drivestoredirect:s:%s\n", DrivesToRedirect);
+	WRITE_RDP_FILE_VALUE_STRING("username:s:%s\n", Username);
+	WRITE_RDP_FILE_VALUE_STRING("domain:s:%s\n", Domain);
+
+	WRITE_RDP_FILE_VALUE_RETURN
 }
+
 
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
 	if (~((size_t) file->Domain))
-		settings->Domain = file->Domain;
+		freerdp_set_param_string(settings, FreeRDP_Domain, file->Domain);
 
 	if (~((size_t) file->Username))
 	{
@@ -722,84 +671,83 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		char* domain;
 
 		freerdp_parse_username(file->Username, &user, &domain);
-
-		settings->Username = user;
+		freerdp_set_param_string(settings, FreeRDP_Username, user);
 
 		if (domain != NULL)
-			settings->Domain = domain;
+			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
 	}
 
 	if (~file->ServerPort)
-		settings->ServerPort = file->ServerPort;
+		freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->ServerPort);
 	if (~((size_t) file->FullAddress))
-		settings->ServerHostname = file->FullAddress;
+		freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->FullAddress);
+
 	if (~file->DesktopWidth)
-		settings->DesktopWidth = file->DesktopWidth;
+		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth);
 	if (~file->DesktopHeight)
-		settings->DesktopHeight = file->DesktopHeight;
+		freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, file->DesktopHeight);
 	if (~file->SessionBpp)
-		settings->ColorDepth = file->SessionBpp;
+		freerdp_set_param_uint32(settings, FreeRDP_ColorDepth, file->SessionBpp);
 	if (~file->ConnectToConsole)
-		settings->ConsoleSession = file->ConnectToConsole;
+		freerdp_set_param_uint32(settings, FreeRDP_ConsoleSession, file->ConnectToConsole);
 	if (~file->AdministrativeSession)
-		settings->ConsoleSession = file->AdministrativeSession;
+		freerdp_set_param_uint32(settings, FreeRDP_ConsoleSession, file->AdministrativeSession);
 	if (~file->NegotiateSecurityLayer)
-		settings->NegotiateSecurityLayer = file->NegotiateSecurityLayer;
+		freerdp_set_param_uint32(settings, FreeRDP_NegotiateSecurityLayer, file->NegotiateSecurityLayer);
 	if (~file->EnableCredSSPSupport)
-		settings->NlaSecurity = file->EnableCredSSPSupport;
+		freerdp_set_param_uint32(settings, FreeRDP_NlaSecurity, file->EnableCredSSPSupport);
 	if (~((size_t) file->AlternateShell))
-		settings->AlternateShell = file->AlternateShell;
+		freerdp_set_param_string(settings, FreeRDP_AlternateShell, file->AlternateShell);
 	if (~((size_t) file->ShellWorkingDirectory))
-		settings->ShellWorkingDirectory = file->ShellWorkingDirectory;
+		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
 	
 	if (~file->ConnectionType)
-	{
-		freerdp_set_connection_type(settings, file->ConnectionType);
-	}
+		freerdp_set_param_uint32(settings, FreeRDP_ConnectionType, file->ConnectionType);
 
 	if (~file->AudioMode)
 	{
 		if (file->AudioMode == AUDIO_MODE_REDIRECT)
 		{
-			settings->AudioPlayback = TRUE;
+			freerdp_set_param_bool(settings, FreeRDP_AudioPlayback, TRUE);
 		}
 		else if (file->AudioMode == AUDIO_MODE_PLAY_ON_SERVER)
 		{
-			settings->RemoteConsoleAudio = TRUE;
+			freerdp_set_param_bool(settings, FreeRDP_RemoteConsoleAudio, TRUE);
 		}
 		else if (file->AudioMode == AUDIO_MODE_NONE)
 		{
-			settings->AudioPlayback = FALSE;
-			settings->RemoteConsoleAudio = FALSE;
+			freerdp_set_param_bool(settings, FreeRDP_AudioPlayback, FALSE);
+			freerdp_set_param_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE);
 		}
 	}
 
 	if (~((size_t) file->GatewayHostname))
-		settings->GatewayHostname = file->GatewayHostname;
+		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
 	if (~file->GatewayUsageMethod)
-		settings->GatewayUsageMethod = TRUE;
+		freerdp_set_param_bool(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
 	if (~file->PromptCredentialOnce)
+		freerdp_set_param_bool(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
 		settings->GatewayUseSameCredentials = TRUE;
 	
 	if (~file->RemoteApplicationMode)
-		settings->RemoteApplicationMode = file->RemoteApplicationMode;
+		freerdp_set_param_bool(settings, FreeRDP_RemoteApplicationMode, file->RemoteApplicationMode);
 	if (~((size_t) file->RemoteApplicationProgram))
-		settings->RemoteApplicationProgram = file->RemoteApplicationProgram;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationProgram, file->RemoteApplicationProgram);
 	if (~((size_t) file->RemoteApplicationName))
-		settings->RemoteApplicationName = file->RemoteApplicationName;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationName, file->RemoteApplicationName);
 	if (~((size_t) file->RemoteApplicationIcon))
-		settings->RemoteApplicationIcon = file->RemoteApplicationIcon;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationIcon, file->RemoteApplicationIcon);
 	if (~((size_t) file->RemoteApplicationFile))
-		settings->RemoteApplicationFile = file->RemoteApplicationFile;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationGuid, file->RemoteApplicationGuid);
 	if (~((size_t) file->RemoteApplicationGuid))
-		settings->RemoteApplicationGuid = file->RemoteApplicationGuid;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationGuid, file->RemoteApplicationGuid);
 	if (~((size_t) file->RemoteApplicationCmdLine))
-		settings->RemoteApplicationCmdLine = file->RemoteApplicationCmdLine;
+		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationCmdLine, file->RemoteApplicationCmdLine);
 
 	if (~file->SpanMonitors)
-		settings->SpanMonitors = file->SpanMonitors;
+		freerdp_set_param_bool(settings, FreeRDP_SpanMonitors, file->SpanMonitors);
 	if (~file->UseMultiMon)
-		settings->UseMultimon = file->UseMultiMon;
+		freerdp_set_param_bool(settings, FreeRDP_UseMultimon, file->UseMultiMon);
 
 	return TRUE;
 }

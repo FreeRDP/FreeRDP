@@ -414,6 +414,9 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
 		settings_load_hkey_local_machine(settings);
+
+		settings->settings_modified = (BYTE*) malloc(sizeof(rdpSettings) / 8 );
+		ZeroMemory(settings->settings_modified, sizeof(rdpSettings) / 8);
 	}
 
 	return settings;
@@ -457,6 +460,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		freerdp_device_collection_free(settings);
 		freerdp_static_channel_collection_free(settings);
 		freerdp_dynamic_channel_collection_free(settings);
+		free(settings->settings_modified);
 		free(settings);
 	}
 }
