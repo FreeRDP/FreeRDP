@@ -35,6 +35,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
+#include <freerdp/client/file.h>
 
 #include "wf_event.h"
 
@@ -124,6 +125,8 @@ struct wf_info
 
 	BOOL sw_gdi;
 	callbackFunc callback_func;
+
+	rdpFile* connectionRdpFile;
 };
 
 /**
@@ -159,6 +162,9 @@ FREERDP_API char* freerdp_client_get_param_string(wfInfo* cfi, int id);
 FREERDP_API int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param);
 
 FREERDP_API int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
+
+FREERDP_API int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename);
+FREERDP_API int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename);
 
 #ifdef __cplusplus
 }

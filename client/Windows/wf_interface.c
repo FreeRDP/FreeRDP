@@ -44,7 +44,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
-#include <freerdp/client/file.h>
+//#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
@@ -57,14 +57,28 @@
 
 #include "resource.h"
 
+wfInfo* wf_wfi_new()
+{
+	wfInfo* wfi;
+
+	wfi = (wfInfo*) malloc(sizeof(wfInfo));
+	ZeroMemory(wfi, sizeof(wfInfo));
+
+	return wfi;
+}
+
+void wf_wfi_free(wfInfo* wfi)
+{
+	free(wfi);
+}
+
 void wf_context_new(freerdp* instance, rdpContext* context)
 {
 	wfInfo* wfi;
 
 	context->channels = freerdp_channels_new();
 
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
+	wfi = wf_wfi_new();
 
 	((wfContext*) context)->wfi = wfi;
 	wfi->instance = instance;
@@ -76,6 +90,9 @@ void wf_context_free(freerdp* instance, rdpContext* context)
 		cache_free(context->cache);
 
 	freerdp_channels_free(context->channels);
+
+	wf_wfi_free(((wfContext*) context)->wfi);
+	((wfContext*) context)->wfi = NULL;
 }
 
 int wf_create_console(void)
@@ -207,7 +224,6 @@ BOOL wf_pre_connect(freerdp* instance)
 {
 	int i1;
 	wfInfo* wfi;
-	rdpFile* file;
 	wfContext* context;
 	rdpSettings* settings;
 
@@ -220,14 +236,17 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	if (settings->ConnectionFile)
 	{
-		file = freerdp_client_rdp_file_new();
+		if (wfi->connectionRdpFile)
+		{
+			freerdp_client_rdp_file_free(wfi->connectionRdpFile);
+		}
+
+		wfi->connectionRdpFile = freerdp_client_rdp_file_new();
 
 		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
 
-		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
-		freerdp_client_populate_settings_from_rdp_file(file, settings);
-
-		freerdp_client_rdp_file_free(file);
+		freerdp_client_parse_rdp_file(wfi->connectionRdpFile, settings->ConnectionFile);
+		freerdp_client_populate_settings_from_rdp_file(wfi->connectionRdpFile, settings);
 	}
 
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
@@ -976,5 +995,67 @@ int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param)
 int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc)
 {
 	cfi->callback_func = callbackFunc;
+	return 0;
+}
+
+// TODO: Some of that code is a duplicate of wf_pre_connect. Refactor?
+int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename)
+{
+	rdpSettings* settings;
+
+	settings = cfi->instance->settings;
+
+	if (filename)
+	{
+		settings->ConnectionFile = _strdup(filename);
+
+		// free old settings file
+		freerdp_client_rdp_file_free(cfi->connectionRdpFile);
+		cfi->connectionRdpFile = freerdp_client_rdp_file_new();
+
+		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
+
+		if (!freerdp_client_parse_rdp_file(cfi->connectionRdpFile, settings->ConnectionFile))
+		{
+			return 1;
+		}
+
+		if (!freerdp_client_populate_settings_from_rdp_file(cfi->connectionRdpFile, settings))
+		{
+			return 2;
+		}
+	}
+
+	return 0;
+}
+
+int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename)
+{
+	if (filename == NULL)
+		return 1;
+
+	if (cfi->instance->settings->ConnectionFile)
+	{
+		free(cfi->instance->settings->ConnectionFile);
+	}
+
+	cfi->instance->settings->ConnectionFile = _strdup(filename);
+
+	// Reuse existing rdpFile structure if available, to preserve unsupported settings when saving to disk.
+	if (cfi->connectionRdpFile == NULL)
+	{
+		cfi->connectionRdpFile = freerdp_client_rdp_file_new();
+	}
+
+	if (!freerdp_client_populate_rdp_file_from_settings(cfi->connectionRdpFile, cfi->instance->settings))
+	{
+		return 1;
+	}
+
+	if (!freerdp_client_write_rdp_file(cfi->connectionRdpFile, filename, UNICODE));
+	{
+		return 2;
+	}
+
 	return 0;
 }

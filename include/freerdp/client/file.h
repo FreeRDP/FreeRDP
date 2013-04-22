@@ -141,6 +141,10 @@ FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name);
 FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size);
 FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
 
+FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* settings);
+FREERDP_API BOOL freerdp_client_write_rdp_file(rdpFile* file, char* name, BOOL unicode);
+FREERDP_API size_t freerdp_client_write_rdp_file_buffer(rdpFile* file, char* buffer, size_t size);
+
 FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
 FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
 

@@ -695,6 +695,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
+	settings->ConnectionType = type;
 	if (type == CONNECTION_TYPE_MODEM)
 	{
 		settings->DisableWallpaper = TRUE;
@@ -762,6 +763,43 @@ int freerdp_set_connection_type(rdpSettings* settings, int type)
 	}
 
 	return 0;
+}
+
+FREERDP_API int freerdp_get_connection_type(rdpSettings* settings)
+{
+	int connectionType;
+
+	connectionType = settings->ConnectionType;
+
+	if (~settings->ConnectionType)
+	{
+		if (settings->NetworkAutoDetect)
+		{
+			connectionType = CONNECTION_TYPE_AUTODETECT;
+		}
+		else if (settings->DisableThemes == TRUE)
+		{
+			connectionType = CONNECTION_TYPE_MODEM;
+		}
+		else if (settings->DisableWallpaper == TRUE)
+		{
+			if (settings->AllowDesktopComposition == FALSE)
+			{
+				connectionType = CONNECTION_TYPE_BROADBAND_LOW;
+			}
+			else 
+			{
+				// SATELLITE or BROADBAND_HIGH: same criteria?
+				connectionType = CONNECTION_TYPE_BROADBAND_HIGH;
+			}
+		}
+		else
+		{
+			// WAN or LAN: same criteria?
+			connectionType = CONNECTION_TYPE_WAN;
+		}
+	}
+	return connectionType;
 }
 
 int freerdp_map_keyboard_layout_name_to_id(char* name)
