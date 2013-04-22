@@ -23,6 +23,8 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/Xv.h>
+#include <X11/extensions/Xvlib.h>
 
 #ifdef WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
@@ -74,8 +76,133 @@
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
 
+static int run = 0;
+
 static long xv_port = 0;
 static const size_t password_size = 512;
+
+void testXV(rdpContext* context)
+{
+	xfInfo*			xfi;
+	XvAdaptorInfo		*ai;
+	XvEncodingInfo		*ei;
+	XvAttribute		*at;
+	XvImageFormatValues	*fo;
+	int			ret;
+	unsigned int		adaptor, encodings;
+	int			attributes, formats;
+	unsigned int		p_num_adaptors;
+	int			i, j, p;
+	long			port;
+	
+	unsigned int version;
+	unsigned int release;
+	unsigned int event_base;
+	unsigned int error_base;
+	unsigned int request_base;
+	
+	printf("testing xv....\n");
+
+	
+	xfi = ((xfContext*) context)->xfi;
+	
+	ret = XvQueryExtension(xfi->display, &version, &release, &request_base, &event_base, &error_base);
+	if (ret != Success)
+	{
+		printf("XvQueryExtension failed %d.\n", ret);
+		return;
+	}
+	
+	ret = XvQueryAdaptors(xfi->display, DefaultRootWindow(xfi->display),
+			      &p_num_adaptors, &ai);
+	
+	if (ret != Success)
+	{
+		if (ret == XvBadExtension)
+			printf("XvBadExtension returned at XvQueryExtension.\n");
+		else
+			if (ret == XvBadAlloc)
+				printf("XvBadAlloc returned at XvQueryExtension.\n");
+			else
+				printf("other error happaned at XvQueryAdaptors.\n");
+	}
+	
+		
+	printf("=======================================\n");
+	printf("XvQueryAdaptors returned the following:\n");
+	printf("%d adaptors available.\n", p_num_adaptors);
+	for (i = 0; i < p_num_adaptors; i++) {
+		printf(" name:        %s\n"
+		       " type:        %s%s%s%s%s\n"
+		       " ports:       %ld\n"
+		       " first port:  %ld\n",
+		       ai[i].name,
+		       (ai[i].type & XvInputMask)	? "input | "	: "",
+		       (ai[i].type & XvOutputMask)	? "output | "	: "",
+		       (ai[i].type & XvVideoMask)	? "video | "	: "",
+		       (ai[i].type & XvStillMask)	? "still | "	: "",
+		       (ai[i].type & XvImageMask)	? "image | "	: "",
+		       ai[i].num_ports,
+		       ai[i].base_id);
+		port = ai[i].base_id;
+		
+		printf("adaptor %d ; format list:\n", i);
+		for (j = 0; j < ai[i].num_formats; j++) {
+			printf(" depth=%d, visual=%ld\n",
+			       ai[i].formats[j].depth,
+			       ai[i].formats[j].visual_id);
+		}
+		for (p = ai[i].base_id; p < ai[i].base_id+ai[i].num_ports; p++) {
+			
+			printf(" encoding list for port %d\n", p);
+			if (XvQueryEncodings(xfi->display, p, &encodings, &ei) != Success) {
+				printf("XvQueryEncodings failed.\n");
+				continue;
+			}
+			for (j = 0; j < encodings; j++) {
+				printf("  id=%ld, name=%s, size=%ldx%ld, numerator=%d, denominator=%d\n",
+				       ei[j].encoding_id, ei[j].name, ei[j].width, ei[j].height,
+				       ei[j].rate.numerator, ei[j].rate.denominator);
+			}
+			XvFreeEncodingInfo(ei);
+			
+			printf(" attribute list for port %d\n", p);
+			at = XvQueryPortAttributes(xfi->display, p, &attributes);
+			for (j = 0; j < attributes; j++) {
+				printf("  name:       %s\n"
+				       "  flags:     %s%s\n"
+				       "  min_color:  %i\n"
+				       "  max_color:  %i\n",
+				       at[j].name,
+				       (at[j].flags & XvGettable) ? " get" : "",
+				       (at[j].flags & XvSettable) ? " set" : "",
+				       at[j].min_value, at[j].max_value);
+			}
+			if (at)
+				XFree(at);
+			
+			printf(" image format list for port %d\n", p);
+			fo = XvListImageFormats(xfi->display, p, &formats);
+			for (j = 0; j < formats; j++) {
+				printf("  0x%x (%4.4s) %s\n",
+				       fo[j].id,
+				       (char *)&fo[j].id,
+				       (fo[j].format == XvPacked) ? "packed" : "planar");
+			}
+			if (fo)
+				XFree(fo);
+		}
+		printf("\n");
+	}
+	if (p_num_adaptors > 0)
+		XvFreeAdaptorInfo(ai);
+	if (port == -1)
+		exit (0);
+	
+	
+	
+	return;
+}
 
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
@@ -115,6 +242,8 @@ void xf_sw_end_paint(rdpContext* context)
 			y = gdi->primary->hdc->hwnd->invalid->y;
 			w = gdi->primary->hdc->hwnd->invalid->w;
 			h = gdi->primary->hdc->hwnd->invalid->h;
+			
+			printf("sw1");
 
 			xf_lock_x11(xfi, FALSE);
 
@@ -143,6 +272,8 @@ void xf_sw_end_paint(rdpContext* context)
 				y = cinvalid[i].y;
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
+				
+				printf("sw2");
 
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
@@ -162,7 +293,7 @@ void xf_sw_end_paint(rdpContext* context)
 		y = gdi->primary->hdc->hwnd->invalid->y;
 		w = gdi->primary->hdc->hwnd->invalid->w;
 		h = gdi->primary->hdc->hwnd->invalid->h;
-
+		
 		xf_lock_x11(xfi, FALSE);
 
 		xf_rail_paint(xfi, context->rail, x, y, x + w - 1, y + h - 1);
@@ -227,6 +358,8 @@ void xf_hw_end_paint(rdpContext* context)
 			w = xfi->hdc->hwnd->invalid->w;
 			h = xfi->hdc->hwnd->invalid->h;
 
+			printf("hw1");
+			
 			xf_lock_x11(xfi, FALSE);
 
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
@@ -253,8 +386,15 @@ void xf_hw_end_paint(rdpContext* context)
 				y = cinvalid[i].y;
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
-
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+				
+				//here
+				//XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w/2, h/2, x, y);
+				if (run == 0)
+				{
+					run++;
+					testXV(context);
+				}
+				
 			}
 
 			XFlush(xfi->display);
