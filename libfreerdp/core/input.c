@@ -65,7 +65,6 @@ void input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	wStream* s;
 	rdpRdp* rdp = input->context->rdp;
-	printf("In input_send_synchronize_event\n");
 
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SYNC);
 	input_write_synchronize_event(s, flags);
@@ -154,8 +153,6 @@ void input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 
 void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
 {
-	printf("In input_send_focus_in_event\n");
-
 	/* send a tab up like mstsc.exe */
 	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
 
@@ -173,7 +170,7 @@ void input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	wStream* s;
 	rdpRdp* rdp = input->context->rdp;
-printf("In input_send_fastpath_synchronize_event\n");
+
 	/* The FastPath Synchronization eventFlags has identical values as SlowPath */
 	s = fastpath_input_pdu_init(rdp->fastpath, (BYTE) flags, FASTPATH_INPUT_EVENT_SYNC);
 	fastpath_send_input_pdu(rdp->fastpath, s);
