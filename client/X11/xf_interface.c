@@ -1428,6 +1428,14 @@ int freerdp_client_global_uninit()
 
 int freerdp_client_start(xfInfo* xfi)
 {
+	rdpSettings* settings = xfi->settings;
+
+	if (!settings->ServerHostname)
+	{
+		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+		return -1;
+	}
+
 	xfi->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) xfi->instance, 0, NULL);
 
 	return 0;

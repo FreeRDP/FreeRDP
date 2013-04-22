@@ -992,8 +992,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (!settings->ConnectionFile && !(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 	{
-		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
-		return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
+		//fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+		//return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
 	}
 
 	arg = args;
