@@ -642,7 +642,7 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xfi->display = XOpenDisplay(NULL);
 
-	if (xfi->display == NULL)
+	if (!xfi->display)
 	{
 		fprintf(stderr, "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
 		fprintf(stderr, "Please check that the $DISPLAY environment variable is properly set.\n");

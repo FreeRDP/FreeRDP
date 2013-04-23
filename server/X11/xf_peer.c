@@ -36,6 +36,7 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
@@ -43,6 +44,8 @@
 
 #include "xf_input.h"
 #include "xf_encode.h"
+
+#include "makecert.h"
 
 #include "xf_peer.h"
 
@@ -189,6 +192,8 @@ xfInfo* xf_info_init()
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
 	xfi->use_xshm = FALSE;
+
+	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
 	if (!XInitThreads())
 		fprintf(stderr, "warning: XInitThreads() failure\n");
@@ -521,7 +526,53 @@ BOOL xf_peer_activate(freerdp_peer* client)
 	return TRUE;
 }
 
-void* xf_peer_main_loop(void* arg)
+const char* makecert_argv[4] =
+{
+	"makecert",
+	"-rdp",
+	"-live",
+	"-silent"
+};
+
+int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
+
+int xf_generate_certificate(rdpSettings* settings)
+{
+	char* server_file_path;
+	MAKECERT_CONTEXT* context;
+
+	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
+
+	if (!PathFileExistsA(server_file_path))
+		CreateDirectoryA(server_file_path, 0);
+
+	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
+	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
+
+	if ((!PathFileExistsA(settings->CertificateFile)) ||
+			(!PathFileExistsA(settings->PrivateKeyFile)))
+	{
+		context = makecert_context_new();
+
+		makecert_context_process(context, makecert_argc, (char**) makecert_argv);
+
+		makecert_context_set_output_file_name(context, "server");
+
+		if (!PathFileExistsA(settings->CertificateFile))
+			makecert_context_output_certificate_file(context, server_file_path);
+
+		if (!PathFileExistsA(settings->PrivateKeyFile))
+			makecert_context_output_private_key_file(context, server_file_path);
+
+		makecert_context_free(context);
+	}
+
+	free(server_file_path);
+
+	return 0;
+}
+
+static void* xf_peer_main_loop(void* arg)
 {
 	int i;
 	int fds;
@@ -530,7 +581,6 @@ void* xf_peer_main_loop(void* arg)
 	void* rfds[32];
 	fd_set rfds_set;
 	rdpSettings* settings;
-	char* server_file_path;
 	freerdp_peer* client = (freerdp_peer*) arg;
 	xfPeerContext* xfp;
 
@@ -545,13 +595,7 @@ void* xf_peer_main_loop(void* arg)
 
 	/* Initialize the real server settings here */
 
-	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
-
-	if (!PathFileExistsA(server_file_path))
-		CreateDirectoryA(server_file_path, 0);
-
-	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
-	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
+	xf_generate_certificate(settings);
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
@@ -638,8 +682,7 @@ void* xf_peer_main_loop(void* arg)
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	pthread_t th;
+	HANDLE thread;
 
-	pthread_create(&th, 0, xf_peer_main_loop, client);
-	pthread_detach(th);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_peer_main_loop, client, 0, NULL);
 }

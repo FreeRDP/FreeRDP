@@ -362,6 +362,12 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 	return 1;
 }
 
+int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, char* name)
+{
+	context->output_file = _strdup(name);
+	return 1;
+}
+
 int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path)
 {
 	FILE* fp;

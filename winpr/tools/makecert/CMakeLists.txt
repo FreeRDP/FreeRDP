@@ -25,7 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS
 	${ZLIB_LIBRARIES}

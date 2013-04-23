@@ -19,6 +19,7 @@ set(MODULE_NAME "xfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_X11")
 
 include_directories(${X11_INCLUDE_DIRS})
+include_directories("../../winpr/tools/makecert")
 
 set(${MODULE_PREFIX}_SRCS
 	xf_peer.c
@@ -95,6 +96,8 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
 	MODULES winpr-sspi)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
