@@ -159,6 +159,9 @@ void testXI(rdpContext* context)
 	XIDeviceInfo *info;
 	int ndevices, i, j;
 
+	XIEventMask eventmask;
+	unsigned char mask[1] = { 0 };
+
 	xfi = ((xfContext*) context)->xfi;
 
 
@@ -178,7 +181,7 @@ void testXI(rdpContext* context)
 	for (i = 0; i < ndevices; i++)
 	{
 	    XIDeviceInfo *dev = &info[i];
-	    printf("Device name %s\n", dev->name);
+	    printf("Device name [id] %s [%d]\n", dev->name, dev->deviceid);
 	    for (j = 0; j < dev->num_classes; j++)
 	    {
 	        XIAnyClassInfo *class = dev->classes[j];
@@ -192,6 +195,20 @@ void testXI(rdpContext* context)
 	               t->num_touches);
 	    }
 	}
+
+	////////////////////
+
+	eventmask.deviceid = 13;
+	eventmask.mask_len = sizeof(mask); /* always in bytes */
+	eventmask.mask = mask;
+	/* now set the mask */
+	XISetMask(mask, XI_TouchBegin);
+	XISetMask(mask, XI_TouchUpdate);
+	XISetMask(mask, XI_TouchEnd);
+
+	XISelectEvents(xfi->display, xfi->window, &eventmask, 1);
+
+	printf("Should now be able to get touch events\n");
 
 }
 
@@ -501,16 +518,8 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				//here
-				//XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w/2, h/2, x, y);
-				if (run == 0)
-				{
-					run++;
-					//testXV(context);
-					testXI(context);
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w/2, h/2, x, y);
 
-				}
-				
 			}
 
 			XFlush(xfi->display);
@@ -1081,6 +1090,78 @@ BOOL xf_post_connect(freerdp* instance)
 	xf_tsmf_init(xfi, xv_port);
 
 	xf_cliprdr_init(xfi, channels);
+
+	//begin init touch input
+
+	{
+		int opcode, event, error;
+		int major = 2, minor = 2;
+
+		XIDeviceInfo *info;
+		int ndevices, i, j;
+
+		XIEventMask eventmask;
+		unsigned char mask[1] = { 0 };
+
+
+		if (XQueryExtension(xfi->display, "XInputExtension", &opcode, &event, &error))
+		{
+			printf("X Input extension available.\n");
+
+			XIQueryVersion(xfi->display, &major, &minor);
+			if (!(major * 1000 + minor < 2002))
+			{
+				printf("XI 2.2 supported\n");
+
+
+
+				info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
+
+				for (i = 0; i < ndevices; i++)
+				{
+					XIDeviceInfo *dev = &info[i];
+					printf("Device name [id] %s [%d]\n", dev->name, dev->deviceid);
+					for (j = 0; j < dev->num_classes; j++)
+					{
+						XIAnyClassInfo *class = dev->classes[j];
+						XITouchClassInfo *t = (XITouchClassInfo*)class;
+
+						if (class->type != XITouchClass)
+							continue;
+
+						printf("%s touch device, supporting %d touches.\n",
+								(t->mode == XIDirectTouch) ?  "direct" : "dependent",
+										t->num_touches);
+					}
+				}
+
+				////////////////////
+
+				eventmask.deviceid = 13;
+				eventmask.mask_len = sizeof(mask); /* always in bytes */
+				eventmask.mask = mask;
+				/* now set the mask */
+				XISetMask(mask, XI_TouchBegin);
+				XISetMask(mask, XI_TouchUpdate);
+				XISetMask(mask, XI_TouchEnd);
+
+				XISelectEvents(xfi->display, xfi->window->handle, &eventmask, 1);
+
+				printf("Should now be able to get touch events\n");
+
+			}
+			else
+			{
+				printf("Server does not support XI 2.2\n");
+			}
+		}
+		else
+		{
+			printf("X Input extension not available!!!\n");
+		}
+	}
+
+	//end init touch input
 
 	IFCALL(xfi->client->OnResizeWindow, instance, settings->DesktopWidth, settings->DesktopHeight);
 

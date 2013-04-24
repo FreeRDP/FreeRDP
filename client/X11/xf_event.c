@@ -23,6 +23,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/XInput2.h>
 
 #include <freerdp/locale/keyboard.h>
 
@@ -975,7 +976,17 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		case PropertyNotify:
 			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
 			break;
+
+		/*
+		case XI_TouchBegin:
+		case XI_TouchUpdate:
+		case XI_TouchEnd:
+			printf("TouchEvent!\n");
+			break;
+		*/
 	}
+
+
 
 	XSync(xfi->display, FALSE);
 
