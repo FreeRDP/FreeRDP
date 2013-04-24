@@ -4,7 +4,7 @@
 	android:installLocation="auto"
 	package="com.freerdp.freerdpcore"
 	android:versionCode="1"
-	android:versionName="@FREERDP_VERSION_FULL@" >
+	android:versionName="@GIT_REVISION@" >
 
 	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
