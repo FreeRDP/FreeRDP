@@ -3,7 +3,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	android:installLocation="auto"
 	package="com.freerdp.afreerdp"
-	android:versionCode="1"
+	android:versionCode="3"
 	android:versionName="@GIT_REVISION@" >
 
 	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
