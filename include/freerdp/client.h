@@ -30,10 +30,12 @@ extern "C" {
 #endif
 
 typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
+typedef void (*pOnParamChange)(freerdp* instance, int id);
 
 struct rdp_client
 {
 	pOnResizeWindow OnResizeWindow;
+	pOnParamChange OnParamChange;
 };
 
 /**

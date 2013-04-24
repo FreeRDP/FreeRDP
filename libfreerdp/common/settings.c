@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/settings.h>
+#include <freerdp/freerdp.h>
 
 int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 {
@@ -1176,6 +1177,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
 
 	return -1;
 }
@@ -1795,7 +1797,8 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	
 	return 0;
 }
 
@@ -1830,7 +1833,8 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	
 	return 0;
 }
 
@@ -2161,6 +2165,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
 
 	return 0;
 }

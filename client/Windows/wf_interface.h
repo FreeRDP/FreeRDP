@@ -124,7 +124,7 @@ struct wf_info
 	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
-	callbackFunc callback_func;
+	callbackFunc client_callback_func;
 
 	rdpFile* connectionRdpFile;
 };
@@ -134,6 +134,8 @@ struct wf_info
  */
 
 #define cfInfo	wfInfo
+
+void wf_on_param_change(freerdp* instance, int id);
 
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
@@ -149,19 +151,9 @@ FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int heigh
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API int freerdp_client_free(wfInfo* cfi);
 
-FREERDP_API BOOL freerdp_client_get_param_bool(wfInfo* cfi, int id);
-FREERDP_API int freerdp_client_set_param_bool(wfInfo* cfi, int id, BOOL param);
+FREERDP_API int freerdp_client_set_client_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
 
-FREERDP_API UINT32 freerdp_client_get_param_uint32(wfInfo* cfi, int id);
-FREERDP_API int freerdp_client_set_param_uint32(wfInfo* cfi, int id, UINT32 param);
-
-FREERDP_API UINT64 freerdp_client_get_param_uint64(wfInfo* cfi, int id);
-FREERDP_API int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 param);
-
-FREERDP_API char* freerdp_client_get_param_string(wfInfo* cfi, int id);
-FREERDP_API int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param);
-
-FREERDP_API int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
+FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
 
 FREERDP_API int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename);
 FREERDP_API int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename);

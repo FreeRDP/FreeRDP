@@ -82,6 +82,9 @@ void wf_context_new(freerdp* instance, rdpContext* context)
 
 	((wfContext*) context)->wfi = wfi;
 	wfi->instance = instance;
+
+	// Register callbacks
+	instance->context->client->OnParamChange = wf_on_param_change;
 }
 
 void wf_context_free(freerdp* instance, rdpContext* context)
@@ -222,7 +225,7 @@ void wf_hw_desktop_resize(rdpContext* context)
 
 BOOL wf_pre_connect(freerdp* instance)
 {
-	int i1;
+	int desktopWidth, desktopHeight;
 	wfInfo* wfi;
 	wfContext* context;
 	rdpSettings* settings;
@@ -288,24 +291,32 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	instance->context->cache = cache_new(settings);
 
+	desktopWidth = settings->DesktopWidth;
+	desktopHeight = settings->DesktopHeight;
+
 	if (wfi->percentscreen > 0)
 	{
-		i1 = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
-		settings->DesktopWidth = i1;
-
-		i1 = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
-		settings->DesktopHeight = i1;
+		desktopWidth = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
+		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
 	}
 
 	if (wfi->fullscreen)
 	{
-		settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
-		settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
+		desktopWidth = GetSystemMetrics(SM_CXSCREEN);
+		desktopHeight = GetSystemMetrics(SM_CYSCREEN);
 	}
 
-	i1 = settings->DesktopWidth;
-	i1 = (i1 + 3) & (~3);
-	settings->DesktopWidth = i1;
+	desktopWidth = (desktopWidth + 3) & (~3);
+
+	if (desktopWidth != settings->DesktopWidth)
+	{
+		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, desktopWidth);
+	}
+
+	if (desktopHeight != settings->DesktopHeight)
+	{
+		freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, desktopHeight);
+	}
 
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
 		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
@@ -314,7 +325,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		return 1;
 	}
 
-	settings->KeyboardLayout = (int) GetKeyboardLayout(0) & 0x0000FFFF;
+	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, (int) GetKeyboardLayout(0) & 0x0000FFFF);
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return TRUE;
@@ -436,9 +447,9 @@ BOOL wf_post_connect(freerdp* instance)
 	wf_cliprdr_init(wfi, instance->context->channels);
 
 	// Callback
-	if (wfi->callback_func != NULL)
+	if (wfi->client_callback_func != NULL)
 	{
-		wfi->callback_func(wfi, CALLBACK_TYPE_CONNECTED, 0, 0);
+		wfi->client_callback_func(wfi, CALLBACK_TYPE_CONNECTED, 0, 0);
 	}
 
 	return TRUE;
@@ -697,9 +708,9 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	freerdp_disconnect(instance);	
 
 	// Callback
-	if (((wfContext*) instance->context)->wfi->callback_func != NULL)
+	if (((wfContext*) instance->context)->wfi->client_callback_func != NULL)
 	{
-		((wfContext*) instance->context)->wfi->callback_func(((wfContext*) instance->context)->wfi, CALLBACK_TYPE_DISCONNECTED, 12, 34);
+		((wfContext*) instance->context)->wfi->client_callback_func(((wfContext*) instance->context)->wfi, CALLBACK_TYPE_DISCONNECTED, 12, 34);
 	}
 
 	return 0;
@@ -812,6 +823,11 @@ wfInfo* freerdp_client_new(int argc, char** argv)
 	return wfi;
 }
 
+rdpSettings* freerdp_client_get_settings(wfInfo* wfi)
+{
+	return wfi->instance->settings;
+}
+
 int freerdp_client_start(wfInfo* wfi)
 {
 	HWND hWndParent;
@@ -900,8 +916,9 @@ int freerdp_client_free(wfInfo* wfi)
 	return 0;
 }
 
-void wf_on_param_change(wfInfo* cfi, int id)
+void wf_on_param_change(freerdp* instance, int id)
 {
+	wfInfo* cfi = ((wfContext*) instance->context)->wfi;
 	RECT rect;
 
 	// specific processing here
@@ -922,79 +939,16 @@ void wf_on_param_change(wfInfo* cfi, int id)
 
 	// trigger callback to client
 
-	if (cfi->callback_func != NULL)
+	if (cfi->client_callback_func != NULL)
 	{
 		fprintf(stderr, "Notifying client...");
-		cfi->callback_func(cfi, CALLBACK_TYPE_PARAM_CHANGE, id, 0);
+		cfi->client_callback_func(cfi, CALLBACK_TYPE_PARAM_CHANGE, id, 0);
 	}
 }
 
-BOOL freerdp_client_get_param_bool(wfInfo* cfi, int id)
+int freerdp_client_set_client_callback_function(wfInfo* cfi, callbackFunc callbackFunc)
 {
-	return freerdp_get_param_bool(cfi->instance->settings, id);
-}
-
-int freerdp_client_set_param_bool(wfInfo* cfi, int id, BOOL param)
-{
-	int rc;
-
-	rc = freerdp_set_param_bool(cfi->instance->settings, id, param);
-
-	wf_on_param_change(cfi, id);
-
-	return rc;
-}
-
-UINT32 freerdp_client_get_param_uint32(wfInfo* cfi, int id)
-{
-	return freerdp_get_param_uint32(cfi->instance->settings, id);
-}
-
-int freerdp_client_set_param_uint32(wfInfo* cfi, int id, UINT32 param)
-{
-	int rc;
-
-	rc = freerdp_set_param_uint32(cfi->instance->settings, id, param);
-
-	wf_on_param_change(cfi, id);
-
-	return rc;
-}
-
-UINT64 freerdp_client_get_param_uint64(wfInfo* cfi, int id)
-{
-	return freerdp_get_param_uint64(cfi->instance->settings, id);
-}
-
-int freerdp_client_set_param_uint64(wfInfo* cfi, int id, UINT64 param)
-{
-	int rc;
-
-	rc = freerdp_set_param_uint64(cfi->instance->settings, id, param);
-
-	wf_on_param_change(cfi, id);
-
-	return rc;
-}
-
-char* freerdp_client_get_param_string(wfInfo* cfi, int id)
-{
-	return freerdp_get_param_string(cfi->instance->settings, id);
-}
-
-int freerdp_client_set_param_string(wfInfo* cfi, int id, char* param)
-{
-	int rc;
-	rc = freerdp_set_param_string(cfi->instance->settings, id, param);
-
-	wf_on_param_change(cfi, id);
-
-	return rc;
-}
-
-int freerdp_client_set_callback_function(wfInfo* cfi, callbackFunc callbackFunc)
-{
-	cfi->callback_func = callbackFunc;
+	cfi->client_callback_func = callbackFunc;
 	return 0;
 }
 
