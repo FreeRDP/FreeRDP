@@ -33,9 +33,6 @@
 #include "xf_peer.h"
 #include "xfreerdp.h"
 
-char* xf_pcap_file = NULL;
-BOOL xf_pcap_dump_realtime = TRUE;
-
 void xf_server_main_loop(freerdp_listener* instance)
 {
 	int i;
@@ -105,12 +102,6 @@ int main(int argc, char* argv[])
 
 	instance = freerdp_listener_new();
 	instance->PeerAccepted = xf_peer_accepted;
-
-	if (argc > 1)
-		xf_pcap_file = argv[1];
-
-	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		xf_pcap_dump_realtime = FALSE;
 
 	/* Open the server socket and start listening. */
 	if (instance->Open(instance, NULL, 3389))

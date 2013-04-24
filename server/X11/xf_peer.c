@@ -431,35 +431,25 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
-	wMessage message;
+	HGDI_RGN region;
 	xfPeerContext* xfp;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	if (xfp->activated == FALSE)
+	if (!xfp->activated)
 		return TRUE;
 
-	if (MessageQueue_Peek(xfp->queue, &message, TRUE))
-	{
-		if (message.id == MakeMessageId(PeerEvent, EncodeRegion))
-		{
-			UINT32 xy, wh;
-			UINT16 x, y, w, h;
+	region = xfp->hdc->hwnd->invalid;
 
-			xy = (UINT32) (size_t) message.wParam;
-			wh = (UINT32) (size_t) message.lParam;
+	pthread_mutex_lock(&(xfp->mutex));
 
-			x = ((xy & 0xFFFF0000) >> 16);
-			y = (xy & 0x0000FFFF);
+	if ((region->w * region->h) > 0)
+		xf_peer_rfx_update(client, region->x, region->y, region->w, region->h);
 
-			w = ((wh & 0xFFFF0000) >> 16);
-			h = (wh & 0x0000FFFF);
+	region->null = 1;
 
-			if (w * h > 0)
-				xf_peer_rfx_update(client, x, y, w, h);
-		}
-	}
+	pthread_mutex_unlock(&(xfp->mutex));
 
 	return TRUE;
 }
@@ -583,17 +573,16 @@ static void* xf_peer_main_loop(void* arg)
 	rdpSettings* settings;
 	freerdp_peer* client = (freerdp_peer*) arg;
 	xfPeerContext* xfp;
+	struct timeval timeout;
 
 	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(&timeout, sizeof(struct timeval));
 
 	fprintf(stderr, "We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
 	xfp = (xfPeerContext*) client->context;
-
 	settings = client->settings;
-
-	/* Initialize the real server settings here */
 
 	xf_generate_certificate(settings);
 
@@ -617,6 +606,7 @@ static void* xf_peer_main_loop(void* arg)
 			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+
 		if (xf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
@@ -639,7 +629,10 @@ static void* xf_peer_main_loop(void* arg)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100;
+
+		if (select(max_fds + 1, &rfds_set, NULL, NULL, &timeout) == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
@@ -657,6 +650,7 @@ static void* xf_peer_main_loop(void* arg)
 			fprintf(stderr, "Failed to check freerdp file descriptor\n");
 			break;
 		}
+
 		if ((xf_peer_check_fds(client)) != TRUE)
 		{
 			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
@@ -669,10 +663,8 @@ static void* xf_peer_main_loop(void* arg)
 	client->Disconnect(client);
 	
 	pthread_cancel(xfp->thread);
-	pthread_cancel(xfp->frame_rate_thread);
 	
 	pthread_join(xfp->thread, NULL);
-	pthread_join(xfp->frame_rate_thread, NULL);
 	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);

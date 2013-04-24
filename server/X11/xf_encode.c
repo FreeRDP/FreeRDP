@@ -65,49 +65,6 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 #endif
 }
 
-void* xf_frame_rate_thread(void* param)
-{
-	xfInfo* xfi;
-	HGDI_RGN region;
-	xfPeerContext* xfp;
-	freerdp_peer* client;
-	UINT32 wait_interval;
-
-	client = (freerdp_peer*) param;
-	xfp = (xfPeerContext*) client->context;
-	xfi = xfp->info;
-
-	region = xfp->hdc->hwnd->invalid;
-	wait_interval = 1000000 / xfp->fps;
-
-	while (1)
-	{
-		/* check if we should terminate */
-		pthread_testcancel();
-
-		if (!region->null)
-		{
-			UINT32 xy, wh;
-
-			pthread_mutex_lock(&(xfp->mutex));
-
-			xy = (region->x << 16) | region->y;
-			wh = (region->w << 16) | region->h;
-			region->null = 1;
-
-			pthread_mutex_unlock(&(xfp->mutex));
-
-			MessageQueue_Post(xfp->queue, (void*) xfp,
-					MakeMessageId(PeerEvent, EncodeRegion),
-					(void*) (size_t) xy, (void*) (size_t) wh);
-		}
-
-		USleep(wait_interval);
-	}
-
-	return NULL;
-}
-
 void* xf_monitor_updates(void* param)
 {
 	int fds;
@@ -129,8 +86,6 @@ void* xf_monitor_updates(void* param)
 	fds = xfi->xfds;
 	wait_interval = 1000000 / xfp->fps;
 	ZeroMemory(&timeout, sizeof(struct timeval));
-
-	pthread_create(&(xfp->frame_rate_thread), 0, xf_frame_rate_thread, (void*) client);
 
 	while (1)
 	{
