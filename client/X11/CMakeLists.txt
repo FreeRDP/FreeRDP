@@ -124,6 +124,15 @@ if(WITH_XV)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XV_LIBRARIES})
 endif()
 
+#Corey hacked this here for testing
+#include_directories(${XINPUT2_INCLUDE_DIRS})
+#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XINPUT2_LIBRARIES})
+
+include_directories(X11/extensions/XInput2.h)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} Xi)
+
+
+
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
