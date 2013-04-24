@@ -250,9 +250,11 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_KILLFOCUS:
-			DEBUG_KBD("loosing focus %X", hWnd);
-			if (g_focus_hWnd == hWnd)
+			if (g_focus_hWnd == hWnd && wfi && !wfi->fullscreen)
+			{
+				DEBUG_KBD("loosing focus %X", hWnd);
 				g_focus_hWnd = NULL;
+			}
 			break;
 
 		default:

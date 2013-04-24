@@ -282,6 +282,7 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 {
 	ShowWindow(wfi->hwnd, SW_HIDE);
 	wfi->fullscreen = !wfi->fullscreen;
+	SetParent(wfi->hwnd, wfi->fullscreen ? NULL : wfi->hWndParent);
 	wf_resize_window(wfi);
 	ShowWindow(wfi->hwnd, SW_SHOW);
 	SetForegroundWindow(wfi->hwnd);
