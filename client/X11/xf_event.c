@@ -992,7 +992,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
     if (	event->xcookie.type == GenericEvent &&
     		event->xcookie.extension == xfi->XInputOpcode)
     	{
-			switch(cookie.evtype)
+			switch(cookie->evtype)
 			{
 				case XI_ButtonPress:
 				case XI_Motion:
