@@ -170,6 +170,48 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		switch (Msg)
 		{
+			case WM_MOVE:
+				if (!wfi->fullscreen)
+				{
+					int x = LOWORD(lParam);
+					int y = HIWORD(lParam);
+					((wfContext*) wfi->instance->context)->wfi->client_x = x;
+					((wfContext*) wfi->instance->context)->wfi->client_y = y;
+				}
+				break;
+
+			case WM_SIZE:
+				{
+					int dwStyle = GetWindowLongPtr(wfi->hwnd, GWL_STYLE);
+
+					int width = LOWORD(lParam);
+					int height = HIWORD(lParam);
+
+					if (!wfi->fullscreen)
+					{
+						//if (width > wfi->width || height > wfi->height)
+						//{
+						//	// Calculate decoration size
+						//	RECT decoration;
+						//	GetWindowRect(wfi->hwnd, &decoration);
+						//	decoration.right = decoration.right - decoration.left - width;
+						//	decoration.left = 0;
+						//	decoration.bottom = decoration.bottom - decoration.top - height;
+						//	decoration.top = 0;
+
+						//	width = min(wfi->width + decoration.right, width + decoration.right);
+						//	height = min(wfi->height + decoration.bottom, height + decoration.bottom);
+
+						//	SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, width, height, SWP_NOMOVE | SWP_FRAMECHANGED);
+
+						//}
+
+						((wfContext*) wfi->instance->context)->wfi->client_width = width;
+						((wfContext*) wfi->instance->context)->wfi->client_height = height;
+					}
+				}
+				break;
+
 			case WM_ERASEBKGND:
 				/* Say we handled it - prevents flickering */
 				return (LRESULT) 1;
@@ -286,7 +328,7 @@ BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, 
 	if (!wh)
 		wh = dh;
 
-	if (!wfi->instance->settings->SmartSizing || (ww == dw && wh == dh))
+	if (wfi->fullscreen || !wfi->instance->settings->SmartSizing || (ww >= dw && wh >= dh))
 	{
 		return BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x1, y1, SRCCOPY);
 	}
@@ -295,7 +337,7 @@ BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, 
 		SetStretchBltMode(hdc, HALFTONE);
 		SetBrushOrgEx(hdc, 0, 0, NULL);
 
-		return StretchBlt(hdc, x * ww / dw, y * wh / dh, ww, wh, wfi->primary->hdc, x1, y1, dw, dh, SRCCOPY);
+		return StretchBlt(hdc, MIN(x, x * ww / dw), MIN(y, y * wh / dh), MIN(dw, ww), MIN(dh, wh), wfi->primary->hdc, x1, y1, dw, dh, SRCCOPY);
 	}
 
 	return TRUE;
@@ -316,8 +358,8 @@ void wf_scale_mouse_event(wfInfo* wfi, rdpInput* input, UINT16 flags, UINT16 x, 
 	dw = wfi->instance->settings->DesktopWidth;
 	dh = wfi->instance->settings->DesktopHeight;
 
-	if ((ww == dw) && (wh == dh))
+	if ((ww >= dw) && (wh >= dh))
 		input->MouseEvent(input, flags, x, y);
 	else
-		input->MouseEvent(input, flags, x * dw / ww, y * dh / wh);
+		input->MouseEvent(input, flags, MAX(x, x * dw / ww), MAX(y, y * dh / wh));
 }

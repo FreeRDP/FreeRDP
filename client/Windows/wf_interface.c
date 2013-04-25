@@ -692,8 +692,8 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 				width = LOWORD(msg.lParam);
 				height = HIWORD(msg.lParam);
 
-				((wfContext*) instance->context)->wfi->client_width = width;
-				((wfContext*) instance->context)->wfi->client_height = height;
+				//((wfContext*) instance->context)->wfi->client_width = width;
+				//((wfContext*) instance->context)->wfi->client_height = height;
 
 				SetWindowPos(((wfContext*) instance->context)->wfi->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
 			}

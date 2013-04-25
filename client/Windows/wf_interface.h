@@ -89,6 +89,8 @@ struct wf_info
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
+	int client_x;
+	int client_y;
 	int client_width;
 	int client_height;
 
