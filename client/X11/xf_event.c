@@ -23,7 +23,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/XInput2.h>
 
 #include <freerdp/locale/keyboard.h>
 
@@ -978,32 +977,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 
 
 	}
-
-	//handle touch events
-	XGenericEventCookie* cookie = &event->xcookie;
-    XGetEventData(xfi->display, cookie);
-
-    if (	(cookie->type == GenericEvent) &&
-    		(cookie->extension == xfi->XInputOpcode) )
-    	{
-			switch(cookie->evtype)
-			{
-				case XI_TouchBegin:
-				case XI_TouchUpdate:
-				case XI_TouchEnd:
-					printf("\tTouch %d\n", cookie->evtype);
-					//do_something(ev.xcookie.data);
-					break;
-
-				default:
-					printf("evtype= %d\n", cookie->evtype);
-					break;
-			}
-    	}
-
-
-	XFreeEventData(xfi->display,cookie);
-
 
 	XSync(xfi->display, FALSE);
 

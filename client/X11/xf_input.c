@@ -23,11 +23,8 @@
 
 #include "xf_input.h"
 
-void xf_input_init(rdpContext* context)
+void xf_input_init(xfInfo* xfi)
 {
-	xfInfo*			xfi;
-	xfi = ((xfContext*) context)->xfi;
-
 	int opcode, event, error;
 	int major = 2, minor = 2;
 
@@ -42,7 +39,6 @@ void xf_input_init(rdpContext* context)
 
 	if (XQueryExtension(xfi->display, "XInputExtension", &opcode, &event, &error))
 	{
-		printf("X Input extension available.\n");
 
 		xfi->XInputOpcode = opcode;
 		printf("Input Opcode = %d\n", opcode);
@@ -50,9 +46,6 @@ void xf_input_init(rdpContext* context)
 		XIQueryVersion(xfi->display, &major, &minor);
 		if (!(major * 1000 + minor < 2002))
 		{
-			printf("XI 2.2 supported\n");
-
-
 
 			info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
 
@@ -95,13 +88,14 @@ void xf_input_init(rdpContext* context)
 				printf("\tBadWindow\n");
 				break;
 
+			case 0: //no error
+				break;
+
 			default:
 				printf("XISelectEvents() returned %d\n", error);
 				break;
 
 			}
-
-			printf("Should now be able to get touch events\n");
 
 		}
 		else
@@ -113,4 +107,35 @@ void xf_input_init(rdpContext* context)
 	{
 		printf("X Input extension not available!!!\n");
 	}
+}
+
+void xf_input_handle_event(xfInfo* xfi, XEvent* event)
+{
+	//handle touch events
+	XGenericEventCookie* cookie = &event->xcookie;
+	XIDeviceEvent* devEvent;
+
+	XGetEventData(xfi->display, cookie);
+
+	if (	(cookie->type == GenericEvent) &&
+			(cookie->extension == xfi->XInputOpcode) )
+		{
+			switch(cookie->evtype)
+			{
+				case XI_TouchBegin:
+				case XI_TouchUpdate:
+				case XI_TouchEnd:
+					devEvent = cookie->data;
+					printf("\tTouch (%d) [%f,%f]\n", cookie->evtype, devEvent->event_x, devEvent->event_y);
+					//do_something(ev.xcookie.data);
+					break;
+
+				default:
+					printf("unhandled xi type= %d\n", cookie->evtype);
+					break;
+			}
+		}
+
+
+	XFreeEventData(xfi->display,cookie);
 }

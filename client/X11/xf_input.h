@@ -22,6 +22,8 @@
 
 #include "xf_interface.h"
 
-void xf_input_init(rdpContext* context);
+void xf_input_init(xfInfo* xfi);//rdpContext* context);
+void xf_input_handle_event(xfInfo* xfi, XEvent* event);
+//void xf_input_touch_begin(xfInfo* xfi)
 
 #endif
