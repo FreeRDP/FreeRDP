@@ -2,6 +2,7 @@
 # FreeRDP X11 Client
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,11 +95,16 @@ set(XV_FEATURE_TYPE "RECOMMENDED")
 set(XV_FEATURE_PURPOSE "video")
 set(XV_FEATURE_DESCRIPTION "X11 video extension")
 
+set(XI_FEATURE_TYPE "RECOMMENDED")
+set(XI_FEATURE_PURPOSE "input")
+set(XI_FEATURE_DESCRIPTION "X11 input extension") 
+
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
 find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
 find_feature(Xcursor ${XCURSOR_FEATURE_TYPE} ${XCURSOR_FEATURE_PURPOSE} ${XCURSOR_FEATURE_DESCRIPTION})
 find_feature(Xv ${XV_FEATURE_TYPE} ${XV_FEATURE_PURPOSE} ${XV_FEATURE_DESCRIPTION})
+find_feature(Xi ${XI_FEATURE_TYPE} ${XI_FEATURE_PURPOSE} ${XI_FEATURE_DESCRIPTION}) 
 
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA)
@@ -124,12 +130,11 @@ if(WITH_XV)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XV_LIBRARIES})
 endif()
 
-#Corey hacked this here for testing
-#include_directories(${XINPUT2_INCLUDE_DIRS})
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XINPUT2_LIBRARIES})
-
-include_directories(X11/extensions/XInput2.h)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} Xi)
+if(WITH_XI)
+  add_definitions(-DWITH_XI)
+  include_directories(${XI_INCLUDE_DIRS})
+  set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XI_LIBRARIES})
+endif() 
 
 
 

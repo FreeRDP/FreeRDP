@@ -3,6 +3,7 @@
  * X11 Client Interface
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +24,10 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
+#endif
 
 #ifdef WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
