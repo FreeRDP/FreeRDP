@@ -297,13 +297,24 @@ BOOL wf_pre_connect(freerdp* instance)
 	if (wfi->percentscreen > 0)
 	{
 		desktopWidth = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
+		settings->DesktopWidth = desktopWidth;
+
 		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
+		settings->DesktopHeight = desktopHeight;
 	}
 
 	if (wfi->fullscreen)
 	{
-		desktopWidth = GetSystemMetrics(SM_CXSCREEN);
-		desktopHeight = GetSystemMetrics(SM_CYSCREEN);
+		if (settings->UseMultimon)
+		{
+			settings->DesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			settings->DesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+		}
+		else
+		{
+			settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
+			settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
+		}
 	}
 
 	desktopWidth = (desktopWidth + 3) & (~3);

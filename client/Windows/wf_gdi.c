@@ -220,12 +220,29 @@ void wf_update_offset(wfInfo* wfi)
 {
 	if (wfi->fullscreen)
 	{
-		wfi->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfi->width) / 2;
-		if (wfi->offset_x < 0)
-			wfi->offset_x = 0;
-		wfi->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfi->height) / 2;
-		if (wfi->offset_y < 0)
-			wfi->offset_y = 0;
+		if (wfi->instance->settings->UseMultimon)
+		{
+			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+			wfi->offset_x = (w - wfi->width) / 2;
+			if (wfi->offset_x < x)
+				wfi->offset_x = x;
+			wfi->offset_y = (h - wfi->height) / 2;
+			if (wfi->offset_y < y)
+				wfi->offset_y = y;
+		}
+		else
+		{
+			wfi->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfi->width) / 2;
+			if (wfi->offset_x < 0)
+				wfi->offset_x = 0;
+			wfi->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfi->height) / 2;
+			if (wfi->offset_y < 0)
+				wfi->offset_y = 0;
+		}
 	}
 	else
 	{
@@ -239,7 +256,17 @@ void wf_resize_window(wfInfo* wfi)
 	if (wfi->fullscreen)
 	{
 		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
-		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+		if(wfi->instance->settings->UseMultimon)
+		{
+			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+			SetWindowPos(wfi->hwnd, HWND_TOP, x, y, w, h, SWP_FRAMECHANGED);
+		}
+		else
+			SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 	}
 	else if (!wfi->instance->settings->Decorations)
 	{
