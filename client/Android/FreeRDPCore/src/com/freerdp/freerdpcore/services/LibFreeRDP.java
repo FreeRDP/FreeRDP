@@ -39,6 +39,8 @@ public class LibFreeRDP
 	
 	private static native void freerdp_set_data_directory(int inst, String directory);
 	
+	private static native void freerdp_set_drive_redirection(int inst, String path);
+	
 	private static native boolean freerdp_update_graphics(int inst,
 			Bitmap bitmap, int x, int y, int width, int height);
 	
@@ -143,6 +145,10 @@ public class LibFreeRDP
 		BookmarkBase.AdvancedSettings advancedSettings = bookmark.getAdvancedSettings();
 		freerdp_set_advanced_settings(inst, advancedSettings.getRemoteProgram(), advancedSettings.getWorkDir());
 
+		// drive redirection enabled?
+		if (advancedSettings.getRedirectSDCard())
+			freerdp_set_drive_redirection(inst, android.os.Environment.getExternalStorageDirectory().getPath());		
+		
 		return true;
 	}
 	
