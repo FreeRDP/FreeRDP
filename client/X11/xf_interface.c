@@ -161,7 +161,9 @@ void xf_input_init(rdpContext* context)
 	int ndevices, i, j;
 
 	XIEventMask eventmask;
-	unsigned char mask[1] = { 0 };
+	unsigned char mask[(XI_LASTEVENT + 7)/8];
+
+	ZeroMemory(mask, sizeof(mask));
 
 
 	if (XQueryExtension(xfi->display, "XInputExtension", &opcode, &event, &error))
