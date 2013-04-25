@@ -29,6 +29,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_rail.h
 	xf_tsmf.c
 	xf_tsmf.h
+	xf_input.c
+	xf_input.h
 	xf_event.c
 	xf_event.h
 	xf_cliprdr.c
