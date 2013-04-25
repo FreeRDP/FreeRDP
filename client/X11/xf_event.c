@@ -992,12 +992,12 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
     if (	event->xcookie.type == GenericEvent &&
     		event->xcookie.extension == xfi->XInputOpcode)
     	{
-			switch(event->xcookie.evtype)
+			switch(cookie.evtype)
 			{
 				case XI_ButtonPress:
 				case XI_Motion:
 				case XI_KeyPress:
-					printf("Touch\n");
+					printf("Touch %d\n", cookie->evtype);
 					//do_something(ev.xcookie.data);
 					break;
 			}
