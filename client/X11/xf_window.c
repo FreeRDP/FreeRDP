@@ -42,6 +42,10 @@
 #include <X11/extensions/shape.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
 #else
@@ -319,6 +323,73 @@ static void xf_SetWindowPID(xfInfo* xfi, xfWindow* window, pid_t pid)
 			32, PropModeReplace, (unsigned char *)&pid, 1);
 }
 
+int xf_input_init(xfInfo* xfi, Window window)
+{
+	int i, j;
+	int ndevices;
+	int major = 2;
+	int minor = 2;
+	Status xstatus;
+	XIEventMask evmask;
+	XIDeviceInfo* info;
+	int opcode, event, error;
+	XIGrabModifiers mods = { 1 };
+	unsigned char mask[XIMaskLen(XI_LASTEVENT)];
+
+	if (!XQueryExtension(xfi->display, "XInputExtension", &opcode, &event, &error))
+	{
+		printf("XInput extension not available.\n");
+		return -1;
+	}
+
+	XIQueryVersion(xfi->display, &major, &minor);
+
+	if (major * 1000 + minor < 2002)
+	{
+		printf("Server does not support XI 2.2\n");
+		return -1;
+	}
+
+	info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
+
+	for (i = 0; i < ndevices; i++)
+	{
+		XIDeviceInfo* dev = &info[i];
+
+		for (j = 0; j < dev->num_classes; j++)
+		{
+			XIAnyClassInfo* class = dev->classes[j];
+			XITouchClassInfo* t = (XITouchClassInfo*) class;
+
+			if (class->type != XITouchClass)
+				continue;
+
+			printf("%s %s touch device, supporting %d touches.\n",
+				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent", t->num_touches);
+		}
+	}
+
+	evmask.mask = mask;
+	evmask.mask_len = sizeof(mask);
+	ZeroMemory(mask, sizeof(mask));
+	evmask.deviceid = XIAllDevices;
+
+	XISetMask(mask, XI_TouchBegin);
+	XISetMask(mask, XI_TouchUpdate);
+	XISetMask(mask, XI_TouchEnd);
+
+	xstatus = XISelectEvents(xfi->display, window, &evmask, 1);
+	//XIClearMask(mask, XI_TouchOwnership);
+
+	mods.modifiers = XIAnyModifier;
+
+	//XIGrabTouchBegin(xfi->display, XIAllMasterDevices, window, XINoOwnerEvents, &evmask, 1, &mods);
+
+	XSync(xfi->display, False);
+
+	return -1;
+}
+
 xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height, BOOL decorations)
 {
 	xfWindow* window;
@@ -402,6 +473,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XSelectInput(xfi->display, window->handle, input_mask);
 		XClearWindow(xfi->display, window->handle);
 		XMapWindow(xfi->display, window->handle);
+
+		xf_input_init(xfi, window->handle);
 
 		/*
 		 * NOTE: This must be done here to handle reparenting the window, 
