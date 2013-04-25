@@ -492,7 +492,7 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w/2, h/2, x, y);
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 
 			}
 
