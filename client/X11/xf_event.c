@@ -976,13 +976,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
 			break;
 
-		/*
-		case XI_TouchBegin:
-		case XI_TouchUpdate:
-		case XI_TouchEnd:
-			printf("TouchEvent!\n");
-			break;
-		*/
+
 	}
 
 	//handle touch events
@@ -994,9 +988,9 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
     	{
 			switch(cookie->evtype)
 			{
-				case XI_ButtonPress:
-				case XI_Motion:
-				case XI_KeyPress:
+				case XI_TouchBegin:
+				case XI_TouchUpdate:
+				case XI_TouchEnd:
 					printf("\tTouch %d\n", cookie->evtype);
 					//do_something(ev.xcookie.data);
 					break;
@@ -1006,10 +1000,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 					break;
 			}
     	}
-    else
-    {
-    	printf("cookie type, opcode = %d, %d\n", cookie->type, cookie->extension);
-    }
+
 
 	XFreeEventData(xfi->display,cookie);
 
