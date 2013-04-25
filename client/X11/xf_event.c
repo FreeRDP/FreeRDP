@@ -899,7 +899,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		case MotionNotify:
 			status = xf_event_MotionNotify(xfi, event, xfi->remote_app);
 			break;
-
 		case ButtonPress:
 			status = xf_event_ButtonPress(xfi, event, xfi->remote_app);
 			break;
@@ -986,6 +985,25 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		*/
 	}
 
+	//handle touch events
+	XGenericEventCookie *cookie = &event->xcookie;
+    XGetEventData(xfi->display, cookie);
+
+    if (	event->xcookie.type == GenericEvent &&
+    		event->xcookie.extension == xfi->XInputOpcode)
+    	{
+			switch(event->xcookie.evtype)
+			{
+				case XI_ButtonPress:
+				case XI_Motion:
+				case XI_KeyPress:
+					printf("Touch\n");
+					//do_something(ev.xcookie.data);
+					break;
+			}
+    	}
+
+	XFreeEventData(xfi->display,cookie);
 
 
 	XSync(xfi->display, FALSE);

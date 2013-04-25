@@ -125,6 +125,8 @@ struct xf_info
 	HANDLE thread;
 	BOOL UseXThreads;
 
+	int XInputOpcode;
+
 	HGDI_DC hdc;
 	BYTE* primary_buffer;
 
