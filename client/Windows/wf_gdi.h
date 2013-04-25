@@ -33,4 +33,6 @@ void wf_toggle_fullscreen(wfInfo* wfi);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
+void wf_update_canvas_diff(wfInfo* wfi);
+
 #endif /* __WF_GDI_H */

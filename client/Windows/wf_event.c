@@ -160,6 +160,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	rdpInput* input;
 	BOOL processed;
 
+	RECT windowRect, clientRect;
+	MINMAXINFO *minmax;
+
 	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfi = (wfInfo*) ptr;
@@ -171,13 +174,27 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		switch (Msg)
 		{
 			case WM_MOVE:
-				if (!wfi->fullscreen)
+				if (!wfi->disablewindowtracking)
 				{
 					int x = LOWORD(lParam);
 					int y = HIWORD(lParam);
 					((wfContext*) wfi->instance->context)->wfi->client_x = x;
 					((wfContext*) wfi->instance->context)->wfi->client_y = y;
 				}
+				break;
+
+			case WM_GETMINMAXINFO:
+				// Set maximum window size for resizing
+
+				minmax = (MINMAXINFO*) lParam;
+				wf_update_canvas_diff(wfi);
+				if (!wfi->fullscreen)
+				{
+					// add window decoration
+					minmax->ptMaxTrackSize.x = wfi->width + wfi->diff.x; 
+					minmax->ptMaxTrackSize.y = wfi->height + wfi->diff.y; 
+				}
+
 				break;
 
 			case WM_SIZE:
@@ -189,23 +206,6 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					if (!wfi->fullscreen)
 					{
-						//if (width > wfi->width || height > wfi->height)
-						//{
-						//	// Calculate decoration size
-						//	RECT decoration;
-						//	GetWindowRect(wfi->hwnd, &decoration);
-						//	decoration.right = decoration.right - decoration.left - width;
-						//	decoration.left = 0;
-						//	decoration.bottom = decoration.bottom - decoration.top - height;
-						//	decoration.top = 0;
-
-						//	width = min(wfi->width + decoration.right, width + decoration.right);
-						//	height = min(wfi->height + decoration.bottom, height + decoration.bottom);
-
-						//	SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, width, height, SWP_NOMOVE | SWP_FRAMECHANGED);
-
-						//}
-
 						((wfContext*) wfi->instance->context)->wfi->client_width = width;
 						((wfContext*) wfi->instance->context)->wfi->client_height = height;
 					}

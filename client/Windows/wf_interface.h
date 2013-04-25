@@ -129,6 +129,9 @@ struct wf_info
 	callbackFunc client_callback_func;
 
 	rdpFile* connectionRdpFile;
+
+	// Keep track of window size and position, disable when in fullscreen mode.
+	BOOL disablewindowtracking; 
 };
 
 /**
