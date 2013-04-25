@@ -986,22 +986,30 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	}
 
 	//handle touch events
-	XGenericEventCookie *cookie = &event->xcookie;
+	XGenericEventCookie* cookie = &event->xcookie;
     XGetEventData(xfi->display, cookie);
 
-    if (	event->xcookie.type == GenericEvent &&
-    		event->xcookie.extension == xfi->XInputOpcode)
+    if (	(cookie->type == GenericEvent) &&
+    		(cookie->extension == xfi->XInputOpcode) )
     	{
 			switch(cookie->evtype)
 			{
 				case XI_ButtonPress:
 				case XI_Motion:
 				case XI_KeyPress:
-					printf("Touch %d\n", cookie->evtype);
+					printf("\tTouch %d\n", cookie->evtype);
 					//do_something(ev.xcookie.data);
+					break;
+
+				default:
+					printf("evtype= %d\n", cookie->evtype);
 					break;
 			}
     	}
+    else
+    {
+    	printf("cookie type, opcode = %d, %d\n", cookie->type, cookie->extension);
+    }
 
 	XFreeEventData(xfi->display,cookie);
 
