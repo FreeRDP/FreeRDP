@@ -31,6 +31,7 @@
 #include "xf_cliprdr.h"
 
 #include "xf_event.h"
+#include "xf_input.h"
 
 const char* const X11_EVENT_STRINGS[] =
 {
@@ -975,8 +976,9 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
 			break;
 
-
 	}
+
+	xf_input_handle_event(xfi, event);
 
 	XSync(xfi->display, FALSE);
 

@@ -23,13 +23,13 @@
 
 #include "xf_input.h"
 
+int xinput_opcode; //TODO: use this instead of xfi
+
 void xf_input_init(xfInfo* xfi)
 {
 	int opcode, event, error;
 	int major = 2, minor = 2;
 
-	XIDeviceInfo *info;
-	int ndevices, i, j;
 
 	XIEventMask eventmask;
 	unsigned char mask[(XI_LASTEVENT + 7)/8];
@@ -41,38 +41,15 @@ void xf_input_init(xfInfo* xfi)
 	{
 
 		xfi->XInputOpcode = opcode;
-		printf("Input Opcode = %d\n", opcode);
 
 		XIQueryVersion(xfi->display, &major, &minor);
 		if (!(major * 1000 + minor < 2002))
 		{
 
-			info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
-
-			for (i = 0; i < ndevices; i++)
-			{
-				XIDeviceInfo *dev = &info[i];
-				printf("Device name [id] %s [%d]\n", dev->name, dev->deviceid);
-				for (j = 0; j < dev->num_classes; j++)
-				{
-					XIAnyClassInfo *class = dev->classes[j];
-					XITouchClassInfo *t = (XITouchClassInfo*)class;
-
-					if (class->type != XITouchClass)
-						continue;
-
-					printf("%s touch device, supporting %d touches.\n",
-							(t->mode == XIDirectTouch) ?  "direct" : "dependent",
-									t->num_touches);
-				}
-			}
-
-			////////////////////
-
-			eventmask.deviceid = XIAllDevices; //13;
-			eventmask.mask_len = sizeof(mask); /* always in bytes */
+			eventmask.deviceid = XIAllDevices;
+			eventmask.mask_len = sizeof(mask);
 			eventmask.mask = mask;
-			/* now set the mask */
+
 			XISetMask(mask, XI_TouchBegin);
 			XISetMask(mask, XI_TouchUpdate);
 			XISetMask(mask, XI_TouchEnd);
