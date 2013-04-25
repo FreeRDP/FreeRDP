@@ -284,6 +284,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private boolean enable3GSettings;
 		private ScreenSettings screen3G;
 		private PerformanceFlags performance3G;
+		private boolean redirectSDCard;
 		private int security;
 		private boolean consoleMode;
 		private String remoteProgram;
@@ -297,6 +298,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			enable3GSettings = (parcel.readInt() == 1) ? true : false;
 			screen3G = parcel.readParcelable(ScreenSettings.class.getClassLoader());
 			performance3G = parcel.readParcelable(PerformanceFlags.class.getClassLoader());
+			redirectSDCard = (parcel.readInt() == 1) ? true : false;
 			security = parcel.readInt();
 			consoleMode = (parcel.readInt() == 1) ? true : false;
 			remoteProgram = parcel.readString();
@@ -307,6 +309,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			enable3GSettings = false;
 			screen3G = new ScreenSettings();
 			performance3G = new PerformanceFlags();
+			redirectSDCard = false;
 			security = 0;
 			consoleMode = false;
 			remoteProgram = "";
@@ -337,6 +340,14 @@ public class BookmarkBase implements Parcelable, Cloneable
 			this.performance3G = performance3G; 
 		}
 
+		public void setRedirectSDCard(boolean redirectSDCard) {
+			this.redirectSDCard = redirectSDCard;
+		}
+		
+		public boolean getRedirectSDCard() {
+			return redirectSDCard;
+		}
+		
 		public void setSecurity(int security) {
 			this.security = security;
 		}
@@ -396,6 +407,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeInt(enable3GSettings ? 1 : 0);
 			out.writeParcelable(screen3G, flags);
 			out.writeParcelable(performance3G, flags);
+			out.writeInt(redirectSDCard ? 1 : 0);
 			out.writeInt(security);		
 			out.writeInt(consoleMode ? 1 : 0);		
 			out.writeString(remoteProgram);
@@ -597,6 +609,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putBoolean("bookmark.perf_menu_animation_3g", advancedSettings.getPerformance3G().getMenuAnimations());
 		editor.putBoolean("bookmark.perf_themes_3g", advancedSettings.getPerformance3G().getTheming());
 
+		editor.putBoolean("bookmark.redirect_sdcard", advancedSettings.getRedirectSDCard());
 		editor.putInt("bookmark.security", advancedSettings.getSecurity());
 		editor.putString("bookmark.remote_program", advancedSettings.getRemoteProgram());
 		editor.putString("bookmark.work_dir", advancedSettings.getWorkDir());
@@ -638,6 +651,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.getPerformance3G().setMenuAnimations(sharedPrefs.getBoolean("bookmark.perf_menu_animation_3g", false));
 		advancedSettings.getPerformance3G().setTheming(sharedPrefs.getBoolean("bookmark.perf_themes_3g", false));
 
+		advancedSettings.setRedirectSDCard(sharedPrefs.getBoolean("bookmark.redirect_sdcard", false));
 		advancedSettings.setSecurity(sharedPrefs.getInt("bookmark.security", 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString("bookmark.remote_program", ""));
 		advancedSettings.setWorkDir(sharedPrefs.getString("bookmark.work_dir", ""));

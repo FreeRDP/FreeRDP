@@ -462,7 +462,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[1].tv_usec = 0;
 #ifndef WIN32
 /* TODO on win32 */                        
-                        futimes(file->fd, tv);
+#ifdef ANDROID
+			utimes(file->fullpath, tv);
+#else
+			futimes(file->fd, tv);
+#endif
 
 			if (FileAttributes > 0)
 			{

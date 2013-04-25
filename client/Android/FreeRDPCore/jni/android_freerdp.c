@@ -20,6 +20,8 @@
 #include <sys/select.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cmdline.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
@@ -119,7 +121,8 @@ BOOL android_pre_connect(freerdp* instance)
 
 	settings->FrameAcknowledge = 10;
 
-	freerdp_channels_load_plugin(instance->context->channels, instance->settings, "tsxlc", NULL);
+	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
@@ -727,6 +730,22 @@ JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls
 
 	(*env)->ReleaseStringUTFChars(env, jRemoteProgram, remote_program);
 	(*env)->ReleaseStringUTFChars(env, jWorkDir, work_dir);
+}
+
+JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls, jint instance, jstring jpath)
+{
+	freerdp* inst = (freerdp*)instance;
+	rdpSettings * settings = inst->settings;
+	char* args[] = {"drive", "Android", ""};
+
+	const jbyte *path = (*env)->GetStringUTFChars(env, jpath, NULL);
+	DEBUG_ANDROID("drive redirect: %s", (char*)path);
+
+	args[2] = (char*)path;
+	freerdp_client_add_device_channel(settings, 3, args);
+	settings->DeviceRedirection = TRUE;
+
+	(*env)->ReleaseStringUTFChars(env, jpath, path);
 }
 
 void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp)

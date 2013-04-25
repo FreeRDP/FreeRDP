@@ -42,6 +42,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(JNIEnv *env, jclass cls, jint instance, jboolean remotefx, jboolean disableWallpaper, jboolean disableFullWindowDrag,
 	jboolean disableMenuAnimations, jboolean disableTheming, jboolean enableFontSmoothing, jboolean enableDesktopComposition);
 JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls, jint instance, jstring jRemoteProgram, jstring jWorkDir);
+JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls, jint instance, jstring jpath);
 JNIEXPORT void JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cls, jint instance, jstring jdirectory);
 JNIEXPORT jboolean JNICALL jni_freerdp_update_graphics(JNIEnv *env, jclass cls, jint instance, jobject bitmap, jint x, jint y, jint width, jint height);
 JNIEXPORT void JNICALL jni_freerdp_send_cursor_event(JNIEnv *env, jclass cls, jint instance, jint x, jint y, jint flags);

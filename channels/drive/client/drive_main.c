@@ -407,7 +407,11 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 			stream_write_UINT32(output, 17 + length); /* Length */
 			stream_check_size(output, 17 + length);
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
+#ifdef ANDROID
+			stream_write_UINT32(output, svfst.f_fsid.__val[0]); /* VolumeSerialNumber */
+#else
 			stream_write_UINT32(output, svfst.f_fsid); /* VolumeSerialNumber */
+#endif
 			stream_write_UINT32(output, length); /* VolumeLabelLength */
 			stream_write_BYTE(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
@@ -434,7 +438,11 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 				FILE_CASE_SENSITIVE_SEARCH |
 				FILE_CASE_PRESERVED_NAMES |
 				FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
+#ifdef ANDROID
+			stream_write_UINT32(output, 255); /* MaximumComponentNameLength */
+#else
 			stream_write_UINT32(output, svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
+#endif
 			stream_write_UINT32(output, length); /* FileSystemNameLength */
 			stream_write(output, outStr, length); /* FileSystemName (Unicode) */
 			free(outStr);
