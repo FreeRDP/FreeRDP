@@ -17,11 +17,26 @@
  * limitations under the License.
  */
 
-#ifdef WITH_XI
-#include <X11/extensions/XInput2.h>
-#endif
+#include <math.h>
 
 #include "xf_input.h"
+
+#define MAX_CONTACTS 2
+
+typedef struct touch_contact
+{
+	int id;
+	int count;
+	double pos_x;
+	double pos_y;
+	double last_x;
+	double last_y;
+
+} touchContact;
+
+touchContact contacts[MAX_CONTACTS];
+
+int active_contacts;
 
 int xinput_opcode; //TODO: use this instead of xfi
 
@@ -33,6 +48,9 @@ void xf_input_init(xfInfo* xfi)
 
 	XIEventMask eventmask;
 	unsigned char mask[(XI_LASTEVENT + 7)/8];
+
+	active_contacts = 0;
+	ZeroMemory(contacts, sizeof(touchContact) * MAX_CONTACTS);
 
 	ZeroMemory(mask, sizeof(mask));
 
@@ -90,7 +108,6 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 {
 	//handle touch events
 	XGenericEventCookie* cookie = &event->xcookie;
-	XIDeviceEvent* devEvent;
 
 	XGetEventData(xfi->display, cookie);
 
@@ -100,16 +117,15 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 			switch(cookie->evtype)
 			{
 				case XI_TouchBegin:
+					xf_input_touch_begin(xfi, cookie->data);
+					break;
+
 				case XI_TouchUpdate:
+					xf_input_touch_update(xfi, cookie->data);
+					break;
+
 				case XI_TouchEnd:
-					devEvent = cookie->data;
-					printf("\tTouch (%d - dev:%d - src:%d)  [%f,%f]\n",
-							cookie->evtype,
-							devEvent->deviceid,
-							devEvent->sourceid,
-							devEvent->event_x,
-							devEvent->event_y);
-					//do_something(ev.xcookie.data);
+					xf_input_touch_end(xfi, cookie->data);
 					break;
 
 				default:
@@ -121,3 +137,106 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 
 	XFreeEventData(xfi->display,cookie);
 }
+
+void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
+{
+	int i;
+
+	//find an empty slot and save it
+	for(i=0; i<MAX_CONTACTS; i++)
+	{
+		if(contacts[i].id == 0)
+		{
+			contacts[i].id = event->detail;
+			contacts[i].count = 1;
+			contacts[i].pos_x = event->event_x;
+			contacts[i].pos_y = event->event_y;
+
+			active_contacts++;
+			break;
+		}
+	}
+
+
+	////
+	printf("\tTouchBegin (%d)  [%.2f,%.2f]\n",
+								event->detail,
+								event->event_x,
+								event->event_y);
+
+}
+void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
+{
+	int i;
+
+
+	for(i=0; i<MAX_CONTACTS; i++)
+		{
+			if(contacts[i].id == event->detail)
+			{
+				contacts[i].count++;
+				contacts[i].last_x = contacts[i].pos_x;
+				contacts[i].last_y = contacts[i].pos_y;
+				contacts[i].pos_x = event->event_x;
+				contacts[i].pos_y = event->event_y;
+
+				//detect pinch-zoom
+				if(active_contacts == 2)
+				{
+					int j = 0;
+
+					//find the other nonzero contact
+					for(j=0; j<MAX_CONTACTS; j++)
+					{
+						if( (contacts[j].id != 0) && (contacts[j].id != contacts[i].id) )
+						{
+							double delta;
+							//now compute the delta
+							delta = sqrt(pow(contacts[j].pos_x - contacts[i].last_x, 2.0) +
+									pow(contacts[j].pos_y - contacts[i].last_y, 2.0));
+
+							printf("delta = %.2f\n", delta);
+
+							break;
+						}
+					}
+				}
+
+				break;
+			}
+		}
+
+
+	printf("\tTouchUpdate (%d)  [%.2f,%.2f]\n",
+								event->detail,
+								event->event_x,
+								event->event_y);
+}
+void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
+{
+	int i;
+
+	//find our and delete the point
+	for(i=0; i<MAX_CONTACTS; i++)
+		{
+			if(contacts[i].id == event->detail)
+			{
+				contacts[i].id = 0;
+				contacts[i].count = 0;
+				//contacts[i].pos_x = (int)event->event_x;
+				//contacts[i].pos_y = (int)event->event_y;
+
+				active_contacts--;
+				break;
+			}
+		}
+
+
+
+
+	printf("\tTouchEnd (%d)  [%.2f,%.2f]\n",
+								event->detail,
+								event->event_x,
+								event->event_y);
+}
+
