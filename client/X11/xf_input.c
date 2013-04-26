@@ -103,7 +103,12 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 				case XI_TouchUpdate:
 				case XI_TouchEnd:
 					devEvent = cookie->data;
-					printf("\tTouch (%d) [%f,%f]\n", cookie->evtype, devEvent->event_x, devEvent->event_y);
+					printf("\tTouch (%d - dev:%d - src:%d)  [%f,%f]\n",
+							cookie->evtype,
+							devEvent->deviceid,
+							devEvent->sourceid,
+							devEvent->event_x,
+							devEvent->event_y);
 					//do_something(ev.xcookie.data);
 					break;
 
