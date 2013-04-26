@@ -48,6 +48,9 @@ extern "C" {
 #define CALLBACK_TYPE_CONNECTED			0x02
 #define CALLBACK_TYPE_DISCONNECTED		0x03
 
+// System menu constants
+#define SMARTSIZING_SYS_MENU_ID			1000
+
 struct wf_bitmap
 {
 	rdpBitmap _bitmap;
@@ -132,6 +135,19 @@ struct wf_info
 
 	// Keep track of window size and position, disable when in fullscreen mode.
 	BOOL disablewindowtracking; 
+
+    // These variables are required for horizontal scrolling. 
+	BOOL updating_scrollbars;
+	BOOL xScrollVisible;
+    int xMinScroll;       // minimum horizontal scroll value 
+    int xCurrentScroll;   // current horizontal scroll value 
+    int xMaxScroll;       // maximum horizontal scroll value 
+ 
+    // These variables are required for vertical scrolling. 
+	BOOL yScrollVisible;
+    int yMinScroll;       // minimum vertical scroll value 
+    int yCurrentScroll;   // current vertical scroll value 
+    int yMaxScroll;       // maximum vertical scroll value 
 };
 
 /**
@@ -141,6 +157,7 @@ struct wf_info
 #define cfInfo	wfInfo
 
 void wf_on_param_change(freerdp* instance, int id);
+void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height);
 
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
@@ -162,7 +179,7 @@ FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
 
 FREERDP_API int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename);
 FREERDP_API int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename);
-
+	
 #ifdef __cplusplus
 }
 #endif

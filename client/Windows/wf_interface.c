@@ -430,7 +430,7 @@ BOOL wf_post_connect(freerdp* instance)
 	UpdateWindow(wfi->hwnd);
 
 	if (wfi->sw_gdi)
-	{
+	{											
 		instance->update->BeginPaint = wf_sw_begin_paint;
 		instance->update->EndPaint = wf_sw_end_paint;
 		instance->update->DesktopResize = wf_sw_desktop_resize;
@@ -1023,4 +1023,103 @@ int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename)
 	}
 
 	return 0;
+}
+
+
+void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
+{
+	if (wfi->disablewindowtracking == TRUE)
+	{
+		return;
+	}
+
+
+	// prevent infinite message loop
+	wfi->disablewindowtracking = TRUE;
+
+	if (wfi->instance->settings->SmartSizing && (wfi->xScrollVisible || wfi->yScrollVisible))
+	{
+		wfi->xScrollVisible = FALSE;
+		wfi->yScrollVisible = FALSE;
+		ShowScrollBar(wfi->hwnd, SB_BOTH, FALSE);
+	}
+	else
+	{
+		SCROLLINFO si;
+		BOOL horiz = wfi->xScrollVisible;
+		BOOL vert = wfi->yScrollVisible;;
+
+		if (!horiz && client_width < wfi->instance->settings->DesktopWidth)
+		{
+			horiz = TRUE;		
+		}
+		else if (horiz && client_width >= wfi->instance->settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
+		{
+			horiz = FALSE;		
+		}
+
+		if (!vert && client_height < wfi->instance->settings->DesktopHeight)
+		{
+			vert = TRUE;
+		}
+		else if (vert && client_height >= wfi->instance->settings->DesktopHeight/* - GetSystemMetrics(SM_CYHSCROLL)*/)
+		{
+			vert = FALSE;
+		}
+
+		if (horiz == vert && (horiz != wfi->xScrollVisible && vert != wfi->yScrollVisible))
+		{
+			ShowScrollBar(wfi->hwnd, SB_BOTH, horiz);
+			wfi->xScrollVisible = horiz;
+			wfi->yScrollVisible = vert;
+		}
+
+		if (horiz != wfi->xScrollVisible)
+		{
+			ShowScrollBar(wfi->hwnd, SB_HORZ, horiz);
+			wfi->xScrollVisible = horiz;
+		}
+
+		if (vert != wfi->yScrollVisible)
+		{
+			ShowScrollBar(wfi->hwnd, SB_VERT, vert);
+			wfi->yScrollVisible = vert;
+		}
+
+		if (horiz)
+		{
+			// The horizontal scrolling range is defined by 
+			// (bitmap_width) - (client_width). The current horizontal 
+			// scroll value remains within the horizontal scrolling range. 
+			wfi->xMaxScroll = MAX(wfi->instance->settings->DesktopWidth - client_width, 0); 
+			wfi->xCurrentScroll = MIN(wfi->xCurrentScroll, wfi->xMaxScroll); 
+			si.cbSize = sizeof(si); 
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.nMin   = wfi->xMinScroll; 
+			si.nMax   = wfi->instance->settings->DesktopWidth; 
+			si.nPage  = client_width; 
+			si.nPos   = wfi->xCurrentScroll; 
+			SetScrollInfo(wfi->hwnd, SB_HORZ, &si, TRUE); 
+		}
+
+		if (vert)
+		{
+			// The vertical scrolling range is defined by 
+			// (bitmap_height) - (client_height). The current vertical 
+			// scroll value remains within the vertical scrolling range. 
+			wfi->yMaxScroll = MAX(wfi->instance->settings->DesktopHeight - client_height, 0); 
+			wfi->yCurrentScroll = MIN(wfi->yCurrentScroll, wfi->yMaxScroll); 
+			si.cbSize = sizeof(si); 
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.nMin   = wfi->yMinScroll; 
+			si.nMax   = wfi->instance->settings->DesktopHeight; 
+			si.nPage  = client_height; 
+			si.nPos   = wfi->yCurrentScroll; 
+			SetScrollInfo(wfi->hwnd, SB_VERT, &si, TRUE); 
+		}
+
+		wfi->disablewindowtracking = FALSE;
+		wf_update_canvas_diff(wfi);
+	}
+		
 }

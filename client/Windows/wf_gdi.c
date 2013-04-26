@@ -195,6 +195,11 @@ void wf_scale_rect(wfInfo* wfi, RECT* source)
 		source->left = MIN(source->left - 2, MAX(0, source->left * ww / dw - 2));
 		source->right = MIN(source->right + 2, MAX(0, source->right * ww / dw + 2));
 	}
+
+	source->bottom -= wfi->yCurrentScroll; 
+	source->top -= wfi->yCurrentScroll;
+	source->left -= wfi->xCurrentScroll;
+	source->right -= wfi->xCurrentScroll;
 }
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
@@ -303,11 +308,12 @@ void wf_resize_window(wfInfo* wfi)
 
 		if (!wfi->client_y)
 			wfi->client_y = 10;
-
+		
 		wf_update_canvas_diff(wfi);
 
 		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfi->hwnd, HWND_TOP, wfi->client_x, wfi->client_y, wfi->client_width + wfi->diff.x, wfi->client_height + wfi->diff.y, SWP_FRAMECHANGED);
+		SetWindowPos(wfi->hwnd, HWND_TOP, wfi->client_x, wfi->client_y, wfi->client_width + wfi->diff.x, wfi->client_height + wfi->diff.y, 0 /*SWP_FRAMECHANGED*/);
+		//wf_size_scrollbars(wfi,  wfi->client_width, wfi->client_height);
 	}
 	wf_update_offset(wfi);
 }
