@@ -257,27 +257,7 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 				contacts[i].pos_y = event->event_y;
 
 				//detect pinch-zoom
-				if(active_contacts == 2)
-				{
-					int j = 0;
-
-
-					//find the other nonzero contact
-					for(j=0; j<MAX_CONTACTS; j++)
-					{
-						if( (contacts[j].id != 0) && (contacts[j].id != contacts[i].id) )
-						{
-							double delta;
-							//now compute the delta
-							delta = sqrt(pow(contacts[j].pos_x - contacts[i].last_x, 2.0) +
-									pow(contacts[j].pos_y - contacts[i].last_y, 2.0));
-
-							printf("delta = %.2f\n", delta);
-
-							break;
-						}
-					}
-				}
+				xf_input_detect_pinch();
 
 				break;
 			}
