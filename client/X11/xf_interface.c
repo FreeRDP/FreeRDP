@@ -154,68 +154,6 @@ int up_scale_image(
     return 1;
 }
 
-/*
-void testXI(rdpContext* context)
-{
-	int major = 2, minor = 2;
-	xfInfo*			xfi;
-
-	XIDeviceInfo *info;
-	int ndevices, i, j;
-
-	XIEventMask eventmask;
-	unsigned char mask[1] = { 0 };
-
-	xfi = ((xfContext*) context)->xfi;
-
-
-	XIQueryVersion(xfi->display, &major, &minor);
-	if (major * 1000 + minor < 2002)
-	{
-	    printf("Server does not support XI 2.2\n");
-	    return;
-	}
-
-	printf("XI supported\n");
-
-
-
-	info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
-
-	for (i = 0; i < ndevices; i++)
-	{
-	    XIDeviceInfo *dev = &info[i];
-	    printf("Device name [id] %s [%d]\n", dev->name, dev->deviceid);
-	    for (j = 0; j < dev->num_classes; j++)
-	    {
-	        XIAnyClassInfo *class = dev->classes[j];
-	        XITouchClassInfo *t = (XITouchClassInfo*)class;
-
-	        if (class->type != XITouchClass)
-	            continue;
-
-	        printf("%s touch device, supporting %d touches.\n",
-	               (t->mode == XIDirectTouch) ?  "direct" : "dependent",
-	               t->num_touches);
-	    }
-	}
-
-	////////////////////
-
-	eventmask.deviceid = 13;
-	eventmask.mask_len = sizeof(mask);
-	eventmask.mask = mask;
-
-	XISetMask(mask, XI_TouchBegin);
-	XISetMask(mask, XI_TouchUpdate);
-	XISetMask(mask, XI_TouchEnd);
-
-	XISelectEvents(xfi->display, xfi->window, &eventmask, 1);
-
-	printf("Should now be able to get touch events\n");
-
-}
-*/
 
 
 void xf_context_new(freerdp* instance, rdpContext* context)
