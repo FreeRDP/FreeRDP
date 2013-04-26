@@ -109,6 +109,8 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 	//handle touch events
 	XGenericEventCookie* cookie = &event->xcookie;
 
+	printf("event: %p\n", event);
+
 	XGetEventData(xfi->display, cookie);
 
 	if (	(cookie->type == GenericEvent) &&
@@ -163,6 +165,11 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 								event->detail,
 								event->event_x,
 								event->event_y);
+
+	printf("state: a=%d", active_contacts);
+	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
+	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+
 
 }
 void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
