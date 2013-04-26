@@ -81,6 +81,14 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
+ * Method:    freerdp_set_drive_redirection
+ * Signature: (ILjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
+  (JNIEnv *, jclass, jint, jstring);
+
+/*
+ * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_update_graphics
  * Signature: (ILandroid/graphics/Bitmap;IIII)Z
  */

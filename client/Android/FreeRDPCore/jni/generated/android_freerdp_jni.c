@@ -70,6 +70,12 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 	jni_freerdp_set_performance_flags(env, cls, instance, remotefx, disableWallpaper, disableFullWindowDrag, disableMenuAnimations, disableTheming, enableFontSmoothing, enableDesktopComposition);
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
+  (JNIEnv *env, jclass cls, jint inst, jstring path)
+{
+	jni_freerdp_set_drive_redirection(env, cls, inst, path);
+}
+
 JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(
 		JNIEnv *env, jclass cls, jint instance, jobject bitmap, jint x, jint y, jint width, jint height)
 {
