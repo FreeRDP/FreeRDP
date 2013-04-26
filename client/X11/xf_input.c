@@ -39,6 +39,7 @@ touchContact contacts[MAX_CONTACTS];
 int active_contacts;
 
 XIDeviceEvent lastEvent;
+double firstDist = -1.0;
 
 int xinput_opcode; //TODO: use this instead of xfi
 
@@ -65,6 +66,36 @@ void xf_input_save_last_event(XIDeviceEvent* event)
 	lastEvent.event_y = event->event_y;
 
 	return;
+}
+
+void xf_input_detect_pinch()
+{
+	double dist;
+	double zoom;
+
+	if(active_contacts != 2)
+	{
+		firstDist = -1.0;
+		return;
+	}
+
+	//first calculate the distance
+	dist = sqrt(pow(contacts[1].pos_x - contacts[0].last_x, 2.0) +
+			pow(contacts[1].pos_y - contacts[0].last_y, 2.0));
+
+
+	//if this is the first 2pt touch
+	if(firstDist > 0)
+	{
+		firstDist = dist;
+	}
+	else
+	{
+		//compare the current distance to the first one
+		zoom = (dist / firstDist) * 100.0;
+		printf("zoom %.2f%%\n", zoom);
+	}
+
 }
 
 void xf_input_init(xfInfo* xfi)
@@ -179,6 +210,7 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
 
+
 	//find an empty slot and save it
 	for(i=0; i<MAX_CONTACTS; i++)
 	{
@@ -196,6 +228,7 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 
 
 	////
+	/*
 	printf("\tTouchBegin (%d)  [%.2f,%.2f]\n",
 								event->detail,
 								event->event_x,
@@ -204,6 +237,8 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 	printf("state: a=%d time=%lu\n", active_contacts, event->time);
 	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
 	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+
+	*/
 
 }
 void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
@@ -224,7 +259,7 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 				//detect pinch-zoom
 				if(active_contacts == 2)
 				{
-					int j = 0;	printf("event: %p\n", event);
+					int j = 0;
 
 
 					//find the other nonzero contact
@@ -248,7 +283,7 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 			}
 		}
 
-
+	/*
 	printf("\tTouchUpdate (%d)  [%.2f,%.2f]\n",
 								event->detail,
 								event->event_x,
@@ -257,6 +292,8 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 	printf("state: a=%d time=%lu\n", active_contacts, event->time);
 	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
 	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+	*/
+
 }
 void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 {
@@ -279,7 +316,7 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 
 
 
-
+	/*
 	printf("\tTouchEnd (%d)  [%.2f,%.2f]\n",
 								event->detail,
 								event->event_x,
@@ -288,5 +325,6 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 	printf("state: a=%d time=%lu\n", active_contacts, event->time);
 	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
 	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+	*/
 }
 
