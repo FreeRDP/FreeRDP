@@ -148,22 +148,27 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 				case XI_TouchBegin:
 					if(xf_input_is_duplicate(cookie->data) == FALSE)
 						xf_input_touch_begin(xfi, cookie->data);
+					xf_input_save_last_event(cookie->data);
 					break;
 
 				case XI_TouchUpdate:
 					if(xf_input_is_duplicate(cookie->data) == FALSE)
 						xf_input_touch_update(xfi, cookie->data);
+					xf_input_save_last_event(cookie->data);
 					break;
 
 				case XI_TouchEnd:
 					if(xf_input_is_duplicate(cookie->data) == FALSE)
 						xf_input_touch_end(xfi, cookie->data);
+					xf_input_save_last_event(cookie->data);
 					break;
 
 				default:
 					printf("unhandled xi type= %d\n", cookie->evtype);
 					break;
 			}
+
+
 		}
 
 
