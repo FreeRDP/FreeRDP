@@ -85,7 +85,7 @@ void xf_input_detect_pinch()
 
 
 	//if this is the first 2pt touch
-	if(firstDist > 0)
+	if(firstDist <= 0)
 	{
 		firstDist = dist;
 	}
