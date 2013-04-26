@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <locale.h>
 #include <sys/select.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/channels/channels.h>
@@ -28,11 +27,12 @@
 #include <freerdp/locale/keyboard.h>
 
 #include <android/bitmap.h>
-#include <machine/cpu-features.h>
 
 #include "android_freerdp.h"
 #include "android_jni_callback.h"
+#include "android_jni_utils.h"
 #include "android_debug.h"
+#include "android_cliprdr.h"
 
 struct thread_data
 {
@@ -143,10 +143,7 @@ BOOL android_post_connect(freerdp* instance)
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
 
-	//ai->rail = rail_new(instance->settings);
-	//instance->update->rail = (void*) ai->rail;
-	//rail_register_update_callbacks(xfi->rail, instance->update);
-	//android_rail_register_callbacks(xfi, xfi->rail);
+	android_cliprdr_init(instance);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
@@ -155,74 +152,6 @@ BOOL android_post_connect(freerdp* instance)
 
 	return TRUE;
 }
-
-jobject create_string_builder(JNIEnv *env, char* initialStr)
-{
-	jclass cls;
-	jmethodID methodId;
-	jobject obj;
-
-	// get class
-	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
-	if(!cls)
-		return NULL;
-
-	if(initialStr)
-	{
-		// get method id for constructor
-		methodId = (*env)->GetMethodID(env, cls, "<init>", "(Ljava/lang/String;)V");
-		if(!methodId)
-			return NULL;
-
-		// create string that holds our initial string
-		jstring jstr = (*env)->NewStringUTF(env, initialStr);
-
-		// construct new StringBuilder
-		obj = (*env)->NewObject(env, cls, methodId, jstr);
-	}
-	else
-	{
-		// get method id for constructor
-		methodId = (*env)->GetMethodID(env, cls, "<init>", "()V");
-		if(!methodId)
-			return NULL;
-
-		// construct new StringBuilder
-		obj = (*env)->NewObject(env, cls, methodId);
-	}
-
-	return obj;
-}
-
-char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
-{
-	jclass cls;
-	jmethodID methodId;
-	jstring strObj;
-	const jbyte* native_str;
-	char* result;
-
-	// get class
-	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
-	if(!cls)
-		return NULL;
-
-	// get method id for constructor
-	methodId = (*env)->GetMethodID(env, cls, "toString", "()Ljava/lang/String;");
-	if(!methodId)
-		return NULL;
-
-	// get jstring representation of our buffer
-	strObj = (*env)->CallObjectMethod(env, strBuilder, methodId);
-
-	// read string
-	native_str = (*env)->GetStringUTFChars(env, strObj, NULL);
-	result = strdup(native_str);
-	(*env)->ReleaseStringUTFChars(env, strObj, native_str);
-
-	return result;
-}
-
 
 BOOL android_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
@@ -291,19 +220,6 @@ BOOL android_verify_changed_certificate(freerdp* instance, char* subject, char* 
 	return android_verify_certificate(instance, subject, issuer, new_fingerprint);
 }
 
-
-/*
-int xf_process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
-{
-	rdpChanMan* chanman = (rdpChanMan*) user_data;
-
-	printf("loading plugin %s\n", name);
-	freerdp_chanman_load_plugin(chanman, settings, name, plugin_data);
-
-	return 1;
-}
-*/
-
 int android_receive_channel_data(freerdp* instance, int channelId, UINT8* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
@@ -317,25 +233,16 @@ void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 	if (event)
 	{
-/*		switch (event->event_class)
+		switch(GetMessageClass(event->id))
 		{
-			case RailChannel_Class:
-				xf_process_rail_event(ai, chanman, event);
+			case CliprdrChannel_Class:
+				android_process_cliprdr_event(instance, event);
 				break;
 
 			default:
 				break;
 		}
 
-		switch (event->event_type)
-		{
-			case RDP_EVENT_TYPE_CB_SYNC:
-				android_process_cb_sync_event(chanman, instance);
-				break;
-			default:
-				break;
-		}
-*/
 		freerdp_event_free(event);
 	}
 }
@@ -437,6 +344,7 @@ int android_freerdp_run(freerdp* instance)
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 	cache_free(instance->context->cache);
+	android_cliprdr_uninit(instance);
 	freerdp_callback("OnDisconnected", "(I)V", instance);
 
 	return 0;
@@ -454,20 +362,6 @@ void* android_thread_func(void* param)
 	pthread_detach(pthread_self());
 
 	return NULL;
-}
-
-jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-
-	DEBUG_ANDROID("JNI_OnLoad");
-
-	jint res = init_callback_environment(vm);
-
-	setlocale(LC_ALL, "");
-
-	freerdp_channels_global_init();
-
-	return res;
 }
 
 JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
@@ -657,7 +551,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 {
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
-
+	
 	DEBUG_ANDROID("remotefx: %d", (remotefx == JNI_TRUE) ? 1 : 0);
 	if (remotefx == JNI_TRUE)
 	{
@@ -746,6 +640,16 @@ JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls
 	settings->DeviceRedirection = TRUE;
 
 	(*env)->ReleaseStringUTFChars(env, jpath, path);
+}
+
+JNIEXPORT void JNICALL jni_freerdp_set_clipboard_redirection(JNIEnv *env, jclass cls, jint instance, jboolean enable)
+{
+	freerdp* inst = (freerdp*)instance;
+	rdpSettings * settings = inst->settings;
+
+	DEBUG_ANDROID("clipboard redirect: %s", enable ? "TRUE" : "FALSE");
+
+	settings->RedirectClipboard = enable ? TRUE : FALSE;
 }
 
 void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp)
@@ -858,6 +762,22 @@ JNIEXPORT void JNICALL jni_freerdp_send_cursor_event(
 	android_push_event(inst, event);
 
 	DEBUG_ANDROID("send_cursor_event: (%d, %d), %d", x, y, flags);
+}
+
+JNIEXPORT void JNICALL jni_freerdp_send_clipboard_data(JNIEnv *env, jclass cls, jint instance, jstring jdata)
+{
+	ANDROID_EVENT* event;
+	freerdp* inst = (freerdp*)instance;
+	const jbyte *data = jdata != NULL ? (*env)->GetStringUTFChars(env, jdata, NULL) : NULL;
+	int data_length = data ? strlen(data) : 0;      
+
+	event = (ANDROID_EVENT*) android_event_clipboard_new((void*)data, data_length);
+	android_push_event(inst, event);
+
+	DEBUG_ANDROID("send_clipboard_data: (%s)", data);
+
+	if (data)
+		(*env)->ReleaseStringUTFChars(env, jdata, data);
 }
 
 JNIEXPORT jstring JNICALL jni_freerdp_get_version(JNIEnv *env, jclass cls)

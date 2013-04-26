@@ -70,6 +70,12 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 	jni_freerdp_set_performance_flags(env, cls, instance, remotefx, disableWallpaper, disableFullWindowDrag, disableMenuAnimations, disableTheming, enableFontSmoothing, enableDesktopComposition);
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1clipboard_1redirection
+  (JNIEnv *env, jclass cls, jint inst, jboolean enable)
+{
+	jni_freerdp_set_clipboard_redirection(env, cls, inst, enable);
+}
+
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
   (JNIEnv *env, jclass cls, jint inst, jstring path)
 {
@@ -98,6 +104,12 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
   (JNIEnv *env, jclass cls, jint instance, jint keycode)
 {
 	jni_freerdp_send_unicodekey_event(env, cls, instance, keycode);
+}
+
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
+  (JNIEnv *env, jclass cls, jint instance, jstring data)
+{	
+	jni_freerdp_send_clipboard_data(env, cls, instance, data);
 }
 
 JNIEXPORT jstring JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1get_1version(JNIEnv *env, jclass cls)
