@@ -42,6 +42,31 @@ XIDeviceEvent lastEvent;
 
 int xinput_opcode; //TODO: use this instead of xfi
 
+BOOL xf_input_is_duplicate(XIDeviceEvent* event)
+{
+	if( (lastEvent.time == event->time) &&
+			(lastEvent.detail == event->detail) &&
+			(lastEvent.event_x == event->event_x) &&
+			(lastEvent.event_y == event->event_y) )
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void xf_input_save_last_event(XIDeviceEvent* event)
+{
+	//only save what we care about
+
+	lastEvent.time = event->time;
+	lastEvent.detail = event->detail;
+	lastEvent.event_x = event->event_x;
+	lastEvent.event_y = event->event_y;
+
+	return;
+}
+
 void xf_input_init(xfInfo* xfi)
 {
 	int opcode, event, error;
@@ -121,15 +146,18 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 			switch(cookie->evtype)
 			{
 				case XI_TouchBegin:
-					xf_input_touch_begin(xfi, cookie->data);
+					if(xf_input_is_duplicate(cookie->data) == FALSE)
+						xf_input_touch_begin(xfi, cookie->data);
 					break;
 
 				case XI_TouchUpdate:
-					xf_input_touch_update(xfi, cookie->data);
+					if(xf_input_is_duplicate(cookie->data) == FALSE)
+						xf_input_touch_update(xfi, cookie->data);
 					break;
 
 				case XI_TouchEnd:
-					xf_input_touch_end(xfi, cookie->data);
+					if(xf_input_is_duplicate(cookie->data) == FALSE)
+						xf_input_touch_end(xfi, cookie->data);
 					break;
 
 				default:
@@ -168,10 +196,9 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 								event->event_x,
 								event->event_y);
 
-	printf("state: a=%d time=%lu", active_contacts, event->time);
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
-
+	printf("state: a=%d time=%lu\n", active_contacts, event->time);
+	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
+	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
 
 }
 void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
@@ -222,9 +249,9 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 								event->event_x,
 								event->event_y);
 
-	printf("state: a=%d time=%lu", active_contacts, event->time);
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+	printf("state: a=%d time=%lu\n", active_contacts, event->time);
+	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
+	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
 }
 void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 {
@@ -253,8 +280,8 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 								event->event_x,
 								event->event_y);
 
-	printf("state: a=%d time=%lu", active_contacts, event->time);
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
-	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
+	printf("state: a=%d time=%lu\n", active_contacts, event->time);
+	printf("c0=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[0].id, contacts[0].count,contacts[0].pos_x, contacts[0].pos_y, contacts[0].last_x, contacts[0].last_y );
+	printf("c1=[%d, %d, %.2f, %.2f, %.2f, %.2f]\n", contacts[1].id, contacts[1].count,contacts[1].pos_x, contacts[1].pos_y, contacts[1].last_x, contacts[1].last_y );
 }
 
