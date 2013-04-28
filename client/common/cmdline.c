@@ -50,6 +50,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
+	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<0,1,2...>", NULL, NULL, -1, NULL, "Select monitors to use" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
@@ -1091,6 +1092,24 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "workarea")
 		{
 			settings->Workarea = TRUE;
+		}
+		CommandLineSwitchCase(arg, "monitors")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char** p;
+				int i, count = 0;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				settings->NumMonitorIds = count;
+				settings->MonitorIds = (UINT32*) malloc(sizeof(UINT32) * settings->NumMonitorIds);
+
+				for (i = 0; i < settings->NumMonitorIds; i++)
+				{
+					settings->MonitorIds[i] = atoi(p[i]);
+				}
+			}
 		}
 		CommandLineSwitchCase(arg, "monitor-list")
 		{

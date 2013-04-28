@@ -83,9 +83,10 @@ int xf_list_monitors(xfInfo* xfi)
 
 BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 {
-	int i;
+	int i, j;
 	int nmonitors;
 	int primaryMonitor;
+	int vWidth, vHeight;
 	int maxWidth, maxHeight;
 	VIRTUAL_SCREEN* vscreen;
 
@@ -169,19 +170,24 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	nmonitors = 0;
 	primaryMonitor = 0;
 
-	vscreen->area.left = settings->DesktopPosX;
-	vscreen->area.right = MIN(settings->DesktopPosX + settings->DesktopWidth - 1, maxWidth);
-	vscreen->area.top = settings->DesktopPosY;
-	vscreen->area.bottom = MIN(settings->DesktopPosY + settings->DesktopHeight - 1, maxHeight);
-
 	for (i = 0; i < vscreen->nmonitors; i++)
 	{
-		if ((vscreen->monitors[i].area.left > vscreen->area.right) || (vscreen->monitors[i].area.right < vscreen->area.left) ||
-			(vscreen->monitors[i].area.top > vscreen->area.bottom) || (vscreen->monitors[i].area.bottom < vscreen->area.top))
-				continue;
+		if (settings->NumMonitorIds)
+		{
+			BOOL found = FALSE;
 
-		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left - settings->DesktopPosX;
-		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top - settings->DesktopPosY;
+			for (j = 0; j < settings->NumMonitorIds; j++)
+			{
+				if (settings->MonitorIds[j] == i)
+					found = TRUE;
+			}
+
+			if (!found)
+				continue;
+		}
+
+		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
+		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
 		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, settings->DesktopWidth);
 		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, settings->DesktopHeight);
 		settings->MonitorDefArray[nmonitors].is_primary = vscreen->monitors[i].primary;
@@ -191,6 +197,24 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	}
 
 	settings->MonitorCount = nmonitors;
+
+	vWidth = vHeight = 0;
+	settings->DesktopPosX = maxWidth - 1;
+	settings->DesktopPosY = maxHeight - 1;
+
+	for (i = 0; i < settings->MonitorCount; i++)
+	{
+		settings->DesktopPosX = MIN(settings->DesktopPosX, settings->MonitorDefArray[i].x);
+		settings->DesktopPosY = MIN(settings->DesktopPosY, settings->MonitorDefArray[i].y);
+
+		vWidth += settings->MonitorDefArray[i].width;
+		vHeight = MAX(vHeight, settings->MonitorDefArray[i].height);
+	}
+
+	vscreen->area.left = 0;
+	vscreen->area.right = vWidth - 1;
+	vscreen->area.top = 0;
+	vscreen->area.bottom = vHeight - 1;
 
 	if (nmonitors && !primaryMonitor)
 		settings->MonitorDefArray[0].is_primary = TRUE;

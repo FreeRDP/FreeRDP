@@ -140,9 +140,11 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, BOOL fullscreen)
 {
 	if (fullscreen)
 	{
+		rdpSettings* settings = xfi->instance->settings;
+
 		xf_SetWindowDecorations(xfi, window, FALSE);
 
-                XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
+		XMoveResizeWindow(xfi->display, window->handle, settings->DesktopPosX, settings->DesktopPosY, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
 
 		window->fullscreen = TRUE;
@@ -495,9 +497,13 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		 */
 
 		if (xfi->instance->settings->RemoteApplicationMode)
+		{
                         XMoveWindow(xfi->display, window->handle, 0, 0);
+		}
 		else if (settings->DesktopPosX || settings->DesktopPosY)
+		{
 			XMoveWindow(xfi->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
+		}
 	}
 
 	xf_SetWindowText(xfi, window, name);

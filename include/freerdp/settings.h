@@ -812,7 +812,9 @@ struct rdp_settings
 	ALIGN64 UINT32 DesktopPosX; /* 390 */
 	ALIGN64 UINT32 DesktopPosY; /* 391 */
 	ALIGN64 BOOL ListMonitors; /* 392 */
-	UINT64 padding0448[448 - 393]; /* 393 */
+	ALIGN64 UINT32* MonitorIds; /* 393 */
+	ALIGN64 UINT32 NumMonitorIds; /* 394 */
+	UINT64 padding0448[448 - 395]; /* 395 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
