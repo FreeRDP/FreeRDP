@@ -167,6 +167,28 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	if (!settings->Fullscreen && !settings->Workarea && !settings->UseMultimon)
 		return TRUE;
 
+	if ((settings->Fullscreen && !settings->UseMultimon && !settings->SpanMonitors) ||
+			(settings->Workarea && !settings->RemoteApplicationMode))
+	{
+		/* Select a single monitor */
+
+		if (settings->NumMonitorIds != 1)
+		{
+			settings->NumMonitorIds = 1;
+			settings->MonitorIds = (UINT32*) malloc(sizeof(UINT32) * settings->NumMonitorIds);
+			settings->MonitorIds[0] = 0;
+
+			for (i = 0; i < vscreen->nmonitors; i++)
+			{
+				if (vscreen->monitors[i].primary)
+				{
+					settings->MonitorIds[0] = i;
+					break;
+				}
+			}
+		}
+	}
+
 	nmonitors = 0;
 	primaryMonitor = 0;
 
@@ -215,6 +237,12 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	vscreen->area.right = vWidth - 1;
 	vscreen->area.top = 0;
 	vscreen->area.bottom = vHeight - 1;
+
+	if (settings->Workarea)
+	{
+		vscreen->area.top = xfi->workArea.y;
+		vscreen->area.bottom = (vHeight - (vHeight - (xfi->workArea.height + xfi->workArea.y))) - 1;
+	}
 
 	if (nmonitors && !primaryMonitor)
 		settings->MonitorDefArray[0].is_primary = TRUE;
