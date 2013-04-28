@@ -195,8 +195,6 @@ void xf_sw_end_paint(rdpContext* context)
 			w = gdi->primary->hdc->hwnd->invalid->w;
 			h = gdi->primary->hdc->hwnd->invalid->h;
 			
-			printf("sw1");
-
 			xf_lock_x11(xfi, FALSE);
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
@@ -225,7 +223,7 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				printf("sw2");
+				//here
 
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
@@ -309,8 +307,6 @@ void xf_hw_end_paint(rdpContext* context)
 			y = xfi->hdc->hwnd->invalid->y;
 			w = xfi->hdc->hwnd->invalid->w;
 			h = xfi->hdc->hwnd->invalid->h;
-
-			printf("hw1");
 			
 			xf_lock_x11(xfi, FALSE);
 
