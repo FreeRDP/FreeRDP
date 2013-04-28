@@ -37,6 +37,50 @@
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071 */
 
+int xf_list_monitors(xfInfo* xfi)
+{
+#ifdef WITH_XINERAMA
+	Display* display;
+	int i, nmonitors = 0;
+	int ignored, ignored2;
+	XineramaScreenInfo* screen = NULL;
+
+	display = XOpenDisplay(NULL);
+
+	if (XineramaQueryExtension(display, &ignored, &ignored2))
+	{
+		if (XineramaIsActive(display))
+		{
+			screen = XineramaQueryScreens(display, &nmonitors);
+
+			for (i = 0; i < nmonitors; i++)
+			{
+				printf("      %s [%d] %dx%d\t+%d+%d\n",
+				       (i == 0) ? "*" : " ", i,
+				       screen[i].width, screen[i].height,
+				       screen[i].x_org, screen[i].y_org);
+			}
+
+			XFree(screen);
+		}
+	}
+
+	XCloseDisplay(display);
+#else
+	Screen* screen;
+	Display* display;
+
+	display = XOpenDisplay(NULL);
+
+	screen = ScreenOfDisplay(display, DefaultScreen(display));
+	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
+
+	XCloseDisplay(display);
+#endif
+
+	return 0;
+}
+
 BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 {
 	int i;

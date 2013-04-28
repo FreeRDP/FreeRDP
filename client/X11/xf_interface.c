@@ -1560,6 +1560,11 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
+	if (settings->ListMonitors)
+	{
+		xf_list_monitors(xfi);
+	}
+
 	return xfi;
 }
 

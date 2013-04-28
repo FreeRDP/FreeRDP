@@ -48,8 +48,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<subtype id>", NULL, NULL, -1, NULL, "Keyboard subtype" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<function key count>", NULL, NULL, -1, NULL, "Keyboard function key count" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
-	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
-	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
+	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
+	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
+	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
 	{ "smart-sizing", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Scale remote desktop to window size" },
@@ -985,6 +986,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			printf("\n");
 		}
 
+		arg = CommandLineFindArgumentA(args, "monitor-list");
+
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			settings->ListMonitors = TRUE;
+		}
+
 		return COMMAND_LINE_STATUS_PRINT;
 	}
 
@@ -1083,6 +1091,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "workarea")
 		{
 			settings->Workarea = TRUE;
+		}
+		CommandLineSwitchCase(arg, "monitor-list")
+		{
+			settings->ListMonitors = TRUE;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{

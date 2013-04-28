@@ -811,7 +811,8 @@ struct rdp_settings
 	ALIGN64 BOOL ForceMultimon; /* 389 */
 	ALIGN64 UINT32 DesktopPosX; /* 390 */
 	ALIGN64 UINT32 DesktopPosY; /* 391 */
-	UINT64 padding0448[448 - 392]; /* 392 */
+	ALIGN64 BOOL ListMonitors; /* 392 */
+	UINT64 padding0448[448 - 393]; /* 393 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
