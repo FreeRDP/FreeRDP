@@ -21,6 +21,7 @@
 #define __XF_TSMF_H
 
 #include "xf_interface.h"
+#include "xfreerdp.h"
 
 void xf_tsmf_init(xfInfo* xfi, long xv_port);
 void xf_tsmf_uninit(xfInfo* xfi);

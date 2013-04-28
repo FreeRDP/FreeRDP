@@ -21,8 +21,7 @@ set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 include_directories(..)
 
 set(${MODULE_PREFIX}_SRCS
-	xfreerdp.c
-	xfreerdp.h)
+	xfreerdp.c)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

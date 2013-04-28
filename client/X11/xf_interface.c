@@ -74,6 +74,8 @@
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
 
+#include "xfreerdp.h"
+
 static long xv_port = 0;
 static const size_t password_size = 512;
 
@@ -1455,6 +1457,21 @@ int freerdp_client_stop(xfInfo* xfi)
 	}
 
 	return 0;
+}
+
+freerdp* freerdp_client_get_instance(cfInfo* cfi)
+{
+	return cfi->instance;
+}
+
+HANDLE freerdp_client_get_thread(cfInfo* cfi)
+{
+	return cfi->thread;
+}
+
+rdpClient* freerdp_client_get_interface(cfInfo* cfi)
+{
+	return cfi->client;
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)
