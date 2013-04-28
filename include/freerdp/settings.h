@@ -511,6 +511,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SpanMonitors					387
 #define FreeRDP_UseMultimon					388
 #define FreeRDP_ForceMultimon					389
+#define FreeRDP_DesktopPosX					390
+#define FreeRDP_DesktopPosY					391
 #define FreeRDP_MultitransportFlags				512
 #define FreeRDP_AlternateShell					640
 #define FreeRDP_ShellWorkingDirectory				641
@@ -807,7 +809,9 @@ struct rdp_settings
 	ALIGN64 BOOL SpanMonitors; /* 387 */
 	ALIGN64 BOOL UseMultimon; /* 388 */
 	ALIGN64 BOOL ForceMultimon; /* 389 */
-	UINT64 padding0448[448 - 390]; /* 390 */
+	ALIGN64 UINT32 DesktopPosX; /* 390 */
+	ALIGN64 UINT32 DesktopPosY; /* 391 */
+	UINT64 padding0448[448 - 392]; /* 392 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */

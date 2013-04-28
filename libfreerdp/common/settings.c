@@ -1245,6 +1245,14 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->MonitorDefArraySize;
 			break;
 
+		case FreeRDP_DesktopPosX:
+			return settings->DesktopPosX;
+			break;
+
+		case FreeRDP_DesktopPosY:
+			return settings->DesktopPosY;
+			break;
+
 		case FreeRDP_MultitransportFlags:
 			return settings->MultitransportFlags;
 			break;
@@ -1551,6 +1559,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_MonitorDefArraySize:
 			settings->MonitorDefArraySize = param;
+			break;
+
+		case FreeRDP_DesktopPosX:
+			settings->DesktopPosX = param;
+			break;
+
+		case FreeRDP_DesktopPosY:
+			settings->DesktopPosY = param;
 			break;
 
 		case FreeRDP_MultitransportFlags:

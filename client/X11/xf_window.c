@@ -394,9 +394,11 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 {
 	xfWindow* window;
 	XEvent xevent;
+	rdpSettings* settings;
 
 	window = (xfWindow*) malloc(sizeof(xfWindow));
 	ZeroMemory(window, sizeof(xfWindow));
+	settings = xfi->instance->settings;
 
 	if (window)
 	{
@@ -494,7 +496,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 
 		if (xfi->instance->settings->RemoteApplicationMode)
                         XMoveWindow(xfi->display, window->handle, 0, 0);
-
+		else if (settings->DesktopPosX || settings->DesktopPosY)
+			XMoveWindow(xfi->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
 	}
 
 	xf_SetWindowText(xfi, window, name);
