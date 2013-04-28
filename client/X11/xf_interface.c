@@ -438,6 +438,9 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	XFreePixmap(xfi->display, contents);
 
 	xf_unlock_x11(xfi, TRUE);
+
+	IFCALL(xfi->client->OnWindowStateChange, xfi->instance,
+	       xfi->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0);
 }
 
 void xf_lock_x11(xfInfo* xfi, BOOL display)
