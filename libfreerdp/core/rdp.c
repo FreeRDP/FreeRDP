@@ -490,7 +490,13 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 	stream_read_UINT32(s, rdp->errorInfo); /* errorInfo (4 bytes) */
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
+	{
+		rdpClient* client = rdp->instance->context->client;
+
 		rdp_print_errinfo(rdp->errorInfo);
+
+		IFCALL(client->OnErrorInfo, rdp->instance, rdp->errorInfo);
+	}
 
 	return TRUE;
 }
