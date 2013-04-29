@@ -25,6 +25,10 @@
 
 #ifndef _WIN32
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer);
 WINPR_API DWORD GetCurrentDirectoryW(DWORD nBufferLength, LPWSTR lpBuffer);
 
@@ -61,6 +65,11 @@ WINPR_API DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSi
 
 WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
 WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #ifdef UNICODE
 #define GetCurrentDirectory		GetCurrentDirectoryW

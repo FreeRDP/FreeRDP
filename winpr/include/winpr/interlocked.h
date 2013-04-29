@@ -25,6 +25,10 @@
 #include <winpr/wtypes.h>
 #include <winpr/platform.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _WIN32
 
 /* workaround for SLIST_ENTRY conflict */
@@ -171,6 +175,10 @@ WINPR_API VOID AppendTailList(PLIST_ENTRY ListHead, PLIST_ENTRY ListToAppend);
 
 WINPR_API VOID PushEntryList(PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry);
 WINPR_API PSINGLE_LIST_ENTRY PopEntryList(PSINGLE_LIST_ENTRY ListHead);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_INTERLOCKED_H */
 

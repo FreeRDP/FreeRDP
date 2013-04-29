@@ -83,6 +83,10 @@ typedef PVOID BCRYPT_SECRET_HANDLE;
 #define BCRYPT_PRIMITIVE_TYPE				L"PrimitiveType"
 #define BCRYPT_IS_KEYED_HASH				L"IsKeyedHash"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API NTSTATUS BCryptOpenAlgorithmProvider(BCRYPT_ALG_HANDLE* phAlgorithm,
 		LPCWSTR pszAlgId, LPCWSTR pszImplementation, ULONG dwFlags);
 
@@ -122,4 +126,7 @@ WINPR_API NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG c
 		VOID* pPaddingInfo, PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput,
 		ULONG cbOutput, ULONG* pcbResult, ULONG dwFlags);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* WINPR_BCRYPT_MEMORY_H */

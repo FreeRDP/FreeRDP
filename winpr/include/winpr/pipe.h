@@ -28,7 +28,15 @@
 
 #ifndef _WIN32
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
