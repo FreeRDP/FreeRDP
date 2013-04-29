@@ -53,6 +53,7 @@ if(WITH_CLIENT_INTERFACE)
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c cli/xfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp")
 endif()
 
 set(${MODULE_PREFIX}_LIBS
@@ -146,7 +147,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)
-    target_link_libraries(xfreerdp ${IPP_LIBRARY_LIST})
+    target_link_libraries(${MODULE_NAME} ${IPP_LIBRARY_LIST})
 endif()
 
 if(WITH_CLIENT_INTERFACE)

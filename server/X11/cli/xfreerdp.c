@@ -21,11 +21,11 @@
 #include "config.h"
 #endif
 
-#include "xf_peer.h"
-#include "xfreerdp.h"
+#include "xf_interface.h"
 
 int main(int argc, char* argv[])
 {
+	HANDLE thread;
 	xfServer* server;
 	DWORD dwExitCode;
 
@@ -38,9 +38,11 @@ int main(int argc, char* argv[])
 
 	freerdp_server_start(server);
 
-	WaitForSingleObject(server->thread, INFINITE);
+	thread = freerdp_server_get_thread(server);
 
-	GetExitCodeThread(server->thread, &dwExitCode);
+	WaitForSingleObject(thread, INFINITE);
+
+	GetExitCodeThread(thread, &dwExitCode);
 
 	freerdp_server_free(server);
 

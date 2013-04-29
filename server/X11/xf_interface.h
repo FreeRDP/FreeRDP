@@ -20,6 +20,8 @@
 #ifndef XFREERDP_SERVER_INTERFACE_H
 #define XFREERDP_SERVER_INTERFACE_H
 
+#include <winpr/crt.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
@@ -39,6 +41,8 @@ FREERDP_API int freerdp_server_global_uninit();
 
 FREERDP_API int freerdp_server_start(xfServer* server);
 FREERDP_API int freerdp_server_stop(xfServer* server);
+
+FREERDP_API HANDLE freerdp_server_get_thread(xfServer* server);
 
 FREERDP_API xfServer* freerdp_server_new(int argc, char** argv);
 FREERDP_API void freerdp_server_free(xfServer* server);

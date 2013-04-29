@@ -16,7 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "xfreerdp-server")
-set(MODULE_PREFIX "FREERDP_SERVER_X11")
+set(MODULE_PREFIX "FREERDP_SERVER_X11_CONTROL")
 
 include_directories(${X11_INCLUDE_DIRS})
 include_directories("../../winpr/tools/makecert")
@@ -30,10 +30,20 @@ set(${MODULE_PREFIX}_SRCS
 	xf_encode.h
 	xf_interface.c
 	xf_interface.h
-	xfreerdp.c
 	xfreerdp.h)
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if(WITH_SERVER_INTERFACE)
+	if(SERVER_INTERFACE_SHARED)
+		add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
+	else()
+		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	endif()
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+else()
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c)
+	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp-server")
+endif()
 
 set(XEXT_FEATURE_TYPE "RECOMMENDED")
 set(XEXT_FEATURE_PURPOSE "X11 extension")
@@ -106,7 +116,13 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+if(WITH_SERVER_INTERFACE)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+	add_subdirectory(cli)
+else()
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/X11")
 

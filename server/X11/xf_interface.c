@@ -117,7 +117,7 @@ int freerdp_server_start(xfServer* server)
 {
 	if (server->listener->Open(server->listener, NULL, 3389))
 	{
-		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) server, 0, NULL);
+		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_server_thread, (void*) server, 0, NULL);
 	}
 
 	return 0;
@@ -126,6 +126,11 @@ int freerdp_server_start(xfServer* server)
 int freerdp_server_stop(xfServer* server)
 {
 	return 0;
+}
+
+HANDLE freerdp_server_get_thread(xfServer* server)
+{
+	return server->thread;
 }
 
 xfServer* freerdp_server_new(int argc, char** argv)
