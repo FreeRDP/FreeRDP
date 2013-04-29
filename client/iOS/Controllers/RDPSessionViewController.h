@@ -57,6 +57,7 @@
     AdvancedKeyboardView* _advanced_keyboard_view;
     BOOL _advanced_keyboard_visible;
     BOOL _requesting_advanced_keyboard;
+    CGFloat _keyboard_height_delta;
     
     // delayed mouse move event sending
     NSTimer* _mouse_move_event_timer;

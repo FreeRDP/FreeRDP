@@ -1025,6 +1025,7 @@ void xf_window_free(xfInfo* xfi)
 	}
 
 	freerdp_clrconv_free(xfi->clrconv);
+	xfi->clrconv = NULL;
 
 	if (xfi->hdc)
 		gdi_DeleteDC(xfi->hdc);
@@ -1191,7 +1192,6 @@ void* xf_thread(void* param)
 
 	if (!status)
 	{
-		freerdp_client_free(xfi);
 		exit_code = XF_EXIT_CONN_FAILED;
 		ExitThread(exit_code);
 	}
@@ -1517,6 +1517,13 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 
 	status = freerdp_client_parse_command_line_arguments(instance->context->argc,
 				instance->context->argv, settings);
+	if (status < 0)
+	{
+		freerdp_context_free(xfi->instance);
+		freerdp_free(xfi->instance);
+		free(xfi);
+		return NULL;
+	}
 
 	if (settings->ConnectionFile)
 	{
