@@ -76,15 +76,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-if(NOT DEFINED WITH_CLIENT_INTERFACE)
-	set(WITH_CLIENT_INTERFACE ON)
-endif()
-
-if(NOT DEFINED WITH_SERVER_INTERFACE)
-	set(WITH_SERVER_INTERFACE ON)
+	set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
@@ -245,6 +237,7 @@ if(ANDROID)
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+
 if(NOT IOS AND NOT ANDROID)
 	find_package(Threads REQUIRED)
 endif()
@@ -443,9 +436,10 @@ if(WITH_CHANNELS)
 endif()
 
 if (IOS)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "")
-set(CMAKE_OSX_SYSROOT "iphoneos")
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+	set(CMAKE_OSX_SYSROOT "iphoneos")
 endif()
+
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
@@ -476,7 +470,6 @@ if(NOT WIN32)
             set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "xfreerdp-server")
         endif()
     endif()
-
 
 endif()
 
@@ -556,10 +549,9 @@ set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Development")
 # problems when compiling freerdp/jni. To prevent this problem
 # we set the macros to "".
 if (ANDROID AND CMAKE_EXTRA_GENERATOR STREQUAL "Eclipse CDT4")
-  set(CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_DEFINED_MACROS "")
-  message(STATUS "Disabled CXX system defines for eclipse (workaround).")
+	set(CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_DEFINED_MACROS "")
+	message(STATUS "Disabled CXX system defines for eclipse (workaround).")
 endif()
 
-
-
 include(CPack)
+
