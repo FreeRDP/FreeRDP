@@ -81,6 +81,14 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
+ * Method:    freerdp_set_clipboard_redirection
+ * Signature: (IZ)V
+ */
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1clipboard_1redirection
+  (JNIEnv *, jclass, jint, jboolean);
+
+/*
+ * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_drive_redirection
  * Signature: (ILjava/lang/String;)V
  */
@@ -118,6 +126,14 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
  */
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1event
   (JNIEnv *, jclass, jint, jint);
+
+/*
+ * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
+ * Method:    freerdp_send_clipboard_data
+ * Signature: (ILjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
+  (JNIEnv *, jclass, jint, jstring);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
