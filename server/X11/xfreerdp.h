@@ -20,6 +20,12 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+#include "xf_interface.h"
+
+#include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/listener.h>
+
 #include <freerdp/codec/color.h>
 
 #ifdef WITH_XSHM
@@ -37,8 +43,6 @@
 #ifdef WITH_XDAMAGE
 #include <X11/extensions/Xdamage.h>
 #endif
-
-typedef struct xf_info xfInfo;
 
 struct xf_info
 {
@@ -69,5 +73,14 @@ struct xf_info
 	XserverRegion xdamage_region;
 #endif
 };
+
+struct xf_server
+{
+	DWORD port;
+	HANDLE thread;
+	freerdp_listener* listener;
+};
+
+void* xf_server_thread(void* param);
 
 #endif /* __XFREERDP_H */

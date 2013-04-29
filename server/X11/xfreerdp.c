@@ -21,97 +21,30 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <sys/select.h>
-#include <sys/signal.h>
-
 #include "xf_peer.h"
 #include "xfreerdp.h"
 
-void xf_server_main_loop(freerdp_listener* instance)
-{
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
-
-	ZeroMemory(rfds, sizeof(rfds));
-
-	while (1)
-	{
-		rcount = 0;
-
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
-		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
-			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				fprintf(stderr, "select failed\n");
-				break;
-			}
-		}
-
-		if (instance->CheckFileDescriptor(instance) != TRUE)
-		{
-			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
-			break;
-		}
-	}
-
-	instance->Close(instance);
-}
-
 int main(int argc, char* argv[])
 {
-	freerdp_listener* instance;
+	xfServer* server;
+	DWORD dwExitCode;
 
-	/* ignore SIGPIPE, otherwise an SSL_write failure could crash the server */
-	signal(SIGPIPE, SIG_IGN);
+	freerdp_server_global_init();
 
-	instance = freerdp_listener_new();
-	instance->PeerAccepted = xf_peer_accepted;
+	server = freerdp_server_new(argc, argv);
 
-	/* Open the server socket and start listening. */
-	if (instance->Open(instance, NULL, 3389))
-	{
-		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
-		xf_server_main_loop(instance);
-	}
+	if (!server)
+		return 0;
 
-	freerdp_listener_free(instance);
+	freerdp_server_start(server);
+
+	WaitForSingleObject(server->thread, INFINITE);
+
+	GetExitCodeThread(server->thread, &dwExitCode);
+
+	freerdp_server_free(server);
+
+	freerdp_server_global_uninit();
 
 	return 0;
 }
-

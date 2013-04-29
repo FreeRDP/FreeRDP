@@ -23,9 +23,15 @@ include_directories("../../winpr/tools/makecert")
 
 set(${MODULE_PREFIX}_SRCS
 	xf_peer.c
+	xf_peer.h
 	xf_input.c
+	xf_input.h
 	xf_encode.c
-	xfreerdp.c)
+	xf_encode.h
+	xf_interface.c
+	xf_interface.h
+	xfreerdp.c
+	xfreerdp.h)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
