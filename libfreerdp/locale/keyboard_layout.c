@@ -285,3 +285,28 @@ const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 
 	return "unknown";
 }
+
+DWORD freerdp_keyboard_get_layout_id_from_name(const char* name)
+{
+	int i;
+
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
+	{
+		if (strcmp(RDP_KEYBOARD_LAYOUT_TABLE[i].name, name) == 0)
+			return RDP_KEYBOARD_LAYOUT_TABLE[i].code;
+	}
+
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE); i++)
+	{
+		if (strcmp(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name, name) == 0)
+			return RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
+	}
+
+	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_IME_TABLE); i++)
+	{
+		if (strcmp(RDP_KEYBOARD_IME_TABLE[i].name, name) == 0)
+			return RDP_KEYBOARD_IME_TABLE[i].code;
+	}
+
+	return 0;
+}
