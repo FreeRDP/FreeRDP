@@ -26,6 +26,10 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 WINPR_API BYTE* NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash);
 
@@ -38,6 +42,10 @@ WINPR_API BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength,
 		LPWSTR Domain, UINT32 DomainLength, BYTE* NtHash);
 WINPR_API BYTE* NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength,
 		LPSTR Domain, UINT32 DomainLength, BYTE* NtHash);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef UNICODE
 #define NTOWFv1 		NTOWFv1W

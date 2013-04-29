@@ -49,6 +49,10 @@ typedef struct _OVERLAPPED_ENTRY
 	DWORD dwNumberOfBytesTransferred;
 } OVERLAPPED_ENTRY, *LPOVERLAPPED_ENTRY;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait);
 
 WINPR_API BOOL GetOverlappedResultEx(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, DWORD dwMilliseconds, BOOL bAlertable);
@@ -71,6 +75,10 @@ WINPR_API BOOL CancelIo(HANDLE hFile);
 WINPR_API BOOL CancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
 
 WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
