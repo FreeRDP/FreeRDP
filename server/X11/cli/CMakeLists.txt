@@ -24,7 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	xfreerdp.c)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp-server")
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp-server" RUNTIME_OUTPUT_DIRECTORY "..")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-server)
 
