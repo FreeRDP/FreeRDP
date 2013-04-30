@@ -568,6 +568,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
+
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	void* pfd;
@@ -609,6 +610,30 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 			rfds[*rcount] = pfd;
 			(*rcount)++;
 		}
+	}
+}
+
+void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
+{
+	events[*count] = tcp_get_event_handle(transport->TcpIn);
+	(*count)++;
+
+	if (transport->SplitInputOutput)
+	{
+		events[*count] = tcp_get_event_handle(transport->TcpOut);
+		(*count)++;
+	}
+
+	if (transport->ReceiveEvent)
+	{
+		events[*count] = transport->ReceiveEvent;
+		(*count)++;
+	}
+
+	if (transport->GatewayEvent)
+	{
+		events[*count] = transport->GatewayEvent;
+		(*count)++;
 	}
 }
 
@@ -763,22 +788,26 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[3];
-	HANDLE ReadEvent;
+	HANDLE events[32];
 	freerdp* instance;
 	rdpTransport* transport;
 
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
 
-	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, transport->TcpIn->sockfd);
+	/**
+	 * Ugly temporary hack to start thread after connection
+	 */
 
-	nCount = 0;
-	events[nCount++] = transport->stopEvent;
-	events[nCount++] = ReadEvent;
+	Sleep(2000);
 
 	while (1)
 	{
+		nCount = 0;
+		events[nCount++] = transport->stopEvent;
+
+		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
+
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
@@ -786,14 +815,9 @@ static void* transport_client_thread(void* arg)
 			break;
 		}
 
-		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
-		{
-			if (!freerdp_check_fds(instance))
-				break;
-		}
+		if (!freerdp_check_fds(instance))
+			break;
 	}
-
-	CloseHandle(ReadEvent);
 
 	return NULL;
 }

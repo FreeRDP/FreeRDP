@@ -273,6 +273,8 @@ WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 #endif
 
 WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
+WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor);
+
 WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 
 #ifdef __cplusplus

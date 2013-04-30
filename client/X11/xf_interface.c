@@ -106,9 +106,9 @@ void xf_sw_end_paint(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	gdi = context->gdi;
 
-	if (xfi->remote_app != TRUE)
+	if (!xfi->remote_app)
 	{
-		if (xfi->complex_regions != TRUE)
+		if (!xfi->complex_regions)
 		{
 			if (gdi->primary->hdc->hwnd->invalid->null)
 				return;
@@ -183,7 +183,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfi, TRUE);
 
-	if (xfi->fullscreen != TRUE)
+	if (!xfi->fullscreen)
 	{
 		rdpGdi* gdi = context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
@@ -293,7 +293,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfi, TRUE);
 
-	if (xfi->fullscreen != TRUE)
+	if (!xfi->fullscreen)
 	{
 		xfi->width = settings->DesktopWidth;
 		xfi->height = settings->DesktopHeight;
