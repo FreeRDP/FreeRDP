@@ -82,6 +82,12 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 	jni_freerdp_set_drive_redirection(env, cls, inst, path);
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1gateway_1info
+  (JNIEnv *env, jclass cls, jint inst, jstring hostname, jint port, jstring username, jstring password, jstring domain)
+{
+	jni_freerdp_set_gateway_info(env, cls, inst, hostname, port, username, password, domain);
+}
+
 JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(
 		JNIEnv *env, jclass cls, jint instance, jobject bitmap, jint x, jint y, jint width, jint height)
 {
