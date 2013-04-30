@@ -652,6 +652,37 @@ JNIEXPORT void JNICALL jni_freerdp_set_clipboard_redirection(JNIEnv *env, jclass
 	settings->RedirectClipboard = enable ? TRUE : FALSE;
 }
 
+JNIEXPORT void JNICALL jni_freerdp_set_gateway_info(JNIEnv *env, jclass cls, jint instance, jstring jgatewayhostname, jint port, 
+													jstring jgatewayusername, jstring jgatewaypassword, jstring jgatewaydomain)
+{
+	freerdp* inst = (freerdp*)instance;
+	rdpSettings * settings = inst->settings;
+
+	const jbyte *gatewayhostname = (*env)->GetStringUTFChars(env, jgatewayhostname, NULL);
+	const jbyte *gatewayusername = (*env)->GetStringUTFChars(env, jgatewayusername, NULL);
+	const jbyte *gatewaypassword = (*env)->GetStringUTFChars(env, jgatewaypassword, NULL);
+	const jbyte *gatewaydomain = (*env)->GetStringUTFChars(env, jgatewaydomain, NULL);
+
+	DEBUG_ANDROID("gatewayhostname: %s", (char*) gatewayhostname);
+	DEBUG_ANDROID("gatewayport: %d", port);
+	DEBUG_ANDROID("gatewayusername: %s", (char*) gatewayusername);
+	DEBUG_ANDROID("gatewaypassword: %s", (char*) gatewaypassword);
+	DEBUG_ANDROID("gatewaydomain: %s", (char*) gatewaydomain);
+
+	settings->GatewayHostname = strdup(gatewayhostname);
+	settings->GatewayPort     = port;
+	settings->GatewayUsername = strdup(gatewayusername);
+	settings->GatewayPassword = strdup(gatewaypassword);
+	settings->GatewayDomain = strdup(gatewaydomain);
+	settings->GatewayUsageMethod = TRUE;
+	settings->GatewayUseSameCredentials = FALSE;
+
+	(*env)->ReleaseStringUTFChars(env, jgatewayhostname, gatewayhostname);
+	(*env)->ReleaseStringUTFChars(env, jgatewayusername, gatewayusername);
+	(*env)->ReleaseStringUTFChars(env, jgatewaypassword, gatewaypassword);
+	(*env)->ReleaseStringUTFChars(env, jgatewaydomain, gatewaydomain);
+}
+
 void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp)
 {
 	int i, j;
@@ -737,7 +768,7 @@ JNIEXPORT void JNICALL jni_freerdp_send_key_event(
 
 	android_push_event(inst, event);
 
-	DEBUG_ANDROID("send_key_event: %d, %d", scancode, flags);
+	DEBUG_ANDROID("send_key_event: %d, %d", (int)scancode, flags);
 }
 
 JNIEXPORT void JNICALL jni_freerdp_send_unicodekey_event(

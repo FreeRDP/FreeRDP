@@ -586,7 +586,7 @@ void android_process_cliprdr_event(freerdp* inst, wMessage* event)
 			break;
 
 		default:
-			DEBUG_ANDROID("unknown event type %d", event->event_type);
+			DEBUG_ANDROID("unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 }
