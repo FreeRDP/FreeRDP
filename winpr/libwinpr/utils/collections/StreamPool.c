@@ -126,7 +126,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	{
 		s = pool->aArray[index];
 
-		if (s->capacity == size)
+		if (s->capacity >= size)
 		{
 			StreamPool_ShiftAvailable(pool, index, -1);
 			found = TRUE;
@@ -135,9 +135,14 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	}
 
 	if (!found)
+	{
 		s = Stream_New(NULL, size);
+	}
 	else
+	{
+		Stream_EnsureCapacity(s, size);
 		Stream_Pointer(s) = Stream_Buffer(s);
+	}
 
 	s->pool = pool;
 	s->count = 1;

@@ -26,10 +26,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/api.h>
 #include <freerdp/crypto/per.h>
-#include <winpr/stream.h>
 
 #include "orders.h"
 #include "update.h"
@@ -277,21 +277,34 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	return status;
 }
 
+const char* fastpath_get_fragmentation_string(BYTE fragmentation)
+{
+	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
+		return "FASTPATH_FRAGMENT_SINGLE";
+	else if (fragmentation == FASTPATH_FRAGMENT_LAST)
+		return "FASTPATH_FRAGMENT_LAST";
+	else if (fragmentation == FASTPATH_FRAGMENT_FIRST)
+		return "FASTPATH_FRAGMENT_FIRST";
+	else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
+		return "FASTPATH_FRAGMENT_NEXT";
+
+	return "FASTPATH_FRAGMENT_UNKNOWN";
+}
+
 static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 {
 	int status;
 	UINT16 size;
+	UINT32 roff;
+	UINT32 rlen;
+	rdpRdp* rdp;
 	int next_pos;
 	UINT32 totalSize;
 	BYTE updateCode;
 	BYTE fragmentation;
 	BYTE compression;
 	BYTE compressionFlags;
-	wStream* update_stream;
 	wStream* comp_stream;
-	rdpRdp* rdp;
-	UINT32 roff;
-	UINT32 rlen;
 
 	status = 0;
 	rdp = fastpath->rdp;
@@ -328,41 +341,106 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		}
 	}
 
-	update_stream = NULL;
-
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
 	{
-		totalSize = size;
-		update_stream = comp_stream;
-	}
-	else
-	{
-		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
-			Stream_SetPosition(fastpath->updateData, 0);
-
-		stream_check_size(fastpath->updateData, size);
-		stream_copy(fastpath->updateData, comp_stream, size);
-
-		if (Stream_GetPosition(fastpath->updateData) > rdp->settings->MultifragMaxRequestSize)
+		if (fastpath->fragmentation != -1)
 		{
-			fprintf(stderr, "fastpath PDU is bigger than MultifragMaxRequestSize\n");
+			fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_SINGLE\n");
 			return -1;
 		}
 
-		if (fragmentation == FASTPATH_FRAGMENT_LAST)
-		{
-			update_stream = fastpath->updateData;
-			totalSize = Stream_GetPosition(update_stream);
-			Stream_SetPosition(update_stream, 0);
-		}
-	}
-
-	if (update_stream)
-	{
-		status = fastpath_recv_update(fastpath, updateCode, totalSize, update_stream);
+		totalSize = size;
+		status = fastpath_recv_update(fastpath, updateCode, totalSize, comp_stream);
 
 		if (status < 0)
 			return -1;
+	}
+	else
+	{
+		rdpTransport* transport = fastpath->rdp->transport;
+
+		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
+		{
+			if (fastpath->fragmentation != -1)
+			{
+				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_FIRST\n");
+				return -1;
+			}
+
+			fastpath->fragmentation = FASTPATH_FRAGMENT_FIRST;
+
+			totalSize = size;
+
+			if (totalSize > transport->settings->MultifragMaxRequestSize)
+			{
+				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
+						totalSize, transport->settings->MultifragMaxRequestSize);
+				return -1;
+			}
+
+			fastpath->updateData = StreamPool_Take(transport->ReceivePool, size);
+			Stream_SetPosition(fastpath->updateData, 0);
+
+			Stream_Copy(fastpath->updateData, comp_stream, size);
+		}
+		else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
+		{
+			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
+					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
+			{
+				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_NEXT\n");
+				return -1;
+			}
+
+			fastpath->fragmentation = FASTPATH_FRAGMENT_NEXT;
+
+			totalSize = Stream_GetPosition(fastpath->updateData) + size;
+
+			if (totalSize > transport->settings->MultifragMaxRequestSize)
+			{
+				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
+						totalSize, transport->settings->MultifragMaxRequestSize);
+				return -1;
+			}
+
+			Stream_EnsureCapacity(fastpath->updateData, totalSize);
+
+			Stream_Copy(fastpath->updateData, comp_stream, size);
+		}
+		else if (fragmentation == FASTPATH_FRAGMENT_LAST)
+		{
+			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
+					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
+			{
+				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_LAST\n");
+				return -1;
+			}
+
+			fastpath->fragmentation = -1;
+
+			totalSize = Stream_GetPosition(fastpath->updateData) + size;
+
+			if (totalSize > transport->settings->MultifragMaxRequestSize)
+			{
+				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
+						totalSize, transport->settings->MultifragMaxRequestSize);
+				return -1;
+			}
+
+			Stream_EnsureCapacity(fastpath->updateData, totalSize);
+
+			Stream_Copy(fastpath->updateData, comp_stream, size);
+
+			Stream_SealLength(fastpath->updateData);
+			Stream_SetPosition(fastpath->updateData, 0);
+
+			status = fastpath_recv_update(fastpath, updateCode, totalSize, fastpath->updateData);
+
+			Stream_Release(fastpath->updateData);
+
+			if (status < 0)
+				return -1;
+		}
 	}
 
 	Stream_SetPosition(s, next_pos);
@@ -798,16 +876,22 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 	rdpFastPath* fastpath;
 
 	fastpath = (rdpFastPath*) malloc(sizeof(rdpFastPath));
-	ZeroMemory(fastpath, sizeof(rdpFastPath));
 
-	fastpath->rdp = rdp;
-	fastpath->updateData = stream_new(4096);
+	if (fastpath)
+	{
+		ZeroMemory(fastpath, sizeof(rdpFastPath));
+
+		fastpath->rdp = rdp;
+		fastpath->fragmentation = -1;
+	}
 
 	return fastpath;
 }
 
 void fastpath_free(rdpFastPath* fastpath)
 {
-	stream_free(fastpath->updateData);
-	free(fastpath);
+	if (fastpath)
+	{
+		free(fastpath);
+	}
 }

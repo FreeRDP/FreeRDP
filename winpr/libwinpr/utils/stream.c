@@ -29,9 +29,14 @@ void Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	if (s->capacity < size)
 	{
+		size_t position;
+
+		position = Stream_GetPosition(s);
+
 		s->capacity = size;
 		s->buffer = (BYTE*) realloc(s->buffer, size);
-		s->pointer = s->buffer;
+
+		Stream_SetPosition(s, position);
 	}
 }
 

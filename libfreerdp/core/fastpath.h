@@ -101,6 +101,7 @@ struct rdp_fastpath
 	BYTE encryptionFlags;
 	BYTE numberEvents;
 	wStream* updateData;
+	int fragmentation;
 };
 
 UINT16 fastpath_header_length(wStream* s);
