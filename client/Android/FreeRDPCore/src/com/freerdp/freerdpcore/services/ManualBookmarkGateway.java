@@ -39,12 +39,26 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 		ManualBookmark bm = (ManualBookmark)bookmark;
 		columns.put("hostname", bm.getHostname());
 		columns.put("port", bm.getPort());
+		
+		// gateway settings
+		columns.put("enable_gateway_settings", bm.getEnableGatewaySettings());
+		columns.put("gateway_hostname", bm.getGatewaySettings().getHostname());
+		columns.put("gateway_port", bm.getGatewaySettings().getPort());
+		columns.put("gateway_username", bm.getGatewaySettings().getUsername());
+		columns.put("gateway_password", bm.getGatewaySettings().getPassword());
+		columns.put("gateway_domain", bm.getGatewaySettings().getDomain());		
 	}
 
 	@Override
 	protected void addBookmarkSpecificColumns(ArrayList<String> columns) {
 		columns.add("hostname");
 		columns.add("port");
+		columns.add("enable_gateway_settings");
+		columns.add("gateway_hostname");
+		columns.add("gateway_port");
+		columns.add("gateway_username");
+		columns.add("gateway_password");
+		columns.add("gateway_domain");		
 	}
 	
 	@Override
@@ -52,8 +66,11 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 		ManualBookmark bm = (ManualBookmark)bookmark;
 		bm.setHostname(cursor.getString(cursor.getColumnIndex("hostname")));
 		bm.setPort(cursor.getInt(cursor.getColumnIndex("port")));
-	}
 
+		bm.setEnableGatewaySettings(cursor.getInt(cursor.getColumnIndex("enable_gateway_settings")) == 0 ? false : true);
+        readGatewaySettings(bm, cursor);
+    }
+	
 	public BookmarkBase findByLabelOrHostname(String pattern) 
 	{	
 		if(pattern.length() == 0)
@@ -84,4 +101,14 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 		cursor.close();	
 		return bookmarks;
 	}	
+	
+	private void readGatewaySettings(ManualBookmark bookmark, Cursor cursor) 
+	{
+        ManualBookmark.GatewaySettings gatewaySettings = bookmark.getGatewaySettings();
+        gatewaySettings.setHostname(cursor.getString(cursor.getColumnIndex("gateway_hostname")));
+        gatewaySettings.setPort(cursor.getInt(cursor.getColumnIndex("gateway_port")));
+        gatewaySettings.setUsername(cursor.getString(cursor.getColumnIndex("gateway_username")));
+        gatewaySettings.setPassword(cursor.getString(cursor.getColumnIndex("gateway_password")));
+        gatewaySettings.setDomain(cursor.getString(cursor.getColumnIndex("gateway_domain")));
+	}
 }
