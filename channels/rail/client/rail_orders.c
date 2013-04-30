@@ -90,7 +90,7 @@ void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_
 
 BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT16(s, *orderType); /* orderType (2 bytes) */
 	stream_read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
@@ -107,7 +107,7 @@ wStream* rail_pdu_init(int length)
 {
 	wStream* s;
 	s = stream_new(length + RAIL_PDU_HEADER_LENGTH);
-	stream_seek(s, RAIL_PDU_HEADER_LENGTH);
+	Stream_Seek(s, RAIL_PDU_HEADER_LENGTH);
 	return s;
 }
 
@@ -115,11 +115,11 @@ void rail_send_pdu(rdpRailOrder* rail_order, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
-	orderLength = stream_get_length(s);
-	stream_set_pos(s, 0);
+	orderLength = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
 
 	rail_write_pdu_header(s, orderType, orderLength);
-	stream_set_pos(s, orderLength);
+	Stream_SetPosition(s, orderLength);
 
 	/* send */
 	DEBUG_RAIL("Sending %s PDU, length:%d",
@@ -138,7 +138,7 @@ void rail_write_high_contrast(wStream* s, HIGH_CONTRAST* high_contrast)
 
 BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 	return TRUE;
@@ -146,12 +146,12 @@ BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 
 BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result)
 {
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 	stream_read_UINT16(s, exec_result->flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, exec_result->execResult); /* execResult (2 bytes) */
 	stream_read_UINT32(s, exec_result->rawResult); /* rawResult (4 bytes) */
-	stream_seek_UINT16(s); /* padding (2 bytes) */
+	Stream_Seek_UINT16(s); /* padding (2 bytes) */
 	return rail_read_unicode_string(s, &exec_result->exeOrFile); /* exeOrFile */
 }
 
@@ -159,7 +159,7 @@ BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
 
-	if (stream_get_left(s) < 5)
+	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
 	stream_read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 	stream_read_BYTE(s, body); /* body (1 byte) */
@@ -182,7 +182,7 @@ BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 
 BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
 {
-	if (stream_get_left(s) < 20)
+	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
 	stream_read_UINT32(s, minmaxinfo->windowId); /* windowId (4 bytes) */
 	stream_read_UINT16(s, minmaxinfo->maxWidth); /* maxWidth (2 bytes) */
@@ -199,7 +199,7 @@ BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmax
 BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* localmovesize)
 {
 	UINT16 isMoveSizeStart;
-	if (stream_get_left(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 	stream_read_UINT32(s, localmovesize->windowId); /* windowId (4 bytes) */
 
@@ -214,7 +214,7 @@ BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* 
 
 BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp)
 {
-	if (stream_get_left(s) < 516)
+	if (Stream_GetRemainingLength(s) < 516)
 		return FALSE;
 	stream_read_UINT32(s, get_appid_resp->windowId); /* windowId (4 bytes) */
 	stream_read(s, &get_appid_resp->applicationIdBuffer[0], 512); /* applicationId (256 UNICODE chars) */
@@ -226,7 +226,7 @@ BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER
 
 BOOL rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info)
 {
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, langbar_info->languageBarStatus); /* languageBarStatus (4 bytes) */
 	return TRUE;

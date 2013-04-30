@@ -63,7 +63,7 @@ static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityLength;
 
 	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output printer direction capability set */
@@ -78,7 +78,7 @@ static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityLength;
 
 	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output port redirection capability set */
@@ -93,7 +93,7 @@ static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityLength;
 
 	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output drive redirection capability set */
@@ -108,7 +108,7 @@ static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityLength;
 
 	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output smart card redirection capability set */
@@ -123,7 +123,7 @@ static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityLength;
 
 	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in)
@@ -133,7 +133,7 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 capabilityType;
 
 	stream_read_UINT16(data_in, numCapabilities);
-	stream_seek(data_in, 2); /* pad (2 bytes) */
+	Stream_Seek(data_in, 2); /* pad (2 bytes) */
 
 	for(i = 0; i < numCapabilities; i++)
 	{

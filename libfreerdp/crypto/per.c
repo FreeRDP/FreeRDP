@@ -34,14 +34,14 @@ BOOL per_read_length(wStream* s, UINT16* length)
 {
 	BYTE byte;
 
-	if (stream_get_left(s) < 1)
+	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, byte);
 
 	if (byte & 0x80)
 	{
-		if (stream_get_left(s) < 1)
+		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
 		byte &= ~(0x80);
@@ -80,7 +80,7 @@ void per_write_length(wStream* s, int length)
 
 BOOL per_read_choice(wStream* s, BYTE* choice)
 {
-	if (stream_get_left(s) < 1)
+	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, *choice);
@@ -107,7 +107,7 @@ void per_write_choice(wStream* s, BYTE choice)
 
 BOOL per_read_selection(wStream* s, BYTE* selection)
 {
-	if (stream_get_left(s) < 1)
+	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, *selection);
@@ -134,7 +134,7 @@ void per_write_selection(wStream* s, BYTE selection)
 
 BOOL per_read_number_of_sets(wStream* s, BYTE* number)
 {
-	if (stream_get_left(s) < 1)
+	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, *number);
@@ -160,10 +160,10 @@ void per_write_number_of_sets(wStream* s, BYTE number)
 
 BOOL per_read_padding(wStream* s, int length)
 {
-	if (stream_get_left(s) < length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	stream_seek(s, length);
+	Stream_Seek(s, length);
 	return TRUE;
 }
 
@@ -195,7 +195,7 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 	if (!per_read_length(s, &length))
 		return FALSE;
 
-	if (stream_get_left(s) < length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	if (length == 1)
@@ -243,7 +243,7 @@ void per_write_integer(wStream* s, UINT32 integer)
 
 BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 {
-	if (stream_get_left(s) < 2)
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	stream_read_UINT16_be(s, *integer);
@@ -278,7 +278,7 @@ void per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 
 BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
-	if (stream_get_left(s) < 1)
+	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, *enumerated);
@@ -322,7 +322,7 @@ BOOL per_read_object_identifier(wStream* s, BYTE oid[6])
 	if (length != 5)
 		return FALSE;
 
-	if (stream_get_left(s) < length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	stream_read_BYTE(s, t12); /* first two tuples */
@@ -399,11 +399,11 @@ BOOL per_read_octet_string(wStream* s, BYTE* oct_str, int length, int min)
 	if (mlength + min != length)
 		return FALSE;
 
-	if (stream_get_left(s) < length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	a_oct_str = s->pointer;
-	stream_seek(s, length);
+	Stream_Seek(s, length);
 
 	for (i = 0; i < length; i++)
 	{
@@ -453,10 +453,10 @@ BOOL per_read_numeric_string(wStream* s, int min)
 
 	length = (mlength + min + 1) / 2;
 
-	if (stream_get_left(s) < length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	stream_seek(s, length);
+	Stream_Seek(s, length);
 	return TRUE;
 }
 

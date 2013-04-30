@@ -262,14 +262,14 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	rdpsnd->NumberOfServerFormats = 0;
 	rdpsnd->ServerFormats = NULL;
 
-	stream_seek_UINT32(s); /* dwFlags */
-	stream_seek_UINT32(s); /* dwVolume */
-	stream_seek_UINT32(s); /* dwPitch */
-	stream_seek_UINT16(s); /* wDGramPort */
+	Stream_Seek_UINT32(s); /* dwFlags */
+	Stream_Seek_UINT32(s); /* dwVolume */
+	Stream_Seek_UINT32(s); /* dwPitch */
+	Stream_Seek_UINT16(s); /* wDGramPort */
 	stream_read_UINT16(s, wNumberOfFormats);
 	stream_read_BYTE(s, rdpsnd->cBlockNo); /* cLastBlockConfirmed */
 	stream_read_UINT16(s, wVersion); /* wVersion */
-	stream_seek_BYTE(s); /* bPad */
+	Stream_Seek_BYTE(s); /* bPad */
 
 	rdpsnd->NumberOfServerFormats = wNumberOfFormats;
 	rdpsnd->ServerFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) * wNumberOfFormats);
@@ -333,7 +333,7 @@ static void rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 B
 	stream_read_UINT16(s, rdpsnd->wTimeStamp);
 	stream_read_UINT16(s, wFormatNo);
 	stream_read_BYTE(s, rdpsnd->cBlockNo);
-	stream_seek(s, 3); /* bPad */
+	Stream_Seek(s, 3); /* bPad */
 	stream_read(s, rdpsnd->waveData, 4);
 
 	rdpsnd->waveDataSize = BodySize - 8;
@@ -402,7 +402,7 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	CopyMemory(stream_get_head(s), rdpsnd->waveData, 4);
 
 	data = stream_get_head(s);
-	size = stream_get_size(s);
+	size = Stream_Capacity(s);
 
 	wave = (RDPSND_WAVE*) malloc(sizeof(RDPSND_WAVE));
 
@@ -481,7 +481,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, wStream* s)
 	}
 
 	stream_read_BYTE(s, msgType); /* msgType */
-	stream_seek_BYTE(s); /* bPad */
+	Stream_Seek_BYTE(s); /* bPad */
 	stream_read_UINT16(s, BodySize);
 
 	//fprintf(stderr, "msgType %d BodySize %d\n", msgType, BodySize);

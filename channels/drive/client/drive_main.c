@@ -128,12 +128,12 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	UINT32 PathLength;
 
 	stream_read_UINT32(irp->input, DesiredAccess);
-	stream_seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
+	Stream_Seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
 	stream_read_UINT32(irp->input, CreateDisposition);
 	stream_read_UINT32(irp->input, CreateOptions);
 	stream_read_UINT32(irp->input, PathLength);
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
@@ -284,7 +284,7 @@ static void drive_process_irp_write(DRIVE_DEVICE* disk, IRP* irp)
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
@@ -302,7 +302,7 @@ static void drive_process_irp_write(DRIVE_DEVICE* disk, IRP* irp)
 
 		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
 	}
-	else if (!drive_file_write(file, stream_get_tail(irp->input), Length))
+	else if (!drive_file_write(file, Stream_Pointer(irp->input), Length))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
@@ -357,7 +357,7 @@ static void drive_process_irp_set_information(DRIVE_DEVICE* disk, IRP* irp)
 
 	stream_read_UINT32(irp->input, FsInformationClass);
 	stream_read_UINT32(irp->input, Length);
-	stream_seek(irp->input, 24); /* Padding */
+	Stream_Seek(irp->input, 24); /* Padding */
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
@@ -504,9 +504,9 @@ static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 	stream_read_UINT32(irp->input, FsInformationClass);
 	stream_read_BYTE(irp->input, InitialQuery);
 	stream_read_UINT32(irp->input, PathLength);
-	stream_seek(irp->input, 23); /* Padding */
+	Stream_Seek(irp->input, 23); /* Padding */
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)

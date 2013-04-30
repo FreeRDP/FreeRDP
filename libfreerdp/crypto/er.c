@@ -178,7 +178,7 @@ BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 
 	if (byte != ((ER_CLASS_CTXT | ER_PC(pc)) | (ER_TAG_MASK & tag)))
 	{
-		stream_rewind(s, 1);
+		Stream_Rewind(s, 1);
 		return FALSE;
 	}
 
@@ -355,7 +355,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 
 	if (value == NULL)
 	{
-		stream_seek(s, length);
+		Stream_Seek(s, length);
 		return TRUE;
 	}
 

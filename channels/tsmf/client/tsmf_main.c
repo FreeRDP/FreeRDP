@@ -89,8 +89,8 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	stream_write_UINT64(s, duration); /* DataDuration */
 	stream_write_UINT64(s, data_size); /* cbData */
 	
-	DEBUG_DVC("response size %d", (int) stream_get_length(s));
-	status = callback->channel->Write(callback->channel, stream_get_length(s), stream_get_head(s), NULL);
+	DEBUG_DVC("response size %d", (int) Stream_GetPosition(s));
+	status = callback->channel->Write(callback->channel, Stream_GetPosition(s), stream_get_head(s), NULL);
 
 	if (status)
 	{
@@ -139,7 +139,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	input = stream_new(0);
 	stream_attach(input, (BYTE*) pBuffer, cbSize);
 	output = stream_new(256);
-	stream_seek(output, 8);
+	Stream_Seek(output, 8);
 
 	stream_read_UINT32(input, InterfaceId);
 	stream_read_UINT32(input, MessageId);
@@ -181,8 +181,8 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			switch (FunctionId)
 			{
 				case SET_CHANNEL_PARAMS:
-					memcpy(callback->presentation_id, stream_get_tail(input), 16);
-					stream_seek(input, 16);
+					memcpy(callback->presentation_id, Stream_Pointer(input), 16);
+					Stream_Seek(input, 16);
 					stream_read_UINT32(input, callback->stream_id);
 					DEBUG_DVC("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
 					ifman.output_pending = TRUE;
@@ -317,8 +317,8 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	if (status == 0 && !ifman.output_pending)
 	{
 		/* Response packet does not have FunctionId */
-		length = stream_get_length(output);
-		stream_set_pos(output, 0);
+		length = Stream_GetPosition(output);
+		Stream_SetPosition(output, 0);
 		stream_write_UINT32(output, ifman.output_interface_id);
 		stream_write_UINT32(output, MessageId);
 

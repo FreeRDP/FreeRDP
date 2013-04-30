@@ -135,7 +135,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			if(stream_get_left(s) < 4)
+			if(Stream_GetRemainingLength(s) < 4)
 				return FALSE;
 			stream_read_UINT32(s, client->ack_frame_id);
 			break;
@@ -232,7 +232,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	fastpath_read_header_rdp(fastpath, s, &length);
 
-	if ((length == 0) || (length > stream_get_left(s)))
+	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
 		fprintf(stderr, "incorrect FastPath PDU header length %d\n", length);
 		return -1;
@@ -326,7 +326,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				 * During reactivation sequence the client might sent some input or channel data
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
-				stream_set_pos(s, 0);
+				Stream_SetPosition(s, 0);
 				return peer_recv_pdu(client, s);
 			}
 			break;

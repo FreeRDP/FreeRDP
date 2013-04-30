@@ -157,9 +157,9 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	stream_write_UINT16(data_out, RDPDR_CTYP_CORE);
 	stream_write_UINT16(data_out, PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-	count_pos = stream_get_pos(data_out);
+	count_pos = Stream_GetPosition(data_out);
 	count = 0;
-	stream_seek_UINT32(data_out); /* deviceCount */
+	Stream_Seek_UINT32(data_out); /* deviceCount */
 
 	for (item = rdpdr->devman->devices->head; item; item = item->next)
 	{
@@ -175,12 +175,12 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		if ((rdpdr->versionMinor == 0x0005) ||
 			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
 		{
-			data_len = (device->data == NULL ? 0 : stream_get_length(device->data));
+			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 			stream_check_size(data_out, 20 + data_len);
 
 			stream_write_UINT32(data_out, device->type); /* deviceType */
 			stream_write_UINT32(data_out, device->id); /* deviceID */
-			strncpy((char*) stream_get_tail(data_out), device->name, 8);
+			strncpy((char*) Stream_Pointer(data_out), device->name, 8);
 
 			for (i = 0; i < 8; i++)
 			{
@@ -189,13 +189,13 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 				if (c > 0x7F)
 					stream_write_BYTE(data_out, '_');
 				else
-					stream_seek_BYTE(data_out);
+					Stream_Seek_BYTE(data_out);
 			}
 
 			stream_write_UINT32(data_out, data_len);
 
 			if (data_len > 0)
-				stream_write(data_out, stream_get_data(device->data), data_len);
+				stream_write(data_out, Stream_Buffer(device->data), data_len);
 
 			count++;
 
@@ -204,11 +204,11 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		}
 	}
 
-	pos = stream_get_pos(data_out);
-	stream_set_pos(data_out, count_pos);
+	pos = Stream_GetPosition(data_out);
+	Stream_SetPosition(data_out, count_pos);
 	stream_write_UINT32(data_out, count);
-	stream_set_pos(data_out, pos);
-	stream_seal(data_out);
+	Stream_SetPosition(data_out, pos);
+	Stream_SealLength(data_out);
 
 	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
 }

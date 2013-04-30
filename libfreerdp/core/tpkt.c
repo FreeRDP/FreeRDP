@@ -90,7 +90,7 @@ UINT16 tpkt_read_header(wStream* s)
 
 	if (version == 3)
 	{
-		stream_seek(s, 2);
+		Stream_Seek(s, 2);
 		stream_read_UINT16_be(s, length);
 	}
 	else

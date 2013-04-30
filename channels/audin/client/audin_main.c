@@ -101,7 +101,7 @@ static int audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, w
 	out = stream_new(5);
 	stream_write_BYTE(out, MSG_SNDIN_VERSION);
 	stream_write_UINT32(out, Version);
-	error = callback->channel->Write(callback->channel, stream_get_length(s), stream_get_head(s), NULL);
+	error = callback->channel->Write(callback->channel, Stream_GetPosition(s), stream_get_head(s), NULL);
 	stream_free(out);
 
 	return error;
@@ -135,13 +135,13 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 		DEBUG_WARN("bad NumFormats %d", NumFormats);
 		return 1;
 	}
-	stream_seek_UINT32(s); /* cbSizeFormatsPacket */
+	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
 
 	callback->formats = (audinFormat*) malloc(NumFormats * sizeof(audinFormat));
 	ZeroMemory(callback->formats, NumFormats * sizeof(audinFormat));
 
 	out = stream_new(9);
-	stream_seek(out, 9);
+	Stream_Seek(out, 9);
 
 	/* SoundFormats (variable) */
 	for (i = 0; i < NumFormats; i++)
@@ -150,12 +150,12 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 		stream_read_UINT16(s, format.wFormatTag);
 		stream_read_UINT16(s, format.nChannels);
 		stream_read_UINT32(s, format.nSamplesPerSec);
-		stream_seek_UINT32(s); /* nAvgBytesPerSec */
+		Stream_Seek_UINT32(s); /* nAvgBytesPerSec */
 		stream_read_UINT16(s, format.nBlockAlign);
 		stream_read_UINT16(s, format.wBitsPerSample);
 		stream_read_UINT16(s, format.cbSize);
-		format.data = stream_get_tail(s);
-		stream_seek(s, format.cbSize);
+		format.data = Stream_Pointer(s);
+		Stream_Seek(s, format.cbSize);
 		
 		DEBUG_DVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d "
 			"nBlockAlign=%d wBitsPerSample=%d cbSize=%d",
@@ -182,8 +182,8 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 
 	audin_send_incoming_data_pdu(pChannelCallback);
 
-	cbSizeFormatsPacket = stream_get_pos(out);
-	stream_set_pos(out, 0);
+	cbSizeFormatsPacket = Stream_GetPosition(out);
+	Stream_SetPosition(out, 0);
 
 	stream_write_BYTE(out, MSG_SNDIN_FORMATS); /* Header (1 byte) */
 	stream_write_UINT32(out, callback->formats_count); /* NumFormats (4 bytes) */
@@ -239,7 +239,7 @@ static BOOL audin_receive_wave_data(BYTE* data, int size, void* user_data)
 	out = stream_new(size + 1);
 	stream_write_BYTE(out, MSG_SNDIN_DATA);
 	stream_write(out, data, size);
-	error = callback->channel->Write(callback->channel, stream_get_length(out), stream_get_head(out), NULL);
+	error = callback->channel->Write(callback->channel, Stream_GetPosition(out), stream_get_head(out), NULL);
 	stream_free(out);
 
 	return (error == 0 ? TRUE : FALSE);

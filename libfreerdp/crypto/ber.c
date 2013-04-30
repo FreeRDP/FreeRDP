@@ -30,7 +30,7 @@ BOOL ber_read_length(wStream* s, int* length)
 {
 	BYTE byte;
 
-	if(stream_get_left(s) < 1)
+	if(Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 	stream_read_BYTE(s, byte);
 
@@ -38,7 +38,7 @@ BOOL ber_read_length(wStream* s, int* length)
 	{
 		byte &= ~(0x80);
 
-		if(stream_get_left(s) < byte)
+		if(Stream_GetRemainingLength(s) < byte)
 			return FALSE;
 
 		if (byte == 1)
@@ -103,7 +103,7 @@ BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
 	BYTE byte;
 
-	if(stream_get_left(s) < 1)
+	if(Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 	stream_read_BYTE(s, byte);
 
@@ -138,14 +138,14 @@ BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length)
 
 	if (tag > 30)
 	{
-		if(stream_get_left(s) < 1)
+		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 		stream_read_BYTE(s, byte);
 
 		if (byte != ((BER_CLASS_APPL | BER_CONSTRUCT) | BER_TAG_MASK))
 			return FALSE;
 
-		if(stream_get_left(s) < 1)
+		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 		stream_read_BYTE(s, byte);
 
@@ -156,7 +156,7 @@ BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length)
 	}
 	else
 	{
-		if(stream_get_left(s) < 1)
+		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 		stream_read_BYTE(s, byte);
 
@@ -195,13 +195,13 @@ BOOL ber_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 {
 	BYTE byte;
 
-	if(stream_get_left(s) < 1)
+	if(Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 	stream_read_BYTE(s, byte);
 
 	if (byte != ((BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag)))
 	{
-		stream_rewind(s, 1);
+		Stream_Rewind(s, 1);
 		return FALSE;
 	}
 
@@ -223,7 +223,7 @@ BOOL ber_read_sequence_tag(wStream* s, int* length)
 {
 	BYTE byte;
 
-	if(stream_get_left(s) < 1)
+	if(Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 	stream_read_BYTE(s, byte);
 
@@ -263,7 +263,7 @@ BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 		!ber_read_length(s, &length))
 		return FALSE;
 
-	if (length != 1 || stream_get_left(s) < 1)
+	if (length != 1 || Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, *enumerated);
@@ -288,7 +288,7 @@ BOOL ber_read_bit_string(wStream* s, int* length, BYTE* padding)
 		!ber_read_length(s, length))
 		return FALSE;
 
-	if(stream_get_left(s) < 1)
+	if(Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 	stream_read_BYTE(s, *padding);
 	return TRUE;
@@ -342,7 +342,7 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 		!ber_read_length(s, &length))
 		return FALSE;
 
-	if (length != 1 || stream_get_left(s) < 1)
+	if (length != 1 || Stream_GetRemainingLength(s) < 1)
 		return FALSE;
 
 	stream_read_BYTE(s, v);
@@ -369,7 +369,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 
 	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
 		!ber_read_length(s, &length) ||
-		stream_get_left(s) < length)
+		Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
 	if (value == NULL)

@@ -447,10 +447,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	{
 		case FileBasicInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			stream_seek_UINT64(input); /* CreationTime */
-			stream_seek_UINT64(input); /* LastAccessTime */
+			Stream_Seek_UINT64(input); /* CreationTime */
+			Stream_Seek_UINT64(input); /* LastAccessTime */
 			stream_read_UINT64(input, LastWriteTime);
-			stream_seek_UINT64(input); /* ChangeTime */
+			Stream_Seek_UINT64(input); /* ChangeTime */
 			stream_read_UINT32(input, FileAttributes);
 
 			if (FSTAT(file->fd, &st) != 0)
@@ -501,11 +501,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 		case FileRenameInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
-			stream_seek_BYTE(input); /* ReplaceIfExists */
-			stream_seek_BYTE(input); /* RootDirectory */
+			Stream_Seek_BYTE(input); /* ReplaceIfExists */
+			Stream_Seek_BYTE(input); /* RootDirectory */
 			stream_read_UINT32(input, FileNameLength);
 
-			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(input),
+			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(input),
 					FileNameLength / 2, &s, 0, NULL, NULL);
 
 			if (status < 1)

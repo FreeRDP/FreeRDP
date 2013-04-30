@@ -79,7 +79,7 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	char* str = NULL;
 	TIME_ZONE_INFO* clientTimeZone;
 
-	if (stream_get_left(s) < 172)
+	if (Stream_GetRemainingLength(s) < 172)
 		return FALSE;
 
 	clientTimeZone = settings->ClientTimeZone;
@@ -87,8 +87,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	stream_read_UINT32(s, clientTimeZone->bias); /* Bias */
 
 	/* standardName (64 bytes) */
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
-	stream_seek(s, 64);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
+	Stream_Seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
 	free(str);
 	str = NULL;
@@ -97,8 +97,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	stream_read_UINT32(s, clientTimeZone->standardBias); /* StandardBias */
 
 	/* daylightName (64 bytes) */
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
-	stream_seek(s, 64);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
+	Stream_Seek(s, 64);
 	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
 	free(str);
 

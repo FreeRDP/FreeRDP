@@ -232,7 +232,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	/* skip zero padding, if any */
 	do
 	{
-		if(stream_get_left(s) < 1)
+		if(Stream_GetRemainingLength(s) < 1)
 			goto error1;
 		stream_peek_BYTE(s, padding);
 
@@ -246,7 +246,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	while (padding == 0);
 	error++;
 
-	if(stream_get_left(s) < modulus_length)
+	if(Stream_GetRemainingLength(s) < modulus_length)
 		goto error1;
 	info->ModulusLength = modulus_length;
 	info->Modulus = (BYTE*) malloc(info->ModulusLength);
@@ -256,7 +256,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	if(!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
 		goto error2;
 	error++;
-	if(stream_get_left(s) < exponent_length || exponent_length > 4)
+	if(Stream_GetRemainingLength(s) < exponent_length || exponent_length > 4)
 		goto error2;
 	stream_read(s, &info->exponent[4 - exponent_length], exponent_length);
 	crypto_reverse(info->Modulus, info->ModulusLength);
@@ -325,7 +325,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	UINT32 datalen;
 	UINT32 modlen;
 
-	if(stream_get_left(s) < 20)
+	if(Stream_GetRemainingLength(s) < 20)
 		return FALSE;
 	stream_read(s, magic, 4);
 
@@ -341,13 +341,13 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	stream_read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 
-	if(stream_get_left(s) < modlen + 8)	// count padding
+	if(Stream_GetRemainingLength(s) < modlen + 8)	// count padding
 		return FALSE;
 	certificate->cert_info.ModulusLength = modlen;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
 	stream_read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 	/* 8 bytes of zero padding */
-	stream_seek(s, 8);
+	Stream_Seek(s, 8);
 
 	return TRUE;
 }
@@ -425,11 +425,11 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	BYTE* sigdata;
 	int sigdatalen;
 
-	if(stream_get_left(s) < 12)
+	if(Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	/* -4, because we need to include dwVersion */
-	sigdata = stream_get_tail(s) - 4;
+	sigdata = Stream_Pointer(s) - 4;
 	stream_read_UINT32(s, dwSigAlgId);
 	stream_read_UINT32(s, dwKeyAlgId);
 
@@ -448,7 +448,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	stream_read_UINT16(s, wPublicKeyBlobLen);
-	if(stream_get_left(s) < wPublicKeyBlobLen)
+	if(Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
 		return FALSE;
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
@@ -457,10 +457,10 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 		return FALSE;
 	}
 
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	sigdatalen = stream_get_tail(s) - sigdata;
+	sigdatalen = Stream_Pointer(s) - sigdata;
 	stream_read_UINT16(s, wSignatureBlobType);
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
@@ -470,7 +470,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	stream_read_UINT16(s, wSignatureBlobLen);
-	if(stream_get_left(s) < wSignatureBlobLen)
+	if(Stream_GetRemainingLength(s) < wSignatureBlobLen)
 		return FALSE;
 
 	if (wSignatureBlobLen != 72)
@@ -503,7 +503,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, numCertBlobs); /* numCertBlobs */
 
@@ -511,10 +511,10 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	for (i = 0; i < (int) numCertBlobs; i++)
 	{
-		if(stream_get_left(s) < 4)
+		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 		stream_read_UINT32(s, certLength);
-		if(stream_get_left(s) < certLength)
+		if(Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);

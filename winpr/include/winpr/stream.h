@@ -190,9 +190,12 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 #define Stream_Buffer(_s)		_s->buffer
 #define Stream_Length(_s)		_s->length
 #define Stream_Capacity(_s)		_s->capacity
-#define Stream_Position(_s)		(_s->pointer - _s->buffer)
 
+#define Stream_GetPosition(_s)		(_s->pointer - _s->buffer)
 #define Stream_SetPosition(_s, _p)	_s->pointer = _s->buffer + (_p)
+
+#define Stream_SealLength(_s)		_s->length = (_s->pointer - _s->buffer)
+#define Stream_GetRemainingLength(_s)	(_s->length - (_s->pointer - _s->buffer))
 
 /* Deprecated STREAM API */
 
@@ -201,6 +204,7 @@ WINPR_API void stream_free(wStream* stream);
 
 #define stream_attach(_s, _buf, _size) do { \
 	_s->capacity = _size; \
+	_s->length = _size; \
 	_s->buffer = _buf; \
 	_s->pointer = _buf; } while (0)
 #define stream_detach(_s) memset(_s, 0, sizeof(wStream))
@@ -211,19 +215,9 @@ WINPR_API void stream_extend(wStream* stream, int request_size);
 	while (_s->pointer - _s->buffer + (_n) > _s->capacity) \
 		stream_extend(_s, _n)
 
-#define stream_get_pos(_s) (_s->pointer - _s->buffer)
-#define stream_set_pos(_s,_m) _s->pointer = _s->buffer + (_m)
-#define stream_seek(_s,_offset) _s->pointer += (_offset)
-#define stream_rewind(_s,_offset) _s->pointer -= (_offset)
-#define stream_seal(_s) _s->capacity = (_s->pointer - _s->buffer)
 #define stream_get_mark(_s,_mark) _mark = _s->pointer
 #define stream_set_mark(_s,_mark) _s->pointer = _mark
 #define stream_get_head(_s) _s->buffer
-#define stream_get_tail(_s) _s->pointer
-#define stream_get_length(_s) (_s->pointer - _s->buffer)
-#define stream_get_data(_s) (_s->buffer)
-#define stream_get_size(_s) (_s->capacity)
-#define stream_get_left(_s) (_s->capacity - (_s->pointer - _s->buffer))
 
 #define stream_read_BYTE(_s, _v) do { _v = *_s->pointer++; } while (0)
 #define stream_read_UINT16(_s, _v) do { _v = \
@@ -305,10 +299,10 @@ WINPR_API void stream_extend(wStream* stream, int request_size);
 	(((UINT64)(*(_s->pointer + 7))) << 56); \
 	} while (0)
 
-#define stream_seek_BYTE(_s)	stream_seek(_s, 1)
-#define stream_seek_UINT16(_s)	stream_seek(_s, 2)
-#define stream_seek_UINT32(_s)	stream_seek(_s, 4)
-#define stream_seek_UINT64(_s)	stream_seek(_s, 8)
+#define Stream_Seek_BYTE(_s)	Stream_Seek(_s, 1)
+#define Stream_Seek_UINT16(_s)	Stream_Seek(_s, 2)
+#define Stream_Seek_UINT32(_s)	Stream_Seek(_s, 4)
+#define Stream_Seek_UINT64(_s)	Stream_Seek(_s, 8)
 
 #define stream_read_UINT16_be(_s, _v) do { _v = \
 	(((UINT16)(*_s->pointer)) << 8) + \
@@ -336,9 +330,9 @@ WINPR_API void stream_extend(wStream* stream, int request_size);
 	} while (0)
 
 static INLINE BOOL stream_skip(wStream* s, size_t sz) {
-    if (stream_get_left(s) < sz)
+    if (Stream_GetRemainingLength(s) < sz)
 		return FALSE;
-	stream_seek(s, sz);
+	Stream_Seek(s, sz);
 	return TRUE;
 }
 

@@ -178,9 +178,9 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 
 	stream_read_BYTE(s, context->nsc_stream.ColorLossLevel);
 	stream_read_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel);
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
-	context->nsc_stream.Planes = stream_get_tail(s);
+	context->nsc_stream.Planes = Stream_Pointer(s);
 }
 
 static void nsc_context_initialize(NSC_CONTEXT* context, wStream* s)

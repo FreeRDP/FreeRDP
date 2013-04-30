@@ -63,12 +63,12 @@ void rdp_print_redirection_flags(UINT32 flags)
 
 BOOL rdp_string_read_length32(wStream* s, rdpString* string)
 {
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, string->length);
 
-	if(stream_get_left(s) < string->length)
+	if(Stream_GetRemainingLength(s) < string->length)
 		return FALSE;
 
 	string->unicode = (char*) malloc(string->length);
@@ -94,7 +94,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	if (stream_get_left(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 	stream_read_UINT16(s, flags); /* flags (2 bytes) */
 	stream_read_UINT16(s, length); /* length (2 bytes) */
@@ -116,10 +116,10 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 		stream_read_UINT32(s, redirection->LoadBalanceInfoLength);
-		if (stream_get_left(s) < redirection->LoadBalanceInfoLength)
+		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
 			return FALSE;
 
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
@@ -147,7 +147,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		/* Note: length (hopefully) includes double zero termination */
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 		stream_read_UINT32(s, redirection->PasswordCookieLength);
 		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
@@ -186,7 +186,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
-		if (stream_get_left(s) < 8)
+		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 		stream_read_UINT32(s, targetNetAddressesLength);
 

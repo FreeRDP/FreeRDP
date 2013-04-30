@@ -126,7 +126,7 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
 BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsgSize)
 {
 	/* preamble (4 bytes) */
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_BYTE(s, *bMsgType); /* bMsgType (1 byte) */
@@ -164,7 +164,7 @@ wStream* license_send_stream_init(rdpLicense* license)
 	wStream* s;
 
 	s = transport_send_stream_init(license->rdp->transport, 4096);
-	stream_seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
+	Stream_Seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
 
 	return s;
 }
@@ -185,8 +185,8 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 
 	DEBUG_LICENSE("Sending %s Packet", LICENSE_MESSAGE_STRINGS[type & 0x1F]);
 
-	length = stream_get_length(s);
-	stream_set_pos(s, 0);
+	length = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
 
 	sec_flags = SEC_LICENSE_PKT;
 	wMsgSize = length - LICENSE_PACKET_HEADER_MAX_LENGTH + 4;
@@ -206,7 +206,7 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	winpr_HexDump(s->pointer - 4, wMsgSize);
 #endif
 
-	stream_set_pos(s, length);
+	Stream_SetPosition(s, length);
 
 	if (transport_write(license->rdp->transport, s) < 0)
 		return FALSE;
@@ -252,7 +252,7 @@ BOOL license_recv(rdpLicense* license, wStream* s)
 	if (!(securityFlags & SEC_LICENSE_PKT))
 	{
 		if (!(securityFlags & SEC_ENCRYPT))
-			stream_rewind(s, RDP_SECURITY_HEADER_LENGTH);
+			Stream_Rewind(s, RDP_SECURITY_HEADER_LENGTH);
 
 		if (rdp_recv_out_of_sequence_pdu(license->rdp, s) != TRUE)
 		{
@@ -463,14 +463,14 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 
 BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 {
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	stream_read_UINT32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
 
 	stream_read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
 
-	if (stream_get_left(s) < productInfo->cbCompanyName + 4)
+	if (Stream_GetRemainingLength(s) < productInfo->cbCompanyName + 4)
 		return FALSE;
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
@@ -478,7 +478,7 @@ BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 
 	stream_read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
-	if (stream_get_left(s) < productInfo->cbProductId)
+	if (Stream_GetRemainingLength(s) < productInfo->cbProductId)
 	{
 		free(productInfo->pbCompanyName);
 		productInfo->pbCompanyName = NULL;
@@ -540,13 +540,13 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
 	UINT16 wBlobType;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT16(s, wBlobType); /* wBlobType (2 bytes) */
 	stream_read_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
-	if (stream_get_left(s) < blob->length)
+	if (Stream_GetRemainingLength(s) < blob->length)
 		return FALSE;
 
 	/*
@@ -649,7 +649,7 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 	UINT32 i;
 	UINT32 scopeCount;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
@@ -722,7 +722,7 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 {
 	/* ServerRandom (32 bytes) */
-	if (stream_get_left(s) < 32)
+	if (Stream_GetRemainingLength(s) < 32)
 		return FALSE;
 
 	stream_read(s, license->ServerRandom, 32);
@@ -781,7 +781,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
@@ -791,7 +791,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	license_read_binary_blob(s, license->EncryptedPlatformChallenge);
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
-	if (stream_get_left(s) < 16)
+	if (Stream_GetRemainingLength(s) < 16)
 		return FALSE;
 
 	stream_read(s, MacData, 16); /* MACData (16 bytes) */
@@ -856,7 +856,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 	UINT32 dwErrorCode;
 	UINT32 dwStateTransition;
 
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	stream_read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */

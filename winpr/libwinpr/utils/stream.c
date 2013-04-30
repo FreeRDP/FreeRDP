@@ -147,7 +147,7 @@ void stream_extend(wStream* stream, int request_size)
 	int original_size;
 	int increased_size;
 
-	pos = stream_get_pos(stream);
+	pos = Stream_GetPosition(stream);
 	original_size = stream->capacity;
 	increased_size = (request_size > original_size ? request_size : original_size);
 	stream->capacity += increased_size;
@@ -158,5 +158,5 @@ void stream_extend(wStream* stream, int request_size)
 		stream->buffer = (BYTE*) realloc(stream->buffer, stream->capacity);
 
 	memset(stream->buffer + original_size, 0, increased_size);
-	stream_set_pos(stream, pos);
+	Stream_SetPosition(stream, pos);
 }

@@ -93,23 +93,23 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		return 1;
 
 	data_out = stream_new(CHANNEL_CHUNK_LENGTH);
-	stream_set_pos(data_out, 1);
+	Stream_SetPosition(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
 	if (data_size == 0)
 	{
-		pos = stream_get_pos(data_out);
-		stream_set_pos(data_out, 0);
+		pos = Stream_GetPosition(data_out);
+		Stream_SetPosition(data_out, 0);
 		stream_write_BYTE(data_out, 0x40 | cbChId);
-		stream_set_pos(data_out, pos);
+		Stream_SetPosition(data_out, pos);
 		error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 	}
 	else if (data_size <= CHANNEL_CHUNK_LENGTH - pos)
 	{
-		pos = stream_get_pos(data_out);
-		stream_set_pos(data_out, 0);
+		pos = Stream_GetPosition(data_out);
+		Stream_SetPosition(data_out, 0);
 		stream_write_BYTE(data_out, 0x30 | cbChId);
-		stream_set_pos(data_out, pos);
+		Stream_SetPosition(data_out, pos);
 		stream_write(data_out, data, data_size);
 		error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 	}
@@ -117,10 +117,10 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	{
 		/* Fragment the data */
 		cbLen = drdynvc_write_variable_uint(data_out, data_size);
-		pos = stream_get_pos(data_out);
-		stream_set_pos(data_out, 0);
+		pos = Stream_GetPosition(data_out);
+		Stream_SetPosition(data_out, 0);
 		stream_write_BYTE(data_out, 0x20 | cbChId | (cbLen << 2));
-		stream_set_pos(data_out, pos);
+		Stream_SetPosition(data_out, pos);
 		chunk_len = CHANNEL_CHUNK_LENGTH - pos;
 		stream_write(data_out, data, chunk_len);
 		data += chunk_len;
@@ -130,13 +130,13 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		while (error == CHANNEL_RC_OK && data_size > 0)
 		{
 			data_out = stream_new(CHANNEL_CHUNK_LENGTH);
-			stream_set_pos(data_out, 1);
+			Stream_SetPosition(data_out, 1);
 			cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
-			pos = stream_get_pos(data_out);
-			stream_set_pos(data_out, 0);
+			pos = Stream_GetPosition(data_out);
+			Stream_SetPosition(data_out, 0);
 			stream_write_BYTE(data_out, 0x30 | cbChId);
-			stream_set_pos(data_out, pos);
+			Stream_SetPosition(data_out, pos);
 
 			chunk_len = data_size;
 			if (chunk_len > CHANNEL_CHUNK_LENGTH - pos)
@@ -179,7 +179,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 	int error;
 
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
-	stream_seek(s, 1); /* pad */
+	Stream_Seek(s, 1); /* pad */
 	stream_read_UINT16(s, drdynvc->version);
 
 	if (drdynvc->version == 2)
@@ -236,14 +236,14 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	wStream* data_out;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	pos = stream_get_pos(s);
-	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, stream_get_tail(s));
+	pos = Stream_GetPosition(s);
+	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
 
-	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) stream_get_tail(s));
+	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
 	data_out = stream_new(pos + 4);
 	stream_write_BYTE(data_out, 0x10 | cbChId);
-	stream_set_pos(s, 1);
+	Stream_SetPosition(s, 1);
 	stream_copy(data_out, s, pos - 1);
 	
 	if (error == 0)
@@ -284,7 +284,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 		return error;
 
 	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId,
-		stream_get_tail(s), stream_get_left(s));
+		Stream_Pointer(s), Stream_GetRemainingLength(s));
 }
 
 static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
@@ -295,7 +295,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStr
 	DEBUG_DVC("ChannelId=%d", ChannelId);
 
 	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId,
-		stream_get_tail(s), stream_get_left(s));
+		Stream_Pointer(s), Stream_GetRemainingLength(s));
 }
 
 static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)

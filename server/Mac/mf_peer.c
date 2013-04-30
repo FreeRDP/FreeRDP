@@ -134,7 +134,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	s = mfp->s;
 	stream_clear(s);
-	stream_set_pos(s, 0);
+	Stream_SetPosition(s, 0);
 	
 	UINT32 x = mfi->invalid.x / mfi->scale;
 	UINT32 y = mfi->invalid.y / mfi->scale;
@@ -160,7 +160,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	cmd->codecID = 3;
 	cmd->width = rect.width;
 	cmd->height = rect.height;
-	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
 	cmd->bitmapData = stream_get_head(s);
 	
 	//send

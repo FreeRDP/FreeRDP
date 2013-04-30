@@ -165,24 +165,24 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 
 		params[0].context = context;
 		params[0].quantization_values = y_quants;
-		params[0].buffer = stream_get_tail(data_in);
+		params[0].buffer = Stream_Pointer(data_in);
 		params[0].capacity = y_size;
 		params[0].buffer = pSrcDst[0];
-		stream_seek(data_in, y_size);
+		Stream_Seek(data_in, y_size);
 
 		params[1].context = context;
 		params[1].quantization_values = cb_quants;
-		params[1].buffer = stream_get_tail(data_in);
+		params[1].buffer = Stream_Pointer(data_in);
 		params[1].capacity = cb_size;
 		params[1].buffer = pSrcDst[1];
-		stream_seek(data_in, cb_size);
+		Stream_Seek(data_in, cb_size);
 
 		params[2].context = context;
 		params[2].quantization_values = cr_quants;
-		params[2].buffer = stream_get_tail(data_in);
+		params[2].buffer = Stream_Pointer(data_in);
 		params[2].capacity = cr_size;
 		params[2].buffer = pSrcDst[2];
-		stream_seek(data_in, cr_size);
+		Stream_Seek(data_in, cr_size);
 
 		work_objects[0] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_decode_component_work_callback,
 				(void*) &params[0], &context->priv->ThreadPoolEnv);
@@ -202,20 +202,20 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 	else
 #endif
 	{
-		if (stream_get_left(data_in) < y_size + cb_size + cr_size)
+		if (Stream_GetRemainingLength(data_in) < y_size + cb_size + cr_size)
 		{
 			DEBUG_WARN("rfx_decode_rgb: packet too small for y_size+cb_size+cr_size");
 			return FALSE;
 		}
 
-		rfx_decode_component(context, y_quants, stream_get_tail(data_in), y_size, pSrcDst[0]); /* YData */
-		stream_seek(data_in, y_size);
+		rfx_decode_component(context, y_quants, Stream_Pointer(data_in), y_size, pSrcDst[0]); /* YData */
+		Stream_Seek(data_in, y_size);
 
-		rfx_decode_component(context, cb_quants, stream_get_tail(data_in), cb_size, pSrcDst[1]); /* CbData */
-		stream_seek(data_in, cb_size);
+		rfx_decode_component(context, cb_quants, Stream_Pointer(data_in), cb_size, pSrcDst[1]); /* CbData */
+		Stream_Seek(data_in, cb_size);
 
-		rfx_decode_component(context, cr_quants, stream_get_tail(data_in), cr_size, pSrcDst[2]); /* CrData */
-		stream_seek(data_in, cr_size);
+		rfx_decode_component(context, cr_quants, Stream_Pointer(data_in), cr_size, pSrcDst[2]); /* CrData */
+		Stream_Seek(data_in, cr_size);
 	}
 
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),

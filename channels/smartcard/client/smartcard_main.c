@@ -220,10 +220,10 @@ static void smartcard_irp_complete(IRP* irp)
 
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
-	pos = stream_get_pos(irp->output);
-	stream_set_pos(irp->output, 12);
+	pos = Stream_GetPosition(irp->output);
+	Stream_SetPosition(irp->output, 12);
 	stream_write_UINT32(irp->output, irp->IoStatus);
-	stream_set_pos(irp->output, pos);
+	Stream_SetPosition(irp->output, pos);
 
 	/* Begin TS Client defect workaround. */
 	WaitForSingleObject(smartcard->CompletionIdsMutex, INFINITE);

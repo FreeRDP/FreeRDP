@@ -90,11 +90,11 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	UINT32 PathLength;
 	UINT32 FileId;
 
-	stream_seek(irp->input, 28); /* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
+	Stream_Seek(irp->input, 28); /* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 					/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_UINT32(irp->input, PathLength);
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
@@ -210,7 +210,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	DEBUG_SVC("length %u offset %llu", Length, Offset);
 
@@ -223,7 +223,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 
 		DEBUG_WARN("tty not valid.");
 	}
-	else if (!serial_tty_write(tty, stream_get_tail(irp->input), Length))
+	else if (!serial_tty_write(tty, Stream_Pointer(irp->input), Length))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
@@ -254,7 +254,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	stream_read_UINT32(irp->input, InputBufferLength);
 	stream_read_UINT32(irp->input, OutputBufferLength);
 	stream_read_UINT32(irp->input, IoControlCode);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	tty = serial->tty;
 
@@ -478,9 +478,9 @@ void serial_get_timeouts(SERIAL_DEVICE* serial, IRP* irp, UINT32* timeout, UINT3
 	UINT32 Length;
 	UINT32 pos;
 
-	pos = stream_get_pos(irp->input);
+	pos = Stream_GetPosition(irp->input);
 	stream_read_UINT32(irp->input, Length);
-	stream_set_pos(irp->input, pos);
+	Stream_SetPosition(irp->input, pos);
 
 	DEBUG_SVC("length read %u", Length);
 

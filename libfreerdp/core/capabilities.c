@@ -171,17 +171,17 @@ BOOL rdp_read_general_capability_set(wStream* s, UINT16 length, rdpSettings* set
 	}
 	else
 	{
-		stream_seek_UINT16(s); /* osMajorType (2 bytes) */
-		stream_seek_UINT16(s); /* osMinorType (2 bytes) */
+		Stream_Seek_UINT16(s); /* osMajorType (2 bytes) */
+		Stream_Seek_UINT16(s); /* osMinorType (2 bytes) */
 	}
 
-	stream_seek_UINT16(s); /* protocolVersion (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
-	stream_seek_UINT16(s); /* generalCompressionTypes (2 bytes) */
+	Stream_Seek_UINT16(s); /* protocolVersion (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s); /* generalCompressionTypes (2 bytes) */
 	stream_read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
-	stream_seek_UINT16(s); /* updateCapabilityFlag (2 bytes) */
-	stream_seek_UINT16(s); /* remoteUnshareFlag (2 bytes) */
-	stream_seek_UINT16(s); /* generalCompressionLevel (2 bytes) */
+	Stream_Seek_UINT16(s); /* updateCapabilityFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* remoteUnshareFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* generalCompressionLevel (2 bytes) */
 	stream_read_BYTE(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	stream_read_BYTE(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
 
@@ -303,18 +303,18 @@ BOOL rdp_read_bitmap_capability_set(wStream* s, UINT16 length, rdpSettings* sett
 		return FALSE;
 
 	stream_read_UINT16(s, preferredBitsPerPixel); /* preferredBitsPerPixel (2 bytes) */
-	stream_seek_UINT16(s); /* receive1BitPerPixel (2 bytes) */
-	stream_seek_UINT16(s); /* receive4BitsPerPixel (2 bytes) */
-	stream_seek_UINT16(s); /* receive8BitsPerPixel (2 bytes) */
+	Stream_Seek_UINT16(s); /* receive1BitPerPixel (2 bytes) */
+	Stream_Seek_UINT16(s); /* receive4BitsPerPixel (2 bytes) */
+	Stream_Seek_UINT16(s); /* receive8BitsPerPixel (2 bytes) */
 	stream_read_UINT16(s, desktopWidth); /* desktopWidth (2 bytes) */
 	stream_read_UINT16(s, desktopHeight); /* desktopHeight (2 bytes) */
-	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 	stream_read_UINT16(s, desktopResizeFlag); /* desktopResizeFlag (2 bytes) */
-	stream_seek_UINT16(s); /* bitmapCompressionFlag (2 bytes) */
-	stream_seek_BYTE(s); /* highColorFlags (1 byte) */
+	Stream_Seek_UINT16(s); /* bitmapCompressionFlag (2 bytes) */
+	Stream_Seek_BYTE(s); /* highColorFlags (1 byte) */
 	stream_read_BYTE(s, drawingFlags); /* drawingFlags (1 byte) */
-	stream_seek_UINT16(s); /* multipleRectangleSupport (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsB (2 bytes) */
+	Stream_Seek_UINT16(s); /* multipleRectangleSupport (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsB (2 bytes) */
 
 	if (!settings->ServerMode && (preferredBitsPerPixel != settings->ColorDepth))
 	{
@@ -448,23 +448,23 @@ BOOL rdp_read_order_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 	if (length < 88)
 		return FALSE;
 
-	stream_seek(s, 16); /* terminalDescriptor (16 bytes) */
-	stream_seek_UINT32(s); /* pad4OctetsA (4 bytes) */
-	stream_seek_UINT16(s); /* desktopSaveXGranularity (2 bytes) */
-	stream_seek_UINT16(s); /* desktopSaveYGranularity (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
-	stream_seek_UINT16(s); /* maximumOrderLevel (2 bytes) */
-	stream_seek_UINT16(s); /* numberFonts (2 bytes) */
+	Stream_Seek(s, 16); /* terminalDescriptor (16 bytes) */
+	Stream_Seek_UINT32(s); /* pad4OctetsA (4 bytes) */
+	Stream_Seek_UINT16(s); /* desktopSaveXGranularity (2 bytes) */
+	Stream_Seek_UINT16(s); /* desktopSaveYGranularity (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s); /* maximumOrderLevel (2 bytes) */
+	Stream_Seek_UINT16(s); /* numberFonts (2 bytes) */
 	stream_read_UINT16(s, orderFlags); /* orderFlags (2 bytes) */
 	stream_read(s, orderSupport, 32); /* orderSupport (32 bytes) */
-	stream_seek_UINT16(s); /* textFlags (2 bytes) */
+	Stream_Seek_UINT16(s); /* textFlags (2 bytes) */
 	stream_read_UINT16(s, orderSupportExFlags); /* orderSupportExFlags (2 bytes) */
-	stream_seek_UINT32(s); /* pad4OctetsB (4 bytes) */
-	stream_seek_UINT32(s); /* desktopSaveSize (4 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsC (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsD (2 bytes) */
-	stream_seek_UINT16(s); /* textANSICodePage (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsE (2 bytes) */
+	Stream_Seek_UINT32(s); /* pad4OctetsB (4 bytes) */
+	Stream_Seek_UINT32(s); /* desktopSaveSize (4 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsC (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsD (2 bytes) */
+	Stream_Seek_UINT16(s); /* textANSICodePage (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsE (2 bytes) */
 
 	for (i = 0; i < 32; i++)
 	{
@@ -640,18 +640,18 @@ BOOL rdp_read_bitmap_cache_capability_set(wStream* s, UINT16 length, rdpSettings
 	if (length < 40)
 		return FALSE;
 
-	stream_seek_UINT32(s); /* pad1 (4 bytes) */
-	stream_seek_UINT32(s); /* pad2 (4 bytes) */
-	stream_seek_UINT32(s); /* pad3 (4 bytes) */
-	stream_seek_UINT32(s); /* pad4 (4 bytes) */
-	stream_seek_UINT32(s); /* pad5 (4 bytes) */
-	stream_seek_UINT32(s); /* pad6 (4 bytes) */
-	stream_seek_UINT16(s); /* Cache0Entries (2 bytes) */
-	stream_seek_UINT16(s); /* Cache0MaximumCellSize (2 bytes) */
-	stream_seek_UINT16(s); /* Cache1Entries (2 bytes) */
-	stream_seek_UINT16(s); /* Cache1MaximumCellSize (2 bytes) */
-	stream_seek_UINT16(s); /* Cache2Entries (2 bytes) */
-	stream_seek_UINT16(s); /* Cache2MaximumCellSize (2 bytes) */
+	Stream_Seek_UINT32(s); /* pad1 (4 bytes) */
+	Stream_Seek_UINT32(s); /* pad2 (4 bytes) */
+	Stream_Seek_UINT32(s); /* pad3 (4 bytes) */
+	Stream_Seek_UINT32(s); /* pad4 (4 bytes) */
+	Stream_Seek_UINT32(s); /* pad5 (4 bytes) */
+	Stream_Seek_UINT32(s); /* pad6 (4 bytes) */
+	Stream_Seek_UINT16(s); /* Cache0Entries (2 bytes) */
+	Stream_Seek_UINT16(s); /* Cache0MaximumCellSize (2 bytes) */
+	Stream_Seek_UINT16(s); /* Cache1Entries (2 bytes) */
+	Stream_Seek_UINT16(s); /* Cache1MaximumCellSize (2 bytes) */
+	Stream_Seek_UINT16(s); /* Cache2Entries (2 bytes) */
+	Stream_Seek_UINT16(s); /* Cache2MaximumCellSize (2 bytes) */
 
 	return TRUE;
 }
@@ -753,10 +753,10 @@ BOOL rdp_read_control_capability_set(wStream* s, UINT16 length, rdpSettings* set
 	if (length < 12)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* controlFlags (2 bytes) */
-	stream_seek_UINT16(s); /* remoteDetachFlag (2 bytes) */
-	stream_seek_UINT16(s); /* controlInterest (2 bytes) */
-	stream_seek_UINT16(s); /* detachInterest (2 bytes) */
+	Stream_Seek_UINT16(s); /* controlFlags (2 bytes) */
+	Stream_Seek_UINT16(s); /* remoteDetachFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* controlInterest (2 bytes) */
+	Stream_Seek_UINT16(s); /* detachInterest (2 bytes) */
 
 	return TRUE;
 }
@@ -820,10 +820,10 @@ BOOL rdp_read_window_activation_capability_set(wStream* s, UINT16 length, rdpSet
 	if (length < 12)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* helpKeyFlag (2 bytes) */
-	stream_seek_UINT16(s); /* helpKeyIndexFlag (2 bytes) */
-	stream_seek_UINT16(s); /* helpExtendedKeyFlag (2 bytes) */
-	stream_seek_UINT16(s); /* windowManagerKeyFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* helpKeyFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* helpKeyIndexFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* helpExtendedKeyFlag (2 bytes) */
+	Stream_Seek_UINT16(s); /* windowManagerKeyFlag (2 bytes) */
 
 	return TRUE;
 }
@@ -967,8 +967,8 @@ BOOL rdp_read_share_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 	if (length < 8)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* nodeId (2 bytes) */
-	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
+	Stream_Seek_UINT16(s); /* nodeId (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	return TRUE;
 }
@@ -1027,8 +1027,8 @@ BOOL rdp_read_color_cache_capability_set(wStream* s, UINT16 length, rdpSettings*
 	if (length < 8)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* colorTableCacheSize (2 bytes) */
-	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
+	Stream_Seek_UINT16(s); /* colorTableCacheSize (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	return TRUE;
 }
@@ -1087,7 +1087,7 @@ BOOL rdp_read_sound_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 		return FALSE;
 
 	stream_read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 
 	settings->SoundBeepsEnabled = (soundFlags & SOUND_BEEPS_FLAG) ? TRUE : FALSE;
 
@@ -1151,7 +1151,7 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 		return FALSE;
 
 	stream_read_UINT16(s, inputFlags); /* inputFlags (2 bytes) */
-	stream_seek_UINT16(s); /* pad2OctetsA (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 
 	if (settings->ServerMode)
 	{
@@ -1162,13 +1162,13 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 	}
 	else
 	{
-		stream_seek_UINT32(s); /* keyboardLayout (4 bytes) */
-		stream_seek_UINT32(s); /* keyboardType (4 bytes) */
-		stream_seek_UINT32(s); /* keyboardSubType (4 bytes) */
-		stream_seek_UINT32(s); /* keyboardFunctionKeys (4 bytes) */
+		Stream_Seek_UINT32(s); /* keyboardLayout (4 bytes) */
+		Stream_Seek_UINT32(s); /* keyboardType (4 bytes) */
+		Stream_Seek_UINT32(s); /* keyboardSubType (4 bytes) */
+		Stream_Seek_UINT32(s); /* keyboardFunctionKeys (4 bytes) */
 	}
 
-	stream_seek(s, 64); /* imeFileName (64 bytes) */
+	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
 
 	if (settings->ServerMode != TRUE)
 	{
@@ -1242,7 +1242,7 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	stream_read_UINT32(s, keyboardType); /* keyboardType (4 bytes) */
 	stream_read_UINT32(s, keyboardSubType); /* keyboardSubType (4 bytes) */
 	stream_read_UINT32(s, keyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
-	stream_seek(s, 64); /* imeFileName (64 bytes) */
+	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
 
 	fprintf(stderr, "\tinputFlags: 0x%04X\n", inputFlags);
 	fprintf(stderr, "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
@@ -1265,10 +1265,10 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 BOOL rdp_read_font_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
 	if (length > 4)
-		stream_seek_UINT16(s); /* fontSupportFlags (2 bytes) */
+		Stream_Seek_UINT16(s); /* fontSupportFlags (2 bytes) */
 
 	if (length > 6)
-		stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
+		Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	return TRUE;
 }
@@ -1324,7 +1324,7 @@ BOOL rdp_read_brush_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 	if (length < 8)
 		return FALSE;
 
-	stream_seek_UINT32(s); /* brushSupportLevel (4 bytes) */
+	Stream_Seek_UINT32(s); /* brushSupportLevel (4 bytes) */
 
 	return TRUE;
 }
@@ -1400,10 +1400,10 @@ BOOL rdp_read_glyph_cache_capability_set(wStream* s, UINT16 length, rdpSettings*
 	if (length < 52)
 		return FALSE;
 
-	stream_seek(s, 40); /* glyphCache (40 bytes) */
-	stream_seek_UINT32(s); /* fragCache (4 bytes) */
+	Stream_Seek(s, 40); /* glyphCache (40 bytes) */
+	Stream_Seek_UINT32(s); /* fragCache (4 bytes) */
 	stream_read_UINT16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
-	stream_seek_UINT16(s); /* pad2Octets (2 bytes) */
+	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	settings->GlyphSupportLevel = glyphSupportLevel;
 
@@ -1575,8 +1575,8 @@ BOOL rdp_read_bitmap_cache_host_support_capability_set(wStream* s, UINT16 length
 		return FALSE;
 
 	stream_read_BYTE(s, cacheVersion); /* cacheVersion (1 byte) */
-	stream_seek_BYTE(s); /* pad1 (1 byte) */
-	stream_seek_UINT16(s); /* pad2 (2 bytes) */
+	Stream_Seek_BYTE(s); /* pad1 (1 byte) */
+	Stream_Seek_UINT16(s); /* pad2 (2 bytes) */
 
 	if (cacheVersion & BITMAP_CACHE_V2)
 		settings->BitmapCachePersistEnabled = TRUE;
@@ -1667,15 +1667,15 @@ BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, UINT16 length, rdpSetti
 	if (length < 40)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* cacheFlags (2 bytes) */
-	stream_seek_BYTE(s); /* pad2 (1 byte) */
-	stream_seek_BYTE(s); /* numCellCaches (1 byte) */
-	stream_seek(s, 4); /* bitmapCache0CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache1CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache2CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache3CellInfo (4 bytes) */
-	stream_seek(s, 4); /* bitmapCache4CellInfo (4 bytes) */
-	stream_seek(s, 12); /* pad3 (12 bytes) */
+	Stream_Seek_UINT16(s); /* cacheFlags (2 bytes) */
+	Stream_Seek_BYTE(s); /* pad2 (1 byte) */
+	Stream_Seek_BYTE(s); /* numCellCaches (1 byte) */
+	Stream_Seek(s, 4); /* bitmapCache0CellInfo (4 bytes) */
+	Stream_Seek(s, 4); /* bitmapCache1CellInfo (4 bytes) */
+	Stream_Seek(s, 4); /* bitmapCache2CellInfo (4 bytes) */
+	Stream_Seek(s, 4); /* bitmapCache3CellInfo (4 bytes) */
+	Stream_Seek(s, 4); /* bitmapCache4CellInfo (4 bytes) */
+	Stream_Seek(s, 12); /* pad3 (12 bytes) */
 
 	return TRUE;
 }
@@ -1732,7 +1732,7 @@ BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
-	stream_seek(s, 12); /* pad3 (12 bytes) */
+	Stream_Seek(s, 12); /* pad3 (12 bytes) */
 
 	fprintf(stderr, "\tcacheFlags: 0x%04X\n", cacheFlags);
 	fprintf(stderr, "\tpad2: 0x%02X\n", pad2);
@@ -1928,11 +1928,11 @@ BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s, UINT16 length, rdpSe
 		return FALSE;
 
 	stream_read_UINT32(s, drawGDIPlusSupportLevel); /* drawGDIPlusSupportLevel (4 bytes) */
-	stream_seek_UINT32(s); /* GdipVersion (4 bytes) */
+	Stream_Seek_UINT32(s); /* GdipVersion (4 bytes) */
 	stream_read_UINT32(s, drawGdiplusCacheLevel); /* drawGdiplusCacheLevel (4 bytes) */
-	stream_seek(s, 10); /* GdipCacheEntries (10 bytes) */
-	stream_seek(s, 8); /* GdipCacheChunkSize (8 bytes) */
-	stream_seek(s, 6); /* GdipImageCacheProperties (6 bytes) */
+	Stream_Seek(s, 10); /* GdipCacheEntries (10 bytes) */
+	Stream_Seek(s, 8); /* GdipCacheChunkSize (8 bytes) */
+	Stream_Seek(s, 6); /* GdipImageCacheProperties (6 bytes) */
 
 	if (drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED)
 		settings->DrawGdiPlusEnabled = TRUE;
@@ -1985,9 +1985,9 @@ BOOL rdp_print_draw_gdiplus_cache_capability_set(wStream* s, UINT16 length)
 	stream_read_UINT32(s, drawGdiPlusSupportLevel); /* drawGdiPlusSupportLevel (4 bytes) */
 	stream_read_UINT32(s, GdipVersion); /* GdipVersion (4 bytes) */
 	stream_read_UINT32(s, drawGdiplusCacheLevel); /* drawGdiPlusCacheLevel (4 bytes) */
-	stream_seek(s, 10); /* GdipCacheEntries (10 bytes) */
-	stream_seek(s, 8); /* GdipCacheChunkSize (8 bytes) */
-	stream_seek(s, 6); /* GdipImageCacheProperties (6 bytes) */
+	Stream_Seek(s, 10); /* GdipCacheEntries (10 bytes) */
+	Stream_Seek(s, 8); /* GdipCacheChunkSize (8 bytes) */
+	Stream_Seek(s, 6); /* GdipImageCacheProperties (6 bytes) */
 
 	return TRUE;
 }
@@ -2073,9 +2073,9 @@ BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length, rdpSettings*
 	if (length < 11)
 		return FALSE;
 
-	stream_seek_UINT32(s); /* wndSupportLevel (4 bytes) */
-	stream_seek_BYTE(s); /* numIconCaches (1 byte) */
-	stream_seek_UINT16(s); /* numIconCacheEntries (2 bytes) */
+	Stream_Seek_UINT32(s); /* wndSupportLevel (4 bytes) */
+	Stream_Seek_BYTE(s); /* numIconCaches (1 byte) */
+	Stream_Seek_UINT16(s); /* numIconCacheEntries (2 bytes) */
 
 	return TRUE;
 }
@@ -2138,7 +2138,7 @@ BOOL rdp_read_desktop_composition_capability_set(wStream* s, UINT16 length, rdpS
 	if (length < 6)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* compDeskSupportLevel (2 bytes) */
+	Stream_Seek_UINT16(s); /* compDeskSupportLevel (2 bytes) */
 
 	return TRUE;
 }
@@ -2191,10 +2191,12 @@ BOOL rdp_print_desktop_composition_capability_set(wStream* s, UINT16 length)
 BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
 	UINT32 multifragMaxRequestSize;
+
 	if (length < 8)
 		return FALSE;
 
 	stream_read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
+
 	if (settings->MultifragMaxRequestSize < multifragMaxRequestSize)
 		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
 
@@ -2248,7 +2250,7 @@ BOOL rdp_read_large_pointer_capability_set(wStream* s, UINT16 length, rdpSetting
 	if (length < 6)
 		return FALSE;
 
-	stream_seek_UINT16(s); /* largePointerSupportFlags (2 bytes) */
+	Stream_Seek_UINT16(s); /* largePointerSupportFlags (2 bytes) */
 
 	return TRUE;
 }
@@ -2303,8 +2305,8 @@ BOOL rdp_read_surface_commands_capability_set(wStream* s, UINT16 length, rdpSett
 	if (length < 12)
 		return FALSE;
 
-	stream_seek_UINT32(s); /* cmdFlags (4 bytes) */
-	stream_seek_UINT32(s); /* reserved (4 bytes) */
+	Stream_Seek_UINT32(s); /* cmdFlags (4 bytes) */
+	Stream_Seek_UINT32(s); /* reserved (4 bytes) */
 
 	settings->SurfaceCommandsEnabled = TRUE;
 
@@ -2473,12 +2475,12 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 			}
 			else
 			{
-				stream_seek_BYTE(s); /* codecID (1 byte) */
+				Stream_Seek_BYTE(s); /* codecID (1 byte) */
 			}
 		}
 		else
 		{
-			stream_seek_BYTE(s); /* codecID (1 byte) */
+			Stream_Seek_BYTE(s); /* codecID (1 byte) */
 		}
 
 		stream_read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
@@ -2491,9 +2493,9 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 		{
 			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
 			{
-				stream_seek_UINT32(s); /* length */
+				Stream_Seek_UINT32(s); /* length */
 				stream_read_UINT32(s, settings->RemoteFxCaptureFlags); /* captureFlags */
-				stream_rewind(s, 8);
+				Stream_Rewind(s, 8);
 
 				if (settings->RemoteFxCaptureFlags & CARDP_CAPS_CAPTURE_NON_CAC)
 				{
@@ -2502,7 +2504,7 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 			}
 		}
 
-		stream_seek(s, codecPropertiesLength); /* codecProperties */
+		Stream_Seek(s, codecPropertiesLength); /* codecProperties */
 		remainingLength -= codecPropertiesLength;
 
 		bitmapCodecCount--;
@@ -2747,7 +2749,7 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 		if (remainingLength < codecPropertiesLength)
 			return FALSE;
 
-		stream_seek(s, codecPropertiesLength); /* codecProperties */
+		Stream_Seek(s, codecPropertiesLength); /* codecProperties */
 		remainingLength -= codecPropertiesLength;
 
 		bitmapCodecCount--;
@@ -2774,7 +2776,7 @@ BOOL rdp_read_frame_acknowledge_capability_set(wStream* s, UINT16 length, rdpSet
 	}
 	else
 	{
-		stream_seek_UINT32(s); /* (4 bytes) */
+		Stream_Seek_UINT32(s); /* (4 bytes) */
 	}
 	return TRUE;
 }
@@ -2867,7 +2869,7 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 
 		em = bm + length;
 
-		if (stream_get_left(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < length - 4)
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3058,7 +3060,7 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 		settings->ReceivedCapabilities[type] = TRUE;
 		em = bm + length;
 
-		if (stream_get_left(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < length - 4)
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3302,18 +3304,18 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	stream_read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 	stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (!stream_skip(s, lengthSourceDescriptor) || stream_get_left(s) < 4) /* sourceDescriptor */
+	if (!stream_skip(s, lengthSourceDescriptor) || Stream_GetRemainingLength(s) < 4) /* sourceDescriptor */
 		return FALSE;
 
 	stream_read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
@@ -3337,11 +3339,11 @@ void rdp_write_demand_active(wStream* s, rdpSettings* settings)
 	stream_write_UINT16(s, 4); /* lengthSourceDescriptor (2 bytes) */
 
 	stream_get_mark(s, lm);
-	stream_seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
+	Stream_Seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
 	stream_write(s, "RDP", 4); /* sourceDescriptor */
 
 	stream_get_mark(s, bm);
-	stream_seek_UINT16(s); /* numberCapabilities (2 bytes) */
+	Stream_Seek_UINT16(s); /* numberCapabilities (2 bytes) */
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 
 	numberCapabilities = 14;
@@ -3376,10 +3378,10 @@ void rdp_write_demand_active(wStream* s, rdpSettings* settings)
 	stream_write_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 
 #ifdef WITH_DEBUG_CAPABILITIES
-	stream_seek_UINT16(s);
+	Stream_Seek_UINT16(s);
 	rdp_print_capability_sets(s, numberCapabilities, FALSE);
 	stream_set_mark(s, bm);
-	stream_seek_UINT16(s);
+	Stream_Seek_UINT16(s);
 #endif
 
 	stream_set_mark(s, em);
@@ -3421,20 +3423,20 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	if (pduType != PDU_TYPE_CONFIRM_ACTIVE)
 		return FALSE;
 
-	if (stream_get_left(s) < 10)
+	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
 
-	stream_seek_UINT32(s); /* shareId (4 bytes) */
-	stream_seek_UINT16(s); /* originatorId (2 bytes) */
+	Stream_Seek_UINT32(s); /* shareId (4 bytes) */
+	Stream_Seek_UINT16(s); /* originatorId (2 bytes) */
 	stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	stream_read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (stream_get_left(s) < lengthSourceDescriptor + 4)
+	if (Stream_GetRemainingLength(s) < lengthSourceDescriptor + 4)
 		return FALSE;
 
-	stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor */
+	Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor */
 	stream_read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	return rdp_read_capability_sets(s, rdp->settings, numberCapabilities);
 }
@@ -3453,11 +3455,11 @@ void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	stream_write_UINT16(s, lengthSourceDescriptor);/* lengthSourceDescriptor (2 bytes) */
 
 	stream_get_mark(s, lm);
-	stream_seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
+	Stream_Seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
 	stream_write(s, SOURCE_DESCRIPTOR, lengthSourceDescriptor); /* sourceDescriptor */
 
 	stream_get_mark(s, bm);
-	stream_seek_UINT16(s); /* numberCapabilities (2 bytes) */
+	Stream_Seek_UINT16(s); /* numberCapabilities (2 bytes) */
 	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 
 	/* Capability Sets */
@@ -3561,10 +3563,10 @@ void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	stream_write_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 
 #ifdef WITH_DEBUG_CAPABILITIES
-	stream_seek_UINT16(s);
+	Stream_Seek_UINT16(s);
 	rdp_print_capability_sets(s, numberCapabilities, FALSE);
 	stream_set_mark(s, bm);
-	stream_seek_UINT16(s);
+	Stream_Seek_UINT16(s);
 #endif
 
 	stream_set_mark(s, em);

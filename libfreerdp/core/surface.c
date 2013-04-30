@@ -30,7 +30,7 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
-	if (stream_get_left(s) < 20)
+	if (Stream_GetRemainingLength(s) < 20)
 		return -1;
 
 	stream_read_UINT16(s, cmd->destLeft);
@@ -38,19 +38,19 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	stream_read_UINT16(s, cmd->destRight);
 	stream_read_UINT16(s, cmd->destBottom);
 	stream_read_BYTE(s, cmd->bpp);
-	stream_seek(s, 2); /* reserved1, reserved2 */
+	Stream_Seek(s, 2); /* reserved1, reserved2 */
 	stream_read_BYTE(s, cmd->codecID);
 	stream_read_UINT16(s, cmd->width);
 	stream_read_UINT16(s, cmd->height);
 	stream_read_UINT32(s, cmd->bitmapDataLength);
 
-	if (stream_get_left(s) < cmd->bitmapDataLength)
+	if (Stream_GetRemainingLength(s) < cmd->bitmapDataLength)
 		return -1;
 
-	pos = stream_get_pos(s) + cmd->bitmapDataLength;
-	cmd->bitmapData = stream_get_tail(s);
+	pos = Stream_GetPosition(s) + cmd->bitmapDataLength;
+	cmd->bitmapData = Stream_Pointer(s);
 
-	stream_set_pos(s, pos);
+	Stream_SetPosition(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
 
 	IFCALL(update->SurfaceBits, update->context, cmd);
@@ -71,7 +71,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s, UINT3
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return -1;
 
 	stream_read_UINT16(s, marker->frameAction);

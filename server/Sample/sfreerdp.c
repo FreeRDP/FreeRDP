@@ -105,7 +105,7 @@ static void test_peer_init(freerdp_peer* client)
 static wStream* test_peer_stream_init(testPeerContext* context)
 {
 	stream_clear(context->s);
-	stream_set_pos(context->s, 0);
+	Stream_SetPosition(context->s, 0);
 	return context->s;
 }
 
@@ -179,7 +179,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->bpp = 32;
 	cmd->width = rect.width;
 	cmd->height = rect.height;
-	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
 	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update->context, cmd);
 
@@ -278,7 +278,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd->bpp = 32;
 		cmd->width = context->icon_width;
 		cmd->height = context->icon_height;
-		cmd->bitmapDataLength = stream_get_length(s);
+		cmd->bitmapDataLength = Stream_GetPosition(s);
 		cmd->bitmapData = stream_get_head(s);
 		update->SurfaceBits(update->context, cmd);
 	}
@@ -305,7 +305,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd->bpp = 32;
 	cmd->width = context->icon_width;
 	cmd->height = context->icon_height;
-	cmd->bitmapDataLength = stream_get_length(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
 	cmd->bitmapData = stream_get_head(s);
 	update->SurfaceBits(update->context, cmd);
 
@@ -417,10 +417,10 @@ static void* tf_debug_channel_thread_func(void* arg)
 		if (WaitForSingleObject(context->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		stream_set_pos(s, 0);
+		Stream_SetPosition(s, 0);
 
 		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
-			stream_get_size(s), &bytes_returned) == FALSE)
+			Stream_Capacity(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
 				break;
@@ -428,14 +428,14 @@ static void* tf_debug_channel_thread_func(void* arg)
 			stream_check_size(s, bytes_returned);
 
 			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
-				stream_get_size(s), &bytes_returned) == FALSE)
+				Stream_Capacity(s), &bytes_returned) == FALSE)
 			{
 				/* should not happen */
 				break;
 			}
 		}
 
-		stream_set_pos(s, bytes_returned);
+		Stream_SetPosition(s, bytes_returned);
 
 		printf("got %d bytes\n", bytes_returned);
 	}

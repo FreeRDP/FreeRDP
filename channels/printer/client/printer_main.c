@@ -116,7 +116,7 @@ static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	if (printer_dev->printer)
 		printjob = printer_dev->printer->FindPrintJob(printer_dev->printer, irp->FileId);
@@ -130,7 +130,7 @@ static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	}
 	else
 	{
-		printjob->Write(printjob, stream_get_tail(irp->input), Length);
+		printjob->Write(printjob, Stream_Pointer(irp->input), Length);
 
 		DEBUG_SVC("printjob id %d written %d bytes.", irp->FileId, Length);
 	}

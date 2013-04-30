@@ -68,7 +68,7 @@
 
 BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 {
-	if(stream_get_left(s) < 3)
+	if(Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
 	stream_read_BYTE(s, *li); /* LI */
@@ -77,7 +77,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 	if (*code == X224_TPDU_DATA)
 	{
 		/* EOT (1 byte) */
-		stream_seek(s, 1);
+		Stream_Seek(s, 1);
 	}
 	else
 	{
@@ -165,7 +165,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE *li)
 		return FALSE;
 	}
 
-	return (stream_get_left(s) >= *li);
+	return (Stream_GetRemainingLength(s) >= *li);
 }
 
 /**

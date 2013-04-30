@@ -140,7 +140,7 @@ BOOL freerdp_connect(freerdp* instance)
 				s->capacity = record.length;
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
-				stream_set_pos(s, 0);
+				Stream_SetPosition(s, 0);
 
 				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, s->capacity, s);

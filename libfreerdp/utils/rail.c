@@ -48,12 +48,12 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	if (stream_get_left(s) < 2)
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 
-	if (stream_get_left(s) < unicode_string->length)
+	if (Stream_GetRemainingLength(s) < unicode_string->length)
 		return FALSE;
 
 	if (unicode_string->string == NULL)

@@ -210,10 +210,10 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 {
 	UINT32 toggleFlags;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 	stream_read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
 
 	IFCALL(input->SynchronizeEvent, input, toggleFlags);
@@ -225,12 +225,12 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 {
 	UINT16 keyboardFlags, keyCode;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	stream_read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	stream_read_UINT16(s, keyCode); /* keyCode (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	IFCALL(input->KeyboardEvent, input, keyboardFlags, keyCode);
 
@@ -241,12 +241,12 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 {
 	UINT16 keyboardFlags, unicodeCode;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	stream_read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	stream_read_UINT16(s, unicodeCode); /* unicodeCode (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/*
 	 * According to the specification, the slow path Unicode Keyboard Event
@@ -270,7 +270,7 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 {
 	UINT16 pointerFlags, xPos, yPos;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	stream_read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
@@ -286,7 +286,7 @@ static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 {
 	UINT16 pointerFlags, xPos, yPos;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	stream_read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
@@ -302,10 +302,10 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 {
 	UINT16 messageType;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_seek(s, 4); /* eventTime (4 bytes), ignored by the server */
+	Stream_Seek(s, 4); /* eventTime (4 bytes), ignored by the server */
 	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
 
 	switch (messageType)
@@ -338,7 +338,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 		default:
 			fprintf(stderr, "Unknown messageType %u\n", messageType);
 			/* Each input event uses 6 bytes. */
-			stream_seek(s, 6);
+			Stream_Seek(s, 6);
 			break;
 	}
 
@@ -349,14 +349,14 @@ BOOL input_recv(rdpInput* input, wStream* s)
 {
 	UINT16 i, numberEvents;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT16(s, numberEvents); /* numberEvents (2 bytes) */
-	stream_seek(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
-	if (stream_get_left(s) < 6 * numberEvents)
+	if (Stream_GetRemainingLength(s) < 6 * numberEvents)
 		return FALSE;
 
 	for (i = 0; i < numberEvents; i++)

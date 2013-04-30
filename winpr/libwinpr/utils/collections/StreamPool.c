@@ -55,8 +55,6 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 
 void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 {
-	int index;
-
 	if ((pool->uSize + 1) >= pool->uCapacity)
 	{
 		pool->uCapacity *= 2;
@@ -88,32 +86,58 @@ void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 		StreamPool_ShiftUsed(pool, index, -1);
 }
 
+void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
+{
+	if (count > 0)
+	{
+		if (pool->aSize + count > pool->aCapacity)
+		{
+			pool->aCapacity *= 2;
+			pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+		}
+
+		MoveMemory(&pool->aArray[index + count], &pool->aArray[index], (pool->aSize - index) * sizeof(wStream*));
+		pool->aSize += count;
+	}
+	else if (count < 0)
+	{
+		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize + count) * sizeof(wStream*));
+		pool->aSize += count;
+	}
+}
+
 /**
  * Gets a stream from the pool.
  */
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
+	int index;
 	wStream* s = NULL;
+	BOOL found = FALSE;
 
 	if (pool->synchronized)
 		WaitForSingleObject(pool->mutex, INFINITE);
 
-	if (pool->aSize > 0)
-		s = pool->aArray[--(pool->aSize)];
-
 	if (size == 0)
 		size = pool->defaultSize;
 
-	if (!s)
+	for (index = 0; index < pool->aSize; index++)
 	{
+		s = pool->aArray[index];
+
+		if (s->capacity == size)
+		{
+			StreamPool_ShiftAvailable(pool, index, -1);
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (!found)
 		s = Stream_New(NULL, size);
-	}
 	else
-	{
-		Stream_EnsureCapacity(s, size);
 		Stream_Pointer(s) = Stream_Buffer(s);
-	}
 
 	s->pool = pool;
 	s->count = 1;

@@ -90,7 +90,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 
 	DEBUG_SVC("in");
 
-	stream_seek(output, sizeof(UINT32));
+	Stream_Seek(output, sizeof(UINT32));
 
 	switch (IoControlCode)
 	{
@@ -361,10 +361,10 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 	}
 
 	/* Write OutputBufferLength */
-	pos = stream_get_pos(output);
-	stream_set_pos(output, 16);
+	pos = Stream_GetPosition(output);
+	Stream_SetPosition(output, 16);
 	stream_write_UINT32(output, length);
-	stream_set_pos(output, pos);
+	Stream_SetPosition(output, pos);
 
 	return ret;
 }

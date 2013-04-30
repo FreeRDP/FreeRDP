@@ -123,7 +123,7 @@ void wf_update_encode(wfInfo* wfi)
 
 	cmd = &wfi->cmd;
 
-	stream_set_pos(wfi->s, 0);
+	Stream_SetPosition(wfi->s, 0);
 
 	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
 
@@ -149,7 +149,7 @@ void wf_update_encode(wfInfo* wfi)
 	cmd->codecID = 3;
 	cmd->width = width;
 	cmd->height = height;
-	cmd->bitmapDataLength = stream_get_length(wfi->s);
+	cmd->bitmapDataLength = Stream_GetPosition(wfi->s);
 	cmd->bitmapData = stream_get_head(wfi->s);
 }
 
