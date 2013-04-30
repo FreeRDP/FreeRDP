@@ -80,10 +80,23 @@
 #include "xf_keyboard.h"
 #include "xf_input.h"
 
-static int run = 0;
+#include <magick/MagickCore.h>
+
+static int initialized_xi = 0;
+
+static int rtest = 0;
 
 static long xv_port = 0;
 static const size_t password_size = 512;
+
+void testIM()
+{
+Image im;
+
+MagickCoreGenesis("/tmp/", MagickTrue);
+
+return;
+}
 
 /*	Upscaling the image uses simple bilinear interpolation	*/
 int up_scale_image(
@@ -197,6 +210,8 @@ void xf_sw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
+			printf("sw1");
+
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
@@ -223,7 +238,14 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				//here
+				//here --sw
+				if(rtest < 10)
+				{
+					rtest++;
+
+					printf("first rect: %dx%d @ (%d, %d)\n", w, h, x, y);
+				}
+				
 
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
@@ -310,6 +332,8 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
+			printf("hw1");
+
 			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 
 			xf_unlock_x11(xfi, FALSE);
@@ -338,6 +362,8 @@ void xf_hw_end_paint(rdpContext* context)
 				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 
 			}
+
+			printf("hw1");
 
 			XFlush(xfi->display);
 
@@ -422,9 +448,9 @@ BOOL xf_process_x_events(freerdp* instance)
 	int pending_status;
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
-	if (run == 0)
+	if (initialized_xi == 0)
 	{
-		run++;
+		initialized_xi++;
 		xf_input_init(xfi);
 	}
 
