@@ -44,7 +44,7 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize + count) * sizeof(wStream*));
+		MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index) * sizeof(wStream*));
 		pool->uSize += count;
 	}
 }
@@ -101,7 +101,7 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize + count) * sizeof(wStream*));
+		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index) * sizeof(wStream*));
 		pool->aSize += count;
 	}
 }
@@ -113,6 +113,7 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
 	int index;
+	int foundIndex;
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
@@ -128,7 +129,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 
 		if (s->capacity >= size)
 		{
-			StreamPool_ShiftAvailable(pool, index, -1);
+			foundIndex = index;
 			found = TRUE;
 			break;
 		}
@@ -140,6 +141,8 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	}
 	else
 	{
+		StreamPool_ShiftAvailable(pool, foundIndex, -1);
+
 		Stream_EnsureCapacity(s, size);
 		Stream_Pointer(s) = Stream_Buffer(s);
 	}
