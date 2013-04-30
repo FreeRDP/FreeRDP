@@ -964,6 +964,13 @@ void wf_on_param_change(freerdp* instance, int id)
 		case FreeRDP_SmartSizing:
 			fprintf(stderr, "SmartSizing changed.\n");
 
+			if (!instance->settings->SmartSizing && (cfi->client_width > instance->settings->DesktopWidth || cfi->client_height > instance->settings->DesktopHeight))
+			{
+				GetWindowRect(cfi->hwnd, &rect);
+				SetWindowPos(cfi->hwnd, HWND_TOP, 0, 0, MIN(cfi->client_width + cfi->offset_x, rect.right - rect.left), MIN(cfi->client_height + cfi->offset_y, rect.bottom - rect.top), SWP_NOMOVE | SWP_FRAMECHANGED);
+				wf_update_canvas_diff(cfi);
+			}
+
 			hMenu = GetSystemMenu(cfi->hwnd, FALSE);
 			CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, instance->settings->SmartSizing);
 			wf_size_scrollbars(cfi, cfi->client_width, cfi->client_height);
