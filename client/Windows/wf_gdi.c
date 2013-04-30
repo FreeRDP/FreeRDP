@@ -190,10 +190,10 @@ void wf_scale_rect(wfInfo* wfi, RECT* source)
 
 	if (wfi->instance->settings->SmartSizing && (ww != dw || wh != dh))
 	{
-		source->bottom = MIN(source->bottom + 2, MAX(0, source->bottom * wh / dh + 2));
-		source->top = MIN(source->top - 2, MAX(0, source->top * wh / dh - 2));
-		source->left = MIN(source->left - 2, MAX(0, source->left * ww / dw - 2));
-		source->right = MIN(source->right + 2, MAX(0, source->right * ww / dw + 2));
+		source->bottom = source->bottom * wh / dh + 20;
+		source->top = source->top * wh / dh - 20;
+		source->left = source->left * ww / dw - 20;
+		source->right = source->right * ww / dw + 20;
 	}
 
 	source->bottom -= wfi->yCurrentScroll; 

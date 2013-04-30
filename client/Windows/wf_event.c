@@ -543,7 +543,7 @@ BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, 
 	if (!wh)
 		wh = dh;
 
-	if (wfi->fullscreen || !wfi->instance->settings->SmartSizing || (ww >= dw && wh >= dh))
+	if (wfi->fullscreen || !wfi->instance->settings->SmartSizing || (ww == dw && wh == dh))
 	{
 		return BitBlt(hdc, x, y, w, h, wfi->primary->hdc, x1, y1, SRCCOPY);
 	}
@@ -552,7 +552,7 @@ BOOL wf_scale_blt(wfInfo* wfi, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, 
 		SetStretchBltMode(hdc, HALFTONE);
 		SetBrushOrgEx(hdc, 0, 0, NULL);
 
-		return StretchBlt(hdc, MIN(x, x * ww / dw), MIN(y, y * wh / dh), MIN(dw, ww), MIN(dh, wh), wfi->primary->hdc, x1, y1, dw, dh, SRCCOPY);
+		return StretchBlt(hdc, 0, 0, ww, wh, wfi->primary->hdc, 0, 0, dw, dh, SRCCOPY);
 	}
 
 	return TRUE;
@@ -573,8 +573,8 @@ void wf_scale_mouse_event(wfInfo* wfi, rdpInput* input, UINT16 flags, UINT16 x, 
 	dw = wfi->instance->settings->DesktopWidth;
 	dh = wfi->instance->settings->DesktopHeight;
 
-	if (!wfi->instance->settings->SmartSizing || (ww >= dw) && (wh >= dh))
+	if (!wfi->instance->settings->SmartSizing || (ww == dw) && (wh == dh))
 		input->MouseEvent(input, flags, x + wfi->xCurrentScroll, y + wfi->yCurrentScroll);
 	else
-		input->MouseEvent(input, flags, MAX(x, x * dw / ww) + wfi->xCurrentScroll, MAX(y, y * dh / wh) + wfi->yCurrentScroll);
+		input->MouseEvent(input, flags, x * dw / ww + wfi->xCurrentScroll, y * dh / wh + wfi->yCurrentScroll);
 }
