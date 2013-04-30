@@ -73,7 +73,7 @@ BOOL freerdp_connect(freerdp* instance)
 	extension_load_and_init_plugins(rdp->extension);
 	extension_pre_connect(rdp->extension);
 
-	if (status != TRUE)
+	if (!status)
 	{
 		if (!connectErrorCode)
 		{
@@ -84,6 +84,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	status = rdp_client_connect(rdp);
+
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
@@ -105,7 +106,7 @@ BOOL freerdp_connect(freerdp* instance)
 		IFCALLRET(instance->PostConnect, status, instance);
 		update_post_connect(instance->update);
 
-		if (status != TRUE)
+		if (!status)
 		{
 			fprintf(stderr, "freerdp_post_connect failed\n");
 			
@@ -156,7 +157,9 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		connectErrorCode = UNDEFINEDCONNECTERROR;
 	}
-	
+
+	SetEvent(rdp->transport->connectedEvent);
+
 	return status;
 }
 

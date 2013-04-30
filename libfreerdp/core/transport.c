@@ -795,16 +795,19 @@ static void* transport_client_thread(void* arg)
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
 
-	/**
-	 * Ugly temporary hack to start thread after connection
-	 */
-
-	Sleep(2000);
-
 	while (1)
 	{
 		nCount = 0;
 		events[nCount++] = transport->stopEvent;
+
+		events[nCount] = transport->connectedEvent;
+
+		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
 
 		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
 
@@ -845,6 +848,8 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
+		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 		/* buffers for blocking read/write */
 		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
 		transport->SendStream = stream_new(BUFFER_SIZE);
@@ -871,6 +876,8 @@ void transport_free(rdpTransport* transport)
 
 		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
+
+		CloseHandle(transport->connectedEvent);
 
 		if (transport->TlsIn)
 			tls_free(transport->TlsIn);
