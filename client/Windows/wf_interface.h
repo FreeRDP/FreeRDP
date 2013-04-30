@@ -49,7 +49,7 @@ extern "C" {
 #define CALLBACK_TYPE_DISCONNECTED		0x03
 
 // System menu constants
-#define SMARTSIZING_SYS_MENU_ID			1000
+#define SYSCOMMAND_ID_SMARTSIZING 1000
 
 struct wf_bitmap
 {

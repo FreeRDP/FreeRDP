@@ -244,9 +244,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 			
 			case WM_SIZE:
+				GetWindowRect(wfi->hwnd, &windowRect);
+				
 				if (!wfi->fullscreen)
 				{
-					GetWindowRect(wfi->hwnd, &windowRect);
 					wfi->client_width = LOWORD(lParam);
 					wfi->client_height = HIWORD(lParam);
 					wfi->client_x = windowRect.left;
@@ -254,6 +255,11 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				}
 				
 				wf_size_scrollbars(wfi, LOWORD(lParam), HIWORD(lParam));
+
+				// Workaround: when the window is maximized, the call to "ShowScrollBars" returns TRUE but has no effect.
+				if (wParam == SIZE_MAXIMIZED && !wfi->fullscreen)
+					SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, SWP_NOMOVE | SWP_FRAMECHANGED);
+
 				break;
 
 			case WM_EXITSIZEMOVE:
@@ -452,6 +458,22 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					SetScrollInfo(wfi->hwnd, SB_VERT, &si, TRUE);     
 				}
 				break; 
+
+				case WM_SYSCOMMAND:
+				{
+					if (wParam == SYSCOMMAND_ID_SMARTSIZING)
+					{
+						HMENU hMenu = GetSystemMenu(wfi->hwnd, FALSE);
+						freerdp_set_param_bool(wfi->instance->settings, FreeRDP_SmartSizing, !wfi->instance->settings->SmartSizing);
+						CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, wfi->instance->settings->SmartSizing ? MF_CHECKED : MF_UNCHECKED);
+
+					}
+					else
+					{
+						processed = FALSE;
+					}
+				}
+				break;
 
 			default:
 				processed = FALSE;

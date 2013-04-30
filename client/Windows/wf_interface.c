@@ -342,6 +342,29 @@ BOOL wf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
+void wf_add_system_menu(wfInfo* wfi)
+{
+	HMENU hMenu = GetSystemMenu(wfi->hwnd, FALSE);
+
+	MENUITEMINFO item_info;
+	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
+
+	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING | MIIM_DATA;
+	item_info.cbSize = sizeof(MENUITEMINFO);
+	item_info.wID = SYSCOMMAND_ID_SMARTSIZING;
+	item_info.fType = MFT_STRING;
+	item_info.dwTypeData = _wcsdup(_T("Smart sizing"));
+	item_info.cch = _wcslen(_T("Smart sizing"));
+	item_info.dwItemData = (ULONG_PTR) wfi;
+
+	InsertMenuItem(hMenu, 6, TRUE, &item_info);
+
+	if (wfi->instance->settings->SmartSizing)
+	{
+		CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, MF_CHECKED);
+	}
+}
+
 BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -422,6 +445,8 @@ BOOL wf_post_connect(freerdp* instance)
 	}
 
 	wf_resize_window(wfi);
+
+	wf_add_system_menu(wfi);
 
 	BitBlt(wfi->primary->hdc, 0, 0, wfi->width, wfi->height, NULL, 0, 0, BLACKNESS);
 	wfi->drawing = wfi->primary;
@@ -931,6 +956,7 @@ void wf_on_param_change(freerdp* instance, int id)
 {
 	wfInfo* cfi = ((wfContext*) instance->context)->wfi;
 	RECT rect;
+	HMENU hMenu;
 
 	// specific processing here
 	switch(id)
@@ -938,7 +964,10 @@ void wf_on_param_change(freerdp* instance, int id)
 		case FreeRDP_SmartSizing:
 			fprintf(stderr, "SmartSizing changed.\n");
 
-			GetWindowRect(cfi->hwnd, &rect);
+			hMenu = GetSystemMenu(cfi->hwnd, FALSE);
+			CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, instance->settings->SmartSizing);
+			wf_size_scrollbars(cfi, cfi->client_width, cfi->client_height);
+			GetClientRect(cfi->hwnd, &rect);
 			InvalidateRect(cfi->hwnd, &rect, TRUE);
 			break;
 
@@ -1028,6 +1057,7 @@ int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename)
 
 void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
 {
+	BOOL rc;
 	if (wfi->disablewindowtracking == TRUE)
 	{
 		return;
@@ -1037,11 +1067,19 @@ void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
 	// prevent infinite message loop
 	wfi->disablewindowtracking = TRUE;
 
-	if (wfi->instance->settings->SmartSizing && (wfi->xScrollVisible || wfi->yScrollVisible))
+	if (wfi->instance->settings->SmartSizing)
 	{
-		wfi->xScrollVisible = FALSE;
-		wfi->yScrollVisible = FALSE;
-		ShowScrollBar(wfi->hwnd, SB_BOTH, FALSE);
+		wfi->xCurrentScroll = 0;
+		wfi->yCurrentScroll = 0;
+
+		if (wfi->xScrollVisible || wfi->yScrollVisible)
+		{
+			if (ShowScrollBar(wfi->hwnd, SB_BOTH, FALSE))
+			{
+				wfi->xScrollVisible = FALSE;
+				wfi->yScrollVisible = FALSE;
+			}
+		}
 	}
 	else
 	{
@@ -1069,21 +1107,27 @@ void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
 
 		if (horiz == vert && (horiz != wfi->xScrollVisible && vert != wfi->yScrollVisible))
 		{
-			ShowScrollBar(wfi->hwnd, SB_BOTH, horiz);
-			wfi->xScrollVisible = horiz;
-			wfi->yScrollVisible = vert;
+			if (ShowScrollBar(wfi->hwnd, SB_BOTH, horiz))
+			{
+				wfi->xScrollVisible = horiz;
+				wfi->yScrollVisible = vert;
+			}
 		}
 
 		if (horiz != wfi->xScrollVisible)
 		{
-			ShowScrollBar(wfi->hwnd, SB_HORZ, horiz);
-			wfi->xScrollVisible = horiz;
+			if (ShowScrollBar(wfi->hwnd, SB_HORZ, horiz))
+			{
+				wfi->xScrollVisible = horiz;
+			}
 		}
 
 		if (vert != wfi->yScrollVisible)
 		{
-			ShowScrollBar(wfi->hwnd, SB_VERT, vert);
-			wfi->yScrollVisible = vert;
+			if (ShowScrollBar(wfi->hwnd, SB_VERT, vert))
+			{
+				wfi->yScrollVisible = vert;
+			}
 		}
 
 		if (horiz)
@@ -1117,9 +1161,8 @@ void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
 			si.nPos   = wfi->yCurrentScroll; 
 			SetScrollInfo(wfi->hwnd, SB_VERT, &si, TRUE); 
 		}
-
-		wfi->disablewindowtracking = FALSE;
-		wf_update_canvas_diff(wfi);
 	}
-		
+
+	wfi->disablewindowtracking = FALSE;
+	wf_update_canvas_diff(wfi);		
 }
