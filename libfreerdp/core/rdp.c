@@ -80,7 +80,7 @@ static const char* const DATA_PDU_TYPE_STRINGS[] =
 BOOL rdp_read_security_header(wStream* s, UINT16* flags)
 {
 	/* Basic Security Header */
-	if(Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT16(s, *flags); /* flags */
 	Stream_Seek(s, 2); /* flagsHi (unused) */
@@ -262,13 +262,13 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 		return TRUE;
 	}
 
-	if(Stream_GetRemainingLength(s) < 5)
+	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, channel_id, 0); /* channelId */
 	Stream_Seek(s, 1); /* dataPriority + Segmentation (0x70) */
 
-	if(!per_read_length(s, length)) /* userData (OCTET_STRING) */
+	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
 	if (*length > Stream_GetRemainingLength(s))
 		return FALSE;
@@ -504,18 +504,19 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	BYTE type;
+	UINT32 roff;
+	UINT32 rlen;
+	wStream* cs;
+	BYTE* buffer;
 	UINT16 length;
 	UINT32 share_id;
 	BYTE compressed_type;
 	UINT16 compressed_len;
-	UINT32 roff;
-	UINT32 rlen;
-	wStream* comp_stream;
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return -1;
 
-	comp_stream = s;
+	cs = s;
 
 	if (compressed_type & PACKET_COMPRESSED)
 	{
@@ -524,18 +525,23 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			fprintf(stderr, "decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
 			return -1;	
 		}
+
 		if (decompress_rdp(rdp->mppc_dec, s->pointer, compressed_len - 18, compressed_type, &roff, &rlen))
 		{
-			comp_stream = stream_new(0);
-			comp_stream->buffer = rdp->mppc_dec->history_buf + roff;
-			comp_stream->pointer = comp_stream->buffer;
-			comp_stream->capacity = rlen;
+			buffer = rdp->mppc_dec->history_buf + roff;
+			cs = StreamPool_Take(rdp->transport->ReceivePool, rlen);
+
+			Stream_SetPosition(cs, 0);
+			Stream_Write(cs, buffer, rlen);
+			Stream_SealLength(cs);
+			Stream_SetPosition(cs, 0);
 		}
 		else
 		{
 			fprintf(stderr, "decompress_rdp() failed\n");
 			return -1;
 		}
+
 		Stream_Seek(s, compressed_len - 18);
 	}
 
@@ -548,17 +554,17 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	switch (type)
 	{
 		case DATA_PDU_TYPE_UPDATE:
-			if (!update_recv(rdp->update, comp_stream))
+			if (!update_recv(rdp->update, cs))
 				return -1;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			if (!rdp_recv_server_control_pdu(rdp, comp_stream))
+			if (!rdp_recv_server_control_pdu(rdp, cs))
 				return -1;
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
-			if (!update_recv_pointer(rdp->update, comp_stream))
+			if (!update_recv_pointer(rdp->update, cs))
 				return -1;
 			break;
 
@@ -566,7 +572,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if (!rdp_recv_synchronize_pdu(rdp, comp_stream))
+			if (!rdp_recv_synchronize_pdu(rdp, cs))
 				return -1;
 			break;
 
@@ -574,7 +580,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_PLAY_SOUND:
-			if (!update_recv_play_sound(rdp->update, comp_stream))
+			if (!update_recv_play_sound(rdp->update, cs))
 				return -1;
 			break;
 
@@ -588,7 +594,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
-			if(!rdp_recv_save_session_info(rdp, comp_stream))
+			if (!rdp_recv_save_session_info(rdp, cs))
 				return -1;
 			break;
 
@@ -596,7 +602,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
-			if(!rdp_recv_font_map_pdu(rdp, comp_stream))
+			if (!rdp_recv_font_map_pdu(rdp, cs))
 				return -1;
 			break;
 
@@ -616,7 +622,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
-			if (!rdp_recv_set_error_info_data_pdu(rdp, comp_stream))
+			if (!rdp_recv_set_error_info_data_pdu(rdp, cs))
 				return -1;
 			break;
 
@@ -639,11 +645,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 	}
 
-	if (comp_stream != s)
-	{
-		stream_detach(comp_stream);
-		stream_free(comp_stream);
-	}
+	if (cs != s)
+		Stream_Release(cs);
 
 	return 0;
 }

@@ -299,15 +299,18 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	UINT32 rlen;
 	rdpRdp* rdp;
 	int next_pos;
+	BYTE* buffer;
+	wStream* cs;
 	UINT32 totalSize;
 	BYTE updateCode;
 	BYTE fragmentation;
 	BYTE compression;
 	BYTE compressionFlags;
-	wStream* comp_stream;
+	rdpTransport* transport;
 
 	status = 0;
 	rdp = fastpath->rdp;
+	transport = fastpath->rdp->transport;
 
 	fastpath_read_update_header(s, &updateCode, &fragmentation, &compression);
 
@@ -321,18 +324,22 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	if (Stream_GetRemainingLength(s) < size)
 		return -1;
 
+	cs = s;
 	next_pos = Stream_GetPosition(s) + size;
-	comp_stream = s;
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
 		if (decompress_rdp(rdp->mppc_dec, s->pointer, size, compressionFlags, &roff, &rlen))
 		{
-			comp_stream = stream_new(0);
-			comp_stream->buffer = rdp->mppc_dec->history_buf + roff;
-			comp_stream->pointer = comp_stream->buffer;
-			comp_stream->capacity = rlen;
-			size = comp_stream->capacity;
+			size = rlen;
+			buffer = rdp->mppc_dec->history_buf + roff;
+
+			cs = StreamPool_Take(transport->ReceivePool, size);
+
+			Stream_SetPosition(cs, 0);
+			Stream_Write(cs, buffer, size);
+			Stream_SealLength(cs);
+			Stream_SetPosition(cs, 0);
 		}
 		else
 		{
@@ -350,15 +357,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		}
 
 		totalSize = size;
-		status = fastpath_recv_update(fastpath, updateCode, totalSize, comp_stream);
+		status = fastpath_recv_update(fastpath, updateCode, totalSize, cs);
 
 		if (status < 0)
 			return -1;
 	}
 	else
 	{
-		rdpTransport* transport = fastpath->rdp->transport;
-
 		if (fragmentation == FASTPATH_FRAGMENT_FIRST)
 		{
 			if (fastpath->fragmentation != -1)
@@ -381,7 +386,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			fastpath->updateData = StreamPool_Take(transport->ReceivePool, size);
 			Stream_SetPosition(fastpath->updateData, 0);
 
-			Stream_Copy(fastpath->updateData, comp_stream, size);
+			Stream_Copy(fastpath->updateData, cs, size);
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
 		{
@@ -405,7 +410,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			Stream_EnsureCapacity(fastpath->updateData, totalSize);
 
-			Stream_Copy(fastpath->updateData, comp_stream, size);
+			Stream_Copy(fastpath->updateData, cs, size);
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
@@ -429,7 +434,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			Stream_EnsureCapacity(fastpath->updateData, totalSize);
 
-			Stream_Copy(fastpath->updateData, comp_stream, size);
+			Stream_Copy(fastpath->updateData, cs, size);
 
 			Stream_SealLength(fastpath->updateData);
 			Stream_SetPosition(fastpath->updateData, 0);
@@ -445,8 +450,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	Stream_SetPosition(s, next_pos);
 
-	if (comp_stream != s)
-		free(comp_stream);
+	if (cs != s)
+		Stream_Release(cs);
 
 	return status;
 }
