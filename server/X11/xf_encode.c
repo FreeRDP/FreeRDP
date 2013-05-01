@@ -65,13 +65,11 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 #endif
 }
 
-void* xf_monitor_updates(void* param)
+void* xf_monitor_thread(void* param)
 {
-	int fds;
 	xfInfo* xfi;
+	HANDLE event;
 	XEvent xevent;
-	fd_set rfds_set;
-	int select_status;
 	xfPeerContext* xfp;
 	freerdp_peer* client;
 	UINT32 wait_interval;
@@ -83,31 +81,13 @@ void* xf_monitor_updates(void* param)
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	fds = xfi->xfds;
 	wait_interval = 1000000 / xfp->fps;
 	ZeroMemory(&timeout, sizeof(struct timeval));
 
-	while (1)
+	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfi->xfds);
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
-		/* check if we should terminate */
-		pthread_testcancel();
-
-		FD_ZERO(&rfds_set);
-		FD_SET(fds, &rfds_set);
-
-		timeout.tv_sec = 0;
-		timeout.tv_usec = wait_interval;
-		select_status = select(fds + 1, &rfds_set, NULL, NULL, &timeout);
-
-		if (select_status == -1)
-		{
-			fprintf(stderr, "select failed\n");
-		}
-		else if (select_status == 0)
-		{
-
-		}
-
 		while (XPending(xfi->display) > 0)
 		{
 			ZeroMemory(&xevent, sizeof(xevent));
@@ -122,9 +102,9 @@ void* xf_monitor_updates(void* param)
 				width = notify->area.width;
 				height = notify->area.height;
 
-				pthread_mutex_lock(&(xfp->mutex));
+				WaitForSingleObject(xfp->mutex, INFINITE);
 				gdi_InvalidateRegion(xfp->hdc, x, y, width, height);
-				pthread_mutex_unlock(&(xfp->mutex));
+				ReleaseMutex(xfp->mutex);
 
 				xf_xdamage_subtract_region(xfp, x, y, width, height);
 			}

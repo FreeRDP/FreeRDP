@@ -125,7 +125,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 #endif
 
-void xf_xshm_init(xfInfo* xfi)
+int xf_xshm_init(xfInfo* xfi)
 {
 	xfi->fb_shm_info.shmid = -1;
 	xfi->fb_shm_info.shmaddr = (char*) -1;
@@ -136,7 +136,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (!xfi->fb_image)
 	{
 		fprintf(stderr, "XShmCreateImage failed\n");
-		return;
+		return -1;
 	}
 
 	xfi->fb_shm_info.shmid = shmget(IPC_PRIVATE,
@@ -145,7 +145,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (xfi->fb_shm_info.shmid == -1)
 	{
 		fprintf(stderr, "shmget failed\n");
-		return;
+		return -1;
 	}
 
 	xfi->fb_shm_info.readOnly = False;
@@ -155,7 +155,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
 	{
 		fprintf(stderr, "shmat failed\n");
-		return;
+		return -1;
 	}
 
 	XShmAttach(xfi->display, &(xfi->fb_shm_info));
@@ -169,6 +169,8 @@ void xf_xshm_init(xfInfo* xfi)
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
 			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
 			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+
+	return 0;
 }
 
 xfInfo* xf_info_init()
@@ -191,7 +193,7 @@ xfInfo* xf_info_init()
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	xfi->use_xshm = FALSE;
+	xfi->use_xshm = TRUE;
 
 	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
@@ -268,7 +270,13 @@ xfInfo* xf_info_init()
 #endif
 
 	if (xfi->use_xshm)
-		xf_xshm_init(xfi);
+	{
+		if (xf_xshm_init(xfi) < 0)
+			xfi->use_xshm = FALSE;
+	}
+
+	if (xfi->use_xshm)
+		printf("Using X Shared Memory Extension (XShm)\n");
 
 	xfi->bytesPerPixel = 4;
 
@@ -313,7 +321,6 @@ void xf_peer_init(freerdp_peer* client)
 	xfp = (xfPeerContext*) client->context;
 
 	xfp->fps = 16;
-	xfp->thread = 0;
 	xfp->activations = 0;
 
 	xfp->queue = MessageQueue_New();
@@ -321,7 +328,7 @@ void xf_peer_init(freerdp_peer* client)
 	xfi = xfp->info;
 	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
-	pthread_mutex_init(&(xfp->mutex), NULL);
+	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
 wStream* xf_peer_stream_init(xfPeerContext* context)
@@ -334,7 +341,9 @@ wStream* xf_peer_stream_init(xfPeerContext* context)
 void xf_peer_live_rfx(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
-	pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
+
+	xfp->monitorThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) xf_monitor_thread, (void*) client, 0, NULL);
 }
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
@@ -443,14 +452,14 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 
 	region = xfp->hdc->hwnd->invalid;
 
-	pthread_mutex_lock(&(xfp->mutex));
+	WaitForSingleObject(xfp->mutex, INFINITE);
 
 	if ((region->w * region->h) > 0)
 		xf_peer_rfx_update(client, region->x, region->y, region->w, region->h);
 
 	region->null = 1;
 
-	pthread_mutex_unlock(&(xfp->mutex));
+	ReleaseMutex(xfp->mutex);
 
 	return TRUE;
 }
@@ -662,10 +671,6 @@ static void* xf_peer_main_loop(void* arg)
 	fprintf(stderr, "Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
-	
-	pthread_cancel(xfp->thread);
-	
-	pthread_join(xfp->thread, NULL);
 	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);

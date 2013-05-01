@@ -27,6 +27,6 @@
 
 XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
 void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
-void* xf_monitor_updates(void* param);
+void* xf_monitor_thread(void* param);
 
 #endif /* __XF_ENCODE_H */
