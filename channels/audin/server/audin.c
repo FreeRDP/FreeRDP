@@ -111,7 +111,9 @@ static void audin_server_send_formats(audin_server* audin, wStream* s)
 		nAvgBytesPerSec = audin->context.server_formats[i].nSamplesPerSec *
 			audin->context.server_formats[i].nChannels *
 			audin->context.server_formats[i].wBitsPerSample / 8;
-		stream_check_size(s, 18);
+
+		Stream_EnsureRemainingCapacity(s, 18);
+
 		stream_write_UINT16(s, audin->context.server_formats[i].wFormatTag);
 		stream_write_UINT16(s, audin->context.server_formats[i].nChannels);
 		stream_write_UINT32(s, audin->context.server_formats[i].nSamplesPerSec);
@@ -119,9 +121,10 @@ static void audin_server_send_formats(audin_server* audin, wStream* s)
 		stream_write_UINT16(s, audin->context.server_formats[i].nBlockAlign);
 		stream_write_UINT16(s, audin->context.server_formats[i].wBitsPerSample);
 		stream_write_UINT16(s, audin->context.server_formats[i].cbSize);
+
 		if (audin->context.server_formats[i].cbSize)
 		{
-			stream_check_size(s, audin->context.server_formats[i].cbSize);
+			Stream_EnsureRemainingCapacity(s, audin->context.server_formats[i].cbSize);
 			stream_write(s, audin->context.server_formats[i].data,
 				audin->context.server_formats[i].cbSize);
 		}
@@ -333,7 +336,7 @@ static void* audin_server_thread_func(void* arg)
 			if (bytes_returned == 0)
 				break;
 			
-			stream_check_size(s, (int) bytes_returned);
+			Stream_EnsureRemainingCapacity(s, (int) bytes_returned);
 
 			if (WTSVirtualChannelRead(audin->audin_channel, 0, stream_get_head(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)

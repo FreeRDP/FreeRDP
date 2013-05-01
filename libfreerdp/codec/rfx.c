@@ -942,7 +942,7 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, wStream* s)
 
 void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 {
-	stream_check_size(s, 12 + 10 + 12 + 13);
+	Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13);
 
 	rfx_compose_message_sync(context, s);
 	rfx_compose_message_context(context, s);
@@ -954,7 +954,7 @@ void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, wStream* s)
 {
-	stream_check_size(s, 14);
+	Stream_EnsureRemainingCapacity(s, 14);
 
 	stream_write_UINT16(s, WBT_FRAME_BEGIN); /* CodecChannelT.blockType */
 	stream_write_UINT32(s, 14); /* CodecChannelT.blockLen */
@@ -973,7 +973,7 @@ static void rfx_compose_message_region(RFX_CONTEXT* context, wStream* s,
 	int i;
 
 	size = 15 + num_rects * 8;
-	stream_check_size(s, size);
+	Stream_EnsureRemainingCapacity(s, size);
 
 	stream_write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType */
 	stream_write_UINT32(s, size); /* set CodecChannelT.blockLen later */
@@ -1004,7 +1004,7 @@ static void rfx_compose_message_tile(RFX_CONTEXT* context, wStream* s,
 	int CrLen = 0;
 	int start_pos, end_pos;
 
-	stream_check_size(s, 19);
+	Stream_EnsureRemainingCapacity(s, 19);
 	start_pos = Stream_GetPosition(s);
 
 	stream_write_UINT16(s, CBT_TILE); /* BlockT.blockType */
@@ -1077,7 +1077,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 	numTiles = numTilesX * numTilesY;
 
 	size = 22 + numQuants * 5;
-	stream_check_size(s, size);
+	Stream_EnsureRemainingCapacity(s, size);
 	start_pos = Stream_GetPosition(s);
 
 	stream_write_UINT16(s, WBT_EXTENSION); /* CodecChannelT.blockType */
@@ -1127,7 +1127,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 
 static void rfx_compose_message_frame_end(RFX_CONTEXT* context, wStream* s)
 {
-	stream_check_size(s, 8);
+	Stream_EnsureRemainingCapacity(s, 8);
 
 	stream_write_UINT16(s, WBT_FRAME_END); /* CodecChannelT.blockType */
 	stream_write_UINT32(s, 8); /* CodecChannelT.blockLen */

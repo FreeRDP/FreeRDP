@@ -43,6 +43,7 @@ struct _wStream
 typedef struct _wStream wStream;
 
 WINPR_API void Stream_EnsureCapacity(wStream* s, size_t size);
+WINPR_API void Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
 WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
@@ -197,6 +198,8 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 #define Stream_SealLength(_s)		_s->length = (_s->pointer - _s->buffer)
 #define Stream_GetRemainingLength(_s)	(_s->length - (_s->pointer - _s->buffer))
 
+#define Stream_Clear(_s)		memset(_s->buffer, 0, _s->capacity)
+
 /* Deprecated STREAM API */
 
 WINPR_API wStream* stream_new(int size);
@@ -204,16 +207,12 @@ WINPR_API void stream_free(wStream* stream);
 
 #define stream_attach(_s, _buf, _size) do { \
 	_s->capacity = _size; \
-	_s->length = _size; \
+ 	_s->length = _size; \
 	_s->buffer = _buf; \
 	_s->pointer = _buf; } while (0)
 #define stream_detach(_s) memset(_s, 0, sizeof(wStream))
-#define stream_clear(_s) memset(_s->buffer, 0, _s->capacity)
 
 WINPR_API void stream_extend(wStream* stream, int request_size);
-#define stream_check_size(_s, _n) \
-	while (_s->pointer - _s->buffer + (_n) > _s->capacity) \
-		stream_extend(_s, _n)
 
 #define stream_get_mark(_s,_mark) _mark = _s->pointer
 #define stream_set_mark(_s,_mark) _s->pointer = _mark

@@ -287,7 +287,8 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
-	context->s = stream_new(65536);
+	context->s = Stream_New(NULL, 65536);
+	Stream_Clear(context->s);
 }
 
 void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
@@ -325,7 +326,7 @@ void xf_peer_init(freerdp_peer* client)
 
 wStream* xf_peer_stream_init(xfPeerContext* context)
 {
-	stream_clear(context->s);
+	Stream_Clear(context->s);
 	Stream_SetPosition(context->s, 0);
 	return context->s;
 }
@@ -409,7 +410,7 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	cmd->width = width;
 	cmd->height = height;
 	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapData = Stream_Buffer(s);
 
 	update->SurfaceBits(update->context, cmd);
 }

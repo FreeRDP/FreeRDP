@@ -44,7 +44,7 @@ int tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 	stream_read_UINT32(ifman->input, CapabilityValue);
 	DEBUG_DVC("server CapabilityValue %d", CapabilityValue);
 
-	stream_check_size(ifman->output, 8);
+	Stream_EnsureRemainingCapacity(ifman->output, 8);
 	stream_write_UINT32(ifman->output, 1); /* CapabilityValue */
 	stream_write_UINT32(ifman->output, 0); /* Result */
 
@@ -61,7 +61,7 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	UINT32 numHostCapabilities;
 
 	pos = Stream_GetPosition(ifman->output);
-	stream_check_size(ifman->output, ifman->input_size + 4);
+	Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4);
 	stream_copy(ifman->output, ifman->input, ifman->input_size);
 
 	Stream_SetPosition(ifman->output, pos);
@@ -117,7 +117,7 @@ int tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	if (FormatSupported)
 		DEBUG_DVC("format ok.");
 
-	stream_check_size(ifman->output, 12);
+	Stream_EnsureRemainingCapacity(ifman->output, 12);
 	stream_write_UINT32(ifman->output, FormatSupported);
 	stream_write_UINT32(ifman->output, PlatformCookie);
 	stream_write_UINT32(ifman->output, 0); /* Result */
@@ -191,7 +191,7 @@ int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
 
-	stream_check_size(ifman->output, 8);
+	Stream_EnsureRemainingCapacity(ifman->output, 8);
 	stream_write_UINT32(ifman->output, 1); /* TopologyReady */
 	stream_write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
@@ -243,7 +243,7 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 
 	pexisted = 0;
 
-	stream_check_size(ifman->output, 4);
+	Stream_EnsureRemainingCapacity(ifman->output, 4);
 	stream_write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
@@ -489,7 +489,7 @@ int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	}
 	DEBUG_DVC("StreamId %d", StreamId);
 
-	stream_check_size(ifman->output, 16);
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	stream_write_UINT32(ifman->output, StreamId); /* StreamId */
 	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
@@ -512,7 +512,7 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 	else
 		DEBUG_WARN("unknown presentation id");
 
-	stream_check_size(ifman->output, 16);
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	stream_write_UINT32(ifman->output, 0); /* StreamId */
 	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_START_COMPLETED); /* EventId */
@@ -573,7 +573,7 @@ int tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 	else
 		DEBUG_WARN("unknown presentation id");
 
-	stream_check_size(ifman->output, 16);
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	stream_write_UINT32(ifman->output, 0); /* StreamId */
 	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_STOP_COMPLETED); /* EventId */
@@ -587,7 +587,7 @@ int tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN * ifman)
 {
 	DEBUG_DVC("");
 
-	stream_check_size(ifman->output, 16);
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	stream_write_UINT32(ifman->output, 0); /* StreamId */
 	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_MONITORCHANGED); /* EventId */

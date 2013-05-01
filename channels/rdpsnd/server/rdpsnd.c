@@ -224,7 +224,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 			if (bytes_returned == 0)
 				break;
 			
-			stream_check_size(s, (int) bytes_returned);
+			Stream_EnsureRemainingCapacity(s, (int) bytes_returned);
 
 			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)
@@ -414,7 +414,7 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	Stream_SetPosition(s, 0);
 
 	/* Wave PDU */
-	stream_check_size(s, size + fill_size);
+	Stream_EnsureRemainingCapacity(s, size + fill_size);
 	stream_write_UINT32(s, 0); /* bPad */
 	stream_write(s, src + 4, size - 4);
 

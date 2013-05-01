@@ -176,7 +176,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
 		{
 			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
-			stream_check_size(data_out, 20 + data_len);
+			Stream_EnsureRemainingCapacity(data_out, 20 + data_len);
 
 			stream_write_UINT32(data_out, device->type); /* deviceType */
 			stream_write_UINT32(data_out, device->id); /* deviceID */

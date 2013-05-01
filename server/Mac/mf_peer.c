@@ -133,7 +133,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	
 	s = mfp->s;
-	stream_clear(s);
+	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
 	
 	UINT32 x = mfi->invalid.x / mfi->scale;

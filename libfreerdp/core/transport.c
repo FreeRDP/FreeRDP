@@ -53,7 +53,7 @@ static void* transport_client_thread(void* arg);
 wStream* transport_recv_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s = transport->ReceiveStream;
-	stream_check_size(s, size);
+	Stream_EnsureCapacity(s, size);
 	Stream_SetPosition(s, 0);
 	return s;
 }
@@ -61,7 +61,7 @@ wStream* transport_recv_stream_init(rdpTransport* transport, int size)
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s = transport->SendStream;
-	stream_check_size(s, size);
+	Stream_EnsureCapacity(s, size);
 	Stream_SetPosition(s, 0);
 	return s;
 }
@@ -498,7 +498,7 @@ static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	stream_check_size(transport->ReceiveBuffer, 32 * 1024);
+	Stream_EnsureCapacity(transport->ReceiveBuffer, 32 * 1024);
 	status = transport_read(transport, transport->ReceiveBuffer);
 
 	if (status <= 0)

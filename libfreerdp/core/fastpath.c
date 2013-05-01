@@ -96,7 +96,7 @@ UINT16 fastpath_read_header(rdpFastPath* fastpath, wStream* s)
 
 	stream_read_BYTE(s, header);
 
-	if (fastpath != NULL)
+	if (fastpath)
 	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
 		fastpath->numberEvents = (header & 0x3C) >> 2;
@@ -133,7 +133,7 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16 *length)
 
 	stream_read_BYTE(s, header);
 
-	if (fastpath != NULL)
+	if (fastpath)
 	{
 		fastpath->encryptionFlags = (header & 0xC0) >> 6;
 		fastpath->numberEvents = (header & 0x3C) >> 2;
@@ -157,6 +157,7 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
 	{
 		if (!update_recv_order(update, s))
 			return FALSE;
+
 		numberOrders--;
 	}
 
@@ -500,6 +501,7 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 	stream_read_BYTE(s, code); /* keyCode (1 byte) */
 
 	flags = 0;
+
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
 		flags |= KBD_FLAGS_RELEASE;
 	else
@@ -567,6 +569,7 @@ static BOOL fastpath_recv_input_event_unicode(rdpFastPath* fastpath, wStream* s,
 	stream_read_UINT16(s, unicodeCode); /* unicodeCode (2 bytes) */
 
 	flags = 0;
+
 	if ((eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE))
 		flags |= KBD_FLAGS_RELEASE;
 	else
@@ -650,14 +653,16 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 {
 	UINT32 sec_bytes;
 
+	sec_bytes = 0;
+
 	if (rdp->do_crypt)
 	{
 		sec_bytes = 8;
+
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
-	else
-		sec_bytes = 0;
+
 	return sec_bytes;
 }
 
@@ -669,14 +674,20 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 	rdp = fastpath->rdp;
 
 	s = transport_send_stream_init(rdp->transport, 256);
+
 	Stream_Seek(s, 3); /* fpInputHeader, length1 and length2 */
-	if (rdp->do_crypt) {
+
+	if (rdp->do_crypt)
+	{
 		rdp->sec_flags |= SEC_ENCRYPT;
+
 		if (rdp->do_secure_checksum)
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
+
 	Stream_Seek(s, fastpath_get_sec_bytes(rdp));
 	stream_write_BYTE(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
+
 	return s;
 }
 
@@ -690,6 +701,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 	rdp = fastpath->rdp;
 
 	length = Stream_GetPosition(s);
+
 	if (length >= (2 << 14))
 	{
 		fprintf(stderr, "Maximum FastPath PDU length is 32767\n");
@@ -698,6 +710,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 
 	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
 	eventHeader |= (1 << 2); /* numberEvents */
+
 	if (rdp->sec_flags & SEC_ENCRYPT)
 		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
 	if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
@@ -706,8 +719,9 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 	Stream_SetPosition(s, 0);
 	stream_write_BYTE(s, eventHeader);
 	sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+
 	/*
-	 * We always encode length in two bytes, eventhough we could use
+	 * We always encode length in two bytes, even though we could use
 	 * only one byte if length <= 0x7F. It is just easier that way,
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.
@@ -721,16 +735,19 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 
 		fpInputEvents = Stream_Pointer(s) + sec_bytes;
 		fpInputEvents_length = length - 3 - sec_bytes;
+
 		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
 			security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
 		else
 			security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
+
 		security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
 	}
 
 	rdp->sec_flags = 0;
 
 	Stream_SetPosition(s, length);
+
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return FALSE;
 
@@ -740,10 +757,13 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 {
 	wStream* s;
+
 	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
+
 	Stream_Seek(s, 3); /* fpOutputHeader, length1 and length2 */
 	Stream_Seek(s, fastpath_get_sec_bytes(fastpath->rdp));
 	Stream_Seek(s, 3); /* updateHeader, size */
+
 	return s;
 }
 
@@ -783,7 +803,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	try_comp = rdp->settings->CompressionEnabled;
 	comp_update = stream_new(0);
 
-	for (fragment = 0; totalLength > 0 || fragment == 0; fragment++)
+	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
 		stream_get_mark(s, holdp);
 		ls = s;
@@ -792,6 +812,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		comp_flags = 0;
 		header_bytes = 6 + sec_bytes;
 		pdu_data_bytes = dlen;
+
 		if (try_comp)
 		{
 			if (compress_rdp(rdp->mppc_enc, ls->pointer + header_bytes, dlen))
@@ -808,7 +829,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 				}
 			}
 			else
+			{
 				fprintf(stderr, "fastpath_send_update_pdu: mppc_encode failed\n");
+			}
 		}
 
 		totalLength -= dlen;
@@ -821,8 +844,10 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		stream_get_mark(ls, bm);
 		header = 0;
+
 		if (sec_bytes > 0)
 			header |= (FASTPATH_OUTPUT_ENCRYPTED << 6);
+
 		stream_write_BYTE(ls, header); /* fpOutputHeader (1 byte) */
 		stream_write_BYTE(ls, 0x80 | (pduLength >> 8)); /* length1 */
 		stream_write_BYTE(ls, pduLength & 0xFF); /* length2 */
@@ -839,7 +864,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			bytes_to_crypt = pdu_data_bytes + 4;
 		}
 		else
+		{
 			bytes_to_crypt = pdu_data_bytes + 3;
+		}
 
 		stream_write_UINT16(ls, pdu_data_bytes);
 
@@ -851,10 +878,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			/* does this work ? */
 			ptr_to_crypt = bm + 3 + sec_bytes;
 			ptr_sig = bm + 3;
+
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
 				security_salted_mac_signature(rdp, ptr_to_crypt, bytes_to_crypt, TRUE, ptr_sig);
 			else
 				security_mac_signature(rdp, ptr_to_crypt, bytes_to_crypt, ptr_sig);
+
 			security_encrypt(ptr_to_crypt, bytes_to_crypt, rdp);
 		}
 

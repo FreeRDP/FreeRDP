@@ -511,7 +511,7 @@ static void update_send_surface_command(rdpContext* context, wStream* s)
 	rdpRdp* rdp = context->rdp;
 
 	update = fastpath_update_pdu_init(rdp->fastpath);
-	stream_check_size(update, Stream_GetPosition(s));
+	Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s));
 	stream_write(update, stream_get_head(s), Stream_GetPosition(s));
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update);
 }
@@ -522,7 +522,7 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	stream_check_size(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surface_bits_command->bitmapDataLength);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surface_bits_command->bitmapDataLength);
 	update_write_surfcmd_surface_bits_header(s, surface_bits_command);
 	stream_write(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
@@ -610,7 +610,7 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 
 static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 {
-	stream_check_size(s, 15 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
+	Stream_EnsureRemainingCapacity(s, 15 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
 
 	stream_write_UINT16(s, pointer_color->cacheIndex);
 	stream_write_UINT16(s, pointer_color->xPos);
@@ -674,6 +674,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < numberOfAreas * 4 * 2)
 		return FALSE;
+
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
 
 	for (index = 0; index < numberOfAreas; index++)

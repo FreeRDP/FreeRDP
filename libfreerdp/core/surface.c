@@ -136,7 +136,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 
 void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
 {
-	stream_check_size(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
 
 	stream_write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
 
@@ -154,7 +154,7 @@ void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* 
 
 void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
 {
-	stream_check_size(s, SURFCMD_FRAME_MARKER_LENGTH);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_FRAME_MARKER_LENGTH);
 
 	stream_write_UINT16(s, CMDTYPE_FRAME_MARKER);
 

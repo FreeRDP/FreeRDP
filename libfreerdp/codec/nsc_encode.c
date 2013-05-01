@@ -349,7 +349,7 @@ void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data);
 
 	/* Assemble the NSCodec message into stream */
-	stream_check_size(s, 20);
+	Stream_EnsureRemainingCapacity(s, 20);
 	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
 	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
 	stream_write_UINT32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
@@ -362,7 +362,7 @@ void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	{
 		if (context->nsc_stream.PlaneByteCount[i] > 0)
 		{
-			stream_check_size(s, (int) context->nsc_stream.PlaneByteCount[i]);
+			Stream_EnsureRemainingCapacity(s, (int) context->nsc_stream.PlaneByteCount[i]);
 			stream_write(s, context->priv->plane_buf[i], context->nsc_stream.PlaneByteCount[i]);
 		}
 	}

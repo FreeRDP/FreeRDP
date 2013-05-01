@@ -157,7 +157,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, Length);
+		Stream_EnsureRemainingCapacity(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
 

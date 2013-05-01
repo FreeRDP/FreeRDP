@@ -175,7 +175,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 			/* Store the agreed format in the corresponding index */
 			callback->formats[callback->formats_count++] = format;
 			/* Put the format to output buffer */
-			stream_check_size(out, 18 + format.cbSize);
+			Stream_EnsureRemainingCapacity(out, 18 + format.cbSize);
 			stream_write(out, fm, 18 + format.cbSize);
 		}
 	}

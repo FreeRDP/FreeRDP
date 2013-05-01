@@ -193,7 +193,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, Length);
+		Stream_EnsureRemainingCapacity(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
 

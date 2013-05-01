@@ -104,7 +104,7 @@ static void test_peer_init(freerdp_peer* client)
 
 static wStream* test_peer_stream_init(testPeerContext* context)
 {
-	stream_clear(context->s);
+	Stream_Clear(context->s);
 	Stream_SetPosition(context->s, 0);
 	return context->s;
 }
@@ -425,7 +425,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 			if (bytes_returned == 0)
 				break;
 
-			stream_check_size(s, bytes_returned);
+			Stream_EnsureRemainingCapacity(s, bytes_returned);
 
 			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)

@@ -1395,7 +1395,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	// Stream_Seek(irp->input, 4);	/* rpce len */
 
 	/* [MS-RDPESC] 3.2.5.1 Sending Outgoing Messages */
-	stream_extend(irp->output, 2048);
+	Stream_EnsureRemainingCapacity(irp->output, 2048);
 
 	irp_result_pos = Stream_GetPosition(irp->output);
 

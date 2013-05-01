@@ -87,7 +87,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 			if (!cliprdr->use_long_format_names)
 				name_length = 32;
 			
-			stream_extend(body, Stream_Capacity(body) + 4 + name_length);
+			Stream_EnsureRemainingCapacity(body, Stream_Capacity(body) + 4 + name_length);
 
 			stream_write_UINT32(body, cb_event->formats[i]);
 			stream_write(body, name, name_length);
