@@ -89,13 +89,74 @@ static int rtest = 0;
 static long xv_port = 0;
 static const size_t password_size = 512;
 
-void testIM()
+void testIM(size_t cols, size_t rows, void* data)
 {
-Image im;
+	/*
 
-MagickCoreGenesis("/tmp/", MagickTrue);
+	//lets just dump it
 
-return;
+	FILE * pFile;
+	
+	pFile = fopen("dump.raw", "wb");
+
+	fwrite(data, 1, 4 * cols * rows, pFile);
+
+	fclose(pFile);
+
+	printf("dumped\n");
+
+
+	*/
+	int w, h;
+	Image* im;
+	Image* im_scaled;
+	ExceptionInfo* e;
+
+	MagickBooleanType ret;
+
+	ImageInfo* i_info;
+
+	MagickCoreGenesis("/tmp/", MagickTrue);
+	e = AcquireExceptionInfo();
+
+	w = cols / 2;
+	h = rows / 2;
+
+	if(w == 0)
+		w = 1;
+	if(h == 0)
+		h = 1;
+
+	im = ConstituteImage(cols, rows, "RGBA", CharPixel, data, e);
+
+	im_scaled = ResizeImage(im, w, h, LanczosFilter, 1.0, e);
+
+	if (im_scaled == (Image *) NULL)
+	{
+        MagickError(e->severity, e->reason, e->description);
+		printf("cols:%d rows:%d\n", cols, rows);
+		printf("w:%d h:%d\n", w, h);
+	}
+
+	ret = ExportImagePixels(im_scaled, 0, 0, w, h, "RGBA", CharPixel, data, e);
+
+	
+
+
+	/*i_info=CloneImageInfo((ImageInfo *) NULL);
+
+	strcpy(im->filename, "atest.png");
+
+	WriteImage(NULL, im);
+	printf("wrote image\n");
+	*/
+
+	//i_info = DestroyImageInfo(i_info);
+	im = DestroyImage(im);
+	im_scaled = DestroyImage(im_scaled);
+	// ExportImagePixels(image,0,0,640,1,"RGB",CharPixel,pixels,exception);
+
+	return;
 }
 
 /*	Upscaling the image uses simple bilinear interpolation	*/
@@ -239,16 +300,75 @@ void xf_sw_end_paint(rdpContext* context)
 				h = cinvalid[i].h;
 				
 				//here --sw
-				if(rtest < 10)
-				{
-					rtest++;
-
-					printf("first rect: %dx%d @ (%d, %d)\n", w, h, x, y);
-				}
 				
-
+					//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
+
+/*
+				if(1)//(rtest < 2)
+				{
+
+					if(1)//(w > 100 && h > 100)
+					{
+							printf("first rect: %dx%d @ (%d, %d)\n", w, h, x, y);
+						printf("\tXImage: %dx%d, offset:%d, format=%d, bpp:%d\n", 
+							   xfi->image->width,
+							   xfi->image->height,
+							   xfi->image->xoffset,
+							   xfi->image->format,
+							   xfi->image->bits_per_pixel);
+												
+						testIM(w, h, xfi->image->data);
+						rtest++;
+					}
+				}
+*/
+
+
+
+				//copy from xfi->primary to xfi->window->handle
 				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+
+				{
+					//try resizing the entire screen
+					int w, h;
+					int w2, h2;
+					XImage xi_small;
+					Image* im_orig;
+					Image*  im_small;
+					ExceptionInfo* e;
+					MagickBooleanType ret;
+
+					w = 1024;
+					h = 768;
+
+					w2 = w/2;
+					h2 = h/2;
+					
+					MagickCoreGenesis("/tmp/", MagickTrue);
+					e = AcquireExceptionInfo();
+
+					
+					XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, 0, 0, 0, 0, 1024, 768);
+
+					im_orig = ConstituteImage(w, h, "RGBA", CharPixel, (void *)xfi->image->data, e);
+
+					im_small = ResizeImage(im_orig, w2, h2, LanczosFilter, 1.0, e);
+
+					ret = CompositeImage(im_orig, AtopCompositeOp, im_small, 0, 0);
+
+					ret = ExportImagePixels(im_orig, 0, 0, w, h, "RGBA", CharPixel, (void *)xfi->image->data, e);
+
+					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, 0, 0, w, h, 0, 0);
+
+					im_orig = DestroyImage(im_orig);
+					im_small = DestroyImage(im_small);
+
+
+					
+				}
+
 			}
 
 			XFlush(xfi->display);
