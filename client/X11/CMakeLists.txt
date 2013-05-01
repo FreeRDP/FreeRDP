@@ -138,20 +138,22 @@ if(WITH_XI)
   set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XI_LIBRARIES})
 endif() 
 
-#find_package(ImageMagick COMPONENTS MagickCore)
-#include_directories(${ImageMagick_MagickCore_INCLUDE_DIRS})
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ImageMagick_MagickCore_LIBRARIES})
+find_package(ImageMagick COMPONENTS MagickCore)
+include_directories(${ImageMagick_MagickCore_INCLUDE_DIRS})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ImageMagick_MagickCore_LIBRARIES})
 #SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/include/ImageMagick-6)
 #SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -I/usr/include/ImageMagick-6)
 
-#message(Found MagickCore: ${ImageMagick_MagickCore_FOUND})
+message(Found MagickCore: ${ImageMagick_MagickCore_FOUND})
+message(INCLUDE: ${ImageMagick_MagickCore_INCLUDE_DIRS})
+message(LIBS: ${${MODULE_PREFIX}_LIBS})
 
-#message(INCLUDE: ${ImageMagick_MagickCore_INCLUDE_DIRS})
-#message(LIBS: ${${MODULE_PREFIX}_LIBS})
 
-include_directories(/usr/include/ImageMagick-6)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib64/libMagickCore-6.Q16.so)
-
+if(NOT ${ImageMagick_MagickCore_FOUND})
+  #just hack it
+  include_directories(/usr/include/ImageMagick-6)
+  set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib64/libMagickCore-6.Q16.so)
+endif()
 
 
 
