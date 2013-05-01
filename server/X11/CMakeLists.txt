@@ -28,6 +28,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_input.h
 	xf_encode.c
 	xf_encode.h
+	xf_update.c
+	xf_update.h
 	xf_interface.c
 	xf_interface.h
 	xfreerdp.h)

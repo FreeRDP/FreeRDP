@@ -27,7 +27,6 @@
 #include <sys/signal.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 
 #include "xf_encode.h"
 
@@ -63,53 +62,4 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 	XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
 	XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
 #endif
-}
-
-void* xf_monitor_thread(void* param)
-{
-	xfInfo* xfi;
-	HANDLE event;
-	XEvent xevent;
-	xfPeerContext* xfp;
-	freerdp_peer* client;
-	UINT32 wait_interval;
-	struct timeval timeout;
-	int x, y, width, height;
-	XDamageNotifyEvent* notify;
-
-	client = (freerdp_peer*) param;
-	xfp = (xfPeerContext*) client->context;
-	xfi = xfp->info;
-
-	wait_interval = 1000000 / xfp->fps;
-	ZeroMemory(&timeout, sizeof(struct timeval));
-
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfi->xfds);
-
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
-	{
-		while (XPending(xfi->display) > 0)
-		{
-			ZeroMemory(&xevent, sizeof(xevent));
-			XNextEvent(xfi->display, &xevent);
-
-			if (xevent.type == xfi->xdamage_notify_event)
-			{
-				notify = (XDamageNotifyEvent*) &xevent;
-
-				x = notify->area.x;
-				y = notify->area.y;
-				width = notify->area.width;
-				height = notify->area.height;
-
-				WaitForSingleObject(xfp->mutex, INFINITE);
-				gdi_InvalidateRegion(xfp->hdc, x, y, width, height);
-				ReleaseMutex(xfp->mutex);
-
-				xf_xdamage_subtract_region(xfp, x, y, width, height);
-			}
-		}
-	}
-
-	return NULL;
 }

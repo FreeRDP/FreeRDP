@@ -44,6 +44,7 @@
 
 #include "xf_input.h"
 #include "xf_encode.h"
+#include "xf_update.h"
 
 #include "makecert.h"
 
@@ -279,6 +280,7 @@ xfInfo* xf_info_init()
 		printf("Using X Shared Memory Extension (XShm)\n");
 
 	xfi->bytesPerPixel = 4;
+	xfi->activePeerCount = 0;
 
 	freerdp_keyboard_init(0);
 
@@ -343,7 +345,7 @@ void xf_peer_live_rfx(freerdp_peer* client)
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
 	xfp->monitorThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) xf_monitor_thread, (void*) client, 0, NULL);
+			(LPTHREAD_START_ROUTINE) xf_update_thread, (void*) client, 0, NULL);
 }
 
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
@@ -520,6 +522,8 @@ BOOL xf_peer_activate(freerdp_peer* client)
 
 	rfx_context_reset(xfp->rfx_context);
 	xfp->activated = TRUE;
+
+	xfp->info->activePeerCount++;
 
 	xf_peer_live_rfx(client);
 

@@ -60,6 +60,7 @@ struct xf_info
 	int bytesPerPixel;
 	HCLRCONV clrconv;
 	BOOL use_xshm;
+	int activePeerCount;
 
 	XImage* fb_image;
 	Pixmap fb_pixmap;

@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 RemoteFX Encoder
+ * X11 Server Graphical Updates
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __XF_ENCODE_H
-#define __XF_ENCODE_H
+#ifndef __XF_UPDATE_H
+#define __XF_UPDATE_H
 
 #include "xfreerdp.h"
 
-#include "xf_peer.h"
+void* xf_update_thread(void* param);
 
-XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
-void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
+#endif /* __XF_UPDATE_H */
 
-#endif /* __XF_ENCODE_H */
