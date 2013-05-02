@@ -331,12 +331,7 @@ void xf_peer_init(freerdp_peer* client)
 	xfp = (xfPeerContext*) client->context;
 
 	xfp->fps = 16;
-	xfp->activations = 0;
-
-	xfp->queue = MessageQueue_New();
-
 	xfi = xfp->info;
-	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
 	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }

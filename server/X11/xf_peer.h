@@ -49,16 +49,13 @@ struct xf_peer_context
 
 	int fps;
 	wStream* s;
-	HGDI_DC hdc;
 	xfInfo* info;
 	HANDLE mutex;
-	int activations;
 	BOOL activated;
 	HANDLE monitorThread;
 	HANDLE updateReadyEvent;
 	HANDLE updateSentEvent;
 	RFX_CONTEXT* rfx_context;
-	wMessageQueue* queue;
 };
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
