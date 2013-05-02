@@ -272,9 +272,10 @@ void xf_sw_end_paint(rdpContext* context)
 					
 					//XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, 0, 0, 0, 0, 1024, 768);
 
-					im_orig = ConstituteImage(w, h, "RGBA", CharPixel, (void *)xfi->image->data, e);
+					//printf("creating primary magick image: %dx%d");
+					im_orig = ConstituteImage(xfi->width, xfi->height, "RGBA", CharPixel, (void *)xfi->image->data, e);
 
-					im_re = ResizeImage(im_orig, w2, h2, LanczosFilter, 1.0, e);
+					im_re = ResizeImage(im_orig, xfi->width * scale, xfi->height * scale, LanczosFilter, 1.0, e);
 
 					//ret = CompositeImage(im_orig, AtopCompositeOp, im_re, 0, 0);
 
@@ -286,14 +287,14 @@ void xf_sw_end_paint(rdpContext* context)
 					//ret = ExportImagePixels(im_re, 0, 0, w2, h2, "RGBA", CharPixel, scaled_image->data, e); //???
 
 
-					printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
+					/*printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
 					printf("im_re: %dx%d\n", im_re->columns, im_re->rows);
 					printf("address of data: %p\naddress of scaledBuf: %p\naddress of calculated offset: %p\n",
 							scaled_image->data,
 							scaledBuf,
 							scaled_image->data + (scaled_image->bytes_per_line * y2));
-
-					for(i = 0; i < h2; i++)
+*/
+					for(i = 0; i <= h2; i++)
 					{
 						int offset;
 
