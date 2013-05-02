@@ -54,30 +54,10 @@
 
 void xf_xdamage_init(xfInfo* xfi)
 {
-	Bool pixmaps;
 	int damage_event;
 	int damage_error;
 	int major, minor;
 	XGCValues values;
-
-	if (xfi->use_xshm)
-	{
-		if (XShmQueryExtension(xfi->display) != False)
-		{
-			XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
-
-			if (pixmaps != True)
-			{
-				fprintf(stderr, "XShmQueryVersion failed\n");
-				return;
-			}
-		}
-		else
-		{
-			fprintf(stderr, "XShmQueryExtension failed\n");
-			return;
-		}
-	}
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
 	{
@@ -128,6 +108,25 @@ void xf_xdamage_init(xfInfo* xfi)
 
 int xf_xshm_init(xfInfo* xfi)
 {
+	Bool pixmaps;
+	int major, minor;
+
+	if (XShmQueryExtension(xfi->display) != False)
+	{
+		XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
+
+		if (pixmaps != True)
+		{
+			fprintf(stderr, "XShmQueryVersion failed\n");
+			return -1;
+		}
+	}
+	else
+	{
+		fprintf(stderr, "XShmQueryExtension failed\n");
+		return -1;
+	}
+
 	xfi->fb_shm_info.shmid = -1;
 	xfi->fb_shm_info.shmaddr = (char*) -1;
 
@@ -244,7 +243,7 @@ xfInfo* xf_info_init()
 
 	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
 
-	if (vis == NULL)
+	if (!vis)
 	{
 		fprintf(stderr, "XGetVisualInfo failed\n");
 		exit(1);
@@ -266,10 +265,6 @@ xfInfo* xf_info_init()
 
 	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
 
-#ifdef WITH_XDAMAGE
-	xf_xdamage_init(xfi);
-#endif
-
 	if (xfi->use_xshm)
 	{
 		if (xf_xshm_init(xfi) < 0)
@@ -278,6 +273,10 @@ xfInfo* xf_info_init()
 
 	if (xfi->use_xshm)
 		printf("Using X Shared Memory Extension (XShm)\n");
+
+#ifdef WITH_XDAMAGE
+	xf_xdamage_init(xfi);
+#endif
 
 	xfi->bytesPerPixel = 4;
 	xfi->activePeerCount = 0;
@@ -305,7 +304,7 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 {
 	if (context)
 	{
-		stream_free(context->s);
+		Stream_Free(context->s, TRUE);
 		rfx_context_free(context->rfx_context);
 	}
 }
@@ -333,21 +332,6 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
-wStream* xf_peer_stream_init(xfPeerContext* context)
-{
-	Stream_Clear(context->s);
-	Stream_SetPosition(context->s, 0);
-	return context->s;
-}
-
-void xf_peer_live_rfx(freerdp_peer* client)
-{
-	xfPeerContext* xfp = (xfPeerContext*) client->context;
-
-	xfp->monitorThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) xf_update_thread, (void*) client, 0, NULL);
-}
-
 void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
 {
 	wStream* s;
@@ -367,7 +351,9 @@ void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int heigh
 	if (width * height <= 0)
 		return;
 
-	s = xf_peer_stream_init(xfp);
+	s = xfp->s;
+	Stream_Clear(s);
+	Stream_SetPosition(s, 0);
 
 	if (xfi->use_xshm)
 	{
@@ -525,7 +511,8 @@ BOOL xf_peer_activate(freerdp_peer* client)
 
 	xfp->info->activePeerCount++;
 
-	xf_peer_live_rfx(client);
+	xfp->monitorThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) xf_update_thread, (void*) client, 0, NULL);
 
 	return TRUE;
 }

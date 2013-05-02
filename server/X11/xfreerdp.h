@@ -25,8 +25,9 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
-
 #include <freerdp/codec/color.h>
+
+#include <X11/Xlib.h>
 
 #ifdef WITH_XSHM
 #include <X11/extensions/XShm.h>

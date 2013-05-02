@@ -51,12 +51,12 @@ struct xf_peer_context
 	wStream* s;
 	HGDI_DC hdc;
 	xfInfo* info;
+	HANDLE mutex;
+	HANDLE event;
 	int activations;
 	BOOL activated;
 	HANDLE monitorThread;
-	HANDLE mutex;
 	RFX_CONTEXT* rfx_context;
-
 	wMessageQueue* queue;
 };
 

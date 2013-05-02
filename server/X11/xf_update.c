@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <X11/Xlib.h>
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
