@@ -28,8 +28,28 @@
 #include <X11/Xcursor/Xcursor.h>
 #endif
 
+#ifdef WITH_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
+
 #include <winpr/crt.h>
 
 #include "xf_cursor.h"
 
+int xf_cursor_init(xfInfo* xfi)
+{
+	int event;
+	int error;
 
+	if (!XFixesQueryExtension(xfi->display, &event, &error))
+	{
+		fprintf(stderr, "XFixesQueryExtension failed\n");
+		return -1;
+	}
+
+	xfi->xfixes_notify_event = event + XFixesCursorNotify;
+
+	XFixesSelectCursorInput(xfi->display, DefaultRootWindow(xfi->display), XFixesDisplayCursorNotifyMask);
+
+	return 0;
+}

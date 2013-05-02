@@ -43,6 +43,7 @@
 #include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
+#include "xf_cursor.h"
 #include "xf_encode.h"
 #include "xf_update.h"
 #include "xf_monitors.h"
@@ -280,6 +281,8 @@ xfInfo* xf_info_init()
 #ifdef WITH_XDAMAGE
 	xf_xdamage_init(xfi);
 #endif
+
+	xf_cursor_init(xfi);
 
 	xfi->bytesPerPixel = 4;
 	xfi->activePeerCount = 0;

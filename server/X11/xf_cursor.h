@@ -22,7 +22,6 @@
 
 #include "xfreerdp.h"
 
-
+int xf_cursor_init(xfInfo* xfi);
 
 #endif /* XFREERDP_SERVER_CURSOR_H */
-

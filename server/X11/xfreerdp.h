@@ -74,6 +74,10 @@ struct xf_info
 	int xdamage_notify_event;
 	XserverRegion xdamage_region;
 #endif
+
+#ifdef WITH_XFIXES
+	int xfixes_notify_event;
+#endif
 };
 
 struct xf_server
