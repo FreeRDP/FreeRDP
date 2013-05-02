@@ -81,7 +81,7 @@
 #include "xf_keyboard.h"
 #include "xf_input.h"
 
-#include <magick/MagickCore.h>
+//#include <magick/MagickCore.h>
 
 static int initialized_xi = 0;
 
@@ -90,11 +90,11 @@ static int rtest = 0;
 static long xv_port = 0;
 static const size_t password_size = 512;
 
-void * scaledBuf;
-XImage* scaled_image;
-Pixmap scaled_pixmap;
+//void * scaledBuf;
+//XImage* scaled_image;
+//Pixmap scaled_pixmap;
 
-void setScale(rdpContext* context, double scale)
+/*void setScale(rdpContext* context, double scale)
 {
 	int w2, h2;
 	rdpGdi* gdi;
@@ -135,6 +135,7 @@ void setScale(rdpContext* context, double scale)
 
 
 }
+*/
 
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
@@ -209,7 +210,7 @@ void xf_sw_end_paint(rdpContext* context)
 				
 					//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 /*
 				if(1)//(rtest < 2)
 				{
@@ -235,7 +236,7 @@ void xf_sw_end_paint(rdpContext* context)
 				//copy from xfi->primary to xfi->window->handle
 				//XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
-
+				/*
 				{
 					//try resizing the entire screen
 					//int w, h;
@@ -287,13 +288,9 @@ void xf_sw_end_paint(rdpContext* context)
 					//ret = ExportImagePixels(im_re, 0, 0, w2, h2, "RGBA", CharPixel, scaled_image->data, e); //???
 
 
-					/*printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
-					printf("im_re: %dx%d\n", im_re->columns, im_re->rows);
-					printf("address of data: %p\naddress of scaledBuf: %p\naddress of calculated offset: %p\n",
-							scaled_image->data,
-							scaledBuf,
-							scaled_image->data + (scaled_image->bytes_per_line * y2));
-*/
+					//printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
+					//printf("im_re: %dx%d\n", im_re->columns, im_re->rows);
+
 					for(i = 0; i <= h2; i++)
 					{
 						int offset;
@@ -313,14 +310,8 @@ void xf_sw_end_paint(rdpContext* context)
 					im_orig = DestroyImage(im_orig);
 					im_re = DestroyImage(im_re);
 
-					/*{
-						char tmp;
-						printf("Continue?\n");
-						scanf("%c", &tmp);
-					}
-					*/
 				}
-
+				*/
 			}
 
 			XFlush(xfi->display);
