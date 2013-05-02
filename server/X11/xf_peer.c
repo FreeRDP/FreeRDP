@@ -298,6 +298,9 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 
 	context->s = Stream_New(NULL, 65536);
 	Stream_Clear(context->s);
+
+	context->updateReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->updateSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
 void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
@@ -332,84 +335,16 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
-void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
+void xf_peer_send_update(freerdp_peer* client)
 {
-	wStream* s;
-	BYTE* data;
-	xfInfo* xfi;
-	RFX_RECT rect;
-	XImage* image;
 	rdpUpdate* update;
-	xfPeerContext* xfp;
 	SURFACE_BITS_COMMAND* cmd;
 
 	update = client->update;
-	xfp = (xfPeerContext*) client->context;
 	cmd = &update->surface_bits_command;
-	xfi = xfp->info;
 
-	if (width * height <= 0)
-		return;
-
-	s = xfp->s;
-	Stream_Clear(s);
-	Stream_SetPosition(s, 0);
-
-	if (xfi->use_xshm)
-	{
-		/**
-		 * Passing an offset source rectangle to rfx_compose_message()
-		 * leads to protocol errors, so offset the data pointer instead.
-		 */
-
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
-		image = xf_snapshot(xfp, x, y, width, height);
-
-		data = (BYTE*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
-
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
-	}
-	else
-	{
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
-		image = xf_snapshot(xfp, x, y, width, height);
-
-		data = (BYTE*) image->data;
-
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
-
-		XDestroyImage(image);
-	}
-
-	cmd->bpp = 32;
-	cmd->codecID = client->settings->RemoteFxCodecId;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = Stream_Buffer(s);
-
-	update->SurfaceBits(update->context, cmd);
+	if (cmd->bitmapDataLength)
+		update->SurfaceBits(update->context, cmd);
 }
 
 BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
@@ -418,7 +353,7 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	HANDLE event;
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	event = MessageQueue_Event(xfp->queue);
+	event = xfp->updateReadyEvent;
 	fds = GetEventFileDescriptor(event);
 	rfds[*rcount] = (void*) (long) fds;
 	(*rcount)++;
@@ -429,25 +364,21 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
-	HGDI_RGN region;
 	xfPeerContext* xfp;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	if (!xfp->activated)
-		return TRUE;
+	if (WaitForSingleObject(xfp->updateReadyEvent, 0) == WAIT_OBJECT_0)
+	{
+		if (!xfp->activated)
+			return TRUE;
 
-	region = xfp->hdc->hwnd->invalid;
+		xf_peer_send_update(client);
 
-	WaitForSingleObject(xfp->mutex, INFINITE);
-
-	if ((region->w * region->h) > 0)
-		xf_peer_rfx_update(client, region->x, region->y, region->w, region->h);
-
-	region->null = 1;
-
-	ReleaseMutex(xfp->mutex);
+		ResetEvent(xfp->updateReadyEvent);
+		SetEvent(xfp->updateSentEvent);
+	}
 
 	return TRUE;
 }
@@ -572,9 +503,9 @@ static void* xf_peer_main_loop(void* arg)
 	void* rfds[32];
 	fd_set rfds_set;
 	rdpSettings* settings;
-	freerdp_peer* client = (freerdp_peer*) arg;
 	xfPeerContext* xfp;
 	struct timeval timeout;
+	freerdp_peer* client = (freerdp_peer*) arg;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(&timeout, sizeof(struct timeval));

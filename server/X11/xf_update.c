@@ -70,11 +70,15 @@ void* xf_update_thread(void* param)
 				width = notify->area.width;
 				height = notify->area.height;
 
-				WaitForSingleObject(xfp->mutex, INFINITE);
-				gdi_InvalidateRegion(xfp->hdc, x, y, width, height);
-				ReleaseMutex(xfp->mutex);
+				if (xf_update_encode(client, x, y, width, height) >= 0)
+				{
+					xf_xdamage_subtract_region(xfp, x, y, width, height);
 
-				xf_xdamage_subtract_region(xfp, x, y, width, height);
+					SetEvent(xfp->updateReadyEvent);
+
+					WaitForSingleObject(xfp->updateSentEvent, INFINITE);
+					ResetEvent(xfp->updateSentEvent);
+				}
 			}
 		}
 

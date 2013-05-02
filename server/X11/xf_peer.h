@@ -52,10 +52,11 @@ struct xf_peer_context
 	HGDI_DC hdc;
 	xfInfo* info;
 	HANDLE mutex;
-	HANDLE event;
 	int activations;
 	BOOL activated;
 	HANDLE monitorThread;
+	HANDLE updateReadyEvent;
+	HANDLE updateSentEvent;
 	RFX_CONTEXT* rfx_context;
 	wMessageQueue* queue;
 };
