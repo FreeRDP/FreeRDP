@@ -30,6 +30,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_encode.h
 	xf_update.c
 	xf_update.h
+	xf_monitors.c
+	xf_monitors.h
 	xf_interface.c
 	xf_interface.h
 	xfreerdp.h)
@@ -55,9 +57,17 @@ set(XSHM_FEATURE_TYPE "RECOMMENDED")
 set(XSHM_FEATURE_PURPOSE "X11 shared memory")
 set(XSHM_FEATURE_DESCRIPTION "X11 shared memory extension")
 
+set(XINERAMA_FEATURE_TYPE "RECOMMENDED")
+set(XINERAMA_FEATURE_PURPOSE "multi-monitor")
+set(XINERAMA_FEATURE_DESCRIPTION "X11 multi-monitor extension")
+
 set(XTEST_FEATURE_TYPE "RECOMMENDED")
 set(XTEST_FEATURE_PURPOSE "X11 input event injection")
 set(XTEST_FEATURE_DESCRIPTION "X11 input event injection extension")
+
+set(XCURSOR_FEATURE_TYPE "RECOMMENDED")
+set(XCURSOR_FEATURE_PURPOSE "cursor")
+set(XCURSOR_FEATURE_DESCRIPTION "X11 cursor extension")
 
 set(XFIXES_FEATURE_TYPE "RECOMMENDED")
 set(XFIXES_FEATURE_PURPOSE "X11 region")
@@ -72,6 +82,8 @@ find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DE
 find_feature(XTest ${XTEST_FEATURE_TYPE} ${XTEST_FEATURE_PURPOSE} ${XTEST_FEATURE_DESCRIPTION})
 find_feature(Xfixes ${XFIXES_FEATURE_TYPE} ${XFIXES_FEATURE_PURPOSE} ${XFIXES_FEATURE_DESCRIPTION})
 find_feature(Xdamage ${XDAMAGE_FEATURE_TYPE} ${XDAMAGE_FEATURE_PURPOSE} ${XDAMAGE_FEATURE_DESCRIPTION})
+find_feature(Xcursor ${XCURSOR_FEATURE_TYPE} ${XCURSOR_FEATURE_PURPOSE} ${XCURSOR_FEATURE_DESCRIPTION})
+find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
 
 if(WITH_XSHM)
 	add_definitions(-DWITH_XSHM)
@@ -82,6 +94,18 @@ if(WITH_XEXT)
 	add_definitions(-DWITH_XEXT)
 	include_directories(${XEXT_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XEXT_LIBRARIES})
+endif()
+
+if(WITH_XINERAMA)
+	add_definitions(-DWITH_XINERAMA)
+	include_directories(${XINERAMA_INCLUDE_DIRS})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XINERAMA_LIBRARIES})
+endif()
+
+if(WITH_XCURSOR)
+	add_definitions(-DWITH_XCURSOR)
+	include_directories(${XCURSOR_INCLUDE_DIRS})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XCURSOR_LIBRARIES})
 endif()
 
 if(WITH_XDAMAGE)

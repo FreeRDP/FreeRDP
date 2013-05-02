@@ -45,6 +45,7 @@
 #include "xf_input.h"
 #include "xf_encode.h"
 #include "xf_update.h"
+#include "xf_monitors.h"
 
 #include "makecert.h"
 
@@ -207,6 +208,8 @@ xfInfo* xf_info_init()
 		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
 	}
+
+	xf_list_monitors(xfi);
 
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->number = DefaultScreen(xfi->display);
