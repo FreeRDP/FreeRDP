@@ -69,6 +69,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/file.h>
+#include <winpr/print.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -89,146 +90,51 @@ static int rtest = 0;
 static long xv_port = 0;
 static const size_t password_size = 512;
 
-void testIM(size_t cols, size_t rows, void* data)
+void * scaledBuf;
+XImage* scaled_image;
+Pixmap scaled_pixmap;
+
+void setScale(rdpContext* context, double scale)
 {
-	/*
+	int w2, h2;
+	rdpGdi* gdi;
+	xfInfo* xfi;
 
-	//lets just dump it
-
-	FILE * pFile;
+	xfi = ((xfContext*) context)->xfi;
+	gdi = context->gdi;
 	
-	pFile = fopen("dump.raw", "wb");
-
-	fwrite(data, 1, 4 * cols * rows, pFile);
-
-	fclose(pFile);
-
-	printf("dumped\n");
-
-
-	*/
-	int w, h;
-	Image* im;
-	Image* im_scaled;
-	ExceptionInfo* e;
-
-	MagickBooleanType ret;
-
-	ImageInfo* i_info;
-
-	MagickCoreGenesis("/tmp/", MagickTrue);
-	e = AcquireExceptionInfo();
-
-	w = cols / 2;
-	h = rows / 2;
-
-	if(w == 0)
-		w = 1;
-	if(h == 0)
-		h = 1;
-
-	im = ConstituteImage(cols, rows, "RGBA", CharPixel, data, e);
-
-	im_scaled = ResizeImage(im, w, h, LanczosFilter, 1.0, e);
-
-	if (im_scaled == (Image *) NULL)
+	//for now only run once
+	if(rtest == 0)
 	{
-        MagickError(e->severity, e->reason, e->description);
-		printf("cols:%d rows:%d\n", cols, rows);
-		printf("w:%d h:%d\n", w, h);
+		rtest++;
+
+		//must be careful here with rounding
+		w2 = (int)(gdi->width * scale);
+		h2 = (int)(gdi->height * scale);
+
+		printf("###########################/n");
+		printf("gdi: %dx%d, xfi: %dx%d\n", gdi->width, gdi->height, xfi->width, xfi->height);
+
+
+
+		printf("creating scaled buffer\n");
+		printf("%dx%d -> %.2f -> %dx%d (%d bytes)\n", gdi->width, gdi->height, scale, w2, h2, 4*w2*h2);
+
+
+		scaledBuf = malloc(4 * w2 * h2);
+		scaled_image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
+				(char*) scaledBuf, w2, h2, xfi->scanline_pad, 0);
+
+		scaled_pixmap = XCreatePixmap(xfi->display, xfi->drawable,
+							w2, h2, xfi->depth);
+
+		printf("done\n");
 	}
-
-	ret = ExportImagePixels(im_scaled, 0, 0, w, h, "RGBA", CharPixel, data, e);
-
 	
-
-
-	/*i_info=CloneImageInfo((ImageInfo *) NULL);
-
-	strcpy(im->filename, "atest.png");
-
-	WriteImage(NULL, im);
-	printf("wrote image\n");
-	*/
-
-	//i_info = DestroyImageInfo(i_info);
-	im = DestroyImage(im);
-	im_scaled = DestroyImage(im_scaled);
-	// ExportImagePixels(image,0,0,640,1,"RGB",CharPixel,pixels,exception);
-
 	return;
+
+
 }
-
-/*	Upscaling the image uses simple bilinear interpolation	*/
-int up_scale_image(
-		const unsigned char* const orig,
-		int width, int height, int channels,
-		unsigned char* resampled,
-		int resampled_width, int resampled_height
-	)
-{
-	float dx, dy;
-	int x, y, c;
-
-    /* error(s) check	*/
-    if ( 	(width < 1) || (height < 1) ||
-            (resampled_width < 2) || (resampled_height < 2) ||
-            (channels < 1) ||
-            (NULL == orig) || (NULL == resampled) )
-    {
-        /*	signify badness	*/
-        return 0;
-    }
-    /*
-		for each given pixel in the new map, find the exact location
-		from the original map which would contribute to this guy
-	*/
-    dx = (width - 1.0f) / (resampled_width - 1.0f);
-    dy = (height - 1.0f) / (resampled_height - 1.0f);
-    for ( y = 0; y < resampled_height; ++y )
-    {
-    	/* find the base y index and fractional offset from that	*/
-    	float sampley = y * dy;
-    	int inty = (int)sampley;
-    	/*	if( inty < 0 ) { inty = 0; } else	*/
-		if( inty > height - 2 ) { inty = height - 2; }
-		sampley -= inty;
-        for ( x = 0; x < resampled_width; ++x )
-        {
-			float samplex = x * dx;
-			int intx = (int)samplex;
-			int base_index;
-			/* find the base x index and fractional offset from that	*/
-			/*	if( intx < 0 ) { intx = 0; } else	*/
-			if( intx > width - 2 ) { intx = width - 2; }
-			samplex -= intx;
-			/*	base index into the original image	*/
-			base_index = (inty * width + intx) * channels;
-            for ( c = 0; c < channels; ++c )
-            {
-            	/*	do the sampling	*/
-				float value = 0.5f;
-				value += orig[base_index]
-							*(1.0f-samplex)*(1.0f-sampley);
-				value += orig[base_index+channels]
-							*(samplex)*(1.0f-sampley);
-				value += orig[base_index+width*channels]
-							*(1.0f-samplex)*(sampley);
-				value += orig[base_index+width*channels+channels]
-							*(samplex)*(sampley);
-				/*	move to the next channel	*/
-				++base_index;
-            	/*	save the new value	*/
-            	resampled[y*resampled_width*channels+x*channels+c] =
-						(unsigned char)(value);
-            }
-        }
-    }
-    /*	done	*/
-    return 1;
-}
-
-
 
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
@@ -325,48 +231,93 @@ void xf_sw_end_paint(rdpContext* context)
 */
 
 
-
+				///////////////////////////////////////////////////
 				//copy from xfi->primary to xfi->window->handle
-				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				//XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
 
 				{
 					//try resizing the entire screen
-					int w, h;
+					//int w, h;
 					int w2, h2;
+					int x2, y2;
+					int i;
 					XImage xi_small;
 					Image* im_orig;
-					Image*  im_small;
+					Image*  im_re;
 					ExceptionInfo* e;
 					MagickBooleanType ret;
 
-					w = 1024;
-					h = 768;
+					double scale;
 
-					w2 = w/2;
-					h2 = h/2;
+					scale = 0.5;
+
+					setScale(context, scale);
+
+
+					w2 = (int)(w * scale);
+					h2 = (int)(h * scale);
+
+					x2 = (int)(x * scale);
+					y2 = (int)(y * scale);
+
+					if(w2 == 0)
+						w2++;
+					if(h2 == 0)
+						h2++;
 					
 					MagickCoreGenesis("/tmp/", MagickTrue);
 					e = AcquireExceptionInfo();
 
 					
-					XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, 0, 0, 0, 0, 1024, 768);
+					//XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, 0, 0, 0, 0, 1024, 768);
 
 					im_orig = ConstituteImage(w, h, "RGBA", CharPixel, (void *)xfi->image->data, e);
 
-					im_small = ResizeImage(im_orig, w2, h2, LanczosFilter, 1.0, e);
+					im_re = ResizeImage(im_orig, w2, h2, LanczosFilter, 1.0, e);
 
-					ret = CompositeImage(im_orig, AtopCompositeOp, im_small, 0, 0);
+					//ret = CompositeImage(im_orig, AtopCompositeOp, im_re, 0, 0);
 
-					ret = ExportImagePixels(im_orig, 0, 0, w, h, "RGBA", CharPixel, (void *)xfi->image->data, e);
+					//printf("putimage\n");
+					//XPutImage(xfi->display, scaled_pixmap, xfi->gc, scaled_image, x2, y2, x2, y2, w2, h2);
+					XPutImage(xfi->display, scaled_pixmap, xfi->gc, scaled_image, x2, y2, x2, y2, w2, h2);
 
-					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, 0, 0, w, h, 0, 0);
+					//printf("export bpl:%d calc:%d\n", scaled_image->bytes_per_line, 4*w2);
+					//ret = ExportImagePixels(im_re, 0, 0, w2, h2, "RGBA", CharPixel, scaled_image->data, e); //???
+
+
+					printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
+					printf("im_re: %dx%d\n", im_re->columns, im_re->rows);
+					printf("address of data: %p\naddress of scaledBuf: %p\naddress of calculated offset: %p\n",
+							scaled_image->data,
+							scaledBuf,
+							scaled_image->data + (scaled_image->bytes_per_line * y2));
+
+					for(i = 0; i < h2; i++)
+					{
+						int offset;
+
+						offset = scaled_image->bytes_per_line * (i);
+						offset += x2 * 4;
+
+						//printf("\toffset:%d i:%d/%d \n", offset, i, h2-1);
+
+						ret = ExportImagePixels(im_re, 0, i, im_re->columns, 1, "RGBA", CharPixel, scaled_image->data + offset, e);
+
+					}
+
+					//printf("copy\n");
+					XCopyArea(xfi->display, scaled_pixmap, xfi->window->handle, xfi->gc, x2, y2, w, h, x2, y2);
 
 					im_orig = DestroyImage(im_orig);
-					im_small = DestroyImage(im_small);
+					im_re = DestroyImage(im_re);
 
-
-					
+					/*{
+						char tmp;
+						printf("Continue?\n");
+						scanf("%c", &tmp);
+					}
+					*/
 				}
 
 			}
