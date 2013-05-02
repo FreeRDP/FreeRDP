@@ -30,6 +30,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_encode.h
 	xf_update.c
 	xf_update.h
+	xf_cursor.c
+	xf_cursor.h
 	xf_monitors.c
 	xf_monitors.h
 	xf_interface.c
@@ -137,7 +139,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-sspi)
+	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
 
