@@ -126,6 +126,10 @@ struct xf_info
 	BOOL UseXThreads;
 
 	int XInputOpcode;
+	int orig_width;
+	int orig_height;
+
+	double scale;
 
 	HGDI_DC hdc;
 	BYTE* primary_buffer;

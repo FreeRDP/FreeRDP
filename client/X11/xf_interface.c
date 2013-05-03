@@ -159,6 +159,11 @@ double percent_to_scale(double p)
 }
 */
 
+void xf_set_scale(double scale)
+{
+
+}
+
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
@@ -255,29 +260,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 					//scale
 					{
-						int w2, h2;
-						int x2, y2;
-						double percent;
-						double scale;
 						XTransform transform;
-
-						percent = 0.5;
-
-						scale = percent_to_scale(percent);
-
-						w2 = (int)(w * percent);
-						h2 = (int)(h * percent);
-
-						x2 = (int)(x * percent);
-						y2 = (int)(y * percent);
-
-						if(w2 == 0)
-							w2++;
-						if(h2 == 0)
-							h2++;
-
-
-
 
 						transform.matrix[0][0] = XDoubleToFixed(1);
 						transform.matrix[0][1] = XDoubleToFixed(0);
@@ -285,11 +268,11 @@ void xf_sw_end_paint(rdpContext* context)
 
 						transform.matrix[1][0] = XDoubleToFixed(0);
 						transform.matrix[1][1] = XDoubleToFixed(1);
-						transform.matrix[1][2] = XDoubleToFixed(1);
+						transform.matrix[1][2] = XDoubleToFixed(0);
 
 						transform.matrix[2][0] = XDoubleToFixed(0);
 						transform.matrix[2][1] = XDoubleToFixed(0);
-						transform.matrix[2][2] = XDoubleToFixed(0.5);
+						transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
 
 
 
@@ -691,6 +674,16 @@ void xf_create_window(xfInfo* xfi)
 
 		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 		xfi->drawable = xfi->window->handle;
+
+
+		xfi->scale = 1.0;
+		xfi->orig_width = xfi->width;
+		xfi->orig_height = xfi->height;
+		//allow resizing from half to double
+		xf_SetWindowMinMaxInfo(xfi, xfi->window,
+				0, 0, 0, 0, //these aren't used
+				xfi->width * 0.5, xfi->height * 0.5, xfi->width * 2, xfi->height * 2);
+
 	}
 	else
 	{

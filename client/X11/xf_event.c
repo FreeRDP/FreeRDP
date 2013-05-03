@@ -524,6 +524,24 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
         rdpWindow* window;
         rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
+        {
+        	double scale;
+
+
+        	if(xfi->width != event->xconfigure.width)
+        	{
+        		printf("resize detected: x: %dx%d xfi:%dx%d orig: %dx%d\n",
+        				event->xconfigure.width, event->xconfigure.height,
+        				xfi->width, xfi->height,
+        				xfi->orig_width, xfi->orig_height);
+
+        		scale = (double)event->xconfigure.width / (double) xfi->orig_width;
+
+        		printf("\tscale:%.2f\n", scale);
+        		xfi->scale = scale;
+        	}
+	   }
+
         window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
         if (window != NULL)
@@ -540,6 +558,9 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
                 XTranslateCoordinates(xfi->display, xfw->handle, 
 			RootWindowOfScreen(xfi->screen),
                         0, 0, &xfw->left, &xfw->top, &childWindow);
+
+
+
 
                 xfw->width = event->xconfigure.width;
                 xfw->height = event->xconfigure.height;
