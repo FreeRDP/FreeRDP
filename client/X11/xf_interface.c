@@ -94,6 +94,24 @@ static int rtest = 0;
 static long xv_port = 0;
 static const size_t password_size = 512;
 
+double scale_to_percent(double s)
+{
+	double p;
+
+	p = 1 - (s - 1);
+
+	return p;
+}
+
+double percent_to_scale(double p)
+{
+	double s;
+
+	s = 2 - p;
+
+	return s;
+}
+
 //void * scaledBuf;
 //XImage* scaled_image;
 //Pixmap scaled_pixmap;
@@ -230,6 +248,7 @@ void xf_sw_end_paint(rdpContext* context)
 					pic_prim = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
 					pic_win = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
 
+
 					//normal
 					//XRenderComposite(xfi->display, PictOpSrc, pic_prim, pic_prim, pic_win, x, y, x, y, x, y, w, h);
 
@@ -238,35 +257,46 @@ void xf_sw_end_paint(rdpContext* context)
 					{
 						int w2, h2;
 						int x2, y2;
+						double percent;
+						double scale;
 						XTransform transform;
-						double scale = 1.5;
 
-						w2 = (int)(w / scale);
-						h2 = (int)(h / scale);
+						percent = 0.5;
 
-						x2 = (int)(x / scale);
-						y2 = (int)(y / scale);
+						scale = percent_to_scale(percent);
+
+						w2 = (int)(w * percent);
+						h2 = (int)(h * percent);
+
+						x2 = (int)(x * percent);
+						y2 = (int)(y * percent);
 
 						if(w2 == 0)
 							w2++;
 						if(h2 == 0)
 							h2++;
 
-						transform.matrix[0][0] = XDoubleToFixed(scale);
-						transform.matrix[0][1] = XDoubleToFixed(0.0);
-						transform.matrix[0][2] = XDoubleToFixed(0.0);
 
-						transform.matrix[1][0] = XDoubleToFixed(0.0);
-						transform.matrix[1][1] = XDoubleToFixed(scale);
-						transform.matrix[1][2] = XDoubleToFixed(0.0);
 
-						transform.matrix[2][0] = XDoubleToFixed(0.0);
-						transform.matrix[2][1] = XDoubleToFixed(0.0);
-						transform.matrix[2][2] = XDoubleToFixed(1.0);
+
+						transform.matrix[0][0] = XDoubleToFixed(1);
+						transform.matrix[0][1] = XDoubleToFixed(0);
+						transform.matrix[0][2] = XDoubleToFixed(0);
+
+						transform.matrix[1][0] = XDoubleToFixed(0);
+						transform.matrix[1][1] = XDoubleToFixed(1);
+						transform.matrix[1][2] = XDoubleToFixed(1);
+
+						transform.matrix[2][0] = XDoubleToFixed(0);
+						transform.matrix[2][1] = XDoubleToFixed(0);
+						transform.matrix[2][2] = XDoubleToFixed(0.5);
+
+
 
 						XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
 
-						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, x, y, x, y, x, y, w, h);
+						//XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, x, y, x, y, x, y, w, h);
+						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, gdi->width, gdi->height);
 
 					}
 
