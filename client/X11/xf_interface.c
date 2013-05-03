@@ -25,6 +25,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#ifdef WITH_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
 #endif
@@ -210,7 +214,75 @@ void xf_sw_end_paint(rdpContext* context)
 				
 					//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				//XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+
+				if(1)//(rtest < 1)
+				{
+					Picture pic_prim;
+					Picture pic_win;
+					XRenderPictureAttributes pa;
+					XRenderPictFormat* picFormat;
+
+
+					picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
+					pa.subwindow_mode = IncludeInferiors;//wtf is this?
+					pic_prim = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
+					pic_win = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
+
+					//normal
+					//XRenderComposite(xfi->display, PictOpSrc, pic_prim, pic_prim, pic_win, x, y, x, y, x, y, w, h);
+
+
+					//scale
+					{
+						int w2, h2;
+						int x2, y2;
+						XTransform transform;
+						double scale = 1.5;
+
+						w2 = (int)(w / scale);
+						h2 = (int)(h / scale);
+
+						x2 = (int)(x / scale);
+						y2 = (int)(y / scale);
+
+						if(w2 == 0)
+							w2++;
+						if(h2 == 0)
+							h2++;
+
+						transform.matrix[0][0] = XDoubleToFixed(scale);
+						transform.matrix[0][1] = XDoubleToFixed(0.0);
+						transform.matrix[0][2] = XDoubleToFixed(0.0);
+
+						transform.matrix[1][0] = XDoubleToFixed(0.0);
+						transform.matrix[1][1] = XDoubleToFixed(scale);
+						transform.matrix[1][2] = XDoubleToFixed(0.0);
+
+						transform.matrix[2][0] = XDoubleToFixed(0.0);
+						transform.matrix[2][1] = XDoubleToFixed(0.0);
+						transform.matrix[2][2] = XDoubleToFixed(1.0);
+
+						XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
+
+						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, x, y, x, y, x, y, w, h);
+
+					}
+
+
+					rtest++;
+				}
+
+
+
+
+
+
+
+
+
+
 /*
 				if(1)//(rtest < 2)
 				{

@@ -101,12 +101,17 @@ set(XI_FEATURE_TYPE "RECOMMENDED")
 set(XI_FEATURE_PURPOSE "input")
 set(XI_FEATURE_DESCRIPTION "X11 input extension") 
 
+set(XRENDER_FEATURE_TYPE "RECOMMENDED")
+set(XRENDER_FEATURE_PURPOSE "rendering")
+set(XRENDER_FEATURE_DESCRIPTION "X11 render extension") 
+
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
 find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
 find_feature(Xcursor ${XCURSOR_FEATURE_TYPE} ${XCURSOR_FEATURE_PURPOSE} ${XCURSOR_FEATURE_DESCRIPTION})
 find_feature(Xv ${XV_FEATURE_TYPE} ${XV_FEATURE_PURPOSE} ${XV_FEATURE_DESCRIPTION})
 find_feature(Xi ${XI_FEATURE_TYPE} ${XI_FEATURE_PURPOSE} ${XI_FEATURE_DESCRIPTION}) 
+find_feature(Xrender ${XRENDER_FEATURE_TYPE} ${XRENDER_FEATURE_PURPOSE} ${XRENDER_FEATURE_DESCRIPTION}) 
 
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA)
@@ -138,15 +143,21 @@ if(WITH_XI)
   set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XI_LIBRARIES})
 endif() 
 
+if(WITH_XRENDER)
+  add_definitions(-DWITH_XRENDER)
+  include_directories(${XRENDER_INCLUDE_DIRS})
+  set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XRENDER_LIBRARIES})
+endif() 
+
 #find_package(ImageMagick COMPONENTS MagickCore)
 #include_directories(${ImageMagick_MagickCore_INCLUDE_DIRS})
 #set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ImageMagick_MagickCore_LIBRARIES})
 #SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/include/ImageMagick-6)
 #SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -I/usr/include/ImageMagick-6)
 
-message(Found MagickCore: ${ImageMagick_MagickCore_FOUND})
-message(INCLUDE: ${ImageMagick_MagickCore_INCLUDE_DIRS})
-message(LIBS: ${${MODULE_PREFIX}_LIBS})
+#message(Found MagickCore: ${ImageMagick_MagickCore_FOUND})
+#message(INCLUDE: ${ImageMagick_MagickCore_INCLUDE_DIRS})
+#message(LIBS: ${${MODULE_PREFIX}_LIBS})
 
 
 #if(NOT ${ImageMagick_MagickCore_FOUND})
@@ -156,8 +167,8 @@ message(LIBS: ${${MODULE_PREFIX}_LIBS})
 #endif()
 
 #ubuntu
-include_directories(/usr/include/ImageMagick)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib/x86_64-linux-gnu/libMagickCore.so.5)
+#include_directories(/usr/include/ImageMagick)
+#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib/x86_64-linux-gnu/libMagickCore.so.5)
 
 
 
