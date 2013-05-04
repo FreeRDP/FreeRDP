@@ -151,6 +151,13 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 			RootWindowOfScreen(xfi->screen),
 			x, y, &x, &y, &childWindow);
 	}
+	
+	/* Take scaling in to consideration */
+	if(xfi->scale != 1.0)
+	{
+		x = (int)(x * (1.0 / xfi->scale) );
+		y = (int)(y * (1.0 / xfi->scale) );
+	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
@@ -253,7 +260,15 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 				XTranslateCoordinates(xfi->display, event->xbutton.window,
 					RootWindowOfScreen(xfi->screen),
 					x, y, &x, &y, &childWindow);
+
 			}
+
+				/* Take scaling in to consideration */
+				if(xfi->scale != 1.0)
+				{
+					x = (int)(x * (1.0 / xfi->scale) );
+					y = (int)(y * (1.0 / xfi->scale) );
+				}
 
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
@@ -337,6 +352,13 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 				RootWindowOfScreen(xfi->screen),
 				x, y, &x, &y, &childWindow);
 		}
+
+				/* Take scaling in to consideration */
+				if(xfi->scale != 1.0)
+				{
+					x = (int)(x * (1.0 / xfi->scale) );
+					y = (int)(y * (1.0 / xfi->scale) );
+				}
 
 		if (extended)
 			input->ExtendedMouseEvent(input, flags, x, y);
