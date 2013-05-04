@@ -262,6 +262,12 @@ void xf_sw_end_paint(rdpContext* context)
 					{
 						XTransform transform;
 
+						if(xfi->scale == 0 || xfi->cur_width == 0 || xfi->cur_height == 0)
+						{
+							printf("w: %d h: %d s: %.2f\n", xfi->cur_width, xfi->cur_height, xfi->scale);
+							exit(1);
+						}
+
 						transform.matrix[0][0] = XDoubleToFixed(1);
 						transform.matrix[0][1] = XDoubleToFixed(0);
 						transform.matrix[0][2] = XDoubleToFixed(0);
@@ -279,7 +285,7 @@ void xf_sw_end_paint(rdpContext* context)
 						XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
 
 						//XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, x, y, x, y, x, y, w, h);
-						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, gdi->width, gdi->height);
+						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, xfi->cur_width, xfi->cur_height);
 
 					}
 
@@ -675,10 +681,6 @@ void xf_create_window(xfInfo* xfi)
 		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 		xfi->drawable = xfi->window->handle;
 
-
-		xfi->scale = 1.0;
-		xfi->orig_width = xfi->width;
-		xfi->orig_height = xfi->height;
 		//allow resizing from half to double
 		xf_SetWindowMinMaxInfo(xfi, xfi->window,
 				0, 0, 0, 0, //these aren't used
@@ -997,6 +999,8 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_register_graphics(instance->context->graphics);
 
+
+
 	if (xfi->settings->SoftwareGdi)
 	{
 		rdpGdi* gdi;
@@ -1034,6 +1038,14 @@ BOOL xf_post_connect(freerdp* instance)
 			xfi->nsc_context = nsc_context;
 		}
 	}
+
+	xfi->orig_width = instance->settings->DesktopWidth;
+	xfi->orig_height = instance->settings->DesktopHeight;
+	xfi->cur_width = xfi->orig_width;
+	xfi->cur_height = xfi->orig_width;
+	xfi->scale = 1;
+
+	printf("postconnect: w: %d h: %d s: %.2f\n", xfi->orig_width, xfi->orig_height, xfi->scale);
 
 	xfi->width = settings->DesktopWidth;
 	xfi->height = settings->DesktopHeight;

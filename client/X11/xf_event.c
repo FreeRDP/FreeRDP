@@ -538,6 +538,9 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
         		scale = (double)event->xconfigure.width / (double) xfi->orig_width;
 
         		printf("\tscale:%.2f\n", scale);
+
+        		xfi->cur_width = event->xconfigure.width;
+        		xfi->cur_height = event->xconfigure.width;
         		xfi->scale = scale;
         	}
 	   }

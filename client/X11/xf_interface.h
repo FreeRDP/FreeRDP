@@ -128,6 +128,8 @@ struct xf_info
 	int XInputOpcode;
 	int orig_width;
 	int orig_height;
+	int cur_width;
+	int cur_height;
 
 	double scale;
 
