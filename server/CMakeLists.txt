@@ -36,6 +36,12 @@ else()
 endif()
 
 if(WITH_WAYK)
-	add_subdirectory(WaykServer)
+	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/WaykServer")
+		add_subdirectory(WaykServer)
+	endif()
+endif()
+
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xrdp-ng")
+	add_subdirectory("xrdp-ng")
 endif()
 
