@@ -215,7 +215,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		}
 	}
 
-
+	/*
 	if (keysym == XK_period)
 	{
 				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
@@ -253,6 +253,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					return TRUE;
 				}
 	}
+
+	*/
 
 	return FALSE;
 }

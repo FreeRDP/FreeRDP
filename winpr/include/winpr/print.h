@@ -25,8 +25,16 @@
 
 #define WINPR_HEXDUMP_LINE_LENGTH	16
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API void winpr_HexDump(BYTE* data, int length);
 
 WINPR_API int wprintfx(const char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_UTILS_PRINT_H */

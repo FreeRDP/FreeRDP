@@ -122,18 +122,18 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	}
 
 	data_in = plugin->data_in;
-	stream_check_size(data_in, (int) dataLength);
+	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
 	stream_write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (stream_get_size(data_in) != stream_get_length(data_in))
+		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			fprintf(stderr, "svc_plugin_process_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
-		stream_set_pos(data_in, 0);
+		Stream_SetPosition(data_in, 0);
 
 		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
 	}
@@ -305,13 +305,13 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 {
 	UINT32 status = 0;
 
-	DEBUG_SVC("length %d", (int) stream_get_length(data_out));
+	DEBUG_SVC("length %d", (int) Stream_GetPosition(data_out));
 
 	if (!plugin)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
 		status = plugin->channel_entry_points.pVirtualChannelWrite(plugin->open_handle,
-			stream_get_data(data_out), stream_get_length(data_out), data_out);
+			Stream_Buffer(data_out), Stream_GetPosition(data_out), data_out);
 
 	if (status != CHANNEL_RC_OK)
 	{

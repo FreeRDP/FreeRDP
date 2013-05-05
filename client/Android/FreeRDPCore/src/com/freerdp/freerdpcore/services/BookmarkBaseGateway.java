@@ -63,6 +63,7 @@ public abstract class BookmarkBaseGateway
 		values.put("screen_3g", rowid);
 		rowid = insertPerformanceFlags(db, bookmark.getAdvancedSettings().getPerformance3G());
 		values.put("performance_3g", rowid);
+		values.put("redirect_sdcard", bookmark.getAdvancedSettings().getRedirectSDCard());
 		values.put("security", bookmark.getAdvancedSettings().getSecurity());
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
@@ -98,6 +99,7 @@ public abstract class BookmarkBaseGateway
 		// update 3G screen and 3G performance settings settings
 		updateScreenSettings3G(db, bookmark);
 		updatePerformanceFlags3G(db, bookmark);
+		values.put("redirect_sdcard", bookmark.getAdvancedSettings().getRedirectSDCard());
 		values.put("security", bookmark.getAdvancedSettings().getSecurity());
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
@@ -216,6 +218,7 @@ public abstract class BookmarkBaseGateway
 		
 		// advanced settings
 		columns.add("enable_3g_settings");
+		columns.add("redirect_sdcard");
 		columns.add("security");
 		columns.add("console_mode");
 		columns.add("remote_program");
@@ -273,6 +276,7 @@ public abstract class BookmarkBaseGateway
 		bookmark.getAdvancedSettings().setEnable3GSettings(cursor.getInt(cursor.getColumnIndex("enable_3g_settings")) == 0 ? false : true);		
 		readScreenSettings3G(bookmark, cursor);		
 		readPerformanceFlags3G(bookmark, cursor);		
+		bookmark.getAdvancedSettings().setRedirectSDCard(cursor.getInt(cursor.getColumnIndex("redirect_sdcard")) == 0 ? false : true);		
 		bookmark.getAdvancedSettings().setSecurity(cursor.getInt(cursor.getColumnIndex("security")));		
 		bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex("console_mode")) == 0 ? false : true);		
 		bookmark.getAdvancedSettings().setRemoteProgram(cursor.getString(cursor.getColumnIndex("remote_program")));		

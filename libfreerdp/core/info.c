@@ -54,7 +54,7 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
-	if (stream_get_left(s) < 4+4+4+16)
+	if (Stream_GetRemainingLength(s) < 4+4+4+16)
 		return FALSE;
 	stream_read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	stream_read_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
@@ -75,7 +75,7 @@ BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
-	if (stream_get_left(s) < 28)
+	if (Stream_GetRemainingLength(s) < 28)
 		return FALSE;
 
 	stream_read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
@@ -118,38 +118,38 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT16(s, clientAddressFamily); /* clientAddressFamily */
 	stream_read_UINT16(s, cbClientAddress); /* cbClientAddress */
 
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
-	if (stream_get_left(s) < cbClientAddress)
+	if (Stream_GetRemainingLength(s) < cbClientAddress)
 		return FALSE;
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbClientAddress / 2, &settings->ClientAddress, 0, NULL, NULL);
-	stream_seek(s, cbClientAddress);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbClientAddress / 2, &settings->ClientAddress, 0, NULL, NULL);
+	Stream_Seek(s, cbClientAddress);
 
-	if (stream_get_left(s) < 2)
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 	stream_read_UINT16(s, cbClientDir); /* cbClientDir */
 
-	if (stream_get_left(s) < cbClientDir)
+	if (Stream_GetRemainingLength(s) < cbClientDir)
 		return FALSE;
 
 	if (settings->ClientDir)
 		free(settings->ClientDir);
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbClientDir / 2, &settings->ClientDir, 0, NULL, NULL);
-	stream_seek(s, cbClientDir);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbClientDir / 2, &settings->ClientDir, 0, NULL, NULL);
+	Stream_Seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
 		return FALSE;
 
-	if (stream_get_left(s) < 10)
+	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
-	stream_seek_UINT32(s); /* clientSessionId, should be set to 0 */
+	Stream_Seek_UINT32(s); /* clientSessionId, should be set to 0 */
 	stream_read_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
 
 	stream_read_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
@@ -234,10 +234,10 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
 
-	if (stream_get_left(s) < 18) // invalid packet
+	if (Stream_GetRemainingLength(s) < 18) // invalid packet
 		return FALSE;
 
-	stream_seek_UINT32(s); /* CodePage */
+	Stream_Seek_UINT32(s); /* CodePage */
 	stream_read_UINT32(s, flags); /* flags */
 
 	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
@@ -251,55 +251,55 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	stream_read_UINT16(s, cbAlternateShell); /* cbAlternateShell */
 	stream_read_UINT16(s, cbWorkingDir); /* cbWorkingDir */
 
-	if (stream_get_left(s) < cbDomain + 2)
+	if (Stream_GetRemainingLength(s) < cbDomain + 2)
 		return FALSE;
 
 	if (cbDomain > 0)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbDomain / 2, &settings->Domain, 0, NULL, NULL);
-		stream_seek(s, cbDomain);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain / 2, &settings->Domain, 0, NULL, NULL);
+		Stream_Seek(s, cbDomain);
 	}
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
-	if (stream_get_left(s) < cbUserName + 2)
+	if (Stream_GetRemainingLength(s) < cbUserName + 2)
 		return FALSE;
 
 	if (cbUserName > 0)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbUserName / 2, &settings->Username, 0, NULL, NULL);
-		stream_seek(s, cbUserName);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName / 2, &settings->Username, 0, NULL, NULL);
+		Stream_Seek(s, cbUserName);
 	}
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
-	if (stream_get_left(s) < cbPassword + 2)
+	if (Stream_GetRemainingLength(s) < cbPassword + 2)
 		return FALSE;
 
 	if (cbPassword > 0)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbPassword / 2, &settings->Password, 0, NULL, NULL);
-		stream_seek(s, cbPassword);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbPassword / 2, &settings->Password, 0, NULL, NULL);
+		Stream_Seek(s, cbPassword);
 	}
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
-	if (stream_get_left(s) < cbAlternateShell + 2)
+	if (Stream_GetRemainingLength(s) < cbAlternateShell + 2)
 		return FALSE;
 
 	if (cbAlternateShell > 0)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbAlternateShell / 2, &settings->AlternateShell, 0, NULL, NULL);
-		stream_seek(s, cbAlternateShell);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbAlternateShell / 2, &settings->AlternateShell, 0, NULL, NULL);
+		Stream_Seek(s, cbAlternateShell);
 	}
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
-	if (stream_get_left(s) < cbWorkingDir + 2)
+	if (Stream_GetRemainingLength(s) < cbWorkingDir + 2)
 		return FALSE;
 
 	if (cbWorkingDir > 0)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), cbWorkingDir / 2, &settings->ShellWorkingDirectory, 0, NULL, NULL);
-		stream_seek(s, cbWorkingDir);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbWorkingDir / 2, &settings->ShellWorkingDirectory, 0, NULL, NULL);
+		Stream_Seek(s, cbWorkingDir);
 	}
-	stream_seek(s, 2);
+	Stream_Seek(s, 2);
 
 	if (settings->RdpVersion >= 5)
 		return rdp_read_extended_info_packet(s, settings); /* extraInfo */
@@ -488,14 +488,14 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s)
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
-	if (stream_get_left(s) < (4 + 52 + 4 + 512 + 4))
+	if (Stream_GetRemainingLength(s) < (4 + 52 + 4 + 512 + 4))
 		return FALSE;
 
 	stream_read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
-	stream_seek(s, 52); /* domain (52 bytes) */
+	Stream_Seek(s, 52); /* domain (52 bytes) */
 	stream_read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
-	stream_seek(s, 512); /* userName (512 bytes) */
-	stream_seek_UINT32(s); /* sessionId (4 bytes) */
+	Stream_Seek(s, 512); /* userName (512 bytes) */
+	Stream_Seek_UINT32(s); /* sessionId (4 bytes) */
 
 	return TRUE;
 }
@@ -505,31 +505,31 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
-	if (stream_get_left(s) < (2 + 4 + 4 + 4 + 4 + 558))
+	if (Stream_GetRemainingLength(s) < (2 + 4 + 4 + 4 + 4 + 558))
 		return FALSE;
 
-	stream_seek_UINT16(s); /* version (2 bytes) */
-	stream_seek_UINT32(s); /* size (4 bytes) */
-	stream_seek_UINT32(s); /* sessionId (4 bytes) */
+	Stream_Seek_UINT16(s); /* version (2 bytes) */
+	Stream_Seek_UINT32(s); /* size (4 bytes) */
+	Stream_Seek_UINT32(s); /* sessionId (4 bytes) */
 	stream_read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 	stream_read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
-	stream_seek(s, 558); /* pad */
+	Stream_Seek(s, 558); /* pad */
 
-	if (stream_get_left(s) < cbDomain+cbUserName)
+	if (Stream_GetRemainingLength(s) < cbDomain+cbUserName)
 		return FALSE;
 
-	stream_seek(s, cbDomain); /* domain */
-	stream_seek(s, cbUserName); /* userName */
+	Stream_Seek(s, cbDomain); /* domain */
+	Stream_Seek(s, cbUserName); /* userName */
 
 	return TRUE;
 }
 
 BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 {
-	if (stream_get_left(s) < 576)
+	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
-	stream_seek(s, 576); /* pad */
+	Stream_Seek(s, 576); /* pad */
 
 	return TRUE;
 }
@@ -539,7 +539,7 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 	UINT32 errorNotificationData;
 	UINT32 errorNotificationType;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
@@ -556,7 +556,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 	UINT32 fieldsPresent;
 	UINT16 Length;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
 	stream_read_UINT16(s, Length); /* The total size in bytes of this structure */
@@ -566,7 +566,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 
 	if (fieldsPresent & LOGON_EX_AUTORECONNECTCOOKIE)
 	{
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
 		stream_read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
@@ -577,7 +577,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 
 	if (fieldsPresent & LOGON_EX_LOGONERRORS)
 	{
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
 		stream_read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
@@ -586,10 +586,10 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 			return FALSE;
 	}
 
-	if (stream_get_left(s) < 570)
+	if (Stream_GetRemainingLength(s) < 570)
 		return FALSE;
 
-	stream_seek(s, 570); /* pad */
+	Stream_Seek(s, 570); /* pad */
 
 	return TRUE;
 }
@@ -598,7 +598,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, infoType); /* infoType (4 bytes) */
 

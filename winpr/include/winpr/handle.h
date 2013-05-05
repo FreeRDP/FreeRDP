@@ -36,6 +36,10 @@
 #define HANDLE_TYPE_NAMED_PIPE			6
 #define HANDLE_TYPE_ANONYMOUS_PIPE		7
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object);
 WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);
 
@@ -56,6 +60,10 @@ WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle
 WINPR_API BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
 WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_HANDLE_H */

@@ -70,6 +70,7 @@ struct rdp_transport
 	BOOL blocking;
 	BOOL SplitInputOutput;
 	wStreamPool* ReceivePool;
+	HANDLE connectedEvent;
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
@@ -92,6 +93,7 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);

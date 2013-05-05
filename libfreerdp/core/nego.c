@@ -567,16 +567,16 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 	if (!tpdu_read_connection_request(s, &li))
 		return FALSE;
 
-	if (li != stream_get_left(s) + 6)
+	if (li != Stream_GetRemainingLength(s) + 6)
 	{
 		fprintf(stderr, "Incorrect TPDU length indicator.\n");
 		return FALSE;
 	}
 
-	if (stream_get_left(s) > 8)
+	if (Stream_GetRemainingLength(s) > 8)
 	{
 		/* Optional routingToken or cookie, ending with CR+LF */
-		while (stream_get_left(s) > 0)
+		while (Stream_GetRemainingLength(s) > 0)
 		{
 			stream_read_BYTE(s, c);
 
@@ -588,12 +588,12 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 			if (c != '\x0A')
 				continue;
 
-			stream_seek_BYTE(s);
+			Stream_Seek_BYTE(s);
 			break;
 		}
 	}
 
-	if (stream_get_left(s) >= 8)
+	if (Stream_GetRemainingLength(s) >= 8)
 	{
 		/* rdpNegData (optional) */
 
@@ -647,7 +647,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
 	stream_get_mark(s, bm);
-	stream_seek(s, length);
+	Stream_Seek(s, length);
 
 	if (nego->RoutingToken)
 	{
@@ -728,7 +728,7 @@ void nego_process_negotiation_response(rdpNego* nego, wStream* s)
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
-	if (stream_get_left(s) < 7)
+	if (Stream_GetRemainingLength(s) < 7)
 	{
 		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
 		nego->state = NEGO_STATE_FAIL;
@@ -811,7 +811,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	stream_get_mark(s, bm);
-	stream_seek(s, length);
+	Stream_Seek(s, length);
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
 	{

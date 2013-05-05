@@ -310,7 +310,7 @@ void test_decode(void)
 	stream_write(s, y_data, sizeof(y_data));
 	stream_write(s, cb_data, sizeof(cb_data));
 	stream_write(s, cr_data, sizeof(cr_data));
-	stream_set_pos(s, 0);
+	Stream_SetPosition(s, 0);
 
 	context = rfx_context_new();
 	context->mode = RLGR3;
@@ -358,7 +358,7 @@ void test_encode(void)
 	printf("*** Cr ***\n");
 	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
 
-	stream_set_pos(enc_stream, 0);
+	Stream_SetPosition(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,
 		y_size, test_quantization_values,
 		cb_size, test_quantization_values,
@@ -398,9 +398,9 @@ void test_message(void)
 		stream_clear(s);
 		rfx_compose_message(context, s,
 			&rect, 1, rgb_data, 100, 80, 100 * 3);
-		stream_seal(s);
+		Stream_SealLength(s);
 		/*hexdump(buffer, size);*/
-		stream_set_pos(s, 0);
+		Stream_SetPosition(s, 0);
 		message = rfx_process_message(context, s->pointer, s->capacity);
 		if (i == 0)
 		{

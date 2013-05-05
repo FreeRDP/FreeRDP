@@ -26,6 +26,10 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _WIN32
 
 #define PROCESSOR_ARCHITECTURE_INTEL			0
@@ -309,5 +313,9 @@ WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
  */
 #define PF_SSE_INSTRUCTIONS_AVAILABLE	PF_XMMI_INSTRUCTIONS_AVAILABLE
 #define PF_SSE2_INSTRUCTIONS_AVAILABLE	PF_XMMI64_INSTRUCTIONS_AVAILABLE
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_SYSINFO_H */

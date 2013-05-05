@@ -70,7 +70,7 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 
 	rdp->finalize_sc_pdus |= FINALIZE_SC_SYNCHRONIZE_PDU;
 
-	if (stream_get_left(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
@@ -79,7 +79,7 @@ BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	/* targetUser (2 bytes) */
-	stream_seek_UINT16(s);
+	Stream_Seek_UINT16(s);
 
 	return TRUE;
 }
@@ -97,12 +97,12 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 
 BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
 {
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	stream_read_UINT16(s, *action); /* action (2 bytes) */
-	stream_seek_UINT16(s); /* grantId (2 bytes) */
-	stream_seek_UINT32(s); /* controlId (4 bytes) */
+	Stream_Seek_UINT16(s); /* grantId (2 bytes) */
+	Stream_Seek_UINT32(s); /* controlId (4 bytes) */
 
 	return TRUE;
 }
@@ -208,7 +208,7 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 
 BOOL rdp_recv_client_font_list_pdu(wStream* s)
 {
-	if (stream_get_left(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	return TRUE;
@@ -249,12 +249,12 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
-	if(stream_get_left(s) >= 8)
+	if(Stream_GetRemainingLength(s) >= 8)
 	{
-		stream_seek_UINT16(s); /* numberEntries (2 bytes) */
-		stream_seek_UINT16(s); /* totalNumEntries (2 bytes) */
-		stream_seek_UINT16(s); /* mapFlags (2 bytes) */
-		stream_seek_UINT16(s); /* entrySize (2 bytes) */
+		Stream_Seek_UINT16(s); /* numberEntries (2 bytes) */
+		Stream_Seek_UINT16(s); /* totalNumEntries (2 bytes) */
+		Stream_Seek_UINT16(s); /* mapFlags (2 bytes) */
+		Stream_Seek_UINT16(s); /* entrySize (2 bytes) */
 	}
 
 	return TRUE;
@@ -282,18 +282,18 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	 * Windows XP can send short DEACTIVATE_ALL PDU that doesn't contain
 	 * the following fields.
 	 */
-	if (stream_get_left(s) > 0)
+	if (Stream_GetRemainingLength(s) > 0)
 	{
 		do {
-			if(stream_get_left(s) < 4)
+			if(Stream_GetRemainingLength(s) < 4)
 				break;
 			stream_read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
-			if(stream_get_left(s) < 2)
+			if(Stream_GetRemainingLength(s) < 2)
 				break;
 			stream_read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-			if(stream_get_left(s) < lengthSourceDescriptor)
+			if(Stream_GetRemainingLength(s) < lengthSourceDescriptor)
 				break;
-			stream_seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
+			Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
 		} while(0);
 	}
 

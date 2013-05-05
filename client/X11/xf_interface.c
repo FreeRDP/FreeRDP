@@ -87,6 +87,8 @@
 
 static int initialized_xi = 0;
 
+#include "xfreerdp.h"
+
 static long xv_port = 0;
 static const size_t password_size = 512;
 
@@ -148,9 +150,9 @@ void xf_sw_end_paint(rdpContext* context)
 	xfi = ((xfContext*) context)->xfi;
 	gdi = context->gdi;
 
-	if (xfi->remote_app != TRUE)
+	if (!xfi->remote_app)
 	{
-		if (xfi->complex_regions != TRUE)
+		if (!xfi->complex_regions)
 		{
 			if (gdi->primary->hdc->hwnd->invalid->null)
 				return;
@@ -235,7 +237,7 @@ void xf_sw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfi, TRUE);
 
-	if (xfi->fullscreen != TRUE)
+	if (!xfi->fullscreen)
 	{
 		rdpGdi* gdi = context->gdi;
 		gdi_resize(gdi, xfi->width, xfi->height);
@@ -360,7 +362,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfi, TRUE);
 
-	if (xfi->fullscreen != TRUE)
+	if (!xfi->fullscreen)
 	{
 		xfi->width = settings->DesktopWidth;
 		xfi->height = settings->DesktopHeight;
@@ -518,6 +520,9 @@ void xf_toggle_fullscreen(xfInfo* xfi)
 	XFreePixmap(xfi->display, contents);
 
 	xf_unlock_x11(xfi, TRUE);
+
+	IFCALL(xfi->client->OnWindowStateChange, xfi->instance,
+	       xfi->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0);
 }
 
 void xf_lock_x11(xfInfo* xfi, BOOL display)
@@ -724,7 +729,7 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xfi->display = XOpenDisplay(NULL);
 
-	if (xfi->display == NULL)
+	if (!xfi->display)
 	{
 		fprintf(stderr, "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
 		fprintf(stderr, "Please check that the $DISPLAY environment variable is properly set.\n");
@@ -1528,6 +1533,14 @@ int freerdp_client_global_uninit()
 
 int freerdp_client_start(xfInfo* xfi)
 {
+	rdpSettings* settings = xfi->settings;
+
+	if (!settings->ServerHostname)
+	{
+		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+		return -1;
+	}
+
 	xfi->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, (void*) xfi->instance, 0, NULL);
 
 	return 0;
@@ -1547,6 +1560,21 @@ int freerdp_client_stop(xfInfo* xfi)
 	}
 
 	return 0;
+}
+
+freerdp* freerdp_client_get_instance(cfInfo* cfi)
+{
+	return cfi->instance;
+}
+
+HANDLE freerdp_client_get_thread(cfInfo* cfi)
+{
+	return cfi->thread;
+}
+
+rdpClient* freerdp_client_get_interface(cfInfo* cfi)
+{
+	return cfi->client;
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)
@@ -1638,6 +1666,11 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
+	if (settings->ListMonitors)
+	{
+		xf_list_monitors(xfi);
+	}
 
 	return xfi;
 }

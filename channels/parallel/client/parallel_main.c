@@ -75,12 +75,12 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	int status;
 	UINT32 PathLength;
 
-	stream_seek(irp->input, 28);
+	Stream_Seek(irp->input, 28);
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	stream_read_UINT32(irp->input, PathLength);
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
@@ -157,7 +157,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, Length);
+		Stream_EnsureRemainingCapacity(irp->output, Length);
 		stream_write(irp->output, buffer, Length);
 	}
 
@@ -175,7 +175,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	DEBUG_SVC("Length %u Offset %llu", Length, Offset);
 
@@ -183,7 +183,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	while (len > 0)
 	{
-		status = write(parallel->file, stream_get_tail(irp->input), len);
+		status = write(parallel->file, Stream_Pointer(irp->input), len);
 
 		if (status < 0)
 		{
@@ -194,7 +194,7 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 			break;
 		}
 
-		stream_seek(irp->input, status);
+		Stream_Seek(irp->input, status);
 		len -= status;
 	}
 

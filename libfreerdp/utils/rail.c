@@ -48,12 +48,12 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	if (stream_get_left(s) < 2)
+	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
 	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 
-	if (stream_get_left(s) < unicode_string->length)
+	if (Stream_GetRemainingLength(s) < unicode_string->length)
 		return FALSE;
 
 	if (unicode_string->string == NULL)
@@ -68,7 +68,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 
 void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	stream_check_size(s, 2 + unicode_string->length);
+	Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length);
 	stream_write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 	stream_write(s, unicode_string->string, unicode_string->length); /* string */
 }
@@ -77,7 +77,7 @@ void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_st
 {
 	if (unicode_string->length > 0)
 	{
-		stream_check_size(s, unicode_string->length);
+		Stream_EnsureRemainingCapacity(s, unicode_string->length);
 		stream_write(s, unicode_string->string, unicode_string->length); /* string */
 	}
 }

@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client
+ * Android Clipboard Redirection
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Felix Long
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __XFREERDP_H
-#define __XFREERDP_H
+#ifndef __ANDROID_CLIPRDR_H__
+#define __ANDROID_CLIPRDR_H__
 
+#include "android_freerdp.h"
 
+void android_cliprdr_init(freerdp* inst);
+void android_cliprdr_uninit(freerdp* inst);
+void android_process_cliprdr_send_clipboard_data(freerdp* inst, void* data, int len);
+void android_process_cliprdr_event(freerdp* inst, wMessage* event);
 
-#endif /* __XFREERDP_H */
+#endif /* __ANDROID_CLIPRDR_H__ */

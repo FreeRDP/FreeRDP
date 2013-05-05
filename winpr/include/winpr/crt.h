@@ -44,6 +44,10 @@ typedef int errno_t;
 #define ARRAYSIZE(A)		RTL_NUMBER_OF_V2(A)
 #define _ARRAYSIZE(A)		RTL_NUMBER_OF_V1(A)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API void* _aligned_malloc(size_t size, size_t alignment);
 WINPR_API void* _aligned_realloc(void* memblock, size_t size, size_t alignment);
 WINPR_API void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment);
@@ -64,6 +68,11 @@ WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int 
 
 WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
 WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif
 

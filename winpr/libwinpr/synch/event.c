@@ -273,6 +273,31 @@ int GetEventFileDescriptor(HANDLE hEvent)
 #endif
 }
 
+/*
+ * Set inner file descriptor for usage with select()
+ * This file descriptor is not usable on Windows
+ */
+
+int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor)
+{
+#ifndef _WIN32
+	ULONG Type;
+	PVOID Object;
+	WINPR_EVENT* event;
+
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+		return -1;
+
+	event = (WINPR_EVENT*) Object;
+
+	event->pipe_fd[0] = FileDescriptor;
+
+	return 0;
+#else
+	return -1;
+#endif
+}
+
 /**
  * Returns platform-specific wait object as a void pointer
  *

@@ -119,7 +119,7 @@ void ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* cha
 	Stream_Read(s, challenge->ClientChallenge, 8);
 	Stream_Read_UINT32(s, challenge->Reserved3);
 
-	size = Stream_Length(s) - Stream_Position(s);
+	size = Stream_Length(s) - Stream_GetPosition(s);
 	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
 	Stream_Read(s, challenge->AvPairs, size);
 }

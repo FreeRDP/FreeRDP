@@ -28,6 +28,7 @@
            		android:data="preferences://performance_flags_3g" />
         </PreferenceScreen>
         
+        <CheckBoxPreference android:key="bookmark.redirect_sdcard" android:title="@string/settings_redirect_sdcard"/>
         <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.security" android:title="@string/settings_security" android:entries="@array/security_array" android:entryValues="@array/security_values_array" />
         <EditTextPreference android:key="bookmark.remote_program" android:title="@string/settings_remote_program" android:summary="notepad.exe"/>
         <EditTextPreference android:key="bookmark.work_dir" android:title="@string/settings_work_dir"/>

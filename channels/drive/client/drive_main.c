@@ -128,12 +128,12 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	UINT32 PathLength;
 
 	stream_read_UINT32(irp->input, DesiredAccess);
-	stream_seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
+	Stream_Seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
 	stream_read_UINT32(irp->input, CreateDisposition);
 	stream_read_UINT32(irp->input, CreateOptions);
 	stream_read_UINT32(irp->input, PathLength);
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
@@ -267,7 +267,7 @@ static void drive_process_irp_read(DRIVE_DEVICE* disk, IRP* irp)
 
 	if (Length > 0)
 	{
-		stream_check_size(irp->output, (int) Length);
+		Stream_EnsureRemainingCapacity(irp->output, (int) Length);
 		stream_write(irp->output, buffer, Length);
 	}
 
@@ -284,7 +284,7 @@ static void drive_process_irp_write(DRIVE_DEVICE* disk, IRP* irp)
 
 	stream_read_UINT32(irp->input, Length);
 	stream_read_UINT64(irp->input, Offset);
-	stream_seek(irp->input, 20); /* Padding */
+	Stream_Seek(irp->input, 20); /* Padding */
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
@@ -302,7 +302,7 @@ static void drive_process_irp_write(DRIVE_DEVICE* disk, IRP* irp)
 
 		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
 	}
-	else if (!drive_file_write(file, stream_get_tail(irp->input), Length))
+	else if (!drive_file_write(file, Stream_Pointer(irp->input), Length))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
@@ -357,7 +357,7 @@ static void drive_process_irp_set_information(DRIVE_DEVICE* disk, IRP* irp)
 
 	stream_read_UINT32(irp->input, FsInformationClass);
 	stream_read_UINT32(irp->input, Length);
-	stream_seek(irp->input, 24); /* Padding */
+	Stream_Seek(irp->input, 24); /* Padding */
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
@@ -405,9 +405,13 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
 			length = ConvertToUnicode(CP_UTF8, 0, volumeLabel, -1, &outStr, 0) * 2;
 			stream_write_UINT32(output, 17 + length); /* Length */
-			stream_check_size(output, 17 + length);
+			Stream_EnsureRemainingCapacity(output, 17 + length);
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
+#ifdef ANDROID
+			stream_write_UINT32(output, svfst.f_fsid.__val[0]); /* VolumeSerialNumber */
+#else
 			stream_write_UINT32(output, svfst.f_fsid); /* VolumeSerialNumber */
+#endif
 			stream_write_UINT32(output, length); /* VolumeLabelLength */
 			stream_write_BYTE(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
@@ -418,7 +422,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 		case FileFsSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232107.aspx */
 			stream_write_UINT32(output, 24); /* Length */
-			stream_check_size(output, 24);
+			Stream_EnsureRemainingCapacity(output, 24);
 			stream_write_UINT64(output, svfst.f_blocks); /* TotalAllocationUnits */
 			stream_write_UINT64(output, svfst.f_bavail); /* AvailableAllocationUnits */
 			stream_write_UINT32(output, 1); /* SectorsPerAllocationUnit */
@@ -429,12 +433,16 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
 			length = ConvertToUnicode(CP_UTF8, 0, diskType, -1, &outStr, 0) * 2;
 			stream_write_UINT32(output, 12 + length); /* Length */
-			stream_check_size(output, 12 + length);
+			Stream_EnsureRemainingCapacity(output, 12 + length);
 			stream_write_UINT32(output,
 				FILE_CASE_SENSITIVE_SEARCH |
 				FILE_CASE_PRESERVED_NAMES |
 				FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
+#ifdef ANDROID
+			stream_write_UINT32(output, 255); /* MaximumComponentNameLength */
+#else
 			stream_write_UINT32(output, svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
+#endif
 			stream_write_UINT32(output, length); /* FileSystemNameLength */
 			stream_write(output, outStr, length); /* FileSystemName (Unicode) */
 			free(outStr);
@@ -443,7 +451,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 		case FileFsFullSizeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232104.aspx */
 			stream_write_UINT32(output, 32); /* Length */
-			stream_check_size(output, 32);
+			Stream_EnsureRemainingCapacity(output, 32);
 			stream_write_UINT64(output, svfst.f_blocks); /* TotalAllocationUnits */
 			stream_write_UINT64(output, svfst.f_bavail); /* CallerAvailableAllocationUnits */
 			stream_write_UINT64(output, svfst.f_bfree); /* AvailableAllocationUnits */
@@ -454,7 +462,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 		case FileFsDeviceInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232109.aspx */
 			stream_write_UINT32(output, 8); /* Length */
-			stream_check_size(output, 8);
+			Stream_EnsureRemainingCapacity(output, 8);
 			stream_write_UINT32(output, FILE_DEVICE_DISK); /* DeviceType */
 			stream_write_UINT32(output, 0); /* Characteristics */
 			break;
@@ -496,9 +504,9 @@ static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 	stream_read_UINT32(irp->input, FsInformationClass);
 	stream_read_BYTE(irp->input, InitialQuery);
 	stream_read_UINT32(irp->input, PathLength);
-	stream_seek(irp->input, 23); /* Padding */
+	Stream_Seek(irp->input, 23); /* Padding */
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(irp->input),
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)

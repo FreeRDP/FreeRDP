@@ -930,7 +930,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 
 	s = stream_new(0);
 	stream_attach(s, data, size);
-	stream_seek(s, 14);
+	Stream_Seek(s, 14);
 	stream_read_UINT16(s, bpp);
 	stream_read_UINT32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
@@ -948,7 +948,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	stream_write(s, data, size);
 
 	cb->data = stream_get_head(s);
-	cb->data_length = stream_get_length(s);
+	cb->data_length = Stream_GetPosition(s);
 	stream_detach(s);
 	stream_free(s);
 }

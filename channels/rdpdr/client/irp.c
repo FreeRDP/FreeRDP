@@ -51,10 +51,10 @@ static void irp_complete(IRP* irp)
 
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
-	pos = stream_get_pos(irp->output);
-	stream_set_pos(irp->output, 12);
+	pos = Stream_GetPosition(irp->output);
+	Stream_SetPosition(irp->output, 12);
 	stream_write_UINT32(irp->output, irp->IoStatus);
-	stream_set_pos(irp->output, pos);
+	Stream_SetPosition(irp->output, pos);
 
 	svc_plugin_send(irp->devman->plugin, irp->output);
 	irp->output = NULL;
@@ -93,7 +93,7 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 	stream_write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
 	stream_write_UINT32(irp->output, DeviceId);
 	stream_write_UINT32(irp->output, irp->CompletionId);
-	stream_seek_UINT32(irp->output); /* IoStatus */
+	Stream_Seek_UINT32(irp->output); /* IoStatus */
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;

@@ -121,7 +121,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	if (buffer3Length > 0)
 		Stream_Write(s, buffer3, buffer3Length); /* buffer3 (variable) */
 
-	Stream_Length(s) = Stream_Position(s);
+	Stream_Length(s) = Stream_GetPosition(s);
 
 	status = rpc_write(tsg->rpc, Stream_Buffer(s), Stream_Length(s), TsProxySendToServerOpnum);
 

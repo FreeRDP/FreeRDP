@@ -391,7 +391,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 		case FileBasicInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
 			stream_write_UINT32(output, 36); /* Length */
-			stream_check_size(output, 36);
+			Stream_EnsureRemainingCapacity(output, 36);
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_atime)); /* LastAccessTime */
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* LastWriteTime */
@@ -403,7 +403,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 		case FileStandardInformation:
 			/*  http://msdn.microsoft.com/en-us/library/cc232088.aspx */
 			stream_write_UINT32(output, 22); /* Length */
-			stream_check_size(output, 22);
+			Stream_EnsureRemainingCapacity(output, 22);
 			stream_write_UINT64(output, st.st_size); /* AllocationSize */
 			stream_write_UINT64(output, st.st_size); /* EndOfFile */
 			stream_write_UINT32(output, st.st_nlink); /* NumberOfLinks */
@@ -415,7 +415,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 		case FileAttributeTagInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232093.aspx */
 			stream_write_UINT32(output, 8); /* Length */
-			stream_check_size(output, 8);
+			Stream_EnsureRemainingCapacity(output, 8);
 			stream_write_UINT32(output, FILE_ATTR_SYSTEM_TO_RDP(file, st)); /* FileAttributes */
 			stream_write_UINT32(output, 0); /* ReparseTag */
 			break;
@@ -447,10 +447,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	{
 		case FileBasicInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			stream_seek_UINT64(input); /* CreationTime */
-			stream_seek_UINT64(input); /* LastAccessTime */
+			Stream_Seek_UINT64(input); /* CreationTime */
+			Stream_Seek_UINT64(input); /* LastAccessTime */
 			stream_read_UINT64(input, LastWriteTime);
-			stream_seek_UINT64(input); /* ChangeTime */
+			Stream_Seek_UINT64(input); /* ChangeTime */
 			stream_read_UINT32(input, FileAttributes);
 
 			if (FSTAT(file->fd, &st) != 0)
@@ -462,7 +462,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[1].tv_usec = 0;
 #ifndef WIN32
 /* TODO on win32 */                        
-                        futimes(file->fd, tv);
+#ifdef ANDROID
+			utimes(file->fullpath, tv);
+#else
+			futimes(file->fd, tv);
+#endif
 
 			if (FileAttributes > 0)
 			{
@@ -497,11 +501,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 		case FileRenameInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
-			stream_seek_BYTE(input); /* ReplaceIfExists */
-			stream_seek_BYTE(input); /* RootDirectory */
+			Stream_Seek_BYTE(input); /* ReplaceIfExists */
+			Stream_Seek_BYTE(input); /* RootDirectory */
 			stream_read_UINT32(input, FileNameLength);
 
-			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(input),
+			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(input),
 					FileNameLength / 2, &s, 0, NULL, NULL);
 
 			if (status < 1)
@@ -612,7 +616,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		case FileDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232097.aspx */
 			stream_write_UINT32(output, 64 + length); /* Length */
-			stream_check_size(output, 64 + length);
+			Stream_EnsureRemainingCapacity(output, 64 + length);
 			stream_write_UINT32(output, 0); /* NextEntryOffset */
 			stream_write_UINT32(output, 0); /* FileIndex */
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -629,7 +633,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		case FileFullDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232068.aspx */
 			stream_write_UINT32(output, 68 + length); /* Length */
-			stream_check_size(output, 68 + length);
+			Stream_EnsureRemainingCapacity(output, 68 + length);
 			stream_write_UINT32(output, 0); /* NextEntryOffset */
 			stream_write_UINT32(output, 0); /* FileIndex */
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -647,7 +651,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		case FileBothDirectoryInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232095.aspx */
 			stream_write_UINT32(output, 93 + length); /* Length */
-			stream_check_size(output, 93 + length);
+			Stream_EnsureRemainingCapacity(output, 93 + length);
 			stream_write_UINT32(output, 0); /* NextEntryOffset */
 			stream_write_UINT32(output, 0); /* FileIndex */
 			stream_write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_mtime)); /* CreationTime */
@@ -668,7 +672,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		case FileNamesInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232077.aspx */
 			stream_write_UINT32(output, 12 + length); /* Length */
-			stream_check_size(output, 12 + length);
+			Stream_EnsureRemainingCapacity(output, 12 + length);
 			stream_write_UINT32(output, 0); /* NextEntryOffset */
 			stream_write_UINT32(output, 0); /* FileIndex */
 			stream_write_UINT32(output, length); /* FileNameLength */

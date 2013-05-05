@@ -63,6 +63,12 @@ typedef UINT32 mode_t;
 #define FSTAT fstat
 #define STATVFS statvfs
 #define O_LARGEFILE 0
+#elif defined(ANDROID)
+#define STAT stat
+#define OPEN open
+#define LSEEK lseek
+#define FSTAT fstat
+#define STATVFS statfs
 #else
 #define STAT stat64
 #define OPEN open64

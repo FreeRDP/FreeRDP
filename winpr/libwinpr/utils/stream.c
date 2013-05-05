@@ -29,10 +29,27 @@ void Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	if (s->capacity < size)
 	{
+		size_t position;
+		size_t old_capacity;
+
+		old_capacity = s->capacity;
 		s->capacity = size;
-		s->buffer = (BYTE*) realloc(s->buffer, size);
-		s->pointer = s->buffer;
+		s->length = size;
+
+		position = Stream_GetPosition(s);
+
+		s->buffer = (BYTE*) realloc(s->buffer, s->capacity);
+
+		ZeroMemory(&s->buffer[old_capacity], s->capacity - old_capacity);
+
+		Stream_SetPosition(s, position);
 	}
+}
+
+void Stream_EnsureRemainingCapacity(wStream* s, size_t size)
+{
+	if (Stream_GetPosition(s) + size > Stream_Capacity(s))
+		Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
 }
 
 wStream* Stream_New(BYTE* buffer, size_t size)
@@ -105,6 +122,7 @@ wStream* stream_new(int size)
 			ZeroMemory(stream->buffer, size);
 			stream->pointer = stream->buffer;
 			stream->capacity = size;
+			stream->length = size;
 		}
 	}
 
@@ -129,34 +147,4 @@ void stream_free(wStream* stream)
 
 		free(stream);
 	}
-}
-
-/**
- * This function is used to extend the size of an existing stream.
- * It will infact extend the attached buffer, fill the newly allocated region with 0, and reset the current
- * stream position.
- * If the stream did not have a buffer attached, a new one will be allocated and attached.
- *
- * @param stream [in/out]	pointer to the STREAM structure that needs to be extended.
- * @param request_size [in]	Number of bytes to add to the existing stream.
- * 							If the value is < the existing size, then the existing size is doubled.
- */
-void stream_extend(wStream* stream, int request_size)
-{
-	int pos;
-	int original_size;
-	int increased_size;
-
-	pos = stream_get_pos(stream);
-	original_size = stream->capacity;
-	increased_size = (request_size > original_size ? request_size : original_size);
-	stream->capacity += increased_size;
-
-	if (original_size == 0)
-		stream->buffer = (BYTE*) malloc(stream->capacity);
-	else
-		stream->buffer = (BYTE*) realloc(stream->buffer, stream->capacity);
-
-	memset(stream->buffer + original_size, 0, increased_size);
-	stream_set_pos(stream, pos);
 }

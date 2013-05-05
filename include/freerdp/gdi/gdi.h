@@ -288,6 +288,10 @@ struct rdp_gdi
 	gdiBitmap* image;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API UINT32 gdi_rop3_code(BYTE code);
 FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
@@ -296,6 +300,10 @@ FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
 FREERDP_API int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef WITH_DEBUG_GDI
 #define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)

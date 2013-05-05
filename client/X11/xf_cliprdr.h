@@ -21,6 +21,7 @@
 #define __XF_CLIPRDR_H
 
 #include "xf_interface.h"
+#include "xfreerdp.h"
 
 void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman);
 void xf_cliprdr_uninit(xfInfo* xfi);

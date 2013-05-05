@@ -56,6 +56,7 @@ if(WITH_CLIENT_INTERFACE)
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c cli/xfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp")
 endif()
 
 set(${MODULE_PREFIX}_LIBS
@@ -105,6 +106,7 @@ set(XRENDER_FEATURE_TYPE "RECOMMENDED")
 set(XRENDER_FEATURE_PURPOSE "rendering")
 set(XRENDER_FEATURE_DESCRIPTION "X11 render extension") 
 
+
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
 find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
@@ -149,30 +151,6 @@ if(WITH_XRENDER)
   set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XRENDER_LIBRARIES})
 endif() 
 
-#find_package(ImageMagick COMPONENTS MagickCore)
-#include_directories(${ImageMagick_MagickCore_INCLUDE_DIRS})
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ImageMagick_MagickCore_LIBRARIES})
-#SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/include/ImageMagick-6)
-#SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -I/usr/include/ImageMagick-6)
-
-#message(Found MagickCore: ${ImageMagick_MagickCore_FOUND})
-#message(INCLUDE: ${ImageMagick_MagickCore_INCLUDE_DIRS})
-#message(LIBS: ${${MODULE_PREFIX}_LIBS})
-
-
-#if(NOT ${ImageMagick_MagickCore_FOUND})
-#  #just hack it
-#  include_directories(/usr/include/ImageMagick-6)
-#  set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib64/libMagickCore-6.Q16.so)
-#endif()
-
-#ubuntu
-#include_directories(/usr/include/ImageMagick)
-#set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} /usr/lib/x86_64-linux-gnu/libMagickCore.so.5)
-
-
-
-
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
@@ -185,7 +163,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)
-    target_link_libraries(xfreerdp ${IPP_LIBRARY_LIST})
+    target_link_libraries(${MODULE_NAME} ${IPP_LIBRARY_LIST})
 endif()
 
 if(WITH_CLIENT_INTERFACE)

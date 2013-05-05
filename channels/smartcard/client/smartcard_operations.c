@@ -89,7 +89,7 @@ static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 	BYTE* p;
 	UINT32 len;
 
-	p = stream_get_tail(irp->output);
+	p = Stream_Pointer(irp->output);
 	len = strlen(src) + 1;
 
 	if (wide)
@@ -109,7 +109,7 @@ static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 		memcpy(p, src, len);
 	}
 
-	stream_seek(irp->output, len);
+	Stream_Seek(irp->output, len);
 	return len;
 }
 
@@ -120,7 +120,7 @@ static void smartcard_output_alignment(IRP* irp, UINT32 seed)
 					 * CompletionID, and IoStatus
 					 * of Section 2.2.1.5.5 of MS-RDPEFS.
 					 */
-	UINT32 size = stream_get_length(irp->output) - field_lengths;
+	UINT32 size = Stream_GetPosition(irp->output) - field_lengths;
 	UINT32 add = (seed - (size % seed)) % seed;
 
 	if (add > 0)
@@ -212,14 +212,14 @@ static void smartcard_input_repos(IRP* irp, UINT32 read)
 	UINT32 add = 4 - (read % 4);
 
 	if (add < 4 && add > 0)
-		stream_seek(irp->input, add);
+		Stream_Seek(irp->input, add);
 }
 
 static void smartcard_input_reader_name(IRP* irp, char** dest, BOOL wide)
 {
 	UINT32 dataLength;
 
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 	stream_read_UINT32(irp->input, dataLength);
 
 	DEBUG_SCARD("datalength %d", dataLength);
@@ -233,7 +233,7 @@ static void smartcard_input_skip_linked(IRP* irp)
 
 	if (len > 0)
 	{
-		stream_seek(irp->input, len);
+		Stream_Seek(irp->input, len);
 		smartcard_input_repos(irp, len);
 	}
 }
@@ -267,13 +267,13 @@ static UINT32 handle_EstablishContext(IRP* irp)
 	UINT32 scope;
 	SCARDCONTEXT hContext = -1;
 
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 	stream_read_UINT32(irp->input, len);
 
 	if (len != 8)
 		return SCARD_F_INTERNAL_ERROR;
 
-	stream_seek_UINT32(irp->input);
+	Stream_Seek_UINT32(irp->input);
 	stream_read_UINT32(irp->input, scope);
 
 	status = SCardEstablishContext(scope, NULL, NULL, &hContext);
@@ -295,10 +295,10 @@ static UINT32 handle_ReleaseContext(IRP* irp)
 	UINT32 len, status;
 	SCARDCONTEXT hContext = -1;
 
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 	stream_read_UINT32(irp->input, len);
 
-	stream_seek(irp->input, 0x10);
+	Stream_Seek(irp->input, 0x10);
 	stream_read_UINT32(irp->input, hContext);
 
 	status = SCardReleaseContext(hContext);
@@ -318,7 +318,7 @@ static UINT32 handle_IsValidContext(IRP* irp)
 	UINT32 status;
 	SCARDCONTEXT hContext;
 
-	stream_seek(irp->input, 0x1C);
+	Stream_Seek(irp->input, 0x1C);
 	stream_read_UINT32(irp->input, hContext);
 
 	status = SCardIsValidContext(hContext);
@@ -342,10 +342,10 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 	int elemLength, dataLength;
 	int pos, poslen1, poslen2;
 
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 	stream_read_UINT32(irp->input, len);
 
-	stream_seek(irp->input, 0x1c);
+	Stream_Seek(irp->input, 0x1c);
 	stream_read_UINT32(irp->input, len);
 
 	if (len != 4)
@@ -373,13 +373,13 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 
 /*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
 
-	poslen1 = stream_get_pos(irp->output);
-	stream_seek_UINT32(irp->output);
+	poslen1 = Stream_GetPosition(irp->output);
+	Stream_Seek_UINT32(irp->output);
 
 	stream_write_UINT32(irp->output, 0x01760650);
 
-	poslen2 = stream_get_pos(irp->output);
-	stream_seek_UINT32(irp->output);
+	poslen2 = Stream_GetPosition(irp->output);
+	Stream_Seek_UINT32(irp->output);
 
 	walker = readerList;
 	dataLength = 0;
@@ -397,14 +397,14 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 
 	dataLength += smartcard_output_string(irp, "\0", wide);
 
-	pos = stream_get_pos(irp->output);
+	pos = Stream_GetPosition(irp->output);
 
-	stream_set_pos(irp->output, poslen1);
+	Stream_SetPosition(irp->output, poslen1);
 	stream_write_UINT32(irp->output, dataLength);
-	stream_set_pos(irp->output, poslen2);
+	Stream_SetPosition(irp->output, poslen2);
 	stream_write_UINT32(irp->output, dataLength);
 
-	stream_set_pos(irp->output, pos);
+	Stream_SetPosition(irp->output, pos);
 
 	smartcard_output_repos(irp, dataLength);
 	smartcard_output_alignment(irp, 8);
@@ -427,15 +427,15 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 	DWORD readerCount = 0;
 	SCARD_READERSTATE *readerStates, *cur;
 
-	stream_seek(irp->input, 0x18);
+	Stream_Seek(irp->input, 0x18);
 	stream_read_UINT32(irp->input, dwTimeout);
 	stream_read_UINT32(irp->input, readerCount);
 
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 
 	stream_read_UINT32(irp->input, hContext);
 
-	stream_seek(irp->input, 4);
+	Stream_Seek(irp->input, 4);
 
 	DEBUG_SCARD("context: 0x%08x, timeout: 0x%08x, count: %d",
 		     (unsigned) hContext, (unsigned) dwTimeout, (int) readerCount);
@@ -452,7 +452,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		{
 			cur = &readerStates[i];
 
-			stream_seek(irp->input, 4);
+			Stream_Seek(irp->input, 4);
 
 			/*
 			 * TODO: on-wire is little endian; need to either
@@ -464,7 +464,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 			stream_read_UINT32(irp->input, cur->cbAtr);
 			stream_read(irp->input, cur->rgbAtr, 32);
 
-			stream_seek(irp->input, 4);
+			Stream_Seek(irp->input, 4);
 
 			/* reset high bytes? */
 			cur->dwCurrentState &= 0x0000FFFF;
@@ -476,7 +476,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 			cur = &readerStates[i];
 			UINT32 dataLength;
 
-			stream_seek(irp->input, 8);
+			Stream_Seek(irp->input, 8);
 			stream_read_UINT32(irp->input, dataLength);
 			smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
@@ -536,7 +536,7 @@ static UINT32 handle_Cancel(IRP *irp)
 	LONG status;
 	SCARDCONTEXT hContext;
 
-	stream_seek(irp->input, 0x1C);
+	Stream_Seek(irp->input, 0x1C);
 	stream_read_UINT32(irp->input, hContext);
 
 	status = SCardCancel(hContext);
@@ -561,13 +561,13 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 	DWORD dwActiveProtocol = 0;
 	SCARDHANDLE hCard;
 
-	stream_seek(irp->input, 0x1c);
+	Stream_Seek(irp->input, 0x1c);
 	stream_read_UINT32(irp->input, dwShareMode);
 	stream_read_UINT32(irp->input, dwPreferredProtocol);
 
 	smartcard_input_reader_name(irp, &readerName, wide);
 
-	stream_seek(irp->input, 4);
+	Stream_Seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hContext);
 
 	DEBUG_SCARD("(context: 0x%08x, share: 0x%08x, proto: 0x%08x, reader: \"%s\")",
@@ -606,14 +606,14 @@ static UINT32 handle_Reconnect(IRP* irp)
 	DWORD dwInitialization = 0;
 	DWORD dwActiveProtocol = 0;
 
-	stream_seek(irp->input, 0x20);
+	Stream_Seek(irp->input, 0x20);
 	stream_read_UINT32(irp->input, dwShareMode);
 	stream_read_UINT32(irp->input, dwPreferredProtocol);
 	stream_read_UINT32(irp->input, dwInitialization);
 
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, hContext);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, share: 0x%08x, proto: 0x%08x, init: 0x%08x)",
@@ -641,11 +641,11 @@ static UINT32 handle_Disconnect(IRP* irp)
 	SCARDHANDLE hCard;
 	DWORD dwDisposition = 0;
 
-	stream_seek(irp->input, 0x20);
+	Stream_Seek(irp->input, 0x20);
 	stream_read_UINT32(irp->input, dwDisposition);
-	stream_seek(irp->input, 4);
+	Stream_Seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hContext);
-	stream_seek(irp->input, 4);
+	Stream_Seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, disposition: 0x%08x)",
@@ -668,7 +668,7 @@ static UINT32 handle_BeginTransaction(IRP* irp)
 	LONG status;
 	SCARDCONTEXT hCard;
 
-	stream_seek(irp->input, 0x30);
+	Stream_Seek(irp->input, 0x30);
 	stream_read_UINT32(irp->input, hCard);
 
 	status = SCardBeginTransaction(hCard);
@@ -689,10 +689,10 @@ static UINT32 handle_EndTransaction(IRP* irp)
 	SCARDCONTEXT hCard;
 	DWORD dwDisposition = 0;
 
-	stream_seek(irp->input, 0x20);
+	Stream_Seek(irp->input, 0x20);
 	stream_read_UINT32(irp->input, dwDisposition);
 
-	stream_seek(irp->input, 0x0C);
+	Stream_Seek(irp->input, 0x0C);
 	stream_read_UINT32(irp->input, hCard);
 
 	status = SCardEndTransaction(hCard, dwDisposition);
@@ -721,12 +721,12 @@ static UINT32 handle_State(IRP* irp)
 	int i;
 #endif
 
-	stream_seek(irp->input, 0x24);
-	stream_seek_UINT32(irp->input);	/* atrLen */
+	Stream_Seek(irp->input, 0x24);
+	Stream_Seek_UINT32(irp->input);	/* atrLen */
 
-	stream_seek(irp->input, 0x0c);
+	Stream_Seek(irp->input, 0x0c);
 	stream_read_UINT32(irp->input, hCard);
-	stream_seek(irp->input, 0x04);
+	Stream_Seek(irp->input, 0x04);
 
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
@@ -792,12 +792,12 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	int i;
 #endif
 
-	stream_seek(irp->input, 0x24);
+	Stream_Seek(irp->input, 0x24);
 	stream_read_UINT32(irp->input, readerLen);
 	stream_read_UINT32(irp->input, atrLen);
-	stream_seek(irp->input, 0x0c);
+	Stream_Seek(irp->input, 0x0c);
 	stream_read_UINT32(irp->input, hCard);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 
 	atrLen = MAX_ATR_SIZE;
 
@@ -830,7 +830,7 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 
 	state = smartcard_map_state(state);
 
-	poslen1 = stream_get_pos(irp->output);
+	poslen1 = Stream_GetPosition(irp->output);
 	stream_write_UINT32(irp->output, readerLen);
 	stream_write_UINT32(irp->output, 0x00020000);
 	stream_write_UINT32(irp->output, state);
@@ -841,19 +841,19 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 		stream_write_zero(irp->output, 32 - atrLen);
 	stream_write_UINT32(irp->output, atrLen);
 
-	poslen2 = stream_get_pos(irp->output);
+	poslen2 = Stream_GetPosition(irp->output);
 	stream_write_UINT32(irp->output, readerLen);
 
 	dataLength = smartcard_output_string(irp, readerName, wide);
 	dataLength += smartcard_output_string(irp, "\0", wide);
 	smartcard_output_repos(irp, dataLength);
 
-	pos = stream_get_pos(irp->output);
-	stream_set_pos(irp->output, poslen1);
+	pos = Stream_GetPosition(irp->output);
+	Stream_SetPosition(irp->output, poslen1);
 	stream_write_UINT32(irp->output,dataLength);
-	stream_set_pos(irp->output, poslen2);
+	Stream_SetPosition(irp->output, poslen2);
 	stream_write_UINT32(irp->output,dataLength);
-	stream_set_pos(irp->output, pos);
+	Stream_SetPosition(irp->output, pos);
 
 	smartcard_output_alignment(irp, 8);
 
@@ -876,9 +876,9 @@ static UINT32 handle_Transmit(IRP* irp)
 	DWORD cbSendLength = 0, cbRecvLength = 0;
 	BYTE *sendBuf = NULL, *recvBuf = NULL;
 
-	stream_seek(irp->input, 0x14);
+	Stream_Seek(irp->input, 0x14);
 	stream_read_UINT32(irp->input, map[0]);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, map[1]);
 
 	stream_read_UINT32(irp->input, pioSendPci.dwProtocol);
@@ -894,7 +894,7 @@ static UINT32 handle_Transmit(IRP* irp)
 	if (map[0] & SCARD_INPUT_LINKED)
 		smartcard_input_skip_linked(irp);
 
-	stream_seek(irp->input, 4);
+	Stream_Seek(irp->input, 4);
 	stream_read_UINT32(irp->input, hCard);
 
 	if (map[2] & SCARD_INPUT_LINKED)
@@ -903,7 +903,7 @@ static UINT32 handle_Transmit(IRP* irp)
 		stream_read_UINT32(irp->input, linkedLen);
 
 		stream_read_UINT32(irp->input, pioSendPci.dwProtocol);
-		stream_seek(irp->input, linkedLen - 4);
+		Stream_Seek(irp->input, linkedLen - 4);
 
 		smartcard_input_repos(irp, linkedLen);
 	}
@@ -928,7 +928,7 @@ static UINT32 handle_Transmit(IRP* irp)
 		stream_read_UINT32(irp->input, linkedLen);
 
 		stream_read_UINT32(irp->input, pioRecvPci.dwProtocol);
-		stream_seek(irp->input, linkedLen - 4);
+		Stream_Seek(irp->input, linkedLen - 4);
 
 		smartcard_input_repos(irp, linkedLen);
 
@@ -937,7 +937,7 @@ static UINT32 handle_Transmit(IRP* irp)
 		{
 			/* not sure what this is */
 			stream_read_UINT32(irp->input, linkedLen);
-			stream_seek(irp->input, linkedLen);
+			Stream_Seek(irp->input, linkedLen);
 
 			smartcard_input_repos(irp, linkedLen);
 		}
@@ -993,18 +993,18 @@ static UINT32 handle_Control(IRP* irp)
 	DWORD nBytesReturned;
 	DWORD outBufferSize;
 
-	stream_seek(irp->input, 0x14);
+	Stream_Seek(irp->input, 0x14);
 	stream_read_UINT32(irp->input, map[0]);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, map[1]);
 	stream_read_UINT32(irp->input, controlCode);
 	stream_read_UINT32(irp->input, recvLength);
 	stream_read_UINT32(irp->input, map[2]);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, outBufferSize);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, hContext);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, hCard);
 
 	/* Translate Windows SCARD_CTL_CODE's to corresponding local code */
@@ -1069,11 +1069,11 @@ static UINT32 handle_GetAttrib(IRP* irp)
 	DWORD attrLen = 0;
 	BYTE* pbAttr = NULL;
 
-	stream_seek(irp->input, 0x20);
+	Stream_Seek(irp->input, 0x20);
 	stream_read_UINT32(irp->input, dwAttrId);
-	stream_seek(irp->input, 0x4);
+	Stream_Seek(irp->input, 0x4);
 	stream_read_UINT32(irp->input, dwAttrLen);
-	stream_seek(irp->input, 0xC);
+	Stream_Seek(irp->input, 0xC);
 	stream_read_UINT32(irp->input, hCard);
 
 	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)",
@@ -1182,7 +1182,7 @@ void scard_error(SMARTCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
 	/* [MS-RDPESC] 3.1.4.4 */
 	fprintf(stderr, "scard processing error %x\n", ntstatus);
 
-	stream_set_pos(irp->output, 0);	/* CHECKME */
+	Stream_SetPosition(irp->output, 0);	/* CHECKME */
 	irp->IoStatus = ntstatus;
 	irp->Complete(irp);
 }
@@ -1209,7 +1209,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	SERVER_SCARD_ATRMASK* curAtr = NULL;
 	SERVER_SCARD_ATRMASK* pAtrMasks = NULL;
 
-	stream_seek(irp->input, 0x2C);
+	Stream_Seek(irp->input, 0x2C);
 	stream_read_UINT32(irp->input, hContext);
 	stream_read_UINT32(irp->input, atrMaskCount);
 
@@ -1237,7 +1237,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	{
 		cur = &readerStates[i];
 
-		stream_seek(irp->input, 4);
+		Stream_Seek(irp->input, 4);
 
 		/*
 		 * TODO: on-wire is little endian; need to either
@@ -1249,7 +1249,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		stream_read_UINT32(irp->input, cur->cbAtr);
 		stream_read(irp->input, cur->rgbAtr, 32);
 
-		stream_seek(irp->input, 4);
+		Stream_Seek(irp->input, 4);
 
 		/* reset high bytes? */
 		cur->dwCurrentState &= 0x0000FFFF;
@@ -1262,7 +1262,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		cur = &readerStates[i];
 		UINT32 dataLength;
 
-		stream_seek(irp->input, 8);
+		Stream_Seek(irp->input, 8);
 		stream_read_UINT32(irp->input, dataLength);
 		smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
@@ -1334,9 +1334,9 @@ BOOL smartcard_async_op(IRP* irp)
 	UINT32 ioctl_code;
 
 	/* peek ahead */
-	stream_seek(irp->input, 8);
+	Stream_Seek(irp->input, 8);
 	stream_read_UINT32(irp->input, ioctl_code);
-	stream_rewind(irp->input, 12);
+	Stream_Rewind(irp->input, 12);
 
 	switch (ioctl_code)
 	{
@@ -1388,16 +1388,16 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	stream_read_UINT32(irp->input, input_len);
 	stream_read_UINT32(irp->input, ioctl_code);
 
-	stream_seek(irp->input, 20);	/* padding */
+	Stream_Seek(irp->input, 20);	/* padding */
 
-	// stream_seek(irp->input, 4);	/* TODO: parse len, le, v1 */
-	// stream_seek(irp->input, 4);	/* 0xcccccccc */
-	// stream_seek(irp->input, 4);	/* rpce len */
+	// Stream_Seek(irp->input, 4);	/* TODO: parse len, le, v1 */
+	// Stream_Seek(irp->input, 4);	/* 0xcccccccc */
+	// Stream_Seek(irp->input, 4);	/* rpce len */
 
 	/* [MS-RDPESC] 3.2.5.1 Sending Outgoing Messages */
-	stream_extend(irp->output, 2048);
+	Stream_EnsureRemainingCapacity(irp->output, 2048);
 
-	irp_result_pos = stream_get_pos(irp->output);
+	irp_result_pos = Stream_GetPosition(irp->output);
 
 	stream_write_UINT32(irp->output, 0x00000000); 	/* MS-RDPEFS 
 							 * OutputBufferLength
@@ -1409,13 +1409,13 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	stream_write_UINT32(irp->output, 0x00081001); /* len 8, LE, v1 */
 	stream_write_UINT32(irp->output, 0xcccccccc); /* filler */
 
-	output_len_pos = stream_get_pos(irp->output);
-	stream_seek(irp->output, 4);		/* size */
+	output_len_pos = Stream_GetPosition(irp->output);
+	Stream_Seek(irp->output, 4);		/* size */
 
 	stream_write_UINT32(irp->output, 0x0);	/* filler */
 
-	result_pos = stream_get_pos(irp->output);
-	stream_seek(irp->output, 4);		/* result */
+	result_pos = Stream_GetPosition(irp->output);
+	Stream_Seek(irp->output, 4);		/* result */
 
 	/* body */
 	switch (ioctl_code)
@@ -1529,24 +1529,24 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 		result = 0x80100022;
 
 	/* handle response packet */
-	pos = stream_get_pos(irp->output);
+	pos = Stream_GetPosition(irp->output);
 	stream_len = pos - irp_result_pos - 4;	/* Value of OutputBufferLength */
-	stream_set_pos(irp->output, irp_result_pos);
+	Stream_SetPosition(irp->output, irp_result_pos);
 	stream_write_UINT32(irp->output, stream_len);
 
-	stream_set_pos(irp->output, output_len_pos);
+	Stream_SetPosition(irp->output, output_len_pos);
 	/* Remove the effect of the MS-RPCE Common Type Header and Private
 	 * Header (Sections 2.2.6.1 and 2.2.6.2).
 	 */
 	stream_write_UINT32(irp->output, stream_len - header_lengths);
 
-	stream_set_pos(irp->output, result_pos);
+	Stream_SetPosition(irp->output, result_pos);
 	stream_write_UINT32(irp->output, result);
 
-	stream_set_pos(irp->output, pos);
+	Stream_SetPosition(irp->output, pos);
 
 #ifdef WITH_DEBUG_SCARD
-	winpr_HexDump(stream_get_data(irp->output), stream_get_length(irp->output));
+	winpr_HexDump(Stream_Buffer(irp->output), Stream_GetPosition(irp->output));
 #endif
 	irp->IoStatus = 0;
 

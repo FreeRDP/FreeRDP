@@ -140,6 +140,9 @@ char* GetPath_XDG_CONFIG_HOME()
 
 	home = GetPath_HOME();
 
+	if (!home)
+		home = GetPath_TEMP();
+
 	path = (char*) malloc(strlen(home) + strlen("/.config") + 1);
 	sprintf(path, "%s%s", home, "/.config");
 

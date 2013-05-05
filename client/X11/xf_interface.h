@@ -36,13 +36,11 @@
 
 typedef struct xf_info xfInfo;
 
-#include "xf_window.h"
-#include "xf_monitor.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/*
 struct xf_WorkArea
 {
 	UINT32 x;
@@ -192,7 +190,7 @@ BOOL xf_post_connect(freerdp* instance);
 
 enum XF_EXIT_CODE
 {
-	/* section 0-15: protocol-independent codes */
+	// section 0-15: protocol-independent codes
 	XF_EXIT_SUCCESS = 0,
 	XF_EXIT_DISCONNECT = 1,
 	XF_EXIT_LOGOFF = 2,
@@ -206,7 +204,7 @@ enum XF_EXIT_CODE
 	XF_EXIT_FRESH_CREDENTIALS_REQUIRED = 10,
 	XF_EXIT_DISCONNECT_BY_USER = 11,
 
-	/* section 16-31: license error set */
+	// section 16-31: license error set
 	XF_EXIT_LICENSE_INTERNAL = 16,
 	XF_EXIT_LICENSE_NO_LICENSE_SERVER = 17,
 	XF_EXIT_LICENSE_NO_LICENSE = 18,
@@ -219,10 +217,10 @@ enum XF_EXIT_CODE
 	XF_EXIT_LICENSE_CANT_UPGRADE = 25,
 	XF_EXIT_LICENSE_NO_REMOTE_CONNECTIONS = 26,
 
-	/* section 32-127: RDP protocol error set */
+	// section 32-127: RDP protocol error set //
 	XF_EXIT_RDP = 32,
 
-	/* section 128-254: xfreerdp specific exit codes */
+	// section 128-254: xfreerdp specific exit codes //
 	XF_EXIT_PARSE_ARGUMENTS = 128,
 	XF_EXIT_MEMORY = 129,
 	XF_EXIT_PROTOCOL = 130,
@@ -236,6 +234,10 @@ void xf_unlock_x11(xfInfo* xfi, BOOL display);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
+ */
+
+
+
 /**
  * Client Interface
  */
@@ -247,6 +249,10 @@ FREERDP_API int freerdp_client_global_uninit();
 
 FREERDP_API int freerdp_client_start(cfInfo* cfi);
 FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+
+FREERDP_API freerdp* freerdp_client_get_instance(cfInfo* cfi);
+FREERDP_API HANDLE freerdp_client_get_thread(cfInfo* cfi);
+FREERDP_API rdpClient* freerdp_client_get_interface(cfInfo* cfi);
 
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API void freerdp_client_free(cfInfo* cfi);

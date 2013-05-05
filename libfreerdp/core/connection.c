@@ -349,10 +349,10 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	stream_read_UINT32(s, rand_len);
-	if(stream_get_left(s) < rand_len + 8)  /* include 8 bytes of padding */
+	if(Stream_GetRemainingLength(s) < rand_len + 8)  /* include 8 bytes of padding */
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
@@ -366,7 +366,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
 	stream_read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
-	stream_seek(s, 8);
+	Stream_Seek(s, 8);
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
@@ -535,7 +535,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		UINT16 channelId;
 		stream_set_mark(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
-		/* Was stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */

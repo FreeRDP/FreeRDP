@@ -1,13 +1,13 @@
 # - Find Xi
 # Find the Xi libraries
 #
-# This module defines the following variables:
-# 	XI_FOUND - true if XI_INCLUDE_DIR & XI_LIBRARY are found
-# 	XI_LIBRARIES - Set when XI_LIBRARY is found
-# 	XI_INCLUDE_DIRS - Set when XI_INCLUDE_DIR is found
+#  This module defines the following variables:
+#     XI_FOUND        - true if XI_INCLUDE_DIR & XI_LIBRARY are found
+#     XI_LIBRARIES    - Set when XI_LIBRARY is found
+#     XI_INCLUDE_DIRS - Set when XI_INCLUDE_DIR is found
 #
-# 	XI_INCLUDE_DIR - where to find XInput2.h, etc.
-# 	XI_LIBRARY - the Xi library
+#     XI_INCLUDE_DIR  - where to find XInput2.h, etc.
+#     XI_LIBRARY      - the Xi library
 #
 
 #=============================================================================
@@ -39,8 +39,8 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xi DEFAULT_MSG XI_LIBRARY XI_INCLUDE_DIR)
 
 if(XI_FOUND)
-set(XI_LIBRARIES ${XI_LIBRARY})
-set(XI_INCLUDE_DIRS ${XI_INCLUDE_DIR})
+	set(XI_LIBRARIES ${XI_LIBRARY})
+	set(XI_INCLUDE_DIRS ${XI_INCLUDE_DIR})
 endif()
 
 mark_as_advanced(XI_INCLUDE_DIR XI_LIBRARY)
