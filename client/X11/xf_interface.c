@@ -85,32 +85,10 @@
 #include "xf_keyboard.h"
 #include "xf_input.h"
 
-//#include <magick/MagickCore.h>
-
 static int initialized_xi = 0;
-
-static int rtest = 0;
 
 static long xv_port = 0;
 static const size_t password_size = 512;
-
-double scale_to_percent(double s)
-{
-	double p;
-
-	p = 1 - (s - 1);
-
-	return p;
-}
-
-double percent_to_scale(double p)
-{
-	double s;
-
-	s = 2 - p;
-
-	return s;
-}
 
 void xf_draw_screen_scaled(xfInfo* xfi)
 {
@@ -141,58 +119,6 @@ void xf_draw_screen_scaled(xfInfo* xfi)
 	XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
 	XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, xfi->cur_width, xfi->cur_height);
 	
-}
-
-//void * scaledBuf;
-//XImage* scaled_image;
-//Pixmap scaled_pixmap;
-
-/*void setScale(rdpContext* context, double scale)
-{
-	int w2, h2;
-	rdpGdi* gdi;
-	xfInfo* xfi;
-
-	xfi = ((xfContext*) context)->xfi;
-	gdi = context->gdi;
-	
-	//for now only run once
-	if(rtest == 0)
-	{
-		rtest++;
-
-		//must be careful here with rounding
-		w2 = (int)(gdi->width * scale);
-		h2 = (int)(gdi->height * scale);
-
-		printf("###########################/n");
-		printf("gdi: %dx%d, xfi: %dx%d\n", gdi->width, gdi->height, xfi->width, xfi->height);
-
-
-
-		printf("creating scaled buffer\n");
-		printf("%dx%d -> %.2f -> %dx%d (%d bytes)\n", gdi->width, gdi->height, scale, w2, h2, 4*w2*h2);
-
-
-		scaledBuf = malloc(4 * w2 * h2);
-		scaled_image = XCreateImage(xfi->display, xfi->visual, xfi->depth, ZPixmap, 0,
-				(char*) scaledBuf, w2, h2, xfi->scanline_pad, 0);
-
-		scaled_pixmap = XCreatePixmap(xfi->display, xfi->drawable,
-							w2, h2, xfi->depth);
-
-		printf("done\n");
-	}
-	
-	return;
-
-
-}
-*/
-
-void xf_set_scale(double scale)
-{
-
 }
 
 void xf_context_new(freerdp* instance, rdpContext* context)
@@ -236,8 +162,6 @@ void xf_sw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
-			printf("sw1");
-
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
@@ -264,9 +188,7 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				//here --sw
-				
-					//combine xfi->primary with xfi->image	
+				//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 
 				if(xfi->scale != 1.0)
@@ -278,108 +200,6 @@ void xf_sw_end_paint(rdpContext* context)
 					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 				}
 
-
-/*
-				if(1)//(rtest < 2)
-				{
-
-					if(1)//(w > 100 && h > 100)
-					{
-							printf("first rect: %dx%d @ (%d, %d)\n", w, h, x, y);
-						printf("\tXImage: %dx%d, offset:%d, format=%d, bpp:%d\n", 
-							   xfi->image->width,
-							   xfi->image->height,
-							   xfi->image->xoffset,
-							   xfi->image->format,
-							   xfi->image->bits_per_pixel);
-												
-						testIM(w, h, xfi->image->data);
-						rtest++;
-					}
-				}
-*/
-
-
-				///////////////////////////////////////////////////
-				//copy from xfi->primary to xfi->window->handle
-				//XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
-
-				/*
-				{
-					//try resizing the entire screen
-					//int w, h;
-					int w2, h2;
-					int x2, y2;
-					int i;
-					XImage xi_small;
-					Image* im_orig;
-					Image*  im_re;
-					ExceptionInfo* e;
-					MagickBooleanType ret;
-
-					double scale;
-
-					scale = 0.5;
-
-					setScale(context, scale);
-
-
-					w2 = (int)(w * scale);
-					h2 = (int)(h * scale);
-
-					x2 = (int)(x * scale);
-					y2 = (int)(y * scale);
-
-					if(w2 == 0)
-						w2++;
-					if(h2 == 0)
-						h2++;
-					
-					MagickCoreGenesis("/tmp/", MagickTrue);
-					e = AcquireExceptionInfo();
-
-					
-					//XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, 0, 0, 0, 0, 1024, 768);
-
-					//printf("creating primary magick image: %dx%d");
-					im_orig = ConstituteImage(xfi->width, xfi->height, "RGBA", CharPixel, (void *)xfi->image->data, e);
-
-					im_re = ResizeImage(im_orig, xfi->width * scale, xfi->height * scale, LanczosFilter, 1.0, e);
-
-					//ret = CompositeImage(im_orig, AtopCompositeOp, im_re, 0, 0);
-
-					//printf("putimage\n");
-					//XPutImage(xfi->display, scaled_pixmap, xfi->gc, scaled_image, x2, y2, x2, y2, w2, h2);
-					XPutImage(xfi->display, scaled_pixmap, xfi->gc, scaled_image, x2, y2, x2, y2, w2, h2);
-
-					//printf("export bpl:%d calc:%d\n", scaled_image->bytes_per_line, 4*w2);
-					//ret = ExportImagePixels(im_re, 0, 0, w2, h2, "RGBA", CharPixel, scaled_image->data, e); //???
-
-
-					//printf("rect: %dx%d @ %d, %d\n", w2, h2, x2, y2);
-					//printf("im_re: %dx%d\n", im_re->columns, im_re->rows);
-
-					for(i = 0; i <= h2; i++)
-					{
-						int offset;
-
-						offset = scaled_image->bytes_per_line * (i);
-						offset += x2 * 4;
-
-						//printf("\toffset:%d i:%d/%d \n", offset, i, h2-1);
-
-						ret = ExportImagePixels(im_re, 0, i, im_re->columns, 1, "RGBA", CharPixel, scaled_image->data + offset, e);
-
-					}
-
-					//printf("copy\n");
-					XCopyArea(xfi->display, scaled_pixmap, xfi->window->handle, xfi->gc, x2, y2, w, h, x2, y2);
-
-					im_orig = DestroyImage(im_orig);
-					im_re = DestroyImage(im_re);
-
-				}
-				*/
 			}
 
 			XFlush(xfi->display);
@@ -472,8 +292,6 @@ void xf_hw_end_paint(rdpContext* context)
 					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 			}
 
-			
-
 			xf_unlock_x11(xfi, FALSE);
 		}
 		else
@@ -497,19 +315,16 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-			if(xfi->scale != 1.0)
-			{
-				xf_draw_screen_scaled(xfi);
-			}
-			else
-			{
+				if(xfi->scale != 1.0)
+				{
+					xf_draw_screen_scaled(xfi);
+				}
+				else
+				{
 					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
-			}
-			
+				}
 
 			}
-
-			printf("hw1");
 
 			XFlush(xfi->display);
 
