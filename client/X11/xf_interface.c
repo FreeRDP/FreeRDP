@@ -488,12 +488,12 @@ void xf_create_window(xfInfo* xfi)
 		XSetWMProtocols(xfi->display, xfi->window->handle, &(xfi->WM_DELETE_WINDOW), 1);
 		xfi->drawable = xfi->window->handle;
 
+		/*
 		//allow resizing from half to double
-		
 		xf_SetWindowMinMaxInfo(xfi, xfi->window,
 				0, 0, 0, 0, //these aren't used
 				xfi->width * 0.5, xfi->height * 0.5, xfi->width * 2, xfi->height * 2);
-		
+		*/
 	}
 	else
 	{
