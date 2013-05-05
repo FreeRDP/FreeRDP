@@ -184,6 +184,8 @@ struct xf_info
 	Atom WM_DELETE_WINDOW;
 };
 
+void xf_draw_screen_scaled(xfInfo* xfi);
+
 void xf_create_window(xfInfo* xfi);
 void xf_toggle_fullscreen(xfInfo* xfi);
 BOOL xf_post_connect(freerdp* instance);

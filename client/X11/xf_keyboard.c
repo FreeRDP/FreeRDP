@@ -215,6 +215,45 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		}
 	}
 
+
+	if (keysym == XK_period)
+	{
+				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+				{
+					//Zoom in (scale larger)
+					double s = xfi->scale;
+					s += 0.1;
+					if(s > 1.5)
+						s = 1.5;
+					
+					xfi->scale = s;
+
+					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
+					xf_draw_screen_scaled(xfi);
+					return TRUE;
+				}
+	}
+
+	if (keysym == XK_comma)
+	{
+				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+				{
+					//Zoom out (scale smaller)
+					double s = xfi->scale;
+					s -= 0.1;
+					if(s < 0.5)
+						s = 0.5;
+					
+					xfi->scale = s;
+
+					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
+					xf_draw_screen_scaled(xfi);
+					return TRUE;
+				}
+	}
+
 	return FALSE;
 }
 

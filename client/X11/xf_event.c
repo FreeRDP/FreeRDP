@@ -94,9 +94,18 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 	w = event->xexpose.width;
 	h = event->xexpose.height;
 
+
 	if (!app)
 	{
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+		if(xfi->scale != 1.0)
+		{
+			xf_draw_screen_scaled(xfi);
+		}
+		else
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		}
 	}
 	else
 	{

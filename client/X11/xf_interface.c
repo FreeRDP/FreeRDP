@@ -112,6 +112,37 @@ double percent_to_scale(double p)
 	return s;
 }
 
+void xf_draw_screen_scaled(xfInfo* xfi)
+{
+
+	Picture pic_prim;
+	Picture pic_win;
+	XRenderPictureAttributes pa;
+	XRenderPictFormat* picFormat;
+	XTransform transform;
+	
+	picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
+	pa.subwindow_mode = IncludeInferiors;//wtf is this?
+	pic_prim = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
+	pic_win = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
+
+	transform.matrix[0][0] = XDoubleToFixed(1);
+	transform.matrix[0][1] = XDoubleToFixed(0);
+	transform.matrix[0][2] = XDoubleToFixed(0);
+	
+	transform.matrix[1][0] = XDoubleToFixed(0);
+	transform.matrix[1][1] = XDoubleToFixed(1);
+	transform.matrix[1][2] = XDoubleToFixed(0);
+	
+	transform.matrix[2][0] = XDoubleToFixed(0);
+	transform.matrix[2][1] = XDoubleToFixed(0);
+	transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
+	
+	XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
+	XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, xfi->cur_width, xfi->cur_height);
+	
+}
+
 //void * scaledBuf;
 //XImage* scaled_image;
 //Pixmap scaled_pixmap;
@@ -237,69 +268,15 @@ void xf_sw_end_paint(rdpContext* context)
 				
 					//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-				//XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 
-
-				if(1)//(rtest < 1)
+				if(xfi->scale != 1.0)
 				{
-					Picture pic_prim;
-					Picture pic_win;
-					XRenderPictureAttributes pa;
-					XRenderPictFormat* picFormat;
-
-
-					picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
-					pa.subwindow_mode = IncludeInferiors;//wtf is this?
-					pic_prim = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
-					pic_win = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
-
-
-					//normal
-					//XRenderComposite(xfi->display, PictOpSrc, pic_prim, pic_prim, pic_win, x, y, x, y, x, y, w, h);
-
-
-					//scale
-					{
-						XTransform transform;
-
-						if(xfi->scale == 0 || xfi->cur_width == 0 || xfi->cur_height == 0)
-						{
-							printf("w: %d h: %d s: %.2f\n", xfi->cur_width, xfi->cur_height, xfi->scale);
-							exit(1);
-						}
-
-						transform.matrix[0][0] = XDoubleToFixed(1);
-						transform.matrix[0][1] = XDoubleToFixed(0);
-						transform.matrix[0][2] = XDoubleToFixed(0);
-
-						transform.matrix[1][0] = XDoubleToFixed(0);
-						transform.matrix[1][1] = XDoubleToFixed(1);
-						transform.matrix[1][2] = XDoubleToFixed(0);
-
-						transform.matrix[2][0] = XDoubleToFixed(0);
-						transform.matrix[2][1] = XDoubleToFixed(0);
-						transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
-
-
-
-						XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
-
-						//XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, x, y, x, y, x, y, w, h);
-						XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, xfi->cur_width, xfi->cur_height);
-
-					}
-
-
-					rtest++;
+					xf_draw_screen_scaled(xfi);
 				}
-
-
-
-
-
-
-
-
+				else
+				{
+					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				}
 
 
 /*
