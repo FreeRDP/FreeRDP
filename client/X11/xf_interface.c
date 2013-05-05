@@ -659,10 +659,11 @@ void xf_create_window(xfInfo* xfi)
 		xfi->drawable = xfi->window->handle;
 
 		//allow resizing from half to double
+		
 		xf_SetWindowMinMaxInfo(xfi, xfi->window,
 				0, 0, 0, 0, //these aren't used
 				xfi->width * 0.5, xfi->height * 0.5, xfi->width * 2, xfi->height * 2);
-
+		
 	}
 	else
 	{
@@ -1021,8 +1022,6 @@ BOOL xf_post_connect(freerdp* instance)
 	xfi->cur_width = xfi->orig_width;
 	xfi->cur_height = xfi->orig_width;
 	xfi->scale = 1;
-
-	printf("postconnect: w: %d h: %d s: %.2f\n", xfi->orig_width, xfi->orig_height, xfi->scale);
 
 	xfi->width = settings->DesktopWidth;
 	xfi->height = settings->DesktopHeight;
