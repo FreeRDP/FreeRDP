@@ -463,9 +463,16 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
-			printf("hw1");
+			if(xfi->scale != 1.0)
+			{
+				xf_draw_screen_scaled(xfi);
+			}
+			else
+			{
+					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			}
 
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			
 
 			xf_unlock_x11(xfi, FALSE);
 		}
@@ -490,7 +497,15 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			if(xfi->scale != 1.0)
+			{
+				xf_draw_screen_scaled(xfi);
+			}
+			else
+			{
+					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			}
+			
 
 			}
 
