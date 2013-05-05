@@ -21,6 +21,7 @@
 #define __XF_INPUT_H
 
 #include "xf_interface.h"
+#include "xfreerdp.h"
 
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
