@@ -411,8 +411,9 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XClearWindow(xfi->display, window->handle);
 		XMapWindow(xfi->display, window->handle);
 
+#ifdef WITH_XI
 		xf_input_init(xfi, window->handle);
-
+#endif
 		/*
 		 * NOTE: This must be done here to handle reparenting the window, 
 		 * so that we don't miss the event and hang waiting for the next one

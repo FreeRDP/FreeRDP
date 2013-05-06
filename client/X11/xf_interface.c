@@ -1515,6 +1515,11 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
  * Client Interface
  */
 
+double freerdp_client_get_scale(xfInfo* xfi)
+{
+	return xfi->scale;
+}
+
 int freerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");

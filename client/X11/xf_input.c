@@ -21,6 +21,8 @@
 
 #include "xf_input.h"
 
+#ifdef WITH_XI
+
 #define MAX_CONTACTS 2
 
 typedef struct touch_contact
@@ -37,7 +39,6 @@ typedef struct touch_contact
 touchContact contacts[MAX_CONTACTS];
 
 int active_contacts;
-
 XIDeviceEvent lastEvent;
 double firstDist = -1.0;
 
@@ -98,8 +99,11 @@ void xf_input_detect_pinch()
 
 }
 
+#endif
+
 void xf_input_init(xfInfo* xfi)
 {
+#ifdef WITH_XI
 	int opcode, event, error;
 	int major = 2, minor = 2;
 
@@ -160,10 +164,12 @@ void xf_input_init(xfInfo* xfi)
 	{
 		printf("X Input extension not available!!!\n");
 	}
+#endif
 }
 
 void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 {
+#ifdef WITH_XI
 	//handle touch events
 	XGenericEventCookie* cookie = &event->xcookie;
 
@@ -204,8 +210,10 @@ void xf_input_handle_event(xfInfo* xfi, XEvent* event)
 
 
 	XFreeEventData(xfi->display,cookie);
+#endif
 }
 
+#ifdef WITH_XI
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
@@ -308,3 +316,4 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 	*/
 }
 
+#endif

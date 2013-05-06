@@ -215,7 +215,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		}
 	}
 
-	/*
+
 	if (keysym == XK_period)
 	{
 				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
@@ -230,6 +230,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					xfi->scale = s;
 
 					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * s, xfi->orig_height * s);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
@@ -249,12 +250,13 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					xfi->scale = s;
 
 					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * s, xfi->orig_height * s);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
 	}
 
-	*/
+
 
 	return FALSE;
 }
