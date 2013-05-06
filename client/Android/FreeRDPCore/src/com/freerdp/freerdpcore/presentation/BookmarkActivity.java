@@ -526,6 +526,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 	private void finishAndResetBookmark()
 	{
 		bookmark = null;
+		getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 		finish();
 	}
 	
@@ -536,6 +537,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		if (current_preferences != PREFERENCES_BOOKMARK)
 		{
 			super.onBackPressed();
+			getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 			return;			
 		}
 		
