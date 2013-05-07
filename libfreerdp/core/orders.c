@@ -271,13 +271,14 @@ static INLINE BOOL update_write_2byte_unsigned(wStream* s, UINT32 value)
 	if (value >= 0x7F)
 	{
 		byte = ((value & 0x7F00) >> 8);
-		stream_write_BYTE(s, byte);
+		stream_write_BYTE(s, byte | 0x80);
 		byte = (value & 0xFF);
 		stream_write_BYTE(s, byte);
 	}
 	else
 	{
-		stream_write_BYTE(s, value);
+		byte = (value & 0x7F);
+		stream_write_BYTE(s, byte);
 	}
 
 	return TRUE;
@@ -301,12 +302,52 @@ static INLINE BOOL update_read_2byte_signed(wStream* s, INT32* value)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, byte);
 		*value = (*value << 8) | byte;
 	}
 
 	if (negative)
 		*value *= -1;
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_2byte_signed(wStream* s, INT32 value)
+{
+	BYTE byte;
+	BOOL negative = FALSE;
+
+	if (value < 0)
+	{
+		negative = TRUE;
+		value *= -1;
+	}
+
+	if (value > 0x3FFF)
+		return FALSE;
+
+	if (value >= 0x3F)
+	{
+		byte = ((value & 0x3F00) >> 8);
+
+		if (negative)
+			byte |= 0x40;
+
+		stream_write_BYTE(s, byte | 0x80);
+		byte = (value & 0xFF);
+		stream_write_BYTE(s, byte);
+	}
+	else
+	{
+		byte = (value & 0x3F);
+
+		if (negative)
+			byte |= 0x40;
+
+		stream_write_BYTE(s, byte);
+	}
+
 	return TRUE;
 }
 
@@ -968,6 +1009,43 @@ BOOL update_read_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* m
 
 	memblt->colorIndex = (memblt->cacheId >> 8);
 	memblt->cacheId = (memblt->cacheId & 0xFF);
+
+	return TRUE;
+}
+
+BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt)
+{
+	UINT16 cacheId;
+
+	cacheId = (memblt->cacheId & 0xFF) | ((memblt->colorIndex & 0xFF) << 8);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	stream_write_UINT16(s, memblt->cacheId);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, memblt->nLeftRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, memblt->nTopRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, memblt->nWidth);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	update_write_coord(s, memblt->nHeight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	stream_write_BYTE(s, memblt->bRop);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	update_write_coord(s, memblt->nXSrc);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_08;
+	update_write_coord(s, memblt->nYSrc);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_09;
+	stream_write_UINT16(s, memblt->cacheIndex);
+
 	return TRUE;
 }
 
@@ -1506,18 +1584,18 @@ BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_or
 	return TRUE;
 }
 
-BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order, UINT16 flags)
+BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16 flags)
 {
 	int i;
 	GLYPH_DATA_V2* glyph;
 
-	cache_glyph_v2_order->cacheId = (flags & 0x000F);
-	cache_glyph_v2_order->flags = (flags & 0x00F0) >> 4;
-	cache_glyph_v2_order->cGlyphs = (flags & 0xFF00) >> 8;
+	cache_glyph_v2->cacheId = (flags & 0x000F);
+	cache_glyph_v2->flags = (flags & 0x00F0) >> 4;
+	cache_glyph_v2->cGlyphs = (flags & 0xFF00) >> 8;
 
-	for (i = 0; i < (int) cache_glyph_v2_order->cGlyphs; i++)
+	for (i = 0; i < (int) cache_glyph_v2->cGlyphs; i++)
 	{
-		glyph = &cache_glyph_v2_order->glyphData[i];
+		glyph = &cache_glyph_v2->glyphData[i];
 
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
@@ -1544,7 +1622,43 @@ BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_gl
 
 	if (flags & CG_GLYPH_UNICODE_PRESENT)
 	{
-		return stream_skip(s, cache_glyph_v2_order->cGlyphs * 2);
+		return stream_skip(s, cache_glyph_v2->cGlyphs * 2);
+	}
+
+	return TRUE;
+}
+
+BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16* flags)
+{
+	int i;
+	GLYPH_DATA_V2* glyph;
+
+	*flags = (cache_glyph_v2->cacheId & 0x000F) |
+			((cache_glyph_v2->flags & 0x000F) << 4) |
+			((cache_glyph_v2->cGlyphs & 0x00FF) << 8);
+
+	for (i = 0; i < (int) cache_glyph_v2->cGlyphs; i++)
+	{
+		glyph = &cache_glyph_v2->glyphData[i];
+
+		stream_write_BYTE(s, glyph->cacheIndex);
+
+		if (!update_write_2byte_signed(s, glyph->x) ||
+				!update_write_2byte_signed(s, glyph->y) ||
+				!update_write_2byte_unsigned(s, glyph->cx) ||
+				!update_write_2byte_unsigned(s, glyph->cy))
+		{
+			return FALSE;
+		}
+
+		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
+		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
+		stream_write(s, glyph->aj, glyph->cb);
+	}
+
+	if (*flags & CG_GLYPH_UNICODE_PRESENT)
+	{
+		Stream_Zero(s, cache_glyph_v2->cGlyphs * 2);
 	}
 
 	return TRUE;
