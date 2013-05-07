@@ -135,6 +135,15 @@ static const BYTE CBR2_BPP[] =
 		0, 0, 0, 8, 16, 24, 32
 };
 
+static const BYTE BPP_CBR2[] =
+{
+		0, 0, 0, 0, 0, 0, 0, 0,
+		3, 0, 0, 0, 0, 0, 0, 0,
+		4, 0, 0, 0, 0, 0, 0, 0,
+		5, 0, 0, 0, 0, 0, 0, 0,
+		6, 0, 0, 0, 0, 0, 0, 0
+};
+
 static const BYTE CBR23_BPP[] =
 {
 		0, 0, 0, 8, 16, 24, 32
@@ -248,6 +257,29 @@ static INLINE BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
 	{
 		*value = (byte & 0x7F);
 	}
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_2byte_unsigned(wStream* s, UINT32 value)
+{
+	BYTE byte;
+
+	if (value > 0x7FFF)
+		return FALSE;
+
+	if (value >= 0x7F)
+	{
+		byte = ((value & 0x7F00) >> 8);
+		stream_write_BYTE(s, byte);
+		byte = (value & 0xFF);
+		stream_write_BYTE(s, byte);
+	}
+	else
+	{
+		stream_write_BYTE(s, value);
+	}
+
 	return TRUE;
 }
 
@@ -324,6 +356,50 @@ static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 		default:
 			break;
 	}
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
+{
+	BYTE byte;
+
+	if (value <= 0x3F)
+	{
+		stream_write_BYTE(s, value);
+	}
+	else if (value <= 0x3FFF)
+	{
+		byte = (value >> 8) & 0x3F;
+		stream_write_BYTE(s, byte);
+		byte = (value & 0xFF);
+		stream_write_BYTE(s, byte);
+	}
+	else if (value <= 0x3FFFFF)
+	{
+		byte = (value >> 16) & 0x3F;
+		stream_write_BYTE(s, byte);
+		byte = (value >> 8) & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (value & 0xFF);
+		stream_write_BYTE(s, byte);
+	}
+	else if (value <= 0x3FFFFF)
+	{
+		byte = (value >> 24) & 0x3F;
+		stream_write_BYTE(s, byte);
+		byte = (value >> 16) & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (value >> 8) & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (value & 0xFF);
+		stream_write_BYTE(s, byte);
+	}
+	else
+	{
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -1200,6 +1276,7 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 	{
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
+
 		stream_read_UINT32(s, cache_bitmap_v2_order->key1); /* key1 (4 bytes) */
 		stream_read_UINT32(s, cache_bitmap_v2_order->key2); /* key2 (4 bytes) */
 	}
@@ -1208,6 +1285,7 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 	{
 		if (!update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapWidth)) /* bitmapWidth */
 			return FALSE;
+
 		cache_bitmap_v2_order->bitmapHeight = cache_bitmap_v2_order->bitmapWidth;
 	}
 	else
@@ -1240,6 +1318,7 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 
 		if (Stream_GetRemainingLength(s) < cache_bitmap_v2_order->bitmapLength)
 			return FALSE;
+
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_v2_order->bitmapLength);
 	}
@@ -1247,10 +1326,70 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 	{
 		if (Stream_GetRemainingLength(s) < cache_bitmap_v2_order->bitmapLength)
 			return FALSE;
+
 		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_v2_order->bitmapLength);
 	}
+
 	cache_bitmap_v2_order->compressed = compressed;
+
+	return TRUE;
+}
+
+BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2, BOOL compressed, UINT16* flags)
+{
+	BYTE bitsPerPixelId;
+
+	bitsPerPixelId = BPP_CBR2[cache_bitmap_v2->bitmapBpp];
+
+	*flags = (cache_bitmap_v2->cacheId & 0x0003) |
+			(bitsPerPixelId << 3) | ((cache_bitmap_v2->flags << 7) & 0xFF80);
+
+	if (cache_bitmap_v2->flags & CBR2_PERSISTENT_KEY_PRESENT)
+	{
+		stream_write_UINT32(s, cache_bitmap_v2->key1); /* key1 (4 bytes) */
+		stream_write_UINT32(s, cache_bitmap_v2->key2); /* key2 (4 bytes) */
+	}
+
+	if (cache_bitmap_v2->flags & CBR2_HEIGHT_SAME_AS_WIDTH)
+	{
+		if (!update_write_2byte_unsigned(s, cache_bitmap_v2->bitmapWidth)) /* bitmapWidth */
+			return FALSE;
+	}
+	else
+	{
+		if (!update_write_2byte_unsigned(s, cache_bitmap_v2->bitmapWidth) || /* bitmapWidth */
+		   !update_write_2byte_unsigned(s, cache_bitmap_v2->bitmapHeight)) /* bitmapHeight */
+			return FALSE;
+	}
+
+	if (!update_write_4byte_unsigned(s, cache_bitmap_v2->bitmapLength) || /* bitmapLength */
+		!update_write_2byte_unsigned(s, cache_bitmap_v2->cacheIndex)) /* cacheIndex */
+		return FALSE;
+
+	if (cache_bitmap_v2->flags & CBR2_DO_NOT_CACHE)
+		cache_bitmap_v2->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
+
+	if (compressed)
+	{
+		if (!(cache_bitmap_v2->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
+		{
+			stream_write_UINT16(s, cache_bitmap_v2->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_write_UINT16(s, cache_bitmap_v2->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_write_UINT16(s, cache_bitmap_v2->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_write_UINT16(s, cache_bitmap_v2->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
+		}
+
+		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
+	}
+	else
+	{
+		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
+	}
+
+	cache_bitmap_v2->compressed = compressed;
+
 	return TRUE;
 }
 

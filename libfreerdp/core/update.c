@@ -619,6 +619,32 @@ static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaq
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 }
 
+static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
+{
+	wStream* s;
+	UINT16 flags;
+	BYTE *bm, *em;
+	rdpRdp* rdp = context->rdp;
+
+	flags = 0;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
+
+	Stream_Seek(s, 8);
+	update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, FALSE, &flags);
+	em = Stream_Pointer(s);
+
+	Stream_Pointer(s) = bm;
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_UINT16(s, 0); /* orderLength (2 bytes) */
+	stream_write_UINT16(s, 0); /* extraFlags (2 bytes) */
+	stream_write_BYTE(s, ORDER_TYPE_BITMAP_UNCOMPRESSED_V2); /* orderType (1 byte) */
+	Stream_Pointer(s) = em;
+
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
+}
+
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	wStream* s;
@@ -749,6 +775,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceCommand = update_send_surface_command;
 	update->primary->ScrBlt = update_send_scrblt;
 	update->primary->OpaqueRect = update_send_opaque_rect;
+	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerColor = update_send_pointer_color;
 	update->pointer->PointerNew = update_send_pointer_new;

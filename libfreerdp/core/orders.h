@@ -214,6 +214,7 @@ BOOL update_read_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_CB_
 
 BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap_order, BOOL compressed, UINT16 flags);
 BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, UINT16 flags);
+BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, UINT16* flags);
 BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, BOOL compressed, UINT16 flags);
 BOOL update_read_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16 flags);
 BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_order, UINT16 flags);
