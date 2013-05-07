@@ -762,6 +762,35 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 }
 
+static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
+{
+	wStream* s;
+	UINT16 flags;
+	BYTE *bm, *em;
+	INT16 orderLength;
+	rdpRdp* rdp = context->rdp;
+
+	flags = 0;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
+
+	Stream_Seek(s, 8);
+	update_write_cache_glyph_v2_order(s, cache_glyph, &flags);
+	em = Stream_Pointer(s);
+
+	orderLength = (em - bm) - 13 - 2;
+
+	Stream_Pointer(s) = bm;
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_UINT16(s, orderLength); /* orderLength (2 bytes) */
+	stream_write_UINT16(s, flags); /* extraFlags (2 bytes) */
+	stream_write_BYTE(s, ORDER_TYPE_CACHE_GLYPH); /* orderType (1 byte) */
+	Stream_Pointer(s) = em;
+
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
+}
+
 static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
 	wStream* s;
@@ -925,6 +954,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->primary->MemBlt = update_send_memblt;
 	update->primary->GlyphIndex = update_send_glyph_index;
 	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
+	update->secondary->CacheGlyph = update_send_cache_glyph;
 	update->secondary->CacheGlyphV2 = update_send_cache_glyph_v2;
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerColor = update_send_pointer_color;

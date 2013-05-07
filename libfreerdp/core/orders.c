@@ -585,19 +585,19 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 		stream_write_BYTE(s, brush->style);
 	}
 
-	if (fieldFlags & ORDER_FIELD_04)
-	{
-		stream_write_BYTE(s, brush->hatch);
-	}
-
 	if (brush->style & CACHED_BRUSH)
 	{
-		brush->index = brush->hatch;
+		brush->hatch = brush->index;
 
 		brush->bpp = BMF_BPP[brush->style & 0x0F];
 
 		if (brush->bpp == 0)
 			brush->bpp = 1;
+	}
+
+	if (fieldFlags & ORDER_FIELD_04)
+	{
+		stream_write_BYTE(s, brush->hatch);
 	}
 
 	if (fieldFlags & ORDER_FIELD_05)
@@ -1793,6 +1793,44 @@ BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_or
 	return TRUE;
 }
 
+BOOL update_write_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
+{
+	int i;
+	INT16 lsi16;
+	GLYPH_DATA* glyph;
+
+	stream_write_BYTE(s, cache_glyph->cacheId); /* cacheId (1 byte) */
+	stream_write_BYTE(s, cache_glyph->cGlyphs); /* cGlyphs (1 byte) */
+
+	for (i = 0; i < (int) cache_glyph->cGlyphs; i++)
+	{
+		glyph = &cache_glyph->glyphData[i];
+
+		stream_write_UINT16(s, glyph->cacheIndex); /* cacheIndex (2 bytes) */
+
+		lsi16 = glyph->x;
+		stream_write_UINT16(s, lsi16); /* x (2 bytes) */
+
+		lsi16 = glyph->y;
+		stream_write_UINT16(s, lsi16); /* y (2 bytes) */
+
+		stream_write_UINT16(s, glyph->cx); /* cx (2 bytes) */
+		stream_write_UINT16(s, glyph->cy); /* cy (2 bytes) */
+
+		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
+		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
+
+		Stream_Write(s, glyph->aj, glyph->cb);
+	}
+
+	if (*flags & CG_GLYPH_UNICODE_PRESENT)
+	{
+		Stream_Zero(s, cache_glyph->cGlyphs * 2);
+	}
+
+	return TRUE;
+}
+
 BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16 flags)
 {
 	int i;
@@ -1862,7 +1900,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_g
 
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 		glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
-		stream_write(s, glyph->aj, glyph->cb);
+		Stream_Write(s, glyph->aj, glyph->cb);
 	}
 
 	if (*flags & CG_GLYPH_UNICODE_PRESENT)
@@ -2197,7 +2235,6 @@ BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fi
 
 BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags, BYTE fieldBytes)
 {
-	int i;
 	BYTE byte;
 
 	if (fieldBytes == 1)
