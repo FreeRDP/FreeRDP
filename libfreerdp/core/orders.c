@@ -154,6 +154,7 @@ static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, lsi8);
 		*coord += lsi8;
 	}
@@ -161,9 +162,27 @@ static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 	{
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
+
 		stream_read_UINT16(s, lsi16);
 		*coord = lsi16;
 	}
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_coord(wStream* s, INT32 coord)
+{
+	stream_write_UINT16(s, coord);
+	return TRUE;
+}
+
+static INLINE BOOL update_write_coord_delta(wStream* s, INT32 prevCoord, INT32 nextCoord)
+{
+	INT8 lsi8;
+
+	lsi8 = nextCoord - prevCoord;
+	stream_write_BYTE(s, lsi8);
+
 	return TRUE;
 }
 
@@ -623,23 +642,59 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, byte);
 		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
 	}
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_06) {
+	if (orderInfo->fieldFlags & ORDER_FIELD_06)
+	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, byte);
 		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
 	}
 
-	if (orderInfo->fieldFlags & ORDER_FIELD_07) {
+	if (orderInfo->fieldFlags & ORDER_FIELD_07)
+	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, byte);
 		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
 	}
+
+	return TRUE;
+}
+
+BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect)
+{
+	BYTE byte;
+
+	orderInfo->fieldFlags = 0;
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	update_write_coord(s, opaque_rect->nLeftRect);
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, opaque_rect->nTopRect);
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, opaque_rect->nWidth);
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, opaque_rect->nHeight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	byte = opaque_rect->color & 0x000000FF;
+	stream_write_BYTE(s, byte);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	byte = (opaque_rect->color & 0x0000FF00) >> 8;
+	stream_write_BYTE(s, byte);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	byte = (opaque_rect->color & 0x00FF0000) >> 16;
+	stream_write_BYTE(s, byte);
+
 	return TRUE;
 }
 
@@ -722,6 +777,7 @@ BOOL update_read_multi_scrblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_SCR
 BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	BYTE byte;
+
 	ORDER_FIELD_COORD(1, multi_opaque_rect->nLeftRect);
 	ORDER_FIELD_COORD(2, multi_opaque_rect->nTopRect);
 	ORDER_FIELD_COORD(3, multi_opaque_rect->nWidth);

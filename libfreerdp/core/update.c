@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
@@ -57,6 +58,7 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 	{
 		if (!update_recv_order(update, s))
 			return FALSE;
+
 		numberOrders--;
 	}
 
@@ -592,6 +594,31 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 }
 
+static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
+{
+	wStream* s;
+	BYTE *bm, *em;
+	ORDER_INFO orderInfo;
+	rdpRdp* rdp = context->rdp;
+
+	orderInfo.fieldFlags = 0;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
+
+	Stream_Seek(s, 5);
+	update_write_opaque_rect_order(s, &orderInfo, opaque_rect);
+	em = Stream_Pointer(s);
+
+	Stream_Pointer(s) = bm;
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_BYTE(s, ORDER_TYPE_OPAQUE_RECT); /* orderType (1 byte) */
+	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
+	Stream_Pointer(s) = em;
+
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
+}
+
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	wStream* s;
@@ -721,6 +748,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
 	update->primary->ScrBlt = update_send_scrblt;
+	update->primary->OpaqueRect = update_send_opaque_rect;
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerColor = update_send_pointer_color;
 	update->pointer->PointerNew = update_send_pointer_new;
@@ -745,7 +773,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
 
-	if (update != NULL)
+	if (update)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
 
