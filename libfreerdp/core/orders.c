@@ -99,7 +99,7 @@ static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
 
 #endif /* WITH_DEBUG_ORDERS */
 
-static const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
+const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 {
 	DSTBLT_ORDER_FIELD_BYTES,
 	PATBLT_ORDER_FIELD_BYTES,
@@ -1126,6 +1126,7 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 
 		return update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
 	}
+
 	return TRUE;
 }
 
@@ -1154,7 +1155,7 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* 
 	cacheId = (memblt->cacheId & 0xFF) | ((memblt->colorIndex & 0xFF) << 8);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
-	stream_write_UINT16(s, memblt->cacheId);
+	stream_write_UINT16(s, cacheId);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_02;
 	update_write_coord(s, memblt->nLeftRect);
@@ -2185,6 +2186,20 @@ BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fi
 		stream_read_BYTE(s, byte);
 		*fieldFlags |= byte << (i * 8);
 	}
+	return TRUE;
+}
+
+BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags, BYTE fieldBytes)
+{
+	int i;
+	BYTE byte;
+
+	for (i = fieldBytes - 1; i >= 0; i--)
+	{
+		byte = (fieldFlags << (i * 8)) & 0xFF;
+		stream_write_BYTE(s, byte);
+	}
+
 	return TRUE;
 }
 

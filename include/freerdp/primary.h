@@ -73,6 +73,7 @@ typedef struct rdp_brush rdpBrush;
 
 struct _ORDER_INFO
 {
+	BYTE controlFlags;
 	UINT32 orderType;
 	UINT32 fieldFlags;
 	rdpBounds bounds;
