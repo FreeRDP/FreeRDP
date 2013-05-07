@@ -577,22 +577,29 @@ static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	wStream* s;
 	BYTE *bm, *em;
+	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpRdp* rdp = context->rdp;
 
+	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
+	orderInfo.orderType = ORDER_TYPE_PATBLT;
 	orderInfo.fieldFlags = 0;
+
+	headerLength = 4 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	bm = Stream_Pointer(s);
 
-	Stream_Seek(s, 5);
+	Stream_Seek(s, headerLength);
 	update_write_patblt_order(s, &orderInfo, patblt);
 	em = Stream_Pointer(s);
 
 	Stream_Pointer(s) = bm;
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
-	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
-	stream_write_BYTE(s, ORDER_TYPE_PATBLT); /* orderType (1 byte) */
-	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
+	stream_write_BYTE(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
+	stream_write_BYTE(s, orderInfo.orderType); /* orderType (1 byte) */
+	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
+			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
 	Stream_Pointer(s) = em;
 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
@@ -687,7 +694,6 @@ static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
 	stream_write_BYTE(s, orderInfo.orderType); /* orderType (1 byte) */
-	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
 	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
 			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
 	Stream_Pointer(s) = em;
@@ -720,7 +726,6 @@ static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
 	stream_write_BYTE(s, orderInfo.orderType); /* orderType (1 byte) */
-	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
 	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
 			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
 	Stream_Pointer(s) = em;
@@ -731,23 +736,26 @@ static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	wStream* s;
-	UINT16 flags;
 	BYTE *bm, *em;
+	UINT16 extraFlags;
+	INT16 orderLength;
 	rdpRdp* rdp = context->rdp;
 
-	flags = 0;
+	extraFlags = 0;
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	bm = Stream_Pointer(s);
 
 	Stream_Seek(s, 8);
-	update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, cache_bitmap_v2->compressed, &flags);
+	update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags);
 	em = Stream_Pointer(s);
+
+	orderLength = (em - bm) - 13 - 2;
 
 	Stream_Pointer(s) = bm;
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
-	stream_write_UINT16(s, (em - bm) - 13); /* orderLength (2 bytes) */
-	stream_write_UINT16(s, flags); /* extraFlags (2 bytes) */
+	stream_write_UINT16(s, orderLength); /* orderLength (2 bytes) */
+	stream_write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	stream_write_BYTE(s, ORDER_TYPE_BITMAP_UNCOMPRESSED_V2); /* orderType (1 byte) */
 	Stream_Pointer(s) = em;
 
@@ -759,6 +767,7 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	wStream* s;
 	UINT16 flags;
 	BYTE *bm, *em;
+	INT16 orderLength;
 	rdpRdp* rdp = context->rdp;
 
 	flags = 0;
@@ -769,10 +778,12 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	update_write_cache_glyph_v2_order(s, cache_glyph_v2, &flags);
 	em = Stream_Pointer(s);
 
+	orderLength = (em - bm) - 13 - 2;
+
 	Stream_Pointer(s) = bm;
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
-	stream_write_UINT16(s, (em - bm) - 13); /* orderLength (2 bytes) */
+	stream_write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	stream_write_UINT16(s, flags); /* extraFlags (2 bytes) */
 	stream_write_BYTE(s, ORDER_TYPE_CACHE_GLYPH); /* orderType (1 byte) */
 	Stream_Pointer(s) = em;

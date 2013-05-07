@@ -1507,6 +1507,7 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 {
 	if (Stream_GetRemainingLength(s) < 9)
 		return FALSE;
+
 	stream_read_BYTE(s, cache_bitmap_order->cacheId); /* cacheId (1 byte) */
 	Stream_Seek_BYTE(s); /* pad1Octet (1 byte) */
 	stream_read_BYTE(s, cache_bitmap_order->bitmapWidth); /* bitmapWidth (1 byte) */
@@ -1520,8 +1521,10 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 		if ((flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
 			BYTE* bitmapComprHdr = (BYTE*) &(cache_bitmap_order->bitmapComprHdr);
+
 			if (Stream_GetRemainingLength(s) < 8)
 				return FALSE;
+
 			stream_read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
 			cache_bitmap_order->bitmapLength -= 8;
 		}
@@ -1540,80 +1543,82 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
 	}
+
 	cache_bitmap_order->compressed = compressed;
+
 	return TRUE;
 }
 
-BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, UINT16 flags)
+BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2, BOOL compressed, UINT16 flags)
 {
 	BYTE bitsPerPixelId;
 
-	cache_bitmap_v2_order->cacheId = flags & 0x0003;
-	cache_bitmap_v2_order->flags = (flags & 0xFF80) >> 7;
+	cache_bitmap_v2->cacheId = flags & 0x0003;
+	cache_bitmap_v2->flags = (flags & 0xFF80) >> 7;
 
 	bitsPerPixelId = (flags & 0x0078) >> 3;
-	cache_bitmap_v2_order->bitmapBpp = CBR2_BPP[bitsPerPixelId];
+	cache_bitmap_v2->bitmapBpp = CBR2_BPP[bitsPerPixelId];
 
-	if (cache_bitmap_v2_order->flags & CBR2_PERSISTENT_KEY_PRESENT)
+	if (cache_bitmap_v2->flags & CBR2_PERSISTENT_KEY_PRESENT)
 	{
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 
-		stream_read_UINT32(s, cache_bitmap_v2_order->key1); /* key1 (4 bytes) */
-		stream_read_UINT32(s, cache_bitmap_v2_order->key2); /* key2 (4 bytes) */
+		stream_read_UINT32(s, cache_bitmap_v2->key1); /* key1 (4 bytes) */
+		stream_read_UINT32(s, cache_bitmap_v2->key2); /* key2 (4 bytes) */
 	}
 
-	if (cache_bitmap_v2_order->flags & CBR2_HEIGHT_SAME_AS_WIDTH)
+	if (cache_bitmap_v2->flags & CBR2_HEIGHT_SAME_AS_WIDTH)
 	{
-		if (!update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapWidth)) /* bitmapWidth */
+		if (!update_read_2byte_unsigned(s, &cache_bitmap_v2->bitmapWidth)) /* bitmapWidth */
 			return FALSE;
 
-		cache_bitmap_v2_order->bitmapHeight = cache_bitmap_v2_order->bitmapWidth;
+		cache_bitmap_v2->bitmapHeight = cache_bitmap_v2->bitmapWidth;
 	}
 	else
 	{
-		if (!update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapWidth) || /* bitmapWidth */
-		   !update_read_2byte_unsigned(s, &cache_bitmap_v2_order->bitmapHeight)) /* bitmapHeight */
+		if (!update_read_2byte_unsigned(s, &cache_bitmap_v2->bitmapWidth) || /* bitmapWidth */
+		   !update_read_2byte_unsigned(s, &cache_bitmap_v2->bitmapHeight)) /* bitmapHeight */
 			return FALSE;
 	}
 
-	if (!update_read_4byte_unsigned(s, &cache_bitmap_v2_order->bitmapLength) || /* bitmapLength */
-		!update_read_2byte_unsigned(s, &cache_bitmap_v2_order->cacheIndex)) /* cacheIndex */
+	if (!update_read_4byte_unsigned(s, &cache_bitmap_v2->bitmapLength) || /* bitmapLength */
+		!update_read_2byte_unsigned(s, &cache_bitmap_v2->cacheIndex)) /* cacheIndex */
 		return FALSE;
 
-	if (cache_bitmap_v2_order->flags & CBR2_DO_NOT_CACHE)
-		cache_bitmap_v2_order->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
+	if (cache_bitmap_v2->flags & CBR2_DO_NOT_CACHE)
+		cache_bitmap_v2->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
 
 	if (compressed)
 	{
-		if (!(cache_bitmap_v2_order->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
+		if (!(cache_bitmap_v2->flags & CBR2_NO_BITMAP_COMPRESSION_HDR))
 		{
 			if (Stream_GetRemainingLength(s) < 8)
 				return FALSE;
 
-			stream_read_UINT16(s, cache_bitmap_v2_order->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
-			stream_read_UINT16(s, cache_bitmap_v2_order->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
-			stream_read_UINT16(s, cache_bitmap_v2_order->cbScanWidth); /* cbScanWidth (2 bytes) */
-			stream_read_UINT16(s, cache_bitmap_v2_order->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
-			cache_bitmap_v2_order->bitmapLength = cache_bitmap_v2_order->cbCompMainBodySize;
+			stream_read_UINT16(s, cache_bitmap_v2->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			stream_read_UINT16(s, cache_bitmap_v2->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			stream_read_UINT16(s, cache_bitmap_v2->cbScanWidth); /* cbScanWidth (2 bytes) */
+			stream_read_UINT16(s, cache_bitmap_v2->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
 		}
 
-		if (Stream_GetRemainingLength(s) < cache_bitmap_v2_order->bitmapLength)
+		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_v2_order->bitmapLength);
+		stream_get_mark(s, cache_bitmap_v2->bitmapDataStream);
+		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
 	}
 	else
 	{
-		if (Stream_GetRemainingLength(s) < cache_bitmap_v2_order->bitmapLength)
+		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_v2_order->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_v2_order->bitmapLength);
+		stream_get_mark(s, cache_bitmap_v2->bitmapDataStream);
+		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
 	}
 
-	cache_bitmap_v2_order->compressed = compressed;
+	cache_bitmap_v2->compressed = compressed;
 
 	return TRUE;
 }
@@ -2186,6 +2191,7 @@ BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fi
 		stream_read_BYTE(s, byte);
 		*fieldFlags |= byte << (i * 8);
 	}
+
 	return TRUE;
 }
 
@@ -2194,10 +2200,30 @@ BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags, BYTE fi
 	int i;
 	BYTE byte;
 
-	for (i = fieldBytes - 1; i >= 0; i--)
+	if (fieldBytes == 1)
 	{
-		byte = (fieldFlags << (i * 8)) & 0xFF;
+		byte = fieldFlags & 0xFF;
 		stream_write_BYTE(s, byte);
+	}
+	else if (fieldBytes == 2)
+	{
+		byte = fieldFlags & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (fieldFlags >> 8) & 0xFF;
+		stream_write_BYTE(s, byte);
+	}
+	else if (fieldBytes == 3)
+	{
+		byte = fieldFlags & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (fieldFlags >> 8) & 0xFF;
+		stream_write_BYTE(s, byte);
+		byte = (fieldFlags >> 16) & 0xFF;
+		stream_write_BYTE(s, byte);
+	}
+	else
+	{
+		return FALSE;
 	}
 
 	return TRUE;
@@ -2452,6 +2478,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
+
 	stream_read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	stream_read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	stream_read_BYTE(s, orderType); /* orderType (1 byte) */
