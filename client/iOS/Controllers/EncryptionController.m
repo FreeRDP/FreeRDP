@@ -115,6 +115,7 @@ static EncryptionController* _shared_encryption_controller = nil;
     {
         password = [NSString stringWithUUID];
         [[NSUserDefaults standardUserDefaults] setObject:password forKey:@"UUID"];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"TSXMasterPasswordVerification"];
     }
     return password;
 }
