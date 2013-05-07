@@ -571,25 +571,52 @@ static void update_send_desktop_resize(rdpContext* context)
 	rdp_server_reactivate(context->rdp);
 }
 
+static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+{
+	wStream* s;
+	BYTE *bm, *em;
+	ORDER_INFO orderInfo;
+	rdpRdp* rdp = context->rdp;
+
+	orderInfo.fieldFlags = 0;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
+
+	Stream_Seek(s, 5);
+	update_write_patblt_order(s, &orderInfo, patblt);
+	em = Stream_Pointer(s);
+
+	Stream_Pointer(s) = bm;
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_BYTE(s, ORDER_TYPE_PATBLT); /* orderType (1 byte) */
+	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
+	Stream_Pointer(s) = em;
+
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
+}
+
 static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	wStream* s;
+	BYTE *bm, *em;
+	ORDER_INFO orderInfo;
 	rdpRdp* rdp = context->rdp;
 
+	orderInfo.fieldFlags = 0;
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
 
+	Stream_Seek(s, 5);
+	update_write_scrblt_order(s, &orderInfo, scrblt);
+	em = Stream_Pointer(s);
+
+	Stream_Pointer(s) = bm;
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
 	stream_write_BYTE(s, ORDER_TYPE_SCRBLT); /* orderType (1 byte) */
-	stream_write_BYTE(s, 0x7F); /* fieldFlags (variable) */
-
-	stream_write_UINT16(s, scrblt->nLeftRect);
-	stream_write_UINT16(s, scrblt->nTopRect);
-	stream_write_UINT16(s, scrblt->nWidth);
-	stream_write_UINT16(s, scrblt->nHeight);
-	stream_write_BYTE(s, scrblt->bRop);
-	stream_write_UINT16(s, scrblt->nXSrc);
-	stream_write_UINT16(s, scrblt->nYSrc);
+	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
+	Stream_Pointer(s) = em;
 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 }
@@ -638,6 +665,31 @@ static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
 	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
 	stream_write_BYTE(s, ORDER_TYPE_MEMBLT); /* orderType (1 byte) */
+	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
+	Stream_Pointer(s) = em;
+
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
+}
+
+static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
+{
+	wStream* s;
+	BYTE *bm, *em;
+	ORDER_INFO orderInfo;
+	rdpRdp* rdp = context->rdp;
+
+	orderInfo.fieldFlags = 0;
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	bm = Stream_Pointer(s);
+
+	Stream_Seek(s, 5);
+	update_write_glyph_index_order(s, &orderInfo, glyph_index);
+	em = Stream_Pointer(s);
+
+	Stream_Pointer(s) = bm;
+	stream_write_UINT16(s, 1); /* numberOrders (2 bytes) */
+	stream_write_BYTE(s, ORDER_STANDARD | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	stream_write_BYTE(s, ORDER_TYPE_GLYPH_INDEX); /* orderType (1 byte) */
 	stream_write_BYTE(s, orderInfo.fieldFlags); /* fieldFlags (variable) */
 	Stream_Pointer(s) = em;
 
@@ -824,9 +876,11 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
+	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;
 	update->primary->OpaqueRect = update_send_opaque_rect;
 	update->primary->MemBlt = update_send_memblt;
+	update->primary->GlyphIndex = update_send_glyph_index;
 	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
 	update->secondary->CacheGlyphV2 = update_send_cache_glyph_v2;
 	update->pointer->PointerSystem = update_send_pointer_system;

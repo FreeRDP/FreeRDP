@@ -190,7 +190,9 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s);
 
 BOOL update_read_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt);
 BOOL update_read_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
+BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
 BOOL update_read_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt);
+BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt);
 BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect);
 BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect);
 BOOL update_read_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, DRAW_NINE_GRID_ORDER* draw_nine_grid);
@@ -206,6 +208,7 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* 
 BOOL update_read_mem3blt_order(wStream* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* mem3blt);
 BOOL update_read_save_bitmap_order(wStream* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap);
 BOOL update_read_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index);
+BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index);
 BOOL update_read_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index);
 BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph);
 BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc);

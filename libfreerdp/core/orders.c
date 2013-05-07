@@ -201,12 +201,28 @@ static INLINE BOOL update_read_color(wStream* s, UINT32* color)
 
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
+
 	stream_read_BYTE(s, byte);
 	*color = byte;
 	stream_read_BYTE(s, byte);
 	*color |= (byte << 8);
 	stream_read_BYTE(s, byte);
 	*color |= (byte << 16);
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_color(wStream* s, UINT32 color)
+{
+	BYTE byte;
+
+	byte = (color & 0xFF);
+	stream_write_BYTE(s, byte);
+	byte = ((color >> 8) & 0xFF);
+	stream_write_BYTE(s, byte);
+	byte = ((color >> 16) & 0xFF);
+	stream_write_BYTE(s, byte);
+
 	return TRUE;
 }
 
@@ -495,6 +511,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, brush->x);
 	}
 
@@ -502,6 +519,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, brush->y);
 	}
 
@@ -509,6 +527,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, brush->style);
 	}
 
@@ -516,6 +535,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, brush->hatch);
 	}
 
@@ -533,6 +553,7 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 	{
 		if (Stream_GetRemainingLength(s) < 7)
 			return FALSE;
+
 		brush->data = (BYTE*) brush->p8x8;
 		stream_read_BYTE(s, brush->data[7]);
 		stream_read_BYTE(s, brush->data[6]);
@@ -543,6 +564,55 @@ static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 		stream_read_BYTE(s, brush->data[1]);
 		brush->data[0] = brush->hatch;
 	}
+
+	return TRUE;
+}
+
+static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
+{
+	if (fieldFlags & ORDER_FIELD_01)
+	{
+		stream_write_BYTE(s, brush->x);
+	}
+
+	if (fieldFlags & ORDER_FIELD_02)
+	{
+		stream_write_BYTE(s, brush->y);
+	}
+
+	if (fieldFlags & ORDER_FIELD_03)
+	{
+		stream_write_BYTE(s, brush->style);
+	}
+
+	if (fieldFlags & ORDER_FIELD_04)
+	{
+		stream_write_BYTE(s, brush->hatch);
+	}
+
+	if (brush->style & CACHED_BRUSH)
+	{
+		brush->index = brush->hatch;
+
+		brush->bpp = BMF_BPP[brush->style & 0x0F];
+
+		if (brush->bpp == 0)
+			brush->bpp = 1;
+	}
+
+	if (fieldFlags & ORDER_FIELD_05)
+	{
+		brush->data = (BYTE*) brush->p8x8;
+		stream_write_BYTE(s, brush->data[7]);
+		stream_write_BYTE(s, brush->data[6]);
+		stream_write_BYTE(s, brush->data[5]);
+		stream_write_BYTE(s, brush->data[4]);
+		stream_write_BYTE(s, brush->data[3]);
+		stream_write_BYTE(s, brush->data[2]);
+		stream_write_BYTE(s, brush->data[1]);
+		brush->data[0] = brush->hatch;
+	}
+
 	return TRUE;
 }
 
@@ -734,6 +804,41 @@ BOOL update_read_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* p
 	return update_read_brush(s, &patblt->brush, orderInfo->fieldFlags >> 7);
 }
 
+BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt)
+{
+	orderInfo->fieldFlags = 0;
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	update_write_coord(s, patblt->nLeftRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, patblt->nTopRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, patblt->nWidth);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, patblt->nHeight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	stream_write_BYTE(s, patblt->bRop);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	update_write_coord(s, patblt->backColor);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	update_write_coord(s, patblt->foreColor);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_08;
+	orderInfo->fieldFlags |= ORDER_FIELD_09;
+	orderInfo->fieldFlags |= ORDER_FIELD_10;
+	orderInfo->fieldFlags |= ORDER_FIELD_11;
+	orderInfo->fieldFlags |= ORDER_FIELD_12;
+	update_write_brush(s, &patblt->brush, orderInfo->fieldFlags >> 7);
+
+	return TRUE;
+}
+
 BOOL update_read_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
 {
 	ORDER_FIELD_COORD(1, scrblt->nLeftRect);
@@ -743,6 +848,35 @@ BOOL update_read_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* s
 	ORDER_FIELD_BYTE(5, scrblt->bRop);
 	ORDER_FIELD_COORD(6, scrblt->nXSrc);
 	ORDER_FIELD_COORD(7, scrblt->nYSrc);
+
+	return TRUE;
+}
+
+BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
+{
+	orderInfo->fieldFlags = 0;
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	update_write_coord(s, scrblt->nLeftRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, scrblt->nTopRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, scrblt->nWidth);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, scrblt->nHeight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	stream_write_BYTE(s, scrblt->bRop);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	update_write_coord(s, scrblt->nXSrc);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	update_write_coord(s, scrblt->nYSrc);
+
 	return TRUE;
 }
 
@@ -1109,13 +1243,82 @@ BOOL update_read_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDE
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
+
 		stream_read_BYTE(s, glyph_index->cbData);
 
 		if (Stream_GetRemainingLength(s) < glyph_index->cbData)
 			return FALSE;
+
 		memcpy(glyph_index->data, s->pointer, glyph_index->cbData);
 		Stream_Seek(s, glyph_index->cbData);
 	}
+
+	return TRUE;
+}
+
+BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index)
+{
+	orderInfo->fieldFlags = 0;
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	stream_write_BYTE(s, glyph_index->cacheId);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	stream_write_BYTE(s, glyph_index->flAccel);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	stream_write_BYTE(s, glyph_index->ulCharInc);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	stream_write_BYTE(s, glyph_index->fOpRedundant);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	update_write_color(s, glyph_index->backColor);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	update_write_color(s, glyph_index->foreColor);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	stream_write_UINT16(s, glyph_index->bkLeft);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_08;
+	stream_write_UINT16(s, glyph_index->bkTop);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_09;
+	stream_write_UINT16(s, glyph_index->bkRight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_10;
+	stream_write_UINT16(s, glyph_index->bkBottom);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_11;
+	stream_write_UINT16(s, glyph_index->opLeft);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_12;
+	stream_write_UINT16(s, glyph_index->opTop);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_13;
+	stream_write_UINT16(s, glyph_index->opRight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_14;
+	stream_write_UINT16(s, glyph_index->opBottom);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_15;
+	orderInfo->fieldFlags |= ORDER_FIELD_16;
+	orderInfo->fieldFlags |= ORDER_FIELD_17;
+	orderInfo->fieldFlags |= ORDER_FIELD_18;
+	orderInfo->fieldFlags |= ORDER_FIELD_19;
+	update_write_brush(s, &glyph_index->brush, orderInfo->fieldFlags >> 14);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_20;
+	stream_write_UINT16(s, glyph_index->x);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_21;
+	stream_write_UINT16(s, glyph_index->y);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_22;
+	stream_write_BYTE(s, glyph_index->cbData);
+	Stream_Write(s, glyph_index->data, glyph_index->cbData);
+
 	return TRUE;
 }
 
