@@ -41,6 +41,9 @@ touchContact contacts[MAX_CONTACTS];
 int active_contacts;
 XIDeviceEvent lastEvent;
 double firstDist = -1.0;
+double lastDist;
+
+double z_vector;
 
 int xinput_opcode; //TODO: use this instead of xfi
 
@@ -75,6 +78,7 @@ void xf_input_detect_pinch(xfInfo* xfi)
 {
 	double dist;
 	double zoom;
+    double delta;
 
 	if(active_contacts != 2)
 	{
@@ -91,14 +95,51 @@ void xf_input_detect_pinch(xfInfo* xfi)
 	if(firstDist <= 0)
 	{
 		firstDist = dist;
+        lastDist = firstDist;
         scale_cnt = 0;
+        z_vector = 0;
 	}
 	else
 	{
+        delta = lastDist - dist;
+
 		//compare the current distance to the first one
         zoom = (dist / firstDist);
 
-        printf("zoom: %.2f, cnt:%d\n", zoom, scale_cnt);
+        z_vector += delta;
+        printf("d: %.2f\n", delta);
+
+        lastDist = dist;
+
+        if(z_vector > 10)
+        {
+            //zoom in a level
+            xfi->scale -= 0.05;
+
+            if(xfi->scale < 0.5)
+                xfi->scale = 0.5;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+
+            z_vector = 0;
+        }
+
+        if(z_vector < -10)
+        {
+            //zoom in a level
+            xfi->scale += 0.05;
+
+            if(xfi->scale > 1.5)
+                xfi->scale = 1.5;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+
+            z_vector = 0;
+        }
+
+        /*printf("zoom: %.2f, cnt:%d\n", zoom, scale_cnt);
         if(zoom < 0.75 && scale_cnt == 0)
         {
             //zoom out one level
@@ -141,6 +182,7 @@ void xf_input_detect_pinch(xfInfo* xfi)
             IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
             printf("+5 ");
         }
+        */
 	}
 
 }
