@@ -722,12 +722,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	}
 
 	eventHeader = FASTPATH_INPUT_ACTION_FASTPATH;
-<<<<<<< HEAD
 	eventHeader |= (1 << 2); /* numberEvents */
 
-=======
-	eventHeader |= (iNumEvents << 2); /* numberEvents */
->>>>>>> f1672948ff0b5f6a9d3cda658a18104df3c3d1e4
 	if (rdp->sec_flags & SEC_ENCRYPT)
 		eventHeader |= (FASTPATH_INPUT_ENCRYPTED << 6);
 	if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
