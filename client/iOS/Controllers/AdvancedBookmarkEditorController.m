@@ -13,6 +13,7 @@
 #import "EditorSelectionController.h"
 #import "ScreenSelectionController.h"
 #import "PerformanceEditorController.h"
+#import "BookmarkGatewaySettingsController.h"
 
 @interface AdvancedBookmarkEditorController ()
 
@@ -68,7 +69,7 @@
 	switch (section)
 	{
 		case SECTION_ADVANCED_SETTINGS: // advanced settings
-			return 7;
+			return 9;
 		default:
 			break;
 	}
@@ -100,23 +101,29 @@
         {
             switch([indexPath row]) 
             {
-                case 0: // 3G Settings
+                case 0: // Enable/Disable TSG Settings
                     cellType = TableCellIdentifierYesNo;
                     break;
-                case 1:	// 3G screen/color depth
-                    cellType = TableCellIdentifierSelection;
-                    break;
-                case 2:	// 3G performance settings
+                case 1:	// TS Gateway Settings
                     cellType = TableCellIdentifierSubEditor;
                     break;
-                case 3: // security mode
+                case 2: // 3G Settings
+                    cellType = TableCellIdentifierYesNo;
+                    break;
+                case 3:	// 3G screen/color depth
                     cellType = TableCellIdentifierSelection;
                     break;
-                case 4:	// remote program
-                case 5:	// work dir
+                case 4:	// 3G performance settings
+                    cellType = TableCellIdentifierSubEditor;
+                    break;
+                case 5: // security mode
+                    cellType = TableCellIdentifierSelection;
+                    break;
+                case 6:	// remote program
+                case 7:	// work dir
                     cellType = TableCellIdentifierText;
                     break;
-                case 6:	// console mode
+                case 8:	// console mode
                     cellType = TableCellIdentifierYesNo;
                     break;
                 default:						
@@ -155,13 +162,31 @@
 		case 0:
         {
             EditFlagTableViewCell* flagCell = (EditFlagTableViewCell*)cell;
+            [[flagCell label] setText:NSLocalizedString(@"Enable TS Gateway", @"'Enable TS Gateway': Bookmark enable TSG settings")];
+            [[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
+            [[flagCell toggle] setOn:[_params boolForKey:@"enable_tsg_settings"]];
+            [[flagCell toggle] addTarget:self action:@selector(toggleSettingValue:) forControlEvents:UIControlEventValueChanged];
+            break;
+        }
+        case 1:
+        {
+            BOOL enable_tsg_settings = [_params boolForKey:@"enable_tsg_settings"];
+            EditSubEditTableViewCell* editCell = (EditSubEditTableViewCell*)cell;
+            [[editCell label] setText:NSLocalizedString(@"TS Gateway Settings", @"'TS Gateway Settings': Bookmark TS Gateway Settings")];
+            [[editCell label] setEnabled:enable_tsg_settings];
+            [editCell setSelectionStyle:enable_tsg_settings ? UITableViewCellSelectionStyleBlue : UITableViewCellSelectionStyleNone];
+            break;
+        }
+		case 2:
+        {
+            EditFlagTableViewCell* flagCell = (EditFlagTableViewCell*)cell;
             [[flagCell label] setText:NSLocalizedString(@"3G Settings", @"'3G Settings': Bookmark enable 3G settings")];
             [[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
             [[flagCell toggle] setOn:[_params boolForKey:@"enable_3g_settings"]];
             [[flagCell toggle] addTarget:self action:@selector(toggleSettingValue:) forControlEvents:UIControlEventValueChanged];
             break;
         }
-		case 1:
+		case 3:
         {
             EditSelectionTableViewCell* selCell = (EditSelectionTableViewCell*)cell;
             [[selCell label] setText:NSLocalizedString(@"3G Screen", @"'3G Screen': Bookmark 3G Screen settings")];
@@ -172,8 +197,8 @@
             [[selCell selection] setEnabled:enable_3G_settings];
             [selCell setSelectionStyle:enable_3G_settings ? UITableViewCellSelectionStyleBlue : UITableViewCellSelectionStyleNone];
             break;
-        }            
-		case 2:
+        }
+		case 4:
         {
             EditSubEditTableViewCell* editCell = (EditSubEditTableViewCell*)cell;
             [[editCell label] setText:NSLocalizedString(@"3G Performance", @"'3G Performance': Bookmark 3G Performance Settings")];
@@ -181,14 +206,14 @@
             [editCell setSelectionStyle:enable_3G_settings ? UITableViewCellSelectionStyleBlue : UITableViewCellSelectionStyleNone];
             break;
         }			
-		case 3:
+		case 5:
         {
             EditSelectionTableViewCell* selCell = (EditSelectionTableViewCell*)cell;
             [[selCell label] setText:NSLocalizedString(@"Security", @"'Security': Bookmark protocl security settings")];
             [[selCell selection] setText:ProtocolSecurityDescription([_params intForKey:@"security"])];
             break;
         }                                    
-		case 4:
+		case 6:
         {
             EditTextTableViewCell* textCell = (EditTextTableViewCell*)cell;
             [[textCell label] setText:NSLocalizedString(@"Remote Program", @"'Remote Program': Bookmark remote program settings")];
@@ -198,7 +223,7 @@
             [self adjustEditTextTableViewCell:textCell];
             break;
         }            
-		case 5:
+		case 7:
         {
             EditTextTableViewCell* textCell = (EditTextTableViewCell*)cell;
             [[textCell label] setText:NSLocalizedString(@"Working Directory", @"'Working Directory': Bookmark working directory settings")];
@@ -208,7 +233,7 @@
             [self adjustEditTextTableViewCell:textCell];
             break;
         }            
-		case 6:
+		case 8:
         {
             EditFlagTableViewCell* flagCell = (EditFlagTableViewCell*)cell;
             [[flagCell label] setText:NSLocalizedString(@"Console Mode", @"'Console Mode': Bookmark console mode settings")];
@@ -233,14 +258,18 @@
     switch ([indexPath row])
     {
         case 1:
+            if ([_params boolForKey:@"enable_tsg_settings"])
+                viewCtrl = [[[BookmarkGatewaySettingsController alloc] initWithBookmark:_bookmark] autorelease];
+            break;
+        case 3:
             if ([_params boolForKey:@"enable_3g_settings"])
                 viewCtrl = [[[ScreenSelectionController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"] autorelease];
             break;
-        case 2:
+        case 4:
             if ([_params boolForKey:@"enable_3g_settings"])
                 viewCtrl = [[[PerformanceEditorController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"] autorelease];
             break;                    
-        case 3:
+        case 5:
             viewCtrl = [[[EditorSelectionController alloc] initWithConnectionParams:_params entries:[NSArray arrayWithObject:@"security"] selections:[NSArray arrayWithObject:SelectionForSecuritySetting()]] autorelease];
             break;                                    
         default:
@@ -267,13 +296,13 @@
 	switch(textField.tag)
 	{
         // update remote program/work dir settings
-        case GET_TAG(SECTION_ADVANCED_SETTINGS, 4):
+        case GET_TAG(SECTION_ADVANCED_SETTINGS, 6):
         {
             [_params setValue:[textField text] forKey:@"remote_program"];
             break;
         }
             
-        case GET_TAG(SECTION_ADVANCED_SETTINGS, 5):
+        case GET_TAG(SECTION_ADVANCED_SETTINGS, 7):
         {
             [_params setValue:[textField text] forKey:@"working_dir"];
             break;
@@ -293,12 +322,22 @@
     switch(valueSwitch.tag)
     {
         case GET_TAG(SECTION_ADVANCED_SETTINGS, 0):
-            [_params setBool:[valueSwitch isOn] forKey:@"enable_3g_settings"];
+        {
+            [_params setBool:[valueSwitch isOn] forKey:@"enable_tsg_settings"];
             NSArray* indexPaths = [NSArray arrayWithObjects:[NSIndexPath indexPathForRow:1 inSection:SECTION_ADVANCED_SETTINGS], [NSIndexPath indexPathForRow:2 inSection:SECTION_ADVANCED_SETTINGS], nil];
             [[self tableView] reloadRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationNone];
             break;
+        }
+
+        case GET_TAG(SECTION_ADVANCED_SETTINGS, 2):
+        {
+            [_params setBool:[valueSwitch isOn] forKey:@"enable_3g_settings"];
+            NSArray* indexPaths = [NSArray arrayWithObjects:[NSIndexPath indexPathForRow:3 inSection:SECTION_ADVANCED_SETTINGS], [NSIndexPath indexPathForRow:2 inSection:SECTION_ADVANCED_SETTINGS], nil];
+            [[self tableView] reloadRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationNone];
+            break;
+        }
             
-        case GET_TAG(SECTION_ADVANCED_SETTINGS, 6):
+        case GET_TAG(SECTION_ADVANCED_SETTINGS, 8):
             [_params setBool:[valueSwitch isOn] forKey:@"console"];
             break;
             

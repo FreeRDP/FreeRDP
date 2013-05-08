@@ -7,6 +7,12 @@
 //
 
 #import "BookmarkGatewaySettingsController.h"
+#import "Bookmark.h"
+#import "Utils.h"
+#import "EditorSelectionController.h"
+
+#define SECTION_TSGATEWAY_SETTINGS 0
+#define SECTION_COUNT 1
 
 @interface BookmarkGatewaySettingsController ()
 
@@ -14,11 +20,13 @@
 
 @implementation BookmarkGatewaySettingsController
 
-- (id)initWithStyle:(UITableViewStyle)style
+- (id)initWithBookmark:(ComputerBookmark*)bookmark
 {
-    self = [super initWithStyle:style];
-    if (self) {
-        // Custom initialization
+    if ((self = [super initWithStyle:UITableViewStyleGrouped]))
+	{
+		// set additional settings state according to bookmark data
+		_bookmark = [bookmark retain];
+        _params = [bookmark params];
     }
     return self;
 }
@@ -26,97 +34,203 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
- 
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    [self setTitle:NSLocalizedString(@"TS Gateway Settings", @"TS Gateway Settings title")];
 }
 
-- (void)didReceiveMemoryWarning
+- (void)viewWillAppear:(BOOL)animated
 {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    [super viewWillAppear:animated];
+    
+    // we need to reload the table view data here to have up-to-date data for the
+    // advanced settings accessory items (like for resolution/color mode settings)
+    [[self tableView] reloadData];
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    return YES;
+}
+
+- (void)dealloc
+{
+    [super dealloc];
+    [_bookmark release];
 }
 
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-#warning Potentially incomplete method implementation.
     // Return the number of sections.
-    return 0;
+    return SECTION_COUNT;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-#warning Incomplete method implementation.
     // Return the number of rows in the section.
+	switch (section)
+	{
+		case SECTION_TSGATEWAY_SETTINGS: // ts gateway settings
+			return 5;
+		default:
+			break;
+	}
+	
     return 0;
+}
+
+// set section headers
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+	switch(section)
+	{
+		case SECTION_TSGATEWAY_SETTINGS:
+			return NSLocalizedString(@"TS Gateway", @"'TS Gateway': ts gateway settings header");
+	}
+	return @"unknown";
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+	// determine the required cell type
+	NSString* cellType = nil;
+	switch([indexPath section])
+	{
+        case SECTION_TSGATEWAY_SETTINGS: // advanced settings
+        {
+            switch([indexPath row])
+            {
+                case 0: // hostname
+                case 1:	// port
+                case 2: // username
+                case 4: // domain
+                    cellType = TableCellIdentifierText;
+                    break;
+                case 3: // password
+                    cellType = TableCellIdentifierSecretText;
+                    break;
+                default:
+                    break;
+            }
+			break;
+        }
+	}
+	NSAssert(cellType != nil, @"Couldn't determine cell type");
+	
+	// get the table view cell
+	UITableViewCell *cell = [self tableViewCellFromIdentifier:cellType];
+	NSAssert(cell, @"Invalid cell");
     
-    // Configure the cell...
+	// set cell values
+	switch([indexPath section])
+	{
+            // advanced settings
+		case SECTION_TSGATEWAY_SETTINGS:
+			[self initGatewaySettings:indexPath cell:cell];
+			break;
+            
+		default:
+			break;
+	}
     
     return cell;
 }
 
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
+// updates server settings in the UI
+- (void)initGatewaySettings:(NSIndexPath*)indexPath cell:(UITableViewCell*)cell
 {
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
+    EditTextTableViewCell* textCell = (EditTextTableViewCell*)cell;
+	[[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
+	switch([indexPath row])
+	{
+		case 0:
+        {
+			[[textCell label] setText:NSLocalizedString(@"Host", @"'Host': Bookmark hostname")];
+			[[textCell textfield] setText:[_params StringForKey:@"tsg_hostname"]];
+            [[textCell textfield] setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
+			break;
+        }
+		case 1:
+        {
+            int port = [_params intForKey:@"tsg_port"];
+            if (port == 0) port = 443;
+			[[textCell label] setText:NSLocalizedString(@"Port", @"'Port': Bookmark port")];
+			[[textCell textfield] setText:[NSString stringWithFormat:@"%d", port]];
+            [[textCell textfield] setKeyboardType:UIKeyboardTypeNumberPad];
+			break;            
+        }
+		case 2:
+        {
+            [[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
+            [[textCell label] setText:NSLocalizedString(@"Username", @"'Username': Bookmark username")];
+			[[textCell textfield] setText:[_params StringForKey:@"tsg_username"]];
+            [[textCell textfield] setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
+			break;
+        }
+		case 3:
+        {
+            [[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
+			[[textCell label] setText:NSLocalizedString(@"Password", @"'Password': Bookmark password")];
+			[[textCell textfield] setText:[_params StringForKey:@"tsg_password"]];
+            [[textCell textfield] setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
+			break;
+        }
+		case 4:
+        {
+            [[textCell textfield] setTag:GET_TAG_FROM_PATH(indexPath)];
+			[[textCell label] setText:NSLocalizedString(@"Domain", @"'Domain': Bookmark domain")];
+			[[textCell textfield] setText:[_params StringForKey:@"tsg_domain"]];
+            [[textCell textfield] setPlaceholder:NSLocalizedString(@"not set", @"not set placeholder")];
+			break;
+        }
+		default:
+			NSLog(@"Invalid row index in settings table!");
+			break;
+	}
+    
+    [self adjustEditTextTableViewCell:textCell];
 }
-*/
 
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+
+#pragma mark -
+#pragma mark Text Field delegate
+
+- (BOOL)textFieldShouldReturn:(UITextField*)textField
 {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
+	[textField resignFirstResponder];
+	return NO;
 }
-*/
 
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
+	switch(textField.tag)
+	{
+            // update server settings
+		case GET_TAG(SECTION_TSGATEWAY_SETTINGS, 0):
+			[_params setValue:[textField text] forKey:@"tsg_hostname"];
+			break;
+            
+		case GET_TAG(SECTION_TSGATEWAY_SETTINGS, 1):
+			[_params setInt:[[textField text] intValue] forKey:@"tsg_port"];
+			break;
+            
+		case GET_TAG(SECTION_TSGATEWAY_SETTINGS, 2):
+			[_params setValue:[textField text] forKey:@"tsg_username"];
+			break;
+            
+		case GET_TAG(SECTION_TSGATEWAY_SETTINGS, 3):
+			[_params setValue:[textField text] forKey:@"tsg_password"];
+			break;
+            
+		case GET_TAG(SECTION_TSGATEWAY_SETTINGS, 4):
+			[_params setValue:[textField text] forKey:@"tsg_domain"];
+			break;            
+            
+		default:
+			break;
+	}
+	return YES;
 }
-*/
 
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
-
-#pragma mark - Table view delegate
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Navigation logic may go here. Create and push another view controller.
-    /*
-     <#DetailViewController#> *detailViewController = [[<#DetailViewController#> alloc] initWithNibName:@"<#Nib name#>" bundle:nil];
-     // ...
-     // Pass the selected object to the new view controller.
-     [self.navigationController pushViewController:detailViewController animated:YES];
-     [detailViewController release];
-     */
-}
 
 @end

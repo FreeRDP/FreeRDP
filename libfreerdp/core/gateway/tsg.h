@@ -61,8 +61,8 @@ struct rdp_tsg
 	LPWSTR MachineName;
 	TSG_STATE state;
 	BOOL PendingPdu;
-	BOOL BytesRead;
-	BOOL BytesAvailable;
+	UINT32 BytesRead;
+	UINT32 BytesAvailable;
 	UINT32 StubOffset;
 	UINT32 StubLength;
 	rdpSettings* settings;
