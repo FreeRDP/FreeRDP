@@ -374,9 +374,11 @@ static INLINE BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 
 	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
+
 	stream_read_BYTE(s, byte);
 
 	count = (byte & 0xC0) >> 6;
+
 	if (Stream_GetRemainingLength(s) < count)
 		return FALSE;
 
@@ -428,14 +430,14 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 	else if (value <= 0x3FFF)
 	{
 		byte = (value >> 8) & 0x3F;
-		stream_write_BYTE(s, byte);
+		stream_write_BYTE(s, byte | 0x40);
 		byte = (value & 0xFF);
 		stream_write_BYTE(s, byte);
 	}
 	else if (value <= 0x3FFFFF)
 	{
 		byte = (value >> 16) & 0x3F;
-		stream_write_BYTE(s, byte);
+		stream_write_BYTE(s, byte | 0x80);
 		byte = (value >> 8) & 0xFF;
 		stream_write_BYTE(s, byte);
 		byte = (value & 0xFF);
@@ -444,7 +446,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 	else if (value <= 0x3FFFFF)
 	{
 		byte = (value >> 24) & 0x3F;
-		stream_write_BYTE(s, byte);
+		stream_write_BYTE(s, byte | 0xC0);
 		byte = (value >> 16) & 0xFF;
 		stream_write_BYTE(s, byte);
 		byte = (value >> 8) & 0xFF;
@@ -1650,12 +1652,12 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 			return FALSE;
 	}
 
+	if (cache_bitmap_v2->flags & CBR2_DO_NOT_CACHE)
+		cache_bitmap_v2->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
+
 	if (!update_write_4byte_unsigned(s, cache_bitmap_v2->bitmapLength) || /* bitmapLength */
 		!update_write_2byte_unsigned(s, cache_bitmap_v2->cacheIndex)) /* cacheIndex */
 		return FALSE;
-
-	if (cache_bitmap_v2->flags & CBR2_DO_NOT_CACHE)
-		cache_bitmap_v2->cacheIndex = BITMAP_CACHE_WAITING_LIST_INDEX;
 
 	if (compressed)
 	{
