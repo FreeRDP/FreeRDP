@@ -23,6 +23,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/endian.h>
 
 #ifdef __cplusplus
 extern "C" {
