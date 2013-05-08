@@ -245,6 +245,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 #define cfInfo	xfInfo
 
 FREERDP_API double freerdp_client_get_scale(xfInfo* xfi);
+FREERDP_API void freerdp_client_reset_scale(xfInfo* xfi);
 
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
