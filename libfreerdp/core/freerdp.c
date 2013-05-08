@@ -272,6 +272,22 @@ BOOL freerdp_shall_disconnect(freerdp* instance)
 	return instance->context->rdp->disconnect;
 }
 
+FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
+{
+	rdpRdp* rdp;
+	BOOL bRetCode = FALSE;
+
+	rdp = instance->context->rdp;
+
+	if (rdp->resendFocus)
+	{
+		bRetCode = TRUE;
+		rdp->resendFocus = FALSE;
+	}
+
+	return bRetCode;
+}
+
 void freerdp_get_version(int* major, int* minor, int* revision)
 {
 	if (major != NULL)
