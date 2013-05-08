@@ -164,6 +164,18 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
             break;
     }
     
+    // ts gateway settings
+    if ([_params boolForKey:@"enable_tsg_settings"])
+    {
+        settings->GatewayHostname = strdup([_params UTF8StringForKey:@"tsg_hostname"]);
+        settings->GatewayPort = [_params intForKey:@"tsg_port"];
+        settings->GatewayUsername = strdup([_params UTF8StringForKey:@"tsg_username"]);
+        settings->GatewayPassword = strdup([_params UTF8StringForKey:@"tsg_password"]);
+        settings->GatewayDomain = strdup([_params UTF8StringForKey:@"tsg_domain"]);
+        settings->GatewayUsageMethod = TRUE;
+        settings->GatewayUseSameCredentials = FALSE;
+    }
+    
 	// Remote keyboard layout
 	settings->KeyboardLayout = 0x409;
     
