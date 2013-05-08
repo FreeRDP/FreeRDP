@@ -129,6 +129,7 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 
 		case CTRLACTION_GRANTED_CONTROL:
 			rdp->finalize_sc_pdus |= FINALIZE_SC_CONTROL_GRANTED_PDU;
+			rdp->resendFocus = TRUE;
 			break;
 	}
 
