@@ -32,25 +32,25 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 {
 	if(Stream_GetRemainingLength(s) < 8)
 		return FALSE;
-	stream_read_UINT16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	stream_read_BYTE(s, icon_info->cacheId); /* cacheId (1 byte) */
-	stream_read_BYTE(s, icon_info->bpp); /* bpp (1 byte) */
-	stream_read_UINT16(s, icon_info->width); /* width (2 bytes) */
-	stream_read_UINT16(s, icon_info->height); /* height (2 bytes) */
+	Stream_Read_UINT16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
+	Stream_Read_UINT8(s, icon_info->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT8(s, icon_info->bpp); /* bpp (1 byte) */
+	Stream_Read_UINT16(s, icon_info->width); /* width (2 bytes) */
+	Stream_Read_UINT16(s, icon_info->height); /* height (2 bytes) */
 
 	/* cbColorTable is only present when bpp is 1, 2 or 4 */
 	if (icon_info->bpp == 1 || icon_info->bpp == 2 || icon_info->bpp == 4) {
 		if(Stream_GetRemainingLength(s) < 2)
 			return FALSE;
-		stream_read_UINT16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
+		Stream_Read_UINT16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
 	} else {
 		icon_info->cbColorTable = 0;
 	}
 
 	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
-	stream_read_UINT16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
-	stream_read_UINT16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
+	Stream_Read_UINT16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
+	Stream_Read_UINT16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
 
 	if(Stream_GetRemainingLength(s) < icon_info->cbBitsMask + icon_info->cbBitsColor)
 		return FALSE;
@@ -60,21 +60,21 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 		icon_info->bitsMask = (BYTE*) malloc(icon_info->cbBitsMask);
 	else
 		icon_info->bitsMask = (BYTE*) realloc(icon_info->bitsMask, icon_info->cbBitsMask);
-	stream_read(s, icon_info->bitsMask, icon_info->cbBitsMask);
+	Stream_Read(s, icon_info->bitsMask, icon_info->cbBitsMask);
 
 	/* colorTable */
 	if (icon_info->colorTable == NULL)
 		icon_info->colorTable = (BYTE*) malloc(icon_info->cbColorTable);
 	else
 		icon_info->colorTable = (BYTE*) realloc(icon_info->colorTable, icon_info->cbColorTable);
-	stream_read(s, icon_info->colorTable, icon_info->cbColorTable);
+	Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
 
 	/* bitsColor */
 	if (icon_info->bitsColor == NULL)
 		icon_info->bitsColor = (BYTE*) malloc(icon_info->cbBitsColor);
 	else
 		icon_info->bitsColor = (BYTE*) realloc(icon_info->bitsColor, icon_info->cbBitsColor);
-	stream_read(s, icon_info->bitsColor, icon_info->cbBitsColor);
+	Stream_Read(s, icon_info->bitsColor, icon_info->cbBitsColor);
 	return TRUE;
 }
 
@@ -82,8 +82,8 @@ BOOL update_read_cached_icon_info(wStream* s, CACHED_ICON_INFO* cached_icon_info
 {
 	if(Stream_GetRemainingLength(s) < 3)
 		return FALSE;
-	stream_read_UINT16(s, cached_icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	stream_read_BYTE(s, cached_icon_info->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT16(s, cached_icon_info->cacheEntry); /* cacheEntry (2 bytes) */
+	Stream_Read_UINT8(s, cached_icon_info->cacheId); /* cacheId (1 byte) */
 	return TRUE;
 }
 
@@ -91,8 +91,8 @@ BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* notify_ico
 {
 	if(Stream_GetRemainingLength(s) < 8)
 		return FALSE;
-	stream_read_UINT32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
-	stream_read_UINT32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
+	Stream_Read_UINT32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
+	Stream_Read_UINT32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
 	return rail_read_unicode_string(s, &notify_icon_infotip->text) && /* infoTipText */
 			rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
 }
@@ -105,21 +105,21 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER) {
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, window_state->ownerWindowId); /* ownerWindowId (4 bytes) */
+		Stream_Read_UINT32(s, window_state->ownerWindowId); /* ownerWindowId (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		if(Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		stream_read_UINT32(s, window_state->style); /* style (4 bytes) */
-		stream_read_UINT32(s, window_state->extendedStyle); /* extendedStyle (4 bytes) */
+		Stream_Read_UINT32(s, window_state->style); /* style (4 bytes) */
+		Stream_Read_UINT32(s, window_state->extendedStyle); /* extendedStyle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW) {
 		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
-		stream_read_BYTE(s, window_state->showState); /* showState (1 byte) */
+		Stream_Read_UINT8(s, window_state->showState); /* showState (1 byte) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE) {
@@ -131,59 +131,59 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 	{
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, window_state->clientOffsetX); /* clientOffsetX (4 bytes) */
-		stream_read_UINT32(s, window_state->clientOffsetY); /* clientOffsetY (4 bytes) */
+		Stream_Read_UINT32(s, window_state->clientOffsetX); /* clientOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, window_state->clientOffsetY); /* clientOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, window_state->clientAreaWidth); /* clientAreaWidth (4 bytes) */
-		stream_read_UINT32(s, window_state->clientAreaHeight); /* clientAreaHeight (4 bytes) */
+		Stream_Read_UINT32(s, window_state->clientAreaWidth); /* clientAreaWidth (4 bytes) */
+		Stream_Read_UINT32(s, window_state->clientAreaHeight); /* clientAreaHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT) {
 		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
-		stream_read_BYTE(s, window_state->RPContent); /* RPContent (1 byte) */
+		Stream_Read_UINT8(s, window_state->RPContent); /* RPContent (1 byte) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT) {
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, window_state->rootParentHandle);/* rootParentHandle (4 bytes) */
+		Stream_Read_UINT32(s, window_state->rootParentHandle);/* rootParentHandle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
 		if(Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		stream_read_UINT32(s, window_state->windowOffsetX); /* windowOffsetX (4 bytes) */
-		stream_read_UINT32(s, window_state->windowOffsetY); /* windowOffsetY (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowOffsetX); /* windowOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowOffsetY); /* windowOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
 		if(Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		stream_read_UINT32(s, window_state->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
-		stream_read_UINT32(s, window_state->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
 		if(Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		stream_read_UINT32(s, window_state->windowWidth); /* windowWidth (4 bytes) */
-		stream_read_UINT32(s, window_state->windowHeight); /* windowHeight (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowWidth); /* windowWidth (4 bytes) */
+		Stream_Read_UINT32(s, window_state->windowHeight); /* windowHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
 		if(Stream_GetRemainingLength(s) < 2)
 			return FALSE;
-		stream_read_UINT16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
+		Stream_Read_UINT16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numWindowRects;
 		window_state->windowRects = (RECTANGLE_16*) malloc(size);
@@ -194,10 +194,10 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		/* windowRects */
 		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
-			stream_read_UINT16(s, window_state->windowRects[i].left); /* left (2 bytes) */
-			stream_read_UINT16(s, window_state->windowRects[i].top); /* top (2 bytes) */
-			stream_read_UINT16(s, window_state->windowRects[i].right); /* right (2 bytes) */
-			stream_read_UINT16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
+			Stream_Read_UINT16(s, window_state->windowRects[i].left); /* left (2 bytes) */
+			Stream_Read_UINT16(s, window_state->windowRects[i].top); /* top (2 bytes) */
+			Stream_Read_UINT16(s, window_state->windowRects[i].right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 
@@ -205,15 +205,15 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 	{
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, window_state->visibleOffsetX); /* visibleOffsetX (4 bytes) */
-		stream_read_UINT32(s, window_state->visibleOffsetY); /* visibleOffsetY (4 bytes) */
+		Stream_Read_UINT32(s, window_state->visibleOffsetX); /* visibleOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, window_state->visibleOffsetY); /* visibleOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		if(Stream_GetRemainingLength(s) < 2)
 			return FALSE;
-		stream_read_UINT16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
+		Stream_Read_UINT16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
 		size = sizeof(RECTANGLE_16) * window_state->numVisibilityRects;
 		window_state->visibilityRects = (RECTANGLE_16*) malloc(size);
@@ -224,10 +224,10 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		/* visibilityRects */
 		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
-			stream_read_UINT16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
-			stream_read_UINT16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
-			stream_read_UINT16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
-			stream_read_UINT16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
+			Stream_Read_UINT16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
+			Stream_Read_UINT16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
+			Stream_Read_UINT16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 	return TRUE;
@@ -258,7 +258,7 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 
 	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
-	stream_read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	Stream_Read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
@@ -299,7 +299,7 @@ BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* or
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, notify_icon_state->version); /* version (4 bytes) */
+		Stream_Read_UINT32(s, notify_icon_state->version); /* version (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
@@ -315,7 +315,7 @@ BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* or
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, notify_icon_state->state); /* state (4 bytes) */
+		Stream_Read_UINT32(s, notify_icon_state->state); /* state (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON) {
@@ -342,8 +342,8 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 
 	if(Stream_GetRemainingLength(s) < 8)
 		return FALSE;
-	stream_read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
-	stream_read_UINT32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
+	Stream_Read_UINT32(s, orderInfo->windowId); /* windowId (4 bytes) */
+	Stream_Read_UINT32(s, orderInfo->notifyIconId); /* notifyIconId (4 bytes) */
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
@@ -373,14 +373,14 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND) {
 		if(Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, monitored_desktop->activeWindowId); /* activeWindowId (4 bytes) */
+		Stream_Read_UINT32(s, monitored_desktop->activeWindowId); /* activeWindowId (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
 		if(Stream_GetRemainingLength(s) < 1)
 			return FALSE;
-		stream_read_BYTE(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
+		Stream_Read_UINT8(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
 
 		if(Stream_GetRemainingLength(s) < 4 * monitored_desktop->numWindowIds)
 			return FALSE;
@@ -395,7 +395,7 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 		/* windowIds */
 		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
 		{
-			stream_read_UINT32(s, monitored_desktop->windowIds[i]);
+			Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
 		}
 	}
 	return TRUE;
@@ -434,8 +434,8 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 
 	if(Stream_GetRemainingLength(s) < 6)
 		return FALSE;
-	stream_read_UINT16(s, orderSize); /* orderSize (2 bytes) */
-	stream_read_UINT32(s, window->orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
+	Stream_Read_UINT16(s, orderSize); /* orderSize (2 bytes) */
+	Stream_Read_UINT32(s, window->orderInfo.fieldFlags); /* FieldsPresentFlags (4 bytes) */
 
 	if (window->orderInfo.fieldFlags & WINDOW_ORDER_TYPE_WINDOW)
 		return update_recv_window_info_order(update, s, &window->orderInfo);

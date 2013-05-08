@@ -174,10 +174,10 @@ static void nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 	int i;
 
 	for (i = 0; i < 4; i++)
-		stream_read_UINT32(s, context->nsc_stream.PlaneByteCount[i]);
+		Stream_Read_UINT32(s, context->nsc_stream.PlaneByteCount[i]);
 
-	stream_read_BYTE(s, context->nsc_stream.ColorLossLevel);
-	stream_read_BYTE(s, context->nsc_stream.ChromaSubSamplingLevel);
+	Stream_Read_UINT8(s, context->nsc_stream.ColorLossLevel);
+	Stream_Read_UINT8(s, context->nsc_stream.ChromaSubSamplingLevel);
 	Stream_Seek(s, 2);
 
 	context->nsc_stream.Planes = Stream_Pointer(s);

@@ -1173,7 +1173,7 @@ int credssp_recv(rdpCredssp* credssp)
 			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->negoToken, length);
-		stream_read(s, credssp->negoToken.pvBuffer, length);
+		Stream_Read(s, credssp->negoToken.pvBuffer, length);
 		credssp->negoToken.cbBuffer = length;
 	}
 
@@ -1184,7 +1184,7 @@ int credssp_recv(rdpCredssp* credssp)
 			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->authInfo, length);
-		stream_read(s, credssp->authInfo.pvBuffer, length);
+		Stream_Read(s, credssp->authInfo.pvBuffer, length);
 		credssp->authInfo.cbBuffer = length;
 	}
 
@@ -1195,7 +1195,7 @@ int credssp_recv(rdpCredssp* credssp)
 			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
-		stream_read(s, credssp->pubKeyAuth.pvBuffer, length);
+		Stream_Read(s, credssp->pubKeyAuth.pvBuffer, length);
 		credssp->pubKeyAuth.cbBuffer = length;
 	}
 

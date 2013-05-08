@@ -296,7 +296,7 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_sequence_tag(s, length);
-	stream_write(s, stream_get_head(tmps), length);
+	Stream_Write(s, stream_get_head(tmps), length);
 	stream_free(tmps);
 }
 
@@ -414,7 +414,7 @@ void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data)
 	length = Stream_GetPosition(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
-	stream_write(s, stream_get_head(tmps), length);
+	Stream_Write(s, stream_get_head(tmps), length);
 	stream_free(tmps);
 }
 
@@ -441,7 +441,7 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
-	stream_write(s, stream_get_head(tmps), length);
+	Stream_Write(s, stream_get_head(tmps), length);
 	stream_free(tmps);
 }
 

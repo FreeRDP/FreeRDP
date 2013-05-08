@@ -129,9 +129,9 @@ BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsg
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_BYTE(s, *bMsgType); /* bMsgType (1 byte) */
-	stream_read_BYTE(s, *flags); /* flags (1 byte) */
-	stream_read_UINT16(s, *wMsgSize); /* wMsgSize (2 bytes) */
+	Stream_Read_UINT8(s, *bMsgType); /* bMsgType (1 byte) */
+	Stream_Read_UINT8(s, *flags); /* flags (1 byte) */
+	Stream_Read_UINT16(s, *wMsgSize); /* wMsgSize (2 bytes) */
 
 	return TRUE;
 }
@@ -148,9 +148,9 @@ BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT16* wMsg
 void license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSize)
 {
 	/* preamble (4 bytes) */
-	stream_write_BYTE(s, bMsgType); /* bMsgType (1 byte) */
-	stream_write_BYTE(s, flags); /* flags (1 byte) */
-	stream_write_UINT16(s, wMsgSize); /* wMsgSize (2 bytes) */
+	Stream_Write_UINT8(s, bMsgType); /* bMsgType (1 byte) */
+	Stream_Write_UINT8(s, flags); /* flags (1 byte) */
+	Stream_Write_UINT16(s, wMsgSize); /* wMsgSize (2 bytes) */
 }
 
 /**
@@ -466,17 +466,17 @@ BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	stream_read_UINT32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
+	Stream_Read_UINT32(s, productInfo->dwVersion); /* dwVersion (4 bytes) */
 
-	stream_read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
+	Stream_Read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < productInfo->cbCompanyName + 4)
 		return FALSE;
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
-	stream_read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
+	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
-	stream_read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
+	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < productInfo->cbProductId)
 	{
@@ -486,7 +486,7 @@ BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 	}
 
 	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
-	stream_read(s, productInfo->pbProductId, productInfo->cbProductId);
+	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
 
 	return TRUE;
 }
@@ -543,8 +543,8 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_UINT16(s, wBlobType); /* wBlobType (2 bytes) */
-	stream_read_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
+	Stream_Read_UINT16(s, wBlobType); /* wBlobType (2 bytes) */
+	Stream_Read_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
 	if (Stream_GetRemainingLength(s) < blob->length)
 		return FALSE;
@@ -564,7 +564,7 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 	blob->type = wBlobType;
 	blob->data = (BYTE*) malloc(blob->length);
 
-	stream_read(s, blob->data, blob->length); /* blobData */
+	Stream_Read(s, blob->data, blob->length); /* blobData */
 	return TRUE;
 }
 
@@ -577,11 +577,11 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 
 void license_write_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
-	stream_write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
-	stream_write_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
+	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
+	Stream_Write_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
-		stream_write(s, blob->data, blob->length); /* blobData */
+		Stream_Write(s, blob->data, blob->length); /* blobData */
 }
 
 void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blob, UINT32 ModulusLength)
@@ -596,13 +596,13 @@ void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blo
 		return;
 	}
 
-	stream_write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
-	stream_write_UINT16(s, length); /* wBlobLen (2 bytes) */
+	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
+	Stream_Write_UINT16(s, length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
-		stream_write(s, blob->data, blob->length); /* blobData */
+		Stream_Write(s, blob->data, blob->length); /* blobData */
 
-	stream_write_zero(s, length - blob->length);
+	Stream_Write_zero(s, length - blob->length);
 }
 
 /**
@@ -652,7 +652,7 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
+	Stream_Read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
 	scopeList->count = scopeCount;
 	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
@@ -725,7 +725,7 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 	if (Stream_GetRemainingLength(s) < 32)
 		return FALSE;
 
-	stream_read(s, license->ServerRandom, 32);
+	Stream_Read(s, license->ServerRandom, 32);
 
 	/* ProductInfo */
 	if (!license_read_product_info(s, license->ProductInfo))
@@ -784,7 +784,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
+	Stream_Read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
 	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;
@@ -794,7 +794,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	if (Stream_GetRemainingLength(s) < 16)
 		return FALSE;
 
-	stream_read(s, MacData, 16); /* MACData (16 bytes) */
+	Stream_Read(s, MacData, 16); /* MACData (16 bytes) */
 
 	license_decrypt_platform_challenge(license);
 
@@ -859,8 +859,8 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	stream_read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
-	stream_read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
+	Stream_Read_UINT32(s, dwErrorCode); /* dwErrorCode (4 bytes) */
+	Stream_Read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
 
 	if (!license_read_binary_blob(s, license->ErrorInfo)) /* bbErrorInfo */
 		return FALSE;
@@ -914,9 +914,9 @@ void license_write_new_license_request_packet(rdpLicense* license, wStream* s)
 
 	PlatformId = CLIENT_OS_ID_WINNT_POST_52 | CLIENT_IMAGE_ID_MICROSOFT;
 
-	stream_write_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
-	stream_write_UINT32(s, PlatformId); /* PlatformId (4 bytes) */
-	stream_write(s, license->ClientRandom, 32); /* ClientRandom (32 bytes) */
+	Stream_Write_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
+	Stream_Write_UINT32(s, PlatformId); /* PlatformId (4 bytes) */
+	Stream_Write(s, license->ClientRandom, 32); /* ClientRandom (32 bytes) */
 	license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret, license->ModulusLength); /* EncryptedPremasterSecret */
 	license_write_binary_blob(s, license->ClientUserName); /* ClientUserName */
 	license_write_binary_blob(s, license->ClientMachineName); /* ClientMachineName */
@@ -990,7 +990,7 @@ void license_write_platform_challenge_response_packet(rdpLicense* license, wStre
 {
 	license_write_binary_blob(s, license->EncryptedPlatformChallenge); /* EncryptedPlatformChallengeResponse */
 	license_write_binary_blob(s, license->EncryptedHardwareId); /* EncryptedHWID */
-	stream_write(s, macData, 16); /* MACData */
+	Stream_Write(s, macData, 16); /* MACData */
 }
 
 /**
@@ -1062,8 +1062,8 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license)
 
 	DEBUG_LICENSE("Sending Error Alert Packet");
 
-	stream_write_UINT32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
-	stream_write_UINT32(s, ST_NO_TRANSITION); /* dwStateTransition */
+	Stream_Write_UINT32(s, STATUS_VALID_CLIENT); /* dwErrorCode */
+	Stream_Write_UINT32(s, ST_NO_TRANSITION); /* dwStateTransition */
 
 	license_write_binary_blob(s, license->ErrorInfo);
 

@@ -453,7 +453,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 			return 1;
 		}
 
-		stream_write(channel->dvc_data, data, data_size);
+		Stream_Write(channel->dvc_data, data, data_size);
 
 		if (Stream_GetPosition(channel->dvc_data) >= Stream_Capacity(channel->dvc_data))
 		{

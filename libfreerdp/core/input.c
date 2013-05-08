@@ -31,14 +31,14 @@
 
 void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
-	stream_write_UINT16(s, 1); /* numberEvents (2 bytes) */
-	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
+	Stream_Write_UINT16(s, 1); /* numberEvents (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 }
 
 void rdp_write_input_event_header(wStream* s, UINT32 time, UINT16 type)
 {
-	stream_write_UINT32(s, time); /* eventTime (4 bytes) */
-	stream_write_UINT16(s, type); /* messageType (2 bytes) */
+	Stream_Write_UINT32(s, time); /* eventTime (4 bytes) */
+	Stream_Write_UINT16(s, type); /* messageType (2 bytes) */
 }
 
 wStream* rdp_client_input_pdu_init(rdpRdp* rdp, UINT16 type)
@@ -57,8 +57,8 @@ void rdp_send_client_input_pdu(rdpRdp* rdp, wStream* s)
 
 void input_write_synchronize_event(wStream* s, UINT32 flags)
 {
-	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
-	stream_write_UINT32(s, flags); /* toggleFlags (4 bytes) */
+	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
+	Stream_Write_UINT32(s, flags); /* toggleFlags (4 bytes) */
 }
 
 void input_send_synchronize_event(rdpInput* input, UINT32 flags)
@@ -73,9 +73,9 @@ void input_send_synchronize_event(rdpInput* input, UINT32 flags)
 
 void input_write_keyboard_event(wStream* s, UINT16 flags, UINT16 code)
 {
-	stream_write_UINT16(s, flags); /* keyboardFlags (2 bytes) */
-	stream_write_UINT16(s, code); /* keyCode (2 bytes) */
-	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
+	Stream_Write_UINT16(s, flags); /* keyboardFlags (2 bytes) */
+	Stream_Write_UINT16(s, code); /* keyCode (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 }
 
 void input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -90,9 +90,9 @@ void input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 void input_write_unicode_keyboard_event(wStream* s, UINT16 flags, UINT16 code)
 {
-	stream_write_UINT16(s, flags); /* keyboardFlags (2 bytes) */
-	stream_write_UINT16(s, code); /* unicodeCode (2 bytes) */
-	stream_write_UINT16(s, 0); /* pad2Octets (2 bytes) */
+	Stream_Write_UINT16(s, flags); /* keyboardFlags (2 bytes) */
+	Stream_Write_UINT16(s, code); /* unicodeCode (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 }
 
 void input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -119,9 +119,9 @@ void input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 cod
 
 void input_write_mouse_event(wStream* s, UINT16 flags, UINT16 x, UINT16 y)
 {
-	stream_write_UINT16(s, flags); /* pointerFlags (2 bytes) */
-	stream_write_UINT16(s, x); /* xPos (2 bytes) */
-	stream_write_UINT16(s, y); /* yPos (2 bytes) */
+	Stream_Write_UINT16(s, flags); /* pointerFlags (2 bytes) */
+	Stream_Write_UINT16(s, x); /* xPos (2 bytes) */
+	Stream_Write_UINT16(s, y); /* yPos (2 bytes) */
 }
 
 void input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
@@ -136,9 +136,9 @@ void input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 
 void input_write_extended_mouse_event(wStream* s, UINT16 flags, UINT16 x, UINT16 y)
 {
-	stream_write_UINT16(s, flags); /* pointerFlags (2 bytes) */
-	stream_write_UINT16(s, x); /* xPos (2 bytes) */
-	stream_write_UINT16(s, y); /* yPos (2 bytes) */
+	Stream_Write_UINT16(s, flags); /* pointerFlags (2 bytes) */
+	Stream_Write_UINT16(s, x); /* xPos (2 bytes) */
+	Stream_Write_UINT16(s, y); /* yPos (2 bytes) */
 }
 
 void input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
@@ -185,7 +185,7 @@ void input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UINT16 co
 	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
 	eventFlags |= (flags & KBD_FLAGS_EXTENDED) ? FASTPATH_INPUT_KBDFLAGS_EXTENDED : 0;
 	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_SCANCODE);
-	stream_write_BYTE(s, code); /* keyCode (1 byte) */
+	Stream_Write_UINT8(s, code); /* keyCode (1 byte) */
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
@@ -197,7 +197,7 @@ void input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 
 	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
 	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_UNICODE);
-	stream_write_UINT16(s, code); /* unicodeCode (2 bytes) */
+	Stream_Write_UINT16(s, code); /* unicodeCode (2 bytes) */
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
@@ -230,21 +230,21 @@ void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates, UI
 	s = fastpath_input_pdu_init_header(rdp->fastpath);
 	/* send a tab up like mstsc.exe */
 	eventFlags = FASTPATH_INPUT_KBDFLAGS_RELEASE | FASTPATH_INPUT_EVENT_SCANCODE << 5;
-	stream_write_BYTE(s, eventFlags); /* Key Release event (1 byte) */
-	stream_write_BYTE(s, 0x0f); /* keyCode (1 byte) */
+	Stream_Write_UINT8(s, eventFlags); /* Key Release event (1 byte) */
+	Stream_Write_UINT8(s, 0x0f); /* keyCode (1 byte) */
 
 	/* send the toggle key states */
 	eventFlags = (toggleStates & 0x1F) | FASTPATH_INPUT_EVENT_SYNC << 5;
-	stream_write_BYTE(s, eventFlags); /* toggle state (1 byte) */
+	Stream_Write_UINT8(s, eventFlags); /* toggle state (1 byte) */
 
 	/* send another tab up like mstsc.exe */
 	eventFlags = FASTPATH_INPUT_KBDFLAGS_RELEASE | FASTPATH_INPUT_EVENT_SCANCODE << 5;
-	stream_write_BYTE(s, eventFlags); /* Key Release event (1 byte) */
-	stream_write_BYTE(s, 0x0f); /* keyCode (1 byte) */
+	Stream_Write_UINT8(s, eventFlags); /* Key Release event (1 byte) */
+	Stream_Write_UINT8(s, 0x0f); /* keyCode (1 byte) */
 
 	/* finish with a mouse pointer position like mstsc.exe */
 	eventFlags = 0 | FASTPATH_INPUT_EVENT_MOUSE << 5;
-	stream_write_BYTE(s, eventFlags); /* Mouse Pointer event (1 byte) */
+	Stream_Write_UINT8(s, eventFlags); /* Mouse Pointer event (1 byte) */
 	input_write_extended_mouse_event(s, PTR_FLAGS_MOVE, x, y);
 
 	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 4);
@@ -258,7 +258,7 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 		return FALSE;
 
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
-	stream_read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
+	Stream_Read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
 
 	IFCALL(input->SynchronizeEvent, input, toggleFlags);
 
@@ -272,8 +272,8 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
-	stream_read_UINT16(s, keyCode); /* keyCode (2 bytes) */
+	Stream_Read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
+	Stream_Read_UINT16(s, keyCode); /* keyCode (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	IFCALL(input->KeyboardEvent, input, keyboardFlags, keyCode);
@@ -288,8 +288,8 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
-	stream_read_UINT16(s, unicodeCode); /* unicodeCode (2 bytes) */
+	Stream_Read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
+	Stream_Read_UINT16(s, unicodeCode); /* unicodeCode (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/*
@@ -317,9 +317,9 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
-	stream_read_UINT16(s, xPos); /* xPos (2 bytes) */
-	stream_read_UINT16(s, yPos); /* yPos (2 bytes) */
+	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	Stream_Read_UINT16(s, xPos); /* xPos (2 bytes) */
+	Stream_Read_UINT16(s, yPos); /* yPos (2 bytes) */
 
 	IFCALL(input->MouseEvent, input, pointerFlags, xPos, yPos);
 
@@ -333,9 +333,9 @@ static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	stream_read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
-	stream_read_UINT16(s, xPos); /* xPos (2 bytes) */
-	stream_read_UINT16(s, yPos); /* yPos (2 bytes) */
+	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
+	Stream_Read_UINT16(s, xPos); /* xPos (2 bytes) */
+	Stream_Read_UINT16(s, yPos); /* yPos (2 bytes) */
 
 	IFCALL(input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
 
@@ -350,7 +350,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 		return FALSE;
 
 	Stream_Seek(s, 4); /* eventTime (4 bytes), ignored by the server */
-	stream_read_UINT16(s, messageType); /* messageType (2 bytes) */
+	Stream_Read_UINT16(s, messageType); /* messageType (2 bytes) */
 
 	switch (messageType)
 	{
@@ -396,7 +396,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_UINT16(s, numberEvents); /* numberEvents (2 bytes) */
+	Stream_Read_UINT16(s, numberEvents); /* numberEvents (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */

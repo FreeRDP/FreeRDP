@@ -78,10 +78,10 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size)
 			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 		}
 
-		stream_write_UINT32(s, size);
-		stream_write_UINT32(s, flags);
+		Stream_Write_UINT32(s, size);
+		Stream_Write_UINT32(s, flags);
 		Stream_EnsureCapacity(s, chunk_size);
-		stream_write(s, data, chunk_size);
+		Stream_Write(s, data, chunk_size);
 
 		rdp_send(rdp, s, channel_id);
 
@@ -102,8 +102,8 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channel_id)
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	stream_read_UINT32(s, length);
-	stream_read_UINT32(s, flags);
+	Stream_Read_UINT32(s, length);
+	Stream_Read_UINT32(s, flags);
 	chunk_length = Stream_GetRemainingLength(s);
 
 	IFCALL(instance->ReceiveChannelData, instance,
@@ -120,8 +120,8 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 
 	if(Stream_GetRemainingLength(s) < 8)
 		return FALSE;
-	stream_read_UINT32(s, length);
-	stream_read_UINT32(s, flags);
+	Stream_Read_UINT32(s, length);
+	Stream_Read_UINT32(s, flags);
 	chunk_length = Stream_GetRemainingLength(s);
 
 	IFCALL(client->ReceiveChannelData, client,

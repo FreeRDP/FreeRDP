@@ -123,7 +123,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	data_in = plugin->data_in;
 	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
-	stream_write(data_in, pData, dataLength);
+	Stream_Write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{

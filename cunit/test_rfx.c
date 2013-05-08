@@ -307,9 +307,9 @@ void test_decode(void)
 	wStream* s;
 
 	s = stream_new(sizeof(y_data) + sizeof(cb_data) + sizeof(cr_data));
-	stream_write(s, y_data, sizeof(y_data));
-	stream_write(s, cb_data, sizeof(cb_data));
-	stream_write(s, cr_data, sizeof(cr_data));
+	Stream_Write(s, y_data, sizeof(y_data));
+	Stream_Write(s, cb_data, sizeof(cb_data));
+	Stream_Write(s, cr_data, sizeof(cr_data));
 	Stream_SetPosition(s, 0);
 
 	context = rfx_context_new();

@@ -94,13 +94,13 @@ static int audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, w
 	UINT32 Version;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 
-	stream_read_UINT32(s, Version);
+	Stream_Read_UINT32(s, Version);
 
 	DEBUG_DVC("Version=%d", Version);
 
 	out = stream_new(5);
-	stream_write_BYTE(out, MSG_SNDIN_VERSION);
-	stream_write_UINT32(out, Version);
+	Stream_Write_UINT8(out, MSG_SNDIN_VERSION);
+	Stream_Write_UINT32(out, Version);
 	error = callback->channel->Write(callback->channel, Stream_GetPosition(s), stream_get_head(s), NULL);
 	stream_free(out);
 
@@ -128,7 +128,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 	audinFormat format;
 	UINT32 cbSizeFormatsPacket;
 
-	stream_read_UINT32(s, NumFormats);
+	Stream_Read_UINT32(s, NumFormats);
 	DEBUG_DVC("NumFormats %d", NumFormats);
 	if ((NumFormats < 1) || (NumFormats > 1000))
 	{
@@ -147,13 +147,13 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 	for (i = 0; i < NumFormats; i++)
 	{
 		stream_get_mark(s, fm);
-		stream_read_UINT16(s, format.wFormatTag);
-		stream_read_UINT16(s, format.nChannels);
-		stream_read_UINT32(s, format.nSamplesPerSec);
+		Stream_Read_UINT16(s, format.wFormatTag);
+		Stream_Read_UINT16(s, format.nChannels);
+		Stream_Read_UINT32(s, format.nSamplesPerSec);
 		Stream_Seek_UINT32(s); /* nAvgBytesPerSec */
-		stream_read_UINT16(s, format.nBlockAlign);
-		stream_read_UINT16(s, format.wBitsPerSample);
-		stream_read_UINT16(s, format.cbSize);
+		Stream_Read_UINT16(s, format.nBlockAlign);
+		Stream_Read_UINT16(s, format.wBitsPerSample);
+		Stream_Read_UINT16(s, format.cbSize);
 		format.data = Stream_Pointer(s);
 		Stream_Seek(s, format.cbSize);
 		
@@ -176,7 +176,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 			callback->formats[callback->formats_count++] = format;
 			/* Put the format to output buffer */
 			Stream_EnsureRemainingCapacity(out, 18 + format.cbSize);
-			stream_write(out, fm, 18 + format.cbSize);
+			Stream_Write(out, fm, 18 + format.cbSize);
 		}
 	}
 
@@ -185,9 +185,9 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 	cbSizeFormatsPacket = Stream_GetPosition(out);
 	Stream_SetPosition(out, 0);
 
-	stream_write_BYTE(out, MSG_SNDIN_FORMATS); /* Header (1 byte) */
-	stream_write_UINT32(out, callback->formats_count); /* NumFormats (4 bytes) */
-	stream_write_UINT32(out, cbSizeFormatsPacket); /* cbSizeFormatsPacket (4 bytes) */
+	Stream_Write_UINT8(out, MSG_SNDIN_FORMATS); /* Header (1 byte) */
+	Stream_Write_UINT32(out, callback->formats_count); /* NumFormats (4 bytes) */
+	Stream_Write_UINT32(out, cbSizeFormatsPacket); /* cbSizeFormatsPacket (4 bytes) */
 
 	error = callback->channel->Write(callback->channel, cbSizeFormatsPacket, stream_get_head(out), NULL);
 	stream_free(out);
@@ -202,8 +202,8 @@ static int audin_send_format_change_pdu(IWTSVirtualChannelCallback* pChannelCall
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 
 	out = stream_new(5);
-	stream_write_BYTE(out, MSG_SNDIN_FORMATCHANGE);
-	stream_write_UINT32(out, NewFormat);
+	Stream_Write_UINT8(out, MSG_SNDIN_FORMATCHANGE);
+	Stream_Write_UINT32(out, NewFormat);
 	error = callback->channel->Write(callback->channel, 5, stream_get_head(out), NULL);
 	stream_free(out);
 
@@ -217,8 +217,8 @@ static int audin_send_open_reply_pdu(IWTSVirtualChannelCallback* pChannelCallbac
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) pChannelCallback;
 
 	out = stream_new(5);
-	stream_write_BYTE(out, MSG_SNDIN_OPEN_REPLY);
-	stream_write_UINT32(out, Result);
+	Stream_Write_UINT8(out, MSG_SNDIN_OPEN_REPLY);
+	Stream_Write_UINT32(out, Result);
 	error = callback->channel->Write(callback->channel, 5, stream_get_head(out), NULL);
 	stream_free(out);
 
@@ -237,8 +237,8 @@ static BOOL audin_receive_wave_data(BYTE* data, int size, void* user_data)
 		return FALSE;
 
 	out = stream_new(size + 1);
-	stream_write_BYTE(out, MSG_SNDIN_DATA);
-	stream_write(out, data, size);
+	Stream_Write_UINT8(out, MSG_SNDIN_DATA);
+	Stream_Write(out, data, size);
 	error = callback->channel->Write(callback->channel, Stream_GetPosition(out), stream_get_head(out), NULL);
 	stream_free(out);
 
@@ -253,8 +253,8 @@ static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wStr
 	UINT32 initialFormat;
 	UINT32 FramesPerPacket;
 
-	stream_read_UINT32(s, FramesPerPacket);
-	stream_read_UINT32(s, initialFormat);
+	Stream_Read_UINT32(s, FramesPerPacket);
+	Stream_Read_UINT32(s, initialFormat);
 
 	DEBUG_DVC("FramesPerPacket=%d initialFormat=%d",
 		FramesPerPacket, initialFormat);
@@ -286,7 +286,7 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 	UINT32 NewFormat;
 	audinFormat* format;
 
-	stream_read_UINT32(s, NewFormat);
+	Stream_Read_UINT32(s, NewFormat);
 
 	DEBUG_DVC("NewFormat=%d", NewFormat);
 
@@ -320,7 +320,7 @@ static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	s = stream_new(0);
 	stream_attach(s, pBuffer, cbSize);
 
-	stream_read_BYTE(s, MessageId);
+	Stream_Read_UINT8(s, MessageId);
 
 	DEBUG_DVC("MessageId=0x%x", MessageId);
 

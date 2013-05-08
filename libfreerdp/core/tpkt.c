@@ -91,7 +91,7 @@ UINT16 tpkt_read_header(wStream* s)
 	if (version == 3)
 	{
 		Stream_Seek(s, 2);
-		stream_read_UINT16_be(s, length);
+		Stream_Read_UINT16_BE(s, length);
 	}
 	else
 	{
@@ -110,7 +110,7 @@ UINT16 tpkt_read_header(wStream* s)
 
 void tpkt_write_header(wStream* s, UINT16 length)
 {
-	stream_write_BYTE(s, 3); /* version */
-	stream_write_BYTE(s, 0); /* reserved */
-	stream_write_UINT16_be(s, length); /* length */
+	Stream_Write_UINT8(s, 3); /* version */
+	Stream_Write_UINT8(s, 0); /* reserved */
+	Stream_Write_UINT16_BE(s, length); /* length */
 }

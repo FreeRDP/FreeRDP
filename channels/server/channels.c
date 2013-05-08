@@ -136,19 +136,19 @@ static int wts_read_variable_uint(wStream* s, int cbLen, UINT32* val)
 		case 0:
 			if (Stream_GetRemainingLength(s) < 1)
 				return 0;
-			stream_read_BYTE(s, *val);
+			Stream_Read_UINT8(s, *val);
 			return 1;
 
 		case 1:
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
-			stream_read_UINT16(s, *val);
+			Stream_Read_UINT16(s, *val);
 			return 2;
 
 		default:
 			if (Stream_GetRemainingLength(s) < 4)
 				return 0;
-			stream_read_UINT32(s, *val);
+			Stream_Read_UINT32(s, *val);
 			return 4;
 	}
 }
@@ -161,7 +161,7 @@ static void wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, UINT
 		return;
 
 	Stream_Seek_BYTE(channel->receive_data); /* Pad (1 byte) */
-	stream_read_UINT16(channel->receive_data, Version);
+	Stream_Read_UINT16(channel->receive_data, Version);
 
 	DEBUG_DVC("Version: %d", Version);
 
@@ -175,7 +175,7 @@ static void wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 	if (length < 4)
 		return;
 
-	stream_read_UINT32(s, CreationStatus);
+	Stream_Read_UINT32(s, CreationStatus);
 
 	if ((INT32) CreationStatus < 0)
 	{
@@ -207,7 +207,7 @@ static void wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 
 	Stream_SetPosition(channel->receive_data, 0);
 	Stream_EnsureRemainingCapacity(channel->receive_data, (int) channel->dvc_total_length);
-	stream_write(channel->receive_data, Stream_Pointer(s), length);
+	Stream_Write(channel->receive_data, Stream_Pointer(s), length);
 }
 
 static void wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 length)
@@ -221,7 +221,7 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 			return;
 		}
 
-		stream_write(channel->receive_data, Stream_Pointer(s), length);
+		Stream_Write(channel->receive_data, Stream_Pointer(s), length);
 
 		if (Stream_GetPosition(channel->receive_data) >= (int) channel->dvc_total_length)
 		{
@@ -257,7 +257,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		return;
 
 	Stream_SetPosition(channel->receive_data, 0);
-	stream_read_BYTE(channel->receive_data, value);
+	Stream_Read_UINT8(channel->receive_data, value);
 
 	length--;
 	Cmd = (value & 0xf0) >> 4;
@@ -323,17 +323,17 @@ static int wts_write_variable_uint(wStream* stream, UINT32 val)
 	if (val <= 0xFF)
 	{
 		cb = 0;
-		stream_write_BYTE(stream, val);
+		Stream_Write_UINT8(stream, val);
 	}
 	else if (val <= 0xFFFF)
 	{
 		cb = 1;
-		stream_write_UINT16(stream, val);
+		Stream_Write_UINT16(stream, val);
 	}
 	else
 	{
 		cb = 3;
-		stream_write_UINT32(stream, val);
+		Stream_Write_UINT32(stream, val);
 	}
 
 	return cb;
@@ -357,7 +357,7 @@ static void wts_write_drdynvc_create_request(wStream *s, UINT32 ChannelId, const
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
 	len = strlen(ChannelName) + 1;
 	Stream_EnsureRemainingCapacity(s, (int) len);
-	stream_write(s, ChannelName, len);
+	Stream_Write(s, ChannelName, len);
 }
 
 static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, BYTE* data, int size, int flags, int total_size)
@@ -368,7 +368,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, BYTE* 
 	}
 
 	Stream_EnsureRemainingCapacity(channel->receive_data, size);
-	stream_write(channel->receive_data, data, size);
+	Stream_Write(channel->receive_data, data, size);
 
 	if (flags & CHANNEL_FLAG_LAST)
 	{
@@ -803,7 +803,7 @@ BOOL WTSVirtualChannelWrite(
 			if (written > Length)
 				written = Length;
 
-			stream_write(s, Buffer, written);
+			Stream_Write(s, Buffer, written);
 			item->length = Stream_GetPosition(s);
 			stream_detach(s);
 			Length -= written;

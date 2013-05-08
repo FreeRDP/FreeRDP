@@ -44,7 +44,7 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length)
 	railPlugin* plugin = (railPlugin*) rail_object;
 
 	s = stream_new(length);
-	stream_write(s, data, length);
+	Stream_Write(s, data, length);
 
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }

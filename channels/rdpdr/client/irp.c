@@ -53,7 +53,7 @@ static void irp_complete(IRP* irp)
 
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, 12);
-	stream_write_UINT32(irp->output, irp->IoStatus);
+	Stream_Write_UINT32(irp->output, irp->IoStatus);
 	Stream_SetPosition(irp->output, pos);
 
 	svc_plugin_send(irp->devman->plugin, irp->output);
@@ -68,7 +68,7 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 	UINT32 DeviceId;
 	DEVICE* device;
 
-	stream_read_UINT32(data_in, DeviceId);
+	Stream_Read_UINT32(data_in, DeviceId);
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (device == NULL)
@@ -82,17 +82,17 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 
 	irp->device = device;
 	irp->devman = devman;
-	stream_read_UINT32(data_in, irp->FileId);
-	stream_read_UINT32(data_in, irp->CompletionId);
-	stream_read_UINT32(data_in, irp->MajorFunction);
-	stream_read_UINT32(data_in, irp->MinorFunction);
+	Stream_Read_UINT32(data_in, irp->FileId);
+	Stream_Read_UINT32(data_in, irp->CompletionId);
+	Stream_Read_UINT32(data_in, irp->MajorFunction);
+	Stream_Read_UINT32(data_in, irp->MinorFunction);
 	irp->input = data_in;
 
 	irp->output = stream_new(256);
-	stream_write_UINT16(irp->output, RDPDR_CTYP_CORE);
-	stream_write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
-	stream_write_UINT32(irp->output, DeviceId);
-	stream_write_UINT32(irp->output, irp->CompletionId);
+	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
+	Stream_Write_UINT32(irp->output, DeviceId);
+	Stream_Write_UINT32(irp->output, irp->CompletionId);
 	Stream_Seek_UINT32(irp->output); /* IoStatus */
 
 	irp->Complete = irp_complete;

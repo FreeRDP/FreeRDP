@@ -51,7 +51,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	stream_read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
 
 	if (Stream_GetRemainingLength(s) < unicode_string->length)
 		return FALSE;
@@ -61,7 +61,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	else
 		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
 
-	stream_read(s, unicode_string->string, unicode_string->length);
+	Stream_Read(s, unicode_string->string, unicode_string->length);
 
 	return TRUE;
 }
@@ -69,8 +69,8 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length);
-	stream_write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
-	stream_write(s, unicode_string->string, unicode_string->length); /* string */
+	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
 }
 
 void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
@@ -78,24 +78,24 @@ void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_st
 	if (unicode_string->length > 0)
 	{
 		Stream_EnsureRemainingCapacity(s, unicode_string->length);
-		stream_write(s, unicode_string->string, unicode_string->length); /* string */
+		Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
 	}
 }
 
 void rail_read_rectangle_16(wStream* s, RECTANGLE_16* rectangle_16)
 {
-	stream_read_UINT16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_read_UINT16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_read_UINT16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_read_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	Stream_Read_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	Stream_Read_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	Stream_Read_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	Stream_Read_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
 void rail_write_rectangle_16(wStream* s, RECTANGLE_16* rectangle_16)
 {
-	stream_write_UINT16(s, rectangle_16->left); /* left (2 bytes) */
-	stream_write_UINT16(s, rectangle_16->top); /* top (2 bytes) */
-	stream_write_UINT16(s, rectangle_16->right); /* right (2 bytes) */
-	stream_write_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
+	Stream_Write_UINT16(s, rectangle_16->left); /* left (2 bytes) */
+	Stream_Write_UINT16(s, rectangle_16->top); /* top (2 bytes) */
+	Stream_Write_UINT16(s, rectangle_16->right); /* right (2 bytes) */
+	Stream_Write_UINT16(s, rectangle_16->bottom); /* bottom (2 bytes) */
 }
 
 void* rail_clone_order(UINT32 event_type, void* order)

@@ -222,7 +222,7 @@ static void smartcard_irp_complete(IRP* irp)
 
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, 12);
-	stream_write_UINT32(irp->output, irp->IoStatus);
+	Stream_Write_UINT32(irp->output, irp->IoStatus);
 	Stream_SetPosition(irp->output, pos);
 
 	/* Begin TS Client defect workaround. */
@@ -328,7 +328,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		smartcard->device.data = stream_new(length + 1);
 
 		for (i = 0; i <= length; i++)
-			stream_write_BYTE(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
+			Stream_Write_UINT8(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
 
 		smartcard->path = path;
 
