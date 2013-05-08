@@ -52,6 +52,14 @@ If you want to specify an output directory add CONFIGURATION_BUILD_DIR=<output-p
 
 * If using XCode choose "Open Other" from the welcome screen, browse to the FreeRDP root directory and select FreeRDP.xcodeproj.
 
+* If you switch between platforms (OS and SIMULATOR) please remove CMakeCache.txt and CMakeFiles/ before calling cmake again.
+  Otherwise build errors might occur (this seems to be a bug with cmake or the cmake scripts). To switch between platforms do:
+
+  rm CMakeCache.txt
+  rm -rf CMakeFiles/
+
+  before you run a new cmake command with the desired platform.
+
 
 cmake variables
 ===============

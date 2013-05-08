@@ -2195,8 +2195,6 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 		return FALSE;
 
 	stream_read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
-	if (settings->MultifragMaxRequestSize < multifragMaxRequestSize)
-		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
 
 	return TRUE;
 }
