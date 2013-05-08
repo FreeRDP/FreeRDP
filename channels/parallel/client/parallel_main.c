@@ -319,7 +319,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		parallel->device.Free = parallel_free;
 
 		length = strlen(name);
-		parallel->device.data = stream_new(length + 1);
+		parallel->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);

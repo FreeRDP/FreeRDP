@@ -160,110 +160,115 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	int exponent_length;
 	int error = 0;
 
-	s = stream_new(0);
-	stream_attach(s, cert->data, cert->length);
+	s = Stream_New(cert->data, cert->length);
 	info->Modulus = 0;
 
-	if(!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
 		goto error1;
 	error++;
 
-	if(!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
 		goto error1;
 	error++;
 
-	if(!ber_read_contextual_tag(s, 0, &length, TRUE))	/* Explicit Contextual Tag [0] */
+	if (!ber_read_contextual_tag(s, 0, &length, TRUE))	/* Explicit Contextual Tag [0] */
 		goto error1;
 	error++;
-	if(!ber_read_integer(s, &version)) /* version (INTEGER) */
+	if (!ber_read_integer(s, &version)) /* version (INTEGER) */
 		goto error1;
 	error++;
 	version++;
 
 	/* serialNumber */
-	if(!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
+	if (!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
 		goto error1;
 	error++;
 
 	/* signature */
-	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* issuer */
-	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* validity */
-	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Validity (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Validity (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* subject */
-	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* Name (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* subjectPublicKeyInfo */
-	if(!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	if(!ber_read_sequence_tag(s, &length) || !stream_skip(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
 		goto error1;
 	error++;
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
-	if(!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
+	if (!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
 		goto error1;
 	error++;
 
 	/* RSAPublicKey (SEQUENCE) */
-	if(!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
+	if (!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
 		goto error1;
 	error++;
 
-	if(!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
+	if (!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
 		goto error1;
 	error++;
 
 	/* skip zero padding, if any */
 	do
 	{
-		if(Stream_GetRemainingLength(s) < 1)
+		if (Stream_GetRemainingLength(s) < 1)
 			goto error1;
+
 		Stream_Peek_UINT8(s, padding);
 
 		if (padding == 0)
 		{
-			if(!stream_skip(s, 1))
+			if (!Stream_SafeSeek(s, 1))
 				goto error1;
+
 			modulus_length--;
 		}
 	}
 	while (padding == 0);
+
 	error++;
 
-	if(Stream_GetRemainingLength(s) < modulus_length)
+	if (Stream_GetRemainingLength(s) < modulus_length)
 		goto error1;
+
 	info->ModulusLength = modulus_length;
 	info->Modulus = (BYTE*) malloc(info->ModulusLength);
 	Stream_Read(s, info->Modulus, info->ModulusLength);
 	error++;
 
-	if(!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
+	if (!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
 		goto error2;
+
 	error++;
-	if(Stream_GetRemainingLength(s) < exponent_length || exponent_length > 4)
+
+	if (Stream_GetRemainingLength(s) < exponent_length || exponent_length > 4)
 		goto error2;
+
 	Stream_Read(s, &info->exponent[4 - exponent_length], exponent_length);
 	crypto_reverse(info->Modulus, info->ModulusLength);
 	crypto_reverse(info->exponent, 4);
 
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 	return TRUE;
 
 error2:
@@ -271,8 +276,7 @@ error2:
 	info->Modulus = 0;
 error1:
 	fprintf(stderr, "error reading when reading certificate: part=%s error=%d\n", certificate_read_errors[error], error);
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 	return FALSE;
 }
 
@@ -325,7 +329,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	UINT32 datalen;
 	UINT32 modlen;
 
-	if(Stream_GetRemainingLength(s) < 20)
+	if (Stream_GetRemainingLength(s) < 20)
 		return FALSE;
 	Stream_Read(s, magic, 4);
 
@@ -341,7 +345,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 	Stream_Read(s, certificate->cert_info.exponent, 4);
 	modlen = keylen - 8;
 
-	if(Stream_GetRemainingLength(s) < modlen + 8)	// count padding
+	if (Stream_GetRemainingLength(s) < modlen + 8)	// count padding
 		return FALSE;
 	certificate->cert_info.ModulusLength = modlen;
 	certificate->cert_info.Modulus = malloc(certificate->cert_info.ModulusLength);
@@ -425,7 +429,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	BYTE* sigdata;
 	int sigdatalen;
 
-	if(Stream_GetRemainingLength(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	/* -4, because we need to include dwVersion */
@@ -448,7 +452,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	Stream_Read_UINT16(s, wPublicKeyBlobLen);
-	if(Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
+	if (Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
 		return FALSE;
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
@@ -457,7 +461,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 		return FALSE;
 	}
 
-	if(Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	sigdatalen = Stream_Pointer(s) - sigdata;
@@ -470,7 +474,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	}
 
 	Stream_Read_UINT16(s, wSignatureBlobLen);
-	if(Stream_GetRemainingLength(s) < wSignatureBlobLen)
+	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 		return FALSE;
 
 	if (wSignatureBlobLen != 72)
@@ -503,7 +507,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
-	if(Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	Stream_Read_UINT32(s, numCertBlobs); /* numCertBlobs */
 
@@ -511,10 +515,12 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 	for (i = 0; i < (int) numCertBlobs; i++)
 	{
-		if(Stream_GetRemainingLength(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
+
 		Stream_Read_UINT32(s, certLength);
-		if(Stream_GetRemainingLength(s) < certLength)
+
+		if (Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
@@ -571,8 +577,7 @@ int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serve
 	if (length < 4)
 		return -1;
 
-	s = stream_new(0);
-	stream_attach(s, server_cert, length);
+	s = Stream_New(server_cert, length);
 
 	Stream_Read_UINT32(s, dwVersion); /* dwVersion (4 bytes) */
 
@@ -592,7 +597,7 @@ int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serve
 			break;
 	}
 
-	free(s);
+	Stream_Free(s, FALSE);
 
 	return status;
 }

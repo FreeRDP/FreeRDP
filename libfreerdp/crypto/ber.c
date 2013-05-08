@@ -375,7 +375,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	if (value == NULL)
 	{
 		// even if we don't care the integer value, check the announced size
-		return stream_skip(s, length);
+		return Stream_SafeSeek(s, length);
 	}
 
 	if (length == 1)

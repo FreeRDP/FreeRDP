@@ -1140,7 +1140,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpSettings* settings)
 	}
 
 	if (channelCount % 2 == 1)
-		return stream_skip(s, 2); /* padding */
+		return Stream_SafeSeek(s, 2); /* padding */
 
 	return TRUE;
 }

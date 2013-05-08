@@ -891,8 +891,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 	int length;
 	int ts_password_creds_length;
 
-	s = stream_new(0);
-	stream_attach(s, ts_credentials->pvBuffer, ts_credentials->cbBuffer);
+	s = Stream_New(ts_credentials->pvBuffer, ts_credentials->cbBuffer);
 
 	/* TSCredentials (SEQUENCE) */
 	ber_read_sequence_tag(s, &length);
@@ -907,8 +906,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 
 	credssp_read_ts_password_creds(credssp, s);
 
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 }
 
 void credssp_write_ts_credentials(rdpCredssp* credssp, wStream* s)
@@ -945,14 +943,13 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	wStream* s;
 	int length;
 
-	s = stream_new(0);
 	length = credssp_skip_ts_credentials(credssp);
 	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
-	stream_attach(s, credssp->ts_credentials.pvBuffer, length);
 
+	s = Stream_New(credssp->ts_credentials.pvBuffer, length);
 	credssp_write_ts_credentials(credssp, s);
-	stream_detach(s);
-	stream_free(s);
+
+	Stream_Free(s, FALSE);
 }
 
 SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
@@ -1091,7 +1088,7 @@ void credssp_send(rdpCredssp* credssp)
 	length = nego_tokens_length + pub_key_auth_length + auth_info_length;
 	ts_request_length = credssp_skip_ts_request(length);
 
-	s = stream_new(ts_request_length);
+	s = Stream_New(NULL, ts_request_length);
 
 	/* TSRequest */
 	length = der_get_content_length(ts_request_length);
@@ -1129,7 +1126,7 @@ void credssp_send(rdpCredssp* credssp)
 	}
 
 	transport_write(credssp->transport, s);
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 /**
@@ -1145,7 +1142,7 @@ int credssp_recv(rdpCredssp* credssp)
 	int status;
 	UINT32 version;
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	status = transport_read(credssp->transport, s);
 	Stream_Length(s) = status;
@@ -1153,7 +1150,7 @@ int credssp_recv(rdpCredssp* credssp)
 	if (status < 0)
 	{
 		fprintf(stderr, "credssp_recv() error: %d\n", status);
-		stream_free(s);
+		Stream_Free(s, TRUE);
 		return -1;
 	}
 
@@ -1199,7 +1196,7 @@ int credssp_recv(rdpCredssp* credssp)
 		credssp->pubKeyAuth.cbBuffer = length;
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

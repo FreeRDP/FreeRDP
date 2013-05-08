@@ -703,7 +703,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->device.Free = serial_free;
 
 		len = strlen(name);
-		serial->device.data = stream_new(len + 1);
+		serial->device.data = Stream_New(NULL, len + 1);
 
 		for (i = 0; i <= len; i++)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);

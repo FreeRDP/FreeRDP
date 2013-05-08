@@ -325,7 +325,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		smartcard->device.Free = smartcard_free;
 
 		length = strlen(smartcard->device.name);
-		smartcard->device.data = stream_new(length + 1);
+		smartcard->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(smartcard->device.data, name[i] < 0 ? '_' : name[i]);

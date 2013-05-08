@@ -3308,7 +3308,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (!stream_skip(s, lengthSourceDescriptor) || Stream_GetRemainingLength(s) < 4) /* sourceDescriptor */
+	if (!Stream_SafeSeek(s, lengthSourceDescriptor) || Stream_GetRemainingLength(s) < 4) /* sourceDescriptor */
 		return FALSE;
 
 	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */

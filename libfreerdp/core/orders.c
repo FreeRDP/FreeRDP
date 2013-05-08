@@ -776,7 +776,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 			return FALSE; \
 		}\
 		Stream_Read_UINT16(s, TARGET_LEN); \
-		if (!stream_skip(s, TARGET_LEN)) { \
+		if (!Stream_SafeSeek(s, TARGET_LEN)) { \
 			fprintf(stderr, "%s: error skipping %d bytes\n", __FUNCTION__, TARGET_LEN); \
 			return FALSE; \
 		} \
@@ -1389,7 +1389,7 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 		memcpy(fast_glyph->data, s->pointer, fast_glyph->cbData);
 		phold = s->pointer;
 
-		if (!stream_skip(s, 1))
+		if (!Stream_SafeSeek(s, 1))
 			return FALSE;
 
 		if (fast_glyph->cbData > 1)
@@ -1789,7 +1789,7 @@ BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_or
 
 	if (flags & CG_GLYPH_UNICODE_PRESENT)
 	{
-		return stream_skip(s, cache_glyph_order->cGlyphs * 2);
+		return Stream_SafeSeek(s, cache_glyph_order->cGlyphs * 2);
 	}
 
 	return TRUE;
@@ -1871,7 +1871,7 @@ BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_gl
 
 	if (flags & CG_GLYPH_UNICODE_PRESENT)
 	{
-		return stream_skip(s, cache_glyph_v2->cGlyphs * 2);
+		return Stream_SafeSeek(s, cache_glyph_v2->cGlyphs * 2);
 	}
 
 	return TRUE;
@@ -2144,7 +2144,7 @@ BOOL update_read_draw_gdiplus_first_order(wStream* s, DRAW_GDIPLUS_FIRST_ORDER* 
 	Stream_Read_UINT32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_first->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
 
-	return stream_skip(s, draw_gdiplus_first->cbSize); /* emfRecords */
+	return Stream_SafeSeek(s, draw_gdiplus_first->cbSize); /* emfRecords */
 }
 
 BOOL update_read_draw_gdiplus_next_order(wStream* s, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next)
@@ -2165,7 +2165,7 @@ BOOL update_read_draw_gdiplus_end_order(wStream* s, DRAW_GDIPLUS_END_ORDER* draw
 	Stream_Read_UINT32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_end->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
 
-	return stream_skip(s, draw_gdiplus_end->cbSize); /* emfRecords */
+	return Stream_SafeSeek(s, draw_gdiplus_end->cbSize); /* emfRecords */
 }
 
 BOOL update_read_draw_gdiplus_cache_first_order(wStream* s, DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first)
@@ -2178,7 +2178,7 @@ BOOL update_read_draw_gdiplus_cache_first_order(wStream* s, DRAW_GDIPLUS_CACHE_F
 	Stream_Read_UINT16(s, draw_gdiplus_cache_first->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_cache_first->cbTotalSize); /* cbTotalSize (4 bytes) */
 
-	return stream_skip(s, draw_gdiplus_cache_first->cbSize); /* emfRecords */
+	return Stream_SafeSeek(s, draw_gdiplus_cache_first->cbSize); /* emfRecords */
 }
 
 BOOL update_read_draw_gdiplus_cache_next_order(wStream* s, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next)
@@ -2203,7 +2203,7 @@ BOOL update_read_draw_gdiplus_cache_end_order(wStream* s, DRAW_GDIPLUS_CACHE_END
 	Stream_Read_UINT16(s, draw_gdiplus_cache_end->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_cache_end->cbTotalSize); /* cbTotalSize (4 bytes) */
 
-	return stream_skip(s, draw_gdiplus_cache_end->cbSize); /* emfRecords */
+	return Stream_SafeSeek(s, draw_gdiplus_cache_end->cbSize); /* emfRecords */
 }
 
 BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes)

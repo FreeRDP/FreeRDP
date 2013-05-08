@@ -203,7 +203,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		events[1] = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	rdpsnd_server_send_formats(rdpsnd, s);
 
@@ -256,7 +256,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 		}
 	}
 	
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	return NULL;
 }
@@ -269,7 +269,7 @@ static BOOL rdpsnd_server_initialize(rdpsnd_server_context* context)
 
 	if (rdpsnd->rdpsnd_channel != NULL)
 	{
-		rdpsnd->rdpsnd_pdu = stream_new(4096);
+		rdpsnd->rdpsnd_pdu = Stream_New(NULL, 4096);
 
 		rdpsnd->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -545,7 +545,7 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 		WTSVirtualChannelClose(rdpsnd->rdpsnd_channel);
 
 	if (rdpsnd->rdpsnd_pdu)
-		stream_free(rdpsnd->rdpsnd_pdu);
+		Stream_Free(rdpsnd->rdpsnd_pdu, TRUE);
 
 	if (rdpsnd->out_buffer)
 		free(rdpsnd->out_buffer);

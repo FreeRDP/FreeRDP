@@ -39,8 +39,8 @@ static void irp_free(IRP* irp)
 {
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
-	stream_free(irp->input);
-	stream_free(irp->output);
+	Stream_Free(irp->input, TRUE);
+	Stream_Free(irp->output, TRUE);
 
 	_aligned_free(irp);
 }
@@ -88,7 +88,7 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 	Stream_Read_UINT32(data_in, irp->MinorFunction);
 	irp->input = data_in;
 
-	irp->output = stream_new(256);
+	irp->output = Stream_New(NULL, 256);
 	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
 	Stream_Write_UINT32(irp->output, DeviceId);

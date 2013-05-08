@@ -710,7 +710,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		disk->device.Free = drive_free;
 
 		length = strlen(name);
-		disk->device.data = stream_new(length + 1);
+		disk->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(disk->device.data, name[i] < 0 ? '_' : name[i]);

@@ -196,7 +196,7 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, wStream* s)
 {
 	/* server 2008 can send invalid synchronize packet with missing padding,
 	  so don't return FALSE even if the packet is invalid */
-	stream_skip(s, 2); /* size (2 bytes), MUST be set to zero */
+	Stream_SafeSeek(s, 2); /* size (2 bytes), MUST be set to zero */
 	return TRUE;
 }
 
@@ -813,13 +813,13 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	result = TRUE;
 	rdp = fastpath->rdp;
+	update = comp_update = ls = NULL;
+	try_comp = rdp->settings->CompressionEnabled;
+
 	sec_bytes = fastpath_get_sec_bytes(rdp);
 	maxLength = FASTPATH_MAX_PACKET_SIZE - (6 + sec_bytes);
 	totalLength = Stream_GetPosition(s) - (6 + sec_bytes);
 	Stream_SetPosition(s, 0);
-	update = stream_new(0);
-	try_comp = rdp->settings->CompressionEnabled;
-	comp_update = stream_new(0);
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
@@ -842,7 +842,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 					comp_flags = FASTPATH_OUTPUT_COMPRESSION_USED;
 					header_bytes = 7 + sec_bytes;
 					bm = (BYTE*) (rdp->mppc_enc->outputBuffer - header_bytes);
-					stream_attach(comp_update, bm, pdu_data_bytes + header_bytes);
+					comp_update = Stream_New(bm, pdu_data_bytes + header_bytes);
 					ls = comp_update;
 				}
 			}
@@ -888,7 +888,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		Stream_Write_UINT16(ls, pdu_data_bytes);
 
-		stream_attach(update, bm, pduLength);
+		update = Stream_New(bm, pduLength);
 		Stream_Seek(update, pduLength);
 
 		if (sec_bytes > 0)
@@ -915,10 +915,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		Stream_SetPointer(s, holdp + dlen);
 	}
 
-	stream_detach(update);
-	stream_detach(comp_update);
-	stream_free(update);
-	stream_free(comp_update);
+	Stream_Free(update, FALSE);
+	Stream_Free(comp_update, FALSE);
 
 	return result;
 }

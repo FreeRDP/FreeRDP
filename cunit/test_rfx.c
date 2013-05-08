@@ -321,7 +321,7 @@ void test_decode(void)
 		sizeof(cr_data), test_quantization_values,
 		decode_buffer);
 	rfx_context_free(context);
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	dump_ppm_image(decode_buffer);
 }
@@ -410,7 +410,7 @@ void test_message(void)
 			}
 		}
 		rfx_message_free(context, message);
-		stream_free(s);
+		Stream_Free(s, TRUE);
 	}
 
 	rfx_context_free(context);

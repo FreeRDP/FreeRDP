@@ -77,7 +77,7 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
 	wStream* data_out;
 
-	data_out = stream_new(12);
+	data_out = Stream_New(NULL, 12);
 
 	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENTID_CONFIRM);
@@ -100,7 +100,7 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
 
-	data_out = stream_new(16 + computerNameLenW + 2);
+	data_out = Stream_New(NULL, 16 + computerNameLenW + 2);
 
 	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENT_NAME);
@@ -152,7 +152,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	DEVICE* device;
 	LIST_ITEM* item;
 
-	data_out = stream_new(256);
+	data_out = Stream_New(NULL, 256);
 
 	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(data_out, PAKID_CORE_DEVICELIST_ANNOUNCE);
@@ -294,7 +294,7 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 		DEBUG_WARN("RDPDR component: 0x%02X packetID: 0x%02X", component, packetID);
 	}
 
-	stream_free(data_in);
+	Stream_Free(data_in, TRUE);
 }
 
 static void rdpdr_process_event(rdpSvcPlugin* plugin, wMessage* event)

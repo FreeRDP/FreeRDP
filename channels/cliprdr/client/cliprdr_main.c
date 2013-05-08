@@ -57,7 +57,7 @@ wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
 	wStream* s;
 
-	s = stream_new(dataLen + 8);
+	s = Stream_New(NULL, dataLen + 8);
 	Stream_Write_UINT16(s, msgType);
 	Stream_Write_UINT16(s, msgFlags);
 	/* Write actual length after the entire packet has been constructed. */
@@ -238,7 +238,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			break;
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)

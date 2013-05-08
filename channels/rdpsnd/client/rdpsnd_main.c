@@ -126,7 +126,7 @@ void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 {
 	wStream* pdu;
 
-	pdu = stream_new(8);
+	pdu = Stream_New(NULL, 8);
 	Stream_Write_UINT8(pdu, SNDC_QUALITYMODE); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 	Stream_Write_UINT16(pdu, 4); /* BodySize */
@@ -217,7 +217,7 @@ void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	for (index = 0; index < (int) wNumberOfFormats; index++)
 		length += (18 + rdpsnd->ClientFormats[index].cbSize);
 
-	pdu = stream_new(length);
+	pdu = Stream_New(NULL, length);
 
 	Stream_Write_UINT8(pdu, SNDC_FORMATS); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
@@ -302,7 +302,7 @@ void rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, U
 {
 	wStream* pdu;
 
-	pdu = stream_new(8);
+	pdu = Stream_New(NULL, 8);
 	Stream_Write_UINT8(pdu, SNDC_TRAINING); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 	Stream_Write_UINT16(pdu, 4); /* BodySize */
@@ -367,7 +367,7 @@ void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE 
 {
 	wStream* pdu;
 
-	pdu = stream_new(8);
+	pdu = Stream_New(NULL, 8);
 	Stream_Write_UINT8(pdu, SNDC_WAVECONFIRM);
 	Stream_Write_UINT8(pdu, 0);
 	Stream_Write_UINT16(pdu, 4);
@@ -476,7 +476,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, wStream* s)
 	if (rdpsnd->expectingWave)
 	{
 		rdpsnd_recv_wave_pdu(rdpsnd, s);
-		stream_free(s);
+		Stream_Free(s, TRUE);
 		return;
 	}
 
@@ -513,7 +513,7 @@ static void rdpsnd_recv_pdu(rdpSvcPlugin* plugin, wStream* s)
 			break;
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device)

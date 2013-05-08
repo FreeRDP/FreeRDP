@@ -57,7 +57,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 	}
 	else
 	{
-		wStream* body = stream_new(0);
+		wStream* body = Stream_New(NULL, 64);
 		
 		for (i = 0; i < cb_event->num_formats; i++)
 		{
@@ -95,7 +95,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 				
 		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, Stream_Capacity(body));
 		Stream_Write(s, Stream_Buffer(body), Stream_Capacity(body));
-		stream_free(body);
+		Stream_Free(body, TRUE);
 	}
 
 	cliprdr_packet_send(cliprdr, s);

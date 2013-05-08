@@ -758,8 +758,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
 	ZeroMemory(message, sizeof(RFX_MESSAGE));
 
-	s = stream_new(0);
-	stream_attach(s, data, length);
+	s = Stream_New(data, length);
 
 	while (Stream_GetRemainingLength(s) > 6)
 	{
@@ -789,7 +788,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 			/* RFX_CODEC_CHANNELT */
 			/* codecId (1 byte) must be set to 0x01 */
 			/* channelId (1 byte) must be set to 0x00 */
-			if (!stream_skip(s, 2))
+			if (!Stream_SafeSeek(s, 2))
 			{
 				DEBUG_WARN("rfx_process_message: unable to skip RFX_CODEC_CHANNELT");
 				break;
@@ -838,8 +837,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 		Stream_SetPosition(s, pos);
 	}
 
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 
 	return message;
 }

@@ -111,5 +111,5 @@ void test_mcs_write_connect_initial(void)
 
 	ASSERT_STREAM(s, (BYTE*) mcs_connect_initial_expected, sizeof(mcs_connect_initial_expected));
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }

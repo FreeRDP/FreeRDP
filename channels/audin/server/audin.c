@@ -314,7 +314,7 @@ static void* audin_server_thread_func(void* arg)
 			break;
 	}
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	if (ready)
 	{
@@ -381,7 +381,7 @@ static void* audin_server_thread_func(void* arg)
 		}
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 	WTSVirtualChannelClose(audin->audin_channel);
 	audin->audin_channel = NULL;
 

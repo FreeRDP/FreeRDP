@@ -84,7 +84,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		return stream_skip(s, 5);
+		return Stream_SafeSeek(s, 5);
 	}
 	return TRUE;
 }

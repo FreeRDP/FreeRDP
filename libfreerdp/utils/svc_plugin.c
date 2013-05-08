@@ -116,9 +116,9 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (plugin->data_in != NULL)
-			stream_free(plugin->data_in);
+			Stream_Free(plugin->data_in, TRUE);
 
-		plugin->data_in = stream_new(totalLength);
+		plugin->data_in = Stream_New(NULL, totalLength);
 	}
 
 	data_in = plugin->data_in;
@@ -167,7 +167,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
-			stream_free((wStream*) pData);
+			Stream_Free((wStream*) pData, TRUE);
 			break;
 
 		case CHANNEL_EVENT_USER:
@@ -247,7 +247,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	if (plugin->data_in)
 	{
-		stream_free(plugin->data_in);
+		Stream_Free(plugin->data_in, TRUE);
 		plugin->data_in = NULL;
 	}
 
@@ -315,7 +315,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		stream_free(data_out);
+		Stream_Free(data_out, TRUE);
 		fprintf(stderr, "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
 	}
 

@@ -259,7 +259,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	DriverNameLen = ConvertToUnicode(CP_UTF8, 0, printer->driver, -1, &DriverName, 0) * 2;
 	PrintNameLen = ConvertToUnicode(CP_UTF8, 0, printer->name, -1, &PrintName, 0) * 2;
 
-	printer_dev->device.data = stream_new(28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
+	printer_dev->device.data = Stream_New(NULL, 28 + DriverNameLen + PrintNameLen + CachedFieldsLen);
 
 	Stream_Write_UINT32(printer_dev->device.data, Flags);
 	Stream_Write_UINT32(printer_dev->device.data, 0); /* CodePage, reserved */

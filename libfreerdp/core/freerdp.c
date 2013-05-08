@@ -124,7 +124,7 @@ BOOL freerdp_connect(freerdp* instance)
 			rdpUpdate* update;
 			pcap_record record;
 
-			s = stream_new(1024);
+			s = Stream_New(NULL, 1024);
 			instance->update->pcap_rfx = pcap_open(instance->settings->PlayRemoteFxFile, FALSE);
 
 			if (instance->update->pcap_rfx)

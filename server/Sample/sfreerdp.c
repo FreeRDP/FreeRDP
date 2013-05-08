@@ -55,7 +55,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->nsc_context = nsc_context_new();
 	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8);
 
-	context->s = stream_new(65536);
+	context->s = Stream_New(NULL, 65536);
 
 	context->icon_x = -1;
 	context->icon_y = -1;
@@ -74,7 +74,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 			CloseHandle(context->debug_channel_thread);
 		}
 
-		stream_free(context->s);
+		Stream_Free(context->s, TRUE);
 		free(context->icon_data);
 		free(context->bg_data);
 
@@ -362,7 +362,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	rdpPcap* pcap_rfx;
 	pcap_record record;
 
-	s = stream_new(512);
+	s = Stream_New(NULL, 512);
 	update = client->update;
 	client->update->pcap_rfx = pcap_open(test_pcap_file, FALSE);
 	pcap_rfx = client->update->pcap_rfx;
@@ -406,7 +406,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test1", 5, NULL);
 
@@ -440,7 +440,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		printf("got %d bytes\n", bytes_returned);
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

@@ -92,7 +92,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	if (drdynvc->channel_error != CHANNEL_RC_OK)
 		return 1;
 
-	data_out = stream_new(CHANNEL_CHUNK_LENGTH);
+	data_out = Stream_New(NULL, CHANNEL_CHUNK_LENGTH);
 	Stream_SetPosition(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
@@ -129,7 +129,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 
 		while (error == CHANNEL_RC_OK && data_size > 0)
 		{
-			data_out = stream_new(CHANNEL_CHUNK_LENGTH);
+			data_out = Stream_New(NULL, CHANNEL_CHUNK_LENGTH);
 			Stream_SetPosition(data_out, 1);
 			cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
@@ -190,7 +190,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge3);
 	}
 
-	data_out = stream_new(4);
+	data_out = Stream_New(NULL, 4);
 	Stream_Write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(data_out, drdynvc->version);
 	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
@@ -241,7 +241,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
-	data_out = stream_new(pos + 4);
+	data_out = Stream_New(NULL, pos + 4);
 	Stream_Write_UINT8(data_out, 0x10 | cbChId);
 	Stream_SetPosition(s, 1);
 	Stream_Copy(data_out, s, pos - 1);
@@ -346,7 +346,7 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			break;
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 static void drdynvc_process_connect(rdpSvcPlugin* plugin)

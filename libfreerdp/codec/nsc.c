@@ -329,14 +329,12 @@ void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 {
 	wStream* s;
 
-	s = stream_new(0);
-	stream_attach(s, data, length);
+	s = Stream_New(data, length);
 	context->bpp = bpp;
 	context->width = width;
 	context->height = height;
 	nsc_context_initialize(context, s);
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 
 	/* RLE decode */
 	PROFILER_ENTER(context->priv->prof_nsc_rle_decompress_data);

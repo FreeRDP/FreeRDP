@@ -81,7 +81,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	int status;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = stream_new(32);
+	s = Stream_New(NULL, 32);
 	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
 	Stream_Write_UINT32(s, message_id);
 	Stream_Write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
@@ -97,7 +97,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 		DEBUG_WARN("response error %d", status);
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, wMessage* event)
@@ -136,9 +136,9 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		DEBUG_WARN("invalid size. cbSize=%d", cbSize);
 		return 1;
 	}
-	input = stream_new(0);
-	stream_attach(input, (BYTE*) pBuffer, cbSize);
-	output = stream_new(256);
+
+	input = Stream_New((BYTE*) pBuffer, cbSize);
+	output = Stream_New(NULL, 256);
 	Stream_Seek(output, 8);
 
 	Stream_Read_UINT32(input, InterfaceId);
@@ -282,8 +282,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			break;
 	}
 
-	stream_detach(input);
-	stream_free(input);
+	Stream_Free(input, FALSE);
 	input = NULL;
 	ifman.input = NULL;
 
@@ -330,7 +329,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		}
 	}
 
-	stream_free(output);
+	Stream_Free(output, TRUE);
 
 	return status;
 }

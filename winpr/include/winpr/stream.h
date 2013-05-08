@@ -187,40 +187,34 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 	_src->pointer += _n; \
 	} while (0)
 
-#define Stream_Pointer(_s)		_s->pointer
-#define Stream_Buffer(_s)		_s->buffer
-#define Stream_Length(_s)		_s->length
-#define Stream_Capacity(_s)		_s->capacity
+#define Stream_Buffer(_s)			_s->buffer
+#define Stream_GetBuffer(_s, _b)	_b = _s->buffer
+#define Stream_SetBuffer(_s, _b)	_s->buffer = _b
+
+#define Stream_Pointer(_s)			_s->pointer
+#define Stream_GetPointer(_s, _p)	_p = _s->pointer
+#define Stream_SetPointer(_s, _p)	_s->pointer = _p
+
+#define Stream_Length(_s)			_s->length
+#define Stream_GetLength(_s, _l)	_l = _s->length
+#define Stream_SetLength(_s, _l)	_s->length = _l
+
+#define Stream_Capacity(_s)			_s->capacity
+#define Stream_GetCapacity(_s, _c)	_c = _s->capacity
+#define Stream_SetCapacity(_s, _c)	_s->capacity = _c
 
 #define Stream_GetPosition(_s)		(_s->pointer - _s->buffer)
 #define Stream_SetPosition(_s, _p)	_s->pointer = _s->buffer + (_p)
-
-#define Stream_GetPointer(_s, _p)	_p = _s->pointer
-#define Stream_SetPointer(_s, _p)	_s->pointer = _p
 
 #define Stream_SealLength(_s)		_s->length = (_s->pointer - _s->buffer)
 #define Stream_GetRemainingLength(_s)	(_s->length - (_s->pointer - _s->buffer))
 
 #define Stream_Clear(_s)		memset(_s->buffer, 0, _s->capacity)
 
-/* Deprecated STREAM API */
-
-WINPR_API wStream* stream_new(int size);
-WINPR_API void stream_free(wStream* stream);
-
-#define stream_attach(_s, _buf, _size) do { \
-	_s->capacity = _size; \
- 	_s->length = _size; \
-	_s->buffer = _buf; \
-	_s->pointer = _buf; } while (0)
-#define stream_detach(_s) memset(_s, 0, sizeof(wStream))
-
-WINPR_API void stream_extend(wStream* stream, int request_size);
-
-static INLINE BOOL stream_skip(wStream* s, size_t sz) {
-    if (Stream_GetRemainingLength(s) < sz)
+static INLINE BOOL Stream_SafeSeek(wStream* s, size_t size) {
+	if (Stream_GetRemainingLength(s) < size)
 		return FALSE;
-	Stream_Seek(s, sz);
+	Stream_Seek(s, size);
 	return TRUE;
 }
 

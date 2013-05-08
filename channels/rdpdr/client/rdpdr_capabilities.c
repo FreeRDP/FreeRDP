@@ -172,7 +172,7 @@ void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
 	wStream* data_out;
 
-	data_out = stream_new(256);
+	data_out = Stream_New(NULL, 256);
 
 	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENT_CAPABILITY);
