@@ -775,7 +775,7 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	bm = Stream_Pointer(s);
 
 	Stream_Seek(s, 8);
-	update_write_cache_glyph_v2_order(s, cache_glyph, &flags);
+	update_write_cache_glyph_order(s, cache_glyph, &flags);
 	em = Stream_Pointer(s);
 
 	orderLength = (em - bm) - 13 - 2;
