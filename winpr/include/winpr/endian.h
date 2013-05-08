@@ -85,7 +85,7 @@ extern "C" {
 	*_d = (UINT8)(_v); } while (0)
 
 #define Data_Write_UINT16_NE(_d, _v) do { \
-	*((UINT16*) _d) = v; } while (0)
+	*((UINT16*) _d) = _v; } while (0)
 
 #define Data_Write_UINT16(_d, _v) do { \
 	*(_d) = (_v) & 0xFF; \
@@ -98,7 +98,7 @@ extern "C" {
 	} while (0)
 
 #define Data_Write_UINT32_NE(_d, _v) do { \
-	*((UINT32*) _d) = v; } while (0)
+	*((UINT32*) _d) = _v; } while (0)
 
 #define Data_Write_UINT32(_d, _v) do { \
 	*(_d) = (_v) & 0xFF; \
@@ -113,7 +113,7 @@ extern "C" {
 	} while (0)
 
 #define Data_Write_UINT64_NE(_d, _v) do { \
-	*((UINT64*) _d) = v; } while (0)
+	*((UINT64*) _d) = _v; } while (0)
 
 #define Data_Write_UINT64(_d, _v) do { \
 	*(_d) = (UINT64)(_v) & 0xFF; \
