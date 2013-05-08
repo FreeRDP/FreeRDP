@@ -561,14 +561,7 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
 
         	if(xfi->width != event->xconfigure.width)
         	{
-        		printf("resize detected: x: %dx%d xfi:%dx%d orig: %dx%d\n",
-        				event->xconfigure.width, event->xconfigure.height,
-        				xfi->width, xfi->height,
-        				xfi->orig_width, xfi->orig_height);
-
         		scale = (double)event->xconfigure.width / (double) xfi->orig_width;
-
-        		printf("\tscale:%.2f\n", scale);
 
         		xfi->cur_width = event->xconfigure.width;
         		xfi->cur_height = event->xconfigure.width;

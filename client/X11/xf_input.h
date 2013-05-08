@@ -27,7 +27,7 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
-void xf_input_init(xfInfo* xfi);//rdpContext* context);
+void xf_input_init(xfInfo* xfi, Window win);//rdpContext* context);
 void xf_input_handle_event(xfInfo* xfi, XEvent* event);
 
 #ifdef WITH_XI

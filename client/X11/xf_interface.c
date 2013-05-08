@@ -414,7 +414,7 @@ BOOL xf_process_x_events(freerdp* instance)
 	if (initialized_xi == 0)
 	{
 		initialized_xi++;
-		xf_input_init(xfi);
+        //xf_input_init(xfi);
 	}
 
 	status = TRUE;
@@ -1171,7 +1171,7 @@ void* xf_input_thread(void* arg)
 
 	xfi = ((xfContext*) instance->context)->xfi;
 
-	xf_input_init(xfi);
+    //xf_input_init(xfi);
 
 	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfi->xfds);
 

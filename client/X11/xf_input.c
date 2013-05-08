@@ -44,6 +44,8 @@ double firstDist = -1.0;
 
 int xinput_opcode; //TODO: use this instead of xfi
 
+int scale_cnt;
+
 BOOL xf_input_is_duplicate(XIDeviceEvent* event)
 {
 	if( (lastEvent.time == event->time) &&
@@ -69,7 +71,7 @@ void xf_input_save_last_event(XIDeviceEvent* event)
 	return;
 }
 
-void xf_input_detect_pinch()
+void xf_input_detect_pinch(xfInfo* xfi)
 {
 	double dist;
 	double zoom;
@@ -89,19 +91,63 @@ void xf_input_detect_pinch()
 	if(firstDist <= 0)
 	{
 		firstDist = dist;
+        scale_cnt = 0;
 	}
 	else
 	{
 		//compare the current distance to the first one
-		zoom = (dist / firstDist) * 100.0;
-		printf("zoom %.2f%%\n", zoom);
+        zoom = (dist / firstDist);
+
+        printf("zoom: %.2f, cnt:%d\n", zoom, scale_cnt);
+        if(zoom < 0.75 && scale_cnt == 0)
+        {
+            //zoom out one level
+            xfi->scale -= 0.05;
+            scale_cnt++;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            printf("-5 ");
+        }
+        else if(zoom < 0.5 && scale_cnt == 1)
+        {
+            //zoom out an other level
+            xfi->scale -= 0.05;
+            scale_cnt++;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            printf("-5 ");
+        }
+
+
+        if(zoom > 1.25 && scale_cnt == 0)
+        {
+            //zoom out one level
+            xfi->scale += 0.05;
+            scale_cnt++;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            printf("+5 ");
+        }
+        else if(zoom < 1.5 && scale_cnt == 1)
+        {
+            //zoom out an other level
+            xfi->scale += 0.05;
+            scale_cnt++;
+
+            XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
+            printf("+5 ");
+        }
 	}
 
 }
 
 #endif
 
-void xf_input_init(xfInfo* xfi)
+void xf_input_init(xfInfo* xfi, Window win)
 {
 #ifdef WITH_XI
 	int opcode, event, error;
@@ -134,7 +180,8 @@ void xf_input_init(xfInfo* xfi)
 			XISetMask(mask, XI_TouchUpdate);
 			XISetMask(mask, XI_TouchEnd);
 
-			error = XISelectEvents(xfi->display, xfi->window->handle, &eventmask, 1);
+
+            error = XISelectEvents(xfi->display, win, &eventmask, 1);
 
 			switch (error)
 			{
@@ -265,7 +312,7 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 				contacts[i].pos_y = event->event_y;
 
 				//detect pinch-zoom
-				xf_input_detect_pinch();
+                xf_input_detect_pinch(xfi);
 
 				break;
 			}

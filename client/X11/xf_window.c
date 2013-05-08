@@ -44,6 +44,7 @@
 
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
+#include "xf_input.h"
 #endif
 
 #ifdef WITH_DEBUG_X11
@@ -412,7 +413,7 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XMapWindow(xfi->display, window->handle);
 
 #ifdef WITH_XI
-		xf_input_init(xfi, window->handle);
+        xf_input_init(xfi, settings->ParentWindowId);//window->handle);
 #endif
 		/*
 		 * NOTE: This must be done here to handle reparenting the window, 
