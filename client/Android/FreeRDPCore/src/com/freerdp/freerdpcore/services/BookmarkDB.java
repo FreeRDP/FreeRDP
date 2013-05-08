@@ -22,7 +22,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class BookmarkDB extends SQLiteOpenHelper
 {
-	private static final int DB_VERSION = 2;
+	private static final int DB_VERSION = 3;
 	private static final String DB_NAME = "bookmarks.db";
 	
 	public static final String ID = BaseColumns._ID;
@@ -130,6 +130,13 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "screen_settings INTEGER NOT NULL, "
 			+ "performance_flags INTEGER NOT NULL, "
 			
+			+ "enable_gateway_settings INTEGER DEFAULT 0, "
+			+ "gateway_hostname TEXT, "
+			+ "gateway_port INTEGER DEFAULT 443, "
+			+ "gateway_username TEXT, "
+			+ "gateway_password TEXT, "
+			+ "gateway_domain TEXT, "
+                        
 			+ "enable_3g_settings INTEGER DEFAULT 0, "
 			+ "screen_3g INTEGER NOT NULL, "
 			+ "performance_3g INTEGER NOT NULL, "
@@ -138,7 +145,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "remote_program TEXT, "
 			+ "work_dir TEXT, "
 			+ "console_mode INTEGER, "
-		
+			
 			+ "FOREIGN KEY(screen_settings) REFERENCES tbl_screen_settings(" + ID + "), "
 			+ "FOREIGN KEY(performance_flags) REFERENCES tbl_performance_flags(" + ID + "), "
 			+ "FOREIGN KEY(screen_3g) REFERENCES tbl_screen_settings(" + ID + "), "

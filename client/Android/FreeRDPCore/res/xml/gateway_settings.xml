@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Credential Settings Layout
+
+   Copyright 2013 Felix Long
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"  xmlns:freerdp="http://schemas.android.com/apk/res-auto">
+        <PreferenceCategory android:title="@string/settings_cat_gateway">
+	        <EditTextPreference android:key="bookmark.gateway_hostname" android:title="@string/settings_hostname" android:summary="Name or address of the target computer"/>
+	        <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.gateway_port" android:title="@string/settings_port" android:summary="Gateway Port on the target computer" android:numeric="integer" android:inputType="number" freerdp:bounds_min="10" freerdp:bounds_max="65535" freerdp:bounds_default="443" />            
+            <EditTextPreference android:key="bookmark.gateway_username" android:title="@string/settings_username"/>
+            <EditTextPreference android:key="bookmark.gateway_password" android:title="@string/settings_password" android:inputType="textPassword" />
+            <EditTextPreference android:key="bookmark.gateway_domain" android:title="@string/settings_domain" android:summary="Optional"/>
+        </PreferenceCategory>
+</PreferenceScreen>

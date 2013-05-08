@@ -1195,7 +1195,6 @@ void* xf_thread(void* param)
 		exit_code = XF_EXIT_CONN_FAILED;
 		ExitThread(exit_code);
 	}
-
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
@@ -1223,6 +1222,11 @@ void* xf_thread(void* param)
 	{
 		rcount = 0;
 		wcount = 0;
+
+		if (freerdp_focus_required(instance))
+		{
+			xf_kbd_focus_in(xfi);
+		}
 
 		if (!async_transport)
 		{

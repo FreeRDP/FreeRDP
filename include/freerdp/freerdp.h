@@ -218,6 +218,7 @@ FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);
 
+FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
 #ifdef __cplusplus
 }
 #endif

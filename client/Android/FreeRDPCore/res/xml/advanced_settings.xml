@@ -12,8 +12,15 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory android:title="Advanced">
         
-       <CheckBoxPreference android:key="bookmark.enable_3g_settings" android:title="@string/settings_enable_3g_settings" />
-       
+    	<CheckBoxPreference android:key="bookmark.enable_gateway_settings" android:title="@string/settings_enable_gateway_settings" />       
+    	<PreferenceScreen android:key="bookmark.gateway_settings" android:title="@string/settings_gateway_settings">
+    	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://gateway_settings" />
+        </PreferenceScreen>
+        
+       <CheckBoxPreference android:key="bookmark.enable_3g_settings" android:title="@string/settings_enable_3g_settings" />      
        <PreferenceScreen android:key="bookmark.screen_3g" android:title="@string/settings_screen_3g">
         	<intent android:action="android.intent.action.VIEW" 
            		android:targetPackage="*" 
