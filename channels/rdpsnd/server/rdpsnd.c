@@ -98,7 +98,7 @@ static BOOL rdpsnd_server_send_formats(rdpsnd_server* rdpsnd, wStream* s)
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_SetPosition(s, 0);
 
 	return status;
@@ -112,7 +112,7 @@ static void rdpsnd_server_recv_waveconfirm(rdpsnd_server* rdpsnd, wStream* s)
 	BYTE confirmBlockNum = 0;
 	Stream_Read_UINT16(s, timestamp);
 	Stream_Read_UINT8(s, confirmBlockNum);
-	Stream_Seek_BYTE(s); // padding
+	Stream_Seek_UINT8(s); // padding
 }
 
 static void rdpsnd_server_recv_quality_mode(rdpsnd_server* rdpsnd, wStream* s)
@@ -141,7 +141,7 @@ static BOOL rdpsnd_server_recv_formats(rdpsnd_server* rdpsnd, wStream* s)
 	Stream_Read_UINT16(s, rdpsnd->context.num_client_formats); /* wNumberOfFormats */
 	Stream_Read_UINT8(s, lastblock); /* cLastBlockConfirmed */
 	Stream_Read_UINT16(s, version); /* wVersion */
-	Stream_Seek_BYTE(s); /* bPad */
+	Stream_Seek_UINT8(s); /* bPad */
 
 	if (rdpsnd->context.num_client_formats > 0)
 	{
@@ -218,7 +218,7 @@ static void* rdpsnd_server_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
+		if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, Stream_Buffer(s),
 			Stream_Capacity(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
@@ -226,13 +226,13 @@ static void* rdpsnd_server_thread_func(void* arg)
 			
 			Stream_EnsureRemainingCapacity(s, (int) bytes_returned);
 
-			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, stream_get_head(s),
+			if (WTSVirtualChannelRead(rdpsnd->rdpsnd_channel, 0, Stream_Buffer(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)
 				break;
 		}
 		
 		Stream_Read_UINT8(s, msgType);
-		Stream_Seek_BYTE(s); /* bPad */
+		Stream_Seek_UINT8(s); /* bPad */
 		Stream_Read_UINT16(s, BodySize);
 
 		switch (msgType)
@@ -410,7 +410,7 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	Stream_Seek(s, 3); /* bPad */
 	Stream_Write(s, src, 4);
 
-	WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_SetPosition(s, 0);
 
 	/* Wave PDU */
@@ -419,9 +419,9 @@ static BOOL rdpsnd_server_send_audio_pdu(rdpsnd_server* rdpsnd)
 	Stream_Write(s, src + 4, size - 4);
 
 	if (fill_size > 0)
-		Stream_Write_zero(s, fill_size);
+		Stream_Zero(s, fill_size);
 
-	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_SetPosition(s, 0);
 
 	rdpsnd->out_pending_frames = 0;
@@ -476,7 +476,7 @@ static BOOL rdpsnd_server_set_volume(rdpsnd_server_context* context, int left, i
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_SetPosition(s, 0);
 
 	return status;
@@ -508,7 +508,7 @@ static BOOL rdpsnd_server_close(rdpsnd_server_context* context)
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(rdpsnd->rdpsnd_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_SetPosition(s, 0);
 
 	return status;

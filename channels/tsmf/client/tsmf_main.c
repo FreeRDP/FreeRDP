@@ -90,7 +90,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	Stream_Write_UINT64(s, data_size); /* cbData */
 	
 	DEBUG_DVC("response size %d", (int) Stream_GetPosition(s));
-	status = callback->channel->Write(callback->channel, Stream_GetPosition(s), stream_get_head(s), NULL);
+	status = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
 
 	if (status)
 	{
@@ -323,7 +323,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		Stream_Write_UINT32(output, MessageId);
 
 		DEBUG_DVC("response size %d", length);
-		status = callback->channel->Write(callback->channel, length, stream_get_head(output), NULL);
+		status = callback->channel->Write(callback->channel, length, Stream_Buffer(output), NULL);
 		if (status)
 		{
 			DEBUG_WARN("response error %d", status);

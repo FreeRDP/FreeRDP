@@ -62,7 +62,7 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 
 	pos = Stream_GetPosition(ifman->output);
 	Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4);
-	stream_copy(ifman->output, ifman->input, ifman->input_size);
+	Stream_Copy(ifman->output, ifman->input, ifman->input_size);
 
 	Stream_SetPosition(ifman->output, pos);
 	Stream_Read_UINT32(ifman->output, numHostCapabilities);
@@ -80,7 +80,7 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 				DEBUG_DVC("server protocol version %d", v);
 				break;
 			case 2: /* Supported platform */
-				stream_peek_UINT32(ifman->output, v);
+				Stream_Peek_UINT32(ifman->output, v);
 				DEBUG_DVC("server supported platform %d", v);
 				/* Claim that we support both MF and DShow platforms. */
 				Stream_Write_UINT32(ifman->output,

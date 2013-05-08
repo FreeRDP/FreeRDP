@@ -140,7 +140,7 @@ void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 
 	/* standardName (64 bytes) */
 	Stream_Write(s, standardName, standardNameLength);
-	Stream_Write_zero(s, 64 - standardNameLength);
+	Stream_Zero(s, 64 - standardNameLength);
 
     /* StandardDate */
     rdp_write_system_time(s, &clientTimeZone->standardDate);
@@ -154,7 +154,7 @@ void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 
 	/* daylightName (64 bytes) */
     Stream_Write(s, daylightName, daylightNameLength);
-    Stream_Write_zero(s, 64 - daylightNameLength);
+    Stream_Zero(s, 64 - daylightNameLength);
 
      /* DaylightDate */
     rdp_write_system_time(s, &clientTimeZone->daylightDate);

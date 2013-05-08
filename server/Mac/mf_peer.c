@@ -161,7 +161,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	cmd->width = rect.width;
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	
 	//send
 	

@@ -124,7 +124,7 @@ static void smartcard_output_alignment(IRP* irp, UINT32 seed)
 	UINT32 add = (seed - (size % seed)) % seed;
 
 	if (add > 0)
-		Stream_Write_zero(irp->output, add);
+		Stream_Zero(irp->output, add);
 }
 
 static void smartcard_output_repos(IRP* irp, UINT32 written)
@@ -132,12 +132,12 @@ static void smartcard_output_repos(IRP* irp, UINT32 written)
 	UINT32 add = (4 - (written % 4)) % 4;
 
 	if (add > 0)
-		Stream_Write_zero(irp->output, add);
+		Stream_Zero(irp->output, add);
 }
 
 static UINT32 smartcard_output_return(IRP* irp, UINT32 status)
 {
-	Stream_Write_zero(irp->output, 256);
+	Stream_Zero(irp->output, 256);
 	return status;
 }
 
@@ -520,7 +520,7 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		Stream_Write_UINT32(irp->output, cur->cbAtr);
 		Stream_Write(irp->output, cur->rgbAtr, 32);
 
-		Stream_Write_zero(irp->output, 4);
+		Stream_Zero(irp->output, 4);
 
 		free((void *)cur->szReader);
 	}
@@ -838,7 +838,7 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	Stream_Write(irp->output, pbAtr, atrLen);
 
 	if (atrLen < 32)
-		Stream_Write_zero(irp->output, 32 - atrLen);
+		Stream_Zero(irp->output, 32 - atrLen);
 	Stream_Write_UINT32(irp->output, atrLen);
 
 	poslen2 = Stream_GetPosition(irp->output);
@@ -1154,7 +1154,7 @@ static UINT32 handle_GetAttrib(IRP* irp)
 
 		if (!pbAttr)
 		{
-			Stream_Write_zero(irp->output, dwAttrLen);
+			Stream_Zero(irp->output, dwAttrLen);
 		}
 		else
 		{
@@ -1317,7 +1317,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		Stream_Write_UINT32(irp->output, cur->cbAtr);
 		Stream_Write(irp->output, cur->rgbAtr, 32);
 
-		Stream_Write_zero(irp->output, 4);
+		Stream_Zero(irp->output, 4);
 
 		free((void*) cur->szReader);
 	}

@@ -180,7 +180,7 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->width = rect.width;
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, cmd);
 
 	free(rgb_data);
@@ -279,7 +279,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd->width = context->icon_width;
 		cmd->height = context->icon_height;
 		cmd->bitmapDataLength = Stream_GetPosition(s);
-		cmd->bitmapData = stream_get_head(s);
+		cmd->bitmapData = Stream_Buffer(s);
 		update->SurfaceBits(update->context, cmd);
 	}
 
@@ -306,7 +306,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd->width = context->icon_width;
 	cmd->height = context->icon_height;
 	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, cmd);
 
 	context->icon_x = x;
@@ -419,7 +419,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
 			Stream_Capacity(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
@@ -427,7 +427,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 			Stream_EnsureRemainingCapacity(s, bytes_returned);
 
-			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
+			if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)
 			{
 				/* should not happen */

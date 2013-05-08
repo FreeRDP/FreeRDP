@@ -184,12 +184,12 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 			for (i = 0; i < 8; i++)
 			{
-				stream_peek_BYTE(data_out, c);
+				Stream_Peek_UINT8(data_out, c);
 
 				if (c > 0x7F)
 					Stream_Write_UINT8(data_out, '_');
 				else
-					Stream_Seek_BYTE(data_out);
+					Stream_Seek_UINT8(data_out);
 			}
 
 			Stream_Write_UINT32(data_out, data_len);

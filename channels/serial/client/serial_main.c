@@ -144,7 +144,7 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 		serial->tty = NULL;
 	}
 
-	Stream_Write_zero(irp->output, 5); /* Padding(5) */
+	Stream_Zero(irp->output, 5); /* Padding(5) */
 
 	irp->Complete(irp);
 }

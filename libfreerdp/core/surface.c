@@ -99,7 +99,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 
 	while (size > 2)
 	{
-		stream_get_mark(s, mark);
+		Stream_GetPointer(s, mark);
 
 		Stream_Read_UINT16(s, cmdType);
 		size -= 2;

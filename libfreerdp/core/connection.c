@@ -528,12 +528,12 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
 
-	stream_get_mark(s, mark);
+	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
-		stream_set_mark(s, mark);
+		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,

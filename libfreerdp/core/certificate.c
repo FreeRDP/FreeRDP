@@ -234,7 +234,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	{
 		if(Stream_GetRemainingLength(s) < 1)
 			goto error1;
-		stream_peek_BYTE(s, padding);
+		Stream_Peek_UINT8(s, padding);
 
 		if (padding == 0)
 		{

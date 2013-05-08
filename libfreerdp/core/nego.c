@@ -583,12 +583,12 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 			if (c != '\x0D')
 				continue;
 
-			stream_peek_BYTE(s, c);
+			Stream_Peek_UINT8(s, c);
 
 			if (c != '\x0A')
 				continue;
 
-			Stream_Seek_BYTE(s);
+			Stream_Seek_UINT8(s);
 			break;
 		}
 	}
@@ -646,7 +646,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, length);
 
 	if (nego->RoutingToken)
@@ -682,11 +682,11 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += 8;
 	}
 
-	stream_get_mark(s, em);
-	stream_set_mark(s, bm);
+	Stream_GetPointer(s, em);
+	Stream_SetPointer(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_request(s, length - 5);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
@@ -810,7 +810,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	s = transport_send_stream_init(nego->transport, 256);
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, length);
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
@@ -837,11 +837,11 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		status = FALSE;
 	}
 
-	stream_get_mark(s, em);
-	stream_set_mark(s, bm);
+	Stream_GetPointer(s, em);
+	Stream_SetPointer(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_confirm(s, length - 5);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;

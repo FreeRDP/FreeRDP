@@ -103,7 +103,7 @@ static void printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 		DEBUG_SVC("printjob id %d closed.", irp->FileId);
 	}
 
-	Stream_Write_zero(irp->output, 4); /* Padding(4) */
+	Stream_Zero(irp->output, 4); /* Padding(4) */
 
 	irp->Complete(irp);
 }

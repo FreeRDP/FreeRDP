@@ -67,7 +67,7 @@ BOOL tpkt_verify_header(wStream* s)
 {
 	BYTE version;
 
-	stream_peek_BYTE(s, version);
+	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
 		return TRUE;
@@ -86,7 +86,7 @@ UINT16 tpkt_read_header(wStream* s)
 	BYTE version;
 	UINT16 length;
 
-	stream_peek_BYTE(s, version);
+	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
 	{

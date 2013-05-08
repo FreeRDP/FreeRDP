@@ -520,9 +520,9 @@ BOOL tsmf_codec_check_media_type(wStream* s)
 	BOOL ret;
 	TS_AM_MEDIA_TYPE mediatype;
 
-	stream_get_mark(s, m);
+	Stream_GetPointer(s, m);
 	ret = tsmf_codec_parse_media_type(&mediatype, s);
-	stream_set_mark(s, m);
+	Stream_SetPointer(s, m);
 
 	return ret;
 }

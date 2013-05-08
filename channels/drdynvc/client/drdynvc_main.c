@@ -244,7 +244,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	data_out = stream_new(pos + 4);
 	Stream_Write_UINT8(data_out, 0x10 | cbChId);
 	Stream_SetPosition(s, 1);
-	stream_copy(data_out, s, pos - 1);
+	Stream_Copy(data_out, s, pos - 1);
 	
 	if (error == 0)
 	{

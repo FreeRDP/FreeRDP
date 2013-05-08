@@ -214,7 +214,7 @@ static void drive_process_irp_close(DRIVE_DEVICE* disk, IRP* irp)
 		drive_file_free(file);
 	}
 
-	Stream_Write_zero(irp->output, 5); /* Padding(5) */
+	Stream_Zero(irp->output, 5); /* Padding(5) */
 
 	irp->Complete(irp);
 }

@@ -501,8 +501,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 		case FileRenameInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
-			Stream_Seek_BYTE(input); /* ReplaceIfExists */
-			Stream_Seek_BYTE(input); /* RootDirectory */
+			Stream_Seek_UINT8(input); /* ReplaceIfExists */
+			Stream_Seek_UINT8(input); /* RootDirectory */
 			Stream_Read_UINT32(input, FileNameLength);
 
 			status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(input),
@@ -665,7 +665,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 			Stream_Write_UINT32(output, 0); /* EaSize */
 			Stream_Write_UINT8(output, 0); /* ShortNameLength */
 			/* Reserved(1), MUST NOT be added! */
-			Stream_Write_zero(output, 24); /* ShortName */
+			Stream_Zero(output, 24); /* ShortName */
 			Stream_Write(output, ent_path, length);
 			break;
 

@@ -582,7 +582,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpSettings* settings, UINT16 blockLe
 
 		if (blockLength < 1)
 			break;
-		Stream_Seek_BYTE(s); /* pad1octet */
+		Stream_Seek_UINT8(s); /* pad1octet */
 		blockLength -= 1;
 
 		if (blockLength < 4)
@@ -692,14 +692,14 @@ void gcc_write_client_core_data(wStream* s, rdpSettings* settings)
 	}
 
 	Stream_Write(s, clientName, (clientNameLength * 2));
-	Stream_Write_zero(s, 32 - (clientNameLength * 2));
+	Stream_Zero(s, 32 - (clientNameLength * 2));
 	free(clientName);
 
 	Stream_Write_UINT32(s, settings->KeyboardType); /* KeyboardType */
 	Stream_Write_UINT32(s, settings->KeyboardSubType); /* KeyboardSubType */
 	Stream_Write_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey */
 
-	Stream_Write_zero(s, 64); /* imeFileName */
+	Stream_Zero(s, 64); /* imeFileName */
 
 	Stream_Write_UINT16(s, RNS_UD_COLOR_8BPP); /* postBeta2ColorDepth */
 	Stream_Write_UINT16(s, 1); /* clientProductID */
@@ -739,7 +739,7 @@ void gcc_write_client_core_data(wStream* s, rdpSettings* settings)
 		clientDigProductId[clientDigProductIdLength-1] = 0;
 	}
 	Stream_Write(s, clientDigProductId, (clientDigProductIdLength * 2) );
-	Stream_Write_zero(s, 64 - (clientDigProductIdLength * 2) );
+	Stream_Zero(s, 64 - (clientDigProductIdLength * 2) );
 	free(clientDigProductId);
 
 	Stream_Write_UINT8(s, connectionType); /* connectionType */
@@ -1031,7 +1031,7 @@ void gcc_write_server_security_data(wStream* s, rdpSettings* settings)
 
 	Stream_Write(s, settings->RdpServerRsaKey->exponent, expLen);
 	Stream_Write(s, settings->RdpServerRsaKey->Modulus, keyLen);
-	Stream_Write_zero(s, 8);
+	Stream_Zero(s, 8);
 
 	sigDataLen = Stream_Pointer(s) - sigData;
 
@@ -1048,7 +1048,7 @@ void gcc_write_server_security_data(wStream* s, rdpSettings* settings)
 		tssk_modulus, tssk_privateExponent, encryptedSignature);
 
 	Stream_Write(s, encryptedSignature, sizeof(encryptedSignature));
-	Stream_Write_zero(s, 8);
+	Stream_Zero(s, 8);
 }
 
 /**

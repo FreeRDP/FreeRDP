@@ -717,7 +717,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (length == 0)
 		{
 			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
+			winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
 			return -1;
 		}
 

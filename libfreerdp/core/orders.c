@@ -236,7 +236,7 @@ static INLINE void update_read_colorref(wStream* s, UINT32* color)
 	*color |= (byte << 8);
 	Stream_Read_UINT8(s, byte);
 	*color |= (byte << 16);
-	Stream_Seek_BYTE(s);
+	Stream_Seek_UINT8(s);
 }
 
 static INLINE void update_read_color_quad(wStream* s, UINT32* color)
@@ -249,7 +249,7 @@ static INLINE void update_read_color_quad(wStream* s, UINT32* color)
 	*color |= (byte << 8);
 	Stream_Read_UINT8(s, byte);
 	*color |= byte;
-	Stream_Seek_BYTE(s);
+	Stream_Seek_UINT8(s);
 }
 
 static INLINE BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
@@ -504,7 +504,7 @@ static INLINE void update_seek_glyph_delta(wStream* s)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
-		Stream_Seek_BYTE(s);
+		Stream_Seek_UINT8(s);
 }
 
 static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
@@ -632,7 +632,7 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, i
 
 	if (Stream_GetRemainingLength(s) < zeroBitsSize)
 		return FALSE;
-	stream_get_mark(s, zeroBits);
+	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
 
 	memset(rectangles, 0, sizeof(DELTA_RECT) * (number + 1));
@@ -683,7 +683,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 
 	if (Stream_GetRemainingLength(s) < zeroBitsSize)
 		return FALSE;
-	stream_get_mark(s, zeroBits);
+	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
 
 	memset(points, 0, sizeof(DELTA_POINT) * number);
@@ -1511,7 +1511,7 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 		return FALSE;
 
 	Stream_Read_UINT8(s, cache_bitmap_order->cacheId); /* cacheId (1 byte) */
-	Stream_Seek_BYTE(s); /* pad1Octet (1 byte) */
+	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap_order->bitmapWidth); /* bitmapWidth (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap_order->bitmapHeight); /* bitmapHeight (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap_order->bitmapBpp); /* bitmapBpp (1 byte) */
@@ -1534,7 +1534,7 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 		if (Stream_GetRemainingLength(s) < cache_bitmap_order->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
+		Stream_GetPointer(s, cache_bitmap_order->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_order->bitmapLength);
 	}
 	else
@@ -1542,7 +1542,7 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 		if (Stream_GetRemainingLength(s) < cache_bitmap_order->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_order->bitmapDataStream);
+		Stream_GetPointer(s, cache_bitmap_order->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
 	}
 
@@ -1608,7 +1608,7 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_v2->bitmapDataStream);
+		Stream_GetPointer(s, cache_bitmap_v2->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
 	}
 	else
@@ -1616,7 +1616,7 @@ BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_
 		if (Stream_GetRemainingLength(s) < cache_bitmap_v2->bitmapLength)
 			return FALSE;
 
-		stream_get_mark(s, cache_bitmap_v2->bitmapDataStream);
+		Stream_GetPointer(s, cache_bitmap_v2->bitmapDataStream);
 		Stream_Seek(s, cache_bitmap_v2->bitmapLength);
 	}
 
@@ -1702,8 +1702,8 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 	bitmapData = &cache_bitmap_v3_order->bitmapData;
 
 	Stream_Read_UINT8(s, bitmapData->bpp);
-	Stream_Seek_BYTE(s); /* reserved1 (1 byte) */
-	Stream_Seek_BYTE(s); /* reserved2 (1 byte) */
+	Stream_Seek_UINT8(s); /* reserved1 (1 byte) */
+	Stream_Seek_UINT8(s); /* reserved2 (1 byte) */
 	Stream_Read_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
 	Stream_Read_UINT16(s, bitmapData->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, bitmapData->height); /* height (2 bytes) */
@@ -2139,7 +2139,7 @@ BOOL update_read_draw_gdiplus_first_order(wStream* s, DRAW_GDIPLUS_FIRST_ORDER* 
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
-	Stream_Seek_BYTE(s); /* pad1Octet (1 byte) */
+	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_first->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_first->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */
@@ -2151,7 +2151,7 @@ BOOL update_read_draw_gdiplus_next_order(wStream* s, DRAW_GDIPLUS_NEXT_ORDER* dr
 {
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
-	Stream_Seek_BYTE(s); /* pad1Octet (1 byte) */
+	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	FIELD_SKIP_BUFFER16(s, draw_gdiplus_next->cbSize); /* cbSize(2 bytes) + emfRecords */
 	return TRUE;
 }
@@ -2160,7 +2160,7 @@ BOOL update_read_draw_gdiplus_end_order(wStream* s, DRAW_GDIPLUS_END_ORDER* draw
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
-	Stream_Seek_BYTE(s); /* pad1Octet (1 byte) */
+	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_end->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_end->cbTotalEmfSize); /* cbTotalEmfSize (4 bytes) */

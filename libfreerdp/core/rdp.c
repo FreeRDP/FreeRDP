@@ -141,8 +141,8 @@ BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* 
 
 	/* Share Data Header */
 	Stream_Read_UINT32(s, *share_id); /* shareId (4 bytes) */
-	Stream_Seek_BYTE(s); /* pad1 (1 byte) */
-	Stream_Seek_BYTE(s); /* streamId (1 byte) */
+	Stream_Seek_UINT8(s); /* pad1 (1 byte) */
+	Stream_Seek_UINT8(s); /* streamId (1 byte) */
 	Stream_Read_UINT16(s, *length); /* uncompressedLength (2 bytes) */
 	Stream_Read_UINT8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 	Stream_Read_UINT8(s, *compressed_type); /* compressedType (1 byte) */
@@ -807,7 +807,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		while (Stream_GetRemainingLength(s) > 3)
 		{
-			stream_get_mark(s, nextp);
+			Stream_GetPointer(s, nextp);
 
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 				return -1;
@@ -840,7 +840,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					fprintf(stderr, "incorrect PDU type: 0x%04X\n", pduType);
 					break;
 			}
-			stream_set_mark(s, nextp);
+			Stream_SetPointer(s, nextp);
 		}
 	}
 

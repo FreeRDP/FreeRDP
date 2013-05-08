@@ -195,6 +195,9 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 #define Stream_GetPosition(_s)		(_s->pointer - _s->buffer)
 #define Stream_SetPosition(_s, _p)	_s->pointer = _s->buffer + (_p)
 
+#define Stream_GetPointer(_s, _p)	_p = _s->pointer
+#define Stream_SetPointer(_s, _p)	_s->pointer = _p
+
 #define Stream_SealLength(_s)		_s->length = (_s->pointer - _s->buffer)
 #define Stream_GetRemainingLength(_s)	(_s->length - (_s->pointer - _s->buffer))
 
@@ -213,52 +216,6 @@ WINPR_API void stream_free(wStream* stream);
 #define stream_detach(_s) memset(_s, 0, sizeof(wStream))
 
 WINPR_API void stream_extend(wStream* stream, int request_size);
-
-#define stream_get_mark(_s,_mark) _mark = _s->pointer
-#define stream_set_mark(_s,_mark) _s->pointer = _mark
-#define stream_get_head(_s) _s->buffer
-
-#define Stream_Write_zero(_s, _n) do { \
-	memset(_s->pointer, '\0', (_n)); \
-	_s->pointer += (_n); \
-	} while (0)
-#define stream_set_byte(_s, _v, _n) do { \
-	memset(_s->pointer, _v, (_n)); \
-	_s->pointer += (_n); \
-	} while (0)
-
-#define stream_peek_BYTE(_s, _v) do { _v = *_s->pointer; } while (0)
-#define stream_peek_UINT16(_s, _v) do { _v = \
-	(UINT16)(*_s->pointer) + \
-	(((UINT16)(*(_s->pointer + 1))) << 8); \
-	} while (0)
-#define stream_peek_UINT32(_s, _v) do { _v = \
-	(UINT32)(*_s->pointer) + \
-	(((UINT32)(*(_s->pointer + 1))) << 8) + \
-	(((UINT32)(*(_s->pointer + 2))) << 16) + \
-	(((UINT32)(*(_s->pointer + 3))) << 24); \
-	} while (0)
-#define stream_peek_UINT64(_s, _v) do { _v = \
-	(UINT64)(*_s->pointer) + \
-	(((UINT64)(*(_s->pointer + 1))) << 8) + \
-	(((UINT64)(*(_s->pointer + 2))) << 16) + \
-	(((UINT64)(*(_s->pointer + 3))) << 24) + \
-	(((UINT64)(*(_s->pointer + 4))) << 32) + \
-	(((UINT64)(*(_s->pointer + 5))) << 40) + \
-	(((UINT64)(*(_s->pointer + 6))) << 48) + \
-	(((UINT64)(*(_s->pointer + 7))) << 56); \
-	} while (0)
-
-#define Stream_Seek_BYTE(_s)	Stream_Seek(_s, 1)
-#define Stream_Seek_UINT16(_s)	Stream_Seek(_s, 2)
-#define Stream_Seek_UINT32(_s)	Stream_Seek(_s, 4)
-#define Stream_Seek_UINT64(_s)	Stream_Seek(_s, 8)
-
-#define stream_copy(_dst, _src, _n) do { \
-	memcpy(_dst->pointer, _src->pointer, _n); \
-	_dst->pointer += _n; \
-	_src->pointer += _n; \
-	} while (0)
 
 static INLINE BOOL stream_skip(wStream* s, size_t sz) {
     if (Stream_GetRemainingLength(s) < sz)

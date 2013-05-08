@@ -352,11 +352,11 @@ void test_encode(void)
 	//dump_buffer(context->priv->cb_g_buffer, 4096);
 
 	/*printf("*** Y ***\n");
-	winpr_HexDump(stream_get_head(enc_stream), y_size);
+	winpr_HexDump(Stream_Buffer(enc_stream), y_size);
 	printf("*** Cb ***\n");
-	winpr_HexDump(stream_get_head(enc_stream) + y_size, cb_size);
+	winpr_HexDump(Stream_Buffer(enc_stream) + y_size, cb_size);
 	printf("*** Cr ***\n");
-	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
+	winpr_HexDump(Stream_Buffer(enc_stream) + y_size + cb_size, cr_size);*/
 
 	Stream_SetPosition(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,

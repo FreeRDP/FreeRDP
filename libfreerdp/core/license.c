@@ -602,7 +602,7 @@ void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blo
 	if (blob->length > 0)
 		Stream_Write(s, blob->data, blob->length); /* blobData */
 
-	Stream_Write_zero(s, length - blob->length);
+	Stream_Zero(s, length - blob->length);
 }
 
 /**

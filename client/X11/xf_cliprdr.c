@@ -947,7 +947,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	Stream_Write_UINT32(s, offset);
 	Stream_Write(s, data, size);
 
-	cb->data = stream_get_head(s);
+	cb->data = Stream_Buffer(s);
 	cb->data_length = Stream_GetPosition(s);
 	stream_detach(s);
 	stream_free(s);

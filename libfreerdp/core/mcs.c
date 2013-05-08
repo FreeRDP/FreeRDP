@@ -296,7 +296,7 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_sequence_tag(s, length);
-	Stream_Write(s, stream_get_head(tmps), length);
+	Stream_Write(s, Stream_Buffer(tmps), length);
 	stream_free(tmps);
 }
 
@@ -414,7 +414,7 @@ void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data)
 	length = Stream_GetPosition(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
-	Stream_Write(s, stream_get_head(tmps), length);
+	Stream_Write(s, Stream_Buffer(tmps), length);
 	stream_free(tmps);
 }
 
@@ -441,7 +441,7 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
-	Stream_Write(s, stream_get_head(tmps), length);
+	Stream_Write(s, Stream_Buffer(tmps), length);
 	stream_free(tmps);
 }
 
@@ -468,17 +468,17 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 
 	s = transport_send_stream_init(mcs->transport, 1024);
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_initial(s, mcs, gcc_CCrq);
-	stream_get_mark(s, em);
+	Stream_GetPointer(s, em);
 	length = (em - bm);
-	stream_set_mark(s, bm);
+	Stream_SetPointer(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	status = transport_write(mcs->transport, s);
 
@@ -547,17 +547,17 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 
 	s = transport_send_stream_init(mcs->transport, 1024);
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_response(s, mcs, gcc_CCrsp);
-	stream_get_mark(s, em);
+	Stream_GetPointer(s, em);
 	length = (em - bm);
-	stream_set_mark(s, bm);
+	Stream_SetPointer(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	ret = transport_write(mcs->transport, s);
 

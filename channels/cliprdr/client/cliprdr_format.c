@@ -94,7 +94,7 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 		}
 				
 		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, Stream_Capacity(body));
-		Stream_Write(s, stream_get_head(body), Stream_Capacity(body));
+		Stream_Write(s, Stream_Buffer(body), Stream_Capacity(body));
 		stream_free(body);
 	}
 
@@ -160,7 +160,7 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, wStream* s, UINT3
 	BYTE* end_mark;
 	CLIPRDR_FORMAT_NAME* format_name;
 	
-	stream_get_mark(s, end_mark);
+	Stream_GetPointer(s, end_mark);
 	end_mark += length;
 		
 	cliprdr->format_names = (CLIPRDR_FORMAT_NAME*) malloc(sizeof(CLIPRDR_FORMAT_NAME) * allocated_formats);

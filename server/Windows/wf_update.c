@@ -150,7 +150,7 @@ void wf_update_encode(wfInfo* wfi)
 	cmd->width = width;
 	cmd->height = height;
 	cmd->bitmapDataLength = Stream_GetPosition(wfi->s);
-	cmd->bitmapData = stream_get_head(wfi->s);
+	cmd->bitmapData = Stream_Buffer(wfi->s);
 }
 
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)

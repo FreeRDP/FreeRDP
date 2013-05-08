@@ -76,7 +76,7 @@ UINT16 fastpath_header_length(wStream* s)
 {
 	BYTE length1;
 
-	Stream_Seek_BYTE(s);
+	Stream_Seek_UINT8(s);
 	Stream_Read_UINT8(s, length1);
 	Stream_Rewind(s, 2);
 
@@ -823,7 +823,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
-		stream_get_mark(s, holdp);
+		Stream_GetPointer(s, holdp);
 		ls = s;
 		dlen = MIN(maxLength, totalLength);
 		cflags = 0;
@@ -860,7 +860,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		else
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
-		stream_get_mark(ls, bm);
+		Stream_GetPointer(ls, bm);
 		header = 0;
 
 		if (sec_bytes > 0)
@@ -912,7 +912,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		}
 
 		/* Reserve 6 + sec_bytes bytes for the next fragment header, if any. */
-		stream_set_mark(s, holdp + dlen);
+		Stream_SetPointer(s, holdp + dlen);
 	}
 
 	stream_detach(update);

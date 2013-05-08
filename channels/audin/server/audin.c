@@ -78,7 +78,7 @@ static void audin_server_send_version(audin_server* audin, wStream* s)
 {
 	Stream_Write_UINT8(s, MSG_SNDIN_VERSION);
 	Stream_Write_UINT32(s, 1); /* Version (4 bytes) */
-	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	WTSVirtualChannelWrite(audin->audin_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 }
 
 static BOOL audin_server_recv_version(audin_server* audin, wStream* s, UINT32 length)
@@ -130,7 +130,7 @@ static void audin_server_send_formats(audin_server* audin, wStream* s)
 		}
 	}
 
-	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	WTSVirtualChannelWrite(audin->audin_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 }
 
 static BOOL audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 length)
@@ -201,7 +201,7 @@ static void audin_server_send_open(audin_server* audin, wStream* s)
 	Stream_Write_UINT16(s, 16); /* wBitsPerSample */
 	Stream_Write_UINT16(s, 0); /* cbSize */
 
-	WTSVirtualChannelWrite(audin->audin_channel, stream_get_head(s), Stream_GetPosition(s), NULL);
+	WTSVirtualChannelWrite(audin->audin_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
 }
 
 static BOOL audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32 length)
@@ -330,7 +330,7 @@ static void* audin_server_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(audin->audin_channel, 0, stream_get_head(s),
+		if (WTSVirtualChannelRead(audin->audin_channel, 0, Stream_Buffer(s),
 			Stream_Capacity(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
@@ -338,7 +338,7 @@ static void* audin_server_thread_func(void* arg)
 			
 			Stream_EnsureRemainingCapacity(s, (int) bytes_returned);
 
-			if (WTSVirtualChannelRead(audin->audin_channel, 0, stream_get_head(s),
+			if (WTSVirtualChannelRead(audin->audin_channel, 0, Stream_Buffer(s),
 				Stream_Capacity(s), &bytes_returned) == FALSE)
 				break;
 		}

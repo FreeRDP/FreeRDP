@@ -94,7 +94,7 @@ BOOL update_read_bitmap_data(wStream* s, BITMAP_DATA* bitmap_data)
 		}
 
 		bitmap_data->compressed = TRUE;
-		stream_get_mark(s, bitmap_data->bitmapDataStream);
+		Stream_GetPointer(s, bitmap_data->bitmapDataStream);
 		Stream_Seek(s, bitmap_data->bitmapLength);
 	}
 	else
@@ -102,7 +102,7 @@ BOOL update_read_bitmap_data(wStream* s, BITMAP_DATA* bitmap_data)
 		if (Stream_GetRemainingLength(s) < bitmap_data->bitmapLength)
 			return FALSE;
 		bitmap_data->compressed = FALSE;
-		stream_get_mark(s, bitmap_data->bitmapDataStream);
+		Stream_GetPointer(s, bitmap_data->bitmapDataStream);
 		Stream_Seek(s, bitmap_data->bitmapLength);
 	}
 	return TRUE;
@@ -270,7 +270,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
-		Stream_Seek_BYTE(s); /* pad (1 byte) */
+		Stream_Seek_UINT8(s); /* pad (1 byte) */
 
 	return TRUE;
 }
@@ -516,7 +516,7 @@ static void update_send_surface_command(rdpContext* context, wStream* s)
 
 	update = fastpath_update_pdu_init(rdp->fastpath);
 	Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s));
-	Stream_Write(update, stream_get_head(s), Stream_GetPosition(s));
+	Stream_Write(update, Stream_Buffer(s), Stream_GetPosition(s));
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update);
 }
 
@@ -561,7 +561,7 @@ static void update_send_synchronize(rdpContext* context)
 	rdpRdp* rdp = context->rdp;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	Stream_Write_zero(s, 2); /* pad2Octets (2 bytes) */
+	Stream_Zero(s, 2); /* pad2Octets (2 bytes) */
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SYNCHRONIZE, s);
 }
 

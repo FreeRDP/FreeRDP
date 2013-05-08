@@ -504,7 +504,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return FALSE;
 	}
 
-	Stream_Seek_BYTE(s); /* regionFlags (1 byte) */
+	Stream_Seek_UINT8(s); /* regionFlags (1 byte) */
 	Stream_Read_UINT16(s, message->num_rects); /* numRects (2 bytes) */
 
 	if (message->num_rects < 1)
@@ -621,7 +621,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	Stream_Seek_UINT16(s); /* properties (2 bytes) */
 
 	Stream_Read_UINT8(s, context->num_quants); /* numQuant (1 byte) */
-	Stream_Seek_BYTE(s); /* tileSize (1 byte), must be set to 0x40 */
+	Stream_Seek_UINT8(s); /* tileSize (1 byte), must be set to 0x40 */
 
 	if (context->num_quants < 1)
 	{
