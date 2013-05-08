@@ -28,14 +28,19 @@
 	
 	_connection_params = [dict mutableDeepCopy];
 	
-	if ([[_connection_params objectForKey:@"password"] isKindOfClass:[NSData class]])
-	{
-		NSString* plaintext_password = [[[EncryptionController sharedEncryptionController] decryptor] decryptString:[_connection_params objectForKey:@"password"]];
-        
-		[self setValue:plaintext_password forKey:@"password"];
-	}
+    [self decryptPasswordForKey:@"password"];
+    [self decryptPasswordForKey:@"tsg_password"];
 	
 	return self;
+}
+
+- (void)decryptPasswordForKey:(NSString*)key
+{
+	if ([[_connection_params objectForKey:key] isKindOfClass:[NSData class]])
+	{
+		NSString* plaintext_password = [[[EncryptionController sharedEncryptionController] decryptor] decryptString:[_connection_params objectForKey:key]];
+		[self setValue:plaintext_password forKey:key];
+	}
 }
 
 - (id)initWithBaseDefaultParameters
@@ -89,19 +94,23 @@
 			[serializable_params setObject:[_connection_params objectForKey:k] forKey:k];
 	
 	if ([serializable_params objectForKey:@"password"] != nil)
-	{
-		NSData* encrypted_password = [[[EncryptionController sharedEncryptionController] encryptor] encryptString:[serializable_params objectForKey:@"password"]];
-		
-		if (encrypted_password)
-			[serializable_params setObject:encrypted_password forKey:@"password"];
-		else
-			[serializable_params removeObjectForKey:@"password"]; 
-	}
+        [self serializeDecryptedForKey:@"password" forParams:serializable_params];
+	if ([serializable_params objectForKey:@"tsg_password"] != nil)
+        [self serializeDecryptedForKey:@"tsg_password" forParams:serializable_params];
 	
 	[coder encodeObject:serializable_params forKey:@"connectionParams"];
 	[serializable_params release];
 }
 
+- (void)serializeDecryptedForKey:(NSString*)key forParams:(NSMutableDictionary*)params
+{
+    NSData* encrypted_password = [[[EncryptionController sharedEncryptionController] encryptor] encryptString:[params objectForKey:key]];
+    
+    if (encrypted_password)
+        [params setObject:encrypted_password forKey:key];
+    else
+        [params removeObjectForKey:key];
+}
 
 #pragma mark -
 #pragma mark NSKeyValueCoding
