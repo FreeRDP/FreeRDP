@@ -55,6 +55,7 @@ FREERDP_API int freerdp_client_stop(cfInfo* cfi);
 FREERDP_API freerdp* freerdp_client_get_instance(cfInfo* cfi);
 FREERDP_API HANDLE freerdp_client_get_thread(cfInfo* cfi);
 FREERDP_API rdpClient* freerdp_client_get_interface(cfInfo* cfi);
+FREERDP_API double freerdp_client_get_scale(xfInfo* xfi);
 
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API void freerdp_client_free(cfInfo* cfi);

@@ -32,6 +32,14 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
+#ifdef WITH_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +87,35 @@
 static long xv_port = 0;
 static const size_t password_size = 512;
 
+void xf_draw_screen_scaled(xfInfo* xfi)
+{
+	XTransform transform;
+	Picture windowPicture;
+	Picture primaryPicture;
+	XRenderPictureAttributes pa;
+	XRenderPictFormat* picFormat;
+
+	picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
+	pa.subwindow_mode = IncludeInferiors;
+	primaryPicture = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
+	windowPicture = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
+
+	transform.matrix[0][0] = XDoubleToFixed(1);
+	transform.matrix[0][1] = XDoubleToFixed(0);
+	transform.matrix[0][2] = XDoubleToFixed(0);
+
+	transform.matrix[1][0] = XDoubleToFixed(0);
+	transform.matrix[1][1] = XDoubleToFixed(1);
+	transform.matrix[1][2] = XDoubleToFixed(0);
+
+	transform.matrix[2][0] = XDoubleToFixed(0);
+	transform.matrix[2][1] = XDoubleToFixed(0);
+	transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
+
+	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
+	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+}
+
 void xf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
@@ -121,7 +158,15 @@ void xf_sw_end_paint(rdpContext* context)
 			xf_lock_x11(xfi, FALSE);
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+			if (xfi->scale != 1.0)
+			{
+				xf_draw_screen_scaled(xfi);
+			}
+			else
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+			}
 
 			xf_unlock_x11(xfi, FALSE);
 		}
@@ -147,7 +192,15 @@ void xf_sw_end_paint(rdpContext* context)
 				h = cinvalid[i].h;
 
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+				if (xfi->scale != 1.0)
+				{
+					xf_draw_screen_scaled(xfi);
+				}
+				else
+				{
+					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+				}
 			}
 
 			XFlush(xfi->display);
@@ -231,7 +284,14 @@ void xf_hw_end_paint(rdpContext* context)
 
 			xf_lock_x11(xfi, FALSE);
 
-			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			if (xfi->scale != 1.0)
+			{
+				xf_draw_screen_scaled(xfi);
+			}
+			else
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+			}
 
 			xf_unlock_x11(xfi, FALSE);
 		}
@@ -256,7 +316,14 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 
-				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+				if (xfi->scale != 1.0)
+				{
+					xf_draw_screen_scaled(xfi);
+				}
+				else
+				{
+					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+				}
 			}
 
 			XFlush(xfi->display);
@@ -767,6 +834,12 @@ BOOL xf_post_connect(freerdp* instance)
 			xfi->nsc_context = nsc_context;
 		}
 	}
+
+	xfi->originalWidth = settings->DesktopWidth;
+	xfi->originalHeight = settings->DesktopHeight;
+	xfi->currentWidth = xfi->originalWidth;
+	xfi->currentHeight = xfi->originalWidth;
+	xfi->scale = 1.0;
 
 	xfi->width = settings->DesktopWidth;
 	xfi->height = settings->DesktopHeight;
@@ -1479,6 +1552,11 @@ HANDLE freerdp_client_get_thread(cfInfo* cfi)
 rdpClient* freerdp_client_get_interface(cfInfo* cfi)
 {
 	return cfi->client;
+}
+
+double freerdp_client_get_scale(xfInfo* xfi)
+{
+	return xfi->scale;
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)
