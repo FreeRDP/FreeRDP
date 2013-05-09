@@ -785,6 +785,19 @@ wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 	return s;
 }
 
+wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
+{
+	wStream* s;
+
+	s = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+
+	Stream_Seek(s, 3); /* fpOutputHeader, length1 and length2 */
+	Stream_Seek(s, fastpath_get_sec_bytes(fastpath->rdp));
+	Stream_Seek(s, 3); /* updateHeader, size */
+
+	return s;
+}
+
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	rdpRdp* rdp;

@@ -380,6 +380,9 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
+	client->context->input = client->input;
+	client->context->update = client->update;
+	client->context->settings = client->settings;
 
 	client->update->context = client->context;
 	client->input->context = client->context;

@@ -116,6 +116,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iEv
 BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
+wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s);
 
 BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction, UINT32 frameId);

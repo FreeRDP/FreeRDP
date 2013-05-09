@@ -810,6 +810,8 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 {
 	orderInfo->fieldFlags = 0;
 
+	Stream_EnsureRemainingCapacity(s, 64);
+
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	update_write_coord(s, patblt->nLeftRect);
 
@@ -857,6 +859,8 @@ BOOL update_read_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* s
 BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
 {
 	orderInfo->fieldFlags = 0;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	update_write_coord(s, scrblt->nLeftRect);
@@ -924,6 +928,8 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	BYTE byte;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	orderInfo->fieldFlags = 0;
 
@@ -1154,6 +1160,8 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* 
 {
 	UINT16 cacheId;
 
+	Stream_EnsureRemainingCapacity(s, 32);
+
 	cacheId = (memblt->cacheId & 0xFF) | ((memblt->colorIndex & 0xFF) << 8);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
@@ -1262,6 +1270,8 @@ BOOL update_read_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDE
 BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index)
 {
 	orderInfo->fieldFlags = 0;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_01;
 	Stream_Write_UINT8(s, glyph_index->cacheId);
@@ -1629,6 +1639,8 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 {
 	BYTE bitsPerPixelId;
 
+	Stream_EnsureRemainingCapacity(s, 64);
+
 	bitsPerPixelId = BPP_CBR2[cache_bitmap_v2->bitmapBpp];
 
 	*flags = (cache_bitmap_v2->cacheId & 0x0003) |
@@ -1670,10 +1682,12 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
 		}
 
+		Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength);
 		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
 	}
 	else
 	{
+		Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength);
 		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
 	}
 
@@ -1801,6 +1815,8 @@ BOOL update_write_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph, 
 	INT16 lsi16;
 	GLYPH_DATA* glyph;
 
+	Stream_EnsureRemainingCapacity(s, 2 + cache_glyph->cGlyphs * 32);
+
 	Stream_Write_UINT8(s, cache_glyph->cacheId); /* cacheId (1 byte) */
 	Stream_Write_UINT8(s, cache_glyph->cGlyphs); /* cGlyphs (1 byte) */
 
@@ -1881,6 +1897,8 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_g
 {
 	int i;
 	GLYPH_DATA_V2* glyph;
+
+	Stream_EnsureRemainingCapacity(s, cache_glyph_v2->cGlyphs * 32);
 
 	*flags = (cache_glyph_v2->cacheId & 0x000F) |
 			((cache_glyph_v2->flags & 0x000F) << 4) |
