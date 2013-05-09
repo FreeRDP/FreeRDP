@@ -205,47 +205,8 @@ void xf_input_detect_pinch(xfInfo* xfi)
 
 #endif
 
-int xf_input_handle_event(xfInfo* xfi, XEvent* event)
-{
 #ifdef WITH_XI
-	XGenericEventCookie* cookie = &event->xcookie;
 
-	XGetEventData(xfi->display, cookie);
-
-	if ((cookie->type == GenericEvent) && (cookie->extension == xfi->XInputOpcode))
-	{
-		switch(cookie->evtype)
-		{
-			case XI_TouchBegin:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
-					xf_input_touch_begin(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
-				break;
-
-			case XI_TouchUpdate:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
-					xf_input_touch_update(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
-				break;
-
-			case XI_TouchEnd:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
-					xf_input_touch_end(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
-				break;
-
-			default:
-				printf("unhandled xi type= %d\n", cookie->evtype);
-				break;
-		}
-	}
-
-	XFreeEventData(xfi->display,cookie);
-#endif
-	return 0;
-}
-
-#ifdef WITH_XI
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
@@ -306,3 +267,120 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 }
 
 #endif
+
+int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
+{
+#ifdef WITH_XI
+	XGenericEventCookie* cookie = &event->xcookie;
+
+	XGetEventData(xfi->display, cookie);
+
+	if ((cookie->type == GenericEvent) && (cookie->extension == xfi->XInputOpcode))
+	{
+		switch (cookie->evtype)
+		{
+			case XI_TouchBegin:
+				if (xf_input_is_duplicate(cookie->data) == FALSE)
+					xf_input_touch_begin(xfi, cookie->data);
+				xf_input_save_last_event(cookie->data);
+				break;
+
+			case XI_TouchUpdate:
+				if (xf_input_is_duplicate(cookie->data) == FALSE)
+					xf_input_touch_update(xfi, cookie->data);
+				xf_input_save_last_event(cookie->data);
+				break;
+
+			case XI_TouchEnd:
+				if (xf_input_is_duplicate(cookie->data) == FALSE)
+					xf_input_touch_end(xfi, cookie->data);
+				xf_input_save_last_event(cookie->data);
+				break;
+
+			default:
+				printf("unhandled xi type= %d\n", cookie->evtype);
+				break;
+		}
+	}
+
+	XFreeEventData(xfi->display,cookie);
+#endif
+	return 0;
+}
+
+#ifdef WITH_XI
+
+int xf_input_touch_begin_remote(xfInfo* xfi, XIDeviceEvent* event)
+{
+	return 0;
+}
+
+int xf_input_touch_update_remote(xfInfo* xfi, XIDeviceEvent* event)
+{
+	return 0;
+}
+
+int xf_input_touch_end_remote(xfInfo* xfi, XIDeviceEvent* event)
+{
+	return 0;
+}
+
+#endif
+
+int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
+{
+#ifdef WITH_XI
+	XGenericEventCookie* cookie = &event->xcookie;
+
+	XGetEventData(xfi->display, cookie);
+
+	if ((cookie->type == GenericEvent) && (cookie->extension == xfi->XInputOpcode))
+	{
+		switch (cookie->evtype)
+		{
+			case XI_TouchBegin:
+				xf_input_touch_begin_remote(xfi, cookie->data);
+				break;
+
+			case XI_TouchUpdate:
+				xf_input_touch_update_remote(xfi, cookie->data);
+				break;
+
+			case XI_TouchEnd:
+				xf_input_touch_end_remote(xfi, cookie->data);
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	XFreeEventData(xfi->display,cookie);
+#endif
+	return 0;
+}
+
+void xf_process_rdpei_event(xfInfo* xfi, wMessage* event)
+{
+	switch (GetMessageType(event->id))
+	{
+		case RdpeiChannel_ServerReady:
+			break;
+
+		case RdpeiChannel_SuspendTouch:
+			break;
+
+		case RdpeiChannel_ResumeTouch:
+			break;
+	}
+}
+
+int xf_input_handle_event(xfInfo* xfi, XEvent* event)
+{
+	if (xfi->settings->MultiTouchInput)
+	{
+		return xf_input_handle_event_remote(xfi, event);
+	}
+
+	return xf_input_handle_event_local(xfi, event);
+}

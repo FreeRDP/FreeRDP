@@ -29,13 +29,6 @@
 
 int xf_input_init(xfInfo* xfi, Window win);
 int xf_input_handle_event(xfInfo* xfi, XEvent* event);
-
-#ifdef WITH_XI
-
-void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event);
-void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event);
-void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event);
-
-#endif
+void xf_process_rdpei_event(xfInfo* xfi, wMessage* event);
 
 #endif

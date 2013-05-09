@@ -324,5 +324,25 @@
 #define FREERDP_RAIL_CHANNEL_CLIENT_GET_APP_ID_REQUEST		MakeMessageId(RailChannel, ClientGetAppIdRequest)
 #define FREERDP_RAIL_CHANNEL_SERVER_GET_APP_ID_RESPONSE		MakeMessageId(RailChannel, ServerGetAppIdResponse)
 
+/**
+ * MultiTouch Input Channel Extension (MS-RDPEDI)
+ */
+
+#define RdpeiChannel_Class					(Channel_Base + 5)
+
+#define RdpeiChannel_ServerReady				1
+#define RdpeiChannel_ClientReady				2
+#define RdpeiChannel_TouchEvent					3
+#define RdpeiChannel_SuspendTouch				4
+#define RdpeiChannel_ResumeTouch				5
+#define RdpeiChannel_DismissHoveringContact			6
+
+#define FREERDP_RDPEI_CHANNEL_SERVER_READY			MakeMessageId(RdpeiChannel, ServerReady)
+#define FREERDP_RDPEI_CHANNEL_CLIENT_READY			MakeMessageId(RdpeiChannel, ClientReady)
+#define FREERDP_RDPEI_CHANNEL_TOUCH_EVENT			MakeMessageId(RdpeiChannel, TouchEvent)
+#define FREERDP_RDPEI_CHANNEL_SUSPEND_TOUCH			MakeMessageId(RdpeiChannel, SuspendTouch)
+#define FREERDP_RDPEI_CHANNEL_RESUME_TOUCH			MakeMessageId(RdpeiChannel, ResumeTouch)
+#define FREERDP_RDPEI_CHANNEL_DISMISS_HOVERING_CONTACT		MakeMessageId(RdpeiChannel, DismissHoveringContact)
+
 #endif /* FREERDP_CORE_MESSAGE_H */
 

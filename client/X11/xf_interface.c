@@ -77,6 +77,7 @@
 #include "xf_rail.h"
 #include "xf_tsmf.h"
 #include "xf_event.h"
+#include "xf_input.h"
 #include "xf_cliprdr.h"
 #include "xf_monitor.h"
 #include "xf_graphics.h"
@@ -1022,6 +1023,10 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 			case CliprdrChannel_Class:
 				xf_process_cliprdr_event(xfi, event);
+				break;
+
+			case RdpeiChannel_Class:
+				xf_process_rdpei_event(xfi, event);
 				break;
 
 			default:
