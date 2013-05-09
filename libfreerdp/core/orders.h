@@ -191,6 +191,9 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s);
 BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes);
 BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags, BYTE fieldBytes);
 
+BOOL update_read_bounds(wStream* s, rdpBounds* bounds);
+BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo);
+
 BOOL update_read_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt);
 BOOL update_read_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
 BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);

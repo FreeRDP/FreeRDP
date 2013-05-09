@@ -210,6 +210,8 @@ struct rdp_update
 	wStream* us;
 	UINT16 numberOrders;
 	BOOL combineUpdates;
+	rdpBounds currentBounds;
+	rdpBounds previousBounds;
 };
 
 #endif /* FREERDP_UPDATE_H */

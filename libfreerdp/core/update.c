@@ -487,6 +487,130 @@ static void update_end_paint(rdpContext* context)
 	Stream_Free(s, TRUE);
 }
 
+static void update_set_bounds(rdpContext* context, rdpBounds* bounds)
+{
+	rdpUpdate* update = context->update;
+
+	CopyMemory(&update->previousBounds, &update->currentBounds, sizeof(rdpBounds));
+
+	if (!bounds)
+		ZeroMemory(&update->currentBounds, sizeof(rdpBounds));
+	else
+		CopyMemory(&update->currentBounds, bounds, sizeof(rdpBounds));
+}
+
+BOOL update_bounds_is_null(rdpBounds* bounds)
+{
+	if ((bounds->left == 0) && (bounds->top == 0) &&
+			(bounds->right == 0) && (bounds->bottom == 0))
+		return TRUE;
+
+	return FALSE;
+}
+
+BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
+{
+	if ((bounds1->left == bounds2->left) && (bounds1->top == bounds2->top) &&
+		(bounds1->right == bounds2->right) && (bounds1->bottom == bounds2->bottom))
+		return TRUE;
+
+	return FALSE;
+}
+
+int update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)
+{
+	int length = 0;
+	rdpUpdate* update = context->update;
+
+	orderInfo->boundsFlags = 0;
+
+	if (update_bounds_is_null(&update->currentBounds))
+		return 0;
+
+	orderInfo->controlFlags |= ORDER_BOUNDS;
+
+	if (update_bounds_equals(&update->previousBounds, &update->currentBounds))
+	{
+		orderInfo->controlFlags |= ORDER_ZERO_BOUNDS_DELTAS;
+		return 0;
+	}
+	else
+	{
+		length += 1;
+
+		if (update->previousBounds.left != update->currentBounds.left)
+		{
+			orderInfo->bounds.left = update->currentBounds.left;
+			orderInfo->boundsFlags |= BOUND_LEFT;
+			length += 2;
+		}
+
+		if (update->previousBounds.top != update->currentBounds.top)
+		{
+			orderInfo->bounds.top = update->currentBounds.top;
+			orderInfo->boundsFlags |= BOUND_TOP;
+			length += 2;
+		}
+
+		if (update->previousBounds.right != update->currentBounds.right)
+		{
+			orderInfo->bounds.right = update->currentBounds.right;
+			orderInfo->boundsFlags |= BOUND_RIGHT;
+			length += 2;
+		}
+
+		if (update->previousBounds.bottom != update->currentBounds.bottom)
+		{
+			orderInfo->bounds.bottom = update->currentBounds.bottom;
+			orderInfo->boundsFlags |= BOUND_BOTTOM;
+			length += 2;
+		}
+	}
+
+	return length;
+}
+
+int update_prepare_order_info(rdpContext* context, ORDER_INFO* orderInfo, UINT32 orderType)
+{
+	int length = 1;
+
+	orderInfo->fieldFlags = 0;
+	orderInfo->orderType = orderType;
+
+	orderInfo->controlFlags = ORDER_STANDARD;
+
+	orderInfo->controlFlags |= ORDER_TYPE_CHANGE;
+	length += 1;
+
+	length += PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType];
+
+	length += update_prepare_bounds(context, orderInfo);
+
+	return length;
+}
+
+int update_write_order_info(rdpContext* context, wStream* s, ORDER_INFO* orderInfo, int offset)
+{
+	int position;
+
+	position = Stream_GetPosition(s);
+	Stream_SetPosition(s, offset);
+
+	Stream_Write_UINT8(s, orderInfo->controlFlags); /* controlFlags (1 byte) */
+
+	if (orderInfo->controlFlags & ORDER_TYPE_CHANGE)
+		Stream_Write_UINT8(s, orderInfo->orderType); /* orderType (1 byte) */
+
+	update_write_field_flags(s, orderInfo->fieldFlags, orderInfo->controlFlags,
+			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]);
+
+	update_write_bounds(s, orderInfo);
+
+	Stream_SetPosition(s, position);
+
+	return 0;
+}
+
 static void update_write_refresh_rect(wStream* s, BYTE count, RECTANGLE_16* areas)
 {
 	int i;
@@ -612,32 +736,21 @@ static void update_send_desktop_resize(rdpContext* context)
 static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	wStream* s;
-	int bm, em;
+	int offset;
 	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpUpdate* update = context->update;
 
-	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
-	orderInfo.orderType = ORDER_TYPE_PATBLT;
-	orderInfo.fieldFlags = 0;
-
-	headerLength = 2 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_PATBLT);
 
 	s = update->us;
-	bm = Stream_GetPosition(s);
+	offset = Stream_GetPosition(s);
 
 	Stream_EnsureRemainingCapacity(s, headerLength);
 	Stream_Seek(s, headerLength);
 
 	update_write_patblt_order(s, &orderInfo, patblt);
-	em = Stream_GetPosition(s);
-
-	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
-	Stream_Write_UINT8(s, orderInfo.orderType); /* orderType (1 byte) */
-	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
-			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
-	Stream_SetPosition(s, em);
+	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
 }
@@ -645,32 +758,21 @@ static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	wStream* s;
-	int bm, em;
+	int offset;
 	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpUpdate* update = context->update;
 
-	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
-	orderInfo.orderType = ORDER_TYPE_SCRBLT;
-	orderInfo.fieldFlags = 0;
-
-	headerLength = 2 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_SCRBLT);
 
 	s = update->us;
-	bm = Stream_GetPosition(s);
+	offset = Stream_GetPosition(s);
 
 	Stream_EnsureRemainingCapacity(s, headerLength);
 	Stream_Seek(s, headerLength);
 
 	update_write_scrblt_order(s, &orderInfo, scrblt);
-	em = Stream_GetPosition(s);
-
-	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
-	Stream_Write_UINT8(s, orderInfo.orderType); /* orderType (1 byte) */
-	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
-			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
-	Stream_SetPosition(s, em);
+	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
 }
@@ -678,32 +780,21 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	wStream* s;
-	int bm, em;
+	int offset;
 	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpUpdate* update = context->update;
 
-	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
-	orderInfo.orderType = ORDER_TYPE_OPAQUE_RECT;
-	orderInfo.fieldFlags = 0;
-
-	headerLength = 2 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_OPAQUE_RECT);
 
 	s = update->us;
-	bm = Stream_GetPosition(s);
+	offset = Stream_GetPosition(s);
 
 	Stream_EnsureRemainingCapacity(s, headerLength);
 	Stream_Seek(s, headerLength);
 
 	update_write_opaque_rect_order(s, &orderInfo, opaque_rect);
-	em = Stream_GetPosition(s);
-
-	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
-	Stream_Write_UINT8(s, orderInfo.orderType); /* orderType (1 byte) */
-	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
-			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
-	Stream_SetPosition(s, em);
+	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
 }
@@ -711,32 +802,21 @@ static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaq
 static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	wStream* s;
-	int bm, em;
+	int offset;
 	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpUpdate* update = context->update;
 
-	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
-	orderInfo.orderType = ORDER_TYPE_MEMBLT;
-	orderInfo.fieldFlags = 0;
-
-	headerLength = 2 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_MEMBLT);
 
 	s = update->us;
-	bm = Stream_GetPosition(s);
+	offset = Stream_GetPosition(s);
 
 	Stream_EnsureRemainingCapacity(s, headerLength);
 	Stream_Seek(s, headerLength);
 
 	update_write_memblt_order(s, &orderInfo, memblt);
-	em = Stream_GetPosition(s);
-
-	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
-	Stream_Write_UINT8(s, orderInfo.orderType); /* orderType (1 byte) */
-	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
-			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
-	Stream_SetPosition(s, em);
+	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
 }
@@ -744,32 +824,21 @@ static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
 	wStream* s;
-	int bm, em;
+	int offset;
 	int headerLength;
 	ORDER_INFO orderInfo;
 	rdpUpdate* update = context->update;
 
-	orderInfo.controlFlags = ORDER_STANDARD | ORDER_TYPE_CHANGE;
-	orderInfo.orderType = ORDER_TYPE_GLYPH_INDEX;
-	orderInfo.fieldFlags = 0;
-
-	headerLength = 2 + PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType];
+	headerLength = update_prepare_order_info(context, &orderInfo, ORDER_TYPE_GLYPH_INDEX);
 
 	s = update->us;
-	bm = Stream_GetPosition(s);
+	offset = Stream_GetPosition(s);
 
 	Stream_EnsureRemainingCapacity(s, headerLength);
 	Stream_Seek(s, headerLength);
 
 	update_write_glyph_index_order(s, &orderInfo, glyph_index);
-	em = Stream_GetPosition(s);
-
-	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, orderInfo.controlFlags); /* controlFlags (1 byte) */
-	Stream_Write_UINT8(s, orderInfo.orderType); /* orderType (1 byte) */
-	update_write_field_flags(s, orderInfo.fieldFlags, orderInfo.controlFlags,
-			PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo.orderType]);
-	Stream_SetPosition(s, em);
+	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
 }
@@ -1003,6 +1072,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
 	update->EndPaint = update_end_paint;
+	update->SetBounds = update_set_bounds;
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
 	update->SurfaceBits = update_send_surface_bits;
