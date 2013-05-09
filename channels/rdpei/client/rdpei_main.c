@@ -26,11 +26,12 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
 
-#include <winpr/stream.h>
+#include "rdpei_common.h"
 
 #include "rdpei_main.h"
 
@@ -61,10 +62,82 @@ struct _RDPEI_PLUGIN
 	RDPEI_LISTENER_CALLBACK* listener_callback;
 };
 
+const char* RDPEI_EVENTID_STRINGS[] =
+{
+	"",
+	"EVENTID_SC_READY",
+	"EVENTID_CS_READY",
+	"EVENTID_TOUCH",
+	"EVENTID_SUSPEND_TOUCH",
+	"EVENTID_RESUME_TOUCH",
+	"EVENTID_DISMISS_HOVERING_CONTACT"
+};
+
+int rdpei_recv_sc_ready_pdu(wStream* s)
+{
+	UINT32 protocolVersion;
+
+	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
+
+	if (protocolVersion != RDPINPUT_PROTOCOL_V1)
+	{
+		printf("Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
+		return -1;
+	}
+
+	return 0;
+}
+
+int rdpei_recv_pdu(wStream* s)
+{
+	UINT16 eventId;
+	UINT32 pduLength;
+
+	Stream_Read_UINT16(s, eventId); /* eventId (2 bytes) */
+	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
+
+	printf("rdpei_recv_pdu: eventId: %d (%s) length: %d\n",
+			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
+
+	switch (eventId)
+	{
+		case EVENTID_SC_READY:
+			rdpei_recv_sc_ready_pdu(s);
+			break;
+
+		case EVENTID_CS_READY:
+			break;
+
+		case EVENTID_TOUCH:
+			break;
+
+		case EVENTID_SUSPEND_TOUCH:
+			break;
+
+		case EVENTID_RESUME_TOUCH:
+			break;
+
+		case EVENTID_DISMISS_HOVERING_CONTACT:
+			break;
+
+		default:
+			break;
+	}
+
+	return 0;
+}
+
 static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
 {
+	wStream* s;
 	int status = 0;
 	//RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*) pChannelCallback;
+
+	s = Stream_New(pBuffer, cbSize);
+
+	status = rdpei_recv_pdu(s);
+
+	Stream_Free(s, FALSE);
 
 	return status;
 }

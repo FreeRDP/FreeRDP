@@ -29,6 +29,19 @@
 #include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
+/* Protocol Version */
+
+#define RDPINPUT_PROTOCOL_V1			0x00010000
+
+/* Input Event Ids */
+
+#define EVENTID_SC_READY			0x0001
+#define EVENTID_CS_READY			0x0002
+#define EVENTID_TOUCH				0x0003
+#define EVENTID_SUSPEND_TOUCH			0x0004
+#define EVENTID_RESUME_TOUCH			0x0005
+#define EVENTID_DISMISS_HOVERING_CONTACT	0x0006
+
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
 #else
