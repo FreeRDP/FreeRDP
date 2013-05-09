@@ -826,10 +826,10 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 	Stream_Write_UINT8(s, patblt->bRop);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_06;
-	update_write_coord(s, patblt->backColor);
+	update_write_color(s, patblt->backColor);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_07;
-	update_write_coord(s, patblt->foreColor);
+	update_write_color(s, patblt->foreColor);
 
 	orderInfo->fieldFlags |= ORDER_FIELD_08;
 	orderInfo->fieldFlags |= ORDER_FIELD_09;
