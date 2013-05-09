@@ -23,5 +23,16 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+BOOL rdpei_read_2byte_unsigned(wStream* s, UINT32* value);
+BOOL rdpei_write_2byte_unsigned(wStream* s, UINT32 value);
+BOOL rdpei_read_2byte_signed(wStream* s, INT32* value);
+BOOL rdpei_write_2byte_signed(wStream* s, INT32 value);
+BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value);
+BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value);
+BOOL rdpei_read_4byte_signed(wStream* s, INT32* value);
+BOOL rdpei_write_4byte_signed(wStream* s, INT32 value);
+BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value);
+BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value);
+
 #endif /* FREERDP_CHANNEL_RDPEI_CLIENT_COMMON_H */
 

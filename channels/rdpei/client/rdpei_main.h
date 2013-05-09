@@ -29,9 +29,51 @@
 #include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
+#define RDPINPUT_HEADER_LENGTH			6
+
+#define CONTACT_DATA_CONTACTRECT_PRESENT	0x0001
+#define CONTACT_DATA_ORIENTATION_PRESENT	0x0002
+#define CONTACT_DATA_PRESSURE_PRESENT		0x0004
+
+#define CONTACT_FLAG_DOWN			0x0001
+#define CONTACT_FLAG_UPDATE			0x0002
+#define CONTACT_FLAG_UP				0x0004
+#define CONTACT_FLAG_INRANGE			0x0008
+#define CONTACT_FLAG_INCONTACT			0x0010
+#define CONTACT_FLAG_CANCELED			0x0020
+
+struct _RDPINPUT_CONTACT_DATA
+{
+	UINT32 contactId;
+	UINT32 fieldsPresent;
+	INT32 x;
+	INT32 y;
+	UINT32 contactFlags;
+	INT32 contactRectLeft;
+	INT32 contactRectTop;
+	INT32 contactRectRight;
+	INT32 contactRectBottom;
+	UINT32 orientation;
+	UINT32 pressure;
+};
+typedef struct _RDPINPUT_CONTACT_DATA RDPINPUT_CONTACT_DATA;
+
+struct _RDPINPUT_TOUCH_FRAME
+{
+	UINT32 contactCount;
+	UINT64 frameOffset;
+	RDPINPUT_CONTACT_DATA* contacts;
+};
+typedef struct _RDPINPUT_TOUCH_FRAME RDPINPUT_TOUCH_FRAME;
+
 /* Protocol Version */
 
 #define RDPINPUT_PROTOCOL_V1			0x00010000
+
+/* Client Ready Flags */
+
+#define READY_FLAGS_SHOW_TOUCH_VISUALS		0x00000001
+#define READY_FLAGS_DISABLE_TIMESTAMP_INJECTION	0x00000002
 
 /* Input Event Ids */
 

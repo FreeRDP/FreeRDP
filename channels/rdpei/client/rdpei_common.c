@@ -32,6 +32,7 @@ BOOL rdpei_read_2byte_unsigned(wStream* s, UINT32* value)
 
 	if (Stream_GetRemainingLength(s) < 1)
 		return FALSE;
+
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
