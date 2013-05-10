@@ -326,7 +326,8 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 {
 	UINT32 status = 0;
 
-	DEBUG_SVC("event_type %d", event->event_type);
+	DEBUG_SVC("event class: %d type: %d",
+			GetMessageClass(event->id), GetMessageType(event->id));
 
 	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
 

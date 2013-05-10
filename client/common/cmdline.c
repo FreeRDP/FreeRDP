@@ -1661,6 +1661,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{
+		settings->DeviceRedirection = TRUE; /* rdpsnd requires rdpdr to be registered */
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
 	}
 
