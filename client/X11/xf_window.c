@@ -42,6 +42,12 @@
 #include <X11/extensions/shape.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
+#include "xf_input.h"
+
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
 #else
@@ -136,9 +142,11 @@ void xf_SetWindowFullscreen(xfInfo* xfi, xfWindow* window, BOOL fullscreen)
 {
 	if (fullscreen)
 	{
+		rdpSettings* settings = xfi->instance->settings;
+
 		xf_SetWindowDecorations(xfi, window, FALSE);
 
-                XMoveResizeWindow(xfi->display, window->handle, 0, 0, window->width, window->height);
+		XMoveResizeWindow(xfi->display, window->handle, settings->DesktopPosX, settings->DesktopPosY, window->width, window->height);
                 XMapRaised(xfi->display, window->handle);
 
 		window->fullscreen = TRUE;
@@ -323,9 +331,11 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 {
 	xfWindow* window;
 	XEvent xevent;
+	rdpSettings* settings;
 
 	window = (xfWindow*) malloc(sizeof(xfWindow));
 	ZeroMemory(window, sizeof(xfWindow));
+	settings = xfi->instance->settings;
 
 	if (window)
 	{
@@ -403,6 +413,8 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		XClearWindow(xfi->display, window->handle);
 		XMapWindow(xfi->display, window->handle);
 
+		xf_input_init(xfi, window->handle);
+
 		/*
 		 * NOTE: This must be done here to handle reparenting the window, 
 		 * so that we don't miss the event and hang waiting for the next one
@@ -420,8 +432,13 @@ xfWindow* xf_CreateDesktopWindow(xfInfo* xfi, char* name, int width, int height,
 		 */
 
 		if (xfi->instance->settings->RemoteApplicationMode)
+		{
                         XMoveWindow(xfi->display, window->handle, 0, 0);
-
+		}
+		else if (settings->DesktopPosX || settings->DesktopPosY)
+		{
+			XMoveWindow(xfi->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
+		}
 	}
 
 	xf_SetWindowText(xfi, window, name);

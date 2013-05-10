@@ -584,3 +584,34 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 
 	return vkcode;
 }
+
+DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
+{
+	int index;
+	DWORD keycode = 0;
+
+	if (dwFlags & KEYCODE_TYPE_APPLE)
+	{
+		for (index = 0; index < 256; index++)
+		{
+			if (vkcode == KEYCODE_TO_VKCODE_APPLE[index])
+			{
+				keycode = index;
+				break;
+			}
+		}
+	}
+	else if (dwFlags & KEYCODE_TYPE_EVDEV)
+	{
+		for (index = 0; index < 256; index++)
+		{
+			if (vkcode == KEYCODE_TO_VKCODE_EVDEV[index])
+			{
+				keycode = index;
+				break;
+			}
+		}
+	}
+
+	return keycode;
+}

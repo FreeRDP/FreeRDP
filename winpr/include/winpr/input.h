@@ -874,6 +874,7 @@ WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeybo
 #define KEYCODE_TYPE_EVDEV		0x00000002
 
 WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags);
+WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, DWORD dwFlags);
 
 #ifdef __cplusplus
 }

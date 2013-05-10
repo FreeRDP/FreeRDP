@@ -307,10 +307,10 @@ void test_decode(void)
 	wStream* s;
 
 	s = stream_new(sizeof(y_data) + sizeof(cb_data) + sizeof(cr_data));
-	stream_write(s, y_data, sizeof(y_data));
-	stream_write(s, cb_data, sizeof(cb_data));
-	stream_write(s, cr_data, sizeof(cr_data));
-	stream_set_pos(s, 0);
+	Stream_Write(s, y_data, sizeof(y_data));
+	Stream_Write(s, cb_data, sizeof(cb_data));
+	Stream_Write(s, cr_data, sizeof(cr_data));
+	Stream_SetPosition(s, 0);
 
 	context = rfx_context_new();
 	context->mode = RLGR3;
@@ -321,7 +321,7 @@ void test_decode(void)
 		sizeof(cr_data), test_quantization_values,
 		decode_buffer);
 	rfx_context_free(context);
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	dump_ppm_image(decode_buffer);
 }
@@ -352,13 +352,13 @@ void test_encode(void)
 	//dump_buffer(context->priv->cb_g_buffer, 4096);
 
 	/*printf("*** Y ***\n");
-	winpr_HexDump(stream_get_head(enc_stream), y_size);
+	winpr_HexDump(Stream_Buffer(enc_stream), y_size);
 	printf("*** Cb ***\n");
-	winpr_HexDump(stream_get_head(enc_stream) + y_size, cb_size);
+	winpr_HexDump(Stream_Buffer(enc_stream) + y_size, cb_size);
 	printf("*** Cr ***\n");
-	winpr_HexDump(stream_get_head(enc_stream) + y_size + cb_size, cr_size);*/
+	winpr_HexDump(Stream_Buffer(enc_stream) + y_size + cb_size, cr_size);*/
 
-	stream_set_pos(enc_stream, 0);
+	Stream_SetPosition(enc_stream, 0);
 	rfx_decode_rgb(context, enc_stream,
 		y_size, test_quantization_values,
 		cb_size, test_quantization_values,
@@ -398,9 +398,9 @@ void test_message(void)
 		stream_clear(s);
 		rfx_compose_message(context, s,
 			&rect, 1, rgb_data, 100, 80, 100 * 3);
-		stream_seal(s);
+		Stream_SealLength(s);
 		/*hexdump(buffer, size);*/
-		stream_set_pos(s, 0);
+		Stream_SetPosition(s, 0);
 		message = rfx_process_message(context, s->pointer, s->capacity);
 		if (i == 0)
 		{
@@ -410,7 +410,7 @@ void test_message(void)
 			}
 		}
 		rfx_message_free(context, message);
-		stream_free(s);
+		Stream_Free(s, TRUE);
 	}
 
 	rfx_context_free(context);

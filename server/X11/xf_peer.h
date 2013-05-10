@@ -21,6 +21,8 @@
 #define __XF_PEER_H
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
@@ -47,16 +49,13 @@ struct xf_peer_context
 
 	int fps;
 	wStream* s;
-	HGDI_DC hdc;
 	xfInfo* info;
-	int activations;
-	pthread_t thread;
+	HANDLE mutex;
 	BOOL activated;
-	pthread_mutex_t mutex;
+	HANDLE monitorThread;
+	HANDLE updateReadyEvent;
+	HANDLE updateSentEvent;
 	RFX_CONTEXT* rfx_context;
-	pthread_t frame_rate_thread;
-
-	wMessageQueue* queue;
 };
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);

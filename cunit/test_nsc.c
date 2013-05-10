@@ -363,11 +363,11 @@ void test_nsc_encode(void)
 
 	for (i = 0; i < 30000; i++)
 	{
-		stream_set_pos(enc_stream, 0);
+		Stream_SetPosition(enc_stream, 0);
 		nsc_compose_message(context, enc_stream, rgb_data, 64, 64, 64 * 3);
 	}
-	/*winpr_HexDump(stream_get_head(enc_stream), stream_get_length(enc_stream));*/
-	nsc_process_message(context, 32, 64, 64, stream_get_head(enc_stream), stream_get_length(enc_stream));
+	/*winpr_HexDump(Stream_Buffer(enc_stream), Stream_GetPosition(enc_stream));*/
+	nsc_process_message(context, 32, 64, 64, Stream_Buffer(enc_stream), Stream_GetPosition(enc_stream));
 	/*winpr_HexDump(context->bmpdata, 64 * 64 * 4);*/
 	stream_free(enc_stream);
 

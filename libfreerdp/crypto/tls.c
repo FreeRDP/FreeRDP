@@ -249,17 +249,16 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 
 	SSL_CTX_set_options(tls->ctx, options);
 
-	fprintf(stderr, "private key file: %s\n", privatekey_file);
-
 	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
 		fprintf(stderr, "SSL_CTX_use_RSAPrivateKey_file failed\n");
+		fprintf(stderr, "PrivateKeyFile: %s\n", privatekey_file);
 		return FALSE;
 	}
 
 	tls->ssl = SSL_new(tls->ctx);
 
-	if (tls->ssl == NULL)
+	if (!tls->ssl)
 	{
 		fprintf(stderr, "SSL_new failed\n");
 		return FALSE;
@@ -273,7 +272,7 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 
 	cert = tls_get_certificate(tls, FALSE);
 
-	if (cert == NULL)
+	if (!cert)
 	{
 		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;

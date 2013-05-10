@@ -134,6 +134,8 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 		if (tcp->sockfd < 0)
 			return FALSE;
 
+		SetEventFileDescriptor(tcp->event, tcp->sockfd);
+
 		tcp_get_ip_address(tcp);
 		tcp_get_mac_address(tcp);
 
@@ -248,6 +250,15 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 	return TRUE;
 }
 
+HANDLE tcp_get_event_handle(rdpTcp* tcp)
+{
+#ifndef _WIN32
+	return tcp->event;
+#else
+	return (HANDLE) tcp->wsa_event;
+#endif
+}
+
 rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
@@ -260,6 +271,7 @@ rdpTcp* tcp_new(rdpSettings* settings)
 
 		tcp->sockfd = -1;
 		tcp->settings = settings;
+		tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
 	}
 
 	return tcp;
@@ -267,8 +279,9 @@ rdpTcp* tcp_new(rdpSettings* settings)
 
 void tcp_free(rdpTcp* tcp)
 {
-	if (tcp != NULL)
+	if (tcp)
 	{
+		CloseHandle(tcp->event);
 		free(tcp);
 	}
 }

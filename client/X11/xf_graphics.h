@@ -21,6 +21,7 @@
 #define __XF_GRAPHICS_H
 
 #include "xf_interface.h"
+#include "xfreerdp.h"
 
 void xf_register_graphics(rdpGraphics* graphics);
 

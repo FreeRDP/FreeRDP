@@ -233,7 +233,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_read_version_info(s, &(message->Version)); /* Version (8 bytes) */
 
-	length = Stream_Position(s);
+	length = Stream_GetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
@@ -317,7 +317,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_write_version_info(s, &(message->Version));
 
-	length = Stream_Position(s);
+	length = Stream_GetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->NegotiateMessage, length);
@@ -606,7 +606,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
 		ntlm_write_message_fields_buffer(s, &(message->TargetInfo));
 
-	length = Stream_Position(s);
+	length = Stream_GetPosition(s);
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
@@ -682,7 +682,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_read_version_info(s, &(message->Version)); /* Version (8 bytes) */
 
-	PayloadBufferOffset = Stream_Position(s);
+	PayloadBufferOffset = Stream_GetPosition(s);
 
 	ntlm_read_message_fields_buffer(s, &(message->DomainName)); /* DomainName */
 
@@ -718,7 +718,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_read_message_fields_buffer(s, &(message->EncryptedRandomSessionKey));
 	CopyMemory(context->EncryptedRandomSessionKey, message->EncryptedRandomSessionKey.Buffer, 16);
 
-	length = Stream_Position(s);
+	length = Stream_GetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
 	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
 	buffer->cbBuffer = length;
@@ -727,7 +727,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		MicOffset = Stream_Position(s);
+		MicOffset = Stream_GetPosition(s);
 		Stream_Read(s, message->MessageIntegrityCheck, 16);
 		PayloadBufferOffset += 16;
 	}
@@ -995,7 +995,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->UseMIC)
 	{
-		MicOffset = Stream_Position(s);
+		MicOffset = Stream_GetPosition(s);
 		Stream_Zero(s, 16); /* Message Integrity Check (16 bytes) */
 	}
 
@@ -1014,7 +1014,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)
 		ntlm_write_message_fields_buffer(s, &(message->EncryptedRandomSessionKey)); /* EncryptedRandomSessionKey */
 
-	length = Stream_Position(s);
+	length = Stream_GetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
 	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
 	buffer->cbBuffer = length;

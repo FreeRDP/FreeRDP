@@ -30,27 +30,27 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	int pos;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 
-	if (stream_get_left(s) < 20)
+	if (Stream_GetRemainingLength(s) < 20)
 		return -1;
 
-	stream_read_UINT16(s, cmd->destLeft);
-	stream_read_UINT16(s, cmd->destTop);
-	stream_read_UINT16(s, cmd->destRight);
-	stream_read_UINT16(s, cmd->destBottom);
-	stream_read_BYTE(s, cmd->bpp);
-	stream_seek(s, 2); /* reserved1, reserved2 */
-	stream_read_BYTE(s, cmd->codecID);
-	stream_read_UINT16(s, cmd->width);
-	stream_read_UINT16(s, cmd->height);
-	stream_read_UINT32(s, cmd->bitmapDataLength);
+	Stream_Read_UINT16(s, cmd->destLeft);
+	Stream_Read_UINT16(s, cmd->destTop);
+	Stream_Read_UINT16(s, cmd->destRight);
+	Stream_Read_UINT16(s, cmd->destBottom);
+	Stream_Read_UINT8(s, cmd->bpp);
+	Stream_Seek(s, 2); /* reserved1, reserved2 */
+	Stream_Read_UINT8(s, cmd->codecID);
+	Stream_Read_UINT16(s, cmd->width);
+	Stream_Read_UINT16(s, cmd->height);
+	Stream_Read_UINT32(s, cmd->bitmapDataLength);
 
-	if (stream_get_left(s) < cmd->bitmapDataLength)
+	if (Stream_GetRemainingLength(s) < cmd->bitmapDataLength)
 		return -1;
 
-	pos = stream_get_pos(s) + cmd->bitmapDataLength;
-	cmd->bitmapData = stream_get_tail(s);
+	pos = Stream_GetPosition(s) + cmd->bitmapDataLength;
+	cmd->bitmapData = Stream_Pointer(s);
 
-	stream_set_pos(s, pos);
+	Stream_SetPosition(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
 
 	IFCALL(update->SurfaceBits, update->context, cmd);
@@ -63,7 +63,7 @@ static void update_send_frame_acknowledge(rdpRdp* rdp, UINT32 frameId)
 	wStream* s;
 
 	s = rdp_data_pdu_init(rdp);
-	stream_write_UINT32(s, frameId);
+	Stream_Write_UINT32(s, frameId);
 	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
 }
 
@@ -71,11 +71,11 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s, UINT3
 {
 	SURFACE_FRAME_MARKER* marker = &update->surface_frame_marker;
 
-	if (stream_get_left(s) < 6)
+	if (Stream_GetRemainingLength(s) < 6)
 		return -1;
 
-	stream_read_UINT16(s, marker->frameAction);
-	stream_read_UINT32(s, marker->frameId);
+	Stream_Read_UINT16(s, marker->frameAction);
+	Stream_Read_UINT32(s, marker->frameId);
 
 	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 
@@ -99,9 +99,9 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 
 	while (size > 2)
 	{
-		stream_get_mark(s, mark);
+		Stream_GetPointer(s, mark);
 
-		stream_read_UINT16(s, cmdType);
+		Stream_Read_UINT16(s, cmdType);
 		size -= 2;
 
 		switch (cmdType)
@@ -136,28 +136,28 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 
 void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
 {
-	stream_check_size(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
 
-	stream_write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
+	Stream_Write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
 
-	stream_write_UINT16(s, cmd->destLeft);
-	stream_write_UINT16(s, cmd->destTop);
-	stream_write_UINT16(s, cmd->destRight);
-	stream_write_UINT16(s, cmd->destBottom);
-	stream_write_BYTE(s, cmd->bpp);
-	stream_write_UINT16(s, 0); /* reserved1, reserved2 */
-	stream_write_BYTE(s, cmd->codecID);
-	stream_write_UINT16(s, cmd->width);
-	stream_write_UINT16(s, cmd->height);
-	stream_write_UINT32(s, cmd->bitmapDataLength);
+	Stream_Write_UINT16(s, cmd->destLeft);
+	Stream_Write_UINT16(s, cmd->destTop);
+	Stream_Write_UINT16(s, cmd->destRight);
+	Stream_Write_UINT16(s, cmd->destBottom);
+	Stream_Write_UINT8(s, cmd->bpp);
+	Stream_Write_UINT16(s, 0); /* reserved1, reserved2 */
+	Stream_Write_UINT8(s, cmd->codecID);
+	Stream_Write_UINT16(s, cmd->width);
+	Stream_Write_UINT16(s, cmd->height);
+	Stream_Write_UINT32(s, cmd->bitmapDataLength);
 }
 
 void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
 {
-	stream_check_size(s, SURFCMD_FRAME_MARKER_LENGTH);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_FRAME_MARKER_LENGTH);
 
-	stream_write_UINT16(s, CMDTYPE_FRAME_MARKER);
+	Stream_Write_UINT16(s, CMDTYPE_FRAME_MARKER);
 
-	stream_write_UINT16(s, frameAction);
-	stream_write_UINT32(s, frameId);
+	Stream_Write_UINT16(s, frameAction);
+	Stream_Write_UINT32(s, frameId);
 }

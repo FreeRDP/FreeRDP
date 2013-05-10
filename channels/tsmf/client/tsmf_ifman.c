@@ -41,12 +41,12 @@ int tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 {
 	UINT32 CapabilityValue;
 
-	stream_read_UINT32(ifman->input, CapabilityValue);
+	Stream_Read_UINT32(ifman->input, CapabilityValue);
 	DEBUG_DVC("server CapabilityValue %d", CapabilityValue);
 
-	stream_check_size(ifman->output, 8);
-	stream_write_UINT32(ifman->output, 1); /* CapabilityValue */
-	stream_write_UINT32(ifman->output, 0); /* Result */
+	Stream_EnsureRemainingCapacity(ifman->output, 8);
+	Stream_Write_UINT32(ifman->output, 1); /* CapabilityValue */
+	Stream_Write_UINT32(ifman->output, 0); /* Result */
 
 	return 0;
 }
@@ -60,39 +60,39 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	UINT32 cbCapabilityLength;
 	UINT32 numHostCapabilities;
 
-	pos = stream_get_pos(ifman->output);
-	stream_check_size(ifman->output, ifman->input_size + 4);
-	stream_copy(ifman->output, ifman->input, ifman->input_size);
+	pos = Stream_GetPosition(ifman->output);
+	Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4);
+	Stream_Copy(ifman->output, ifman->input, ifman->input_size);
 
-	stream_set_pos(ifman->output, pos);
-	stream_read_UINT32(ifman->output, numHostCapabilities);
+	Stream_SetPosition(ifman->output, pos);
+	Stream_Read_UINT32(ifman->output, numHostCapabilities);
 
 	for (i = 0; i < numHostCapabilities; i++)
 	{
-		stream_read_UINT32(ifman->output, CapabilityType);
-		stream_read_UINT32(ifman->output, cbCapabilityLength);
-		pos = stream_get_pos(ifman->output);
+		Stream_Read_UINT32(ifman->output, CapabilityType);
+		Stream_Read_UINT32(ifman->output, cbCapabilityLength);
+		pos = Stream_GetPosition(ifman->output);
 
 		switch (CapabilityType)
 		{
 			case 1: /* Protocol version request */
-				stream_read_UINT32(ifman->output, v);
+				Stream_Read_UINT32(ifman->output, v);
 				DEBUG_DVC("server protocol version %d", v);
 				break;
 			case 2: /* Supported platform */
-				stream_peek_UINT32(ifman->output, v);
+				Stream_Peek_UINT32(ifman->output, v);
 				DEBUG_DVC("server supported platform %d", v);
 				/* Claim that we support both MF and DShow platforms. */
-				stream_write_UINT32(ifman->output,
+				Stream_Write_UINT32(ifman->output,
 					MMREDIR_CAPABILITY_PLATFORM_MF | MMREDIR_CAPABILITY_PLATFORM_DSHOW);
 				break;
 			default:
 				DEBUG_WARN("unknown capability type %d", CapabilityType);
 				break;
 		}
-		stream_set_pos(ifman->output, pos + cbCapabilityLength);
+		Stream_SetPosition(ifman->output, pos + cbCapabilityLength);
 	}
-	stream_write_UINT32(ifman->output, 0); /* Result */
+	Stream_Write_UINT32(ifman->output, 0); /* Result */
 
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
@@ -105,9 +105,9 @@ int tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	UINT32 PlatformCookie;
 	UINT32 FormatSupported = 1;
 
-	stream_read_UINT32(ifman->input, PlatformCookie);
-	stream_seek_UINT32(ifman->input); /* NoRolloverFlags (4 bytes) */
-	stream_read_UINT32(ifman->input, numMediaType);
+	Stream_Read_UINT32(ifman->input, PlatformCookie);
+	Stream_Seek_UINT32(ifman->input); /* NoRolloverFlags (4 bytes) */
+	Stream_Read_UINT32(ifman->input, numMediaType);
 
 	DEBUG_DVC("PlatformCookie %d numMediaType %d", PlatformCookie, numMediaType);
 
@@ -117,10 +117,10 @@ int tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	if (FormatSupported)
 		DEBUG_DVC("format ok.");
 
-	stream_check_size(ifman->output, 12);
-	stream_write_UINT32(ifman->output, FormatSupported);
-	stream_write_UINT32(ifman->output, PlatformCookie);
-	stream_write_UINT32(ifman->output, 0); /* Result */
+	Stream_EnsureRemainingCapacity(ifman->output, 12);
+	Stream_Write_UINT32(ifman->output, FormatSupported);
+	Stream_Write_UINT32(ifman->output, PlatformCookie);
+	Stream_Write_UINT32(ifman->output, 0); /* Result */
 
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
@@ -143,7 +143,7 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 
 	}
 
-	presentation = tsmf_presentation_new(stream_get_tail(ifman->input), ifman->channel_callback);
+	presentation = tsmf_presentation_new(Stream_Pointer(ifman->input), ifman->channel_callback);
 	pexisted = presentation;
 
 	if (presentation == NULL)
@@ -165,8 +165,8 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
-	stream_seek(ifman->input, 16);
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
 
 	if (presentation == NULL)
 	{
@@ -174,8 +174,8 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 	}
 	else
 	{
-		stream_read_UINT32(ifman->input, StreamId);
-		stream_seek_UINT32(ifman->input); /* numMediaType */
+		Stream_Read_UINT32(ifman->input, StreamId);
+		Stream_Seek_UINT32(ifman->input); /* numMediaType */
 		stream = tsmf_stream_new(presentation, StreamId);
 
 		if (stream)
@@ -191,9 +191,9 @@ int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 {
 	DEBUG_DVC("");
 
-	stream_check_size(ifman->output, 8);
-	stream_write_UINT32(ifman->output, 1); /* TopologyReady */
-	stream_write_UINT32(ifman->output, 0); /* Result */
+	Stream_EnsureRemainingCapacity(ifman->output, 8);
+	Stream_Write_UINT32(ifman->output, 1); /* TopologyReady */
+	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
 	return 0;
@@ -208,8 +208,8 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
-	stream_seek(ifman->input, 16);
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
 
 	if (presentation == NULL)
 	{
@@ -217,7 +217,7 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 	}
 	else
 	{
-		stream_read_UINT32(ifman->input, StreamId);
+		Stream_Read_UINT32(ifman->input, StreamId);
 		stream = tsmf_stream_find_by_id(presentation, StreamId);
 		if (stream)
 			tsmf_stream_free(stream);
@@ -230,21 +230,62 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 	return status;
 }
 
+float tsmf_stream_read_float(wStream* s)
+{
+	float fValue;
+	UINT32 iValue;
+
+	Stream_Read_UINT32(s, iValue);
+	CopyMemory(&fValue, &iValue, 4);
+
+	return fValue;
+}
+
+int tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
+{
+	int status = 0;
+	float Left, Top;
+	float Right, Bottom;
+	TSMF_PRESENTATION* presentation;
+
+	DEBUG_DVC("");
+
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
+
+	if (!presentation)
+	{
+		status = 1;
+	}
+	else
+	{
+		Left = tsmf_stream_read_float(ifman->input); /* Left (4 bytes) */
+		Top = tsmf_stream_read_float(ifman->input); /* Top (4 bytes) */
+		Right = tsmf_stream_read_float(ifman->input); /* Right (4 bytes) */
+		Bottom = tsmf_stream_read_float(ifman->input); /* Bottom (4 bytes) */
+
+		DEBUG_DVC("SetSourceVideoRect: Left: %f Top: %f Right: %f Bottom: %f",
+				Left, Top, Right, Bottom);
+	}
+
+	return status;
+}
+
 int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
 	DEBUG_DVC("");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 		tsmf_presentation_free(presentation);
 
 	pexisted = 0;
 
-	stream_check_size(ifman->output, 4);
-	stream_write_UINT32(ifman->output, 0); /* Result */
+	Stream_EnsureRemainingCapacity(ifman->output, 4);
+	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
 	return 0;
@@ -256,17 +297,17 @@ int tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("on stream volume");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 	{
 		UINT32 newVolume;
 		UINT32 muted;
 
-		stream_seek(ifman->input, 16);
-		stream_read_UINT32(ifman->input, newVolume);
+		Stream_Seek(ifman->input, 16);
+		Stream_Read_UINT32(ifman->input, newVolume);
 		DEBUG_DVC("on stream volume: new volume=[%d]", newVolume);
-		stream_read_UINT32(ifman->input, muted);
+		Stream_Read_UINT32(ifman->input, muted);
 		DEBUG_DVC("on stream volume: muted=[%d]", muted);
 		tsmf_presentation_volume_changed(presentation, newVolume, muted);
 	}
@@ -286,17 +327,17 @@ int tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("on channel volume");
 	
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 	{
 		UINT32 channelVolume;
 		UINT32 changedChannel;
 
-		stream_seek(ifman->input, 16);
-		stream_read_UINT32(ifman->input, channelVolume);
+		Stream_Seek(ifman->input, 16);
+		Stream_Read_UINT32(ifman->input, channelVolume);
 		DEBUG_DVC("on channel volume: channel volume=[%d]", channelVolume);
-		stream_read_UINT32(ifman->input, changedChannel);
+		Stream_Read_UINT32(ifman->input, changedChannel);
 		DEBUG_DVC("on stream volume: changed channel=[%d]", changedChannel);
 	}
 	
@@ -327,20 +368,20 @@ int tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	int i;
 	int pos;
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
-	stream_seek(ifman->input, 16);
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
 
-	stream_read_UINT32(ifman->input, numGeometryInfo);
-	pos = stream_get_pos(ifman->input);
+	Stream_Read_UINT32(ifman->input, numGeometryInfo);
+	pos = Stream_GetPosition(ifman->input);
 
-	stream_seek(ifman->input, 12); /* VideoWindowId (8 bytes), VideoWindowState (4 bytes) */
-	stream_read_UINT32(ifman->input, Width);
-	stream_read_UINT32(ifman->input, Height);
-	stream_read_UINT32(ifman->input, Left);
-	stream_read_UINT32(ifman->input, Top);
+	Stream_Seek(ifman->input, 12); /* VideoWindowId (8 bytes), VideoWindowState (4 bytes) */
+	Stream_Read_UINT32(ifman->input, Width);
+	Stream_Read_UINT32(ifman->input, Height);
+	Stream_Read_UINT32(ifman->input, Left);
+	Stream_Read_UINT32(ifman->input, Top);
 
-	stream_set_pos(ifman->input, pos + numGeometryInfo);
-	stream_read_UINT32(ifman->input, cbVisibleRect);
+	Stream_SetPosition(ifman->input, pos + numGeometryInfo);
+	Stream_Read_UINT32(ifman->input, cbVisibleRect);
 	num_rects = cbVisibleRect / 16;
 
 	DEBUG_DVC("numGeometryInfo %d Width %d Height %d Left %d Top %d cbVisibleRect %d num_rects %d",
@@ -359,14 +400,14 @@ int tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 
 			for (i = 0; i < num_rects; i++)
 			{
-				stream_read_UINT16(ifman->input, rects[i].y); /* Top */
-				stream_seek_UINT16(ifman->input);
-				stream_read_UINT16(ifman->input, rects[i].x); /* Left */
-				stream_seek_UINT16(ifman->input);
-				stream_read_UINT16(ifman->input, rects[i].height); /* Bottom */
-				stream_seek_UINT16(ifman->input);
-				stream_read_UINT16(ifman->input, rects[i].width); /* Right */
-				stream_seek_UINT16(ifman->input);
+				Stream_Read_UINT16(ifman->input, rects[i].y); /* Top */
+				Stream_Seek_UINT16(ifman->input);
+				Stream_Read_UINT16(ifman->input, rects[i].x); /* Left */
+				Stream_Seek_UINT16(ifman->input);
+				Stream_Read_UINT16(ifman->input, rects[i].height); /* Bottom */
+				Stream_Seek_UINT16(ifman->input);
+				Stream_Read_UINT16(ifman->input, rects[i].width); /* Right */
+				Stream_Seek_UINT16(ifman->input);
 				rects[i].width -= rects[i].x;
 				rects[i].height -= rects[i].y;
 
@@ -407,15 +448,15 @@ int tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	UINT32 SampleExtensions;
 	UINT32 cbData;
 
-	stream_seek(ifman->input, 16);
-	stream_read_UINT32(ifman->input, StreamId);
-	stream_seek_UINT32(ifman->input); /* numSample */
-	stream_read_UINT64(ifman->input, SampleStartTime);
-	stream_read_UINT64(ifman->input, SampleEndTime);
-	stream_read_UINT64(ifman->input, ThrottleDuration);
-	stream_seek_UINT32(ifman->input); /* SampleFlags */
-	stream_read_UINT32(ifman->input, SampleExtensions);
-	stream_read_UINT32(ifman->input, cbData);
+	Stream_Seek(ifman->input, 16);
+	Stream_Read_UINT32(ifman->input, StreamId);
+	Stream_Seek_UINT32(ifman->input); /* numSample */
+	Stream_Read_UINT64(ifman->input, SampleStartTime);
+	Stream_Read_UINT64(ifman->input, SampleEndTime);
+	Stream_Read_UINT64(ifman->input, ThrottleDuration);
+	Stream_Seek_UINT32(ifman->input); /* SampleFlags */
+	Stream_Read_UINT32(ifman->input, SampleExtensions);
+	Stream_Read_UINT32(ifman->input, cbData);
 	
 	DEBUG_DVC("MessageId %d StreamId %d SampleStartTime %d SampleEndTime %d "
 		"ThrottleDuration %d SampleExtensions %d cbData %d",
@@ -440,7 +481,7 @@ int tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 
 	tsmf_stream_push_sample(stream, ifman->channel_callback,
 		ifman->message_id, SampleStartTime, SampleEndTime, ThrottleDuration, SampleExtensions,
-		cbData, stream_get_tail(ifman->input));
+		cbData, Stream_Pointer(ifman->input));
 
 	ifman->output_pending = TRUE;
 
@@ -452,8 +493,8 @@ int tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 	UINT32 StreamId;
 	TSMF_PRESENTATION* presentation;
 
-	stream_seek(ifman->input, 16);
-	stream_read_UINT32(ifman->input, StreamId);
+	Stream_Seek(ifman->input, 16);
+	Stream_Read_UINT32(ifman->input, StreamId);
 	DEBUG_DVC("StreamId %d", StreamId);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
@@ -477,9 +518,9 @@ int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	TSMF_STREAM* stream;
 	TSMF_PRESENTATION* presentation;
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
-	stream_seek(ifman->input, 16);
-	stream_read_UINT32(ifman->input, StreamId);
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
+	Stream_Read_UINT32(ifman->input, StreamId);
 
 	if (presentation)
 	{
@@ -489,11 +530,11 @@ int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	}
 	DEBUG_DVC("StreamId %d", StreamId);
 
-	stream_check_size(ifman->output, 16);
-	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	stream_write_UINT32(ifman->output, StreamId); /* StreamId */
-	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
-	stream_write_UINT32(ifman->output, 0); /* cbData */
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+	Stream_Write_UINT32(ifman->output, StreamId); /* StreamId */
+	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
+	Stream_Write_UINT32(ifman->output, 0); /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 
 	return 0;
@@ -505,18 +546,18 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 		tsmf_presentation_start(presentation);
 	else
 		DEBUG_WARN("unknown presentation id");
 
-	stream_check_size(ifman->output, 16);
-	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	stream_write_UINT32(ifman->output, 0); /* StreamId */
-	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_START_COMPLETED); /* EventId */
-	stream_write_UINT32(ifman->output, 0); /* cbData */
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_START_COMPLETED); /* EventId */
+	Stream_Write_UINT32(ifman->output, 0); /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 
 	return 0;
@@ -531,7 +572,7 @@ int tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 
 	/* Added pause control so gstreamer pipeline can be paused accordingly */
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 		tsmf_presentation_paused(presentation);
@@ -550,7 +591,7 @@ int tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
 
 	/* Added restart control so gstreamer pipeline can be resumed accordingly */
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 		tsmf_presentation_restarted(presentation);
@@ -566,18 +607,18 @@ int tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("");
 
-	presentation = tsmf_presentation_find_by_id(stream_get_tail(ifman->input));
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 
 	if (presentation)
 		tsmf_presentation_stop(presentation);
 	else
 		DEBUG_WARN("unknown presentation id");
 
-	stream_check_size(ifman->output, 16);
-	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	stream_write_UINT32(ifman->output, 0); /* StreamId */
-	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_STOP_COMPLETED); /* EventId */
-	stream_write_UINT32(ifman->output, 0); /* cbData */
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_STOP_COMPLETED); /* EventId */
+	Stream_Write_UINT32(ifman->output, 0); /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 
 	return 0;
@@ -587,11 +628,11 @@ int tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN * ifman)
 {
 	DEBUG_DVC("");
 
-	stream_check_size(ifman->output, 16);
-	stream_write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	stream_write_UINT32(ifman->output, 0); /* StreamId */
-	stream_write_UINT32(ifman->output, TSMM_CLIENT_EVENT_MONITORCHANGED); /* EventId */
-	stream_write_UINT32(ifman->output, 0); /* cbData */
+	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
+	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_MONITORCHANGED); /* EventId */
+	Stream_Write_UINT32(ifman->output, 0); /* cbData */
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 
 	return 0;

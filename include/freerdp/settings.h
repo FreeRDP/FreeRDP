@@ -511,6 +511,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SpanMonitors					387
 #define FreeRDP_UseMultimon					388
 #define FreeRDP_ForceMultimon					389
+#define FreeRDP_DesktopPosX					390
+#define FreeRDP_DesktopPosY					391
 #define FreeRDP_MultitransportFlags				512
 #define FreeRDP_AlternateShell					640
 #define FreeRDP_ShellWorkingDirectory				641
@@ -673,6 +675,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_ImeFileName					2628
 #define FreeRDP_UnicodeInput					2629
 #define FreeRDP_FastPathInput					2630
+#define FreeRDP_MultiTouchInput					2631
 #define FreeRDP_BrushSupportLevel				2688
 #define FreeRDP_GlyphSupportLevel				2752
 #define FreeRDP_GlyphCache					2753
@@ -807,7 +810,12 @@ struct rdp_settings
 	ALIGN64 BOOL SpanMonitors; /* 387 */
 	ALIGN64 BOOL UseMultimon; /* 388 */
 	ALIGN64 BOOL ForceMultimon; /* 389 */
-	UINT64 padding0448[448 - 390]; /* 390 */
+	ALIGN64 UINT32 DesktopPosX; /* 390 */
+	ALIGN64 UINT32 DesktopPosY; /* 391 */
+	ALIGN64 BOOL ListMonitors; /* 392 */
+	ALIGN64 UINT32* MonitorIds; /* 393 */
+	ALIGN64 UINT32 NumMonitorIds; /* 394 */
+	UINT64 padding0448[448 - 395]; /* 395 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */
@@ -1090,7 +1098,8 @@ struct rdp_settings
 	ALIGN64 char* ImeFileName; /* 2628 */
 	ALIGN64 BOOL UnicodeInput; /* 2629 */
 	ALIGN64 BOOL FastPathInput; /* 2630 */
-	UINT64 padding2688[2688 - 2631]; /* 2631 */
+	ALIGN64 BOOL MultiTouchInput; /* 2631 */
+	UINT64 padding2688[2688 - 2632]; /* 2632 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

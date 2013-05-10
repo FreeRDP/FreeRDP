@@ -645,6 +645,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->FastPathInput;
 			break;
 
+		case FreeRDP_MultiTouchInput:
+			return settings->MultiTouchInput;
+			break;
+
 		case FreeRDP_SoundBeepsEnabled:
 			return settings->SoundBeepsEnabled;
 			break;
@@ -1081,6 +1085,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->FastPathInput = param;
 			break;
 
+		case FreeRDP_MultiTouchInput:
+			settings->MultiTouchInput = param;
+			break;
+
 		case FreeRDP_SoundBeepsEnabled:
 			settings->SoundBeepsEnabled = param;
 			break;
@@ -1243,6 +1251,14 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 		case FreeRDP_MonitorDefArraySize:
 			return settings->MonitorDefArraySize;
+			break;
+
+		case FreeRDP_DesktopPosX:
+			return settings->DesktopPosX;
+			break;
+
+		case FreeRDP_DesktopPosY:
+			return settings->DesktopPosY;
 			break;
 
 		case FreeRDP_MultitransportFlags:
@@ -1551,6 +1567,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_MonitorDefArraySize:
 			settings->MonitorDefArraySize = param;
+			break;
+
+		case FreeRDP_DesktopPosX:
+			settings->DesktopPosX = param;
+			break;
+
+		case FreeRDP_DesktopPosY:
+			settings->DesktopPosY = param;
 			break;
 
 		case FreeRDP_MultitransportFlags:
