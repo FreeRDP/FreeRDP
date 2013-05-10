@@ -847,6 +847,7 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 {
 	wStream* s;
 	int bm, em;
+	BYTE orderType;
 	int headerLength;
 	UINT16 extraFlags;
 	INT16 orderLength;
@@ -854,6 +855,9 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 
 	extraFlags = 0;
 	headerLength = 6;
+
+	orderType = cache_bitmap_v2->compressed ?
+			ORDER_TYPE_BITMAP_COMPRESSED_V2 : ORDER_TYPE_BITMAP_UNCOMPRESSED_V2;
 
 	s = update->us;
 	bm = Stream_GetPosition(s);
@@ -870,7 +874,7 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
-	Stream_Write_UINT8(s, ORDER_TYPE_BITMAP_UNCOMPRESSED_V2); /* orderType (1 byte) */
+	Stream_Write_UINT8(s, orderType); /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
