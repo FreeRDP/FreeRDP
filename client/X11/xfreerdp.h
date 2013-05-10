@@ -120,6 +120,7 @@ struct xf_info
 	int currentWidth;
 	int currentHeight;
 	int XInputOpcode;
+	BOOL enableScaling;
 
 	BOOL focused;
 	BOOL mouse_active;

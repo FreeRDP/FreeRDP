@@ -382,5 +382,8 @@ int xf_input_handle_event(xfInfo* xfi, XEvent* event)
 		return xf_input_handle_event_remote(xfi, event);
 	}
 
-	return xf_input_handle_event_local(xfi, event);
+	if (xfi->enableScaling)
+		return xf_input_handle_event_local(xfi, event);
+
+	return 0;
 }
