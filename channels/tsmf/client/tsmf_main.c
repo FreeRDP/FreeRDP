@@ -213,6 +213,10 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 					status = tsmf_ifman_remove_stream(&ifman);
 					break;
 
+				case SET_SOURCE_VIDEO_RECT:
+					status = tsmf_ifman_set_source_video_rect(&ifman);
+					break;
+
 				case SHUTDOWN_PRESENTATION_REQ:
 					status = tsmf_ifman_shutdown_presentation(&ifman);
 					break;

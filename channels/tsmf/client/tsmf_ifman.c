@@ -230,6 +230,47 @@ int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 	return status;
 }
 
+float tsmf_stream_read_float(wStream* s)
+{
+	float fValue;
+	UINT32 iValue;
+
+	Stream_Read_UINT32(s, iValue);
+	CopyMemory(&fValue, &iValue, 4);
+
+	return fValue;
+}
+
+int tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
+{
+	int status = 0;
+	float Left, Top;
+	float Right, Bottom;
+	TSMF_PRESENTATION* presentation;
+
+	DEBUG_DVC("");
+
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	Stream_Seek(ifman->input, 16);
+
+	if (!presentation)
+	{
+		status = 1;
+	}
+	else
+	{
+		Left = tsmf_stream_read_float(ifman->input); /* Left (4 bytes) */
+		Top = tsmf_stream_read_float(ifman->input); /* Top (4 bytes) */
+		Right = tsmf_stream_read_float(ifman->input); /* Right (4 bytes) */
+		Bottom = tsmf_stream_read_float(ifman->input); /* Bottom (4 bytes) */
+
+		DEBUG_DVC("SetSourceVideoRect: Left: %f Top: %f Right: %f Bottom: %f",
+				Left, Top, Right, Bottom);
+	}
+
+	return status;
+}
+
 int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;

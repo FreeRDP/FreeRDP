@@ -45,6 +45,7 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman);
 int tsmf_ifman_add_stream(TSMF_IFMAN* ifman);
 int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman);
 int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman);
+int tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman);
 int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman);
 int tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman);
 int tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman);
