@@ -113,6 +113,37 @@ static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 	return len;
 }
 
+static void smartcard_output_wide_array_as_narrow(IRP* irp, char* src, UINT32 len)
+{
+	int i;
+	BYTE* p;
+
+	p = stream_get_tail(irp->output);
+
+	for (i = 0; i < len; i++ )
+	{
+		p[i] = src[2 * i];
+	}
+
+	stream_seek(irp->output, len);
+}
+
+static void smartcard_output_narrow_array_as_wide(IRP* irp, char* src, UINT32 len)
+{
+	int i;
+	BYTE* p;
+
+	p = stream_get_tail(irp->output);
+
+	for (i = 0; i < len / 2; i++ )
+	{
+		p[2 * i] = src[i] < 0 ? '?' : src[i];
+		p[2 * i + 1] = '\0';
+	}
+
+	stream_seek(irp->output, len);
+}
+
 static void smartcard_output_alignment(IRP* irp, UINT32 seed)
 {
 	const UINT32 field_lengths = 20;/* Remove the lengths of the fields
@@ -1068,6 +1099,8 @@ static UINT32 handle_GetAttrib(IRP* irp)
 	DWORD dwAttrLen = 0;
 	DWORD attrLen = 0;
 	BYTE* pbAttr = NULL;
+	BOOL convertFromWide = FALSE;
+	BOOL convertToWide = FALSE;
 
 	stream_seek(irp->input, 0x20);
 	stream_read_UINT32(irp->input, dwAttrId);
@@ -1116,6 +1149,8 @@ static UINT32 handle_GetAttrib(IRP* irp)
 				attrLen = SCARD_AUTOALLOCATE;
 #endif
 		}
+		convertFromWide = TRUE;
+		attrLen /= 2;
 	}
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && status == SCARD_E_UNSUPPORTED_FEATURE)
 	{
@@ -1131,6 +1166,8 @@ static UINT32 handle_GetAttrib(IRP* irp)
 				attrLen = SCARD_AUTOALLOCATE;
 #endif
 		}
+		convertToWide = TRUE;
+		attrLen *= 2;
 	}
 	if (attrLen > dwAttrLen && pbAttr != NULL)
 	{
@@ -1155,11 +1192,16 @@ static UINT32 handle_GetAttrib(IRP* irp)
 		if (!pbAttr)
 		{
 			stream_write_zero(irp->output, dwAttrLen);
+		} else {
+			if( !convertToWide && !convertFromWide ) {
+				stream_write(irp->output, pbAttr, dwAttrLen);
+			} else if ( convertToWide ) {
+				smartcard_output_narrow_array_as_wide(irp, (char *)pbAttr, dwAttrLen);
+			} else {
+				smartcard_output_wide_array_as_narrow(irp, (char *)pbAttr, dwAttrLen);
+			}
 		}
-		else
-		{
-			stream_write(irp->output, pbAttr, dwAttrLen);
-		}
+
 		smartcard_output_repos(irp, dwAttrLen);
 		/* align to multiple of 4 */
 		stream_write_UINT32(irp->output, 0);
