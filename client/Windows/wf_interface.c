@@ -829,6 +829,21 @@ int freerdp_client_stop(wfInfo* wfi)
 	return 0;
 }
 
+HANDLE freerdp_client_get_thread(wfInfo* cfi)
+{
+    return cfi->thread;
+}
+
+freerdp* freerdp_client_get_instance(wfInfo* cfi)
+{
+    return cfi->instance;
+}
+
+rdpClient* freerdp_client_get_interface(wfInfo* cfi)
+{
+    return cfi->client;
+}
+
 int freerdp_client_focus_in(wfInfo* wfi)
 {
 	PostThreadMessage(wfi->mainThreadId, WM_SETFOCUS, 0, 1);

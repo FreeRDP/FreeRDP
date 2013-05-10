@@ -68,23 +68,23 @@
 
 BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 {
-	if(stream_get_left(s) < 3)
+	if(Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
-	stream_read_BYTE(s, *li); /* LI */
-	stream_read_BYTE(s, *code); /* Code */
+	Stream_Read_UINT8(s, *li); /* LI */
+	Stream_Read_UINT8(s, *code); /* Code */
 
 	if (*code == X224_TPDU_DATA)
 	{
 		/* EOT (1 byte) */
-		stream_seek(s, 1);
+		Stream_Seek(s, 1);
 	}
 	else
 	{
 		/* DST-REF (2 bytes) */
 		/* SRC-REF (2 bytes) */
 		/* Class 0 (1 byte) */
-		return stream_skip(s, 5);
+		return Stream_SafeSeek(s, 5);
 	}
 	return TRUE;
 }
@@ -98,18 +98,18 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 
 void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 {
-	stream_write_BYTE(s, length); /* LI */
-	stream_write_BYTE(s, code); /* code */
+	Stream_Write_UINT8(s, length); /* LI */
+	Stream_Write_UINT8(s, code); /* code */
 
 	if (code == X224_TPDU_DATA)
 	{
-		stream_write_BYTE(s, 0x80); /* EOT */
+		Stream_Write_UINT8(s, 0x80); /* EOT */
 	}
 	else
 	{
-		stream_write_UINT16(s, 0); /* DST-REF */
-		stream_write_UINT16(s, 0); /* SRC-REF */
-		stream_write_BYTE(s, 0); /* Class 0 */
+		Stream_Write_UINT16(s, 0); /* DST-REF */
+		Stream_Write_UINT16(s, 0); /* SRC-REF */
+		Stream_Write_UINT8(s, 0); /* Class 0 */
 	}
 }
 
@@ -165,7 +165,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE *li)
 		return FALSE;
 	}
 
-	return (stream_get_left(s) >= *li);
+	return (Stream_GetRemainingLength(s) >= *li);
 }
 
 /**

@@ -23,6 +23,7 @@
 #include "xf_keyboard.h"
 
 #include "xf_interface.h"
+#include "xfreerdp.h"
 
 BOOL xf_event_process(freerdp* instance, XEvent* event);
 void xf_event_SendClientEvent(xfInfo *xfi, xfWindow* window, Atom atom, unsigned int numArgs, ...);

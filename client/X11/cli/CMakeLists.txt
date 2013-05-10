@@ -15,16 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "xfreerdp")
+set(MODULE_NAME "xfreerdp-cli")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 
 include_directories(..)
 
 set(${MODULE_PREFIX}_SRCS
-	xfreerdp.c
-	xfreerdp.h)
+	xfreerdp.c)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp" RUNTIME_OUTPUT_DIRECTORY "..")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-client)
 

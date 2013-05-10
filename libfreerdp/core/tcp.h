@@ -26,6 +26,8 @@
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/stream.h>
 
 #ifndef MSG_NOSIGNAL
@@ -43,6 +45,7 @@ struct rdp_tcp
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
+	HANDLE event;
 };
 
 BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
@@ -53,6 +56,7 @@ int tcp_wait_read(rdpTcp* tcp);
 int tcp_wait_write(rdpTcp* tcp);
 BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
+HANDLE tcp_get_event_handle(rdpTcp* tcp);
 
 rdpTcp* tcp_new(rdpSettings* settings);
 void tcp_free(rdpTcp* tcp);

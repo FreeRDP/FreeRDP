@@ -129,6 +129,10 @@ FREERDP_API int freerdp_client_global_uninit();
 FREERDP_API int freerdp_client_start(wfInfo* cfi);
 FREERDP_API int freerdp_client_stop(wfInfo* cfi);
 
+FREERDP_API HANDLE freerdp_client_get_thread(wfInfo* cfi);
+FREERDP_API freerdp* freerdp_client_get_instance(wfInfo* cfi);
+FREERDP_API rdpClient* freerdp_client_get_interface(wfInfo* cfi);
+
 FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
 FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
 

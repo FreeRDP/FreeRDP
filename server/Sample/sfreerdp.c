@@ -55,7 +55,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->nsc_context = nsc_context_new();
 	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8);
 
-	context->s = stream_new(65536);
+	context->s = Stream_New(NULL, 65536);
 
 	context->icon_x = -1;
 	context->icon_y = -1;
@@ -74,7 +74,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 			CloseHandle(context->debug_channel_thread);
 		}
 
-		stream_free(context->s);
+		Stream_Free(context->s, TRUE);
 		free(context->icon_data);
 		free(context->bg_data);
 
@@ -104,8 +104,8 @@ static void test_peer_init(freerdp_peer* client)
 
 static wStream* test_peer_stream_init(testPeerContext* context)
 {
-	stream_clear(context->s);
-	stream_set_pos(context->s, 0);
+	Stream_Clear(context->s);
+	Stream_SetPosition(context->s, 0);
 	return context->s;
 }
 
@@ -179,8 +179,8 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->bpp = 32;
 	cmd->width = rect.width;
 	cmd->height = rect.height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, cmd);
 
 	free(rgb_data);
@@ -278,8 +278,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		cmd->bpp = 32;
 		cmd->width = context->icon_width;
 		cmd->height = context->icon_height;
-		cmd->bitmapDataLength = stream_get_length(s);
-		cmd->bitmapData = stream_get_head(s);
+		cmd->bitmapDataLength = Stream_GetPosition(s);
+		cmd->bitmapData = Stream_Buffer(s);
 		update->SurfaceBits(update->context, cmd);
 	}
 
@@ -305,8 +305,8 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	cmd->bpp = 32;
 	cmd->width = context->icon_width;
 	cmd->height = context->icon_height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	update->SurfaceBits(update->context, cmd);
 
 	context->icon_x = x;
@@ -362,7 +362,7 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	rdpPcap* pcap_rfx;
 	pcap_record record;
 
-	s = stream_new(512);
+	s = Stream_New(NULL, 512);
 	update = client->update;
 	client->update->pcap_rfx = pcap_open(test_pcap_file, FALSE);
 	pcap_rfx = client->update->pcap_rfx;
@@ -406,7 +406,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
 	}
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test1", 5, NULL);
 
@@ -417,30 +417,30 @@ static void* tf_debug_channel_thread_func(void* arg)
 		if (WaitForSingleObject(context->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		stream_set_pos(s, 0);
+		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
-			stream_get_size(s), &bytes_returned) == FALSE)
+		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
+			Stream_Capacity(s), &bytes_returned) == FALSE)
 		{
 			if (bytes_returned == 0)
 				break;
 
-			stream_check_size(s, bytes_returned);
+			Stream_EnsureRemainingCapacity(s, bytes_returned);
 
-			if (WTSVirtualChannelRead(context->debug_channel, 0, stream_get_head(s),
-				stream_get_size(s), &bytes_returned) == FALSE)
+			if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
+				Stream_Capacity(s), &bytes_returned) == FALSE)
 			{
 				/* should not happen */
 				break;
 			}
 		}
 
-		stream_set_pos(s, bytes_returned);
+		Stream_SetPosition(s, bytes_returned);
 
 		printf("got %d bytes\n", bytes_returned);
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client
+ * X11 Server Cursor
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __XFREERDP_H
-#define __XFREERDP_H
+#ifndef XFREERDP_SERVER_CURSOR_H
+#define XFREERDP_SERVER_CURSOR_H
 
+#include "xfreerdp.h"
 
+int xf_cursor_init(xfInfo* xfi);
 
-#endif /* __XFREERDP_H */
+#endif /* XFREERDP_SERVER_CURSOR_H */

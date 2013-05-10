@@ -43,8 +43,8 @@ void rail_send_channel_data(void* rail_object, void* data, size_t length)
 	wStream* s = NULL;
 	railPlugin* plugin = (railPlugin*) rail_object;
 
-	s = stream_new(length);
-	stream_write(s, data, length);
+	s = Stream_New(NULL, length);
+	Stream_Write(s, data, length);
 
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }
@@ -89,7 +89,7 @@ static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	railPlugin* rail = (railPlugin*) plugin;
 	rail_order_recv(rail->rail_order, s);
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 static void rail_process_addin_args(rdpRailOrder* rail_order, rdpSettings* settings)

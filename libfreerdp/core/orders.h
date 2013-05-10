@@ -188,10 +188,19 @@
 
 BOOL update_recv_order(rdpUpdate* update, wStream* s);
 
+BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes);
+BOOL update_write_field_flags(wStream* s, UINT32 fieldFlags, BYTE flags, BYTE fieldBytes);
+
+BOOL update_read_bounds(wStream* s, rdpBounds* bounds);
+BOOL update_write_bounds(wStream* s, ORDER_INFO* orderInfo);
+
 BOOL update_read_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt);
 BOOL update_read_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
+BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt);
 BOOL update_read_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt);
+BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt);
 BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect);
+BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RECT_ORDER* opaque_rect);
 BOOL update_read_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, DRAW_NINE_GRID_ORDER* draw_nine_grid);
 BOOL update_read_multi_dstblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DSTBLT_ORDER* multi_dstblt);
 BOOL update_read_multi_patblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_PATBLT_ORDER* multi_patblt);
@@ -201,9 +210,11 @@ BOOL update_read_multi_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, M
 BOOL update_read_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to);
 BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline);
 BOOL update_read_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt);
+BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt);
 BOOL update_read_mem3blt_order(wStream* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* mem3blt);
 BOOL update_read_save_bitmap_order(wStream* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap);
 BOOL update_read_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index);
+BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index);
 BOOL update_read_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index);
 BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph);
 BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc);
@@ -213,10 +224,13 @@ BOOL update_read_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_CB_
 
 BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap_order, BOOL compressed, UINT16 flags);
 BOOL update_read_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, UINT16 flags);
+BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order, BOOL compressed, UINT16* flags);
 BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, BOOL compressed, UINT16 flags);
 BOOL update_read_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16 flags);
 BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_order, UINT16 flags);
+BOOL update_write_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_order, UINT16* flags);
 BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order, UINT16 flags);
+BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16* flags);
 BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_order, UINT16 flags);
 
 BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);

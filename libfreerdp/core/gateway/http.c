@@ -250,7 +250,7 @@ wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request
 
 	Stream_Write(s, "\0", 1); /* append null terminator */
 	Stream_Rewind(s, 1); /* don't include null terminator in length */
-	Stream_Length(s) = Stream_Position(s);
+	Stream_Length(s) = Stream_GetPosition(s);
 
 	return s;
 }

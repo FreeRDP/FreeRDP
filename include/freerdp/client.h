@@ -29,11 +29,21 @@ typedef struct rdp_client rdpClient;
 extern "C" {
 #endif
 
+#define FREERDP_WINDOW_STATE_NORMAL		0
+#define FREERDP_WINDOW_STATE_MINIMIZED		1
+#define FREERDP_WINDOW_STATE_MAXIMIZED		2
+#define FREERDP_WINDOW_STATE_FULLSCREEN		3
+#define FREERDP_WINDOW_STATE_ACTIVE		4
+
 typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
+typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
+typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
 
 struct rdp_client
 {
 	pOnResizeWindow OnResizeWindow;
+	pOnWindowStateChange OnWindowStateChange;
+	pOnErrorInfo OnErrorInfo;
 };
 
 /**

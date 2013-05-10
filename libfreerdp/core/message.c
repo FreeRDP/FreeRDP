@@ -31,7 +31,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-//#define WITH_STREAM_POOL	1
+#define WITH_STREAM_POOL	1
 
 /* Update */
 

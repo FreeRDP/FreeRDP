@@ -133,8 +133,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	
 	
 	s = mfp->s;
-	stream_clear(s);
-	stream_set_pos(s, 0);
+	Stream_Clear(s);
+	Stream_SetPosition(s, 0);
 	
 	UINT32 x = mfi->invalid.x / mfi->scale;
 	UINT32 y = mfi->invalid.y / mfi->scale;
@@ -160,8 +160,8 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	cmd->codecID = 3;
 	cmd->width = rect.width;
 	cmd->height = rect.height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
+	cmd->bitmapDataLength = Stream_GetPosition(s);
+	cmd->bitmapData = Stream_Buffer(s);
 	
 	//send
 	
@@ -184,7 +184,7 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	//context->nsc_context = nsc_context_new();
 	//nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 	
-	context->s = stream_new(0xFFFF);
+	context->s = Stream_New(NULL, 0xFFFF);
 	
 	//#ifdef WITH_SERVER_CHANNELS
 	context->vcm = WTSCreateVirtualChannelManager(client);
@@ -203,7 +203,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 		
 		dispatch_suspend(info_timer);
 		
-		stream_free(context->s);
+		Stream_Free(context->s, TRUE);
 		
 		rfx_context_free(context->rfx_context);
 		//nsc_context_free(context->nsc_context);

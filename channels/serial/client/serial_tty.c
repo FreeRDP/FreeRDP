@@ -90,32 +90,32 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 
 	DEBUG_SVC("in");
 
-	stream_seek(output, sizeof(UINT32));
+	Stream_Seek(output, sizeof(UINT32));
 
 	switch (IoControlCode)
 	{
 		case IOCTL_SERIAL_SET_BAUD_RATE:
-			stream_read_UINT32(input, tty->baud_rate);
+			Stream_Read_UINT32(input, tty->baud_rate);
 			tty_set_termios(tty);
 			DEBUG_SVC("SERIAL_SET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_GET_BAUD_RATE:
 			length = 4;
-			stream_write_UINT32(output, tty->baud_rate);
+			Stream_Write_UINT32(output, tty->baud_rate);
 			DEBUG_SVC("SERIAL_GET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_SET_QUEUE_SIZE:
-			stream_read_UINT32(input, tty->queue_in_size);
-			stream_read_UINT32(input, tty->queue_out_size);
+			Stream_Read_UINT32(input, tty->queue_in_size);
+			Stream_Read_UINT32(input, tty->queue_out_size);
 			DEBUG_SVC("SERIAL_SET_QUEUE_SIZE in %d out %d", tty->queue_in_size, tty->queue_out_size);
 			break;
 
 		case IOCTL_SERIAL_SET_LINE_CONTROL:
-			stream_read_BYTE(input, tty->stop_bits);
-			stream_read_BYTE(input, tty->parity);
-			stream_read_BYTE(input, tty->word_length);
+			Stream_Read_UINT8(input, tty->stop_bits);
+			Stream_Read_UINT8(input, tty->parity);
+			Stream_Read_UINT8(input, tty->word_length);
 			tty_set_termios(tty);
 			DEBUG_SVC("SERIAL_SET_LINE_CONTROL stop %d parity %d word %d",
 				tty->stop_bits, tty->parity, tty->word_length);
@@ -124,62 +124,62 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 		case IOCTL_SERIAL_GET_LINE_CONTROL:
 			DEBUG_SVC("SERIAL_GET_LINE_CONTROL");
 			length = 3;
-			stream_write_BYTE(output, tty->stop_bits);
-			stream_write_BYTE(output, tty->parity);
-			stream_write_BYTE(output, tty->word_length);
+			Stream_Write_UINT8(output, tty->stop_bits);
+			Stream_Write_UINT8(output, tty->parity);
+			Stream_Write_UINT8(output, tty->word_length);
 			break;
 
 		case IOCTL_SERIAL_IMMEDIATE_CHAR:
 			DEBUG_SVC("SERIAL_IMMEDIATE_CHAR");
-			stream_read_BYTE(input, immediate);
+			Stream_Read_UINT8(input, immediate);
 			tty_write_data(tty, &immediate, 1);
 			break;
 
 		case IOCTL_SERIAL_CONFIG_SIZE:
 			DEBUG_SVC("SERIAL_CONFIG_SIZE");
 			length = 4;
-			stream_write_UINT32(output, 0);
+			Stream_Write_UINT32(output, 0);
 			break;
 
 		case IOCTL_SERIAL_GET_CHARS:
 			DEBUG_SVC("SERIAL_GET_CHARS");
 			length = 6;
-			stream_write(output, tty->chars, 6);
+			Stream_Write(output, tty->chars, 6);
 			break;
 
 		case IOCTL_SERIAL_SET_CHARS:
 			DEBUG_SVC("SERIAL_SET_CHARS");
-			stream_read(input, tty->chars, 6);
+			Stream_Read(input, tty->chars, 6);
 			tty_set_termios(tty);
 			break;
 
 		case IOCTL_SERIAL_GET_HANDFLOW:
 			length = 16;
 			tty_get_termios(tty);
-			stream_write_UINT32(output, tty->control);
-			stream_write_UINT32(output, tty->xonoff);
-			stream_write_UINT32(output, tty->onlimit);
-			stream_write_UINT32(output, tty->offlimit);
+			Stream_Write_UINT32(output, tty->control);
+			Stream_Write_UINT32(output, tty->xonoff);
+			Stream_Write_UINT32(output, tty->onlimit);
+			Stream_Write_UINT32(output, tty->offlimit);
 			DEBUG_SVC("IOCTL_SERIAL_GET_HANDFLOW %X %X %X %X",
 				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			break;
 
 		case IOCTL_SERIAL_SET_HANDFLOW:
-			stream_read_UINT32(input, tty->control);
-			stream_read_UINT32(input, tty->xonoff);
-			stream_read_UINT32(input, tty->onlimit);
-			stream_read_UINT32(input, tty->offlimit);
+			Stream_Read_UINT32(input, tty->control);
+			Stream_Read_UINT32(input, tty->xonoff);
+			Stream_Read_UINT32(input, tty->onlimit);
+			Stream_Read_UINT32(input, tty->offlimit);
 			DEBUG_SVC("IOCTL_SERIAL_SET_HANDFLOW %X %X %X %X",
 				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			tty_set_termios(tty);
 			break;
 
 		case IOCTL_SERIAL_SET_TIMEOUTS:
-			stream_read_UINT32(input, tty->read_interval_timeout);
-			stream_read_UINT32(input, tty->read_total_timeout_multiplier);
-			stream_read_UINT32(input, tty->read_total_timeout_constant);
-			stream_read_UINT32(input, tty->write_total_timeout_multiplier);
-			stream_read_UINT32(input, tty->write_total_timeout_constant);
+			Stream_Read_UINT32(input, tty->read_interval_timeout);
+			Stream_Read_UINT32(input, tty->read_total_timeout_multiplier);
+			Stream_Read_UINT32(input, tty->read_total_timeout_constant);
+			Stream_Read_UINT32(input, tty->write_total_timeout_multiplier);
+			Stream_Read_UINT32(input, tty->write_total_timeout_constant);
 
 			/* http://www.codeproject.com/KB/system/chaiyasit_t.aspx, see 'ReadIntervalTimeout' section
 				http://msdn.microsoft.com/en-us/library/ms885171.aspx */
@@ -201,21 +201,21 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 				tty->read_total_timeout_multiplier,
 				tty->read_total_timeout_constant);
 			length = 20;
-			stream_write_UINT32(output, tty->read_interval_timeout);
-			stream_write_UINT32(output, tty->read_total_timeout_multiplier);
-			stream_write_UINT32(output, tty->read_total_timeout_constant);
-			stream_write_UINT32(output, tty->write_total_timeout_multiplier);
-			stream_write_UINT32(output, tty->write_total_timeout_constant);
+			Stream_Write_UINT32(output, tty->read_interval_timeout);
+			Stream_Write_UINT32(output, tty->read_total_timeout_multiplier);
+			Stream_Write_UINT32(output, tty->read_total_timeout_constant);
+			Stream_Write_UINT32(output, tty->write_total_timeout_multiplier);
+			Stream_Write_UINT32(output, tty->write_total_timeout_constant);
 			break;
 
 		case IOCTL_SERIAL_GET_WAIT_MASK:
 			DEBUG_SVC("SERIAL_GET_WAIT_MASK %X", tty->wait_mask);
 			length = 4;
-			stream_write_UINT32(output, tty->wait_mask);
+			Stream_Write_UINT32(output, tty->wait_mask);
 			break;
 
 		case IOCTL_SERIAL_SET_WAIT_MASK:
-			stream_read_UINT32(input, tty->wait_mask);
+			Stream_Read_UINT32(input, tty->wait_mask);
 			DEBUG_SVC("SERIAL_SET_WAIT_MASK %X", tty->wait_mask);
 			break;
 
@@ -270,19 +270,19 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 #endif
 			DEBUG_SVC("SERIAL_GET_MODEMSTATUS %X", modemstate);
 			length = 4;
-			stream_write_UINT32(output, modemstate);
+			Stream_Write_UINT32(output, modemstate);
 			break;
 
 		case IOCTL_SERIAL_GET_COMMSTATUS:
 			length = 18;
-			stream_write_UINT32(output, 0);	/* Errors */
-			stream_write_UINT32(output, 0);	/* Hold reasons */
+			Stream_Write_UINT32(output, 0);	/* Errors */
+			Stream_Write_UINT32(output, 0);	/* Hold reasons */
 
 			result = 0;
 #ifdef TIOCINQ
 			ioctl(tty->fd, TIOCINQ, &result);
 #endif
-			stream_write_UINT32(output, result); /* Amount in in queue */
+			Stream_Write_UINT32(output, result); /* Amount in in queue */
 			if (result)
 				DEBUG_SVC("SERIAL_GET_COMMSTATUS in queue %d", result);
 
@@ -290,15 +290,15 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 #ifdef TIOCOUTQ
 			ioctl(tty->fd, TIOCOUTQ, &result);
 #endif
-			stream_write_UINT32(output, result);	/* Amount in out queue */
+			Stream_Write_UINT32(output, result);	/* Amount in out queue */
 			DEBUG_SVC("SERIAL_GET_COMMSTATUS out queue %d", result);
 
-			stream_write_BYTE(output, 0); /* EofReceived */
-			stream_write_BYTE(output, 0); /* WaitForImmediate */
+			Stream_Write_UINT8(output, 0); /* EofReceived */
+			Stream_Write_UINT8(output, 0); /* WaitForImmediate */
 			break;
 
 		case IOCTL_SERIAL_PURGE:
-			stream_read_UINT32(input, purge_mask);
+			Stream_Read_UINT32(input, purge_mask);
 			DEBUG_SVC("SERIAL_PURGE purge_mask %X", purge_mask);
 
 		/*	See http://msdn.microsoft.com/en-us/library/ms901431.aspx
@@ -327,7 +327,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			if (serial_tty_get_event(tty, &result))
 			{
 				DEBUG_SVC("WAIT end  event = %X", result);
-				stream_write_UINT32(output, result);
+				Stream_Write_UINT32(output, result);
 				break;
 			}
 			ret = STATUS_PENDING;
@@ -361,10 +361,10 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 	}
 
 	/* Write OutputBufferLength */
-	pos = stream_get_pos(output);
-	stream_set_pos(output, 16);
-	stream_write_UINT32(output, length);
-	stream_set_pos(output, pos);
+	pos = Stream_GetPosition(output);
+	Stream_SetPosition(output, 16);
+	Stream_Write_UINT32(output, length);
+	Stream_SetPosition(output, pos);
 
 	return ret;
 }

@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP X11 Server
+ * FreeRDP X11 Server Interface
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,10 +29,9 @@
 #include "xf_peer.h"
 #include "xfreerdp.h"
 
-char* xf_pcap_file = NULL;
-BOOL xf_pcap_dump_realtime = TRUE;
+#include "xf_interface.h"
 
-void xf_server_main_loop(freerdp_listener* instance)
+void* xf_server_thread(void* param)
 {
 	int i;
 	int fds;
@@ -44,14 +39,19 @@ void xf_server_main_loop(freerdp_listener* instance)
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
+	xfServer* server;
+	freerdp_listener* listener;
 
 	ZeroMemory(rfds, sizeof(rfds));
+
+	server = (xfServer*) param;
+	listener = server->listener;
 
 	while (1)
 	{
 		rcount = 0;
 
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
+		if (listener->GetFileDescriptor(listener, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
@@ -86,41 +86,73 @@ void xf_server_main_loop(freerdp_listener* instance)
 			}
 		}
 
-		if (instance->CheckFileDescriptor(instance) != TRUE)
+		if (listener->CheckFileDescriptor(listener) != TRUE)
 		{
 			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}
 
-	instance->Close(instance);
+	listener->Close(listener);
+
+	return NULL;
 }
 
-int main(int argc, char* argv[])
+int freerdp_server_global_init()
 {
-	freerdp_listener* instance;
-
-	/* ignore SIGPIPE, otherwise an SSL_write failure could crash the server */
+	/*
+	 * ignore SIGPIPE, otherwise an SSL_write failure could crash the server
+	 */
 	signal(SIGPIPE, SIG_IGN);
-
-	instance = freerdp_listener_new();
-	instance->PeerAccepted = xf_peer_accepted;
-
-	if (argc > 1)
-		xf_pcap_file = argv[1];
-
-	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		xf_pcap_dump_realtime = FALSE;
-
-	/* Open the server socket and start listening. */
-	if (instance->Open(instance, NULL, 3389))
-	{
-		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
-		xf_server_main_loop(instance);
-	}
-
-	freerdp_listener_free(instance);
 
 	return 0;
 }
 
+int freerdp_server_global_uninit()
+{
+	return 0;
+}
+
+int freerdp_server_start(xfServer* server)
+{
+	if (server->listener->Open(server->listener, NULL, 3389))
+	{
+		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_server_thread, (void*) server, 0, NULL);
+	}
+
+	return 0;
+}
+
+int freerdp_server_stop(xfServer* server)
+{
+	return 0;
+}
+
+HANDLE freerdp_server_get_thread(xfServer* server)
+{
+	return server->thread;
+}
+
+xfServer* freerdp_server_new(int argc, char** argv)
+{
+	xfServer* server;
+
+	server = (xfServer*) malloc(sizeof(xfServer));
+
+	if (server)
+	{
+		server->listener = freerdp_listener_new();
+		server->listener->PeerAccepted = xf_peer_accepted;
+	}
+
+	return server;
+}
+
+void freerdp_server_free(xfServer* server)
+{
+	if (server)
+	{
+		freerdp_listener_free(server->listener);
+		free(server);
+	}
+}

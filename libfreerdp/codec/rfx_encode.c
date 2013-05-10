@@ -242,21 +242,21 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int h
 	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr);
 
 	/* Ensure the buffer is reasonably large enough */
-	stream_check_size(data_out, 4096);
+	Stream_EnsureRemainingCapacity(data_out, 4096);
 
 	rfx_encode_component(context, y_quants, pSrcDst[0],
-		stream_get_tail(data_out), stream_get_left(data_out), y_size);
-	stream_seek(data_out, *y_size);
+		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), y_size);
+	Stream_Seek(data_out, *y_size);
 
-	stream_check_size(data_out, 4096);
+	Stream_EnsureRemainingCapacity(data_out, 4096);
 	rfx_encode_component(context, cb_quants, pSrcDst[1],
-		stream_get_tail(data_out), stream_get_left(data_out), cb_size);
-	stream_seek(data_out, *cb_size);
+		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), cb_size);
+	Stream_Seek(data_out, *cb_size);
 
-	stream_check_size(data_out, 4096);
+	Stream_EnsureRemainingCapacity(data_out, 4096);
 	rfx_encode_component(context, cr_quants, pSrcDst[2],
-		stream_get_tail(data_out), stream_get_left(data_out), cr_size);
-	stream_seek(data_out, *cr_size);
+		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), cr_size);
+	Stream_Seek(data_out, *cr_size);
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 

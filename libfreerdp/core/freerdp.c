@@ -73,7 +73,7 @@ BOOL freerdp_connect(freerdp* instance)
 	extension_load_and_init_plugins(rdp->extension);
 	extension_pre_connect(rdp->extension);
 
-	if (status != TRUE)
+	if (!status)
 	{
 		if (!connectErrorCode)
 		{
@@ -84,6 +84,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	status = rdp_client_connect(rdp);
+
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
@@ -105,7 +106,7 @@ BOOL freerdp_connect(freerdp* instance)
 		IFCALLRET(instance->PostConnect, status, instance);
 		update_post_connect(instance->update);
 
-		if (status != TRUE)
+		if (!status)
 		{
 			fprintf(stderr, "freerdp_post_connect failed\n");
 			
@@ -123,7 +124,7 @@ BOOL freerdp_connect(freerdp* instance)
 			rdpUpdate* update;
 			pcap_record record;
 
-			s = stream_new(1024);
+			s = Stream_New(NULL, 1024);
 			instance->update->pcap_rfx = pcap_open(instance->settings->PlayRemoteFxFile, FALSE);
 
 			if (instance->update->pcap_rfx)
@@ -140,7 +141,7 @@ BOOL freerdp_connect(freerdp* instance)
 				s->capacity = record.length;
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
-				stream_set_pos(s, 0);
+				Stream_SetPosition(s, 0);
 
 				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, s->capacity, s);
@@ -156,7 +157,9 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		connectErrorCode = UNDEFINEDCONNECTERROR;
 	}
-	
+
+	SetEvent(rdp->transport->connectedEvent);
+
 	return status;
 }
 

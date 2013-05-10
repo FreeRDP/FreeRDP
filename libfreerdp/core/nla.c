@@ -818,7 +818,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	credssp->identity.DomainLength = (UINT32) length;
 	credssp->identity.Domain = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Domain, s->pointer, credssp->identity.DomainLength);
-	stream_seek(s, credssp->identity.DomainLength);
+	Stream_Seek(s, credssp->identity.DomainLength);
 	credssp->identity.DomainLength /= 2;
 
 	/* [1] userName (OCTET STRING) */
@@ -827,7 +827,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	credssp->identity.UserLength = (UINT32) length;
 	credssp->identity.User = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.User, s->pointer, credssp->identity.UserLength);
-	stream_seek(s, credssp->identity.UserLength);
+	Stream_Seek(s, credssp->identity.UserLength);
 	credssp->identity.UserLength /= 2;
 
 	/* [2] password (OCTET STRING) */
@@ -836,7 +836,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	credssp->identity.PasswordLength = (UINT32) length;
 	credssp->identity.Password = (UINT16*) malloc(length);
 	CopyMemory(credssp->identity.Password, s->pointer, credssp->identity.PasswordLength);
-	stream_seek(s, credssp->identity.PasswordLength);
+	Stream_Seek(s, credssp->identity.PasswordLength);
 	credssp->identity.PasswordLength /= 2;
 
 	credssp->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -891,8 +891,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 	int length;
 	int ts_password_creds_length;
 
-	s = stream_new(0);
-	stream_attach(s, ts_credentials->pvBuffer, ts_credentials->cbBuffer);
+	s = Stream_New(ts_credentials->pvBuffer, ts_credentials->cbBuffer);
 
 	/* TSCredentials (SEQUENCE) */
 	ber_read_sequence_tag(s, &length);
@@ -907,8 +906,7 @@ void credssp_read_ts_credentials(rdpCredssp* credssp, PSecBuffer ts_credentials)
 
 	credssp_read_ts_password_creds(credssp, s);
 
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 }
 
 void credssp_write_ts_credentials(rdpCredssp* credssp, wStream* s)
@@ -945,14 +943,13 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	wStream* s;
 	int length;
 
-	s = stream_new(0);
 	length = credssp_skip_ts_credentials(credssp);
 	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
-	stream_attach(s, credssp->ts_credentials.pvBuffer, length);
 
+	s = Stream_New(credssp->ts_credentials.pvBuffer, length);
 	credssp_write_ts_credentials(credssp, s);
-	stream_detach(s);
-	stream_free(s);
+
+	Stream_Free(s, FALSE);
 }
 
 SECURITY_STATUS credssp_encrypt_ts_credentials(rdpCredssp* credssp)
@@ -1091,7 +1088,7 @@ void credssp_send(rdpCredssp* credssp)
 	length = nego_tokens_length + pub_key_auth_length + auth_info_length;
 	ts_request_length = credssp_skip_ts_request(length);
 
-	s = stream_new(ts_request_length);
+	s = Stream_New(NULL, ts_request_length);
 
 	/* TSRequest */
 	length = der_get_content_length(ts_request_length);
@@ -1129,7 +1126,7 @@ void credssp_send(rdpCredssp* credssp)
 	}
 
 	transport_write(credssp->transport, s);
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 /**
@@ -1145,15 +1142,15 @@ int credssp_recv(rdpCredssp* credssp)
 	int status;
 	UINT32 version;
 
-	s = stream_new(4096);
+	s = Stream_New(NULL, 4096);
 
 	status = transport_read(credssp->transport, s);
-	s->capacity = status;
+	Stream_Length(s) = status;
 
 	if (status < 0)
 	{
 		fprintf(stderr, "credssp_recv() error: %d\n", status);
-		stream_free(s);
+		Stream_Free(s, TRUE);
 		return -1;
 	}
 
@@ -1170,10 +1167,10 @@ int credssp_recv(rdpCredssp* credssp)
 			!ber_read_sequence_tag(s, &length) || /* NegoDataItem */
 			!ber_read_contextual_tag(s, 0, &length, TRUE) || /* [0] negoToken */
 			!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			stream_get_left(s) < length)
+			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->negoToken, length);
-		stream_read(s, credssp->negoToken.pvBuffer, length);
+		Stream_Read(s, credssp->negoToken.pvBuffer, length);
 		credssp->negoToken.cbBuffer = length;
 	}
 
@@ -1181,10 +1178,10 @@ int credssp_recv(rdpCredssp* credssp)
 	if (ber_read_contextual_tag(s, 2, &length, TRUE) != FALSE)
 	{
 		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			stream_get_left(s) < length)
+			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->authInfo, length);
-		stream_read(s, credssp->authInfo.pvBuffer, length);
+		Stream_Read(s, credssp->authInfo.pvBuffer, length);
 		credssp->authInfo.cbBuffer = length;
 	}
 
@@ -1192,14 +1189,14 @@ int credssp_recv(rdpCredssp* credssp)
 	if (ber_read_contextual_tag(s, 3, &length, TRUE) != FALSE)
 	{
 		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			stream_get_left(s) < length)
+			Stream_GetRemainingLength(s) < length)
 			return -1;
 		sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
-		stream_read(s, credssp->pubKeyAuth.pvBuffer, length);
+		Stream_Read(s, credssp->pubKeyAuth.pvBuffer, length);
 		credssp->pubKeyAuth.cbBuffer = length;
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

@@ -928,29 +928,26 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 		return;
 	}
 
-	s = stream_new(0);
-	stream_attach(s, data, size);
-	stream_seek(s, 14);
-	stream_read_UINT16(s, bpp);
-	stream_read_UINT32(s, ncolors);
+	s = Stream_New(data, size);
+	Stream_Seek(s, 14);
+	Stream_Read_UINT16(s, bpp);
+	Stream_Read_UINT32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
-	stream_detach(s);
-	stream_free(s);
+	Stream_Free(s, FALSE);
 
 	DEBUG_X11_CLIPRDR("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
 
-	s = stream_new(14 + size);
-	stream_write_BYTE(s, 'B');
-	stream_write_BYTE(s, 'M');
-	stream_write_UINT32(s, 14 + size);
-	stream_write_UINT32(s, 0);
-	stream_write_UINT32(s, offset);
-	stream_write(s, data, size);
+	s = Stream_New(NULL, 14 + size);
+	Stream_Write_UINT8(s, 'B');
+	Stream_Write_UINT8(s, 'M');
+	Stream_Write_UINT32(s, 14 + size);
+	Stream_Write_UINT32(s, 0);
+	Stream_Write_UINT32(s, offset);
+	Stream_Write(s, data, size);
 
-	cb->data = stream_get_head(s);
-	cb->data_length = stream_get_length(s);
-	stream_detach(s);
-	stream_free(s);
+	cb->data = Stream_Buffer(s);
+	cb->data_length = Stream_GetPosition(s);
+	Stream_Free(s, FALSE);
 }
 
 static void xf_cliprdr_process_html(clipboardContext* cb, BYTE* data, int size)

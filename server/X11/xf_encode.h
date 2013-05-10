@@ -20,13 +20,12 @@
 #ifndef __XF_ENCODE_H
 #define __XF_ENCODE_H
 
-#include <pthread.h>
 #include "xfreerdp.h"
 
 #include "xf_peer.h"
 
 XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
 void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
-void* xf_monitor_updates(void* param);
+int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height);
 
 #endif /* __XF_ENCODE_H */

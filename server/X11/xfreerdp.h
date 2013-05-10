@@ -20,7 +20,14 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+#include "xf_interface.h"
+
+#include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/listener.h>
 #include <freerdp/codec/color.h>
+
+#include <X11/Xlib.h>
 
 #ifdef WITH_XSHM
 #include <X11/extensions/XShm.h>
@@ -38,8 +45,6 @@
 #include <X11/extensions/Xdamage.h>
 #endif
 
-typedef struct xf_info xfInfo;
-
 struct xf_info
 {
 	int bpp;
@@ -56,6 +61,7 @@ struct xf_info
 	int bytesPerPixel;
 	HCLRCONV clrconv;
 	BOOL use_xshm;
+	int activePeerCount;
 
 	XImage* fb_image;
 	Pixmap fb_pixmap;
@@ -68,6 +74,19 @@ struct xf_info
 	int xdamage_notify_event;
 	XserverRegion xdamage_region;
 #endif
+
+#ifdef WITH_XFIXES
+	int xfixes_notify_event;
+#endif
 };
+
+struct xf_server
+{
+	DWORD port;
+	HANDLE thread;
+	freerdp_listener* listener;
+};
+
+void* xf_server_thread(void* param);
 
 #endif /* __XFREERDP_H */

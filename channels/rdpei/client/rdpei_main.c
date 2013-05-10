@@ -26,11 +26,12 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
 
-#include <winpr/stream.h>
+#include "rdpei_common.h"
 
 #include "rdpei_main.h"
 
@@ -61,10 +62,209 @@ struct _RDPEI_PLUGIN
 	RDPEI_LISTENER_CALLBACK* listener_callback;
 };
 
+const char* RDPEI_EVENTID_STRINGS[] =
+{
+	"",
+	"EVENTID_SC_READY",
+	"EVENTID_CS_READY",
+	"EVENTID_TOUCH",
+	"EVENTID_SUSPEND_TOUCH",
+	"EVENTID_RESUME_TOUCH",
+	"EVENTID_DISMISS_HOVERING_CONTACT"
+};
+
+int rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId, UINT32 pduLength)
+{
+	int status;
+
+	Stream_SetPosition(s, 0);
+	Stream_Write_UINT16(s, eventId); /* eventId (2 bytes) */
+	Stream_Write_UINT32(s, pduLength); /* pduLength (4 bytes) */
+	Stream_SetPosition(s, Stream_Length(s));
+
+	printf("rdpei_send_pdu: eventId: %d (%s) length: %d\n",
+			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
+
+	status = callback->channel->Write(callback->channel,
+			Stream_Length(s), Stream_Buffer(s), NULL);
+
+	return status;
+}
+
+int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
+{
+	int status;
+	wStream* s;
+	UINT32 flags;
+	UINT32 pduLength;
+	UINT16 maxTouchContacts;
+
+	flags = 0;
+	flags |= READY_FLAGS_SHOW_TOUCH_VISUALS;
+	//flags |= READY_FLAGS_DISABLE_TIMESTAMP_INJECTION;
+
+	maxTouchContacts = 10;
+
+	pduLength = RDPINPUT_HEADER_LENGTH + 10;
+	s = Stream_New(NULL, pduLength);
+	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
+
+	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
+	Stream_Write_UINT32(s, RDPINPUT_PROTOCOL_V1); /* protocolVersion (4 bytes) */
+	Stream_Write_UINT16(s, maxTouchContacts); /* maxTouchContacts (2 bytes) */
+
+	Stream_SealLength(s);
+
+	status = rdpei_send_pdu(callback, s, EVENTID_CS_READY, pduLength);
+	Stream_Free(s, TRUE);
+
+	return status;
+}
+
+int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
+{
+	int index;
+	RDPINPUT_CONTACT_DATA* contact;
+
+	rdpei_write_2byte_unsigned(s, frame->contactCount);
+	rdpei_write_8byte_unsigned(s, frame->frameOffset);
+
+	Stream_EnsureRemainingCapacity(s, frame->contactCount * 32);
+
+	for (index = 0; index < frame->contactCount; index++)
+	{
+		contact = &frame->contacts[index];
+
+		Stream_Write_UINT8(s, contact->contactId);
+		rdpei_write_2byte_unsigned(s, contact->fieldsPresent);
+		rdpei_write_4byte_signed(s, contact->x);
+		rdpei_write_4byte_signed(s, contact->y);
+		rdpei_write_4byte_unsigned(s, contact->contactFlags);
+
+		if (contact->fieldsPresent & CONTACT_DATA_CONTACTRECT_PRESENT)
+		{
+			rdpei_write_2byte_signed(s, contact->contactRectLeft);
+			rdpei_write_2byte_signed(s, contact->contactRectTop);
+			rdpei_write_2byte_signed(s, contact->contactRectRight);
+			rdpei_write_2byte_signed(s, contact->contactRectBottom);
+		}
+
+		if (contact->fieldsPresent & CONTACT_DATA_ORIENTATION_PRESENT)
+		{
+			rdpei_write_4byte_unsigned(s, contact->orientation);
+		}
+
+		if (contact->fieldsPresent & CONTACT_DATA_PRESSURE_PRESENT)
+		{
+			rdpei_write_4byte_unsigned(s, contact->pressure);
+		}
+	}
+
+	return 0;
+}
+
+int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback)
+{
+	int status;
+	wStream* s;
+	UINT32 pduLength;
+	UINT32 encodeTime;
+	UINT16 frameCount;
+	RDPINPUT_TOUCH_FRAME frame;
+	RDPINPUT_CONTACT_DATA contact;
+
+	encodeTime = 123;
+	frameCount = 1;
+
+	frame.contactCount = 1;
+	frame.contacts = &contact;
+
+	s = Stream_New(NULL, 512);
+	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
+
+	rdpei_write_4byte_unsigned(s, encodeTime);
+	rdpei_write_2byte_unsigned(s, frameCount);
+
+	rdpei_write_touch_frame(s, &frame);
+
+	Stream_SealLength(s);
+	pduLength = Stream_Length(s);
+
+	status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, pduLength);
+	Stream_Free(s, TRUE);
+
+	return status;
+}
+
+int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	UINT32 protocolVersion;
+
+	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
+
+	if (protocolVersion != RDPINPUT_PROTOCOL_V1)
+	{
+		printf("Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
+		return -1;
+	}
+
+	return 0;
+}
+
+int rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	return 0;
+}
+
+int rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	return 0;
+}
+
+int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	UINT16 eventId;
+	UINT32 pduLength;
+
+	Stream_Read_UINT16(s, eventId); /* eventId (2 bytes) */
+	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
+
+	printf("rdpei_recv_pdu: eventId: %d (%s) length: %d\n",
+			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
+
+	switch (eventId)
+	{
+		case EVENTID_SC_READY:
+			rdpei_recv_sc_ready_pdu(callback, s);
+			rdpei_send_cs_ready_pdu(callback);
+			break;
+
+		case EVENTID_SUSPEND_TOUCH:
+			rdpei_recv_suspend_touch_pdu(callback, s);
+			break;
+
+		case EVENTID_RESUME_TOUCH:
+			rdpei_recv_resume_touch_pdu(callback, s);
+			break;
+
+		default:
+			break;
+	}
+
+	return 0;
+}
+
 static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
 {
+	wStream* s;
 	int status = 0;
-	//RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*) pChannelCallback;
+	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*) pChannelCallback;
+
+	s = Stream_New(pBuffer, cbSize);
+
+	status = rdpei_recv_pdu(callback, s);
+
+	Stream_Free(s, FALSE);
 
 	return status;
 }
