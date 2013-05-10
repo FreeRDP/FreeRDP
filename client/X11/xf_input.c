@@ -203,10 +203,6 @@ void xf_input_detect_pinch(xfInfo* xfi)
 	}
 }
 
-#endif
-
-#ifdef WITH_XI
-
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
@@ -266,11 +262,8 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 	}
 }
 
-#endif
-
 int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 {
-#ifdef WITH_XI
 	XGenericEventCookie* cookie = &event->xcookie;
 
 	XGetEventData(xfi->display, cookie);
@@ -304,11 +297,9 @@ int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 	}
 
 	XFreeEventData(xfi->display,cookie);
-#endif
+
 	return 0;
 }
-
-#ifdef WITH_XI
 
 int xf_input_touch_begin_remote(xfInfo* xfi, XIDeviceEvent* event)
 {
@@ -325,11 +316,8 @@ int xf_input_touch_end_remote(xfInfo* xfi, XIDeviceEvent* event)
 	return 0;
 }
 
-#endif
-
 int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
 {
-#ifdef WITH_XI
 	XGenericEventCookie* cookie = &event->xcookie;
 
 	XGetEventData(xfi->display, cookie);
@@ -356,9 +344,18 @@ int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
 	}
 
 	XFreeEventData(xfi->display,cookie);
-#endif
+
 	return 0;
 }
+
+#else
+
+int xf_input_init(xfInfo* xfi, Window window)
+{
+	return 0;
+}
+
+#endif
 
 void xf_process_rdpei_event(xfInfo* xfi, wMessage* event)
 {
@@ -377,6 +374,7 @@ void xf_process_rdpei_event(xfInfo* xfi, wMessage* event)
 
 int xf_input_handle_event(xfInfo* xfi, XEvent* event)
 {
+#ifdef WITH_XI
 	if (xfi->settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfi, event);
@@ -384,6 +382,7 @@ int xf_input_handle_event(xfInfo* xfi, XEvent* event)
 
 	if (xfi->enableScaling)
 		return xf_input_handle_event_local(xfi, event);
+#endif
 
 	return 0;
 }
