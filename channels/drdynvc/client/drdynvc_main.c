@@ -182,7 +182,10 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 	Stream_Seek(s, 1); /* pad */
 	Stream_Read_UINT16(s, drdynvc->version);
 
-	if (drdynvc->version == 2)
+	/* RDP8 servers offer version 3, though Microsoft forgot to document it
+	 * in their early documents.  It behaves the same as version 2.
+	 */
+	if ((drdynvc->version == 2) || (drdynvc->version == 3))
 	{
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge0);
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge1);
