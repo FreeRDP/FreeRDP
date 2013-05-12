@@ -149,9 +149,27 @@ static const BYTE CBR23_BPP[] =
 		0, 0, 0, 8, 16, 24, 32
 };
 
+static const BYTE BPP_CBR23[] =
+{
+		0, 0, 0, 0, 0, 0, 0, 0,
+		3, 0, 0, 0, 0, 0, 0, 0,
+		4, 0, 0, 0, 0, 0, 0, 0,
+		5, 0, 0, 0, 0, 0, 0, 0,
+		6, 0, 0, 0, 0, 0, 0, 0
+};
+
 static const BYTE BMF_BPP[] =
 {
 		0, 1, 0, 8, 16, 24, 32
+};
+
+static const BYTE BPP_BMF[] =
+{
+		0, 1, 0, 0, 0, 0, 0, 0,
+		3, 0, 0, 0, 0, 0, 0, 0,
+		4, 0, 0, 0, 0, 0, 0, 0,
+		5, 0, 0, 0, 0, 0, 0, 0,
+		6, 0, 0, 0, 0, 0, 0, 0
 };
 
 static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
@@ -250,6 +268,18 @@ static INLINE void update_read_color_quad(wStream* s, UINT32* color)
 	Stream_Read_UINT8(s, byte);
 	*color |= byte;
 	Stream_Seek_UINT8(s);
+}
+
+static INLINE void update_write_color_quad(wStream* s, UINT32 color)
+{
+	BYTE byte;
+
+	byte = (color << 16) & 0xFF;
+	Stream_Write_UINT8(s, byte);
+	byte = (color << 8) & 0xFF;
+	Stream_Write_UINT8(s, byte);
+	byte = color & 0xFF;
+	Stream_Write_UINT8(s, byte);
 }
 
 static INLINE BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
@@ -794,6 +824,30 @@ BOOL update_read_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* d
 	return TRUE;
 }
 
+BOOL update_write_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt)
+{
+	orderInfo->fieldFlags = 0;
+
+	Stream_EnsureRemainingCapacity(s, 64);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	update_write_coord(s, dstblt->nLeftRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, dstblt->nTopRect);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, dstblt->nWidth);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, dstblt->nHeight);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	Stream_Write_UINT8(s, dstblt->bRop);
+
+	return TRUE;
+}
+
 BOOL update_read_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt)
 {
 	ORDER_FIELD_COORD(1, patblt->nLeftRect);
@@ -967,6 +1021,11 @@ BOOL update_read_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, DRAW_NI
 	return TRUE;
 }
 
+BOOL update_write_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, DRAW_NINE_GRID_ORDER* draw_nine_grid)
+{
+	return TRUE;
+}
+
 BOOL update_read_multi_dstblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DSTBLT_ORDER* multi_dstblt)
 {
 	ORDER_FIELD_COORD(1, multi_dstblt->nLeftRect);
@@ -983,6 +1042,11 @@ BOOL update_read_multi_dstblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DST
 		Stream_Read_UINT16(s, multi_dstblt->cbData);
 		return update_read_delta_rects(s, multi_dstblt->rectangles, multi_dstblt->numRectangles);
 	}
+	return TRUE;
+}
+
+BOOL update_write_multi_dstblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DSTBLT_ORDER* multi_dstblt)
+{
 	return TRUE;
 }
 
@@ -1012,6 +1076,11 @@ BOOL update_read_multi_patblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_PAT
 	return TRUE;
 }
 
+BOOL update_write_multi_patblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_PATBLT_ORDER* multi_patblt)
+{
+	return TRUE;
+}
+
 BOOL update_read_multi_scrblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_SCRBLT_ORDER* multi_scrblt)
 {
 	ORDER_FIELD_COORD(1, multi_scrblt->nLeftRect);
@@ -1030,6 +1099,11 @@ BOOL update_read_multi_scrblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_SCR
 		Stream_Read_UINT16(s, multi_scrblt->cbData);
 		return update_read_delta_rects(s, multi_scrblt->rectangles, multi_scrblt->numRectangles);
 	}
+	return TRUE;
+}
+
+BOOL update_write_multi_scrblt_order(wStream* s, ORDER_INFO* orderInfo, MULTI_SCRBLT_ORDER* multi_scrblt)
+{
 	return TRUE;
 }
 
@@ -1078,6 +1152,10 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 	return TRUE;
 }
 
+BOOL update_write_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+{
+	return TRUE;
+}
 
 BOOL update_read_multi_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
 {
@@ -1095,6 +1173,11 @@ BOOL update_read_multi_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, M
 	return TRUE;
 }
 
+BOOL update_write_multi_draw_nine_grid_order(wStream* s, ORDER_INFO* orderInfo, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
+{
+	return TRUE;
+}
+
 BOOL update_read_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to)
 {
 	ORDER_FIELD_UINT16(1, line_to->backMode);
@@ -1107,6 +1190,45 @@ BOOL update_read_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER*
 	ORDER_FIELD_BYTE(8, line_to->penStyle);
 	ORDER_FIELD_BYTE(9, line_to->penWidth);
 	ORDER_FIELD_COLOR(10, line_to->penColor);
+	return TRUE;
+}
+
+BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to)
+{
+	Stream_EnsureRemainingCapacity(s, 32);
+
+	orderInfo->fieldFlags = 0;
+
+	orderInfo->fieldFlags |= ORDER_FIELD_01;
+	Stream_Write_UINT16(s, line_to->backMode);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_02;
+	update_write_coord(s, line_to->nXStart);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_03;
+	update_write_coord(s, line_to->nYStart);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_04;
+	update_write_coord(s, line_to->nXEnd);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_05;
+	update_write_coord(s, line_to->nYEnd);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_06;
+	update_write_color(s, line_to->backColor);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_07;
+	Stream_Write_UINT8(s, line_to->bRop2);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_08;
+	Stream_Write_UINT8(s, line_to->penStyle);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_09;
+	Stream_Write_UINT8(s, line_to->penWidth);
+
+	orderInfo->fieldFlags |= ORDER_FIELD_10;
+	update_write_color(s, line_to->penColor);
+
 	return TRUE;
 }
 
@@ -1135,6 +1257,11 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 		return update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
 	}
 
+	return TRUE;
+}
+
+BOOL update_write_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
+{
 	return TRUE;
 }
 
@@ -1216,6 +1343,11 @@ BOOL update_read_mem3blt_order(wStream* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER*
 	return TRUE;
 }
 
+BOOL update_write_mem3blt_order(wStream* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER* mem3blt)
+{
+	return TRUE;
+}
+
 BOOL update_read_save_bitmap_order(wStream* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)
 {
 	ORDER_FIELD_UINT32(1, save_bitmap->savedBitmapPosition);
@@ -1224,6 +1356,11 @@ BOOL update_read_save_bitmap_order(wStream* s, ORDER_INFO* orderInfo, SAVE_BITMA
 	ORDER_FIELD_COORD(4, save_bitmap->nRightRect);
 	ORDER_FIELD_COORD(5, save_bitmap->nBottomRect);
 	ORDER_FIELD_BYTE(6, save_bitmap->operation);
+	return TRUE;
+}
+
+BOOL update_write_save_bitmap_order(wStream* s, ORDER_INFO* orderInfo, SAVE_BITMAP_ORDER* save_bitmap)
+{
 	return TRUE;
 }
 
@@ -1366,6 +1503,11 @@ BOOL update_read_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX_
 	return TRUE;
 }
 
+BOOL update_write_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
+{
+	return TRUE;
+}
+
 BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
 {
 	BYTE* phold;
@@ -1429,6 +1571,11 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 	return TRUE;
 }
 
+BOOL update_write_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
+{
+	return TRUE;
+}
+
 BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
 {
 	ORDER_FIELD_COORD(1, polygon_sc->xStart);
@@ -1451,6 +1598,11 @@ BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_
 
 		return update_read_delta_points(s, polygon_sc->points, polygon_sc->numPoints, polygon_sc->xStart, polygon_sc->yStart);
 	}
+	return TRUE;
+}
+
+BOOL update_write_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
+{
 	return TRUE;
 }
 
@@ -1488,6 +1640,11 @@ BOOL update_read_polygon_cb_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_CB_
 	return TRUE;
 }
 
+BOOL update_write_polygon_cb_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
+{
+	return TRUE;
+}
+
 BOOL update_read_ellipse_sc_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_SC_ORDER* ellipse_sc)
 {
 	ORDER_FIELD_COORD(1, ellipse_sc->leftRect);
@@ -1497,6 +1654,11 @@ BOOL update_read_ellipse_sc_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_SC_
 	ORDER_FIELD_BYTE(5, ellipse_sc->bRop2);
 	ORDER_FIELD_BYTE(6, ellipse_sc->fillMode);
 	ORDER_FIELD_COLOR(7, ellipse_sc->color);
+	return TRUE;
+}
+
+BOOL update_write_ellipse_sc_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_SC_ORDER* ellipse_sc)
+{
 	return TRUE;
 }
 
@@ -1513,50 +1675,91 @@ BOOL update_read_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_CB_
 	return update_read_brush(s, &ellipse_cb->brush, orderInfo->fieldFlags >> 8);
 }
 
+BOOL update_write_ellipse_cb_order(wStream* s, ORDER_INFO* orderInfo, ELLIPSE_CB_ORDER* ellipse_cb)
+{
+	return TRUE;
+}
+
 /* Secondary Drawing Orders */
 
-BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap_order, BOOL compressed, UINT16 flags)
+BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap, BOOL compressed, UINT16 flags)
 {
 	if (Stream_GetRemainingLength(s) < 9)
 		return FALSE;
 
-	Stream_Read_UINT8(s, cache_bitmap_order->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT8(s, cache_bitmap->cacheId); /* cacheId (1 byte) */
 	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
-	Stream_Read_UINT8(s, cache_bitmap_order->bitmapWidth); /* bitmapWidth (1 byte) */
-	Stream_Read_UINT8(s, cache_bitmap_order->bitmapHeight); /* bitmapHeight (1 byte) */
-	Stream_Read_UINT8(s, cache_bitmap_order->bitmapBpp); /* bitmapBpp (1 byte) */
-	Stream_Read_UINT16(s, cache_bitmap_order->bitmapLength); /* bitmapLength (2 bytes) */
-	Stream_Read_UINT16(s, cache_bitmap_order->cacheIndex); /* cacheIndex (2 bytes) */
+	Stream_Read_UINT8(s, cache_bitmap->bitmapWidth); /* bitmapWidth (1 byte) */
+	Stream_Read_UINT8(s, cache_bitmap->bitmapHeight); /* bitmapHeight (1 byte) */
+	Stream_Read_UINT8(s, cache_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	Stream_Read_UINT16(s, cache_bitmap->bitmapLength); /* bitmapLength (2 bytes) */
+	Stream_Read_UINT16(s, cache_bitmap->cacheIndex); /* cacheIndex (2 bytes) */
 
 	if (compressed)
 	{
 		if ((flags & NO_BITMAP_COMPRESSION_HDR) == 0)
 		{
-			BYTE* bitmapComprHdr = (BYTE*) &(cache_bitmap_order->bitmapComprHdr);
+			BYTE* bitmapComprHdr = (BYTE*) &(cache_bitmap->bitmapComprHdr);
 
 			if (Stream_GetRemainingLength(s) < 8)
 				return FALSE;
 
 			Stream_Read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
-			cache_bitmap_order->bitmapLength -= 8;
+			cache_bitmap->bitmapLength -= 8;
 		}
 
-		if (Stream_GetRemainingLength(s) < cache_bitmap_order->bitmapLength)
+		if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
 			return FALSE;
 
-		Stream_GetPointer(s, cache_bitmap_order->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_order->bitmapLength);
+		Stream_GetPointer(s, cache_bitmap->bitmapDataStream);
+		Stream_Seek(s, cache_bitmap->bitmapLength);
 	}
 	else
 	{
-		if (Stream_GetRemainingLength(s) < cache_bitmap_order->bitmapLength)
+		if (Stream_GetRemainingLength(s) < cache_bitmap->bitmapLength)
 			return FALSE;
 
-		Stream_GetPointer(s, cache_bitmap_order->bitmapDataStream);
-		Stream_Seek(s, cache_bitmap_order->bitmapLength); /* bitmapDataStream */
+		Stream_GetPointer(s, cache_bitmap->bitmapDataStream);
+		Stream_Seek(s, cache_bitmap->bitmapLength); /* bitmapDataStream */
 	}
 
-	cache_bitmap_order->compressed = compressed;
+	cache_bitmap->compressed = compressed;
+
+	return TRUE;
+}
+
+BOOL update_write_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap, BOOL compressed, UINT16* flags)
+{
+	*flags = NO_BITMAP_COMPRESSION_HDR;
+
+	Stream_EnsureRemainingCapacity(s, 64 + cache_bitmap->bitmapLength);
+
+	if ((*flags & NO_BITMAP_COMPRESSION_HDR) == 0)
+		cache_bitmap->bitmapLength += 8;
+
+	Stream_Write_UINT8(s, cache_bitmap->cacheId); /* cacheId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* pad1Octet (1 byte) */
+	Stream_Write_UINT8(s, cache_bitmap->bitmapWidth); /* bitmapWidth (1 byte) */
+	Stream_Write_UINT8(s, cache_bitmap->bitmapHeight); /* bitmapHeight (1 byte) */
+	Stream_Write_UINT8(s, cache_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	Stream_Write_UINT16(s, cache_bitmap->bitmapLength); /* bitmapLength (2 bytes) */
+	Stream_Write_UINT16(s, cache_bitmap->cacheIndex); /* cacheIndex (2 bytes) */
+
+	if (compressed)
+	{
+		if ((*flags & NO_BITMAP_COMPRESSION_HDR) == 0)
+		{
+			BYTE* bitmapComprHdr = (BYTE*) &(cache_bitmap->bitmapComprHdr);
+			Stream_Write(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
+			cache_bitmap->bitmapLength -= 8;
+		}
+
+		Stream_Write(s, cache_bitmap->bitmapDataStream, cache_bitmap->bitmapLength);
+	}
+	else
+	{
+		Stream_Write(s, cache_bitmap->bitmapDataStream, cache_bitmap->bitmapLength);
+	}
 
 	return TRUE;
 }
@@ -1639,7 +1842,7 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 {
 	BYTE bitsPerPixelId;
 
-	Stream_EnsureRemainingCapacity(s, 64);
+	Stream_EnsureRemainingCapacity(s, 64 + cache_bitmap_v2->bitmapLength);
 
 	bitsPerPixelId = BPP_CBR2[cache_bitmap_v2->bitmapBpp];
 
@@ -1696,24 +1899,25 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 	return TRUE;
 }
 
-BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order, BOOL compressed, UINT16 flags)
+BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3, UINT16 flags)
 {
 	BYTE bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
 
-	cache_bitmap_v3_order->cacheId = flags & 0x00000003;
-	cache_bitmap_v3_order->flags = (flags & 0x0000FF80) >> 7;
+	cache_bitmap_v3->cacheId = flags & 0x00000003;
+	cache_bitmap_v3->flags = (flags & 0x0000FF80) >> 7;
 
 	bitsPerPixelId = (flags & 0x00000078) >> 3;
-	cache_bitmap_v3_order->bpp = CBR23_BPP[bitsPerPixelId];
+	cache_bitmap_v3->bpp = CBR23_BPP[bitsPerPixelId];
 
 	if (Stream_GetRemainingLength(s) < 21)
 		return FALSE;
-	Stream_Read_UINT16(s, cache_bitmap_v3_order->cacheIndex); /* cacheIndex (2 bytes) */
-	Stream_Read_UINT32(s, cache_bitmap_v3_order->key1); /* key1 (4 bytes) */
-	Stream_Read_UINT32(s, cache_bitmap_v3_order->key2); /* key2 (4 bytes) */
 
-	bitmapData = &cache_bitmap_v3_order->bitmapData;
+	Stream_Read_UINT16(s, cache_bitmap_v3->cacheIndex); /* cacheIndex (2 bytes) */
+	Stream_Read_UINT32(s, cache_bitmap_v3->key1); /* key1 (4 bytes) */
+	Stream_Read_UINT32(s, cache_bitmap_v3->key2); /* key2 (4 bytes) */
+
+	bitmapData = &cache_bitmap_v3->bitmapData;
 
 	Stream_Read_UINT8(s, bitmapData->bpp);
 	Stream_Seek_UINT8(s); /* reserved1 (1 byte) */
@@ -1725,16 +1929,50 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 
 	if (Stream_GetRemainingLength(s) < bitmapData->length)
 		return FALSE;
+
 	if (bitmapData->data == NULL)
 		bitmapData->data = (BYTE*) malloc(bitmapData->length);
 	else
 		bitmapData->data = (BYTE*) realloc(bitmapData->data, bitmapData->length);
 
 	Stream_Read(s, bitmapData->data, bitmapData->length);
+
 	return TRUE;
 }
 
-BOOL update_read_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16 flags)
+BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3, UINT16* flags)
+{
+	BYTE bitsPerPixelId;
+	BITMAP_DATA_EX* bitmapData;
+
+	bitmapData = &cache_bitmap_v3->bitmapData;
+
+	Stream_EnsureRemainingCapacity(s, 64 + bitmapData->length);
+
+	bitsPerPixelId = BPP_CBR23[cache_bitmap_v3->bpp];
+
+	*flags = (cache_bitmap_v3->cacheId & 0x00000003) |
+			((cache_bitmap_v3->flags << 7) & 0x0000FF80) |
+			((bitsPerPixelId << 3) & 0x00000078);
+
+	Stream_Write_UINT16(s, cache_bitmap_v3->cacheIndex); /* cacheIndex (2 bytes) */
+	Stream_Write_UINT32(s, cache_bitmap_v3->key1); /* key1 (4 bytes) */
+	Stream_Write_UINT32(s, cache_bitmap_v3->key2); /* key2 (4 bytes) */
+
+	Stream_Write_UINT8(s, bitmapData->bpp);
+	Stream_Write_UINT8(s, 0); /* reserved1 (1 byte) */
+	Stream_Write_UINT8(s, 0); /* reserved2 (1 byte) */
+	Stream_Write_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
+	Stream_Write_UINT16(s, bitmapData->width); /* width (2 bytes) */
+	Stream_Write_UINT16(s, bitmapData->height); /* height (2 bytes) */
+	Stream_Write_UINT32(s, bitmapData->length); /* length (4 bytes) */
+
+	Stream_Write(s, bitmapData->data, bitmapData->length);
+
+	return TRUE;
+}
+
+BOOL update_read_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* cache_color_table, UINT16 flags)
 {
 	int i;
 	UINT32* colorTable;
@@ -1742,23 +1980,46 @@ BOOL update_read_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* ca
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
-	Stream_Read_UINT8(s, cache_color_table_order->cacheIndex); /* cacheIndex (1 byte) */
-	Stream_Read_UINT16(s, cache_color_table_order->numberColors); /* numberColors (2 bytes) */
+	Stream_Read_UINT8(s, cache_color_table->cacheIndex); /* cacheIndex (1 byte) */
+	Stream_Read_UINT16(s, cache_color_table->numberColors); /* numberColors (2 bytes) */
 
-	if (cache_color_table_order->numberColors != 256)
+	if (cache_color_table->numberColors != 256)
 	{
 		/* This field MUST be set to 256 */
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < cache_color_table_order->numberColors * 4)
+	if (Stream_GetRemainingLength(s) < cache_color_table->numberColors * 4)
 		return FALSE;
 
-	colorTable = (UINT32*) &cache_color_table_order->colorTable;
+	colorTable = (UINT32*) &cache_color_table->colorTable;
 
-	for (i = 0; i < (int) cache_color_table_order->numberColors; i++)
+	for (i = 0; i < (int) cache_color_table->numberColors; i++)
 	{
 		update_read_color_quad(s, &colorTable[i]);
+	}
+
+	return TRUE;
+}
+
+BOOL update_write_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* cache_color_table, UINT16* flags)
+{
+	int i;
+	UINT32* colorTable;
+
+	if (cache_color_table->numberColors != 256)
+		return FALSE;
+
+	Stream_EnsureRemainingCapacity(s, 16 + (256 * 4));
+
+	Stream_Write_UINT8(s, cache_color_table->cacheIndex); /* cacheIndex (1 byte) */
+	Stream_Write_UINT16(s, cache_color_table->numberColors); /* numberColors (2 bytes) */
+
+	colorTable = (UINT32*) &cache_color_table->colorTable;
+
+	for (i = 0; i < (int) cache_color_table->numberColors; i++)
+	{
+		update_write_color_quad(s, colorTable[i]);
 	}
 
 	return TRUE;
@@ -1960,10 +2221,16 @@ BOOL update_decompress_brush(wStream* s, BYTE* output, BYTE bpp)
 			}
 		}
 	}
+
 	return TRUE;
 }
 
-BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_order, UINT16 flags)
+BOOL update_compress_brush(wStream* s, BYTE* input, BYTE bpp)
+{
+	return FALSE;
+}
+
+BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, UINT16 flags)
 {
 	int i;
 	int size;
@@ -1973,25 +2240,25 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_or
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	Stream_Read_UINT8(s, cache_brush_order->index); /* cacheEntry (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->index); /* cacheEntry (1 byte) */
 
 	Stream_Read_UINT8(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
-	cache_brush_order->bpp = BMF_BPP[iBitmapFormat];
+	cache_brush->bpp = BMF_BPP[iBitmapFormat];
 
-	Stream_Read_UINT8(s, cache_brush_order->cx); /* cx (1 byte) */
-	Stream_Read_UINT8(s, cache_brush_order->cy); /* cy (1 byte) */
-	Stream_Read_UINT8(s, cache_brush_order->style); /* style (1 byte) */
-	Stream_Read_UINT8(s, cache_brush_order->length); /* iBytes (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->cx); /* cx (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->cy); /* cy (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->style); /* style (1 byte) */
+	Stream_Read_UINT8(s, cache_brush->length); /* iBytes (1 byte) */
 
-	if ((cache_brush_order->cx == 8) && (cache_brush_order->cy == 8))
+	if ((cache_brush->cx == 8) && (cache_brush->cy == 8))
 	{
-		size = (cache_brush_order->bpp == 1) ? 8 : 8 * 8 * cache_brush_order->bpp;
+		size = (cache_brush->bpp == 1) ? 8 : 8 * 8 * cache_brush->bpp;
 
-		if (cache_brush_order->bpp == 1)
+		if (cache_brush->bpp == 1)
 		{
-			if (cache_brush_order->length != 8)
+			if (cache_brush->length != 8)
 			{
-				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush_order->length);
+				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush->length);
 				return TRUE; // should be FALSE ?
 			}
 
@@ -2001,35 +2268,102 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_or
 
 			for (i = 7; i >= 0; i--)
 			{
-				Stream_Read_UINT8(s, cache_brush_order->data[i]);
+				Stream_Read_UINT8(s, cache_brush->data[i]);
 			}
 		}
 		else
 		{
-			if ((iBitmapFormat == BMF_8BPP) && (cache_brush_order->length == 20))
+			if ((iBitmapFormat == BMF_8BPP) && (cache_brush->length == 20))
 				compressed = TRUE;
-			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush_order->length == 24))
+			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush->length == 24))
 				compressed = TRUE;
-			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush_order->length == 32))
+			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush->length == 32))
 				compressed = TRUE;
 
 			if (compressed != FALSE)
 			{
 				/* compressed brush */
-				if (!update_decompress_brush(s, cache_brush_order->data, cache_brush_order->bpp))
+				if (!update_decompress_brush(s, cache_brush->data, cache_brush->bpp))
 					return FALSE;
 			}
 			else
 			{
 				/* uncompressed brush */
-				int scanline = (cache_brush_order->bpp / 8) * 8;
+				int scanline = (cache_brush->bpp / 8) * 8;
 
 				if (Stream_GetRemainingLength(s) < scanline * 8)
 					return FALSE;
 
 				for (i = 7; i >= 0; i--)
 				{
-					Stream_Read(s, &cache_brush_order->data[i * scanline], scanline);
+					Stream_Read(s, &cache_brush->data[i * scanline], scanline);
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL update_write_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
+{
+	int i;
+	int size;
+	BYTE iBitmapFormat;
+	BOOL compressed = FALSE;
+
+	Stream_EnsureRemainingCapacity(s, 64);
+
+	iBitmapFormat = BPP_BMF[cache_brush->bpp];
+
+	Stream_Write_UINT8(s, cache_brush->index); /* cacheEntry (1 byte) */
+	Stream_Write_UINT8(s, iBitmapFormat); /* iBitmapFormat (1 byte) */
+
+	Stream_Write_UINT8(s, cache_brush->cx); /* cx (1 byte) */
+	Stream_Write_UINT8(s, cache_brush->cy); /* cy (1 byte) */
+	Stream_Write_UINT8(s, cache_brush->style); /* style (1 byte) */
+	Stream_Write_UINT8(s, cache_brush->length); /* iBytes (1 byte) */
+
+	if ((cache_brush->cx == 8) && (cache_brush->cy == 8))
+	{
+		size = (cache_brush->bpp == 1) ? 8 : 8 * 8 * cache_brush->bpp;
+
+		if (cache_brush->bpp == 1)
+		{
+			if (cache_brush->length != 8)
+			{
+				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush->length);
+				return FALSE;
+			}
+
+			for (i = 7; i >= 0; i--)
+			{
+				Stream_Write_UINT8(s, cache_brush->data[i]);
+			}
+		}
+		else
+		{
+			if ((iBitmapFormat == BMF_8BPP) && (cache_brush->length == 20))
+				compressed = TRUE;
+			else if ((iBitmapFormat == BMF_16BPP) && (cache_brush->length == 24))
+				compressed = TRUE;
+			else if ((iBitmapFormat == BMF_32BPP) && (cache_brush->length == 32))
+				compressed = TRUE;
+
+			if (compressed != FALSE)
+			{
+				/* compressed brush */
+				if (!update_compress_brush(s, cache_brush->data, cache_brush->bpp))
+					return FALSE;
+			}
+			else
+			{
+				/* uncompressed brush */
+				int scanline = (cache_brush->bpp / 8) * 8;
+
+				for (i = 7; i >= 0; i--)
+				{
+					Stream_Write(s, &cache_brush->data[i * scanline], scanline);
 				}
 			}
 		}
@@ -2173,27 +2507,44 @@ BOOL update_read_frame_marker_order(wStream* s, FRAME_MARKER_ORDER* frame_marker
 	return TRUE;
 }
 
+BOOL update_write_frame_marker_order(wStream* s, FRAME_MARKER_ORDER* frame_marker)
+{
+	return TRUE;
+}
+
 BOOL update_read_stream_bitmap_first_order(wStream* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first)
 {
 	if (Stream_GetRemainingLength(s) < 10)	// 8 + 2 at least
 		return FALSE;
+
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapFlags); /* bitmapFlags (1 byte) */
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapBpp); /* bitmapBpp (1 byte) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapType); /* bitmapType (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapWidth); /* bitmapWidth (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */
 
-	if (stream_bitmap_first->bitmapFlags & STREAM_BITMAP_V2) {
+	if (stream_bitmap_first->bitmapFlags & STREAM_BITMAP_V2)
+	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
+
 		Stream_Read_UINT32(s, stream_bitmap_first->bitmapSize); /* bitmapSize (4 bytes) */
-	} else {
+	}
+	else
+	{
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
+
 		Stream_Read_UINT16(s, stream_bitmap_first->bitmapSize); /* bitmapSize (2 bytes) */
 	}
 
 	FIELD_SKIP_BUFFER16(s, stream_bitmap_first->bitmapBlockSize); /* bitmapBlockSize(2 bytes) + bitmapBlock */
+
+	return TRUE;
+}
+
+BOOL update_write_stream_bitmap_first_order(wStream* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first)
+{
 	return TRUE;
 }
 
@@ -2201,9 +2552,16 @@ BOOL update_read_stream_bitmap_next_order(wStream* s, STREAM_BITMAP_NEXT_ORDER* 
 {
 	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
+
 	Stream_Read_UINT8(s, stream_bitmap_next->bitmapFlags); /* bitmapFlags (1 byte) */
 	Stream_Read_UINT16(s, stream_bitmap_next->bitmapType); /* bitmapType (2 bytes) */
 	FIELD_SKIP_BUFFER16(s, stream_bitmap_next->bitmapBlockSize); /* bitmapBlockSize(2 bytes) + bitmapBlock */
+
+	return TRUE;
+}
+
+BOOL update_write_stream_bitmap_next_order(wStream* s, STREAM_BITMAP_NEXT_ORDER* stream_bitmap_next)
+{
 	return TRUE;
 }
 
@@ -2211,6 +2569,7 @@ BOOL update_read_draw_gdiplus_first_order(wStream* s, DRAW_GDIPLUS_FIRST_ORDER* 
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
+
 	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_first->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_first->cbTotalSize); /* cbTotalSize (4 bytes) */
@@ -2219,12 +2578,24 @@ BOOL update_read_draw_gdiplus_first_order(wStream* s, DRAW_GDIPLUS_FIRST_ORDER* 
 	return Stream_SafeSeek(s, draw_gdiplus_first->cbSize); /* emfRecords */
 }
 
+BOOL update_write_draw_gdiplus_first_order(wStream* s, DRAW_GDIPLUS_FIRST_ORDER* draw_gdiplus_first)
+{
+	return TRUE;
+}
+
 BOOL update_read_draw_gdiplus_next_order(wStream* s, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next)
 {
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
+
 	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	FIELD_SKIP_BUFFER16(s, draw_gdiplus_next->cbSize); /* cbSize(2 bytes) + emfRecords */
+
+	return TRUE;
+}
+
+BOOL update_write_draw_gdiplus_next_order(wStream* s, DRAW_GDIPLUS_NEXT_ORDER* draw_gdiplus_next)
+{
 	return TRUE;
 }
 
@@ -2232,6 +2603,7 @@ BOOL update_read_draw_gdiplus_end_order(wStream* s, DRAW_GDIPLUS_END_ORDER* draw
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
+
 	Stream_Seek_UINT8(s); /* pad1Octet (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_end->cbSize); /* cbSize (2 bytes) */
 	Stream_Read_UINT32(s, draw_gdiplus_end->cbTotalSize); /* cbTotalSize (4 bytes) */
@@ -2240,10 +2612,16 @@ BOOL update_read_draw_gdiplus_end_order(wStream* s, DRAW_GDIPLUS_END_ORDER* draw
 	return Stream_SafeSeek(s, draw_gdiplus_end->cbSize); /* emfRecords */
 }
 
+BOOL update_write_draw_gdiplus_end_order(wStream* s, DRAW_GDIPLUS_END_ORDER* draw_gdiplus_end)
+{
+	return TRUE;
+}
+
 BOOL update_read_draw_gdiplus_cache_first_order(wStream* s, DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first)
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
+
 	Stream_Read_UINT8(s, draw_gdiplus_cache_first->flags); /* flags (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_first->cacheType); /* cacheType (2 bytes) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_first->cacheIndex); /* cacheIndex (2 bytes) */
@@ -2253,22 +2631,34 @@ BOOL update_read_draw_gdiplus_cache_first_order(wStream* s, DRAW_GDIPLUS_CACHE_F
 	return Stream_SafeSeek(s, draw_gdiplus_cache_first->cbSize); /* emfRecords */
 }
 
+BOOL update_write_draw_gdiplus_cache_first_order(wStream* s, DRAW_GDIPLUS_CACHE_FIRST_ORDER* draw_gdiplus_cache_first)
+{
+	return TRUE;
+}
+
 BOOL update_read_draw_gdiplus_cache_next_order(wStream* s, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next)
 {
 	if (Stream_GetRemainingLength(s) < 7)
 		return FALSE;
+
 	Stream_Read_UINT8(s, draw_gdiplus_cache_next->flags); /* flags (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_next->cacheType); /* cacheType (2 bytes) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_next->cacheIndex); /* cacheIndex (2 bytes) */
 	FIELD_SKIP_BUFFER16(s, draw_gdiplus_cache_next->cbSize); /* cbSize(2 bytes) + emfRecords */
-	return TRUE;
 
+	return TRUE;
+}
+
+BOOL update_write_draw_gdiplus_cache_next_order(wStream* s, DRAW_GDIPLUS_CACHE_NEXT_ORDER* draw_gdiplus_cache_next)
+{
+	return TRUE;
 }
 
 BOOL update_read_draw_gdiplus_cache_end_order(wStream* s, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end)
 {
 	if (Stream_GetRemainingLength(s) < 11)
 		return FALSE;
+
 	Stream_Read_UINT8(s, draw_gdiplus_cache_end->flags); /* flags (1 byte) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_end->cacheType); /* cacheType (2 bytes) */
 	Stream_Read_UINT16(s, draw_gdiplus_cache_end->cacheIndex); /* cacheIndex (2 bytes) */
@@ -2276,6 +2666,11 @@ BOOL update_read_draw_gdiplus_cache_end_order(wStream* s, DRAW_GDIPLUS_CACHE_END
 	Stream_Read_UINT32(s, draw_gdiplus_cache_end->cbTotalSize); /* cbTotalSize (4 bytes) */
 
 	return Stream_SafeSeek(s, draw_gdiplus_cache_end->cbSize); /* emfRecords */
+}
+
+BOOL update_write_draw_gdiplus_cache_end_order(wStream* s, DRAW_GDIPLUS_CACHE_END_ORDER* draw_gdiplus_cache_end)
+{
+	return TRUE;
 }
 
 BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes)
@@ -2685,7 +3080,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
-			if (!update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), TRUE, extraFlags))
+			if (!update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), extraFlags))
 				return FALSE;
 			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
 			break;
