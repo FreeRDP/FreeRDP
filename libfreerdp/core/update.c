@@ -953,6 +953,64 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	update->numberOrders++;
 }
 
+static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
+{
+	wStream* s;
+	int bm, em;
+	BYTE orderType;
+	BYTE controlFlags;
+	int headerLength;
+	rdpUpdate* update = context->update;
+
+	headerLength = 1;
+	orderType = ORDER_TYPE_CREATE_OFFSCREEN_BITMAP;
+	controlFlags = ORDER_SECONDARY | (orderType << 2);
+
+	s = update->us;
+	bm = Stream_GetPosition(s);
+
+	Stream_EnsureRemainingCapacity(s, headerLength);
+	Stream_Seek(s, headerLength);
+
+	update_write_create_offscreen_bitmap_order(s, create_offscreen_bitmap);
+	em = Stream_GetPosition(s);
+
+	Stream_SetPosition(s, bm);
+	Stream_Write_UINT8(s, controlFlags); /* controlFlags (1 byte) */
+	Stream_SetPosition(s, em);
+
+	update->numberOrders++;
+}
+
+static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE_ORDER* switch_surface)
+{
+	wStream* s;
+	int bm, em;
+	BYTE orderType;
+	BYTE controlFlags;
+	int headerLength;
+	rdpUpdate* update = context->update;
+
+	headerLength = 1;
+	orderType = ORDER_TYPE_SWITCH_SURFACE;
+	controlFlags = ORDER_SECONDARY | (orderType << 2);
+
+	s = update->us;
+	bm = Stream_GetPosition(s);
+
+	Stream_EnsureRemainingCapacity(s, headerLength);
+	Stream_Seek(s, headerLength);
+
+	update_write_switch_surface_order(s, switch_surface);
+	em = Stream_GetPosition(s);
+
+	Stream_SetPosition(s, bm);
+	Stream_Write_UINT8(s, controlFlags); /* controlFlags (1 byte) */
+	Stream_SetPosition(s, em);
+
+	update->numberOrders++;
+}
+
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	wStream* s;
@@ -1090,6 +1148,8 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->secondary->CacheBitmapV2 = update_send_cache_bitmap_v2;
 	update->secondary->CacheGlyph = update_send_cache_glyph;
 	update->secondary->CacheGlyphV2 = update_send_cache_glyph_v2;
+	update->altsec->CreateOffscreenBitmap = update_send_create_offscreen_bitmap_order;
+	update->altsec->SwitchSurface = update_send_switch_surface_order;
 	update->pointer->PointerSystem = update_send_pointer_system;
 	update->pointer->PointerColor = update_send_pointer_color;
 	update->pointer->PointerNew = update_send_pointer_new;

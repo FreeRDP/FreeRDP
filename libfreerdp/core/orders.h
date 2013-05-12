@@ -234,7 +234,9 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_g
 BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush_order, UINT16 flags);
 
 BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
+BOOL update_write_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap);
 BOOL update_read_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* switch_surface);
+BOOL update_write_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* switch_surface);
 BOOL update_read_create_nine_grid_bitmap_order(wStream* s, CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap);
 BOOL update_read_frame_marker_order(wStream* s, FRAME_MARKER_ORDER* frame_marker);
 BOOL update_read_stream_bitmap_first_order(wStream* s, STREAM_BITMAP_FIRST_ORDER* stream_bitmap_first);

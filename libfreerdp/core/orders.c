@@ -2048,6 +2048,7 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
+
 	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
 	create_offscreen_bitmap->id = flags & 0x7FFF;
 	deleteListPresent = (flags & 0x8000) ? TRUE : FALSE;
@@ -2056,11 +2057,14 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 	Stream_Read_UINT16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
 
 	deleteList = &(create_offscreen_bitmap->deleteList);
+
 	if (deleteListPresent)
 	{
 		int i;
+
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
+
 		Stream_Read_UINT16(s, deleteList->cIndices);
 
 		if (deleteList->cIndices > deleteList->sIndices)
@@ -2081,6 +2085,44 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 	{
 		deleteList->cIndices = 0;
 	}
+
+	return TRUE;
+}
+
+BOOL update_write_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
+{
+	UINT16 flags;
+	BOOL deleteListPresent;
+	OFFSCREEN_DELETE_LIST* deleteList;
+
+	deleteList = &(create_offscreen_bitmap->deleteList);
+
+	Stream_EnsureRemainingCapacity(s, 8 + deleteList->cIndices * 2);
+
+	flags = create_offscreen_bitmap->id & 0x7FFF;
+
+	deleteListPresent = (deleteList->cIndices > 0) ? TRUE : FALSE;
+
+	if (deleteListPresent)
+		flags |= 0x8000;
+
+	Stream_Write_UINT16(s, flags); /* flags (2 bytes) */
+
+	Stream_Write_UINT16(s, create_offscreen_bitmap->cx); /* cx (2 bytes) */
+	Stream_Write_UINT16(s, create_offscreen_bitmap->cy); /* cy (2 bytes) */
+
+	if (deleteListPresent)
+	{
+		int i;
+
+		Stream_Write_UINT16(s, deleteList->cIndices);
+
+		for (i = 0; i < (int) deleteList->cIndices; i++)
+		{
+			Stream_Write_UINT16(s, deleteList->indices[i]);
+		}
+	}
+
 	return TRUE;
 }
 
@@ -2088,7 +2130,18 @@ BOOL update_read_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* switch_s
 {
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
+
 	Stream_Read_UINT16(s, switch_surface->bitmapId); /* bitmapId (2 bytes) */
+
+	return TRUE;
+}
+
+BOOL update_write_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* switch_surface)
+{
+	Stream_EnsureRemainingCapacity(s, 2);
+
+	Stream_Write_UINT16(s, switch_surface->bitmapId); /* bitmapId (2 bytes) */
+
 	return TRUE;
 }
 
@@ -2098,6 +2151,7 @@ BOOL update_read_create_nine_grid_bitmap_order(wStream* s, CREATE_NINE_GRID_BITM
 
 	if (Stream_GetRemainingLength(s) < 19)
 		return FALSE;
+
 	Stream_Read_UINT8(s, create_nine_grid_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
 	Stream_Read_UINT16(s, create_nine_grid_bitmap->bitmapId); /* bitmapId (2 bytes) */
 
