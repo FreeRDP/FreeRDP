@@ -94,13 +94,13 @@ int xf_input_init(xfInfo* xfi, Window window)
 		for (j = 0; j < dev->num_classes; j++)
 		{
 			XIAnyClassInfo* class = dev->classes[j];
-			//XITouchClassInfo* t = (XITouchClassInfo*) class;
+			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
 			if (class->type != XITouchClass)
 				continue;
 
-			//printf("%s %s touch device, supporting %d touches.\n",
-			//	dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent", t->num_touches);
+			printf("%s %s touch device, supporting %d touches.\n",
+				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent", t->num_touches);
 		}
 	}
 
@@ -257,7 +257,7 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 			//contacts[i].pos_y = (int)event->event_y;
 
 			active_contacts--;
-			break;
+			break;printf("TouchBegin\n");
 		}
 	}
 }
@@ -301,18 +301,50 @@ int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 	return 0;
 }
 
-int xf_input_touch_begin_remote(xfInfo* xfi, XIDeviceEvent* event)
+char* xf_input_touch_state_string(DWORD flags)
 {
-	return 0;
+	if (flags & CONTACT_FLAG_DOWN)
+		return "TouchBegin";
+	else if (flags & CONTACT_FLAG_UPDATE)
+		return "TouchUpdate";
+	else if (flags & CONTACT_FLAG_UP)
+		return "TouchEnd";
+	else
+		return "TouchUnknown";
 }
 
-int xf_input_touch_update_remote(xfInfo* xfi, XIDeviceEvent* event)
+int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 {
-	return 0;
-}
+	int x, y;
+	int touchId;
+	RDPINPUT_CONTACT_DATA contact;
+	RdpeiClientContext* rdpei = xfi->rdpei;
 
-int xf_input_touch_end_remote(xfInfo* xfi, XIDeviceEvent* event)
-{
+	if (!rdpei)
+		return 0;
+
+	touchId = event->detail;
+	x = (int) event->event_x;
+	y = (int) event->event_y;
+	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+	if ((x < 0) || (y < 0))
+		return 0;
+
+	printf("%s: id: %d x: %d y: %d\n",
+			xf_input_touch_state_string(flags),
+			touchId, x, y);
+
+	contact.contactId = touchId % 0xFF;
+	contact.fieldsPresent = 0;
+	contact.x = x;
+	contact.y = y;
+	contact.contactFlags = flags;
+
+	rdpei->BeginFrame(rdpei);
+	rdpei->AddContact(rdpei, &contact);
+	rdpei->EndFrame(rdpei);
+
 	return 0;
 }
 
@@ -327,15 +359,15 @@ int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
-				xf_input_touch_begin_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_DOWN);
 				break;
 
 			case XI_TouchUpdate:
-				xf_input_touch_update_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UPDATE);
 				break;
 
 			case XI_TouchEnd:
-				xf_input_touch_end_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UP);
 				break;
 
 			default:

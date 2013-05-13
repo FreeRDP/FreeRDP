@@ -32,6 +32,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_event.h
 	xf_input.c
 	xf_input.h
+	xf_channels.c
+	xf_channels.h
 	xf_cliprdr.c
 	xf_cliprdr.h
 	xf_monitor.c

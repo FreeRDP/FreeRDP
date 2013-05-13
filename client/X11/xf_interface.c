@@ -83,6 +83,7 @@
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
+#include "xf_channels.h"
 
 #include "xfreerdp.h"
 
@@ -651,17 +652,6 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
  	 */
 	XUngrabKeyboard(d, CurrentTime);
 	return xf_error_handler(d, ev);
-}
-
-int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
-{
-	//printf("OnChannelConnected: %s\n", name);
-	return 0;
-}
-
-int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface)
-{
-	return 0;
 }
 
 /**

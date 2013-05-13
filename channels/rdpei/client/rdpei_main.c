@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
@@ -35,14 +36,7 @@
 
 #include "rdpei_main.h"
 
-struct _RDPEI_LISTENER_CALLBACK
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-};
-typedef struct _RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
+#define MAX_CONTACTS	512
 
 struct _RDPEI_CHANNEL_CALLBACK
 {
@@ -54,12 +48,28 @@ struct _RDPEI_CHANNEL_CALLBACK
 };
 typedef struct _RDPEI_CHANNEL_CALLBACK RDPEI_CHANNEL_CALLBACK;
 
+struct _RDPEI_LISTENER_CALLBACK
+{
+	IWTSListenerCallback iface;
+
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	RDPEI_CHANNEL_CALLBACK* channel_callback;
+};
+typedef struct _RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
+
 struct _RDPEI_PLUGIN
 {
 	IWTSPlugin iface;
 
 	IWTSListener* listener;
 	RDPEI_LISTENER_CALLBACK* listener_callback;
+
+	int version;
+	UINT64 currentFrameTime;
+	UINT64 previousFrameTime;
+	RDPINPUT_TOUCH_FRAME frame;
+	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS];
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
@@ -164,21 +174,16 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	return 0;
 }
 
-int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback)
+int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_FRAME* frame)
 {
 	int status;
 	wStream* s;
 	UINT32 pduLength;
 	UINT32 encodeTime;
 	UINT16 frameCount;
-	RDPINPUT_TOUCH_FRAME frame;
-	RDPINPUT_CONTACT_DATA contact;
 
-	encodeTime = 123;
+	encodeTime = 0;
 	frameCount = 1;
-
-	frame.contactCount = 1;
-	frame.contacts = &contact;
 
 	s = Stream_New(NULL, 512);
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
@@ -186,7 +191,7 @@ int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	rdpei_write_4byte_unsigned(s, encodeTime);
 	rdpei_write_2byte_unsigned(s, frameCount);
 
-	rdpei_write_touch_frame(s, &frame);
+	rdpei_write_touch_frame(s, frame);
 
 	Stream_SealLength(s);
 	pduLength = Stream_Length(s);
@@ -298,6 +303,7 @@ static int rdpei_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
+	listener_callback->channel_callback = callback;
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
@@ -343,7 +349,53 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 
 int rdpei_get_version(RdpeiClientContext* context)
 {
-	//RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+	return rdpei->version;
+}
+
+int rdpei_begin_frame(RdpeiClientContext* context)
+{
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+
+	rdpei->frame.contactCount = 0;
+	rdpei->frame.frameOffset = 0;
+
+	return 1;
+}
+
+int rdpei_end_frame(RdpeiClientContext* context)
+{
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+	RDPEI_CHANNEL_CALLBACK* callback = rdpei->listener_callback->channel_callback;
+
+	if (!rdpei->previousFrameTime && !rdpei->currentFrameTime)
+	{
+		rdpei->currentFrameTime = (UINT64) GetTickCount64();
+		rdpei->frame.frameOffset = 0;
+	}
+	else
+	{
+		rdpei->currentFrameTime = (UINT64) GetTickCount64();
+		rdpei->frame.frameOffset = rdpei->currentFrameTime - rdpei->previousFrameTime;
+	}
+
+	rdpei_send_touch_event_pdu(callback, &rdpei->frame);
+	rdpei->previousFrameTime = rdpei->currentFrameTime;
+	rdpei->frame.contactCount = 0;
+
+	return 1;
+}
+
+int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact)
+{
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+
+	if (rdpei->frame.contactCount < MAX_CONTACTS)
+	{
+		CopyMemory(&(rdpei->contacts[rdpei->frame.contactCount]), contact, sizeof(RDPINPUT_CONTACT_DATA));
+		rdpei->frame.contactCount++;
+	}
+
 	return 1;
 }
 
@@ -369,10 +421,18 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->iface.Disconnected = NULL;
 		rdpei->iface.Terminated = rdpei_plugin_terminated;
 
+		rdpei->version = 1;
+		rdpei->currentFrameTime = 0;
+		rdpei->previousFrameTime = 0;
+		rdpei->frame.contacts = (RDPINPUT_CONTACT_DATA*) rdpei->contacts;
+
 		context = (RdpeiClientContext*) malloc(sizeof(RdpeiClientContext));
 
 		context->handle = (void*) rdpei;
 		context->GetVersion = rdpei_get_version;
+		context->BeginFrame = rdpei_begin_frame;
+		context->EndFrame = rdpei_end_frame;
+		context->AddContact = rdpei_add_contact;
 
 		rdpei->iface.pInterface = (void*) context;
 
