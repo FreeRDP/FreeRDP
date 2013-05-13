@@ -230,8 +230,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * s, xfi->orig_height * s);
+					XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * s, xfi->originalHeight * s);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * s, xfi->originalHeight * s);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
@@ -250,8 +250,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * s, xfi->orig_height * s);
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * s, xfi->orig_height * s);
+					XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * s, xfi->originalHeight * s);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * s, xfi->originalHeight * s);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}

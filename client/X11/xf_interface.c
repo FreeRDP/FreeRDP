@@ -1545,20 +1545,6 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
  * Client Interface
  */
 
-double freerdp_client_get_scale(xfInfo* xfi)
-{
-	return xfi->scale;
-}
-
-void freerdp_client_reset_scale(xfInfo* xfi)
-{
-    xfi->scale = 1.0;
-
-    XResizeWindow(xfi->display, xfi->window->handle, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
-    IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->orig_width * xfi->scale, xfi->orig_height * xfi->scale);
-    xf_draw_screen_scaled(xfi);
-}
-
 int freerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");

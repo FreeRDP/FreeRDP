@@ -105,14 +105,6 @@ struct xf_info
 	HANDLE thread;
 	BOOL UseXThreads;
 
-	int XInputOpcode;
-	int orig_width;
-	int orig_height;
-	int cur_width;
-	int cur_height;
-
-	double scale;
-
 	HGDI_DC hdc;
 	BYTE* primary_buffer;
 
