@@ -318,7 +318,7 @@ static int rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 	rdpei->listener_callback->plugin = pPlugin;
 	rdpei->listener_callback->channel_mgr = pChannelMgr;
 
-	status = pChannelMgr->CreateListener(pChannelMgr, "Microsoft::Windows::RDS::Input", 0,
+	status = pChannelMgr->CreateListener(pChannelMgr, RDPEI_DVC_CHANNEL_NAME, 0,
 		(IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener));
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;

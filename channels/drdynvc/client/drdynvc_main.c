@@ -26,34 +26,14 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/constants.h>
-#include <winpr/stream.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
 #include "drdynvc_types.h"
 #include "drdynvc_main.h"
-
-#define CREATE_REQUEST_PDU		0x01
-#define DATA_FIRST_PDU			0x02
-#define DATA_PDU			0x03
-#define CLOSE_REQUEST_PDU		0x04
-#define CAPABILITY_REQUEST_PDU		0x05
-
-struct drdynvc_plugin
-{
-	rdpSvcPlugin plugin;
-
-	int version;
-	int PriorityCharge0;
-	int PriorityCharge1;
-	int PriorityCharge2;
-	int PriorityCharge3;
-	int channel_error;
-
-	IWTSVirtualChannelManager* channel_mgr;
-};
 
 static int drdynvc_write_variable_uint(wStream* stream, UINT32 val)
 {
@@ -273,7 +253,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
-	int error;
+	int status;
 	UINT32 Length;
 	UINT32 ChannelId;
 
@@ -281,10 +261,10 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 	Length = drdynvc_read_variable_uint(s, Sp);
 	DEBUG_DVC("ChannelId=%d Length=%d", ChannelId, Length);
 
-	error = dvcman_receive_channel_data_first(drdynvc->channel_mgr, ChannelId, Length);
+	status = dvcman_receive_channel_data_first(drdynvc->channel_mgr, ChannelId, Length);
 
-	if (error)
-		return error;
+	if (status)
+		return status;
 
 	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId,
 		Stream_Pointer(s), Stream_GetRemainingLength(s));
@@ -439,6 +419,8 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context = (DrdynvcClientContext*) malloc(sizeof(DrdynvcClientContext));
 
 		context->handle = (void*) _p;
+		_p->context = context;
+
 		context->GetVersion = drdynvc_get_version;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;

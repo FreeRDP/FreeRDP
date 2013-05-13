@@ -331,6 +331,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	int bAccept;
 	DVCMAN_LISTENER* listener;
 	DVCMAN_CHANNEL* channel;
+	DrdynvcClientContext* context;
 	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
@@ -360,6 +361,9 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 
 				channel->channel_callback = pCallback;
 				ArrayList_Add(dvcman->channels, channel);
+
+				context = dvcman->drdynvc->context;
+				IFCALL(context->OnChannelConnected, context, ChannelName, listener->iface.pInterface);
 
 				return 0;
 			}

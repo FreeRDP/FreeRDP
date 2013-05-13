@@ -24,6 +24,8 @@
  * Client Interface
  */
 
+#define RDPEI_DVC_CHANNEL_NAME	"Microsoft::Windows::RDS::Input"
+
 typedef struct _rdpei_client_context RdpeiClientContext;
 
 typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
@@ -31,6 +33,8 @@ typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
 struct _rdpei_client_context
 {
 	void* handle;
+	void* custom;
+
 	pcRdpeiGetVersion GetVersion;
 };
 

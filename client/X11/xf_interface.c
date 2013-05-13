@@ -52,6 +52,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
@@ -652,6 +653,17 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
+int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
+{
+	//printf("OnChannelConnected: %s\n", name);
+	return 0;
+}
+
+int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface)
+{
+	return 0;
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
@@ -665,6 +677,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 BOOL xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
+	rdpChannels* channels;
 	rdpSettings* settings;
 
 	xfi = ((xfContext*) instance->context)->xfi;
@@ -676,13 +689,17 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	settings = instance->settings;
+	channels = instance->context->channels;
+
+	instance->OnChannelConnected = xf_on_channel_connected;
+	instance->OnChannelDisconnected = xf_on_channel_disconnected;
 
 	//if (status < 0)
 	//	exit(XF_EXIT_PARSE_ARGUMENTS);
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	freerdp_client_load_addins(channels, instance->settings);
 
-	freerdp_channels_pre_connect(xfi->_context->channels, instance);
+	freerdp_channels_pre_connect(channels, instance);
 
 	if (settings->AuthenticationOnly)
 	{

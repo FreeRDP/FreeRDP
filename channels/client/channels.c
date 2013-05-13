@@ -438,6 +438,28 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 	return freerdp_channels_client_load(channels, settings, entry, data);
 }
 
+int freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
+{
+	int status = 0;
+	rdpChannels* channels = (rdpChannels*) context->custom;
+	freerdp* instance = channels->instance;
+
+	IFCALLRET(instance->OnChannelConnected, status, instance, name, pInterface);
+
+	return status;
+}
+
+int freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
+{
+	int status = 0;
+	rdpChannels* channels = (rdpChannels*) context->custom;
+	freerdp* instance = channels->instance;
+
+	IFCALLRET(instance->OnChannelDisconnected, status, instance, name, pInterface);
+
+	return status;
+}
+
 /**
  * go through and inform all the libraries that we are initialized
  * called only from main thread
@@ -488,6 +510,13 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	}
 
 	channels->drdynvc = (DrdynvcClientContext*) freerdp_channels_get_static_channel_interface(channels, "drdynvc");
+
+	if (channels->drdynvc)
+	{
+		channels->drdynvc->custom = (void*) channels;
+		channels->drdynvc->OnChannelConnected = freerdp_drdynvc_on_channel_connected;
+		channels->drdynvc->OnChannelDisconnected = freerdp_drdynvc_on_channel_disconnected;
+	}
 
 	return 0;
 }

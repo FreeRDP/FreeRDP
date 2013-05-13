@@ -27,11 +27,17 @@
 typedef struct _drdynvc_client_context DrdynvcClientContext;
 
 typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
+typedef int (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
+typedef int (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
 
 struct _drdynvc_client_context
 {
 	void* handle;
+	void* custom;
+
 	pcDrdynvcGetVersion GetVersion;
+	pcDrdynvcOnChannelConnected OnChannelConnected;
+	pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_DRDYNVC_H */
