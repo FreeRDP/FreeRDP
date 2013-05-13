@@ -223,6 +223,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom in (scale larger)
+					int zoom_width;
+					int zoom_height;
 					double s = xfi->scale;
 					s += 0.1;
 					if(s > 1.5)
@@ -230,8 +232,26 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * s, xfi->originalHeight * s);
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * s, xfi->originalHeight * s);
+					zoom_width = xfi->originalWidth * s;
+					zoom_height = xfi->originalHeight * s;
+
+					{
+						XSizeHints* size_hints;
+
+						size_hints = XAllocSizeHints();
+
+						if (size_hints)
+						{
+							size_hints->flags = PMinSize | PMaxSize;
+							size_hints->min_width = size_hints->max_width = zoom_width;
+							size_hints->min_height = size_hints->max_height = zoom_height;
+							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
+							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
+							XFree(size_hints);
+						}
+					}
+
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
@@ -243,6 +263,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom out (scale smaller)
+					int zoom_width;
+					int zoom_height;
 					double s = xfi->scale;
 					s -= 0.1;
 					if(s < 0.5)
@@ -250,13 +272,85 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * s, xfi->originalHeight * s);
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * s, xfi->originalHeight * s);
+					zoom_width = xfi->originalWidth * s;
+					zoom_height = xfi->originalHeight * s;
+
+					{
+						XSizeHints* size_hints;
+
+						size_hints = XAllocSizeHints();
+
+						if (size_hints)
+						{
+							size_hints->flags = PMinSize | PMaxSize;
+							size_hints->min_width = size_hints->max_width = zoom_width;
+							size_hints->min_height = size_hints->max_height = zoom_height;
+							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
+							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
+							XFree(size_hints);
+						}
+					}
+
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
 					//xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
 	}
 
+
+	if (keysym == XK_KP_4)
+		{
+			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+						{
+							xfi->offset_x -= 5;
+
+							if(xfi->offset_x < 0)
+								xfi->offset_x = 0;
+
+
+							printf("pan left : %d\n", xfi->offset_x);
+							return TRUE;
+						}
+		}
+
+	if (keysym == XK_KP_6)
+		{
+			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+						{
+							xfi->offset_x += 5;
+
+							printf("pan right : %d\n", xfi->offset_x);
+							return TRUE;
+						}
+		}
+
+	if (keysym == XK_KP_8)
+			{
+				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+						    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+							{
+								xfi->offset_y -= 5;
+
+								if(xfi->offset_y < 0)
+									xfi->offset_y = 0;
+
+								printf("pan up : %d\n", xfi->offset_y);
+								return TRUE;
+							}
+			}
+
+	if (keysym == XK_KP_2)
+		{
+			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+						{
+							xfi->offset_y += 5;
+							printf("pan down : %d\n", xfi->offset_y);
+							return TRUE;
+						}
+		}
 
 
 	return FALSE;

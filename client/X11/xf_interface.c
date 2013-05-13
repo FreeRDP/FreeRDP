@@ -127,7 +127,9 @@ void xf_draw_screen_scaled(xfInfo* xfi)
 	transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
 
 	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
-	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+	//XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfi->offset_x, xfi->offset_y, xfi->currentWidth, xfi->currentHeight);
+
 }
 
 void xf_context_new(freerdp* instance, rdpContext* context)
@@ -879,6 +881,9 @@ BOOL xf_post_connect(freerdp* instance)
 	xfi->currentWidth = xfi->originalWidth;
 	xfi->currentHeight = xfi->originalWidth;
 	xfi->scale = 1.0;
+
+	xfi->offset_x = 0;
+	xfi->offset_y = 0;
 
 	xfi->width = settings->DesktopWidth;
 	xfi->height = settings->DesktopHeight;

@@ -122,6 +122,9 @@ struct xf_info
 	int XInputOpcode;
 	BOOL enableScaling;
 
+	int offset_x;
+	int offset_y;
+
 	BOOL focused;
 	BOOL mouse_active;
 	BOOL suppress_output;
