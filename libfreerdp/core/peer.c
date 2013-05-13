@@ -137,7 +137,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
 			if(Stream_GetRemainingLength(s) < 4)
 				return FALSE;
-			stream_read_UINT32(s, client->ack_frame_id);
+			Stream_Read_UINT32(s, client->ack_frame_id);
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -380,6 +380,9 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
+	client->context->input = client->input;
+	client->context->update = client->update;
+	client->context->settings = client->settings;
 
 	client->update->context = client->context;
 	client->input->context = client->context;

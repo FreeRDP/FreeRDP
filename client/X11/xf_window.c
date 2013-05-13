@@ -47,6 +47,8 @@
 #include "xf_input.h"
 #endif
 
+#include "xf_input.h"
+
 #ifdef WITH_DEBUG_X11
 #define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
 #else

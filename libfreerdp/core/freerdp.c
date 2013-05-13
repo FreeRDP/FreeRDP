@@ -124,7 +124,7 @@ BOOL freerdp_connect(freerdp* instance)
 			rdpUpdate* update;
 			pcap_record record;
 
-			s = stream_new(1024);
+			s = Stream_New(NULL, 1024);
 			instance->update->pcap_rfx = pcap_open(instance->settings->PlayRemoteFxFile, FALSE);
 
 			if (instance->update->pcap_rfx)
@@ -273,6 +273,22 @@ BOOL freerdp_disconnect(freerdp* instance)
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
 	return instance->context->rdp->disconnect;
+}
+
+FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
+{
+	rdpRdp* rdp;
+	BOOL bRetCode = FALSE;
+
+	rdp = instance->context->rdp;
+
+	if (rdp->resendFocus)
+	{
+		bRetCode = TRUE;
+		rdp->resendFocus = FALSE;
+	}
+
+	return bRetCode;
 }
 
 void freerdp_get_version(int* major, int* minor, int* revision)

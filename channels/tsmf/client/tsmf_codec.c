@@ -290,9 +290,9 @@ static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wSt
 	UINT32 biWidth;
 	UINT32 biHeight;
 
-	stream_read_UINT32(s, biSize);
-	stream_read_UINT32(s, biWidth);
-	stream_read_UINT32(s, biHeight);
+	Stream_Read_UINT32(s, biSize);
+	Stream_Read_UINT32(s, biWidth);
+	Stream_Read_UINT32(s, biHeight);
 	Stream_Seek(s, 28);
 
 	if (mediatype->Width == 0)
@@ -315,16 +315,16 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, wSt
 	/* VIDEOINFOHEADER2.rcSource, RECT(LONG left, LONG top, LONG right, LONG bottom) */
 	Stream_Seek_UINT32(s);
 	Stream_Seek_UINT32(s);
-	stream_read_UINT32(s, mediatype->Width);
-	stream_read_UINT32(s, mediatype->Height);
+	Stream_Read_UINT32(s, mediatype->Width);
+	Stream_Read_UINT32(s, mediatype->Height);
 	/* VIDEOINFOHEADER2.rcTarget */
 	Stream_Seek(s, 16);
 	/* VIDEOINFOHEADER2.dwBitRate */
-	stream_read_UINT32(s, mediatype->BitRate);
+	Stream_Read_UINT32(s, mediatype->BitRate);
 	/* VIDEOINFOHEADER2.dwBitErrorRate */
 	Stream_Seek_UINT32(s);
 	/* VIDEOINFOHEADER2.AvgTimePerFrame */
-	stream_read_UINT64(s, AvgTimePerFrame);
+	Stream_Read_UINT64(s, AvgTimePerFrame);
 	mediatype->SamplesPerSecond.Numerator = 1000000;
 	mediatype->SamplesPerSecond.Denominator = (int)(AvgTimePerFrame / 10LL);
 	/* Remaining fields before bmiHeader */
@@ -351,16 +351,16 @@ typedef struct tagVIDEOINFOHEADER {
 	/* VIDEOINFOHEADER.rcSource, RECT(LONG left, LONG top, LONG right, LONG bottom) */
 	Stream_Seek_UINT32(s);
 	Stream_Seek_UINT32(s);
-	stream_read_UINT32(s, mediatype->Width);
-	stream_read_UINT32(s, mediatype->Height);
+	Stream_Read_UINT32(s, mediatype->Width);
+	Stream_Read_UINT32(s, mediatype->Height);
 	/* VIDEOINFOHEADER.rcTarget */
 	Stream_Seek(s, 16);
 	/* VIDEOINFOHEADER.dwBitRate */
-	stream_read_UINT32(s, mediatype->BitRate);
+	Stream_Read_UINT32(s, mediatype->BitRate);
 	/* VIDEOINFOHEADER.dwBitErrorRate */
 	Stream_Seek_UINT32(s);
 	/* VIDEOINFOHEADER.AvgTimePerFrame */
-	stream_read_UINT64(s, AvgTimePerFrame);
+	Stream_Read_UINT64(s, AvgTimePerFrame);
 	mediatype->SamplesPerSecond.Numerator = 1000000;
 	mediatype->SamplesPerSecond.Denominator = (int)(AvgTimePerFrame / 10LL);
 
@@ -421,7 +421,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 	Stream_Seek(s, 16);
 
 	/* cbFormat */
-	stream_read_UINT32(s, cbFormat);
+	Stream_Read_UINT32(s, cbFormat);
 	DEBUG_DVC("cbFormat %d", cbFormat);
 
 #ifdef WITH_DEBUG_DVC
@@ -434,14 +434,14 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 			/* http://msdn.microsoft.com/en-us/library/aa473808.aspx */
 
 			Stream_Seek(s, 8); /* dwSize and ? */
-			stream_read_UINT32(s, mediatype->Width); /* videoInfo.dwWidth */
-			stream_read_UINT32(s, mediatype->Height); /* videoInfo.dwHeight */
+			Stream_Read_UINT32(s, mediatype->Width); /* videoInfo.dwWidth */
+			Stream_Read_UINT32(s, mediatype->Height); /* videoInfo.dwHeight */
 			Stream_Seek(s, 32);
 			/* videoInfo.FramesPerSecond */
-			stream_read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
-			stream_read_UINT32(s, mediatype->SamplesPerSecond.Denominator);
+			Stream_Read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
+			Stream_Read_UINT32(s, mediatype->SamplesPerSecond.Denominator);
 			Stream_Seek(s, 80);
-			stream_read_UINT32(s, mediatype->BitRate); /* compressedInfo.AvgBitrate */
+			Stream_Read_UINT32(s, mediatype->BitRate); /* compressedInfo.AvgBitrate */
 			Stream_Seek(s, 36);
 
 			if (cbFormat > 176)
@@ -455,14 +455,14 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 			/* http://msdn.microsoft.com/en-us/library/dd757720.aspx */
 
 			Stream_Seek_UINT16(s);
-			stream_read_UINT16(s, mediatype->Channels);
-			stream_read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
+			Stream_Read_UINT16(s, mediatype->Channels);
+			Stream_Read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
 			mediatype->SamplesPerSecond.Denominator = 1;
-			stream_read_UINT32(s, mediatype->BitRate);
+			Stream_Read_UINT32(s, mediatype->BitRate);
 			mediatype->BitRate *= 8;
-			stream_read_UINT16(s, mediatype->BlockAlign);
-			stream_read_UINT16(s, mediatype->BitsPerSample);
-			stream_read_UINT16(s, mediatype->ExtraDataSize);
+			Stream_Read_UINT16(s, mediatype->BlockAlign);
+			Stream_Read_UINT16(s, mediatype->BitsPerSample);
+			Stream_Read_UINT16(s, mediatype->ExtraDataSize);
 			if (mediatype->ExtraDataSize > 0)
 				mediatype->ExtraData = Stream_Pointer(s);
 			
@@ -520,9 +520,9 @@ BOOL tsmf_codec_check_media_type(wStream* s)
 	BOOL ret;
 	TS_AM_MEDIA_TYPE mediatype;
 
-	stream_get_mark(s, m);
+	Stream_GetPointer(s, m);
 	ret = tsmf_codec_parse_media_type(&mediatype, s);
-	stream_set_mark(s, m);
+	Stream_SetPointer(s, m);
 
 	return ret;
 }

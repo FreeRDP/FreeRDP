@@ -27,15 +27,9 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
-void xf_input_init(xfInfo* xfi, Window win);//rdpContext* context);
-void xf_input_handle_event(xfInfo* xfi, XEvent* event);
+int xf_input_init(xfInfo* xfi, Window window);
 
-#ifdef WITH_XI
-
-void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event);
-void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event);
-void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event);
-
-#endif
+int xf_input_handle_event(xfInfo* xfi, XEvent* event);
+void xf_process_rdpei_event(xfInfo* xfi, wMessage* event);
 
 #endif

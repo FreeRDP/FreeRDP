@@ -717,7 +717,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (length == 0)
 		{
 			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
+			winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
 			return -1;
 		}
 
@@ -852,7 +852,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		/* buffers for blocking read/write */
 		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
-		transport->SendStream = stream_new(BUFFER_SIZE);
+		transport->SendStream = Stream_New(NULL, BUFFER_SIZE);
 
 		transport->blocking = TRUE;
 
@@ -874,7 +874,7 @@ void transport_free(rdpTransport* transport)
 
 		StreamPool_Free(transport->ReceivePool);
 
-		stream_free(transport->SendStream);
+		Stream_Free(transport->SendStream, TRUE);
 		CloseHandle(transport->ReceiveEvent);
 
 		CloseHandle(transport->connectedEvent);

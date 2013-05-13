@@ -67,6 +67,7 @@
 #define NOTIFY_PREROLL                      0x00000113
 #define UPDATE_GEOMETRY_INFO                0x00000114
 #define REMOVE_STREAM                       0x00000115
+#define SET_SOURCE_VIDEO_RECT               0x00000116
 
 /* Supported platform */
 #define MMREDIR_CAPABILITY_PLATFORM_MF      0x00000001

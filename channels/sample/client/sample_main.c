@@ -69,8 +69,8 @@ static void sample_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 
 	if (bytes > 0)
 	{
-		data_out = stream_new(bytes);
-		stream_copy(data_out, data_in, bytes);
+		data_out = Stream_New(NULL, bytes);
+		Stream_Copy(data_out, data_in, bytes);
 		/* svc_plugin_send takes ownership of data_out, that is why
 		   we do not free it */
 
@@ -80,7 +80,7 @@ static void sample_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 		svc_plugin_send(plugin, data_out);
 	}
 
-	stream_free(data_in);
+	Stream_Free(data_in, TRUE);
 }
 
 static void sample_process_connect(rdpSvcPlugin* plugin)

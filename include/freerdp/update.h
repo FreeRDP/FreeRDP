@@ -206,6 +206,12 @@ struct rdp_update
 	BOOL asynchronous;
 	rdpUpdateProxy* proxy;
 	wMessageQueue* queue;
+
+	wStream* us;
+	UINT16 numberOrders;
+	BOOL combineUpdates;
+	rdpBounds currentBounds;
+	rdpBounds previousBounds;
 };
 
 #endif /* FREERDP_UPDATE_H */

@@ -42,6 +42,9 @@ public class LibFreeRDP
 	private static native void freerdp_set_clipboard_redirection(int inst, boolean enable);
 	private static native void freerdp_set_drive_redirection(int inst, String path);
 	
+	private static native void freerdp_set_gateway_info(int inst, String gatewayhostname, int port, 
+			String gatewayusername, String gatewaypassword, String gatewaydomain);
+	
 	private static native boolean freerdp_update_graphics(int inst,
 			Bitmap bitmap, int x, int y, int width, int height);
 	
@@ -155,6 +158,14 @@ public class LibFreeRDP
 		// always enable clipboard redirection
 		freerdp_set_clipboard_redirection(inst, true);
 		
+		// Gateway enabled?
+		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.<ManualBookmark>get().getEnableGatewaySettings())
+		{
+			ManualBookmark.GatewaySettings gatewaySettings = bookmark.<ManualBookmark>get().getGatewaySettings();
+			freerdp_set_gateway_info(inst, gatewaySettings.getHostname(), gatewaySettings.getPort(), 
+					gatewaySettings.getUsername(), gatewaySettings.getPassword(), gatewaySettings.getDomain());			
+		}
+					
 		return true;
 	}
 	

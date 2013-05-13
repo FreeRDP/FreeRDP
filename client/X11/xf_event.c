@@ -29,6 +29,7 @@
 #include "xf_rail.h"
 #include "xf_window.h"
 #include "xf_cliprdr.h"
+#include "xf_input.h"
 
 #include "xf_event.h"
 #include "xf_input.h"
@@ -98,13 +99,14 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 	if (!app)
 	{
 
-		if(xfi->scale != 1.0)
+		if (xfi->scale != 1.0)
 		{
 			xf_draw_screen_scaled(xfi);
 		}
 		else
 		{
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+			XCopyArea(xfi->display, xfi->primary,
+					xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 		}
 	}
 	else
@@ -166,6 +168,13 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	{
 		x = (int)(x * (1.0 / xfi->scale) );
 		y = (int)(y * (1.0 / xfi->scale) );
+	}
+
+	if (xfi->scale != 1.0)
+	{
+		/* Take scaling in to consideration */
+		x = (int) (x * (1.0 / xfi->scale));
+		y = (int) (y * (1.0 / xfi->scale));
 	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -272,12 +281,12 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 
 			}
 
+			if (xfi->scale != 1.0)
+			{
 				/* Take scaling in to consideration */
-				if(xfi->scale != 1.0)
-				{
-					x = (int)(x * (1.0 / xfi->scale) );
-					y = (int)(y * (1.0 / xfi->scale) );
-				}
+				x = (int) (x * (1.0 / xfi->scale));
+				y = (int) (y * (1.0 / xfi->scale));
+			}
 
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
@@ -362,12 +371,12 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 				x, y, &x, &y, &childWindow);
 		}
 
-				/* Take scaling in to consideration */
-				if(xfi->scale != 1.0)
-				{
-					x = (int)(x * (1.0 / xfi->scale) );
-					y = (int)(y * (1.0 / xfi->scale) );
-				}
+		if (xfi->scale != 1.0)
+		{
+			/* Take scaling in to consideration */
+			x = (int) (x * (1.0 / xfi->scale));
+			y = (int) (y * (1.0 / xfi->scale));
+		}
 
 		if (extended)
 			input->ExtendedMouseEvent(input, flags, x, y);
@@ -555,22 +564,15 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
         rdpWindow* window;
         rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-        {
-        	double scale;
 
+	if (xfi->width != event->xconfigure.width)
+	{
+		xfi->scale = (double) event->xconfigure.width / (double) xfi->originalWidth;
+		xfi->currentWidth = event->xconfigure.width;
+		xfi->currentHeight = event->xconfigure.width;
 
-        	if(xfi->width != event->xconfigure.width)
-        	{
-        		scale = (double)event->xconfigure.width / (double) xfi->orig_width;
-
-        		xfi->cur_width = event->xconfigure.width;
-        		xfi->cur_height = event->xconfigure.width;
-        		xfi->scale = scale;
-
-				
-				xf_draw_screen_scaled(xfi);
-        	}
-	   }
+		xf_draw_screen_scaled(xfi);
+	}
 
         window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 

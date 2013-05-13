@@ -284,7 +284,7 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 	int length;
 	wStream* tmps;
 
-	tmps = stream_new(Stream_Capacity(s));
+	tmps = Stream_New(NULL, Stream_Capacity(s));
 	ber_write_integer(tmps, domainParameters->maxChannelIds);
 	ber_write_integer(tmps, domainParameters->maxUserIds);
 	ber_write_integer(tmps, domainParameters->maxTokenIds);
@@ -296,8 +296,8 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_sequence_tag(s, length);
-	stream_write(s, stream_get_head(tmps), length);
-	stream_free(tmps);
+	Stream_Write(s, Stream_Buffer(tmps), length);
+	Stream_Free(tmps, TRUE);
 }
 
 /**
@@ -388,7 +388,7 @@ void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data)
 	int length;
 	wStream* tmps;
 
-	tmps = stream_new(Stream_Capacity(s));
+	tmps = Stream_New(NULL, Stream_Capacity(s));
 
 	/* callingDomainSelector (OCTET_STRING) */
 	ber_write_octet_string(tmps, callingDomainSelector, sizeof(callingDomainSelector));
@@ -414,8 +414,8 @@ void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data)
 	length = Stream_GetPosition(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_INITIAL, length);
-	stream_write(s, stream_get_head(tmps), length);
-	stream_free(tmps);
+	Stream_Write(s, Stream_Buffer(tmps), length);
+	Stream_Free(tmps, TRUE);
 }
 
 /**
@@ -431,7 +431,7 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data)
 	int length;
 	wStream* tmps;
 
-	tmps = stream_new(Stream_Capacity(s));
+	tmps = Stream_New(NULL, Stream_Capacity(s));
 	ber_write_enumerated(tmps, 0, MCS_Result_enum_length);
 	ber_write_integer(tmps, 0); /* calledConnectId */
 	mcs->domainParameters = mcs->targetParameters;
@@ -441,8 +441,8 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data)
 
 	length = Stream_GetPosition(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
-	stream_write(s, stream_get_head(tmps), length);
-	stream_free(tmps);
+	Stream_Write(s, Stream_Buffer(tmps), length);
+	Stream_Free(tmps, TRUE);
 }
 
 /**
@@ -460,30 +460,30 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	wStream* client_data;
 	int status;
 
-	client_data = stream_new(512);
+	client_data = Stream_New(NULL, 512);
 	gcc_write_client_data_blocks(client_data, mcs->transport->settings);
 
-	gcc_CCrq = stream_new(512);
+	gcc_CCrq = Stream_New(NULL, 512);
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 
 	s = transport_send_stream_init(mcs->transport, 1024);
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_initial(s, mcs, gcc_CCrq);
-	stream_get_mark(s, em);
+	Stream_GetPointer(s, em);
 	length = (em - bm);
-	stream_set_mark(s, bm);
+	Stream_SetPointer(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	status = transport_write(mcs->transport, s);
 
-	stream_free(gcc_CCrq);
-	stream_free(client_data);
+	Stream_Free(gcc_CCrq, TRUE);
+	Stream_Free(client_data, TRUE);
 
 	return (status < 0 ? FALSE : TRUE);
 }
@@ -539,30 +539,30 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	wStream* gcc_CCrsp;
 	wStream* server_data;
 
-	server_data = stream_new(512);
+	server_data = Stream_New(NULL, 512);
 	gcc_write_server_data_blocks(server_data, mcs->transport->settings);
 
-	gcc_CCrsp = stream_new(512);
+	gcc_CCrsp = Stream_New(NULL, 512);
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 
 	s = transport_send_stream_init(mcs->transport, 1024);
-	stream_get_mark(s, bm);
+	Stream_GetPointer(s, bm);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_response(s, mcs, gcc_CCrsp);
-	stream_get_mark(s, em);
+	Stream_GetPointer(s, em);
 	length = (em - bm);
-	stream_set_mark(s, bm);
+	Stream_SetPointer(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	stream_set_mark(s, em);
+	Stream_SetPointer(s, em);
 
 	ret = transport_write(mcs->transport, s);
 
-	stream_free(gcc_CCrsp);
-	stream_free(server_data);
+	Stream_Free(gcc_CCrsp, TRUE);
+	Stream_Free(server_data, TRUE);
 
 	return (ret < 0) ? FALSE : TRUE;
 }

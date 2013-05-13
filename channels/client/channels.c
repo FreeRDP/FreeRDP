@@ -833,7 +833,7 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
 
 	if (!name)
 	{
-		DEBUG_CHANNELS("unknown event_class %d", event->event_class);
+		DEBUG_CHANNELS("unknown event_class %d", GetMessageClass(event->id));
 		freerdp_event_free(event);
 		return 1;
 	}

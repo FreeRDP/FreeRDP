@@ -56,6 +56,12 @@
     return YES;
 }
 
+- (void)dealloc
+{
+    [super dealloc];
+    [_bookmark release];
+}
+
 #pragma mark -
 #pragma mark Table view data source
 

@@ -285,8 +285,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
 
-	stream_write_UINT32(s, length);
-	stream_write(s, crypt_client_random, length);
+	Stream_Write_UINT32(s, length);
+	Stream_Write(s, crypt_client_random, length);
 
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
@@ -351,7 +351,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
-	stream_read_UINT32(s, rand_len);
+	Stream_Read_UINT32(s, rand_len);
 	if(Stream_GetRemainingLength(s) < rand_len + 8)  /* include 8 bytes of padding */
 		return FALSE;
 
@@ -364,7 +364,7 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
-	stream_read(s, crypt_client_random, rand_len);
+	Stream_Read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
 	Stream_Seek(s, 8);
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
@@ -528,12 +528,12 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
 
-	stream_get_mark(s, mark);
+	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
-		stream_set_mark(s, mark);
+		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,

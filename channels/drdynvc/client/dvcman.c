@@ -398,7 +398,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 	if (channel->dvc_data)
 	{
-		stream_free(channel->dvc_data);
+		Stream_Free(channel->dvc_data, TRUE);
 		channel->dvc_data = NULL;
 	}
 
@@ -422,9 +422,9 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 	}
 
 	if (channel->dvc_data)
-		stream_free(channel->dvc_data);
+		Stream_Free(channel->dvc_data, TRUE);
 
-	channel->dvc_data = stream_new(length);
+	channel->dvc_data = Stream_New(NULL, length);
 
 	return 0;
 }
@@ -448,18 +448,18 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 		if (Stream_GetPosition(channel->dvc_data) + data_size > (UINT32) Stream_Capacity(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
-			stream_free(channel->dvc_data);
+			Stream_Free(channel->dvc_data, TRUE);
 			channel->dvc_data = NULL;
 			return 1;
 		}
 
-		stream_write(channel->dvc_data, data, data_size);
+		Stream_Write(channel->dvc_data, data, data_size);
 
 		if (Stream_GetPosition(channel->dvc_data) >= Stream_Capacity(channel->dvc_data))
 		{
 			error = channel->channel_callback->OnDataReceived(channel->channel_callback,
 				Stream_Capacity(channel->dvc_data), Stream_Buffer(channel->dvc_data));
-			stream_free(channel->dvc_data);
+			Stream_Free(channel->dvc_data, TRUE);
 			channel->dvc_data = NULL;
 		}
 	}

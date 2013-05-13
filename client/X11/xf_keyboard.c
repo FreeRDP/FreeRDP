@@ -191,15 +191,16 @@ void xf_kbd_focus_in(xfInfo* xfi)
 {
 	rdpInput* input;
 	UINT32 syncFlags;
+	int dummy, mouseX, mouseY;
+	Window wdummy;
+	UINT32 state = 0;
 
 	input = xfi->instance->input;
 
-	/* on focus in send a tab up like mstsc.exe */
-	input->KeyboardEvent(input, KBD_FLAGS_RELEASE, 0x0F);
-
-	/* synchronize toggle keys */
 	syncFlags = xf_kbd_get_toggle_keys_state(xfi);
-	input->SynchronizeEvent(input, syncFlags);
+	XQueryPointer(xfi->display, xfi->window->handle, &wdummy, &wdummy, &mouseX, &mouseY, &dummy, &dummy, &state);
+
+	input->FocusInEvent(input, syncFlags, mouseX, mouseY);
 }
 
 BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)

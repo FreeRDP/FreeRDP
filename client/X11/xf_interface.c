@@ -41,6 +41,14 @@
 #include <X11/extensions/Xinerama.h>
 #endif
 
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
+
+#ifdef WITH_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +87,7 @@
 #include "xf_rail.h"
 #include "xf_tsmf.h"
 #include "xf_event.h"
+#include "xf_input.h"
 #include "xf_cliprdr.h"
 #include "xf_monitor.h"
 #include "xf_graphics.h"
@@ -94,33 +103,31 @@ static const size_t password_size = 512;
 
 void xf_draw_screen_scaled(xfInfo* xfi)
 {
-
-	Picture pic_prim;
-	Picture pic_win;
+	XTransform transform;
+	Picture windowPicture;
+	Picture primaryPicture;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat* picFormat;
-	XTransform transform;
-	
+
 	picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
-	pa.subwindow_mode = IncludeInferiors;//wtf is this?
-	pic_prim = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
-	pic_win = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
+	pa.subwindow_mode = IncludeInferiors;
+	primaryPicture = XRenderCreatePicture(xfi->display, xfi->primary, picFormat, CPSubwindowMode, &pa);
+	windowPicture = XRenderCreatePicture(xfi->display, xfi->window->handle, picFormat, CPSubwindowMode, &pa);
 
 	transform.matrix[0][0] = XDoubleToFixed(1);
 	transform.matrix[0][1] = XDoubleToFixed(0);
 	transform.matrix[0][2] = XDoubleToFixed(0);
-	
+
 	transform.matrix[1][0] = XDoubleToFixed(0);
 	transform.matrix[1][1] = XDoubleToFixed(1);
 	transform.matrix[1][2] = XDoubleToFixed(0);
-	
+
 	transform.matrix[2][0] = XDoubleToFixed(0);
 	transform.matrix[2][1] = XDoubleToFixed(0);
 	transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
-	
-	XRenderSetPictureTransform(xfi->display, pic_prim, &transform);
-	XRenderComposite(xfi->display, PictOpSrc, pic_prim, 0, pic_win, 0, 0, 0, 0, 0, 0, xfi->cur_width, xfi->cur_height);
-	
+
+	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
+	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
 }
 
 void xf_context_new(freerdp* instance, rdpContext* context)
@@ -165,7 +172,15 @@ void xf_sw_end_paint(rdpContext* context)
 			xf_lock_x11(xfi, FALSE);
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
-			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+
+			if (xfi->scale != 1.0)
+			{
+				xf_draw_screen_scaled(xfi);
+			}
+			else
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+			}
 
 			xf_unlock_x11(xfi, FALSE);
 		}
@@ -193,7 +208,7 @@ void xf_sw_end_paint(rdpContext* context)
 				//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 
-				if(xfi->scale != 1.0)
+				if (xfi->scale != 1.0)
 				{
 					xf_draw_screen_scaled(xfi);
 				}
@@ -201,7 +216,6 @@ void xf_sw_end_paint(rdpContext* context)
 				{
 					XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
 				}
-
 			}
 
 			XFlush(xfi->display);
@@ -285,13 +299,13 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
-			if(xfi->scale != 1.0)
+			if (xfi->scale != 1.0)
 			{
 				xf_draw_screen_scaled(xfi);
 			}
 			else
 			{
-					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 			}
 
 			xf_unlock_x11(xfi, FALSE);
@@ -326,6 +340,14 @@ void xf_hw_end_paint(rdpContext* context)
 					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
 				}
 
+				if (xfi->scale != 1.0)
+				{
+					xf_draw_screen_scaled(xfi);
+				}
+				else
+				{
+					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
+				}
 			}
 
 			XFlush(xfi->display);
@@ -852,11 +874,11 @@ BOOL xf_post_connect(freerdp* instance)
 		}
 	}
 
-	xfi->orig_width = instance->settings->DesktopWidth;
-	xfi->orig_height = instance->settings->DesktopHeight;
-	xfi->cur_width = xfi->orig_width;
-	xfi->cur_height = xfi->orig_width;
-	xfi->scale = 1;
+	xfi->originalWidth = settings->DesktopWidth;
+	xfi->originalHeight = settings->DesktopHeight;
+	xfi->currentWidth = xfi->originalWidth;
+	xfi->currentHeight = xfi->originalWidth;
+	xfi->scale = 1.0;
 
 	xfi->width = settings->DesktopWidth;
 	xfi->height = settings->DesktopHeight;
@@ -1047,6 +1069,10 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 			case CliprdrChannel_Class:
 				xf_process_cliprdr_event(xfi, event);
+				break;
+
+			case RdpeiChannel_Class:
+				xf_process_rdpei_event(xfi, event);
 				break;
 
 			default:
@@ -1295,7 +1321,6 @@ void* xf_thread(void* param)
 		exit_code = XF_EXIT_CONN_FAILED;
 		ExitThread(exit_code);
 	}
-
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
@@ -1323,6 +1348,11 @@ void* xf_thread(void* param)
 	{
 		rcount = 0;
 		wcount = 0;
+
+		if (freerdp_focus_required(instance))
+		{
+			xf_kbd_focus_in(xfi);
+		}
 
 		if (!async_transport)
 		{
@@ -1589,6 +1619,20 @@ HANDLE freerdp_client_get_thread(cfInfo* cfi)
 rdpClient* freerdp_client_get_interface(cfInfo* cfi)
 {
 	return cfi->client;
+}
+
+double freerdp_client_get_scale(xfInfo* xfi)
+{
+	return xfi->scale;
+}
+
+void freerdp_client_reset_scale(xfInfo* xfi)
+{
+    xfi->scale = 1.0;
+
+    XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+    IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+    xf_draw_screen_scaled(xfi);
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)

@@ -122,6 +122,14 @@ struct xf_info
 	UINT16 frame_x2;
 	UINT16 frame_y2;
 
+	double scale;
+	int originalWidth;
+	int originalHeight;
+	int currentWidth;
+	int currentHeight;
+	int XInputOpcode;
+	BOOL enableScaling;
+
 	BOOL focused;
 	BOOL mouse_active;
 	BOOL suppress_output;
@@ -211,6 +219,8 @@ enum XF_EXIT_CODE
 
 void xf_lock_x11(xfInfo* xfi, BOOL display);
 void xf_unlock_x11(xfInfo* xfi, BOOL display);
+
+void xf_draw_screen_scaled(xfInfo* xfi);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
