@@ -68,6 +68,7 @@
  * VirtualChannelInit for the pInitHandle.
  */
 
+void* g_pInterface;
 CHANNEL_INIT_DATA g_ChannelInitData;
 
 static wArrayList* g_ChannelsList = NULL;
@@ -386,7 +387,9 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	ep.pVirtualChannelClose = FreeRDP_VirtualChannelClose;
 	ep.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
 
-	ep.pInterface = NULL;
+	g_pInterface = NULL;
+	ep.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
+	ep.ppInterface = &g_pInterface;
 	ep.pExtendedData = data;
 	ep.pVirtualChannelEventPush = FreeRDP_VirtualChannelEventPush;
 
@@ -397,10 +400,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	WaitForSingleObject(g_mutex_init, INFINITE);
 
 	g_ChannelInitData.channels = channels;
-	g_ChannelInitData.pInterface = ep.pInterface;
 	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS) &ep);
-	g_ChannelInitData.channels = NULL;
-	g_ChannelInitData.pInterface = NULL;
 
 	ReleaseMutex(g_mutex_init);
 
@@ -659,12 +659,10 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 	return TRUE;
 }
 
-void* freerdp_channels_get_static_channel_interface(freerdp* instance, const char* name)
+void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name)
 {
-	rdpChannels* channels;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
-	channels = instance->context->channels;
 	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, name);
 
 	return pChannelOpenData->pInterface;

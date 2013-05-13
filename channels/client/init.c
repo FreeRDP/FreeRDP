@@ -26,6 +26,8 @@
 #include "init.h"
 
 extern int g_open_handle_sequence;
+
+extern void* g_pInterface;
 extern CHANNEL_INIT_DATA g_ChannelInitData;
 
 UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
@@ -47,7 +49,7 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	}
 
 	channels = g_ChannelInitData.channels;
-	pInterface = g_ChannelInitData.pInterface;
+	pInterface = g_pInterface;
 
 	pChannelInitData = &(channels->initDataList[channels->initDataCount]);
 	*ppInitHandle = pChannelInitData;

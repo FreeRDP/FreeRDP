@@ -30,6 +30,7 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/channels/channels.h>
 
 #include "xf_cliprdr.h"
 
@@ -89,7 +90,7 @@ struct clipboard_context
 	int incr_data_length;
 };
 
-void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
+void xf_cliprdr_init(xfInfo* xfi, rdpChannels* channels)
 {
 	int n;
 	UINT32 id;
@@ -100,7 +101,7 @@ void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman)
 
 	xfi->clipboard_context = cb;
 
-	cb->channels = chanman;
+	cb->channels = channels;
 	cb->request_index = -1;
 
 	cb->root_window = DefaultRootWindow(xfi->display);
