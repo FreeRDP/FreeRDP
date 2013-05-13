@@ -53,7 +53,8 @@ struct rdp_channel_open_data
 	char name[8];
 	int OpenHandle;
 	int options;
-	int flags; /* 0 nothing 1 init 2 open */
+	int flags;
+	void* pInterface;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
 };
 typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
@@ -76,6 +77,7 @@ typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
 struct rdp_channel_init_data
 {
 	rdpChannels* channels;
+	void* pInterface;
 };
 typedef struct rdp_channel_init_data CHANNEL_INIT_DATA;
 
@@ -110,6 +112,6 @@ struct rdp_channels
 #endif
 
 rdpChannels* freerdp_channels_find_by_open_handle(int open_handle, int* pindex);
-CHANNEL_OPEN_DATA* freerdp_channels_find_channel_data_by_name(rdpChannels* channels, const char* channel_name, int* pindex);
+CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels, const char* channel_name);
 
 #endif /* FREERDP_PRIVATE_CLIENT_CHANNELS */

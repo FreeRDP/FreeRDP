@@ -35,9 +35,10 @@
 
 struct _CHANNEL_DEF
 {
-	char name[CHANNEL_NAME_LEN + 1];
+	char name[8];
 	UINT32 options;
 };
+
 typedef struct _CHANNEL_DEF CHANNEL_DEF;
 typedef CHANNEL_DEF* PCHANNEL_DEF;
 typedef CHANNEL_DEF** PPCHANNEL_DEF;

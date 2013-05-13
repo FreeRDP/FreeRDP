@@ -22,13 +22,16 @@
 UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 	char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
 {
-	int index;
+	void* pInterface;
 	rdpChannels* channels;
+	CHANNEL_INIT_DATA* pChannelInitData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
 	DEBUG_CHANNELS("enter");
 
-	channels = ((CHANNEL_INIT_DATA*) pInitHandle)->channels;
+	pChannelInitData = (CHANNEL_INIT_DATA*) pInitHandle;
+	channels = pChannelInitData->channels;
+	pInterface = pChannelInitData->pInterface;
 
 	if (!pOpenHandle)
 	{
@@ -48,7 +51,7 @@ UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 		return CHANNEL_RC_NOT_CONNECTED;
 	}
 
-	pChannelOpenData = freerdp_channels_find_channel_data_by_name(channels, pChannelName, &index);
+	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, pChannelName);
 
 	if (!pChannelOpenData)
 	{
@@ -63,6 +66,7 @@ UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 	}
 
 	pChannelOpenData->flags = 2; /* open */
+	pChannelOpenData->pInterface = pInterface;
 	pChannelOpenData->pChannelOpenEventProc = pChannelOpenEventProc;
 	*pOpenHandle = pChannelOpenData->OpenHandle;
 

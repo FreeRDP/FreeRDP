@@ -25,21 +25,18 @@
 
 #include "init.h"
 
-rdpChannels* g_init_channels;
 extern int g_open_handle_sequence;
-
-/**
- * must be called by same thread that calls freerdp_chanman_load_plugin
- * according to MS docs. only called from main thread
- */
+extern CHANNEL_INIT_DATA g_ChannelInitData;
 
 UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
+	void* pInterface;
 	rdpChannel* channel;
 	rdpChannels* channels;
 	PCHANNEL_DEF pChannelDef;
+	CHANNEL_INIT_DATA* pChannelInitData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
@@ -49,12 +46,15 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
-	channels = g_init_channels;
+	channels = g_ChannelInitData.channels;
+	pInterface = g_ChannelInitData.pInterface;
 
-	channels->initDataList[channels->initDataCount].channels = channels;
-	*ppInitHandle = &channels->initDataList[channels->initDataCount];
-
+	pChannelInitData = &(channels->initDataList[channels->initDataCount]);
+	*ppInitHandle = pChannelInitData;
 	channels->initDataCount++;
+
+	pChannelInitData->channels = channels;
+	pChannelInitData->pInterface = pInterface;
 
 	DEBUG_CHANNELS("enter");
 
@@ -91,7 +91,7 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	{
 		pChannelDef = &pChannel[index];
 
-		if (freerdp_channels_find_channel_data_by_name(channels, pChannelDef->name, 0) != 0)
+		if (freerdp_channels_find_channel_open_data_by_name(channels, pChannelDef->name) != 0)
 		{
 			DEBUG_CHANNELS("error channel already used");
 			return CHANNEL_RC_BAD_CHANNEL;
@@ -114,7 +114,7 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
 		pChannelOpenData->options = pChannelDef->options;
 
-		if (channels->settings->ChannelCount < 16)
+		if (channels->settings->ChannelCount < CHANNEL_MAX_COUNT)
 		{
 			channel = channels->settings->ChannelDefArray + channels->settings->ChannelCount;
 			strncpy(channel->Name, pChannelDef->name, 7);
@@ -123,7 +123,7 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 		}
 		else
 		{
-			DEBUG_CHANNELS("warning more than 16 channels");
+			DEBUG_CHANNELS("warning more than %d channels", CHANNEL_MAX_COUNT);
 		}
 
 		channels->openDataCount++;
