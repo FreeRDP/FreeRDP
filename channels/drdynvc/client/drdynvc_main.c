@@ -234,7 +234,7 @@ static UINT32 drdynvc_read_variable_uint(wStream* stream, int cbLen)
 static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	int pos;
-	int error;
+	int status;
 	UINT32 ChannelId;
 	wStream* data_out;
 
@@ -242,14 +242,14 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	pos = Stream_GetPosition(s);
 	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
 
-	error = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
+	status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
 	data_out = Stream_New(NULL, pos + 4);
 	Stream_Write_UINT8(data_out, 0x10 | cbChId);
 	Stream_SetPosition(s, 1);
 	Stream_Copy(data_out, s, pos - 1);
 	
-	if (error == 0)
+	if (status == 0)
 	{
 		DEBUG_DVC("channel created");
 		Stream_Write_UINT32(data_out, 0);
@@ -260,11 +260,11 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 		Stream_Write_UINT32(data_out, (UINT32)(-1));
 	}
 
-	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+	status = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
 
-	if (error != CHANNEL_RC_OK)
+	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN("VirtualChannelWrite failed %d", error);
+		DEBUG_WARN("VirtualChannelWrite failed %d", status);
 		return 1;
 	}
 
@@ -332,18 +332,23 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 		case CAPABILITY_REQUEST_PDU:
 			drdynvc_process_capability_request(drdynvc, Sp, cbChId, s);
 			break;
+
 		case CREATE_REQUEST_PDU:
 			drdynvc_process_create_request(drdynvc, Sp, cbChId, s);
 			break;
+
 		case DATA_FIRST_PDU:
 			drdynvc_process_data_first(drdynvc, Sp, cbChId, s);
 			break;
+
 		case DATA_PDU:
 			drdynvc_process_data(drdynvc, Sp, cbChId, s);
 			break;
+
 		case CLOSE_REQUEST_PDU:
 			drdynvc_process_close_request(drdynvc, Sp, cbChId, s);
 			break;
+
 		default:
 			DEBUG_WARN("unknown drdynvc cmd 0x%x", Cmd);
 			break;
@@ -386,10 +391,20 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 
 	DEBUG_DVC("terminating");
 
-	if (drdynvc->channel_mgr != NULL)
+	if (drdynvc->channel_mgr)
 		dvcman_free(drdynvc->channel_mgr);
 
 	free(drdynvc);
+}
+
+/**
+ * Channel Client Interface
+ */
+
+int drdynvc_get_version(DrdynvcClientContext* context)
+{
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*) context->handle;
+	return drdynvc->version;
 }
 
 /* drdynvc is always built-in */
@@ -398,6 +413,8 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	drdynvcPlugin* _p;
+	DrdynvcClientContext* context;
+	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
 
 	_p = (drdynvcPlugin*) malloc(sizeof(drdynvcPlugin));
 	ZeroMemory(_p, sizeof(drdynvcPlugin));
@@ -413,6 +430,19 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.receive_callback = drdynvc_process_receive;
 	_p->plugin.event_callback = drdynvc_process_event;
 	_p->plugin.terminate_callback = drdynvc_process_terminate;
+
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
+
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
+	{
+		context = (DrdynvcClientContext*) malloc(sizeof(DrdynvcClientContext));
+
+		context->handle = (void*) _p;
+		context->GetVersion = drdynvc_get_version;
+
+		*(pEntryPointsEx->ppInterface) = (void*) context;
+	}
 
 	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
 

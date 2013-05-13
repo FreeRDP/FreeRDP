@@ -29,6 +29,8 @@
 #include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
+#include <freerdp/client/rdpei.h>
+
 #define RDPINPUT_HEADER_LENGTH			6
 
 #define CONTACT_DATA_CONTACTRECT_PRESENT	0x0001

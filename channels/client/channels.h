@@ -32,6 +32,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/drdynvc.h>
 #include <freerdp/channels/channels.h>
 
 #ifdef HAVE_CONFIG_H
@@ -103,6 +104,8 @@ struct rdp_channels
 	freerdp* instance;
 
 	wMessagePipe* MsgPipe;
+
+	DrdynvcClientContext* drdynvc;
 };
 
 #ifdef WITH_DEBUG_CHANNELS

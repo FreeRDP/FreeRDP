@@ -23,7 +23,61 @@
 #include <freerdp/dvc.h>
 #include <freerdp/addin.h>
 
+#include <winpr/collections.h>
+
 #include "drdynvc_main.h"
+
+#define MAX_PLUGINS 32
+
+struct _DVCMAN
+{
+	IWTSVirtualChannelManager iface;
+
+	drdynvcPlugin* drdynvc;
+
+	const char* plugin_names[MAX_PLUGINS];
+	IWTSPlugin* plugins[MAX_PLUGINS];
+	int num_plugins;
+
+	IWTSListener* listeners[MAX_PLUGINS];
+	int num_listeners;
+
+	wArrayList* channels;
+};
+typedef struct _DVCMAN DVCMAN;
+
+struct _DVCMAN_LISTENER
+{
+	IWTSListener iface;
+
+	DVCMAN* dvcman;
+	char* channel_name;
+	UINT32 flags;
+	IWTSListenerCallback* listener_callback;
+};
+typedef struct _DVCMAN_LISTENER DVCMAN_LISTENER;
+
+struct _DVCMAN_ENTRY_POINTS
+{
+	IDRDYNVC_ENTRY_POINTS iface;
+
+	DVCMAN* dvcman;
+	ADDIN_ARGV* args;
+};
+typedef struct _DVCMAN_ENTRY_POINTS DVCMAN_ENTRY_POINTS;
+
+struct _DVCMAN_CHANNEL
+{
+	IWTSVirtualChannel iface;
+
+	DVCMAN* dvcman;
+	UINT32 channel_id;
+	IWTSVirtualChannelCallback* channel_callback;
+
+	wStream* dvc_data;
+	HANDLE dvc_chan_mutex;
+};
+typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin);
 int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args);
@@ -33,6 +87,8 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
 int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length);
 int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size);
+
+void* dvcman_get_channel_interface_by_name(IWTSVirtualChannelManager* pChannelMgr, const char* ChannelName);
 
 #endif
 

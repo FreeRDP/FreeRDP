@@ -487,6 +487,8 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			pChannelClientData->pChannelInitEventProc(pChannelClientData->pInitHandle, CHANNEL_EVENT_CONNECTED, hostname, hostnameLength);
 	}
 
+	channels->drdynvc = (DrdynvcClientContext*) freerdp_channels_get_static_channel_interface(channels, "drdynvc");
+
 	return 0;
 }
 

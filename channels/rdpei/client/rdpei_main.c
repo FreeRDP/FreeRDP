@@ -35,7 +35,6 @@
 
 #include "rdpei_main.h"
 
-typedef struct _RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
 struct _RDPEI_LISTENER_CALLBACK
 {
 	IWTSListenerCallback iface;
@@ -43,8 +42,8 @@ struct _RDPEI_LISTENER_CALLBACK
 	IWTSPlugin* plugin;
 	IWTSVirtualChannelManager* channel_mgr;
 };
+typedef struct _RDPEI_LISTENER_CALLBACK RDPEI_LISTENER_CALLBACK;
 
-typedef struct _RDPEI_CHANNEL_CALLBACK RDPEI_CHANNEL_CALLBACK;
 struct _RDPEI_CHANNEL_CALLBACK
 {
 	IWTSVirtualChannelCallback iface;
@@ -53,14 +52,16 @@ struct _RDPEI_CHANNEL_CALLBACK
 	IWTSVirtualChannelManager* channel_mgr;
 	IWTSVirtualChannel* channel;
 };
+typedef struct _RDPEI_CHANNEL_CALLBACK RDPEI_CHANNEL_CALLBACK;
 
-typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 struct _RDPEI_PLUGIN
 {
 	IWTSPlugin iface;
 
+	IWTSListener* listener;
 	RDPEI_LISTENER_CALLBACK* listener_callback;
 };
+typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
 const char* RDPEI_EVENTID_STRINGS[] =
 {
@@ -305,30 +306,45 @@ static int rdpei_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 
 static int rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	RDPEI_PLUGIN* echo = (RDPEI_PLUGIN*) pPlugin;
+	int status;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) pPlugin;
 
 	DEBUG_DVC("");
 
-	echo->listener_callback = (RDPEI_LISTENER_CALLBACK*) malloc(sizeof(RDPEI_LISTENER_CALLBACK));
-	ZeroMemory(echo->listener_callback, sizeof(RDPEI_LISTENER_CALLBACK));
+	rdpei->listener_callback = (RDPEI_LISTENER_CALLBACK*) malloc(sizeof(RDPEI_LISTENER_CALLBACK));
+	ZeroMemory(rdpei->listener_callback, sizeof(RDPEI_LISTENER_CALLBACK));
 
-	echo->listener_callback->iface.OnNewChannelConnection = rdpei_on_new_channel_connection;
-	echo->listener_callback->plugin = pPlugin;
-	echo->listener_callback->channel_mgr = pChannelMgr;
+	rdpei->listener_callback->iface.OnNewChannelConnection = rdpei_on_new_channel_connection;
+	rdpei->listener_callback->plugin = pPlugin;
+	rdpei->listener_callback->channel_mgr = pChannelMgr;
 
-	return pChannelMgr->CreateListener(pChannelMgr, "Microsoft::Windows::RDS::Input", 0,
-		(IWTSListenerCallback*) echo->listener_callback, NULL);
+	status = pChannelMgr->CreateListener(pChannelMgr, "Microsoft::Windows::RDS::Input", 0,
+		(IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener));
+
+	rdpei->listener->pInterface = rdpei->iface.pInterface;
+
+	return status;
 }
 
 static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 {
-	RDPEI_PLUGIN* echo = (RDPEI_PLUGIN*) pPlugin;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) pPlugin;
 
 	DEBUG_DVC("");
 
-	free(echo);
+	free(rdpei);
 
 	return 0;
+}
+
+/**
+ * Channel Client Interface
+ */
+
+int rdpei_get_version(RdpeiClientContext* context)
+{
+	//RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+	return 1;
 }
 
 #ifdef STATIC_CHANNELS
@@ -339,6 +355,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int error = 0;
 	RDPEI_PLUGIN* rdpei;
+	RdpeiClientContext* context;
 
 	rdpei = (RDPEI_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "rdpei");
 
@@ -351,6 +368,13 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->iface.Connected = NULL;
 		rdpei->iface.Disconnected = NULL;
 		rdpei->iface.Terminated = rdpei_plugin_terminated;
+
+		context = (RdpeiClientContext*) malloc(sizeof(RdpeiClientContext));
+
+		context->handle = (void*) rdpei;
+		context->GetVersion = rdpei_get_version;
+
+		rdpei->iface.pInterface = (void*) context;
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpei", (IWTSPlugin*) rdpei);
 	}

@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Dynamic Virtual Channel
+ * Dynamic Virtual Channel Extension
  *
- * Copyright 2010-2011 Vic Lee
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,21 @@
  * limitations under the License.
  */
 
-#ifndef __DRDYNVC_MAIN_H
-#define __DRDYNVC_MAIN_H
+#ifndef FREERDP_CHANNEL_CLIENT_DRDYNVC_H
+#define FREERDP_CHANNEL_CLIENT_DRDYNVC_H
 
-#include <freerdp/types.h>
-#include <freerdp/client/drdynvc.h>
+/**
+ * Client Interface
+ */
 
-typedef struct drdynvc_plugin drdynvcPlugin;
+typedef struct _drdynvc_client_context DrdynvcClientContext;
 
-int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, wMessage* event);
+typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
 
-#endif
+struct _drdynvc_client_context
+{
+	void* handle;
+	pcDrdynvcGetVersion GetVersion;
+};
+
+#endif /* FREERDP_CHANNEL_CLIENT_DRDYNVC_H */
