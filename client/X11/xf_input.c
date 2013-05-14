@@ -328,20 +328,31 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 	y = (int) event->event_y;
 	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
-	if ((x < 0) || (y < 0))
-		return 0;
+	//if ((x < 0) || (y < 0))
+	//	return 0;
 
-	printf("%s: id: %d x: %d y: %d\n",
-			xf_input_touch_state_string(flags),
-			touchId, x, y);
-
-	contact.contactId = touchId % 0xFF;
+	contact.contactId = touchId;
 	contact.fieldsPresent = 0;
 	contact.x = x;
 	contact.y = y;
 	contact.contactFlags = flags;
 
-	rdpei->BeginFrame(rdpei);
+	if (flags & CONTACT_FLAG_DOWN)
+	{
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+	}
+	else if (flags & CONTACT_FLAG_UPDATE)
+	{
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+	}
+	else if (flags & CONTACT_FLAG_UP)
+	{
+		//contact.contactFlags |= CONTACT_FLAG_INRANGE;
+	}
+
+	//rdpei->BeginFrame(rdpei);
 	rdpei->AddContact(rdpei, &contact);
 	rdpei->EndFrame(rdpei);
 
