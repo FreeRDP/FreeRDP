@@ -238,11 +238,14 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					{
 						XSizeHints* size_hints;
 
-						size_hints = XAllocSizeHints();
+						size_hints = XGetWMHints(xfi->display, xfi->window->handle);
+
+						if(size_hints == NULL)
+							size_hints = XAllocSizeHints();
 
 						if (size_hints)
 						{
-							size_hints->flags = PMinSize | PMaxSize;
+							size_hints->flags |= PMinSize | PMaxSize;
 							size_hints->min_width = size_hints->max_width = zoom_width;
 							size_hints->min_height = size_hints->max_height = zoom_height;
 							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
@@ -281,11 +284,15 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					{
 						XSizeHints* size_hints;
 
-						size_hints = XAllocSizeHints();
+						size_hints = XGetWMHints(xfi->display, xfi->window->handle);
+
+						if(size_hints == NULL)
+							size_hints = XAllocSizeHints();
 
 						if (size_hints)
 						{
-							size_hints->flags = PMinSize | PMaxSize;
+							size_hints->flags |= PMinSize | PMaxSize;
+
 							size_hints->min_width = size_hints->max_width = zoom_width;
 							size_hints->min_height = size_hints->max_height = zoom_height;
 							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
