@@ -64,11 +64,9 @@ typedef struct _RDPINPUT_TOUCH_FRAME RDPINPUT_TOUCH_FRAME;
 typedef struct _rdpei_client_context RdpeiClientContext;
 
 typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
-typedef int (*pcRdpeiBeginFrame)(RdpeiClientContext* context);
-typedef int (*pcRdpeiEndFrame)(RdpeiClientContext* context);
 typedef int (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
-typedef int (*pcRdpeiContactBegin)(RdpeiClientContext* context, int externalId, int x, int y);
+typedef int (*pcRdpeiContactBegin)(RdpeiClientContext* context, int externalId);
 typedef int (*pcRdpeiContactUpdate)(RdpeiClientContext* context, int externalId);
 typedef int (*pcRdpeiContactEnd)(RdpeiClientContext* context, int externalId);
 
@@ -78,10 +76,8 @@ struct _rdpei_client_context
 	void* custom;
 
 	pcRdpeiGetVersion GetVersion;
-	pcRdpeiBeginFrame BeginFrame;
-	pcRdpeiEndFrame EndFrame;
-	pcRdpeiAddContact AddContact;
 
+	pcRdpeiAddContact AddContact;
 	pcRdpeiContactBegin ContactBegin;
 	pcRdpeiContactUpdate ContactUpdate;
 	pcRdpeiContactEnd ContactEnd;

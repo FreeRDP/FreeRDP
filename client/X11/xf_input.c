@@ -338,9 +338,6 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 	y = (int) event->event_y;
 	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
-	//if ((x < 0) || (y < 0))
-	//	return 0;
-
 	contact.fieldsPresent = 0;
 	contact.x = x;
 	contact.y = y;
@@ -348,7 +345,7 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 
 	if (flags & CONTACT_FLAG_DOWN)
 	{
-		contact.contactId = rdpei->ContactBegin(rdpei, touchId, x, y);
+		contact.contactId = rdpei->ContactBegin(rdpei, touchId);
 		contact.contactFlags |= CONTACT_FLAG_INRANGE;
 		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
 	}
@@ -363,9 +360,7 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 		contact.contactId = rdpei->ContactEnd(rdpei, touchId);
 	}
 
-	rdpei->BeginFrame(rdpei);
 	rdpei->AddContact(rdpei, &contact);
-	rdpei->EndFrame(rdpei);
 
 	return 0;
 }
