@@ -247,6 +247,9 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 							size_hints->min_height = size_hints->max_height = zoom_height;
 							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
 							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
+							xfi->currentWidth = zoom_width;
+							xfi->currentHeight = zoom_height;
+
 							XFree(size_hints);
 						}
 					}
@@ -287,6 +290,9 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 							size_hints->min_height = size_hints->max_height = zoom_height;
 							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
 							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
+							xfi->currentWidth = zoom_width;
+							xfi->currentHeight = zoom_height;
+
 							XFree(size_hints);
 						}
 					}
