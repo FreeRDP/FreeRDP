@@ -216,6 +216,7 @@ void xf_lock_x11(xfInfo* xfi, BOOL display);
 void xf_unlock_x11(xfInfo* xfi, BOOL display);
 
 void xf_draw_screen_scaled(xfInfo* xfi);
+void xf_transform_window(xfInfo* xfi);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

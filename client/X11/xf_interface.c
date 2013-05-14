@@ -101,6 +101,37 @@ static int initialized_xi = 0;
 static long xv_port = 0;
 static const size_t password_size = 512;
 
+void xf_transform_window(xfInfo* xfi)
+{
+	int ret;
+	int w;
+	int h;
+	long supplied;
+	Atom hints_atom;
+	XSizeHints* size_hints = NULL;
+
+	hints_atom = XInternAtom(xfi->display, "WM_SIZE_HINTS", 1);
+
+	ret = XGetWMSizeHints(xfi->display, xfi->window->handle, size_hints, &supplied, hints_atom);
+
+	if(ret == 0)
+		size_hints = XAllocSizeHints();
+
+	w = (xfi->originalWidth * xfi->scale) + xfi->offset_x;
+	h = (xfi->originalHeight * xfi->scale) + xfi->offset_y;
+
+	if (size_hints)
+	{
+		size_hints->flags |= PMinSize | PMaxSize;
+		size_hints->min_width = size_hints->max_width = w;
+		size_hints->min_height = size_hints->max_height = h;
+		XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
+		XResizeWindow(xfi->display, xfi->window->handle, w, h);
+
+		XFree(size_hints);
+	}
+}
+
 void xf_draw_screen_scaled(xfInfo* xfi)
 {
 	XTransform transform;

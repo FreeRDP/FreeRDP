@@ -223,8 +223,6 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom in (scale larger)
-					int ret;
-					long supplied;
 					int zoom_width;
 					int zoom_height;
 					double s = xfi->scale;
@@ -237,30 +235,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					zoom_width = xfi->originalWidth * s;
 					zoom_height = xfi->originalHeight * s;
 
-					{
-						Atom hints_atom;
-						XSizeHints* size_hints = NULL;
-
-						hints_atom = XInternAtom(xfi->display, "WM_SIZE_HINTS", 1);
-
-						ret = XGetWMSizeHints(xfi->display, xfi->window->handle, size_hints, &supplied, hints_atom);
-
-						if(ret == 0)
-							size_hints = XAllocSizeHints();
-
-						if (size_hints)
-						{
-							size_hints->flags |= PMinSize | PMaxSize;
-							size_hints->min_width = size_hints->max_width = zoom_width;
-							size_hints->min_height = size_hints->max_height = zoom_height;
-							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
-							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
-							xfi->currentWidth = zoom_width;
-							xfi->currentHeight = zoom_height;
-
-							XFree(size_hints);
-						}
-					}
+					xf_transform_window(xfi);
 
 					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
 					//xf_draw_screen_scaled(xfi);
@@ -274,8 +249,6 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom out (scale smaller)
-					int ret;
-					long supplied;
 					int zoom_width;
 					int zoom_height;
 					double s = xfi->scale;
@@ -288,30 +261,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					zoom_width = xfi->originalWidth * s;
 					zoom_height = xfi->originalHeight * s;
 
-					{
-						Atom hints_atom;
-						XSizeHints* size_hints = NULL;
-
-						hints_atom = XInternAtom(xfi->display, "WM_SIZE_HINTS", 1);
-
-						ret = XGetWMSizeHints(xfi->display, xfi->window->handle, size_hints, &supplied, hints_atom);
-
-						if(ret == 0)
-							size_hints = XAllocSizeHints();
-
-						if (size_hints)
-						{
-							size_hints->flags |= PMinSize | PMaxSize;
-							size_hints->min_width = size_hints->max_width = zoom_width;
-							size_hints->min_height = size_hints->max_height = zoom_height;
-							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
-							XResizeWindow(xfi->display, xfi->window->handle, zoom_width, zoom_height);
-							xfi->currentWidth = zoom_width;
-							xfi->currentHeight = zoom_height;
-
-							XFree(size_hints);
-						}
-					}
+					xf_transform_window(xfi);
 
 					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
 					//xf_draw_screen_scaled(xfi);
@@ -321,65 +271,70 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 
 
 	if (keysym == XK_KP_4)
-		{
-			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-						{
-							xfi->offset_x -= 5;
+	{
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+					{
+						xfi->offset_x -= 5;
 
+						xf_transform_window(xfi);
 
-
-							xf_draw_screen_scaled(xfi);
-							printf("pan left : %d\n", xfi->offset_x);
-							return TRUE;
-						}
-		}
+						xf_draw_screen_scaled(xfi);
+						printf("pan left : %d\n", xfi->offset_x);
+						return TRUE;
+					}
+	}
 
 	if (keysym == XK_KP_6)
-		{
-			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-						{
-							xfi->offset_x += 5;
+	{
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+					{
+						xfi->offset_x += 5;
 
-							if(xfi->offset_x > 0)
-								xfi->offset_x = 0;
+						if(xfi->offset_x > 0)
+							xfi->offset_x = 0;
 
-							xf_draw_screen_scaled(xfi);
-							printf("pan right : %d\n", xfi->offset_x);
-							return TRUE;
-						}
-		}
+						xf_transform_window(xfi);
+
+						xf_draw_screen_scaled(xfi);
+						printf("pan right : %d\n", xfi->offset_x);
+						return TRUE;
+					}
+	}
 
 	if (keysym == XK_KP_8)
-			{
-				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-						    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-							{
-								xfi->offset_y -= 5;
+	{
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+					{
+						xfi->offset_y -= 5;
 
+						xf_transform_window(xfi);
 
-								xf_draw_screen_scaled(xfi);
-								printf("pan up : %d\n", xfi->offset_y);
-								return TRUE;
-							}
-			}
+						xf_draw_screen_scaled(xfi);
+						printf("pan up : %d\n", xfi->offset_y);
+						return TRUE;
+					}
+	}
 
 	if (keysym == XK_KP_2)
-		{
-			if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-					    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-						{
-							xfi->offset_y += 5;
+	{
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
+				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+					{
+						xfi->offset_y += 5;
 
-							if(xfi->offset_y > 0)
-								xfi->offset_y = 0;
+						if(xfi->offset_y > 0)
+							xfi->offset_y = 0;
 
-							xf_draw_screen_scaled(xfi);
-							printf("pan down : %d\n", xfi->offset_y);
-							return TRUE;
-						}
-		}
+						xf_transform_window(xfi);
+
+						xf_draw_screen_scaled(xfi);
+						printf("pan down : %d\n", xfi->offset_y);
+						return TRUE;
+					}
+	}
 
 
 	return FALSE;
