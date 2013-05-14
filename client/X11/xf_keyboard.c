@@ -321,7 +321,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 							if(xfi->offset_x < 0)
 								xfi->offset_x = 0;
 
-
+							xf_draw_screen_scaled(xfi);
 							printf("pan left : %d\n", xfi->offset_x);
 							return TRUE;
 						}
@@ -334,6 +334,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 						{
 							xfi->offset_x += 5;
 
+							xf_draw_screen_scaled(xfi);
 							printf("pan right : %d\n", xfi->offset_x);
 							return TRUE;
 						}
