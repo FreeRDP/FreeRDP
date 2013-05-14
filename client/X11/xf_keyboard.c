@@ -223,6 +223,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom in (scale larger)
+					int ret;
+					long supplied;
 					int zoom_width;
 					int zoom_height;
 					double s = xfi->scale;
@@ -236,11 +238,14 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					zoom_height = xfi->originalHeight * s;
 
 					{
-						XSizeHints* size_hints;
+						Atom hints_atom;
+						XSizeHints* size_hints = NULL;
 
-						size_hints = XGetWMHints(xfi->display, xfi->window->handle);
+						hints_atom = XInternAtom(xfi->display, "WM_SIZE_HINTS", 1);
 
-						if(size_hints == NULL)
+						ret = XGetWMSizeHints(xfi->display, xfi->window->handle, size_hints, &supplied, hints_atom);
+
+						if(ret == 0)
 							size_hints = XAllocSizeHints();
 
 						if (size_hints)
@@ -269,6 +274,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom out (scale smaller)
+					int ret;
+					long supplied;
 					int zoom_width;
 					int zoom_height;
 					double s = xfi->scale;
@@ -282,17 +289,19 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					zoom_height = xfi->originalHeight * s;
 
 					{
-						XSizeHints* size_hints;
+						Atom hints_atom;
+						XSizeHints* size_hints = NULL;
 
-						size_hints = XGetWMHints(xfi->display, xfi->window->handle);
+						hints_atom = XInternAtom(xfi->display, "WM_SIZE_HINTS", 1);
 
-						if(size_hints == NULL)
+						ret = XGetWMSizeHints(xfi->display, xfi->window->handle, size_hints, &supplied, hints_atom);
+
+						if(ret == 0)
 							size_hints = XAllocSizeHints();
 
 						if (size_hints)
 						{
 							size_hints->flags |= PMinSize | PMaxSize;
-
 							size_hints->min_width = size_hints->max_width = zoom_width;
 							size_hints->min_height = size_hints->max_height = zoom_height;
 							XSetWMNormalHints(xfi->display, xfi->window->handle, size_hints);
