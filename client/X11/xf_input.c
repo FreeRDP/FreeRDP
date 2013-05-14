@@ -57,15 +57,17 @@ int scale_cnt;
 int xf_input_init(xfInfo* xfi, Window window)
 {
 	int i, j;
+	int nmasks;
 	int ndevices;
 	int major = 2;
 	int minor = 2;
 	Status xstatus;
-	XIEventMask evmask;
 	XIDeviceInfo* info;
+	XIEventMask evmasks[8];
 	int opcode, event, error;
-	unsigned char mask[XIMaskLen(XI_LASTEVENT)];
+	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
+	nmasks = 0;
 	active_contacts = 0;
 	ZeroMemory(contacts, sizeof(touchContact) * MAX_CONTACTS);
 
@@ -99,21 +101,29 @@ int xf_input_init(xfInfo* xfi, Window window)
 			if (class->type != XITouchClass)
 				continue;
 
-			printf("%s %s touch device, supporting %d touches.\n",
-				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent", t->num_touches);
+			if (t->mode != XIDirectTouch)
+				continue;
+
+			if (strcmp(dev->name, "Virtual core pointer") == 0)
+				continue;
+
+			printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
+				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+						dev->deviceid, t->mode, t->num_touches);
+
+			evmasks[nmasks].mask = masks[nmasks];
+			evmasks[nmasks].mask_len = sizeof(masks[0]);
+			ZeroMemory(masks[nmasks], sizeof(masks[0]));
+			evmasks[nmasks].deviceid = dev->deviceid;
+
+			XISetMask(masks[nmasks], XI_TouchBegin);
+			XISetMask(masks[nmasks], XI_TouchUpdate);
+			XISetMask(masks[nmasks], XI_TouchEnd);
+			nmasks++;
 		}
 	}
 
-	evmask.mask = mask;
-	evmask.mask_len = sizeof(mask);
-	ZeroMemory(mask, sizeof(mask));
-	evmask.deviceid = XIAllDevices;
-
-	XISetMask(mask, XI_TouchBegin);
-	XISetMask(mask, XI_TouchUpdate);
-	XISetMask(mask, XI_TouchEnd);
-
-	xstatus = XISelectEvents(xfi->display, window, &evmask, 1);
+	xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
 
 	return -1;
 }
@@ -331,7 +341,6 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 	//if ((x < 0) || (y < 0))
 	//	return 0;
 
-	contact.contactId = touchId;
 	contact.fieldsPresent = 0;
 	contact.x = x;
 	contact.y = y;
@@ -339,20 +348,22 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 
 	if (flags & CONTACT_FLAG_DOWN)
 	{
+		contact.contactId = rdpei->ContactBegin(rdpei, touchId, x, y);
 		contact.contactFlags |= CONTACT_FLAG_INRANGE;
 		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
 	}
 	else if (flags & CONTACT_FLAG_UPDATE)
 	{
+		contact.contactId = rdpei->ContactUpdate(rdpei, touchId);
 		contact.contactFlags |= CONTACT_FLAG_INRANGE;
 		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
 	}
 	else if (flags & CONTACT_FLAG_UP)
 	{
-		//contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactId = rdpei->ContactEnd(rdpei, touchId);
 	}
 
-	//rdpei->BeginFrame(rdpei);
+	rdpei->BeginFrame(rdpei);
 	rdpei->AddContact(rdpei, &contact);
 	rdpei->EndFrame(rdpei);
 

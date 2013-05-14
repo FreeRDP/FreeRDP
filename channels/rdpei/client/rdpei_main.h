@@ -51,6 +51,19 @@
 #define EVENTID_RESUME_TOUCH			0x0005
 #define EVENTID_DISMISS_HOVERING_CONTACT	0x0006
 
+#define MAX_EXTERNAL_IDS	32
+
+struct _RDPINPUT_CONTACT_POINT
+{
+	UINT32 flags;
+	UINT32 contactId;
+	int touchDownX;
+	int touchDownY;
+	int externalIdCount;
+	int externalIds[MAX_EXTERNAL_IDS];
+};
+typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
+
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
 #else

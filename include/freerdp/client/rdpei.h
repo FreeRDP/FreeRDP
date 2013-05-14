@@ -68,6 +68,10 @@ typedef int (*pcRdpeiBeginFrame)(RdpeiClientContext* context);
 typedef int (*pcRdpeiEndFrame)(RdpeiClientContext* context);
 typedef int (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
+typedef int (*pcRdpeiContactBegin)(RdpeiClientContext* context, int externalId, int x, int y);
+typedef int (*pcRdpeiContactUpdate)(RdpeiClientContext* context, int externalId);
+typedef int (*pcRdpeiContactEnd)(RdpeiClientContext* context, int externalId);
+
 struct _rdpei_client_context
 {
 	void* handle;
@@ -77,6 +81,10 @@ struct _rdpei_client_context
 	pcRdpeiBeginFrame BeginFrame;
 	pcRdpeiEndFrame EndFrame;
 	pcRdpeiAddContact AddContact;
+
+	pcRdpeiContactBegin ContactBegin;
+	pcRdpeiContactUpdate ContactUpdate;
+	pcRdpeiContactEnd ContactEnd;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPEI_H */

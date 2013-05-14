@@ -136,6 +136,9 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	int x, y;
 	Window childWindow;
 
+	if (xfi->settings->MultiTouchInput)
+		return TRUE;
+
 	input = xfi->instance->input;
 	x = event->xmotion.x;
 	y = event->xmotion.y;
@@ -185,6 +188,9 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 	BOOL wheel;
 	BOOL extended;
 	rdpInput* input;
+
+	if (xfi->settings->MultiTouchInput)
+		return TRUE;
 
 	input = xfi->instance->input;
 
@@ -294,6 +300,9 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 	Window childWindow;
 	BOOL extended;
 	rdpInput* input;
+
+	if (xfi->settings->MultiTouchInput)
+		return TRUE;
 
 	input = xfi->instance->input;
 
