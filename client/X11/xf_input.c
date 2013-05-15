@@ -68,6 +68,7 @@ int xf_input_init(xfInfo* xfi, Window window)
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
 	nmasks = 0;
+	ndevices = 0;
 	active_contacts = 0;
 	ZeroMemory(contacts, sizeof(touchContact) * MAX_CONTACTS);
 
@@ -123,9 +124,10 @@ int xf_input_init(xfInfo* xfi, Window window)
 		}
 	}
 
-	xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
+	if (nmasks > 0)
+		xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
 
-	return -1;
+	return 0;
 }
 
 BOOL xf_input_is_duplicate(XIDeviceEvent* event)

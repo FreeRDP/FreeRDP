@@ -692,11 +692,15 @@ BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** r
 
 void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name)
 {
+	void* pInterface = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
 	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, name);
 
-	return pChannelOpenData->pInterface;
+	if (pChannelOpenData)
+		pInterface = pChannelOpenData->pInterface;
+
+	return pInterface;
 }
 
 HANDLE freerdp_channels_get_event_handle(freerdp* instance)
