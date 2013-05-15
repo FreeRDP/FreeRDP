@@ -195,12 +195,13 @@ void xf_kbd_focus_in(xfInfo* xfi)
 	Window wdummy;
 	UINT32 state = 0;
 
-	input = xfi->instance->input;
-
-	syncFlags = xf_kbd_get_toggle_keys_state(xfi);
-	XQueryPointer(xfi->display, xfi->window->handle, &wdummy, &wdummy, &mouseX, &mouseY, &dummy, &dummy, &state);
-
-	input->FocusInEvent(input, syncFlags, mouseX, mouseY);
+    if (xfi->display && xfi->window)
+    {
+	    input = xfi->instance->input;
+	    syncFlags = xf_kbd_get_toggle_keys_state(xfi);
+	    XQueryPointer(xfi->display, xfi->window->handle, &wdummy, &wdummy, &mouseX, &mouseY, &dummy, &dummy, &state);
+	    input->FocusInEvent(input, syncFlags, mouseX, mouseY);
+	}
 }
 
 BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
