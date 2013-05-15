@@ -270,7 +270,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	/* encrypt client random */
-	memset(crypt_client_random, 0, sizeof(crypt_client_random));
+	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
@@ -279,7 +279,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
-	s = transport_send_stream_init(rdp->mcs->transport, length);
+	s = Stream_New(NULL, length);
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
@@ -294,6 +294,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		return FALSE;
 	}
 
+	Stream_Free(s, TRUE);
+
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
 	{
@@ -301,6 +303,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = TRUE;
+
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 

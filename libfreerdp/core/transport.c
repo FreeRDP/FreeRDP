@@ -498,7 +498,6 @@ static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	Stream_EnsureCapacity(transport->ReceiveBuffer, 32 * 1024);
 	status = transport_read(transport, transport->ReceiveBuffer);
 
 	if (status <= 0)

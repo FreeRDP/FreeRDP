@@ -163,7 +163,7 @@ wStream* license_send_stream_init(rdpLicense* license)
 {
 	wStream* s;
 
-	s = transport_send_stream_init(license->rdp->transport, 4096);
+	s = Stream_New(NULL, 4096);
 	Stream_Seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
 
 	return s;
@@ -211,6 +211,8 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 
 	if (transport_write(license->rdp->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -578,6 +580,8 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 
 void license_write_binary_blob(wStream* s, LICENSE_BLOB* blob)
 {
+	Stream_EnsureRemainingCapacity(s, blob->length +  4);
+
 	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
@@ -596,6 +600,8 @@ void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blo
 		fprintf(stderr, "license_write_encrypted_premaster_secret_blob: invalid blob\n");
 		return;
 	}
+
+	Stream_EnsureRemainingCapacity(s, length + 4);
 
 	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, length); /* wBlobLen (2 bytes) */
@@ -991,6 +997,8 @@ void license_write_platform_challenge_response_packet(rdpLicense* license, wStre
 {
 	license_write_binary_blob(s, license->EncryptedPlatformChallenge); /* EncryptedPlatformChallengeResponse */
 	license_write_binary_blob(s, license->EncryptedHardwareId); /* EncryptedHWID */
+
+	Stream_EnsureRemainingCapacity(s, 16);
 	Stream_Write(s, macData, 16); /* MACData */
 }
 

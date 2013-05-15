@@ -276,7 +276,8 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		cbSize += cchPCB * 2;
 	}
 
-	s = transport_send_stream_init(nego->transport, cbSize);
+	s = Stream_New(NULL, cbSize);
+
 	Stream_Write_UINT32(s, cbSize); /* cbSize */
 	Stream_Write_UINT32(s, 0); /* Flags */
 	Stream_Write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
@@ -293,6 +294,8 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -646,7 +649,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	BYTE *bm, *em;
 	int cookie_length;
 
-	s = transport_send_stream_init(nego->transport, 256);
+	s = Stream_New(NULL, 512);
+
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
 	Stream_GetPointer(s, bm);
 	Stream_Seek(s, length);
@@ -694,6 +698,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -812,7 +818,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	status = TRUE;
 	settings = nego->transport->settings;
 
-	s = transport_send_stream_init(nego->transport, 256);
+	s = Stream_New(NULL, 512);
+
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	Stream_GetPointer(s, bm);
 	Stream_Seek(s, length);
@@ -851,6 +858,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	if (status)
 	{
