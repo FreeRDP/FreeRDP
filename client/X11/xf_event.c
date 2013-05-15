@@ -170,13 +170,6 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 		y = (int)(y * (1.0 / xfi->scale) );
 	}
 
-	if (xfi->scale != 1.0)
-	{
-		/* Take scaling in to consideration */
-		x = (int) (x * (1.0 / xfi->scale));
-		y = (int) (y * (1.0 / xfi->scale));
-	}
-
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
 	if (xfi->fullscreen)

@@ -1555,6 +1555,8 @@ void* xf_thread(void* param)
 	gdi_free(instance);
 
 	ExitThread(exit_code);
+
+	return NULL;
 }
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
