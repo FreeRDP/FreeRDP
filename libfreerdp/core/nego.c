@@ -646,13 +646,13 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	wStream* s;
 	int length;
-	BYTE *bm, *em;
+	int bm, em;
 	int cookie_length;
 
 	s = Stream_New(NULL, 512);
 
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
 	if (nego->RoutingToken)
@@ -688,11 +688,11 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += 8;
 	}
 
-	Stream_GetPointer(s, em);
-	Stream_SetPointer(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_request(s, length - 5);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 
 	Stream_SealLength(s);
 
@@ -808,11 +808,10 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	wStream* s;
-	BYTE* bm;
-	BYTE* em;
 	int length;
+	int bm, em;
 	BOOL status;
+	wStream* s;
 	rdpSettings* settings;
 
 	status = TRUE;
@@ -821,7 +820,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	s = Stream_New(NULL, 512);
 
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
@@ -848,11 +847,11 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		status = FALSE;
 	}
 
-	Stream_GetPointer(s, em);
-	Stream_SetPointer(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_confirm(s, length - 5);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 
 	Stream_SealLength(s);
 

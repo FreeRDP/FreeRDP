@@ -457,7 +457,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	int status;
 	int length;
 	wStream* s;
-	BYTE *bm, *em;
+	int bm, em;
 	wStream* gcc_CCrq;
 	wStream* client_data;
 
@@ -470,17 +470,17 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 
 	s = Stream_New(NULL, 1024 + length);
 
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_initial(s, mcs, gcc_CCrq);
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 	length = (em - bm);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 
 	status = transport_write(mcs->transport, s);
@@ -539,7 +539,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	int length;
 	int status;
 	wStream* s;
-	BYTE *bm, *em;
+	int bm, em;
 	wStream* gcc_CCrsp;
 	wStream* server_data;
 
@@ -552,17 +552,17 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 
 	s = Stream_New(NULL, length + 1024);
 
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_response(s, mcs, gcc_CCrsp);
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 	length = (em - bm);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 
 	status = transport_write(mcs->transport, s);

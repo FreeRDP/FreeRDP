@@ -772,7 +772,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduSource;
 	UINT16 channelId;
 	UINT16 securityFlags;
-	BYTE* nextp;
+	int nextPosition;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
@@ -815,12 +815,12 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		while (Stream_GetRemainingLength(s) > 3)
 		{
-			Stream_GetPointer(s, nextp);
+			nextPosition = Stream_GetPosition(s);
 
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 				return -1;
 
-			nextp += pduLength;
+			nextPosition += pduLength;
 
 			rdp->settings->PduSource = pduSource;
 
@@ -848,7 +848,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					fprintf(stderr, "incorrect PDU type: 0x%04X\n", pduType);
 					break;
 			}
-			Stream_SetPointer(s, nextp);
+
+			Stream_SetPosition(s, nextPosition);
 		}
 	}
 

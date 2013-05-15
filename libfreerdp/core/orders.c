@@ -662,10 +662,11 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, i
 
 	if (Stream_GetRemainingLength(s) < zeroBitsSize)
 		return FALSE;
+
 	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
 
-	memset(rectangles, 0, sizeof(DELTA_RECT) * (number + 1));
+	ZeroMemory(rectangles, sizeof(DELTA_RECT) * (number + 1));
 
 	for (i = 1; i < number + 1; i++)
 	{
@@ -684,7 +685,9 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, i
 				return FALSE;
 		}
 		else
+		{
 			rectangles[i].width = rectangles[i - 1].width;
+		}
 
 		if (~flags & 0x10)
 		{
@@ -692,13 +695,16 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, i
 				return FALSE;
 		}
 		else
+		{
 			rectangles[i].height = rectangles[i - 1].height;
+		}
 
 		rectangles[i].left = rectangles[i].left + rectangles[i - 1].left;
 		rectangles[i].top = rectangles[i].top + rectangles[i - 1].top;
 
 		flags <<= 4;
 	}
+
 	return TRUE;
 }
 
@@ -713,10 +719,11 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 
 	if (Stream_GetRemainingLength(s) < zeroBitsSize)
 		return FALSE;
+
 	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
 
-	memset(points, 0, sizeof(DELTA_POINT) * number);
+	ZeroMemory(points, sizeof(DELTA_POINT) * number);
 
 	for (i = 0; i < number; i++)
 	{
