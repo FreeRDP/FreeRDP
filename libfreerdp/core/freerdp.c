@@ -136,19 +136,19 @@ BOOL freerdp_connect(freerdp* instance)
 			{
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				s->buffer = (BYTE*) realloc(s->buffer, record.length);
-				record.data = s->buffer;
-				s->capacity = record.length;
+				Stream_Buffer(s) = (BYTE*) realloc(Stream_Buffer(s), record.length);
+				record.data = Stream_Buffer(s);
+				Stream_Capacity(s) = record.length;
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
 				Stream_SetPosition(s, 0);
 
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, s->capacity, s);
+				update_recv_surfcmds(update, Stream_Capacity(s), s);
 				update->EndPaint(update->context);
 			}
 
-			free(s->buffer);
+			free(Stream_Buffer(s));
 			return TRUE;
 		}
 	}

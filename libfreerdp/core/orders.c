@@ -1397,7 +1397,7 @@ BOOL update_read_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDE
 		if (Stream_GetRemainingLength(s) < glyph_index->cbData)
 			return FALSE;
 
-		memcpy(glyph_index->data, s->pointer, glyph_index->cbData);
+		memcpy(glyph_index->data, Stream_Pointer(s), glyph_index->cbData);
 		Stream_Seek(s, glyph_index->cbData);
 	}
 
@@ -1497,7 +1497,7 @@ BOOL update_read_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX_
 
 		if (Stream_GetRemainingLength(s) < fast_index->cbData)
 			return FALSE;
-		memcpy(fast_index->data, s->pointer, fast_index->cbData);
+		memcpy(fast_index->data, Stream_Pointer(s), fast_index->cbData);
 		Stream_Seek(s, fast_index->cbData);
 	}
 	return TRUE;
@@ -1538,8 +1538,8 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 		if (Stream_GetRemainingLength(s) < fast_glyph->cbData)
 			return FALSE;
 
-		memcpy(fast_glyph->data, s->pointer, fast_glyph->cbData);
-		phold = s->pointer;
+		memcpy(fast_glyph->data, Stream_Pointer(s), fast_glyph->cbData);
+		phold = Stream_Pointer(s);
 
 		if (!Stream_SafeSeek(s, 1))
 			return FALSE;
@@ -1566,7 +1566,7 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			Stream_Read(s, glyph->aj, glyph->cb);
 		}
 
-		s->pointer = phold + fast_glyph->cbData;
+		Stream_Pointer(s) = phold + fast_glyph->cbData;
 	}
 	return TRUE;
 }
@@ -2200,7 +2200,7 @@ BOOL update_decompress_brush(wStream* s, BYTE* output, BYTE bpp)
 	BYTE* palette;
 	int bytesPerPixel;
 
-	palette = s->pointer + 16;
+	palette = Stream_Pointer(s) + 16;
 	bytesPerPixel = ((bpp + 1) / 8);
 
 	if (Stream_GetRemainingLength(s) < 16) // 64 / 4
@@ -3044,7 +3044,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType); /* orderType (1 byte) */
 
-	next = s->pointer + ((INT16) orderLength) + 7;
+	next = Stream_Pointer(s) + ((INT16) orderLength) + 7;
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
@@ -3116,7 +3116,8 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			break;
 	}
 
-	s->pointer = next;
+	Stream_Pointer(s) = next;
+
 	return TRUE;
 }
 

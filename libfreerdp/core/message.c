@@ -154,7 +154,7 @@ static void update_message_SurfaceCommand(rdpContext* context, wStream* s)
 
 	wParam = (wStream*) malloc(sizeof(wStream));
 
-	wParam->capacity = s->capacity;
+	wParam->capacity = Stream_Capacity(s);
 	wParam->buffer = (BYTE*) malloc(wParam->capacity);
 	wParam->pointer = wParam->buffer;
 
@@ -1005,8 +1005,7 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 			IFCALL(proxy->SurfaceCommand, msg->context, (wStream*) msg->wParam);
 			{
 				wStream* s = (wStream*) msg->wParam;
-				free(s->buffer);
-				free(s);
+				Stream_Free(s, TRUE);
 			}
 			break;
 

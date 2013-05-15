@@ -289,6 +289,8 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		free(wszPCB);
 	}
 
+	Stream_SealLength(s);
+
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
 
@@ -688,6 +690,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	tpdu_write_connection_request(s, length - 5);
 	Stream_SetPointer(s, em);
 
+	Stream_SealLength(s);
+
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
 
@@ -842,6 +846,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	tpkt_write_header(s, length);
 	tpdu_write_connection_confirm(s, length - 5);
 	Stream_SetPointer(s, em);
+
+	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;

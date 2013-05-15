@@ -331,7 +331,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp->mppc_dec, s->pointer, size, compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp->mppc_dec, Stream_Pointer(s), size, compressionFlags, &roff, &rlen))
 		{
 			size = rlen;
 			buffer = rdp->mppc_dec->history_buf + roff;
@@ -760,6 +760,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	rdp->sec_flags = 0;
 
 	Stream_SetPosition(s, length);
+	Stream_SealLength(s);
 
 	if (transport_write(fastpath->rdp->transport, s) < 0)
 		return FALSE;
@@ -846,7 +847,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		if (try_comp)
 		{
-			if (compress_rdp(rdp->mppc_enc, ls->pointer + header_bytes, dlen))
+			if (compress_rdp(rdp->mppc_enc, Stream_Pointer(ls) + header_bytes, dlen))
 			{
 				if (rdp->mppc_enc->flags & PACKET_COMPRESSED)
 				{
@@ -917,6 +918,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 			security_encrypt(ptr_to_crypt, bytes_to_crypt, rdp);
 		}
+
+		Stream_SealLength(s);
 
 		if (transport_write(fastpath->rdp->transport, update) < 0)
 		{

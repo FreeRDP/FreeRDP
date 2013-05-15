@@ -203,10 +203,11 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 
 #ifdef WITH_DEBUG_LICENSE
 	fprintf(stderr, "Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
-	winpr_HexDump(s->pointer - 4, wMsgSize);
+	winpr_HexDump(Stream_Pointer(s) - 4, wMsgSize);
 #endif
 
 	Stream_SetPosition(s, length);
+	Stream_SealLength(s);
 
 	if (transport_write(license->rdp->transport, s) < 0)
 		return FALSE;

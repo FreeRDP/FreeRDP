@@ -415,7 +415,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 		if (pdu)
 		{
 			fprintf(stderr, "Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
-			winpr_HexDump(pdu->s->buffer, pdu->s->length);
+			winpr_HexDump(Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 			fprintf(stderr, "\n");
 		}
 #endif

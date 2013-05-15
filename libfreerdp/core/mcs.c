@@ -479,6 +479,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
 	Stream_SetPointer(s, em);
+	Stream_SealLength(s);
 
 	status = transport_write(mcs->transport, s);
 
@@ -558,6 +559,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
 	Stream_SetPointer(s, em);
+	Stream_SealLength(s);
 
 	ret = transport_write(mcs->transport, s);
 
@@ -600,6 +602,8 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 	per_write_integer(s, 0); /* subHeight (INTEGER) */
 	per_write_integer(s, 0); /* subInterval (INTEGER) */
 
+	Stream_SealLength(s);
+
 	if (transport_write(mcs->transport, s) < 0)
 		return FALSE;
 
@@ -635,6 +639,8 @@ BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 	s = transport_send_stream_init(mcs->transport, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length, 0);
+
+	Stream_SealLength(s);
 
 	if (transport_write(mcs->transport, s) < 0)
 		return FALSE;
@@ -680,6 +686,8 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	mcs->user_id = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->transport->settings->ChannelCount;
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 
+	Stream_SealLength(s);
+
 	transport_write(mcs->transport, s);
 
 	return TRUE;
@@ -723,6 +731,8 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id)
 
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
 	per_write_integer16(s, channel_id, 0);
+
+	Stream_SealLength(s);
 
 	if (transport_write(mcs->transport, s) < 0)
 		return FALSE;
@@ -775,6 +785,8 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id)
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_write_integer16(s, channel_id, 0); /* requested (ChannelId) */
 	per_write_integer16(s, channel_id, 0); /* channelId */
+
+	Stream_SealLength(s);
 
 	transport_write(mcs->transport, s);
 

@@ -406,29 +406,29 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 int transport_read(rdpTransport* transport, wStream* s)
 {
 	int status;
-	int pdu_bytes;
-	int stream_bytes;
+	int pduLength;
+	int streamPosition;
 	int transport_status;
 
-	pdu_bytes = 0;
+	pduLength = 0;
 	transport_status = 0;
 
 	/* first check if we have header */
-	stream_bytes = Stream_GetPosition(s);
+	streamPosition = Stream_GetPosition(s);
 
-	if (stream_bytes < 4)
+	if (streamPosition < 4)
 	{
-		status = transport_read_layer(transport, s->buffer + stream_bytes, 4 - stream_bytes);
+		status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, 4 - streamPosition);
 
 		if (status < 0)
 			return status;
 
 		transport_status += status;
 
-		if ((status + stream_bytes) < 4)
+		if ((status + streamPosition) < 4)
 			return transport_status;
 
-		stream_bytes += status;
+		streamPosition += status;
 	}
 
 	/* if header is present, read in exactly one PDU */
@@ -436,7 +436,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 	{
 		/* TPKT header */
 
-		pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
+		pduLength = (s->buffer[2] << 8) | s->buffer[3];
 	}
 	else if (s->buffer[0] == 0x30)
 	{
@@ -446,13 +446,13 @@ int transport_read(rdpTransport* transport, wStream* s)
 		{
 			if ((s->buffer[1] & ~(0x80)) == 1)
 			{
-				pdu_bytes = s->buffer[2];
-				pdu_bytes += 3;
+				pduLength = s->buffer[2];
+				pduLength += 3;
 			}
 			else if ((s->buffer[1] & ~(0x80)) == 2)
 			{
-				pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
-				pdu_bytes += 4;
+				pduLength = (s->buffer[2] << 8) | s->buffer[3];
+				pduLength += 4;
 			}
 			else
 			{
@@ -461,8 +461,8 @@ int transport_read(rdpTransport* transport, wStream* s)
 		}
 		else
 		{
-			pdu_bytes = s->buffer[1];
-			pdu_bytes += 2;
+			pduLength = s->buffer[1];
+			pduLength += 2;
 		}
 	}
 	else
@@ -470,12 +470,12 @@ int transport_read(rdpTransport* transport, wStream* s)
 		/* Fast-Path Header */
 
 		if (s->buffer[1] & 0x80)
-			pdu_bytes = ((s->buffer[1] & 0x7f) << 8) | s->buffer[2];
+			pduLength = ((s->buffer[1] & 0x7F) << 8) | s->buffer[2];
 		else
-			pdu_bytes = s->buffer[1];
+			pduLength = s->buffer[1];
 	}
 
-	status = transport_read_layer(transport, s->buffer + stream_bytes, pdu_bytes - stream_bytes);
+	status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, pduLength - streamPosition);
 
 	if (status < 0)
 		return status;
@@ -484,10 +484,10 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 #ifdef WITH_DEBUG_TRANSPORT
 	/* dump when whole PDU is read */
-	if (stream_bytes + status >= pdu_bytes)
+	if (streamPosition + status >= pduLength)
 	{
 		fprintf(stderr, "Local < Remote\n");
-		winpr_HexDump(s->buffer, pdu_bytes);
+		winpr_HexDump(Stream_Buffer(s), pduLength);
 	}
 #endif
 
@@ -511,8 +511,8 @@ static int transport_read_nonblocking(rdpTransport* transport)
 
 int transport_write(rdpTransport* transport, wStream* s)
 {
-	int status = -1;
 	int length;
+	int status = -1;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -521,7 +521,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	if (length > 0)
 	{
 		fprintf(stderr, "Local > Remote\n");
-		winpr_HexDump(s->buffer, length);
+		winpr_HexDump(Stream_Buffer(s), length);
 	}
 #endif
 
@@ -733,14 +733,6 @@ int transport_check_fds(rdpTransport** ptransport)
 		Stream_SetPosition(received, length);
 		Stream_SealLength(received);
 		Stream_SetPosition(received, 0);
-
-		/**
-		 * ReceiveCallback return values:
-		 *
-		 * -1: synchronous failure
-		 *  0: synchronous success
-		 *  1: asynchronous return
-		 */
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 

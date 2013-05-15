@@ -287,6 +287,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	Stream_Write_UINT32(s, length);
 	Stream_Write(s, crypt_client_random, length);
+	Stream_SealLength(s);
 
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
