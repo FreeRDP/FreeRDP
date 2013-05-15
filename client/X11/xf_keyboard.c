@@ -223,8 +223,6 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom in (scale larger)
-					int zoom_width;
-					int zoom_height;
 					double s = xfi->scale;
 					s += 0.1;
 					if(s > 1.5)
@@ -232,13 +230,13 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					zoom_width = xfi->originalWidth * s;
-					zoom_height = xfi->originalHeight * s;
+					xfi->currentWidth = xfi->originalWidth * s;
+					xfi->currentHeight = xfi->originalHeight * s;
 
 					xf_transform_window(xfi);
 
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
-					//xf_draw_screen_scaled(xfi);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
+					xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
 	}
@@ -249,8 +247,6 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
 				{
 					//Zoom out (scale smaller)
-					int zoom_width;
-					int zoom_height;
 					double s = xfi->scale;
 					s -= 0.1;
 					if(s < 0.5)
@@ -258,13 +254,13 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					
 					xfi->scale = s;
 
-					zoom_width = xfi->originalWidth * s;
-					zoom_height = xfi->originalHeight * s;
+					xfi->currentWidth = xfi->originalWidth * s;
+					xfi->currentHeight = xfi->originalHeight * s;
 
 					xf_transform_window(xfi);
 
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, zoom_width, zoom_height);
-					//xf_draw_screen_scaled(xfi);
+					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
+					xf_draw_screen_scaled(xfi);
 					return TRUE;
 				}
 	}
