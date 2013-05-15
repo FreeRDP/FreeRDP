@@ -47,6 +47,7 @@ typedef struct touch_contact
 touchContact contacts[MAX_CONTACTS];
 
 int active_contacts;
+int lastEvType;
 XIDeviceEvent lastEvent;
 double firstDist = -1.0;
 double lastDist;
@@ -119,21 +120,36 @@ int xf_input_init(xfInfo* xfi, Window window)
 	return -1;
 }
 
-BOOL xf_input_is_duplicate(XIDeviceEvent* event)
+//BOOL xf_input_is_duplicate(XIDeviceEvent* event)
+BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
 {
+  XIDeviceEvent* event;
+
+  event = cookie->data;
+  
+
 	if ( (lastEvent.time == event->time) &&
+	     (lastEvType == cookie->evtype) &&
 			(lastEvent.detail == event->detail) &&
 			(lastEvent.event_x == event->event_x) &&
 			(lastEvent.event_y == event->event_y) )
 	{
+	  //	  printf("duplicate: %d\n", event->detail);
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-void xf_input_save_last_event(XIDeviceEvent* event)
+//void xf_input_save_last_event(XIDeviceEvent* event)
+void xf_input_save_last_event(XGenericEventCookie* cookie)
 {
+  XIDeviceEvent* event;
+
+  event = cookie->data;
+
+  lastEvType = cookie->evtype;
+
 	lastEvent.time = event->time;
 	lastEvent.detail = event->detail;
 	lastEvent.event_x = event->event_x;
@@ -183,8 +199,8 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		{
 			xfi->scale -= 0.05;
 
-			if (xfi->scale < 0.5)
-				xfi->scale = 0.5;
+			if (xfi->scale < 0.8)
+				xfi->scale = 0.8;
 
 			XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
@@ -196,8 +212,8 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		{
 			xfi->scale += 0.05;
 
-			if (xfi->scale > 1.5)
-				xfi->scale = 1.5;
+			if (xfi->scale > 1.2)
+				xfi->scale = 1.2;
 
 			XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
@@ -210,6 +226,11 @@ void xf_input_detect_pinch(xfInfo* xfi)
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
+
+	//	printf("Begin: %d count: %d\n", event->detail, active_contacts);
+
+	if(active_contacts == MAX_CONTACTS)
+	  printf("Houston, we have a problem!\n\n");
 
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
@@ -251,6 +272,8 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
 
+	//	printf("End: %d\n", event->detail);
+
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
@@ -277,21 +300,21 @@ int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
+				if (xf_input_is_duplicate(cookie) == FALSE)
 					xf_input_touch_begin(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
+				xf_input_save_last_event(cookie);
 				break;
 
 			case XI_TouchUpdate:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
+				if (xf_input_is_duplicate(cookie) == FALSE)
 					xf_input_touch_update(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
+				xf_input_save_last_event(cookie);
 				break;
 
 			case XI_TouchEnd:
-				if (xf_input_is_duplicate(cookie->data) == FALSE)
+				if (xf_input_is_duplicate(cookie) == FALSE)
 					xf_input_touch_end(xfi, cookie->data);
-				xf_input_save_last_event(cookie->data);
+				xf_input_save_last_event(cookie);
 				break;
 
 			default:
@@ -384,7 +407,7 @@ int xf_input_handle_event(xfInfo* xfi, XEvent* event)
 		return xf_input_handle_event_remote(xfi, event);
 	}
 
-	if (xfi->enableScaling)
+	if (1)
 		return xf_input_handle_event_local(xfi, event);
 #endif
 
