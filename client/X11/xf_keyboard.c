@@ -225,8 +225,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					//Zoom in (scale larger)
 					double s = xfi->scale;
 					s += 0.1;
-					if(s > 1.5)
-						s = 1.5;
+					if(s > 1.2)
+						s = 1.2;
 					
 					xfi->scale = s;
 
