@@ -467,12 +467,28 @@ void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	wStream* s = transport_recv_stream_init(nego->transport, 1024);
+	int status;
+	wStream* s;
 
-	if (transport_read(nego->transport, s) < 0)
+	s = Stream_New(NULL, 1024);
+
+	status = transport_read(nego->transport, s);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
-	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
+	status = nego_recv(nego->transport, s, nego);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /**

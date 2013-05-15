@@ -475,12 +475,20 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
 	wStream* s;
+	BOOL status;
 
-	//rdp->settings->crypt_flags |= SEC_INFO_PKT;
 	rdp->sec_flags |= SEC_INFO_PKT;
-	s = rdp_send_stream_init(rdp);
+
+	s = Stream_New(NULL, 2048);
+	rdp_init_stream(rdp, s);
+
 	rdp_write_info_packet(s, rdp->settings);
-	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
+
+	status = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
+
+	Stream_Free(s, TRUE);
+
+	return status;
 }
 
 BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s)

@@ -50,14 +50,6 @@
 
 static void* transport_client_thread(void* arg);
 
-wStream* transport_recv_stream_init(rdpTransport* transport, int size)
-{
-	wStream* s = transport->ReceiveStream;
-	Stream_EnsureCapacity(s, size);
-	Stream_SetPosition(s, 0);
-	return s;
-}
-
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s = transport->SendStream;
@@ -842,7 +834,6 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		/* buffers for blocking read/write */
-		transport->ReceiveStream = StreamPool_Take(transport->ReceivePool, 0);
 		transport->SendStream = Stream_New(NULL, BUFFER_SIZE);
 
 		transport->blocking = TRUE;
@@ -859,9 +850,6 @@ void transport_free(rdpTransport* transport)
 	{
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
-
-		if (transport->ReceiveStream)
-			Stream_Release(transport->ReceiveStream);
 
 		StreamPool_Free(transport->ReceivePool);
 

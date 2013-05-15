@@ -118,13 +118,15 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	UINT32 flags;
 	int chunk_length;
 
-	if(Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
+
 	Stream_Read_UINT32(s, length);
 	Stream_Read_UINT32(s, flags);
 	chunk_length = Stream_GetRemainingLength(s);
 
 	IFCALL(client->ReceiveChannelData, client,
 		channel_id, Stream_Pointer(s), chunk_length, flags, length);
+
 	return TRUE;
 }

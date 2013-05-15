@@ -76,7 +76,6 @@ struct rdp_transport
 	BOOL async;
 };
 
-wStream* transport_recv_stream_init(rdpTransport* transport, int size);
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
 void transport_attach(rdpTransport* transport, int sockfd);

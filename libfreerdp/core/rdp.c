@@ -188,41 +188,43 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s)
 	return 0;
 }
 
-/**
- * Initialize an RDP packet stream.\n
- * @param rdp rdp module
- * @return
- */
+int rdp_init_stream(rdpRdp* rdp, wStream* s)
+{
+	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+	rdp_security_stream_init(rdp, s);
+	return 0;
+}
 
 wStream* rdp_send_stream_init(rdpRdp* rdp)
 {
 	wStream* s;
-
 	s = transport_send_stream_init(rdp->transport, 2048);
-	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
-
+	rdp_init_stream(rdp, s);
 	return s;
 }
 
-wStream* rdp_pdu_init(rdpRdp* rdp)
+int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s)
 {
-	wStream* s;
-	s = transport_send_stream_init(rdp->transport, 2048);
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 	rdp_security_stream_init(rdp, s);
 	Stream_Seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
-	return s;
+	return 0;
+}
+
+int rdp_init_stream_data_pdu(rdpRdp* rdp, wStream* s)
+{
+	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+	rdp_security_stream_init(rdp, s);
+	Stream_Seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
+	Stream_Seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
+	return 0;
 }
 
 wStream* rdp_data_pdu_init(rdpRdp* rdp)
 {
 	wStream* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
-	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
-	Stream_Seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
-	Stream_Seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
+	rdp_init_stream_data_pdu(rdp, s);
 	return s;
 }
 
@@ -264,12 +266,14 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 
 	if (Stream_GetRemainingLength(s) < 5)
 		return FALSE;
+
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 	per_read_integer16(s, channel_id, 0); /* channelId */
 	Stream_Seek(s, 1); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
+
 	if (*length > Stream_GetRemainingLength(s))
 		return FALSE;
 
@@ -405,9 +409,9 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp)
 
 BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 {
+	int secm;
 	UINT16 length;
 	UINT32 sec_bytes;
-	BYTE* sec_hold;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -415,10 +419,10 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, channel_id);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = Stream_Pointer(s);
+	secm = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 
-	Stream_Pointer(s) = sec_hold;
+	Stream_SetPosition(s, secm);
 	length += rdp_security_stream_out(rdp, s, length);
 
 	Stream_SetPosition(s, length);
@@ -434,7 +438,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 {
 	UINT16 length;
 	UINT32 sec_bytes;
-	BYTE* sec_hold;
+	int sec_hold;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -442,12 +446,12 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = Stream_Pointer(s);
+	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 
-	Stream_Pointer(s) = sec_hold;
+	Stream_SetPosition(s, sec_hold);
 	length += rdp_security_stream_out(rdp, s, length);
 
 	Stream_SetPosition(s, length);
@@ -463,7 +467,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 {
 	UINT16 length;
 	UINT32 sec_bytes;
-	BYTE* sec_hold;
+	int sec_hold;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -471,13 +475,13 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
-	sec_hold = Stream_Pointer(s);
+	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 
 	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId);
 
-	Stream_Pointer(s) = sec_hold;
+	Stream_SetPosition(s, sec_hold);
 	length += rdp_security_stream_out(rdp, s, length);
 
 	Stream_SetPosition(s, length);
@@ -889,21 +893,6 @@ static int rdp_recv_pdu(rdpRdp* rdp, wStream* s)
 		return rdp_recv_tpkt_pdu(rdp, s);
 	else
 		return rdp_recv_fastpath_pdu(rdp, s);
-}
-
-/**
- * Receive an RDP packet.\n
- * @param rdp RDP module
- */
-
-void rdp_recv(rdpRdp* rdp)
-{
-	wStream* s;
-
-	s = transport_recv_stream_init(rdp->transport, 4096);
-	transport_read(rdp->transport, s);
-
-	rdp_recv_pdu(rdp, s);
 }
 
 static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
