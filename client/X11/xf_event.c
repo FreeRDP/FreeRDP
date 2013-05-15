@@ -565,6 +565,8 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
         rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
 
+/*	This is for resizing the window by dragging the border
+
 	if (xfi->width != event->xconfigure.width)
 	{
 		xfi->scale = (double) event->xconfigure.width / (double) xfi->originalWidth;
@@ -573,7 +575,7 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
 
 		xf_draw_screen_scaled(xfi);
 	}
-
+*/
         window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
         if (window != NULL)
