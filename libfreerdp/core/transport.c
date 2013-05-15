@@ -52,9 +52,13 @@ static void* transport_client_thread(void* arg);
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
-	wStream* s = transport->SendStream;
+	wStream* s;
+
+	s = StreamPool_Take(transport->ReceivePool, size);
+
 	Stream_EnsureCapacity(s, size);
 	Stream_SetPosition(s, 0);
+
 	return s;
 }
 
@@ -505,6 +509,8 @@ int transport_write(rdpTransport* transport, wStream* s)
 	int length;
 	int status = -1;
 
+	WaitForSingleObject(transport->WriteMutex, INFINITE);
+
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
@@ -555,6 +561,11 @@ int transport_write(rdpTransport* transport, wStream* s)
 		/* A write error indicates that the peer has dropped the connection */
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 	}
+
+	if (s->pool)
+		Stream_Release(s);
+
+	ReleaseMutex(transport->WriteMutex);
 
 	return status;
 }
@@ -833,10 +844,10 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		/* buffers for blocking read/write */
-		transport->SendStream = Stream_New(NULL, BUFFER_SIZE);
-
 		transport->blocking = TRUE;
+
+		transport->ReadMutex = CreateMutex(NULL, FALSE, NULL);
+		transport->WriteMutex = CreateMutex(NULL, FALSE, NULL);
 
 		transport->layer = TRANSPORT_LAYER_TCP;
 	}
@@ -853,9 +864,7 @@ void transport_free(rdpTransport* transport)
 
 		StreamPool_Free(transport->ReceivePool);
 
-		Stream_Free(transport->SendStream, TRUE);
 		CloseHandle(transport->ReceiveEvent);
-
 		CloseHandle(transport->connectedEvent);
 
 		if (transport->TlsIn)
@@ -870,6 +879,9 @@ void transport_free(rdpTransport* transport)
 			tcp_free(transport->TcpOut);
 
 		tsg_free(transport->tsg);
+
+		CloseHandle(transport->ReadMutex);
+		CloseHandle(transport->WriteMutex);
 
 		free(transport);
 	}

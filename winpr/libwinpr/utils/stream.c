@@ -77,6 +77,9 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 		s->pointer = s->buffer;
 		s->capacity = size;
 		s->length = size;
+
+		s->pool = NULL;
+		s->count = 0;
 	}
 
 	return s;

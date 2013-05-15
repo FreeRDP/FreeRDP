@@ -706,7 +706,7 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 
 BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNumEvents)
 {
-	rdpRdp *rdp;
+	rdpRdp* rdp;
 	UINT16 length;
 	BYTE eventHeader;
 	int sec_bytes;

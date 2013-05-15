@@ -60,8 +60,6 @@ struct rdp_transport
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;
-	wStream* SendStream;
-	wStream* ReceiveStream;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
@@ -74,6 +72,8 @@ struct rdp_transport
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
+	HANDLE ReadMutex;
+	HANDLE WriteMutex;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
