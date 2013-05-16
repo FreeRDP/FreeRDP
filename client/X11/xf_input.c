@@ -202,8 +202,10 @@ void xf_input_detect_pinch(xfInfo* xfi)
 			if (xfi->scale < 0.8)
 				xfi->scale = 0.8;
 
-			XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			//XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 
 			z_vector = 0;
 		}
@@ -212,11 +214,13 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		{
 			xfi->scale += 0.05;
 
-			if (xfi->scale > 1.5)
-				xfi->scale = 1.5;
+			if (xfi->scale > 1.2)
+				xfi->scale = 1.2;
 
-			XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			//XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 
 			z_vector = 0;
 		}
