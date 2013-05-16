@@ -40,9 +40,19 @@ struct winpr_handle
 };
 typedef struct winpr_handle WINPR_HANDLE;
 
-WINPR_API HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object);
-WINPR_API BOOL winpr_Handle_Remove(HANDLE handle);
+#define WINPR_HANDLE_SET_TYPE(_handle, _type) \
+	_handle->Type = _type
 
-WINPR_API BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject);
+static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
+{
+	WINPR_HANDLE* wHandle;
+
+	wHandle = (WINPR_HANDLE*) handle;
+
+	*pType = wHandle->Type;
+	*pObject = handle;
+
+	return TRUE;
+}
 
 #endif /* WINPR_HANDLE_PRIVATE_H */

@@ -111,7 +111,8 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	pthread_mutex_init(&thread->mutex, 0);
 
-	handle = winpr_Handle_Insert(HANDLE_TYPE_THREAD, (void*) thread);
+	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
+	handle = (HANDLE) thread;
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 		winpr_StartThread(thread);

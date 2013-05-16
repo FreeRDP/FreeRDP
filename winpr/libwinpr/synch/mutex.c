@@ -50,7 +50,8 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	{
 		pthread_mutex_init(&mutex->mutex, 0);
 
-		handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, mutex);
+		WINPR_HANDLE_SET_TYPE(mutex, HANDLE_TYPE_MUTEX);
+		handle = (HANDLE) mutex;
 
 		if (bInitialOwner)
 			pthread_mutex_lock(&mutex->mutex);

@@ -80,7 +80,8 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		}
 #endif
 
-		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
+		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
+		handle = (HANDLE) event;
 	}
 
 	if (!cs.LockSemaphore)
@@ -221,7 +222,8 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;
 
-		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
+		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
+		handle = (HANDLE) event;
 	}
 
 	return handle;

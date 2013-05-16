@@ -62,11 +62,11 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 
-	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, pReadPipe);
-	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) handle;
+	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 
-	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, pWritePipe);
-	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) handle;
+	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 
 	return TRUE;
 }

@@ -28,33 +28,5 @@
 
 #include "../handle/handle.h"
 
-HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object)
-{
-	WINPR_HANDLE* wHandle;
-
-	wHandle = (WINPR_HANDLE*) Object;
-
-	wHandle->Type = Type;
-
-	return (HANDLE) wHandle;
-}
-
-BOOL winpr_Handle_Remove(HANDLE handle)
-{
-	return TRUE;
-}
-
-BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
-{
-	WINPR_HANDLE* wHandle;
-
-	wHandle = (WINPR_HANDLE*) handle;
-
-	*pType = wHandle->Type;
-	*pObject = handle;
-
-	return TRUE;
-}
-
 #endif
 

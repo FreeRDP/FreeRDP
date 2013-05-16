@@ -73,7 +73,8 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 #endif
 	}
 
-	handle = winpr_Handle_Insert(HANDLE_TYPE_SEMAPHORE, (PVOID) semaphore);
+	WINPR_HANDLE_SET_TYPE(semaphore, HANDLE_TYPE_SEMAPHORE);
+	handle = (HANDLE) semaphore;
 
 	return handle;
 }

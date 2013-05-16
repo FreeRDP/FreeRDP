@@ -49,7 +49,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 		thread = (WINPR_THREAD*) Object;
 
-		free(thread);
+		free(Object);
 
 		return TRUE;
 	}
@@ -60,7 +60,7 @@ BOOL CloseHandle(HANDLE hObject)
 		mutex = (WINPR_MUTEX*) Object;
 
 		pthread_mutex_destroy(&mutex->mutex);
-		winpr_Handle_Remove(Object);
+
 		free(Object);
 
 		return TRUE;
@@ -85,8 +85,7 @@ BOOL CloseHandle(HANDLE hObject)
 			}
 		}
 
-		winpr_Handle_Remove(Object);
-		free(event);
+		free(Object);
 
 		return TRUE;
 	}
@@ -119,7 +118,6 @@ BOOL CloseHandle(HANDLE hObject)
 #endif
 
 #endif
-		winpr_Handle_Remove(Object);
 		free(Object);
 
 		return TRUE;
@@ -135,7 +133,7 @@ BOOL CloseHandle(HANDLE hObject)
 			close(pipe->fd);
 		}
 
-		winpr_Handle_Remove(Object);
+		free(Object);
 
 		return TRUE;
 	}
