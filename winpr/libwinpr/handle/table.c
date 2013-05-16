@@ -99,6 +99,8 @@ HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object)
 			g_WinPR_HandleTable.Entries[index].Type = Type;
 			g_WinPR_HandleTable.Entries[index].Object = Object;
 
+			((WINPR_HANDLE*) Object)->winpr_Index = index;
+
 			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 			return Object;
@@ -175,27 +177,27 @@ PVOID winpr_Handle_GetObject(HANDLE handle)
 BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
 {
 	int index;
+	BOOL status = TRUE;
 
 	HandleTable_GetInstance();
 
 	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	for (index = 0; index < (int) g_WinPR_HandleTable.MaxCount; index++)
+	index = ((WINPR_HANDLE*) handle)->winpr_Index;
+
+	if ((index >= 0) && (index < g_WinPR_HandleTable.MaxCount))
 	{
-		if (g_WinPR_HandleTable.Entries[index].Object == handle)
-		{
-			*pType = g_WinPR_HandleTable.Entries[index].Type;
-			*pObject = g_WinPR_HandleTable.Entries[index].Object;
-
-			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
-
-			return TRUE;
-		}
+		*pType = g_WinPR_HandleTable.Entries[index].Type;
+		*pObject = g_WinPR_HandleTable.Entries[index].Object;
+	}
+	else
+	{
+		status = FALSE;
 	}
 
 	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
-	return FALSE;
+	return status;
 }
 
 #endif

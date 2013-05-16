@@ -47,7 +47,13 @@ typedef struct _HANDLE_TABLE
 } HANDLE_TABLE, *PHANDLE_TABLE;
 
 #define WINPR_HANDLE_DEF() \
-	void* handle
+	int winpr_Index;
+
+struct winpr_handle
+{
+	WINPR_HANDLE_DEF();
+};
+typedef struct winpr_handle WINPR_HANDLE;
 
 #define HandleTable_GetInstance() \
 	if (g_WinPR_HandleTable.MaxCount < 1) \
