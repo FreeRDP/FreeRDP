@@ -22,6 +22,15 @@ if(MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+# Create imported targets for Intel IPP libraries
+
+if(IPP_FOUND)
+    foreach(ipp_lib ${IPP_LIBRARIES})
+    	add_library("${ipp_lib}_imported" STATIC IMPORTED)
+		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
+	endforeach()
+endif()
+
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
 	common
