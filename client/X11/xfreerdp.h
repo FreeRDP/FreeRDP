@@ -215,7 +215,7 @@ enum XF_EXIT_CODE
 void xf_lock_x11(xfInfo* xfi, BOOL display);
 void xf_unlock_x11(xfInfo* xfi, BOOL display);
 
-void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h);
+void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h, BOOL scale);
 void xf_transform_window(xfInfo* xfi);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);

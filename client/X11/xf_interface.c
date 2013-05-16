@@ -132,7 +132,7 @@ void xf_transform_window(xfInfo* xfi)
 	}
 }
 
-void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h)
+void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h, BOOL scale)
 {
 	XTransform transform;
 	Picture windowPicture;
@@ -160,10 +160,21 @@ void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h)
 
 	if( (w != 0) && (h != 0) )
 	{
-		xr.x = x * xfi->scale;
-		xr.y = y * xfi->scale;
-		xr.width = (w+1) * xfi->scale;
-		xr.height = (h+1) * xfi->scale;
+
+		if(scale == TRUE)
+		{
+			xr.x = x * xfi->scale;
+			xr.y = y * xfi->scale;
+			xr.width = (w+1) * xfi->scale;
+			xr.height = (h+1) * xfi->scale;
+		}
+		else
+		{
+			xr.x = x;
+			xr.y = y;
+			xr.width = w;
+			xr.height = h;
+		}
 
 		XRenderSetPictureClipRectangles(xfi->display, primaryPicture, 0, 0, &xr, 1);
 	}
@@ -222,7 +233,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			if (xfi->scale != 1.0)
 			{
-				xf_draw_screen_scaled(xfi, x, y, w, h);
+				xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 			}
 			else
 			{
@@ -257,7 +268,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 				if (xfi->scale != 1.0)
 				{
-					xf_draw_screen_scaled(xfi, x, y, w, h);
+					xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 				}
 				else
 				{
@@ -348,7 +359,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 			if (xfi->scale != 1.0)
 			{
-				xf_draw_screen_scaled(xfi, x, y, w, h);
+				xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 			}
 			else
 			{
@@ -380,7 +391,7 @@ void xf_hw_end_paint(rdpContext* context)
 				
 				if(xfi->scale != 1.0)
 				{
-					xf_draw_screen_scaled(xfi, x, y, w, h);
+					xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 				}
 				else
 				{
@@ -1661,7 +1672,7 @@ void freerdp_client_reset_scale(xfInfo* xfi)
 
     XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
     IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
-    xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
+    xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)
