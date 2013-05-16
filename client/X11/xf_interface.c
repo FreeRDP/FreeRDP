@@ -132,13 +132,14 @@ void xf_transform_window(xfInfo* xfi)
 	}
 }
 
-void xf_draw_screen_scaled(xfInfo* xfi)
+void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h)
 {
 	XTransform transform;
 	Picture windowPicture;
 	Picture primaryPicture;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat* picFormat;
+	XRectangle xr;
 
 	picFormat = XRenderFindStandardFormat(xfi->display, PictStandardRGB24);
 	pa.subwindow_mode = IncludeInferiors;
@@ -157,9 +158,22 @@ void xf_draw_screen_scaled(xfInfo* xfi)
 	transform.matrix[2][1] = XDoubleToFixed(0);
 	transform.matrix[2][2] = XDoubleToFixed(xfi->scale);
 
+	if( (w != 0) && (h != 0) )
+	{
+		xr.x = x * xfi->scale;
+		xr.y = y * xfi->scale;
+		xr.width = (w+1) * xfi->scale;
+		xr.height = (h+1) * xfi->scale;
+
+		XRenderSetPictureClipRectangles(xfi->display, primaryPicture, 0, 0, &xr, 1);
+	}
+
 	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
 	//XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
 	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfi->offset_x, xfi->offset_y, xfi->currentWidth, xfi->currentHeight);
+
+	XRenderFreePicture(xfi->display, primaryPicture);
+	XRenderFreePicture(xfi->display, windowPicture);
 
 }
 
@@ -208,7 +222,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			if (xfi->scale != 1.0)
 			{
-				xf_draw_screen_scaled(xfi);
+				xf_draw_screen_scaled(xfi, x, y, w, h);
 			}
 			else
 			{
@@ -243,7 +257,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 				if (xfi->scale != 1.0)
 				{
-					xf_draw_screen_scaled(xfi);
+					xf_draw_screen_scaled(xfi, x, y, w, h);
 				}
 				else
 				{
@@ -334,7 +348,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 			if (xfi->scale != 1.0)
 			{
-				xf_draw_screen_scaled(xfi);
+				xf_draw_screen_scaled(xfi, x, y, w, h);
 			}
 			else
 			{
@@ -366,16 +380,7 @@ void xf_hw_end_paint(rdpContext* context)
 				
 				if(xfi->scale != 1.0)
 				{
-					xf_draw_screen_scaled(xfi);
-				}
-				else
-				{
-					XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, x, y, w, h, x, y);
-				}
-
-				if (xfi->scale != 1.0)
-				{
-					xf_draw_screen_scaled(xfi);
+					xf_draw_screen_scaled(xfi, x, y, w, h);
 				}
 				else
 				{
@@ -1656,7 +1661,7 @@ void freerdp_client_reset_scale(xfInfo* xfi)
 
     XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
     IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
-    xf_draw_screen_scaled(xfi);
+    xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 }
 
 xfInfo* freerdp_client_new(int argc, char** argv)

@@ -101,7 +101,7 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 
 		if (xfi->scale != 1.0)
 		{
-			xf_draw_screen_scaled(xfi);
+			xf_draw_screen_scaled(xfi, x, y, w, h);
 		}
 		else
 		{

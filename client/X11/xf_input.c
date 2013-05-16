@@ -212,8 +212,8 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		{
 			xfi->scale += 0.05;
 
-			if (xfi->scale > 1.2)
-				xfi->scale = 1.2;
+			if (xfi->scale > 1.5)
+				xfi->scale = 1.5;
 
 			XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);

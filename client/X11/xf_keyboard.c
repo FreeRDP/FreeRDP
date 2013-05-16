@@ -225,8 +225,8 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					//Zoom in (scale larger)
 					double s = xfi->scale;
 					s += 0.1;
-					if(s > 1.2)
-						s = 1.2;
+					if(s > 2.0)
+						s = 2.0;
 					
 					xfi->scale = s;
 
@@ -236,7 +236,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					xf_transform_window(xfi);
 
 					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
-					xf_draw_screen_scaled(xfi);
+					xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 					return TRUE;
 				}
 	}
@@ -260,7 +260,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 					xf_transform_window(xfi);
 
 					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
-					xf_draw_screen_scaled(xfi);
+					xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 					return TRUE;
 				}
 	}
@@ -275,7 +275,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 
 						xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi);
+						xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 						printf("pan left : %d\n", xfi->offset_x);
 						return TRUE;
 					}
@@ -293,7 +293,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 
 						xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi);
+						xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 						printf("pan right : %d\n", xfi->offset_x);
 						return TRUE;
 					}
@@ -308,7 +308,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 
 						xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi);
+						xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 						printf("pan up : %d\n", xfi->offset_y);
 						return TRUE;
 					}
@@ -326,7 +326,7 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 
 						xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi);
+						xf_draw_screen_scaled(xfi, 0, 0, 0, 0);
 						printf("pan down : %d\n", xfi->offset_y);
 						return TRUE;
 					}
