@@ -355,6 +355,18 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				status = 0;
 				break;
 
+			case SSL_ERROR_SYSCALL:
+				if (errno == EAGAIN)
+				{
+					status = 0;
+				}
+				else
+				{
+					tls_print_error("SSL_read", tls->ssl, status);
+					status = -1;
+				}
+				break;
+
 			default:
 				tls_print_error("SSL_read", tls->ssl, status);
 				status = -1;
@@ -401,6 +413,18 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
 				status = 0;
+				break;
+
+			case SSL_ERROR_SYSCALL:
+				if (errno == EAGAIN)
+				{
+					status = 0;
+				}
+				else
+				{
+					tls_print_error("SSL_write", tls->ssl, status);
+					status = -1;
+				}
 				break;
 
 			default:
@@ -473,7 +497,7 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 			return FALSE;
 
 		case SSL_ERROR_SYSCALL:
-			fprintf(stderr, "%s: I/O error\n", func);
+			fprintf(stderr, "%s: I/O error: %s (%d)\n", func, strerror(errno), errno);
 			tls_errors(func);
 			return TRUE;
 
