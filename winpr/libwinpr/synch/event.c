@@ -125,8 +125,6 @@ BOOL SetEvent(HANDLE hEvent)
 
 	status = FALSE;
 
-	EnterCriticalSection(&cs);
-
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
 		event = (WINPR_EVENT*) Object;
@@ -156,8 +154,6 @@ BOOL SetEvent(HANDLE hEvent)
 #endif
 	}
 
-	LeaveCriticalSection(&cs);
-
 	return status;
 }
 
@@ -170,8 +166,6 @@ BOOL ResetEvent(HANDLE hEvent)
 	WINPR_EVENT* event;
 
 	status = FALSE;
-
-	EnterCriticalSection(&cs);
 
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
@@ -198,8 +192,6 @@ BOOL ResetEvent(HANDLE hEvent)
 #endif
 		}
 	}
-
-	LeaveCriticalSection(&cs);
 
 	return status;
 }
