@@ -31,6 +31,8 @@
 
 #ifndef _WIN32
 
+#include "../handle/handle.h"
+
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
 	HANDLE handle;

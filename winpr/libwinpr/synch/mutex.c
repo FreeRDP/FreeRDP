@@ -37,19 +37,23 @@
 
 #ifndef _WIN32
 
+#include "../handle/handle.h"
+
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
 	HANDLE handle = NULL;
-	pthread_mutex_t* pMutex;
+	WINPR_MUTEX* mutex;
 
-	pMutex = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
+	mutex = (WINPR_MUTEX*) malloc(sizeof(WINPR_MUTEX));
 
-	if (pMutex)
+	if (mutex)
 	{
-		pthread_mutex_init(pMutex, 0);
-		handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, pMutex);
+		pthread_mutex_init(&mutex->mutex, 0);
+
+		handle = winpr_Handle_Insert(HANDLE_TYPE_MUTEX, mutex);
+
 		if (bInitialOwner)
-			pthread_mutex_lock(pMutex);
+			pthread_mutex_lock(&mutex->mutex);
 	}
 
 	return handle;
@@ -84,13 +88,15 @@ BOOL ReleaseMutex(HANDLE hMutex)
 {
 	ULONG Type;
 	PVOID Object;
+	WINPR_MUTEX* mutex;
 
 	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
-		pthread_mutex_unlock((pthread_mutex_t*) Object);
+		mutex = (WINPR_MUTEX*) Object;
+		pthread_mutex_unlock(&mutex->mutex);
 		return TRUE;
 	}
 

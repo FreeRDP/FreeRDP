@@ -1,6 +1,6 @@
 /**
  * WinPR: Windows Portable Runtime
- * Process Thread Functions
+ * Pipe Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,35 +17,25 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_THREAD_PRIVATE_H
-#define WINPR_THREAD_PRIVATE_H
+#ifndef WINPR_PIPE_PRIVATE_H
+#define WINPR_PIPE_PRIVATE_H
 
 #ifndef _WIN32
 
-#include <pthread.h>
-
-#include <winpr/thread.h>
+#include <winpr/pipe.h>
 
 #include "../handle/handle.h"
 
-typedef void *(*pthread_start_routine)(void*);
-
-struct winpr_thread
+struct winpr_pipe
 {
 	WINPR_HANDLE_DEF();
 
-	BOOL started;
-	DWORD dwExitCode;
-	pthread_t thread;
-	SIZE_T dwStackSize;
-	LPVOID lpParameter;
-	pthread_mutex_t mutex;
-	LPTHREAD_START_ROUTINE lpStartAddress;
-	LPSECURITY_ATTRIBUTES lpThreadAttributes;
+	int fd;
 };
-typedef struct winpr_thread WINPR_THREAD;
+typedef struct winpr_pipe WINPR_PIPE;
 
 #endif
 
-#endif /* WINPR_THREAD_PRIVATE_H */
+#endif /* WINPR_PIPE_PRIVATE_H */
+
 

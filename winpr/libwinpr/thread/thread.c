@@ -71,6 +71,8 @@
 
 #include "thread.h"
 
+#include "../handle/handle.h"
+
 /**
  * TODO: implement thread suspend/resume using pthreads
  * http://stackoverflow.com/questions/3140867/suspend-pthreads-without-using-condition

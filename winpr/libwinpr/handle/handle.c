@@ -27,10 +27,13 @@
 
 #include "../synch/synch.h"
 #include "../thread/thread.h"
+#include "../pipe/pipe.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include "../handle/handle.h"
 
 BOOL CloseHandle(HANDLE hObject)
 {
@@ -52,7 +55,11 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
-		pthread_mutex_destroy((pthread_mutex_t*) Object);
+		WINPR_MUTEX* mutex;
+
+		mutex = (WINPR_MUTEX*) Object;
+
+		pthread_mutex_destroy(&mutex->mutex);
 		winpr_Handle_Remove(Object);
 		free(Object);
 
@@ -119,13 +126,13 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
-		int pipe_fd;
+		WINPR_PIPE* pipe;
 
-		pipe_fd = (int) ((ULONG_PTR) Object);
+		pipe = (WINPR_PIPE*) Object;
 
-		if (pipe_fd != -1)
+		if (pipe->fd != -1)
 		{
-			close(pipe_fd);
+			close(pipe->fd);
 		}
 
 		winpr_Handle_Remove(Object);

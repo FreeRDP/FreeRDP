@@ -40,6 +40,8 @@
 #include <errno.h>
 #endif
 
+#include "../handle/handle.h"
+
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)

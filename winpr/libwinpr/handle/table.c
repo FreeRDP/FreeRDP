@@ -28,74 +28,58 @@
 
 #include <pthread.h>
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#include "../handle/handle.h"
 
-typedef struct _HANDLE_TABLE_ENTRY
-{
-	ULONG Type;
-	PVOID Object;
-} HANDLE_TABLE_ENTRY, *PHANDLE_TABLE_ENTRY;
-
-typedef struct _HANDLE_TABLE
-{
-	LONG Count;
-	LONG MaxCount;
-	PHANDLE_TABLE_ENTRY Entries;
-} HANDLE_TABLE, *PHANDLE_TABLE;
-
-static HANDLE_TABLE HandleTable = { 0, 0, NULL };
-
-#define HandleTable_GetInstance() \
-	if (HandleTable.MaxCount < 1) \
-		winpr_HandleTable_New()
+HANDLE_TABLE g_WinPR_HandleTable = { 0, 0, NULL };
+pthread_mutex_t g_WinPR_HandleTable_Mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void winpr_HandleTable_New()
 {
 	size_t size;
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	if (HandleTable.MaxCount < 1)
+	if (g_WinPR_HandleTable.MaxCount < 1)
 	{
-		HandleTable.Count = 0;
-		HandleTable.MaxCount = 64;
+		g_WinPR_HandleTable.Count = 0;
+		g_WinPR_HandleTable.MaxCount = 64;
 
-		size = sizeof(HANDLE_TABLE_ENTRY) * HandleTable.MaxCount;
+		size = sizeof(HANDLE_TABLE_ENTRY) * g_WinPR_HandleTable.MaxCount;
 
-		HandleTable.Entries = (PHANDLE_TABLE_ENTRY) malloc(size);
-		ZeroMemory(HandleTable.Entries, size);
+		g_WinPR_HandleTable.Entries = (PHANDLE_TABLE_ENTRY) malloc(size);
+		ZeroMemory(g_WinPR_HandleTable.Entries, size);
 	}
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 }
 
 void winpr_HandleTable_Grow()
 {
 	size_t size;
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	HandleTable.MaxCount *= 2;
+	g_WinPR_HandleTable.MaxCount *= 2;
 
-	size = sizeof(HANDLE_TABLE_ENTRY) * HandleTable.MaxCount;
+	size = sizeof(HANDLE_TABLE_ENTRY) * g_WinPR_HandleTable.MaxCount;
 
-	HandleTable.Entries = (PHANDLE_TABLE_ENTRY) realloc(HandleTable.Entries, size);
-	ZeroMemory((void*) &HandleTable.Entries[HandleTable.MaxCount / 2], size / 2);
+	g_WinPR_HandleTable.Entries = (PHANDLE_TABLE_ENTRY) realloc(g_WinPR_HandleTable.Entries, size);
+	ZeroMemory((void*) &g_WinPR_HandleTable.Entries[g_WinPR_HandleTable.MaxCount / 2], size / 2);
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 }
 
 void winpr_HandleTable_Free()
 {
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	HandleTable.Count = 0;
-	HandleTable.MaxCount = 0;
+	g_WinPR_HandleTable.Count = 0;
+	g_WinPR_HandleTable.MaxCount = 0;
 
-	free(HandleTable.Entries);
-	HandleTable.Entries = NULL;
+	free(g_WinPR_HandleTable.Entries);
+	g_WinPR_HandleTable.Entries = NULL;
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 }
 
 HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object)
@@ -104,24 +88,24 @@ HANDLE winpr_Handle_Insert(ULONG Type, PVOID Object)
 
 	HandleTable_GetInstance();
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	for (index = 0; index < (int) HandleTable.MaxCount; index++)
+	for (index = 0; index < (int) g_WinPR_HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index].Object == NULL)
+		if (g_WinPR_HandleTable.Entries[index].Object == NULL)
 		{
-			HandleTable.Count++;
+			g_WinPR_HandleTable.Count++;
 
-			HandleTable.Entries[index].Type = Type;
-			HandleTable.Entries[index].Object = Object;
+			g_WinPR_HandleTable.Entries[index].Type = Type;
+			g_WinPR_HandleTable.Entries[index].Object = Object;
 
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 			return Object;
 		}
 	}
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 	/* no available entry was found, the table needs to be grown */
 
@@ -138,23 +122,23 @@ BOOL winpr_Handle_Remove(HANDLE handle)
 
 	HandleTable_GetInstance();
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	for (index = 0; index < (int) HandleTable.MaxCount; index++)
+	for (index = 0; index < (int) g_WinPR_HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index].Object == handle)
+		if (g_WinPR_HandleTable.Entries[index].Object == handle)
 		{
-			HandleTable.Entries[index].Type = HANDLE_TYPE_NONE;
-			HandleTable.Entries[index].Object = NULL;
-			HandleTable.Count--;
+			g_WinPR_HandleTable.Entries[index].Type = HANDLE_TYPE_NONE;
+			g_WinPR_HandleTable.Entries[index].Object = NULL;
+			g_WinPR_HandleTable.Count--;
 
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 			return TRUE;
 		}
 	}
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 	return FALSE;
 }
@@ -165,18 +149,18 @@ ULONG winpr_Handle_GetType(HANDLE handle)
 
 	HandleTable_GetInstance();
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	for (index = 0; index < (int) HandleTable.MaxCount; index++)
+	for (index = 0; index < (int) g_WinPR_HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index].Object == handle)
+		if (g_WinPR_HandleTable.Entries[index].Object == handle)
 		{
-			pthread_mutex_unlock(&mutex);
-			return HandleTable.Entries[index].Type;
+			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
+			return g_WinPR_HandleTable.Entries[index].Type;
 		}
 	}
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 	return HANDLE_TYPE_NONE;
 }
@@ -194,22 +178,22 @@ BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
 
 	HandleTable_GetInstance();
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&g_WinPR_HandleTable_Mutex);
 
-	for (index = 0; index < (int) HandleTable.MaxCount; index++)
+	for (index = 0; index < (int) g_WinPR_HandleTable.MaxCount; index++)
 	{
-		if (HandleTable.Entries[index].Object == handle)
+		if (g_WinPR_HandleTable.Entries[index].Object == handle)
 		{
-			*pType = HandleTable.Entries[index].Type;
-			*pObject = HandleTable.Entries[index].Object;
+			*pType = g_WinPR_HandleTable.Entries[index].Type;
+			*pObject = g_WinPR_HandleTable.Entries[index].Object;
 
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 			return TRUE;
 		}
 	}
 
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&g_WinPR_HandleTable_Mutex);
 
 	return FALSE;
 }
