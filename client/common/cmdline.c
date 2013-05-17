@@ -1665,6 +1665,11 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
 	}
 
+	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
+	{
+		settings->AudioCapture = TRUE;
+	}
+
 	if (settings->RedirectDrives)
 	{
 		settings->DeviceRedirection = TRUE;
