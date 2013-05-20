@@ -335,19 +335,21 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
+	channel = (DVCMAN_CHANNEL*) malloc(sizeof(DVCMAN_CHANNEL));
+	ZeroMemory(channel, sizeof(DVCMAN_CHANNEL));
+
+	channel->dvcman = dvcman;
+	channel->channel_id = ChannelId;
+	channel->channel_name = _strdup(ChannelName);
+
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
 		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
 
 		if (strcmp(listener->channel_name, ChannelName) == 0)
 		{
-			channel = (DVCMAN_CHANNEL*) malloc(sizeof(DVCMAN_CHANNEL));
-			ZeroMemory(channel, sizeof(DVCMAN_CHANNEL));
-
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
-			channel->dvcman = dvcman;
-			channel->channel_id = ChannelId;
 			channel->dvc_chan_mutex = CreateMutex(NULL, FALSE, NULL);
 
 			bAccept = 1;
@@ -359,7 +361,10 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 				DEBUG_DVC("listener %s created new channel %d",
 					  listener->channel_name, channel->channel_id);
 
+				channel->status = 0;
 				channel->channel_callback = pCallback;
+				channel->pInterface = listener->iface.pInterface;
+
 				ArrayList_Add(dvcman->channels, channel);
 
 				context = dvcman->drdynvc->context;
@@ -370,11 +375,16 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 			else
 			{
 				DEBUG_WARN("channel rejected by plugin");
-				dvcman_channel_free(channel);
+
+				channel->status = 1;
+				ArrayList_Add(dvcman->channels, channel);
 				return 1;
 			}
 		}
 	}
+
+	channel->status = 1;
+	ArrayList_Add(dvcman->channels, channel);
 
 	return 1;
 }
@@ -383,6 +393,8 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 {
 	DVCMAN_CHANNEL* channel;
 	IWTSVirtualChannel* ichannel;
+	DrdynvcClientContext* context;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
 	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
@@ -398,9 +410,18 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 		channel->dvc_data = NULL;
 	}
 
-	DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
-	ichannel = (IWTSVirtualChannel*) channel;
-	ichannel->Close(ichannel);
+	if (channel->status == 0)
+	{
+		context = dvcman->drdynvc->context;
+
+		IFCALL(context->OnChannelDisconnected, context, channel->channel_name, channel->pInterface);
+
+		DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
+		ichannel = (IWTSVirtualChannel*) channel;
+		ichannel->Close(ichannel);
+	}
+
+	free(channel->channel_name);
 
 	return 0;
 }

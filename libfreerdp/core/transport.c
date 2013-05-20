@@ -793,7 +793,6 @@ static void* transport_client_thread(void* arg)
 	{
 		nCount = 0;
 		events[nCount++] = transport->stopEvent;
-
 		events[nCount] = transport->connectedEvent;
 
 		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);

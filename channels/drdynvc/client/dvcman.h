@@ -70,8 +70,11 @@ struct _DVCMAN_CHANNEL
 {
 	IWTSVirtualChannel iface;
 
+	int status;
 	DVCMAN* dvcman;
+	void* pInterface;
 	UINT32 channel_id;
+	char* channel_name;
 	IWTSVirtualChannelCallback* channel_callback;
 
 	wStream* dvc_data;

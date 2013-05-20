@@ -30,8 +30,6 @@ int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterfac
 {
 	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
 
-	printf("OnChannelConnected: %s\n", name);
-
 	if (strcmp(name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		xfi->rdpei = (RdpeiClientContext*) pInterface;
