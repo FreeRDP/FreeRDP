@@ -90,7 +90,15 @@ struct _audin_server_context
 	psAudinServerReceiveSamples ReceiveSamples;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API audin_server_context* audin_server_context_new(WTSVirtualChannelManager* vcm);
 FREERDP_API void audin_server_context_free(audin_server_context* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_AUDIN_SERVER_H */
