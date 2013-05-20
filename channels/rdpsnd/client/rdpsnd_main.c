@@ -199,9 +199,10 @@ void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	UINT16 wNumberOfFormats;
 	AUDIO_FORMAT* clientFormat;
 
-	if (rdpsnd->device->GetVolume)
+	if (rdpsnd->device)
 	{
-		dwVolume = rdpsnd->device->GetVolume(rdpsnd->device);
+		if (rdpsnd->device->GetVolume)
+			dwVolume = rdpsnd->device->GetVolume(rdpsnd->device);
 	}
 	else
 	{
