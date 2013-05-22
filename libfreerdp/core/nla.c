@@ -788,22 +788,11 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 int credssp_sizeof_ts_password_creds(rdpCredssp* credssp)
 {
-	int length;
-	int ts_password_creds_length = 0;
+	int length = 0;
 
-	length = ber_sizeof_octet_string(credssp->identity.DomainLength * 2);
-	length += ber_sizeof_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_sizeof_octet_string(credssp->identity.UserLength * 2);
-	length += ber_sizeof_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_sizeof_octet_string(credssp->identity.PasswordLength * 2);
-	length += ber_sizeof_contextual_tag(length);
-	ts_password_creds_length += length;
-
-	length = ber_sizeof_sequence(ts_password_creds_length);
+	length += ber_sizeof_sequence_octet_string(credssp->identity.DomainLength * 2);
+	length += ber_sizeof_sequence_octet_string(credssp->identity.UserLength * 2);
+	length += ber_sizeof_sequence_octet_string(credssp->identity.PasswordLength * 2);
 
 	return length;
 }
@@ -849,11 +838,6 @@ int credssp_write_ts_password_creds(rdpCredssp* credssp, wStream* s)
 {
 	int size = 0;
 	int innerSize = credssp_sizeof_ts_password_creds(credssp);
-
-	if (innerSize > Stream_GetRemainingLength(s))
-	{
-		printf("\033[91m[ ERROR ] Not enough space allocated for ts_password_creds\033[0m");
-	}
 
 	/* TSPasswordCreds (SEQUENCE) */
 
@@ -1102,6 +1086,8 @@ void credssp_send(rdpCredssp* credssp)
 		length -= ber_write_sequence_tag(s, ber_sizeof_sequence(ber_sizeof_sequence_octet_string(credssp->negoToken.cbBuffer))); /* SEQUENCE OF NegoDataItem */
 		length -= ber_write_sequence_tag(s, ber_sizeof_sequence_octet_string(credssp->negoToken.cbBuffer)); /* NegoDataItem */
 		length -= ber_write_sequence_octet_string(s, 0, (BYTE*) credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer); /* OCTET STRING */
+
+		// assert length == 0
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -1109,6 +1095,8 @@ void credssp_send(rdpCredssp* credssp)
 	{
 		length = auth_info_length;
 		length -= ber_write_sequence_octet_string(s, 2, credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
+
+		// assert length == 0
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -1116,6 +1104,8 @@ void credssp_send(rdpCredssp* credssp)
 	{
 		length = pub_key_auth_length;
 		length -= ber_write_sequence_octet_string(s, 3, credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
+
+		// assert length == 0
 	}
 
 	transport_write(credssp->transport, s);
