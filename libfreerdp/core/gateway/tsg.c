@@ -1371,8 +1371,14 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 
 	tsg->rpc->client->SynchronousReceive = TRUE;
 
-	if (!TsProxyCloseChannel(tsg, NULL))
-		return FALSE;
+    /* if we are already in state pending (i.e. if a server initiated disconnect was issued)
+       we have to skip TsProxyCloseChannel - see Figure 13 in section 3.2.3
+     */
+    if (tsg->state != TSG_STATE_TUNNEL_CLOSE_PENDING)
+    {
+        if (!TsProxyCloseChannel(tsg, NULL))
+            return FALSE;
+    }
 
 	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST, NULL, NULL))
 		return FALSE;
