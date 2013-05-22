@@ -603,7 +603,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		else if (match == -1)
 		{
 			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
-			tls_print_certificate_error(hostname, fingerprint);
+			tls_print_certificate_error(hostname, fingerprint, tls->certificate_store->file);
 			
 			if (instance->VerifyChangedCertificate)
 				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
@@ -644,7 +644,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	return verification_status;
 }
 
-void tls_print_certificate_error(char* hostname, char* fingerprint)
+void tls_print_certificate_error(char* hostname, char* fingerprint, char *hosts_file)
 {
 	fprintf(stderr, "The host key for %s has changed\n", hostname);
 	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
@@ -655,7 +655,7 @@ void tls_print_certificate_error(char* hostname, char* fingerprint)
 	fprintf(stderr, "It is also possible that a host key has just been changed.\n");
 	fprintf(stderr, "The fingerprint for the host key sent by the remote host is\n%s\n", fingerprint);
 	fprintf(stderr, "Please contact your system administrator.\n");
-	fprintf(stderr, "Add correct host key in ~/.freerdp/known_hosts to get rid of this message.\n");
+	fprintf(stderr, "Add correct host key in %s to get rid of this message.\n", hosts_file);
 	fprintf(stderr, "Host key for %s has changed and you have requested strict checking.\n", hostname);
 	fprintf(stderr, "Host key verification failed.\n");
 }
