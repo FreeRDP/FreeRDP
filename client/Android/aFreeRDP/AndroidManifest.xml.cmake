@@ -7,7 +7,7 @@
 	android:versionName="@GIT_REVISION@" >
 
 	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
-	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
+	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" />
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
