@@ -36,9 +36,9 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xrender DEFAULT_MSG Xrender_LIBRARY Xrender_INCLUDE_DIR)
 
 if(Xrender_FOUND)
-set(XRENDER_LIBRARIES ${Xrender_LIBRARY})
-set(XRENDER_INCLUDE_DIRS ${Xrender_INCLUDE_DIR})
+	set(XRENDER_LIBRARIES ${Xrender_LIBRARY})
+	set(XRENDER_INCLUDE_DIRS ${Xrender_INCLUDE_DIR})
 endif()
 
-mark_as_advanced(Xrender_INCLUDE_DIR Xrender_LIBRARY)
+mark_as_advanced(XRENDER_INCLUDE_DIRS XRENDER_LIBRARIES)
 

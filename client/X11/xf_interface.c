@@ -92,6 +92,7 @@ static const size_t password_size = 512;
 
 void xf_draw_screen_scaled(xfInfo* xfi)
 {
+#ifdef WITH_XRENDER
 	XTransform transform;
 	Picture windowPicture;
 	Picture primaryPicture;
@@ -117,6 +118,7 @@ void xf_draw_screen_scaled(xfInfo* xfi)
 
 	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
 	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+#endif
 }
 
 void xf_context_new(freerdp* instance, rdpContext* context)
