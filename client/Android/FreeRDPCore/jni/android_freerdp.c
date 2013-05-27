@@ -258,6 +258,8 @@ int android_freerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	int select_status;
+	struct timeval timeout;
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -269,7 +271,7 @@ int android_freerdp_run(freerdp* instance)
 	}
 	
 	((androidContext*)instance->context)->is_connected = TRUE;
-	while (1)
+	while (!freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
 		wcount = 0;
@@ -307,7 +309,14 @@ int android_freerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
+		select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
+
+		if (select_status == 0)
+			continue;
+		else if (select_status == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
@@ -495,9 +504,6 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 	settings->ConsoleSession = (console == JNI_TRUE) ? TRUE : FALSE;
 
 	settings->SoftwareGdi = TRUE;
-
-	/* enable NSCodec */
-	settings->NSCodec = TRUE;
 	settings->BitmapCacheV3Enabled = TRUE;
 
 	switch ((int) security)
@@ -560,6 +566,11 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 		settings->ColorDepth = 32;
 		settings->LargePointerFlag = TRUE;
 		settings->FrameMarkerCommandEnabled = TRUE;
+	}
+	else
+	{
+		/* enable NSCodec if we don't use remotefx */
+		settings->NSCodec = TRUE;
 	}
 
 	/* store performance settings */

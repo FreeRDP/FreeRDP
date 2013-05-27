@@ -138,11 +138,13 @@ ios_run_freerdp(freerdp * instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+    struct timeval timeout;
+    int select_status;
 	
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
-	while (1)
+	while (!freerdp_shall_disconnect(instance))
 	{
 		rcount = wcount = 0;
 		
@@ -179,11 +181,19 @@ ios_run_freerdp(freerdp * instance)
 			
 			FD_SET(fds, &rfds_set);
 		}
-		
+        
 		if (max_fds == 0)
 			break;
-		
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+	
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
+        
+        // timeout?
+        if (select_status == 0)
+            continue;
+        else if (select_status == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
@@ -191,7 +201,7 @@ ios_run_freerdp(freerdp * instance)
 				  (errno == EINPROGRESS) ||
 				  (errno == EINTR))) /* signal occurred */
 			{
-				NSLog(@"%s: max_sck is zero.", __func__);
+				NSLog(@"%s: select failed!", __func__);
 				break;
 			}
 		}

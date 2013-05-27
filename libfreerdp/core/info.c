@@ -240,6 +240,8 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT32(s); /* CodePage */
 	Stream_Read_UINT32(s, flags); /* flags */
 
+	settings->AudioCapture = ((flags & RNS_INFO_AUDIOCAPTURE) ? TRUE : FALSE);
+	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
 	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
 	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
 	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);

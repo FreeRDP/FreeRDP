@@ -120,6 +120,9 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 	UINT32 option_value;
 	socklen_t option_len;
 
+	if (hostname == NULL)
+		return FALSE;
+
 	if (hostname[0] == '/')
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
