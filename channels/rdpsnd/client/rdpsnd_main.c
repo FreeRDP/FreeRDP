@@ -199,16 +199,14 @@ void rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	UINT16 wNumberOfFormats;
 	AUDIO_FORMAT* clientFormat;
 
+	dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
+	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
+	dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
+
 	if (rdpsnd->device)
 	{
 		if (rdpsnd->device->GetVolume)
 			dwVolume = rdpsnd->device->GetVolume(rdpsnd->device);
-	}
-	else
-	{
-		dwVolumeLeft = ((50 * 0xFFFF) / 100); /* 50% */
-		dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
-		dwVolume = (dwVolumeLeft << 16) | dwVolumeRight;
 	}
 
 	wNumberOfFormats = rdpsnd->NumberOfClientFormats;
