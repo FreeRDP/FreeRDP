@@ -102,7 +102,9 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 	  //if (xfi->scale != 1.0)
 	  if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 		{
-			xf_draw_screen_scaled(xfi, x, y, w, h, FALSE);
+		  //		  printf("expose: %d,%d [%dx%d]\n", x, y, w, h);
+		  //xf_draw_screen_scaled(xfi, x, y, w, h, FALSE);
+		  xf_draw_screen_scaled(xfi, 0, 0, xfi->currentWidth, xfi->currentHeight, FALSE);
 		}
 		else
 		{
