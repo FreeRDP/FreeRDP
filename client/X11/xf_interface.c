@@ -1669,6 +1669,8 @@ double freerdp_client_get_scale(xfInfo* xfi)
 void freerdp_client_reset_scale(xfInfo* xfi)
 {
     xfi->scale = 1.0;
+    xfi->offset_x = 0;
+    xfi->offset_y = 0;
 
     XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
     IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
