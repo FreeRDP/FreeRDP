@@ -1675,6 +1675,9 @@ void freerdp_client_reset_scale(xfInfo* xfi)
     xfi->offset_x = 0;
     xfi->offset_y = 0;
 
+    xfi->currentWidth = xfi->originalWidth;
+    xfi->currentHeight = xfi->originalHeight;
+
     XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
     IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
     xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
