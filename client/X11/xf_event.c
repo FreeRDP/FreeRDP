@@ -99,7 +99,8 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 	if (!app)
 	{
 
-		if (xfi->scale != 1.0)
+	  //if (xfi->scale != 1.0)
+	  if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 		{
 			xf_draw_screen_scaled(xfi, x, y, w, h, FALSE);
 		}
@@ -164,10 +165,11 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	}
 	
 	/* Take scaling in to consideration */
-	if(xfi->scale != 1.0)
+	//if(xfi->scale != 1.0)
+	if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 	{
-		x = (int)(x * (1.0 / xfi->scale) );
-		y = (int)(y * (1.0 / xfi->scale) );
+	  x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
+	  y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
 	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -274,12 +276,12 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 
 			}
 
-			if (xfi->scale != 1.0)
-			{
-				/* Take scaling in to consideration */
-				x = (int) (x * (1.0 / xfi->scale));
-				y = (int) (y * (1.0 / xfi->scale));
-			}
+			//if (xfi->scale != 1.0)
+			if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
+			  {
+			    x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
+			    y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
+			  }
 
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
@@ -364,11 +366,12 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 				x, y, &x, &y, &childWindow);
 		}
 
-		if (xfi->scale != 1.0)
+		
+		//if (xfi->scale != 1.0)
+		if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 		{
-			/* Take scaling in to consideration */
-			x = (int) (x * (1.0 / xfi->scale));
-			y = (int) (y * (1.0 / xfi->scale));
+		  x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
+		  y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
 		}
 
 		if (extended)

@@ -231,7 +231,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 
-			if (xfi->scale != 1.0)
+			if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 			{
 				xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 			}
@@ -266,7 +266,8 @@ void xf_sw_end_paint(rdpContext* context)
 				//combine xfi->primary with xfi->image	
 				XPutImage(xfi->display, xfi->primary, xfi->gc, xfi->image, x, y, x, y, w, h);
 
-				if (xfi->scale != 1.0)
+				//if (xfi->scale != 1.0)
+				if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 				{
 					xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 				}
@@ -357,7 +358,8 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfi, FALSE);
 
-			if (xfi->scale != 1.0)
+			//if (xfi->scale != 1.0)
+			if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 			{
 				xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 			}
@@ -389,7 +391,8 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				if(xfi->scale != 1.0)
+				//if(xfi->scale != 1.0)
+				if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 				{
 					xf_draw_screen_scaled(xfi, x, y, w, h, TRUE);
 				}
