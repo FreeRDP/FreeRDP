@@ -105,6 +105,10 @@
     <string name="settings_enable_3g_settings">3G Instellingen</string>
     <string name="settings_screen_3g">3G Scherm</string>
     <string name="settings_performance_3g">3G Prestatie</string>
+    <string name="settings_cat_gateway">Gateway</string>
+    <string name="settings_enable_gateway_settings">Gateway inschakelen</string>
+    <string name="settings_gateway_settings">Gateway instellingen</string>    
+    <string name="settings_redirect_sdcard">SDCard aankoppelen</string>
     <string name="settings_security">Beveiliging</string>
     <string-array name="security_array">
         <item>Automatisch</item>
