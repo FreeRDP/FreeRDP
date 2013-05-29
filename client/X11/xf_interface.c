@@ -1669,6 +1669,16 @@ double freerdp_client_get_scale(xfInfo* xfi)
 	return xfi->scale;
 }
 
+int freerdp_client_get_xpan(xfInfo* xfi)
+{
+  return xfi->offset_x;
+}
+
+int freerdp_client_get_ypan(xfInfo* xfi)
+{
+  return xfi->offset_y;
+}
+
 void freerdp_client_reset_scale(xfInfo* xfi)
 {
     xfi->scale = 1.0;
