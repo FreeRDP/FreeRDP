@@ -53,6 +53,9 @@ double firstDist = -1.0;
 double lastDist;
 
 double z_vector;
+double px_vector;
+double py_vector;
+
 int xinput_opcode;
 int scale_cnt;
 
@@ -117,6 +120,10 @@ int xf_input_init(xfInfo* xfi, Window window)
 
 	xstatus = XISelectEvents(xfi->display, window, &evmask, 1);
 
+	z_vector = 0;
+	px_vector = 0;
+	py_vector = 0;
+
 	return -1;
 }
 
@@ -155,6 +162,64 @@ void xf_input_save_last_event(XGenericEventCookie* cookie)
 	lastEvent.event_x = event->event_x;
 	lastEvent.event_y = event->event_y;
 
+}
+
+void xf_input_detect_pan(xfInfo* xfi)
+{
+  double dx[2];
+  double dy[2];
+
+  double px;
+  double py;
+
+
+  dx[0] = contacts[0].pos_x - contacts[0].last_x;
+  dx[1] = contacts[1].pos_x - contacts[1].last_x;
+
+  dy[0] = contacts[0].pos_y - contacts[0].last_y;
+  dy[1] = contacts[1].pos_y - contacts[1].last_y;
+
+  //px = fmin(dx[0], dx[1]);
+  //py = fmin(dy[0], dy[1]);
+
+  px = dx[0] + dx[1] / 2;
+  py = dy[0] + dy[1] / 2;
+
+  
+  px_vector += px;
+  py_vector += py;
+  
+
+  //printf("px: %.2f\tpy: %.2f\n", px_vector, py_vector);
+
+  if(px_vector > 100)
+    {
+      printf("pan ->\n");
+      
+      px_vector = 0;
+    }
+  else if(px_vector < -100)
+    {
+      printf("<- pan\n");
+
+      px_vector = 0;
+    }
+
+
+  if(py_vector > 100)
+    {
+      printf("\tpan ^\n");
+
+      py_vector = 0;
+    }
+  else if(py_vector < -100)
+    {
+      printf("\tv pan\n");
+
+      py_vector = 0;
+    }
+  
+  
 }
 
 void xf_input_detect_pinch(xfInfo* xfi)
@@ -266,6 +331,7 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 			contacts[i].pos_y = event->event_y;
 
 			xf_input_detect_pinch(xfi);
+			xf_input_detect_pan(xfi);
 
 			break;
 		}
