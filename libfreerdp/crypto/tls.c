@@ -270,23 +270,6 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 		return FALSE;
 	}
 
-	cert = tls_get_certificate(tls, FALSE);
-
-	if (!cert)
-	{
-		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return FALSE;
-	}
-
-	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
-	{
-		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
-		tls_free_certificate(cert);
-		return FALSE;
-	}
-
-	free(cert);
-
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		fprintf(stderr, "SSL_set_fd failed\n");
@@ -317,6 +300,23 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 			break;
 		}
 	}
+
+	cert = tls_get_certificate(tls, FALSE);
+
+	if (!cert)
+	{
+		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		return FALSE;
+	}
+
+	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
+	{
+		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
+		tls_free_certificate(cert);
+		return FALSE;
+	}
+
+	free(cert);
 
 	fprintf(stderr, "TLS connection accepted\n");
 
