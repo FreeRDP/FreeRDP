@@ -182,9 +182,12 @@ void xf_input_detect_pan(xfInfo* xfi)
   //px = fmin(dx[0], dx[1]);
   //py = fmin(dy[0], dy[1]);
 
-  px = dx[0] + dx[1] / 2;
-  py = dy[0] + dy[1] / 2;
+  //px = dx[0] + dx[1] / 2;
+  //py = dy[0] + dy[1] / 2;
 
+
+  px = fabs(dx[0]) < fabs(dx[1]) ? dx[0] : dx[1];
+  py = fabs(dy[0]) < fabs(dy[1]) ? dy[0] : dy[1];
   
   px_vector += px;
   py_vector += py;
@@ -194,29 +197,65 @@ void xf_input_detect_pan(xfInfo* xfi)
 
   if(px_vector > 100)
     {
+      xfi->offset_x += 5;
+      
+      xf_transform_window(xfi);
+      
+      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
       printf("pan ->\n");
       
       px_vector = 0;
+
+      px_vector = 0;
+      py_vector = 0;
+      z_vector = 0;
     }
   else if(px_vector < -100)
     {
+      xfi->offset_x -= 5;
+      
+      xf_transform_window(xfi);
+      
+      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
       printf("<- pan\n");
 
       px_vector = 0;
+
+      px_vector = 0;
+      py_vector = 0;
+      z_vector = 0;
     }
 
 
   if(py_vector > 100)
     {
+      xfi->offset_y += 5;
+      
+      xf_transform_window(xfi);
+      
+      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
       printf("\tpan ^\n");
 
       py_vector = 0;
+
+      px_vector = 0;
+      py_vector = 0;
+      z_vector = 0;
     }
   else if(py_vector < -100)
     {
+      xfi->offset_y -= 5;
+      
+      xf_transform_window(xfi);
+      
+      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
       printf("\tv pan\n");
 
       py_vector = 0;
+
+      px_vector = 0;
+      py_vector = 0;
+      z_vector = 0;
     }
   
   
@@ -247,6 +286,10 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		lastDist = firstDist;
 		scale_cnt = 0;
 		z_vector = 0;
+
+		px_vector = 0;
+		py_vector = 0;
+		z_vector = 0;
 	}
 	else
 	{
@@ -273,6 +316,10 @@ void xf_input_detect_pinch(xfInfo* xfi)
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 
 			z_vector = 0;
+
+			px_vector = 0;
+			py_vector = 0;
+			z_vector = 0;
 		}
 
 		if (z_vector < -10)
@@ -287,6 +334,10 @@ void xf_input_detect_pinch(xfInfo* xfi)
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 
+			z_vector = 0;
+
+			px_vector = 0;
+			py_vector = 0;
 			z_vector = 0;
 		}
 	}
