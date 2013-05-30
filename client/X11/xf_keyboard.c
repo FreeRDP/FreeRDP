@@ -208,8 +208,11 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 {
 	if (keysym == XK_Return)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
 		{
 			/* Ctrl-Alt-Enter: toggle full screen */
 			xf_toggle_fullscreen(xfi);
@@ -217,122 +220,139 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 		}
 	}
 
-
 	if (keysym == XK_period)
 	{
-				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-				{
-					//Zoom in (scale larger)
-					double s = xfi->scale;
-					s += 0.1;
-					if(s > 2.0)
-						s = 2.0;
-					
-					xfi->scale = s;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			//Zoom in (scale larger)
+			double s = xfi->scale;
+			s += 0.1;
+			if (s > 2.0)
+				s = 2.0;
 
-					xfi->currentWidth = xfi->originalWidth * s;
-					xfi->currentHeight = xfi->originalHeight * s;
+			xfi->scale = s;
 
-					xf_transform_window(xfi);
+			xfi->currentWidth = xfi->originalWidth * s;
+			xfi->currentHeight = xfi->originalHeight * s;
 
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
-					xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-					return TRUE;
-				}
+			xf_transform_window(xfi);
+
+			IFCALL(xfi->client->OnResizeWindow,
+					xfi->instance, xfi->currentWidth, xfi->currentHeight);
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			return TRUE;
+		}
 	}
 
 	if (keysym == XK_comma)
 	{
-				if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-		    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-				{
-					//Zoom out (scale smaller)
-					double s = xfi->scale;
-					s -= 0.1;
-					if(s < 0.5)
-						s = 0.5;
-					
-					xfi->scale = s;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			//Zoom out (scale smaller)
+			double s = xfi->scale;
+			s -= 0.1;
+			if (s < 0.5)
+				s = 0.5;
 
-					xfi->currentWidth = xfi->originalWidth * s;
-					xfi->currentHeight = xfi->originalHeight * s;
+			xfi->scale = s;
 
-					xf_transform_window(xfi);
+			xfi->currentWidth = xfi->originalWidth * s;
+			xfi->currentHeight = xfi->originalHeight * s;
 
-					IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
-					xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-					return TRUE;
-				}
+			xf_transform_window(xfi);
+
+			IFCALL(xfi->client->OnResizeWindow,
+					xfi->instance, xfi->currentWidth, xfi->currentHeight);
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			return TRUE;
+		}
 	}
-
 
 	if (keysym == XK_KP_4)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-					{
-						xfi->offset_x -= 5;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			xfi->offset_x -= 5;
 
-						xf_transform_window(xfi);
+			xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-						printf("pan left : %d\n", xfi->offset_x);
-						return TRUE;
-					}
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			printf("pan left : %d\n", xfi->offset_x);
+			return TRUE;
+		}
 	}
 
 	if (keysym == XK_KP_6)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-					{
-						xfi->offset_x += 5;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			xfi->offset_x += 5;
 
-						if(xfi->offset_x > 0)
-							xfi->offset_x = 0;
+			if (xfi->offset_x > 0)
+				xfi->offset_x = 0;
 
-						xf_transform_window(xfi);
+			xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-						printf("pan right : %d\n", xfi->offset_x);
-						return TRUE;
-					}
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			printf("pan right : %d\n", xfi->offset_x);
+			return TRUE;
+		}
 	}
 
 	if (keysym == XK_KP_8)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-					{
-						xfi->offset_y -= 5;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			xfi->offset_y -= 5;
 
-						xf_transform_window(xfi);
+			xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-						printf("pan up : %d\n", xfi->offset_y);
-						return TRUE;
-					}
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			printf("pan up : %d\n", xfi->offset_y);
+			return TRUE;
+		}
 	}
 
 	if (keysym == XK_KP_2)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L) || xf_kbd_key_pressed(xfi, XK_Alt_R))
-				    && (xf_kbd_key_pressed(xfi, XK_Control_L) || xf_kbd_key_pressed(xfi, XK_Control_R)))
-					{
-						xfi->offset_y += 5;
+		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
+						|| xf_kbd_key_pressed(xfi,
+								XK_Control_R)))
+		{
+			xfi->offset_y += 5;
 
-						if(xfi->offset_y > 0)
-							xfi->offset_y = 0;
+			if (xfi->offset_y > 0)
+				xfi->offset_y = 0;
 
-						xf_transform_window(xfi);
+			xf_transform_window(xfi);
 
-						xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-						printf("pan down : %d\n", xfi->offset_y);
-						return TRUE;
-					}
+			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			printf("pan down : %d\n", xfi->offset_y);
+			return TRUE;
+		}
 	}
-
 
 	return FALSE;
 }

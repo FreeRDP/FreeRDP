@@ -95,35 +95,30 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 	w = event->xexpose.width;
 	h = event->xexpose.height;
 
-
 	if (!app)
 	{
 
-	  //if (xfi->scale != 1.0)
-	  if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
+		//if (xfi->scale != 1.0)
+		if ((xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y))
 		{
-		  xf_draw_screen_scaled(xfi,
-					x - xfi->offset_x,
-					y - xfi->offset_y,
-					w,
-					h,
-					FALSE);
-		}
-		else
+			xf_draw_screen_scaled(xfi, x - xfi->offset_x,
+					y - xfi->offset_y, w, h, FALSE);
+		} else
 		{
 			XCopyArea(xfi->display, xfi->primary,
-					xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+					xfi->window->handle, xfi->gc, x, y, w,
+					h, x, y);
 		}
-	}
-	else
+	} else
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
 		rdpRail* rail = ((rdpContext*) xfi->context)->rail;
 
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+		window = window_list_get_by_extra_id(rail->list,
+				(void*) event->xexpose.window);
 
-		if (window != NULL)
+		if (window != NULL )
 		{
 			xfw = (xfWindow*) window->extra;
 			xf_UpdateWindowArea(xfi, xfw, x, y, w, h);
@@ -173,8 +168,8 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 	//if(xfi->scale != 1.0)
 	if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
 	{
-	  x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
-	  y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
+		x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
+		y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
 	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -282,11 +277,14 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 			}
 
 			//if (xfi->scale != 1.0)
-			if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
-			  {
-			    x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
-			    y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
-			  }
+			if ((xfi->scale != 1.0) || (xfi->offset_x)
+					|| (xfi->offset_y))
+			{
+				x = (int) ((x - xfi->offset_x)
+						* (1.0 / xfi->scale));
+				y = (int) ((y - xfi->offset_y)
+						* (1.0 / xfi->scale));
+			}
 
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
@@ -373,10 +371,10 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 
 		
 		//if (xfi->scale != 1.0)
-		if ( (xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y) )
+		if ((xfi->scale != 1.0) || (xfi->offset_x) || (xfi->offset_y))
 		{
-		  x = (int)((x - xfi->offset_x) * (1.0 / xfi->scale) );
-		  y = (int)((y - xfi->offset_y) * (1.0 / xfi->scale) );
+			x = (int) ((x - xfi->offset_x) * (1.0 / xfi->scale));
+			y = (int) ((y - xfi->offset_y) * (1.0 / xfi->scale));
 		}
 
 		if (extended)
