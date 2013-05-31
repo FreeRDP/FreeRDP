@@ -7,10 +7,13 @@ add_subdirectory(cli)
 set(MODULE_NAME "MacFreeRDP-library")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC-LIB")
 
-# Import libraries
+# Import frameworks
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(COCOA_LIBRARY Cocoa)
 find_library(APPKIT_LIBRARY AppKit)
+
+mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
+set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY})
 
 set(MACOSX_BUNDLE_INFO_STRING "MacFreeRDP-library")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.mac")
@@ -20,9 +23,6 @@ set(MACOSX_BUNDLE_BUNDLE_NAME "MacFreeRDP-library")
 set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.1.0)
 set(MACOSX_BUNDLE_BUNDLE_VERSION 1.1.0)
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2013. All Rights Reserved.")
-
-mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
-set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY})
 
 set(${MODULE_NAME}_RESOURCES "en.lproj/InfoPlist.strings")
 
@@ -35,7 +35,6 @@ if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${${MODULE_NAME}_XIBS})
 endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
 
-
 add_library(${MODULE_NAME}
 	SHARED
 	MRDPView.h
@@ -47,8 +46,8 @@ add_library(${MODULE_NAME}
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
 SET_TARGET_PROPERTIES(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
           
-set_target_properties(${MODULE_NAME}  PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${EXECUTABLE_OUTPUT_PATH} 
+set_target_properties(${MODULE_NAME} PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH} 
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
 
 # Support for automatic reference counting requires non-fragile abi.
@@ -71,53 +70,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS} freerdp-client)
 
-# Set a list of the dependent targets used by the application. There should be a way to get this list automatically
-# from cmake, but for now I put it down manually. I got the references by calling
-# otool -L MacFreeRDP-client
-
-set(DEPENDENCIES  
-	winpr-asn1
-	winpr-heap		
-	winpr-sspi
-	winpr-bcrypt		
-	winpr-input		
-	winpr-sspicli
-	winpr-credentials	
-	winpr-interlocked	
-	winpr-synch
-	winpr-credui		
-	winpr-io		
-	winpr-sysinfo
-	winpr-crt		
-	winpr-library		
-	winpr-thread
-	winpr-crypto
-	winpr-timezone
-	winpr-dsparse		
-	winpr-path		
-	winpr-utils
-	winpr-environment	
-	winpr-pipe		
-	winpr-winhttp
-	winpr-error		
-	winpr-pool		
-	winpr-winsock
-	winpr-file		
-	winpr-registry
-	winpr-handle		
-	winpr-rpc
-	freerdp-utils
-	freerdp-gdi
-	freerdp-rail
-	freerdp-cache
-	freerdp-codec
-	freerdp-primitives
-	freerdp-core
-	freerdp-crypto
-	freerdp-client
-	freerdp-locale
-	freerdp-common)
-
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
 	MODULES freerdp-core freerdp-cache freerdp-gdi freerdp-codec freerdp-primitives freerdp-rail freerdp-utils)
@@ -128,6 +80,18 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 
 set_target_properties(${MODULE_NAME} PROPERTIES LINK_INTERFACE_LIBRARIES "")
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+# Set a list of the dependent targets used by the application. There should be a way to get this list automatically
+# from cmake, but for now I put it down manually. I got the references by calling "otool -L MacFreeRDP-client"
+
+set(DEPENDENCIES "")
+
+foreach(LIB ${${MODULE_PREFIX}_LIBS})
+	get_target_property(LOCATION ${LIB} LOCATION)
+	if(NOT ${LOCATION} MATCHES ".*-NOTFOUND")
+		list(APPEND DEPENDENCIES ${LIB})
+	endif()
+endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Mac")
 
