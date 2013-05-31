@@ -514,6 +514,19 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			}
 			break;
 
+		case WM_ACTIVATE:
+			{
+				int activate = (int)(short) LOWORD(lParam);
+				if (activate != WA_INACTIVE)
+				{
+					g_focus_hWnd = hWnd;
+				}
+				else
+				{
+					g_focus_hWnd = NULL;
+				}
+			}
+
 		default:
 			return DefWindowProc(hWnd, Msg, wParam, lParam);
 			break;
