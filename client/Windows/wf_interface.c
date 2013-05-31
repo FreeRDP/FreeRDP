@@ -302,7 +302,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
 		settings->DesktopHeight = desktopHeight;
 	}
-
+	
 	if (wfi->fullscreen)
 	{
 		if (settings->UseMultimon)
