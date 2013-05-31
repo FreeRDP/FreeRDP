@@ -33,6 +33,9 @@
 
 #define MAX_CONTACTS 2
 
+#define PAN_THRESHOLD 50
+#define ZOOM_THRESHOLD 10
+
 typedef struct touch_contact
 {
 	int id;
@@ -104,8 +107,6 @@ int xf_input_init(xfInfo* xfi, Window window)
 			if (class->type != XITouchClass)
 				continue;
 
-			//printf("%s %s touch device, supporting %d touches.\n",
-			//	dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent", t->num_touches);
 		}
 	}
 
@@ -141,7 +142,6 @@ BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
 			(lastEvent.event_x == event->event_x) &&
 			(lastEvent.event_y == event->event_y) )
 	{
-	  //	  printf("duplicate: %d\n", event->detail);
 		return TRUE;
 	}
 
@@ -179,13 +179,6 @@ void xf_input_detect_pan(xfInfo* xfi)
   dy[0] = contacts[0].pos_y - contacts[0].last_y;
   dy[1] = contacts[1].pos_y - contacts[1].last_y;
 
-  //px = fmin(dx[0], dx[1]);
-  //py = fmin(dy[0], dy[1]);
-
-  //px = dx[0] + dx[1] / 2;
-  //py = dy[0] + dy[1] / 2;
-
-
   px = fabs(dx[0]) < fabs(dx[1]) ? dx[0] : dx[1];
   py = fabs(dy[0]) < fabs(dy[1]) ? dy[0] : dy[1];
   
@@ -193,16 +186,13 @@ void xf_input_detect_pan(xfInfo* xfi)
   py_vector += py;
   
 
-  //printf("px: %.2f\tpy: %.2f\n", px_vector, py_vector);
-
-  if(px_vector > 100)
+  if(px_vector > PAN_THRESHOLD)
     {
       xfi->offset_x += 5;
       
       xf_transform_window(xfi);
       
       xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-      printf("pan ->\n");
       
       px_vector = 0;
 
@@ -210,14 +200,13 @@ void xf_input_detect_pan(xfInfo* xfi)
       py_vector = 0;
       z_vector = 0;
     }
-  else if(px_vector < -100)
+  else if(px_vector < -PAN_THRESHOLD)
     {
       xfi->offset_x -= 5;
       
       xf_transform_window(xfi);
       
       xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-      printf("<- pan\n");
 
       px_vector = 0;
 
@@ -227,14 +216,13 @@ void xf_input_detect_pan(xfInfo* xfi)
     }
 
 
-  if(py_vector > 100)
+  if(py_vector > PAN_THRESHOLD)
     {
       xfi->offset_y += 5;
       
       xf_transform_window(xfi);
       
       xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-      printf("\tpan ^\n");
 
       py_vector = 0;
 
@@ -242,14 +230,13 @@ void xf_input_detect_pan(xfInfo* xfi)
       py_vector = 0;
       z_vector = 0;
     }
-  else if(py_vector < -100)
+  else if(py_vector < -PAN_THRESHOLD)
     {
       xfi->offset_y -= 5;
       
       xf_transform_window(xfi);
       
       xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-      printf("\tv pan\n");
 
       py_vector = 0;
 
@@ -299,18 +286,16 @@ void xf_input_detect_pinch(xfInfo* xfi)
 		zoom = (dist / firstDist);
 
 		z_vector += delta;
-		//printf("d: %.2f\n", delta);
 
 		lastDist = dist;
 
-		if (z_vector > 10)
+		if (z_vector > ZOOM_THRESHOLD)
 		{
 			xfi->scale -= 0.05;
 
 			if (xfi->scale < 0.8)
 				xfi->scale = 0.8;
 
-			//XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
@@ -322,14 +307,13 @@ void xf_input_detect_pinch(xfInfo* xfi)
 			z_vector = 0;
 		}
 
-		if (z_vector < -10)
+		if (z_vector < -ZOOM_THRESHOLD)
 		{
 			xfi->scale += 0.05;
 
 			if (xfi->scale > 1.2)
 				xfi->scale = 1.2;
 
-			//XResizeWindow(xfi->display, xfi->window->handle, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
@@ -346,8 +330,6 @@ void xf_input_detect_pinch(xfInfo* xfi)
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
-
-	//	printf("Begin: %d count: %d\n", event->detail, active_contacts);
 
 	if(active_contacts == MAX_CONTACTS)
 	  printf("Houston, we have a problem!\n\n");
@@ -392,8 +374,6 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
-
-	//	printf("End: %d\n", event->detail);
 
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
