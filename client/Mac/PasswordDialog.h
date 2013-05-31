@@ -20,7 +20,15 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PasswordDialog : NSWindowController
-
+{
+@public
+    NSTextField* usernameText;
+    NSTextField* passwordText;
+    NSTextField* messageLabel;
+    NSString* serverHostname;
+    NSString* username;
+    NSString* password;
+}
 @property (retain) IBOutlet NSTextField* usernameText;
 @property (retain) IBOutlet NSTextField* passwordText;
 @property (retain) IBOutlet NSTextField* messageLabel;
