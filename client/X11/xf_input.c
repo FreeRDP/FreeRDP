@@ -172,6 +172,8 @@ void xf_input_detect_pan(xfInfo* xfi)
   double px;
   double py;
 
+  double dist_x;
+  double dist_y;
 
   dx[0] = contacts[0].pos_x - contacts[0].last_x;
   dx[1] = contacts[1].pos_x - contacts[1].last_x;
@@ -185,66 +187,83 @@ void xf_input_detect_pan(xfInfo* xfi)
   px_vector += px;
   py_vector += py;
   
+  dist_x = fabs(contacts[0].pos_x - contacts[1].pos_x);
+  dist_y = fabs(contacts[0].pos_y - contacts[1].pos_y);
+  
 
-  if(px_vector > PAN_THRESHOLD)
+  //only pan in x if dist_y is greater than something
+  if(dist_y > 30)
     {
-      xfi->offset_x += 5;
       
-      xf_transform_window(xfi);
+      if(px_vector > PAN_THRESHOLD)
+	{
+	  xfi->offset_x += 5;
+	  
+	  if(xfi->offset_x > 0)
+	    xfi->offset_x = 0;
+	  
+	  xf_transform_window(xfi);
+	  
+	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+	  
+	  px_vector = 0;
+	  
+	  px_vector = 0;
+	  py_vector = 0;
+	  z_vector = 0;
+	}
+      else if(px_vector < -PAN_THRESHOLD)
+	{
+	  xfi->offset_x -= 5;
+	  
+	  xf_transform_window(xfi);
+	  
+	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+	  
+	  px_vector = 0;
+	  
+	  px_vector = 0;
+	  py_vector = 0;
+	  z_vector = 0;
+	}
       
-      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-      
-      px_vector = 0;
-
-      px_vector = 0;
-      py_vector = 0;
-      z_vector = 0;
-    }
-  else if(px_vector < -PAN_THRESHOLD)
-    {
-      xfi->offset_x -= 5;
-      
-      xf_transform_window(xfi);
-      
-      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-
-      px_vector = 0;
-
-      px_vector = 0;
-      py_vector = 0;
-      z_vector = 0;
-    }
-
-
-  if(py_vector > PAN_THRESHOLD)
-    {
-      xfi->offset_y += 5;
-      
-      xf_transform_window(xfi);
-      
-      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-
-      py_vector = 0;
-
-      px_vector = 0;
-      py_vector = 0;
-      z_vector = 0;
-    }
-  else if(py_vector < -PAN_THRESHOLD)
-    {
-      xfi->offset_y -= 5;
-      
-      xf_transform_window(xfi);
-      
-      xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-
-      py_vector = 0;
-
-      px_vector = 0;
-      py_vector = 0;
-      z_vector = 0;
     }
   
+  if(dist_x > 30)
+    {
+      
+      if(py_vector > PAN_THRESHOLD)
+	{
+	  xfi->offset_y += 5;
+	  
+	  if(xfi->offset_y > 0)
+	    xfi->offset_y = 0;
+	  
+	  xf_transform_window(xfi);
+	  
+	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+	  
+	  py_vector = 0;
+	  
+	  px_vector = 0;
+	  py_vector = 0;
+	  z_vector = 0;
+	}
+      else if(py_vector < -PAN_THRESHOLD)
+	{
+	  xfi->offset_y -= 5;
+	  
+	  xf_transform_window(xfi);
+	  
+	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+	  
+	  py_vector = 0;
+	  
+	  px_vector = 0;
+	  py_vector = 0;
+	  z_vector = 0;
+	}
+    }
   
 }
 
@@ -282,10 +301,17 @@ void xf_input_detect_pinch(xfInfo* xfi)
 	{
 		delta = lastDist - dist;
 
+		if(delta > 1.0)
+		  delta = 1.0;
+		if(delta < -1.0)
+		  delta = -1.0;
+
 		/* compare the current distance to the first one */
 		zoom = (dist / firstDist);
 
 		z_vector += delta;
+
+		//	printf("%.2f = %.2f - %.2f\t(%.2f)\n", delta, lastDist, dist, z_vector);
 
 		lastDist = dist;
 
@@ -295,6 +321,9 @@ void xf_input_detect_pinch(xfInfo* xfi)
 
 			if (xfi->scale < 0.8)
 				xfi->scale = 0.8;
+
+			xfi->currentWidth = xfi->originalWidth * xfi->scale;
+			xfi->currentHeight = xfi->originalHeight * xfi->scale;
 
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
@@ -314,6 +343,9 @@ void xf_input_detect_pinch(xfInfo* xfi)
 			if (xfi->scale > 1.2)
 				xfi->scale = 1.2;
 
+			xfi->currentWidth = xfi->originalWidth * xfi->scale;
+			xfi->currentHeight = xfi->originalHeight * xfi->scale;
+
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
@@ -330,7 +362,14 @@ void xf_input_detect_pinch(xfInfo* xfi)
 void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
-
+	/*
+	printf("id: %d active: %d x:%.2f y:%.2f BEGIN\n",
+	       event->detail,
+	       active_contacts,
+	       event->event_x,
+	       event->event_y
+	       );
+	*/
 	if(active_contacts == MAX_CONTACTS)
 	  printf("Houston, we have a problem!\n\n");
 
@@ -352,7 +391,14 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
-
+	/*
+	printf("id: %d active: %d x:%.2f y:%.2f UPDATE\n",
+	       event->detail,
+	       active_contacts,
+	       event->event_x,
+	       event->event_y
+	       );
+	*/
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
@@ -375,6 +421,13 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 {
 	int i;
 
+	/*	printf("id: %d active: %d x:%.2f y:%.2f END\n",
+	       event->detail,
+	       active_contacts,
+	       event->event_x,
+	       event->event_y
+	       );
+	*/
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
