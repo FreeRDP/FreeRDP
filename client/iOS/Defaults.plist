@@ -65,6 +65,18 @@
 		<string></string>
 		<key>console</key>
 		<false/>
+		<key>enable_tsg_settings</key>
+		<false/>
+		<key>tsg_hostname</key>
+		<string></string>
+		<key>tsg_port</key>
+		<integer>443</integer>
+		<key>tsg_username</key>
+		<string></string>
+		<key>tsg_password</key>
+		<string></string>
+		<key>tsg_domain</key>
+		<string></string>
 	</dict>
 	<key>ui.auto_scroll_touchpointer</key>
 	<true/>

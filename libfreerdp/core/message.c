@@ -21,10 +21,17 @@
 #include "config.h"
 #endif
 
+#include "rdp.h"
 #include "message.h"
+#include "transport.h"
+
+#include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
+
+#define WITH_STREAM_POOL	1
 
 /* Update */
 
@@ -79,13 +86,15 @@ static void update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitm
 	wParam->rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * wParam->number);
 	CopyMemory(wParam->rectangles, bitmap->rectangles, sizeof(BITMAP_DATA) * wParam->number);
 
-	/* TODO: increment reference count to original stream instead of copying */
-
 	for (index = 0; index < wParam->number; index++)
 	{
+#ifdef WITH_STREAM_POOL
+		StreamPool_AddRef(context->rdp->transport->ReceivePool, bitmap->rectangles[index].bitmapDataStream);
+#else
 		wParam->rectangles[index].bitmapDataStream = (BYTE*) malloc(wParam->rectangles[index].bitmapLength);
 		CopyMemory(wParam->rectangles[index].bitmapDataStream, bitmap->rectangles[index].bitmapDataStream,
 				wParam->rectangles[index].bitmapLength);
+#endif
 	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
@@ -145,7 +154,7 @@ static void update_message_SurfaceCommand(rdpContext* context, wStream* s)
 
 	wParam = (wStream*) malloc(sizeof(wStream));
 
-	wParam->capacity = s->capacity;
+	wParam->capacity = Stream_Capacity(s);
 	wParam->buffer = (BYTE*) malloc(wParam->capacity);
 	wParam->pointer = wParam->buffer;
 
@@ -160,8 +169,12 @@ static void update_message_SurfaceBits(rdpContext* context, SURFACE_BITS_COMMAND
 	wParam = (SURFACE_BITS_COMMAND*) malloc(sizeof(SURFACE_BITS_COMMAND));
 	CopyMemory(wParam, surfaceBitsCommand, sizeof(SURFACE_BITS_COMMAND));
 
+#ifdef WITH_STREAM_POOL
+	StreamPool_AddRef(context->rdp->transport->ReceivePool, surfaceBitsCommand->bitmapData);
+#else
 	wParam->bitmapData = (BYTE*) malloc(wParam->bitmapDataLength);
 	CopyMemory(wParam->bitmapData, surfaceBitsCommand->bitmapData, wParam->bitmapDataLength);
+#endif
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
@@ -952,7 +965,14 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 				BITMAP_UPDATE* wParam = (BITMAP_UPDATE*) msg->wParam;
 
 				for (index = 0; index < wParam->number; index++)
+				{
+#ifdef WITH_STREAM_POOL
+					rdpContext* context = (rdpContext*) msg->context;
+					StreamPool_Release(context->rdp->transport->ReceivePool, wParam->rectangles[index].bitmapDataStream);
+#else
 					free(wParam->rectangles[index].bitmapDataStream);
+#endif
+				}
 
 				free(wParam);
 			}
@@ -985,17 +1005,22 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 			IFCALL(proxy->SurfaceCommand, msg->context, (wStream*) msg->wParam);
 			{
 				wStream* s = (wStream*) msg->wParam;
-				free(s->buffer);
-				free(s);
+				Stream_Free(s, TRUE);
 			}
 			break;
 
 		case Update_SurfaceBits:
 			IFCALL(proxy->SurfaceBits, msg->context, (SURFACE_BITS_COMMAND*) msg->wParam);
 			{
+#ifdef WITH_STREAM_POOL
+				rdpContext* context = (rdpContext*) msg->context;
+				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
+				StreamPool_Release(context->rdp->transport->ReceivePool, wParam->bitmapData);
+#else
 				SURFACE_BITS_COMMAND* wParam = (SURFACE_BITS_COMMAND*) msg->wParam;
 				free(wParam->bitmapData);
 				free(wParam);
+#endif
 			}
 			break;
 
@@ -1494,22 +1519,6 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 
 	if (message->id == WMQ_QUIT)
 		return 0;
-
-	/**
-	 * FIXME:
-	 *
-	 * Certain messages like RefreshRect, SuppressOutput and SurfaceFrameAcknowledge
-	 * and not really output but really input events that send a message to the server.
-	 * Right now they will race with other code making use of the transport layer.
-	 */
-
-	switch (message->id)
-	{
-		case FREERDP_UPDATE_REFRESH_RECT:
-		case FREERDP_UPDATE_SUPPRESS_OUTPUT:
-		case FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE:
-			return 1;
-	}
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);

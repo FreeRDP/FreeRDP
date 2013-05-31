@@ -50,19 +50,15 @@
 
 static void* transport_client_thread(void* arg);
 
-wStream* transport_recv_stream_init(rdpTransport* transport, int size)
-{
-	wStream* s = transport->ReceiveStream;
-	stream_check_size(s, size);
-	stream_set_pos(s, 0);
-	return s;
-}
-
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
-	wStream* s = transport->SendStream;
-	stream_check_size(s, size);
-	stream_set_pos(s, 0);
+	wStream* s;
+
+	s = StreamPool_Take(transport->ReceivePool, size);
+
+	Stream_EnsureCapacity(s, size);
+	Stream_SetPosition(s, 0);
+
 	return s;
 }
 
@@ -322,13 +318,13 @@ UINT32 nla_read_header(wStream* s)
 		{
 			length = s->pointer[2];
 			length += 3;
-			stream_seek(s, 3);
+			Stream_Seek(s, 3);
 		}
 		else if ((s->pointer[1] & ~(0x80)) == 2)
 		{
 			length = (s->pointer[2] << 8) | s->pointer[3];
 			length += 4;
-			stream_seek(s, 4);
+			Stream_Seek(s, 4);
 		}
 		else
 		{
@@ -339,7 +335,7 @@ UINT32 nla_read_header(wStream* s)
 	{
 		length = s->pointer[1];
 		length += 2;
-		stream_seek(s, 2);
+		Stream_Seek(s, 2);
 	}
 
 	return length;
@@ -406,29 +402,29 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 int transport_read(rdpTransport* transport, wStream* s)
 {
 	int status;
-	int pdu_bytes;
-	int stream_bytes;
+	int pduLength;
+	int streamPosition;
 	int transport_status;
 
-	pdu_bytes = 0;
+	pduLength = 0;
 	transport_status = 0;
 
 	/* first check if we have header */
-	stream_bytes = stream_get_length(s);
+	streamPosition = Stream_GetPosition(s);
 
-	if (stream_bytes < 4)
+	if (streamPosition < 4)
 	{
-		status = transport_read_layer(transport, s->buffer + stream_bytes, 4 - stream_bytes);
+		status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, 4 - streamPosition);
 
 		if (status < 0)
 			return status;
 
 		transport_status += status;
 
-		if ((status + stream_bytes) < 4)
+		if ((status + streamPosition) < 4)
 			return transport_status;
 
-		stream_bytes += status;
+		streamPosition += status;
 	}
 
 	/* if header is present, read in exactly one PDU */
@@ -436,7 +432,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 	{
 		/* TPKT header */
 
-		pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
+		pduLength = (s->buffer[2] << 8) | s->buffer[3];
 	}
 	else if (s->buffer[0] == 0x30)
 	{
@@ -446,13 +442,13 @@ int transport_read(rdpTransport* transport, wStream* s)
 		{
 			if ((s->buffer[1] & ~(0x80)) == 1)
 			{
-				pdu_bytes = s->buffer[2];
-				pdu_bytes += 3;
+				pduLength = s->buffer[2];
+				pduLength += 3;
 			}
 			else if ((s->buffer[1] & ~(0x80)) == 2)
 			{
-				pdu_bytes = (s->buffer[2] << 8) | s->buffer[3];
-				pdu_bytes += 4;
+				pduLength = (s->buffer[2] << 8) | s->buffer[3];
+				pduLength += 4;
 			}
 			else
 			{
@@ -461,8 +457,8 @@ int transport_read(rdpTransport* transport, wStream* s)
 		}
 		else
 		{
-			pdu_bytes = s->buffer[1];
-			pdu_bytes += 2;
+			pduLength = s->buffer[1];
+			pduLength += 2;
 		}
 	}
 	else
@@ -470,12 +466,12 @@ int transport_read(rdpTransport* transport, wStream* s)
 		/* Fast-Path Header */
 
 		if (s->buffer[1] & 0x80)
-			pdu_bytes = ((s->buffer[1] & 0x7f) << 8) | s->buffer[2];
+			pduLength = ((s->buffer[1] & 0x7F) << 8) | s->buffer[2];
 		else
-			pdu_bytes = s->buffer[1];
+			pduLength = s->buffer[1];
 	}
 
-	status = transport_read_layer(transport, s->buffer + stream_bytes, pdu_bytes - stream_bytes);
+	status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, pduLength - streamPosition);
 
 	if (status < 0)
 		return status;
@@ -484,10 +480,10 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 #ifdef WITH_DEBUG_TRANSPORT
 	/* dump when whole PDU is read */
-	if (stream_bytes + status >= pdu_bytes)
+	if (streamPosition + status >= pduLength)
 	{
 		fprintf(stderr, "Local < Remote\n");
-		winpr_HexDump(s->buffer, pdu_bytes);
+		winpr_HexDump(Stream_Buffer(s), pduLength);
 	}
 #endif
 
@@ -498,41 +494,42 @@ static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	stream_check_size(transport->ReceiveBuffer, 32 * 1024);
 	status = transport_read(transport, transport->ReceiveBuffer);
 
 	if (status <= 0)
 		return status;
 
-	stream_seek(transport->ReceiveBuffer, status);
+	Stream_Seek(transport->ReceiveBuffer, status);
 
 	return status;
 }
 
 int transport_write(rdpTransport* transport, wStream* s)
 {
-	int status = -1;
 	int length;
+	int status = -1;
 
-	length = stream_get_length(s);
-	stream_set_pos(s, 0);
+	WaitForSingleObject(transport->WriteMutex, INFINITE);
+
+	length = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
 
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{
 		fprintf(stderr, "Local > Remote\n");
-		winpr_HexDump(s->buffer, length);
+		winpr_HexDump(Stream_Buffer(s), length);
 	}
 #endif
 
 	while (length > 0)
 	{
 		if (transport->layer == TRANSPORT_LAYER_TLS)
-			status = tls_write(transport->TlsOut, stream_get_tail(s), length);
+			status = tls_write(transport->TlsOut, Stream_Pointer(s), length);
 		else if (transport->layer == TRANSPORT_LAYER_TCP)
-			status = tcp_write(transport->TcpOut, stream_get_tail(s), length);
+			status = tcp_write(transport->TcpOut, Stream_Pointer(s), length);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
-			status = tsg_write(transport->tsg, stream_get_tail(s), length);
+			status = tsg_write(transport->tsg, Stream_Pointer(s), length);
 
 		if (status < 0)
 			break; /* error occurred */
@@ -556,7 +553,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 		}
 
 		length -= status;
-		stream_seek(s, status);
+		Stream_Seek(s, status);
 	}
 
 	if (status < 0)
@@ -565,8 +562,14 @@ int transport_write(rdpTransport* transport, wStream* s)
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 	}
 
+	if (s->pool)
+		Stream_Release(s);
+
+	ReleaseMutex(transport->WriteMutex);
+
 	return status;
 }
+
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
@@ -612,6 +615,30 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	}
 }
 
+void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
+{
+	events[*count] = tcp_get_event_handle(transport->TcpIn);
+	(*count)++;
+
+	if (transport->SplitInputOutput)
+	{
+		events[*count] = tcp_get_event_handle(transport->TcpOut);
+		(*count)++;
+	}
+
+	if (transport->ReceiveEvent)
+	{
+		events[*count] = transport->ReceiveEvent;
+		(*count)++;
+	}
+
+	if (transport->GatewayEvent)
+	{
+		events[*count] = transport->GatewayEvent;
+		(*count)++;
+	}
+}
+
 int transport_check_fds(rdpTransport** ptransport)
 {
 	int pos;
@@ -631,16 +658,16 @@ int transport_check_fds(rdpTransport** ptransport)
 	if (status < 0)
 		return status;
 
-	while ((pos = stream_get_pos(transport->ReceiveBuffer)) > 0)
+	while ((pos = Stream_GetPosition(transport->ReceiveBuffer)) > 0)
 	{
-		stream_set_pos(transport->ReceiveBuffer, 0);
+		Stream_SetPosition(transport->ReceiveBuffer, 0);
 
 		if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
 		{
 			/* Ensure the TPKT header is available. */
 			if (pos <= 4)
 			{
-				stream_set_pos(transport->ReceiveBuffer, pos);
+				Stream_SetPosition(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
@@ -653,7 +680,7 @@ int transport_check_fds(rdpTransport** ptransport)
 			/* Ensure the TSRequest header is available. */
 			if (pos <= 4)
 			{
-				stream_set_pos(transport->ReceiveBuffer, pos);
+				Stream_SetPosition(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
@@ -662,7 +689,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 			if (pos < length)
 			{
-				stream_set_pos(transport->ReceiveBuffer, pos);
+				Stream_SetPosition(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
@@ -673,7 +700,7 @@ int transport_check_fds(rdpTransport** ptransport)
 			/* Ensure the Fast Path header is available. */
 			if (pos <= 2)
 			{
-				stream_set_pos(transport->ReceiveBuffer, pos);
+				Stream_SetPosition(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
@@ -682,7 +709,7 @@ int transport_check_fds(rdpTransport** ptransport)
 
 			if (pos < length)
 			{
-				stream_set_pos(transport->ReceiveBuffer, pos);
+				Stream_SetPosition(transport->ReceiveBuffer, pos);
 				return 0;
 			}
 
@@ -692,35 +719,26 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (length == 0)
 		{
 			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			winpr_HexDump(stream_get_head(transport->ReceiveBuffer), pos);
+			winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
 			return -1;
 		}
 
 		if (pos < length)
 		{
-			stream_set_pos(transport->ReceiveBuffer, pos);
+			Stream_SetPosition(transport->ReceiveBuffer, pos);
 			return 0; /* Packet is not yet completely received. */
 		}
 
 		received = transport->ReceiveBuffer;
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
-		transport->ReceiveBuffer->pointer = transport->ReceiveBuffer->buffer;
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 
-		stream_set_pos(received, length);
-		stream_seal(received);
-		stream_set_pos(received, 0);
-
-		/**
-		 * ReceiveCallback return values:
-		 *
-		 * -1: synchronous failure
-		 *  0: synchronous success
-		 *  1: asynchronous return
-		 */
+		Stream_SetPosition(received, length);
+		Stream_SealLength(received);
+		Stream_SetPosition(received, 0);
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		ObjectPool_Return(transport->ReceivePool, received);
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
@@ -764,22 +782,28 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[3];
-	HANDLE ReadEvent;
+	HANDLE events[32];
 	freerdp* instance;
 	rdpTransport* transport;
 
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
 
-	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, transport->TcpIn->sockfd);
-
-	nCount = 0;
-	events[nCount++] = transport->stopEvent;
-	events[nCount++] = ReadEvent;
-
 	while (1)
 	{
+		nCount = 0;
+		events[nCount++] = transport->stopEvent;
+		events[nCount] = transport->connectedEvent;
+
+		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
+
+		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
+
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
@@ -787,26 +811,11 @@ static void* transport_client_thread(void* arg)
 			break;
 		}
 
-		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
-		{
-			if (!freerdp_check_fds(instance))
-				break;
-		}
+		if (!freerdp_check_fds(instance))
+			break;
 	}
 
-	CloseHandle(ReadEvent);
-
 	return NULL;
-}
-
-wStream* transport_receive_buffer_pool_new()
-{
-	wStream* pdu = NULL;
-
-	pdu = stream_new(BUFFER_SIZE);
-	pdu->pointer = pdu->buffer;
-
-	return pdu;
 }
 
 rdpTransport* transport_new(rdpSettings* settings)
@@ -826,19 +835,18 @@ rdpTransport* transport_new(rdpSettings* settings)
 		/* a small 0.1ms delay when transport is blocking. */
 		transport->SleepInterval = 100;
 
-		transport->ReceivePool = ObjectPool_New(TRUE);
-		ObjectPool_Object(transport->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) stream_free;
-		ObjectPool_Object(transport->ReceivePool)->fnObjectNew = (OBJECT_NEW_FN) transport_receive_buffer_pool_new;
+		transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 		/* receive buffer for non-blocking read. */
-		transport->ReceiveBuffer = ObjectPool_Take(transport->ReceivePool);
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 		transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-		/* buffers for blocking read/write */
-		transport->ReceiveStream = stream_new(BUFFER_SIZE);
-		transport->SendStream = stream_new(BUFFER_SIZE);
+		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		transport->blocking = TRUE;
+
+		transport->ReadMutex = CreateMutex(NULL, FALSE, NULL);
+		transport->WriteMutex = CreateMutex(NULL, FALSE, NULL);
 
 		transport->layer = TRANSPORT_LAYER_TCP;
 	}
@@ -851,13 +859,12 @@ void transport_free(rdpTransport* transport)
 	if (transport != NULL)
 	{
 		if (transport->ReceiveBuffer)
-			ObjectPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
+			Stream_Release(transport->ReceiveBuffer);
 
-		ObjectPool_Free(transport->ReceivePool);
+		StreamPool_Free(transport->ReceivePool);
 
-		stream_free(transport->ReceiveStream);
-		stream_free(transport->SendStream);
 		CloseHandle(transport->ReceiveEvent);
+		CloseHandle(transport->connectedEvent);
 
 		if (transport->TlsIn)
 			tls_free(transport->TlsIn);
@@ -871,6 +878,9 @@ void transport_free(rdpTransport* transport)
 			tcp_free(transport->TcpOut);
 
 		tsg_free(transport->tsg);
+
+		CloseHandle(transport->ReadMutex);
+		CloseHandle(transport->WriteMutex);
 
 		free(transport);
 	}

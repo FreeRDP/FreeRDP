@@ -9,6 +9,7 @@
 
 #import "EncryptionController.h"
 #import "SFHFKeychainUtils.h"
+#import "TSXAdditions.h"
 
 @interface EncryptionController (Private)
 
@@ -109,7 +110,14 @@ static EncryptionController* _shared_encryption_controller = nil;
 
 - (NSString*)keychainDefaultPassword
 {
-    return [[UIDevice currentDevice] uniqueIdentifier];
+    NSString* password = [[NSUserDefaults standardUserDefaults] stringForKey:@"UUID"];
+    if ([password length] == 0)
+    {
+        password = [NSString stringWithUUID];
+        [[NSUserDefaults standardUserDefaults] setObject:password forKey:@"UUID"];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"TSXMasterPasswordVerification"];
+    }
+    return password;
 }
 
 #pragma mark -

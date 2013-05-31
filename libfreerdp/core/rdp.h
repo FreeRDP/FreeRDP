@@ -54,8 +54,8 @@
 #define SEC_ENCRYPT						0x0008
 #define SEC_RESET_SEQNO						0x0010
 #define SEC_IGNORE_SEQNO					0x0020
-#define	 SEC_INFO_PKT						0x0040
-#define	 SEC_LICENSE_PKT					0x0080
+#define	SEC_INFO_PKT						0x0040
+#define	SEC_LICENSE_PKT						0x0080
 #define SEC_LICENSE_ENCRYPT_CS					0x0200
 #define SEC_LICENSE_ENCRYPT_SC					0x0200
 #define SEC_REDIRECTION_PKT					0x0400
@@ -156,6 +156,7 @@ struct rdp_rdp
 	UINT32 errorInfo;
 	UINT32 finalize_sc_pdus;
 	BOOL disconnect;
+	BOOL resendFocus;
 };
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags);
@@ -169,12 +170,13 @@ BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* 
 
 void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
+int rdp_init_stream(rdpRdp* rdp, wStream* s);
 wStream* rdp_send_stream_init(rdpRdp* rdp);
 
 BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
 void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id);
 
-wStream* rdp_pdu_init(rdpRdp* rdp);
+int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s);
 BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id);
 
 wStream* rdp_data_pdu_init(rdpRdp* rdp);
@@ -182,7 +184,6 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
 BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id);
-void rdp_recv(rdpRdp* rdp);
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size);
 

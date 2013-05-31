@@ -238,7 +238,7 @@
     if(isupper(character) && _shift_pressed == NO)
     {
         character = tolower(character);
-        [self sendVirtualKey:VK_SHIFT up:NO];
+        [self sendVirtualKey:VK_LSHIFT up:NO];
         shift_was_sent = YES;
     }
     
@@ -253,7 +253,7 @@
     
     // send the missing shift up if we had a shift down
     if(shift_was_sent)
-        [self sendVirtualKey:VK_SHIFT up:YES];
+        [self sendVirtualKey:VK_LSHIFT up:YES];
 }
 
 - (void)handleSpecialKey:(int)character

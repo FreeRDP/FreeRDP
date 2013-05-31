@@ -33,6 +33,10 @@
 
 #else
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PATHCCH_ALLOW_LONG_PATHS	0x00000001 /* Allow building of \\?\ paths if longer than MAX_PATH */
 
 #define VOLUME_PREFIX			_T("\\\\?\\Volume")
@@ -110,6 +114,7 @@ WINPR_API HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath);
 
 WINPR_API HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
+
 
 #ifdef UNICODE
 #define PathCchAddBackslash		PathCchAddBackslashW
@@ -248,6 +253,10 @@ WINPR_API PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags);
 #define PathGetSharedLibraryExtension	PathGetSharedLibraryExtensionA
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /**
@@ -261,6 +270,10 @@ WINPR_API PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags);
 #define KNOWN_PATH_XDG_CACHE_HOME	5
 #define KNOWN_PATH_XDG_RUNTIME_DIR	6
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API char* GetKnownPath(int id);
 WINPR_API char* GetKnownSubPath(int id, char* path);
 WINPR_API char* GetCombinedPath(char* basePath, char* subPath);
@@ -269,6 +282,10 @@ WINPR_API char* GetCombinedPath(char* basePath, char* subPath);
 
 WINPR_API BOOL PathFileExistsA(LPCSTR pszPath);
 WINPR_API BOOL PathFileExistsW(LPCWSTR pszPath);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef UNICODE
 #define PathFileExists	PathFileExistsW

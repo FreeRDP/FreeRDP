@@ -40,6 +40,8 @@
 #include <errno.h>
 #endif
 
+#include "../handle/handle.h"
+
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
@@ -78,7 +80,8 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		}
 #endif
 
-		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
+		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
+		handle = (HANDLE) event;
 	}
 
 	if (!cs.LockSemaphore)
@@ -122,8 +125,6 @@ BOOL SetEvent(HANDLE hEvent)
 
 	status = FALSE;
 
-	EnterCriticalSection(&cs);
-
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
 		event = (WINPR_EVENT*) Object;
@@ -153,8 +154,6 @@ BOOL SetEvent(HANDLE hEvent)
 #endif
 	}
 
-	LeaveCriticalSection(&cs);
-
 	return status;
 }
 
@@ -167,8 +166,6 @@ BOOL ResetEvent(HANDLE hEvent)
 	WINPR_EVENT* event;
 
 	status = FALSE;
-
-	EnterCriticalSection(&cs);
 
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
@@ -196,8 +193,6 @@ BOOL ResetEvent(HANDLE hEvent)
 		}
 	}
 
-	LeaveCriticalSection(&cs);
-
 	return status;
 }
 
@@ -219,7 +214,8 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;
 
-		handle = winpr_Handle_Insert(HANDLE_TYPE_EVENT, event);
+		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
+		handle = (HANDLE) event;
 	}
 
 	return handle;
@@ -268,6 +264,31 @@ int GetEventFileDescriptor(HANDLE hEvent)
 	event = (WINPR_EVENT*) Object;
 
 	return event->pipe_fd[0];
+#else
+	return -1;
+#endif
+}
+
+/*
+ * Set inner file descriptor for usage with select()
+ * This file descriptor is not usable on Windows
+ */
+
+int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor)
+{
+#ifndef _WIN32
+	ULONG Type;
+	PVOID Object;
+	WINPR_EVENT* event;
+
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+		return -1;
+
+	event = (WINPR_EVENT*) Object;
+
+	event->pipe_fd[0] = FileDescriptor;
+
+	return 0;
 #else
 	return -1;
 #endif

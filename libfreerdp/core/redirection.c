@@ -63,16 +63,16 @@ void rdp_print_redirection_flags(UINT32 flags)
 
 BOOL rdp_string_read_length32(wStream* s, rdpString* string)
 {
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	stream_read_UINT32(s, string->length);
+	Stream_Read_UINT32(s, string->length);
 
-	if(stream_get_left(s) < string->length)
+	if(Stream_GetRemainingLength(s) < string->length)
 		return FALSE;
 
 	string->unicode = (char*) malloc(string->length);
-	stream_read(s, string->unicode, string->length);
+	Stream_Read(s, string->unicode, string->length);
 
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
 
@@ -94,12 +94,12 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	if (stream_get_left(s) < 12)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
-	stream_read_UINT16(s, flags); /* flags (2 bytes) */
-	stream_read_UINT16(s, length); /* length (2 bytes) */
-	stream_read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
-	stream_read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
+	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
+	Stream_Read_UINT16(s, length); /* length (2 bytes) */
+	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
+	Stream_Read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
 
 	DEBUG_REDIR("flags: 0x%04X, length:%d, sessionID:0x%08X", flags, length, redirection->sessionID);
 
@@ -116,14 +116,14 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, redirection->LoadBalanceInfoLength);
-		if (stream_get_left(s) < redirection->LoadBalanceInfoLength)
+		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
+		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
 			return FALSE;
 
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
-		stream_read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		Stream_Read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("loadBalanceInfo:");
 		winpr_HexDump(redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
@@ -147,11 +147,11 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_PASSWORD)
 	{
 		/* Note: length (hopefully) includes double zero termination */
-		if (stream_get_left(s) < 4)
+		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		stream_read_UINT32(s, redirection->PasswordCookieLength);
+		Stream_Read_UINT32(s, redirection->PasswordCookieLength);
 		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
-		stream_read(s, redirection->PasswordCookie, redirection->PasswordCookieLength);
+		Stream_Read(s, redirection->PasswordCookie, redirection->PasswordCookieLength);
 
 #ifdef WITH_DEBUG_REDIR
 		DEBUG_REDIR("password_cookie:");
@@ -186,11 +186,11 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
-		if (stream_get_left(s) < 8)
+		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		stream_read_UINT32(s, targetNetAddressesLength);
+		Stream_Read_UINT32(s, targetNetAddressesLength);
 
-		stream_read_UINT32(s, redirection->targetNetAddressesCount);
+		Stream_Read_UINT32(s, redirection->targetNetAddressesCount);
 		count = redirection->targetNetAddressesCount;
 
 		redirection->targetNetAddresses = (rdpString*) malloc(count * sizeof(rdpString));
@@ -204,7 +204,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (!stream_skip(s, 8)) /* pad (8 bytes) */
+	if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
 		return FALSE;
 
 	if (redirection->flags & LB_NOREDIRECT)
@@ -220,9 +220,9 @@ BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 {
-	return stream_skip(s, 2) && 					/* pad2Octets (2 bytes) */
+	return Stream_SafeSeek(s, 2) && 					/* pad2Octets (2 bytes) */
 		rdp_recv_server_redirection_pdu(rdp, s) &&
-		stream_skip(s, 1);							/* pad2Octets (1 byte) */
+		Stream_SafeSeek(s, 1);							/* pad2Octets (1 byte) */
 }
 
 rdpRedirection* redirection_new()

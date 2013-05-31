@@ -28,6 +28,11 @@
 #include <winpr/wtypes.h>
 
 #include <winpr/synch.h>
+#include <winpr/stream.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void* (*OBJECT_NEW_FN)(void);
 typedef void (*OBJECT_FREE_FN)(void* obj);
@@ -334,4 +339,7 @@ WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
 WINPR_API wMessagePipe* MessagePipe_New(void);
 WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* WINPR_COLLECTIONS_H */

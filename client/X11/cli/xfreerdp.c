@@ -41,6 +41,12 @@ int main(int argc, char* argv[])
 	freerdp_client_global_init();
 
 	xfi = freerdp_client_new(argc, argv);
+
+	if (xfi == NULL)
+	{
+		return 1;
+	}
+
 	instance = xfi->instance;
 
 	freerdp_client_start(xfi);
@@ -49,8 +55,7 @@ int main(int argc, char* argv[])
 
 	GetExitCodeThread(xfi->thread, &dwExitCode);
 
-	freerdp_context_free(instance);
-	freerdp_free(instance);
+	freerdp_client_free(xfi);
 
 	freerdp_client_global_uninit();
 

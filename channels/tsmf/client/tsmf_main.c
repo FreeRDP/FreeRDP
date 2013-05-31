@@ -81,23 +81,23 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 	int status;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = stream_new(32);
-	stream_write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
-	stream_write_UINT32(s, message_id);
-	stream_write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
-	stream_write_UINT32(s, callback->stream_id); /* StreamId */
-	stream_write_UINT64(s, duration); /* DataDuration */
-	stream_write_UINT64(s, data_size); /* cbData */
+	s = Stream_New(NULL, 32);
+	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
+	Stream_Write_UINT32(s, message_id);
+	Stream_Write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
+	Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
+	Stream_Write_UINT64(s, duration); /* DataDuration */
+	Stream_Write_UINT64(s, data_size); /* cbData */
 	
-	DEBUG_DVC("response size %d", (int) stream_get_length(s));
-	status = callback->channel->Write(callback->channel, stream_get_length(s), stream_get_head(s), NULL);
+	DEBUG_DVC("response size %d", (int) Stream_GetPosition(s));
+	status = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
 
 	if (status)
 	{
 		DEBUG_WARN("response error %d", status);
 	}
 
-	stream_free(s);
+	Stream_Free(s, TRUE);
 }
 
 BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, wMessage* event)
@@ -136,14 +136,14 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		DEBUG_WARN("invalid size. cbSize=%d", cbSize);
 		return 1;
 	}
-	input = stream_new(0);
-	stream_attach(input, (BYTE*) pBuffer, cbSize);
-	output = stream_new(256);
-	stream_seek(output, 8);
 
-	stream_read_UINT32(input, InterfaceId);
-	stream_read_UINT32(input, MessageId);
-	stream_read_UINT32(input, FunctionId);
+	input = Stream_New((BYTE*) pBuffer, cbSize);
+	output = Stream_New(NULL, 256);
+	Stream_Seek(output, 8);
+
+	Stream_Read_UINT32(input, InterfaceId);
+	Stream_Read_UINT32(input, MessageId);
+	Stream_Read_UINT32(input, FunctionId);
 	DEBUG_DVC("cbSize=%d InterfaceId=0x%X MessageId=0x%X FunctionId=0x%X",
 		cbSize, InterfaceId, MessageId, FunctionId);
 
@@ -181,9 +181,9 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			switch (FunctionId)
 			{
 				case SET_CHANNEL_PARAMS:
-					memcpy(callback->presentation_id, stream_get_tail(input), 16);
-					stream_seek(input, 16);
-					stream_read_UINT32(input, callback->stream_id);
+					memcpy(callback->presentation_id, Stream_Pointer(input), 16);
+					Stream_Seek(input, 16);
+					Stream_Read_UINT32(input, callback->stream_id);
 					DEBUG_DVC("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
 					ifman.output_pending = TRUE;
 					status = 0;
@@ -211,6 +211,10 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 				case REMOVE_STREAM:
 					status = tsmf_ifman_remove_stream(&ifman);
+					break;
+
+				case SET_SOURCE_VIDEO_RECT:
+					status = tsmf_ifman_set_source_video_rect(&ifman);
 					break;
 
 				case SHUTDOWN_PRESENTATION_REQ:
@@ -282,8 +286,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			break;
 	}
 
-	stream_detach(input);
-	stream_free(input);
+	Stream_Free(input, FALSE);
 	input = NULL;
 	ifman.input = NULL;
 
@@ -317,20 +320,20 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	if (status == 0 && !ifman.output_pending)
 	{
 		/* Response packet does not have FunctionId */
-		length = stream_get_length(output);
-		stream_set_pos(output, 0);
-		stream_write_UINT32(output, ifman.output_interface_id);
-		stream_write_UINT32(output, MessageId);
+		length = Stream_GetPosition(output);
+		Stream_SetPosition(output, 0);
+		Stream_Write_UINT32(output, ifman.output_interface_id);
+		Stream_Write_UINT32(output, MessageId);
 
 		DEBUG_DVC("response size %d", length);
-		status = callback->channel->Write(callback->channel, length, stream_get_head(output), NULL);
+		status = callback->channel->Write(callback->channel, length, Stream_Buffer(output), NULL);
 		if (status)
 		{
 			DEBUG_WARN("response error %d", status);
 		}
 	}
 
-	stream_free(output);
+	Stream_Free(output, TRUE);
 
 	return status;
 }

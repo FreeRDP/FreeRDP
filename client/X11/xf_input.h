@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * X11 Input
  *
- * Copyright 2012 Thomas Goddard
+ * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,19 @@
  * limitations under the License.
  */
 
-#import "MRDPRailWindow.h"
+#ifndef __XF_INPUT_H
+#define __XF_INPUT_H
 
-@implementation MRDPRailWindow
+#include "xf_interface.h"
+#include "xfreerdp.h"
 
-- (BOOL) canBecomeKeyWindow
-{
-	return YES;
-}
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
 
-@end
+int xf_input_init(xfInfo* xfi, Window window);
+
+int xf_input_handle_event(xfInfo* xfi, XEvent* event);
+void xf_process_rdpei_event(xfInfo* xfi, wMessage* event);
+
+#endif

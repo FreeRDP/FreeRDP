@@ -50,7 +50,8 @@
 
         _advanced_keyboard_view = nil;
         _advanced_keyboard_visible = NO;
-        _requesting_advanced_keyboard = NO;    
+        _requesting_advanced_keyboard = NO;
+        _keyboard_height_delta = 0;
 
         _session_toolbar_visible = NO;
         
@@ -227,8 +228,7 @@
 	{
 		for(int i = 0 ; i < [string length] ; i++)
 		{
-			NSString *characterTyped = [string substringWithRange:NSMakeRange(i, 1)];
-            unichar curChar = [characterTyped characterAtIndex:0];
+            unichar curChar = [string characterAtIndex:i];
 
             // special handling for return/enter key
             if(curChar == '\n')
@@ -581,14 +581,20 @@
 #pragma mark iOS Keyboard Notification Handlers
 
 - (void)keyboardWillShow:(NSNotification *)notification
-{   
+{
 	CGRect keyboardEndFrame = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect keyboardFrame = [[self view] convertRect:keyboardEndFrame toView:nil];
+
+    CGFloat newHeightDelta = (keyboardFrame.size.height - _keyboard_height_delta);
+    if (newHeightDelta < 0.1 && newHeightDelta > -0.1)
+        return; // nothing changed
     
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationCurve:[[[notification userInfo] objectForKey:UIKeyboardAnimationCurveUserInfoKey] intValue]];
     [UIView setAnimationDuration:[[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
 	CGRect frame = [_session_scrollview frame];
-	frame.size.height -= [[self view] convertRect:keyboardEndFrame toView:nil].size.height;
+	frame.size.height -= newHeightDelta;
+    _keyboard_height_delta += newHeightDelta;
 	[_session_scrollview setFrame:frame];
     [_touchpointer_view setFrame:frame];    
 	[UIView commitAnimations];
@@ -618,6 +624,7 @@
     [_session_scrollview setFrame:frame];
     [_touchpointer_view setFrame:frame];
     [UIView commitAnimations];
+    _keyboard_height_delta = 0;
 }
 
 - (void)keyboardDidHide:(NSNotification*)notification

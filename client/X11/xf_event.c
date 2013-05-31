@@ -29,6 +29,7 @@
 #include "xf_rail.h"
 #include "xf_window.h"
 #include "xf_cliprdr.h"
+#include "xf_input.h"
 
 #include "xf_event.h"
 
@@ -95,7 +96,15 @@ static BOOL xf_event_Expose(xfInfo* xfi, XEvent* event, BOOL app)
 
 	if (!app)
 	{
-		XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		if (xfi->scale != 1.0)
+		{
+			xf_draw_screen_scaled(xfi);
+		}
+		else
+		{
+			XCopyArea(xfi->display, xfi->primary,
+					xfi->window->handle, xfi->gc, x, y, w, h, x, y);
+		}
 	}
 	else
 	{
@@ -123,8 +132,8 @@ static BOOL xf_event_VisibilityNotify(xfInfo* xfi, XEvent* event, BOOL app)
 
 static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
-	rdpInput* input;
 	int x, y;
+	rdpInput* input;
 	Window childWindow;
 
 	input = xfi->instance->input;
@@ -151,6 +160,13 @@ static BOOL xf_event_MotionNotify(xfInfo* xfi, XEvent* event, BOOL app)
 			x, y, &x, &y, &childWindow);
 	}
 
+	if (xfi->scale != 1.0)
+	{
+		/* Take scaling in to consideration */
+		x = (int) (x * (1.0 / xfi->scale));
+		y = (int) (y * (1.0 / xfi->scale));
+	}
+
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
 	if (xfi->fullscreen)
@@ -165,10 +181,10 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	int x, y;
 	int flags;
-	Window childWindow;
 	BOOL wheel;
 	BOOL extended;
 	rdpInput* input;
+	Window childWindow;
 
 	input = xfi->instance->input;
 
@@ -254,6 +270,13 @@ static BOOL xf_event_ButtonPress(xfInfo* xfi, XEvent* event, BOOL app)
 					x, y, &x, &y, &childWindow);
 			}
 
+			if (xfi->scale != 1.0)
+			{
+				/* Take scaling in to consideration */
+				x = (int) (x * (1.0 / xfi->scale));
+				y = (int) (y * (1.0 / xfi->scale));
+			}
+
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
 			else
@@ -268,9 +291,9 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 {
 	int x, y;
 	int flags;
-	Window childWindow;
 	BOOL extended;
 	rdpInput* input;
+	Window childWindow;
 
 	input = xfi->instance->input;
 
@@ -335,6 +358,13 @@ static BOOL xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, BOOL app)
 			XTranslateCoordinates(xfi->display, event->xbutton.window,
 				RootWindowOfScreen(xfi->screen),
 				x, y, &x, &y, &childWindow);
+		}
+
+		if (xfi->scale != 1.0)
+		{
+			/* Take scaling in to consideration */
+			x = (int) (x * (1.0 / xfi->scale));
+			y = (int) (y * (1.0 / xfi->scale));
 		}
 
 		if (extended)
@@ -522,6 +552,15 @@ static BOOL xf_event_ConfigureNotify(xfInfo* xfi, XEvent* event, BOOL app)
 {
         rdpWindow* window;
         rdpRail* rail = ((rdpContext*) xfi->context)->rail;
+
+	if (xfi->width != event->xconfigure.width)
+	{
+		xfi->scale = (double) event->xconfigure.width / (double) xfi->originalWidth;
+		xfi->currentWidth = event->xconfigure.width;
+		xfi->currentHeight = event->xconfigure.width;
+
+		xf_draw_screen_scaled(xfi);
+	}
 
         window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
@@ -976,6 +1015,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			status = xf_event_PropertyNotify(xfi, event, xfi->remote_app);
 			break;
 	}
+
+	xf_input_handle_event(xfi, event);
 
 	XSync(xfi->display, FALSE);
 

@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/string.h>
 
 #include "http.h"
 
@@ -249,7 +250,7 @@ wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request
 
 	Stream_Write(s, "\0", 1); /* append null terminator */
 	Stream_Rewind(s, 1); /* don't include null terminator in length */
-	Stream_Length(s) = Stream_Position(s);
+	Stream_Length(s) = Stream_GetPosition(s);
 
 	return s;
 }
@@ -280,31 +281,36 @@ void http_request_free(HttpRequest* http_request)
 	}
 }
 
-void http_response_parse_header_status_line(HttpResponse* http_response, char* status_line)
+BOOL http_response_parse_header_status_line(HttpResponse* http_response, char* status_line)
 {
 	char* separator;
 	char* status_code;
 	char* reason_phrase;
 
 	separator = strchr(status_line, ' ');
+	if (!separator)
+		return FALSE;
 	status_code = separator + 1;
 
 	separator = strchr(status_code, ' ');
+	if (!separator)
+		return FALSE;
 	reason_phrase = separator + 1;
 
 	*separator = '\0';
 	http_response->StatusCode = atoi(status_code);
 	http_response->ReasonPhrase = _strdup(reason_phrase);
 	*separator = ' ';
+	return TRUE;
 }
 
 void http_response_parse_header_field(HttpResponse* http_response, char* name, char* value)
 {
-	if (strcmp(name, "Content-Length") == 0)
+	if (_stricmp(name, "Content-Length") == 0)
 	{
 		http_response->ContentLength = atoi(value);
 	}
-	else if (strcmp(name, "Authorization") == 0)
+	else if (_stricmp(name, "Authorization") == 0)
 	{
 		char* separator;
 
@@ -320,7 +326,7 @@ void http_response_parse_header_field(HttpResponse* http_response, char* name, c
 			*separator = ' ';
 		}
 	}
-	else if (strcmp(name, "WWW-Authenticate") == 0)
+	else if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
 		char* separator;
 
@@ -348,36 +354,63 @@ void http_response_parse_header_field(HttpResponse* http_response, char* name, c
 	}
 }
 
-void http_response_parse_header(HttpResponse* http_response)
+BOOL http_response_parse_header(HttpResponse* http_response)
 {
 	int count;
 	char* line;
 	char* name;
 	char* value;
-	char* separator;
+	char* colon_pos;
+	char* end_of_header;
+	char end_of_header_char;
+	char c;
 
-	http_response_parse_header_status_line(http_response, http_response->lines[0]);
+	if (!http_response_parse_header_status_line(http_response, http_response->lines[0]))
+		return FALSE;
 
 	for (count = 1; count < http_response->count; count++)
 	{
 		line = http_response->lines[count];
 
-		separator = strstr(line, ": ");
+		/**
+		 * name         end_of_header
+		 * |            |
+		 * v            v
+		 * <header name>   :     <header value>
+		 *                 ^     ^
+		 *                 |     |
+		 *         colon_pos     value
+		 */
+		colon_pos = strchr(line, ':');
+		if ((colon_pos == NULL) || (colon_pos == line))
+			return FALSE;
 
-		if (separator == NULL)
-			continue;
-
-		separator[0] = '\0';
-		separator[1] = '\0';
+		/* retrieve the position just after header name */
+		for(end_of_header = colon_pos; end_of_header != line; end_of_header--)
+		{
+			c = end_of_header[-1];
+			if (c != ' ' && c != '\t' && c != ':')
+				break;
+		}
+		if (end_of_header == line)
+			return FALSE;
+		end_of_header_char = *end_of_header;
+		*end_of_header = '\0';
 
 		name = line;
-		value = separator + 2;
+
+		/* eat space and tabs before header value */
+		for (value = colon_pos + 1; *value; value++)
+		{
+			if ((*value != ' ') && (*value != '\t'))
+				break;
+		}
 
 		http_response_parse_header_field(http_response, name, value);
 
-		separator[0] = ':';
-		separator[1] = ' ';
+		*end_of_header = end_of_header_char;
 	}
+	return TRUE;
 }
 
 void http_response_print(HttpResponse* http_response)
@@ -435,17 +468,15 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		header_end = strstr((char*) buffer, "\r\n\r\n");
         
-		if (header_end)
-		{
-			header_end += 2;
-		}
-		else
+		if (!header_end)
 		{
 			fprintf(stderr, "http_response_recv: invalid response:\n");
 			winpr_HexDump(buffer, status);
 			http_response_free(http_response);
 			return NULL;
 		}
+
+		header_end += 2;
 
 		if (header_end != NULL)
 		{
@@ -478,7 +509,11 @@ HttpResponse* http_response_recv(rdpTls* tls)
 				count++;
 			}
 
-			http_response_parse_header(http_response);
+			if (!http_response_parse_header(http_response))
+			{
+				http_response_free(http_response);
+				return NULL;
+			}
 
 			if (http_response->ContentLength > 0)
 			{

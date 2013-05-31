@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * X11 Server Cursor
  *
- * Copyright 2012 Thomas Goddard
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@
  * limitations under the License.
  */
 
-#import <Cocoa/Cocoa.h>
-#import "MRDPView.h"
+#ifndef XFREERDP_SERVER_CURSOR_H
+#define XFREERDP_SERVER_CURSOR_H
 
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+#include "xfreerdp.h"
 
-@property (assign) IBOutlet MRDPView *mrdpView;
-@property (assign) IBOutlet NSWindow *window;
+int xf_cursor_init(xfInfo* xfi);
 
-int rdp_connect(void);
-@end
+#endif /* XFREERDP_SERVER_CURSOR_H */

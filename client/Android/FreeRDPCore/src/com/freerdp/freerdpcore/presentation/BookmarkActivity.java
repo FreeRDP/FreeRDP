@@ -45,6 +45,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 	private static final int PREFERENCES_ADVANCED = 5;
 	private static final int PREFERENCES_SCREEN3G = 6;
 	private static final int PREFERENCES_PERFORMANCE3G = 7;
+	private static final int PREFERENCES_GATEWAY = 8;
 
 	// bookmark needs to be static because the activity is started for each subview 
 	// (we have to do this because Android has a bug where the style for Preferences 
@@ -112,6 +113,13 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			if(bookmark == null)
 				bookmark = new ManualBookmark();				
 
+			// hide gateway settings if we edit a non-manual bookmark
+			if (current_preferences == PREFERENCES_ADVANCED && bookmark.getType() != ManualBookmark.TYPE_MANUAL)
+			{
+				getPreferenceScreen().removePreference(findPreference("bookmark.enable_gateway"));
+				getPreferenceScreen().removePreference(findPreference("bookmark.gateway"));
+			}
+			 
 			// update preferences from bookmark
 			bookmark.writeToSharedPreferences(getPreferenceManager().getSharedPreferences());
 			
@@ -155,6 +163,11 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			addPreferencesFromResource(R.xml.credentials_settings);
 			current_preferences = PREFERENCES_CREDENTIALS;
 		}
+		else if (getIntent().getData().toString().equals("preferences://gateway_settings"))
+        {
+			addPreferencesFromResource(R.xml.gateway_settings);
+			current_preferences = PREFERENCES_GATEWAY;
+        }
 		else
 		{
 			addPreferencesFromResource(R.xml.bookmark_settings);
@@ -230,7 +243,8 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			"bookmark.performance",
 			"bookmark.advanced",
 			"bookmark.screen_3g",
-			"bookmark.performance_3g"
+			"bookmark.performance_3g",
+			"bookmark.gateway_settings"
 		};
 		
 		for (int i = 0; i < prefKeys.length; ++i)
@@ -264,6 +278,10 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			case PREFERENCES_SCREEN3G:
 				screenSettingsChanged(sharedPreferences, key);
 				break;
+
+            case PREFERENCES_GATEWAY:
+                gatewaySettingsChanged(sharedPreferences, key);
+                break;				
 		}
 					
 	}
@@ -291,6 +309,10 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			case PREFERENCES_SCREEN3G:
 				initScreenSettings3G(sharedPreferences);
 				break;
+			
+			case PREFERENCES_GATEWAY:
+                initGatewaySettings(sharedPreferences);
+                break;				
 		}		
 	}
 	
@@ -332,6 +354,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 
 	private void initAdvancedSettings(SharedPreferences sharedPreferences)
 	{
+		advancedSettingsChanged(sharedPreferences, "bookmark.enable_gateway_settings");
 		advancedSettingsChanged(sharedPreferences, "bookmark.enable_3g_settings");		
 		advancedSettingsChanged(sharedPreferences, "bookmark.security");		
 		advancedSettingsChanged(sharedPreferences, "bookmark.resolution_3g");		
@@ -341,7 +364,12 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 
 	private void advancedSettingsChanged(SharedPreferences sharedPreferences, String key)
 	{		
-		if (key.equals("bookmark.enable_3g_settings"))
+		if (key.equals("bookmark.enable_gateway_settings"))
+        {
+                boolean enabled = sharedPreferences.getBoolean(key, false);
+                findPreference("bookmark.gateway_settings").setEnabled(enabled);
+        }
+		else if (key.equals("bookmark.enable_3g_settings"))
 		{
 			boolean enabled = sharedPreferences.getBoolean(key, false);
 			findPreference("bookmark.screen_3g").setEnabled(enabled);
@@ -441,6 +469,40 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			findPreference(key).setSummary(String.valueOf(sharedPreferences.getInt(key, 600)));		
 	}
 
+	private void initGatewaySettings(SharedPreferences sharedPreferences)
+    {
+            gatewaySettingsChanged(sharedPreferences, "bookmark.gateway_hostname");
+            gatewaySettingsChanged(sharedPreferences, "bookmark.gateway_port");
+            gatewaySettingsChanged(sharedPreferences, "bookmark.gateway_username");         
+            gatewaySettingsChanged(sharedPreferences, "bookmark.gateway_password");         
+            gatewaySettingsChanged(sharedPreferences, "bookmark.gateway_domain");           
+    }
+	
+	private void gatewaySettingsChanged(SharedPreferences sharedPreferences, String key)
+    {       
+            if (key.equals("bookmark.gateway_hostname"))
+            {
+                    findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+            }
+            else if (key.equals("bookmark.gateway_port"))
+            {
+                    findPreference(key).setSummary(String.valueOf(sharedPreferences.getInt(key, 443)));
+            }
+            else if (key.equals("bookmark.gateway_username"))
+            {
+                    findPreference(key).setSummary(sharedPreferences.getString(key, ""));
+            }
+            else if (key.equals("bookmark.gateway_password"))
+            {
+                    if (sharedPreferences.getString(key, "").length() == 0)
+                            findPreference(key).setSummary(getResources().getString(R.string.settings_password_empty));
+                    else
+                            findPreference(key).setSummary(getResources().getString(R.string.settings_password_present));
+            }
+            else if (key.equals("bookmark.gateway_domain"))
+                    findPreference(key).setSummary(sharedPreferences.getString(key, ""));           
+    }	
+	
 	private boolean verifySettings(SharedPreferences sharedPreferences) {
 	
 		boolean verifyFailed = false;
@@ -464,6 +526,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 	private void finishAndResetBookmark()
 	{
 		bookmark = null;
+		getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 		finish();
 	}
 	
@@ -474,6 +537,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		if (current_preferences != PREFERENCES_BOOKMARK)
 		{
 			super.onBackPressed();
+			getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 			return;			
 		}
 		

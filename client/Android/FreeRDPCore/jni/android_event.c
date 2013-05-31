@@ -26,6 +26,7 @@
 #endif
 
 #include "android_freerdp.h"
+#include "android_cliprdr.h"
 
 int android_is_event_set(ANDROID_EVENT_QUEUE * queue)
 {
@@ -136,6 +137,12 @@ int android_process_event(ANDROID_EVENT_QUEUE * queue, freerdp * inst)
 			ANDROID_EVENT_CURSOR* cursor_event = (ANDROID_EVENT_CURSOR*) event;
 			inst->input->MouseEvent(inst->input, cursor_event->flags, cursor_event->x, cursor_event->y);
 			android_event_cursor_free(cursor_event);
+		}
+		else if (event->type == EVENT_TYPE_CLIPBOARD)
+		{
+			ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*)event;                     
+			android_process_cliprdr_send_clipboard_data(inst, clipboard_event->data, clipboard_event->data_length);
+			android_event_clipboard_free(clipboard_event);
 		}
 		else if (event->type == EVENT_TYPE_DISCONNECT)
 		{
@@ -252,6 +259,36 @@ void android_event_disconnect_free(ANDROID_EVENT* event)
 {
 	if (event != NULL)
 		free(event);
+}
+
+ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length)
+{
+	ANDROID_EVENT_CLIPBOARD* event;
+
+	event = (ANDROID_EVENT_CLIPBOARD*) malloc(sizeof(ANDROID_EVENT_CLIPBOARD));
+	memset(event, 0, sizeof(ANDROID_EVENT_CLIPBOARD));
+
+	event->type = EVENT_TYPE_CLIPBOARD;
+	if (data)
+	{
+		event->data = malloc(data_length);
+		memcpy(event->data, data, data_length);
+		event->data_length = data_length;
+	}
+
+	return event;
+}
+
+void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event)
+{
+	if (event != NULL)
+	{
+		if (event->data)
+		{
+			free(event->data);
+		}
+		free(event);
+	}
 }
 
 void android_event_queue_init(freerdp * inst)

@@ -36,10 +36,11 @@ else()
 		option(WITH_IPP "Use Intel Performance Primitives." OFF)
 	endif()
 endif()
+
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
-if(APPLE)
-	option(WITH_CLANG "Build using clang" OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
 
 if(MSVC)
@@ -76,7 +77,8 @@ endif()
 
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
-option(WITH_SERVER_INTERFACE "Build server as a library with an interface" OFF)
+option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" ON)
+option(WITH_SERVER_INTERFACE "Build servers as a library with an interface" ON)
 
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)
 

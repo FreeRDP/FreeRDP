@@ -33,12 +33,20 @@ set(${MODULE_PREFIX}_SRCS
 	android_event.h
 	android_freerdp.c
 	android_freerdp.h
+	android_jni_utils.c
+	android_jni_utils.h
 	android_jni_callback.c
 	android_jni_callback.h)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 	generated/android_freerdp_jni.c
 	generated/android_freerdp_jni.h)
+
+if(WITH_CLIENT_CHANNELS)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+		android_cliprdr.c
+		android_cliprdr.h)
+endif()
 
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
 

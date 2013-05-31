@@ -17,6 +17,7 @@
 #define EVENT_TYPE_CURSOR		2
 #define EVENT_TYPE_DISCONNECT		3
 #define EVENT_TYPE_KEY_UNICODE		4
+#define EVENT_TYPE_CLIPBOARD	5
 
 struct _ANDROID_EVENT
 {
@@ -41,6 +42,14 @@ struct _ANDROID_EVENT_CURSOR
 };
 typedef struct _ANDROID_EVENT_CURSOR ANDROID_EVENT_CURSOR;
 
+struct _ANDROID_EVENT_CLIPBOARD
+{
+	int type;
+	void* data;
+	int data_length;
+};
+typedef struct _ANDROID_EVENT_CLIPBOARD ANDROID_EVENT_CLIPBOARD;
+
 struct _ANDROID_EVENT_QUEUE
 {
 	int size;
@@ -64,10 +73,12 @@ ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
 ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key);
 ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
 ANDROID_EVENT* android_event_disconnect_new(void);
+ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length);
 void android_event_key_free(ANDROID_EVENT_KEY* event);
 void android_event_unicodekey_free(ANDROID_EVENT_KEY* event);
 void android_event_cursor_free(ANDROID_EVENT_CURSOR* event);
 void android_event_disconnect_free(ANDROID_EVENT* event);
+void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event);
 void android_event_queue_init(freerdp * inst);
 void android_event_queue_uninit(freerdp * inst);
 

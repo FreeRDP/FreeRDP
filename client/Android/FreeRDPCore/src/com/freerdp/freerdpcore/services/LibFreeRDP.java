@@ -39,13 +39,20 @@ public class LibFreeRDP
 	
 	private static native void freerdp_set_data_directory(int inst, String directory);
 	
+	private static native void freerdp_set_clipboard_redirection(int inst, boolean enable);
+	private static native void freerdp_set_drive_redirection(int inst, String path);
+	
+	private static native void freerdp_set_gateway_info(int inst, String gatewayhostname, int port, 
+			String gatewayusername, String gatewaypassword, String gatewaydomain);
+	
 	private static native boolean freerdp_update_graphics(int inst,
 			Bitmap bitmap, int x, int y, int width, int height);
 	
 	private static native void freerdp_send_cursor_event(int inst, int x, int y, int flags);
 	private static native void freerdp_send_key_event(int inst, int keycode, boolean down);
 	private static native void freerdp_send_unicodekey_event(int inst, int keycode);
-
+	private static native void freerdp_send_clipboard_data(int inst, String data);
+	
 	private static native String freerdp_get_version();
 	
 	private static final String TAG = "LibFreeRDP";
@@ -65,6 +72,7 @@ public class LibFreeRDP
 		boolean OnVerifiyCertificate(String subject, String issuer, String fingerprint);
 		void OnGraphicsUpdate(int x, int y, int width, int height);		
 		void OnGraphicsResize(int width, int height, int bpp);		
+		void OnRemoteClipboardChanged(String data);
 	}
 
 	private static EventListener listener;
@@ -143,6 +151,21 @@ public class LibFreeRDP
 		BookmarkBase.AdvancedSettings advancedSettings = bookmark.getAdvancedSettings();
 		freerdp_set_advanced_settings(inst, advancedSettings.getRemoteProgram(), advancedSettings.getWorkDir());
 
+		// drive redirection enabled?
+		if (advancedSettings.getRedirectSDCard())
+			freerdp_set_drive_redirection(inst, android.os.Environment.getExternalStorageDirectory().getPath());		
+		
+		// always enable clipboard redirection
+		freerdp_set_clipboard_redirection(inst, true);
+		
+		// Gateway enabled?
+		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.<ManualBookmark>get().getEnableGatewaySettings())
+		{
+			ManualBookmark.GatewaySettings gatewaySettings = bookmark.<ManualBookmark>get().getGatewaySettings();
+			freerdp_set_gateway_info(inst, gatewaySettings.getHostname(), gatewaySettings.getPort(), 
+					gatewaySettings.getUsername(), gatewaySettings.getPassword(), gatewaySettings.getDomain());			
+		}
+					
 		return true;
 	}
 	
@@ -171,6 +194,11 @@ public class LibFreeRDP
 		freerdp_send_unicodekey_event(inst, keycode);
 	}
 
+	public static void sendClipboardData(int inst, String data)
+    {
+		freerdp_send_clipboard_data(inst, data);
+    }
+	
 	private static void OnConnectionSuccess(int inst)
 	{		
 		if (listener != null)
@@ -246,7 +274,17 @@ public class LibFreeRDP
 		if (uiEventListener != null)
 			uiEventListener.OnGraphicsResize(width, height, bpp);
 	}
-	
+
+    private static void OnRemoteClipboardChanged(int inst, String data)
+    {
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRemoteClipboardChanged(data);
+    }
+    
 	public static String getVersion()
 	{
 		return freerdp_get_version();

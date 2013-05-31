@@ -48,8 +48,10 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<subtype id>", NULL, NULL, -1, NULL, "Keyboard subtype" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<function key count>", NULL, NULL, -1, NULL, "Keyboard function key count" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
-	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Multi-monitor" },
-	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Work area" },
+	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
+	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
+	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<0,1,2...>", NULL, NULL, -1, NULL, "Select monitors to use" },
+	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
 	{ "smart-sizing", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Scale remote desktop to window size" },
@@ -63,6 +65,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "||<alias> or <executable path>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
 	{ "app-icon", COMMAND_LINE_VALUE_REQUIRED, "<icon path>", NULL, NULL, -1, NULL, "Remote application icon for user interface" },
@@ -84,8 +87,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
-	{ "printer", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
+	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
+	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (ClearType)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
@@ -287,14 +291,16 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_PRINTER* printer;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
 		ZeroMemory(printer, sizeof(RDPDR_PRINTER));
 
 		printer->Type = RDPDR_DTYP_PRINT;
-		printer->Name = _strdup(params[1]);
+
+		if (count > 1)
+			printer->Name = _strdup(params[1]);
 
 		if (count > 2)
 			printer->DriverName = _strdup(params[2]);
@@ -543,15 +549,28 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
-		char** p;
-		int count;
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
 
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
-		p[0] = "printer";
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "printer";
 
-		freerdp_client_add_device_channel(settings, count, p);
+			freerdp_client_add_device_channel(settings, count, p);
 
-		free(p);
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+
+			count = 1;
+			p[0] = "printer";
+
+			freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "usb")
 	{
@@ -564,6 +583,16 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		freerdp_client_add_dynamic_channel(settings, count, p);
 
 		free(p);
+	}
+	CommandLineSwitchCase(arg, "multitouch")
+	{
+		char* p[1];
+		int count = 1;
+
+		settings->MultiTouchInput = TRUE;
+
+		p[0] = "rdpei";
+		freerdp_client_add_dynamic_channel(settings, count, p);
 	}
 	CommandLineSwitchCase(arg, "echo")
 	{
@@ -985,6 +1014,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			printf("\n");
 		}
 
+		arg = CommandLineFindArgumentA(args, "monitor-list");
+
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			settings->ListMonitors = TRUE;
+		}
+
 		return COMMAND_LINE_STATUS_PRINT;
 	}
 
@@ -992,8 +1028,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (!settings->ConnectionFile && !(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 	{
-		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
-		return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
+		//fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+		//return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
 	}
 
 	arg = args;
@@ -1088,6 +1124,28 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "workarea")
 		{
 			settings->Workarea = TRUE;
+		}
+		CommandLineSwitchCase(arg, "monitors")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char** p;
+				int i, count = 0;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				settings->NumMonitorIds = count;
+				settings->MonitorIds = (UINT32*) malloc(sizeof(UINT32) * settings->NumMonitorIds);
+
+				for (i = 0; i < settings->NumMonitorIds; i++)
+				{
+					settings->MonitorIds[i] = atoi(p[i]);
+				}
+			}
+		}
+		CommandLineSwitchCase(arg, "monitor-list")
+		{
+			settings->ListMonitors = TRUE;
 		}
 		CommandLineSwitchCase(arg, "t")
 		{
@@ -1219,6 +1277,11 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			settings->Workarea = TRUE;
 			settings->DisableWallpaper = TRUE;
 			settings->DisableFullWindowDrag = TRUE;
+		}
+		CommandLineSwitchCase(arg, "load-balance-info")
+		{
+			settings->LoadBalanceInfo = (BYTE*) _strdup(arg->Value);
+			settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{
@@ -1619,7 +1682,13 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{
+		settings->DeviceRedirection = TRUE; /* rdpsnd requires rdpdr to be registered */
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
+	}
+
+	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
+	{
+		settings->AudioCapture = TRUE;
 	}
 
 	if (settings->RedirectDrives)

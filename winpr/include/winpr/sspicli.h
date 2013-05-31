@@ -75,8 +75,16 @@ typedef enum
 
 } EXTENDED_NAME_FORMAT, *PEXTENDED_NAME_FORMAT;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize);
 WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef UNICODE
 #define GetUserNameEx	GetUserNameExW

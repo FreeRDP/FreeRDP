@@ -25,6 +25,9 @@
 
 #include <freerdp/locale/keyboard.h>
 
+#include <winpr/crt.h>
+#include <winpr/input.h>
+
 #include "xf_peer.h"
 
 #include "xf_input.h"
@@ -37,7 +40,8 @@ void xf_input_synchronize_event(rdpInput* input, UINT32 flags)
 void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 #ifdef WITH_XTEST
-	unsigned int keycode;
+	DWORD vkcode;
+	DWORD keycode;
 	BOOL extended = FALSE;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	xfInfo* xfi = xfp->info;
@@ -45,7 +49,11 @@ void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
 
-	keycode = freerdp_keyboard_get_x11_keycode_from_rdp_scancode(code, extended);
+	if (extended)
+		code |= KBDEXT;
+
+	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_EVDEV);
 
 	if (keycode != 0)
 	{

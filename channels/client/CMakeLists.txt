@@ -23,7 +23,12 @@ set(${MODULE_PREFIX}_SRCS
 	tables.h
 	addin.c
 	addin.h
-	channels.c)
+	init.c
+	init.h
+	open.c
+	open.h
+	channels.c
+	channels.h)
 
 list(REMOVE_DUPLICATES CHANNEL_STATIC_CLIENT_ENTRIES)
 

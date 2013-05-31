@@ -34,14 +34,14 @@
 
 void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
-	stream_read_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
-	stream_read_UINT16(s, system_time->wMonth); /* wMonth */
-	stream_read_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
-	stream_read_UINT16(s, system_time->wDay); /* wDay */
-	stream_read_UINT16(s, system_time->wHour); /* wHour */
-	stream_read_UINT16(s, system_time->wMinute); /* wMinute */
-	stream_read_UINT16(s, system_time->wSecond); /* wSecond */
-	stream_read_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
+	Stream_Read_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
+	Stream_Read_UINT16(s, system_time->wMonth); /* wMonth */
+	Stream_Read_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
+	Stream_Read_UINT16(s, system_time->wDay); /* wDay */
+	Stream_Read_UINT16(s, system_time->wHour); /* wHour */
+	Stream_Read_UINT16(s, system_time->wMinute); /* wMinute */
+	Stream_Read_UINT16(s, system_time->wSecond); /* wSecond */
+	Stream_Read_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
 }
 
 /**
@@ -53,14 +53,14 @@ void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time)
 
 void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time)
 {
-	stream_write_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
-	stream_write_UINT16(s, system_time->wMonth); /* wMonth */
-	stream_write_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
-	stream_write_UINT16(s, system_time->wDay); /* wDay */
-	stream_write_UINT16(s, system_time->wHour); /* wHour */
-	stream_write_UINT16(s, system_time->wMinute); /* wMinute */
-	stream_write_UINT16(s, system_time->wSecond); /* wSecond */
-	stream_write_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
+	Stream_Write_UINT16(s, system_time->wYear); /* wYear, must be set to 0 */
+	Stream_Write_UINT16(s, system_time->wMonth); /* wMonth */
+	Stream_Write_UINT16(s, system_time->wDayOfWeek); /* wDayOfWeek */
+	Stream_Write_UINT16(s, system_time->wDay); /* wDay */
+	Stream_Write_UINT16(s, system_time->wHour); /* wHour */
+	Stream_Write_UINT16(s, system_time->wMinute); /* wMinute */
+	Stream_Write_UINT16(s, system_time->wSecond); /* wSecond */
+	Stream_Write_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
 	DEBUG_TIMEZONE("Time: y=%d,m=%d,dow=%d,d=%d, %02d:%02d:%02d.%03d",
 		system_time->wYear, system_time->wMonth, system_time->wDayOfWeek,
 		system_time->wDay, system_time->wHour, system_time->wMinute,
@@ -79,31 +79,31 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	char* str = NULL;
 	TIME_ZONE_INFO* clientTimeZone;
 
-	if (stream_get_left(s) < 172)
+	if (Stream_GetRemainingLength(s) < 172)
 		return FALSE;
 
 	clientTimeZone = settings->ClientTimeZone;
 
-	stream_read_UINT32(s, clientTimeZone->bias); /* Bias */
+	Stream_Read_UINT32(s, clientTimeZone->bias); /* Bias */
 
 	/* standardName (64 bytes) */
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
-	stream_seek(s, 64);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
+	Stream_Seek(s, 64);
 	strncpy(clientTimeZone->standardName, str, sizeof(clientTimeZone->standardName));
 	free(str);
 	str = NULL;
 
 	rdp_read_system_time(s, &clientTimeZone->standardDate); /* StandardDate */
-	stream_read_UINT32(s, clientTimeZone->standardBias); /* StandardBias */
+	Stream_Read_UINT32(s, clientTimeZone->standardBias); /* StandardBias */
 
 	/* daylightName (64 bytes) */
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) stream_get_tail(s), 64 / 2, &str, 0, NULL, NULL);
-	stream_seek(s, 64);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
+	Stream_Seek(s, 64);
 	strncpy(clientTimeZone->daylightName, str, sizeof(clientTimeZone->daylightName));
 	free(str);
 
 	rdp_read_system_time(s, &clientTimeZone->daylightDate); /* DaylightDate */
-	stream_read_UINT32(s, clientTimeZone->daylightBias); /* DaylightBias */
+	Stream_Read_UINT32(s, clientTimeZone->daylightBias); /* DaylightBias */
 
 	return TRUE;
 }
@@ -136,11 +136,11 @@ void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 		daylightNameLength = 62;
 
     /* Bias */
- 	stream_write_UINT32(s, clientTimeZone->bias);
+ 	Stream_Write_UINT32(s, clientTimeZone->bias);
 
 	/* standardName (64 bytes) */
-	stream_write(s, standardName, standardNameLength);
-	stream_write_zero(s, 64 - standardNameLength);
+	Stream_Write(s, standardName, standardNameLength);
+	Stream_Zero(s, 64 - standardNameLength);
 
     /* StandardDate */
     rdp_write_system_time(s, &clientTimeZone->standardDate);
@@ -149,19 +149,19 @@ void rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 
 	/* Note that StandardBias is ignored if no valid standardDate is provided. */
     /* StandardBias */
-	stream_write_UINT32(s, clientTimeZone->standardBias);
+	Stream_Write_UINT32(s, clientTimeZone->standardBias);
 	DEBUG_TIMEZONE("StandardBias=%d", clientTimeZone->standardBias);
 
 	/* daylightName (64 bytes) */
-    stream_write(s, daylightName, daylightNameLength);
-    stream_write_zero(s, 64 - daylightNameLength);
+    Stream_Write(s, daylightName, daylightNameLength);
+    Stream_Zero(s, 64 - daylightNameLength);
 
      /* DaylightDate */
     rdp_write_system_time(s, &clientTimeZone->daylightDate);
 
 	/* Note that DaylightBias is ignored if no valid daylightDate is provided. */
     /* DaylightBias */
-	stream_write_UINT32(s, clientTimeZone->daylightBias);
+	Stream_Write_UINT32(s, clientTimeZone->daylightBias);
 	DEBUG_TIMEZONE("DaylightBias=%d", clientTimeZone->daylightBias);
 
 	free(standardName);

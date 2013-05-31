@@ -29,6 +29,36 @@
 #include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
 
+#include <freerdp/client/rdpei.h>
+
+#define RDPINPUT_HEADER_LENGTH			6
+
+/* Protocol Version */
+
+#define RDPINPUT_PROTOCOL_V1			0x00010000
+
+/* Client Ready Flags */
+
+#define READY_FLAGS_SHOW_TOUCH_VISUALS		0x00000001
+#define READY_FLAGS_DISABLE_TIMESTAMP_INJECTION	0x00000002
+
+/* Input Event Ids */
+
+#define EVENTID_SC_READY			0x0001
+#define EVENTID_CS_READY			0x0002
+#define EVENTID_TOUCH				0x0003
+#define EVENTID_SUSPEND_TOUCH			0x0004
+#define EVENTID_RESUME_TOUCH			0x0005
+#define EVENTID_DISMISS_HOVERING_CONTACT	0x0006
+
+struct _RDPINPUT_CONTACT_POINT
+{
+	UINT32 flags;
+	UINT32 contactId;
+	int externalId;
+};
+typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
+
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
 #else

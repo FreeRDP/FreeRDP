@@ -123,7 +123,7 @@ void wf_update_encode(wfInfo* wfi)
 
 	cmd = &wfi->cmd;
 
-	stream_set_pos(wfi->s, 0);
+	Stream_SetPosition(wfi->s, 0);
 
 	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
 
@@ -134,7 +134,7 @@ void wf_update_encode(wfInfo* wfi)
 
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
-	stream_clear(wfi->s);
+	Stream_Clear(wfi->s);
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 		pDataBits, width, height, stride);
 
@@ -149,8 +149,8 @@ void wf_update_encode(wfInfo* wfi)
 	cmd->codecID = 3;
 	cmd->width = width;
 	cmd->height = height;
-	cmd->bitmapDataLength = stream_get_length(wfi->s);
-	cmd->bitmapData = stream_get_head(wfi->s);
+	cmd->bitmapDataLength = Stream_GetPosition(wfi->s);
+	cmd->bitmapData = Stream_Buffer(wfi->s);
 }
 
 void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
@@ -203,7 +203,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 			wfi->rfx_context->width = wfi->servscreen_width;
 			wfi->rfx_context->height = wfi->servscreen_height;
 			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			wfi->s = stream_new(0xFFFF);
+			wfi->s = Stream_New(NULL, 0xFFFF);
 		}
 
 		wf_info_invalidate_full_screen(wfi);

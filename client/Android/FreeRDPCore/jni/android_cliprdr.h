@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * Android Clipboard Redirection
  *
- * Copyright 2012 Thomas Goddard
+ * Copyright 2013 Felix Long
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "MRDPRailView.h"
-#import "MRDPRailWindow.h"
+#ifndef __ANDROID_CLIPRDR_H__
+#define __ANDROID_CLIPRDR_H__
 
-@interface MRDPWindow : NSObject
-{
-}
+#include "android_freerdp.h"
 
-@property (assign) int windowID;
-@property (retain) MRDPRailWindow* window;
-@property (retain) MRDPRailView* view;
+void android_cliprdr_init(freerdp* inst);
+void android_cliprdr_uninit(freerdp* inst);
+void android_process_cliprdr_send_clipboard_data(freerdp* inst, void* data, int len);
+void android_process_cliprdr_event(freerdp* inst, wMessage* event);
 
-@end
-
+#endif /* __ANDROID_CLIPRDR_H__ */

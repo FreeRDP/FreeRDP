@@ -29,6 +29,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/CountdownEvent.c
 	collections/BufferPool.c
 	collections/ObjectPool.c
+	collections/StreamPool.c
 	collections/MessageQueue.c
 	collections/MessagePipe.c)
 

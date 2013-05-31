@@ -308,7 +308,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, siz
 
 	line = strtok_s((char*) buffer, "\r\n", &context);
 
-	while (line != NULL)
+	while (line)
 	{
 		length = strlen(line);
 
@@ -458,8 +458,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 	if (file_size < 1)
 		return FALSE;
 
-	buffer = (BYTE*) malloc(file_size);
-
+	buffer = (BYTE*) malloc(file_size + 2);
 	read_size = fread(buffer, file_size, 1, fp);
 
 	if (!read_size)
@@ -474,6 +473,9 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
 		buffer = NULL;
 		return FALSE;
 	}
+
+	buffer[file_size] = '\0';
+	buffer[file_size + 1] = '\0';
 
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
 }
@@ -701,6 +703,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
 	
+	if (~((size_t) file->LoadBalanceInfo))
+	{
+		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
+		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+	}
+
 	if (~file->ConnectionType)
 		freerdp_set_param_uint32(settings, FreeRDP_ConnectionType, file->ConnectionType);
 

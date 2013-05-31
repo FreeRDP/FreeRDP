@@ -593,6 +593,10 @@ typedef struct
 
 #define WINHTTP_ERROR_LAST						(WINHTTP_ERROR_BASE + 186)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API BOOL WinHttpTimeFromSystemTime(const SYSTEMTIME* pst, LPWSTR pwszTime);
 WINPR_API BOOL WinHttpTimeToSystemTime(LPCWSTR pwszTime, SYSTEMTIME* pst);
 
@@ -650,6 +654,10 @@ WINPR_API BOOL WinHttpGetProxyForUrl(HINTERNET hSession, LPCWSTR lpcwszUrl,
 		WINHTTP_AUTOPROXY_OPTIONS* pAutoProxyOptions, WINHTTP_PROXY_INFO* pProxyInfo);
 
 WINPR_API BOOL WinHttpGetIEProxyConfigForCurrentUser(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG* pProxyConfig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

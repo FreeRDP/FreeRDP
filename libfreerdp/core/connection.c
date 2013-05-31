@@ -135,6 +135,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
+	if (settings->LoadBalanceInfo)
+		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+
 	if (!nego_connect(rdp->nego))
 	{
 		fprintf(stderr, "Error: protocol security negotiation or connection failure\n");
@@ -267,7 +270,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	/* encrypt client random */
-	memset(crypt_client_random, 0, sizeof(crypt_client_random));
+	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
 	crypto_nonce(client_random, sizeof(client_random));
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
@@ -276,19 +279,22 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
-	s = transport_send_stream_init(rdp->mcs->transport, length);
+	s = Stream_New(NULL, length);
 
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
 	length = key_len + 8;
 
-	stream_write_UINT32(s, length);
-	stream_write(s, crypt_client_random, length);
+	Stream_Write_UINT32(s, length);
+	Stream_Write(s, crypt_client_random, length);
+	Stream_SealLength(s);
 
 	if (transport_write(rdp->mcs->transport, s) < 0)
 	{
 		return FALSE;
 	}
+
+	Stream_Free(s, TRUE);
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
@@ -297,6 +303,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->do_crypt = TRUE;
+
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
@@ -346,10 +353,10 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if(stream_get_left(s) < 4)
+	if(Stream_GetRemainingLength(s) < 4)
 		return FALSE;
-	stream_read_UINT32(s, rand_len);
-	if(stream_get_left(s) < rand_len + 8)  /* include 8 bytes of padding */
+	Stream_Read_UINT32(s, rand_len);
+	if(Stream_GetRemainingLength(s) < rand_len + 8)  /* include 8 bytes of padding */
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
@@ -361,9 +368,9 @@ static BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	memset(crypt_client_random, 0, sizeof(crypt_client_random));
-	stream_read(s, crypt_client_random, rand_len);
+	Stream_Read(s, crypt_client_random, rand_len);
 	/* 8 zero bytes of padding */
-	stream_seek(s, 8);
+	Stream_Seek(s, 8);
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
@@ -525,14 +532,14 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
 
-	stream_get_mark(s, mark);
+	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
-		stream_set_mark(s, mark);
+		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
-		/* Was stream_seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */

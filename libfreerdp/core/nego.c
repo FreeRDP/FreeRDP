@@ -276,21 +276,26 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		cbSize += cchPCB * 2;
 	}
 
-	s = transport_send_stream_init(nego->transport, cbSize);
-	stream_write_UINT32(s, cbSize); /* cbSize */
-	stream_write_UINT32(s, 0); /* Flags */
-	stream_write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
-	stream_write_UINT32(s, nego->preconnection_id); /* Id */
-	stream_write_UINT16(s, cchPCB); /* cchPCB */
+	s = Stream_New(NULL, cbSize);
+
+	Stream_Write_UINT32(s, cbSize); /* cbSize */
+	Stream_Write_UINT32(s, 0); /* Flags */
+	Stream_Write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
+	Stream_Write_UINT32(s, nego->preconnection_id); /* Id */
+	Stream_Write_UINT16(s, cchPCB); /* cchPCB */
 
 	if (wszPCB)
 	{
-		stream_write(s, wszPCB, cchPCB * 2); /* wszPCB */
+		Stream_Write(s, wszPCB, cchPCB * 2); /* wszPCB */
 		free(wszPCB);
 	}
 
+	Stream_SealLength(s);
+
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -462,12 +467,28 @@ void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	wStream* s = transport_recv_stream_init(nego->transport, 1024);
+	int status;
+	wStream* s;
 
-	if (transport_read(nego->transport, s) < 0)
+	s = Stream_New(NULL, 1024);
+
+	status = transport_read(nego->transport, s);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
-	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
+	status = nego_recv(nego->transport, s, nego);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /**
@@ -490,14 +511,14 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	if (length == 0)
 		return -1;
 
-	if(!tpdu_read_connection_confirm(s, &li))
+	if (!tpdu_read_connection_confirm(s, &li))
 		return -1;
 
 	if (li > 6)
 	{
 		/* rdpNegData (optional) */
 
-		stream_read_BYTE(s, type); /* Type */
+		Stream_Read_UINT8(s, type); /* Type */
 
 		switch (type)
 		{
@@ -563,40 +584,41 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 	BYTE type;
 
 	tpkt_read_header(s);
-	if(!tpdu_read_connection_request(s, &li))
+
+	if (!tpdu_read_connection_request(s, &li))
 		return FALSE;
 
-	if (li != stream_get_left(s) + 6)
+	if (li != Stream_GetRemainingLength(s) + 6)
 	{
 		fprintf(stderr, "Incorrect TPDU length indicator.\n");
 		return FALSE;
 	}
 
-	if (stream_get_left(s) > 8)
+	if (Stream_GetRemainingLength(s) > 8)
 	{
 		/* Optional routingToken or cookie, ending with CR+LF */
-		while (stream_get_left(s) > 0)
+		while (Stream_GetRemainingLength(s) > 0)
 		{
-			stream_read_BYTE(s, c);
+			Stream_Read_UINT8(s, c);
 
 			if (c != '\x0D')
 				continue;
 
-			stream_peek_BYTE(s, c);
+			Stream_Peek_UINT8(s, c);
 
 			if (c != '\x0A')
 				continue;
 
-			stream_seek_BYTE(s);
+			Stream_Seek_UINT8(s);
 			break;
 		}
 	}
 
-	if (stream_get_left(s) >= 8)
+	if (Stream_GetRemainingLength(s) >= 8)
 	{
 		/* rdpNegData (optional) */
 
-		stream_read_BYTE(s, type); /* Type */
+		Stream_Read_UINT8(s, type); /* Type */
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
@@ -640,53 +662,60 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	wStream* s;
 	int length;
-	BYTE *bm, *em;
+	int bm, em;
 	int cookie_length;
 
-	s = transport_send_stream_init(nego->transport, 256);
-	length = TPDU_CONNECTION_REQUEST_LENGTH;
-	stream_get_mark(s, bm);
-	stream_seek(s, length);
+	s = Stream_New(NULL, 512);
 
-	if (nego->RoutingToken != NULL)
+	length = TPDU_CONNECTION_REQUEST_LENGTH;
+	bm = Stream_GetPosition(s);
+	Stream_Seek(s, length);
+
+	if (nego->RoutingToken)
 	{
-		stream_write(s, nego->RoutingToken, nego->RoutingTokenLength);
-		length += nego->RoutingTokenLength;
+		Stream_Write(s, nego->RoutingToken, nego->RoutingTokenLength);
+		Stream_Write_UINT8(s, 0x0D); /* CR */
+		Stream_Write_UINT8(s, 0x0A); /* LF */
+		length += nego->RoutingTokenLength + 2;
 	}
-	else if (nego->cookie != NULL)
+	else if (nego->cookie)
 	{
 		cookie_length = strlen(nego->cookie);
 
 		if (cookie_length > (int) nego->cookie_max_length)
 			cookie_length = nego->cookie_max_length;
 
-		stream_write(s, "Cookie: mstshash=", 17);
-		stream_write(s, (BYTE*) nego->cookie, cookie_length);
-		stream_write_BYTE(s, 0x0D); /* CR */
-		stream_write_BYTE(s, 0x0A); /* LF */
+		Stream_Write(s, "Cookie: mstshash=", 17);
+		Stream_Write(s, (BYTE*) nego->cookie, cookie_length);
+		Stream_Write_UINT8(s, 0x0D); /* CR */
+		Stream_Write_UINT8(s, 0x0A); /* LF */
 		length += cookie_length + 19;
 	}
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
-	if (nego->requested_protocols > PROTOCOL_RDP)
+	if ((nego->requested_protocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
-		stream_write_BYTE(s, TYPE_RDP_NEG_REQ);
-		stream_write_BYTE(s, 0); /* flags, must be set to zero */
-		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
+		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
+		Stream_Write_UINT8(s, 0); /* flags, must be set to zero */
+		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		Stream_Write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
 		length += 8;
 	}
 
-	stream_get_mark(s, em);
-	stream_set_mark(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_request(s, length - 5);
-	stream_set_mark(s, em);
+	Stream_SetPosition(s, em);
+
+	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -704,9 +733,9 @@ void nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 	DEBUG_NEGO("RDP_NEG_REQ");
 
-	stream_read_BYTE(s, flags);
-	stream_read_UINT16(s, length);
-	stream_read_UINT32(s, nego->requested_protocols);
+	Stream_Read_UINT8(s, flags);
+	Stream_Read_UINT16(s, length);
+	Stream_Read_UINT32(s, nego->requested_protocols);
 
 	DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
 
@@ -725,16 +754,16 @@ void nego_process_negotiation_response(rdpNego* nego, wStream* s)
 
 	DEBUG_NEGO("RDP_NEG_RSP");
 
-	if (stream_get_left(s) < 7)
+	if (Stream_GetRemainingLength(s) < 7)
 	{
 		DEBUG_NEGO("RDP_INVALID_NEG_RSP");
 		nego->state = NEGO_STATE_FAIL;
 		return;
 	}
 
-	stream_read_BYTE(s, nego->flags);
-	stream_read_UINT16(s, length);
-	stream_read_UINT32(s, nego->selected_protocol);
+	Stream_Read_UINT8(s, nego->flags);
+	Stream_Read_UINT16(s, length);
+	Stream_Read_UINT32(s, nego->selected_protocol);
 
 	nego->state = NEGO_STATE_FINAL;
 }
@@ -753,27 +782,33 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 	DEBUG_NEGO("RDP_NEG_FAILURE");
 
-	stream_read_BYTE(s, flags);
-	stream_read_UINT16(s, length);
-	stream_read_UINT32(s, failureCode);
+	Stream_Read_UINT8(s, flags);
+	Stream_Read_UINT16(s, length);
+	Stream_Read_UINT32(s, failureCode);
 
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
 			break;
+
 		case SSL_NOT_ALLOWED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
 			break;
+
 		case SSL_CERT_NOT_ON_SERVER:
 			DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
+			nego->sendNegoData = TRUE;
 			break;
+
 		case INCONSISTENT_FLAGS:
 			DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
 			break;
+
 		case HYBRID_REQUIRED_BY_SERVER:
 			DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
+
 		default:
 			DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
 			break;
@@ -789,53 +824,57 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	wStream* s;
-	BYTE* bm;
-	BYTE* em;
 	int length;
+	int bm, em;
 	BOOL status;
+	wStream* s;
 	rdpSettings* settings;
 
 	status = TRUE;
 	settings = nego->transport->settings;
 
-	s = transport_send_stream_init(nego->transport, 256);
+	s = Stream_New(NULL, 512);
+
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
-	stream_get_mark(s, bm);
-	stream_seek(s, length);
+	bm = Stream_GetPosition(s);
+	Stream_Seek(s, length);
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
-		stream_write_BYTE(s, TYPE_RDP_NEG_RSP);
-		stream_write_BYTE(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
-		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
-		stream_write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
+		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
+		Stream_Write_UINT8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
+		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		Stream_Write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
 	else if (!settings->RdpSecurity)
 	{
-		stream_write_BYTE(s, TYPE_RDP_NEG_FAILURE);
-		stream_write_BYTE(s, 0); /* flags */
-		stream_write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		Stream_Write_UINT8(s, TYPE_RDP_NEG_FAILURE);
+		Stream_Write_UINT8(s, 0); /* flags */
+		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		/*
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
 		fprintf(stderr, "nego_send_negotiation_response: client supports only Standard RDP Security\n");
-		stream_write_UINT32(s, SSL_REQUIRED_BY_SERVER);
+		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
 	}
 
-	stream_get_mark(s, em);
-	stream_set_mark(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_confirm(s, length - 5);
-	stream_set_mark(s, em);
+	Stream_SetPosition(s, em);
+
+	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	if (status)
 	{

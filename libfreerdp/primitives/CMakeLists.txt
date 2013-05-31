@@ -76,8 +76,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVER
 if(IPP_FOUND)
 	include_directories(${IPP_INCLUDE_DIRS})
     foreach(ipp_lib ${IPP_LIBRARIES})
-		add_library("${ipp_lib}_imported" STATIC IMPORTED)
-		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
 		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} "${ipp_lib}_imported")
 	endforeach()
 endif()

@@ -123,6 +123,10 @@ typedef int (*COMMAND_LINE_PRE_FILTER_FN_W)(void* context, int index, int argc, 
 typedef int (*COMMAND_LINE_POST_FILTER_FN_A)(void* context, COMMAND_LINE_ARGUMENT_A* arg);
 typedef int (*COMMAND_LINE_POST_FILTER_FN_W)(void* context, COMMAND_LINE_ARGUMENT_W* arg);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
 WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
 
@@ -135,6 +139,10 @@ WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(COMMAND_LINE_ARGUMEN
 WINPR_API COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
 
 WINPR_API COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(COMMAND_LINE_ARGUMENT_A* argument);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef UNICODE
 #define CommandLineClearArguments	CommandLineClearArgumentsW

@@ -60,8 +60,6 @@ struct rdp_transport
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;
-	wStream* SendStream;
-	wStream* ReceiveStream;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
@@ -69,13 +67,15 @@ struct rdp_transport
 	HANDLE GatewayEvent;
 	BOOL blocking;
 	BOOL SplitInputOutput;
-	wObjectPool* ReceivePool;
+	wStreamPool* ReceivePool;
+	HANDLE connectedEvent;
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
+	HANDLE ReadMutex;
+	HANDLE WriteMutex;
 };
 
-wStream* transport_recv_stream_init(rdpTransport* transport, int size);
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
 void transport_attach(rdpTransport* transport, int sockfd);
@@ -92,6 +92,7 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport** ptransport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);

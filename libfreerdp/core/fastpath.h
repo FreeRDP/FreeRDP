@@ -101,6 +101,7 @@ struct rdp_fastpath
 	BYTE encryptionFlags;
 	BYTE numberEvents;
 	wStream* updateData;
+	int fragmentation;
 };
 
 UINT16 fastpath_header_length(wStream* s);
@@ -109,10 +110,13 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16 *length)
 int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
 int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
 
+wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath);
 wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode);
+BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iEventCount);
 BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
+wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s);
 
 BOOL fastpath_send_surfcmd_frame_marker(rdpFastPath* fastpath, UINT16 frameAction, UINT32 frameId);

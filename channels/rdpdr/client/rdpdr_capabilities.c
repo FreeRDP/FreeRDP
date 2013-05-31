@@ -35,9 +35,9 @@
 /* Output device redirection capability set header */
 static void rdpdr_write_capset_header(wStream* data_out, UINT16 capabilityType, UINT16 capabilityLength, UINT32 version)
 {
-	stream_write_UINT16(data_out, capabilityType);
-	stream_write_UINT16(data_out, capabilityLength);
-	stream_write_UINT32(data_out, version);
+	Stream_Write_UINT16(data_out, capabilityType);
+	Stream_Write_UINT16(data_out, capabilityLength);
+	Stream_Write_UINT32(data_out, version);
 }
 
 /* Output device direction general capability set */
@@ -45,16 +45,16 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* data_out)
 {
 	rdpdr_write_capset_header(data_out, CAP_GENERAL_TYPE, 44, GENERAL_CAPABILITY_VERSION_02);
 
-	stream_write_UINT32(data_out, 0); /* osType, ignored on receipt */
-	stream_write_UINT32(data_out, 0); /* osVersion, unused and must be set to zero */
-	stream_write_UINT16(data_out, 1); /* protocolMajorVersion, must be set to 1 */
-	stream_write_UINT16(data_out, RDPDR_MINOR_RDP_VERSION_5_2); /* protocolMinorVersion */
-	stream_write_UINT32(data_out, 0x0000FFFF); /* ioCode1 */
-	stream_write_UINT32(data_out, 0); /* ioCode2, must be set to zero, reserved for future use */
-	stream_write_UINT32(data_out, RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU | RDPDR_USER_LOGGEDON_PDU); /* extendedPDU */
-	stream_write_UINT32(data_out, ENABLE_ASYNCIO); /* extraFlags1 */
-	stream_write_UINT32(data_out, 0); /* extraFlags2, must be set to zero, reserved for future use */
-	stream_write_UINT32(data_out, 0); /* SpecialTypeDeviceCap, number of special devices to be redirected before logon */
+	Stream_Write_UINT32(data_out, 0); /* osType, ignored on receipt */
+	Stream_Write_UINT32(data_out, 0); /* osVersion, unused and must be set to zero */
+	Stream_Write_UINT16(data_out, 1); /* protocolMajorVersion, must be set to 1 */
+	Stream_Write_UINT16(data_out, RDPDR_MINOR_RDP_VERSION_5_2); /* protocolMinorVersion */
+	Stream_Write_UINT32(data_out, 0x0000FFFF); /* ioCode1 */
+	Stream_Write_UINT32(data_out, 0); /* ioCode2, must be set to zero, reserved for future use */
+	Stream_Write_UINT32(data_out, RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU | RDPDR_USER_LOGGEDON_PDU); /* extendedPDU */
+	Stream_Write_UINT32(data_out, ENABLE_ASYNCIO); /* extraFlags1 */
+	Stream_Write_UINT32(data_out, 0); /* extraFlags2, must be set to zero, reserved for future use */
+	Stream_Write_UINT32(data_out, 0); /* SpecialTypeDeviceCap, number of special devices to be redirected before logon */
 }
 
 /* Process device direction general capability set */
@@ -62,8 +62,8 @@ static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
-	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Read_UINT16(data_in, capabilityLength);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output printer direction capability set */
@@ -77,8 +77,8 @@ static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
-	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Read_UINT16(data_in, capabilityLength);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output port redirection capability set */
@@ -92,8 +92,8 @@ static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
-	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Read_UINT16(data_in, capabilityLength);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output drive redirection capability set */
@@ -107,8 +107,8 @@ static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
-	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Read_UINT16(data_in, capabilityLength);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 /* Output smart card redirection capability set */
@@ -122,8 +122,8 @@ static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* data_in)
 {
 	UINT16 capabilityLength;
 
-	stream_read_UINT16(data_in, capabilityLength);
-	stream_seek(data_in, capabilityLength - 4);
+	Stream_Read_UINT16(data_in, capabilityLength);
+	Stream_Seek(data_in, capabilityLength - 4);
 }
 
 void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in)
@@ -132,12 +132,12 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in)
 	UINT16 numCapabilities;
 	UINT16 capabilityType;
 
-	stream_read_UINT16(data_in, numCapabilities);
-	stream_seek(data_in, 2); /* pad (2 bytes) */
+	Stream_Read_UINT16(data_in, numCapabilities);
+	Stream_Seek(data_in, 2); /* pad (2 bytes) */
 
 	for(i = 0; i < numCapabilities; i++)
 	{
-		stream_read_UINT16(data_in, capabilityType);
+		Stream_Read_UINT16(data_in, capabilityType);
 
 		switch (capabilityType)
 		{
@@ -172,13 +172,13 @@ void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
 	wStream* data_out;
 
-	data_out = stream_new(256);
+	data_out = Stream_New(NULL, 256);
 
-	stream_write_UINT16(data_out, RDPDR_CTYP_CORE);
-	stream_write_UINT16(data_out, PAKID_CORE_CLIENT_CAPABILITY);
+	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENT_CAPABILITY);
 
-	stream_write_UINT16(data_out, 5); /* numCapabilities */
-	stream_write_UINT16(data_out, 0); /* pad */
+	Stream_Write_UINT16(data_out, 5); /* numCapabilities */
+	Stream_Write_UINT16(data_out, 0); /* pad */
 
 	rdpdr_write_general_capset(rdpdr, data_out);
 	rdpdr_write_printer_capset(rdpdr, data_out);

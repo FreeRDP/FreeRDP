@@ -9,14 +9,20 @@
 
 package com.freerdp.freerdpcore.services;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import android.content.Context;
 import android.provider.BaseColumns;
+import android.util.Log;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class BookmarkDB extends SQLiteOpenHelper
 {
-	private static final int DB_VERSION = 1;
+	private static final int DB_VERSION = 3;
 	private static final String DB_NAME = "bookmarks.db";
 	
 	public static final String ID = BaseColumns._ID;
@@ -52,33 +58,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 
 		db.execSQL(sqlPerformanceFlags);
 				
-		String sqlManualBookmarks =
-			"CREATE TABLE tbl_manual_bookmarks ("
-			+ ID + " INTEGER PRIMARY KEY, "
-			+ "label TEXT NOT NULL, "
-			+ "hostname TEXT NOT NULL, "
-			+ "username TEXT NOT NULL, "
-			+ "password TEXT, "
-			+ "domain TEXT, "
-			+ "port TEXT, "
-			+ "screen_settings INTEGER NOT NULL, "
-			+ "performance_flags INTEGER NOT NULL, "
-			
-			+ "enable_3g_settings INTEGER DEFAULT 0, "
-			+ "screen_3g INTEGER NOT NULL, "
-			+ "performance_3g INTEGER NOT NULL, "
-			+ "security INTEGER, "
-			+ "remote_program TEXT, "
-			+ "work_dir TEXT, "
-			+ "console_mode INTEGER, "
-		
-			+ "FOREIGN KEY(screen_settings) REFERENCES tbl_screen_settings(" + ID + "), "
-			+ "FOREIGN KEY(performance_flags) REFERENCES tbl_performance_flags(" + ID + "), "
-			+ "FOREIGN KEY(screen_3g) REFERENCES tbl_screen_settings(" + ID + "), "
-			+ "FOREIGN KEY(performance_3g) REFERENCES tbl_performance_flags(" + ID + ") "
-
-			+ ");";
-		
+		String sqlManualBookmarks = getManualBookmarksCreationString();		
 		db.execSQL(sqlManualBookmarks);
 
 			
@@ -120,6 +100,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "performance_flags, "
 			+ "screen_3g, "
 			+ "performance_3g, "
+			+ "redirect_sdcard, "
 			+ "security, "
 			+ "remote_program, "
 			+ "work_dir, "
@@ -131,12 +112,101 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "'', "
 			+ "'', "
 			+ "3389, "
-			+ "1, 1, 2, 2, 0, '', '', 0);";
+			+ "1, 1, 2, 2, 0, 0, '', '', 0);";
 		db.execSQL(sqlInsertDefaultSessionEntry);
 	}
 
+	private String getManualBookmarksCreationString()
+	{
+		return (
+			"CREATE TABLE IF NOT EXISTS tbl_manual_bookmarks ("
+			+ ID + " INTEGER PRIMARY KEY, "
+			+ "label TEXT NOT NULL, "
+			+ "hostname TEXT NOT NULL, "
+			+ "username TEXT NOT NULL, "
+			+ "password TEXT, "
+			+ "domain TEXT, "
+			+ "port TEXT, "
+			+ "screen_settings INTEGER NOT NULL, "
+			+ "performance_flags INTEGER NOT NULL, "
+			
+			+ "enable_gateway_settings INTEGER DEFAULT 0, "
+			+ "gateway_hostname TEXT, "
+			+ "gateway_port INTEGER DEFAULT 443, "
+			+ "gateway_username TEXT, "
+			+ "gateway_password TEXT, "
+			+ "gateway_domain TEXT, "
+                        
+			+ "enable_3g_settings INTEGER DEFAULT 0, "
+			+ "screen_3g INTEGER NOT NULL, "
+			+ "performance_3g INTEGER NOT NULL, "
+			+ "redirect_sdcard INTEGER, "
+			+ "security INTEGER, "
+			+ "remote_program TEXT, "
+			+ "work_dir TEXT, "
+			+ "console_mode INTEGER, "
+			
+			+ "FOREIGN KEY(screen_settings) REFERENCES tbl_screen_settings(" + ID + "), "
+			+ "FOREIGN KEY(performance_flags) REFERENCES tbl_performance_flags(" + ID + "), "
+			+ "FOREIGN KEY(screen_3g) REFERENCES tbl_screen_settings(" + ID + "), "
+			+ "FOREIGN KEY(performance_3g) REFERENCES tbl_performance_flags(" + ID + ") "
+	
+			+ ");");		
+	}
+	
+	// from http://stackoverflow.com/questions/3424156/upgrade-sqlite-database-from-one-version-to-another
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
-	{
+	{		
+		db.beginTransaction();
+	
+		// run a table creation with if not exists (we are doing an upgrade, so the table might 
+		// not exists yet, it will fail alter and drop)
+		db.execSQL(getManualBookmarksCreationString());
+		// put in a list the existing columns 
+		List<String> columns = GetColumns(db, "tbl_manual_bookmarks");
+		// backup table 
+		db.execSQL("ALTER TABLE tbl_manual_bookmarks RENAME TO 'temp_tbl_manual_bookmarks'");
+		// create new table (with new scheme)
+		db.execSQL(getManualBookmarksCreationString());
+		// get the intersection with the new columns, this time columns taken from the upgraded table
+		columns.retainAll(GetColumns(db, "tbl_manual_bookmarks"));
+		// restore data
+		String cols = joinStrings(columns, ","); 
+		db.execSQL(String.format("INSERT INTO %s (%s) SELECT %s from 'temp_%s", "tbl_manual_bookmarks", cols, cols, "tbl_manual_bookmarks'"));
+		// remove backup table
+		db.execSQL("DROP table 'temp_tbl_manual_bookmarks'");
+		
+		db.setTransactionSuccessful();
+		db.endTransaction();		
 	}
+	
+	private static List<String> GetColumns(SQLiteDatabase db, String tableName) {
+	    List<String> ar = null;
+	    Cursor c = null;
+	    try {
+	        c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
+	        if (c != null) {
+	            ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
+	        }
+	    } catch (Exception e) {
+	        Log.v(tableName, e.getMessage(), e);
+	        e.printStackTrace();
+	    } finally {
+	        if (c != null)
+	            c.close();
+	    }
+	    return ar;
+	}
+
+	private static String joinStrings(List<String> list, String delim) {
+	    StringBuilder buf = new StringBuilder();
+	    int num = list.size();
+	    for (int i = 0; i < num; i++) {
+	        if (i != 0)
+	            buf.append(delim);
+	        buf.append((String) list.get(i));
+	    }
+	    return buf.toString();
+	}	
 }

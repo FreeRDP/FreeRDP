@@ -220,10 +220,10 @@ static void smartcard_irp_complete(IRP* irp)
 
 	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
-	pos = stream_get_pos(irp->output);
-	stream_set_pos(irp->output, 12);
-	stream_write_UINT32(irp->output, irp->IoStatus);
-	stream_set_pos(irp->output, pos);
+	pos = Stream_GetPosition(irp->output);
+	Stream_SetPosition(irp->output, 12);
+	Stream_Write_UINT32(irp->output, irp->IoStatus);
+	Stream_SetPosition(irp->output, pos);
 
 	/* Begin TS Client defect workaround. */
 	WaitForSingleObject(smartcard->CompletionIdsMutex, INFINITE);
@@ -325,10 +325,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		smartcard->device.Free = smartcard_free;
 
 		length = strlen(smartcard->device.name);
-		smartcard->device.data = stream_new(length + 1);
+		smartcard->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)
-			stream_write_BYTE(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
+			Stream_Write_UINT8(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
 
 		smartcard->path = path;
 

@@ -104,6 +104,10 @@
     <string name="settings_enable_3g_settings">"Paramètres 3G"</string>
     <string name="settings_screen_3g">"Écran 3G"</string>
     <string name="settings_performance_3g">"Performance 3G"</string>
+    <string name="settings_cat_gateway">Gateway</string>
+    <string name="settings_enable_gateway_settings">Enable Gateway</string>
+    <string name="settings_gateway_settings">Gateway Settings</string>    
+    <string name="settings_redirect_sdcard">"Redirect SDCard"</string>
     <string name="settings_security">"Securité"</string>
     <string-array name="security_array">
         <item>"Automatique"</item>

@@ -22,6 +22,7 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.KeyboardMapper;
 import com.freerdp.freerdpcore.utils.Mouse;
+import com.freerdp.freerdpcore.utils.ClipboardManagerProxy;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -59,7 +60,8 @@ import android.inputmethodservice.KeyboardView;
 
 public class SessionActivity extends Activity 
 	implements LibFreeRDP.UIEventListener, KeyboardView.OnKeyboardActionListener, ScrollView2D.ScrollView2DListener, 
-			   KeyboardMapper.KeyProcessingListener, SessionView.SessionViewListener, TouchPointerView.TouchPointerListener
+			   KeyboardMapper.KeyProcessingListener, SessionView.SessionViewListener, TouchPointerView.TouchPointerListener,
+			   ClipboardManagerProxy.OnClipboardChangedListener
 {	
 	private class UIHandler extends Handler {
 		
@@ -256,7 +258,6 @@ public class SessionActivity extends Activity
 			if (!connectCancelledByUser)
 				uiHandler.sendMessage(Message.obtain(null, UIHandler.DISPLAY_TOAST, getResources().getText(R.string.error_connection_failure)));
 			
-			session = null;
 			closeSessionActivity(RESULT_CANCELED);
 		}
 
@@ -271,7 +272,6 @@ public class SessionActivity extends Activity
 			}
 			
 			session.setUIEventListener(null);
-			session = null;
 			closeSessionActivity(RESULT_OK);
 		}
 	}
@@ -329,6 +329,8 @@ public class SessionActivity extends Activity
 	private static final int MAX_DISCARDED_MOVE_EVENTS = 3;
 	private static final int SEND_MOVE_EVENT_TIMEOUT = 150;
 	private int discardedMoveEvents = 0;
+	
+	private ClipboardManagerProxy mClipboardManager;
 	
 	private void createDialogs()
 	{
@@ -479,6 +481,9 @@ public class SessionActivity extends Activity
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(GlobalApp.ACTION_EVENT_FREERDP);
 		registerReceiver(libFreeRDPBroadcastReceiver, filter);
+		
+		mClipboardManager = ClipboardManagerProxy.getClipboardManager(this);
+        mClipboardManager.addClipboardChangedListener(this);		
 	}
 
 	@Override
@@ -518,9 +523,16 @@ public class SessionActivity extends Activity
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.v(TAG, "Session.onDestroy");
-
+		
 		// unregister freerdp events broadcast receiver
 		unregisterReceiver(libFreeRDPBroadcastReceiver);
+
+		// remove clipboard listener		
+		mClipboardManager.removeClipboardboardChangedListener(this);
+
+		// free session
+		GlobalApp.freeSession(session.getInstance());
+		session = null;
 	}
 		
 	@Override
@@ -1011,7 +1023,13 @@ public class SessionActivity extends Activity
 		return callbackDialogResult;
 	}
 	
-
+	@Override
+	public void OnRemoteClipboardChanged(String data)
+	{
+		Log.v(TAG, "OnRemoteClipboardChanged: " + data);
+		mClipboardManager.setClipboardData(data);				
+    }
+	
 	// ****************************************************************************	
 	// ScrollView2DListener implementation
 	private void resetZoomControlsAutoHideTimeout() {
@@ -1129,5 +1147,13 @@ public class SessionActivity extends Activity
 	public void onTouchPointerResetScrollZoom() {
 		sessionView.setZoom(1.0f);
 		scrollView.scrollTo(0, 0);
+	}
+
+	// ****************************************************************************
+	// ClipboardManagerProxy.OnClipboardChangedListener
+	@Override
+	public void onClipboardChanged(String data) {
+		Log.v(TAG, "onClipboardChanged: " + data);
+		LibFreeRDP.sendClipboardData(session.getInstance(), data);
 	}	
 }

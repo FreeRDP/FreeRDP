@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client
+ * X11 Server Monitors
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __XFREERDP_H
-#define __XFREERDP_H
+#ifndef XFREERDP_SERVER_MONITORS_H
+#define XFREERDP_SERVER_MONITORS_H
 
+#include "xfreerdp.h"
 
+int xf_list_monitors(xfInfo* xfi);
 
-#endif /* __XFREERDP_H */
+#endif /* XFREERDP_SERVER_MONITORS_H */
+

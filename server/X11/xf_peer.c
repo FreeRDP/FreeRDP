@@ -36,13 +36,19 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/locale/keyboard.h>
 
 #include "xf_input.h"
+#include "xf_cursor.h"
 #include "xf_encode.h"
+#include "xf_update.h"
+#include "xf_monitors.h"
+
+#include "makecert.h"
 
 #include "xf_peer.h"
 
@@ -50,30 +56,10 @@
 
 void xf_xdamage_init(xfInfo* xfi)
 {
-	Bool pixmaps;
 	int damage_event;
 	int damage_error;
 	int major, minor;
 	XGCValues values;
-
-	if (xfi->use_xshm)
-	{
-		if (XShmQueryExtension(xfi->display) != False)
-		{
-			XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
-
-			if (pixmaps != True)
-			{
-				fprintf(stderr, "XShmQueryVersion failed\n");
-				return;
-			}
-		}
-		else
-		{
-			fprintf(stderr, "XShmQueryExtension failed\n");
-			return;
-		}
-	}
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
 	{
@@ -122,8 +108,27 @@ void xf_xdamage_init(xfInfo* xfi)
 
 #endif
 
-void xf_xshm_init(xfInfo* xfi)
+int xf_xshm_init(xfInfo* xfi)
 {
+	Bool pixmaps;
+	int major, minor;
+
+	if (XShmQueryExtension(xfi->display) != False)
+	{
+		XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
+
+		if (pixmaps != True)
+		{
+			fprintf(stderr, "XShmQueryVersion failed\n");
+			return -1;
+		}
+	}
+	else
+	{
+		fprintf(stderr, "XShmQueryExtension failed\n");
+		return -1;
+	}
+
 	xfi->fb_shm_info.shmid = -1;
 	xfi->fb_shm_info.shmaddr = (char*) -1;
 
@@ -133,7 +138,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (!xfi->fb_image)
 	{
 		fprintf(stderr, "XShmCreateImage failed\n");
-		return;
+		return -1;
 	}
 
 	xfi->fb_shm_info.shmid = shmget(IPC_PRIVATE,
@@ -142,7 +147,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (xfi->fb_shm_info.shmid == -1)
 	{
 		fprintf(stderr, "shmget failed\n");
-		return;
+		return -1;
 	}
 
 	xfi->fb_shm_info.readOnly = False;
@@ -152,7 +157,7 @@ void xf_xshm_init(xfInfo* xfi)
 	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
 	{
 		fprintf(stderr, "shmat failed\n");
-		return;
+		return -1;
 	}
 
 	XShmAttach(xfi->display, &(xfi->fb_shm_info));
@@ -166,6 +171,8 @@ void xf_xshm_init(xfInfo* xfi)
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
 			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
 			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+
+	return 0;
 }
 
 xfInfo* xf_info_init()
@@ -188,7 +195,9 @@ xfInfo* xf_info_init()
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	xfi->use_xshm = FALSE;
+	xfi->use_xshm = TRUE;
+
+	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
 	if (!XInitThreads())
 		fprintf(stderr, "warning: XInitThreads() failure\n");
@@ -200,6 +209,8 @@ xfInfo* xf_info_init()
 		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
 	}
+
+	xf_list_monitors(xfi);
 
 	xfi->xfds = ConnectionNumber(xfi->display);
 	xfi->number = DefaultScreen(xfi->display);
@@ -236,7 +247,7 @@ xfInfo* xf_info_init()
 
 	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
 
-	if (vis == NULL)
+	if (!vis)
 	{
 		fprintf(stderr, "XGetVisualInfo failed\n");
 		exit(1);
@@ -258,14 +269,23 @@ xfInfo* xf_info_init()
 
 	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
 
+	if (xfi->use_xshm)
+	{
+		if (xf_xshm_init(xfi) < 0)
+			xfi->use_xshm = FALSE;
+	}
+
+	if (xfi->use_xshm)
+		printf("Using X Shared Memory Extension (XShm)\n");
+
 #ifdef WITH_XDAMAGE
 	xf_xdamage_init(xfi);
 #endif
 
-	if (xfi->use_xshm)
-		xf_xshm_init(xfi);
+	xf_cursor_init(xfi);
 
 	xfi->bytesPerPixel = 4;
+	xfi->activePeerCount = 0;
 
 	freerdp_keyboard_init(0);
 
@@ -282,14 +302,18 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
-	context->s = stream_new(65536);
+	context->s = Stream_New(NULL, 65536);
+	Stream_Clear(context->s);
+
+	context->updateReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->updateSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
 void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 {
 	if (context)
 	{
-		stream_free(context->s);
+		Stream_Free(context->s, TRUE);
 		rfx_context_free(context->rfx_context);
 	}
 }
@@ -307,106 +331,21 @@ void xf_peer_init(freerdp_peer* client)
 	xfp = (xfPeerContext*) client->context;
 
 	xfp->fps = 16;
-	xfp->thread = 0;
-	xfp->activations = 0;
-
-	xfp->queue = MessageQueue_New();
-
 	xfi = xfp->info;
-	xfp->hdc = gdi_CreateDC(xfi->clrconv, xfi->bpp);
 
-	pthread_mutex_init(&(xfp->mutex), NULL);
+	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
-wStream* xf_peer_stream_init(xfPeerContext* context)
+void xf_peer_send_update(freerdp_peer* client)
 {
-	stream_clear(context->s);
-	stream_set_pos(context->s, 0);
-	return context->s;
-}
-
-void xf_peer_live_rfx(freerdp_peer* client)
-{
-	xfPeerContext* xfp = (xfPeerContext*) client->context;
-	pthread_create(&(xfp->thread), 0, xf_monitor_updates, (void*) client);
-}
-
-void xf_peer_rfx_update(freerdp_peer* client, int x, int y, int width, int height)
-{
-	wStream* s;
-	BYTE* data;
-	xfInfo* xfi;
-	RFX_RECT rect;
-	XImage* image;
 	rdpUpdate* update;
-	xfPeerContext* xfp;
 	SURFACE_BITS_COMMAND* cmd;
 
 	update = client->update;
-	xfp = (xfPeerContext*) client->context;
 	cmd = &update->surface_bits_command;
-	xfi = xfp->info;
 
-	if (width * height <= 0)
-		return;
-
-	s = xf_peer_stream_init(xfp);
-
-	if (xfi->use_xshm)
-	{
-		/**
-		 * Passing an offset source rectangle to rfx_compose_message()
-		 * leads to protocol errors, so offset the data pointer instead.
-		 */
-
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
-		image = xf_snapshot(xfp, x, y, width, height);
-
-		data = (BYTE*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
-
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
-	}
-	else
-	{
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
-		image = xf_snapshot(xfp, x, y, width, height);
-
-		data = (BYTE*) image->data;
-
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
-
-		XDestroyImage(image);
-	}
-
-	cmd->bpp = 32;
-	cmd->codecID = client->settings->RemoteFxCodecId;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = stream_get_length(s);
-	cmd->bitmapData = stream_get_head(s);
-
-	update->SurfaceBits(update->context, cmd);
+	if (cmd->bitmapDataLength)
+		update->SurfaceBits(update->context, cmd);
 }
 
 BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
@@ -415,7 +354,7 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	HANDLE event;
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
-	event = MessageQueue_Event(xfp->queue);
+	event = xfp->updateReadyEvent;
 	fds = GetEventFileDescriptor(event);
 	rfds[*rcount] = (void*) (long) fds;
 	(*rcount)++;
@@ -426,34 +365,20 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 BOOL xf_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
-	wMessage message;
 	xfPeerContext* xfp;
 
 	xfp = (xfPeerContext*) client->context;
 	xfi = xfp->info;
 
-	if (xfp->activated == FALSE)
-		return TRUE;
-
-	if (MessageQueue_Peek(xfp->queue, &message, TRUE))
+	if (WaitForSingleObject(xfp->updateReadyEvent, 0) == WAIT_OBJECT_0)
 	{
-		if (message.id == MakeMessageId(PeerEvent, EncodeRegion))
-		{
-			UINT32 xy, wh;
-			UINT16 x, y, w, h;
+		if (!xfp->activated)
+			return TRUE;
 
-			xy = (UINT32) (size_t) message.wParam;
-			wh = (UINT32) (size_t) message.lParam;
+		xf_peer_send_update(client);
 
-			x = ((xy & 0xFFFF0000) >> 16);
-			y = (xy & 0x0000FFFF);
-
-			w = ((wh & 0xFFFF0000) >> 16);
-			h = (wh & 0x0000FFFF);
-
-			if (w * h > 0)
-				xf_peer_rfx_update(client, x, y, w, h);
-		}
+		ResetEvent(xfp->updateReadyEvent);
+		SetEvent(xfp->updateSentEvent);
 	}
 
 	return TRUE;
@@ -516,34 +441,28 @@ BOOL xf_peer_activate(freerdp_peer* client)
 	rfx_context_reset(xfp->rfx_context);
 	xfp->activated = TRUE;
 
-	xf_peer_live_rfx(client);
+	xfp->info->activePeerCount++;
+
+	xfp->monitorThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) xf_update_thread, (void*) client, 0, NULL);
 
 	return TRUE;
 }
 
-void* xf_peer_main_loop(void* arg)
+const char* makecert_argv[4] =
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
-	rdpSettings* settings;
+	"makecert",
+	"-rdp",
+	"-live",
+	"-silent"
+};
+
+int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
+
+int xf_generate_certificate(rdpSettings* settings)
+{
 	char* server_file_path;
-	freerdp_peer* client = (freerdp_peer*) arg;
-	xfPeerContext* xfp;
-
-	ZeroMemory(rfds, sizeof(rfds));
-
-	fprintf(stderr, "We've got a client %s\n", client->hostname);
-
-	xf_peer_init(client);
-	xfp = (xfPeerContext*) client->context;
-
-	settings = client->settings;
-
-	/* Initialize the real server settings here */
+	MAKECERT_CONTEXT* context;
 
 	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
 
@@ -552,6 +471,53 @@ void* xf_peer_main_loop(void* arg)
 
 	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
 	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
+
+	if ((!PathFileExistsA(settings->CertificateFile)) ||
+			(!PathFileExistsA(settings->PrivateKeyFile)))
+	{
+		context = makecert_context_new();
+
+		makecert_context_process(context, makecert_argc, (char**) makecert_argv);
+
+		makecert_context_set_output_file_name(context, "server");
+
+		if (!PathFileExistsA(settings->CertificateFile))
+			makecert_context_output_certificate_file(context, server_file_path);
+
+		if (!PathFileExistsA(settings->PrivateKeyFile))
+			makecert_context_output_private_key_file(context, server_file_path);
+
+		makecert_context_free(context);
+	}
+
+	free(server_file_path);
+
+	return 0;
+}
+
+static void* xf_peer_main_loop(void* arg)
+{
+	int i;
+	int fds;
+	int max_fds;
+	int rcount;
+	void* rfds[32];
+	fd_set rfds_set;
+	rdpSettings* settings;
+	xfPeerContext* xfp;
+	struct timeval timeout;
+	freerdp_peer* client = (freerdp_peer*) arg;
+
+	ZeroMemory(rfds, sizeof(rfds));
+	ZeroMemory(&timeout, sizeof(struct timeval));
+
+	fprintf(stderr, "We've got a client %s\n", client->hostname);
+
+	xf_peer_init(client);
+	xfp = (xfPeerContext*) client->context;
+	settings = client->settings;
+
+	xf_generate_certificate(settings);
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
@@ -573,6 +539,7 @@ void* xf_peer_main_loop(void* arg)
 			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+
 		if (xf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
@@ -595,7 +562,10 @@ void* xf_peer_main_loop(void* arg)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100;
+
+		if (select(max_fds + 1, &rfds_set, NULL, NULL, &timeout) == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
@@ -613,6 +583,7 @@ void* xf_peer_main_loop(void* arg)
 			fprintf(stderr, "Failed to check freerdp file descriptor\n");
 			break;
 		}
+
 		if ((xf_peer_check_fds(client)) != TRUE)
 		{
 			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
@@ -624,12 +595,6 @@ void* xf_peer_main_loop(void* arg)
 
 	client->Disconnect(client);
 	
-	pthread_cancel(xfp->thread);
-	pthread_cancel(xfp->frame_rate_thread);
-	
-	pthread_join(xfp->thread, NULL);
-	pthread_join(xfp->frame_rate_thread, NULL);
-	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 
@@ -638,8 +603,7 @@ void* xf_peer_main_loop(void* arg)
 
 void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	pthread_t th;
+	HANDLE thread;
 
-	pthread_create(&th, 0, xf_peer_main_loop, client);
-	pthread_detach(th);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_peer_main_loop, client, 0, NULL);
 }

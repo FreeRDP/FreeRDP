@@ -445,6 +445,10 @@ typedef struct _RPC_BINDING_HANDLE_TEMPLATE
 #include <winpr/ndr.h>
 #include <winpr/midl.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API RPC_STATUS RpcBindingCopy(RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding);
 WINPR_API RPC_STATUS RpcBindingFree(RPC_BINDING_HANDLE* Binding);
 WINPR_API RPC_STATUS RpcBindingSetOption(RPC_BINDING_HANDLE hBinding, unsigned long option, ULONG_PTR optionValue);
@@ -600,6 +604,10 @@ WINPR_API RPC_STATUS RpcMgmtEpUnregister(RPC_BINDING_HANDLE EpBinding, RPC_IF_ID
 WINPR_API RPC_STATUS RpcMgmtSetAuthorizationFn(RPC_MGMT_AUTHORIZATION_FN AuthorizationFn);
 
 WINPR_API RPC_STATUS RpcServerInqBindingHandle(RPC_BINDING_HANDLE* Binding);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

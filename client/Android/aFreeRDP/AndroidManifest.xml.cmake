@@ -3,8 +3,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	android:installLocation="auto"
 	package="com.freerdp.afreerdp"
-	android:versionCode="1"
-	android:versionName="@FREERDP_VERSION_FULL@" >
+	android:versionCode="3"
+	android:versionName="@GIT_REVISION@" >
 
 	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
 	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" />
