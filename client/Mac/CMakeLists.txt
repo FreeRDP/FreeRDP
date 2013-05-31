@@ -45,31 +45,16 @@ add_library(${MODULE_NAME}
 	${${MODULE_NAME}_RESOURCES})
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
-SET_TARGET_PROPERTIES( ${MODULE_NAME}  PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/  )
+SET_TARGET_PROPERTIES(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
           
- set_target_properties( ${MODULE_NAME}  PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${EXECUTABLE_OUTPUT_PATH} 
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH}
-)           
-           
-# Automatic ref counting
-# temporary turn off for x86_64 build issue
-# set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
+set_target_properties(${MODULE_NAME}  PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${EXECUTABLE_OUTPUT_PATH} 
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
 
 # Support for automatic reference counting requires non-fragile abi.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
 
-# XCode project architecture to native architecture of build machine
-# -----------------------------------------------------------------------------------------------------
-# Issue: Had some issues with FreeRDP project building only 64 bit and
-# MacFreeRDP attempting to link to both 32 and 64 for dual target.
-# In the future the FreeRDP Xcode project should be pulled in for a couple of reasons:
-# 1) better step-into debugging 2) automatic dependency compilation and multi-arch compilation + linkage
-# If you know the solutions for 1 and 2, please add below.
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH_ACTUAL)")
-
-# Set the info plist to the custom instance
-#	MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist
 
 set(MODULE_VERSION, 1.1.0)
 
@@ -80,10 +65,9 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 	MACOSX_FRAMEWORK_SHORT_VERSION_STRING 1.1.0
 	MACOSX_FRAMEWORK_BUNDLE_VERSION 1.1.0
 	PUBLIC_HEADER "MRDPView.h"
-    INSTALL_NAME_DIR "@executable_path/../../Frameworks"
-    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
-    BUILD_WITH_INSTALL_RPATH 1
-)         
+	INSTALL_NAME_DIR "@executable_path/../../Frameworks"
+	MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
+	BUILD_WITH_INSTALL_RPATH 1)  
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS} freerdp-client)
 
@@ -132,17 +116,7 @@ set(DEPENDENCIES
 	freerdp-crypto
 	freerdp-client
 	freerdp-locale
-	freerdp-common
-	)
-
-
-## Modify the install name path of the dependent libraries so that they can be located by the bundling app.
-# foreach(LIB ${DEPENDENCIES})
-# set_target_properties(${LIB} PROPERTIES 
-#     INSTALL_NAME_DIR "@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents"
-#     BUILD_WITH_INSTALL_RPATH 1
-# )         
-# endforeach()
+	freerdp-common)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
@@ -215,4 +189,4 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 			COMMENT "Compiling ${xib}")
 	endforeach()
 
-endif("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+endif()

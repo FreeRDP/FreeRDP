@@ -150,6 +150,12 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
+if(CMAKE_COMPILER_IS_CLANG)
+	if(WITH_SSE2)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mssse3")
+	endif()
+endif()
+
 if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
