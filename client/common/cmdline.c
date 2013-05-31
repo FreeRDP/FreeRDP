@@ -724,6 +724,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
+	settings->ConnectionType = type;
 	if (type == CONNECTION_TYPE_MODEM)
 	{
 		settings->DisableWallpaper = TRUE;
@@ -1106,6 +1107,11 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
+			settings->Fullscreen = TRUE;
+
+			// force?
+			settings->DesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			settings->DesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
