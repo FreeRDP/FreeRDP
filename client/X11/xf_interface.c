@@ -120,6 +120,12 @@ void xf_transform_window(xfInfo* xfi)
 	w = (xfi->originalWidth * xfi->scale) + xfi->offset_x;
 	h = (xfi->originalHeight * xfi->scale) + xfi->offset_y;
 
+	if(w < 1)
+		w = 1;
+
+	if(h < 1)
+		h = 1;
+
 	if (size_hints)
 	{
 		size_hints->flags |= PMinSize | PMaxSize;
