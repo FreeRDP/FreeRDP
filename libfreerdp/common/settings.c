@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/settings.h>
+#include <freerdp/freerdp.h>
 
 int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 {
@@ -513,6 +514,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->Decorations;
 			break;
 
+		case FreeRDP_SmartSizing:
+			return settings->SmartSizing;
+			break;
+
 		case FreeRDP_MouseMotion:
 			return settings->MouseMotion;
 			break;
@@ -953,6 +958,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->Decorations = param;
 			break;
 
+		case FreeRDP_SmartSizing:
+			settings->SmartSizing = param;
+			break;		
+
 		case FreeRDP_MouseMotion:
 			settings->MouseMotion = param;
 			break;
@@ -1173,6 +1182,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			return -1;
 			break;
 	}
+
+	// Mark field as modified
+	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
 
 	return -1;
 }
@@ -1806,6 +1819,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 	}
 
+	// Mark field as modified
+	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	
 	return 0;
 }
 
@@ -1838,6 +1855,10 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 	}
 
+	// Mark field as modified
+	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	
 	return 0;
 }
 
@@ -2165,6 +2186,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 			return -1;
 			break;
 	}
+
+	// Mark field as modified
+	settings->settings_modified[id] = 1;
+	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
 
 	return 0;
 }

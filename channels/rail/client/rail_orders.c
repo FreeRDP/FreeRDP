@@ -125,7 +125,7 @@ void rail_send_pdu(rdpRailOrder* rail_order, wStream* s, UINT16 orderType)
 	DEBUG_RAIL("Sending %s PDU, length:%d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
-	rail_send_channel_data(rail_order->plugin, s->buffer, orderLength);
+	rail_send_channel_data(rail_order->plugin, Stream_Buffer(s), orderLength);
 }
 
 void rail_write_high_contrast(wStream* s, HIGH_CONTRAST* high_contrast)

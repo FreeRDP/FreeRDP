@@ -139,6 +139,10 @@
 #include <sys/statvfs.h>
 #endif
 
+#include "../handle/handle.h"
+
+#include "../pipe/pipe.h"
+
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
@@ -166,6 +170,7 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 {
 	ULONG Type;
 	PVOID Object;
+	WINPR_PIPE* pipe;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
@@ -173,11 +178,10 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
 		int status;
-		int read_fd;
 
-		read_fd = (int) ((ULONG_PTR) Object);
+		pipe = (WINPR_PIPE*) Object;
 
-		status = read(read_fd, lpBuffer, nNumberOfBytesToRead);
+		status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
 
 		*lpNumberOfBytesRead = status;
 
@@ -204,6 +208,7 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 {
 	ULONG Type;
 	PVOID Object;
+	WINPR_PIPE* pipe;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
@@ -211,11 +216,10 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
 		int status;
-		int write_fd;
 
-		write_fd = (int) ((ULONG_PTR) Object);
+		pipe = (WINPR_PIPE*) Object;
 
-		status = write(write_fd, lpBuffer, nNumberOfBytesToWrite);
+		status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
 
 		*lpNumberOfBytesWritten = status;
 

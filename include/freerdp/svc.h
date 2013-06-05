@@ -35,9 +35,10 @@
 
 struct _CHANNEL_DEF
 {
-	char name[CHANNEL_NAME_LEN + 1];
+	char name[8];
 	UINT32 options;
 };
+
 typedef struct _CHANNEL_DEF CHANNEL_DEF;
 typedef CHANNEL_DEF* PCHANNEL_DEF;
 typedef CHANNEL_DEF** PPCHANNEL_DEF;
@@ -94,6 +95,8 @@ typedef CHANNEL_ENTRY_POINTS* PCHANNEL_ENTRY_POINTS;
 
 typedef int (FREERDP_CC * PVIRTUALCHANNELENTRY)(PCHANNEL_ENTRY_POINTS pEntryPoints);
 
+#define FREERDP_CHANNEL_MAGIC_NUMBER	0x46524450
+
 struct _CHANNEL_ENTRY_POINTS_EX
 {
 	UINT32 cbSize;
@@ -104,9 +107,9 @@ struct _CHANNEL_ENTRY_POINTS_EX
 	PVIRTUALCHANNELWRITE pVirtualChannelWrite;
 
 	/* Extended Fields */
-
+	UINT32 MagicNumber; /* identifies FreeRDP */
 	void* pExtendedData; /* extended initial data */
-	void* pInterface; /* channel callback interface */
+	void** ppInterface; /* channel callback interface */
 	PVIRTUALCHANNELEVENTPUSH pVirtualChannelEventPush;
 };
 typedef struct _CHANNEL_ENTRY_POINTS_EX CHANNEL_ENTRY_POINTS_EX;

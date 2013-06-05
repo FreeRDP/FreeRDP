@@ -41,6 +41,8 @@
 
 #ifndef _WIN32
 
+#include "../handle/handle.h"
+
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
 	ULONG Type;
@@ -70,10 +72,14 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
+		WINPR_MUTEX* mutex;
+
+		mutex = (WINPR_MUTEX*) Object;
+
 		if (dwMilliseconds != INFINITE)
 			fprintf(stderr, "WaitForSingleObject: timeout not implemented for mutex wait\n");
 
-		pthread_mutex_lock((pthread_mutex_t*) Object);
+		pthread_mutex_lock(&mutex->mutex);
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{

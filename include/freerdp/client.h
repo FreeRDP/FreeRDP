@@ -38,12 +38,14 @@ extern "C" {
 typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
 typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
 typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
+typedef void (*pOnParamChange)(freerdp* instance, int id);
 
 struct rdp_client
 {
 	pOnResizeWindow OnResizeWindow;
 	pOnWindowStateChange OnWindowStateChange;
 	pOnErrorInfo OnErrorInfo;
+	pOnParamChange OnParamChange;
 };
 
 /**

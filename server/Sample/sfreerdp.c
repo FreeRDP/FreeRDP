@@ -376,12 +376,12 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	{
 		pcap_get_next_record_header(pcap_rfx, &record);
 
-		s->buffer = realloc(s->buffer, record.length);
-		record.data = s->buffer;
-		s->capacity = record.length;
+		Stream_Buffer(s) = realloc(Stream_Buffer(s), record.length);
+		record.data = Stream_Buffer(s);
+		Stream_Capacity(s) = record.length;
 
 		pcap_get_next_record_content(pcap_rfx, &record);
-		s->pointer = s->buffer + s->capacity;
+		Stream_Pointer(s) = Stream_Buffer(s) + Stream_Capacity(s);
 
 		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == FALSE)
 			break;

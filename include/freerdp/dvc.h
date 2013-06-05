@@ -67,6 +67,8 @@ struct _IWTSListener
 	/* Retrieves the listener-specific configuration. */
 	int (*GetConfiguration) (IWTSListener* pListener,
 		void** ppPropertyBag);
+
+	void* pInterface;
 };
 
 struct _IWTSVirtualChannel
@@ -115,6 +117,10 @@ struct _IWTSPlugin
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has terminated. */
 	int (*Terminated) (IWTSPlugin* pPlugin);
+
+	/* Extended */
+
+	void* pInterface;
 };
 
 struct _IWTSListenerCallback

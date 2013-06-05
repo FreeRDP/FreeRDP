@@ -37,6 +37,7 @@
 
 #include "wf_interface.h"
 #include "wf_graphics.h"
+#include "wf_gdi.h"
 
 const BYTE wf_rop2_table[] =
 {
@@ -189,11 +190,16 @@ void wf_scale_rect(wfInfo* wfi, RECT* source)
 
 	if (wfi->instance->settings->SmartSizing && (ww != dw || wh != dh))
 	{
-		source->bottom = MIN(dh, MAX(0, source->bottom * wh / dh + 2));
-		source->top = MIN(dh, MAX(0, source->top * wh / dh - 2));
-		source->left = MIN(dw, MAX(0, source->left * ww / dw - 2));
-		source->right = MIN(dw, MAX(0, source->right * ww / dw + 2));
+		source->bottom = source->bottom * wh / dh + 20;
+		source->top = source->top * wh / dh - 20;
+		source->left = source->left * ww / dw - 20;
+		source->right = source->right * ww / dw + 20;
 	}
+
+	source->bottom -= wfi->yCurrentScroll; 
+	source->top -= wfi->yCurrentScroll;
+	source->left -= wfi->xCurrentScroll;
+	source->right -= wfi->xCurrentScroll;
 }
 
 void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height)
@@ -220,12 +226,29 @@ void wf_update_offset(wfInfo* wfi)
 {
 	if (wfi->fullscreen)
 	{
-		wfi->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfi->width) / 2;
-		if (wfi->offset_x < 0)
-			wfi->offset_x = 0;
-		wfi->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfi->height) / 2;
-		if (wfi->offset_y < 0)
-			wfi->offset_y = 0;
+		if (wfi->instance->settings->UseMultimon)
+		{
+			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+			wfi->offset_x = (w - wfi->width) / 2;
+			if (wfi->offset_x < x)
+				wfi->offset_x = x;
+			wfi->offset_y = (h - wfi->height) / 2;
+			if (wfi->offset_y < y)
+				wfi->offset_y = y;
+		}
+		else 
+		{
+			wfi->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfi->width) / 2;
+			if (wfi->offset_x < 0)
+				wfi->offset_x = 0;
+			wfi->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfi->height) / 2;
+			if (wfi->offset_y < 0)
+				wfi->offset_y = 0;
+		}
 	}
 	else
 	{
@@ -238,8 +261,21 @@ void wf_resize_window(wfInfo* wfi)
 {
 	if (wfi->fullscreen)
 	{
-		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
-		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+		if(wfi->instance->settings->UseMultimon)
+		{
+			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+			SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
+			SetWindowPos(wfi->hwnd, HWND_TOP, x, y, w, h, SWP_FRAMECHANGED);
+		}
+		else
+		{
+			SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_POPUP);
+			SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+		}
 	}
 	else if (!wfi->instance->settings->Decorations)
 	{
@@ -250,12 +286,8 @@ void wf_resize_window(wfInfo* wfi)
 
 		/* Now resize to get full canvas size and room for caption and borders */
 		SetWindowPos(wfi->hwnd, HWND_TOP, 0, 0, wfi->width, wfi->height, SWP_FRAMECHANGED);
-		GetClientRect(wfi->hwnd, &rc_client);
-		GetWindowRect(wfi->hwnd, &rc_wnd);
-		
-		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
-		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
-		
+
+		wf_update_canvas_diff(wfi);
 		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 	else
@@ -263,17 +295,25 @@ void wf_resize_window(wfInfo* wfi)
 		RECT rc_wnd;
 		RECT rc_client;
 
-		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX);
+		SetWindowLongPtr(wfi->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX);
+
+		if (!wfi->client_height)
+			wfi->client_height = wfi->height;
+
+		if (!wfi->client_width)
+			wfi->client_width = wfi->width;
+
+		if (!wfi->client_x)
+			wfi->client_x = 10;
+
+		if (!wfi->client_y)
+			wfi->client_y = 10;
+		
+		wf_update_canvas_diff(wfi);
 
 		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfi->hwnd, HWND_TOP, 10, 10, wfi->width, wfi->height, SWP_FRAMECHANGED);
-		GetClientRect(wfi->hwnd, &rc_client);
-		GetWindowRect(wfi->hwnd, &rc_wnd);
-
-		wfi->diff.x = (rc_wnd.right - rc_wnd.left) - rc_client.right;
-		wfi->diff.y = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
-		
-		SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+		SetWindowPos(wfi->hwnd, HWND_TOP, wfi->client_x, wfi->client_y, wfi->client_width + wfi->diff.x, wfi->client_height + wfi->diff.y, 0 /*SWP_FRAMECHANGED*/);
+		//wf_size_scrollbars(wfi,  wfi->client_width, wfi->client_height);
 	}
 	wf_update_offset(wfi);
 }
@@ -282,9 +322,22 @@ void wf_toggle_fullscreen(wfInfo* wfi)
 {
 	ShowWindow(wfi->hwnd, SW_HIDE);
 	wfi->fullscreen = !wfi->fullscreen;
+
+	if (wfi->fullscreen)
+	{
+		wfi->disablewindowtracking = TRUE;
+	}
+
+	SetParent(wfi->hwnd, wfi->fullscreen ? NULL : wfi->hWndParent);
 	wf_resize_window(wfi);
 	ShowWindow(wfi->hwnd, SW_SHOW);
 	SetForegroundWindow(wfi->hwnd);
+
+	if (!wfi->fullscreen)
+	{
+		// Reenable window tracking AFTER resizing it back, otherwise it can lean to repositioning errors.
+		wfi->disablewindowtracking = FALSE;
+	}
 }
 
 void wf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
@@ -650,4 +703,22 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->SurfaceBits = wf_gdi_surface_bits;
 	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
+}
+
+void wf_update_canvas_diff(wfInfo* wfi)
+{
+	RECT rc_client, rc_wnd;
+	int dx, dy;
+
+	GetClientRect(wfi->hwnd, &rc_client);
+	GetWindowRect(wfi->hwnd, &rc_wnd);
+	
+	dx = (rc_wnd.right - rc_wnd.left) - rc_client.right;
+	dy = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
+
+	if (!wfi->disablewindowtracking)
+	{
+		wfi->diff.x = dx;
+		wfi->diff.y = dy;
+	}
 }

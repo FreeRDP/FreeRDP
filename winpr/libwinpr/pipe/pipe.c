@@ -32,11 +32,17 @@
 
 #ifndef _WIN32
 
+#include "../handle/handle.h"
+
+#include "pipe.h"
+
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
 {
 	void* ptr;
 	HANDLE handle;
 	int pipe_fd[2];
+	WINPR_PIPE* pReadPipe;
+	WINPR_PIPE* pWritePipe;
 
 	pipe_fd[0] = -1;
 	pipe_fd[1] = -1;
@@ -47,13 +53,20 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 		return FALSE;
 	}
 
-	ptr = (void*) ((ULONG_PTR) pipe_fd[0]);
-	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, ptr);
-	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) handle;
+	pReadPipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
+	pWritePipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
 
-	ptr = (void*) ((ULONG_PTR) pipe_fd[1]);
-	handle = winpr_Handle_Insert(HANDLE_TYPE_ANONYMOUS_PIPE, ptr);
-	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) handle;
+	if (!pReadPipe || !pWritePipe)
+		return FALSE;
+
+	pReadPipe->fd = pipe_fd[0];
+	pWritePipe->fd = pipe_fd[1];
+
+	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
+
+	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 
 	return TRUE;
 }

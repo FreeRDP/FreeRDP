@@ -407,7 +407,7 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 4:
-			*value = (byte & 0x1F) << 32;
+			*value = ((UINT64) (byte & 0x1F)) << 32;
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -419,9 +419,9 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 5:
-			*value = (byte & 0x1F) << 40;
+			*value = ((UINT64) (byte & 0x1F)) << 40;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 32);
+			*value |= (((UINT64) byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -433,11 +433,11 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 6:
-			*value = (byte & 0x1F) << 48;
+			*value = ((UINT64) (byte & 0x1F)) << 48;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 40);
+			*value |= (((UINT64) byte) << 40);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 32);
+			*value |= (((UINT64) byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -449,13 +449,13 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 			break;
 
 		case 7:
-			*value = (byte & 0x1F) << 56;
+			*value = ((UINT64) (byte & 0x1F)) << 56;
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 48);
+			*value |= (((UINT64) byte) << 48);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 40);
+			*value |= (((UINT64) byte) << 40);
 			Stream_Read_UINT8(s, byte);
-			*value |= (byte << 32);
+			*value |= (((UINT64) byte) << 32);
 			Stream_Read_UINT8(s, byte);
 			*value |= (byte << 24);
 			Stream_Read_UINT8(s, byte);
@@ -476,27 +476,25 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 {
 	BYTE byte;
-	BYTE count;
 
 	if (value <= 0x1F)
 	{
-		count = 0;
 		byte = value & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		Stream_Write_UINT8(s, byte);
 	}
 	else if (value <= 0x1FFF)
 	{
-		count = 1;
 		byte = (value >> 8) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (1 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
 	else if (value <= 0x1FFFFF)
 	{
-		count = 2;
 		byte = (value >> 16) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (2 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 8) & 0xFF;
 		Stream_Write_UINT8(s, byte);
 		byte = (value & 0xFF);
@@ -504,9 +502,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 	else if (value <= 0x1FFFFF)
 	{
-		count = 3;
 		byte = (value >> 24) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (3 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 16) & 0xFF;
 		Stream_Write_UINT8(s, byte);
 		byte = (value >> 8) & 0xFF;
@@ -516,9 +514,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 	else if (value <= 0x1FFFFFFF)
 	{
-		count = 4;
 		byte = (value >> 32) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (4 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 24) & 0x1F;
 		Stream_Write_UINT8(s, byte);
 		byte = (value >> 16) & 0xFF;
@@ -530,9 +528,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 	else if (value <= 0x1FFFFFFFFF)
 	{
-		count = 5;
 		byte = (value >> 40) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (5 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 32) & 0x1F;
 		Stream_Write_UINT8(s, byte);
 		byte = (value >> 24) & 0x1F;
@@ -546,9 +544,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 	else if (value <= 0x1FFFFFFFFFFF)
 	{
-		count = 6;
 		byte = (value >> 48) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (6 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 40) & 0x1F;
 		Stream_Write_UINT8(s, byte);
 		byte = (value >> 32) & 0x1F;
@@ -564,9 +562,9 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 	else if (value <= 0x1FFFFFFFFFFFFF)
 	{
-		count = 7;
 		byte = (value >> 56) & 0x1F;
-		Stream_Write_UINT8(s, byte | (count << 5));
+		byte |= (7 << 5);
+		Stream_Write_UINT8(s, byte);
 		byte = (value >> 48) & 0x1F;
 		Stream_Write_UINT8(s, byte);
 		byte = (value >> 40) & 0x1F;

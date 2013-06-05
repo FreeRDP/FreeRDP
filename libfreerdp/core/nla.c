@@ -809,7 +809,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.DomainLength = (UINT32) length;
 	credssp->identity.Domain = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.Domain, s->pointer, credssp->identity.DomainLength);
+	CopyMemory(credssp->identity.Domain, Stream_Pointer(s), credssp->identity.DomainLength);
 	Stream_Seek(s, credssp->identity.DomainLength);
 	credssp->identity.DomainLength /= 2;
 
@@ -818,7 +818,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.UserLength = (UINT32) length;
 	credssp->identity.User = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.User, s->pointer, credssp->identity.UserLength);
+	CopyMemory(credssp->identity.User, Stream_Pointer(s), credssp->identity.UserLength);
 	Stream_Seek(s, credssp->identity.UserLength);
 	credssp->identity.UserLength /= 2;
 
@@ -827,7 +827,7 @@ void credssp_read_ts_password_creds(rdpCredssp* credssp, wStream* s)
 	ber_read_octet_string_tag(s, &length);
 	credssp->identity.PasswordLength = (UINT32) length;
 	credssp->identity.Password = (UINT16*) malloc(length);
-	CopyMemory(credssp->identity.Password, s->pointer, credssp->identity.PasswordLength);
+	CopyMemory(credssp->identity.Password, Stream_Pointer(s), credssp->identity.PasswordLength);
 	Stream_Seek(s, credssp->identity.PasswordLength);
 	credssp->identity.PasswordLength /= 2;
 
@@ -1109,7 +1109,10 @@ void credssp_send(rdpCredssp* credssp)
 		// assert length == 0
 	}
 
+	Stream_SealLength(s);
+
 	transport_write(credssp->transport, s);
+
 	Stream_Free(s, TRUE);
 }
 
