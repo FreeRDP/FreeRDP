@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * X11 Client Channels
  *
- * Copyright 2012 Thomas Goddard
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,28 @@
  * limitations under the License.
  */
 
-#import <Cocoa/Cocoa.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-@interface MRDPRailWindow : NSWindow
+#include "xf_channels.h"
 
-@end
+#include "xf_interface.h"
+#include "xfreerdp.h"
+
+int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
+{
+	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
+
+	if (strcmp(name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		xfi->rdpei = (RdpeiClientContext*) pInterface;
+	}
+
+	return 0;
+}
+
+int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface)
+{
+	return 0;
+}

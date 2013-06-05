@@ -614,22 +614,61 @@ BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int h
 		src16 = (UINT16*) srcData;
 		dst32 = (UINT32*) dstData;
 
-		for (i = width * height; i > 0; i--)
+		if (clrconv->alpha)
 		{
-			pixel = *src16;
-			src16++;
-			GetBGR16(red, green, blue, pixel);
-			if (clrconv->alpha)
+			if (clrconv->invert)
 			{
-				pixel = (clrconv->invert) ? ARGB32(0xFF, red, green, blue) : ABGR32(0xFF, red, green, blue);
+				for (i = width * height; i > 0; i--)
+				{
+					pixel = *src16;
+					src16++;
+					GetBGR16(red, green, blue, pixel);
+					pixel = ARGB32(0xFF, red, green, blue);
+					*dst32 = pixel;
+					dst32++;
+				}
 			}
 			else
 			{
-				pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
+				for (i = width * height; i > 0; i--)
+				{
+					pixel = *src16;
+					src16++;
+					GetBGR16(red, green, blue, pixel);
+					pixel = ABGR32(0xFF, red, green, blue);
+					*dst32 = pixel;
+					dst32++;
+				}
 			}
-			*dst32 = pixel;
-			dst32++;
 		}
+		else
+		{
+			if (clrconv->invert)
+			{
+				for (i = width * height; i > 0; i--)
+				{
+					pixel = *src16;
+					src16++;
+					GetBGR16(red, green, blue, pixel);
+					pixel = RGB32(red, green, blue);
+					*dst32 = pixel;
+					dst32++;
+				}
+			}
+			else
+			{
+				for (i = width * height; i > 0; i--)
+				{
+					pixel = *src16;
+					src16++;
+					GetBGR16(red, green, blue, pixel);
+					pixel = BGR32(red, green, blue);
+					*dst32 = pixel;
+					dst32++;
+				}
+			}
+		}
+
 		return dstData;
 	}
 

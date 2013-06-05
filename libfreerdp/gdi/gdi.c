@@ -782,6 +782,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 			freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
 #endif
 
+
 			for (j = 0; j < message->num_rects; j++)
 			{
 				gdi_SetClipRgn(gdi->primary->hdc,

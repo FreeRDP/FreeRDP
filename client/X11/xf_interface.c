@@ -52,6 +52,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
@@ -82,6 +83,7 @@
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
+#include "xf_channels.h"
 
 #include "xfreerdp.h"
 
@@ -90,6 +92,7 @@ static const size_t password_size = 512;
 
 void xf_draw_screen_scaled(xfInfo* xfi)
 {
+#ifdef WITH_XRENDER
 	XTransform transform;
 	Picture windowPicture;
 	Picture primaryPicture;
@@ -115,6 +118,7 @@ void xf_draw_screen_scaled(xfInfo* xfi)
 
 	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
 	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+#endif
 }
 
 void xf_context_new(freerdp* instance, rdpContext* context)
@@ -665,6 +669,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 BOOL xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
+	rdpChannels* channels;
 	rdpSettings* settings;
 
 	xfi = ((xfContext*) instance->context)->xfi;
@@ -676,13 +681,17 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	settings = instance->settings;
+	channels = instance->context->channels;
+
+	instance->OnChannelConnected = xf_on_channel_connected;
+	instance->OnChannelDisconnected = xf_on_channel_disconnected;
 
 	//if (status < 0)
 	//	exit(XF_EXIT_PARSE_ARGUMENTS);
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	freerdp_client_load_addins(channels, instance->settings);
 
-	freerdp_channels_pre_connect(xfi->_context->channels, instance);
+	freerdp_channels_pre_connect(channels, instance);
 
 	if (settings->AuthenticationOnly)
 	{

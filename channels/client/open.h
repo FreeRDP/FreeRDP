@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * MacFreeRDP
+ * Client Channels
  *
- * Copyright 2012 Thomas Goddard
+ * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "MRDPRailView.h"
-#import "MRDPRailWindow.h"
+#ifndef FREERDP_PRIVATE_CLIENT_CHANNELS_OPEN
+#define FREERDP_PRIVATE_CLIENT_CHANNELS_OPEN
 
-@interface MRDPWindow : NSObject
-{
-}
+#include "channels.h"
 
-@property (assign) int windowID;
-@property (retain) MRDPRailWindow* window;
-@property (retain) MRDPRailView* view;
+UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
+	char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
 
-@end
+UINT32 FreeRDP_VirtualChannelClose(UINT32 openHandle);
 
+#endif /* FREERDP_PRIVATE_CLIENT_CHANNELS_OPEN */

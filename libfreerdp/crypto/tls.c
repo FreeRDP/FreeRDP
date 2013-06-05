@@ -270,23 +270,6 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 		return FALSE;
 	}
 
-	cert = tls_get_certificate(tls, FALSE);
-
-	if (!cert)
-	{
-		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return FALSE;
-	}
-
-	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
-	{
-		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
-		tls_free_certificate(cert);
-		return FALSE;
-	}
-
-	free(cert);
-
 	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
 	{
 		fprintf(stderr, "SSL_set_fd failed\n");
@@ -317,6 +300,23 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 			break;
 		}
 	}
+
+	cert = tls_get_certificate(tls, FALSE);
+
+	if (!cert)
+	{
+		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
+		return FALSE;
+	}
+
+	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
+	{
+		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
+		tls_free_certificate(cert);
+		return FALSE;
+	}
+
+	free(cert);
 
 	fprintf(stderr, "TLS connection accepted\n");
 
@@ -353,6 +353,18 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
 				status = 0;
+				break;
+
+			case SSL_ERROR_SYSCALL:
+				if (errno == EAGAIN)
+				{
+					status = 0;
+				}
+				else
+				{
+					tls_print_error("SSL_read", tls->ssl, status);
+					status = -1;
+				}
 				break;
 
 			default:
@@ -401,6 +413,18 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
 				status = 0;
+				break;
+
+			case SSL_ERROR_SYSCALL:
+				if (errno == EAGAIN)
+				{
+					status = 0;
+				}
+				else
+				{
+					tls_print_error("SSL_write", tls->ssl, status);
+					status = -1;
+				}
 				break;
 
 			default:
@@ -473,7 +497,7 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 			return FALSE;
 
 		case SSL_ERROR_SYSCALL:
-			fprintf(stderr, "%s: I/O error\n", func);
+			fprintf(stderr, "%s: I/O error: %s (%d)\n", func, strerror(errno), errno);
 			tls_errors(func);
 			return TRUE;
 

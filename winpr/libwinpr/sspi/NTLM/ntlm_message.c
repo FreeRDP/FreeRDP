@@ -326,7 +326,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 
 #ifdef WITH_DEBUG_NTLM
 	fprintf(stderr, "NEGOTIATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->buffer, length);
+	winpr_HexDump(Stream_Buffer(s), length);
 	fprintf(stderr, "\n");
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -610,7 +610,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	buffer->cbBuffer = length;
 
 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
-	CopyMemory(context->ChallengeMessage.pvBuffer, s->buffer, length);
+	CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s), length);
 
 #ifdef WITH_DEBUG_NTLM
 	fprintf(stderr, "CHALLENGE_MESSAGE (length = %d)\n", length);
@@ -720,7 +720,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	length = Stream_GetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, Stream_Buffer(s), length);
 	buffer->cbBuffer = length;
 
 	Stream_SetPosition(s, PayloadBufferOffset);
@@ -1016,7 +1016,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	length = Stream_GetPosition(s);
 	sspi_SecBufferAlloc(&context->AuthenticateMessage, length);
-	CopyMemory(context->AuthenticateMessage.pvBuffer, s->buffer, length);
+	CopyMemory(context->AuthenticateMessage.pvBuffer, Stream_Buffer(s), length);
 	buffer->cbBuffer = length;
 
 	if (context->UseMIC)
@@ -1031,7 +1031,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 	fprintf(stderr, "AUTHENTICATE_MESSAGE (length = %d)\n", length);
-	winpr_HexDump(s->buffer, length);
+	winpr_HexDump(Stream_Buffer(s), length);
 	fprintf(stderr, "\n");
 
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
