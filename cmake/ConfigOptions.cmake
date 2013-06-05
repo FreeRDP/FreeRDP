@@ -36,10 +36,11 @@ else()
 		option(WITH_IPP "Use Intel Performance Primitives." OFF)
 	endif()
 endif()
+
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
-if(APPLE)
-	option(WITH_CLANG "Build using clang" OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
 
 if(MSVC)

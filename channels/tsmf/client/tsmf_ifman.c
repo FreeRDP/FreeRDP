@@ -268,6 +268,8 @@ int tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 				Left, Top, Right, Bottom);
 	}
 
+	ifman->output_pending = TRUE;
+
 	return status;
 }
 

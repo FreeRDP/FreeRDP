@@ -141,6 +141,12 @@ static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	irp->Complete(irp);
 }
 
+static void printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP* irp)
+{
+	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
+	irp->Complete(irp);
+}
+
 static void printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	switch (irp->MajorFunction)
@@ -155,6 +161,10 @@ static void printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 		case IRP_MJ_WRITE:
 			printer_process_irp_write(printer_dev, irp);
+			break;
+
+		case IRP_MJ_DEVICE_CONTROL:
+			printer_process_irp_device_control(printer_dev, irp);
 			break;
 
 		default:

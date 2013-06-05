@@ -285,17 +285,24 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	 */
 	if (Stream_GetRemainingLength(s) > 0)
 	{
-		do {
-			if(Stream_GetRemainingLength(s) < 4)
+		do
+		{
+			if (Stream_GetRemainingLength(s) < 4)
 				break;
+
 			Stream_Read_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
-			if(Stream_GetRemainingLength(s) < 2)
+
+			if (Stream_GetRemainingLength(s) < 2)
 				break;
+
 			Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
-			if(Stream_GetRemainingLength(s) < lengthSourceDescriptor)
+
+			if (Stream_GetRemainingLength(s) < lengthSourceDescriptor)
 				break;
+
 			Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
-		} while(0);
+		}
+		while(0);
 	}
 
 	rdp->state = CONNECTION_STATE_CAPABILITY;
@@ -304,6 +311,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
+
 		if (rdp->disconnect)
 			break;
 	}
@@ -314,14 +322,20 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 {
 	wStream* s;
+	BOOL status;
 
-	s = rdp_pdu_init(rdp);
+	s = Stream_New(NULL, 1024);
+	rdp_init_stream_pdu(rdp, s);
 
 	Stream_Write_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 1); /* lengthSourceDescriptor (2 bytes) */
 	Stream_Write_UINT8(s, 0); /* sourceDescriptor (should be 0x00) */
 
-	return rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->user_id);
+
+	Stream_Free(s, TRUE);
+
+	return status;
 }
 
 BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
@@ -330,11 +344,13 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_recv_control_pdu(s, &action))
 		return FALSE;
+
 	if (action == CTRLACTION_REQUEST_CONTROL)
 	{
 		if (!rdp_send_server_control_granted_pdu(rdp))
 			return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -342,6 +358,7 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
+
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
 

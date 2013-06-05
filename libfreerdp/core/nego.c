@@ -276,7 +276,8 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		cbSize += cchPCB * 2;
 	}
 
-	s = transport_send_stream_init(nego->transport, cbSize);
+	s = Stream_New(NULL, cbSize);
+
 	Stream_Write_UINT32(s, cbSize); /* cbSize */
 	Stream_Write_UINT32(s, 0); /* Flags */
 	Stream_Write_UINT32(s, PRECONNECTION_PDU_V2); /* Version */
@@ -289,8 +290,12 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		free(wszPCB);
 	}
 
+	Stream_SealLength(s);
+
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -462,12 +467,28 @@ void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	wStream* s = transport_recv_stream_init(nego->transport, 1024);
+	int status;
+	wStream* s;
 
-	if (transport_read(nego->transport, s) < 0)
+	s = Stream_New(NULL, 1024);
+
+	status = transport_read(nego->transport, s);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
-	return ((nego_recv(nego->transport, s, nego) < 0) ? FALSE : TRUE);
+	status = nego_recv(nego->transport, s, nego);
+
+	if (status < 0)
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /**
@@ -641,12 +662,13 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	wStream* s;
 	int length;
-	BYTE *bm, *em;
+	int bm, em;
 	int cookie_length;
 
-	s = transport_send_stream_init(nego->transport, 256);
+	s = Stream_New(NULL, 512);
+
 	length = TPDU_CONNECTION_REQUEST_LENGTH;
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
 	if (nego->RoutingToken)
@@ -682,14 +704,18 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += 8;
 	}
 
-	Stream_GetPointer(s, em);
-	Stream_SetPointer(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_request(s, length - 5);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
+
+	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	return TRUE;
 }
@@ -798,19 +824,19 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	wStream* s;
-	BYTE* bm;
-	BYTE* em;
 	int length;
+	int bm, em;
 	BOOL status;
+	wStream* s;
 	rdpSettings* settings;
 
 	status = TRUE;
 	settings = nego->transport->settings;
 
-	s = transport_send_stream_init(nego->transport, 256);
+	s = Stream_New(NULL, 512);
+
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
@@ -837,14 +863,18 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		status = FALSE;
 	}
 
-	Stream_GetPointer(s, em);
-	Stream_SetPointer(s, bm);
+	em = Stream_GetPosition(s);
+	Stream_SetPosition(s, bm);
 	tpkt_write_header(s, length);
 	tpdu_write_connection_confirm(s, length - 5);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
+
+	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
 		return FALSE;
+
+	Stream_Free(s, TRUE);
 
 	if (status)
 	{

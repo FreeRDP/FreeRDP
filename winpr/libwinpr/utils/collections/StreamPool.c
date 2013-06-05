@@ -127,7 +127,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	{
 		s = pool->aArray[index];
 
-		if (s->capacity >= size)
+		if (Stream_Capacity(s) >= size)
 		{
 			foundIndex = index;
 			found = TRUE;
@@ -247,7 +247,7 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	{
 		s = pool->uArray[index];
 
-		if ((ptr >= s->buffer) && (ptr < (s->buffer + s->capacity)))
+		if ((ptr >= Stream_Buffer(s)) && (ptr < (Stream_Buffer(s) + Stream_Capacity(s))))
 		{
 			found = TRUE;
 			break;

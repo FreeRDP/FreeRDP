@@ -35,12 +35,21 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
+#include <freerdp/client/file.h>
 
 #include "wf_event.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Callback type codes. Move elsewhere?
+#define CALLBACK_TYPE_PARAM_CHANGE		0x01
+#define CALLBACK_TYPE_CONNECTED			0x02
+#define CALLBACK_TYPE_DISCONNECTED		0x03
+
+// System menu constants
+#define SYSCOMMAND_ID_SMARTSIZING 1000
 
 struct wf_bitmap
 {
@@ -69,6 +78,8 @@ struct wf_context
 };
 typedef struct wf_context wfContext;
 
+typedef void (CALLBACK * callbackFunc)(wfInfo* wfi, int callback_type, DWORD param1, DWORD param2);
+
 struct wf_info
 {
 	rdpClient* client;
@@ -81,6 +92,8 @@ struct wf_info
 	int fullscreen;
 	int percentscreen;
 	char window_title[64];
+	int client_x;
+	int client_y;
 	int client_width;
 	int client_height;
 
@@ -111,10 +124,30 @@ struct wf_info
 
 	wfBitmap* tile;
 	DWORD mainThreadId;
+	DWORD keyboardThreadId;
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
+	callbackFunc client_callback_func;
+
+	rdpFile* connectionRdpFile;
+
+	// Keep track of window size and position, disable when in fullscreen mode.
+	BOOL disablewindowtracking; 
+
+    // These variables are required for horizontal scrolling. 
+	BOOL updating_scrollbars;
+	BOOL xScrollVisible;
+    int xMinScroll;       // minimum horizontal scroll value 
+    int xCurrentScroll;   // current horizontal scroll value 
+    int xMaxScroll;       // maximum horizontal scroll value 
+ 
+    // These variables are required for vertical scrolling. 
+	BOOL yScrollVisible;
+    int yMinScroll;       // minimum vertical scroll value 
+    int yCurrentScroll;   // current vertical scroll value 
+    int yMaxScroll;       // maximum vertical scroll value 
 };
 
 /**
@@ -122,6 +155,9 @@ struct wf_info
  */
 
 #define cfInfo	wfInfo
+
+void wf_on_param_change(freerdp* instance, int id);
+void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height);
 
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
@@ -141,6 +177,13 @@ FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int heigh
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
 FREERDP_API int freerdp_client_free(wfInfo* cfi);
 
+FREERDP_API int freerdp_client_set_client_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
+
+FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
+
+FREERDP_API int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename);
+FREERDP_API int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename);
+	
 #ifdef __cplusplus
 }
 #endif

@@ -51,8 +51,112 @@
 
 #include <freerdp/constants.h>
 
+#import "freerdp/freerdp.h"
+#import "freerdp/types.h"
+#import "freerdp/channels/channels.h"
+#import "freerdp/gdi/gdi.h"
+#import "freerdp/graphics.h"
+#import "freerdp/utils/event.h"
+#import "freerdp/client/cliprdr.h"
+#import "freerdp/client/file.h"
+#import "freerdp/client/cmdline.h"
+#import "freerdp/rail/rail.h"
+#import "freerdp/rail.h"
+#import "freerdp/utils/rail.h"
+
+#ifdef HAVE_RAIL
+#import "MRDPWindow.h"
+#endif
+
 // RAIL_TODO DELETE WHEN DONE TESTING
 #define MRDP_DRAW_INDIVIDUAL_RECTS
+
+
+
+/******************************************
+ Forward declarations
+ ******************************************/
+
+
+void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
+void mf_Pointer_SetNull(rdpContext* context);
+void mf_Pointer_SetDefault(rdpContext* context);
+// int rdp_connect(void);
+BOOL mac_pre_connect(freerdp* instance);
+BOOL mac_post_connect(freerdp*	instance);
+BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
+void mac_context_new(freerdp* instance, rdpContext* context);
+void mac_context_free(freerdp* instance, rdpContext* context);
+void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
+void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
+void mac_begin_paint(rdpContext* context);
+void mac_end_paint(rdpContext* context);
+void mac_save_state_info(freerdp* instance, rdpContext* context);
+void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
+void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
+int register_fds(int* fds, int count, void* instance);
+int invoke_draw_rect(rdpContext* context);
+int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
+int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
+void process_cliprdr_event(freerdp* instance, wMessage* event);
+void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_EVENT* event);
+void cliprdr_send_data_request(freerdp* instance, UINT32 format);
+void cliprdr_process_cb_monitor_ready_event(freerdp* inst);
+void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPONSE_EVENT* event);
+void cliprdr_process_text(freerdp* instance, BYTE* data, int len);
+void cliprdr_send_supported_format_list(freerdp* instance);
+int register_channel_fds(int* fds, int count, void* instance);
+
+void mac_process_rail_event(freerdp* instance, wMessage* event);
+void mac_rail_register_callbacks(freerdp* instance, rdpRail* rail);
+void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window);
+void mac_rail_MoveWindow(rdpRail* rail, rdpWindow* window);
+void mac_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state);
+void mac_rail_SetWindowText(rdpRail* rail, rdpWindow* window);
+void mac_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon);
+void mac_rail_SetWindowRects(rdpRail* rail, rdpWindow* window);
+void mac_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window);
+void mac_rail_DestroyWindow(rdpRail* rail, rdpWindow* window);
+void mac_process_rail_get_sysparams_event(rdpChannels* channels, wMessage* event);
+void mac_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param);
+void mac_on_free_rail_client_event(wMessage* event);
+void mac_process_rail_server_sysparam_event(rdpChannels* channels, wMessage* event);
+void mac_process_rail_exec_result_event(rdpChannels* channels, wMessage* event);
+void mac_rail_enable_remoteapp_mode(void);
+void mac_process_rail_server_minmaxinfo_event(rdpChannels* channels, wMessage* event);
+void mac_process_rail_server_localmovesize_event(freerdp* instance, wMessage* event);
+void apple_center_window(NSRect* r);
+void apple_to_windowMove(NSRect* r, RAIL_WINDOW_MOVE_ORDER * windowMove);
+
+struct mac_context
+{
+	// *must* have this - do not delete
+	rdpContext _p;
+};
+
+struct cursor
+{
+	rdpPointer* pointer;
+	BYTE* cursor_data;
+	void* bmiRep; /* NSBitmapImageRep */
+	void* nsCursor; /* NSCursor */
+	void* nsImage; /* NSImage */
+};
+
+struct rgba_data
+{
+	char red;
+	char green;
+	char blue;
+	char alpha;
+};
+
+
+
+
+
 
 @implementation MRDPView
 
@@ -70,6 +174,41 @@ const char* error_code_names[] =
 	"RAIL_EXEC_E_FAIL",
 	"RAIL_EXEC_E_SESSION_LOCKED"
 };
+
+//int rdp_connect()
+- (int) rdpConnect
+{
+	int status;
+	freerdp* instance;
+	
+	freerdp_channels_global_init();
+	
+	instance = freerdp_new();
+	instance->PreConnect = mac_pre_connect;
+	instance->PostConnect = mac_post_connect;
+	instance->context_size = sizeof(struct mac_context);
+	instance->ContextNew = mac_context_new;
+	instance->ContextFree = mac_context_free;
+	instance->ReceiveChannelData = receive_channel_data;
+	instance->Authenticate = mac_authenticate;
+	freerdp_context_new(instance);
+	
+	status = freerdp_connect(instance);
+	
+	if (status)
+	{
+		freerdp_check_fds(instance);
+		[g_mrdpview setIs_connected:1];
+		return 0;
+	}
+	
+	[g_mrdpview setIs_connected:0];
+	[g_mrdpview rdpConnectError];
+	
+	return -1;
+}
+
+
 
 /************************************************************************
  methods we override
@@ -108,16 +247,19 @@ const char* error_code_names[] =
 	[[self window] setAcceptsMouseMovedEvents:YES];
 	
 	cursors = [[NSMutableArray alloc] initWithCapacity:10];
-	
+
+#ifdef HAVE_RAIL
 	firstCreateWindow = TRUE;
 	skipResizeOnce = YES;
 	windows = [[NSMutableArray alloc] initWithCapacity:10];
-	
+
+#endif
+    
 	// setup a mouse tracking area
 	NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 	
 	//[self addTrackingArea:trackingArea];
-	
+
 	// windows in RemoteApp (RAIL) mode cannot have title bars
 	NSArray * args = [[NSProcessInfo processInfo] arguments];
 	for (NSString * str in args)
@@ -132,6 +274,7 @@ const char* error_code_names[] =
 		[self addTrackingArea:trackingArea];
 	
 	mouseInClientArea = YES;
+
 }
 
 /** *********************************************************************
@@ -170,7 +313,7 @@ const char* error_code_names[] =
 	y = height - y;
 	
 	// send mouse motion event to RDP server
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -190,7 +333,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -210,7 +353,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON1, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -230,7 +373,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -250,7 +393,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON2, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -270,7 +413,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
 
 /** *********************************************************************
@@ -290,7 +433,7 @@ const char* error_code_names[] =
 	
 	y = height - y;
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_BUTTON3, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
 - (void) scrollWheel:(NSEvent *)event
@@ -318,7 +461,7 @@ const char* error_code_names[] =
 	x += (int) [event deltaX];
 	y += (int) [event deltaY];
 	
-	rdp_instance->input->MouseEvent(rdp_instance->input, flags, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, flags, x, y);
 }
 
 /** *********************************************************************
@@ -337,6 +480,7 @@ const char* error_code_names[] =
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
+#ifdef HAVE_RAIL
 	// RAIL_TODO delete this if not reqd
 	if ((isRemoteApp) && (isMoveSizeInProgress))
 	{
@@ -356,11 +500,12 @@ const char* error_code_names[] =
 		r.origin.y += newY;
 		[[g_mrdpview window] setFrame:r display:YES];
 	}
-	
+#endif
+    
 	y = height - y;
 	
 	// send mouse motion event to RDP server
-	rdp_instance->input->MouseEvent(rdp_instance->input, PTR_FLAGS_MOVE, x, y);
+	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -383,7 +528,7 @@ const char* error_code_names[] =
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	extended = (scancode & KBDEXT) ? KBDEXT : 0;
 	
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
+	((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -406,7 +551,7 @@ const char* error_code_names[] =
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	extended = (scancode & KBDEXT) ? KBDEXT : 0;
 	
-	rdp_instance->input->KeyboardEvent(rdp_instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
+	((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -432,96 +577,96 @@ const char* error_code_names[] =
 	// left shift
 	if ((kdlshift == 0) && ((mf & 2) != 0)) {
 		// left shift went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_DOWN, 0x2a);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x2a);
 		kdlshift = 1;
 	}
 	if ((kdlshift != 0) && ((mf & 2) == 0)) {
 		// left shift went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x2a);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x2a);
 		kdlshift = 0;
 	}
 	
 	// right shift
 	if ((kdrshift == 0) && ((mf & 4) != 0)) {
 		// right shift went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_DOWN, 0x36);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x36);
 		kdrshift = 1;
 	}
 	if ((kdrshift != 0) && ((mf & 4) == 0)) {
 		// right shift went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x36);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x36);
 		kdrshift = 0;
 	}
 	
 	// left ctrl
 	if ((kdlctrl == 0) && ((mf & 1) != 0)) {
 		// left ctrl went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_DOWN, 0x1d);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x1d);
 		kdlctrl = 1;
 	}
 	if ((kdlctrl != 0) && ((mf & 1) == 0)) {
 		// left ctrl went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x1d);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x1d);
 		kdlctrl = 0;
 	}
 	
 	// right ctrl
 	if ((kdrctrl == 0) && ((mf & 0x2000) != 0)) {
 		// right ctrl went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_DOWN, 0x1d);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x1d);
 		kdrctrl = 1;
 	}
 	if ((kdrctrl != 0) && ((mf & 0x2000) == 0)) {
 		// right ctrl went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
 		kdrctrl = 0;
 	}
 	
 	// left alt
 	if ((kdlalt == 0) && ((mf & 0x20) != 0)) {
 		// left alt went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_DOWN, 0x38);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x38);
 		kdlalt = 1;
 	}
 	if ((kdlalt != 0) && ((mf & 0x20) == 0)) {
 		// left alt went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, KBD_FLAGS_RELEASE, 0x38);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x38);
 		kdlalt = 0;
 	}
 	
 	// right alt
 	if ((kdralt == 0) && ((mf & 0x40) != 0)) {
 		// right alt went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_DOWN, 0x38);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x38);
 		kdralt = 1;
 	}
 	if ((kdralt != 0) && ((mf & 0x40) == 0)) {
 		// right alt went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x38);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x38);
 		kdralt = 0;
 	}
 	
 	// left meta
 	if ((kdlmeta == 0) && ((mf & 0x08) != 0)) {
 		// left meta went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_DOWN, 0x5b);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x5b);
 		kdlmeta = 1;
 	}
 	if ((kdlmeta != 0) && ((mf & 0x08) == 0)) {
 		// left meta went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
 		kdlmeta = 0;
 	}
 	
 	// right meta
 	if ((kdrmeta == 0) && ((mf & 0x10) != 0)) {
 		// right meta went down
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_DOWN, 0x5c);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x5c);
 		kdrmeta = 1;
 	}
 	if ((kdrmeta != 0) && ((mf & 0x10) == 0)) {
 		// right meta went up
-		rdp_instance->input->KeyboardEvent(rdp_instance->input, 1 | KBD_FLAGS_RELEASE, 0x5c);
+		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x5c);
 		kdrmeta = 0;
 	}
 }
@@ -536,12 +681,14 @@ const char* error_code_names[] =
 			free(argv[i]);
 	}
 	
+#ifdef HAVE_RAIL
 	for (MRDPWindow * w in windows)
 	{
 		[w setWindow:nil];
 		[w setView:nil];
 	}
-	
+#endif
+    
 	if (!is_connected)
 		return;
 	
@@ -566,9 +713,11 @@ const char* error_code_names[] =
 	if (!rdp_context)
 		return;
 
+#ifdef HAVE_RAIL
 	if (g_mrdpview->isRemoteApp && g_mrdpview->currentWindow)
 		return;
-
+#endif
+    
     if(g_mrdpview->bitmap_context)
     {
         CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
@@ -595,7 +744,7 @@ const char* error_code_names[] =
  * save state info for use by other methods later on
  ***********************************************************************/
 
-- (void) saveStateInfo:(freerdp *) instance :(rdpContext *) context
+- (void) saveStateInfo:(void *) instance :(void *) context
 {
 	rdp_instance = instance;
 	rdp_context = context;
@@ -755,9 +904,11 @@ const char* error_code_names[] =
 	[[g_mrdpview window] orderOut:g_mrdpview];
 }
 
+#ifdef HAVE_RAIL
 // RAIL_TODO is this func required
 - (void) windowDidResize:(NSNotification*) notification
 {
+    
 	RAIL_WINDOW_MOVE_ORDER windowMove;
 	
 	printf("RAIL_TODO: MRDPView: windowDidResize() - not yet implemented\n");
@@ -786,8 +937,9 @@ const char* error_code_names[] =
 	printf("----- LK_TODO: MRDPView:windowDidResize windowID=%d left=%d top=%d right=%d bottom=x%d width=%f height=%f\n",
 	       [currentWindow windowID], windowMove.left, windowMove.top, windowMove.right, windowMove.bottom, r.size.width, r.size.height);
 	
-	//mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
+	//mac_send_rail_client_event(g_mrdpview->((freerdp*)rdp_instance)->context->channels, RDP_EVENT_TYPE_RAIL_CLIENT_WINDOW_MOVE, &windowMove);
 }
+#endif
 
 /************************************************************************
  *                                                                      *
@@ -801,37 +953,6 @@ const char* error_code_names[] =
  * @return 0 on success, -1 on failure
  ***********************************************************************/
 
-int rdp_connect()
-{
-	int status;
-	freerdp* instance;
-	
-	freerdp_channels_global_init();
-	
-	instance = freerdp_new();
-	instance->PreConnect = mac_pre_connect;
-	instance->PostConnect = mac_post_connect;
-	instance->context_size = sizeof(struct mac_context);
-	instance->ContextNew = mac_context_new;
-	instance->ContextFree = mac_context_free;
-	instance->ReceiveChannelData = receive_channel_data;
-	instance->Authenticate = mac_authenticate;
-	freerdp_context_new(instance);
-	
-	status = freerdp_connect(instance);
-	
-	if (status)
-	{
-		freerdp_check_fds(instance);
-		[g_mrdpview setIs_connected:1];
-		return 0;
-	}
-	
-	[g_mrdpview setIs_connected:0];
-	[g_mrdpview rdpConnectError];
-	
-	return -1;
-}
 
 /** *********************************************************************
  * a callback given to freerdp_connect() to process the pre-connect operations.
@@ -1038,12 +1159,14 @@ BOOL mac_post_connect(freerdp* instance)
 	
 	register_channel_fds(fds, rd_count, instance);
 	freerdp_channels_post_connect(instance->context->channels, instance);
-	
+
+#ifdef HAVE_RAIL
 	/* setup RemoteApp */
 	instance->context->rail = rail_new(instance->settings);
 	rail_register_update_callbacks(instance->context->rail, instance->update);
 	mac_rail_register_callbacks(instance, instance->context->rail);
-	
+#endif
+    
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	g_mrdpview->pasteboard_wr = [NSPasteboard generalPasteboard];
 	
@@ -1281,14 +1404,16 @@ void mac_end_paint(rdpContext* context)
 	if (context->gdi->drawing != context->gdi->primary)
 		return;
 	
-	gdi = g_mrdpview->rdp_context->gdi;
+	gdi = ((rdpContext*)g_mrdpview->rdp_context)->gdi;
 	
+#ifdef HAVE_RAIL
 	if (g_mrdpview->isRemoteApp && g_mrdpview->currentWindow)
 	{
 		[[g_mrdpview->currentWindow view] updateDisplay];
 		return;
 	}
-	
+#endif
+    
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{
 		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
@@ -1333,10 +1458,11 @@ void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 	{
 		switch (GetMessageClass(event->id))
 		{
+#ifdef HAVE_RAIL
 			case RailChannel_Class:
 				mac_process_rail_event(instance, event);
 				break;
-				
+#endif
 			case CliprdrChannel_Class:
 				process_cliprdr_event(instance, event);
 				break;
@@ -1617,6 +1743,9 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
+
+#ifdef HAVE_RAIL
+
 /****************************************************************************************
  *                                                                                      *
  *                                                                                      *
@@ -1715,7 +1844,7 @@ void mac_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 		RAIL_WINDOW_MOVE_ORDER windowMove;
 		apple_to_windowMove(&winFrame, &windowMove);
 		windowMove.windowId = window->windowId;
-		mac_send_rail_client_event(g_mrdpview->rdp_instance->context->channels, RailChannel_ClientWindowMove, &windowMove);
+		mac_send_rail_client_event(((freerdp*)g_mrdpview->rdp_instance)->context->channels, RailChannel_ClientWindowMove, &windowMove);
 	}
 	
 	/* create MRDPRailView and add to above window */
@@ -2031,6 +2160,8 @@ void mac_rail_enable_remoteapp_mode()
 		g_mrdpview->isRemoteApp = TRUE;
 }
 
+#endif
+
 /**
  * given a rect with 0,0 at the bottom left (apple cords)
  * convert it to a rect with 0,0 at the top left (windows cords)
@@ -2057,6 +2188,7 @@ void apple_center_window(NSRect* r)
 	r->origin.y = (g_mrdpview->height - r->size.height) / 2;
 }
 
+#ifdef HAVE_RAIL
 void apple_to_windowMove(NSRect* r, RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
 	windowMove->left = (UINT16) r->origin.x;                                         // x-cord of top left corner
@@ -2064,5 +2196,7 @@ void apple_to_windowMove(NSRect* r, RAIL_WINDOW_MOVE_ORDER* windowMove)
 	windowMove->right = (UINT16) (windowMove->left + r->size.width);                 // x-cord of bottom right corner
 	windowMove->bottom = (UINT16) (windowMove->top + r->size.height);                // y-cord of bottom right corner
 }
+#endif
+
 
 @end

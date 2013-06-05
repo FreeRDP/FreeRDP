@@ -19,7 +19,8 @@ set(MODULE_NAME "winpr-pipe")
 set(MODULE_PREFIX "WINPR_PIPE")
 
 set(${MODULE_PREFIX}_SRCS
-	pipe.c)
+	pipe.c
+	pipe.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)

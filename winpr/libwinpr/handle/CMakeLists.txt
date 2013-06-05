@@ -20,6 +20,7 @@ set(MODULE_PREFIX "WINPR_HANDLE")
 
 set(${MODULE_PREFIX}_SRCS
 	handle.c
+	handle.h
 	table.c)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))

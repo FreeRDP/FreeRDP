@@ -87,7 +87,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
-	{ "printer", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
+	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },
@@ -292,14 +292,16 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_PRINTER* printer;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
 		ZeroMemory(printer, sizeof(RDPDR_PRINTER));
 
 		printer->Type = RDPDR_DTYP_PRINT;
-		printer->Name = _strdup(params[1]);
+
+		if (count > 1)
+			printer->Name = _strdup(params[1]);
 
 		if (count > 2)
 			printer->DriverName = _strdup(params[2]);
@@ -548,15 +550,28 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
-		char** p;
-		int count;
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
 
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
-		p[0] = "printer";
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "printer";
 
-		freerdp_client_add_device_channel(settings, count, p);
+			freerdp_client_add_device_channel(settings, count, p);
 
-		free(p);
+			free(p);
+		}
+		else
+		{
+			char* p[1];
+			int count;
+
+			count = 1;
+			p[0] = "printer";
+
+			freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "usb")
 	{
@@ -710,6 +725,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
+	settings->ConnectionType = type;
 	if (type == CONNECTION_TYPE_MODEM)
 	{
 		settings->DisableWallpaper = TRUE;
@@ -1092,6 +1108,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
+			settings->Fullscreen = TRUE;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
@@ -1668,6 +1685,11 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		settings->DeviceRedirection = TRUE; /* rdpsnd requires rdpdr to be registered */
 		settings->AudioPlayback = TRUE; /* Both rdpsnd and tsmf require this flag to be set */
+	}
+
+	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
+	{
+		settings->AudioCapture = TRUE;
 	}
 
 	if (settings->RedirectDrives)
