@@ -303,10 +303,10 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 								XK_Control_R)))
 		{
 			xfi->offset_x += 5;
-
+/*
 			if (xfi->offset_x > 0)
 				xfi->offset_x = 0;
-
+*/
 			xf_transform_window(xfi);
 
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
@@ -342,10 +342,10 @@ BOOL xf_kbd_handle_special_keys(xfInfo* xfi, KeySym keysym)
 								XK_Control_R)))
 		{
 			xfi->offset_y += 5;
-
+/*
 			if (xfi->offset_y > 0)
 				xfi->offset_y = 0;
-
+*/
 			xf_transform_window(xfi);
 
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
