@@ -109,12 +109,12 @@ BOOL freerdp_connect(freerdp* instance)
 		if (!status)
 		{
 			fprintf(stderr, "freerdp_post_connect failed\n");
-			
+
 			if (!connectErrorCode)
 			{
 				connectErrorCode = POSTCONNECTERROR;
 			}
-			
+
 			return FALSE;
 		}
 
@@ -151,6 +151,11 @@ BOOL freerdp_connect(freerdp* instance)
 
 			return TRUE;
 		}
+	}
+
+	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
+	{
+		connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
 	}
 
 	if (!connectErrorCode)

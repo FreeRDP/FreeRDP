@@ -118,7 +118,7 @@ int rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
 	status = callback->channel->Write(callback->channel, Stream_Length(s), Stream_Buffer(s), NULL);
 
 #ifdef WITH_DEBUG_RDPEI
-	printf("rdpei_send_pdu: eventId: %d (%s) length: %d status: %d\n",
+	fprintf(stderr, "rdpei_send_pdu: eventId: %d (%s) length: %d status: %d\n",
 			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength, status);
 #endif
 
@@ -270,7 +270,7 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (protocolVersion != RDPINPUT_PROTOCOL_V1)
 	{
-		printf("Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
+		fprintf(stderr, "Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
 		return -1;
 	}
 
@@ -296,7 +296,7 @@ int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
 
 #ifdef WITH_DEBUG_RDPEI
-	printf("rdpei_recv_pdu: eventId: %d (%s) length: %d\n",
+	fprintf(stderr, "rdpei_recv_pdu: eventId: %d (%s) length: %d\n",
 			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
 #endif
 

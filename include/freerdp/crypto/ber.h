@@ -54,10 +54,9 @@
 
 FREERDP_API BOOL ber_read_length(wStream* s, int* length);
 FREERDP_API int ber_write_length(wStream* s, int length);
-FREERDP_API int _ber_skip_length(int length);
-FREERDP_API int ber_get_content_length(int length);
+FREERDP_API int _ber_sizeof_length(int length);
 FREERDP_API BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
-FREERDP_API void ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
+FREERDP_API int ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
 FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length);
 FREERDP_API void ber_write_application_tag(wStream* s, BYTE tag, int length);
 FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length);
@@ -65,21 +64,21 @@ FREERDP_API BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
 FREERDP_API void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count);
 FREERDP_API BOOL ber_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc);
 FREERDP_API int ber_write_contextual_tag(wStream* s, BYTE tag, int length, BOOL pc);
-FREERDP_API int ber_skip_contextual_tag(int length);
+FREERDP_API int ber_sizeof_contextual_tag(int length);
 FREERDP_API BOOL ber_read_sequence_tag(wStream* s, int* length);
 FREERDP_API int ber_write_sequence_tag(wStream* s, int length);
-FREERDP_API int ber_skip_sequence(int length);
-FREERDP_API int ber_skip_sequence_tag(int length);
+FREERDP_API int ber_sizeof_sequence(int length);
+FREERDP_API int ber_sizeof_sequence_tag(int length);
 FREERDP_API BOOL ber_read_bit_string(wStream* s, int* length, BYTE* padding);
-FREERDP_API void ber_write_octet_string(wStream* s, const BYTE* oct_str, int length);
+FREERDP_API int ber_write_octet_string(wStream* s, const BYTE* oct_str, int length);
 FREERDP_API BOOL ber_read_octet_string_tag(wStream* s, int* length);
 FREERDP_API int ber_write_octet_string_tag(wStream* s, int length);
-FREERDP_API int ber_skip_octet_string(int length);
+FREERDP_API int ber_sizeof_octet_string(int length);
 FREERDP_API BOOL ber_read_BOOL(wStream* s, BOOL* value);
 FREERDP_API void ber_write_BOOL(wStream* s, BOOL value);
 FREERDP_API BOOL ber_read_integer(wStream* s, UINT32* value);
 FREERDP_API int ber_write_integer(wStream* s, UINT32 value);
 FREERDP_API BOOL ber_read_integer_length(wStream* s, int* length);
-FREERDP_API int ber_skip_integer(UINT32 value);
+FREERDP_API int ber_sizeof_integer(UINT32 value);
 
 #endif /* FREERDP_CRYPTO_BER_H */
