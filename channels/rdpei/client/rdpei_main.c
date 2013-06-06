@@ -461,7 +461,7 @@ int rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y)
 	int i;
 	int contactId = -1;
 	RDPINPUT_CONTACT_DATA contact;
-	RDPINPUT_CONTACT_POINT* contactPoint;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	/* Create a new contact point in an empty slot */
@@ -485,6 +485,9 @@ int rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y)
 	{
 		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
+		contactPoint->lastX = x;
+		contactPoint->lastY = y;
+
 		contact.x = x;
 		contact.y = y;
 		contact.contactId = (UINT32) contactId;
@@ -504,7 +507,7 @@ int rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y
 	int i;
 	int contactId = -1;
 	RDPINPUT_CONTACT_DATA contact;
-	RDPINPUT_CONTACT_POINT* contactPoint;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
@@ -524,6 +527,9 @@ int rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y
 	if (contactId >= 0)
 	{
 		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contactPoint->lastX = x;
+		contactPoint->lastY = y;
 
 		contact.x = x;
 		contact.y = y;
@@ -557,12 +563,6 @@ int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 		if (contactPoint->externalId == externalId)
 		{
 			contactId = contactPoint->contactId;
-
-			contactPoint->externalId = 0;
-			contactPoint->active = FALSE;
-			contactPoint->flags = 0;
-			contactPoint->contactId = 0;
-			contactPoint->state = RDPINPUT_CONTACT_STATE_OUT_OF_RANGE;
 			break;
 		}
 	}
@@ -571,6 +571,11 @@ int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 	{
 		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
+		if ((contactPoint->lastX != x) && (contactPoint->lastY != y))
+		{
+			context->TouchUpdate(context, externalId, x, y);
+		}
+
 		contact.x = x;
 		contact.y = y;
 		contact.contactId = (UINT32) contactId;
@@ -578,6 +583,12 @@ int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 		contact.contactFlags |= CONTACT_FLAG_UP;
 
 		context->AddContact(context, &contact);
+
+		contactPoint->externalId = 0;
+		contactPoint->active = FALSE;
+		contactPoint->flags = 0;
+		contactPoint->contactId = 0;
+		contactPoint->state = RDPINPUT_CONTACT_STATE_OUT_OF_RANGE;
 	}
 
 	return contactId;

@@ -86,6 +86,8 @@
 
 struct _RDPINPUT_CONTACT_POINT
 {
+	int lastX;
+	int lastY;
 	BOOL active;
 	UINT32 state;
 	UINT32 flags;
