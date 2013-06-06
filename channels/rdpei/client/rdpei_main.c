@@ -456,73 +456,128 @@ int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contac
 	return 1;
 }
 
-int rdpei_contact_begin(RdpeiClientContext* context, int externalId)
+int rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	/* Create a new contact point in an empty slot */
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
-		{
-			rdpei->contactPoints[i].flags = 1;
-			rdpei->contactPoints[i].contactId = i;
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
 
-			if (!rdpei->contactPoints[i].externalId)
-			{
-				rdpei->contactPoints[i].externalId = externalId;
-				contactId = rdpei->contactPoints[i].contactId;
-				break;
-			}
+		if (!contactPoint->active)
+		{
+			contactPoint->contactId = i;
+			contactId = contactPoint->contactId;
+			contactPoint->externalId = externalId;
+			contactPoint->active = TRUE;
+			contactPoint->state = RDPINPUT_CONTACT_STATE_ENGAGED;
+			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_DOWN;
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+
+		context->AddContact(context, &contact);
 	}
 
 	return contactId;
 }
 
-int rdpei_contact_update(RdpeiClientContext* context, int externalId)
+int rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
+
+		if (!contactPoint->active)
 			continue;
 
-		if (rdpei->contactPoints[i].externalId == externalId)
+		if (contactPoint->externalId == externalId)
 		{
-			contactId = rdpei->contactPoints[i].contactId;
+			contactId = contactPoint->contactId;
 			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_UPDATE;
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+
+		context->AddContact(context, &contact);
 	}
 
 	return contactId;
 }
 
-int rdpei_contact_end(RdpeiClientContext* context, int externalId)
+int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
+
+		if (!contactPoint->active)
 			continue;
 
-		if (rdpei->contactPoints[i].externalId == externalId)
+		if (contactPoint->externalId == externalId)
 		{
-			contactId = rdpei->contactPoints[i].contactId;
-			rdpei->contactPoints[i].externalId = 0;
-			rdpei->contactPoints[i].flags = 0;
-			rdpei->contactPoints[i].contactId = 0;
+			contactId = contactPoint->contactId;
+
+			contactPoint->externalId = 0;
+			contactPoint->active = FALSE;
+			contactPoint->flags = 0;
+			contactPoint->contactId = 0;
+			contactPoint->state = RDPINPUT_CONTACT_STATE_OUT_OF_RANGE;
 			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_UP;
+
+		context->AddContact(context, &contact);
 	}
 
 	return contactId;
@@ -568,9 +623,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetVersion = rdpei_get_version;
 		context->AddContact = rdpei_add_contact;
 
-		context->ContactBegin = rdpei_contact_begin;
-		context->ContactUpdate = rdpei_contact_update;
-		context->ContactEnd = rdpei_contact_end;
+		context->TouchBegin = rdpei_touch_begin;
+		context->TouchUpdate = rdpei_touch_update;
+		context->TouchEnd = rdpei_touch_end;
 
 		rdpei->iface.pInterface = (void*) context;
 
