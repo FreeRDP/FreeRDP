@@ -1684,6 +1684,18 @@ double freerdp_client_get_scale(xfInfo* xfi)
 	return xfi->scale;
 }
 
+void freerdp_client_set_scale(xfInfo* xfi, double newScale)
+{
+	xfi->scale = newScale;
+
+	xfi->currentWidth = xfi->originalWidth * xfi->scale;
+	xfi->currentHeight = xfi->originalHeight * xfi->scale;
+	
+	xf_transform_window(xfi);
+	IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+	xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+}
+
 int freerdp_client_get_xpan(xfInfo* xfi)
 {
   return xfi->offset_x;
