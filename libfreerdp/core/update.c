@@ -487,6 +487,17 @@ static void update_end_paint(rdpContext* context)
 	Stream_Free(s, TRUE);
 }
 
+static void update_flush(rdpContext* context)
+{
+	rdpUpdate* update = context->update;
+
+	if (update->numberOrders > 0)
+	{
+		update->EndPaint(context);
+		update->BeginPaint(context);
+	}
+}
+
 static void update_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	rdpUpdate* update = context->update;
@@ -941,6 +952,8 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
 
+	update_flush(context);
+
 	extraFlags = 0;
 	headerLength = 6;
 
@@ -955,6 +968,8 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 
 	update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags);
 	em = Stream_GetPosition(s);
+
+	printf("update_send_cache_bitmap_v2: orderLength: %d numberOrders: %d\n", orderLength, update->numberOrders);
 
 	orderLength = (em - bm) - 13;
 
@@ -971,8 +986,7 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	 * temporary workaround to avoid PDUs exceeding maximum size
 	 */
 
-	update->EndPaint(context);
-	update->BeginPaint(context);
+	update_flush(context);
 }
 
 static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
