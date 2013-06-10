@@ -40,12 +40,15 @@ typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
 typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
 typedef void (*pOnParamChange)(freerdp* instance, int id);
 
+typedef void (*pOnPan)(freerdp* instance, int xdiff, int ydiff);
+
 struct rdp_client
 {
 	pOnResizeWindow OnResizeWindow;
 	pOnWindowStateChange OnWindowStateChange;
 	pOnErrorInfo OnErrorInfo;
 	pOnParamChange OnParamChange;
+	pOnPan OnPan;
 };
 
 /**
