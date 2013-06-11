@@ -36,6 +36,8 @@
 #define PAN_THRESHOLD 50
 #define ZOOM_THRESHOLD 10
 
+#define MIN_FINGER_DIST 5
+
 typedef struct touch_contact
 {
 	int id;
@@ -192,7 +194,7 @@ void xf_input_detect_pan(xfInfo* xfi)
   
 
   //only pan in x if dist_y is greater than something
-  if(dist_y > 30)
+  if(dist_y > MIN_FINGER_DIST)
     {
       
       if(px_vector > PAN_THRESHOLD)
@@ -229,7 +231,7 @@ void xf_input_detect_pan(xfInfo* xfi)
       
     }
   
-  if(dist_x > 30)
+  if(dist_x > MIN_FINGER_DIST)
     {
       
       if(py_vector > PAN_THRESHOLD)
