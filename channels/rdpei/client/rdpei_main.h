@@ -88,11 +88,13 @@ struct _RDPINPUT_CONTACT_POINT
 {
 	int lastX;
 	int lastY;
+	BOOL dirty;
 	BOOL active;
 	UINT32 state;
 	UINT32 flags;
 	UINT32 contactId;
 	int externalId;
+	RDPINPUT_CONTACT_DATA data;
 };
 typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
 

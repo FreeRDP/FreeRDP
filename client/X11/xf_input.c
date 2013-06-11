@@ -341,17 +341,17 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, int evtype)
 
 	if (evtype == XI_TouchBegin)
 	{
-		printf("TouchBegin: %d\n", touchId);
+		//printf("TouchBegin: %d\n", touchId);
 		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchUpdate)
 	{
-		printf("TouchUpdate: %d\n", touchId);
+		//printf("TouchUpdate: %d\n", touchId);
 		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchEnd)
 	{
-		printf("TouchEnd: %d\n", touchId);
+		//printf("TouchEnd: %d\n", touchId);
 		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
 	}
 
