@@ -80,7 +80,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
-	if(ANDROID OR IOS)
+	if(ANDROID OR IOS OR APPLE)
 		set(BUILD_SHARED_LIBS OFF)
 	else()
 		set(BUILD_SHARED_LIBS ON)
@@ -194,6 +194,7 @@ check_include_files(inttypes.h HAVE_INTTYPES_H)
 check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
 check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
 check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
+check_include_files(sys/select.h HAVE_SYS_SELECT_H)
 else()
 set(HAVE_FCNTL_H 1)
 set(HAVE_UNISTD_H 1)
@@ -225,6 +226,14 @@ if(APPLE)
         endif()
         if(WITH_CLANG)
                 set(CMAKE_C_COMPILER "clang")
+        endif()
+
+        if (WITH_VERBOSE)
+            # Support for automatic reference counting requires non-fragile abi.
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
+
+            # Tell the compiler where to look for the FreeRDP framework
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v")
         endif()
 endif()
 
