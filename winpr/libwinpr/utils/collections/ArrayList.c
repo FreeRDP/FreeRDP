@@ -148,7 +148,9 @@ void ArrayList_Shift(wArrayList* arrayList, int index, int count)
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&arrayList->array[index], &arrayList->array[index - count], (arrayList->size + count) * sizeof(void*));
+		int chunk = arrayList->size - index + count;
+		if (chunk > 0)
+			MoveMemory(&arrayList->array[index], &arrayList->array[index - count], chunk * sizeof(void*));
 		arrayList->size += count;
 	}
 }

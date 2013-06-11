@@ -301,6 +301,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* _p;
 	CliprdrClientContext* context;
+	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
 
 	_p = (cliprdrPlugin*) malloc(sizeof(cliprdrPlugin));
 	ZeroMemory(_p, sizeof(cliprdrPlugin));
@@ -318,14 +319,20 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.event_callback = cliprdr_process_event;
 	_p->plugin.terminate_callback = cliprdr_process_terminate;
 
-	context = (CliprdrClientContext*) malloc(sizeof(CliprdrClientContext));
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
 
-	context->MonitorReady = cliprdr_monitor_ready;
-	context->FormatList = cliprdr_format_list;
-	context->DataRequest = cliprdr_data_request;
-	context->DataResponse = cliprdr_data_response;
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
+	{
+		context = (CliprdrClientContext*) malloc(sizeof(CliprdrClientContext));
 
-	_p->plugin.channel_entry_points.pInterface = (void*) context;
+		context->MonitorReady = cliprdr_monitor_ready;
+		context->FormatList = cliprdr_format_list;
+		context->DataRequest = cliprdr_data_request;
+		context->DataResponse = cliprdr_data_response;
+
+		*(pEntryPointsEx->ppInterface) = (void*) context;
+	}
 
 	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
 

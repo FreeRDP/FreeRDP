@@ -248,6 +248,7 @@ FREERDP_API int freerdp_client_get_xpan(xfInfo* xfi);
 FREERDP_API int freerdp_client_get_ypan(xfInfo* xfi);
 
 FREERDP_API double freerdp_client_get_scale(xfInfo* xfi);
+FREERDP_API void freerdp_client_set_scale(xfInfo* xfi, double newScale);
 FREERDP_API void freerdp_client_reset_scale(xfInfo* xfi);
 
 FREERDP_API int freerdp_client_global_init();

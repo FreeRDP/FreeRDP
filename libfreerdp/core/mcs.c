@@ -261,6 +261,7 @@ static void mcs_init_domain_parameters(DomainParameters* domainParameters,
 BOOL mcs_read_domain_parameters(wStream* s, DomainParameters* domainParameters)
 {
 	int length;
+
 	return
 		ber_read_sequence_tag(s, &length) &&
 		ber_read_integer(s, &(domainParameters->maxChannelIds)) &&
@@ -453,12 +454,12 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data)
 
 BOOL mcs_send_connect_initial(rdpMcs* mcs)
 {
-	wStream* s;
+	int status;
 	int length;
-	BYTE *bm, *em;
+	wStream* s;
+	int bm, em;
 	wStream* gcc_CCrq;
 	wStream* client_data;
-	int status;
 
 	client_data = Stream_New(NULL, 512);
 	gcc_write_client_data_blocks(client_data, mcs->transport->settings);
@@ -467,21 +468,24 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 
-	s = transport_send_stream_init(mcs->transport, 1024);
-	Stream_GetPointer(s, bm);
+	s = Stream_New(NULL, 1024 + length);
+
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_initial(s, mcs, gcc_CCrq);
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 	length = (em - bm);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
+	Stream_SealLength(s);
 
 	status = transport_write(mcs->transport, s);
 
+	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrq, TRUE);
 	Stream_Free(client_data, TRUE);
 
@@ -532,10 +536,10 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 
 BOOL mcs_send_connect_response(rdpMcs* mcs)
 {
-	wStream* s;
 	int length;
-	int ret;
-	BYTE *bm, *em;
+	int status;
+	wStream* s;
+	int bm, em;
 	wStream* gcc_CCrsp;
 	wStream* server_data;
 
@@ -546,25 +550,28 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 
-	s = transport_send_stream_init(mcs->transport, 1024);
-	Stream_GetPointer(s, bm);
+	s = Stream_New(NULL, length + 1024);
+
+	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
 	mcs_write_connect_response(s, mcs, gcc_CCrsp);
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 	length = (em - bm);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 
 	tpkt_write_header(s, length);
 	tpdu_write_data(s);
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
+	Stream_SealLength(s);
 
-	ret = transport_write(mcs->transport, s);
+	status = transport_write(mcs->transport, s);
 
+	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrsp, TRUE);
 	Stream_Free(server_data, TRUE);
 
-	return (ret < 0) ? FALSE : TRUE;
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -580,6 +587,7 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = DomainMCSPDU_ErectDomainRequest;
+
 	return mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
 }
 
@@ -592,18 +600,23 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 12;
-	s = transport_send_stream_init(mcs->transport, length);
+
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length, 0);
 
 	per_write_integer(s, 0); /* subHeight (INTEGER) */
 	per_write_integer(s, 0); /* subInterval (INTEGER) */
 
-	if (transport_write(mcs->transport, s) < 0)
-		return FALSE;
+	Stream_SealLength(s);
 
-	return TRUE;
+	status = transport_write(mcs->transport, s);
+
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -619,6 +632,7 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = DomainMCSPDU_AttachUserRequest;
+
 	return mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
 }
 
@@ -631,15 +645,20 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 8;
-	s = transport_send_stream_init(mcs->transport, length);
+
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length, 0);
 
-	if (transport_write(mcs->transport, s) < 0)
-		return FALSE;
+	Stream_SealLength(s);
 
-	return TRUE;
+	status = transport_write(mcs->transport, s);
+
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -655,6 +674,7 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = DomainMCSPDU_AttachUserConfirm;
+
 	return
 		mcs_read_domain_mcspdu_header(s, &MCSPDU, &length) &&
 		per_read_enumerated(s, &result, MCS_Result_enum_length) && /* result */
@@ -670,9 +690,10 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 11;
 	
-	s = transport_send_stream_init(mcs->transport, length);
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
 
@@ -680,9 +701,13 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	mcs->user_id = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->transport->settings->ChannelCount;
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
 
-	transport_write(mcs->transport, s);
+	Stream_SealLength(s);
 
-	return TRUE;
+	status = transport_write(mcs->transport, s);
+
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -699,6 +724,7 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channel_id)
 	UINT16 user_id;
 
 	MCSPDU = DomainMCSPDU_ChannelJoinRequest;
+
 	return
 		mcs_read_domain_mcspdu_header(s, &MCSPDU, &length) &&
 		per_read_integer16(s, &user_id, MCS_BASE_CHANNEL_ID) &&
@@ -716,18 +742,23 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channel_id)
 BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 12;
-	s = transport_send_stream_init(mcs->transport, 12);
+
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinRequest, length, 0);
 
 	per_write_integer16(s, mcs->user_id, MCS_BASE_CHANNEL_ID);
 	per_write_integer16(s, channel_id, 0);
 
-	if (transport_write(mcs->transport, s) < 0)
-		return FALSE;
+	Stream_SealLength(s);
 
-	return TRUE;
+	status = transport_write(mcs->transport, s);
+
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -766,8 +797,10 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channel_id)
 BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 15;
-	s = transport_send_stream_init(mcs->transport, 15);
+
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, length, 2);
 
@@ -776,9 +809,13 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id)
 	per_write_integer16(s, channel_id, 0); /* requested (ChannelId) */
 	per_write_integer16(s, channel_id, 0); /* channelId */
 
-	transport_write(mcs->transport, s);
+	Stream_SealLength(s);
 
-	return TRUE;
+	status = transport_write(mcs->transport, s);
+
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**
@@ -789,16 +826,20 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id)
 BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 {
 	wStream* s;
+	int status;
 	UINT16 length = 9;
-	s = transport_send_stream_init(mcs->transport, 9);
+
+	s = Stream_New(NULL, length);
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1);
 
 	per_write_enumerated(s, 0, 0); /* reason */
 
-	transport_write(mcs->transport, s);
+	status = transport_write(mcs->transport, s);
 
-	return TRUE;
+	Stream_Free(s, TRUE);
+
+	return (status < 0) ? FALSE : TRUE;
 }
 
 /**

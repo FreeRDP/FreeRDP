@@ -22,6 +22,15 @@ if(MONOLITHIC_BUILD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+# Create imported targets for Intel IPP libraries
+
+if(IPP_FOUND)
+    foreach(ipp_lib ${IPP_LIBRARIES})
+    	add_library("${ipp_lib}_imported" STATIC IMPORTED)
+		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
+	endforeach()
+endif()
+
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
 	common
@@ -43,7 +52,7 @@ if(MONOLITHIC_BUILD)
 		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_NAME}-${${MODULE_PREFIX}_SUBMODULE}>")
 	endforeach()
 
-	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_OBJECTS})
+	add_library(${MODULE_NAME} dummy.c ${${MODULE_PREFIX}_OBJECTS})
 
 	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")

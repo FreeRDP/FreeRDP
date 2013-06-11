@@ -22,14 +22,18 @@
 
 #ifndef _WIN32
 
+#include <pthread.h>
+
 #include <winpr/thread.h>
 
-#include <pthread.h>
+#include "../handle/handle.h"
 
 typedef void *(*pthread_start_routine)(void*);
 
 struct winpr_thread
 {
+	WINPR_HANDLE_DEF();
+
 	BOOL started;
 	DWORD dwExitCode;
 	pthread_t thread;

@@ -399,7 +399,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpSettings* settings, int length)
 
 	while (offset < length)
 	{
-		holdp = s->pointer;
+		holdp = Stream_Pointer(s);
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
@@ -438,7 +438,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpSettings* settings, int length)
 				break;
 		}
 		offset += blockLength;
-		s->pointer = holdp + blockLength;
+		Stream_Pointer(s) = holdp + blockLength;
 	}
 
 	return TRUE;

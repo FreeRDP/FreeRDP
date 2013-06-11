@@ -22,6 +22,7 @@
 
 #include "xf_window.h"
 #include "xf_monitor.h"
+#include "xf_channels.h"
 
 struct xf_WorkArea
 {
@@ -165,6 +166,9 @@ struct xf_info
 	Atom WM_STATE;
 	Atom WM_PROTOCOLS;
 	Atom WM_DELETE_WINDOW;
+
+	/* Channels */
+	RdpeiClientContext* rdpei;
 };
 
 void xf_create_window(xfInfo* xfi);

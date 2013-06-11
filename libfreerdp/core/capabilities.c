@@ -124,27 +124,27 @@ void rdp_write_capability_set_header(wStream* s, UINT16 length, UINT16 type)
 	Stream_Write_UINT16(s, length); /* lengthCapability */
 }
 
-BYTE* rdp_capability_set_start(wStream* s)
+int rdp_capability_set_start(wStream* s)
 {
-	BYTE* header;
+	int header;
 
-	Stream_GetPointer(s, header);
+	header = Stream_GetPosition(s);
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 
 	return header;
 }
 
-void rdp_capability_set_finish(wStream* s, BYTE* header, UINT16 type)
+void rdp_capability_set_finish(wStream* s, int header, UINT16 type)
 {
+	int footer;
 	UINT16 length;
-	BYTE* footer;
 
-	footer = s->pointer;
+	footer = Stream_GetPosition(s);
 	length = footer - header;
-	Stream_SetPointer(s, header);
+	Stream_SetPosition(s, header);
 
 	rdp_write_capability_set_header(s, length, type);
-	Stream_SetPointer(s, footer);
+	Stream_SetPosition(s, footer);
 }
 
 /**
@@ -206,8 +206,10 @@ BOOL rdp_read_general_capability_set(wStream* s, UINT16 length, rdpSettings* set
 
 void rdp_write_general_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 extraFlags;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -344,10 +346,12 @@ BOOL rdp_read_bitmap_capability_set(wStream* s, UINT16 length, rdpSettings* sett
 
 void rdp_write_bitmap_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	BYTE drawingFlags = 0;
 	UINT16 desktopResizeFlag;
 	UINT16 preferredBitsPerPixel;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -484,10 +488,12 @@ BOOL rdp_read_order_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 void rdp_write_order_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 orderFlags;
 	UINT16 orderSupportExFlags;
 	UINT16 textANSICodePage;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -666,8 +672,10 @@ BOOL rdp_read_bitmap_cache_capability_set(wStream* s, UINT16 length, rdpSettings
 void rdp_write_bitmap_cache_capability_set(wStream* s, rdpSettings* settings)
 {
 	int bpp;
+	int header;
 	UINT16 size;
-	BYTE* header;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -770,7 +778,9 @@ BOOL rdp_read_control_capability_set(wStream* s, UINT16 length, rdpSettings* set
 
 void rdp_write_control_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -837,7 +847,9 @@ BOOL rdp_read_window_activation_capability_set(wStream* s, UINT16 length, rdpSet
 
 void rdp_write_window_activation_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -914,8 +926,10 @@ BOOL rdp_read_pointer_capability_set(wStream* s, UINT16 length, rdpSettings* set
 
 void rdp_write_pointer_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 colorPointerFlag;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -982,8 +996,10 @@ BOOL rdp_read_share_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 void rdp_write_share_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 nodeId;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1042,7 +1058,9 @@ BOOL rdp_read_color_cache_capability_set(wStream* s, UINT16 length, rdpSettings*
 
 void rdp_write_color_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1103,8 +1121,10 @@ BOOL rdp_read_sound_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 void rdp_write_sound_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 soundFlags;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1198,8 +1218,10 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 void rdp_write_input_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 inputFlags;
+
+	Stream_EnsureRemainingCapacity(s, 128);
 
 	header = rdp_capability_set_start(s);
 
@@ -1282,7 +1304,9 @@ BOOL rdp_read_font_capability_set(wStream* s, UINT16 length, rdpSettings* settin
 
 void rdp_write_font_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1338,7 +1362,9 @@ BOOL rdp_read_brush_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 void rdp_write_brush_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1419,7 +1445,9 @@ BOOL rdp_read_glyph_cache_capability_set(wStream* s, UINT16 length, rdpSettings*
 
 void rdp_write_glyph_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -1522,8 +1550,10 @@ BOOL rdp_read_offscreen_bitmap_cache_capability_set(wStream* s, UINT16 length, r
 
 void rdp_write_offscreen_bitmap_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 offscreenSupportLevel = FALSE;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1593,7 +1623,9 @@ BOOL rdp_read_bitmap_cache_host_support_capability_set(wStream* s, UINT16 length
 
 void rdp_write_bitmap_cache_host_support_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1689,8 +1721,10 @@ BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, UINT16 length, rdpSetti
 
 void rdp_write_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 cacheFlags;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -1784,8 +1818,10 @@ BOOL rdp_read_virtual_channel_capability_set(wStream* s, UINT16 length, rdpSetti
 
 void rdp_write_virtual_channel_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 flags;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1855,8 +1891,10 @@ BOOL rdp_read_draw_nine_grid_cache_capability_set(wStream* s, UINT16 length, rdp
 
 void rdp_write_draw_nine_grid_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 drawNineGridSupportLevel;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -1952,9 +1990,11 @@ BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s, UINT16 length, rdpSe
 
 void rdp_write_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 drawGDIPlusSupportLevel;
 	UINT32 drawGdiplusCacheLevel;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -2029,8 +2069,10 @@ BOOL rdp_read_remote_programs_capability_set(wStream* s, UINT16 length, rdpSetti
 
 void rdp_write_remote_programs_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 railSupportLevel;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -2089,8 +2131,10 @@ BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length, rdpSettings*
 
 void rdp_write_window_list_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 wndSupportLevel;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2152,8 +2196,10 @@ BOOL rdp_read_desktop_composition_capability_set(wStream* s, UINT16 length, rdpS
 
 void rdp_write_desktop_composition_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 compDeskSupportLevel;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2211,7 +2257,9 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 
 void rdp_write_multifragment_update_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2263,8 +2311,10 @@ BOOL rdp_read_large_pointer_capability_set(wStream* s, UINT16 length, rdpSetting
 
 void rdp_write_large_pointer_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT16 largePointerSupportFlags;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2321,8 +2371,10 @@ BOOL rdp_read_surface_commands_capability_set(wStream* s, UINT16 length, rdpSett
 
 void rdp_write_surface_commands_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 cmdFlags;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2522,6 +2574,8 @@ void rdp_write_rfx_client_capability_container(wStream* s, rdpSettings* settings
 	UINT32 captureFlags;
 	BYTE codecMode;
 
+	Stream_EnsureRemainingCapacity(s, 64);
+
 	captureFlags = settings->RemoteFxOnly ? 0 : CARDP_CAPS_CAPTURE_NON_CAC;
 	codecMode = settings->RemoteFxCodecMode;
 
@@ -2569,6 +2623,8 @@ void rdp_write_rfx_client_capability_container(wStream* s, rdpSettings* settings
  */
 void rdp_write_nsc_client_capability_container(wStream* s, rdpSettings* settings)
 {
+	Stream_EnsureRemainingCapacity(s, 8);
+
 	Stream_Write_UINT16(s, 3); /* codecPropertiesLength */
 
 	/* TS_NSCODEC_CAPABILITYSET */
@@ -2579,6 +2635,8 @@ void rdp_write_nsc_client_capability_container(wStream* s, rdpSettings* settings
 
 void rdp_write_jpeg_client_capability_container(wStream* s, rdpSettings* settings)
 {
+	Stream_EnsureRemainingCapacity(s, 8);
+
 	Stream_Write_UINT16(s, 1); /* codecPropertiesLength */
 	Stream_Write_UINT8(s, settings->JpegQuality);
 }
@@ -2590,12 +2648,16 @@ void rdp_write_jpeg_client_capability_container(wStream* s, rdpSettings* setting
  */
 void rdp_write_rfx_server_capability_container(wStream* s, rdpSettings* settings)
 {
+	Stream_EnsureRemainingCapacity(s, 8);
+
 	Stream_Write_UINT16(s, 4); /* codecPropertiesLength */
 	Stream_Write_UINT32(s, 0); /* reserved */
 }
 
 void rdp_write_jpeg_server_capability_container(wStream* s, rdpSettings* settings)
 {
+	Stream_EnsureRemainingCapacity(s, 8);
+
 	Stream_Write_UINT16(s, 1); /* codecPropertiesLength */
 	Stream_Write_UINT8(s, 75);
 }
@@ -2607,6 +2669,8 @@ void rdp_write_jpeg_server_capability_container(wStream* s, rdpSettings* setting
  */
 void rdp_write_nsc_server_capability_container(wStream* s, rdpSettings* settings)
 {
+	Stream_EnsureRemainingCapacity(s, 8);
+
 	Stream_Write_UINT16(s, 4); /* codecPropertiesLength */
 	Stream_Write_UINT32(s, 0); /* reserved */
 }
@@ -2620,8 +2684,10 @@ void rdp_write_nsc_server_capability_container(wStream* s, rdpSettings* settings
 
 void rdp_write_bitmap_codecs_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	BYTE bitmapCodecCount;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	header = rdp_capability_set_start(s);
 
@@ -2788,8 +2854,10 @@ BOOL rdp_read_frame_acknowledge_capability_set(wStream* s, UINT16 length, rdpSet
 
 void rdp_write_frame_acknowledge_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
 	UINT32 frame_acknowledge;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
@@ -2829,10 +2897,13 @@ BOOL rdp_read_bitmap_cache_v3_codec_id_capability_set(wStream* s, UINT16 length,
 
 void rdp_write_bitmap_cache_v3_codec_id_capability_set(wStream* s, rdpSettings* settings)
 {
-	BYTE* header;
+	int header;
+
+	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 	Stream_Write_UINT8(s, settings->BitmapCacheV3CodecId);
+
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID);
 }
 
@@ -3330,18 +3401,20 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 void rdp_write_demand_active(wStream* s, rdpSettings* settings)
 {
-	BYTE *bm, *em, *lm;
+	int bm, em, lm;
 	UINT16 numberCapabilities;
 	UINT16 lengthCombinedCapabilities;
+
+	Stream_EnsureRemainingCapacity(s, 64);
 
 	Stream_Write_UINT32(s, settings->ShareId); /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 4); /* lengthSourceDescriptor (2 bytes) */
 
-	Stream_GetPointer(s, lm);
+	lm = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
 	Stream_Write(s, "RDP", 4); /* sourceDescriptor */
 
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s); /* numberCapabilities (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 
@@ -3367,23 +3440,23 @@ void rdp_write_demand_active(wStream* s, rdpSettings* settings)
 		rdp_write_bitmap_cache_host_support_capability_set(s, settings);
 	}
 
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 
-	Stream_SetPointer(s, lm); /* go back to lengthCombinedCapabilities */
+	Stream_SetPosition(s, lm); /* go back to lengthCombinedCapabilities */
 	lengthCombinedCapabilities = (em - bm);
 	Stream_Write_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	Stream_SetPointer(s, bm); /* go back to numberCapabilities */
+	Stream_SetPosition(s, bm); /* go back to numberCapabilities */
 	Stream_Write_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 
 #ifdef WITH_DEBUG_CAPABILITIES
 	Stream_Seek_UINT16(s);
 	rdp_print_capability_sets(s, numberCapabilities, FALSE);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 	Stream_Seek_UINT16(s);
 #endif
 
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 
 	Stream_Write_UINT32(s, 0); /* sessionId */
 }
@@ -3391,14 +3464,20 @@ void rdp_write_demand_active(wStream* s, rdpSettings* settings)
 BOOL rdp_send_demand_active(rdpRdp* rdp)
 {
 	wStream* s;
+	BOOL status;
 
-	s = rdp_pdu_init(rdp);
+	s = Stream_New(NULL, 4096);
+	rdp_init_stream_pdu(rdp, s);
 
 	rdp->settings->ShareId = 0x10000 + rdp->mcs->user_id;
 
 	rdp_write_demand_active(s, rdp->settings);
 
-	return rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+
+	Stream_Free(s, TRUE);
+
+	return status;
 }
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
@@ -3442,7 +3521,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 
 void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 {
-	BYTE *bm, *em, *lm;
+	int bm, em, lm;
 	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
@@ -3453,11 +3532,11 @@ void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT16(s, 0x03EA); /* originatorId (2 bytes) */
 	Stream_Write_UINT16(s, lengthSourceDescriptor);/* lengthSourceDescriptor (2 bytes) */
 
-	Stream_GetPointer(s, lm);
+	lm = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s); /* lengthCombinedCapabilities (2 bytes) */
 	Stream_Write(s, SOURCE_DESCRIPTOR, lengthSourceDescriptor); /* sourceDescriptor */
 
-	Stream_GetPointer(s, bm);
+	bm = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s); /* numberCapabilities (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2Octets (2 bytes) */
 
@@ -3552,32 +3631,38 @@ void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 		}
 	}
 
-	Stream_GetPointer(s, em);
+	em = Stream_GetPosition(s);
 
-	Stream_SetPointer(s, lm); /* go back to lengthCombinedCapabilities */
+	Stream_SetPosition(s, lm); /* go back to lengthCombinedCapabilities */
 	lengthCombinedCapabilities = (em - bm);
 	Stream_Write_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	Stream_SetPointer(s, bm); /* go back to numberCapabilities */
+	Stream_SetPosition(s, bm); /* go back to numberCapabilities */
 	Stream_Write_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 
 #ifdef WITH_DEBUG_CAPABILITIES
 	Stream_Seek_UINT16(s);
 	rdp_print_capability_sets(s, numberCapabilities, FALSE);
-	Stream_SetPointer(s, bm);
+	Stream_SetPosition(s, bm);
 	Stream_Seek_UINT16(s);
 #endif
 
-	Stream_SetPointer(s, em);
+	Stream_SetPosition(s, em);
 }
 
 BOOL rdp_send_confirm_active(rdpRdp* rdp)
 {
 	wStream* s;
+	BOOL status;
 
-	s = rdp_pdu_init(rdp);
+	s = Stream_New(NULL, 4096);
+	rdp_init_stream_pdu(rdp, s);
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	return rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
+
+	Stream_Free(s, TRUE);
+
+	return status;
 }

@@ -61,6 +61,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
@@ -93,10 +94,10 @@
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
 #include "xf_input.h"
+#include "xf_channels.h"
+#include "xfreerdp.h"
 
 static int initialized_xi = 0;
-
-#include "xfreerdp.h"
 
 static long xv_port = 0;
 static const size_t password_size = 512;
@@ -120,6 +121,12 @@ void xf_transform_window(xfInfo* xfi)
 	w = (xfi->originalWidth * xfi->scale) + xfi->offset_x;
 	h = (xfi->originalHeight * xfi->scale) + xfi->offset_y;
 
+	if(w < 1)
+		w = 1;
+
+	if(h < 1)
+		h = 1;
+
 	if (size_hints)
 	{
 		size_hints->flags |= PMinSize | PMaxSize;
@@ -134,6 +141,7 @@ void xf_transform_window(xfInfo* xfi)
 
 void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h, BOOL scale)
 {
+#ifdef WITH_XRENDER
 	XTransform transform;
 	Picture windowPicture;
 	Picture primaryPicture;
@@ -180,11 +188,13 @@ void xf_draw_screen_scaled(xfInfo* xfi, int x, int y, int w, int h, BOOL scale)
 	}
 
 	XRenderSetPictureTransform(xfi->display, primaryPicture, &transform);
-	//XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfi->currentWidth, xfi->currentHeight);
+
 	XRenderComposite(xfi->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfi->offset_x, xfi->offset_y, xfi->currentWidth, xfi->currentHeight);
 
 	XRenderFreePicture(xfi->display, primaryPicture);
 	XRenderFreePicture(xfi->display, windowPicture);
+
+#endif
 
 }
 
@@ -753,6 +763,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 BOOL xf_pre_connect(freerdp* instance)
 {
 	xfInfo* xfi;
+	rdpChannels* channels;
 	rdpSettings* settings;
 
 	xfi = ((xfContext*) instance->context)->xfi;
@@ -764,13 +775,17 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfi->context->settings = instance->settings;
 	xfi->instance = instance;
 	settings = instance->settings;
+	channels = instance->context->channels;
+
+	instance->OnChannelConnected = xf_on_channel_connected;
+	instance->OnChannelDisconnected = xf_on_channel_disconnected;
 
 	//if (status < 0)
 	//	exit(XF_EXIT_PARSE_ARGUMENTS);
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	freerdp_client_load_addins(channels, instance->settings);
 
-	freerdp_channels_pre_connect(xfi->_context->channels, instance);
+	freerdp_channels_pre_connect(channels, instance);
 
 	if (settings->AuthenticationOnly)
 	{
@@ -1667,6 +1682,18 @@ rdpClient* freerdp_client_get_interface(cfInfo* cfi)
 double freerdp_client_get_scale(xfInfo* xfi)
 {
 	return xfi->scale;
+}
+
+void freerdp_client_set_scale(xfInfo* xfi, double newScale)
+{
+	xfi->scale = newScale;
+
+	xfi->currentWidth = xfi->originalWidth * xfi->scale;
+	xfi->currentHeight = xfi->originalHeight * xfi->scale;
+	
+	xf_transform_window(xfi);
+	IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
+	xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 }
 
 int freerdp_client_get_xpan(xfInfo* xfi)

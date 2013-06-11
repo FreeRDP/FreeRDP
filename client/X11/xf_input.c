@@ -67,15 +67,22 @@ int scale_cnt;
 int xf_input_init(xfInfo* xfi, Window window)
 {
 	int i, j;
+	int nmasks;
 	int ndevices;
 	int major = 2;
 	int minor = 2;
 	Status xstatus;
-	XIEventMask evmask;
 	XIDeviceInfo* info;
+	XIEventMask evmasks[8];
 	int opcode, event, error;
-	unsigned char mask[XIMaskLen(XI_LASTEVENT)];
+	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
+	z_vector = 0;
+	px_vector = 0;
+	py_vector = 0;
+
+	nmasks = 0;
+	ndevices = 0;
 	active_contacts = 0;
 	ZeroMemory(contacts, sizeof(touchContact) * MAX_CONTACTS);
 
@@ -104,30 +111,38 @@ int xf_input_init(xfInfo* xfi, Window window)
 		for (j = 0; j < dev->num_classes; j++)
 		{
 			XIAnyClassInfo* class = dev->classes[j];
-			//XITouchClassInfo* t = (XITouchClassInfo*) class;
+			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
 			if (class->type != XITouchClass)
 				continue;
 
+			if (t->mode != XIDirectTouch)
+				continue;
+
+
+			if (strcmp(dev->name, "Virtual core pointer") == 0)
+				continue;
+
+			printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
+				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+						dev->deviceid, t->mode, t->num_touches);
+
+			evmasks[nmasks].mask = masks[nmasks];
+			evmasks[nmasks].mask_len = sizeof(masks[0]);
+			ZeroMemory(masks[nmasks], sizeof(masks[0]));
+			evmasks[nmasks].deviceid = dev->deviceid;
+
+			XISetMask(masks[nmasks], XI_TouchBegin);
+			XISetMask(masks[nmasks], XI_TouchUpdate);
+			XISetMask(masks[nmasks], XI_TouchEnd);
+			nmasks++;
 		}
 	}
 
-	evmask.mask = mask;
-	evmask.mask_len = sizeof(mask);
-	ZeroMemory(mask, sizeof(mask));
-	evmask.deviceid = XIAllDevices;
+	if (nmasks > 0)
+		xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
 
-	XISetMask(mask, XI_TouchBegin);
-	XISetMask(mask, XI_TouchUpdate);
-	XISetMask(mask, XI_TouchEnd);
-
-	xstatus = XISelectEvents(xfi->display, window, &evmask, 1);
-
-	z_vector = 0;
-	px_vector = 0;
-	py_vector = 0;
-
-	return -1;
+	return 0;
 }
 
 //BOOL xf_input_is_duplicate(XIDeviceEvent* event)
@@ -440,7 +455,7 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 			//contacts[i].pos_y = (int)event->event_y;
 
 			active_contacts--;
-			break;
+			break;printf("TouchBegin\n");
 		}
 	}
 }
@@ -484,18 +499,57 @@ int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 	return 0;
 }
 
-int xf_input_touch_begin_remote(xfInfo* xfi, XIDeviceEvent* event)
+char* xf_input_touch_state_string(DWORD flags)
 {
-	return 0;
+	if (flags & CONTACT_FLAG_DOWN)
+		return "TouchBegin";
+	else if (flags & CONTACT_FLAG_UPDATE)
+		return "TouchUpdate";
+	else if (flags & CONTACT_FLAG_UP)
+		return "TouchEnd";
+	else
+		return "TouchUnknown";
 }
 
-int xf_input_touch_update_remote(xfInfo* xfi, XIDeviceEvent* event)
+int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 {
-	return 0;
-}
+	int x, y;
+	int touchId;
+	RDPINPUT_CONTACT_DATA contact;
+	RdpeiClientContext* rdpei = xfi->rdpei;
 
-int xf_input_touch_end_remote(xfInfo* xfi, XIDeviceEvent* event)
-{
+	if (!rdpei)
+		return 0;
+
+	touchId = event->detail;
+	x = (int) event->event_x;
+	y = (int) event->event_y;
+	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+	contact.fieldsPresent = 0;
+	contact.x = x;
+	contact.y = y;
+	contact.contactFlags = flags;
+
+	if (flags & CONTACT_FLAG_DOWN)
+	{
+		contact.contactId = rdpei->ContactBegin(rdpei, touchId);
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+	}
+	else if (flags & CONTACT_FLAG_UPDATE)
+	{
+		contact.contactId = rdpei->ContactUpdate(rdpei, touchId);
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+	}
+	else if (flags & CONTACT_FLAG_UP)
+	{
+		contact.contactId = rdpei->ContactEnd(rdpei, touchId);
+	}
+
+	rdpei->AddContact(rdpei, &contact);
+
 	return 0;
 }
 
@@ -510,15 +564,15 @@ int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
-				xf_input_touch_begin_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_DOWN);
 				break;
 
 			case XI_TouchUpdate:
-				xf_input_touch_update_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UPDATE);
 				break;
 
 			case XI_TouchEnd:
-				xf_input_touch_end_remote(xfi, cookie->data);
+				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UP);
 				break;
 
 			default:
