@@ -34,28 +34,28 @@
 
 int main(int argc, char* argv[])
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	DWORD dwExitCode;
 	freerdp* instance;
 
 	freerdp_client_global_init();
 
-	xfi = freerdp_client_new(argc, argv);
+	xfc = freerdp_client_new(argc, argv);
 
-	if (xfi == NULL)
+	if (xfc == NULL)
 	{
 		return 1;
 	}
 
-	instance = xfi->instance;
+	instance = xfc->instance;
 
-	freerdp_client_start(xfi);
+	freerdp_client_start(xfc);
 
-	WaitForSingleObject(xfi->thread, INFINITE);
+	WaitForSingleObject(xfc->thread, INFINITE);
 
-	GetExitCodeThread(xfi->thread, &dwExitCode);
+	GetExitCodeThread(xfc->thread, &dwExitCode);
 
-	freerdp_client_free(xfi);
+	freerdp_client_free(xfc);
 
 	freerdp_client_global_uninit();
 

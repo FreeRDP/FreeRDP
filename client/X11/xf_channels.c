@@ -28,11 +28,11 @@
 
 int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
 {
-	xfInfo* xfi = ((xfContext*) instance->context)->xfi;
+	xfContext* xfc = (xfContext*) instance->context;
 
 	if (strcmp(name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		xfi->rdpei = (RdpeiClientContext*) pInterface;
+		xfc->rdpei = (RdpeiClientContext*) pInterface;
 	}
 
 	return 0;

@@ -35,6 +35,7 @@
 #include <winpr/thread.h>
 
 typedef struct xf_context xfInfo;
+typedef struct xf_context xfContext;
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,22 +45,22 @@ extern "C" {
  * Client Interface
  */
 
-#define cfInfo	xfInfo
+#define cfInfo	xfContext
 
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
 
-FREERDP_API int freerdp_client_start(cfInfo* cfi);
-FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+FREERDP_API int freerdp_client_start(cfInfo* cfc);
+FREERDP_API int freerdp_client_stop(cfInfo* cfc);
 
-FREERDP_API freerdp* freerdp_client_get_instance(cfInfo* cfi);
-FREERDP_API HANDLE freerdp_client_get_thread(cfInfo* cfi);
-FREERDP_API rdpClient* freerdp_client_get_interface(cfInfo* cfi);
-FREERDP_API double freerdp_client_get_scale(xfInfo* xfi);
-FREERDP_API void freerdp_client_reset_scale(xfInfo* xfi);
+FREERDP_API freerdp* freerdp_client_get_instance(cfInfo* cfc);
+FREERDP_API HANDLE freerdp_client_get_thread(cfInfo* cfc);
+FREERDP_API rdpClient* freerdp_client_get_interface(cfInfo* cfc);
+FREERDP_API double freerdp_client_get_scale(cfInfo* cfc);
+FREERDP_API void freerdp_client_reset_scale(cfInfo* cfc);
 
 FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
-FREERDP_API void freerdp_client_free(cfInfo* cfi);
+FREERDP_API void freerdp_client_free(cfInfo* cfc);
 
 #ifdef __cplusplus
 }
