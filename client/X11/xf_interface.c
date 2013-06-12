@@ -1610,9 +1610,7 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 	for (index = 0; index < argc; index++)
 		instance->context->argv[index] = _strdup(argv[index]);
 
-	xfi = (xfInfo*) malloc(sizeof(xfInfo));
-	ZeroMemory(xfi, sizeof(xfInfo));
-
+	xfi = (xfInfo*) instance->context;
 	((xfContext*) instance->context)->xfi = xfi;
 
 	xfi->instance = instance;
@@ -1685,7 +1683,11 @@ void freerdp_client_free(xfInfo* xfi)
 	if (xfi)
 	{
 		int index;
+		freerdp* instance;
 		rdpContext* context;
+
+		context = (rdpContext*) xfi->context;
+		instance = context->instance;
 
 		xf_window_free(xfi);
 
@@ -1693,16 +1695,12 @@ void freerdp_client_free(xfInfo* xfi)
 
 		XCloseDisplay(xfi->display);
 
-		context = (rdpContext*) xfi->context;
-
 		for (index = 0; index < context->argc; index++)
 			free(context->argv[index]);
 
 		free(context->argv);
 
-		freerdp_context_free(xfi->instance);
-		freerdp_free(xfi->instance);
-
-		free(xfi);
+		freerdp_context_free(instance);
+		freerdp_free(instance);
 	}
 }
