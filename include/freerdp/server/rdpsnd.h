@@ -91,7 +91,15 @@ struct _rdpsnd_server_context
 	psRdpsndServerActivated Activated;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
 FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_RDPSND_SERVER_H */

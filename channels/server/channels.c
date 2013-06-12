@@ -552,9 +552,25 @@ void* WTSVirtualChannelOpenEx(
 
 	if ((flags & WTS_CHANNEL_OPTION_DYNAMIC) != 0)
 	{
+		for (i = 0; i < client->settings->ChannelCount; i++)
+		{
+			if (client->settings->ChannelDefArray[i].joined &&
+				strncmp(client->settings->ChannelDefArray[i].Name, "drdynvc", 7) == 0)
+			{
+				break;
+			}
+		}
+		if (i >= client->settings->ChannelCount)
+		{
+			DEBUG_DVC("Dynamic virtual channel not registered.");
+			SetLastError(ERROR_NOT_FOUND);
+			return NULL;
+		}
+
 		if (vcm->drdynvc_channel == NULL || vcm->drdynvc_state != DRDYNVC_STATE_READY)
 		{
 			DEBUG_DVC("Dynamic virtual channel not ready.");
+			SetLastError(ERROR_NOT_READY);
 			return NULL;
 		}
 
@@ -586,7 +602,10 @@ void* WTSVirtualChannelOpenEx(
 		len = strlen(pVirtualName);
 
 		if (len > 8)
+		{
+			SetLastError(ERROR_NOT_FOUND);
 			return NULL;
+		}
 
 		for (i = 0; i < client->settings->ChannelCount; i++)
 		{
@@ -598,7 +617,10 @@ void* WTSVirtualChannelOpenEx(
 		}
 
 		if (i >= client->settings->ChannelCount)
+		{
+			SetLastError(ERROR_NOT_FOUND);
 			return NULL;
+		}
 
 		channel = (rdpPeerChannel*) client->settings->ChannelDefArray[i].handle;
 

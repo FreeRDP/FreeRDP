@@ -1177,7 +1177,7 @@ struct rdp_settings
 	/* NSCodec */
 	ALIGN64 BOOL NSCodec; /* 3712 */
 	ALIGN64 UINT32 NSCodecId; /* 3713 */
-	ALIGN64 BOOL FrameAcknowledge; /* 3714 */
+	ALIGN64 UINT32 FrameAcknowledge; /* 3714 */
 	UINT64 padding3776[3776 - 3715]; /* 3715 */
 
 	/* JPEG */

@@ -54,17 +54,14 @@ struct xf_glyph
 };
 typedef struct xf_glyph xfGlyph;
 
+typedef struct xf_context xfContext;
+
 struct xf_context
 {
 	rdpContext _p;
 
 	xfInfo* xfi;
-	rdpSettings* settings;
-};
-typedef struct xf_context xfContext;
 
-struct xf_info
-{
 	freerdp* instance;
 	xfContext* context;
 	rdpContext* _context;

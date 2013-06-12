@@ -101,9 +101,12 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
         settings->FrameMarkerCommandEnabled = TRUE;
         settings->FrameAcknowledge = 10;
 	}
-    
-    // enable NSCodec
-    settings->NSCodec = TRUE;
+	else
+	{
+		// enable NSCodec if remotefx is not used
+		settings->NSCodec = TRUE;
+	}
+
 	settings->BitmapCacheV3Enabled = TRUE;
 
 	// Performance flags

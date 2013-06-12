@@ -34,7 +34,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-typedef struct xf_info xfInfo;
+typedef struct xf_context xfInfo;
 
 #ifdef __cplusplus
 extern "C" {

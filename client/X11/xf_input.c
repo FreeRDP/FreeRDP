@@ -325,11 +325,11 @@ char* xf_input_touch_state_string(DWORD flags)
 		return "TouchUnknown";
 }
 
-int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
+int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, int evtype)
 {
 	int x, y;
 	int touchId;
-	RDPINPUT_CONTACT_DATA contact;
+	int contactId;
 	RdpeiClientContext* rdpei = xfi->rdpei;
 
 	if (!rdpei)
@@ -338,31 +338,22 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 	touchId = event->detail;
 	x = (int) event->event_x;
 	y = (int) event->event_y;
-	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
-	contact.fieldsPresent = 0;
-	contact.x = x;
-	contact.y = y;
-	contact.contactFlags = flags;
-
-	if (flags & CONTACT_FLAG_DOWN)
+	if (evtype == XI_TouchBegin)
 	{
-		contact.contactId = rdpei->ContactBegin(rdpei, touchId);
-		contact.contactFlags |= CONTACT_FLAG_INRANGE;
-		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+		//printf("TouchBegin: %d\n", touchId);
+		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
 	}
-	else if (flags & CONTACT_FLAG_UPDATE)
+	else if (evtype == XI_TouchUpdate)
 	{
-		contact.contactId = rdpei->ContactUpdate(rdpei, touchId);
-		contact.contactFlags |= CONTACT_FLAG_INRANGE;
-		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+		//printf("TouchUpdate: %d\n", touchId);
+		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
-	else if (flags & CONTACT_FLAG_UP)
+	else if (evtype == XI_TouchEnd)
 	{
-		contact.contactId = rdpei->ContactEnd(rdpei, touchId);
+		//printf("TouchEnd: %d\n", touchId);
+		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
 	}
-
-	rdpei->AddContact(rdpei, &contact);
 
 	return 0;
 }
@@ -378,15 +369,15 @@ int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_DOWN);
+				xf_input_touch_remote(xfi, cookie->data, XI_TouchBegin);
 				break;
 
 			case XI_TouchUpdate:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UPDATE);
+				xf_input_touch_remote(xfi, cookie->data, XI_TouchUpdate);
 				break;
 
 			case XI_TouchEnd:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UP);
+				xf_input_touch_remote(xfi, cookie->data, XI_TouchEnd);
 				break;
 
 			default:
