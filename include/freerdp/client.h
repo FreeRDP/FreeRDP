@@ -57,31 +57,31 @@ struct rdp_client
 FREERDP_API int freerdp_client_global_init();
 FREERDP_API int freerdp_client_global_uninit();
 
-FREERDP_API int freerdp_client_start(rdpContext* cfc);
-FREERDP_API int freerdp_client_stop(rdpContext* cfc);
+FREERDP_API int freerdp_client_start(rdpContext* context);
+FREERDP_API int freerdp_client_stop(rdpContext* context);
 
-FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* cfc);
-FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* cfc);
-FREERDP_API rdpClient* freerdp_client_get_interface(rdpContext* cfc);
-FREERDP_API double freerdp_client_get_scale(rdpContext* cfc);
-FREERDP_API void freerdp_client_reset_scale(rdpContext* cfc);
+FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
+FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);
+FREERDP_API rdpClient* freerdp_client_get_interface(rdpContext* context);
+FREERDP_API double freerdp_client_get_scale(rdpContext* context);
+FREERDP_API void freerdp_client_reset_scale(rdpContext* context);
 
 FREERDP_API rdpContext* freerdp_client_new(int argc, char** argv);
 FREERDP_API void freerdp_client_free(rdpContext* cfc);
 
-FREERDP_API BOOL freerdp_client_get_param_bool(rdpContext* cfc, int id);
-FREERDP_API int freerdp_client_set_param_bool(rdpContext* cfc, int id, BOOL param);
+FREERDP_API BOOL freerdp_client_get_param_bool(rdpContext* context, int id);
+FREERDP_API int freerdp_client_set_param_bool(rdpContext* context, int id, BOOL param);
 
-FREERDP_API UINT32 freerdp_client_get_param_uint32(rdpContext* cfc, int id);
-FREERDP_API int freerdp_client_set_param_uint32(rdpContext* cfc, int id, UINT32 param);
+FREERDP_API UINT32 freerdp_client_get_param_uint32(rdpContext* context, int id);
+FREERDP_API int freerdp_client_set_param_uint32(rdpContext* context, int id, UINT32 param);
 
-FREERDP_API UINT64 freerdp_client_get_param_uint64(rdpContext* cfc, int id);
-FREERDP_API int freerdp_client_set_param_uint64(rdpContext* cfc, int id, UINT64 param);
+FREERDP_API UINT64 freerdp_client_get_param_uint64(rdpContext* context, int id);
+FREERDP_API int freerdp_client_set_param_uint64(rdpContext* context, int id, UINT64 param);
 
-FREERDP_API char* freerdp_client_get_param_string(rdpContext* cfc, int id);
-FREERDP_API int freerdp_client_set_param_string(rdpContext* cfc, int id, char* param);
+FREERDP_API char* freerdp_client_get_param_string(rdpContext* context, int id);
+FREERDP_API int freerdp_client_set_param_string(rdpContext* context, int id, char* param);
 
-FREERDP_API void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y);
+FREERDP_API void freerdp_client_mouse_event(rdpContext* context, DWORD flags, int x, int y);
 
 #ifdef __cplusplus
 }

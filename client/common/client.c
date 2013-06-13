@@ -21,70 +21,59 @@
 #include "config.h"
 #endif
 
-#include "freerdp/client.h"
+#include <freerdp/client.h>
 
-
-freerdp* freerdp_client_get_instance(rdpContext* cfc)
+freerdp* freerdp_client_get_instance(rdpContext* context)
 {
-    return cfc->instance;
+	return context->instance;
 }
 
-BOOL freerdp_client_get_param_bool(rdpContext* cfc, int id)
+BOOL freerdp_client_get_param_bool(rdpContext* context, int id)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_get_param_bool(settings, id);
+	rdpSettings* settings = context->settings;
+	return freerdp_get_param_bool(settings, id);
 }
 
-int freerdp_client_set_param_bool(rdpContext* cfc, int id, BOOL param)
+int freerdp_client_set_param_bool(rdpContext* context, int id, BOOL param)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_set_param_bool(settings, id, param);
+	rdpSettings* settings = context->settings;
+	return freerdp_set_param_bool(settings, id, param);
 }
 
-UINT32 freerdp_client_get_param_uint32(rdpContext* cfc, int id)
+UINT32 freerdp_client_get_param_uint32(rdpContext* context, int id)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_get_param_uint32(settings, id);
+	rdpSettings* settings = context->settings;
+	return freerdp_get_param_uint32(settings, id);
 }
 
-int freerdp_client_set_param_uint32(rdpContext* cfc, int id, UINT32 param)
+int freerdp_client_set_param_uint32(rdpContext* context, int id, UINT32 param)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_set_param_uint32(settings, id, param);
+	rdpSettings* settings = context->settings;
+	return freerdp_set_param_uint32(settings, id, param);
 }
 
-UINT64 freerdp_client_get_param_uint64(rdpContext* cfc, int id)
+UINT64 freerdp_client_get_param_uint64(rdpContext* context, int id)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_get_param_uint64(settings, id);
+	rdpSettings* settings = context->settings;
+	return freerdp_get_param_uint64(settings, id);
 }
 
-int freerdp_client_set_param_uint64(rdpContext* cfc, int id, UINT64 param)
+int freerdp_client_set_param_uint64(rdpContext* context, int id, UINT64 param)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_set_param_uint64(settings, id, param);
+	rdpSettings* settings = context->settings;
+	return freerdp_set_param_uint64(settings, id, param);
 }
 
-char* freerdp_client_get_param_string(rdpContext* cfc, int id)
+char* freerdp_client_get_param_string(rdpContext* context, int id)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_get_param_string(settings, id);
+	rdpSettings* settings = context->settings;
+	return freerdp_get_param_string(settings, id);
 }
 
-int freerdp_client_set_param_string(rdpContext* cfc, int id, char* param)
+int freerdp_client_set_param_string(rdpContext* context, int id, char* param)
 {
-    rdpSettings* settings = cfc->instance->settings;
-
-    return freerdp_set_param_string(settings, id, param);
+	rdpSettings* settings = context->settings;
+	return freerdp_set_param_string(settings, id, param);
 }
-
-
 
 

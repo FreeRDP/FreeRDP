@@ -1510,9 +1510,11 @@ int freerdp_client_global_uninit()
 	return 0;
 }
 
-int freerdp_client_start(xfContext* xfc)
+int freerdp_client_start(rdpContext* context)
 {
-	rdpSettings* settings = xfc->settings;
+	xfContext* xfc = (xfContext*) context;
+
+	rdpSettings* settings = context->settings;
 
 	if (!settings->ServerHostname)
 	{
@@ -1525,12 +1527,14 @@ int freerdp_client_start(xfContext* xfc)
 	return 0;
 }
 
-int freerdp_client_stop(xfContext* xfc)
+int freerdp_client_stop(rdpContext* context)
 {
-	if (xfc->instance->settings->AsyncInput)
+	xfContext* xfc = (xfContext*) context;
+
+	if (context->instance->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
-		queue = freerdp_get_message_queue(xfc->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
 		MessageQueue_PostQuit(queue, 0);
 	}
 	else
@@ -1541,36 +1545,39 @@ int freerdp_client_stop(xfContext* xfc)
 	return 0;
 }
 
-freerdp* freerdp_client_get_instance(cfInfo* cfi)
+freerdp* freerdp_client_get_instance(rdpContext* context)
 {
-	return cfi->instance;
+	return context->instance;
 }
 
-HANDLE freerdp_client_get_thread(cfInfo* cfi)
+HANDLE freerdp_client_get_thread(rdpContext* context)
 {
-	return cfi->thread;
+	xfContext* xfc = (xfContext*) context;
+	return xfc->thread;
 }
 
-rdpClient* freerdp_client_get_interface(cfInfo* cfi)
+rdpClient* freerdp_client_get_interface(rdpContext* context)
 {
-	return cfi->client;
+	return context->client;
 }
 
-double freerdp_client_get_scale(xfContext* xfc)
+double freerdp_client_get_scale(rdpContext* context)
 {
+	xfContext* xfc = (xfContext*) context;
 	return xfc->scale;
 }
 
-void freerdp_client_reset_scale(xfContext* xfc)
+void freerdp_client_reset_scale(rdpContext* context)
 {
-    xfc->scale = 1.0;
+	xfContext* xfc = (xfContext*) context;
 
-    XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-    IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-    xf_draw_screen_scaled(xfc);
+	xfc->scale = 1.0;
+	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	xf_draw_screen_scaled(xfc);
 }
 
-xfInfo* freerdp_client_new(int argc, char** argv)
+rdpContext* freerdp_client_new(int argc, char** argv)
 {
 	int index;
 	int status;
@@ -1662,18 +1669,17 @@ xfInfo* freerdp_client_new(int argc, char** argv)
 		xf_list_monitors(xfc);
 	}
 
-	return xfc;
+	return (rdpContext*) xfc;
 }
 
-void freerdp_client_free(xfContext* xfc)
+void freerdp_client_free(rdpContext* context)
 {
-	if (xfc)
-	{
-		int index;
-		freerdp* instance;
-		rdpContext* context;
+	int index;
+	freerdp* instance;
+	xfContext* xfc = (xfContext*) context;
 
-		context = (rdpContext*) xfc;
+	if (context)
+	{
 		instance = context->instance;
 
 		xf_window_free(xfc);
