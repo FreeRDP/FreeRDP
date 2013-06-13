@@ -54,18 +54,11 @@ struct xf_glyph
 };
 typedef struct xf_glyph xfGlyph;
 
-typedef struct xf_context xfContext;
-
 struct xf_context
 {
-	rdpContext _p;
-
-	xfInfo* xfi;
+	rdpContext context;
 
 	freerdp* instance;
-	xfContext* context;
-	rdpContext* _context;
-
 	rdpClient* client;
 	rdpSettings* settings;
 
@@ -165,8 +158,8 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 };
 
-void xf_create_window(xfInfo* xfi);
-void xf_toggle_fullscreen(xfInfo* xfi);
+void xf_create_window(xfContext* xfc);
+void xf_toggle_fullscreen(xfContext* xfc);
 BOOL xf_post_connect(freerdp* instance);
 
 enum XF_EXIT_CODE
@@ -210,10 +203,10 @@ enum XF_EXIT_CODE
 	XF_EXIT_UNKNOWN = 255,
 };
 
-void xf_lock_x11(xfInfo* xfi, BOOL display);
-void xf_unlock_x11(xfInfo* xfi, BOOL display);
+void xf_lock_x11(xfContext* xfc, BOOL display);
+void xf_unlock_x11(xfContext* xfc, BOOL display);
 
-void xf_draw_screen_scaled(xfInfo* xfi);
+void xf_draw_screen_scaled(xfContext* xfc);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

@@ -37,7 +37,7 @@
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071 */
 
-int xf_list_monitors(xfInfo* xfi)
+int xf_list_monitors(xfContext* xfc)
 {
 #ifdef WITH_XINERAMA
 	Display* display;
@@ -81,7 +81,7 @@ int xf_list_monitors(xfInfo* xfi)
 	return 0;
 }
 
-BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
+BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 {
 	int i, j;
 	int nmonitors;
@@ -95,14 +95,14 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	XineramaScreenInfo* screen_info = NULL;
 #endif
 
-	vscreen = &xfi->vscreen;
+	vscreen = &xfc->vscreen;
 
 #ifdef WITH_XINERAMA
-	if (XineramaQueryExtension(xfi->display, &ignored, &ignored2))
+	if (XineramaQueryExtension(xfc->display, &ignored, &ignored2))
 	{
-		if (XineramaIsActive(xfi->display))
+		if (XineramaIsActive(xfc->display))
 		{
-			screen_info = XineramaQueryScreens(xfi->display, &vscreen->nmonitors);
+			screen_info = XineramaQueryScreens(xfc->display, &vscreen->nmonitors);
 
 			if (vscreen->nmonitors > 16)
 				vscreen->nmonitors = 0;
@@ -129,39 +129,39 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 	}
 #endif
 
-	if (!xf_GetWorkArea(xfi))
+	if (!xf_GetWorkArea(xfc))
 	{
-		xfi->workArea.x = 0;
-		xfi->workArea.y = 0;
-		xfi->workArea.width = WidthOfScreen(xfi->screen);
-		xfi->workArea.height = HeightOfScreen(xfi->screen);
+		xfc->workArea.x = 0;
+		xfc->workArea.y = 0;
+		xfc->workArea.width = WidthOfScreen(xfc->screen);
+		xfc->workArea.height = HeightOfScreen(xfc->screen);
 	}
 
 	if (settings->Fullscreen)
 	{
-		settings->DesktopWidth = WidthOfScreen(xfi->screen);
-		settings->DesktopHeight = HeightOfScreen(xfi->screen);
+		settings->DesktopWidth = WidthOfScreen(xfc->screen);
+		settings->DesktopHeight = HeightOfScreen(xfc->screen);
 		maxWidth = settings->DesktopWidth;
 		maxHeight = settings->DesktopHeight;
 	}
 	else if (settings->Workarea)
 	{
-		settings->DesktopWidth = xfi->workArea.width;
-		settings->DesktopHeight = xfi->workArea.height;
+		settings->DesktopWidth = xfc->workArea.width;
+		settings->DesktopHeight = xfc->workArea.height;
 		maxWidth = settings->DesktopWidth;
 		maxHeight = settings->DesktopHeight;
 	}
 	else if (settings->PercentScreen)
 	{
-		settings->DesktopWidth = (xfi->workArea.width * settings->PercentScreen) / 100;
-		settings->DesktopHeight = (xfi->workArea.height * settings->PercentScreen) / 100;
+		settings->DesktopWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
+		settings->DesktopHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
 		maxWidth = settings->DesktopWidth;
 		maxHeight = settings->DesktopHeight;
 	}
 	else
 	{
-		maxWidth = WidthOfScreen(xfi->screen);
-		maxHeight = HeightOfScreen(xfi->screen);
+		maxWidth = WidthOfScreen(xfc->screen);
+		maxHeight = HeightOfScreen(xfc->screen);
 	}
 
 	if (!settings->Fullscreen && !settings->Workarea && !settings->UseMultimon)
@@ -240,8 +240,8 @@ BOOL xf_detect_monitors(xfInfo* xfi, rdpSettings* settings)
 
 	if (settings->Workarea)
 	{
-		vscreen->area.top = xfi->workArea.y;
-		vscreen->area.bottom = (vHeight - (vHeight - (xfi->workArea.height + xfi->workArea.y))) - 1;
+		vscreen->area.top = xfc->workArea.y;
+		vscreen->area.bottom = (vHeight - (vHeight - (xfc->workArea.height + xfc->workArea.y))) - 1;
 	}
 
 	if (nmonitors && !primaryMonitor)
