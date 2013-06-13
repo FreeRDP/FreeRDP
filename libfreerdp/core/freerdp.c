@@ -126,7 +126,6 @@ BOOL freerdp_connect(freerdp* instance)
 
 			update = instance->update;
 
-			s = StreamPool_Take(rdp->transport->ReceivePool, 0);
 			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
 
 			if (!update->pcap_rfx)
@@ -139,7 +138,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				Stream_EnsureCapacity(s, record.length);
+				s = StreamPool_Take(rdp->transport->ReceivePool, record.length);
 				record.data = Stream_Buffer(s);
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
@@ -149,9 +148,9 @@ BOOL freerdp_connect(freerdp* instance)
 				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
+				Stream_Release(s);
 			}
 
-			Stream_Release(s);
 			return TRUE;
 		}
 	}
