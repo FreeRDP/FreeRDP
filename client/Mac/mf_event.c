@@ -27,6 +27,5 @@
 
 #include <freerdp/freerdp.h>
 
-#include "mf_interface.h"
 #include "mf_event.h"
 

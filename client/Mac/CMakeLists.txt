@@ -44,6 +44,7 @@ endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
 
 add_library(${MODULE_NAME}
 	SHARED
+	../common/client.c
 	${${MODULE_NAME}_SRC}
 	${${MODULE_NAME}_RESOURCES})
 

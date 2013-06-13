@@ -21,4 +21,70 @@
 #include "config.h"
 #endif
 
+#include "freerdp/client.h"
+
+
+freerdp* freerdp_client_get_instance(rdpContext* cfc)
+{
+    return cfc->instance;
+}
+
+BOOL freerdp_client_get_param_bool(rdpContext* cfc, int id)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_get_param_bool(settings, id);
+}
+
+int freerdp_client_set_param_bool(rdpContext* cfc, int id, BOOL param)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_set_param_bool(settings, id, param);
+}
+
+UINT32 freerdp_client_get_param_uint32(rdpContext* cfc, int id)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_get_param_uint32(settings, id);
+}
+
+int freerdp_client_set_param_uint32(rdpContext* cfc, int id, UINT32 param)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_set_param_uint32(settings, id, param);
+}
+
+UINT64 freerdp_client_get_param_uint64(rdpContext* cfc, int id)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_get_param_uint64(settings, id);
+}
+
+int freerdp_client_set_param_uint64(rdpContext* cfc, int id, UINT64 param)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_set_param_uint64(settings, id, param);
+}
+
+char* freerdp_client_get_param_string(rdpContext* cfc, int id)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_get_param_string(settings, id);
+}
+
+int freerdp_client_set_param_string(rdpContext* cfc, int id, char* param)
+{
+    rdpSettings* settings = cfc->instance->settings;
+
+    return freerdp_set_param_string(settings, id, param);
+}
+
+
+
 
