@@ -40,7 +40,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-interlocked)
+	MODULES winpr-crt winpr-synch winpr-interlocked winpr-error)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} PARENT_SCOPE)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
