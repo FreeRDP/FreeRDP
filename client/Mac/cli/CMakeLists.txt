@@ -18,7 +18,7 @@ set(MACOSX_BUNDLE_LONG_VERSION_STRING "MacFreeRDP Client Version 1.1.0")
 set(MACOSX_BUNDLE_BUNDLE_NAME "MacFreeRDP")
 set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.1.0)
 set(MACOSX_BUNDLE_BUNDLE_VERSION 1.1.0)
-set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2012. All Rights Reserved.")
+set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2013. All Rights Reserved.")
 
 set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "MainMenu")
 set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
@@ -60,10 +60,10 @@ set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_NAME}_RESOU
 # set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
 
 # Support for automatic reference counting requires non-fragile abi.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v -fobjc-nonfragile-abi")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
 
 # Tell the compiler where to look for the FreeRDP framework
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -F../")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
 
 # Tell XCode where to look for the MacFreeRDP-library framework
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS
@@ -112,7 +112,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 
 	# Make sure the 'Resources' Directory is correctly created before we build
 	add_custom_command (TARGET ${MODULE_NAME} PRE_BUILD
-						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.app/Contents/Resources)
+						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_NAME}.app/Contents/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
 	foreach(xib ${${MODULE_NAME}_XIBS})
@@ -120,7 +120,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.app/Contents/Resources/${XIB_WE}.nib ${xib}                     
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_NAME}.app/Contents/Resources/${XIB_WE}.nib ${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 

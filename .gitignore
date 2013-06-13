@@ -93,3 +93,5 @@ default.log
 
 *.cbp
 *.txt.user
+
+*.autosave

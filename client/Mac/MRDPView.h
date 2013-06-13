@@ -19,6 +19,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+
+
 #ifdef HAVE_RAIL
 #import "MRDPWindow.h"
 #endif
@@ -36,9 +38,9 @@
 #import "freerdp/rail/rail.h"
 #import "freerdp/rail.h"
 #import "freerdp/utils/rail.h"
+
+#import "mf_interface.h"
 */
-
-
 
 @interface MRDPView : NSView
 {

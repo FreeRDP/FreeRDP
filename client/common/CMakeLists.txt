@@ -19,7 +19,6 @@ set(MODULE_NAME "freerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	client.c
 	cmdline.c
 	compatibility.c
 	compatibility.h
