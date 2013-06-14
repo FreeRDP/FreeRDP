@@ -20,8 +20,6 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
-typedef struct rdp_client rdpClient;
-
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
@@ -88,6 +86,16 @@ struct rdp_client
 	pOnParamChange OnParamChange;
 };
 
+#define DEFINE_RDP_CLIENT_COMMON() \
+	HANDLE thread
+
+struct rdp_client_context
+{
+	rdpContext context;
+	DEFINE_RDP_CLIENT_COMMON();
+};
+typedef struct rdp_client_context rdpClientContext;
+
 /* Common client functions */
 
 FREERDP_API rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
@@ -96,29 +104,12 @@ FREERDP_API void freerdp_client_context_free(rdpContext* context);
 FREERDP_API int freerdp_client_start(rdpContext* context);
 FREERDP_API int freerdp_client_stop(rdpContext* context);
 
+FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
+FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);
+
 FREERDP_API int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv);
 FREERDP_API int freerdp_client_parse_connection_file(rdpContext* context, char* filename);
 FREERDP_API int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size);
-
-FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
-FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);
-FREERDP_API rdpClient* freerdp_client_get_interface(rdpContext* context);
-FREERDP_API double freerdp_client_get_scale(rdpContext* context);
-FREERDP_API void freerdp_client_reset_scale(rdpContext* context);
-
-FREERDP_API BOOL freerdp_client_get_param_bool(rdpContext* context, int id);
-FREERDP_API int freerdp_client_set_param_bool(rdpContext* context, int id, BOOL param);
-
-FREERDP_API UINT32 freerdp_client_get_param_uint32(rdpContext* context, int id);
-FREERDP_API int freerdp_client_set_param_uint32(rdpContext* context, int id, UINT32 param);
-
-FREERDP_API UINT64 freerdp_client_get_param_uint64(rdpContext* context, int id);
-FREERDP_API int freerdp_client_set_param_uint64(rdpContext* context, int id, UINT64 param);
-
-FREERDP_API char* freerdp_client_get_param_string(rdpContext* context, int id);
-FREERDP_API int freerdp_client_set_param_string(rdpContext* context, int id, char* param);
-
-FREERDP_API void freerdp_client_mouse_event(rdpContext* context, DWORD flags, int x, int y);
 
 #ifdef __cplusplus
 }

@@ -26,59 +26,6 @@
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
-freerdp* freerdp_client_get_instance(rdpContext* context)
-{
-	return context->instance;
-}
-
-BOOL freerdp_client_get_param_bool(rdpContext* context, int id)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_get_param_bool(settings, id);
-}
-
-int freerdp_client_set_param_bool(rdpContext* context, int id, BOOL param)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_set_param_bool(settings, id, param);
-}
-
-UINT32 freerdp_client_get_param_uint32(rdpContext* context, int id)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_get_param_uint32(settings, id);
-}
-
-int freerdp_client_set_param_uint32(rdpContext* context, int id, UINT32 param)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_set_param_uint32(settings, id, param);
-}
-
-UINT64 freerdp_client_get_param_uint64(rdpContext* context, int id)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_get_param_uint64(settings, id);
-}
-
-int freerdp_client_set_param_uint64(rdpContext* context, int id, UINT64 param)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_set_param_uint64(settings, id, param);
-}
-
-char* freerdp_client_get_param_string(rdpContext* context, int id)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_get_param_string(settings, id);
-}
-
-int freerdp_client_set_param_string(rdpContext* context, int id, char* param)
-{
-	rdpSettings* settings = context->settings;
-	return freerdp_set_param_string(settings, id, param);
-}
-
 /* Common API */
 
 rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
@@ -120,6 +67,16 @@ int freerdp_client_stop(rdpContext* context)
 {
 	rdpClient* client = context->client;
 	return client->pEntryPoints->ClientStop(context);
+}
+
+freerdp* freerdp_client_get_instance(rdpContext* context)
+{
+	return context->instance;
+}
+
+HANDLE freerdp_client_get_thread(rdpContext* context)
+{
+	return ((rdpClientContext*) context)->thread;
 }
 
 int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv)

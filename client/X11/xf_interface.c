@@ -1550,17 +1550,6 @@ int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-freerdp* freerdp_client_get_instance(rdpContext* context)
-{
-	return context->instance;
-}
-
-HANDLE freerdp_client_get_thread(rdpContext* context)
-{
-	xfContext* xfc = (xfContext*) context;
-	return xfc->thread;
-}
-
 rdpClient* freerdp_client_get_interface(rdpContext* context)
 {
 	return context->client;
