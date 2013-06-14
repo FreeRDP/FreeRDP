@@ -59,6 +59,7 @@ typedef struct xf_glyph xfGlyph;
 struct xf_context
 {
 	rdpContext context;
+	DEFINE_RDP_CLIENT_COMMON();
 
 	freerdp* instance;
 	rdpClient* client;
@@ -95,7 +96,6 @@ struct xf_context
 	BOOL disconnect;
 	HCLRCONV clrconv;
 	HANDLE mutex;
-	HANDLE thread;
 	BOOL UseXThreads;
 
 	HGDI_DC hdc;

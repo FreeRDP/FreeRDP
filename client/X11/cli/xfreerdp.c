@@ -34,6 +34,7 @@
 
 int main(int argc, char* argv[])
 {
+	HANDLE thread;
 	xfContext* xfc;
 	DWORD dwExitCode;
 	rdpContext* context;
@@ -69,9 +70,11 @@ int main(int argc, char* argv[])
 
 	freerdp_client_start(context);
 
-	WaitForSingleObject(xfc->thread, INFINITE);
+	thread = freerdp_client_get_thread(context);
 
-	GetExitCodeThread(xfc->thread, &dwExitCode);
+	WaitForSingleObject(thread, INFINITE);
+
+	GetExitCodeThread(thread, &dwExitCode);
 
 	freerdp_client_stop(context);
 
