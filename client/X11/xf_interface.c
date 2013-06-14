@@ -1036,10 +1036,13 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 void xf_window_free(xfContext* xfc)
 {
-	rdpContext* context = xfc->instance->context;
+	rdpContext* context = (rdpContext*) xfc;
 
-	XFreeModifiermap(xfc->modifier_map);
-	xfc->modifier_map = 0;
+	if (xfc->modifier_map)
+	{
+		XFreeModifiermap(xfc->modifier_map);
+		xfc->modifier_map = 0;
+	}
 
 	if (xfc->gc)
 	{
@@ -1078,11 +1081,14 @@ void xf_window_free(xfContext* xfc)
 		xfc->image = NULL;
 	}
 
-	if (context)
+	if (context->cache)
 	{
 		cache_free(context->cache);
 		context->cache = NULL;
+	}
 
+	if (context->rail)
+	{
 		rail_free(context->rail);
 		context->rail = NULL;
 	}
@@ -1099,14 +1105,26 @@ void xf_window_free(xfContext* xfc)
 		xfc->nsc_context = NULL;
 	}
 
-	freerdp_clrconv_free(xfc->clrconv);
-	xfc->clrconv = NULL;
+	if (xfc->clrconv)
+	{
+		freerdp_clrconv_free(xfc->clrconv);
+		xfc->clrconv = NULL;
+	}
 
 	if (xfc->hdc)
 		gdi_DeleteDC(xfc->hdc);
 
-	xf_tsmf_uninit(xfc);
-	xf_cliprdr_uninit(xfc);
+	if (xfc->xv_context)
+	{
+		xf_tsmf_uninit(xfc);
+		xfc->xv_context = NULL;
+	}
+
+	if (xfc->clipboard_context)
+	{
+		xf_cliprdr_uninit(xfc);
+		xfc->clipboard_context = NULL;
+	}
 }
 
 void* xf_update_thread(void* arg)
@@ -1574,14 +1592,11 @@ void freerdp_client_reset_scale(rdpContext* context)
 	xf_draw_screen_scaled(xfc);
 }
 
-int freerdp_client_new(rdpContext* context)
+int freerdp_client_new(freerdp* instance, rdpContext* context)
 {
-	int status;
 	xfContext* xfc;
-	freerdp* instance;
 	rdpSettings* settings;
 
-	instance = context->instance;
 	xfc = (xfContext*) instance->context;
 
 	instance->PreConnect = xf_pre_connect;
@@ -1591,27 +1606,11 @@ int freerdp_client_new(rdpContext* context)
 	instance->LogonErrorInfo = xf_logon_error_info;
 	instance->ReceiveChannelData = xf_receive_channel_data;
 
+	context->channels = freerdp_channels_new();
+
 	settings = instance->settings;
 	xfc->client = instance->context->client;
 	xfc->settings = instance->context->settings;
-
-	status = freerdp_client_parse_command_line_arguments(context->argc, context->argv, settings);
-
-	if (status < 0)
-	{
-		freerdp_context_free(xfc->instance);
-		freerdp_free(xfc->instance);
-		free(xfc);
-		return -1;
-	}
-
-	if (settings->ConnectionFile)
-	{
-		rdpFile* file = freerdp_client_rdp_file_new();
-		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
-		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
-		freerdp_client_populate_settings_from_rdp_file(file, settings);
-	}
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
@@ -1641,28 +1640,22 @@ int freerdp_client_new(rdpContext* context)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	if (settings->ListMonitors)
-	{
-		xf_list_monitors(xfc);
-	}
-
 	return 0;
 }
 
-void freerdp_client_free(rdpContext* context)
+void freerdp_client_free(freerdp* instance, rdpContext* context)
 {
-	freerdp* instance;
 	xfContext* xfc = (xfContext*) context;
 
 	if (context)
 	{
-		instance = context->instance;
-
 		xf_window_free(xfc);
 
-		free(xfc->bmp_codec_none);
+		if (xfc->bmp_codec_none)
+			free(xfc->bmp_codec_none);
 
-		XCloseDisplay(xfc->display);
+		if (xfc->display)
+			XCloseDisplay(xfc->display);
 
 		freerdp_context_free(instance);
 		freerdp_free(instance);
@@ -1674,11 +1667,10 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 
-	pEntryPoints->ContextSize = sizeof(xfContext);
-
 	pEntryPoints->GlobalInit = freerdp_client_global_init;
 	pEntryPoints->GlobalUninit = freerdp_client_global_uninit;
 
+	pEntryPoints->ContextSize = sizeof(xfContext);
 	pEntryPoints->ClientNew = freerdp_client_new;
 	pEntryPoints->ClientFree = freerdp_client_free;
 

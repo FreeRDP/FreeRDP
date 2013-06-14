@@ -49,7 +49,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 extern "C" {
 #endif
 
-typedef void (*pContextNew)(freerdp* instance, rdpContext* context);
+typedef int (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
 typedef BOOL (*pPreConnect)(freerdp* instance);
@@ -123,7 +123,7 @@ struct rdp_freerdp
 {
 	rdpContext* context; /**< (offset 0)
 							  Pointer to a rdpContext structure.
-							  Client applications can use the context_size field to register a context bigger than the rdpContext
+							  Client applications can use the ContextSize field to register a context bigger than the rdpContext
 							  structure. This allow clients to use additional context information.
 							  When using this capability, client application should ALWAYS declare their structure with the
 							  rdpContext field first, and any additional content following it.
@@ -143,7 +143,7 @@ struct rdp_freerdp
 								Will be initialized by a call to freerdp_context_new() */
 	UINT32 paddingB[32 - 19]; /* 19 */
 
-	size_t context_size; /* (offset 32)
+	size_t ContextSize; /* (offset 32)
 							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
 							freerdp_new() sets it to sizeof(rdpContext).
 							If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
@@ -203,7 +203,7 @@ struct rdp_freerdp
 	UINT32 paddingE[80 - 66]; /* 66 */
 };
 
-FREERDP_API void freerdp_context_new(freerdp* instance);
+FREERDP_API int freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);

@@ -55,8 +55,8 @@ struct rdp_client
 typedef void (*pRdpGlobalInit)(void);
 typedef void (*pRdpGlobalUninit)(void);
 
-typedef int (*pRdpClientNew)(rdpContext* context);
-typedef void (*pRdpClientFree)(rdpContext* context);
+typedef int (*pRdpClientNew)(freerdp* instance, rdpContext* context);
+typedef void (*pRdpClientFree)(freerdp* instance, rdpContext* context);
 
 typedef int (*pRdpClientStart)(rdpContext* context);
 typedef int (*pRdpClientStop)(rdpContext* context);
@@ -66,11 +66,10 @@ struct rdp_client_entry_points_v1
 	DWORD Size;
 	DWORD Version;
 
-	DWORD ContextSize;
-
 	pRdpGlobalInit GlobalInit;
 	pRdpGlobalUninit GlobalUninit;
 
+	DWORD ContextSize;
 	pRdpClientNew ClientNew;
 	pRdpClientFree ClientFree;
 
@@ -86,6 +85,10 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 /* Common client functions */
+
+FREERDP_API int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv);
+FREERDP_API int freerdp_client_parse_connection_file(rdpContext* context, char* filename);
+FREERDP_API int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size);
 
 FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
 FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);

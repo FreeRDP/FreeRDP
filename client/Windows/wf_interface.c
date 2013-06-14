@@ -72,7 +72,7 @@ void wf_wfi_free(wfInfo* wfi)
 	free(wfi);
 }
 
-void wf_context_new(freerdp* instance, rdpContext* context)
+int wf_context_new(freerdp* instance, rdpContext* context)
 {
 	wfInfo* wfi;
 
@@ -85,6 +85,8 @@ void wf_context_new(freerdp* instance, rdpContext* context)
 
 	// Register callbacks
 	instance->context->client->OnParamChange = wf_on_param_change;
+
+	return 0;
 }
 
 void wf_context_free(freerdp* instance, rdpContext* context)
@@ -838,7 +840,7 @@ wfInfo* freerdp_client_new(int argc, char** argv)
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	instance->context_size = sizeof(wfContext);
+	instance->ContextSize = sizeof(wfContext);
 	instance->ContextNew = wf_context_new;
 	instance->ContextFree = wf_context_free;
 	freerdp_context_new(instance);

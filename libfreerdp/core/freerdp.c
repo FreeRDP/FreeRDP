@@ -316,19 +316,18 @@ void freerdp_get_version(int* major, int* minor, int* revision)
  *
  *  @param instance - Pointer to the rdp_freerdp structure that will be initialized with the new context.
  */
-void freerdp_context_new(freerdp* instance)
+int freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
 
 	rdp = rdp_new(instance);
-	// FIXME - we're not checking where rdp_new returns NULL, and have no way to report an error to the caller
 
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
-	instance->context = (rdpContext*) malloc(instance->context_size);
-	ZeroMemory(instance->context, instance->context_size);
+	instance->context = (rdpContext*) malloc(instance->ContextSize);
+	ZeroMemory(instance->context, instance->ContextSize);
 
 	instance->context->graphics = graphics_new(instance->context);
 	instance->context->instance = instance;
@@ -352,6 +351,8 @@ void freerdp_context_new(freerdp* instance)
 	update_register_client_callbacks(rdp->update);
 
 	IFCALL(instance->ContextNew, instance, instance->context);
+
+	return 0;
 }
 
 /** Deallocator function for a rdp context.
@@ -395,7 +396,7 @@ freerdp* freerdp_new()
 	if (instance)
 	{
 		ZeroMemory(instance, sizeof(freerdp));
-		instance->context_size = sizeof(rdpContext);
+		instance->ContextSize = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}
 

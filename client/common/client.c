@@ -23,6 +23,9 @@
 
 #include <freerdp/client.h>
 
+#include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
+
 freerdp* freerdp_client_get_instance(rdpContext* context)
 {
 	return context->instance;
@@ -76,4 +79,57 @@ int freerdp_client_set_param_string(rdpContext* context, int id, char* param)
 	return freerdp_set_param_string(settings, id, param);
 }
 
+/* Common API */
 
+int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv)
+{
+	int status;
+	rdpSettings* settings;
+
+	context->argc = argc;
+	context->argv = argv;
+
+	if (context->argc < 1)
+		return 0;
+
+	if (!context->argv)
+		return -1;
+
+	settings = context->settings;
+
+	status = freerdp_client_parse_command_line_arguments(context->argc, context->argv, settings);
+
+	if (settings->ConnectionFile)
+	{
+		rdpFile* file = freerdp_client_rdp_file_new();
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
+		freerdp_client_rdp_file_free(file);
+	}
+
+	return status;
+}
+
+int freerdp_client_parse_connection_file(rdpContext* context, char* filename)
+{
+	rdpFile* file;
+
+	file = freerdp_client_rdp_file_new();
+	freerdp_client_parse_rdp_file(file, filename);
+	freerdp_client_populate_settings_from_rdp_file(file, context->settings);
+	freerdp_client_rdp_file_free(file);
+
+	return 0;
+}
+
+int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size)
+{
+	rdpFile* file;
+
+	file = freerdp_client_rdp_file_new();
+	freerdp_client_parse_rdp_file_buffer(file, buffer, size);
+	freerdp_client_populate_settings_from_rdp_file(file, context->settings);
+	freerdp_client_rdp_file_free(file);
+
+	return 0;
+}

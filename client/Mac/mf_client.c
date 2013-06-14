@@ -110,7 +110,7 @@ rdpContext* freerdp_client_new(int argc, char** argv)
 //    instance->LogonErrorInfo = mf_logon_error_info;
 //    instance->ReceiveChannelData = mf_receive_channel_data;
 
-    instance->context_size = sizeof(mfContext);
+    instance->ContextSize = sizeof(mfContext);
     instance->ContextNew = (pContextNew) mf_context_new;
     instance->ContextFree = (pContextFree) mf_context_free;
     freerdp_context_new(instance);
@@ -212,10 +212,11 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
     input->MouseEvent(input, flags, x, y);
 }
 
-void mf_context_new(freerdp* instance, cfContext* cfc)
+int mf_context_new(freerdp* instance, cfContext* cfc)
 {
     cfc->instance = instance;
     cfc->settings = instance->settings;
+    return 0;
 }
 
 void mf_context_free(freerdp* instance, cfContext* cfc)

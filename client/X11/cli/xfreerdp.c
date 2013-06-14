@@ -32,22 +32,13 @@
 
 #include "xfreerdp.h"
 
-void client_context_new(freerdp* instance, rdpContext* context)
-{
-	context->channels = freerdp_channels_new();
-}
-
-void client_context_free(freerdp* instance, rdpContext* context)
-{
-
-}
-
 int main(int argc, char* argv[])
 {
 	xfContext* xfc;
 	DWORD dwExitCode;
 	freerdp* instance;
 	rdpContext* context;
+	rdpSettings* settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
@@ -59,18 +50,31 @@ int main(int argc, char* argv[])
 	clientEntryPoints.GlobalInit();
 
 	instance = freerdp_new();
-	instance->context_size = clientEntryPoints.ContextSize;
-	instance->ContextNew = client_context_new;
-	instance->ContextFree = client_context_free;
+	instance->ContextSize = clientEntryPoints.ContextSize;
+	instance->ContextNew = clientEntryPoints.ClientNew;
+	instance->ContextFree = clientEntryPoints.ClientFree;
 	freerdp_context_new(instance);
 
 	context = instance->context;
+	settings = context->settings;
 	xfc = (xfContext*) context;
 
-	context->argc = argc;
-	context->argv = argv;
+	if (freerdp_client_parse_command_line(context, argc, argv) < 0)
+	{
+		if (settings->ConnectionFile)
+		{
+			freerdp_client_parse_connection_file(context, settings->ConnectionFile);
+		}
+		else
+		{
+			if (settings->ListMonitors)
+				xf_list_monitors(xfc);
 
-	clientEntryPoints.ClientNew(context);
+			freerdp_context_free(instance);
+			freerdp_free(instance);
+			return 0;
+		}
+	}
 
 	clientEntryPoints.ClientStart(context);
 
@@ -79,8 +83,6 @@ int main(int argc, char* argv[])
 	GetExitCodeThread(xfc->thread, &dwExitCode);
 
 	clientEntryPoints.ClientStop(context);
-
-	clientEntryPoints.ClientFree(context);
 
 	clientEntryPoints.GlobalUninit();
 
