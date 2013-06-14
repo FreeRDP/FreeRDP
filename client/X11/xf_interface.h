@@ -34,8 +34,6 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-typedef struct xf_context xfContext;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,6 +41,8 @@ extern "C" {
 /**
  * Client Interface
  */
+
+FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }
