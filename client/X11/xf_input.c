@@ -192,6 +192,11 @@ void xf_input_detect_pan(xfInfo* xfi)
   double dist_x;
   double dist_y;
 
+  if (active_contacts != 2)
+    {
+      return;
+    }
+
   dx[0] = contacts[0].pos_x - contacts[0].last_x;
   dx[1] = contacts[1].pos_x - contacts[1].last_x;
 
