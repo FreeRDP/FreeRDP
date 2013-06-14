@@ -196,6 +196,8 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	if (status == ERROR_SUCCESS)
 	{
+		dwSize = sizeof(dwValue);
+
 		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 			context->priv->UseThreads = dwValue ? 1 : 0;
 
