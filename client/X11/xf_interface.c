@@ -121,16 +121,6 @@ void xf_draw_screen_scaled(xfContext* xfc)
 #endif
 }
 
-void xf_context_new(freerdp* instance, rdpContext* context)
-{
-
-}
-
-void xf_context_free(freerdp* instance, rdpContext* context)
-{
-
-}
-
 void xf_sw_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
@@ -1041,7 +1031,7 @@ void xf_window_free(xfContext* xfc)
 	if (xfc->modifier_map)
 	{
 		XFreeModifiermap(xfc->modifier_map);
-		xfc->modifier_map = 0;
+		xfc->modifier_map = NULL;
 	}
 
 	if (xfc->gc)
@@ -1513,19 +1503,19 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
  * Client Interface
  */
 
-void freerdp_client_global_init()
+void xfreerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");
 	freerdp_handle_signals();
 	freerdp_channels_global_init();
 }
 
-void freerdp_client_global_uninit()
+void xfreerdp_client_global_uninit()
 {
 	freerdp_channels_global_uninit();
 }
 
-int freerdp_client_start(rdpContext* context)
+int xfreerdp_client_start(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1542,7 +1532,7 @@ int freerdp_client_start(rdpContext* context)
 	return 0;
 }
 
-int freerdp_client_stop(rdpContext* context)
+int xfreerdp_client_stop(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1592,7 +1582,7 @@ void freerdp_client_reset_scale(rdpContext* context)
 	xf_draw_screen_scaled(xfc);
 }
 
-int freerdp_client_new(freerdp* instance, rdpContext* context)
+int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc;
 	rdpSettings* settings;
@@ -1643,7 +1633,7 @@ int freerdp_client_new(freerdp* instance, rdpContext* context)
 	return 0;
 }
 
-void freerdp_client_free(freerdp* instance, rdpContext* context)
+void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1656,9 +1646,6 @@ void freerdp_client_free(freerdp* instance, rdpContext* context)
 
 		if (xfc->display)
 			XCloseDisplay(xfc->display);
-
-		freerdp_context_free(instance);
-		freerdp_free(instance);
 	}
 }
 
@@ -1667,15 +1654,15 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 
-	pEntryPoints->GlobalInit = freerdp_client_global_init;
-	pEntryPoints->GlobalUninit = freerdp_client_global_uninit;
+	pEntryPoints->GlobalInit = xfreerdp_client_global_init;
+	pEntryPoints->GlobalUninit = xfreerdp_client_global_uninit;
 
 	pEntryPoints->ContextSize = sizeof(xfContext);
-	pEntryPoints->ClientNew = freerdp_client_new;
-	pEntryPoints->ClientFree = freerdp_client_free;
+	pEntryPoints->ClientNew = xfreerdp_client_new;
+	pEntryPoints->ClientFree = xfreerdp_client_free;
 
-	pEntryPoints->ClientStart = freerdp_client_start;
-	pEntryPoints->ClientStop = freerdp_client_stop;
+	pEntryPoints->ClientStart = xfreerdp_client_start;
+	pEntryPoints->ClientStop = xfreerdp_client_stop;
 
 	return 0;
 }

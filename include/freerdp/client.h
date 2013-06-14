@@ -29,27 +29,8 @@ typedef struct rdp_client rdpClient;
 extern "C" {
 #endif
 
-#define FREERDP_WINDOW_STATE_NORMAL		0
-#define FREERDP_WINDOW_STATE_MINIMIZED		1
-#define FREERDP_WINDOW_STATE_MAXIMIZED		2
-#define FREERDP_WINDOW_STATE_FULLSCREEN		3
-#define FREERDP_WINDOW_STATE_ACTIVE		4
-
-typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
-typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
-typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
-typedef void (*pOnParamChange)(freerdp* instance, int id);
-
-struct rdp_client
-{
-	pOnResizeWindow OnResizeWindow;
-	pOnWindowStateChange OnWindowStateChange;
-	pOnErrorInfo OnErrorInfo;
-	pOnParamChange OnParamChange;
-};
-
 /**
- * Generic Client Interface
+ * Client Entry Points
  */
 
 typedef void (*pRdpGlobalInit)(void);
@@ -84,7 +65,36 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 
 typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
+/* Common Client Interface */
+
+#define FREERDP_WINDOW_STATE_NORMAL		0
+#define FREERDP_WINDOW_STATE_MINIMIZED		1
+#define FREERDP_WINDOW_STATE_MAXIMIZED		2
+#define FREERDP_WINDOW_STATE_FULLSCREEN		3
+#define FREERDP_WINDOW_STATE_ACTIVE		4
+
+typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
+typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
+typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
+typedef void (*pOnParamChange)(freerdp* instance, int id);
+
+struct rdp_client
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	pOnResizeWindow OnResizeWindow;
+	pOnWindowStateChange OnWindowStateChange;
+	pOnErrorInfo OnErrorInfo;
+	pOnParamChange OnParamChange;
+};
+
 /* Common client functions */
+
+FREERDP_API rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+FREERDP_API void freerdp_client_context_free(rdpContext* context);
+
+FREERDP_API int freerdp_client_start(rdpContext* context);
+FREERDP_API int freerdp_client_stop(rdpContext* context);
 
 FREERDP_API int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv);
 FREERDP_API int freerdp_client_parse_connection_file(rdpContext* context, char* filename);

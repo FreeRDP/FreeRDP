@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
 {
 	xfContext* xfc;
 	DWORD dwExitCode;
-	freerdp* instance;
 	rdpContext* context;
 	rdpSettings* settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
@@ -47,15 +46,8 @@ int main(int argc, char* argv[])
 
 	RdpClientEntry(&clientEntryPoints);
 
-	clientEntryPoints.GlobalInit();
+	context = freerdp_client_context_new(&clientEntryPoints);
 
-	instance = freerdp_new();
-	instance->ContextSize = clientEntryPoints.ContextSize;
-	instance->ContextNew = clientEntryPoints.ClientNew;
-	instance->ContextFree = clientEntryPoints.ClientFree;
-	freerdp_context_new(instance);
-
-	context = instance->context;
 	settings = context->settings;
 	xfc = (xfContext*) context;
 
@@ -70,21 +62,20 @@ int main(int argc, char* argv[])
 			if (settings->ListMonitors)
 				xf_list_monitors(xfc);
 
-			freerdp_context_free(instance);
-			freerdp_free(instance);
+			freerdp_client_context_free(context);
 			return 0;
 		}
 	}
 
-	clientEntryPoints.ClientStart(context);
+	freerdp_client_start(context);
 
 	WaitForSingleObject(xfc->thread, INFINITE);
 
 	GetExitCodeThread(xfc->thread, &dwExitCode);
 
-	clientEntryPoints.ClientStop(context);
+	freerdp_client_stop(context);
 
-	clientEntryPoints.GlobalUninit();
+	freerdp_client_context_free(context);
 
 	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }

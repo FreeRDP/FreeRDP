@@ -81,6 +81,47 @@ int freerdp_client_set_param_string(rdpContext* context, int id, char* param)
 
 /* Common API */
 
+rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+{
+	freerdp* instance;
+	rdpContext* context;
+
+	pEntryPoints->GlobalInit();
+
+	instance = freerdp_new();
+	instance->ContextSize = pEntryPoints->ContextSize;
+	instance->ContextNew = pEntryPoints->ClientNew;
+	instance->ContextFree = pEntryPoints->ClientFree;
+	freerdp_context_new(instance);
+
+	context = instance->context;
+
+	context->client->pEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
+	CopyMemory(context->client->pEntryPoints, pEntryPoints, pEntryPoints->Size);
+
+	return context;
+}
+
+void freerdp_client_context_free(rdpContext* context)
+{
+	freerdp* instance = context->instance;
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
+}
+
+int freerdp_client_start(rdpContext* context)
+{
+	rdpClient* client = context->client;
+	return client->pEntryPoints->ClientStart(context);
+}
+
+int freerdp_client_stop(rdpContext* context)
+{
+	rdpClient* client = context->client;
+	return client->pEntryPoints->ClientStop(context);
+}
+
 int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv)
 {
 	int status;

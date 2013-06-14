@@ -319,6 +319,7 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 int freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
+	rdpContext* context;
 
 	rdp = rdp_new(instance);
 
@@ -328,17 +329,18 @@ int freerdp_context_new(freerdp* instance)
 
 	instance->context = (rdpContext*) malloc(instance->ContextSize);
 	ZeroMemory(instance->context, instance->ContextSize);
+	context = instance->context;
 
-	instance->context->graphics = graphics_new(instance->context);
-	instance->context->instance = instance;
-	instance->context->rdp = rdp;
+	context->graphics = graphics_new(context);
+	context->instance = instance;
+	context->rdp = rdp;
 
-	instance->context->input = instance->input;
-	instance->context->update = instance->update;
-	instance->context->settings = instance->settings;
+	context->input = instance->input;
+	context->update = instance->update;
+	context->settings = instance->settings;
 
-	instance->context->client = (rdpClient*) malloc(sizeof(rdpClient));
-	ZeroMemory(instance->context->client, sizeof(rdpClient));
+	context->client = (rdpClient*) malloc(sizeof(rdpClient));
+	ZeroMemory(context->client, sizeof(rdpClient));
 
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
@@ -346,7 +348,7 @@ int freerdp_context_new(freerdp* instance)
 	instance->update->secondary->context = instance->context;
 	instance->update->altsec->context = instance->context;
 
-	instance->input->context = instance->context;
+	instance->input->context = context;
 
 	update_register_client_callbacks(rdp->update);
 
@@ -373,7 +375,11 @@ void freerdp_context_free(freerdp* instance)
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
 
-	free(instance->context->client);
+	if (instance->context->client)
+	{
+		free(instance->context->client->pEntryPoints);
+		free(instance->context->client);
+	}
 
 	free(instance->context);
 	instance->context = NULL;
