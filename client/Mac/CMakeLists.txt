@@ -154,23 +154,21 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.app/Contents/Resources/${XIB_WE}.nib ${xib}                     
 			COMMENT "Compiling ${xib}")
 	endforeach()
-
-        # Copy the public header files into the framework
-        foreach(HEADER ${${MODULE_NAME}_HEADERS})
-                # message("adding post-build dependency: ${LIB}")
-                add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-                    COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/
-                    COMMENT Copying public header files to ${MODULE_NAME}
-        )
-
-        endforeach()
-
-        # Copy the FreeRDP header files into the framework
-        add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-                COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/freerdp
-                COMMENT Copying FreeRDP header files to ${MODULE_NAME}
-
-          )
-
-
 endif()
+
+# Copy the public header files into the framework
+foreach(HEADER ${${MODULE_NAME}_HEADERS})
+        # message("adding post-build dependency: ${LIB}")
+        add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+            COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/
+            COMMENT Copying public header files to ${MODULE_NAME}
+)
+
+endforeach()
+
+# Copy the FreeRDP header files into the framework
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+        COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/freerdp
+        COMMENT Copying FreeRDP header files to ${MODULE_NAME}
+
+  )

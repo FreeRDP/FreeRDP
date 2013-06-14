@@ -87,7 +87,7 @@ void mf_Pointer_SetDefault(rdpContext* context);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
-void mac_context_new(freerdp* instance, rdpContext* context);
+int mac_context_new(freerdp* instance, rdpContext* context);
 void mac_context_free(freerdp* instance, rdpContext* context);
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
 void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
@@ -1342,10 +1342,11 @@ void mf_Pointer_SetDefault(rdpContext* context)
  * create a new context - but all we really need to do is save state info
  ***********************************************************************/
 
-void mac_context_new(freerdp* instance, rdpContext* context)
+int mac_context_new(freerdp* instance, rdpContext* context)
 {
 	[g_mrdpview saveStateInfo:instance :context];
 	context->channels = freerdp_channels_new();
+    return 0;
 }
 
 /** *********************************************************************

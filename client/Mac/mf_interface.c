@@ -22,6 +22,7 @@
 #endif
 
 #include "mfreerdp.h"
+#include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
 
@@ -29,87 +30,61 @@
  * Client Interface
  */
 
-int freerdp_client_global_init()
+void mfreerdp_client_global_init()
 {
 //    setlocale(LC_ALL, "");
 	freerdp_handle_signals();
 	freerdp_channels_global_init();
-
-	return 0;
 }
 
-int freerdp_client_global_uninit()
+void mfreerdp_client_global_uninit()
 {
 	freerdp_channels_global_uninit();
+}
+
+int mfreerdp_client_start(rdpContext* context)
+{
+    mfContext* mfc = (mfContext*) context;
+
+    rdpSettings* settings = context->settings;
+
+    if (!settings->ServerHostname)
+    {
+        fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+        return -1;
+    }
+
+    // mfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mf_thread, context->instance, 0, NULL);
 
 	return 0;
 }
 
-int freerdp_client_start(void* cfi)
+int mfreerdp_client_stop(rdpContext* context)
 {
-    mfInfo* mfi = (mfInfo*) cfi;
+    mfContext* mfc = (mfContext*) context;
 
-    rdpSettings* settings = mfi->instance->settings;
+    if (context->settings->AsyncInput)
+    {
+        wMessageQueue* queue;
+        queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+        MessageQueue_PostQuit(queue, 0);
+    }
+    else
+    {
+        mfc->disconnect = TRUE;
+    }
 
-	if (!settings->ServerHostname)
-	{
-		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
-		return -1;
-	}
-
-    //mfi->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mf_thread, (void*) mfi->instance, 0, NULL);
-
-	return 0;
+    return 0;
 }
 
-int freerdp_client_stop(void* cfi)
+int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
-    mfInfo* mfi = (mfInfo*) cfi;
+    mfContext* mfc;
+    rdpSettings* settings;
 
-//    if (mfi->instance->settings->AsyncInput)
-//	{
-//		wMessageQueue* queue;
-//        queue = freerdp_get_message_queue(mfi->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-//		MessageQueue_PostQuit(queue, 0);
-//	}
-//	else
-//	{
-//        mfi->disconnect = TRUE;
-//	}
+    mfc = (mfContext*) instance->context;
 
-	return 0;
-}
-
-void* freerdp_client_get_instance(void* cfi)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    return mfi->instance;
-}
-
-HANDLE freerdp_client_get_thread(void* cfi)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-
-    return mfi->thread;
-}
-
-void* freerdp_client_get_interface(void* cfi)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-
-    return mfi->client;
-}
-
-cfInfo* freerdp_client_new(int argc, char** argv)
-{
-	int index;
-	int status;
-    mfInfo* mfi;
-	rdpFile* file;
-	freerdp* instance;
-	rdpSettings* settings;
-
-	instance = freerdp_new();
+    // TODO
 //    instance->PreConnect = mf_pre_connect;
 //    instance->PostConnect = mf_post_connect;
 //    instance->Authenticate = mf_authenticate;
@@ -117,48 +92,14 @@ cfInfo* freerdp_client_new(int argc, char** argv)
 //    instance->LogonErrorInfo = mf_logon_error_info;
 //    instance->ReceiveChannelData = mf_receive_channel_data;
 
-    instance->context_size = sizeof(mfContext);
-    instance->ContextNew = (pContextNew) mf_context_new;
-    instance->ContextFree = (pContextFree) mf_context_free;
-	freerdp_context_new(instance);
+    context->channels = freerdp_channels_new();
 
-	instance->context->argc = argc;
-	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
+    settings = instance->settings;
+    mfc->client = instance->context->client;
+    mfc->settings = instance->context->settings;
 
-	for (index = 0; index < argc; index++)
-		instance->context->argv[index] = _strdup(argv[index]);
-
-    mfi = (mfInfo*) malloc(sizeof(mfInfo));
-    ZeroMemory(mfi, sizeof(mfInfo));
-
-    ((mfContext*) instance->context)->mfi = mfi;
-
-    mfi->instance = instance;
-	settings = instance->settings;
-    mfi->client = instance->context->client;
-
-	status = freerdp_client_parse_command_line_arguments(instance->context->argc,
-				instance->context->argv, settings);
-	if (status < 0)
-	{
-        freerdp_context_free(mfi->instance);
-        freerdp_free(mfi->instance);
-        free(mfi);
-		return NULL;
-	}
-
-	if (settings->ConnectionFile)
-	{
-		file = freerdp_client_rdp_file_new();
-
-		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
-
-		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
-		freerdp_client_populate_settings_from_rdp_file(file, settings);
-	}
-
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+    settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
+    settings->OsMinorType = OSMINORTYPE_MACINTOSH;
 
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
@@ -189,130 +130,58 @@ cfInfo* freerdp_client_new(int argc, char** argv)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-//	if (settings->ListMonitors)
-//	{
-//		mf_list_monitors(mfi);
-//	}
-
-    return mfi;
+    return 0;
 }
 
-void freerdp_client_free(void* cfi)
+void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-    mfInfo* mfi = (mfInfo*) cfi;
+    mfContext* mfc = (mfContext*) context;
 
-    if (mfi)
-	{
-		int index;
-		rdpContext* context;
-
-//        mf_window_free(mfi);
-
-//        free(mfi->bmp_codec_none);
-
-//        XCloseDisplay(mfi->display);
-
-//        context = (rdpContext*) mfi->context;
-
-		for (index = 0; index < context->argc; index++)
-			free(context->argv[index]);
-
-		free(context->argv);
-
-        freerdp_context_free(mfi->instance);
-        freerdp_free(mfi->instance);
-
-        free(mfi);
-	}
+    if (context)
+    {
+    }
 }
 
+//void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
+//{
+//    int width, height;
+//    rdpInput* input = cfc->instance->input;
+//    rdpSettings* settings = cfc->instance->settings;
 
-BOOL freerdp_client_get_param_bool(void* cfi, int id)
+//    width = settings->DesktopWidth;
+//    height = settings->DesktopHeight;
+
+//    if (x < 0)
+//        x = 0;
+
+//    if (x >= width)
+//        x = width - 1;
+
+//    if (y < 0)
+//        y = 0;
+
+//    if (y >= height)
+//        y = height - 1;
+
+//    input->MouseEvent(input, flags, x, y);
+//}
+
+
+
+int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
+    pEntryPoints->Version = 1;
+    pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 
-    return freerdp_get_param_bool(settings, id);
-}
+    pEntryPoints->GlobalInit = mfreerdp_client_global_init;
+    pEntryPoints->GlobalUninit = mfreerdp_client_global_uninit;
 
-int freerdp_client_set_param_bool(void* cfi, int id, BOOL param)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
+    pEntryPoints->ContextSize = sizeof(mfContext);
+    pEntryPoints->ClientNew = mfreerdp_client_new;
+    pEntryPoints->ClientFree = mfreerdp_client_free;
 
-    return freerdp_set_param_bool(settings, id, param);
-}
+    pEntryPoints->ClientStart = mfreerdp_client_start;
+    pEntryPoints->ClientStop = mfreerdp_client_stop;
 
-UINT32 freerdp_client_get_param_uint32(void* cfi, int id)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_get_param_uint32(settings, id);
-}
-
-int freerdp_client_set_param_uint32(void* cfi, int id, UINT32 param)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_set_param_uint32(settings, id, param);
-}
-
-UINT64 freerdp_client_get_param_uint64(void* cfi, int id)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_get_param_uint64(settings, id);
-}
-
-int freerdp_client_set_param_uint64(void* cfi, int id, UINT64 param)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_set_param_uint64(settings, id, param);
-}
-
-char* freerdp_client_get_param_string(void* cfi, int id)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_get_param_string(settings, id);
-}
-
-int freerdp_client_set_param_string(void* cfi, int id, char* param)
-{
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpSettings* settings = mfi->instance->settings;
-
-    return freerdp_set_param_string(settings, id, param);
-}
-
-
-void freerdp_client_mouse_event(void* cfi, DWORD flags, int x, int y)
-{
-    int width, height;
-    mfInfo* mfi = (mfInfo*) cfi;
-    rdpInput* input = mfi->instance->input;
-    rdpSettings* settings = mfi->instance->settings;
-
-    width = settings->DesktopWidth;
-    height = settings->DesktopHeight;
-
-    if (x < 0)
-        x = 0;
-
-    if (x >= width)
-        x = width - 1;
-
-    if (y < 0)
-        y = 0;
-
-    if (y >= height)
-        y = height - 1;
-
-    input->MouseEvent(input, flags, x, y);
+    return 0;
 }
