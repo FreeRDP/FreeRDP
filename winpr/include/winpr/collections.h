@@ -339,6 +339,26 @@ WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
 WINPR_API wMessagePipe* MessagePipe_New(void);
 WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
+/* Publisher/Subscriber Pattern */
+
+struct _wEventArgs
+{
+	DWORD size;
+};
+typedef struct _wEventArgs wEventArgs;
+
+typedef void (*pEventHandler)(void* context, wEventArgs* e);
+
+struct _wPubSub
+{
+	HANDLE mutex;
+	BOOL synchronized;
+};
+typedef struct _wPubSub wPubSub;
+
+WINPR_API wPubSub* PubSub_New(BOOL synchronized);
+WINPR_API void PubSub_Free(wPubSub* pubSub);
+
 #ifdef __cplusplus
 }
 #endif
