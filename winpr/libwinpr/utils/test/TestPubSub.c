@@ -3,88 +3,60 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
-typedef struct _MouseMotionEventArgs
-{
-	wEventArgs e;
-
+DEFINE_EVENT_BEGIN(MouseMotion)
 	int x;
 	int y;
+DEFINE_EVENT_END(MouseMotion)
 
-} MouseMotionEventArgs;
-
-typedef void (*pMouseMotionEventHandler)(void* context, MouseMotionEventArgs* e);
+DEFINE_EVENT_BEGIN(MouseButton)
+	int x;
+	int y;
+	int flags;
+	int button;
+DEFINE_EVENT_END(MouseButton)
 
 void MouseMotionEventHandler(void* context, MouseMotionEventArgs* e)
 {
 	printf("MouseMotionEvent: x: %d y: %d\n", e->x, e->y);
 }
 
-struct _wEvent
+void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
 {
-	const char* EventName;
-	pEventHandler EventHandler;
-	wEventArgs EventArgs;
-};
-typedef struct _wEvent wEvent;
-
-static wEvent Events[] =
-{
-	{ "MouseMotion", NULL, { sizeof(MouseMotionEventArgs) } },
-	{ NULL, NULL, { 0 } },
-};
-
-void ListExportedEvents(wEvent* events)
-{
-	int i;
-
-	for (i = 0; events[i].EventName; i++)
-	{
-		printf("Event[%d]: %s\n", i, events[i].EventName);
-	}
+	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }
 
-void RegisterEventHandler(wEvent* events, const char* EventName, pEventHandler EventHandler)
+static wEvent Node_Events[] =
 {
-	int i;
+	DEFINE_EVENT_ENTRY(MouseMotion)
+	DEFINE_EVENT_ENTRY(MouseButton)
+};
 
-	for (i = 0; events[i].EventName; i++)
-	{
-		if (strcmp(events[i].EventName, EventName) == 0)
-		{
-			printf("Registering Event Handler for %s\n", EventName);
-			events[i].EventHandler = EventHandler;
-		}
-	}
+#define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEvent))
+
+/* strongly-typed wrappers could be automatically defined using a macro */
+
+static INLINE int PubSub_SubscribeMouseMotion(wPubSub* pubSub, pMouseMotionEventHandler MouseMotionEventHandler)
+{
+	return PubSub_Subscribe(pubSub, "MouseMotion", (pEventHandler) MouseMotionEventHandler);
 }
 
-void TriggerEvent(wEvent* events, const char* EventName, void* context, wEventArgs* e)
+static INLINE int PubSub_OnMouseMotion(wPubSub* pubSub, void* context, MouseMotionEventArgs* e)
 {
-	int i;
-
-	for (i = 0; events[i].EventName; i++)
-	{
-		if (strcmp(events[i].EventName, EventName) == 0)
-		{
-			printf("Triggering Event %s\n", EventName);
-
-			if (events[i].EventHandler)
-				events[i].EventHandler(context, e);
-		}
-	}
+	return PubSub_OnEvent(pubSub, "MouseMotion", context, (wEventArgs*) e);
 }
 
 int TestPubSub(int argc, char* argv[])
 {
-	wPubSub* nodeA;
-	wPubSub* nodeB;
+	wPubSub* node;
 
-	nodeA = PubSub_New(TRUE);
-	nodeB = PubSub_New(TRUE);
+	node = PubSub_New(TRUE);
 
-	ListExportedEvents(Events);
+	PubSub_Publish(node, Node_Events, NODE_EVENT_COUNT);
 
 	/* Register Event Handler */
-	RegisterEventHandler(Events, "MouseMotion", (pEventHandler) MouseMotionEventHandler);
+
+	PubSub_SubscribeMouseMotion(node, MouseMotionEventHandler);
+	PubSub_Subscribe(node, "MouseButton", (pEventHandler) MouseButtonEventHandler);
 
 	/* Call Event Handler */
 	{
@@ -93,11 +65,21 @@ int TestPubSub(int argc, char* argv[])
 		e.x = 64;
 		e.y = 128;
 
-		TriggerEvent(Events, "MouseMotion", NULL, (wEventArgs*) &e);
+		PubSub_OnMouseMotion(node, NULL, &e);
 	}
 
-	PubSub_Free(nodeA);
-	PubSub_Free(nodeB);
+	{
+		MouseButtonEventArgs e;
+
+		e.x = 23;
+		e.y = 56;
+		e.flags = 7;
+		e.button = 1;
+
+		PubSub_OnEvent(node, "MouseButton", NULL, (wEventArgs*) &e);
+	}
+
+	PubSub_Free(node);
 
 	return 0;
 }
