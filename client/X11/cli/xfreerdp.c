@@ -27,12 +27,14 @@
 #include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client/cmdline.h>
 
 #include "xf_client.h"
 #include "xfreerdp.h"
 
 int main(int argc, char* argv[])
 {
+	int status;
 	HANDLE thread;
 	xfContext* xfc;
 	DWORD dwExitCode;
@@ -51,20 +53,17 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 	xfc = (xfContext*) context;
 
-	if (freerdp_client_parse_command_line(context, argc, argv) < 0)
-	{
-		if (settings->ConnectionFile)
-		{
-			freerdp_client_parse_connection_file(context, settings->ConnectionFile);
-		}
-		else
-		{
-			if (settings->ListMonitors)
-				xf_list_monitors(xfc);
+	status = freerdp_client_parse_command_line(context, argc, argv);
 
-			freerdp_client_context_free(context);
-			return 0;
-		}
+	status = freerdp_client_command_line_status_print(argc, argv, settings, status);
+
+	if (status)
+	{
+		if (settings->ListMonitors)
+			xf_list_monitors(xfc);
+
+		freerdp_client_context_free(context);
+		return 0;
 	}
 
 	freerdp_client_start(context);

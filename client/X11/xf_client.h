@@ -33,6 +33,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/collections.h>
 
 #ifdef __cplusplus
 extern "C" {

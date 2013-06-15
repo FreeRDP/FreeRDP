@@ -667,9 +667,6 @@ BOOL xf_pre_connect(freerdp* instance)
 	instance->OnChannelConnected = xf_on_channel_connected;
 	instance->OnChannelDisconnected = xf_on_channel_disconnected;
 
-	//if (status < 0)
-	//	exit(XF_EXIT_PARSE_ARGUMENTS);
-
 	freerdp_client_load_addins(channels, instance->settings);
 
 	freerdp_channels_pre_connect(channels, instance);

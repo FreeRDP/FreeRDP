@@ -949,31 +949,9 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	return compatibility;
 }
 
-int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
+int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings* settings, int status)
 {
-	char* p;
-	char* str;
-	int length;
-	int status;
-	DWORD flags;
-	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
-
-	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
-
-	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
-
-	if (compatibility)
-	{
-		fprintf(stderr, "WARNING: Using deprecated command-line interface!\n");
-		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
-	}
-	else
-	{
-		CommandLineClearArgumentsA(args);
-		status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
-				freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
-	}
 
 	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
 	{
@@ -1025,13 +1003,36 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		return COMMAND_LINE_STATUS_PRINT;
 	}
 
-	arg = CommandLineFindArgumentA(args, "v");
+	return 0;
+}
 
-	if (!settings->ConnectionFile && !(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
+{
+	char* p;
+	char* str;
+	int length;
+	int status;
+	DWORD flags;
+	BOOL compatibility;
+	COMMAND_LINE_ARGUMENT_A* arg;
+
+	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
+	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
+
+	if (compatibility)
 	{
-		//fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
-		//return COMMAND_LINE_ERROR_MISSING_ARGUMENT;
+		fprintf(stderr, "WARNING: Using deprecated command-line interface!\n");
+		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
+	else
+	{
+		CommandLineClearArgumentsA(args);
+		status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
+				freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
+	}
+
+	arg = CommandLineFindArgumentA(args, "v");
 
 	arg = args;
 
