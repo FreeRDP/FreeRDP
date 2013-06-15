@@ -349,11 +349,14 @@ typedef struct _wEventArgs wEventArgs;
 
 typedef void (*pEventHandler)(void* context, wEventArgs* e);
 
+#define MAX_EVENT_HANDLERS	32
+
 struct _wEvent
 {
 	const char* EventName;
-	pEventHandler EventHandler;
 	wEventArgs EventArgs;
+	int EventHandlerCount;
+	pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
 };
 typedef struct _wEvent wEvent;
 
@@ -369,7 +372,7 @@ typedef struct _wEvent wEvent;
 	DEFINE_EVENT_HANDLER(_name);
 
 #define DEFINE_EVENT_ENTRY(_name) \
-	{ #_name, NULL, { sizeof( _name ## EventArgs) } },
+	{ #_name, { sizeof( _name ## EventArgs) }, 0, {  } },
 
 struct _wPubSub
 {
@@ -382,7 +385,11 @@ struct _wPubSub
 };
 typedef struct _wPubSub wPubSub;
 
+WINPR_API BOOL PubSub_Lock(wPubSub* pubSub);
+WINPR_API BOOL PubSub_Unlock(wPubSub* pubSub);
+
 WINPR_API wEvent* PubSub_Events(wPubSub* pubSub, int* count);
+WINPR_API wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName);
 
 WINPR_API void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count);
 

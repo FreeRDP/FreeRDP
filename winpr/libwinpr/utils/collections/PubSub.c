@@ -41,6 +41,16 @@ wEvent* PubSub_Events(wPubSub* pubSub, int* count)
  * Methods
  */
 
+BOOL PubSub_Lock(wPubSub* pubSub)
+{
+	return (WaitForSingleObject(pubSub->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
+}
+
+BOOL PubSub_Unlock(wPubSub* pubSub)
+{
+	return ReleaseMutex(pubSub->mutex);
+}
+
 wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName)
 {
 	int index;
@@ -60,6 +70,9 @@ wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName)
 
 void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count)
 {
+	if (pubSub->synchronized)
+		PubSub_Lock(pubSub);
+
 	while (pubSub->count + count >= pubSub->size)
 	{
 		pubSub->size *= 2;
@@ -68,6 +81,9 @@ void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count)
 
 	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEvent));
 	pubSub->count += count;
+
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
 }
 
 int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
@@ -75,52 +91,93 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 	wEvent* event;
 	int status = -1;
 
+	if (pubSub->synchronized)
+		PubSub_Lock(pubSub);
+
 	event = PubSub_FindEvent(pubSub, EventName);
 
 	if (event)
 	{
-		event->EventHandler = EventHandler;
 		status = 0;
+
+		if (event->EventHandlerCount <= MAX_EVENT_HANDLERS)
+		{
+			event->EventHandlers[event->EventHandlerCount] = EventHandler;
+			event->EventHandlerCount++;
+		}
+		else
+		{
+			status = -1;
+		}
 	}
+
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
 
 	return status;
 }
 
 int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
 {
+	int index;
 	wEvent* event;
 	int status = -1;
+
+	if (pubSub->synchronized)
+		PubSub_Lock(pubSub);
 
 	event = PubSub_FindEvent(pubSub, EventName);
 
 	if (event)
 	{
-		event->EventHandler = NULL;
 		status = 0;
+
+		for (index = 0; index < event->EventHandlerCount; index++)
+		{
+			if (event->EventHandlers[index] == EventHandler)
+			{
+				event->EventHandlers[index] = NULL;
+				event->EventHandlerCount--;
+				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
+						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEvent));
+				status = 1;
+			}
+		}
 	}
+
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
 
 	return status;
 }
 
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e)
 {
+	int index;
 	wEvent* event;
 	int status = -1;
+
+	if (pubSub->synchronized)
+		PubSub_Lock(pubSub);
 
 	event = PubSub_FindEvent(pubSub, EventName);
 
 	if (event)
 	{
-		if (event->EventHandler)
+		status = 0;
+
+		for (index = 0; index < event->EventHandlerCount; index++)
 		{
-			event->EventHandler(context, e);
-			status = 1;
-		}
-		else
-		{
-			status = 0;
+			if (event->EventHandlers[index])
+			{
+				event->EventHandlers[index](context, e);
+				status = 1;
+			}
 		}
 	}
+
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
 
 	return status;
 }

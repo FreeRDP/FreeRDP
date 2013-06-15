@@ -32,7 +32,7 @@
 #define HANDLE_TYPE_ANONYMOUS_PIPE		7
 
 #define WINPR_HANDLE_DEF() \
-	ULONG Type;
+	ULONG Type
 
 struct winpr_handle
 {
