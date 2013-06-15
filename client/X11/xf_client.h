@@ -22,6 +22,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>

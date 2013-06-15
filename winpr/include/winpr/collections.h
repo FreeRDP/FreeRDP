@@ -369,7 +369,7 @@ typedef struct _wEvent wEvent;
 	DEFINE_EVENT_HANDLER(_name);
 
 #define DEFINE_EVENT_ENTRY(_name) \
-	{ #_name, NULL, { sizeof(MouseMotionEventArgs) } },
+	{ #_name, NULL, { sizeof( _name ## EventArgs) } },
 
 struct _wPubSub
 {

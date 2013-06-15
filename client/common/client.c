@@ -26,6 +26,39 @@
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
+static wEvent Client_Events[] =
+{
+	DEFINE_EVENT_ENTRY(WindowStateChange)
+	DEFINE_EVENT_ENTRY(ResizeWindow)
+};
+
+int freerdp_client_common_new(freerdp* instance, rdpContext* context)
+{
+	rdpClientContext* clientContext;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	clientContext = (rdpClientContext*) context;
+	pEntryPoints = instance->pClientEntryPoints;
+
+	clientContext->pubSub = PubSub_New(TRUE);
+	PubSub_Publish(clientContext->pubSub, Client_Events, sizeof(Client_Events) / sizeof(wEvent));
+
+	return pEntryPoints->ClientNew(instance, context);
+}
+
+void freerdp_client_common_free(freerdp* instance, rdpContext* context)
+{
+	rdpClientContext* clientContext;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
+
+	clientContext = (rdpClientContext*) context;
+	pEntryPoints = instance->pClientEntryPoints;
+
+	PubSub_Free(clientContext->pubSub);
+
+	pEntryPoints->ClientFree(instance, context);
+}
+
 /* Common API */
 
 rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
@@ -37,8 +70,10 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	instance = freerdp_new();
 	instance->ContextSize = pEntryPoints->ContextSize;
-	instance->ContextNew = pEntryPoints->ClientNew;
-	instance->ContextFree = pEntryPoints->ClientFree;
+	instance->ContextNew = freerdp_client_common_new;
+	instance->ContextFree = freerdp_client_common_free;
+	instance->pClientEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
+	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
 	freerdp_context_new(instance);
 
 	context = instance->context;

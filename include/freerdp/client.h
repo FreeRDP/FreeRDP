@@ -55,11 +55,9 @@ struct rdp_client_entry_points_v1
 	pRdpClientStart ClientStart;
 	pRdpClientStop ClientStop;
 };
-typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
 
 #define RDP_CLIENT_INTERFACE_VERSION	1
 #define RDP_CLIENT_ENTRY_POINT_NAME	"RdpClientEntry"
-typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 
 typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
@@ -71,23 +69,29 @@ typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 #define FREERDP_WINDOW_STATE_FULLSCREEN		3
 #define FREERDP_WINDOW_STATE_ACTIVE		4
 
-typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
-typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
 typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
 typedef void (*pOnParamChange)(freerdp* instance, int id);
+
+DEFINE_EVENT_BEGIN(ResizeWindow)
+	int width;
+	int height;
+DEFINE_EVENT_END(ResizeWindow)
+
+DEFINE_EVENT_BEGIN(WindowStateChange)
+	int state;
+DEFINE_EVENT_END(WindowStateChange)
 
 struct rdp_client
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
 
-	pOnResizeWindow OnResizeWindow;
-	pOnWindowStateChange OnWindowStateChange;
 	pOnErrorInfo OnErrorInfo;
 	pOnParamChange OnParamChange;
 };
 
 #define DEFINE_RDP_CLIENT_COMMON() \
-	HANDLE thread
+	HANDLE thread; \
+	wPubSub* pubSub
 
 struct rdp_client_context
 {

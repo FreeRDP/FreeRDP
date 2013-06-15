@@ -31,7 +31,10 @@ typedef struct rdp_client rdpClient;
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
 typedef struct rdp_freerdp_peer freerdp_peer;
+
 typedef struct rdp_client_context rdpClientContext;
+typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
+typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -135,7 +138,9 @@ struct rdp_freerdp
 							  Can be allocated by a call to freerdp_context_new().
 							  Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
 
-	UINT64 paddingA[16 - 1]; /* 1 */
+	RDP_CLIENT_ENTRY_POINTS* pClientEntryPoints;
+
+	UINT64 paddingA[16 - 2]; /* 2 */
 
 	ALIGN64 rdpInput* input; /* (offset 16)
 						Input handle for the connection.

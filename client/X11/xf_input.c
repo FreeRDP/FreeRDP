@@ -156,6 +156,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 	double dist;
 	double zoom;
 	double delta;
+	ResizeWindowEventArgs e;
 
 	if (active_contacts != 2)
 	{
@@ -195,7 +196,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 				xfc->scale = 0.5;
 
 			XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-			IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+
+			e.width = (int) xfc->originalWidth * xfc->scale;
+			e.height = (int) xfc->originalHeight * xfc->scale;
+			PubSub_OnEvent(xfc->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
 
 			z_vector = 0;
 		}
@@ -208,7 +212,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 				xfc->scale = 1.5;
 
 			XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-			IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+
+			e.width = (int) xfc->originalWidth * xfc->scale;
+			e.height = (int) xfc->originalHeight * xfc->scale;
+			PubSub_OnEvent(xfc->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
 
 			z_vector = 0;
 		}
