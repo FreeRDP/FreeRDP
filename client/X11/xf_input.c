@@ -199,7 +199,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
-			PubSub_OnEvent(xfc->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
+			PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
 
 			z_vector = 0;
 		}
@@ -215,7 +215,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
-			PubSub_OnEvent(xfc->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
+			PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
 
 			z_vector = 0;
 		}

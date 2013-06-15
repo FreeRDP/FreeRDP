@@ -308,6 +308,14 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
+static wEvent FreeRDP_Events[] =
+{
+	DEFINE_EVENT_ENTRY(WindowStateChange)
+	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(ErrorInfo)
+	DEFINE_EVENT_ENTRY(ParamChange)
+};
+
 /** Allocator function for a rdp context.
  *  The function will allocate a rdpRdp structure using rdp_new(), then copy
  *  its contents to the appropriate fields in the rdp_freerdp structure given in parameters.
@@ -339,8 +347,8 @@ int freerdp_context_new(freerdp* instance)
 	context->update = instance->update;
 	context->settings = instance->settings;
 
-	context->client = (rdpClient*) malloc(sizeof(rdpClient));
-	ZeroMemory(context->client, sizeof(rdpClient));
+	context->pubSub = PubSub_New(TRUE);
+	PubSub_Publish(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEvent));
 
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
@@ -375,11 +383,7 @@ void freerdp_context_free(freerdp* instance)
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
 
-	if (instance->context->client)
-	{
-		free(instance->context->client->pEntryPoints);
-		free(instance->context->client);
-	}
+	PubSub_Free(instance->context->pubSub);
 
 	free(instance->context);
 	instance->context = NULL;

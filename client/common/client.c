@@ -26,36 +26,15 @@
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
-static wEvent Client_Events[] =
-{
-	DEFINE_EVENT_ENTRY(WindowStateChange)
-	DEFINE_EVENT_ENTRY(ResizeWindow)
-};
-
 int freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
-	rdpClientContext* clientContext;
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
-
-	clientContext = (rdpClientContext*) context;
-	pEntryPoints = instance->pClientEntryPoints;
-
-	clientContext->pubSub = PubSub_New(TRUE);
-	PubSub_Publish(clientContext->pubSub, Client_Events, sizeof(Client_Events) / sizeof(wEvent));
-
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	return pEntryPoints->ClientNew(instance, context);
 }
 
 void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
-	rdpClientContext* clientContext;
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
-
-	clientContext = (rdpClientContext*) context;
-	pEntryPoints = instance->pClientEntryPoints;
-
-	PubSub_Free(clientContext->pubSub);
-
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	pEntryPoints->ClientFree(instance, context);
 }
 
@@ -78,9 +57,6 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	context = instance->context;
 
-	context->client->pEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
-	CopyMemory(context->client->pEntryPoints, pEntryPoints, pEntryPoints->Size);
-
 	return context;
 }
 
@@ -94,14 +70,14 @@ void freerdp_client_context_free(rdpContext* context)
 
 int freerdp_client_start(rdpContext* context)
 {
-	rdpClient* client = context->client;
-	return client->pEntryPoints->ClientStart(context);
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStart(context);
 }
 
 int freerdp_client_stop(rdpContext* context)
 {
-	rdpClient* client = context->client;
-	return client->pEntryPoints->ClientStop(context);
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStop(context);
 }
 
 freerdp* freerdp_client_get_instance(rdpContext* context)

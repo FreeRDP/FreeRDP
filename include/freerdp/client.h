@@ -63,35 +63,8 @@ typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 /* Common Client Interface */
 
-#define FREERDP_WINDOW_STATE_NORMAL		0
-#define FREERDP_WINDOW_STATE_MINIMIZED		1
-#define FREERDP_WINDOW_STATE_MAXIMIZED		2
-#define FREERDP_WINDOW_STATE_FULLSCREEN		3
-#define FREERDP_WINDOW_STATE_ACTIVE		4
-
-typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
-typedef void (*pOnParamChange)(freerdp* instance, int id);
-
-DEFINE_EVENT_BEGIN(ResizeWindow)
-	int width;
-	int height;
-DEFINE_EVENT_END(ResizeWindow)
-
-DEFINE_EVENT_BEGIN(WindowStateChange)
-	int state;
-DEFINE_EVENT_END(WindowStateChange)
-
-struct rdp_client
-{
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
-
-	pOnErrorInfo OnErrorInfo;
-	pOnParamChange OnParamChange;
-};
-
 #define DEFINE_RDP_CLIENT_COMMON() \
-	HANDLE thread; \
-	wPubSub* pubSub
+	HANDLE thread
 
 struct rdp_client_context
 {
