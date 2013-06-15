@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __XF_INTERFACE_H
-#define __XF_INTERFACE_H
+#ifndef __XF_CLIENT_H
+#define __XF_CLIENT_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -48,4 +48,4 @@ FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 }
 #endif
 
-#endif /* __XF_INTERFACE_H */
+#endif /* __XF_CLIENT_H */

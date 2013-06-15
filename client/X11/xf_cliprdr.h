@@ -20,7 +20,7 @@
 #ifndef __XF_CLIPRDR_H
 #define __XF_CLIPRDR_H
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels);

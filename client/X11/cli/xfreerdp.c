@@ -28,8 +28,7 @@
 
 #include <freerdp/freerdp.h>
 
-#include "xf_interface.h"
-
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 int main(int argc, char* argv[])

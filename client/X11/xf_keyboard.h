@@ -22,7 +22,7 @@
 
 #include <freerdp/locale/keyboard.h>
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 void xf_kbd_init(xfContext* xfc);

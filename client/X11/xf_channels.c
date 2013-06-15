@@ -23,7 +23,7 @@
 
 #include "xf_channels.h"
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)

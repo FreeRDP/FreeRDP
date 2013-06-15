@@ -20,7 +20,7 @@
 #ifndef __XF_INPUT_H
 #define __XF_INPUT_H
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 #ifdef WITH_XI
