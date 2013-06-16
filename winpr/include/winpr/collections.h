@@ -372,7 +372,11 @@ typedef struct _wEvent wEvent;
 	DEFINE_EVENT_HANDLER(_name);
 
 #define DEFINE_EVENT_ENTRY(_name) \
-	{ #_name, { sizeof( _name ## EventArgs) }, 0, {  } },
+	{ #_name, { sizeof( _name ## EventArgs) }, 0, { \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } },
 
 struct _wPubSub
 {
