@@ -117,7 +117,7 @@ void wf_sw_desktop_resize(wfContext* wfc)
 	rdpContext* context;
 	rdpSettings* settings;
 
-	context = (rdpContext*) context;
+	context = (rdpContext*) wfc;
 	settings = wfc->instance->settings;
 	gdi = context->gdi;
 
@@ -550,7 +550,7 @@ BOOL wf_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-DWORD WINAPI wf_thread(LPVOID lpParam)
+DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
 	int index;
@@ -695,6 +695,8 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	freerdp_channels_close(channels, instance);
 	freerdp_disconnect(instance);
 
+	printf("Main thread exited.\n");
+
 	return 0;
 }
 
@@ -734,6 +736,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 
 	wfc->keyboardThreadId = 0;
 	printf("Keyboard thread exited.\n");
+
 	return (DWORD) NULL;
 }
 
@@ -971,7 +974,7 @@ void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height)
 	wf_update_canvas_diff(wfc);
 }
 
-void wfreerdp_client_global_init()
+void wfreerdp_client_global_init(void)
 {
 	WSADATA wsaData;
 
@@ -994,7 +997,7 @@ void wfreerdp_client_global_init()
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 }
 
-void wfreerdp_client_global_uninit()
+void wfreerdp_client_global_uninit(void)
 {
 	WSACleanup();
 }
@@ -1002,6 +1005,8 @@ void wfreerdp_client_global_uninit()
 int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	wfContext* wfc = (wfContext*) context;
+
+	wfreerdp_client_global_init();
 
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -1011,14 +1016,6 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	wfc->instance = instance;
 	context->channels = freerdp_channels_new();
-
-	//instance->context->argc = argc;
-	//instance->context->argv = (char**) malloc(sizeof(char*) * argc);
-
-	//for (index = 0; index < argc; index++)
-	//	instance->context->argv[index] = _strdup(argv[index]);
-
-	//status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
 
 	return 0;
 }
@@ -1067,14 +1064,13 @@ int wfreerdp_client_start(rdpContext* context)
 	if (!wfc->keyboardThread)
 		return -1;
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	freerdp_client_load_addins(context->channels, instance->settings);
 
-	wfc->thread = CreateThread(NULL, 0, wf_thread, (void*) instance, 0, &wfc->mainThreadId);
+	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*) instance, 0, &wfc->mainThreadId);
 
 	if (!wfc->thread)
 		return -1;
 
-	printf("Main thread exited.\n");
 	return 0;
 }
 

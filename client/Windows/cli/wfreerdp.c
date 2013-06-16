@@ -44,6 +44,7 @@
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	int index;
 	int status;
 	HANDLE thread;
 	wfContext* wfc;
@@ -63,9 +64,15 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	settings = context->settings;
 	wfc = (wfContext*) context;
 
-	status = freerdp_client_parse_command_line(context, __argc, __argv);
+	context->argc = __argc;
+	context->argv = (char**) malloc(sizeof(char*) * __argc);
 
-	status = freerdp_client_command_line_status_print(__argc, __argv, settings, status);
+	for (index = 0; index < context->argc; index++)
+		context->argv[index] = _strdup(__argv[index]);
+
+	status = freerdp_client_parse_command_line(context, context->argc, context->argv);
+
+	status = freerdp_client_command_line_status_print(context->argc, context->argv, settings, status);
 
 	if (status)
 	{

@@ -37,8 +37,8 @@ static HWND g_focus_hWnd;
 #define X_POS(lParam) (lParam & 0xFFFF)
 #define Y_POS(lParam) ((lParam >> 16) & 0xFFFF)
 
-BOOL wf_scale_blt(rdpContext* context, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
-void wf_scale_mouse_event(rdpContext* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
+void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {

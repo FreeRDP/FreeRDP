@@ -651,11 +651,12 @@ void wf_gdi_surface_frame_marker(wfContext* wfc, SURFACE_FRAME_MARKER* surface_f
 	rdpContext* context;
 	rdpSettings* settings;
 
+	context = (rdpContext*) wfc;
 	settings = wfc->instance->settings;
 
 	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END && settings->FrameAcknowledge > 0)
 	{
-		IFCALL(wfc->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
 	}
 }
 
@@ -666,19 +667,19 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	update->Palette = wf_gdi_palette_update;
 	update->SetBounds = wf_gdi_set_bounds;
 
-	primary->DstBlt = wf_gdi_dstblt;
-	primary->PatBlt = wf_gdi_patblt;
-	primary->ScrBlt = wf_gdi_scrblt;
-	primary->OpaqueRect = wf_gdi_opaque_rect;
+	primary->DstBlt = (pDstBlt) wf_gdi_dstblt;
+	primary->PatBlt = (pPatBlt) wf_gdi_patblt;
+	primary->ScrBlt = (pScrBlt) wf_gdi_scrblt;
+	primary->OpaqueRect = (pOpaqueRect) wf_gdi_opaque_rect;
 	primary->DrawNineGrid = NULL;
 	primary->MultiDstBlt = NULL;
 	primary->MultiPatBlt = NULL;
 	primary->MultiScrBlt = NULL;
-	primary->MultiOpaqueRect = wf_gdi_multi_opaque_rect;
+	primary->MultiOpaqueRect = (pMultiOpaqueRect) wf_gdi_multi_opaque_rect;
 	primary->MultiDrawNineGrid = NULL;
-	primary->LineTo = wf_gdi_line_to;
-	primary->Polyline = wf_gdi_polyline;
-	primary->MemBlt = wf_gdi_memblt;
+	primary->LineTo = (pLineTo) wf_gdi_line_to;
+	primary->Polyline = (pPolyline) wf_gdi_polyline;
+	primary->MemBlt = (pMemBlt) wf_gdi_memblt;
 	primary->Mem3Blt = NULL;
 	primary->SaveBitmap = NULL;
 	primary->GlyphIndex = NULL;
