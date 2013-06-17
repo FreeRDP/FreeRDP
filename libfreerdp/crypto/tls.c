@@ -527,30 +527,6 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 			return TRUE;
 	}
 
-	/* ccpp: Check for wildcard certificates */
-	if (memchr(pattern, '*', pattern_length) != NULL)
-	{
-		/* The wildcard matches one subdomain level (all except a dot) */
-
-		int pattern_position = 0;
-		int hostname_position = 0;
-
-		for(; hostname[hostname_position] && pattern_position < pattern_length; pattern_position++, hostname_position++)
-		{
-			if( pattern[pattern_position] == '*' ) {
-				while( hostname[hostname_position] != '.' && hostname[hostname_position] != '\0' )
-					hostname_position++;
-
-				pattern_position++;
-			}
-
-			if (hostname[hostname_position] != pattern[pattern_position] )
-			{
-				return FALSE;
-			}
-		}
-	}
-
 	if (pattern_length > 2 && pattern[0] == '*' && pattern[1] == '.')
 	{
 		char *check_hostname = &hostname[ strlen(hostname) - pattern_length+1 ];
