@@ -20,7 +20,7 @@
 #ifndef __XF_TSMF_H
 #define __XF_TSMF_H
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 void xf_tsmf_init(xfContext* xfc, long xv_port);

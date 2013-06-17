@@ -62,7 +62,6 @@ struct xf_context
 	DEFINE_RDP_CLIENT_COMMON();
 
 	freerdp* instance;
-	rdpClient* client;
 	rdpSettings* settings;
 
 	GC gc;

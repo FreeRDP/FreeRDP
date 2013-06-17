@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client Channels
+ * X11 Client Interface
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,28 +17,37 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef __XF_CLIENT_H
+#define __XF_CLIENT_H
+
+#include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/client.h>
+
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/rail/rail.h>
+#include <freerdp/cache/cache.h>
+#include <freerdp/channels/channels.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#include "xf_channels.h"
+/**
+ * Client Interface
+ */
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
-int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
-{
-	xfContext* xfc = (xfContext*) instance->context;
-
-	if (strcmp(name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-		xfc->rdpei = (RdpeiClientContext*) pInterface;
-	}
-
-	return 0;
+#ifdef __cplusplus
 }
+#endif
 
-int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface)
-{
-	return 0;
-}
+#endif /* __XF_CLIENT_H */

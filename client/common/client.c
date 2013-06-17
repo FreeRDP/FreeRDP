@@ -26,6 +26,18 @@
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
+int freerdp_client_common_new(freerdp* instance, rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	return pEntryPoints->ClientNew(instance, context);
+}
+
+void freerdp_client_common_free(freerdp* instance, rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	pEntryPoints->ClientFree(instance, context);
+}
+
 /* Common API */
 
 rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
@@ -37,14 +49,13 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	instance = freerdp_new();
 	instance->ContextSize = pEntryPoints->ContextSize;
-	instance->ContextNew = pEntryPoints->ClientNew;
-	instance->ContextFree = pEntryPoints->ClientFree;
+	instance->ContextNew = freerdp_client_common_new;
+	instance->ContextFree = freerdp_client_common_free;
+	instance->pClientEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
+	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
 	freerdp_context_new(instance);
 
 	context = instance->context;
-
-	context->client->pEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
-	CopyMemory(context->client->pEntryPoints, pEntryPoints, pEntryPoints->Size);
 
 	return context;
 }
@@ -59,14 +70,14 @@ void freerdp_client_context_free(rdpContext* context)
 
 int freerdp_client_start(rdpContext* context)
 {
-	rdpClient* client = context->client;
-	return client->pEntryPoints->ClientStart(context);
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStart(context);
 }
 
 int freerdp_client_stop(rdpContext* context)
 {
-	rdpClient* client = context->client;
-	return client->pEntryPoints->ClientStop(context);
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStop(context);
 }
 
 freerdp* freerdp_client_get_instance(rdpContext* context)

@@ -480,6 +480,7 @@ void xf_create_window(xfContext* xfc)
 void xf_toggle_fullscreen(xfContext* xfc)
 {
 	Pixmap contents = 0;
+	WindowStateChangeEventArgs e;
 
 	xf_lock_x11(xfc, TRUE);
 
@@ -495,8 +496,9 @@ void xf_toggle_fullscreen(xfContext* xfc)
 
 	xf_unlock_x11(xfc, TRUE);
 
-	IFCALL(xfc->client->OnWindowStateChange, xfc->instance,
-	       xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0);
+	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
+
+	PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "WindowStateChange", xfc, (wEventArgs*) &e);
 }
 
 void xf_lock_x11(xfContext* xfc, BOOL display)
@@ -667,9 +669,6 @@ BOOL xf_pre_connect(freerdp* instance)
 	instance->OnChannelConnected = xf_on_channel_connected;
 	instance->OnChannelDisconnected = xf_on_channel_disconnected;
 
-	//if (status < 0)
-	//	exit(XF_EXIT_PARSE_ARGUMENTS);
-
 	freerdp_client_load_addins(channels, instance->settings);
 
 	freerdp_channels_pre_connect(channels, instance);
@@ -774,6 +773,7 @@ BOOL xf_post_connect(freerdp* instance)
 	rdpCache* cache;
 	rdpChannels* channels;
 	rdpSettings* settings;
+	ResizeWindowEventArgs e;
 	RFX_CONTEXT* rfx_context = NULL;
 	NSC_CONTEXT* nsc_context = NULL;
 	xfContext* xfc = (xfContext*) instance->context;
@@ -894,7 +894,10 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_cliprdr_init(xfc, channels);
 
-	IFCALL(xfc->client->OnResizeWindow, instance, settings->DesktopWidth, settings->DesktopHeight);
+	e.width = settings->DesktopWidth;
+	e.height = settings->DesktopHeight;
+
+	PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
 
 	return TRUE;
 }
@@ -1550,11 +1553,6 @@ int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-rdpClient* freerdp_client_get_interface(rdpContext* context)
-{
-	return context->client;
-}
-
 double freerdp_client_get_scale(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -1563,11 +1561,16 @@ double freerdp_client_get_scale(rdpContext* context)
 
 void freerdp_client_reset_scale(rdpContext* context)
 {
+	ResizeWindowEventArgs e;
 	xfContext* xfc = (xfContext*) context;
 
 	xfc->scale = 1.0;
 	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-	IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+
+	e.width = (int) xfc->originalWidth * xfc->scale;
+	e.height = (int) xfc->originalHeight * xfc->scale;
+	PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
+
 	xf_draw_screen_scaled(xfc);
 }
 
@@ -1588,7 +1591,6 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	context->channels = freerdp_channels_new();
 
 	settings = instance->settings;
-	xfc->client = instance->context->client;
 	xfc->settings = instance->context->settings;
 
 	settings->OsMajorType = OSMAJORTYPE_UNIX;

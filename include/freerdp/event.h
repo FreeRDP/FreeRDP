@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client Interface
+ * Event Definitions
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,35 +17,41 @@
  * limitations under the License.
  */
 
-#ifndef __XF_INTERFACE_H
-#define __XF_INTERFACE_H
+#ifndef FREERDP_EVENT_H
+#define FREERDP_EVENT_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/region.h>
-#include <freerdp/rail/rail.h>
-#include <freerdp/cache/cache.h>
-#include <freerdp/channels/channels.h>
-
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-
-#ifdef __cplusplus
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
-/**
- * Client Interface
- */
+#define FREERDP_WINDOW_STATE_NORMAL		0
+#define FREERDP_WINDOW_STATE_MINIMIZED		1
+#define FREERDP_WINDOW_STATE_MAXIMIZED		2
+#define FREERDP_WINDOW_STATE_FULLSCREEN		3
+#define FREERDP_WINDOW_STATE_ACTIVE		4
 
-FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+DEFINE_EVENT_BEGIN(WindowStateChange)
+	int state;
+DEFINE_EVENT_END(WindowStateChange)
 
-#ifdef __cplusplus
+DEFINE_EVENT_BEGIN(ResizeWindow)
+	int width;
+	int height;
+DEFINE_EVENT_END(ResizeWindow)
+
+DEFINE_EVENT_BEGIN(ErrorInfo)
+	UINT32 code;
+DEFINE_EVENT_END(ErrorInfo)
+
+DEFINE_EVENT_BEGIN(ParamChange)
+	int id;
+DEFINE_EVENT_END(ParamChange)
+
+#ifdef	__cplusplus
 }
 #endif
 
-#endif /* __XF_INTERFACE_H */
+#endif	/* FREERDP_EVENT_H */

@@ -502,11 +502,13 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
-		rdpClient* client = rdp->instance->context->client;
+		ErrorInfoEventArgs e;
+		rdpContext* context = rdp->instance->context;
 
 		rdp_print_errinfo(rdp->errorInfo);
 
-		IFCALL(client->OnErrorInfo, rdp->instance, rdp->errorInfo);
+		e.code = rdp->errorInfo;
+		PubSub_OnEvent(context->pubSub, "ErrorInfo", context, (wEventArgs*) &e);
 	}
 
 	return TRUE;
