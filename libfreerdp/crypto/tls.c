@@ -100,6 +100,7 @@ BOOL tls_connect(rdpTls* tls)
 	CryptoCert cert;
 	long options = 0;
 	int connection_status;
+	char *hostname;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -183,7 +184,12 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (!tls_verify_certificate(tls, cert, tls->settings->ServerHostname))
+	if (tls->settings->GatewayUsageMethod)
+		hostname = tls->settings->GatewayHostname;
+	else
+		hostname = tls->settings->ServerHostname;
+
+	if (!tls_verify_certificate(tls, cert, hostname))
 	{
 		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
@@ -513,6 +519,50 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 	}
 }
 
+BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
+{
+	if (strlen(hostname) == pattern_length)
+	{
+		if (memcmp((void*) hostname, (void*) pattern, pattern_length) == 0)
+			return TRUE;
+	}
+
+	/* ccpp: Check for wildcard certificates */
+	if (memchr(pattern, '*', pattern_length) != NULL)
+	{
+		/* The wildcard matches one subdomain level (all except a dot) */
+
+		int pattern_position = 0;
+		int hostname_position = 0;
+
+		for(; hostname[hostname_position] && pattern_position < pattern_length; pattern_position++, hostname_position++)
+		{
+			if( pattern[pattern_position] == '*' ) {
+				while( hostname[hostname_position] != '.' && hostname[hostname_position] != '\0' )
+					hostname_position++;
+
+				pattern_position++;
+			}
+
+			if (hostname[hostname_position] != pattern[pattern_position] )
+			{
+				return FALSE;
+			}
+		}
+	}
+
+	if (pattern_length > 2 && pattern[0] == '*' && pattern[1] == '.')
+	{
+		char *check_hostname = &hostname[ strlen(hostname) - pattern_length+1 ];
+		if (memcmp((void*) check_hostname, (void*) &pattern[1], pattern_length - 1) == 0 )
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 {
 	int match;
@@ -549,11 +599,8 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 
 	if (common_name != NULL)
 	{
-		if (strlen(hostname) == common_name_length)
-		{
-			if (memcmp((void*) hostname, (void*) common_name, common_name_length) == 0)
-				hostname_match = TRUE;
-		}
+		if (tls_match_hostname(common_name, common_name_length, hostname))
+			hostname_match = TRUE;
 	}
 
 	/* compare against alternative names */
@@ -562,10 +609,10 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	{
 		for (index = 0; index < alt_names_count; index++)
 		{
-			if (strlen(hostname) == alt_names_lengths[index])
+			if (tls_match_hostname(alt_names[index], alt_names_lengths[index], hostname))
 			{
-				if (memcmp((void*) hostname, (void*) alt_names[index], alt_names_lengths[index]) == 0)
-					hostname_match = TRUE;
+				hostname_match = TRUE;
+				break;
 			}
 		}
 	}
