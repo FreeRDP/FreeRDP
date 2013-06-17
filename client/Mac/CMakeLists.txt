@@ -46,6 +46,7 @@ add_library(${MODULE_NAME}
 	SHARED
 	../common/client.c
 	${${MODULE_NAME}_SRC}
+    ${${MODULE_NAME}_HEADERS}
 	${${MODULE_NAME}_RESOURCES})
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.

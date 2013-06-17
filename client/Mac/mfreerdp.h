@@ -19,12 +19,14 @@ typedef struct mf_context mfContext;
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
+#include <AppKit/NSView.h>
+
 struct mf_context
 {
     rdpContext context;
-
-    rdpClient* client;
-    rdpSettings* settings;
+	DEFINE_RDP_CLIENT_COMMON();
+    
+    NSView* nsView;
 
     int width;
     int height;
@@ -39,7 +41,6 @@ struct mf_context
     int client_width;
     int client_height;
 
-    HANDLE thread;
     HANDLE keyboardThread;
 
     HGDI_DC hdc;

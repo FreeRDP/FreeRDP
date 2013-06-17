@@ -60,15 +60,9 @@
 	int height;
 	int argc;
 	char** argv;
-
-#ifdef HAVE_RAIL
-	// RemoteApp
-	MRDPWindow* currentWindow;
-#endif
     
 	NSPoint savedDragLocation;
 	BOOL mouseInClientArea;
-	BOOL isRemoteApp;
 	BOOL firstCreateWindow;
 	BOOL isMoveSizeInProgress;
 	BOOL skipResizeOnce;
@@ -87,7 +81,6 @@
 	int kdcapslock;
 	
 @public
-	NSWindow* ourMainWindow;
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
 	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
 	int pasteboard_changecount;
