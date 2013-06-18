@@ -27,6 +27,8 @@
 
 #include <math.h>
 
+#include "xf_event.h"
+
 #include "xf_input.h"
 
 #ifdef WITH_XI
@@ -63,7 +65,7 @@ int xf_input_init(xfContext* xfc, Window window)
 	int minor = 2;
 	Status xstatus;
 	XIDeviceInfo* info;
-	XIEventMask evmasks[8];
+	XIEventMask evmasks[64];
 	int opcode, event, error;
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
@@ -88,6 +90,9 @@ int xf_input_init(xfContext* xfc, Window window)
 		return -1;
 	}
 
+	if (xfc->settings->MultiTouchInput)
+		xfc->use_xinput = TRUE;
+
 	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
 
 	for (i = 0; i < ndevices; i++)
@@ -99,28 +104,36 @@ int xf_input_init(xfContext* xfc, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
-			if (class->type != XITouchClass)
-				continue;
-
-			if (t->mode != XIDirectTouch)
-				continue;
-
-			if (strcmp(dev->name, "Virtual core pointer") == 0)
-				continue;
-
-			printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
-				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-						dev->deviceid, t->mode, t->num_touches);
+			//printf("class->type: %d name: %s\n", class->type, dev->name);
 
 			evmasks[nmasks].mask = masks[nmasks];
 			evmasks[nmasks].mask_len = sizeof(masks[0]);
 			ZeroMemory(masks[nmasks], sizeof(masks[0]));
 			evmasks[nmasks].deviceid = dev->deviceid;
 
-			XISetMask(masks[nmasks], XI_TouchBegin);
-			XISetMask(masks[nmasks], XI_TouchUpdate);
-			XISetMask(masks[nmasks], XI_TouchEnd);
-			nmasks++;
+			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
+					(strcmp(dev->name, "Virtual core pointer") != 0))
+			{
+				printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
+						dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+						dev->deviceid, t->mode, t->num_touches);
+
+				XISetMask(masks[nmasks], XI_TouchBegin);
+				XISetMask(masks[nmasks], XI_TouchUpdate);
+				XISetMask(masks[nmasks], XI_TouchEnd);
+				nmasks++;
+			}
+
+			if (xfc->use_xinput)
+			{
+				if (class->type == XIButtonClass)
+				{
+					XISetMask(masks[nmasks], XI_ButtonPress);
+					XISetMask(masks[nmasks], XI_ButtonRelease);
+					XISetMask(masks[nmasks], XI_Motion);
+					nmasks++;
+				}
+			}
 		}
 	}
 
@@ -365,6 +378,31 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	return 0;
 }
 
+int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
+{
+	return TRUE;
+
+	switch (evtype)
+	{
+		case XI_ButtonPress:
+			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+
+		case XI_ButtonRelease:
+			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+
+		case XI_Motion:
+			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+	}
+
+	return 0;
+}
+
 int xf_input_handle_event_remote(xfContext* xfc, XEvent* event)
 {
 	XGenericEventCookie* cookie = &event->xcookie;
@@ -388,6 +426,7 @@ int xf_input_handle_event_remote(xfContext* xfc, XEvent* event)
 				break;
 
 			default:
+				xf_input_event(xfc, cookie->data, cookie->evtype);
 				break;
 		}
 	}
