@@ -50,6 +50,10 @@ DEFINE_EVENT_BEGIN(ParamChange)
 	int id;
 DEFINE_EVENT_END(ParamChange)
 
+DEFINE_EVENT_BEGIN(Terminate)
+	int code;
+DEFINE_EVENT_END(Terminate)
+
 #ifdef	__cplusplus
 }
 #endif

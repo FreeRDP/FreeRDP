@@ -193,8 +193,6 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 	extended = FALSE;
 	input = xfc->instance->input;
 
-	printf("ButtonPress: x: %d y: %d button: %d\n", x, y, button);
-
 	switch (button)
 	{
 		case 1:
