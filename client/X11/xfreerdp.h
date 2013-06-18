@@ -115,6 +115,7 @@ struct xf_context
 	BOOL enableScaling;
 
 	BOOL focused;
+	BOOL use_xinput;
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;

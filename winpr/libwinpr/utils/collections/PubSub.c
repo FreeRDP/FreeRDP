@@ -26,6 +26,11 @@
 #include <winpr/collections.h>
 
 /**
+ * Events (C# Programming Guide)
+ * http://msdn.microsoft.com/en-us/library/awbftdfh.aspx
+ */
+
+/**
  * Properties
  */
 
@@ -171,7 +176,7 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 			if (event->EventHandlers[index])
 			{
 				event->EventHandlers[index](context, e);
-				status = 1;
+				status++;
 			}
 		}
 	}

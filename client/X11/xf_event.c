@@ -130,32 +130,29 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return TRUE;
 }
 
-static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
+BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app)
 {
-	int x, y;
 	rdpInput* input;
 	Window childWindow;
 
 	input = xfc->instance->input;
-	x = event->xmotion.x;
-	y = event->xmotion.y;
 
 	if (!xfc->settings->MouseMotion)
 	{
-		if ((event->xmotion.state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
+		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
-	} 
+	}
 
 	if (app)
 	{
 		/* make sure window exists */
-		if (xf_rdpWindowFromWindow(xfc, event->xmotion.window) == 0)
+		if (xf_rdpWindowFromWindow(xfc, window) == 0)
 		{
 			return TRUE;
 		}
 
 		/* Translate to desktop coordinates */
-		XTranslateCoordinates(xfc->display, event->xmotion.window,
+		XTranslateCoordinates(xfc->display, window,
 			RootWindowOfScreen(xfc->screen),
 			x, y, &x, &y, &childWindow);
 	}
@@ -177,40 +174,38 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return TRUE;
 }
 
-static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
+static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
-	int x, y;
+	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
+			event->xmotion.state, event->xmotion.window, app);
+}
+
+BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window window, BOOL app)
+{
 	int flags;
 	BOOL wheel;
 	BOOL extended;
 	rdpInput* input;
 	Window childWindow;
 
-	input = xfc->instance->input;
-
-	x = 0;
-	y = 0;
 	flags = 0;
 	wheel = FALSE;
 	extended = FALSE;
+	input = xfc->instance->input;
 
-	switch (event->xbutton.button)
+	printf("ButtonPress: x: %d y: %d button: %d\n", x, y, button);
+
+	switch (button)
 	{
 		case 1:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
 			break;
 
 		case 2:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
 			break;
 
 		case 3:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
 			break;
 
@@ -228,8 +223,6 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 		case 8:		/* back */
 		case 97:	/* Xming */
 			extended = TRUE;
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON1;
 			break;
 
@@ -237,8 +230,6 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 		case 9:		/* forward */
 		case 112:	/* Xming */
 			extended = TRUE;
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON2;
 			break;
 
@@ -260,12 +251,12 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 			if (app)
 			{
 				/* make sure window exists */
-				if (xf_rdpWindowFromWindow(xfc, event->xbutton.window) == 0)
+				if (xf_rdpWindowFromWindow(xfc, window) == 0)
 				{
 					return TRUE;
 				}
 				/* Translate to desktop coordinates */
-				XTranslateCoordinates(xfc->display, event->xbutton.window,
+				XTranslateCoordinates(xfc->display, window,
 					RootWindowOfScreen(xfc->screen),
 					x, y, &x, &y, &childWindow);
 			}
@@ -287,38 +278,36 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 	return TRUE;
 }
 
-static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
+static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 {
-	int x, y;
+	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
+			event->xbutton.button, event->xbutton.window, app);
+}
+
+BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window window, BOOL app)
+{
 	int flags;
+	BOOL wheel;
 	BOOL extended;
 	rdpInput* input;
 	Window childWindow;
 
+	flags = 0;
+	wheel = FALSE;
+	extended = FALSE;
 	input = xfc->instance->input;
 
-	x = 0;
-	y = 0;
-	flags = 0;
-	extended = FALSE;
-
-	switch (event->xbutton.button)
+	switch (button)
 	{
 		case 1:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON1;
 			break;
 
 		case 2:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON3;
 			break;
 
 		case 3:
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_FLAGS_BUTTON2;
 			break;
 
@@ -326,8 +315,6 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 		case 8:
 		case 97:
 			extended = TRUE;
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_XFLAGS_BUTTON1;
 			break;
 
@@ -335,8 +322,6 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 		case 9:
 		case 112:
 			extended = TRUE;
-			x = event->xbutton.x;
-			y = event->xbutton.y;
 			flags = PTR_XFLAGS_BUTTON2;
 			break;
 
@@ -350,12 +335,12 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 		if (app)
 		{
 			/* make sure window exists */
-			if (xf_rdpWindowFromWindow(xfc, event->xbutton.window) == NULL)
+			if (xf_rdpWindowFromWindow(xfc, window) == NULL)
 			{
 				return TRUE;
 			}
 			/* Translate to desktop coordinates */
-			XTranslateCoordinates(xfc->display, event->xbutton.window,
+			XTranslateCoordinates(xfc->display, window,
 				RootWindowOfScreen(xfc->screen),
 				x, y, &x, &y, &childWindow);
 		}
@@ -374,6 +359,12 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 	}
 
 	return TRUE;
+}
+
+static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
+{
+	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
+			event->xbutton.button, event->xbutton.window, app);
 }
 
 static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
