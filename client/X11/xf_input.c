@@ -56,6 +56,22 @@ double z_vector;
 int xinput_opcode;
 int scale_cnt;
 
+const char* xf_input_get_class_string(int class)
+{
+	if (class == XIKeyClass)
+		return "XIKeyClass";
+	else if (class == XIButtonClass)
+		return "XIButtonClass";
+	else if (class == XIValuatorClass)
+		return "XIValuatorClass";
+	else if (class == XIScrollClass)
+		return "XIScrollClass";
+	else if (class == XITouchClass)
+		return "XITouchClass";
+
+	return "XIUnknownClass";
+}
+
 int xf_input_init(xfContext* xfc, Window window)
 {
 	int i, j;
@@ -97,6 +113,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 	for (i = 0; i < ndevices; i++)
 	{
+		BOOL touch = FALSE;
 		XIDeviceInfo* dev = &info[i];
 
 		for (j = 0; j < dev->num_classes; j++)
@@ -104,7 +121,24 @@ int xf_input_init(xfContext* xfc, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
-			//printf("class->type: %d name: %s\n", class->type, dev->name);
+			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
+				(strcmp(dev->name, "Virtual core pointer") != 0))
+			{
+				touch = TRUE;
+			}
+		}
+
+		for (j = 0; j < dev->num_classes; j++)
+		{
+			XIAnyClassInfo* class = dev->classes[j];
+			XITouchClassInfo* t = (XITouchClassInfo*) class;
+
+			if (xfc->settings->MultiTouchInput)
+			{
+				printf("%s (%d) \"%s\" id: %d\n",
+						xf_input_get_class_string(class->type),
+						class->type, dev->name, dev->deviceid);
+			}
 
 			evmasks[nmasks].mask = masks[nmasks];
 			evmasks[nmasks].mask_len = sizeof(masks[0]);
@@ -114,9 +148,12 @@ int xf_input_init(xfContext* xfc, Window window)
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 					(strcmp(dev->name, "Virtual core pointer") != 0))
 			{
-				printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
+				if (xfc->settings->MultiTouchInput)
+				{
+					printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
 						dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
 						dev->deviceid, t->mode, t->num_touches);
+				}
 
 				XISetMask(masks[nmasks], XI_TouchBegin);
 				XISetMask(masks[nmasks], XI_TouchUpdate);
@@ -126,7 +163,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 			if (xfc->use_xinput)
 			{
-				if (class->type == XIButtonClass)
+				if (!touch && (class->type == XIButtonClass))
 				{
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
@@ -385,16 +422,19 @@ int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	switch (evtype)
 	{
 		case XI_ButtonPress:
+			printf("ButtonPress\n");
 			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_ButtonRelease:
+			printf("ButtonRelease\n");
 			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_Motion:
+			printf("Motion\n");
 			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
