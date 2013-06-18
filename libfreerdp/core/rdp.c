@@ -507,8 +507,9 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 
 		rdp_print_errinfo(rdp->errorInfo);
 
+		EventArgsInit(&e, "freerdp");
 		e.code = rdp->errorInfo;
-		PubSub_OnEvent(context->pubSub, "ErrorInfo", context, (wEventArgs*) &e);
+		PubSub_OnErrorInfo(context->pubSub, context, &e);
 	}
 
 	return TRUE;

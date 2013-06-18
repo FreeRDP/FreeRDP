@@ -197,9 +197,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
 
+			EventArgsInit(&e, "xfreerdp");
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
-			PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
+			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 			z_vector = 0;
 		}
@@ -213,9 +214,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
 
+			EventArgsInit(&e, "xfreerdp");
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
-			PubSub_OnEvent(((rdpContext*) xfc)->pubSub, "ResizeWindow", xfc, (wEventArgs*) &e);
+			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 			z_vector = 0;
 		}
