@@ -36,6 +36,9 @@
 #import "mf_interface.h"
 */
 
+#import "mfreerdp.h"
+#import "mf_client.h"
+
 @interface MRDPView : NSView
 {
 	CFRunLoopSourceRef run_loop_src;
@@ -82,7 +85,7 @@
 	int is_connected;
 }
 
-- (int) rdpConnect;
+- (int) rdpStart :(rdpContext*) context;
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
 - (void) saveStateInfo :(void *) instance :(void *) context;

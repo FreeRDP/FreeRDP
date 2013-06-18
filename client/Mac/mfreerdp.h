@@ -27,7 +27,7 @@ struct mf_context
     rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
     
-    MRDPView* view;
+    void* view;
 
     int width;
     int height;

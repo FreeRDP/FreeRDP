@@ -43,6 +43,7 @@
  */
 
 #include "mf_client.h"
+#import "mfreerdp.h"
 #import "MRDPView.h"
 #import "MRDPCursor.h"
 #import "PasswordDialog.h"
@@ -62,7 +63,6 @@
 #import "freerdp/client/file.h"
 #import "freerdp/client/cmdline.h"
 
-#import "mfreerdp.h"
 
 /******************************************
  Forward declarations
@@ -122,30 +122,20 @@ struct rgba_data
 
 @synthesize is_connected;
 
-//int rdp_connect()
-- (int) rdpConnect
+//- (int) rdpConnect
+
+- (int) rdpStart:(rdpContext*) context
 {
 	int status;
-    rdpContext* context;
     mfContext* mfc;
 	rdpSettings* settings;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-    
-	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
-	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
-	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
-    
-	RdpClientEntry(&clientEntryPoints);
-    
-	context = freerdp_client_context_new(&clientEntryPoints);
-    
-	settings = context->settings;
+
 	mfc = (mfContext*) context;
+	settings = context->settings;
     mfc->view = self;
     self->rdp_instance = context->instance;
     self->rdp_context = mfc;
     
-
     context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->ReceiveChannelData = receive_channel_data;
@@ -808,10 +798,6 @@ struct rgba_data
 
 BOOL mac_pre_connect(freerdp* instance)
 {
-	int i;
-	int len;
-	int status;
-	char* cptr;
 	rdpSettings* settings;
 	BOOL bitmap_cache;
 
@@ -821,45 +807,16 @@ BOOL mac_pre_connect(freerdp* instance)
 	instance->update->SetBounds = mac_set_bounds;
 	//instance->update->BitmapUpdate = mac_bitmap_update;
 	
-	NSArray *args = [[NSProcessInfo processInfo] arguments];
-	
     mfContext *mfc = (mfContext*) instance->context;
-  
-	mfc->view->argc = (int) [args count];
-	
-	mfc->view->argv = malloc(sizeof(char *) * mfc->view->argc);
-	
-	if (mfc->view->argv == NULL)
-		return FALSE;
-	
-	i = 0;
-	
-	for (NSString * str in args)
-    {
-        len = (int) ([str length] + 1);
-        cptr = (char *) malloc(len);
-        strcpy(cptr, [str UTF8String]);
-        mfc->view->argv[i++] = cptr;
-    }
-	
-	instance->context->argc = mfc->view->argc;
-	instance->context->argv = mfc->view->argv;
-	
-	status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
-    
+
     settings = instance->settings;
     if (!settings->ServerHostname)
     {
         fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+        [NSApp terminate:nil];
         return -1;
     }
  
-	if (status < 0)
-	{
-		[NSApp terminate:nil];
-		return TRUE;
-	}
-
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	settings = instance->settings;
@@ -899,8 +856,8 @@ BOOL mac_pre_connect(freerdp* instance)
     
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-        
-	[mfc->view setViewSize:instance->settings->DesktopWidth :instance->settings->DesktopHeight];
+    
+	[((MRDPView*)mfc->view) setViewSize:instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
@@ -929,6 +886,8 @@ BOOL mac_post_connect(freerdp* instance)
 	void* wr_fds[32];
 	rdpPointer rdp_pointer;
     mfContext *mfc = (mfContext*) instance->context;
+ 
+    MRDPView* view = (MRDPView*) mfc->view;
     
 	ZeroMemory(&rdp_pointer, sizeof(rdpPointer));
 	rdp_pointer.size = sizeof(rdpPointer);
@@ -943,7 +902,7 @@ BOOL mac_post_connect(freerdp* instance)
 
 	rdpGdi* gdi = instance->context->gdi;
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	mfc->view->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+	view->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
 
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
@@ -974,12 +933,12 @@ BOOL mac_post_connect(freerdp* instance)
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
-	mfc->view->pasteboard_wr = [NSPasteboard generalPasteboard];
+	view->pasteboard_wr = [NSPasteboard generalPasteboard];
 	
 	/* setup pasteboard for read operations */
-	mfc->view->pasteboard_rd = [NSPasteboard generalPasteboard];
-	mfc->view->pasteboard_changecount = (int) [mfc->view->pasteboard_rd changeCount];
-	mfc->view->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:mfc->view selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
+	view->pasteboard_rd = [NSPasteboard generalPasteboard];
+	view->pasteboard_changecount = (int) [view->pasteboard_rd changeCount];
+	view->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:mfc->view selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
 	
 	/* we want to be notified when window resizes */
 	[[NSNotificationCenter defaultCenter] addObserver:mfc->view selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
@@ -1034,6 +993,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	NSBitmapImageRep* bmiRep;
 	MRDPCursor* mrdpCursor = [[MRDPCursor alloc] init];
     mfContext* mfc = (mfContext*) context;
+    MRDPView* view = (MRDPView*) mfc->view;
 	
 	rect.size.width = pointer->width;
 	rect.size.height = pointer->height;
@@ -1078,7 +1038,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	mrdpCursor->pointer = pointer;
 	
 	/* save cursor for later use in mf_Pointer_Set() */
-	ma = mfc->view->cursors;
+	ma = view->cursors;
 	[ma addObject:mrdpCursor];
 }
 
@@ -1089,7 +1049,8 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
     mfContext* mfc = (mfContext*) context;
-	NSMutableArray* ma = mfc->view->cursors;
+    MRDPView* view = (MRDPView*) mfc->view;
+	NSMutableArray* ma = view->cursors;
 	
 	for (MRDPCursor* cursor in ma)
 	{
@@ -1112,11 +1073,13 @@ void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
     mfContext* mfc = (mfContext*) context;
-	NSMutableArray* ma = mfc->view->cursors;
+    MRDPView* view = (MRDPView*) mfc->view;
+    
+	NSMutableArray* ma = view->cursors;
 
 	return; /* disable pointer until it is fixed */
 	
-	if (!mfc->view->mouseInClientArea)
+	if (!view->mouseInClientArea)
 		return;
 	
 	for (MRDPCursor* cursor in ma)
@@ -1154,7 +1117,9 @@ void mf_Pointer_SetDefault(rdpContext* context)
 int mac_context_new(freerdp* instance, rdpContext* context)
 {
     mfContext* mfc = (mfContext*) context;
-	[mfc->view saveStateInfo:instance :context];
+    MRDPView* view = (MRDPView*) mfc->view;
+    
+	[view saveStateInfo:instance :context];
 	context->channels = freerdp_channels_new();
     return 0;
 }
@@ -1206,6 +1171,7 @@ void mac_end_paint(rdpContext* context)
 	rdpGdi* gdi;
 	NSRect drawRect;
     mfContext* mfc = (mfContext*) context;
+    MRDPView* view = (MRDPView*) mfc->view;
 	
 	if ((context == 0) || (context->gdi == 0))
 		return;
@@ -1225,7 +1191,7 @@ void mac_end_paint(rdpContext* context)
 		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
 		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
 		windows_to_apple_cords(mfc->view, &drawRect);
-		[mfc->view setNeedsDisplayInRect:drawRect];
+		[view setNeedsDisplayInRect:drawRect];
 	}
 	
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1279,12 +1245,13 @@ int register_fds(int* fds, int count, freerdp* instance)
 	CFSocketRef skt_ref;
 	CFSocketContext skt_context = { 0, instance, NULL, NULL, NULL };
 	mfContext* mfc = (mfContext*) instance->context;
+    MRDPView* view = (MRDPView*) mfc->view;
     
 	for (i = 0; i < count; i++)
 	{
 		skt_ref = CFSocketCreateWithNative(NULL, fds[i], kCFSocketReadCallBack, skt_activity_cb, &skt_context);
-		mfc->view->run_loop_src = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), mfc->view->run_loop_src, kCFRunLoopDefaultMode);
+		view->run_loop_src = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
+		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src, kCFRunLoopDefaultMode);
 		CFRelease(skt_ref);
 	}
 	
@@ -1301,12 +1268,13 @@ int register_channel_fds(int* fds, int count, freerdp* instance)
 	CFSocketRef skt_ref;
 	CFSocketContext skt_context = { 0, instance, NULL, NULL, NULL };
     mfContext* mfc = (mfContext*) instance->context;
-	
+	MRDPView* view = (MRDPView*) mfc->view;
+    
 	for (i = 0; i < count; i++)
 	{
 		skt_ref = CFSocketCreateWithNative(NULL, fds[i], kCFSocketReadCallBack, channel_activity_cb, &skt_context);
-		mfc->view->run_loop_src_channels = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), mfc->view->run_loop_src_channels, kCFRunLoopDefaultMode);
+		view->run_loop_src_channels = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
+		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_channels, kCFRunLoopDefaultMode);
 		CFRelease(skt_ref);
 	}
 	
@@ -1359,11 +1327,12 @@ void cliprdr_process_cb_data_request_event(freerdp* instance)
 	NSArray* types;
 	RDP_CB_DATA_RESPONSE_EVENT* event;
     mfContext* mfc = (mfContext*) instance->context;
-	
+	MRDPView* view = (MRDPView*) mfc->view;
+    
 	event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_DataResponse, NULL, NULL);
 	
 	types = [NSArray arrayWithObject:NSStringPboardType];
-	NSString* str = [mfc->view->pasteboard_rd availableTypeFromArray:types];
+	NSString* str = [view->pasteboard_rd availableTypeFromArray:types];
 	
 	if (str == nil)
 	{
@@ -1372,7 +1341,7 @@ void cliprdr_process_cb_data_request_event(freerdp* instance)
 	}
 	else
 	{
-		NSString* data = [mfc->view->pasteboard_rd stringForType:NSStringPboardType];
+		NSString* data = [view->pasteboard_rd stringForType:NSStringPboardType];
 		len = (int) ([data length] * 2 + 2);
 		event->data = malloc(len);
 		[data getCString:(char *) event->data maxLength:len encoding:NSUnicodeStringEncoding];
@@ -1403,16 +1372,17 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 	NSString* str;
 	NSArray* types;
     mfContext* mfc = (mfContext*) instance->context;
-	
+	MRDPView* view = (MRDPView*) mfc->view;
+    
 	if (event->size == 0)
 		return;
 	
-	if (mfc->view->pasteboard_format == CB_FORMAT_TEXT || mfc->view->pasteboard_format == CB_FORMAT_UNICODETEXT)
+	if (view->pasteboard_format == CB_FORMAT_TEXT || view->pasteboard_format == CB_FORMAT_UNICODETEXT)
 	{
 		str = [[NSString alloc] initWithCharacters:(unichar *) event->data length:event->size / 2];
 		types = [[NSArray alloc] initWithObjects:NSStringPboardType, nil];
-		[mfc->view->pasteboard_wr declareTypes:types owner:mfc->view];
-		[mfc->view->pasteboard_wr setString:str forType:NSStringPboardType];
+		[view->pasteboard_wr declareTypes:types owner:mfc->view];
+		[view->pasteboard_wr setString:str forType:NSStringPboardType];
 	}
 }
 
@@ -1439,7 +1409,8 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 {
 	int i;
     mfContext* mfc = (mfContext*) instance->context;
-	
+	MRDPView* view = (MRDPView*) mfc->view;
+    
 	if (event->num_formats == 0)
 		return;
 	
@@ -1453,7 +1424,7 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 				
 			case CB_FORMAT_TEXT:
 			case CB_FORMAT_UNICODETEXT:
-				mfc->view->pasteboard_format = CB_FORMAT_UNICODETEXT;
+				view->pasteboard_format = CB_FORMAT_UNICODETEXT;
 				cliprdr_send_data_request(instance, CB_FORMAT_UNICODETEXT);
 				return;
 				break;
