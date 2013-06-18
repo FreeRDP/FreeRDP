@@ -95,8 +95,6 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
     context->channels = freerdp_channels_new();
 
     settings = instance->settings;
-    mfc->client = instance->context->client;
-    mfc->settings = instance->context->settings;
 
     settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
     settings->OsMinorType = OSMINORTYPE_MACINTOSH;
