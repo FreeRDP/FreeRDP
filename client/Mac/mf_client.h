@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef __MF_INTERFACE_H
-#define __MF_INTERFACE_H
+#ifndef __MF_CLIENT_H
+#define __MF_CLIENT_H
 
 #include <freerdp/client.h>
 

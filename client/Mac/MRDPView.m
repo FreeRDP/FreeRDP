@@ -42,6 +42,7 @@
  *  -
  */
 
+#include "mf_client.h"
 #import "MRDPView.h"
 #import "MRDPCursor.h"
 #import "PasswordDialog.h"

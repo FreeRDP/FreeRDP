@@ -19,7 +19,7 @@
 
 @synthesize mrdpView = mrdpView;
 
-- (void)applicationDidFinishLaunching:(NSNotification*)aNotification
+- (void) applicationDidFinishLaunching:(NSNotification*)aNotification
 {
 	[mrdpView rdpConnect];
 }
@@ -27,6 +27,11 @@
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
     [mrdpView releaseResources];
+}
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
+{
+    return YES;
 }
 
 @end
