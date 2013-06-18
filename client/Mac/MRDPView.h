@@ -19,12 +19,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-
-
-#ifdef HAVE_RAIL
-#import "MRDPWindow.h"
-#endif
-
 /*
  #import "freerdp/freerdp.h"
 #import "freerdp/types.h"

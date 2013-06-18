@@ -19,6 +19,7 @@ typedef struct mf_context mfContext;
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
+#include "MRDPView.h"
 #include <AppKit/NSView.h>
 
 struct mf_context
@@ -26,7 +27,7 @@ struct mf_context
     rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
     
-    NSView* nsView;
+    MRDPView* view;
 
     int width;
     int height;

@@ -56,6 +56,8 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	freerdp_context_new(instance);
 
 	context = instance->context;
+    context->instance = instance;
+    context->settings = instance->settings;
 
 	return context;
 }

@@ -44,19 +44,7 @@ void mfreerdp_client_global_uninit()
 
 int mfreerdp_client_start(rdpContext* context)
 {
-    mfContext* mfc = (mfContext*) context;
-
-    rdpSettings* settings = context->settings;
-
-    if (!settings->ServerHostname)
-    {
-        fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
-        return -1;
-    }
-
-    // mfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mf_thread, context->instance, 0, NULL);
-
-	return 0;
+    return freerdp_connect(context->instance);
 }
 
 int mfreerdp_client_stop(rdpContext* context)
@@ -140,29 +128,29 @@ void mfreerdp_client_free(freerdp* instance, rdpContext* context)
     }
 }
 
-//void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
-//{
-//    int width, height;
-//    rdpInput* input = cfc->instance->input;
-//    rdpSettings* settings = cfc->instance->settings;
+void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
+{
+    int width, height;
+    rdpInput* input = cfc->instance->input;
+    rdpSettings* settings = cfc->instance->settings;
 
-//    width = settings->DesktopWidth;
-//    height = settings->DesktopHeight;
+    width = settings->DesktopWidth;
+    height = settings->DesktopHeight;
 
-//    if (x < 0)
-//        x = 0;
+    if (x < 0)
+        x = 0;
 
 //    if (x >= width)
-//        x = width - 1;
+    x = width - 1;
 
-//    if (y < 0)
-//        y = 0;
+    if (y < 0)
+        y = 0;
 
-//    if (y >= height)
-//        y = height - 1;
+    if (y >= height)
+        y = height - 1;
 
-//    input->MouseEvent(input, flags, x, y);
-//}
+    input->MouseEvent(input, flags, x, y);
+}
 
 
 
