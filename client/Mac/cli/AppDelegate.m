@@ -43,8 +43,6 @@
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
     [mrdpView releaseResources];
-    
-    [self ReleaseContext];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender

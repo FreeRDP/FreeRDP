@@ -598,6 +598,12 @@ struct rgba_data
 	
 	if (run_loop_src != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src, kCFRunLoopDefaultMode);
+    
+    
+	freerdp_client_stop((rdpContext*) self->rdp_context);
+    
+	freerdp_client_context_free((rdpContext*) self->rdp_context);
+ 
 }
 
 /** *********************************************************************
