@@ -38,6 +38,7 @@
 
 int xf_cursor_init(xfInfo* xfi)
 {
+#ifdef WITH_XFIXES
 	int event;
 	int error;
 
@@ -50,6 +51,7 @@ int xf_cursor_init(xfInfo* xfi)
 	xfi->xfixes_notify_event = event + XFixesCursorNotify;
 
 	XFixesSelectCursorInput(xfi->display, DefaultRootWindow(xfi->display), XFixesDisplayCursorNotifyMask);
+#endif
 
 	return 0;
 }
