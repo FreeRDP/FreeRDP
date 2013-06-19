@@ -653,6 +653,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SaltedChecksum					2309
 #define FreeRDP_LongCredentialsSupported			2310
 #define FreeRDP_NoBitmapCompressionHeader			2311
+#define FreeRDP_BitmapCompressionDisabled			2312
 #define FreeRDP_DesktopResize					2368
 #define FreeRDP_DrawAllowDynamicColorFidelity			2369
 #define FreeRDP_DrawAllowColorSubsampling			2370
@@ -1061,7 +1062,8 @@ struct rdp_settings
 	ALIGN64 BOOL SaltedChecksum; /* 2309 */
 	ALIGN64 BOOL LongCredentialsSupported; /* 2310 */
 	ALIGN64 BOOL NoBitmapCompressionHeader; /* 2311 */
-	UINT64 padding2368[2368 - 2312]; /* 2312 */
+	ALIGN64 BOOL BitmapCompressionDisabled; /* 2312 */
+	UINT64 padding2368[2368 - 2313]; /* 2313 */
 
 	/* Bitmap Capabilities */
 	ALIGN64 BOOL DesktopResize; /* 2368 */

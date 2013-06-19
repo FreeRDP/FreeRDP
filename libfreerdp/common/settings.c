@@ -602,6 +602,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->NoBitmapCompressionHeader;
 			break;
 
+		case FreeRDP_BitmapCompressionDisabled:
+			return settings->BitmapCompressionDisabled;
+			break;
+
 		case FreeRDP_DesktopResize:
 			return settings->DesktopResize;
 			break;
@@ -1047,6 +1051,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_NoBitmapCompressionHeader:
 			settings->NoBitmapCompressionHeader = param;
+			break;
+
+		case FreeRDP_BitmapCompressionDisabled:
+			settings->BitmapCompressionDisabled = param;
 			break;
 
 		case FreeRDP_DesktopResize:
