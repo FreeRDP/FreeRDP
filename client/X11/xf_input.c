@@ -64,6 +64,8 @@ double py_vector;
 int xinput_opcode;
 int scale_cnt;
 
+int initialized = 0;
+
 int xf_input_init(xfInfo* xfi, Window window)
 {
 	int i, j;
@@ -76,6 +78,10 @@ int xf_input_init(xfInfo* xfi, Window window)
 	XIEventMask evmasks[8];
 	int opcode, event, error;
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
+
+	//dont initialize multiple times
+	if(initialized)
+	  return 0;
 
 	z_vector = 0;
 	px_vector = 0;
@@ -219,6 +225,7 @@ void xf_input_detect_pan(xfInfo* xfi)
       
       if(px_vector > PAN_THRESHOLD)
 	{
+	  /*
 	  xfi->offset_x += 5;
 	  
 	  if(xfi->offset_x > 0)
@@ -227,6 +234,10 @@ void xf_input_detect_pan(xfInfo* xfi)
 	  xf_transform_window(xfi);
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+
+	  */
+
+	  IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
 	  
 	  px_vector = 0;
 	  
@@ -236,12 +247,16 @@ void xf_input_detect_pan(xfInfo* xfi)
 	}
       else if(px_vector < -PAN_THRESHOLD)
 	{
+	  /*
 	  xfi->offset_x -= 5;
 	  
 	  xf_transform_window(xfi);
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  
+	  */
+
+	  IFCALL(xfi->client->OnPan, xfi->instance, -5, 0);
+
 	  px_vector = 0;
 	  
 	  px_vector = 0;
@@ -256,6 +271,7 @@ void xf_input_detect_pan(xfInfo* xfi)
       
       if(py_vector > PAN_THRESHOLD)
 	{
+	  /*
 	  xfi->offset_y += 5;
 	  
 	  if(xfi->offset_y > 0)
@@ -264,7 +280,9 @@ void xf_input_detect_pan(xfInfo* xfi)
 	  xf_transform_window(xfi);
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  
+	  */
+	  IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);	  
+
 	  py_vector = 0;
 	  
 	  px_vector = 0;
@@ -273,12 +291,15 @@ void xf_input_detect_pan(xfInfo* xfi)
 	}
       else if(py_vector < -PAN_THRESHOLD)
 	{
+	  /*
 	  xfi->offset_y -= 5;
 	  
 	  xf_transform_window(xfi);
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  
+	  */
+	  IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
+
 	  py_vector = 0;
 	  
 	  px_vector = 0;
