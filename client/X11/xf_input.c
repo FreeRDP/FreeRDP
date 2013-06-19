@@ -644,7 +644,7 @@ int xf_input_handle_event(xfInfo* xfi, XEvent* event)
 		return xf_input_handle_event_remote(xfi, event);
 	}
 
-	if (1)
+	if (xfi->settings->MultiTouchGestures)
 		return xf_input_handle_event_local(xfi, event);
 #endif
 

@@ -654,6 +654,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->MultiTouchInput;
 			break;
 
+		case FreeRDP_MultiTouchGestures:
+			return settings->MultiTouchGestures;
+			break;
+
 		case FreeRDP_SoundBeepsEnabled:
 			return settings->SoundBeepsEnabled;
 			break;
@@ -1096,6 +1100,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_MultiTouchInput:
 			settings->MultiTouchInput = param;
+			break;
+
+		case FreeRDP_MultiTouchGestures:
+			settings->MultiTouchGestures = param;
 			break;
 
 		case FreeRDP_SoundBeepsEnabled:
