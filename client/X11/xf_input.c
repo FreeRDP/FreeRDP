@@ -148,6 +148,7 @@ int xf_input_init(xfInfo* xfi, Window window)
 	if (nmasks > 0)
 		xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
 
+	initialized = 1;
 	return 0;
 }
 
