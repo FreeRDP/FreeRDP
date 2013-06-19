@@ -36,7 +36,7 @@
 #endif
 
 struct _aligned_meminfo {
-	UINT32 size;
+	size_t size;
 	void *base_addr;
 };
 
