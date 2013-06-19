@@ -34,7 +34,7 @@
  * Properties
  */
 
-wEvent* PubSub_Events(wPubSub* pubSub, int* count)
+wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count)
 {
 	if (count)
 		*count = pubSub->count;
@@ -56,10 +56,10 @@ BOOL PubSub_Unlock(wPubSub* pubSub)
 	return ReleaseMutex(pubSub->mutex);
 }
 
-wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName)
+wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
 	int index;
-	wEvent* event = NULL;
+	wEventType* event = NULL;
 
 	for (index = 0; pubSub->count; index++)
 	{
@@ -73,7 +73,7 @@ wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName)
 	return event;
 }
 
-void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count)
+void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count)
 {
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
@@ -81,10 +81,10 @@ void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count)
 	while (pubSub->count + count >= pubSub->size)
 	{
 		pubSub->size *= 2;
-		pubSub->events = (wEvent*) realloc(pubSub->events, pubSub->size);
+		pubSub->events = (wEventType*) realloc(pubSub->events, pubSub->size);
 	}
 
-	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEvent));
+	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEventType));
 	pubSub->count += count;
 
 	if (pubSub->synchronized)
@@ -93,13 +93,13 @@ void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count)
 
 int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
 {
-	wEvent* event;
+	wEventType* event;
 	int status = -1;
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
-	event = PubSub_FindEvent(pubSub, EventName);
+	event = PubSub_FindEventType(pubSub, EventName);
 
 	if (event)
 	{
@@ -125,13 +125,13 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
 {
 	int index;
-	wEvent* event;
+	wEventType* event;
 	int status = -1;
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
-	event = PubSub_FindEvent(pubSub, EventName);
+	event = PubSub_FindEventType(pubSub, EventName);
 
 	if (event)
 	{
@@ -144,7 +144,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
 				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
-						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEvent));
+						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEventType));
 				status = 1;
 			}
 		}
@@ -159,13 +159,13 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e)
 {
 	int index;
-	wEvent* event;
+	wEventType* event;
 	int status = -1;
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
-	event = PubSub_FindEvent(pubSub, EventName);
+	event = PubSub_FindEventType(pubSub, EventName);
 
 	if (event)
 	{
@@ -207,8 +207,8 @@ wPubSub* PubSub_New(BOOL synchronized)
 		pubSub->count = 0;
 		pubSub->size = 64;
 
-		pubSub->events = (wEvent*) malloc(sizeof(wEvent) * pubSub->size);
-		ZeroMemory(pubSub->events, sizeof(wEvent) * pubSub->size);
+		pubSub->events = (wEventType*) malloc(sizeof(wEventType) * pubSub->size);
+		ZeroMemory(pubSub->events, sizeof(wEventType) * pubSub->size);
 	}
 
 	return pubSub;

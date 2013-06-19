@@ -34,6 +34,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
+#include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
@@ -188,7 +189,16 @@ BOOL freerdp_check_fds(freerdp* instance)
 	status = rdp_check_fds(rdp);
 
 	if (status < 0)
+	{
+		TerminateEventArgs e;
+		rdpContext* context = instance->context;
+
+		EventArgsInit(&e, "freerdp");
+		e.code = 0;
+		PubSub_OnTerminate(context->pubSub, context, &e);
+
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -308,12 +318,13 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
-static wEvent FreeRDP_Events[] =
+static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
 	DEFINE_EVENT_ENTRY(ErrorInfo)
 	DEFINE_EVENT_ENTRY(ParamChange)
+	DEFINE_EVENT_ENTRY(Terminate)
 };
 
 /** Allocator function for a rdp context.
@@ -329,15 +340,17 @@ int freerdp_context_new(freerdp* instance)
 	rdpRdp* rdp;
 	rdpContext* context;
 
-	rdp = rdp_new(instance);
-
-	instance->input = rdp->input;
-	instance->update = rdp->update;
-	instance->settings = rdp->settings;
-
 	instance->context = (rdpContext*) malloc(instance->ContextSize);
 	ZeroMemory(instance->context, instance->ContextSize);
 	context = instance->context;
+
+	context->pubSub = PubSub_New(TRUE);
+	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
+
+	rdp = rdp_new(instance);
+	instance->input = rdp->input;
+	instance->update = rdp->update;
+	instance->settings = rdp->settings;
 
 	context->graphics = graphics_new(context);
 	context->instance = instance;
@@ -346,9 +359,6 @@ int freerdp_context_new(freerdp* instance)
 	context->input = instance->input;
 	context->update = instance->update;
 	context->settings = instance->settings;
-
-	context->pubSub = PubSub_New(TRUE);
-	PubSub_Publish(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEvent));
 
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;

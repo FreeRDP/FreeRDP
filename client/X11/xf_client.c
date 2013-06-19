@@ -1502,6 +1502,24 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	return reason;
 }
 
+void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
+{
+	wMessageQueue* queue;
+	xfContext* xfc = (xfContext*) context;
+
+	if (context->settings->AsyncInput)
+	{
+		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+
+		if (queue)
+			MessageQueue_PostQuit(queue, 0);
+	}
+	else
+	{
+		xfc->disconnect = TRUE;
+	}
+}
+
 /**
  * Client Interface
  */
@@ -1543,7 +1561,9 @@ int xfreerdp_client_stop(rdpContext* context)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(queue, 0);
+
+		if (queue)
+			MessageQueue_PostQuit(queue, 0);
 	}
 	else
 	{
@@ -1621,6 +1641,8 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
+	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 
 	return 0;
 }

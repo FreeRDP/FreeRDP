@@ -91,6 +91,9 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	UINT32 StubLength;
 	wStream* fragment;
 	rpcconn_hdr_t* header;
+	freerdp* instance;
+
+	instance = (freerdp*) rpc->transport->settings->instance;
 
 	if (!rpc->client->pdu)
 		rpc->client->pdu = rpc_client_receive_pool_take(rpc);
@@ -158,15 +161,21 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	if (StubLength == 4)
 	{
 		//fprintf(stderr, "Ignoring TsProxySendToServer Response\n");
-        printf("Got stub length 4 with flags %d and callid %d\n", header->common.pfc_flags, header->common.call_id);
-        
-        /* received a disconnect request from the server? */
-        if (header->common.call_id == rpc->PipeCallId && header->common.pfc_flags & PFC_LAST_FRAG)
-        {
-            ((freerdp*)rpc->settings->instance)->context->rdp->disconnect = TRUE;
-            ((freerdp*)rpc->settings->instance)->context->rdp->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;            
-        }
-        
+		printf("Got stub length 4 with flags %d and callid %d\n", header->common.pfc_flags, header->common.call_id);
+
+		/* received a disconnect request from the server? */
+		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
+		{
+			TerminateEventArgs e;
+
+			instance->context->rdp->disconnect = TRUE;
+			rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
+
+			EventArgsInit(&e, "freerdp");
+			e.code = 0;
+			PubSub_OnTerminate(instance->context->pubSub, instance->context, &e);
+		}
+
 		rpc_client_fragment_pool_return(rpc, fragment);
 		return 0;
 	}

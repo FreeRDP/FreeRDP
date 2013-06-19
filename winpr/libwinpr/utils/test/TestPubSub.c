@@ -25,25 +25,13 @@ void MouseButtonEventHandler(void* context, MouseButtonEventArgs* e)
 	printf("MouseButtonEvent: x: %d y: %d flags: %d button: %d\n", e->x, e->y, e->flags, e->button);
 }
 
-static wEvent Node_Events[] =
+static wEventType Node_Events[] =
 {
 	DEFINE_EVENT_ENTRY(MouseMotion)
 	DEFINE_EVENT_ENTRY(MouseButton)
 };
 
-#define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEvent))
-
-/* strongly-typed wrappers could be automatically defined using a macro */
-
-static INLINE int PubSub_SubscribeMouseMotion(wPubSub* pubSub, pMouseMotionEventHandler MouseMotionEventHandler)
-{
-	return PubSub_Subscribe(pubSub, "MouseMotion", (pEventHandler) MouseMotionEventHandler);
-}
-
-static INLINE int PubSub_OnMouseMotion(wPubSub* pubSub, void* context, MouseMotionEventArgs* e)
-{
-	return PubSub_OnEvent(pubSub, "MouseMotion", context, (wEventArgs*) e);
-}
+#define NODE_EVENT_COUNT (sizeof(Node_Events) / sizeof(wEventType))
 
 int TestPubSub(int argc, char* argv[])
 {
@@ -51,12 +39,10 @@ int TestPubSub(int argc, char* argv[])
 
 	node = PubSub_New(TRUE);
 
-	PubSub_Publish(node, Node_Events, NODE_EVENT_COUNT);
-
-	/* Register Event Handler */
+	PubSub_AddEventTypes(node, Node_Events, NODE_EVENT_COUNT);
 
 	PubSub_SubscribeMouseMotion(node, MouseMotionEventHandler);
-	PubSub_Subscribe(node, "MouseButton", (pEventHandler) MouseButtonEventHandler);
+	PubSub_SubscribeMouseButton(node, MouseButtonEventHandler);
 
 	/* Call Event Handler */
 	{
@@ -76,7 +62,7 @@ int TestPubSub(int argc, char* argv[])
 		e.flags = 7;
 		e.button = 1;
 
-		PubSub_OnEvent(node, "MouseButton", NULL, (wEventArgs*) &e);
+		PubSub_OnMouseButton(node, NULL, &e);
 	}
 
 	PubSub_Free(node);
