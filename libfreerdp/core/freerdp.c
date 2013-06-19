@@ -318,7 +318,7 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
-static wEvent FreeRDP_Events[] =
+static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
@@ -345,7 +345,7 @@ int freerdp_context_new(freerdp* instance)
 	context = instance->context;
 
 	context->pubSub = PubSub_New(TRUE);
-	PubSub_Publish(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEvent));
+	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
 	rdp = rdp_new(instance);
 	instance->input = rdp->input;

@@ -352,14 +352,14 @@ typedef void (*pEventHandler)(void* context, wEventArgs* e);
 
 #define MAX_EVENT_HANDLERS	32
 
-struct _wEvent
+struct _wEventType
 {
 	const char* EventName;
 	wEventArgs EventArgs;
 	int EventHandlerCount;
 	pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
 };
-typedef struct _wEvent wEvent;
+typedef struct _wEventType wEventType;
 
 #define EventArgsInit(_event_args, _sender) \
 	memset(_event_args, 0, sizeof(*_event_args)); \
@@ -406,17 +406,16 @@ struct _wPubSub
 
 	int size;
 	int count;
-	wEvent* events;
+	wEventType* events;
 };
 typedef struct _wPubSub wPubSub;
 
 WINPR_API BOOL PubSub_Lock(wPubSub* pubSub);
 WINPR_API BOOL PubSub_Unlock(wPubSub* pubSub);
 
-WINPR_API wEvent* PubSub_Events(wPubSub* pubSub, int* count);
-WINPR_API wEvent* PubSub_FindEvent(wPubSub* pubSub, const char* EventName);
-
-WINPR_API void PubSub_Publish(wPubSub* pubSub, wEvent* events, int count);
+WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count);
+WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count);
+WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
 
 WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
 WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
