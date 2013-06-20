@@ -87,7 +87,8 @@ void mac_end_paint(rdpContext* context);
 void mac_save_state_info(freerdp* instance, rdpContext* context);
 void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
 void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
-int register_fds(int* fds, int count, freerdp* instance);
+int register_update_fds(freerdp* instance);
+int register_transport_fds(int* fds, int count, freerdp* instance);
 int invoke_draw_rect(rdpContext* context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
@@ -122,8 +123,6 @@ struct rgba_data
 
 @synthesize is_connected;
 
-//- (int) rdpConnect
-
 - (int) rdpStart:(rdpContext*) context
 {
 	int status;
@@ -143,17 +142,21 @@ struct rgba_data
 
     status = freerdp_client_start(context);
 	
-	if (status)
+    if (status)
 	{
-		freerdp_check_fds(context->instance);
-		[self setIs_connected:1];
-		return 0;
+        [self setIs_connected:0];
+        [self rdpConnectError];
+        return 1;
 	}
-	
-	[self setIs_connected:0];
-	[self rdpConnectError];
-	
-	return -1;
+	   
+    /* register update message queue with the RunLoop */
+    register_update_fds(context->instance);
+    
+    freerdp_check_fds(context->instance);
+
+    [self setIs_connected:1];
+    
+    return 0;
 }
 
 
@@ -592,12 +595,15 @@ struct rgba_data
 	
 	if (pixel_data)
 		free(pixel_data);
-	
-	if (run_loop_src != 0)
+
+    if (run_loop_src_update != 0)
+		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_update, kCFRunLoopDefaultMode);
+
+	if (run_loop_src_channels != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
 	
-	if (run_loop_src != 0)
-		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src, kCFRunLoopDefaultMode);
+	if (run_loop_src_transport != 0)
+		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_transport, kCFRunLoopDefaultMode);
     
     
 	freerdp_client_stop((rdpContext*) self->rdp_context);
@@ -913,29 +919,38 @@ BOOL mac_post_connect(freerdp* instance)
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 	
-	/* register file descriptors with the RunLoop */
-	if (!freerdp_get_fds(instance, rd_fds, &rd_count, 0, 0))
-	{
-		printf("mac_post_connect: freerdp_get_fds() failed!\n");
-	}
+    if (!instance->settings->AsyncTransport)
+    {
+        /* register file descriptors with the RunLoop */
+        if (!freerdp_get_fds(instance, rd_fds, &rd_count, 0, 0))
+        {
+            printf("mac_post_connect: freerdp_get_fds() failed!\n");
+        }
 	
-	for (index = 0; index < rd_count; index++)
-	{
-		fds[index] = (int)(long)rd_fds[index];
+        for (index = 0; index < rd_count; index++)
+        {
+            fds[index] = (int)(long)rd_fds[index];
+        }
+    
+        register_transport_fds(fds, rd_count, instance);
 	}
-	register_fds(fds, rd_count, instance);
-	
-	/* register channel manager file descriptors with the RunLoop */
-	if (!freerdp_channels_get_fds(instance->context->channels, instance, rd_fds, &rd_count, wr_fds, &wr_count))
-	{
-		printf("ERROR: freerdp_channels_get_fds() failed\n");
-	}
-	for (index = 0; index < rd_count; index++)
-	{
-		fds[index] = (int)(long)rd_fds[index];
-	}
-	
-	register_channel_fds(fds, rd_count, instance);
+    
+    
+    if (!instance->settings->AsyncTransport)
+    {
+        /* register channel manager file descriptors with the RunLoop */
+        if (!freerdp_channels_get_fds(instance->context->channels, instance, rd_fds, &rd_count, wr_fds, &wr_count))
+        {
+            printf("ERROR: freerdp_channels_get_fds() failed\n");
+        }
+        for (index = 0; index < rd_count; index++)
+        {
+            fds[index] = (int)(long)rd_fds[index];
+        }
+
+       	register_channel_fds(fds, rd_count, instance); 
+    }
+    
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
@@ -948,9 +963,10 @@ BOOL mac_post_connect(freerdp* instance)
 	
 	/* we want to be notified when window resizes */
 	[[NSNotificationCenter defaultCenter] addObserver:mfc->view selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
-	
+
 	return TRUE;
 }
+
 
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
@@ -1203,6 +1219,38 @@ void mac_end_paint(rdpContext* context)
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
+
+/** *********************************************************************
+ * called when data is available on a socket
+ ***********************************************************************/
+
+static void fd_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+{
+    int status;
+    wMessage message;
+    wMessageQueue* queue;
+    freerdp* instance = (freerdp*) info;
+    
+    status = 1;
+    queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+    
+    if (queue)
+    {
+        while (MessageQueue_Peek(queue, &message, TRUE))
+        {
+            status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
+            
+            if (!status)
+                break;
+        }
+        
+        register_update_fds(instance);
+    }
+    
+    CFRelease(fdref);
+}
+
+
 /** *********************************************************************
  * called when data is available on a socket
  ***********************************************************************/
@@ -1242,10 +1290,37 @@ void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
 }
 
 /** *********************************************************************
+ * setup callbacks for data availability on update message queue
+ ***********************************************************************/
+
+int register_update_fds(freerdp* instance)
+{
+    int fd_update_event;
+    HANDLE update_event;
+    CFFileDescriptorRef fdref;
+    CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
+    mfContext* mfc = (mfContext*) instance->context;
+    MRDPView* view = (MRDPView*) mfc->view;
+
+    if (instance->settings->AsyncUpdate)
+    {
+        update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+        fd_update_event = GetEventFileDescriptor(update_event);
+
+        fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_update_event, true, fd_activity_cb, &fd_context);
+        CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
+        view->run_loop_src_update = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_update, kCFRunLoopDefaultMode);
+    }
+
+    return 0;
+}
+
+/** *********************************************************************
  * setup callbacks for data availability on sockets
  ***********************************************************************/
 
-int register_fds(int* fds, int count, freerdp* instance)
+int register_transport_fds(int* fds, int count, freerdp* instance)
 {
 	int i;
 	CFSocketRef skt_ref;
@@ -1256,8 +1331,8 @@ int register_fds(int* fds, int count, freerdp* instance)
 	for (i = 0; i < count; i++)
 	{
 		skt_ref = CFSocketCreateWithNative(NULL, fds[i], kCFSocketReadCallBack, skt_activity_cb, &skt_context);
-		view->run_loop_src = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src, kCFRunLoopDefaultMode);
+		view->run_loop_src_transport = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
+		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_transport, kCFRunLoopDefaultMode);
 		CFRelease(skt_ref);
 	}
 	

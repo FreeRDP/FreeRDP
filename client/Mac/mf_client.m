@@ -44,7 +44,23 @@ void mfreerdp_client_global_uninit()
 
 int mfreerdp_client_start(rdpContext* context)
 {
-    return freerdp_connect(context->instance);
+    int status;
+    status = freerdp_connect(context->instance);
+
+    /* Connection succeeded. --authonly ? */
+    if (context->instance->settings->AuthenticationOnly)
+    {
+        freerdp_disconnect(context->instance);
+        fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+        return -1;
+    }
+
+    if (!status)
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
 int mfreerdp_client_stop(rdpContext* context)
@@ -84,6 +100,11 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
     settings = instance->settings;
 
+    settings->AsyncUpdate = TRUE;
+    // TODO    settings->AsyncInput = TRUE;
+    settings->AsyncChannels = TRUE;
+    settings->AsyncTransport = TRUE;
+
     settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
     settings->OsMinorType = OSMINORTYPE_MACINTOSH;
 
@@ -121,11 +142,6 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-    mfContext* mfc = (mfContext*) context;
-
-    if (context)
-    {
-    }
 }
 
 void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)

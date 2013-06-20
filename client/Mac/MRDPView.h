@@ -41,8 +41,10 @@
 
 @interface MRDPView : NSView
 {
-	CFRunLoopSourceRef run_loop_src;
+	CFRunLoopSourceRef run_loop_src_transport;
 	CFRunLoopSourceRef run_loop_src_channels;
+    CFRunLoopSourceRef run_loop_src_update;
+    
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
