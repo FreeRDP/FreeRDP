@@ -741,7 +741,10 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	if (context->priv->UseThreads)
 	{
 		for (i = 0; i < message->num_tiles; i++)
+		{
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+			CloseThreadpoolWork(work_objects[i]);
+		}
 
 		free(work_objects);
 		free(params);
