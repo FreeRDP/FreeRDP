@@ -78,17 +78,13 @@ void mf_Pointer_SetDefault(rdpContext* context);
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
-int mac_context_new(freerdp* instance, rdpContext* context);
-void mac_context_free(freerdp* instance, rdpContext* context);
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
 void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
 void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
 void mac_save_state_info(freerdp* instance, rdpContext* context);
-void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
 void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
 int register_update_fds(freerdp* instance);
-int register_transport_fds(int* fds, int count, freerdp* instance);
 int invoke_draw_rect(rdpContext* context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
@@ -132,9 +128,9 @@ struct rgba_data
 	mfc = (mfContext*) context;
 	settings = context->settings;
     mfc->view = self;
-    self->rdp_instance = context->instance;
-    self->rdp_context = mfc;
-    
+    rdp_instance = context->instance;
+    rdp_context = mfc;
+
     context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->ReceiveChannelData = receive_channel_data;
@@ -601,10 +597,6 @@ struct rgba_data
 
 	if (run_loop_src_channels != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
-	
-	if (run_loop_src_transport != 0)
-		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_transport, kCFRunLoopDefaultMode);
-    
     
 	freerdp_client_stop((rdpContext*) self->rdp_context);
     
@@ -642,16 +634,6 @@ struct rgba_data
 /************************************************************************
  instance methods
  ************************************************************************/
-
-/** *********************************************************************
- * save state info for use by other methods later on
- ***********************************************************************/
-
-- (void) saveStateInfo:(void *) instance :(void *) context
-{
-	rdp_instance = instance;
-	rdp_context = context;
-}
 
 /** *********************************************************************
  * double check that a mouse event occurred in our client view
@@ -918,23 +900,6 @@ BOOL mac_post_connect(freerdp* instance)
 
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
-	
-    if (!instance->settings->AsyncTransport)
-    {
-        /* register file descriptors with the RunLoop */
-        if (!freerdp_get_fds(instance, rd_fds, &rd_count, 0, 0))
-        {
-            printf("mac_post_connect: freerdp_get_fds() failed!\n");
-        }
-	
-        for (index = 0; index < rd_count; index++)
-        {
-            fds[index] = (int)(long)rd_fds[index];
-        }
-    
-        register_transport_fds(fds, rd_count, instance);
-	}
-    
     
     if (!instance->settings->AsyncChannels)
     {
@@ -1133,29 +1098,6 @@ void mf_Pointer_SetDefault(rdpContext* context)
 }
 
 /** *********************************************************************
- * create a new context - but all we really need to do is save state info
- ***********************************************************************/
-
-int mac_context_new(freerdp* instance, rdpContext* context)
-{
-    mfContext* mfc = (mfContext*) context;
-    MRDPView* view = (MRDPView*) mfc->view;
-    
-	[view saveStateInfo:instance :context];
-	context->channels = freerdp_channels_new();
-    return 0;
-}
-
-/** *********************************************************************
- * we don't do much over here
- ***********************************************************************/
-
-void mac_context_free(freerdp* instance, rdpContext* context)
-{
-	
-}
-
-/** *********************************************************************
  * clip drawing surface so nothing is drawn outside specified bounds
  ***********************************************************************/
 
@@ -1250,21 +1192,6 @@ static void fd_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackType
     CFRelease(fdref);
 }
 
-
-/** *********************************************************************
- * called when data is available on a socket
- ***********************************************************************/
-
-void skt_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
-                     CFDataRef address, const void* data, void* info)
-{
-	if (!freerdp_check_fds(info))
-	{
-		/* lost connection or did not connect */
-		[NSApp terminate:nil];
-	}
-}
-
 /** *********************************************************************
  * called when data is available on a virtual channel
  ***********************************************************************/
@@ -1314,29 +1241,6 @@ int register_update_fds(freerdp* instance)
     }
 
     return 0;
-}
-
-/** *********************************************************************
- * setup callbacks for data availability on sockets
- ***********************************************************************/
-
-int register_transport_fds(int* fds, int count, freerdp* instance)
-{
-	int i;
-	CFSocketRef skt_ref;
-	CFSocketContext skt_context = { 0, instance, NULL, NULL, NULL };
-	mfContext* mfc = (mfContext*) instance->context;
-    MRDPView* view = (MRDPView*) mfc->view;
-    
-	for (i = 0; i < count; i++)
-	{
-		skt_ref = CFSocketCreateWithNative(NULL, fds[i], kCFSocketReadCallBack, skt_activity_cb, &skt_context);
-		view->run_loop_src_transport = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_transport, kCFRunLoopDefaultMode);
-		CFRelease(skt_ref);
-	}
-	
-	return 0;
 }
 
 /** *********************************************************************

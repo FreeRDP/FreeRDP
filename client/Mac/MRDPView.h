@@ -41,7 +41,6 @@
 
 @interface MRDPView : NSView
 {
-	CFRunLoopSourceRef run_loop_src_transport;
 	CFRunLoopSourceRef run_loop_src_channels;
     CFRunLoopSourceRef run_loop_src_update;
     
@@ -87,10 +86,9 @@
 	int is_connected;
 }
 
-- (int) rdpStart :(rdpContext*) context;
+- (int)  rdpStart :(rdpContext*) context;
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
-- (void) saveStateInfo :(void *) instance :(void *) context;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
 - (void) setViewSize : (int) width : (int) height;
