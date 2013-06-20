@@ -861,6 +861,8 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{
+        SetEvent(transport->stopEvent);
+        
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
 
