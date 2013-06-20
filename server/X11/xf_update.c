@@ -80,12 +80,13 @@ void* xf_update_thread(void* param)
 					ResetEvent(xfp->updateSentEvent);
 				}
 			}
+#ifdef WITH_XFIXES
 			else if (xevent.type == xfi->xfixes_notify_event)
 			{
 				XFixesCursorImage* ci = XFixesGetCursorImage(xfi->display);
-
 				XFree(ci);
 			}
+#endif
 		}
 
 		end = GetTickCount();
