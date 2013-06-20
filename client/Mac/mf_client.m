@@ -88,14 +88,6 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
     mfc = (mfContext*) instance->context;
 
-    // TODO
-//    instance->PreConnect = mf_pre_connect;
-//    instance->PostConnect = mf_post_connect;
-//    instance->Authenticate = mf_authenticate;
-//    instance->VerifyCertificate = mf_verify_certificate;
-//    instance->LogonErrorInfo = mf_logon_error_info;
-//    instance->ReceiveChannelData = mf_receive_channel_data;
-
     context->channels = freerdp_channels_new();
 
     settings = instance->settings;
@@ -104,6 +96,7 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
     // TODO    settings->AsyncInput = TRUE;
     settings->AsyncChannels = TRUE;
     settings->AsyncTransport = TRUE;
+    settings->RedirectClipboard = TRUE;
 
     settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
     settings->OsMinorType = OSMINORTYPE_MACINTOSH;

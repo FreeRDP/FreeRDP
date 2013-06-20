@@ -133,8 +133,13 @@ struct rgba_data
 
     context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
-	context->instance->ReceiveChannelData = receive_channel_data;
+    context->instance->ReceiveChannelData = mac_receive_channel_data;
 	context->instance->Authenticate = mac_authenticate;
+
+// TODO
+//    instance->Authenticate = mf_authenticate;
+//    instance->VerifyCertificate = mf_verify_certificate;
+//    instance->LogonErrorInfo = mf_logon_error_info;
 
     status = freerdp_client_start(context);
 	
@@ -1266,7 +1271,7 @@ int register_channels_fds(freerdp* instance)
  * called when channel data is available
  ***********************************************************************/
 
-int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size)
+int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, chan_id, data, size, flags, total_size);
 }
