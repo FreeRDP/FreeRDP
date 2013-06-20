@@ -83,7 +83,7 @@ void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
 void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
 void mac_save_state_info(freerdp* instance, rdpContext* context);
-void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType, CFDataRef address, const void* data, void* info);
+void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
 int register_update_fds(freerdp* instance);
 int invoke_draw_rect(rdpContext* context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
@@ -148,6 +148,9 @@ struct rgba_data
     /* register update message queue with the RunLoop */
     register_update_fds(context->instance);
     
+    /* register channel events with the RunLoop */
+    register_channels_fds(context->instance);
+
     freerdp_check_fds(context->instance);
 
     [self setIs_connected:1];
@@ -181,6 +184,8 @@ struct rgba_data
  * called when MRDPView has been successfully created from the NIB
  ***********************************************************************/
 
+//TODO - Expose this code as a public method, because awakeFromNib
+//       won't be called if the view is created dynamically
 - (void) awakeFromNib
 {
 	// store our window dimensions
@@ -901,22 +906,7 @@ BOOL mac_post_connect(freerdp* instance)
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
     
-    if (!instance->settings->AsyncChannels)
-    {
-        /* register channel manager file descriptors with the RunLoop */
-        if (!freerdp_channels_get_fds(instance->context->channels, instance, rd_fds, &rd_count, wr_fds, &wr_count))
-        {
-            printf("ERROR: freerdp_channels_get_fds() failed\n");
-        }
-        for (index = 0; index < rd_count; index++)
-        {
-            fds[index] = (int)(long)rd_fds[index];
-        }
-
-       	register_channel_fds(fds, rd_count, instance); 
-    }
-    
-	freerdp_channels_post_connect(instance->context->channels, instance);
+    freerdp_channels_post_connect(instance->context->channels, instance);
 
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	view->pasteboard_wr = [NSPasteboard generalPasteboard];
@@ -1166,7 +1156,7 @@ void mac_end_paint(rdpContext* context)
  * called when data is available on a socket
  ***********************************************************************/
 
-static void fd_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
 {
     int status;
     wMessage message;
@@ -1185,35 +1175,37 @@ static void fd_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackType
             if (!status)
                 break;
         }
-        
-        register_update_fds(instance);
     }
     
     CFRelease(fdref);
+    register_update_fds(instance);
 }
 
 /** *********************************************************************
  * called when data is available on a virtual channel
  ***********************************************************************/
 
-void channel_activity_cb(CFSocketRef s, CFSocketCallBackType callbackType,
-			 CFDataRef address, const void* data, void* info)
+void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
 {
-	wMessage* event;
+    wMessage* event;
 	freerdp* instance = (freerdp*) info;
-	
-	freerdp_channels_check_fds(instance->context->channels, instance);
-	event = freerdp_channels_pop_event(instance->context->channels);
-	
-	if (event)
-	{
-		switch (GetMessageClass(event->id))
-		{
-			case CliprdrChannel_Class:
-				process_cliprdr_event(instance, event);
-				break;
-		}
-	}
+
+    freerdp_channels_process_pending_messages(instance);
+    event = freerdp_channels_pop_event(instance->context->channels);
+    if (event)
+    {
+        switch (GetMessageClass(event->id))
+        {
+            case CliprdrChannel_Class:
+                process_cliprdr_event(instance, event);
+                break;
+        }
+
+        freerdp_event_free(event);
+    }
+
+    CFRelease(fdref);
+    register_channels_fds(instance);
 }
 
 /** *********************************************************************
@@ -1234,7 +1226,7 @@ int register_update_fds(freerdp* instance)
         update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
         fd_update_event = GetEventFileDescriptor(update_event);
 
-        fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_update_event, true, fd_activity_cb, &fd_context);
+        fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_update_event, true, update_activity_cb, &fd_context);
         CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
         view->run_loop_src_update = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_update, kCFRunLoopDefaultMode);
@@ -1247,23 +1239,27 @@ int register_update_fds(freerdp* instance)
  * setup callbacks for data availability on channels
  ***********************************************************************/
 
-int register_channel_fds(int* fds, int count, freerdp* instance)
+int register_channels_fds(freerdp* instance)
 {
-	int i;
-	CFSocketRef skt_ref;
-	CFSocketContext skt_context = { 0, instance, NULL, NULL, NULL };
+    int fd_channel_event;
+    HANDLE channel_event;
+    CFFileDescriptorRef fdref;
+    CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
     mfContext* mfc = (mfContext*) instance->context;
-	MRDPView* view = (MRDPView*) mfc->view;
-    
-	for (i = 0; i < count; i++)
-	{
-		skt_ref = CFSocketCreateWithNative(NULL, fds[i], kCFSocketReadCallBack, channel_activity_cb, &skt_context);
-		view->run_loop_src_channels = CFSocketCreateRunLoopSource(NULL, skt_ref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_channels, kCFRunLoopDefaultMode);
-		CFRelease(skt_ref);
-	}
-	
-	return 0;
+    MRDPView* view = (MRDPView*) mfc->view;
+
+    if (instance->settings->AsyncChannels)
+    {
+        channel_event = freerdp_channels_get_event_handle(instance);
+        fd_channel_event = GetEventFileDescriptor(channel_event);
+
+        fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_channel_event, true, channel_activity_cb, &fd_context);
+        CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
+        view->run_loop_src_channels = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_channels, kCFRunLoopDefaultMode);
+    }
+
+    return 0;
 }
 
 /** *********************************************************************
@@ -1485,8 +1481,6 @@ void process_cliprdr_event(freerdp* instance, wMessage* event)
 				printf("process_cliprdr_event: unknown event type %d\n", GetMessageType(event->id));
 				break;
 		}
-		
-		freerdp_event_free(event);
 	}
 }
 
