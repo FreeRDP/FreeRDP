@@ -1185,7 +1185,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	if (settings->instance)
+	{
+		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	}
 
 	return -1;
 }
@@ -1821,7 +1824,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	if (settings->instance)
+	{
+		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	}
 	
 	return 0;
 }
@@ -1857,7 +1863,10 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	if (settings->instance)
+	{
+		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	}
 	
 	return 0;
 }
@@ -2189,7 +2198,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	if (settings->instance)
+	{
+		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+	}
 
 	return 0;
 }
