@@ -936,7 +936,7 @@ BOOL mac_post_connect(freerdp* instance)
 	}
     
     
-    if (!instance->settings->AsyncTransport)
+    if (!instance->settings->AsyncChannels)
     {
         /* register channel manager file descriptors with the RunLoop */
         if (!freerdp_channels_get_fds(instance->context->channels, instance, rd_fds, &rd_count, wr_fds, &wr_count))
