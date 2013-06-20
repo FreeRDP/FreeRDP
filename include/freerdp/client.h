@@ -71,7 +71,6 @@ struct rdp_client_context
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 };
-typedef struct rdp_client_context rdpClientContext;
 
 /* Common client functions */
 
