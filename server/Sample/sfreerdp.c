@@ -41,6 +41,10 @@
 
 #include "sfreerdp.h"
 
+#define SAMPLE_SERVER_USE_CLIENT_RESOLUTION 0
+#define SAMPLE_SERVER_DEFAULT_WIDTH 1024
+#define SAMPLE_SERVER_DEFAULT_HEIGHT 768
+
 static char* test_pcap_file = NULL;
 static BOOL test_dump_rfx_realtime = TRUE;
 
@@ -48,8 +52,8 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
+	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->nsc_context = nsc_context_new();
@@ -473,6 +477,17 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
+#if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
+	context->rfx_context->width = client->settings->DesktopWidth;
+	context->rfx_context->height = client->settings->DesktopHeight;
+	printf("Using resolution requested by client.\n");
+#else
+	client->settings->DesktopWidth = context->rfx_context->width;
+	client->settings->DesktopHeight = context->rfx_context->height;
+	printf("Resizing client to %dx%d\n", client->settings->DesktopWidth, client->settings->DesktopHeight);
+	client->update->DesktopResize(client->update->context);
+#endif
+
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
@@ -666,6 +681,8 @@ static void* test_peer_mainloop(void* arg)
 
 	client->update->RefreshRect = tf_peer_refresh_rect;
 	client->update->SuppressOutput = tf_peer_suppress_output;
+
+	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
 
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
