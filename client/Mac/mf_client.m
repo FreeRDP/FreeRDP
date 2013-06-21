@@ -67,6 +67,13 @@ int mfreerdp_client_stop(rdpContext* context)
 {
     mfContext* mfc = (mfContext*) context;
 
+    if (context->settings->AsyncUpdate)
+    {
+        wMessageQueue* queue;
+        queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+        MessageQueue_PostQuit(queue, 0);
+    }
+
     if (context->settings->AsyncInput)
     {
         wMessageQueue* queue;

@@ -83,8 +83,11 @@ void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
 void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
 void mac_save_state_info(freerdp* instance, rdpContext* context);
-void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
+static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
+static void input_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
+static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
 int register_update_fds(freerdp* instance);
+int register_input_fds(freerdp* instance);
 int invoke_draw_rect(rdpContext* context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
@@ -152,7 +155,10 @@ struct rgba_data
 	   
     /* register update message queue with the RunLoop */
     register_update_fds(context->instance);
-    
+
+    /* register update message queue with the RunLoop */
+    register_input_fds(context->instance);
+
     /* register channel events with the RunLoop */
     register_channels_fds(context->instance);
 
@@ -605,6 +611,9 @@ struct rgba_data
     if (run_loop_src_update != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_update, kCFRunLoopDefaultMode);
 
+    if (run_loop_src_input != 0)
+        CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_input, kCFRunLoopDefaultMode);
+
 	if (run_loop_src_channels != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
     
@@ -785,13 +794,6 @@ struct rgba_data
  ***********************************************************************/
 
 /** *********************************************************************
- * connect to RDP server
- *
- * @return 0 on success, -1 on failure
- ***********************************************************************/
-
-
-/** *********************************************************************
  * a callback given to freerdp_connect() to process the pre-connect operations.
  *
  * @param inst  - pointer to a rdp_freerdp struct that contains the connection's parameters, and
@@ -812,6 +814,7 @@ BOOL mac_pre_connect(freerdp* instance)
 	//instance->update->BitmapUpdate = mac_bitmap_update;
 	
     mfContext *mfc = (mfContext*) instance->context;
+    MRDPView* view = (MRDPView*) mfc->view;
 
     settings = instance->settings;
     if (!settings->ServerHostname)
@@ -861,7 +864,7 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
     
-	[((MRDPView*)mfc->view) setViewSize:instance->settings->DesktopWidth :instance->settings->DesktopHeight];
+    [view setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
@@ -1158,7 +1161,7 @@ void mac_end_paint(rdpContext* context)
 
 
 /** *********************************************************************
- * called when data is available on a socket
+ * called when update data is available
  ***********************************************************************/
 
 static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
@@ -1187,10 +1190,41 @@ static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBack
 }
 
 /** *********************************************************************
+ * called when input data is available
+ ***********************************************************************/
+
+static void input_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+{
+    int status;
+    wMessage message;
+    wMessageQueue* queue;
+    freerdp* instance = (freerdp*) info;
+
+    status = 1;
+    queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+
+    if (queue)
+    {
+        while (MessageQueue_Peek(queue, &message, TRUE))
+        {
+            fprintf(stderr, "input_activity_cb: message %d\n", message.id);
+
+            status = freerdp_message_queue_process_message(instance, FREERDP_INPUT_MESSAGE_QUEUE, &message);
+
+            if (!status)
+                break;
+        }
+    }
+
+    CFRelease(fdref);
+    register_input_fds(instance);
+}
+
+/** *********************************************************************
  * called when data is available on a virtual channel
  ***********************************************************************/
 
-void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
 {
     wMessage* event;
 	freerdp* instance = (freerdp*) info;
@@ -1235,6 +1269,33 @@ int register_update_fds(freerdp* instance)
         CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
         view->run_loop_src_update = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_update, kCFRunLoopDefaultMode);
+    }
+
+    return 0;
+}
+
+/** *********************************************************************
+ * setup callbacks for data availability on input message queue
+ ***********************************************************************/
+
+int register_input_fds(freerdp* instance)
+{
+    int fd_input_event;
+    HANDLE input_event;
+    CFFileDescriptorRef fdref;
+    CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
+    mfContext* mfc = (mfContext*) instance->context;
+    MRDPView* view = (MRDPView*) mfc->view;
+
+    if (instance->settings->AsyncInput)
+    {
+        input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+        fd_input_event = GetEventFileDescriptor(input_event);
+
+        fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_input_event, true, input_activity_cb, &fd_context);
+        CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
+        view->run_loop_src_input = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_input, kCFRunLoopDefaultMode);
     }
 
     return 0;

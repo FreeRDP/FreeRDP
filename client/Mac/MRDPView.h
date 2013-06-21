@@ -43,7 +43,8 @@
 {
 	CFRunLoopSourceRef run_loop_src_channels;
     CFRunLoopSourceRef run_loop_src_update;
-    
+    CFRunLoopSourceRef run_loop_src_input;
+
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
