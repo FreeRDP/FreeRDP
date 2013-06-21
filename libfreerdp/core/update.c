@@ -724,11 +724,15 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
+	update_force_flush(context);
+
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surface_bits_command->bitmapDataLength);
 	update_write_surfcmd_surface_bits_header(s, surface_bits_command);
 	Stream_Write(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
+
+	update_force_flush(context);
 }
 
 static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -736,9 +740,13 @@ static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
+	update_force_flush(context);
+
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	update_write_surfcmd_frame_marker(s, surface_frame_marker->frameAction, surface_frame_marker->frameId);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
+
+	update_force_flush(context);
 }
 
 static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)

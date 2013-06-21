@@ -448,6 +448,8 @@ BOOL rdp_read_order_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 	UINT16 orderFlags;
 	BYTE orderSupport[32];
 	UINT16 orderSupportExFlags;
+	BOOL BitmapCacheV3Enabled = FALSE;
+	BOOL FrameMarkerCommandEnabled = FALSE;
 
 	if (length < 88)
 		return FALSE;
@@ -475,6 +477,23 @@ BOOL rdp_read_order_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 		if (orderSupport[i] == FALSE)
 			settings->OrderSupport[i] = FALSE;
 	}
+
+	if (orderFlags & ORDER_FLAGS_EXTRA_SUPPORT)
+	{
+		if (orderSupportExFlags & CACHE_BITMAP_V3_SUPPORT)
+			BitmapCacheV3Enabled = TRUE;
+
+		if (orderSupportExFlags & ALTSEC_FRAME_MARKER_SUPPORT)
+			FrameMarkerCommandEnabled = TRUE;
+	}
+
+	if (settings->BitmapCacheV3Enabled && BitmapCacheV3Enabled)
+		settings->BitmapCacheVersion = 3;
+	else
+		settings ->BitmapCacheV3Enabled = FALSE;
+
+	if (settings->FrameMarkerCommandEnabled && !FrameMarkerCommandEnabled)
+		settings->FrameMarkerCommandEnabled = FALSE;
 
 	return TRUE;
 }
