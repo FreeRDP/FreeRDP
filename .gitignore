@@ -84,7 +84,7 @@ xcode
 *.dir
 Release
 Win32
-build/
+build*/
 *.orig
 
 default.log
