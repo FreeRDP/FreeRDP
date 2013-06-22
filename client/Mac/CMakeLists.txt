@@ -34,7 +34,7 @@ file(GLOB ${MODULE_NAME}_SRC *.c *.m)
 # header files
 file(GLOB ${MODULE_NAME}_HEADERS *.h)
 
-message(WARNING "public headers:" ${${MODULE_NAME}_HEADERS})
+#message(WARNING "public headers:" ${${MODULE_NAME}_HEADERS})
 
 # Include XIB file in Xcode resources. 
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
@@ -46,7 +46,7 @@ add_library(${MODULE_NAME}
 	SHARED
 	../common/client.c
 	${${MODULE_NAME}_SRC}
-    ${${MODULE_NAME}_HEADERS}
+	${${MODULE_NAME}_HEADERS}
 	${${MODULE_NAME}_RESOURCES})
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
