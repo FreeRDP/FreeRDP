@@ -64,22 +64,22 @@
 	int argc;
 	char** argv = nil;
 
-	NSArray *args = [[NSProcessInfo processInfo] arguments];
+	NSArray* args = [[NSProcessInfo processInfo] arguments];
 
 	argc = (int) [args count];
-	argv = malloc(sizeof(char *) * argc);
+	argv = malloc(sizeof(char*) * argc);
 	
 	i = 0;
 	
-	for (NSString * str in args)
+	for (NSString* str in args)
 	{
 		len = (int) ([str length] + 1);
-		cptr = (char *) malloc(len);
+		cptr = (char*) malloc(len);
 		strcpy(cptr, [str UTF8String]);
 		argv[i++] = cptr;
 	}
 	
-	status = freerdp_client_parse_command_line((rdpContext*) context, argc, argv);
+	status = freerdp_client_parse_command_line(context, argc, argv);
 
 	return status;
 }
@@ -99,7 +99,7 @@
 
 - (void) ReleaseContext
 {
-	freerdp_client_context_free((rdpContext*) context);
+	freerdp_client_context_free(context);
 	context = nil;
 }
 

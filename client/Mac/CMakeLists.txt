@@ -1,9 +1,7 @@
 project(MacFreeRDP-library)
 
-# add directory for App
-add_subdirectory(cli)
-
 set(MODULE_NAME "MacFreeRDP-library")
+set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC-LIB")
 
 # Import frameworks
@@ -14,11 +12,11 @@ find_library(APPKIT_LIBRARY AppKit)
 mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
 set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY})
 
-set(MACOSX_BUNDLE_INFO_STRING "MacFreeRDP-library")
+set(MACOSX_BUNDLE_INFO_STRING "${MODULE_OUTPUT_NAME}")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.mac")
 set(MACOSX_BUNDLE_BUNDLE_IDENTIFIER "FreeRDP-library.Mac")
 set(MACOSX_BUNDLE_LONG_VERSION_STRING "MacFreeRDP library Version 1.1")
-set(MACOSX_BUNDLE_BUNDLE_NAME "MacFreeRDP-library")
+set(MACOSX_BUNDLE_BUNDLE_NAME "${MODULE_OUTPUT_NAME}")
 set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.1.0)
 set(MACOSX_BUNDLE_BUNDLE_VERSION 1.1.0)
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2013. All Rights Reserved.")
@@ -34,13 +32,11 @@ file(GLOB ${MODULE_NAME}_SRC *.c *.m)
 # header files
 file(GLOB ${MODULE_NAME}_HEADERS *.h)
 
-#message(WARNING "public headers:" ${${MODULE_NAME}_HEADERS})
-
 # Include XIB file in Xcode resources. 
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
 	set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${${MODULE_NAME}_XIBS})
-endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
+endif()
 
 add_library(${MODULE_NAME}
 	SHARED
@@ -48,6 +44,8 @@ add_library(${MODULE_NAME}
 	${${MODULE_NAME}_SRC}
 	${${MODULE_NAME}_HEADERS}
 	${${MODULE_NAME}_RESOURCES})
+
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}")
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
 SET_TARGET_PROPERTIES(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
@@ -110,22 +108,25 @@ if (${BUILD_SHARED_LIBS})
 					"$<TARGET_FILE:${LIB}>"
 					"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
 			COMMENT "Copying ${LIB} to output directory"
-			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>" "@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>" "${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/${MODULE_NAME}"
+			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
+				"@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/${MODULE_NAME}"
 			COMMENT Setting install name for ${LIB}
-			COMMAND "${CMAKE_COMMAND}" -E echo install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>" "@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>" "${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/${MODULE_NAME}"
-			)
+			COMMAND "${CMAKE_COMMAND}" -E echo install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
+				"@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/${MODULE_NAME}")
 	endforeach()
 
 	# Call install_name_tool to reassign the library install names in dependent libraries
 	foreach(DEST ${DEPENDENCIES})
-	foreach(LIB ${DEPENDENCIES})
-		# message("adding post-build dependency: ${LIB}")
-		add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>" "@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>" "${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${DEST}>"
-			COMMENT Setting install name for ${LIB} in module ${DEST}
-	)
-
-	endforeach()
+		foreach(LIB ${DEPENDENCIES})
+			# message("adding post-build dependency: ${LIB}")
+			add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+				COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
+					"@executable_path/../Frameworks/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
+					"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Contents/$<TARGET_FILE_NAME:${DEST}>"
+				COMMENT Setting install name for ${LIB} in module ${DEST})
+		endforeach()
 	endforeach()
 
 endif()
@@ -138,12 +139,12 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 	# skip generation of this project
 	find_program(IBTOOL ibtool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
 	if (${IBTOOL} STREQUAL "IBTOOL-NOTFOUND")
-	  message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with 
-						the Apple developer tools. The default system paths were searched in addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
+		message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with 
+				the Apple developer tools. The default system paths were searched in addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
 	endif()
 
 	# Make sure the 'Resources' Directory is correctly created before we build
-	add_custom_command (TARGET ${MODULE_NAME} PRE_BUILD
+	add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD
 						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.app/Contents/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
@@ -159,17 +160,15 @@ endif()
 
 # Copy the public header files into the framework
 foreach(HEADER ${${MODULE_NAME}_HEADERS})
-        # message("adding post-build dependency: ${LIB}")
-        add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-            COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/
-            COMMENT Copying public header files to ${MODULE_NAME}
-)
-
+	# message("adding post-build dependency: ${LIB}")
+	add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+		COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/
+		COMMENT Copying public header files to ${MODULE_NAME})
 endforeach()
 
 # Copy the FreeRDP header files into the framework
 add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-        COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/freerdp
-        COMMENT Copying FreeRDP header files to ${MODULE_NAME}
+	COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_NAME}.framework/Headers/freerdp
+	COMMENT Copying FreeRDP header files to ${MODULE_NAME})
 
-  )
+add_subdirectory(cli)
