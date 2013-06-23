@@ -14,8 +14,9 @@
 {
 @public
 	NSWindow* window;
-    rdpContext* context;
-	MRDPView* mrdpView;}
+	rdpContext* context;
+	MRDPView* mrdpView;
+}
 
 @property (assign) IBOutlet NSWindow *window;
 @property (assign) rdpContext *context;

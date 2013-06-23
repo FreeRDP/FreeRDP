@@ -41,6 +41,11 @@ DEFINE_EVENT_BEGIN(ResizeWindow)
 	int width;
 	int height;
 DEFINE_EVENT_END(ResizeWindow)
+	
+DEFINE_EVENT_BEGIN(EmbedWindow)
+	BOOL embed;
+	void* handle;
+DEFINE_EVENT_END(EmbedWindow)
 
 DEFINE_EVENT_BEGIN(ErrorInfo)
 	UINT32 code;

@@ -32,7 +32,6 @@
 
 void mfreerdp_client_global_init()
 {
-//    setlocale(LC_ALL, "");
 	freerdp_handle_signals();
 	freerdp_channels_global_init();
 }
@@ -44,69 +43,62 @@ void mfreerdp_client_global_uninit()
 
 int mfreerdp_client_start(rdpContext* context)
 {
-    int status;
-    status = freerdp_connect(context->instance);
+	int status;
 
-    /* Connection succeeded. --authonly ? */
-    if (context->instance->settings->AuthenticationOnly)
-    {
-        freerdp_disconnect(context->instance);
-        fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
-        return -1;
-    }
+	status = freerdp_connect(context->instance);
 
-    if (!status)
-    {
-        return -1;
-    }
+	if (!status)
+	{
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 int mfreerdp_client_stop(rdpContext* context)
 {
-    mfContext* mfc = (mfContext*) context;
+	mfContext* mfc = (mfContext*) context;
 
-    if (context->settings->AsyncUpdate)
-    {
-        wMessageQueue* queue;
-        queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-        MessageQueue_PostQuit(queue, 0);
-    }
+	if (context->settings->AsyncUpdate)
+	{
+		wMessageQueue* queue;
+		queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(queue, 0);
+	}
 
-    if (context->settings->AsyncInput)
-    {
-        wMessageQueue* queue;
-        queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-        MessageQueue_PostQuit(queue, 0);
-    }
-    else
-    {
-        mfc->disconnect = TRUE;
-    }
+	if (context->settings->AsyncInput)
+	{
+		wMessageQueue* queue;
+		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(queue, 0);
+	}
+	else
+	{
+		mfc->disconnect = TRUE;
+	}
 
-    return 0;
+	return 0;
 }
 
 int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
-    mfContext* mfc;
-    rdpSettings* settings;
+	mfContext* mfc;
+	rdpSettings* settings;
 
-    mfc = (mfContext*) instance->context;
+	mfc = (mfContext*) instance->context;
 
-    context->channels = freerdp_channels_new();
+	context->channels = freerdp_channels_new();
 
-    settings = instance->settings;
+	settings = instance->settings;
 
-    settings->AsyncUpdate = TRUE;
-    // TODO    settings->AsyncInput = TRUE;
-    settings->AsyncChannels = TRUE;
-    settings->AsyncTransport = TRUE;
-    settings->RedirectClipboard = TRUE;
+	settings->AsyncUpdate = TRUE;
+	// TODO    settings->AsyncInput = TRUE;
+	settings->AsyncChannels = TRUE;
+	settings->AsyncTransport = TRUE;
+	settings->RedirectClipboard = TRUE;
 
-    settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
-    settings->OsMinorType = OSMINORTYPE_MACINTOSH;
+	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
+	settings->OsMinorType = OSMINORTYPE_MACINTOSH;
 
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
@@ -137,7 +129,7 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-    return 0;
+	return 0;
 }
 
 void mfreerdp_client_free(freerdp* instance, rdpContext* context)
@@ -146,44 +138,42 @@ void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 {
-    int width, height;
-    rdpInput* input = cfc->instance->input;
-    rdpSettings* settings = cfc->instance->settings;
+	int width, height;
+	rdpInput* input = cfc->instance->input;
+	rdpSettings* settings = cfc->instance->settings;
 
-    width = settings->DesktopWidth;
-    height = settings->DesktopHeight;
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
 
-    if (x < 0)
-        x = 0;
+	if (x < 0)
+		x = 0;
 
-//    if (x >= width)
-    x = width - 1;
+	//    if (x >= width)
+	x = width - 1;
 
-    if (y < 0)
-        y = 0;
+	if (y < 0)
+		y = 0;
 
-    if (y >= height)
-        y = height - 1;
+	if (y >= height)
+		y = height - 1;
 
-    input->MouseEvent(input, flags, x, y);
+	input->MouseEvent(input, flags, x, y);
 }
-
-
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
-    pEntryPoints->Version = 1;
-    pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
+	pEntryPoints->Version = 1;
+	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 
-    pEntryPoints->GlobalInit = mfreerdp_client_global_init;
-    pEntryPoints->GlobalUninit = mfreerdp_client_global_uninit;
+	pEntryPoints->GlobalInit = mfreerdp_client_global_init;
+	pEntryPoints->GlobalUninit = mfreerdp_client_global_uninit;
 
-    pEntryPoints->ContextSize = sizeof(mfContext);
-    pEntryPoints->ClientNew = mfreerdp_client_new;
-    pEntryPoints->ClientFree = mfreerdp_client_free;
+	pEntryPoints->ContextSize = sizeof(mfContext);
+	pEntryPoints->ClientNew = mfreerdp_client_new;
+	pEntryPoints->ClientFree = mfreerdp_client_free;
 
-    pEntryPoints->ClientStart = mfreerdp_client_start;
-    pEntryPoints->ClientStop = mfreerdp_client_stop;
+	pEntryPoints->ClientStart = mfreerdp_client_start;
+	pEntryPoints->ClientStop = mfreerdp_client_stop;
 
-    return 0;
+	return 0;
 }
