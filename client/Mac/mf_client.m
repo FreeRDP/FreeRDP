@@ -43,14 +43,11 @@ void mfreerdp_client_global_uninit()
 
 int mfreerdp_client_start(rdpContext* context)
 {
-	int status;
+	MRDPView* view;
+	mfContext* mfc = (mfContext*) context;
 
-	status = freerdp_connect(context->instance);
-
-	if (!status)
-	{
-		return -1;
-	}
+	view = (MRDPView*) mfc->view;
+	[view rdpStart:context];
 
 	return 0;
 }
@@ -134,6 +131,7 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+
 }
 
 void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
@@ -148,7 +146,6 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 	if (x < 0)
 		x = 0;
 
-	//    if (x >= width)
 	x = width - 1;
 
 	if (y < 0)

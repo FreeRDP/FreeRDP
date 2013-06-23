@@ -42,8 +42,8 @@
 @interface MRDPView : NSView
 {
 	CFRunLoopSourceRef run_loop_src_channels;
-    CFRunLoopSourceRef run_loop_src_update;
-    CFRunLoopSourceRef run_loop_src_input;
+	CFRunLoopSourceRef run_loop_src_update;
+	CFRunLoopSourceRef run_loop_src_input;
 
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
@@ -51,8 +51,8 @@
 	NSTimer* pasteboard_timer;
 	NSRect prevWinPosition;
 	int titleBarHeight;
-	void* rdp_instance;
-	void* rdp_context;
+	freerdp* instance;
+	rdpContext* context;
 	CGContextRef bitmap_context;
 	char* pixel_data;
 	int width;
@@ -87,7 +87,7 @@
 	int is_connected;
 }
 
-- (int)  rdpStart :(rdpContext*) context;
+- (int)  rdpStart :(rdpContext*) rdp_context;
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;

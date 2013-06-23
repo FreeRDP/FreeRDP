@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import "MacFreeRDP-library/mfreerdp.h"
 #import "MacFreeRDP-library/mf_client.h"
 
 @implementation AppDelegate
@@ -25,10 +26,14 @@
 - (void) applicationDidFinishLaunching:(NSNotification*)aNotification
 {
 	int status;
+	mfContext* mfc;
 
 	[self CreateContext];
 
 	status = [self ParseCommandLineArguments];
+
+	mfc = (mfContext*) context;
+	mfc->view = (void*) mrdpView;
 
 	if (status < 0)
 	{
@@ -36,7 +41,7 @@
 	}
 	else
 	{
-		[mrdpView rdpStart:context];
+		freerdp_client_start(context);
 	}
 }
 
@@ -54,10 +59,10 @@
 {
 	int i;
 	int len;
+	int status;
 	char* cptr;
 	int argc;
 	char** argv = nil;
-	int status;
 
 	NSArray *args = [[NSProcessInfo processInfo] arguments];
 

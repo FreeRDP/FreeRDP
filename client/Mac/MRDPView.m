@@ -122,18 +122,18 @@ struct rgba_data
 
 @synthesize is_connected;
 
-- (int) rdpStart:(rdpContext*) context
+- (int) rdpStart:(rdpContext*) rdp_context
 {
 	int status;
 	mfContext* mfc;
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 
-	mfc = (mfContext*) context;
+	context = rdp_context;
+	mfc = (mfContext*) rdp_context;
+	instance = context->instance;
 	settings = context->settings;
 	mfc->view = self;
-	rdp_instance = context->instance;
-	rdp_context = mfc;
 
 	EventArgsInit(&e, "mfreerdp");
 	e.embed = TRUE;
@@ -150,9 +150,9 @@ struct rgba_data
 	//    instance->VerifyCertificate = mf_verify_certificate;
 	//    instance->LogonErrorInfo = mf_logon_error_info;
 
-	status = freerdp_client_start(context);
+	status = freerdp_connect(context->instance);
 	
-	if (status)
+	if (!status)
 	{
 		[self setIs_connected:0];
 		[self rdpConnectError];
@@ -174,8 +174,6 @@ struct rgba_data
 
 	return 0;
 }
-
-
 
 /************************************************************************
  methods we override
@@ -259,7 +257,7 @@ struct rgba_data
 	y = height - y;
 	
 	// send mouse motion event to RDP server
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_MOVE, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -279,7 +277,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -299,7 +297,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON1, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -319,7 +317,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -339,7 +337,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON2, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -359,7 +357,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
 
 /** *********************************************************************
@@ -379,7 +377,7 @@ struct rgba_data
 	
 	y = height - y;
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_BUTTON3, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
 - (void) scrollWheel:(NSEvent *)event
@@ -407,7 +405,7 @@ struct rgba_data
 	x += (int) [event deltaX];
 	y += (int) [event deltaY];
 	
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, flags, x, y);
+	instance->input->MouseEvent(instance->input, flags, x, y);
 }
 
 /** *********************************************************************
@@ -429,7 +427,7 @@ struct rgba_data
 	y = height - y;
 	
 	// send mouse motion event to RDP server
-	((freerdp*)rdp_instance)->input->MouseEvent(((freerdp*)rdp_instance)->input, PTR_FLAGS_MOVE, x, y);
+	instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -452,7 +450,7 @@ struct rgba_data
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	extended = (scancode & KBDEXT) ? KBDEXT : 0;
 	
-	((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
+	instance->input->KeyboardEvent(instance->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -475,7 +473,7 @@ struct rgba_data
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	extended = (scancode & KBDEXT) ? KBDEXT : 0;
 	
-	((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
+	instance->input->KeyboardEvent(instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
 }
 
 /** *********************************************************************
@@ -501,96 +499,96 @@ struct rgba_data
 	// left shift
 	if ((kdlshift == 0) && ((mf & 2) != 0)) {
 		// left shift went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x2a);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x2a);
 		kdlshift = 1;
 	}
 	if ((kdlshift != 0) && ((mf & 2) == 0)) {
 		// left shift went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x2a);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x2a);
 		kdlshift = 0;
 	}
 	
 	// right shift
 	if ((kdrshift == 0) && ((mf & 4) != 0)) {
 		// right shift went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x36);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x36);
 		kdrshift = 1;
 	}
 	if ((kdrshift != 0) && ((mf & 4) == 0)) {
 		// right shift went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x36);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x36);
 		kdrshift = 0;
 	}
 	
 	// left ctrl
 	if ((kdlctrl == 0) && ((mf & 1) != 0)) {
 		// left ctrl went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x1d);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x1d);
 		kdlctrl = 1;
 	}
 	if ((kdlctrl != 0) && ((mf & 1) == 0)) {
 		// left ctrl went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x1d);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x1d);
 		kdlctrl = 0;
 	}
 	
 	// right ctrl
 	if ((kdrctrl == 0) && ((mf & 0x2000) != 0)) {
 		// right ctrl went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x1d);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x1d);
 		kdrctrl = 1;
 	}
 	if ((kdrctrl != 0) && ((mf & 0x2000) == 0)) {
 		// right ctrl went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
 		kdrctrl = 0;
 	}
 	
 	// left alt
 	if ((kdlalt == 0) && ((mf & 0x20) != 0)) {
 		// left alt went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_DOWN, 0x38);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x38);
 		kdlalt = 1;
 	}
 	if ((kdlalt != 0) && ((mf & 0x20) == 0)) {
 		// left alt went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, KBD_FLAGS_RELEASE, 0x38);
+		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x38);
 		kdlalt = 0;
 	}
 	
 	// right alt
 	if ((kdralt == 0) && ((mf & 0x40) != 0)) {
 		// right alt went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x38);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x38);
 		kdralt = 1;
 	}
 	if ((kdralt != 0) && ((mf & 0x40) == 0)) {
 		// right alt went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x38);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x38);
 		kdralt = 0;
 	}
 	
 	// left meta
 	if ((kdlmeta == 0) && ((mf & 0x08) != 0)) {
 		// left meta went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x5b);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x5b);
 		kdlmeta = 1;
 	}
 	if ((kdlmeta != 0) && ((mf & 0x08) == 0)) {
 		// left meta went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
 		kdlmeta = 0;
 	}
 	
 	// right meta
 	if ((kdrmeta == 0) && ((mf & 0x10) != 0)) {
 		// right meta went down
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_DOWN, 0x5c);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x5c);
 		kdrmeta = 1;
 	}
 	if ((kdrmeta != 0) && ((mf & 0x10) == 0)) {
 		// right meta went up
-		((freerdp*)rdp_instance)->input->KeyboardEvent(((freerdp*)rdp_instance)->input, 1 | KBD_FLAGS_RELEASE, 0x5c);
+		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x5c);
 		kdrmeta = 0;
 	}
 }
@@ -622,9 +620,9 @@ struct rgba_data
 	if (run_loop_src_channels != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
 
-	freerdp_client_stop((rdpContext*) self->rdp_context);
+	freerdp_client_stop(self->context);
 
-	freerdp_client_context_free((rdpContext*) self->rdp_context);
+	freerdp_client_context_free(self->context);
 
 }
 
@@ -634,16 +632,16 @@ struct rgba_data
 
 - (void) drawRect:(NSRect)rect
 {
-	if (!rdp_context)
+	if (!context)
 		return;
 
-	if(self->bitmap_context)
+	if (self->bitmap_context)
 	{
-		CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
+		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 
-		CGContextClipToRect(context, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-		CGContextDrawImage(context, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+		CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+		CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
 		CGImageRelease(cgImage);
 	}
@@ -761,7 +759,7 @@ struct rgba_data
 		NSString *str = [pasteboard_rd availableTypeFromArray:types];
 		if (str != nil)
 		{
-			cliprdr_send_supported_format_list(rdp_instance);
+			cliprdr_send_supported_format_list(instance);
 		}
 	}
 }

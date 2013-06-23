@@ -24,53 +24,53 @@ typedef struct mf_context mfContext;
 
 struct mf_context
 {
-    rdpContext context;
+	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
-    
-    void* view;
 
-    int width;
-    int height;
-    int offset_x;
-    int offset_y;
-    int fs_toggle;
-    int fullscreen;
-    int percentscreen;
-    char window_title[64];
-    int client_x;
-    int client_y;
-    int client_width;
-    int client_height;
+	void* view;
 
-    HANDLE keyboardThread;
+	int width;
+	int height;
+	int offset_x;
+	int offset_y;
+	int fs_toggle;
+	int fullscreen;
+	int percentscreen;
+	char window_title[64];
+	int client_x;
+	int client_y;
+	int client_width;
+	int client_height;
 
-    HGDI_DC hdc;
-    UINT16 srcBpp;
-    UINT16 dstBpp;
-    freerdp* instance;
+	HANDLE keyboardThread;
 
-    DWORD mainThreadId;
-    DWORD keyboardThreadId;
-    BOOL disconnect;
-    BOOL sw_gdi;
+	HGDI_DC hdc;
+	UINT16 srcBpp;
+	UINT16 dstBpp;
+	freerdp* instance;
 
-    rdpFile* connectionRdpFile;
+	DWORD mainThreadId;
+	DWORD keyboardThreadId;
+	BOOL disconnect;
+	BOOL sw_gdi;
 
-    // Keep track of window size and position, disable when in fullscreen mode.
-    BOOL disablewindowtracking;
+	rdpFile* connectionRdpFile;
 
-    // These variables are required for horizontal scrolling.
-    BOOL updating_scrollbars;
-    BOOL xScrollVisible;
-    int xMinScroll;       // minimum horizontal scroll value
-    int xCurrentScroll;   // current horizontal scroll value
-    int xMaxScroll;       // maximum horizontal scroll value
+	// Keep track of window size and position, disable when in fullscreen mode.
+	BOOL disablewindowtracking;
 
-    // These variables are required for vertical scrolling.
-    BOOL yScrollVisible;
-    int yMinScroll;       // minimum vertical scroll value
-    int yCurrentScroll;   // current vertical scroll value
-    int yMaxScroll;       // maximum vertical scroll value
+	// These variables are required for horizontal scrolling.
+	BOOL updating_scrollbars;
+	BOOL xScrollVisible;
+	int xMinScroll;       // minimum horizontal scroll value
+	int xCurrentScroll;   // current horizontal scroll value
+	int xMaxScroll;       // maximum horizontal scroll value
+
+	// These variables are required for vertical scrolling.
+	BOOL yScrollVisible;
+	int yMinScroll;       // minimum vertical scroll value
+	int yCurrentScroll;   // current vertical scroll value
+	int yMaxScroll;       // maximum vertical scroll value
 };
 
 #endif // MFREERDP_H
