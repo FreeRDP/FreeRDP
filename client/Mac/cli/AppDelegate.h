@@ -7,8 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <MacFreeRDP-library/MRDPView.h>
-#import <MacFreeRDP-library/mfreerdp.h>
+#import <MacFreeRDP/MRDPView.h>
+#import <MacFreeRDP/mfreerdp.h>
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 {

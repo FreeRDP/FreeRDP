@@ -201,7 +201,7 @@ struct rgba_data
 
 //TODO - Expose this code as a public method, because awakeFromNib
 //       won't be called if the view is created dynamically
-- (void) awakeFromNib
+- (void) viewDidLoad
 {
 	// store our window dimensions
 	width = [self frame].size.width;

@@ -7,8 +7,8 @@
 //
 
 #import "AppDelegate.h"
-#import "MacFreeRDP-library/mfreerdp.h"
-#import "MacFreeRDP-library/mf_client.h"
+#import "MacFreeRDP/mfreerdp.h"
+#import "MacFreeRDP/mf_client.h"
 
 @implementation AppDelegate
 
