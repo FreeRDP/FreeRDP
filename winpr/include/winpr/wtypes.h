@@ -47,7 +47,9 @@
 #if defined(__APPLE__)
 typedef signed char BOOL;
 #else
+#ifndef XMD_H
 typedef int BOOL;
+#endif
 #endif
 #endif
 
@@ -87,7 +89,9 @@ typedef int INT, *LPINT;
 typedef signed char INT8;
 typedef signed short INT16;
 typedef signed int INT32;
+#ifndef XMD_H
 typedef signed __int64 INT64;
+#endif
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef long LONG, *PLONG, *LPLONG;
@@ -97,7 +101,10 @@ typedef __int3264 LONG_PTR, *PLONG_PTR;
 typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
 
 typedef signed int LONG32;
+
+#ifndef XMD_H
 typedef signed __int64 LONG64;
+#endif
 
 typedef CHAR* PSTR, *LPSTR, *LPCH;
 typedef const CHAR *LPCSTR,*PCSTR;
