@@ -169,6 +169,8 @@ struct xf_info
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
+
+	BOOL use_xinput;
 };
 
 void xf_create_window(xfInfo* xfi);

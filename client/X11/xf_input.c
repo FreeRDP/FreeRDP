@@ -27,6 +27,7 @@
 
 #include <math.h>
 
+#include "xf_event.h"
 #include "xf_input.h"
 
 #ifdef WITH_XI
@@ -66,6 +67,22 @@ int scale_cnt;
 
 int initialized = 0;
 
+const char* xf_input_get_class_string(int class)
+{
+	if (class == XIKeyClass)
+		return "XIKeyClass";
+	else if (class == XIButtonClass)
+		return "XIButtonClass";
+	else if (class == XIValuatorClass)
+		return "XIValuatorClass";
+	else if (class == XIScrollClass)
+		return "XIScrollClass";
+	else if (class == XITouchClass)
+		return "XITouchClass";
+
+	return "XIUnknownClass";
+}
+
 int xf_input_init(xfInfo* xfi, Window window)
 {
 	int i, j;
@@ -75,7 +92,7 @@ int xf_input_init(xfInfo* xfi, Window window)
 	int minor = 2;
 	Status xstatus;
 	XIDeviceInfo* info;
-	XIEventMask evmasks[8];
+	XIEventMask evmasks[64];
 	int opcode, event, error;
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
@@ -108,10 +125,16 @@ int xf_input_init(xfInfo* xfi, Window window)
 		return -1;
 	}
 
+
+	if (xfi->settings->MultiTouchInput)
+			xfi->use_xinput = TRUE;
+
+
 	info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
 
 	for (i = 0; i < ndevices; i++)
 	{
+		BOOL touch = FALSE;
 		XIDeviceInfo* dev = &info[i];
 
 		for (j = 0; j < dev->num_classes; j++)
@@ -119,29 +142,56 @@ int xf_input_init(xfInfo* xfi, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
-			if (class->type != XITouchClass)
-				continue;
+			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
+					(strcmp(dev->name, "Virtual core pointer") != 0))
+			{
+				touch = TRUE;
+			}
+		}
 
-			if (t->mode != XIDirectTouch)
-				continue;
+		for (j = 0; j < dev->num_classes; j++)
+		{
+			XIAnyClassInfo* class = dev->classes[j];
+			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
-
-			if (strcmp(dev->name, "Virtual core pointer") == 0)
-				continue;
-
-			printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
-				dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-						dev->deviceid, t->mode, t->num_touches);
+			if (xfi->settings->MultiTouchInput)
+			{
+				printf("%s (%d) \"%s\" id: %d\n",
+				       xf_input_get_class_string(class->type),
+				       class->type, dev->name, dev->deviceid);
+			}
 
 			evmasks[nmasks].mask = masks[nmasks];
 			evmasks[nmasks].mask_len = sizeof(masks[0]);
 			ZeroMemory(masks[nmasks], sizeof(masks[0]));
 			evmasks[nmasks].deviceid = dev->deviceid;
 
-			XISetMask(masks[nmasks], XI_TouchBegin);
-			XISetMask(masks[nmasks], XI_TouchUpdate);
-			XISetMask(masks[nmasks], XI_TouchEnd);
-			nmasks++;
+			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
+					(strcmp(dev->name, "Virtual core pointer") != 0))
+			{
+				if (xfi->settings->MultiTouchInput)
+				{
+					printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
+					       dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+					       dev->deviceid, t->mode, t->num_touches);
+				}
+
+				XISetMask(masks[nmasks], XI_TouchBegin);
+				XISetMask(masks[nmasks], XI_TouchUpdate);
+				XISetMask(masks[nmasks], XI_TouchEnd);
+				nmasks++;
+			}
+
+			if (xfi->use_xinput)
+			{
+				if (!touch && (class->type == XIButtonClass))
+				{
+					XISetMask(masks[nmasks], XI_ButtonPress);
+					XISetMask(masks[nmasks], XI_ButtonRelease);
+					XISetMask(masks[nmasks], XI_Motion);
+					nmasks++;
+				}
+			}
 		}
 	}
 
