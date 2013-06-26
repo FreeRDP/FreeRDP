@@ -134,7 +134,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	xfi = ((xfContext*) context)->xfi;
 
-	size = width * height * (bpp + 7) / 8;
+	size = width * height * ((bpp + 7) / 8);
 
 	if (bitmap->data == NULL)
 		bitmap->data = (BYTE*) malloc(size);
