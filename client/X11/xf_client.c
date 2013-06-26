@@ -1520,6 +1520,18 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
+void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
+{
+	switch (e->id)
+	{
+		case FreeRDP_ScalingFactor:
+			break;
+
+		default:
+			break;
+	}
+}
+
 /**
  * Client Interface
  */
@@ -1643,6 +1655,7 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
+	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
 
 	return 0;
 }
