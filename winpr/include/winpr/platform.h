@@ -128,6 +128,22 @@
 
 /* Windows (_WIN32) */
 
+/* WinRT (_WINRT) */
+
+#if defined(WINAPI_FAMILY)
+#if (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifndef _WINRT
+#define _WINRT		1
+#endif
+#endif
+#endif
+
+#if defined(__cplusplus_winrt)
+#ifndef _WINRT
+#define _WINRT		1
+#endif
+#endif
+
 /* Linux (__linux__) */
 
 #if defined(linux) || defined(__linux)
