@@ -587,8 +587,15 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 		return FALSE;
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
 		return FALSE;
-	if (!rdp_send_client_persistent_key_list_pdu(rdp))
-		return FALSE;
+	/**
+	 * [MS-RDPBCGR] 2.2.1.17
+	 * Client persistent key list must be sent if a bitmap is
+	 * stored in persistent bitmap cache or the server has advertised support for bitmap
+	 * host cache and a deactivation reactivation sequence is *not* in progress.
+	 */
+	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
+		if (!rdp_send_client_persistent_key_list_pdu(rdp))
+			return FALSE;
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
 		return FALSE;
 
