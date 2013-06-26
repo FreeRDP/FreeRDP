@@ -47,6 +47,15 @@ DEFINE_EVENT_BEGIN(EmbedWindow)
 	void* handle;
 DEFINE_EVENT_END(EmbedWindow)
 
+DEFINE_EVENT_BEGIN(PanningChange)
+	int XPan;
+	int YPan;
+DEFINE_EVENT_END(PanningChange)
+
+DEFINE_EVENT_BEGIN(ScalingFactorChange)
+	double ScalingFactor;
+DEFINE_EVENT_END(ScalingFactorChange)
+
 DEFINE_EVENT_BEGIN(ErrorInfo)
 	UINT32 code;
 DEFINE_EVENT_END(ErrorInfo)
