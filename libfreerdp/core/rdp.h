@@ -157,6 +157,7 @@ struct rdp_rdp
 	UINT32 finalize_sc_pdus;
 	BOOL disconnect;
 	BOOL resendFocus;
+	BOOL deactivation_reactivation;
 };
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags);
