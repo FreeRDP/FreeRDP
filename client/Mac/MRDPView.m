@@ -129,11 +129,12 @@ struct rgba_data
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 
+    [self initializeView];
+
 	context = rdp_context;
 	mfc = (mfContext*) rdp_context;
 	instance = context->instance;
 	settings = context->settings;
-	mfc->view = self;
 
 	EventArgsInit(&e, "mfreerdp");
 	e.embed = TRUE;
@@ -185,7 +186,7 @@ struct rgba_data
 
 - (id)initWithFrame:(NSRect)frame
 {
-	self = [super initWithFrame:frame];
+    self = [super initWithFrame:frame];
 	
 	if (self)
 	{
@@ -203,22 +204,32 @@ struct rgba_data
 //       won't be called if the view is created dynamically
 - (void) viewDidLoad
 {
-	// store our window dimensions
-	width = [self frame].size.width;
-	height = [self frame].size.height;
-	titleBarHeight = 22;
-	
-	[[self window] becomeFirstResponder];
-	[[self window] setAcceptsMouseMovedEvents:YES];
-	
-	cursors = [[NSMutableArray alloc] initWithCapacity:10];
+    [self initializeView];
+}
 
-	// setup a mouse tracking area
-	NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
-	
-	[self addTrackingArea:trackingArea];
-	
-	mouseInClientArea = YES;
+- (void) initializeView
+{
+    if (!initialized)
+    {
+        // store our window dimensions
+        width = [self frame].size.width;
+        height = [self frame].size.height;
+        titleBarHeight = 22;
+
+        [[self window] becomeFirstResponder];
+        [[self window] setAcceptsMouseMovedEvents:YES];
+
+        cursors = [[NSMutableArray alloc] initWithCapacity:10];
+
+        // setup a mouse tracking area
+        NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
+
+        [self addTrackingArea:trackingArea];
+
+        mouseInClientArea = YES;
+
+        initialized = YES;
+    }
 }
 
 /** *********************************************************************
@@ -619,11 +630,6 @@ struct rgba_data
 
 	if (run_loop_src_channels != 0)
 		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
-
-	freerdp_client_stop(self->context);
-
-	freerdp_client_context_free(self->context);
-
 }
 
 /** *********************************************************************

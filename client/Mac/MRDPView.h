@@ -78,6 +78,8 @@
 	int kdlmeta;
 	int kdrmeta;
 	int kdcapslock;
+
+    BOOL initialized;
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
