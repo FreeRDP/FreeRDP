@@ -65,7 +65,14 @@
  * UpdateProcThreadAttribute
  */
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+BOOL JoinThread(HANDLE hThread)
+{
+	return WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0;
+}
+
+#else
 
 #include <winpr/crt.h>
 
@@ -124,6 +131,24 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	return NULL;
+}
+
+BOOL JoinThread(HANDLE hThread)
+{
+	ULONG Type;
+	PVOID Object;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+		return FALSE;
+
+	if (Type != HANDLE_TYPE_THREAD)
+		return FALSE;
+
+	WINPR_THREAD *thread = (WINPR_THREAD*) Object;
+	if(pthread_join(thread->thread, NULL))
+		return FALSE;
+
+	return TRUE;
 }
 
 VOID ExitThread(DWORD dwExitCode)

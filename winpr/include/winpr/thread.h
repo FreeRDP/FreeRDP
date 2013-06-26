@@ -167,5 +167,7 @@ WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
 }
 #endif
 
+WINPR_API BOOL JoinThread(HANDLE hThread);
+
 #endif /* WINPR_THREAD_H */
 
