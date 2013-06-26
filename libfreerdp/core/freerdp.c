@@ -34,6 +34,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
+#include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
@@ -188,7 +189,16 @@ BOOL freerdp_check_fds(freerdp* instance)
 	status = rdp_check_fds(rdp);
 
 	if (status < 0)
+	{
+		TerminateEventArgs e;
+		rdpContext* context = instance->context;
+
+		EventArgsInit(&e, "freerdp");
+		e.code = 0;
+		PubSub_OnTerminate(context->pubSub, context, &e);
+
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -308,6 +318,16 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
+static wEventType FreeRDP_Events[] =
+{
+	DEFINE_EVENT_ENTRY(WindowStateChange)
+	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(EmbedWindow)
+	DEFINE_EVENT_ENTRY(ErrorInfo)
+	DEFINE_EVENT_ENTRY(ParamChange)
+	DEFINE_EVENT_ENTRY(Terminate)
+};
+
 /** Allocator function for a rdp context.
  *  The function will allocate a rdpRdp structure using rdp_new(), then copy
  *  its contents to the appropriate fields in the rdp_freerdp structure given in parameters.
@@ -316,30 +336,30 @@ void freerdp_get_version(int* major, int* minor, int* revision)
  *
  *  @param instance - Pointer to the rdp_freerdp structure that will be initialized with the new context.
  */
-void freerdp_context_new(freerdp* instance)
+int freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
+	rdpContext* context;
+
+	instance->context = (rdpContext*) malloc(instance->ContextSize);
+	ZeroMemory(instance->context, instance->ContextSize);
+	context = instance->context;
+
+	context->pubSub = PubSub_New(TRUE);
+	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
 	rdp = rdp_new(instance);
-	// FIXME - we're not checking where rdp_new returns NULL, and have no way to report an error to the caller
-
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
-	instance->context = (rdpContext*) malloc(instance->context_size);
-	ZeroMemory(instance->context, instance->context_size);
+	context->graphics = graphics_new(context);
+	context->instance = instance;
+	context->rdp = rdp;
 
-	instance->context->graphics = graphics_new(instance->context);
-	instance->context->instance = instance;
-	instance->context->rdp = rdp;
-
-	instance->context->input = instance->input;
-	instance->context->update = instance->update;
-	instance->context->settings = instance->settings;
-
-	instance->context->client = (rdpClient*) malloc(sizeof(rdpClient));
-	ZeroMemory(instance->context->client, sizeof(rdpClient));
+	context->input = instance->input;
+	context->update = instance->update;
+	context->settings = instance->settings;
 
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
@@ -347,11 +367,13 @@ void freerdp_context_new(freerdp* instance)
 	instance->update->secondary->context = instance->context;
 	instance->update->altsec->context = instance->context;
 
-	instance->input->context = instance->context;
+	instance->input->context = context;
 
 	update_register_client_callbacks(rdp->update);
 
 	IFCALL(instance->ContextNew, instance, instance->context);
+
+	return 0;
 }
 
 /** Deallocator function for a rdp context.
@@ -372,7 +394,7 @@ void freerdp_context_free(freerdp* instance)
 	rdp_free(instance->context->rdp);
 	graphics_free(instance->context->graphics);
 
-	free(instance->context->client);
+	PubSub_Free(instance->context->pubSub);
 
 	free(instance->context);
 	instance->context = NULL;
@@ -395,7 +417,7 @@ freerdp* freerdp_new()
 	if (instance)
 	{
 		ZeroMemory(instance, sizeof(freerdp));
-		instance->context_size = sizeof(rdpContext);
+		instance->ContextSize = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
 	}
 

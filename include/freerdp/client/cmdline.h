@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 FREERDP_API int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings);
+FREERDP_API int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings* settings, int status);
 FREERDP_API int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
 FREERDP_API int freerdp_client_print_version(void);

@@ -57,6 +57,11 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 	(((UINT16)(*(_s->pointer + 1))) << 8); \
 	_s->pointer += 2; } while (0)
 
+#define Stream_Read_INT16(_s, _v) do { _v = \
+	(INT16)(*_s->pointer) + \
+	(((INT16)(*(_s->pointer + 1))) << 8); \
+	_s->pointer += 2; } while (0)
+
 #define Stream_Read_UINT16_BE(_s, _v) do { _v = \
 	(((UINT16)(*_s->pointer)) << 8) + \
 	(UINT16)(*(_s->pointer + 1)); \

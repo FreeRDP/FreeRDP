@@ -27,6 +27,7 @@
 #cmakedefine HAVE_INTTYPES_H
 #cmakedefine HAVE_SYS_MODEM_H
 #cmakedefine HAVE_SYS_FILIO_H
+#cmakedefine HAVE_SYS_SELECT_H
 #cmakedefine HAVE_SYS_STRTIO_H
 #cmakedefine HAVE_EVENTFD_H
 #cmakedefine HAVE_TM_GMTOFF
@@ -67,6 +68,7 @@
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_SVC
+#cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND

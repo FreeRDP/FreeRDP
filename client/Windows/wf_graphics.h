@@ -22,8 +22,8 @@
 
 #include "wf_interface.h"
 
-HBITMAP wf_create_dib(wfInfo* wfi, int width, int height, int bpp, BYTE* data, BYTE** pdata);
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);
+HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata);
+wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
 void wf_image_free(wfBitmap* image);
 
 void wf_register_graphics(rdpGraphics* graphics);

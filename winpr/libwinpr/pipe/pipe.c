@@ -38,8 +38,6 @@
 
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
 {
-	void* ptr;
-	HANDLE handle;
 	int pipe_fd[2];
 	WINPR_PIPE* pReadPipe;
 	WINPR_PIPE* pWritePipe;

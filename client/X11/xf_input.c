@@ -28,6 +28,10 @@
 #include <math.h>
 
 #include "xf_event.h"
+<<<<<<< HEAD
+=======
+
+>>>>>>> awake/master
 #include "xf_input.h"
 
 #ifdef WITH_XI
@@ -83,7 +87,8 @@ const char* xf_input_get_class_string(int class)
 	return "XIUnknownClass";
 }
 
-int xf_input_init(xfInfo* xfi, Window window)
+
+int xf_input_init(xfContext* xfc, Window window)
 {
 	int i, j;
 	int nmasks;
@@ -109,15 +114,15 @@ int xf_input_init(xfInfo* xfi, Window window)
 	active_contacts = 0;
 	ZeroMemory(contacts, sizeof(touchContact) * MAX_CONTACTS);
 
-	if (!XQueryExtension(xfi->display, "XInputExtension", &opcode, &event, &error))
+	if (!XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
 		printf("XInput extension not available.\n");
 		return -1;
 	}
 
-	xfi->XInputOpcode = opcode;
+	xfc->XInputOpcode = opcode;
 
-	XIQueryVersion(xfi->display, &major, &minor);
+	XIQueryVersion(xfc->display, &major, &minor);
 
 	if (major * 1000 + minor < 2002)
 	{
@@ -125,12 +130,10 @@ int xf_input_init(xfInfo* xfi, Window window)
 		return -1;
 	}
 
+	if (xfc->settings->MultiTouchInput)
+		xfc->use_xinput = TRUE;
 
-	if (xfi->settings->MultiTouchInput)
-			xfi->use_xinput = TRUE;
-
-
-	info = XIQueryDevice(xfi->display, XIAllDevices, &ndevices);
+	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
 
 	for (i = 0; i < ndevices; i++)
 	{
@@ -154,11 +157,11 @@ int xf_input_init(xfInfo* xfi, Window window)
 			XIAnyClassInfo* class = dev->classes[j];
 			XITouchClassInfo* t = (XITouchClassInfo*) class;
 
-			if (xfi->settings->MultiTouchInput)
+			if (xfc->settings->MultiTouchInput)
 			{
 				printf("%s (%d) \"%s\" id: %d\n",
-				       xf_input_get_class_string(class->type),
-				       class->type, dev->name, dev->deviceid);
+						xf_input_get_class_string(class->type),
+						class->type, dev->name, dev->deviceid);
 			}
 
 			evmasks[nmasks].mask = masks[nmasks];
@@ -169,11 +172,11 @@ int xf_input_init(xfInfo* xfi, Window window)
 			if ((class->type == XITouchClass) && (t->mode == XIDirectTouch) &&
 					(strcmp(dev->name, "Virtual core pointer") != 0))
 			{
-				if (xfi->settings->MultiTouchInput)
+				if (xfc->settings->MultiTouchInput)
 				{
 					printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
-					       dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-					       dev->deviceid, t->mode, t->num_touches);
+						dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+						dev->deviceid, t->mode, t->num_touches);
 				}
 
 				XISetMask(masks[nmasks], XI_TouchBegin);
@@ -182,7 +185,7 @@ int xf_input_init(xfInfo* xfi, Window window)
 				nmasks++;
 			}
 
-			if (xfi->use_xinput)
+			if (xfc->use_xinput)
 			{
 				if (!touch && (class->type == XIButtonClass))
 				{
@@ -196,7 +199,7 @@ int xf_input_init(xfInfo* xfi, Window window)
 	}
 
 	if (nmasks > 0)
-		xstatus = XISelectEvents(xfi->display, window, evmasks, nmasks);
+		xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
 
 	initialized = 1;
 	return 0;
@@ -361,12 +364,13 @@ void xf_input_detect_pan(xfInfo* xfi)
   
 }
 
-void xf_input_detect_pinch(xfInfo* xfi)
+void xf_input_detect_pinch(xfContext* xfc)
 {
 	double dist;
 	double zoom;
 
 	double delta;
+	ResizeWindowEventArgs e;
 
 	if (active_contacts != 2)
 	{
@@ -411,17 +415,28 @@ void xf_input_detect_pinch(xfInfo* xfi)
 
 		if (z_vector > ZOOM_THRESHOLD)
 		{
-			xfi->scale -= 0.05;
+			xfc->scale -= 0.05;
 
 			if (xfi->scale < 0.8)
 				xfi->scale = 0.8;
-
+/*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
 
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			*/
+
+			//XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+
+
+			EventArgsInit(&e, "xfreerdp");
+			e.width = (int) xfc->originalWidth * xfc->scale;
+			e.height = (int) xfc->originalHeight * xfc->scale;
+
+			xf_transform_window(xfi);
+			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 			z_vector = 0;
 
@@ -432,17 +447,29 @@ void xf_input_detect_pinch(xfInfo* xfi)
 
 		if (z_vector < -ZOOM_THRESHOLD)
 		{
-			xfi->scale += 0.05;
+			xfc->scale += 0.05;
 
 			if (xfi->scale > 1.2)
 				xfi->scale = 1.2;
-
+/*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
 
 			xf_transform_window(xfi);
 			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			*/
+
+			if (xfc->scale > 1.5)
+				xfc->scale = 1.5;
+
+			EventArgsInit(&e, "xfreerdp");
+			e.width = (int) xfc->originalWidth * xfc->scale;
+			e.height = (int) xfc->originalHeight * xfc->scale;
+
+			xf_transform_window(xfi);
+			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+
 
 			z_vector = 0;
 
@@ -453,7 +480,7 @@ void xf_input_detect_pinch(xfInfo* xfi)
 	}
 }
 
-void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
+void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 	/*
@@ -482,7 +509,7 @@ void xf_input_touch_begin(xfInfo* xfi, XIDeviceEvent* event)
 	}
 }
 
-void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
+void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 	/*
@@ -503,15 +530,15 @@ void xf_input_touch_update(xfInfo* xfi, XIDeviceEvent* event)
 			contacts[i].pos_x = event->event_x;
 			contacts[i].pos_y = event->event_y;
 
-			xf_input_detect_pinch(xfi);
-			xf_input_detect_pan(xfi);
+			xf_input_detect_pinch(xfc);
+			xf_input_detect_pan(xfc);
 
 			break;
 		}
 	}
 }
 
-void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
+void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
@@ -537,31 +564,31 @@ void xf_input_touch_end(xfInfo* xfi, XIDeviceEvent* event)
 	}
 }
 
-int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
+int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
 {
 	XGenericEventCookie* cookie = &event->xcookie;
 
-	XGetEventData(xfi->display, cookie);
+	XGetEventData(xfc->display, cookie);
 
-	if ((cookie->type == GenericEvent) && (cookie->extension == xfi->XInputOpcode))
+	if ((cookie->type == GenericEvent) && (cookie->extension == xfc->XInputOpcode))
 	{
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
 				if (xf_input_is_duplicate(cookie) == FALSE)
-					xf_input_touch_begin(xfi, cookie->data);
+					xf_input_touch_begin(xfc, cookie->data);
 				xf_input_save_last_event(cookie);
 				break;
 
 			case XI_TouchUpdate:
 				if (xf_input_is_duplicate(cookie) == FALSE)
-					xf_input_touch_update(xfi, cookie->data);
+					xf_input_touch_update(xfc, cookie->data);
 				xf_input_save_last_event(cookie);
 				break;
 
 			case XI_TouchEnd:
 				if (xf_input_is_duplicate(cookie) == FALSE)
-					xf_input_touch_end(xfi, cookie->data);
+					xf_input_touch_end(xfc, cookie->data);
 				xf_input_save_last_event(cookie);
 				break;
 
@@ -571,7 +598,7 @@ int xf_input_handle_event_local(xfInfo* xfi, XEvent* event)
 		}
 	}
 
-	XFreeEventData(xfi->display,cookie);
+	XFreeEventData(xfc->display,cookie);
 
 	return 0;
 }
@@ -588,12 +615,12 @@ char* xf_input_touch_state_string(DWORD flags)
 		return "TouchUnknown";
 }
 
-int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
+int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
 	int x, y;
 	int touchId;
-	RDPINPUT_CONTACT_DATA contact;
-	RdpeiClientContext* rdpei = xfi->rdpei;
+	int contactId;
+	RdpeiClientContext* rdpei = xfc->rdpei;
 
 	if (!rdpei)
 		return 0;
@@ -601,77 +628,97 @@ int xf_input_touch_remote(xfInfo* xfi, XIDeviceEvent* event, DWORD flags)
 	touchId = event->detail;
 	x = (int) event->event_x;
 	y = (int) event->event_y;
-	ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
 
-	contact.fieldsPresent = 0;
-	contact.x = x;
-	contact.y = y;
-	contact.contactFlags = flags;
-
-	if (flags & CONTACT_FLAG_DOWN)
+	if (evtype == XI_TouchBegin)
 	{
-		contact.contactId = rdpei->ContactBegin(rdpei, touchId);
-		contact.contactFlags |= CONTACT_FLAG_INRANGE;
-		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+		//printf("TouchBegin: %d\n", touchId);
+		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
 	}
-	else if (flags & CONTACT_FLAG_UPDATE)
+	else if (evtype == XI_TouchUpdate)
 	{
-		contact.contactId = rdpei->ContactUpdate(rdpei, touchId);
-		contact.contactFlags |= CONTACT_FLAG_INRANGE;
-		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+		//printf("TouchUpdate: %d\n", touchId);
+		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
-	else if (flags & CONTACT_FLAG_UP)
+	else if (evtype == XI_TouchEnd)
 	{
-		contact.contactId = rdpei->ContactEnd(rdpei, touchId);
+		//printf("TouchEnd: %d\n", touchId);
+		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
 	}
-
-	rdpei->AddContact(rdpei, &contact);
 
 	return 0;
 }
 
-int xf_input_handle_event_remote(xfInfo* xfi, XEvent* event)
+int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
+{
+	return TRUE;
+
+	switch (evtype)
+	{
+		case XI_ButtonPress:
+			printf("ButtonPress\n");
+			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+
+		case XI_ButtonRelease:
+			printf("ButtonRelease\n");
+			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+
+		case XI_Motion:
+			printf("Motion\n");
+			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
+					event->detail, event->event, xfc->remote_app);
+			break;
+	}
+
+	return 0;
+}
+
+int xf_input_handle_event_remote(xfContext* xfc, XEvent* event)
 {
 	XGenericEventCookie* cookie = &event->xcookie;
 
-	XGetEventData(xfi->display, cookie);
+	XGetEventData(xfc->display, cookie);
 
-	if ((cookie->type == GenericEvent) && (cookie->extension == xfi->XInputOpcode))
+	if ((cookie->type == GenericEvent) && (cookie->extension == xfc->XInputOpcode))
 	{
 		switch (cookie->evtype)
 		{
 			case XI_TouchBegin:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_DOWN);
+				xf_input_touch_remote(xfc, cookie->data, XI_TouchBegin);
 				break;
 
 			case XI_TouchUpdate:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UPDATE);
+				xf_input_touch_remote(xfc, cookie->data, XI_TouchUpdate);
 				break;
 
 			case XI_TouchEnd:
-				xf_input_touch_remote(xfi, cookie->data, CONTACT_FLAG_UP);
+				xf_input_touch_remote(xfc, cookie->data, XI_TouchEnd);
 				break;
 
 			default:
+				xf_input_event(xfc, cookie->data, cookie->evtype);
 				break;
 		}
 	}
 
-	XFreeEventData(xfi->display,cookie);
+	XFreeEventData(xfc->display,cookie);
 
 	return 0;
 }
 
 #else
 
-int xf_input_init(xfInfo* xfi, Window window)
+int xf_input_init(xfContext* xfc, Window window)
 {
 	return 0;
 }
 
 #endif
 
-void xf_process_rdpei_event(xfInfo* xfi, wMessage* event)
+void xf_process_rdpei_event(xfContext* xfc, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
@@ -686,16 +733,17 @@ void xf_process_rdpei_event(xfInfo* xfi, wMessage* event)
 	}
 }
 
-int xf_input_handle_event(xfInfo* xfi, XEvent* event)
+int xf_input_handle_event(xfContext* xfc, XEvent* event)
 {
 #ifdef WITH_XI
-	if (xfi->settings->MultiTouchInput)
+	if (xfc->settings->MultiTouchInput)
 	{
-		return xf_input_handle_event_remote(xfi, event);
+		return xf_input_handle_event_remote(xfc, event);
 	}
 
-	if (xfi->settings->MultiTouchGestures)
-		return xf_input_handle_event_local(xfi, event);
+	if (xfc->settings->MultiTouchGestures)
+		return xf_input_handle_event_local(xfc, event);
+
 #endif
 
 	return 0;

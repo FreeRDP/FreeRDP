@@ -49,6 +49,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter, COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
 	int i, j;
+	int status;
 	int count;
 	int length;
 	int index;
@@ -67,11 +68,16 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	int value_index;
 	int toggle;
 
+	status = 0;
+
 	if (!argv)
-		return 0;
+		return status;
 
 	if (argc == 1)
-		return COMMAND_LINE_STATUS_PRINT_HELP;
+	{
+		status = COMMAND_LINE_STATUS_PRINT_HELP;
+		return status;
+	}
 
 	for (i = 1; i < argc; i++)
 	{
@@ -82,7 +88,10 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 			count = preFilter(context, i, argc, argv);
 
 			if (count < 0)
-				return COMMAND_LINE_ERROR;
+			{
+				status = COMMAND_LINE_ERROR;
+				return status;
+			}
 
 			if (count > 0)
 			{
@@ -257,7 +266,10 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				}
 
 				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
-					return COMMAND_LINE_ERROR_MISSING_VALUE;
+				{
+					status = COMMAND_LINE_ERROR_MISSING_VALUE;
+					return status;
+				}
 
 				options[j].Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
 
@@ -311,7 +323,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		}
 	}
 
-	return 0;
+	return status;
 }
 
 int CommandLineParseArgumentsW(int argc, LPCWSTR* argv, COMMAND_LINE_ARGUMENT_W* options, DWORD flags,

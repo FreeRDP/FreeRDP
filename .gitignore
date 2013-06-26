@@ -84,7 +84,7 @@ xcode
 *.dir
 Release
 Win32
-build/
+build*/
 *.orig
 
 default.log
@@ -93,3 +93,5 @@ default.log
 
 *.cbp
 *.txt.user
+
+*.autosave

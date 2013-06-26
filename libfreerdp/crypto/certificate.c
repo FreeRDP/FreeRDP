@@ -34,12 +34,14 @@
 #include <openssl/rsa.h>
 
 static const char certificate_store_dir[] = "certs";
+static const char certificate_server_dir[] = "server";
 static const char certificate_known_hosts_file[] = "known_hosts";
 
 #include <freerdp/crypto/certificate.h>
 
 void certificate_store_init(rdpCertificateStore* certificate_store)
 {
+	char* server_path;
 	rdpSettings* settings;
 
 	settings = certificate_store->settings;
@@ -57,6 +59,16 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 		CreateDirectoryA(certificate_store->path, 0);
 		fprintf(stderr, "creating directory %s\n", certificate_store->path);
 	}
+
+	server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir);
+
+	if (!PathFileExistsA(server_path))
+	{
+		CreateDirectoryA(server_path, 0);
+		fprintf(stderr, "creating directory %s\n", server_path);
+	}
+
+	free(server_path);
 
 	certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file);
 

@@ -63,7 +63,7 @@ struct xf_xv_context
 #define DEBUG_XV(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-void xf_tsmf_init(xfInfo* xfi, long xv_port)
+void xf_tsmf_init(xfContext* xfc, long xv_port)
 {
 	int ret;
 	unsigned int i;
@@ -81,19 +81,19 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	xv = (xfXvContext*) malloc(sizeof(xfXvContext));
 	ZeroMemory(xv, sizeof(xfXvContext));
 
-	xfi->xv_context = xv;
+	xfc->xv_context = xv;
 
 	xv->xv_colorkey_atom = None;
 	xv->xv_image_size = 0;
 	xv->xv_port = xv_port;
 
-	if (!XShmQueryExtension(xfi->display))
+	if (!XShmQueryExtension(xfc->display))
 	{
 		DEBUG_XV("no shmem available.");
 		return;
 	}
 
-	ret = XvQueryExtension(xfi->display, &version, &release, &request_base, &event_base, &error_base);
+	ret = XvQueryExtension(xfc->display, &version, &release, &request_base, &event_base, &error_base);
 	if (ret != Success)
 	{
 		DEBUG_XV("XvQueryExtension failed %d.", ret);
@@ -101,7 +101,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	}
 	DEBUG_XV("version %u release %u", version, release);
 
-	ret = XvQueryAdaptors(xfi->display, DefaultRootWindow(xfi->display),
+	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display),
 		&num_adaptors, &ai);
 	if (ret != Success)
 	{
@@ -127,13 +127,13 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 	}
 	DEBUG_XV("selected %ld", xv->xv_port);
 
-	attr = XvQueryPortAttributes(xfi->display, xv->xv_port, &ret);
+	attr = XvQueryPortAttributes(xfc->display, xv->xv_port, &ret);
 	for (i = 0; i < (unsigned int)ret; i++)
 	{
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
-			xv->xv_colorkey_atom = XInternAtom(xfi->display, "XV_COLORKEY", FALSE);
-			XvSetPortAttribute(xfi->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
+			xv->xv_colorkey_atom = XInternAtom(xfc->display, "XV_COLORKEY", FALSE);
+			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
 			break;
 		}
 	}
@@ -142,7 +142,7 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 #ifdef WITH_DEBUG_XV
 	fprintf(stderr, "xf_tsmf_init: pixel format ");
 #endif
-	fo = XvListImageFormats(xfi->display, xv->xv_port, &ret);
+	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
 	if (ret > 0)
 	{
 		xv->xv_pixfmts = (UINT32*) malloc((ret + 1) * sizeof(UINT32));
@@ -164,9 +164,9 @@ void xf_tsmf_init(xfInfo* xfi, long xv_port)
 #endif
 }
 
-void xf_tsmf_uninit(xfInfo* xfi)
+void xf_tsmf_uninit(xfContext* xfc)
 {
-	xfXvContext* xv = (xfXvContext*) xfi->xv_context;
+	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
 
 	if (xv)
 	{
@@ -181,7 +181,7 @@ void xf_tsmf_uninit(xfInfo* xfi)
 			xv->xv_pixfmts = NULL;
 		}
 		free(xv);
-		xfi->xv_context = NULL;
+		xfc->xv_context = NULL;
 	}
 }
 
@@ -202,7 +202,7 @@ xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 	return FALSE;
 }
 
-static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT* vevent)
+static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EVENT* vevent)
 {
 	int i;
 	BYTE* data1;
@@ -213,7 +213,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	XvImage * image;
 	int colorkey = 0;
 	XShmSegmentInfo shminfo;
-	xfXvContext* xv = (xfXvContext*) xfi->xv_context;
+	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
 
 	if (xv->xv_port == 0)
 		return;
@@ -224,13 +224,13 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 
 	if (xv->xv_colorkey_atom != None)
 	{
-		XvGetPortAttribute(xfi->display, xv->xv_port, xv->xv_colorkey_atom, &colorkey);
-		XSetFunction(xfi->display, xfi->gc, GXcopy);
-		XSetFillStyle(xfi->display, xfi->gc, FillSolid);
-		XSetForeground(xfi->display, xfi->gc, colorkey);
+		XvGetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, &colorkey);
+		XSetFunction(xfc->display, xfc->gc, GXcopy);
+		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+		XSetForeground(xfc->display, xfc->gc, colorkey);
 		for (i = 0; i < vevent->num_visible_rects; i++)
 		{
-			XFillRectangle(xfi->display, xfi->window->handle, xfi->gc,
+			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc,
 				vevent->x + vevent->visible_rects[i].x,
 				vevent->y + vevent->visible_rects[i].y,
 				vevent->visible_rects[i].width,
@@ -239,7 +239,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	}
 	else
 	{
-		XSetClipRectangles(xfi->display, xfi->gc, vevent->x, vevent->y,
+		XSetClipRectangles(xfc->display, xfc->gc, vevent->x, vevent->y,
 			(XRectangle*) vevent->visible_rects, vevent->num_visible_rects, YXBanded);
 	}
 
@@ -265,7 +265,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 		return;
 	}
 
-	image = XvShmCreateImage(xfi->display, xv->xv_port,
+	image = XvShmCreateImage(xfc->display, xv->xv_port,
 		xvpixfmt, 0, vevent->frame_width, vevent->frame_height, &shminfo);
 
 	if (xv->xv_image_size != image->data_size)
@@ -283,7 +283,7 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 	shminfo.shmaddr = image->data = xv->xv_shmaddr;
 	shminfo.readOnly = FALSE;
 
-	if (!XShmAttach(xfi->display, &shminfo))
+	if (!XShmAttach(xfc->display, &shminfo))
 	{
 		XFree(image);
 		DEBUG_XV("XShmAttach failed.");
@@ -356,35 +356,35 @@ static void xf_process_tsmf_video_frame_event(xfInfo* xfi, RDP_VIDEO_FRAME_EVENT
 			break;
 	}
 
-	XvShmPutImage(xfi->display, xv->xv_port, xfi->window->handle, xfi->gc, image,
+	XvShmPutImage(xfc->display, xv->xv_port, xfc->window->handle, xfc->gc, image,
 		0, 0, image->width, image->height,
 		vevent->x, vevent->y, vevent->width, vevent->height, FALSE);
 	if (xv->xv_colorkey_atom == None)
-		XSetClipMask(xfi->display, xfi->gc, None);
-	XSync(xfi->display, FALSE);
+		XSetClipMask(xfc->display, xfc->gc, None);
+	XSync(xfc->display, FALSE);
 
-	XShmDetach(xfi->display, &shminfo);
+	XShmDetach(xfc->display, &shminfo);
 	XFree(image);
 }
 
-static void xf_process_tsmf_redraw_event(xfInfo* xfi, RDP_REDRAW_EVENT* revent)
+static void xf_process_tsmf_redraw_event(xfContext* xfc, RDP_REDRAW_EVENT* revent)
 {
-	XSetFunction(xfi->display, xfi->gc, GXcopy);
-	XSetFillStyle(xfi->display, xfi->gc, FillSolid);
-	XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc,
+	XSetFunction(xfc->display, xfc->gc, GXcopy);
+	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
 		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
+void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
 		case TsmfChannel_VideoFrame:
-			xf_process_tsmf_video_frame_event(xfi, (RDP_VIDEO_FRAME_EVENT*) event);
+			xf_process_tsmf_video_frame_event(xfc, (RDP_VIDEO_FRAME_EVENT*) event);
 			break;
 
 		case TsmfChannel_Redraw:
-			xf_process_tsmf_redraw_event(xfi, (RDP_REDRAW_EVENT*) event);
+			xf_process_tsmf_redraw_event(xfc, (RDP_REDRAW_EVENT*) event);
 			break;
 
 	}
@@ -392,15 +392,15 @@ void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
 
 #else /* WITH_XV */
 
-void xf_tsmf_init(xfInfo* xfi, long xv_port)
+void xf_tsmf_init(xfContext* xfc, long xv_port)
 {
 }
 
-void xf_tsmf_uninit(xfInfo* xfi)
+void xf_tsmf_uninit(xfContext* xfc)
 {
 }
 
-void xf_process_tsmf_event(xfInfo* xfi, wMessage* event)
+void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
 {
 }
 
