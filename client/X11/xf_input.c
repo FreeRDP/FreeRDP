@@ -28,10 +28,6 @@
 #include <math.h>
 
 #include "xf_event.h"
-<<<<<<< HEAD
-=======
-
->>>>>>> awake/master
 #include "xf_input.h"
 
 #ifdef WITH_XI
@@ -241,7 +237,7 @@ void xf_input_save_last_event(XGenericEventCookie* cookie)
 
 }
 
-void xf_input_detect_pan(xfInfo* xfi)
+void xf_input_detect_pan(xfContext* xfc)
 {
   double dx[2];
   double dy[2];
@@ -291,7 +287,15 @@ void xf_input_detect_pan(xfInfo* xfi)
 
 	  */
 
-	  IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
+	  //IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
+	      {
+		      PanEventArgs e;
+
+		      EventArgsInit(&e, "xfreerdp");
+		      e.xdiff = 5;
+		      e.ydiff = 0;
+		      PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+	      }
 	  
 	  px_vector = 0;
 	  
@@ -309,7 +313,15 @@ void xf_input_detect_pan(xfInfo* xfi)
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 	  */
 
-	  IFCALL(xfi->client->OnPan, xfi->instance, -5, 0);
+	  //IFCALL(xfi->client->OnPan, xfi->instance, -5, 0);
+	      {
+		      PanEventArgs e;
+
+		      EventArgsInit(&e, "xfreerdp");
+		      e.xdiff = -5;
+		      e.ydiff = 0;
+		      PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+	      }
 
 	  px_vector = 0;
 	  
@@ -335,7 +347,15 @@ void xf_input_detect_pan(xfInfo* xfi)
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 	  */
-	  IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);	  
+	  //IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);
+	      {
+		      PanEventArgs e;
+
+		      EventArgsInit(&e, "xfreerdp");
+		      e.xdiff = 0;
+		      e.ydiff = 5;
+		      PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+	      }
 
 	  py_vector = 0;
 	  
@@ -352,7 +372,15 @@ void xf_input_detect_pan(xfInfo* xfi)
 	  
 	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 	  */
-	  IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
+	  //IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
+	      {
+		      PanEventArgs e;
+
+		      EventArgsInit(&e, "xfreerdp");
+		      e.xdiff = 0;
+		      e.ydiff = -5;
+		      PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+	      }
 
 	  py_vector = 0;
 	  
@@ -417,8 +445,8 @@ void xf_input_detect_pinch(xfContext* xfc)
 		{
 			xfc->scale -= 0.05;
 
-			if (xfi->scale < 0.8)
-				xfi->scale = 0.8;
+			if (xfc->scale < 0.8)
+				xfc->scale = 0.8;
 /*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
@@ -435,7 +463,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
 
-			xf_transform_window(xfi);
+			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 			z_vector = 0;
@@ -449,8 +477,8 @@ void xf_input_detect_pinch(xfContext* xfc)
 		{
 			xfc->scale += 0.05;
 
-			if (xfi->scale > 1.2)
-				xfi->scale = 1.2;
+			if (xfc->scale > 1.2)
+				xfc->scale = 1.2;
 /*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
@@ -467,7 +495,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 			e.width = (int) xfc->originalWidth * xfc->scale;
 			e.height = (int) xfc->originalHeight * xfc->scale;
 
-			xf_transform_window(xfi);
+			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 

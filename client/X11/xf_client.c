@@ -1704,22 +1704,22 @@ void freerdp_client_reset_scale(xfContext* xfc)
 {
 	ResizeWindowEventArgs e;
 
-    xfc->scale = 1.0;
-    xfc->offset_x = 0;
-    xfc->offset_y = 0;
+	xfc->scale = 1.0;
+	xfc->offset_x = 0;
+	xfc->offset_y = 0;
 
-    xfc->currentWidth = xfc->originalWidth;
-    xfc->currentHeight = xfc->originalHeight;
+	xfc->currentWidth = xfc->originalWidth;
+	xfc->currentHeight = xfc->originalHeight;
 
-    XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-    //IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	//IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
 
-    EventArgsInit(&e, "xfreerdp");
-    e.width = (int) xfc->originalWidth * xfc->scale;
-    e.height = (int) xfc->originalHeight * xfc->scale;
-    PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+	EventArgsInit(&e, "xfreerdp");
+	e.width = (int) xfc->originalWidth * xfc->scale;
+	e.height = (int) xfc->originalHeight * xfc->scale;
+	PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
-    xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 }
 
 int xfreerdp_client_new(freerdp* instance, rdpContext* context)

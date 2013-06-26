@@ -219,78 +219,101 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (keysym == XK_period)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 			//Zoom in (scale larger)
-			double s = xfi->scale;
+			double s = xfc->scale;
 			s += 0.1;
 			if (s > 2.0)
 				s = 2.0;
 
-			xfi->scale = s;
+			xfc->scale = s;
 
-			xfi->currentWidth = xfi->originalWidth * s;
-			xfi->currentHeight = xfi->originalHeight * s;
+			xfc->currentWidth = xfc->originalWidth * s;
+			xfc->currentHeight = xfc->originalHeight * s;
 
-			xf_transform_window(xfi);
+			xf_transform_window(xfc);
 
-			IFCALL(xfi->client->OnResizeWindow,
-					xfi->instance, xfi->currentWidth, xfi->currentHeight);
-			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			//IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
+			{
+				ResizeWindowEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.width = (int) xfc->originalWidth * xfc->scale;
+				e.height = (int) xfc->originalHeight * xfc->scale;
+				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 			return TRUE;
 		}
 	}
 
 	if (keysym == XK_comma)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 			//Zoom out (scale smaller)
-			double s = xfi->scale;
+			double s = xfc->scale;
 			s -= 0.1;
 			if (s < 0.5)
 				s = 0.5;
 
-			xfi->scale = s;
+			xfc->scale = s;
 
-			xfi->currentWidth = xfi->originalWidth * s;
-			xfi->currentHeight = xfi->originalHeight * s;
+			xfc->currentWidth = xfc->originalWidth * s;
+			xfc->currentHeight = xfc->originalHeight * s;
 
-			xf_transform_window(xfi);
+			xf_transform_window(xfc);
 
-			IFCALL(xfi->client->OnResizeWindow,
-					xfi->instance, xfi->currentWidth, xfi->currentHeight);
-			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
+			//IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
+			{
+				ResizeWindowEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.width = (int) xfc->originalWidth * xfc->scale;
+				e.height = (int) xfc->originalHeight * xfc->scale;
+				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 			return TRUE;
 		}
 	}
 
 	if (keysym == XK_KP_4)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 			/*
-			xfi->offset_x -= 5;
+			xfc->offset_x -= 5;
 
-			xf_transform_window(xfi);
+			xf_transform_window(xfc);
 
-			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-			printf("pan left : %d\n", xfi->offset_x);
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+			printf("pan left : %d\n", xfc->offset_x);
 			*/
 
-			IFCALL(xfi->client->OnPan, xfi->instance, -5, 0);
+			//IFCALL(xfc->client->OnPan, xfi->instance, -5, 0);
+			{
+				PanEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.xdiff = -5;
+				e.ydiff = 0;
+				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
 
 			return TRUE;
 		}
@@ -298,10 +321,10 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (keysym == XK_KP_6)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 /*
@@ -316,17 +339,25 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 			printf("pan right : %d\n", xfi->offset_x);
 */
 
-			IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
+			//IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
+			{
+				PanEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.xdiff = 5;
+				e.ydiff = 0;
+				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
 			return TRUE;
 		}
 	}
 
 	if (keysym == XK_KP_8)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 /*
@@ -337,17 +368,25 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 			printf("pan up : %d\n", xfi->offset_y);
 */
-			IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
+			//IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
+			{
+				PanEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.xdiff = 0;
+				e.ydiff = -5;
+				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
 			return TRUE;
 		}
 	}
 
 	if (keysym == XK_KP_2)
 	{
-		if ((xf_kbd_key_pressed(xfi, XK_Alt_L)
-				|| xf_kbd_key_pressed(xfi, XK_Alt_R))
-				&& (xf_kbd_key_pressed(xfi, XK_Control_L)
-						|| xf_kbd_key_pressed(xfi,
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+				|| xf_kbd_key_pressed(xfc, XK_Alt_R))
+				&& (xf_kbd_key_pressed(xfc, XK_Control_L)
+						|| xf_kbd_key_pressed(xfc,
 								XK_Control_R)))
 		{
 /*
@@ -361,7 +400,15 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 			printf("pan down : %d\n", xfi->offset_y);
 */
-			IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);
+			//IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);
+			{
+				PanEventArgs e;
+
+				EventArgsInit(&e, "xfreerdp");
+				e.xdiff = 0;
+				e.ydiff = 5;
+				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
 			return TRUE;
 		}
 	}

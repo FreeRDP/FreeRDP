@@ -41,6 +41,11 @@ DEFINE_EVENT_BEGIN(ResizeWindow)
 	int width;
 	int height;
 DEFINE_EVENT_END(ResizeWindow)
+
+DEFINE_EVENT_BEGIN(Pan)
+	int xdiff;
+	int ydiff;
+DEFINE_EVENT_END(Pan)
 	
 DEFINE_EVENT_BEGIN(EmbedWindow)
 	BOOL embed;

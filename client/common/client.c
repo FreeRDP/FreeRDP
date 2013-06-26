@@ -92,6 +92,30 @@ HANDLE freerdp_client_get_thread(rdpContext* context)
 	return ((rdpClientContext*) context)->thread;
 }
 
+double freerdp_client_get_scale(rdpContext* context)
+{
+	return context->scale;
+}
+
+void freerdp_client_set_scale(rdpContext* context, double newScale)
+{
+	context->scale = newScale;
+
+	context->currentWidth = context->originalWidth * context->scale;
+	context->currentHeight = context->originalHeight * context->scale;
+
+	//need to call transform window
+
+	{
+		ResizeWindowEventArgs e;
+
+		EventArgsInit(&e, "xfreerdp");
+		e.width = (int) xfc->originalWidth * xfc->scale;
+		e.height = (int) xfc->originalHeight * xfc->scale;
+		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+	}
+}
+
 int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv)
 {
 	int status;
