@@ -259,6 +259,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 	{
 		CloseThreadpool(context->priv->ThreadPool);
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+		IF_PROFILER	(fprintf(stderr, "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");)
 	}
 
 	BufferPool_Free(context->priv->BufferPool);
