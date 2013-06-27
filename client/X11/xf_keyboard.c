@@ -307,12 +307,12 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 			//IFCALL(xfc->client->OnPan, xfi->instance, -5, 0);
 			{
-				PanEventArgs e;
+				PanningChangeEventArgs e;
 
 				EventArgsInit(&e, "xfreerdp");
-				e.xdiff = -5;
-				e.ydiff = 0;
-				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+				e.XPan = -5;
+				e.YPan = 0;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
 
 			return TRUE;
@@ -341,12 +341,12 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 			//IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
 			{
-				PanEventArgs e;
+				PanningChangeEventArgs e;
 
 				EventArgsInit(&e, "xfreerdp");
-				e.xdiff = 5;
-				e.ydiff = 0;
-				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+				e.XPan = 5;
+				e.YPan = 0;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
 			return TRUE;
 		}
@@ -370,12 +370,12 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 */
 			//IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
 			{
-				PanEventArgs e;
+				PanningChangeEventArgs e;
 
 				EventArgsInit(&e, "xfreerdp");
-				e.xdiff = 0;
-				e.ydiff = -5;
-				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+				e.XPan = 0;
+				e.YPan = -5;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
 			return TRUE;
 		}
@@ -402,12 +402,12 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 */
 			//IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);
 			{
-				PanEventArgs e;
+				PanningChangeEventArgs e;
 
 				EventArgsInit(&e, "xfreerdp");
-				e.xdiff = 0;
-				e.ydiff = 5;
-				PubSub_OnPan(((rdpContext*) xfc)->pubSub, xfc, &e);
+				e.XPan = 0;
+				e.YPan = 5;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
 			return TRUE;
 		}
