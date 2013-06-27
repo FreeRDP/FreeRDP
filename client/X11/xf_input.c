@@ -418,6 +418,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 
 			z_vector = 0;
 
@@ -439,7 +440,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 
 			z_vector = 0;
 
