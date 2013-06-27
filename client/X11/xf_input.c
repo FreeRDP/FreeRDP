@@ -275,17 +275,6 @@ void xf_input_detect_pan(xfContext* xfc)
       
       if(px_vector > PAN_THRESHOLD)
 	{
-	  /*
-	  xfi->offset_x += 5;
-	  
-	  if(xfi->offset_x > 0)
-	    xfi->offset_x = 0;
-	  
-	  xf_transform_window(xfi);
-	  
-	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-
-	  */
 
 	  //IFCALL(xfi->client->OnPan, xfi->instance, 5, 0);
 	      {
@@ -305,14 +294,6 @@ void xf_input_detect_pan(xfContext* xfc)
 	}
       else if(px_vector < -PAN_THRESHOLD)
 	{
-	  /*
-	  xfi->offset_x -= 5;
-	  
-	  xf_transform_window(xfi);
-	  
-	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  */
-
 	  //IFCALL(xfi->client->OnPan, xfi->instance, -5, 0);
 	      {
 		      PanningChangeEventArgs e;
@@ -337,16 +318,6 @@ void xf_input_detect_pan(xfContext* xfc)
       
       if(py_vector > PAN_THRESHOLD)
 	{
-	  /*
-	  xfi->offset_y += 5;
-	  
-	  if(xfi->offset_y > 0)
-	    xfi->offset_y = 0;
-	  
-	  xf_transform_window(xfi);
-	  
-	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  */
 	  //IFCALL(xfi->client->OnPan, xfi->instance, 0, 5);
 	      {
 		      PanningChangeEventArgs e;
@@ -365,13 +336,6 @@ void xf_input_detect_pan(xfContext* xfc)
 	}
       else if(py_vector < -PAN_THRESHOLD)
 	{
-	  /*
-	  xfi->offset_y -= 5;
-	  
-	  xf_transform_window(xfi);
-	  
-	  xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-	  */
 	  //IFCALL(xfi->client->OnPan, xfi->instance, 0, -5);
 	      {
 		      PanningChangeEventArgs e;
@@ -447,17 +411,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			if (xfc->settings->ScalingFactor < 0.8)
 				xfc->settings->ScalingFactor = 0.8;
-/*
-			xfi->currentWidth = xfi->originalWidth * xfi->scale;
-			xfi->currentHeight = xfi->originalHeight * xfi->scale;
-
-			xf_transform_window(xfi);
-			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
-			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-			*/
-
-			//XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->settings->ScalingFactor, xfc->originalHeight * xfc->settings->ScalingFactor);
-
 
 			EventArgsInit(&e, "xfreerdp");
 			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
@@ -479,17 +432,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 			if (xfc->settings->ScalingFactor > 1.2)
 				xfc->settings->ScalingFactor = 1.2;
-/*
-			xfi->currentWidth = xfi->originalWidth * xfi->scale;
-			xfi->currentHeight = xfi->originalHeight * xfi->scale;
-
-			xf_transform_window(xfi);
-			IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->originalWidth * xfi->scale, xfi->originalHeight * xfi->scale);
-			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
-			*/
-
-			if (xfc->settings->ScalingFactor > 1.5)
-				xfc->settings->ScalingFactor = 1.5;
 
 			EventArgsInit(&e, "xfreerdp");
 			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
@@ -511,14 +453,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
-	/*
-	printf("id: %d active: %d x:%.2f y:%.2f BEGIN\n",
-	       event->detail,
-	       active_contacts,
-	       event->event_x,
-	       event->event_y
-	       );
-	*/
 	if(active_contacts == MAX_CONTACTS)
 	  printf("Houston, we have a problem!\n\n");
 
@@ -540,14 +474,6 @@ void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
-	/*
-	printf("id: %d active: %d x:%.2f y:%.2f UPDATE\n",
-	       event->detail,
-	       active_contacts,
-	       event->event_x,
-	       event->event_y
-	       );
-	*/
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
@@ -569,14 +495,6 @@ void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
-
-	/*	printf("id: %d active: %d x:%.2f y:%.2f END\n",
-	       event->detail,
-	       active_contacts,
-	       event->event_x,
-	       event->event_y
-	       );
-	*/
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
