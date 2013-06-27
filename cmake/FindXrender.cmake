@@ -26,18 +26,18 @@
 # limitations under the License.
 #=============================================================================
 
-find_path(Xrender_INCLUDE_DIR NAMES X11/extensions/Xrender.h
+find_path(XRENDER_INCLUDE_DIR NAMES X11/extensions/Xrender.h
           DOC "The Xrender include directory")
 
-find_library(Xrender_LIBRARY NAMES Xrender
+find_library(XRENDER_LIBRARY NAMES Xrender
           DOC "The Xrender library")
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xrender DEFAULT_MSG Xrender_LIBRARY Xrender_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xrender DEFAULT_MSG XRENDER_LIBRARY XRENDER_INCLUDE_DIR)
 
-if(Xrender_FOUND)
-	set(XRENDER_LIBRARIES ${Xrender_LIBRARY})
-	set(XRENDER_INCLUDE_DIRS ${Xrender_INCLUDE_DIR})
+if(XRENDER_FOUND)
+	set(XRENDER_LIBRARIES ${XRENDER_LIBRARY})
+	set(XRENDER_INCLUDE_DIRS ${XRENDER_INCLUDE_DIR})
 endif()
 
 mark_as_advanced(XRENDER_INCLUDE_DIRS XRENDER_LIBRARIES)
