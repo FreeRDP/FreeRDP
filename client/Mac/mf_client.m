@@ -50,7 +50,7 @@ int mfreerdp_client_start(rdpContext* context)
     if (mfc->view == NULL)
     {
         // view not specified beforehand. Create view dynamically
-        mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, 300, 300)];
+        mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, context->settings->DesktopWidth, context->settings->DesktopHeight)];
         mfc->view_ownership = TRUE;
     }
 
@@ -68,15 +68,21 @@ int mfreerdp_client_stop(rdpContext* context)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(queue, 0);
+        if (queue)
+        {
+            MessageQueue_PostQuit(queue, 0);
+        }
 	}
 
 	if (context->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(queue, 0);
-	}
+        if (queue)
+        {
+            MessageQueue_PostQuit(queue, 0);
+        }
+    }
 	else
 	{
 		mfc->disconnect = TRUE;
@@ -84,9 +90,10 @@ int mfreerdp_client_stop(rdpContext* context)
 
     if (mfc->view_ownership)
     {
-        MRDPView* view = (MRDPView*) view;
+        MRDPView* view = (MRDPView*) mfc->view;
         [view releaseResources];
         [view release];
+        mfc->view = nil;
     }
 
 	return 0;

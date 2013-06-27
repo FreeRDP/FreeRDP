@@ -20,6 +20,5 @@
 
 @property (assign) IBOutlet NSWindow *window;
 @property (assign) rdpContext *context;
-@property (assign) IBOutlet MRDPView *mrdpView;
 
 @end
