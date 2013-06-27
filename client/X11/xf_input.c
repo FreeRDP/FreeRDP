@@ -443,10 +443,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 		if (z_vector > ZOOM_THRESHOLD)
 		{
-			xfc->scale -= 0.05;
+			xfc->settings->ScalingFactor -= 0.05;
 
-			if (xfc->scale < 0.8)
-				xfc->scale = 0.8;
+			if (xfc->settings->ScalingFactor < 0.8)
+				xfc->settings->ScalingFactor = 0.8;
 /*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
@@ -456,12 +456,12 @@ void xf_input_detect_pinch(xfContext* xfc)
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 			*/
 
-			//XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+			//XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->settings->ScalingFactor, xfc->originalHeight * xfc->settings->ScalingFactor);
 
 
 			EventArgsInit(&e, "xfreerdp");
-			e.width = (int) xfc->originalWidth * xfc->scale;
-			e.height = (int) xfc->originalHeight * xfc->scale;
+			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 
 			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
@@ -475,10 +475,10 @@ void xf_input_detect_pinch(xfContext* xfc)
 
 		if (z_vector < -ZOOM_THRESHOLD)
 		{
-			xfc->scale += 0.05;
+			xfc->settings->ScalingFactor += 0.05;
 
-			if (xfc->scale > 1.2)
-				xfc->scale = 1.2;
+			if (xfc->settings->ScalingFactor > 1.2)
+				xfc->settings->ScalingFactor = 1.2;
 /*
 			xfi->currentWidth = xfi->originalWidth * xfi->scale;
 			xfi->currentHeight = xfi->originalHeight * xfi->scale;
@@ -488,12 +488,12 @@ void xf_input_detect_pinch(xfContext* xfc)
 			xf_draw_screen_scaled(xfi, 0, 0, 0, 0, FALSE);
 			*/
 
-			if (xfc->scale > 1.5)
-				xfc->scale = 1.5;
+			if (xfc->settings->ScalingFactor > 1.5)
+				xfc->settings->ScalingFactor = 1.5;
 
 			EventArgsInit(&e, "xfreerdp");
-			e.width = (int) xfc->originalWidth * xfc->scale;
-			e.height = (int) xfc->originalHeight * xfc->scale;
+			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 
 			xf_transform_window(xfc);
 			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);

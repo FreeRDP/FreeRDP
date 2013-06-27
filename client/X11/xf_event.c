@@ -97,7 +97,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (!app)
 	{
-		if ((xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y))
+		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
 			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
 					y - xfc->offset_y, w, h, FALSE);
@@ -160,10 +160,10 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	}
 	
 	/* Take scaling in to consideration */
-	if ( (xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
+	if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 	{
-		x = (int)((x - xfc->offset_x) * (1.0 / xfc->scale) );
-		y = (int)((y - xfc->offset_y) * (1.0 / xfc->scale) );
+		x = (int)((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor) );
+		y = (int)((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor) );
 	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -262,13 +262,13 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 			}
 
-			if ((xfc->scale != 1.0) || (xfc->offset_x)
+			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x)
 					|| (xfc->offset_y))
 			{
 				x = (int) ((x - xfc->offset_x)
-						* (1.0 / xfc->scale));
+						* (1.0 / xfc->settings->ScalingFactor));
 				y = (int) ((y - xfc->offset_y)
-						* (1.0 / xfc->scale));
+						* (1.0 / xfc->settings->ScalingFactor));
 			}
 
 			if (extended)
@@ -349,10 +349,10 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 		}
 
 		
-		if ((xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y))
+		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
-			x = (int) ((x - xfc->offset_x) * (1.0 / xfc->scale));
-			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->scale));
+			x = (int) ((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor));
+			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor));
 		}
 
 		if (extended)
@@ -552,7 +552,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (xfc->width != event->xconfigure.width)
 	{
-		xfc->scale = (double) event->xconfigure.width / (double) xfc->originalWidth;
+		xfc->settings->ScalingFactor = (double) event->xconfigure.width / (double) xfc->originalWidth;
 		xfc->currentWidth = event->xconfigure.width;
 		xfc->currentHeight = event->xconfigure.width;
 

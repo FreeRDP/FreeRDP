@@ -2319,7 +2319,8 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	//PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }

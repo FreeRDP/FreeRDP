@@ -106,7 +106,7 @@ struct xf_context
 	UINT16 frame_x2;
 	UINT16 frame_y2;
 
-	double scale;
+	//double scale;
 	int originalWidth;
 	int originalHeight;
 	int currentWidth;

@@ -118,8 +118,8 @@ void xf_transform_window(xfContext* xfc)
 	if(ret == 0)
 		size_hints = XAllocSizeHints();
 
-	w = (xfc->originalWidth * xfc->scale) + xfc->offset_x;
-	h = (xfc->originalHeight * xfc->scale) + xfc->offset_y;
+	w = (xfc->originalWidth * xfc->settings->ScalingFactor) + xfc->offset_x;
+	h = (xfc->originalHeight * xfc->settings->ScalingFactor) + xfc->offset_y;
 
 	if(w < 1)
 		w = 1;
@@ -164,17 +164,17 @@ void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scal
 
 	transform.matrix[2][0] = XDoubleToFixed(0);
 	transform.matrix[2][1] = XDoubleToFixed(0);
-	transform.matrix[2][2] = XDoubleToFixed(xfc->scale);
+	transform.matrix[2][2] = XDoubleToFixed(xfc->settings->ScalingFactor);
 
 	if( (w != 0) && (h != 0) )
 	{
 
 		if(scale == TRUE)
 		{
-			xr.x = x * xfc->scale;
-			xr.y = y * xfc->scale;
-			xr.width = (w+1) * xfc->scale;
-			xr.height = (h+1) * xfc->scale;
+			xr.x = x * xfc->settings->ScalingFactor;
+			xr.y = y * xfc->settings->ScalingFactor;
+			xr.width = (w+1) * xfc->settings->ScalingFactor;
+			xr.height = (h+1) * xfc->settings->ScalingFactor;
 		}
 		else
 		{
@@ -230,7 +230,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-			if ( (xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
+			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
 				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 			}
@@ -265,7 +265,7 @@ void xf_sw_end_paint(rdpContext* context)
 				//combine xfc->primary with xfc->image
 				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-				if ( (xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
+				if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 				{
 					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 				}
@@ -352,7 +352,7 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfc, FALSE);
 
-			if ( (xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
+			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
 				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 			}
@@ -384,7 +384,7 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				if ( (xfc->scale != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
+				if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 				{
 					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 				}
@@ -913,7 +913,7 @@ BOOL xf_post_connect(freerdp* instance)
 	xfc->originalHeight = settings->DesktopHeight;
 	xfc->currentWidth = xfc->originalWidth;
 	xfc->currentHeight = xfc->originalWidth;
-	xfc->scale = 1.0;
+	xfc->settings->ScalingFactor = 1.0;
 
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
@@ -1618,6 +1618,8 @@ void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
 	{
 		case FreeRDP_ScalingFactor:
 
+		printf("scaling factor changed to: %.2f\n", xfc->settings->ScalingFactor);
+
 		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
 		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
 
@@ -1697,7 +1699,7 @@ int xfreerdp_client_stop(rdpContext* context)
 double freerdp_client_get_scale(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
-	return xfc->scale;
+	return xfc->settings->ScalingFactor;
 }
 
 
@@ -1706,17 +1708,17 @@ void freerdp_client_set_scale(rdpContext* context, double newScale)
 	ResizeWindowEventArgs e;
 
 	xfContext* xfc = (xfContext*) context;
-	xfc->scale = newScale;
+	xfc->settings->ScalingFactor = newScale;
 
-	xfc->currentWidth = xfc->originalWidth * xfc->scale;
-	xfc->currentHeight = xfc->originalHeight * xfc->scale;
+	xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
+	xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
 	
 	xf_transform_window(xfc);
-	//IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	//IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->settings->ScalingFactor, xfc->originalHeight * xfc->settings->ScalingFactor);
 
 	EventArgsInit(&e, "xfreerdp");
-	e.width = (int) xfc->originalWidth * xfc->scale;
-	e.height = (int) xfc->originalHeight * xfc->scale;
+	e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+	e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 	PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
@@ -1736,19 +1738,19 @@ void freerdp_client_reset_scale(xfContext* xfc)
 {
 	ResizeWindowEventArgs e;
 
-	xfc->scale = 1.0;
+	xfc->settings->ScalingFactor = 1.0;
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
 
 	xfc->currentWidth = xfc->originalWidth;
 	xfc->currentHeight = xfc->originalHeight;
 
-	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-	//IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
+	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->settings->ScalingFactor, xfc->originalHeight * xfc->settings->ScalingFactor);
+	//IFCALL(xfc->client->OnResizeWindow, xfc->instance, xfc->originalWidth * xfc->settings->ScalingFactor, xfc->originalHeight * xfc->settings->ScalingFactor);
 
 	EventArgsInit(&e, "xfreerdp");
-	e.width = (int) xfc->originalWidth * xfc->scale;
-	e.height = (int) xfc->originalHeight * xfc->scale;
+	e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+	e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 	PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 
 	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
