@@ -42,10 +42,14 @@ DEFINE_EVENT_BEGIN(ResizeWindow)
 	int height;
 DEFINE_EVENT_END(ResizeWindow)
 
-DEFINE_EVENT_BEGIN(Pan)
-	int xdiff;
-	int ydiff;
-DEFINE_EVENT_END(Pan)
+DEFINE_EVENT_BEGIN(PanningChange)
+	int XPan;
+	int YPan;
+DEFINE_EVENT_END(PanningChange)
+
+DEFINE_EVENT_BEGIN(ScalingFactorChange)
+	double ScalingFactor;
+DEFINE_EVENT_END(ScalingFactorChange)
 	
 DEFINE_EVENT_BEGIN(EmbedWindow)
 	BOOL embed;

@@ -609,6 +609,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_WmClass						1549
 #define FreeRDP_EmbeddedWindow					1550
 #define FreeRDP_SmartSizing					1551
+#define FreeRDP_XPan						1552
+#define FreeRDP_YPan						1553
+#define FreeRDP_ScalingFactor					1554
 #define FreeRDP_SoftwareGdi					1601
 #define FreeRDP_LocalConnection					1602
 #define FreeRDP_AuthenticationOnly				1603
@@ -977,7 +980,10 @@ struct rdp_settings
 	ALIGN64 char* WmClass; /* 1549 */
 	ALIGN64 BOOL EmbeddedWindow; /* 1550 */
 	ALIGN64 BOOL SmartSizing; /* 1551 */
-	UINT64 padding1600[1600 - 1552]; /* 1552 */
+	ALIGN64 int XPan; /* 1552 */
+	ALIGN64 int YPan; /* 1553 */
+	ALIGN64 double ScalingFactor; /* 1554 */
+	UINT64 padding1600[1600 - 1555]; /* 1555 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
@@ -1312,6 +1318,9 @@ FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
 
+FREERDP_API int freerdp_get_param_int(rdpSettings* settings, int id);
+FREERDP_API int freerdp_set_param_int(rdpSettings* settings, int id, int param);
+
 FREERDP_API UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param);
 
@@ -1320,6 +1329,9 @@ FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 p
 
 FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, char* param);
+
+FREERDP_API double freerdp_get_param_double(rdpSettings* settings, int id);
+FREERDP_API int freerdp_set_param_double(rdpSettings* settings, int id, double param);
 
 #ifdef __cplusplus
 }

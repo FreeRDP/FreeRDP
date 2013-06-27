@@ -323,6 +323,8 @@ static wEventType FreeRDP_Events[] =
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
 	DEFINE_EVENT_ENTRY(EmbedWindow)
+	DEFINE_EVENT_ENTRY(PanningChange)
+	DEFINE_EVENT_ENTRY(ScalingFactorChange)
 	DEFINE_EVENT_ENTRY(ErrorInfo)
 	DEFINE_EVENT_ENTRY(ParamChange)
 	DEFINE_EVENT_ENTRY(Terminate)
