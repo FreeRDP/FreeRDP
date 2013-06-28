@@ -98,8 +98,8 @@ int xf_input_init(xfContext* xfc, Window window)
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)];
 
 	//dont initialize multiple times
-	if(initialized)
-	  return 0;
+	//	if(initialized)
+	// return 0;
 
 	z_vector = 0;
 	px_vector = 0;
@@ -197,7 +197,7 @@ int xf_input_init(xfContext* xfc, Window window)
 	if (nmasks > 0)
 		xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
 
-	initialized = 1;
+	//	initialized = 1;
 	return 0;
 }
 
@@ -578,17 +578,17 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 
 	if (evtype == XI_TouchBegin)
 	{
-		//printf("TouchBegin: %d\n", touchId);
+		printf("TouchBegin: %d\n", touchId);
 		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchUpdate)
 	{
-		//printf("TouchUpdate: %d\n", touchId);
+	        printf("TouchUpdate: %d\n", touchId);
 		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchEnd)
 	{
-		//printf("TouchEnd: %d\n", touchId);
+		printf("TouchEnd: %d\n", touchId);
 		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
 	}
 
@@ -602,19 +602,19 @@ int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			printf("ButtonPress\n");
+		  //printf("ButtonPress\n");
 			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_ButtonRelease:
-			printf("ButtonRelease\n");
+		  //printf("ButtonRelease\n");
 			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_Motion:
-			printf("Motion\n");
+		  //printf("Motion\n");
 			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
@@ -683,7 +683,8 @@ void xf_process_rdpei_event(xfContext* xfc, wMessage* event)
 int xf_input_handle_event(xfContext* xfc, XEvent* event)
 {
 #ifdef WITH_XI
-	if (xfc->settings->MultiTouchInput)
+  //printf("m:%d g:%d\n", (xfc->settings->MultiTouchInput), (xfc->settings->MultiTouchGestures) );
+  	if (xfc->settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}

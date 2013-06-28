@@ -1618,8 +1618,6 @@ void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
 	{
 	case FreeRDP_ScalingFactor:
 
-		printf("scaling factor changed to: %.2f\n", xfc->settings->ScalingFactor);
-
 		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
 		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
 
