@@ -175,7 +175,7 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 
 			dl = al + bl + cl + 3;
 
-			d = malloc(cl + 1);
+			d = malloc(dl + 1);
 			sprintf_s(d, dl, "(%s%s%s)", b ? b : "", c, a);
 
 			Stack_Push(stack, d);
