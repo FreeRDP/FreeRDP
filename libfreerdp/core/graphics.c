@@ -117,10 +117,16 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 		pointer->Free(context, pointer);
 
 		if (pointer->xorMaskData)
+		{
 			free(pointer->xorMaskData);
+			pointer->xorMaskData = NULL;
+		}
 
 		if (pointer->andMaskData)
+		{
 			free(pointer->andMaskData);
+			pointer->andMaskData = NULL;
+		}
 
 		free(pointer);
 	}

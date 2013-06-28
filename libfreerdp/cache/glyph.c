@@ -500,6 +500,7 @@ void glyph_cache_free(rdpGlyphCache* glyph_cache)
 					Glyph_Free(glyph_cache->context, glyph);
 					free(glyph->aj);
 					free(glyph);
+					glyph_cache->glyphCache[i].entries[j] = NULL;
 				}
 			}
 			free(glyph_cache->glyphCache[i].entries);
@@ -509,6 +510,7 @@ void glyph_cache_free(rdpGlyphCache* glyph_cache)
 		{
 			fragment = glyph_cache->fragCache.entries[i].fragment;
 			free(fragment);
+			glyph_cache->fragCache.entries[i].fragment = NULL;
 		}
 
 		free(glyph_cache->fragCache.entries);
