@@ -29,54 +29,54 @@
 
 #include "wf_cliprdr.h"
 
-void wf_cliprdr_init(wfInfo* wfi, rdpChannels* chanman)
+void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels)
 {
 
 }
 
-void wf_cliprdr_uninit(wfInfo* wfi)
+void wf_cliprdr_uninit(wfContext* wfc)
 {
 
 }
 
-static void wf_cliprdr_process_cb_monitor_ready_event(wfInfo* wfi)
+static void wf_cliprdr_process_cb_monitor_ready_event(wfContext* wfc)
 {
 
 }
 
-static void wf_cliprdr_process_cb_data_request_event(wfInfo* wfi, RDP_CB_DATA_REQUEST_EVENT* event)
+static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA_REQUEST_EVENT* event)
 {
 
 }
 
-static void wf_cliprdr_process_cb_format_list_event(wfInfo* wfi, RDP_CB_FORMAT_LIST_EVENT* event)
+static void wf_cliprdr_process_cb_format_list_event(wfContext* wfc, RDP_CB_FORMAT_LIST_EVENT* event)
 {
 
 }
 
-static void wf_cliprdr_process_cb_data_response_event(wfInfo* wfi, RDP_CB_DATA_RESPONSE_EVENT* event)
+static void wf_cliprdr_process_cb_data_response_event(wfContext* wfc, RDP_CB_DATA_RESPONSE_EVENT* event)
 {
 
 }
 
-void wf_process_cliprdr_event(wfInfo* wfi, wMessage* event)
+void wf_process_cliprdr_event(wfContext* wfc, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
 		case CliprdrChannel_MonitorReady:
-			wf_cliprdr_process_cb_monitor_ready_event(wfi);
+			wf_cliprdr_process_cb_monitor_ready_event(wfc);
 			break;
 
 		case CliprdrChannel_FormatList:
-			wf_cliprdr_process_cb_format_list_event(wfi, (RDP_CB_FORMAT_LIST_EVENT*) event);
+			wf_cliprdr_process_cb_format_list_event(wfc, (RDP_CB_FORMAT_LIST_EVENT*) event);
 			break;
 
 		case CliprdrChannel_DataRequest:
-			wf_cliprdr_process_cb_data_request_event(wfi, (RDP_CB_DATA_REQUEST_EVENT*) event);
+			wf_cliprdr_process_cb_data_request_event(wfc, (RDP_CB_DATA_REQUEST_EVENT*) event);
 			break;
 
 		case CliprdrChannel_DataResponse:
-			wf_cliprdr_process_cb_data_response_event(wfi, (RDP_CB_DATA_RESPONSE_EVENT*) event);
+			wf_cliprdr_process_cb_data_response_event(wfc, (RDP_CB_DATA_RESPONSE_EVENT*) event);
 			break;
 
 		default:
@@ -84,27 +84,27 @@ void wf_process_cliprdr_event(wfInfo* wfi, wMessage* event)
 	}
 }
 
-BOOL wf_cliprdr_process_selection_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-BOOL wf_cliprdr_process_selection_request(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_request(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-BOOL wf_cliprdr_process_selection_clear(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-BOOL wf_cliprdr_process_property_notify(wfInfo* wfi, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return TRUE;
 }
 
-void wf_cliprdr_check_owner(wfInfo* wfi)
+void wf_cliprdr_check_owner(wfContext* wfc)
 {
 
 }

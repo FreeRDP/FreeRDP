@@ -20,16 +20,16 @@
 #ifndef __XF_INPUT_H
 #define __XF_INPUT_H
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
 #endif
 
-int xf_input_init(xfInfo* xfi, Window window);
+int xf_input_init(xfContext* xfc, Window window);
 
-int xf_input_handle_event(xfInfo* xfi, XEvent* event);
-void xf_process_rdpei_event(xfInfo* xfi, wMessage* event);
+int xf_input_handle_event(xfContext* xfc, XEvent* event);
+void xf_process_rdpei_event(xfContext* xfc, wMessage* event);
 
 #endif

@@ -7,10 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <MacFreeRDP-library/MRDPView.h>
 
 int main(int argc, char *argv[])
 {
-    [MRDPView class];
-    return NSApplicationMain(argc, (const char **)argv);
+	return NSApplicationMain(argc, (const char**) argv);
 }

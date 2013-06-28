@@ -19,10 +19,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#ifdef HAVE_RAIL
-#import "MRDPWindow.h"
-#endif
-
 /*
  #import "freerdp/freerdp.h"
 #import "freerdp/types.h"
@@ -36,37 +32,36 @@
 #import "freerdp/rail/rail.h"
 #import "freerdp/rail.h"
 #import "freerdp/utils/rail.h"
+
+#import "mf_interface.h"
 */
 
-
+#import "mfreerdp.h"
+#import "mf_client.h"
 
 @interface MRDPView : NSView
 {
-	CFRunLoopSourceRef run_loop_src;
 	CFRunLoopSourceRef run_loop_src_channels;
+	CFRunLoopSourceRef run_loop_src_update;
+	CFRunLoopSourceRef run_loop_src_input;
+
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
 	NSRect prevWinPosition;
 	int titleBarHeight;
-	void* rdp_instance;
-	void* rdp_context;
+	freerdp* instance;
+	rdpContext* context;
 	CGContextRef bitmap_context;
 	char* pixel_data;
 	int width;
 	int height;
 	int argc;
 	char** argv;
-
-#ifdef HAVE_RAIL
-	// RemoteApp
-	MRDPWindow* currentWindow;
-#endif
     
 	NSPoint savedDragLocation;
 	BOOL mouseInClientArea;
-	BOOL isRemoteApp;
 	BOOL firstCreateWindow;
 	BOOL isMoveSizeInProgress;
 	BOOL skipResizeOnce;
@@ -85,7 +80,6 @@
 	int kdcapslock;
 	
 @public
-	NSWindow* ourMainWindow;
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
 	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
 	int pasteboard_changecount;
@@ -93,10 +87,9 @@
 	int is_connected;
 }
 
-- (int) rdpConnect;
+- (int)  rdpStart :(rdpContext*) rdp_context;
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
-- (void) saveStateInfo :(void *) instance :(void *) context;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
 - (void) setViewSize : (int) width : (int) height;

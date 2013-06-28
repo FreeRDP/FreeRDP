@@ -172,7 +172,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
-void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
+int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
 	context->info = mf_info_get_instance();
 	context->rfx_context = rfx_context_new();
@@ -191,6 +191,8 @@ void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	//#endif
 	
 	mf_info_peer_register(context->info, context);
+
+	return 0;
 }
 
 
@@ -228,7 +230,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 /* Called when a new client connects */
 void mf_peer_init(freerdp_peer* client)
 {
-	client->context_size = sizeof(mfPeerContext);
+	client->ContextSize = sizeof(mfPeerContext);
 	client->ContextNew = (psPeerContextNew) mf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) mf_peer_context_free;
 	freerdp_peer_context_new(client);

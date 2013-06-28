@@ -57,46 +57,7 @@
 
 #include "resource.h"
 
-wfInfo* wf_wfi_new()
-{
-	wfInfo* wfi;
-
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
-
-	return wfi;
-}
-
-void wf_wfi_free(wfInfo* wfi)
-{
-	free(wfi);
-}
-
-void wf_context_new(freerdp* instance, rdpContext* context)
-{
-	wfInfo* wfi;
-
-	context->channels = freerdp_channels_new();
-
-	wfi = wf_wfi_new();
-
-	((wfContext*) context)->wfi = wfi;
-	wfi->instance = instance;
-
-	// Register callbacks
-	instance->context->client->OnParamChange = wf_on_param_change;
-}
-
-void wf_context_free(freerdp* instance, rdpContext* context)
-{
-	if (context->cache)
-		cache_free(context->cache);
-
-	freerdp_channels_free(context->channels);
-
-	wf_wfi_free(((wfContext*) context)->wfi);
-	((wfContext*) context)->wfi = NULL;
-}
+void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height);
 
 int wf_create_console(void)
 {
@@ -109,26 +70,24 @@ int wf_create_console(void)
 	return 0;
 }
 
-void wf_sw_begin_paint(rdpContext* context)
+void wf_sw_begin_paint(wfContext* wfc)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi = ((rdpContext*) wfc)->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
-void wf_sw_end_paint(rdpContext* context)
+void wf_sw_end_paint(wfContext* wfc)
 {
 	int i;
 	rdpGdi* gdi;
-	wfInfo* wfi;
 	INT32 x, y;
 	UINT32 w, h;
 	int ninvalid;
 	RECT update_rect;
 	HGDI_RGN cinvalid;
 
-	gdi = context->gdi;
-	wfi = ((wfContext*) context)->wfi;
+	gdi = ((rdpContext*) wfc)->gdi;
 
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return;
@@ -148,108 +107,105 @@ void wf_sw_end_paint(rdpContext* context)
 		update_rect.right = x + w - 1;
 		update_rect.bottom = y + h - 1;
 
-		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+		InvalidateRect(wfc->hwnd, &update_rect, FALSE);
 	}
 }
 
-void wf_sw_desktop_resize(rdpContext* context)
+void wf_sw_desktop_resize(wfContext* wfc)
 {
-	wfInfo* wfi;
 	rdpGdi* gdi;
+	rdpContext* context;
 	rdpSettings* settings;
 
-	wfi = ((wfContext*) context)->wfi;
-	settings = wfi->instance->settings;
+	context = (rdpContext*) wfc;
+	settings = wfc->instance->settings;
 	gdi = context->gdi;
 
-	wfi->width = settings->DesktopWidth;
-	wfi->height = settings->DesktopHeight;
-	gdi_resize(gdi, wfi->width, wfi->height);
+	wfc->width = settings->DesktopWidth;
+	wfc->height = settings->DesktopHeight;
+	gdi_resize(gdi, wfc->width, wfc->height);
 
-	if (wfi->primary)
+	if (wfc->primary)
 	{
-		wf_image_free(wfi->primary);
-		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, gdi->primary_buffer);
+		wf_image_free(wfc->primary);
+		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, gdi->primary_buffer);
 	}
 }
 
-void wf_hw_begin_paint(rdpContext* context)
+void wf_hw_begin_paint(wfContext* wfc)
 {
-	wfInfo* wfi = ((wfContext*) context)->wfi;
-	wfi->hdc->hwnd->invalid->null = 1;
-	wfi->hdc->hwnd->ninvalid = 0;
+	wfc->hdc->hwnd->invalid->null = 1;
+	wfc->hdc->hwnd->ninvalid = 0;
 }
 
-void wf_hw_end_paint(rdpContext* context)
+void wf_hw_end_paint(wfContext* wfc)
 {
 
 }
 
-void wf_hw_desktop_resize(rdpContext* context)
+void wf_hw_desktop_resize(wfContext* wfc)
 {
-	wfInfo* wfi;
 	BOOL same;
 	RECT rect;
 	rdpSettings* settings;
 
-	wfi = ((wfContext*) context)->wfi;
-	settings = wfi->instance->settings;
+	settings = wfc->instance->settings;
 
-	wfi->width = settings->DesktopWidth;
-	wfi->height = settings->DesktopHeight;
+	wfc->width = settings->DesktopWidth;
+	wfc->height = settings->DesktopHeight;
 
-	if (wfi->primary)
+	if (wfc->primary)
 	{
-		same = (wfi->primary == wfi->drawing) ? TRUE : FALSE;
+		same = (wfc->primary == wfc->drawing) ? TRUE : FALSE;
 
-		wf_image_free(wfi->primary);
+		wf_image_free(wfc->primary);
 
-		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, NULL);
+		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
 		if (same)
-			wfi->drawing = wfi->primary;
+			wfc->drawing = wfc->primary;
 	}
 
-	if (wfi->fullscreen != TRUE)
+	if (wfc->fullscreen != TRUE)
 	{
-		if (wfi->hwnd)
-			SetWindowPos(wfi->hwnd, HWND_TOP, -1, -1, wfi->width + wfi->diff.x, wfi->height + wfi->diff.y, SWP_NOMOVE);
+		if (wfc->hwnd)
+			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, wfc->width + wfc->diff.x, wfc->height + wfc->diff.y, SWP_NOMOVE);
 	}
 	else
 	{
-		wf_update_offset(wfi);
-		GetWindowRect(wfi->hwnd, &rect);
-		InvalidateRect(wfi->hwnd, &rect, TRUE);
+		wf_update_offset(wfc);
+		GetWindowRect(wfc->hwnd, &rect);
+		InvalidateRect(wfc->hwnd, &rect, TRUE);
 	}
 }
 
 BOOL wf_pre_connect(freerdp* instance)
 {
-	int desktopWidth, desktopHeight;
-	wfInfo* wfi;
-	wfContext* context;
+	wfContext* wfc;
+	int desktopWidth;
+	int desktopHeight;
+	rdpContext* context;
 	rdpSettings* settings;
 
-	context = (wfContext*) instance->context;
-
-	wfi = context->wfi;
-	wfi->instance = instance;
+	context = instance->context;
+	wfc = (wfContext*) instance->context;
+	wfc->instance = instance;
 
 	settings = instance->settings;
 
 	if (settings->ConnectionFile)
 	{
-		if (wfi->connectionRdpFile)
+		if (wfc->connectionRdpFile)
 		{
-			freerdp_client_rdp_file_free(wfi->connectionRdpFile);
+			freerdp_client_rdp_file_free(wfc->connectionRdpFile);
 		}
 
-		wfi->connectionRdpFile = freerdp_client_rdp_file_new();
+		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
 
 		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
 
-		freerdp_client_parse_rdp_file(wfi->connectionRdpFile, settings->ConnectionFile);
-		freerdp_client_populate_settings_from_rdp_file(wfi->connectionRdpFile, settings);
+		freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile);
+		freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings);
 	}
 
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
@@ -279,31 +235,31 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
-	wfi->fullscreen = settings->Fullscreen;
-	wfi->fs_toggle = 1;
-	wfi->sw_gdi = settings->SoftwareGdi;
+	wfc->fullscreen = settings->Fullscreen;
+	wfc->fs_toggle = 1;
+	wfc->sw_gdi = settings->SoftwareGdi;
 
-	wfi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	ZeroMemory(wfi->clrconv, sizeof(CLRCONV));
+	wfc->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+	ZeroMemory(wfc->clrconv, sizeof(CLRCONV));
 
-	wfi->clrconv->palette = NULL;
-	wfi->clrconv->alpha = FALSE;
+	wfc->clrconv->palette = NULL;
+	wfc->clrconv->alpha = FALSE;
 
 	instance->context->cache = cache_new(settings);
 
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
 
-	if (wfi->percentscreen > 0)
+	if (wfc->percentscreen > 0)
 	{
-		desktopWidth = (GetSystemMetrics(SM_CXSCREEN) * wfi->percentscreen) / 100;
+		desktopWidth = (GetSystemMetrics(SM_CXSCREEN) * wfc->percentscreen) / 100;
 		settings->DesktopWidth = desktopWidth;
 
-		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfi->percentscreen) / 100;
+		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfc->percentscreen) / 100;
 		settings->DesktopHeight = desktopHeight;
 	}
 	
-	if (wfi->fullscreen)
+	if (wfc->fullscreen)
 	{
 		if (settings->UseMultimon)
 		{
@@ -342,9 +298,9 @@ BOOL wf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-void wf_add_system_menu(wfInfo* wfi)
+void wf_add_system_menu(wfContext* wfc)
 {
-	HMENU hMenu = GetSystemMenu(wfi->hwnd, FALSE);
+	HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 
 	MENUITEMINFO item_info;
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
@@ -355,11 +311,11 @@ void wf_add_system_menu(wfInfo* wfi)
 	item_info.fType = MFT_STRING;
 	item_info.dwTypeData = _wcsdup(_T("Smart sizing"));
 	item_info.cch = _wcslen(_T("Smart sizing"));
-	item_info.dwItemData = (ULONG_PTR) wfi;
+	item_info.dwItemData = (ULONG_PTR) wfc;
 
 	InsertMenuItem(hMenu, 6, TRUE, &item_info);
 
-	if (wfi->instance->settings->SmartSizing)
+	if (wfc->instance->settings->SmartSizing)
 	{
 		CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, MF_CHECKED);
 	}
@@ -368,59 +324,59 @@ void wf_add_system_menu(wfInfo* wfi)
 BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
-	wfInfo* wfi;
 	DWORD dwStyle;
 	rdpCache* cache;
-	wfContext* context;
+	wfContext* wfc;
+	rdpContext* context;
 	WCHAR lpWindowName[64];
 	rdpSettings* settings;
 
 	settings = instance->settings;
-	context = (wfContext*) instance->context;
+	context = instance->context;
+	wfc = (wfContext*) instance->context;
 	cache = instance->context->cache;
-	wfi = context->wfi;
 
-	wfi->dstBpp = 32;
-	wfi->width = settings->DesktopWidth;
-	wfi->height = settings->DesktopHeight;
+	wfc->dstBpp = 32;
+	wfc->width = settings->DesktopWidth;
+	wfc->height = settings->DesktopHeight;
 
-	if (wfi->sw_gdi)
+	if (wfc->sw_gdi)
 	{
 		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
 		gdi = instance->context->gdi;
-		wfi->hdc = gdi->primary->hdc;
-		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, gdi->primary_buffer);
+		wfc->hdc = gdi->primary->hdc;
+		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, gdi->primary_buffer);
 	}
 	else
 	{
 		wf_gdi_register_update_callbacks(instance->update);
-		wfi->srcBpp = instance->settings->ColorDepth;
-		wfi->primary = wf_image_new(wfi, wfi->width, wfi->height, wfi->dstBpp, NULL);
+		wfc->srcBpp = instance->settings->ColorDepth;
+		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		wfi->hdc = gdi_GetDC();
-		wfi->hdc->bitsPerPixel = wfi->dstBpp;
-		wfi->hdc->bytesPerPixel = wfi->dstBpp / 8;
+		wfc->hdc = gdi_GetDC();
+		wfc->hdc->bitsPerPixel = wfc->dstBpp;
+		wfc->hdc->bytesPerPixel = wfc->dstBpp / 8;
 
-		wfi->hdc->alpha = wfi->clrconv->alpha;
-		wfi->hdc->invert = wfi->clrconv->invert;
+		wfc->hdc->alpha = wfc->clrconv->alpha;
+		wfc->hdc->invert = wfc->clrconv->invert;
 
-		wfi->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-		wfi->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-		wfi->hdc->hwnd->invalid->null = 1;
+		wfc->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+		wfc->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+		wfc->hdc->hwnd->invalid->null = 1;
 
-		wfi->hdc->hwnd->count = 32;
-		wfi->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfi->hdc->hwnd->count);
-		wfi->hdc->hwnd->ninvalid = 0;
+		wfc->hdc->hwnd->count = 32;
+		wfc->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfc->hdc->hwnd->count);
+		wfc->hdc->hwnd->ninvalid = 0;
 
 		if (settings->RemoteFxCodec)
 		{
-			wfi->tile = wf_image_new(wfi, 64, 64, 32, NULL);
-			wfi->rfx_context = rfx_context_new();
+			wfc->tile = wf_image_new(wfc, 64, 64, 32, NULL);
+			wfc->rfx_context = rfx_context_new();
 		}
 
 		if (settings->NSCodec)
 		{
-			wfi->nsc_context = nsc_context_new();
+			wfc->nsc_context = nsc_context_new();
 		}
 	}
 
@@ -436,40 +392,40 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		dwStyle = 0;
 
-	if (!wfi->hwnd)
+	if (!wfc->hwnd)
 	{
-		wfi->hwnd = CreateWindowEx((DWORD) NULL, wfi->wndClassName, lpWindowName, dwStyle,
-			0, 0, 0, 0, wfi->hWndParent, NULL, wfi->hInstance, NULL);
+		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName, dwStyle,
+			0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 
-		SetWindowLongPtr(wfi->hwnd, GWLP_USERDATA, (LONG_PTR) wfi);
+		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
 	}
 
-	wf_resize_window(wfi);
+	wf_resize_window(wfc);
 
-	wf_add_system_menu(wfi);
+	wf_add_system_menu(wfc);
 
-	BitBlt(wfi->primary->hdc, 0, 0, wfi->width, wfi->height, NULL, 0, 0, BLACKNESS);
-	wfi->drawing = wfi->primary;
+	BitBlt(wfc->primary->hdc, 0, 0, wfc->width, wfc->height, NULL, 0, 0, BLACKNESS);
+	wfc->drawing = wfc->primary;
 
-	ShowWindow(wfi->hwnd, SW_SHOWNORMAL);
-	UpdateWindow(wfi->hwnd);
+	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
+	UpdateWindow(wfc->hwnd);
 
-	if (wfi->sw_gdi)
+	if (wfc->sw_gdi)
 	{											
-		instance->update->BeginPaint = wf_sw_begin_paint;
-		instance->update->EndPaint = wf_sw_end_paint;
-		instance->update->DesktopResize = wf_sw_desktop_resize;
+		instance->update->BeginPaint = (pBeginPaint) wf_sw_begin_paint;
+		instance->update->EndPaint = (pEndPaint) wf_sw_end_paint;
+		instance->update->DesktopResize = (pDesktopResize) wf_sw_desktop_resize;
 	}
 	else
 	{
-		instance->update->BeginPaint = wf_hw_begin_paint;
-		instance->update->EndPaint = wf_hw_end_paint;
-		instance->update->DesktopResize = wf_hw_desktop_resize;
+		instance->update->BeginPaint = (pBeginPaint) wf_hw_begin_paint;
+		instance->update->EndPaint = (pEndPaint) wf_hw_end_paint;
+		instance->update->DesktopResize = (pDesktopResize) wf_hw_desktop_resize;
 	}
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (wfi->sw_gdi != TRUE)
+	if (wfc->sw_gdi != TRUE)
 	{
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
@@ -480,13 +436,7 @@ BOOL wf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	wf_cliprdr_init(wfi, instance->context->channels);
-
-	// Callback
-	if (wfi->client_callback_func != NULL)
-	{
-		wfi->client_callback_func(wfi, CALLBACK_TYPE_CONNECTED, 0, 0);
-	}
+	wf_cliprdr_init(wfc, instance->context->channels);
 
 	return TRUE;
 }
@@ -600,7 +550,7 @@ BOOL wf_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-DWORD WINAPI wf_thread(LPVOID lpParam)
+DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
 	int index;
@@ -614,10 +564,12 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	void* wfds[32];
 	int fds_count;
 	HANDLE fds[64];
+	wfContext* wfc;
 	freerdp* instance;
 	rdpChannels* channels;
 
 	instance = (freerdp*) lpParam;
+	wfc = (wfContext*) instance->context;
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
@@ -704,11 +656,11 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 			{
 				if ((msg.message == WM_SETFOCUS) && (msg.lParam == 1))
 				{
-					PostMessage(((wfContext*) instance->context)->wfi->hwnd, WM_SETFOCUS, 0, 0); 
+					PostMessage(wfc->hwnd, WM_SETFOCUS, 0, 0);
 				}
 				else if ((msg.message == WM_KILLFOCUS) && (msg.lParam == 1))
 				{
-					PostMessage(((wfContext*) instance->context)->wfi->hwnd, WM_KILLFOCUS, 0, 0); 
+					PostMessage(wfc->hwnd, WM_KILLFOCUS, 0, 0);
 				}
 			}
 
@@ -717,10 +669,10 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 				width = LOWORD(msg.lParam);
 				height = HIWORD(msg.lParam);
 
-				//((wfContext*) instance->context)->wfi->client_width = width;
-				//((wfContext*) instance->context)->wfi->client_height = height;
+				//wfc->client_width = width;
+				//wfc->client_height = height;
 
-				SetWindowPos(((wfContext*) instance->context)->wfi->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
+				SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
 			}
 
 			if ((msg_ret == 0) || (msg_ret == -1))
@@ -738,16 +690,12 @@ DWORD WINAPI wf_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	((wfContext*) instance->context)->wfi->mainThreadId = 0;
+	wfc->mainThreadId = 0;
 
 	freerdp_channels_close(channels, instance);
-	freerdp_disconnect(instance);	
+	freerdp_disconnect(instance);
 
-	// Callback
-	if (((wfContext*) instance->context)->wfi->client_callback_func != NULL)
-	{
-		((wfContext*) instance->context)->wfi->client_callback_func(((wfContext*) instance->context)->wfi, CALLBACK_TYPE_DISCONNECTED, 12, 34);
-	}
+	printf("Main thread exited.\n");
 
 	return 0;
 }
@@ -756,12 +704,12 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 {
 	MSG msg;
 	BOOL status;
-	wfInfo* wfi;
+	wfContext* wfc;
 	HHOOK hook_handle;
 
-	wfi = (wfInfo*) lpParam;
+	wfc = (wfContext*) lpParam;
 
-	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfi->hInstance, 0);
+	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfc->hInstance, 0);
 
 	if (hook_handle)
 	{
@@ -786,12 +734,247 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 		fprintf(stderr, "failed to install keyboard hook\n");
 	}
 
-	wfi->keyboardThreadId = 0;
+	wfc->keyboardThreadId = 0;
 	printf("Keyboard thread exited.\n");
+
 	return (DWORD) NULL;
 }
 
-int freerdp_client_global_init()
+rdpSettings* freerdp_client_get_settings(wfContext* wfc)
+{
+	return wfc->instance->settings;
+}
+
+int freerdp_client_focus_in(wfContext* wfc)
+{
+	PostThreadMessage(wfc->mainThreadId, WM_SETFOCUS, 0, 1);
+	return 0;
+}
+
+int freerdp_client_focus_out(wfContext* wfc)
+{
+	PostThreadMessage(wfc->mainThreadId, WM_KILLFOCUS, 0, 1);
+	return 0;
+}
+
+int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
+{
+	if ((width != wfc->client_width) || (height != wfc->client_height))
+	{
+		PostThreadMessage(wfc->mainThreadId, WM_SIZE, SIZE_RESTORED, ((UINT) height << 16) | (UINT) width);
+	}
+
+	return 0;
+}
+
+void wf_on_param_change(freerdp* instance, int id)
+{
+	RECT rect;
+	HMENU hMenu;
+	wfContext* wfc = (wfContext*) instance->context;
+
+	// specific processing here
+	switch (id)
+	{
+		case FreeRDP_SmartSizing:
+			fprintf(stderr, "SmartSizing changed.\n");
+
+			if (!instance->settings->SmartSizing && (wfc->client_width > instance->settings->DesktopWidth || wfc->client_height > instance->settings->DesktopHeight))
+			{
+				GetWindowRect(wfc->hwnd, &rect);
+				SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, MIN(wfc->client_width + wfc->offset_x, rect.right - rect.left), MIN(wfc->client_height + wfc->offset_y, rect.bottom - rect.top), SWP_NOMOVE | SWP_FRAMECHANGED);
+				wf_update_canvas_diff(wfc);
+			}
+
+			hMenu = GetSystemMenu(wfc->hwnd, FALSE);
+			CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, instance->settings->SmartSizing);
+			wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
+			GetClientRect(wfc->hwnd, &rect);
+			InvalidateRect(wfc->hwnd, &rect, TRUE);
+			break;
+
+		case FreeRDP_ConnectionType:
+			fprintf(stderr, "ConnectionType changed.\n");
+			freerdp_set_connection_type(wfc->instance->settings, wfc->instance->settings->ConnectionType);
+			break;
+	}
+}
+
+// TODO: Some of that code is a duplicate of wf_pre_connect. Refactor?
+int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
+{
+	rdpSettings* settings;
+
+	settings = wfc->instance->settings;
+
+	if (filename)
+	{
+		settings->ConnectionFile = _strdup(filename);
+
+		// free old settings file
+		freerdp_client_rdp_file_free(wfc->connectionRdpFile);
+		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
+
+		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
+
+		if (!freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile))
+		{
+			return 1;
+		}
+
+		if (!freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings))
+		{
+			return 2;
+		}
+	}
+
+	return 0;
+}
+
+int freerdp_client_save_settings_to_rdp_file(wfContext* wfc, char* filename)
+{
+	if (!filename)
+		return 1;
+
+	if (wfc->instance->settings->ConnectionFile)
+	{
+		free(wfc->instance->settings->ConnectionFile);
+	}
+
+	wfc->instance->settings->ConnectionFile = _strdup(filename);
+
+	// Reuse existing rdpFile structure if available, to preserve unsupported settings when saving to disk.
+	if (wfc->connectionRdpFile == NULL)
+	{
+		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
+	}
+
+	if (!freerdp_client_populate_rdp_file_from_settings(wfc->connectionRdpFile, wfc->instance->settings))
+	{
+		return 1;
+	}
+
+	if (!freerdp_client_write_rdp_file(wfc->connectionRdpFile, filename, UNICODE));
+	{
+		return 2;
+	}
+
+	return 0;
+}
+
+void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height)
+{
+	BOOL rc;
+
+	if (wfc->disablewindowtracking == TRUE)
+	{
+		return;
+	}
+
+	// prevent infinite message loop
+	wfc->disablewindowtracking = TRUE;
+
+	if (wfc->instance->settings->SmartSizing)
+	{
+		wfc->xCurrentScroll = 0;
+		wfc->yCurrentScroll = 0;
+
+		if (wfc->xScrollVisible || wfc->yScrollVisible)
+		{
+			if (ShowScrollBar(wfc->hwnd, SB_BOTH, FALSE))
+			{
+				wfc->xScrollVisible = FALSE;
+				wfc->yScrollVisible = FALSE;
+			}
+		}
+	}
+	else
+	{
+		SCROLLINFO si;
+		BOOL horiz = wfc->xScrollVisible;
+		BOOL vert = wfc->yScrollVisible;;
+
+		if (!horiz && client_width < wfc->instance->settings->DesktopWidth)
+		{
+			horiz = TRUE;		
+		}
+		else if (horiz && client_width >= wfc->instance->settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
+		{
+			horiz = FALSE;		
+		}
+
+		if (!vert && client_height < wfc->instance->settings->DesktopHeight)
+		{
+			vert = TRUE;
+		}
+		else if (vert && client_height >= wfc->instance->settings->DesktopHeight/* - GetSystemMetrics(SM_CYHSCROLL)*/)
+		{
+			vert = FALSE;
+		}
+
+		if (horiz == vert && (horiz != wfc->xScrollVisible && vert != wfc->yScrollVisible))
+		{
+			if (ShowScrollBar(wfc->hwnd, SB_BOTH, horiz))
+			{
+				wfc->xScrollVisible = horiz;
+				wfc->yScrollVisible = vert;
+			}
+		}
+
+		if (horiz != wfc->xScrollVisible)
+		{
+			if (ShowScrollBar(wfc->hwnd, SB_HORZ, horiz))
+			{
+				wfc->xScrollVisible = horiz;
+			}
+		}
+
+		if (vert != wfc->yScrollVisible)
+		{
+			if (ShowScrollBar(wfc->hwnd, SB_VERT, vert))
+			{
+				wfc->yScrollVisible = vert;
+			}
+		}
+
+		if (horiz)
+		{
+			// The horizontal scrolling range is defined by 
+			// (bitmap_width) - (client_width). The current horizontal 
+			// scroll value remains within the horizontal scrolling range. 
+			wfc->xMaxScroll = MAX(wfc->instance->settings->DesktopWidth - client_width, 0);
+			wfc->xCurrentScroll = MIN(wfc->xCurrentScroll, wfc->xMaxScroll);
+			si.cbSize = sizeof(si); 
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.nMin   = wfc->xMinScroll;
+			si.nMax   = wfc->instance->settings->DesktopWidth;
+			si.nPage  = client_width; 
+			si.nPos   = wfc->xCurrentScroll;
+			SetScrollInfo(wfc->hwnd, SB_HORZ, &si, TRUE);
+		}
+
+		if (vert)
+		{
+			// The vertical scrolling range is defined by 
+			// (bitmap_height) - (client_height). The current vertical 
+			// scroll value remains within the vertical scrolling range. 
+			wfc->yMaxScroll = MAX(wfc->instance->settings->DesktopHeight - client_height, 0);
+			wfc->yCurrentScroll = MIN(wfc->yCurrentScroll, wfc->yMaxScroll);
+			si.cbSize = sizeof(si); 
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.nMin   = wfc->yMinScroll;
+			si.nMax   = wfc->instance->settings->DesktopHeight;
+			si.nPage  = client_height; 
+			si.nPos   = wfc->yCurrentScroll;
+			SetScrollInfo(wfc->hwnd, SB_VERT, &si, TRUE);
+		}
+	}
+
+	wfc->disablewindowtracking = FALSE;
+	wf_update_canvas_diff(wfc);
+}
+
+void wfreerdp_client_global_init(void)
 {
 	WSADATA wsaData;
 
@@ -803,8 +986,7 @@ int freerdp_client_global_init()
 		_putenv(home);
 	}
 
-	if (WSAStartup(0x101, &wsaData) != 0)
-		return 1;
+	WSAStartup(0x101, &wsaData);
 
 #if defined(WITH_DEBUG) || defined(_DEBUG)
 	wf_create_console();
@@ -813,378 +995,112 @@ int freerdp_client_global_init()
 	freerdp_channels_global_init();
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
-
-	return 0;
 }
 
-int freerdp_client_global_uninit()
+void wfreerdp_client_global_uninit(void)
 {
 	WSACleanup();
-
-	return 0;
 }
 
-wfInfo* freerdp_client_new(int argc, char** argv)
+int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
-	int index;
-	int status;
-	wfInfo* wfi;
-	freerdp* instance;
+	wfContext* wfc = (wfContext*) context;
 
-	instance = freerdp_new();
+	wfreerdp_client_global_init();
+
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->Authenticate = wf_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
-	instance->context_size = sizeof(wfContext);
-	instance->ContextNew = wf_context_new;
-	instance->ContextFree = wf_context_free;
-	freerdp_context_new(instance);
+	wfc->instance = instance;
+	context->channels = freerdp_channels_new();
 
-	wfi = ((wfContext*) (instance->context))->wfi;
-
-	wfi->instance = instance;
-	wfi->client = instance->context->client;
-
-	instance->context->argc = argc;
-	instance->context->argv = (char**) malloc(sizeof(char*) * argc);
-
-	for (index = 0; index < argc; index++)
-		instance->context->argv[index] = _strdup(argv[index]);
-
-	status = freerdp_client_parse_command_line_arguments(instance->context->argc, instance->context->argv, instance->settings);
-
-	return wfi;
+	return 0;
 }
 
-rdpSettings* freerdp_client_get_settings(wfInfo* wfi)
+void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-	return wfi->instance->settings;
+	if (context->cache)
+		cache_free(context->cache);
+
+	freerdp_channels_free(context->channels);
 }
 
-int freerdp_client_start(wfInfo* wfi)
+int wfreerdp_client_start(rdpContext* context)
 {
 	HWND hWndParent;
 	HINSTANCE hInstance;
-	freerdp* instance = wfi->instance;
+	wfContext* wfc = (wfContext*) context;
+	freerdp* instance = context->instance;
 
 	hInstance = GetModuleHandle(NULL);
 	hWndParent = (HWND) instance->settings->ParentWindowId;
 	instance->settings->EmbeddedWindow = (hWndParent) ? TRUE : FALSE;
 
-	wfi->hWndParent = hWndParent;
-	wfi->hInstance = hInstance;
-	wfi->cursor = LoadCursor(NULL, IDC_ARROW);
-	wfi->icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
-	wfi->wndClassName = _tcsdup(_T("FreeRDP"));
+	wfc->hWndParent = hWndParent;
+	wfc->hInstance = hInstance;
+	wfc->cursor = LoadCursor(NULL, IDC_ARROW);
+	wfc->icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
+	wfc->wndClassName = _tcsdup(_T("FreeRDP"));
 
-	wfi->wndClass.cbSize = sizeof(WNDCLASSEX);
-	wfi->wndClass.style = CS_HREDRAW | CS_VREDRAW;
-	wfi->wndClass.lpfnWndProc = wf_event_proc;
-	wfi->wndClass.cbClsExtra = 0;
-	wfi->wndClass.cbWndExtra = 0;
-	wfi->wndClass.hCursor = wfi->cursor;
-	wfi->wndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-	wfi->wndClass.lpszMenuName = NULL;
-	wfi->wndClass.lpszClassName = wfi->wndClassName;
-	wfi->wndClass.hInstance = hInstance;
-	wfi->wndClass.hIcon = wfi->icon;
-	wfi->wndClass.hIconSm = wfi->icon;
-	RegisterClassEx(&(wfi->wndClass));
+	wfc->wndClass.cbSize = sizeof(WNDCLASSEX);
+	wfc->wndClass.style = CS_HREDRAW | CS_VREDRAW;
+	wfc->wndClass.lpfnWndProc = wf_event_proc;
+	wfc->wndClass.cbClsExtra = 0;
+	wfc->wndClass.cbWndExtra = 0;
+	wfc->wndClass.hCursor = wfc->cursor;
+	wfc->wndClass.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+	wfc->wndClass.lpszMenuName = NULL;
+	wfc->wndClass.lpszClassName = wfc->wndClassName;
+	wfc->wndClass.hInstance = hInstance;
+	wfc->wndClass.hIcon = wfc->icon;
+	wfc->wndClass.hIconSm = wfc->icon;
+	RegisterClassEx(&(wfc->wndClass));
 
-	wfi->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfi, 0, &wfi->keyboardThreadId);
+	wfc->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfc, 0, &wfc->keyboardThreadId);
 
-	if (!wfi->keyboardThread)
+	if (!wfc->keyboardThread)
 		return -1;
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	freerdp_client_load_addins(context->channels, instance->settings);
 
-	wfi->thread = CreateThread(NULL, 0, wf_thread, (void*) instance, 0, &wfi->mainThreadId);
+	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*) instance, 0, &wfc->mainThreadId);
 
-	if (!wfi->thread)
+	if (!wfc->thread)
 		return -1;
 
-	printf("Main thread exited.\n");
 	return 0;
 }
 
-int freerdp_client_stop(wfInfo* wfi)
+int wfreerdp_client_stop(rdpContext* context)
 {
-	if (wfi->mainThreadId)
-		PostThreadMessage(wfi->mainThreadId, WM_QUIT, 0, 0);
+	wfContext* wfc = (wfContext*) context;
 
-	if (wfi->keyboardThreadId)
-		PostThreadMessage(wfi->keyboardThreadId, WM_QUIT, 0, 0);
-	return 0;
-}
+	if (wfc->mainThreadId)
+		PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
 
-HANDLE freerdp_client_get_thread(wfInfo* cfi)
-{
-    return cfi->thread;
-}
-
-freerdp* freerdp_client_get_instance(wfInfo* cfi)
-{
-    return cfi->instance;
-}
-
-rdpClient* freerdp_client_get_interface(wfInfo* cfi)
-{
-    return cfi->client;
-}
-
-int freerdp_client_focus_in(wfInfo* wfi)
-{
-	PostThreadMessage(wfi->mainThreadId, WM_SETFOCUS, 0, 1);
-	return 0;
-}
-
-int freerdp_client_focus_out(wfInfo* wfi)
-{
-	PostThreadMessage(wfi->mainThreadId, WM_KILLFOCUS, 0, 1);
-	return 0;
-}
-
-int freerdp_client_set_window_size(wfInfo* wfi, int width, int height)
-{
-	if ((width != wfi->client_width) || (height != wfi->client_height))
-	{
-		PostThreadMessage(wfi->mainThreadId, WM_SIZE, SIZE_RESTORED, ((UINT) height << 16) | (UINT) width);
-	}
+	if (wfc->keyboardThreadId)
+		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
 
 	return 0;
 }
 
-int freerdp_client_free(wfInfo* wfi)
+int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
-	freerdp* instance = wfi->instance;
+	pEntryPoints->Version = 1;
+	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
 
-	freerdp_context_free(instance);
-	freerdp_free(instance);
+	pEntryPoints->GlobalInit = wfreerdp_client_global_init;
+	pEntryPoints->GlobalUninit = wfreerdp_client_global_uninit;
+
+	pEntryPoints->ContextSize = sizeof(wfContext);
+	pEntryPoints->ClientNew = wfreerdp_client_new;
+	pEntryPoints->ClientFree = wfreerdp_client_free;
+
+	pEntryPoints->ClientStart = wfreerdp_client_start;
+	pEntryPoints->ClientStop = wfreerdp_client_stop;
 
 	return 0;
-}
-
-void wf_on_param_change(freerdp* instance, int id)
-{
-	wfInfo* cfi = ((wfContext*) instance->context)->wfi;
-	RECT rect;
-	HMENU hMenu;
-
-	// specific processing here
-	switch(id)
-	{
-		case FreeRDP_SmartSizing:
-			fprintf(stderr, "SmartSizing changed.\n");
-
-			if (!instance->settings->SmartSizing && (cfi->client_width > instance->settings->DesktopWidth || cfi->client_height > instance->settings->DesktopHeight))
-			{
-				GetWindowRect(cfi->hwnd, &rect);
-				SetWindowPos(cfi->hwnd, HWND_TOP, 0, 0, MIN(cfi->client_width + cfi->offset_x, rect.right - rect.left), MIN(cfi->client_height + cfi->offset_y, rect.bottom - rect.top), SWP_NOMOVE | SWP_FRAMECHANGED);
-				wf_update_canvas_diff(cfi);
-			}
-
-			hMenu = GetSystemMenu(cfi->hwnd, FALSE);
-			CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, instance->settings->SmartSizing);
-			wf_size_scrollbars(cfi, cfi->client_width, cfi->client_height);
-			GetClientRect(cfi->hwnd, &rect);
-			InvalidateRect(cfi->hwnd, &rect, TRUE);
-			break;
-
-		case FreeRDP_ConnectionType:
-			fprintf(stderr, "ConnectionType changed.\n");
-			freerdp_set_connection_type(cfi->instance->settings, cfi->instance->settings->ConnectionType);
-			break;
-	}
-
-	// trigger callback to client
-
-	if (cfi->client_callback_func != NULL)
-	{
-		fprintf(stderr, "Notifying client...");
-		cfi->client_callback_func(cfi, CALLBACK_TYPE_PARAM_CHANGE, id, 0);
-	}
-}
-
-int freerdp_client_set_client_callback_function(wfInfo* cfi, callbackFunc callbackFunc)
-{
-	cfi->client_callback_func = callbackFunc;
-	return 0;
-}
-
-// TODO: Some of that code is a duplicate of wf_pre_connect. Refactor?
-int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename)
-{
-	rdpSettings* settings;
-
-	settings = cfi->instance->settings;
-
-	if (filename)
-	{
-		settings->ConnectionFile = _strdup(filename);
-
-		// free old settings file
-		freerdp_client_rdp_file_free(cfi->connectionRdpFile);
-		cfi->connectionRdpFile = freerdp_client_rdp_file_new();
-
-		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
-
-		if (!freerdp_client_parse_rdp_file(cfi->connectionRdpFile, settings->ConnectionFile))
-		{
-			return 1;
-		}
-
-		if (!freerdp_client_populate_settings_from_rdp_file(cfi->connectionRdpFile, settings))
-		{
-			return 2;
-		}
-	}
-
-	return 0;
-}
-
-int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename)
-{
-	if (filename == NULL)
-		return 1;
-
-	if (cfi->instance->settings->ConnectionFile)
-	{
-		free(cfi->instance->settings->ConnectionFile);
-	}
-
-	cfi->instance->settings->ConnectionFile = _strdup(filename);
-
-	// Reuse existing rdpFile structure if available, to preserve unsupported settings when saving to disk.
-	if (cfi->connectionRdpFile == NULL)
-	{
-		cfi->connectionRdpFile = freerdp_client_rdp_file_new();
-	}
-
-	if (!freerdp_client_populate_rdp_file_from_settings(cfi->connectionRdpFile, cfi->instance->settings))
-	{
-		return 1;
-	}
-
-	if (!freerdp_client_write_rdp_file(cfi->connectionRdpFile, filename, UNICODE));
-	{
-		return 2;
-	}
-
-	return 0;
-}
-
-
-void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height)
-{
-	BOOL rc;
-	if (wfi->disablewindowtracking == TRUE)
-	{
-		return;
-	}
-
-
-	// prevent infinite message loop
-	wfi->disablewindowtracking = TRUE;
-
-	if (wfi->instance->settings->SmartSizing)
-	{
-		wfi->xCurrentScroll = 0;
-		wfi->yCurrentScroll = 0;
-
-		if (wfi->xScrollVisible || wfi->yScrollVisible)
-		{
-			if (ShowScrollBar(wfi->hwnd, SB_BOTH, FALSE))
-			{
-				wfi->xScrollVisible = FALSE;
-				wfi->yScrollVisible = FALSE;
-			}
-		}
-	}
-	else
-	{
-		SCROLLINFO si;
-		BOOL horiz = wfi->xScrollVisible;
-		BOOL vert = wfi->yScrollVisible;;
-
-		if (!horiz && client_width < wfi->instance->settings->DesktopWidth)
-		{
-			horiz = TRUE;		
-		}
-		else if (horiz && client_width >= wfi->instance->settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
-		{
-			horiz = FALSE;		
-		}
-
-		if (!vert && client_height < wfi->instance->settings->DesktopHeight)
-		{
-			vert = TRUE;
-		}
-		else if (vert && client_height >= wfi->instance->settings->DesktopHeight/* - GetSystemMetrics(SM_CYHSCROLL)*/)
-		{
-			vert = FALSE;
-		}
-
-		if (horiz == vert && (horiz != wfi->xScrollVisible && vert != wfi->yScrollVisible))
-		{
-			if (ShowScrollBar(wfi->hwnd, SB_BOTH, horiz))
-			{
-				wfi->xScrollVisible = horiz;
-				wfi->yScrollVisible = vert;
-			}
-		}
-
-		if (horiz != wfi->xScrollVisible)
-		{
-			if (ShowScrollBar(wfi->hwnd, SB_HORZ, horiz))
-			{
-				wfi->xScrollVisible = horiz;
-			}
-		}
-
-		if (vert != wfi->yScrollVisible)
-		{
-			if (ShowScrollBar(wfi->hwnd, SB_VERT, vert))
-			{
-				wfi->yScrollVisible = vert;
-			}
-		}
-
-		if (horiz)
-		{
-			// The horizontal scrolling range is defined by 
-			// (bitmap_width) - (client_width). The current horizontal 
-			// scroll value remains within the horizontal scrolling range. 
-			wfi->xMaxScroll = MAX(wfi->instance->settings->DesktopWidth - client_width, 0); 
-			wfi->xCurrentScroll = MIN(wfi->xCurrentScroll, wfi->xMaxScroll); 
-			si.cbSize = sizeof(si); 
-			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
-			si.nMin   = wfi->xMinScroll; 
-			si.nMax   = wfi->instance->settings->DesktopWidth; 
-			si.nPage  = client_width; 
-			si.nPos   = wfi->xCurrentScroll; 
-			SetScrollInfo(wfi->hwnd, SB_HORZ, &si, TRUE); 
-		}
-
-		if (vert)
-		{
-			// The vertical scrolling range is defined by 
-			// (bitmap_height) - (client_height). The current vertical 
-			// scroll value remains within the vertical scrolling range. 
-			wfi->yMaxScroll = MAX(wfi->instance->settings->DesktopHeight - client_height, 0); 
-			wfi->yCurrentScroll = MIN(wfi->yCurrentScroll, wfi->yMaxScroll); 
-			si.cbSize = sizeof(si); 
-			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
-			si.nMin   = wfi->yMinScroll; 
-			si.nMax   = wfi->instance->settings->DesktopHeight; 
-			si.nPage  = client_height; 
-			si.nPos   = wfi->yCurrentScroll; 
-			SetScrollInfo(wfi->hwnd, SB_VERT, &si, TRUE); 
-		}
-	}
-
-	wfi->disablewindowtracking = FALSE;
-	wf_update_canvas_diff(wfi);		
 }

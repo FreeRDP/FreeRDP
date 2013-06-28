@@ -62,7 +62,7 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 
 void wf_peer_init(freerdp_peer* client)
 {
-	client->context_size = sizeof(wfPeerContext);
+	client->ContextSize = sizeof(wfPeerContext);
 	client->ContextNew = (psPeerContextNew) wf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) wf_peer_context_free;
 

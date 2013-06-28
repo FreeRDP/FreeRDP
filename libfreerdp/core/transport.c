@@ -784,10 +784,13 @@ static void* transport_client_thread(void* arg)
 	DWORD nCount;
 	HANDLE events[32];
 	freerdp* instance;
+	rdpContext* context;
 	rdpTransport* transport;
+	TerminateEventArgs e;
 
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
+	context = instance->context;
 
 	while (1)
 	{
@@ -858,6 +861,8 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport != NULL)
 	{
+        SetEvent(transport->stopEvent);
+        
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
 

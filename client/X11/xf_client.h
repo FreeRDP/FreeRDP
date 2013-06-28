@@ -17,11 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef __XF_INTERFACE_H
-#define __XF_INTERFACE_H
+#ifndef __XF_CLIENT_H
+#define __XF_CLIENT_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/client.h>
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
@@ -33,8 +34,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-
-typedef struct xf_info xfInfo;
+#include <winpr/collections.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,25 +44,10 @@ extern "C" {
  * Client Interface
  */
 
-#define cfInfo	xfInfo
-
-FREERDP_API int freerdp_client_global_init();
-FREERDP_API int freerdp_client_global_uninit();
-
-FREERDP_API int freerdp_client_start(cfInfo* cfi);
-FREERDP_API int freerdp_client_stop(cfInfo* cfi);
-
-FREERDP_API freerdp* freerdp_client_get_instance(cfInfo* cfi);
-FREERDP_API HANDLE freerdp_client_get_thread(cfInfo* cfi);
-FREERDP_API rdpClient* freerdp_client_get_interface(cfInfo* cfi);
-FREERDP_API double freerdp_client_get_scale(xfInfo* xfi);
-FREERDP_API void freerdp_client_reset_scale(xfInfo* xfi);
-
-FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
-FREERDP_API void freerdp_client_free(cfInfo* cfi);
+FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __XF_INTERFACE_H */
+#endif /* __XF_CLIENT_H */

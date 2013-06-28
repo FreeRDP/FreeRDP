@@ -249,7 +249,7 @@ ios_run_freerdp(freerdp * instance)
 #pragma mark -
 #pragma mark Context callbacks
 
-void ios_context_new(freerdp* instance, rdpContext* context)
+int ios_context_new(freerdp* instance, rdpContext* context)
 {
 	mfInfo* mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
 	((mfContext*) context)->mfi = mfi;
@@ -260,6 +260,7 @@ void ios_context_new(freerdp* instance, rdpContext* context)
 	mfi->context = (mfContext*)context;
 	mfi->context->settings = instance->settings;
 	mfi->instance = instance;
+	return 0;
 }
 
 void ios_context_free(freerdp* instance, rdpContext* context)
@@ -284,7 +285,7 @@ freerdp* ios_freerdp_new()
     inst->VerifyChangedCertificate = ios_ui_check_changed_certificate;
     inst->ReceiveChannelData = ios_receive_channel_data;
     
-	inst->context_size = sizeof(mfContext);
+	inst->ContextSize = sizeof(mfContext);
 	inst->ContextNew = ios_context_new;
 	inst->ContextFree = ios_context_free;
 	freerdp_context_new(inst);

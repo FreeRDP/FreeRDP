@@ -99,7 +99,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 
 static void test_peer_init(freerdp_peer* client)
 {
-	client->context_size = sizeof(testPeerContext);
+	client->ContextSize = sizeof(testPeerContext);
 	client->ContextNew = (psPeerContextNew) test_peer_context_new;
 	client->ContextFree = (psPeerContextFree) test_peer_context_free;
 	freerdp_peer_context_new(client);

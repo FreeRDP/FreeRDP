@@ -44,27 +44,53 @@
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	int index;
 	int status;
-	wfInfo* wfi;
+	HANDLE thread;
+	wfContext* wfc;
+	DWORD dwExitCode;
+	rdpContext* context;
+	rdpSettings* settings;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 
-	freerdp_client_global_init();
+	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
+	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
-	wfi = freerdp_client_new(__argc, __argv);
+	RdpClientEntry(&clientEntryPoints);
 
-	status = freerdp_client_start(wfi);
+	context = freerdp_client_context_new(&clientEntryPoints);
 
-	if (status < 0)
+	settings = context->settings;
+	wfc = (wfContext*) context;
+
+	context->argc = __argc;
+	context->argv = (char**) malloc(sizeof(char*) * __argc);
+
+	for (index = 0; index < context->argc; index++)
+		context->argv[index] = _strdup(__argv[index]);
+
+	status = freerdp_client_parse_command_line(context, context->argc, context->argv);
+
+	status = freerdp_client_command_line_status_print(context->argc, context->argv, settings, status);
+
+	if (status)
 	{
-		MessageBox(GetConsoleWindow(),
-			_T("Failed to start wfreerdp.\n\nPlease check the debug output."),
-			_T("FreeRDP Error"), MB_ICONSTOP);
-	}
-	else
-	{
-		WaitForSingleObject(wfi->thread, INFINITE);
+		freerdp_client_context_free(context);
+		return 0;
 	}
 
-	freerdp_client_free(wfi);
+	freerdp_client_start(context);
+
+	thread = freerdp_client_get_thread(context);
+
+	WaitForSingleObject(thread, INFINITE);
+
+	GetExitCodeThread(thread, &dwExitCode);
+
+	freerdp_client_stop(context);
+
+	freerdp_client_context_free(context);
 
 	return 0;
 }

@@ -20,7 +20,7 @@
 add_subdirectory(common)
 
 if(WIN32)
-	add_subdirectory(Windows)
+	add_subdirectory(Windows)	
 else()
 	if(WITH_SAMPLE)
 		add_subdirectory(Sample)
@@ -55,3 +55,6 @@ if(WITH_WAYK)
 	add_subdirectory(WaykClient)
 endif()
 
+if (WITH_DOTNET)
+	add_subdirectory(DotNetClient)
+endif()

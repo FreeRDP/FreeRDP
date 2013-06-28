@@ -27,37 +27,56 @@
 #include <winpr/thread.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client/cmdline.h>
 
-#include "xf_interface.h"
-
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 int main(int argc, char* argv[])
 {
-	xfInfo* xfi;
+	int status;
+	HANDLE thread;
+	xfContext* xfc;
 	DWORD dwExitCode;
-	freerdp* instance;
+	rdpContext* context;
+	rdpSettings* settings;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 
-	freerdp_client_global_init();
+	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
+	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
+	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
-	xfi = freerdp_client_new(argc, argv);
+	RdpClientEntry(&clientEntryPoints);
 
-	if (xfi == NULL)
+	context = freerdp_client_context_new(&clientEntryPoints);
+
+	settings = context->settings;
+	xfc = (xfContext*) context;
+
+	status = freerdp_client_parse_command_line(context, argc, argv);
+
+	status = freerdp_client_command_line_status_print(argc, argv, settings, status);
+
+	if (status)
 	{
-		return 1;
+		if (settings->ListMonitors)
+			xf_list_monitors(xfc);
+
+		freerdp_client_context_free(context);
+		return 0;
 	}
 
-	instance = xfi->instance;
+	freerdp_client_start(context);
 
-	freerdp_client_start(xfi);
+	thread = freerdp_client_get_thread(context);
 
-	WaitForSingleObject(xfi->thread, INFINITE);
+	WaitForSingleObject(thread, INFINITE);
 
-	GetExitCodeThread(xfi->thread, &dwExitCode);
+	GetExitCodeThread(thread, &dwExitCode);
 
-	freerdp_client_free(xfi);
+	freerdp_client_stop(context);
 
-	freerdp_client_global_uninit();
+	freerdp_client_context_free(context);
 
 	return xf_exit_code_from_disconnect_reason(dwExitCode);
 }

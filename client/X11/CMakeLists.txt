@@ -44,8 +44,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_keyboard.h
 	xf_window.c
 	xf_window.h
-	xf_interface.c
-	xf_interface.h)
+	xf_client.c
+	xf_client.h)
 
 if(WITH_CLIENT_INTERFACE)
 	if(CLIENT_INTERFACE_SHARED)

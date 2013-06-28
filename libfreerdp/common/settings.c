@@ -602,6 +602,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->NoBitmapCompressionHeader;
 			break;
 
+		case FreeRDP_BitmapCompressionDisabled:
+			return settings->BitmapCompressionDisabled;
+			break;
+
 		case FreeRDP_DesktopResize:
 			return settings->DesktopResize;
 			break;
@@ -652,6 +656,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_MultiTouchInput:
 			return settings->MultiTouchInput;
+			break;
+
+		case FreeRDP_MultiTouchGestures:
+			return settings->MultiTouchGestures;
 			break;
 
 		case FreeRDP_SoundBeepsEnabled:
@@ -744,6 +752,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 {
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
 	switch (id)
 	{
 		case FreeRDP_ServerMode:
@@ -1046,6 +1057,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->NoBitmapCompressionHeader = param;
 			break;
 
+		case FreeRDP_BitmapCompressionDisabled:
+			settings->BitmapCompressionDisabled = param;
+			break;
+
 		case FreeRDP_DesktopResize:
 			settings->DesktopResize = param;
 			break;
@@ -1096,6 +1111,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_MultiTouchInput:
 			settings->MultiTouchInput = param;
+			break;
+
+		case FreeRDP_MultiTouchGestures:
+			settings->MultiTouchGestures = param;
 			break;
 
 		case FreeRDP_SoundBeepsEnabled:
@@ -1185,12 +1204,61 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	if (settings->instance)
-	{
-		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
-	}
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return -1;
+}
+
+int freerdp_get_param_int(rdpSettings* settings, int id)
+{
+	switch (id)
+	{
+		case FreeRDP_XPan:
+			return settings->XPan;
+			break;
+
+		case FreeRDP_YPan:
+			return settings->YPan;
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+
+	return 0;
+}
+
+int freerdp_set_param_int(rdpSettings* settings, int id, int param)
+{
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
+	switch (id)
+	{
+		case FreeRDP_XPan:
+			settings->XPan = param;
+			break;
+
+		case FreeRDP_YPan:
+			settings->YPan = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	settings->settings_modified[id] = 1;
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
+
+	return 0;
 }
 
 UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
@@ -1511,6 +1579,9 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 {
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
 	switch (id)
 	{
 		case FreeRDP_ShareId:
@@ -1824,10 +1895,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	if (settings->instance)
-	{
-		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
-	}
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -1850,6 +1921,9 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
 
 int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 {
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
 	switch (id)
 	{
 		case FreeRDP_ParentWindowId:
@@ -1863,10 +1937,10 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	if (settings->instance)
-	{
-		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
-	}
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -2037,6 +2111,9 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 {
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
 	switch (id)
 	{
 		case FreeRDP_ServerHostname:
@@ -2198,10 +2275,51 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 
 	// Mark field as modified
 	settings->settings_modified[id] = 1;
-	if (settings->instance)
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
+
+	return 0;
+}
+
+double freerdp_get_param_double(rdpSettings* settings, int id)
+{
+	switch (id)
 	{
-		IFCALL(((freerdp*) settings->instance)->context->client->OnParamChange, ((freerdp*) settings->instance), id);
+		case FreeRDP_ScalingFactor:
+			return settings->ScalingFactor;
+			break;
+
+		default:
+			return 0;
+			break;
 	}
+
+	return 0;
+}
+
+int freerdp_set_param_double(rdpSettings* settings, int id, double param)
+{
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
+	switch (id)
+	{
+		case FreeRDP_ScalingFactor:
+			settings->ScalingFactor = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	settings->settings_modified[id] = 1;
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }

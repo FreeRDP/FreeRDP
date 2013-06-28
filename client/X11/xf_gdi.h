@@ -22,7 +22,7 @@
 
 #include <freerdp/gdi/gdi.h>
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update);
