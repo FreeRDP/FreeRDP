@@ -31,15 +31,18 @@ typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
 typedef struct rdp_freerdp_peer freerdp_peer;
 
+typedef struct rdp_client_context rdpClientContext;
+typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
+typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/error.h>
+#include <freerdp/event.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
 
 #include <winpr/stream.h>
-
-#include <freerdp/client.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
@@ -49,7 +52,7 @@ typedef struct rdp_freerdp_peer freerdp_peer;
 extern "C" {
 #endif
 
-typedef void (*pContextNew)(freerdp* instance, rdpContext* context);
+typedef int (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
 typedef BOOL (*pPreConnect)(freerdp* instance);
@@ -73,45 +76,51 @@ typedef int (*pOnChannelDisconnected)(freerdp* instance, const char* name, void*
  */
 struct rdp_context
 {
-	freerdp* instance; /**< (offset 0)
+	ALIGN64 freerdp* instance; /**< (offset 0)
 						  Pointer to a rdp_freerdp structure.
 						  This is a back-link to retrieve the freerdp instance from the context.
 						  It is set by the freerdp_context_new() function */
-	freerdp_peer* peer; /**< (offset 1)
+	ALIGN64 freerdp_peer* peer; /**< (offset 1)
 						   Pointer to the client peer.
 						   This is set by a call to freerdp_peer_context_new() during peer initialization.
 						   This field is used only on the server side. */
-	UINT32 paddingA[16 - 2]; /* 2 */
+	UINT64 paddingA[16 - 2]; /* 2 */
 
-	int argc;	/**< (offset 16)
+	ALIGN64 int argc;	/**< (offset 16)
 				   Number of arguments given to the program at launch time.
 				   Used to keep this data available and used later on, typically just before connection initialization.
 				   @see freerdp_parse_args() */
-	char** argv; /**< (offset 17)
+	ALIGN64 char** argv; /**< (offset 17)
 					List of arguments given to the program at launch time.
 					Used to keep this data available and used later on, typically just before connection initialization.
 					@see freerdp_parse_args() */
 
-	UINT32 paddingB[32 - 18]; /* 18 */
+	ALIGN64 wPubSub* pubSub; /* (offset 18) */
 
-	rdpRdp* rdp; /**< (offset 32)
+	UINT64 paddingB[32 - 19]; /* 19 */
+
+	ALIGN64 rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
 					It is allocated by freerdp_context_new() and deallocated by freerdp_context_free(), at the same
 					time that this rdp_context structure - there is no need to specifically allocate/deallocate this. */
-	rdpGdi* gdi; /**< (offset 33)
+	ALIGN64 rdpGdi* gdi; /**< (offset 33)
 					Pointer to a rdp_gdi structure used to keep the gdi settings.
 					It is allocated by gdi_init() and deallocated by gdi_free().
 					It must be deallocated before deallocating this rdp_context structure. */
-	rdpRail* rail; /* 34 */
-	rdpCache* cache; /* 35 */
-	rdpChannels* channels; /* 36 */
-	rdpGraphics* graphics; /* 37 */
-	rdpInput* input; /* 38 */
-	rdpUpdate* update; /* 39 */
-	rdpSettings* settings; /* 40 */
-	rdpClient* client; /* 41 */
-	UINT32 paddingC[64 - 42]; /* 42 */
+	ALIGN64 rdpRail* rail; /* 34 */
+	ALIGN64 rdpCache* cache; /* 35 */
+	ALIGN64 rdpChannels* channels; /* 36 */
+	ALIGN64 rdpGraphics* graphics; /* 37 */
+	ALIGN64 rdpInput* input; /* 38 */
+	ALIGN64 rdpUpdate* update; /* 39 */
+	ALIGN64 rdpSettings* settings; /* 40 */
+	UINT64 paddingC[64 - 41]; /* 41 */
+
+	UINT64 paddingD[96 - 64]; /* 64 */
+	UINT64 paddingE[128 - 96]; /* 96 */
 };
+
+#include <freerdp/client.h>
 
 /** Defines the options for a given instance of RDP connection.
  *  This is built by the client and given to the FreeRDP library to create the connection
@@ -121,29 +130,31 @@ struct rdp_context
  */
 struct rdp_freerdp
 {
-	rdpContext* context; /**< (offset 0)
+	ALIGN64 rdpContext* context; /**< (offset 0)
 							  Pointer to a rdpContext structure.
-							  Client applications can use the context_size field to register a context bigger than the rdpContext
+							  Client applications can use the ContextSize field to register a context bigger than the rdpContext
 							  structure. This allow clients to use additional context information.
 							  When using this capability, client application should ALWAYS declare their structure with the
 							  rdpContext field first, and any additional content following it.
 							  Can be allocated by a call to freerdp_context_new().
 							  Must be deallocated by a call to freerdp_context_free() before deallocating the current instance. */
 
-	UINT32 paddingA[16 - 1]; /* 1 */
+	ALIGN64 RDP_CLIENT_ENTRY_POINTS* pClientEntryPoints;
 
-	rdpInput* input; /* (offset 16)
+	UINT64 paddingA[16 - 2]; /* 2 */
+
+	ALIGN64 rdpInput* input; /* (offset 16)
 						Input handle for the connection.
 						Will be initialized by a call to freerdp_context_new() */
-	rdpUpdate* update; /* (offset 17)
+	ALIGN64 rdpUpdate* update; /* (offset 17)
 						  Update display parameters. Used to register display events callbacks and settings.
 						  Will be initialized by a call to freerdp_context_new() */
-	rdpSettings* settings; /**< (offset 18)
+	ALIGN64 rdpSettings* settings; /**< (offset 18)
 								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
 								Will be initialized by a call to freerdp_context_new() */
-	UINT32 paddingB[32 - 19]; /* 19 */
+	UINT64 paddingB[32 - 19]; /* 19 */
 
-	size_t context_size; /* (offset 32)
+	ALIGN64 size_t ContextSize; /* (offset 32)
 							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
 							freerdp_new() sets it to sizeof(rdpContext).
 							If modifying it, there should always be a minimum of sizeof(rdpContext), as the freerdp library will assume it can use the
@@ -152,58 +163,58 @@ struct rdp_freerdp
 							adding additional information after that.
 						 */
 
-	pContextNew ContextNew; /**< (offset 33)
+	ALIGN64 pContextNew ContextNew; /**< (offset 33)
 								 Callback for context allocation
 								 Can be set before calling freerdp_context_new() to have it executed after allocation and initialization.
 								 Must be set to NULL if not needed. */
 
-	pContextFree ContextFree; /**< (offset 34)
+	ALIGN64 pContextFree ContextFree; /**< (offset 34)
 								   Callback for context deallocation
 								   Can be set before calling freerdp_context_free() to have it executed before deallocation.
 								   Must be set to NULL if not needed. */
-	UINT32 paddingC[48 - 35]; /* 35 */
+	UINT64 paddingC[48 - 35]; /* 35 */
 
-	pPreConnect PreConnect; /**< (offset 48)
+	ALIGN64 pPreConnect PreConnect; /**< (offset 48)
 								 Callback for pre-connect operations.
 								 Can be set before calling freerdp_connect() to have it executed before the actual connection happens.
 								 Must be set to NULL if not needed. */
 
-	pPostConnect PostConnect; /**< (offset 49)
+	ALIGN64 pPostConnect PostConnect; /**< (offset 49)
 								   Callback for post-connect operations.
 								   Can be set before calling freerdp_connect() to have it executed after the actual connection has succeeded.
 								   Must be set to NULL if not needed. */
 
-	pAuthenticate Authenticate; /**< (offset 50)
+	ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
 									 Callback for authentication.
 									 It is used to get the username/password when it was not provided at connection time. */
-	pVerifyCertificate VerifyCertificate; /**< (offset 51)
+	ALIGN64 pVerifyCertificate VerifyCertificate; /**< (offset 51)
 											   Callback for certificate validation.
 											   Used to verify that an unknown certificate is trusted. */
-	pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
+	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
 															 Callback for changed certificate validation. 
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 
-	pLogonErrorInfo LogonErrorInfo; /**< (offset 53)  Callback for logon error info, important for logon system messages with RemoteApp */
+	ALIGN64 pLogonErrorInfo LogonErrorInfo; /**< (offset 53)  Callback for logon error info, important for logon system messages with RemoteApp */
 
-	UINT32 paddingD[64 - 54]; /* 54 */
+	UINT64 paddingD[64 - 54]; /* 54 */
 
-	pSendChannelData SendChannelData; /* (offset 64)
+	ALIGN64 pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.
 										 By default, it is set by freerdp_new() to freerdp_send_channel_data(), which eventually calls
 										 freerdp_channel_send() */
-	pReceiveChannelData ReceiveChannelData; /* (offset 65)
+	ALIGN64 pReceiveChannelData ReceiveChannelData; /* (offset 65)
 											   Callback for receiving data from a channel.
 											   This is called by freerdp_channel_process() (if not NULL).
 											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
 
-	pOnChannelConnected OnChannelConnected;
-	pOnChannelDisconnected OnChannelDisconnected;
+	ALIGN64 pOnChannelConnected OnChannelConnected;
+	ALIGN64 pOnChannelDisconnected OnChannelDisconnected;
 
-	UINT32 paddingE[80 - 66]; /* 66 */
+	UINT64 paddingE[80 - 66]; /* 66 */
 };
 
-FREERDP_API void freerdp_context_new(freerdp* instance);
+FREERDP_API int freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);
@@ -226,6 +237,7 @@ FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
+
 #ifdef __cplusplus
 }
 #endif

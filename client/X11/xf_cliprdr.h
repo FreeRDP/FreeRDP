@@ -20,16 +20,16 @@
 #ifndef __XF_CLIPRDR_H
 #define __XF_CLIPRDR_H
 
-#include "xf_interface.h"
+#include "xf_client.h"
 #include "xfreerdp.h"
 
-void xf_cliprdr_init(xfInfo* xfi, rdpChannels* chanman);
-void xf_cliprdr_uninit(xfInfo* xfi);
-void xf_process_cliprdr_event(xfInfo* xfi, wMessage* event);
-BOOL xf_cliprdr_process_selection_notify(xfInfo* xfi, XEvent* xevent);
-BOOL xf_cliprdr_process_selection_request(xfInfo* xfi, XEvent* xevent);
-BOOL xf_cliprdr_process_selection_clear(xfInfo* xfi, XEvent* xevent);
-BOOL xf_cliprdr_process_property_notify(xfInfo* xfi, XEvent* xevent);
-void xf_cliprdr_check_owner(xfInfo* xfi);
+void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels);
+void xf_cliprdr_uninit(xfContext* xfc);
+void xf_process_cliprdr_event(xfContext* xfc, wMessage* event);
+BOOL xf_cliprdr_process_selection_notify(xfContext* xfc, XEvent* xevent);
+BOOL xf_cliprdr_process_selection_request(xfContext* xfc, XEvent* xevent);
+BOOL xf_cliprdr_process_selection_clear(xfContext* xfc, XEvent* xevent);
+BOOL xf_cliprdr_process_property_notify(xfContext* xfc, XEvent* xevent);
+void xf_cliprdr_check_owner(xfContext* xfc);
 
 #endif /* __XF_CLIPRDR_H */

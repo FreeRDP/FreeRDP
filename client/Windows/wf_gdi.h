@@ -24,15 +24,15 @@
 
 #include "wf_interface.h"
 
-void wf_invalidate_region(wfInfo* wfi, int x, int y, int width, int height);
-wfBitmap* wf_image_new(wfInfo* wfi, int width, int height, int bpp, BYTE* data);
+void wf_invalidate_region(wfContext* wfc, int x, int y, int width, int height);
+wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
 void wf_image_free(wfBitmap* image);
-void wf_update_offset(wfInfo* wfi);
-void wf_resize_window(wfInfo* wfi);
-void wf_toggle_fullscreen(wfInfo* wfi);
+void wf_update_offset(wfContext* wfc);
+void wf_resize_window(wfContext* wfc);
+void wf_toggle_fullscreen(wfContext* wfc);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
-void wf_update_canvas_diff(wfInfo* wfi);
+void wf_update_canvas_diff(wfContext* wfc);
 
 #endif /* __WF_GDI_H */

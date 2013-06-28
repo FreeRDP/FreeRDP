@@ -255,11 +255,17 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
 	{
 		BYTE reason;
+		TerminateEventArgs e;
+		rdpContext* context = rdp->instance->context;
 
 		(void) per_read_enumerated(s, &reason, 0);
 		DEBUG_RDP("DisconnectProviderUltimatum from server, reason code 0x%02x\n", reason);
 
 		rdp->disconnect = TRUE;
+
+		EventArgsInit(&e, "freerdp");
+		e.code = 0;
+		PubSub_OnTerminate(context->pubSub, context, &e);
 
 		return TRUE;
 	}
@@ -502,11 +508,14 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
-		rdpClient* client = rdp->instance->context->client;
+		ErrorInfoEventArgs e;
+		rdpContext* context = rdp->instance->context;
 
 		rdp_print_errinfo(rdp->errorInfo);
 
-		IFCALL(client->OnErrorInfo, rdp->instance, rdp->errorInfo);
+		EventArgsInit(&e, "freerdp");
+		e.code = rdp->errorInfo;
+		PubSub_OnErrorInfo(context->pubSub, context, &e);
 	}
 
 	return TRUE;

@@ -40,10 +40,11 @@ struct thread_data
 };
 
 
-void android_context_new(freerdp* instance, rdpContext* context)
+int android_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
-	android_event_queue_init(instance);	
+	android_event_queue_init(instance);
+	return 0;
 }
 
 void android_context_free(freerdp* instance, rdpContext* context)
@@ -388,7 +389,7 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 	
 
 	// create context
-	instance->context_size = sizeof(androidContext);
+	instance->ContextSize = sizeof(androidContext);
 	instance->ContextNew = android_context_new;
 	instance->ContextFree = android_context_free;
 	freerdp_context_new(instance);

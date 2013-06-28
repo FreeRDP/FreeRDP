@@ -69,9 +69,10 @@ struct thread_data
 	freerdp* instance;
 };
 
-void tf_context_new(freerdp* instance, rdpContext* context)
+int tf_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
+	return 0;
 }
 
 void tf_context_free(freerdp* instance, rdpContext* context)
@@ -314,7 +315,7 @@ int main(int argc, char* argv[])
 	instance->PostConnect = tf_post_connect;
 	instance->ReceiveChannelData = tf_receive_channel_data;
 
-	instance->context_size = sizeof(tfContext);
+	instance->ContextSize = sizeof(tfContext);
 	instance->ContextNew = tf_context_new;
 	instance->ContextFree = tf_context_free;
 	freerdp_context_new(instance);

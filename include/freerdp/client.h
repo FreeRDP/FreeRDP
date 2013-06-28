@@ -20,8 +20,6 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
-typedef struct rdp_client rdpClient;
-
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
@@ -29,43 +27,65 @@ typedef struct rdp_client rdpClient;
 extern "C" {
 #endif
 
-#define FREERDP_WINDOW_STATE_NORMAL		0
-#define FREERDP_WINDOW_STATE_MINIMIZED		1
-#define FREERDP_WINDOW_STATE_MAXIMIZED		2
-#define FREERDP_WINDOW_STATE_FULLSCREEN		3
-#define FREERDP_WINDOW_STATE_ACTIVE		4
-
-typedef void (*pOnResizeWindow)(freerdp* instance, int width, int height);
-typedef void (*pOnWindowStateChange)(freerdp* instance, int state);
-typedef void (*pOnErrorInfo)(freerdp* instance, UINT32 code);
-typedef void (*pOnParamChange)(freerdp* instance, int id);
-
-struct rdp_client
-{
-	pOnResizeWindow OnResizeWindow;
-	pOnWindowStateChange OnWindowStateChange;
-	pOnErrorInfo OnErrorInfo;
-	pOnParamChange OnParamChange;
-};
-
 /**
- * Generic Client Interface
+ * Client Entry Points
  */
 
-#if 0
+typedef void (*pRdpGlobalInit)(void);
+typedef void (*pRdpGlobalUninit)(void);
 
-#define cfInfo	void*
+typedef int (*pRdpClientNew)(freerdp* instance, rdpContext* context);
+typedef void (*pRdpClientFree)(freerdp* instance, rdpContext* context);
 
-FREERDP_API int freerdp_client_global_init();
-FREERDP_API int freerdp_client_global_uninit();
+typedef int (*pRdpClientStart)(rdpContext* context);
+typedef int (*pRdpClientStop)(rdpContext* context);
 
-FREERDP_API int freerdp_client_start(cfInfo* cfi);
-FREERDP_API int freerdp_client_stop(cfInfo* cfi);
+struct rdp_client_entry_points_v1
+{
+	DWORD Size;
+	DWORD Version;
 
-FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
-FREERDP_API void freerdp_client_free(cfInfo* cfi);
+	pRdpGlobalInit GlobalInit;
+	pRdpGlobalUninit GlobalUninit;
 
-#endif
+	DWORD ContextSize;
+	pRdpClientNew ClientNew;
+	pRdpClientFree ClientFree;
+
+	pRdpClientStart ClientStart;
+	pRdpClientStop ClientStop;
+};
+
+#define RDP_CLIENT_INTERFACE_VERSION	1
+#define RDP_CLIENT_ENTRY_POINT_NAME	"RdpClientEntry"
+
+typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+
+/* Common Client Interface */
+
+#define DEFINE_RDP_CLIENT_COMMON() \
+	HANDLE thread
+
+struct rdp_client_context
+{
+	rdpContext context;
+	DEFINE_RDP_CLIENT_COMMON();
+};
+
+/* Common client functions */
+
+FREERDP_API rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+FREERDP_API void freerdp_client_context_free(rdpContext* context);
+
+FREERDP_API int freerdp_client_start(rdpContext* context);
+FREERDP_API int freerdp_client_stop(rdpContext* context);
+
+FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
+FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);
+
+FREERDP_API int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv);
+FREERDP_API int freerdp_client_parse_connection_file(rdpContext* context, char* filename);
+FREERDP_API int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size);
 
 #ifdef __cplusplus
 }

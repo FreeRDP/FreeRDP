@@ -376,8 +376,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 
-	client->context = (rdpContext*) malloc(client->context_size);
-	ZeroMemory(client->context, client->context_size);
+	client->context = (rdpContext*) malloc(client->ContextSize);
+	ZeroMemory(client->context, client->ContextSize);
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
@@ -416,7 +416,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	if (client != NULL)
 	{
 		client->sockfd = sockfd;
-		client->context_size = sizeof(rdpContext);
+		client->ContextSize = sizeof(rdpContext);
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;

@@ -609,6 +609,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_WmClass						1549
 #define FreeRDP_EmbeddedWindow					1550
 #define FreeRDP_SmartSizing					1551
+#define FreeRDP_XPan						1552
+#define FreeRDP_YPan						1553
+#define FreeRDP_ScalingFactor					1554
 #define FreeRDP_SoftwareGdi					1601
 #define FreeRDP_LocalConnection					1602
 #define FreeRDP_AuthenticationOnly				1603
@@ -653,6 +656,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SaltedChecksum					2309
 #define FreeRDP_LongCredentialsSupported			2310
 #define FreeRDP_NoBitmapCompressionHeader			2311
+#define FreeRDP_BitmapCompressionDisabled			2312
 #define FreeRDP_DesktopResize					2368
 #define FreeRDP_DrawAllowDynamicColorFidelity			2369
 #define FreeRDP_DrawAllowColorSubsampling			2370
@@ -676,6 +680,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_UnicodeInput					2629
 #define FreeRDP_FastPathInput					2630
 #define FreeRDP_MultiTouchInput					2631
+#define FreeRDP_MultiTouchGestures				2632
 #define FreeRDP_BrushSupportLevel				2688
 #define FreeRDP_GlyphSupportLevel				2752
 #define FreeRDP_GlyphCache					2753
@@ -975,7 +980,10 @@ struct rdp_settings
 	ALIGN64 char* WmClass; /* 1549 */
 	ALIGN64 BOOL EmbeddedWindow; /* 1550 */
 	ALIGN64 BOOL SmartSizing; /* 1551 */
-	UINT64 padding1600[1600 - 1552]; /* 1552 */
+	ALIGN64 int XPan; /* 1552 */
+	ALIGN64 int YPan; /* 1553 */
+	ALIGN64 double ScalingFactor; /* 1554 */
+	UINT64 padding1600[1600 - 1555]; /* 1555 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
@@ -1061,7 +1069,8 @@ struct rdp_settings
 	ALIGN64 BOOL SaltedChecksum; /* 2309 */
 	ALIGN64 BOOL LongCredentialsSupported; /* 2310 */
 	ALIGN64 BOOL NoBitmapCompressionHeader; /* 2311 */
-	UINT64 padding2368[2368 - 2312]; /* 2312 */
+	ALIGN64 BOOL BitmapCompressionDisabled; /* 2312 */
+	UINT64 padding2368[2368 - 2313]; /* 2313 */
 
 	/* Bitmap Capabilities */
 	ALIGN64 BOOL DesktopResize; /* 2368 */
@@ -1099,7 +1108,8 @@ struct rdp_settings
 	ALIGN64 BOOL UnicodeInput; /* 2629 */
 	ALIGN64 BOOL FastPathInput; /* 2630 */
 	ALIGN64 BOOL MultiTouchInput; /* 2631 */
-	UINT64 padding2688[2688 - 2632]; /* 2632 */
+	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
+	UINT64 padding2688[2688 - 2633]; /* 2633 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
@@ -1308,6 +1318,9 @@ FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
 
+FREERDP_API int freerdp_get_param_int(rdpSettings* settings, int id);
+FREERDP_API int freerdp_set_param_int(rdpSettings* settings, int id, int param);
+
 FREERDP_API UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param);
 
@@ -1316,6 +1329,9 @@ FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 p
 
 FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, char* param);
+
+FREERDP_API double freerdp_get_param_double(rdpSettings* settings, int id);
+FREERDP_API int freerdp_set_param_double(rdpSettings* settings, int id, double param);
 
 #ifdef __cplusplus
 }

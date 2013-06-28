@@ -38,27 +38,27 @@
 #define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-void xf_rail_enable_remoteapp_mode(xfInfo* xfi)
+void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
-	if (!xfi->remote_app)
+	if (!xfc->remote_app)
 	{
-		xfi->remote_app = TRUE;
-		xfi->drawable = DefaultRootWindow(xfi->display);
-		xf_DestroyWindow(xfi, xfi->window);
-		xfi->window = NULL;
+		xfc->remote_app = TRUE;
+		xfc->drawable = DefaultRootWindow(xfc->display);
+		xf_DestroyWindow(xfc, xfc->window);
+		xfc->window = NULL;
 	}
 }
 
-void xf_rail_disable_remoteapp_mode(xfInfo* xfi)
+void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 {
-	if (xfi->remote_app)
+	if (xfc->remote_app)
 	{
-		xfi->remote_app = FALSE;
-		xf_create_window(xfi);
+		xfc->remote_app = FALSE;
+		xf_create_window(xfc);
 	}
 }
 
-void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
+void xf_rail_paint(xfContext* xfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
 	xfWindow* xfw;
 	rdpWindow* window;
@@ -100,36 +100,35 @@ void xf_rail_paint(xfInfo* xfi, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 u
 
 		if (intersect)
 		{
-			xf_UpdateWindowArea(xfi, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
+			xf_UpdateWindowArea(xfc, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
 }
 
 void xf_rail_DesktopNonMonitored(rdpRail *rail, rdpWindow* window)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 
-	xfi = (xfInfo*) rail->extra;
-	xf_rail_disable_remoteapp_mode(xfi);
+	xfc = (xfContext*) rail->extra;
+	xf_rail_disable_remoteapp_mode(xfc);
 }
 
 static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 
-	xf_rail_enable_remoteapp_mode(xfi);
+	xf_rail_enable_remoteapp_mode(xfc);
 
-	xfw = xf_CreateWindow((xfInfo*) rail->extra, window,
+	xfw = xf_CreateWindow(xfc, window,
 			window->windowOffsetX, window->windowOffsetY,
-			window->windowWidth, window->windowHeight,
-			window->windowId);
+			window->windowWidth, window->windowHeight, window->windowId);
 
-	xf_SetWindowStyle(xfi, xfw, window->style, window->extendedStyle);
+	xf_SetWindowStyle(xfc, xfw, window->style, window->extendedStyle);
 
-	xf_SetWindowText(xfi, xfw, window->title);
+	xf_SetWindowText(xfc, xfw, window->title);
 
 	window->extra = (void*) xfw;
 	window->extraId = (void*) xfw->handle;
@@ -137,10 +136,10 @@ static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 
 static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
 	/*
@@ -161,83 +160,87 @@ static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 	      * Just ensure entire window area is updated to handle cases where we
 	      * have drawn locally before getting new bitmap from the server
 	      */
-             xf_UpdateWindowArea(xfi, xfw, 0, 0, window->windowWidth, window->windowHeight);
+             xf_UpdateWindowArea(xfc, xfw, 0, 0, window->windowWidth, window->windowHeight);
              return;
         }
 
-	xf_MoveWindow(xfi, xfw,
+	xf_MoveWindow(xfc, xfw,
 		window->visibleOffsetX, window->visibleOffsetY,
 		window->windowWidth, window->windowHeight);
 }
 
 static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_ShowWindow(xfi, xfw, state);
+	xf_ShowWindow(xfc, xfw, state);
 }
 
 static void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_SetWindowText(xfi, xfw, window->title);
+	xf_SetWindowText(xfc, xfw, window->title);
 }
 
 static void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
 	icon->extra = freerdp_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
 			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
 
-	xf_SetWindowIcon(xfi, xfw, icon);
+	xf_SetWindowIcon(xfc, xfw, icon);
 }
 
 static void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 {
-	xfInfo* xfi;
+	xfContext* xfc;
 	xfWindow* xfw;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_SetWindowRects(xfi, xfw, window->windowRects, window->numWindowRects);
+	xf_SetWindowRects(xfc, xfw, window->windowRects, window->numWindowRects);
 }
 
 static void xf_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
 {
-	xfInfo* xfi;
 	xfWindow* xfw;
+	xfContext* xfc;
 
-	xfi = (xfInfo*) rail->extra;
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
 
-	xf_SetWindowVisibilityRects(xfi, xfw, window->windowRects, window->numWindowRects);
+	xf_SetWindowVisibilityRects(xfc, xfw, window->windowRects, window->numWindowRects);
 }
 
 static void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfWindow* xfw;
+	xfContext* xfc;
+
+	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
-	xf_DestroyWindow((xfInfo*) rail->extra, xfw);
+
+	xf_DestroyWindow(xfc, xfw);
 }
 
-void xf_rail_register_callbacks(xfInfo* xfi, rdpRail* rail)
+void xf_rail_register_callbacks(xfContext* xfc, rdpRail* rail)
 {
-	rail->extra = (void*) xfi;
+	rail->extra = (void*) xfc;
 	rail->rail_CreateWindow = xf_rail_CreateWindow;
 	rail->rail_MoveWindow = xf_rail_MoveWindow;
 	rail->rail_ShowWindow = xf_rail_ShowWindow;
@@ -270,15 +273,15 @@ static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, 
 	}
 }
 
-void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
+void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
 	rdpRail* rail;
 	rdpChannels* channels;
 	rdpWindow* rail_window;
 	RAIL_ACTIVATE_ORDER activate;
 
-	rail = xfi->_context->rail;
-	channels = xfi->_context->channels;
+	rail = ((rdpContext*) xfc)->rail;
+	channels = ((rdpContext*) xfc)->channels;
 
 	rail_window = window_list_get_by_extra_id(rail->list, (void*) xwindow);
 
@@ -291,12 +294,12 @@ void xf_rail_send_activate(xfInfo* xfi, Window xwindow, BOOL enabled)
 	xf_send_rail_client_event(channels, RailChannel_ClientActivate, &activate);
 }
 
-void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 command)
+void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command)
 {
 	rdpChannels* channels;
 	RAIL_SYSCOMMAND_ORDER syscommand;
 
-	channels = xfi->_context->channels;
+	channels = ((rdpContext*) xfc)->channels;
 
 	syscommand.windowId = windowId;
 	syscommand.command = command;
@@ -310,14 +313,14 @@ void xf_rail_send_client_system_command(xfInfo* xfi, UINT32 windowId, UINT16 com
  * send an update to the RDP server informing it of the new window position
  * and size.
  */
-void xf_rail_adjust_position(xfInfo* xfi, rdpWindow* window)
+void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 {
 	xfWindow* xfw;
 	rdpChannels* channels;
 	RAIL_WINDOW_MOVE_ORDER window_move;
 
 	xfw = (xfWindow*) window->extra;
-	channels = xfi->_context->channels;
+	channels = ((rdpContext*) xfc)->channels;
 
 	if (! xfw->is_mapped || xfw->local_move.state != LMS_NOT_ACTIVE)
 		return;
@@ -371,12 +374,12 @@ void xf_rail_adjust_position(xfInfo* xfi, rdpWindow* window)
         }
 }
 
-void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
+void xf_rail_end_local_move(xfContext* xfc, rdpWindow *window)
 {
 	xfWindow* xfw;
 	rdpChannels* channels;
 	RAIL_WINDOW_MOVE_ORDER window_move;
-	rdpInput* input = xfi->instance->input;
+	rdpInput* input = xfc->instance->input;
 	int x,y;
 	Window root_window;
 	Window child_window;
@@ -385,7 +388,7 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	int child_y;
 
 	xfw = (xfWindow*) window->extra;
-	channels = xfi->_context->channels;
+	channels = ((rdpContext*) xfc)->channels;
 
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
         	(UINT32) xfw->handle, 
@@ -427,7 +430,7 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
 
-	XQueryPointer(xfi->display, xfw->handle, 
+	XQueryPointer(xfc->display, xfw->handle, 
 		&root_window, &child_window, 
 		&x, &y, &child_x, &child_y, &mask);
         input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
@@ -454,16 +457,16 @@ void xf_rail_end_local_move(xfInfo* xfi, rdpWindow *window)
 	xfw->local_move.state = LMS_TERMINATING;
 }
 
-void xf_process_rail_get_sysparams_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_get_sysparams_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_SYSPARAM_ORDER* sysparam;
 
 	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 
-	sysparam->workArea.left = xfi->workArea.x;
-	sysparam->workArea.top = xfi->workArea.y;
-	sysparam->workArea.right = xfi->workArea.x + xfi->workArea.width;
-	sysparam->workArea.bottom = xfi->workArea.y + xfi->workArea.height;
+	sysparam->workArea.left = xfc->workArea.x;
+	sysparam->workArea.top = xfc->workArea.y;
+	sysparam->workArea.right = xfc->workArea.x + xfc->workArea.width;
+	sysparam->workArea.bottom = xfc->workArea.y + xfc->workArea.height;
 
 	sysparam->taskbarPos.left = 0;
 	sysparam->taskbarPos.top = 0;
@@ -486,7 +489,7 @@ const char* error_code_names[] =
 		"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
-void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_exec_result_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_EXEC_RESULT_ORDER* exec_result;
 
@@ -496,15 +499,15 @@ void xf_process_rail_exec_result_event(xfInfo* xfi, rdpChannels* channels, wMess
 	{
 		fprintf(stderr, "RAIL exec error: execResult=%s NtError=0x%X\n",
 			error_code_names[exec_result->execResult], exec_result->rawResult);
-		xfi->disconnect = True;
+		xfc->disconnect = True;
 	}
 	else
 	{
-		xf_rail_enable_remoteapp_mode(xfi);
+		xf_rail_enable_remoteapp_mode(xfc);
 	}
 }
 
-void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_server_sysparam_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
 
@@ -518,13 +521,13 @@ void xf_process_rail_server_sysparam_event(xfInfo* xfi, rdpChannels* channels, w
 	}
 }
 
-void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_server_minmaxinfo_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	rdpRail* rail;
 	rdpWindow* rail_window = NULL;
 	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*) event->wParam;
 
-	rail = ((rdpContext*) xfi->context)->rail;
+	rail = ((rdpContext*) xfc)->rail;
 	rail_window = window_list_get_by_id(rail->list, minmax->windowId);
 
 	if (rail_window != NULL)
@@ -539,7 +542,7 @@ void xf_process_rail_server_minmaxinfo_event(xfInfo* xfi, rdpChannels* channels,
 			minmax->minTrackWidth, minmax->minTrackHeight,
 			minmax->maxTrackWidth, minmax->maxTrackHeight);
 
-		xf_SetWindowMinMaxInfo(xfi, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
+		xf_SetWindowMinMaxInfo(xfc, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
 			minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
 	}
 }
@@ -560,7 +563,7 @@ const char* movetype_names[] =
 	"RAIL_WMSZ_KEYSIZE"
 };
 
-void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_server_localmovesize_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	int x, y;
 	rdpRail* rail;
@@ -569,7 +572,7 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 	rdpWindow* rail_window = NULL;
 	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->wParam;
 
-	rail = ((rdpContext*) xfi->context)->rail;
+	rail = ((rdpContext*) xfc)->rail;
 	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
 
 	if (rail_window != NULL)
@@ -625,8 +628,8 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 				break;
 			case RAIL_WMSZ_MOVE: //0x9
 				direction = _NET_WM_MOVERESIZE_MOVE;
-				XTranslateCoordinates(xfi->display, xfw->handle, 
-					RootWindowOfScreen(xfi->screen), 
+				XTranslateCoordinates(xfc->display, xfw->handle, 
+					RootWindowOfScreen(xfc->screen), 
 					movesize->posX, movesize->posY, &x, &y, &child_window);
 				break;
 			case RAIL_WMSZ_KEYMOVE: //0xA
@@ -645,14 +648,14 @@ void xf_process_rail_server_localmovesize_event(xfInfo* xfi, rdpChannels* channe
 
 		if (movesize->isMoveSizeStart)
 		{
-			xf_StartLocalMoveSize(xfi, xfw, direction, x, y);
+			xf_StartLocalMoveSize(xfc, xfw, direction, x, y);
 		} else {
-			xf_EndLocalMoveSize(xfi, xfw);
+			xf_EndLocalMoveSize(xfc, xfw);
 		}
 	}
 }
 
-void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_appid_resp_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_GET_APPID_RESP_ORDER* appid_resp =
 		(RAIL_GET_APPID_RESP_ORDER*) event->wParam;
@@ -664,7 +667,7 @@ void xf_process_rail_appid_resp_event(xfInfo* xfi, rdpChannels* channels, wMessa
 	winpr_HexDump(appid_resp->applicationId.string, appid_resp->applicationId.length);
 }
 
-void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_langbarinfo_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_LANGBAR_INFO_ORDER* langbar =
 		(RAIL_LANGBAR_INFO_ORDER*) event->wParam;
@@ -673,36 +676,36 @@ void xf_process_rail_langbarinfo_event(xfInfo* xfi, rdpChannels* channels, wMess
 		langbar->languageBarStatus);
 }
 
-void xf_process_rail_event(xfInfo* xfi, rdpChannels* channels, wMessage* event)
+void xf_process_rail_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	switch (GetMessageType(event->id))
 	{
 		case RailChannel_GetSystemParam:
-			xf_process_rail_get_sysparams_event(xfi, channels, event);
+			xf_process_rail_get_sysparams_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerExecuteResult:
-			xf_process_rail_exec_result_event(xfi, channels, event);
+			xf_process_rail_exec_result_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerSystemParam:
-			xf_process_rail_server_sysparam_event(xfi, channels, event);
+			xf_process_rail_server_sysparam_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerMinMaxInfo:
-			xf_process_rail_server_minmaxinfo_event(xfi, channels, event);
+			xf_process_rail_server_minmaxinfo_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerLocalMoveSize:
-			xf_process_rail_server_localmovesize_event(xfi, channels, event);
+			xf_process_rail_server_localmovesize_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerGetAppIdResponse:
-			xf_process_rail_appid_resp_event(xfi, channels, event);
+			xf_process_rail_appid_resp_event(xfc, channels, event);
 			break;
 
 		case RailChannel_ServerLanguageBarInfo:
-			xf_process_rail_langbarinfo_event(xfi, channels, event);
+			xf_process_rail_langbarinfo_event(xfc, channels, event);
 			break;
 
 		default:

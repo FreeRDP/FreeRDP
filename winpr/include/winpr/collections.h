@@ -339,6 +339,92 @@ WINPR_API void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode);
 WINPR_API wMessagePipe* MessagePipe_New(void);
 WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
+/* Publisher/Subscriber Pattern */
+
+struct _wEventArgs
+{
+	DWORD Size;
+	const char* Sender;
+};
+typedef struct _wEventArgs wEventArgs;
+
+typedef void (*pEventHandler)(void* context, wEventArgs* e);
+
+#define MAX_EVENT_HANDLERS	32
+
+struct _wEventType
+{
+	const char* EventName;
+	wEventArgs EventArgs;
+	int EventHandlerCount;
+	pEventHandler EventHandlers[MAX_EVENT_HANDLERS];
+};
+typedef struct _wEventType wEventType;
+
+#define EventArgsInit(_event_args, _sender) \
+	memset(_event_args, 0, sizeof(*_event_args)); \
+	((wEventArgs*) _event_args)->Size = sizeof(*_event_args); \
+	((wEventArgs*) _event_args)->Sender = _sender
+
+#define DEFINE_EVENT_HANDLER(_name) \
+	typedef void (*p ## _name ## EventHandler)(void* context, _name ## EventArgs* e)
+
+#define DEFINE_EVENT_RAISE(_name) \
+	static INLINE int PubSub_On ## _name (wPubSub* pubSub, void* context, _name ## EventArgs* e) { \
+		return PubSub_OnEvent(pubSub, #_name, context, (wEventArgs*) e); }
+
+#define DEFINE_EVENT_SUBSCRIBE(_name) \
+	static INLINE int PubSub_Subscribe ## _name (wPubSub* pubSub, p ## _name ## EventHandler EventHandler) { \
+		return PubSub_Subscribe(pubSub, #_name, (pEventHandler) EventHandler); }
+
+#define DEFINE_EVENT_UNSUBSCRIBE(_name) \
+	static INLINE int PubSub_Unsubscribe ## _name (wPubSub* pubSub, p ## _name ## EventHandler EventHandler) { \
+		return PubSub_Unsubscribe(pubSub, #_name, (pEventHandler) EventHandler); }
+
+#define DEFINE_EVENT_BEGIN(_name) \
+	typedef struct _ ## _name ## EventArgs { \
+	wEventArgs e;
+
+#define DEFINE_EVENT_END(_name) \
+	} _name ## EventArgs; \
+	DEFINE_EVENT_HANDLER(_name); \
+	DEFINE_EVENT_RAISE(_name); \
+	DEFINE_EVENT_SUBSCRIBE(_name); \
+	DEFINE_EVENT_UNSUBSCRIBE(_name);
+
+#define DEFINE_EVENT_ENTRY(_name) \
+	{ #_name, { sizeof( _name ## EventArgs) }, 0, { \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } },
+
+struct _wPubSub
+{
+	HANDLE mutex;
+	BOOL synchronized;
+
+	int size;
+	int count;
+	wEventType* events;
+};
+typedef struct _wPubSub wPubSub;
+
+WINPR_API BOOL PubSub_Lock(wPubSub* pubSub);
+WINPR_API BOOL PubSub_Unlock(wPubSub* pubSub);
+
+WINPR_API wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count);
+WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count);
+WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
+
+WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
+WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler);
+
+WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEventArgs* e);
+
+WINPR_API wPubSub* PubSub_New(BOOL synchronized);
+WINPR_API void PubSub_Free(wPubSub* pubSub);
+
 #ifdef __cplusplus
 }
 #endif

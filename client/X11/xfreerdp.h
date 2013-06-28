@@ -20,6 +20,8 @@
 #ifndef __XFREERDP_H
 #define __XFREERDP_H
 
+typedef struct xf_context xfContext;
+
 #include "xf_window.h"
 #include "xf_monitor.h"
 #include "xf_channels.h"
@@ -56,20 +58,10 @@ typedef struct xf_glyph xfGlyph;
 
 struct xf_context
 {
-	rdpContext _p;
+	rdpContext context;
+	DEFINE_RDP_CLIENT_COMMON();
 
-	xfInfo* xfi;
-	rdpSettings* settings;
-};
-typedef struct xf_context xfContext;
-
-struct xf_info
-{
 	freerdp* instance;
-	xfContext* context;
-	rdpContext* _context;
-
-	rdpClient* client;
 	rdpSettings* settings;
 
 	GC gc;
@@ -103,7 +95,6 @@ struct xf_info
 	BOOL disconnect;
 	HCLRCONV clrconv;
 	HANDLE mutex;
-	HANDLE thread;
 	BOOL UseXThreads;
 
 	HGDI_DC hdc;
@@ -124,6 +115,7 @@ struct xf_info
 	BOOL enableScaling;
 
 	BOOL focused;
+	BOOL use_xinput;
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
@@ -168,8 +160,8 @@ struct xf_info
 	RdpeiClientContext* rdpei;
 };
 
-void xf_create_window(xfInfo* xfi);
-void xf_toggle_fullscreen(xfInfo* xfi);
+void xf_create_window(xfContext* xfc);
+void xf_toggle_fullscreen(xfContext* xfc);
 BOOL xf_post_connect(freerdp* instance);
 
 enum XF_EXIT_CODE
@@ -213,10 +205,10 @@ enum XF_EXIT_CODE
 	XF_EXIT_UNKNOWN = 255,
 };
 
-void xf_lock_x11(xfInfo* xfi, BOOL display);
-void xf_unlock_x11(xfInfo* xfi, BOOL display);
+void xf_lock_x11(xfContext* xfc, BOOL display);
+void xf_unlock_x11(xfContext* xfc, BOOL display);
 
-void xf_draw_screen_scaled(xfInfo* xfi);
+void xf_draw_screen_scaled(xfContext* xfc);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

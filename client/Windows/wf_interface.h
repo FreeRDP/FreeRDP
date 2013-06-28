@@ -43,11 +43,6 @@
 extern "C" {
 #endif
 
-// Callback type codes. Move elsewhere?
-#define CALLBACK_TYPE_PARAM_CHANGE		0x01
-#define CALLBACK_TYPE_CONNECTED			0x02
-#define CALLBACK_TYPE_DISCONNECTED		0x03
-
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
 
@@ -68,21 +63,10 @@ struct wf_pointer
 };
 typedef struct wf_pointer wfPointer;
 
-typedef struct wf_info wfInfo;
-
 struct wf_context
 {
-	rdpContext _p;
-
-	wfInfo* wfi;
-};
-typedef struct wf_context wfContext;
-
-typedef void (CALLBACK * callbackFunc)(wfInfo* wfi, int callback_type, DWORD param1, DWORD param2);
-
-struct wf_info
-{
-	rdpClient* client;
+	rdpContext context;
+	DEFINE_RDP_CLIENT_COMMON();
 
 	int width;
 	int height;
@@ -97,7 +81,6 @@ struct wf_info
 	int client_width;
 	int client_height;
 
-	HANDLE thread;
 	HANDLE keyboardThread;
 
 	HICON icon;
@@ -129,61 +112,33 @@ struct wf_info
 	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
-	callbackFunc client_callback_func;
 
 	rdpFile* connectionRdpFile;
 
 	// Keep track of window size and position, disable when in fullscreen mode.
-	BOOL disablewindowtracking; 
+	BOOL disablewindowtracking;
 
-    // These variables are required for horizontal scrolling. 
+	// These variables are required for horizontal scrolling.
 	BOOL updating_scrollbars;
 	BOOL xScrollVisible;
-    int xMinScroll;       // minimum horizontal scroll value 
-    int xCurrentScroll;   // current horizontal scroll value 
-    int xMaxScroll;       // maximum horizontal scroll value 
- 
-    // These variables are required for vertical scrolling. 
+	int xMinScroll;       // minimum horizontal scroll value
+	int xCurrentScroll;   // current horizontal scroll value
+	int xMaxScroll;       // maximum horizontal scroll value
+
+	// These variables are required for vertical scrolling.
 	BOOL yScrollVisible;
-    int yMinScroll;       // minimum vertical scroll value 
-    int yCurrentScroll;   // current vertical scroll value 
-    int yMaxScroll;       // maximum vertical scroll value 
+	int yMinScroll;       // minimum vertical scroll value
+	int yCurrentScroll;   // current vertical scroll value
+	int yMaxScroll;       // maximum vertical scroll value
 };
+typedef struct wf_context wfContext;
 
 /**
  * Client Interface
  */
 
-#define cfInfo	wfInfo
+FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
-void wf_on_param_change(freerdp* instance, int id);
-void wf_size_scrollbars(wfInfo* wfi, int client_width, int client_height);
-
-FREERDP_API int freerdp_client_global_init();
-FREERDP_API int freerdp_client_global_uninit();
-
-FREERDP_API int freerdp_client_start(wfInfo* cfi);
-FREERDP_API int freerdp_client_stop(wfInfo* cfi);
-
-FREERDP_API HANDLE freerdp_client_get_thread(wfInfo* cfi);
-FREERDP_API freerdp* freerdp_client_get_instance(wfInfo* cfi);
-FREERDP_API rdpClient* freerdp_client_get_interface(wfInfo* cfi);
-
-FREERDP_API int freerdp_client_focus_in(wfInfo* cfi);
-FREERDP_API int freerdp_client_focus_out(wfInfo* cfi);
-
-FREERDP_API int freerdp_client_set_window_size(wfInfo* cfi, int width, int height);
-
-FREERDP_API cfInfo* freerdp_client_new(int argc, char** argv);
-FREERDP_API int freerdp_client_free(wfInfo* cfi);
-
-FREERDP_API int freerdp_client_set_client_callback_function(wfInfo* cfi, callbackFunc callbackFunc);
-
-FREERDP_API rdpSettings* freerdp_client_get_settings(wfInfo* wfi);
-
-FREERDP_API int freerdp_client_load_settings_from_rdp_file(wfInfo* cfi, char* filename);
-FREERDP_API int freerdp_client_save_settings_to_rdp_file(wfInfo* cfi, char* filename);
-	
 #ifdef __cplusplus
 }
 #endif

@@ -26,9 +26,12 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
+#include <winpr/collections.h>
 
 #include <freerdp/addin.h>
 
@@ -92,8 +95,14 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_TOUCH_FRAME frame;
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS];
 	RDPINPUT_CONTACT_POINT* contactPoints;
+
+	HANDLE mutex;
+	HANDLE event;
+	HANDLE thread;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
+
+int rdpei_send_frame(RdpeiClientContext* context);
 
 const char* RDPEI_EVENTID_STRINGS[] =
 {
@@ -105,6 +114,67 @@ const char* RDPEI_EVENTID_STRINGS[] =
 	"EVENTID_RESUME_TOUCH",
 	"EVENTID_DISMISS_HOVERING_CONTACT"
 };
+
+int rdpei_add_frame(RdpeiClientContext* context)
+{
+	int i;
+	RDPINPUT_CONTACT_DATA* contact;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
+
+	rdpei->frame.contactCount = 0;
+
+	for (i = 0; i < rdpei->maxTouchContacts; i++)
+	{
+		contact = (RDPINPUT_CONTACT_DATA*) &(rdpei->contactPoints[i].data);
+
+		if (rdpei->contactPoints[i].dirty)
+		{
+			CopyMemory(&(rdpei->contacts[rdpei->frame.contactCount]), contact, sizeof(RDPINPUT_CONTACT_DATA));
+			rdpei->contactPoints[i].dirty = FALSE;
+			rdpei->frame.contactCount++;
+		}
+		else if (rdpei->contactPoints[i].active)
+		{
+			if (contact->contactFlags & CONTACT_FLAG_DOWN)
+			{
+				contact->contactFlags = CONTACT_FLAG_UPDATE;
+				contact->contactFlags |= CONTACT_FLAG_INRANGE;
+				contact->contactFlags |= CONTACT_FLAG_INCONTACT;
+			}
+
+			CopyMemory(&(rdpei->contacts[rdpei->frame.contactCount]), contact, sizeof(RDPINPUT_CONTACT_DATA));
+			rdpei->frame.contactCount++;
+		}
+	}
+
+	return 1;
+}
+
+static void* rdpei_schedule_thread(void* arg)
+{
+	DWORD status;
+	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) arg;
+	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
+
+	while (1)
+	{
+		status = WaitForSingleObject(rdpei->event, 20);
+
+		WaitForSingleObject(rdpei->mutex, INFINITE);
+
+		rdpei_add_frame(context);
+
+		if (rdpei->frame.contactCount > 0)
+			rdpei_send_frame(context);
+
+		if (status == WAIT_OBJECT_0)
+			ResetEvent(rdpei->event);
+
+		ReleaseMutex(rdpei->mutex);
+	}
+
+	return NULL;
+}
 
 int rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId, UINT32 pduLength)
 {
@@ -147,6 +217,13 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 
 	Stream_SealLength(s);
 
+	if (!rdpei->thread)
+	{
+		rdpei->mutex = CreateMutex(NULL, FALSE, NULL);
+		rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpei_schedule_thread, (void*) rdpei, 0, NULL);
+	}
+
 	status = rdpei_send_pdu(callback, s, EVENTID_CS_READY, pduLength);
 	Stream_Free(s, TRUE);
 
@@ -180,7 +257,12 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 #endif
 
 	rdpei_write_2byte_unsigned(s, frame->contactCount); /* contactCount (TWO_BYTE_UNSIGNED_INTEGER) */
-	rdpei_write_8byte_unsigned(s, frame->frameOffset); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
+
+	/**
+	 * the time offset from the previous frame (in microseconds).
+	 * If this is the first frame being transmitted then this field MUST be set to zero.
+	 */
+	rdpei_write_8byte_unsigned(s, frame->frameOffset * 1000); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
 
 	Stream_EnsureRemainingCapacity(s, frame->contactCount * 32);
 
@@ -248,8 +330,13 @@ int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_
 	s = Stream_New(NULL, pduLength);
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
 
-	rdpei_write_4byte_unsigned(s, frame->frameOffset); /* FOUR_BYTE_UNSIGNED_INTEGER */
-	rdpei_write_2byte_unsigned(s, 1); /* TWO_BYTE_UNSIGNED_INTEGER */
+	/**
+	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
+	 * was generated to when it was encoded for transmission by the client.
+	 */
+	rdpei_write_4byte_unsigned(s, frame->frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
+
+	rdpei_write_2byte_unsigned(s, 1); /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
 
 	rdpei_write_touch_frame(s, frame);
 
@@ -443,86 +530,155 @@ int rdpei_send_frame(RdpeiClientContext* context)
 
 int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact)
 {
+	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
-	if (rdpei->frame.contactCount < MAX_CONTACTS)
-	{
-		CopyMemory(&(rdpei->contacts[rdpei->frame.contactCount]), contact, sizeof(RDPINPUT_CONTACT_DATA));
-		rdpei->frame.contactCount++;
-	}
+	WaitForSingleObject(rdpei->mutex, INFINITE);
 
-	rdpei_send_frame(context);
+	contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[contact->contactId];
+	CopyMemory(&(contactPoint->data), contact, sizeof(RDPINPUT_CONTACT_DATA));
+	contactPoint->dirty = TRUE;
+
+	SetEvent(rdpei->event);
+
+	ReleaseMutex(rdpei->mutex);
 
 	return 1;
 }
 
-int rdpei_contact_begin(RdpeiClientContext* context, int externalId)
+int rdpei_touch_begin(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	/* Create a new contact point in an empty slot */
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
-		{
-			rdpei->contactPoints[i].flags = 1;
-			rdpei->contactPoints[i].contactId = i;
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
 
-			if (!rdpei->contactPoints[i].externalId)
-			{
-				rdpei->contactPoints[i].externalId = externalId;
-				contactId = rdpei->contactPoints[i].contactId;
-				break;
-			}
+		if (!contactPoint->active)
+		{
+			contactPoint->contactId = i;
+			contactId = contactPoint->contactId;
+			contactPoint->externalId = externalId;
+			contactPoint->active = TRUE;
+			contactPoint->state = RDPINPUT_CONTACT_STATE_ENGAGED;
+			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contactPoint->lastX = x;
+		contactPoint->lastY = y;
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_DOWN;
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+
+		context->AddContact(context, &contact);
 	}
 
 	return contactId;
 }
 
-int rdpei_contact_update(RdpeiClientContext* context, int externalId)
+int rdpei_touch_update(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
+
+		if (!contactPoint->active)
 			continue;
 
-		if (rdpei->contactPoints[i].externalId == externalId)
+		if (contactPoint->externalId == externalId)
 		{
-			contactId = rdpei->contactPoints[i].contactId;
+			contactId = contactPoint->contactId;
 			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		contactPoint->lastX = x;
+		contactPoint->lastY = y;
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_UPDATE;
+		contact.contactFlags |= CONTACT_FLAG_INRANGE;
+		contact.contactFlags |= CONTACT_FLAG_INCONTACT;
+
+		context->AddContact(context, &contact);
 	}
 
 	return contactId;
 }
 
-int rdpei_contact_end(RdpeiClientContext* context, int externalId)
+int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 {
 	int i;
 	int contactId = -1;
+	RDPINPUT_CONTACT_DATA contact;
+	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
 	{
-		if (!rdpei->contactPoints[i].flags)
+		contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[i];
+
+		if (!contactPoint->active)
 			continue;
 
-		if (rdpei->contactPoints[i].externalId == externalId)
+		if (contactPoint->externalId == externalId)
 		{
-			contactId = rdpei->contactPoints[i].contactId;
-			rdpei->contactPoints[i].externalId = 0;
-			rdpei->contactPoints[i].flags = 0;
-			rdpei->contactPoints[i].contactId = 0;
+			contactId = contactPoint->contactId;
 			break;
 		}
+	}
+
+	if (contactId >= 0)
+	{
+		ZeroMemory(&contact, sizeof(RDPINPUT_CONTACT_DATA));
+
+		if ((contactPoint->lastX != x) && (contactPoint->lastY != y))
+		{
+			context->TouchUpdate(context, externalId, x, y);
+		}
+
+		contact.x = x;
+		contact.y = y;
+		contact.contactId = (UINT32) contactId;
+
+		contact.contactFlags |= CONTACT_FLAG_UP;
+
+		context->AddContact(context, &contact);
+
+		contactPoint->externalId = 0;
+		contactPoint->active = FALSE;
+		contactPoint->flags = 0;
+		contactPoint->contactId = 0;
+		contactPoint->state = RDPINPUT_CONTACT_STATE_OUT_OF_RANGE;
 	}
 
 	return contactId;
@@ -568,9 +724,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetVersion = rdpei_get_version;
 		context->AddContact = rdpei_add_contact;
 
-		context->ContactBegin = rdpei_contact_begin;
-		context->ContactUpdate = rdpei_contact_update;
-		context->ContactEnd = rdpei_contact_end;
+		context->TouchBegin = rdpei_touch_begin;
+		context->TouchUpdate = rdpei_touch_update;
+		context->TouchEnd = rdpei_touch_end;
 
 		rdpei->iface.pInterface = (void*) context;
 

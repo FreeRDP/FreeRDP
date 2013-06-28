@@ -84,7 +84,6 @@ void* xf_update_thread(void* param)
 			else if (xevent.type == xfi->xfixes_notify_event)
 			{
 				XFixesCursorImage* ci = XFixesGetCursorImage(xfi->display);
-
 				XFree(ci);
 			}
 #endif

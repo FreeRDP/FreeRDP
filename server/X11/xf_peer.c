@@ -323,7 +323,7 @@ void xf_peer_init(freerdp_peer* client)
 	xfInfo* xfi;
 	xfPeerContext* xfp;
 
-	client->context_size = sizeof(xfPeerContext);
+	client->ContextSize = sizeof(xfPeerContext);
 	client->ContextNew = (psPeerContextNew) xf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) xf_peer_context_free;
 	freerdp_peer_context_new(client);

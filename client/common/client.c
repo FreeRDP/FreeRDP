@@ -21,4 +21,126 @@
 #include "config.h"
 #endif
 
+#include <freerdp/client.h>
 
+#include <freerdp/client/file.h>
+#include <freerdp/client/cmdline.h>
+
+int freerdp_client_common_new(freerdp* instance, rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	return pEntryPoints->ClientNew(instance, context);
+}
+
+void freerdp_client_common_free(freerdp* instance, rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
+	pEntryPoints->ClientFree(instance, context);
+}
+
+/* Common API */
+
+rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+{
+	freerdp* instance;
+	rdpContext* context;
+
+	pEntryPoints->GlobalInit();
+
+	instance = freerdp_new();
+	instance->ContextSize = pEntryPoints->ContextSize;
+	instance->ContextNew = freerdp_client_common_new;
+	instance->ContextFree = freerdp_client_common_free;
+	instance->pClientEntryPoints = (RDP_CLIENT_ENTRY_POINTS*) malloc(pEntryPoints->Size);
+	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
+	freerdp_context_new(instance);
+
+	context = instance->context;
+    context->instance = instance;
+    context->settings = instance->settings;
+
+	return context;
+}
+
+void freerdp_client_context_free(rdpContext* context)
+{
+	freerdp* instance = context->instance;
+
+	freerdp_context_free(instance);
+	freerdp_free(instance);
+}
+
+int freerdp_client_start(rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStart(context);
+}
+
+int freerdp_client_stop(rdpContext* context)
+{
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = context->instance->pClientEntryPoints;
+	return pEntryPoints->ClientStop(context);
+}
+
+freerdp* freerdp_client_get_instance(rdpContext* context)
+{
+	return context->instance;
+}
+
+HANDLE freerdp_client_get_thread(rdpContext* context)
+{
+	return ((rdpClientContext*) context)->thread;
+}
+
+int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv)
+{
+	int status;
+	rdpSettings* settings;
+
+	context->argc = argc;
+	context->argv = argv;
+
+	if (context->argc < 1)
+		return 0;
+
+	if (!context->argv)
+		return -1;
+
+	settings = context->settings;
+
+	status = freerdp_client_parse_command_line_arguments(context->argc, context->argv, settings);
+
+	if (settings->ConnectionFile)
+	{
+		rdpFile* file = freerdp_client_rdp_file_new();
+		freerdp_client_parse_rdp_file(file, settings->ConnectionFile);
+		freerdp_client_populate_settings_from_rdp_file(file, settings);
+		freerdp_client_rdp_file_free(file);
+	}
+
+	return status;
+}
+
+int freerdp_client_parse_connection_file(rdpContext* context, char* filename)
+{
+	rdpFile* file;
+
+	file = freerdp_client_rdp_file_new();
+	freerdp_client_parse_rdp_file(file, filename);
+	freerdp_client_populate_settings_from_rdp_file(file, context->settings);
+	freerdp_client_rdp_file_free(file);
+
+	return 0;
+}
+
+int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size)
+{
+	rdpFile* file;
+
+	file = freerdp_client_rdp_file_new();
+	freerdp_client_parse_rdp_file_buffer(file, buffer, size);
+	freerdp_client_populate_settings_from_rdp_file(file, context->settings);
+	freerdp_client_rdp_file_free(file);
+
+	return 0;
+}
