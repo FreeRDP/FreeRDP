@@ -31,6 +31,7 @@
 #include "message.h"
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
@@ -372,9 +373,13 @@ void freerdp_context_free(freerdp* instance)
 	IFCALL(instance->ContextFree, instance, instance->context);
 
 	rdp_free(instance->context->rdp);
+	instance->context->rdp = NULL;
+
 	graphics_free(instance->context->graphics);
+	instance->context->graphics = NULL;
 
 	free(instance->context->client);
+	instance->context->client = NULL;
 
 	free(instance->context);
 	instance->context = NULL;
