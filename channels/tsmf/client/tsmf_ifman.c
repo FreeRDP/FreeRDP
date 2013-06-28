@@ -127,8 +127,6 @@ int tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	return 0;
 }
 
-static TSMF_PRESENTATION* pexisted = 0;
-
 int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 {
 	int status = 0;
@@ -136,15 +134,16 @@ int tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 
 	DEBUG_DVC("");
 
-	if (pexisted)
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+	if (presentation)
 	{
+		DEBUG_DVC("Presentation already exists");
 		ifman->output_pending = FALSE;
 		return 0;
 
 	}
 
 	presentation = tsmf_presentation_new(Stream_Pointer(ifman->input), ifman->channel_callback);
-	pexisted = presentation;
 
 	if (presentation == NULL)
 		status = 1;
@@ -283,8 +282,8 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 
 	if (presentation)
 		tsmf_presentation_free(presentation);
-
-	pexisted = 0;
+	else
+		DEBUG_WARN("unknown presentation id");
 
 	Stream_EnsureRemainingCapacity(ifman->output, 4);
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
