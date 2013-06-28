@@ -65,7 +65,9 @@ public abstract class ClipboardManagerProxy {
 			String data = null;
 			
 			if (clip != null && clip.getItemCount() > 0) {
-				data = clip.getItemAt(0).getText().toString();
+				CharSequence cs = clip.getItemAt(0).getText();
+				if (cs != null)
+					data = cs.toString();
 			}
 			if (mListener != null) {
 				mListener.onClipboardChanged(data);
