@@ -788,8 +788,18 @@ struct rgba_data
 	outerRect.size.height = h + heightDiff;
 	[[self window] setMaxSize:outerRect.size];
 	[[self window] setMinSize:outerRect.size];
-	[[self window] setFrame:outerRect display:YES];
-	
+
+    @try
+    {
+        [[self window] setFrame:outerRect display:YES];
+    }
+    @catch (NSException * e) {
+       NSLog(@"Exception: %@", e);
+    }
+    @finally {
+       NSLog(@"finally");
+    }
+
 	// set client area to specified dimensions
 	innerRect.size.width = w;
 	innerRect.size.height = h;
@@ -874,8 +884,7 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-	[view setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
-	
+    [view setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
 	return TRUE;
@@ -933,9 +942,6 @@ BOOL mac_post_connect(freerdp* instance)
 	view->pasteboard_rd = [NSPasteboard generalPasteboard];
 	view->pasteboard_changecount = (int) [view->pasteboard_rd changeCount];
 	view->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:mfc->view selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
-	
-	/* we want to be notified when window resizes */
-	[[NSNotificationCenter defaultCenter] addObserver:mfc->view selector:@selector(windowDidResize:) name:NSWindowDidResizeNotification object:nil];
 
 	return TRUE;
 }
