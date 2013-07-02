@@ -167,6 +167,9 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 
 	event = PubSub_FindEventType(pubSub, EventName);
 
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
+
 	if (event)
 	{
 		status = 0;
@@ -180,9 +183,6 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 			}
 		}
 	}
-
-	if (pubSub->synchronized)
-		PubSub_Unlock(pubSub);
 
 	return status;
 }

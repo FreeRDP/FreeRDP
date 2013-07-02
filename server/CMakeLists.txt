@@ -19,11 +19,11 @@
 
 add_subdirectory(common)
 
-if(NOT WIN32)
-	if(WITH_SAMPLE)
-		add_subdirectory(Sample)
-	endif()
+if(WITH_SAMPLE)
+	add_subdirectory(Sample)
+endif()
 
+if(NOT WIN32)
 	if(WITH_X11)
 		add_subdirectory(X11)
 	endif()

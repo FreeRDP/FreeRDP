@@ -47,6 +47,9 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 {
 	WINPR_HANDLE* wHandle;
 
+	if (handle == NULL)
+		return FALSE;
+
 	wHandle = (WINPR_HANDLE*) handle;
 
 	*pType = wHandle->Type;

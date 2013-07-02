@@ -26,20 +26,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <pthread.h>
 #include <signal.h>
-#include <sys/time.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
 #include <freerdp/constants.h>
+#include <freerdp/utils/tcp.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
 #include "sf_rdpsnd.h"
 
 #include "sfreerdp.h"
+
+#define SAMPLE_SERVER_USE_CLIENT_RESOLUTION 1
+#define SAMPLE_SERVER_DEFAULT_WIDTH 1024
+#define SAMPLE_SERVER_DEFAULT_HEIGHT 768
 
 static char* test_pcap_file = NULL;
 static BOOL test_dump_rfx_realtime = TRUE;
@@ -48,8 +51,8 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
 	context->rfx_context = rfx_context_new();
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
+	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	context->nsc_context = nsc_context_new();
@@ -473,6 +476,17 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	printf("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
+#if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
+	context->rfx_context->width = client->settings->DesktopWidth;
+	context->rfx_context->height = client->settings->DesktopHeight;
+	printf("Using resolution requested by client.\n");
+#else
+	client->settings->DesktopWidth = context->rfx_context->width;
+	client->settings->DesktopHeight = context->rfx_context->height;
+	printf("Resizing client to %dx%d\n", client->settings->DesktopWidth, client->settings->DesktopHeight);
+	client->update->DesktopResize(client->update->context);
+#endif
+
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
@@ -554,9 +568,11 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		}
 		else
 		{
-			client->settings->DesktopWidth = 640;
-			client->settings->DesktopHeight = 480;
+			client->settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
+			client->settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
 		}
+		context->rfx_context->width = client->settings->DesktopWidth;
+		context->rfx_context->height = client->settings->DesktopHeight;
 		update->DesktopResize(update->context);
 		context->activated = FALSE;
 	}
@@ -667,6 +683,8 @@ static void* test_peer_mainloop(void* arg)
 	client->update->RefreshRect = tf_peer_refresh_rect;
 	client->update->SuppressOutput = tf_peer_suppress_output;
 
+	client->settings->MultifragMaxRequestSize = 0xFFFFFF; /* FIXME */
+
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
 
@@ -681,7 +699,11 @@ static void* test_peer_mainloop(void* arg)
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+
+#ifndef _WIN32
+		/* winsock's select() only works with sockets ! */
 		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
+#endif
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -701,15 +723,27 @@ static void* test_peer_mainloop(void* arg)
 
 		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
 		{
+#ifdef _WIN32
+			/* error codes set by windows sockets are not made available through errno ! */
+			int wsa_error = WSAGetLastError();
+			if (!((wsa_error == WSAEWOULDBLOCK) ||
+				(wsa_error == WSAEINPROGRESS) ||
+				(wsa_error == WSAEINTR)))
+			{
+				printf("select failed (WSAGetLastError: %d)\n", wsa_error);
+				break;
+			}
+#else
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
 				(errno == EWOULDBLOCK) ||
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				printf("select failed (errno: %d)\n", errno);
 				break;
 			}
+#endif
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)
@@ -730,10 +764,10 @@ static void* test_peer_mainloop(void* arg)
 
 static void test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	pthread_t th;
-
-	pthread_create(&th, 0, test_peer_mainloop, client);
-	pthread_detach(th);
+	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL);
+	if (hThread != NULL) {
+		CloseHandle(hThread);
+	}
 }
 
 static void test_server_mainloop(freerdp_listener* instance)
@@ -800,9 +834,6 @@ int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
 
-	/* Ignore SIGPIPE, otherwise an SSL_write failure could crash your server */
-	signal(SIGPIPE, SIG_IGN);
-
 	instance = freerdp_listener_new();
 
 	instance->PeerAccepted = test_peer_accepted;
@@ -814,12 +845,14 @@ int main(int argc, char* argv[])
 		test_dump_rfx_realtime = FALSE;
 
 	/* Open the server socket and start listening. */
+	freerdp_wsa_startup();
 	if (instance->Open(instance, NULL, 3389) &&
 		instance->OpenLocal(instance, "/tmp/tfreerdp-server.0"))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
 	}
+	freerdp_wsa_cleanup();
 
 	freerdp_listener_free(instance);
 

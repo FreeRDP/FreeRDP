@@ -248,6 +248,9 @@ public class SessionActivity extends Activity
 		{
 			Log.v(TAG, "OnConnectionFailure");
 			
+			// remove pending move events
+			uiHandler.removeMessages(UIHandler.SEND_MOVE_EVENT);
+
 			if(progressDialog != null)
 			{
 				progressDialog.dismiss();
@@ -264,7 +267,10 @@ public class SessionActivity extends Activity
 		private void OnDisconnected(Context context)
 		{
 			Log.v(TAG, "OnDisconnected");
-			
+
+			// remove pending move events
+			uiHandler.removeMessages(UIHandler.SEND_MOVE_EVENT);
+
 			if(progressDialog != null)
 			{
 				progressDialog.dismiss();
@@ -434,6 +440,7 @@ public class SessionActivity extends Activity
 		
 		keyboardMapper = new KeyboardMapper();
 		keyboardMapper.init(this);
+		keyboardMapper.reset(this);
 		
 		modifiersKeyboard = new Keyboard(getApplicationContext(), R.xml.modifiers_keyboard);
 		specialkeysKeyboard = new Keyboard(getApplicationContext(), R.xml.specialkeys_keyboard);

@@ -158,7 +158,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 {
 	rdpPcap* pcap;
 
-	FILE* pcap_fp = fopen(name, write ? "w+" : "r");
+	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
 
 	if (pcap_fp == NULL)
 	{

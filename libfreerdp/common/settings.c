@@ -1207,7 +1207,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return -1;
 }
@@ -1256,7 +1256,7 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }
@@ -1898,7 +1898,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -1940,7 +1940,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -2278,7 +2278,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }
@@ -2319,7 +2319,7 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }

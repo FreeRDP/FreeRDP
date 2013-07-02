@@ -196,6 +196,8 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	if (status == ERROR_SUCCESS)
 	{
+		dwSize = sizeof(dwValue);
+
 		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
 			context->priv->UseThreads = dwValue ? 1 : 0;
 
@@ -257,6 +259,9 @@ void rfx_context_free(RFX_CONTEXT* context)
 	{
 		CloseThreadpool(context->priv->ThreadPool);
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+#ifdef WITH_PROFILER
+		fprintf(stderr, "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");
+#endif
 	}
 
 	BufferPool_Free(context->priv->BufferPool);
@@ -739,7 +744,10 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	if (context->priv->UseThreads)
 	{
 		for (i = 0; i < message->num_tiles; i++)
+		{
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+			CloseThreadpoolWork(work_objects[i]);
+		}
 
 		free(work_objects);
 		free(params);

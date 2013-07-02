@@ -107,7 +107,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	rdpGdi* gdi;
 	BOOL status;
 
-	size = width * height * (bpp + 7) / 8;
+	size = width * height * ((bpp + 7) / 8);
 
 	if (bitmap->data == NULL)
 		bitmap->data = (BYTE*) malloc(size);

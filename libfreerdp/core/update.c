@@ -677,6 +677,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 		update_write_refresh_rect(s, count, areas);
 
 		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+		Stream_Release(s);
 	}
 }
 
@@ -705,6 +706,7 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 		update_write_suppress_output(s, allow, area);
 
 		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
+		Stream_Release(s);
 	}
 }
 
@@ -717,6 +719,7 @@ static void update_send_surface_command(rdpContext* context, wStream* s)
 	Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s));
 	Stream_Write(update, Stream_Buffer(s), Stream_GetPosition(s));
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update);
+	Stream_Release(update);
 }
 
 static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -733,6 +736,8 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 
 	update_force_flush(context);
+
+	Stream_Release(s);
 }
 
 static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -747,6 +752,8 @@ static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 
 	update_force_flush(context);
+
+	Stream_Release(s);
 }
 
 static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
@@ -759,6 +766,7 @@ static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 		s = rdp_data_pdu_init(rdp);
 		Stream_Write_UINT32(s, frameId);
 		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+		Stream_Release(s);
 	}
 }
 
@@ -770,6 +778,7 @@ static void update_send_synchronize(rdpContext* context)
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	Stream_Zero(s, 2); /* pad2Octets (2 bytes) */
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SYNCHRONIZE, s);
+	Stream_Release(s);
 }
 
 static void update_send_desktop_resize(rdpContext* context)
@@ -1311,6 +1320,7 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 		updateCode = FASTPATH_UPDATETYPE_PTR_DEFAULT;
 	
 	fastpath_send_update_pdu(rdp->fastpath, updateCode, s);
+	Stream_Release(s);
 }
 
 static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
@@ -1342,6 +1352,7 @@ static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE*
 	s = fastpath_update_pdu_init(rdp->fastpath);
         update_write_pointer_color(s, pointer_color);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_COLOR, s);
+	Stream_Release(s);
 }
 
 static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
@@ -1353,6 +1364,7 @@ static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* poi
 	Stream_Write_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
         update_write_pointer_color(s, &pointer_new->colorPtrAttr);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_POINTER, s);
+	Stream_Release(s);
 }
 
 static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
@@ -1363,6 +1375,7 @@ static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDAT
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	Stream_Write_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s);
+	Stream_Release(s);
 }
 
 BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
