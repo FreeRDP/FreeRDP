@@ -159,6 +159,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
+		transport->credssp = NULL;
 		return FALSE;
 	}
 
@@ -292,6 +293,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	{
 		fprintf(stderr, "client authentication failure\n");
 		credssp_free(transport->credssp);
+		transport->credssp = NULL;
 		return FALSE;
 	}
 

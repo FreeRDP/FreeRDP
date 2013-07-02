@@ -685,7 +685,8 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	}
 
 #ifndef _WIN32
-	free(common_name);
+	if (common_name)
+		free(common_name);
 #endif
 
 	return verification_status;
@@ -715,25 +716,20 @@ void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name
 	fprintf(stderr, "@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
 	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 	fprintf(stderr, "The hostname used for this connection (%s) \n", hostname);
-
-	if (alt_names_count < 1)
+	fprintf(stderr, "does not match %s given in the certificate:\n", alt_names_count < 1 ? "the name" : "any of the names");
+	fprintf(stderr, "Common Name (CN):\n");
+	fprintf(stderr, "\t%s\n", common_name ? common_name : "no CN found in certificate");
+	if (alt_names_count > 1)
 	{
-		fprintf(stderr, "does not match the name given in the certificate:\n");
-		fprintf(stderr, "%s\n", common_name);
-	}
-	else
-	{
-		fprintf(stderr, "does not match the names given in the certificate:\n");
-		fprintf(stderr, "%s", common_name);
-
-		for (index = 0; index < alt_names_count; index++)
+		fprintf(stderr, "Alternative names:\n");
+		if (alt_names_count > 1)
 		{
-			fprintf(stderr, ", %s", alt_names[index]);
+			for (index = 0; index < alt_names_count; index++)
+			{
+				fprintf(stderr, "\t %s\n", alt_names[index]);
+			}
 		}
-
-		fprintf(stderr, "\n");
 	}
-
 	fprintf(stderr, "A valid certificate for the wrong name should NOT be trusted!\n");
 }
 
