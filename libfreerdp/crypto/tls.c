@@ -184,7 +184,7 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (tls->settings->GatewayUsageMethod)
+	if (tls->settings->GatewayEnabled)
 		hostname = tls->settings->GatewayHostname;
 	else
 		hostname = tls->settings->ServerHostname;

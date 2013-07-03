@@ -175,7 +175,8 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
         settings->GatewayUsername = strdup([_params UTF8StringForKey:@"tsg_username"]);
         settings->GatewayPassword = strdup([_params UTF8StringForKey:@"tsg_password"]);
         settings->GatewayDomain = strdup([_params UTF8StringForKey:@"tsg_domain"]);
-        settings->GatewayUsageMethod = TRUE;
+        settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
+        settings->GatewayEnabled = TRUE;
         settings->GatewayUseSameCredentials = FALSE;
     }
     

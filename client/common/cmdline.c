@@ -1243,8 +1243,9 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
-			settings->GatewayUsageMethod = TRUE;
+			settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
 			settings->GatewayUseSameCredentials = TRUE;
+			settings->GatewayEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -1638,7 +1639,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	if (settings->DisableThemes)
 		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
 
-	if (settings->GatewayUsageMethod)
+	if (settings->GatewayEnabled)
 	{
 		if (settings->GatewayUseSameCredentials)
 		{

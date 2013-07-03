@@ -731,11 +731,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t) file->GatewayHostname))
 		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
+
 	if (~file->GatewayUsageMethod)
-		freerdp_set_param_bool(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
+	{
+		freerdp_set_param_uint32(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
+
+		if (file->GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+	}
+
 	if (~file->PromptCredentialOnce)
-		freerdp_set_param_bool(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
-		settings->GatewayUseSameCredentials = TRUE;
+		freerdp_set_param_bool(settings, FreeRDP_GatewayUseSameCredentials, TRUE);
 	
 	if (~file->RemoteApplicationMode)
 		freerdp_set_param_bool(settings, FreeRDP_RemoteApplicationMode, file->RemoteApplicationMode);
