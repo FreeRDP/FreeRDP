@@ -212,7 +212,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
 	}
 
-	if (transport->settings->GatewayUsageMethod)
+	if (transport->settings->GatewayEnabled)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);

@@ -75,7 +75,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
-	if (settings->GatewayUsageMethod)
+	if (settings->GatewayEnabled)
 	{
 		char* user;
 		char* domain;
