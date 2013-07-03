@@ -67,7 +67,6 @@ struct _SERIAL_DEVICE
 
 	wQueue* queue;
 	LIST* pending_irps;
-	HANDLE in_event;
 
 	fd_set read_fds;
 	fd_set write_fds;
@@ -330,7 +329,9 @@ static void* serial_thread_func(void* arg)
 		if (WaitForSingleObject(serial->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if (WaitForSingleObject(Queue_Event(serial->queue), 10) == WAIT_OBJECT_0)
+		status = WaitForSingleObject(Queue_Event(serial->queue), 10);
+
+		if ((status != WAIT_OBJECT_0) && (status != WAIT_TIMEOUT))
 			break;
 
 		serial->nfds = 1;
@@ -341,18 +342,13 @@ static void* serial_thread_func(void* arg)
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
-		irp = (IRP*) Queue_Dequeue(serial->queue);
-
-		if (irp)
-			serial_process_irp(serial, irp);
-
-		status = WaitForSingleObject(serial->in_event, 0);
-
-		if ((status == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
+		if (status == WAIT_OBJECT_0)
 		{
-			if (serial_check_fds(serial))
-				ResetEvent(serial->in_event);
+			if ((irp = (IRP*) Queue_Dequeue(serial->queue)))
+				serial_process_irp(serial, irp);
 		}
+
+		serial_check_fds(serial);
 	}
 
 	return NULL;
@@ -423,7 +419,6 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 		Stream_Write_UINT32(irp->output, 0);
 		irp->Complete(irp);
 
-		SetEvent(serial->in_event);
 		break;
 	}
 
@@ -460,8 +455,6 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 				prev = irp;
 				irp = (IRP*) list_next(serial->pending_irps, irp);
 				list_remove(serial->pending_irps, prev);
-
-				SetEvent(serial->in_event);
 			}
 		}
 
@@ -537,7 +530,6 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 	irp->IoStatus = STATUS_PENDING;
 	list_enqueue(serial->pending_irps, irp);
-	SetEvent(serial->in_event);
 }
 
 static void __serial_check_fds(SERIAL_DEVICE* serial)
@@ -599,10 +591,7 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 		irp = (IRP*) list_next(serial->pending_irps, irp);
 
 		if (irp_completed || (prev->IoStatus == STATUS_SUCCESS))
-		{
 			list_remove(serial->pending_irps, prev);
-			SetEvent(serial->in_event);
-		}
 	}
 }
 
@@ -692,7 +681,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
-	if (name[0] && path[0])
+	if ((name && name[0]) && (path && path[0]))
 	{
 		serial = (SERIAL_DEVICE*) malloc(sizeof(SERIAL_DEVICE));
 		ZeroMemory(serial, sizeof(SERIAL_DEVICE));
@@ -711,7 +700,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->path = path;
 		serial->queue = Queue_New(TRUE, -1, -1);
 		serial->pending_irps = list_new();
-		serial->in_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		serial->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
