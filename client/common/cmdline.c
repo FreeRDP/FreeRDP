@@ -1667,7 +1667,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
-	return 1;
+	return status;
 }
 
 int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings, char* name, void* data)
