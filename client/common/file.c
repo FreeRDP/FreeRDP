@@ -439,7 +439,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t si
 	return freerdp_client_parse_rdp_file_buffer_ascii(file, buffer, size);
 }
 
-BOOL freerdp_client_parse_rdp_file(rdpFile* file, char* name)
+BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 {
 	BYTE* buffer;
 	FILE* fp = NULL;

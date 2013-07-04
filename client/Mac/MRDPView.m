@@ -75,9 +75,6 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_SetNull(rdpContext* context);
 void mf_Pointer_SetDefault(rdpContext* context);
 // int rdp_connect(void);
-BOOL mac_pre_connect(freerdp* instance);
-BOOL mac_post_connect(freerdp*	instance);
-BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
 void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
 void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
 void mac_begin_paint(rdpContext* context);
@@ -141,17 +138,7 @@ struct rgba_data
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 
-	context->instance->PreConnect = mac_pre_connect;
-	context->instance->PostConnect = mac_post_connect;
-	context->instance->ReceiveChannelData = mac_receive_channel_data;
-	context->instance->Authenticate = mac_authenticate;
-
-	// TODO
-	//    instance->Authenticate = mf_authenticate;
-	//    instance->VerifyCertificate = mf_verify_certificate;
-	//    instance->LogonErrorInfo = mf_logon_error_info;
-
-	status = freerdp_connect(context->instance);
+    status = freerdp_connect(context->instance);
 	
 	if (!status)
 	{
@@ -797,7 +784,6 @@ struct rgba_data
        NSLog(@"Exception: %@", e);
     }
     @finally {
-       NSLog(@"finally");
     }
 
 	// set client area to specified dimensions

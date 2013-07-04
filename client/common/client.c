@@ -121,7 +121,7 @@ int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv
 	return status;
 }
 
-int freerdp_client_parse_connection_file(rdpContext* context, char* filename)
+int freerdp_client_parse_connection_file(rdpContext* context, const char* filename)
 {
 	rdpFile* file;
 
