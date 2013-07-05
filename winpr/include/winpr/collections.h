@@ -171,12 +171,38 @@ typedef struct _wDictionary wDictionary;
 
 /* System.Collections.Specialized.ListDictionary */
 
+typedef struct _wListDictionaryItem wListDictionaryItem;
+
+struct _wListDictionaryItem
+{
+	void* key;
+	void* value;
+
+	wListDictionaryItem* next;
+};
+
 struct _wListDictionary
 {
 	BOOL synchronized;
 	HANDLE mutex;
+
+	wListDictionaryItem* head;
 };
 typedef struct _wListDictionary wListDictionary;
+
+WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
+
+WINPR_API void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
+WINPR_API void ListDictionary_Remove(wListDictionary* listDictionary, void* key);
+WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
+
+WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key);
+
+WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, void* key);
+WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void* key, void* value);
+
+WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
+WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
