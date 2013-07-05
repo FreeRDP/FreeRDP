@@ -20,9 +20,10 @@ set(MODULE_PREFIX "FREERDP_CODEC")
 
 set(${MODULE_PREFIX}_SRCS
 	dsp.c
-	bitmap.c
 	color.c
 	audio.c
+	bitmap_decode.c
+	bitmap_encode.c
 	rfx_bitstream.h
 	rfx_constants.h
 	rfx_decode.c
