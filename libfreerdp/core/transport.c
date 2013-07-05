@@ -788,7 +788,6 @@ static void* transport_client_thread(void* arg)
 	freerdp* instance;
 	rdpContext* context;
 	rdpTransport* transport;
-	TerminateEventArgs e;
 
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
