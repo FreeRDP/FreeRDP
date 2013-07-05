@@ -1245,6 +1245,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 		ZeroMemory(&credssp->negoToken, sizeof(SecBuffer));
 		ZeroMemory(&credssp->pubKeyAuth, sizeof(SecBuffer));
 		ZeroMemory(&credssp->authInfo, sizeof(SecBuffer));
+		SecInvalidateHandle(&credssp->context);
 
 		if (credssp->server)
 		{
