@@ -480,7 +480,8 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
 }
 
-#define SETTING_MODIFIED(_settings, _field) (_settings->settings_modified[FreeRDP_##_field])
+#define WRITE_ALL_SETTINGS TRUE
+#define SETTING_MODIFIED(_settings, _field) (WRITE_ALL_SETTINGS || _settings->settings_modified[FreeRDP_##_field])
 #define SETTING_MODIFIED_SET(_target, _settings, _field) if SETTING_MODIFIED(_settings, _field) _target = _settings->_field
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* settings)
@@ -529,9 +530,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* 
 }
 
 
-BOOL freerdp_client_write_rdp_file(rdpFile* file, char* name, BOOL unicode)
+BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode)
 {
-	BOOL success = FALSE;
+    int rc = 0;
 	char* buffer;
 	int len, len2;
 	FILE* fp = NULL;
@@ -559,22 +560,22 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, char* name, BOOL unicode)
 				fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp);
 				fwrite(unicodestr, 2, len, fp);
 
-				free(unicodestr);
+                free(unicodestr);
 			}
 			else
 			{
 				fwrite(buffer, 1, len, fp);
 			}
 
-			fflush(fp);
-			fclose(fp);
+            rc = fflush(fp);
+            rc = fclose(fp);
 		}
 	}
 
 	if (buffer != NULL)
 		free(buffer);
 
-	return success;
+    return (rc == 0);
 }
 
 #define WRITE_RDP_FILE_DECLARE(_file, _buffer, _size) \
