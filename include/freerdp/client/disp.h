@@ -32,6 +32,8 @@ struct _DISPLAY_CONTROL_MONITOR_LAYOUT
 	UINT32 PhysicalWidth;
 	UINT32 PhysicalHeight;
 	UINT32 Orientation;
+	UINT32 DesktopScaleFactor;
+	UINT32 DeviceScaleFactor;
 };
 typedef struct _DISPLAY_CONTROL_MONITOR_LAYOUT DISPLAY_CONTROL_MONITOR_LAYOUT;
 

@@ -41,6 +41,11 @@ DEFINE_EVENT_BEGIN(ResizeWindow)
 	int width;
 	int height;
 DEFINE_EVENT_END(ResizeWindow)
+
+DEFINE_EVENT_BEGIN(LocalResizeWindow)
+	int width;
+	int height;
+DEFINE_EVENT_END(LocalResizeWindow)
 	
 DEFINE_EVENT_BEGIN(EmbedWindow)
 	BOOL embed;

@@ -98,6 +98,9 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		Stream_Write_UINT32(s, Monitors[index].PhysicalWidth); /* PhysicalWidth (4 bytes) */
 		Stream_Write_UINT32(s, Monitors[index].PhysicalHeight); /* PhysicalHeight (4 bytes) */
 		Stream_Write_UINT32(s, Monitors[index].Orientation); /* Orientation (4 bytes) */
+
+		//Stream_Write_UINT32(s, Monitors[index].DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
+		//Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
 	}
 
 	Stream_SealLength(s);
