@@ -45,6 +45,7 @@
 #include "rfx_encode.h"
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
+#include "rfx_rlgr.h"
 
 #include "rfx_sse2.h"
 #include "rfx_neon.h"
@@ -240,6 +241,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->quantization_encode = rfx_quantization_encode;	
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
+	context->rlgr_decode = rfx_rlgr_decode;
+	context->rlgr_encode = rfx_rlgr_encode;
 
 	RFX_INIT_SIMD(context);
 	
