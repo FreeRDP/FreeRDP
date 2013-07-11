@@ -475,6 +475,9 @@ boolean security_encrypt(uint8* data, int length, rdpRdp* rdp)
 
 boolean security_decrypt(uint8* data, int length, rdpRdp* rdp)
 {
+	if (rdp->decrypt_key == NULL)
+		return false;
+
 	if (rdp->decrypt_use_count >= 4096)
 	{
 		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len);
