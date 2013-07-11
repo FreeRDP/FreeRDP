@@ -78,6 +78,8 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 	UINT32 type;
 	UINT32 length;
 
+	fprintf(stderr, "DisplayControlMonitorLayout\n");
+
 	length = 8 + 4 + NumMonitors * 32;
 	type = DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT;
 
@@ -122,6 +124,9 @@ int disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream*
 	Stream_Read_UINT32(s, disp->MaxMonitorWidth); /* MaxMonitorWidth (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorHeight); /* MaxMonitorHeight (4 bytes) */
 
+	fprintf(stderr, "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d\n",
+	       disp->MaxNumMonitors, disp->MaxMonitorWidth, disp->MaxMonitorHeight);
+
 	return 0;
 }
 
@@ -132,6 +137,8 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	fprintf(stderr, "Type: %d Length: %d\n", type, length);
 
 	switch (type)
 	{
@@ -151,6 +158,8 @@ static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, U
 	wStream* s;
 	int status = 0;
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
+
+	fprintf(stderr, "DisplayControlOnDataReceived\n");
 
 	s = Stream_New(pBuffer, cbSize);
 
@@ -191,6 +200,8 @@ static int disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 	listener_callback->channel_callback = callback;
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
+
+	fprintf(stderr, "DisplayControlNewChannelConnection\n");
 
 	return 0;
 }

@@ -77,6 +77,16 @@ DEFINE_EVENT_BEGIN(ConnectionResult)
 	int result;
 DEFINE_EVENT_END(ConnectionResult)
 
+DEFINE_EVENT_BEGIN(ChannelConnected)
+	const char* name;
+	void* pInterface;
+DEFINE_EVENT_END(ChannelConnected)
+
+DEFINE_EVENT_BEGIN(ChannelDisconnected)
+	const char* name;
+	void* pInterface;
+DEFINE_EVENT_END(ChannelDisconnected)
+
 #ifdef	__cplusplus
 }
 #endif

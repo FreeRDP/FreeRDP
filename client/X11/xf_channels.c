@@ -26,19 +26,17 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface)
+void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
-	xfContext* xfc = (xfContext*) instance->context;
+	xfContext* xfc = (xfContext*) context;
 
-	if (strcmp(name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		xfc->rdpei = (RdpeiClientContext*) pInterface;
+		xfc->rdpei = (RdpeiClientContext*) e->pInterface;
 	}
-
-	return 0;
 }
 
-int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface)
+void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
 {
-	return 0;
+
 }

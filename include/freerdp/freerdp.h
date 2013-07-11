@@ -66,9 +66,6 @@ typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 typedef int (*pSendChannelData)(freerdp* instance, int channelId, BYTE* data, int size);
 typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
 
-typedef int (*pOnChannelConnected)(freerdp* instance, const char* name, void* pInterface);
-typedef int (*pOnChannelDisconnected)(freerdp* instance, const char* name, void* pInterface);
-
 /**
  * Defines the context for a given instance of RDP connection.
  * It is embedded in the rdp_freerdp structure, and allocated by a call to freerdp_context_new().
@@ -207,9 +204,6 @@ struct rdp_freerdp
 											   Callback for receiving data from a channel.
 											   This is called by freerdp_channel_process() (if not NULL).
 											   Clients will typically use a function that calls freerdp_channels_data() to perform the needed tasks. */
-
-	ALIGN64 pOnChannelConnected OnChannelConnected;
-	ALIGN64 pOnChannelDisconnected OnChannelDisconnected;
 
 	UINT64 paddingE[80 - 66]; /* 66 */
 };
