@@ -889,13 +889,7 @@ BOOL mac_pre_connect(freerdp* instance)
 
 BOOL mac_post_connect(freerdp* instance)
 {
-	int index;
-	int fds[32];
 	UINT32 flags;
-	int rd_count = 0;
-	int wr_count = 0;
-	void* rd_fds[32];
-	void* wr_fds[32];
 	rdpPointer rdp_pointer;
 	mfContext *mfc = (mfContext*) instance->context;
 
@@ -1150,10 +1144,10 @@ void mac_end_paint(rdpContext* context)
 
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{
-		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
-		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
-		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
-		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
+		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x - 1;
+		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y - 1;
+		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w + 1;
+		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h + 1;
 		windows_to_apple_cords(mfc->view, &drawRect);
 		[view setNeedsDisplayInRect:drawRect];
 	}
