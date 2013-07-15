@@ -107,7 +107,7 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
 	for (index = 0; index < scopeList->count; index++)
 	{
 		scope = &scopeList->array[index];
-		fprintf(stderr, "\t%s\n", (char*) scope->buffer);
+		fprintf(stderr, "\t%s\n", (char*) scope->data);
 	}
 }
 
@@ -810,11 +810,11 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "EncryptedPlatformChallenge:\n");
-	winpr_HexDump(license->EncryptedPlatformChallenge->buffer, license->EncryptedPlatformChallenge->length);
+	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "PlatformChallenge:\n");
-	winpr_HexDump(license->PlatformChallenge->buffer, license->PlatformChallenge->length);
+	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "MacData:\n");
@@ -937,13 +937,13 @@ void license_write_new_license_request_packet(rdpLicense* license, wStream* s)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "EncryptedPremasterSecret\n");
-	winpr_HexDump(license->EncryptedPremasterSecret->buffer, license->EncryptedPremasterSecret->length);
+	winpr_HexDump(license->EncryptedPremasterSecret->data, license->EncryptedPremasterSecret->length);
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->buffer);
+	fprintf(stderr, "ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->buffer);
+	fprintf(stderr, "ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
 	fprintf(stderr, "\n");
 #endif
 }
@@ -1048,7 +1048,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "EncryptedHardwareId:\n");
-	winpr_HexDump(license->EncryptedHardwareId->buffer, 20);
+	winpr_HexDump(license->EncryptedHardwareId->data, 20);
 	fprintf(stderr, "\n");
 #endif
 
