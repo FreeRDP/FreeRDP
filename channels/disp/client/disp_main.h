@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client Channels
+ * Display Update Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,26 +17,22 @@
  * limitations under the License.
  */
 
+#ifndef FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "xf_channels.h"
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
+#include <freerdp/addin.h>
+#include <freerdp/utils/debug.h>
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+#include <freerdp/client/disp.h>
 
-void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
-{
-	xfContext* xfc = (xfContext*) context;
+#define DISPLAY_CONTROL_PDU_TYPE_CAPS			0x00000001
+#define DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT		0x00000002
 
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-		xfc->rdpei = (RdpeiClientContext*) e->pInterface;
-	}
-}
+#endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
 
-void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
-{
-
-}

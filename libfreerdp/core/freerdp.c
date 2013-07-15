@@ -330,6 +330,7 @@ static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(LocalResizeWindow)
 	DEFINE_EVENT_ENTRY(EmbedWindow)
 	DEFINE_EVENT_ENTRY(PanningChange)
 	DEFINE_EVENT_ENTRY(ScalingFactorChange)
@@ -337,6 +338,8 @@ static wEventType FreeRDP_Events[] =
 	DEFINE_EVENT_ENTRY(ParamChange)
 	DEFINE_EVENT_ENTRY(Terminate)
 	DEFINE_EVENT_ENTRY(ConnectionResult)
+	DEFINE_EVENT_ENTRY(ChannelConnected)
+	DEFINE_EVENT_ENTRY(ChannelDisconnected)
 };
 
 /** Allocator function for a rdp context.
