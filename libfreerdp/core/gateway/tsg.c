@@ -1369,6 +1369,10 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 	 *        |                                                   |
 	 */
 
+
+    if (tsg == NULL)
+        return FALSE;
+
 	tsg->rpc->client->SynchronousReceive = TRUE;
 
     /* if we are already in state pending (i.e. if a server initiated disconnect was issued)
@@ -1392,7 +1396,12 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
-	rdpRpc* rpc = tsg->rpc;
+    rdpRpc* rpc;
+
+    if (tsg == NULL)
+        return -1;
+
+    rpc = tsg->rpc;
 
 	if (tsg->PendingPdu)
 	{

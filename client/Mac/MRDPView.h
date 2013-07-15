@@ -78,6 +78,8 @@
 	int kdlmeta;
 	int kdrmeta;
 	int kdcapslock;
+
+    BOOL initialized;
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
@@ -107,3 +109,8 @@
 #define PTR_FLAGS_BUTTON2               0x2000
 #define PTR_FLAGS_BUTTON3               0x4000
 #define WheelRotationMask               0x01FF
+
+BOOL mac_pre_connect(freerdp* instance);
+BOOL mac_post_connect(freerdp*	instance);
+BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
+int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
