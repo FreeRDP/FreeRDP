@@ -210,6 +210,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			return WAIT_FAILED;
 		}
 
+        if (fd == -1)
+            return WAIT_FAILED;
+
 		FD_SET(fd, &fds);
 
 		if (fd > maxfd)

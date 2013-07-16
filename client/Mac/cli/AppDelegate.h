@@ -7,8 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <MacFreeRDP-library/MRDPView.h>
-#import <MacFreeRDP-library/mfreerdp.h>
+#import <MacFreeRDP/MRDPView.h>
+#import <MacFreeRDP/mfreerdp.h>
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 {
@@ -20,6 +20,5 @@
 
 @property (assign) IBOutlet NSWindow *window;
 @property (assign) rdpContext *context;
-@property (assign) IBOutlet MRDPView *mrdpView;
 
 @end
