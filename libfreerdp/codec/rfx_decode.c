@@ -103,7 +103,7 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode);
-		rfx_rlgr_decode(context->mode, data, size, buffer, 4096);
+		context->rlgr_decode(context->mode, data, size, buffer, 4096);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode);
 
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode);

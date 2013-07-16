@@ -106,6 +106,8 @@ struct _RFX_CONTEXT
 	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
 	void (*dwt_2d_decode)(INT16* buffer, INT16* dwt_buffer);
 	void (*dwt_2d_encode)(INT16* buffer, INT16* dwt_buffer);
+	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buffer, int buffer_size);
+	int (*rlgr_encode)(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buffer, int buffer_size);
 
 	/* private definitions */
 	RFX_CONTEXT_PRIV* priv;

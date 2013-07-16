@@ -45,6 +45,7 @@
 #include "rfx_encode.h"
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
+#include "rfx_rlgr.h"
 
 #include "rfx_sse2.h"
 #include "rfx_neon.h"
@@ -137,6 +138,7 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
+
 RFX_CONTEXT* rfx_context_new(void)
 {
 	HKEY hKey;
@@ -159,8 +161,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	/*
 	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
 	 *
-	 * y_r_buffer, cb_g_buffer, cr_b_buffer: 64 * 64 * 4 = 16384 (0x4000)
-	 * dwt_buffer: 32 * 32 * 2 * 2 * 4 = 16384, maximum sub-band width is 32
+	 * y_r_buffer, cb_g_buffer, cr_b_buffer: 64 * 64 * sizeof(INT16) = 8192 (0x2000)
+	 * dwt_buffer: 32 * 32 * 2 * 2 * sizeof(INT16) = 8192, maximum sub-band width is 32
 	 *
 	 * Additionally we add 32 bytes (16 in front and 16 at the back of the buffer)
 	 * in order to allow optimized functions (SEE, NEON) to read from positions 
@@ -168,7 +170,7 @@ RFX_CONTEXT* rfx_context_new(void)
 	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
 	 */
 
-	context->priv->BufferPool = BufferPool_New(TRUE, 16384 + 32, 16);
+	context->priv->BufferPool = BufferPool_New(TRUE, 8192 + 32, 16);
 
 #ifdef _WIN32
 	{
@@ -239,6 +241,8 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->quantization_encode = rfx_quantization_encode;	
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
+	context->rlgr_decode = rfx_rlgr_decode;
+	context->rlgr_encode = rfx_rlgr_encode;
 
 	RFX_INIT_SIMD(context);
 	
