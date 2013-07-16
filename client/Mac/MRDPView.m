@@ -903,7 +903,7 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 
-	flags = CLRBUF_32BPP;
+	flags = CLRBUF_32BPP | CLRCONV_ALPHA;
 	gdi_init(instance, flags, NULL);
 
 	rdpGdi* gdi = instance->context->gdi;
@@ -975,7 +975,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	MRDPCursor* mrdpCursor = [[MRDPCursor alloc] init];
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	
+
 	rect.size.width = pointer->width;
 	rect.size.height = pointer->height;
 	rect.origin.x = pointer->xPos;
@@ -986,10 +986,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
-	
-	// TODO if xorBpp is > 24 need to call freerdp_image_swap_color_order
-	//         see file df_graphics.c
-	
+
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
 											pixelsWide:rect.size.width
@@ -1057,8 +1054,6 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	MRDPView* view = (MRDPView*) mfc->view;
 
 	NSMutableArray* ma = view->cursors;
-
-	return; /* disable pointer until it is fixed */
 	
 	if (!view->mouseInClientArea)
 		return;
@@ -1227,6 +1222,7 @@ static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBac
 
 	freerdp_channels_process_pending_messages(instance);
 	event = freerdp_channels_pop_event(instance->context->channels);
+
 	if (event)
 	{
 		switch (GetMessageClass(event->id))
