@@ -686,7 +686,8 @@ JNIEXPORT void JNICALL jni_freerdp_set_gateway_info(JNIEnv *env, jclass cls, jin
 	settings->GatewayUsername = strdup(gatewayusername);
 	settings->GatewayPassword = strdup(gatewaypassword);
 	settings->GatewayDomain = strdup(gatewaydomain);
-	settings->GatewayUsageMethod = TRUE;
+	settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
+	settings->GatewayEnabled = TRUE;
 	settings->GatewayUseSameCredentials = FALSE;
 
 	(*env)->ReleaseStringUTFChars(env, jgatewayhostname, gatewayhostname);

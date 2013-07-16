@@ -56,6 +56,7 @@ BOOL freerdp_connect(freerdp* instance)
 	rdpRdp* rdp;
 	rdpSettings* settings;
 	BOOL status = FALSE;
+	ConnectionResultEventArgs e;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
@@ -168,6 +169,10 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	SetEvent(rdp->transport->connectedEvent);
+
+	EventArgsInit(&e, "freerdp");
+	e.result = status ? 0 : -1;
+	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
 
 	return status;
 }
@@ -325,12 +330,16 @@ static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(LocalResizeWindow)
 	DEFINE_EVENT_ENTRY(EmbedWindow)
 	DEFINE_EVENT_ENTRY(PanningChange)
 	DEFINE_EVENT_ENTRY(ScalingFactorChange)
 	DEFINE_EVENT_ENTRY(ErrorInfo)
 	DEFINE_EVENT_ENTRY(ParamChange)
 	DEFINE_EVENT_ENTRY(Terminate)
+	DEFINE_EVENT_ENTRY(ConnectionResult)
+	DEFINE_EVENT_ENTRY(ChannelConnected)
+	DEFINE_EVENT_ENTRY(ChannelDisconnected)
 };
 
 /** Allocator function for a rdp context.
