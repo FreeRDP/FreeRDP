@@ -212,11 +212,31 @@ struct rgba_data
         NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 
         [self addTrackingArea:trackingArea];
+        
+        // Set the default cursor
+        currentCursor = [NSCursor arrowCursor];
 
         mouseInClientArea = YES;
+        NSLog(@"SET mouseInClientArea: %d", mouseInClientArea);
 
         initialized = YES;
     }
+}
+
+- (void) setCursor: (NSCursor*) cursor
+{
+    NSLog(@"Setcursor %@", cursor);
+    self->currentCursor = cursor;
+    [[self window] invalidateCursorRectsForView:self];
+    
+    [imageView setImage:[currentCursor image]];
+}
+
+
+// Set the current cursor
+- (void) resetCursorRects
+{
+    [self addCursorRect:[self visibleRect] cursor:currentCursor];
 }
 
 /** *********************************************************************
@@ -650,50 +670,6 @@ struct rgba_data
  instance methods
  ************************************************************************/
 
-/** *********************************************************************
- * double check that a mouse event occurred in our client view
- ***********************************************************************/
-
-- (BOOL) eventIsInClientArea :(NSEvent *) event :(int *) xptr :(int *) yptr
-{
-	NSPoint loc = [event locationInWindow];
-	int x = (int) loc.x;
-	int y = (int) loc.y;
-	
-	if ((x < 0) || (y < 0))
-	{
-		if (mouseInClientArea)
-		{
-			// set default cursor before leaving client area
-			mouseInClientArea = NO;
-			NSCursor *cur = [NSCursor arrowCursor];
-			[cur set];
-		}
-		
-		return NO;
-	}
-	
-	if ((x > width) || (y > height))
-	{
-		if (mouseInClientArea)
-		{
-			// set default cursor before leaving client area
-			mouseInClientArea = NO;
-			NSCursor *cur = [NSCursor arrowCursor];
-			[cur set];
-		}
-		
-		return NO;
-	}
-	
-	// on Mac origin is at lower left, but we want it on upper left
-	y = height - y;
-	
-	*xptr = x;
-	*yptr = y;
-	mouseInClientArea = YES;
-	return YES;
-}
 
 /** *********************************************************************
  * called when we fail to connect to a RDP server
@@ -903,7 +879,7 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 
-	flags = CLRBUF_32BPP;
+	flags = CLRBUF_32BPP | CLRCONV_ALPHA;
 	gdi_init(instance, flags, NULL);
 
 	rdpGdi* gdi = instance->context->gdi;
@@ -984,6 +960,11 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
+    if (pointer->xorBpp > 24)
+    {
+        freerdp_image_swap_color_order(pointer->xorMaskData, pointer->width, pointer->height);
+	}
+    
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
 	
@@ -1058,19 +1039,16 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 	NSMutableArray* ma = view->cursors;
 
-	return; /* disable pointer until it is fixed */
-	
-	if (!view->mouseInClientArea)
-		return;
-	
 	for (MRDPCursor* cursor in ma)
 	{
 		if (cursor->pointer == pointer)
 		{
-			[cursor->nsCursor set];
+            [view setCursor:cursor->nsCursor];
 			return;
 		}
 	}
+    
+    NSLog(@"Cursor not found");
 }
 
 /** *********************************************************************
@@ -1088,7 +1066,9 @@ void mf_Pointer_SetNull(rdpContext* context)
 
 void mf_Pointer_SetDefault(rdpContext* context)
 {
-	
+	mfContext* mfc = (mfContext*) context;
+	MRDPView* view = (MRDPView*) mfc->view;
+    [view setCursor:[NSCursor arrowCursor]];
 }
 
 /** *********************************************************************
@@ -1559,20 +1539,12 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
-
-/**
- * given a rect with 0,0 at the bottom left (apple cords)
- * convert it to a rect with 0,0 at the top left (windows cords)
- */
-
-void apple_to_windows_cords(MRDPView* view, NSRect* r)
-{
-	r->origin.y = view->height - (r->origin.y + r->size.height);
-}
-
 /**
  * given a rect with 0,0 at the top left (windows cords)
  * convert it to a rect with 0,0 at the bottom left (apple cords)
+ *
+ * Note: the formula works for conversions in both directions.
+ *
  */
 
 void windows_to_apple_cords(MRDPView* view, NSRect* r)

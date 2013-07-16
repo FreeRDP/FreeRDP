@@ -49,6 +49,7 @@
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
+    NSCursor* currentCursor;
 	NSRect prevWinPosition;
 	int titleBarHeight;
 	freerdp* instance;
@@ -80,6 +81,8 @@
 	int kdcapslock;
 
     BOOL initialized;
+    
+    NSImageView* imageView;
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
@@ -90,6 +93,8 @@
 }
 
 - (int)  rdpStart :(rdpContext*) rdp_context;
+- (void) setCursor: (NSCursor*) cursor;
+
 - (void) rdpConnectError;
 - (void) rdpRemoteAppError;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;

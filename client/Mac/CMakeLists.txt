@@ -132,7 +132,7 @@ if (${BUILD_SHARED_LIBS})
 endif()
 
 # Add post-build NIB file generation in unix makefiles. XCode handles this implicitly.
-if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+# if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 	message(STATUS "Adding post-build NIB file generation event for ${MODULE_NAME}")
 
 	# Make sure we can find the 'ibtool' program. If we can NOT find it we
@@ -156,7 +156,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
-endif()
+# endif()
 
 # Copy the public header files into the framework
 foreach(HEADER ${${MODULE_NAME}_HEADERS})
