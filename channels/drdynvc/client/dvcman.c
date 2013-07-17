@@ -376,16 +376,13 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 			{
 				DEBUG_WARN("channel rejected by plugin");
 
-				channel->status = 1;
-				ArrayList_Add(dvcman->channels, channel);
+				free(channel);
 				return 1;
 			}
 		}
 	}
 
-	channel->status = 1;
-	ArrayList_Add(dvcman->channels, channel);
-
+	free(channel);
 	return 1;
 }
 

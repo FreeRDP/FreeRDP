@@ -75,17 +75,21 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
-	if (settings->GatewayUsageMethod)
+	if (settings->GatewayEnabled)
 	{
-		char* user;
+        char* user;
 		char* domain;
 		char* cookie;
-		int user_length;
+        int user_length = 0;
 		int domain_length;
 		int cookie_length;
 
-		user = settings->Username;
-		user_length = strlen(settings->Username);
+
+        if (settings->Username)
+        {
+            user = settings->Username;
+            user_length = strlen(settings->Username);
+        }
 
 		if (settings->Domain)
 			domain = settings->Domain;
@@ -100,8 +104,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		CopyMemory(cookie, domain, domain_length);
 		CharUpperBuffA(cookie, domain_length);
 		cookie[domain_length] = '\\';
-		CopyMemory(&cookie[domain_length + 1], user, user_length);
-		cookie[cookie_length] = '\0';
+
+        if (settings->Username)
+            CopyMemory(&cookie[domain_length + 1], user, user_length);
+
+        cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
@@ -587,8 +594,15 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 		return FALSE;
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
 		return FALSE;
-	if (!rdp_send_client_persistent_key_list_pdu(rdp))
-		return FALSE;
+	/**
+	 * [MS-RDPBCGR] 2.2.1.17
+	 * Client persistent key list must be sent if a bitmap is
+	 * stored in persistent bitmap cache or the server has advertised support for bitmap
+	 * host cache and a deactivation reactivation sequence is *not* in progress.
+	 */
+	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
+		if (!rdp_send_client_persistent_key_list_pdu(rdp))
+			return FALSE;
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
 		return FALSE;
 

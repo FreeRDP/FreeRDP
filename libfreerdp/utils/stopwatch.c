@@ -26,9 +26,33 @@
 
 #include <freerdp/utils/stopwatch.h>
 
+#ifdef _WIN32
+LARGE_INTEGER stopwatch_freq = { 0, 0 };
+#else
+#include <sys/time.h>
+#endif
+
+void stopwatch_set_time(UINT64* usecs)
+{
+#ifdef _WIN32
+	LARGE_INTEGER perfcount;
+	QueryPerformanceCounter(&perfcount);
+	*usecs = (perfcount.QuadPart * 1000000) / stopwatch_freq.QuadPart;
+#else
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	*usecs = tv.tv_sec * 1000000 + tv.tv_usec;
+#endif
+}
+
 STOPWATCH* stopwatch_create()
 {
 	STOPWATCH* sw;
+#ifdef _WIN32
+	if (stopwatch_freq.QuadPart == 0) {
+		QueryPerformanceFrequency(&stopwatch_freq);
+	}
+#endif
 
 	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
 	stopwatch_reset(sw);
@@ -43,13 +67,13 @@ void stopwatch_free(STOPWATCH* stopwatch)
 
 void stopwatch_start(STOPWATCH* stopwatch)
 {
-	stopwatch->start = clock();
+	stopwatch_set_time(&stopwatch->start);
 	stopwatch->count++;
 }
 
 void stopwatch_stop(STOPWATCH* stopwatch)
 {
-	stopwatch->end = clock();
+	stopwatch_set_time(&stopwatch->end);
 	stopwatch->elapsed += (stopwatch->end - stopwatch->start);
 }
 
@@ -63,22 +87,12 @@ void stopwatch_reset(STOPWATCH* stopwatch)
 
 double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 {
-	return ((double) stopwatch->elapsed) / CLOCKS_PER_SEC;
+	return (stopwatch->elapsed/1000000.0);
 }
 
 void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec)
 {
-	double uelapsed;
-	double clocks_per_usec;
-
-	*sec = ((UINT32) stopwatch->elapsed) / CLOCKS_PER_SEC;
-	uelapsed = stopwatch->elapsed - ((double)(*sec) * CLOCKS_PER_SEC);
-
-	clocks_per_usec = (CLOCKS_PER_SEC / 1000000);
-
-	if (clocks_per_usec > 0.0)
-		*usec = (UINT32)(uelapsed / clocks_per_usec);
-	else
-		*usec = 0;
+	*sec = stopwatch->elapsed / 1000000;
+	*usec = stopwatch->elapsed % 1000000;
 }
 

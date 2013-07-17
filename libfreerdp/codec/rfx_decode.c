@@ -103,7 +103,7 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode);
-		rfx_rlgr_decode(context->mode, data, size, buffer, 4096);
+		context->rlgr_decode(context->mode, data, size, buffer, 4096);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode);
 
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode);
@@ -218,8 +218,10 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
 		Stream_Seek(data_in, cr_size);
 	}
 
+	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb);
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
+	PROFILER_EXIT(context->priv->prof_rfx_ycbcr_to_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_decode_format_rgb);
 		rfx_decode_format_rgb(pSrcDst[0], pSrcDst[1], pSrcDst[2],

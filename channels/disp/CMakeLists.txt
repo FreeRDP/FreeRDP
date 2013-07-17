@@ -1,5 +1,5 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
-# FreeRDP Servers
+# FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
@@ -15,33 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Servers
+define_channel("disp")
 
-add_subdirectory(common)
-
-if(WITH_SAMPLE)
-	add_subdirectory(Sample)
+if(WITH_CLIENT_CHANNELS)
+	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
 endif()
-
-if(NOT WIN32)
-	if(WITH_X11)
-		add_subdirectory(X11)
-	endif()
-
-	if(APPLE AND (NOT IOS))
-		add_subdirectory(Mac)
-	endif()
-else()
-	add_subdirectory(Windows)
-endif()
-
-if(WITH_WAYK)
-	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/WaykServer")
-		add_subdirectory(WaykServer)
-	endif()
-endif()
-
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xrdp-ng")
-	add_subdirectory("xrdp-ng")
-endif()
-

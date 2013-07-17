@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Server Cursor
+ * Display Update Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,41 +17,24 @@
  * limitations under the License.
  */
 
+#ifndef FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
+#define FREERDP_CHANNEL_DISP_CLIENT_MAIN_H
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
+#include <freerdp/addin.h>
+#include <freerdp/utils/debug.h>
 
-#ifdef WITH_XCURSOR
-#include <X11/Xcursor/Xcursor.h>
-#endif
+#include <freerdp/client/disp.h>
 
-#ifdef WITH_XFIXES
-#include <X11/extensions/Xfixes.h>
-#endif
+#define DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT		0x00000002
+#define DISPLAY_CONTROL_PDU_TYPE_CAPS			0x00000003
 
-#include <winpr/crt.h>
+#define DISP_PREVIEW	1
 
-#include "xf_cursor.h"
+#endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
 
-int xf_cursor_init(xfInfo* xfi)
-{
-#ifdef WITH_XFIXES
-	int event;
-	int error;
-
-	if (!XFixesQueryExtension(xfi->display, &event, &error))
-	{
-		fprintf(stderr, "XFixesQueryExtension failed\n");
-		return -1;
-	}
-
-	xfi->xfixes_notify_event = event + XFixesCursorNotify;
-
-	XFixesSelectCursorInput(xfi->display, DefaultRootWindow(xfi->display), XFixesDisplayCursorNotifyMask);
-#endif
-
-	return 0;
-}

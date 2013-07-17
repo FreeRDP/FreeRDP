@@ -31,6 +31,7 @@
 #include "message.h"
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
@@ -55,6 +56,7 @@ BOOL freerdp_connect(freerdp* instance)
 	rdpRdp* rdp;
 	rdpSettings* settings;
 	BOOL status = FALSE;
+	ConnectionResultEventArgs e;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
@@ -127,28 +129,30 @@ BOOL freerdp_connect(freerdp* instance)
 
 			update = instance->update;
 
-			s = StreamPool_Take(rdp->transport->ReceivePool, 0);
-			instance->update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
+			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
 
-			if (update->pcap_rfx)
+			if (!update->pcap_rfx)
+				return FALSE;
+			else
 				update->play_rfx = TRUE;
-			
-			while (update->play_rfx && pcap_has_next_record(update->pcap_rfx))
+
+			while (pcap_has_next_record(update->pcap_rfx))
 			{
+
 				pcap_get_next_record_header(update->pcap_rfx, &record);
 
-				Stream_EnsureCapacity(s, record.length);
+				s = StreamPool_Take(rdp->transport->ReceivePool, record.length);
 				record.data = Stream_Buffer(s);
 
 				pcap_get_next_record_content(update->pcap_rfx, &record);
+				Stream_SetLength(s,record.length);
 				Stream_SetPosition(s, 0);
 
 				update->BeginPaint(update->context);
-				update_recv_surfcmds(update, Stream_Capacity(s), s);
+				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
+				Stream_Release(s);
 			}
-
-			Stream_Release(s);
 
 			return TRUE;
 		}
@@ -165,6 +169,10 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	SetEvent(rdp->transport->connectedEvent);
+
+	EventArgsInit(&e, "freerdp");
+	e.result = status ? 0 : -1;
+	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
 
 	return status;
 }
@@ -322,12 +330,16 @@ static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
 	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(LocalResizeWindow)
 	DEFINE_EVENT_ENTRY(EmbedWindow)
 	DEFINE_EVENT_ENTRY(PanningChange)
 	DEFINE_EVENT_ENTRY(ScalingFactorChange)
 	DEFINE_EVENT_ENTRY(ErrorInfo)
 	DEFINE_EVENT_ENTRY(ParamChange)
 	DEFINE_EVENT_ENTRY(Terminate)
+	DEFINE_EVENT_ENTRY(ConnectionResult)
+	DEFINE_EVENT_ENTRY(ChannelConnected)
+	DEFINE_EVENT_ENTRY(ChannelDisconnected)
 };
 
 /** Allocator function for a rdp context.
@@ -394,7 +406,10 @@ void freerdp_context_free(freerdp* instance)
 	IFCALL(instance->ContextFree, instance, instance->context);
 
 	rdp_free(instance->context->rdp);
+	instance->context->rdp = NULL;
+
 	graphics_free(instance->context->graphics);
+	instance->context->graphics = NULL;
 
 	PubSub_Free(instance->context->pubSub);
 

@@ -750,8 +750,11 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	channels = instance->context->channels;
 
-	instance->OnChannelConnected = xf_on_channel_connected;
-	instance->OnChannelDisconnected = xf_on_channel_disconnected;
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+			(pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
+
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
 	freerdp_client_load_addins(channels, instance->settings);
 

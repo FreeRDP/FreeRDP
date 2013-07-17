@@ -669,7 +669,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE *
 			return FALSE;
 	}
 
-
 	return TRUE;
 }
 
@@ -1133,12 +1132,12 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 	{
-		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+		DEBUG_DVC("tsmf_gstreamer_decodeEx_VIDEO. Start:(%"PRIu64") End:(%"PRIu64") Duration:(%"PRIu64") Last End:(%"PRIu64")",
 				start_time, end_time, duration, mdecoder->last_sample_end_time);
 	}
 	else
 	{
-		DEBUG_DVC("tsmf_gstreamer_decodeEX_AUDIO. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
+		DEBUG_DVC("tsmf_gstreamer_decodeEx_AUDIO. Start:(%"PRIu64") End:(%"PRIu64") Duration:(%"PRIu64") Last End:(%"PRIu64")",
 				start_time, end_time, duration, mdecoder->last_sample_end_time);
 	}
 
@@ -1176,7 +1175,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		*/
 		if (start_time > (mdecoder->last_sample_end_time + 10000000) || (end_time + 10000000) < mdecoder->last_sample_end_time)
 		{
-			DEBUG_DVC("tsmf_gstreamer_decodeEx: start_time=[%llu] > last_sample_end_time=[%llu]", start_time, mdecoder->last_sample_end_time);
+			DEBUG_DVC("tsmf_gstreamer_decodeEx: start_time=[%"PRIu64"] > last_sample_end_time=[%"PRIu64"]", start_time, mdecoder->last_sample_end_time);
 			DEBUG_DVC("tsmf_gstreamer_decodeEx: Stream seek detected - flushing element.");
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
 			gst_object_unref(mdecoder->pipe);
@@ -1205,7 +1204,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 
 			if (fout)
 			{
-				fprintf(fout, "%"PRIu64"\n", (long unsigned int) start_time);
+				fprintf(fout, "%"PRIu64"\n", start_time);
 				fclose(fout);
 			}
 
@@ -1231,7 +1230,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			if (fin)
 			{
 				UINT64 AStartTime = 0;
-				fscanf(fin, "%"PRIu64, (long unsigned int*) &AStartTime);
+				fscanf(fin, "%"PRIu64, &AStartTime);
 				fclose(fin);
 				if (start_time > AStartTime)
 				{
@@ -1265,7 +1264,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			if (fin)
 			{
 				UINT64 VStartTime = 0;
-				fscanf(fin, "%"PRIu64, (long unsigned int*) &VStartTime);
+				fscanf(fin, "%"PRIu64, &VStartTime);
 				fclose(fin);
 				if (start_time > VStartTime)
 				{
@@ -1283,7 +1282,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		pthread_mutex_unlock(&mdecoder->gst_mutex);
 		DEBUG_WARN("tsmf_gstreamer_decodeEx: gst_buffer_try_new_and_alloc(%d) failed.", data_size);
 		return FALSE; 
-	} 
+	}
 	gst_buffer_set_caps(gst_buf, mdecoder->gst_caps);
 	memcpy(GST_BUFFER_MALLOCDATA(gst_buf), data, data_size);
 	GST_BUFFER_TIMESTAMP(gst_buf) = tsmf_gstreamer_timestamp_ms_to_gst(start_time);
@@ -1325,20 +1324,21 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, UINT32 newVolum
 	if (mdecoder->shutdown)
 		return;
 
-	if (!mdecoder->aVolume)
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 		return;
 
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+	mdecoder->gstMuted = (BOOL) muted;
+	DEBUG_DVC("tsmf_gstreamer_change_volume: mute=[%d]", mdecoder->gstMuted);
+	mdecoder->gstVolume = (double) newVolume / (double) 10000;
+	DEBUG_DVC("tsmf_gstreamer_change_volume: gst_new_vol=[%f]", mdecoder->gstVolume);
+
+	if (!mdecoder->aVolume)
 		return;
 
 	if (!G_IS_OBJECT(mdecoder->aVolume))
 		return;
 
-	mdecoder->gstMuted = (BOOL) muted;
-	DEBUG_DVC("tsmf_gstreamer_change_volume: mute=[%d]", mdecoder->gstMuted);
 	g_object_set(mdecoder->aVolume, "mute", mdecoder->gstMuted, NULL);
-	mdecoder->gstVolume = (double) newVolume / (double) 10000;
-	DEBUG_DVC("tsmf_gstreamer_change_volume: gst_new_vol=[%f]", mdecoder->gstVolume);
 	g_object_set(mdecoder->aVolume, "volume", mdecoder->gstVolume, NULL);
 }
 
@@ -1482,7 +1482,7 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
 	GstFormat fmt = GST_FORMAT_TIME;
 	gint64 pos = 0;
 	gst_element_query_position (mdecoder->outsink, &fmt, &pos);
-	DEBUG_DVC("tsmf_gstreamer_current_pos=[%llu]", pos);
+	DEBUG_DVC("tsmf_gstreamer_current_pos=[%"PRIu64"]", pos);
 	return pos/100;
 }
 
@@ -1524,13 +1524,14 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 					{
 						if (info->noutput > 0)
 						{
-							if (info->outputs[0] == primary_output)
+							if (info->outputs[0] == primary_output || i == 0)
 							{
 								mdecoder->xOffset = info->x;
 								mdecoder->yOffset = info->y;
 							}
 							DEBUG_DVC("output %d ID: %lu (x,y): (%d,%d) (w,h): (%d,%d) primary: %d", i, info->outputs[0], info->x, info->y, info->width, info->height, (info->outputs[0] == primary_output));
 						}
+						XRRFreeCrtcInfo(info);
 					}
 				}
 			}
@@ -1545,7 +1546,12 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 		if(mdecoder->subwin)
 		{
 			XMoveWindow(mdecoder->disp, mdecoder->subwin, anewX, anewY);
-			XResizeWindow(mdecoder->disp, mdecoder->subwin, newWidth, newHeight);
+			if(newWidth > 0 && newHeight > 0) {
+				XResizeWindow(mdecoder->disp, mdecoder->subwin, newWidth, newHeight);
+			} else {
+				XResizeWindow(mdecoder->disp, mdecoder->subwin, 1, 1);
+			}
+
 			XSync(mdecoder->disp, FALSE);
 			XShapeCombineRectangles (mdecoder->disp, mdecoder->subwin, ShapeBounding, 0, 0,(XRectangle*) rectangles, numRectangles, ShapeSet, Unsorted);
 			XSync(mdecoder->disp, FALSE);
@@ -1599,7 +1605,7 @@ ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 	decoder->xOffset = 0;
 	decoder->yOffset = 0;
 	decoder->offsetObtained = FALSE;
-	decoder->gstVolume = 1.0;
+	decoder->gstVolume = 0.5;
 	decoder->gstMuted = FALSE;
 	decoder->state = GST_STATE_VOID_PENDING;  /* No real state yet */
 	pthread_mutex_init(&decoder->gst_mutex, NULL);

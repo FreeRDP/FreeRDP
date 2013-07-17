@@ -183,8 +183,11 @@ int xf_input_init(xfContext* xfc, Window window)
 
 			if (xfc->use_xinput)
 			{
-				if (!touch && (class->type == XIButtonClass))
+				if (!touch && (class->type == XIButtonClass) && strcmp(dev->name, "Virtual core pointer"))
 				{
+					printf("%s button device (id: %d, mode: %d)\n",
+						dev->name,
+						dev->deviceid, t->mode);
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
 					XISetMask(masks[nmasks], XI_Motion);
@@ -597,24 +600,23 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 
 int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	return TRUE;
 
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-		  //printf("ButtonPress\n");
+			
 			xf_generic_ButtonPress(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_ButtonRelease:
-		  //printf("ButtonRelease\n");
+
 			xf_generic_ButtonRelease(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;
 
 		case XI_Motion:
-		  //printf("Motion\n");
+
 			xf_generic_MotionNotify(xfc, (int) event->event_x, (int) event->event_y,
 					event->detail, event->event, xfc->remote_app);
 			break;

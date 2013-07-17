@@ -35,32 +35,20 @@
 #include <malloc.h>
 #endif
 
+struct _aligned_meminfo {
+	size_t size;
+	void *base_addr;
+};
+
+
 void* _aligned_malloc(size_t size, size_t alignment)
 {
-	void* memptr;
-
-	/* alignment must be a power of 2 */
-
-	if (alignment % 2 == 1)
-		return NULL;
-
-#ifdef ANDROID
-	memptr = memalign(alignment, size);
-#else
-	if (posix_memalign(&memptr, alignment, size) != 0)
-		return NULL;
-#endif
-
-	return memptr;
+	return _aligned_offset_malloc(size, alignment, 0);
 }
 
 void* _aligned_realloc(void* memblock, size_t size, size_t alignment)
 {
-	void* memptr = NULL;
-
-	memptr = realloc(memblock, size);
-
-	return memptr;
+	return _aligned_offset_realloc(memblock, size, alignment, 0);
 }
 
 void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignment)
@@ -70,36 +58,59 @@ void* _aligned_recalloc(void* memblock, size_t num, size_t size, size_t alignmen
 
 void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 {
-	void* memptr;
+	void* memptr, *tmpptr;
+	struct _aligned_meminfo *ameminfo;
 
 	/* alignment must be a power of 2 */
-
 	if (alignment % 2 == 1)
 		return NULL;
 
 	/* offset must be less than size */
-
 	if (offset >= size)
 		return NULL;
 
 	/* minimum alignment is pointer size */
-
 	if (alignment < sizeof(void*))
 		alignment = sizeof(void*);
 
-#ifdef ANDROID
-	memptr = memalign(alignment, size);
-#else
-	if (posix_memalign(&memptr, alignment, size) != 0)
+	/* malloc size + alignment to make sure we can align afterwards */
+	tmpptr = malloc(size + alignment + sizeof(struct _aligned_meminfo));
+	if (!tmpptr)
 		return NULL;
-#endif
+
+
+	memptr = (void *)((((size_t)((PBYTE)tmpptr + alignment + offset + sizeof(struct _aligned_meminfo)) & ~(alignment - 1)) - offset));
+
+	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memptr - sizeof(struct _aligned_meminfo))));
+	ameminfo->base_addr = tmpptr;
+	ameminfo->size = size;
 
 	return memptr;
 }
 
 void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset)
 {
-	return NULL;
+	struct _aligned_meminfo *ameminfo;
+	void *newmem;
+
+	if (!memblock)
+		return _aligned_offset_malloc(size, alignment, offset);
+
+	if (size == 0)
+	{
+		_aligned_free(memblock);
+		return NULL;
+	}
+	/*  The following is not very performant but a simple and working solution */
+	newmem = _aligned_offset_malloc(size, alignment, offset);
+
+	if (!newmem)
+		return NULL;
+
+	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
+	memcpy(newmem, memblock, ameminfo->size);
+	_aligned_free(memblock);
+	return newmem;
 }
 
 void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment, size_t offset)
@@ -114,7 +125,13 @@ size_t _aligned_msize(void* memblock, size_t alignment, size_t offset)
 
 void _aligned_free(void* memblock)
 {
-	free(memblock);
+	struct _aligned_meminfo *ameminfo;
+	if (!memblock)
+		return;
+
+	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
+
+	free(ameminfo->base_addr);
 }
 
 #endif

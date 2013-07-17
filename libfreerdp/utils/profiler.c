@@ -70,7 +70,7 @@ void profiler_print(PROFILER* profiler)
 	double elapsed_sec = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg_sec = elapsed_sec / (double) profiler->stopwatch->count;
 	
-	fprintf(stderr, "| %-30.30s| %'10lu | %'9f | %'9f |\n", profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
+	fprintf(stderr, "| %-30.30s| %10lu | %9f | %9f |\n", profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
 }
 
 void profiler_print_footer()

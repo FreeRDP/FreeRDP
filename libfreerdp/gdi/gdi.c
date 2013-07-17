@@ -739,6 +739,28 @@ void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 	fprintf(stderr, "EllipseCB\n");
 }
 
+void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+{
+	DEBUG_GDI("frameId %d frameAction %d",
+		surface_frame_marker->frameId,
+		surface_frame_marker->frameAction);
+
+	/* TODO: Implement frame marker completely */
+
+	switch (surface_frame_marker->frameAction)
+	{
+		case SURFACECMD_FRAMEACTION_BEGIN:
+			break;
+
+		case SURFACECMD_FRAMEACTION_END:
+			if (context->instance->settings->FrameAcknowledge > 0)
+			{
+				IFCALL(context->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+			}
+			break;
+	}
+}
+
 int tilenum = 0;
 
 void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
@@ -890,6 +912,7 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseCB = gdi_ellipse_cb;
 
 	update->SurfaceBits = gdi_surface_bits;
+	update->SurfaceFrameMarker = gdi_surface_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)

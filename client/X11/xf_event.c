@@ -178,6 +178,9 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 			event->xmotion.state, event->xmotion.window, app);
 }
@@ -283,6 +286,9 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
 			event->xbutton.button, event->xbutton.window, app);
 }
@@ -294,6 +300,7 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 	BOOL extended;
 	rdpInput* input;
 	Window childWindow;
+
 
 	flags = 0;
 	wheel = FALSE;
@@ -366,6 +373,9 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
 			event->xbutton.button, event->xbutton.window, app);
 }

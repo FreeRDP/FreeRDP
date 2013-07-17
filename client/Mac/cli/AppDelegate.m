@@ -7,8 +7,12 @@
 //
 
 #import "AppDelegate.h"
-#import "MacFreeRDP-library/mfreerdp.h"
-#import "MacFreeRDP-library/mf_client.h"
+#import "MacFreeRDP/mfreerdp.h"
+#import "MacFreeRDP/mf_client.h"
+
+static AppDelegate* _singleDelegate = nil;
+void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventArgs* e);
+
 
 @implementation AppDelegate
 
@@ -19,7 +23,6 @@
 
 @synthesize window = window;
 
-@synthesize mrdpView = mrdpView;
 
 @synthesize context = context;
 
@@ -28,6 +31,7 @@
 	int status;
 	mfContext* mfc;
 
+    _singleDelegate = self;
 	[self CreateContext];
 
 	status = [self ParseCommandLineArguments];
@@ -41,6 +45,7 @@
 	}
 	else
 	{
+        PubSub_Subscribe(context->pubSub, "EmbedWindow", (pEventHandler) AppDelegate_EmbedWindowEventHandler);
 		freerdp_client_start(context);
 	}
 }
@@ -48,6 +53,7 @@
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
 	[mrdpView releaseResources];
+    _singleDelegate = nil;    
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
@@ -103,4 +109,19 @@
 	context = nil;
 }
 
+
 @end
+
+void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventArgs* e)
+{
+    if (_singleDelegate)
+    {
+        mfContext* mfc = (mfContext*) context;
+        _singleDelegate->mrdpView = mfc->view;
+        
+        if (_singleDelegate->window)
+        {
+            [[_singleDelegate->window contentView] addSubview:mfc->view];
+        }
+    }
+}

@@ -159,6 +159,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
+		transport->credssp = NULL;
 		return FALSE;
 	}
 
@@ -212,7 +213,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
 	}
 
-	if (transport->settings->GatewayUsageMethod)
+	if (transport->settings->GatewayEnabled)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
@@ -292,6 +293,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	{
 		fprintf(stderr, "client authentication failure\n");
 		credssp_free(transport->credssp);
+		transport->credssp = NULL;
 		return FALSE;
 	}
 
@@ -786,7 +788,6 @@ static void* transport_client_thread(void* arg)
 	freerdp* instance;
 	rdpContext* context;
 	rdpTransport* transport;
-	TerminateEventArgs e;
 
 	transport = (rdpTransport*) arg;
 	instance = (freerdp*) transport->settings->instance;
