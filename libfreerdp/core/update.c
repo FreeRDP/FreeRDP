@@ -1512,6 +1512,8 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		update->SuppressOutput = update_send_suppress_output;
 
 		update->initialState = TRUE;
+
+		update->queue = MessageQueue_New();
 	}
 
 	return update;
@@ -1544,6 +1546,8 @@ void update_free(rdpUpdate* update)
 
 		if (update->asynchronous)
 			update_message_proxy_free(update->proxy);
+
+		MessageQueue_Free(update->queue);
 
 		free(update);
 	}
