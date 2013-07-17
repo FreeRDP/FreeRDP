@@ -62,7 +62,6 @@
 	char** argv;
     
 	NSPoint savedDragLocation;
-	BOOL mouseInClientArea;
 	BOOL firstCreateWindow;
 	BOOL isMoveSizeInProgress;
 	BOOL skipResizeOnce;

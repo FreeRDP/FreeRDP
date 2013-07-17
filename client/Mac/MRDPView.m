@@ -216,16 +216,12 @@ struct rgba_data
         // Set the default cursor
         currentCursor = [NSCursor arrowCursor];
 
-        mouseInClientArea = YES;
-        NSLog(@"SET mouseInClientArea: %d", mouseInClientArea);
-
         initialized = YES;
     }
 }
 
 - (void) setCursor: (NSCursor*) cursor
 {
-    NSLog(@"Setcursor %@", cursor);
     self->currentCursor = cursor;
     [[self window] invalidateCursorRectsForView:self];
     
