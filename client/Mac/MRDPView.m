@@ -42,6 +42,8 @@
  *  -
  */
 
+#include <winpr/windows.h>
+
 #include "mf_client.h"
 #import "mfreerdp.h"
 #import "MRDPView.h"
@@ -98,6 +100,9 @@ void cliprdr_process_text(freerdp* instance, BYTE* data, int len);
 void cliprdr_send_supported_format_list(freerdp* instance);
 int register_channel_fds(int* fds, int count, freerdp* instance);
 
+
+DWORD mf_client_thread(void* param);
+
 struct cursor
 {
 	rdpPointer* pointer;
@@ -121,7 +126,6 @@ struct rgba_data
 
 - (int) rdpStart:(rdpContext*) rdp_context
 {
-	int status;
 	mfContext* mfc;
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
@@ -138,28 +142,40 @@ struct rgba_data
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 
+	/* register update message queue with the RunLoop */
+	register_update_fds(context->instance);
+	
+	/* register update message queue with the RunLoop */
+	register_input_fds(context->instance);
+	
+	/* register channel events with the RunLoop */
+	register_channels_fds(context->instance);
+	
+	freerdp_check_fds(context->instance);
+
+	mfc->thread = CreateThread(NULL, 0, mf_client_thread, (void*) context, 0, &mfc->mainThreadId);
+	
+	return 0;
+}
+
+DWORD mf_client_thread(void* param)
+{
+	int status;
+	rdpContext* context = (rdpContext*) param;
+	mfContext* mfc = (mfContext*) context;
+	MRDPView* view = mfc->view;
+	
     status = freerdp_connect(context->instance);
 	
 	if (!status)
 	{
-		[self setIs_connected:0];
-		[self rdpConnectError];
-		return 1;
+		[view setIs_connected:0];
+		[view rdpConnectError];
+		return 0;
 	}
 
-	/* register update message queue with the RunLoop */
-	register_update_fds(context->instance);
-
-	/* register update message queue with the RunLoop */
-	register_input_fds(context->instance);
-
-	/* register channel events with the RunLoop */
-	register_channels_fds(context->instance);
-
-	freerdp_check_fds(context->instance);
-
-	[self setIs_connected:1];
-
+	[view setIs_connected:1];
+	
 	return 0;
 }
 
