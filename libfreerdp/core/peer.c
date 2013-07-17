@@ -319,9 +319,14 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (!rdp_send_demand_active(rdp))
 				return -1;
+
 			break;
 
 		case CONNECTION_STATE_LICENSE:
+			/* TODO: we don't support licensing so nothing here */
+			break;
+
+		case CONNECTION_STATE_CAPABILITY:
 			if (!rdp_server_accept_confirm_active(rdp, s))
 			{
 				/**
