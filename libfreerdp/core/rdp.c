@@ -926,12 +926,12 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				status = -1;
 			break;
 
-		case CONNECTION_STATE_LICENSE:
+		case CONNECTION_STATE_LICENSING:
 			if (!rdp_client_connect_license(rdp, s))
 				status = -1;
 			break;
 
-		case CONNECTION_STATE_CAPABILITY:
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp_client_connect_demand_active(rdp, s))
 				status = -1;
 			break;
