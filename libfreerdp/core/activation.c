@@ -313,7 +313,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		while(0);
 	}
 
-	rdp->state = CONNECTION_STATE_CAPABILITIES_EXCHANGE;
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
@@ -370,8 +370,7 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
 
-	rdp->state = CONNECTION_STATE_ACTIVE;
-	update_reset_state(rdp->update);
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
 
 	return TRUE;
 }

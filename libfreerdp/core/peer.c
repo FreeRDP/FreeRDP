@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include "info.h"
 #include "certificate.h"
 
 #include <freerdp/utils/tcp.h>
@@ -261,7 +262,6 @@ static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 
 static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
-	int status = -1;
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
 
@@ -310,20 +310,21 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
 			if (rdp->settings->DisableEncryption)
 			{
-				if (!rdp_server_accept_client_keys(rdp, s))
+				if (!rdp_server_establish_keys(rdp, s))
 					return -1;
 			}
 
-			rdp->state = CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE;
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
 			return peer_recv_callback(transport, s, extra);
 
 			break;
 
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
-			if (!rdp_server_accept_client_info(rdp, s))
+
+			if (!rdp_recv_client_info(rdp, s))
 				return -1;
 
-			rdp->state = CONNECTION_STATE_LICENSING;
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
 			return peer_recv_callback(transport, NULL, extra);
 
 			break;
@@ -333,19 +334,27 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			if (!license_send_valid_client_error_packet(rdp->license))
 				return FALSE;
 
-			rdp->state = CONNECTION_STATE_CAPABILITIES_EXCHANGE;
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 			return peer_recv_callback(transport, NULL, extra);
 
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 
-			if (!s)
+			if (!rdp->AwaitCapabilities)
 			{
 				IFCALL(client->Capabilities, client);
 
 				if (!rdp_send_demand_active(rdp))
 					return -1;
+
+				rdp->AwaitCapabilities = TRUE;
+
+				if (s)
+				{
+					if (peer_recv_pdu(client, s) < 0)
+						return -1;
+				}
 			}
 			else
 			{
@@ -357,10 +366,14 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				if (!rdp_server_accept_confirm_active(rdp, s))
 				{
 					Stream_SetPosition(s, 0);
-					return peer_recv_pdu(client, s);
-				}
 
-				rdp->state = CONNECTION_STATE_FINALIZATION;
+					if (peer_recv_pdu(client, s) < 0)
+						return -1;
+				}
+				else
+				{
+					rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
+				}
 			}
 
 			break;
