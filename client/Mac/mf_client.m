@@ -88,6 +88,8 @@ int mfreerdp_client_stop(rdpContext* context)
 		mfc->disconnect = TRUE;
 	}
 
+    SetEvent(mfc->stopEvent);
+
     if (mfc->view_ownership)
     {
         MRDPView* view = (MRDPView*) mfc->view;
@@ -106,6 +108,8 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	mfc = (mfContext*) instance->context;
 
+    mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
     context->instance->PreConnect = mac_pre_connect;
     context->instance->PostConnect = mac_post_connect;
     context->instance->ReceiveChannelData = mac_receive_channel_data;
@@ -115,8 +119,8 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	settings = instance->settings;
 
-	settings->AsyncUpdate = TRUE;
-	// TODO    settings->AsyncInput = TRUE;
+    settings->AsyncUpdate = TRUE;
+    settings->AsyncInput = TRUE;
 	settings->AsyncChannels = TRUE;
 	settings->AsyncTransport = TRUE;
 	settings->RedirectClipboard = TRUE;

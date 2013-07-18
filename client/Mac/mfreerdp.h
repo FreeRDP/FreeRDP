@@ -44,6 +44,7 @@ struct mf_context
 	int client_height;
 
 	HANDLE keyboardThread;
+    HANDLE stopEvent;
 
 	HGDI_DC hdc;
 	UINT16 srcBpp;

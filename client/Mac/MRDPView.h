@@ -41,10 +41,6 @@
 
 @interface MRDPView : NSView
 {
-	CFRunLoopSourceRef run_loop_src_channels;
-	CFRunLoopSourceRef run_loop_src_update;
-	CFRunLoopSourceRef run_loop_src_input;
-
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
@@ -98,7 +94,7 @@
 - (void) rdpRemoteAppError;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
-- (void) setViewSize : (int) width : (int) height;
+- (void) setViewSize : (int) w : (int) h;
 
 @property (assign) int is_connected;
 
@@ -118,3 +114,4 @@ BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
 int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
+DWORD mac_client_thread(void* param);
