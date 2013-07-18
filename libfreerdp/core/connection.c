@@ -768,10 +768,12 @@ BOOL rdp_server_accept_client_info(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_client_info(rdp, s))
 		return FALSE;
 
+	rdp->state = CONNECTION_STATE_LICENSE;
+
 	if (!license_send_valid_client_error_packet(rdp->license))
 		return FALSE;
 
-	rdp->state = CONNECTION_STATE_LICENSE;
+	rdp->state = CONNECTION_STATE_CAPABILITY;
 
 	return TRUE;
 }
@@ -798,7 +800,7 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	if (!rdp_send_deactivate_all(rdp))
 		return FALSE;
 
-	rdp->state = CONNECTION_STATE_LICENSE;
+	rdp->state = CONNECTION_STATE_CAPABILITY;
 
 	if (!rdp_send_demand_active(rdp))
 		return FALSE;
