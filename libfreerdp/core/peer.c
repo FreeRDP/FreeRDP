@@ -211,6 +211,11 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 					return -1;
 				break;
 
+			case PDU_TYPE_CONFIRM_ACTIVE:
+				if (!rdp_server_accept_confirm_active(rdp, s))
+					return -1;
+				break;
+
 			default:
 				fprintf(stderr, "Client sent pduType %d\n", pduType);
 				return -1;
@@ -228,8 +233,6 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	//if (!fastpath_read_header_rdp(fastpath, s, &length))
-	//	return -1;
 
 	fastpath_read_header_rdp(fastpath, s, &length);
 
@@ -258,8 +261,11 @@ static int peer_recv_pdu(freerdp_peer* client, wStream* s)
 
 static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
+	int status = -1;
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
+
+	printf("rdp->state: %d\n", rdp->state);
 
 	switch (rdp->state)
 	{
@@ -301,41 +307,67 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return -1;
 			break;
 
-		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
 			if (rdp->settings->DisableEncryption)
 			{
 				if (!rdp_server_accept_client_keys(rdp, s))
 					return -1;
-				break;
 			}
-			rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
-			/* FALLTHROUGH */
 
-		case CONNECTION_STATE_ESTABLISH_KEYS:
+			rdp->state = CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE;
+			return peer_recv_callback(transport, s, extra);
+
+			break;
+
+		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
 			if (!rdp_server_accept_client_info(rdp, s))
 				return -1;
 
-			IFCALL(client->Capabilities, client);
-
-			if (!rdp_send_demand_active(rdp))
-				return -1;
+			rdp->state = CONNECTION_STATE_LICENSING;
+			return peer_recv_callback(transport, NULL, extra);
 
 			break;
 
-		case CONNECTION_STATE_LICENSE:
-			/* TODO: we don't support licensing so nothing here */
+		case CONNECTION_STATE_LICENSING:
+
+			if (!license_send_valid_client_error_packet(rdp->license))
+				return FALSE;
+
+			rdp->state = CONNECTION_STATE_CAPABILITIES_EXCHANGE;
+			return peer_recv_callback(transport, NULL, extra);
+
 			break;
 
-		case CONNECTION_STATE_CAPABILITY:
-			if (!rdp_server_accept_confirm_active(rdp, s))
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
+
+			if (!s)
+			{
+				IFCALL(client->Capabilities, client);
+
+				if (!rdp_send_demand_active(rdp))
+					return -1;
+			}
+			else
 			{
 				/**
 				 * During reactivation sequence the client might sent some input or channel data
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
-				Stream_SetPosition(s, 0);
-				return peer_recv_pdu(client, s);
+
+				if (!rdp_server_accept_confirm_active(rdp, s))
+				{
+					Stream_SetPosition(s, 0);
+					return peer_recv_pdu(client, s);
+				}
+
+				rdp->state = CONNECTION_STATE_FINALIZATION;
 			}
+
+			break;
+
+		case CONNECTION_STATE_FINALIZATION:
+			if (peer_recv_pdu(client, s) < 0)
+				return -1;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
@@ -360,6 +392,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	 */
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
+
 	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
 }
 
