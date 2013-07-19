@@ -250,6 +250,7 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
+
 	if(Stream_GetRemainingLength(s) >= 8)
 	{
 		Stream_Seek_UINT16(s); /* numberEntries (2 bytes) */

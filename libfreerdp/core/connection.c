@@ -933,8 +933,13 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 {
+	if (rdp->state != CONNECTION_STATE_CAPABILITIES_EXCHANGE)
+		return FALSE;
+
 	if (!rdp_recv_confirm_active(rdp, s))
 		return FALSE;
+
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
 
 	if (!rdp_send_server_synchronize_pdu(rdp))
 		return FALSE;

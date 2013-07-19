@@ -236,8 +236,9 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp)
  * @param channel_id channel id
  */
 
-BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id)
+BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 {
+	BYTE byte;
 	UINT16 initiator;
 	enum DomainMCSPDU MCSPDU;
 
@@ -274,8 +275,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 		return FALSE;
 
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_read_integer16(s, channel_id, 0); /* channelId */
-	Stream_Seek(s, 1); /* dataPriority + Segmentation (0x70) */
+	per_read_integer16(s, channelId, 0); /* channelId */
+	Stream_Read_UINT8(s, byte); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
@@ -294,7 +295,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
  * @param channel_id channel id
  */
 
-void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id)
+void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
 	enum DomainMCSPDU MCSPDU;
@@ -314,10 +315,10 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id)
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
-	per_write_integer16(s, channel_id, 0); /* channelId */
+	per_write_integer16(s, channelId, 0); /* channelId */
 	Stream_Write_UINT8(s, 0x70); /* dataPriority + segmentation */
 	/*
-	 * We always encode length in two bytes, eventhough we could use
+	 * We always encode length in two bytes, even though we could use
 	 * only one byte if length <= 0x7F. It is just easier that way,
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.

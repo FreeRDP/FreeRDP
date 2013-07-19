@@ -136,7 +136,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			if(Stream_GetRemainingLength(s) < 4)
+			if (Stream_GetRemainingLength(s) < 4)
 				return FALSE;
 			Stream_Read_UINT32(s, client->ack_frame_id);
 			IFCALL(client->update->SurfaceFrameAcknowledge, client->update->context, client->ack_frame_id);
@@ -195,7 +195,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		if(!freerdp_channel_peer_process(client, s, channelId))
+		if (!freerdp_channel_peer_process(client, s, channelId))
 			return -1;
 	}
 	else
@@ -264,8 +264,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
-
-	printf("rdp->state: %d\n", rdp->state);
 
 	switch (rdp->state)
 	{
@@ -363,17 +361,8 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
 
-				if (!rdp_server_accept_confirm_active(rdp, s))
-				{
-					Stream_SetPosition(s, 0);
-
-					if (peer_recv_pdu(client, s) < 0)
-						return -1;
-				}
-				else
-				{
-					rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
-				}
+				if (peer_recv_pdu(client, s) < 0)
+					return -1;
 			}
 
 			break;
