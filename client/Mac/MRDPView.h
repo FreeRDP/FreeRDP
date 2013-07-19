@@ -90,8 +90,6 @@
 - (int)  rdpStart :(rdpContext*) rdp_context;
 - (void) setCursor: (NSCursor*) cursor;
 
-- (void) rdpConnectError;
-- (void) rdpRemoteAppError;
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
 - (void) setViewSize : (int) w : (int) h;

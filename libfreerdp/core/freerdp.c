@@ -83,7 +83,8 @@ BOOL freerdp_connect(freerdp* instance)
 			connectErrorCode = PREECONNECTERROR;
 		}
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
-		return FALSE;
+
+        goto freerdp_connect_finally;
 	}
 
 	status = rdp_client_connect(rdp);
@@ -92,8 +93,8 @@ BOOL freerdp_connect(freerdp* instance)
 	if (instance->settings->AuthenticationOnly)
 	{
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
-		return status;
-	}
+        goto freerdp_connect_finally;
+    }
 
 	if (status)
 	{
@@ -118,7 +119,7 @@ BOOL freerdp_connect(freerdp* instance)
 				connectErrorCode = POSTCONNECTERROR;
 			}
 
-			return FALSE;
+            goto freerdp_connect_finally;
 		}
 
 		if (instance->settings->PlayRemoteFx)
@@ -132,7 +133,10 @@ BOOL freerdp_connect(freerdp* instance)
 			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
 
 			if (!update->pcap_rfx)
-				return FALSE;
+            {
+                status = FALSE;
+                goto freerdp_connect_finally;
+            }
 			else
 				update->play_rfx = TRUE;
 
@@ -154,7 +158,8 @@ BOOL freerdp_connect(freerdp* instance)
 				Stream_Release(s);
 			}
 
-			return TRUE;
+            status = TRUE;
+            goto freerdp_connect_finally;
 		}
 	}
 
@@ -170,6 +175,9 @@ BOOL freerdp_connect(freerdp* instance)
 
 	SetEvent(rdp->transport->connectedEvent);
 
+freerdp_connect_finally:
+
+    fprintf(stderr, "ConnectionResult: %s\n", status ? "TRUE" : "FALSE");
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
 	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);

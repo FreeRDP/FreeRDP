@@ -11,8 +11,8 @@
 #import "MacFreeRDP/mf_client.h"
 
 static AppDelegate* _singleDelegate = nil;
-void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventArgs* e);
-
+void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
+void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e);
 
 @implementation AppDelegate
 
@@ -45,7 +45,9 @@ void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventAr
 	}
 	else
 	{
-        PubSub_Subscribe(context->pubSub, "EmbedWindow", (pEventHandler) AppDelegate_EmbedWindowEventHandler);
+		PubSub_SubscribeConnectionResult(context->pubSub, AppDelegate_ConnectionResultEventHandler);
+		PubSub_SubscribeEmbedWindow(context->pubSub, AppDelegate_EmbedWindowEventHandler);
+		
 		freerdp_client_start(context);
 	}
 }
@@ -110,10 +112,45 @@ void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventAr
 }
 
 
+/** *********************************************************************
+ * called when we fail to connect to a RDP server
+ ***********************************************************************/
+
+- (void) rdpConnectError
+{
+	// TODO: This should be called on the main thread
+	
+	NSString* message = @"Error connecting to server";
+	if (connectErrorCode == AUTHENTICATIONERROR)
+	{
+		message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
+	}
+	
+	NSAlert *alert = [[NSAlert alloc] init];
+	[alert setMessageText:message];
+	[alert beginSheetModalForWindow:[self window]
+					  modalDelegate:self
+					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
+						contextInfo:nil];
+}
+
+
+/** *********************************************************************
+ * just a terminate selector for above call
+ ***********************************************************************/
+
+- (void) alertDidEnd:(NSAlert *)a returnCode:(NSInteger)rc contextInfo:(void *)ci
+{
+	[NSApp terminate:nil];
+}
+
+
 @end
 
-void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventArgs* e)
+void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
 {
+	rdpContext* context = (rdpContext*) ctx;
+	
     if (_singleDelegate)
     {
         mfContext* mfc = (mfContext*) context;
@@ -124,4 +161,19 @@ void AppDelegate_EmbedWindowEventHandler(rdpContext* context, EmbedWindowEventAr
             [[_singleDelegate->window contentView] addSubview:mfc->view];
         }
     }
+}
+
+/** *********************************************************************
+ * On connection error, display message and quit application
+ ***********************************************************************/
+
+void AppDelegate_ConnectionResultEventHandler(void* ctx, ConnectionResultEventArgs* e)
+{
+	if (_singleDelegate)
+	{
+		if (e->result != 0)
+		{
+			[_singleDelegate rdpConnectError];
+		}
+	}
 }

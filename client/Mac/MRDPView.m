@@ -165,7 +165,6 @@ DWORD mac_client_thread(void* param)
     if (!status)
     {
         [view setIs_connected:0];
-        [view rdpConnectError];
         return 0;
     }
 
@@ -722,50 +721,6 @@ DWORD mac_client_thread(void* param)
 /************************************************************************
  instance methods
  ************************************************************************/
-
-
-/** *********************************************************************
- * called when we fail to connect to a RDP server
- ***********************************************************************/
-
-- (void) rdpConnectError
-{
-	NSString* message = @"Error connecting to server";
-	if (connectErrorCode == AUTHENTICATIONERROR)
-	{
-		message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
-	}
-
-	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:message];
-	[alert beginSheetModalForWindow:[self window]
-					 modalDelegate:self
-					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
-	      contextInfo:nil];
-}
-
-/** *********************************************************************
- * called when we fail to launch remote app on RDP server
- ***********************************************************************/
-
-- (void) rdpRemoteAppError
-{
-	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:@"Error starting remote app on specified server"];
-	[alert beginSheetModalForWindow:[self window]
-					 modalDelegate:self
-					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
-	      contextInfo:nil];
-}
-
-/** *********************************************************************
- * just a terminate selector for above call
- ***********************************************************************/
-
-- (void) alertDidEnd:(NSAlert *)a returnCode:(NSInteger)rc contextInfo:(void *)ci
-{
-	[NSApp terminate:nil];
-}
 
 - (void) onPasteboardTimerFired :(NSTimer*) timer
 {
