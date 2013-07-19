@@ -73,8 +73,7 @@ int mfreerdp_client_stop(rdpContext* context)
             MessageQueue_PostQuit(queue, 0);
         }
 	}
-
-	if (context->settings->AsyncInput)
+	else if (context->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -87,8 +86,14 @@ int mfreerdp_client_stop(rdpContext* context)
 	{
 		mfc->disconnect = TRUE;
 	}
-
-    SetEvent(mfc->stopEvent);
+	
+    if (mfc->thread)
+    {
+		SetEvent(mfc->stopEvent);
+        WaitForSingleObject(mfc->thread, INFINITE);
+        CloseHandle(mfc->thread);
+        mfc->thread = NULL;
+    }
 
     if (mfc->view_ownership)
     {

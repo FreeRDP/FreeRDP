@@ -676,14 +676,6 @@ DWORD mac_client_thread(void* param)
 {
 	int i;
 
-    mfContext* mfc = (mfContext*) context;
-
-    if (mfc && mfc->thread)
-    {
-        WaitForSingleObject(mfc->thread, INFINITE);
-        CloseHandle(mfc->thread);
-        mfc->thread = NULL;
-    }
 
 	for (i = 0; i < argc; i++)
 	{
