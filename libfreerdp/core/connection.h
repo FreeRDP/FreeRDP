@@ -55,15 +55,16 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_finalize(rdpRdp* rdp);
+int rdp_client_transition_to_state(rdpRdp* rdp, int state);
 
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s);
-BOOL rdp_server_accept_client_keys(rdpRdp* rdp, wStream* s);
-BOOL rdp_server_accept_client_info(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s);
+BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_reactivate(rdpRdp* rdp);
+int rdp_server_transition_to_state(rdpRdp* rdp, int state);
 
 #endif /* __CONNECTION_H */

@@ -3155,6 +3155,8 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 			return FALSE;
 		}
 
+		printf("Caps %d of %d\n", count - numberCapabilities + 1, count);
+
 		switch (type)
 		{
 			case CAPSET_TYPE_GENERAL:
@@ -3501,6 +3503,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 {
+	BOOL status;
 	UINT16 channelId;
 	UINT16 pduType;
 	UINT16 pduLength;
@@ -3535,7 +3538,9 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
-	return rdp_read_capability_sets(s, rdp->settings, numberCapabilities);
+	status = rdp_read_capability_sets(s, rdp->settings, numberCapabilities);
+
+	return status;
 }
 
 void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
