@@ -984,23 +984,25 @@ int rdp_check_fds(rdpRdp* rdp)
  * @return new RDP module
  */
 
-rdpRdp* rdp_new(freerdp* instance)
+rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
 
 	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
 
-	if (rdp != NULL)
+	if (rdp)
 	{
 		ZeroMemory(rdp, sizeof(rdpRdp));
 
-		rdp->instance = instance;
-		rdp->settings = freerdp_settings_new((void*) instance);
+		rdp->context = context;
 
-		if (instance != NULL)
-			instance->settings = rdp->settings;
+		rdp->instance = context->instance;
+		rdp->settings = freerdp_settings_new((void*) context->instance);
 
-		rdp->extension = extension_new(instance);
+		if (context->instance)
+			context->instance->settings = rdp->settings;
+
+		rdp->extension = extension_new(context->instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);

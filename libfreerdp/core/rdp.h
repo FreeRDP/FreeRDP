@@ -120,6 +120,7 @@ struct rdp_rdp
 {
 	int state;
 	freerdp* instance;
+	rdpContext* context;
 	struct rdp_mcs* mcs;
 	struct rdp_nego* nego;
 	struct rdp_input* input;
@@ -194,7 +195,7 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
-rdpRdp* rdp_new(freerdp* instance);
+rdpRdp* rdp_new(rdpContext* context);
 void rdp_free(rdpRdp* rdp);
 
 #ifdef WITH_DEBUG_RDP

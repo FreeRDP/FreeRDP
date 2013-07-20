@@ -106,29 +106,6 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
 				return FALSE;
 
-			if (!client->connected)
-			{
-				/**
-				 * PostConnect should only be called once and should not be called
-				 * after a reactivation sequence.
-				 */
-
-				IFCALLRET(client->PostConnect, client->connected, client);
-
-				if (!client->connected)
-					return FALSE;
-			}
-
-			if (!client->activated)
-			{
-				/* Activate will be called everytime after the client is activated/reactivated. */
-			
-				IFCALLRET(client->Activate, client->activated, client);
-
-				if (!client->activated)
-					return FALSE;
-			}
-
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
@@ -412,13 +389,14 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	rdp = rdp_new(NULL);
+	client->context = (rdpContext*) malloc(client->ContextSize);
+	ZeroMemory(client->context, client->ContextSize);
+
+	rdp = rdp_new(client->context);
+
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
-
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
 
 	client->context->rdp = rdp;
 	client->context->peer = client;

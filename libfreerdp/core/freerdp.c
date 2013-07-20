@@ -357,18 +357,19 @@ int freerdp_context_new(freerdp* instance)
 
 	instance->context = (rdpContext*) malloc(instance->ContextSize);
 	ZeroMemory(instance->context, instance->ContextSize);
+
 	context = instance->context;
+	context->instance = instance;
 
 	context->pubSub = PubSub_New(TRUE);
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
-	rdp = rdp_new(instance);
+	rdp = rdp_new(context);
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
 
 	context->graphics = graphics_new(context);
-	context->instance = instance;
 	context->rdp = rdp;
 
 	context->input = instance->input;
