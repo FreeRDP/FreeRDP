@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/handle.h>
 
 #include <winpr/pipe.h>
@@ -77,10 +78,47 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
  * Named pipe
  */
 
+#define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
+
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	return NULL;
+	HANDLE hNamedPipe;
+	char* lpTempPath;
+	char* lpPipePath;
+	WINPR_NAMED_PIPE* pNamedPipe;
+
+	if (!lpName)
+		return INVALID_HANDLE_VALUE;
+
+	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+		return INVALID_HANDLE_VALUE;
+
+	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
+	hNamedPipe = (HANDLE) pNamedPipe;
+
+	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+
+	pNamedPipe->name = _strdup(lpName);
+	pNamedPipe->dwOpenMode = dwOpenMode;
+	pNamedPipe->dwPipeMode = dwPipeMode;
+	pNamedPipe->nMaxInstances = nMaxInstances;
+	pNamedPipe->nOutBufferSize = nOutBufferSize;
+	pNamedPipe->nInBufferSize = nInBufferSize;
+	pNamedPipe->nDefaultTimeOut = nDefaultTimeOut;
+
+	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
+
+	pNamedPipe->lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
+	pNamedPipe->lpFilePath = GetCombinedPath(lpPipePath, (char*) pNamedPipe->lpFileName);
+
+	free(lpTempPath);
+	free(lpPipePath);
+
+	printf("CreateNamedPipe: %s\n", pNamedPipe->lpFilePath);
+
+	return hNamedPipe;
 }
 
 HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
@@ -91,11 +129,19 @@ HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWOR
 
 BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 {
+	WINPR_NAMED_PIPE* pNamedPipe;
+
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
 	return TRUE;
 }
 
 BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 {
+	WINPR_NAMED_PIPE* pNamedPipe;
+
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
 	return TRUE;
 }
 
@@ -123,6 +169,13 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
 {
+	WINPR_NAMED_PIPE* pNamedPipe;
+
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
+	if (lpMode)
+		pNamedPipe->dwPipeMode = *lpMode;
+
 	return TRUE;
 }
 
