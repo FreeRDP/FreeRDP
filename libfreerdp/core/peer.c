@@ -54,6 +54,11 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	return TRUE;
 }
 
+static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
+{
+	return client->context->rdp->transport->TcpIn->event;
+}
+
 static BOOL freerdp_peer_check_fds(freerdp_peer* client)
 {
 	int status;
@@ -106,29 +111,6 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
 				return FALSE;
 
-			if (!client->connected)
-			{
-				/**
-				 * PostConnect should only be called once and should not be called
-				 * after a reactivation sequence.
-				 */
-
-				IFCALLRET(client->PostConnect, client->connected, client);
-
-				if (!client->connected)
-					return FALSE;
-			}
-
-			if (!client->activated)
-			{
-				/* Activate will be called everytime after the client is activated/reactivated. */
-			
-				IFCALLRET(client->Activate, client->activated, client);
-
-				if (!client->activated)
-					return FALSE;
-			}
-
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
@@ -136,7 +118,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			if(Stream_GetRemainingLength(s) < 4)
+			if (Stream_GetRemainingLength(s) < 4)
 				return FALSE;
 			Stream_Read_UINT32(s, client->ack_frame_id);
 			IFCALL(client->update->SurfaceFrameAcknowledge, client->update->context, client->ack_frame_id);
@@ -195,7 +177,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		if(!freerdp_channel_peer_process(client, s, channelId))
+		if (!freerdp_channel_peer_process(client, s, channelId))
 			return -1;
 	}
 	else
@@ -264,8 +246,6 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
 	freerdp_peer* client = (freerdp_peer*) extra;
 	rdpRdp* rdp = client->context->rdp;
-
-	printf("rdp->state: %d\n", rdp->state);
 
 	switch (rdp->state)
 	{
@@ -363,17 +343,8 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
 
-				if (!rdp_server_accept_confirm_active(rdp, s))
-				{
-					Stream_SetPosition(s, 0);
-
-					if (peer_recv_pdu(client, s) < 0)
-						return -1;
-				}
-				else
-				{
-					rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
-				}
+				if (peer_recv_pdu(client, s) < 0)
+					return -1;
 			}
 
 			break;
@@ -423,13 +394,14 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	rdp = rdp_new(NULL);
+	client->context = (rdpContext*) malloc(client->ContextSize);
+	ZeroMemory(client->context, client->ContextSize);
+
+	rdp = rdp_new(client->context);
+
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
-
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
@@ -465,12 +437,13 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 
-	if (client != NULL)
+	if (client)
 	{
 		client->sockfd = sockfd;
 		client->ContextSize = sizeof(rdpContext);
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
+		client->GetEventHandle = freerdp_peer_get_event_handle;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
 		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;

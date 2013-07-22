@@ -30,6 +30,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/error.h>
+#include <freerdp/listener.h>
 
 /**
  *                                      Connection Sequence\n
@@ -933,8 +934,13 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 {
+	if (rdp->state != CONNECTION_STATE_CAPABILITIES_EXCHANGE)
+		return FALSE;
+
 	if (!rdp_recv_confirm_active(rdp, s))
 		return FALSE;
+
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
 
 	if (!rdp_send_server_synchronize_pdu(rdp))
 		return FALSE;
@@ -961,6 +967,16 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 {
 	int status = 0;
+	freerdp_peer* client = NULL;
+
+	if (rdp->state >= CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT)
+		client = rdp->context->peer;
+
+	if (rdp->state < CONNECTION_STATE_ACTIVE)
+	{
+		if (client)
+			client->activated = FALSE;
+	}
 
 	switch (state)
 	{
@@ -1021,6 +1037,28 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 		case CONNECTION_STATE_ACTIVE:
 			rdp->state = CONNECTION_STATE_ACTIVE;
 			update_reset_state(rdp->update);
+
+			if (client)
+			{
+				if (!client->connected)
+				{
+					/**
+					 * PostConnect should only be called once and should not
+					 * be called after a reactivation sequence.
+					 */
+
+					IFCALLRET(client->PostConnect, client->connected, client);
+
+					if (!client->connected)
+						return -1;
+				}
+
+				IFCALLRET(client->Activate, client->activated, client);
+
+				if (!client->activated)
+					return -1;
+			}
+
 			break;
 
 		default:

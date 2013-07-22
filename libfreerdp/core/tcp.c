@@ -253,6 +253,13 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 	return TRUE;
 }
 
+int tcp_attach(rdpTcp* tcp, int sockfd)
+{
+	tcp->sockfd = sockfd;
+	SetEventFileDescriptor(tcp->event, tcp->sockfd);
+	return 0;
+}
+
 HANDLE tcp_get_event_handle(rdpTcp* tcp)
 {
 #ifndef _WIN32

@@ -783,9 +783,6 @@ static void update_send_synchronize(rdpContext* context)
 
 static void update_send_desktop_resize(rdpContext* context)
 {
-	if (context->peer)
-		context->peer->activated = FALSE;
-
 	rdp_server_reactivate(context->rdp);
 }
 

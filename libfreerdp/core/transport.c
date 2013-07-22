@@ -64,8 +64,7 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 
 void transport_attach(rdpTransport* transport, int sockfd)
 {
-	transport->TcpIn->sockfd = sockfd;
-
+	tcp_attach(transport->TcpIn, sockfd);
 	transport->SplitInputOutput = FALSE;
 	transport->TcpOut = transport->TcpIn;
 }
