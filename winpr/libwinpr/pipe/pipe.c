@@ -36,6 +36,10 @@
 
 #include "pipe.h"
 
+/*
+ * Unnamed pipe
+ */
+
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
 {
 	int pipe_fd[2];
@@ -67,6 +71,74 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 
 	return TRUE;
+}
+
+/**
+ * Named pipe
+ */
+
+HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
+		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	return NULL;
+}
+
+HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
+		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	return NULL;
+}
+
+BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
+{
+	return TRUE;
+}
+
+BOOL PeekNamedPipe(HANDLE hNamedPipe, LPVOID lpBuffer, DWORD nBufferSize,
+		LPDWORD lpBytesRead, LPDWORD lpTotalBytesAvail, LPDWORD lpBytesLeftThisMessage)
+{
+	return TRUE;
+}
+
+BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer,
+		DWORD nOutBufferSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
+{
+	return TRUE;
+}
+
+BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
+{
+	return TRUE;
+}
+
+BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
+{
+	return TRUE;
+}
+
+BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
+{
+	return TRUE;
+}
+
+BOOL ImpersonateNamedPipeClient(HANDLE hNamedPipe)
+{
+	return FALSE;
+}
+
+BOOL GetNamedPipeClientComputerNameA(HANDLE Pipe, LPCSTR ClientComputerName, ULONG ClientComputerNameLength)
+{
+	return FALSE;
+}
+
+BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComputerName, ULONG ClientComputerNameLength)
+{
+	return FALSE;
 }
 
 #endif
