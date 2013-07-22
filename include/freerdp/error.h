@@ -20,6 +20,10 @@
 #ifndef FREERDP_ERROR_H
 #define FREERDP_ERROR_H
 
+#include <winpr/crt.h>
+
+#include <freerdp/api.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -127,6 +131,9 @@ extern "C" {
 
 #define ERRINFO_SUCCESS						0x00000000
 #define ERRINFO_NONE						0xFFFFFFFF
+
+FREERDP_API const char* freerdp_get_error_info_string(UINT32 code);
+FREERDP_API const char* freerdp_get_error_info_name(UINT32 code);
 
 /**
 * This static variable holds an error code if the return value from connect is FALSE.
