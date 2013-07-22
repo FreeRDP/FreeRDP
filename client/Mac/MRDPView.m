@@ -148,83 +148,86 @@ struct rgba_data
 
 DWORD mac_client_thread(void* param)
 {
-    int status;
-    HANDLE events[4];
-    HANDLE input_event;
-    HANDLE update_event;
-    HANDLE channels_event;
-
-    DWORD nCount;
-    rdpContext* context = (rdpContext*) param;
-    mfContext* mfc = (mfContext*) context;
-    freerdp* instance = context->instance;
-    MRDPView* view = mfc->view;
-
-    status = freerdp_connect(context->instance);
-
-    if (!status)
-    {
-        [view setIs_connected:0];
-        return 0;
-    }
-
-    [view setIs_connected:1];
-
-    nCount = 0;
-
-    events[nCount++] = mfc->stopEvent;
-
-    if (instance->settings->AsyncUpdate)
-    {
-        events[nCount++] = update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-    }
-
-    if (instance->settings->AsyncInput)
-    {
-        events[nCount++] = input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-    }
-
-    if (instance->settings->AsyncChannels)
-    {
-        events[nCount++] = channels_event = freerdp_channels_get_event_handle(instance);
-    }
-
-    while (1)
-    {
-        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-        if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
-        {
-            break;
-        }
-
-        if (instance->settings->AsyncUpdate)
-        {
-            if (WaitForSingleObject(update_event, 0) == WAIT_OBJECT_0)
-            {
-                update_activity_cb(instance);
-            }
-        }
-
-        if (instance->settings->AsyncInput)
-        {
-            if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
-            {
-                input_activity_cb(instance);
-            }
-        }
-
-        if (instance->settings->AsyncChannels)
-        {
-            if (WaitForSingleObject(channels_event, 0) == WAIT_OBJECT_0)
-            {
-                channel_activity_cb(instance);
-            }
-        }
-    }
-
-    ExitThread(0);
-    return 0;
+	@autoreleasepool
+	{
+		int status;
+		HANDLE events[4];
+		HANDLE input_event;
+		HANDLE update_event;
+		HANDLE channels_event;
+		
+		DWORD nCount;
+		rdpContext* context = (rdpContext*) param;
+		mfContext* mfc = (mfContext*) context;
+		freerdp* instance = context->instance;
+		MRDPView* view = mfc->view;
+		
+		status = freerdp_connect(context->instance);
+		
+		if (!status)
+		{
+			[view setIs_connected:0];
+			return 0;
+		}
+		
+		[view setIs_connected:1];
+		
+		nCount = 0;
+		
+		events[nCount++] = mfc->stopEvent;
+		
+		if (instance->settings->AsyncUpdate)
+		{
+			events[nCount++] = update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		}
+		
+		if (instance->settings->AsyncInput)
+		{
+			events[nCount++] = input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		}
+		
+		if (instance->settings->AsyncChannels)
+		{
+			events[nCount++] = channels_event = freerdp_channels_get_event_handle(instance);
+		}
+		
+		while (1)
+		{
+			status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+			
+			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
+			{
+				break;
+			}
+			
+			if (instance->settings->AsyncUpdate)
+			{
+				if (WaitForSingleObject(update_event, 0) == WAIT_OBJECT_0)
+				{
+					update_activity_cb(instance);
+				}
+			}
+			
+			if (instance->settings->AsyncInput)
+			{
+				if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+				{
+					input_activity_cb(instance);
+				}
+			}
+			
+			if (instance->settings->AsyncChannels)
+			{
+				if (WaitForSingleObject(channels_event, 0) == WAIT_OBJECT_0)
+				{
+					channel_activity_cb(instance);
+				}
+			}
+		}
+		
+		ExitThread(0);
+		return 0;
+	}
 }
 
 /************************************************************************

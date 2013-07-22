@@ -13,6 +13,7 @@
 static AppDelegate* _singleDelegate = nil;
 void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
 void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e);
+void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e);
 
 @implementation AppDelegate
 
@@ -46,6 +47,7 @@ void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEve
 	else
 	{
 		PubSub_SubscribeConnectionResult(context->pubSub, AppDelegate_ConnectionResultEventHandler);
+		PubSub_SubscribeErrorInfo(context->pubSub, AppDelegate_ErrorInfoEventHandler);
 		PubSub_SubscribeEmbedWindow(context->pubSub, AppDelegate_EmbedWindowEventHandler);
 		
 		freerdp_client_start(context);
@@ -113,19 +115,13 @@ void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEve
 
 
 /** *********************************************************************
- * called when we fail to connect to a RDP server
+ * called when we fail to connect to a RDP server - Make sure this is called from the main thread.
  ***********************************************************************/
 
-- (void) rdpConnectError
+- (void) rdpConnectError : (NSString*) withMessage
 {
-	// TODO: This should be called on the main thread
-	
-	NSString* message = @"Error connecting to server";
-	if (connectErrorCode == AUTHENTICATIONERROR)
-	{
-		message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
-	}
-	
+	NSString* message = withMessage ? withMessage : @"Error connecting to server";
+
 	NSAlert *alert = [[NSAlert alloc] init];
 	[alert setMessageText:message];
 	[alert beginSheetModalForWindow:[self window]
@@ -169,11 +165,40 @@ void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
 
 void AppDelegate_ConnectionResultEventHandler(void* ctx, ConnectionResultEventArgs* e)
 {
+	NSLog(@"ConnectionResult event result:%d\n", e->result);
 	if (_singleDelegate)
 	{
 		if (e->result != 0)
 		{
-			[_singleDelegate rdpConnectError];
+			NSString* message = nil;
+			if (connectErrorCode == AUTHENTICATIONERROR)
+			{
+				message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
+			}
+			
+			
+			// Making sure this should be invoked on the main UI thread.
+			[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:FALSE];
+			[message release];
 		}
+	}
+}
+
+void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e)
+{
+	NSLog(@"ErrorInfo event code:%d\n", e->code);
+	if (_singleDelegate)
+	{
+		// Retrieve error message associated with error code
+		NSString* message = nil;
+		if (e->code != ERRINFO_NONE)
+		{
+			const char* errorMessage = freerdp_get_error_info_string(e->code);
+			message = [[NSString alloc] initWithUTF8String:errorMessage];
+		}
+		
+		// Making sure this should be invoked on the main UI thread.
+		[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:TRUE];
+		[message release];
 	}
 }
