@@ -40,7 +40,6 @@
 struct _RFX_CONTEXT_PRIV
 {
 	wQueue* TilePool;
-	wQueue* TileQueue;
 
 	BOOL UseThreads;
 	DWORD MinThreadCount;
