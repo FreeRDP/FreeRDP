@@ -35,6 +35,11 @@
 
 #include "../handle/handle.h"
 
+#include <fcntl.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+
 #include "pipe.h"
 
 /*
@@ -80,18 +85,82 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 #define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
 
+char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
+{
+	char* lpFileName;
+
+	if (!lpName)
+		return NULL;
+
+	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+		return NULL;
+
+	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
+
+	return lpFileName;
+}
+
+char* GetNamedPipeUnixDomainSocketBaseFilePathA()
+{
+	char* lpTempPath;
+	char* lpPipePath;
+
+	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
+
+	free(lpTempPath);
+
+	return lpPipePath;
+}
+
+char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
+{
+	char* lpPipePath;
+	char* lpFileName;
+	char* lpFilePath;
+
+	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
+
+	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
+	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
+
+	free(lpPipePath);
+	free(lpFileName);
+
+	return lpFilePath;
+}
+
+int UnixChangeMode(const char* filename, int flags)
+{
+	mode_t fl = 0;
+
+	fl |= (flags & 0x4000) ? S_ISUID : 0;
+	fl |= (flags & 0x2000) ? S_ISGID : 0;
+	fl |= (flags & 0x1000) ? S_ISVTX : 0;
+	fl |= (flags & 0x0400) ? S_IRUSR : 0;
+	fl |= (flags & 0x0200) ? S_IWUSR : 0;
+	fl |= (flags & 0x0100) ? S_IXUSR : 0;
+	fl |= (flags & 0x0040) ? S_IRGRP : 0;
+	fl |= (flags & 0x0020) ? S_IWGRP : 0;
+	fl |= (flags & 0x0010) ? S_IXGRP : 0;
+	fl |= (flags & 0x0004) ? S_IROTH : 0;
+	fl |= (flags & 0x0002) ? S_IWOTH : 0;
+	fl |= (flags & 0x0001) ? S_IXOTH : 0;
+
+	return chmod(filename, fl);
+}
+
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
+	int status;
 	HANDLE hNamedPipe;
-	char* lpTempPath;
 	char* lpPipePath;
+	unsigned long flags;
+	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (!lpName)
-		return INVALID_HANDLE_VALUE;
-
-	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
 		return INVALID_HANDLE_VALUE;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
@@ -107,16 +176,42 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->nInBufferSize = nInBufferSize;
 	pNamedPipe->nDefaultTimeOut = nDefaultTimeOut;
 
-	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
-	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
+	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
+	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpName);
 
-	pNamedPipe->lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
-	pNamedPipe->lpFilePath = GetCombinedPath(lpPipePath, (char*) pNamedPipe->lpFileName);
+	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 
-	free(lpTempPath);
+	if (!PathFileExistsA(lpPipePath))
+		CreateDirectoryA(lpPipePath, 0);
+
 	free(lpPipePath);
 
-	printf("CreateNamedPipe: %s\n", pNamedPipe->lpFilePath);
+	pNamedPipe->clientfd = -1;
+	pNamedPipe->serverfd = socket(PF_LOCAL, SOCK_STREAM, 0);
+
+	if (0)
+	{
+		flags = fcntl(pNamedPipe->serverfd, F_GETFL);
+		flags = flags | O_NONBLOCK;
+		fcntl(pNamedPipe->serverfd, F_SETFL, flags);
+	}
+
+	ZeroMemory(&s, sizeof(struct sockaddr_un));
+	s.sun_family = AF_UNIX;
+	strcpy(s.sun_path, pNamedPipe->lpFilePath);
+	unlink(s.sun_path);
+
+	status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
+
+	if (status == 0)
+	{
+		status = listen(pNamedPipe->serverfd, 2);
+
+		if (status == 0)
+		{
+			UnixChangeMode(pNamedPipe->lpFilePath, 0xFFFF);
+		}
+	}
 
 	return hNamedPipe;
 }
@@ -129,9 +224,28 @@ HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWOR
 
 BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 {
+	int status;
+	socklen_t length;
+	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
+	if (!hNamedPipe)
+		return FALSE;
+
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
+	length = sizeof(struct sockaddr_un);
+	ZeroMemory(&s, sizeof(struct sockaddr_un));
+
+	status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
+
+	if (status < 0)
+	{
+		printf("accept: %d\n", status);
+		return FALSE;
+	}
+
+	pNamedPipe->clientfd = status;
 
 	return TRUE;
 }

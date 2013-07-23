@@ -125,13 +125,21 @@
 
 #ifndef _WIN32
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <time.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+
+#include <fcntl.h>
+#include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 
 #ifdef ANDROID
 #include <sys/vfs.h>
@@ -146,14 +154,27 @@
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
+	char* name;
+	int status;
 	HANDLE hNamedPipe;
+	unsigned long flags;
+	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
+	name = GetNamedPipeNameWithoutPrefixA(lpFileName);
+
+	if (!name)
+		return INVALID_HANDLE_VALUE;
+
+	free(name);
+
 	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
 	hNamedPipe = (HANDLE) pNamedPipe;
+
+	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
 	pNamedPipe->name = _strdup(lpFileName);
 	pNamedPipe->dwOpenMode = 0;
@@ -163,9 +184,32 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	pNamedPipe->nInBufferSize = 0;
 	pNamedPipe->nDefaultTimeOut = 0;
 
-	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpFileName);
+	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpFileName);
 
-	return INVALID_HANDLE_VALUE;
+	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
+	pNamedPipe->serverfd = -1;
+
+	if (0)
+	{
+		flags = fcntl(pNamedPipe->clientfd, F_GETFL);
+		flags = flags | O_NONBLOCK;
+		fcntl(pNamedPipe->clientfd, F_SETFL, flags);
+	}
+
+	ZeroMemory(&s, sizeof(struct sockaddr_un));
+	s.sun_family = AF_UNIX;
+	strcpy(s.sun_path, pNamedPipe->lpFilePath);
+
+	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
+
+	if (status != 0)
+	{
+		printf("connect: %d\n", status);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	return hNamedPipe;
 }
 
 HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
@@ -215,6 +259,17 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		status = nNumberOfBytesToRead;
 
+		if (pipe->clientfd != -1)
+			status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+		else
+			return FALSE;
+
+		if (status < 0)
+		{
+			*lpNumberOfBytesRead = 0;
+			return FALSE;
+		}
+
 		*lpNumberOfBytesRead = status;
 
 		return TRUE;
@@ -240,7 +295,6 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_PIPE* pipe;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
@@ -266,6 +320,17 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
 		status = nNumberOfBytesToWrite;
+
+		if (pipe->clientfd != -1)
+			status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
+		else
+			return FALSE;
+
+		if (status < 0)
+		{
+			*lpNumberOfBytesWritten = 0;
+			return FALSE;
+		}
 
 		*lpNumberOfBytesWritten = status;
 

@@ -38,7 +38,9 @@ struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
 
-	int fd;
+	int clientfd;
+	int serverfd;
+
 	const char* name;
 	const char* lpFileName;
 	const char* lpFilePath;
