@@ -37,19 +37,6 @@ typedef void (*pRdpGlobalUninit)(void);
 typedef int (*pRdpClientNew)(freerdp* instance, rdpContext* context);
 typedef void (*pRdpClientFree)(freerdp* instance, rdpContext* context);
 
-/*
-typedef void (*pOnPan)(freerdp* instance, int xdiff, int ydiff);
-
-struct rdp_client
-{
-	pOnResizeWindow OnResizeWindow;
-	pOnWindowStateChange OnWindowStateChange;
-	pOnErrorInfo OnErrorInfo;
-	pOnParamChange OnParamChange;
-	pOnPan OnPan;
-*/
-
-
 typedef int (*pRdpClientStart)(rdpContext* context);
 typedef int (*pRdpClientStop)(rdpContext* context);
 

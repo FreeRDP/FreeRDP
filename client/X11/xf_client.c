@@ -97,8 +97,6 @@
 #include "xf_channels.h"
 #include "xfreerdp.h"
 
-static int initialized_xi = 0;
-
 static long xv_port = 0;
 static const size_t password_size = 512;
 
@@ -475,12 +473,6 @@ BOOL xf_process_x_events(freerdp* instance)
 	XEvent xevent;
 	int pending_status;
 	xfContext* xfc = (xfContext*) instance->context;
-
-	if (initialized_xi == 0)
-	{
-		initialized_xi++;
-        //xf_input_init(xfi);
-	}
 
 	status = TRUE;
 	pending_status = TRUE;
@@ -1626,7 +1618,6 @@ void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
 
 		xf_transform_window(xfc);
 
-		//IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
 		{
 			ResizeWindowEventArgs e;
 
@@ -1661,7 +1652,6 @@ void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChange
 
 	xf_transform_window(xfc);
 
-	//IFCALL(xfi->client->OnResizeWindow, xfi->instance, xfi->currentWidth, xfi->currentHeight);
 	{
 		ResizeWindowEventArgs e;
 

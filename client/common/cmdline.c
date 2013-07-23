@@ -601,14 +601,8 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	}
 	CommandLineSwitchCase(arg, "gestures")
 	{
-		//char* p[1];
-		//int count = 1;
-
-	  printf("gestures\n");
+		printf("gestures\n");
 		settings->MultiTouchGestures = TRUE;
-
-		//p[0] = "rdpei";
-		//freerdp_client_add_dynamic_channel(settings, count, p);
 	}
 	CommandLineSwitchCase(arg, "echo")
 	{

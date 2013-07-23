@@ -89,40 +89,40 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
-
+	
 	x = event->xexpose.x;
 	y = event->xexpose.y;
 	w = event->xexpose.width;
 	h = event->xexpose.height;
-
+	
 	if (!app)
 	{
 		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
 			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
-					y - xfc->offset_y, w, h, FALSE);
+					      y - xfc->offset_y, w, h, FALSE);
 		} else
 		{
 			XCopyArea(xfc->display, xfc->primary,
-					xfc->window->handle, xfc->gc, x, y, w,
-					h, x, y);
+				  xfc->window->handle, xfc->gc, x, y, w,
+				  h, x, y);
 		}
 	} else
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
 		rdpRail* rail = ((rdpContext*) xfc)->rail;
-
+		
 		window = window_list_get_by_extra_id(rail->list,
-				(void*) event->xexpose.window);
-
+						     (void*) event->xexpose.window);
+		
 		if (window != NULL )
 		{
 			xfw = (xfWindow*) window->extra;
 			xf_UpdateWindowArea(xfc, xfw, x, y, w, h);
 		}
 	}
-
+	
 	return TRUE;
 }
 
@@ -266,12 +266,12 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 			}
 
 			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x)
-					|| (xfc->offset_y))
+			    || (xfc->offset_y))
 			{
 				x = (int) ((x - xfc->offset_x)
-						* (1.0 / xfc->settings->ScalingFactor));
+					   * (1.0 / xfc->settings->ScalingFactor));
 				y = (int) ((y - xfc->offset_y)
-						* (1.0 / xfc->settings->ScalingFactor));
+					   * (1.0 / xfc->settings->ScalingFactor));
 			}
 
 			if (extended)
