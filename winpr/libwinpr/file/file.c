@@ -204,10 +204,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
 	if (status != 0)
-	{
-		printf("connect: %d\n", status);
 		return INVALID_HANDLE_VALUE;
-	}
 
 	return hNamedPipe;
 }

@@ -48,7 +48,7 @@ static void* named_pipe_client_thread(void* arg)
 	lpNumberOfBytesWritten = 0;
 	nNumberOfBytesToWrite = PIPE_BUFFER_SIZE;
 
-	FillMemory(lpWriteBuffer, 0xAB, PIPE_BUFFER_SIZE);
+	FillMemory(lpWriteBuffer, PIPE_BUFFER_SIZE, 0x59);
 
 	fSuccess = WriteFile(hNamedPipe, lpWriteBuffer, nNumberOfBytesToWrite, &lpNumberOfBytesWritten, NULL);
 
@@ -76,6 +76,8 @@ static void* named_pipe_client_thread(void* arg)
 
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
+
+	CloseHandle(hNamedPipe);
 
 	return NULL;
 }
@@ -143,7 +145,7 @@ static void* named_pipe_server_thread(void* arg)
 	lpNumberOfBytesWritten = 0;
 	nNumberOfBytesToWrite = PIPE_BUFFER_SIZE;
 
-	FillMemory(lpWriteBuffer, 0xCD, PIPE_BUFFER_SIZE);
+	FillMemory(lpWriteBuffer, PIPE_BUFFER_SIZE, 0x45);
 
 	fSuccess = WriteFile(hNamedPipe, lpWriteBuffer, nNumberOfBytesToWrite, &lpNumberOfBytesWritten, NULL);
 
@@ -155,6 +157,8 @@ static void* named_pipe_server_thread(void* arg)
 
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
+
+	CloseHandle(hNamedPipe);
 
 	return NULL;
 }

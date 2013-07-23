@@ -240,10 +240,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 	status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
 
 	if (status < 0)
-	{
-		printf("accept: %d\n", status);
 		return FALSE;
-	}
 
 	pNamedPipe->clientfd = status;
 
@@ -255,6 +252,12 @@ BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
+	if (pNamedPipe->clientfd != -1)
+	{
+		close(pNamedPipe->clientfd);
+		pNamedPipe->clientfd = -1;
+	}
 
 	return TRUE;
 }

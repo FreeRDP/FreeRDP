@@ -143,6 +143,12 @@ BOOL CloseHandle(HANDLE hObject)
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
+		if (pipe->clientfd != -1)
+			close(pipe->clientfd);
+
+		if (pipe->serverfd != -1)
+			close(pipe->serverfd);
+
 		free(Object);
 
 		return TRUE;
