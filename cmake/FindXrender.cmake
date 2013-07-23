@@ -1,13 +1,13 @@
-# - Find Xrender
-# Find the Xrender libraries
+# - Find XRender
+# Find the XRender libraries
 #
 # This module defines the following variables:
-# 	Xrender_FOUND - true if Xrender_INCLUDE_DIR & Xrender_LIBRARY are found
-# 	Xrender_LIBRARIES - Set when Xrender_LIBRARY is found
-# 	Xrender_INCLUDE_DIRS - Set when Xrender_INCLUDE_DIR is found
+# 	XRENDER_FOUND - true if XRENDER_INCLUDE_DIR & XRENDER_LIBRARY are found
+# 	XRENDER_LIBRARIES - Set when Xrender_LIBRARY is found
+# 	XRENDER_INCLUDE_DIRS - Set when Xrender_INCLUDE_DIR is found
 #
-# 	Xrender_INCLUDE_DIR - where to find Xrendernput2.h, etc.
-# 	Xrender_LIBRARY - the Xrender library
+# 	XRENDER_INCLUDE_DIR - where to find Xrender.h, etc.
+# 	XRENDER_LIBRARY - the Xrender library
 #
 
 #=============================================================================
@@ -36,9 +36,10 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Xrender DEFAULT_MSG XRENDER_LIBRARY XRENDER_INCLUDE_DIR)
 
 if(XRENDER_FOUND)
+
 	set(XRENDER_LIBRARIES ${XRENDER_LIBRARY})
 	set(XRENDER_INCLUDE_DIRS ${XRENDER_INCLUDE_DIR})
+
 endif()
 
-mark_as_advanced(XRENDER_INCLUDE_DIRS XRENDER_LIBRARIES)
-
+mark_as_advanced(XRENDER_INCLUDE_DIR XRENDER_LIBRARY)
