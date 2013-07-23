@@ -2331,3 +2331,4 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 
 	return 0;
 }
+

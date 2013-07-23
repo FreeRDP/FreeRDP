@@ -216,7 +216,160 @@ BOOL xf_kbd_handle_special_keys(xfContext* xfc, KeySym keysym)
 			return TRUE;
 		}
 	}
-
+	
+	if (keysym == XK_period)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			//Zoom in (scale larger)
+			double s = xfc->settings->ScalingFactor;
+			s += 0.1;
+			if (s > 2.0)
+				s = 2.0;
+			
+			xfc->settings->ScalingFactor = s;
+			
+			xfc->currentWidth = xfc->originalWidth * s;
+			xfc->currentHeight = xfc->originalHeight * s;
+			
+			xf_transform_window(xfc);
+			
+			{
+				ResizeWindowEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
+				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+			return TRUE;
+		}
+	}
+	
+	if (keysym == XK_comma)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			//Zoom out (scale smaller)
+			double s = xfc->settings->ScalingFactor;
+			s -= 0.1;
+			if (s < 0.5)
+				s = 0.5;
+			
+			xfc->settings->ScalingFactor = s;
+			
+			xfc->currentWidth = xfc->originalWidth * s;
+			xfc->currentHeight = xfc->originalHeight * s;
+			
+			xf_transform_window(xfc);
+			
+			{
+				ResizeWindowEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
+				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			
+			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+			return TRUE;
+		}
+	}
+	
+	if (keysym == XK_KP_4)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			
+			{
+				PanningChangeEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.XPan = -5;
+				e.YPan = 0;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			
+			return TRUE;
+		}
+	}
+	
+	if (keysym == XK_KP_6)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			
+			{
+				PanningChangeEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.XPan = 5;
+				e.YPan = 0;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			return TRUE;
+		}
+	}
+	
+	if (keysym == XK_KP_8)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			{
+				PanningChangeEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.XPan = 0;
+				e.YPan = -5;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			return TRUE;
+		}
+	}
+	
+	if (keysym == XK_KP_2)
+	{
+		if ((xf_kbd_key_pressed(xfc, XK_Alt_L)
+		     || xf_kbd_key_pressed(xfc, XK_Alt_R))
+		    && (xf_kbd_key_pressed(xfc, XK_Control_L)
+			|| xf_kbd_key_pressed(xfc,
+					      XK_Control_R)))
+		{
+			{
+				PanningChangeEventArgs e;
+				
+				EventArgsInit(&e, "xfreerdp");
+				e.XPan = 0;
+				e.YPan = 5;
+				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+			}
+			return TRUE;
+		}
+	}
+	
+	
 	return FALSE;
 }
 
