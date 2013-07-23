@@ -95,7 +95,7 @@ static void* named_pipe_server_thread(void* arg)
 	DWORD lpNumberOfBytesWritten;
 
 	hNamedPipe = CreateNamedPipe(lpszPipeName,
-			PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+			PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
 			PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, NULL);
 
 	if (!hNamedPipe)
