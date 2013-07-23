@@ -142,7 +142,7 @@ FREERDP_API const char* freerdp_get_error_info_name(UINT32 code);
 * The value can hold one of the defined error codes below OR an error according to errno
 */
 
-extern int connectErrorCode;
+FREERDP_API extern int connectErrorCode;
 
 #define ERRORSTART 10000
 #define PREECONNECTERROR ERRORSTART + 1
