@@ -60,6 +60,8 @@ struct _ITSMFDecoder
 	void (*ChangeVolume) (ITSMFDecoder * decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */
 	UINT32 (*BufferLevel) (ITSMFDecoder * decoder);
+	/* Optional Set Audio/Video Sync flag */
+	void (*SetStreamSync) (ITSMFDecoder * decoder, BOOL synced);
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"

@@ -52,6 +52,7 @@
 
 #define SHARED_MEM_KEY	7777
 #define TRY_DECODEBIN	0
+#define SEEK_TOLERANCE 10000000
 
 typedef struct _TSMFGstreamerDecoder
 {
@@ -78,10 +79,23 @@ typedef struct _TSMFGstreamerDecoder
 
 	BOOL paused;
 	UINT64 last_sample_end_time;
+	UINT64 last_sample_start_time;
+
+	// Time delta between real stream playback time and gstreamer internal playback time
+	UINT64 seek_offset;
+
+	// Flag for whether or not this stream is synced to another stream of the opposite media type
+	// If this stream is Audio then it is synced to a Video stream
+	// Or of this stream is Video then it is synced to an Audio stream 
+	BOOL synced;
+
+	// Flag for whether or not the decoder is actively performing a sync
+	BOOL seeking;
 
 	Display *disp;
 	int *xfwin;
 	Window subwin;
+	BOOL subwinMapped;
 	int xOffset;
 	int yOffset;
 	BOOL offsetObtained;
@@ -101,6 +115,11 @@ const char *NAME_GST_STATE_READY = "GST_STATE_READY";
 const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
 const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
 const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
+
+static BOOL video_ready = FALSE;
+static BOOL audio_ready = False;
+static UINT64 aseek_time = 0;
+static UINT64 vseek_time = 0;
 
 static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
 {
@@ -242,7 +261,11 @@ static int tsmf_gstreamer_stop_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, GstState desired_state)
 {
 	if (!mdecoder)
+	{
+		DEBUG_DVC("tsmf_gstreamer_pipeline_set_state called on NULL decoder. Returning.");
 		return 0;
+	}
+
 	GstStateChangeReturn state_change;
 	int keep_waiting;
 	int timeout;
@@ -252,21 +275,28 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 	const char *current_name;
 	const char *pending_name;
 
-	if (!mdecoder->pipe) 
+	if (!mdecoder->pipe)
+	{
+		DEBUG_DVC("tsmf_gstreamer_pipeline_set_state called on a decoder with a NULL pipe. Returning.");
 		return 0;  /* Just in case this is called during startup or shutdown when we don't expect it */
-
-	if (desired_state == mdecoder->state) 
-		return 0;  /* Redundant request - Nothing to do */
+	}
 
 	name = tsmf_gstreamer_state_name(desired_state); /* For debug */
 
+	if (desired_state == mdecoder->state) 
+	{
+		DEBUG_DVC("tsmf_gstreamer_pipeline_set_state(%s) called but already in state (%s). Returning.", name, name);
+		return 0;  /* Redundant request - Nothing to do */
+	}
+
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+                DEBUG_DVC("tsmf_gstreamer_pipeline_set_state_VIDEO:");
+        else
+                DEBUG_DVC("tsmf_gstreamer_pipeline_set_state_AUDIO:");
+
 	keep_waiting = 1;
  	state_change = gst_element_set_state (mdecoder->pipe, desired_state);
-	timeout = 1000;
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		DEBUG_DVC("tsmf_gstreamer_pipeline_set_state_VIDEO:");
-	else
-		DEBUG_DVC("tsmf_gstreamer_pipeline_set_state_AUDIO:");
+	timeout = 2000;
 
 	while (keep_waiting) 
 	{
@@ -311,9 +341,9 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 			}
 		}
 		/*
-			To avoid RDP session hang. set timeout for changing gstreamer state to 5 seconds.
+			To avoid RDP session hang. set timeout for changing gstreamer state to 2 seconds.
 		*/
-		usleep(10000);
+		usleep(1000);
 		timeout--;
 		if (timeout <= 0)
 		{
@@ -322,7 +352,6 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 			break;
 		}
 	}
-	//sleep(1);
 	return 0;
 }
 
@@ -660,10 +689,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder * decoder, TS_AM_MEDIA_TYPE *
 				"channels", G_TYPE_INT, media_type->Channels,
 				NULL);
 			break;
-#if 0
-		case TSMF_SUB_TYPE_AC3:
-			break;
-#endif
 		default:
 			DEBUG_WARN("tsmf_gstreamer_set_format: unknown format:(%d).", media_type->SubType);
 			return FALSE;
@@ -734,47 +759,43 @@ static BOOL tsmf_gstreamer_pipeline_omx_available()
 }
 #endif
 
-static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder * mdecoder)
+static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder * mdecoder, BOOL do_unref)
 {
-	//Cleaning up elements
+	// Cleaning up elements
 	if (!mdecoder)
 		return;
 
-	if (mdecoder->src)
+	if (do_unref)
 	{
-		gst_object_unref(mdecoder->src);
-		mdecoder->src = NULL;
+		if (mdecoder->src)
+			gst_object_unref(mdecoder->src);
+		
+		if (mdecoder->queue)
+			gst_object_unref(mdecoder->queue);
+		
+		if (mdecoder->decbin)
+			gst_object_unref(mdecoder->decbin);
+
+		if(mdecoder->outbin)
+			gst_object_unref(mdecoder->outbin);
+
+		if (mdecoder->outconv)
+			gst_object_unref(mdecoder->outconv);
+
+		if (mdecoder->outsink)
+			gst_object_unref(mdecoder->outsink);
+
+		if (mdecoder->aVolume)
+			gst_object_unref(mdecoder->aVolume);
 	}
-	if (mdecoder->queue)
-	{
-		gst_object_unref(mdecoder->queue);
-		mdecoder->queue = NULL;
-	}
-	if (mdecoder->decbin)
-	{
-		gst_object_unref(mdecoder->decbin);
-		mdecoder->decbin = NULL;
-	}
-	if(mdecoder->outbin)
-	{
-		gst_object_unref(mdecoder->outbin);
-		mdecoder->outbin = NULL;
-	}
-	if (mdecoder->outconv)
-	{
-		gst_object_unref(mdecoder->outconv);
-		mdecoder->outconv = NULL;
-	}
-	if (mdecoder->outsink)
-	{
-		gst_object_unref(mdecoder->outsink);
-		mdecoder->outsink = NULL;
-	}
-	if (mdecoder->aVolume)
-	{
-		gst_object_unref(mdecoder->aVolume);
-		mdecoder->aVolume = NULL;
-	}
+
+	mdecoder->src = NULL;
+	mdecoder->queue = NULL;
+	mdecoder->decbin = NULL;
+	mdecoder->outbin = NULL;
+	mdecoder->outconv = NULL;
+	mdecoder->outsink = NULL;
+	mdecoder->aVolume = NULL;
 }
 
 
@@ -782,6 +803,14 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 {
 	if (!mdecoder)
 		return FALSE;
+
+	tsmf_gstreamer_clean_up(mdecoder,FALSE);
+
+	if (mdecoder->pipe)
+	{
+		gst_object_unref(mdecoder->pipe);
+		mdecoder->pipe = NULL;
+	}
 
 	GstPad *out_pad;
 	mdecoder->pipe = gst_pipeline_new (NULL);
@@ -994,6 +1023,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 				{
 					mdecoder->subwin = XCreateSimpleWindow(mdecoder->disp, *mdecoder->xfwin, 0, 0, 1, 1, 0, 0, 0);
 					XMapWindow(mdecoder->disp, mdecoder->subwin);
+					mdecoder->subwinMapped = TRUE;
 					XSync(mdecoder->disp, FALSE);
 				}
 			}
@@ -1020,25 +1050,46 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	if (!mdecoder->outconv)
 	{
 		DEBUG_WARN("tsmf_gstreamer_pipeline_build: Failed to load media converter");
-		tsmf_gstreamer_clean_up(mdecoder);
+		tsmf_gstreamer_clean_up(mdecoder, TRUE);
 		return FALSE;
 	}
 	if (!mdecoder->outsink)
 	{
 		DEBUG_WARN("tsmf_gstreamer_pipeline_build: Failed to load xvimagesink plugin");
-		tsmf_gstreamer_clean_up(mdecoder);
+		tsmf_gstreamer_clean_up(mdecoder, TRUE);
 		return FALSE;
 	}
 
 	mdecoder->src = gst_element_factory_make ("appsrc", NULL);
 	mdecoder->queue = gst_element_factory_make ("queue2", NULL);
-	g_object_set(mdecoder->queue, "use-buffering", FALSE, NULL);
-	g_object_set(mdecoder->queue, "use-rate-estimate", FALSE, NULL);
-	g_object_set(mdecoder->outsink, "async", FALSE, NULL);
-	g_object_set(mdecoder->src, "format", GST_FORMAT_TIME, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "use-buffering", FALSE, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "use-rate-estimate", FALSE, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-buffers", 0, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-bytes", 0, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-time", (guint64) 0, NULL); 
+	g_object_set(G_OBJECT(mdecoder->outsink), "sync", TRUE, NULL); //synchronize on the clock
+	g_object_set(G_OBJECT(mdecoder->outsink), "async", FALSE, NULL); //no async state changes
+	g_object_set(G_OBJECT(mdecoder->src), "format", GST_FORMAT_TIME, NULL);
+	g_object_set(G_OBJECT(mdecoder->src), "is-live", FALSE, NULL);
+	g_object_set(G_OBJECT(mdecoder->src), "blocksize", 1024, NULL);
+	g_object_set(G_OBJECT(mdecoder->outsink), "blocksize", 1024, NULL);
 	gst_app_src_set_stream_type((GstAppSrc *) mdecoder->src, GST_APP_STREAM_TYPE_STREAM);
-	gst_app_src_set_max_bytes((GstAppSrc *) mdecoder->src, 4*1024*1024);  /* 32 Mbits */
+	gst_app_src_set_max_bytes((GstAppSrc *) mdecoder->src, (guint64) 0);//unlimited
+	gst_app_src_set_size((GstAppSrc *) mdecoder->src, -1);
+	gst_app_src_set_latency((GstAppSrc *) mdecoder->src, 0, -1);
 	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
+
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+	{
+		gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 40000000); //nanoseconds
+	}
+	else
+	{
+		g_object_set(G_OBJECT(mdecoder->outsink), "drift-tolerance", (gint64) 40000, NULL); //microseconds
+		g_object_set(G_OBJECT(mdecoder->outsink), "buffer-time", (gint64) 200000, NULL); //microseconds
+		g_object_set(G_OBJECT(mdecoder->outsink), "latency-time", (gint64) 10000, NULL); //microseconds
+		g_object_set(G_OBJECT(mdecoder->outsink), "slave-method", 1, NULL);
+	}
 
 	out_pad = gst_element_get_static_pad(mdecoder->outconv, "sink");
 
@@ -1057,7 +1108,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	if (!linkResult)
 	{
 		DEBUG_WARN("tsmf_gstreamer_pipeline_build: Failed to link these elements: converter->sink");
-		tsmf_gstreamer_clean_up(mdecoder);
+		tsmf_gstreamer_clean_up(mdecoder, TRUE);
 		return FALSE;
 	}
 
@@ -1073,7 +1124,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	if (!linkResult)
 	{
 		DEBUG_WARN("tsmf_gstreamer_pipeline_build: Failed to link these elements: source->decoder");
-		tsmf_gstreamer_clean_up(mdecoder);
+		tsmf_gstreamer_clean_up(mdecoder, TRUE);
 		return FALSE;
 	}
 
@@ -1081,22 +1132,27 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	if (!mdecoder->linked)
 	{
 		DEBUG_WARN("tsmf_gstreamer_pipeline_build: Failed to link these elements: decoder->output_bin");
-		tsmf_gstreamer_clean_up(mdecoder);
+		tsmf_gstreamer_clean_up(mdecoder, TRUE);
 		return FALSE;
 	}
 	
 	if (GST_IS_X_OVERLAY (mdecoder->outsink))
 	{
-		//gst_x_overlay_set_window_handle (GST_X_OVERLAY (mdecoder->outsink), *mdecoder->xfwin);
 		if(mdecoder->subwin)
 		{
 			//gdk_threads_enter();
-			gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (mdecoder->outsink), mdecoder->subwin);
+			// gst_overlay_set_xwindow_id was deprecated, so using gst_x_overlay_set_window_handle instead
+			//gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (mdecoder->outsink), mdecoder->subwin);
+			gst_x_overlay_set_window_handle (GST_X_OVERLAY (mdecoder->outsink), mdecoder->subwin);
 			//gdk_threads_leave();
 		}
 	}
 
-	g_object_set(mdecoder->outsink, "preroll-queue-len", 10, NULL);
+	// hackish - mpeg1 and mpeg2 videos cant seem to buffer enough data quick enough in the start to prevent visual stepping
+	// so we just delay the playback of synced stream by .5 seconds to help ensure consistent flow of data
+	if (mdecoder->synced)
+		usleep(500000);
+
 	return TRUE;
 }
 
@@ -1148,6 +1204,22 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		return FALSE;
 	}
 
+	BOOL useTimestamps = TRUE;
+	// Relative timestamping will sometimes be set to 0
+	// so we ignore these timestamps just to be safe(bit 8)  
+	if (extensions & 0x00000080)
+	{
+		DEBUG_DVC("Ignoring the timestamps - relative - bit 8");
+		useTimestamps = FALSE;
+	}
+
+	// If no timestamps exist then we dont want to look at the timestamp values (bit 7)
+	if (extensions & 0x00000040)
+	{
+		DEBUG_DVC("Ignoring the timestamps - none - bit 7");
+		useTimestamps = FALSE;
+	}
+
 	if (mdecoder->pipe == NULL) 
 	{
 		if (!tsmf_gstreamer_pipeline_build(mdecoder))
@@ -1155,12 +1227,20 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			if (mdecoder->pipe)
 			{
 				tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
+				tsmf_gstreamer_clean_up(mdecoder, FALSE);
 				gst_object_unref(mdecoder->pipe);
 				mdecoder->pipe = NULL;
 			}
 			pthread_mutex_unlock(&mdecoder->gst_mutex);
 			return FALSE;
 		}
+
+		// Set stream to seeking for initial audio/video sync
+		mdecoder->seeking = TRUE;
+
+		// Set the seek offset if buffer has valid timestamps.
+		if (useTimestamps)
+			mdecoder->seek_offset = start_time;
 
 		//tsmf_gstreamer_start_eventloop_thread(mdecoder);
 
@@ -1173,41 +1253,46 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		 *  this is to fix gstreamer's seeking forward/backward issue with live stream.
 		 *  set the seeking tolerance to 1 second.
 		*/
-		if (start_time > (mdecoder->last_sample_end_time + 10000000) || (end_time + 10000000) < mdecoder->last_sample_end_time)
+
+		// Base the condition for a seek to be based on start time only
+		// WMV1 and WMV2 files in particular have bad end time and duration values
+		UINT64 minTime = mdecoder->last_sample_start_time - SEEK_TOLERANCE;
+		UINT64 maxTime = mdecoder->last_sample_start_time + SEEK_TOLERANCE;
+
+		// Make sure the minTime stops at 0, should we be at the beginning of the stream 
+		if (mdecoder->last_sample_start_time < SEEK_TOLERANCE)
+			minTime = 0; 
+
+		// If the start_time is valid and different from the previous start time by more than the seek tolerance, then we have a seek condition
+		if (((start_time > maxTime) || (start_time < minTime)) && useTimestamps)
 		{
-			DEBUG_DVC("tsmf_gstreamer_decodeEx: start_time=[%"PRIu64"] > last_sample_end_time=[%"PRIu64"]", start_time, mdecoder->last_sample_end_time);
+			DEBUG_DVC("tsmf_gstreamer_decodeEx: start_time=[%llu] > last_sample_start_time=[%llu] OR ", start_time, mdecoder->last_sample_start_time);
+			DEBUG_DVC("tsmf_gstreamer_decodeEx: start_time=[%llu] < last_sample_start_time=[%llu] with", start_time, mdecoder->last_sample_start_time);
+			DEBUG_DVC("tsmf_gstreamer_decodeEX: a tolerance of [%llu] from the last sample", SEEK_TOLERANCE);
 			DEBUG_DVC("tsmf_gstreamer_decodeEx: Stream seek detected - flushing element.");
-			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
-			gst_object_unref(mdecoder->pipe);
-			mdecoder->pipe = NULL;
-			if (!tsmf_gstreamer_pipeline_build(mdecoder))
-			{
-				if (mdecoder->pipe)
-				{
-					tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
-					gst_object_unref(mdecoder->pipe);
-					mdecoder->pipe = NULL;
-				}
-				pthread_mutex_unlock(&mdecoder->gst_mutex);
-				return FALSE;
-			}
+
+			mdecoder->seeking = TRUE;
+
+			// since there are issues trying to  make the gstreamer pipeline jump to the new start time after a seek
+			// we just maintain a offset between realtime and gstreamer time
+			mdecoder->seek_offset = start_time; 
+
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_READY);
-			mdecoder->pipeline_start_time_valid = 0;
+
 			/*
 			 * This is to fix the discrepancy between audio/video start time during a seek
 			*/
-			FILE *fout = NULL;
+
 			if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-				fout = fopen("/tmp/tsmf_vseek.info", "wt");
-			else
-				fout = fopen("/tmp/tsmf_aseek.info", "wt");
-
-			if (fout)
 			{
-				fprintf(fout, "%"PRIu64"\n", start_time);
-				fclose(fout);
+				vseek_time = start_time;
+				DEBUG_DVC("vseek_time set to %llu", start_time);
 			}
-
+			else
+			{
+				aseek_time = start_time;
+				DEBUG_DVC("aseek_time set to %llu", start_time);
+			}
 		}
 	}
 
@@ -1218,61 +1303,110 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		return FALSE;
 	}
 
-	if (GST_STATE(mdecoder->pipe) != GST_STATE_PAUSED && GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
+	// If performing a seek and NOT synced to another stream then just reset the sync flag and set pipeline to paused
+	if ((mdecoder->seeking) && (!mdecoder->synced))
 	{
+		mdecoder->seeking = FALSE;
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+	}
+
+	// If performing a seek and synced to another stream then reset the sync flag and set pipeline to paused
+	// BUT ALSO do extra logic since we are trying to keep the audio/video stream synced
+	if ((mdecoder->seeking) && (mdecoder->synced))
+	{
+		mdecoder->seeking = FALSE;
+		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+
+		// Set video as ready, wait for audio to be ready then deal with audio seek delta if necessary
 		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 		{
-			FILE *fout = fopen("/tmp/tsmf_video.ready", "wt");
-			if (fout)
-				fclose(fout);
-			FILE *fin = fopen("/tmp/tsmf_aseek.info", "rt");
-			if (fin)
-			{
-				UINT64 AStartTime = 0;
-				fscanf(fin, "%"PRIu64, &AStartTime);
-				fclose(fin);
-				if (start_time > AStartTime)
-				{
-					UINT64 streamDelay = (start_time - AStartTime) / 10;
-					usleep(streamDelay);
-				}
-				unlink("/tmp/tsmf_aseek.info");
-			}
-		}
-		else if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
-		{
 			int timeout = 0;
-			FILE *fin = fopen("/tmp/tsmf_video.ready", "rt");
-			while (fin == NULL)
+
+			// Set the video ready flag
+			video_ready = TRUE;
+
+			// wait for audio thread to set 
+			while (audio_ready == FALSE)
 			{
 				timeout++;
 				usleep(1000);
-				//wait up to 1.5 second
-				if (timeout >= 1500)
-					break;
-				fin = fopen("/tmp/tsmf_video.ready", "rt");
-			}
-			if (fin)
-			{
-				fclose(fin);
-				unlink("/tmp/tsmf_video.ready");
-				fin = NULL;
+				// wait up to 1.5 seconds
+				if (timeout > 1500)
+					break;	
 			}
 
-			fin = fopen("/tmp/tsmf_vseek.info", "rt");
-			if (fin)
+			if (audio_ready == TRUE)
+				audio_ready = FALSE;
+
+			if (aseek_time > 0)
 			{
-				UINT64 VStartTime = 0;
-				fscanf(fin, "%"PRIu64, &VStartTime);
-				fclose(fin);
-				if (start_time > VStartTime)
+				DEBUG_DVC("aseek_time = %llu is greater than 0", aseek_time);
+				if (start_time > aseek_time)
 				{
-					UINT64 streamDelay = (start_time - VStartTime) / 10;
-					usleep(streamDelay);
+					UINT64 streamDelay = (start_time - aseek_time) / 10;
+
+					// if the streamDelay is greater than 1.5 seconds then something is most likely wrong so cap it at 1.5 seconds
+					if (streamDelay > 1500000)
+						streamDelay = 1500000;
+
+					// Only sleep if off by more than 1 ms
+					if (streamDelay >= 1000)
+					{
+						DEBUG_DVC("VIDEO sleeping for delay of %llu due to aseek time of %llu and a start time of %llu", streamDelay, aseek_time, start_time);
+						usleep(streamDelay);
+						DEBUG_DVC("VIDEO sleep delay of %llu is DONE", streamDelay);
+					}
 				}
-				unlink("/tmp/tsmf_vseek.info");
 			}
+			else
+				DEBUG_DVC("aseek_time = %llu is less than or equal to 0", aseek_time);
+
+			aseek_time = 0;
+
+		}
+
+		// Set audio as ready, wait for video to be ready then deal with video seek delta if necessary
+		else if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
+		{
+			int timeout = 0;
+
+			audio_ready = TRUE;
+			
+			while (video_ready == FALSE)
+			{
+				timeout++;
+				usleep(1000);
+				// wait up to 1.5 seconds
+				if (timeout > 1500)
+					break;
+			}
+
+			if (video_ready == TRUE)
+				video_ready = FALSE;
+
+			if (vseek_time > 0)
+			{
+				DEBUG_DVC("vseek_time = %llu is greater than 0", vseek_time);
+				if (start_time > vseek_time)
+				{
+					UINT64 streamDelay = (start_time - vseek_time) / 10; 
+					// if the streamDelay is greater than 1.5 seconds then something is most likely wrong so cap it at 1.5 seconds
+					if (streamDelay > 1500000)
+						streamDelay = 1500000;
+       
+					//Only sleep if off by more than 1 ms
+					if (streamDelay >= 1000)
+					{
+						DEBUG_DVC("AUDIO sleeping for delay of %llu due to vseek time of %llu and a start time of %llu", streamDelay, vseek_time, start_time);
+						usleep(streamDelay);
+						DEBUG_DVC("AUDIO sleep delay of %llu is DONE", streamDelay);
+					}
+				}
+			}
+			else
+				DEBUG_DVC("vseek_time = %llu is less than or equal to 0", vseek_time);
+
+			vseek_time = 0;
 		}
 	}
 
@@ -1285,28 +1419,45 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 	}
 	gst_buffer_set_caps(gst_buf, mdecoder->gst_caps);
 	memcpy(GST_BUFFER_MALLOCDATA(gst_buf), data, data_size);
-	GST_BUFFER_TIMESTAMP(gst_buf) = tsmf_gstreamer_timestamp_ms_to_gst(start_time);
-	GST_BUFFER_DURATION(gst_buf) = tsmf_gstreamer_timestamp_ms_to_gst(duration);
+
+	if (useTimestamps)
+		GST_BUFFER_TIMESTAMP(gst_buf) = tsmf_gstreamer_timestamp_ms_to_gst(start_time) - tsmf_gstreamer_timestamp_ms_to_gst(mdecoder->seek_offset);
+	else
+		GST_BUFFER_TIMESTAMP(gst_buf) = GST_CLOCK_TIME_NONE;
+	GST_BUFFER_DURATION(gst_buf) = GST_CLOCK_TIME_NONE;//tsmf_gstreamer_timestamp_ms_to_gst(duration);
+	GST_BUFFER_OFFSET(gst_buf) = GST_BUFFER_OFFSET_NONE;
 
 	gst_app_src_push_buffer(GST_APP_SRC(mdecoder->src), gst_buf);
 
-	mdecoder->last_sample_end_time = end_time;
-	
+	// Should only update the last timestamps if the current ones are valid
+	if (useTimestamps)
+	{
+		mdecoder->last_sample_start_time = start_time;
+		mdecoder->last_sample_end_time = end_time;
+	}
+
 	if (!mdecoder->pipeline_start_time_valid) 
 	{
-		gst_element_set_base_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(start_time));
-		gst_element_set_start_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(start_time));
+		// Always set base/start time to 0. Will use seek offset to translate real buffer times
+		// back to 0. This allows the video to be started from anywhere and the ability to handle seeks
+		// without rebuilding the pipeline, etc. since that is costly
+		gst_element_set_base_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
+		gst_element_set_start_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
 		mdecoder->pipeline_start_time_valid = 1;
 	}
 
 	if(GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
 	{
+		DEBUG_DVC("State not currently playing");
+
 		if (!mdecoder->paused)
 		{
-			if (mdecoder->subwin)
+			// Remap the window here if needed
+			if ((mdecoder->subwin) && (!mdecoder->subwinMapped))
 			{
 				XMapWindow(mdecoder->disp, mdecoder->subwin);
 				XSync(mdecoder->disp, FALSE);
+				mdecoder->subwinMapped = TRUE;
 			}
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 		}
@@ -1345,6 +1496,9 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder * decoder, UINT32 newVolum
 static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg control_msg, UINT32 *arg)
 {
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) decoder;
+
+	DEBUG_DVC("");
+
 	if (!mdecoder)
 		return;
 
@@ -1353,22 +1507,20 @@ static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg contr
 		DEBUG_DVC("tsmf_gstreamer_control: Control_Pause");
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
 		mdecoder->paused = TRUE;
-
-		if (mdecoder->subwin)
-		{
-			XUnmapWindow(mdecoder->disp, mdecoder->subwin);
-			XSync(mdecoder->disp, FALSE);
-		}
 	}
 	else if (control_msg == Control_Restart) 
 	{
 		DEBUG_DVC("tsmf_gstreamer_control: Control_Restart");
 		mdecoder->paused = FALSE;
-		if (mdecoder->subwin)
+
+		// Only need to map the window if it is not currently mapped
+		if ((mdecoder->subwin) && (!mdecoder->subwinMapped))
 		{
 			XMapWindow(mdecoder->disp, mdecoder->subwin);
+			mdecoder->subwinMapped = TRUE;
 			XSync(mdecoder->disp, FALSE);
 		}
+
 		if (mdecoder->pipeline_start_time_valid)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
@@ -1379,16 +1531,20 @@ static void tsmf_gstreamer_control(ITSMFDecoder * decoder, ITSMFControlMsg contr
 		if (mdecoder->pipe) 
 		{
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
+			tsmf_gstreamer_clean_up(mdecoder, FALSE);
 			gst_object_unref(mdecoder->pipe);
 			mdecoder->pipe = NULL;
 		}
+		mdecoder->seek_offset = 0;
 		mdecoder->pipeline_start_time_valid = 0;
 		mdecoder->paused = FALSE;
 		
-		if (mdecoder->subwin)
+		// Only need to unmap window if it is currently mapped
+		if ((mdecoder->subwin) && (mdecoder->subwinMapped))
 		{
 			XUnmapWindow(mdecoder->disp, mdecoder->subwin);
 			XSync(mdecoder->disp, FALSE);
+			mdecoder->subwinMapped = FALSE;
 		}
 	}
 	else if (control_msg == Control_EndOfStream) 
@@ -1426,6 +1582,7 @@ static guint tsmf_gstreamer_buffer_level(ITSMFDecoder * decoder)
 
 	guint clbuff = 0;
 	g_object_get(mdecoder->queue, "current-level-buffers", &clbuff, NULL);
+	DEBUG_DVC("Gstreamer Buffer Level: %i", clbuff);
 	return clbuff;
 }
 
@@ -1441,6 +1598,7 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 		if (mdecoder->pipe)
 		{
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
+			tsmf_gstreamer_clean_up(mdecoder, FALSE);
 			gst_object_unref(mdecoder->pipe);
 			mdecoder->pipe = NULL;
 		}
@@ -1458,9 +1616,10 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 		if (mdecoder->disp)
 			XCloseDisplay(mdecoder->disp);
 
-		unlink("/tmp/tsmf_aseek.info");
-		unlink("/tmp/tsmf_vseek.info");
-		unlink("/tmp/tsmf_video.ready");
+		aseek_time = 0;
+		vseek_time = 0;
+		video_ready = FALSE;
+		audio_ready = FALSE;
 
 		pthread_mutex_unlock(&mdecoder->gst_mutex);
 		free(mdecoder);
@@ -1483,7 +1642,7 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder * decoder)
 	gint64 pos = 0;
 	gst_element_query_position (mdecoder->outsink, &fmt, &pos);
 	DEBUG_DVC("tsmf_gstreamer_current_pos=[%"PRIu64"]", pos);
-	return pos/100;
+	return pos/100 + mdecoder->seek_offset;
 }
 
 static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles)
@@ -1569,6 +1728,15 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 	}
 }
 
+static void tsmf_gstreamer_set_stream_sync(ITSMFDecoder * decoder, BOOL synced)
+{
+	TSMFGstreamerDecoder *mdecoder = (TSMFGstreamerDecoder *) decoder;
+
+	mdecoder->synced = synced;
+}
+
+
+
 static int initialized = 0;
 
 #ifdef STATIC_CHANNELS
@@ -1600,11 +1768,18 @@ ITSMFDecoder* freerdp_tsmf_client_decoder_subsystem_entry(void)
 	decoder->iface.DecodeEx = tsmf_gstreamer_decodeEx;
 	decoder->iface.ChangeVolume = tsmf_gstreamer_change_volume;
 	decoder->iface.BufferLevel = tsmf_gstreamer_buffer_level;
+	decoder->iface.SetStreamSync = tsmf_gstreamer_set_stream_sync;
 	decoder->paused = FALSE;
+	decoder->subwinMapped = FALSE;
 	decoder->subwin = 0;
 	decoder->xOffset = 0;
 	decoder->yOffset = 0;
 	decoder->offsetObtained = FALSE;
+	decoder->last_sample_start_time = 0;
+	decoder->last_sample_end_time = 0;
+	decoder->seek_offset = 0;
+	decoder->seeking = FALSE;
+	decoder->synced = FALSE;
 	decoder->gstVolume = 0.5;
 	decoder->gstMuted = FALSE;
 	decoder->state = GST_STATE_VOID_PENDING;  /* No real state yet */
