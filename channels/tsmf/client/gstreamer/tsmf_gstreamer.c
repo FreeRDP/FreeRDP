@@ -62,8 +62,6 @@ typedef struct _TSMFGstreamerDecoder
 
 	TS_AM_MEDIA_TYPE tsmf_media_type; /* TSMF description of the media type, (without ExtraData) */
 
-	//pthread_t eventloop_thread;
-
 	GstCaps *gst_caps;  /* Gstreamer description of the media type */
 
 	GstState state;
@@ -143,121 +141,6 @@ static const char *tsmf_gstreamer_state_name(GstState state)
 	return name;
 }
 
-#if 0
-static void *tsmf_gstreamer_eventloop_thread_func(void * arg)
-{
-	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder *) arg;
-	GstBus *bus;
-	GstMessage *message = NULL;
-	GstState old, new, pending;
-	int loop;
-	
-	DEBUG_DVC("tsmf_gstreamer_eventloop_thread_func: "); 
-
-	bus = gst_element_get_bus(mdecoder->pipe);
-	
-	loop = 1;
-	while (loop) 
-	{
-		message = gst_bus_poll (bus, GST_MESSAGE_ANY, -1);
-
-		if (mdecoder->shutdown)
-		{
-			loop =0; /* We are done with this stream */
-		}
-		else 
-		{
-			switch (message->type) 
-			{
-			case GST_MESSAGE_EOS:
-				DEBUG_DVC("tsmf_gstreamer_eventloop_thread_func: GST_MESSAGE_EOS");
-		        	gst_message_unref (message);
-				break;
-		
-			case GST_MESSAGE_WARNING:
-			case GST_MESSAGE_ERROR:
-			{
-				DEBUG_DVC("tsmf_gstreamer_eventloop_thread_func: GST_MESSAGE_ERROR");
-				/*GError *err;
-				gchar *debug;
-				gst_message_parse_error(message, &err, &debug);
-				g_print("ERROR: %s\nDEBUG:%s\n", err->message, debug);
-				g_error_free(err);
-				g_free(debug);
-				gst_message_unref(message);*/
-				break;
-			}
-			case GST_MESSAGE_STATE_CHANGED:
-			{
-				gchar *name = gst_object_get_path_string (GST_MESSAGE_SRC(message));
-	
-				gst_message_parse_state_changed (message, &old, &new, &pending);
-				
-				DEBUG_DVC("tsmf_gstreamer_eventloop_thread_func: GST_MESSAGE_STATE_CHANGED %s old %s new %s pending %s", 
-						name,
-						gst_element_state_get_name(old),
-						gst_element_state_get_name(new),
-						gst_element_state_get_name(pending));
-	
-				g_free (name);
-				gst_message_unref(message);
-	
-				break;
-			}
-	
-			case GST_MESSAGE_REQUEST_STATE:
-			{
-				GstState state;
-				gchar *name = gst_object_get_path_string (GST_MESSAGE_SRC(message));
-			
-				gst_message_parse_request_state(message, &state);
-			
-				DEBUG_DVC("GST_MESSAGE_REQUEST_STATE: Setting %s state to %s", name, gst_element_state_get_name(state));
-			
-				gst_element_set_state (mdecoder->pipe, state);
-			
-				g_free (name);
-	
-				gst_message_unref(message);
-				break;
-			}
-		
-			default:
-				gst_message_unref(message);
-				break;
-			}
-		}
-	}
-
-	mdecoder->eventloop_thread = 0;
-
-	DEBUG_DVC("tsmf_gstreamer_eventloop_thread_func: EXITED"); 
-	return 0;
-}
-
-static int tsmf_gstreamer_start_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
-{
-	pthread_create(&(mdecoder->eventloop_thread), 0, tsmf_gstreamer_eventloop_thread_func, mdecoder);
-	pthread_detach(mdecoder->eventloop_thread);
-
-	return 0;
-}
-
-static int tsmf_gstreamer_stop_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
-{
-	DEBUG_DVC("tsmf_gstreamer_stop_eventloop_thread: ");
-	if (!mdecoder)
-		return 0;
-
-	if (mdecoder->eventloop_thread != 0) 
-	{
-		 pthread_cancel(mdecoder->eventloop_thread);
-	}
-
-	return 0;
-}
-#endif
-
 static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, GstState desired_state)
 {
 	if (!mdecoder)
@@ -296,7 +179,14 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 
 	keep_waiting = 1;
  	state_change = gst_element_set_state (mdecoder->pipe, desired_state);
-	timeout = 2000;
+
+	/*
+	 *	To avoid RDP session hang, set timeout for changing gstreamer state to maximum of 
+	 *	2 seconds(100 20ms chunks). On each iteration While waiting for a state change to 
+	 *	occur, the timeout is decremented by 1 and we can take 20ms complete the iteration:
+	 *	usleep(10000) + gst_element_get_state timeout of (10 * GST_MSECOND) = 20ms.
+	 */
+	timeout = 100; // in 20ms increments
 
 	while (keep_waiting) 
 	{
@@ -338,18 +228,21 @@ static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, Gs
 			else 
 			{
 				DEBUG_DVC("tsmf_gstreamer_pipeline_set_state(%s) Waiting - current %s pending %s.", name, current_name, pending_name);
+
+				usleep(10000);
+                        	timeout--;
+                        	if (timeout <= 0)
+                        	{
+                                	DEBUG_WARN("tsmf_gstreamer_pipeline_set_state: TIMED OUT - failed to change state");
+                                	keep_waiting = 0;
+                                	break;
+                        	}
 			}
 		}
-		/*
-			To avoid RDP session hang. set timeout for changing gstreamer state to 2 seconds.
-		*/
-		usleep(1000);
-		timeout--;
-		if (timeout <= 0)
+		else
 		{
-			DEBUG_WARN("tsmf_gstreamer_pipeline_set_state: TIMED OUT - failed to change state");
+			DEBUG_WARN("tsmf_gstreamer_pipeline_set_state: Unknown state change result - exiting.");
 			keep_waiting = 0;
-			break;
 		}
 	}
 	return 0;
@@ -1242,8 +1135,6 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		if (useTimestamps)
 			mdecoder->seek_offset = start_time;
 
-		//tsmf_gstreamer_start_eventloop_thread(mdecoder);
-
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_READY);
 		mdecoder->pipeline_start_time_valid = 0;
 	}
@@ -1602,7 +1493,6 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 			gst_object_unref(mdecoder->pipe);
 			mdecoder->pipe = NULL;
 		}
-		//tsmf_gstreamer_stop_eventloop_thread(mdecoder);
 		if (mdecoder->gst_caps)
 			gst_caps_unref(mdecoder->gst_caps);
 
