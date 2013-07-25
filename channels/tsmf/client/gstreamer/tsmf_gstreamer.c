@@ -61,7 +61,7 @@ typedef struct _TSMFGstreamerDecoder
 
 	TS_AM_MEDIA_TYPE tsmf_media_type; /* TSMF description of the media type, (without ExtraData) */
 
-	pthread_t eventloop_thread;
+	//pthread_t eventloop_thread;
 
 	GstCaps *gst_caps;  /* Gstreamer description of the media type */
 
@@ -223,7 +223,6 @@ static int tsmf_gstreamer_start_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 
 	return 0;
 }
-#endif
 
 static int tsmf_gstreamer_stop_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 {
@@ -238,6 +237,7 @@ static int tsmf_gstreamer_stop_eventloop_thread(TSMFGstreamerDecoder *mdecoder)
 
 	return 0;
 }
+#endif
 
 static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder * mdecoder, GstState desired_state)
 {
@@ -1444,7 +1444,7 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 			gst_object_unref(mdecoder->pipe);
 			mdecoder->pipe = NULL;
 		}
-		tsmf_gstreamer_stop_eventloop_thread(mdecoder);
+		//tsmf_gstreamer_stop_eventloop_thread(mdecoder);
 		if (mdecoder->gst_caps)
 			gst_caps_unref(mdecoder->gst_caps);
 
