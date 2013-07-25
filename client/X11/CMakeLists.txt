@@ -2,6 +2,7 @@
 # FreeRDP X11 Client
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +29,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_rail.h
 	xf_tsmf.c
 	xf_tsmf.h
+	xf_input.c
+	xf_input.h
 	xf_event.c
 	xf_event.h
 	xf_input.c
@@ -101,11 +104,11 @@ set(XV_FEATURE_DESCRIPTION "X11 video extension")
 
 set(XI_FEATURE_TYPE "RECOMMENDED")
 set(XI_FEATURE_PURPOSE "input")
-set(XI_FEATURE_DESCRIPTION "X11 input extension")
+set(XI_FEATURE_DESCRIPTION "X11 input extension") 
 
 set(XRENDER_FEATURE_TYPE "RECOMMENDED")
 set(XRENDER_FEATURE_PURPOSE "rendering")
-set(XRENDER_FEATURE_DESCRIPTION "X11 render extension")
+set(XRENDER_FEATURE_DESCRIPTION "X11 render extension") 
 
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})

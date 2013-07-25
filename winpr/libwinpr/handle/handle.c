@@ -137,6 +137,22 @@ BOOL CloseHandle(HANDLE hObject)
 
 		return TRUE;
 	}
+	else if (Type == HANDLE_TYPE_NAMED_PIPE)
+	{
+		WINPR_NAMED_PIPE* pipe;
+
+		pipe = (WINPR_NAMED_PIPE*) Object;
+
+		if (pipe->clientfd != -1)
+			close(pipe->clientfd);
+
+		if (pipe->serverfd != -1)
+			close(pipe->serverfd);
+
+		free(Object);
+
+		return TRUE;
+	}
 
 	return FALSE;
 }
