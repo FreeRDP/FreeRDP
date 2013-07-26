@@ -160,7 +160,7 @@ endif()
 
 if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
@@ -462,7 +462,9 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
+if (NOT WITH_WAYK)
+    add_subdirectory(include)
+endif()
 
 add_subdirectory(libfreerdp)
 
@@ -486,6 +488,8 @@ endif()
 # Packaging
 
 SET(CPACK_BINARY_ZIP "ON")
+
+if(NOT WITH_WAYK)
 
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
 
@@ -542,9 +546,12 @@ if(MSVC)
 	if(MSVC_RUNTIME STREQUAL "dynamic")
 		set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 		include(InstallRequiredSystemLibraries)
+
+if(NOT WITH_WAYK)
 		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
 			DESTINATION ${CMAKE_INSTALL_BINDIR}
 			COMPONENT libraries)
+endif()
     endif()
 			
     set(EXTRA_DATA_DIR "extra/")
@@ -590,3 +597,4 @@ endif()
 
 include(CPack)
 
+endif()
