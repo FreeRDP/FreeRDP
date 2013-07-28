@@ -1209,7 +1209,7 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 
 	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
 
-	if (settings->ServerMode != TRUE)
+	if (!settings->ServerMode)
 	{
 		if (inputFlags & INPUT_FLAG_FASTPATH_INPUT)
 		{
@@ -1217,7 +1217,7 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 		}
 		else if (inputFlags & INPUT_FLAG_FASTPATH_INPUT2)
 		{
-			/* avertised by RDP 5.2, 6.0, 6.1 and 7.0 servers */
+			/* advertised by RDP 5.2, 6.0, 6.1 and 7.0 servers */
 		}
 		else
 		{
@@ -1440,17 +1440,25 @@ void rdp_write_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache_defini
 
 BOOL rdp_read_glyph_cache_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
-	UINT16 glyphSupportLevel;
-
 	if (length < 52)
 		return FALSE;
 
-	Stream_Seek(s, 40); /* glyphCache (40 bytes) */
-	Stream_Seek_UINT32(s); /* fragCache (4 bytes) */
-	Stream_Read_UINT16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
-	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
+	/* glyphCache (40 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[0])); /* glyphCache0 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[1])); /* glyphCache1 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[2])); /* glyphCache2 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[3])); /* glyphCache3 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[4])); /* glyphCache4 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[5])); /* glyphCache5 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[6])); /* glyphCache6 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[7])); /* glyphCache7 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[8])); /* glyphCache8 (4 bytes) */
+	rdp_read_cache_definition(s, &(settings->GlyphCache[9])); /* glyphCache9 (4 bytes) */
+	rdp_read_cache_definition(s, settings->FragCache);  /* fragCache (4 bytes) */
 
-	settings->GlyphSupportLevel = glyphSupportLevel;
+	Stream_Read_UINT16(s, settings->GlyphSupportLevel); /* glyphSupportLevel (2 bytes) */
+
+	Stream_Seek_UINT16(s); /* pad2Octets (2 bytes) */
 
 	return TRUE;
 }
@@ -2313,10 +2321,14 @@ BOOL rdp_print_multifragment_update_capability_set(wStream* s, UINT16 length)
 
 BOOL rdp_read_large_pointer_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
+	UINT16 largePointerSupportFlags;
+
 	if (length < 6)
 		return FALSE;
 
-	Stream_Seek_UINT16(s); /* largePointerSupportFlags (2 bytes) */
+	Stream_Read_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
+
+	settings->LargePointerFlag = (largePointerSupportFlags & LARGE_POINTER_FLAG_96x96) ? 1 : 0;
 
 	return TRUE;
 }
@@ -3502,9 +3514,12 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 {
 	BOOL status;
+	rdpSettings* settings;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
 	UINT16 numberCapabilities;
+
+	settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
@@ -3522,6 +3537,42 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	status = rdp_read_capability_sets(s, rdp->settings, numberCapabilities);
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
+	{
+		/* client does not support surface commands */
+	}
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
+	{
+		/* client does not support frame acks */
+	}
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
+	{
+		/* client does not support bitmap cache v3 */
+		settings->BitmapCacheV3Enabled = FALSE;
+	}
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
+	{
+		/* client does not support bitmap codecs */
+
+		settings->RemoteFxCodec = FALSE;
+		settings->NSCodec = FALSE;
+		settings->JpegCodec = FALSE;
+	}
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
+	{
+		/* client does not support multi fragment updates */
+	}
+
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
+	{
+		/* client does not support large pointers */
+		settings->LargePointerFlag = 0;
+	}
 
 	return status;
 }

@@ -84,7 +84,7 @@ BOOL freerdp_connect(freerdp* instance)
 		}
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
 
-        goto freerdp_connect_finally;
+		goto freerdp_connect_finally;
 	}
 
 	status = rdp_client_connect(rdp);
@@ -93,8 +93,8 @@ BOOL freerdp_connect(freerdp* instance)
 	if (instance->settings->AuthenticationOnly)
 	{
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
-        goto freerdp_connect_finally;
-    }
+		goto freerdp_connect_finally;
+	}
 
 	if (status)
 	{
@@ -119,7 +119,7 @@ BOOL freerdp_connect(freerdp* instance)
 				connectErrorCode = POSTCONNECTERROR;
 			}
 
-            goto freerdp_connect_finally;
+			goto freerdp_connect_finally;
 		}
 
 		if (instance->settings->PlayRemoteFx)
@@ -133,12 +133,14 @@ BOOL freerdp_connect(freerdp* instance)
 			update->pcap_rfx = pcap_open(settings->PlayRemoteFxFile, FALSE);
 
 			if (!update->pcap_rfx)
-            {
-                status = FALSE;
-                goto freerdp_connect_finally;
-            }
+			{
+				status = FALSE;
+				goto freerdp_connect_finally;
+			}
 			else
+			{
 				update->play_rfx = TRUE;
+			}
 
 			while (pcap_has_next_record(update->pcap_rfx))
 			{
@@ -158,8 +160,8 @@ BOOL freerdp_connect(freerdp* instance)
 				Stream_Release(s);
 			}
 
-            status = TRUE;
-            goto freerdp_connect_finally;
+			status = TRUE;
+			goto freerdp_connect_finally;
 		}
 	}
 
@@ -175,9 +177,8 @@ BOOL freerdp_connect(freerdp* instance)
 
 	SetEvent(rdp->transport->connectedEvent);
 
-freerdp_connect_finally:
+	freerdp_connect_finally:
 
-    fprintf(stderr, "ConnectionResult: %s\n", status ? "TRUE" : "FALSE");
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
 	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
@@ -336,18 +337,18 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 
 static wEventType FreeRDP_Events[] =
 {
-	DEFINE_EVENT_ENTRY(WindowStateChange)
-	DEFINE_EVENT_ENTRY(ResizeWindow)
-	DEFINE_EVENT_ENTRY(LocalResizeWindow)
-	DEFINE_EVENT_ENTRY(EmbedWindow)
-	DEFINE_EVENT_ENTRY(PanningChange)
-	DEFINE_EVENT_ENTRY(ScalingFactorChange)
-	DEFINE_EVENT_ENTRY(ErrorInfo)
-	DEFINE_EVENT_ENTRY(ParamChange)
-	DEFINE_EVENT_ENTRY(Terminate)
-	DEFINE_EVENT_ENTRY(ConnectionResult)
-	DEFINE_EVENT_ENTRY(ChannelConnected)
-	DEFINE_EVENT_ENTRY(ChannelDisconnected)
+		DEFINE_EVENT_ENTRY(WindowStateChange)
+		DEFINE_EVENT_ENTRY(ResizeWindow)
+		DEFINE_EVENT_ENTRY(LocalResizeWindow)
+		DEFINE_EVENT_ENTRY(EmbedWindow)
+		DEFINE_EVENT_ENTRY(PanningChange)
+		DEFINE_EVENT_ENTRY(ScalingFactorChange)
+		DEFINE_EVENT_ENTRY(ErrorInfo)
+		DEFINE_EVENT_ENTRY(ParamChange)
+		DEFINE_EVENT_ENTRY(Terminate)
+		DEFINE_EVENT_ENTRY(ConnectionResult)
+		DEFINE_EVENT_ENTRY(ChannelConnected)
+		DEFINE_EVENT_ENTRY(ChannelDisconnected)
 };
 
 /** Allocator function for a rdp context.
