@@ -62,13 +62,16 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		thread = (WINPR_THREAD*) Object;
 
-		status = pthread_join(thread->thread, &thread_status);
+		if (thread->started)
+		{
+			status = pthread_join(thread->thread, &thread_status);
 
-		if (status != 0)
-			fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+			if (status != 0)
+				fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
 
-		if (thread_status)
-			thread->dwExitCode = ((DWORD) (size_t) thread_status);
+			if (thread_status)
+				thread->dwExitCode = ((DWORD) (size_t) thread_status);
+		}
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{

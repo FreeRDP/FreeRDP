@@ -517,6 +517,12 @@ static BOOL update_check_flush(rdpContext* context, int size)
 
 	s = update->us;
 
+	if (!update->us)
+	{
+		update->BeginPaint(context);
+		return FALSE;
+	}
+
 	if (Stream_GetPosition(s) + size + 256 >= settings->MultifragMaxRequestSize)
 	{
 		update_flush(context);
