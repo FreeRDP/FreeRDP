@@ -117,7 +117,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 #ifdef __linux__
 	ZeroMemory(&(timer->timeout), sizeof(struct itimerspec));
 
-	if (lpDueTime < 0)
+	if (lpDueTime->QuadPart < 0)
 	{
 		LONGLONG due = lpDueTime->QuadPart * (-1);
 
@@ -126,13 +126,15 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		seconds = (due / 10000000);
 		nanoseconds = ((due % 10000000) * 100);
 	}
+	else if (lpDueTime->QuadPart == 0)
+	{
+		seconds = nanoseconds = 0;
+	}
 	else
 	{
 		printf("SetWaitableTimer: implement absolute time\n");
+		return FALSE;
 	}
-
-	timer->timeout.it_value.tv_sec = seconds; /* seconds */
-	timer->timeout.it_value.tv_nsec = nanoseconds; /* nanoseconds */
 
 	if (lPeriod > 0)
 	{
@@ -140,10 +142,24 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		timer->timeout.it_interval.tv_nsec = ((lPeriod % 1000) * 1000000); /* nanoseconds */
 	}
 
+	if (lpDueTime->QuadPart != 0)
+	{
+		timer->timeout.it_value.tv_sec = seconds; /* seconds */
+		timer->timeout.it_value.tv_nsec = nanoseconds; /* nanoseconds */
+	}
+	else
+	{
+		timer->timeout.it_value.tv_sec = timer->timeout.it_interval.tv_sec; /* seconds */
+		timer->timeout.it_value.tv_nsec = timer->timeout.it_interval.tv_nsec; /* nanoseconds */
+	}
+
 	status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
 
 	if (status)
+	{
+		printf("SetWaitableTimer timerfd_settime failure: %d\n", status);
 		return FALSE;
+	}
 #endif
 
 	return TRUE;

@@ -168,8 +168,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		if (timer->fd != -1)
 		{
 			int status;
-			int length;
 			fd_set rfds;
+			UINT64 expirations;
 			struct timeval timeout;
 
 			FD_ZERO(&rfds);
@@ -188,6 +188,11 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				return WAIT_FAILED;
 
 			if (status != 1)
+				return WAIT_TIMEOUT;
+
+			status = read(timer->fd, (void*) &expirations, sizeof(UINT64));
+
+			if (status != 8)
 				return WAIT_TIMEOUT;
 		}
 		else
@@ -304,9 +309,21 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		{
 			if (Type == HANDLE_TYPE_SEMAPHORE)
 			{
-				int length = read(fd, &length, 1);
+				int length;
+
+				length = read(fd, &length, 1);
 
 				if (length != 1)
+					return WAIT_FAILED;
+			}
+			else if (Type == HANDLE_TYPE_TIMER)
+			{
+				int length;
+				UINT64 expirations;
+
+				length = read(fd, (void*) &expirations, sizeof(UINT64));
+
+				if (length != 8)
 					return WAIT_FAILED;
 			}
 
