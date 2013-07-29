@@ -515,7 +515,6 @@ static BOOL update_check_flush(rdpContext* context, int size)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
-	rdpSettings* settings = context->settings;
 
 	s = update->us;
 
@@ -525,7 +524,7 @@ static BOOL update_check_flush(rdpContext* context, int size)
 		return FALSE;
 	}
 
-	if (Stream_GetPosition(s) + size + 256 >= settings->MultifragMaxRequestSize)
+	if (Stream_GetPosition(s) + size + 64 >= 0x3FFF)
 	{
 		update_flush(context);
 		return TRUE;
@@ -1019,8 +1018,6 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
 
-	update_force_flush(context);
-
 	extraFlags = 0;
 	headerLength = 6;
 
@@ -1051,8 +1048,6 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
@@ -1064,8 +1059,6 @@ static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	UINT16 extraFlags;
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	extraFlags = 0;
 	headerLength = 6;
@@ -1092,8 +1085,6 @@ static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table)
@@ -1104,8 +1095,6 @@ static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE
 	int headerLength;
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	flags = 0;
 	headerLength = 6;
@@ -1131,8 +1120,6 @@ static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
@@ -1143,8 +1130,6 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	int headerLength;
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	flags = 0;
 	headerLength = 6;
@@ -1170,8 +1155,6 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
@@ -1182,8 +1165,6 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	int headerLength;
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	flags = 0;
 	headerLength = 6;
@@ -1209,8 +1190,6 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
@@ -1221,8 +1200,6 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 	int headerLength;
 	INT16 orderLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	flags = 0;
 	headerLength = 6;
@@ -1248,8 +1225,6 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 /**
@@ -1264,8 +1239,6 @@ static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREAT
 	BYTE controlFlags;
 	int headerLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	headerLength = 1;
 	orderType = ORDER_TYPE_CREATE_OFFSCREEN_BITMAP;
@@ -1287,8 +1260,6 @@ static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREAT
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE_ORDER* switch_surface)
@@ -1299,8 +1270,6 @@ static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE
 	BYTE controlFlags;
 	int headerLength;
 	rdpUpdate* update = context->update;
-
-	update_force_flush(context);
 
 	headerLength = 1;
 	orderType = ORDER_TYPE_SWITCH_SURFACE;
@@ -1322,8 +1291,6 @@ static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
-
-	update_force_flush(context);
 }
 
 static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)

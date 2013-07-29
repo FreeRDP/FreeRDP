@@ -2879,6 +2879,7 @@ BOOL rdp_read_frame_acknowledge_capability_set(wStream* s, UINT16 length, rdpSet
 	{
 		Stream_Seek_UINT32(s); /* (4 bytes) */
 	}
+
 	return TRUE;
 }
 
@@ -2891,14 +2892,12 @@ BOOL rdp_read_frame_acknowledge_capability_set(wStream* s, UINT16 length, rdpSet
 void rdp_write_frame_acknowledge_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
-	UINT32 frame_acknowledge;
 
 	Stream_EnsureRemainingCapacity(s, 32);
 
 	header = rdp_capability_set_start(s);
 
-	frame_acknowledge = settings->FrameAcknowledge;
-	Stream_Write_UINT32(s, frame_acknowledge); /* (4 bytes) */
+	Stream_Write_UINT32(s, settings->FrameAcknowledge); /* (4 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_FRAME_ACKNOWLEDGE);
 }
@@ -3551,6 +3550,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
 		/* client does not support frame acks */
+		settings->FrameAcknowledge = 0;
 	}
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
@@ -3672,17 +3672,13 @@ void rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 		rdp_write_bitmap_codecs_capability_set(s, settings);
 	}
 
-	if (settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
-	{
-		if (settings->FrameAcknowledge > 0)
-		{
-			numberCapabilities++;
-			rdp_write_frame_acknowledge_capability_set(s, settings);
-		}
-	}
-	else
-	{
+	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 		settings->FrameAcknowledge = 0;
+
+	if (settings->FrameAcknowledge)
+	{
+		numberCapabilities++;
+		rdp_write_frame_acknowledge_capability_set(s, settings);
 	}
 
 	if (settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CACHE_V3_CODEC_ID])
