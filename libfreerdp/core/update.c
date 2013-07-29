@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
@@ -477,6 +478,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
+		printf("Sending %d orders\n", update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 
@@ -792,6 +794,10 @@ static void update_send_desktop_resize(rdpContext* context)
 	rdp_server_reactivate(context->rdp);
 }
 
+/**
+ * Primary Drawing Orders
+ */
+
 static void update_send_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
 	wStream* s;
@@ -960,6 +966,10 @@ static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 	update->numberOrders++;
 }
 
+/*
+ * Secondary Drawing Orders
+ */
+
 static void update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
 {
 	wStream* s;
@@ -990,7 +1000,7 @@ static void update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* ca
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType); /* orderType (1 byte) */
@@ -1017,6 +1027,9 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	orderType = cache_bitmap_v2->compressed ?
 			ORDER_TYPE_BITMAP_COMPRESSED_V2 : ORDER_TYPE_BITMAP_UNCOMPRESSED_V2;
 
+	if (context->settings->NoBitmapCompressionHeader)
+		cache_bitmap_v2->flags |= CBR2_NO_BITMAP_COMPRESSION_HDR;
+
 	update_check_flush(context, headerLength + update_approximate_cache_bitmap_v2_order(cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags));
 
 	s = update->us;
@@ -1031,7 +1044,7 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType); /* orderType (1 byte) */
@@ -1072,7 +1085,7 @@ static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType); /* orderType (1 byte) */
@@ -1111,7 +1124,7 @@ static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_COLOR_TABLE); /* orderType (1 byte) */
@@ -1150,7 +1163,7 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_GLYPH); /* orderType (1 byte) */
@@ -1189,7 +1202,7 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_GLYPH); /* orderType (1 byte) */
@@ -1228,7 +1241,7 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 	orderLength = (em - bm) - 13;
 
 	Stream_SetPosition(s, bm);
-	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY | ORDER_TYPE_CHANGE); /* controlFlags (1 byte) */
+	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags); /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_BRUSH); /* orderType (1 byte) */
@@ -1238,6 +1251,10 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 
 	update_force_flush(context);
 }
+
+/**
+ * Alternate Secondary Drawing Orders
+ */
 
 static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {

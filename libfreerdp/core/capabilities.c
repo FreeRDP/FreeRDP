@@ -185,6 +185,8 @@ BOOL rdp_read_general_capability_set(wStream* s, UINT16 length, rdpSettings* set
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
 
+	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
+
 	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
 		settings->FastPathOutput = FALSE;
 
@@ -213,7 +215,10 @@ void rdp_write_general_capability_set(wStream* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	extraFlags = LONG_CREDENTIALS_SUPPORTED | NO_BITMAP_COMPRESSION_HDR;
+	extraFlags = LONG_CREDENTIALS_SUPPORTED;
+
+	if (settings->NoBitmapCompressionHeader)
+		extraFlags |= NO_BITMAP_COMPRESSION_HDR;
 
 	if (settings->AutoReconnectionEnabled)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
