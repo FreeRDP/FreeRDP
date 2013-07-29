@@ -25,16 +25,6 @@
 
 #include "synch.h"
 
-/**
- * CreateMutexA
- * CreateMutexW
- * CreateMutexExA
- * CreateMutexExW
- * OpenMutexA
- * OpenMutexW
- * ReleaseMutex
- */
-
 #ifndef _WIN32
 
 #include "../handle/handle.h"

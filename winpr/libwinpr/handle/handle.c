@@ -122,6 +122,21 @@ BOOL CloseHandle(HANDLE hObject)
 
 		return TRUE;
 	}
+	else if (Type == HANDLE_TYPE_TIMER)
+	{
+		WINPR_TIMER* timer;
+
+		timer = (WINPR_TIMER*) Object;
+
+#ifdef __linux__
+		if (timer->fd != -1)
+			close(timer->fd);
+#endif
+
+		free(Object);
+
+		return TRUE;
+	}
 	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
 		WINPR_PIPE* pipe;

@@ -20,6 +20,8 @@
 #ifndef WINPR_SYNCH_PRIVATE_H
 #define WINPR_SYNCH_PRIVATE_H
 
+#include <winpr/platform.h>
+
 #include <winpr/synch.h>
 
 #ifndef _WIN32
@@ -67,6 +69,29 @@ struct winpr_event
 	BOOL bManualReset;
 };
 typedef struct winpr_event WINPR_EVENT;
+
+#ifdef __linux__
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/timerfd.h>
+#endif
+
+struct winpr_timer
+{
+	WINPR_HANDLE_DEF();
+
+	int fd;
+	LONG lPeriod;
+	BOOL bManualReset;
+	PTIMERAPCROUTINE pfnCompletionRoutine;
+	LPVOID lpArgToCompletionRoutine;
+
+#ifdef __linux__
+	struct itimerspec timeout;
+#endif
+};
+typedef struct winpr_timer WINPR_TIMER;
 
 #endif
 
