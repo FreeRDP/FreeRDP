@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/handle.h>
 
 #include <winpr/file.h>
@@ -552,4 +553,73 @@ BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttrib
 }
 
 #endif
+
+/* Extended API */
+
+#define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
+
+char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
+{
+	char* lpFileName;
+
+	if (!lpName)
+		return NULL;
+
+	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+		return NULL;
+
+	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
+
+	return lpFileName;
+}
+
+char* GetNamedPipeUnixDomainSocketBaseFilePathA()
+{
+	char* lpTempPath;
+	char* lpPipePath;
+
+	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
+
+	free(lpTempPath);
+
+	return lpPipePath;
+}
+
+char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
+{
+	char* lpPipePath;
+	char* lpFileName;
+	char* lpFilePath;
+
+	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
+
+	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
+	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
+
+	free(lpPipePath);
+	free(lpFileName);
+
+	return lpFilePath;
+}
+
+int UnixChangeFileMode(const char* filename, int flags)
+{
+	mode_t fl = 0;
+
+	fl |= (flags & 0x4000) ? S_ISUID : 0;
+	fl |= (flags & 0x2000) ? S_ISGID : 0;
+	fl |= (flags & 0x1000) ? S_ISVTX : 0;
+	fl |= (flags & 0x0400) ? S_IRUSR : 0;
+	fl |= (flags & 0x0200) ? S_IWUSR : 0;
+	fl |= (flags & 0x0100) ? S_IXUSR : 0;
+	fl |= (flags & 0x0040) ? S_IRGRP : 0;
+	fl |= (flags & 0x0020) ? S_IWGRP : 0;
+	fl |= (flags & 0x0010) ? S_IXGRP : 0;
+	fl |= (flags & 0x0004) ? S_IROTH : 0;
+	fl |= (flags & 0x0002) ? S_IWOTH : 0;
+	fl |= (flags & 0x0001) ? S_IXOTH : 0;
+
+	return chmod(filename, fl);
+}
 
