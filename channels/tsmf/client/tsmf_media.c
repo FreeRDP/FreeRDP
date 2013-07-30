@@ -719,7 +719,8 @@ static void tsmf_stream_start(TSMF_STREAM* stream)
 {
 	if (!stream->started)
 	{
-		ResumeThread(stream->thread);
+		ResetEvent(stream->stopEvent);
+		stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
 		stream->started = TRUE;
 	}
 }
@@ -729,14 +730,19 @@ static void tsmf_stream_stop(TSMF_STREAM* stream)
 	if (!stream)
 		return;
 
-	if (!stream->decoder)
-		return;
-
 	if (stream->started)
 	{
 		SetEvent(stream->stopEvent);
 		stream->started = FALSE;
+
+		SetEvent(stream->thread);
+		WaitForSingleObject(stream->thread, INFINITE);
+		CloseHandle(stream->thread);
+		stream->thread = NULL;
 	}
+
+	if (!stream->decoder)
+		return;
 
 	if (stream->decoder->Control)
 	{
@@ -970,7 +976,6 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->started = FALSE;
 
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
 
 	stream->sample_list = Queue_New(TRUE, -1, -1);
 	stream->sample_list->object.fnObjectFree = free;
@@ -1066,8 +1071,6 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 		stream->decoder->Free(stream->decoder);
 		stream->decoder = 0;
 	}
-
-	SetEvent(stream->thread);
 
 	free(stream);
 	stream = 0;
