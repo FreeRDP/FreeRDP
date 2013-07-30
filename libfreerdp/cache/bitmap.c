@@ -40,6 +40,8 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
+	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
+	if (bitmap == NULL) return;
 
 	memblt->bitmap = bitmap;
 	IFCALL(cache->bitmap->MemBlt, context, memblt);
@@ -56,6 +58,8 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId, mem3blt->cacheIndex);
+	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
+	if (bitmap == NULL) return;
 
 	style = brush->style;
 
