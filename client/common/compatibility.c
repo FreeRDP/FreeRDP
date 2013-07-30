@@ -473,7 +473,9 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "p")
 		{
 			settings->Password = _strdup(arg->Value);
-			fprintf(stderr, "-p %s -> /p:%s\n", arg->Value, arg->Value);
+			fprintf(stderr, "-p ****** -> /p:******\n");
+			/* Hide the value from 'ps'. */
+			FillMemory(arg->Value, strlen(arg->Value), '*');
 		}
 		CommandLineSwitchCase(arg, "s")
 		{
