@@ -116,8 +116,6 @@ struct _TSMF_STREAM
 	/* Next sample should not start before this system time. */
 	UINT64 next_start_time;
 
-	BOOL started;
-
 	HANDLE thread;
 	HANDLE stopEvent;
 
@@ -717,29 +715,37 @@ static void* tsmf_stream_playback_func(void* arg)
 
 static void tsmf_stream_start(TSMF_STREAM* stream)
 {
-	if (!stream->started)
+	if (!stream || !stream->presentation)
+		return;
+
+	WaitForSingleObject(stream->presentation->mutex, INFINITE);
+	if (!stream->thread)
 	{
 		ResetEvent(stream->stopEvent);
 		stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
-		stream->started = TRUE;
+		if(!stream->thread || !stream->thread->started)
+		{
+			DEBUG_WARNING("stream playback start failure");
+		}
 	}
+	ReleaseMutex(stream->presentation->mutex);
 }
 
 static void tsmf_stream_stop(TSMF_STREAM* stream)
 {
-	if (!stream)
+	if (!stream || !stream->presentation)
 		return;
 
-	if (stream->started)
+	WaitForSingleObject(stream->presentation->mutex, INFINITE);
+	if (stream->thread)
 	{
 		SetEvent(stream->stopEvent);
-		stream->started = FALSE;
-
 		SetEvent(stream->thread);
 		WaitForSingleObject(stream->thread, INFINITE);
 		CloseHandle(stream->thread);
 		stream->thread = NULL;
 	}
+	ReleaseMutex(stream->presentation->mutex);
 
 	if (!stream->decoder)
 		return;
@@ -972,8 +978,6 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
-
-	stream->started = FALSE;
 
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
