@@ -723,9 +723,9 @@ static void tsmf_stream_start(TSMF_STREAM* stream)
 	{
 		ResetEvent(stream->stopEvent);
 		stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
-		if(!stream->thread || !stream->thread->started)
+		if(!stream->thread)
 		{
-			DEBUG_WARNING("stream playback start failure");
+			DEBUG_WARN("stream playback start failure");
 		}
 	}
 	ReleaseMutex(stream->presentation->mutex);
