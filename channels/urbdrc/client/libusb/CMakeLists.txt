@@ -27,6 +27,8 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(..)
 
+find_package(libusb-1.0 REQUIRED)
+
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
@@ -37,7 +39,7 @@ set(${MODULE_PREFIX}_LIBS
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
     ${DBUS_GLIB_LIBRARIES}
     ${UUID_LIBRARIES}
-    usb-1.0
+    ${LIBUSB_1_LIBRARIES}
     )
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
