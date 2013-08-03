@@ -51,7 +51,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 
-#ifdef __linux__
+#ifdef HAVE_TIMERFD_H
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
 		if (timer->fd <= 0)
@@ -114,7 +114,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 	timer->pfnCompletionRoutine = pfnCompletionRoutine;
 	timer->lpArgToCompletionRoutine = lpArgToCompletionRoutine;
 
-#ifdef __linux__
+#ifdef HAVE_TIMERFD_H
 	ZeroMemory(&(timer->timeout), sizeof(struct itimerspec));
 
 	if (lpDueTime->QuadPart < 0)

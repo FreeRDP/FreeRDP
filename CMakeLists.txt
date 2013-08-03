@@ -268,6 +268,7 @@ endif()
 
 if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
+	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
 else()
 	set(X11_FEATURE_TYPE "DISABLED")

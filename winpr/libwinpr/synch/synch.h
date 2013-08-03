@@ -20,6 +20,10 @@
 #ifndef WINPR_SYNCH_PRIVATE_H
 #define WINPR_SYNCH_PRIVATE_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/platform.h>
 
 #include <winpr/synch.h>
@@ -70,7 +74,7 @@ struct winpr_event
 };
 typedef struct winpr_event WINPR_EVENT;
 
-#ifdef __linux__
+#ifdef HAVE_TIMERFD_H
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -87,7 +91,7 @@ struct winpr_timer
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
 
-#ifdef __linux__
+#ifdef HAVE_TIMERFD_H
 	struct itimerspec timeout;
 #endif
 };
