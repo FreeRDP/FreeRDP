@@ -24,6 +24,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/endian.h>
+#include <winpr/synch.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -236,7 +237,7 @@ struct _wStreamPool
 	int uCapacity;
 	wStream** uArray;
 
-	HANDLE mutex;
+	CRITICAL_SECTION lock;
 	BOOL synchronized;
 	size_t defaultSize;
 };

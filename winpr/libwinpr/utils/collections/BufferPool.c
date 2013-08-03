@@ -43,7 +43,7 @@ void* BufferPool_Take(wBufferPool* pool, int bufferSize)
 	void* buffer = NULL;
 
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	if (pool->fixedSize)
 	{
@@ -64,7 +64,7 @@ void* BufferPool_Take(wBufferPool* pool, int bufferSize)
 	}
 
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 
 	return buffer;
 }
@@ -76,7 +76,7 @@ void* BufferPool_Take(wBufferPool* pool, int bufferSize)
 void BufferPool_Return(wBufferPool* pool, void* buffer)
 {
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
@@ -87,7 +87,7 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 	pool->array[(pool->size)++] = buffer;
 
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 }
 
 /**
@@ -97,7 +97,7 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 void BufferPool_Clear(wBufferPool* pool)
 {
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	while (pool->size > 0)
 	{
@@ -110,7 +110,7 @@ void BufferPool_Clear(wBufferPool* pool)
 	}
 
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 }
 
 /**
@@ -134,7 +134,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			pool->mutex = CreateMutex(NULL, FALSE, NULL);
+			InitializeCriticalSection(&pool->lock);
 
 		if (!pool->fixedSize)
 		{
@@ -156,7 +156,7 @@ void BufferPool_Free(wBufferPool* pool)
 		BufferPool_Clear(pool);
 
 		if (pool->synchronized)
-			CloseHandle(pool->mutex);
+			DeleteCriticalSection(&pool->lock);
 
 		free(pool->array);
 
