@@ -88,7 +88,7 @@ UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr)
 	wReference* reference = NULL;
 
 	if (referenceTable->synchronized)
-		WaitForSingleObject(referenceTable->mutex, INFINITE);
+		EnterCriticalSection(&referenceTable->lock);
 
 	reference = ReferenceTable_FindEntry(referenceTable, ptr);
 
@@ -102,7 +102,7 @@ UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr)
 	count = ++(reference->Count);
 
 	if (referenceTable->synchronized)
-		ReleaseMutex(referenceTable->mutex);
+		LeaveCriticalSection(&referenceTable->lock);
 
 	return count;
 }
@@ -113,7 +113,7 @@ UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr)
 	wReference* reference = NULL;
 
 	if (referenceTable->synchronized)
-		WaitForSingleObject(referenceTable->mutex, INFINITE);
+		EnterCriticalSection(&referenceTable->lock);
 
 	reference = ReferenceTable_FindEntry(referenceTable, ptr);
 
@@ -133,7 +133,7 @@ UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr)
 	}
 
 	if (referenceTable->synchronized)
-		ReleaseMutex(referenceTable->mutex);
+		LeaveCriticalSection(&referenceTable->lock);
 
 	return count;
 }
@@ -154,7 +154,7 @@ wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_
 		ZeroMemory(referenceTable->array, sizeof(wReference) * referenceTable->size);
 
 		referenceTable->synchronized = synchronized;
-		referenceTable->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&referenceTable->lock);
 	}
 
 	return referenceTable;
@@ -164,7 +164,7 @@ void ReferenceTable_Free(wReferenceTable* referenceTable)
 {
 	if (referenceTable)
 	{
-		CloseHandle(referenceTable->mutex);
+		DeleteCriticalSection(&referenceTable->lock);
 		free(referenceTable->array);
 		free(referenceTable);
 	}
