@@ -69,7 +69,7 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 
 void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 {
-	WaitForSingleObject(queue->mutex, INFINITE);
+	EnterCriticalSection(&queue->lock);
 
 	if (queue->size == queue->capacity)
 	{
@@ -100,7 +100,7 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	if (queue->size > 0)
 		SetEvent(queue->event);
 
-	ReleaseMutex(queue->mutex);
+	LeaveCriticalSection(&queue->lock);
 }
 
 void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam)
@@ -127,7 +127,7 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 	if (!MessageQueue_Wait(queue))
 		return status;
 
-	WaitForSingleObject(queue->mutex, INFINITE);
+	EnterCriticalSection(&queue->lock);
 
 	if (queue->size > 0)
 	{
@@ -142,7 +142,7 @@ int MessageQueue_Get(wMessageQueue* queue, wMessage* message)
 		status = (message->id != WMQ_QUIT) ? 1 : 0;
 	}
 
-	ReleaseMutex(queue->mutex);
+	LeaveCriticalSection(&queue->lock);
 
 	return status;
 }
@@ -151,7 +151,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 {
 	int status = 0;
 
-	WaitForSingleObject(queue->mutex, INFINITE);
+	EnterCriticalSection(&queue->lock);
 
 	if (queue->size > 0)
 	{
@@ -169,7 +169,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 		}
 	}
 
-	ReleaseMutex(queue->mutex);
+	LeaveCriticalSection(&queue->lock);
 
 	return status;
 }
@@ -194,7 +194,7 @@ wMessageQueue* MessageQueue_New()
 		queue->array = (wMessage*) malloc(sizeof(wMessage) * queue->capacity);
 		ZeroMemory(queue->array, sizeof(wMessage) * queue->capacity);
 
-		queue->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&queue->lock);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	}
 
@@ -204,7 +204,7 @@ wMessageQueue* MessageQueue_New()
 void MessageQueue_Free(wMessageQueue* queue)
 {
 	CloseHandle(queue->event);
-	CloseHandle(queue->mutex);
+	DeleteCriticalSection(&queue->lock);
 
 	free(queue->array);
 	free(queue);

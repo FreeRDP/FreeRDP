@@ -89,14 +89,14 @@ HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown)
 
 void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount)
 {
-	WaitForSingleObject(countdown->mutex, INFINITE);
+	EnterCriticalSection(&countdown->lock);
 
 	countdown->count += signalCount;
 
 	if (countdown->count > 0)
 		ResetEvent(countdown->event);
 
-	ReleaseMutex(countdown->mutex);
+	LeaveCriticalSection(&countdown->lock);
 }
 
 /**
@@ -111,7 +111,7 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
 
 	status = newStatus = oldStatus = FALSE;
 
-	WaitForSingleObject(countdown->mutex, INFINITE);
+	EnterCriticalSection(&countdown->lock);
 
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
 		oldStatus = TRUE;
@@ -130,7 +130,7 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
 		status = TRUE;
 	}
 
-	ReleaseMutex(countdown->mutex);
+	LeaveCriticalSection(&countdown->lock);
 
 	return status;
 }
@@ -158,7 +158,7 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 	{
 		countdown->count = initialCount;
 		countdown->initialCount = initialCount;
-		countdown->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&countdown->lock);
 		countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (countdown->count == 0)
@@ -170,7 +170,7 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 
 void CountdownEvent_Free(wCountdownEvent* countdown)
 {
-	CloseHandle(countdown->mutex);
+	DeleteCriticalSection(&countdown->lock);
 	CloseHandle(countdown->event);
 
 	free(countdown);

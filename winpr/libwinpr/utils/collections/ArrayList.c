@@ -83,18 +83,18 @@ BOOL ArrayList_IsSynchronized(wArrayList* arrayList)
  * Lock access to the ArrayList
  */
 
-BOOL ArrayList_Lock(wArrayList* arrayList)
+void ArrayList_Lock(wArrayList* arrayList)
 {
-	return (WaitForSingleObject(arrayList->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
+	EnterCriticalSection(&arrayList->lock);
 }
 
 /**
  * Unlock access to the ArrayList
  */
 
-BOOL ArrayList_Unlock(wArrayList* arrayList)
+void ArrayList_Unlock(wArrayList* arrayList)
 {
-	return ReleaseMutex(arrayList->mutex);
+	LeaveCriticalSection(&arrayList->lock);
 }
 
 /**
@@ -164,7 +164,7 @@ void ArrayList_Clear(wArrayList* arrayList)
 	int index;
 
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	for (index = 0; index < arrayList->size; index++)
 	{
@@ -177,7 +177,7 @@ void ArrayList_Clear(wArrayList* arrayList)
 	arrayList->size = 0;
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 }
 
 /**
@@ -187,10 +187,10 @@ void ArrayList_Clear(wArrayList* arrayList)
 BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 {
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 
 	return FALSE;
 }
@@ -204,7 +204,7 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 	int index;
 
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if (arrayList->size + 1 > arrayList->capacity)
 	{
@@ -216,7 +216,7 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 	index = arrayList->size;
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 
 	return index;
 }
@@ -228,7 +228,7 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 void ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 {
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
@@ -237,7 +237,7 @@ void ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 	}
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 }
 
 /**
@@ -250,7 +250,7 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
 	BOOL found = FALSE;
 
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	for (index = 0; index < arrayList->size; index++)
 	{
@@ -265,7 +265,7 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
 		ArrayList_Shift(arrayList, index, -1);
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 }
 
 /**
@@ -275,7 +275,7 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
 void ArrayList_RemoveAt(wArrayList* arrayList, int index)
 {
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
@@ -283,7 +283,7 @@ void ArrayList_RemoveAt(wArrayList* arrayList, int index)
 	}
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 }
 
 /**
@@ -302,7 +302,7 @@ int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int coun
 	BOOL found = FALSE;
 
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if (startIndex < 0)
 		startIndex = 0;
@@ -323,7 +323,7 @@ int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int coun
 		index = -1;
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 
 	return index;
 }
@@ -344,7 +344,7 @@ int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int 
 	BOOL found = FALSE;
 
 	if (arrayList->synchronized)
-		WaitForSingleObject(arrayList->mutex, INFINITE);
+		EnterCriticalSection(&arrayList->lock);
 
 	if (startIndex < 0)
 		startIndex = 0;
@@ -365,7 +365,7 @@ int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int 
 		index = -1;
 
 	if (arrayList->synchronized)
-		ReleaseMutex(arrayList->mutex);
+		LeaveCriticalSection(&arrayList->lock);
 
 	return index;
 }
@@ -390,7 +390,7 @@ wArrayList* ArrayList_New(BOOL synchronized)
 
 		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
 
-		arrayList->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&arrayList->lock);
 
 		ZeroMemory(&arrayList->object, sizeof(wObject));
 	}
@@ -402,7 +402,7 @@ void ArrayList_Free(wArrayList* arrayList)
 {
 	ArrayList_Clear(arrayList);
 
-	CloseHandle(arrayList->mutex);
+	DeleteCriticalSection(&arrayList->lock);
 	free(arrayList->array);
 	free(arrayList);
 }
