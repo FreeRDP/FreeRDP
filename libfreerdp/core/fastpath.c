@@ -856,6 +856,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 					comp_flags = FASTPATH_OUTPUT_COMPRESSION_USED;
 					header_bytes = 7 + sec_bytes;
 					bm = (BYTE*) (rdp->mppc_enc->outputBuffer - header_bytes);
+					if (comp_update)
+						Stream_Free(comp_update, FALSE);
 					comp_update = Stream_New(bm, pdu_data_bytes + header_bytes);
 					ls = comp_update;
 				}
@@ -902,6 +904,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		Stream_Write_UINT16(ls, pdu_data_bytes);
 
+		if (update)
+			Stream_Free(update, FALSE);
 		update = Stream_New(bm, pduLength);
 		Stream_Seek(update, pduLength);
 
