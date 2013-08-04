@@ -141,17 +141,19 @@ void xf_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsigned in
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
-	if (fullscreen)
-	{
-		rdpSettings* settings = xfc->instance->settings;
+	xf_SendClientEvent(xfc, window, xfc->_NET_WM_STATE, 2, 
+		fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE, 
+		xfc->_NET_WM_STATE_FULLSCREEN);
 
-		xf_SetWindowDecorations(xfc, window, FALSE);
+	xf_SendClientEvent(xfc, window, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+		xfc->fullscreenMonitors.top,
+		xfc->fullscreenMonitors.bottom,
+		xfc->fullscreenMonitors.left,
+		xfc->fullscreenMonitors.right,
+		1);
 
-		XMoveResizeWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY, window->width, window->height);
-                XMapRaised(xfc->display, window->handle);
-
-		window->fullscreen = TRUE;
-	}
+	/* don't know, why this is necessary */
+	window->fullscreen = fullscreen;
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -393,7 +395,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		}
 
 		xf_ResizeDesktopWindow(xfc, window, width, height);
-		xf_SetWindowDecorations(xfc, window, decorations);
+		xf_SetWindowDecorations(xfc, window, window->decorations);
 		xf_SetWindowPID(xfc, window, 0);
 
 		input_mask =
