@@ -68,10 +68,17 @@ set(${MODULE_PREFIX}_LIBS
 	${CMAKE_DL_LIBS})
 
 if(WITH_MANPAGES)
+    add_executable(generate_argument_docbook
+        generate_argument_docbook.c)
+    target_link_libraries(generate_argument_docbook winpr-utils freerdp-core freerdp-utils freerdp-client)
+
 	if(XMLTO_FOUND)
 		add_custom_command(OUTPUT xfreerdp.1
-			COMMAND ${XMLTO_EXECUTABLE} man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
-			DEPENDS xfreerdp.1.xml)
+            COMMAND generate_argument_docbook
+            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml ${CMAKE_CURRENT_BINARY_DIR}/
+            COMMAND ${XMLTO_EXECUTABLE} man xfreerdp.1.xml
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			DEPENDS xfreerdp.1.xml generate_argument_docbook)
 
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
