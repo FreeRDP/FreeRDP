@@ -75,7 +75,7 @@ if(WITH_MANPAGES)
 
 		TODAY(MAN_TODAY)
 
-		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY)
+		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
 
     add_executable(generate_argument_docbook
         generate_argument_docbook.c)
@@ -83,6 +83,10 @@ if(WITH_MANPAGES)
 
 		add_custom_command(OUTPUT xfreerdp.1
             COMMAND generate_argument_docbook
+						COMMAND ${CMAKE_COMMAND} -E copy 
+							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+						COMMAND ${CMAKE_COMMAND} -E copy 
+							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND ${XMLTO_EXECUTABLE} man xfreerdp.1.xml
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			DEPENDS 
