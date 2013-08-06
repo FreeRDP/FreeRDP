@@ -164,7 +164,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		timer = (WINPR_TIMER*) Object;
 
-#ifdef __linux__
+#ifdef HAVE_EVENTFD_H
 		if (timer->fd != -1)
 		{
 			int status;
