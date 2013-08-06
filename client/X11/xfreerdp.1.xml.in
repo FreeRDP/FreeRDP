@@ -8,7 +8,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 
 <refentry>
 	<refentryinfo>
-	<date>2013-08-05</date>
+	<date>@MAN_TODAY@</date>
 	<author>
 		<authorblurb><para>The FreeRDP Team</para></authorblurb>
 	</author>
@@ -25,7 +25,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	</refnamediv>
 	<refsynopsisdiv>
 	<refsynopsisdivinfo>
-		<date>2013-08-05</date>
+		<date>@MAN_TODAY@</date>
 	</refsynopsisdivinfo>
 	<para>
 		<command>xfreerdp</command> [file] [options] [/v:server[:port]]
@@ -33,7 +33,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	</refsynopsisdiv>
 	<refsect1>
 	<refsect1info>
-		<date>2011-08-27</date>
+		<date>@MAN_TODAY@</date>
 	</refsect1info>
 	<title>DESCRIPTION</title>
 	<para>
