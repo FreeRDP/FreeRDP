@@ -123,6 +123,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 
 int main(int argc, char *argv[])
 {
+	size_t elements = sizeof(args)/sizeof(args[0]);
 	size_t x;
 	const char *fname = "xfreerdp-argument.1.xml";
 	FILE *fp = NULL;
@@ -142,7 +143,13 @@ int main(int argc, char *argv[])
 
 	/* Iterate over argument struct and write data to docbook 4.5 
 	 * compatible XML */
-	for(x=0; x<sizeof(args)/sizeof(args[0]); x++)
+	if( elements < 2 )
+	{
+		fprintf(stderr, "The argument array 'args' is empty, writing an empty file.");
+		elements = 1;
+	}
+
+	for(x=0; x<elements - 1; x++)
 	{
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
 
