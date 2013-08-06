@@ -1,0 +1,11 @@
+<refsect1>
+	<title>Channels</title>
+	<variablelist>
+		<varlistentry>
+			<term>foo</term>
+			<listitem>
+				<para>bar</para>
+			</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>

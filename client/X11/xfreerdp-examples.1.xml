@@ -1,0 +1,89 @@
+<refsect1>
+	<title>Examples</title>
+	<variablelist>
+		<varlistentry>
+			<term>xfreerdp connection.rdp /p:Pwd123! /f</term>
+			<listitem>
+				<para>Connect in fullscreen mode using a stored configuration <varname>connection.rdp</varname> and the password <varname>Pwd123!</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com</term>
+			<listitem>
+				<para>Connect to host <varname>rdp.contoso.com</varname> with user <varname>CONTOSO\\JohnDoe</varname> and password <varname>Pwd123!</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489</term>
+			<listitem>
+				<para>Connect to host <varname>192.168.1.100</varname> on port <varname>4489</varname> with user <varname>JohnDoe</varname>, password <varname>Pwd123!</varname>. The screen width is set to <varname>1366</varname> and the height to <varname>768</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168. 1.100</term>
+			<listitem>
+				<para>Establish a connection to host <varname>192.168.1.100</varname> with user <varname>JohnDoe</varname>, password <varname>Pwd123!</varname> and connect to Hyper-V console (use port 2179, disable negotiation) with VMID <varname>C824F53E-95D2-46C6-9A18-23A5BB403532</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>+clipboard</term>
+			<listitem>
+				<para>Activate clipboard redirection</para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/drive:home,/home/user</term>
+			<listitem>
+				<para>Activate drive redirection of <varname>/home/user</varname> as home drive</para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/smartcard:&lt;device&gt;</term>
+			<listitem>
+				<para>Activate smartcard redirection for device <varname>device</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/printer:&lt;device&gt;,&lt;driver&gt;</term>
+			<listitem>
+				<para>Activate printer redirection for printer <varname>device</varname> using driver <varname>driver</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/serial:&lt;device&gt;</term>
+			<listitem>
+				<para>Activate serial port redirection for port <varname>device</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/parallel:&lt;device&gt;</term>
+			<listitem>
+				<para>Activate parallel port redirection for port <varname>device</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/sound:sys:alsa</term>
+			<listitem>
+				<para>Activate audio output redirection using device <varname>sys:alsa</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/microphone:sys:alsa</term>
+			<listitem>
+				<para>Activate audio input redirection using device <varname>sys:alsa</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/multimedia:sys:alsa</term>
+			<listitem>
+				<para>Activate multimedia redirection using device <varname>sys:alsa</varname></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>/usb:id,dev:054c:0268</term>
+			<listitem>
+				<para>Activate USB device redirection for the device identified by <varname>054c:0268</varname></para>
+			</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
