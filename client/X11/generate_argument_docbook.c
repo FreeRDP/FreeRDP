@@ -147,14 +147,12 @@ int main(int argc, char *argv[])
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
 
 		fprintf(fp, "\t\t\t<varlistentry>\n");
-		fprintf(fp, "\t\t\t\t<term>%s</term>\n", tr_esc_str(arg->Name) );
-		fprintf(fp, "\t\t\t\t<listitem>\n");
 		if( COMMAND_LINE_VALUE_REQUIRED == arg->Flags )
-			fprintf(fp, "\t\t\t\t\t<para>%s %s</para>\n", tr_esc_str(arg->Text), tr_esc_str(arg->Format)); 
+			fprintf(fp, "\t\t\t\t<term>/%s %s</term>\n", tr_esc_str(arg->Name), tr_esc_str(arg->Format) );
 		else
-			fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str(arg->Text));
-		if( NULL != arg->LongText )
-			fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str(arg->LongText));
+			fprintf(fp, "\t\t\t\t<term>/%s</term>\n", tr_esc_str(arg->Name) );
+		fprintf(fp, "\t\t\t\t<listitem>\n");
+		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str(arg->Text));
 		
 		fprintf(fp, "\t\t\t\t</listitem>\n");
 		fprintf(fp, "\t\t\t</varlistentry>\n");
