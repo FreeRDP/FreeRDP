@@ -75,17 +75,21 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
-	if (settings->GatewayUsageMethod)
+	if (settings->GatewayEnabled)
 	{
-		char* user;
+        char* user;
 		char* domain;
 		char* cookie;
-		int user_length;
+        int user_length = 0;
 		int domain_length;
 		int cookie_length;
 
-		user = settings->Username;
-		user_length = strlen(settings->Username);
+
+        if (settings->Username)
+        {
+            user = settings->Username;
+            user_length = strlen(settings->Username);
+        }
 
 		if (settings->Domain)
 			domain = settings->Domain;
@@ -100,8 +104,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		CopyMemory(cookie, domain, domain_length);
 		CharUpperBuffA(cookie, domain_length);
 		cookie[domain_length] = '\\';
-		CopyMemory(&cookie[domain_length + 1], user, user_length);
-		cookie[cookie_length] = '\0';
+
+        if (settings->Username)
+            CopyMemory(&cookie[domain_length + 1], user, user_length);
+
+        cookie[cookie_length] = '\0';
 
 		nego_set_cookie(rdp->nego, cookie);
 		free(cookie);

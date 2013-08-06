@@ -156,7 +156,6 @@ RFX_CONTEXT* rfx_context_new(void)
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
 	context->priv->TilePool = Queue_New(TRUE, -1, -1);
-	context->priv->TileQueue = Queue_New(TRUE, -1, -1);
 
 	/*
 	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
@@ -254,7 +253,6 @@ void rfx_context_free(RFX_CONTEXT* context)
 	free(context->quants);
 
 	Queue_Free(context->priv->TilePool);
-	Queue_Free(context->priv->TileQueue);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
@@ -314,8 +312,7 @@ RFX_TILE* rfx_tile_pool_take(RFX_CONTEXT* context)
 {
 	RFX_TILE* tile = NULL;
 
-	if (WaitForSingleObject(Queue_Event(context->priv->TilePool), 0) == WAIT_OBJECT_0)
-		tile = Queue_Dequeue(context->priv->TilePool);
+	tile = Queue_Dequeue(context->priv->TilePool);
 
 	if (!tile)
 	{

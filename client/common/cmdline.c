@@ -90,7 +90,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
+	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Consume multitouch input locally" },
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },
+	{ "disp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Display control" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (ClearType)" },
 	{ "aero", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueFalse, -1, NULL, "Desktop composition" },
 	{ "window-drag", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Full window drag" },
@@ -597,6 +599,11 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		p[0] = "rdpei";
 		freerdp_client_add_dynamic_channel(settings, count, p);
 	}
+	CommandLineSwitchCase(arg, "gestures")
+	{
+		printf("gestures\n");
+		settings->MultiTouchGestures = TRUE;
+	}
 	CommandLineSwitchCase(arg, "echo")
 	{
 		char* p[1];
@@ -604,6 +611,16 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 		count = 1;
 		p[0] = "echo";
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+	}
+	CommandLineSwitchCase(arg, "disp")
+	{
+		char* p[1];
+		int count;
+
+		count = 1;
+		p[0] = "disp";
 
 		freerdp_client_add_dynamic_channel(settings, count, p);
 	}
@@ -1238,8 +1255,9 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
-			settings->GatewayUsageMethod = TRUE;
+			settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
 			settings->GatewayUseSameCredentials = TRUE;
+			settings->GatewayEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -1633,7 +1651,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	if (settings->DisableThemes)
 		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
 
-	if (settings->GatewayUsageMethod)
+	if (settings->GatewayEnabled)
 	{
 		if (settings->GatewayUseSameCredentials)
 		{

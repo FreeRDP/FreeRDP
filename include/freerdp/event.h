@@ -41,11 +41,6 @@ DEFINE_EVENT_BEGIN(ResizeWindow)
 	int width;
 	int height;
 DEFINE_EVENT_END(ResizeWindow)
-	
-DEFINE_EVENT_BEGIN(EmbedWindow)
-	BOOL embed;
-	void* handle;
-DEFINE_EVENT_END(EmbedWindow)
 
 DEFINE_EVENT_BEGIN(PanningChange)
 	int XPan;
@@ -55,6 +50,16 @@ DEFINE_EVENT_END(PanningChange)
 DEFINE_EVENT_BEGIN(ScalingFactorChange)
 	double ScalingFactor;
 DEFINE_EVENT_END(ScalingFactorChange)
+
+DEFINE_EVENT_BEGIN(LocalResizeWindow)
+	int width;
+	int height;
+DEFINE_EVENT_END(LocalResizeWindow)
+	
+DEFINE_EVENT_BEGIN(EmbedWindow)
+	BOOL embed;
+	void* handle;
+DEFINE_EVENT_END(EmbedWindow)
 
 DEFINE_EVENT_BEGIN(ErrorInfo)
 	UINT32 code;
@@ -67,6 +72,20 @@ DEFINE_EVENT_END(ParamChange)
 DEFINE_EVENT_BEGIN(Terminate)
 	int code;
 DEFINE_EVENT_END(Terminate)
+
+DEFINE_EVENT_BEGIN(ConnectionResult)
+	int result;
+DEFINE_EVENT_END(ConnectionResult)
+
+DEFINE_EVENT_BEGIN(ChannelConnected)
+	const char* name;
+	void* pInterface;
+DEFINE_EVENT_END(ChannelConnected)
+
+DEFINE_EVENT_BEGIN(ChannelDisconnected)
+	const char* name;
+	void* pInterface;
+DEFINE_EVENT_END(ChannelDisconnected)
 
 #ifdef	__cplusplus
 }

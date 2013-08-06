@@ -3,6 +3,7 @@
  * X11 Client Interface
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,14 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#ifdef WITH_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+
+#ifdef WITH_XI
+#include <X11/extensions/XInput2.h>
+#endif
 
 #ifdef WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
@@ -73,6 +82,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/file.h>
+#include <winpr/print.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -83,14 +93,51 @@
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
+#include "xf_input.h"
 #include "xf_channels.h"
-
 #include "xfreerdp.h"
 
 static long xv_port = 0;
 static const size_t password_size = 512;
 
-void xf_draw_screen_scaled(xfContext* xfc)
+void xf_transform_window(xfContext* xfc)
+{
+	int ret;
+	int w;
+	int h;
+	long supplied;
+	Atom hints_atom;
+	XSizeHints* size_hints = NULL;
+
+	hints_atom = XInternAtom(xfc->display, "WM_SIZE_HINTS", 1);
+
+	ret = XGetWMSizeHints(xfc->display, xfc->window->handle, size_hints, &supplied, hints_atom);
+
+	if(ret == 0)
+		size_hints = XAllocSizeHints();
+
+	w = (xfc->originalWidth * xfc->settings->ScalingFactor) + xfc->offset_x;
+	h = (xfc->originalHeight * xfc->settings->ScalingFactor) + xfc->offset_y;
+
+	if(w < 1)
+		w = 1;
+
+	if(h < 1)
+		h = 1;
+
+	if (size_hints)
+	{
+		size_hints->flags |= PMinSize | PMaxSize;
+		size_hints->min_width = size_hints->max_width = w;
+		size_hints->min_height = size_hints->max_height = h;
+		XSetWMNormalHints(xfc->display, xfc->window->handle, size_hints);
+		XResizeWindow(xfc->display, xfc->window->handle, w, h);
+
+		XFree(size_hints);
+	}
+}
+
+void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale)
 {
 #ifdef WITH_XRENDER
 	XTransform transform;
@@ -98,6 +145,7 @@ void xf_draw_screen_scaled(xfContext* xfc)
 	Picture primaryPicture;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat* picFormat;
+	XRectangle xr;
 
 	picFormat = XRenderFindStandardFormat(xfc->display, PictStandardRGB24);
 	pa.subwindow_mode = IncludeInferiors;
@@ -114,11 +162,38 @@ void xf_draw_screen_scaled(xfContext* xfc)
 
 	transform.matrix[2][0] = XDoubleToFixed(0);
 	transform.matrix[2][1] = XDoubleToFixed(0);
-	transform.matrix[2][2] = XDoubleToFixed(xfc->scale);
+	transform.matrix[2][2] = XDoubleToFixed(xfc->settings->ScalingFactor);
+
+	if( (w != 0) && (h != 0) )
+	{
+
+		if(scale == TRUE)
+		{
+			xr.x = x * xfc->settings->ScalingFactor;
+			xr.y = y * xfc->settings->ScalingFactor;
+			xr.width = (w+1) * xfc->settings->ScalingFactor;
+			xr.height = (h+1) * xfc->settings->ScalingFactor;
+		}
+		else
+		{
+			xr.x = x;
+			xr.y = y;
+			xr.width = w;
+			xr.height = h;
+		}
+
+		XRenderSetPictureClipRectangles(xfc->display, primaryPicture, 0, 0, &xr, 1);
+	}
 
 	XRenderSetPictureTransform(xfc->display, primaryPicture, &transform);
-	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, 0, 0, xfc->currentWidth, xfc->currentHeight);
+
+	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfc->offset_x, xfc->offset_y, xfc->currentWidth, xfc->currentHeight);
+
+	XRenderFreePicture(xfc->display, primaryPicture);
+	XRenderFreePicture(xfc->display, windowPicture);
+
 #endif
+
 }
 
 void xf_sw_begin_paint(rdpContext* context)
@@ -153,9 +228,9 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-			if (xfc->scale != 1.0)
+			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
-				xf_draw_screen_scaled(xfc);
+				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 			}
 			else
 			{
@@ -184,12 +259,13 @@ void xf_sw_end_paint(rdpContext* context)
 				y = cinvalid[i].y;
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
-
+				
+				//combine xfc->primary with xfc->image
 				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-				if (xfc->scale != 1.0)
+				if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 				{
-					xf_draw_screen_scaled(xfc);
+					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 				}
 				else
 				{
@@ -271,12 +347,12 @@ void xf_hw_end_paint(rdpContext* context)
 			y = xfc->hdc->hwnd->invalid->y;
 			w = xfc->hdc->hwnd->invalid->w;
 			h = xfc->hdc->hwnd->invalid->h;
-
+			
 			xf_lock_x11(xfc, FALSE);
 
-			if (xfc->scale != 1.0)
+			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
-				xf_draw_screen_scaled(xfc);
+				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 			}
 			else
 			{
@@ -305,10 +381,10 @@ void xf_hw_end_paint(rdpContext* context)
 				y = cinvalid[i].y;
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
-
-				if (xfc->scale != 1.0)
+				
+				if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 				{
-					xf_draw_screen_scaled(xfc);
+					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 				}
 				else
 				{
@@ -666,8 +742,11 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	channels = instance->context->channels;
 
-	instance->OnChannelConnected = xf_on_channel_connected;
-	instance->OnChannelDisconnected = xf_on_channel_disconnected;
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+			(pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
+
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
 	freerdp_client_load_addins(channels, instance->settings);
 
@@ -829,7 +908,10 @@ BOOL xf_post_connect(freerdp* instance)
 	xfc->originalHeight = settings->DesktopHeight;
 	xfc->currentWidth = xfc->originalWidth;
 	xfc->currentHeight = xfc->originalWidth;
-	xfc->scale = 1.0;
+	xfc->settings->ScalingFactor = 1.0;
+
+	xfc->offset_x = 0;
+	xfc->offset_y = 0;
 
 	xfc->width = settings->DesktopWidth;
 	xfc->height = settings->DesktopHeight;
@@ -1480,6 +1562,8 @@ void* xf_thread(void* param)
 	gdi_free(instance);
 
 	ExitThread(exit_code);
+
+	return NULL;
 }
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
@@ -1522,14 +1606,62 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 
 void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
 {
+
+	xfContext* xfc = (xfContext*) context;
+
 	switch (e->id)
 	{
-		case FreeRDP_ScalingFactor:
-			break;
+	case FreeRDP_ScalingFactor:
 
-		default:
-			break;
+		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
+		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
+
+		xf_transform_window(xfc);
+
+		{
+			ResizeWindowEventArgs e;
+
+			EventArgsInit(&e, "xfreerdp");
+			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
+			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+		}
+		xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+
+		break;
+
+	default:
+		break;
 	}
+}
+
+void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
+{
+	xfContext* xfc = (xfContext*) context;
+
+	xfc->settings->ScalingFactor += e->ScalingFactor;
+
+	if (xfc->settings->ScalingFactor > 1.2)
+		xfc->settings->ScalingFactor = 1.2;
+	if (xfc->settings->ScalingFactor < 0.8)
+		xfc->settings->ScalingFactor = 0.8;
+
+
+	xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
+	xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
+
+	xf_transform_window(xfc);
+
+	{
+		ResizeWindowEventArgs e;
+
+		EventArgsInit(&e, "xfreerdp");
+		e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+		e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
+		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+	}
+	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+
 }
 
 /**
@@ -1585,28 +1717,6 @@ int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-double freerdp_client_get_scale(rdpContext* context)
-{
-	xfContext* xfc = (xfContext*) context;
-	return xfc->scale;
-}
-
-void freerdp_client_reset_scale(rdpContext* context)
-{
-	ResizeWindowEventArgs e;
-	xfContext* xfc = (xfContext*) context;
-
-	xfc->scale = 1.0;
-	XResizeWindow(xfc->display, xfc->window->handle, xfc->originalWidth * xfc->scale, xfc->originalHeight * xfc->scale);
-
-	EventArgsInit(&e, "xfreerdp");
-	e.width = (int) xfc->originalWidth * xfc->scale;
-	e.height = (int) xfc->originalHeight * xfc->scale;
-	PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-
-	xf_draw_screen_scaled(xfc);
-}
-
 int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc;
@@ -1656,6 +1766,8 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
+	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
+
 
 	return 0;
 }

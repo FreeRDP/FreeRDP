@@ -25,6 +25,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
+#import "MRDPView.h"
 
 /**
  * Client Interface
@@ -46,6 +47,13 @@ int mfreerdp_client_start(rdpContext* context)
 	MRDPView* view;
 	mfContext* mfc = (mfContext*) context;
 
+    if (mfc->view == NULL)
+    {
+        // view not specified beforehand. Create view dynamically
+        mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, context->settings->DesktopWidth, context->settings->DesktopHeight)];
+        mfc->view_ownership = TRUE;
+    }
+
 	view = (MRDPView*) mfc->view;
 	[view rdpStart:context];
 
@@ -60,19 +68,33 @@ int mfreerdp_client_stop(rdpContext* context)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(queue, 0);
+        if (queue)
+        {
+            MessageQueue_PostQuit(queue, 0);
+        }
 	}
 
 	if (context->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(queue, 0);
-	}
+        if (queue)
+        {
+            MessageQueue_PostQuit(queue, 0);
+        }
+    }
 	else
 	{
 		mfc->disconnect = TRUE;
 	}
+
+    if (mfc->view_ownership)
+    {
+        MRDPView* view = (MRDPView*) mfc->view;
+        [view releaseResources];
+        [view release];
+        mfc->view = nil;
+    }
 
 	return 0;
 }
@@ -84,7 +106,12 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	mfc = (mfContext*) instance->context;
 
-	context->channels = freerdp_channels_new();
+    context->instance->PreConnect = mac_pre_connect;
+    context->instance->PostConnect = mac_post_connect;
+    context->instance->ReceiveChannelData = mac_receive_channel_data;
+    context->instance->Authenticate = mac_authenticate;
+
+    context->channels = freerdp_channels_new();
 
 	settings = instance->settings;
 

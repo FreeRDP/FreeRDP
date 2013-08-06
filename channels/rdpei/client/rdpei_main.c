@@ -212,7 +212,7 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
 
 	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, RDPINPUT_PROTOCOL_V1); /* protocolVersion (4 bytes) */
+	Stream_Write_UINT32(s, RDPINPUT_PROTOCOL_V10); /* protocolVersion (4 bytes) */
 	Stream_Write_UINT16(s, rdpei->maxTouchContacts); /* maxTouchContacts (2 bytes) */
 
 	Stream_SealLength(s);
@@ -249,6 +249,7 @@ void rdpei_print_contact_flags(UINT32 contactFlags)
 int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
 	int index;
+	int rectSize = 2;
 	RDPINPUT_CONTACT_DATA* contact;
 
 #ifdef WITH_DEBUG_RDPEI
@@ -264,11 +265,17 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	 */
 	rdpei_write_8byte_unsigned(s, frame->frameOffset * 1000); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
 
-	Stream_EnsureRemainingCapacity(s, frame->contactCount * 32);
+	Stream_EnsureRemainingCapacity(s, frame->contactCount * 64);
 
 	for (index = 0; index < frame->contactCount; index++)
 	{
 		contact = &frame->contacts[index];
+
+		contact->fieldsPresent |= CONTACT_DATA_CONTACTRECT_PRESENT;
+		contact->contactRectLeft = contact->x - rectSize;
+		contact->contactRectTop = contact->y - rectSize;
+		contact->contactRectRight = contact->x + rectSize;
+		contact->contactRectBottom = contact->y + rectSize;
 
 #ifdef WITH_DEBUG_RDPEI
 		printf("contact[%d].contactId: %d\n", index, contact->contactId);
@@ -325,7 +332,7 @@ int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_
 	wStream* s;
 	UINT32 pduLength;
 
-	pduLength = 64 + (frame->contactCount * 32);
+	pduLength = 64 + (frame->contactCount * 64);
 
 	s = Stream_New(NULL, pduLength);
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
@@ -355,11 +362,13 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
 
-	if (protocolVersion != RDPINPUT_PROTOCOL_V1)
+#if 0
+	if (protocolVersion != RDPINPUT_PROTOCOL_V10)
 	{
 		fprintf(stderr, "Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
 		return -1;
 	}
+#endif
 
 	return 0;
 }

@@ -1,8 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2012 Atrust corp.
-# Copyright 2012 Alfred Liu <alfred.liu@atruscorp.com>
+# Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,39 +15,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client_subsystem("urbdrc" "libusb" "")
+define_channel_client("disp")
 
 set(${MODULE_PREFIX}_SRCS
-	libusb_udevman.c
-	libusb_udevice.c
-	libusb_udevice.h
-	request_queue.c
-	request_queue.h)
+	disp_main.c
+	disp_main.h)
 
 include_directories(..)
 
-find_package(libusb-1.0 REQUIRED)
-
-add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT})
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-    ${DBUS_GLIB_LIBRARIES}
-    ${UUID_LIBRARIES}
-    ${LIBUSB_1_LIBRARIES}
-    )
-
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-common freerdp-utils)
+	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-utils)
+	MODULES winpr-sysinfo)	
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
 endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+

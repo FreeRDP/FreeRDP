@@ -31,6 +31,12 @@
 
 #ifndef _WIN32
 
+/**
+ * TODO: EnterCriticalSection allows recursive calls from the same thread.
+ *       Implement this using pthreads (see PTHREAD_MUTEX_RECURSIVE_NP)
+ *       http://msdn.microsoft.com/en-us/library/windows/desktop/ms682608%28v=vs.85%29.aspx
+ */
+
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	if (lpCriticalSection)
@@ -44,60 +50,65 @@ VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		lpCriticalSection->OwningThread = NULL;
 		lpCriticalSection->LockSemaphore = NULL;
 
-		lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
-#if defined __APPLE__
-		semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 1);
-#else
-		sem_init(lpCriticalSection->LockSemaphore, 0, 1);
-#endif
+		lpCriticalSection->LockSemaphore = malloc(sizeof(pthread_mutex_t));
+		pthread_mutex_init(lpCriticalSection->LockSemaphore, NULL);
 	}
 }
 
 BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
 {
-	return TRUE;
+	if (Flags != 0) {
+		 fprintf(stderr, "warning: InitializeCriticalSectionEx Flags unimplemented\n");
+	}
+	return InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount);
 }
 
 BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
 {
+	InitializeCriticalSection(lpCriticalSection);
+	SetCriticalSectionSpinCount(lpCriticalSection, dwSpinCount);
 	return TRUE;
 }
 
 DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)
 {
-	return 0;
+	DWORD dwPreviousSpinCount = lpCriticalSection->SpinCount;
+	lpCriticalSection->SpinCount = dwSpinCount;
+	return dwPreviousSpinCount;
 }
 
 VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-#if defined __APPLE__
-	semaphore_wait(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
-#else
-	sem_wait((winpr_sem_t*) lpCriticalSection->LockSemaphore);
+	/**
+	 * Linux NPTL thread synchronization primitives are implemented using
+	 * the futex system calls ... no need for performing a trylock loop.
+	 */
+#if !defined(__linux__)
+	ULONG spin = lpCriticalSection->SpinCount;
+	while (spin--)
+	{
+		if (pthread_mutex_trylock((pthread_mutex_t*)lpCriticalSection->LockSemaphore) == 0)
+			return;
+		pthread_yield();
+	}
 #endif
+	pthread_mutex_lock((pthread_mutex_t*)lpCriticalSection->LockSemaphore);
 }
 
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	return TRUE;
+	return (pthread_mutex_trylock((pthread_mutex_t*)lpCriticalSection->LockSemaphore) == 0 ? TRUE : FALSE);
 }
 
 VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-#if defined __APPLE__
-	semaphore_signal(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
-#else
-	sem_post((winpr_sem_t*) lpCriticalSection->LockSemaphore);
-#endif
+	pthread_mutex_unlock((pthread_mutex_t*)lpCriticalSection->LockSemaphore);
 }
 
 VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-#if defined __APPLE__
-	semaphore_destroy(mach_task_self(), *((winpr_sem_t*) lpCriticalSection->LockSemaphore));
-#else
-	sem_destroy((winpr_sem_t*) lpCriticalSection->LockSemaphore);
-#endif
+	pthread_mutex_destroy((pthread_mutex_t*)lpCriticalSection->LockSemaphore);
+	free(lpCriticalSection->LockSemaphore);
 }
 
 #endif

@@ -562,12 +562,12 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->PlayRemoteFx;
 			break;
 
-		case FreeRDP_GatewayUsageMethod:
-			return settings->GatewayUsageMethod;
-			break;
-
 		case FreeRDP_GatewayUseSameCredentials:
 			return settings->GatewayUseSameCredentials;
+			break;
+
+		case FreeRDP_GatewayEnabled:
+			return settings->GatewayEnabled;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:
@@ -1017,12 +1017,12 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->PlayRemoteFx = param;
 			break;
 
-		case FreeRDP_GatewayUsageMethod:
-			settings->GatewayUsageMethod = param;
-			break;
-
 		case FreeRDP_GatewayUseSameCredentials:
 			settings->GatewayUseSameCredentials = param;
+			break;
+
+		case FreeRDP_GatewayEnabled:
+			settings->GatewayEnabled = param;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:
@@ -1417,6 +1417,10 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->PercentScreen;
 			break;
 
+		case FreeRDP_GatewayUsageMethod:
+			return settings->GatewayUsageMethod;
+			break;
+
 		case FreeRDP_GatewayPort:
 			return settings->GatewayPort;
 			break;
@@ -1734,6 +1738,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_PercentScreen:
 			settings->PercentScreen = param;
+			break;
+
+		case FreeRDP_GatewayUsageMethod:
+			settings->GatewayUsageMethod = param;
 			break;
 
 		case FreeRDP_GatewayPort:
@@ -2323,3 +2331,4 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 
 	return 0;
 }
+

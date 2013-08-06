@@ -35,7 +35,8 @@
 
 /* Protocol Version */
 
-#define RDPINPUT_PROTOCOL_V1				0x00010000
+#define RDPINPUT_PROTOCOL_V10				0x00010000
+#define RDPINPUT_PROTOCOL_V101				0x00010001
 
 /* Client Ready Flags */
 

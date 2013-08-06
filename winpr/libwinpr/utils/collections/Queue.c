@@ -47,18 +47,18 @@ int Queue_Count(wQueue* queue)
  * Lock access to the ArrayList
  */
 
-BOOL Queue_Lock(wQueue* queue)
+void Queue_Lock(wQueue* queue)
 {
-	return (WaitForSingleObject(queue->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
+	EnterCriticalSection(&queue->lock);
 }
 
 /**
  * Unlock access to the ArrayList
  */
 
-BOOL Queue_Unlock(wQueue* queue)
+void Queue_Unlock(wQueue* queue)
 {
-	return ReleaseMutex(queue->mutex);
+	LeaveCriticalSection(&queue->lock);
 }
 
 /**
@@ -83,7 +83,7 @@ void Queue_Clear(wQueue* queue)
 	int index;
 
 	if (queue->synchronized)
-		WaitForSingleObject(queue->mutex, INFINITE);
+		EnterCriticalSection(&queue->lock);
 
 	for (index = queue->head; index != queue->tail; index = (index + 1) % queue->capacity)
 	{
@@ -97,7 +97,7 @@ void Queue_Clear(wQueue* queue)
 	queue->head = queue->tail = 0;
 
 	if (queue->synchronized)
-		ReleaseMutex(queue->mutex);
+		LeaveCriticalSection(&queue->lock);
 }
 
 /**
@@ -110,7 +110,7 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 	BOOL found = FALSE;
 
 	if (queue->synchronized)
-		WaitForSingleObject(queue->mutex, INFINITE);
+		EnterCriticalSection(&queue->lock);
 
 	for (index = 0; index < queue->tail; index++)
 	{
@@ -122,7 +122,7 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 	}
 
 	if (queue->synchronized)
-		ReleaseMutex(queue->mutex);
+		LeaveCriticalSection(&queue->lock);
 
 	return found;
 }
@@ -134,7 +134,7 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 void Queue_Enqueue(wQueue* queue, void* obj)
 {
 	if (queue->synchronized)
-		WaitForSingleObject(queue->mutex, INFINITE);
+		EnterCriticalSection(&queue->lock);
 
 	if (queue->size == queue->capacity)
 	{
@@ -162,7 +162,7 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 	SetEvent(queue->event);
 
 	if (queue->synchronized)
-		ReleaseMutex(queue->mutex);
+		LeaveCriticalSection(&queue->lock);
 }
 
 /**
@@ -174,7 +174,7 @@ void* Queue_Dequeue(wQueue* queue)
 	void* obj = NULL;
 
 	if (queue->synchronized)
-		WaitForSingleObject(queue->mutex, INFINITE);
+		EnterCriticalSection(&queue->lock);
 
 	if (queue->size > 0)
 	{
@@ -188,7 +188,7 @@ void* Queue_Dequeue(wQueue* queue)
 		ResetEvent(queue->event);
 
 	if (queue->synchronized)
-		ReleaseMutex(queue->mutex);
+		LeaveCriticalSection(&queue->lock);
 
 	return obj;
 }
@@ -202,13 +202,13 @@ void* Queue_Peek(wQueue* queue)
 	void* obj = NULL;
 
 	if (queue->synchronized)
-		WaitForSingleObject(queue->mutex, INFINITE);
+		EnterCriticalSection(&queue->lock);
 
 	if (queue->size > 0)
 		obj = queue->array[queue->head];
 
 	if (queue->synchronized)
-		ReleaseMutex(queue->mutex);
+		LeaveCriticalSection(&queue->lock);
 
 	return obj;
 }
@@ -243,7 +243,7 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
 		ZeroMemory(queue->array, sizeof(void*) * queue->capacity);
 
-		queue->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&queue->lock);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		ZeroMemory(&queue->object, sizeof(wObject));
@@ -257,7 +257,7 @@ void Queue_Free(wQueue* queue)
 	Queue_Clear(queue);
 
 	CloseHandle(queue->event);
-	CloseHandle(queue->mutex);
+	DeleteCriticalSection(&queue->lock);
 	free(queue->array);
 	free(queue);
 }

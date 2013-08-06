@@ -32,6 +32,7 @@
 #include "xf_input.h"
 
 #include "xf_event.h"
+#include "xf_input.h"
 
 const char* const X11_EVENT_STRINGS[] =
 {
@@ -88,39 +89,40 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
-
+	
 	x = event->xexpose.x;
 	y = event->xexpose.y;
 	w = event->xexpose.width;
 	h = event->xexpose.height;
-
+	
 	if (!app)
 	{
-		if (xfc->scale != 1.0)
+		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
-			xf_draw_screen_scaled(xfc);
-		}
-		else
+			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
+					      y - xfc->offset_y, w, h, FALSE);
+		} else
 		{
 			XCopyArea(xfc->display, xfc->primary,
-					xfc->window->handle, xfc->gc, x, y, w, h, x, y);
+				  xfc->window->handle, xfc->gc, x, y, w,
+				  h, x, y);
 		}
-	}
-	else
+	} else
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
 		rdpRail* rail = ((rdpContext*) xfc)->rail;
-
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
-
-		if (window != NULL)
+		
+		window = window_list_get_by_extra_id(rail->list,
+						     (void*) event->xexpose.window);
+		
+		if (window != NULL )
 		{
 			xfw = (xfWindow*) window->extra;
 			xf_UpdateWindowArea(xfc, xfw, x, y, w, h);
 		}
 	}
-
+	
 	return TRUE;
 }
 
@@ -156,12 +158,12 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 			RootWindowOfScreen(xfc->screen),
 			x, y, &x, &y, &childWindow);
 	}
-
-	if (xfc->scale != 1.0)
+	
+	/* Take scaling in to consideration */
+	if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 	{
-		/* Take scaling in to consideration */
-		x = (int) (x * (1.0 / xfc->scale));
-		y = (int) (y * (1.0 / xfc->scale));
+		x = (int)((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor) );
+		y = (int)((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor) );
 	}
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
@@ -176,6 +178,9 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 static BOOL xf_event_MotionNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_MotionNotify(xfc, event->xmotion.x, event->xmotion.y,
 			event->xmotion.state, event->xmotion.window, app);
 }
@@ -257,13 +262,16 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 				XTranslateCoordinates(xfc->display, window,
 					RootWindowOfScreen(xfc->screen),
 					x, y, &x, &y, &childWindow);
+
 			}
 
-			if (xfc->scale != 1.0)
+			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x)
+			    || (xfc->offset_y))
 			{
-				/* Take scaling in to consideration */
-				x = (int) (x * (1.0 / xfc->scale));
-				y = (int) (y * (1.0 / xfc->scale));
+				x = (int) ((x - xfc->offset_x)
+					   * (1.0 / xfc->settings->ScalingFactor));
+				y = (int) ((y - xfc->offset_y)
+					   * (1.0 / xfc->settings->ScalingFactor));
 			}
 
 			if (extended)
@@ -278,6 +286,9 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 static BOOL xf_event_ButtonPress(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_ButtonPress(xfc, event->xbutton.x, event->xbutton.y,
 			event->xbutton.button, event->xbutton.window, app);
 }
@@ -289,6 +300,7 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 	BOOL extended;
 	rdpInput* input;
 	Window childWindow;
+
 
 	flags = 0;
 	wheel = FALSE;
@@ -343,11 +355,11 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 				x, y, &x, &y, &childWindow);
 		}
 
-		if (xfc->scale != 1.0)
+		
+		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
-			/* Take scaling in to consideration */
-			x = (int) (x * (1.0 / xfc->scale));
-			y = (int) (y * (1.0 / xfc->scale));
+			x = (int) ((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor));
+			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor));
 		}
 
 		if (extended)
@@ -361,6 +373,9 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
+	if (xfc->use_xinput)
+		return TRUE;
+
 	return xf_generic_ButtonRelease(xfc, event->xbutton.x, event->xbutton.y,
 			event->xbutton.button, event->xbutton.window, app);
 }
@@ -542,15 +557,18 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
         rdpWindow* window;
         rdpRail* rail = ((rdpContext*) xfc)->rail;
 
+
+/*	This is for resizing the window by dragging the border
+
 	if (xfc->width != event->xconfigure.width)
 	{
-		xfc->scale = (double) event->xconfigure.width / (double) xfc->originalWidth;
+		xfc->settings->ScalingFactor = (double) event->xconfigure.width / (double) xfc->originalWidth;
 		xfc->currentWidth = event->xconfigure.width;
 		xfc->currentHeight = event->xconfigure.width;
 
 		xf_draw_screen_scaled(xfc);
 	}
-
+*/
         window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
         if (window != NULL)
@@ -567,6 +585,9 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
                 XTranslateCoordinates(xfc->display, xfw->handle, 
 			RootWindowOfScreen(xfc->screen),
                         0, 0, &xfw->left, &xfw->top, &childWindow);
+
+
+
 
                 xfw->width = event->xconfigure.width;
                 xfw->height = event->xconfigure.height;
@@ -926,7 +947,6 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		case MotionNotify:
 			status = xf_event_MotionNotify(xfc, event, xfc->remote_app);
 			break;
-
 		case ButtonPress:
 			status = xf_event_ButtonPress(xfc, event, xfc->remote_app);
 			break;
@@ -1003,6 +1023,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		case PropertyNotify:
 			status = xf_event_PropertyNotify(xfc, event, xfc->remote_app);
 			break;
+
 	}
 
 	xf_input_handle_event(xfc, event);

@@ -84,7 +84,7 @@ BOOL Stack_Contains(wStack* stack, void* obj)
 void Stack_Push(wStack* stack, void* obj)
 {
 	if (stack->synchronized)
-		WaitForSingleObject(stack->mutex, INFINITE);
+		EnterCriticalSection(&stack->lock);
 
 	if ((stack->size + 1) >= stack->capacity)
 	{
@@ -95,7 +95,7 @@ void Stack_Push(wStack* stack, void* obj)
 	stack->array[(stack->size)++] = obj;
 
 	if (stack->synchronized)
-		ReleaseMutex(stack->mutex);
+		LeaveCriticalSection(&stack->lock);
 }
 
 /**
@@ -107,13 +107,13 @@ void* Stack_Pop(wStack* stack)
 	void* obj = NULL;
 
 	if (stack->synchronized)
-		WaitForSingleObject(stack->mutex, INFINITE);
+		EnterCriticalSection(&stack->lock);
 
 	if (stack->size > 0)
 		obj = stack->array[--(stack->size)];
 
 	if (stack->synchronized)
-		ReleaseMutex(stack->mutex);
+		LeaveCriticalSection(&stack->lock);
 
 	return obj;
 }
@@ -127,13 +127,13 @@ void* Stack_Peek(wStack* stack)
 	void* obj = NULL;
 
 	if (stack->synchronized)
-		WaitForSingleObject(stack->mutex, INFINITE);
+		EnterCriticalSection(&stack->lock);
 
 	if (stack->size > 0)
 		obj = stack->array[stack->size];
 
 	if (stack->synchronized)
-		ReleaseMutex(stack->mutex);
+		LeaveCriticalSection(&stack->lock);
 
 	return obj;
 }
@@ -153,7 +153,7 @@ wStack* Stack_New(BOOL synchronized)
 		stack->synchronized = synchronized;
 
 		if (stack->synchronized)
-			stack->mutex = CreateMutex(NULL, FALSE, NULL);
+			InitializeCriticalSection(&stack->lock);
 
 		stack->size = 0;
 		stack->capacity = 32;
@@ -168,7 +168,7 @@ void Stack_Free(wStack* stack)
 	if (stack)
 	{
 		if (stack->synchronized)
-			CloseHandle(stack->mutex);
+			DeleteCriticalSection(&stack->lock);
 
 		free(stack->array);
 
