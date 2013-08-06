@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FreeRDP: A Remote Desktop Protocol Client
  * Time Zone Redirection Table Generator
  *
