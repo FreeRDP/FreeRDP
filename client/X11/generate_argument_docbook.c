@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 
 	/* The tag used as header in the manpage */
 	fprintf(fp, "<refsect1>\n");
-	fprintf(fp, "\t<title>Syntax</title>\n");
+	fprintf(fp, "\t<title>Options</title>\n");
 	fprintf(fp, "\t\t<variablelist>\n");
 
 	/* Iterate over argument struct and write data to docbook 4.5 
