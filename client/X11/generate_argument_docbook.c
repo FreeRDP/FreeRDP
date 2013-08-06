@@ -155,9 +155,9 @@ int main(int argc, char *argv[])
 
 		fprintf(fp, "\t\t\t<varlistentry>\n");
 		if( COMMAND_LINE_VALUE_REQUIRED == arg->Flags )
-			fprintf(fp, "\t\t\t\t<term>/%s %s</term>\n", tr_esc_str(arg->Name), tr_esc_str(arg->Format) );
+			fprintf(fp, "\t\t\t\t<term><option>/%s</option> <replaceable>%s</replaceable></term>\n", tr_esc_str(arg->Name), tr_esc_str(arg->Format) );
 		else
-			fprintf(fp, "\t\t\t\t<term>/%s</term>\n", tr_esc_str(arg->Name) );
+			fprintf(fp, "\t\t\t\t<term><option>/%s</option></term>\n", tr_esc_str(arg->Name) );
 		fprintf(fp, "\t\t\t\t<listitem>\n");
 		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str(arg->Text));
 		

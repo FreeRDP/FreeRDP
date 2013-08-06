@@ -2,87 +2,87 @@
 	<title>Examples</title>
 	<variablelist>
 		<varlistentry>
-			<term>xfreerdp connection.rdp /p:Pwd123! /f</term>
+			<term><command>xfreerdp connection.rdp /p:Pwd123! /f</command></term>
 			<listitem>
-				<para>Connect in fullscreen mode using a stored configuration <varname>connection.rdp</varname> and the password <varname>Pwd123!</varname></para>
+				<para>Connect in fullscreen mode using a stored configuration <replaceable>connection.rdp</replaceable> and the password <replaceable>Pwd123!</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com</term>
+			<term><command>xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com</command></term>
 			<listitem>
-				<para>Connect to host <varname>rdp.contoso.com</varname> with user <varname>CONTOSO\\JohnDoe</varname> and password <varname>Pwd123!</varname></para>
+				<para>Connect to host <replaceable>rdp.contoso.com</replaceable> with user <replaceable>CONTOSO\\JohnDoe</replaceable> and password <replaceable>Pwd123!</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489</term>
+			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489</command></term>
 			<listitem>
-				<para>Connect to host <varname>192.168.1.100</varname> on port <varname>4489</varname> with user <varname>JohnDoe</varname>, password <varname>Pwd123!</varname>. The screen width is set to <varname>1366</varname> and the height to <varname>768</varname></para>
+				<para>Connect to host <replaceable>192.168.1.100</replaceable> on port <replaceable>4489</replaceable> with user <replaceable>JohnDoe</replaceable>, password <replaceable>Pwd123!</replaceable>. The screen width is set to <replaceable>1366</replaceable> and the height to <replaceable>768</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168. 1.100</term>
+			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168. 1.100</command></term>
 			<listitem>
-				<para>Establish a connection to host <varname>192.168.1.100</varname> with user <varname>JohnDoe</varname>, password <varname>Pwd123!</varname> and connect to Hyper-V console (use port 2179, disable negotiation) with VMID <varname>C824F53E-95D2-46C6-9A18-23A5BB403532</varname></para>
+				<para>Establish a connection to host <replaceable>192.168.1.100</replaceable> with user <replaceable>JohnDoe</replaceable>, password <replaceable>Pwd123!</replaceable> and connect to Hyper-V console (use port 2179, disable negotiation) with VMID <replaceable>C824F53E-95D2-46C6-9A18-23A5BB403532</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>+clipboard</term>
+			<term><command>+clipboard</command></term>
 			<listitem>
 				<para>Activate clipboard redirection</para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/drive:home,/home/user</term>
+			<term><command>/drive:home,/home/user</command></term>
 			<listitem>
-				<para>Activate drive redirection of <varname>/home/user</varname> as home drive</para>
+				<para>Activate drive redirection of <replaceable>/home/user</replaceable> as home drive</para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/smartcard:&lt;device&gt;</term>
+			<term><command>/smartcard:&lt;device&gt;</command></term>
 			<listitem>
-				<para>Activate smartcard redirection for device <varname>device</varname></para>
+				<para>Activate smartcard redirection for device <replaceable>device</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/printer:&lt;device&gt;,&lt;driver&gt;</term>
+			<term><command>/printer:&lt;device&gt;,&lt;driver&gt;</command></term>
 			<listitem>
-				<para>Activate printer redirection for printer <varname>device</varname> using driver <varname>driver</varname></para>
+				<para>Activate printer redirection for printer <replaceable>device</replaceable> using driver <replaceable>driver</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/serial:&lt;device&gt;</term>
+			<term><command>/serial:&lt;device&gt;</command></term>
 			<listitem>
-				<para>Activate serial port redirection for port <varname>device</varname></para>
+				<para>Activate serial port redirection for port <replaceable>device</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/parallel:&lt;device&gt;</term>
+			<term><command>/parallel:&lt;device&gt;</command></term>
 			<listitem>
-				<para>Activate parallel port redirection for port <varname>device</varname></para>
+				<para>Activate parallel port redirection for port <replaceable>device</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/sound:sys:alsa</term>
+			<term><command>/sound:sys:alsa</command></term>
 			<listitem>
-				<para>Activate audio output redirection using device <varname>sys:alsa</varname></para>
+				<para>Activate audio output redirection using device <replaceable>sys:alsa</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/microphone:sys:alsa</term>
+			<term><command>/microphone:sys:alsa</command></term>
 			<listitem>
-				<para>Activate audio input redirection using device <varname>sys:alsa</varname></para>
+				<para>Activate audio input redirection using device <replaceable>sys:alsa</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/multimedia:sys:alsa</term>
+			<term><command>/multimedia:sys:alsa</command></term>
 			<listitem>
-				<para>Activate multimedia redirection using device <varname>sys:alsa</varname></para>
+				<para>Activate multimedia redirection using device <replaceable>sys:alsa</replaceable></para>
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>/usb:id,dev:054c:0268</term>
+			<term><command>/usb:id,dev:054c:0268</command></term>
 			<listitem>
-				<para>Activate USB device redirection for the device identified by <varname>054c:0268</varname></para>
+				<para>Activate USB device redirection for the device identified by <replaceable>054c:0268</replaceable></para>
 			</listitem>
 		</varlistentry>
 	</variablelist>
