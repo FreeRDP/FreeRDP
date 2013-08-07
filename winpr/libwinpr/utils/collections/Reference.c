@@ -154,7 +154,7 @@ wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_
 		ZeroMemory(referenceTable->array, sizeof(wReference) * referenceTable->size);
 
 		referenceTable->synchronized = synchronized;
-		InitializeCriticalSection(&referenceTable->lock);
+		InitializeCriticalSectionAndSpinCount(&referenceTable->lock, 4000);
 	}
 
 	return referenceTable;

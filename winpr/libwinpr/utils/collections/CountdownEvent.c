@@ -158,7 +158,7 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 	{
 		countdown->count = initialCount;
 		countdown->initialCount = initialCount;
-		InitializeCriticalSection(&countdown->lock);
+		InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000);
 		countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (countdown->count == 0)

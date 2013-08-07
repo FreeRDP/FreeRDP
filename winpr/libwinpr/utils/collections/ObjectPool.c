@@ -119,7 +119,7 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			InitializeCriticalSection(&pool->lock);
+			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
 		pool->size = 0;
 		pool->capacity = 32;
