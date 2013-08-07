@@ -18,7 +18,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-pipe winpr-synch winpr-thread winpr-error winpr-utils)
+	MODULES winpr-pipe winpr-io winpr-synch winpr-thread winpr-error winpr-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
