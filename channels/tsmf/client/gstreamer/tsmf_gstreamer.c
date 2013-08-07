@@ -102,6 +102,12 @@ const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
 const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
 const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
 
+/* Template filenames for gstreamer sync, the actual file
+ * name will be determined when opened with mkstemp */
+static char tsmf_vseek[] = "/tmp/tsmf_vseek.info.XXXXXX";
+static char tsmf_aseek[] = "/tmp/tsmf_aseek.info.XXXXXX";
+static char tsmf_video[] = "/tmp/tsmf_video.ready.XXXXXX";
+
 static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
 {
 	/* 
@@ -1198,9 +1204,9 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			*/
 			FILE *fout = NULL;
 			if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-				fout = fopen("/tmp/tsmf_vseek.info", "wt");
+				fout = mkstemp(tsmf_vseek);
 			else
-				fout = fopen("/tmp/tsmf_aseek.info", "wt");
+				fout = mkstemp(tsmf_aseek);
 
 			if (fout)
 			{
@@ -1223,10 +1229,10 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
 		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 		{
-			FILE *fout = fopen("/tmp/tsmf_video.ready", "wt");
+			FILE *fout = mkstemp(tsmf_video);
 			if (fout)
 				fclose(fout);
-			FILE *fin = fopen("/tmp/tsmf_aseek.info", "rt");
+			FILE *fin = fopen(tsmf_aseek, "rt");
 			if (fin)
 			{
 				UINT64 AStartTime = 0;
@@ -1237,13 +1243,13 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 					UINT64 streamDelay = (start_time - AStartTime) / 10;
 					usleep(streamDelay);
 				}
-				unlink("/tmp/tsmf_aseek.info");
+				unlink(tsmf_aseek);
 			}
 		}
 		else if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
 		{
 			int timeout = 0;
-			FILE *fin = fopen("/tmp/tsmf_video.ready", "rt");
+			FILE *fin = fopen(tsmf_video, "rt");
 			while (fin == NULL)
 			{
 				timeout++;
@@ -1251,16 +1257,16 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 				//wait up to 1.5 second
 				if (timeout >= 1500)
 					break;
-				fin = fopen("/tmp/tsmf_video.ready", "rt");
+				fin = fopen(tsmf_video, "rt");
 			}
 			if (fin)
 			{
 				fclose(fin);
-				unlink("/tmp/tsmf_video.ready");
+				unlink(tsmf_video);
 				fin = NULL;
 			}
 
-			fin = fopen("/tmp/tsmf_vseek.info", "rt");
+			fin = fopen(tsmf_vseek, "rt");
 			if (fin)
 			{
 				UINT64 VStartTime = 0;
@@ -1271,7 +1277,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 					UINT64 streamDelay = (start_time - VStartTime) / 10;
 					usleep(streamDelay);
 				}
-				unlink("/tmp/tsmf_vseek.info");
+				unlink(tsmf_vseek);
 			}
 		}
 	}
@@ -1458,9 +1464,9 @@ static void tsmf_gstreamer_free(ITSMFDecoder * decoder)
 		if (mdecoder->disp)
 			XCloseDisplay(mdecoder->disp);
 
-		unlink("/tmp/tsmf_aseek.info");
-		unlink("/tmp/tsmf_vseek.info");
-		unlink("/tmp/tsmf_video.ready");
+		unlink(tsmf_aseek);
+		unlink(tsmf_vseek);
+		unlink(tsmf_video);
 
 		pthread_mutex_unlock(&mdecoder->gst_mutex);
 		free(mdecoder);

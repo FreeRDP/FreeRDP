@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,6 +56,9 @@
 #include "tsmf_media.h"
 
 #include <pthread.h>
+#include <sys/mman.h>
+#include <sys/stat.h>        /* For mode constants */
+#include <fcntl.h>           /* For O_* constants */
 
 #define AUDIO_TOLERANCE 10000000LL
 
@@ -260,16 +265,62 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
+	const size_t shm_size = 100;
 	TSMF_PRESENTATION* presentation;
 	pthread_t thid = pthread_self();
 	FILE* fout = NULL;
-	fout = fopen("/tmp/tsmf.tid", "wt");
-	
-	if (fout)
+	char tsmf_tid[32];
+	int fd;
+
+	snprintf(tsmf_tid, sizeof(tsmf_tid), "/tsmf.tid.%08X", getpid());
+	fd = shm_open(tsmf_tid, O_RDWR | O_CREAT | O_EXCL, (S_IREAD | S_IWRITE));
+	if( ( fd < 0 ) && ( EEXIST == errno ) )
 	{
-		fprintf(fout, "%d\n", (int) (size_t) thid);
-		fclose(fout);
+		if(shm_unlink(tsmf_tid))
+		{
+			DEBUG_WARN("shm_unlink for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+			return NULL;
+		}
+	
+		fd = shm_open(tsmf_tid, O_RDWR | O_CREAT | O_EXCL, (S_IREAD | S_IWRITE));
 	}
+
+	if( fd < 0 )
+	{
+		DEBUG_WARN("shm_open for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		return NULL;
+	}
+
+	if(ftruncate(fd, shm_size))
+	{
+		DEBUG_WARN("ftruncate for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+
+	if(NULL == mmap( 0, shm_size, PROT_READ | PROT_WRITE,
+				            MAP_PRIVATE, fd, 0 ))
+	{
+		DEBUG_WARN("mmap for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+
+	fout = fdopen(fd, "wt");
+	if (NULL == fout)
+	{
+		DEBUG_WARN("fdopen for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+	
+	fprintf(fout, "%d\n", (int) (size_t) thid);
+	fclose(fout);
 
 	presentation = tsmf_presentation_find_by_id(guid);
 
@@ -1115,6 +1166,9 @@ static void tsmf_signal_handler(int s)
 	TSMF_PRESENTATION* presentation;
 	LIST_ITEM* s_item;
 	TSMF_STREAM* _stream;
+	char tsmf_tid[32];
+
+	snprintf(tsmf_tid, sizeof(tsmf_tid), "/tsmf.tid.%08X", getpid());
 
 	WaitForSingleObject(tsmf_mutex, INFINITE);
 	TERMINATING = 1;
@@ -1134,7 +1188,7 @@ static void tsmf_signal_handler(int s)
 		}
 	}
 
-	unlink("/tmp/tsmf.tid");
+	shm_unlink(tsmf_tid);
 
 	if (s == SIGINT)
 	{
