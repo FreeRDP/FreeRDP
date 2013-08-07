@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -263,6 +265,7 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
+	const size_t shm_size = 100;
 	TSMF_PRESENTATION* presentation;
 	pthread_t thid = pthread_self();
 	FILE* fout = NULL;
@@ -270,16 +273,54 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	int fd;
 
 	snprintf(tsmf_tid, sizeof(tsmf_tid), "/tsmf.tid.%08X", getpid());
-	fd = shm_open(tsmf_tid, O_RDWR | O_CREAT, 600);
-	fout = fdopen(fd, "wt");
-	
-	if (fout)
+	fd = shm_open(tsmf_tid, O_RDWR | O_CREAT | O_EXCL, (S_IREAD | S_IWRITE));
+	if( ( fd < 0 ) && ( EEXIST == errno ) )
 	{
-		fprintf(fout, "%d\n", (int) (size_t) thid);
-		fclose(fout);
+		if(shm_unlink(tsmf_tid))
+		{
+			DEBUG_WARN("shm_unlink for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+			return NULL;
+		}
+	
+		fd = shm_open(tsmf_tid, O_RDWR | O_CREAT | O_EXCL, (S_IREAD | S_IWRITE));
 	}
 
-	close(fd);
+	if( fd < 0 )
+	{
+		DEBUG_WARN("shm_open for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		return NULL;
+	}
+
+	if(ftruncate(fd, shm_size))
+	{
+		DEBUG_WARN("ftruncate for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+
+	if(NULL == mmap( 0, shm_size, PROT_READ | PROT_WRITE,
+				            MAP_PRIVATE, fd, 0 ))
+	{
+		DEBUG_WARN("mmap for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+
+	fout = fdopen(fd, "wt");
+	if (NULL == fout)
+	{
+		DEBUG_WARN("fdopen for SHM '%s' failed with %s [%d]", 
+				tsmf_tid, strerror(errno), errno);
+		close(fd);
+		return NULL;
+	}
+	
+	fprintf(fout, "%d\n", (int) (size_t) thid);
+	fclose(fout);
 
 	presentation = tsmf_presentation_find_by_id(guid);
 
