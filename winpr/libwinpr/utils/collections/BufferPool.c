@@ -134,7 +134,7 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			InitializeCriticalSection(&pool->lock);
+			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
 		if (!pool->fixedSize)
 		{
