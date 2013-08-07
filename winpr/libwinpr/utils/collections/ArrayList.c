@@ -390,7 +390,7 @@ wArrayList* ArrayList_New(BOOL synchronized)
 
 		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
 
-		InitializeCriticalSection(&arrayList->lock);
+		InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
 
 		ZeroMemory(&arrayList->object, sizeof(wObject));
 	}
