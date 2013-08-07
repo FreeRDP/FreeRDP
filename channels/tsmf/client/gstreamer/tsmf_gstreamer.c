@@ -102,6 +102,12 @@ const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
 const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
 const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
 
+/* Template filenames for gstreamer sync, the actual file
+ * name will be determined when opened with mkstemp */
+static char tsmf_vseek[] = "/tmp/tsmf_vseek.info.XXXXXX";
+static char tsmf_aseek[] = "/tmp/tsmf_aseek.info.XXXXXX";
+static char tsmf_video[] = "/tmp/tsmf_video.ready.XXXXXX";
+
 static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
 {
 	/* 
@@ -1103,9 +1109,6 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
         			UINT64 start_time, UINT64 end_time, UINT64 duration)
 {
-	char tsmf_vseek[] = "/tmp/tsmf_vseek.info.XXXXXX";
-	char tsmf_aseek[] = "/tmp/tsmf_aseek.info.XXXXXX";
-	char tsmf_video[] = "/tmp/tsmf_video.ready.XXXXXX";
 	TSMFGstreamerDecoder * mdecoder = (TSMFGstreamerDecoder*) decoder;
 
 	if (!mdecoder)
