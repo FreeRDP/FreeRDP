@@ -243,7 +243,7 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
 		ZeroMemory(queue->array, sizeof(void*) * queue->capacity);
 
-		InitializeCriticalSection(&queue->lock);
+		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		ZeroMemory(&queue->object, sizeof(wObject));
