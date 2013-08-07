@@ -255,7 +255,7 @@ void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 
 	xf_lock_x11(xfc, FALSE);
 
-	if (((xfPointer*) pointer)->cursor != 0)
+	if (((xfPointer*) pointer)->cursor)
 		XFreeCursor(xfc->display, ((xfPointer*) pointer)->cursor);
 
 	xf_unlock_x11(xfc, FALSE);
@@ -269,10 +269,12 @@ void xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 	xf_lock_x11(xfc, FALSE);
 
+	xfc->pointer = (xfPointer*) pointer;
+
 	/* in RemoteApp mode, window can be null if none has had focus */
 
-	if (xfc->window != NULL)
-		XDefineCursor(xfc->display, xfc->window->handle, ((xfPointer*) pointer)->cursor);
+	if (xfc->window)
+		XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
 
 	xf_unlock_x11(xfc, FALSE);
 #endif
@@ -299,7 +301,9 @@ void xf_Pointer_SetNull(rdpContext* context)
 		nullcursor = XcursorImageLoadCursor(xfc->display, &ci);
 	}
 
-	if (xfc->window != NULL && nullcursor != None)
+	xfc->pointer = NULL;
+
+	if ((xfc->window) && (nullcursor != None))
 		XDefineCursor(xfc->display, xfc->window->handle, nullcursor);
 
 	xf_unlock_x11(xfc, FALSE);
@@ -313,7 +317,9 @@ void xf_Pointer_SetDefault(rdpContext* context)
 
 	xf_lock_x11(xfc, FALSE);
 
-	if (xfc->window != NULL)
+	xfc->pointer = NULL;
+
+	if (xfc->window)
 		XUndefineCursor(xfc->display, xfc->window->handle);
 
 	xf_unlock_x11(xfc, FALSE);

@@ -495,6 +495,8 @@ rdpInput* input_new(rdpRdp* rdp)
 	if (input != NULL)
 	{
 		ZeroMemory(input, sizeof(rdpInput));
+
+		input->queue = MessageQueue_New();
 	}
 
 	return input;
@@ -506,6 +508,8 @@ void input_free(rdpInput* input)
 	{
 		if (input->asynchronous)
 			input_message_proxy_free(input->proxy);
+
+		MessageQueue_Free(input->queue);
 
 		free(input);
 	}

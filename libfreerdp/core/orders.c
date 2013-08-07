@@ -1364,7 +1364,7 @@ BOOL update_read_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* m
 
 int update_approximate_memblt_order(ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt)
 {
-	return 32;
+	return 64;
 }
 
 BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt)
@@ -2600,7 +2600,7 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 int update_approximate_create_offscreen_bitmap_order(CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	OFFSCREEN_DELETE_LIST* deleteList = &(create_offscreen_bitmap->deleteList);
-	return 8 + deleteList->cIndices * 2;
+	return 32 + deleteList->cIndices * 2;
 }
 
 BOOL update_write_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)

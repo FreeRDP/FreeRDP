@@ -21,6 +21,13 @@
 #include "config.h"
 #endif
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+#ifdef WITH_XCURSOR
+#include <X11/Xcursor/Xcursor.h>
+#endif
+
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
 #endif
@@ -551,6 +558,57 @@ char* xf_input_touch_state_string(DWORD flags)
 		return "TouchUnknown";
 }
 
+void xf_input_hide_cursor(xfContext* xfc)
+{
+#ifdef WITH_XCURSOR
+	if (!xfc->cursorHidden)
+	{
+		XcursorImage ci;
+		XcursorPixel xp = 0;
+		static Cursor nullcursor = None;
+
+		xf_lock_x11(xfc, FALSE);
+
+		ZeroMemory(&ci, sizeof(ci));
+		ci.version = XCURSOR_IMAGE_VERSION;
+		ci.size = sizeof(ci);
+		ci.width = ci.height = 1;
+		ci.xhot = ci.yhot = 0;
+		ci.pixels = &xp;
+		nullcursor = XcursorImageLoadCursor(xfc->display, &ci);
+
+		if ((xfc->window) && (nullcursor != None))
+			XDefineCursor(xfc->display, xfc->window->handle, nullcursor);
+
+		xfc->cursorHidden = TRUE;
+
+		xf_unlock_x11(xfc, FALSE);
+	}
+#endif
+}
+
+void xf_input_show_cursor(xfContext* xfc)
+{
+#ifdef WITH_XCURSOR
+	xf_lock_x11(xfc, FALSE);
+
+	if (xfc->cursorHidden)
+	{
+		if (xfc->window)
+		{
+			if (!xfc->pointer)
+				XUndefineCursor(xfc->display, xfc->window->handle);
+			else
+				XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
+		}
+
+		xfc->cursorHidden = FALSE;
+	}
+
+	xf_unlock_x11(xfc, FALSE);
+#endif
+}
+
 int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
 	int x, y;
@@ -561,6 +619,8 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	if (!rdpei)
 		return 0;
 	
+	xf_input_hide_cursor(xfc);
+
 	touchId = event->detail;
 	x = (int) event->event_x;
 	y = (int) event->event_y;
@@ -586,7 +646,8 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 
 int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	
+	xf_input_show_cursor(xfc);
+
 	switch (evtype)
 	{
 		case XI_ButtonPress:

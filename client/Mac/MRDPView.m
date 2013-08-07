@@ -42,6 +42,8 @@
  *  -
  */
 
+#include <winpr/windows.h>
+
 #include "mf_client.h"
 #import "mfreerdp.h"
 #import "MRDPView.h"
@@ -80,11 +82,9 @@ void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
 void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
 void mac_save_state_info(freerdp* instance, rdpContext* context);
-static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
-static void input_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
-static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info);
-int register_update_fds(freerdp* instance);
-int register_input_fds(freerdp* instance);
+static void update_activity_cb(freerdp* instance);
+static void input_activity_cb(freerdp* instance);
+static void channel_activity_cb(freerdp* instance);
 int invoke_draw_rect(rdpContext* context);
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
@@ -97,6 +97,9 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 void cliprdr_process_text(freerdp* instance, BYTE* data, int len);
 void cliprdr_send_supported_format_list(freerdp* instance);
 int register_channel_fds(int* fds, int count, freerdp* instance);
+
+
+DWORD mac_client_thread(void* param);
 
 struct cursor
 {
@@ -121,7 +124,6 @@ struct rgba_data
 
 - (int) rdpStart:(rdpContext*) rdp_context
 {
-	int status;
 	mfContext* mfc;
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
@@ -137,30 +139,95 @@ struct rgba_data
 	e.embed = TRUE;
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
+    [self setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 
-    status = freerdp_connect(context->instance);
+    mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
-	if (!status)
-	{
-		[self setIs_connected:0];
-		[self rdpConnectError];
-		return 1;
-	}
-
-	/* register update message queue with the RunLoop */
-	register_update_fds(context->instance);
-
-	/* register update message queue with the RunLoop */
-	register_input_fds(context->instance);
-
-	/* register channel events with the RunLoop */
-	register_channels_fds(context->instance);
-
-	freerdp_check_fds(context->instance);
-
-	[self setIs_connected:1];
-
 	return 0;
+}
+
+DWORD mac_client_thread(void* param)
+{
+	@autoreleasepool
+	{
+		int status;
+		HANDLE events[4];
+		HANDLE input_event;
+		HANDLE update_event;
+		HANDLE channels_event;
+		
+		DWORD nCount;
+		rdpContext* context = (rdpContext*) param;
+		mfContext* mfc = (mfContext*) context;
+		freerdp* instance = context->instance;
+		MRDPView* view = mfc->view;
+		
+		status = freerdp_connect(context->instance);
+		
+		if (!status)
+		{
+			[view setIs_connected:0];
+			return 0;
+		}
+		
+		[view setIs_connected:1];
+		
+		nCount = 0;
+		
+		events[nCount++] = mfc->stopEvent;
+		
+		if (instance->settings->AsyncUpdate)
+		{
+			events[nCount++] = update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		}
+		
+		if (instance->settings->AsyncInput)
+		{
+			events[nCount++] = input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		}
+		
+		if (instance->settings->AsyncChannels)
+		{
+			events[nCount++] = channels_event = freerdp_channels_get_event_handle(instance);
+		}
+		
+		while (1)
+		{
+			status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+			
+			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
+			{
+				break;
+			}
+			
+			if (instance->settings->AsyncUpdate)
+			{
+				if (WaitForSingleObject(update_event, 0) == WAIT_OBJECT_0)
+				{
+					update_activity_cb(instance);
+				}
+			}
+			
+			if (instance->settings->AsyncInput)
+			{
+				if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+				{
+					input_activity_cb(instance);
+				}
+			}
+			
+			if (instance->settings->AsyncChannels)
+			{
+				if (WaitForSingleObject(channels_event, 0) == WAIT_OBJECT_0)
+				{
+					channel_activity_cb(instance);
+				}
+			}
+		}
+		
+		ExitThread(0);
+		return 0;
+	}
 }
 
 /************************************************************************
@@ -212,11 +279,27 @@ struct rgba_data
         NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 
         [self addTrackingArea:trackingArea];
-
-        mouseInClientArea = YES;
+        
+        // Set the default cursor
+        currentCursor = [NSCursor arrowCursor];
 
         initialized = YES;
     }
+}
+
+- (void) setCursor: (NSCursor*) cursor
+{
+    self->currentCursor = cursor;
+    [[self window] invalidateCursorRectsForView:self];
+    
+    [imageView setImage:[currentCursor image]];
+}
+
+
+// Set the current cursor
+- (void) resetCursorRects
+{
+    [self addCursorRect:[self visibleRect] cursor:currentCursor];
 }
 
 /** *********************************************************************
@@ -594,7 +677,8 @@ struct rgba_data
 - (void) releaseResources
 {
 	int i;
-	
+
+
 	for (i = 0; i < argc; i++)
 	{
 		if (argv[i])
@@ -608,15 +692,6 @@ struct rgba_data
 	
 	if (pixel_data)
 		free(pixel_data);
-
-	if (run_loop_src_update != 0)
-		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_update, kCFRunLoopDefaultMode);
-
-	if (run_loop_src_input != 0)
-		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_input, kCFRunLoopDefaultMode);
-
-	if (run_loop_src_channels != 0)
-		CFRunLoopRemoveSource(CFRunLoopGetCurrent(), run_loop_src_channels, kCFRunLoopDefaultMode);
 }
 
 /** *********************************************************************
@@ -649,94 +724,6 @@ struct rgba_data
 /************************************************************************
  instance methods
  ************************************************************************/
-
-/** *********************************************************************
- * double check that a mouse event occurred in our client view
- ***********************************************************************/
-
-- (BOOL) eventIsInClientArea :(NSEvent *) event :(int *) xptr :(int *) yptr
-{
-	NSPoint loc = [event locationInWindow];
-	int x = (int) loc.x;
-	int y = (int) loc.y;
-	
-	if ((x < 0) || (y < 0))
-	{
-		if (mouseInClientArea)
-		{
-			// set default cursor before leaving client area
-			mouseInClientArea = NO;
-			NSCursor *cur = [NSCursor arrowCursor];
-			[cur set];
-		}
-		
-		return NO;
-	}
-	
-	if ((x > width) || (y > height))
-	{
-		if (mouseInClientArea)
-		{
-			// set default cursor before leaving client area
-			mouseInClientArea = NO;
-			NSCursor *cur = [NSCursor arrowCursor];
-			[cur set];
-		}
-		
-		return NO;
-	}
-	
-	// on Mac origin is at lower left, but we want it on upper left
-	y = height - y;
-	
-	*xptr = x;
-	*yptr = y;
-	mouseInClientArea = YES;
-	return YES;
-}
-
-/** *********************************************************************
- * called when we fail to connect to a RDP server
- ***********************************************************************/
-
-- (void) rdpConnectError
-{
-	NSString* message = @"Error connecting to server";
-	if (connectErrorCode == AUTHENTICATIONERROR)
-	{
-		message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
-	}
-
-	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:message];
-	[alert beginSheetModalForWindow:[self window]
-					 modalDelegate:self
-					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
-	      contextInfo:nil];
-}
-
-/** *********************************************************************
- * called when we fail to launch remote app on RDP server
- ***********************************************************************/
-
-- (void) rdpRemoteAppError
-{
-	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:@"Error starting remote app on specified server"];
-	[alert beginSheetModalForWindow:[self window]
-					 modalDelegate:self
-					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
-	      contextInfo:nil];
-}
-
-/** *********************************************************************
- * just a terminate selector for above call
- ***********************************************************************/
-
-- (void) alertDidEnd:(NSAlert *)a returnCode:(NSInteger)rc contextInfo:(void *)ci
-{
-	[NSApp terminate:nil];
-}
 
 - (void) onPasteboardTimerFired :(NSTimer*) timer
 {
@@ -870,7 +857,6 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
-    [view setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
 	return TRUE;
@@ -975,7 +961,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	MRDPCursor* mrdpCursor = [[MRDPCursor alloc] init];
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-
+	
 	rect.size.width = pointer->width;
 	rect.size.height = pointer->height;
 	rect.origin.x = pointer->xPos;
@@ -984,9 +970,17 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
+    if (pointer->xorBpp > 24)
+    {
+        freerdp_image_swap_color_order(pointer->xorMaskData, pointer->width, pointer->height);
+	}
+    
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
-
+	
+	// TODO if xorBpp is > 24 need to call freerdp_image_swap_color_order
+	//         see file df_graphics.c
+	
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
 											pixelsWide:rect.size.width
@@ -1054,18 +1048,17 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	MRDPView* view = (MRDPView*) mfc->view;
 
 	NSMutableArray* ma = view->cursors;
-	
-	if (!view->mouseInClientArea)
-		return;
-	
+
 	for (MRDPCursor* cursor in ma)
 	{
 		if (cursor->pointer == pointer)
 		{
-			[cursor->nsCursor set];
+            [view setCursor:cursor->nsCursor];
 			return;
 		}
 	}
+    
+    NSLog(@"Cursor not found");
 }
 
 /** *********************************************************************
@@ -1083,7 +1076,9 @@ void mf_Pointer_SetNull(rdpContext* context)
 
 void mf_Pointer_SetDefault(rdpContext* context)
 {
-	
+	mfContext* mfc = (mfContext*) context;
+	MRDPView* view = (MRDPView*) mfc->view;
+    [view setCursor:[NSCursor arrowCursor]];
 }
 
 /** *********************************************************************
@@ -1155,16 +1150,15 @@ void mac_end_paint(rdpContext* context)
  * called when update data is available
  ***********************************************************************/
 
-static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+static void update_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
 	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) info;
 
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-
+	
 	if (queue)
 	{
 		while (MessageQueue_Peek(queue, &message, TRUE))
@@ -1175,21 +1169,21 @@ static void update_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBack
 				break;
 		}
 	}
-
-	CFRelease(fdref);
-	register_update_fds(instance);
+	else
+	{
+        fprintf(stderr, "update_activity_cb: No queue!\n");
+	}
 }
 
 /** *********************************************************************
  * called when input data is available
  ***********************************************************************/
 
-static void input_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+static void input_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) info;
+    wMessageQueue* queue;
 
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -1198,34 +1192,32 @@ static void input_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackT
 	{
 		while (MessageQueue_Peek(queue, &message, TRUE))
 		{
-			fprintf(stderr, "input_activity_cb: message %d\n", message.id);
-
 			status = freerdp_message_queue_process_message(instance, FREERDP_INPUT_MESSAGE_QUEUE, &message);
 
 			if (!status)
 				break;
 		}
 	}
-
-	CFRelease(fdref);
-	register_input_fds(instance);
+    else
+    {
+        fprintf(stderr, "input_activity_cb: No queue!\n");
+    }
 }
 
 /** *********************************************************************
  * called when data is available on a virtual channel
  ***********************************************************************/
 
-static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info)
+static void channel_activity_cb(freerdp* instance)
 {
-	wMessage* event;
-	freerdp* instance = (freerdp*) info;
+    wMessage* event;
 
 	freerdp_channels_process_pending_messages(instance);
 	event = freerdp_channels_pop_event(instance->context->channels);
-
 	if (event)
 	{
-		switch (GetMessageClass(event->id))
+        fprintf(stderr, "channel_activity_cb: message %d\n", event->id);
+        switch (GetMessageClass(event->id))
 		{
 		case CliprdrChannel_Class:
 			process_cliprdr_event(instance, event);
@@ -1234,90 +1226,6 @@ static void channel_activity_cb(CFFileDescriptorRef fdref, CFOptionFlags callBac
 
 		freerdp_event_free(event);
 	}
-
-	CFRelease(fdref);
-	register_channels_fds(instance);
-}
-
-/** *********************************************************************
- * setup callbacks for data availability on update message queue
- ***********************************************************************/
-
-int register_update_fds(freerdp* instance)
-{
-	int fd_update_event;
-	HANDLE update_event;
-	CFFileDescriptorRef fdref;
-	CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
-	mfContext* mfc = (mfContext*) instance->context;
-	MRDPView* view = (MRDPView*) mfc->view;
-
-	if (instance->settings->AsyncUpdate)
-	{
-		update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		fd_update_event = GetEventFileDescriptor(update_event);
-
-		fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_update_event, true, update_activity_cb, &fd_context);
-		CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
-		view->run_loop_src_update = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_update, kCFRunLoopDefaultMode);
-	}
-
-	return 0;
-}
-
-/** *********************************************************************
- * setup callbacks for data availability on input message queue
- ***********************************************************************/
-
-int register_input_fds(freerdp* instance)
-{
-	int fd_input_event;
-	HANDLE input_event;
-	CFFileDescriptorRef fdref;
-	CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
-	mfContext* mfc = (mfContext*) instance->context;
-	MRDPView* view = (MRDPView*) mfc->view;
-
-	if (instance->settings->AsyncInput)
-	{
-		input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		fd_input_event = GetEventFileDescriptor(input_event);
-
-		fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_input_event, true, input_activity_cb, &fd_context);
-		CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
-		view->run_loop_src_input = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_input, kCFRunLoopDefaultMode);
-	}
-
-	return 0;
-}
-
-/** *********************************************************************
- * setup callbacks for data availability on channels
- ***********************************************************************/
-
-int register_channels_fds(freerdp* instance)
-{
-	int fd_channel_event;
-	HANDLE channel_event;
-	CFFileDescriptorRef fdref;
-	CFFileDescriptorContext fd_context = { 0, instance, NULL, NULL, NULL };
-	mfContext* mfc = (mfContext*) instance->context;
-	MRDPView* view = (MRDPView*) mfc->view;
-
-	if (instance->settings->AsyncChannels)
-	{
-		channel_event = freerdp_channels_get_event_handle(instance);
-		fd_channel_event = GetEventFileDescriptor(channel_event);
-
-		fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd_channel_event, true, channel_activity_cb, &fd_context);
-		CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
-		view->run_loop_src_channels = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
-		CFRunLoopAddSource(CFRunLoopGetCurrent(), view->run_loop_src_channels, kCFRunLoopDefaultMode);
-	}
-
-	return 0;
 }
 
 /** *********************************************************************
@@ -1555,20 +1463,12 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }
 
-
-/**
- * given a rect with 0,0 at the bottom left (apple cords)
- * convert it to a rect with 0,0 at the top left (windows cords)
- */
-
-void apple_to_windows_cords(MRDPView* view, NSRect* r)
-{
-	r->origin.y = view->height - (r->origin.y + r->size.height);
-}
-
 /**
  * given a rect with 0,0 at the top left (windows cords)
  * convert it to a rect with 0,0 at the bottom left (apple cords)
+ *
+ * Note: the formula works for conversions in both directions.
+ *
  */
 
 void windows_to_apple_cords(MRDPView* view, NSRect* r)
