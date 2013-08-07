@@ -60,6 +60,9 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/select.h>
+#include <sys/mman.h>
+#include <sys/stat.h>        /* For mode constants */
+#include <fcntl.h>           /* For O_* constants */
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -1520,7 +1523,13 @@ void* xf_thread(void* param)
 		CloseHandle(update_thread);
 	}
 
-	FILE* fin = fopen("/tmp/tsmf.tid", "rt");
+	int fd, pid = getpid();
+  char tsmf_tid[32];
+	FILE *fin;
+
+	snprintf(tsmf_tid, sizeof(tsmf_tid), "/tsmf.tid.%08X", pid);
+	fd = shm_open(tsmf_tid, O_RDWR, 600);
+	fin = fdopen(fd, "rt");
 
 	if (fin)
 	{
@@ -1531,27 +1540,36 @@ void* xf_thread(void* param)
 		fscanf(fin, "%d", &thid);
 		fclose(fin);
 
-		pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
-
-		fin1 = fopen("/tmp/tsmf.tid", "rt");
-		timeout = 5;
-
-		while (fin1)
+		/* Check, if the thread ID is valid. */
+		if(0 == pthread_kill((pthread_t) (size_t) thid, 0))
 		{
-			fclose(fin1);
-			sleep(1);
-			timeout--;
+			pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
 
-			if (timeout <= 0)
+			fin1 = fdopen(fd, "rt");
+			timeout = 5;
+
+			while (fin1)
 			{
-				unlink("/tmp/tsmf.tid");
-				pthread_kill((pthread_t) (size_t) thid, SIGKILL);
-				break;
-			}
+				fclose(fin1);
+				sleep(1);
+				timeout--;
 
-			fin1 = fopen("/tmp/tsmf.tid", "rt");
+				if (timeout <= 0)
+				{
+					pthread_kill((pthread_t) (size_t) thid, SIGKILL);
+					break;
+				}
+
+				fin1 = fdopen(fd, "rt");
+			}
 		}
+
+		/* Remove shared memory, either the process that created
+		 * it died or we killed the thread. */
+		shm_unlink(tsmf_tid);
 	}
+
+	close(fd);
 
 	if (!exit_code)
 		exit_code = freerdp_error_info(instance);
