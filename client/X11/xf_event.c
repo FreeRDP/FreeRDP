@@ -101,13 +101,15 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		{
 			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
 					      y - xfc->offset_y, w, h, FALSE);
-		} else
+		}
+		else
 		{
 			XCopyArea(xfc->display, xfc->primary,
 				  xfc->window->handle, xfc->gc, x, y, w,
 				  h, x, y);
 		}
-	} else
+	}
+	else
 	{
 		xfWindow* xfw;
 		rdpWindow* window;
@@ -116,7 +118,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		window = window_list_get_by_extra_id(rail->list,
 						     (void*) event->xexpose.window);
 		
-		if (window != NULL )
+		if (window)
 		{
 			xfw = (xfWindow*) window->extra;
 			xf_UpdateWindowArea(xfc, xfw, x, y, w, h);

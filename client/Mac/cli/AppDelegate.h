@@ -18,6 +18,8 @@
 	MRDPView* mrdpView;
 }
 
+- (void) rdpConnectError: (NSString*) customMessage;
+
 @property (assign) IBOutlet NSWindow *window;
 @property (assign) rdpContext *context;
 

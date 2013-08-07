@@ -41,14 +41,11 @@
 
 @interface MRDPView : NSView
 {
-	CFRunLoopSourceRef run_loop_src_channels;
-	CFRunLoopSourceRef run_loop_src_update;
-	CFRunLoopSourceRef run_loop_src_input;
-
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
+    NSCursor* currentCursor;
 	NSRect prevWinPosition;
 	int titleBarHeight;
 	freerdp* instance;
@@ -61,7 +58,6 @@
 	char** argv;
     
 	NSPoint savedDragLocation;
-	BOOL mouseInClientArea;
 	BOOL firstCreateWindow;
 	BOOL isMoveSizeInProgress;
 	BOOL skipResizeOnce;
@@ -80,6 +76,8 @@
 	int kdcapslock;
 
     BOOL initialized;
+    
+    NSImageView* imageView;
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
@@ -90,11 +88,11 @@
 }
 
 - (int)  rdpStart :(rdpContext*) rdp_context;
-- (void) rdpConnectError;
-- (void) rdpRemoteAppError;
+- (void) setCursor: (NSCursor*) cursor;
+
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
-- (void) setViewSize : (int) width : (int) height;
+- (void) setViewSize : (int) w : (int) h;
 
 @property (assign) int is_connected;
 
@@ -114,3 +112,4 @@ BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
 int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
+DWORD mac_client_thread(void* param);

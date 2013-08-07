@@ -334,6 +334,8 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->BitmapCacheV2CellInfo[4].numEntries = 2048;
 		settings->BitmapCacheV2CellInfo[4].persistent = FALSE;
 
+		settings->NoBitmapCompressionHeader = TRUE;
+
 		settings->RefreshRect = TRUE;
 		settings->SuppressOutput = TRUE;
 

@@ -69,7 +69,9 @@ endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)
 
-add_subdirectory(include)
+if(NOT WITH_WAYK)
+    add_subdirectory(include)
+endif()
 
 add_subdirectory(libwinpr)
 

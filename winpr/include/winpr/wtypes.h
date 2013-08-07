@@ -88,8 +88,8 @@ typedef DWORD HCALL;
 typedef int INT, *LPINT;
 typedef signed char INT8;
 typedef signed short INT16;
-typedef signed int INT32;
 #ifndef XMD_H
+typedef signed int INT32;
 typedef signed __int64 INT64;
 #endif
 typedef const WCHAR* LMCSTR;

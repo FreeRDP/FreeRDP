@@ -1741,7 +1741,6 @@ rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
 		ZeroMemory(message, sizeof(rdpUpdateProxy));
 
 		message->update = update;
-		update->queue = MessageQueue_New();
 		update_message_register_interface(message, update);
 	}
 
@@ -1752,7 +1751,6 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 {
 	if (message)
 	{
-		MessageQueue_Free(message->update->queue);
 		free(message);
 	}
 }
@@ -1940,7 +1938,6 @@ rdpInputProxy* input_message_proxy_new(rdpInput* input)
 		ZeroMemory(proxy, sizeof(rdpInputProxy));
 
 		proxy->input = input;
-		input->queue = MessageQueue_New();
 		input_message_proxy_register(proxy, input);
 	}
 
@@ -1951,7 +1948,6 @@ void input_message_proxy_free(rdpInputProxy* proxy)
 {
 	if (proxy)
 	{
-		MessageQueue_Free(proxy->input->queue);
 		free(proxy);
 	}
 }

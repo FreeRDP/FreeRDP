@@ -22,6 +22,7 @@
 #endif
 
 #include <stdio.h>
+#include <winpr/print.h>
 
 #include "tpdu.h"
 
@@ -66,9 +67,9 @@
  * @return TPDU length indicator (LI)
  */
 
-BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
+BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li)
 {
-	if(Stream_GetRemainingLength(s) < 3)
+	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
 	Stream_Read_UINT8(s, *li); /* LI */
@@ -86,6 +87,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li)
 		/* Class 0 (1 byte) */
 		return Stream_SafeSeek(s, 5);
 	}
+
 	return TRUE;
 }
 
@@ -205,16 +207,18 @@ void tpdu_write_data(wStream* s)
  * @param s stream
  */
 
-BOOL tpdu_read_data(wStream* s, UINT16 *LI)
+BOOL tpdu_read_data(wStream* s, UINT16* LI)
 {
 	BYTE code;
 	BYTE li;
 
-	if(!tpdu_read_header(s, &code, &li))
+	if (!tpdu_read_header(s, &code, &li))
 		return FALSE;
 
 	if (code != X224_TPDU_DATA)
 		return FALSE;
+
 	*LI = li;
+
 	return TRUE;
 }

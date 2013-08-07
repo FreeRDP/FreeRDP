@@ -204,6 +204,48 @@ WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void
 WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
 WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
+/* System.Collections.Generic.LinkedList<T> */
+
+typedef struct _wLinkedListItem wLinkedListNode;
+
+struct _wLinkedListItem
+{
+	void* value;
+	wLinkedListNode* prev;
+	wLinkedListNode* next;
+};
+
+struct _wLinkedList
+{
+	int count;
+	int initial;
+	wLinkedListNode* head;
+	wLinkedListNode* tail;
+	wLinkedListNode* current;
+};
+typedef struct _wLinkedList wLinkedList;
+
+WINPR_API int LinkedList_Count(wLinkedList* list);
+WINPR_API void* LinkedList_First(wLinkedList* list);
+WINPR_API void* LinkedList_Last(wLinkedList* list);
+
+WINPR_API BOOL LinkedList_Contains(wLinkedList* list, void* value);
+WINPR_API void LinkedList_Clear(wLinkedList* list);
+
+WINPR_API void LinkedList_AddFirst(wLinkedList* list, void* value);
+WINPR_API void LinkedList_AddLast(wLinkedList* list, void* value);
+
+WINPR_API void LinkedList_Remove(wLinkedList* list, void* value);
+WINPR_API void LinkedList_RemoveFirst(wLinkedList* list);
+WINPR_API void LinkedList_RemoveLast(wLinkedList* list);
+
+WINPR_API void LinkedList_Enumerator_Reset(wLinkedList* list);
+WINPR_API void* LinkedList_Enumerator_Current(wLinkedList* list);
+WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
+
+WINPR_API wLinkedList* LinkedList_New();
+WINPR_API void LinkedList_Free(wLinkedList* list);
+
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
 struct _wKeyValuePair

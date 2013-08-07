@@ -66,8 +66,8 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 	MACOSX_FRAMEWORK_IDENTIFIER com.awakecoding.${MODULE_NAME}
 	FRAMEWORK_VERSION 1.1.0
 	MACOSX_FRAMEWORK_SHORT_VERSION_STRING 1.1.0
-	MACOSX_FRAMEWORK_BUNDLE_VERSION 1.1.0
-	INSTALL_NAME_DIR "@executable_path/../../Frameworks"
+	MACOSX_FRAMEWORK_BUNDLE_BUNDLE_VERSION 1.1.0
+	INSTALL_NAME_DIR "@executable_path/../Frameworks"
 	MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
 	BUILD_WITH_INSTALL_RPATH 1)  
 
@@ -132,7 +132,7 @@ if (${BUILD_SHARED_LIBS})
 endif()
 
 # Add post-build NIB file generation in unix makefiles. XCode handles this implicitly.
-if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+# if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 	message(STATUS "Adding post-build NIB file generation event for ${MODULE_NAME}")
 
 	# Make sure we can find the 'ibtool' program. If we can NOT find it we
@@ -156,7 +156,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
-endif()
+# endif()
 
 # Copy the public header files into the framework
 foreach(HEADER ${${MODULE_NAME}_HEADERS})
@@ -169,6 +169,7 @@ endforeach()
 # Copy the FreeRDP header files into the framework
 add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
 	COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/freerdp
+	COMMAND ditto ${CMAKE_SOURCE_DIR}/winpr/include/winpr ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/winpr
 	COMMENT Copying FreeRDP header files to ${MODULE_NAME})
 
 add_subdirectory(cli)
