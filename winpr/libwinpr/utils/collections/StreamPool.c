@@ -44,7 +44,8 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index) * sizeof(wStream*));
+		if (pool->uSize - index + count > 0)
+			MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index + count) * sizeof(wStream*));
 		pool->uSize += count;
 	}
 }
@@ -101,7 +102,8 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 	}
 	else if (count < 0)
 	{
-		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index) * sizeof(wStream*));
+		if (pool->aSize - index + count > 0)
+			MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index + count) * sizeof(wStream*));
 		pool->aSize += count;
 	}
 }
