@@ -194,24 +194,38 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdp_client_disconnect(rdp);
 
 	/* FIXME: this is a subset of rdp_free */
+	/* --> this should really go into rdp.c */
 	crypto_rc4_free(rdp->rc4_decrypt_key);
+	rdp->rc4_decrypt_key = NULL ;
 	crypto_rc4_free(rdp->rc4_encrypt_key);
+	rdp->rc4_encrypt_key = NULL;
 	crypto_des3_free(rdp->fips_encrypt);
+	rdp->fips_encrypt = NULL ;
 	crypto_des3_free(rdp->fips_decrypt);
+	rdp->fips_decrypt = NULL ;
 	crypto_hmac_free(rdp->fips_hmac);
+	rdp->fips_hmac = NULL ;
+
+	free(settings->ServerRandom);
+	settings->ServerRandom = NULL ;
+	free(settings->ServerCertificate);
+	settings->ServerCertificate = NULL ;
+	free(settings->ClientAddress);
+	settings->ClientAddress = NULL ;
+
+	mppc_enc_free(rdp->mppc_enc);
+	mppc_dec_free(rdp->mppc_dec);
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 
-	free(settings->ServerRandom);
-	free(settings->ServerCertificate);
-	free(settings->ClientAddress);
-
 	rdp->transport = transport_new(settings);
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
+	rdp->mppc_dec = mppc_dec_new();
+	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 	settings->RedirectedSessionId = redirection->sessionID;
