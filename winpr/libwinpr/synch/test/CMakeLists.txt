@@ -7,6 +7,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 set(${MODULE_PREFIX}_TESTS
 	TestSynchEvent.c
 	TestSynchMutex.c
+	TestSynchCritical.c
 	TestSynchSemaphore.c
 	TestSynchWaitableTimer.c)
 
@@ -19,7 +20,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-synch)
+	MODULES winpr-synch winpr-sysinfo)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -31,3 +32,4 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+

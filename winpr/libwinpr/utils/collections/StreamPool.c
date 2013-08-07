@@ -323,7 +323,7 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->synchronized = synchronized;
 		pool->defaultSize = defaultSize;
 
-		InitializeCriticalSection(&pool->lock); 
+		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
 		pool->aSize = 0;
 		pool->aCapacity = 32;

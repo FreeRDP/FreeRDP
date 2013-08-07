@@ -34,7 +34,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-handle winpr-synch)
+	MODULES winpr-crt winpr-handle)
 
 if(MONOLITHIC_BUILD)
 
