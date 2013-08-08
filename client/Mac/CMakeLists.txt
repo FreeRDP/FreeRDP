@@ -166,7 +166,7 @@ endif()
 foreach(HEADER ${${MODULE_PREFIX}_HEADERS})
 	# message("adding post-build dependency: ${LIB}")
 	add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-		COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/
+		COMMAND ditto ${CMAKE_CURRENT_SOURCE_DIR}/${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/
 		COMMENT Copying public header files to ${MODULE_NAME})
 endforeach()
 
