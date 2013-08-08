@@ -178,7 +178,7 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 	switch (updateType)
 	{
 		case UPDATE_TYPE_BITMAP:
-			if (!update_read_bitmap(update, s, &update->bitmap_update))
+			if (!update_read_bitmap_update(update, s, &update->bitmap_update))
 				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
