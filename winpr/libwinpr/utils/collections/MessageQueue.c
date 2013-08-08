@@ -194,7 +194,7 @@ wMessageQueue* MessageQueue_New()
 		queue->array = (wMessage*) malloc(sizeof(wMessage) * queue->capacity);
 		ZeroMemory(queue->array, sizeof(wMessage) * queue->capacity);
 
-		InitializeCriticalSection(&queue->lock);
+		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	}
 

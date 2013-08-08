@@ -480,7 +480,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
 }
 
-#define WRITE_ALL_SETTINGS TRUE
+#define WRITE_ALL_SETTINGS FALSE
 #define SETTING_MODIFIED(_settings, _field) (WRITE_ALL_SETTINGS || _settings->settings_modified[FreeRDP_##_field])
 #define SETTING_MODIFIED_SET(_target, _settings, _field) if SETTING_MODIFIED(_settings, _field) _target = _settings->_field
 
@@ -605,7 +605,6 @@ if (~__rdpFile->_field) \
 #define WRITE_RDP_FILE_VALUE_RETURN \
 	return __required_size;
 
-// TODO: Optimize by only writing the fields that have a value i.e ~((size_t) file->FieldName) != 0
 size_t freerdp_client_write_rdp_file_buffer(rdpFile* file, char* buffer, size_t size)
 {
 	WRITE_RDP_FILE_DECLARE(file, buffer, size)

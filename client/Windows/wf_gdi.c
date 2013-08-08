@@ -664,8 +664,8 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
 
-	update->Palette = wf_gdi_palette_update;
-	update->SetBounds = wf_gdi_set_bounds;
+	update->Palette = (pPalette) wf_gdi_palette_update;
+	update->SetBounds = (pSetBounds) wf_gdi_set_bounds;
 
 	primary->DstBlt = (pDstBlt) wf_gdi_dstblt;
 	primary->PatBlt = (pPatBlt) wf_gdi_patblt;
@@ -690,8 +690,8 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseSC = NULL;
 	primary->EllipseCB = NULL;
 
-	update->SurfaceBits = wf_gdi_surface_bits;
-	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
+	update->SurfaceBits = (pSurfaceBits) wf_gdi_surface_bits;
+	update->SurfaceFrameMarker = (pSurfaceFrameMarker) wf_gdi_surface_frame_marker;
 }
 
 void wf_update_canvas_diff(wfContext* wfc)

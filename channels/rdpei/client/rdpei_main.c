@@ -96,9 +96,10 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS];
 	RDPINPUT_CONTACT_POINT* contactPoints;
 
-	HANDLE mutex;
 	HANDLE event;
 	HANDLE thread;
+
+	CRITICAL_SECTION lock;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
@@ -160,7 +161,7 @@ static void* rdpei_schedule_thread(void* arg)
 	{
 		status = WaitForSingleObject(rdpei->event, 20);
 
-		WaitForSingleObject(rdpei->mutex, INFINITE);
+		EnterCriticalSection(&rdpei->lock);
 
 		rdpei_add_frame(context);
 
@@ -170,7 +171,7 @@ static void* rdpei_schedule_thread(void* arg)
 		if (status == WAIT_OBJECT_0)
 			ResetEvent(rdpei->event);
 
-		ReleaseMutex(rdpei->mutex);
+		LeaveCriticalSection(&rdpei->lock);
 	}
 
 	return NULL;
@@ -219,7 +220,7 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 
 	if (!rdpei->thread)
 	{
-		rdpei->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&rdpei->lock);
 		rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 		rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpei_schedule_thread, (void*) rdpei, 0, NULL);
 	}
@@ -542,7 +543,7 @@ int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contac
 	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
-	WaitForSingleObject(rdpei->mutex, INFINITE);
+	EnterCriticalSection(&rdpei->lock);
 
 	contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[contact->contactId];
 	CopyMemory(&(contactPoint->data), contact, sizeof(RDPINPUT_CONTACT_DATA));
@@ -550,7 +551,7 @@ int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contac
 
 	SetEvent(rdpei->event);
 
-	ReleaseMutex(rdpei->mutex);
+	LeaveCriticalSection(&rdpei->lock);
 
 	return 1;
 }

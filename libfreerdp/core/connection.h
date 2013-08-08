@@ -37,11 +37,14 @@ enum CONNECTION_STATE
 	CONNECTION_STATE_MCS_ERECT_DOMAIN = 3,
 	CONNECTION_STATE_MCS_ATTACH_USER = 4,
 	CONNECTION_STATE_MCS_CHANNEL_JOIN = 5,
-	CONNECTION_STATE_ESTABLISH_KEYS = 6,
-	CONNECTION_STATE_LICENSE = 7,
-	CONNECTION_STATE_CAPABILITY = 8,
-	CONNECTION_STATE_FINALIZATION = 9,
-	CONNECTION_STATE_ACTIVE = 10
+	CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT = 6,
+	CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE = 7,
+	CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT = 8,
+	CONNECTION_STATE_LICENSING = 9,
+	CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING = 10,
+	CONNECTION_STATE_CAPABILITIES_EXCHANGE = 11,
+	CONNECTION_STATE_FINALIZATION = 12,
+	CONNECTION_STATE_ACTIVE = 13
 };
 
 BOOL rdp_client_connect(rdpRdp* rdp);
@@ -52,15 +55,16 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_finalize(rdpRdp* rdp);
+int rdp_client_transition_to_state(rdpRdp* rdp, int state);
 
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s);
-BOOL rdp_server_accept_client_keys(rdpRdp* rdp, wStream* s);
-BOOL rdp_server_accept_client_info(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s);
+BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s);
 BOOL rdp_server_reactivate(rdpRdp* rdp);
+int rdp_server_transition_to_state(rdpRdp* rdp, int state);
 
 #endif /* __CONNECTION_H */

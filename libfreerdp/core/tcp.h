@@ -56,6 +56,7 @@ int tcp_wait_read(rdpTcp* tcp);
 int tcp_wait_write(rdpTcp* tcp);
 BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
+int tcp_attach(rdpTcp* tcp, int sockfd);
 HANDLE tcp_get_event_handle(rdpTcp* tcp);
 
 rdpTcp* tcp_new(rdpSettings* settings);

@@ -142,7 +142,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		endif()
 	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
+                set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
@@ -160,10 +160,10 @@ endif()
 
 if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_AMD64_")
 	else()
@@ -171,6 +171,13 @@ if(MSVC)
 	endif()
 	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+
+        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        else()
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
+        endif()
+
 endif()
 
 if(WIN32)
@@ -261,6 +268,7 @@ endif()
 
 if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
+	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
 else()
 	set(X11_FEATURE_TYPE "DISABLED")
@@ -461,7 +469,9 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
+if (NOT WITH_WAYK)
+    add_subdirectory(include)
+endif()
 
 add_subdirectory(libfreerdp)
 
@@ -485,6 +495,8 @@ endif()
 # Packaging
 
 SET(CPACK_BINARY_ZIP "ON")
+
+if(NOT WITH_WAYK)
 
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
 
@@ -541,9 +553,12 @@ if(MSVC)
 	if(MSVC_RUNTIME STREQUAL "dynamic")
 		set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 		include(InstallRequiredSystemLibraries)
+
+if(NOT WITH_WAYK)
 		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
 			DESTINATION ${CMAKE_INSTALL_BINDIR}
 			COMPONENT libraries)
+endif()
     endif()
 			
     set(EXTRA_DATA_DIR "extra/")
@@ -589,3 +604,4 @@ endif()
 
 include(CPack)
 
+endif()

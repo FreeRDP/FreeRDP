@@ -82,6 +82,9 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
 		handle = (HANDLE) event;
+
+		if (bInitialState)
+			SetEvent(handle);
 	}
 
 	if (!cs.LockSemaphore)

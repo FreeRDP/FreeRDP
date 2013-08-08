@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include "info.h"
 #include "certificate.h"
 
 #include <freerdp/utils/tcp.h>
@@ -51,6 +52,11 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	(*rcount)++;
 
 	return TRUE;
+}
+
+static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
+{
+	return client->context->rdp->transport->TcpIn->event;
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* client)
@@ -105,29 +111,6 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
 				return FALSE;
 
-			if (!client->connected)
-			{
-				/**
-				 * PostConnect should only be called once and should not be called
-				 * after a reactivation sequence.
-				 */
-
-				IFCALLRET(client->PostConnect, client->connected, client);
-
-				if (!client->connected)
-					return FALSE;
-			}
-
-			if (!client->activated)
-			{
-				/* Activate will be called everytime after the client is activated/reactivated. */
-			
-				IFCALLRET(client->Activate, client->activated, client);
-
-				if (!client->activated)
-					return FALSE;
-			}
-
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
@@ -135,7 +118,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			return FALSE;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
-			if(Stream_GetRemainingLength(s) < 4)
+			if (Stream_GetRemainingLength(s) < 4)
 				return FALSE;
 			Stream_Read_UINT32(s, client->ack_frame_id);
 			IFCALL(client->update->SurfaceFrameAcknowledge, client->update->context, client->ack_frame_id);
@@ -194,7 +177,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		if(!freerdp_channel_peer_process(client, s, channelId))
+		if (!freerdp_channel_peer_process(client, s, channelId))
 			return -1;
 	}
 	else
@@ -208,6 +191,11 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		{
 			case PDU_TYPE_DATA:
 				if (!peer_recv_data_pdu(client, s))
+					return -1;
+				break;
+
+			case PDU_TYPE_CONFIRM_ACTIVE:
+				if (!rdp_server_accept_confirm_active(rdp, s))
 					return -1;
 				break;
 
@@ -228,8 +216,6 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	rdp = client->context->rdp;
 	fastpath = rdp->fastpath;
-	//if (!fastpath_read_header_rdp(fastpath, s, &length))
-	//	return -1;
 
 	fastpath_read_header_rdp(fastpath, s, &length);
 
@@ -301,36 +287,71 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return -1;
 			break;
 
-		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
+		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
 			if (rdp->settings->DisableEncryption)
 			{
-				if (!rdp_server_accept_client_keys(rdp, s))
+				if (!rdp_server_establish_keys(rdp, s))
 					return -1;
-				break;
 			}
-			rdp->state = CONNECTION_STATE_ESTABLISH_KEYS;
-			/* FALLTHROUGH */
 
-		case CONNECTION_STATE_ESTABLISH_KEYS:
-			if (!rdp_server_accept_client_info(rdp, s))
-				return -1;
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
+			return peer_recv_callback(transport, s, extra);
 
-			IFCALL(client->Capabilities, client);
-
-			if (!rdp_send_demand_active(rdp))
-				return -1;
 			break;
 
-		case CONNECTION_STATE_LICENSE:
-			if (!rdp_server_accept_confirm_active(rdp, s))
+		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
+
+			if (!rdp_recv_client_info(rdp, s))
+				return -1;
+
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING);
+			return peer_recv_callback(transport, NULL, extra);
+
+			break;
+
+		case CONNECTION_STATE_LICENSING:
+
+			if (!license_send_valid_client_error_packet(rdp->license))
+				return FALSE;
+
+			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
+			return peer_recv_callback(transport, NULL, extra);
+
+			break;
+
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
+
+			if (!rdp->AwaitCapabilities)
+			{
+				IFCALL(client->Capabilities, client);
+
+				if (!rdp_send_demand_active(rdp))
+					return -1;
+
+				rdp->AwaitCapabilities = TRUE;
+
+				if (s)
+				{
+					if (peer_recv_pdu(client, s) < 0)
+						return -1;
+				}
+			}
+			else
 			{
 				/**
 				 * During reactivation sequence the client might sent some input or channel data
 				 * before receiving the Deactivate All PDU. We need to process them as usual.
 				 */
-				Stream_SetPosition(s, 0);
-				return peer_recv_pdu(client, s);
+
+				if (peer_recv_pdu(client, s) < 0)
+					return -1;
 			}
+
+			break;
+
+		case CONNECTION_STATE_FINALIZATION:
+			if (peer_recv_pdu(client, s) < 0)
+				return -1;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
@@ -355,6 +376,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	 */
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
+
 	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
 }
 
@@ -372,13 +394,14 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	rdp = rdp_new(NULL);
+	client->context = (rdpContext*) malloc(client->ContextSize);
+	ZeroMemory(client->context, client->ContextSize);
+
+	rdp = rdp_new(client->context);
+
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
-
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
@@ -414,12 +437,13 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 
-	if (client != NULL)
+	if (client)
 	{
 		client->sockfd = sockfd;
 		client->ContextSize = sizeof(rdpContext);
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
+		client->GetEventHandle = freerdp_peer_get_event_handle;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
 		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;

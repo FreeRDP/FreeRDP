@@ -153,7 +153,7 @@ wStack* Stack_New(BOOL synchronized)
 		stack->synchronized = synchronized;
 
 		if (stack->synchronized)
-			InitializeCriticalSection(&stack->lock);
+			InitializeCriticalSectionAndSpinCount(&stack->lock, 4000);
 
 		stack->size = 0;
 		stack->capacity = 32;
