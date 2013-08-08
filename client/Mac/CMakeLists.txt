@@ -65,9 +65,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH} 
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
 
-# Support for automatic reference counting requires non-fragile abi.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
-
 set_target_properties(${MODULE_NAME} PROPERTIES 
 	FRAMEWORK TRUE
 	MACOSX_FRAMEWORK_IDENTIFIER com.awakecoding.${MODULE_NAME}

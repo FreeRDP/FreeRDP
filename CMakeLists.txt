@@ -231,17 +231,14 @@ if(APPLE)
                         include_directories(/opt/local/include)
                         link_directories(/opt/local/lib)
                 endif()
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.5")
         endif()
+
         if(WITH_CLANG)
                 set(CMAKE_C_COMPILER "clang")
         endif()
 
         if (WITH_VERBOSE)
-            # Support for automatic reference counting requires non-fragile abi.
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
-
-            # Tell the compiler where to look for the FreeRDP framework
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v")
         endif()
 endif()

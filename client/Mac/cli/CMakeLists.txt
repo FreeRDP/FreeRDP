@@ -4,7 +4,6 @@ project(MacFreeRDP)
 set(MODULE_NAME "MacFreeRDP")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_CLIENT")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.5")
 
 # Import libraries
 find_library(FOUNDATION_LIBRARY Foundation)
@@ -61,9 +60,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist ${CMAKE_CURRENT_BINARY_DIR
 
 # This allows for automatic xib to nib ibitool
 set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_PREFIX}_RESOURCES}")
-
-# Support for automatic reference counting requires non-fragile abi.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
 
 # Tell the compiler where to look for the FreeRDP framework
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
