@@ -34,15 +34,13 @@
 #include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
 
-/*
-static const char* const UPDATE_TYPE_STRINGS[] =
+const char* const UPDATE_TYPE_STRINGS[] =
 {
 	"Orders",
 	"Bitmap",
 	"Palette",
 	"Synchronize"
 };
-*/
 
 extern const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[];
 
@@ -107,12 +105,25 @@ BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapD
 		Stream_GetPointer(s, bitmapData->bitmapDataStream);
 		Stream_Seek(s, bitmapData->bitmapLength);
 	}
+
 	return TRUE;
 }
 
 BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength);
+
+	bitmapData->flags = 0;
+	bitmapData->cbCompFirstRowSize = 0;
+
+	if (bitmapData->compressed)
+		bitmapData->flags |= BITMAP_COMPRESSION;
+
+	if (update->context->settings->NoBitmapCompressionHeader)
+	{
+		bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
+		bitmapData->cbCompMainBodySize = bitmapData->bitmapLength;
+	}
 
 	Stream_Write_UINT16(s, bitmapData->destLeft);
 	Stream_Write_UINT16(s, bitmapData->destTop);
@@ -123,12 +134,6 @@ BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmap
 	Stream_Write_UINT16(s, bitmapData->bitsPerPixel);
 	Stream_Write_UINT16(s, bitmapData->flags);
 	Stream_Write_UINT16(s, bitmapData->bitmapLength);
-
-	if (bitmapData->compressed)
-		bitmapData->flags |= BITMAP_COMPRESSION;
-
-	if (update->context->settings->NoBitmapCompressionHeader)
-		bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
 
 	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
@@ -168,7 +173,7 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bit
 		bitmapUpdate->rectangles = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
 				sizeof(BITMAP_DATA) * count);
 
-		memset(&bitmapUpdate->rectangles[bitmapUpdate->count], 0,
+		ZeroMemory(&bitmapUpdate->rectangles[bitmapUpdate->count],
 				sizeof(BITMAP_DATA) * (count - bitmapUpdate->count));
 
 		bitmapUpdate->count = count;
@@ -188,6 +193,8 @@ BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bi
 	int i;
 
 	Stream_EnsureRemainingCapacity(s, 32);
+
+	Stream_Write_UINT16(s, UPDATE_TYPE_BITMAP); /* updateType */
 
 	Stream_Write_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
@@ -413,7 +420,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//fprintf(stderr, "%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -858,11 +865,14 @@ static void update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap
 	rdpRdp* rdp = context->rdp;
 	rdpUpdate* update = context->update;
 
+	update_force_flush(context);
+
 	s = fastpath_update_pdu_init(rdp->fastpath);
-
 	update_write_bitmap_update(update, s, bitmapUpdate);
-
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_BITMAP, s);
+
+	update_force_flush(context);
+
 	Stream_Release(s);
 }
 
