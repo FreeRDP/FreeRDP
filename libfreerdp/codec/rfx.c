@@ -1068,6 +1068,14 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 {
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*) context;
 
+	/**
+	 * Some component of the encoder chain (I suspect the rlgr encoder) expects
+	 * the output buffer to be zeroed. The multithreaded RemoteFX encoder uses
+	 * wStreams from the StreamPool which are reused and not zeroed out of
+	 * course. For now, in order to prevent data corruption we clear the stream.
+	 */
+	Stream_Clear(param->s);
+
 	rfx_compose_message_tile(param->context, param->s,
 		param->tile_data, param->tile_width, param->tile_height, param->rowstride,
 		param->quantVals, param->quantIdxY, param->quantIdxCb, param->quantIdxCr, param->xIdx, param->yIdx);
