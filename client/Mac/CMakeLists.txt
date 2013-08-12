@@ -157,7 +157,7 @@ endif()
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${xib}
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 # endif()
