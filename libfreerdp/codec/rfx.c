@@ -1177,7 +1177,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 				params[i].tile_width = tileWidth;
 				params[i].tile_height = tileHeight;
 				params[i].rowstride = rowstride;
-				params[i].quantVals = (UINT32*)quantVals;
+				params[i].quantVals = (UINT32*) quantVals;
 				params[i].quantIdxY = quantIdxY;
 				params[i].quantIdxCb = quantIdxCb;
 				params[i].quantIdxCr = quantIdxCr;
@@ -1199,13 +1199,20 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 
 	if (context->priv->UseThreads)
 	{
-		for (i = 0; i < numTiles; i++)
+		for (yIdx = 0; yIdx < numTilesY; yIdx++)
 		{
-			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
-			CloseThreadpoolWork(work_objects[i]);
-			Stream_Write(s, Stream_Buffer(params[i].s), Stream_GetPosition(params[i].s));
-			StreamPool_Return(context->priv->EncoderStreamPool, params[i].s);
+			for (xIdx = 0; xIdx < numTilesX; xIdx++)
+			{
+				i = yIdx * numTilesX + xIdx;
+
+				WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+				Stream_EnsureRemainingCapacity(s, Stream_GetPosition(params[i].s));
+				Stream_Write(s, Stream_Buffer(params[i].s), Stream_GetPosition(params[i].s));
+				CloseThreadpoolWork(work_objects[i]);
+				Stream_Release(params[i].s);
+			}
 		}
+
 		free(work_objects);
 		free(params);
 	}

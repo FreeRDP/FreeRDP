@@ -174,9 +174,9 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 
 		while (y_exceed > 0)
 		{
-			memcpy(r_buf, r_last, 64 * sizeof(INT16));
-			memcpy(g_buf, g_last, 64 * sizeof(INT16));
-			memcpy(b_buf, b_last, 64 * sizeof(INT16));
+			CopyMemory(r_buf, r_last, 64 * sizeof(INT16));
+			CopyMemory(g_buf, g_last, 64 * sizeof(INT16));
+			CopyMemory(b_buf, b_last, 64 * sizeof(INT16));
 			r_buf += 64;
 			g_buf += 64;
 			b_buf += 64;
