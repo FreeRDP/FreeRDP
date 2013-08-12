@@ -444,8 +444,8 @@ if(BUILD_TESTING)
 endif()
 
 # WinPR
-set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories(${WINPR_INCLUDE_DIR})
+include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
 
