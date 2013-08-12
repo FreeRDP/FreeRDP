@@ -605,6 +605,7 @@ char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 
 int UnixChangeFileMode(const char* filename, int flags)
 {
+#ifndef _WIN32
 	mode_t fl = 0;
 
 	fl |= (flags & 0x4000) ? S_ISUID : 0;
@@ -621,5 +622,7 @@ int UnixChangeFileMode(const char* filename, int flags)
 	fl |= (flags & 0x0001) ? S_IXOTH : 0;
 
 	return chmod(filename, fl);
+#else
+	return 0;
+#endif
 }
-
