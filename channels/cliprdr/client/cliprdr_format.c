@@ -291,13 +291,13 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	/* where is this documented? */
+	/* http://msdn.microsoft.com/en-us/library/hh872154.aspx */
 	wMessage* event;
 
 	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
 	{
-		/* In case of an error the clipboard will cease to operate.
-		 * Post this event to reenable the plugin. */
+		/* In case of an error the clipboard will not be synchronized with the server.
+		 * Post this event to restart format negociation and data transfer. */
 		event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
 	}
