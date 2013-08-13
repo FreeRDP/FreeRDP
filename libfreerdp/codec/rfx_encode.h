@@ -22,7 +22,7 @@
 
 #include <freerdp/codec/rfx.h>
 
-void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, int rowstride, wStream* s);
+void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, wStream* s);
 
 #endif
 

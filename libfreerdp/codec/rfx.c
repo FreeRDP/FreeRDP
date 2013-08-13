@@ -263,9 +263,9 @@ RFX_CONTEXT* rfx_context_new(void)
 
 		if (context->priv->MaxThreadCount)
 			SetThreadpoolThreadMaximum(context->priv->ThreadPool, context->priv->MaxThreadCount);
-
-		context->priv->EncoderStreamPool = StreamPool_New(TRUE, 64*64*3+19);
 	}
+
+	context->priv->EncoderStreamPool = StreamPool_New(TRUE, 64*64*3+19);
 
 	/* initialize the default pixel format */
 	rfx_context_set_pixel_format(context, RDP_PIXEL_FORMAT_B8G8R8A8);
@@ -1000,7 +1000,7 @@ static void rfx_compose_message_region(RFX_CONTEXT* context, wStream* s,
 	Stream_Write_UINT16(s, 1); /* numTilesets */
 }
 
-static void rfx_compose_message_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile, int rowstride)
+static void rfx_compose_message_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
 {
 	int start_pos, end_pos;
 
@@ -1017,7 +1017,7 @@ static void rfx_compose_message_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE*
 
 	Stream_Seek(s, 6); /* YLen, CbLen, CrLen */
 
-	rfx_encode_rgb(context, tile, rowstride, s);
+	rfx_encode_rgb(context, tile, s);
 
 	DEBUG_RFX("xIdx=%d yIdx=%d width=%d height=%d YLen=%d CbLen=%d CrLen=%d",
 		tile->xIdx, tile->yIdx, tile->width, tile->height, tile->YLen, tile->CbLen, tile->CrLen);
@@ -1039,27 +1039,18 @@ struct _RFX_TILE_COMPOSE_WORK_PARAM
 {
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;
-
 	wStream* s;
-	int rowstride;
 };
 typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
 
 void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*) context;
-
-	/**
-	 * We need to clear the stream as the RLGR encoder expects it to be initialized to zero.
-	 * This allows simplifying and improving the performance of the encoding process.
-	 */
-	Stream_Clear(param->s);
-
-	rfx_compose_message_tile(param->context, param->s, param->tile, param->rowstride);
+	rfx_compose_message_tile(param->context, param->s, param->tile);
 }
 
 static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
-	BYTE* image_data, int width, int height, int rowstride)
+	BYTE* image_data, int width, int height, int scanline)
 {
 	int i;
 	int size;
@@ -1116,7 +1107,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 		quantValsPtr += 2;
 	}
 
-	DEBUG_RFX("width:%d height:%d rowstride:%d", width, height, rowstride);
+	DEBUG_RFX("width:%d height:%d rowstride:%d", width, height, scanline);
 
 	end_pos = Stream_GetPosition(s);
 
@@ -1134,7 +1125,8 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 
 			tile = params[i].tile = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
 
-			tile->data = image_data + yIdx * 64 * rowstride + xIdx * 8 * context->bits_per_pixel;
+			tile->scanline = scanline;
+			tile->data = image_data + yIdx * 64 * scanline + xIdx * 8 * context->bits_per_pixel;
 			tile->width = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
 			tile->height = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
 
@@ -1154,7 +1146,6 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 			{
 				params[i].context = context;
 				params[i].s = StreamPool_Take(context->priv->EncoderStreamPool, 0);
-				params[i].rowstride = rowstride;
 
 				work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_compose_message_tile_work_callback,
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
@@ -1163,7 +1154,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 			}
 			else
 			{
-				rfx_compose_message_tile(context, s, tile, rowstride);
+				rfx_compose_message_tile(context, s, tile);
 			}
 		}
 	}
