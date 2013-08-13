@@ -217,7 +217,7 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
-void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, wStream* s)
+void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 {
 	INT16* pSrcDst[3];
 	int YLen, CbLen, CrLen;
@@ -229,10 +229,6 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, wStream* s)
 	YQuant = context->quants + (tile->quantIdxY * 10);
 	CbQuant = context->quants + (tile->quantIdxCb * 10);
 	CrQuant = context->quants + (tile->quantIdxCr * 10);
-
-	tile->YData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-	tile->CbData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-	tile->CrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
 
 	pSrcDst[0] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* y_r_buffer */
 	pSrcDst[1] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cb_g_buffer */
@@ -267,22 +263,9 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, wStream* s)
 	tile->CbLen = (UINT16) CbLen;
 	tile->CrLen = (UINT16) CrLen;
 
-	Stream_EnsureRemainingCapacity(s, tile->YLen);
-	Stream_Write(s, tile->YData, tile->YLen);
-
-	Stream_EnsureRemainingCapacity(s, tile->CbLen);
-	Stream_Write(s, tile->CbData, tile->CbLen);
-
-	Stream_EnsureRemainingCapacity(s, tile->CrLen);
-	Stream_Write(s, tile->CrData, tile->CrLen);
-
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[0] - 16);
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[1] - 16);
 	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[2] - 16);
-
-	BufferPool_Return(context->priv->BufferPool, tile->YData);
-	BufferPool_Return(context->priv->BufferPool, tile->CbData);
-	BufferPool_Return(context->priv->BufferPool, tile->CrData);
 }

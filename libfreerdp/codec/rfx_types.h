@@ -49,7 +49,6 @@ struct _RFX_CONTEXT_PRIV
 	TP_CALLBACK_ENVIRON ThreadPoolEnv;
  
 	wBufferPool* BufferPool;
-	wStreamPool* EncoderStreamPool;
 
 	/* profilers */
 	PROFILER_DEFINE(prof_rfx_decode_rgb);
