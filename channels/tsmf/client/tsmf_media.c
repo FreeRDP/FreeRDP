@@ -53,8 +53,6 @@
 #include "tsmf_codec.h"
 #include "tsmf_media.h"
 
-#include <pthread.h>
-
 #define AUDIO_TOLERANCE 10000000LL
 
 struct _TSMF_PRESENTATION
@@ -237,15 +235,19 @@ static void tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 	Queue_Enqueue(stream->sample_ack_list, sample);
 }
 
-static void tsmf_stream_process_ack(TSMF_STREAM* stream)
+static BOOL tsmf_stream_process_ack(TSMF_STREAM* stream)
 {
 	TSMF_SAMPLE* sample;
 	UINT64 ack_time;
+	BOOL rc = FALSE;
 
 	ack_time = get_current_time();
 
-	while ((Queue_Count(stream->sample_ack_list) > 0) && !(WaitForSingleObject(stream->stopEvent, 0) == WAIT_OBJECT_0))
+	while ((Queue_Count(stream->sample_ack_list) > 0) && !rc)
 	{
+		if(WaitForSingleObject(stream->stopEvent, 0) == WAIT_OBJECT_0)
+			rc = TRUE;
+	
 		sample = (TSMF_SAMPLE*) Queue_Peek(stream->sample_ack_list);
 
 		if (!sample || (sample->ack_time > ack_time))
@@ -256,20 +258,13 @@ static void tsmf_stream_process_ack(TSMF_STREAM* stream)
 		tsmf_sample_ack(sample);
 		tsmf_sample_free(sample);
 	}
+
+	return rc;
 }
 
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCallback* pChannelCallback)
 {
 	TSMF_PRESENTATION* presentation;
-	pthread_t thid = pthread_self();
-	FILE* fout = NULL;
-	fout = fopen("/tmp/tsmf.tid", "wt");
-	
-	if (fout)
-	{
-		fprintf(fout, "%d\n", (int) (size_t) thid);
-		fclose(fout);
-	}
 
 	presentation = tsmf_presentation_find_by_id(guid);
 
@@ -685,20 +680,18 @@ static void* tsmf_stream_playback_func(void* arg)
 		}
 	}
 
+	stream->started = TRUE;
 	while (!(WaitForSingleObject(stream->stopEvent, 0) == WAIT_OBJECT_0))
 	{
-		tsmf_stream_process_ack(stream);
+		if (!stream->eos && !presentation->eos)
+			/* tsmf_stream_process_ack is internally listening to stream->stopEvent,
+			 * so if it already consumed the event, end this thread. */
+			if(tsmf_stream_process_ack(stream))
+				break;
+
 		sample = tsmf_stream_pop_sample(stream, 1);
 
 		if (sample)
-			tsmf_sample_playback(sample);
-		else
-			USleep(5000);
-	}
-
-	if (stream->eos || presentation->eos)
-	{
-		while ((sample = tsmf_stream_pop_sample(stream, 1)) != NULL)
 			tsmf_sample_playback(sample);
 	}
 
@@ -707,8 +700,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		stream->audio->Free(stream->audio);
 		stream->audio = NULL;
 	}
-
-	SetEvent(stream->stopEvent);
+	stream->started = FALSE;
 
 	DEBUG_DVC("out %d", stream->stream_id);
 
@@ -729,19 +721,14 @@ static void tsmf_stream_stop(TSMF_STREAM* stream)
 	if (!stream)
 		return;
 
+	if (stream->started)
+		SetEvent(stream->stopEvent);
+
 	if (!stream->decoder)
 		return;
 
-	if (stream->started)
-	{
-		SetEvent(stream->stopEvent);
-		stream->started = FALSE;
-	}
-
 	if (stream->decoder->Control)
-	{
 		stream->decoder->Control(stream->decoder, Control_Flush, NULL);
-	}
 }
 
 static void tsmf_stream_pause(TSMF_STREAM* stream)
@@ -970,7 +957,9 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->started = FALSE;
 
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
+	stream->thread = CreateThread(NULL, 0, 
+			(LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream,
+			CREATE_SUSPENDED, NULL);
 
 	stream->sample_list = Queue_New(TRUE, -1, -1);
 	stream->sample_list->object.fnObjectFree = free;
@@ -1051,8 +1040,10 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 {
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
-	tsmf_stream_stop(stream);
 	tsmf_stream_flush(stream);
+	tsmf_stream_stop(stream);
+
+	WaitForSingleObject(stream->thread, INFINITE);
 
 	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_remove(presentation->stream_list, stream);
@@ -1067,7 +1058,8 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 		stream->decoder = 0;
 	}
 
-	SetEvent(stream->thread);
+	CloseHandle(stream->stopEvent);
+	CloseHandle(stream->thread);
 
 	free(stream);
 	stream = 0;
@@ -1133,8 +1125,6 @@ static void tsmf_signal_handler(int s)
 			tsmf_presentation_free(presentation);
 		}
 	}
-
-	unlink("/tmp/tsmf.tid");
 
 	if (s == SIGINT)
 	{
