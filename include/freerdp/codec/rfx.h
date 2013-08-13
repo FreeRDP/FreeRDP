@@ -72,6 +72,8 @@ typedef struct _RFX_TILE RFX_TILE;
 
 struct _RFX_MESSAGE
 {
+	UINT32 frameIdx;
+
 	/**
 	 * The rects array represents the updated region of the frame. The UI
 	 * requires to clip drawing destination base on the union of the rects.

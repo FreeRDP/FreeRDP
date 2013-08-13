@@ -984,48 +984,6 @@ void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 	rfx_compose_message_channels(context, s);
 }
 
-static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, wStream* s)
-{
-	Stream_EnsureRemainingCapacity(s, 14);
-
-	Stream_Write_UINT16(s, WBT_FRAME_BEGIN); /* CodecChannelT.blockType */
-	Stream_Write_UINT32(s, 14); /* CodecChannelT.blockLen */
-	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
-	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
-	Stream_Write_UINT32(s, context->frameIdx); /* frameIdx */
-	Stream_Write_UINT16(s, 1); /* numRegions */
-
-	context->frameIdx++;
-}
-
-static void rfx_compose_message_region(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int numRects)
-{
-	int i;
-	UINT32 blockLen;
-
-	blockLen = 15 + (numRects * 8);
-	Stream_EnsureRemainingCapacity(s, blockLen);
-
-	Stream_Write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
-	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId (1 byte) */
-	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId (1 byte) */
-	Stream_Write_UINT8(s, 1); /* regionFlags (1 byte) */
-	Stream_Write_UINT16(s, numRects); /* numRects (2 bytes) */
-
-	for (i = 0; i < numRects; i++)
-	{
-		Stream_Write_UINT16(s, rects[i].x);
-		Stream_Write_UINT16(s, rects[i].y);
-		Stream_Write_UINT16(s, rects[i].width);
-		Stream_Write_UINT16(s, rects[i].height);
-	}
-
-	Stream_Write_UINT16(s, CBT_REGION); /* regionType (2 bytes) */
-	Stream_Write_UINT16(s, 1); /* numTilesets (2 bytes) */
-}
-
 static int rfx_tile_length(RFX_TILE* tile)
 {
 	return 19 + tile->YLen + tile->CbLen + tile->CrLen;
@@ -1066,7 +1024,8 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, BYTE* data, int width, int height, int scanline)
+RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, const RFX_RECT* rects,
+		int numRects, BYTE* data, int width, int height, int scanline)
 {
 	int i;
 	int xIdx;
@@ -1080,6 +1039,11 @@ RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, BYTE* data, int widt
 
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
 	ZeroMemory(message, sizeof(RFX_MESSAGE));
+
+	message->frameIdx = context->frameIdx++;
+
+	message->numRects = numRects;
+	message->rects = (RFX_RECT*) rects;
 
 	if (!context->numQuant)
 	{
@@ -1214,7 +1178,46 @@ static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 			message->numQuant, message->numTiles, message->tilesDataSize);
 }
 
-static void rfx_compose_message_frame_end(RFX_CONTEXT* context, wStream* s)
+void rfx_write_message_frame_begin(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
+{
+	Stream_EnsureRemainingCapacity(s, 14);
+
+	Stream_Write_UINT16(s, WBT_FRAME_BEGIN); /* CodecChannelT.blockType */
+	Stream_Write_UINT32(s, 14); /* CodecChannelT.blockLen */
+	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
+	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
+	Stream_Write_UINT32(s, message->frameIdx); /* frameIdx */
+	Stream_Write_UINT16(s, 1); /* numRegions */
+}
+
+void rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
+{
+	int i;
+	UINT32 blockLen;
+
+	blockLen = 15 + (message->numRects * 8);
+	Stream_EnsureRemainingCapacity(s, blockLen);
+
+	Stream_Write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId (1 byte) */
+	Stream_Write_UINT8(s, 1); /* regionFlags (1 byte) */
+	Stream_Write_UINT16(s, message->numRects); /* numRects (2 bytes) */
+
+	for (i = 0; i < message->numRects; i++)
+	{
+		Stream_Write_UINT16(s, message->rects[i].x);
+		Stream_Write_UINT16(s, message->rects[i].y);
+		Stream_Write_UINT16(s, message->rects[i].width);
+		Stream_Write_UINT16(s, message->rects[i].height);
+	}
+
+	Stream_Write_UINT16(s, CBT_REGION); /* regionType (2 bytes) */
+	Stream_Write_UINT16(s, 1); /* numTilesets (2 bytes) */
+}
+
+void rfx_write_message_frame_end(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
 {
 	Stream_EnsureRemainingCapacity(s, 8);
 
@@ -1235,13 +1238,15 @@ FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 		context->state = RFX_STATE_SEND_FRAME_DATA;
 	}
 
-	rfx_compose_message_frame_begin(context, s);
-	rfx_compose_message_region(context, s, rects, numRects);
+	message = rfx_compose_message_full(context, rects, numRects, data, width, height, scanline);
 
-	message = rfx_compose_message_full(context, data, width, height, scanline);
+	rfx_write_message_frame_begin(context, s, message);
+	rfx_write_message_region(context, s, message);
 	rfx_write_message_tileset(context, s, message);
+	rfx_write_message_frame_end(context, s, message);
 
-	rfx_compose_message_frame_end(context, s);
+	message->rects = NULL;
+	message->numRects = 0;
 
 	rfx_message_free(context, message);
 }
