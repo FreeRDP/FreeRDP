@@ -323,15 +323,13 @@ static void* serial_thread_func(void* arg)
 	IRP* irp;
 	DWORD status;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
+	HANDLE ev[] = {serial->stopEvent, Queue_Event(serial->queue)};
 
 	while (1)
 	{
-		if (WaitForSingleObject(serial->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
+		status = WaitForMultipleObjects(2, ev, FALSE, 10);
 
-		status = WaitForSingleObject(Queue_Event(serial->queue), 10);
-
-		if ((status != WAIT_OBJECT_0) && (status != WAIT_TIMEOUT))
+		if (WAIT_OBJECT_0 == status)
 			break;
 
 		serial->nfds = 1;
@@ -342,7 +340,7 @@ static void* serial_thread_func(void* arg)
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
-		if (status == WAIT_OBJECT_0)
+		if (status == WAIT_OBJECT_0 + 1)
 		{
 			if ((irp = (IRP*) Queue_Dequeue(serial->queue)))
 				serial_process_irp(serial, irp);
