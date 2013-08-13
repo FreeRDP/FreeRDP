@@ -76,7 +76,7 @@ struct _RFX_MESSAGE
 	 * The rects array represents the updated region of the frame. The UI
 	 * requires to clip drawing destination base on the union of the rects.
 	 */
-	UINT16 num_rects;
+	UINT16 numRects;
 	RFX_RECT* rects;
 
 	/**
@@ -85,15 +85,33 @@ struct _RFX_MESSAGE
 	 * rects described above) are valid. Pixels outside of the region may
 	 * contain arbitrary data.
 	 */
-	UINT16 num_tiles;
+	UINT16 numTiles;
 	RFX_TILE** tiles;
+
+	UINT16 numQuant;
+	UINT32* quantVals;
+
+	UINT32 tilesDataSize;
 };
 typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
 typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
+enum _RFX_STATE
+{
+	RFX_STATE_INITIAL,
+	RFX_STATE_SERVER_UNINITIALIZED,
+	RFX_STATE_SEND_HEADERS,
+	RFX_STATE_SEND_FRAME_DATA,
+	RFX_STATE_FRAME_DATA_SENT,
+	RFX_STATE_FINAL
+};
+typedef enum _RFX_STATE RFX_STATE;
+
 struct _RFX_CONTEXT
 {
+	RFX_STATE state;
+
 	UINT16 flags;
 	UINT16 properties;
 	UINT16 width;
@@ -109,8 +127,7 @@ struct _RFX_CONTEXT
 	const BYTE* palette;
 
 	/* temporary data within a frame */
-	UINT32 frame_idx;
-	BOOL header_processed;
+	UINT32 frameIdx;
 	BYTE numQuant;
 	UINT32* quants;
 	BYTE quantIdxY;

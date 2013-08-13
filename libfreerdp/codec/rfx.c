@@ -144,6 +144,12 @@ void rfx_tile_init(RFX_TILE* tile)
 	{
 		tile->x = 0;
 		tile->y = 0;
+		tile->YLen = 0;
+		tile->YData = NULL;
+		tile->CbLen = 0;
+		tile->CbData = NULL;
+		tile->CrLen = 0;
+		tile->CrData = NULL;
 	}
 }
 
@@ -281,6 +287,8 @@ RFX_CONTEXT* rfx_context_new(void)
 
 	RFX_INIT_SIMD(context);
 	
+	context->state = RFX_STATE_SEND_HEADERS;
+
 	return context;
 }
 
@@ -340,8 +348,8 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 
 void rfx_context_reset(RFX_CONTEXT* context)
 {
-	context->header_processed = FALSE;
-	context->frame_idx = 0;
+	context->state = RFX_STATE_SEND_HEADERS;
+	context->frameIdx = 0;
 }
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
@@ -524,27 +532,27 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	}
 
 	Stream_Seek_UINT8(s); /* regionFlags (1 byte) */
-	Stream_Read_UINT16(s, message->num_rects); /* numRects (2 bytes) */
+	Stream_Read_UINT16(s, message->numRects); /* numRects (2 bytes) */
 
-	if (message->num_rects < 1)
+	if (message->numRects < 1)
 	{
 		DEBUG_WARN("no rects.");
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8 * message->num_rects)
+	if (Stream_GetRemainingLength(s) < 8 * message->numRects)
 	{
-		DEBUG_WARN("RfxMessageRegion packet too small for num_rects=%d", message->num_rects);
+		DEBUG_WARN("RfxMessageRegion packet too small for num_rects=%d", message->numRects);
 		return FALSE;
 	}
 
 	if (message->rects != NULL)
-		message->rects = (RFX_RECT*) realloc(message->rects, message->num_rects * sizeof(RFX_RECT));
+		message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
 	else
-		message->rects = (RFX_RECT*) malloc(message->num_rects * sizeof(RFX_RECT));
+		message->rects = (RFX_RECT*) malloc(message->numRects * sizeof(RFX_RECT));
 
 	/* rects */
-	for (i = 0; i < message->num_rects; i++)
+	for (i = 0; i < message->numRects; i++)
 	{
 		/* RFX_RECT */
 		Stream_Read_UINT16(s, message->rects[i].x); /* x (2 bytes) */
@@ -611,9 +619,9 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		return TRUE;
 	}
 
-	Stream_Read_UINT16(s, message->num_tiles); /* numTiles (2 bytes) */
+	Stream_Read_UINT16(s, message->numTiles); /* numTiles (2 bytes) */
 
-	if (message->num_tiles < 1)
+	if (message->numTiles < 1)
 	{
 		DEBUG_WARN("no tiles.");
 		return TRUE;
@@ -661,24 +669,24 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			context->quants[i * 10 + 8], context->quants[i * 10 + 9]);
 	}
 
-	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->num_tiles);
-	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->num_tiles);
+	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->numTiles);
+	ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->numTiles);
 
 	if (context->priv->UseThreads)
 	{
-		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->num_tiles);
-		params = (RFX_TILE_PROCESS_WORK_PARAM*) malloc(sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->num_tiles);
+		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
+		params = (RFX_TILE_PROCESS_WORK_PARAM*) malloc(sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->numTiles);
 	}
 
 	/* tiles */
-	for (i = 0; i < message->num_tiles; i++)
+	for (i = 0; i < message->numTiles; i++)
 	{
 		tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
 
 		/* RFX_TILE */
 		if (Stream_GetRemainingLength(s) < 6)
 		{
-			DEBUG_WARN("RfxMessageTileSet packet too small to read tile %d/%d", i, message->num_tiles);
+			DEBUG_WARN("RfxMessageTileSet packet too small to read tile %d/%d", i, message->numTiles);
 			return FALSE;
 		}
 
@@ -687,7 +695,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
-			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d", i, message->num_tiles, blockLen);
+			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d", i, message->numTiles, blockLen);
 			return FALSE;
 		}
 
@@ -738,7 +746,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (context->priv->UseThreads)
 	{
-		for (i = 0; i < message->num_tiles; i++)
+		for (i = 0; i < message->numTiles; i++)
 		{
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
@@ -747,6 +755,14 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		free(work_objects);
 		free(params);
 	}
+
+	for (i = 0; i < message->numTiles; i++)
+	{
+		tile = message->tiles[i];
+		tile->YLen = tile->CbLen = tile->CrLen = 0;
+		tile->YData = tile->CbData = tile->CrData = NULL;
+	}
+
 	return TRUE;
 }
 
@@ -847,7 +863,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 
 UINT16 rfx_message_get_tile_count(RFX_MESSAGE* message)
 {
-	return message->num_tiles;
+	return message->numTiles;
 }
 
 RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* message, int index)
@@ -857,7 +873,7 @@ RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* message, int index)
 
 UINT16 rfx_message_get_rect_count(RFX_MESSAGE* message)
 {
-	return message->num_rects;
+	return message->numRects;
 }
 
 RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index)
@@ -868,16 +884,31 @@ RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index)
 void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 {
 	int i;
+	RFX_TILE* tile;
 
-	if (message != NULL)
+	if (message)
 	{
-		free(message->rects);
+		if (message->rects)
+		{
+			free(message->rects);
+		}
 
 		if (message->tiles)
 		{
-			for (i = 0; i < message->num_tiles; i++)
+			for (i = 0; i < message->numTiles; i++)
 			{
-				ObjectPool_Return(context->priv->TilePool, (void*) message->tiles[i]);
+				tile = message->tiles[i];
+
+				if (tile->YData)
+					BufferPool_Return(context->priv->BufferPool, tile->YData);
+
+				if (tile->CbData)
+					BufferPool_Return(context->priv->BufferPool, tile->CbData);
+
+				if (tile->CrData)
+					BufferPool_Return(context->priv->BufferPool, tile->CrData);
+
+				ObjectPool_Return(context->priv->TilePool, (void*) tile);
 			}
 
 			free(message->tiles);
@@ -951,8 +982,6 @@ void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 	rfx_compose_message_context(context, s);
 	rfx_compose_message_codec_versions(context, s);
 	rfx_compose_message_channels(context, s);
-
-	context->header_processed = TRUE;
 }
 
 static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, wStream* s)
@@ -963,29 +992,29 @@ static void rfx_compose_message_frame_begin(RFX_CONTEXT* context, wStream* s)
 	Stream_Write_UINT32(s, 14); /* CodecChannelT.blockLen */
 	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
 	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
-	Stream_Write_UINT32(s, context->frame_idx); /* frameIdx */
+	Stream_Write_UINT32(s, context->frameIdx); /* frameIdx */
 	Stream_Write_UINT16(s, 1); /* numRegions */
 
-	context->frame_idx++;
+	context->frameIdx++;
 }
 
 static void rfx_compose_message_region(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int num_rects)
+	const RFX_RECT* rects, int numRects)
 {
-	int size;
 	int i;
+	UINT32 blockLen;
 
-	size = 15 + num_rects * 8;
-	Stream_EnsureRemainingCapacity(s, size);
+	blockLen = 15 + (numRects * 8);
+	Stream_EnsureRemainingCapacity(s, blockLen);
 
-	Stream_Write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType */
-	Stream_Write_UINT32(s, size); /* set CodecChannelT.blockLen later */
-	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
-	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
-	Stream_Write_UINT8(s, 1); /* regionFlags */
-	Stream_Write_UINT16(s, num_rects); /* numRects */
+	Stream_Write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId (1 byte) */
+	Stream_Write_UINT8(s, 1); /* regionFlags (1 byte) */
+	Stream_Write_UINT16(s, numRects); /* numRects (2 bytes) */
 
-	for (i = 0; i < num_rects; i++)
+	for (i = 0; i < numRects; i++)
 	{
 		Stream_Write_UINT16(s, rects[i].x);
 		Stream_Write_UINT16(s, rects[i].y);
@@ -993,15 +1022,20 @@ static void rfx_compose_message_region(RFX_CONTEXT* context, wStream* s,
 		Stream_Write_UINT16(s, rects[i].height);
 	}
 
-	Stream_Write_UINT16(s, CBT_REGION); /* regionType */
-	Stream_Write_UINT16(s, 1); /* numTilesets */
+	Stream_Write_UINT16(s, CBT_REGION); /* regionType (2 bytes) */
+	Stream_Write_UINT16(s, 1); /* numTilesets (2 bytes) */
+}
+
+static int rfx_tile_length(RFX_TILE* tile)
+{
+	return 19 + tile->YLen + tile->CbLen + tile->CrLen;
 }
 
 static void rfx_write_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
 {
 	UINT32 blockLen;
 
-	blockLen = 19 + tile->YLen + tile->CbLen + tile->CrLen;
+	blockLen = rfx_tile_length(tile);
 	Stream_EnsureRemainingCapacity(s, blockLen);
 
 	Stream_Write_UINT16(s, CBT_TILE); /* BlockT.blockType (2 bytes) */
@@ -1032,24 +1066,20 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
-	BYTE* image_data, int width, int height, int scanline)
+RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, BYTE* data, int width, int height, int scanline)
 {
 	int i;
-	int size;
 	int xIdx;
 	int yIdx;
-	int numTiles;
 	int numTilesX;
 	int numTilesY;
 	RFX_TILE* tile;
-	int start_pos, end_pos;
-	int numQuants;
-	const UINT32* quantVals;
-	const UINT32* quantValsPtr;
-	int tilesDataSize;
+	RFX_MESSAGE* message = NULL;
 	PTP_WORK* work_objects = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
+
+	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
+	ZeroMemory(message, sizeof(RFX_MESSAGE));
 
 	if (!context->numQuant)
 	{
@@ -1060,44 +1090,23 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 		context->quantIdxCr = 0;
 	}
 
-	numQuants = context->numQuant;
-	quantVals = context->quants;
+	message->numQuant = context->numQuant;
+	message->quantVals = context->quants;
 
 	numTilesX = (width + 63) / 64;
 	numTilesY = (height + 63) / 64;
-	numTiles = numTilesX * numTilesY;
 
-	size = 22 + numQuants * 5;
-	Stream_EnsureRemainingCapacity(s, size);
-	start_pos = Stream_GetPosition(s);
+	message->numTiles = numTilesX * numTilesY;
+	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE) * message->numTiles);
+	ZeroMemory(message->tiles, sizeof(RFX_TILE) * message->numTiles);
 
-	Stream_Write_UINT16(s, WBT_EXTENSION); /* CodecChannelT.blockType */
-	Stream_Seek_UINT32(s); /* set CodecChannelT.blockLen later */
-	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
-	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
-	Stream_Write_UINT16(s, CBT_TILESET); /* subtype */
-	Stream_Write_UINT16(s, 0); /* idx */
-	Stream_Write_UINT16(s, context->properties); /* properties */
-	Stream_Write_UINT8(s, numQuants); /* numQuants */
-	Stream_Write_UINT8(s, 0x40); /* tileSize */
-	Stream_Write_UINT16(s, numTiles); /* numTiles */
-	Stream_Seek_UINT32(s); /* set tilesDataSize later */
-
-	quantValsPtr = quantVals;
-	for (i = 0; i < numQuants * 5; i++)
-	{
-		Stream_Write_UINT8(s, quantValsPtr[0] + (quantValsPtr[1] << 4));
-		quantValsPtr += 2;
-	}
-
-	DEBUG_RFX("width:%d height:%d scanline:%d", width, height, scanline);
-
-	end_pos = Stream_GetPosition(s);
+	DEBUG_RFX("width: %d height: %d scanline: %d", width, height, scanline);
 
 	if (context->priv->UseThreads)
-		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * numTiles);
-
-	params = (RFX_TILE_COMPOSE_WORK_PARAM*) malloc(sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * numTiles);
+	{
+		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
+		params = (RFX_TILE_COMPOSE_WORK_PARAM*) malloc(sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
+	}
 
 	for (yIdx = 0; yIdx < numTilesY; yIdx++)
 	{
@@ -1105,10 +1114,10 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 		{
 			i = yIdx * numTilesX + xIdx;
 
-			tile = params[i].tile = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+			tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
 
 			tile->scanline = scanline;
-			tile->data = image_data + yIdx * 64 * scanline + xIdx * 8 * context->bits_per_pixel;
+			tile->data = data + yIdx * 64 * scanline + xIdx * 8 * context->bits_per_pixel;
 			tile->width = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
 			tile->height = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
 
@@ -1127,6 +1136,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 			if (context->priv->UseThreads)
 			{
 				params[i].context = context;
+				params[i].tile = tile;
 
 				work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_compose_message_tile_work_callback,
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
@@ -1140,45 +1150,68 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 		}
 	}
 
-	for (yIdx = 0; yIdx < numTilesY; yIdx++)
+	message->tilesDataSize = 0;
+
+	for (i = 0; i < message->numTiles; i++)
 	{
-		for (xIdx = 0; xIdx < numTilesX; xIdx++)
+		tile = message->tiles[i];
+
+		if (context->priv->UseThreads)
 		{
-			i = yIdx * numTilesX + xIdx;
-
-			tile = params[i].tile;
-
-			if (context->priv->UseThreads)
-			{
-				WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
-				CloseThreadpoolWork(work_objects[i]);
-			}
-
-			rfx_write_tile(context, s, tile);
-
-			BufferPool_Return(context->priv->BufferPool, tile->YData);
-			BufferPool_Return(context->priv->BufferPool, tile->CbData);
-			BufferPool_Return(context->priv->BufferPool, tile->CrData);
-
-			ObjectPool_Return(context->priv->TilePool, (void*) params[i].tile);
+			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+			CloseThreadpoolWork(work_objects[i]);
 		}
+
+		message->tilesDataSize += rfx_tile_length(tile);
 	}
 
 	if (context->priv->UseThreads)
+	{
 		free(work_objects);
+		free(params);
+	}
 
-	free(params);
+	return message;
+}
 
-	tilesDataSize = Stream_GetPosition(s) - end_pos;
-	size += tilesDataSize;
-	end_pos = Stream_GetPosition(s);
+static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
+{
+	int i;
+	RFX_TILE* tile;
+	UINT32 blockLen;
+	UINT32* quantVals;
 
-	Stream_SetPosition(s, start_pos + 2);
-	Stream_Write_UINT32(s, size); /* CodecChannelT.blockLen */
-	Stream_SetPosition(s, start_pos + 18);
-	Stream_Write_UINT32(s, tilesDataSize);
+	blockLen = 22 + (message->numQuant * 5) + message->tilesDataSize;
+	Stream_EnsureRemainingCapacity(s, blockLen);
 
-	Stream_SetPosition(s, end_pos);
+	Stream_Write_UINT16(s, WBT_EXTENSION); /* CodecChannelT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId (1 byte) */
+	Stream_Write_UINT16(s, CBT_TILESET); /* subtype (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* idx (2 bytes) */
+	Stream_Write_UINT16(s, context->properties); /* properties (2 bytes) */
+	Stream_Write_UINT8(s, message->numQuant); /* numQuant (1 byte) */
+	Stream_Write_UINT8(s, 0x40); /* tileSize (1 byte) */
+	Stream_Write_UINT16(s, message->numTiles); /* numTiles (2 bytes) */
+	Stream_Write_UINT32(s, message->tilesDataSize); /* set tilesDataSize later */
+
+	quantVals = message->quantVals;
+
+	for (i = 0; i < message->numQuant * 5; i++)
+	{
+		Stream_Write_UINT8(s, quantVals[0] + (quantVals[1] << 4));
+		quantVals += 2;
+	}
+
+	for (i = 0; i < message->numTiles; i++)
+	{
+		tile = message->tiles[i];
+		rfx_write_tile(context, s, tile);
+	}
+
+	DEBUG_RFX("numQuant: %d numTiles: %d tilesDataSize: %d",
+			message->numQuant, message->numTiles, message->tilesDataSize);
 }
 
 static void rfx_compose_message_frame_end(RFX_CONTEXT* context, wStream* s)
@@ -1191,22 +1224,25 @@ static void rfx_compose_message_frame_end(RFX_CONTEXT* context, wStream* s)
 	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
 }
 
-static void rfx_compose_message_data(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride)
-{
-	rfx_compose_message_frame_begin(context, s);
-	rfx_compose_message_region(context, s, rects, num_rects);
-	rfx_compose_message_tileset(context, s, image_data, width, height, rowstride);
-	rfx_compose_message_frame_end(context, s);
-}
-
 FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride)
+	const RFX_RECT* rects, int numRects, BYTE* data, int width, int height, int scanline)
 {
-	/* Only the first frame should send the RemoteFX header */
-	if (context->frame_idx == 0 && !context->header_processed)
-		rfx_compose_message_header(context, s);
+	RFX_MESSAGE* message;
 
-	rfx_compose_message_data(context, s, rects, num_rects, image_data, width, height, rowstride);
+	if ((context->frameIdx == 0) && (context->state == RFX_STATE_SEND_HEADERS))
+	{
+		rfx_compose_message_header(context, s);
+		context->state = RFX_STATE_SEND_FRAME_DATA;
+	}
+
+	rfx_compose_message_frame_begin(context, s);
+	rfx_compose_message_region(context, s, rects, numRects);
+
+	message = rfx_compose_message_full(context, data, width, height, scanline);
+	rfx_write_message_tileset(context, s, message);
+
+	rfx_compose_message_frame_end(context, s);
+
+	rfx_message_free(context, message);
 }
 

@@ -789,10 +789,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		message = rfx_process_message(rfx_context,
 				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
-		DEBUG_GDI("num_rects %d num_tiles %d", message->num_rects, message->num_tiles);
+		DEBUG_GDI("num_rects %d num_tiles %d", message->numRects, message->numTiles);
 
 		/* blit each tile */
-		for (i = 0; i < message->num_tiles; i++)
+		for (i = 0; i < message->numTiles; i++)
 		{
 			tx = message->tiles[i]->x + surface_bits_command->destLeft;
 			ty = message->tiles[i]->y + surface_bits_command->destTop;
@@ -805,7 +805,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 #endif
 
 
-			for (j = 0; j < message->num_rects; j++)
+			for (j = 0; j < message->numRects; j++)
 			{
 				gdi_SetClipRgn(gdi->primary->hdc,
 					surface_bits_command->destLeft + message->rects[j].x,

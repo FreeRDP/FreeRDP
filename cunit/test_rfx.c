@@ -404,7 +404,7 @@ void test_message(void)
 		message = rfx_process_message(context, s->pointer, s->capacity);
 		if (i == 0)
 		{
-			for (j = 0; j < message->num_tiles; j++)
+			for (j = 0; j < message->numTiles; j++)
 			{
 				dump_ppm_image(message->tiles[j]->data);
 			}

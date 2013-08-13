@@ -138,7 +138,7 @@ void wf_update_encode(wfInfo* wfi)
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 		pDataBits, width, height, stride);
 
-	wfi->frame_idx = wfi->rfx_context->frame_idx;
+	wfi->frame_idx = wfi->rfx_context->frameIdx;
 
 	cmd->destLeft = wfi->invalid.left;
 	cmd->destTop = wfi->invalid.top;
