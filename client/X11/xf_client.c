@@ -1234,7 +1234,6 @@ void* xf_input_thread(void* arg)
 	xfContext* xfc;
 	HANDLE event;
 	XEvent xevent;
-	wMessageQueue* queue;
 	int pending_status = 1;
 	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
@@ -1272,9 +1271,6 @@ void* xf_input_thread(void* arg)
 		if (!process_status)
 			break;
 	}
-
-	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	MessageQueue_PostQuit(queue, 0);
 
 	return NULL;
 }
@@ -1374,17 +1370,20 @@ void* xf_thread(void* param)
 
 	if (async_update)
 	{
-		update_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_update_thread, instance, 0, NULL);
+		update_thread = CreateThread(NULL, 0, 
+				(LPTHREAD_START_ROUTINE) xf_update_thread, instance, 0, NULL);
 	}
 
 	if (async_input)
 	{
-		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
+		input_thread = CreateThread(NULL, 0, 
+				(LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
 	}
 
 	if (async_channels)
 	{
-		channels_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_channels_thread, instance, 0, NULL);
+		channels_thread = CreateThread(NULL, 0, 
+				(LPTHREAD_START_ROUTINE) xf_channels_thread, instance, 0, NULL);
 	}
 
 	while (!xfc->disconnect && !freerdp_shall_disconnect(instance))
@@ -1514,43 +1513,29 @@ void* xf_thread(void* param)
 
 	if (async_update)
 	{
-		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		wMessageQueue* update_queue = 
+			freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
 		MessageQueue_PostQuit(update_queue, 0);
+
 		WaitForSingleObject(update_thread, INFINITE);
 		CloseHandle(update_thread);
 	}
 
-	FILE* fin = fopen("/tmp/tsmf.tid", "rt");
-
-	if (fin)
+	if (async_input)
 	{
-		FILE* fin1;
-		int thid = 0;
-		int timeout;
+		wMessageQueue* input_queue = 
+			freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(input_queue, 0);
 
-		fscanf(fin, "%d", &thid);
-		fclose(fin);
+		WaitForSingleObject(input_thread, INFINITE);
+		CloseHandle(input_thread);
+	}
 
-		pthread_kill((pthread_t) (size_t) thid, SIGUSR1);
-
-		fin1 = fopen("/tmp/tsmf.tid", "rt");
-		timeout = 5;
-
-		while (fin1)
-		{
-			fclose(fin1);
-			sleep(1);
-			timeout--;
-
-			if (timeout <= 0)
-			{
-				unlink("/tmp/tsmf.tid");
-				pthread_kill((pthread_t) (size_t) thid, SIGKILL);
-				break;
-			}
-
-			fin1 = fopen("/tmp/tsmf.tid", "rt");
-		}
+	if (async_channels)
+	{
+		TerminateThread(channels_thread, 0);
+		WaitForSingleObject(channels_thread, INFINITE);
+		CloseHandle(channels_thread);
 	}
 
 	if (!exit_code)
@@ -1686,13 +1671,15 @@ int xfreerdp_client_start(rdpContext* context)
 
 	rdpSettings* settings = context->settings;
 
+	xfc->thread = NULL;
 	if (!settings->ServerHostname)
 	{
 		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
 		return -1;
 	}
 
-	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, context->instance, 0, NULL);
+	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, 
+		context->instance, 0, NULL);
 
 	return 0;
 }
@@ -1712,6 +1699,13 @@ int xfreerdp_client_stop(rdpContext* context)
 	else
 	{
 		xfc->disconnect = TRUE;
+	}
+
+	if(xfc->thread)
+	{
+		WaitForSingleObject(xfc->thread, INFINITE);
+		CloseHandle(xfc->thread);
+		xfc->thread = NULL;
 	}
 
 	return 0;
