@@ -217,13 +217,18 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
-void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int height, int rowstride,
-	const UINT32* y_quants, const UINT32* cb_quants, const UINT32* cr_quants,
-	wStream* data_out, int* y_size, int* cb_size, int* cr_size)
+void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, int rowstride, wStream* s)
 {
 	INT16* pSrcDst[3];
+	int YLen, CbLen, CrLen;
+	UINT32 *y_quants, *cb_quants, *cr_quants;
 	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
+
+	YLen = CbLen = CrLen = 0;
+	y_quants = context->quants + (tile->quantIdxY * 10);
+	cb_quants = context->quants + (tile->quantIdxCb * 10);
+	cr_quants = context->quants + (tile->quantIdxCr * 10);
 
 	pSrcDst[0] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* y_r_buffer */
 	pSrcDst[1] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cb_g_buffer */
@@ -232,7 +237,7 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int h
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb);
-		rfx_encode_format_rgb(rgb_data, width, height, rowstride,
+		rfx_encode_format_rgb(tile->data, tile->width, tile->height, rowstride,
 			context->pixel_format, context->palette, pSrcDst[0], pSrcDst[1], pSrcDst[2]);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_format_rgb);
 
@@ -242,21 +247,25 @@ void rfx_encode_rgb(RFX_CONTEXT* context, const BYTE* rgb_data, int width, int h
 	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr);
 
 	/* Ensure the buffer is reasonably large enough */
-	Stream_EnsureRemainingCapacity(data_out, 4096);
+	Stream_EnsureRemainingCapacity(s, 4096);
 
 	rfx_encode_component(context, y_quants, pSrcDst[0],
-		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), y_size);
-	Stream_Seek(data_out, *y_size);
+		Stream_Pointer(s), Stream_GetRemainingLength(s), &YLen);
+	Stream_Seek(s, YLen);
 
-	Stream_EnsureRemainingCapacity(data_out, 4096);
+	Stream_EnsureRemainingCapacity(s, 4096);
 	rfx_encode_component(context, cb_quants, pSrcDst[1],
-		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), cb_size);
-	Stream_Seek(data_out, *cb_size);
+		Stream_Pointer(s), Stream_GetRemainingLength(s), &CbLen);
+	Stream_Seek(s, CbLen);
 
-	Stream_EnsureRemainingCapacity(data_out, 4096);
+	Stream_EnsureRemainingCapacity(s, 4096);
 	rfx_encode_component(context, cr_quants, pSrcDst[2],
-		Stream_Pointer(data_out), Stream_GetRemainingLength(data_out), cr_size);
-	Stream_Seek(data_out, *cr_size);
+		Stream_Pointer(s), Stream_GetRemainingLength(s), &CrLen);
+	Stream_Seek(s, CrLen);
+
+	tile->YLen = (UINT16) YLen;
+	tile->CbLen = (UINT16) CbLen;
+	tile->CrLen = (UINT16) CrLen;
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 

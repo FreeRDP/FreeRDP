@@ -110,11 +110,11 @@ struct _RFX_CONTEXT
 	/* temporary data within a frame */
 	UINT32 frame_idx;
 	BOOL header_processed;
-	BYTE num_quants;
+	BYTE numQuant;
 	UINT32* quants;
-	BYTE quant_idx_y;
-	BYTE quant_idx_cb;
-	BYTE quant_idx_cr;
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
 
 	/* routines */
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
