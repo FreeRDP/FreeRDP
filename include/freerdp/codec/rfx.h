@@ -52,6 +52,18 @@ struct _RFX_TILE
 	UINT16 x;
 	UINT16 y;
 	BYTE* data;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	UINT16 YLen;
+	UINT16 CbLen;
+	UINT16 CrLen;
+	BYTE* YData;
+	BYTE* CbData;
+	BYTE* CrData;
 };
 typedef struct _RFX_TILE RFX_TILE;
 

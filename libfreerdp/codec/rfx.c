@@ -561,46 +561,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	return TRUE;
 }
 
-static BOOL rfx_process_message_tile(RFX_CONTEXT* context, RFX_TILE* tile, wStream* s)
-{
-	BYTE quantIdxY;
-	BYTE quantIdxCb;
-	BYTE quantIdxCr;
-	UINT16 xIdx, yIdx;
-	UINT16 YLen, CbLen, CrLen;
-
-	if (Stream_GetRemainingLength(s) < 13)
-	{
-		DEBUG_WARN("RfxMessageTile packet too small");
-		return FALSE;
-	}
-
-	/* RFX_TILE */
-	Stream_Read_UINT8(s, quantIdxY); /* quantIdxY (1 byte) */
-	Stream_Read_UINT8(s, quantIdxCb); /* quantIdxCb (1 byte) */
-	Stream_Read_UINT8(s, quantIdxCr); /* quantIdxCr (1 byte) */
-	Stream_Read_UINT16(s, xIdx); /* xIdx (2 bytes) */
-	Stream_Read_UINT16(s, yIdx); /* yIdx (2 bytes) */
-	Stream_Read_UINT16(s, YLen); /* YLen (2 bytes) */
-	Stream_Read_UINT16(s, CbLen); /* CbLen (2 bytes) */
-	Stream_Read_UINT16(s, CrLen); /* CrLen (2 bytes) */
-
-	DEBUG_RFX("quantIdxY:%d quantIdxCb:%d quantIdxCr:%d xIdx:%d yIdx:%d YLen:%d CbLen:%d CrLen:%d",
-		quantIdxY, quantIdxCb, quantIdxCr, xIdx, yIdx, YLen, CbLen, CrLen);
-
-	tile->x = xIdx * 64;
-	tile->y = yIdx * 64;
-
-	return rfx_decode_rgb(context, s,
-		YLen, context->quants + (quantIdxY * 10),
-		CbLen, context->quants + (quantIdxCb * 10),
-		CrLen, context->quants + (quantIdxCr * 10),
-		tile->data, 64 * 4);
-}
-
 struct _RFX_TILE_PROCESS_WORK_PARAM
 {
-	wStream s;
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;
 };
@@ -609,7 +571,7 @@ typedef struct _RFX_TILE_PROCESS_WORK_PARAM RFX_TILE_PROCESS_WORK_PARAM;
 void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
 	RFX_TILE_PROCESS_WORK_PARAM* param = (RFX_TILE_PROCESS_WORK_PARAM*) context;
-	rfx_process_message_tile(param->context, param->tile, &(param->s));
+	rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4);
 }
 
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s)
@@ -617,6 +579,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	int i;
 	int pos;
 	BYTE quant;
+	RFX_TILE* tile;
 	UINT32* quants;
 	UINT16 subtype;
 	UINT32 blockLen;
@@ -713,6 +676,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	/* tiles */
 	for (i = 0; i < message->num_tiles; i++)
 	{
+		tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+
 		/* RFX_TILE */
 		if (Stream_GetRemainingLength(s) < 6)
 		{
@@ -737,13 +702,29 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
-		message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+		Stream_Read_UINT8(s, tile->quantIdxY); /* quantIdxY (1 byte) */
+		Stream_Read_UINT8(s, tile->quantIdxCb); /* quantIdxCb (1 byte) */
+		Stream_Read_UINT8(s, tile->quantIdxCr); /* quantIdxCr (1 byte) */
+		Stream_Read_UINT16(s, tile->xIdx); /* xIdx (2 bytes) */
+		Stream_Read_UINT16(s, tile->yIdx); /* yIdx (2 bytes) */
+		Stream_Read_UINT16(s, tile->YLen); /* YLen (2 bytes) */
+		Stream_Read_UINT16(s, tile->CbLen); /* CbLen (2 bytes) */
+		Stream_Read_UINT16(s, tile->CrLen); /* CrLen (2 bytes) */
+
+		Stream_GetPointer(s, tile->YData);
+		Stream_Seek(s, tile->YLen);
+		Stream_GetPointer(s, tile->CbData);
+		Stream_Seek(s, tile->CbLen);
+		Stream_GetPointer(s, tile->CrData);
+		Stream_Seek(s, tile->CrLen);
+
+		tile->x = tile->xIdx * 64;
+		tile->y = tile->yIdx * 64;
 
 		if (context->priv->UseThreads)
 		{
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
-			CopyMemory(&(params[i].s), s, sizeof(wStream));
 
 			work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_process_message_tile_work_callback,
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
@@ -752,7 +733,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		}
 		else
 		{
-			rfx_process_message_tile(context, message->tiles[i], s);
+			rfx_decode_rgb(context, tile, tile->data, 64 * 4);
 		}
 
 		Stream_SetPosition(s, pos);
