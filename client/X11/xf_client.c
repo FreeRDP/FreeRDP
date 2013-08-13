@@ -1234,6 +1234,7 @@ void* xf_input_thread(void* arg)
 	xfContext* xfc;
 	HANDLE event;
 	XEvent xevent;
+	wMessageQueue* queue;
 	int pending_status = 1;
 	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
@@ -1271,6 +1272,9 @@ void* xf_input_thread(void* arg)
 		if (!process_status)
 			break;
 	}
+
+	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	MessageQueue_PostQuit(queue, 0);
 
 	return NULL;
 }
@@ -1523,9 +1527,13 @@ void* xf_thread(void* param)
 
 	if (async_input)
 	{
-		wMessageQueue* input_queue = 
+		/* The thread may already have been terminated by a keyboard or mouse
+		 * event requesting the application close, but a disconnect by the 
+		 * server will not terminate the thread, so assure proper termination
+		 * by posting the quit event. */
+		wMessageQueue* queue = 
 			freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(input_queue, 0);
+		MessageQueue_PostQuit(queue, 0);
 
 		WaitForSingleObject(input_thread, INFINITE);
 		CloseHandle(input_thread);
