@@ -51,6 +51,8 @@ struct _RFX_TILE
 {
 	UINT16 x;
 	UINT16 y;
+	int width;
+	int height;
 	BYTE* data;
 
 	BYTE quantIdxY;

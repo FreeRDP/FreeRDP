@@ -1045,36 +1045,31 @@ static void rfx_compose_message_tile(RFX_CONTEXT* context, wStream* s,
 
 struct _RFX_TILE_COMPOSE_WORK_PARAM
 {
+	RFX_TILE* tile;
 	RFX_CONTEXT* context;
-	wStream *s;
-	BYTE* tile_data;
-	int tile_width;
-	int tile_height;
+
+	wStream* s;
 	int rowstride;
 	UINT32* quantVals;
-	int quantIdxY;
-	int quantIdxCb;
-	int quantIdxCr;
-	int xIdx;
-	int yIdx;
 };
 typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
 
 void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
+	RFX_TILE* tile;
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*) context;
 
+	tile = param->tile;
+
 	/**
-	 * Some component of the encoder chain (I suspect the rlgr encoder) expects
-	 * the output buffer to be zeroed. The multithreaded RemoteFX encoder uses
-	 * wStreams from the StreamPool which are reused and not zeroed out of
-	 * course. For now, in order to prevent data corruption we clear the stream.
+	 * We need to clear the stream as the RLGR encoder expects it to be initialized to zero.
+	 * This allows simplifying and improving the performance of the encoding process.
 	 */
 	Stream_Clear(param->s);
 
 	rfx_compose_message_tile(param->context, param->s,
-		param->tile_data, param->tile_width, param->tile_height, param->rowstride,
-		param->quantVals, param->quantIdxY, param->quantIdxCb, param->quantIdxCr, param->xIdx, param->yIdx);
+		tile->data, tile->width, tile->height, param->rowstride,
+		param->quantVals, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx);
 }
 
 static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
@@ -1082,6 +1077,7 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 {
 	int i;
 	int size;
+	RFX_TILE* tile;
 	int start_pos, end_pos;
 	int numQuants;
 	const UINT32* quantVals;
@@ -1095,9 +1091,6 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 	int xIdx;
 	int yIdx;
 	int tilesDataSize;
-	BYTE* tileData;
-	int tileWidth;
-	int tileHeight;
 	PTP_WORK* work_objects = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
 
@@ -1159,26 +1152,32 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 	{
 		for (xIdx = 0; xIdx < numTilesX; xIdx++)
 		{
-			tileData = image_data + yIdx * 64 * rowstride + xIdx * 8 * context->bits_per_pixel;
-			tileWidth = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
-			tileHeight = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
+			i = yIdx * numTilesX + xIdx;
+
+			tile = params[i].tile = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+
+			tile->data = image_data + yIdx * 64 * rowstride + xIdx * 8 * context->bits_per_pixel;
+			tile->width = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
+			tile->height = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
+
+			tile->quantIdxY = quantIdxY;
+			tile->quantIdxCb = quantIdxCb;
+			tile->quantIdxCr = quantIdxCr;
+			tile->xIdx = xIdx;
+			tile->yIdx = yIdx;
+			tile->YLen = 0;
+			tile->CbLen = 0;
+			tile->CrLen = 0;
+			tile->YData = NULL;
+			tile->CbData = NULL;
+			tile->CrData = NULL;
 
 			if (context->priv->UseThreads)
 			{
-				i = yIdx * numTilesX + xIdx;
-
 				params[i].context = context;
 				params[i].s = StreamPool_Take(context->priv->EncoderStreamPool, 0);
-				params[i].tile_data = tileData;
-				params[i].tile_width = tileWidth;
-				params[i].tile_height = tileHeight;
 				params[i].rowstride = rowstride;
 				params[i].quantVals = (UINT32*) quantVals;
-				params[i].quantIdxY = quantIdxY;
-				params[i].quantIdxCb = quantIdxCb;
-				params[i].quantIdxCr = quantIdxCr;
-				params[i].xIdx = xIdx;
-				params[i].yIdx = yIdx;
 
 				work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_compose_message_tile_work_callback,
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
@@ -1187,8 +1186,9 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 			}
 			else
 			{
-				rfx_compose_message_tile(context, s, tileData, tileWidth, tileHeight,
-					rowstride, quantVals, quantIdxY, quantIdxCb, quantIdxCr, xIdx, yIdx);
+				rfx_compose_message_tile(context, s, tile->data, tile->width, tile->height,
+					rowstride, quantVals, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr,
+					tile->xIdx, tile->yIdx);
 			}
 		}
 	}
@@ -1202,9 +1202,11 @@ static void rfx_compose_message_tileset(RFX_CONTEXT* context, wStream* s,
 				i = yIdx * numTilesX + xIdx;
 
 				WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
+				CloseThreadpoolWork(work_objects[i]);
+
 				Stream_EnsureRemainingCapacity(s, Stream_GetPosition(params[i].s));
 				Stream_Write(s, Stream_Buffer(params[i].s), Stream_GetPosition(params[i].s));
-				CloseThreadpoolWork(work_objects[i]);
+				ObjectPool_Return(context->priv->TilePool, (void*) params[i].tile);
 				Stream_Release(params[i].s);
 			}
 		}
