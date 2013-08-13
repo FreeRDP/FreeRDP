@@ -25,6 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
@@ -57,18 +59,28 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		WINPR_THREAD* thread;
 		void* thread_status = NULL;
 
-		if (dwMilliseconds != INFINITE)
-			fprintf(stderr, "WaitForSingleObject: timeout not implemented for thread wait\n");
-
 		thread = (WINPR_THREAD*) Object;
 
-		status = pthread_join(thread->thread, &thread_status);
+		if (thread->started)
+		{
+			if (dwMilliseconds != INFINITE)
+			{
+				struct timespec timeout;
 
-		if (status != 0)
-			fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+				timeout.tv_sec = dwMilliseconds / 1000;
+				timeout.tv_nsec = (dwMilliseconds % 1000) * 1000000;
 
-		if (thread_status)
-			thread->dwExitCode = ((DWORD) (size_t) thread_status);
+				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
+			}
+			else
+				status = pthread_join(thread->thread, &thread_status);
+
+			if (status != 0)
+				fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+
+			if (thread_status)
+				thread->dwExitCode = ((DWORD) (size_t) thread_status);
+		}
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
@@ -77,9 +89,16 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		mutex = (WINPR_MUTEX*) Object;
 
 		if (dwMilliseconds != INFINITE)
-			fprintf(stderr, "WaitForSingleObject: timeout not implemented for mutex wait\n");
+		{
+			struct timespec timeout;
 
-		pthread_mutex_lock(&mutex->mutex);
+			timeout.tv_sec = dwMilliseconds / 1000;
+			timeout.tv_nsec = (dwMilliseconds % 1000) * 1000000;
+
+			pthread_mutex_timedlock(&mutex->mutex, &timeout);
+		}
+		else
+			pthread_mutex_lock(&mutex->mutex);
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
@@ -165,6 +184,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	assert(0);
 	return WAIT_OBJECT_0;
 }
 
@@ -261,11 +281,13 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	assert(0);
 	return 0;
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	assert(0);
 	return 0;
 }
 
