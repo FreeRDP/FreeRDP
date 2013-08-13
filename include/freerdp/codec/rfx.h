@@ -22,6 +22,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
 #include <winpr/stream.h>

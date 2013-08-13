@@ -54,6 +54,9 @@ void* ObjectPool_Take(wObjectPool* pool)
 			obj = pool->object.fnObjectNew();
 	}
 
+	if (pool->object.fnObjectInit)
+		pool->object.fnObjectInit(obj);
+
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 
@@ -76,6 +79,9 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 	}
 
 	pool->array[(pool->size)++] = obj;
+
+	if (pool->object.fnObjectUninit)
+		pool->object.fnObjectUninit(obj);
 
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);

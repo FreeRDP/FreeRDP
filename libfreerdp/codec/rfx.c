@@ -138,6 +138,39 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
+void rfx_tile_init(RFX_TILE* tile)
+{
+	if (tile)
+	{
+		tile->x = 0;
+		tile->y = 0;
+	}
+}
+
+RFX_TILE* rfx_tile_new()
+{
+	RFX_TILE* tile = NULL;
+
+	tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
+
+	if (tile)
+	{
+		ZeroMemory(tile, sizeof(RFX_TILE));
+
+		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
+	}
+
+	return tile;
+}
+
+void rfx_tile_free(RFX_TILE* tile)
+{
+	if (tile)
+	{
+		free(tile->data);
+		free(tile);
+	}
+}
 
 RFX_CONTEXT* rfx_context_new(void)
 {
@@ -155,7 +188,10 @@ RFX_CONTEXT* rfx_context_new(void)
 	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
-	context->priv->TilePool = Queue_New(TRUE, -1, -1);
+	context->priv->TilePool = ObjectPool_New(TRUE);
+	ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_tile_new;
+	ObjectPool_Object(context->priv->TilePool)->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
+	ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_tile_free;
 
 	/*
 	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
@@ -254,7 +290,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 {
 	free(context->quants);
 
-	Queue_Free(context->priv->TilePool);
+	ObjectPool_Free(context->priv->TilePool);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
@@ -309,29 +345,6 @@ void rfx_context_reset(RFX_CONTEXT* context)
 {
 	context->header_processed = FALSE;
 	context->frame_idx = 0;
-}
-
-RFX_TILE* rfx_tile_pool_take(RFX_CONTEXT* context)
-{
-	RFX_TILE* tile = NULL;
-
-	tile = Queue_Dequeue(context->priv->TilePool);
-
-	if (!tile)
-	{
-		tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
-
-		tile->x = tile->y = 0;
-		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
-	}
-
-	return tile;
-}
-
-int rfx_tile_pool_return(RFX_CONTEXT* context, RFX_TILE* tile)
-{
-	Queue_Enqueue(context->priv->TilePool, tile);
-	return 0;
 }
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
@@ -724,7 +737,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			break;
 		}
 
-		message->tiles[i] = rfx_tile_pool_take(context);
+		message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
 
 		if (context->priv->UseThreads)
 		{
@@ -885,7 +898,9 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 		if (message->tiles)
 		{
 			for (i = 0; i < message->num_tiles; i++)
-				rfx_tile_pool_return(context, message->tiles[i]);
+			{
+				ObjectPool_Return(context->priv->TilePool, (void*) message->tiles[i]);
+			}
 
 			free(message->tiles);
 		}

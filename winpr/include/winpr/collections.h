@@ -35,12 +35,16 @@ extern "C" {
 #endif
 
 typedef void* (*OBJECT_NEW_FN)(void);
+typedef void (*OBJECT_INIT_FN)(void* obj);
+typedef void (*OBJECT_UNINIT_FN)(void* obj);
 typedef void (*OBJECT_FREE_FN)(void* obj);
 typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
 
 struct _wObject
 {
 	OBJECT_NEW_FN fnObjectNew;
+	OBJECT_INIT_FN fnObjectInit;
+	OBJECT_UNINIT_FN fnObjectUninit;
 	OBJECT_FREE_FN fnObjectFree;
 	OBJECT_EQUALS_FN fnObjectEquals;
 };
