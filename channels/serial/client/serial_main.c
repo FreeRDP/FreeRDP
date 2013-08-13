@@ -365,10 +365,16 @@ static void serial_free(DEVICE* device)
 
 	DEBUG_SVC("freeing device");
 
+	/* Stop thread */
 	SetEvent(serial->stopEvent);
+	WaitForSingleObject(serial->thread, INFINITE);
 
-	/* TODO: free lists */
-
+	/* Clean up resources */
+	Stream_Free(serial->device.data, TRUE);
+	Queue_Free(serial->queue);
+	list_free(serial->pending_irps);
+	CloseHandle(serial->stopEvent);
+	CloseHandle(serial->thread);
 	free(serial);
 }
 
