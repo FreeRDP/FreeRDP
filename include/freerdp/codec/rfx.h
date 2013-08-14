@@ -80,6 +80,7 @@ struct _RFX_MESSAGE
 	 */
 	UINT16 numRects;
 	RFX_RECT* rects;
+	BOOL freeRects;
 
 	/**
 	 * The tiles array represents the actual frame data. Each tile is always
@@ -164,6 +165,10 @@ FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s);
 FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride);
+
+FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
+		int numRects, BYTE* data, int width, int height, int scanline);
+FREERDP_API void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
 
 #ifdef __cplusplus
 }

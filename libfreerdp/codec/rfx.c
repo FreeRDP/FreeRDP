@@ -777,6 +777,8 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
 	ZeroMemory(message, sizeof(RFX_MESSAGE));
 
+	message->freeRects = TRUE;
+
 	s = Stream_New(data, length);
 
 	while (Stream_GetRemainingLength(s) > 6)
@@ -888,7 +890,7 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 
 	if (message)
 	{
-		if (message->rects)
+		if ((message->rects) && (message->freeRects))
 		{
 			free(message->rects);
 		}
@@ -918,51 +920,9 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 	}
 }
 
-static void rfx_compose_message_sync(RFX_CONTEXT* context, wStream* s)
-{
-	Stream_Write_UINT16(s, WBT_SYNC); /* BlockT.blockType */
-	Stream_Write_UINT32(s, 12); /* BlockT.blockLen */
-	Stream_Write_UINT32(s, WF_MAGIC); /* magic */
-	Stream_Write_UINT16(s, WF_VERSION_1_0); /* version */
-}
-
-static void rfx_compose_message_codec_versions(RFX_CONTEXT* context, wStream* s)
-{
-	Stream_Write_UINT16(s, WBT_CODEC_VERSIONS); /* BlockT.blockType */
-	Stream_Write_UINT32(s, 10); /* BlockT.blockLen */
-	Stream_Write_UINT8(s, 1); /* numCodecs */
-	Stream_Write_UINT8(s, 1); /* codecs.codecId */
-	Stream_Write_UINT16(s, WF_VERSION_1_0); /* codecs.version */
-}
-
-static void rfx_compose_message_channels(RFX_CONTEXT* context, wStream* s)
-{
-	Stream_Write_UINT16(s, WBT_CHANNELS); /* BlockT.blockType */
-	Stream_Write_UINT32(s, 12); /* BlockT.blockLen */
-	Stream_Write_UINT8(s, 1); /* numChannels */
-	Stream_Write_UINT8(s, 0); /* Channel.channelId */
-	Stream_Write_UINT16(s, context->width); /* Channel.width */
-	Stream_Write_UINT16(s, context->height); /* Channel.height */
-}
-
-static void rfx_compose_message_context(RFX_CONTEXT* context, wStream* s)
+static void rfx_update_context_properties(RFX_CONTEXT* context)
 {
 	UINT16 properties;
-
-	Stream_Write_UINT16(s, WBT_CONTEXT); /* CodecChannelT.blockType */
-	Stream_Write_UINT32(s, 13); /* CodecChannelT.blockLen */
-	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId */
-	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
-	Stream_Write_UINT8(s, 0); /* ctxId */
-	Stream_Write_UINT16(s, CT_TILE_64x64); /* tileSize */
-
-	/* properties */
-	properties = context->flags; /* flags */
-	properties |= (COL_CONV_ICT << 3); /* cct */
-	properties |= (CLW_XFORM_DWT_53_A << 5); /* xft */
-	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 9); /* et */
-	properties |= (SCALAR_QUANTIZATION << 13); /* qt */
-	Stream_Write_UINT16(s, properties);
 
 	/* properties in tilesets: note that this has different format from the one in TS_RFX_CONTEXT */
 	properties = 1; /* lt */
@@ -971,17 +931,67 @@ static void rfx_compose_message_context(RFX_CONTEXT* context, wStream* s)
 	properties |= (CLW_XFORM_DWT_53_A << 6); /* xft */
 	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 10); /* et */
 	properties |= (SCALAR_QUANTIZATION << 14); /* qt */
+
 	context->properties = properties;
+}
+
+static void rfx_write_message_sync(RFX_CONTEXT* context, wStream* s)
+{
+	Stream_Write_UINT16(s, WBT_SYNC); /* BlockT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, 12); /* BlockT.blockLen (4 bytes) */
+	Stream_Write_UINT32(s, WF_MAGIC); /* magic (4 bytes) */
+	Stream_Write_UINT16(s, WF_VERSION_1_0); /* version (2 bytes) */
+}
+
+static void rfx_write_message_codec_versions(RFX_CONTEXT* context, wStream* s)
+{
+	Stream_Write_UINT16(s, WBT_CODEC_VERSIONS); /* BlockT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, 10); /* BlockT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* numCodecs (1 byte) */
+	Stream_Write_UINT8(s, 1); /* codecs.codecId (1 byte) */
+	Stream_Write_UINT16(s, WF_VERSION_1_0); /* codecs.version (2 bytes) */
+}
+
+static void rfx_write_message_channels(RFX_CONTEXT* context, wStream* s)
+{
+	Stream_Write_UINT16(s, WBT_CHANNELS); /* BlockT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, 12); /* BlockT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* numChannels (1 byte) */
+	Stream_Write_UINT8(s, 0); /* Channel.channelId (1 byte) */
+	Stream_Write_UINT16(s, context->width); /* Channel.width (2 bytes) */
+	Stream_Write_UINT16(s, context->height); /* Channel.height (2 bytes) */
+}
+
+static void rfx_write_message_context(RFX_CONTEXT* context, wStream* s)
+{
+	UINT16 properties;
+
+	Stream_Write_UINT16(s, WBT_CONTEXT); /* CodecChannelT.blockType (2 bytes) */
+	Stream_Write_UINT32(s, 13); /* CodecChannelT.blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 1); /* CodecChannelT.codecId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId (1 byte) */
+	Stream_Write_UINT8(s, 0); /* ctxId (1 byte) */
+	Stream_Write_UINT16(s, CT_TILE_64x64); /* tileSize (2 bytes) */
+
+	/* properties */
+	properties = context->flags; /* flags */
+	properties |= (COL_CONV_ICT << 3); /* cct */
+	properties |= (CLW_XFORM_DWT_53_A << 5); /* xft */
+	properties |= ((context->mode == RLGR1 ? CLW_ENTROPY_RLGR1 : CLW_ENTROPY_RLGR3) << 9); /* et */
+	properties |= (SCALAR_QUANTIZATION << 13); /* qt */
+	Stream_Write_UINT16(s, properties); /* properties (2 bytes) */
+
+	rfx_update_context_properties(context);
 }
 
 void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 {
 	Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13);
 
-	rfx_compose_message_sync(context, s);
-	rfx_compose_message_context(context, s);
-	rfx_compose_message_codec_versions(context, s);
-	rfx_compose_message_channels(context, s);
+	rfx_write_message_sync(context, s);
+	rfx_write_message_context(context, s);
+	rfx_write_message_codec_versions(context, s);
+	rfx_write_message_channels(context, s);
 }
 
 static int rfx_tile_length(RFX_TILE* tile)
@@ -1024,7 +1034,7 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, const RFX_RECT* rects,
+RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		int numRects, BYTE* data, int width, int height, int scanline)
 {
 	int i;
@@ -1039,6 +1049,9 @@ RFX_MESSAGE* rfx_compose_message_full(RFX_CONTEXT* context, const RFX_RECT* rect
 
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
 	ZeroMemory(message, sizeof(RFX_MESSAGE));
+
+	if (context->state == RFX_STATE_SEND_HEADERS)
+		rfx_update_context_properties(context);
 
 	message->frameIdx = context->frameIdx++;
 
@@ -1158,7 +1171,7 @@ static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 	Stream_Write_UINT8(s, message->numQuant); /* numQuant (1 byte) */
 	Stream_Write_UINT8(s, 0x40); /* tileSize (1 byte) */
 	Stream_Write_UINT16(s, message->numTiles); /* numTiles (2 bytes) */
-	Stream_Write_UINT32(s, message->tilesDataSize); /* set tilesDataSize later */
+	Stream_Write_UINT32(s, message->tilesDataSize); /* tilesDataSize (4 bytes) */
 
 	quantVals = message->quantVals;
 
@@ -1227,27 +1240,28 @@ void rfx_write_message_frame_end(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* 
 	Stream_Write_UINT8(s, 0); /* CodecChannelT.channelId */
 }
 
-FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int numRects, BYTE* data, int width, int height, int scanline)
+void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
 {
-	RFX_MESSAGE* message;
-
-	if ((context->frameIdx == 0) && (context->state == RFX_STATE_SEND_HEADERS))
+	if (context->state == RFX_STATE_SEND_HEADERS)
 	{
 		rfx_compose_message_header(context, s);
 		context->state = RFX_STATE_SEND_FRAME_DATA;
 	}
 
-	message = rfx_compose_message_full(context, rects, numRects, data, width, height, scanline);
-
 	rfx_write_message_frame_begin(context, s, message);
 	rfx_write_message_region(context, s, message);
 	rfx_write_message_tileset(context, s, message);
 	rfx_write_message_frame_end(context, s, message);
+}
 
-	message->rects = NULL;
-	message->numRects = 0;
+void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
+	const RFX_RECT* rects, int numRects, BYTE* data, int width, int height, int scanline)
+{
+	RFX_MESSAGE* message;
+
+ 	message = rfx_encode_message(context, rects, numRects, data, width, height, scanline);
+
+	rfx_write_message(context, s, message);
 
 	rfx_message_free(context, message);
 }
-
