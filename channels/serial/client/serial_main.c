@@ -370,6 +370,8 @@ static void serial_free(DEVICE* device)
 	SetEvent(serial->stopEvent);
 	WaitForSingleObject(serial->thread, INFINITE);
 
+	serial_tty_free(serial->tty);
+
 	/* Clean up resources */
 	Stream_Free(serial->device.data, TRUE);
 	Queue_Free(serial->queue);
@@ -388,6 +390,11 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 
 	switch (abort_io)
 	{
@@ -438,6 +445,11 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 	SERIAL_TTY* tty;
 
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
@@ -483,6 +495,11 @@ void serial_get_timeouts(SERIAL_DEVICE* serial, IRP* irp, UINT32* timeout, UINT3
 	DEBUG_SVC("length read %u", Length);
 
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 
 	*timeout = (tty->read_total_timeout_multiplier * Length) + tty->read_total_timeout_constant;
 	*interval_timeout = tty->read_interval_timeout;
@@ -497,6 +514,11 @@ static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp)
 	SERIAL_TTY* tty;
 
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 
 	switch (irp->MajorFunction)
 	{
@@ -547,6 +569,11 @@ static void __serial_check_fds(SERIAL_DEVICE* serial)
 
 	ZeroMemory(&serial->tv, sizeof(struct timeval));
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 
 	/* scan every pending */
 	irp = list_peek(serial->pending_irps);
@@ -609,6 +636,11 @@ static void serial_set_fds(SERIAL_DEVICE* serial)
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
 	tty = serial->tty;
+	if(!tty)
+	{
+		DEBUG_WARN("tty = %p", tty);
+		return;
+	}
 	irp = (IRP*) list_peek(serial->pending_irps);
 
 	while (irp)
@@ -710,7 +742,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
-		serial->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) serial_thread_func, (void*) serial, 0, NULL);
+		serial->thread = CreateThread(NULL, 0, 
+				(LPTHREAD_START_ROUTINE) serial_thread_func, (void*) serial, 0, NULL);
 	}
 
 	return 0;
