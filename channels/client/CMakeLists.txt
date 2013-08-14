@@ -19,16 +19,16 @@ set(MODULE_NAME "freerdp-channels-client")
 set(MODULE_PREFIX "FREERDP_CHANNELS_CLIENT")
 
 set(${MODULE_PREFIX}_SRCS
-	tables.c
-	tables.h
-	addin.c
-	addin.h
-	init.c
-	init.h
-	open.c
-	open.h
-	channels.c
-	channels.h)
+	${CMAKE_CURRENT_BINARY_DIR}/tables.c
+	${CMAKE_CURRENT_SOURCE_DIR}/tables.h
+	${CMAKE_CURRENT_SOURCE_DIR}/addin.c
+	${CMAKE_CURRENT_SOURCE_DIR}/addin.h
+	${CMAKE_CURRENT_SOURCE_DIR}/init.c
+	${CMAKE_CURRENT_SOURCE_DIR}/init.h
+	${CMAKE_CURRENT_SOURCE_DIR}/open.c
+	${CMAKE_CURRENT_SOURCE_DIR}/open.h
+	${CMAKE_CURRENT_SOURCE_DIR}/channels.c
+	${CMAKE_CURRENT_SOURCE_DIR}/channels.h)
 
 list(REMOVE_DUPLICATES CHANNEL_STATIC_CLIENT_ENTRIES)
 
@@ -96,7 +96,7 @@ foreach(STATIC_MODULE ${CHANNEL_STATIC_CLIENT_MODULES})
 endforeach()
 set(CLIENT_STATIC_ADDIN_TABLE "${CLIENT_STATIC_ADDIN_TABLE}\n\t{ NULL, NULL, NULL }\n};")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tables.c.in ${CMAKE_CURRENT_SOURCE_DIR}/tables.c)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tables.c.in ${CMAKE_CURRENT_BINARY_DIR}/tables.c)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
