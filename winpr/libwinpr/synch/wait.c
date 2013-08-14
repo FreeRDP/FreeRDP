@@ -85,6 +85,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
 #else
+				fprintf(stderr, "[ERROR] %s: Thread timeouts not implemented.\n", __func__);
 				assert(0);
 #endif
 			}
@@ -245,6 +246,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
 	assert(0);
 	return WAIT_OBJECT_0;
 }
@@ -372,12 +374,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
 	assert(0);
 	return 0;
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
 	assert(0);
 	return 0;
 }
