@@ -409,12 +409,7 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 	ZeroMemory(buffer, *Length);
 
-	do
-	{
-		errno = 0;
-		status = read(tty->fd, buffer, *Length);
-	}
-	while(EAGAIN == errno);
+	status = read(tty->fd, buffer, *Length);
 
 	if (status < 0)
 	{
