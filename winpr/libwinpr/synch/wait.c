@@ -45,6 +45,18 @@
 
 #include "../handle/handle.h"
 
+static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
+{
+	ts->tv_sec += dwMilliseconds / 1000L;
+	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
+
+	while(ts->tv_nsec >= 1000000000L)
+	{
+		ts->tv_sec ++;
+		ts->tv_nsec -= 1000000000L;
+	}
+}
+
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
 	ULONG Type;
@@ -55,7 +67,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
-		int status;
+		int status = 0;
 		WINPR_THREAD* thread;
 		void* thread_status = NULL;
 
@@ -65,12 +77,16 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			if (dwMilliseconds != INFINITE)
 			{
+#if _GNU_SOURCE
 				struct timespec timeout;
 
-				timeout.tv_sec = dwMilliseconds / 1000;
-				timeout.tv_nsec = (dwMilliseconds % 1000) * 1000000;
+				clock_gettime(CLOCK_REALTIME, &timeout);
+				ts_add_ms(&timeout, dwMilliseconds);
 
 				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
+#else
+				assert(0);
+#endif
 			}
 			else
 				status = pthread_join(thread->thread, &thread_status);
@@ -92,8 +108,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			struct timespec timeout;
 
-			timeout.tv_sec = dwMilliseconds / 1000;
-			timeout.tv_nsec = (dwMilliseconds % 1000) * 1000000;
+			clock_gettime(CLOCK_REALTIME, &timeout);
+			ts_add_ms(&timeout, dwMilliseconds);	
 
 			pthread_mutex_timedlock(&mutex->mutex, &timeout);
 		}
@@ -252,7 +268,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	ZeroMemory(&timeout, sizeof(timeout));
 
 	if (bWaitAll)
+	{
 		fprintf(stderr, "WaitForMultipleObjects: bWaitAll not yet implemented\n");
+		assert(0);
+	}
 
 	for (index = 0; index < nCount; index++)
 	{
