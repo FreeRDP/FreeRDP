@@ -327,7 +327,7 @@ static void* serial_thread_func(void* arg)
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(2, ev, FALSE, 10);
+		status = WaitForMultipleObjects(2, ev, FALSE, 1);
 
 		if (WAIT_OBJECT_0 == status)
 			break;
@@ -336,7 +336,7 @@ static void* serial_thread_func(void* arg)
 		FD_ZERO(&serial->read_fds);
 		FD_ZERO(&serial->write_fds);
 
-		serial->tv.tv_sec = 1;
+		serial->tv.tv_sec = 0;
 		serial->tv.tv_usec = 0;
 		serial->select_timeout = 0;
 
@@ -344,6 +344,7 @@ static void* serial_thread_func(void* arg)
 		{
 			if ((irp = (IRP*) Queue_Dequeue(serial->queue)))
 				serial_process_irp(serial, irp);
+			continue;
 		}
 
 		serial_check_fds(serial);
