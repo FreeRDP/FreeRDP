@@ -95,6 +95,8 @@ struct _RFX_MESSAGE
 	UINT32* quantVals;
 
 	UINT32 tilesDataSize;
+
+	BOOL freeArray;
 };
 typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
@@ -168,6 +170,8 @@ FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 
 FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		int numRects, BYTE* data, int width, int height, int scanline);
+FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
+		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
 FREERDP_API void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
 
 #ifdef __cplusplus

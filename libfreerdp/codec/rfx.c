@@ -916,7 +916,8 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 			free(message->tiles);
 		}
 
-		free(message);
+		if (!message->freeArray)
+			free(message);
 	}
 }
 
@@ -1149,6 +1150,63 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	}
 
 	return message;
+}
+
+RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* numMessages, int maxDataSize)
+{
+	int i, j;
+	UINT32 tileDataSize;
+	RFX_MESSAGE* messages;
+
+	maxDataSize -= 1024; /* reserve enough space for headers */
+
+	*numMessages = ((message->tilesDataSize + maxDataSize) / maxDataSize) * 4;
+
+	messages = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE) * (*numMessages));
+	ZeroMemory(messages, sizeof(RFX_MESSAGE) * (*numMessages));
+
+	j = 0;
+
+	for (i = 0; i < message->numTiles; i++)
+	{
+		tileDataSize = rfx_tile_length(message->tiles[i]);
+
+		if ((messages[j].tilesDataSize + tileDataSize) > maxDataSize)
+			j++;
+
+		if (!messages[j].numTiles)
+		{
+			messages[j].frameIdx = message->frameIdx + j;
+			messages[j].numQuant = message->numQuant;
+			messages[j].quantVals = message->quantVals;
+			messages[j].numRects = message->numRects;
+			messages[j].rects = message->rects;
+			messages[j].tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->numTiles);
+			messages[j].freeArray = TRUE;
+		}
+
+		messages[j].tilesDataSize += tileDataSize;
+		messages[j].tiles[messages[j].numTiles++] = message->tiles[i];
+		message->tiles[i] = NULL;
+	}
+
+	*numMessages = j + 1;
+	message->numTiles = 0;
+
+	return messages;
+}
+
+RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
+		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize)
+{
+	RFX_MESSAGE* message;
+	RFX_MESSAGE* messages;
+
+	message = rfx_encode_message(context, rects, numRects, data, width, height, scanline);
+	messages = rfx_split_message(context, message, numMessages, maxDataSize);
+	rfx_message_free(context, message);
+
+	return messages;
 }
 
 static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
