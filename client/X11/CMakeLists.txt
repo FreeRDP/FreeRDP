@@ -19,7 +19,7 @@
 set(MODULE_NAME "xfreerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
-include(FindXmlto)
+include(FindDocBookXSL)
 include_directories(${X11_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
@@ -68,18 +68,43 @@ set(${MODULE_PREFIX}_LIBS
 	${CMAKE_DL_LIBS})
 
 if(WITH_MANPAGES)
-	if(XMLTO_FOUND)
+	find_program( XSLTPROC_EXECUTABLE NAMES xsltproc)
+
+	if(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
+
+		# We need the variable ${MAN_TODAY} to contain the current date in ISO
+		# format to replace it in the configure_file step.
+		include(today)
+
+		TODAY(MAN_TODAY)
+
+		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
+
+    add_executable(generate_argument_docbook
+        generate_argument_docbook.c)
+    target_link_libraries(generate_argument_docbook winpr-utils freerdp-core freerdp-utils freerdp-client)
+
 		add_custom_command(OUTPUT xfreerdp.1
-			COMMAND ${XMLTO_EXECUTABLE} man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
-			DEPENDS xfreerdp.1.xml)
+            COMMAND generate_argument_docbook
+						COMMAND ${CMAKE_COMMAND} -E copy 
+							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+						COMMAND ${CMAKE_COMMAND} -E copy 
+							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+							COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			DEPENDS 
+				${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
+				${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
+				${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
+				generate_argument_docbook)
 
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
 
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION share/man/man1)
-	else(XMLTO_FOUND)
-		message(WARNING "WITH_MANPAGES was set, but xmlto was not found. man-pages will not be installed")
-	endif(XMLTO_FOUND)
+	else(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
+		message(WARNING "WITH_MANPAGES was set, but xsltproc was not found. man-pages will not be installed")
+	endif(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
 endif(WITH_MANPAGES)
 
 set(XSHM_FEATURE_TYPE "REQUIRED")
