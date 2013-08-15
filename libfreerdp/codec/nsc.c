@@ -79,7 +79,9 @@ static void nsc_decode(NSC_CONTEXT* context)
 			coplane = context->priv->plane_buf[1] + y * context->width; /* Co */
 			cgplane = context->priv->plane_buf[2] + y * context->width; /* Cg */
 		}
+
 		aplane = context->priv->plane_buf[3] + y * context->width; /* A */
+
 		for (x = 0; x < context->width; x++)
 		{
 			y_val = (INT16) *yplane;
@@ -100,13 +102,14 @@ static void nsc_decode(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 origsz)
+static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 originalSize)
 {
 	UINT32 len;
 	UINT32 left;
 	BYTE value;
 
-	left = origsz;
+	left = originalSize;
+
 	while (left > 4)
 	{
 		value = *in++;
@@ -119,6 +122,7 @@ static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 origsz)
 		else if (value == *in)
 		{
 			in++;
+
 			if (*in < 0xFF)
 			{
 				len = (UINT32) *in++;
@@ -130,7 +134,8 @@ static void nsc_rle_decode(BYTE* in, BYTE* out, UINT32 origsz)
 				len = *((UINT32*) in);
 				in += 4;
 			}
-			memset(out, value, len);
+
+			FillMemory(out, len, value);
 			out += len;
 			left -= len;
 		}
@@ -148,24 +153,24 @@ static void nsc_rle_decompress_data(NSC_CONTEXT* context)
 {
 	UINT16 i;
 	BYTE* rle;
-	UINT32 origsize;
-	UINT32 planesize;
+	UINT32 planeSize;
+	UINT32 originalSize;
 
 	rle = context->nsc_stream.Planes;
 
 	for (i = 0; i < 4; i++)
 	{
-		origsize = context->OrgByteCount[i];
-		planesize = context->nsc_stream.PlaneByteCount[i];
+		originalSize = context->OrgByteCount[i];
+		planeSize = context->nsc_stream.PlaneByteCount[i];
 
-		if (planesize == 0)
-			memset(context->priv->plane_buf[i], 0xff, origsize);
-		else if (planesize < origsize)
-			nsc_rle_decode(rle, context->priv->plane_buf[i], origsize);
+		if (planeSize == 0)
+			FillMemory(context->priv->plane_buf[i], originalSize, 0xFF);
+		else if (planeSize < originalSize)
+			nsc_rle_decode(rle, context->priv->plane_buf[i], originalSize);
 		else
-			memcpy(context->priv->plane_buf[i], rle, origsize);
+			CopyMemory(context->priv->plane_buf[i], rle, originalSize);
 
-		rle += planesize;
+		rle += planeSize;
 	}
 }
 
@@ -192,7 +197,8 @@ static void nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 
 	nsc_stream_initialize(context, s);
 	length = context->width * context->height * 4;
-	if (context->bmpdata == NULL)
+
+	if (!context->bmpdata)
 	{
 		context->bmpdata = malloc(length + 16);
 		ZeroMemory(context->bmpdata, length + 16);
@@ -206,12 +212,15 @@ static void nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
+
 	/* The maximum length a decoded plane can reach in all cases */
 	length = tempWidth * tempHeight;
+
 	if (length > context->priv->plane_buf_length)
 	{
 		for (i = 0; i < 4; i++)
 			context->priv->plane_buf[i] = (BYTE*) realloc(context->priv->plane_buf[i], length);
+
 		context->priv->plane_buf_length = length;
 	}
 
@@ -250,6 +259,7 @@ void nsc_context_free(NSC_CONTEXT* context)
 			context->priv->plane_buf[i] = NULL;
 		}
 	}
+
 	if (context->bmpdata)
 		free(context->bmpdata);
 
@@ -266,15 +276,17 @@ void nsc_context_free(NSC_CONTEXT* context)
 
 NSC_CONTEXT* nsc_context_new(void)
 {
-	NSC_CONTEXT* nsc_context;
 	UINT8 i;
+	NSC_CONTEXT* nsc_context;
 
 	nsc_context = (NSC_CONTEXT*) calloc(1, sizeof(NSC_CONTEXT));
 	nsc_context->priv = (NSC_CONTEXT_PRIV*) calloc(1, sizeof(NSC_CONTEXT_PRIV));
-	for (i=0; i < 5; ++i)
+
+	for (i = 0; i < 5; ++i)
 	{
 		nsc_context->priv->plane_buf[i] = NULL;
 	}
+
 	nsc_context->bmpdata = NULL;
 
 	nsc_context->decode = nsc_decode;
@@ -298,34 +310,39 @@ NSC_CONTEXT* nsc_context_new(void)
 void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format)
 {
 	context->pixel_format = pixel_format;
+
 	switch (pixel_format)
 	{
 		case RDP_PIXEL_FORMAT_B8G8R8A8:
 		case RDP_PIXEL_FORMAT_R8G8B8A8:
 			context->bpp = 32;
 			break;
+
 		case RDP_PIXEL_FORMAT_B8G8R8:
 		case RDP_PIXEL_FORMAT_R8G8B8:
 			context->bpp = 24;
 			break;
+
 		case RDP_PIXEL_FORMAT_B5G6R5_LE:
 		case RDP_PIXEL_FORMAT_R5G6B5_LE:
 			context->bpp = 16;
 			break;
+
 		case RDP_PIXEL_FORMAT_P4_PLANER:
 			context->bpp = 4;
 			break;
+
 		case RDP_PIXEL_FORMAT_P8:
 			context->bpp = 8;
 			break;
+
 		default:
 			context->bpp = 0;
 			break;
 	}
 }
 
-void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
-	UINT16 width, UINT16 height, BYTE* data, UINT32 length)
+void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT16 width, UINT16 height, BYTE* data, UINT32 length)
 {
 	wStream* s;
 
