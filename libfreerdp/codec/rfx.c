@@ -546,7 +546,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return FALSE;
 	}
 
-	if (message->rects != NULL)
+	if (message->rects)
 		message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
 	else
 		message->rects = (RFX_RECT*) malloc(message->numRects * sizeof(RFX_RECT));
@@ -1043,7 +1043,10 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	int yIdx;
 	int numTilesX;
 	int numTilesY;
+	UINT16 ax, ay;
 	RFX_TILE* tile;
+	RFX_RECT* rect;
+	int BytesPerPixel;
 	RFX_MESSAGE* message = NULL;
 	PTP_WORK* work_objects = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
@@ -1068,6 +1071,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		context->quantIdxCr = 0;
 	}
 
+	rect = (RFX_RECT*) &rects[0];
+	BytesPerPixel = (context->bits_per_pixel / 8);
+
 	message->numQuant = context->numQuant;
 	message->quantVals = context->quants;
 
@@ -1078,7 +1084,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE) * message->numTiles);
 	ZeroMemory(message->tiles, sizeof(RFX_TILE) * message->numTiles);
 
-	DEBUG_RFX("width: %d height: %d scanline: %d", width, height, scanline);
+	DEBUG_RFX("x: %d y: %d width: %d height: %d scanline: %d BytesPerPixel: %d",
+			rect->x, rect->y, width, height, scanline, BytesPerPixel);
 
 	if (context->priv->UseThreads)
 	{
@@ -1094,16 +1101,22 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 
 			tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
 
+			tile->xIdx = xIdx;
+			tile->yIdx = yIdx;
+			tile->x = tile->xIdx * 64;
+			tile->y = tile->yIdx * 64;
 			tile->scanline = scanline;
-			tile->data = data + yIdx * 64 * scanline + xIdx * 8 * context->bits_per_pixel;
 			tile->width = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
 			tile->height = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
+
+			ax = rect->x + tile->x;
+			ay = rect->y + tile->y;
+			tile->data = &data[(ay * scanline) + (ax * BytesPerPixel)];
 
 			tile->quantIdxY = context->quantIdxY;
 			tile->quantIdxCb = context->quantIdxCb;
 			tile->quantIdxCr = context->quantIdxCr;
-			tile->xIdx = xIdx;
-			tile->yIdx = yIdx;
+
 			tile->YLen = 0;
 			tile->CbLen = 0;
 			tile->CrLen = 0;
@@ -1182,6 +1195,7 @@ RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* 
 			messages[j].numRects = message->numRects;
 			messages[j].rects = message->rects;
 			messages[j].tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->numTiles);
+			messages[j].freeRects = FALSE;
 			messages[j].freeArray = TRUE;
 		}
 
@@ -1191,7 +1205,16 @@ RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* 
 	}
 
 	*numMessages = j + 1;
+	context->frameIdx += j;
 	message->numTiles = 0;
+
+	for (i = 0; i < *numMessages; i++)
+	{
+		for (j = 0; j < messages[i].numTiles; j++)
+		{
+
+		}
+	}
 
 	return messages;
 }
@@ -1201,6 +1224,9 @@ RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, in
 {
 	RFX_MESSAGE* message;
 	RFX_MESSAGE* messages;
+
+	printf("rfx_encode_messages: numRects: %d maxDataSize: %d x: %d y: %d w: %d/%d h: %d/%d\n", numRects, maxDataSize,
+			rects[0].x, rects[0].y, rects[0].width, width, rects[0].height, height);
 
 	message = rfx_encode_message(context, rects, numRects, data, width, height, scanline);
 	messages = rfx_split_message(context, message, numMessages, maxDataSize);
@@ -1278,10 +1304,18 @@ void rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* mes
 
 	for (i = 0; i < message->numRects; i++)
 	{
-		Stream_Write_UINT16(s, message->rects[i].x);
-		Stream_Write_UINT16(s, message->rects[i].y);
-		Stream_Write_UINT16(s, message->rects[i].width);
-		Stream_Write_UINT16(s, message->rects[i].height);
+		/* Clipping rectangles are relative to destLeft, destTop */
+
+#if 1
+		Stream_Write_UINT16(s, 0); /* x (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* y (2 bytes) */
+#else
+		Stream_Write_UINT16(s, message->rects[i].x); /* x (2 bytes) */
+		Stream_Write_UINT16(s, message->rects[i].y); /* y (2 bytes) */
+#endif
+
+		Stream_Write_UINT16(s, message->rects[i].width); /* width (2 bytes) */
+		Stream_Write_UINT16(s, message->rects[i].height); /* height (2 bytes) */
 	}
 
 	Stream_Write_UINT16(s, CBT_REGION); /* regionType (2 bytes) */
