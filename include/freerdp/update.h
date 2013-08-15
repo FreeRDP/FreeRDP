@@ -134,6 +134,14 @@ enum SURFCMD_FRAMEACTION
 	SURFACECMD_FRAMEACTION_END = 0x0001
 };
 
+struct _SURFACE_FRAME
+{
+	UINT32 frameId;
+	UINT32 commandCount;
+	SURFACE_BITS_COMMAND* commands;
+};
+typedef struct _SURFACE_FRAME SURFACE_FRAME;
+
 /* defined inside libfreerdp-core */
 typedef struct rdp_update_proxy rdpUpdateProxy;
 

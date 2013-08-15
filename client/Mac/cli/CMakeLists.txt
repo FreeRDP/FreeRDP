@@ -1,15 +1,14 @@
-project(MacFreeRDP-client)
+
+project(MacFreeRDP)
 
 set(MODULE_NAME "MacFreeRDP")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_CLIENT")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mmacosx-version-min=10.5")
 
 # Import libraries
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(COCOA_LIBRARY Cocoa)
 find_library(APPKIT_LIBRARY AppKit)
-#find_library(FREERDP_LIBRARY NAMES MacFreeRDP PATHS ${CMAKE_CURRENT_BINARY_DIR}/../${CONFIGURATION})
 
 set(MACOSX_BUNDLE_INFO_STRING "MacFreeRDP")
 set(MACOSX_BUNDLE_ICON_FILE "FreeRDP.icns")
@@ -27,28 +26,32 @@ set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
 mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
 set(APP_TYPE MACOSX_BUNDLE)
 
-# OS X Interface Builder files
-file(GLOB ${MODULE_NAME}_XIBS *.xib)
+set(${MODULE_PREFIX}_XIBS MainMenu.xib)
 
-set(${MODULE_NAME}_RESOURCES ${MACOSX_BUNDLE_ICON_FILE})
+set(${MODULE_PREFIX}_SOURCES "")
+
+set(${MODULE_PREFIX}_OBJECTIVE_SOURCES
+	main.m
+	AppDelegate.m)
+
+list(APPEND ${MODULE_PREFIX}_SOURCES ${${MODULE_PREFIX}_OBJECTIVE_SOURCES})
+
+set(${MODULE_PREFIX}_HEADERS
+	AppDelegate.h)
+
+set(${MODULE_PREFIX}_RESOURCES ${MACOSX_BUNDLE_ICON_FILE})
 
 # Include XIB file in Xcode resources. 
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
-	set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${${MODULE_NAME}_XIBS})
-endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
-
-# Headers
-file(GLOB ${MODULE_NAME}_HEADERS *.h)
-
-# Source
-file(GLOB ${MODULE_NAME}_SOURCES *.m)
+	set(${MODULE_PREFIX}_RESOURCES ${${MODULE_PREFIX}_RESOURCES} ${${MODULE_PREFIX}_XIBS})
+endif()
 
 add_executable(${MODULE_NAME}
 	${APP_TYPE} 
-	${${MODULE_NAME}_HEADERS}
-	${${MODULE_NAME}_SOURCES}
-	${${MODULE_NAME}_RESOURCES})
+	${${MODULE_PREFIX}_HEADERS}
+	${${MODULE_PREFIX}_SOURCES}
+	${${MODULE_PREFIX}_RESOURCES})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}") 
 
@@ -56,14 +59,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAM
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
 # This allows for automatic xib to nib ibitool
-set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_NAME}_RESOURCES}")
-
-# Automatic ref counting
-# temporary turn off for x86_64 build issue
-# set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
-
-# Support for automatic reference counting requires non-fragile abi.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
+set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_PREFIX}_RESOURCES}")
 
 # Tell the compiler where to look for the FreeRDP framework
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
@@ -71,8 +67,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
 # Tell XCode where to look for the MacFreeRDP framework
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS
 	"${XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS} ${CMAKE_CURRENT_BINARY_DIR}/../$(CONFIGURATION)")
-
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH_ACTUAL)")
 
 # Set the info plist to the custom instance
 set_target_properties(${MODULE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
@@ -106,13 +100,13 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 	add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_OUTPUT_NAME}.app/Contents/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
-	foreach(xib ${${MODULE_NAME}_XIBS})
+	foreach(xib ${${MODULE_PREFIX}_XIBS})
 		get_filename_component(XIB_WE ${xib} NAME_WE)
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_OUTPUT_NAME}.app/Contents/Resources/${XIB_WE}.nib ${xib}
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_OUTPUT_NAME}.app/Contents/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 
-endif("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+endif()

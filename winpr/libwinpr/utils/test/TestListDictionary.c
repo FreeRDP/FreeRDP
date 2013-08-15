@@ -17,7 +17,7 @@ int TestListDictionary(int argc, char* argv[])
 	char* value;
 	wListDictionary* list;
 
-	list = ListDictionary_New(FALSE);
+	list = ListDictionary_New(TRUE);
 
 	ListDictionary_Add(list, key1, val1);
 	ListDictionary_Add(list, key2, val2);

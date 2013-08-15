@@ -34,15 +34,13 @@
 #include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
 
-/*
-static const char* const UPDATE_TYPE_STRINGS[] =
+const char* const UPDATE_TYPE_STRINGS[] =
 {
 	"Orders",
 	"Bitmap",
 	"Palette",
 	"Synchronize"
 };
-*/
 
 extern const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[];
 
@@ -68,77 +66,145 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 	return TRUE;
 }
 
-BOOL update_read_bitmap_data(wStream* s, BITMAP_DATA* bitmap_data)
+BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
-	Stream_Read_UINT16(s, bitmap_data->destLeft);
-	Stream_Read_UINT16(s, bitmap_data->destTop);
-	Stream_Read_UINT16(s, bitmap_data->destRight);
-	Stream_Read_UINT16(s, bitmap_data->destBottom);
-	Stream_Read_UINT16(s, bitmap_data->width);
-	Stream_Read_UINT16(s, bitmap_data->height);
-	Stream_Read_UINT16(s, bitmap_data->bitsPerPixel);
-	Stream_Read_UINT16(s, bitmap_data->flags);
-	Stream_Read_UINT16(s, bitmap_data->bitmapLength);
+	Stream_Read_UINT16(s, bitmapData->destLeft);
+	Stream_Read_UINT16(s, bitmapData->destTop);
+	Stream_Read_UINT16(s, bitmapData->destRight);
+	Stream_Read_UINT16(s, bitmapData->destBottom);
+	Stream_Read_UINT16(s, bitmapData->width);
+	Stream_Read_UINT16(s, bitmapData->height);
+	Stream_Read_UINT16(s, bitmapData->bitsPerPixel);
+	Stream_Read_UINT16(s, bitmapData->flags);
+	Stream_Read_UINT16(s, bitmapData->bitmapLength);
 
-	if (bitmap_data->flags & BITMAP_COMPRESSION)
+	if (bitmapData->flags & BITMAP_COMPRESSION)
 	{
-		if (!(bitmap_data->flags & NO_BITMAP_COMPRESSION_HDR))
+		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
 		{
-			Stream_Read_UINT16(s, bitmap_data->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
-			Stream_Read_UINT16(s, bitmap_data->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
-			Stream_Read_UINT16(s, bitmap_data->cbScanWidth); /* cbScanWidth (2 bytes) */
-			Stream_Read_UINT16(s, bitmap_data->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
-			bitmap_data->bitmapLength = bitmap_data->cbCompMainBodySize;
+			Stream_Read_UINT16(s, bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			Stream_Read_UINT16(s, bitmapData->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			Stream_Read_UINT16(s, bitmapData->cbScanWidth); /* cbScanWidth (2 bytes) */
+			Stream_Read_UINT16(s, bitmapData->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+			bitmapData->bitmapLength = bitmapData->cbCompMainBodySize;
 		}
 
-		bitmap_data->compressed = TRUE;
-		Stream_GetPointer(s, bitmap_data->bitmapDataStream);
-		Stream_Seek(s, bitmap_data->bitmapLength);
+		bitmapData->compressed = TRUE;
+		Stream_GetPointer(s, bitmapData->bitmapDataStream);
+		Stream_Seek(s, bitmapData->bitmapLength);
 	}
 	else
 	{
-		if (Stream_GetRemainingLength(s) < bitmap_data->bitmapLength)
+		if (Stream_GetRemainingLength(s) < bitmapData->bitmapLength)
 			return FALSE;
-		bitmap_data->compressed = FALSE;
-		Stream_GetPointer(s, bitmap_data->bitmapDataStream);
-		Stream_Seek(s, bitmap_data->bitmapLength);
+
+		bitmapData->compressed = FALSE;
+		Stream_GetPointer(s, bitmapData->bitmapDataStream);
+		Stream_Seek(s, bitmapData->bitmapLength);
 	}
+
 	return TRUE;
 }
 
-BOOL update_read_bitmap(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmap_update)
+BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
+{
+	Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength);
+
+	bitmapData->flags = 0;
+	bitmapData->cbCompFirstRowSize = 0;
+
+	if (bitmapData->compressed)
+		bitmapData->flags |= BITMAP_COMPRESSION;
+
+	if (update->context->settings->NoBitmapCompressionHeader)
+	{
+		bitmapData->flags |= NO_BITMAP_COMPRESSION_HDR;
+		bitmapData->cbCompMainBodySize = bitmapData->bitmapLength;
+	}
+
+	Stream_Write_UINT16(s, bitmapData->destLeft);
+	Stream_Write_UINT16(s, bitmapData->destTop);
+	Stream_Write_UINT16(s, bitmapData->destRight);
+	Stream_Write_UINT16(s, bitmapData->destBottom);
+	Stream_Write_UINT16(s, bitmapData->width);
+	Stream_Write_UINT16(s, bitmapData->height);
+	Stream_Write_UINT16(s, bitmapData->bitsPerPixel);
+	Stream_Write_UINT16(s, bitmapData->flags);
+	Stream_Write_UINT16(s, bitmapData->bitmapLength);
+
+	if (bitmapData->flags & BITMAP_COMPRESSION)
+	{
+		if (!(bitmapData->flags & NO_BITMAP_COMPRESSION_HDR))
+		{
+			Stream_Write_UINT16(s, bitmapData->cbCompFirstRowSize); /* cbCompFirstRowSize (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbCompMainBodySize); /* cbCompMainBodySize (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbScanWidth); /* cbScanWidth (2 bytes) */
+			Stream_Write_UINT16(s, bitmapData->cbUncompressedSize); /* cbUncompressedSize (2 bytes) */
+		}
+
+		Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
+	}
+	else
+	{
+		Stream_Write(s, bitmapData->bitmapDataStream, bitmapData->bitmapLength);
+	}
+
+	return TRUE;
+}
+
+BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmapUpdate)
 {
 	int i;
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	Stream_Read_UINT16(s, bitmap_update->number); /* numberRectangles (2 bytes) */
+	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
-	if (bitmap_update->number > bitmap_update->count)
+	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
 		UINT16 count;
 
-		count = bitmap_update->number * 2;
+		count = bitmapUpdate->number * 2;
 
-		bitmap_update->rectangles = (BITMAP_DATA*) realloc(bitmap_update->rectangles,
+		bitmapUpdate->rectangles = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
 				sizeof(BITMAP_DATA) * count);
 
-		memset(&bitmap_update->rectangles[bitmap_update->count], 0,
-				sizeof(BITMAP_DATA) * (count - bitmap_update->count));
+		ZeroMemory(&bitmapUpdate->rectangles[bitmapUpdate->count],
+				sizeof(BITMAP_DATA) * (count - bitmapUpdate->count));
 
-		bitmap_update->count = count;
+		bitmapUpdate->count = count;
 	}
 
 	/* rectangles */
-	for (i = 0; i < (int) bitmap_update->number; i++)
+	for (i = 0; i < (int) bitmapUpdate->number; i++)
 	{
-		if (!update_read_bitmap_data(s, &bitmap_update->rectangles[i]))
+		if (!update_read_bitmap_data(update, s, &bitmapUpdate->rectangles[i]))
 			return FALSE;
 	}
+	return TRUE;
+}
+
+BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmapUpdate)
+{
+	int i;
+
+	Stream_EnsureRemainingCapacity(s, 32);
+
+	Stream_Write_UINT16(s, UPDATE_TYPE_BITMAP); /* updateType */
+
+	Stream_Write_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
+
+	/* rectangles */
+	for (i = 0; i < (int) bitmapUpdate->number; i++)
+	{
+		if (!update_write_bitmap_data(update, s, &bitmapUpdate->rectangles[i]))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -354,7 +420,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//fprintf(stderr, "%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -369,7 +435,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			if (!update_read_bitmap(update, s, &update->bitmap_update))
+			if (!update_read_bitmap_update(update, s, &update->bitmap_update))
 				return FALSE;
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
@@ -791,6 +857,23 @@ static void update_send_synchronize(rdpContext* context)
 static void update_send_desktop_resize(rdpContext* context)
 {
 	rdp_server_reactivate(context->rdp);
+}
+
+static void update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+	rdpUpdate* update = context->update;
+
+	update_force_flush(context);
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	update_write_bitmap_update(update, s, bitmapUpdate);
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_BITMAP, s);
+
+	update_force_flush(context);
+
+	Stream_Release(s);
 }
 
 /**
@@ -1423,6 +1506,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SetBounds = update_set_bounds;
 	update->Synchronize = update_send_synchronize;
 	update->DesktopResize = update_send_desktop_resize;
+	update->BitmapUpdate = update_send_bitmap_update;
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;

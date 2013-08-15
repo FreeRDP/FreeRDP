@@ -53,7 +53,7 @@
 #endif
 
 #ifndef DECLSPEC_NORETURN
-#if (defined(__GNUC__) || defined(_MSC_VER))
+#if (defined(__GNUC__) || defined(_MSC_VER) || defined(__clang__))
 #define DECLSPEC_NORETURN __declspec(noreturn)
 #else
 #define DECLSPEC_NORETURN

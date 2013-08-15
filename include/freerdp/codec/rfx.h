@@ -22,6 +22,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
 #include <winpr/stream.h>
@@ -50,18 +51,36 @@ struct _RFX_TILE
 {
 	UINT16 x;
 	UINT16 y;
+	int width;
+	int height;
 	BYTE* data;
+	int scanline;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	UINT16 YLen;
+	UINT16 CbLen;
+	UINT16 CrLen;
+	BYTE* YData;
+	BYTE* CbData;
+	BYTE* CrData;
 };
 typedef struct _RFX_TILE RFX_TILE;
 
 struct _RFX_MESSAGE
 {
+	UINT32 frameIdx;
+
 	/**
 	 * The rects array represents the updated region of the frame. The UI
 	 * requires to clip drawing destination base on the union of the rects.
 	 */
-	UINT16 num_rects;
+	UINT16 numRects;
 	RFX_RECT* rects;
+	BOOL freeRects;
 
 	/**
 	 * The tiles array represents the actual frame data. Each tile is always
@@ -69,15 +88,35 @@ struct _RFX_MESSAGE
 	 * rects described above) are valid. Pixels outside of the region may
 	 * contain arbitrary data.
 	 */
-	UINT16 num_tiles;
+	UINT16 numTiles;
 	RFX_TILE** tiles;
+
+	UINT16 numQuant;
+	UINT32* quantVals;
+
+	UINT32 tilesDataSize;
+
+	BOOL freeArray;
 };
 typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
 typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
+enum _RFX_STATE
+{
+	RFX_STATE_INITIAL,
+	RFX_STATE_SERVER_UNINITIALIZED,
+	RFX_STATE_SEND_HEADERS,
+	RFX_STATE_SEND_FRAME_DATA,
+	RFX_STATE_FRAME_DATA_SENT,
+	RFX_STATE_FINAL
+};
+typedef enum _RFX_STATE RFX_STATE;
+
 struct _RFX_CONTEXT
 {
+	RFX_STATE state;
+
 	UINT16 flags;
 	UINT16 properties;
 	UINT16 width;
@@ -93,13 +132,12 @@ struct _RFX_CONTEXT
 	const BYTE* palette;
 
 	/* temporary data within a frame */
-	UINT32 frame_idx;
-	BOOL header_processed;
-	BYTE num_quants;
+	UINT32 frameIdx;
+	BYTE numQuant;
 	UINT32* quants;
-	BYTE quant_idx_y;
-	BYTE quant_idx_cb;
-	BYTE quant_idx_cr;
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
 
 	/* routines */
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
@@ -129,6 +167,12 @@ FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s);
 FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride);
+
+FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
+		int numRects, BYTE* data, int width, int height, int scanline);
+FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
+		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
+FREERDP_API void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
 
 #ifdef __cplusplus
 }

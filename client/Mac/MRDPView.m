@@ -65,7 +65,6 @@
 #import "freerdp/client/file.h"
 #import "freerdp/client/cmdline.h"
 
-
 /******************************************
  Forward declarations
  ******************************************/
@@ -804,9 +803,6 @@ BOOL mac_pre_connect(freerdp* instance)
 	instance->update->EndPaint = mac_end_paint;
 	instance->update->SetBounds = mac_set_bounds;
 	//instance->update->BitmapUpdate = mac_bitmap_update;
-	
-	mfContext *mfc = (mfContext*) instance->context;
-	MRDPView* view = (MRDPView*) mfc->view;
 
 	settings = instance->settings;
 

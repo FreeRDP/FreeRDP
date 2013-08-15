@@ -35,11 +35,11 @@
 #include <malloc.h>
 #endif
 
-struct _aligned_meminfo {
+struct _aligned_meminfo
+{
 	size_t size;
-	void *base_addr;
+	void* base_addr;
 };
-
 
 void* _aligned_malloc(size_t size, size_t alignment)
 {
@@ -75,13 +75,13 @@ void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 
 	/* malloc size + alignment to make sure we can align afterwards */
 	tmpptr = malloc(size + alignment + sizeof(struct _aligned_meminfo));
+
 	if (!tmpptr)
 		return NULL;
 
-
 	memptr = (void *)((((size_t)((PBYTE)tmpptr + alignment + offset + sizeof(struct _aligned_meminfo)) & ~(alignment - 1)) - offset));
 
-	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memptr - sizeof(struct _aligned_meminfo))));
+	ameminfo = (struct _aligned_meminfo*) (((size_t)((PBYTE)memptr - sizeof(struct _aligned_meminfo))));
 	ameminfo->base_addr = tmpptr;
 	ameminfo->size = size;
 
@@ -90,8 +90,8 @@ void* _aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 
 void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset)
 {
-	struct _aligned_meminfo *ameminfo;
-	void *newmem;
+	void* newmem;
+	struct _aligned_meminfo* ameminfo;
 
 	if (!memblock)
 		return _aligned_offset_malloc(size, alignment, offset);
@@ -101,15 +101,17 @@ void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, siz
 		_aligned_free(memblock);
 		return NULL;
 	}
+
 	/*  The following is not very performant but a simple and working solution */
 	newmem = _aligned_offset_malloc(size, alignment, offset);
 
 	if (!newmem)
 		return NULL;
 
-	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
-	memcpy(newmem, memblock, ameminfo->size);
+	ameminfo = (struct _aligned_meminfo*) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
+	CopyMemory(newmem, memblock, ameminfo->size);
 	_aligned_free(memblock);
+
 	return newmem;
 }
 
@@ -125,11 +127,12 @@ size_t _aligned_msize(void* memblock, size_t alignment, size_t offset)
 
 void _aligned_free(void* memblock)
 {
-	struct _aligned_meminfo *ameminfo;
+	struct _aligned_meminfo* ameminfo;
+
 	if (!memblock)
 		return;
 
-	ameminfo = (struct _aligned_meminfo *) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
+	ameminfo = (struct _aligned_meminfo*) (((size_t)((PBYTE)memblock - sizeof(struct _aligned_meminfo))));
 
 	free(ameminfo->base_addr);
 }

@@ -1,10 +1,10 @@
+
 project(MacFreeRDP-library)
 
 set(MODULE_NAME "MacFreeRDP-library")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
-set(MODULE_PREFIX "FREERDP_CLIENT_MAC-LIB")
+set(MODULE_PREFIX "FREERDP_CLIENT_MAC_LIBRARY")
 
-# Import frameworks
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(COCOA_LIBRARY Cocoa)
 find_library(APPKIT_LIBRARY AppKit)
@@ -21,45 +21,49 @@ set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.1.0)
 set(MACOSX_BUNDLE_BUNDLE_VERSION 1.1.0)
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2013. All Rights Reserved.")
 
-set(${MODULE_NAME}_RESOURCES "en.lproj/InfoPlist.strings")
+set(${MODULE_PREFIX}_XIBS PasswordDialog.xib)
 
-# OS X Interface Builder files
-file(GLOB ${MODULE_NAME}_XIBS *.xib)
+set(${MODULE_PREFIX}_SOURCES "")
 
-# source files
-file(GLOB ${MODULE_NAME}_SRC *.c *.m)
+set(${MODULE_PREFIX}_OBJECTIVE_SOURCES
+	main.m
+	mf_client.m
+	MRDPCursor.m
+	MRDPView.m
+	PasswordDialog.m)
 
-# header files
-file(GLOB ${MODULE_NAME}_HEADERS *.h)
+list(APPEND ${MODULE_PREFIX}_SOURCES ${${MODULE_PREFIX}_OBJECTIVE_SOURCES})
+
+set(${MODULE_PREFIX}_HEADERS
+	mfreerdp.h
+	mf_client.h
+	MRDPCursor.h
+	MRDPView.h
+	PasswordDialog.h)
+
+set(${MODULE_PREFIX}_RESOURCES "en.lproj/InfoPlist.strings")
 
 # Include XIB file in Xcode resources. 
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
-	set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${${MODULE_NAME}_XIBS})
+	set(${MODULE_PREFIX}_RESOURCES ${${MODULE_PREFIX}_RESOURCES} ${${MODULE_PREFIX}_XIBS})
 endif()
 
 add_library(${MODULE_NAME}
 	SHARED
 	../common/client.c
-	${${MODULE_NAME}_SRC}
-	${${MODULE_NAME}_HEADERS}
-	${${MODULE_NAME}_RESOURCES})
+	${${MODULE_PREFIX}_SOURCES}
+	${${MODULE_PREFIX}_HEADERS}
+	${${MODULE_PREFIX}_RESOURCES})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}")
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
-SET_TARGET_PROPERTIES(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
+set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
           
 set_target_properties(${MODULE_NAME} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH} 
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
-
-# Support for automatic reference counting requires non-fragile abi.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-nonfragile-abi")
-
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_ARCHS "$(NATIVE_ARCH_ACTUAL)")
-
-set(MODULE_VERSION, 1.1.0)
 
 set_target_properties(${MODULE_NAME} PROPERTIES 
 	FRAMEWORK TRUE
@@ -153,16 +157,16 @@ endif()
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${xib}
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 # endif()
 
 # Copy the public header files into the framework
-foreach(HEADER ${${MODULE_NAME}_HEADERS})
+foreach(HEADER ${${MODULE_PREFIX}_HEADERS})
 	# message("adding post-build dependency: ${LIB}")
 	add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-		COMMAND ditto ${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/
+		COMMAND ditto ${CMAKE_CURRENT_SOURCE_DIR}/${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/
 		COMMENT Copying public header files to ${MODULE_NAME})
 endforeach()
 
