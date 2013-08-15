@@ -179,13 +179,16 @@ static void* printer_thread_func(void* arg)
 {
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) arg;
+	HANDLE obj[] = {printer_dev->event, printer_dev->stopEvent};
 
 	while (1)
 	{
-		WaitForSingleObject(printer_dev->event, INFINITE);
+		DWORD rc = WaitForMultipleObjects(2, obj, FALSE, INFINITE);
 
-		if (WaitForSingleObject(printer_dev->stopEvent, 0) == WAIT_OBJECT_0)
+		if (rc == WAIT_OBJECT_0 + 1)
 			break;
+		else if( rc != WAIT_OBJECT_0 )
+			continue;
 
 		ResetEvent(printer_dev->event);
 

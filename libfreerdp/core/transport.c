@@ -739,7 +739,11 @@ int transport_check_fds(rdpTransport** ptransport)
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		Stream_Release(received);
+		if (transport == *ptransport)
+			/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
+			/* so only release if still valid */
+			Stream_Release(received);
+			
 
 		if (recv_status < 0)
 			status = -1;

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE refentry 
+PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+	<!ENTITY syntax SYSTEM "xfreerdp-argument.1.xml">
+	<!ENTITY channels SYSTEM "xfreerdp-channels.1.xml">
+	<!ENTITY examples SYSTEM "xfreerdp-examples.1.xml">
+	]
+>
+
+<refentry>
+	<refentryinfo>
+	<date>@MAN_TODAY@</date>
+	<author>
+		<authorblurb><para>The FreeRDP Team</para></authorblurb>
+	</author>
+	</refentryinfo>
+	<refmeta>
+	<refentrytitle>xfreerdp</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">freerdp</refmiscinfo>
+	<refmiscinfo class="manual">xfreerdp</refmiscinfo>
+	</refmeta>
+	<refnamediv>
+	<refname><application>xfreerdp</application></refname>
+	<refpurpose>FreeRDP X11 client</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+	<refsynopsisdivinfo>
+		<date>@MAN_TODAY@</date>
+	</refsynopsisdivinfo>
+	<para>
+		<command>xfreerdp</command> [file] [options] [/v:server[:port]]
+	</para>
+	</refsynopsisdiv>
+	<refsect1>
+	<refsect1info>
+		<date>@MAN_TODAY@</date>
+	</refsect1info>
+	<title>DESCRIPTION</title>
+	<para>
+		<command>xfreerdp</command> is an X11 Remote Desktop Protocol (RDP)
+		client which is part of the FreeRDP project. An RDP server is built-in
+		to many editions of Windows. Alternative servers included xrdp and VRDP (VirtualBox).
+	</para>
+	</refsect1>
+
+	&syntax;
+
+	&channels;
+
+	&examples;
+
+	<refsect1>
+	<title>LINKS</title>
+	<para>
+		<ulink url="http://www.freerdp.com/">http://www.freerdp.com/</ulink>
+	</para>
+	</refsect1>
+</refentry>
