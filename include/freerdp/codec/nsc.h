@@ -51,8 +51,9 @@ struct _NSC_MESSAGE
 	BYTE* data;
 	int scanline;
 	UINT32 MaxPlaneSize;
+	BYTE* PlaneBuffers[5];
 	UINT32 OrgByteCount[4];
-	BYTE* PlaneBuffers[4];
+	UINT32 PlaneByteCount[4];
 };
 typedef struct _NSC_MESSAGE NSC_MESSAGE;
 
@@ -87,6 +88,11 @@ FREERDP_API void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 FREERDP_API void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	BYTE* bmpdata, int width, int height, int rowstride);
 FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
+
+FREERDP_API NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
+		int width, int height, int scanline, int* numMessages, int maxDataSize);
+FREERDP_API int nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message);
+FREERDP_API int nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message);
 
 #ifdef __cplusplus
 }

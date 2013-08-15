@@ -148,8 +148,8 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 	{
 		if (pool->aArray[index].size > maxSize)
 		{
-			maxSize = pool->aArray[index].size;
 			maxIndex = index;
+			maxSize = pool->aArray[index].size;
 		}
 
 		if (pool->aArray[index].size >= size)
@@ -160,28 +160,31 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		}
 	}
 
+	if (!found && maxSize)
+	{
+		foundIndex = maxIndex;
+		found = TRUE;
+	}
+
 	if (!found)
 	{
-		if (!maxSize)
-		{
-			if (pool->alignment)
-				buffer = _aligned_malloc(size, pool->alignment);
-			else
-				buffer = malloc(size);
-		}
+		if (pool->alignment)
+			buffer = _aligned_malloc(size, pool->alignment);
 		else
-		{
-			buffer = pool->aArray[maxIndex].buffer;
+			buffer = malloc(size);
+	}
+	else
+	{
+		buffer = pool->aArray[index].buffer;
 
+		if (maxSize < size)
+		{
 			if (pool->alignment)
 				buffer = _aligned_realloc(buffer, size, pool->alignment);
 			else
 				buffer = realloc(buffer, size);
 		}
-	}
-	else
-	{
-		buffer = pool->aArray[index].buffer;
+
 		BufferPool_ShiftAvailable(pool, foundIndex, -1);
 	}
 
