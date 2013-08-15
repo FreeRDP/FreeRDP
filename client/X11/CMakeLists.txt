@@ -80,31 +80,43 @@ if(WITH_MANPAGES)
 
 		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
 
-    add_executable(generate_argument_docbook
-        generate_argument_docbook.c)
-    target_link_libraries(generate_argument_docbook winpr-utils freerdp-core freerdp-utils freerdp-client)
+		add_executable(generate_argument_docbook generate_argument_docbook.c)
+	
+		set(GAD_LIBS freerdp-client)
+
+		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+			MODULE winpr
+			MODULES winpr-utils)
+
+		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+			MODULE freerdp
+			MODULES freerdp-core freerdp-utils)
+
+		message(WARNING "GAD_LIBS: ${GAD_LIBS}")
+
+		target_link_libraries(generate_argument_docbook ${GAD_LIBS})
 
 		add_custom_command(OUTPUT xfreerdp.1
-            COMMAND generate_argument_docbook
-						COMMAND ${CMAKE_COMMAND} -E copy 
-							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
-						COMMAND ${CMAKE_COMMAND} -E copy 
-							${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
-							COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			DEPENDS 
-				${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
-				${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
-				${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
-				generate_argument_docbook)
+					COMMAND generate_argument_docbook
+					COMMAND ${CMAKE_COMMAND} -E copy 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+					COMMAND ${CMAKE_COMMAND} -E copy 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+						COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
+					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+					DEPENDS 
+						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
+						generate_argument_docbook)
 
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
 
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION share/man/man1)
-	else(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
+	else()
 		message(WARNING "WITH_MANPAGES was set, but xsltproc was not found. man-pages will not be installed")
-	endif(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
+	endif()
 endif(WITH_MANPAGES)
 
 set(XSHM_FEATURE_TYPE "REQUIRED")
