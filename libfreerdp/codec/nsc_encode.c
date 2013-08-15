@@ -48,12 +48,12 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	/* The maximum length a decoded plane can reach in all cases */
 	length = tempWidth * tempHeight + 16;
 
-	if (length > context->priv->plane_buf_length)
+	if (length > context->priv->PlaneBuffersLength)
 	{
 		for (i = 0; i < 5; i++)
-			context->priv->plane_buf[i] = (BYTE*) realloc(context->priv->plane_buf[i], length);
+			context->priv->PlaneBuffers[i] = (BYTE*) realloc(context->priv->PlaneBuffers[i], length);
 
-		context->priv->plane_buf_length = length;
+		context->priv->PlaneBuffersLength = length;
 	}
 
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
@@ -94,18 +94,18 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* bmpdata, int r
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->nsc_stream.ChromaSubSamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->nsc_stream.ColorLossLevel;
-	yplane = context->priv->plane_buf[0];
-	coplane = context->priv->plane_buf[1];
-	cgplane = context->priv->plane_buf[2];
-	aplane = context->priv->plane_buf[3];
+	yplane = context->priv->PlaneBuffers[0];
+	coplane = context->priv->PlaneBuffers[1];
+	cgplane = context->priv->PlaneBuffers[2];
+	aplane = context->priv->PlaneBuffers[3];
 
 	for (y = 0; y < context->height; y++)
 	{
 		src = bmpdata + (context->height - 1 - y) * rowstride;
-		yplane = context->priv->plane_buf[0] + y * rw;
-		coplane = context->priv->plane_buf[1] + y * rw;
-		cgplane = context->priv->plane_buf[2] + y * rw;
-		aplane = context->priv->plane_buf[3] + y * context->width;
+		yplane = context->priv->PlaneBuffers[0] + y * rw;
+		coplane = context->priv->PlaneBuffers[1] + y * rw;
+		cgplane = context->priv->PlaneBuffers[2] + y * rw;
+		aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
 		for (x = 0; x < context->width; x++)
 		{
@@ -234,11 +234,11 @@ static void nsc_encode_subsampling(NSC_CONTEXT* context)
 
 	for (y = 0; y < tempHeight >> 1; y++)
 	{
-		co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
-		cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
-		co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
+		co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
+		cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
+		co_src0 = (INT8*) context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
 		co_src1 = co_src0 + tempWidth;
-		cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
+		cg_src0 = (INT8*) context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		cg_src1 = cg_src0 + tempWidth;
 
 		for (x = 0; x < tempWidth >> 1; x++)
@@ -338,10 +338,10 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 		}
 		else
 		{
-			planeSize = nsc_rle_encode(context->priv->plane_buf[i], context->priv->plane_buf[4], originalSize);
+			planeSize = nsc_rle_encode(context->priv->PlaneBuffers[i], context->priv->PlaneBuffers[4], originalSize);
 
 			if (planeSize < originalSize)
-				CopyMemory(context->priv->plane_buf[i], context->priv->plane_buf[4], planeSize);
+				CopyMemory(context->priv->PlaneBuffers[i], context->priv->PlaneBuffers[4], planeSize);
 			else
 				planeSize = originalSize;
 		}
@@ -350,7 +350,118 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, int width, int height, int scanline)
+UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width, UINT32 height)
+{
+	UINT32 tempWidth;
+	UINT32 tempHeight;
+	UINT32 maxPlaneSize;
+
+	tempWidth = ROUND_UP_TO(width, 8);
+	tempHeight = ROUND_UP_TO(height, 2);
+
+	maxPlaneSize = tempWidth * tempHeight + 16;
+
+	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
+	{
+		ByteCount[0] = tempWidth * height;
+		ByteCount[1] = tempWidth * tempHeight / 4;
+		ByteCount[2] = tempWidth * tempHeight / 4;
+		ByteCount[3] = width * height;
+	}
+	else
+	{
+		ByteCount[0] = width * height;
+		ByteCount[1] = width * height;
+		ByteCount[2] = width * height;
+		ByteCount[3] = width * height;
+	}
+
+	return maxPlaneSize;
+}
+
+NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
+		int width, int height, int scanline, int* numMessages, int maxDataSize)
+{
+	int step;
+	int i, j;
+	UINT32 ByteCount[4];
+	UINT32 MaxPlaneSize;
+	UINT32 MaxMessageSize;
+	NSC_MESSAGE* messages;
+
+	MaxPlaneSize = nsc_compute_byte_count(context, (UINT32*) ByteCount, width, height);
+	MaxMessageSize = MaxPlaneSize + 20;
+
+	maxDataSize -= 1024; /* reserve enough space for headers */
+
+	if (MaxMessageSize > maxDataSize)
+		*numMessages = MaxMessageSize / maxDataSize;
+
+	if (*numMessages < 1)
+		*numMessages = 1;
+
+	messages = (NSC_MESSAGE*) malloc(sizeof(NSC_MESSAGE) * (*numMessages));
+	ZeroMemory(messages, sizeof(sizeof(NSC_MESSAGE) * (*numMessages)));
+
+	if (width > height)
+	{
+		/**
+		 * Horizontal Split
+		 */
+
+		step = height / *numMessages;
+		step += (step % 4);
+
+		for (i = 0; i < *numMessages; i++)
+		{
+			messages[i].x = x;
+			messages[i].width = width;
+			messages[i].data = data;
+			messages[i].scanline = scanline;
+
+			messages[i].y = y + (i * step);
+			messages[i].height = height - (i * step);
+
+			messages[i].MaxPlaneSize = nsc_compute_byte_count(context,
+					(UINT32*) messages[i].OrgByteCount, messages[i].width, messages[i].height);
+		}
+	}
+	else
+	{
+		/**
+		 * Vertical Split
+		 */
+
+		step = width / *numMessages;
+		step += (step % 4);
+
+		for (i = 0; i < *numMessages; i++)
+		{
+			messages[i].y = y;
+			messages[i].height = height;
+			messages[i].data = data;
+			messages[i].scanline = scanline;
+
+			messages[i].x = x + (i * step);
+			messages[i].width = width - (i * step);
+
+			messages[i].MaxPlaneSize = nsc_compute_byte_count(context,
+					(UINT32*) messages[i].OrgByteCount, messages[i].width, messages[i].height);
+		}
+	}
+
+	for (i = 0; i < *numMessages; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			messages[i].PlaneBuffers[j] = NULL;
+		}
+	}
+
+	return messages;
+}
+
+void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* data, int width, int height, int scanline)
 {
 	int i;
 
@@ -360,7 +471,7 @@ void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, int wi
 
 	/* ARGB to AYCoCg conversion, chroma subsampling and colorloss reduction */
 	PROFILER_ENTER(context->priv->prof_nsc_encode);
-	context->encode(context, bmpdata, scanline);
+	context->encode(context, data, scanline);
 	PROFILER_EXIT(context->priv->prof_nsc_encode);
 
 	/* RLE encode */
@@ -383,7 +494,7 @@ void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, int wi
 		if (context->nsc_stream.PlaneByteCount[i] > 0)
 		{
 			Stream_EnsureRemainingCapacity(s, (int) context->nsc_stream.PlaneByteCount[i]);
-			Stream_Write(s, context->priv->plane_buf[i], context->nsc_stream.PlaneByteCount[i]);
+			Stream_Write(s, context->priv->PlaneBuffers[i], context->nsc_stream.PlaneByteCount[i]);
 		}
 	}
 }

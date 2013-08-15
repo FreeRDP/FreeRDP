@@ -618,7 +618,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		bitmap_info.bmiHeader.biCompression = BI_RGB;
 		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			nsc_context->bmpdata, &bitmap_info, DIB_RGB_COLORS);
+			nsc_context->BitmapData, &bitmap_info, DIB_RGB_COLORS);
 		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}

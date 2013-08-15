@@ -42,9 +42,24 @@ struct _NSC_STREAM
 };
 typedef struct _NSC_STREAM NSC_STREAM;
 
+struct _NSC_MESSAGE
+{
+	int x;
+	int y;
+	UINT32 width;
+	UINT32 height;
+	BYTE* data;
+	int scanline;
+	UINT32 MaxPlaneSize;
+	UINT32 OrgByteCount[4];
+	BYTE* PlaneBuffers[4];
+};
+typedef struct _NSC_MESSAGE NSC_MESSAGE;
+
 typedef struct _NSC_CONTEXT_PRIV NSC_CONTEXT_PRIV;
 
 typedef struct _NSC_CONTEXT NSC_CONTEXT;
+
 struct _NSC_CONTEXT
 {
 	UINT32 OrgByteCount[4];	/* original byte length of luma, chroma orange, chroma green, alpha variable in order */
@@ -52,15 +67,15 @@ struct _NSC_CONTEXT
 	UINT16 bpp;
 	UINT16 width;
 	UINT16 height;
-	BYTE* bmpdata;     /* final argb values in little endian order */
-	UINT32 bmpdata_length; /* the maximum length of the buffer that bmpdata points to */
+	BYTE* BitmapData;     /* final argb values in little endian order */
+	UINT32 BitmapDataLength; /* the maximum length of the buffer that bmpdata points to */
 	RDP_PIXEL_FORMAT pixel_format;
 
 	/* color palette allocated by the application */
 	const BYTE* palette;
 
 	void (*decode)(NSC_CONTEXT* context);
-	void (*encode)(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
+	void (*encode)(NSC_CONTEXT* context, BYTE* BitmapData, int rowstride);
 
 	NSC_CONTEXT_PRIV* priv;
 };

@@ -988,7 +988,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		xfc->bmp_codec_nsc = (BYTE*) realloc(xfc->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_flip(nsc_context->bmpdata, xfc->bmp_codec_nsc,
+		freerdp_image_flip(nsc_context->BitmapData, xfc->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,

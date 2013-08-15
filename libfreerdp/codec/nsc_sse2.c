@@ -28,10 +28,12 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+#include <winpr/crt.h>
+
 #include "nsc_types.h"
 #include "nsc_sse2.h"
 
-static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
+static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
 {
 	UINT16 x;
 	UINT16 y;
@@ -56,18 +58,19 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->nsc_stream.ChromaSubSamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->nsc_stream.ColorLossLevel;
-	yplane = context->priv->plane_buf[0];
-	coplane = context->priv->plane_buf[1];
-	cgplane = context->priv->plane_buf[2];
-	aplane = context->priv->plane_buf[3];
+	yplane = context->priv->PlaneBuffers[0];
+	coplane = context->priv->PlaneBuffers[1];
+	cgplane = context->priv->PlaneBuffers[2];
+	aplane = context->priv->PlaneBuffers[3];
 
 	for (y = 0; y < context->height; y++)
 	{
-		src = bmpdata + (context->height - 1 - y) * rowstride;
-		yplane = context->priv->plane_buf[0] + y * rw;
-		coplane = context->priv->plane_buf[1] + y * rw;
-		cgplane = context->priv->plane_buf[2] + y * rw;
-		aplane = context->priv->plane_buf[3] + y * context->width;
+		src = data + (context->height - 1 - y) * scanline;
+		yplane = context->priv->PlaneBuffers[0] + y * rw;
+		coplane = context->priv->PlaneBuffers[1] + y * rw;
+		cgplane = context->priv->PlaneBuffers[2] + y * rw;
+		aplane = context->priv->PlaneBuffers[3] + y * context->width;
+
 		for (x = 0; x < context->width; x += 8)
 		{
 			switch (context->pixel_format)
@@ -79,6 +82,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19), *(src + 15), *(src + 11), *(src + 7), *(src + 3));
 					src += 32;
 					break;
+
 				case RDP_PIXEL_FORMAT_R8G8B8A8:
 					r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12), *(src + 8), *(src + 4), *src);
 					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17), *(src + 13), *(src + 9), *(src + 5), *(src + 1));
@@ -86,6 +90,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19), *(src + 15), *(src + 11), *(src + 7), *(src + 3));
 					src += 32;
 					break;
+
 				case RDP_PIXEL_FORMAT_B8G8R8:
 					b_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9), *(src + 6), *(src + 3), *src);
 					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13), *(src + 10), *(src + 7), *(src + 4), *(src + 1));
@@ -93,6 +98,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set1_epi16(0xFF);
 					src += 24;
 					break;
+
 				case RDP_PIXEL_FORMAT_R8G8B8:
 					r_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9), *(src + 6), *(src + 3), *src);
 					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13), *(src + 10), *(src + 7), *(src + 4), *(src + 1));
@@ -100,6 +106,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set1_epi16(0xFF);
 					src += 24;
 					break;
+
 				case RDP_PIXEL_FORMAT_B5G6R5_LE:
 					b_val = _mm_set_epi16(
 						(((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
@@ -131,6 +138,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
+
 				case RDP_PIXEL_FORMAT_R5G6B5_LE:
 					r_val = _mm_set_epi16(
 						(((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
@@ -162,6 +170,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
+
 				case RDP_PIXEL_FORMAT_P4_PLANER:
 					{
 						int shift;
@@ -206,6 +215,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					}
 					a_val = _mm_set1_epi16(0xFF);
 					break;
+
 				case RDP_PIXEL_FORMAT_P8:
 					{
 						r_val = _mm_set_epi16(
@@ -239,6 +249,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 					}
 					a_val = _mm_set1_epi16(0xFF);
 					break;
+
 				default:
 					r_val = g_val = b_val = a_val = _mm_set1_epi16(0);
 					break;
@@ -266,18 +277,20 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* bmpdata, 
 			cgplane += 8;
 			aplane += 8;
 		}
+
 		if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (context->width % 2) == 1)
 		{
-			context->priv->plane_buf[0][y * rw + context->width] = context->priv->plane_buf[0][y * rw + context->width - 1];
-			context->priv->plane_buf[1][y * rw + context->width] = context->priv->plane_buf[1][y * rw + context->width - 1];
-			context->priv->plane_buf[2][y * rw + context->width] = context->priv->plane_buf[2][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[0][y * rw + context->width] = context->priv->PlaneBuffers[0][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[1][y * rw + context->width] = context->priv->PlaneBuffers[1][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[2][y * rw + context->width] = context->priv->PlaneBuffers[2][y * rw + context->width - 1];
 		}
 	}
+
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (y % 2) == 1)
 	{
-		memcpy(yplane + rw, yplane, rw);
-		memcpy(coplane + rw, coplane, rw);
-		memcpy(cgplane + rw, cgplane, rw);
+		CopyMemory(yplane + rw, yplane, rw);
+		CopyMemory(coplane + rw, coplane, rw);
+		CopyMemory(cgplane + rw, cgplane, rw);
 	}
 }
 
@@ -302,12 +315,13 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 
 	for (y = 0; y < tempHeight >> 1; y++)
 	{
-		co_dst = context->priv->plane_buf[1] + y * (tempWidth >> 1);
-		cg_dst = context->priv->plane_buf[2] + y * (tempWidth >> 1);
-		co_src0 = (INT8*) context->priv->plane_buf[1] + (y << 1) * tempWidth;
+		co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
+		cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
+		co_src0 = (INT8*) context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
 		co_src1 = co_src0 + tempWidth;
-		cg_src0 = (INT8*) context->priv->plane_buf[2] + (y << 1) * tempWidth;
+		cg_src0 = (INT8*) context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		cg_src1 = cg_src0 + tempWidth;
+
 		for (x = 0; x < tempWidth >> 1; x += 8)
 		{
 			t = _mm_loadu_si128((__m128i*) co_src0);
@@ -333,9 +347,10 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
+static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
 {
-	nsc_encode_argb_to_aycocg_sse2(context, bmpdata, rowstride);
+	nsc_encode_argb_to_aycocg_sse2(context, data, scanline);
+
 	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
 	{
 		nsc_encode_subsampling_sse2(context);
