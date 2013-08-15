@@ -950,10 +950,10 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 		XSetClipRectangles(xfc->display, xfc->gc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,
-				(XRectangle*) message->rects, message->num_rects, YXBanded);
+				(XRectangle*) message->rects, message->numRects, YXBanded);
 
 		/* Draw the tiles to primary surface, each is 64x64. */
-		for (i = 0; i < message->num_tiles; i++)
+		for (i = 0; i < message->numTiles; i++)
 		{
 			image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 				(char*) message->tiles[i]->data, 64, 64, 32, 0);
@@ -966,7 +966,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		}
 
 		/* Copy the updated region from backstore to the window. */
-		for (i = 0; i < message->num_rects; i++)
+		for (i = 0; i < message->numRects; i++)
 		{
 			tx = message->rects[i].x + surface_bits_command->destLeft;
 			ty = message->rects[i].y + surface_bits_command->destTop;
@@ -988,7 +988,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		xfc->bmp_codec_nsc = (BYTE*) realloc(xfc->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_flip(nsc_context->bmpdata, xfc->bmp_codec_nsc,
+		freerdp_image_flip(nsc_context->BitmapData, xfc->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,

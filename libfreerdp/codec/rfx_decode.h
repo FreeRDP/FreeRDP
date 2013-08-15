@@ -23,11 +23,7 @@
 #include <freerdp/codec/rfx.h>
 
 /* stride is bytes between rows in the output buffer. */
-BOOL rfx_decode_rgb(RFX_CONTEXT* context, wStream* data_in,
-	int y_size, const UINT32 * y_quants,
-	int cb_size, const UINT32 * cb_quants,
-	int cr_size, const UINT32 * cr_quants, BYTE* rgb_buffer,
-	int stride);
+BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer, int stride);
 
 #endif /* __RFX_DECODE_H */
 

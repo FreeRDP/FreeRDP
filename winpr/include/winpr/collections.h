@@ -35,12 +35,16 @@ extern "C" {
 #endif
 
 typedef void* (*OBJECT_NEW_FN)(void);
+typedef void (*OBJECT_INIT_FN)(void* obj);
+typedef void (*OBJECT_UNINIT_FN)(void* obj);
 typedef void (*OBJECT_FREE_FN)(void* obj);
 typedef void (*OBJECT_EQUALS_FN)(void* objA, void* objB);
 
 struct _wObject
 {
 	OBJECT_NEW_FN fnObjectNew;
+	OBJECT_INIT_FN fnObjectInit;
+	OBJECT_UNINIT_FN fnObjectUninit;
 	OBJECT_FREE_FN fnObjectFree;
 	OBJECT_EQUALS_FN fnObjectEquals;
 };
@@ -308,17 +312,32 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 /* BufferPool */
 
-struct _wBufferPool
+struct _wBufferPoolItem
 {
 	int size;
-	int capacity;
-	void** array;
-	CRITICAL_SECTION lock;
-	int fixedSize;
+	void* buffer;
+};
+typedef struct _wBufferPoolItem wBufferPoolItem;
+
+struct _wBufferPool
+{
+	int defaultSize;
 	DWORD alignment;
 	BOOL synchronized;
+	CRITICAL_SECTION lock;
+
+	int aSize;
+	int aCapacity;
+	wBufferPoolItem* aArray;
+
+	int uSize;
+	int uCapacity;
+	wBufferPoolItem* uArray;
 };
 typedef struct _wBufferPool wBufferPool;
+
+WINPR_API int BufferPool_GetPoolSize(wBufferPool* pool);
+WINPR_API int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer);
 
 WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
 WINPR_API void BufferPool_Return(wBufferPool* pool, void* buffer);

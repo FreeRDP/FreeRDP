@@ -227,21 +227,24 @@ if(APPLE)
                 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
         	set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
 	else()
+		set(CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
+
+		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+			set(CMAKE_OSX_ARCHITECTURES i386 x86_64)
+		endif()
+
                 if(IS_DIRECTORY /opt/local/include)
                         include_directories(/opt/local/include)
                         link_directories(/opt/local/lib)
                 endif()
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.5")
         endif()
+
         if(WITH_CLANG)
                 set(CMAKE_C_COMPILER "clang")
         endif()
 
         if (WITH_VERBOSE)
-            # Support for automatic reference counting requires non-fragile abi.
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
-
-            # Tell the compiler where to look for the FreeRDP framework
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v")
         endif()
 endif()

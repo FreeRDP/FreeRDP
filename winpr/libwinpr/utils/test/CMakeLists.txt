@@ -12,6 +12,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestLinkedList.c
 	TestListDictionary.c
 	TestCmdLine.c
+	TestBufferPool.c
 	TestStreamPool.c
 	TestMessageQueue.c
 	TestMessagePipe.c)
