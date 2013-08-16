@@ -128,7 +128,7 @@ static void* smartcard_thread_func(void* arg)
 
 	while (1)
 	{
-		DWORD status = WaitForSingleObject(2, ev, FALSE, INFINITE);
+		DWORD status = WaitForMultipleObjects(2, ev, FALSE, INFINITE);
 
 		if (status == WAIT_OBJECT_0 + 1)
 			break;
