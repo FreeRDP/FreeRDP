@@ -20,6 +20,8 @@
 #ifndef FREERDP_CHANNEL_CLIENT_CLIPRDR_H
 #define FREERDP_CHANNEL_CLIENT_CLIPRDR_H
 
+#include <freerdp/types.h>
+
 /**
  * Client Interface
  */

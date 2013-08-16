@@ -42,6 +42,7 @@
 
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/cliprdr.h>
 
 void freerdp_channels_dummy()
 {
@@ -50,6 +51,9 @@ void freerdp_channels_dummy()
 
 	rdpsnd_server_context_new(NULL);
 	rdpsnd_server_context_free(NULL);
+
+	cliprdr_server_context_new(NULL);
+	cliprdr_server_context_free(NULL);
 }
 
 /**
@@ -420,7 +424,7 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 
 	vcm = (WTSVirtualChannelManager*) malloc(sizeof(WTSVirtualChannelManager));
 
-	if (vcm != NULL)
+	if (vcm)
 	{
 		ZeroMemory(vcm, sizeof(WTSVirtualChannelManager));
 
@@ -659,6 +663,7 @@ BOOL WTSVirtualChannelQuery(
 	BOOL result = FALSE;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	ZeroMemory(fds, sizeof(fds));
+
 	switch (WtsVirtualClass)
 	{
 		case WTSVirtualFileHandle:
@@ -673,6 +678,13 @@ BOOL WTSVirtualChannelQuery(
 
 			*ppBuffer = malloc(sizeof(void*));
 			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
+			*pBytesReturned = sizeof(void*);
+			result = TRUE;
+			break;
+
+		case WTSVirtualEventHandle:
+			*ppBuffer = malloc(sizeof(HANDLE));
+			CopyMemory(*ppBuffer, &(channel->receive_event), sizeof(HANDLE));
 			*pBytesReturned = sizeof(void*);
 			result = TRUE;
 			break;

@@ -49,7 +49,7 @@ static BOOL test_dump_rfx_realtime = TRUE;
 
 void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
-	context->rfx_context = rfx_context_new();
+	context->rfx_context = rfx_context_new(TRUE);
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
 	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;

@@ -43,6 +43,7 @@ typedef enum _WTS_VIRTUAL_CLASS
 {
 	WTSVirtualClientData,
 	WTSVirtualFileHandle,
+	WTSVirtualEventHandle,
 	WTSVirtualChannelReady
 } WTS_VIRTUAL_CLASS;
 

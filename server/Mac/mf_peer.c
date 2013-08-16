@@ -175,7 +175,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
 	context->info = mf_info_get_instance();
-	context->rfx_context = rfx_context_new();
+	context->rfx_context = rfx_context_new(TRUE);
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
