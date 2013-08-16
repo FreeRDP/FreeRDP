@@ -77,7 +77,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			if (dwMilliseconds != INFINITE)
 			{
-#if _GNU_SOURCE
+#if HAVE_PTHREAD_GNU_EXT
 				struct timespec timeout;
 
 				clock_gettime(CLOCK_REALTIME, &timeout);
@@ -105,6 +105,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		mutex = (WINPR_MUTEX*) Object;
 
+#if HAVE_PTHREAD_GNU_EXT
 		if (dwMilliseconds != INFINITE)
 		{
 			struct timespec timeout;
@@ -115,6 +116,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			pthread_mutex_timedlock(&mutex->mutex, &timeout);
 		}
 		else
+#endif
 			pthread_mutex_lock(&mutex->mutex);
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
