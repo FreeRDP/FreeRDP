@@ -113,6 +113,14 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	else
 	{
 		serial->tty = tty;
+	
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_NONE, 
+				STATUS_CANCELLED);
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_READ, 
+				STATUS_CANCELLED);
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_WRITE, 
+				STATUS_CANCELLED);
+
 		DEBUG_SVC("%s(%d) created.", serial->path, FileId);
 	}
 
@@ -332,7 +340,6 @@ static void* serial_thread_func(void* arg)
 		if (WAIT_OBJECT_0 == status)
 			break;
 
-		serial->nfds = 1;
 		FD_ZERO(&serial->read_fds);
 		FD_ZERO(&serial->write_fds);
 
