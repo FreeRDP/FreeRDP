@@ -340,21 +340,22 @@ static void* serial_thread_func(void* arg)
 		if (WAIT_OBJECT_0 == status)
 			break;
 
-		FD_ZERO(&serial->read_fds);
-		FD_ZERO(&serial->write_fds);
-
-		serial->tv.tv_sec = 0;
-		serial->tv.tv_usec = 0;
-		serial->select_timeout = 0;
-
 		if (status == WAIT_OBJECT_0 + 1)
 		{
+			FD_ZERO(&serial->read_fds);
+			FD_ZERO(&serial->write_fds);
+
+			serial->tv.tv_sec = 0;
+			serial->tv.tv_usec = 0;
+			serial->select_timeout = 0;
+
 			if ((irp = (IRP*) Queue_Dequeue(serial->queue)))
 				serial_process_irp(serial, irp);
 			continue;
 		}
 
-		serial_check_fds(serial);
+		if(serial->tty)
+			serial_check_fds(serial);
 	}
 
 	return NULL;
@@ -679,6 +680,13 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 {
 	if (list_size(serial->pending_irps) == 0)
 		return 1;
+
+	FD_ZERO(&serial->read_fds);
+	FD_ZERO(&serial->write_fds);
+
+	serial->tv.tv_sec = 0;
+	serial->tv.tv_usec = 0;
+	serial->select_timeout = 0;
 
 	serial_set_fds(serial);
 	DEBUG_SVC("waiting %lu %lu", serial->tv.tv_sec, serial->tv.tv_usec);
