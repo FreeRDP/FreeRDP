@@ -60,6 +60,8 @@ FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelMana
 	void** fds, int* fds_count);
 FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 
+FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm);
+
 /**
  * Opens a static or dynamic virtual channel and return the handle. If the
  * operation fails, a NULL handle is returned.

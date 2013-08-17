@@ -474,8 +474,7 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 	}
 }
 
-void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
-	void** fds, int* fds_count)
+void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count)
 {
 	void* fd;
 
@@ -541,6 +540,11 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 	ReleaseMutex(vcm->mutex);
 
 	return result;
+}
+
+HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm)
+{
+	return vcm->send_event;
 }
 
 void* WTSVirtualChannelOpenEx(
@@ -786,7 +790,7 @@ BOOL WTSVirtualChannelWrite(
 	int first;
 	UINT32 written;
 
-	if (channel == NULL)
+	if (!channel)
 		return FALSE;
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)

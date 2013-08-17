@@ -26,11 +26,25 @@
 
 #include <freerdp/server/cliprdr.h>
 
+struct _CLIPRDR_HEADER
+{
+	UINT16 msgType;
+	UINT16 msgFlags;
+	UINT32 dataLen;
+};
+typedef struct _CLIPRDR_HEADER CLIPRDR_HEADER;
+
 struct _cliprdr_server_private
 {
 	HANDLE Thread;
 	HANDLE StopEvent;
 	void* ChannelHandle;
+	BOOL UseLongFormatNames;
+	BOOL StreamFileClipEnabled;
+	BOOL FileClipNoFilePaths;
+	BOOL CanLockClipData;
+	UINT32 ClientFormatNameCount;
+	CLIPRDR_FORMAT_NAME* ClientFormatNames;
 };
 
 #endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H */
