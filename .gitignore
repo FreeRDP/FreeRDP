@@ -56,6 +56,7 @@ Release-*
 *.vcxproj.*
 *.vcproj
 *.vcproj.*
+*.aps
 *.sdf
 *.sln
 *.suo
