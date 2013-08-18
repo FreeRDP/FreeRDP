@@ -35,20 +35,12 @@ typedef struct _cliprdr_server_private CliprdrServerPrivate;
 typedef int (*psCliprdrStart)(CliprdrServerContext* context);
 typedef int (*psCliprdrStop)(CliprdrServerContext* context);
 
-typedef int (*psCliprdrSendCapabilities)(CliprdrServerContext* context);
-typedef int (*psCliprdrSendMonitorReady)(CliprdrServerContext* context);
-typedef int (*psCliprdrSendFormatListResponse)(CliprdrServerContext* context);
-
 struct _cliprdr_server_context
 {
 	WTSVirtualChannelManager* vcm;
 
 	psCliprdrStart Start;
 	psCliprdrStop Stop;
-
-	psCliprdrSendCapabilities SendCapabilities;
-	psCliprdrSendMonitorReady SendMonitorReady;
-	psCliprdrSendFormatListResponse SendFormatListResponse;
 
 	CliprdrServerPrivate* priv;
 };

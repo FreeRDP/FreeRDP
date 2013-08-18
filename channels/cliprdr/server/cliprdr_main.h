@@ -26,6 +26,8 @@
 
 #include <freerdp/server/cliprdr.h>
 
+#define CLIPRDR_HEADER_LENGTH	8
+
 struct _CLIPRDR_HEADER
 {
 	UINT16 msgType;
@@ -39,10 +41,12 @@ struct _cliprdr_server_private
 	HANDLE Thread;
 	HANDLE StopEvent;
 	void* ChannelHandle;
+
 	BOOL UseLongFormatNames;
 	BOOL StreamFileClipEnabled;
 	BOOL FileClipNoFilePaths;
 	BOOL CanLockClipData;
+
 	UINT32 ClientFormatNameCount;
 	CLIPRDR_FORMAT_NAME* ClientFormatNames;
 };

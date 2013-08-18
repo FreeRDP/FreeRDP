@@ -749,7 +749,7 @@ BOOL WTSVirtualChannelRead(
 
 	item = (wts_data_item*) list_peek(channel->receive_queue);
 
-	if (item == NULL)
+	if (!item)
 	{
 		ResetEvent(channel->receive_event);
 		*pBytesRead = 0;
@@ -771,7 +771,7 @@ BOOL WTSVirtualChannelRead(
 	ReleaseMutex(channel->mutex);
 
 	CopyMemory(Buffer, item->buffer, item->length);
-	wts_data_item_free(item) ;
+	wts_data_item_free(item);
 
 	return TRUE;
 }
