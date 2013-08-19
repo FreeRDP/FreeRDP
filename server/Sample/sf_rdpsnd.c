@@ -31,7 +31,7 @@ static const AUDIO_FORMAT test_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
-static void sf_peer_rdpsnd_activated(rdpsnd_server_context* context)
+static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	printf("RDPSND Activated\n");
 }

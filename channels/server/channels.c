@@ -44,6 +44,7 @@
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/rdpdr.h>
+#include <freerdp/server/drdynvc.h>
 
 void freerdp_channels_dummy()
 {
@@ -58,6 +59,9 @@ void freerdp_channels_dummy()
 
 	rdpdr_server_context_new(NULL);
 	rdpdr_server_context_free(NULL);
+
+	drdynvc_server_context_new(NULL);
+	drdynvc_server_context_free(NULL);
 }
 
 /**
