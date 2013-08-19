@@ -214,14 +214,19 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		}
 		else
 		{
-			buffer = pool->aArray[index].buffer;
+			buffer = pool->aArray[foundIndex].buffer;
 
 			if (maxSize < size)
 			{
 				if (pool->alignment)
-					buffer = _aligned_realloc(buffer, size, pool->alignment);
+				{
+					_aligned_free(buffer);
+					buffer = _aligned_malloc(size, pool->alignment);
+				}
 				else
+				{
 					buffer = realloc(buffer, size);
+				}
 			}
 
 			BufferPool_ShiftAvailable(pool, foundIndex, -1);

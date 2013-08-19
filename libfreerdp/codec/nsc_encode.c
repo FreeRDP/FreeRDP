@@ -390,6 +390,7 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 	UINT32 MaxPlaneSize;
 	UINT32 MaxMessageSize;
 	NSC_MESSAGE* messages;
+	UINT32 PaddedMaxPlaneSize;
 
 	k = 0;
 	MaxRegionWidth = 64 * 4;
@@ -430,11 +431,15 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 
 	for (i = 0; i < *numMessages; i++)
 	{
-		messages[i].PlaneBuffers[0] = (BYTE*) BufferPool_Take(context->priv->PlanePool, messages[i].MaxPlaneSize);
-		messages[i].PlaneBuffers[1] = (BYTE*) BufferPool_Take(context->priv->PlanePool, messages[i].MaxPlaneSize);
-		messages[i].PlaneBuffers[2] = (BYTE*) BufferPool_Take(context->priv->PlanePool, messages[i].MaxPlaneSize);
-		messages[i].PlaneBuffers[3] = (BYTE*) BufferPool_Take(context->priv->PlanePool, messages[i].MaxPlaneSize);
-		messages[i].PlaneBuffers[4] = (BYTE*) BufferPool_Take(context->priv->PlanePool, messages[i].MaxPlaneSize);
+		PaddedMaxPlaneSize = messages[i].MaxPlaneSize + 32;
+
+		messages[i].PlaneBuffer = (BYTE*) BufferPool_Take(context->priv->PlanePool, PaddedMaxPlaneSize * 5);
+
+		messages[i].PlaneBuffers[0] = (BYTE*) &(messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 0) + 16]);
+		messages[i].PlaneBuffers[1] = (BYTE*) &(messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 1) + 16]);
+		messages[i].PlaneBuffers[2] = (BYTE*) &(messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 2) + 16]);
+		messages[i].PlaneBuffers[3] = (BYTE*) &(messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 3) + 16]);
+		messages[i].PlaneBuffers[4] = (BYTE*) &(messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 4) + 16]);
 	}
 
 	for (i = 0; i < *numMessages; i++)
@@ -504,11 +509,7 @@ int nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
 
 int nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message)
 {
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffers[0]);
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffers[1]);
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffers[2]);
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffers[3]);
-	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffers[4]);
+	BufferPool_Return(context->priv->PlanePool, message->PlaneBuffer);
 	return 0;
 }
 
