@@ -90,6 +90,12 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context,
 	 * not in characters, including the NULL terminator!
 	 */
 
+	if (context->priv->ClientComputerName)
+	{
+		free(context->priv->ClientComputerName);
+		context->priv->ClientComputerName = NULL;
+	}
+
 	if (UnicodeFlag)
 	{
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
@@ -579,6 +585,8 @@ static void* rdpdr_server_thread(void* arg)
 
 	while (1)
 	{
+		BytesReturned = 0;
+
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
@@ -586,8 +594,8 @@ static void* rdpdr_server_thread(void* arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_Pointer(s),
+				Stream_Capacity(s) - Stream_GetPosition(s), &BytesReturned))
 		{
 			if (BytesReturned)
 				Stream_Seek(s, BytesReturned);

@@ -249,6 +249,8 @@ static int cliprdr_server_receive_long_format_list(CliprdrServerContext* context
 	int length;
 	int position;
 
+	printf("%s\n", __FUNCTION__);
+
 	position = Stream_GetPosition(s);
 	Stream_SetPosition(s, Stream_Length(s));
 	end = (WCHAR*) Stream_Pointer(s);
@@ -281,17 +283,29 @@ static int cliprdr_server_receive_long_format_list(CliprdrServerContext* context
 	{
 		Stream_Read_UINT32(s, context->priv->ClientFormatNames[i].id); /* formatId (4 bytes) */
 
-		context->priv->ClientFormatNames[i].length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
-				-1, &context->priv->ClientFormatNames[i].name, 0, NULL, NULL);
+		length = cliprdr_wcslen((WCHAR*) Stream_Pointer(s), end);
 
-		Stream_Seek(s, (context->priv->ClientFormatNames[i].length + 1) * 2);
+		context->priv->ClientFormatNames[i].name = NULL;
+
+		if (length)
+		{
+			context->priv->ClientFormatNames[i].length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
+					-1, &(context->priv->ClientFormatNames[i].name), 0, NULL, NULL) - 1;
+		}
+		else
+		{
+			context->priv->ClientFormatNames[i].length = 0;
+		}
+
+		Stream_Seek(s, (length + 1) * 2); /* wszFormatName */
 	}
 
 	for (i = 0; i < context->priv->ClientFormatNameCount; i++)
 	{
-		printf("Format %d: Id: 0x%04X Name: %s\n", i,
+		printf("Format %d: Id: 0x%04X Name: %s Length: %d\n", i,
 				context->priv->ClientFormatNames[i].id,
-				context->priv->ClientFormatNames[i].name);
+				context->priv->ClientFormatNames[i].name,
+				context->priv->ClientFormatNames[i].length);
 	}
 
 	return 0;
