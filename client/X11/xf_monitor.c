@@ -255,3 +255,16 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 
 	return TRUE;
 }
+
+/** Clean up all resources allocated by functions in this file.
+ */
+void xf_monitors_free(xfContext *xfc, rdpSettings *settings)
+{
+#ifdef WITH_XINERAMA
+	if(xfc->vscreen.monitors)
+		free(xfc->vscreen.monitors);
+#endif
+
+	if(settings->MonitorIds)
+		free(settings->MonitorIds);
+}
