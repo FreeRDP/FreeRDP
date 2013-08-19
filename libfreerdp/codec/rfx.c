@@ -242,9 +242,11 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	 * in order to allow optimized functions (SEE, NEON) to read from positions 
 	 * that are actually in front/beyond the buffer. Offset calculations are
 	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
+	 *
+	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
 	 */
 
-	context->priv->BufferPool = BufferPool_New(TRUE, 8192 + 32, 16);
+	context->priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 
 #ifdef _WIN32
 	{
@@ -934,14 +936,11 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 			{
 				tile = message->tiles[i];
 
-				if (tile->YData)
-					BufferPool_Return(context->priv->BufferPool, tile->YData);
-
-				if (tile->CbData)
-					BufferPool_Return(context->priv->BufferPool, tile->CbData);
-
-				if (tile->CrData)
-					BufferPool_Return(context->priv->BufferPool, tile->CrData);
+				if (tile->YCbCrData)
+				{
+					BufferPool_Return(context->priv->BufferPool, tile->YCbCrData);
+					tile->YCbCrData = NULL;
+				}
 
 				ObjectPool_Return(context->priv->TilePool, (void*) tile);
 			}
@@ -1154,9 +1153,12 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 			tile->YLen = 0;
 			tile->CbLen = 0;
 			tile->CrLen = 0;
-			tile->YData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-			tile->CbData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-			tile->CrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+
+			tile->YCbCrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+
+			tile->YData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
+			tile->CbData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
+			tile->CrData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
 
 			if (context->priv->UseThreads)
 			{

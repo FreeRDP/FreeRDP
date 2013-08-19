@@ -66,6 +66,7 @@ struct _RFX_TILE
 	BYTE* YData;
 	BYTE* CbData;
 	BYTE* CrData;
+	BYTE* YCbCrData;
 };
 typedef struct _RFX_TILE RFX_TILE;
 
