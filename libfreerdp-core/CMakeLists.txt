@@ -63,6 +63,8 @@ set(LIBFREERDP_CORE_SRCS
 	connection.h
 	redirection.c
 	redirection.h
+	timezone.c
+	timezone.h
 	rdp.c
 	rdp.h
 	per.c
