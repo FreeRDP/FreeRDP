@@ -321,10 +321,14 @@ typedef struct _wBufferPoolItem wBufferPoolItem;
 
 struct _wBufferPool
 {
-	int defaultSize;
+	int fixedSize;
 	DWORD alignment;
 	BOOL synchronized;
 	CRITICAL_SECTION lock;
+
+	int size;
+	int capacity;
+	void** array;
 
 	int aSize;
 	int aCapacity;
