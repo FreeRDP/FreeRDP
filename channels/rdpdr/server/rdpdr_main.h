@@ -24,6 +24,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
+#include <freerdp/settings.h>
 #include <freerdp/server/rdpdr.h>
 
 struct _rdpdr_server_private
@@ -36,6 +37,8 @@ struct _rdpdr_server_private
 	UINT16 VersionMajor;
 	UINT16 VersionMinor;
 	char* ClientComputerName;
+
+	BOOL UserLoggedOnPdu;
 };
 
 #define RDPDR_HEADER_LENGTH		4

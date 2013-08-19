@@ -189,6 +189,26 @@ static int cliprdr_server_receive_capabilities(CliprdrServerContext* context, wS
 	return 0;
 }
 
+static int cliprdr_server_receive_temporary_directory(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+{
+	WCHAR* wszTempDir;
+
+	if (Stream_GetRemainingLength(s) < 520)
+		return -1;
+
+	wszTempDir = (WCHAR*) Stream_Pointer(s);
+
+	if (wszTempDir[260] != 0)
+		return -1;
+
+	ConvertFromUnicode(CP_UTF8, 0, wszTempDir, -1,
+			&(context->priv->ClientTemporaryDirectory), 0, NULL, NULL);
+
+	printf("ClientTemporaryDirectory: %s\n", context->priv->ClientTemporaryDirectory);
+
+	return 0;
+}
+
 int cliprdr_wcslen(const WCHAR* str, const WCHAR* end)
 {
 	WCHAR* p = (WCHAR*) str;
@@ -313,6 +333,7 @@ static int cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s,
 			break;
 
 		case CB_TEMP_DIRECTORY:
+			cliprdr_server_receive_temporary_directory(context, s, header);
 			break;
 
 		case CB_FORMAT_LIST:

@@ -29,7 +29,7 @@
 
 static UINT32 g_ClientId = 0;
 
-static int cliprdr_server_send_announce_request(RdpdrServerContext* context)
+static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
 	wStream* s;
 	BOOL status;
@@ -70,6 +70,8 @@ static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, w
 
 	printf("Client Announce Response: VersionMajor: 0x%04X VersionMinor: 0x%04X ClientId: 0x%04X\n",
 			VersionMajor, VersionMinor, ClientId);
+
+	context->priv->ClientId = ClientId;
 
 	return 0;
 }
@@ -141,6 +143,8 @@ static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context,
 	Stream_Seek_UINT32(s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 	Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
 
+	context->priv->UserLoggedOnPdu = (extendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
+
 	return 0;
 }
 
@@ -177,7 +181,9 @@ static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context
 	extendedPdu = 0;
 	extendedPdu |= RDPDR_CLIENT_DISPLAY_NAME_PDU; /* always set */
 	extendedPdu |= RDPDR_DEVICE_REMOVE_PDUS; /* optional */
-	extendedPdu |= RDPDR_USER_LOGGEDON_PDU; /* optional */
+
+	if (context->priv->UserLoggedOnPdu)
+		extendedPdu |= RDPDR_USER_LOGGEDON_PDU; /* optional */
 
 	extraFlags1 = 0;
 	extraFlags1 |= ENABLE_ASYNCIO; /* optional */
@@ -359,6 +365,112 @@ static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* con
 	return 0;
 }
 
+static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
+{
+	wStream* s;
+	BOOL status;
+	RDPDR_HEADER header;
+
+	printf("RdpdrServerSendClientIdConfirm\n");
+
+	header.Component = RDPDR_CTYP_CORE;
+	header.PacketId = PAKID_CORE_CLIENTID_CONFIRM;
+
+	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
+
+	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
+
+	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
+	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
+	Stream_Write_UINT32(s, context->priv->ClientId); /* ClientId (4 bytes) */
+
+	Stream_SealLength(s);
+
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+
+	Stream_Free(s, TRUE);
+
+	return 0;
+}
+
+static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+{
+	int i;
+	UINT32 DeviceCount;
+	UINT32 DeviceType;
+	UINT32 DeviceId;
+	char PreferredDosName[9];
+	UINT32 DeviceDataLength;
+
+	PreferredDosName[8] = 0;
+
+	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
+
+	printf("%s: DeviceCount: %d\n", __FUNCTION__, DeviceCount);
+
+	for (i = 0; i < DeviceCount; i++)
+	{
+		Stream_Read_UINT32(s, DeviceType); /* DeviceType (4 bytes) */
+		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
+		Stream_Read(s, PreferredDosName, 8); /* PreferredDosName (8 bytes) */
+		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
+
+		printf("Device %d Name: %s Id: 0x%04X DataLength: %d\n",
+				i, PreferredDosName, DeviceId, DeviceDataLength);
+
+		switch (DeviceId)
+		{
+			case RDPDR_DTYP_FILESYSTEM:
+				break;
+
+			case RDPDR_DTYP_PRINT:
+				break;
+
+			case RDPDR_DTYP_SERIAL:
+				break;
+
+			case RDPDR_DTYP_PARALLEL:
+				break;
+
+			case RDPDR_DTYP_SMARTCARD:
+				break;
+
+			default:
+				break;
+		}
+
+		Stream_Seek(s, DeviceDataLength);
+	}
+
+	return 0;
+}
+
+static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
+{
+	wStream* s;
+	BOOL status;
+	RDPDR_HEADER header;
+
+	printf("%s\n", __FUNCTION__);
+
+	header.Component = RDPDR_CTYP_CORE;
+	header.PacketId = PAKID_CORE_USER_LOGGEDON;
+
+	s = Stream_New(NULL, RDPDR_HEADER_LENGTH);
+
+	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
+
+	Stream_SealLength(s);
+
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+
+	Stream_Free(s, TRUE);
+
+	return 0;
+}
+
 static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	printf("RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X\n",
@@ -381,9 +493,14 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDP
 
 			case PAKID_CORE_CLIENT_CAPABILITY:
 				rdpdr_server_receive_core_capability_response(context, s, header);
+				rdpdr_server_send_client_id_confirm(context);
+
+				if (context->priv->UserLoggedOnPdu)
+					rdpdr_server_send_user_logged_on(context);
 				break;
 
 			case PAKID_CORE_DEVICELIST_ANNOUNCE:
+				rdpdr_server_receive_device_list_announce_request(context, s, header);
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:
@@ -458,7 +575,7 @@ static void* rdpdr_server_thread(void* arg)
 	events[nCount++] = ChannelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
-	cliprdr_server_send_announce_request(context);
+	rdpdr_server_send_announce_request(context);
 
 	while (1)
 	{
@@ -552,6 +669,8 @@ RdpdrServerContext* rdpdr_server_context_new(WTSVirtualChannelManager* vcm)
 			context->priv->VersionMajor = RDPDR_VERSION_MAJOR;
 			context->priv->VersionMinor = RDPDR_VERSION_MINOR_RDP6X;
 			context->priv->ClientId = g_ClientId++;
+
+			context->priv->UserLoggedOnPdu = TRUE;
 		}
 	}
 

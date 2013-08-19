@@ -49,6 +49,8 @@ struct _cliprdr_server_private
 
 	UINT32 ClientFormatNameCount;
 	CLIPRDR_FORMAT_NAME* ClientFormatNames;
+
+	char* ClientTemporaryDirectory;
 };
 
 #endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H */
