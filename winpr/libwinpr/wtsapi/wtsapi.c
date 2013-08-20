@@ -294,7 +294,8 @@ BOOL WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LP
 	return TRUE;
 }
 
-BOOL WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
+BOOL WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
 {
 	return TRUE;
 }
