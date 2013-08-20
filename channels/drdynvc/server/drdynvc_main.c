@@ -68,7 +68,7 @@ static void* drdynvc_server_thread(void* arg)
 		}
 
 		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
 			if (BytesReturned)
 				Stream_Seek(s, BytesReturned);
@@ -86,7 +86,7 @@ static void* drdynvc_server_thread(void* arg)
 
 static int drdynvc_server_start(DrdynvcServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpenEx(context->vcm, "rdpdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdr", 0);
 
 	if (!context->priv->ChannelHandle)
 		return -1;

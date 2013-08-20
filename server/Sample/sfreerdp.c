@@ -398,10 +398,10 @@ static void* tf_debug_channel_thread_func(void* arg)
 	void* fd;
 	wStream* s;
 	void* buffer;
-	UINT32 bytes_returned = 0;
+	DWORD BytesReturned = 0;
 	testPeerContext* context = (testPeerContext*) arg;
 
-	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
+	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &BytesReturned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
@@ -411,7 +411,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	s = Stream_New(NULL, 4096);
 
-	WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test1", 5, NULL);
+	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, NULL);
 
 	while (1)
 	{
@@ -422,25 +422,25 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
-			Stream_Capacity(s), &bytes_returned) == FALSE)
+		if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
+			Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
-			if (bytes_returned == 0)
+			if (BytesReturned == 0)
 				break;
 
-			Stream_EnsureRemainingCapacity(s, bytes_returned);
+			Stream_EnsureRemainingCapacity(s, BytesReturned);
 
-			if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
-				Stream_Capacity(s), &bytes_returned) == FALSE)
+			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
+				Stream_Capacity(s), &BytesReturned) == FALSE)
 			{
 				/* should not happen */
 				break;
 			}
 		}
 
-		Stream_SetPosition(s, bytes_returned);
+		Stream_SetPosition(s, BytesReturned);
 
-		printf("got %d bytes\n", bytes_returned);
+		printf("got %d bytes\n", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);

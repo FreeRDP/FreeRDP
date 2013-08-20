@@ -397,7 +397,7 @@ static BOOL audin_server_open(audin_server_context* context)
 
 	if (!audin->thread)
 	{
-		audin->audin_channel = WTSVirtualChannelOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
+		audin->audin_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (!audin->audin_channel)
 			return FALSE;

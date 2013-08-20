@@ -518,13 +518,13 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 		/* Initialize drdynvc channel once and only once. */
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
 
-		channel = WTSVirtualChannelOpenEx(vcm, "drdynvc", 0);
+		channel = WTSVirtualChannelManagerOpenEx(vcm, "drdynvc", 0);
 
 		if (channel)
 		{
 			vcm->drdynvc_channel = channel;
 			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-			WTSVirtualChannelWrite(channel, (BYTE*) &dynvc_caps, sizeof(dynvc_caps), NULL);
+			WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), NULL);
 		}
 	}
 
@@ -555,10 +555,7 @@ HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm)
 	return vcm->send_event;
 }
 
-void* WTSVirtualChannelOpenEx(
-	/* __in */ WTSVirtualChannelManager* vcm,
-	/* __in */ const char* pVirtualName,
-	/* __in */ UINT32 flags)
+HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirtualName, DWORD flags)
 {
 	int i;
 	int len;
@@ -608,7 +605,7 @@ void* WTSVirtualChannelOpenEx(
 
 		s = Stream_New(NULL, 64);
 		wts_write_drdynvc_create_request(s, channel->channel_id, pVirtualName);
-		WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
+		WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 		Stream_Free(s, TRUE);
 
 		DEBUG_DVC("ChannelId %d.%s (total %d)", channel->channel_id, pVirtualName, list_size(vcm->dvc_channel_list));
@@ -851,8 +848,7 @@ BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, P
 	return TRUE;
 }
 
-BOOL WTSVirtualChannelClose(
-	/* __in */ void* hChannelHandle)
+BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 {
 	wStream* s;
 	wts_data_item* item;
@@ -878,7 +874,7 @@ BOOL WTSVirtualChannelClose(
 			{
 				s = Stream_New(NULL, 8);
 				wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, channel->channel_id);
-				WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
+				WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 				Stream_Free(s, TRUE);
 			}
 		}

@@ -65,10 +65,9 @@ extern "C" {
  */
 FREERDP_API WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client);
 FREERDP_API void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm);
-FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
-	void** fds, int* fds_count);
-FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 
+FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count);
+FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm);
 
 /**
@@ -84,10 +83,7 @@ FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManag
 
 // WINPR_API HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
 
-FREERDP_API void* WTSVirtualChannelOpenEx(
-	/* __in */ WTSVirtualChannelManager* vcm,
-	/* __in */ const char* pVirtualName,
-	/* __in */ UINT32 flags);
+WINPR_API HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirtualName, DWORD flags);
 
 /**
  * Returns information about a specified virtual channel.
@@ -134,10 +130,7 @@ WINPR_API BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG
  * Closes an open virtual channel handle.
  */
 
-// WINPR_API BOOL WTSVirtualChannelClose(HANDLE hChannelHandle);
-
-FREERDP_API BOOL WTSVirtualChannelClose(
-	/* __in */ void* hChannelHandle);
+WINPR_API BOOL WTSVirtualChannelClose(HANDLE hChannelHandle);
 
 #ifdef __cplusplus
 }

@@ -630,7 +630,7 @@ static void* rdpdr_server_thread(void* arg)
 
 static int rdpdr_server_start(RdpdrServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpenEx(context->vcm, "rdpdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdr", 0);
 
 	if (!context->priv->ChannelHandle)
 		return -1;
