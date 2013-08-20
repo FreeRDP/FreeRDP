@@ -145,6 +145,8 @@ static UINT64 last_played_audio_time = 0;
 static HANDLE tsmf_mutex = NULL;
 static int TERMINATING = 0;
 
+static void tsmf_stream_flush(TSMF_STREAM* stream);
+
 static UINT64 get_current_time(void)
 {
 	struct timeval tp;
@@ -680,18 +682,19 @@ static void* tsmf_stream_playback_func(void* arg)
 		}
 	}
 
-	stream->started = TRUE;
 	while (!(WaitForSingleObject(stream->stopEvent, 0) == WAIT_OBJECT_0))
 	{
-		if (!stream->eos && !presentation->eos)
-			/* tsmf_stream_process_ack is internally listening to stream->stopEvent,
-			 * so if it already consumed the event, end this thread. */
-			if(tsmf_stream_process_ack(stream))
-				break;
+		if(tsmf_stream_process_ack(stream))
+			break;
 
 		sample = tsmf_stream_pop_sample(stream, 1);
-
 		if (sample)
+			tsmf_sample_playback(sample);
+	}
+
+	if (stream->eos || presentation->eos)
+	{
+		while ((sample = tsmf_stream_pop_sample(stream, 1)) != NULL)
 			tsmf_sample_playback(sample);
 	}
 
@@ -700,9 +703,9 @@ static void* tsmf_stream_playback_func(void* arg)
 		stream->audio->Free(stream->audio);
 		stream->audio = NULL;
 	}
-	stream->started = FALSE;
 
 	DEBUG_DVC("out %d", stream->stream_id);
+	ExitThread(0);
 
 	return NULL;
 }
@@ -711,7 +714,10 @@ static void tsmf_stream_start(TSMF_STREAM* stream)
 {
 	if (!stream->started)
 	{
-		ResumeThread(stream->thread);
+		stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		stream->thread = CreateThread(NULL, 0, 
+			(LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream,
+			0, NULL);
 		stream->started = TRUE;
 	}
 }
@@ -722,7 +728,12 @@ static void tsmf_stream_stop(TSMF_STREAM* stream)
 		return;
 
 	if (stream->started)
+	{
 		SetEvent(stream->stopEvent);
+		WaitForSingleObject(stream->thread, INFINITE);
+		CloseHandle(stream->stopEvent);
+		CloseHandle(stream->thread);
+	}
 
 	if (!stream->decoder)
 		return;
@@ -836,6 +847,7 @@ void tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 	for (item = presentation->stream_list->head; item; item = item->next)
 	{
 		stream = (TSMF_STREAM*) item->data;
+		tsmf_stream_flush(stream);
 		tsmf_stream_stop(stream);
 	}
 
@@ -879,7 +891,7 @@ void tsmf_presentation_set_audio_device(TSMF_PRESENTATION* presentation, const c
 	presentation->audio_device = device;
 }
 
-static void tsmf_stream_flush(TSMF_STREAM* stream)
+void tsmf_stream_flush(TSMF_STREAM* stream)
 {
 	//TSMF_SAMPLE* sample;
 
@@ -955,11 +967,6 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->presentation = presentation;
 
 	stream->started = FALSE;
-
-	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	stream->thread = CreateThread(NULL, 0, 
-			(LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream,
-			CREATE_SUSPENDED, NULL);
 
 	stream->sample_list = Queue_New(TRUE, -1, -1);
 	stream->sample_list->object.fnObjectFree = free;
@@ -1043,8 +1050,6 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 	tsmf_stream_flush(stream);
 	tsmf_stream_stop(stream);
 
-	WaitForSingleObject(stream->thread, INFINITE);
-
 	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_remove(presentation->stream_list, stream);
 	ReleaseMutex(presentation->mutex);
@@ -1057,9 +1062,6 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 		stream->decoder->Free(stream->decoder);
 		stream->decoder = 0;
 	}
-
-	CloseHandle(stream->stopEvent);
-	CloseHandle(stream->thread);
 
 	free(stream);
 	stream = 0;
