@@ -160,6 +160,9 @@ typedef struct _LUID
 	LONG  HighPart;
 } LUID, *PLUID;
 
+typedef GUID IID;
+typedef IID* REFIID;
+
 #ifdef UNICODE
 #define _T(x)	L ## x
 #else

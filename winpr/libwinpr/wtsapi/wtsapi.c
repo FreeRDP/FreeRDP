@@ -25,6 +25,11 @@
 
 #include <winpr/wtsapi.h>
 
+/**
+ * Remote Desktop Services API Functions:
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/aa383464/
+ */
+
 #ifndef _WIN32
 
 BOOL WTSStopRemoteControlSession(ULONG LogonId)
