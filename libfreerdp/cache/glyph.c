@@ -48,6 +48,7 @@ void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 
 	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 	{
+		/* Contrary to fragments, the offset is added before the glyph. */
 		(*index)++;
 		offset = data[*index];
 
@@ -111,17 +112,18 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 
 				if (fragments != NULL)
 				{
+					for (n = 0; n < (int) size; n++)
+					{
+						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
+					}
+
+					/* Contrary to glyphs, the offset is added after the fragment. */
 					if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 					{
 						if (flAccel & SO_VERTICAL)
 							y += data[index + 2];
 						else
 							x += data[index + 2];
-					}
-
-					for (n = 0; n < (int) size; n++)
-					{
-						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
 					}
 				}
 
