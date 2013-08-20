@@ -35,7 +35,7 @@ static void* drdynvc_server_thread(void* arg)
 	void* buffer;
 	HANDLE events[8];
 	HANDLE ChannelEvent;
-	UINT32 BytesReturned;
+	DWORD BytesReturned;
 	DrdynvcServerContext* context;
 
 	context = (DrdynvcServerContext*) arg;

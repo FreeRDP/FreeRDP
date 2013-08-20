@@ -662,11 +662,7 @@ void* WTSVirtualChannelOpenEx(
 	return channel;
 }
 
-BOOL WTSVirtualChannelQuery(
-	/* __in */  void* hChannelHandle,
-	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
-	/* __out */ void** ppBuffer,
-	/* __out */ UINT32* pBytesReturned)
+BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
 {
 	void* pfd;
 	BOOL bval;
@@ -739,18 +735,12 @@ BOOL WTSVirtualChannelQuery(
 	return result;
 }
 
-void WTSFreeMemory(
-	/* __in */ void* pMemory)
+VOID WTSFreeMemory(PVOID pMemory)
 {
 	free(pMemory);
 }
 
-BOOL WTSVirtualChannelRead(
-	/* __in */  void* hChannelHandle,
-	/* __in */  UINT32 TimeOut,
-	/* __out */ BYTE* Buffer,
-	/* __in */  UINT32 BufferSize,
-	/* __out */ UINT32* pBytesRead)
+BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	wts_data_item* item;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
@@ -784,11 +774,7 @@ BOOL WTSVirtualChannelRead(
 	return TRUE;
 }
 
-BOOL WTSVirtualChannelWrite(
-	/* __in */  void* hChannelHandle,
-	/* __in */  BYTE* Buffer,
-	/* __in */  UINT32 Length,
-	/* __out */ UINT32* pBytesWritten)
+BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	wts_data_item* item;

@@ -35,17 +35,26 @@
 #include <freerdp/types.h>
 #include <freerdp/peer.h>
 
-typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
-
-#define WTS_CHANNEL_OPTION_DYNAMIC 0x00000001
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
+//#include <winpr/wtsapi.h>
 
 typedef enum _WTS_VIRTUAL_CLASS
 {
 	WTSVirtualClientData,
 	WTSVirtualFileHandle,
-	WTSVirtualEventHandle,
-	WTSVirtualChannelReady
+	WTSVirtualEventHandle, /* Extended */
+	WTSVirtualChannelReady /* Extended */
 } WTS_VIRTUAL_CLASS;
+
+#define WTS_CHANNEL_OPTION_DYNAMIC			0x00000001
+#define WTS_CHANNEL_OPTION_DYNAMIC_PRI_LOW		0x00000000
+#define WTS_CHANNEL_OPTION_DYNAMIC_PRI_MED		0x00000002
+#define WTS_CHANNEL_OPTION_DYNAMIC_PRI_HIGH		0x00000004
+#define WTS_CHANNEL_OPTION_DYNAMIC_PRI_REAL		0x00000006
+#define WTS_CHANNEL_OPTION_DYNAMIC_NO_COMPRESS		0x00000008
+
+typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +81,9 @@ FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManag
  * Static virtual channels must be opened from the main thread. Dynamic virtual channels
  * can be opened from any thread.
  */
+
+// WINPR_API HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
+
 FREERDP_API void* WTSVirtualChannelOpenEx(
 	/* __in */ WTSVirtualChannelManager* vcm,
 	/* __in */ const char* pVirtualName,
@@ -83,17 +95,14 @@ FREERDP_API void* WTSVirtualChannelOpenEx(
  * Servers use this function to gain access to a virtual channel file handle
  * that can be used for asynchronous I/O.
  */
-FREERDP_API BOOL WTSVirtualChannelQuery(
-	/* __in */  void* hChannelHandle,
-	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
-	/* __out */ void** ppBuffer,
-	/* __out */ UINT32* pBytesReturned);
+
+WINPR_API BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
 
 /**
  * Frees memory allocated by WTSVirtualChannelQuery
  */
-FREERDP_API void WTSFreeMemory(
-	/* __in */ void* pMemory);
+
+WINPR_API VOID WTSFreeMemory(PVOID pMemory);
 
 /**
  * Reads data from the server end of a virtual channel.
@@ -112,25 +121,21 @@ FREERDP_API void WTSFreeMemory(
  * The caller should use the file handle returned by WTSVirtualChannelQuery to
  * determine whether a packet has arrived.
  */
-FREERDP_API BOOL WTSVirtualChannelRead(
-	/* __in */  void* hChannelHandle,
-	/* __in */  UINT32 TimeOut,
-	/* __out */ BYTE* Buffer,
-	/* __in */  UINT32 BufferSize,
-	/* __out */ UINT32* pBytesRead);
+
+WINPR_API BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
 
 /**
  * Writes data to the server end of a virtual channel.
  */
-FREERDP_API BOOL WTSVirtualChannelWrite(
-	/* __in */  void* hChannelHandle,
-	/* __in */  BYTE* Buffer,
-	/* __in */  UINT32 Length,
-	/* __out */ UINT32* pBytesWritten);
+
+WINPR_API BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
 
 /**
  * Closes an open virtual channel handle.
  */
+
+// WINPR_API BOOL WTSVirtualChannelClose(HANDLE hChannelHandle);
+
 FREERDP_API BOOL WTSVirtualChannelClose(
 	/* __in */ void* hChannelHandle);
 

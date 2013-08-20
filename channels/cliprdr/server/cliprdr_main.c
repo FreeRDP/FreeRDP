@@ -96,7 +96,7 @@ static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -123,7 +123,7 @@ static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -150,7 +150,7 @@ static int cliprdr_server_send_format_list_response(CliprdrServerContext* contex
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -392,7 +392,7 @@ static void* cliprdr_server_thread(void* arg)
 	int position;
 	HANDLE events[8];
 	HANDLE ChannelEvent;
-	UINT32 BytesReturned;
+	DWORD BytesReturned;
 	CLIPRDR_HEADER header;
 	CliprdrServerContext* context;
 
@@ -429,7 +429,7 @@ static void* cliprdr_server_thread(void* arg)
 		}
 
 		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
 			if (BytesReturned)
 				Stream_Seek(s, BytesReturned);

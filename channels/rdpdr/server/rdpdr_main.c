@@ -51,7 +51,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -319,7 +319,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -393,7 +393,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -470,7 +470,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
 
 	Stream_Free(s, TRUE);
 
@@ -558,7 +558,7 @@ static void* rdpdr_server_thread(void* arg)
 	HANDLE events[8];
 	RDPDR_HEADER header;
 	HANDLE ChannelEvent;
-	UINT32 BytesReturned;
+	DWORD BytesReturned;
 	RdpdrServerContext* context;
 
 	context = (RdpdrServerContext*) arg;
@@ -594,7 +594,7 @@ static void* rdpdr_server_thread(void* arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_Pointer(s),
+		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR) Stream_Pointer(s),
 				Stream_Capacity(s) - Stream_GetPosition(s), &BytesReturned))
 		{
 			if (BytesReturned)

@@ -717,7 +717,9 @@ typedef struct _WTSUSERCONFIGW
 typedef enum _WTS_VIRTUAL_CLASS
 {
 	WTSVirtualClientData,
-	WTSVirtualFileHandle
+	WTSVirtualFileHandle,
+	WTSVirtualEventHandle, /* Extended */
+	WTSVirtualChannelReady /* Extended */
 } WTS_VIRTUAL_CLASS;
 
 typedef struct _WTS_SESSION_ADDRESS
