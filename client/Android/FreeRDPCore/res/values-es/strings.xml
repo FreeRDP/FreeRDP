@@ -64,9 +64,11 @@
     </string-array>
     <string name="settings_resolution">Resolucion</string>
     <string name="resolution_automatic">Automatico</string>
+    <string name="resolution_fit">Pantalla</string>
     <string name="resolution_custom">Manual</string>
     <string-array name="resolutions_array">
         <item>Automatico</item>
+        <item>Ajuste a la pantalla</item>
         <item>Manual</item>
         <item>640x480</item>
         <item>720x480</item>
@@ -79,6 +81,7 @@
     </string-array>
     <string-array name="resolutions_values_array">
         <item>automatico</item>
+        <item>pantalla</item>
         <item>manual</item>
         <item>640x480</item>
         <item>720x480</item>

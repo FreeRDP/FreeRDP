@@ -64,9 +64,11 @@
     </string-array>
     <string name="settings_resolution">Resolutie</string>
     <string name="resolution_automatic">Automatisch</string>
+    <string name="resolution_fit">Schermvullend</string>
     <string name="resolution_custom">Aangepast</string>
     <string-array name="resolutions_array">
         <item>Automatisch</item>
+        <item>Schermvullend</item>
         <item>Aangepast</item>
         <item>640x480</item>
         <item>720x480</item>
@@ -79,6 +81,7 @@
     </string-array>
     <string-array name="resolutions_values_array">
         <item>Automatisch</item>
+        <item>Schermvullend</item>
         <item>Aangepast</item>
         <item>640x480</item>
         <item>720x480</item>

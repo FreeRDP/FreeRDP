@@ -63,9 +63,11 @@
     </string-array>
     <string name="settings_resolution">"Résolution"</string>
     <string name="resolution_automatic">"Automatique"</string>
+    <string name="resolution_fit">"Agrandir la fenêtre"</string>
     <string name="resolution_custom">"Personalisé"</string>
     <string-array name="resolutions_array">
         <item>"Automatique"</item>
+        <item>"Agrandir la fenêtre"</item>
         <item>"Personalisé"</item>
         <item>"640x480"</item>
         <item>"720x480"</item>
@@ -78,6 +80,7 @@
     </string-array>
     <string-array name="resolutions_values_array">
         <item>"Automatique"</item>
+        <item>"fenêtre"</item>
         <item>"Personalisé"</item>
         <item>"640x480"</item>
         <item>"720x480"</item>

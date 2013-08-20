@@ -451,7 +451,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			ListPreference listPreference = (ListPreference)findPreference(key);
 			listPreference.setSummary(listPreference.getEntry());		
 			
-			boolean enabled = listPreference.getValue().equals("custom");
+			boolean enabled = listPreference.getValue().equalsIgnoreCase(getResources().getString(R.string.resolution_custom));
 			if (key.equals("bookmark.resolution"))
 			{
 				findPreference("bookmark.width").setEnabled(enabled);				

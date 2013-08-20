@@ -10,6 +10,8 @@
 package com.freerdp.freerdpcore.domain;
 
 import com.freerdp.freerdpcore.application.GlobalApp;
+import com.freerdp.freerdpcore.application.GlobalSettings;
+import com.freerdp.freerdpcore.R;
 
 import android.content.SharedPreferences;
 import android.os.Parcel;
@@ -143,6 +145,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 	// Screen Settings class
 	public static class ScreenSettings implements Parcelable
 	{
+		public static final int FITSCREEN = -2;
 		public static final int AUTOMATIC = -1;
 		public static final int CUSTOM = 0;
 		public static final int PREDEFINED = 1;
@@ -174,7 +177,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		{
 			this.resolution = resolution;
 			
-			if (resolution == AUTOMATIC) {
+			if (resolution == AUTOMATIC || resolution == FITSCREEN) {
 				width = 0;
 				height = 0;
 			}
@@ -188,15 +191,20 @@ public class BookmarkBase implements Parcelable, Cloneable
 				this.height = Integer.valueOf(dimensions[1]);
 				this.resolution = PREDEFINED;
 			}
-			else if (resolution.equalsIgnoreCase("custom"))
+			else if (resolution.equalsIgnoreCase(GlobalSettings.initialContext.getResources().getString(R.string.resolution_custom)))
 			{
 				this.width = width;				
 				this.height = height;				
 				this.resolution = CUSTOM;
 			}
+			else if (resolution.equalsIgnoreCase(GlobalSettings.initialContext.getResources().getString(R.string.resolution_fit)))
+			{
+				this.width = this.height = 0;
+				this.resolution = FITSCREEN;
+			}
 			else
 			{
-				this.width = this.height = 0;				
+				this.width = this.height = 0;
 				this.resolution = AUTOMATIC;
 			}
 		}
@@ -210,8 +218,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 		{	
 			if (isPredefined())
 				return (width + "x" + height);
-			
-			return (isAutomatic() ? "automatic" : "custom");
+
+			return (isFitScreen() ? GlobalSettings.initialContext.getResources().getString(R.string.resolution_fit) :
+				isAutomatic() ? GlobalSettings.initialContext.getResources().getString(R.string.resolution_automatic) : 
+					GlobalSettings.initialContext.getResources().getString(R.string.resolution_custom));
 		}
 
 		public boolean isPredefined() {
@@ -221,7 +231,11 @@ public class BookmarkBase implements Parcelable, Cloneable
 		public boolean isAutomatic() {
 			return (resolution == AUTOMATIC);
 		}
-		
+
+		public boolean isFitScreen() {
+			return (resolution == FITSCREEN);
+		}
+
 		public boolean isCustom() {
 			return (resolution == CUSTOM);
 		}
