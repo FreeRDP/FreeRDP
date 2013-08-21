@@ -114,8 +114,6 @@ struct _TSMF_STREAM
 	/* Next sample should not start before this system time. */
 	UINT64 next_start_time;
 
-	BOOL started;
-
 	HANDLE thread;
 	HANDLE stopEvent;
 
@@ -712,28 +710,51 @@ static void* tsmf_stream_playback_func(void* arg)
 
 static void tsmf_stream_start(TSMF_STREAM* stream)
 {
-	if (!stream->started)
+	DWORD rc;
+
+	if (!stream || !stream->presentation)
+		return;
+
+	rc = WaitForSingleObject(stream->presentation->mutex, INFINITE); 
+	if (WAIT_OBJECT_0 != rc)
+		DEBUG_WARN("WaitForSingleObject failed with %d", rc);
+
+	if (!stream->thread)
 	{
 		stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!stream->stopEvent)
+			DEBUG_WARN("Could not create stop event!");
+
 		stream->thread = CreateThread(NULL, 0, 
 			(LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream,
 			0, NULL);
-		stream->started = TRUE;
+		if (!stream->thread)
+			DEBUG_WARN("Could not create thread!");
 	}
+	ReleaseMutex(stream->presentation->mutex); 
 }
 
 static void tsmf_stream_stop(TSMF_STREAM* stream)
 {
-	if (!stream)
+	DWORD rc;
+
+	if (!stream || !stream->presentation)
 		return;
 
-	if (stream->started)
+	rc = WaitForSingleObject(stream->presentation->mutex, INFINITE); 
+	if (WAIT_OBJECT_0 != rc)
+		DEBUG_WARN("WaitForSingleObject failed with %d", rc);
+	
+	if (stream->thread)
 	{
 		SetEvent(stream->stopEvent);
 		WaitForSingleObject(stream->thread, INFINITE);
 		CloseHandle(stream->stopEvent);
 		CloseHandle(stream->thread);
+		stream->thread = NULL;
 	}
+	
+	ReleaseMutex(stream->presentation->mutex); 
 
 	if (!stream->decoder)
 		return;
@@ -966,13 +987,13 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
 
-	stream->started = FALSE;
-
 	stream->sample_list = Queue_New(TRUE, -1, -1);
 	stream->sample_list->object.fnObjectFree = free;
 
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
 	stream->sample_ack_list->object.fnObjectFree = free;
+
+	stream->thread = NULL;
 
 	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_enqueue(presentation->stream_list, stream);
