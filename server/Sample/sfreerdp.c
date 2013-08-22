@@ -498,7 +498,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		{
 			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
 			{
-				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
+				context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
 
 				if (context->debug_channel != NULL)
 				{
@@ -580,7 +580,7 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		if (context->debug_channel)
 		{
-			WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test2", 5, NULL);
+			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, NULL);
 		}
 	}
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
