@@ -115,7 +115,6 @@ typedef WCHAR* LPWSTR, *PWSTR, *LPWCH;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
 
 typedef unsigned __int64 QWORD;
-typedef UCHAR* STRING;
 
 typedef unsigned int UINT;
 typedef unsigned char UINT8;

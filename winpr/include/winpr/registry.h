@@ -35,6 +35,7 @@ extern "C" {
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/nt.h>
 #include <winpr/io.h>
 #include <winpr/error.h>
 
@@ -105,9 +106,6 @@ extern "C" {
 
 typedef HANDLE HKEY;
 typedef HANDLE* PHKEY;
-
-typedef DWORD ACCESS_MASK;
-typedef ACCESS_MASK* PACCESS_MASK;
 
 typedef ACCESS_MASK REGSAM;
 
