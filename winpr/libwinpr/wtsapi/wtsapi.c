@@ -201,37 +201,151 @@ HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 
 BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 {
+	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	/* TODO: properly close handle */
+
 	return TRUE;
 }
 
 BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
-	return TRUE;
+	OVERLAPPED overlapped;
+
+	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	overlapped.hEvent = 0;
+	overlapped.Offset = 0;
+	overlapped.OffsetHigh = 0;
+
+	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, &overlapped))
+		return TRUE;
+
+	if (GetLastError() != ERROR_IO_PENDING)
+		return FALSE;
+
+	if (!TimeOut)
+	{
+		CancelIo(hChannelHandle);
+		*pBytesRead = 0;
+		return TRUE;
+	}
+
+	if (WaitForSingleObject(hChannelHandle, TimeOut) == WAIT_TIMEOUT)
+	{
+		CancelIo(hChannelHandle);
+		SetLastError(ERROR_IO_INCOMPLETE);
+		return FALSE;
+	}
+
+	return GetOverlappedResult(hChannelHandle, &overlapped, pBytesRead, 0);
 }
 
 BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
+	OVERLAPPED overlapped;
+
+	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	overlapped.hEvent = 0;
+	overlapped.Offset = 0;
+	overlapped.OffsetHigh = 0;
+
+	if (WriteFile(hChannelHandle, Buffer, Length, pBytesWritten, &overlapped))
+		return TRUE;
+
+	if (GetLastError() == ERROR_IO_PENDING)
+		return GetOverlappedResult(hChannelHandle, &overlapped, pBytesWritten, 1);
+
+	return FALSE;
+}
+
+BOOL VirtualChannelIoctl(HANDLE hChannelHandle, ULONG IoControlCode)
+{
+	DWORD error;
+	NTSTATUS ntstatus;
+	IO_STATUS_BLOCK ioStatusBlock;
+
+	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	ntstatus = NtDeviceIoControlFile(hChannelHandle, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
+
+	if (ntstatus == STATUS_PENDING)
+	{
+		ntstatus = NtWaitForSingleObject(hChannelHandle, 0, 0);
+
+		if (ntstatus >= 0)
+			ntstatus = ioStatusBlock.status;
+	}
+
+	if (ntstatus == STATUS_BUFFER_OVERFLOW)
+	{
+		ntstatus = STATUS_BUFFER_TOO_SMALL;
+		error = RtlNtStatusToDosError(ntstatus);
+		SetLastError(error);
+		return FALSE;
+	}
+
+	if (ntstatus < 0)
+	{
+		error = RtlNtStatusToDosError(ntstatus);
+		SetLastError(error);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
+#define FILE_DEVICE_TERMSRV		0x00000038
+
 BOOL WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
 {
-	return TRUE;
+	return VirtualChannelIoctl(hChannelHandle, (FILE_DEVICE_TERMSRV << 16) | 0x0107);
 }
 
 BOOL WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
 {
-	return TRUE;
+	return VirtualChannelIoctl(hChannelHandle, (FILE_DEVICE_TERMSRV << 16) | 0x010B);
 }
 
 BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
 {
-	return TRUE;
+	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	if (WtsVirtualClass == WTSVirtualFileHandle)
+	{
+		*ppBuffer = malloc(sizeof(void*));
+		CopyMemory(*ppBuffer, &hChannelHandle, sizeof(void*));
+		*pBytesReturned = sizeof(void*);
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 VOID WTSFreeMemory(PVOID pMemory)
 {
-
+	free(pMemory);
 }
 
 BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)

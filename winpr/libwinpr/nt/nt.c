@@ -299,6 +299,16 @@ VOID RtlFreeUnicodeString(PUNICODE_STRING UnicodeString)
 }
 
 /**
+ * RtlNtStatusToDosError function:
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/ms680600/
+ */
+
+ULONG RtlNtStatusToDosError(NTSTATUS status)
+{
+	return status;
+}
+
+/**
  * InitializeObjectAttributes macro
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff547804/
  */
@@ -359,6 +369,16 @@ NTSTATUS NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
  */
 
 NTSTATUS NtClose(HANDLE Handle)
+{
+	return 0;
+}
+
+/**
+ * NtWaitForSingleObject function:
+ * http://msdn.microsoft.com/en-us/library/ms648412/
+ */
+
+NTSTATUS NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER Timeout)
 {
 	return 0;
 }
