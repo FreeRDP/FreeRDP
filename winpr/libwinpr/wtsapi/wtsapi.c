@@ -32,17 +32,17 @@
 
 #ifndef _WIN32
 
-BOOL WTSStopRemoteControlSession(ULONG LogonId)
-{
-	return TRUE;
-}
-
 BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
 	return TRUE;
 }
 
 BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
+{
+	return TRUE;
+}
+
+BOOL WTSStopRemoteControlSession(ULONG LogonId)
 {
 	return TRUE;
 }
@@ -191,11 +191,24 @@ BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
 
 HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
-	return NULL;
+	HANDLE handle = NULL;
+
+	if (hServer != WTS_CURRENT_SERVER_HANDLE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return NULL;
+	}
+
+	return handle;
 }
 
 HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
+	HANDLE handle = NULL;
+
+	if (!flags)
+		return WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, SessionId, pVirtualName);
+
 	return NULL;
 }
 
@@ -375,12 +388,48 @@ BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
 
 BOOL WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
-	return TRUE;
+	BOOL status = TRUE;
+
+	switch (WTSTypeClass)
+	{
+		case WTSTypeProcessInfoLevel0:
+			break;
+
+		case WTSTypeProcessInfoLevel1:
+			break;
+
+		case WTSTypeSessionInfoLevel1:
+			break;
+
+		default:
+			status = FALSE;
+			break;
+	}
+
+	return status;
 }
 
 BOOL WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
-	return TRUE;
+	BOOL status = TRUE;
+
+	switch (WTSTypeClass)
+	{
+		case WTSTypeProcessInfoLevel0:
+			break;
+
+		case WTSTypeProcessInfoLevel1:
+			break;
+
+		case WTSTypeSessionInfoLevel1:
+			break;
+
+		default:
+			status = FALSE;
+			break;
+	}
+
+	return status;
 }
 
 BOOL WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)

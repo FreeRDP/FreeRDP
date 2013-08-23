@@ -270,6 +270,7 @@ if(NOT IOS AND NOT ANDROID)
 endif()
 
 if(UNIX OR CYGWIN)
+	check_include_files(sys/eventfd.h HAVE_AIO_H)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
 	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")

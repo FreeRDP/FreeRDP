@@ -51,6 +51,8 @@ struct winpr_named_pipe
 	DWORD nOutBufferSize;
 	DWORD nInBufferSize;
 	DWORD nDefaultTimeOut;
+	DWORD dwFlagsAndAttributes;
+	LPOVERLAPPED lpOverlapped;
 };
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 

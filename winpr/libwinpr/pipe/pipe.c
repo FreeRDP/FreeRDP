@@ -108,6 +108,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->nOutBufferSize = nOutBufferSize;
 	pNamedPipe->nInBufferSize = nInBufferSize;
 	pNamedPipe->nDefaultTimeOut = nDefaultTimeOut;
+	pNamedPipe->dwFlagsAndAttributes = dwOpenMode;
 
 	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
 	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpName);
@@ -176,6 +177,14 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 		return FALSE;
 
 	pNamedPipe->clientfd = status;
+
+	if (pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+		if (!lpOverlapped)
+			return FALSE;
+
+		SetEvent(lpOverlapped->hEvent);
+	}
 
 	return TRUE;
 }
