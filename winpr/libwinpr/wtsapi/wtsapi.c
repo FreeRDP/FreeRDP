@@ -32,9 +32,11 @@
 
 #ifndef _WIN32
 
+#include "wtsrpc_c.h"
+
 BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
-	return TRUE;
+	return RpcStartRemoteControlSession(NULL, pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
 }
 
 BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
@@ -44,7 +46,12 @@ BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId,
 
 BOOL WTSStopRemoteControlSession(ULONG LogonId)
 {
-	return TRUE;
+	return RpcStopRemoteControlSession(NULL, LogonId);
+}
+
+BOOL WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
+{
+	return RpcConnectSession(NULL, LogonId, TargetLogonId, pPassword, bWait);
 }
 
 BOOL WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait)
@@ -52,14 +59,9 @@ BOOL WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL
 	return TRUE;
 }
 
-BOOL WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
-{
-	return TRUE;
-}
-
 BOOL WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
 {
-	return TRUE;
+	return RpcEnumerateServers(NULL, pDomainName, Reserved, Version, ppServerInfo, pCount);
 }
 
 BOOL WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
@@ -69,7 +71,7 @@ BOOL WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS
 
 HANDLE WTSOpenServerW(LPWSTR pServerName)
 {
-	return NULL;
+	return RpcOpenServer(NULL, pServerName);
 }
 
 HANDLE WTSOpenServerA(LPSTR pServerName)
@@ -79,7 +81,7 @@ HANDLE WTSOpenServerA(LPSTR pServerName)
 
 HANDLE WTSOpenServerExW(LPWSTR pServerName)
 {
-	return NULL;
+	return RpcOpenServerEx(NULL, pServerName);
 }
 
 HANDLE WTSOpenServerExA(LPSTR pServerName)
@@ -89,12 +91,12 @@ HANDLE WTSOpenServerExA(LPSTR pServerName)
 
 VOID WTSCloseServer(HANDLE hServer)
 {
-
+	RpcCloseServer(NULL, hServer);
 }
 
 BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
 {
-	return TRUE;
+	return RpcEnumerateSessions(NULL, hServer, Reserved, Version, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
@@ -104,7 +106,7 @@ BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_S
 
 BOOL WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
 {
-	return TRUE;
+	return RpcEnumerateSessionsEx(NULL, hServer, pLevel, Filter, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
@@ -114,7 +116,7 @@ BOOL WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_S
 
 BOOL WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
 {
-	return TRUE;
+	return RpcEnumerateProcesses(NULL, hServer, Reserved, Version, ppProcessInfo, pCount);
 }
 
 BOOL WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
@@ -124,12 +126,12 @@ BOOL WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_
 
 BOOL WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
 {
-	return TRUE;
+	return RpcTerminateProcess(NULL, hServer, ProcessId, ExitCode);
 }
 
 BOOL WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return TRUE;
+	return RpcQuerySessionInformation(NULL, hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
@@ -139,7 +141,7 @@ BOOL WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS
 
 BOOL WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return TRUE;
+	return RpcQueryUserConfig(NULL, pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
@@ -149,7 +151,7 @@ BOOL WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WT
 
 BOOL WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength)
 {
-	return TRUE;
+	return RpcSetUserConfig(NULL, pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
 }
 
 BOOL WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength)
@@ -160,7 +162,8 @@ BOOL WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSC
 BOOL WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
 		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
-	return TRUE;
+	return RpcSendMessage(NULL, hServer, SessionId, pTitle, TitleLength,
+			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
 BOOL WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
@@ -171,17 +174,17 @@ BOOL WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleL
 
 BOOL WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
-	return TRUE;
+	return RpcDisconnectSession(NULL, hServer, SessionId, bWait);
 }
 
 BOOL WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
-	return TRUE;
+	return RpcLogoffSession(NULL, hServer, SessionId, bWait);
 }
 
 BOOL WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
 {
-	return TRUE;
+	return RpcShutdownSystem(NULL, hServer, ShutdownFlag);
 }
 
 BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
@@ -361,31 +364,6 @@ VOID WTSFreeMemory(PVOID pMemory)
 	free(pMemory);
 }
 
-BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
-{
-	return TRUE;
-}
-
-BOOL WTSUnRegisterSessionNotification(HWND hWnd)
-{
-	return TRUE;
-}
-
-BOOL WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
-{
-	return TRUE;
-}
-
-BOOL WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
-{
-	return TRUE;
-}
-
-BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
-{
-	return TRUE;
-}
-
 BOOL WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
 	BOOL status = TRUE;
@@ -430,6 +408,31 @@ BOOL WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOf
 	}
 
 	return status;
+}
+
+BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
+{
+	return RpcRegisterSessionNotification(NULL, hWnd, dwFlags);
+}
+
+BOOL WTSUnRegisterSessionNotification(HWND hWnd)
+{
+	return RpcUnRegisterSessionNotification(NULL, hWnd);
+}
+
+BOOL WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
+{
+	return RpcRegisterSessionNotificationEx(NULL, hServer, hWnd, dwFlags);
+}
+
+BOOL WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
+{
+	return RpcUnRegisterSessionNotificationEx(NULL, hServer, hWnd);
+}
+
+BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
+{
+	return TRUE;
 }
 
 BOOL WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)
@@ -504,17 +507,17 @@ BOOL WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 
 BOOL WTSEnableChildSessions(BOOL bEnable)
 {
-	return TRUE;
+	return RpcEnableChildSessions(NULL, bEnable);
 }
 
 BOOL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
 {
-	return TRUE;
+	return RpcIsChildSessionsEnabled(NULL, pbEnabled);
 }
 
 BOOL WTSGetChildSessionId(PULONG pSessionId)
 {
-	return TRUE;
+	return RpcGetChildSessionId(NULL, pSessionId);
 }
 
 #endif

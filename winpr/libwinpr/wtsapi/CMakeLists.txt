@@ -19,7 +19,9 @@ set(MODULE_NAME "winpr-wtsapi")
 set(MODULE_PREFIX "WINPR_WTSAPI")
 
 set(${MODULE_PREFIX}_SRCS
-	wtsapi.c)
+	wtsapi.c
+	wtsrpc_c.c
+	wtsrpc_c.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
