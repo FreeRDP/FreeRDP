@@ -87,14 +87,15 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 			if (!cliprdr->use_long_format_names)
 				name_length = 32;
 			
-			Stream_EnsureRemainingCapacity(body, Stream_Capacity(body) + 4 + name_length);
+			Stream_EnsureRemainingCapacity(body, 4 + name_length);
 
 			Stream_Write_UINT32(body, cb_event->formats[i]);
 			Stream_Write(body, name, name_length);
 		}
 				
-		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, Stream_Capacity(body));
-		Stream_Write(s, Stream_Buffer(body), Stream_Capacity(body));
+		Stream_SealLength(body);
+		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, Stream_Length(body));
+		Stream_Write(s, Stream_Buffer(body), Stream_Length(body));
 		Stream_Free(body, TRUE);
 	}
 
@@ -290,16 +291,16 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	/* where is this documented? */
-#if 0
+	/* http://msdn.microsoft.com/en-us/library/hh872154.aspx */
 	wMessage* event;
 
 	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
 	{
-		event = freerdp_event_new(RDP_EVENT_CLASS_CLIPRDR, RDP_EVENT_TYPE_CB_MONITOR_READY, NULL, NULL);
+		/* In case of an error the clipboard will not be synchronized with the server.
+		 * Post this event to restart format negociation and data transfer. */
+		event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
 	}
-#endif
 }
 
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
