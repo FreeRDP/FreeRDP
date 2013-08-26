@@ -313,6 +313,10 @@ set(NPP_FEATURE_TYPE "OPTIONAL")
 set(NPP_FEATURE_PURPOSE "performance")
 set(NPP_FEATURE_DESCRIPTION "NVIDIA Performance Primitives library")
 
+set(JPEG_FEATURE_TYPE "OPTIONAL")
+set(JPEG_FEATURE_PURPOSE "codec")
+set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
+
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(ZLIB_FEATURE_TYPE "DISABLED")
@@ -372,6 +376,8 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FEATURE_DESCRIPTION})
 find_feature(Gstreamer ${GSTREAMER_FEATURE_TYPE} ${GSTREAMER_FEATURE_PURPOSE} ${GSTREAMER_FEATURE_DESCRIPTION})
 
+find_feature(JPEG ${JPEG_FEATURE_TYPE} ${JPEG_FEATURE_PURPOSE} ${JPEG_FEATURE_DESCRIPTION})
+
 if(TARGET_ARCH MATCHES "x86|x64")
 	if (NOT APPLE)
 		# Intel Performance Primitives
@@ -400,12 +406,12 @@ set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 
 # Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -430,8 +436,8 @@ if(BUILD_TESTING)
 endif()
 
 # WinPR
-set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories(${WINPR_INCLUDE_DIR})
+include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
 
