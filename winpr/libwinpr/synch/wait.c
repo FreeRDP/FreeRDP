@@ -25,6 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
@@ -43,6 +45,18 @@
 
 #include "../handle/handle.h"
 
+static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
+{
+	ts->tv_sec += dwMilliseconds / 1000L;
+	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
+
+	while(ts->tv_nsec >= 1000000000L)
+	{
+		ts->tv_sec ++;
+		ts->tv_nsec -= 1000000000L;
+	}
+}
+
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
 	ULONG Type;
@@ -53,22 +67,37 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
-		int status;
+		int status = 0;
 		WINPR_THREAD* thread;
 		void* thread_status = NULL;
 
-		if (dwMilliseconds != INFINITE)
-			fprintf(stderr, "WaitForSingleObject: timeout not implemented for thread wait\n");
-
 		thread = (WINPR_THREAD*) Object;
 
-		status = pthread_join(thread->thread, &thread_status);
+		if (thread->started)
+		{
+			if (dwMilliseconds != INFINITE)
+			{
+#if _GNU_SOURCE
+				struct timespec timeout;
 
-		if (status != 0)
-			fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+				clock_gettime(CLOCK_REALTIME, &timeout);
+				ts_add_ms(&timeout, dwMilliseconds);
 
-		if (thread_status)
-			thread->dwExitCode = ((DWORD) (size_t) thread_status);
+				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
+#else
+				fprintf(stderr, "[ERROR] %s: Thread timeouts not implemented.\n", __func__);
+				assert(0);
+#endif
+			}
+			else
+				status = pthread_join(thread->thread, &thread_status);
+
+			if (status != 0)
+				fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+
+			if (thread_status)
+				thread->dwExitCode = ((DWORD) (size_t) thread_status);
+		}
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
@@ -77,9 +106,16 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		mutex = (WINPR_MUTEX*) Object;
 
 		if (dwMilliseconds != INFINITE)
-			fprintf(stderr, "WaitForSingleObject: timeout not implemented for mutex wait\n");
+		{
+			struct timespec timeout;
 
-		pthread_mutex_lock(&mutex->mutex);
+			clock_gettime(CLOCK_REALTIME, &timeout);
+			ts_add_ms(&timeout, dwMilliseconds);	
+
+			pthread_mutex_timedlock(&mutex->mutex, &timeout);
+		}
+		else
+			pthread_mutex_lock(&mutex->mutex);
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
@@ -165,6 +201,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
+	assert(0);
 	return WAIT_OBJECT_0;
 }
 
@@ -186,7 +224,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	ZeroMemory(&timeout, sizeof(timeout));
 
 	if (bWaitAll)
+	{
 		fprintf(stderr, "WaitForMultipleObjects: bWaitAll not yet implemented\n");
+		assert(0);
+	}
 
 	for (index = 0; index < nCount; index++)
 	{
@@ -261,11 +302,15 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
+	assert(0);
 	return 0;
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
 {
+	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
+	assert(0);
 	return 0;
 }
 
