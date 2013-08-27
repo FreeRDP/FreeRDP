@@ -43,7 +43,7 @@ void* ObjectPool_Take(wObjectPool* pool)
 	void* obj = NULL;
 
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	if (pool->size > 0)
 		obj = pool->array[--(pool->size)];
@@ -54,8 +54,11 @@ void* ObjectPool_Take(wObjectPool* pool)
 			obj = pool->object.fnObjectNew();
 	}
 
+	if (pool->object.fnObjectInit)
+		pool->object.fnObjectInit(obj);
+
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 
 	return obj;
 }
@@ -67,7 +70,7 @@ void* ObjectPool_Take(wObjectPool* pool)
 void ObjectPool_Return(wObjectPool* pool, void* obj)
 {
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
@@ -77,8 +80,11 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	pool->array[(pool->size)++] = obj;
 
+	if (pool->object.fnObjectUninit)
+		pool->object.fnObjectUninit(obj);
+
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 }
 
 /**
@@ -88,7 +94,7 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 void ObjectPool_Clear(wObjectPool* pool)
 {
 	if (pool->synchronized)
-		WaitForSingleObject(pool->mutex, INFINITE);
+		EnterCriticalSection(&pool->lock);
 
 	while (pool->size > 0)
 	{
@@ -99,7 +105,7 @@ void ObjectPool_Clear(wObjectPool* pool)
 	}
 
 	if (pool->synchronized)
-		ReleaseMutex(pool->mutex);
+		LeaveCriticalSection(&pool->lock);
 }
 
 /**
@@ -119,7 +125,7 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			pool->mutex = CreateMutex(NULL, FALSE, NULL);
+			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
 		pool->size = 0;
 		pool->capacity = 32;
@@ -136,7 +142,7 @@ void ObjectPool_Free(wObjectPool* pool)
 		ObjectPool_Clear(pool);
 
 		if (pool->synchronized)
-			CloseHandle(pool->mutex);
+			DeleteCriticalSection(&pool->lock);
 
 		free(pool->array);
 

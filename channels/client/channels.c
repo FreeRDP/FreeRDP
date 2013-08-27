@@ -441,10 +441,14 @@ int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings, c
 int freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
 	int status = 0;
+	ChannelConnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;
 
-	IFCALLRET(instance->OnChannelConnected, status, instance, name, pInterface);
+	EventArgsInit(&e, "freerdp");
+	e.name = name;
+	e.pInterface = pInterface;
+	PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
 
 	return status;
 }
@@ -452,10 +456,14 @@ int freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const ch
 int freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
 	int status = 0;
+	ChannelDisconnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;
 
-	IFCALLRET(instance->OnChannelDisconnected, status, instance, name, pInterface);
+	EventArgsInit(&e, "freerdp");
+	e.name = name;
+	e.pInterface = pInterface;
+	PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
 
 	return status;
 }

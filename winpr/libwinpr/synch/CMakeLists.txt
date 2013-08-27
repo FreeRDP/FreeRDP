@@ -53,7 +53,7 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-handle)
+	MODULES winpr-handle winpr-interlocked winpr-thread)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
@@ -64,3 +64,6 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
 
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

@@ -33,6 +33,7 @@ typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
 
 typedef BOOL (*psPeerInitialize)(freerdp_peer* client);
 typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
+typedef HANDLE (*psPeerGetEventHandle)(freerdp_peer* client);
 typedef BOOL (*psPeerCheckFileDescriptor)(freerdp_peer* client);
 typedef BOOL (*psPeerClose)(freerdp_peer* client);
 typedef void (*psPeerDisconnect)(freerdp_peer* client);
@@ -60,6 +61,7 @@ struct rdp_freerdp_peer
 
 	psPeerInitialize Initialize;
 	psPeerGetFileDescriptor GetFileDescriptor;
+	psPeerGetEventHandle GetEventHandle;
 	psPeerCheckFileDescriptor CheckFileDescriptor;
 	psPeerClose Close;
 	psPeerDisconnect Disconnect;

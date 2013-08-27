@@ -1,5 +1,5 @@
 # Copyright (c) 2010-2011, Ethan Rublee
-# Copyright (c) 2011-2012, Andrey Kamaev
+# Copyright (c) 2011-2013, Andrey Kamaev
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 #
 #  The file is mantained by the OpenCV project. The latest version can be get at
 #  http://code.opencv.org/projects/opencv/repository/revisions/master/changes/android/android.toolchain.cmake
-#  Git commit: 084b1c796900b0825fc4e0593ab3143da3f3a90e
 #
 #  Usage Linux:
 #   $ export ANDROID_NDK=/absolute/path/to/the/android-ndk
@@ -282,8 +281,19 @@
 #     [+] updated for NDK r8c
 #     [+] added support for clang compiler
 #   - December 2012
+#     [+] suppress warning about unused CMAKE_TOOLCHAIN_FILE variable
+#     [+] adjust API level to closest compatible as NDK does
 #     [~] fixed ccache full path search
 #     [+] updated for NDK r8d
+#     [~] compiler options are aligned with NDK r8d
+#   - March 2013
+#     [+] updated for NDK r8e (x86 version)
+#     [+] support x86_64 version of NDK
+#   - April 2013
+#     [+] support non-release NDK layouts (from Linaro git and Android git)
+#     [~] automatically detect if explicit link to crtbegin_*.o is needed
+#   - June 2013
+#     [~] fixed stl include path for standalone toolchain made by NDK >= r8c
 # ------------------------------------------------------------------------------
 
 cmake_minimum_required( VERSION 2.6.3 )
@@ -291,6 +301,10 @@ cmake_minimum_required( VERSION 2.6.3 )
 if( DEFINED CMAKE_CROSSCOMPILING )
  # subsequent toolchain loading is not really needed
  return()
+endif()
+
+if( CMAKE_TOOLCHAIN_FILE )
+ # touch toolchain variable only to suppress "unused variable" warning
 endif()
 
 get_property( _CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
@@ -312,7 +326,7 @@ endif()
 # rpath makes low sence for Android
 set( CMAKE_SKIP_RPATH TRUE CACHE BOOL "If set, runtime paths are not added when using shared libraries." )
 
-set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
+set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r9 -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
 if(NOT DEFINED ANDROID_NDK_SEARCH_PATHS)
  if( CMAKE_HOST_WIN32 )
   file( TO_CMAKE_PATH "$ENV{PROGRAMFILES}" ANDROID_NDK_SEARCH_PATHS )
@@ -456,17 +470,30 @@ if( ANDROID_FORBID_SYGWIN )
  endif()
 endif()
 
+
 # detect current host platform
+if( NOT DEFINED ANDROID_NDK_HOST_X64 AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64")
+ set( ANDROID_NDK_HOST_X64 1 CACHE BOOL "Try to use 64-bit compiler toolchain" )
+ mark_as_advanced( ANDROID_NDK_HOST_X64 )
+endif()
+
 set( TOOL_OS_SUFFIX "" )
 if( CMAKE_HOST_APPLE )
- set( ANDROID_NDK_HOST_SYSTEM_NAME "darwin-x86" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME "darwin-x86_64" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME2 "darwin-x86" )
 elseif( CMAKE_HOST_WIN32 )
- set( ANDROID_NDK_HOST_SYSTEM_NAME "windows" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME "windows-x86_64" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME2 "windows" )
  set( TOOL_OS_SUFFIX ".exe" )
 elseif( CMAKE_HOST_UNIX )
- set( ANDROID_NDK_HOST_SYSTEM_NAME "linux-x86" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME "linux-x86_64" )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME2 "linux-x86" )
 else()
  message( FATAL_ERROR "Cross-compilation on your platform is not supported by this cmake toolchain" )
+endif()
+
+if( NOT ANDROID_NDK_HOST_X64 )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} )
 endif()
 
 # see if we have path to Android NDK
@@ -500,35 +527,19 @@ if( NOT ANDROID_NDK )
   endif( ANDROID_NDK )
  endif( NOT ANDROID_STANDALONE_TOOLCHAIN )
 endif( NOT ANDROID_NDK )
+
 # remember found paths
 if( ANDROID_NDK )
  get_filename_component( ANDROID_NDK "${ANDROID_NDK}" ABSOLUTE )
- # try to detect change
- if( CMAKE_AR )
-  string( LENGTH "${ANDROID_NDK}" __length )
-  string( SUBSTRING "${CMAKE_AR}" 0 ${__length} __androidNdkPreviousPath )
-  if( NOT __androidNdkPreviousPath STREQUAL ANDROID_NDK )
-   message( FATAL_ERROR "It is not possible to change the path to the NDK on subsequent CMake run. You must remove all generated files from your build folder first.
-   " )
-  endif()
-  unset( __androidNdkPreviousPath )
-  unset( __length )
- endif()
  set( ANDROID_NDK "${ANDROID_NDK}" CACHE INTERNAL "Path of the Android NDK" FORCE )
  set( BUILD_WITH_ANDROID_NDK True )
- file( STRINGS "${ANDROID_NDK}/RELEASE.TXT" ANDROID_NDK_RELEASE_TXT LIMIT_COUNT 1 REGEX r[0-9]+[a-z]? )
-
- if(${ANDROID_NDK_RELEASE_TXT} MATCHES "^r[0-9]+[a-z] \([^ ]+\)$")
-  string( REGEX REPLACE "^(r[0-9]+[a-z]) \(([^ ]+)\)$" "\\1" ANDROID_NDK_RELEASE "${ANDROID_NDK_RELEASE_TXT}" )
-  string( REGEX REPLACE "^(r[0-9]+[a-z]) \(([^ ]+)\)$" "\\2" ANDROID_NDK_RELEASE_EXTRA "${ANDROID_NDK_RELEASE_TXT}" )
-
-  set( ANDROID_NDK_64BIT True)
-  set( ANDROID_NDK_HOST_SYSTEM_NAME "${ANDROID_NDK_HOST_SYSTEM_NAME}_64" )
-
+ if( EXISTS "${ANDROID_NDK}/RELEASE.TXT" )
+  file( STRINGS "${ANDROID_NDK}/RELEASE.TXT" ANDROID_NDK_RELEASE_FULL LIMIT_COUNT 1 REGEX r[0-9]+[a-z]? )
+  string( REGEX MATCH r[0-9]+[a-z]? ANDROID_NDK_RELEASE "${ANDROID_NDK_RELEASE_FULL}" )
  else()
-  set( ANDROID_NDK_RELEASE "${ANDROID_NDK_RELEASE_TXT}" )
+  set( ANDROID_NDK_RELEASE "r1x" )
+  set( ANDROID_NDK_RELEASE_FULL "unreleased" )
  endif()
-
 elseif( ANDROID_STANDALONE_TOOLCHAIN )
  get_filename_component( ANDROID_STANDALONE_TOOLCHAIN "${ANDROID_STANDALONE_TOOLCHAIN}" ABSOLUTE )
  # try to detect change
@@ -554,6 +565,51 @@ else()
       sudo ln -s ~/my-android-ndk ${ANDROID_NDK_SEARCH_PATH}
       sudo ln -s ~/my-android-toolchain ${ANDROID_STANDALONE_TOOLCHAIN_SEARCH_PATH}" )
 endif()
+
+# android NDK layout
+if( BUILD_WITH_ANDROID_NDK )
+ if( NOT DEFINED ANDROID_NDK_LAYOUT )
+  # try to automatically detect the layout
+  if( EXISTS "${ANDROID_NDK}/RELEASE.TXT")
+   set( ANDROID_NDK_LAYOUT "RELEASE" )
+  elseif( EXISTS "${ANDROID_NDK}/../../linux-x86/toolchain/" )
+   set( ANDROID_NDK_LAYOUT "LINARO" )
+  elseif( EXISTS "${ANDROID_NDK}/../../gcc/" )
+   set( ANDROID_NDK_LAYOUT "ANDROID" )
+  endif()
+ endif()
+ set( ANDROID_NDK_LAYOUT "${ANDROID_NDK_LAYOUT}" CACHE STRING "The inner layout of NDK" )
+ mark_as_advanced( ANDROID_NDK_LAYOUT )
+ if( ANDROID_NDK_LAYOUT STREQUAL "LINARO" )
+  set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} ) # only 32-bit at the moment
+  set( ANDROID_NDK_TOOLCHAINS_PATH "${ANDROID_NDK}/../../${ANDROID_NDK_HOST_SYSTEM_NAME}/toolchain" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH  "" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH2 "" )
+ elseif( ANDROID_NDK_LAYOUT STREQUAL "ANDROID" )
+  set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} ) # only 32-bit at the moment
+  set( ANDROID_NDK_TOOLCHAINS_PATH "${ANDROID_NDK}/../../gcc/${ANDROID_NDK_HOST_SYSTEM_NAME}/arm" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH  "" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH2 "" )
+ else() # ANDROID_NDK_LAYOUT STREQUAL "RELEASE"
+  set( ANDROID_NDK_TOOLCHAINS_PATH "${ANDROID_NDK}/toolchains" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH  "/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}" )
+  set( ANDROID_NDK_TOOLCHAINS_SUBPATH2 "/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME2}" )
+ endif()
+ get_filename_component( ANDROID_NDK_TOOLCHAINS_PATH "${ANDROID_NDK_TOOLCHAINS_PATH}" ABSOLUTE )
+
+ # try to detect change of NDK
+ if( CMAKE_AR )
+  string( LENGTH "${ANDROID_NDK_TOOLCHAINS_PATH}" __length )
+  string( SUBSTRING "${CMAKE_AR}" 0 ${__length} __androidNdkPreviousPath )
+  if( NOT __androidNdkPreviousPath STREQUAL ANDROID_NDK_TOOLCHAINS_PATH )
+   message( FATAL_ERROR "It is not possible to change the path to the NDK on subsequent CMake run. You must remove all generated files from your build folder first.
+   " )
+  endif()
+  unset( __androidNdkPreviousPath )
+  unset( __length )
+ endif()
+endif()
+
 
 # get all the details about standalone toolchain
 if( BUILD_WITH_STANDALONE_TOOLCHAIN )
@@ -582,22 +638,27 @@ if( BUILD_WITH_STANDALONE_TOOLCHAIN )
  endif()
 endif()
 
-macro( __GLOB_NDK_TOOLCHAINS __availableToolchainsVar )
- foreach( __toolchain ${${__availableToolchainsVar}} )
-  if( "${__toolchain}" MATCHES "-clang3[.][0-9]$" AND NOT EXISTS "${ANDROID_NDK}/toolchains/${__toolchain}/prebuilt/" )
+macro( __GLOB_NDK_TOOLCHAINS __availableToolchainsVar __availableToolchainsLst __toolchain_subpath )
+ foreach( __toolchain ${${__availableToolchainsLst}} )
+  if( "${__toolchain}" MATCHES "-clang3[.][0-9]$" AND NOT EXISTS "${ANDROID_NDK_TOOLCHAINS_PATH}/${__toolchain}${__toolchain_subpath}" )
    string( REGEX REPLACE "-clang3[.][0-9]$" "-4.6" __gcc_toolchain "${__toolchain}" )
   else()
    set( __gcc_toolchain "${__toolchain}" )
   endif()
-  __DETECT_TOOLCHAIN_MACHINE_NAME( __machine "${ANDROID_NDK}/toolchains/${__gcc_toolchain}/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}" )
+  __DETECT_TOOLCHAIN_MACHINE_NAME( __machine "${ANDROID_NDK_TOOLCHAINS_PATH}/${__gcc_toolchain}${__toolchain_subpath}" )
   if( __machine )
-   string( REGEX MATCH "[0-9]+[.][0-9]+([.][0-9]+)?$" __version "${__gcc_toolchain}" )
-   string( REGEX MATCH "^[^-]+" __arch "${__gcc_toolchain}" )
+   string( REGEX MATCH "[0-9]+[.][0-9]+([.][0-9x]+)?$" __version "${__gcc_toolchain}" )
+   if( __machine MATCHES i686 )
+    set( __arch "x86" )
+   elseif( __machine MATCHES arm )
+    set( __arch "arm" )
+   elseif( __machine MATCHES mipsel )
+    set( __arch "mipsel" )
+   endif()
    list( APPEND __availableToolchainMachines "${__machine}" )
    list( APPEND __availableToolchainArchs "${__arch}" )
    list( APPEND __availableToolchainCompilerVersions "${__version}" )
-  else()
-   list( REMOVE_ITEM ${__availableToolchainsVar} "${__toolchain}" )
+   list( APPEND ${__availableToolchainsVar} "${__toolchain}" )
   endif()
   unset( __gcc_toolchain )
  endforeach()
@@ -611,19 +672,31 @@ if( BUILD_WITH_ANDROID_NDK )
  set( __availableToolchainMachines "" )
  set( __availableToolchainArchs "" )
  set( __availableToolchainCompilerVersions "" )
- if( ANDROID_TOOLCHAIN_NAME AND EXISTS "${ANDROID_NDK}/toolchains/${ANDROID_TOOLCHAIN_NAME}/" )
+ if( ANDROID_TOOLCHAIN_NAME AND EXISTS "${ANDROID_NDK_TOOLCHAINS_PATH}/${ANDROID_TOOLCHAIN_NAME}/" )
   # do not go through all toolchains if we know the name
-  set( __availableToolchains "${ANDROID_TOOLCHAIN_NAME}" )
-  __GLOB_NDK_TOOLCHAINS( __availableToolchains )
+  set( __availableToolchainsLst "${ANDROID_TOOLCHAIN_NAME}" )
+  __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH}" )
+  if( NOT __availableToolchains AND NOT ANDROID_NDK_TOOLCHAINS_SUBPATH STREQUAL ANDROID_NDK_TOOLCHAINS_SUBPATH2 )
+   __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH2}" )
+   if( __availableToolchains )
+    set( ANDROID_NDK_TOOLCHAINS_SUBPATH ${ANDROID_NDK_TOOLCHAINS_SUBPATH2} )
+   endif()
+  endif()
  endif()
  if( NOT __availableToolchains )
-  file( GLOB __availableToolchains RELATIVE "${ANDROID_NDK}/toolchains" "${ANDROID_NDK}/toolchains/*" )
+  file( GLOB __availableToolchainsLst RELATIVE "${ANDROID_NDK_TOOLCHAINS_PATH}" "${ANDROID_NDK_TOOLCHAINS_PATH}/*" )
   if( __availableToolchains )
-   list(SORT __availableToolchains) # we need clang to go after gcc
+   list(SORT __availableToolchainsLst) # we need clang to go after gcc
   endif()
-  __LIST_FILTER( __availableToolchains "^[.]" )
-  __LIST_FILTER( __availableToolchains "llvm" )
-  __GLOB_NDK_TOOLCHAINS( __availableToolchains )
+  __LIST_FILTER( __availableToolchainsLst "^[.]" )
+  __LIST_FILTER( __availableToolchainsLst "llvm" )
+  __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH}" )
+  if( NOT __availableToolchains AND NOT ANDROID_NDK_TOOLCHAINS_SUBPATH STREQUAL ANDROID_NDK_TOOLCHAINS_SUBPATH2 )
+   __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH2}" )
+   if( __availableToolchains )
+    set( ANDROID_NDK_TOOLCHAINS_SUBPATH ${ANDROID_NDK_TOOLCHAINS_SUBPATH2} )
+   endif()
+  endif()
  endif()
  if( NOT __availableToolchains )
   message( FATAL_ERROR "Could not find any working toolchain in the NDK. Probably your Android NDK is broken." )
@@ -636,11 +709,11 @@ set( __uniqToolchainArchNames ${__availableToolchainArchs} )
 list( REMOVE_DUPLICATES __uniqToolchainArchNames )
 list( SORT __uniqToolchainArchNames )
 foreach( __arch ${__uniqToolchainArchNames} )
-list( APPEND ANDROID_SUPPORTED_ABIS ${ANDROID_SUPPORTED_ABIS_${__arch}} )
+ list( APPEND ANDROID_SUPPORTED_ABIS ${ANDROID_SUPPORTED_ABIS_${__arch}} )
 endforeach()
 unset( __uniqToolchainArchNames )
 if( NOT ANDROID_SUPPORTED_ABIS )
-message( FATAL_ERROR "No one of known Android ABIs is supported by this cmake toolchain." )
+ message( FATAL_ERROR "No one of known Android ABIs is supported by this cmake toolchain." )
 endif()
 
 # choose target ABI
@@ -752,6 +825,7 @@ else()
   list( GET __availableToolchainArchs ${__idx} __toolchainArch )
   if( __toolchainArch STREQUAL ANDROID_ARCH_FULLNAME )
    list( GET __availableToolchainCompilerVersions ${__idx} __toolchainVersion )
+   string( REPLACE "x" "99" __toolchainVersion "${__toolchainVersion}")
    if( __toolchainVersion VERSION_GREATER __toolchainMaxVersion )
     set( __toolchainMaxVersion "${__toolchainVersion}" )
     set( __toolchainIdx ${__idx} )
@@ -779,11 +853,22 @@ unset( __availableToolchainCompilerVersions )
 # choose native API level
 __INIT_VARIABLE( ANDROID_NATIVE_API_LEVEL ENV_ANDROID_NATIVE_API_LEVEL ANDROID_API_LEVEL ENV_ANDROID_API_LEVEL ANDROID_STANDALONE_TOOLCHAIN_API_LEVEL ANDROID_DEFAULT_NDK_API_LEVEL_${ANDROID_ARCH_NAME} ANDROID_DEFAULT_NDK_API_LEVEL )
 string( REGEX MATCH "[0-9]+" ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" )
-# TODO: filter out unsupported levels
+# adjust API level
+set( __real_api_level ${ANDROID_DEFAULT_NDK_API_LEVEL_${ANDROID_ARCH_NAME}} )
+foreach( __level ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
+ if( NOT __level GREATER ANDROID_NATIVE_API_LEVEL AND NOT __level LESS __real_api_level )
+  set( __real_api_level ${__level} )
+ endif()
+endforeach()
+if( __real_api_level AND NOT ANDROID_NATIVE_API_LEVEL EQUAL __real_api_level )
+ message( STATUS "Adjusting Android API level 'android-${ANDROID_NATIVE_API_LEVEL}' to 'android-${__real_api_level}'")
+ set( ANDROID_NATIVE_API_LEVEL ${__real_api_level} )
+endif()
+unset(__real_api_level)
 # validate
 list( FIND ANDROID_SUPPORTED_NATIVE_API_LEVELS "${ANDROID_NATIVE_API_LEVEL}" __levelIdx )
 if( __levelIdx EQUAL -1 )
- message( SEND_ERROR "Specified Android native API level (${ANDROID_NATIVE_API_LEVEL}) is not supported by your NDK/toolchain." )
+ message( SEND_ERROR "Specified Android native API level 'android-${ANDROID_NATIVE_API_LEVEL}' is not supported by your NDK/toolchain." )
 else()
  if( BUILD_WITH_ANDROID_NDK )
   __DETECT_NATIVE_API_LEVEL( __realApiLevel "${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android/api-level.h" )
@@ -893,7 +978,11 @@ if( BUILD_WITH_STANDALONE_TOOLCHAIN )
  set( ANDROID_SYSROOT "${ANDROID_STANDALONE_TOOLCHAIN}/sysroot" )
 
  if( NOT ANDROID_STL STREQUAL "none" )
-  set( ANDROID_STL_INCLUDE_DIRS "${ANDROID_STANDALONE_TOOLCHAIN}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/include/c++/${ANDROID_COMPILER_VERSION}" )
+  set( ANDROID_STL_INCLUDE_DIRS "${ANDROID_STANDALONE_TOOLCHAIN}/include/c++/${ANDROID_COMPILER_VERSION}" )
+  if( NOT EXISTS "${ANDROID_STL_INCLUDE_DIRS}" )
+   # old location ( pre r8c )
+   set( ANDROID_STL_INCLUDE_DIRS "${ANDROID_STANDALONE_TOOLCHAIN}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/include/c++/${ANDROID_COMPILER_VERSION}" )
+  endif()
   if( ARMEABI_V7A AND EXISTS "${ANDROID_STL_INCLUDE_DIRS}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/${CMAKE_SYSTEM_PROCESSOR}/bits" )
    list( APPEND ANDROID_STL_INCLUDE_DIRS "${ANDROID_STL_INCLUDE_DIRS}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/${CMAKE_SYSTEM_PROCESSOR}" )
   elseif( ARMEABI AND NOT ANDROID_FORCE_ARM_BUILD AND EXISTS "${ANDROID_STL_INCLUDE_DIRS}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/thumb/bits" )
@@ -944,11 +1033,11 @@ if( "${ANDROID_TOOLCHAIN_NAME}" STREQUAL "standalone-clang" )
 elseif( "${ANDROID_TOOLCHAIN_NAME}" MATCHES "-clang3[.][0-9]?$" )
  string( REGEX MATCH "3[.][0-9]$" ANDROID_CLANG_VERSION "${ANDROID_TOOLCHAIN_NAME}")
  string( REGEX REPLACE "-clang${ANDROID_CLANG_VERSION}$" "-4.6" ANDROID_GCC_TOOLCHAIN_NAME "${ANDROID_TOOLCHAIN_NAME}" )
- if( NOT EXISTS "${ANDROID_NDK}/toolchains/llvm-${ANDROID_CLANG_VERSION}/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}/bin/clang${TOOL_OS_SUFFIX}" )
-  message( FATAL_ERROR "Could not find the " )
+ if( NOT EXISTS "${ANDROID_NDK_TOOLCHAINS_PATH}/llvm-${ANDROID_CLANG_VERSION}${ANDROID_NDK_TOOLCHAINS_SUBPATH}/bin/clang${TOOL_OS_SUFFIX}" )
+  message( FATAL_ERROR "Could not find the Clang compiler driver" )
  endif()
  set( ANDROID_COMPILER_IS_CLANG 1 )
- set( ANDROID_CLANG_TOOLCHAIN_ROOT "${ANDROID_NDK}/toolchains/llvm-${ANDROID_CLANG_VERSION}/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}" )
+ set( ANDROID_CLANG_TOOLCHAIN_ROOT "${ANDROID_NDK_TOOLCHAINS_PATH}/llvm-${ANDROID_CLANG_VERSION}${ANDROID_NDK_TOOLCHAINS_SUBPATH}" )
 else()
  set( ANDROID_GCC_TOOLCHAIN_NAME "${ANDROID_TOOLCHAIN_NAME}" )
  unset( ANDROID_COMPILER_IS_CLANG CACHE )
@@ -962,7 +1051,7 @@ endif()
 
 # setup paths and STL for NDK
 if( BUILD_WITH_ANDROID_NDK )
- set( ANDROID_TOOLCHAIN_ROOT "${ANDROID_NDK}/toolchains/${ANDROID_GCC_TOOLCHAIN_NAME}/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}" )
+ set( ANDROID_TOOLCHAIN_ROOT "${ANDROID_NDK_TOOLCHAINS_PATH}/${ANDROID_GCC_TOOLCHAIN_NAME}${ANDROID_NDK_TOOLCHAINS_SUBPATH}" )
  set( ANDROID_SYSROOT "${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}" )
 
  if( ANDROID_STL STREQUAL "none" )
@@ -1021,11 +1110,11 @@ if( BUILD_WITH_ANDROID_NDK )
  endif()
  # find libsupc++.a - rtti & exceptions
  if( ANDROID_STL STREQUAL "system_re" OR ANDROID_STL MATCHES "gnustl" )
-  if( ANDROID_NDK_RELEASE STRGREATER "r8" ) # r8b
-   set( __libsupcxx "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/${ANDROID_COMPILER_VERSION}/libs/${ANDROID_NDK_ABI_NAME}/libsupc++.a" )
-  elseif( NOT ANDROID_NDK_RELEASE STRLESS "r7" AND ANDROID_NDK_RELEASE STRLESS "r8b")
-   set( __libsupcxx "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/libs/${ANDROID_NDK_ABI_NAME}/libsupc++.a" )
-  else( ANDROID_NDK_RELEASE STRLESS "r7" )
+  set( __libsupcxx "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/${ANDROID_COMPILER_VERSION}/libs/${ANDROID_NDK_ABI_NAME}/libsupc++.a" ) # r8b or newer
+  if( NOT EXISTS "${__libsupcxx}" )
+   set( __libsupcxx "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/libs/${ANDROID_NDK_ABI_NAME}/libsupc++.a" ) # r7-r8
+  endif()
+  if( NOT EXISTS "${__libsupcxx}" ) # before r7
    if( ARMEABI_V7A )
     if( ANDROID_FORCE_ARM_BUILD )
      set( __libsupcxx "${ANDROID_TOOLCHAIN_ROOT}/${ANDROID_TOOLCHAIN_MACHINE_NAME}/lib/${CMAKE_SYSTEM_PROCESSOR}/libsupc++.a" )
@@ -1075,7 +1164,7 @@ unset( _ndk_ccache )
 
 # setup the cross-compiler
 if( NOT CMAKE_C_COMPILER )
- if( NDK_CCACHE )
+ if( NDK_CCACHE AND NOT ANDROID_SYSROOT MATCHES "[ ;\"]" )
   set( CMAKE_C_COMPILER   "${NDK_CCACHE}" CACHE PATH "ccache as C compiler" )
   set( CMAKE_CXX_COMPILER "${NDK_CCACHE}" CACHE PATH "ccache as C++ compiler" )
   if( ANDROID_COMPILER_IS_CLANG )
@@ -1147,11 +1236,25 @@ set( CMAKE_ASM_SOURCE_FILE_EXTENSIONS s S asm )
 remove_definitions( -DANDROID )
 add_definitions( -DANDROID )
 
-if(ANDROID_SYSROOT MATCHES "[ ;\"]")
- set( ANDROID_CXX_FLAGS "--sysroot=\"${ANDROID_SYSROOT}\"" )
+if( ANDROID_SYSROOT MATCHES "[ ;\"]" )
+ if( CMAKE_HOST_WIN32 )
+  # try to convert path to 8.3 form
+  file( WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cvt83.cmd" "@echo %~s1" )
+  execute_process( COMMAND "$ENV{ComSpec}" /c "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cvt83.cmd" "${ANDROID_SYSROOT}"
+                   OUTPUT_VARIABLE __path OUTPUT_STRIP_TRAILING_WHITESPACE
+                   RESULT_VARIABLE __result ERROR_QUIET )
+  if( __result EQUAL 0 )
+   file( TO_CMAKE_PATH "${__path}" ANDROID_SYSROOT )
+   set( ANDROID_CXX_FLAGS "--sysroot=${ANDROID_SYSROOT}" )
+  else()
+   set( ANDROID_CXX_FLAGS "--sysroot=\"${ANDROID_SYSROOT}\"" )
+  endif()
+ else()
+  set( ANDROID_CXX_FLAGS "'--sysroot=${ANDROID_SYSROOT}'" )
+ endif()
  if( NOT _CMAKE_IN_TRY_COMPILE )
-  # quotes will break try_compile and compiler identification
-  message(WARNING "Your Android system root has non-alphanumeric symbols. It can break compiler features detection and the whole build.")
+  # quotes can break try_compile and compiler identification
+  message(WARNING "Path to your Android NDK (or toolchain) has non-alphanumeric symbols.\nThe build might be broken.\n")
  endif()
 else()
  set( ANDROID_CXX_FLAGS "--sysroot=${ANDROID_SYSROOT}" )
@@ -1159,38 +1262,52 @@ endif()
 
 # NDK flags
 if( ARMEABI OR ARMEABI_V7A )
- set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fpic -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__" )
+ set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fpic -funwind-tables" )
  if( NOT ANDROID_FORCE_ARM_BUILD AND NOT ARMEABI_V6 )
-  # It is recommended to use the -mthumb compiler flag to force the generation
-  # of 16-bit Thumb-1 instructions (the default being 32-bit ARM ones).
-  set( ANDROID_CXX_FLAGS_RELEASE "-mthumb" )
-  set( ANDROID_CXX_FLAGS_DEBUG   "-marm -finline-limit=64" )
+  set( ANDROID_CXX_FLAGS_RELEASE "-mthumb -fomit-frame-pointer -fno-strict-aliasing" )
+  set( ANDROID_CXX_FLAGS_DEBUG   "-marm -fno-omit-frame-pointer -fno-strict-aliasing" )
+  if( NOT ANDROID_COMPILER_IS_CLANG )
+   set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -finline-limit=64" )
+  endif()
  else()
   # always compile ARMEABI_V6 in arm mode; otherwise there is no difference from ARMEABI
-  # O3 instead of O2/Os in release mode - like cmake sets for desktop gcc
-  set( ANDROID_CXX_FLAGS_RELEASE "-marm" )
-  set( ANDROID_CXX_FLAGS_DEBUG   "-marm -finline-limit=300" )
+  set( ANDROID_CXX_FLAGS_RELEASE "-marm -fomit-frame-pointer -fstrict-aliasing" )
+  set( ANDROID_CXX_FLAGS_DEBUG   "-marm -fno-omit-frame-pointer -fno-strict-aliasing" )
+  if( NOT ANDROID_COMPILER_IS_CLANG )
+   set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funswitch-loops -finline-limit=300" )
+  endif()
  endif()
 elseif( X86 )
- set( ANDROID_CXX_FLAGS         "${ANDROID_CXX_FLAGS} -funwind-tables" )
- set( ANDROID_CXX_FLAGS_RELEASE "" )
- set( ANDROID_CXX_FLAGS_DEBUG   "-finline-limit=300" )
+ set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funwind-tables" )
+ if( NOT ANDROID_COMPILER_IS_CLANG )
+  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funswitch-loops -finline-limit=300" )
+ else()
+  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fPIC" )
+ endif()
+ set( ANDROID_CXX_FLAGS_RELEASE "-fomit-frame-pointer -fstrict-aliasing" )
+ set( ANDROID_CXX_FLAGS_DEBUG   "-fno-omit-frame-pointer -fno-strict-aliasing" )
 elseif( MIPS )
- set( ANDROID_CXX_FLAGS         "${ANDROID_CXX_FLAGS} -fpic -funwind-tables -fmessage-length=0 -fno-inline-functions-called-once -frename-registers" )
- set( ANDROID_CXX_FLAGS_RELEASE "-finline-limit=300 -fno-strict-aliasing" )
- set( ANDROID_CXX_FLAGS_DEBUG   "-finline-functions -fgcse-after-reload -frerun-cse-after-loop" )
+ set( ANDROID_CXX_FLAGS         "${ANDROID_CXX_FLAGS} -fpic -fno-strict-aliasing -finline-functions -ffunction-sections -funwind-tables -fmessage-length=0" )
+ set( ANDROID_CXX_FLAGS_RELEASE "-fomit-frame-pointer" )
+ set( ANDROID_CXX_FLAGS_DEBUG   "-fno-omit-frame-pointer" )
+ if( NOT ANDROID_COMPILER_IS_CLANG )
+  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers" )
+  set( ANDROID_CXX_FLAGS_RELEASE "${ANDROID_CXX_FLAGS_RELEASE} -funswitch-loops -finline-limit=300" )
+ endif()
 elseif()
  set( ANDROID_CXX_FLAGS_RELEASE "" )
  set( ANDROID_CXX_FLAGS_DEBUG   "" )
 endif()
 
-if( NOT X86 )
- set( ANDROID_CXX_FLAGS         "-Wno-psabi ${ANDROID_CXX_FLAGS}" )
+set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fsigned-char" ) # good/necessary when porting desktop libraries
+
+if( NOT X86 AND NOT ANDROID_COMPILER_IS_CLANG )
+ set( ANDROID_CXX_FLAGS "-Wno-psabi ${ANDROID_CXX_FLAGS}" )
 endif()
 
-set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -fsigned-char" ) # good/necessary when porting desktop libraries
-set( ANDROID_CXX_FLAGS_RELEASE "${ANDROID_CXX_FLAGS_RELEASE} -fomit-frame-pointer" )
-set( ANDROID_CXX_FLAGS_DEBUG   "${ANDROID_CXX_FLAGS_DEBUG} -fno-strict-aliasing -fno-omit-frame-pointer" )
+if( NOT ANDROID_COMPILER_VERSION VERSION_LESS "4.6" )
+ set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -no-canonical-prefixes" ) # see https://android-review.googlesource.com/#/c/47564/
+endif()
 
 # ABI-specific flags
 if( ARMEABI_V7A )
@@ -1208,22 +1325,18 @@ elseif( ARMEABI )
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv5te -mtune=xscale -msoft-float" )
 endif()
 
+if( ANDROID_STL MATCHES "gnustl" AND (EXISTS "${__libstl}" OR EXISTS "${__libsupcxx}") )
+ set( CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
+ set( CMAKE_CXX_CREATE_SHARED_MODULE  "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
+ set( CMAKE_CXX_LINK_EXECUTABLE       "<CMAKE_C_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>" )
+else()
+ set( CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
+ set( CMAKE_CXX_CREATE_SHARED_MODULE  "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
+ set( CMAKE_CXX_LINK_EXECUTABLE       "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>" )
+endif()
+
 # STL
 if( EXISTS "${__libstl}" OR EXISTS "${__libsupcxx}" )
- if( ANDROID_STL MATCHES "gnustl" )
-  set( CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
-  set( CMAKE_CXX_CREATE_SHARED_MODULE  "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
-  set( CMAKE_CXX_LINK_EXECUTABLE       "<CMAKE_C_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>" )
- else()
-  set( CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
-  set( CMAKE_CXX_CREATE_SHARED_MODULE  "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>" )
-  set( CMAKE_CXX_LINK_EXECUTABLE       "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>" )
- endif()
- if ( X86 AND ANDROID_STL MATCHES "gnustl" AND ANDROID_NDK_RELEASE STREQUAL "r6" )
-  # workaround "undefined reference to `__dso_handle'" problem
-  set( CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY} \"${ANDROID_SYSROOT}/usr/lib/crtbegin_so.o\"" )
-  set( CMAKE_CXX_CREATE_SHARED_MODULE  "${CMAKE_CXX_CREATE_SHARED_MODULE} \"${ANDROID_SYSROOT}/usr/lib/crtbegin_so.o\"" )
- endif()
  if( EXISTS "${__libstl}" )
   set( CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY} \"${__libstl}\"" )
   set( CMAKE_CXX_CREATE_SHARED_MODULE  "${CMAKE_CXX_CREATE_SHARED_MODULE} \"${__libstl}\"" )
@@ -1242,9 +1355,12 @@ if( EXISTS "${__libstl}" OR EXISTS "${__libsupcxx}" )
   set( CMAKE_C_LINK_EXECUTABLE       "${CMAKE_C_LINK_EXECUTABLE} \"${__libsupcxx}\"" )
  endif()
  if( ANDROID_STL MATCHES "gnustl" )
-  set( CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY} -lm" )
-  set( CMAKE_CXX_CREATE_SHARED_MODULE  "${CMAKE_CXX_CREATE_SHARED_MODULE} -lm" )
-  set( CMAKE_CXX_LINK_EXECUTABLE       "${CMAKE_CXX_LINK_EXECUTABLE} -lm" )
+  if( NOT EXISTS "${ANDROID_LIBM_PATH}" )
+   set( ANDROID_LIBM_PATH -lm )
+  endif()
+  set( CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY} ${ANDROID_LIBM_PATH}" )
+  set( CMAKE_CXX_CREATE_SHARED_MODULE  "${CMAKE_CXX_CREATE_SHARED_MODULE} ${ANDROID_LIBM_PATH}" )
+  set( CMAKE_CXX_LINK_EXECUTABLE       "${CMAKE_CXX_LINK_EXECUTABLE} ${ANDROID_LIBM_PATH}" )
  endif()
 endif()
 
@@ -1280,7 +1396,14 @@ if( ARMEABI_V7A )
 endif()
 
 if( ANDROID_NO_UNDEFINED )
- set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -Wl,--no-undefined" )
+ if( MIPS )
+  # there is some sysroot-related problem in mips linker...
+  if( NOT ANDROID_SYSROOT MATCHES "[ ;\"]" )
+   set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -Wl,--no-undefined -Wl,-rpath-link,${ANDROID_SYSROOT}/usr/lib" )
+  endif()
+ else()
+  set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -Wl,--no-undefined" )
+ endif()
 endif()
 
 if( ANDROID_SO_UNDEFINED )
@@ -1327,9 +1450,6 @@ if( ANDROID_COMPILER_IS_CLANG )
   set( ANDROID_CXX_FLAGS "-target ${ANDROID_LLVM_TRIPLE} ${ANDROID_CXX_FLAGS}" )
  endif()
  if( BUILD_WITH_ANDROID_NDK )
-  if(ANDROID_ARCH_NAME STREQUAL "arm" )
-   set( ANDROID_CXX_FLAGS "-isystem ${ANDROID_CLANG_TOOLCHAIN_ROOT}/lib/clang/${ANDROID_CLANG_VERSION}/include ${ANDROID_CXX_FLAGS}" )
-  endif()
   set( ANDROID_CXX_FLAGS "-gcc-toolchain ${ANDROID_TOOLCHAIN_ROOT} ${ANDROID_CXX_FLAGS}" )
  endif()
 endif()
@@ -1345,6 +1465,12 @@ set( CMAKE_SHARED_LINKER_FLAGS ""                        CACHE STRING "shared li
 set( CMAKE_MODULE_LINKER_FLAGS ""                        CACHE STRING "module linker flags" )
 set( CMAKE_EXE_LINKER_FLAGS    "-Wl,-z,nocopyreloc"      CACHE STRING "executable linker flags" )
 
+# put flags to cache (for debug purpose only)
+set( ANDROID_CXX_FLAGS         "${ANDROID_CXX_FLAGS}"         CACHE INTERNAL "Android specific c/c++ flags" )
+set( ANDROID_CXX_FLAGS_RELEASE "${ANDROID_CXX_FLAGS_RELEASE}" CACHE INTERNAL "Android specific c/c++ Release flags" )
+set( ANDROID_CXX_FLAGS_DEBUG   "${ANDROID_CXX_FLAGS_DEBUG}"   CACHE INTERNAL "Android specific c/c++ Debug flags" )
+set( ANDROID_LINKER_FLAGS      "${ANDROID_LINKER_FLAGS}"      CACHE INTERNAL "Android specific c/c++ linker flags" )
+
 # finish flags
 set( CMAKE_CXX_FLAGS           "${ANDROID_CXX_FLAGS} ${CMAKE_CXX_FLAGS}" )
 set( CMAKE_C_FLAGS             "${ANDROID_CXX_FLAGS} ${CMAKE_C_FLAGS}" )
@@ -1357,9 +1483,9 @@ set( CMAKE_MODULE_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} ${CMAKE_MODULE_LINKER_FL
 set( CMAKE_EXE_LINKER_FLAGS    "${ANDROID_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}" )
 
 if( MIPS AND BUILD_WITH_ANDROID_NDK AND ANDROID_NDK_RELEASE STREQUAL "r8" )
- set( CMAKE_SHARED_LINKER_FLAGS "-Wl,-T,${ANDROID_NDK}/toolchains/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.xsc ${CMAKE_SHARED_LINKER_FLAGS}" )
- set( CMAKE_MODULE_LINKER_FLAGS "-Wl,-T,${ANDROID_NDK}/toolchains/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.xsc ${CMAKE_MODULE_LINKER_FLAGS}" )
- set( CMAKE_EXE_LINKER_FLAGS    "-Wl,-T,${ANDROID_NDK}/toolchains/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.x ${CMAKE_EXE_LINKER_FLAGS}" )
+ set( CMAKE_SHARED_LINKER_FLAGS "-Wl,-T,${ANDROID_NDK_TOOLCHAINS_PATH}/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.xsc ${CMAKE_SHARED_LINKER_FLAGS}" )
+ set( CMAKE_MODULE_LINKER_FLAGS "-Wl,-T,${ANDROID_NDK_TOOLCHAINS_PATH}/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.xsc ${CMAKE_MODULE_LINKER_FLAGS}" )
+ set( CMAKE_EXE_LINKER_FLAGS    "-Wl,-T,${ANDROID_NDK_TOOLCHAINS_PATH}/${ANDROID_GCC_TOOLCHAIN_NAME}/mipself.x ${CMAKE_EXE_LINKER_FLAGS}" )
 endif()
 
 # configure rtti
@@ -1385,6 +1511,43 @@ endif()
 # global includes and link directories
 include_directories( SYSTEM "${ANDROID_SYSROOT}/usr/include" ${ANDROID_STL_INCLUDE_DIRS} )
 link_directories( "${CMAKE_INSTALL_PREFIX}/libs/${ANDROID_NDK_ABI_NAME}" )
+
+# detect if need link crtbegin_so.o explicitly
+if( NOT DEFINED ANDROID_EXPLICIT_CRT_LINK )
+ set( __cmd "${CMAKE_CXX_CREATE_SHARED_LIBRARY}" )
+ string( REPLACE "<CMAKE_CXX_COMPILER>" "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}" __cmd "${__cmd}" )
+ string( REPLACE "<CMAKE_C_COMPILER>"   "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}"   __cmd "${__cmd}" )
+ string( REPLACE "<CMAKE_SHARED_LIBRARY_CXX_FLAGS>" "${CMAKE_CXX_FLAGS}" __cmd "${__cmd}" )
+ string( REPLACE "<LANGUAGE_COMPILE_FLAGS>" "" __cmd "${__cmd}" )
+ string( REPLACE "<LINK_FLAGS>" "${CMAKE_SHARED_LINKER_FLAGS}" __cmd "${__cmd}" )
+ string( REPLACE "<CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS>" "-shared" __cmd "${__cmd}" )
+ string( REPLACE "<CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG>" "" __cmd "${__cmd}" )
+ string( REPLACE "<TARGET_SONAME>" "" __cmd "${__cmd}" )
+ string( REPLACE "<TARGET>" "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/toolchain_crtlink_test.so" __cmd "${__cmd}" )
+ string( REPLACE "<OBJECTS>" "\"${ANDROID_SYSROOT}/usr/lib/crtbegin_so.o\"" __cmd "${__cmd}" )
+ string( REPLACE "<LINK_LIBRARIES>" "" __cmd "${__cmd}" )
+ separate_arguments( __cmd )
+ foreach( __var ANDROID_NDK ANDROID_NDK_TOOLCHAINS_PATH ANDROID_STANDALONE_TOOLCHAIN )
+  if( ${__var} )
+   set( __tmp "${${__var}}" )
+   separate_arguments( __tmp )
+   string( REPLACE "${__tmp}" "${${__var}}" __cmd "${__cmd}")
+  endif()
+ endforeach()
+ string( REPLACE "'" "" __cmd "${__cmd}" )
+ string( REPLACE "\"" "" __cmd "${__cmd}" )
+ execute_process( COMMAND ${__cmd} RESULT_VARIABLE __cmd_result OUTPUT_QUIET ERROR_QUIET )
+ if( __cmd_result EQUAL 0 )
+  set( ANDROID_EXPLICIT_CRT_LINK ON )
+ else()
+  set( ANDROID_EXPLICIT_CRT_LINK OFF )
+ endif()
+endif()
+
+if( ANDROID_EXPLICIT_CRT_LINK )
+ set( CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY} \"${ANDROID_SYSROOT}/usr/lib/crtbegin_so.o\"" )
+ set( CMAKE_CXX_CREATE_SHARED_MODULE  "${CMAKE_CXX_CREATE_SHARED_MODULE} \"${ANDROID_SYSROOT}/usr/lib/crtbegin_so.o\"" )
+endif()
 
 # setup output directories
 set( LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_SOURCE_DIR} CACHE PATH "root for library output, set this to change where android libs are installed to" )
@@ -1475,7 +1638,9 @@ endmacro()
 if( NOT PROJECT_NAME STREQUAL "CMAKE_TRY_COMPILE" )
  set( __toolchain_config "")
  foreach( __var NDK_CCACHE  LIBRARY_OUTPUT_PATH_ROOT  ANDROID_FORBID_SYGWIN  ANDROID_SET_OBSOLETE_VARIABLES
+                ANDROID_NDK_HOST_X64
                 ANDROID_NDK
+                ANDROID_NDK_LAYOUT
                 ANDROID_STANDALONE_TOOLCHAIN
                 ANDROID_TOOLCHAIN_NAME
                 ANDROID_ABI
@@ -1489,6 +1654,8 @@ if( NOT PROJECT_NAME STREQUAL "CMAKE_TRY_COMPILE" )
                 ANDROID_GOLD_LINKER
                 ANDROID_NOEXECSTACK
                 ANDROID_RELRO
+                ANDROID_LIBM_PATH
+                ANDROID_EXPLICIT_CRT_LINK
                 )
   if( DEFINED ${__var} )
    if( "${__var}" MATCHES " ")
@@ -1531,6 +1698,8 @@ endif()
 #   ANDROID_NDK
 #   ANDROID_STANDALONE_TOOLCHAIN
 #   ANDROID_TOOLCHAIN_NAME : the NDK name of compiler toolchain
+#   ANDROID_NDK_HOST_X64 : try to use x86_64 toolchain (default for x64 host systems)
+#   ANDROID_NDK_LAYOUT : the inner NDK structure (RELEASE, LINARO, ANDROID)
 #   LIBRARY_OUTPUT_PATH_ROOT : <any valid path>
 #   NDK_CCACHE : <path to your ccache executable>
 # Obsolete:
@@ -1553,7 +1722,7 @@ endif()
 #   BUILD_ANDROID : always TRUE
 #   BUILD_WITH_ANDROID_NDK : TRUE if NDK is used
 #   BUILD_WITH_STANDALONE_TOOLCHAIN : TRUE if standalone toolchain is used
-#   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86", "linux-x86_64" or "darwin-x86" depending on host platform
+#   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86" or "darwin-x86" depending on host platform
 #   ANDROID_NDK_ABI_NAME : "armeabi", "armeabi-v7a", "x86" or "mips" depending on ANDROID_ABI
 #   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e; set only for NDK
 #   ANDROID_ARCH_NAME : "arm" or "x86" or "mips" depending on ANDROID_ABI
@@ -1576,6 +1745,7 @@ endif()
 #   ANDROID_EXCEPTIONS : if exceptions are enabled by the runtime
 #   ANDROID_GCC_TOOLCHAIN_NAME : read-only, differs from ANDROID_TOOLCHAIN_NAME only if clang is used
 #   ANDROID_CLANG_VERSION : version of clang compiler if clang is used
+#   ANDROID_LIBM_PATH : path to libm.so (set to something like $(TOP)/out/target/product/<product_name>/obj/lib/libm.so) to workaround unresolved `sincos`
 #
 # Defaults:
 #   ANDROID_DEFAULT_NDK_API_LEVEL

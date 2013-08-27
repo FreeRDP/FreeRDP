@@ -290,6 +290,17 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
 
+	/* There is a race condition here where we may receive this callback
+	 * before the buffer has been set up in the main code.  It's probably
+	 * possible to fix with additional locking, but it's easier just to
+	 * ignore input until the buffer is ready.
+	 */
+	if (pulse->buffer == NULL)
+	{
+		/* fprintf(stderr, "%s: ignoring input, pulse buffer not ready.\n", __func__); */
+		return;
+	}
+
 	pa_stream_peek(stream, &data, &length);
 	frames = length / pulse->bytes_per_frame;
 
@@ -373,6 +384,7 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 
 	DEBUG_DVC("");
 
+	pulse->buffer = NULL;
 	pulse->receive = receive;
 	pulse->user_data = user_data;
 

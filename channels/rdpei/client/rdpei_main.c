@@ -96,9 +96,10 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS];
 	RDPINPUT_CONTACT_POINT* contactPoints;
 
-	HANDLE mutex;
 	HANDLE event;
 	HANDLE thread;
+
+	CRITICAL_SECTION lock;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
@@ -160,7 +161,7 @@ static void* rdpei_schedule_thread(void* arg)
 	{
 		status = WaitForSingleObject(rdpei->event, 20);
 
-		WaitForSingleObject(rdpei->mutex, INFINITE);
+		EnterCriticalSection(&rdpei->lock);
 
 		rdpei_add_frame(context);
 
@@ -170,7 +171,7 @@ static void* rdpei_schedule_thread(void* arg)
 		if (status == WAIT_OBJECT_0)
 			ResetEvent(rdpei->event);
 
-		ReleaseMutex(rdpei->mutex);
+		LeaveCriticalSection(&rdpei->lock);
 	}
 
 	return NULL;
@@ -212,14 +213,14 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
 
 	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, RDPINPUT_PROTOCOL_V1); /* protocolVersion (4 bytes) */
+	Stream_Write_UINT32(s, RDPINPUT_PROTOCOL_V10); /* protocolVersion (4 bytes) */
 	Stream_Write_UINT16(s, rdpei->maxTouchContacts); /* maxTouchContacts (2 bytes) */
 
 	Stream_SealLength(s);
 
 	if (!rdpei->thread)
 	{
-		rdpei->mutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSection(&rdpei->lock);
 		rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 		rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpei_schedule_thread, (void*) rdpei, 0, NULL);
 	}
@@ -249,6 +250,7 @@ void rdpei_print_contact_flags(UINT32 contactFlags)
 int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
 	int index;
+	int rectSize = 2;
 	RDPINPUT_CONTACT_DATA* contact;
 
 #ifdef WITH_DEBUG_RDPEI
@@ -264,11 +266,17 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	 */
 	rdpei_write_8byte_unsigned(s, frame->frameOffset * 1000); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
 
-	Stream_EnsureRemainingCapacity(s, frame->contactCount * 32);
+	Stream_EnsureRemainingCapacity(s, frame->contactCount * 64);
 
 	for (index = 0; index < frame->contactCount; index++)
 	{
 		contact = &frame->contacts[index];
+
+		contact->fieldsPresent |= CONTACT_DATA_CONTACTRECT_PRESENT;
+		contact->contactRectLeft = contact->x - rectSize;
+		contact->contactRectTop = contact->y - rectSize;
+		contact->contactRectRight = contact->x + rectSize;
+		contact->contactRectBottom = contact->y + rectSize;
 
 #ifdef WITH_DEBUG_RDPEI
 		printf("contact[%d].contactId: %d\n", index, contact->contactId);
@@ -325,7 +333,7 @@ int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_
 	wStream* s;
 	UINT32 pduLength;
 
-	pduLength = 64 + (frame->contactCount * 32);
+	pduLength = 64 + (frame->contactCount * 64);
 
 	s = Stream_New(NULL, pduLength);
 	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
@@ -355,11 +363,13 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, protocolVersion); /* protocolVersion (4 bytes) */
 
-	if (protocolVersion != RDPINPUT_PROTOCOL_V1)
+#if 0
+	if (protocolVersion != RDPINPUT_PROTOCOL_V10)
 	{
 		fprintf(stderr, "Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
 		return -1;
 	}
+#endif
 
 	return 0;
 }
@@ -533,7 +543,7 @@ int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contac
 	RDPINPUT_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
-	WaitForSingleObject(rdpei->mutex, INFINITE);
+	EnterCriticalSection(&rdpei->lock);
 
 	contactPoint = (RDPINPUT_CONTACT_POINT*) &rdpei->contactPoints[contact->contactId];
 	CopyMemory(&(contactPoint->data), contact, sizeof(RDPINPUT_CONTACT_DATA));
@@ -541,7 +551,7 @@ int rdpei_add_contact(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contac
 
 	SetEvent(rdpei->event);
 
-	ReleaseMutex(rdpei->mutex);
+	LeaveCriticalSection(&rdpei->lock);
 
 	return 1;
 }

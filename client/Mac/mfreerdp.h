@@ -28,6 +28,7 @@ struct mf_context
 	DEFINE_RDP_CLIENT_COMMON();
 
 	void* view;
+    BOOL view_ownership; // TRUE indicates that the window was created and should be freed by the API.
 
 	int width;
 	int height;
@@ -43,6 +44,7 @@ struct mf_context
 	int client_height;
 
 	HANDLE keyboardThread;
+    HANDLE stopEvent;
 
 	HGDI_DC hdc;
 	UINT16 srcBpp;

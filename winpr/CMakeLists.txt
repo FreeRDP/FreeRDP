@@ -63,13 +63,18 @@ endif()
 
 if(FREERDP_BUILD)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+	include_directories(${CMAKE_CURRENT_BINARY_DIR}/include PARENT_SCOPE)
 else()
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+	include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in 
+	${CMAKE_CURRENT_BINARY_DIR}/include/winpr/config.h)
 
-add_subdirectory(include)
+if(NOT WITH_WAYK)
+    add_subdirectory(include)
+endif()
 
 add_subdirectory(libwinpr)
 

@@ -356,15 +356,15 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 		return FALSE;
 
 	/* targetParameters (DomainParameters) */
-	if(!mcs_read_domain_parameters(s, &mcs->targetParameters))
+	if (!mcs_read_domain_parameters(s, &mcs->targetParameters))
 		return FALSE;
 
 	/* minimumParameters (DomainParameters) */
-	if(!mcs_read_domain_parameters(s, &mcs->minimumParameters))
+	if (!mcs_read_domain_parameters(s, &mcs->minimumParameters))
 		return FALSE;
 
 	/* maximumParameters (DomainParameters) */
-	if(!mcs_read_domain_parameters(s, &mcs->maximumParameters))
+	if (!mcs_read_domain_parameters(s, &mcs->maximumParameters))
 		return FALSE;
 
 	if (!ber_read_octet_string_tag(s, &length) || Stream_GetRemainingLength(s) < length)
@@ -510,7 +510,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 	if (!tpdu_read_data(s, &li))
 		return FALSE;
 
-	if(!ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length) ||
+	if (!ber_read_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, &length) ||
 		!ber_read_enumerated(s, &result, MCS_Result_enum_length) ||
 		!ber_read_integer(s, &calledConnectId) ||
 		!mcs_read_domain_parameters(s, &(mcs->domainParameters)) ||

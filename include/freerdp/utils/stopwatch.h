@@ -20,17 +20,15 @@
 #ifndef FREERDP_UTILS_STOPWATCH_H
 #define FREERDP_UTILS_STOPWATCH_H
 
-#include <time.h>
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
 struct _STOPWATCH
 {
-	clock_t start;
-	clock_t end;
-	double elapsed;
-	clock_t count;
+	UINT64 start;
+	UINT64 end;
+	UINT64 elapsed;
+	UINT32 count;
 };
 typedef struct _STOPWATCH STOPWATCH;
 

@@ -236,8 +236,9 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp)
  * @param channel_id channel id
  */
 
-BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id)
+BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 {
+	BYTE byte;
 	UINT16 initiator;
 	enum DomainMCSPDU MCSPDU;
 
@@ -274,8 +275,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
 		return FALSE;
 
 	per_read_integer16(s, &initiator, MCS_BASE_CHANNEL_ID); /* initiator (UserId) */
-	per_read_integer16(s, channel_id, 0); /* channelId */
-	Stream_Seek(s, 1); /* dataPriority + Segmentation (0x70) */
+	per_read_integer16(s, channelId, 0); /* channelId */
+	Stream_Read_UINT8(s, byte); /* dataPriority + Segmentation (0x70) */
 
 	if (!per_read_length(s, length)) /* userData (OCTET_STRING) */
 		return FALSE;
@@ -294,7 +295,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id
  * @param channel_id channel id
  */
 
-void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id)
+void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
 	int body_length;
 	enum DomainMCSPDU MCSPDU;
@@ -314,10 +315,10 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id)
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
 	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
-	per_write_integer16(s, channel_id, 0); /* channelId */
+	per_write_integer16(s, channelId, 0); /* channelId */
 	Stream_Write_UINT8(s, 0x70); /* dataPriority + segmentation */
 	/*
-	 * We always encode length in two bytes, eventhough we could use
+	 * We always encode length in two bytes, even though we could use
 	 * only one byte if length <= 0x7F. It is just easier that way,
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.
@@ -926,20 +927,21 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				status = -1;
 			break;
 
-		case CONNECTION_STATE_LICENSE:
+		case CONNECTION_STATE_LICENSING:
 			if (!rdp_client_connect_license(rdp, s))
 				status = -1;
 			break;
 
-		case CONNECTION_STATE_CAPABILITY:
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp_client_connect_demand_active(rdp, s))
 				status = -1;
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
 			status = rdp_recv_pdu(rdp, s);
+
 			if ((status >= 0) && (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE))
-				rdp->state = CONNECTION_STATE_ACTIVE;
+				rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
@@ -982,23 +984,25 @@ int rdp_check_fds(rdpRdp* rdp)
  * @return new RDP module
  */
 
-rdpRdp* rdp_new(freerdp* instance)
+rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
 
 	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
 
-	if (rdp != NULL)
+	if (rdp)
 	{
 		ZeroMemory(rdp, sizeof(rdpRdp));
 
-		rdp->instance = instance;
-		rdp->settings = freerdp_settings_new((void*) instance);
+		rdp->context = context;
 
-		if (instance != NULL)
-			instance->settings = rdp->settings;
+		rdp->instance = context->instance;
+		rdp->settings = freerdp_settings_new((void*) context->instance);
 
-		rdp->extension = extension_new(instance);
+		if (context->instance)
+			context->instance->settings = rdp->settings;
+
+		rdp->extension = extension_new(context->instance);
 		rdp->transport = transport_new(rdp->settings);
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);

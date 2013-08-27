@@ -89,6 +89,7 @@ struct xf_context
 	BOOL unobscured;
 	BOOL debug;
 	xfWindow* window;
+	xfPointer* pointer;
 	xfWorkArea workArea;
 	int current_desktop;
 	BOOL remote_app;
@@ -96,6 +97,7 @@ struct xf_context
 	HCLRCONV clrconv;
 	HANDLE mutex;
 	BOOL UseXThreads;
+	BOOL cursorHidden;
 
 	HGDI_DC hdc;
 	BYTE* primary_buffer;
@@ -106,13 +108,15 @@ struct xf_context
 	UINT16 frame_x2;
 	UINT16 frame_y2;
 
-	double scale;
 	int originalWidth;
 	int originalHeight;
 	int currentWidth;
 	int currentHeight;
 	int XInputOpcode;
 	BOOL enableScaling;
+
+	int offset_x;
+	int offset_y;
 
 	BOOL focused;
 	BOOL use_xinput;
@@ -208,7 +212,8 @@ enum XF_EXIT_CODE
 void xf_lock_x11(xfContext* xfc, BOOL display);
 void xf_unlock_x11(xfContext* xfc, BOOL display);
 
-void xf_draw_screen_scaled(xfContext* xfc);
+void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
+void xf_transform_window(xfContext* xfc);
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

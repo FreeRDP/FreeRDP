@@ -52,5 +52,6 @@ int xf_cursor_init(xfInfo* xfi)
 
 	XFixesSelectCursorInput(xfi->display, DefaultRootWindow(xfi->display), XFixesDisplayCursorNotifyMask);
 #endif
+
 	return 0;
 }

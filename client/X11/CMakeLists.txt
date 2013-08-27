@@ -2,6 +2,7 @@
 # FreeRDP X11 Client
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 set(MODULE_NAME "xfreerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
-include(FindXmlto)
+include(FindDocBookXSL)
 include_directories(${X11_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
@@ -28,6 +29,8 @@ set(${MODULE_PREFIX}_SRCS
 	xf_rail.h
 	xf_tsmf.c
 	xf_tsmf.h
+	xf_input.c
+	xf_input.h
 	xf_event.c
 	xf_event.h
 	xf_input.c
@@ -65,18 +68,55 @@ set(${MODULE_PREFIX}_LIBS
 	${CMAKE_DL_LIBS})
 
 if(WITH_MANPAGES)
-	if(XMLTO_FOUND)
+	find_program( XSLTPROC_EXECUTABLE NAMES xsltproc)
+
+	if(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
+
+		# We need the variable ${MAN_TODAY} to contain the current date in ISO
+		# format to replace it in the configure_file step.
+		include(today)
+
+		TODAY(MAN_TODAY)
+
+		configure_file(xfreerdp.1.xml.in xfreerdp.1.xml @ONLY IMMEDIATE)
+
+		add_executable(generate_argument_docbook generate_argument_docbook.c)
+	
+		set(GAD_LIBS freerdp-client)
+
+		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+			MODULE winpr
+			MODULES winpr-utils)
+
+		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
+			MODULE freerdp
+			MODULES freerdp-core freerdp-utils)
+
+		message(WARNING "GAD_LIBS: ${GAD_LIBS}")
+
+		target_link_libraries(generate_argument_docbook ${GAD_LIBS})
+
 		add_custom_command(OUTPUT xfreerdp.1
-			COMMAND ${XMLTO_EXECUTABLE} man ${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp.1.xml
-			DEPENDS xfreerdp.1.xml)
+					COMMAND generate_argument_docbook
+					COMMAND ${CMAKE_COMMAND} -E copy 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+					COMMAND ${CMAKE_COMMAND} -E copy 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+						COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
+					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+					DEPENDS 
+						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
+						generate_argument_docbook)
 
 		add_custom_target(xfreerdp.manpage ALL
 			DEPENDS xfreerdp.1)
 
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION share/man/man1)
-	else(XMLTO_FOUND)
-		message(WARNING "WITH_MANPAGES was set, but xmlto was not found. man-pages will not be installed")
-	endif(XMLTO_FOUND)
+	else()
+		message(WARNING "WITH_MANPAGES was set, but xsltproc was not found. man-pages will not be installed")
+	endif()
 endif(WITH_MANPAGES)
 
 set(XSHM_FEATURE_TYPE "REQUIRED")
@@ -101,11 +141,11 @@ set(XV_FEATURE_DESCRIPTION "X11 video extension")
 
 set(XI_FEATURE_TYPE "RECOMMENDED")
 set(XI_FEATURE_PURPOSE "input")
-set(XI_FEATURE_DESCRIPTION "X11 input extension")
+set(XI_FEATURE_DESCRIPTION "X11 input extension") 
 
 set(XRENDER_FEATURE_TYPE "RECOMMENDED")
 set(XRENDER_FEATURE_PURPOSE "rendering")
-set(XRENDER_FEATURE_DESCRIPTION "X11 render extension")
+set(XRENDER_FEATURE_DESCRIPTION "X11 render extension") 
 
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})

@@ -562,12 +562,12 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->PlayRemoteFx;
 			break;
 
-		case FreeRDP_GatewayUsageMethod:
-			return settings->GatewayUsageMethod;
-			break;
-
 		case FreeRDP_GatewayUseSameCredentials:
 			return settings->GatewayUseSameCredentials;
+			break;
+
+		case FreeRDP_GatewayEnabled:
+			return settings->GatewayEnabled;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:
@@ -656,6 +656,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_MultiTouchInput:
 			return settings->MultiTouchInput;
+			break;
+
+		case FreeRDP_MultiTouchGestures:
+			return settings->MultiTouchGestures;
 			break;
 
 		case FreeRDP_SoundBeepsEnabled:
@@ -1013,12 +1017,12 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->PlayRemoteFx = param;
 			break;
 
-		case FreeRDP_GatewayUsageMethod:
-			settings->GatewayUsageMethod = param;
-			break;
-
 		case FreeRDP_GatewayUseSameCredentials:
 			settings->GatewayUseSameCredentials = param;
+			break;
+
+		case FreeRDP_GatewayEnabled:
+			settings->GatewayEnabled = param;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:
@@ -1107,6 +1111,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_MultiTouchInput:
 			settings->MultiTouchInput = param;
+			break;
+
+		case FreeRDP_MultiTouchGestures:
+			settings->MultiTouchGestures = param;
 			break;
 
 		case FreeRDP_SoundBeepsEnabled:
@@ -1199,9 +1207,58 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return -1;
+}
+
+int freerdp_get_param_int(rdpSettings* settings, int id)
+{
+	switch (id)
+	{
+		case FreeRDP_XPan:
+			return settings->XPan;
+			break;
+
+		case FreeRDP_YPan:
+			return settings->YPan;
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+
+	return 0;
+}
+
+int freerdp_set_param_int(rdpSettings* settings, int id, int param)
+{
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
+	switch (id)
+	{
+		case FreeRDP_XPan:
+			settings->XPan = param;
+			break;
+
+		case FreeRDP_YPan:
+			settings->YPan = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	settings->settings_modified[id] = 1;
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
+
+	return 0;
 }
 
 UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
@@ -1358,6 +1415,10 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 		case FreeRDP_PercentScreen:
 			return settings->PercentScreen;
+			break;
+
+		case FreeRDP_GatewayUsageMethod:
+			return settings->GatewayUsageMethod;
 			break;
 
 		case FreeRDP_GatewayPort:
@@ -1679,6 +1740,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->PercentScreen = param;
 			break;
 
+		case FreeRDP_GatewayUsageMethod:
+			settings->GatewayUsageMethod = param;
+			break;
+
 		case FreeRDP_GatewayPort:
 			settings->GatewayPort = param;
 			break;
@@ -1841,7 +1906,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -1883,7 +1948,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -2221,7 +2286,49 @@ int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
 
 	EventArgsInit(&e, "freerdp");
 	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context->instance, &e);
+	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }
+
+double freerdp_get_param_double(rdpSettings* settings, int id)
+{
+	switch (id)
+	{
+		case FreeRDP_ScalingFactor:
+			return settings->ScalingFactor;
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+
+	return 0;
+}
+
+int freerdp_set_param_double(rdpSettings* settings, int id, double param)
+{
+	ParamChangeEventArgs e;
+	rdpContext* context = ((freerdp*) settings->instance)->context;
+
+	switch (id)
+	{
+		case FreeRDP_ScalingFactor:
+			settings->ScalingFactor = param;
+			break;
+
+		default:
+			return -1;
+			break;
+	}
+
+	settings->settings_modified[id] = 1;
+
+	EventArgsInit(&e, "freerdp");
+	e.id = id;
+	PubSub_OnParamChange(context->pubSub, context, &e);
+
+	return 0;
+}
+

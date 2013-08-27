@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Compressed Bitmap
+ * Bitmap Decompression
  *
  * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>
  *

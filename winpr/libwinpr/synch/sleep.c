@@ -52,17 +52,23 @@ VOID USleep(DWORD dwMicroseconds)
 #ifndef _WIN32
 	usleep(dwMicroseconds);
 #else
-	UINT64 t1;
-	UINT64 t2;
-	UINT64 freq;
+	static LARGE_INTEGER freq = { 0, 0 };
+	LARGE_INTEGER t1 = { 0, 0 };
+	LARGE_INTEGER t2 = { 0, 0 };
 
-	QueryPerformanceCounter((LARGE_INTEGER*) &t1);
-	QueryPerformanceCounter((LARGE_INTEGER*) &freq);
+	QueryPerformanceCounter(&t1);
 
-	do
-	{
-		QueryPerformanceCounter((LARGE_INTEGER*) &t2);
+	if (freq.QuadPart == 0) {
+		QueryPerformanceFrequency(&freq);
 	}
-	while ((t2 - t1) < dwMicroseconds);
+
+	// in order to save cpu cyles we use Sleep() for the large share ...
+	if (dwMicroseconds >= 1000) {
+		Sleep(dwMicroseconds/1000);
+	}
+	// ... and busy loop until all the requested micro seconds have passed
+	do {
+		QueryPerformanceCounter(&t2);
+	} while (((t2.QuadPart - t1.QuadPart)*1000000)/freq.QuadPart < dwMicroseconds);
 #endif
 }

@@ -25,6 +25,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Reference.c
 	collections/ArrayList.c
 	collections/Dictionary.c
+	collections/LinkedList.c
 	collections/ListDictionary.c
 	collections/KeyValuePair.c
 	collections/CountdownEvent.c

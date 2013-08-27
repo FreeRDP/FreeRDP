@@ -84,6 +84,9 @@ struct _TSMF_PRESENTATION
 	UINT64 audio_start_time;
 	UINT64 audio_end_time;
 
+	UINT32 volume;
+	UINT32 muted;
+
 	HANDLE mutex;
 	HANDLE thread;
 
@@ -281,6 +284,9 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 
 	memcpy(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
+
+	presentation->volume = 5000; /* 50% */
+	presentation->muted = 0;
 
 	presentation->mutex = CreateMutex(NULL, FALSE, NULL);
 	presentation->stream_list = list_new();
@@ -786,6 +792,9 @@ void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 ne
 	LIST_ITEM* item;
 	TSMF_STREAM* stream;
 
+	presentation->volume = newVolume;
+	presentation->muted = muted;
+
 	for (item = presentation->stream_list->head; item; item = item->next)
 	{
 		stream = (TSMF_STREAM*) item->data;
@@ -964,7 +973,10 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
 
 	stream->sample_list = Queue_New(TRUE, -1, -1);
+	stream->sample_list->object.fnObjectFree = free;
+
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
+	stream->sample_ack_list->object.fnObjectFree = free;
 
 	WaitForSingleObject(presentation->mutex, INFINITE);
 	list_enqueue(presentation->stream_list, stream);
@@ -1026,6 +1038,7 @@ void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 	stream->width = mediatype.Width;
 	stream->height = mediatype.Height;
 	stream->decoder = tsmf_load_decoder(name, &mediatype);
+	tsmf_stream_change_volume(stream, stream->presentation->volume, stream->presentation->muted);
 }
 
 void tsmf_stream_end(TSMF_STREAM* stream)

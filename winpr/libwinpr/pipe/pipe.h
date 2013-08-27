@@ -34,6 +34,26 @@ struct winpr_pipe
 };
 typedef struct winpr_pipe WINPR_PIPE;
 
+struct winpr_named_pipe
+{
+	WINPR_HANDLE_DEF();
+
+	int clientfd;
+	int serverfd;
+
+	const char* name;
+	const char* lpFileName;
+	const char* lpFilePath;
+
+	DWORD dwOpenMode;
+	DWORD dwPipeMode;
+	DWORD nMaxInstances;
+	DWORD nOutBufferSize;
+	DWORD nInBufferSize;
+	DWORD nDefaultTimeOut;
+};
+typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
+
 #endif
 
 #endif /* WINPR_PIPE_PRIVATE_H */

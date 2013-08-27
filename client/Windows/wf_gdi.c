@@ -575,14 +575,14 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		message = rfx_process_message(rfx_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		/* blit each tile */
-		for (i = 0; i < message->num_tiles; i++)
+		for (i = 0; i < message->numTiles; i++)
 		{
 			tx = message->tiles[i]->x + surface_bits_command->destLeft;
 			ty = message->tiles[i]->y + surface_bits_command->destTop;
 
 			freerdp_image_convert(message->tiles[i]->data, wfc->tile->pdata, 64, 64, 32, 32, wfc->clrconv);
 
-			for (j = 0; j < message->num_rects; j++)
+			for (j = 0; j < message->numRects; j++)
 			{
 				wf_set_clip_rgn(wfc,
 					surface_bits_command->destLeft + message->rects[j].x,
@@ -596,7 +596,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		wf_set_null_clip_rgn(wfc);
 
 		/* invalidate regions */
-		for (i = 0; i < message->num_rects; i++)
+		for (i = 0; i < message->numRects; i++)
 		{
 			tx = surface_bits_command->destLeft + message->rects[i].x;
 			ty = surface_bits_command->destTop + message->rects[i].y;
@@ -618,7 +618,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		bitmap_info.bmiHeader.biCompression = BI_RGB;
 		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			nsc_context->bmpdata, &bitmap_info, DIB_RGB_COLORS);
+			nsc_context->BitmapData, &bitmap_info, DIB_RGB_COLORS);
 		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}
@@ -664,8 +664,8 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
 
-	update->Palette = wf_gdi_palette_update;
-	update->SetBounds = wf_gdi_set_bounds;
+	update->Palette = (pPalette) wf_gdi_palette_update;
+	update->SetBounds = (pSetBounds) wf_gdi_set_bounds;
 
 	primary->DstBlt = (pDstBlt) wf_gdi_dstblt;
 	primary->PatBlt = (pPatBlt) wf_gdi_patblt;
@@ -690,8 +690,8 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->EllipseSC = NULL;
 	primary->EllipseCB = NULL;
 
-	update->SurfaceBits = wf_gdi_surface_bits;
-	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
+	update->SurfaceBits = (pSurfaceBits) wf_gdi_surface_bits;
+	update->SurfaceFrameMarker = (pSurfaceFrameMarker) wf_gdi_surface_frame_marker;
 }
 
 void wf_update_canvas_diff(wfContext* wfc)

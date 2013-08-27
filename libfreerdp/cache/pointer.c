@@ -68,9 +68,18 @@ void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_col
 		pointer->height = pointer_color->height;
 		pointer->lengthAndMask = pointer_color->lengthAndMask;
 		pointer->lengthXorMask = pointer_color->lengthXorMask;
-		pointer->xorMaskData = pointer_color->xorMaskData;
-		pointer->andMaskData = pointer_color->andMaskData;
 
+		if (pointer->lengthAndMask && pointer_color->xorMaskData)
+		{
+			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+			CopyMemory(pointer->andMaskData, pointer_color->andMaskData, pointer->lengthAndMask);
+		}
+
+		if (pointer->lengthXorMask && pointer_color->xorMaskData)
+		{
+			pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
+			CopyMemory(pointer->xorMaskData, pointer_color->xorMaskData, pointer->lengthXorMask);
+		}
 		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer);
 		Pointer_Set(context, pointer);
@@ -202,7 +211,10 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 			pointer = pointer_cache->entries[i];
 
 			if (pointer != NULL)
+			{
 				Pointer_Free(pointer_cache->update->context, pointer);
+				pointer_cache->entries[i] = NULL;
+			}
 		}
 
 		free(pointer_cache->entries);

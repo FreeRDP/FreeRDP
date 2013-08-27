@@ -87,7 +87,7 @@ BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCom
 	return TRUE;
 }
 
-VOID ExitProcess(UINT uExitCode)
+DECLSPEC_NORETURN VOID ExitProcess(UINT uExitCode)
 {
 
 }

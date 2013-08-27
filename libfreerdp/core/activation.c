@@ -250,6 +250,7 @@ BOOL rdp_recv_server_font_map_pdu(rdpRdp* rdp, wStream* s)
 BOOL rdp_recv_client_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
 	rdp->finalize_sc_pdus |= FINALIZE_SC_FONT_MAP_PDU;
+
 	if(Stream_GetRemainingLength(s) >= 8)
 	{
 		Stream_Seek_UINT16(s); /* numberEntries (2 bytes) */
@@ -279,6 +280,11 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 {
 	UINT16 lengthSourceDescriptor;
 
+	if (rdp->state == CONNECTION_STATE_ACTIVE)
+		rdp->deactivation_reactivation = TRUE;
+	else
+		rdp->deactivation_reactivation = FALSE;
+
 	/*
 	 * Windows XP can send short DEACTIVATE_ALL PDU that doesn't contain
 	 * the following fields.
@@ -305,7 +311,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		while(0);
 	}
 
-	rdp->state = CONNECTION_STATE_CAPABILITY;
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
@@ -361,6 +367,8 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
+
+	rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
 
 	return TRUE;
 }

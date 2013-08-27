@@ -107,7 +107,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	rdpGdi* gdi;
 	BOOL status;
 
-	size = width * height * (bpp + 7) / 8;
+	size = width * height * ((bpp + 7) / 8);
 
 	if (bitmap->data == NULL)
 		bitmap->data = (BYTE*) malloc(size);
@@ -119,7 +119,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		case RDP_CODEC_ID_NSCODEC:
 			gdi = context->gdi;
 			nsc_process_message(gdi->nsc_context, bpp, width, height, data, length);
-			freerdp_image_flip(((NSC_CONTEXT*)gdi->nsc_context)->bmpdata, bitmap->data, width, height, bpp);
+			freerdp_image_flip(((NSC_CONTEXT*)gdi->nsc_context)->BitmapData, bitmap->data, width, height, bpp);
 			break;
 		case RDP_CODEC_ID_REMOTEFX:
 			gdi = context->gdi;

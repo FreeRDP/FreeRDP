@@ -1,0 +1,89 @@
+<refsect1>
+	<title>Examples</title>
+	<variablelist>
+		<varlistentry>
+			<term><command>xfreerdp connection.rdp /p:Pwd123! /f</command></term>
+			<listitem>
+				<para>Connect in fullscreen mode using a stored configuration <replaceable>connection.rdp</replaceable> and the password <replaceable>Pwd123!</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com</command></term>
+			<listitem>
+				<para>Connect to host <replaceable>rdp.contoso.com</replaceable> with user <replaceable>CONTOSO\\JohnDoe</replaceable> and password <replaceable>Pwd123!</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489</command></term>
+			<listitem>
+				<para>Connect to host <replaceable>192.168.1.100</replaceable> on port <replaceable>4489</replaceable> with user <replaceable>JohnDoe</replaceable>, password <replaceable>Pwd123!</replaceable>. The screen width is set to <replaceable>1366</replaceable> and the height to <replaceable>768</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168. 1.100</command></term>
+			<listitem>
+				<para>Establish a connection to host <replaceable>192.168.1.100</replaceable> with user <replaceable>JohnDoe</replaceable>, password <replaceable>Pwd123!</replaceable> and connect to Hyper-V console (use port 2179, disable negotiation) with VMID <replaceable>C824F53E-95D2-46C6-9A18-23A5BB403532</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>+clipboard</command></term>
+			<listitem>
+				<para>Activate clipboard redirection</para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/drive:home,/home/user</command></term>
+			<listitem>
+				<para>Activate drive redirection of <replaceable>/home/user</replaceable> as home drive</para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/smartcard:&lt;device&gt;</command></term>
+			<listitem>
+				<para>Activate smartcard redirection for device <replaceable>device</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/printer:&lt;device&gt;,&lt;driver&gt;</command></term>
+			<listitem>
+				<para>Activate printer redirection for printer <replaceable>device</replaceable> using driver <replaceable>driver</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/serial:&lt;device&gt;</command></term>
+			<listitem>
+				<para>Activate serial port redirection for port <replaceable>device</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/parallel:&lt;device&gt;</command></term>
+			<listitem>
+				<para>Activate parallel port redirection for port <replaceable>device</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/sound:sys:alsa</command></term>
+			<listitem>
+				<para>Activate audio output redirection using device <replaceable>sys:alsa</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/microphone:sys:alsa</command></term>
+			<listitem>
+				<para>Activate audio input redirection using device <replaceable>sys:alsa</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/multimedia:sys:alsa</command></term>
+			<listitem>
+				<para>Activate multimedia redirection using device <replaceable>sys:alsa</replaceable></para>
+			</listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><command>/usb:id,dev:054c:0268</command></term>
+			<listitem>
+				<para>Activate USB device redirection for the device identified by <replaceable>054c:0268</replaceable></para>
+			</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>

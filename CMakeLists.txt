@@ -142,7 +142,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		endif()
 	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Release")
-		set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
+                set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
@@ -160,10 +160,10 @@ endif()
 
 if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
+	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_AMD64_")
 	else()
@@ -171,6 +171,13 @@ if(MSVC)
 	endif()
 	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+
+        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        else()
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
+        endif()
+
 endif()
 
 if(WIN32)
@@ -220,21 +227,24 @@ if(APPLE)
                 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
         	set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
 	else()
+		set(CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
+
+		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+			set(CMAKE_OSX_ARCHITECTURES i386 x86_64)
+		endif()
+
                 if(IS_DIRECTORY /opt/local/include)
                         include_directories(/opt/local/include)
                         link_directories(/opt/local/lib)
                 endif()
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.5")
         endif()
+
         if(WITH_CLANG)
                 set(CMAKE_C_COMPILER "clang")
         endif()
 
         if (WITH_VERBOSE)
-            # Support for automatic reference counting requires non-fragile abi.
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
-
-            # Tell the compiler where to look for the FreeRDP framework
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v")
         endif()
 endif()
@@ -261,6 +271,7 @@ endif()
 
 if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
+	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
 else()
 	set(X11_FEATURE_TYPE "DISABLED")
@@ -313,6 +324,10 @@ set(NPP_FEATURE_TYPE "OPTIONAL")
 set(NPP_FEATURE_PURPOSE "performance")
 set(NPP_FEATURE_DESCRIPTION "NVIDIA Performance Primitives library")
 
+set(JPEG_FEATURE_TYPE "OPTIONAL")
+set(JPEG_FEATURE_PURPOSE "codec")
+set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
+
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(ZLIB_FEATURE_TYPE "DISABLED")
@@ -329,8 +344,9 @@ if(APPLE)
 	set(DIRECTFB_FEATURE_TYPE "DISABLED")
 	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
 	set(GSTREAMER_FEATURE_TYPE "OPTIONAL")
-	set(X11_FEATURE_TYPE "DISABLED")
+	set(X11_FEATURE_TYPE "OPTIONAL")
 	if(IOS)
+		set(X11_FEATURE_TYPE "DISABLED")
 		set(ALSA_FEATURE_TYPE "DISABLED")
 		set(PULSE_FEATURE_TYPE "DISABLED")
 		set(CUPS_FEATURE_TYPE "DISABLED")
@@ -353,6 +369,11 @@ endif()
 
 find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
 find_feature(DirectFB ${DIRECTFB_FEATURE_TYPE} ${DIRECTFB_FEATURE_PURPOSE} ${DIRECTFB_FEATURE_DESCRIPTION})
+if (${WITH_DIRECTFB})
+	message(WARNING "
+DIRECTFB is orphaned and not maintained see docs/README.directfb for details
+")
+endif()
 
 find_feature(ZLIB ${ZLIB_FEATURE_TYPE} ${ZLIB_FEATURE_PURPOSE} ${ZLIB_FEATURE_DESCRIPTION})
 find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
@@ -365,6 +386,8 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 
 find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FEATURE_DESCRIPTION})
 find_feature(Gstreamer ${GSTREAMER_FEATURE_TYPE} ${GSTREAMER_FEATURE_PURPOSE} ${GSTREAMER_FEATURE_DESCRIPTION})
+
+find_feature(JPEG ${JPEG_FEATURE_TYPE} ${JPEG_FEATURE_PURPOSE} ${JPEG_FEATURE_DESCRIPTION})
 
 if(TARGET_ARCH MATCHES "x86|x64")
 	if (NOT APPLE)
@@ -394,12 +417,12 @@ set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 
 # Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # RPATH configuration
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -424,8 +447,8 @@ if(BUILD_TESTING)
 endif()
 
 # WinPR
-set(WINPR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/winpr/include")
-include_directories(${WINPR_INCLUDE_DIR})
+include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
+include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
 
@@ -449,7 +472,9 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-add_subdirectory(include)
+if (NOT WITH_WAYK)
+    add_subdirectory(include)
+endif()
 
 add_subdirectory(libfreerdp)
 
@@ -473,6 +498,8 @@ endif()
 # Packaging
 
 SET(CPACK_BINARY_ZIP "ON")
+
+if(NOT WITH_WAYK)
 
 set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
 
@@ -529,9 +556,12 @@ if(MSVC)
 	if(MSVC_RUNTIME STREQUAL "dynamic")
 		set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 		include(InstallRequiredSystemLibraries)
+
+if(NOT WITH_WAYK)
 		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
 			DESTINATION ${CMAKE_INSTALL_BINDIR}
 			COMPONENT libraries)
+endif()
     endif()
 			
     set(EXTRA_DATA_DIR "extra/")
@@ -577,3 +607,4 @@ endif()
 
 include(CPack)
 
+endif()

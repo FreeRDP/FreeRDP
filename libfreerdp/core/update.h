@@ -45,7 +45,7 @@ void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 void update_reset_state(rdpUpdate* update);
 void update_post_connect(rdpUpdate* update);
 
-BOOL update_read_bitmap(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmap_update);
+BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmapUpdate);
 BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_update);
 BOOL update_recv_play_sound(rdpUpdate* update, wStream* s);
 BOOL update_recv_pointer(rdpUpdate* update, wStream* s);

@@ -24,6 +24,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/endian.h>
+#include <winpr/synch.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +56,11 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 #define Stream_Read_UINT16(_s, _v) do { _v = \
 	(UINT16)(*_s->pointer) + \
 	(((UINT16)(*(_s->pointer + 1))) << 8); \
+	_s->pointer += 2; } while (0)
+
+#define Stream_Read_INT16(_s, _v) do { _v = \
+	(INT16)(*_s->pointer) + \
+	(((INT16)(*(_s->pointer + 1))) << 8); \
 	_s->pointer += 2; } while (0)
 
 #define Stream_Read_UINT16_BE(_s, _v) do { _v = \
@@ -231,7 +237,7 @@ struct _wStreamPool
 	int uCapacity;
 	wStream** uArray;
 
-	HANDLE mutex;
+	CRITICAL_SECTION lock;
 	BOOL synchronized;
 	size_t defaultSize;
 };

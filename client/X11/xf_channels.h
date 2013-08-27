@@ -27,4 +27,7 @@
 int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);
 
+void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e);
+void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e);
+
 #endif

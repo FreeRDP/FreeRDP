@@ -46,14 +46,14 @@ wEventType* PubSub_GetEventTypes(wPubSub* pubSub, int* count)
  * Methods
  */
 
-BOOL PubSub_Lock(wPubSub* pubSub)
+void PubSub_Lock(wPubSub* pubSub)
 {
-	return (WaitForSingleObject(pubSub->mutex, INFINITE) == WAIT_OBJECT_0) ? TRUE : FALSE;
+	EnterCriticalSection(&pubSub->lock);
 }
 
-BOOL PubSub_Unlock(wPubSub* pubSub)
+void PubSub_Unlock(wPubSub* pubSub)
 {
-	return ReleaseMutex(pubSub->mutex);
+	LeaveCriticalSection(&pubSub->lock);
 }
 
 wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
@@ -167,6 +167,9 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 
 	event = PubSub_FindEventType(pubSub, EventName);
 
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
+
 	if (event)
 	{
 		status = 0;
@@ -180,9 +183,6 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, wEvent
 			}
 		}
 	}
-
-	if (pubSub->synchronized)
-		PubSub_Unlock(pubSub);
 
 	return status;
 }
@@ -202,7 +202,7 @@ wPubSub* PubSub_New(BOOL synchronized)
 		pubSub->synchronized = synchronized;
 
 		if (pubSub->synchronized)
-			pubSub->mutex = CreateMutex(NULL, FALSE, NULL);
+			InitializeCriticalSectionAndSpinCount(&pubSub->lock, 4000);
 
 		pubSub->count = 0;
 		pubSub->size = 64;
@@ -219,7 +219,7 @@ void PubSub_Free(wPubSub* pubSub)
 	if (pubSub)
 	{
 		if (pubSub->synchronized)
-			CloseHandle(pubSub->mutex);
+			DeleteCriticalSection(&pubSub->lock);
 
 		if (pubSub->events)
 			free(pubSub->events);

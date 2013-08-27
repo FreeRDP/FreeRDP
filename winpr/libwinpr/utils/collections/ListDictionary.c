@@ -26,6 +26,8 @@
 /**
  * C equivalent of the C# ListDictionary Class:
  * http://msdn.microsoft.com/en-us/library/system.collections.specialized.listdictionary.aspx
+ *
+ * Internal implementation uses a singly-linked list
  */
 
 /**
@@ -38,7 +40,27 @@
 
 int ListDictionary_Count(wListDictionary* listDictionary)
 {
-	return 0;
+	int count = 0;
+	wListDictionaryItem* item;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			count++;
+			item = item->next;
+		}
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return count;
 }
 
 /**
@@ -78,7 +100,35 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
 
 void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 {
+	wListDictionaryItem* item;
+	wListDictionaryItem* lastItem;
 
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	item = (wListDictionaryItem*) malloc(sizeof(wListDictionaryItem));
+
+	item->key = key;
+	item->value = value;
+
+	item->next = NULL;
+
+	if (!listDictionary->head)
+	{
+		listDictionary->head = item;
+	}
+	else
+	{
+		lastItem = listDictionary->head;
+
+		while (lastItem->next)
+			lastItem = lastItem->next;
+
+		lastItem->next = item;
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
 }
 
 /**
@@ -87,7 +137,28 @@ void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 
 void ListDictionary_Clear(wListDictionary* listDictionary)
 {
+	wListDictionaryItem* item;
+	wListDictionaryItem* nextItem;
 
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			nextItem = item->next;
+			free(item);
+			item = nextItem;
+		}
+
+		listDictionary->head = NULL;
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
 }
 
 /**
@@ -96,7 +167,31 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 
 BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 {
-	return FALSE;
+	BOOL status = FALSE;
+	wListDictionaryItem* item;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			if (item->key == key)
+				break;
+
+			item = item->next;
+		}
+
+		status = (item) ? TRUE : FALSE;
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return status;
 }
 
 /**
@@ -105,7 +200,114 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 
 void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 {
+	wListDictionaryItem* item;
+	wListDictionaryItem* prevItem;
 
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		if (listDictionary->head->key == key)
+		{
+			listDictionary->head = listDictionary->head->next;
+			free(item);
+		}
+		else
+		{
+			if (item->next)
+			{
+				prevItem = item;
+				item = item->next;
+
+				while (item)
+				{
+					if (item->key == key)
+					{
+						prevItem->next = item->next;
+						free(item);
+						break;
+					}
+
+					item = item->next;
+				}
+			}
+		}
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+}
+
+/**
+ * Get an item value using key
+ */
+
+void* ListDictionary_GetItemValue(wListDictionary* listDictionary, void* key)
+{
+	void* value = NULL;
+	wListDictionaryItem* item;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			if (item->key == key)
+				break;
+
+			item = item->next;
+		}
+	}
+
+	value = (item) ? item->value : NULL;
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return value;
+}
+
+/**
+ * Set an item value using key
+ */
+
+BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void* key, void* value)
+{
+	BOOL status = FALSE;
+	wListDictionaryItem* item;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			if (item->key == key)
+				break;
+
+			item = item->next;
+		}
+
+		if (item)
+			item->value = value;
+
+		status = (item) ? TRUE : FALSE;
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return status;
 }
 
 /**
@@ -121,6 +323,10 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 	if (listDictionary)
 	{
 		listDictionary->synchronized = synchronized;
+
+		listDictionary->head = NULL;
+
+		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
 	}
 
 	return listDictionary;
@@ -128,6 +334,11 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 
 void ListDictionary_Free(wListDictionary* listDictionary)
 {
-	free(listDictionary);
+	if (listDictionary)
+	{
+		ListDictionary_Clear(listDictionary);
+		DeleteCriticalSection(&listDictionary->lock);
+		free(listDictionary);
+	}
 }
 

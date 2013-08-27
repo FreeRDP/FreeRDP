@@ -214,6 +214,11 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] =
 	{ KBD_CHINESE_TRADITIONAL_ALPHANUMERIC,			"romanime.ime", "Chinese (Traditional) - Alphanumeric" }
 };
 
+void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts)
+{
+    free(layouts);
+}
+
 RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 {
 	int num, length, i;
