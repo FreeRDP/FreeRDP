@@ -673,14 +673,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t) file->Username))
 	{
-		char* user;
-		char* domain;
+		char* user = NULL;
+		char* domain = NULL;
 
 		freerdp_parse_username(file->Username, &user, &domain);
 		freerdp_set_param_string(settings, FreeRDP_Username, user);
 
 		if (domain != NULL)
 			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
+
+		if (user)
+			free(user);
+		if(domain)
+			free(domain);
 	}
 
 	if (~file->ServerPort)
