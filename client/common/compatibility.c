@@ -279,6 +279,11 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				}
 		}
 
+		for (i=0; i<args->argc; i++)
+			free(args->argv[i]);
+		free(args->argv);
+		free(args);
+
 		return (index - old_index);
 	}
 
