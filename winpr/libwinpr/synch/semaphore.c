@@ -57,7 +57,11 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 		while (lInitialCount > 0)
 		{
 			if (write(semaphore->pipe_fd[1], "-", 1) != 1)
+			{
+				close(semaphore->pipe_fd[0]);
+				close(semaphore->pipe_fd[1]);
 				return FALSE;
+			}
 
 			lInitialCount--;
 		}
