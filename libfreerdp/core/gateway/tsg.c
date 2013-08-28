@@ -599,7 +599,10 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (SizeValue != packetResponse->responseDataLen)
 	{
-		fprintf(stderr, "Unexpected size value: %d, expected: %d\n", SizeValue, packetResponse->responseDataLen);
+		fprintf(stderr, "Unexpected size value: %d, expected: %d\n",
+				SizeValue, packetResponse->responseDataLen);
+		free(packetResponse);
+		free(packet);
 		return FALSE;
 	}
 
