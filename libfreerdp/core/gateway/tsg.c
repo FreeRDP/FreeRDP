@@ -321,6 +321,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP\n",
 					tsgCaps->capabilityType);
+			free(tsgCaps);
+			free(versionCaps);
+			free(packetCapsResponse);
 			return FALSE;
 		}
 
