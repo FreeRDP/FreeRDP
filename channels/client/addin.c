@@ -188,6 +188,8 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 
 	hFind = FindFirstFileA(pszSearchPath, &FindData);
 
+	free(pszSearchPath);
+
 	nAddins = 0;
 	ppAddins = (FREERDP_ADDIN**) malloc(sizeof(FREERDP_ADDIN*) * 128);
 	ppAddins[nAddins] = NULL;
