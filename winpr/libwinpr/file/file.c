@@ -475,6 +475,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		}
 	}
 
+	free(pFileSearch);
 	return INVALID_HANDLE_VALUE;
 }
 
