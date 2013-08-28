@@ -799,6 +799,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			winpr_HexDump(context->MessageIntegrityCheck, 16);
 			fprintf(stderr, "Actual MIC:\n");
 			winpr_HexDump(message->MessageIntegrityCheck, 16);
+			Stream_Free(s, FALSE);
 
 			return SEC_E_MESSAGE_ALTERED;
 		}
