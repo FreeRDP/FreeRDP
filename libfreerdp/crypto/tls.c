@@ -591,6 +591,8 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 				break;
 			}
 		}
+	
+		free(alt_names_length);
 	}
 
 	/* if the certificate is valid and the certificate name matches, verification succeeds */
