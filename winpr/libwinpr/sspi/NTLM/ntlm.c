@@ -43,20 +43,21 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
+	char *ws = Workstation;
 	DWORD nSize = 0;
 
 	if (!Workstation)
 	{
 		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-		Workstation = malloc(nSize);
+		ws = malloc(nSize);
 		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
 	}
 
 	context->Workstation.Length = ConvertToUnicode(CP_UTF8, 0,
-			Workstation, -1, &context->Workstation.Buffer, 0) - 1;
+			ws, -1, &context->Workstation.Buffer, 0) - 1;
 	context->Workstation.Length *= 2;
 
-	if (nSize > 0)
+	if (!Workstation)
 		free(Workstation);
 }
 
