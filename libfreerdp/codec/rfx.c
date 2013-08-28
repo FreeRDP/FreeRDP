@@ -689,6 +689,10 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		if (Stream_GetRemainingLength(s) < 6)
 		{
 			DEBUG_WARN("RfxMessageTileSet packet too small to read tile %d/%d", i, message->numTiles);
+			if (work_objects)
+				free(work_objects);
+			if (params)
+				free(params);
 			return FALSE;
 		}
 
@@ -697,7 +701,12 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
-			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d", i, message->numTiles, blockLen);
+			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d",
+					i, message->numTiles, blockLen);
+			if (work_objects)
+				free(work_objects);
+			if (params)
+				free(params);
 			return FALSE;
 		}
 
