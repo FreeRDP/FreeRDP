@@ -788,6 +788,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 	}
 
+	if (packet)
+		free(packet);
+
 	return TRUE;
 }
 
