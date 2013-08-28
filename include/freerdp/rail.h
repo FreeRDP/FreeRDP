@@ -157,13 +157,13 @@ struct _RAIL_UNICODE_STRING
 };
 typedef struct _RAIL_UNICODE_STRING RAIL_UNICODE_STRING;
 
-struct _HIGH_CONTRAST
+struct _RAIL_HIGH_CONTRAST
 {
 	UINT32 flags;
 	UINT32 colorSchemeLength;
 	RAIL_UNICODE_STRING colorScheme;
 };
-typedef struct _HIGH_CONTRAST HIGH_CONTRAST;
+typedef struct _RAIL_HIGH_CONTRAST RAIL_HIGH_CONTRAST;
 
 /* RAIL Orders */
 
@@ -208,7 +208,7 @@ struct _RAIL_SYSPARAM_ORDER
 	RECTANGLE_16 workArea;
 	RECTANGLE_16 displayChange;
 	RECTANGLE_16 taskbarPos;
-	HIGH_CONTRAST highContrast;
+	RAIL_HIGH_CONTRAST highContrast;
 	BOOL setScreenSaveActive;
 	BOOL setScreenSaveSecure;
 };
