@@ -182,6 +182,8 @@ FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPSTR pszName, LPSTR pszSub
 	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
 	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
 
+	free(pszPattern);
+
 	cchSearchPath = strlen(pszSearchPath);
 
 	hFind = FindFirstFileA(pszSearchPath, &FindData);
