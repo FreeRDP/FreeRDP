@@ -677,7 +677,21 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	if (context->priv->UseThreads)
 	{
 		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
-		params = (RFX_TILE_PROCESS_WORK_PARAM*) malloc(sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->numTiles);
+		params = (RFX_TILE_PROCESS_WORK_PARAM*)
+			malloc(sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->numTiles);
+
+		if (!work_objects)
+		{
+			if (params)
+				free(params);
+			return FALSE;
+		}
+		if (!params)
+		{
+			if (work_objects)
+				free(work_objects);
+			return FALSE;
+		}
 	}
 
 	/* tiles */
