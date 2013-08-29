@@ -50,7 +50,7 @@ void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	{
 		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
 		ws = malloc(nSize);
-		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
+		GetComputerNameExA(ComputerNameNetBIOS, ws, &nSize);
 	}
 
 	context->Workstation.Length = ConvertToUnicode(CP_UTF8, 0,
