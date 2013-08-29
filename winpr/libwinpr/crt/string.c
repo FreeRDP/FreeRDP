@@ -241,6 +241,9 @@ LPSTR CharLowerA(LPSTR lpsz)
 	int i;
 	int length;
 
+	if (!lpsz)
+		return (LPSTR) NULL;
+
 	length = strlen(lpsz);
 
 	if (length < 1)
@@ -248,15 +251,14 @@ LPSTR CharLowerA(LPSTR lpsz)
 
 	if (length == 1)
 	{
-		LPSTR pc = NULL;
 		char c = *lpsz;
 
 		if ((c >= 'A') && (c <= 'Z'))
 			c = c + 32;
 
-		*pc = c;
+		*lpsz = c;
 
-		return pc;
+		return lpsz;
 	}
 
 	for (i = 0; i < length; i++)
