@@ -39,6 +39,8 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	WINPR_SEMAPHORE* semaphore;
 
 	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
+	if (!semaphore)
+		return NULL;
 
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[0] = -1;
