@@ -754,6 +754,9 @@ static int BitBlt_PATPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 
 int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)
 {
+	if (!hdcDest)
+		return 0;
+
 	if (hdcSrc != NULL)
 	{
 		if (gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc, &nYSrc) == 0)
