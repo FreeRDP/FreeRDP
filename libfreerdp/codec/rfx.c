@@ -583,7 +583,7 @@ void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s)
 {
-	int i;
+	int i, close_cnt;
 	int pos;
 	BYTE quant;
 	RFX_TILE* tile;
@@ -692,9 +692,12 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 				free(work_objects);
 			return FALSE;
 		}
+		ZeroMemory(work_objects, sizeof(PTP_WORK) * message->numTiles);
+		ZeroMemory(params, sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->numTiles);
 	}
 
 	/* tiles */
+	close_cnt = 0;
 	for (i = 0; i < message->numTiles; i++)
 	{
 		tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
@@ -760,6 +763,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
 
 			SubmitThreadpoolWork(work_objects[i]);
+			close_cnt = i + 1;
 		}
 		else
 		{
@@ -771,15 +775,17 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (context->priv->UseThreads)
 	{
-		for (i = 0; i < message->numTiles; i++)
+		for (i = 0; i < close_cnt; i++)
 		{
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
 		}
-
-		free(work_objects);
-		free(params);
 	}
+
+	if (work_objects)
+		free(work_objects);
+	if (params)
+		free(params);
 
 	for (i = 0; i < message->numTiles; i++)
 	{
@@ -1063,7 +1069,7 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		int numRects, BYTE* data, int width, int height, int scanline)
 {
-	int i;
+	int i, close_cnt;
 	int xIdx;
 	int yIdx;
 	int numTilesX;
@@ -1077,6 +1083,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
 
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
+	if (!message)
+		return NULL;
+
 	ZeroMemory(message, sizeof(RFX_MESSAGE));
 
 	if (context->state == RFX_STATE_SEND_HEADERS)
@@ -1116,9 +1125,24 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	if (context->priv->UseThreads)
 	{
 		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
-		params = (RFX_TILE_COMPOSE_WORK_PARAM*) malloc(sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
+		if (!work_objects)
+		{
+			free(message);
+			return NULL;
+		}
+		params = (RFX_TILE_COMPOSE_WORK_PARAM*)
+			malloc(sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
+		if (!params)
+		{
+			free(message);
+			free(work_objects);
+			return NULL;
+		}
+		ZeroMemory(work_objects, sizeof(PTP_WORK) * message->numTiles);
+		ZeroMemory(params, sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
 	}
 
+	close_cnt = 0;
 	for (yIdx = 0; yIdx < numTilesY; yIdx++)
 	{
 		for (xIdx = 0; xIdx < numTilesX; xIdx++)
@@ -1164,6 +1188,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 					(void*) &params[i], &context->priv->ThreadPoolEnv);
 
 				SubmitThreadpoolWork(work_objects[i]);
+				close_cnt = i + 1;
 			}
 			else
 			{
@@ -1174,11 +1199,11 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 
 	message->tilesDataSize = 0;
 
-	for (i = 0; i < message->numTiles; i++)
+	for (i = 0; i < close_cnt; i++)
 	{
 		tile = message->tiles[i];
 
-		if (context->priv->UseThreads)
+		if (context->priv->UseThreads && work_objects)
 		{
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
@@ -1187,11 +1212,11 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		message->tilesDataSize += rfx_tile_length(tile);
 	}
 
-	if (context->priv->UseThreads)
-	{
+	if (work_objects)
 		free(work_objects);
+
+	if (params)
 		free(params);
-	}
 
 	return message;
 }

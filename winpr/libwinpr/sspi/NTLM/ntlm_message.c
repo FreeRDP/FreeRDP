@@ -650,6 +650,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	message = &context->AUTHENTICATE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_AUTHENTICATE_MESSAGE));
+	ZeroMemory(&response, sizeof(NTLMv2_RESPONSE));
 
 	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
 

@@ -399,6 +399,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
 				versionCaps->tsgHeader.ComponentId);
+			free(packet);
 			return FALSE;
 		}
 
@@ -436,6 +437,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
 				"or TSG_PACKET_TYPE_QUARENC_RESPONSE\n", packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -565,7 +567,9 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
-		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n", packet->packetId);
+		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n",
+				packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -580,6 +584,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		fprintf(stderr, "Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST\n",
 				packetResponse->flags);
+		free(packet);
+		free(packetResponse);
 		return FALSE;
 	}
 
@@ -715,7 +721,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) || (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
 	{
-		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n", packet->packetId);
+		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n",
+				packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -783,7 +791,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		default:
-			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n", SwitchValue);
+			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
+					SwitchValue);
+			free(packet);
 			return FALSE;
 			break;
 	}

@@ -112,6 +112,9 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 			break;
 	}
 
+	if (!ptr)
+		return pFormat;
+
 	switch (type)
 	{
 		case FC_LONG:

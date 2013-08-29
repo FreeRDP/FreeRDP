@@ -287,6 +287,8 @@ char* GetCombinedPath(char* basePath, char* subPath)
 
 	length = basePathLength + subPathLength + 1;
 	path = (char*) malloc(length + 1);
+	if (!path)
+		return NULL;
 
 	CopyMemory(path, basePath, basePathLength);
 	path[basePathLength] = '\0';

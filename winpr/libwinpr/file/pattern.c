@@ -314,7 +314,7 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 		LPSTR lpY;
 		size_t cchX;
 		size_t cchY;
-		LPSTR lpMatchEnd;
+		LPSTR lpMatchEnd = NULL;
 		LPSTR lpSubPattern;
 		size_t cchSubPattern;
 		LPSTR lpSubFileName;

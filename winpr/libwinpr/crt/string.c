@@ -159,22 +159,23 @@ LPSTR CharUpperA(LPSTR lpsz)
 	int i;
 	int length;
 
-	length = strlen(lpsz);
+	if (!lpsz)
+		return NULL;
 
+	length = strlen(lpsz);
 	if (length < 1)
 		return (LPSTR) NULL;
 
 	if (length == 1)
 	{
-		LPSTR pc = NULL;
 		char c = *lpsz;
 
 		if ((c >= 'a') && (c <= 'z'))
 			c = c - 32;
 
-		*pc = c;
+		*lpsz = c;
 
-		return pc;
+		return lpsz;
 	}
 
 	for (i = 0; i < length; i++)

@@ -1032,7 +1032,10 @@ static UINT32 handle_Control(IRP* irp)
 	sendBuffer = malloc(outBufferSize);
 
 	if (!sendBuffer)
+	{
+		free(recvBuffer);
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
+	}
 
 	status = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
 		sendBuffer, (DWORD) outBufferSize, &nBytesReturned);

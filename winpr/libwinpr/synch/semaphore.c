@@ -53,6 +53,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 		if (pipe(semaphore->pipe_fd) < 0)
 		{
 			fprintf(stderr, "CreateSemaphoreW: failed to create semaphore\n");
+			free(semaphore);
 			return NULL;
 		}
 
@@ -62,6 +63,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 			{
 				close(semaphore->pipe_fd[0]);
 				close(semaphore->pipe_fd[1]);
+				free(semaphore);
 				return FALSE;
 			}
 

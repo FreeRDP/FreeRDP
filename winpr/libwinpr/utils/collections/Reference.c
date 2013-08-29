@@ -70,6 +70,9 @@ wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
 
 	if (!found)
 	{
+		if (!referenceTable->size)
+			return NULL;
+
 		referenceTable->size *= 2;
 		referenceTable->array = (wReference*) realloc(referenceTable->array, sizeof(wReference) * referenceTable->size);
 

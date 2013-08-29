@@ -125,6 +125,9 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 	}
 	else if (strcmp(args->argv[0], "rdpdr") == 0)
 	{
+		if (args->argc < 2)
+			return -1;
+
 		if ((strcmp(args->argv[1], "disk") == 0) ||
 			(strcmp(args->argv[1], "drive") == 0))
 		{
@@ -156,11 +159,17 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 	}
 	else if (strcmp(args->argv[0], "rdpsnd") == 0)
 	{
+		if (args->argc < 2)
+			return -1;
+
 		freerdp_addin_replace_argument_value(args, args->argv[1], "sys", args->argv[1]);
 		freerdp_client_add_static_channel(settings, args->argc, args->argv);
 	}
 	else if (strcmp(args->argv[0], "rail") == 0)
 	{
+		if (args->argc < 2)
+			return -1;
+
 		settings->RemoteApplicationProgram = _strdup(args->argv[1]);
 	}
 	else

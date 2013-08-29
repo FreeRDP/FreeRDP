@@ -417,7 +417,10 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	wave->wAudioLength = rdpsnd_compute_audio_time_length(format, size);
 
 	if (!rdpsnd->device)
+	{
+		free(wave);
 		return;
+	}
 
 	if (rdpsnd->device->WaveDecode)
 	{

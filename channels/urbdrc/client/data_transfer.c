@@ -279,6 +279,7 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 
 		default:
 			LLOGLN(urbdrc_debug, ("urbdrc_process_io_control: unknown IoControlCode 0x%X", IoControlCode));
+			zfree(OutputBuffer);
 			return -1;
 			break;
 	}
@@ -1718,6 +1719,7 @@ static int urb_control_feature_request(URBDRC_CHANNEL_CALLBACK * callback, BYTE 
 			break;
 		default:
 			fprintf(stderr, "urb_control_feature_request: Error Command %x\n", command);
+			zfree(out_data);
 			return -1;
 	}
 

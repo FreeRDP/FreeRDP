@@ -183,6 +183,9 @@ RegVal* reg_load_value(Reg* reg, RegKey* key)
 
 BOOL reg_load_has_next_line(Reg* reg)
 {
+	if (!reg)
+		return FALSE;
+
 	return (reg->next_line != NULL) ? 1 : 0;
 }
 
