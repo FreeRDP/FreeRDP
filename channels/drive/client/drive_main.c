@@ -117,7 +117,7 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* disk, UINT32 id)
 
 static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 {
-	char* path;
+	char* path = NULL;
 	int status;
 	UINT32 FileId;
 	DRIVE_FILE* file;
