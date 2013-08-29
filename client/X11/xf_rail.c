@@ -565,7 +565,7 @@ const char* movetype_names[] =
 
 void xf_process_rail_server_localmovesize_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
-	int x, y;
+	int x = 0, y = 0;
 	rdpRail* rail;
 	int direction = 0;
 	Window child_window;

@@ -592,7 +592,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			}
 		}
 	
-		free(alt_names_length);
+		free(alt_names_lengths);
 	}
 
 	/* if the certificate is valid and the certificate name matches, verification succeeds */

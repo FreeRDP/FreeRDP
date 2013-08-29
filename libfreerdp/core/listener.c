@@ -306,6 +306,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 				continue;
 #endif
 			perror("accept");
+			free(client);
 			return FALSE;
 		}
 

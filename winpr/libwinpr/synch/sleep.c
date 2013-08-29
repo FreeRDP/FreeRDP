@@ -30,7 +30,9 @@
 #include <time.h>
 
 #ifdef HAVE_UNISTD_H
-#define _XOPEN_SOURCE 500
+	#ifndef _XOPEN_SOURCE
+		#define _XOPEN_SOURCE 500
+	#endif
 #include <unistd.h>
 #endif
 
