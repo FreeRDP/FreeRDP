@@ -140,10 +140,13 @@ void sspi_ContextBufferAllocTableNew()
 void sspi_ContextBufferAllocTableGrow()
 {
 	size_t size;
+	ContextBufferAllocTable.entries = NULL;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries *= 2;
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
+	if (!size)
+		return;
 
 	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
 	ZeroMemory((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], size / 2);

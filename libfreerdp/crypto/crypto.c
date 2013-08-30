@@ -395,8 +395,8 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 {
 	int index;
-	int length;
-	char** strings;
+	int length = 0;
+	char** strings = NULL;
 	BYTE* string;
 	int num_subject_alt_names;
 	GENERAL_NAMES* subject_alt_names;
@@ -409,8 +409,11 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		return NULL;
 
 	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
-	strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
-	*lengths = (int*) malloc(sizeof(int*) * num_subject_alt_names);
+	if (num_subject_alt_names)
+	{
+		strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+		*lengths = (int*) malloc(sizeof(int) * num_subject_alt_names);
+	}
 
 	for (index = 0; index < num_subject_alt_names; ++index)
 	{

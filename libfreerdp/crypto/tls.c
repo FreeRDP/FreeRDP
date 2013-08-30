@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 
@@ -717,6 +719,9 @@ void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name
 {
 	int index;
 
+	assert(NULL != hostname);
+	assert(NULL != common_name);
+	
 	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 	fprintf(stderr, "@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
 	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
@@ -726,11 +731,13 @@ void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name
 	fprintf(stderr, "\t%s\n", common_name ? common_name : "no CN found in certificate");
 	if (alt_names_count > 1)
 	{
+		assert(NULL != alt_names);
 		fprintf(stderr, "Alternative names:\n");
 		if (alt_names_count > 1)
 		{
 			for (index = 0; index < alt_names_count; index++)
 			{
+				assert(alt_names[index]);
 				fprintf(stderr, "\t %s\n", alt_names[index]);
 			}
 		}

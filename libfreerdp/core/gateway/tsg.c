@@ -295,6 +295,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
 					versionCaps->tsgHeader.ComponentId);
+			free(packetCapsResponse);
+			free(versionCaps);
+			free(packet);
 			return FALSE;
 		}
 
@@ -324,6 +327,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			free(tsgCaps);
 			free(versionCaps);
 			free(packetCapsResponse);
+			free(packet);
 			return FALSE;
 		}
 
@@ -399,6 +403,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
 				versionCaps->tsgHeader.ComponentId);
+			free(versionCaps);
+			free(packetQuarEncResponse);
 			free(packet);
 			return FALSE;
 		}

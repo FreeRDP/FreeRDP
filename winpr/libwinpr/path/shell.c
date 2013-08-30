@@ -290,7 +290,8 @@ char* GetCombinedPath(char* basePath, char* subPath)
 	if (!path)
 		return NULL;
 
-	CopyMemory(path, basePath, basePathLength);
+	if (basePath)
+		CopyMemory(path, basePath, basePathLength);
 	path[basePathLength] = '\0';
 
 	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);

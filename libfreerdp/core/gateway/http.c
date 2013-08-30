@@ -503,7 +503,11 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 			http_response->count = count;
-			http_response->lines = (char**) malloc(sizeof(char*) * http_response->count);
+			if (count)
+			{
+				http_response->lines = (char**) malloc(sizeof(char*) * http_response->count);
+				ZeroMemory(http_response->lines, sizeof(char*) * http_response->count);
+			}
 
 			count = 0;
 			line = strtok((char*) buffer, "\r\n");

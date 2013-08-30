@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -756,6 +757,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (context->priv->UseThreads)
 		{
+			assert(params);
+
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
 
@@ -1116,15 +1119,19 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	numTilesY = (height + 63) / 64;
 
 	message->numTiles = numTilesX * numTilesY;
-	message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE) * message->numTiles);
-	ZeroMemory(message->tiles, sizeof(RFX_TILE) * message->numTiles);
+	if (message->numTiles)
+	{
+		message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->numTiles);
+		ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->numTiles);
+	}
 
 	DEBUG_RFX("x: %d y: %d width: %d height: %d scanline: %d BytesPerPixel: %d",
 			rect->x, rect->y, width, height, scanline, BytesPerPixel);
 
 	if (context->priv->UseThreads)
 	{
-		work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
+		if (message->numTiles)
+			work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
 		if (!work_objects)
 		{
 			free(message);
@@ -1181,6 +1188,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 
 			if (context->priv->UseThreads)
 			{
+				assert(params);
+
 				params[i].context = context;
 				params[i].tile = tile;
 

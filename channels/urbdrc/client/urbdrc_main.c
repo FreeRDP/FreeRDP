@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -286,6 +287,9 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 M
 	char* out_data;
 
 	LLOGLN(10, ("urdbrc_send_virtual_channel_add"));
+
+	assert(NULL != channel);
+	assert(NULL != channel->Write);
 
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_DEVICE_SINK);
 
@@ -830,7 +834,10 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			transfer_data = (TRANSFER_DATA*) malloc(sizeof(TRANSFER_DATA));
 
 			if (transfer_data == NULL)
+			{
 				fprintf(stderr, "transfer_data is NULL!!");
+				return 0;
+			}
 
 			transfer_data->callback = callback;
 			transfer_data->urbdrc = urbdrc;

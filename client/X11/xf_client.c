@@ -1650,7 +1650,7 @@ void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
 	}
 }
 
-void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
+static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1668,12 +1668,12 @@ void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChange
 	xf_transform_window(xfc);
 
 	{
-		ResizeWindowEventArgs e;
+		ResizeWindowEventArgs ev;
 
-		EventArgsInit(&e, "xfreerdp");
-		e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-		e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+		EventArgsInit(&ev, "xfreerdp");
+		ev.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
+		ev.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
+		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &ev);
 	}
 	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 
@@ -1683,19 +1683,19 @@ void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChange
  * Client Interface
  */
 
-void xfreerdp_client_global_init()
+static void xfreerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");
 	freerdp_handle_signals();
 	freerdp_channels_global_init();
 }
 
-void xfreerdp_client_global_uninit()
+static void xfreerdp_client_global_uninit()
 {
 	freerdp_channels_global_uninit();
 }
 
-int xfreerdp_client_start(rdpContext* context)
+static int xfreerdp_client_start(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1712,7 +1712,7 @@ int xfreerdp_client_start(rdpContext* context)
 	return 0;
 }
 
-int xfreerdp_client_stop(rdpContext* context)
+static int xfreerdp_client_stop(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -1735,7 +1735,7 @@ int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-int xfreerdp_client_new(freerdp* instance, rdpContext* context)
+static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc;
 	rdpSettings* settings;
@@ -1791,7 +1791,7 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	return 0;
 }
 
-void xfreerdp_client_free(freerdp* instance, rdpContext* context)
+static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 

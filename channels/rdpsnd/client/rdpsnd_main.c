@@ -146,8 +146,10 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	rdpsnd->NumberOfClientFormats = 0;
 	rdpsnd->ClientFormats = NULL;
 
-	rdpsnd->ClientFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) * rdpsnd->NumberOfServerFormats);
+	if (!rdpsnd->NumberOfServerFormats)
+		return;
 
+	rdpsnd->ClientFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) * rdpsnd->NumberOfServerFormats);
 	for (index = 0; index < (int) rdpsnd->NumberOfServerFormats; index++)
 	{
 		serverFormat = &rdpsnd->ServerFormats[index];

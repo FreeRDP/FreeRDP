@@ -11,7 +11,7 @@
 
 LPSTR tmp = NULL;
 
-LPCSTR tr_esc_str(LPCSTR arg)
+LPSTR tr_esc_str(LPSTR arg)
 {
 	size_t cs = 0, x, ds;
 	size_t s;
@@ -26,7 +26,8 @@ LPCSTR tr_esc_str(LPCSTR arg)
 		s--;
 
 	/* Prepare a initial buffer with the size of the result string. */
-	tmp = malloc(s * sizeof(LPCSTR));
+	if (s)
+		tmp = (LPSTR)malloc(s * sizeof(CHAR));
 	if( NULL == tmp )
 	{
 		fprintf(stderr, "Could not allocate string buffer.");
@@ -41,7 +42,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 		{
 			case '<':
 				ds += 3;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -54,7 +55,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '>':
 				ds += 3;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -67,7 +68,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '\'':
 				ds += 5;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -82,7 +83,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '"':
 				ds += 5;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -97,7 +98,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '&':
 				ds += 4;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");

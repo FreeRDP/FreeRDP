@@ -1234,7 +1234,10 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
 	if (!readerStates)
+	{
+		free(pAtrMasks);
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
+	}
 
 	for (i = 0; i < readerCount; i++)
 	{
@@ -1284,6 +1287,8 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		DEBUG_SCARD("Failure: %s (0x%08x)",
 			pcsc_stringify_error(status), (unsigned) status);
 
+		free(readerStates);
+		free(pAtrMasks);
 		return smartcard_output_return(irp, status);
 	}
 
@@ -1313,7 +1318,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	Stream_Write_UINT32(irp->output, 0x00084dd8);
 	Stream_Write_UINT32(irp->output, readerCount);
 
-	for (i = 0, rsCur = readerStates; i < readerCount; i++, rsCur++)
+	for (i = 0, cur = readerStates; i < readerCount; i++, cur++)
 	{
 		Stream_Write_UINT32(irp->output, cur->dwCurrentState);
 		Stream_Write_UINT32(irp->output, cur->dwEventState);
@@ -1328,6 +1333,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	smartcard_output_alignment(irp, 8);
 
 	free(readerStates);
+	free(pAtrMasks);
 
 	return status;
 }
