@@ -75,7 +75,8 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 		free(icon_info->colorTable);
 		icon_info->colorTable = NULL;
 	}
-	Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
+	if (icon_info->colorTable)
+		Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
 
 	/* bitsColor */
 	if (icon_info->bitsColor == NULL)
