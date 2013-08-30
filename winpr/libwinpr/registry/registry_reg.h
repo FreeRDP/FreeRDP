@@ -16,6 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef REGISTRY_REG_H_
+#define REGISTRY_REG_H_
 
 #include <winpr/registry.h>
 
@@ -62,3 +64,6 @@ struct _reg_key
 };
 
 Reg* reg_open(BOOL read_only);
+void reg_close(Reg *reg);
+
+#endif

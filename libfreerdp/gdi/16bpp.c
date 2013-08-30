@@ -400,7 +400,7 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT16 color16;
 	HGDI_BITMAP hSrcBmp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	/* D = (S & P) | (~S & D) */

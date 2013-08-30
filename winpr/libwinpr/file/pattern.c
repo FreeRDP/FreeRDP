@@ -86,6 +86,9 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 {
 	LPSTR lpMatch;
 
+	if (!lpFileName)
+		return FALSE;
+
 	if (*lpWildcard == '*')
 	{
 		/*

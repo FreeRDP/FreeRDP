@@ -160,7 +160,7 @@ static int BitBlt_SRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* srcp;
 	BYTE* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
@@ -224,7 +224,7 @@ static int BitBlt_NOTSRCCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -274,7 +274,7 @@ static int BitBlt_SRCERASE_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -302,7 +302,7 @@ static int BitBlt_NOTSRCERASE_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -330,7 +330,7 @@ static int BitBlt_SRCINVERT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -358,7 +358,7 @@ static int BitBlt_SRCAND_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -386,7 +386,7 @@ static int BitBlt_SRCPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT32* srcp;
 	UINT32* dstp;
 		
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -419,7 +419,7 @@ static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT32 color32;
 	HGDI_BITMAP hSrcBmp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	/* D = (S & P) | (~S & D) */
@@ -484,7 +484,7 @@ static int BitBlt_PSDPxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT32* patp;
 	UINT32 color32;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	/* D = (S & D) | (~S & P) */
@@ -541,7 +541,7 @@ static int BitBlt_SPDSxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT32* patp;
 	UINT32 color32;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	/* D = S ^ (P & (D ^ S)) */
@@ -597,7 +597,7 @@ static int BitBlt_SPna_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 	UINT32* dstp;
 	UINT32* patp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -627,7 +627,7 @@ static int BitBlt_DSna_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 	UINT32* srcp;
 	UINT32* dstp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -706,7 +706,7 @@ static int BitBlt_MERGECOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	UINT32* dstp;
 	UINT32* patp;
 	
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -736,7 +736,7 @@ static int BitBlt_MERGEPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 	UINT32* srcp;
 	UINT32* dstp;
 	
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
@@ -870,7 +870,7 @@ static int BitBlt_PATPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT32* dstp;
 	UINT32* patp;
 
-	if (!hdcDst || !hdcSrc)
+	if (!hdcDest || !hdcSrc)
 		return 1;
 
 	for (y = 0; y < nHeight; y++)
