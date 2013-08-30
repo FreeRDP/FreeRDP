@@ -23,13 +23,11 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <strings.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 #define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
@@ -153,6 +151,7 @@ static void smartcard_output_buffer_limit(IRP* irp, char* buffer, unsigned int l
 	}
 	else
 	{
+		assert(NULL != buffer);
 		if (header < length)
 			length = header;
 
@@ -485,6 +484,11 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
 				(unsigned) cur->dwEventState);
 
+			if (!cur->szReader)
+			{
+				DEBUG_WARN("cur->szReader=%p", cur->szReader);
+				continue;
+			}
 			if (strcmp(cur->szReader, "\\\\?PnP?\\Notification") == 0)
 				cur->dwCurrentState |= SCARD_STATE_IGNORE;
 		}
@@ -966,15 +970,19 @@ static UINT32 handle_Transmit(IRP* irp)
 
 		Stream_Write_UINT32(irp->output, 0); 	/* pioRecvPci 0x00; */
 
-		smartcard_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
-
-		smartcard_output_buffer(irp, (char*) recvBuf, cbRecvLength);
+		if (recvBuf)
+		{
+			smartcard_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
+			smartcard_output_buffer(irp, (char*) recvBuf, cbRecvLength);
+		}
 	}
 
 	smartcard_output_alignment(irp, 8);
 
-	free(sendBuf);
-	free(recvBuf);
+	if (sendBuf)
+		free(sendBuf);
+	if (recvBuf)
+		free(recvBuf);
 
 	return status;
 }
@@ -1277,6 +1285,11 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
 				(unsigned) cur->dwEventState);
 
+		if (!cur->szReader)
+		{
+			DEBUG_WARN("cur->szReader=%p", cur->szReader);
+			continue;
+		}
 		if (strcmp(cur->szReader, "\\\\?PnP?\\Notification") == 0)
 			cur->dwCurrentState |= SCARD_STATE_IGNORE;
 	}
