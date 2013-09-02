@@ -22,7 +22,7 @@
 #endif
 
 #include <stdio.h>
-
+#include <assert.h>
 #include <winpr/crt.h>
 
 #include <freerdp/update.h>
@@ -73,7 +73,7 @@ void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	brush->style = style;
 }
 
-void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
+static void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
 	int length;
 	void* data = NULL;
@@ -90,6 +90,9 @@ void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)
 {
 	void* entry;
+
+	assert(brush);
+	assert(bpp);
 
 	if (*bpp == 1)
 	{
@@ -132,6 +135,8 @@ void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp
 		if (index >= brush->maxMonoEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			if (entry)
+				free(entry);
 			return;
 		}
 
@@ -148,6 +153,8 @@ void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp
 		if (index >= brush->maxEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			if (entry)
+				free(entry);
 			return;
 		}
 
