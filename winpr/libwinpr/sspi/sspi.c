@@ -128,6 +128,7 @@ void sspi_ContextBufferAllocTableNew()
 {
 	size_t size;
 
+	ContextBufferAllocTable.entries = NULL;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries = 4;
 
@@ -140,7 +141,6 @@ void sspi_ContextBufferAllocTableNew()
 void sspi_ContextBufferAllocTableGrow()
 {
 	size_t size;
-	ContextBufferAllocTable.entries = NULL;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries *= 2;
 

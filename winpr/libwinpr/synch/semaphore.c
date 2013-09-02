@@ -64,7 +64,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 				close(semaphore->pipe_fd[0]);
 				close(semaphore->pipe_fd[1]);
 				free(semaphore);
-				return FALSE;
+				return NULL;
 			}
 
 			lInitialCount--;

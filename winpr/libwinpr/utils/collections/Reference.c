@@ -71,10 +71,16 @@ wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
 	if (!found)
 	{
 		if (!referenceTable->size)
+		{
+			if (referenceTable->array)
+				free(referenceTable->array);
+			referenceTable->array = NULL;
 			return NULL;
+		}
 
 		referenceTable->size *= 2;
-		referenceTable->array = (wReference*) realloc(referenceTable->array, sizeof(wReference) * referenceTable->size);
+		referenceTable->array = (wReference*) realloc(referenceTable->array,
+				sizeof(wReference) * referenceTable->size);
 
 		ZeroMemory(&referenceTable->array[(referenceTable->size / 2)],
 				sizeof(wReference) * (referenceTable->size / 2));
