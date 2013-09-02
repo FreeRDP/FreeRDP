@@ -694,6 +694,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 
 BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
+	BOOL rc = TRUE;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -799,15 +800,22 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		default:
 			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
 					SwitchValue);
-			free(packet);
-			return FALSE;
+			rc = FALSE;
 			break;
 	}
 
 	if (packet)
+	{
+		if (packet->tsgPacket.packetMsgResponse)
+		{
+			if (packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage)
+				free(packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage);
+			free(packet->tsgPacket.packetMsgResponse);
+		}
 		free(packet);
+	}
 
-	return TRUE;
+	return rc;
 }
 
 BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
