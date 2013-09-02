@@ -590,6 +590,7 @@ void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s)
 {
+	BOOL rc;
 	int i, close_cnt;
 	int pos;
 	BYTE quant;
@@ -705,6 +706,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	/* tiles */
 	close_cnt = 0;
+	rc = TRUE;
 	for (i = 0; i < message->numTiles; i++)
 	{
 		tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
@@ -713,11 +715,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		if (Stream_GetRemainingLength(s) < 6)
 		{
 			DEBUG_WARN("RfxMessageTileSet packet too small to read tile %d/%d", i, message->numTiles);
-			if (work_objects)
-				free(work_objects);
-			if (params)
-				free(params);
-			return FALSE;
+			rc = FALSE;
+			break;
 		}
 
 		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes), must be set to CBT_TILE (0xCAC3) */
@@ -727,11 +726,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		{
 			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d",
 					i, message->numTiles, blockLen);
-			if (work_objects)
-				free(work_objects);
-			if (params)
-				free(params);
-			return FALSE;
+			rc = FALSE;
+			break;
 		}
 
 		pos = Stream_GetPosition(s) - 6 + blockLen;
@@ -803,7 +799,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		tile->YData = tile->CbData = tile->CrData = NULL;
 	}
 
-	return TRUE;
+	return rc;
 }
 
 RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length)
