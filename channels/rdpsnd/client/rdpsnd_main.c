@@ -381,10 +381,7 @@ void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE 
 
 void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	RDPSND_WAVE *copy = malloc(sizeof(RDPSND_WAVE));
-	CopyMemory(copy, wave, sizeof(RDPSND_WAVE));
-
-	MessageQueue_Post(device->rdpsnd->queue, NULL, 0, (void*) copy, NULL);
+	MessageQueue_Post(device->rdpsnd->queue, NULL, 0, (void*) wave, NULL);
 }
 
 static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
@@ -447,7 +444,8 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + TIME_DELAY_MS;
 		rdpsnd->device->WaveConfirm(rdpsnd->device, wave);
 	}
-	free(wave);
+	else
+		free(wave);
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
