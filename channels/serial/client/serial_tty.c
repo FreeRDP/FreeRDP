@@ -412,7 +412,11 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 	status = read(tty->fd, buffer, *Length);
 
 	if (status < 0)
+	{
+		DEBUG_WARN("failed with %zd, errno=[%d] %s\n", 
+				status, errno, strerror(errno));
 		return FALSE;
+	}
 
 	tty->event_txempty = status;
 	*Length = status;
@@ -455,6 +459,9 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 void serial_tty_free(SERIAL_TTY* tty)
 {
 	DEBUG_SVC("in");
+
+	if(!tty)
+		return;
 
 	if (tty->fd >= 0)
 	{

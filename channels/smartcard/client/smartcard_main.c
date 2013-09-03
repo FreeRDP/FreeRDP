@@ -44,8 +44,7 @@ static void smartcard_free(DEVICE* dev)
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) dev;
 
 	SetEvent(smartcard->stopEvent);
-	CloseHandle(smartcard->thread);
-	CloseHandle(smartcard->irpEvent);
+	WaitForSingleObject(smartcard->thread, INFINITE);
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(smartcard->pIrpList)) != NULL)
 		irp->Discard(irp);
@@ -55,8 +54,14 @@ static void smartcard_free(DEVICE* dev)
 	/* Begin TS Client defect workaround. */
 
 	while ((CompletionIdInfo = (COMPLETIONIDINFO*) list_dequeue(smartcard->CompletionIds)) != NULL)
-	        free(CompletionIdInfo);
+		free(CompletionIdInfo);
 
+	CloseHandle(smartcard->thread);
+	CloseHandle(smartcard->irpEvent);
+	CloseHandle(smartcard->stopEvent);
+	CloseHandle(smartcard->CompletionIdsMutex);
+
+	Stream_Free(smartcard->device.data, TRUE);
 	list_free(smartcard->CompletionIds);
 
 	/* End TS Client defect workaround. */
@@ -119,13 +124,16 @@ static void smartcard_process_irp_thread_func(SMARTCARD_IRP_WORKER* irpWorker)
 static void* smartcard_thread_func(void* arg)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) arg;
+	HANDLE ev[] = {smartcard->irpEvent, smartcard->stopEvent};
 
 	while (1)
 	{
-		WaitForSingleObject(smartcard->irpEvent, INFINITE);
+		DWORD status = WaitForMultipleObjects(2, ev, FALSE, INFINITE);
 
-		if (WaitForSingleObject(smartcard->stopEvent, 0) == WAIT_OBJECT_0)
+		if (status == WAIT_OBJECT_0 + 1)
 			break;
+		else if(status != WAIT_OBJECT_0)
+			continue;
 
 		ResetEvent(smartcard->irpEvent);
 		smartcard_process_irp_list(smartcard);

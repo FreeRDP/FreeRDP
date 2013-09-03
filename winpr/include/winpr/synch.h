@@ -139,14 +139,22 @@ typedef RTL_CONDITION_VARIABLE CONDITION_VARIABLE, *PCONDITION_VARIABLE;
 
 /* Critical Section */
 
+#if defined(__linux__)
+/**
+ * Linux NPTL thread synchronization primitives are implemented using
+ * the futex system calls ... we can't beat futex with a spin loop.
+ */
+#define WINPR_CRITICAL_SECTION_DISABLE_SPINCOUNT
+#endif
+
 typedef struct _RTL_CRITICAL_SECTION
 {
-	void* DebugInfo;
+	PVOID DebugInfo;
 	LONG LockCount;
 	LONG RecursionCount;
-	PVOID OwningThread;
-	PVOID LockSemaphore;
-	ULONG SpinCount;
+	HANDLE OwningThread;
+	HANDLE LockSemaphore;
+	ULONG_PTR SpinCount;
 } RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
 
 typedef RTL_CRITICAL_SECTION CRITICAL_SECTION;
