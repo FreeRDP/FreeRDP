@@ -488,6 +488,7 @@ BOOL nego_recv_response(rdpNego* nego)
 		return FALSE;
 	}
 
+	Stream_Free(s, TRUE);
 	return TRUE;
 }
 

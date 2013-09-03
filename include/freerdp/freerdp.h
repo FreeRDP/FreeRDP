@@ -57,6 +57,7 @@ typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
 typedef BOOL (*pPreConnect)(freerdp* instance);
 typedef BOOL (*pPostConnect)(freerdp* instance);
+typedef void (*pPostDisconnect)(freerdp* instance);
 typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
@@ -194,7 +195,11 @@ struct rdp_freerdp
 
 	ALIGN64 pLogonErrorInfo LogonErrorInfo; /**< (offset 53)  Callback for logon error info, important for logon system messages with RemoteApp */
 
-	UINT64 paddingD[64 - 54]; /* 54 */
+	ALIGN64 pPostDisconnect PostDisconnect; /**< (offset 54)
+																						Callback for cleaning up resources allocated
+																						by connect callbacks. */
+
+	UINT64 paddingD[64 - 55]; /* 55 */
 
 	ALIGN64 pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.
