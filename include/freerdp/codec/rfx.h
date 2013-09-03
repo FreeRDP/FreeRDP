@@ -55,6 +55,7 @@ struct _RFX_TILE
 	int height;
 	BYTE* data;
 	int scanline;
+	BOOL allocated;
 
 	BYTE quantIdxY;
 	BYTE quantIdxCb;
