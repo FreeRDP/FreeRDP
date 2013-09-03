@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -718,6 +720,20 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
+static void xf_post_disconnect(freerdp *instance)
+{
+	xfContext* xfc = (xfContext*) instance->context;
+
+	assert(NULL != instance);
+	assert(NULL != xfc);
+	assert(NULL != instance->settings);
+
+	WaitForSingleObject(xfc->mutex, INFINITE);
+	CloseHandle(xfc->mutex);
+
+	xf_monitors_free(xfc, instance->settings);
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
@@ -735,7 +751,6 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfContext* xfc = (xfContext*) instance->context;
 
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
-
 	xfc->settings = instance->settings;
 	xfc->instance = instance;
 
@@ -1355,7 +1370,7 @@ void* xf_thread(void* param)
 	{
 		freerdp_disconnect(instance);
 		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
-		exit(!status);
+		ExitThread(exit_code);
 	}
 
 	if (!status)
@@ -1714,6 +1729,9 @@ int xfreerdp_client_stop(rdpContext* context)
 		xfc->disconnect = TRUE;
 	}
 
+	WaitForSingleObject(xfc->thread, INFINITE);
+	CloseHandle(xfc->thread);
+
 	return 0;
 }
 
@@ -1726,6 +1744,7 @@ int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
+	instance->PostDisconnect = xf_post_disconnect;
 	instance->Authenticate = xf_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;

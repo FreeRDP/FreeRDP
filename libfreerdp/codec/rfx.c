@@ -164,6 +164,7 @@ RFX_TILE* rfx_decoder_tile_new()
 		ZeroMemory(tile, sizeof(RFX_TILE));
 
 		tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
+		tile->allocated = TRUE;
 	}
 
 	return tile;
@@ -173,7 +174,8 @@ void rfx_decoder_tile_free(RFX_TILE* tile)
 {
 	if (tile)
 	{
-		free(tile->data);
+		if (tile->allocated)
+			free(tile->data);
 		free(tile);
 	}
 }
@@ -1144,6 +1146,11 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 
 			ax = rect->x + tile->x;
 			ay = rect->y + tile->y;
+			if (tile->data && tile->allocated)
+			{
+				free(tile->data);
+				tile->allocated = FALSE;
+			}
 			tile->data = &data[(ay * scanline) + (ax * BytesPerPixel)];
 
 			tile->quantIdxY = context->quantIdxY;

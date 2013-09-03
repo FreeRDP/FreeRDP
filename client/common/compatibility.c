@@ -517,7 +517,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 				settings->PerformanceFlags = type;
 			}
 
-			fprintf(stderr, "-x %s -> /network ", arg->Value);
+			fprintf(stderr, "-x %s -> /network:", arg->Value);
 
 			if (type == CONNECTION_TYPE_MODEM)
 				fprintf(stderr, "modem");
@@ -541,7 +541,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "app")
 		{
 			settings->RemoteApplicationMode = TRUE;
-			fprintf(stderr, "--app -> /app + program name or alias\n");
+			fprintf(stderr, "--app -> /app: + program name or alias\n");
 		}
 		CommandLineSwitchCase(arg, "ext")
 		{
@@ -606,7 +606,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 			else if (arg->Value[0] == 'i')
 				settings->RemoteFxCodecMode = 0x02;
 
-			fprintf(stderr, "--rfx-mode -> /rfx-mode\n");
+			fprintf(stderr, "--rfx-mode -> /rfx-mode:%s\n", settings->RemoteFxCodecMode ? "image" : "video");
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{

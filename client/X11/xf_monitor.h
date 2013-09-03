@@ -45,5 +45,6 @@ typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 
 int xf_list_monitors(xfContext* xfc);
 BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings);
+void xf_monitors_free(xfContext *xfc, rdpSettings *settings);
 
 #endif /* __XF_MONITOR_H */

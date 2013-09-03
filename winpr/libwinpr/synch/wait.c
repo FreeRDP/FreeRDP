@@ -77,7 +77,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			if (dwMilliseconds != INFINITE)
 			{
-#if _GNU_SOURCE
+#if HAVE_PTHREAD_GNU_EXT
 				struct timespec timeout;
 
 				clock_gettime(CLOCK_REALTIME, &timeout);
@@ -93,7 +93,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				status = pthread_join(thread->thread, &thread_status);
 
 			if (status != 0)
-				fprintf(stderr, "WaitForSingleObject: pthread_join failure: %d\n", status);
+				fprintf(stderr, "WaitForSingleObject: pthread_join failure: [%d] %s\n",
+						status, strerror(status));
 
 			if (thread_status)
 				thread->dwExitCode = ((DWORD) (size_t) thread_status);
@@ -105,7 +106,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		mutex = (WINPR_MUTEX*) Object;
 
-#if _GNU_SOURCE
+#if HAVE_PTHREAD_GNU_EXT
 		if (dwMilliseconds != INFINITE)
 		{
 			struct timespec timeout;
