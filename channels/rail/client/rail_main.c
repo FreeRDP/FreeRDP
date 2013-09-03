@@ -104,9 +104,9 @@ static void rail_process_addin_args(rdpRailOrder* rail_order, rdpSettings* setti
 			rail_order->exec.flags |= RAIL_EXEC_FLAG_FILE;
 	}
 
-	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationProgram, &rail_order->exec.exeOrFile);
-	rail_string_to_unicode_string(rail_order, settings->ShellWorkingDirectory, &rail_order->exec.workingDir);
-	rail_string_to_unicode_string(rail_order, settings->RemoteApplicationCmdLine, &rail_order->exec.arguments);
+	rail_string_to_unicode_string(settings->RemoteApplicationProgram, &rail_order->exec.exeOrFile);
+	rail_string_to_unicode_string(settings->ShellWorkingDirectory, &rail_order->exec.workingDir);
+	rail_string_to_unicode_string(settings->RemoteApplicationCmdLine, &rail_order->exec.arguments);
 
 	rail_send_client_exec_order(rail_order);
 }
