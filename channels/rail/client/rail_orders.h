@@ -23,40 +23,6 @@
 
 #include "rail_main.h"
 
-#define RAIL_ORDER_TYPE_EXEC			0x0001
-#define RAIL_ORDER_TYPE_ACTIVATE		0x0002
-#define RAIL_ORDER_TYPE_SYSPARAM		0x0003
-#define RAIL_ORDER_TYPE_SYSCOMMAND		0x0004
-#define RAIL_ORDER_TYPE_HANDSHAKE		0x0005
-#define RAIL_ORDER_TYPE_NOTIFY_EVENT		0x0006
-#define RAIL_ORDER_TYPE_WINDOW_MOVE		0x0008
-#define RAIL_ORDER_TYPE_LOCALMOVESIZE		0x0009
-#define RAIL_ORDER_TYPE_MINMAXINFO		0x000A
-#define RAIL_ORDER_TYPE_CLIENT_STATUS		0x000B
-#define RAIL_ORDER_TYPE_SYSMENU			0x000C
-#define RAIL_ORDER_TYPE_LANGBAR_INFO		0x000D
-#define RAIL_ORDER_TYPE_EXEC_RESULT		0x0080
-#define RAIL_ORDER_TYPE_GET_APPID_REQ		0x000E
-#define RAIL_ORDER_TYPE_GET_APPID_RESP		0x000F
-
-#define RAIL_PDU_HEADER_LENGTH			4
-
-/* Fixed length of PDUs, excluding variable lengths */
-#define RAIL_HANDSHAKE_ORDER_LENGTH		4 /* fixed */
-#define RAIL_CLIENT_STATUS_ORDER_LENGTH		4 /* fixed */
-#define RAIL_EXEC_ORDER_LENGTH			8 /* variable */
-#define RAIL_SYSPARAM_ORDER_LENGTH		4 /* variable */
-#define RAIL_ACTIVATE_ORDER_LENGTH		5 /* fixed */
-#define RAIL_SYSMENU_ORDER_LENGTH		8 /* fixed */
-#define RAIL_SYSCOMMAND_ORDER_LENGTH		6 /* fixed */
-#define RAIL_NOTIFY_EVENT_ORDER_LENGTH		12 /* fixed */
-#define RAIL_WINDOW_MOVE_ORDER_LENGTH		12 /* fixed */
-#define RAIL_GET_APPID_REQ_ORDER_LENGTH		4 /* fixed */
-#define RAIL_LANGBAR_INFO_ORDER_LENGTH		4 /* fixed */
-
-void rail_string_to_unicode_string(rdpRailOrder* rail_order, char* string, RAIL_UNICODE_STRING* unicode_string);
-
-BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result);
 BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);
 BOOL rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo);
@@ -64,7 +30,6 @@ BOOL rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* 
 BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* get_appid_resp);
 BOOL rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* client_status);
 void rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec);
 void rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);
