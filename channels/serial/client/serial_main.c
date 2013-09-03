@@ -63,7 +63,9 @@ struct _SERIAL_DEVICE
 	SERIAL_TTY* tty;
 
 	HANDLE thread;
+	HANDLE mthread;
 	HANDLE stopEvent;
+	HANDLE newEvent;
 
 	wQueue* queue;
 	LIST* pending_irps;
@@ -80,6 +82,7 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 static void serial_check_for_events(SERIAL_DEVICE* serial);
 static void serial_handle_async_irp(SERIAL_DEVICE* serial, IRP* irp);
 static BOOL serial_check_fds(SERIAL_DEVICE* serial);
+static void* serial_thread_mfunc(void* arg);
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
@@ -113,6 +116,18 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	else
 	{
 		serial->tty = tty;
+	
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_NONE, 
+				STATUS_CANCELLED);
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_READ, 
+				STATUS_CANCELLED);
+		serial_abort_single_io(serial, serial->timeout_id, SERIAL_ABORT_IO_WRITE, 
+				STATUS_CANCELLED);
+
+		serial->mthread = CreateThread(NULL, 0, 
+				(LPTHREAD_START_ROUTINE) serial_thread_mfunc, (void*) serial,
+				0, NULL);
+
 		DEBUG_SVC("%s(%d) created.", serial->path, FileId);
 	}
 
@@ -138,6 +153,11 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	else
 	{
 		DEBUG_SVC("%s(%d) closed.", serial->path, tty->id);
+
+		TerminateThread(serial->mthread, 0);
+		WaitForSingleObject(serial->mthread, INFINITE);
+		CloseHandle(serial->mthread);
+		serial->mthread = NULL;
 
 		serial_tty_free(tty);
 		serial->tty = NULL;
@@ -318,36 +338,67 @@ static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 	serial_check_for_events(serial);
 }
 
+/* This thread is used as a workaround for the missing serial event
+ * support in WaitForMultipleObjects.
+ * It monitors the terminal for events and posts it in a supported
+ * form that WaitForMultipleObjects can use it. */
+void* serial_thread_mfunc(void* arg)
+{
+	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
+	
+	while(1)
+	{
+		int sl;
+		fd_set rd;
+
+		if(!serial->tty || serial->tty->fd <= 0)
+		{
+			DEBUG_WARN("Monitor thread still running, but no terminal opened!");
+			sleep(1);
+		}
+		else
+		{
+			FD_ZERO(&rd);
+			FD_SET(serial->tty->fd, &rd);
+			sl = select(serial->tty->fd + 1, &rd, NULL,	NULL, NULL);
+			if( sl > 0 )
+				SetEvent(serial->newEvent);
+		}
+	}
+
+	return NULL;
+}
+
 static void* serial_thread_func(void* arg)
 {
 	IRP* irp;
 	DWORD status;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
-	HANDLE ev[] = {serial->stopEvent, Queue_Event(serial->queue)};
+	HANDLE ev[] = {serial->stopEvent, Queue_Event(serial->queue), serial->newEvent};
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(2, ev, FALSE, 1);
-
+		status = WaitForMultipleObjects(3, ev, FALSE, INFINITE);
+	
 		if (WAIT_OBJECT_0 == status)
 			break;
-
-		serial->nfds = 1;
-		FD_ZERO(&serial->read_fds);
-		FD_ZERO(&serial->write_fds);
-
-		serial->tv.tv_sec = 0;
-		serial->tv.tv_usec = 0;
-		serial->select_timeout = 0;
-
-		if (status == WAIT_OBJECT_0 + 1)
+		else if (status == WAIT_OBJECT_0 + 1)
 		{
+			FD_ZERO(&serial->read_fds);
+			FD_ZERO(&serial->write_fds);
+
+			serial->tv.tv_sec = 0;
+			serial->tv.tv_usec = 0;
+			serial->select_timeout = 0;
+
 			if ((irp = (IRP*) Queue_Dequeue(serial->queue)))
 				serial_process_irp(serial, irp);
-			continue;
 		}
+		else if (status == WAIT_OBJECT_0 + 2)
+			ResetEvent(serial->newEvent);
 
-		serial_check_fds(serial);
+		if(serial->tty)
+			serial_check_fds(serial);
 	}
 
 	return NULL;
@@ -368,6 +419,12 @@ static void serial_free(DEVICE* device)
 
 	/* Stop thread */
 	SetEvent(serial->stopEvent);
+	if(serial->mthread)
+	{
+		TerminateThread(serial->mthread, 0);
+		WaitForSingleObject(serial->mthread, INFINITE);
+		CloseHandle(serial->mthread);
+	}
 	WaitForSingleObject(serial->thread, INFINITE);
 
 	serial_tty_free(serial->tty);
@@ -377,6 +434,7 @@ static void serial_free(DEVICE* device)
 	Queue_Free(serial->queue);
 	list_free(serial->pending_irps);
 	CloseHandle(serial->stopEvent);
+	CloseHandle(serial->newEvent);
 	CloseHandle(serial->thread);
 	free(serial);
 }
@@ -673,6 +731,13 @@ static BOOL serial_check_fds(SERIAL_DEVICE* serial)
 	if (list_size(serial->pending_irps) == 0)
 		return 1;
 
+	FD_ZERO(&serial->read_fds);
+	FD_ZERO(&serial->write_fds);
+
+	serial->tv.tv_sec = 0;
+	serial->tv.tv_usec = 0;
+	serial->select_timeout = 0;
+
 	serial_set_fds(serial);
 	DEBUG_SVC("waiting %lu %lu", serial->tv.tv_sec, serial->tv.tv_usec);
 
@@ -739,11 +804,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->pending_irps = list_new();
 
 		serial->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		serial->newEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
 		serial->thread = CreateThread(NULL, 0, 
 				(LPTHREAD_START_ROUTINE) serial_thread_func, (void*) serial, 0, NULL);
+		serial->mthread = NULL;
 	}
 
 	return 0;

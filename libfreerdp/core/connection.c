@@ -975,6 +975,8 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	if (!rdp_send_demand_active(rdp))
 		return FALSE;
 
+	rdp->AwaitCapabilities = TRUE;
+
 	return TRUE;
 }
 

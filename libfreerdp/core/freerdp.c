@@ -30,6 +30,8 @@
 #include "extension.h"
 #include "message.h"
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -158,7 +160,10 @@ BOOL freerdp_connect(freerdp* instance)
 				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
+			
+				StreamPool_Return(rdp->transport->ReceivePool, s);
 			}
+
 
 			status = TRUE;
 			goto freerdp_connect_finally;
@@ -298,6 +303,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
+
+	IFCALL(instance->PostDisconnect, instance);
 
 	return TRUE;
 }
