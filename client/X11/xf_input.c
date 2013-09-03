@@ -197,7 +197,8 @@ int xf_input_init(xfContext* xfc, Window window)
 			}
 		}
 	}
-	
+	XIFreeDeviceInfo(info);
+
 	if (nmasks > 0)
 		xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
 	

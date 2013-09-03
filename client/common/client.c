@@ -66,6 +66,7 @@ void freerdp_client_context_free(rdpContext* context)
 {
 	freerdp* instance = context->instance;
 
+	free(instance->pClientEntryPoints);
 	freerdp_context_free(instance);
 	freerdp_free(instance);
 }
