@@ -24,6 +24,8 @@ project(FreeRDP C)
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 

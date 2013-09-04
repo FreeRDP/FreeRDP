@@ -22,6 +22,8 @@
 
 typedef struct xf_context xfContext;
 
+#include <freerdp/api.h>
+
 #include "xf_window.h"
 #include "xf_monitor.h"
 #include "xf_channels.h"
@@ -215,7 +217,7 @@ void xf_unlock_x11(xfContext* xfc, BOOL display);
 void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
 void xf_transform_window(xfContext* xfc);
 
-DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
+FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* __XFREERDP_H */
 

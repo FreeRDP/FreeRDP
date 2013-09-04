@@ -85,7 +85,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 	MODULE winpr
 	MODULES winpr-input winpr-crt winpr-utils)
 
-set_target_properties(${MODULE_NAME} PROPERTIES LINK_INTERFACE_LIBRARIES "")
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 # Set a list of the dependent targets used by the application. There should be a way to get this list automatically

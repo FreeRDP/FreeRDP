@@ -59,11 +59,7 @@ if(MONOLITHIC_BUILD)
 
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-	if(NOT WITH_WAYK)
-		install(TARGETS ${MODULE_NAME}
-			DESTINATION ${CMAKE_INSTALL_LIBDIR}
-			COMPONENT libraries)
-	endif()
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 	
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 endif()
