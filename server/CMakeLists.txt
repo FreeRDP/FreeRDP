@@ -35,13 +35,28 @@ else()
 	add_subdirectory(Windows)
 endif()
 
-if(WITH_WAYK)
-	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/WaykServer")
-		add_subdirectory(WaykServer)
-	endif()
-endif()
-
 if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xrdp-ng")
 	add_subdirectory("xrdp-ng")
 endif()
 
+# Pick up other clients
+
+set(FILENAME "ModuleOptions.cmake")
+file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
+		set(FREERDP_SERVER_ENABLED 0)
+		include(${FILEPATH})
+		if(FREERDP_SERVER_ENABLED)
+			if(NOT (${FREERDP_SERVER_VENDOR} MATCHES "FreeRDP"))
+				list(APPEND FREERDP_EXTRA_SERVERS ${FREERDP_SERVER})
+			endif()
+		endif()
+	endif()
+endforeach()
+
+foreach(FREERDP_SERVER ${FREERDP_EXTRA_SERVERS})
+	add_subdirectory(${FREERDP_SERVER})
+endforeach()

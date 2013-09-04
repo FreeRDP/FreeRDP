@@ -63,10 +63,8 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
-    if (NOT WITH_WAYK)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 	add_subdirectory(cli)
-    endif()
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 endif()
