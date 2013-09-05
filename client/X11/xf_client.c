@@ -773,12 +773,12 @@ BOOL xf_pre_connect(freerdp* instance)
 		if (settings->Username == NULL)
 		{
 			fprintf(stderr, "--authonly, but no -u username. Please provide one.\n");
-			exit(1);
+			return FALSE;
 		}
 		if (settings->Password == NULL)
 		{
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
-			exit(1);
+			return FALSE;
 		}
 		fprintf(stderr, "%s:%d: Authentication only. Don't connect to X.\n", __FILE__, __LINE__);
 		/* Avoid XWindows initialization and configuration below. */
@@ -1224,6 +1224,8 @@ void* xf_update_thread(void* arg)
 	wMessageQueue* queue;
 	freerdp* instance = (freerdp*) arg;
 
+	assert( NULL != instance);
+
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
 
@@ -1241,6 +1243,7 @@ void* xf_update_thread(void* arg)
 			break;
 	}
 
+	ExitThread(0);
 	return NULL;
 }
 
@@ -1253,8 +1256,10 @@ void* xf_input_thread(void* arg)
 	int pending_status = 1;
 	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
+	assert(NULL != instance);
 
 	xfc = (xfContext*) instance->context;
+	assert(NULL != xfc);
 
 	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
 
@@ -1291,6 +1296,7 @@ void* xf_input_thread(void* arg)
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 	MessageQueue_PostQuit(queue, 0);
 
+	ExitThread(0);
 	return NULL;
 }
 
@@ -1301,8 +1307,10 @@ void* xf_channels_thread(void* arg)
 	HANDLE event;
 	rdpChannels* channels;
 	freerdp* instance = (freerdp*) arg;
+	assert(NULL != instance);
 
 	xfc = (xfContext*) instance->context;
+	assert(NULL != xfc);
 
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
@@ -1313,6 +1321,7 @@ void* xf_channels_thread(void* arg)
 		xf_process_channel_event(channels, instance);
 	}
 
+	ExitThread(0);
 	return NULL;
 }
 
@@ -1356,6 +1365,7 @@ void* xf_thread(void* param)
 	input_event = NULL;
 
 	instance = (freerdp*) param;
+	assert(NULL != instance);
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
@@ -1364,6 +1374,7 @@ void* xf_thread(void* param)
 	status = freerdp_connect(instance);
 
 	xfc = (xfContext*) instance->context;
+	assert(NULL != xfc);
 
 	/* Connection succeeded. --authonly ? */
 	if (instance->settings->AuthenticationOnly)
@@ -1533,6 +1544,18 @@ void* xf_thread(void* param)
 		MessageQueue_PostQuit(update_queue, 0);
 		WaitForSingleObject(update_thread, INFINITE);
 		CloseHandle(update_thread);
+	}
+
+	if (async_input)
+	{
+		WaitForSingleObject(input_thread, INFINITE);
+		CloseHandle(input_thread);
+	}
+
+	if (async_channels)
+	{
+		WaitForSingleObject(channels_thread, INFINITE);
+		CloseHandle(channels_thread);
 	}
 
 	FILE* fin = fopen("/tmp/tsmf.tid", "rt");
@@ -1707,7 +1730,8 @@ int xfreerdp_client_start(rdpContext* context)
 		return -1;
 	}
 
-	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread, context->instance, 0, NULL);
+	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread,
+			context->instance, 0, NULL);
 
 	return 0;
 }
@@ -1716,6 +1740,7 @@ int xfreerdp_client_stop(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
+	assert(NULL != context);
 	if (context->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
