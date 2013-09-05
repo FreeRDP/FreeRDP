@@ -332,15 +332,15 @@ static void audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* us
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 
-	alsa->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	alsa->thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL);
-	
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
 	alsa->buffer = (BYTE*) malloc(tbytes_per_frame * alsa->frames_per_packet);
 	ZeroMemory(alsa->buffer, tbytes_per_frame * alsa->frames_per_packet);
 	alsa->buffer_frames = 0;
+	
+	alsa->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	alsa->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL);
 }
 
 static void audin_alsa_close(IAudinDevice* device)
