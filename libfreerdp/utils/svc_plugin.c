@@ -133,6 +133,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		}
 
 		plugin->data_in = NULL;
+		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
 		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);

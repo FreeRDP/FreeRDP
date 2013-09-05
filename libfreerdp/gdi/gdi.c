@@ -917,10 +917,20 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 void gdi_init_primary(rdpGdi* gdi)
 {
-	gdi->primary = gdi_bitmap_new_ex(gdi, gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
+	gdi->primary = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	gdi->primary->hdc = gdi_CreateCompatibleDC(gdi->hdc);
+
+	if (!gdi->primary_buffer)
+		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
+	else
+		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
+
+	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT) gdi->primary->bitmap);
+	gdi->primary->org_bitmap = NULL;
+
 	gdi->primary_buffer = gdi->primary->bitmap->data;
 
-	if (gdi->drawing == NULL)
+	if (!gdi->drawing)
 		gdi->drawing = gdi->primary;
 
 	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));

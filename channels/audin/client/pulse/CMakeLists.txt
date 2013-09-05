@@ -30,7 +30,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-utils)
+	MODULES freerdp-codec freerdp-utils)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PULSE_LIBRARY})
 
