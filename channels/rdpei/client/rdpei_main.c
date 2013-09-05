@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,6 +98,7 @@ struct _RDPEI_PLUGIN
 	RDPINPUT_CONTACT_POINT* contactPoints;
 
 	HANDLE event;
+	HANDLE stopEvent;
 	HANDLE thread;
 
 	CRITICAL_SECTION lock;
@@ -156,10 +158,16 @@ static void* rdpei_schedule_thread(void* arg)
 	DWORD status;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) arg;
 	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
+	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
+
+	assert(NULL != rdpei);
+	assert(NULL != context);
 
 	while (1)
 	{
-		status = WaitForSingleObject(rdpei->event, 20);
+		status = WaitForMultipleObjects(2, hdl, FALSE, 20);
+		if (status == WAIT_OBJECT_0 + 1)
+			break;
 
 		EnterCriticalSection(&rdpei->lock);
 
@@ -173,6 +181,8 @@ static void* rdpei_schedule_thread(void* arg)
 
 		LeaveCriticalSection(&rdpei->lock);
 	}
+
+	ExitThread(0);
 
 	return NULL;
 }
@@ -217,13 +227,6 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 	Stream_Write_UINT16(s, rdpei->maxTouchContacts); /* maxTouchContacts (2 bytes) */
 
 	Stream_SealLength(s);
-
-	if (!rdpei->thread)
-	{
-		InitializeCriticalSection(&rdpei->lock);
-		rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
-		rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpei_schedule_thread, (void*) rdpei, 0, NULL);
-	}
 
 	status = rdpei_send_pdu(callback, s, EVENTID_CS_READY, pduLength);
 	Stream_Free(s, TRUE);
@@ -487,6 +490,12 @@ static int rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		(IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener));
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;
+	
+	InitializeCriticalSection(&rdpei->lock);
+	rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	rdpei->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	rdpei->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			rdpei_schedule_thread, (void*) rdpei, 0, NULL);
 
 	return status;
 }
@@ -496,6 +505,22 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) pPlugin;
 
 	DEBUG_DVC("");
+
+	assert(NULL != pPlugin);
+
+	SetEvent(rdpei->stopEvent);
+	EnterCriticalSection(&rdpei->lock);
+
+	WaitForSingleObject(rdpei->thread, INFINITE);
+
+	CloseHandle(rdpei->stopEvent);
+	CloseHandle(rdpei->event);
+	CloseHandle(rdpei->thread);
+
+	DeleteCriticalSection(&rdpei->lock);
+
+	if (rdpei->listener_callback)
+		free(rdpei->listener_callback);
 
 	free(rdpei);
 
