@@ -1756,8 +1756,11 @@ int xfreerdp_client_stop(rdpContext* context)
 		xfc->disconnect = TRUE;
 	}
 
-	WaitForSingleObject(xfc->thread, INFINITE);
-	CloseHandle(xfc->thread);
+	if (xfc->thread)
+	{
+		CloseHandle(xfc->thread);
+		xfc->thread = NULL;
+	}
 
 	return 0;
 }
