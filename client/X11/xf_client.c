@@ -1548,10 +1548,13 @@ void* xf_thread(void* param)
 
 	if (async_input)
 	{
+		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(input_queue, 0);
 		WaitForSingleObject(input_thread, INFINITE);
 		CloseHandle(input_thread);
 	}
 
+	freerdp_channels_close(channels, instance);
 	if (async_channels)
 	{
 		WaitForSingleObject(channels_thread, INFINITE);
@@ -1594,7 +1597,6 @@ void* xf_thread(void* param)
 	if (!exit_code)
 		exit_code = freerdp_error_info(instance);
 
-	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
