@@ -185,6 +185,8 @@ static void* svc_plugin_thread_func(void* arg)
 
 	DEBUG_SVC("in");
 
+	assert(NULL != plugin);
+
 	IFCALL(plugin->connect_callback, plugin);
 
 	while (1)
@@ -211,6 +213,8 @@ static void* svc_plugin_thread_func(void* arg)
 	}
 
 	DEBUG_SVC("out");
+
+	ExitThread(0);
 
 	return 0;
 }
