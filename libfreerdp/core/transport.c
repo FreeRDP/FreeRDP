@@ -85,6 +85,14 @@ BOOL transport_disconnect(rdpTransport* transport)
 		status &= tcp_disconnect(transport->TcpIn);
 	}
 
+	if (transport->async)
+	{
+		SetEvent(transport->stopEvent);
+		WaitForSingleObject(transport->thread, INFINITE);
+
+		CloseHandle(transport->thread);
+		CloseHandle(transport->stopEvent);
+	}
 	return status;
 }
 
@@ -793,8 +801,14 @@ static void* transport_client_thread(void* arg)
 	rdpTransport* transport;
 
 	transport = (rdpTransport*) arg;
+	assert(NULL != transport);
+	assert(NULL != transport->settings);
+	
 	instance = (freerdp*) transport->settings->instance;
+	assert(NULL != instance);
+	
 	context = instance->context;
+	assert(NULL != instance->context);
 
 	while (1)
 	{
@@ -802,25 +816,20 @@ static void* transport_client_thread(void* arg)
 		events[nCount++] = transport->stopEvent;
 		events[nCount] = transport->connectedEvent;
 
-		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
-
-		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
-		{
-			break;
-		}
-
-		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
-
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
-		{
+		if (status == WAIT_OBJECT_0)
 			break;
-		}
+
+		transport_get_read_handles(transport, (HANDLE*) events, &nCount);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (status == WAIT_OBJECT_0)
+			break;
 
 		if (!freerdp_check_fds(instance))
 			break;
 	}
+
+	ExitThread(0);
 
 	return NULL;
 }
