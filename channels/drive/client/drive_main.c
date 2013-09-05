@@ -633,17 +633,18 @@ static void drive_process_irp_list(DRIVE_DEVICE* disk)
 static void* drive_thread_func(void* arg)
 {
 	DRIVE_DEVICE* disk = (DRIVE_DEVICE*) arg;
+	HANDLE hdl[] = {disk->irpEvent, disk->stopEvent};
 
 	while (1)
 	{
-		WaitForSingleObject(disk->irpEvent, INFINITE);
-
-		if (WaitForSingleObject(disk->stopEvent, 0) == WAIT_OBJECT_0)
+		DWORD rc = WaitForMultipleObjects(2, hdl, FALSE, INFINITE);
+		if (rc == WAIT_OBJECT_0 + 1)
 			break;
 
 		ResetEvent(disk->irpEvent);
 		drive_process_irp_list(disk);
 	}
+	ExitThread(0);
 
 	return NULL;
 }
@@ -664,8 +665,10 @@ static void drive_free(DEVICE* device)
 	DRIVE_DEVICE* disk = (DRIVE_DEVICE*) device;
 
 	SetEvent(disk->stopEvent);
+	WaitForSingleObject(disk->thread, INFINITE);
 	CloseHandle(disk->thread);
 	CloseHandle(disk->irpEvent);
+	CloseHandle(disk->stopEvent);
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(disk->pIrpList)) != NULL)
 		irp->Discard(irp);
@@ -727,7 +730,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) disk);
 
-                ResumeThread(disk->thread);
+		ResumeThread(disk->thread);
 	}
 }
 
