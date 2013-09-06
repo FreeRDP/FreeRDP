@@ -298,12 +298,12 @@ RFX_CONTEXT* rfx_context_new(void)
 void rfx_context_free(RFX_CONTEXT* context)
 {
 	assert(NULL != context);
-	assert(NULL != context->quants);
 	assert(NULL != context->priv);
 	assert(NULL != context->priv->TilePool);
 	assert(NULL != context->priv->BufferPool);
 
-	free(context->quants);
+	if (context->quants)
+		free(context->quants);
 
 	ObjectPool_Free(context->priv->TilePool);
 

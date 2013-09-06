@@ -35,6 +35,11 @@
 
 #include <freerdp/channels/rdpdr.h>
 
+#define BOOL PCSC_BOOL
+#include <PCSC/pcsclite.h>
+#include <PCSC/reader.h>
+#include <PCSC/winscard.h>
+#undef BOOL
 #include "smartcard_main.h"
 
 static void smartcard_free(DEVICE* dev)
@@ -320,6 +325,22 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
+	{
+		LONG rc;
+		DWORD proto = SCARD_PROTOCOL_RAW | SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
+		SCARDHANDLE card = NULL;
+		DWORD scope = SCARD_SCOPE_SYSTEM;
+		SCARDCONTEXT hContext;
+
+		rc = SCardEstablishContext(scope, NULL, NULL, &hContext);
+		fprintf(stderr, "%s SCardEstablishContext %s\n", __func__, pcsc_stringify_error(rc));
+		rc = SCardConnect(hContext, name, 0, 0, &card, &proto);
+		fprintf(stderr, "%s SCardConnect %s\n", __func__, pcsc_stringify_error(rc));
+		rc = SCardDisconnect(card, 0);
+		fprintf(stderr, "%s SCardDisconnect %s\n", __func__, pcsc_stringify_error(rc));
+		rc = SCardReleaseContext(hContext);
+		fprintf(stderr, "%s SCardReleaseContext %s\n", __func__, pcsc_stringify_error(rc));
+	}
 	if (name)
 	{
 		/* TODO: check if server supports sc redirect (version 5.1) */
