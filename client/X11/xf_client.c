@@ -1250,7 +1250,7 @@ void* xf_update_thread(void* arg)
 void* xf_input_thread(void* arg)
 {
 	xfContext* xfc;
-	HANDLE event;
+	HANDLE event[2];
 	XEvent xevent;
 	wMessageQueue* queue;
 	int pending_status = 1;
@@ -1261,9 +1261,11 @@ void* xf_input_thread(void* arg)
 	xfc = (xfContext*) instance->context;
 	assert(NULL != xfc);
 
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+	event[1] = MessageQueue_Event(queue);
 
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	while (WaitForMultipleObjects(2, event, FALSE, INFINITE) == WAIT_OBJECT_0)
 	{
 		do
 		{
@@ -1293,9 +1295,6 @@ void* xf_input_thread(void* arg)
 			break;
 	}
 
-	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	MessageQueue_PostQuit(queue, 0);
-
 	ExitThread(0);
 	return NULL;
 }
@@ -1318,6 +1317,9 @@ void* xf_channels_thread(void* arg)
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
+		if (!status)
+			break;
+
 		xf_process_channel_event(channels, instance);
 	}
 
@@ -1538,6 +1540,10 @@ void* xf_thread(void* param)
 		}
 	}
 
+	/* Close the channels first. This will signal the internal message pipes
+	 * that the threads should quit. */
+	freerdp_channels_close(channels, instance);
+
 	if (async_update)
 	{
 		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
@@ -1554,7 +1560,6 @@ void* xf_thread(void* param)
 		CloseHandle(input_thread);
 	}
 
-	freerdp_channels_close(channels, instance);
 	if (async_channels)
 	{
 		WaitForSingleObject(channels_thread, INFINITE);
