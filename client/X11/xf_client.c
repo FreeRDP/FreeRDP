@@ -1250,7 +1250,7 @@ void* xf_update_thread(void* arg)
 void* xf_input_thread(void* arg)
 {
 	xfContext* xfc;
-	HANDLE event[2];
+	HANDLE event;
 	XEvent xevent;
 	wMessageQueue* queue;
 	int pending_status = 1;
@@ -1262,10 +1262,9 @@ void* xf_input_thread(void* arg)
 	assert(NULL != xfc);
 
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
-	event[1] = MessageQueue_Event(queue);
+	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
 
-	while (WaitForMultipleObjects(2, event, FALSE, INFINITE) == WAIT_OBJECT_0)
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		do
 		{
@@ -1295,6 +1294,7 @@ void* xf_input_thread(void* arg)
 			break;
 	}
 
+	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
 	return NULL;
 }
