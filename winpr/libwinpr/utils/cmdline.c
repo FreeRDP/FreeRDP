@@ -239,7 +239,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 							value_present = 0;
 					}
 
-					if (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED)
+					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+							(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
 						argument = TRUE;
 					else
 						argument = FALSE;
@@ -253,7 +254,13 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						value = (char*) &argv[i][value_index];
 						value_length = (length - value_index);
 					}
-					else
+					else if (!value_present && (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					{
+						value_index = 0;
+						value = NULL;
+						value_length = 0;
+					}
+					else if (!value_present && argument)
 						return COMMAND_LINE_ERROR;
 				}
 
