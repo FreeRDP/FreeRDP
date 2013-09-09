@@ -154,6 +154,9 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 	{
 		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
 
+		if (NULL == device->Name)
+			continue;
+
 		if (strcmp(device->Name, name) == 0)
 			return device;
 	}
