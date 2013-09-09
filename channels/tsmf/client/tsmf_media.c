@@ -116,8 +116,6 @@ struct _TSMF_STREAM
 	/* Next sample should not start before this system time. */
 	UINT64 next_start_time;
 
-	BOOL started;
-
 	HANDLE thread;
 	HANDLE stopEvent;
 
@@ -717,26 +715,40 @@ static void* tsmf_stream_playback_func(void* arg)
 
 static void tsmf_stream_start(TSMF_STREAM* stream)
 {
-	if (!stream->started)
+	if (!stream || !stream->presentation)
+		return;
+
+	WaitForSingleObject(stream->presentation->mutex, INFINITE);
+	if (!stream->thread)
 	{
-		ResumeThread(stream->thread);
-		stream->started = TRUE;
+		ResetEvent(stream->stopEvent);
+		stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
+		if(!stream->thread)
+		{
+			DEBUG_WARN("stream playback start failure");
+		}
 	}
+	ReleaseMutex(stream->presentation->mutex);
 }
 
 static void tsmf_stream_stop(TSMF_STREAM* stream)
 {
-	if (!stream)
+	if (!stream || !stream->presentation)
 		return;
+
+	WaitForSingleObject(stream->presentation->mutex, INFINITE);
+	if (stream->thread)
+	{
+		SetEvent(stream->stopEvent);
+		SetEvent(stream->thread);
+		WaitForSingleObject(stream->thread, INFINITE);
+		CloseHandle(stream->thread);
+		stream->thread = NULL;
+	}
+	ReleaseMutex(stream->presentation->mutex);
 
 	if (!stream->decoder)
 		return;
-
-	if (stream->started)
-	{
-		SetEvent(stream->stopEvent);
-		stream->started = FALSE;
-	}
 
 	if (stream->decoder->Control)
 	{
@@ -967,10 +979,7 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
 
-	stream->started = FALSE;
-
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	stream->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
 
 	stream->sample_list = Queue_New(TRUE, -1, -1);
 	stream->sample_list->object.fnObjectFree = free;
@@ -1066,8 +1075,6 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 		stream->decoder->Free(stream->decoder);
 		stream->decoder = 0;
 	}
-
-	SetEvent(stream->thread);
 
 	free(stream);
 	stream = 0;
