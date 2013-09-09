@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -179,8 +180,8 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 	BYTE*    src_ptr;        /* used while copying compressed data */
 	BYTE*    cptr;           /* points to next byte in cbuf */
 	BYTE     cur_byte;       /* last byte fetched from cbuf */
-	int       bits_left;      /* bits left in d34 for processing */
-	int       cur_bits_left;  /* bits left in cur_byte for processing */
+	unsigned int	bits_left;      /* bits left in d34 for processing */
+	unsigned int  cur_bits_left;  /* bits left in cur_byte for processing */
 	int       tmp;
 	UINT32    i32;
 
@@ -330,6 +331,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 		*/
 
 		/* how may bits do we need to get? */
+		assert(bits_left <= 32);
 		tmp = 32 - bits_left;
 
 		while (tmp)
@@ -338,7 +340,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= i32 << ((32 - bits_left) - cur_bits_left);
+				d32 |= (i32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)
@@ -527,6 +529,8 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 		*/
 
 		/* how may bits do we need to get? */
+		assert(bits_left <= 32);
+		assert(cur_bits_left <= bits_left);
 		tmp = 32 - bits_left;
 
 		while (tmp)
@@ -535,7 +539,7 @@ int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= i32 << ((32 - bits_left) - cur_bits_left);
+				d32 |= (i32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)
@@ -769,6 +773,8 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 		*/
 
 		/* how may bits do we need to get? */
+		assert(bits_left <= 32);
+		assert(cur_bits_left <= bits_left);
 		tmp = 32 - bits_left;
 
 		while (tmp)
@@ -777,7 +783,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= i32 << ((32 - bits_left) - cur_bits_left);
+				d32 |= (32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)
@@ -990,6 +996,8 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 		*/
 
 		/* how may bits do we need to get? */
+		assert(bits_left <= 32);
+		assert(cur_bits_left <= bits_left);
 		tmp = 32 - bits_left;
 
 		while (tmp)
@@ -998,7 +1006,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= i32 << ((32 - bits_left) - cur_bits_left);
+				d32 |= (i32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)
@@ -1322,6 +1330,8 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 		*/
 
 		/* how may bits do we need to get? */
+		assert(bits_left <= 32);
+		assert(cur_bits_left <= bits_left);
 		tmp = 32 - bits_left;
 
 		while (tmp)
@@ -1330,7 +1340,7 @@ int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= i32 << ((32 - bits_left) - cur_bits_left);
+				d32 |= (i32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)

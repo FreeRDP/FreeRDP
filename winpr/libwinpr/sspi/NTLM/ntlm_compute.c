@@ -279,6 +279,7 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	{
 		fprintf(stderr, "Error: Could not find user in SAM database\n");
 	}
+	SamClose(sam);
 }
 
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)

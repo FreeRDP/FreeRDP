@@ -27,6 +27,11 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
+# This line compiles the static libraries with -fPIC to allow linking
+# to shared libraries later on...
+# TODO: Remove this non portable way of linking.
+set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "-fPIC") 
+
 set(${MODULE_PREFIX}_LIBS
 	${ZLIB_LIBRARIES}
 	${OPENSSL_LIBRARIES})

@@ -156,7 +156,7 @@
 
 /* Mac OS X (__MACOSX__) */
 
-#if (__APPLE__ && __MACH__)
+#if (defined(__APPLE__) && defined(__MACH__))
 #ifndef __MACOSX__
 #define __MACOSX__	1
 #endif
@@ -164,7 +164,7 @@
 
 /* iOS (__IOS__)*/
 
-#if (__APPLE__ && TARGET_OS_IPHONE)
+#if (defined(__APPLE__) && defined(TARGET_OS_IPHONE))
 #ifndef __IOS__
 #define __IOS__		1
 #endif

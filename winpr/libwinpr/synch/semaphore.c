@@ -39,6 +39,8 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	WINPR_SEMAPHORE* semaphore;
 
 	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
+	if (!semaphore)
+		return NULL;
 
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[0] = -1;
@@ -51,13 +53,19 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 		if (pipe(semaphore->pipe_fd) < 0)
 		{
 			fprintf(stderr, "CreateSemaphoreW: failed to create semaphore\n");
+			free(semaphore);
 			return NULL;
 		}
 
 		while (lInitialCount > 0)
 		{
 			if (write(semaphore->pipe_fd[1], "-", 1) != 1)
-				return FALSE;
+			{
+				close(semaphore->pipe_fd[0]);
+				close(semaphore->pipe_fd[1]);
+				free(semaphore);
+				return NULL;
+			}
 
 			lInitialCount--;
 		}

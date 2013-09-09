@@ -365,6 +365,12 @@ BOOL http_response_parse_header(HttpResponse* http_response)
 	char end_of_header_char;
 	char c;
 
+	if (!http_response)
+		return FALSE;
+
+	if (!http_response->lines)
+		return FALSE;
+
 	if (!http_response_parse_header_status_line(http_response, http_response->lines[0]))
 		return FALSE;
 
@@ -497,7 +503,11 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 			http_response->count = count;
-			http_response->lines = (char**) malloc(sizeof(char*) * http_response->count);
+			if (count)
+			{
+				http_response->lines = (char**) malloc(sizeof(char*) * http_response->count);
+				ZeroMemory(http_response->lines, sizeof(char*) * http_response->count);
+			}
 
 			count = 0;
 			line = strtok((char*) buffer, "\r\n");

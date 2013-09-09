@@ -63,6 +63,11 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Client NamedPipe WriteFile failure: %d\n", GetLastError());
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+	
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
 		return NULL;
 	}
 
@@ -85,6 +90,11 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Client NamedPipe ReadFile failure: %d\n", GetLastError());
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
 		return NULL;
 	}
 
@@ -160,6 +170,10 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fConnected)
 	{
 		printf("ConnectNamedPipe failure: %d\n", GetLastError());
+
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+
 		return NULL;
 	}
 
@@ -178,6 +192,12 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Server NamedPipe ReadFile failure: %d\n", GetLastError());
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+
 		return NULL;
 	}
 
@@ -203,6 +223,13 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Server NamedPipe WriteFile failure: %d\n", GetLastError());
+	
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+
 		return NULL;
 	}
 

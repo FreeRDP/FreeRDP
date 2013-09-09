@@ -143,6 +143,9 @@ static int BitBlt_SRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* srcp;
 	BYTE* dstp;
 
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
 	{
@@ -204,6 +207,9 @@ static int BitBlt_NOTSRCCOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 	UINT16* srcp;
 	UINT16* dstp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -251,6 +257,9 @@ static int BitBlt_SRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT16* srcp;
 	UINT16* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -276,6 +285,9 @@ static int BitBlt_NOTSRCERASE_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int
 	UINT16* srcp;
 	UINT16* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -301,6 +313,9 @@ static int BitBlt_SRCINVERT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	UINT16* srcp;
 	UINT16* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -326,6 +341,9 @@ static int BitBlt_SRCAND_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 	UINT16* srcp;
 	UINT16* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -351,6 +369,9 @@ static int BitBlt_SRCPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT16* srcp;
 	UINT16* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -378,6 +399,9 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT16 src16;
 	UINT16 color16;
 	HGDI_BITMAP hSrcBmp;
+
+	if (!hdcDest || !hdcSrc)
+		return 1;
 
 	/* D = (S & P) | (~S & D) */
 	/* DSPDxax, used to draw glyphs */
@@ -419,6 +443,9 @@ static int BitBlt_PSDPxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT16* dstp;
 	UINT16* patp;
 	UINT16 color16;
+
+	if (!hdcSrc || !hdcDest)
+		return 1;
 
 	/* D = (S & D) | (~S & P) */
 
@@ -473,6 +500,9 @@ static int BitBlt_SPna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 	UINT16* dstp;
 	UINT16* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -548,6 +578,9 @@ static int BitBlt_DSna_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 	UINT16* srcp;
 	UINT16* dstp;
 
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -575,6 +608,9 @@ static int BitBlt_MERGECOPY_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	UINT16* dstp;
 	UINT16* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -601,6 +637,9 @@ static int BitBlt_MERGEPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 	UINT16* srcp;
 	UINT16* dstp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -732,6 +771,9 @@ static int BitBlt_PATPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	UINT16* dstp;
 	UINT16* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = (UINT16*) gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -754,6 +796,9 @@ static int BitBlt_PATPAINT_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 
 int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)
 {
+	if (!hdcDest)
+		return 0;
+
 	if (hdcSrc != NULL)
 	{
 		if (gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc, &nYSrc) == 0)
@@ -766,7 +811,10 @@ int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 	}
 	
 	gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight);
-	
+
+	if (!hdcDest)
+		return 1;
+
 	switch (rop)
 	{
 		case GDI_BLACKNESS:

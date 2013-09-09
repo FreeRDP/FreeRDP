@@ -658,8 +658,6 @@ static void* test_peer_mainloop(void* arg)
 	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
-	memset(rfds, 0, sizeof(rfds));
-
 	test_peer_init(client);
 
 	/* Initialize the real server settings here */
@@ -694,6 +692,7 @@ static void* test_peer_mainloop(void* arg)
 	{
 		rcount = 0;
 
+		memset(rfds, 0, sizeof(rfds));
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
@@ -779,12 +778,11 @@ static void test_server_mainloop(freerdp_listener* instance)
 	void* rfds[32];
 	fd_set rfds_set;
 
-	memset(rfds, 0, sizeof(rfds));
-
 	while (1)
 	{
 		rcount = 0;
 
+		memset(rfds, 0, sizeof(rfds));
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");

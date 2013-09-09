@@ -784,7 +784,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduType;
 	UINT16 pduLength;
 	UINT16 pduSource;
-	UINT16 channelId;
+	UINT16 channelId = 0;
 	UINT16 securityFlags;
 	int nextPosition;
 

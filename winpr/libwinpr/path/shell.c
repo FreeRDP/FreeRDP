@@ -276,16 +276,22 @@ char* GetCombinedPath(char* basePath, char* subPath)
 	int length;
 	HRESULT status;
 	char* path = NULL;
-	int basePathLength;
-	int subPathLength;
+	char* subPathCpy;
+	int basePathLength = 0;
+	int subPathLength = 0;
 
-	basePathLength = strlen(basePath);
-	subPathLength = strlen(subPath);
+	if (basePath)
+		basePathLength = strlen(basePath);
+	if (subPath)
+		subPathLength = strlen(subPath);
 
 	length = basePathLength + subPathLength + 1;
 	path = (char*) malloc(length + 1);
+	if (!path)
+		return NULL;
 
-	CopyMemory(path, basePath, basePathLength);
+	if (basePath)
+		CopyMemory(path, basePath, basePathLength);
 	path[basePathLength] = '\0';
 
 	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);
@@ -293,12 +299,12 @@ char* GetCombinedPath(char* basePath, char* subPath)
 	if (!subPath)
 		return path;
 
-	subPath = _strdup(subPath);
-	PathCchConvertStyleA(subPath, subPathLength, PATH_STYLE_NATIVE);
+	subPathCpy = _strdup(subPath);
+	PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE);
 
-	status = NativePathCchAppendA(path, length + 1, subPath);
+	status = NativePathCchAppendA(path, length + 1, subPathCpy);
 
-	free(subPath);
+	free(subPathCpy);
 
 	return path;
 }

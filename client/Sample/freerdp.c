@@ -206,9 +206,6 @@ int tfreerdp_run(freerdp* instance)
 	fd_set wfds_set;
 	rdpChannels* channels;
 
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
-
 	channels = instance->context->channels;
 
 	freerdp_connect(instance);
@@ -218,6 +215,8 @@ int tfreerdp_run(freerdp* instance)
 		rcount = 0;
 		wcount = 0;
 
+		ZeroMemory(rfds, sizeof(rfds));
+		ZeroMemory(wfds, sizeof(wfds));
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");

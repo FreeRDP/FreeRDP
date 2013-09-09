@@ -143,6 +143,7 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	if (entry)
 		return entry;
 
+	FreeLibrary(library);
 	return entry;
 }
 

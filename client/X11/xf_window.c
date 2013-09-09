@@ -832,6 +832,7 @@ void xf_SetWindowIcon(xfContext* xfc, xfWindow* window, rdpIcon* icon)
 		PropModeReplace, (BYTE*) propdata, propsize);
 
 	XFlush(xfc->display);
+	free(propdata);
 }
 
 void xf_SetWindowRects(xfContext* xfc, xfWindow* window, RECTANGLE_16* rects, int nrects)

@@ -88,6 +88,9 @@ static int BitBlt_SRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 	BYTE* srcp;
 	BYTE* dstp;
 
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
 	{
@@ -149,6 +152,9 @@ static int BitBlt_NOTSRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	BYTE* srcp;
 	BYTE* dstp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -196,6 +202,9 @@ static int BitBlt_SRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* srcp;
 	BYTE* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -221,6 +230,9 @@ static int BitBlt_NOTSRCERASE_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 	BYTE* srcp;
 	BYTE* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -246,6 +258,9 @@ static int BitBlt_SRCINVERT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	BYTE* srcp;
 	BYTE* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -271,6 +286,9 @@ static int BitBlt_SRCAND_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidt
 	BYTE* srcp;
 	BYTE* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -296,6 +314,9 @@ static int BitBlt_SRCPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* srcp;
 	BYTE* dstp;
 		
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -317,6 +338,9 @@ static int BitBlt_SRCPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 static int BitBlt_DSPDxax_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc)
 {
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	/* TODO: Implement 8bpp DSPDxax BitBlt */
 	return 0;
 }
@@ -328,6 +352,9 @@ static int BitBlt_PSDPxax_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWid
 	BYTE* dstp;
 	BYTE* patp;
 	BYTE color8;
+
+	if (!hdcSrc || !hdcDest)
+		return 1;
 
 	/* D = (S & D) | (~S & P) */
 
@@ -382,6 +409,9 @@ static int BitBlt_SPna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 	BYTE* dstp;
 	BYTE* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -461,6 +491,9 @@ static int BitBlt_DSna_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth,
 	BYTE* srcp;
 	BYTE* dstp;
 
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -487,6 +520,9 @@ static int BitBlt_MERGECOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	BYTE* dstp;
 	BYTE* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -515,6 +551,9 @@ static int BitBlt_MERGEPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 	BYTE* srcp;
 	BYTE* dstp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -646,6 +685,9 @@ static int BitBlt_PATPAINT_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* dstp;
 	BYTE* patp;
 	
+	if (!hdcSrc || !hdcDest)
+		return 1;
+
 	for (y = 0; y < nHeight; y++)
 	{
 		srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
@@ -682,7 +724,10 @@ int BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight
 	}
 	
 	gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight);
-	
+
+	if (!hdcDest)
+		return 1;
+
 	switch (rop)
 	{
 		case GDI_BLACKNESS:

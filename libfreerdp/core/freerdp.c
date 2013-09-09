@@ -164,7 +164,8 @@ BOOL freerdp_connect(freerdp* instance)
 				StreamPool_Return(rdp->transport->ReceivePool, s);
 			}
 
-
+			pcap_close(update->pcap_rfx);
+			update->pcap_rfx = NULL;
 			status = TRUE;
 			goto freerdp_connect_finally;
 		}
@@ -305,6 +306,13 @@ BOOL freerdp_disconnect(freerdp* instance)
 	transport_disconnect(rdp->transport);
 
 	IFCALL(instance->PostDisconnect, instance);
+
+	if (instance->update->pcap_rfx)
+	{
+		instance->update->dump_rfx = FALSE;
+		pcap_close(instance->update->pcap_rfx);
+		instance->update->pcap_rfx = NULL;
+	}
 
 	return TRUE;
 }
