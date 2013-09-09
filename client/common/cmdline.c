@@ -58,8 +58,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
-	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "u", COMMAND_LINE_VALUE_OPTIONAL, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username, if value is omitted read from stdin" },
+	{ "p", COMMAND_LINE_VALUE_OPTIONAL, "<password>", NULL, NULL, -1, NULL, "Password, if value is ommited read from stdin" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
@@ -1218,7 +1218,18 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			char* user;
 			char* domain;
 
-			freerdp_parse_username(arg->Value, &user, &domain);
+			if (!arg->Value)
+			{
+				size_t s;
+				char *value = NULL;
+
+				printf("Please enter the username\n");
+				getline(&value, &s, stdin);
+				freerdp_parse_username(value, &user, &domain);
+				free(value);
+			}
+			else
+				freerdp_parse_username(arg->Value, &user, &domain);
 
 			settings->Username = user;
 			settings->Domain = domain;
@@ -1229,7 +1240,16 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
-			settings->Password = _strdup(arg->Value);
+			if (!arg->Value)
+			{
+				size_t s;
+				
+				settings->Password = NULL;
+				printf("Please enter the password for the user\n");
+				getline(&settings->Password, &s, stdin);
+			}
+			else
+				settings->Password = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -1670,7 +1690,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
-		FillMemory(arg->Value, strlen(arg->Value), '*');
+		if (arg->Value)
+			FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
 	arg = CommandLineFindArgumentA(args, "gp");
