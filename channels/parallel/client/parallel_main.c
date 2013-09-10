@@ -137,7 +137,7 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	buffer = (BYTE*) malloc(Length);
 
-	status = read(parallel->file, irp->output->pointer, Length);
+	status = read(parallel->file, buffer, Length);
 
 	if (status < 0)
 	{

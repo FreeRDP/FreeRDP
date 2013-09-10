@@ -55,6 +55,11 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess || (lpNumberOfBytesWritten == 0))
 	{
 		printf("Client NamedPipe WriteFile failure\n");
+	
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
 		return NULL;
 	}
 
@@ -68,6 +73,10 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess || (lpNumberOfBytesRead == 0))
 	{
 		printf("Client NamedPipe ReadFile failure\n");
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
 		return NULL;
 	}
 
@@ -120,6 +129,8 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fConnected)
 	{
 		printf("ConnectNamedPipe failure\n");
+
+		CloseHandle(hNamedPipe);
 		return NULL;
 	}
 
@@ -136,6 +147,10 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fSuccess || (lpNumberOfBytesRead == 0))
 	{
 		printf("Server NamedPipe ReadFile failure\n");
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
 		return NULL;
 	}
 
@@ -152,6 +167,10 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fSuccess || (lpNumberOfBytesWritten == 0))
 	{
 		printf("Server NamedPipe WriteFile failure\n");
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+
+		CloseHandle(hNamedPipe);
 		return NULL;
 	}
 
@@ -175,6 +194,9 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);
+
+	CloseHandle(ClientThread);
+	CloseHandle(ServerThread);
 
 	return 0;
 }

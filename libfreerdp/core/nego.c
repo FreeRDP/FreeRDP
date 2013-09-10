@@ -293,7 +293,10 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 
@@ -482,13 +485,10 @@ BOOL nego_recv_response(rdpNego* nego)
 
 	status = nego_recv(nego->transport, s, nego);
 
-	if (status < 0)
-	{
-		Stream_Free(s, TRUE);
-		return FALSE;
-	}
-
 	Stream_Free(s, TRUE);
+	if (status < 0)
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -714,7 +714,10 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 
@@ -873,7 +876,10 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 

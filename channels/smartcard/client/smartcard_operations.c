@@ -23,13 +23,11 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <strings.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 #define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
@@ -153,6 +151,7 @@ static void smartcard_output_buffer_limit(IRP* irp, char* buffer, unsigned int l
 	}
 	else
 	{
+		assert(NULL != buffer);
 		if (header < length)
 			length = header;
 
@@ -485,6 +484,11 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
 				(unsigned) cur->dwEventState);
 
+			if (!cur->szReader)
+			{
+				DEBUG_WARN("cur->szReader=%p", cur->szReader);
+				continue;
+			}
 			if (strcmp(cur->szReader, "\\\\?PnP?\\Notification") == 0)
 				cur->dwCurrentState |= SCARD_STATE_IGNORE;
 		}
@@ -966,15 +970,19 @@ static UINT32 handle_Transmit(IRP* irp)
 
 		Stream_Write_UINT32(irp->output, 0); 	/* pioRecvPci 0x00; */
 
-		smartcard_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
-
-		smartcard_output_buffer(irp, (char*) recvBuf, cbRecvLength);
+		if (recvBuf)
+		{
+			smartcard_output_buffer_start(irp, cbRecvLength);	/* start of recvBuf output */
+			smartcard_output_buffer(irp, (char*) recvBuf, cbRecvLength);
+		}
 	}
 
 	smartcard_output_alignment(irp, 8);
 
-	free(sendBuf);
-	free(recvBuf);
+	if (sendBuf)
+		free(sendBuf);
+	if (recvBuf)
+		free(recvBuf);
 
 	return status;
 }
@@ -1032,7 +1040,10 @@ static UINT32 handle_Control(IRP* irp)
 	sendBuffer = malloc(outBufferSize);
 
 	if (!sendBuffer)
+	{
+		free(recvBuffer);
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
+	}
 
 	status = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
 		sendBuffer, (DWORD) outBufferSize, &nBytesReturned);
@@ -1231,7 +1242,10 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
 	if (!readerStates)
+	{
+		free(pAtrMasks);
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
+	}
 
 	for (i = 0; i < readerCount; i++)
 	{
@@ -1271,6 +1285,11 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
 				(unsigned) cur->dwEventState);
 
+		if (!cur->szReader)
+		{
+			DEBUG_WARN("cur->szReader=%p", cur->szReader);
+			continue;
+		}
 		if (strcmp(cur->szReader, "\\\\?PnP?\\Notification") == 0)
 			cur->dwCurrentState |= SCARD_STATE_IGNORE;
 	}
@@ -1281,6 +1300,8 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 		DEBUG_SCARD("Failure: %s (0x%08x)",
 			pcsc_stringify_error(status), (unsigned) status);
 
+		free(readerStates);
+		free(pAtrMasks);
 		return smartcard_output_return(irp, status);
 	}
 
@@ -1310,7 +1331,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	Stream_Write_UINT32(irp->output, 0x00084dd8);
 	Stream_Write_UINT32(irp->output, readerCount);
 
-	for (i = 0, rsCur = readerStates; i < readerCount; i++, rsCur++)
+	for (i = 0, cur = readerStates; i < readerCount; i++, cur++)
 	{
 		Stream_Write_UINT32(irp->output, cur->dwCurrentState);
 		Stream_Write_UINT32(irp->output, cur->dwEventState);
@@ -1325,6 +1346,7 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	smartcard_output_alignment(irp, 8);
 
 	free(readerStates);
+	free(pAtrMasks);
 
 	return status;
 }

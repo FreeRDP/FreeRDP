@@ -248,7 +248,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 void* ListDictionary_GetItemValue(wListDictionary* listDictionary, void* key)
 {
 	void* value = NULL;
-	wListDictionaryItem* item;
+	wListDictionaryItem* item = NULL;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);

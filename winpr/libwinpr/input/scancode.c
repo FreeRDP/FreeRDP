@@ -33,7 +33,7 @@
  * Keyboard Type 4
  */
 
-DWORD KBD4T[128] =
+static DWORD KBD4T[128] =
 {
 	KBD4_T00,
 	KBD4_T01,
@@ -165,7 +165,7 @@ DWORD KBD4T[128] =
 	KBD4_T7F
 };
 
-DWORD KBD4X[128] =
+static DWORD KBD4X[128] =
 {
 	VK_NONE,
 	VK_NONE,
@@ -301,7 +301,7 @@ DWORD KBD4X[128] =
  * Keyboard Type 7
  */
 
-DWORD KBD7T[128] =
+static DWORD KBD7T[128] =
 {
 	KBD7_T00,
 	KBD7_T01,
@@ -433,7 +433,7 @@ DWORD KBD7T[128] =
 	KBD7_T7F
 };
 
-DWORD KBD7X[128] =
+static DWORD KBD7X[128] =
 {
 	VK_NONE,
 	VK_NONE,

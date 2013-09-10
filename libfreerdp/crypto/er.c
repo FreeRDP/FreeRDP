@@ -34,6 +34,13 @@ void er_read_length(wStream* s, int* length)
 
 	Stream_Read_UINT8(s, byte);
 
+	if (!length)
+		return;
+	
+	*length = 0;
+	if (!s)
+		return;
+	
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
@@ -236,7 +243,7 @@ int er_skip_sequence_tag(int length)
 
 BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
-	int length;
+	int length = 0;
 
 	er_read_universal_tag(s, ER_TAG_ENUMERATED, FALSE);
 	er_read_length(s, &length);
@@ -320,7 +327,7 @@ int er_skip_octet_string(int length)
 
 BOOL er_read_BOOL(wStream* s, BOOL* value)
 {
-	int length;
+	int length = 0;
 	BYTE v;
 
 	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
@@ -348,7 +355,7 @@ void er_write_BOOL(wStream* s, BOOL value)
 
 BOOL er_read_integer(wStream* s, UINT32* value)
 {
-	int length;
+	int length = 0;
 
 	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, &length);

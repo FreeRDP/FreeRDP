@@ -1153,6 +1153,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				{
 					settings->MonitorIds[i] = atoi(p[i]);
 				}
+
+				free(p);
 			}
 		}
 		CommandLineSwitchCase(arg, "monitor-list")

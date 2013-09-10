@@ -42,8 +42,6 @@ void* xf_server_thread(void* param)
 	xfServer* server;
 	freerdp_listener* listener;
 
-	ZeroMemory(rfds, sizeof(rfds));
-
 	server = (xfServer*) param;
 	listener = server->listener;
 
@@ -51,6 +49,7 @@ void* xf_server_thread(void* param)
 	{
 		rcount = 0;
 
+		ZeroMemory(rfds, sizeof(rfds));
 		if (listener->GetFileDescriptor(listener, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");

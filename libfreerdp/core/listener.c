@@ -279,7 +279,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	int i;
 	void* sin_addr;
 	int peer_sockfd;
-	freerdp_peer* client;
+	freerdp_peer* client = NULL;
 	socklen_t peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*) instance->listener;
@@ -306,6 +306,8 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 				continue;
 #endif
 			perror("accept");
+			if (client)
+				free(client);
 			return FALSE;
 		}
 
