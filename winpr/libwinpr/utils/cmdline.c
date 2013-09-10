@@ -54,6 +54,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	int length;
 	int index;
 	BOOL match, found, argument = FALSE;
+	BOOL notescaped = FALSE;
 	char* sigil;
 	int sigil_length;
 	int sigil_index;
@@ -81,6 +82,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
+		BOOL escaped = TRUE;
 		index = i;
 
 		if (preFilter)
@@ -130,12 +132,21 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			sigil_length = 0;
 		}
+		else if (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED)
+		{
+			if (notescaped)
+				return COMMAND_LINE_ERROR; 
+			sigil_length = 0;
+			escaped = FALSE;
+			notescaped = TRUE;
+		}
 		else
 		{
 			return COMMAND_LINE_ERROR;
 		}
 		
-		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE))
+		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
+				(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{
 			if (length < (sigil_length + 1))
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
@@ -190,6 +201,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				value = NULL;
 				value_length = 0;
 			}
+
+			if (!escaped)
+				continue;
 
 			found = FALSE;
 			for (j = 0; options[j].Name != NULL; j++)
