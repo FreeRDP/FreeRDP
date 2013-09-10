@@ -22,6 +22,10 @@ cmake_minimum_required(VERSION 2.8)
 
 project(FreeRDP C)
 
+if(NOT DEFINED VENDOR)
+	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
+endif()
+
 set(CMAKE_COLOR_MAKEFILE ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -496,4 +500,20 @@ if(WITH_SERVER)
 endif()
 
 # Packaging
-include(CMakeCPack.cmake)
+
+set(CMAKE_CPACK_INCLUDE_FILE "CMakeCPack.cmake")
+
+if(NOT (VENDOR MATCHES "FreeRDP"))
+
+message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH}")
+
+	if(DEFINED CLIENT_VENDOR_PATH)
+		if(EXISTS "${CLIENT_VENDOR_PATH}/CMakeCPack.cmake")
+			set(CMAKE_CPACK_INCLUDE_FILE "${CLIENT_VENDOR_PATH}/CMakeCPack.cmake")
+		endif()
+	endif()
+endif()
+
+message("CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
+
+include(${CMAKE_CPACK_INCLUDE_FILE})
