@@ -513,6 +513,4 @@ if(NOT (VENDOR MATCHES "FreeRDP"))
 	endif()
 endif()
 
-message("CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
-
 include(${CMAKE_CPACK_INCLUDE_FILE})
