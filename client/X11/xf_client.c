@@ -999,6 +999,23 @@ BOOL xf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
+static void replace_characters(char *in, char *what, char rep)
+{
+	char *p;
+
+	while (what && *what != '\0')
+	{
+		char cur = *what++;
+
+		do
+		{
+			p = strchr(in, cur);
+			if (p)
+				*p = rep;
+		} while(p);
+	}
+}
+
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
  *  if required to establish the connection.
  *  This function is actually called in credssp_ntlmssp_client_init()
@@ -1024,7 +1041,8 @@ BOOL xf_authenticate(freerdp* instance, char** username, char** password, char**
 		r = getline(&in, &s, stdin);
 		if (r)
 		{
-			freerdp_parse_username(in, &username, &domain);
+			replace_characters(in, "\r\n", '\0');
+			freerdp_parse_username(in, username, domain);
 		}
 		else
 			rc = FALSE;
