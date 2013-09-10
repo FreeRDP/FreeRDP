@@ -1220,6 +1220,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 
 			if (arg->Value)
 				freerdp_parse_username(arg->Value, &user, &domain);
+			else
+				settings->CredentialsFromStdin = TRUE;
 
 			settings->Username = user;
 			settings->Domain = domain;
@@ -1231,7 +1233,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "p")
 		{
 			if (!arg->Value)
+			{
+				settings->CredentialsFromStdin = TRUE;
 				settings->Password = NULL;
+			}
 			else
 				settings->Password = _strdup(arg->Value);
 		}

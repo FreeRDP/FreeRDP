@@ -1032,6 +1032,9 @@ BOOL xf_authenticate(freerdp* instance, char** username, char** password, char**
 {
 	BOOL rc = TRUE;
 
+	if (!instance->settings->CredentialsFromStdin)
+		return FALSE;
+
 	if (*username == NULL)
 	{
 		size_t s=0, r;
@@ -1053,8 +1056,10 @@ BOOL xf_authenticate(freerdp* instance, char** username, char** password, char**
 	
 	if (*password == NULL)
 	{
-		if (freerdp_passphrase_read("Password: ", *password, 0,
-					instance->settings->CredentialsFromStdin) == NULL)
+		*password = freerdp_passphrase_read("Password: ", *password, 0,
+					instance->settings->CredentialsFromStdin);
+
+		if (!*password)
 			rc = FALSE;
 	}
 
