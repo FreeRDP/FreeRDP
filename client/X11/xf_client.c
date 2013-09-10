@@ -1407,8 +1407,14 @@ void* xf_thread(void* param)
 		rcount = 0;
 		wcount = 0;
 
+		/*
+		 * win8 and server 2k12 seem to have some timing issue/race condition
+		 * when a initial sync request is send to sync the keyboard inidcators
+		 * sending the sync event twice fixed this problem
+		 */
 		if (freerdp_focus_required(instance))
 		{
+			xf_kbd_focus_in(xfc);
 			xf_kbd_focus_in(xfc);
 		}
 
