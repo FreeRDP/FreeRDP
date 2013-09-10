@@ -1215,20 +1215,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			char* user;
-			char* domain;
+			char* user = NULL;
+			char* domain = NULL;
 
-			if (!arg->Value)
-			{
-				size_t s;
-				char *value = NULL;
-
-				printf("Please enter the username\n");
-				getline(&value, &s, stdin);
-				freerdp_parse_username(value, &user, &domain);
-				free(value);
-			}
-			else
+			if (arg->Value)
 				freerdp_parse_username(arg->Value, &user, &domain);
 
 			settings->Username = user;
@@ -1241,13 +1231,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "p")
 		{
 			if (!arg->Value)
-			{
-				size_t s;
-				
 				settings->Password = NULL;
-				printf("Please enter the password for the user\n");
-				getline(&settings->Password, &s, stdin);
-			}
 			else
 				settings->Password = _strdup(arg->Value);
 		}

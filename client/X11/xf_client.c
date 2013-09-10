@@ -1013,14 +1013,44 @@ BOOL xf_post_connect(freerdp* instance)
  */
 BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
-	// FIXME: seems this callback may be called when 'username' is not known.
-	// But it doesn't do anything to fix it...
-	*password = malloc(password_size * sizeof(char));
+	BOOL rc = TRUE;
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->CredentialsFromStdin) == NULL)
-		return FALSE;
+	if (*username == NULL)
+	{
+		size_t s=0, r;
+		char *in = NULL;
 
-	return TRUE;
+		printf("Username: ");
+		r = getline(&in, &s, stdin);
+		if (r)
+		{
+			freerdp_parse_username(in, &username, &domain);
+		}
+		else
+			rc = FALSE;
+
+		if (in)
+			free(in);
+	}
+	
+	if (*password == NULL)
+	{
+		if (freerdp_passphrase_read("Password: ", *password, 0,
+					instance->settings->CredentialsFromStdin) == NULL)
+			rc = FALSE;
+	}
+
+	if (!rc)
+	{
+		if (*username)
+			free(*username);
+		if (*password)
+			free(*password);
+		if (*domain)
+			free(*domain);
+	}
+
+	return rc;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation

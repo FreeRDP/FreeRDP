@@ -44,8 +44,8 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 
 char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
 {
+	size_t cur_size = bufsiz;
 	char read_char;
-	char* buf_iter;
 	char term_name[L_ctermid];
 	int term_file, write_file;
 	ssize_t nbytes;
@@ -53,8 +53,8 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 
 	if (bufsiz == 0)
 	{
-		errno = EINVAL;
-		return NULL;
+		cur_size = 2;
+		buf = malloc(sizeof(char) * cur_size);
 	}
 
 	ctermid(term_name);
@@ -83,20 +83,23 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 	if (write(write_file, prompt, strlen(prompt)) == (ssize_t) -1)
 		goto error;
 
-	buf_iter = buf;
 	while ((nbytes = read(terminal_fildes, &read_char, sizeof read_char)) == (sizeof read_char))
 	{
 		if (read_char == '\n')
 			break;
-		if (read_bytes < (bufsiz - (size_t) 1))
+		if (read_bytes < (cur_size - (size_t) 1))
 		{
-			read_bytes++;
-			*buf_iter = read_char;
-			buf_iter++;
+			buf[read_bytes++] = read_char;
+
+			if (!bufsiz)
+			{
+				cur_size++;
+				buf = realloc(buf, sizeof(char) * cur_size);
+			}
 		}
 	}
-	*buf_iter = '\0';
-	buf_iter = NULL;
+	buf[read_bytes] = '\0';
+
 	read_char = '\0';
 	if (nbytes == (ssize_t) -1)
 		goto error;
@@ -119,12 +122,14 @@ char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int 
 	error:
 	{
 		int saved_errno = errno;
-		buf_iter = NULL;
+
 		read_char = '\0';
 		if (terminal_needs_reset)
 			tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
 		if (terminal_fildes != STDIN_FILENO)
 			close(terminal_fildes);
+		if (!bufsiz && buf)
+			free(buf);
 		errno = saved_errno;
 		return NULL;
 	}
