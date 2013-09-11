@@ -237,8 +237,8 @@ if(APPLE)
                 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
         	set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
 	else()
-		if(NOT DEFINED VENDOR)
-		    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.6" CACHE STRING "OSX deployment target")
+		if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET MATCHES "")
+		    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.6 CACHE STRING "OSX deployment target" FORCE)
 		endif()
 
 		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
@@ -251,9 +251,11 @@ if(APPLE)
                 endif()
         endif()
 
-        if(WITH_CLANG)
-                set(CMAKE_C_COMPILER "clang")
-        endif()
+# Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
+# Workaround: specify the parameter in the command-line
+#        if(WITH_CLANG)
+#                set(CMAKE_C_COMPILER "clang")
+#        endif()
 
         if (WITH_VERBOSE)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
