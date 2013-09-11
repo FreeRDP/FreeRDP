@@ -45,6 +45,8 @@
 
 #include "../handle/handle.h"
 
+#include "../pipe/pipe.h"
+
 static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 {
 	ts->tv_sec += dwMilliseconds / 1000L;
@@ -241,6 +243,31 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		return WAIT_FAILED;
 #endif
 	}
+	else if (Type == HANDLE_TYPE_NAMED_PIPE)
+	{
+		int status;
+		fd_set rfds;
+		struct timeval timeout;
+		WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+
+		FD_ZERO(&rfds);
+		FD_SET(pipe->clientfd, &rfds);
+		ZeroMemory(&timeout, sizeof(timeout));
+
+		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+		{
+			timeout.tv_usec = dwMilliseconds * 1000;
+		}
+
+		status = select(pipe->clientfd + 1, &rfds, NULL, NULL,
+				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+		if (status < 0)
+			return WAIT_FAILED;
+
+		if (status != 1)
+			return WAIT_TIMEOUT;
+	}
 	else
 	{
 		fprintf(stderr, "WaitForSingleObject: unknown handle type %lu\n", Type);
@@ -302,6 +329,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
 		}
+		else if (Type == HANDLE_TYPE_NAMED_PIPE)
+		{
+			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+			fd = pipe->clientfd;
+		}
 		else
 		{
 			return WAIT_FAILED;
@@ -346,6 +378,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		{
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
+		}
+		else if (Type == HANDLE_TYPE_NAMED_PIPE)
+		{
+			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+			fd = pipe->clientfd;
 		}
 
 		if (FD_ISSET(fd, &fds))
