@@ -312,7 +312,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i, length;
+	int i, length, ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 
@@ -335,8 +335,20 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	for (i = 0; i <= length; i++)
 		Stream_Write_UINT8(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
 
-	smartcard->path = path;
-	smartcard->name = name;
+	smartcard->name = NULL;
+	smartcard->path = NULL;
+	if (path)
+	{
+		smartcard->path = path;
+		smartcard->name = name;
+	}
+	else
+	{
+		if (1 == sscanf(name, "%d", &ck))
+			smartcard->path = name;
+		else
+			smartcard->name = name;
+	}
 
 	smartcard->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 	InitializeSListHead(smartcard->pIrpList);
