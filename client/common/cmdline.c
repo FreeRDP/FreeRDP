@@ -86,7 +86,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
-	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
@@ -428,6 +428,9 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 
 	nArgs = nCommas = 0;
 
+	if (!list)
+		return NULL;
+
 	for (index = 0; list[index]; index++)
 		nCommas += (list[index] == ',') ? 1 : 0;
 
@@ -550,7 +553,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		int count;
 
 		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
-		fprintf(stderr, "[%s] %d %s %s %s\n", __func__, count, p[0], p[1], arg->Value);
 		p[0] = "smartcard";
 
 		freerdp_client_add_device_channel(settings, count, p);

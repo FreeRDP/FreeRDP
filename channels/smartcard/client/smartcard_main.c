@@ -332,8 +332,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	length = strlen(smartcard->device.name);
 	smartcard->device.data = Stream_New(NULL, length + 1);
 
-	for (i = 0; i <= length; i++)
-		Stream_Write_UINT8(smartcard->device.data, name[i] < 0 ? '_' : name[i]);
+	Stream_Write(smartcard->device.data, "SCARD", 6);
 
 	smartcard->name = NULL;
 	smartcard->path = NULL;
@@ -342,7 +341,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		smartcard->path = path;
 		smartcard->name = name;
 	}
-	else
+	else if (name)
 	{
 		if (1 == sscanf(name, "%d", &ck))
 			smartcard->path = name;
