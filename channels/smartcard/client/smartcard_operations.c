@@ -1551,7 +1551,14 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	UINT32 ptrIoRecvPciBuffer;
 	UINT32 recvBufferIsNULL;
 	UINT32 linkedLen;
-	SCARD_IO_REQUEST pioSendPci, pioRecvPci, *pPioRecvPci;
+	union
+	{
+		SCARD_IO_REQUEST *rq;
+		UINT32 *u32;
+		void *v;
+	} ioSendPci, ioRecvPci;
+
+	SCARD_IO_REQUEST *pPioRecvPci;
 	DWORD cbSendLength = 0, cbRecvLength = 0;
 	BYTE *sendBuf = NULL, *recvBuf = NULL;
 
@@ -1575,8 +1582,11 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		goto finish;
 	}
 
-	Stream_Read_UINT32(irp->input, pioSendPci.dwProtocol);
-	Stream_Read_UINT32(irp->input, pioSendPci.cbPciLength);
+	ioSendPci.v = malloc(sizeof(SCARD_IO_REQUEST));
+	ioRecvPci.v = malloc(sizeof(SCARD_IO_REQUEST));
+
+	Stream_Read_UINT32(irp->input, ioSendPci.rq->dwProtocol);
+	Stream_Read_UINT32(irp->input, ioSendPci.rq->cbPciLength);
 	Stream_Read_UINT32(irp->input, pioSendPciBufferPtr);
 
 	Stream_Read_UINT32(irp->input, cbSendLength);
@@ -1600,7 +1610,6 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			goto finish;
 		}
 		Stream_Read_UINT32(irp->input, linkedLen);
-		Stream_Read_UINT32(irp->input, pioSendPci.dwProtocol);
 
 		if (Stream_GetRemainingLength(irp->input) < linkedLen)
 		{
@@ -1609,18 +1618,22 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		if (linkedLen < sizeof(pioSendPci))
+		
+		/* For details see 2.2.1.8 SCardIO_Request in MS-RDPESC and
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
+		 */
+		if (linkedLen != ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST))
 		{
-			DEBUG_WARN("length violation %d [%d]", sizeof(pioSendPci), linkedLen);
+			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
+					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		/* Skip data... For details see 2.2.1.8 SCardIO_Request in MS-RDPESC */
-		DEBUG_WARN("unhandled buffer data of length %d", linkedLen);
-		Stream_Seek(irp->input, linkedLen);
+		ioSendPci.v = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
+		Stream_Read(irp->input, &ioSendPci.rq[1], linkedLen);
 	}
 	else
-		pioSendPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
+		ioSendPci.rq->cbPciLength = sizeof(SCARD_IO_REQUEST);
 
 	/* Check, if there is data available from the SendBufferPointer */
 	if (ptrSendBuffer)
@@ -1662,7 +1675,17 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		}
 		/* recvPci */
 		Stream_Read_UINT32(irp->input, linkedLen);
-		Stream_Read_UINT32(irp->input, pioRecvPci.dwProtocol);
+		Stream_Read_UINT16(irp->input, ioRecvPci.rq->dwProtocol);
+		Stream_Read_UINT16(irp->input, ioRecvPci.rq->cbPciLength);
+		
+		if (linkedLen != ioSendPci.rq->cbPciLength)
+		{
+			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
+					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		linkedLen -= 4;
 
 		if (Stream_GetRemainingLength(irp->input) < linkedLen)
 		{
@@ -1672,15 +1695,16 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			goto finish;
 		}
 
-		/* Skip data */
-		DEBUG_WARN("unhandled buffer data of length %d", linkedLen);
-		Stream_Seek(irp->input, linkedLen);
+		/* Read data, see
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
+		 */
+		ioRecvPci.v = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
+		Stream_Read(irp->input, &ioRecvPci.rq[1], linkedLen);
+
+		pPioRecvPci = ioRecvPci.rq;
 	}
 	else
-	{
 		pPioRecvPci = NULL;
-	}
-	pPioRecvPci = NULL;
 
 	DEBUG_SCARD("SCardTransmit(hcard: 0x%08lx, send: %d bytes, recv: %d bytes)",
 		(long unsigned) hCard, (int) cbSendLength, (int) cbRecvLength);
@@ -1692,7 +1716,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		goto finish;
 	}
 
-	status = SCardTransmit(hCard, &pioSendPci, sendBuf, cbSendLength,
+	status = SCardTransmit(hCard, ioSendPci.rq, sendBuf, cbSendLength,
 			   pPioRecvPci, recvBuf, &cbRecvLength);
 
 	if (status != SCARD_S_SUCCESS)
@@ -1719,6 +1743,10 @@ finish:
 		free(sendBuf);
 	if (recvBuf)
 		free(recvBuf);
+	if (ioSendPci.v)
+		free(ioSendPci.v);
+	if (ioRecvPci.v)
+		free(ioRecvPci.v);
 
 	return status;
 }
