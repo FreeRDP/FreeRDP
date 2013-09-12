@@ -1553,7 +1553,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	UINT32 linkedLen;
 	SCARD_IO_REQUEST pioSendPci, pioRecvPci, *pPioRecvPci;
 	DWORD cbSendLength = 0, cbRecvLength = 0;
-	BYTE *sendBuf = NULL, *recvBuf = NULL, *ioSendPci = NULL;
+	BYTE *sendBuf = NULL, *recvBuf = NULL;
 
 	status = handle_CommonTypeHeader(scard, irp, &inlen);
 	if (status)
@@ -1609,9 +1609,15 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
+		if (linkedLen < sizeof(pioSendPci))
+		{
+			DEBUG_WARN("length violation %d [%d]", sizeof(pioSendPci), linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
 		/* Skip data... For details see 2.2.1.8 SCardIO_Request in MS-RDPESC */
-		ioSendPci = malloc(linkedLen);
-		Stream_Read(irp->input, ioSendPci, linkedLen);
+		DEBUG_WARN("unhandled buffer data of length %d", linkedLen);
+		Stream_Seek(irp->input, linkedLen);
 	}
 	else
 		pioSendPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
@@ -1667,6 +1673,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		}
 
 		/* Skip data */
+		DEBUG_WARN("unhandled buffer data of length %d", linkedLen);
 		Stream_Seek(irp->input, linkedLen);
 	}
 	else
@@ -1712,8 +1719,6 @@ finish:
 		free(sendBuf);
 	if (recvBuf)
 		free(recvBuf);
-	if (ioSendPci)
-		free(ioSendPci);
 
 	return status;
 }
