@@ -319,15 +319,15 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SMARTCARD* smartcard;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
 		ZeroMemory(smartcard, sizeof(RDPDR_SMARTCARD));
 
 		smartcard->Type = RDPDR_DTYP_SMARTCARD;
-		smartcard->Name = _strdup(params[1]);
-
+		if (count > 1)
+			smartcard->Name = _strdup(params[1]);
 		if (count > 2)
 			smartcard->Path = _strdup(params[2]);
 
@@ -340,15 +340,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SERIAL* serial;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
 		ZeroMemory(serial, sizeof(RDPDR_SERIAL));
 
 		serial->Type = RDPDR_DTYP_SERIAL;
-		serial->Name = _strdup(params[1]);
-		serial->Path = _strdup(params[2]);
+		if (count > 1)
+			serial->Name = _strdup(params[1]);
+		if (count > 2)
+			serial->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 		settings->DeviceRedirection = TRUE;
@@ -359,15 +361,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_PARALLEL* parallel;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
 		ZeroMemory(parallel, sizeof(RDPDR_PARALLEL));
 
 		parallel->Type = RDPDR_DTYP_PARALLEL;
-		parallel->Name = _strdup(params[1]);
-		parallel->Path = _strdup(params[2]);
+		if (count > 1)
+			parallel->Name = _strdup(params[1]);
+		if (count > 1)
+			parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
 		settings->DeviceRedirection = TRUE;
@@ -546,6 +550,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 		int count;
 
 		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+		fprintf(stderr, "[%s] %d %s %s %s\n", __func__, count, p[0], p[1], arg->Value);
 		p[0] = "smartcard";
 
 		freerdp_client_add_device_channel(settings, count, p);
