@@ -1519,9 +1519,21 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	if (map[2] & SCARD_INPUT_LINKED)
 	{
 		/* sendPci */
+		if (Stream_GetRemainingLength(irp->input) < 8)
+		{
+			DEBUG_WARN("length violation %d [%d]", 8,
+					Stream_GetRemainingLength(irp->input));
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		Stream_Read_UINT32(irp->input, linkedLen);
-
 		Stream_Read_UINT32(irp->input, pioSendPci.dwProtocol);
+
+		if (Stream_GetRemainingLength(irp->input) < linkedLen - 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", linkedLen - 4,
+					Stream_GetRemainingLength(irp->input));
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		Stream_Seek(irp->input, linkedLen - 4);
 
 		smartcard_input_repos(irp, linkedLen);
@@ -1530,9 +1542,21 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 
 	if (map[3] & SCARD_INPUT_LINKED)
 	{
+		if (Stream_GetRemainingLength(irp->input) < 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", 4,
+					Stream_GetRemainingLength(irp->input));
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		/* send buffer */
 		Stream_Read_UINT32(irp->input, linkedLen);
 
+		if (Stream_GetRemainingLength(irp->input) < linkedLen)
+		{
+			DEBUG_WARN("length violation %d [%d]", linkedLen,
+					Stream_GetRemainingLength(irp->input));
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		sendBuf = malloc(linkedLen);
 		Stream_Read(irp->input, sendBuf, linkedLen);
 		smartcard_input_repos(irp, linkedLen);
@@ -1543,19 +1567,70 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 
 	if (map[4] & SCARD_INPUT_LINKED)
 	{
+		if (Stream_GetRemainingLength(irp->input) < 8)
+		{
+			DEBUG_WARN("length violation %d [%d]", 8,
+					Stream_GetRemainingLength(irp->input));
+			if (sendBuf)
+				free(sendBuf);
+			if (recvBuf)
+				free(recvBuf);
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		/* recvPci */
 		Stream_Read_UINT32(irp->input, linkedLen);
-
 		Stream_Read_UINT32(irp->input, pioRecvPci.dwProtocol);
+
+		if (Stream_GetRemainingLength(irp->input) < linkedLen - 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", linkedLen - 4,
+					Stream_GetRemainingLength(irp->input));
+			if (sendBuf)
+				free(sendBuf);
+			if (recvBuf)
+				free(recvBuf);
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		Stream_Seek(irp->input, linkedLen - 4);
 
 		smartcard_input_repos(irp, linkedLen);
 
+		if (Stream_GetRemainingLength(irp->input) < 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", 4,
+					Stream_GetRemainingLength(irp->input));
+			if (sendBuf)
+				free(sendBuf);
+			if (recvBuf)
+				free(recvBuf);
+			return SCARD_F_INTERNAL_ERROR;
+		}
 		Stream_Read_UINT32(irp->input, map[6]);
 		if (map[6] & SCARD_INPUT_LINKED)
 		{
 			/* not sure what this is */
+			if (Stream_GetRemainingLength(irp->input) < 4)
+			{
+				DEBUG_WARN("length violation %d [%d]", 4,
+						Stream_GetRemainingLength(irp->input));
+				if (sendBuf)
+					free(sendBuf);
+				if (recvBuf)
+					free(recvBuf);
+				return SCARD_F_INTERNAL_ERROR;
+			}
 			Stream_Read_UINT32(irp->input, linkedLen);
+
+			if (Stream_GetRemainingLength(irp->input) < linkedLen)
+			{
+				DEBUG_WARN("length violation %d [%d]", linkedLen,
+						Stream_GetRemainingLength(irp->input));
+				if (sendBuf)
+					free(sendBuf);
+				if (recvBuf)
+					free(recvBuf);
+				return SCARD_F_INTERNAL_ERROR;
+			}
 			Stream_Seek(irp->input, linkedLen);
 
 			smartcard_input_repos(irp, linkedLen);
@@ -1575,6 +1650,10 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	if (!check_handle_is_forwarded(scard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		if (sendBuf)
+			free(sendBuf);
+		if (recvBuf)
+			free(recvBuf);
 		return SCARD_E_INVALID_TARGET;
 	}
 
