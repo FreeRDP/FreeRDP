@@ -79,10 +79,12 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
+    <!-- The strings in resolutions_values_array should not be localized -->
+    <!-- They are used for text comparison and must remain in english -->
     <string-array name="resolutions_values_array">
-        <item>automatico</item>
-        <item>pantalla</item>
-        <item>manual</item>
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
         <item>640x480</item>
         <item>720x480</item>
         <item>800x600</item>
@@ -92,6 +94,7 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
+    <!-- end protected string section -->
     <string name="settings_width">Ancho</string>
     <string name="settings_height">Altura</string>
     <string name="settings_performance">Rendimiento</string>

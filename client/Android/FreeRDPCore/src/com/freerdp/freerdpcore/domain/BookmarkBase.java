@@ -191,13 +191,13 @@ public class BookmarkBase implements Parcelable, Cloneable
 				this.height = Integer.valueOf(dimensions[1]);
 				this.resolution = PREDEFINED;
 			}
-			else if (resolution.equalsIgnoreCase(GlobalSettings.initialContext.getResources().getString(R.string.resolution_custom)))
+			else if (resolution.equalsIgnoreCase("custom"))
 			{
 				this.width = width;				
 				this.height = height;				
 				this.resolution = CUSTOM;
 			}
-			else if (resolution.equalsIgnoreCase(GlobalSettings.initialContext.getResources().getString(R.string.resolution_fit)))
+			else if (resolution.equalsIgnoreCase("fitscreen"))
 			{
 				this.width = this.height = 0;
 				this.resolution = FITSCREEN;
@@ -219,9 +219,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			if (isPredefined())
 				return (width + "x" + height);
 
-			return (isFitScreen() ? GlobalSettings.initialContext.getResources().getString(R.string.resolution_fit) :
-				isAutomatic() ? GlobalSettings.initialContext.getResources().getString(R.string.resolution_automatic) : 
-					GlobalSettings.initialContext.getResources().getString(R.string.resolution_custom));
+			return (isFitScreen() ? "fitscreen" : isAutomatic() ? "automatic" : "custom");
 		}
 
 		public boolean isPredefined() {

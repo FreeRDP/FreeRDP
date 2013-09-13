@@ -12,6 +12,7 @@ package com.freerdp.freerdpcore.application;
 import android.app.Application;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.util.Log;
 
 import java.util.*;
@@ -50,6 +51,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 
 	// timer for disconnecting sessions after the screen was turned off
 	private static Timer disconnectTimer = null;
+	public static GlobalApp instance = null;
 
 	// TimerTask for disconnecting sessions after screen was turned off
 	private static class DisconnectTask extends TimerTask
@@ -88,6 +90,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 		quickConnectHistoryGateway = new QuickConnectHistoryGateway(historyDB);
 		
     	GlobalSettings.init(this);
+    	instance = this;
 		ConnectedTo3G = NetworkStateReceiver.isConnectedTo3G(this);		
 		
 		// init screen receiver here (this can't be declared in AndroidManifest - refer to:

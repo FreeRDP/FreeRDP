@@ -27,11 +27,9 @@ public class GlobalSettings {
 	private static final String PREF_SECURITY_ACCEPTALLCERTIFICATES = "security.accept_certificates";
 
 	private static SharedPreferences settings;
-	public static Context initialContext;
 	
 	public static void init(Context context)
 	{		
-		initialContext = context;
 		settings = PreferenceManager.getDefaultSharedPreferences(context);
 		initValues();
 	}
