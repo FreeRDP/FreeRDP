@@ -331,8 +331,10 @@ static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE *scard, const char *reade
 		str = strtok(NULL, " ");
 	} 
 
+	if (!strpos)
+		goto finally;
+
 	pos = strtol(strpos, NULL, 10);
-	status = strtol(strstatus, NULL, 10);
 	
 	if ( strpos && strstatus )
 	{
@@ -351,6 +353,7 @@ static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE *scard, const char *reade
 	else
 		DEBUG_WARN("unknown reader format '%s'", readerName);
 
+finally:
 	free(name);
 
 	if (!rc)
@@ -617,7 +620,7 @@ static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* scard, IRP* irp, size_t 
 	/* TODO: store hContext in allowed context list */
 
 	smartcard_output_alignment(irp, 8);
-	return SCARD_S_SUCCESS;
+	return status;
 }
 
 static UINT32 handle_ReleaseContext(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
@@ -729,7 +732,6 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp,
 
 	/* ignore rest of [MS-RDPESC] 2.2.2.4 ListReaders_Call */
 
-	status = SCARD_S_SUCCESS;
 #ifdef SCARD_AUTOALLOCATE
 	dwReaders = SCARD_AUTOALLOCATE;
 	status = SCardListReaders(hContext, NULL, (LPSTR) &readerList, &dwReaders);
@@ -1323,7 +1325,7 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	DWORD state = 0, protocol = 0;
 	DWORD readerLen;
 	DWORD atrLen = MAX_ATR_SIZE;
-	char* readerName;
+	char* readerName = NULL;
 	BYTE pbAtr[MAX_ATR_SIZE];
 
 #ifdef WITH_DEBUG_SCARD
@@ -1426,9 +1428,9 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 	DWORD state, protocol;
 	DWORD readerLen = 0;
 	DWORD atrLen = MAX_ATR_SIZE;
-	char* readerName;
-	BYTE pbAtr[MAX_ATR_SIZE];
-	UINT32 dataLength;
+	char* readerName = NULL;
+	BYTE *pbAtr = NULL;
+	UINT32 dataLength = 0;
 	int pos, poslen1, poslen2;
 
 #ifdef WITH_DEBUG_SCARD
@@ -1469,6 +1471,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 		goto finish;
 	}
 
+	pbAtr = malloc(sizeof(BYTE) * atrLen);
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
 
@@ -1513,7 +1516,8 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 	poslen2 = Stream_GetPosition(irp->output);
 	Stream_Write_UINT32(irp->output, readerLen);
 
-	dataLength = smartcard_output_string(irp, readerName, wide);
+	if (readerName)
+		dataLength += smartcard_output_string(irp, readerName, wide);
 	dataLength += smartcard_output_string(irp, "\0", wide);
 	smartcard_output_repos(irp, dataLength);
 
@@ -1536,6 +1540,9 @@ finish:
 #endif
 	}
 
+	if (pbAtr)
+		free(pbAtr);
+
 	return status;
 }
 
@@ -1549,6 +1556,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	UINT32 ptrIoRecvPciBuffer;
 	UINT32 recvBufferIsNULL;
 	UINT32 linkedLen;
+	void *tmp;
 	union
 	{
 		SCARD_IO_REQUEST *rq;
@@ -1556,9 +1564,12 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		void *v;
 	} ioSendPci, ioRecvPci;
 
-	SCARD_IO_REQUEST *pPioRecvPci;
+	SCARD_IO_REQUEST *pPioRecvPci = NULL;
 	DWORD cbSendLength = 0, cbRecvLength = 0;
 	BYTE *sendBuf = NULL, *recvBuf = NULL;
+
+	ioSendPci.v = NULL;
+	ioRecvPci.v = NULL;
 
 	status = handle_CommonTypeHeader(scard, irp, &inlen);
 	if (status)
@@ -1627,7 +1638,11 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		ioSendPci.v = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
+		tmp = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
+		if (!tmp)
+			goto finish;
+		ioSendPci.v = tmp;
+
 		Stream_Read(irp->input, &ioSendPci.rq[1], linkedLen);
 	}
 	else
@@ -1696,7 +1711,11 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		/* Read data, see
 		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
 		 */
-		ioRecvPci.v = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
+		tmp = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
+		if (!tmp)
+			goto finish;
+		ioRecvPci.v = tmp;
+
 		Stream_Read(irp->input, &ioRecvPci.rq[1], linkedLen);
 
 		pPioRecvPci = ioRecvPci.rq;
