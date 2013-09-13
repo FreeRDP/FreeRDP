@@ -1425,7 +1425,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 	SCARDCONTEXT hContext;
 	DWORD state, protocol;
 	DWORD readerLen = 0;
-	DWORD atrLen = 0;
+	DWORD atrLen = MAX_ATR_SIZE;
 	char* readerName;
 	BYTE pbAtr[MAX_ATR_SIZE];
 	UINT32 dataLength;
@@ -1462,8 +1462,6 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 	if (status)
 		goto finish;
 
-	atrLen = MAX_ATR_SIZE;
-
 	if (!check_handle_is_forwarded(scard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
@@ -1493,7 +1491,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL
 	DEBUG_SCARD("       Reader: \"%s\"", readerName ? readerName : "NULL");
 
 #ifdef WITH_DEBUG_SCARD
-	stderr, "       ATR: ");
+	fprintf(stderr, "       ATR: ");
 	for (i = 0; i < atrLen; i++)
 		fprintf(stderr, "%02x%c", pbAtr[i], (i == atrLen - 1) ? ' ' : ':');
 	fprintf(stderr, "\n");
