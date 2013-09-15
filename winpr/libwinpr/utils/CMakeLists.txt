@@ -51,7 +51,8 @@ set(${MODULE_PREFIX}_SRCS
 	ntlm.c
 	print.c
 	stream.c
-	cmdline.c)
+	cmdline.c
+	wlog.c)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
