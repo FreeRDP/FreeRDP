@@ -25,104 +25,93 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <winpr/crt.h>
 #include <winpr/print.h>
 
 #include <winpr/wlog.h>
 
 #define WLOG_BUFFER_SIZE	8192
 
-void WLog_WriteA(int logLevel, LPCSTR loggerName, LPCSTR logMessage)
+const char* WLOG_LEVELS[7] =
 {
-	switch (logLevel)
-	{
-		case WLOG_TRACE:
-			break;
+	"Trace",
+	"Debug",
+	"Info",
+	"Warn",
+	"Error",
+	"Fatal",
+	"Off"
+};
 
-		case WLOG_DEBUG:
-			break;
+void WLog_WriteA(wLog* log, DWORD logLevel, LPCSTR logMessage)
+{
+	char* logLevelStr;
 
-		case WLOG_INFO:
-			break;
+	if (logLevel > log->Level)
+		return;
 
-		case WLOG_WARN:
-			break;
+	logLevelStr = (char*) WLOG_LEVELS[logLevel];
 
-		case WLOG_ERROR:
-			break;
-
-		case WLOG_FATAL:
-			break;
-	}
-
-	printf("[%s]: %s\n", loggerName, logMessage);
+	printf("[%s] [%s]: %s\n", logLevelStr, log->Name, logMessage);
 }
 
-void WLog_LogVA(int logLevel, LPCSTR loggerName, LPCSTR logMessage, va_list args)
+void WLog_LogVA(wLog* log, DWORD logLevel, LPCSTR logMessage, va_list args)
 {
 	if (!strchr(logMessage, '%'))
 	{
-		WLog_WriteA(logLevel, loggerName, logMessage);
+		WLog_WriteA(log, logLevel, logMessage);
 	}
 	else
 	{
 		char formattedLogMessage[8192];
 		wvsnprintfx(formattedLogMessage, WLOG_BUFFER_SIZE - 1, logMessage, args);
-		WLog_WriteA(logLevel, loggerName, formattedLogMessage);
+		WLog_WriteA(log, logLevel, formattedLogMessage);
 	}
 }
 
-void WLog_LogA(int logLevel, LPCSTR loggerName, LPCSTR logMessage, ...)
+void WLog_Print(wLog* log, DWORD logLevel, LPCSTR logMessage, ...)
 {
 	va_list args;
 	va_start(args, logMessage);
-	WLog_LogVA(logLevel, loggerName, logMessage, args);
+	WLog_LogVA(log, logLevel, logMessage, args);
 	va_end(args);
 }
 
-void WLog_TraceA(LPCSTR loggerName, LPCSTR logMessage, ...)
+DWORD WLog_GetLogLevel(wLog* log)
 {
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_TRACE, loggerName, logMessage, args);
-	va_end(args);
+	return log->Level;
 }
 
-void WLog_DebugA(LPCSTR loggerName, LPCSTR logMessage, ...)
+void WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_DEBUG, loggerName, logMessage, args);
-	va_end(args);
+	if (logLevel > WLOG_OFF)
+		logLevel = WLOG_OFF;
+
+	log->Level = logLevel;
 }
 
-void WLog_InfoA(LPCSTR loggerName, LPCSTR logMessage, ...)
+wLog* WLog_New(LPCSTR name)
 {
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_INFO, loggerName, logMessage, args);
-	va_end(args);
+	wLog* log;
+
+	log = (wLog*) malloc(sizeof(wLog));
+
+	if (log)
+	{
+		ZeroMemory(log, sizeof(wLog));
+
+		log->Name = _strdup(name);
+		log->Level = WLOG_TRACE;
+	}
+
+	return log;
 }
 
-void WLog_WarnA(LPCSTR loggerName, LPCSTR logMessage, ...)
+void WLog_Free(wLog* log)
 {
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_WARN, loggerName, logMessage, args);
-	va_end(args);
-}
-
-void WLog_ErrorA(LPCSTR loggerName, LPCSTR logMessage, ...)
-{
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_ERROR, loggerName, logMessage, args);
-	va_end(args);
-}
-
-void WLog_FatalA(LPCSTR loggerName, LPCSTR logMessage, ...)
-{
-	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(WLOG_FATAL, loggerName, logMessage, args);
-	va_end(args);
+	if (log)
+	{
+		free(log->Name);
+		free(log);
+	}
 }

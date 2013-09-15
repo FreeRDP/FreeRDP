@@ -29,31 +29,21 @@
 #define WLOG_WARN	3
 #define WLOG_ERROR	4
 #define WLOG_FATAL	5
+#define WLOG_OFF	6
 
-WINPR_API void WLog_LogA(int logLevel, LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_TraceA(LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_DebugA(LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_InfoA(LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_WarnA(LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_ErrorA(LPCSTR loggerName, LPCSTR logMessage, ...);
-WINPR_API void WLog_FatalA(LPCSTR loggerName, LPCSTR logMessage, ...);
+struct _wLog
+{
+	LPSTR Name;
+	DWORD Level;
+};
+typedef struct _wLog wLog;
 
-#ifdef UNICODE
-#define WLog_Log	WLog_LogW
-#define WLog_Trace	WLog_TraceW
-#define WLog_Debug	WLog_DebugW
-#define WLog_Info	WLog_InfoW
-#define WLog_Warn	WLog_WarnW
-#define WLog_Error	WLog_ErrorW
-#define WLog_Fatal	WLog_FatalW
-#else
-#define WLog_Log	WLog_LogA
-#define WLog_Trace	WLog_TraceA
-#define WLog_Debug	WLog_DebugA
-#define WLog_Info	WLog_InfoA
-#define WLog_Warn	WLog_WarnA
-#define WLog_Error	WLog_ErrorA
-#define WLog_Fatal	WLog_FatalA
-#endif
+WINPR_API void WLog_Print(wLog* log, DWORD logLevel, LPCSTR logMessage, ...);
+
+WINPR_API DWORD WLog_GetLogLevel(wLog* log);
+WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);
+
+WINPR_API wLog* WLog_New(LPCSTR name);
+WINPR_API void WLog_Free(wLog* log);
 
 #endif /* WINPR_WLOG_H */
