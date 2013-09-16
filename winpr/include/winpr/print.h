@@ -21,6 +21,8 @@
 #define WINPR_UTILS_PRINT_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
