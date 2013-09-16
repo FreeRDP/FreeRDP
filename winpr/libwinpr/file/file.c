@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/synch.h>
 #include <winpr/handle.h>
 #include <winpr/platform.h>
 
@@ -230,7 +231,11 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
 	if (status != 0)
+	{
+		close(pNamedPipe->clientfd);
+		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
+	}
 
 	return hNamedPipe;
 }
@@ -557,13 +562,13 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 	if (lstat(pFileSearch->lpPath, &fileStat) < 0)
 	{
-		free(pFileSearch);
+		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* stat error */
 	}
 
 	if (S_ISDIR(fileStat.st_mode) == 0)
 	{
-		free(pFileSearch);
+		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* not a directory */
 	}
 
@@ -573,7 +578,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 	if (!pFileSearch->pDir)
 	{
-		free(pFileSearch);
+		FindClose(pFileSearch);
 		return INVALID_HANDLE_VALUE; /* failed to open directory */
 	}
 
@@ -592,6 +597,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		}
 	}
 
+	FindClose(pFileSearch);
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -647,13 +653,20 @@ BOOL FindClose(HANDLE hFindFile)
 
 	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
-	free(pFileSearch->lpPath);
-	free(pFileSearch->lpPattern);
-	closedir(pFileSearch->pDir);
+	if (pFileSearch)
+	{
+		if (pFileSearch->lpPath)
+			free(pFileSearch->lpPath);
+		if (pFileSearch->lpPattern)
+			free(pFileSearch->lpPattern);
+		if (pFileSearch->pDir)
+			closedir(pFileSearch->pDir);
+		free(pFileSearch);
 
-	free(pFileSearch);
+		return TRUE;
+	}
 
-	return TRUE;
+	return FALSE;
 }
 
 BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)

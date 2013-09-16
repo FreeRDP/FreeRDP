@@ -218,4 +218,6 @@ void pcap_close(rdpPcap* pcap)
 
 	if (pcap->fp != NULL)
 		fclose(pcap->fp);
+
+	free(pcap);
 }

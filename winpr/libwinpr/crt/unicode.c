@@ -352,5 +352,11 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 	if (status != cbMultiByte)
 		status = 0;
 
+	if ((status <= 0) && allocate)
+	{
+		free(*lpMultiByteStr);
+		*lpMultiByteStr = NULL;
+	}
+
 	return status;
 }

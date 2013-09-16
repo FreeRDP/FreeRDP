@@ -456,7 +456,10 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	fseek(fp, 0, SEEK_SET);
 
 	if (file_size < 1)
+	{
+		fclose(fp);
 		return FALSE;
+	}
 
 	buffer = (BYTE*) malloc(file_size + 2);
 	read_size = fread(buffer, file_size, 1, fp);
@@ -466,6 +469,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 		if (!ferror(fp))
 			read_size = file_size;
 	}
+	fclose(fp);
 
 	if (read_size < 1)
 	{
@@ -669,14 +673,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~((size_t) file->Username))
 	{
-		char* user;
-		char* domain;
+		char* user = NULL;
+		char* domain = NULL;
 
 		freerdp_parse_username(file->Username, &user, &domain);
 		freerdp_set_param_string(settings, FreeRDP_Username, user);
 
 		if (domain != NULL)
 			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
+
+		if (user)
+			free(user);
+		if(domain)
+			free(domain);
 	}
 
 	if (~file->ServerPort)

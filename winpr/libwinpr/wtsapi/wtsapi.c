@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <winpr/wtsapi.h>
 
@@ -210,9 +211,9 @@ HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 	HANDLE handle = NULL;
 
 	if (!flags)
-		return WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, SessionId, pVirtualName);
+		handle = WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, SessionId, pVirtualName);
 
-	return NULL;
+	return handle;
 }
 
 BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)

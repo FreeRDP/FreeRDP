@@ -90,7 +90,7 @@ defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>
 #endif
 
-DWORD GetProcessorArchitecture()
+static DWORD GetProcessorArchitecture()
 {
 	DWORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
 
@@ -113,7 +113,7 @@ DWORD GetProcessorArchitecture()
 	return cpuArch;
 }
 
-DWORD GetNumberOfProcessors()
+static DWORD GetNumberOfProcessors()
 {
 	DWORD numCPUs = 1;
 

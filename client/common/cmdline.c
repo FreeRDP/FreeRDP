@@ -870,6 +870,8 @@ int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int*
 	detect_status = 0;
 	CommandLineClearArgumentsA(args);
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+	if (status < 0)
+		return status;
 
 	arg = args;
 
@@ -903,6 +905,8 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, int* c
 	detect_status = 0;
 	CommandLineClearArgumentsA(args);
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+	if (status < 0)
+		return status;
 
 	arg = args;
 
@@ -945,7 +949,8 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
-	else
+	/* Ignore legacy parsing in case there is an error in the command line. */
+	else if (old_cli_status >= 0)
 	{
 		if ((old_cli_status == 1) || ((old_cli_count > posix_cli_count) && (old_cli_status != -1)))
 		{
@@ -966,12 +971,7 @@ int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings*
 {
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
-	{
-		freerdp_client_print_command_line_help(argc, argv);
-		return COMMAND_LINE_STATUS_PRINT_HELP;
-	}
-	else if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
+	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
@@ -1015,6 +1015,11 @@ int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings*
 
 		return COMMAND_LINE_STATUS_PRINT;
 	}
+	else if (status < 0)
+	{
+		freerdp_client_print_command_line_help(argc, argv);
+		return COMMAND_LINE_STATUS_PRINT_HELP;
+	}
 
 	return 0;
 }
@@ -1043,6 +1048,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineClearArgumentsA(args);
 		status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
 				freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
+		if (status < 0)
+			return status;
 	}
 
 
@@ -1153,6 +1160,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 				{
 					settings->MonitorIds[i] = atoi(p[i]);
 				}
+
+				free(p);
 			}
 		}
 		CommandLineSwitchCase(arg, "monitor-list")
@@ -1624,7 +1633,8 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchDefault(arg)
 		{
-
+			fprintf(stderr, "Unknown argument %s\n", __func__, arg->Name);
+			return COMMAND_LINE_ERROR;
 		}
 
 		CommandLineSwitchEnd(arg)

@@ -392,11 +392,31 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	return (char*) common_name;
 }
 
+FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths,
+		char** alt_name)
+{
+	int i;
+
+	if (lengths)
+		free(lengths);
+
+	if (alt_name)
+	{
+		for (i=0; i<count; i++)
+		{
+			if (alt_name[i])
+				OPENSSL_free(alt_name[i]);
+		}
+
+		free(alt_name);
+	}
+}
+
 char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 {
 	int index;
-	int length;
-	char** strings;
+	int length = 0;
+	char** strings = NULL;
 	BYTE* string;
 	int num_subject_alt_names;
 	GENERAL_NAMES* subject_alt_names;
@@ -409,8 +429,11 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		return NULL;
 
 	num_subject_alt_names = sk_GENERAL_NAME_num(subject_alt_names);
-	strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
-	*lengths = (int*) malloc(sizeof(int*) * num_subject_alt_names);
+	if (num_subject_alt_names)
+	{
+		strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+		*lengths = (int*) malloc(sizeof(int) * num_subject_alt_names);
+	}
 
 	for (index = 0; index < num_subject_alt_names; ++index)
 	{

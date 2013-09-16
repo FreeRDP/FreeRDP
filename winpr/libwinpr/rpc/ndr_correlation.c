@@ -80,6 +80,8 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		if (pStubMsg->StackTop)
 			ptr = pStubMsg->StackTop;
 	}
+	else
+		return pFormat;
 
 	switch (correlation_operator)
 	{
@@ -109,6 +111,9 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 			}
 			break;
 	}
+
+	if (!ptr)
+		return pFormat;
 
 	switch (type)
 	{

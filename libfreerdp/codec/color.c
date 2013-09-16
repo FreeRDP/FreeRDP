@@ -909,7 +909,11 @@ BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, 
 				
 				for (bit = 0; bit < 8; bit++)
 					if ((bmask & (0x80 >> bit)) == 0)
-						*(icon + (height - y - 1) * width + x + bit) |= 0xFF000000;
+					{
+						UINT32 *tmp = (icon + (height - y - 1) * width + x + bit);
+						if (tmp)
+							*tmp |= 0xFF000000;
+					}
 			}
 			
 			if ((width % 8) != 0)
@@ -918,7 +922,11 @@ BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, 
 				
 				for (bit = 0; bit < width % 8; bit++)
 					if ((bmask & (0x80 >> bit)) == 0)
-						*(icon + (height - y - 1) * width + x + bit) |= 0xFF000000;
+					{
+						UINT32 *tmp = (icon + (height - y - 1) * width + x + bit);
+						if (tmp)
+							*tmp |= 0xFF000000;
+					}
 			}
 		
 			/* Skip padding */

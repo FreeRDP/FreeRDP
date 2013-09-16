@@ -53,14 +53,20 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 
 #ifdef HAVE_TIMERFD_H
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
-
 		if (timer->fd <= 0)
+		{
+			free(timer);
 			return NULL;
+		}
 
 		status = fcntl(timer->fd, F_SETFL, O_NONBLOCK);
 
 		if (status)
+		{
+			close(timer->fd);
+			free(timer);
 			return NULL;
+		}
 #endif
 	}
 

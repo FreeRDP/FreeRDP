@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/synch.h>
 #include <winpr/handle.h>
 
 #include <winpr/pipe.h>
@@ -65,7 +66,13 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pWritePipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
 
 	if (!pReadPipe || !pWritePipe)
+	{
+		if (pReadPipe)
+			free(pReadPipe);
+		if (pWritePipe)
+			free(pWritePipe);
 		return FALSE;
+	}
 
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];

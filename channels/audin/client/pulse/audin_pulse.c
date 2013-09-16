@@ -540,3 +540,4 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 
 	return 0;
 }
+

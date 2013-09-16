@@ -112,13 +112,16 @@ struct _SMARTCARD_IRP_WORKER
 };
 typedef struct _SMARTCARD_IRP_WORKER SMARTCARD_IRP_WORKER;
  
-static void smartcard_process_irp_thread_func(SMARTCARD_IRP_WORKER* irpWorker)
+static void *smartcard_process_irp_thread_func(SMARTCARD_IRP_WORKER* irpWorker)
 {
 	smartcard_process_irp(irpWorker->smartcard, irpWorker->irp);
 
 	CloseHandle(irpWorker->thread);
 
 	free(irpWorker);
+
+	ExitThread(0);
+	return NULL;
 }
 
 static void* smartcard_thread_func(void* arg)

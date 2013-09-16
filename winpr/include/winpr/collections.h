@@ -479,9 +479,9 @@ typedef struct _wEventType wEventType;
 #define DEFINE_EVENT_END(_name) \
 	} _name ## EventArgs; \
 	DEFINE_EVENT_HANDLER(_name); \
-	DEFINE_EVENT_RAISE(_name); \
-	DEFINE_EVENT_SUBSCRIBE(_name); \
-	DEFINE_EVENT_UNSUBSCRIBE(_name);
+	DEFINE_EVENT_RAISE(_name) \
+	DEFINE_EVENT_SUBSCRIBE(_name) \
+	DEFINE_EVENT_UNSUBSCRIBE(_name)
 
 #define DEFINE_EVENT_ENTRY(_name) \
 	{ #_name, { sizeof( _name ## EventArgs) }, 0, { \

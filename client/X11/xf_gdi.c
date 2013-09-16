@@ -998,6 +998,8 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
 		XFree(image);
+		free(xfc->bmp_codec_nsc);
+		xfc->bmp_codec_nsc = NULL;
 
 		xf_gdi_surface_update_frame(xfc,
 			surface_bits_command->destLeft, surface_bits_command->destTop,
@@ -1026,6 +1028,8 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 					surface_bits_command->destLeft, surface_bits_command->destTop,
 					surface_bits_command->width, surface_bits_command->height);
 			XFree(image);
+			free(xfc->bmp_codec_none);
+			xfc->bmp_codec_none = NULL;
 
 			xf_gdi_surface_update_frame(xfc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,

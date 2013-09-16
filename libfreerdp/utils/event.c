@@ -35,56 +35,68 @@
 
 static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 {
-	wMessage* event = NULL;
+	union
+	{
+		wMessage* m;
+		void *v;
+	} event;
 
+	event.m = NULL;
 	switch (event_type)
 	{
 		case CliprdrChannel_MonitorReady:
-			event = (wMessage*) malloc(sizeof(RDP_CB_MONITOR_READY_EVENT));
-			ZeroMemory(event, sizeof(RDP_CB_MONITOR_READY_EVENT));
-			event->id = MakeMessageId(CliprdrChannel, MonitorReady);
+			event.v = malloc(sizeof(RDP_CB_MONITOR_READY_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_MONITOR_READY_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, MonitorReady);
 			break;
 
 		case CliprdrChannel_FormatList:
-			event = (wMessage*) malloc(sizeof(RDP_CB_FORMAT_LIST_EVENT));
-			ZeroMemory(event, sizeof(RDP_CB_FORMAT_LIST_EVENT));
-			event->id = MakeMessageId(CliprdrChannel, FormatList);
+			event.v = malloc(sizeof(RDP_CB_FORMAT_LIST_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_FORMAT_LIST_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, FormatList);
 			break;
 
 		case CliprdrChannel_DataRequest:
-			event = (wMessage*) malloc(sizeof(RDP_CB_DATA_REQUEST_EVENT));
-			ZeroMemory(event, sizeof(RDP_CB_DATA_REQUEST_EVENT));
-			event->id = MakeMessageId(CliprdrChannel, DataRequest);
+			event.v = malloc(sizeof(RDP_CB_DATA_REQUEST_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_DATA_REQUEST_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, DataRequest);
 			break;
 
 		case CliprdrChannel_DataResponse:
-			event = (wMessage*) malloc(sizeof(RDP_CB_DATA_RESPONSE_EVENT));
-			ZeroMemory(event, sizeof(RDP_CB_DATA_RESPONSE_EVENT));
-			event->id = MakeMessageId(CliprdrChannel, DataResponse);
+			event.v = malloc(sizeof(RDP_CB_DATA_RESPONSE_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_DATA_RESPONSE_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, DataResponse);
 			break;
 	}
 
-	return event;
+	return event.v;
 }
 
 static wMessage* freerdp_tsmf_event_new(UINT16 event_type)
 {
-	wMessage* event = NULL;
+	union
+	{
+		void *v;
+		wMessage* m;
+	} event;
 
+	event.m = NULL;
 	switch (event_type)
 	{
 		case TsmfChannel_VideoFrame:
-			event = (wMessage*) malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
-			ZeroMemory(event, sizeof(RDP_VIDEO_FRAME_EVENT));
+			event.v = malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_VIDEO_FRAME_EVENT));
+			event.m->id = MakeMessageId(TsmfChannel, VideoFrame);
 			break;
 
 		case TsmfChannel_Redraw:
-			event = (wMessage*) malloc(sizeof(RDP_REDRAW_EVENT));
-			ZeroMemory(event, sizeof(RDP_REDRAW_EVENT));
+			event.v = malloc(sizeof(RDP_REDRAW_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_REDRAW_EVENT));
+			event.m->id = MakeMessageId(TsmfChannel, Redraw);
 			break;
 	}
 
-	return event;
+	return event.v;
 }
 
 static wMessage* freerdp_rail_event_new(UINT16 event_type)

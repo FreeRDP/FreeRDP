@@ -343,10 +343,17 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		else if (key.equals("bookmark.resolution") || key.equals("bookmark.colors") || key.equals("bookmark.width") || key.equals("bookmark.height"))
 		{
 			String resolution = sharedPreferences.getString("bookmark.resolution", "800x600");
-			if (resolution.equals("automatic"))
+			//compare english string from resolutions_values_array array, decode to localized
+			//text for display
+			if (resolution.equals("automatic")) {
 				resolution = getResources().getString(R.string.resolution_automatic);
-			else if (resolution.equals("custom"))
+			}
+			if (resolution.equals("custom")) {
 				resolution = getResources().getString(R.string.resolution_custom);
+			}
+			if (resolution.equals("fitscreen")) {
+				resolution = getResources().getString(R.string.resolution_fit);
+			}
 			resolution += "@" + sharedPreferences.getInt("bookmark.colors", 16);
 			findPreference("bookmark.screen").setSummary(resolution);						
 		}
@@ -451,7 +458,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			ListPreference listPreference = (ListPreference)findPreference(key);
 			listPreference.setSummary(listPreference.getEntry());		
 			
-			boolean enabled = listPreference.getValue().equals("custom");
+			boolean enabled = listPreference.getValue().equalsIgnoreCase(getResources().getString(R.string.resolution_custom));
 			if (key.equals("bookmark.resolution"))
 			{
 				findPreference("bookmark.width").setEnabled(enabled);				

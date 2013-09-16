@@ -93,8 +93,11 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 
 		for (i = 0; i < cache->numCaches; i++)
 		{
-			cache->caches[i].entries = malloc(cache->numCacheEntries * sizeof(rdpIconCache));
-			ZeroMemory(cache->caches[i].entries, cache->numCacheEntries * sizeof(rdpIconCache));
+			if (cache->numCacheEntries)
+			{
+				cache->caches[i].entries = malloc(cache->numCacheEntries * sizeof(rdpIcon));
+				ZeroMemory(cache->caches[i].entries, cache->numCacheEntries * sizeof(rdpIcon));
+			}
 		}
 	}
 

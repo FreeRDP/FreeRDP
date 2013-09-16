@@ -48,8 +48,7 @@ BOOL CloseHandle(HANDLE hObject)
 		WINPR_THREAD* thread;
 
 		thread = (WINPR_THREAD*) Object;
-
-		free(Object);
+		free(thread);
 
 		return TRUE;
 	}

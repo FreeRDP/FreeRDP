@@ -64,9 +64,11 @@
     </string-array>
     <string name="settings_resolution">Resolutie</string>
     <string name="resolution_automatic">Automatisch</string>
+    <string name="resolution_fit">Schermvullend</string>
     <string name="resolution_custom">Aangepast</string>
     <string-array name="resolutions_array">
         <item>Automatisch</item>
+        <item>Schermvullend</item>
         <item>Aangepast</item>
         <item>640x480</item>
         <item>720x480</item>
@@ -77,9 +79,12 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
+    <!-- The strings in resolutions_values_array should not be localized -->
+    <!-- They are used for text comparison and must remain in english -->
     <string-array name="resolutions_values_array">
-        <item>Automatisch</item>
-        <item>Aangepast</item>
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
         <item>640x480</item>
         <item>720x480</item>
         <item>800x600</item>
@@ -89,6 +94,7 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
+    <!-- end protected string section -->
     <string name="settings_width">Breedte</string>
     <string name="settings_height">Hoogte</string>
     <string name="settings_performance">Prestatie</string>

@@ -86,6 +86,9 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 {
 	LPSTR lpMatch;
 
+	if (!lpFileName)
+		return FALSE;
+
 	if (*lpWildcard == '*')
 	{
 		/*
@@ -314,7 +317,7 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 		LPSTR lpY;
 		size_t cchX;
 		size_t cchY;
-		LPSTR lpMatchEnd;
+		LPSTR lpMatchEnd = NULL;
 		LPSTR lpSubPattern;
 		size_t cchSubPattern;
 		LPSTR lpSubFileName;
