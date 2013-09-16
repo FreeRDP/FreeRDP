@@ -293,7 +293,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	
 	data_out = Stream_New(NULL, 4);
-	value = (CLOSE_REQUEST_PDU << 4) | (cbChId & 0x02);
+	value = (CLOSE_REQUEST_PDU << 4) | (cbChId & 0x03);
 	Stream_Write_UINT8(data_out, value);
 	drdynvc_write_variable_uint(data_out, ChannelId);
 	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
