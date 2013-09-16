@@ -5,27 +5,17 @@
 
 int TestBufferPool(int argc, char* argv[])
 {
-	int PoolSize;
+	DWORD PoolSize;
 	int BufferSize;
-	int DefaultSize;
 	wBufferPool* pool;
 	BYTE* Buffers[10];
+	DWORD DefaultSize = 1234;
 
-	DefaultSize = 1234;
+	pool = BufferPool_New(TRUE, -1, 16);
 
-	pool = BufferPool_New(TRUE, DefaultSize, 16);
-
-	Buffers[0] = BufferPool_Take(pool, -1);
-	Buffers[1] = BufferPool_Take(pool, 0);
+	Buffers[0] = BufferPool_Take(pool, DefaultSize);
+	Buffers[1] = BufferPool_Take(pool, DefaultSize);
 	Buffers[2] = BufferPool_Take(pool, 2048);
-
-	PoolSize = BufferPool_GetPoolSize(pool);
-
-	if (PoolSize != 3)
-	{
-		printf("BufferPool_GetPoolSize failure: Actual: %d Expected: %d\n", PoolSize, 3);
-		return -1;
-	}
 
 	BufferSize = BufferPool_GetBufferSize(pool, Buffers[0]);
 
@@ -62,14 +52,6 @@ int TestBufferPool(int argc, char* argv[])
 	}
 
 	BufferPool_Clear(pool);
-
-	PoolSize = BufferPool_GetPoolSize(pool);
-
-	if (PoolSize != 0)
-	{
-		printf("BufferPool_GetPoolSize failure: Actual: %d Expected: %d\n", PoolSize, 0);
-		return -1;
-	}
 
 	BufferPool_Free(pool);
 
