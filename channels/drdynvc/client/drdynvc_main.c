@@ -284,10 +284,27 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStr
 static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
 	UINT32 ChannelId;
+	wStream* data_out;
+	int value;
+	int error;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	DEBUG_DVC("ChannelId=%d", ChannelId);
 	dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
+	
+	data_out = Stream_New(NULL, 4);
+	value = (CLOSE_REQUEST_PDU << 4) | (cbChId & 0x03);
+	Stream_Write_UINT8(data_out, value);
+	drdynvc_write_variable_uint(data_out, ChannelId);
+	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+	
+	if (error != CHANNEL_RC_OK)
+	{
+		DEBUG_WARN("VirtualChannelWrite failed %d", error);
+		return 1;
+	}
+	
+	drdynvc->channel_error = error;
 
 	return 0;
 }
