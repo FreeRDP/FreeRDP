@@ -31,7 +31,7 @@
 #include <freerdp/crypto/per.h>
 
 #ifdef WITH_DEBUG_RDP
-static const char* const DATA_PDU_TYPE_STRINGS[] =
+const char* DATA_PDU_TYPE_STRINGS[80] =
 {
 		"?", "?", /* 0x00 - 0x01 */
 		"Update", /* 0x02 */
@@ -65,7 +65,7 @@ static const char* const DATA_PDU_TYPE_STRINGS[] =
 		"?", "?", "?", /* 0x33 - 0x35 */
 		"Status Info", /* 0x36 */
 		"Monitor Layout" /* 0x37 */
-		"?", "?", "?", /* 0x38 - 0x40 */
+		"FrameAcknowledge", "?", "?", /* 0x38 - 0x40 */
 		"?", "?", "?", "?", "?", "?" /* 0x41 - 0x46 */
 };
 #endif
@@ -133,20 +133,21 @@ void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT
 	Stream_Write_UINT16(s, channel_id); /* pduSource */
 }
 
-BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* share_id,
-					BYTE *compressed_type, UINT16 *compressed_len)
+BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* shareId,
+					BYTE *compressedType, UINT16 *compressedLen)
 {
 	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	/* Share Data Header */
-	Stream_Read_UINT32(s, *share_id); /* shareId (4 bytes) */
+	Stream_Read_UINT32(s, *shareId); /* shareId (4 bytes) */
 	Stream_Seek_UINT8(s); /* pad1 (1 byte) */
 	Stream_Seek_UINT8(s); /* streamId (1 byte) */
 	Stream_Read_UINT16(s, *length); /* uncompressedLength (2 bytes) */
 	Stream_Read_UINT8(s, *type); /* pduType2, Data PDU Type (1 byte) */
-	Stream_Read_UINT8(s, *compressed_type); /* compressedType (1 byte) */
-	Stream_Read_UINT16(s, *compressed_len); /* compressedLength (2 bytes) */
+	Stream_Read_UINT8(s, *compressedType); /* compressedType (1 byte) */
+	Stream_Read_UINT16(s, *compressedLen); /* compressedLength (2 bytes) */
+
 	return TRUE;
 }
 
@@ -567,9 +568,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 #ifdef WITH_DEBUG_RDP
-	/* if (type != DATA_PDU_TYPE_UPDATE) */
-		DEBUG_RDP("recv %s Data PDU (0x%02X), length:%d",
-				type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
+	printf("recv %s Data PDU (0x%02X), length: %d\n",
+		type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
 	switch (type)

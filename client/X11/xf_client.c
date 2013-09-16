@@ -908,7 +908,7 @@ BOOL xf_post_connect(freerdp* instance)
 
 		if (instance->settings->RemoteFxCodec)
 		{
-			rfx_context = (void*) rfx_context_new();
+			rfx_context = (void*) rfx_context_new(FALSE);
 			xfc->rfx_context = rfx_context;
 		}
 

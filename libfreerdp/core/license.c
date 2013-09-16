@@ -191,11 +191,15 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	sec_flags = SEC_LICENSE_PKT;
 	wMsgSize = length - LICENSE_PACKET_HEADER_MAX_LENGTH + 4;
 
+	flags = PREAMBLE_VERSION_3_0;
+
 	/**
 	 * Using EXTENDED_ERROR_MSG_SUPPORTED here would cause mstsc to crash when
 	 * running in server mode! This flag seems to be incorrectly documented.
 	 */
-	flags = PREAMBLE_VERSION_3_0 | EXTENDED_ERROR_MSG_SUPPORTED;
+
+	if (!license->rdp->settings->ServerMode)
+		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
 	rdp_write_header(license->rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, sec_flags);

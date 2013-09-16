@@ -1,5 +1,5 @@
 
-int dummy()
+int freerdp_dummy()
 {
 	return 0;
 }

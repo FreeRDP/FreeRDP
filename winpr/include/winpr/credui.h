@@ -67,9 +67,6 @@
 #define CREDUIWIN_SECURE_PROMPT				0x00001000
 #define CREDUIWIN_PACK_32_WOW				0x10000000
 
-typedef HANDLE HWND;
-typedef HANDLE HBITMAP;
-
 typedef struct _CREDUI_INFOA
 {
 	DWORD cbSize;

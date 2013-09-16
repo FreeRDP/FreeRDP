@@ -23,25 +23,69 @@
 
 #include <winpr/io.h>
 
-/**
- * api-ms-win-core-io-l1-1-1.dll:
- * 
- * GetOverlappedResult
- * GetOverlappedResultEx
- * DeviceIoControl
- * CreateIoCompletionPort
- * GetQueuedCompletionStatus
- * GetQueuedCompletionStatusEx
- * PostQueuedCompletionStatus
- * CancelIo
- * CancelIoEx
- * CancelSynchronousIo
- */
-
 #ifndef _WIN32
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <time.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+
+#include "../handle/handle.h"
+
+#include "../pipe/pipe.h"
 
 BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
 {
+	ULONG Type;
+	PVOID Object;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
+		return FALSE;
+
+	else if (Type == HANDLE_TYPE_NAMED_PIPE)
+	{
+		int status;
+		DWORD request;
+		PVOID lpBuffer;
+		DWORD nNumberOfBytes;
+		WINPR_NAMED_PIPE* pipe;
+
+		pipe = (WINPR_NAMED_PIPE*) Object;
+
+		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+			return FALSE;
+
+		if (pipe->clientfd == -1)
+			return FALSE;
+
+		lpBuffer = lpOverlapped->Pointer;
+		request = (DWORD) lpOverlapped->Internal;
+		nNumberOfBytes = (DWORD) lpOverlapped->InternalHigh;
+
+		if (request == 0)
+		{
+			status = read(pipe->clientfd, lpBuffer, nNumberOfBytes);
+		}
+		else
+		{
+			status = write(pipe->clientfd, lpBuffer, nNumberOfBytes);
+		}
+
+		if (status < 0)
+		{
+			*lpNumberOfBytesTransferred = 0;
+			return FALSE;
+		}
+
+		*lpNumberOfBytesTransferred = status;
+	}
+
 	return TRUE;
 }
 

@@ -23,7 +23,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/synch.h>
 #include <winpr/handle.h>
+#include <winpr/platform.h>
 
 #include <winpr/file.h>
 
@@ -124,6 +126,21 @@
  * http://download.microsoft.com/download/4/3/8/43889780-8d45-4b2e-9d3a-c696a890309f/File%20System%20Behavior%20Overview.pdf
  */
 
+/**
+ * Asynchronous I/O - The GNU C Library:
+ * http://www.gnu.org/software/libc/manual/html_node/Asynchronous-I_002fO.html
+ */
+
+/**
+ * aio.h - asynchronous input and output:
+ * http://pubs.opengroup.org/onlinepubs/009695399/basedefs/aio.h.html
+ */
+
+/**
+ * Asynchronous I/O User Guide:
+ * http://code.google.com/p/kernel/wiki/AIOUserGuide
+ */
+
 #ifndef _WIN32
 
 #ifdef HAVE_UNISTD_H
@@ -141,6 +158,14 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+
+#ifdef HAVE_AIO_H
+#undef HAVE_AIO_H /* disable for now, incomplete */
+#endif
+
+#ifdef HAVE_AIO_H
+#include <aio.h>
+#endif
 
 #ifdef ANDROID
 #include <sys/vfs.h>
@@ -184,6 +209,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	pNamedPipe->nOutBufferSize = 0;
 	pNamedPipe->nInBufferSize = 0;
 	pNamedPipe->nDefaultTimeOut = 0;
+	pNamedPipe->dwFlagsAndAttributes = dwFlagsAndAttributes;
 
 	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpFileName);
 	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpFileName);
@@ -259,20 +285,66 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
-		status = nNumberOfBytesToRead;
-
-		if (pipe->clientfd != -1)
-			status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
-		else
-			return FALSE;
-
-		if (status < 0)
+		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			*lpNumberOfBytesRead = 0;
-			return FALSE;
-		}
+			status = nNumberOfBytesToRead;
 
-		*lpNumberOfBytesRead = status;
+			if (pipe->clientfd == -1)
+				return FALSE;
+
+			status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+
+			if (status < 0)
+			{
+				*lpNumberOfBytesRead = 0;
+				return FALSE;
+			}
+
+			*lpNumberOfBytesRead = status;
+		}
+		else
+		{
+			/* Overlapped I/O */
+
+			if (!lpOverlapped)
+				return FALSE;
+
+			if (pipe->clientfd == -1)
+				return FALSE;
+
+			pipe->lpOverlapped = lpOverlapped;
+
+#ifdef HAVE_AIO_H
+			{
+				struct aiocb cb;
+
+				ZeroMemory(&cb, sizeof(struct aiocb));
+				cb.aio_nbytes = nNumberOfBytesToRead;
+				cb.aio_fildes = pipe->clientfd;
+				cb.aio_offset = lpOverlapped->Offset;
+				cb.aio_buf = lpBuffer;
+
+				status = aio_read(&cb);
+
+				printf("aio_read status: %d\n", status);
+
+				if (status < 0)
+				{
+					return FALSE;
+				}
+			}
+#else
+
+			/* synchronous behavior */
+
+			lpOverlapped->Internal = 0;
+			lpOverlapped->InternalHigh = (ULONG_PTR) nNumberOfBytesToRead;
+			lpOverlapped->Pointer = (PVOID) lpBuffer;
+
+			SetEvent(lpOverlapped->hEvent);
+
+#endif
+		}
 
 		return TRUE;
 	}
@@ -321,20 +393,66 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
-		status = nNumberOfBytesToWrite;
-
-		if (pipe->clientfd != -1)
-			status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
-		else
-			return FALSE;
-
-		if (status < 0)
+		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			*lpNumberOfBytesWritten = 0;
-			return FALSE;
-		}
+			status = nNumberOfBytesToWrite;
 
-		*lpNumberOfBytesWritten = status;
+			if (pipe->clientfd == -1)
+				return FALSE;
+
+			status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
+
+			if (status < 0)
+			{
+				*lpNumberOfBytesWritten = 0;
+				return FALSE;
+			}
+
+			*lpNumberOfBytesWritten = status;
+		}
+		else
+		{
+			/* Overlapped I/O */
+
+			if (!lpOverlapped)
+				return FALSE;
+
+			if (pipe->clientfd == -1)
+				return FALSE;
+
+			pipe->lpOverlapped = lpOverlapped;
+
+#ifdef HAVE_AIO_H
+			{
+				struct aiocb cb;
+
+				ZeroMemory(&cb, sizeof(struct aiocb));
+				cb.aio_nbytes = nNumberOfBytesToWrite;
+				cb.aio_fildes = pipe->clientfd;
+				cb.aio_offset = lpOverlapped->Offset;
+				cb.aio_buf = lpBuffer;
+
+				status = aio_write(&cb);
+
+				printf("aio_write status: %d\n", status);
+
+				if (status < 0)
+				{
+					return FALSE;
+				}
+			}
+#else
+
+			/* synchronous behavior */
+
+			lpOverlapped->Internal = 1;
+			lpOverlapped->InternalHigh = (ULONG_PTR) nNumberOfBytesToWrite;
+			lpOverlapped->Pointer = (PVOID) lpBuffer;
+
+			SetEvent(lpOverlapped->hEvent);
+
+#endif
+		}
 
 		return TRUE;
 	}

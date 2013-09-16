@@ -56,7 +56,6 @@ struct _RFX_TILE
 	BYTE* data;
 	int scanline;
 	BOOL allocated;
-
 	BYTE quantIdxY;
 	BYTE quantIdxCb;
 	BYTE quantIdxCr;
@@ -68,6 +67,7 @@ struct _RFX_TILE
 	BYTE* YData;
 	BYTE* CbData;
 	BYTE* CrData;
+	BYTE* YCbCrData;
 };
 typedef struct _RFX_TILE RFX_TILE;
 
@@ -118,6 +118,7 @@ struct _RFX_CONTEXT
 {
 	RFX_STATE state;
 
+	BOOL encoder;
 	UINT16 flags;
 	UINT16 properties;
 	UINT16 width;
@@ -153,7 +154,7 @@ struct _RFX_CONTEXT
 };
 typedef struct _RFX_CONTEXT RFX_CONTEXT;
 
-FREERDP_API RFX_CONTEXT* rfx_context_new(void);
+FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);

@@ -18,7 +18,6 @@
 define_channel_client("cliprdr")
 
 set(${MODULE_PREFIX}_SRCS
-	cliprdr_constants.h
 	cliprdr_format.c
 	cliprdr_format.h
 	cliprdr_main.c

@@ -6,7 +6,7 @@
 
 int wf_rdpsnd_set_latest_peer(wfPeerContext* peer);
 
-int wf_directsound_activate(rdpsnd_server_context* context);
+int wf_directsound_activate(RdpsndServerContext* context);
 
 DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam);
 
