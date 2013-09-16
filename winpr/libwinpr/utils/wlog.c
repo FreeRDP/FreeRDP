@@ -64,28 +64,24 @@ int WLog_Write(wLog* log, DWORD logLevel, wLogMessage* logMessage)
 	return log->Appender->WriteMessage(log, log->Appender, logLevel, logMessage);
 }
 
-void WLog_LogVA(wLog* log, DWORD logLevel, LPCSTR logMessage, va_list args)
+void WLog_LogVA(wLog* log, DWORD logLevel, wLogMessage* logMessage, va_list args)
 {
-	wLogMessage message;
-
-	message.Type = WLOG_MESSAGE_STRING;
-
-	if (!strchr(logMessage, '%'))
+	if (!strchr(logMessage->FormatString, '%'))
 	{
-		message.TextString = (LPSTR) logMessage;
-		WLog_Write(log, logLevel, &message);
+		logMessage->TextString = (LPSTR) logMessage->FormatString;
+		WLog_Write(log, logLevel, logMessage);
 	}
 	else
 	{
 		char formattedLogMessage[8192];
-		wvsnprintfx(formattedLogMessage, WLOG_BUFFER_SIZE - 1, logMessage, args);
+		wvsnprintfx(formattedLogMessage, WLOG_BUFFER_SIZE - 1, logMessage->FormatString, args);
 
-		message.TextString = formattedLogMessage;
-		WLog_Write(log, logLevel, &message);
+		logMessage->TextString = formattedLogMessage;
+		WLog_Write(log, logLevel, logMessage);
 	}
 }
 
-void WLog_Print(wLog* log, DWORD logLevel, LPCSTR logMessage, ...)
+void WLog_PrintMessage(wLog* log, DWORD logLevel, wLogMessage* logMessage, ...)
 {
 	va_list args;
 	va_start(args, logMessage);
@@ -148,7 +144,9 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
 
-	fprintf(fp, "[%s] [%s]: %s\n", logLevelStr, log->Name, logMessage->TextString);
+	fprintf(fp, "[%s] [%s] (%s,%s@%d): %s\n", logLevelStr, log->Name,
+			logMessage->FunctionName, logMessage->FileName,
+			logMessage->LineNumber, logMessage->TextString);
 
 	return 1;
 }
@@ -236,7 +234,9 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, DWORD 
 	if (!fp || (fp < 0))
 		return -1;
 
-	fprintf(fp, "[%s] [%s]: %s\n", logLevelStr, log->Name, logMessage->TextString);
+	fprintf(fp, "[%s] [%s] (%s,%s@%d): %s\n", logLevelStr, log->Name,
+			logMessage->FunctionName, logMessage->FileName,
+			logMessage->LineNumber, logMessage->TextString);
 
 	return 1;
 }

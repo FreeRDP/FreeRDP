@@ -51,7 +51,12 @@ struct _wLogMessage
 {
 	DWORD Type;
 
+	LPSTR FormatString;
 	LPSTR TextString;
+
+	DWORD LineNumber; /* __LINE__ */
+	LPCSTR FileName; /* __FILE__ */
+	LPCSTR FunctionName; /* __FUNCTION__ */
 };
 
 /**
@@ -108,7 +113,18 @@ struct _wLog
 	wLogAppender* Appender;
 };
 
-WINPR_API void WLog_Print(wLog* log, DWORD logLevel, LPCSTR logMessage, ...);
+WINPR_API void WLog_PrintMessage(wLog* log, DWORD logLevel, wLogMessage* logMessage, ...);
+
+#define WLog_Print(_log, _log_level, _fmt, ...) \
+	if (_log_level <= _log->Level) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_STRING; \
+		_log_message.FormatString = _fmt; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessage(_log, _log_level, &(_log_message), ## __VA_ARGS__ ); \
+	}
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);
