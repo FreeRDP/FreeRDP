@@ -111,18 +111,6 @@ static void reg_load_finish(Reg* reg)
 		free(reg->buffer);
 		reg->buffer = NULL;
 	}
-
-	if (reg->line)
-	{
-		free(reg->line);
-		reg->line = NULL;
-	}
-	
-	if (reg->next_line)
-	{
-		free(reg->next_line);
-		reg->next_line = NULL;
-	}
 }
 
 static RegVal* reg_load_value(Reg* reg, RegKey* key)
