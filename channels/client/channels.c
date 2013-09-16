@@ -631,8 +631,9 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
 /**
  * called only from main thread
  */
-static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
+static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
+	int rc = TRUE;
 	wMessage message;
 	wMessage* event;
 	rdpChannel* channel;
@@ -642,7 +643,10 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 	while (MessageQueue_Peek(channels->MsgPipe->Out, &message, TRUE))
 	{
 		if (message.id == WMQ_QUIT)
+		{
+			rc = FALSE;
 			break;
+		}
 
 		if (message.id == 0)
 		{
@@ -677,6 +681,8 @@ static void freerdp_channels_process_sync(rdpChannels* channels, freerdp* instan
 			 */
 		}
 	}
+
+	return rc;
 }
 
 /**
@@ -730,7 +736,7 @@ int freerdp_channels_process_pending_messages(freerdp* instance)
 
 	if (WaitForSingleObject(MessageQueue_Event(channels->MsgPipe->Out), 0) == WAIT_OBJECT_0)
 	{
-		freerdp_channels_process_sync(channels, instance);
+		 return freerdp_channels_process_sync(channels, instance);
 	}
 
 	return TRUE;
@@ -782,4 +788,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 		if (pChannelClientData->pChannelInitEventProc)
 			pChannelClientData->pChannelInitEventProc(pChannelClientData->pInitHandle, CHANNEL_EVENT_TERMINATED, 0, 0);
 	}
+
+	/* Emit a quit signal to the internal message pipe. */
+	MessagePipe_PostQuit(channels->MsgPipe, 0);
 }

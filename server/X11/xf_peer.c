@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,6 +176,17 @@ int xf_xshm_init(xfInfo* xfi)
 	return 0;
 }
 
+void xf_info_free(xfInfo *info)
+{
+	assert(NULL != info);
+
+	if (info->display)
+		XCloseDisplay(info->display);
+	
+	freerdp_clrconv_free(info->clrconv);
+	free(info);
+}
+
 xfInfo* xf_info_init()
 {
 	int i;
@@ -313,6 +325,11 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 {
 	if (context)
 	{
+		xf_info_free(context->info);
+
+		CloseHandle(context->updateReadyEvent);
+		CloseHandle(context->updateSentEvent);
+
 		Stream_Free(context->s, TRUE);
 		rfx_context_free(context->rfx_context);
 	}
@@ -508,6 +525,8 @@ static void* xf_peer_main_loop(void* arg)
 	struct timeval timeout;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
+	assert(NULL != client);
+
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(&timeout, sizeof(struct timeval));
 
@@ -597,6 +616,8 @@ static void* xf_peer_main_loop(void* arg)
 	
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
+
+	ExitThread(0);
 
 	return NULL;
 }
