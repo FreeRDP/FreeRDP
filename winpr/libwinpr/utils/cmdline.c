@@ -53,7 +53,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	int count;
 	int length;
 	int index;
-	BOOL match;
+	BOOL match, found, argument = FALSE;
+	BOOL notescaped = FALSE;
 	char* sigil;
 	int sigil_length;
 	int sigil_index;
@@ -81,12 +82,12 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
+		BOOL escaped = TRUE;
 		index = i;
 
 		if (preFilter)
 		{
 			count = preFilter(context, i, argc, argv);
-
 			if (count < 0)
 			{
 				status = COMMAND_LINE_ERROR;
@@ -131,12 +132,21 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			sigil_length = 0;
 		}
+		else if (flags & COMMAND_LINE_SIGIL_NOT_ESCAPED)
+		{
+			if (notescaped)
+				return COMMAND_LINE_ERROR; 
+			sigil_length = 0;
+			escaped = FALSE;
+			notescaped = TRUE;
+		}
 		else
 		{
-			continue;
+			return COMMAND_LINE_ERROR;
 		}
-
-		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE))
+		
+		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
+				(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{
 			if (length < (sigil_length + 1))
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
@@ -192,6 +202,10 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				value_length = 0;
 			}
 
+			if (!escaped)
+				continue;
+
+			found = FALSE;
 			for (j = 0; options[j].Name != NULL; j++)
 			{
 				match = FALSE;
@@ -214,6 +228,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				if (!match)
 					continue;
 
+				found = match;
 				options[j].Index = index;
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
@@ -238,7 +253,13 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 							value_present = 0;
 					}
 
-					if (value_present)
+					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+							(options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+						argument = TRUE;
+					else
+						argument = FALSE;
+					
+					if (value_present && argument)
 					{
 						i++;
 						value_index = 0;
@@ -247,6 +268,14 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						value = (char*) &argv[i][value_index];
 						value_length = (length - value_index);
 					}
+					else if (!value_present && (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					{
+						value_index = 0;
+						value = NULL;
+						value_length = 0;
+					}
+					else if (!value_present && argument)
+						return COMMAND_LINE_ERROR;
 				}
 
 				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
@@ -320,6 +349,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
 						return COMMAND_LINE_STATUS_PRINT_VERSION;
 			}
+			
+			if (!found)
+				return COMMAND_LINE_ERROR_NO_KEYWORD;
 		}
 	}
 

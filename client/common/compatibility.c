@@ -315,6 +315,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 	detect_status = 0;
 	flags = COMMAND_LINE_SEPARATOR_SPACE;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
+	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
 
 	settings = (rdpSettings*) malloc(sizeof(rdpSettings));
 	ZeroMemory(settings, sizeof(rdpSettings));
@@ -322,6 +323,8 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 	CommandLineClearArgumentsA(old_args);
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, old_args, flags, settings,
 			freerdp_client_old_command_line_pre_filter, NULL);
+	if (status < 0)
+		return status;
 
 	arg = old_args;
 
@@ -383,16 +386,12 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	flags = COMMAND_LINE_SEPARATOR_SPACE;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
+	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
 
 	status = CommandLineParseArgumentsA(argc, (const char**) argv, old_args, flags, settings,
 			freerdp_client_old_command_line_pre_filter, freerdp_client_old_command_line_post_filter);
 
-	if (status == COMMAND_LINE_STATUS_PRINT_HELP)
-	{
-		freerdp_client_print_command_line_help(argc, argv);
-		return COMMAND_LINE_STATUS_PRINT_HELP;
-	}
-	else if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
+	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
@@ -400,6 +399,15 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
 		return COMMAND_LINE_STATUS_PRINT;
+	}
+	else if (status < 0)
+	{
+		if (status != COMMAND_LINE_STATUS_PRINT_HELP)
+		{
+
+		}
+		freerdp_client_print_command_line_help(argc, argv);
+		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 
 	arg = old_args;
