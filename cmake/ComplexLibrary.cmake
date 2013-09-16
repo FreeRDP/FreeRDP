@@ -1,4 +1,6 @@
 
+
+include(EchoTarget)
 include(CMakeParseArguments)
 
 macro(set_complex_link_libraries)
@@ -46,3 +48,32 @@ macro(add_complex_library)
 	endif()
 
 endmacro(add_complex_library)
+
+if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
+	set(CMAKE_OBJECT_TARGET_SUPPORT 1)
+endif()
+
+function(create_object_cotarget target)
+
+	set(cotarget "${target}-objects")
+
+	get_target_property(${target}_TYPE ${target} TYPE)
+
+	if(NOT ((${target}_TYPE MATCHES "SHARED_LIBRARY") OR (${target}_TYPE MATCHES "SHARED_LIBRARY")))
+		return()
+	endif()
+
+	get_target_property(${target}_SOURCES ${target} SOURCES)
+	get_target_property(${target}_LINK_LIBRARIES ${target} LINK_LIBRARIES)
+	get_target_property(${target}_INCLUDE_DIRECTORIES ${target} INCLUDE_DIRECTORIES)
+
+	add_library(${cotarget} "OBJECT" ${${target}_SOURCES})
+
+	set_target_properties(${cotarget} PROPERTIES LINK_LIBRARIES "${${target}_LINK_LIBRARIES}")
+	set_target_properties(${cotarget} PROPERTIES INCLUDE_DIRECTORIES "${${target}_INCLUDE_DIRECTORIES}")
+
+	echo_target(${target})
+	echo_target(${cotarget})
+
+endfunction()
+

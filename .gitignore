@@ -12,9 +12,17 @@ cmake_install.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
 DartConfiguration.tcl
+CMakeCPackOptions.cmake
 _CPack_Packages
+LICENSE.txt
 external/*
 !external/README
+
+*.a.objlist.cmake
+*.a.objlist
+*.a.objdir
+*_dummy.c
+*_dummy.c.base
 
 # Packages
 *.zip
@@ -22,6 +30,7 @@ external/*
 *.sh
 *.deb
 *.rpm
+*.dmg
 *.tar.Z
 *.tar.gz
 

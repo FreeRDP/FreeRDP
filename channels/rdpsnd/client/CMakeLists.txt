@@ -28,7 +28,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-utils)
+	MODULES freerdp-codec freerdp-utils)
 	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
@@ -41,6 +41,10 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Cli
 
 if(WITH_ALSA)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
+endif()
+
+if(WITH_IOSAUDIO)
+	add_channel_client_subsystem($(MODULE_PREFIX) $(CHANNEL_NAME) "ios" "")
 endif()
 
 if(WITH_PULSE)

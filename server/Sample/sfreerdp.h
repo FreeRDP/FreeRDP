@@ -54,7 +54,7 @@ struct test_peer_context
 	audin_server_context* audin;
 	BOOL audin_open;
 	UINT32 frame_id;
-	rdpsnd_server_context* rdpsnd;
+	RdpsndServerContext* rdpsnd;
 };
 typedef struct test_peer_context testPeerContext;
 

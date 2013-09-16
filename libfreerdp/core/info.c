@@ -120,6 +120,7 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
+
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily */
 	Stream_Read_UINT16(s, cbClientAddress); /* cbClientAddress */
 
@@ -149,6 +150,7 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
+
 	Stream_Seek_UINT32(s); /* clientSessionId, should be set to 0 */
 	Stream_Read_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
 

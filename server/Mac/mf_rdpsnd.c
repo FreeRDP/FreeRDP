@@ -34,7 +34,7 @@ static const AUDIO_FORMAT supported_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
-static void mf_peer_rdpsnd_activated(rdpsnd_server_context* context)
+static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	OSStatus status;
 	int i, j;

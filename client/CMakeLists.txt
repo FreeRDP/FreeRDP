@@ -51,10 +51,29 @@ if(ANDROID)
 	add_subdirectory(Android)
 endif()
 
-if(WITH_WAYK)
-	add_subdirectory(WaykClient)
-endif()
+# Pick up other clients
 
-if (WITH_DOTNET)
-	add_subdirectory(DotNetClient)
-endif()
+set(FILENAME "ModuleOptions.cmake")
+file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+
+foreach(FILEPATH ${FILEPATHS})
+	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" FREERDP_CLIENT ${FILEPATH})
+		set(FREERDP_CLIENT_ENABLED 0)
+		include(${FILEPATH})
+		if(FREERDP_CLIENT_ENABLED)
+			if(NOT (${FREERDP_CLIENT_VENDOR} MATCHES "FreeRDP"))
+				list(APPEND FREERDP_EXTRA_CLIENTS ${FREERDP_CLIENT})
+				if(${FREERDP_CLIENT_VENDOR} MATCHES "${VENDOR}")
+					set(CLIENT_VENDOR_PATH "client/${FREERDP_CLIENT}" PARENT_SCOPE)
+				endif()
+			endif()
+		endif()
+	endif()
+endforeach()
+
+foreach(FREERDP_CLIENT ${FREERDP_EXTRA_CLIENTS})
+	add_subdirectory(${FREERDP_CLIENT})
+endforeach()
+
+

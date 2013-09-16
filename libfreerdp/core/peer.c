@@ -30,6 +30,10 @@
 
 #include "peer.h"
 
+#ifdef WITH_DEBUG_RDP
+extern const char* DATA_PDU_TYPE_STRINGS[80];
+#endif
+
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
 	client->context->rdp->settings->ServerMode = TRUE;
@@ -84,6 +88,11 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 
 	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
 		return FALSE;
+
+#ifdef WITH_DEBUG_RDP
+	printf("recv %s Data PDU (0x%02X), length: %d\n",
+		type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
+#endif
 
 	switch (type)
 	{

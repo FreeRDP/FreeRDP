@@ -22,7 +22,13 @@ cmake_minimum_required(VERSION 2.8)
 
 project(FreeRDP C)
 
+if(NOT DEFINED VENDOR)
+	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
+endif()
+
 set(CMAKE_COLOR_MAKEFILE ON)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
@@ -159,6 +165,10 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	if(WITH_SSE2)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mssse3")
 	endif()
+	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
+	if(Wno-deprecated-declarations)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+	endif()
 endif()
 
 if(MSVC)
@@ -230,7 +240,9 @@ if(APPLE)
                 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
         	set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
 	else()
-		set(CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
+		if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET OR CMAKE_OSX_DEPLOYMENT_TARGET MATCHES "")
+		    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.6 CACHE STRING "OSX deployment target" FORCE)
+		endif()
 
 		if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
 			set(CMAKE_OSX_ARCHITECTURES i386 x86_64)
@@ -242,9 +254,11 @@ if(APPLE)
                 endif()
         endif()
 
-        if(WITH_CLANG)
-                set(CMAKE_C_COMPILER "clang")
-        endif()
+# Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
+# Workaround: specify the parameter in the command-line
+#        if(WITH_CLANG)
+#                set(CMAKE_C_COMPILER "clang")
+#        endif()
 
         if (WITH_VERBOSE)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
@@ -273,6 +287,7 @@ if(NOT IOS AND NOT ANDROID)
 endif()
 
 if(UNIX OR CYGWIN)
+	check_include_files(sys/eventfd.h HAVE_AIO_H)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
 	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
@@ -475,9 +490,7 @@ if(WITH_THIRD_PARTY)
 	endif()
 endif()
 
-if (NOT WITH_WAYK)
-    add_subdirectory(include)
-endif()
+add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
@@ -500,114 +513,16 @@ endif()
 
 # Packaging
 
-SET(CPACK_BINARY_ZIP "ON")
+set(CMAKE_CPACK_INCLUDE_FILE "CMakeCPack.cmake")
 
-if(NOT WITH_WAYK)
-
-set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;/\\\\.gitignore;/CMakeCache.txt")
-
-if(NOT WIN32)
-    if(APPLE AND (NOT IOS))
-    #set(CPACK_PACKAGE_EXECUTABLES "mfreerdp")
-
-        if(WITH_SERVER)
-            set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "mfreerdp-server")
-        endif()
+if(NOT (VENDOR MATCHES "FreeRDP"))
+	if(DEFINED CLIENT_VENDOR_PATH)
+		if(EXISTS "${CMAKE_SOURCE_DIR}/${CLIENT_VENDOR_PATH}/CMakeCPack.cmake")
+			set(CMAKE_CPACK_INCLUDE_FILE "${CLIENT_VENDOR_PATH}/CMakeCPack.cmake")
+		endif()
 	endif()
-    
-    if(WITH_X11)
-        set(CPACK_PACKAGE_EXECUTABLES "xfreerdp")
-
-        if(WITH_SERVER)
-            set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} "xfreerdp-server")
-        endif()
-    endif()
-
 endif()
 
-set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
-set(CPACK_TOPLEVEL_TAG "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+#message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
-string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_lower)
-set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}-${CPACK_SYSTEM_NAME}")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME_lower}-${FREERDP_VERSION_FULL}-${CPACK_SYSTEM_NAME}")
-
-set(CPACK_PACKAGE_NAME "FreeRDP")
-set(CPACK_PACKAGE_VENDOR "FreeRDP")
-set(CPACK_PACKAGE_VERSION ${FREERDP_VERSION_FULL})
-set(CPACK_PACKAGE_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${FREERDP_VERSION_REVISION})
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FreeRDP: A Remote Desktop Protocol Implementation")
-
-set(CPACK_PACKAGE_CONTACT "Marc-Andre Moreau")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "marcandre.moreau@gmail.com")
-set(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "FreeRDP")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-
-set(CPACK_NSIS_MODIFY_PATH ON)
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
-set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
-set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
-
-set(CPACK_COMPONENTS_ALL client server libraries headers)
-
-if(MSVC)
-	if(MSVC_RUNTIME STREQUAL "dynamic")
-		set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
-		include(InstallRequiredSystemLibraries)
-
-if(NOT WITH_WAYK)
-		install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-			DESTINATION ${CMAKE_INSTALL_BINDIR}
-			COMPONENT libraries)
-endif()
-    endif()
-			
-    set(EXTRA_DATA_DIR "extra/")
-    file(GLOB EXTRA_FILES "${CMAKE_SOURCE_DIR}/extra/*")
-    install(FILES ${EXTRA_FILES}
-        DESTINATION ${EXTRA_DATA_DIR}
-        COMPONENT extra)
-			
-    set(REV_DATA_DIR "REV/")
-    file(GLOB REV_FILES "${CMAKE_SOURCE_DIR}/REV/*")
-    install(FILES ${REV_FILES}
-        DESTINATION ${REV_DATA_DIR}
-        COMPONENT rev)
-	
-    set(CPACK_COMPONENTS_AL ${CPACK_COMPONENTS_ALL} extra rev)
-endif()
-
-
-set(CPACK_COMPONENT_CLIENT_DISPLAY_NAME "Client")
-set(CPACK_COMPONENT_CLIENT_GROUP "Applications")
-
-set(CPACK_COMPONENT_SERVER_DISPLAY_NAME "Server")
-set(CPACK_COMPONENT_SERVER_GROUP "Applications")
-
-set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
-set(CPACK_COMPONENT_LIBRARIES_GROUP "Runtime")
-
-set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
-set(CPACK_COMPONENT_HEADERS_GROUP "Development")
-
-set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Runtime")
-set(CPACK_COMPONENT_GROUP_APPLICATIONS_DESCRIPTION "Applications")
-set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Development")
-
-# Workaround to remove c++ compiler macros and defines for Eclipse.
-# If c++ macros/defines are set __cplusplus is also set which causes
-# problems when compiling freerdp/jni. To prevent this problem
-# we set the macros to "".
-if (ANDROID AND CMAKE_EXTRA_GENERATOR STREQUAL "Eclipse CDT4")
-	set(CMAKE_EXTRA_GENERATOR_CXX_SYSTEM_DEFINED_MACROS "")
-	message(STATUS "Disabled CXX system defines for eclipse (workaround).")
-endif()
-
-include(CPack)
-
-endif()
+include(${CMAKE_CPACK_INCLUDE_FILE})

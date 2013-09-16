@@ -154,7 +154,7 @@ void rfx_tile_init(RFX_TILE* tile)
 	}
 }
 
-RFX_TILE* rfx_tile_new()
+RFX_TILE* rfx_decoder_tile_new()
 {
 	RFX_TILE* tile = NULL;
 
@@ -171,7 +171,7 @@ RFX_TILE* rfx_tile_new()
 	return tile;
 }
 
-void rfx_tile_free(RFX_TILE* tile)
+void rfx_decoder_tile_free(RFX_TILE* tile)
 {
 	if (tile)
 	{
@@ -181,7 +181,29 @@ void rfx_tile_free(RFX_TILE* tile)
 	}
 }
 
-RFX_CONTEXT* rfx_context_new(void)
+RFX_TILE* rfx_encoder_tile_new()
+{
+	RFX_TILE* tile = NULL;
+
+	tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
+
+	if (tile)
+	{
+		ZeroMemory(tile, sizeof(RFX_TILE));
+	}
+
+	return tile;
+}
+
+void rfx_encoder_tile_free(RFX_TILE* tile)
+{
+	if (tile)
+	{
+		free(tile);
+	}
+}
+
+RFX_CONTEXT* rfx_context_new(BOOL encoder)
 {
 	HKEY hKey;
 	LONG status;
@@ -194,13 +216,24 @@ RFX_CONTEXT* rfx_context_new(void)
 	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
 	ZeroMemory(context, sizeof(RFX_CONTEXT));
 
+	context->encoder = encoder;
+
 	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
 	context->priv->TilePool = ObjectPool_New(TRUE);
-	ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_tile_new;
 	ObjectPool_Object(context->priv->TilePool)->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
-	ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_tile_free;
+
+	if (context->encoder)
+	{
+		ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_encoder_tile_new;
+		ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_encoder_tile_free;
+	}
+	else
+	{
+		ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_decoder_tile_new;
+		ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_decoder_tile_free;
+	}
 
 	/*
 	 * align buffers to 16 byte boundary (needed for SSE/NEON instructions)
@@ -212,9 +245,11 @@ RFX_CONTEXT* rfx_context_new(void)
 	 * in order to allow optimized functions (SEE, NEON) to read from positions 
 	 * that are actually in front/beyond the buffer. Offset calculations are
 	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
+	 *
+	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
 	 */
 
-	context->priv->BufferPool = BufferPool_New(TRUE, 8192 + 32, 16);
+	context->priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 
 #ifdef _WIN32
 	{
@@ -937,14 +972,11 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 			{
 				tile = message->tiles[i];
 
-				if (tile->YData)
-					BufferPool_Return(context->priv->BufferPool, tile->YData);
-
-				if (tile->CbData)
-					BufferPool_Return(context->priv->BufferPool, tile->CbData);
-
-				if (tile->CrData)
-					BufferPool_Return(context->priv->BufferPool, tile->CrData);
+				if (tile->YCbCrData)
+				{
+					BufferPool_Return(context->priv->BufferPool, tile->YCbCrData);
+					tile->YCbCrData = NULL;
+				}
 
 				ObjectPool_Return(context->priv->TilePool, (void*) tile);
 			}
@@ -1105,7 +1137,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	{
 		context->numQuant = 1;
 		context->quants = (UINT32*) malloc(sizeof(rfx_default_quantization_values));
-		memcpy(context->quants, rfx_default_quantization_values, sizeof(rfx_default_quantization_values));
+		CopyMemory(context->quants, &rfx_default_quantization_values, sizeof(rfx_default_quantization_values));
 		context->quantIdxY = 0;
 		context->quantIdxCb = 0;
 		context->quantIdxCr = 0;
@@ -1186,9 +1218,12 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 			tile->YLen = 0;
 			tile->CbLen = 0;
 			tile->CrLen = 0;
-			tile->YData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-			tile->CbData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
-			tile->CrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+
+			tile->YCbCrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+
+			tile->YData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
+			tile->CbData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
+			tile->CrData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
 
 			if (context->priv->UseThreads)
 			{
@@ -1293,9 +1328,6 @@ RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, in
 {
 	RFX_MESSAGE* message;
 	RFX_MESSAGE* messages;
-
-	printf("rfx_encode_messages: numRects: %d maxDataSize: %d x: %d y: %d w: %d/%d h: %d/%d\n", numRects, maxDataSize,
-			rects[0].x, rects[0].y, rects[0].width, width, rects[0].height, height);
 
 	message = rfx_encode_message(context, rects, numRects, data, width, height, scanline);
 	messages = rfx_split_message(context, message, numMessages, maxDataSize);
