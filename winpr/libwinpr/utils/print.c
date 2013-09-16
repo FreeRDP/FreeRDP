@@ -76,3 +76,8 @@ int wprintfx(const char *fmt, ...)
 
 	return status;
 }
+
+int wvsnprintfx(char *buffer, size_t bufferSize, const char* fmt, va_list args)
+{
+	return trio_vsnprintf(buffer, bufferSize, fmt, args);
+}

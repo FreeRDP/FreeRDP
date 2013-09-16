@@ -42,6 +42,9 @@
 
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/cliprdr.h>
+#include <freerdp/server/rdpdr.h>
+#include <freerdp/server/drdynvc.h>
 
 void freerdp_channels_dummy()
 {
@@ -50,6 +53,15 @@ void freerdp_channels_dummy()
 
 	rdpsnd_server_context_new(NULL);
 	rdpsnd_server_context_free(NULL);
+
+	cliprdr_server_context_new(NULL);
+	cliprdr_server_context_free(NULL);
+
+	rdpdr_server_context_new(NULL);
+	rdpdr_server_context_free(NULL);
+
+	drdynvc_server_context_new(NULL);
+	drdynvc_server_context_free(NULL);
 }
 
 /**
@@ -420,7 +432,7 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 
 	vcm = (WTSVirtualChannelManager*) malloc(sizeof(WTSVirtualChannelManager));
 
-	if (vcm != NULL)
+	if (vcm)
 	{
 		ZeroMemory(vcm, sizeof(WTSVirtualChannelManager));
 
@@ -470,8 +482,7 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 	}
 }
 
-void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm,
-	void** fds, int* fds_count)
+void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count)
 {
 	void* fd;
 
@@ -507,13 +518,13 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 		/* Initialize drdynvc channel once and only once. */
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
 
-		channel = WTSVirtualChannelOpenEx(vcm, "drdynvc", 0);
+		channel = WTSVirtualChannelManagerOpenEx(vcm, "drdynvc", 0);
 
 		if (channel)
 		{
 			vcm->drdynvc_channel = channel;
 			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-			WTSVirtualChannelWrite(channel, (BYTE*) &dynvc_caps, sizeof(dynvc_caps), NULL);
+			WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), NULL);
 		}
 	}
 
@@ -539,10 +550,12 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 	return result;
 }
 
-void* WTSVirtualChannelOpenEx(
-	/* __in */ WTSVirtualChannelManager* vcm,
-	/* __in */ const char* pVirtualName,
-	/* __in */ UINT32 flags)
+HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm)
+{
+	return vcm->send_event;
+}
+
+HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirtualName, DWORD flags)
 {
 	int i;
 	int len;
@@ -592,7 +605,7 @@ void* WTSVirtualChannelOpenEx(
 
 		s = Stream_New(NULL, 64);
 		wts_write_drdynvc_create_request(s, channel->channel_id, pVirtualName);
-		WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
+		WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 		Stream_Free(s, TRUE);
 
 		DEBUG_DVC("ChannelId %d.%s (total %d)", channel->channel_id, pVirtualName, list_size(vcm->dvc_channel_list));
@@ -646,11 +659,7 @@ void* WTSVirtualChannelOpenEx(
 	return channel;
 }
 
-BOOL WTSVirtualChannelQuery(
-	/* __in */  void* hChannelHandle,
-	/* __in */  WTS_VIRTUAL_CLASS WtsVirtualClass,
-	/* __out */ void** ppBuffer,
-	/* __out */ UINT32* pBytesReturned)
+BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
 {
 	void* pfd;
 	BOOL bval;
@@ -659,6 +668,7 @@ BOOL WTSVirtualChannelQuery(
 	BOOL result = FALSE;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	ZeroMemory(fds, sizeof(fds));
+
 	switch (WtsVirtualClass)
 	{
 		case WTSVirtualFileHandle:
@@ -673,6 +683,13 @@ BOOL WTSVirtualChannelQuery(
 
 			*ppBuffer = malloc(sizeof(void*));
 			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
+			*pBytesReturned = sizeof(void*);
+			result = TRUE;
+			break;
+
+		case WTSVirtualEventHandle:
+			*ppBuffer = malloc(sizeof(HANDLE));
+			CopyMemory(*ppBuffer, &(channel->receive_event), sizeof(HANDLE));
 			*pBytesReturned = sizeof(void*);
 			result = TRUE;
 			break;
@@ -715,25 +732,19 @@ BOOL WTSVirtualChannelQuery(
 	return result;
 }
 
-void WTSFreeMemory(
-	/* __in */ void* pMemory)
+VOID WTSFreeMemory(PVOID pMemory)
 {
 	free(pMemory);
 }
 
-BOOL WTSVirtualChannelRead(
-	/* __in */  void* hChannelHandle,
-	/* __in */  UINT32 TimeOut,
-	/* __out */ BYTE* Buffer,
-	/* __in */  UINT32 BufferSize,
-	/* __out */ UINT32* pBytesRead)
+BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	wts_data_item* item;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
 	item = (wts_data_item*) list_peek(channel->receive_queue);
 
-	if (item == NULL)
+	if (!item)
 	{
 		ResetEvent(channel->receive_event);
 		*pBytesRead = 0;
@@ -755,16 +766,12 @@ BOOL WTSVirtualChannelRead(
 	ReleaseMutex(channel->mutex);
 
 	CopyMemory(Buffer, item->buffer, item->length);
-	wts_data_item_free(item) ;
+	wts_data_item_free(item);
 
 	return TRUE;
 }
 
-BOOL WTSVirtualChannelWrite(
-	/* __in */  void* hChannelHandle,
-	/* __in */  BYTE* Buffer,
-	/* __in */  UINT32 Length,
-	/* __out */ UINT32* pBytesWritten)
+BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	wts_data_item* item;
@@ -774,7 +781,7 @@ BOOL WTSVirtualChannelWrite(
 	int first;
 	UINT32 written;
 
-	if (channel == NULL)
+	if (!channel)
 		return FALSE;
 
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_SVC)
@@ -841,8 +848,7 @@ BOOL WTSVirtualChannelWrite(
 	return TRUE;
 }
 
-BOOL WTSVirtualChannelClose(
-	/* __in */ void* hChannelHandle)
+BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 {
 	wStream* s;
 	wts_data_item* item;
@@ -868,7 +874,7 @@ BOOL WTSVirtualChannelClose(
 			{
 				s = Stream_New(NULL, 8);
 				wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, channel->channel_id);
-				WTSVirtualChannelWrite(vcm->drdynvc_channel, Stream_Buffer(s), Stream_GetPosition(s), NULL);
+				WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 				Stream_Free(s, TRUE);
 			}
 		}

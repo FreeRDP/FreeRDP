@@ -50,6 +50,7 @@ struct _NSC_MESSAGE
 	UINT32 height;
 	BYTE* data;
 	int scanline;
+	BYTE* PlaneBuffer;
 	UINT32 MaxPlaneSize;
 	BYTE* PlaneBuffers[5];
 	UINT32 OrgByteCount[4];

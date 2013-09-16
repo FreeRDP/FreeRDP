@@ -23,19 +23,29 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
 
+typedef struct _rdpsnd_server_context RdpsndServerContext;
 typedef struct _rdpsnd_server_context rdpsnd_server_context;
+typedef struct _rdpsnd_server_private RdpsndServerPrivate;
 
-typedef BOOL (*psRdpsndServerInitialize)(rdpsnd_server_context* context);
-typedef void (*psRdpsndServerSelectFormat)(rdpsnd_server_context* context, int client_format_index);
-typedef BOOL (*psRdpsndServerSendSamples)(rdpsnd_server_context* context, const void* buf, int nframes);
-typedef BOOL (*psRdpsndServerSetVolume)(rdpsnd_server_context* context, int left, int right);
-typedef BOOL (*psRdpsndServerClose)(rdpsnd_server_context* context);
+typedef int (*psRdpsndStart)(RdpsndServerContext* context);
+typedef int (*psRdpsndStop)(RdpsndServerContext* context);
 
-typedef void (*psRdpsndServerActivated)(rdpsnd_server_context* context);
+typedef BOOL (*psRdpsndServerInitialize)(RdpsndServerContext* context);
+typedef void (*psRdpsndServerSelectFormat)(RdpsndServerContext* context, int client_format_index);
+typedef BOOL (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf, int nframes);
+typedef BOOL (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
+typedef BOOL (*psRdpsndServerClose)(RdpsndServerContext* context);
+
+typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);
 
 struct _rdpsnd_server_context
 {
 	WTSVirtualChannelManager* vcm;
+
+	psRdpsndStart Start;
+	psRdpsndStop Stop;
+
+	RdpsndServerPrivate* priv;
 
 	/* Server self-defined pointer. */
 	void* data;
@@ -95,8 +105,8 @@ struct _rdpsnd_server_context
 extern "C" {
 #endif
 
-FREERDP_API rdpsnd_server_context* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
-FREERDP_API void rdpsnd_server_context_free(rdpsnd_server_context* context);
+FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);
 
 #ifdef __cplusplus
 }

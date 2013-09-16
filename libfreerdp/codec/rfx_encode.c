@@ -219,6 +219,7 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 
 void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 {
+	BYTE* pBuffer;
 	INT16* pSrcDst[3];
 	int YLen, CbLen, CrLen;
 	UINT32 *YQuant, *CbQuant, *CrQuant;
@@ -230,9 +231,10 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	CbQuant = context->quants + (tile->quantIdxCb * 10);
 	CrQuant = context->quants + (tile->quantIdxCr * 10);
 
-	pSrcDst[0] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* y_r_buffer */
-	pSrcDst[1] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cb_g_buffer */
-	pSrcDst[2] = (INT16*)((BYTE*)BufferPool_Take(context->priv->BufferPool, -1) + 16); /* cr_b_buffer */
+	pBuffer = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* y_r_buffer */
+	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* cb_g_buffer */
+	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* cr_b_buffer */
 
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb);
 
@@ -265,7 +267,5 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb);
 
-	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[0] - 16);
-	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[1] - 16);
-	BufferPool_Return(context->priv->BufferPool, (BYTE*)pSrcDst[2] - 16);
+	BufferPool_Return(context->priv->BufferPool, pBuffer);
 }
