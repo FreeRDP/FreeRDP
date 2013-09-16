@@ -20,6 +20,8 @@
 #ifndef WINPR_LOG_H
 #define WINPR_LOG_H
 
+#include <stdio.h>
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -59,12 +61,19 @@ struct _wLogMessage
 #define WLOG_APPENDER_CONSOLE	0
 #define WLOG_APPENDER_FILE	1
 
+typedef int (*WLOG_APPENDER_OPEN_FN)(wLog* log, wLogAppender* appender);
+typedef int (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, DWORD logLevel, wLogMessage* logMessage);
+
+#define WLOG_APPENDER_COMMON() \
+	DWORD Type; \
+	WLOG_APPENDER_OPEN_FN Open; \
+	WLOG_APPENDER_CLOSE_FN Close; \
+	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage
 
 struct _wLogAppender
 {
-	DWORD Type;
-	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage;
+	WLOG_APPENDER_COMMON();
 };
 
 #define WLOG_CONSOLE_STDOUT	1
@@ -72,8 +81,7 @@ struct _wLogAppender
 
 struct _wLogConsoleAppender
 {
-	DWORD Type;
-	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage;
+	WLOG_APPENDER_COMMON();
 
 	int outputStream;
 };
@@ -81,10 +89,10 @@ typedef struct _wLogConsoleAppender wLogConsoleAppender;
 
 struct _wLogFileAppender
 {
-	DWORD Type;
-	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage;
+	WLOG_APPENDER_COMMON();
 
-
+	char* FileName;
+	FILE* FileDescriptor;
 };
 typedef struct _wLogFileAppender wLogFileAppender;
 
@@ -108,7 +116,12 @@ WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);
 WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);
 WINPR_API void WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
 
-WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* consoleAppender, int outputStream);
+WINPR_API int WLog_OpenAppender(wLog* log);
+WINPR_API int WLog_CloseAppender(wLog* log);
+
+WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream);
+
+WINPR_API void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
 
 WINPR_API wLog* WLog_New(LPCSTR name);
 WINPR_API void WLog_Free(wLog* log);
