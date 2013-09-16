@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,7 +93,7 @@ void* xf_server_thread(void* param)
 		}
 	}
 
-	listener->Close(listener);
+	ExitThread(0);
 
 	return NULL;
 }
@@ -114,9 +115,13 @@ int freerdp_server_global_uninit()
 
 int freerdp_server_start(xfServer* server)
 {
+	assert(NULL != server);
+	
+	server->thread = NULL;
 	if (server->listener->Open(server->listener, NULL, 3389))
 	{
-		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_server_thread, (void*) server, 0, NULL);
+		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+				xf_server_thread, (void*) server, 0, NULL);
 	}
 
 	return 0;
@@ -124,6 +129,17 @@ int freerdp_server_start(xfServer* server)
 
 int freerdp_server_stop(xfServer* server)
 {
+	if (server->thread)
+	{
+		/* ATTENTION: Terminate thread kills a thread, assure
+		 * no resources are allocated during thread execution,
+		 * as they will not be freed! */
+		TerminateThread(server->thread, 0);
+		WaitForSingleObject(server->thread, INFINITE);
+		CloseHandle(server->thread);
+	
+		server->listener->Close(server->listener);
+	}
 	return 0;
 }
 
