@@ -40,20 +40,21 @@
  * http://docs.python.org/2/library/logging.html
  */
 
-#define WLOG_BUFFER_SIZE	8192
+#define WLOG_MAX_PREFIX_SIZE	512
+#define WLOG_MAX_STRING_SIZE	8192
 
 const char* WLOG_LEVELS[7] =
 {
-	"Trace",
-	"Debug",
-	"Info",
-	"Warn",
-	"Error",
-	"Fatal",
-	"Off"
+	"TRACE",
+	"DEBUG",
+	"INFO",
+	"WARN",
+	"ERROR",
+	"FATAL",
+	"OFF"
 };
 
-int WLog_Write(wLog* log, DWORD logLevel, wLogMessage* logMessage)
+int WLog_Write(wLog* log, wLogMessage* message)
 {
 	if (!log->Appender)
 		return -1;
@@ -61,31 +62,31 @@ int WLog_Write(wLog* log, DWORD logLevel, wLogMessage* logMessage)
 	if (!log->Appender->WriteMessage)
 		return -1;
 
-	return log->Appender->WriteMessage(log, log->Appender, logLevel, logMessage);
+	return log->Appender->WriteMessage(log, log->Appender, message);
 }
 
-void WLog_LogVA(wLog* log, DWORD logLevel, wLogMessage* logMessage, va_list args)
+void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 {
-	if (!strchr(logMessage->FormatString, '%'))
+	if (!strchr(message->FormatString, '%'))
 	{
-		logMessage->TextString = (LPSTR) logMessage->FormatString;
-		WLog_Write(log, logLevel, logMessage);
+		message->TextString = (LPSTR) message->FormatString;
+		WLog_Write(log, message);
 	}
 	else
 	{
 		char formattedLogMessage[8192];
-		wvsnprintfx(formattedLogMessage, WLOG_BUFFER_SIZE - 1, logMessage->FormatString, args);
+		wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message->FormatString, args);
 
-		logMessage->TextString = formattedLogMessage;
-		WLog_Write(log, logLevel, logMessage);
+		message->TextString = formattedLogMessage;
+		WLog_Write(log, message);
 	}
 }
 
-void WLog_PrintMessage(wLog* log, DWORD logLevel, wLogMessage* logMessage, ...)
+void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 {
 	va_list args;
-	va_start(args, logMessage);
-	WLog_LogVA(log, logLevel, logMessage, args);
+	va_start(args, message);
+	WLog_PrintMessageVA(log, message, args);
 	va_end(args);
 }
 
@@ -100,6 +101,237 @@ void WLog_SetLogLevel(wLog* log, DWORD logLevel)
 		logLevel = WLOG_OFF;
 
 	log->Level = logLevel;
+}
+
+/**
+ * Log Layout
+ */
+
+void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format, va_list args)
+{
+	if (!strchr(format, '%'))
+	{
+		message->PrefixString = (LPSTR) format;
+	}
+	else
+	{
+		wvsnprintfx(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
+	}
+}
+
+void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	WLog_PrintMessagePrefixVA(log, message, format, args);
+	va_end(args);
+}
+
+void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
+{
+	char* p;
+	int index;
+	int argc = 0;
+	void* args[32];
+	char format[128];
+
+	index = 0;
+	p = (char*) layout->FormatString;
+
+	while (*p)
+	{
+		if (*p == '%')
+		{
+			p++;
+
+			if (*p)
+			{
+				if ((*p == 'l') && (*(p + 1) == 'v')) /* log level */
+				{
+					args[argc++] = (void*) WLOG_LEVELS[message->Level];
+					format[index++] = '%';
+					format[index++] = 's';
+					p++;
+				}
+				else if ((*p == 'm') && (*(p + 1) == 'n')) /* module name */
+				{
+					args[argc++] = (void*) log->Name;
+					format[index++] = '%';
+					format[index++] = 's';
+					p++;
+				}
+				else if ((*p == 'f') && (*(p + 1) == 'l')) /* file */
+				{
+					char* file;
+
+					file = strrchr(message->FileName, '/');
+
+					if (!file)
+						file = strrchr(message->FileName, '\\');
+
+					if (file)
+						file++;
+					else
+						file = (char*) message->FileName;
+
+					args[argc++] = (void*) file;
+					format[index++] = '%';
+					format[index++] = 's';
+					p++;
+				}
+				else if ((*p == 'f') && (*(p + 1) == 'n')) /* function */
+				{
+					args[argc++] = (void*) message->FunctionName;
+					format[index++] = '%';
+					format[index++] = 's';
+					p++;
+				}
+				else if ((*p == 'l') && (*(p + 1) == 'n')) /* line number */
+				{
+					args[argc++] = (void*) message->LineNumber;
+					format[index++] = '%';
+					format[index++] = 'd';
+					p++;
+				}
+			}
+		}
+		else
+		{
+			format[index++] = *p;
+		}
+
+		p++;
+	}
+
+	format[index++] = '\0';
+
+	switch (argc)
+	{
+		case 0:
+			WLog_PrintMessagePrefix(log, message, format);
+			break;
+
+		case 1:
+			WLog_PrintMessagePrefix(log, message, format, args[0]);
+			break;
+
+		case 2:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1]);
+			break;
+
+		case 3:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2]);
+			break;
+
+		case 4:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3]);
+			break;
+
+		case 5:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4]);
+			break;
+
+		case 6:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5]);
+			break;
+
+		case 7:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6]);
+			break;
+
+		case 8:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7]);
+			break;
+
+		case 9:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8]);
+			break;
+
+		case 10:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9]);
+			break;
+
+		case 11:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+			break;
+
+		case 12:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10],
+					args[11]);
+			break;
+
+		case 13:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10],
+					args[11], args[12]);
+			break;
+
+		case 14:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10],
+					args[11], args[12], args[13]);
+			break;
+
+		case 15:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10],
+					args[11], args[12], args[13], args[14]);
+			break;
+
+		case 16:
+			WLog_PrintMessagePrefix(log, message, format, args[0], args[1], args[2], args[3],
+					args[4], args[5], args[6], args[7], args[8], args[9], args[10],
+					args[11], args[12], args[13], args[14], args[15]);
+			break;
+	}
+}
+
+wLogLayout* WLog_GetLogLayout(wLog* log)
+{
+	return log->Appender->Layout;
+}
+
+void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
+{
+	if (layout->FormatString)
+		free(layout->FormatString);
+
+	layout->FormatString = _strdup(format);
+}
+
+wLogLayout* WLog_Layout_New(wLog* log)
+{
+	wLogLayout* layout;
+
+	layout = (wLogLayout*) malloc(sizeof(wLogLayout));
+
+	if (layout)
+	{
+		ZeroMemory(layout, sizeof(wLogLayout));
+
+		layout->FormatString = _strdup("[%lv][%mn] - ");
+	}
+
+	return layout;
+}
+
+void WLog_Layout_Free(wLog* log, wLogLayout* layout)
+{
+	if (layout)
+	{
+		if (layout->FormatString)
+			free(layout->FormatString);
+
+		free(layout);
+	}
 }
 
 /**
@@ -132,21 +364,20 @@ int WLog_ConsoleAppender_Close(wLog* log, wLogConsoleAppender* appender)
 	return 0;
 }
 
-int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, DWORD logLevel, wLogMessage* logMessage)
+int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, wLogMessage* message)
 {
 	FILE* fp;
-	char* logLevelStr;
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (logLevel > log->Level)
+	if (message->Level > log->Level)
 		return 0;
-
-	logLevelStr = (char*) WLOG_LEVELS[logLevel];
 
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
 
-	fprintf(fp, "[%s] [%s] (%s,%s@%d): %s\n", logLevelStr, log->Name,
-			logMessage->FunctionName, logMessage->FileName,
-			logMessage->LineNumber, logMessage->TextString);
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+
+	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
 	return 1;
 }
@@ -171,11 +402,11 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 	return ConsoleAppender;
 }
 
-void WLog_ConsoleAppender_Free(wLog* log, wLogConsoleAppender* consoleAppender)
+void WLog_ConsoleAppender_Free(wLog* log, wLogConsoleAppender* appender)
 {
-	if (consoleAppender)
+	if (appender)
 	{
-		free(consoleAppender);
+		free(appender);
 	}
 }
 
@@ -219,24 +450,23 @@ int WLog_FileAppender_Close(wLog* log, wLogFileAppender* appender)
 	return 0;
 }
 
-int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, DWORD logLevel, wLogMessage* logMessage)
+int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMessage* message)
 {
 	FILE* fp;
-	char* logLevelStr;
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (logLevel > log->Level)
+	if (message->Level > log->Level)
 		return 0;
-
-	logLevelStr = (char*) WLOG_LEVELS[logLevel];
 
 	fp = appender->FileDescriptor;
 
-	if (!fp || (fp < 0))
+	if (!fp)
 		return -1;
 
-	fprintf(fp, "[%s] [%s] (%s,%s@%d): %s\n", logLevelStr, log->Name,
-			logMessage->FunctionName, logMessage->FileName,
-			logMessage->LineNumber, logMessage->TextString);
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+
+	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
 	return 1;
 }
@@ -272,22 +502,35 @@ void WLog_FileAppender_Free(wLog* log, wLogFileAppender* appender)
 
 wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
+	wLogAppender* appender = NULL;
+
 	if (logAppenderType == WLOG_APPENDER_CONSOLE)
 	{
-		return (wLogAppender*) WLog_ConsoleAppender_New(log);
+		appender = (wLogAppender*) WLog_ConsoleAppender_New(log);
 	}
 	else if (logAppenderType == WLOG_APPENDER_FILE)
 	{
-		return (wLogAppender*) WLog_FileAppender_New(log);
+		appender = (wLogAppender*) WLog_FileAppender_New(log);
 	}
 
-	return (wLogAppender*) WLog_ConsoleAppender_New(log);
+	if (!appender)
+		appender = (wLogAppender*) WLog_ConsoleAppender_New(log);
+
+	appender->Layout = WLog_Layout_New(log);
+
+	return appender;
 }
 
 void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 {
 	if (appender)
 	{
+		if (appender->Layout)
+		{
+			WLog_Layout_Free(log, appender->Layout);
+			appender->Layout = NULL;
+		}
+
 		if (appender->Type == WLOG_APPENDER_CONSOLE)
 		{
 			WLog_ConsoleAppender_Free(log, (wLogConsoleAppender*) appender);

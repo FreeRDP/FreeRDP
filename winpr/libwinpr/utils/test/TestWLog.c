@@ -6,6 +6,7 @@
 int TestWLog(int argc, char* argv[])
 {
 	wLog* log;
+	wLogLayout* layout;
 	wLogAppender* appender;
 
 	log = WLog_New("CONSOLE_LOG_TEST");
@@ -14,6 +15,9 @@ int TestWLog(int argc, char* argv[])
 
 	WLog_SetLogAppenderType(log, WLOG_APPENDER_CONSOLE);
 	appender = WLog_GetLogAppender(log);
+
+	layout = WLog_GetLogLayout(log);
+	WLog_Layout_SetPrefixFormat(log, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
 
 	WLog_ConsoleAppender_SetOutputStream(log, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
 	WLog_OpenAppender(log);
@@ -32,6 +36,9 @@ int TestWLog(int argc, char* argv[])
 
 	WLog_SetLogAppenderType(log, WLOG_APPENDER_FILE);
 	appender = WLog_GetLogAppender(log);
+
+	layout = WLog_GetLogLayout(log);
+	WLog_Layout_SetPrefixFormat(log, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
 
 	WLog_FileAppender_SetOutputFileName(log, (wLogFileAppender*) appender, "/tmp/wlog_test.log");
 	WLog_OpenAppender(log);
