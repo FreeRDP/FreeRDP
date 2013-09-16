@@ -64,9 +64,11 @@
     </string-array>
     <string name="settings_resolution">Resolution</string>
     <string name="resolution_automatic">Automatic</string>
+    <string name="resolution_fit">Fitscreen</string>
     <string name="resolution_custom">Custom</string>
     <string-array name="resolutions_array">
         <item>Automatic</item>
+        <item>Fit Screen</item>
         <item>Custom</item>
         <item>640x480</item>
         <item>720x480</item>
@@ -79,6 +81,7 @@
     </string-array>
     <string-array name="resolutions_values_array">
         <item>automatic</item>
+        <item>fitscreen</item>
         <item>custom</item>
         <item>640x480</item>
         <item>720x480</item>
