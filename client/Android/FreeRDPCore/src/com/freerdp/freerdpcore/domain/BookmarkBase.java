@@ -10,8 +10,6 @@
 package com.freerdp.freerdpcore.domain;
 
 import com.freerdp.freerdpcore.application.GlobalApp;
-import com.freerdp.freerdpcore.application.GlobalSettings;
-import com.freerdp.freerdpcore.R;
 
 import android.content.SharedPreferences;
 import android.os.Parcel;
