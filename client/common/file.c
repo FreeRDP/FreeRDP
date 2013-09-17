@@ -42,7 +42,7 @@
 
 #include <winpr/crt.h>
 
-#define DEBUG_CLIENT_FILE	1
+//#define DEBUG_CLIENT_FILE	1
 
 static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
@@ -679,12 +679,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_parse_username(file->Username, &user, &domain);
 		freerdp_set_param_string(settings, FreeRDP_Username, user);
 
-		if (domain != NULL)
+		if (domain)
 			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
 
 		if (user)
 			free(user);
-		if(domain)
+
+		if (domain)
 			free(domain);
 	}
 
