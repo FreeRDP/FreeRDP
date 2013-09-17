@@ -58,8 +58,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
-	{ "u", COMMAND_LINE_VALUE_OPTIONAL, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username, if value is omitted read from stdin" },
-	{ "p", COMMAND_LINE_VALUE_OPTIONAL, "<password>", NULL, NULL, -1, NULL, "Password, if value is ommited read from stdin" },
+	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
+	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
@@ -1218,10 +1219,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			char* user = NULL;
 			char* domain = NULL;
 
-			if (arg->Value)
-				freerdp_parse_username(arg->Value, &user, &domain);
-			else
-				settings->CredentialsFromStdin = TRUE;
+			freerdp_parse_username(arg->Value, &user, &domain);
 
 			settings->Username = user;
 			settings->Domain = domain;
@@ -1230,15 +1228,13 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		{
 			settings->Domain = _strdup(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "from-stdin")
+		{
+			settings->CredentialsFromStdin = TRUE;
+		}
 		CommandLineSwitchCase(arg, "p")
 		{
-			if (!arg->Value)
-			{
-				settings->CredentialsFromStdin = TRUE;
-				settings->Password = NULL;
-			}
-			else
-				settings->Password = _strdup(arg->Value);
+			settings->Password = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
