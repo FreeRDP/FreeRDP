@@ -1317,6 +1317,9 @@ FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, A
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
 
+FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
+FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
+
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);
 

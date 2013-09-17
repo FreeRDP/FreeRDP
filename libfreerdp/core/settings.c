@@ -243,10 +243,14 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->DesktopPosX = 0;
 		settings->DesktopPosY = 0;
 
-		settings->PerformanceFlags =
-				PERF_DISABLE_FULLWINDOWDRAG |
-				PERF_DISABLE_MENUANIMATIONS |
-				PERF_DISABLE_WALLPAPER;
+		settings->PerformanceFlags = PERF_FLAG_NONE;
+		settings->AllowFontSmoothing = FALSE;
+		settings->AllowDesktopComposition = FALSE;
+		settings->DisableWallpaper = TRUE;
+		settings->DisableFullWindowDrag = TRUE;
+		settings->DisableMenuAnims = TRUE;
+		settings->DisableThemes = FALSE;
+		settings->ConnectionType = CONNECTION_TYPE_LAN;
 
 		settings->AutoReconnectionEnabled = TRUE;
 
@@ -306,11 +310,6 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->LargePointerFlag = TRUE;
 		settings->PointerCacheSize = 20;
 		settings->SoundBeepsEnabled = TRUE;
-		settings->DisableWallpaper = FALSE;
-		settings->DisableFullWindowDrag = FALSE;
-		settings->DisableMenuAnims = FALSE;
-		settings->DisableThemes = FALSE;
-		settings->ConnectionType = 0;
 
 		settings->DrawGdiPlusEnabled = FALSE;
 

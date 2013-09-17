@@ -1432,7 +1432,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			settings->RemoteFxCodec = TRUE;
 			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
-			settings->PerformanceFlags = PERF_FLAG_NONE;
 			settings->LargePointerFlag = TRUE;
 			settings->FrameMarkerCommandEnabled = TRUE;
 		}
@@ -1641,25 +1640,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	settings->PerformanceFlags = PERF_FLAG_NONE;
-
-	if (settings->AllowFontSmoothing)
-		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
-
-	if (settings->AllowDesktopComposition)
-		settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
-
-	if (settings->DisableWallpaper)
-		settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
-
-	if (settings->DisableFullWindowDrag)
-		settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
-
-	if (settings->DisableMenuAnims)
-		settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
-
-	if (settings->DisableThemes)
-		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+	freerdp_performance_flags_make(settings);
 
 	if (settings->GatewayEnabled)
 	{
