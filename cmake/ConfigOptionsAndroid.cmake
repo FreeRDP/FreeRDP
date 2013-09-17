@@ -16,7 +16,7 @@
 # limitations under the License.
 
 set(JAVA_DEBUG_DEFAULT "off")
-if("${CMAKE_BUILD_TYPE STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 	set(JAVA_DEBUG_DEFAULT "on")
 endif()
 
