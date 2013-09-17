@@ -391,6 +391,9 @@ rdpSettings* freerdp_settings_new(void* instance)
 		settings->ClientHostname[31] = 0;
 		settings->MouseMotion = TRUE;
 
+		settings->AutoReconnectionEnabled = TRUE;
+		settings->AutoReconnectMaxRetries = 20;
+
 		settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
 		settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(ARC_SC_PRIVATE_PACKET));
 		ZeroMemory(settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));

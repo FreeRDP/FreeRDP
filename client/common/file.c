@@ -778,6 +778,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		}
 	}
 
+	if (~file->Compression)
+		freerdp_set_param_bool(settings, FreeRDP_CompressionEnabled, file->Compression);
+
 	if (~((size_t) file->GatewayHostname))
 		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
 
@@ -835,6 +838,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->AutoReconnectionEnabled)
 		freerdp_set_param_bool(settings, FreeRDP_AutoReconnectionEnabled, file->AutoReconnectionEnabled);
+	if (~file->AutoReconnectMaxRetries)
+		freerdp_set_param_uint32(settings, FreeRDP_AutoReconnectMaxRetries, file->AutoReconnectMaxRetries);
 
 	if (~file->RedirectSmartCards)
 		freerdp_set_param_bool(settings, FreeRDP_RedirectSmartCards, file->RedirectSmartCards);
@@ -890,6 +895,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 * 	devicestoredirect:s:DynamicDevices
 		 * 	devicestoredirect:s:USB\VID_04A9&PID_30C1\6&4BD985D&0&2;,DynamicDevices
 		 *
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
+
+	if (~((size_t) file->DrivesToRedirect))
+	{
+		/*
+		 * Drives to redirect:
+		 *
+		 * Very similar to DevicesToRedirect, but can contain a
+		 * comma-separated list of drive letters to redirect.
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
