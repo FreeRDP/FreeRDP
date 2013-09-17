@@ -712,10 +712,50 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
 	
+	if (~file->ScreenModeId)
+	{
+		/**
+		 * Screen Mode Id:
+		 * http://technet.microsoft.com/en-us/library/ff393692/
+		 *
+		 * This setting corresponds to the selection in the Display
+		 * configuration slider on the Display tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * 0: The remote session will appear in a window.
+		 * 1: The remote session will appear full screen.
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
+				(file->ScreenModeId == 1) ? TRUE : FALSE);
+	}
+
 	if (~((size_t) file->LoadBalanceInfo))
 	{
 		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
 		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+	}
+
+	if (~file->AuthenticationLevel)
+	{
+		/**
+		 * Authentication Level:
+		 * http://technet.microsoft.com/en-us/library/ff393709/
+		 *
+		 * This setting corresponds to the selection in the If server authentication
+		 * fails drop-down list on the Advanced tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * 0: If server authentication fails, connect to the computer without warning (Connect and don’t warn me).
+		 * 1: If server authentication fails, do not establish a connection (Do not connect).
+		 * 2: If server authentication fails, show a warning and allow me to connect or refuse the connection (Warn me).
+		 * 3: No authentication requirement is specified.
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_IgnoreCertificate,
+				(file->AuthenticationLevel == 0) ? TRUE : FALSE);
 	}
 
 	if (~file->ConnectionType)
@@ -789,6 +829,71 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (~file->BitmapCachePersistEnable)
 		freerdp_set_param_bool(settings, FreeRDP_BitmapCachePersistEnabled, file->BitmapCachePersistEnable);
+
+	if (~file->DisableRemoteAppCapsCheck)
+		freerdp_set_param_bool(settings, FreeRDP_DisableRemoteAppCapsCheck, file->DisableRemoteAppCapsCheck);
+
+	if (~file->AutoReconnectionEnabled)
+		freerdp_set_param_bool(settings, FreeRDP_AutoReconnectionEnabled, file->AutoReconnectionEnabled);
+
+	if (~file->RedirectSmartCards)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSmartCards, file->RedirectSmartCards);
+
+	if (~file->RedirectClipboard)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectClipboard, file->RedirectClipboard);
+
+	if (~file->RedirectPrinters)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectPrinters, file->RedirectPrinters);
+
+	if (~file->RedirectDrives)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, file->RedirectDrives);
+
+	if (~file->RedirectPosDevices)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSerialPorts, file->RedirectComPorts);
+		freerdp_set_param_bool(settings, FreeRDP_RedirectParallelPorts, file->RedirectComPorts);
+	}
+
+	if (~file->RedirectComPorts)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSerialPorts, file->RedirectComPorts);
+		freerdp_set_param_bool(settings, FreeRDP_RedirectParallelPorts, file->RedirectComPorts);
+	}
+
+	if (~file->RedirectDirectX)
+	{
+		/* What is this?! */
+	}
+
+	if (~((size_t) file->DevicesToRedirect))
+	{
+		/**
+		 * Devices to redirect:
+		 * http://technet.microsoft.com/en-us/library/ff393728/
+		 *
+		 * This setting corresponds to the selections for Other supported Plug and Play
+		 * (PnP) devices under More on the Local Resources tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * '*':
+		 * 	Redirect all supported Plug and Play devices.
+		 *
+		 * 'DynamicDevices':
+		 * 	Redirect any supported Plug and Play devices that are connected later.
+		 *
+		 * The hardware ID for the supported Plug and Play device:
+		 * 	Redirect the specified supported Plug and Play device.
+		 *
+		 * Examples:
+		 * 	devicestoredirect:s:*
+		 * 	devicestoredirect:s:DynamicDevices
+		 * 	devicestoredirect:s:USB\VID_04A9&PID_30C1\6&4BD985D&0&2;,DynamicDevices
+		 *
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
 
 	return TRUE;
 }

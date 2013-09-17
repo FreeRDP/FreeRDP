@@ -616,6 +616,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->RemoteApplicationMode;
 			break;
 
+		case FreeRDP_DisableRemoteAppCapsCheck:
+			return settings->DisableRemoteAppCapsCheck;
+			break;
+
 		case FreeRDP_RemoteAppLanguageBarSupported:
 			return settings->RemoteAppLanguageBarSupported;
 			break;
@@ -1069,6 +1073,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_RemoteApplicationMode:
 			settings->RemoteApplicationMode = param;
+			break;
+
+		case FreeRDP_DisableRemoteAppCapsCheck:
+			settings->DisableRemoteAppCapsCheck = param;
 			break;
 
 		case FreeRDP_RemoteAppLanguageBarSupported:

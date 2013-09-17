@@ -1046,7 +1046,7 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
 	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
 	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
-	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2121 */
+	ALIGN64 BOOL DisableRemoteAppCapsCheck; /* 2121 */
 	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
 	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
 	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2124 */
