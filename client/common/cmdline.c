@@ -1633,8 +1633,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		}
 		CommandLineSwitchDefault(arg)
 		{
-			fprintf(stderr, "Unknown argument %s\n", __func__, arg->Name);
-			return COMMAND_LINE_ERROR;
 		}
 
 		CommandLineSwitchEnd(arg)
