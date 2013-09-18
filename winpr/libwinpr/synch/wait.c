@@ -79,7 +79,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			if (dwMilliseconds != INFINITE)
 			{
-#if HAVE_PTHREAD_GNU_EXT
+#ifdef HAVE_PTHREAD_GNU_EXT
 				struct timespec timeout;
 
 				clock_gettime(CLOCK_REALTIME, &timeout);
@@ -108,7 +108,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		mutex = (WINPR_MUTEX*) Object;
 
-#if HAVE_PTHREAD_GNU_EXT
+#ifdef HAVE_PTHREAD_GNU_EXT
 		if (dwMilliseconds != INFINITE)
 		{
 			struct timespec timeout;
