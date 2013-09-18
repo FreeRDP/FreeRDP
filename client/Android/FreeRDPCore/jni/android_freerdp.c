@@ -34,7 +34,7 @@
 #include "android_debug.h"
 #include "android_cliprdr.h"
 
-#if defined(WITH_PROFILER)
+#if defined(WITH_GPROF)
 #include "jni/prof.h"
 #endif
 
@@ -382,7 +382,7 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 {
 	freerdp* instance;
 
-#if defined(WITH_PROFILER)
+#if defined(WITH_GPROF)
 	monstartup("libfreerdp-android.so");
 #endif
 
@@ -410,7 +410,7 @@ JNIEXPORT void JNICALL jni_freerdp_free(JNIEnv *env, jclass cls, jint instance)
 	freerdp* inst = (freerdp*)instance;
 	freerdp_free(inst);
 
-#if defined(WITH_PROFILER)
+#if defined(WITH_GPROF)
 	moncleanup();
 #endif
 }

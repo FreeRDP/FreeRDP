@@ -274,7 +274,7 @@ if(ANDROID)
 		else()
 			message(STATUS "FREERDP_ANDROID_EXTERNAL_SSL_PATH not set! - Needs to be set if openssl is not found in the android NDK (which usually isn't)")
 		endif()
-		if(WITH_PROFILER)
+		if(WITH_GPROF)
 			if (NOT FREERDP_ANDROID_EXTERNAL_PROFILER_PATH)
 			if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/android-ndk-profiler")
 				set(FREERDP_ANDROID_EXTERNAL_PROFILER_PATH
@@ -460,7 +460,7 @@ set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
 
 # Android profiling
 if(ANDROID)
-	if(WITH_PROFILER)
+	if(WITH_GPROF)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
 		set(PROFILER_LIBRARIES
 			"${FREERDP_ANDROID_EXTERNAL_PROFILER_PATH}/obj/local/${ANDROID_ABI}/libandroid-ndk-profiler.a")
