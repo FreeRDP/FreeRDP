@@ -269,6 +269,18 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 	return TRUE;
 }
 
+void freerdp_client_add_option(rdpFile* file, char* option)
+{
+	while ((file->argc + 1) > file->argSize)
+	{
+		file->argSize *= 2;
+		file->argv = (char**) realloc(file->argv, file->argSize * sizeof(char*));
+	}
+
+	file->argv[file->argc] = _strdup(option);
+	(file->argc)++;
+}
+
 void freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, WCHAR* name, WCHAR* value)
 {
 	int length;
@@ -296,6 +308,21 @@ void freerdp_client_parse_rdp_file_string_ascii(rdpFile* file, char* name, char*
 	freerdp_client_rdp_file_set_string(file, name, value);
 }
 
+void freerdp_client_parse_rdp_file_option_unicode(rdpFile* file, WCHAR* option)
+{
+	char* optionA = NULL;
+
+	ConvertFromUnicode(CP_UTF8, 0, option, -1, &optionA, 0, NULL, NULL);
+	freerdp_client_add_option(file, optionA);
+
+	free(optionA);
+}
+
+void freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* option)
+{
+	freerdp_client_add_option(file, option);
+}
+
 BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, size_t size)
 {
 	int length;
@@ -316,6 +343,12 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, siz
 		{
 			beg = line;
 			end = &line[length - 1];
+
+			if (beg[0] == '/')
+			{
+				freerdp_client_parse_rdp_file_option_ascii(file, line);
+				goto next_line; /* FreeRDP option */
+			}
 
 			d1 = strchr(line, ':');
 
@@ -382,6 +415,13 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, BYTE* buffer, s
 		{
 			beg = line;
 			end = &line[length - 1];
+
+			if (beg[0] == '/')
+			{
+				/* FreeRDP option */
+				freerdp_client_parse_rdp_file_option_unicode(file, line);
+				goto next_line;
+			}
 
 			d1 = _wcschr(line, ':');
 
@@ -533,16 +573,16 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* 
 	return TRUE;
 }
 
-
 BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode)
 {
-    int rc = 0;
+	int rc = 0;
 	char* buffer;
 	int len, len2;
 	FILE* fp = NULL;
 	WCHAR* unicodestr = NULL;
 
 	len = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
+
 	if (len <= 0)
 	{
 		fprintf(stderr, "freerdp_client_write_rdp_file: Error determining buffer size.\n");
@@ -551,9 +591,11 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode
 
 	buffer = (char*) malloc((len + 1) * sizeof(char));
 	len2 = freerdp_client_write_rdp_file_buffer(file, buffer, len + 1);
+
 	if (len2 == len)
 	{
 		fp = fopen(name, "w+b");
+
 		if (fp != NULL)
 		{
 			if (unicode)
@@ -564,22 +606,22 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode
 				fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp);
 				fwrite(unicodestr, 2, len, fp);
 
-                free(unicodestr);
+				free(unicodestr);
 			}
 			else
 			{
 				fwrite(buffer, 1, len, fp);
 			}
 
-            rc = fflush(fp);
-            rc = fclose(fp);
+			rc = fflush(fp);
+			rc = fclose(fp);
 		}
 	}
 
 	if (buffer != NULL)
 		free(buffer);
 
-    return (rc == 0);
+	return (rc == 0);
 }
 
 #define WRITE_RDP_FILE_DECLARE(_file, _buffer, _size) \
@@ -664,7 +706,6 @@ size_t freerdp_client_write_rdp_file_buffer(rdpFile* file, char* buffer, size_t 
 
 	WRITE_RDP_FILE_VALUE_RETURN
 }
-
 
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
@@ -913,6 +954,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
 	}
 
+	if (file->argc > 1)
+	{
+		freerdp_client_parse_command_line_arguments(file->argc, file->argv, settings);
+	}
+
 	return TRUE;
 }
 
@@ -921,12 +967,35 @@ rdpFile* freerdp_client_rdp_file_new()
 	rdpFile* file;
 
 	file = (rdpFile*) malloc(sizeof(rdpFile));
-	FillMemory(file, sizeof(rdpFile), 0xFF);
+
+	if (file)
+	{
+		FillMemory(file, sizeof(rdpFile), 0xFF);
+
+		file->argc = 0;
+		file->argSize = 32;
+		file->argv = (char**) malloc(file->argSize * sizeof(char*));
+
+		freerdp_client_add_option(file, "freerdp");
+	}
 
 	return file;
 }
 
 void freerdp_client_rdp_file_free(rdpFile* file)
 {
-	free(file);
+	int i;
+
+	if (file)
+	{
+		if (file->argv)
+		{
+			for (i = 0; i < file->argc; i++)
+				free(file->argv[i]);
+
+			free(file->argv);
+		}
+
+		free(file);
+	}
 }
