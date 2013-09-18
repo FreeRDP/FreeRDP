@@ -8,6 +8,6 @@
 # project structure.
 
 # Project target.
-target=android-11
+target=android-@ANDROID_APP_TARGET_SDK@
 android.library.reference.1=../FreeRDPCore
 manifestmerger.enabled=true
