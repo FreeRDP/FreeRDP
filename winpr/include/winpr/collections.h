@@ -173,6 +173,18 @@ struct _wDictionary
 };
 typedef struct _wDictionary wDictionary;
 
+WINPR_API int Dictionary_Count(wDictionary* dictionary);
+WINPR_API BOOL Dictionary_IsFixedSized(wDictionary* dictionary);
+WINPR_API BOOL Dictionary_IsReadOnly(wDictionary* dictionary);
+WINPR_API BOOL Dictionary_IsSynchronized(wDictionary* dictionary);
+WINPR_API void Dictionary_Add(wDictionary* dictionary, void* key, void* value);
+WINPR_API void Dictionary_Clear(wDictionary* dictionary);
+WINPR_API BOOL Dictionary_Contains(wDictionary* dictionary, void* key);
+WINPR_API void Dictionary_Remove(wDictionary* dictionary, void* key);
+WINPR_API wDictionary* Dictionary_New(BOOL synchronized);
+WINPR_API void Dictionary_Free(wDictionary* dictionary);
+
+
 /* System.Collections.Specialized.ListDictionary */
 
 typedef struct _wListDictionaryItem wListDictionaryItem;
@@ -207,6 +219,10 @@ WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void
 
 WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
 WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
+
+WINPR_API BOOL ListDictionary_IsFixedSized(wListDictionary* listDictionary);
+WINPR_API BOOL ListDictionary_IsReadOnly(wListDictionary* listDictionary);
+WINPR_API BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary);
 
 /* System.Collections.Generic.LinkedList<T> */
 
@@ -247,7 +263,7 @@ WINPR_API void LinkedList_Enumerator_Reset(wLinkedList* list);
 WINPR_API void* LinkedList_Enumerator_Current(wLinkedList* list);
 WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
 
-WINPR_API wLinkedList* LinkedList_New();
+WINPR_API wLinkedList* LinkedList_New(void);
 WINPR_API void LinkedList_Free(wLinkedList* list);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
