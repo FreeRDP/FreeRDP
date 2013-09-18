@@ -274,7 +274,17 @@ if(ANDROID)
 		else()
 			message(STATUS "FREERDP_ANDROID_EXTERNAL_SSL_PATH not set! - Needs to be set if openssl is not found in the android NDK (which usually isn't)")
 		endif()
+		if(WITH_PROFILER)
+			if (NOT FREERDP_ANDROID_EXTERNAL_PROFILER_PATH)
+			if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/android-ndk-profiler")
+				set(FREERDP_ANDROID_EXTERNAL_PROFILER_PATH
+					"${CMAKE_CURRENT_SOURCE_DIR}/external/android-ndk-profiler")
+			else()
+				message(STATUS "FREERDP_ANDROID_EXTERNAL_PROFILER_PATH not set!")
+			endif()
+		endif()
 	endif()
+endif()
 	set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_ANDROID_EXTERNAL_SSL_PATH})
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/libs/${ANDROID_ABI})
 	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake ${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
@@ -447,6 +457,16 @@ set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
+
+# Android profiling
+if(ANDROID)
+	if(WITH_PROFILER)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+		set(PROFILER_LIBRARIES
+			"${FREERDP_ANDROID_EXTERNAL_PROFILER_PATH}/obj/local/${ANDROID_ABI}/libandroid-ndk-profiler.a")
+		include_directories("${FREERDP_ANDROID_EXTERNAL_PROFILER_PATH}")
+	endif()
+endif()
 
 # Unit Tests
 
