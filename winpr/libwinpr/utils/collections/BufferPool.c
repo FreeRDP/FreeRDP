@@ -34,7 +34,7 @@
  * Methods
  */
 
-void BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
+static void BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -54,7 +54,7 @@ void BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 	}
 }
 
-void BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
+static void BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
