@@ -23,8 +23,10 @@
 
 #include <freerdp/client.h>
 
+#include <freerdp/addin.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/channels.h>
 
 int freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
@@ -58,6 +60,8 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	context = instance->context;
 	context->instance = instance;
 	context->settings = instance->settings;
+
+	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
 	return context;
 }

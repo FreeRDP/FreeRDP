@@ -1061,8 +1061,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
-
 	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
 
 	if (compatibility)
