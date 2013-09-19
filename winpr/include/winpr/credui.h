@@ -23,6 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/nt.h>
 #include <winpr/sspi.h>
 #include <winpr/error.h>
 #include <winpr/credentials.h>

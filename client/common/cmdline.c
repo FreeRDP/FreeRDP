@@ -856,6 +856,26 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	return 0;
 }
 
+int freerdp_detect_command_line_pre_filter(void* context, int index, int argc, LPCSTR* argv)
+{
+	int length;
+
+	if (index == 1)
+	{
+		length = strlen(argv[index]);
+
+		if (length > 4)
+		{
+			if (_stricmp(&(argv[index])[length - 4], ".rdp") == 0)
+			{
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int* count)
 {
 	int status;
@@ -869,7 +889,10 @@ int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int*
 	*count = 0;
 	detect_status = 0;
 	CommandLineClearArgumentsA(args);
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags,
+			NULL, freerdp_detect_command_line_pre_filter, NULL);
+
 	if (status < 0)
 		return status;
 
@@ -904,7 +927,10 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, int* c
 	*count = 0;
 	detect_status = 0;
 	CommandLineClearArgumentsA(args);
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, NULL, NULL, NULL);
+
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags,
+			NULL, freerdp_detect_command_line_pre_filter, NULL);
+
 	if (status < 0)
 		return status;
 
@@ -949,9 +975,10 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
-	/* Ignore legacy parsing in case there is an error in the command line. */
 	else if (old_cli_status >= 0)
 	{
+		/* Ignore legacy parsing in case there is an error in the command line. */
+
 		if ((old_cli_status == 1) || ((old_cli_count > posix_cli_count) && (old_cli_status != -1)))
 		{
 			*flags = COMMAND_LINE_SEPARATOR_SPACE;
@@ -1034,8 +1061,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
-
 	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
 
 	if (compatibility)
@@ -1046,8 +1071,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	else
 	{
 		CommandLineClearArgumentsA(args);
+
 		status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
 				freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
+
 		if (status < 0)
 			return status;
 	}
@@ -1432,7 +1459,6 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 			settings->RemoteFxCodec = TRUE;
 			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
-			settings->PerformanceFlags = PERF_FLAG_NONE;
 			settings->LargePointerFlag = TRUE;
 			settings->FrameMarkerCommandEnabled = TRUE;
 		}
@@ -1639,25 +1665,7 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	settings->PerformanceFlags = PERF_FLAG_NONE;
-
-	if (settings->AllowFontSmoothing)
-		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
-
-	if (settings->AllowDesktopComposition)
-		settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
-
-	if (settings->DisableWallpaper)
-		settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
-
-	if (settings->DisableFullWindowDrag)
-		settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
-
-	if (settings->DisableMenuAnims)
-		settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
-
-	if (settings->DisableThemes)
-		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+	freerdp_performance_flags_make(settings);
 
 	if (settings->GatewayEnabled)
 	{

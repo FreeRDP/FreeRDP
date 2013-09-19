@@ -29,6 +29,8 @@
 #include <winpr/error.h>
 #include <winpr/handle.h>
 
+#include <winpr/nt.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -266,6 +268,12 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 #define CreateWaitableTimerEx		CreateWaitableTimerExA
 #define OpenWaitableTimer		OpenWaitableTimerA
 #endif
+
+#endif
+
+#if ((_WIN32) && (_WIN32_WINNT < 0x0600))
+
+WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
 #endif
 

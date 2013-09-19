@@ -5,6 +5,7 @@
 
 int TestNtCreateFile(int argc, char* argv[])
 {
+#if 0
 	HANDLE handle;
 	NTSTATUS ntstatus;
 	ULONG CreateOptions;
@@ -25,6 +26,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	ntstatus = NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock, 0, 0, 0, CreateOptions, 0, 0, 0);
 
 	RtlFreeUnicodeString(&uString);
+#endif
 
 	return 0;
 }

@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <assert.h>
 #include <sys/types.h>
 
 #ifdef _MSC_VER
