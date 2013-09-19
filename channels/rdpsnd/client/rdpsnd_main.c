@@ -692,6 +692,13 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	if (!rdpsnd->device)
 	{
+		rdpsnd_set_subsystem(rdpsnd, "audiotrack");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+
+	if (!rdpsnd->device)
+	{
 		DEBUG_WARN("no sound device.");
 		return;
 	}
