@@ -29,6 +29,8 @@
 #include <winpr/error.h>
 #include <winpr/handle.h>
 
+#include <winpr/nt.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
