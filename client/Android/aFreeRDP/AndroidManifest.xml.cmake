@@ -6,7 +6,7 @@
 	android:versionCode="3"
 	android:versionName="@GIT_REVISION@" >
 
-	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
+	<uses-sdk android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@" android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
 	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" />
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"

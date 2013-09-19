@@ -15,6 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(JAVA_DEBUG_DEFAULT "off")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+	set(JAVA_DEBUG_DEFAULT "on")
+endif()
+
 option(WITH_DEBUG_ANDROID_JNI "Enable debug output for android jni bindings" ${DEFAULT_DEBUG_OPTION})
 option(ANDROID_BUILD_JAVA "Automatically android java code - build type depends on CMAKE_BUILD_TYPE" ON)
-option(ANDROID_BUILD_JAVA_DEBUG "Create a android debug package" ON)
+option(ANDROID_BUILD_JAVA_DEBUG "Create a android debug package" ${JAVA_DEBUG_DEFAULT})
+	
+set(ANDROID_APP_TARGET_SDK 11 CACHE STRING "Application target android SDK")
+set(ANDROID_APP_MIN_SDK 8 CACHE STRING "Application minimum android SDK requirement")
+set(ANDROID_APP_GOOGLE_TARGET_SDK "16" CACHE STRING "Application target google SDK")
+

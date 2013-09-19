@@ -3,10 +3,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	android:installLocation="auto"
 	package="com.freerdp.freerdpcore"
-	android:versionCode="1"
+	android:versionCode="2"
 	android:versionName="@GIT_REVISION@" >
 
-	<uses-sdk android:targetSdkVersion="8" android:minSdkVersion="8"/>
+	<uses-sdk android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@" android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
