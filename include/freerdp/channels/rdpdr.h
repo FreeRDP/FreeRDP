@@ -280,50 +280,6 @@ enum FILE_FS_DEVICE_FLAG
 	FILE_DEVICE_SECURE_OPEN = 0x00000100
 };
 
-enum FILE_INFORMATION_CLASS
-{
-	FileDirectoryInformation = 1,
-	FileFullDirectoryInformation,
-	FileBothDirectoryInformation,
-	FileBasicInformation,
-	FileStandardInformation,
-	FileInternalInformation,
-	FileEaInformation,
-	FileAccessInformation,
-	FileNameInformation,
-	FileRenameInformation,
-	FileLinkInformation,
-	FileNamesInformation,
-	FileDispositionInformation,
-	FilePositionInformation,
-	FileFullEaInformation,
-	FileModeInformation,
-	FileAlignmentInformation,
-	FileAllInformation,
-	FileAllocationInformation,
-	FileEndOfFileInformation,
-	FileAlternateNameInformation,
-	FileStreamInformation,
-	FilePipeInformation,
-	FilePipeLocalInformation,
-	FilePipeRemoteInformation,
-	FileMailslotQueryInformation,
-	FileMailslotSetInformation,
-	FileCompressionInformation,
-	FileObjectIdInformation,
-	FileUnknownInformation1,
-	FileMoveClusterInformation,
-	FileQuotaInformation,
-	FileReparsePointInformation,
-	FileNetworkOpenInformation,
-	FileAttributeTagInformation,
-	FileTrackingInformation,
-	FileIdBothDirectoryInformation,
-	FileIdFullDirectoryInformation,
-	FileValidDataLengthInformation,
-	FileShortNameInformation
-};
-
 enum FILE_FS_INFORMATION_CLASS
 {
 	FileFsVolumeInformation = 1,
