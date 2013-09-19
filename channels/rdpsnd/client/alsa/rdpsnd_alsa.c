@@ -72,7 +72,7 @@ struct rdpsnd_alsa_plugin
 		return -1; \
 	}
 
-int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
+static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 {
 	int status;
 	snd_pcm_hw_params_t* hw_params;
@@ -131,7 +131,7 @@ int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	return 0;
 }
 
-int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
+static int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 {
 	int status;
 	snd_pcm_sw_params_t* sw_params;
@@ -158,7 +158,7 @@ int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 	return 0;
 }
 
-int rdpsnd_alsa_validate_params(rdpsndAlsaPlugin* alsa)
+static int rdpsnd_alsa_validate_params(rdpsndAlsaPlugin* alsa)
 {
 	int status;
 	snd_pcm_uframes_t buffer_size;
@@ -413,8 +413,6 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	long volume_max;
 	long volume_left;
 	long volume_right;
-	int percent_left;
-	int percent_right;
 	UINT32 dwVolume;
 	UINT16 dwVolumeLeft;
 	UINT16 dwVolumeRight;
@@ -437,9 +435,6 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 
 			dwVolumeLeft = (UINT16) (((volume_left * 0xFFFF) - volume_min) / (volume_max - volume_min));
 			dwVolumeRight = (UINT16) (((volume_right * 0xFFFF) - volume_min) / (volume_max - volume_min));
-
-			percent_left = (dwVolumeLeft * 100) / 0xFFFF;
-			percent_right = (dwVolumeRight * 100) / 0xFFFF;
 
 			break;
 		}
@@ -485,7 +480,7 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	}
 }
 
-BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
+static BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
 {
 	int frames;
 	BYTE* srcData;
@@ -622,13 +617,13 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	device->WaveConfirm(device, wave);
 }
 
-COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
+static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
 {
 	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -638,6 +633,8 @@ static void rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV*
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
+	if (status)
+		return status;
 
 	arg = rdpsnd_alsa_args;
 
@@ -656,6 +653,8 @@ static void rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV*
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return status;
 }
 
 #ifdef STATIC_CHANNELS
