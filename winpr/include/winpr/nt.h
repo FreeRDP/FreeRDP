@@ -1288,6 +1288,8 @@
 #undef _FILE_INFORMATION_CLASS
 #undef FileDirectoryInformation
 
+#endif
+
 enum FILE_INFORMATION_CLASS
 {
 	FileDirectoryInformation = 1,
@@ -1332,7 +1334,7 @@ enum FILE_INFORMATION_CLASS
 	FileShortNameInformation
 };
 
-#else
+#ifndef _WIN32
 
 #define FILE_SUPERSEDE				0x00000000
 #define FILE_OPEN				0x00000001
