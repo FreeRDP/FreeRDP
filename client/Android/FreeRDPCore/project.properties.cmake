@@ -11,5 +11,5 @@
 #proguard.config=${sdk.dir}/tools/proguard/proguard-android.txt:proguard-project.txt
 
 # Project target.
-target=android-11
+target=android-@ANDROID_APP_TARGET_SDK@
 android.library=true
