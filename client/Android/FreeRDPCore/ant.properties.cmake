@@ -14,3 +14,7 @@
 #  'key.store' for the location of your keystore and
 #  'key.alias' for the name of the key to use.
 # The password will be asked during the build when you use the 'release' target.
+build.dir=@CMAKE_CURRENT_BINARY_DIR@
+source.dir=@CMAKE_CURRENT_SOURCE_DIR@/src
+out.dir=@CMAKE_CURRENT_BINARY_DIR@/bin
+

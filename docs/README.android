@@ -156,3 +156,10 @@ Java classes:
 After that you need to implement the functionality in client/Android/jni/android_freerdp.c and add
 the call to client/Android/jni/generated/android_freerdp_jni.c.
 After that FreeRDP and the Android package need to be rebuilt to include the latest libfreerdp-android in the package.
+
+Android CMake related Variables
+-------------------------------
+
+ANDROID_APP_TARGET_SDK         ... specifies the desired android target SDK, currently 11
+ANDROID_APP_MIN_SDK            ... specifies the minimum android SDK version supported, currently 8
+ANDROID_APP_GOOGLE_TARGET_SDK  ... specifies the minimum google SDK requirement, currently 16
