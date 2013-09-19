@@ -536,6 +536,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 			else
 			{
 				settings->PerformanceFlags = type;
+				freerdp_performance_flags_split(settings);
 			}
 
 			fprintf(stderr, "-x %s -> /network:", arg->Value);

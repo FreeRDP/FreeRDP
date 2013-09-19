@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 #include <winpr/interlocked.h>
@@ -230,6 +231,52 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		free(lpCriticalSection->LockSemaphore);
 		lpCriticalSection->LockSemaphore = NULL;
 	}
+}
+
+#endif
+
+#if ((_WIN32) && (_WIN32_WINNT < 0x0600))
+
+typedef BOOL (WINAPI * PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+
+static HMODULE g_KERNEL32_Library = NULL;
+static BOOL g_InitializeCriticalSectionEx_Detected = FALSE;
+static BOOL g_InitializeCriticalSectionEx_Available = FALSE;
+static PINITIALIZE_CRITICAL_SECTION_EX_FN g_pInitializeCriticalSectionEx = NULL;
+
+BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags)
+{
+	if (!g_InitializeCriticalSectionEx_Detected)
+	{
+		g_KERNEL32_Library = LoadLibrary(_T("kernel32.dll"));
+
+		if (g_KERNEL32_Library)
+		{
+			g_pInitializeCriticalSectionEx = (PINITIALIZE_CRITICAL_SECTION_EX_FN)
+				GetProcAddress(g_KERNEL32_Library, "InitializeCriticalSectionEx");
+
+			g_InitializeCriticalSectionEx_Available = (g_pInitializeCriticalSectionEx) ? TRUE : FALSE;
+		}
+		else
+		{
+			g_InitializeCriticalSectionEx_Available = FALSE;
+		}
+
+		g_InitializeCriticalSectionEx_Detected = TRUE;
+	}
+
+	if (g_InitializeCriticalSectionEx_Available)
+	{
+		/* Vista and later */
+		return (*g_pInitializeCriticalSectionEx)(lpCriticalSection, dwSpinCount, Flags);
+	}
+	else
+	{
+		/* Windows XP */
+		InitializeCriticalSection(lpCriticalSection);
+	}
+
+	return TRUE;
 }
 
 #endif

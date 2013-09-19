@@ -53,8 +53,11 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 	int count;
 	int length;
 	int index;
-	BOOL match, found, argument = FALSE;
-	BOOL notescaped = FALSE;
+	BOOL match;
+	BOOL found;
+	BOOL argument;
+	BOOL escaped;
+	BOOL notescaped;
 	char* sigil;
 	int sigil_length;
 	int sigil_index;
@@ -71,6 +74,12 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	status = 0;
 
+	match = FALSE;
+	found = FALSE;
+	argument = FALSE;
+	escaped = TRUE;
+	notescaped = FALSE;
+
 	if (!argv)
 		return status;
 
@@ -82,12 +91,14 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 	for (i = 1; i < argc; i++)
 	{
-		BOOL escaped = TRUE;
 		index = i;
+
+		escaped = TRUE;
 
 		if (preFilter)
 		{
 			count = preFilter(context, i, argc, argv);
+
 			if (count < 0)
 			{
 				status = COMMAND_LINE_ERROR;
@@ -96,7 +107,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 			if (count > 0)
 			{
-				i += count;
+				i += (count - 1);
 				continue;
 			}
 		}
@@ -136,6 +147,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			if (notescaped)
 				return COMMAND_LINE_ERROR; 
+
 			sigil_length = 0;
 			escaped = FALSE;
 			notescaped = TRUE;
@@ -144,7 +156,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		{
 			return COMMAND_LINE_ERROR;
 		}
-		
+
 		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
 				(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{

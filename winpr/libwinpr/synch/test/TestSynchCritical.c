@@ -7,7 +7,6 @@
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
 
-
 #define TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS 500
 #define TEST_SYNC_CRITICAL_TEST1_RUNS 4
 
