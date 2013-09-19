@@ -3,6 +3,7 @@
 	<name>aFreeRDP</name>
 	<comment></comment>
 	<projects>
+		<project>FreeRDPCore</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

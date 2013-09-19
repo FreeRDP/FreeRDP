@@ -654,6 +654,42 @@ JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls
 	(*env)->ReleaseStringUTFChars(env, jpath, path);
 }
 
+JNIEXPORT void JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env,
+		jclass cls, jint instance, jboolean enable)
+{
+	char** p;
+	int count = 1;
+	freerdp* inst = (freerdp*)instance;
+	rdpSettings * settings = inst->settings;
+
+	DEBUG_ANDROID("sound redirect: %s", enable ? "TRUE" : "FALSE");
+
+	p = malloc(sizeof(char*));
+	p[0] = "rdpsnd";
+
+	freerdp_client_add_static_channel(settings, count, p);
+
+	free(p);
+}
+
+JNIEXPORT void JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
+		jclass cls, jint instance, jboolean enable)
+{
+	char** p;
+	int count = 1;
+	freerdp* inst = (freerdp*)instance;
+	rdpSettings * settings = inst->settings;
+
+	DEBUG_ANDROID("microphone redirect: %s", enable ? "TRUE" : "FALSE");
+
+	p = malloc(sizeof(char*));
+	p[0] = "audin";
+
+	freerdp_client_add_static_channel(settings, count, p);
+
+	free(p);
+}
+
 JNIEXPORT void JNICALL jni_freerdp_set_clipboard_redirection(JNIEnv *env, jclass cls, jint instance, jboolean enable)
 {
 	freerdp* inst = (freerdp*)instance;

@@ -115,6 +115,8 @@
     <string name="settings_enable_gateway_settings">Gateway inschakelen</string>
     <string name="settings_gateway_settings">Gateway instellingen</string>    
     <string name="settings_redirect_sdcard">SDCard aankoppelen</string>
+    <string name="settings_redirect_sound">Redirect Sound</string>
+    <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">Beveiliging</string>
     <string-array name="security_array">
         <item>Automatisch</item>

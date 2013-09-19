@@ -114,6 +114,8 @@
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
     <string name="settings_gateway_settings">Gateway Settings</string>    
     <string name="settings_redirect_sdcard">"Redirect SDCard"</string>
+    <string name="settings_redirect_sound">Redirect Sound</string>
+    <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">"Securité"</string>
     <string-array name="security_array">
         <item>"Automatique"</item>

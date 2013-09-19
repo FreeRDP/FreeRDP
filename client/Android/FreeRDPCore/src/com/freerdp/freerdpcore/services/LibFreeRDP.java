@@ -40,6 +40,8 @@ public class LibFreeRDP
 	private static native void freerdp_set_data_directory(int inst, String directory);
 	
 	private static native void freerdp_set_clipboard_redirection(int inst, boolean enable);
+	private static native void freerdp_set_sound_redirection(int inst, boolean enable);
+	private static native void freerdp_set_microphone_redirection(int inst, boolean enable);
 	private static native void freerdp_set_drive_redirection(int inst, String path);
 	
 	private static native void freerdp_set_gateway_info(int inst, String gatewayhostname, int port, 
@@ -165,7 +167,15 @@ public class LibFreeRDP
 			freerdp_set_gateway_info(inst, gatewaySettings.getHostname(), gatewaySettings.getPort(), 
 					gatewaySettings.getUsername(), gatewaySettings.getPassword(), gatewaySettings.getDomain());			
 		}
-					
+			
+		// Sound redirection
+		if (advancedSettings.getRedirectSound())
+			freerdp_set_sound_redirection(inst, true);
+
+		// Microphone redirection
+		if (advancedSettings.getRedirectMicrophone())
+			freerdp_set_microphone_redirection(inst, true);
+
 		return true;
 	}
 	
