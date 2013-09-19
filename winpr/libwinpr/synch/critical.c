@@ -237,7 +237,7 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #if ((_WIN32) && (_WIN32_WINNT < 0x0600))
 
-typedef BOOL (*PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+typedef BOOL (WINAPI * PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
 static HMODULE g_KERNEL32_Library = NULL;
 static BOOL g_InitializeCriticalSectionEx_Detected = FALSE;
@@ -268,7 +268,7 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	if (g_InitializeCriticalSectionEx_Available)
 	{
 		/* Vista and later */
-		return g_pInitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags);
+		return (*g_pInitializeCriticalSectionEx)(lpCriticalSection, dwSpinCount, Flags);
 	}
 	else
 	{

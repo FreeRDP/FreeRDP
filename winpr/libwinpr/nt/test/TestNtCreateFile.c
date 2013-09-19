@@ -5,7 +5,7 @@
 
 int TestNtCreateFile(int argc, char* argv[])
 {
-#ifndef _WIN32
+#if 0
 	HANDLE handle;
 	NTSTATUS ntstatus;
 	ULONG CreateOptions;

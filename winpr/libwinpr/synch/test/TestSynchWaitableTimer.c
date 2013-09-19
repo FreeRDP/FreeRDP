@@ -4,11 +4,12 @@
 
 int TestSynchWaitableTimer(int argc, char* argv[])
 {
+	DWORD status;
 	HANDLE timer;
 	LONG period;
 	LARGE_INTEGER due;
 
-	timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	timer = CreateWaitableTimer(NULL, FALSE, NULL);
 
 	if (!timer)
 	{
@@ -24,7 +25,9 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 		return -1;
 	}
 
-	if (WaitForSingleObject(timer, INFINITE) != WAIT_OBJECT_0)
+	status = WaitForSingleObject(timer, INFINITE);
+
+	if (status != WAIT_OBJECT_0)
 	{
 		printf("WaitForSingleObject(timer, INFINITE) failure\n");
 		return -1;
@@ -32,9 +35,11 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 
 	printf("Timer Signaled\n");
 
-	if (WaitForSingleObject(timer, 2000) != WAIT_TIMEOUT)
+	status = WaitForSingleObject(timer, 2000);
+
+	if (status != WAIT_TIMEOUT)
 	{
-		printf("WaitForSingleObject(timer, 2000) failure\n");
+		printf("WaitForSingleObject(timer, 2000) failure: Actual: 0x%04X, Expected: 0x%04X\n", status, WAIT_TIMEOUT);
 		return -1;
 	}
 
