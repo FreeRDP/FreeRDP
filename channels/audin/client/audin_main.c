@@ -591,6 +591,13 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
 	}
 
+	if (!audin->device)
+	{
+		audin_set_subsystem(audin, "opensl_es");
+		audin_set_device_name(audin, "default");
+		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
+	}
+
 	if (audin->device == NULL)
 	{
 		DEBUG_WARN("no sound device.");
