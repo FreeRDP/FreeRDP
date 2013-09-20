@@ -1280,17 +1280,19 @@
  * http://msdn.microsoft.com/en-us/library/cc231987.aspx
  */
 
-#define _FILE_INFORMATION_CLASS		_WINTERNL_FILE_INFORMATION_CLASS
+#define FILE_INFORMATION_CLASS		_WINTERNL_FILE_INFORMATION_CLASS
+#define _FILE_INFORMATION_CLASS		_WINTERNL__FILE_INFORMATION_CLASS
 #define FileDirectoryInformation	_WINTERNL_FileDirectoryInformation
 
 #include <winternl.h>
 
+#undef FILE_INFORMATION_CLASS
 #undef _FILE_INFORMATION_CLASS
 #undef FileDirectoryInformation
 
 #endif
 
-enum FILE_INFORMATION_CLASS
+typedef enum _FILE_INFORMATION_CLASS
 {
 	FileDirectoryInformation = 1,
 	FileFullDirectoryInformation,
@@ -1332,7 +1334,7 @@ enum FILE_INFORMATION_CLASS
 	FileIdFullDirectoryInformation,
 	FileValidDataLengthInformation,
 	FileShortNameInformation
-};
+} FILE_INFORMATION_CLASS;
 
 #ifndef _WIN32
 
