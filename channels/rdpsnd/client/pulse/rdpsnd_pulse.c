@@ -548,7 +548,7 @@ static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_pulse_args, flags, pulse, NULL, NULL);
-	if (status)
+	if (status < 0)
 		return;
 
 	arg = rdpsnd_pulse_args;

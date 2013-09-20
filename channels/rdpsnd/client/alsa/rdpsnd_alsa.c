@@ -626,7 +626,7 @@ static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
-	if (status)
+	if (status < 0)
 		return status;
 
 	arg = rdpsnd_alsa_args;
