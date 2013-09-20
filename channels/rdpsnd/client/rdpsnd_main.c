@@ -594,6 +594,8 @@ static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_args, flags, rdpsnd, NULL, NULL);
+	if (status)
+		return;
 
 	arg = rdpsnd_args;
 

@@ -453,8 +453,6 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	long volume_max;
 	long volume_left;
 	long volume_right;
-	int percent_left;
-	int percent_right;
 	snd_mixer_elem_t* elem;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
@@ -464,9 +462,6 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
 	
-	percent_left = (left * 100) / 0xFFFF;
-	percent_right = (right * 100) / 0xFFFF;
-
 	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
 	{
 		if (snd_mixer_selem_has_playback_volume(elem))
