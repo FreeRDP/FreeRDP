@@ -613,8 +613,6 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
 
 	//fprintf(stderr, "wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
-
-	device->WaveConfirm(device, wave);
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
