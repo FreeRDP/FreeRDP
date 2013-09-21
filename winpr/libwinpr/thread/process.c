@@ -63,6 +63,13 @@ BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_AT
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
+	int status = 0;
+
+	if (!lpApplicationName)
+		return FALSE;
+
+	status = execve(lpApplicationName, NULL, NULL);
+
 	return TRUE;
 }
 

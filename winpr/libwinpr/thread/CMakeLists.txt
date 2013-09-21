@@ -19,6 +19,7 @@ set(MODULE_NAME "winpr-thread")
 set(MODULE_PREFIX "WINPR_THREAD")
 
 set(${MODULE_PREFIX}_SRCS
+	argv.c
 	process.c
 	processor.c
 	thread.c
@@ -53,3 +54,7 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

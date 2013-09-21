@@ -117,6 +117,17 @@ WINPR_API DWORD GetCurrentProcessId(void);
 
 WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 
+/* Process Argument Vector Parsing */
+
+WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
+WINPR_API LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs);
+
+#ifdef UNICODE
+#define CommandLineToArgv	CommandLineToArgvW
+#else
+#define CommandLineToArgv	CommandLineToArgvA
+#endif
+
 /* Thread */
 
 #define CREATE_SUSPENDED				0x00000004
