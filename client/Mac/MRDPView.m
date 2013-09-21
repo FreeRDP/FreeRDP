@@ -138,7 +138,21 @@ struct rgba_data
 	e.embed = TRUE;
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
-    [self setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
+
+	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+	NSRect screenFrame = [screen frame];
+
+	if(instance->settings->Fullscreen)
+	{
+		instance->settings->DesktopWidth  = screenFrame.size.width;
+		instance->settings->DesktopHeight = screenFrame.size.height;
+	}
+
+	[self setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
+
+
+	if(instance->settings->Fullscreen)
+		[[self window] toggleFullScreen:nil];
 
     mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
@@ -748,34 +762,25 @@ DWORD mac_client_thread(void* param)
 	// store current dimensions
 	width = w;
 	height = h;
-	
-	// compute difference between window and client area
-	NSRect outerRect = [[self window] frame];
-	NSRect innerRect = [self frame];
-	
-	int widthDiff = outerRect.size.width - innerRect.size.width;
-	int heightDiff = outerRect.size.height - innerRect.size.height;
-	
-	// we are not in RemoteApp mode, disable resizing
-	outerRect.size.width = w + widthDiff;
-	outerRect.size.height = h + heightDiff;
-	[[self window] setMaxSize:outerRect.size];
-	[[self window] setMinSize:outerRect.size];
 
-    @try
-    {
-        [[self window] setFrame:outerRect display:YES];
-    }
-    @catch (NSException * e) {
-       NSLog(@"Exception: %@", e);
-    }
-    @finally {
-    }
 
 	// set client area to specified dimensions
+	NSRect innerRect;
+	innerRect.origin.x = 0;
+	innerRect.origin.y = 0;
 	innerRect.size.width = w;
 	innerRect.size.height = h;
 	[self setFrame:innerRect];
+
+	// calculate window of same size, but keep position
+	NSRect outerRect = [[self window] frame];
+	outerRect.size = [[self window] frameRectForContentRect:innerRect].size;
+
+	// we are not in RemoteApp mode, disable larger than resolution
+	[[self window] setContentMaxSize:innerRect.size];
+
+	// set window to given area
+	[[self window] setFrame:outerRect display:YES];
 }
 
 /************************************************************************
