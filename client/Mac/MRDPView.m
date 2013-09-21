@@ -486,20 +486,23 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
+
 	y = height - y;
 	
 	flags = PTR_FLAGS_WHEEL;
-	
-	if ([event deltaY] < 0)
-		flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
-	else
-		flags |= 0x0078;
-	
-	x += (int) [event deltaX];
-	y += (int) [event deltaY];
-	
-	instance->input->MouseEvent(instance->input, flags, x, y);
+
+	/* 1 event = 120 units */
+	int units = [event deltaY] * 120;
+
+	/* send out all accumulated rotations */
+	while(units != 0)
+	{
+		/* limit to maximum value in WheelRotationMask (9bit signed value) */
+		int step = MIN(MAX(-256, units), 255);
+
+		instance->input->MouseEvent(instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
+		units -= step;
+	}
 }
 
 /** *********************************************************************
