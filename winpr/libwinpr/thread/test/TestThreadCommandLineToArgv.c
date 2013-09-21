@@ -52,6 +52,16 @@ const char* test_args_list_5[] =
 	NULL
 };
 
+const char* test_args_line_6 = "a\\\\\\\\\"b c\" d e";
+
+const char* test_args_list_6[] =
+{
+	"a\\\\b c",
+	"d",
+	"e",
+	NULL
+};
+
 static int test_command_line_parsing_case(const char* line, const char** list)
 {
 	int i;
@@ -81,7 +91,8 @@ int TestThreadCommandLineToArgv(int argc, char* argv[])
 	test_command_line_parsing_case(test_args_line_2, test_args_list_2);
 	test_command_line_parsing_case(test_args_line_3, test_args_list_3);
 	test_command_line_parsing_case(test_args_line_4, test_args_list_4);
-	//test_command_line_parsing_case(test_args_line_5, test_args_list_5);
+	test_command_line_parsing_case(test_args_line_5, test_args_list_5);
+	test_command_line_parsing_case(test_args_line_6, test_args_list_6);
 
 	return 0;
 }
