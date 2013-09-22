@@ -43,6 +43,8 @@
 
 #ifndef _WIN32
 
+#include <sys/wait.h>
+
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
@@ -100,6 +102,17 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 			if (thread_status)
 				thread->dwExitCode = ((DWORD) (size_t) thread_status);
+		}
+	}
+	else if (Type == HANDLE_TYPE_PROCESS)
+	{
+		WINPR_PROCESS* process;
+
+		process = (WINPR_PROCESS*) Object;
+
+		if (waitpid(process->pid, &(process->status), 0) != -1)
+		{
+			return WAIT_FAILED;
 		}
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)

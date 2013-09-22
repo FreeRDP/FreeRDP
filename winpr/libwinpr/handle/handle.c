@@ -52,6 +52,15 @@ BOOL CloseHandle(HANDLE hObject)
 
 		return TRUE;
 	}
+	else if (Type == HANDLE_TYPE_PROCESS)
+	{
+		WINPR_PROCESS* process;
+
+		process = (WINPR_PROCESS*) Object;
+		free(process);
+
+		return TRUE;
+	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		WINPR_MUTEX* mutex;

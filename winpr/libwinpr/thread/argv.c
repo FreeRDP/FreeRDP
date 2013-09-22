@@ -101,7 +101,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	int maxBufferSize;
 	int currentIndex;
 	int cmdLineLength;
-	LPSTR lpEscapedChars;
+	BOOL* lpEscapedChars;
 	LPSTR lpEscapedCmdLine;
 
 	if (!lpCmdLine)
@@ -116,15 +116,15 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = strlen(lpCmdLine);
 
-	lpEscapedChars = (char*) malloc(cmdLineLength + 1);
-	ZeroMemory(lpEscapedChars, cmdLineLength + 1);
+	lpEscapedChars = (BOOL*) malloc((cmdLineLength + 1) * sizeof(BOOL));
+	ZeroMemory(lpEscapedChars, (cmdLineLength + 1) * sizeof(BOOL));
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
 		int i, n;
 		char* pLastEnd = NULL;
 
-		lpEscapedCmdLine = (char*) malloc(cmdLineLength + 1);
+		lpEscapedCmdLine = (char*) malloc((cmdLineLength + 1) * sizeof(char));
 
 		p = (char*) lpCmdLine;
 		pLastEnd = (char*) lpCmdLine;
@@ -173,7 +173,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			p += n + 1;
 
 			if ((n % 2) != 0)
-				lpEscapedChars[pOutput - lpEscapedCmdLine] = '\\';
+				lpEscapedChars[pOutput - lpEscapedCmdLine] = TRUE;
 
 			*pOutput = '"';
 			pOutput++;
@@ -188,7 +188,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		cmdLineLength = strlen(lpCmdLine);
 	}
 
-	maxNumArgs = 1;
+	maxNumArgs = 2;
 	currentIndex = 0;
 	p = (char*) lpCmdLine;
 
@@ -240,7 +240,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			/* no whitespace escaped with double quotes */
 
 			p = &p[index + 1];
-			pEnd = p;
+			pEnd = p - 1;
 
 			length = (pEnd - pBeg);
 
@@ -274,14 +274,14 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			if (p[index] == '\0')
 			{
 				p = &p[index + 1];
-				pEnd = p;
+				pEnd = p - 1;
 			}
 			else
 			{
 				p = &p[index + 1];
 				index = strcspn(p, " \t\0");
 				p = &p[index + 1];
-				pEnd = p;
+				pEnd = p - 1;
 			}
 
 			length = 0;
@@ -312,7 +312,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	if (lpEscapedCmdLine)
 		free(lpEscapedCmdLine);
 
-	free(lpEscapedChars);
+	if (lpEscapedChars)
+		free(lpEscapedChars);
 
 	*pNumArgs = numArgs;
 

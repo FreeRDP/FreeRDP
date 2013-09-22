@@ -55,20 +55,69 @@
 #include <unistd.h>
 #endif
 
+#include <winpr/crt.h>
+
+#include <errno.h>
+#include <spawn.h>
+#include <sys/wait.h>
+
 #include <pthread.h>
 
-typedef void *(*pthread_start_routine)(void*);
+#include "thread.h"
+
+#include "../handle/handle.h"
 
 BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	int status = 0;
+	pid_t pid;
+	char* envp;
+	int status;
+	int numArgs;
+	LPSTR* pArgs;
+	WINPR_THREAD* thread;
+	WINPR_PROCESS* process;
 
-	if (!lpApplicationName)
+	pid = 0;
+	numArgs = 0;
+
+	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+
+	envp = NULL;
+
+	status = posix_spawnp(&pid, pArgs[0], NULL, NULL, pArgs, &envp);
+
+	if (status != 0)
 		return FALSE;
 
-	status = execve(lpApplicationName, NULL, NULL);
+	process = (WINPR_PROCESS*) malloc(sizeof(WINPR_PROCESS));
+
+	if (!process)
+		return FALSE;
+
+	ZeroMemory(process, sizeof(WINPR_PROCESS));
+
+	WINPR_HANDLE_SET_TYPE(process, HANDLE_TYPE_PROCESS);
+
+	process->pid = pid;
+	process->status = 0;
+
+	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
+
+	ZeroMemory(thread, sizeof(WINPR_THREAD));
+
+	if (!thread)
+		return FALSE;
+
+	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
+
+	thread->mainProcess = TRUE;
+
+	lpProcessInformation->hProcess = (HANDLE) process;
+	lpProcessInformation->hThread = (HANDLE) thread;
+	lpProcessInformation->dwProcessId = (DWORD) pid;
+	lpProcessInformation->dwThreadId = (DWORD) pid;
 
 	return TRUE;
 }
