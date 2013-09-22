@@ -62,6 +62,19 @@ const char* test_args_list_6[] =
 	NULL
 };
 
+const char* test_args_line_7 = "a\\\\\\\\\"b c\" d e f\\\\\\\\\"g h\" i j";
+
+const char* test_args_list_7[] =
+{
+	"a\\\\b c",
+	"d",
+	"e",
+	"f\\\\g h",
+	"i",
+	"j",
+	NULL
+};
+
 static int test_command_line_parsing_case(const char* line, const char** list)
 {
 	int i;
@@ -82,6 +95,8 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 		printf("argv[%d] = %s\n", i, pArgs[i]);
 	}
 
+	HeapFree(GetProcessHeap(), 0, pArgs);
+
 	return 0;
 }
 
@@ -93,6 +108,7 @@ int TestThreadCommandLineToArgv(int argc, char* argv[])
 	test_command_line_parsing_case(test_args_line_4, test_args_list_4);
 	test_command_line_parsing_case(test_args_line_5, test_args_list_5);
 	test_command_line_parsing_case(test_args_line_6, test_args_list_6);
+	test_command_line_parsing_case(test_args_line_7, test_args_list_7);
 
 	return 0;
 }

@@ -122,59 +122,70 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	if (strstr(lpCmdLine, "\\\""))
 	{
 		int i, n;
+		char* pLastEnd = NULL;
 
 		lpEscapedCmdLine = (char*) malloc(cmdLineLength + 1);
 
 		p = (char*) lpCmdLine;
+		pLastEnd = (char*) lpCmdLine;
 		pOutput = (char*) lpEscapedCmdLine;
 
-		pBeg = strstr(lpCmdLine, "\\\"");
-		pEnd = pBeg + 2;
-
-		while (pBeg >= lpCmdLine)
+		while (p < &lpCmdLine[cmdLineLength])
 		{
-			if (*pBeg != '\\')
+			pBeg = strstr(p, "\\\"");
+
+			if (!pBeg)
 			{
-				pBeg++;
+				length = strlen(p);
+				CopyMemory(pOutput, p, length);
+				pOutput += length;
+				p += length;
+
 				break;
 			}
 
-			pBeg--;
-		}
+			pEnd = pBeg + 2;
 
-		n = (pEnd - pBeg) - 1;
+			while (pBeg >= lpCmdLine)
+			{
+				if (*pBeg != '\\')
+				{
+					pBeg++;
+					break;
+				}
 
-		length = (pBeg - lpCmdLine);
-		CopyMemory(pOutput, p, length);
-		pOutput += length;
-		p += length;
+				pBeg--;
+			}
 
-		for (i = 0; i < (n / 2); i++)
-		{
-			*pOutput = '\\';
+			n = (pEnd - pBeg) - 1;
+
+			length = (pBeg - pLastEnd);
+			CopyMemory(pOutput, p, length);
+			pOutput += length;
+			p += length;
+
+			for (i = 0; i < (n / 2); i++)
+			{
+				*pOutput = '\\';
+				pOutput++;
+			}
+
+			p += n + 1;
+
+			if ((n % 2) != 0)
+				lpEscapedChars[pOutput - lpEscapedCmdLine] = '\\';
+
+			*pOutput = '"';
 			pOutput++;
+
+			pLastEnd = p;
 		}
-
-		p += n + 1;
-
-		if ((n % 2) != 0)
-			lpEscapedChars[pOutput - lpEscapedCmdLine] = '\\';
-
-		*pOutput = '"';
-		pOutput++;
-
-		length = cmdLineLength - (pEnd - lpCmdLine);
-		CopyMemory(pOutput, p, length);
-		pOutput += length;
-		p += length;
 
 		*pOutput = '\0';
 		pOutput++;
 
 		lpCmdLine = (LPCSTR) lpEscapedCmdLine;
 		cmdLineLength = strlen(lpCmdLine);
-
-		//printf("EscapedCmdLine: %s\n", lpEscapedCmdLine);
 	}
 
 	maxNumArgs = 1;
