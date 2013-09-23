@@ -4,10 +4,12 @@
 #include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/environment.h>
 
 int TestThreadCreateProcess(int argc, char* argv[])
 {
 	BOOL status;
+	DWORD exitCode;
 	LPCTSTR lpApplicationName;
 	LPTSTR lpCommandLine;
 	LPSECURITY_ATTRIBUTES lpProcessAttributes;
@@ -18,14 +20,19 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	LPCTSTR lpCurrentDirectory;
 	STARTUPINFO StartupInfo;
 	PROCESS_INFORMATION ProcessInformation;
+	LPTCH lpszEnvironmentBlock;
+
+	lpszEnvironmentBlock = GetEnvironmentStrings();
 
 	lpApplicationName = NULL;
-	lpCommandLine = _T("ls -l /");
+	//lpCommandLine = _T("ls -l /");
+	lpCommandLine = _T("printenv");
 	lpProcessAttributes = NULL;
 	lpThreadAttributes = NULL;
 	bInheritHandles = FALSE;
 	dwCreationFlags = 0;
 	lpEnvironment = NULL;
+	lpEnvironment = lpszEnvironmentBlock;
 	lpCurrentDirectory = NULL;
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
 	StartupInfo.cb = sizeof(STARTUPINFO);
@@ -42,7 +49,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 			&StartupInfo,
 			&ProcessInformation);
 
+	FreeEnvironmentStrings(lpszEnvironmentBlock);
+
 	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
+
+	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
+
+	printf("Process exited with code: %d\n", exitCode);
 
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);

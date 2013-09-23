@@ -52,6 +52,7 @@ struct winpr_process
 
 	pid_t pid;
 	int status;
+	DWORD dwExitCode;
 };
 typedef struct winpr_process WINPR_PROCESS;
 

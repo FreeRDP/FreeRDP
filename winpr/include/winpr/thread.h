@@ -111,6 +111,7 @@ WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LP
 #endif
 
 DECLSPEC_NORETURN WINPR_API VOID ExitProcess(UINT uExitCode);
+WINPR_API BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode);
 
 WINPR_API HANDLE _GetCurrentProcess(void);
 WINPR_API DWORD GetCurrentProcessId(void);

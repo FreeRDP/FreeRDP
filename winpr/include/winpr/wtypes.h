@@ -108,10 +108,10 @@ typedef signed int LONG32;
 typedef signed __int64 LONG64;
 #endif
 
-typedef CHAR* PSTR, *LPSTR, *LPCH;
+typedef CHAR *PSTR, *LPSTR, *LPCH;
 typedef const CHAR *LPCSTR,*PCSTR;
 
-typedef WCHAR* LPWSTR, *PWSTR, *LPWCH;
+typedef WCHAR *LPWSTR, *PWSTR, *LPWCH;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
 
 typedef unsigned __int64 QWORD;

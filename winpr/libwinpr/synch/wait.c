@@ -114,6 +114,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			return WAIT_FAILED;
 		}
+
+		process->dwExitCode = (DWORD) process->status;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{

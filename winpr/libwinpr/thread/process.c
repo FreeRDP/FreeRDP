@@ -56,6 +56,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/tchar.h>
+#include <winpr/environment.h>
 
 #include <errno.h>
 #include <spawn.h>
@@ -67,26 +69,72 @@
 
 #include "../handle/handle.h"
 
+char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
+{
+	char* p;
+	int index;
+	int count;
+	int length;
+	char** envp = NULL;
+
+	count = 0;
+	p = (char*) lpszEnvironmentBlock;
+
+	while (p[0] && p[1])
+	{
+		length = strlen(p);
+		p += (length + 1);
+		count++;
+	}
+
+	index = 0;
+	p = (char*) lpszEnvironmentBlock;
+
+	envp = (char**) malloc(sizeof(char*) * (count + 1));
+	envp[count] = NULL;
+
+	while (p[0] && p[1])
+	{
+		length = strlen(p);
+		envp[index] = _strdup(p);
+		p += (length + 1);
+		index++;
+	}
+
+	return envp;
+}
+
 BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
-	char* envp;
 	int status;
 	int numArgs;
 	LPSTR* pArgs;
+	char** envp;
 	WINPR_THREAD* thread;
 	WINPR_PROCESS* process;
+	LPTCH lpszEnvironmentBlock;
 
 	pid = 0;
+	envp = NULL;
 	numArgs = 0;
+	lpszEnvironmentBlock = NULL;
 
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
 
-	envp = NULL;
+	if (lpEnvironment)
+	{
+		envp = EnvironmentBlockToEnvpA(lpEnvironment);
+	}
+	else
+	{
+		lpszEnvironmentBlock = GetEnvironmentStrings();
+		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
+	}
 
-	status = posix_spawnp(&pid, pArgs[0], NULL, NULL, pArgs, &envp);
+	status = posix_spawnp(&pid, pArgs[0], NULL, NULL, pArgs, envp);
 
 	if (status != 0)
 		return FALSE;
@@ -102,6 +150,7 @@ BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_AT
 
 	process->pid = pid;
 	process->status = 0;
+	process->dwExitCode = 0;
 
 	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
 
@@ -146,6 +195,23 @@ BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCom
 DECLSPEC_NORETURN VOID ExitProcess(UINT uExitCode)
 {
 
+}
+
+BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
+{
+	WINPR_PROCESS* process;
+
+	if (!hProcess)
+		return FALSE;
+
+	if (!lpExitCode)
+		return FALSE;
+
+	process = (WINPR_PROCESS*) hProcess;
+
+	*lpExitCode = process->dwExitCode;
+
+	return TRUE;
 }
 
 HANDLE _GetCurrentProcess(VOID)

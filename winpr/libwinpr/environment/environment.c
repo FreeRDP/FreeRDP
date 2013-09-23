@@ -157,6 +157,25 @@ DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 
 BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 {
+	int length;
+	char* envstr;
+
+	if (!lpName)
+		return FALSE;
+
+	if (lpValue)
+	{
+		length = strlen(lpName) + strlen(lpValue) + 1;
+		envstr = (char*) malloc(length + 1);
+		sprintf_s(envstr, length + 1, "%s=%s", lpName, lpValue);
+		envstr[length] = '\0';
+		putenv(envstr);
+	}
+	else
+	{
+		unsetenv(lpName);
+	}
+
 	return TRUE;
 }
 
@@ -165,9 +184,61 @@ BOOL SetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
 	return TRUE;
 }
 
+/**
+ * GetEnvironmentStrings function:
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/ms683187/
+ *
+ * The GetEnvironmentStrings function returns a pointer to a block of memory
+ * that contains the environment variables of the calling process (both the
+ * system and the user environment variables). Each environment block contains
+ * the environment variables in the following format:
+ *
+ * Var1=Value1\0
+ * Var2=Value2\0
+ * Var3=Value3\0
+ * ...
+ * VarN=ValueN\0\0
+ */
+
+extern char** environ;
+
 LPCH GetEnvironmentStrings(VOID)
 {
-	return NULL;
+	char* p;
+	int offset;
+	int length;
+	char** envp;
+	DWORD cchEnvironmentBlock;
+	LPCH lpszEnvironmentBlock;
+
+	offset = 0;
+	envp = environ;
+
+	cchEnvironmentBlock = 128;
+	lpszEnvironmentBlock = (LPCH) malloc(cchEnvironmentBlock * sizeof(CHAR));
+
+	while (*envp)
+	{
+		length = strlen(*envp);
+
+		while ((offset + length + 8) > cchEnvironmentBlock)
+		{
+			cchEnvironmentBlock *= 2;
+			lpszEnvironmentBlock = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+		}
+
+		p = &(lpszEnvironmentBlock[offset]);
+
+		CopyMemory(p, *envp, length * sizeof(CHAR));
+		p[length] = '\0';
+
+		offset += (length + 1);
+		envp++;
+	}
+
+	lpszEnvironmentBlock[offset] = '\0';
+
+	return lpszEnvironmentBlock;
 }
 
 LPWCH GetEnvironmentStringsW(VOID)
@@ -197,6 +268,9 @@ DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize)
 
 BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock)
 {
+	if (lpszEnvironmentBlock)
+		free(lpszEnvironmentBlock);
+
 	return TRUE;
 }
 
