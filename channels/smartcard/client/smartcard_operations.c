@@ -1546,6 +1546,23 @@ finish:
 	return status;
 }
 
+static void Stream_Dump(wStream *s)
+{
+	size_t size = Stream_GetRemainingLength(s);
+	int i;
+
+	fprintf(stderr, "-------------------------- Start [%s] [%zd] ------------------------",
+			__func__, size);
+	for(i=0; i<size; i++)
+	{
+		fprintf(stderr, "%02X", s->pointer[i]);
+		if (i % 80 == 0)
+			fprintf(stderr, "\n");
+	}
+	fprintf(stderr, "\n");
+	fprintf(stderr, "-------------------------- End [%s] ------------------------", __func__);
+}
+
 static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
@@ -1607,6 +1624,18 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
 	if (status)
 		goto finish;
+	
+	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength,=%d, ptrSendBuffer,=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL,=%d, cbRecvLength=%d",
+	irp->input, ioSendPci.rq->dwProtocol,
+	irp->input, ioSendPci.rq->cbPciLength,
+	irp->input, pioSendPciBufferPtr,
+	irp->input, cbSendLength,
+	irp->input, ptrSendBuffer,
+	irp->input, ptrIoRecvPciBuffer,
+	irp->input, recvBufferIsNULL,
+	irp->input, cbRecvLength);
+
+	Stream_Dump(irp->input);
 
 	/* Check, if there is data available from the ipSendPci element */
 	if (pioSendPciBufferPtr)
@@ -1690,8 +1719,10 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		Stream_Read_UINT32(irp->input, linkedLen);
 		Stream_Read_UINT16(irp->input, ioRecvPci.rq->dwProtocol);
 		Stream_Read_UINT16(irp->input, ioRecvPci.rq->cbPciLength);
-		
-		if (linkedLen != ioSendPci.rq->cbPciLength)
+	
+		/* Just check for too few bytes, there may be more actual
+		 * data than is used due to padding. */
+		if (linkedLen < ioSendPci.rq->cbPciLength)
 		{
 			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
 					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
@@ -1716,7 +1747,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			goto finish;
 		ioRecvPci.v = tmp;
 
-		Stream_Read(irp->input, &ioRecvPci.rq[1], linkedLen);
+		Stream_Read(irp->input, &ioRecvPci.rq[1], ioRecvPci.rq->cbPciLength);
 
 		pPioRecvPci = ioRecvPci.rq;
 	}
