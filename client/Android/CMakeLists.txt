@@ -36,5 +36,11 @@ if(ANDROID_BUILD_JAVA)
 	endif()
 endif(ANDROID_BUILD_JAVA)
 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+	set(ANDROID_DEBUG_ENABLE "true")
+else()
+	set(ANDROID_DEBUG_ENABLE "false")
+endif()
+
 add_subdirectory(FreeRDPCore)
 add_subdirectory(aFreeRDP)
