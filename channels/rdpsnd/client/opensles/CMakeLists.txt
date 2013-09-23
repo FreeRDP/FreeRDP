@@ -15,13 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client_subsystem("audin" "opensl_es" "")
+define_channel_client_subsystem("rdpsnd" "opensles" "")
 
 set(${MODULE_PREFIX}_SRCS
-	audin_opensl_es.c)
+	opensl_io.c
+	rdpsnd_opensles.c)
 
 include_directories(..)
-include_directories(${OPENSL_ES_INCLUDE_DIRS})
+include_directories(${OPENSLES_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
@@ -30,9 +31,10 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-codec freerdp-utils)
+	MODULES freerdp-codec freerdp-utils
+	${OPENSLES_LIBRARIES})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSL_ES_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSLES_LIBRARIES})
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

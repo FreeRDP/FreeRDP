@@ -59,6 +59,6 @@ if(WITH_WINMM)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "winmm" "")
 endif()
 
-if(WITH_AUDIOTRACK)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "audiotrack" "")
+if(WITH_OPENSLES)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
 endif()

@@ -647,7 +647,9 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 
 	rdpsnd->latency = -1;
 	rdpsnd->queue = MessageQueue_New();
-	rdpsnd->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread, (void*) plugin, 0, NULL);
+	rdpsnd->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
+			(void*) plugin, 0, NULL);
 
 	args = (ADDIN_ARGV*) plugin->channel_entry_points.pExtendedData;
 
@@ -662,40 +664,59 @@ static void rdpsnd_process_connect(rdpSvcPlugin* plugin)
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
 
+#if defined(WITH_IOSAUDIO)
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "ios");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+#endif
+
+#if defined(WITH_OPENSLES)
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "opensles");
+		rdpsnd_set_device_name(rdpsnd, "");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+#endif
+
+#if defined(WITH_PULSE)
 	if (!rdpsnd->device)
 	{
 		rdpsnd_set_subsystem(rdpsnd, "pulse");
 		rdpsnd_set_device_name(rdpsnd, "");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
+#endif
 
+#if defined(WITH_ALSA)
 	if (!rdpsnd->device)
 	{
 		rdpsnd_set_subsystem(rdpsnd, "alsa");
 		rdpsnd_set_device_name(rdpsnd, "default");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
+#endif
 
+#if defined(WITH_MACAUDIO)
 	if (!rdpsnd->device)
 	{
 		rdpsnd_set_subsystem(rdpsnd, "macaudio");
 		rdpsnd_set_device_name(rdpsnd, "default");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
+#endif
 
+#if defined(WITH_WINMM)
 	if (!rdpsnd->device)
 	{
 		rdpsnd_set_subsystem(rdpsnd, "winmm");
 		rdpsnd_set_device_name(rdpsnd, "");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
-
-	if (!rdpsnd->device)
-	{
-		rdpsnd_set_subsystem(rdpsnd, "audiotrack");
-		rdpsnd_set_device_name(rdpsnd, "");
-		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
-	}
+#endif
 
 	if (!rdpsnd->device)
 	{
