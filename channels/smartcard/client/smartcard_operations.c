@@ -1625,15 +1625,15 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	if (status)
 		goto finish;
 	
-	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength,=%d, ptrSendBuffer,=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL,=%d, cbRecvLength=%d",
-	irp->input, ioSendPci.rq->dwProtocol,
-	irp->input, ioSendPci.rq->cbPciLength,
-	irp->input, pioSendPciBufferPtr,
-	irp->input, cbSendLength,
-	irp->input, ptrSendBuffer,
-	irp->input, ptrIoRecvPciBuffer,
-	irp->input, recvBufferIsNULL,
-	irp->input, cbRecvLength);
+	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength=%d, ptrSendBuffer,=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL=%d, cbRecvLength=%d",
+	ioSendPci.rq->dwProtocol,
+	ioSendPci.rq->cbPciLength,
+	pioSendPciBufferPtr,
+	cbSendLength,
+	ptrSendBuffer,
+	ptrIoRecvPciBuffer,
+	recvBufferIsNULL,
+	cbRecvLength);
 
 	Stream_Dump(irp->input);
 
@@ -1731,9 +1731,9 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		}
 		linkedLen -= 4;
 
-		if (Stream_GetRemainingLength(irp->input) < linkedLen)
+		if (Stream_GetRemainingLength(irp->input) < ioSendPci.rq->cbPciLength)
 		{
-			DEBUG_WARN("length violation %d [%d]", linkedLen,
+			DEBUG_WARN("length violation %d [%d]", ioSendPci.rq->cbPciLength,
 					Stream_GetRemainingLength(irp->input));
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
