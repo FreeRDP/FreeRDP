@@ -56,11 +56,14 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/heap.h>
+#include <winpr/path.h>
 #include <winpr/tchar.h>
 #include <winpr/environment.h>
 
 #include <errno.h>
 #include <spawn.h>
+#include <string.h>
 #include <sys/wait.h>
 
 #include <pthread.h>
@@ -68,6 +71,7 @@
 #include "thread.h"
 
 #include "../handle/handle.h"
+#include "../security/security.h"
 
 char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 {
@@ -104,18 +108,81 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 	return envp;
 }
 
+/**
+ * If the file name does not contain a directory path, the system searches for the executable file in the following sequence:
+ *
+ * 1) The directory from which the application loaded.
+ * 2) The current directory for the parent process.
+ * 3) The 32-bit Windows system directory. Use the GetSystemDirectory function to get the path of this directory.
+ * 4) The 16-bit Windows system directory. There is no function that obtains the path of this directory,
+ *    but it is searched. The name of this directory is System.
+ * 5) The Windows directory. Use the GetWindowsDirectory function to get the path of this directory.
+ * 6) The directories that are listed in the PATH environment variable. Note that this function
+ *    does not search the per-application path specified by the App Paths registry key. To include
+ *    this per-application path in the search sequence, use the ShellExecute function.
+ */
+
+char* FindApplicationPath(char* application)
+{
+	char* path;
+	char* save;
+	DWORD nSize;
+	LPSTR lpSystemPath;
+	char* filename = NULL;
+
+	if (!application)
+		return NULL;
+
+	if (application[0] == '/')
+		return application;
+
+	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
+
+	if (!nSize)
+		return application;
+
+	lpSystemPath = (LPSTR) malloc(nSize);
+	nSize = GetEnvironmentVariableA("PATH", lpSystemPath, nSize);
+
+	save = NULL;
+	path = strtok_s(lpSystemPath, ":", &save);
+
+	while (path)
+	{
+		filename = GetCombinedPath(path, application);
+
+		if (PathFileExistsA(filename))
+		{
+			break;
+		}
+
+		free(filename);
+		filename = NULL;
+
+		path = strtok_s(NULL, ":", &save);
+	}
+
+	free(lpSystemPath);
+
+	return filename;
+}
+
 BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
+	int flags;
 	int status;
 	int numArgs;
 	LPSTR* pArgs;
 	char** envp;
+	char* filename;
 	WINPR_THREAD* thread;
 	WINPR_PROCESS* process;
+	posix_spawnattr_t attr;
+	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
 
 	pid = 0;
@@ -124,6 +191,22 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	lpszEnvironmentBlock = NULL;
 
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+
+	flags = 0;
+	posix_spawnattr_init(&attr);
+
+	token = (WINPR_ACCESS_TOKEN*) hToken;
+
+	if (token)
+	{
+
+	}
+
+#ifdef POSIX_SPAWN_USEVFORK
+	flags |= POSIX_SPAWN_USEVFORK;
+#endif
+
+	posix_spawnattr_setflags(&attr, flags);
 
 	if (lpEnvironment)
 	{
@@ -135,7 +218,9 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
 
-	status = posix_spawnp(&pid, pArgs[0], NULL, NULL, pArgs, envp);
+	filename = FindApplicationPath(pArgs[0]);
+
+	status = posix_spawn(&pid, filename, NULL, &attr, pArgs, envp);
 
 	if (status != 0)
 		return FALSE;
@@ -168,6 +253,31 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	lpProcessInformation->hThread = (HANDLE) thread;
 	lpProcessInformation->dwProcessId = (DWORD) pid;
 	lpProcessInformation->dwThreadId = (DWORD) pid;
+
+	free(filename);
+
+	if (pArgs)
+	{
+		HeapFree(GetProcessHeap(), 0, pArgs);
+	}
+
+	posix_spawnattr_destroy(&attr);
+
+	if (lpszEnvironmentBlock)
+		FreeEnvironmentStrings(lpszEnvironmentBlock);
+
+	if (envp)
+	{
+		int i = 0;
+
+		while (envp[i])
+		{
+			free(envp[i]);
+			i++;
+		}
+
+		free(envp);
+	}
 
 	return TRUE;
 }
