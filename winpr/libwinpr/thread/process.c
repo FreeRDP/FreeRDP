@@ -61,6 +61,9 @@
 #include <winpr/tchar.h>
 #include <winpr/environment.h>
 
+#include <pwd.h>
+#include <grp.h>
+
 #include <errno.h>
 #include <spawn.h>
 #include <string.h>
@@ -174,14 +177,12 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 {
 	pid_t pid;
 	int flags;
-	int status;
 	int numArgs;
 	LPSTR* pArgs;
 	char** envp;
 	char* filename;
 	WINPR_THREAD* thread;
 	WINPR_PROCESS* process;
-	posix_spawnattr_t attr;
 	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
 
@@ -193,20 +194,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
 
 	flags = 0;
-	posix_spawnattr_init(&attr);
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
-
-	if (token)
-	{
-
-	}
-
-#ifdef POSIX_SPAWN_USEVFORK
-	flags |= POSIX_SPAWN_USEVFORK;
-#endif
-
-	posix_spawnattr_setflags(&attr, flags);
 
 	if (lpEnvironment)
 	{
@@ -220,10 +209,41 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 	filename = FindApplicationPath(pArgs[0]);
 
-	status = posix_spawn(&pid, filename, NULL, &attr, pArgs, envp);
+	/* fork and exec */
 
-	if (status != 0)
+	pid = fork();
+
+	if (pid < 0)
+	{
+		/* fork failure */
 		return FALSE;
+	}
+
+	if (pid == 0)
+	{
+		/* child process */
+
+		if (token)
+		{
+			if (token->GroupId)
+			{
+				setgid((gid_t) token->GroupId);
+				initgroups(token->Username, (gid_t) token->GroupId);
+			}
+
+			if (token->UserId)
+				setuid((uid_t) token->UserId);
+		}
+
+		if (execve(filename, pArgs, envp) < 0)
+		{
+			return FALSE;
+		}
+	}
+	else
+	{
+		/* parent process */
+	}
 
 	process = (WINPR_PROCESS*) malloc(sizeof(WINPR_PROCESS));
 
@@ -260,8 +280,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	{
 		HeapFree(GetProcessHeap(), 0, pArgs);
 	}
-
-	posix_spawnattr_destroy(&attr);
 
 	if (lpszEnvironmentBlock)
 		FreeEnvironmentStrings(lpszEnvironmentBlock);
