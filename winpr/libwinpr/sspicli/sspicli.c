@@ -30,6 +30,8 @@
  * EnumerateSecurityPackagesW
  * GetUserNameExW
  * ImportSecurityContextA
+ * LogonUser
+ * LogonUserEx
  * LogonUserExExW
  * SspiCompareAuthIdentities
  * SspiCopyAuthIdentity
@@ -52,8 +54,37 @@
 
 #ifndef _WIN32
 
-#include <unistd.h>
 #include <winpr/crt.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
+{
+	return TRUE;
+}
+
+BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
+{
+	return TRUE;
+}
+
+BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+{
+	return TRUE;
+}
+
+BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+{
+	return TRUE;
+}
 
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
