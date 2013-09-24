@@ -485,9 +485,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 		Stream_Write_UINT8(s, byte);
 	}
 	else
-	{
 		return FALSE;
-	}
 
 	return TRUE;
 }
@@ -1670,6 +1668,8 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			if (Stream_GetRemainingLength(s) < glyph->cb)
 				return FALSE;
 
+			if (glyph->aj)
+				free(glyph->aj);
 			glyph->aj = (BYTE*) malloc(glyph->cb);
 			Stream_Read(s, glyph->aj, glyph->cb);
 		}
