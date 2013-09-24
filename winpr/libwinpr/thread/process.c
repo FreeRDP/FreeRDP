@@ -104,7 +104,8 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 	return envp;
 }
 
-BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
+		LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
@@ -171,6 +172,16 @@ BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_AT
 	return TRUE;
 }
 
+BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	return _CreateProcessExA(NULL, 0,
+			lpApplicationName, lpCommandLine, lpProcessAttributes,
+			lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+}
+
 BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
@@ -182,7 +193,10 @@ BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName, LPSTR lpComma
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return _CreateProcessExA(hToken, 0,
+			lpApplicationName, lpCommandLine, lpProcessAttributes,
+			lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment,
+			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
 BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -210,7 +224,10 @@ BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpApplicationName, LPSTR lpCommandLine, DWORD dwCreationFlags, LPVOID lpEnvironment,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	return TRUE;
+	return _CreateProcessExA(NULL, 0,
+			lpApplicationName, lpCommandLine, NULL,
+			NULL, FALSE, dwCreationFlags, lpEnvironment,
+			lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 
 BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags,

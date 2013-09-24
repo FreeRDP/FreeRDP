@@ -60,9 +60,46 @@
 #include <unistd.h>
 #endif
 
+#include <pwd.h>
+#include <grp.h>
+
+#include "../handle/handle.h"
+
+#include "../security/security.h"
+
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
 {
+	struct passwd* pw;
+	WINPR_ACCESS_TOKEN* token;
+
+	if (!lpszUsername)
+		return FALSE;
+
+	token = (WINPR_ACCESS_TOKEN*) malloc(sizeof(WINPR_ACCESS_TOKEN));
+
+	if (!token)
+		return FALSE;
+
+	ZeroMemory(token, sizeof(WINPR_ACCESS_TOKEN));
+
+	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
+
+	token->Username = _strdup(lpszUsername);
+
+	if (lpszDomain)
+		token->Domain = _strdup(lpszDomain);
+
+	pw = getpwnam(lpszUsername);
+
+	if (pw)
+	{
+		token->UserId = (DWORD) pw->pw_uid;
+		token->GroupId = (DWORD) pw->pw_gid;
+	}
+
+	*((ULONG_PTR*) phToken) = (ULONG_PTR) token;
+
 	return TRUE;
 }
 

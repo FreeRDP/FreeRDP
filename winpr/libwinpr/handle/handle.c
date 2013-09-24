@@ -28,6 +28,7 @@
 #include "../synch/synch.h"
 #include "../thread/thread.h"
 #include "../pipe/pipe.h"
+#include "../security/security.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -175,6 +176,20 @@ BOOL CloseHandle(HANDLE hObject)
 		free(Object);
 
 		return TRUE;
+	}
+	else if (Type == HANDLE_TYPE_ACCESS_TOKEN)
+	{
+		WINPR_ACCESS_TOKEN* token;
+
+		token = (WINPR_ACCESS_TOKEN*) Object;
+
+		if (token->Username)
+			free(token->Username);
+
+		if (token->Domain)
+			free(token->Domain);
+
+		free(token);
 	}
 
 	return FALSE;
