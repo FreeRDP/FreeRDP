@@ -1625,7 +1625,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 	if (status)
 		goto finish;
 	
-	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength,=%d, ptrSendBuffer,=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL,=%d, cbRecvLength=%d",
+	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength,=%d, ptrSendBuffer=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL=%d, cbRecvLength=%d",
 	irp->input, ioSendPci.rq->dwProtocol,
 	irp->input, ioSendPci.rq->cbPciLength,
 	irp->input, pioSendPciBufferPtr,
@@ -1649,9 +1649,9 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		}
 		Stream_Read_UINT32(irp->input, linkedLen);
 
-		if (Stream_GetRemainingLength(irp->input) < linkedLen)
+		if (Stream_GetRemainingLength(irp->input) < ioSendPci.rq->cbPciLength)
 		{
-			DEBUG_WARN("length violation %d [%d]", linkedLen,
+			DEBUG_WARN("length violation %d [%d]", ioSendPci.rq->cbPciLength,
 					Stream_GetRemainingLength(irp->input));
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
@@ -1660,7 +1660,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		/* For details see 2.2.1.8 SCardIO_Request in MS-RDPESC and
 		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
 		 */
-		if (linkedLen != ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST))
+		if (linkedLen < ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST))
 		{
 			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
 					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
@@ -1672,7 +1672,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			goto finish;
 		ioSendPci.v = tmp;
 
-		Stream_Read(irp->input, &ioSendPci.rq[1], linkedLen);
+		Stream_Read(irp->input, &ioSendPci.rq[1], ioSendPci.rq->cbPciLength);
 	}
 	else
 		ioSendPci.rq->cbPciLength = sizeof(SCARD_IO_REQUEST);
@@ -1689,15 +1689,24 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 		}
 		Stream_Read_UINT32(irp->input, linkedLen);
 
-		if (Stream_GetRemainingLength(irp->input) < linkedLen)
+		/* Just check for too few bytes, there may be more actual
+		 * data than is used due to padding. */
+		if (linkedLen < cbSendLength)
 		{
-			DEBUG_WARN("length violation %d [%d]", linkedLen,
+			DEBUG_WARN("SendBuffer invalid byte length %d [%d]",
+					cbSendLength, linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		if (Stream_GetRemainingLength(irp->input) < cbSendLength)
+		{
+			DEBUG_WARN("length violation %d [%d]", cbSendLength,
 					Stream_GetRemainingLength(irp->input));
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		sendBuf = malloc(linkedLen);
-		Stream_Read(irp->input, sendBuf, linkedLen);
+		sendBuf = malloc(cbSendLength);
+		Stream_Read(irp->input, sendBuf, cbSendLength);
 	}
 
 	/* Check, if a response is desired. */
@@ -1729,11 +1738,10 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		linkedLen -= 4;
 
-		if (Stream_GetRemainingLength(irp->input) < linkedLen)
+		if (Stream_GetRemainingLength(irp->input) < ioRecvPci.rq->cbPciLength)
 		{
-			DEBUG_WARN("length violation %d [%d]", linkedLen,
+			DEBUG_WARN("length violation %d [%d]", ioRecvPci.rq->cbPciLength,
 					Stream_GetRemainingLength(irp->input));
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
