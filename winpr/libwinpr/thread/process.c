@@ -365,9 +365,9 @@ BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags,
 	return TRUE;
 }
 
-DECLSPEC_NORETURN VOID ExitProcess(UINT uExitCode)
+VOID ExitProcess(UINT uExitCode)
 {
-
+	exit((int) uExitCode);
 }
 
 BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
@@ -399,11 +399,28 @@ DWORD GetCurrentProcessId(VOID)
 
 DWORD GetProcessId(HANDLE Process)
 {
-	return 0;
+	WINPR_PROCESS* process;
+
+	process = (WINPR_PROCESS*) Process;
+
+	if (!process)
+		return 0;
+
+	return (DWORD) process->pid;
 }
 
 BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
+	WINPR_PROCESS* process;
+
+	process = (WINPR_PROCESS*) hProcess;
+
+	if (!process)
+		return FALSE;
+
+	if (kill(process->pid, SIGTERM))
+		return FALSE;
+
 	return TRUE;
 }
 
