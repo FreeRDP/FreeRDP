@@ -260,13 +260,19 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
+		int fd;
 		int status;
 		fd_set rfds;
 		struct timeval timeout;
 		WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
 
+		fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
+
+		if (fd == -1)
+			return WAIT_FAILED;
+
 		FD_ZERO(&rfds);
-		FD_SET(pipe->clientfd, &rfds);
+		FD_SET(fd, &rfds);
 		ZeroMemory(&timeout, sizeof(timeout));
 
 		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
@@ -274,7 +280,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			timeout.tv_usec = dwMilliseconds * 1000;
 		}
 
-		status = select(pipe->clientfd + 1, &rfds, NULL, NULL,
+		status = select(fd + 1, &rfds, NULL, NULL,
 				(dwMilliseconds == INFINITE) ? NULL : &timeout);
 
 		if (status < 0)
@@ -347,7 +353,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
 			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
-			fd = pipe->clientfd;
+			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
+
+			if (fd == -1)
+				return WAIT_FAILED;
 		}
 		else
 		{
@@ -397,7 +406,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
 			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
-			fd = pipe->clientfd;
+			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
 		}
 
 		if (FD_ISSET(fd, &fds))

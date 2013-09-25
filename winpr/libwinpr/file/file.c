@@ -216,6 +216,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->serverfd = -1;
+	pNamedPipe->ServerMode = FALSE;
 
 	if (0)
 	{
@@ -731,6 +732,25 @@ char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 	free(lpFileName);
 
 	return lpFilePath;
+}
+
+int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
+{
+#ifndef _WIN32
+	int fd;
+	WINPR_NAMED_PIPE* pNamedPipe;
+
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
+
+	if (!pNamedPipe)
+		return -1;
+
+	fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;
+
+	return fd;
+#else
+	return -1;
+#endif
 }
 
 int UnixChangeFileMode(const char* filename, int flags)

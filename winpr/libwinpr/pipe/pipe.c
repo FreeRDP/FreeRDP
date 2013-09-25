@@ -123,12 +123,16 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 
 	if (!PathFileExistsA(lpPipePath))
+	{
 		CreateDirectoryA(lpPipePath, 0);
+		UnixChangeFileMode(lpPipePath, 0xFFFF);
+	}
 
 	free(lpPipePath);
 
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->serverfd = socket(PF_LOCAL, SOCK_STREAM, 0);
+	pNamedPipe->ServerMode = TRUE;
 
 	if (0)
 	{
