@@ -26,7 +26,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	lpApplicationName = NULL;
 	//lpCommandLine = _T("ls -l /");
+
+#ifdef _WIN32
+	lpCommandLine = _T("env");
+#else
 	lpCommandLine = _T("printenv");
+#endif
+
 	lpProcessAttributes = NULL;
 	lpThreadAttributes = NULL;
 	bInheritHandles = FALSE;
@@ -53,9 +59,11 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
 
+	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
 
-	printf("Process exited with code: %d\n", exitCode);
+	printf("GetExitCodeProcess status: %d\n", status);
+	printf("Process exited with code: 0x%08X\n", exitCode);
 
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);

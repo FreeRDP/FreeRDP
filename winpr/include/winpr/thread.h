@@ -144,7 +144,6 @@ WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 
 /* Process Argument Vector Parsing */
 
-WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
 WINPR_API LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs);
 
 #ifdef UNICODE
@@ -198,6 +197,10 @@ WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
 #define _GetCurrentThread	GetCurrentThread
 
 #endif
+
+/* CommandLineToArgvA is not present in the original Windows API, WinPR always exports it */
+
+WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
 
 #ifdef __cplusplus
 }

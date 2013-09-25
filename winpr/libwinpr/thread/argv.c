@@ -22,11 +22,10 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/heap.h>
 #include <winpr/handle.h>
 
 #include <winpr/thread.h>
-
-#ifndef _WIN32
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -204,12 +203,10 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
 
-	buffer = (char*) malloc(maxBufferSize);
+	buffer = (char*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
 
 	if (!buffer)
 		return NULL;
-
-	ZeroMemory(buffer, maxBufferSize);
 
 	pArgs = (LPSTR*) buffer;
 	pOutput = (char*) &buffer[maxNumArgs * (sizeof(char*))];
@@ -319,6 +316,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	return pArgs;
 }
+
+#ifndef _WIN32
 
 LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs)
 {
