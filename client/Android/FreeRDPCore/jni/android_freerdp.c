@@ -34,6 +34,10 @@
 #include "android_debug.h"
 #include "android_cliprdr.h"
 
+#if defined(WITH_GPROF)
+#include "jni/prof.h"
+#endif
+
 struct thread_data
 {
 	freerdp* instance;
@@ -378,6 +382,10 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 {
 	freerdp* instance;
 
+#if defined(WITH_GPROF)
+	monstartup("libfreerdp-android.so");
+#endif
+
 	// create instance
 	instance = freerdp_new();
 	instance->PreConnect = android_pre_connect;
@@ -401,6 +409,10 @@ JNIEXPORT void JNICALL jni_freerdp_free(JNIEnv *env, jclass cls, jint instance)
 {
 	freerdp* inst = (freerdp*)instance;
 	freerdp_free(inst);
+
+#if defined(WITH_GPROF)
+	moncleanup();
+#endif
 }
 
 JNIEXPORT jboolean JNICALL jni_freerdp_connect(JNIEnv *env, jclass cls, jint instance)

@@ -37,6 +37,7 @@
 
 /* Options */
 #cmakedefine WITH_PROFILER
+#cmakedefine WITH_GPROF
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
 #cmakedefine WITH_IPP
