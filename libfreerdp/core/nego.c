@@ -798,6 +798,7 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
+			nego->sendNegoData = TRUE;
 			break;
 
 		case SSL_CERT_NOT_ON_SERVER:
@@ -940,6 +941,7 @@ void nego_init(rdpNego* nego)
 	nego->transport->ReceiveCallback = nego_recv;
 	nego->transport->ReceiveExtra = (void*) nego;
 	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
+	nego->sendNegoData = FALSE;
 	nego->flags = 0;
 }
 
