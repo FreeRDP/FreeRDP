@@ -442,8 +442,8 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	{
 		wave->wTimeStampB = rdpsnd->wTimeStamp + wave->wAudioLength + TIME_DELAY_MS;
 		wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + TIME_DELAY_MS;
-		rdpsnd->device->WaveConfirm(rdpsnd->device, wave);
 	}
+	rdpsnd->device->WaveConfirm(rdpsnd->device, wave);
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
@@ -594,6 +594,8 @@ static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_args, flags, rdpsnd, NULL, NULL);
+	if (status < 0)
+		return;
 
 	arg = rdpsnd_args;
 
