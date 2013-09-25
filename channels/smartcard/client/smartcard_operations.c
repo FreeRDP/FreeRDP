@@ -73,14 +73,332 @@
 #define SCARD_IOCTL_ACCESS_STARTED_EVENT	0x000900E0	/* SCardAccessStartedEvent */
 #define SCARD_IOCTL_LOCATE_CARDS_BY_ATR		0x000900E8	/* LocateCardsByATR */
 
-#define SCARD_INPUT_LINKED			0xFFFFFFFF
-
 /* Decode Win CTL_CODE values */
 #define WIN_CTL_FUNCTION(ctl_code)		((ctl_code & 0x3FFC) >> 2)
 #define WIN_CTL_DEVICE_TYPE(ctl_code)		(ctl_code >> 16)
 
 #define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
+static UINT32 handle_CommonTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp, size_t *inlen)
+{
+	UINT8 version;
+	UINT8 endianess;
+	UINT16 header_length;
+
+	assert(scard);
+	assert(irp);
+	assert(irp->input);
+	assert(inlen);
+
+	if (Stream_GetRemainingLength(irp->input) < 8)
+	{
+		DEBUG_WARN("length violation %d [%d]", 8,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	/* Process CommonTypeHeader */
+	Stream_Read_UINT8(irp->input, version);
+	Stream_Read_UINT8(irp->input, endianess);
+	Stream_Read_UINT16(irp->input, header_length);
+	Stream_Seek(irp->input, 4);
+
+	if (0x01 != version)
+	{
+		DEBUG_WARN("unsupported header version %d", version);	
+		return SCARD_F_INTERNAL_ERROR;
+	}
+	if (0x10 != endianess)
+	{
+		DEBUG_WARN("unsupported endianess %d", endianess);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+	if (0x08 != header_length)
+	{
+		DEBUG_WARN("unsupported header length %d", header_length);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	assert(*inlen >= 8);
+	*inlen -= 8;
+
+	return 0;
+}
+
+static UINT32 handle_PrivateTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp, size_t *inlen)
+{
+	UINT32 len;
+
+	assert(scard);
+	assert(irp);
+	assert(irp->input);
+	assert(inlen);
+
+	if (Stream_GetRemainingLength(irp->input) < 8)
+	{
+		DEBUG_WARN("length violation %d [%d]", 8,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	/* Process PrivateTypeHeader */
+	Stream_Read_UINT32(irp->input, len);
+	Stream_Seek_UINT32(irp->input);
+
+	/* Assure the remaining length is as expected. */
+	if (len < Stream_GetRemainingLength(irp->input))
+	{
+		DEBUG_WARN("missing payload %d [%d]",
+				len, Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	assert(*inlen >= 8);
+	*inlen -= 8;
+
+	return 0;
+}
+
+static UINT32 handle_Context(SMARTCARD_DEVICE* scard, IRP* irp, size_t *inlen)
+{
+	UINT32 len;
+
+	assert(scard);
+	assert(irp);
+	assert(irp->input);
+	assert(inlen);
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	/* Process PrivateTypeHeader */
+	Stream_Read_UINT32(irp->input, len);
+	if (Stream_GetRemainingLength(irp->input) < len)
+	{
+		DEBUG_WARN("length violation %d [%d]", len,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek(irp->input, len);
+
+	if (len > Stream_GetRemainingLength(irp->input))
+	{
+		DEBUG_WARN("length violation %d [%d]", len,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	assert(*inlen >= 4 + len);
+	*inlen -= 4;
+	*inlen -= len;
+
+	return 0;
+}
+
+static UINT32 handle_CardHandle(SMARTCARD_DEVICE* scard, IRP* irp, size_t *inlen)
+{
+	UINT32 status;
+	UINT32 len;
+
+	assert(scard);
+	assert(irp);
+	assert(irp->input);
+	assert(inlen);
+
+	status = handle_Context(scard, irp, inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(irp->input, len);
+	if (Stream_GetRemainingLength(irp->input) < len)
+	{
+		DEBUG_WARN("length violation %d [%d]", len,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek(irp->input, len);
+
+	assert(*inlen >= len + 4);
+	*inlen -= len + 4;
+
+	return 0;
+}
+
+static UINT32 handle_RedirContextRef(SMARTCARD_DEVICE* scard, IRP* irp,
+		size_t *inlen, SCARDCONTEXT* hContext)
+{
+	UINT32 len;
+
+	assert(scard);
+	assert(irp);
+	assert(irp->input);
+	assert(inlen);
+	assert(hContext);
+
+	/* Extract context handle. */
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(irp->input, len);
+	if (len != 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(irp->input, *hContext);
+	DEBUG_SCARD("hContext=%p", *hContext);
+
+	assert(*inlen >= 8);
+	*inlen -= 8;
+
+	return 0;
+}
+
+static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* scard, IRP* irp,
+		size_t *inlen, SCARDCONTEXT* hContext, SCARDHANDLE *hHandle)
+{
+	UINT32 len, status;
+
+	status = handle_RedirContextRef(scard, irp, inlen, hContext);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(irp->input, len);
+	if (len != 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", len, 4);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	if (Stream_GetRemainingLength(irp->input) < len)
+	{
+		DEBUG_WARN("length violation %d [%d]", len,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(irp->input, *hHandle);
+	DEBUG_SCARD("hCard=%p", *hHandle);
+
+	assert(*inlen >= len + 4);
+	*inlen -= len + 4;
+
+	return 0;
+}
+
+static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE *scard, const char *readerName)
+{
+	BOOL rc = TRUE;
+	char *name = _strdup(readerName);
+	char *str, *strpos=NULL, *strstatus=NULL;
+	long pos, status, cpos, ret;
+
+	assert(scard);
+	assert(readerName);
+
+	/* Extract the name, position and status from the data provided. */
+	str = strtok(name, " ");
+	while(str)	
+	{
+		strpos = strstatus;
+		strstatus = str;
+		str = strtok(NULL, " ");
+	} 
+
+	if (!strpos)
+		goto finally;
+
+	pos = strtol(strpos, NULL, 10);
+	
+	if ( strpos && strstatus )
+	{
+		/* Check, if the name of the reader matches. */
+		if (scard->name &&  strncmp(scard->name, readerName, strlen(scard->name)))
+			rc = FALSE;
+
+		/* Check, if the position matches. */
+		if (scard->path)
+		{
+			ret = sscanf(scard->path, "%ld", &cpos);
+			if ((1 == ret) && (cpos != pos))
+				rc = FALSE;
+		}
+	}
+	else
+		DEBUG_WARN("unknown reader format '%s'", readerName);
+
+finally:
+	free(name);
+
+	if (!rc)
+		DEBUG_WARN("reader '%s' not forwarded", readerName);
+	
+	return rc;
+}
+
+static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE *scard,
+		SCARDHANDLE hCard, SCARDCONTEXT hContext)
+{
+	BOOL rc = FALSE;
+	LONG status;
+	DWORD state = 0, protocol = 0;
+	DWORD readerLen;
+	DWORD atrLen = MAX_ATR_SIZE;
+	char* readerName = NULL;
+	BYTE pbAtr[MAX_ATR_SIZE];
+
+	assert(scard);
+	assert(hCard);
+
+#ifdef SCARD_AUTOALLOCATE
+	readerLen = SCARD_AUTOALLOCATE;
+#else
+	readerLen = 256;
+	readerName = malloc(readerLen);
+#endif
+
+	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	if (status == SCARD_S_SUCCESS)
+	{
+		rc = check_reader_is_forwarded(scard, readerName);
+		if (!rc)
+			DEBUG_WARN("Reader '%s' not forwarded!", readerName);
+	}
+
+#ifdef SCARD_AUTOALLOCATE
+	SCardFreeMemory(hContext, readerName);
+#else
+	free(readerName);
+#endif
+
+	return rc;
+}
 
 static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 {
@@ -214,27 +532,34 @@ static void smartcard_input_repos(IRP* irp, UINT32 read)
 		Stream_Seek(irp->input, add);
 }
 
-static void smartcard_input_reader_name(IRP* irp, char** dest, BOOL wide)
+static UINT32 smartcard_input_reader_name(IRP* irp, char** dest, BOOL wide)
 {
 	UINT32 dataLength;
+
+	assert(irp);
+	assert(dest);
+
+	if (Stream_GetRemainingLength(irp->input) < 12)
+	{
+		DEBUG_WARN("length violation %d [%d]", 12,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
 
 	Stream_Seek(irp->input, 8);
 	Stream_Read_UINT32(irp->input, dataLength);
 
+	if (Stream_GetRemainingLength(irp->input) < dataLength)
+	{
+		DEBUG_WARN("length violation %d [%d]", dataLength,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
 	DEBUG_SCARD("datalength %d", dataLength);
 	smartcard_input_repos(irp, smartcard_input_string(irp, dest, dataLength, wide));
-}
 
-static void smartcard_input_skip_linked(IRP* irp)
-{
-	UINT32 len;
-	Stream_Read_UINT32(irp->input, len);
-
-	if (len > 0)
-	{
-		Stream_Seek(irp->input, len);
-		smartcard_input_repos(irp, len);
-	}
+	return 0;
 }
 
 static UINT32 smartcard_map_state(UINT32 state)
@@ -259,20 +584,29 @@ static UINT32 smartcard_map_state(UINT32 state)
 	return state;
 }
 
-static UINT32 handle_EstablishContext(IRP* irp)
+static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
-	UINT32 len;
 	UINT32 status;
 	UINT32 scope;
 	SCARDCONTEXT hContext = -1;
 
-	Stream_Seek(irp->input, 8);
-	Stream_Read_UINT32(irp->input, len);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
 
-	if (len != 8)
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	/* Ensure, that the capacity expected is actually available. */
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
 		return SCARD_F_INTERNAL_ERROR;
+	}
 
-	Stream_Seek_UINT32(irp->input);
+	/* Read the scope from the stream. */
 	Stream_Read_UINT32(irp->input, scope);
 
 	status = SCardEstablishContext(scope, NULL, NULL, &hContext);
@@ -286,19 +620,29 @@ static UINT32 handle_EstablishContext(IRP* irp)
 	/* TODO: store hContext in allowed context list */
 
 	smartcard_output_alignment(irp, 8);
-	return SCARD_S_SUCCESS;
+	return status;
 }
 
-static UINT32 handle_ReleaseContext(IRP* irp)
+static UINT32 handle_ReleaseContext(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
-	UINT32 len, status;
+	UINT32 status;
 	SCARDCONTEXT hContext = -1;
 
-	Stream_Seek(irp->input, 8);
-	Stream_Read_UINT32(irp->input, len);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
 
-	Stream_Seek(irp->input, 0x10);
-	Stream_Read_UINT32(irp->input, hContext);
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		return status;
 
 	status = SCardReleaseContext(hContext);
 
@@ -312,13 +656,26 @@ static UINT32 handle_ReleaseContext(IRP* irp)
 	return status;
 }
 
-static UINT32 handle_IsValidContext(IRP* irp)
+static UINT32 handle_IsValidContext(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	UINT32 status;
 	SCARDCONTEXT hContext;
 
-	Stream_Seek(irp->input, 0x1C);
-	Stream_Read_UINT32(irp->input, hContext);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		return status;
 
 	status = SCardIsValidContext(hContext);
 
@@ -326,35 +683,55 @@ static UINT32 handle_IsValidContext(IRP* irp)
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
+	if (status)
+		printf("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+	else
+		printf("Success context: 0x%08x", (unsigned) hContext);
 
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
+static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp,
+		size_t inlen, BOOL wide)
 {
-	UINT32 len, status;
+	UINT32 status;
 	SCARDCONTEXT hContext;
 	DWORD dwReaders;
 	char *readerList = NULL, *walker;
 	int elemLength, dataLength;
-	int pos, poslen1, poslen2;
+	int pos, poslen1, poslen2, allowed_pos;
 
-	Stream_Seek(irp->input, 8);
-	Stream_Read_UINT32(irp->input, len);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
 
-	Stream_Seek(irp->input, 0x1c);
-	Stream_Read_UINT32(irp->input, len);
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
 
-	if (len != 4)
-		return SCARD_F_INTERNAL_ERROR;
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		goto finish;
 
-	Stream_Read_UINT32(irp->input, hContext);
+	/* Ensure, that the capacity expected is actually available. */
+	if (Stream_GetRemainingLength(irp->input) < 0x10)
+	{
+		DEBUG_WARN("length violation %d [%d]", 0x10,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+	Stream_Seek(irp->input, 0x10);
+
+	/* Read RedirScardcontextRef */
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		goto finish;
 
 	/* ignore rest of [MS-RDPESC] 2.2.2.4 ListReaders_Call */
 
-	status = SCARD_S_SUCCESS;
 #ifdef SCARD_AUTOALLOCATE
 	dwReaders = SCARD_AUTOALLOCATE;
 	status = SCardListReaders(hContext, NULL, (LPSTR) &readerList, &dwReaders);
@@ -367,7 +744,7 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
-		return status;
+		goto finish;
 	}
 
 /*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
@@ -383,15 +760,27 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 	walker = readerList;
 	dataLength = 0;
 
+	/* Smartcards can be forwarded by position and name. */
+	allowed_pos = -1;
+	if (scard->path)
+		if (1 != sscanf(scard->path, "%d", &allowed_pos))
+			allowed_pos = -1;
+
+	pos = 0;
 	while (1)
 	{
 		elemLength = strlen(walker);
 		if (elemLength == 0)
 			break;
 
-		dataLength += smartcard_output_string(irp, walker, wide);
+		/* Ignore readers not forwarded. */
+		if ((allowed_pos < 0) || (pos == allowed_pos))
+		{
+			if (!scard->name || strstr(walker, scard->name))
+				dataLength += smartcard_output_string(irp, walker, wide);
+		}
 		walker += elemLength + 1;
-		elemLength = strlen(walker);
+		pos ++;
 	}
 
 	dataLength += smartcard_output_string(irp, "\0", wide);
@@ -408,32 +797,68 @@ static UINT32 handle_ListReaders(IRP* irp, BOOL wide)
 	smartcard_output_repos(irp, dataLength);
 	smartcard_output_alignment(irp, 8);
 
+finish:
+	if (readerList)
+	{
 #ifdef SCARD_AUTOALLOCATE
-	SCardFreeMemory(hContext, readerList);
+		SCardFreeMemory(hContext, readerList);
 #else
-	free(readerList);
+		free(readerList);
 #endif
+	}
 
 	return status;
 }
 
-static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
+static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen, BOOL wide)
 {
 	int i;
 	LONG status;
 	SCARDCONTEXT hContext;
 	DWORD dwTimeout = 0;
 	DWORD readerCount = 0;
-	SCARD_READERSTATE *readerStates, *cur;
+	SCARD_READERSTATE *readerStates = NULL, *cur;
 
-	Stream_Seek(irp->input, 0x18);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	/* Ensure, that the capacity expected is actually available. */
+	if (Stream_GetRemainingLength(irp->input) < 12)
+	{
+		DEBUG_WARN("length violation %d [%d]", 12,
+				Stream_GetRemainingLength(irp->input));
+		status =SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+
 	Stream_Read_UINT32(irp->input, dwTimeout);
 	Stream_Read_UINT32(irp->input, readerCount);
 
-	Stream_Seek(irp->input, 8);
+	/* Skip reader state */
+	Stream_Seek(irp->input, 4);
 
-	Stream_Read_UINT32(irp->input, hContext);
+	/* Get context */
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		goto finish;
 
+	/* Skip ReaderStateConformant */
+	if (Stream_GetRemainingLength(irp->input) < 4 )
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
 	Stream_Seek(irp->input, 4);
 
 	DEBUG_SCARD("context: 0x%08x, timeout: 0x%08x, count: %d",
@@ -444,12 +869,17 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 		readerStates = malloc(readerCount * sizeof(SCARD_READERSTATE));
 		ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
-		if (!readerStates)
-			return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
-
 		for (i = 0; i < readerCount; i++)
 		{
 			cur = &readerStates[i];
+
+			if (Stream_GetRemainingLength(irp->input) < 52 )
+			{
+				DEBUG_WARN("length violation %d [%d]", 52,
+					Stream_GetRemainingLength(irp->input));
+				status = SCARD_F_INTERNAL_ERROR;
+				goto finish;
+			}
 
 			Stream_Seek(irp->input, 4);
 
@@ -475,9 +905,26 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 			cur = &readerStates[i];
 			UINT32 dataLength;
 
+			if (Stream_GetRemainingLength(irp->input) < 12 )
+			{
+				DEBUG_WARN("length violation %d [%d]", 12,
+					Stream_GetRemainingLength(irp->input));
+				status = SCARD_F_INTERNAL_ERROR;
+				goto finish;
+			}
+
 			Stream_Seek(irp->input, 8);
 			Stream_Read_UINT32(irp->input, dataLength);
-			smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
+
+			if (Stream_GetRemainingLength(irp->input) < dataLength )
+			{
+				DEBUG_WARN("length violation %d [%d]", dataLength,
+					Stream_GetRemainingLength(irp->input));
+				status = SCARD_F_INTERNAL_ERROR;
+				goto finish;
+			}
+			smartcard_input_repos(irp, smartcard_input_string(irp,
+						(char **) &cur->szReader, dataLength, wide));
 
 			DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
 			DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
@@ -531,17 +978,33 @@ static UINT32 handle_GetStatusChange(IRP* irp, BOOL wide)
 
 	smartcard_output_alignment(irp, 8);
 
-	free(readerStates);
+finish:
+	if (readerStates)
+		free(readerStates);
+
 	return status;
 }
 
-static UINT32 handle_Cancel(IRP *irp)
+static UINT32 handle_Cancel(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDCONTEXT hContext;
 
-	Stream_Seek(irp->input, 0x1C);
-	Stream_Read_UINT32(irp->input, hContext);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		return status;
 
 	status = SCardCancel(hContext);
 
@@ -555,7 +1018,7 @@ static UINT32 handle_Cancel(IRP *irp)
 	return status;
 }
 
-static UINT32 handle_Connect(IRP* irp, BOOL wide)
+static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen, BOOL wide)
 {
 	LONG status;
 	SCARDCONTEXT hContext;
@@ -565,24 +1028,64 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 	DWORD dwActiveProtocol = 0;
 	SCARDHANDLE hCard;
 
-	Stream_Seek(irp->input, 0x1c);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	/* Skip ptrReader */
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("Length violadion %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+	Stream_Seek(irp->input, 4);
+
+	/* Read common data */
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		goto finish;
+	
+	if (Stream_GetRemainingLength(irp->input) < 8)
+	{
+		DEBUG_WARN("Length violadion %d [%d]", 8,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+
 	Stream_Read_UINT32(irp->input, dwShareMode);
 	Stream_Read_UINT32(irp->input, dwPreferredProtocol);
 
-	smartcard_input_reader_name(irp, &readerName, wide);
-
-	Stream_Seek(irp->input, 4);
-	Stream_Read_UINT32(irp->input, hContext);
+	status = smartcard_input_reader_name(irp, &readerName, wide);
+	if (status)
+		goto finish;
+	
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		goto finish;
 
 	DEBUG_SCARD("(context: 0x%08x, share: 0x%08x, proto: 0x%08x, reader: \"%s\")",
 		(unsigned) hContext, (unsigned) dwShareMode,
 		(unsigned) dwPreferredProtocol, readerName ? readerName : "NULL");
 
+	if (!check_reader_is_forwarded(scard, readerName))
+	{
+		DEBUG_WARN("Reader '%s' not forwarded!", readerName);
+		status = SCARD_E_INVALID_TARGET;
+		goto finish;
+	}
+
 	status = SCardConnect(hContext, readerName, (DWORD) dwShareMode,
 		(DWORD) dwPreferredProtocol, &hCard, (DWORD *) &dwActiveProtocol);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s 0x%08x", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_WARN("Failure: %s 0x%08x", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success 0x%08x", (unsigned) hCard);
 
@@ -596,11 +1099,14 @@ static UINT32 handle_Connect(IRP* irp, BOOL wide)
 
 	smartcard_output_alignment(irp, 8);
 
-	free(readerName);
+finish:
+	if (readerName)
+		free(readerName);
+
 	return status;
 }
 
-static UINT32 handle_Reconnect(IRP* irp)
+static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDCONTEXT hContext;
@@ -610,19 +1116,42 @@ static UINT32 handle_Reconnect(IRP* irp)
 	DWORD dwInitialization = 0;
 	DWORD dwActiveProtocol = 0;
 
-	Stream_Seek(irp->input, 0x20);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 12)
+	{
+		DEBUG_WARN("length violation %d [%d]", 12,
+			Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
 	Stream_Read_UINT32(irp->input, dwShareMode);
 	Stream_Read_UINT32(irp->input, dwPreferredProtocol);
 	Stream_Read_UINT32(irp->input, dwInitialization);
 
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, hContext);
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, hCard);
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		return status;
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, share: 0x%08x, proto: 0x%08x, init: 0x%08x)",
 		(unsigned) hContext, (unsigned) hCard,
 		(unsigned) dwShareMode, (unsigned) dwPreferredProtocol, (unsigned) dwInitialization);
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		return SCARD_E_INVALID_TARGET;
+	}
 
 	status = SCardReconnect(hCard, (DWORD) dwShareMode, (DWORD) dwPreferredProtocol,
 	    (DWORD) dwInitialization, (LPDWORD) &dwActiveProtocol);
@@ -638,22 +1167,46 @@ static UINT32 handle_Reconnect(IRP* irp)
 	return status;
 }
 
-static UINT32 handle_Disconnect(IRP* irp)
+static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	DWORD dwDisposition = 0;
 
-	Stream_Seek(irp->input, 0x20);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+			Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
 	Stream_Read_UINT32(irp->input, dwDisposition);
-	Stream_Seek(irp->input, 4);
-	Stream_Read_UINT32(irp->input, hContext);
-	Stream_Seek(irp->input, 4);
-	Stream_Read_UINT32(irp->input, hCard);
+	
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		return status;
 
 	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, disposition: 0x%08x)",
 		(unsigned) hContext, (unsigned) hCard, (unsigned) dwDisposition);
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		return SCARD_E_INVALID_TARGET;
+	}
 
 	status = SCardDisconnect(hCard, (DWORD) dwDisposition);
 
@@ -667,13 +1220,41 @@ static UINT32 handle_Disconnect(IRP* irp)
 	return status;
 }
 
-static UINT32 handle_BeginTransaction(IRP* irp)
+static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
-	SCARDCONTEXT hCard;
+	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
 
-	Stream_Seek(irp->input, 0x30);
-	Stream_Read_UINT32(irp->input, hCard);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+			Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+	Stream_Seek(irp->input, 4);
+
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		return status;
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		return SCARD_E_INVALID_TARGET;
+	}
 
 	status = SCardBeginTransaction(hCard);
 
@@ -687,17 +1268,42 @@ static UINT32 handle_BeginTransaction(IRP* irp)
 	return status;
 }
 
-static UINT32 handle_EndTransaction(IRP* irp)
+static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
-	SCARDCONTEXT hCard;
+	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
 	DWORD dwDisposition = 0;
 
-	Stream_Seek(irp->input, 0x20);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+			Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
 	Stream_Read_UINT32(irp->input, dwDisposition);
 
-	Stream_Seek(irp->input, 0x0C);
-	Stream_Read_UINT32(irp->input, hCard);
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		return status;
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		return SCARD_E_INVALID_TARGET;
+	}
 
 	status = SCardEndTransaction(hCard, dwDisposition);
 
@@ -711,26 +1317,55 @@ static UINT32 handle_EndTransaction(IRP* irp)
 	return status;
 }
 
-static UINT32 handle_State(IRP* irp)
+static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
 	DWORD state = 0, protocol = 0;
 	DWORD readerLen;
 	DWORD atrLen = MAX_ATR_SIZE;
-	char* readerName;
+	char* readerName = NULL;
 	BYTE pbAtr[MAX_ATR_SIZE];
 
 #ifdef WITH_DEBUG_SCARD
 	int i;
 #endif
 
-	Stream_Seek(irp->input, 0x24);
-	Stream_Seek_UINT32(irp->input);	/* atrLen */
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
 
-	Stream_Seek(irp->input, 0x0c);
-	Stream_Read_UINT32(irp->input, hCard);
-	Stream_Seek(irp->input, 0x04);
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	if (Stream_GetRemainingLength(irp->input) < 8)
+	{
+		DEBUG_WARN("length violation %d [%d]", 8,
+			Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+
+	Stream_Seek(irp->input, 4);
+	Stream_Seek_UINT32(irp->input);	/* atrLen */
+	inlen -= 8;
+
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		goto finish;
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		status = SCARD_E_INVALID_TARGET;
+		goto finish;
+	}
 
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
@@ -746,7 +1381,8 @@ static UINT32 handle_State(IRP* irp)
 	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
-		return smartcard_output_return(irp, status);
+		status = smartcard_output_return(irp, status);
+		goto finish;
 	}
 
 	DEBUG_SCARD("Success (hcard: 0x%08x len: %d state: 0x%08x, proto: 0x%08x)",
@@ -771,40 +1407,71 @@ static UINT32 handle_State(IRP* irp)
 	smartcard_output_repos(irp, atrLen);
 	smartcard_output_alignment(irp, 8);
 
+finish:
+	if (readerName)
+	{
 #ifdef SCARD_AUTOALLOCATE
-	free(readerName);
+		SCardFreeMemory(hContext, readerName);
 #else
-	free(readerName);
+		free(readerName);
 #endif
+	}
 
 	return status;
 }
 
-static DWORD handle_Status(IRP *irp, BOOL wide)
+static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, size_t inlen, BOOL wide)
 {
 	LONG status;
 	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
 	DWORD state, protocol;
 	DWORD readerLen = 0;
-	DWORD atrLen = 0;
-	char* readerName;
-	BYTE pbAtr[MAX_ATR_SIZE];
-	UINT32 dataLength;
+	DWORD atrLen = MAX_ATR_SIZE;
+	char* readerName = NULL;
+	BYTE *pbAtr = NULL;
+	UINT32 dataLength = 0;
 	int pos, poslen1, poslen2;
 
 #ifdef WITH_DEBUG_SCARD
 	int i;
 #endif
 
-	Stream_Seek(irp->input, 0x24);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	if (Stream_GetRemainingLength(irp->input) < 12)
+	{
+		DEBUG_WARN("length violation %d [%d]", 12,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+	Stream_Seek(irp->input, 4);
 	Stream_Read_UINT32(irp->input, readerLen);
 	Stream_Read_UINT32(irp->input, atrLen);
-	Stream_Seek(irp->input, 0x0c);
-	Stream_Read_UINT32(irp->input, hCard);
-	Stream_Seek(irp->input, 0x4);
+	
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		goto finish;
 
-	atrLen = MAX_ATR_SIZE;
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		status = SCARD_E_INVALID_TARGET;
+		goto finish;
+	}
 
+	pbAtr = malloc(sizeof(BYTE) * atrLen);
 #ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
 
@@ -819,7 +1486,8 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
-		return smartcard_output_return(irp, status);
+		status = smartcard_output_return(irp, status);
+		goto finish;
 	}
 
 	DEBUG_SCARD("Success (state: 0x%08x, proto: 0x%08x)", (unsigned) state, (unsigned) protocol);
@@ -848,7 +1516,8 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 	poslen2 = Stream_GetPosition(irp->output);
 	Stream_Write_UINT32(irp->output, readerLen);
 
-	dataLength = smartcard_output_string(irp, readerName, wide);
+	if (readerName)
+		dataLength += smartcard_output_string(irp, readerName, wide);
 	dataLength += smartcard_output_string(irp, "\0", wide);
 	smartcard_output_repos(irp, dataLength);
 
@@ -861,103 +1530,249 @@ static DWORD handle_Status(IRP *irp, BOOL wide)
 
 	smartcard_output_alignment(irp, 8);
 
+finish:
+	if (readerName)
+	{
 #ifdef SCARD_AUTOALLOCATE
-	/* SCardFreeMemory(NULL, readerName); */
-	free(readerName);
+		SCardFreeMemory(hContext, readerName); 
 #else
-	free(readerName);
+		free(readerName);
 #endif
+	}
+
+	if (pbAtr)
+		free(pbAtr);
 
 	return status;
 }
 
-static UINT32 handle_Transmit(IRP* irp)
+static void Stream_Dump(wStream *s)
+{
+	size_t size = Stream_GetRemainingLength(s);
+	int i;
+
+	fprintf(stderr, "-------------------------- Start [%s] [%zd] ------------------------",
+			__func__, size);
+	for(i=0; i<size; i++)
+	{
+		fprintf(stderr, "%02X", s->pointer[i]);
+		if (i % 80 == 0)
+			fprintf(stderr, "\n");
+	}
+	fprintf(stderr, "\n");
+	fprintf(stderr, "-------------------------- End [%s] ------------------------", __func__);
+}
+
+static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
-	SCARDCONTEXT hCard;
-	UINT32 map[7], linkedLen;
-	SCARD_IO_REQUEST pioSendPci, pioRecvPci, *pPioRecvPci;
+	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
+	UINT32 pioSendPciBufferPtr;
+	UINT32 ptrSendBuffer;
+	UINT32 ptrIoRecvPciBuffer;
+	UINT32 recvBufferIsNULL;
+	UINT32 linkedLen;
+	void *tmp;
+	union
+	{
+		SCARD_IO_REQUEST *rq;
+		UINT32 *u32;
+		void *v;
+	} ioSendPci, ioRecvPci;
+
+	SCARD_IO_REQUEST *pPioRecvPci = NULL;
 	DWORD cbSendLength = 0, cbRecvLength = 0;
 	BYTE *sendBuf = NULL, *recvBuf = NULL;
 
-	Stream_Seek(irp->input, 0x14);
-	Stream_Read_UINT32(irp->input, map[0]);
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, map[1]);
+	ioSendPci.v = NULL;
+	ioRecvPci.v = NULL;
 
-	Stream_Read_UINT32(irp->input, pioSendPci.dwProtocol);
-	Stream_Read_UINT32(irp->input, pioSendPci.cbPciLength);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
 
-	Stream_Read_UINT32(irp->input, map[2]);
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+	{
+		DEBUG_WARN("length violation %d [%d]", 32,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+
+	ioSendPci.v = malloc(sizeof(SCARD_IO_REQUEST));
+	ioRecvPci.v = malloc(sizeof(SCARD_IO_REQUEST));
+
+	Stream_Read_UINT32(irp->input, ioSendPci.rq->dwProtocol);
+	Stream_Read_UINT32(irp->input, ioSendPci.rq->cbPciLength);
+	Stream_Read_UINT32(irp->input, pioSendPciBufferPtr);
+
 	Stream_Read_UINT32(irp->input, cbSendLength);
-	Stream_Read_UINT32(irp->input, map[3]);
-	Stream_Read_UINT32(irp->input, map[4]);
-	Stream_Read_UINT32(irp->input, map[5]);
+	Stream_Read_UINT32(irp->input, ptrSendBuffer);
+	Stream_Read_UINT32(irp->input, ptrIoRecvPciBuffer);
+	Stream_Read_UINT32(irp->input, recvBufferIsNULL);
 	Stream_Read_UINT32(irp->input, cbRecvLength);
 
-	if (map[0] & SCARD_INPUT_LINKED)
-		smartcard_input_skip_linked(irp);
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		goto finish;
+	
+	DEBUG_WARN("dwProtocol=%X, cbPciLength=%d, pioSendPciBufferPtr=%d, cbSendLength=%d, ptrSendBuffer=%d, ptrIoRecvPciBuffer=%d, recvBufferIsNULL=%d, cbRecvLength=%d",
+	ioSendPci.rq->dwProtocol,
+	ioSendPci.rq->cbPciLength,
+	pioSendPciBufferPtr,
+	cbSendLength,
+	ptrSendBuffer,
+	ptrIoRecvPciBuffer,
+	recvBufferIsNULL,
+	cbRecvLength);
 
-	Stream_Seek(irp->input, 4);
-	Stream_Read_UINT32(irp->input, hCard);
+	Stream_Dump(irp->input);
 
-	if (map[2] & SCARD_INPUT_LINKED)
+	/* Check, if there is data available from the ipSendPci element */
+	if (pioSendPciBufferPtr)
 	{
-		/* sendPci */
-		Stream_Read_UINT32(irp->input, linkedLen);
-
-		Stream_Read_UINT32(irp->input, pioSendPci.dwProtocol);
-		Stream_Seek(irp->input, linkedLen - 4);
-
-		smartcard_input_repos(irp, linkedLen);
-	}
-	pioSendPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
-
-	if (map[3] & SCARD_INPUT_LINKED)
-	{
-		/* send buffer */
-		Stream_Read_UINT32(irp->input, linkedLen);
-
-		sendBuf = malloc(linkedLen);
-		Stream_Read(irp->input, sendBuf, linkedLen);
-		smartcard_input_repos(irp, linkedLen);
-	}
-
-	if (cbRecvLength)
-		recvBuf = malloc(cbRecvLength);
-
-	if (map[4] & SCARD_INPUT_LINKED)
-	{
-		/* recvPci */
-		Stream_Read_UINT32(irp->input, linkedLen);
-
-		Stream_Read_UINT32(irp->input, pioRecvPci.dwProtocol);
-		Stream_Seek(irp->input, linkedLen - 4);
-
-		smartcard_input_repos(irp, linkedLen);
-
-		Stream_Read_UINT32(irp->input, map[6]);
-		if (map[6] & SCARD_INPUT_LINKED)
+		if (Stream_GetRemainingLength(irp->input) < 8)
 		{
-			/* not sure what this is */
-			Stream_Read_UINT32(irp->input, linkedLen);
-			Stream_Seek(irp->input, linkedLen);
-
-			smartcard_input_repos(irp, linkedLen);
+			DEBUG_WARN("length violation %d [%d]", 8,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
 		}
-		pioRecvPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
-		pPioRecvPci = &pioRecvPci;
+		Stream_Read_UINT32(irp->input, linkedLen);
+
+		if (Stream_GetRemainingLength(irp->input) < ioSendPci.rq->cbPciLength)
+		{
+			DEBUG_WARN("length violation %d [%d]", ioSendPci.rq->cbPciLength,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		
+		/* For details see 2.2.1.8 SCardIO_Request in MS-RDPESC and
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
+		 */
+		if (linkedLen < ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST))
+		{
+			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
+					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		tmp = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
+		if (!tmp)
+			goto finish;
+		ioSendPci.v = tmp;
+
+		Stream_Read(irp->input, &ioSendPci.rq[1], ioSendPci.rq->cbPciLength);
 	}
 	else
+		ioSendPci.rq->cbPciLength = sizeof(SCARD_IO_REQUEST);
+
+	/* Check, if there is data available from the SendBufferPointer */
+	if (ptrSendBuffer)
 	{
-		pPioRecvPci = NULL;
+		if (Stream_GetRemainingLength(irp->input) < 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", 4,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		Stream_Read_UINT32(irp->input, linkedLen);
+
+		/* Just check for too few bytes, there may be more actual
+		 * data than is used due to padding. */
+		if (linkedLen < cbSendLength)
+		{
+			DEBUG_WARN("SendBuffer invalid byte length %d [%d]",
+					cbSendLength, linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		if (Stream_GetRemainingLength(irp->input) < cbSendLength)
+		{
+			DEBUG_WARN("length violation %d [%d]", cbSendLength,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		sendBuf = malloc(cbSendLength);
+		Stream_Read(irp->input, sendBuf, cbSendLength);
 	}
-	pPioRecvPci = NULL;
+
+	/* Check, if a response is desired. */
+	if (cbRecvLength && !recvBufferIsNULL)
+		recvBuf = malloc(cbRecvLength);
+	else
+		cbRecvLength = 0;
+
+	if (ptrIoRecvPciBuffer)
+	{
+		if (Stream_GetRemainingLength(irp->input) < 8)
+		{
+			DEBUG_WARN("length violation %d [%d]", 8,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+		/* recvPci */
+		Stream_Read_UINT32(irp->input, linkedLen);
+		Stream_Read_UINT16(irp->input, ioRecvPci.rq->dwProtocol);
+		Stream_Read_UINT16(irp->input, ioRecvPci.rq->cbPciLength);
+	
+		/* Just check for too few bytes, there may be more actual
+		 * data than is used due to padding. */
+		if (linkedLen < ioSendPci.rq->cbPciLength)
+		{
+			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
+					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+
+		if (Stream_GetRemainingLength(irp->input) < ioRecvPci.rq->cbPciLength)
+		{
+			DEBUG_WARN("length violation %d [%d]", ioRecvPci.rq->cbPciLength,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
+
+		/* Read data, see
+		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
+		 */
+		tmp = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
+		if (!tmp)
+			goto finish;
+		ioRecvPci.v = tmp;
+
+		Stream_Read(irp->input, &ioRecvPci.rq[1], ioRecvPci.rq->cbPciLength);
+
+		pPioRecvPci = ioRecvPci.rq;
+	}
+	else
+		pPioRecvPci = NULL;
 
 	DEBUG_SCARD("SCardTransmit(hcard: 0x%08lx, send: %d bytes, recv: %d bytes)",
 		(long unsigned) hCard, (int) cbSendLength, (int) cbRecvLength);
 
-	status = SCardTransmit(hCard, &pioSendPci, sendBuf, cbSendLength,
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		status = SCARD_E_INVALID_TARGET;
+		goto finish;
+	}
+
+	status = SCardTransmit(hCard, ioSendPci.rq, sendBuf, cbSendLength,
 			   pPioRecvPci, recvBuf, &cbRecvLength);
 
 	if (status != SCARD_S_SUCCESS)
@@ -979,20 +1794,25 @@ static UINT32 handle_Transmit(IRP* irp)
 
 	smartcard_output_alignment(irp, 8);
 
+finish:
 	if (sendBuf)
 		free(sendBuf);
 	if (recvBuf)
 		free(recvBuf);
+	if (ioSendPci.v)
+		free(ioSendPci.v);
+	if (ioRecvPci.v)
+		free(ioRecvPci.v);
 
 	return status;
 }
 
-static UINT32 handle_Control(IRP* irp)
+static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
-	UINT32 map[3];
+	UINT32 pvInBuffer, fpvOutBufferIsNULL;
 	UINT32 controlCode;
 	UINT32 controlFunction;
 	BYTE* recvBuffer = NULL;
@@ -1001,19 +1821,35 @@ static UINT32 handle_Control(IRP* irp)
 	DWORD nBytesReturned;
 	DWORD outBufferSize;
 
-	Stream_Seek(irp->input, 0x14);
-	Stream_Read_UINT32(irp->input, map[0]);
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, map[1]);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		goto finish;
+
+	if (Stream_GetRemainingLength(irp->input) < 20)
+	{
+		DEBUG_WARN("length violation %d [%d]", 20,
+				Stream_GetRemainingLength(irp->input));
+		status = SCARD_F_INTERNAL_ERROR;
+		goto finish;
+	}
+
 	Stream_Read_UINT32(irp->input, controlCode);
 	Stream_Read_UINT32(irp->input, recvLength);
-	Stream_Read_UINT32(irp->input, map[2]);
-	Stream_Seek(irp->input, 0x4);
+	Stream_Read_UINT32(irp->input, pvInBuffer);
+	Stream_Read_UINT32(irp->input, fpvOutBufferIsNULL);
 	Stream_Read_UINT32(irp->input, outBufferSize);
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, hContext);
-	Stream_Seek(irp->input, 0x4);
-	Stream_Read_UINT32(irp->input, hCard);
+
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		goto finish;
 
 	/* Translate Windows SCARD_CTL_CODE's to corresponding local code */
 	if (WIN_CTL_DEVICE_TYPE(controlCode) == WIN_FILE_DEVICE_SMARTCARD)
@@ -1023,15 +1859,27 @@ static UINT32 handle_Control(IRP* irp)
 	}
 	DEBUG_SCARD("controlCode: 0x%08x", (unsigned) controlCode);
 
-	if (map[2] & SCARD_INPUT_LINKED)
+	if (pvInBuffer)
 	{
-		/* read real input size */
+		/* Get the size of the linked data. */
+		if (Stream_GetRemainingLength(irp->input) < 4)
+		{
+			DEBUG_WARN("length violation %d [%d]", 4,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
 		Stream_Read_UINT32(irp->input, recvLength);
 
+		/* Check, if there is actually enough data... */
+		if (Stream_GetRemainingLength(irp->input) < recvLength)
+		{
+			DEBUG_WARN("length violation %d [%d]", recvLength,
+					Stream_GetRemainingLength(irp->input));
+			status = SCARD_F_INTERNAL_ERROR;
+			goto finish;
+		}
 		recvBuffer = malloc(recvLength);
-
-		if (!recvBuffer)
-			return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
 
 		Stream_Read(irp->input, recvBuffer, recvLength);
 	}
@@ -1039,10 +1887,11 @@ static UINT32 handle_Control(IRP* irp)
 	nBytesReturned = outBufferSize;
 	sendBuffer = malloc(outBufferSize);
 
-	if (!sendBuffer)
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
 	{
-		free(recvBuffer);
-		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		status = SCARD_E_INVALID_TARGET;
+		goto finish;
 	}
 
 	status = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
@@ -1065,30 +1914,60 @@ static UINT32 handle_Control(IRP* irp)
 
 	smartcard_output_alignment(irp, 8);
 
-	free(recvBuffer);
-	free(sendBuffer);
+finish:
+	if (recvBuffer)
+		free(recvBuffer);
+	if (sendBuffer)
+		free(sendBuffer);
 
 	return status;
 }
 
-static UINT32 handle_GetAttrib(IRP* irp)
+static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
 {
 	LONG status;
 	SCARDHANDLE hCard;
+	SCARDCONTEXT hContext;
 	DWORD dwAttrId = 0;
 	DWORD dwAttrLen = 0;
 	DWORD attrLen = 0;
 	BYTE* pbAttr = NULL;
 
-	Stream_Seek(irp->input, 0x20);
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_CardHandle(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 12)
+	{
+		DEBUG_WARN("length violation %d [%d]", 12,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
 	Stream_Read_UINT32(irp->input, dwAttrId);
 	Stream_Seek(irp->input, 0x4);
 	Stream_Read_UINT32(irp->input, dwAttrLen);
-	Stream_Seek(irp->input, 0xC);
-	Stream_Read_UINT32(irp->input, hCard);
+	
+	status = handle_RedirHandleRef(scard, irp, &inlen, &hContext, &hCard);
+	if (status)
+		return status;
 
 	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)",
 		(unsigned) hCard, (unsigned) dwAttrId, (int) dwAttrLen);
+
+	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	{
+		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
+		return SCARD_E_INVALID_TARGET;
+	}
 
 #ifdef SCARD_AUTOALLOCATE
 	if (dwAttrLen == 0)
@@ -1177,21 +2056,35 @@ static UINT32 handle_GetAttrib(IRP* irp)
 	}
 	smartcard_output_alignment(irp, 8);
 
+#ifdef SCARD_AUTOALLOCATE
+	SCardFreeMemory(hContext, pbAttr);
+#else
 	free(pbAttr);
+#endif
 
 	return status;
 }
 
-static UINT32 handle_AccessStartedEvent(IRP* irp)
+static UINT32 handle_AccessStartedEvent(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen)
+
 {
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+	Stream_Seek(irp->input, 4);
+
 	smartcard_output_alignment(irp, 8);
+	
 	return SCARD_S_SUCCESS;
 }
 
 void scard_error(SMARTCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
 {
 	/* [MS-RDPESC] 3.1.4.4 */
-	fprintf(stderr, "scard processing error %x\n", ntstatus);
+	DEBUG_WARN("scard processing error %x", ntstatus);
 
 	Stream_SetPosition(irp->output, 0);	/* CHECKME */
 	irp->IoStatus = ntstatus;
@@ -1207,7 +2100,7 @@ typedef struct _SERVER_SCARD_ATRMASK
 }
 SERVER_SCARD_ATRMASK;
 
-static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
+static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, size_t inlen, BOOL wide)
 {
 	LONG status;
 	int i, j, k;
@@ -1219,6 +2112,30 @@ static UINT32 handle_LocateCardsByATR(IRP* irp, BOOL wide)
 	SCARD_READERSTATE* readerStates = NULL;
 	SERVER_SCARD_ATRMASK* curAtr = NULL;
 	SERVER_SCARD_ATRMASK* pAtrMasks = NULL;
+
+	status = handle_CommonTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_PrivateTypeHeader(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	status = handle_Context(scard, irp, &inlen);
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(irp->input) < 4)
+	{
+		DEBUG_WARN("length violation %d [%d]", 4,
+				Stream_GetRemainingLength(irp->input));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek(irp->input, 4);
+	status = handle_RedirContextRef(scard, irp, &inlen, &hContext);
+	if (status)
+		return status;
 
 	Stream_Seek(irp->input, 0x2C);
 	Stream_Read_UINT32(irp->input, hContext);
@@ -1405,6 +2322,12 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	const UINT32 header_lengths = 16;
 
 	/* MS-RPCE, Sections 2.2.6.1 and 2.2.6.2. */
+	if (Stream_GetRemainingLength(irp->input) < 32)
+	{
+		DEBUG_WARN("Invalid IRP of length %d received, ignoring.",
+				Stream_GetRemainingLength(irp->input));
+		return;
+	}
 
 	Stream_Read_UINT32(irp->input, output_len);
 	Stream_Read_UINT32(irp->input, input_len);
@@ -1439,26 +2362,37 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	result_pos = Stream_GetPosition(irp->output);
 	Stream_Seek(irp->output, 4);		/* result */
 
-	/* body */
+	/* Ensure, that this package is fully available. */
+	if (Stream_GetRemainingLength(irp->input) < input_len)
+	{
+		DEBUG_WARN("Invalid IRP of length %d received, expected %d, ignoring.",
+				Stream_GetRemainingLength(irp->input), input_len);
+		return;
+	}
+
+	/* body. input_len contains the length of the remaining data
+	 * that can be read from the current position of irp->input,
+	 * so pass it on ;) */
+	DEBUG_SCARD("ioctl %08X", ioctl_code);
 	switch (ioctl_code)
 	{
 		case SCARD_IOCTL_ESTABLISH_CONTEXT:
-			result = handle_EstablishContext(irp);
+			result = handle_EstablishContext(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_IS_VALID_CONTEXT:
-			result = handle_IsValidContext(irp);
+			result = handle_IsValidContext(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_RELEASE_CONTEXT:
-			result = handle_ReleaseContext(irp);
+			result = handle_ReleaseContext(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_LIST_READERS:
-			result = handle_ListReaders(irp, 0);
+			result = handle_ListReaders(scard, irp, input_len, 0);
 			break;
 		case SCARD_IOCTL_LIST_READERS + 4:
-			result = handle_ListReaders(irp, 1);
+			result = handle_ListReaders(scard, irp, input_len, 1);
 			break;
 
 		case SCARD_IOCTL_LIST_READER_GROUPS:
@@ -1468,76 +2402,77 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_GET_STATUS_CHANGE:
-			result = handle_GetStatusChange(irp, 0);
+			result = handle_GetStatusChange(scard, irp, input_len, 0);
 			break;
 		case SCARD_IOCTL_GET_STATUS_CHANGE + 4:
-			result = handle_GetStatusChange(irp, 1);
+			result = handle_GetStatusChange(scard, irp, input_len, 1);
 			break;
 
 		case SCARD_IOCTL_CANCEL:
-			result = handle_Cancel(irp);
+			result = handle_Cancel(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_CONNECT:
-			result = handle_Connect(irp, 0);
+			result = handle_Connect(scard, irp, input_len, 0);
 			break;
 		case SCARD_IOCTL_CONNECT + 4:
-			result = handle_Connect(irp, 1);
+			result = handle_Connect(scard, irp, input_len, 1);
 			break;
 
 		case SCARD_IOCTL_RECONNECT:
-			result = handle_Reconnect(irp);
+			result = handle_Reconnect(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_DISCONNECT:
-			result = handle_Disconnect(irp);
+			result = handle_Disconnect(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_BEGIN_TRANSACTION:
-			result = handle_BeginTransaction(irp);
+			result = handle_BeginTransaction(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_END_TRANSACTION:
-			result = handle_EndTransaction(irp);
+			result = handle_EndTransaction(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_STATE:
-			result = handle_State(irp);
+			result = handle_State(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_STATUS:
-			result = handle_Status(irp, 0);
+			result = handle_Status(scard, irp, input_len, 0);
 			break;
 		case SCARD_IOCTL_STATUS + 4:
-			result = handle_Status(irp, 1);
+			result = handle_Status(scard, irp, input_len, 1);
 			break;
 
 		case SCARD_IOCTL_TRANSMIT:
-			result = handle_Transmit(irp);
+			result = handle_Transmit(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_CONTROL:
-			result = handle_Control(irp);
+			result = handle_Control(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_GETATTRIB:
-			result = handle_GetAttrib(irp);
+			result = handle_GetAttrib(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_ACCESS_STARTED_EVENT:
-			result = handle_AccessStartedEvent(irp);
+			result = handle_AccessStartedEvent(scard, irp, input_len);
 			break;
 
 		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR:
-			result = handle_LocateCardsByATR(irp, 0);
+			result = handle_LocateCardsByATR(scard, irp, input_len, 0);
 			break;
 		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR + 4:
-			result = handle_LocateCardsByATR(irp, 1);
+			result = handle_LocateCardsByATR(scard, irp, input_len, 1);
 			break;
 
 		default:
 			result = 0xc0000001;
-			fprintf(stderr, "scard unknown ioctl 0x%x\n", ioctl_code);
+			DEBUG_WARN("scard unknown ioctl 0x%x [%d]\n",
+					ioctl_code, input_len);
 			break;
 	}
 
