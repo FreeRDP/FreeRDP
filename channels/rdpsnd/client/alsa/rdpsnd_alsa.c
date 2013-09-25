@@ -453,8 +453,6 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	long volume_max;
 	long volume_left;
 	long volume_right;
-	int percent_left;
-	int percent_right;
 	snd_mixer_elem_t* elem;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
@@ -464,9 +462,6 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
 	
-	percent_left = (left * 100) / 0xFFFF;
-	percent_right = (right * 100) / 0xFFFF;
-
 	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
 	{
 		if (snd_mixer_selem_has_playback_volume(elem))
@@ -613,8 +608,6 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
 
 	//fprintf(stderr, "wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
-
-	device->WaveConfirm(device, wave);
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
@@ -633,7 +626,7 @@ static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
-	if (status)
+	if (status < 0)
 		return status;
 
 	arg = rdpsnd_alsa_args;
