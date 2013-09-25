@@ -86,7 +86,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
 	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
 	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
-	{ "smartcard", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
+	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
@@ -319,15 +319,15 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SMARTCARD* smartcard;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
 		ZeroMemory(smartcard, sizeof(RDPDR_SMARTCARD));
 
 		smartcard->Type = RDPDR_DTYP_SMARTCARD;
-		smartcard->Name = _strdup(params[1]);
-
+		if (count > 1)
+			smartcard->Name = _strdup(params[1]);
 		if (count > 2)
 			smartcard->Path = _strdup(params[2]);
 
@@ -340,15 +340,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_SERIAL* serial;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
 		ZeroMemory(serial, sizeof(RDPDR_SERIAL));
 
 		serial->Type = RDPDR_DTYP_SERIAL;
-		serial->Name = _strdup(params[1]);
-		serial->Path = _strdup(params[2]);
+		if (count > 1)
+			serial->Name = _strdup(params[1]);
+		if (count > 2)
+			serial->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 		settings->DeviceRedirection = TRUE;
@@ -359,15 +361,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 	{
 		RDPDR_PARALLEL* parallel;
 
-		if (count < 2)
+		if (count < 1)
 			return -1;
 
 		parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
 		ZeroMemory(parallel, sizeof(RDPDR_PARALLEL));
 
 		parallel->Type = RDPDR_DTYP_PARALLEL;
-		parallel->Name = _strdup(params[1]);
-		parallel->Path = _strdup(params[2]);
+		if (count > 1)
+			parallel->Name = _strdup(params[1]);
+		if (count > 1)
+			parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
 		settings->DeviceRedirection = TRUE;
@@ -423,6 +427,9 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 	int nCommas;
 
 	nArgs = nCommas = 0;
+
+	if (!list)
+		return NULL;
 
 	for (index = 0; list[index]; index++)
 		nCommas += (list[index] == ',') ? 1 : 0;
