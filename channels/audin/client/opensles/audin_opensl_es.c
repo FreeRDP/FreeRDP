@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,8 +37,8 @@
 
 #include <SLES/OpenSLES.h>
 
-#include "opensl_io.h"
 #include "audin_main.h"
+#include "opensl_io.h"
 
 typedef struct _AudinOpenSLESDevice
 {
@@ -47,16 +48,17 @@ typedef struct _AudinOpenSLESDevice
 	OPENSL_STREAM *stream;
 
 	UINT32 frames_per_packet;
-	UINT32 target_rate;
-	UINT32 actual_rate;
-	UINT32 target_channels;
-	UINT32 actual_channels;
-	int bytes_per_channel;
-	int wformat;
-	int format;
-	int block_size;
+	UINT32 rate;
+	UINT32 channels;
+
+	UINT32 bytes_per_channel;
+
+	UINT32 wformat;
+	UINT32 format;
+	UINT32 block_size;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
+	AudinReceive receive;
 
 	HANDLE thread;
 	HANDLE stopEvent;
@@ -64,124 +66,72 @@ typedef struct _AudinOpenSLESDevice
 	void* user_data;
 } AudinOpenSLESDevice;
 
-static BOOL audin_opensles_thread_receive(AudinOpenSLESDevice* opensles,
-		void* src, int count)
-{
-	int frames;
-	int cframes;
-	int ret = 0;
-	int encoded_size;
-	BYTE* encoded_data;
-	int rbytes_per_frame;
-	int tbytes_per_frame;
-
-	rbytes_per_frame = opensles->actual_channels * opensles->bytes_per_channel;
-	tbytes_per_frame = opensles->target_channels * opensles->bytes_per_channel;
-
-	if ((opensles->target_rate == opensles->actual_rate) &&
-		(opensles->target_channels == opensles->actual_channels))
-	{
-		frames = size / rbytes_per_frame;
-	}
-	else
-	{
-		opensles->dsp_context->resample(opensles->dsp_context, src,
-				opensles->bytes_per_channel,	opensles->actual_channels,
-				opensles->actual_rate, size / rbytes_per_frame,
-				opensles->target_channels, opensles->target_rate);
-		frames = opensles->dsp_context->resampled_frames;
-		
-		DEBUG_DVC("resampled %d frames at %d to %d frames at %d",
-			size / rbytes_per_frame, opensles->actual_rate,
-			frames, opensles->target_rate);
-		
-		size = frames * tbytes_per_frame;
-		src = opensles->dsp_context->resampled_buffer;
-	}
-
-	while (frames > 0)
-	{
-		if (WaitForSingleObject(opensles->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		cframes = opensles->frames_per_packet - opensles->buffer_frames;
-
-		if (cframes > frames)
-			cframes = frames;
-
-		CopyMemory(opensles->buffer + opensles->buffer_frames * tbytes_per_frame,
-				src, cframes * tbytes_per_frame);
-
-		opensles->buffer_frames += cframes;
-
-		if (opensles->buffer_frames >= opensles->frames_per_packet)
-		{
-			if (opensles->wformat == WAVE_FORMAT_DVI_ADPCM)
-			{
-				opensles->dsp_context->encode_ima_adpcm(opensles->dsp_context,
-					opensles->buffer, opensles->buffer_frames * tbytes_per_frame,
-					opensles->target_channels, opensles->block_size);
-
-				encoded_data = opensles->dsp_context->adpcm_buffer;
-				encoded_size = opensles->dsp_context->adpcm_size;
-
-				DEBUG_DVC("encoded %d to %d",
-					opensles->buffer_frames * tbytes_per_frame, encoded_size);
-			}
-			else
-			{
-				encoded_data = opensles->buffer;
-				encoded_size = opensles->buffer_frames * tbytes_per_frame;
-			}
-
-			if (WaitForSingleObject(opensles->stopEvent, 0) == WAIT_OBJECT_0)
-				break;
-			else
-				ret = opensles->receive(encoded_data, encoded_size,
-						opensles->user_data);
-
-			opensles->buffer_frames = 0;
-
-			if (!ret)
-				break;
-		}
-
-		src += cframes * tbytes_per_frame;
-		frames -= cframes;
-	}
-
-	return (ret) ? TRUE : FALSE;
-}
-
 static void* audin_opensles_thread_func(void* arg)
 {
-	float* buffer;
-	int rbytes_per_frame;
-	int tbytes_per_frame;
-	snd_pcm_t* capture_handle = NULL;
+	union
+	{
+		void *v;
+		short* s;
+		BYTE *b;
+	} buffer;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) arg;
 
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_DVC("opensles=%p", opensles);
+	
+	assert(opensles);
+	assert(opensles->frames_per_packet > 0);
+	assert(opensles->dsp_context);
+	assert(opensles->stopEvent);
+	assert(opensles->stream);
 
-	buffer = (BYTE*) calloc(sizeof(float), opensles->frames_per_packet);
-	ZeroMemory(buffer, opensles->frames_per_packet);
+	buffer.v = calloc(sizeof(short), opensles->frames_per_packet);
+	ZeroMemory(buffer.v, opensles->frames_per_packet);
 	freerdp_dsp_context_reset_adpcm(opensles->dsp_context);
 
 	while (!(WaitForSingleObject(opensles->stopEvent, 0) == WAIT_OBJECT_0))
 	{
-		int rc = android_AudioIn(opensles->stream, buffer,
+		size_t encoded_size;
+		void *encoded_data;
+
+		int rc = android_RecIn(opensles->stream, buffer.s,
 				opensles->frames_per_packet);
 		if (rc < 0)
 		{
-			DEBUG_WARN("snd_pcm_readi (%s)", snd_strerror(error));
-			break;
+			DEBUG_WARN("android_RecIn %d", rc);
 		}
 
-		if (!audin_opensles_thread_receive(opensles, buffer, rc * sizeof(float)))
+		DEBUG_DVC("Got %d frames from microphone", opensles->frames_per_packet);
+		if (opensles->format == WAVE_FORMAT_ADPCM)
+		{
+			opensles->dsp_context->encode_ms_adpcm(opensles->dsp_context,
+				buffer.b, opensles->frames_per_packet * sizeof(short),
+				opensles->channels, opensles->block_size);
+
+			encoded_data = opensles->dsp_context->adpcm_buffer;
+			encoded_size = opensles->dsp_context->adpcm_size;
+
+		}
+		else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
+		{
+			opensles->dsp_context->encode_ima_adpcm(opensles->dsp_context,
+				buffer.b, opensles->frames_per_packet * sizeof(short),
+				opensles->channels, opensles->block_size);
+
+			encoded_data = opensles->dsp_context->adpcm_buffer;
+			encoded_size = opensles->dsp_context->adpcm_size;
+		}
+		else
+		{
+			encoded_data = buffer.v;
+			encoded_size = opensles->frames_per_packet;
+		}
+
+		rc = opensles->receive(encoded_data, encoded_size, opensles->user_data);
+		if (!rc)
 			break;
 	}
 
-	free(buffer);
+	free(buffer.v);
 
 	DEBUG_DVC("thread shutdown.");
 
@@ -195,21 +145,34 @@ static void audin_opensles_free(IAudinDevice* device)
 
 	DEBUG_DVC("device=%p", device);
 
+	/* The function may have been called out of order,
+	 * ignore duplicate requests. */
+	if (!opensles)
+		return;
+
+	assert(opensles);
+	assert(opensles->dsp_context);
+	assert(!opensles->stream);
+
 	freerdp_dsp_context_free(opensles->dsp_context);
 
-	free(opensles->device_name);
+	if (opensles->device_name)
+		free(opensles->device_name);
+
 	free(opensles);
 }
 
 static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* format)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
-	SLResult rc;
 	
-	DEBUG_DVC("device=%p, format=%p", device, format);
+	DEBUG_DVC("device=%p, format=%p", opensles, format);
+
+	assert(format);
 
 	switch (format->wFormatTag)
 	{
+		/*
 		case WAVE_FORMAT_PCM:
 			if (format->cbSize == 0 &&
 				(format->nSamplesPerSec <= 48000) &&
@@ -219,8 +182,9 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* f
 				return TRUE;
 			}
 			break;
-
-		case WAVE_FORMAT_DVI_ADPCM:
+*/
+		case WAVE_FORMAT_ADPCM:
+//		case WAVE_FORMAT_DVI_ADPCM:
 			if ((format->nSamplesPerSec <= 48000) &&
 				(format->wBitsPerSample == 4) &&
 				(format->nChannels == 1 || format->nChannels == 2))
@@ -242,67 +206,97 @@ static void audin_opensles_set_format(IAudinDevice* device,
 	DEBUG_DVC("device=%p, format=%p, FramesPerPacket=%d",
 			device, format, FramesPerPacket);
 
-	opensles->target_rate = format->nSamplesPerSec;
-	opensles->actual_rate = format->nSamplesPerSec;
-	opensles->target_channels = format->nChannels;
-	opensles->actual_channels = format->nChannels;
+	assert(format);
+
+	/* The function may have been called out of order, ignore
+	 * requests before the device is available. */
+	if (!opensles)
+		return;
 
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
+			opensles->frames_per_packet = FramesPerPacket;
 			switch (format->wBitsPerSample)
 			{
+				case 4:
+					opensles->format = WAVE_FORMAT_ADPCM;
+					opensles->bytes_per_channel = 1;
+					break;
 				case 8:
-					opensles->format = SND_PCM_FORMAT_S8;
+					opensles->format = WAVE_FORMAT_PCM;
 					opensles->bytes_per_channel = 1;
 					break;
 				case 16:
-					opensles->format = SND_PCM_FORMAT_S16_LE;
+					opensles->format = WAVE_FORMAT_ADPCM;
 					opensles->bytes_per_channel = 2;
 					break;
 			}
 			break;
-
-		case WAVE_FORMAT_DVI_ADPCM:
-			opensles->format = SND_PCM_FORMAT_S16_LE;
+		case WAVE_FORMAT_ADPCM:
+			opensles->format = WAVE_FORMAT_ADPCM;
 			opensles->bytes_per_channel = 2;
 			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
+	
 			opensles->frames_per_packet =
-				(opensles->frames_per_packet * format->nChannels * 2 /
+				(FramesPerPacket * format->nChannels * 2 /
 				bs + 1) * bs / (format->nChannels * 2);
-			DEBUG_DVC("aligned FramesPerPacket=%d",
-				opensles->frames_per_packet);
 			break;
+	
+		case WAVE_FORMAT_DVI_ADPCM:
+			opensles->format = WAVE_FORMAT_DVI_ADPCM;
+			opensles->bytes_per_channel = 2;
+			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
+			
+			opensles->frames_per_packet =
+				(FramesPerPacket * format->nChannels * 2 /
+				bs + 1) * bs / (format->nChannels * 2);
+			break;
+		default:
+			DEBUG_WARN("Unsupported fromat %08X requested, ignoring.",
+					format->wFormatTag);
+			return;
 	}
+
+	opensles->rate = format->nSamplesPerSec;
+	opensles->channels = format->nChannels;
 
 	opensles->wformat = format->wFormatTag;
 	opensles->block_size = format->nBlockAlign;
+
+	if (opensles->stream)
+	{
+		android_CloseRecDevice(opensles->stream);
+
+		opensles->stream = android_OpenRecDevice(opensles->device_name,
+				opensles->rate, opensles->channels,
+				opensles->frames_per_packet);
+	}
 }
 
-static int audin_opensles_open(IAudinDevice* device, AudinReceive receive,
+static void audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 		void* user_data)
 {
-	int status = 0;
-	int rbytes_per_frame;
-	int tbytes_per_frame;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 
 	DEBUG_DVC("device=%p, receive=%d, user_data=%p", device, receive, user_data);
 
-	opensles->stream = android_OpenAudioDevice(opensles->target_rate,
-			opensles->target_channels, 0, opensles->frames_per_packet);
+	assert(opensles);
+
+	/* The function may have been called out of order,
+	 * ignore duplicate open requests. */
+	if(opensles->stream)
+		return;
+
+	opensles->stream = android_OpenRecDevice(
+			opensles->device_name,
+			opensles->rate,
+			opensles->channels, opensles->frames_per_packet);
+	assert(opensles->stream);
 
 	opensles->receive = receive;
 	opensles->user_data = user_data;
 
-	rbytes_per_frame = opensles->actual_channels * opensles->bytes_per_channel;
-	tbytes_per_frame = opensles->target_channels * opensles->bytes_per_channel;
-	opensles->buffer =
-		(BYTE*) malloc(tbytes_per_frame * opensles->frames_per_packet);
-	ZeroMemory(opensles->buffer,
-			tbytes_per_frame * opensles->frames_per_packet);
-	opensles->buffer_frames = 0;
-	
 	opensles->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	opensles->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) audin_opensles_thread_func,
@@ -314,22 +308,33 @@ static void audin_opensles_close(IAudinDevice* device)
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 
 	DEBUG_DVC("device=%p", device);
+	
+	assert(opensles);
+
+	/* The function may have been called out of order,
+	 * ignore duplicate requests. */
+	if (!opensles->stopEvent)
+		return;
+
+	assert(opensles->stopEvent);
+	assert(opensles->thread);
+	assert(opensles->stream);
 
 	SetEvent(opensles->stopEvent);
 	WaitForSingleObject(opensles->thread, INFINITE);
 	CloseHandle(opensles->stopEvent);
 	CloseHandle(opensles->thread);
 
-	android_CloseAudioDevice(opensles->stream);
+	android_CloseRecDevice(opensles->stream);
 
 	opensles->stopEvent = NULL;
 	opensles->thread = NULL;
 	opensles->receive = NULL;
 	opensles->user_data = NULL;
-	opsnsles->stream = NULL;
+	opensles->stream = NULL;
 }
 
-static const COMMAND_LINE_ARGUMENT_A audin_opensles_args[] =
+static COMMAND_LINE_ARGUMENT_A audin_opensles_args[] =
 {
 	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		NULL, NULL, -1, NULL, "audio device name" },
@@ -399,17 +404,6 @@ int freerdp_audin_client_subsystem_entry(
 	args = pEntryPoints->args;
 
 	audin_opensles_parse_addin_args(opensles, args);
-
-	if (!opensles->device_name)
-		opensles->device_name = _strdup("default");
-
-	opensles->frames_per_packet = 128;
-	opensles->target_rate = 22050;
-	opensles->actual_rate = 22050;
-	opensles->format = SND_PCM_FORMAT_S16_LE;
-	opensles->target_channels = 2;
-	opensles->actual_channels = 2;
-	opensles->bytes_per_channel = 2;
 
 	opensles->dsp_context = freerdp_dsp_context_new();
 

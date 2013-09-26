@@ -410,7 +410,7 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	/* 500ms latency */
 	buffer_attr.fragsize = pa_usec_to_bytes(500000, &pulse->sample_spec);
 	if (pa_stream_connect_record(pulse->stream,
-		pulse->device_name[0] ? pulse->device_name : NULL,
+		pulse->device_name,
 		&buffer_attr, PA_STREAM_ADJUST_LATENCY) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
@@ -447,7 +447,7 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	}
 }
 
-COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
+static COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
 {
 	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -504,9 +504,6 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 	args = pEntryPoints->args;
 
 	audin_pulse_parse_addin_args(pulse, args);
-
-	if (!pulse->device_name)
-		pulse->device_name = _strdup("default");
 
 	pulse->dsp_context = freerdp_dsp_context_new();
 
