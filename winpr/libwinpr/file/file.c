@@ -218,13 +218,6 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;
 
-	if (0)
-	{
-		flags = fcntl(pNamedPipe->clientfd, F_GETFL);
-		flags = flags | O_NONBLOCK;
-		fcntl(pNamedPipe->clientfd, F_SETFL, flags);
-	}
-
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
 	strcpy(s.sun_path, pNamedPipe->lpFilePath);
@@ -249,7 +242,11 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 
 BOOL DeleteFileA(LPCSTR lpFileName)
 {
-	return TRUE;
+	int status;
+
+	status = unlink(lpFileName);
+
+	return (status != -1) ? TRUE : FALSE;
 }
 
 BOOL DeleteFileW(LPCWSTR lpFileName)

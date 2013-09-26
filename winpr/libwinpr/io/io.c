@@ -36,6 +36,13 @@
 #include <string.h>
 #include <dirent.h>
 
+#include <fcntl.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+
+#include <winpr/crt.h>
+
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
@@ -61,20 +68,44 @@ BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumb
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 			return FALSE;
 
-		if (pipe->clientfd == -1)
-			return FALSE;
-
 		lpBuffer = lpOverlapped->Pointer;
 		request = (DWORD) lpOverlapped->Internal;
 		nNumberOfBytes = (DWORD) lpOverlapped->InternalHigh;
 
 		if (request == 0)
 		{
+			if (pipe->clientfd == -1)
+				return FALSE;
+
 			status = read(pipe->clientfd, lpBuffer, nNumberOfBytes);
 		}
-		else
+		else if (request == 1)
 		{
+			if (pipe->clientfd == -1)
+				return FALSE;
+
 			status = write(pipe->clientfd, lpBuffer, nNumberOfBytes);
+		}
+		else if (request == 2)
+		{
+			socklen_t length;
+			struct sockaddr_un s;
+
+			if (pipe->serverfd == -1)
+				return FALSE;
+
+			length = sizeof(struct sockaddr_un);
+			ZeroMemory(&s, sizeof(struct sockaddr_un));
+
+			status = accept(pipe->serverfd, (struct sockaddr*) &s, &length);
+
+			if (status < 0)
+				return FALSE;
+
+			pipe->clientfd = status;
+			pipe->ServerMode = FALSE;
+
+			status = 0;
 		}
 
 		if (status < 0)

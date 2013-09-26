@@ -69,8 +69,10 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	{
 		if (pReadPipe)
 			free(pReadPipe);
+
 		if (pWritePipe)
 			free(pWritePipe);
+
 		return FALSE;
 	}
 
@@ -96,7 +98,6 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	int status;
 	HANDLE hNamedPipe;
 	char* lpPipePath;
-	unsigned long flags;
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
@@ -134,17 +135,12 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->serverfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->ServerMode = TRUE;
 
-	if (0)
-	{
-		flags = fcntl(pNamedPipe->serverfd, F_GETFL);
-		flags = flags | O_NONBLOCK;
-		fcntl(pNamedPipe->serverfd, F_SETFL, flags);
-	}
+	if (PathFileExistsA(pNamedPipe->lpFilePath))
+		DeleteFileA(pNamedPipe->lpFilePath);
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
 	strcpy(s.sun_path, pNamedPipe->lpFilePath);
-	unlink(s.sun_path);
 
 	status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
@@ -179,20 +175,34 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
-	length = sizeof(struct sockaddr_un);
-	ZeroMemory(&s, sizeof(struct sockaddr_un));
+	if (!(pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+	{
+		length = sizeof(struct sockaddr_un);
+		ZeroMemory(&s, sizeof(struct sockaddr_un));
 
-	status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
+		status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
 
-	if (status < 0)
-		return FALSE;
+		if (status < 0)
+			return FALSE;
 
-	pNamedPipe->clientfd = status;
-
-	if (pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+		pNamedPipe->clientfd = status;
+		pNamedPipe->ServerMode = FALSE;
+	}
+	else
 	{
 		if (!lpOverlapped)
 			return FALSE;
+
+		if (pNamedPipe->serverfd == -1)
+			return FALSE;
+
+		pNamedPipe->lpOverlapped = lpOverlapped;
+
+		/* synchronous behavior */
+
+		lpOverlapped->Internal = 2;
+		lpOverlapped->InternalHigh = (ULONG_PTR) 0;
+		lpOverlapped->Pointer = (PVOID) NULL;
 
 		SetEvent(lpOverlapped->hEvent);
 	}
@@ -268,12 +278,40 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
 {
+	int fd;
+	unsigned long flags;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
 	if (lpMode)
+	{
 		pNamedPipe->dwPipeMode = *lpMode;
+
+		fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;
+
+		if (fd == -1)
+			return FALSE;
+
+		flags = fcntl(fd, F_GETFL);
+
+		if (pNamedPipe->dwPipeMode & PIPE_NOWAIT)
+			flags = (flags | O_NONBLOCK);
+		else
+			flags = (flags & ~(O_NONBLOCK));
+
+		fcntl(fd, F_SETFL, flags);
+	}
+
+	if (lpMaxCollectionCount)
+	{
+
+	}
+
+	if (lpCollectDataTimeout)
+	{
+
+	}
 
 	return TRUE;
 }
