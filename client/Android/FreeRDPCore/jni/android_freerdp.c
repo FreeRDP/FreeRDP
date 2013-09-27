@@ -12,6 +12,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -262,6 +263,8 @@ int android_freerdp_run(freerdp* instance)
 	int select_status;
 	struct timeval timeout;
 
+	assert(instance);
+
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
@@ -329,6 +332,9 @@ int android_freerdp_run(freerdp* instance)
 				break;
 			}
 		}
+		
+		if (freerdp_shall_disconnect(instance))
+			break;
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
@@ -364,6 +370,9 @@ void* android_thread_func(void* param)
 {
 	struct thread_data* data;
 	data = (struct thread_data*) param;
+
+	assert(data);
+	assert(data->instance);
 
 	freerdp* instance = data->instance;
 	android_freerdp_run(instance);
@@ -408,6 +417,10 @@ JNIEXPORT jboolean JNICALL jni_freerdp_connect(JNIEnv *env, jclass cls, jint ins
 	freerdp* inst = (freerdp*)instance;
 	struct thread_data* data = (struct thread_data*) malloc(sizeof(struct thread_data));
 	data->instance = inst;
+
+	assert(inst);
+	assert(data);
+	assert(inst->context);
 
 	androidContext* ctx = (androidContext*)inst->context;
 	pthread_create(&ctx->thread, 0, android_thread_func, data);
@@ -685,7 +698,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
 	p = malloc(sizeof(char*));
 	p[0] = "audin";
 
-	freerdp_client_add_static_channel(settings, count, p);
+	freerdp_client_add_dynamic_channel(settings, count, p);
 
 	free(p);
 }
