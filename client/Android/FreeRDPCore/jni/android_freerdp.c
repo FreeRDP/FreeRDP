@@ -668,21 +668,27 @@ JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls
 }
 
 JNIEXPORT void JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env,
-		jclass cls, jint instance, jboolean enable)
+		jclass cls, jint instance, jint redirect)
 {
 	char** p;
 	int count = 1;
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
 
-	DEBUG_ANDROID("sound redirect: %s", enable ? "TRUE" : "FALSE");
+	DEBUG_ANDROID("sound: %s",
+			redirect ? ((redirect == 1) ? "Server" : "Redirect") : "None");
 
-	p = malloc(sizeof(char*));
-	p[0] = "rdpsnd";
+	settings->AudioPlayback = (redirect == 2) ? TRUE : FALSE;
+	settings->RemoteConsoleAudio = (redirect == 1) ? TRUE : FALSE;
+	if (settings->AudioPlayback)
+	{
+		p = malloc(sizeof(char*));
+		p[0] = "rdpsnd";
 
-	freerdp_client_add_static_channel(settings, count, p);
+		freerdp_client_add_static_channel(settings, count, p);
 
-	free(p);
+		free(p);
+	}
 }
 
 JNIEXPORT void JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
@@ -695,12 +701,16 @@ JNIEXPORT void JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
 
 	DEBUG_ANDROID("microphone redirect: %s", enable ? "TRUE" : "FALSE");
 
-	p = malloc(sizeof(char*));
-	p[0] = "audin";
+	settings->AudioCapture = enable;
+	if (enable)
+	{
+		p = malloc(sizeof(char*));
+		p[0] = "audin";
 
-	freerdp_client_add_dynamic_channel(settings, count, p);
+		freerdp_client_add_dynamic_channel(settings, count, p);
 
-	free(p);
+		free(p);
+	}
 }
 
 JNIEXPORT void JNICALL jni_freerdp_set_clipboard_redirection(JNIEnv *env, jclass cls, jint instance, jboolean enable)

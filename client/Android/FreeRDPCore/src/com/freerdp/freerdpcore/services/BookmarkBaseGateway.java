@@ -283,7 +283,7 @@ public abstract class BookmarkBaseGateway
 		readScreenSettings3G(bookmark, cursor);		
 		readPerformanceFlags3G(bookmark, cursor);		
 		bookmark.getAdvancedSettings().setRedirectSDCard(cursor.getInt(cursor.getColumnIndex("redirect_sdcard")) == 0 ? false : true);		
-		bookmark.getAdvancedSettings().setRedirectSound(cursor.getInt(cursor.getColumnIndex("redirect_sound")) == 0 ? false : true);		
+		bookmark.getAdvancedSettings().setRedirectSound(cursor.getInt(cursor.getColumnIndex("redirect_sound")));		
 		bookmark.getAdvancedSettings().setRedirectMicrophone(cursor.getInt(cursor.getColumnIndex("redirect_microphone")) == 0 ? false : true);		
 		bookmark.getAdvancedSettings().setSecurity(cursor.getInt(cursor.getColumnIndex("security")));		
 		bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex("console_mode")) == 0 ? false : true);		

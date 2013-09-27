@@ -77,7 +77,7 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 }
 
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
-  (JNIEnv *env, jclass cls, jint inst, jboolean redirect)
+  (JNIEnv *env, jclass cls, jint inst, jint redirect)
 {
 	jni_freerdp_set_sound_redirection(env, cls, inst, redirect);
 }

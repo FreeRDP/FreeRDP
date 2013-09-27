@@ -295,7 +295,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private ScreenSettings screen3G;
 		private PerformanceFlags performance3G;
 		private boolean redirectSDCard;
-		private boolean redirectSound;
+		private int redirectSound;
 		private boolean redirectMicrophone;
 		private int security;
 		private boolean consoleMode;
@@ -311,7 +311,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			screen3G = parcel.readParcelable(ScreenSettings.class.getClassLoader());
 			performance3G = parcel.readParcelable(PerformanceFlags.class.getClassLoader());
 			redirectSDCard = (parcel.readInt() == 1) ? true : false;
-			redirectSound = (parcel.readInt() == 1) ? true : false;
+			redirectSound = parcel.readInt();
 			redirectMicrophone = (parcel.readInt() == 1) ? true : false;
 			security = parcel.readInt();
 			consoleMode = (parcel.readInt() == 1) ? true : false;
@@ -324,7 +324,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			screen3G = new ScreenSettings();
 			performance3G = new PerformanceFlags();
 			redirectSDCard = false;
-			redirectSound = false;
+			redirectSound = 0;
 			redirectMicrophone = false;
 			security = 0;
 			consoleMode = false;
@@ -364,11 +364,11 @@ public class BookmarkBase implements Parcelable, Cloneable
 			return redirectSDCard;
 		}
 		
-		public void setRedirectSound(boolean redirect) {
+		public void setRedirectSound(int redirect) {
 			this.redirectSound = redirect;
 		}
 		
-		public boolean getRedirectSound() {
+		public int getRedirectSound() {
 			return redirectSound;
 		}
 		
@@ -440,7 +440,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeParcelable(screen3G, flags);
 			out.writeParcelable(performance3G, flags);
 			out.writeInt(redirectSDCard ? 1 : 0);
-			out.writeInt(redirectSound ? 1 : 0);
+			out.writeInt(redirectSound);
 			out.writeInt(redirectMicrophone ? 1 : 0);
 			out.writeInt(security);		
 			out.writeInt(consoleMode ? 1 : 0);		
@@ -644,7 +644,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putBoolean("bookmark.perf_themes_3g", advancedSettings.getPerformance3G().getTheming());
 
 		editor.putBoolean("bookmark.redirect_sdcard", advancedSettings.getRedirectSDCard());
-		editor.putBoolean("bookmark.redirect_sound", advancedSettings.getRedirectSound());
+		editor.putInt("bookmark.redirect_sound", advancedSettings.getRedirectSound());
 		editor.putBoolean("bookmark.redirect_microphone", advancedSettings.getRedirectMicrophone());
 		editor.putInt("bookmark.security", advancedSettings.getSecurity());
 		editor.putString("bookmark.remote_program", advancedSettings.getRemoteProgram());
@@ -688,7 +688,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.getPerformance3G().setTheming(sharedPrefs.getBoolean("bookmark.perf_themes_3g", false));
 
 		advancedSettings.setRedirectSDCard(sharedPrefs.getBoolean("bookmark.redirect_sdcard", false));
-		advancedSettings.setRedirectSound(sharedPrefs.getBoolean("bookmark.redirect_sound", false));
+		advancedSettings.setRedirectSound(sharedPrefs.getInt("bookmark.redirect_sound", 0));
 		advancedSettings.setRedirectMicrophone(sharedPrefs.getBoolean("bookmark.redirect_microphone", false));
 		advancedSettings.setSecurity(sharedPrefs.getInt("bookmark.security", 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString("bookmark.remote_program", ""));

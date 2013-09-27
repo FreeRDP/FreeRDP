@@ -116,6 +116,16 @@
     <string name="settings_gateway_settings">Gateway instellingen</string>    
     <string name="settings_redirect_sdcard">SDCard aankoppelen</string>
     <string name="settings_redirect_sound">Redirect Sound</string>
+    <string-array name="redirect_sound_array">
+        <item>None</item>
+        <item>Server</item>
+        <item>Client</item>
+    </string-array>
+    <string-array name="redirect_sound_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
     <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">Beveiliging</string>
     <string-array name="security_array">

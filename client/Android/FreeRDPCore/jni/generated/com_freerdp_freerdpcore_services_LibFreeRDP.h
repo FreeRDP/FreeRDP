@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
  * Signature: (IZ)V
  */
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
-  (JNIEnv *, jclass, jint, jboolean);
+  (JNIEnv *, jclass, jint, jint);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
