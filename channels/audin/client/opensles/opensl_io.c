@@ -322,6 +322,18 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
 	e->size = p->buffersize;
 
+	/* Initial fill up. */
+	if (!p->middle)
+	{
+		p->prep = e;
+  	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
+			e->data, e->size);
+
+		e = calloc(1, sizeof(queue_element));
+		e->data = calloc(p->buffersize, p->bits_per_sample / 8);
+		e->size = p->buffersize;
+	}
+
 	p->next = p->middle;
 	p->middle = p->prep;
 	p->prep = e;
