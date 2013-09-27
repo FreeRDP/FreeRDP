@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
@@ -60,12 +61,63 @@ struct rdpsnd_opensles_plugin
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
+static int rdpsnd_opensles_volume_to_millibel(unsigned short level, int max)
+{
+	const int min = SL_MILLIBEL_MIN;
+	const int step = max - min;
+	const int rc = (level * step / 0xFFFF) + min;
+
+	DEBUG_SND("level=%d, min=%d, max=%d, step=%d, result=%d",
+			level, min, max, step, rc);
+
+	return rc;
+}
+
+static unsigned short rdpsnd_opensles_millibel_to_volume(int millibel, int max)
+{
+	const int min = SL_MILLIBEL_MIN;
+	const int range = max - min;
+	const int rc = ((millibel - min) * 0xFFFF + range / 2 + 1) / range;
+
+	DEBUG_SND("millibel=%d, min=%d, max=%d, range=%d, result=%d",
+			millibel, min, max, range, rc);
+
+	return rc;
+}
+
+static bool rdpsnd_opensles_check_handle(const rdpsndopenslesPlugin *hdl)
+{
+	bool rc = true;
+
+	assert(hdl);
+	if (!hdl)
+		rc = false;
+	else
+	{
+		assert(hdl->dsp_context);
+		if (!hdl->dsp_context)
+			rc = false;
+		assert(hdl->stream);
+		if (!hdl->stream)
+			rc = false;
+	}
+
+	return rc;
+}
+
 static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 		UINT32 volume);
 
 static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 {
 	DEBUG_SND("opensles=%p", opensles);
+	rdpsnd_opensles_check_handle(opensles);
+
+	if (opensles->stream)
+		android_CloseAudioDevice(opensles->stream);
+
+	opensles->stream = android_OpenAudioDevice(
+		opensles->rate, opensles->channels, opensles->rate);
 
 	return 0;
 }
@@ -74,11 +126,16 @@ static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 		AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
+	rdpsnd_opensles_check_handle(opensles);
 
 	DEBUG_SND("opensles=%p format=%p, latency=%d", opensles, format, latency);
 
 	if (format)
 	{
+		DEBUG_SND("format=%d, cbsize=%d, samples=%d, bits=%d, channels=%d, align=%d",
+			format->wFormatTag, format->cbSize, format->nSamplesPerSec,
+			format->wBitsPerSample,	format->nChannels, format->nBlockAlign);
+
 		opensles->rate = format->nSamplesPerSec;
 		opensles->channels = format->nChannels;
 
@@ -103,10 +160,10 @@ static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 
 			case WAVE_FORMAT_ADPCM:
 			case WAVE_FORMAT_DVI_ADPCM:
-				opensles->format = WAVE_FORMAT_ADPCM;
+				opensles->format = format->wFormatTag;
 				break;
 		}
-
+	
 		opensles->wformat = format->wFormatTag;
 		opensles->block_size = format->nBlockAlign;
 	}
@@ -121,27 +178,34 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 
-	DEBUG_SND("opensles=%p format=%p, latency=%d", opensles, format, latency);
+	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%d",
+			opensles, format, latency, opensles->rate);
 	if (opensles->stream)
 		return;
 
 	opensles->stream = android_OpenAudioDevice(
-		opensles->rate, 0, opensles->channels, opensles->rate * 100);
+		opensles->rate, opensles->channels, opensles->rate);
+	assert(opensles->stream);
+
 	if (!opensles->stream)
 		DEBUG_WARN("android_OpenAudioDevice failed");
 	else
 		rdpsnd_opensles_set_volume(device, opensles->volume);
+
+	rdpsnd_opensles_set_format(device, format, latency);
 }
 
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
+	rdpsnd_opensles_check_handle(opensles);
 
 	DEBUG_SND("opensles=%p", opensles);
 	if (!opensles->stream)
 		return;
 
 	android_CloseAudioDevice(opensles->stream);
+	opensles->stream = NULL;
 }
 
 static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
@@ -149,9 +213,12 @@ static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 
 	DEBUG_SND("opensles=%p", opensles);
+	assert(opensles);
 
+	assert(opensles->device_name);
 	free(opensles->device_name);
 
+	assert(opensles->dsp_context);
 	freerdp_dsp_context_free(opensles->dsp_context);
 
 	free(opensles);
@@ -162,8 +229,13 @@ static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 
-	DEBUG_SND("opensles=%p, format=%p", opensles, format);
-	
+	DEBUG_SND("format=%d, cbsize=%d, samples=%d, bits=%d, channels=%d, align=%d",
+		format->wFormatTag, format->cbSize, format->nSamplesPerSec,
+		format->wBitsPerSample,	format->nChannels, format->nBlockAlign);
+
+	assert(opensles);
+	assert(format);
+
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -178,23 +250,18 @@ static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
 
 		case WAVE_FORMAT_ADPCM:
 		case WAVE_FORMAT_DVI_ADPCM:
-			/*
 			if (format->nSamplesPerSec <= 48000 &&
 				format->wBitsPerSample == 4 &&
 				(format->nChannels == 1 || format->nChannels == 2))
 			{
 				return TRUE;
 			}
-			*/
 			break;
 
 		case WAVE_FORMAT_ALAW:
-			break;
-
 		case WAVE_FORMAT_MULAW:
-			break;
-
 		case WAVE_FORMAT_GSM610:
+		default:
 			break;
 	}
 
@@ -206,11 +273,23 @@ static UINT32 rdpsnd_opensles_get_volume(rdpsndDevicePlugin* device)
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 
 	DEBUG_SND("opensles=%p", opensles);
+	assert(opensles);
 
 	if (opensles->stream)
-		return android_GetOutputVolume(opensles->stream);
-	else
-		return opensles->volume;
+	{
+		const int max = android_GetOutputVolumeMax(opensles->stream);
+		const int rc = android_GetOutputVolume(opensles->stream);
+
+		if (android_GetOutputMute(opensles->stream))
+			opensles->volume = 0;
+		else
+		{
+			const unsigned short vol = rdpsnd_opensles_millibel_to_volume(rc, max);
+			opensles->volume = (vol << 16) | (vol & 0xFFFF);
+		}
+	}
+		
+	return opensles->volume;
 }
 
 static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
@@ -219,74 +298,81 @@ static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	
 	DEBUG_SND("opensles=%p, value=%d", opensles, value);
+	assert(opensles);
 
 	opensles->volume = value;
+
+	return;
 	if (opensles->stream)
-		android_SetOutputVolume(opensles->stream, value);
+	{
+		if (0 == opensles->volume)
+			android_SetOutputMute(opensles->stream, true);
+		else
+		{
+			const int max = android_GetOutputVolumeMax(opensles->stream);
+			const int vol = rdpsnd_opensles_volume_to_millibel(value & 0xFFFF, max);
+
+			android_SetOutputMute(opensles->stream, false);
+			android_SetOutputVolume(opensles->stream, vol);
+		}
+	}
 }
 
 static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 		BYTE *data, int size)
 {
-	BYTE* src;
-	int len;
+	union
+	{
+		BYTE *b;
+		short *s;
+	} src;
+	int ret;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	
 	DEBUG_SND("opensles=%p, data=%p, size=%d", opensles, data, size);
-	assert(opensles);
-	if (!opensles->stream)
+	if (!rdpsnd_opensles_check_handle(opensles))
 		return;
 
 	if (opensles->format == WAVE_FORMAT_ADPCM)
 	{
+		DEBUG_SND("dsp_context=%p, channels=%d, block_size=%d",
+				opensles->dsp_context, opensles->channels, opensles->block_size);
+
 		opensles->dsp_context->decode_ms_adpcm(opensles->dsp_context,
 				data, size, opensles->channels, opensles->block_size);
 
 		size = opensles->dsp_context->adpcm_size;
-		src = opensles->dsp_context->adpcm_buffer;
+		src.b = opensles->dsp_context->adpcm_buffer;
 	}
 	else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
 	{
+		DEBUG_SND("dsp_context=%p, channels=%d, block_size=%d",
+				opensles->dsp_context, opensles->channels, opensles->block_size);
+		
 		opensles->dsp_context->decode_ima_adpcm(opensles->dsp_context,
 				data, size, opensles->channels, opensles->block_size);
 		
 		size = opensles->dsp_context->adpcm_size;
-		src = opensles->dsp_context->adpcm_buffer;
+		src.b = opensles->dsp_context->adpcm_buffer;
 	}
 	else
 	{   
-		src = data;
+		src.b = data;
 	} 
 
-	len = size;
-	while (size > 0)
-	{
-		int ret;
-
-		if (len < 0)
-			break;
-		
-		if (len > size)
-			len = size;
-
-		DEBUG_SND("len=%d, src=%p", len, src);
-		ret = android_AudioOut(opensles->stream, (short*)src, len / 2);
-		if (ret < 0)
-		{
-			DEBUG_WARN("android_AudioOut failed (%d)", ret);
-			break;
-		}
-	
-		DEBUG_SND("foobar XXXXXXXXXXXX opensles=%p, data=%p, size=%d", opensles, data, size);
-		
-		src += len;
-		size -= len;
-	}
+	DEBUG_SND("size=%d, src=%p", size, src.b);
+	assert(0 == size % 2);
+	assert(size > 0);
+	assert(src.b);
+	ret = android_AudioOut(opensles->stream, src.s, size / 2);
+	if (ret < 0)
+		DEBUG_WARN("android_AudioOut failed (%d)", ret);
 }
 
 static void rdpsnd_opensles_start(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
+	rdpsnd_opensles_check_handle(opensles);
 
 	DEBUG_SND("opensles=%p", opensles);
 }
@@ -305,6 +391,9 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
+
+	assert(opensles);
+	assert(args);
 
 	DEBUG_SND("opensles=%p, args=%p", opensles, args);
 
@@ -368,7 +457,7 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	if (!opensles->device_name)
 		opensles->device_name = _strdup("default");
 
-	opensles->rate = 22050;
+	opensles->rate = 44100;
 	opensles->channels = 2;
 	opensles->format = WAVE_FORMAT_ADPCM;
 
