@@ -103,15 +103,6 @@ enum IRP_MN
 };
 
 /* DR_CREATE_REQ.CreateDisposition */
-enum FILE_CREATE_DISPOSITION
-{
-	FILE_SUPERSEDE = 0x00000000,
-	FILE_OPEN = 0x00000001,
-	FILE_CREATE = 0x00000002,
-	FILE_OPEN_IF = 0x00000003,
-	FILE_OVERWRITE = 0x00000004,
-	FILE_OVERWRITE_IF = 0x00000005
-};
 
 /* DR_CREATE_REQ.CreateOptions [MS-SMB2] */
 
@@ -287,50 +278,6 @@ enum FILE_FS_DEVICE_FLAG
 	FILE_DEVICE_IS_MOUNTED = 0x00000020,
 	FILE_VIRTUAL_VOLUME = 0x00000040,
 	FILE_DEVICE_SECURE_OPEN = 0x00000100
-};
-
-enum FILE_INFORMATION_CLASS
-{
-	FileDirectoryInformation = 1,
-	FileFullDirectoryInformation,
-	FileBothDirectoryInformation,
-	FileBasicInformation,
-	FileStandardInformation,
-	FileInternalInformation,
-	FileEaInformation,
-	FileAccessInformation,
-	FileNameInformation,
-	FileRenameInformation,
-	FileLinkInformation,
-	FileNamesInformation,
-	FileDispositionInformation,
-	FilePositionInformation,
-	FileFullEaInformation,
-	FileModeInformation,
-	FileAlignmentInformation,
-	FileAllInformation,
-	FileAllocationInformation,
-	FileEndOfFileInformation,
-	FileAlternateNameInformation,
-	FileStreamInformation,
-	FilePipeInformation,
-	FilePipeLocalInformation,
-	FilePipeRemoteInformation,
-	FileMailslotQueryInformation,
-	FileMailslotSetInformation,
-	FileCompressionInformation,
-	FileObjectIdInformation,
-	FileUnknownInformation1,
-	FileMoveClusterInformation,
-	FileQuotaInformation,
-	FileReparsePointInformation,
-	FileNetworkOpenInformation,
-	FileAttributeTagInformation,
-	FileTrackingInformation,
-	FileIdBothDirectoryInformation,
-	FileIdFullDirectoryInformation,
-	FileValidDataLengthInformation,
-	FileShortNameInformation
 };
 
 enum FILE_FS_INFORMATION_CLASS

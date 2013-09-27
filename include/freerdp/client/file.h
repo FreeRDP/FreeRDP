@@ -129,6 +129,10 @@ struct rdp_file
 	LPSTR DrivesToRedirect; /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
 	LPSTR WinPosStr; /* winposstr */
+
+	int argc;
+	char** argv;
+	int argSize;
 };
 
 typedef struct rdp_file rdpFile;

@@ -5,6 +5,7 @@
 
 int TestNtCurrentTeb(int argc, char* argv[])
 {
+#ifndef _WIN32
 	PTEB teb;
 
 	teb = NtCurrentTeb();
@@ -14,7 +15,7 @@ int TestNtCurrentTeb(int argc, char* argv[])
 		printf("NtCurrentTeb() returned NULL\n");
 		return -1;
 	}
-
+#endif
 	return 0;
 }
 

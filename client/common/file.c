@@ -42,7 +42,7 @@
 
 #include <winpr/crt.h>
 
-#define DEBUG_CLIENT_FILE	1
+//#define DEBUG_CLIENT_FILE	1
 
 static BYTE BOM_UTF16_LE[2] = { 0xFF, 0xFE };
 static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
@@ -269,6 +269,18 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value)
 	return TRUE;
 }
 
+void freerdp_client_add_option(rdpFile* file, char* option)
+{
+	while ((file->argc + 1) > file->argSize)
+	{
+		file->argSize *= 2;
+		file->argv = (char**) realloc(file->argv, file->argSize * sizeof(char*));
+	}
+
+	file->argv[file->argc] = _strdup(option);
+	(file->argc)++;
+}
+
 void freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, WCHAR* name, WCHAR* value)
 {
 	int length;
@@ -296,6 +308,21 @@ void freerdp_client_parse_rdp_file_string_ascii(rdpFile* file, char* name, char*
 	freerdp_client_rdp_file_set_string(file, name, value);
 }
 
+void freerdp_client_parse_rdp_file_option_unicode(rdpFile* file, WCHAR* option)
+{
+	char* optionA = NULL;
+
+	ConvertFromUnicode(CP_UTF8, 0, option, -1, &optionA, 0, NULL, NULL);
+	freerdp_client_add_option(file, optionA);
+
+	free(optionA);
+}
+
+void freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* option)
+{
+	freerdp_client_add_option(file, option);
+}
+
 BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, size_t size)
 {
 	int length;
@@ -316,6 +343,12 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, siz
 		{
 			beg = line;
 			end = &line[length - 1];
+
+			if (beg[0] == '/')
+			{
+				freerdp_client_parse_rdp_file_option_ascii(file, line);
+				goto next_line; /* FreeRDP option */
+			}
 
 			d1 = strchr(line, ':');
 
@@ -382,6 +415,13 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, BYTE* buffer, s
 		{
 			beg = line;
 			end = &line[length - 1];
+
+			if (beg[0] == '/')
+			{
+				/* FreeRDP option */
+				freerdp_client_parse_rdp_file_option_unicode(file, line);
+				goto next_line;
+			}
 
 			d1 = _wcschr(line, ':');
 
@@ -533,16 +573,16 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* 
 	return TRUE;
 }
 
-
 BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode)
 {
-    int rc = 0;
+	int rc = 0;
 	char* buffer;
 	int len, len2;
 	FILE* fp = NULL;
 	WCHAR* unicodestr = NULL;
 
 	len = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
+
 	if (len <= 0)
 	{
 		fprintf(stderr, "freerdp_client_write_rdp_file: Error determining buffer size.\n");
@@ -551,9 +591,11 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode
 
 	buffer = (char*) malloc((len + 1) * sizeof(char));
 	len2 = freerdp_client_write_rdp_file_buffer(file, buffer, len + 1);
+
 	if (len2 == len)
 	{
 		fp = fopen(name, "w+b");
+
 		if (fp != NULL)
 		{
 			if (unicode)
@@ -564,22 +606,22 @@ BOOL freerdp_client_write_rdp_file(rdpFile* file, const char* name, BOOL unicode
 				fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp);
 				fwrite(unicodestr, 2, len, fp);
 
-                free(unicodestr);
+				free(unicodestr);
 			}
 			else
 			{
 				fwrite(buffer, 1, len, fp);
 			}
 
-            rc = fflush(fp);
-            rc = fclose(fp);
+			rc = fflush(fp);
+			rc = fclose(fp);
 		}
 	}
 
 	if (buffer != NULL)
 		free(buffer);
 
-    return (rc == 0);
+	return (rc == 0);
 }
 
 #define WRITE_RDP_FILE_DECLARE(_file, _buffer, _size) \
@@ -665,7 +707,6 @@ size_t freerdp_client_write_rdp_file_buffer(rdpFile* file, char* buffer, size_t 
 	WRITE_RDP_FILE_VALUE_RETURN
 }
 
-
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
 	if (~((size_t) file->Domain))
@@ -679,12 +720,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_parse_username(file->Username, &user, &domain);
 		freerdp_set_param_string(settings, FreeRDP_Username, user);
 
-		if (domain != NULL)
+		if (domain)
 			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
 
 		if (user)
 			free(user);
-		if(domain)
+
+		if (domain)
 			free(domain);
 	}
 
@@ -712,10 +754,50 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
 	
+	if (~file->ScreenModeId)
+	{
+		/**
+		 * Screen Mode Id:
+		 * http://technet.microsoft.com/en-us/library/ff393692/
+		 *
+		 * This setting corresponds to the selection in the Display
+		 * configuration slider on the Display tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * 0: The remote session will appear in a window.
+		 * 1: The remote session will appear full screen.
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
+				(file->ScreenModeId == 1) ? TRUE : FALSE);
+	}
+
 	if (~((size_t) file->LoadBalanceInfo))
 	{
 		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
 		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+	}
+
+	if (~file->AuthenticationLevel)
+	{
+		/**
+		 * Authentication Level:
+		 * http://technet.microsoft.com/en-us/library/ff393709/
+		 *
+		 * This setting corresponds to the selection in the If server authentication
+		 * fails drop-down list on the Advanced tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * 0: If server authentication fails, connect to the computer without warning (Connect and don’t warn me).
+		 * 1: If server authentication fails, do not establish a connection (Do not connect).
+		 * 2: If server authentication fails, show a warning and allow me to connect or refuse the connection (Warn me).
+		 * 3: No authentication requirement is specified.
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_IgnoreCertificate,
+				(file->AuthenticationLevel == 0) ? TRUE : FALSE);
 	}
 
 	if (~file->ConnectionType)
@@ -737,6 +819,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			freerdp_set_param_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE);
 		}
 	}
+
+	if (~file->Compression)
+		freerdp_set_param_bool(settings, FreeRDP_CompressionEnabled, file->Compression);
 
 	if (~((size_t) file->GatewayHostname))
 		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
@@ -774,6 +859,106 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->UseMultiMon)
 		freerdp_set_param_bool(settings, FreeRDP_UseMultimon, file->UseMultiMon);
 
+	if (~file->AllowFontSmoothing)
+		freerdp_set_param_bool(settings, FreeRDP_AllowFontSmoothing, file->AllowFontSmoothing);
+	if (~file->DisableWallpaper)
+		freerdp_set_param_bool(settings, FreeRDP_DisableWallpaper, file->DisableWallpaper);
+	if (~file->DisableFullWindowDrag)
+		freerdp_set_param_bool(settings, FreeRDP_DisableFullWindowDrag, file->DisableFullWindowDrag);
+	if (~file->DisableMenuAnims)
+		freerdp_set_param_bool(settings, FreeRDP_DisableMenuAnims, file->DisableMenuAnims);
+	if (~file->DisableThemes)
+		freerdp_set_param_bool(settings, FreeRDP_DisableThemes, file->DisableThemes);
+	if (~file->AllowDesktopComposition)
+		freerdp_set_param_bool(settings, FreeRDP_DisableCursorShadow, file->AllowDesktopComposition);
+
+	if (~file->BitmapCachePersistEnable)
+		freerdp_set_param_bool(settings, FreeRDP_BitmapCachePersistEnabled, file->BitmapCachePersistEnable);
+
+	if (~file->DisableRemoteAppCapsCheck)
+		freerdp_set_param_bool(settings, FreeRDP_DisableRemoteAppCapsCheck, file->DisableRemoteAppCapsCheck);
+
+	if (~file->AutoReconnectionEnabled)
+		freerdp_set_param_bool(settings, FreeRDP_AutoReconnectionEnabled, file->AutoReconnectionEnabled);
+	if (~file->AutoReconnectMaxRetries)
+		freerdp_set_param_uint32(settings, FreeRDP_AutoReconnectMaxRetries, file->AutoReconnectMaxRetries);
+
+	if (~file->RedirectSmartCards)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSmartCards, file->RedirectSmartCards);
+
+	if (~file->RedirectClipboard)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectClipboard, file->RedirectClipboard);
+
+	if (~file->RedirectPrinters)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectPrinters, file->RedirectPrinters);
+
+	if (~file->RedirectDrives)
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, file->RedirectDrives);
+
+	if (~file->RedirectPosDevices)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSerialPorts, file->RedirectComPorts);
+		freerdp_set_param_bool(settings, FreeRDP_RedirectParallelPorts, file->RedirectComPorts);
+	}
+
+	if (~file->RedirectComPorts)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_RedirectSerialPorts, file->RedirectComPorts);
+		freerdp_set_param_bool(settings, FreeRDP_RedirectParallelPorts, file->RedirectComPorts);
+	}
+
+	if (~file->RedirectDirectX)
+	{
+		/* What is this?! */
+	}
+
+	if (~((size_t) file->DevicesToRedirect))
+	{
+		/**
+		 * Devices to redirect:
+		 * http://technet.microsoft.com/en-us/library/ff393728/
+		 *
+		 * This setting corresponds to the selections for Other supported Plug and Play
+		 * (PnP) devices under More on the Local Resources tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * '*':
+		 * 	Redirect all supported Plug and Play devices.
+		 *
+		 * 'DynamicDevices':
+		 * 	Redirect any supported Plug and Play devices that are connected later.
+		 *
+		 * The hardware ID for the supported Plug and Play device:
+		 * 	Redirect the specified supported Plug and Play device.
+		 *
+		 * Examples:
+		 * 	devicestoredirect:s:*
+		 * 	devicestoredirect:s:DynamicDevices
+		 * 	devicestoredirect:s:USB\VID_04A9&PID_30C1\6&4BD985D&0&2;,DynamicDevices
+		 *
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
+
+	if (~((size_t) file->DrivesToRedirect))
+	{
+		/*
+		 * Drives to redirect:
+		 *
+		 * Very similar to DevicesToRedirect, but can contain a
+		 * comma-separated list of drive letters to redirect.
+		 */
+
+		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
+
+	if (file->argc > 1)
+	{
+		freerdp_client_parse_command_line_arguments(file->argc, file->argv, settings);
+	}
+
 	return TRUE;
 }
 
@@ -782,12 +967,35 @@ rdpFile* freerdp_client_rdp_file_new()
 	rdpFile* file;
 
 	file = (rdpFile*) malloc(sizeof(rdpFile));
-	FillMemory(file, sizeof(rdpFile), 0xFF);
+
+	if (file)
+	{
+		FillMemory(file, sizeof(rdpFile), 0xFF);
+
+		file->argc = 0;
+		file->argSize = 32;
+		file->argv = (char**) malloc(file->argSize * sizeof(char*));
+
+		freerdp_client_add_option(file, "freerdp");
+	}
 
 	return file;
 }
 
 void freerdp_client_rdp_file_free(rdpFile* file)
 {
-	free(file);
+	int i;
+
+	if (file)
+	{
+		if (file->argv)
+		{
+			for (i = 0; i < file->argc; i++)
+				free(file->argv[i]);
+
+			free(file->argv);
+		}
+
+		free(file);
+	}
 }

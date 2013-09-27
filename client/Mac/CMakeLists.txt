@@ -151,7 +151,7 @@ endif()
 						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
-	foreach(xib ${${MODULE_NAME}_XIBS})
+	foreach(xib ${${MODULE_PREFIX}_XIBS})
 		get_filename_component(XIB_WE ${xib} NAME_WE)
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 

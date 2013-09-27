@@ -1046,7 +1046,7 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
 	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
 	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
-	ALIGN64 DWORD DisableRemoteAppCapsCheck; /* 2121 */
+	ALIGN64 BOOL DisableRemoteAppCapsCheck; /* 2121 */
 	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
 	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
 	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2124 */
@@ -1316,6 +1316,9 @@ FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
+
+FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
+FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);

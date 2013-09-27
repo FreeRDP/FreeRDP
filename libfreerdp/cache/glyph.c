@@ -48,6 +48,7 @@ void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 
 	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 	{
+		/* Contrary to fragments, the offset is added before the glyph. */
 		(*index)++;
 		offset = data[*index];
 
@@ -111,17 +112,18 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 
 				if (fragments != NULL)
 				{
+					for (n = 0; n < (int) size; n++)
+					{
+						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
+					}
+
+					/* Contrary to glyphs, the offset is added after the fragment. */
 					if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 					{
 						if (flAccel & SO_VERTICAL)
 							y += data[index + 2];
 						else
 							x += data[index + 2];
-					}
-
-					for (n = 0; n < (int) size; n++)
-					{
-						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc, flAccel);
 					}
 				}
 
@@ -277,7 +279,7 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 	if (y == -32768)
 		y = fast_glyph->bkTop;
 
-	if (fast_glyph->cbData > 1)
+	if (fast_glyph->cbData > 1 && NULL != fast_glyph->glyphData.aj)
 	{
 		/* got option font that needs to go into cache */
 		glyph_data = &fast_glyph->glyphData;
@@ -288,7 +290,8 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph)
 		glyph->cx = glyph_data->cx;
 		glyph->cy = glyph_data->cy;
 		glyph->cb = glyph_data->cb;
-		glyph->aj = glyph_data->aj;
+		glyph->aj = malloc(glyph_data->cb);
+		CopyMemory(glyph->aj, glyph_data->aj, glyph->cb);
 		Glyph_New(context, glyph);
 
 		glyph_cache_put(cache->glyph, fast_glyph->cacheId, fast_glyph->data[0], glyph);
@@ -368,16 +371,14 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index)
 
 	if (index > glyph_cache->glyphCache[id].number)
 	{
-		fprintf(stderr, "invalid glyph cache index: %d in cache id: %d\n", index, id);
+		fprintf(stderr, "index %d out of range for cache id: %d\n", index, id);
 		return NULL;
 	}
 
 	glyph = glyph_cache->glyphCache[id].entries[index];
 
 	if (glyph == NULL)
-	{
-		fprintf(stderr, "invalid glyph at cache index: %d in cache id: %d\n", index, id);
-	}
+		fprintf(stderr, "no glyph found at cache index: %d in cache id: %d\n", index, id);
 
 	return glyph;
 }
@@ -419,9 +420,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyph_cache, UINT32 index, UINT32*
 	*size = (BYTE) glyph_cache->fragCache.entries[index].size;
 
 	if (fragment == NULL)
-	{
 		fprintf(stderr, "invalid glyph fragment at index:%d\n", index);
-	}
 
 	return fragment;
 }
@@ -436,9 +435,7 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyph_cache, UINT32 index, UINT32 s
 	glyph_cache->fragCache.entries[index].size = size;
 
 	if (prevFragment != NULL)
-	{
 		free(prevFragment);
-	}
 }
 
 void glyph_cache_register_callbacks(rdpUpdate* update)
