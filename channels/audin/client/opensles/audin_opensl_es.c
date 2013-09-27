@@ -172,6 +172,8 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* f
 
 	switch (format->wFormatTag)
 	{
+		/* TODO: Deactivated, untested */
+#if 0
 		case WAVE_FORMAT_PCM: /* PCM */
 			if (format->cbSize == 0 &&
 				(format->nSamplesPerSec <= 48000) &&
@@ -181,6 +183,8 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* f
 				return TRUE;
 			}
 			break;
+#endif
+			/* TODO: Deactivated format, does not work, find out why */
 //		case WAVE_FORMAT_ADPCM: /* IMA ADPCM */
 		case WAVE_FORMAT_DVI_ADPCM: 
 			if ((format->nSamplesPerSec <= 48000) &&
