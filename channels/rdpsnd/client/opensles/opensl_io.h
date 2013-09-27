@@ -58,7 +58,7 @@ typedef struct opensl_stream {
   unsigned int outchannels;
   unsigned int   sr;
 
-	HANDLE next;
+	wQueue *queue;
 } OPENSL_STREAM;
 
   /*

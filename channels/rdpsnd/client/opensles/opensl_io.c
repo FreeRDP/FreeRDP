@@ -241,7 +241,7 @@ OPENSL_STREAM *android_OpenAudioDevice(int sr, int outchannels, int bufferframes
   }  
 
   p->time = 0.;
-	p->next = CreateEvent(NULL, TRUE, FALSE, NULL);
+	p->queue = Queue_New(TRUE, -1, -1);
   
 	return p;
 }
@@ -253,7 +253,7 @@ void android_CloseAudioDevice(OPENSL_STREAM *p){
     return;
 
   openSLDestroyEngine(p);
-	CloseHandle(p->next);
+	Queue_Free(p->queue);
 
   free(p);
 }
@@ -269,9 +269,10 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
   OPENSL_STREAM *p = (OPENSL_STREAM *) context;
 
 	assert(p);
-	assert(p->next);
+	assert(p->queue);
 
-	SetEvent(p->next);
+	void *data = Queue_Dequeue(p->queue);
+	free(data);
 }
 
 // puts a buffer of size samples to the device
@@ -281,9 +282,10 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 	assert(buffer);
 	assert(size > 0);
 
+	void *data = calloc(size, sizeof(short));
+	memcpy(data, buffer, size * sizeof(short));
  	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
-	 	buffer, sizeof(short) * size);
-	WaitForSingleObject(p->next, INFINITE);
+	 	data, sizeof(short) * size);
   
 	return size;
 }
