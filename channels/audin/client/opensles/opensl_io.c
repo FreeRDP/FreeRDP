@@ -134,9 +134,27 @@ static SLresult openSLRecOpen(OPENSL_STREAM *p){
     else
 			speakers = SL_SPEAKER_FRONT_CENTER;
     SLDataLocator_AndroidSimpleBufferQueue loc_bq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
-    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, channels, sr,
-				   SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
-				   speakers, SL_BYTEORDER_LITTLEENDIAN};
+    SLDataFormat_PCM format_pcm;
+	
+		format_pcm.formatType = SL_DATAFORMAT_PCM;
+		format_pcm.numChannels = channels;
+		format_pcm.samplesPerSec = sr;
+		format_pcm.channelMask = speakers;
+		format_pcm.endianness = SL_BYTEORDER_LITTLEENDIAN; 
+		
+		if (16 == p->bits_per_sample)
+		{
+			format_pcm.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+			format_pcm.containerSize = 16;
+		}
+		else if (8 == p->bits_per_sample)
+		{
+			format_pcm.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_8;
+			format_pcm.containerSize = 8;
+		}
+		else
+			assert(0);
+
     SLDataSink audioSnk = {&loc_bq, &format_pcm};
 
     // create audio recorder
@@ -211,7 +229,7 @@ static void openSLDestroyEngine(OPENSL_STREAM *p)
 
 // open the android audio device for input 
 OPENSL_STREAM *android_OpenRecDevice(char *name, int sr, int inchannels,
-		int bufferframes)
+		int bufferframes, int bits_per_sample)
 {
   
   OPENSL_STREAM *p;
@@ -221,18 +239,26 @@ OPENSL_STREAM *android_OpenRecDevice(char *name, int sr, int inchannels,
   p->inchannels = inchannels;
   p->sr = sr;
 	p->queue = Queue_New(TRUE, -1, -1);
+	p->buffersize = bufferframes;
+	p->bits_per_sample = bits_per_sample;
 
-  if(openSLCreateEngine(p) != SL_RESULT_SUCCESS) {
+	if ((p->bits_per_sample != 8) && (p->bits_per_sample != 16))
+	{
+    android_CloseRecDevice(p);
+		return NULL;
+	}
+	
+  if(openSLCreateEngine(p) != SL_RESULT_SUCCESS)
+	{
     android_CloseRecDevice(p);
     return NULL;
   }
 
-  if(openSLRecOpen(p) != SL_RESULT_SUCCESS) {
+  if(openSLRecOpen(p) != SL_RESULT_SUCCESS)
+	{
     android_CloseRecDevice(p);
     return NULL;
   } 
-
-	p->buffersize = bufferframes;
 
   return p;
 }
@@ -245,11 +271,15 @@ void android_CloseRecDevice(OPENSL_STREAM *p)
   if (p == NULL)
     return;
 
-	while (Queue_Count(p->queue) > 0)
+	if (p->queue)
 	{
-		queue_element *e = Queue_Dequeue(p->queue);
-		free(e->data);
-		free(e);
+		while (Queue_Count(p->queue) > 0)
+		{
+			queue_element *e = Queue_Dequeue(p->queue);
+			free(e->data);
+			free(e);
+		}
+		Queue_Free(p->queue);
 	}
 
 	if (p->next)
@@ -258,7 +288,6 @@ void android_CloseRecDevice(OPENSL_STREAM *p)
 		free(p->next);
 	}
 
-	Queue_Free(p->queue);
   openSLDestroyEngine(p);
 
   free(p);
@@ -276,9 +305,9 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 	assert(p);
 	assert(p->queue);
 
-	DEBUG_DVC("Signalled");
+	printf("Signalled");
 	e = calloc(1, sizeof(queue_element));
-	e->data = calloc(p->buffersize, sizeof(short));
+	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
 	e->size = p->buffersize;
 
 	if (p->next)
@@ -306,19 +335,21 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 		bqRecorderCallback(p->recorderBufferQueue, p);
 	}
 
+	WaitForSingleObject(p->queue->event, INFINITE);
 	e = Queue_Dequeue(p->queue);
 	if (!e)
+	{
+		DEBUG_WARN("[ERROR] got e=%p from queue", e);
 		return -1;
+	}
 
-	rc = e->size;
+	rc = (e->size < size) ? e->size : size;
 	assert(p->buffersize == e->size);
 
-	memcpy(buffer, e->data, size > e->size ? e->size : size);
+	memcpy(buffer, e->data, rc * sizeof(short));
 	free(e->data);
 	free(e);
 
-	DEBUG_DVC("yay!");
-
-  return size;
+  return rc;
 }
 

@@ -324,8 +324,6 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 					pulse->sample_spec.channels, pulse->block_size);
 				encoded_data = pulse->dsp_context->adpcm_buffer;
 				encoded_size = pulse->dsp_context->adpcm_size;
-				DEBUG_DVC("encoded %d to %d",
-					pulse->buffer_frames * pulse->bytes_per_frame, encoded_size);
 			}
 			else
 			{
@@ -333,6 +331,9 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 				encoded_size = pulse->buffer_frames * pulse->bytes_per_frame;
 			}
 
+			DEBUG_DVC("encoded %d [%d] to %d [%X]",
+				pulse->buffer_frames, pulse->bytes_per_frame, encoded_size,
+				pulse->format);
 			ret = pulse->receive(encoded_data, encoded_size, pulse->user_data);
 			pulse->buffer_frames = 0;
 			if (!ret)

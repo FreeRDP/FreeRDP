@@ -62,8 +62,9 @@ typedef struct opensl_stream {
   SLAndroidSimpleBufferQueueItf recorderBufferQueue;
 
   unsigned int inchannels;
-  unsigned int   sr;
+  unsigned int sr;
 	unsigned int buffersize;
+	unsigned int bits_per_sample;
 
 	wQueue *queue;
 	queue_element *next;
@@ -74,7 +75,7 @@ typedef struct opensl_stream {
   in frames. Returns a handle to the OpenSL stream
   */
   OPENSL_STREAM* android_OpenRecDevice(char *name, int sr, int inchannels,
-			int bufferframes);
+			int bufferframes, int bits_per_sample);
   /* 
   Close the audio device 
   */
