@@ -288,6 +288,18 @@ void android_CloseRecDevice(OPENSL_STREAM *p)
 		free(p->next);
 	}
 
+	if (p->middle)
+	{
+		free(p->middle->data);
+		free(p->middle);
+	}
+
+	if (p->prep)
+	{
+		free(p->prep->data);
+		free(p->prep);
+	}
+
   openSLDestroyEngine(p);
 
   free(p);
@@ -310,12 +322,18 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
 	e->size = p->buffersize;
 
-	if (p->next)
-		Queue_Enqueue(p->queue, p->next);
+	p->next = p->middle;
+	p->middle = p->prep;
+	p->prep = e;
 
   (*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
 			e->data, e->size);
-	p->next = e;
+
+	if (p->next)
+	{
+		Queue_Enqueue(p->queue, p->next);
+		p->next = NULL;
+	}
 }
  
 // gets a buffer of size samples from the device
@@ -329,7 +347,7 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	assert(size > 0);
 
 	/* Initial trigger for the queue. */
-	if (!p->next)
+	if (!p->prep)
 	{
     (*p->recorderRecord)->SetRecordState(p->recorderRecord, SL_RECORDSTATE_RECORDING);
 		bqRecorderCallback(p->recorderBufferQueue, p);

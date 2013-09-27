@@ -67,6 +67,8 @@ typedef struct opensl_stream {
 	unsigned int bits_per_sample;
 
 	wQueue *queue;
+	queue_element *prep;
+	queue_element *middle;
 	queue_element *next;
 } OPENSL_STREAM;
 
