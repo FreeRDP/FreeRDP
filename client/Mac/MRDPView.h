@@ -76,8 +76,6 @@
 	int kdcapslock;
 
     BOOL initialized;
-    
-    NSImageView* imageView;
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
@@ -92,7 +90,6 @@
 
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
-- (void) setViewSize : (int) w : (int) h;
 
 @property (assign) int is_connected;
 

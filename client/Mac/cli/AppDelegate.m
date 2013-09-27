@@ -9,11 +9,14 @@
 #import "AppDelegate.h"
 #import "MacFreeRDP/mfreerdp.h"
 #import "MacFreeRDP/mf_client.h"
+#import "MacFreeRDP/MRDPView.h"
 
 static AppDelegate* _singleDelegate = nil;
 void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
 void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e);
 void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e);
+int mac_client_start(rdpContext* context);
+void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 @implementation AppDelegate
 
@@ -103,12 +106,24 @@ void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
 	RdpClientEntry(&clientEntryPoints);
+	
+	clientEntryPoints.ClientStart = mac_client_start;
 
 	context = freerdp_client_context_new(&clientEntryPoints);
 }
 
 - (void) ReleaseContext
 {
+	mfContext* mfc;
+	MRDPView* view;
+	
+	mfc = (mfContext*) context;
+	view = (MRDPView*) mfc->view;
+	
+	[view releaseResources];
+	[view release];
+	 mfc->view = nil;
+	
 	freerdp_client_context_free(context);
 	context = nil;
 }
@@ -156,6 +171,9 @@ void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
         {
             [[_singleDelegate->window contentView] addSubview:mfc->view];
         }
+		
+		
+		mac_set_view_size(context, mfc->view);
     }
 }
 
@@ -201,4 +219,55 @@ void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e)
 		[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:TRUE];
 		[message release];
 	}
+}
+
+
+void mac_set_view_size(rdpContext* context, MRDPView* view)
+{
+	// compute difference between window and client area
+	NSRect outerRect = [[view window] frame];
+	NSRect innerRect = [view frame];
+	
+	int widthDiff = outerRect.size.width - innerRect.size.width;
+	int heightDiff = outerRect.size.height - innerRect.size.height;
+	
+	NSSize desktopSize;
+	desktopSize.width = context->settings->DesktopWidth;
+	desktopSize.height = context->settings->DesktopHeight;
+	
+	// we are not in RemoteApp mode, disable resizing
+	outerRect.size.width = desktopSize.width + widthDiff;
+	outerRect.size.height = desktopSize.height + heightDiff;
+	[[view window] setMaxSize:outerRect.size];
+	[[view window] setMinSize:outerRect.size];
+	
+    @try
+    {
+		[[view window] setFrame:outerRect display:YES];
+    }
+    @catch (NSException * e) {
+		NSLog(@"Exception: %@", e);
+    }
+    @finally {
+    }
+	
+	// set client area to specified dimensions
+	innerRect.size.width = desktopSize.width;
+	innerRect.size.height = desktopSize.height;
+	[view setFrame:innerRect];
+}
+
+int mac_client_start(rdpContext* context)
+{
+	mfContext* mfc;
+	MRDPView* view;
+	
+	mfc = (mfContext*) context;
+	view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, context->settings->DesktopWidth, context->settings->DesktopHeight)];
+	mfc->view = view;
+	
+	[view rdpStart:context];
+	mac_set_view_size(context, view);
+	
+	return 0;
 }

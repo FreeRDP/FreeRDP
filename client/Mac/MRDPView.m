@@ -138,7 +138,6 @@ struct rgba_data
 	e.embed = TRUE;
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
-    [self setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
 
     mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
@@ -290,8 +289,6 @@ DWORD mac_client_thread(void* param)
 {
     self->currentCursor = cursor;
     [[self window] invalidateCursorRectsForView:self];
-    
-    [imageView setImage:[currentCursor image]];
 }
 
 
@@ -703,19 +700,19 @@ DWORD mac_client_thread(void* param)
 		return;
 
 	if (self->bitmap_context)
-	{
+    {
 		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 
-		CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-		CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+        CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+        CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
-		CGImageRelease(cgImage);
-	}
+        CGImageRelease(cgImage);
+    }
 	else
 	{
 		// just clear the screen with black
-		[[NSColor redColor] set];
+		[[NSColor blackColor] set];
 		NSRectFill([self bounds]);
 	}
 }
@@ -741,41 +738,6 @@ DWORD mac_client_thread(void* param)
 			cliprdr_send_supported_format_list(instance);
 		}
 	}
-}
-
-- (void) setViewSize : (int) w : (int) h
-{
-	// store current dimensions
-	width = w;
-	height = h;
-	
-	// compute difference between window and client area
-	NSRect outerRect = [[self window] frame];
-	NSRect innerRect = [self frame];
-	
-	int widthDiff = outerRect.size.width - innerRect.size.width;
-	int heightDiff = outerRect.size.height - innerRect.size.height;
-	
-	// we are not in RemoteApp mode, disable resizing
-	outerRect.size.width = w + widthDiff;
-	outerRect.size.height = h + heightDiff;
-	[[self window] setMaxSize:outerRect.size];
-	[[self window] setMinSize:outerRect.size];
-
-    @try
-    {
-        [[self window] setFrame:outerRect display:YES];
-    }
-    @catch (NSException * e) {
-       NSLog(@"Exception: %@", e);
-    }
-    @finally {
-    }
-
-	// set client area to specified dimensions
-	innerRect.size.width = w;
-	innerRect.size.height = h;
-	[self setFrame:innerRect];
 }
 
 /************************************************************************
@@ -1134,7 +1096,7 @@ void mac_end_paint(rdpContext* context)
 		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y - 1;
 		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w + 1;
 		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h + 1;
-		windows_to_apple_cords(mfc->view, &drawRect);
+        windows_to_apple_cords(mfc->view, &drawRect);
 		[view setNeedsDisplayInRect:drawRect];
 	}
 	
