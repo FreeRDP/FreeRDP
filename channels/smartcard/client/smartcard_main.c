@@ -315,7 +315,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i, length, ck;
+	int length, ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 
