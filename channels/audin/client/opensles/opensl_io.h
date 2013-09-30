@@ -68,7 +68,6 @@ typedef struct opensl_stream {
 
 	wQueue *queue;
 	queue_element *prep;
-	queue_element *middle;
 	queue_element *next;
 } OPENSL_STREAM;
 

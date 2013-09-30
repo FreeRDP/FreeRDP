@@ -74,6 +74,7 @@ static void* audin_opensles_thread_func(void* arg)
 		BYTE *b;
 	} buffer;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) arg;
+	const size_t raw_size = opensles->frames_per_packet * opensles->bytes_per_channel; 
 
 	DEBUG_DVC("opensles=%p", opensles);
 	
@@ -83,8 +84,8 @@ static void* audin_opensles_thread_func(void* arg)
 	assert(opensles->stopEvent);
 	assert(opensles->stream);
 
-	buffer.v = calloc(opensles->bytes_per_channel, opensles->frames_per_packet);
-	ZeroMemory(buffer.v, opensles->frames_per_packet);
+	buffer.v = malloc(raw_size);
+	ZeroMemory(buffer.v, raw_size);
 	freerdp_dsp_context_reset_adpcm(opensles->dsp_context);
 
 	while (!(WaitForSingleObject(opensles->stopEvent, 0) == WAIT_OBJECT_0))
@@ -92,19 +93,18 @@ static void* audin_opensles_thread_func(void* arg)
 		size_t encoded_size;
 		void *encoded_data;
 
-		int rc = android_RecIn(opensles->stream, buffer.s,
-				opensles->frames_per_packet);
+		int rc = android_RecIn(opensles->stream, buffer.s, raw_size);
 		if (rc < 0)
 		{
 			DEBUG_WARN("android_RecIn %d", rc);
 			continue;
 		}
 
+		assert(rc == raw_size);
 		if (opensles->format == WAVE_FORMAT_ADPCM)
 		{
 			opensles->dsp_context->encode_ms_adpcm(opensles->dsp_context,
-				buffer.b, rc * opensles->bytes_per_channel,
-				opensles->channels, opensles->block_size);
+				buffer.b, rc, opensles->channels, opensles->block_size);
 
 			encoded_data = opensles->dsp_context->adpcm_buffer;
 			encoded_size = opensles->dsp_context->adpcm_size;
@@ -112,7 +112,7 @@ static void* audin_opensles_thread_func(void* arg)
 		else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
 		{
 			opensles->dsp_context->encode_ima_adpcm(opensles->dsp_context,
-				buffer.b, rc * opensles->bytes_per_channel,
+				buffer.b, rc,
 				opensles->channels, opensles->block_size);
 
 			encoded_data = opensles->dsp_context->adpcm_buffer;
@@ -121,11 +121,9 @@ static void* audin_opensles_thread_func(void* arg)
 		else
 		{
 			encoded_data = buffer.v;
-			encoded_size = rc * opensles->bytes_per_channel;
+			encoded_size = rc;
 		}
 
-		DEBUG_DVC("encoded %d [%d] to %d [%X]", rc,
-				opensles->bytes_per_channel, encoded_size, opensles->format);
 		rc = opensles->receive(encoded_data, encoded_size, opensles->user_data);
 		if (!rc)
 			break;
@@ -252,8 +250,8 @@ static void audin_opensles_set_format(IAudinDevice* device,
 			break;
 
 		default:
-			DEBUG_WARN("Encoding '%s' [%08X] not supported",
-				rdpsnd_get_audio_tag_string(format->wFormatTag),
+			DEBUG_WARN("Encoding '%d' [%08X] not supported",
+				(format->wFormatTag),
 				format->wFormatTag); 
 			return;
 	}

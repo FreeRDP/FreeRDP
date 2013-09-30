@@ -288,12 +288,6 @@ void android_CloseRecDevice(OPENSL_STREAM *p)
 		free(p->next);
 	}
 
-	if (p->middle)
-	{
-		free(p->middle->data);
-		free(p->middle);
-	}
-
 	if (p->prep)
 	{
 		free(p->prep->data);
@@ -315,37 +309,21 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 	DEBUG_DVC("p=%p", p);
 
 	assert(p);
+	assert(p->next);
+	assert(p->prep);
 	assert(p->queue);
 
-	printf("Signalled");
 	e = calloc(1, sizeof(queue_element));
 	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
-	e->size = p->buffersize;
+	e->size = p->buffersize * p->bits_per_sample / 8;
 
-	/* Initial fill up. */
-	if (!p->middle)
-	{
-		p->prep = e;
-  	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
-			e->data, e->size);
-
-		e = calloc(1, sizeof(queue_element));
-		e->data = calloc(p->buffersize, p->bits_per_sample / 8);
-		e->size = p->buffersize;
-	}
-
-	p->next = p->middle;
-	p->middle = p->prep;
+	Queue_Enqueue(p->queue, p->next);
+	p->next = p->prep;
 	p->prep = e;
 
   (*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
 			e->data, e->size);
 
-	if (p->next)
-	{
-		Queue_Enqueue(p->queue, p->next);
-		p->next = NULL;
-	}
 }
  
 // gets a buffer of size samples from the device
@@ -361,11 +339,26 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	/* Initial trigger for the queue. */
 	if (!p->prep)
 	{
+		p->prep = calloc(1, sizeof(queue_element));
+		p->prep->data = calloc(p->buffersize, p->bits_per_sample / 8);
+		p->prep->size = p->buffersize * p->bits_per_sample / 8;
+
+		p->next = calloc(1, sizeof(queue_element));
+		p->next->data = calloc(p->buffersize, p->bits_per_sample / 8);
+		p->next->size = p->buffersize * p->bits_per_sample / 8;
+
+  	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
+				p->next->data, p->next->size);
+  	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
+				p->prep->data, p->prep->size);
+
     (*p->recorderRecord)->SetRecordState(p->recorderRecord, SL_RECORDSTATE_RECORDING);
-		bqRecorderCallback(p->recorderBufferQueue, p);
 	}
 
-	WaitForSingleObject(p->queue->event, INFINITE);
+	/* Wait for queue to be filled... */
+	if (!Queue_Count(p->queue))
+		WaitForSingleObject(p->queue->event, INFINITE);
+
 	e = Queue_Dequeue(p->queue);
 	if (!e)
 	{
@@ -374,9 +367,10 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	}
 
 	rc = (e->size < size) ? e->size : size;
-	assert(p->buffersize == e->size);
+	assert(size == e->size);
+	assert(p->buffersize * p->bits_per_sample / 8 == size);
 
-	memcpy(buffer, e->data, rc * sizeof(short));
+	memcpy(buffer, e->data, rc);
 	free(e->data);
 	free(e);
 
