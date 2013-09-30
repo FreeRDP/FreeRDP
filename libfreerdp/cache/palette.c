@@ -27,7 +27,8 @@
 
 #include <freerdp/cache/palette.h>
 
-void update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table)
+static void update_gdi_cache_color_table(rdpContext* context,
+		CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 	UINT32* colorTable;
 	rdpCache* cache = context->cache;
@@ -49,7 +50,6 @@ void* palette_cache_get(rdpPaletteCache* palette_cache, UINT32 index)
 	}
 
 	entry = palette_cache->entries[index].entry;
-
 	if (entry == NULL)
 	{
 		fprintf(stderr, "invalid color table at index: 0x%04X\n", index);
@@ -64,8 +64,13 @@ void palette_cache_put(rdpPaletteCache* palette_cache, UINT32 index, void* entry
 	if (index >= palette_cache->maxEntries)
 	{
 		fprintf(stderr, "invalid color table index: 0x%04X\n", index);
+		if (entry)
+			free(entry);
 		return;
 	}
+
+	if(NULL == palette_cache->entries[index].entry)
+		free(palette_cache->entries[index].entry);
 
 	palette_cache->entries[index].entry = entry;
 }
@@ -97,6 +102,13 @@ void palette_cache_free(rdpPaletteCache* palette_cache)
 {
 	if (palette_cache != NULL)
 	{
+		int i;
+
+		for (i=0; i<palette_cache->maxEntries; i++)
+		{
+			if (palette_cache->entries[i].entry)
+				free(palette_cache->entries[i].entry);
+		}
 		free(palette_cache->entries);
 		free(palette_cache);
 	}

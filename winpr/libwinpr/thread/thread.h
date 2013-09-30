@@ -35,6 +35,7 @@ struct winpr_thread
 	WINPR_HANDLE_DEF();
 
 	BOOL started;
+	BOOL mainProcess;
 	DWORD dwExitCode;
 	pthread_t thread;
 	SIZE_T dwStackSize;
@@ -44,6 +45,16 @@ struct winpr_thread
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 };
 typedef struct winpr_thread WINPR_THREAD;
+
+struct winpr_process
+{
+	WINPR_HANDLE_DEF();
+
+	pid_t pid;
+	int status;
+	DWORD dwExitCode;
+};
+typedef struct winpr_process WINPR_PROCESS;
 
 #endif
 

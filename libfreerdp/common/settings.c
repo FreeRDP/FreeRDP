@@ -154,6 +154,9 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 	{
 		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
 
+		if (NULL == device->Name)
+			continue;
+
 		if (strcmp(device->Name, name) == 0)
 			return device;
 	}
@@ -293,6 +296,44 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 	settings->DynamicChannelArraySize = 0;
 	settings->DynamicChannelArray = NULL;
 	settings->DynamicChannelCount = 0;
+}
+
+void freerdp_performance_flags_make(rdpSettings* settings)
+{
+	settings->PerformanceFlags = PERF_FLAG_NONE;
+
+	if (settings->AllowFontSmoothing)
+		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
+
+	if (settings->AllowDesktopComposition)
+		settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+
+	if (settings->DisableWallpaper)
+		settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
+
+	if (settings->DisableFullWindowDrag)
+		settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
+
+	if (settings->DisableMenuAnims)
+		settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
+
+	if (settings->DisableThemes)
+		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+}
+
+void freerdp_performance_flags_split(rdpSettings* settings)
+{
+	settings->AllowFontSmoothing = (settings->PerformanceFlags & PERF_ENABLE_FONT_SMOOTHING) ? TRUE : FALSE;
+
+	settings->AllowDesktopComposition = (settings->PerformanceFlags & PERF_ENABLE_DESKTOP_COMPOSITION) ? TRUE : FALSE;
+
+	settings->DisableWallpaper = (settings->PerformanceFlags & PERF_DISABLE_WALLPAPER) ? TRUE : FALSE;
+
+	settings->DisableFullWindowDrag = (settings->PerformanceFlags & PERF_DISABLE_FULLWINDOWDRAG) ? TRUE : FALSE;
+
+	settings->DisableMenuAnims = (settings->PerformanceFlags & PERF_DISABLE_MENUANIMATIONS) ? TRUE : FALSE;
+
+	settings->DisableThemes = (settings->PerformanceFlags & PERF_DISABLE_THEMING) ? TRUE : FALSE;
 }
 
 /**
@@ -573,6 +614,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
+			break;
+
+		case FreeRDP_DisableRemoteAppCapsCheck:
+			return settings->DisableRemoteAppCapsCheck;
 			break;
 
 		case FreeRDP_RemoteAppLanguageBarSupported:
@@ -1028,6 +1073,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_RemoteApplicationMode:
 			settings->RemoteApplicationMode = param;
+			break;
+
+		case FreeRDP_DisableRemoteAppCapsCheck:
+			settings->DisableRemoteAppCapsCheck = param;
 			break;
 
 		case FreeRDP_RemoteAppLanguageBarSupported:

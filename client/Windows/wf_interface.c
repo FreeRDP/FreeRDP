@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <assert.h>
 #include <sys/types.h>
 
 #ifdef _MSC_VER
@@ -371,7 +372,7 @@ BOOL wf_post_connect(freerdp* instance)
 		if (settings->RemoteFxCodec)
 		{
 			wfc->tile = wf_image_new(wfc, 64, 64, 32, NULL);
-			wfc->rfx_context = rfx_context_new();
+			wfc->rfx_context = rfx_context_new(FALSE);
 		}
 
 		if (settings->NSCodec)
@@ -569,7 +570,10 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	rdpChannels* channels;
 
 	instance = (freerdp*) lpParam;
+	assert(NULL != instance);
+
 	wfc = (wfContext*) instance->context;
+	assert(NULL != wfc);
 
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
@@ -690,13 +694,13 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	wfc->mainThreadId = 0;
-
 	freerdp_channels_close(channels, instance);
 	freerdp_disconnect(instance);
 
 	printf("Main thread exited.\n");
 
+	ExitThread(0);
+	
 	return 0;
 }
 
@@ -708,6 +712,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	HHOOK hook_handle;
 
 	wfc = (wfContext*) lpParam;
+	assert(NULL != wfc);
 
 	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfc->hInstance, 0);
 
@@ -734,9 +739,9 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 		fprintf(stderr, "failed to install keyboard hook\n");
 	}
 
-	wfc->keyboardThreadId = 0;
 	printf("Keyboard thread exited.\n");
 
+	ExitThread(0);
 	return (DWORD) NULL;
 }
 
@@ -1078,11 +1083,26 @@ int wfreerdp_client_stop(rdpContext* context)
 {
 	wfContext* wfc = (wfContext*) context;
 
-	if (wfc->mainThreadId)
+	if (wfc->thread)
+	{
 		PostThreadMessage(wfc->mainThreadId, WM_QUIT, 0, 0);
 
-	if (wfc->keyboardThreadId)
+		WaitForSingleObject(wfc->thread, INFINITE);
+		CloseHandle(wfc->thread);
+		wfc->thread = NULL;
+		wfc->mainThreadId = 0;
+	}
+
+	if (wfc->keyboardThread)
+	{
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
+
+		WaitForSingleObject(wfc->keyboardThread, INFINITE);
+		CloseHandle(wfc->keyboardThread);
+
+		wfc->keyboardThread = NULL;
+		wfc->keyboardThreadId = 0;
+	}
 
 	return 0;
 }

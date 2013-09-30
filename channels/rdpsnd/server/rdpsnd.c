@@ -541,6 +541,9 @@ void rdpsnd_server_context_free(rdpsnd_server_context* context)
 	SetEvent(rdpsnd->StopEvent);
 	WaitForSingleObject(rdpsnd->thread, INFINITE);
 
+	CloseHandle(rdpsnd->StopEvent);
+	CloseHandle(rdpsnd->thread);
+
 	if (rdpsnd->rdpsnd_channel)
 		WTSVirtualChannelClose(rdpsnd->rdpsnd_channel);
 

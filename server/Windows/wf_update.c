@@ -198,7 +198,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 		}
 		else
 		{
-			wfi->rfx_context = rfx_context_new();
+			wfi->rfx_context = rfx_context_new(TRUE);
 			wfi->rfx_context->mode = RLGR3;
 			wfi->rfx_context->width = wfi->servscreen_width;
 			wfi->rfx_context->height = wfi->servscreen_height;

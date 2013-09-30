@@ -112,7 +112,7 @@ static const INT16 ima_step_size_table[] =
 };
 
 static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm,
-	int channel, BYTE sample)
+	unsigned int channel, BYTE sample)
 {
 	INT32 ss;
 	INT32 d;

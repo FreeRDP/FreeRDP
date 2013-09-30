@@ -26,7 +26,7 @@ int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 	return 0;
 }
 
-int wf_directsound_activate(rdpsnd_server_context* context)
+int wf_directsound_activate(RdpsndServerContext* context)
 {
 	HRESULT hr;
 	wfInfo* wfi;

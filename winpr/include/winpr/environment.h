@@ -54,6 +54,11 @@ WINPR_API DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD n
 WINPR_API BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);
 WINPR_API BOOL SetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue);
 
+/**
+ * A brief history of the GetEnvironmentStrings functions:
+ * http://blogs.msdn.com/b/oldnewthing/archive/2013/01/17/10385718.aspx
+ */
+
 WINPR_API LPCH GetEnvironmentStrings(VOID);
 WINPR_API LPWCH GetEnvironmentStringsW(VOID);
 
@@ -79,6 +84,7 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathW
 #define GetEnvironmentVariable		GetEnvironmentVariableW
 #define SetEnvironmentVariable		SetEnvironmentVariableW
+#define GetEnvironmentStrings		GetEnvironmentStringsW
 #define SetEnvironmentStrings		SetEnvironmentStringsW
 #define ExpandEnvironmentStrings	ExpandEnvironmentStringsW
 #define FreeEnvironmentStrings		FreeEnvironmentStringsW
@@ -90,6 +96,7 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathA
 #define GetEnvironmentVariable		GetEnvironmentVariableA
 #define SetEnvironmentVariable		SetEnvironmentVariableA
+#define GetEnvironmentStringsA		GetEnvironmentStrings
 #define SetEnvironmentStrings		SetEnvironmentStringsA
 #define ExpandEnvironmentStrings	ExpandEnvironmentStringsA
 #define FreeEnvironmentStrings		FreeEnvironmentStringsA

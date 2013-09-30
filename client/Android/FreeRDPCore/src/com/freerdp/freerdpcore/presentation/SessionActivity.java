@@ -624,6 +624,10 @@ public class SessionActivity extends Activity
 				screenSettings.setWidth((int)((float)screenMax * 1.6f));
 			}			
 		}
+		if (screenSettings.isFitScreen()) {
+			screenSettings.setHeight(screen_height);				
+			screenSettings.setWidth(screen_width);			
+		}
 		
 		progressDialog = new ProgressDialog(this);
 		progressDialog.setTitle(bookmark.getLabel());

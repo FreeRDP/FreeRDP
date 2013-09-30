@@ -10,6 +10,7 @@
 #import "MacFreeRDP/mfreerdp.h"
 #import "MacFreeRDP/mf_client.h"
 #import "MacFreeRDP/MRDPView.h"
+#import <freerdp/client/cmdline.h>
 
 static AppDelegate* _singleDelegate = nil;
 void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
@@ -93,6 +94,7 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	}
 	
 	status = freerdp_client_parse_command_line(context, argc, argv);
+	status = freerdp_client_command_line_status_print(context->argc, context->argv, context->settings, status);
 
 	return status;
 }
@@ -224,37 +226,27 @@ void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e)
 
 void mac_set_view_size(rdpContext* context, MRDPView* view)
 {
-	// compute difference between window and client area
-	NSRect outerRect = [[view window] frame];
-	NSRect innerRect = [view frame];
-	
-	int widthDiff = outerRect.size.width - innerRect.size.width;
-	int heightDiff = outerRect.size.height - innerRect.size.height;
-	
-	NSSize desktopSize;
-	desktopSize.width = context->settings->DesktopWidth;
-	desktopSize.height = context->settings->DesktopHeight;
-	
-	// we are not in RemoteApp mode, disable resizing
-	outerRect.size.width = desktopSize.width + widthDiff;
-	outerRect.size.height = desktopSize.height + heightDiff;
-	[[view window] setMaxSize:outerRect.size];
-	[[view window] setMinSize:outerRect.size];
-	
-    @try
-    {
-		[[view window] setFrame:outerRect display:YES];
-    }
-    @catch (NSException * e) {
-		NSLog(@"Exception: %@", e);
-    }
-    @finally {
-    }
-	
 	// set client area to specified dimensions
-	innerRect.size.width = desktopSize.width;
-	innerRect.size.height = desktopSize.height;
+	NSRect innerRect;
+	innerRect.origin.x = 0;
+	innerRect.origin.y = 0;
+	innerRect.size.width = context->settings->DesktopWidth;
+	innerRect.size.height = context->settings->DesktopHeight;
 	[view setFrame:innerRect];
+	
+	// calculate window of same size, but keep position
+	NSRect outerRect = [[view window] frame];
+	outerRect.size = [[view window] frameRectForContentRect:innerRect].size;
+	
+	// we are not in RemoteApp mode, disable larger than resolution
+	[[view window] setContentMaxSize:innerRect.size];
+	
+	// set window to given area
+	[[view window] setFrame:outerRect display:YES];
+	
+	
+	if(context->settings->Fullscreen)
+		[[view window] toggleFullScreen:nil];
 }
 
 int mac_client_start(rdpContext* context)

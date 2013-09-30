@@ -295,6 +295,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
 					versionCaps->tsgHeader.ComponentId);
+			free(packetCapsResponse);
+			free(versionCaps);
+			free(packet);
 			return FALSE;
 		}
 
@@ -321,6 +324,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP\n",
 					tsgCaps->capabilityType);
+			free(tsgCaps);
+			free(versionCaps);
+			free(packetCapsResponse);
+			free(packet);
 			return FALSE;
 		}
 
@@ -396,6 +403,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
 				versionCaps->tsgHeader.ComponentId);
+			free(versionCaps);
+			free(packetQuarEncResponse);
+			free(packet);
 			return FALSE;
 		}
 
@@ -433,6 +443,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
 				"or TSG_PACKET_TYPE_QUARENC_RESPONSE\n", packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -562,7 +573,9 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
-		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n", packet->packetId);
+		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n",
+				packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -577,6 +590,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		fprintf(stderr, "Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST\n",
 				packetResponse->flags);
+		free(packet);
+		free(packetResponse);
 		return FALSE;
 	}
 
@@ -599,7 +614,10 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (SizeValue != packetResponse->responseDataLen)
 	{
-		fprintf(stderr, "Unexpected size value: %d, expected: %d\n", SizeValue, packetResponse->responseDataLen);
+		fprintf(stderr, "Unexpected size value: %d, expected: %d\n",
+				SizeValue, packetResponse->responseDataLen);
+		free(packetResponse);
+		free(packet);
 		return FALSE;
 	}
 
@@ -676,6 +694,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 
 BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
+	BOOL rc = TRUE;
 	BYTE* buffer;
 	UINT32 length;
 	UINT32 offset;
@@ -709,7 +728,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) || (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
 	{
-		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n", packet->packetId);
+		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n",
+				packet->packetId);
+		free(packet);
 		return FALSE;
 	}
 
@@ -777,12 +798,24 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		default:
-			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n", SwitchValue);
-			return FALSE;
+			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
+					SwitchValue);
+			rc = FALSE;
 			break;
 	}
 
-	return TRUE;
+	if (packet)
+	{
+		if (packet->tsgPacket.packetMsgResponse)
+		{
+			if (packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage)
+				free(packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage);
+			free(packet->tsgPacket.packetMsgResponse);
+		}
+		free(packet);
+	}
+
+	return rc;
 }
 
 BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,

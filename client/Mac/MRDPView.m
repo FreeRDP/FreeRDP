@@ -139,6 +139,16 @@ struct rgba_data
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 
+	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+	NSRect screenFrame = [screen frame];
+
+	if(instance->settings->Fullscreen)
+	{
+		instance->settings->DesktopWidth  = screenFrame.size.width;
+		instance->settings->DesktopHeight = screenFrame.size.height;
+	}
+
+
     mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
 	return 0;
@@ -469,20 +479,23 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
+
 	y = height - y;
 	
 	flags = PTR_FLAGS_WHEEL;
-	
-	if ([event deltaY] < 0)
-		flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
-	else
-		flags |= 0x0078;
-	
-	x += (int) [event deltaX];
-	y += (int) [event deltaY];
-	
-	instance->input->MouseEvent(instance->input, flags, x, y);
+
+	/* 1 event = 120 units */
+	int units = [event deltaY] * 120;
+
+	/* send out all accumulated rotations */
+	while(units != 0)
+	{
+		/* limit to maximum value in WheelRotationMask (9bit signed value) */
+		int step = MIN(MAX(-256, units), 255);
+
+		instance->input->MouseEvent(instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
+		units -= step;
+	}
 }
 
 /** *********************************************************************
@@ -705,7 +718,8 @@ DWORD mac_client_thread(void* param)
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 
         CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-        CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+        CGContextDrawImage(cgContext, CGRectMake(0,
+         0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
         CGImageRelease(cgImage);
     }

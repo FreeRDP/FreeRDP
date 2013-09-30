@@ -200,6 +200,8 @@ static void* printer_thread_func(void* arg)
 		printer_process_irp(printer_dev, irp);
 	}
 
+	ExitThread(0);
+
 	return NULL;
 }
 
@@ -219,10 +221,13 @@ static void printer_free(DEVICE* device)
 
 	SetEvent(printer_dev->stopEvent);
 	WaitForSingleObject(printer_dev->thread, INFINITE);
-	CloseHandle(printer_dev->thread);
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
 		irp->Discard(irp);
+
+	CloseHandle(printer_dev->thread);
+	CloseHandle(printer_dev->stopEvent);
+	CloseHandle(printer_dev->event);
 
 	_aligned_free(printer_dev->pIrpList);
 

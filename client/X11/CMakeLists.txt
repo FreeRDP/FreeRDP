@@ -92,8 +92,6 @@ if(WITH_MANPAGES)
 			MODULE freerdp
 			MODULES freerdp-core freerdp-utils)
 
-		message(WARNING "GAD_LIBS: ${GAD_LIBS}")
-
 		target_link_libraries(generate_argument_docbook ${GAD_LIBS})
 
 		add_custom_command(OUTPUT xfreerdp.1

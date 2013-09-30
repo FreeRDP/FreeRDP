@@ -25,14 +25,6 @@
 
 #include <freerdp/utils/debug.h>
 
-struct _CLIPRDR_FORMAT_NAME
-{
-	UINT32 id;
-	char* name;
-	int length;
-};
-typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
-
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;

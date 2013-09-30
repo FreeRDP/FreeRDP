@@ -23,6 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/nt.h>
 #include <winpr/sspi.h>
 #include <winpr/error.h>
 #include <winpr/credentials.h>
@@ -66,9 +67,6 @@
 #define CREDUIWIN_ENUMERATE_CURRENT_USER		0x00000200
 #define CREDUIWIN_SECURE_PROMPT				0x00001000
 #define CREDUIWIN_PACK_32_WOW				0x10000000
-
-typedef HANDLE HWND;
-typedef HANDLE HBITMAP;
 
 typedef struct _CREDUI_INFOA
 {

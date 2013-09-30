@@ -66,7 +66,7 @@ struct mf_peer_context
 	//#endif
 	
 	//#ifdef CHANNEL_RDPSND_SERVER
-	rdpsnd_server_context* rdpsnd;
+	RdpsndServerContext* rdpsnd;
 	//#endif
 };
 

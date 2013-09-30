@@ -293,7 +293,10 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 
@@ -482,13 +485,10 @@ BOOL nego_recv_response(rdpNego* nego)
 
 	status = nego_recv(nego->transport, s, nego);
 
-	if (status < 0)
-	{
-		Stream_Free(s, TRUE);
-		return FALSE;
-	}
-
 	Stream_Free(s, TRUE);
+	if (status < 0)
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -714,7 +714,10 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 
@@ -795,6 +798,7 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
 			DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
+			nego->sendNegoData = TRUE;
 			break;
 
 		case SSL_CERT_NOT_ON_SERVER:
@@ -873,7 +877,10 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	Stream_SealLength(s);
 
 	if (transport_write(nego->transport, s) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return FALSE;
+	}
 
 	Stream_Free(s, TRUE);
 
@@ -934,6 +941,7 @@ void nego_init(rdpNego* nego)
 	nego->transport->ReceiveCallback = nego_recv;
 	nego->transport->ReceiveExtra = (void*) nego;
 	nego->cookie_max_length = DEFAULT_COOKIE_MAX_LENGTH;
+	nego->sendNegoData = FALSE;
 	nego->flags = 0;
 }
 

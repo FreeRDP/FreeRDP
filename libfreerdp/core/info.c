@@ -120,6 +120,7 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
+
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily */
 	Stream_Read_UINT16(s, cbClientAddress); /* cbClientAddress */
 
@@ -149,8 +150,10 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
+
 	Stream_Seek_UINT32(s); /* clientSessionId, should be set to 0 */
 	Stream_Read_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
+	freerdp_performance_flags_split(settings);
 
 	Stream_Read_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
 
@@ -204,6 +207,8 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 	rdp_write_client_time_zone(s, settings); /* clientTimeZone */
 
 	Stream_Write_UINT32(s, 0); /* clientSessionId, should be set to 0 */
+
+	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
 
 	Stream_Write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */

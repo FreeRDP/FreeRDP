@@ -32,6 +32,7 @@
 #cmakedefine HAVE_EVENTFD_H
 #cmakedefine HAVE_TIMERFD_H
 #cmakedefine HAVE_TM_GMTOFF
+#cmakedefine HAVE_AIO_H
 
 
 /* Options */

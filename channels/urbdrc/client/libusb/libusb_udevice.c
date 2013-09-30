@@ -485,6 +485,7 @@ static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(LIBUSB_DEVICE* libusb_dev)
 	if (ret < 0)
 	{
 		fprintf(stderr, "libusb_get_device_descriptor: ERROR!!\n");
+		free(descriptor);
 		return NULL;
 	}
 		
@@ -1543,6 +1544,9 @@ static int func_cancel_xact_request(TRANSFER_REQUEST *request)
 {
 	int status;
 
+	if (!request)
+		return -1;
+
 	if ((!request->transfer) || (request->endpoint != request->transfer->endpoint) ||
 		(request->transfer->endpoint == 0) || (request->submit != 1))
 	{
@@ -1583,6 +1587,8 @@ cancel_retry:
 	while (request_queue->has_next(request_queue))
 	{
 		request = request_queue->get_next(request_queue);
+		if (!request)
+			continue;
 
 		LLOGLN(libusb_debug, ("%s: CancelId:0x%x RequestId:0x%x endpoint 0x%x!!", 
 			__func__, RequestId, request->RequestId, request->endpoint)); 

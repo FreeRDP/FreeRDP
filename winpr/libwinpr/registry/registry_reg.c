@@ -31,8 +31,8 @@
 
 #define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
 
-void reg_print_key(Reg* reg, RegKey* key);
-void reg_print_value(Reg* reg, RegVal* value);
+static void reg_print_key(Reg* reg, RegKey* key);
+static void reg_print_value(Reg* reg, RegVal* value);
 
 struct reg_data_type
 {
@@ -41,7 +41,7 @@ struct reg_data_type
 	DWORD type;
 };
 
-struct reg_data_type REG_DATA_TYPE_TABLE[] =
+static struct reg_data_type REG_DATA_TYPE_TABLE[] =
 {
 	{ "\"",		1,	REG_SZ		},
 	{ "dword:",	6,	REG_DWORD	},
@@ -55,7 +55,7 @@ struct reg_data_type REG_DATA_TYPE_TABLE[] =
 	{ NULL,		0,	0		}
 };
 
-char* REG_DATA_TYPE_STRINGS[] =
+static char* REG_DATA_TYPE_STRINGS[] =
 {
 	"REG_NONE",
 	"REG_SZ",
@@ -71,13 +71,17 @@ char* REG_DATA_TYPE_STRINGS[] =
 	"REG_QWORD"
 };
 
-void reg_load_start(Reg* reg)
+static void reg_load_start(Reg* reg)
 {
 	long int file_size;
 
 	fseek(reg->fp, 0, SEEK_END);
 	file_size = ftell(reg->fp);
 	fseek(reg->fp, 0, SEEK_SET);
+
+	reg->line = NULL;
+	reg->next_line = NULL;
+	reg->buffer = NULL;
 
 	if (file_size < 1)
 		return;
@@ -87,24 +91,29 @@ void reg_load_start(Reg* reg)
 	if (fread(reg->buffer, file_size, 1, reg->fp) != 1)
 	{
 		free(reg->buffer);
+		reg->buffer = NULL;
 		return;
 	}
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
 
-	reg->line = NULL;
 	reg->next_line = strtok(reg->buffer, "\n");
 }
 
-void reg_load_finish(Reg* reg)
+static void reg_load_finish(Reg* reg)
 {
-	free(reg->buffer);
-	reg->buffer = NULL;
-	reg->line = NULL;
+	if (!reg)
+		return;
+
+	if (reg->buffer)
+	{
+		free(reg->buffer);
+		reg->buffer = NULL;
+	}
 }
 
-RegVal* reg_load_value(Reg* reg, RegKey* key)
+static RegVal* reg_load_value(Reg* reg, RegKey* key)
 {
 	int index;
 	char* p[5];
@@ -181,13 +190,19 @@ RegVal* reg_load_value(Reg* reg, RegKey* key)
 	return value;
 }
 
-BOOL reg_load_has_next_line(Reg* reg)
+static BOOL reg_load_has_next_line(Reg* reg)
 {
+	if (!reg)
+		return 0;
+
 	return (reg->next_line != NULL) ? 1 : 0;
 }
 
-char* reg_load_get_next_line(Reg* reg)
+static char* reg_load_get_next_line(Reg* reg)
 {
+	if (!reg)
+		return NULL;
+
 	reg->line = reg->next_line;
 	reg->next_line = strtok(NULL, "\n");
 	reg->line_length = strlen(reg->line);
@@ -195,12 +210,12 @@ char* reg_load_get_next_line(Reg* reg)
 	return reg->line;
 }
 
-char* reg_load_peek_next_line(Reg* reg)
+static char* reg_load_peek_next_line(Reg* reg)
 {
 	return reg->next_line;
 }
 
-void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
+static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 {
 	char* name;
 	char* path;
@@ -226,7 +241,7 @@ void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	free(path);
 }
 
-RegKey* reg_load_key(Reg* reg, RegKey* key)
+static RegKey* reg_load_key(Reg* reg, RegKey* key)
 {
 	char* p[2];
 	int length;
@@ -300,7 +315,7 @@ void reg_load(Reg* reg)
 	reg_load_finish(reg);
 }
 
-void reg_unload_value(Reg* reg, RegVal* value)
+static void reg_unload_value(Reg* reg, RegVal* value)
 {
 	if (value->type == REG_DWORD)
 	{
@@ -318,7 +333,7 @@ void reg_unload_value(Reg* reg, RegVal* value)
 	free(value);
 }
 
-void reg_unload_key(Reg* reg, RegKey* key)
+static void reg_unload_key(Reg* reg, RegKey* key)
 {
 	RegVal* pValue;
 	RegVal* pValueNext;

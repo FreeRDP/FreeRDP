@@ -23,24 +23,11 @@
 
 #include <winpr/error.h>
 
-/**
- * api-ms-win-core-errorhandling-l1-1-1.dll:
- * 
- * GetErrorMode
- * SetErrorMode
- * GetLastError
- * SetLastError
- * RestoreLastError
- * RaiseException
- * UnhandledExceptionFilter
- * SetUnhandledExceptionFilter
- * AddVectoredExceptionHandler
- * RemoveVectoredExceptionHandler
- * AddVectoredContinueHandler
- * RemoveVectoredContinueHandler
- */
-
 #ifndef _WIN32
+
+#include <stdio.h>
+
+#include <winpr/nt.h>
 
 UINT GetErrorMode(void)
 {
@@ -54,12 +41,12 @@ UINT SetErrorMode(UINT uMode)
 
 DWORD GetLastError(VOID)
 {
-	return 0;
+	return NtCurrentTeb()->LastErrorValue;
 }
 
 VOID SetLastError(DWORD dwErrCode)
 {
-
+	NtCurrentTeb()->LastErrorValue = dwErrCode;
 }
 
 VOID RestoreLastError(DWORD dwErrCode)

@@ -45,12 +45,15 @@ struct winpr_named_pipe
 	const char* lpFileName;
 	const char* lpFilePath;
 
+	BOOL ServerMode;
 	DWORD dwOpenMode;
 	DWORD dwPipeMode;
 	DWORD nMaxInstances;
 	DWORD nOutBufferSize;
 	DWORD nInBufferSize;
 	DWORD nDefaultTimeOut;
+	DWORD dwFlagsAndAttributes;
+	LPOVERLAPPED lpOverlapped;
 };
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 

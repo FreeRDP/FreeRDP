@@ -63,9 +63,11 @@
     </string-array>
     <string name="settings_resolution">"Résolution"</string>
     <string name="resolution_automatic">"Automatique"</string>
+    <string name="resolution_fit">"Agrandir la fenêtre"</string>
     <string name="resolution_custom">"Personalisé"</string>
     <string-array name="resolutions_array">
         <item>"Automatique"</item>
+        <item>"Agrandir la fenêtre"</item>
         <item>"Personalisé"</item>
         <item>"640x480"</item>
         <item>"720x480"</item>
@@ -76,18 +78,22 @@
         <item>"1920x1080"</item>
         <item>"1920x1200"</item>
     </string-array>
+    <!-- The strings in resolutions_values_array should not be localized -->
+    <!-- They are used for text comparison and must remain in english -->
     <string-array name="resolutions_values_array">
-        <item>"Automatique"</item>
-        <item>"Personalisé"</item>
-        <item>"640x480"</item>
-        <item>"720x480"</item>
-        <item>"800x600"</item>
-        <item>"1024x768"</item>
-        <item>"1280x1024"</item>
-        <item>"1440x900"</item>
-        <item>"1920x1080"</item>
-        <item>"1920x1200"</item>
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
     </string-array>
+    <!-- end protected string section -->
     <string name="settings_width">"Largeur"</string>
     <string name="settings_height">"Hauteur"</string>
     <string name="settings_performance">"Performance"</string>

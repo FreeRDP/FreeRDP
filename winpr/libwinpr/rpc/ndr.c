@@ -143,6 +143,10 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 
 	for (i = 0; i < numberParams; i++)
 	{
+#ifdef __x86_64__
+		float tmp;
+#endif
+
 		arg = pStubMsg->StackTop + params[i].StackOffset;
 		fmt = (PFORMAT_STRING) &pStubMsg->StubDesc->pFormatTypes[params[i].Type.Offset];
 
@@ -151,7 +155,7 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 				!(params[i].Attributes.IsSimpleRef) &&
 				((params[i].Type.FormatChar) == FC_FLOAT) && !fpuArgs)
 		{
-			float tmp = *(double*) arg;
+			tmp = *(double*) arg;
 			arg = (unsigned char*) &tmp;
 		}
 #endif

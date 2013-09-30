@@ -64,10 +64,19 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 
 	/* colorTable */
 	if (icon_info->colorTable == NULL)
-		icon_info->colorTable = (BYTE*) malloc(icon_info->cbColorTable);
-	else
+	{
+		if (icon_info->cbColorTable)
+			icon_info->colorTable = (BYTE*) malloc(icon_info->cbColorTable);
+	}
+	else if (icon_info->cbColorTable)
 		icon_info->colorTable = (BYTE*) realloc(icon_info->colorTable, icon_info->cbColorTable);
-	Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
+	else
+	{
+		free(icon_info->colorTable);
+		icon_info->colorTable = NULL;
+	}
+	if (icon_info->colorTable)
+		Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
 
 	/* bitsColor */
 	if (icon_info->bitsColor == NULL)

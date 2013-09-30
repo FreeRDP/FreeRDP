@@ -34,7 +34,6 @@
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
-#include "cliprdr_constants.h"
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
@@ -62,21 +61,25 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 		for (i = 0; i < cb_event->num_formats; i++)
 		{
 			const char* name;
-			int name_length;
+			int name_length, short_name_length = 32, x;
 
 			switch (cb_event->formats[i])
 			{
 				case CB_FORMAT_HTML:
-					name = CFSTR_HTML; name_length = sizeof(CFSTR_HTML);
+					name = CFSTR_HTML;
+					name_length = sizeof(CFSTR_HTML);
 					break;
 				case CB_FORMAT_PNG:
-					name = CFSTR_PNG; name_length = sizeof(CFSTR_PNG);
+					name = CFSTR_PNG;
+					name_length = sizeof(CFSTR_PNG);
 					break;
 				case CB_FORMAT_JPEG:
-					name = CFSTR_JPEG; name_length = sizeof(CFSTR_JPEG);
+					name = CFSTR_JPEG;
+					name_length = sizeof(CFSTR_JPEG);
 					break;
 				case CB_FORMAT_GIF:
-					name = CFSTR_GIF; name_length = sizeof(CFSTR_GIF);
+					name = CFSTR_GIF;
+					name_length = sizeof(CFSTR_GIF);
 					break;
 				default:
 					name = "\0\0";
@@ -85,12 +88,23 @@ void cliprdr_process_format_list_event(cliprdrPlugin* cliprdr, RDP_CB_FORMAT_LIS
 			}
 			
 			if (!cliprdr->use_long_format_names)
-				name_length = 32;
-			
-			Stream_EnsureRemainingCapacity(body, 4 + name_length);
+			{				
+				x = (name_length > short_name_length) ?
+					name_length : short_name_length;
 
-			Stream_Write_UINT32(body, cb_event->formats[i]);
-			Stream_Write(body, name, name_length);
+				Stream_EnsureRemainingCapacity(body, 4 + short_name_length);
+				Stream_Write_UINT32(body, cb_event->formats[i]);
+				Stream_Write(body, name, x);
+
+				while (x++ < short_name_length)
+					Stream_Write(body, "\0", 1);
+			}
+			else
+			{
+				Stream_EnsureRemainingCapacity(body, 4 + name_length);
+				Stream_Write_UINT32(body, cb_event->formats[i]);
+				Stream_Write(body, name, name_length);
+			}
 		}
 				
 		Stream_SealLength(body);

@@ -433,6 +433,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (encrypt_status != SEC_E_OK)
 	{
 		fprintf(stderr, "EncryptMessage status: 0x%08X\n", encrypt_status);
+		free(request_pdu);
 		return -1;
 	}
 

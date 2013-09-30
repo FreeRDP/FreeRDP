@@ -520,9 +520,10 @@ RPC_STATUS RpcBindingServerFromClient(RPC_BINDING_HANDLE ClientBinding, RPC_BIND
 	return 0;
 }
 
-DECLSPEC_NORETURN void RpcRaiseException(RPC_STATUS exception)
+void RpcRaiseException(RPC_STATUS exception)
 {
 	fprintf(stderr, "RpcRaiseException: 0x%08luX\n", exception);
+	exit((int) exception);
 }
 
 RPC_STATUS RpcTestCancel()

@@ -43,7 +43,11 @@
 
 #ifndef _WIN32
 
+#include <sys/wait.h>
+
 #include "../handle/handle.h"
+
+#include "../pipe/pipe.h"
 
 static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 {
@@ -99,6 +103,19 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			if (thread_status)
 				thread->dwExitCode = ((DWORD) (size_t) thread_status);
 		}
+	}
+	else if (Type == HANDLE_TYPE_PROCESS)
+	{
+		WINPR_PROCESS* process;
+
+		process = (WINPR_PROCESS*) Object;
+
+		if (waitpid(process->pid, &(process->status), 0) != -1)
+		{
+			return WAIT_FAILED;
+		}
+
+		process->dwExitCode = (DWORD) process->status;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
@@ -241,6 +258,37 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		return WAIT_FAILED;
 #endif
 	}
+	else if (Type == HANDLE_TYPE_NAMED_PIPE)
+	{
+		int fd;
+		int status;
+		fd_set rfds;
+		struct timeval timeout;
+		WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+
+		fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
+
+		if (fd == -1)
+			return WAIT_FAILED;
+
+		FD_ZERO(&rfds);
+		FD_SET(fd, &rfds);
+		ZeroMemory(&timeout, sizeof(timeout));
+
+		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+		{
+			timeout.tv_usec = dwMilliseconds * 1000;
+		}
+
+		status = select(fd + 1, &rfds, NULL, NULL,
+				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+
+		if (status < 0)
+			return WAIT_FAILED;
+
+		if (status != 1)
+			return WAIT_TIMEOUT;
+	}
 	else
 	{
 		fprintf(stderr, "WaitForSingleObject: unknown handle type %lu\n", Type);
@@ -302,6 +350,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
 		}
+		else if (Type == HANDLE_TYPE_NAMED_PIPE)
+		{
+			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
+
+			if (fd == -1)
+				return WAIT_FAILED;
+		}
 		else
 		{
 			return WAIT_FAILED;
@@ -346,6 +402,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		{
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
+		}
+		else if (Type == HANDLE_TYPE_NAMED_PIPE)
+		{
+			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
+			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
 		}
 
 		if (FD_ISSET(fd, &fds))

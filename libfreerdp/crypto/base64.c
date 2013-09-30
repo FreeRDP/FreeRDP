@@ -115,10 +115,16 @@ static void* base64_decode(BYTE* s, int length, int* data_len)
 		n[3] = base64_decode_char(*p++);
 
 		if ((n[0] == -1) || (n[1] == -1))
+		{
+			free(data);
 			return NULL;
+		}
 
 		if ((n[2] == -1) && (n[3] != -1))
+		{
+			free(data);
 			return NULL;
+		}
 
 		q[0] = (n[0] << 2) + (n[1] >> 4);
 

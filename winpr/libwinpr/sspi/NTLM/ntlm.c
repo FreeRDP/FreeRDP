@@ -43,20 +43,21 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 
 void ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
+	char *ws = Workstation;
 	DWORD nSize = 0;
 
 	if (!Workstation)
 	{
 		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-		Workstation = malloc(nSize);
-		GetComputerNameExA(ComputerNameNetBIOS, Workstation, &nSize);
+		ws = malloc(nSize);
+		GetComputerNameExA(ComputerNameNetBIOS, ws, &nSize);
 	}
 
 	context->Workstation.Length = ConvertToUnicode(CP_UTF8, 0,
-			Workstation, -1, &context->Workstation.Buffer, 0) - 1;
+			ws, -1, &context->Workstation.Buffer, 0) - 1;
 	context->Workstation.Length *= 2;
 
-	if (nSize > 0)
+	if (!Workstation)
 		free(Workstation);
 }
 
@@ -81,22 +82,23 @@ void ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePr
 
 void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
+	char *name = TargetName;
 	DWORD nSize = 0;
 
 	if (!TargetName)
 	{
 		GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
-		TargetName = malloc(nSize);
+		name = malloc(nSize);
 		GetComputerNameExA(ComputerNameDnsHostname, TargetName, &nSize);
 		CharUpperA(TargetName);
 	}
 
 	context->TargetName.cbBuffer = ConvertToUnicode(CP_UTF8, 0,
-			TargetName, -1, (LPWSTR*) &context->TargetName.pvBuffer, 0) - 1;
+			name, -1, (LPWSTR*) &context->TargetName.pvBuffer, 0) - 1;
 	context->TargetName.cbBuffer *= 2;
 
-	if (nSize > 0)
-		free(TargetName);
+	if (!TargetName)
+		free(name);
 }
 
 NTLM_CONTEXT* ntlm_ContextNew()

@@ -49,7 +49,7 @@ static BOOL test_dump_rfx_realtime = TRUE;
 
 void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
-	context->rfx_context = rfx_context_new();
+	context->rfx_context = rfx_context_new(TRUE);
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
 	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
@@ -398,10 +398,10 @@ static void* tf_debug_channel_thread_func(void* arg)
 	void* fd;
 	wStream* s;
 	void* buffer;
-	UINT32 bytes_returned = 0;
+	DWORD BytesReturned = 0;
 	testPeerContext* context = (testPeerContext*) arg;
 
-	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &bytes_returned) == TRUE)
+	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &BytesReturned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
@@ -411,7 +411,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	s = Stream_New(NULL, 4096);
 
-	WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test1", 5, NULL);
+	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, NULL);
 
 	while (1)
 	{
@@ -422,25 +422,25 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
-			Stream_Capacity(s), &bytes_returned) == FALSE)
+		if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
+			Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
-			if (bytes_returned == 0)
+			if (BytesReturned == 0)
 				break;
 
-			Stream_EnsureRemainingCapacity(s, bytes_returned);
+			Stream_EnsureRemainingCapacity(s, BytesReturned);
 
-			if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_Buffer(s),
-				Stream_Capacity(s), &bytes_returned) == FALSE)
+			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
+				Stream_Capacity(s), &BytesReturned) == FALSE)
 			{
 				/* should not happen */
 				break;
 			}
 		}
 
-		Stream_SetPosition(s, bytes_returned);
+		Stream_SetPosition(s, BytesReturned);
 
-		printf("got %d bytes\n", bytes_returned);
+		printf("got %d bytes\n", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);
@@ -498,7 +498,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		{
 			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
 			{
-				context->debug_channel = WTSVirtualChannelOpenEx(context->vcm, "rdpdbg", 0);
+				context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
 
 				if (context->debug_channel != NULL)
 				{
@@ -580,7 +580,7 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		if (context->debug_channel)
 		{
-			WTSVirtualChannelWrite(context->debug_channel, (BYTE*) "test2", 5, NULL);
+			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, NULL);
 		}
 	}
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
@@ -658,8 +658,6 @@ static void* test_peer_mainloop(void* arg)
 	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
-	memset(rfds, 0, sizeof(rfds));
-
 	test_peer_init(client);
 
 	/* Initialize the real server settings here */
@@ -694,6 +692,7 @@ static void* test_peer_mainloop(void* arg)
 	{
 		rcount = 0;
 
+		memset(rfds, 0, sizeof(rfds));
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
@@ -779,12 +778,11 @@ static void test_server_mainloop(freerdp_listener* instance)
 	void* rfds[32];
 	fd_set rfds_set;
 
-	memset(rfds, 0, sizeof(rfds));
-
 	while (1)
 	{
 		rcount = 0;
 
+		memset(rfds, 0, sizeof(rfds));
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");

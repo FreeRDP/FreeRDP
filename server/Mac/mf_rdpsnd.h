@@ -53,7 +53,7 @@ struct _AQRecorderState
 	UInt32                       bufferByteSize;
 	SInt64                       currentPacket;
 	bool                         isRunning;
-	rdpsnd_server_context*       snd_context;
+	RdpsndServerContext*       snd_context;
 	
 };
 

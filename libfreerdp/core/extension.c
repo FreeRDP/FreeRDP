@@ -147,6 +147,8 @@ static int extension_load_plugins(rdpExtension* extension)
 			fprintf(stderr, "extension_load_plugins: %s entry returns error.\n", path);
 			continue;
 		}
+
+		DLCLOSE(han);
 	}
 
 	return 0;

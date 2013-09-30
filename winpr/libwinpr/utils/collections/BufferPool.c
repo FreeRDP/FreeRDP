@@ -85,7 +85,16 @@ int BufferPool_GetPoolSize(wBufferPool* pool)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	size = pool->uSize;
+	if (pool->fixedSize)
+	{
+		/* fixed size buffers */
+		size = pool->size;
+	}
+	else
+	{
+		/* variable size buffers */
+		size = pool->uSize;
+	}
 
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
@@ -106,13 +115,24 @@ int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	for (index = 0; index < pool->uSize; index++)
+	if (pool->fixedSize)
 	{
-		if (pool->uArray[index].buffer == buffer)
+		/* fixed size buffers */
+		size = pool->fixedSize;
+		found = TRUE;
+	}
+	else
+	{
+		/* variable size buffers */
+
+		for (index = 0; index < pool->uSize; index++)
 		{
-			size = pool->uArray[index].size;
-			found = TRUE;
-			break;
+			if (pool->uArray[index].buffer == buffer)
+			{
+				size = pool->uArray[index].size;
+				found = TRUE;
+				break;
+			}
 		}
 	}
 
@@ -138,65 +158,90 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	maxSize = 0;
-	maxIndex = 0;
-
-	if (size < 1)
-		size = pool->defaultSize;
-
-	for (index = 0; index < pool->aSize; index++)
+	if (pool->fixedSize)
 	{
-		if (pool->aArray[index].size > maxSize)
+		/* fixed size buffers */
+
+		if (pool->size > 0)
+			buffer = pool->array[--(pool->size)];
+
+		if (!buffer)
 		{
-			maxIndex = index;
-			maxSize = pool->aArray[index].size;
+			if (pool->alignment)
+				buffer = _aligned_malloc(pool->fixedSize, pool->alignment);
+			else
+				buffer = malloc(pool->fixedSize);
 		}
-
-		if (pool->aArray[index].size >= size)
-		{
-			foundIndex = index;
-			found = TRUE;
-			break;
-		}
-	}
-
-	if (!found && maxSize)
-	{
-		foundIndex = maxIndex;
-		found = TRUE;
-	}
-
-	if (!found)
-	{
-		if (pool->alignment)
-			buffer = _aligned_malloc(size, pool->alignment);
-		else
-			buffer = malloc(size);
 	}
 	else
 	{
-		buffer = pool->aArray[index].buffer;
+		/* variable size buffers */
 
-		if (maxSize < size)
+		maxSize = 0;
+		maxIndex = 0;
+
+		if (size < 1)
+			size = pool->fixedSize;
+
+		for (index = 0; index < pool->aSize; index++)
 		{
-			if (pool->alignment)
-				buffer = _aligned_realloc(buffer, size, pool->alignment);
-			else
-				buffer = realloc(buffer, size);
+			if (pool->aArray[index].size > maxSize)
+			{
+				maxIndex = index;
+				maxSize = pool->aArray[index].size;
+			}
+
+			if (pool->aArray[index].size >= size)
+			{
+				foundIndex = index;
+				found = TRUE;
+				break;
+			}
 		}
 
-		BufferPool_ShiftAvailable(pool, foundIndex, -1);
-	}
+		if (!found && maxSize)
+		{
+			foundIndex = maxIndex;
+			found = TRUE;
+		}
 
-	if (pool->uSize + 1 > pool->uCapacity)
-	{
-		pool->uCapacity *= 2;
-		pool->uArray = (wBufferPoolItem*) realloc(pool->uArray, sizeof(wBufferPoolItem) * pool->uCapacity);
-	}
+		if (!found)
+		{
+			if (pool->alignment)
+				buffer = _aligned_malloc(size, pool->alignment);
+			else
+				buffer = malloc(size);
+		}
+		else
+		{
+			buffer = pool->aArray[foundIndex].buffer;
 
-	pool->uArray[pool->uSize].buffer = buffer;
-	pool->uArray[pool->uSize].size = size;
-	(pool->uSize)++;
+			if (maxSize < size)
+			{
+				if (pool->alignment)
+				{
+					_aligned_free(buffer);
+					buffer = _aligned_malloc(size, pool->alignment);
+				}
+				else
+				{
+					buffer = realloc(buffer, size);
+				}
+			}
+
+			BufferPool_ShiftAvailable(pool, foundIndex, -1);
+		}
+
+		if (pool->uSize + 1 > pool->uCapacity)
+		{
+			pool->uCapacity *= 2;
+			pool->uArray = (wBufferPoolItem*) realloc(pool->uArray, sizeof(wBufferPoolItem) * pool->uCapacity);
+		}
+
+		pool->uArray[pool->uSize].buffer = buffer;
+		pool->uArray[pool->uSize].size = size;
+		(pool->uSize)++;
+	}
 
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
@@ -217,32 +262,49 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	for (index = 0; index < pool->uSize; index++)
+	if (pool->fixedSize)
 	{
-		if (pool->uArray[index].buffer == buffer)
-		{
-			found = TRUE;
-			break;
-		}
-	}
+		/* fixed size buffers */
 
-	if (found)
-	{
-		size = pool->uArray[index].size;
-		BufferPool_ShiftUsed(pool, index, -1);
-	}
-
-	if (size)
-	{
-		if ((pool->aSize + 1) >= pool->aCapacity)
+		if ((pool->size + 1) >= pool->capacity)
 		{
-			pool->aCapacity *= 2;
-			pool->aArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * pool->aCapacity);
+			pool->capacity *= 2;
+			pool->array = (void**) realloc(pool->array, sizeof(void*) * pool->capacity);
 		}
 
-		pool->aArray[pool->aSize].buffer = buffer;
-		pool->aArray[pool->aSize].size = size;
-		(pool->aSize)++;
+		pool->array[(pool->size)++] = buffer;
+	}
+	else
+	{
+		/* variable size buffers */
+
+		for (index = 0; index < pool->uSize; index++)
+		{
+			if (pool->uArray[index].buffer == buffer)
+			{
+				found = TRUE;
+				break;
+			}
+		}
+
+		if (found)
+		{
+			size = pool->uArray[index].size;
+			BufferPool_ShiftUsed(pool, index, -1);
+		}
+
+		if (size)
+		{
+			if ((pool->aSize + 1) >= pool->aCapacity)
+			{
+				pool->aCapacity *= 2;
+				pool->aArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * pool->aCapacity);
+			}
+
+			pool->aArray[pool->aSize].buffer = buffer;
+			pool->aArray[pool->aSize].size = size;
+			(pool->aSize)++;
+		}
 	}
 
 	if (pool->synchronized)
@@ -258,24 +320,43 @@ void BufferPool_Clear(wBufferPool* pool)
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
-	while (pool->aSize > 0)
+	if (pool->fixedSize)
 	{
-		(pool->aSize)--;
+		/* fixed size buffers */
 
-		if (pool->alignment)
-			_aligned_free(pool->aArray[pool->aSize].buffer);
-		else
-			free(pool->aArray[pool->aSize].buffer);
+		while (pool->size > 0)
+		{
+			(pool->size)--;
+
+			if (pool->alignment)
+				_aligned_free(pool->array[pool->size]);
+			else
+				free(pool->array[pool->size]);
+		}
 	}
-
-	while (pool->uSize > 0)
+	else
 	{
-		(pool->uSize)--;
+		/* variable size buffers */
 
-		if (pool->alignment)
-			_aligned_free(pool->uArray[pool->uSize].buffer);
-		else
-			free(pool->uArray[pool->uSize].buffer);
+		while (pool->aSize > 0)
+		{
+			(pool->aSize)--;
+
+			if (pool->alignment)
+				_aligned_free(pool->aArray[pool->aSize].buffer);
+			else
+				free(pool->aArray[pool->aSize].buffer);
+		}
+
+		while (pool->uSize > 0)
+		{
+			(pool->uSize)--;
+
+			if (pool->alignment)
+				_aligned_free(pool->uArray[pool->uSize].buffer);
+			else
+				free(pool->uArray[pool->uSize].buffer);
+		}
 	}
 
 	if (pool->synchronized)
@@ -286,7 +367,7 @@ void BufferPool_Clear(wBufferPool* pool)
  * Construction, Destruction
  */
 
-wBufferPool* BufferPool_New(BOOL synchronized, int defaultSize, DWORD alignment)
+wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 {
 	wBufferPool* pool = NULL;
 
@@ -294,10 +375,10 @@ wBufferPool* BufferPool_New(BOOL synchronized, int defaultSize, DWORD alignment)
 
 	if (pool)
 	{
-		pool->defaultSize = defaultSize;
+		pool->fixedSize = fixedSize;
 
-		if (pool->defaultSize < 0)
-			pool->defaultSize = 0;
+		if (pool->fixedSize < 0)
+			pool->fixedSize = 0;
 
 		pool->alignment = alignment;
 		pool->synchronized = synchronized;
@@ -305,13 +386,26 @@ wBufferPool* BufferPool_New(BOOL synchronized, int defaultSize, DWORD alignment)
 		if (pool->synchronized)
 			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
-		pool->aSize = 0;
-		pool->aCapacity = 32;
-		pool->aArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->aCapacity);
+		if (pool->fixedSize)
+		{
+			/* fixed size buffers */
 
-		pool->uSize = 0;
-		pool->uCapacity = 32;
-		pool->uArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->uCapacity);
+			pool->size = 0;
+			pool->capacity = 32;
+			pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+		}
+		else
+		{
+			/* variable size buffers */
+
+			pool->aSize = 0;
+			pool->aCapacity = 32;
+			pool->aArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->aCapacity);
+
+			pool->uSize = 0;
+			pool->uCapacity = 32;
+			pool->uArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->uCapacity);
+		}
 	}
 
 	return pool;
@@ -326,8 +420,19 @@ void BufferPool_Free(wBufferPool* pool)
 		if (pool->synchronized)
 			DeleteCriticalSection(&pool->lock);
 
-		free(pool->aArray);
-		free(pool->uArray);
+		if (pool->fixedSize)
+		{
+			/* fixed size buffers */
+
+			free(pool->array);
+		}
+		else
+		{
+			/* variable size buffers */
+
+			free(pool->aArray);
+			free(pool->uArray);
+		}
 
 		free(pool);
 	}

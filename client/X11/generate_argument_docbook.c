@@ -11,7 +11,7 @@
 
 LPSTR tmp = NULL;
 
-LPCSTR tr_esc_str(LPCSTR arg)
+LPSTR tr_esc_str(LPSTR arg)
 {
 	size_t cs = 0, x, ds;
 	size_t s;
@@ -26,7 +26,8 @@ LPCSTR tr_esc_str(LPCSTR arg)
 		s--;
 
 	/* Prepare a initial buffer with the size of the result string. */
-	tmp = malloc(s * sizeof(LPCSTR));
+	if (s)
+		tmp = (LPSTR)malloc(s * sizeof(CHAR));
 	if( NULL == tmp )
 	{
 		fprintf(stderr, "Could not allocate string buffer.");
@@ -41,7 +42,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 		{
 			case '<':
 				ds += 3;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -54,7 +55,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '>':
 				ds += 3;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -67,7 +68,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '\'':
 				ds += 5;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -82,7 +83,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '"':
 				ds += 5;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -97,7 +98,7 @@ LPCSTR tr_esc_str(LPCSTR arg)
 				break;
 			case '&':
 				ds += 4;
-				tmp = realloc(tmp, ds * sizeof(LPCSTR));
+				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if( NULL == tmp )
 				{
 					fprintf(stderr, "Could not reallocate string buffer.");
@@ -154,12 +155,12 @@ int main(int argc, char *argv[])
 		const COMMAND_LINE_ARGUMENT_A *arg = &args[x];
 
 		fprintf(fp, "\t\t\t<varlistentry>\n");
-		if( COMMAND_LINE_VALUE_REQUIRED == arg->Flags )
-			fprintf(fp, "\t\t\t\t<term><option>/%s</option> <replaceable>%s</replaceable></term>\n", tr_esc_str(arg->Name), tr_esc_str(arg->Format) );
+		if ( COMMAND_LINE_VALUE_REQUIRED == arg->Flags)
+			fprintf(fp, "\t\t\t\t<term><option>/%s</option> <replaceable>%s</replaceable></term>\n", tr_esc_str((LPSTR) arg->Name), tr_esc_str(arg->Format) );
 		else
-			fprintf(fp, "\t\t\t\t<term><option>/%s</option></term>\n", tr_esc_str(arg->Name) );
+			fprintf(fp, "\t\t\t\t<term><option>/%s</option></term>\n", tr_esc_str((LPSTR) arg->Name));
 		fprintf(fp, "\t\t\t\t<listitem>\n");
-		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str(arg->Text));
+		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", tr_esc_str((LPSTR) arg->Text));
 		
 		fprintf(fp, "\t\t\t\t</listitem>\n");
 		fprintf(fp, "\t\t\t</varlistentry>\n");

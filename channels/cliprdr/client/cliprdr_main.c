@@ -27,13 +27,13 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
-#include "cliprdr_constants.h"
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
@@ -76,6 +76,11 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_SetPosition(s, 4);
 	Stream_Write_UINT32(s, dataLen);
 	Stream_SetPosition(s, pos);
+
+#ifdef WITH_DEBUG_CLIPRDR
+	printf("Cliprdr Sending (%d bytes)\n", dataLen + 8);
+	winpr_HexDump(Stream_Buffer(s), dataLen + 8);
+#endif
 
 	svc_plugin_send((rdpSvcPlugin*) cliprdr, s);
 }
@@ -206,6 +211,10 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 
 	DEBUG_CLIPRDR("msgType: %s (%d), msgFlags: %d dataLen: %d",
 		CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
+
+#ifdef WITH_DEBUG_CLIPRDR
+	winpr_HexDump(Stream_Buffer(s), dataLen + 8);
+#endif
 
 	switch (msgType)
 	{
