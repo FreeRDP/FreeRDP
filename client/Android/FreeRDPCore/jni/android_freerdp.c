@@ -134,7 +134,9 @@ BOOL android_post_connect(freerdp* instance)
 {
 	DEBUG_ANDROID("android_post_connect");
 
-	freerdp_callback("OnSettingsChanged", "(IIII)V", instance, instance->settings->DesktopWidth, instance->settings->DesktopHeight, instance->settings->ColorDepth);
+	freerdp_callback("OnSettingsChanged", "(IIII)V", instance,
+			instance->settings->DesktopWidth, instance->settings->DesktopHeight,
+			instance->settings->ColorDepth);
 
 	instance->context->cache = cache_new(instance->settings);
 
@@ -553,8 +555,10 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 }
 
 JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
-	JNIEnv *env, jclass cls, jint instance, jboolean remotefx, jboolean disableWallpaper, jboolean disableFullWindowDrag,
-	jboolean disableMenuAnimations, jboolean disableTheming, jboolean enableFontSmoothing, jboolean enableDesktopComposition)
+	JNIEnv *env, jclass cls, jint instance, jboolean remotefx,
+	jboolean disableWallpaper, jboolean disableFullWindowDrag,
+	jboolean disableMenuAnimations, jboolean disableTheming,
+	jboolean enableFontSmoothing, jboolean enableDesktopComposition)
 {
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
@@ -617,7 +621,10 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 	DEBUG_ANDROID("performance_flags: %04X", settings->PerformanceFlags);
 }
 
-JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls, jint instance, jstring jRemoteProgram, jstring jWorkDir)
+JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls,
+		jint instance, jstring jRemoteProgram, jstring jWorkDir,
+		jboolean async_channel, jboolean async_transport, jboolean async_input,
+		jboolean async_update)
 {
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
@@ -627,6 +634,12 @@ JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls
 
 	DEBUG_ANDROID("Remote Program: %s", (char*) remote_program);
 	DEBUG_ANDROID("Work Dir: %s", (char*) work_dir);
+
+	/* Enable async mode. */
+	settings->AsyncUpdate = async_update;
+	settings->AsyncChannels = async_channel;
+	settings->AsyncTransport = async_transport;
+	settings->AsyncInput = async_input;
 
 	if(remote_program && strlen(remote_program) > 0)
 		settings->AlternateShell = strdup(remote_program);

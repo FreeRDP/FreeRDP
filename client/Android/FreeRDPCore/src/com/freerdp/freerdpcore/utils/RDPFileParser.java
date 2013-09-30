@@ -52,7 +52,10 @@ public class RDPFileParser {
 			lines++; ok = false;
 			
 			if (errors > MAX_ERRORS || lines > MAX_LINES)
+			{
+				br.close();			
 				throw new IOException("Parsing limits exceeded");
+			}
 			
 			String[] fields = line.split(":", 3);
 			
@@ -81,6 +84,7 @@ public class RDPFileParser {
 			
 			if (!ok) errors++;
 		}
+		br.close();
 	}
 	
 	public String getString(String optionName)

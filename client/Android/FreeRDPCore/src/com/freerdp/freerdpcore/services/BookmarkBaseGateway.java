@@ -68,6 +68,10 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+		values.put("async_channel", bookmark.getAdvancedSettings().getAsyncChannel());
+		values.put("async_transport", bookmark.getAdvancedSettings().getAsyncTransport());
+		values.put("async_input", bookmark.getAdvancedSettings().getAsyncInput());
+		values.put("async_update", bookmark.getAdvancedSettings().getAsyncUpdate());
 
 		// add any special columns
 		addBookmarkSpecificColumns(bookmark, values);
@@ -104,6 +108,10 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+		values.put("async_channel", bookmark.getAdvancedSettings().getAsyncChannel());
+		values.put("async_transport", bookmark.getAdvancedSettings().getAsyncTransport());
+		values.put("async_input", bookmark.getAdvancedSettings().getAsyncInput());
+		values.put("async_update", bookmark.getAdvancedSettings().getAsyncUpdate());
 		
 		addBookmarkSpecificColumns(bookmark, values);
 				
@@ -223,6 +231,10 @@ public abstract class BookmarkBaseGateway
 		columns.add("console_mode");
 		columns.add("remote_program");
 		columns.add("work_dir");
+		columns.add("async_channel");
+		columns.add("async_transport");
+		columns.add("async_input");
+		columns.add("async_update");
 		
 		addBookmarkSpecificColumns(columns);		
 	}
@@ -281,6 +293,14 @@ public abstract class BookmarkBaseGateway
 		bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex("console_mode")) == 0 ? false : true);		
 		bookmark.getAdvancedSettings().setRemoteProgram(cursor.getString(cursor.getColumnIndex("remote_program")));		
 		bookmark.getAdvancedSettings().setWorkDir(cursor.getString(cursor.getColumnIndex("work_dir")));		
+		bookmark.getAdvancedSettings().setAsyncChannel(
+				cursor.getInt(cursor.getColumnIndex("async_channel")) == 1 ? true : false);		
+		bookmark.getAdvancedSettings().setAsyncTransport(
+				cursor.getInt(cursor.getColumnIndex("async_transport")) == 1 ? true : false);		
+		bookmark.getAdvancedSettings().setAsyncInput(
+				cursor.getInt(cursor.getColumnIndex("async_input")) == 1 ? true : false);		
+		bookmark.getAdvancedSettings().setAsyncUpdate(
+				cursor.getInt(cursor.getColumnIndex("async_update")) == 1 ? true : false);		
 		
 		readBookmarkSpecificColumns(bookmark, cursor);
 

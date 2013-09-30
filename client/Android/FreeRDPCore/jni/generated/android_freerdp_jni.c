@@ -53,9 +53,14 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 			width, height, color_depth, port, console, security, certname);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1advanced_1settings(JNIEnv *env, jclass cls, jint instance, jstring remote_program, jstring work_dir)
+JNIEXPORT void JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1advanced_1settings(
+		JNIEnv *env, jclass cls, jint instance, jstring remote_program, jstring work_dir,
+		jboolean async_channel, jboolean async_transport, jboolean async_input,
+		jboolean async_update)
 {
-	jni_freerdp_set_advanced_settings(env, cls, instance, remote_program, work_dir);
+	jni_freerdp_set_advanced_settings(env, cls, instance, remote_program, work_dir,
+			async_channel, async_transport, async_input, async_update);
 }
 
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1data_1directory(JNIEnv *env, jclass cls, jint instance, jstring directory)

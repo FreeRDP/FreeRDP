@@ -39,6 +39,10 @@
         <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.security" android:title="@string/settings_security" android:entries="@array/security_array" android:entryValues="@array/security_values_array" />
         <EditTextPreference android:key="bookmark.remote_program" android:title="@string/settings_remote_program" android:summary="notepad.exe"/>
         <EditTextPreference android:key="bookmark.work_dir" android:title="@string/settings_work_dir"/>
+        <CheckBoxPreference android:key="bookmark.async_channel" android:title="@string/settings_async_channel"/>
+        <CheckBoxPreference android:key="bookmark.async_transport" android:title="@string/settings_async_transport"/>
+        <CheckBoxPreference android:key="bookmark.async_update" android:title="@string/settings_async_update"/>
+        <CheckBoxPreference android:key="bookmark.async_input" android:title="@string/settings_async_input"/>
         <CheckBoxPreference android:key="bookmark.console_mode" android:title="@string/settings_console_mode"/>
      
      </PreferenceCategory>   

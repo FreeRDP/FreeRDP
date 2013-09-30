@@ -299,6 +299,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private boolean consoleMode;
 		private String remoteProgram;
 		private String workDir;
+		private boolean asyncChannel;
+		private boolean asyncTransport;
+		private boolean asyncInput;
+		private boolean asyncUpdate;
 
 		public AdvancedSettings() {
 			init();
@@ -312,7 +316,11 @@ public class BookmarkBase implements Parcelable, Cloneable
 			security = parcel.readInt();
 			consoleMode = (parcel.readInt() == 1) ? true : false;
 			remoteProgram = parcel.readString();
-			workDir = parcel.readString();			
+			workDir = parcel.readString();
+			asyncChannel = (parcel.readInt() == 1) ? true : false;
+			asyncTransport = (parcel.readInt() == 1) ? true : false;
+			asyncInput = (parcel.readInt() == 1) ? true : false;
+			asyncUpdate = (parcel.readInt() == 1) ? true : false;
 		}
 				
 		private void init() {
@@ -324,6 +332,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 			consoleMode = false;
 			remoteProgram = "";
 			workDir = "";
+			asyncChannel = true;
+			asyncTransport = true;
+			asyncInput = true;
+			asyncUpdate = true;
 		}
 		
 		public void setEnable3GSettings(boolean enable3GSettings) {
@@ -393,7 +405,47 @@ public class BookmarkBase implements Parcelable, Cloneable
 		{	
 			return workDir;
 		}		
-		
+	
+		public boolean getAsyncTransport()
+		{
+			return asyncTransport;
+		}
+
+		public void setAsyncTransport(boolean enabled)
+		{
+			asyncTransport = enabled;
+		}
+
+		public boolean getAsyncUpdate()
+		{
+			return asyncUpdate;
+		}
+
+		public void setAsyncUpdate(boolean enabled)
+		{
+			asyncUpdate = enabled;
+		}
+
+		public boolean getAsyncInput()
+		{
+			return asyncInput;
+		}
+
+		public void setAsyncInput(boolean enabled)
+		{
+			asyncInput = enabled;
+		}
+
+		public void setAsyncChannel(boolean enabled)
+		{
+			asyncChannel = enabled;
+		}
+
+		public boolean getAsyncChannel()
+		{
+			return asyncChannel;
+		}
+
 		public static final Parcelable.Creator<AdvancedSettings> CREATOR = new Parcelable.Creator<AdvancedSettings>()
 		{
 			public AdvancedSettings createFromParcel(Parcel in) {
@@ -422,6 +474,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeInt(consoleMode ? 1 : 0);		
 			out.writeString(remoteProgram);
 			out.writeString(workDir);
+			out.writeInt(asyncChannel ? 1 : 0);
+			out.writeInt(asyncTransport ? 1 : 0);
+			out.writeInt(asyncInput ? 1 : 0);
+			out.writeInt(asyncUpdate ? 1 : 0);
 		}		
 	}
 	
@@ -623,6 +679,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putInt("bookmark.security", advancedSettings.getSecurity());
 		editor.putString("bookmark.remote_program", advancedSettings.getRemoteProgram());
 		editor.putString("bookmark.work_dir", advancedSettings.getWorkDir());
+		editor.putBoolean("bookmark.async_channel", advancedSettings.getAsyncChannel());
+		editor.putBoolean("bookmark.async_transport", advancedSettings.getAsyncTransport());
+		editor.putBoolean("bookmark.async_input", advancedSettings.getAsyncInput());
+		editor.putBoolean("bookmark.async_update", advancedSettings.getAsyncUpdate());
 		editor.putBoolean("bookmark.console_mode", advancedSettings.getConsoleMode());
 		
 		editor.commit();
@@ -665,6 +725,10 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.setSecurity(sharedPrefs.getInt("bookmark.security", 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString("bookmark.remote_program", ""));
 		advancedSettings.setWorkDir(sharedPrefs.getString("bookmark.work_dir", ""));
+		advancedSettings.setAsyncChannel(sharedPrefs.getBoolean("bookmark.async_channel", true));
+		advancedSettings.setAsyncTransport(sharedPrefs.getBoolean("bookmark.async_transport", true));
+		advancedSettings.setAsyncInput(sharedPrefs.getBoolean("bookmark.async_input", true));
+		advancedSettings.setAsyncUpdate(sharedPrefs.getBoolean("bookmark.async_update", true));
 		advancedSettings.setConsoleMode(sharedPrefs.getBoolean("bookmark.console_mode", false));
 	}
 
