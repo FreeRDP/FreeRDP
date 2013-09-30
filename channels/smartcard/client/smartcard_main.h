@@ -30,6 +30,12 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
+#define BOOL PCSC_BOOL
+#include <PCSC/pcsclite.h>
+#include <PCSC/reader.h>
+#include <PCSC/winscard.h>
+#undef BOOL
+
 /* 
  * When using Windows Server 2008 R2 as the Terminal Services (TS)
  * server, and with a smart card reader connected to the TS client machine 
@@ -106,8 +112,10 @@ struct _SMARTCARD_DEVICE
 	HANDLE irpEvent;
 	HANDLE stopEvent;
 
-        LIST* CompletionIds;
-        HANDLE CompletionIdsMutex;
+  LIST* CompletionIds;
+  HANDLE CompletionIdsMutex;
+
+	SCARDCONTEXT hContext;
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
