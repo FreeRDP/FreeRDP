@@ -66,9 +66,16 @@ static SLresult openSLPlayOpen(OPENSL_STREAM *p)
   SLuint32 sr = p->sr;
   SLuint32  channels = p->outchannels;
 
+	assert(p->engineObject);
+	assert(p->engineEngine);
+
   if(channels){
     // configure audio source
-    SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
+    SLDataLocator_AndroidSimpleBufferQueue loc_bufq =
+		{
+			SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+			p->queuesize
+		};
 
     switch(sr){
 
@@ -227,6 +234,7 @@ OPENSL_STREAM *android_OpenAudioDevice(int sr, int outchannels, int bufferframes
   p = (OPENSL_STREAM *) calloc(sizeof(OPENSL_STREAM),1);
 	memset(p, 0, sizeof(OPENSL_STREAM));
 
+	p->queuesize = bufferframes;
   p->outchannels = outchannels;
   p->sr = sr;
  
@@ -240,7 +248,6 @@ OPENSL_STREAM *android_OpenAudioDevice(int sr, int outchannels, int bufferframes
     return NULL;
   }  
 
-  p->time = 0.;
 	p->queue = Queue_New(TRUE, -1, -1);
   
 	return p;
@@ -253,14 +260,10 @@ void android_CloseAudioDevice(OPENSL_STREAM *p){
     return;
 
   openSLDestroyEngine(p);
-	Queue_Free(p->queue);
+	if (p->queue)
+		Queue_Free(p->queue);
 
   free(p);
-}
-
-// returns timestamp of the processed stream
-double android_GetTimestamp(OPENSL_STREAM *p){
-  return p->time;
 }
 
 // this callback handler is called every time a buffer finishes playing
@@ -281,6 +284,10 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 	assert(p);
 	assert(buffer);
 	assert(size > 0);
+
+	/* Assure, that the queue is not full. */
+	if (p->queuesize <= Queue_Count(p->queue))
+		WaitForSingleObject(p->queue->event, INFINITE);
 
 	void *data = calloc(size, sizeof(short));
 	memcpy(data, buffer, size * sizeof(short));

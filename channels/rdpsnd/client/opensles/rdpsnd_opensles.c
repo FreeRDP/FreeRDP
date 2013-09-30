@@ -89,15 +89,12 @@ static bool rdpsnd_opensles_check_handle(const rdpsndopenslesPlugin *hdl)
 {
 	bool rc = true;
 
-	assert(hdl);
 	if (!hdl)
 		rc = false;
 	else
 	{
-		assert(hdl->dsp_context);
 		if (!hdl->dsp_context)
 			rc = false;
-		assert(hdl->stream);
 		if (!hdl->stream)
 			rc = false;
 	}
@@ -111,13 +108,14 @@ static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 {
 	DEBUG_SND("opensles=%p", opensles);
-	rdpsnd_opensles_check_handle(opensles);
+	if (!rdpsnd_opensles_check_handle(opensles))
+		return;
 
 	if (opensles->stream)
 		android_CloseAudioDevice(opensles->stream);
 
 	opensles->stream = android_OpenAudioDevice(
-		opensles->rate, opensles->channels, opensles->rate);
+		opensles->rate, opensles->channels, 20);
 
 	return 0;
 }
@@ -180,11 +178,12 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 
 	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%d",
 			opensles, format, latency, opensles->rate);
-	if (opensles->stream)
+	
+	if( rdpsnd_opensles_check_handle(opensles))
 		return;
 
 	opensles->stream = android_OpenAudioDevice(
-		opensles->rate, opensles->channels, opensles->rate);
+		opensles->rate, opensles->channels, 20);
 	assert(opensles->stream);
 
 	if (!opensles->stream)
@@ -198,10 +197,9 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	rdpsnd_opensles_check_handle(opensles);
 
 	DEBUG_SND("opensles=%p", opensles);
-	if (!opensles->stream)
+	if( !rdpsnd_opensles_check_handle(opensles))
 		return;
 
 	android_CloseAudioDevice(opensles->stream);
@@ -302,7 +300,6 @@ static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 
 	opensles->volume = value;
 
-	return;
 	if (opensles->stream)
 	{
 		if (0 == opensles->volume)
@@ -364,6 +361,7 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 	assert(0 == size % 2);
 	assert(size > 0);
 	assert(src.b);
+
 	ret = android_AudioOut(opensles->stream, src.s, size / 2);
 	if (ret < 0)
 		DEBUG_WARN("android_AudioOut failed (%d)", ret);

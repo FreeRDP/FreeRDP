@@ -54,10 +54,10 @@ typedef struct opensl_stream {
   SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
   SLEffectSendItf bqPlayerEffectSend;
 
-  double time;
   unsigned int outchannels;
-  unsigned int   sr;
+  unsigned int sr;
 
+	unsigned int queuesize;
 	wQueue *queue;
 } OPENSL_STREAM;
 
@@ -74,11 +74,6 @@ typedef struct opensl_stream {
   Write a buffer to the OpenSL stream *p, of size samples. Returns the number of samples written.
   */
   int android_AudioOut(OPENSL_STREAM *p, const short *buffer, int size);
-  /*
-  Get the current IO block time in seconds
-  */
-  double android_GetTimestamp(OPENSL_STREAM *p);
-
 	/*
 	 * Set the volume input level.
 	 */
