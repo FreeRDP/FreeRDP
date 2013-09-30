@@ -3,6 +3,7 @@
 
    Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
    Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+   Copyright 2013 Thinstuff Technologies GmbH, Author: Armin Novak 
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -12,6 +13,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -228,7 +230,7 @@ int android_receive_channel_data(freerdp* instance, int channelId, UINT8* data, 
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-void android_process_channel_event(rdpChannels* channels, freerdp* instance)
+static void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	wMessage* event;
 
@@ -243,6 +245,7 @@ void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
+				DEBUG_ANDROID("Unsupported channel event %08X", event);
 				break;
 		}
 
@@ -250,7 +253,111 @@ void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 	}
 }
 
-int android_freerdp_run(freerdp* instance)
+static void *jni_update_thread(void *arg)
+{
+	int status;
+	wMessage message;
+	wMessageQueue* queue;
+	freerdp* instance = (freerdp*) arg;
+
+	assert( NULL != instance);
+
+	status = 1;
+	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+
+	while (MessageQueue_Wait(queue))
+	{
+		while (MessageQueue_Peek(queue, &message, TRUE))
+		{
+			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
+
+			if (!status)
+				break;
+		}
+
+		if (!status)
+			break;
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+static void* jni_input_thread(void* arg)
+{
+	HANDLE event;
+	wMessageQueue* queue;
+	int pending_status = 1;
+	int process_status = 1;
+	freerdp* instance = (freerdp*) arg;
+	
+	assert(NULL != instance);
+														  
+	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	//event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+																				  
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	{
+		do
+		{
+#if 0
+			xf_lock_x11(xfc, FALSE);
+			
+			pending_status = XPending(xfc->display);
+		
+			xf_unlock_x11(xfc, FALSE);
+				
+			if (pending_status)
+			{
+				xf_lock_x11(xfc, FALSE);
+				
+				ZeroMemory(&xevent, sizeof(xevent));
+				XNextEvent(xfc->display, &xevent);
+				process_status = xf_event_process(instance, &xevent);
+				
+				xf_unlock_x11(xfc, FALSE);
+				if (!process_status)
+					break;
+			}
+#endif		
+		}
+		while (pending_status);
+	
+		if (!process_status)
+			break;
+	}
+	
+	MessageQueue_PostQuit(queue, 0);
+	ExitThread(0);
+	return NULL;
+}
+
+static void* jni_channels_thread(void* arg)
+{     
+	int status;
+	HANDLE event;
+	rdpChannels* channels;
+	freerdp* instance = (freerdp*) arg;
+	
+	assert(NULL != instance);
+											  
+	channels = instance->context->channels;
+	event = freerdp_channels_get_event_handle(instance);
+																	    
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	{
+		status = freerdp_channels_process_pending_messages(instance);
+		if (!status)
+			break; 
+		
+		android_process_channel_event(channels, instance);
+	}
+	
+	ExitThread(0);
+	return NULL;
+} 
+
+static int android_freerdp_run(freerdp* instance)
 {
 	int i;
 	int fds;
@@ -264,6 +371,17 @@ int android_freerdp_run(freerdp* instance)
 	int select_status;
 	struct timeval timeout;
 
+	const rdpSettings* settings = instance->context->settings;
+
+	HANDLE update_thread;
+	HANDLE input_thread;
+	HANDLE channels_thread;
+	
+	BOOL async_update = settings->AsyncUpdate;
+	BOOL async_input = settings->AsyncInput;
+	BOOL async_channels = settings->AsyncChannels;
+	BOOL async_transport = settings->AsyncTransport;
+
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
 
@@ -272,27 +390,56 @@ int android_freerdp_run(freerdp* instance)
 		freerdp_callback("OnConnectionFailure", "(I)V", instance);
 		return 0;
 	}
-	
+
+	if (async_update)
+	{
+		update_thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) jni_update_thread, instance, 0, NULL);
+	}
+   
+  if (async_input)
+	{
+		input_thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) jni_input_thread, instance, 0, NULL);
+	}
+	      
+	if (async_channels)
+	{
+		channels_thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) jni_channels_thread, instance, 0, NULL);
+	}
+
 	((androidContext*)instance->context)->is_connected = TRUE;
 	while (!freerdp_shall_disconnect(instance))
 	{
 		rcount = 0;
 		wcount = 0;
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (!async_transport)
 		{
-			DEBUG_ANDROID("Failed to get FreeRDP file descriptor\n");
-			break;
+			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to get FreeRDP file descriptor\n");
+				break;
+			}
 		}
-		if (freerdp_channels_get_fds(instance->context->channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!async_channels)
 		{
-			DEBUG_ANDROID("Failed to get channel manager file descriptor\n");
-			break;
+			if (freerdp_channels_get_fds(instance->context->channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to get channel manager file descriptor\n");
+				break;
+			}
 		}
-		if (android_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!async_input)
 		{
-			DEBUG_ANDROID("Failed to get android file descriptor\n");
-			break;
+			if (android_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to get android file descriptor\n");
+				break;
+			}
 		}
 
 		max_fds = 0;
@@ -332,27 +479,59 @@ int android_freerdp_run(freerdp* instance)
 			}
 		}
 
-		if (freerdp_check_fds(instance) != TRUE)
+		if (!async_transport)
 		{
-			DEBUG_ANDROID("Failed to check FreeRDP file descriptor\n");
-			break;
+			if (freerdp_check_fds(instance) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to check FreeRDP file descriptor\n");
+				break;
+			}
 		}
+
 		if (android_check_fds(instance) != TRUE)
 		{
 			DEBUG_ANDROID("Failed to check android file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(instance->context->channels, instance) != TRUE)
+
+		if (!async_channels)
 		{
-			DEBUG_ANDROID("Failed to check channel manager file descriptor\n");
-			break;
+			if (freerdp_channels_check_fds(instance->context->channels, instance) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to check channel manager file descriptor\n");
+				break;
+			}
+		
+			android_process_channel_event(instance->context->channels, instance);
 		}
-		android_process_channel_event(instance->context->channels, instance);
 	}
 
 	// issue another OnDisconnecting here in case the disconnect was initiated by the sever and not our client
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
 	freerdp_channels_close(instance->context->channels, instance);
+
+	if (async_update)
+	{
+		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(update_queue, 0);
+		WaitForSingleObject(update_thread, INFINITE);
+		CloseHandle(update_thread);
+	}
+	 
+	if (async_input)
+	{
+		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+		MessageQueue_PostQuit(input_queue, 0);
+		WaitForSingleObject(input_thread, INFINITE);
+		CloseHandle(input_thread);
+	}
+		  
+	if (async_channels)
+	{
+		WaitForSingleObject(channels_thread, INFINITE);
+		CloseHandle(channels_thread);
+	}
+
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 	cache_free(instance->context->cache);
