@@ -1796,12 +1796,21 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
-		tmp = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
-		if (!tmp)
-			goto finish;
-		ioSendPci.v = tmp;
 
-		Stream_Read(irp->input, &ioSendPci.rq[1], ioSendPci.rq->cbPciLength);
+		/* Invalid length received. */
+		if (!ioSendPci.rq->cbPciLength)
+		{
+			if (ioSendPci.v)
+				free(ioSendPci.v);
+			ioSendPci.v = NULL;
+		}
+		else
+		{
+			tmp = realloc(ioSendPci.v, ioSendPci.rq->cbPciLength);
+			ioSendPci.v = tmp;
+		
+			Stream_Read(irp->input, &ioSendPci.rq[1], ioSendPci.rq->cbPciLength);
+		}
 	}
 	else
 		ioSendPci.rq->cbPciLength = sizeof(SCARD_IO_REQUEST);
@@ -1879,12 +1888,19 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 		/* Read data, see
 		 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa379807%28v=vs.85%29.aspx
 		 */
-		tmp = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
-		if (!tmp)
-			goto finish;
-		ioRecvPci.v = tmp;
-
-		Stream_Read(irp->input, &ioRecvPci.rq[1], ioRecvPci.rq->cbPciLength);
+		if (!ioRecvPci.rq->cbPciLength)
+		{
+			if (ioRecvPci.v)
+				free(ioRecvPci.v);
+			ioRecvPci.v = NULL;
+		}
+		else
+		{
+			tmp = realloc(ioRecvPci.v, ioRecvPci.rq->cbPciLength);
+			ioRecvPci.v = tmp;
+		
+			Stream_Read(irp->input, &ioRecvPci.rq[1], ioRecvPci.rq->cbPciLength);
+		}
 
 		pPioRecvPci = ioRecvPci.rq;
 	}
