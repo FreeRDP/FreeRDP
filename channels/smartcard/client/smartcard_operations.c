@@ -1112,15 +1112,23 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 		Stream_Write(irp->output, cur->rgbAtr, 32);
 
 		Stream_Zero(irp->output, 4);
-
-		free((void *)cur->szReader);
 	}
 
 	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (readerStates)
+	{
+		for (i = 0; i < readerCount; i++)
+		{
+			cur = &readerStates[i];
+
+			if (cur->szReader)
+				free(cur->szReader);
+			cur->szReader = NULL;
+		}
 		free(readerStates);
+	}
 
 	return status;
 }
@@ -2154,8 +2162,8 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned int) status);
-		free(pbAttr);
-		return smartcard_output_return(irp, status);
+		status = smartcard_output_return(irp, status);
+		goto finish;
 	}
 	else
 	{
@@ -2179,6 +2187,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 	}
 	smartcard_output_alignment(irp, 8);
 
+finish:
 #ifdef SCARD_AUTOALLOCATE
 	SCardFreeMemory(hContext, pbAttr);
 #else
@@ -2282,12 +2291,6 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	readerStates = malloc(readerCount * sizeof(SCARD_READERSTATE));
 	ZeroMemory(readerStates, readerCount * sizeof(SCARD_READERSTATE));
 
-	if (!readerStates)
-	{
-		free(pAtrMasks);
-		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
-	}
-
 	for (i = 0; i < readerCount; i++)
 	{
 		cur = &readerStates[i];
@@ -2340,10 +2343,8 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)",
 			pcsc_stringify_error(status), (unsigned) status);
-
-		free(readerStates);
-		free(pAtrMasks);
-		return smartcard_output_return(irp, status);
+		status = smartcard_output_return(irp, status);
+		goto finish;
 	}
 
 	DEBUG_SCARD("Success");
@@ -2380,14 +2381,23 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 		Stream_Write(irp->output, cur->rgbAtr, 32);
 
 		Stream_Zero(irp->output, 4);
-
-		free((void*) cur->szReader);
 	}
 
 	smartcard_output_alignment(irp, 8);
 
-	free(readerStates);
-	free(pAtrMasks);
+finish:
+	for (i = 0, cur = readerStates; i < readerCount; i++, cur++)
+	{
+		if (cur->szReader)
+			free((void*) cur->szReader);
+		cur->szReader = NULL;
+	}
+
+	if (readerStates)
+		free(readerStates);
+
+	if (pAtrMasks)
+		free(pAtrMasks);
 
 	return status;
 }
