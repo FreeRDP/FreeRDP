@@ -30,6 +30,11 @@
 
 #include <winpr/wlog.h>
 
+#include "wlog/wlog.h"
+
+#include "wlog/FileAppender.h"
+#include "wlog/ConsoleAppender.h"
+
 /**
  * References for general logging concepts:
  *
@@ -39,9 +44,6 @@
  * logging - Logging facility for Python:
  * http://docs.python.org/2/library/logging.html
  */
-
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
 
 const char* WLOG_LEVELS[7] =
 {
@@ -74,7 +76,7 @@ void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	}
 	else
 	{
-		char formattedLogMessage[8192];
+		char formattedLogMessage[WLOG_MAX_STRING_SIZE];
 		wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message->FormatString, args);
 
 		message->TextString = formattedLogMessage;
@@ -334,172 +336,6 @@ void WLog_Layout_Free(wLog* log, wLogLayout* layout)
 	}
 }
 
-/**
- * Console Appender
- */
-
-void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream)
-{
-	if (!appender)
-		return;
-
-	if (outputStream < 0)
-		outputStream = WLOG_CONSOLE_STDOUT;
-
-	if (outputStream == WLOG_CONSOLE_STDOUT)
-		appender->outputStream = WLOG_CONSOLE_STDOUT;
-	else if (outputStream == WLOG_CONSOLE_STDERR)
-		appender->outputStream = WLOG_CONSOLE_STDERR;
-	else
-		appender->outputStream = WLOG_CONSOLE_STDOUT;
-}
-
-int WLog_ConsoleAppender_Open(wLog* log, wLogConsoleAppender* appender)
-{
-	return 0;
-}
-
-int WLog_ConsoleAppender_Close(wLog* log, wLogConsoleAppender* appender)
-{
-	return 0;
-}
-
-int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, wLogMessage* message)
-{
-	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
-
-	if (message->Level > log->Level)
-		return 0;
-
-	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
-
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
-
-	return 1;
-}
-
-wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
-{
-	wLogConsoleAppender* ConsoleAppender;
-
-	ConsoleAppender = (wLogConsoleAppender*) malloc(sizeof(wLogConsoleAppender));
-
-	if (ConsoleAppender)
-	{
-		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
-
-		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
-		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
-		ConsoleAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_ConsoleAppender_WriteMessage;
-
-		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
-	}
-
-	return ConsoleAppender;
-}
-
-void WLog_ConsoleAppender_Free(wLog* log, wLogConsoleAppender* appender)
-{
-	if (appender)
-	{
-		free(appender);
-	}
-}
-
-/**
- * File Appender
- */
-
-void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
-{
-	if (!appender)
-		return;
-
-	if (!filename)
-		return;
-
-	appender->FileName = _strdup(filename);
-}
-
-int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
-{
-	if (!appender->FileName)
-		return -1;
-
-	appender->FileDescriptor = fopen(appender->FileName, "a+");
-
-	if (!appender->FileDescriptor)
-		return -1;
-
-	return 0;
-}
-
-int WLog_FileAppender_Close(wLog* log, wLogFileAppender* appender)
-{
-	if (!appender->FileDescriptor)
-		return 0;
-
-	fclose(appender->FileDescriptor);
-
-	appender->FileDescriptor = NULL;
-
-	return 0;
-}
-
-int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMessage* message)
-{
-	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
-
-	if (message->Level > log->Level)
-		return 0;
-
-	fp = appender->FileDescriptor;
-
-	if (!fp)
-		return -1;
-
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
-
-	return 1;
-}
-
-wLogFileAppender* WLog_FileAppender_New(wLog* log)
-{
-	wLogFileAppender* FileAppender;
-
-	FileAppender = (wLogFileAppender*) malloc(sizeof(wLogFileAppender));
-
-	if (FileAppender)
-	{
-		ZeroMemory(FileAppender, sizeof(wLogFileAppender));
-
-		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
-		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
-		FileAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
-	}
-
-	return FileAppender;
-}
-
-void WLog_FileAppender_Free(wLog* log, wLogFileAppender* appender)
-{
-	if (appender)
-	{
-		if (appender->FileName)
-			free(appender->FileName);
-
-		free(appender);
-	}
-}
-
 wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
 	wLogAppender* appender = NULL;
@@ -580,6 +416,40 @@ int WLog_CloseAppender(wLog* log)
 	return log->Appender->Close(log, log->Appender);
 }
 
+int WLog_ParseName(wLog* log, LPCSTR name)
+{
+	char* p;
+	int count;
+	LPSTR names;
+
+	count = 1;
+	p = (char*) name;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		count++;
+		p++;
+	}
+
+	names = _strdup(name);
+	log->NameCount = count;
+	log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	log->Names[count] = NULL;
+
+	count = 0;
+	p = (char*) names;
+	log->Names[count++] = p;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		log->Names[count++] = p + 1;
+		*p = '\0';
+		p++;
+	}
+
+	return 0;
+}
+
 wLog* WLog_New(LPCSTR name)
 {
 	wLog* log;
@@ -591,8 +461,9 @@ wLog* WLog_New(LPCSTR name)
 		ZeroMemory(log, sizeof(wLog));
 
 		log->Name = _strdup(name);
-		log->Level = WLOG_TRACE;
+		WLog_ParseName(log, name);
 
+		log->Level = WLOG_TRACE;
 		WLog_SetLogAppenderType(log, WLOG_APPENDER_CONSOLE);
 	}
 
@@ -610,6 +481,9 @@ void WLog_Free(wLog* log)
 		}
 
 		free(log->Name);
+		free(log->Names[0]);
+		free(log->Names);
+
 		free(log);
 	}
 }

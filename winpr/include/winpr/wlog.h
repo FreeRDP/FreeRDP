@@ -127,6 +127,8 @@ struct _wLog
 	LPSTR Name;
 	DWORD Level;
 
+	LPSTR* Names;
+	DWORD NameCount;
 	wLogAppender* Appender;
 };
 

@@ -9,7 +9,7 @@ int TestWLog(int argc, char* argv[])
 	wLogLayout* layout;
 	wLogAppender* appender;
 
-	log = WLog_New("CONSOLE_LOG_TEST");
+	log = WLog_New("com.log.test.console");
 
 	WLog_SetLogLevel(log, WLOG_INFO);
 
@@ -30,7 +30,7 @@ int TestWLog(int argc, char* argv[])
 	WLog_CloseAppender(log);
 	WLog_Free(log);
 
-	log = WLog_New("FILE_LOG_TEST");
+	log = WLog_New("com.log.test.file");
 
 	WLog_SetLogLevel(log, WLOG_WARN);
 
