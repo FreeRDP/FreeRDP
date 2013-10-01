@@ -79,7 +79,7 @@
 
 #define WIN_FILE_DEVICE_SMARTCARD		0x00000031
 
-#if defined(DEBUG_SCARD) && (DEBUG_SCARD)
+#if defined(WITH_DEBUG_SCARD)
 static char *ioctl_to_string(DWORD code)
 {
 	static char res[100];
