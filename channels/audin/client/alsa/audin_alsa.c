@@ -165,7 +165,12 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 			if (WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0)
 				break;
 			else
+			{
+				DEBUG_DVC("encoded %d [%d] to %d [%X]", alsa->buffer_frames,
+						tbytes_per_frame, encoded_size,
+						alsa->wformat);
 				ret = alsa->receive(encoded_data, encoded_size, alsa->user_data);
+			}
 
 			alsa->buffer_frames = 0;
 

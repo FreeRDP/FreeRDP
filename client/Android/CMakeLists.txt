@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(ANDROID_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/aFreeRDP")
+
 if(ANDROID_BUILD_JAVA)
 	if (NOT ANDROID_SDK)
 		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
@@ -35,6 +37,12 @@ if(ANDROID_BUILD_JAVA)
 		set(ANDROID_BUILD_TYPE "release")
 	endif()
 endif(ANDROID_BUILD_JAVA)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+	set(ANDROID_DEBUG_ENABLE "true")
+else()
+	set(ANDROID_DEBUG_ENABLE "false")
+endif()
 
 add_subdirectory(FreeRDPCore)
 add_subdirectory(aFreeRDP)

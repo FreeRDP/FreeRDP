@@ -37,6 +37,7 @@
 
 /* Options */
 #cmakedefine WITH_PROFILER
+#cmakedefine WITH_GPROF
 #cmakedefine WITH_SSE2
 #cmakedefine WITH_NEON
 #cmakedefine WITH_IPP
@@ -44,6 +45,13 @@
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
 #cmakedefine WITH_RDPSND_DSOUND
+
+#cmakedefine WITH_WINMM
+#cmakedefine WITH_MACAUDIO
+#cmakedefine WITH_ALSA
+#cmakedefine WITH_PULSE
+#cmakedefine WITH_IOSAUDIO
+#cmakedefine WITH_OPENSLES
 
 /* Plugins */
 #cmakedefine STATIC_CHANNELS
@@ -69,6 +77,7 @@
 #cmakedefine WITH_DEBUG_REDIR
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
+#cmakedefine WITH_DEBUG_SND
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE

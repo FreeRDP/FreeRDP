@@ -36,6 +36,8 @@
         </PreferenceScreen>
         
         <CheckBoxPreference android:key="bookmark.redirect_sdcard" android:title="@string/settings_redirect_sdcard"/>
+        <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.redirect_sound" android:title="@string/settings_redirect_sound" android:entries="@array/redirect_sound_array" android:entryValues="@array/redirect_sound_values_array" />
+        <CheckBoxPreference android:key="bookmark.redirect_microphone" android:title="@string/settings_redirect_microphone"/>
         <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.security" android:title="@string/settings_security" android:entries="@array/security_array" android:entryValues="@array/security_values_array" />
         <EditTextPreference android:key="bookmark.remote_program" android:title="@string/settings_remote_program" android:summary="notepad.exe"/>
         <EditTextPreference android:key="bookmark.work_dir" android:title="@string/settings_work_dir"/>

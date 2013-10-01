@@ -76,6 +76,18 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 	jni_freerdp_set_clipboard_redirection(env, cls, inst, enable);
 }
 
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
+  (JNIEnv *env, jclass cls, jint inst, jint redirect)
+{
+	jni_freerdp_set_sound_redirection(env, cls, inst, redirect);
+}
+
+JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1microphone_1redirection
+  (JNIEnv *env, jclass cls, jint inst, jboolean redirect)
+{
+	jni_freerdp_set_microphone_redirection(env, cls, inst, redirect);
+}
+
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
   (JNIEnv *env, jclass cls, jint inst, jstring path)
 {

@@ -22,6 +22,12 @@
 
 #include <freerdp/channels/rdpsnd.h>
 
+#if defined(WITH_DEBUG_SND)
+#define DEBUG_SND(fmt, ...) DEBUG_CLASS("rdpsnd", fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_SND(fmt, ...) do { } while (0)
+#endif
+
 struct _RDPSND_WAVE
 {
 	BYTE* data;
