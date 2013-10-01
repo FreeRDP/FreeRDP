@@ -36,6 +36,9 @@ void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* append
 	if (!appender)
 		return;
 
+	if (appender->Type != WLOG_APPENDER_CONSOLE)
+		return;
+
 	if (outputStream < 0)
 		outputStream = WLOG_CONSOLE_STDOUT;
 

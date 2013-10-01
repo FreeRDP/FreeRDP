@@ -39,6 +39,9 @@ void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, 
 	if (!appender)
 		return;
 
+	if (appender->Type != WLOG_APPENDER_FILE)
+		return;
+
 	if (!filename)
 		return;
 
@@ -48,6 +51,9 @@ void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, 
 void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
 {
 	if (!appender)
+		return;
+
+	if (appender->Type != WLOG_APPENDER_FILE)
 		return;
 
 	if (!filepath)
@@ -138,6 +144,10 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
 		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
 		FileAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
+
+		FileAppender->FileName = NULL;
+		FileAppender->FilePath = NULL;
+		FileAppender->FullFileName = NULL;
 	}
 
 	return FileAppender;

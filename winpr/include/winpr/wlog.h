@@ -129,9 +129,15 @@ struct _wLog
 	LPSTR Name;
 	DWORD Level;
 
+	BOOL IsRoot;
 	LPSTR* Names;
 	DWORD NameCount;
 	wLogAppender* Appender;
+
+	wLog* Parent;
+	wLog** Children;
+	DWORD ChildrenCount;
+	DWORD ChildrenSize;
 };
 
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
@@ -165,7 +171,10 @@ WINPR_API void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
 
-WINPR_API wLog* WLog_New(LPCSTR name);
-WINPR_API void WLog_Free(wLog* log);
+WINPR_API wLog* WLog_GetRoot();
+WINPR_API wLog* WLog_Get(LPCSTR name);
+
+WINPR_API void WLog_Init();
+WINPR_API void WLog_Uninit();
 
 #endif /* WINPR_WLOG_H */
