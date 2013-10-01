@@ -109,7 +109,7 @@ static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 {
 	DEBUG_SND("opensles=%p", opensles);
 	if (!rdpsnd_opensles_check_handle(opensles))
-		return;
+		return 0;
 
 	if (opensles->stream)
 		android_CloseAudioDevice(opensles->stream);
