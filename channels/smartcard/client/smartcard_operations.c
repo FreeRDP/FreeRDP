@@ -786,10 +786,6 @@ static UINT32 handle_IsValidContext(SMARTCARD_DEVICE* scard, IRP* irp)
 		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
-	if (status)
-		printf("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
-	else
-		printf("Success context: 0x%08x", (unsigned) hContext);
 
 	smartcard_output_alignment(irp, 8);
 
