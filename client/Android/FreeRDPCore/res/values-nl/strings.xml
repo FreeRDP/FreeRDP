@@ -117,9 +117,9 @@
     <string name="settings_redirect_sdcard">SDCard aankoppelen</string>
     <string name="settings_redirect_sound">Redirect Sound</string>
     <string-array name="redirect_sound_array">
-        <item>None</item>
-        <item>Server</item>
-        <item>Client</item>
+        <item>Do not play</item>
+        <item>Play on Server</item>
+        <item>Play on Device</item>
     </string-array>
     <string-array name="redirect_sound_values_array">
         <item>0</item>
