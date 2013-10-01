@@ -13,7 +13,6 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +34,7 @@
 #include "android_jni_utils.h"
 #include "android_debug.h"
 #include "android_cliprdr.h"
+
 
 #if defined(WITH_GPROF)
 #include "jni/prof.h"
