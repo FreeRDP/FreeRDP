@@ -238,14 +238,15 @@ static void android_process_channel_event(rdpChannels* channels, freerdp* instan
 
 	if (event)
 	{
-		switch(GetMessageClass(event->id))
+		int ev = GetMessageClass(event->id);
+		switch(ev)
 		{
 			case CliprdrChannel_Class:
 				android_process_cliprdr_event(instance, event);
 				break;
 
 			default:
-				DEBUG_ANDROID("Unsupported channel event %08X", event);
+				DEBUG_ANDROID("Unsupported channel event %08X", ev);
 				break;
 		}
 
@@ -261,6 +262,8 @@ static void *jni_update_thread(void *arg)
 	freerdp* instance = (freerdp*) arg;
 
 	assert( NULL != instance);
+
+	DEBUG_ANDROID("Start.");
 
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
@@ -279,53 +282,49 @@ static void *jni_update_thread(void *arg)
 			break;
 	}
 
+	DEBUG_ANDROID("Quit.");
+
 	ExitThread(0);
 	return NULL;
 }
 
 static void* jni_input_thread(void* arg)
 {
-	HANDLE event;
+	HANDLE event[3];
 	wMessageQueue* queue;
-	int pending_status = 1;
-	int process_status = 1;
 	freerdp* instance = (freerdp*) arg;
+	androidContext *aCtx = (androidContext*)instance->context;
 	
 	assert(NULL != instance);
+	assert(NULL != aCtx);
 														  
+	DEBUG_ANDROID("Start.");
+
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	//event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
-																				  
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
-	{
-		do
-		{
-#if 0
-			xf_lock_x11(xfc, FALSE);
+	event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[0]);
+	event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[1]);
+	event[2] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 			
-			pending_status = XPending(xfc->display);
-		
-			xf_unlock_x11(xfc, FALSE);
-				
-			if (pending_status)
-			{
-				xf_lock_x11(xfc, FALSE);
-				
-				ZeroMemory(&xevent, sizeof(xevent));
-				XNextEvent(xfc->display, &xevent);
-				process_status = xf_event_process(instance, &xevent);
-				
-				xf_unlock_x11(xfc, FALSE);
-				if (!process_status)
-					break;
-			}
-#endif		
+	do
+	{
+		DWORD rc = WaitForMultipleObjects(3, event, FALSE, INFINITE);
+		if (rc == WAIT_OBJECT_0 + 2)
+		{
+			wMessage msg;
+
+			MessageQueue_Peek(queue, &msg, FALSE);
+			if (msg.id == WMQ_QUIT)
+				break;
 		}
-		while (pending_status);
+		if ((rc < WAIT_OBJECT_0) && (rc > WAIT_OBJECT_0 + 1))
+			break;
 	
-		if (!process_status)
+		if (android_check_fds(instance) != TRUE)
 			break;
 	}
+	while(1);
+
+	DEBUG_ANDROID("Quit.");
 	
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
@@ -341,6 +340,8 @@ static void* jni_channels_thread(void* arg)
 	
 	assert(NULL != instance);
 											  
+	DEBUG_ANDROID("Start.");
+
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
 																	    
@@ -353,6 +354,8 @@ static void* jni_channels_thread(void* arg)
 		android_process_channel_event(channels, instance);
 	}
 	
+	DEBUG_ANDROID("Quit.");
+
 	ExitThread(0);
 	return NULL;
 } 
@@ -364,6 +367,8 @@ static int android_freerdp_run(freerdp* instance)
 	int max_fds;
 	int rcount;
 	int wcount;
+	int fd_input_event;
+  HANDLE input_event;
 	void* rfds[32];
 	void* wfds[32];
 	fd_set rfds_set;
@@ -381,6 +386,11 @@ static int android_freerdp_run(freerdp* instance)
 	BOOL async_input = settings->AsyncInput;
 	BOOL async_channels = settings->AsyncChannels;
 	BOOL async_transport = settings->AsyncTransport;
+
+	DEBUG_ANDROID("AsyncUpdate=%d", settings->AsyncUpdate);
+	DEBUG_ANDROID("AsyncInput=%d", settings->AsyncInput);
+	DEBUG_ANDROID("AsyncChannels=%d", settings->AsyncChannels);
+	DEBUG_ANDROID("AsyncTransport=%d", settings->AsyncTransport);
 
 	memset(rfds, 0, sizeof(rfds));
 	memset(wfds, 0, sizeof(wfds));
@@ -441,6 +451,12 @@ static int android_freerdp_run(freerdp* instance)
 				break;
 			}
 		}
+		else
+		{
+			input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			fd_input_event = GetEventFileDescriptor(input_event);
+			rfds[rcount++] = (void*) (long) fd_input_event;
+		}
 
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -488,10 +504,25 @@ static int android_freerdp_run(freerdp* instance)
 			}
 		}
 
-		if (android_check_fds(instance) != TRUE)
+		if (!async_input)
 		{
-			DEBUG_ANDROID("Failed to check android file descriptor\n");
-			break;
+			if (android_check_fds(instance) != TRUE)
+			{
+				DEBUG_ANDROID("Failed to check android file descriptor\n");
+				break;
+			}
+		}
+		else
+		{
+			if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+			{
+				if (!freerdp_message_queue_process_pending_messages(instance,
+							FREERDP_INPUT_MESSAGE_QUEUE))
+				{
+					DEBUG_ANDROID("User Disconnect");
+					break;
+				}
+			}
 		}
 
 		if (!async_channels)
@@ -506,10 +537,15 @@ static int android_freerdp_run(freerdp* instance)
 		}
 	}
 
+	DEBUG_ANDROID("Prepare shutdown...");
+
 	// issue another OnDisconnecting here in case the disconnect was initiated by the sever and not our client
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
+	
+	DEBUG_ANDROID("Close channels...");
 	freerdp_channels_close(instance->context->channels, instance);
 
+	DEBUG_ANDROID("Cleanup threads...");
 	if (async_update)
 	{
 		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
@@ -532,11 +568,15 @@ static int android_freerdp_run(freerdp* instance)
 		CloseHandle(channels_thread);
 	}
 
+	DEBUG_ANDROID("Disconnecting...");
+	freerdp_channels_free(instance->context->channels);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 	cache_free(instance->context->cache);
 	android_cliprdr_uninit(instance);
 	freerdp_callback("OnDisconnected", "(I)V", instance);
+
+	DEBUG_ANDROID("Quit.");
 
 	return 0;
 }
@@ -546,12 +586,15 @@ void* android_thread_func(void* param)
 	struct thread_data* data;
 	data = (struct thread_data*) param;
 
+	DEBUG_ANDROID("Start.");
+
 	freerdp* instance = data->instance;
 	android_freerdp_run(instance);
 	free(data);
 
-	pthread_detach(pthread_self());
+	DEBUG_ANDROID("Quit.");
 
+	ExitThread(0);
 	return NULL;
 }
 
