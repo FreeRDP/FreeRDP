@@ -192,6 +192,25 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 	input->MouseEvent(input, flags, x, y);
 }
 
+
+void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+{
+    mfContext* mfc = (mfContext*) context;
+    MRDPView* view = (MRDPView*) mfc->view;
+
+    int ww, wh, dw, dh;
+
+    ww = [view frame].size.width;
+    wh = [view frame].size.height;
+    dw = mfc->context.settings->DesktopWidth;
+    dh = mfc->context.settings->DesktopHeight;
+
+    if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+        input->MouseEvent(input, flags, x + mfc->xCurrentScroll, y + mfc->yCurrentScroll);
+    else
+        input->MouseEvent(input, flags, x * dw / ww + mfc->xCurrentScroll, y * dh / wh + mfc->yCurrentScroll);
+}
+
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;

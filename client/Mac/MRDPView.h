@@ -41,6 +41,7 @@
 
 @interface MRDPView : NSView
 {
+    mfContext* mfc;
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
@@ -52,10 +53,8 @@
 	rdpContext* context;
 	CGContextRef bitmap_context;
 	char* pixel_data;
-	int width;
-	int height;
 	int argc;
-	char** argv;
+    char** argv;
     
 	NSPoint savedDragLocation;
 	BOOL firstCreateWindow;
@@ -75,7 +74,7 @@
 	int kdrmeta;
 	int kdcapslock;
 
-    BOOL initialized;
+    BOOL initialized;    
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
@@ -87,6 +86,8 @@
 
 - (int)  rdpStart :(rdpContext*) rdp_context;
 - (void) setCursor: (NSCursor*) cursor;
+- (void) setScrollOffset:(int)xOffset y:(int)yOffset;
+- (void) sendMouseEvent:(UINT16) flags withX:(UINT16)x withY:(UINT16)y;
 
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;
