@@ -16,8 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ANDROID_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(ANDROID_PACKAGE_NAME "aFreeRDPCore")
+file(MAKE_DIRECTORY ${ANDROID_BINARY_DIR})
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml @ONLY)
@@ -39,6 +39,7 @@ add_subdirectory(jni)
 
 
 if(ANDROID_BUILD_JAVA)
+	file(MAKE_DIRECTORY "${ANDROID_BINARY_DIR}/bin")
 	set(ANDROIDLIB "${ANDROID_BINARY_DIR}/bin/classes.jar")
 
   # command to create the android package
