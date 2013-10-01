@@ -22,6 +22,9 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/thread.h>
 
 #include <winpr/wlog.h>
 
@@ -42,12 +45,46 @@ void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, 
 	appender->FileName = _strdup(filename);
 }
 
+void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
+{
+	if (!appender)
+		return;
+
+	if (!filepath)
+		return;
+
+	appender->FilePath = _strdup(filepath);
+}
+
 int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
 {
-	if (!appender->FileName)
-		return -1;
+	DWORD ProcessId;
 
-	appender->FileDescriptor = fopen(appender->FileName, "a+");
+	ProcessId = GetCurrentProcessId();
+
+	if (!appender->FilePath)
+	{
+		appender->FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+	}
+
+	if (!PathFileExistsA(appender->FilePath))
+	{
+		CreateDirectoryA(appender->FilePath, 0);
+		UnixChangeFileMode(appender->FilePath, 0xFFFF);
+	}
+
+	if (!appender->FileName)
+	{
+		appender->FileName = (char*) malloc(256);
+		sprintf_s(appender->FileName, 256, "%u.log", ProcessId);
+	}
+
+	if (!appender->FullFileName)
+	{
+		appender->FullFileName = GetCombinedPath(appender->FilePath, appender->FileName);
+	}
+
+	appender->FileDescriptor = fopen(appender->FullFileName, "a+");
 
 	if (!appender->FileDescriptor)
 		return -1;
@@ -112,6 +149,12 @@ void WLog_FileAppender_Free(wLog* log, wLogFileAppender* appender)
 	{
 		if (appender->FileName)
 			free(appender->FileName);
+
+		if (appender->FilePath)
+			free(appender->FilePath);
+
+		if (appender->FullFileName)
+			free(appender->FullFileName);
 
 		free(appender);
 	}

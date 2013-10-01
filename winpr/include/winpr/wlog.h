@@ -114,6 +114,8 @@ struct _wLogFileAppender
 	WLOG_APPENDER_COMMON();
 
 	char* FileName;
+	char* FilePath;
+	char* FullFileName;
 	FILE* FileDescriptor;
 };
 typedef struct _wLogFileAppender wLogFileAppender;
@@ -158,6 +160,7 @@ WINPR_API int WLog_CloseAppender(wLog* log);
 WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream);
 
 WINPR_API void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
+WINPR_API void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);

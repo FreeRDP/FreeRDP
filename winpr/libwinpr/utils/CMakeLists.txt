@@ -89,7 +89,7 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-sysinfo)
+	MODULES winpr-crt winpr-file winpr-path winpr-synch winpr-sysinfo)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

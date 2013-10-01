@@ -1,11 +1,13 @@
 
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
+#include <winpr/path.h>
 #include <winpr/wlog.h>
 
 int TestWLog(int argc, char* argv[])
 {
 	wLog* log;
+	char* TempPath;
 	wLogLayout* layout;
 	wLogAppender* appender;
 
@@ -40,8 +42,12 @@ int TestWLog(int argc, char* argv[])
 	layout = WLog_GetLogLayout(log);
 	WLog_Layout_SetPrefixFormat(log, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
 
-	WLog_FileAppender_SetOutputFileName(log, (wLogFileAppender*) appender, "/tmp/wlog_test.log");
+	TempPath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+
+	WLog_FileAppender_SetOutputFilePath(log, (wLogFileAppender*) appender, TempPath);
 	WLog_OpenAppender(log);
+
+	free(TempPath);
 
 	WLog_Print(log, WLOG_INFO, "this is a test");
 	WLog_Print(log, WLOG_WARN, "this is a %dnd %s", 2, "test");
