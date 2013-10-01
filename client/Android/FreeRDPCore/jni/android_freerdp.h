@@ -45,6 +45,8 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(JNIEnv *env, jclass cls
 	jboolean disableMenuAnimations, jboolean disableTheming, jboolean enableFontSmoothing, jboolean enableDesktopComposition);
 JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls, jint instance, jstring jRemoteProgram, jstring jWorkDir);
 JNIEXPORT void JNICALL jni_freerdp_set_drive_redirection(JNIEnv *env, jclass cls, jint instance, jstring jpath);
+JNIEXPORT void JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env, jclass cls, jint instance, jint redirect);
+JNIEXPORT void JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env, jclass cls, jint instance, jboolean enable);
 JNIEXPORT void JNICALL jni_freerdp_set_clipboard_redirection(JNIEnv *env, jclass cls, jint instance, jboolean enable);
 JNIEXPORT void JNICALL jni_freerdp_set_gateway_info(JNIEnv *env, jclass cls, jint instance, jstring jgatewayhostname, jint port, jstring jgatewayusername, jstring jgatewaypassword, jstring jgatewaydomain);
 JNIEXPORT void JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cls, jint instance, jstring jdirectory);

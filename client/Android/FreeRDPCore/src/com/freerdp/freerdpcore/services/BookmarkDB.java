@@ -22,14 +22,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class BookmarkDB extends SQLiteOpenHelper
 {
-	private static final int DB_VERSION = 3;
+	private static final int DB_VERSION = 4;
 	private static final String DB_NAME = "bookmarks.db";
 	
 	public static final String ID = BaseColumns._ID;
-			
+	
 	public BookmarkDB(Context context)
 	{
-		super(context, DB_NAME, null, DB_VERSION);
+		super(context, DB_NAME, null, DB_VERSION);		
 	}
 	
 	@Override
@@ -101,6 +101,8 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "screen_3g, "
 			+ "performance_3g, "
 			+ "redirect_sdcard, "
+			+ "redirect_sound, "
+			+ "redirect_microphone, "
 			+ "security, "
 			+ "remote_program, "
 			+ "work_dir, "
@@ -112,7 +114,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "'', "
 			+ "'', "
 			+ "3389, "
-			+ "1, 1, 2, 2, 0, 0, '', '', 0);";
+			+ "1, 1, 2, 2, 0, 0, 0, 0, '', '', 0);";
 		db.execSQL(sqlInsertDefaultSessionEntry);
 	}
 
@@ -140,7 +142,9 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "enable_3g_settings INTEGER DEFAULT 0, "
 			+ "screen_3g INTEGER NOT NULL, "
 			+ "performance_3g INTEGER NOT NULL, "
-			+ "redirect_sdcard INTEGER, "
+			+ "redirect_sdcard INTEGER DEFAULT 0, "
+			+ "redirect_sound INTEGER DEFAULT 0, "
+			+ "redirect_microphone INTEGER DEFAULT 0, "
 			+ "security INTEGER, "
 			+ "remote_program TEXT, "
 			+ "work_dir TEXT, "

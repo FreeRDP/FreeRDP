@@ -82,6 +82,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
     	super.onCreate();
     	
     	bookmarkDB = new BookmarkDB(this);
+    	
     	manualBookmarkGateway = new ManualBookmarkGateway(bookmarkDB);
 
 		historyDB = new HistoryDB(this);

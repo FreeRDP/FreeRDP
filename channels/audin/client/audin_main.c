@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -554,8 +555,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	ADDIN_ARGV* args;
 	AUDIN_PLUGIN* audin;
 
-	audin = (AUDIN_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "audin");
+	assert(pEntryPoints);
+	assert(pEntryPoints->GetPlugin);
 
+	audin = (AUDIN_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "audin");
 	if (audin == NULL)
 	{
 		audin = (AUDIN_PLUGIN*) malloc(sizeof(AUDIN_PLUGIN));
@@ -577,19 +580,32 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	if (audin->subsystem)
 		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
 
+#if defined(WITH_PULSE)
 	if (!audin->device)
 	{
 		audin_set_subsystem(audin, "pulse");
 		audin_set_device_name(audin, "");
 		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
 	}
+#endif
 
+#if defined(WITH_ALSA)
 	if (!audin->device)
 	{
 		audin_set_subsystem(audin, "alsa");
 		audin_set_device_name(audin, "default");
 		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
 	}
+#endif
+
+#if defined(WITH_OPENSLES)
+	if (!audin->device)
+	{
+		audin_set_subsystem(audin, "opensles");
+		audin_set_device_name(audin, "default");
+		audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args);
+	}
+#endif
 
 	if (audin->device == NULL)
 	{

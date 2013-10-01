@@ -114,6 +114,18 @@
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
     <string name="settings_gateway_settings">Gateway Settings</string>    
     <string name="settings_redirect_sdcard">"Redirect SDCard"</string>
+    <string name="settings_redirect_sound">Redirect Sound</string>
+    <string-array name="redirect_sound_array">
+        <item>Do not play</item>
+        <item>Play on Server</item>
+        <item>Play on Device</item>
+    </string-array>
+    <string-array name="redirect_sound_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">"Securité"</string>
     <string-array name="security_array">
         <item>"Automatique"</item>
