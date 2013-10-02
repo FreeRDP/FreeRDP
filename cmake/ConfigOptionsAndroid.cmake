@@ -21,6 +21,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 option(WITH_DEBUG_ANDROID_JNI "Enable debug output for android jni bindings" ${DEFAULT_DEBUG_OPTION})
+option(WITH_ANDROID_DEBUG_MENU "Enable debug output for android jni bindings" ${DEFAULT_DEBUG_OPTION})
 option(WITH_OPENSLES "Enable sound and microphone redirection using OpenSLES" ON)
 option(ANDROID_BUILD_JAVA "Automatically android java code - build type depends on CMAKE_BUILD_TYPE" ON)
 option(ANDROID_BUILD_JAVA_DEBUG "Create a android debug package" ${JAVA_DEBUG_DEFAULT})

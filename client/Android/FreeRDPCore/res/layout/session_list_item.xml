@@ -23,6 +23,7 @@
 
 	<ImageView
 		android:id="@+id/session_screenshot"
+		android:contentDescription="@+id/session_screenshot"
 		android:layout_width="64dp"
 		android:layout_height="48dp"
 		android:scaleType="fitXY"
@@ -51,6 +52,7 @@
 
 	<ImageButton
 		android:id="@+id/session_disconnect"
+		android:contentDescription="@+id/session_disconnect"
 	    android:focusable="false"
 	    android:focusableInTouchMode="false"
 		android:layout_width="wrap_content"
