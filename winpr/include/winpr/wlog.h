@@ -88,6 +88,7 @@ typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender,
 
 #define WLOG_APPENDER_COMMON() \
 	DWORD Type; \
+	DWORD State; \
 	wLogLayout* Layout; \
 	WLOG_APPENDER_OPEN_FN Open; \
 	WLOG_APPENDER_CLOSE_FN Close; \

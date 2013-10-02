@@ -410,6 +410,7 @@ void WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 
 int WLog_OpenAppender(wLog* log)
 {
+	int status = 0;
 	wLogAppender* appender;
 
 	appender = WLog_GetLogAppender(log);
@@ -420,11 +421,18 @@ int WLog_OpenAppender(wLog* log)
 	if (!appender->Open)
 		return 0;
 
-	return appender->Open(log, appender);
+	if (!appender->State)
+	{
+		status = appender->Open(log, appender);
+		appender->State = 1;
+	}
+
+	return status;
 }
 
 int WLog_CloseAppender(wLog* log)
 {
+	int status = 0;
 	wLogAppender* appender;
 
 	appender = WLog_GetLogAppender(log);
@@ -435,7 +443,13 @@ int WLog_CloseAppender(wLog* log)
 	if (!appender->Close)
 		return 0;
 
-	return appender->Close(log, appender);
+	if (appender->State)
+	{
+		status = appender->Close(log, appender);
+		appender->State = 0;
+	}
+
+	return status;
 }
 
 int WLog_ParseName(wLog* log, LPCSTR name)
@@ -588,7 +602,7 @@ wLog* WLog_Get(LPCSTR name)
 
 void WLog_Init()
 {
-	wLog* root = WLog_GetRoot();
+	WLog_GetRoot();
 }
 
 void WLog_Uninit()
