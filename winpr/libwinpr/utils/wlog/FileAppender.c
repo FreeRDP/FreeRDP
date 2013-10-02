@@ -131,6 +131,41 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 	return 1;
 }
 
+static int g_DataId = 0;
+
+int WLog_FileAppender_WriteDataMessage(wLog* log, wLogFileAppender* appender, wLogMessage* message)
+{
+	int DataId;
+	char* FullFileName;
+
+	DataId = g_DataId++;
+	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
+
+	WLog_DataMessage_Write(FullFileName, message->Data, message->Length);
+
+	free(FullFileName);
+
+	return DataId;
+}
+
+static int g_ImageId = 0;
+
+int WLog_FileAppender_WriteImageMessage(wLog* log, wLogFileAppender* appender, wLogMessage* message)
+{
+	int ImageId;
+	char* FullFileName;
+
+	ImageId = g_ImageId++;
+	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
+
+	WLog_ImageMessage_Write(FullFileName, message->ImageData,
+			message->ImageWidth, message->ImageHeight, message->ImageBpp);
+
+	free(FullFileName);
+
+	return ImageId;
+}
+
 wLogFileAppender* WLog_FileAppender_New(wLog* log)
 {
 	wLogFileAppender* FileAppender;
@@ -143,7 +178,13 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 
 		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
 		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
-		FileAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
+
+		FileAppender->WriteMessage =
+				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
+		FileAppender->WriteDataMessage =
+				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_FileAppender_WriteDataMessage;
+		FileAppender->WriteImageMessage =
+				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_FileAppender_WriteImageMessage;
 
 		FileAppender->FileName = NULL;
 		FileAppender->FilePath = NULL;

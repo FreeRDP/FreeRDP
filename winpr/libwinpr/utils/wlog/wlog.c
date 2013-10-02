@@ -75,14 +75,60 @@ int WLog_Write(wLog* log, wLogMessage* message)
 	return status;
 }
 
-void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
+int WLog_WriteImage(wLog* log, wLogMessage* message)
 {
+	int status;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return -1;
+
+	if (!appender->WriteImageMessage)
+		return -1;
+
+	EnterCriticalSection(&appender->lock);
+
+	status = appender->WriteImageMessage(log, appender, message);
+
+	LeaveCriticalSection(&appender->lock);
+
+	return status;
+}
+
+int WLog_WriteData(wLog* log, wLogMessage* message)
+{
+	int status;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return -1;
+
+	if (!appender->WriteDataMessage)
+		return -1;
+
+	EnterCriticalSection(&appender->lock);
+
+	status = appender->WriteDataMessage(log, appender, message);
+
+	LeaveCriticalSection(&appender->lock);
+
+	return status;
+}
+
+int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
+{
+	int status = -1;
+
 	if (message->Type == WLOG_MESSAGE_TEXT)
 	{
 		if (!strchr(message->FormatString, '%'))
 		{
 			message->TextString = (LPSTR) message->FormatString;
-			WLog_Write(log, message);
+			status = WLog_Write(log, message);
 		}
 		else
 		{
@@ -90,24 +136,38 @@ void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 			wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message->FormatString, args);
 
 			message->TextString = formattedLogMessage;
-			WLog_Write(log, message);
+			status = WLog_Write(log, message);
 		}
 	}
 	else if (message->Type == WLOG_MESSAGE_IMAGE)
 	{
+		message->ImageData = va_arg(args, void*);
+		message->ImageWidth = va_arg(args, int);
+		message->ImageHeight = va_arg(args, int);
+		message->ImageBpp = va_arg(args, int);
 
+		status = WLog_WriteImage(log, message);
 	}
 	else if (message->Type == WLOG_MESSAGE_DATA)
 	{
+		message->Data = va_arg(args, void*);
+		message->Length = va_arg(args, int);
 
+		status = WLog_WriteData(log, message);
 	}
+
+	return status;
 }
 
 void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 {
+	int status;
 	va_list args;
+
 	va_start(args, message);
-	WLog_PrintMessageVA(log, message, args);
+
+	status = WLog_PrintMessageVA(log, message, args);
+
 	va_end(args);
 }
 

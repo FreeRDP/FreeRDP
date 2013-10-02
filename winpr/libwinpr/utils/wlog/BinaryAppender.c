@@ -131,6 +131,16 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 	return 1;
 }
 
+int WLog_BinaryAppender_WriteDataMessage(wLog* log, wLogBinaryAppender* appender, wLogMessage* message)
+{
+	return 1;
+}
+
+int WLog_BinaryAppender_WriteImageMessage(wLog* log, wLogBinaryAppender* appender, wLogMessage* message)
+{
+	return 1;
+}
+
 wLogBinaryAppender* WLog_BinaryAppender_New(wLog* log)
 {
 	wLogBinaryAppender* BinaryAppender;
@@ -143,7 +153,13 @@ wLogBinaryAppender* WLog_BinaryAppender_New(wLog* log)
 
 		BinaryAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Open;
 		BinaryAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Close;
-		BinaryAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_BinaryAppender_WriteMessage;
+
+		BinaryAppender->WriteMessage =
+				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_BinaryAppender_WriteMessage;
+		BinaryAppender->WriteDataMessage =
+				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_BinaryAppender_WriteDataMessage;
+		BinaryAppender->WriteImageMessage =
+				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_BinaryAppender_WriteImageMessage;
 
 		BinaryAppender->FileName = NULL;
 		BinaryAppender->FilePath = NULL;

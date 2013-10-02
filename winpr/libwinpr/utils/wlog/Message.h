@@ -24,6 +24,9 @@
 
 #include "wlog/wlog.h"
 
+#include "wlog/DataMessage.h"
+#include "wlog/ImageMessage.h"
 
+char* WLog_Message_GetOutputFileName(int id, const char* ext);
 
 #endif /* WINPR_WLOG_MESSAGE_PRIVATE_H */

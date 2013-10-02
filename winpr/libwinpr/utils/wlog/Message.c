@@ -21,7 +21,31 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/path.h>
+
 #include <winpr/wlog.h>
 
 #include "wlog/Message.h"
 
+char* WLog_Message_GetOutputFileName(int id, const char* ext)
+{
+	DWORD ProcessId;
+	char* FilePath;
+	char* FileName;
+	char* FullFileName;
+
+	ProcessId = GetCurrentProcessId();
+
+	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+
+	FileName = (char*) malloc(256);
+	sprintf_s(FileName, 256, "%u-%d.%s", (unsigned int) ProcessId, id, ext);
+
+	FullFileName = GetCombinedPath(FilePath, FileName);
+
+	free(FileName);
+	free(FilePath);
+
+	return FullFileName;
+}
