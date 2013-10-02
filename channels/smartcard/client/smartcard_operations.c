@@ -1869,10 +1869,10 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 	
 		/* Just check for too few bytes, there may be more actual
 		 * data than is used due to padding. */
-		if (linkedLen < ioSendPci.rq->cbPciLength)
+		if (linkedLen < ioRecvPci.rq->cbPciLength)
 		{
 			DEBUG_WARN("SCARD_IO_REQUEST with invalid extra byte length %d [%d]",
-					ioSendPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
+					ioRecvPci.rq->cbPciLength - sizeof(SCARD_IO_REQUEST), linkedLen);
 			status = SCARD_F_INTERNAL_ERROR;
 			goto finish;
 		}
