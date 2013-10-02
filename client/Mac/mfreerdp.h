@@ -40,6 +40,8 @@ struct mf_context
 	char window_title[64];
 	int client_x;
 	int client_y;
+	int client_width;
+	int client_height;
 
 	HANDLE keyboardThread;
     HANDLE stopEvent;

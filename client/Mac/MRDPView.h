@@ -48,7 +48,6 @@
 	NSTimer* pasteboard_timer;
     NSCursor* currentCursor;
 	NSRect prevWinPosition;
-	int titleBarHeight;
 	freerdp* instance;
 	rdpContext* context;
 	CGContextRef bitmap_context;
@@ -86,8 +85,7 @@
 
 - (int)  rdpStart :(rdpContext*) rdp_context;
 - (void) setCursor: (NSCursor*) cursor;
-- (void) setScrollOffset:(int)xOffset y:(int)yOffset;
-- (void) sendMouseEvent:(UINT16) flags withX:(UINT16)x withY:(UINT16)y;
+- (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height;
 
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
 - (void) releaseResources;

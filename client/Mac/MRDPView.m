@@ -147,6 +147,8 @@ struct rgba_data
 		instance->settings->DesktopHeight = screenFrame.size.height;
 	}
 
+    mfc->client_height = instance->settings->DesktopHeight;
+    mfc->client_width = instance->settings->DesktopWidth;
 
     mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
@@ -272,12 +274,6 @@ DWORD mac_client_thread(void* param)
 {
     if (!initialized)
     {
-        // store our window dimensions
-        titleBarHeight = 22;
-
-        [[self window] becomeFirstResponder];
-        [[self window] setAcceptsMouseMovedEvents:YES];
-
         cursors = [[NSMutableArray alloc] initWithCapacity:10];
 
         // setup a mouse tracking area
@@ -750,14 +746,13 @@ DWORD mac_client_thread(void* param)
 	}
 }
 
-- (void) setScrollOffset:(int)xOffset y:(int)yOffset
+- (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height
 {
-    if (xOffset != mfc->xCurrentScroll || yOffset != mfc->yCurrentScroll)
-    {
-        NSLog(@"setScrollOffset h:%d v:%d", xOffset, yOffset);
-        mfc->yCurrentScroll = yOffset;
-        mfc->xCurrentScroll = xOffset;
-    }
+    NSLog(@"setScrollOffset x:%d y:%d w:%d h:%d", xOffset, yOffset, width, height);
+    mfc->yCurrentScroll = yOffset;
+    mfc->xCurrentScroll = xOffset;
+    mfc->client_height = height;
+    mfc->client_width = width;
 }
 
 /************************************************************************
@@ -1101,8 +1096,8 @@ void mac_end_paint(rdpContext* context)
 	
     int ww, wh, dw, dh;
 
-    ww = [view frame].size.width;
-    wh = [view frame].size.height;
+    ww = mfc->client_width;
+    wh = mfc->client_height;
     dw = mfc->context.settings->DesktopWidth;
     dh = mfc->context.settings->DesktopHeight;
 
@@ -1124,6 +1119,10 @@ void mac_end_paint(rdpContext* context)
 		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w + 1;
 		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h + 1;
 
+        NSLog(@"drawRect x:%d y:%d w:%d h:%d", (int) drawRect.origin.x, (int) drawRect.origin.y, (int) drawRect.size.width, (int) drawRect.size.height);
+
+        windows_to_apple_cords(mfc->view, &drawRect);
+
         if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
         {
             drawRect.origin.y = drawRect.origin.y * wh / dh;
@@ -1132,9 +1131,10 @@ void mac_end_paint(rdpContext* context)
             drawRect.size.width = drawRect.size.width * ww / dw;
         }
 
-        windows_to_apple_cords(mfc->view, &drawRect);
+        // Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
+        //       because the current frame is always at full size, since the scrolling is handled by the external container.
 
-		[view setNeedsDisplayInRect:drawRect];
+        [view setNeedsDisplayInRect:drawRect];
 	}
 	
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1392,16 +1392,6 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 			break;
 		}
 	}
-}
-
-- (void) sendMouseEvent:(UINT16) flags withX:(UINT16)x withY:(UINT16)y
-{
-    y = instance->settings->DesktopHeight - y + mfc->yCurrentScroll;
-
-    x = x + mfc->xCurrentScroll;
-
-    // send mouse motion event to RDP server
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 void process_cliprdr_event(freerdp* instance, wMessage* event)
