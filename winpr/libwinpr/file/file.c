@@ -184,7 +184,6 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	char* name;
 	int status;
 	HANDLE hNamedPipe;
-	unsigned long flags;
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 

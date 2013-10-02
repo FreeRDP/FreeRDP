@@ -17,17 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_PRIVATE_H
-#define WINPR_WLOG_PRIVATE_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <winpr/wlog.h>
 
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
+#include "wlog/TextMessage.h"
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
-
-#include "wlog/Layout.h"
-#include "wlog/Appender.h"
-
-#endif /* WINPR_WLOG_PRIVATE_H */

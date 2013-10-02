@@ -51,8 +51,22 @@ set(${MODULE_PREFIX}_TRIO_SRCS
 set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/wlog.c
 	wlog/wlog.h
+	wlog/Layout.c
+	wlog/Layout.h
+	wlog/Message.c
+	wlog/Message.h
+	wlog/TextMessage.c
+	wlog/TextMessage.h
+	wlog/DataMessage.c
+	wlog/DataMessage.h
+	wlog/ImageMessage.c
+	wlog/ImageMessage.h
+	wlog/Appender.c
+	wlog/Appender.h
 	wlog/FileAppender.c
 	wlog/FileAppender.h
+	wlog/BinaryAppender.c
+	wlog/BinaryAppender.h
 	wlog/ConsoleAppender.c
 	wlog/ConsoleAppender.h)
 
