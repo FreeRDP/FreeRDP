@@ -28,7 +28,6 @@ find_package_handle_standard_args(OPENSLES DEFAULT_MSG
 if(OPENSLES_FOUND)
 	set(OPENSLES_LIBRARIES ${OPENSLES_LIBRARY})
 else(OPENSLES_FOUND)
-	message("${OPENSLES_FIND_REQUIRED}")
 	if (OpenSLES_FIND_REQUIRED)
 		message(FATAL_ERROR "Could NOT find OPENSLES")
 	endif()
