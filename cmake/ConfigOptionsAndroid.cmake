@@ -27,4 +27,3 @@ option(ANDROID_BUILD_JAVA_DEBUG "Create a android debug package" ${JAVA_DEBUG_DE
 set(ANDROID_APP_TARGET_SDK 11 CACHE STRING "Application target android SDK")
 set(ANDROID_APP_MIN_SDK 9 CACHE STRING "Application minimum android SDK requirement")
 set(ANDROID_APP_GOOGLE_TARGET_SDK "16" CACHE STRING "Application target google SDK")
-set(ANDROID_NATIVE_API_LEVEL "9" CACHE STRING "Android API level for native code")
