@@ -18,7 +18,7 @@ Build requirements
 For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
-- Android NDK (>= r8d)
+- Android NDK (>= r9)
 - prebuild static openssl libraries (see below)
 
 * for the Java GUI (if build with ant)
