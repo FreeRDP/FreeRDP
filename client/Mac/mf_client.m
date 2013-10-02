@@ -204,9 +204,6 @@ void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x
     dw = mfc->context.settings->DesktopWidth;
     dh = mfc->context.settings->DesktopHeight;
 
-    NSLog(@"mouse event ww:%d wh:%d dw:%d dh:%d xScroll:%d yScroll:%d x1:%d y1:%d",
-          ww, wh, dw, dh, mfc->xCurrentScroll, mfc->yCurrentScroll, x, y);
-
     if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
     {
         y = y + mfc->yCurrentScroll;
@@ -216,13 +213,11 @@ void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x
             y -= (dh - wh);
         }
 
-        NSLog(@"(scale off) -> input->MouseEvent(%d, %d)", x + mfc->xCurrentScroll, y);
         input->MouseEvent(input, flags, x + mfc->xCurrentScroll, y);
     }
     else
     {
         y = y * dh / wh + mfc->yCurrentScroll;
-        NSLog(@"(scale on) -> input->MouseEvent(%d, %d)", x * dw / ww + mfc->xCurrentScroll, y);
         input->MouseEvent(input, flags, x * dw / ww + mfc->xCurrentScroll, y);
     }
 }

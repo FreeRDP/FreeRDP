@@ -748,7 +748,6 @@ DWORD mac_client_thread(void* param)
 
 - (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height
 {
-    NSLog(@"setScrollOffset x:%d y:%d w:%d h:%d", xOffset, yOffset, width, height);
     mfc->yCurrentScroll = yOffset;
     mfc->xCurrentScroll = xOffset;
     mfc->client_height = height;
@@ -1114,22 +1113,27 @@ void mac_end_paint(rdpContext* context)
 
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{
-		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x - 1;
-		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y - 1;
-		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w + 1;
-		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h + 1;
-
-        NSLog(@"drawRect x:%d y:%d w:%d h:%d", (int) drawRect.origin.x, (int) drawRect.origin.y, (int) drawRect.size.width, (int) drawRect.size.height);
-
-        windows_to_apple_cords(mfc->view, &drawRect);
+        drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
+        drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
+        drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
+        drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
 
         if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
         {
-            drawRect.origin.y = drawRect.origin.y * wh / dh;
-            drawRect.size.height = drawRect.size.height * wh / dh;
-            drawRect.origin.x = drawRect.origin.x * ww / dw;
-            drawRect.size.width = drawRect.size.width * ww / dw;
+            drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
+            drawRect.size.height = drawRect.size.height * wh / dh + 1;
+            drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
+            drawRect.size.width = drawRect.size.width * ww / dw + 1;
         }
+        else
+        {
+            drawRect.origin.y = drawRect.origin.y - 1;
+            drawRect.size.height = drawRect.size.height + 1;
+            drawRect.origin.x = drawRect.origin.x - 1;
+            drawRect.size.width = drawRect.size.width + 1;
+        }
+
+        windows_to_apple_cords(mfc->view, &drawRect);
 
         // Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
         //       because the current frame is always at full size, since the scrolling is handled by the external container.
