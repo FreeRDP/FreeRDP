@@ -131,12 +131,21 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	free(lpPipePath);
 
+	if (PathFileExistsA(pNamedPipe->lpFilePath))
+	{
+		DeleteFileA(pNamedPipe->lpFilePath);
+	}
+
 	pNamedPipe->clientfd = -1;
-	pNamedPipe->serverfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->ServerMode = TRUE;
 
-	if (PathFileExistsA(pNamedPipe->lpFilePath))
-		DeleteFileA(pNamedPipe->lpFilePath);
+	pNamedPipe->serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+	if (pNamedPipe->serverfd == -1)
+	{
+		fprintf(stderr, "CreateNamedPipeA: socket error\n");
+		return NULL;
+	}
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
@@ -144,15 +153,21 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
-	if (status == 0)
+	if (status != 0)
 	{
-		status = listen(pNamedPipe->serverfd, 2);
-
-		if (status == 0)
-		{
-			UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
-		}
+		fprintf(stderr, "CreateNamedPipeA: bind error\n");
+		return NULL;
 	}
+
+	status = listen(pNamedPipe->serverfd, 2);
+
+	if (status != 0)
+	{
+		fprintf(stderr, "CreateNamedPipeA: listen error\n");
+		return NULL;
+	}
+
+	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
 	return hNamedPipe;
 }
@@ -183,7 +198,10 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 		status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
 
 		if (status < 0)
+		{
+			fprintf(stderr, "ConnectNamedPipe: accept error\n");
 			return FALSE;
+		}
 
 		pNamedPipe->clientfd = status;
 		pNamedPipe->ServerMode = FALSE;

@@ -24,6 +24,7 @@
 #include <winpr/handle.h>
 
 #include <winpr/thread.h>
+#include <fcntl.h>
 
 /**
  * CreateProcessA
@@ -222,6 +223,19 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	if (pid == 0)
 	{
 		/* child process */
+#ifdef __sun
+	closefrom(3);
+#else
+	int maxfd;
+#ifdef F_MAXFD // on some BSD derivates
+	maxfd = fcntl(0, F_MAXFD);
+#else
+	maxfd = sysconf(_SC_OPEN_MAX);
+#endif
+	int fd;
+	for(fd=3; fd<maxfd; fd++)
+		close(fd);
+#endif // __sun
 
 		if (token)
 		{

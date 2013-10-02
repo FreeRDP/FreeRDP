@@ -30,6 +30,11 @@
 
 #include <winpr/wlog.h>
 
+#include "wlog/wlog.h"
+
+#include "wlog/FileAppender.h"
+#include "wlog/ConsoleAppender.h"
+
 /**
  * References for general logging concepts:
  *
@@ -39,9 +44,6 @@
  * logging - Logging facility for Python:
  * http://docs.python.org/2/library/logging.html
  */
-
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
 
 const char* WLOG_LEVELS[7] =
 {
@@ -56,13 +58,17 @@ const char* WLOG_LEVELS[7] =
 
 int WLog_Write(wLog* log, wLogMessage* message)
 {
-	if (!log->Appender)
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
 		return -1;
 
-	if (!log->Appender->WriteMessage)
+	if (!appender->WriteMessage)
 		return -1;
 
-	return log->Appender->WriteMessage(log, log->Appender, message);
+	return appender->WriteMessage(log, appender, message);
 }
 
 void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
@@ -74,7 +80,7 @@ void WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	}
 	else
 	{
-		char formattedLogMessage[8192];
+		char formattedLogMessage[WLOG_MAX_STRING_SIZE];
 		wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message->FormatString, args);
 
 		message->TextString = formattedLogMessage;
@@ -296,7 +302,11 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 wLogLayout* WLog_GetLogLayout(wLog* log)
 {
-	return log->Appender->Layout;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	return appender->Layout;
 }
 
 void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
@@ -331,172 +341,6 @@ void WLog_Layout_Free(wLog* log, wLogLayout* layout)
 			free(layout->FormatString);
 
 		free(layout);
-	}
-}
-
-/**
- * Console Appender
- */
-
-void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream)
-{
-	if (!appender)
-		return;
-
-	if (outputStream < 0)
-		outputStream = WLOG_CONSOLE_STDOUT;
-
-	if (outputStream == WLOG_CONSOLE_STDOUT)
-		appender->outputStream = WLOG_CONSOLE_STDOUT;
-	else if (outputStream == WLOG_CONSOLE_STDERR)
-		appender->outputStream = WLOG_CONSOLE_STDERR;
-	else
-		appender->outputStream = WLOG_CONSOLE_STDOUT;
-}
-
-int WLog_ConsoleAppender_Open(wLog* log, wLogConsoleAppender* appender)
-{
-	return 0;
-}
-
-int WLog_ConsoleAppender_Close(wLog* log, wLogConsoleAppender* appender)
-{
-	return 0;
-}
-
-int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, wLogMessage* message)
-{
-	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
-
-	if (message->Level > log->Level)
-		return 0;
-
-	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
-
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
-
-	return 1;
-}
-
-wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
-{
-	wLogConsoleAppender* ConsoleAppender;
-
-	ConsoleAppender = (wLogConsoleAppender*) malloc(sizeof(wLogConsoleAppender));
-
-	if (ConsoleAppender)
-	{
-		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
-
-		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
-		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
-		ConsoleAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_ConsoleAppender_WriteMessage;
-
-		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
-	}
-
-	return ConsoleAppender;
-}
-
-void WLog_ConsoleAppender_Free(wLog* log, wLogConsoleAppender* appender)
-{
-	if (appender)
-	{
-		free(appender);
-	}
-}
-
-/**
- * File Appender
- */
-
-void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
-{
-	if (!appender)
-		return;
-
-	if (!filename)
-		return;
-
-	appender->FileName = _strdup(filename);
-}
-
-int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
-{
-	if (!appender->FileName)
-		return -1;
-
-	appender->FileDescriptor = fopen(appender->FileName, "a+");
-
-	if (!appender->FileDescriptor)
-		return -1;
-
-	return 0;
-}
-
-int WLog_FileAppender_Close(wLog* log, wLogFileAppender* appender)
-{
-	if (!appender->FileDescriptor)
-		return 0;
-
-	fclose(appender->FileDescriptor);
-
-	appender->FileDescriptor = NULL;
-
-	return 0;
-}
-
-int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMessage* message)
-{
-	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
-
-	if (message->Level > log->Level)
-		return 0;
-
-	fp = appender->FileDescriptor;
-
-	if (!fp)
-		return -1;
-
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
-
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
-
-	return 1;
-}
-
-wLogFileAppender* WLog_FileAppender_New(wLog* log)
-{
-	wLogFileAppender* FileAppender;
-
-	FileAppender = (wLogFileAppender*) malloc(sizeof(wLogFileAppender));
-
-	if (FileAppender)
-	{
-		ZeroMemory(FileAppender, sizeof(wLogFileAppender));
-
-		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
-		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
-		FileAppender->WriteMessage = (WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
-	}
-
-	return FileAppender;
-}
-
-void WLog_FileAppender_Free(wLog* log, wLogFileAppender* appender)
-{
-	if (appender)
-	{
-		if (appender->FileName)
-			free(appender->FileName);
-
-		free(appender);
 	}
 }
 
@@ -544,6 +388,12 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 
 wLogAppender* WLog_GetLogAppender(wLog* log)
 {
+	if (!log)
+		return NULL;
+
+	if (!log->Appender)
+		return WLog_GetLogAppender(log->Parent);
+
 	return log->Appender;
 }
 
@@ -560,24 +410,80 @@ void WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 
 int WLog_OpenAppender(wLog* log)
 {
-	if (!log->Appender)
+	int status = 0;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
 		return -1;
 
-	if (!log->Appender->Open)
+	if (!appender->Open)
 		return 0;
 
-	return log->Appender->Open(log, log->Appender);
+	if (!appender->State)
+	{
+		status = appender->Open(log, appender);
+		appender->State = 1;
+	}
+
+	return status;
 }
 
 int WLog_CloseAppender(wLog* log)
 {
-	if (!log->Appender)
+	int status = 0;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
 		return -1;
 
-	if (!log->Appender->Close)
+	if (!appender->Close)
 		return 0;
 
-	return log->Appender->Close(log, log->Appender);
+	if (appender->State)
+	{
+		status = appender->Close(log, appender);
+		appender->State = 0;
+	}
+
+	return status;
+}
+
+int WLog_ParseName(wLog* log, LPCSTR name)
+{
+	char* p;
+	int count;
+	LPSTR names;
+
+	count = 1;
+	p = (char*) name;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		count++;
+		p++;
+	}
+
+	names = _strdup(name);
+	log->NameCount = count;
+	log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	log->Names[count] = NULL;
+
+	count = 0;
+	p = (char*) names;
+	log->Names[count++] = p;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		log->Names[count++] = p + 1;
+		*p = '\0';
+		p++;
+	}
+
+	return 0;
 }
 
 wLog* WLog_New(LPCSTR name)
@@ -591,9 +497,17 @@ wLog* WLog_New(LPCSTR name)
 		ZeroMemory(log, sizeof(wLog));
 
 		log->Name = _strdup(name);
+		WLog_ParseName(log, name);
+
 		log->Level = WLOG_TRACE;
 
-		WLog_SetLogAppenderType(log, WLOG_APPENDER_CONSOLE);
+		log->Parent = NULL;
+		log->ChildrenCount = 0;
+
+		log->ChildrenSize = 16;
+		log->Children = (wLog**) malloc(sizeof(wLog*) * log->ChildrenSize);
+
+		log->Appender = NULL;
 	}
 
 	return log;
@@ -610,6 +524,91 @@ void WLog_Free(wLog* log)
 		}
 
 		free(log->Name);
+		free(log->Names[0]);
+		free(log->Names);
+
 		free(log);
 	}
+}
+
+static wLog* g_RootLog = NULL;
+
+wLog* WLog_GetRoot()
+{
+	if (!g_RootLog)
+	{
+		g_RootLog = WLog_New("");
+		g_RootLog->IsRoot = TRUE;
+		WLog_SetLogAppenderType(g_RootLog, WLOG_APPENDER_CONSOLE);
+	}
+
+	return g_RootLog;
+}
+
+int WLog_AddChild(wLog* parent, wLog* child)
+{
+	if (parent->ChildrenCount >= parent->ChildrenSize)
+	{
+		parent->ChildrenSize *= 2;
+		parent->Children = (wLog**) realloc(parent->Children, sizeof(wLog*) * parent->ChildrenSize);
+	}
+
+	parent->Children[parent->ChildrenCount++] = child;
+	child->Parent = parent;
+
+	return 0;
+}
+
+wLog* WLog_FindChild(LPCSTR name)
+{
+	int index;
+	wLog* root;
+	wLog* child = NULL;
+	BOOL found = FALSE;
+
+	root = WLog_GetRoot();
+
+	for (index = 0; index < root->ChildrenCount; index++)
+	{
+		child = root->Children[index];
+
+		if (strcmp(child->Name, name) == 0)
+		{
+			found = TRUE;
+			break;
+		}
+	}
+
+	return (found) ? child : NULL;
+}
+
+wLog* WLog_Get(LPCSTR name)
+{
+	wLog* log;
+	wLog* root;
+
+	root = WLog_GetRoot();
+
+	log = WLog_FindChild(name);
+
+	if (!log)
+	{
+		log = WLog_New(name);
+		WLog_AddChild(root, log);
+	}
+
+	return log;
+}
+
+void WLog_Init()
+{
+	WLog_GetRoot();
+}
+
+void WLog_Uninit()
+{
+	wLog* root = WLog_GetRoot();
+
+	WLog_Free(root);
+	g_RootLog = NULL;
 }

@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
+#include <winpr/error.h>
 #include <winpr/handle.h>
 #include <winpr/platform.h>
 
@@ -291,6 +292,17 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				return FALSE;
 
 			status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+
+			if (status == 0)
+			{
+				switch (errno)
+				{
+					case ECONNRESET:
+						SetLastError(ERROR_BROKEN_PIPE);
+						status = -1;
+						break;
+				}
+			}
 
 			if (status < 0)
 			{

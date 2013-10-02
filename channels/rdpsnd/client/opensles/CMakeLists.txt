@@ -1,7 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Armin Novak <armin.novak@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,39 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client("audin")
+define_channel_client_subsystem("rdpsnd" "opensles" "")
 
 set(${MODULE_PREFIX}_SRCS
-	audin_main.c
-	audin_main.h)
+	opensl_io.c
+	rdpsnd_opensles.c)
 
 include_directories(..)
+include_directories(${OPENSLES_INCLUDE_DIRS})
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-common freerdp-utils)
+	MODULES freerdp-codec freerdp-utils
+	${OPENSLES_LIBRARIES})
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSLES_LIBRARIES})
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
-
-if(WITH_ALSA)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
-endif()
-
-if(WITH_PULSE)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
-endif()
-
-if(WITH_OPENSLES)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
+	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
 endif()

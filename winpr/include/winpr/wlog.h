@@ -88,6 +88,7 @@ typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender,
 
 #define WLOG_APPENDER_COMMON() \
 	DWORD Type; \
+	DWORD State; \
 	wLogLayout* Layout; \
 	WLOG_APPENDER_OPEN_FN Open; \
 	WLOG_APPENDER_CLOSE_FN Close; \
@@ -114,6 +115,8 @@ struct _wLogFileAppender
 	WLOG_APPENDER_COMMON();
 
 	char* FileName;
+	char* FilePath;
+	char* FullFileName;
 	FILE* FileDescriptor;
 };
 typedef struct _wLogFileAppender wLogFileAppender;
@@ -127,7 +130,15 @@ struct _wLog
 	LPSTR Name;
 	DWORD Level;
 
+	BOOL IsRoot;
+	LPSTR* Names;
+	DWORD NameCount;
 	wLogAppender* Appender;
+
+	wLog* Parent;
+	wLog** Children;
+	DWORD ChildrenCount;
+	DWORD ChildrenSize;
 };
 
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
@@ -156,11 +167,15 @@ WINPR_API int WLog_CloseAppender(wLog* log);
 WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream);
 
 WINPR_API void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
+WINPR_API void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
 
-WINPR_API wLog* WLog_New(LPCSTR name);
-WINPR_API void WLog_Free(wLog* log);
+WINPR_API wLog* WLog_GetRoot();
+WINPR_API wLog* WLog_Get(LPCSTR name);
+
+WINPR_API void WLog_Init();
+WINPR_API void WLog_Uninit();
 
 #endif /* WINPR_WLOG_H */
