@@ -68,7 +68,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (message->Level > log->Level)
+	if (message->Level < log->Level)
 		return 0;
 
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;

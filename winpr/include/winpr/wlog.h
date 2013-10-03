@@ -178,7 +178,7 @@ struct _wLog
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
-	if (_log_level <= _log->Level) { \
+	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_TEXT; \
 		_log_message.Level = _log_level; \
@@ -190,7 +190,7 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 	}
 
 #define WLog_Image(_log, _log_level, ...) \
-	if (_log_level <= _log->Level) { \
+	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_IMAGE; \
 		_log_message.Level = _log_level; \
@@ -202,7 +202,7 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 	}
 
 #define WLog_Data(_log, _log_level, ...) \
-	if (_log_level <= _log->Level) { \
+	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_DATA; \
 		_log_message.Level = _log_level; \
