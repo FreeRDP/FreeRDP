@@ -25,7 +25,6 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
-#import "MRDPView.h"
 
 /**
  * Client Interface
@@ -191,6 +190,36 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 		y = height - 1;
 
 	input->MouseEvent(input, flags, x, y);
+}
+
+
+void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+{
+    mfContext* mfc = (mfContext*) context;
+
+    int ww, wh, dw, dh;
+
+    ww = mfc->client_width;
+    wh = mfc->client_height;
+    dw = mfc->context.settings->DesktopWidth;
+    dh = mfc->context.settings->DesktopHeight;
+
+    if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+    {
+        y = y + mfc->yCurrentScroll;
+
+        if (wh != dh)
+        {
+            y -= (dh - wh);
+        }
+
+        input->MouseEvent(input, flags, x + mfc->xCurrentScroll, y);
+    }
+    else
+    {
+        y = y * dh / wh + mfc->yCurrentScroll;
+        input->MouseEvent(input, flags, x * dw / ww + mfc->xCurrentScroll, y);
+    }
 }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)

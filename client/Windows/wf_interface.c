@@ -388,6 +388,9 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
+    if (settings->EmbeddedWindow)
+        settings->Decorations = FALSE;
+    
 	if (!settings->Decorations)
 		dwStyle = WS_CHILD | WS_BORDER;
 	else

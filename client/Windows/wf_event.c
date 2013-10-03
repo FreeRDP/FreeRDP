@@ -588,7 +588,7 @@ void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 
 	dw = wfc->instance->settings->DesktopWidth;
 	dh = wfc->instance->settings->DesktopHeight;
 
-	if (!wfc->instance->settings->SmartSizing || (ww == dw) && (wh == dh))
+	if (!wfc->instance->settings->SmartSizing || ((ww == dw) && (wh == dh)))
 		input->MouseEvent(input, flags, x + wfc->xCurrentScroll, y + wfc->yCurrentScroll);
 	else
 		input->MouseEvent(input, flags, x * dw / ww + wfc->xCurrentScroll, y * dh / wh + wfc->yCurrentScroll);
