@@ -22,7 +22,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class BookmarkDB extends SQLiteOpenHelper
 {
-	private static final int DB_VERSION = 4;
+	private static final int DB_VERSION = 6;
 	private static final String DB_NAME = "bookmarks.db";
 	
 	public static final String ID = BaseColumns._ID;
@@ -106,7 +106,8 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "security, "
 			+ "remote_program, "
 			+ "work_dir, "
-			+ "console_mode) "			
+			+ "console_mode, "
+			+ "debug_level ) "			
 			+ "VALUES ( "
 			+ "'Test Server', "
 			+ "'testservice.afreerdp.com', "
@@ -114,7 +115,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "'', "
 			+ "'', "
 			+ "3389, "
-			+ "1, 1, 2, 2, 0, 0, 0, 0, '', '', 0);";
+			+ "1, 1, 2, 2, 0, 0, 0, 0, '', '', 0, 0);";
 		db.execSQL(sqlInsertDefaultSessionEntry);
 	}
 
@@ -149,6 +150,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "remote_program TEXT, "
 			+ "work_dir TEXT, "
 			+ "console_mode INTEGER, "
+			+ "debug_level INTEGER DEFAULT 0, "
 			
 			+ "FOREIGN KEY(screen_settings) REFERENCES tbl_screen_settings(" + ID + "), "
 			+ "FOREIGN KEY(performance_flags) REFERENCES tbl_performance_flags(" + ID + "), "
