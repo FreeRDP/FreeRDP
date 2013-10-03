@@ -70,6 +70,8 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+		
+		values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
 
 		// add any special columns
 		addBookmarkSpecificColumns(bookmark, values);
@@ -108,6 +110,8 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+		
+		values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
 		
 		addBookmarkSpecificColumns(bookmark, values);
 				
@@ -229,6 +233,9 @@ public abstract class BookmarkBaseGateway
 		columns.add("console_mode");
 		columns.add("remote_program");
 		columns.add("work_dir");
+	
+		// debug settings
+		columns.add("debug_level");
 		
 		addBookmarkSpecificColumns(columns);		
 	}
@@ -289,6 +296,8 @@ public abstract class BookmarkBaseGateway
 		bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex("console_mode")) == 0 ? false : true);		
 		bookmark.getAdvancedSettings().setRemoteProgram(cursor.getString(cursor.getColumnIndex("remote_program")));		
 		bookmark.getAdvancedSettings().setWorkDir(cursor.getString(cursor.getColumnIndex("work_dir")));		
+		
+		bookmark.getDebugSettings().setDebugLevel(cursor.getInt(cursor.getColumnIndex("debug_level")));	
 		
 		readBookmarkSpecificColumns(bookmark, cursor);
 
