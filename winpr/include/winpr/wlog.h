@@ -20,6 +20,10 @@
 #ifndef WINPR_LOG_H
 #define WINPR_LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #include <winpr/winpr.h>
@@ -235,5 +239,9 @@ WINPR_API wLog* WLog_Get(LPCSTR name);
 
 WINPR_API void WLog_Init();
 WINPR_API void WLog_Uninit();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_WLOG_H */
