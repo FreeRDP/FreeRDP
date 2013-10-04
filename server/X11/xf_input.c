@@ -123,10 +123,24 @@ void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	int button = 0;
+	BOOL down = FALSE;
 	xfInfo* xfi = xfp->info;
 
 	XTestGrabControl(xfi->display, True);
 	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+
+	if (flags & PTR_XFLAGS_BUTTON1)
+		button = 8;
+	else if (flags & PTR_XFLAGS_BUTTON2)
+		button = 9;
+
+	if (flags & PTR_XFLAGS_DOWN)
+		down = TRUE;
+
+	if (button != 0)
+		XTestFakeButtonEvent(xfi->display, button, down, 0);
+
 	XTestGrabControl(xfi->display, False);
 #endif
 }
