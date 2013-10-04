@@ -247,7 +247,7 @@ WINPR_API void LinkedList_Enumerator_Reset(wLinkedList* list);
 WINPR_API void* LinkedList_Enumerator_Current(wLinkedList* list);
 WINPR_API BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list);
 
-WINPR_API wLinkedList* LinkedList_New();
+WINPR_API wLinkedList* LinkedList_New(void);
 WINPR_API void LinkedList_Free(wLinkedList* list);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
