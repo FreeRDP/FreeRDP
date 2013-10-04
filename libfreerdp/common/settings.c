@@ -2167,7 +2167,7 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 	return NULL;
 }
 
-int freerdp_set_param_string(rdpSettings* settings, int id, char* param)
+int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
 	ParamChangeEventArgs e;
 	rdpContext* context = ((freerdp*) settings->instance)->context;

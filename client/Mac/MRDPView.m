@@ -123,7 +123,6 @@ struct rgba_data
 
 - (int) rdpStart:(rdpContext*) rdp_context
 {
-	mfContext* mfc;
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 
@@ -148,11 +147,8 @@ struct rgba_data
 		instance->settings->DesktopHeight = screenFrame.size.height;
 	}
 
-	[self setViewSize :instance->settings->DesktopWidth :instance->settings->DesktopHeight];
-
-
-	if(instance->settings->Fullscreen)
-		[[self window] toggleFullScreen:nil];
+    mfc->client_height = instance->settings->DesktopHeight;
+    mfc->client_width = instance->settings->DesktopWidth;
 
     mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
@@ -278,14 +274,6 @@ DWORD mac_client_thread(void* param)
 {
     if (!initialized)
     {
-        // store our window dimensions
-        width = [self frame].size.width;
-        height = [self frame].size.height;
-        titleBarHeight = 22;
-
-        [[self window] becomeFirstResponder];
-        [[self window] setAcceptsMouseMovedEvents:YES];
-
         cursors = [[NSMutableArray alloc] initWithCapacity:10];
 
         // setup a mouse tracking area
@@ -304,8 +292,6 @@ DWORD mac_client_thread(void* param)
 {
     self->currentCursor = cursor;
     [[self window] invalidateCursorRectsForView:self];
-    
-    [imageView setImage:[currentCursor image]];
 }
 
 
@@ -347,11 +333,10 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
-	y = height - y;
-	
-	// send mouse motion event to RDP server
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, x, y);
+
+    y = [self frame].size.height - y;
+
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -369,9 +354,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -389,9 +374,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON1, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -409,9 +394,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -429,9 +414,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON2, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -449,9 +434,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
 
 /** *********************************************************************
@@ -469,9 +454,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_BUTTON3, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
 - (void) scrollWheel:(NSEvent *)event
@@ -487,7 +472,7 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 
-	y = height - y;
+    y = [self frame].size.height - y;
 	
 	flags = PTR_FLAGS_WHEEL;
 
@@ -500,7 +485,7 @@ DWORD mac_client_thread(void* param)
 		/* limit to maximum value in WheelRotationMask (9bit signed value) */
 		int step = MIN(MAX(-256, units), 255);
 
-		instance->input->MouseEvent(instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
+        mf_scale_mouse_event(context, instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
 		units -= step;
 	}
 }
@@ -521,10 +506,10 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = height - y;
+    y = [self frame].size.height - y;
 	
 	// send mouse motion event to RDP server
-	instance->input->MouseEvent(instance->input, PTR_FLAGS_MOVE, x, y);
+    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -720,19 +705,20 @@ DWORD mac_client_thread(void* param)
 		return;
 
 	if (self->bitmap_context)
-	{
+    {
 		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 
-		CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-		CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+        CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+        CGContextDrawImage(cgContext, CGRectMake(0,
+         0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
-		CGImageRelease(cgImage);
-	}
+        CGImageRelease(cgImage);
+    }
 	else
 	{
 		// just clear the screen with black
-		[[NSColor redColor] set];
+		[[NSColor blackColor] set];
 		NSRectFill([self bounds]);
 	}
 }
@@ -760,30 +746,12 @@ DWORD mac_client_thread(void* param)
 	}
 }
 
-- (void) setViewSize : (int) w : (int) h
+- (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height
 {
-	// store current dimensions
-	width = w;
-	height = h;
-
-
-	// set client area to specified dimensions
-	NSRect innerRect;
-	innerRect.origin.x = 0;
-	innerRect.origin.y = 0;
-	innerRect.size.width = w;
-	innerRect.size.height = h;
-	[self setFrame:innerRect];
-
-	// calculate window of same size, but keep position
-	NSRect outerRect = [[self window] frame];
-	outerRect.size = [[self window] frameRectForContentRect:innerRect].size;
-
-	// we are not in RemoteApp mode, disable larger than resolution
-	[[self window] setContentMaxSize:innerRect.size];
-
-	// set window to given area
-	[[self window] setFrame:outerRect display:YES];
+    mfc->yCurrentScroll = yOffset;
+    mfc->xCurrentScroll = xOffset;
+    mfc->client_height = height;
+    mfc->client_width = width;
 }
 
 /************************************************************************
@@ -1125,6 +1093,13 @@ void mac_end_paint(rdpContext* context)
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	
+    int ww, wh, dw, dh;
+
+    ww = mfc->client_width;
+    wh = mfc->client_height;
+    dw = mfc->context.settings->DesktopWidth;
+    dh = mfc->context.settings->DesktopHeight;
+
 	if ((context == 0) || (context->gdi == 0))
 		return;
 	
@@ -1138,12 +1113,32 @@ void mac_end_paint(rdpContext* context)
 
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{
-		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x - 1;
-		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y - 1;
-		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w + 1;
-		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h + 1;
-		windows_to_apple_cords(mfc->view, &drawRect);
-		[view setNeedsDisplayInRect:drawRect];
+        drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
+        drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
+        drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
+        drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
+
+        if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+        {
+            drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
+            drawRect.size.height = drawRect.size.height * wh / dh + 1;
+            drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
+            drawRect.size.width = drawRect.size.width * ww / dw + 1;
+        }
+        else
+        {
+            drawRect.origin.y = drawRect.origin.y - 1;
+            drawRect.size.height = drawRect.size.height + 1;
+            drawRect.origin.x = drawRect.origin.x - 1;
+            drawRect.size.width = drawRect.size.width + 1;
+        }
+
+        windows_to_apple_cords(mfc->view, &drawRect);
+
+        // Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
+        //       because the current frame is always at full size, since the scrolling is handled by the external container.
+
+        [view setNeedsDisplayInRect:drawRect];
 	}
 	
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1477,7 +1472,8 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 
 void windows_to_apple_cords(MRDPView* view, NSRect* r)
 {
-	r->origin.y = view->height - (r->origin.y + r->size.height);
+    r->origin.y = [view frame].size.height - (r->origin.y + r->size.height);
 }
+
 
 @end

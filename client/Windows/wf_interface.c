@@ -49,6 +49,7 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/event.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
@@ -331,6 +332,7 @@ BOOL wf_post_connect(freerdp* instance)
 	rdpContext* context;
 	WCHAR lpWindowName[64];
 	rdpSettings* settings;
+    EmbedWindowEventArgs e;
 
 	settings = instance->settings;
 	context = instance->context;
@@ -388,6 +390,9 @@ BOOL wf_post_connect(freerdp* instance)
 	else
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
+    if (settings->EmbeddedWindow)
+        settings->Decorations = FALSE;
+    
 	if (!settings->Decorations)
 		dwStyle = WS_CHILD | WS_BORDER;
 	else
@@ -398,7 +403,7 @@ BOOL wf_post_connect(freerdp* instance)
 		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName, dwStyle,
 			0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 
-		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
+		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);       
 	}
 
 	wf_resize_window(wfc);
@@ -408,6 +413,11 @@ BOOL wf_post_connect(freerdp* instance)
 	BitBlt(wfc->primary->hdc, 0, 0, wfc->width, wfc->height, NULL, 0, 0, BLACKNESS);
 	wfc->drawing = wfc->primary;
 
+    EventArgsInit(&e, "wfreerdp");
+    e.embed = FALSE;
+    e.handle = (void*) wfc->hwnd;
+    PubSub_OnEmbedWindow(context->pubSub, context, &e);           
+    
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
 
@@ -764,6 +774,8 @@ int freerdp_client_focus_out(wfContext* wfc)
 
 int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 {
+    fprintf(stderr, "freerdp_client_set_window_size %d, %d", width, height);
+    
 	if ((width != wfc->client_width) || (height != wfc->client_height))
 	{
 		PostThreadMessage(wfc->mainThreadId, WM_SIZE, SIZE_RESTORED, ((UINT) height << 16) | (UINT) width);
