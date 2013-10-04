@@ -176,6 +176,8 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 	{
 		ZeroMemory(FileAppender, sizeof(wLogFileAppender));
 
+		FileAppender->Type = WLOG_APPENDER_FILE;
+
 		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
 		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
 

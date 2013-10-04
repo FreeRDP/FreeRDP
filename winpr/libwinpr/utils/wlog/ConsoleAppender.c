@@ -126,6 +126,8 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 	{
 		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
 
+		ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
+
 		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
 		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
 
