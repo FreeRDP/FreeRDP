@@ -26,7 +26,9 @@
         </PreferenceScreen>
     </PreferenceCategory>
     
-    <PreferenceCategory android:title="@string/settings_cat_settings">
+		<PreferenceCategory
+			android:key="category.settings"
+			android:title="@string/settings_cat_settings">
 
         <PreferenceScreen android:key="bookmark.screen" android:title="@string/settings_screen">
         	<intent android:action="android.intent.action.VIEW" 
@@ -49,6 +51,13 @@
            		android:data="preferences://advanced_settings" />
         </PreferenceScreen>
     
-    </PreferenceCategory>
+    	<PreferenceScreen android:key="bookmark.debug" android:title="@string/settings_debug">
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://debug_settings" />
+        </PreferenceScreen>
+        
+        </PreferenceCategory>
 
 </PreferenceScreen>

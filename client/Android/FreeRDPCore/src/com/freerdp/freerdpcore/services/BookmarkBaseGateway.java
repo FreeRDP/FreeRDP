@@ -70,10 +70,8 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
-		values.put("async_channel", bookmark.getAdvancedSettings().getAsyncChannel());
-		values.put("async_transport", bookmark.getAdvancedSettings().getAsyncTransport());
-		values.put("async_input", bookmark.getAdvancedSettings().getAsyncInput());
-		values.put("async_update", bookmark.getAdvancedSettings().getAsyncUpdate());
+
+		values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
 
 		// add any special columns
 		addBookmarkSpecificColumns(bookmark, values);
@@ -112,10 +110,8 @@ public abstract class BookmarkBaseGateway
 		values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
 		values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
 		values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
-		values.put("async_channel", bookmark.getAdvancedSettings().getAsyncChannel());
-		values.put("async_transport", bookmark.getAdvancedSettings().getAsyncTransport());
-		values.put("async_input", bookmark.getAdvancedSettings().getAsyncInput());
-		values.put("async_update", bookmark.getAdvancedSettings().getAsyncUpdate());
+		
+		values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
 		
 		addBookmarkSpecificColumns(bookmark, values);
 				
@@ -237,10 +233,9 @@ public abstract class BookmarkBaseGateway
 		columns.add("console_mode");
 		columns.add("remote_program");
 		columns.add("work_dir");
-		columns.add("async_channel");
-		columns.add("async_transport");
-		columns.add("async_input");
-		columns.add("async_update");
+		
+		// debug settings
+		columns.add("debug_level");
 		
 		addBookmarkSpecificColumns(columns);		
 	}
@@ -309,7 +304,8 @@ public abstract class BookmarkBaseGateway
 				cursor.getInt(cursor.getColumnIndex("async_input")) == 1 ? true : false);		
 		bookmark.getAdvancedSettings().setAsyncUpdate(
 				cursor.getInt(cursor.getColumnIndex("async_update")) == 1 ? true : false);		
-		
+		bookmark.getDebugSettings().setDebugLevel(cursor.getInt(cursor.getColumnIndex("debug_level")));	
+	
 		readBookmarkSpecificColumns(bookmark, cursor);
 
 		return bookmark;

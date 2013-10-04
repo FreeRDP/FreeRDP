@@ -22,6 +22,7 @@
     android:layout_height="wrap_content">
 
     <ImageView android:id="@+id/bookmark_icon1"
+        android:contentDescription="@+id/bookmark_icon1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 		android:layout_centerVertical="true"
@@ -46,6 +47,7 @@
 		 />
 
     <ImageView android:id="@+id/bookmark_icon2"
+        android:contentDescription="@+id/bookmark_icon2"
         android:layout_marginTop="9dip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
