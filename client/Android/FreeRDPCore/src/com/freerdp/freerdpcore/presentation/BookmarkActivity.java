@@ -538,7 +538,7 @@ public class BookmarkActivity extends PreferenceActivity implements
 			pref.setDefaultValue(enabled);
 		}else if (key.equals("bookmark.async_input")) {
 			boolean enabled = sharedPreferences.getBoolean(key, false);
-			Preference pref = findPreference("bookmark.async_input1");
+			Preference pref = findPreference("bookmark.async_input");
 			pref.setDefaultValue(enabled);
 		}
 	}

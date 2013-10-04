@@ -274,6 +274,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 	}
 	
 	public static class DebugSettings implements Parcelable {
+		
 		private int debug;
 		private boolean asyncChannel;
 		private boolean asyncTransport;
