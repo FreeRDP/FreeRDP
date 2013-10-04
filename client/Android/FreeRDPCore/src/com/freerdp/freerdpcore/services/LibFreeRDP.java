@@ -153,10 +153,11 @@ public class LibFreeRDP
 				flags.getDesktopComposition());
 		
 		BookmarkBase.AdvancedSettings advancedSettings = bookmark.getAdvancedSettings();
+		BookmarkBase.DebugSettings debugSettings = bookmark.getDebugSettings();
 		freerdp_set_advanced_settings(inst, advancedSettings.getRemoteProgram(),
-				advancedSettings.getWorkDir(), advancedSettings.getAsyncChannel(),
-				advancedSettings.getAsyncTransport(), advancedSettings.getAsyncInput(),
-				advancedSettings.getAsyncUpdate());
+				advancedSettings.getWorkDir(), debugSettings.getAsyncChannel(),
+				debugSettings.getAsyncTransport(), debugSettings.getAsyncInput(),
+				debugSettings.getAsyncUpdate());
 
 		// drive redirection enabled?
 		if (advancedSettings.getRedirectSDCard())

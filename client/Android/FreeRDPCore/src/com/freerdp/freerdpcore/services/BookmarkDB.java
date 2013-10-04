@@ -110,7 +110,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "async_transport, "
 			+ "async_input, "
 			+ "async_update, "
-			+ "console_mode) "
+			+ "console_mode, "
 			+ "debug_level ) "
 			+ "VALUES ( "
 			+ "'Test Server', "
@@ -119,7 +119,9 @@ public class BookmarkDB extends SQLiteOpenHelper
 			+ "'', "
 			+ "'', "
 			+ "3389, "
-			+ "1, 1, 2, 2, 0, 0, 0, 0, '', '', 1, 1, 1, 1, 0, 0);";
+			+ "1, 1, 2, 2, 0, 0, 0, 0, "
+			+ "'', '', "
+			+ "1, 1, 1, 1, 0, 0);";
 		db.execSQL(sqlInsertDefaultSessionEntry);
 	}
 

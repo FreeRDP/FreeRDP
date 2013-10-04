@@ -275,17 +275,29 @@ public class BookmarkBase implements Parcelable, Cloneable {
 	
 	public static class DebugSettings implements Parcelable {
 		private int debug;
+		private boolean asyncChannel;
+		private boolean asyncTransport;
+		private boolean asyncInput;
+		private boolean asyncUpdate;
 	
 		public DebugSettings() {
 			init();
 		}
 	// Session Settings
 		public DebugSettings(Parcel parcel) {
+			asyncChannel = (parcel.readInt() == 1) ? true : false;
+			asyncTransport = (parcel.readInt() == 1) ? true : false;
+			asyncInput = (parcel.readInt() == 1) ? true : false;
+			asyncUpdate = (parcel.readInt() == 1) ? true : false;
 			debug = parcel.readInt();
 		}
 
 		private void init() {
 			debug = 0;
+			asyncChannel = true;
+			asyncTransport = true;
+			asyncInput = true;
+			asyncUpdate = true;
 		}
 
 		public int getDebugLevel() {
@@ -294,6 +306,46 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		public void setDebugLevel(int debug) {
 			this.debug = debug;			
+		}
+
+		public boolean getAsyncTransport()
+		{
+			return asyncTransport;
+		}
+
+		public void setAsyncTransport(boolean enabled)
+		{
+			asyncTransport = enabled;
+		}
+
+		public boolean getAsyncUpdate()
+		{
+			return asyncUpdate;
+		}
+
+		public void setAsyncUpdate(boolean enabled)
+		{
+			asyncUpdate = enabled;
+		}
+
+		public boolean getAsyncInput()
+		{
+			return asyncInput;
+		}
+
+		public void setAsyncInput(boolean enabled)
+		{
+			asyncInput = enabled;
+		}
+
+		public void setAsyncChannel(boolean enabled)
+		{
+			asyncChannel = enabled;
+		}
+
+		public boolean getAsyncChannel()
+		{
+			return asyncChannel;
 		}
 
 		public static final Parcelable.Creator<DebugSettings> CREATOR = new Parcelable.Creator<DebugSettings>() {
@@ -314,6 +366,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		@Override
 		public void writeToParcel(Parcel out, int flags) {
+			out.writeInt(asyncChannel ? 1 : 0);
+			out.writeInt(asyncTransport ? 1 : 0);
+			out.writeInt(asyncInput ? 1 : 0);
+			out.writeInt(asyncUpdate ? 1 : 0);
 			out.writeInt(debug);
 		}
 	}
@@ -443,7 +499,8 @@ public class BookmarkBase implements Parcelable, Cloneable {
 			return workDir;
 		}		
 		
-		public static final Parcelable.Creator<AdvancedSettings> CREATOR = new Parcelable.Creator<AdvancedSettings>() {
+		public static final Parcelable.Creator<AdvancedSettings> CREATOR = new Parcelable.Creator<AdvancedSettings>()
+		{
 			public AdvancedSettings createFromParcel(Parcel in) {
 				return new AdvancedSettings(in);
 			}
@@ -715,13 +772,13 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		editor.putString("bookmark.remote_program",
 				advancedSettings.getRemoteProgram());
 		editor.putString("bookmark.work_dir", advancedSettings.getWorkDir());
-		editor.putBoolean("bookmark.async_channel", advancedSettings.getAsyncChannel());
-		editor.putBoolean("bookmark.async_transport", advancedSettings.getAsyncTransport());
-		editor.putBoolean("bookmark.async_input", advancedSettings.getAsyncInput());
-		editor.putBoolean("bookmark.async_update", advancedSettings.getAsyncUpdate());
 		editor.putBoolean("bookmark.console_mode",
 				advancedSettings.getConsoleMode());
 
+		editor.putBoolean("bookmark.async_channel", debugSettings.getAsyncChannel());
+		editor.putBoolean("bookmark.async_transport", debugSettings.getAsyncTransport());
+		editor.putBoolean("bookmark.async_input", debugSettings.getAsyncInput());
+		editor.putBoolean("bookmark.async_update", debugSettings.getAsyncUpdate());
 		editor.putInt("bookmark.debug_level",
 				debugSettings.getDebugLevel());
 		
@@ -791,11 +848,12 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		advancedSettings.setSecurity(sharedPrefs.getInt("bookmark.security", 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString("bookmark.remote_program", ""));
 		advancedSettings.setWorkDir(sharedPrefs.getString("bookmark.work_dir", ""));
-		advancedSettings.setAsyncChannel(sharedPrefs.getBoolean("bookmark.async_channel", true));
-		advancedSettings.setAsyncTransport(sharedPrefs.getBoolean("bookmark.async_transport", true));
-		advancedSettings.setAsyncInput(sharedPrefs.getBoolean("bookmark.async_input", true));
-		advancedSettings.setAsyncUpdate(sharedPrefs.getBoolean("bookmark.async_update", true));
 		advancedSettings.setConsoleMode(sharedPrefs.getBoolean("bookmark.console_mode", false));
+		
+		debugSettings.setAsyncChannel(sharedPrefs.getBoolean("bookmark.async_channel", true));
+		debugSettings.setAsyncTransport(sharedPrefs.getBoolean("bookmark.async_transport", true));
+		debugSettings.setAsyncInput(sharedPrefs.getBoolean("bookmark.async_input", true));
+		debugSettings.setAsyncUpdate(sharedPrefs.getBoolean("bookmark.async_update", true));
 		debugSettings.setDebugLevel(sharedPrefs.getInt("bookmark.debug_level", 0));
 	}
 
