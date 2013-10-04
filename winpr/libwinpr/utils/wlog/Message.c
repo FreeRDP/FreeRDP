@@ -17,17 +17,35 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_PRIVATE_H
-#define WINPR_WLOG_PRIVATE_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <winpr/crt.h>
+#include <winpr/path.h>
 
 #include <winpr/wlog.h>
 
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
+#include "wlog/Message.h"
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
+char* WLog_Message_GetOutputFileName(int id, const char* ext)
+{
+	DWORD ProcessId;
+	char* FilePath;
+	char* FileName;
+	char* FullFileName;
 
-#include "wlog/Layout.h"
-#include "wlog/Appender.h"
+	ProcessId = GetCurrentProcessId();
 
-#endif /* WINPR_WLOG_PRIVATE_H */
+	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+
+	FileName = (char*) malloc(256);
+	sprintf_s(FileName, 256, "%u-%d.%s", (unsigned int) ProcessId, id, ext);
+
+	FullFileName = GetCombinedPath(FilePath, FileName);
+
+	free(FileName);
+	free(FilePath);
+
+	return FullFileName;
+}

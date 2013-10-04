@@ -17,17 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_PRIVATE_H
-#define WINPR_WLOG_PRIVATE_H
+#ifndef WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
+#define WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
 
 #include <winpr/wlog.h>
 
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
+#include "wlog/wlog.h"
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
+int WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp);
 
-#include "wlog/Layout.h"
-#include "wlog/Appender.h"
-
-#endif /* WINPR_WLOG_PRIVATE_H */
+#endif /* WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H */

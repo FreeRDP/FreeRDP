@@ -16,13 +16,14 @@ int TestWLog(int argc, char* argv[])
 
 	root = WLog_GetRoot();
 
-	WLog_SetLogAppenderType(root, WLOG_APPENDER_CONSOLE);
+	WLog_SetLogAppenderType(root, WLOG_APPENDER_FILE);
+
 	appender = WLog_GetLogAppender(root);
+	WLog_ConsoleAppender_SetOutputStream(root, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
 
 	layout = WLog_GetLogLayout(root);
 	WLog_Layout_SetPrefixFormat(root, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
 
-	WLog_ConsoleAppender_SetOutputStream(root, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
 	WLog_OpenAppender(root);
 
 	logA = WLog_Get("com.test.ChannelA");

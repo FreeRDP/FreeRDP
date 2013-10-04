@@ -17,17 +17,29 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_PRIVATE_H
-#define WINPR_WLOG_PRIVATE_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <winpr/wlog.h>
 
-#define WLOG_MAX_PREFIX_SIZE	512
-#define WLOG_MAX_STRING_SIZE	8192
+#include "wlog/DataMessage.h"
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
+int WLog_DataMessage_Write(char* filename, void* data, int length)
+{
+	FILE* fp;
 
-#include "wlog/Layout.h"
-#include "wlog/Appender.h"
+	fp = fopen(filename, "w+b");
 
-#endif /* WINPR_WLOG_PRIVATE_H */
+	if (!fp)
+	{
+		fprintf(stderr, "failed to open file %s\n", filename);
+		return -1;
+	}
+
+	fwrite(data, length, 1, fp);
+
+	fclose(fp);
+
+	return 0;
+}
