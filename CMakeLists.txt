@@ -536,7 +536,11 @@ endif()
 
 if (IOS)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
-	set(CMAKE_OSX_SYSROOT "iphoneos")
+	if (IOS_PLATFORM MATCHES "SIMULATOR")
+		set(CMAKE_OSX_SYSROOT "iphonesimulator")
+	else()
+		set(CMAKE_OSX_SYSROOT "iphoneos")
+	endif()
 endif()
 
 if(WITH_CLIENT)
