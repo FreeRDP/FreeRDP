@@ -8,17 +8,24 @@
 # This script will download and build openssl for iOS (armv7, armv7s) and simulator (i386)
 
 # Settings and definitions
+USER_OS_SDK=""
+USER_SIM_SDK=""
+
 OPENSSLVERSION="1.0.0e"
 MD5SUM="7040b89c4c58c7a1016c0dfa6e821c86"
 OPENSSLPATCH="OpenSSL-iFreeRDP.diff"
-CORES=`sysctl hw.ncpu | awk '{print $2}'`
-SCRIPTDIR=$(dirname `cd ${0%/*} && echo $PWD/${0##*/}`)
+INSTALLDIR="external"
 
 MAKEOPTS="-j $CORES"
 # disable parallell builds since openssl build
 # fails sometimes
 MAKEOPTS=""
-INSTALLDIR="external"
+CORES=`sysctl hw.ncpu | awk '{print $2}'`
+SCRIPTDIR=$(dirname `cd ${0%/*} && echo $PWD/${0##*/}`)
+OS_SDK=""
+SIM_SDK=""
+OS_SDK_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs"
+SIM_SDK_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs"
 
 # Functions
 function buildArch(){
@@ -44,19 +51,35 @@ if [ $# -gt 0 ];then
 fi
 
 echo "Detecting SDKs..."
-OLDEST_OS_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs | sort -n | head -1`
-if [ "x${OLDEST_OS_SDK}" == "x" ];then
-	echo "No iPhoneOS SDK found"
-	exit 1;
+if [ "x${USER_OS_SDK}" == "x" ];then
+	OS_SDK=`ls -1 ${OS_SDK_PATH} | sort -n | head -1`
+	if [ "x${OS_SDK}" == "x" ];then
+		echo "No iPhoneOS SDK found"
+		exit 1;
+	fi
+else
+	OS_SDK=${USER_OS_SDK}
+	if [ ! -d "${OS_SDK_PATH}/${OS_SDK}" ];then
+		echo "User specified iPhoneOS SDK not found"
+		exit 1
+	fi
 fi
-echo "Using iPhoneOS SDK: ${OLDEST_OS_SDK}"
+echo "Using iPhoneOS SDK: ${OS_SDK}"
 
-OLDEST_SIM_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs | sort -n | head -1`
-if [ "x${OLDEST_SIM_SDK}" == "x" ];then
-	echo "No iPhoneSimulator SDK found"
-	exit 1;
+if [ "x${USER_SIM_SDK}" == "x" ];then
+	SIM_SDK=`ls -1 ${SIM_SDK_PATH} | sort -n | head -1`
+	if [ "x${SIM_SDK}" == "x" ];then
+		echo "No iPhoneSimulator SDK found"
+		exit 1;
+	fi
+else
+	SIM_SDK=${USER_SIM_SDK}
+	if [ ! -d "${SIM_SDK_PATH}/${SIM_SDK}" ];then
+		echo "User specified iPhoneSimulator SDK not found"
+		exit 1
+	fi
 fi
-echo "Using iPhoneSimulator SDK: ${OLDEST_SIM_SDK}"
+echo "Using iPhoneSimulator SDK: ${SIM_SDK}"
 echo
 
 cd $INSTALLDIR
@@ -93,8 +116,8 @@ echo
 echo "Applying iFreeRDP patch ..."
 cd "openssl-$OPENSSLVERSION"
 cp ${SCRIPTDIR}/${OPENSSLPATCH} .
-sed -ie "s#__ISIMSDK__#${OLDEST_SIM_SDK}#" ${OPENSSLPATCH}
-sed -ie "s#__IOSSDK__#${OLDEST_OS_SDK}#" ${OPENSSLPATCH}
+sed -ie "s#__ISIMSDK__#${SIM_SDK}#" ${OPENSSLPATCH}
+sed -ie "s#__IOSSDK__#${OS_SDK}#" ${OPENSSLPATCH}
 
 patch -p1 < $OPENSSLPATCH
 
