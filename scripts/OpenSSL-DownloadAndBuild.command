@@ -7,6 +7,7 @@
 #
 # This script will download and build openssl for iOS (armv7, armv7s) and simulator (i386)
 
+# Settings and definitions
 OPENSSLVERSION="1.0.0e"
 MD5SUM="7040b89c4c58c7a1016c0dfa6e821c86"
 OPENSSLPATCH="OpenSSL-iFreeRDP.diff"
@@ -19,14 +20,7 @@ MAKEOPTS="-j $CORES"
 MAKEOPTS=""
 INSTALLDIR="external"
 
-if [ $# -gt 0 ];then
-	INSTALLDIR=$1
-	if [ ! -d $INSTALLDIR ];then
-		echo "Install directory \"$INSTALLDIR\" does not exist"
-		exit 1
-	fi
-fi
-
+# Functions
 function buildArch(){
 	ARCH=$1
 	LOGFILE="BuildLog.darwin-${ARCH}.txt"
@@ -39,6 +33,31 @@ function buildArch(){
 	make clean >/dev/null 2>&1
 	echo
 }
+
+# main
+if [ $# -gt 0 ];then
+	INSTALLDIR=$1
+	if [ ! -d $INSTALLDIR ];then
+		echo "Install directory \"$INSTALLDIR\" does not exist"
+		exit 1
+	fi
+fi
+
+echo "Detecting SDKs..."
+OLDEST_OS_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs | sort -n | head -1`
+if [ "x${OLDEST_OS_SDK}" == "x" ];then
+	echo "No iPhoneOS SDK found"
+	exit 1;
+fi
+echo "Using iPhoneOS SDK: ${OLDEST_OS_SDK}"
+
+OLDEST_SIM_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs | sort -n | head -1`
+if [ "x${OLDEST_SIM_SDK}" == "x" ];then
+	echo "No iPhoneSimulator SDK found"
+	exit 1;
+fi
+echo "Using iPhoneSimulator SDK: ${OLDEST_SIM_SDK}"
+echo
 
 cd $INSTALLDIR
 if [ ! -d openssl ];then
@@ -72,21 +91,6 @@ fi
 echo
 
 echo "Applying iFreeRDP patch ..."
-OLDEST_OS_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs | sort -n | head -1`
-if [ "x${OLDEST_OS_SDK}" == "x" ];then
-	echo "No iPhoneOS SDK found"
-	exit 1;
-fi
-echo "Using iPhoneOS SDK: ${OLDEST_OS_SDK}"
-
-OLDEST_SIM_SDK=`ls -1 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs | sort -n | head -1`
-if [ "x${OLDEST_SIM_SDK}" == "x" ];then
-	echo "No iPhoneSimulator SDK found"
-	exit 1;
-fi
-echo "Using iPhoneSimulator SDK: ${OLDEST_SIM_SDK}"
-echo
-
 cd "openssl-$OPENSSLVERSION"
 cp ${SCRIPTDIR}/${OPENSSLPATCH} .
 sed -ie "s#__ISIMSDK__#${OLDEST_SIM_SDK}#" ${OPENSSLPATCH}
