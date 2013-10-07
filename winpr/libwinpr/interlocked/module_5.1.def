@@ -1,7 +1,6 @@
 LIBRARY		"libwinpr-interlocked"
 EXPORTS
-	; Not required on windows > 5.1
-	; InterlockedCompareExchange64		@1
+	InterlockedCompareExchange64		@1
 	InitializeListHead			@2
 	IsListEmpty				@3
 	RemoveEntryList				@4
