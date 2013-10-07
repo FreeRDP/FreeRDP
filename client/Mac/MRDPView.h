@@ -41,39 +41,27 @@
 
 @interface MRDPView : NSView
 {
-    mfContext* mfc;
+	mfContext* mfc;
 	NSBitmapImageRep* bmiRep;
 	NSMutableArray* cursors;
 	NSMutableArray* windows;
 	NSTimer* pasteboard_timer;
-    NSCursor* currentCursor;
+	NSCursor* currentCursor;
 	NSRect prevWinPosition;
 	freerdp* instance;
 	rdpContext* context;
 	CGContextRef bitmap_context;
 	char* pixel_data;
 	int argc;
-    char** argv;
-    
+	char** argv;
+	DWORD kbdModFlags;
+	BOOL initialized;
 	NSPoint savedDragLocation;
 	BOOL firstCreateWindow;
 	BOOL isMoveSizeInProgress;
 	BOOL skipResizeOnce;
 	BOOL saveInitialDragLoc;
 	BOOL skipMoveWindowOnce;
-
-	/* store state info for some keys */
-	int kdlshift;
-	int kdrshift;
-	int kdlctrl;
-	int kdrctrl;
-	int kdlalt;
-	int kdralt;
-	int kdlmeta;
-	int kdrmeta;
-	int kdcapslock;
-
-    BOOL initialized;    
 	
 @public
 	NSPasteboard* pasteboard_rd; /* for reading from clipboard */

@@ -126,7 +126,7 @@ struct rgba_data
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 
-    [self initializeView];
+	[self initializeView];
 
 	context = rdp_context;
 	mfc = (mfContext*) rdp_context;
@@ -147,10 +147,10 @@ struct rgba_data
 		instance->settings->DesktopHeight = screenFrame.size.height;
 	}
 
-    mfc->client_height = instance->settings->DesktopHeight;
-    mfc->client_width = instance->settings->DesktopWidth;
+	mfc->client_height = instance->settings->DesktopHeight;
+	mfc->client_width = instance->settings->DesktopWidth;
 
-    mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
+	mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
 	
 	return 0;
 }
@@ -249,7 +249,7 @@ DWORD mac_client_thread(void* param)
 
 - (id)initWithFrame:(NSRect)frame
 {
-    self = [super initWithFrame:frame];
+	self = [super initWithFrame:frame];
 	
 	if (self)
 	{
@@ -267,38 +267,38 @@ DWORD mac_client_thread(void* param)
 //       won't be called if the view is created dynamically
 - (void) viewDidLoad
 {
-    [self initializeView];
+	[self initializeView];
 }
 
 - (void) initializeView
 {
-    if (!initialized)
-    {
-        cursors = [[NSMutableArray alloc] initWithCapacity:10];
+	if (!initialized)
+	{
+		cursors = [[NSMutableArray alloc] initWithCapacity:10];
 
-        // setup a mouse tracking area
-        NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
+		// setup a mouse tracking area
+		NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
 
-        [self addTrackingArea:trackingArea];
-        
-        // Set the default cursor
-        currentCursor = [NSCursor arrowCursor];
+		[self addTrackingArea:trackingArea];
 
-        initialized = YES;
-    }
+		// Set the default cursor
+		currentCursor = [NSCursor arrowCursor];
+
+		initialized = YES;
+	}
 }
 
 - (void) setCursor: (NSCursor*) cursor
 {
-    self->currentCursor = cursor;
-    [[self window] invalidateCursorRectsForView:self];
+	self->currentCursor = cursor;
+	[[self window] invalidateCursorRectsForView:self];
 }
 
 
 // Set the current cursor
 - (void) resetCursorRects
 {
-    [self addCursorRect:[self visibleRect] cursor:currentCursor];
+	[self addCursorRect:[self visibleRect] cursor:currentCursor];
 }
 
 /** *********************************************************************
@@ -334,9 +334,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -354,9 +354,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -374,9 +374,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
 /** *********************************************************************
@@ -394,9 +394,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -414,9 +414,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
 /** *********************************************************************
@@ -434,9 +434,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
 
 /** *********************************************************************
@@ -454,9 +454,9 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON3, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
 - (void) scrollWheel:(NSEvent *)event
@@ -472,7 +472,7 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
 	flags = PTR_FLAGS_WHEEL;
 
@@ -485,7 +485,7 @@ DWORD mac_client_thread(void* param)
 		/* limit to maximum value in WheelRotationMask (9bit signed value) */
 		int step = MIN(MAX(-256, units), 255);
 
-        mf_scale_mouse_event(context, instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
+		mf_scale_mouse_event(context, instance->input, flags | ((UINT16)step & WheelRotationMask), x, y);
 		units -= step;
 	}
 }
@@ -506,10 +506,10 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-    y = [self frame].size.height - y;
+	y = [self frame].size.height - y;
 	
 	// send mouse motion event to RDP server
-    mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
+	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
 /** *********************************************************************
@@ -519,20 +519,28 @@ DWORD mac_client_thread(void* param)
 - (void) keyDown:(NSEvent *) event
 {
 	int key;
-	USHORT extended;
+	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
 	
 	if (!is_connected)
 		return;
 	
+	keyFlags = KBD_FLAGS_DOWN;
 	key = [event keyCode] + 8;
 	
 	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
-	extended = (scancode & KBDEXT) ? KBDEXT : 0;
+	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
+	scancode &= 0xFF;
+	vkcode &= 0xFF;
+
+#if 0
+	fprintf(stderr, "keyDown: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+#endif
 	
-	instance->input->KeyboardEvent(instance->input, extended | KBD_FLAGS_DOWN, scancode & 0xFF);
+	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
 
 /** *********************************************************************
@@ -542,20 +550,28 @@ DWORD mac_client_thread(void* param)
 - (void) keyUp:(NSEvent *) event
 {
 	int key;
-	USHORT extended;
+	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
-	
+
 	if (!is_connected)
 		return;
-	
+
 	key = [event keyCode] + 8;
-	
+	keyFlags = KBD_FLAGS_RELEASE;
+
 	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
-	extended = (scancode & KBDEXT) ? KBDEXT : 0;
-	
-	instance->input->KeyboardEvent(instance->input, extended | KBD_FLAGS_RELEASE, scancode & 0xFF);
+	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
+	scancode &= 0xFF;
+	vkcode &= 0xFF;
+
+#if 0
+	fprintf(stderr, "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+#endif
+
+	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
 
 /** *********************************************************************
@@ -564,121 +580,92 @@ DWORD mac_client_thread(void* param)
 
 - (void) flagsChanged:(NSEvent*) event
 {
-	NSUInteger mf = [event modifierFlags];
-	
+	int key;
+	DWORD keyFlags;
+	DWORD vkcode;
+	DWORD scancode;
+	DWORD modFlags;
+
 	if (!is_connected)
 		return;
-	
-	// caps lock
-	if (mf == 0x10100) {
-		printf("TODO: caps lock is on\n");
-		kdcapslock = 1;
-	}
-	if (kdcapslock && (mf == 0x100)) {
-		kdcapslock = 0;
-		printf("TODO: caps lock is off\n");
-	}
-	// left shift
-	if ((kdlshift == 0) && ((mf & 2) != 0)) {
-		// left shift went down
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x2a);
-		kdlshift = 1;
-	}
-	if ((kdlshift != 0) && ((mf & 2) == 0)) {
-		// left shift went up
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x2a);
-		kdlshift = 0;
-	}
-	
-	// right shift
-	if ((kdrshift == 0) && ((mf & 4) != 0)) {
-		// right shift went down
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x36);
-		kdrshift = 1;
-	}
-	if ((kdrshift != 0) && ((mf & 4) == 0)) {
-		// right shift went up
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x36);
-		kdrshift = 0;
-	}
-	
-	// left ctrl
-	if ((kdlctrl == 0) && ((mf & 1) != 0)) {
-		// left ctrl went down
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x1d);
-		kdlctrl = 1;
-	}
-	if ((kdlctrl != 0) && ((mf & 1) == 0)) {
-		// left ctrl went up
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x1d);
-		kdlctrl = 0;
-	}
-	
-	// right ctrl
-	if ((kdrctrl == 0) && ((mf & 0x2000) != 0)) {
-		// right ctrl went down
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x1d);
-		kdrctrl = 1;
-	}
-	if ((kdrctrl != 0) && ((mf & 0x2000) == 0)) {
-		// right ctrl went up
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x1d);
-		kdrctrl = 0;
-	}
-	
-	// left alt
-	if ((kdlalt == 0) && ((mf & 0x20) != 0)) {
-		// left alt went down
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_DOWN, 0x38);
-		kdlalt = 1;
-	}
-	if ((kdlalt != 0) && ((mf & 0x20) == 0)) {
-		// left alt went up
-		instance->input->KeyboardEvent(instance->input, KBD_FLAGS_RELEASE, 0x38);
-		kdlalt = 0;
-	}
-	
-	// right alt
-	if ((kdralt == 0) && ((mf & 0x40) != 0)) {
-		// right alt went down
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x38);
-		kdralt = 1;
-	}
-	if ((kdralt != 0) && ((mf & 0x40) == 0)) {
-		// right alt went up
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x38);
-		kdralt = 0;
-	}
-	
-	// left meta
-	if ((kdlmeta == 0) && ((mf & 0x08) != 0)) {
-		// left meta went down
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x5b);
-		kdlmeta = 1;
-	}
-	if ((kdlmeta != 0) && ((mf & 0x08) == 0)) {
-		// left meta went up
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x5b);
-		kdlmeta = 0;
-	}
-	
-	// right meta
-	if ((kdrmeta == 0) && ((mf & 0x10) != 0)) {
-		// right meta went down
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_DOWN, 0x5c);
-		kdrmeta = 1;
-	}
-	if ((kdrmeta != 0) && ((mf & 0x10) == 0)) {
-		// right meta went up
-		instance->input->KeyboardEvent(instance->input, 1 | KBD_FLAGS_RELEASE, 0x5c);
-		kdrmeta = 0;
-	}
+
+	keyFlags = 0;
+	key = [event keyCode] + 8;
+	modFlags = [event modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+
+	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
+	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
+	scancode &= 0xFF;
+	vkcode &= 0xFF;
+
+#if 0
+	fprintf(stderr, "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X\n",
+	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode), modFlags);
+
+	if (modFlags & NSAlphaShiftKeyMask)
+		fprintf(stderr, "NSAlphaShiftKeyMask\n");
+
+	if (modFlags & NSShiftKeyMask)
+		fprintf(stderr, "NSShiftKeyMask\n");
+
+	if (modFlags & NSControlKeyMask)
+		fprintf(stderr, "NSControlKeyMask\n");
+
+	if (modFlags & NSAlternateKeyMask)
+		fprintf(stderr, "NSAlternateKeyMask\n");
+
+	if (modFlags & NSCommandKeyMask)
+		fprintf(stderr, "NSCommandKeyMask\n");
+
+	if (modFlags & NSNumericPadKeyMask)
+		fprintf(stderr, "NSNumericPadKeyMask\n");
+
+	if (modFlags & NSHelpKeyMask)
+		fprintf(stderr, "NSHelpKeyMask\n");
+#endif
+
+	if ((modFlags & NSAlphaShiftKeyMask) && !(kbdModFlags & NSAlphaShiftKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSAlphaShiftKeyMask) && (kbdModFlags & NSAlphaShiftKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSShiftKeyMask) && !(kbdModFlags & NSShiftKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSShiftKeyMask) && (kbdModFlags & NSShiftKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSControlKeyMask) && !(kbdModFlags & NSControlKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSControlKeyMask) && (kbdModFlags & NSControlKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSAlternateKeyMask) && !(kbdModFlags & NSAlternateKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSAlternateKeyMask) && (kbdModFlags & NSAlternateKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSCommandKeyMask) && !(kbdModFlags & NSCommandKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSCommandKeyMask) && (kbdModFlags & NSCommandKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSNumericPadKeyMask) && !(kbdModFlags & NSNumericPadKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSNumericPadKeyMask) && (kbdModFlags & NSNumericPadKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	if ((modFlags & NSHelpKeyMask) && !(kbdModFlags & NSHelpKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	else if (!(modFlags & NSHelpKeyMask) && (kbdModFlags & NSHelpKeyMask))
+		freerdp_input_send_keyboard_event(instance->input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+
+	kbdModFlags = modFlags;
 }
 
 - (void) releaseResources
 {
 	int i;
-
 
 	for (i = 0; i < argc; i++)
 	{
@@ -705,16 +692,16 @@ DWORD mac_client_thread(void* param)
 		return;
 
 	if (self->bitmap_context)
-    {
+	{
 		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
 
-        CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-        CGContextDrawImage(cgContext, CGRectMake(0,
-         0, [self bounds].size.width, [self bounds].size.height), cgImage);
+		CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+		CGContextDrawImage(cgContext, CGRectMake(0,
+							 0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
-        CGImageRelease(cgImage);
-    }
+		CGImageRelease(cgImage);
+	}
 	else
 	{
 		// just clear the screen with black
@@ -748,10 +735,10 @@ DWORD mac_client_thread(void* param)
 
 - (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height
 {
-    mfc->yCurrentScroll = yOffset;
-    mfc->xCurrentScroll = xOffset;
-    mfc->client_height = height;
-    mfc->client_width = width;
+	mfc->yCurrentScroll = yOffset;
+	mfc->xCurrentScroll = xOffset;
+	mfc->client_height = height;
+	mfc->client_width = width;
 }
 
 /************************************************************************
@@ -942,11 +929,11 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
-    if (pointer->xorBpp > 24)
-    {
-        freerdp_image_swap_color_order(pointer->xorMaskData, pointer->width, pointer->height);
+	if (pointer->xorBpp > 24)
+	{
+		freerdp_image_swap_color_order(pointer->xorMaskData, pointer->width, pointer->height);
 	}
-    
+
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
 	
@@ -1025,12 +1012,12 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	{
 		if (cursor->pointer == pointer)
 		{
-            [view setCursor:cursor->nsCursor];
+			[view setCursor:cursor->nsCursor];
 			return;
 		}
 	}
-    
-    NSLog(@"Cursor not found");
+
+	NSLog(@"Cursor not found");
 }
 
 /** *********************************************************************
@@ -1050,7 +1037,7 @@ void mf_Pointer_SetDefault(rdpContext* context)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-    [view setCursor:[NSCursor arrowCursor]];
+	[view setCursor:[NSCursor arrowCursor]];
 }
 
 /** *********************************************************************
@@ -1093,12 +1080,12 @@ void mac_end_paint(rdpContext* context)
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	
-    int ww, wh, dw, dh;
+	int ww, wh, dw, dh;
 
-    ww = mfc->client_width;
-    wh = mfc->client_height;
-    dw = mfc->context.settings->DesktopWidth;
-    dh = mfc->context.settings->DesktopHeight;
+	ww = mfc->client_width;
+	wh = mfc->client_height;
+	dw = mfc->context.settings->DesktopWidth;
+	dh = mfc->context.settings->DesktopHeight;
 
 	if ((context == 0) || (context->gdi == 0))
 		return;
@@ -1113,32 +1100,32 @@ void mac_end_paint(rdpContext* context)
 
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{
-        drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
-        drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
-        drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
-        drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
+		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
+		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
+		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
+		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
 
-        if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
-        {
-            drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
-            drawRect.size.height = drawRect.size.height * wh / dh + 1;
-            drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
-            drawRect.size.width = drawRect.size.width * ww / dw + 1;
-        }
-        else
-        {
-            drawRect.origin.y = drawRect.origin.y - 1;
-            drawRect.size.height = drawRect.size.height + 1;
-            drawRect.origin.x = drawRect.origin.x - 1;
-            drawRect.size.width = drawRect.size.width + 1;
-        }
+		if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
+		{
+			drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
+			drawRect.size.height = drawRect.size.height * wh / dh + 1;
+			drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
+			drawRect.size.width = drawRect.size.width * ww / dw + 1;
+		}
+		else
+		{
+			drawRect.origin.y = drawRect.origin.y - 1;
+			drawRect.size.height = drawRect.size.height + 1;
+			drawRect.origin.x = drawRect.origin.x - 1;
+			drawRect.size.width = drawRect.size.width + 1;
+		}
 
-        windows_to_apple_cords(mfc->view, &drawRect);
+		windows_to_apple_cords(mfc->view, &drawRect);
 
-        // Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
-        //       because the current frame is always at full size, since the scrolling is handled by the external container.
+		// Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
+		//       because the current frame is always at full size, since the scrolling is handled by the external container.
 
-        [view setNeedsDisplayInRect:drawRect];
+		[view setNeedsDisplayInRect:drawRect];
 	}
 	
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1170,7 +1157,7 @@ static void update_activity_cb(freerdp* instance)
 	}
 	else
 	{
-        fprintf(stderr, "update_activity_cb: No queue!\n");
+		fprintf(stderr, "update_activity_cb: No queue!\n");
 	}
 }
 
@@ -1182,7 +1169,7 @@ static void input_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
-    wMessageQueue* queue;
+	wMessageQueue* queue;
 
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -1197,10 +1184,10 @@ static void input_activity_cb(freerdp* instance)
 				break;
 		}
 	}
-    else
-    {
-        fprintf(stderr, "input_activity_cb: No queue!\n");
-    }
+	else
+	{
+		fprintf(stderr, "input_activity_cb: No queue!\n");
+	}
 }
 
 /** *********************************************************************
@@ -1209,14 +1196,16 @@ static void input_activity_cb(freerdp* instance)
 
 static void channel_activity_cb(freerdp* instance)
 {
-    wMessage* event;
+	wMessage* event;
 
 	freerdp_channels_process_pending_messages(instance);
 	event = freerdp_channels_pop_event(instance->context->channels);
+
 	if (event)
 	{
-        fprintf(stderr, "channel_activity_cb: message %d\n", event->id);
-        switch (GetMessageClass(event->id))
+		fprintf(stderr, "channel_activity_cb: message %d\n", event->id);
+
+		switch (GetMessageClass(event->id))
 		{
 		case CliprdrChannel_Class:
 			process_cliprdr_event(instance, event);
@@ -1472,7 +1461,7 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 
 void windows_to_apple_cords(MRDPView* view, NSRect* r)
 {
-    r->origin.y = [view frame].size.height - (r->origin.y + r->size.height);
+	r->origin.y = [view frame].size.height - (r->origin.y + r->size.height);
 }
 
 
