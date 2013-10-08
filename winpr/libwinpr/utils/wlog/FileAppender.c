@@ -28,6 +28,8 @@
 
 #include <winpr/wlog.h>
 
+#include "wlog/Message.h"
+
 #include "wlog/FileAppender.h"
 
 /**

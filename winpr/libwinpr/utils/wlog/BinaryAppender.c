@@ -29,6 +29,8 @@
 
 #include <winpr/wlog.h>
 
+#include "wlog/Message.h"
+
 #include "wlog/BinaryAppender.h"
 
 /**
