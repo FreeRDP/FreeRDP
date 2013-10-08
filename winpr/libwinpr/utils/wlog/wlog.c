@@ -258,6 +258,7 @@ void WLog_Free(wLog* log)
 		free(log->Name);
 		free(log->Names[0]);
 		free(log->Names);
+		free(log->Children);
 
 		free(log);
 	}

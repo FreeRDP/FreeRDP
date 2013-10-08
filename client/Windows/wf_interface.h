@@ -138,6 +138,8 @@ typedef struct wf_context wfContext;
  */
 
 FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+FREERDP_API int freerdp_client_set_window_size(wfContext* wfc, int width, int height);
+
 
 #ifdef __cplusplus
 }

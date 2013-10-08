@@ -68,7 +68,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (message->Level > log->Level)
+	if (message->Level < log->Level)
 		return 0;
 
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
@@ -125,6 +125,8 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 	if (ConsoleAppender)
 	{
 		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
+
+		ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
 
 		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
 		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;

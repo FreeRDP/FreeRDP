@@ -25,6 +25,7 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 
 #include <winpr/wlog.h>
 
@@ -82,7 +83,7 @@ int WLog_BinaryAppender_Open(wLog* log, wLogBinaryAppender* appender)
 	if (!appender->FileName)
 	{
 		appender->FileName = (char*) malloc(256);
-		sprintf_s(appender->FileName, 256, "%u.bin.log", (unsigned int) ProcessId);
+		sprintf_s(appender->FileName, 256, "%u.wlog", (unsigned int) ProcessId);
 	}
 
 	if (!appender->FullFileName)
@@ -113,7 +114,11 @@ int WLog_BinaryAppender_Close(wLog* log, wLogBinaryAppender* appender)
 int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wLogMessage* message)
 {
 	FILE* fp;
-	char prefix[WLOG_MAX_PREFIX_SIZE];
+	wStream* s;
+	int MessageLength;
+	int FileNameLength;
+	int FunctionNameLength;
+	int TextStringLength;
 
 	if (message->Level > log->Level)
 		return 0;
@@ -123,10 +128,38 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 	if (!fp)
 		return -1;
 
-	message->PrefixString = prefix;
-	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+	FileNameLength = strlen(message->FileName);
+	FunctionNameLength = strlen(message->FunctionName);
+	TextStringLength = strlen(message->TextString);
 
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+	MessageLength = 16 +
+			(4 + FileNameLength + 1) +
+			(4 + FunctionNameLength + 1) +
+			(4 + TextStringLength + 1);
+
+	s = Stream_New(NULL, MessageLength);
+
+	Stream_Write_UINT32(s, MessageLength);
+
+	Stream_Write_UINT32(s, message->Type);
+	Stream_Write_UINT32(s, message->Level);
+
+	Stream_Write_UINT32(s, message->LineNumber);
+
+	Stream_Write_UINT32(s, FileNameLength);
+	Stream_Write(s, message->FileName, FileNameLength + 1);
+
+	Stream_Write_UINT32(s, FunctionNameLength);
+	Stream_Write(s, message->FunctionName, FunctionNameLength + 1);
+
+	Stream_Write_UINT32(s, TextStringLength);
+	Stream_Write(s, message->TextString, TextStringLength + 1);
+
+	Stream_SealLength(s);
+
+	fwrite(Stream_Buffer(s), MessageLength, 1, fp);
+
+	Stream_Free(s, TRUE);
 
 	return 1;
 }
@@ -150,6 +183,8 @@ wLogBinaryAppender* WLog_BinaryAppender_New(wLog* log)
 	if (BinaryAppender)
 	{
 		ZeroMemory(BinaryAppender, sizeof(wLogBinaryAppender));
+
+		BinaryAppender->Type = WLOG_APPENDER_BINARY;
 
 		BinaryAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Open;
 		BinaryAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Close;

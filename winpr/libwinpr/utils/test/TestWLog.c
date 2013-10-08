@@ -16,7 +16,7 @@ int TestWLog(int argc, char* argv[])
 
 	root = WLog_GetRoot();
 
-	WLog_SetLogAppenderType(root, WLOG_APPENDER_FILE);
+	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
 
 	appender = WLog_GetLogAppender(root);
 	WLog_ConsoleAppender_SetOutputStream(root, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
