@@ -65,7 +65,7 @@ struct _wLogMessage
 
 	LPSTR PrefixString;
 
-	LPSTR FormatString;
+	LPCSTR FormatString;
 	LPSTR TextString;
 
 	DWORD LineNumber; /* __LINE__ */
