@@ -61,6 +61,8 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/DataMessage.h
 	wlog/ImageMessage.c
 	wlog/ImageMessage.h
+	wlog/PacketMessage.c
+	wlog/PacketMessage.h
 	wlog/Appender.c
 	wlog/Appender.h
 	wlog/FileAppender.c

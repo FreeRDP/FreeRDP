@@ -56,6 +56,7 @@ typedef struct _wLogAppender wLogAppender;
 #define WLOG_MESSAGE_TEXT	0
 #define WLOG_MESSAGE_DATA	1
 #define WLOG_MESSAGE_IMAGE	2
+#define WLOG_MESSAGE_PACKET	3
 
 struct _wLogMessage
 {
@@ -109,17 +110,23 @@ typedef int (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
 typedef int (*WLOG_APPENDER_WRITE_DATA_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
 typedef int (*WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
+typedef int (*WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
 
 #define WLOG_APPENDER_COMMON() \
 	DWORD Type; \
 	DWORD State; \
 	wLogLayout* Layout; \
 	CRITICAL_SECTION lock; \
+	void* TextMessageContext; \
+	void* DataMessageContext; \
+	void* ImageMessageContext; \
+	void* PacketMessageContext; \
 	WLOG_APPENDER_OPEN_FN Open; \
 	WLOG_APPENDER_CLOSE_FN Close; \
 	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage; \
 	WLOG_APPENDER_WRITE_DATA_MESSAGE_FN WriteDataMessage; \
-	WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN WriteImageMessage
+	WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN WriteImageMessage; \
+	WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN WritePacketMessage
 
 struct _wLogAppender
 {
@@ -193,6 +200,18 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
 	}
 
+#define WLog_Data(_log, _log_level, ...) \
+	if (_log_level >= _log->Level) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_DATA; \
+		_log_message.Level = _log_level; \
+		_log_message.FormatString = NULL; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+	}
+
 #define WLog_Image(_log, _log_level, ...) \
 	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
@@ -205,10 +224,10 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
 	}
 
-#define WLog_Data(_log, _log_level, ...) \
+#define WLog_Packet(_log, _log_level, ...) \
 	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
-		_log_message.Type = WLOG_MESSAGE_DATA; \
+		_log_message.Type = WLOG_MESSAGE_PACKET; \
 		_log_message.Level = _log_level; \
 		_log_message.FormatString = NULL; \
 		_log_message.LineNumber = __LINE__; \

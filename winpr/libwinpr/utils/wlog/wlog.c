@@ -79,6 +79,31 @@ int WLog_Write(wLog* log, wLogMessage* message)
 	return status;
 }
 
+int WLog_WriteData(wLog* log, wLogMessage* message)
+{
+	int status;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return -1;
+
+	if (!appender->State)
+		WLog_OpenAppender(log);
+
+	if (!appender->WriteDataMessage)
+		return -1;
+
+	EnterCriticalSection(&appender->lock);
+
+	status = appender->WriteDataMessage(log, appender, message);
+
+	LeaveCriticalSection(&appender->lock);
+
+	return status;
+}
+
 int WLog_WriteImage(wLog* log, wLogMessage* message)
 {
 	int status;
@@ -104,7 +129,7 @@ int WLog_WriteImage(wLog* log, wLogMessage* message)
 	return status;
 }
 
-int WLog_WriteData(wLog* log, wLogMessage* message)
+int WLog_WritePacket(wLog* log, wLogMessage* message)
 {
 	int status;
 	wLogAppender* appender;
@@ -117,12 +142,12 @@ int WLog_WriteData(wLog* log, wLogMessage* message)
 	if (!appender->State)
 		WLog_OpenAppender(log);
 
-	if (!appender->WriteDataMessage)
+	if (!appender->WritePacketMessage)
 		return -1;
 
 	EnterCriticalSection(&appender->lock);
 
-	status = appender->WriteDataMessage(log, appender, message);
+	status = appender->WritePacketMessage(log, appender, message);
 
 	LeaveCriticalSection(&appender->lock);
 

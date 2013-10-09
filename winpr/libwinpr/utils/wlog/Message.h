@@ -24,8 +24,10 @@
 
 #include "wlog/wlog.h"
 
+#include "wlog/TextMessage.h"
 #include "wlog/DataMessage.h"
 #include "wlog/ImageMessage.h"
+#include "wlog/PacketMessage.h"
 
 char* WLog_Message_GetOutputFileName(int id, const char* ext);
 
