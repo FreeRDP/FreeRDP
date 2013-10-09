@@ -365,8 +365,6 @@ void rfx_context_free(RFX_CONTEXT* context)
 
 	BufferPool_Free(context->priv->BufferPool);
 
-	WLog_Uninit();
-
 	free(context->priv);
 	free(context);
 }
