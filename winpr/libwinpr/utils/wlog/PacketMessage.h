@@ -76,6 +76,46 @@ void Pcap_Close(wPcap* pcap);
 
 void Pcap_Flush(wPcap* pcap);
 
+struct _wEthernetHeader
+{
+	BYTE Destination[6];
+	BYTE Source[6];
+	UINT16 Type;
+};
+typedef struct _wEthernetHeader wEthernetHeader;
+
+struct _wIPv4Header
+{
+	BYTE Version;
+	BYTE InternetHeaderLength;
+	BYTE TypeOfService;
+	UINT16 TotalLength;
+	UINT16 Identification;
+	BYTE InternetProtocolFlags;
+	UINT16 FragmentOffset;
+	BYTE TimeToLive;
+	BYTE Protocol;
+	UINT16 HeaderChecksum;
+	UINT32 SourceAddress;
+	UINT32 DestinationAddress;
+};
+typedef struct _wIPv4Header wIPv4Header;
+
+struct _wTcpHeader
+{
+	UINT16 SourcePort;
+	UINT16 DestinationPort;
+	UINT32 SequenceNumber;
+	UINT32 AcknowledgementNumber;
+	BYTE Offset;
+	BYTE Reserved;
+	BYTE TcpFlags;
+	UINT16 Window;
+	UINT16 Checksum;
+	UINT16 UrgentPointer;
+};
+typedef struct _wTcpHeader wTcpHeader;
+
 int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags);
 
 #endif /* WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H */
