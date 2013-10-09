@@ -243,7 +243,24 @@ int WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethern
 
 UINT16 IPv4Checksum(BYTE* ipv4, int length)
 {
-	return 0;
+	UINT16 tmp16;
+	long checksum = 0;
+
+	while (length > 1)
+	{
+		tmp16 = *((UINT16*) ipv4);
+		checksum += tmp16;
+		length -= 2;
+		ipv4 += 2;
+	}
+
+	if (length > 0)
+		checksum += *ipv4;
+
+	while (checksum >> 16)
+		checksum = (checksum & 0xFFFF) + (checksum >> 16);
+
+	return (UINT16) (~checksum);
 }
 
 int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
@@ -260,13 +277,13 @@ int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	Stream_Write_UINT16_BE(s, (ipv4->InternetProtocolFlags << 13) | ipv4->FragmentOffset);
 	Stream_Write_UINT8(s, ipv4->TimeToLive);
 	Stream_Write_UINT8(s, ipv4->Protocol);
-	Stream_Write_UINT16_BE(s, ipv4->HeaderChecksum);
+	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
 	Stream_Write_UINT32_BE(s, ipv4->SourceAddress);
 	Stream_Write_UINT32_BE(s, ipv4->DestinationAddress);
 
 	ipv4->HeaderChecksum = IPv4Checksum((BYTE*) buffer, 20);
 	Stream_Rewind(s, 10);
-	Stream_Write_UINT16_BE(s, ipv4->HeaderChecksum);
+	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
 	Stream_Seek(s, 8);
 
 	fwrite(buffer, 20, 1, pcap->fp);
@@ -299,6 +316,9 @@ int WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 
 	return 0;
 }
+
+static UINT32 g_InboundSequenceNumber = 0;
+static UINT32 g_OutboundSequenceNumber = 0;
 
 int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 {
@@ -371,12 +391,24 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 
 	tcp.SourcePort = 3389;
 	tcp.DestinationPort = 3389;
-	tcp.SequenceNumber = 0;
-	tcp.AcknowledgementNumber = 0;
+
+	if (flags & WLOG_PACKET_OUTBOUND)
+	{
+		tcp.SequenceNumber = g_OutboundSequenceNumber;
+		tcp.AcknowledgementNumber = g_InboundSequenceNumber;
+		g_OutboundSequenceNumber += length;
+	}
+	else
+	{
+		tcp.SequenceNumber = g_InboundSequenceNumber;
+		tcp.AcknowledgementNumber = g_OutboundSequenceNumber;
+		g_InboundSequenceNumber += length;
+	}
+
 	tcp.Offset = 5;
 	tcp.Reserved = 0;
-	tcp.TcpFlags = 0;
-	tcp.Window = 0xFFFF;
+	tcp.TcpFlags = 0x0018;
+	tcp.Window = 0x7FFF;
 	tcp.Checksum = 0;
 	tcp.UrgentPointer = 0;
 
