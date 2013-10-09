@@ -249,16 +249,15 @@ int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	s = Stream_New(buffer, 20);
 
 	Stream_Write_UINT8(s, (ipv4->Version << 4) | ipv4->InternetHeaderLength);
-	Stream_Write_UINT8(s, ipv4->InternetHeaderLength);
 	Stream_Write_UINT8(s, ipv4->TypeOfService);
-	Stream_Write_UINT16(s, ipv4->TotalLength);
-	Stream_Write_UINT16(s, ipv4->Identification);
-	Stream_Write_UINT16(s, (ipv4->InternetProtocolFlags << 12) | ipv4->FragmentOffset);
+	Stream_Write_UINT16_BE(s, ipv4->TotalLength);
+	Stream_Write_UINT16_BE(s, ipv4->Identification);
+	Stream_Write_UINT16_BE(s, (ipv4->InternetProtocolFlags << 12) | ipv4->FragmentOffset);
 	Stream_Write_UINT8(s, ipv4->TimeToLive);
 	Stream_Write_UINT8(s, ipv4->Protocol);
-	Stream_Write_UINT16(s, ipv4->HeaderChecksum);
-	Stream_Write_UINT32(s, ipv4->SourceAddress);
-	Stream_Write_UINT32(s, ipv4->DestinationAddress);
+	Stream_Write_UINT16_BE(s, ipv4->HeaderChecksum);
+	Stream_Write_UINT32_BE(s, ipv4->SourceAddress);
+	Stream_Write_UINT32_BE(s, ipv4->DestinationAddress);
 
 	fwrite(buffer, 20, 1, pcap->fp);
 
@@ -274,15 +273,15 @@ int WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 
 	s = Stream_New(buffer, 20);
 
-	Stream_Write_UINT16(s, tcp->SourcePort);
-	Stream_Write_UINT16(s, tcp->DestinationPort);
-	Stream_Write_UINT32(s, tcp->SequenceNumber);
-	Stream_Write_UINT32(s, tcp->AcknowledgementNumber);
+	Stream_Write_UINT16_BE(s, tcp->SourcePort);
+	Stream_Write_UINT16_BE(s, tcp->DestinationPort);
+	Stream_Write_UINT32_BE(s, tcp->SequenceNumber);
+	Stream_Write_UINT32_BE(s, tcp->AcknowledgementNumber);
 	Stream_Write_UINT8(s, (tcp->Offset << 4) | tcp->Reserved);
 	Stream_Write_UINT8(s, tcp->TcpFlags);
-	Stream_Write_UINT16(s, tcp->Window);
-	Stream_Write_UINT16(s, tcp->Checksum);
-	Stream_Write_UINT16(s, tcp->UrgentPointer);
+	Stream_Write_UINT16_BE(s, tcp->Window);
+	Stream_Write_UINT16_BE(s, tcp->Checksum);
+	Stream_Write_UINT16_BE(s, tcp->UrgentPointer);
 
 	fwrite(buffer, 20, 1, pcap->fp);
 
@@ -300,48 +299,76 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 	wEthernetHeader ethernet;
 
 	ethernet.Type = 0x0800;
-	ethernet.Destination[0] = 0xDD;
-	ethernet.Destination[1] = 0xDD;
-	ethernet.Destination[2] = 0xDD;
-	ethernet.Destination[3] = 0xDD;
-	ethernet.Destination[4] = 0xDD;
-	ethernet.Destination[5] = 0xDD;
-	ethernet.Source[0] = 0xAA;
-	ethernet.Source[1] = 0xAA;
-	ethernet.Source[2] = 0xAA;
-	ethernet.Source[3] = 0xAA;
-	ethernet.Source[4] = 0xAA;
-	ethernet.Source[5] = 0xAA;
+
+	if (flags)
+	{
+		ethernet.Source[0] = 0xAA;
+		ethernet.Source[1] = 0xAA;
+		ethernet.Source[2] = 0xAA;
+		ethernet.Source[3] = 0xAA;
+		ethernet.Source[4] = 0xAA;
+		ethernet.Source[5] = 0xAA;
+		ethernet.Destination[0] = 0xDD;
+		ethernet.Destination[1] = 0xDD;
+		ethernet.Destination[2] = 0xDD;
+		ethernet.Destination[3] = 0xDD;
+		ethernet.Destination[4] = 0xDD;
+		ethernet.Destination[5] = 0xDD;
+	}
+	else
+	{
+		ethernet.Source[0] = 0xDD;
+		ethernet.Source[1] = 0xDD;
+		ethernet.Source[2] = 0xDD;
+		ethernet.Source[3] = 0xDD;
+		ethernet.Source[4] = 0xDD;
+		ethernet.Source[5] = 0xDD;
+		ethernet.Destination[0] = 0xAA;
+		ethernet.Destination[1] = 0xAA;
+		ethernet.Destination[2] = 0xAA;
+		ethernet.Destination[3] = 0xAA;
+		ethernet.Destination[4] = 0xAA;
+		ethernet.Destination[5] = 0xAA;
+	}
 
 	ipv4.Version = 4;
 	ipv4.InternetHeaderLength = 5;
 	ipv4.TypeOfService = 0;
-	ipv4.TotalLength = 0;
+	ipv4.TotalLength = length + 20 + 20;
 	ipv4.Identification = 0;
-	ipv4.InternetProtocolFlags = 0;
+	ipv4.InternetProtocolFlags = 0x02;
 	ipv4.FragmentOffset = 0;
-	ipv4.TimeToLive = 64;
-	ipv4.Protocol = 6;
+	ipv4.TimeToLive = 128;
+	ipv4.Protocol = 6; /* TCP */
 	ipv4.HeaderChecksum = 0;
-	ipv4.SourceAddress = 0xC0A80196; /* C0 A8 01 06 : 192.168.1.150 */
-	ipv4.DestinationAddress = 0xC0A80196; /* C0 A8 01 06 : 192.168.1.150 */
+
+	if (flags)
+	{
+		ipv4.SourceAddress = 0xC0A80196; /* 192.168.1.150 */
+		ipv4.DestinationAddress = 0x4A7D64C8; /* 74.125.100.200 */
+	}
+	else
+	{
+		ipv4.SourceAddress = 0x4A7D64C8; /* 74.125.100.200 */
+		ipv4.DestinationAddress = 0xC0A80196; /* 192.168.1.150 */
+	}
 
 	tcp.SourcePort = 3389;
 	tcp.DestinationPort = 3389;
 	tcp.SequenceNumber = 0;
 	tcp.AcknowledgementNumber = 0;
-	tcp.Offset = 0;
+	tcp.Offset = 5;
 	tcp.Reserved = 0;
 	tcp.TcpFlags = 0;
-	tcp.Window = 0;
+	tcp.Window = 0xFFFF;
 	tcp.Checksum = 0;
 	tcp.UrgentPointer = 0;
 
 	record.data = data;
-	record.length = length + 14 + 20 + 20;
+	record.length = length;
+	record.header.incl_len = record.length + 14 + 20 + 20;
+	record.header.orig_len = record.length + 14 + 20 + 20;
 	record.next = NULL;
-	record.header.incl_len = record.length;
-	record.header.orig_len = record.length;
 
 	gettimeofday(&tp, 0);
 	record.header.ts_sec = tp.tv_sec;
