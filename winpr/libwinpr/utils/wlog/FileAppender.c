@@ -130,6 +130,8 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 
 	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
+	//fflush(fp); /* slow! */
+
 	return 1;
 }
 
