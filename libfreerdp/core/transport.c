@@ -499,7 +499,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 	if (streamPosition + status >= pduLength)
 	{
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, 0);
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
 	}
 
 	return transport_status;
@@ -539,7 +539,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, 1);
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
 	}
 
 	while (length > 0)

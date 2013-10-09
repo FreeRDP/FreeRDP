@@ -241,6 +241,11 @@ int WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethern
 	return 0;
 }
 
+UINT16 IPv4Checksum(BYTE* ipv4, int length)
+{
+	return 0;
+}
+
 int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 {
 	wStream* s;
@@ -252,12 +257,17 @@ int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	Stream_Write_UINT8(s, ipv4->TypeOfService);
 	Stream_Write_UINT16_BE(s, ipv4->TotalLength);
 	Stream_Write_UINT16_BE(s, ipv4->Identification);
-	Stream_Write_UINT16_BE(s, (ipv4->InternetProtocolFlags << 12) | ipv4->FragmentOffset);
+	Stream_Write_UINT16_BE(s, (ipv4->InternetProtocolFlags << 13) | ipv4->FragmentOffset);
 	Stream_Write_UINT8(s, ipv4->TimeToLive);
 	Stream_Write_UINT8(s, ipv4->Protocol);
 	Stream_Write_UINT16_BE(s, ipv4->HeaderChecksum);
 	Stream_Write_UINT32_BE(s, ipv4->SourceAddress);
 	Stream_Write_UINT32_BE(s, ipv4->DestinationAddress);
+
+	ipv4->HeaderChecksum = IPv4Checksum((BYTE*) buffer, 20);
+	Stream_Rewind(s, 10);
+	Stream_Write_UINT16_BE(s, ipv4->HeaderChecksum);
+	Stream_Seek(s, 8);
 
 	fwrite(buffer, 20, 1, pcap->fp);
 
@@ -300,35 +310,41 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 
 	ethernet.Type = 0x0800;
 
-	if (flags)
+	if (flags & WLOG_PACKET_OUTBOUND)
 	{
-		ethernet.Source[0] = 0xAA;
-		ethernet.Source[1] = 0xAA;
-		ethernet.Source[2] = 0xAA;
-		ethernet.Source[3] = 0xAA;
-		ethernet.Source[4] = 0xAA;
-		ethernet.Source[5] = 0xAA;
-		ethernet.Destination[0] = 0xDD;
-		ethernet.Destination[1] = 0xDD;
-		ethernet.Destination[2] = 0xDD;
-		ethernet.Destination[3] = 0xDD;
-		ethernet.Destination[4] = 0xDD;
-		ethernet.Destination[5] = 0xDD;
+		/* 00:15:5D:01:64:04 */
+		ethernet.Source[0] = 0x00;
+		ethernet.Source[1] = 0x15;
+		ethernet.Source[2] = 0x5D;
+		ethernet.Source[3] = 0x01;
+		ethernet.Source[4] = 0x64;
+		ethernet.Source[5] = 0x04;
+
+		/* 00:15:5D:01:64:01 */
+		ethernet.Destination[0] = 0x00;
+		ethernet.Destination[1] = 0x15;
+		ethernet.Destination[2] = 0x5D;
+		ethernet.Destination[3] = 0x01;
+		ethernet.Destination[4] = 0x64;
+		ethernet.Destination[5] = 0x01;
 	}
 	else
 	{
-		ethernet.Source[0] = 0xDD;
-		ethernet.Source[1] = 0xDD;
-		ethernet.Source[2] = 0xDD;
-		ethernet.Source[3] = 0xDD;
-		ethernet.Source[4] = 0xDD;
-		ethernet.Source[5] = 0xDD;
-		ethernet.Destination[0] = 0xAA;
-		ethernet.Destination[1] = 0xAA;
-		ethernet.Destination[2] = 0xAA;
-		ethernet.Destination[3] = 0xAA;
-		ethernet.Destination[4] = 0xAA;
-		ethernet.Destination[5] = 0xAA;
+		/* 00:15:5D:01:64:01 */
+		ethernet.Source[0] = 0x00;
+		ethernet.Source[1] = 0x15;
+		ethernet.Source[2] = 0x5D;
+		ethernet.Source[3] = 0x01;
+		ethernet.Source[4] = 0x64;
+		ethernet.Source[5] = 0x01;
+
+		/* 00:15:5D:01:64:04 */
+		ethernet.Destination[0] = 0x00;
+		ethernet.Destination[1] = 0x15;
+		ethernet.Destination[2] = 0x5D;
+		ethernet.Destination[3] = 0x01;
+		ethernet.Destination[4] = 0x64;
+		ethernet.Destination[5] = 0x04;
 	}
 
 	ipv4.Version = 4;
@@ -342,7 +358,7 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 	ipv4.Protocol = 6; /* TCP */
 	ipv4.HeaderChecksum = 0;
 
-	if (flags)
+	if (flags & WLOG_PACKET_OUTBOUND)
 	{
 		ipv4.SourceAddress = 0xC0A80196; /* 192.168.1.150 */
 		ipv4.DestinationAddress = 0x4A7D64C8; /* 74.125.100.200 */

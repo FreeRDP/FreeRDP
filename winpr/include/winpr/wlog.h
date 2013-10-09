@@ -111,6 +111,9 @@ struct _wLogLayout
 #define WLOG_APPENDER_FILE	1
 #define WLOG_APPENDER_BINARY	2
 
+#define WLOG_PACKET_INBOUND	1
+#define WLOG_PACKET_OUTBOUND	2
+
 typedef int (*WLOG_APPENDER_OPEN_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
