@@ -174,6 +174,13 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 			status = WLog_Write(log, message);
 		}
 	}
+	else if (message->Type == WLOG_MESSAGE_DATA)
+	{
+		message->Data = va_arg(args, void*);
+		message->Length = va_arg(args, int);
+
+		status = WLog_WriteData(log, message);
+	}
 	else if (message->Type == WLOG_MESSAGE_IMAGE)
 	{
 		message->ImageData = va_arg(args, void*);
@@ -183,12 +190,13 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 
 		status = WLog_WriteImage(log, message);
 	}
-	else if (message->Type == WLOG_MESSAGE_DATA)
+	else if (message->Type == WLOG_MESSAGE_PACKET)
 	{
-		message->Data = va_arg(args, void*);
-		message->Length = va_arg(args, int);
+		message->PacketData = va_arg(args, void*);
+		message->PacketLength = va_arg(args, int);
+		message->PacketFlags = va_arg(args, int);
 
-		status = WLog_WriteData(log, message);
+		status = WLog_WritePacket(log, message);
 	}
 
 	return status;

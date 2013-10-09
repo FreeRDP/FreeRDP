@@ -1557,10 +1557,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 		ZeroMemory(update, sizeof(rdpUpdate));
 
 		WLog_Init();
-
-		update->log = WLog_Get("com.freerdp.update");
-		WLog_OpenAppender(update->log);
-		//WLog_SetLogLevel(update->log, WLOG_DEBUG);
+		update->log = WLog_Get("com.freerdp.core.update");
 
 		update->bitmap_update.count = 64;
 		update->bitmap_update.rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);

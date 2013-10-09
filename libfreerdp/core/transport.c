@@ -497,6 +497,11 @@ int transport_read(rdpTransport* transport, wStream* s)
 	}
 #endif
 
+	if (streamPosition + status >= pduLength)
+	{
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, 0);
+	}
+
 	return transport_status;
 }
 
@@ -531,6 +536,11 @@ int transport_write(rdpTransport* transport, wStream* s)
 		winpr_HexDump(Stream_Buffer(s), length);
 	}
 #endif
+
+	if (length > 0)
+	{
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, 1);
+	}
 
 	while (length > 0)
 	{
@@ -841,9 +851,12 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 	transport = (rdpTransport*) malloc(sizeof(rdpTransport));
 
-	if (transport != NULL)
+	if (transport)
 	{
 		ZeroMemory(transport, sizeof(rdpTransport));
+
+		WLog_Init();
+		transport->log = WLog_Get("com.freerdp.core.transport");
 
 		transport->TcpIn = tcp_new(settings);
 
@@ -873,9 +886,9 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 void transport_free(rdpTransport* transport)
 {
-	if (transport != NULL)
+	if (transport)
 	{
-        SetEvent(transport->stopEvent);
+		SetEvent(transport->stopEvent);
         
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);

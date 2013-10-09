@@ -127,12 +127,13 @@ int WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogConsoleAppender* appe
 
 	if (!appender->PacketMessageContext)
 	{
-		FullFileName = WLog_Message_GetOutputFileName(PacketId, "pcap");
+		FullFileName = WLog_Message_GetOutputFileName(-1, "pcap");
 		appender->PacketMessageContext = (void*) Pcap_Open(FullFileName, TRUE);
 		free(FullFileName);
 	}
 
-	WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext, message->Data, message->Length, 0);
+	WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
+			message->PacketData, message->PacketLength, message->PacketFlags);
 
 	return PacketId;
 }

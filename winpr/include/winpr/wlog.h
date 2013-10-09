@@ -84,6 +84,12 @@ struct _wLogMessage
 	int ImageWidth;
 	int ImageHeight;
 	int ImageBpp;
+
+	/* Packet Message */
+
+	void* PacketData;
+	int PacketLength;
+	DWORD PacketFlags;
 };
 
 /**
