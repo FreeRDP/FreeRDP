@@ -1483,7 +1483,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "nsc")
 		{
 			settings->NSCodec = TRUE;
+			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
+			settings->LargePointerFlag = TRUE;
+			settings->FrameMarkerCommandEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "jpeg")
 		{
