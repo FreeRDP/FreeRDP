@@ -460,6 +460,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->ForceEncryptedCsPdu;
 			break;
 
+		case FreeRDP_HiDefRemoteApp:
+			return settings->HiDefRemoteApp;
+			break;
+
 		case FreeRDP_IPv6Enabled:
 			return settings->IPv6Enabled;
 			break;
@@ -917,6 +921,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_ForceEncryptedCsPdu:
 			settings->ForceEncryptedCsPdu = param;
+			break;
+
+		case FreeRDP_HiDefRemoteApp:
+			settings->HiDefRemoteApp = param;
 			break;
 
 		case FreeRDP_IPv6Enabled:
