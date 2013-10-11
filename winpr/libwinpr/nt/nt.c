@@ -3,6 +3,8 @@
  * Windows Native System Services
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Thinstuff Technologies GmbH
+ * Copyright 2013 Norbert Federa <nfedera@thinstuff.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,170 +36,35 @@
 
 #include <winpr/crt.h>
 
-/**
- * The current implementation of NtCurrentTeb() is not the most efficient
- * but it's a starting point. Beware of potential performance bottlenecks
- * caused by multithreaded usage of SetLastError/GetLastError.
- */
+static pthread_once_t _TebOnceControl = PTHREAD_ONCE_INIT;
+static pthread_key_t  _TebKey;
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static PPEB g_ProcessEnvironmentBlock = NULL;
-
-static void NtThreadEnvironmentBlockFree(PTEB teb);
-static void NtProcessEnvironmentBlockFree(PPEB peb);
-
-static PTEB NtThreadEnvironmentBlockNew()
+static void _TebDestruct(void *teb)
 {
-	PTEB teb = NULL;
-	pthread_key_t key;
-
-	teb = (PTEB) malloc(sizeof(TEB));
-
-	if (teb)
-	{
-		ZeroMemory(teb, sizeof(TEB));
-
-		/**
-		 * We are not really using the key, but it provides an automatic way
-		 * of calling NtThreadEnvironmentBlockFree on thread termination for
-		 * the current Thread Environment Block.
-		 */
-
-		pthread_key_create(&key, (void (*)(void*)) NtThreadEnvironmentBlockFree);
-		pthread_setspecific(key, (void*) teb);
-	}
-
-	return teb;
-}
-
-static void NtThreadEnvironmentBlockFree(PTEB teb)
-{
-	DWORD index;
-	PPEB peb = NULL;
-
-	peb = teb->ProcessEnvironmentBlock;
-
-	pthread_mutex_lock(&mutex);
-
-	for (index = 0; index < peb->ThreadArraySize; index++)
-	{
-		if (peb->Threads[index].ThreadEnvironmentBlock == teb)
-		{
-			peb->Threads[index].ThreadId = 0;
-			peb->Threads[index].ThreadEnvironmentBlock = NULL;
-			peb->ThreadCount--;
-			break;
-		}
-	}
-
-	if (!peb->ThreadCount)
-	{
-		NtProcessEnvironmentBlockFree(peb);
-	}
-
-	pthread_mutex_unlock(&mutex);
-
 	free(teb);
 }
 
-static PPEB NtProcessEnvironmentBlockNew()
+static void _TebInitOnce(void)
 {
-	PPEB peb = NULL;
-
-	peb = (PPEB) malloc(sizeof(PEB));
-
-	if (peb)
-	{
-		ZeroMemory(peb, sizeof(PEB));
-
-		peb->ThreadCount = 0;
-		peb->ThreadArraySize = 64;
-		peb->Threads = (THREAD_BLOCK_ID*) malloc(sizeof(THREAD_BLOCK_ID) * peb->ThreadArraySize);
-
-		if (peb->Threads)
-		{
-			ZeroMemory(peb->Threads, sizeof(THREAD_BLOCK_ID) * peb->ThreadArraySize);
-		}
-	}
-
-	return peb;
-}
-
-static void NtProcessEnvironmentBlockFree(PPEB peb)
-{
-	if (peb)
-	{
-		free(peb->Threads);
-		free(peb);
-	}
-
-	g_ProcessEnvironmentBlock = NULL;
-}
-
-PPEB NtCurrentPeb(void)
-{
-	PPEB peb = NULL;
-
-	pthread_mutex_lock(&mutex);
-
-	if (!g_ProcessEnvironmentBlock)
-		g_ProcessEnvironmentBlock = NtProcessEnvironmentBlockNew();
-
-	peb = g_ProcessEnvironmentBlock;
-
-	pthread_mutex_unlock(&mutex);
-
-	return peb;
+	pthread_key_create(&_TebKey, _TebDestruct);
 }
 
 PTEB NtCurrentTeb(void)
 {
-	DWORD index;
-	int freeIndex;
-	DWORD ThreadId;
-	PPEB peb = NULL;
 	PTEB teb = NULL;
 
-	peb = NtCurrentPeb();
-
-	ThreadId = (DWORD) pthread_self();
-
-	freeIndex = -1;
-
-	pthread_mutex_lock(&mutex);
-
-	for (index = 0; index < peb->ThreadArraySize; index++)
+	if (pthread_once(&_TebOnceControl, _TebInitOnce) == 0)
 	{
-		if (!peb->Threads[index].ThreadId)
+		if ((teb = pthread_getspecific(_TebKey)) == NULL)
 		{
-			if (freeIndex < 0)
-				freeIndex = (int) index;
-		}
-
-		if (peb->Threads[index].ThreadId == ThreadId)
-		{
-			teb = peb->Threads[index].ThreadEnvironmentBlock;
-			break;
+			teb = malloc(sizeof(TEB));
+			if (teb)
+			{
+				ZeroMemory(teb, sizeof(TEB));
+				pthread_setspecific(_TebKey, teb);
+			}
 		}
 	}
-
-	if (!teb)
-	{
-		if (freeIndex >= 0)
-		{
-			teb = NtThreadEnvironmentBlockNew();
-			peb->Threads[freeIndex].ThreadEnvironmentBlock = teb;
-			peb->Threads[freeIndex].ThreadId = ThreadId;
-			peb->ThreadCount++;
-
-			teb->ProcessEnvironmentBlock = peb;
-			teb->LastErrorValue = 0;
-		}
-	}
-
-	pthread_mutex_unlock(&mutex);
-
 	return teb;
 }
 
