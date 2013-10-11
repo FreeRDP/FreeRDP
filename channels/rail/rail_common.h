@@ -32,7 +32,6 @@
 
 extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 
-
 #define RAIL_PDU_HEADER_LENGTH			4
 
 /* Fixed length of PDUs, excluding variable lengths */
