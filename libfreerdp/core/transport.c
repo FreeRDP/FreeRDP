@@ -104,23 +104,56 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 	return TRUE;
 }
 
+long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
+{
+	printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n",
+			mode, argp, argi, argl, ret);
+
+	return 1;
+}
+
 static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
+	int status;
+	rdpTsg* tsg;
+
 	printf("transport_bio_tsg_write: %d\n", num);
 
-	tsg_write((rdpTsg*) bio->ptr, (BYTE*) buf, num);
+	tsg = (rdpTsg*) bio->ptr;
+	status = tsg_write(tsg, (BYTE*) buf, num);
+
+	printf("tsg_write: %d\n", status);
+
 	BIO_clear_retry_flags(bio);
+
+	if (status <= 0)
+	{
+		BIO_set_retry_write(bio);
+	}
 
 	return num;
 }
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
+	int status;
+	rdpTsg* tsg;
+
 	printf("transport_bio_tsg_read: %d\n", size);
+
+	tsg = (rdpTsg*) bio->ptr;
+	status = tsg_read(bio->ptr, (BYTE*) buf, size);
+
+	printf("tsg_read: %d\n", status);
 
 	BIO_clear_retry_flags(bio);
 
-	return 1;
+	if (status <= 0)
+	{
+		BIO_set_retry_read(bio);
+	}
+
+	return status;
 }
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
@@ -137,7 +170,7 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	printf("transport_bio_tsg_puts: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2);
+	printf("transport_bio_tsg_ctrl: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2);
 	return 1;
 }
 

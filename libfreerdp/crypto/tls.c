@@ -97,6 +97,16 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	return ContextBindings;
 }
 
+static void tls_ssl_info_callback(const SSL* ssl, int type, int val)
+{
+	printf("tls_ssl_info_callback: type: %d val: %d\n");
+
+	if (type & SSL_CB_HANDSHAKE_START)
+	{
+
+	}
+}
+
 BOOL tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
@@ -166,6 +176,8 @@ BOOL tls_connect(rdpTls* tls)
 		tls->bio->ptr = tls->tsg;
 
 		SSL_set_bio(tls->ssl, tls->bio, tls->bio);
+
+		SSL_CTX_set_info_callback(tls->ctx, tls_ssl_info_callback);
 	}
 	else
 	{
