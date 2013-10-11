@@ -20,6 +20,7 @@ set(MODULE_PREFIX "WINPR_CRYPTO")
 
 set(${MODULE_PREFIX}_SRCS
 	crypto.c
+	crypto.h
 	cert.c)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
