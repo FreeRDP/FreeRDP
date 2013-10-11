@@ -832,6 +832,10 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 		if (file->GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
 			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
 		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
 			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
 	}
