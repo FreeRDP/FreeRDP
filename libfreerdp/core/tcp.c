@@ -120,7 +120,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 	UINT32 option_value;
 	socklen_t option_len;
 
-	if (hostname == NULL)
+	if (!hostname)
 		return FALSE;
 
 	if (hostname[0] == '/')
@@ -275,7 +275,7 @@ rdpTcp* tcp_new(rdpSettings* settings)
 
 	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
-	if (tcp != NULL)
+	if (tcp)
 	{
 		ZeroMemory(tcp, sizeof(rdpTcp));
 

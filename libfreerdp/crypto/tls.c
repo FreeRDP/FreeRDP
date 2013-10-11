@@ -171,7 +171,7 @@ BOOL tls_connect(rdpTls* tls)
 
 	cert = tls_get_certificate(tls, TRUE);
 
-	if (cert == NULL)
+	if (!cert)
 	{
 		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;
