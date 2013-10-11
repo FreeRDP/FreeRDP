@@ -106,7 +106,7 @@ BOOL tls_connect(rdpTls* tls)
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
-	if (tls->ctx == NULL)
+	if (!tls->ctx)
 	{
 		fprintf(stderr, "SSL_CTX_new failed\n");
 		return FALSE;
@@ -147,16 +147,33 @@ BOOL tls_connect(rdpTls* tls)
 
 	tls->ssl = SSL_new(tls->ctx);
 
-	if (tls->ssl == NULL)
+	if (!tls->ssl)
 	{
 		fprintf(stderr, "SSL_new failed\n");
 		return FALSE;
 	}
 
-	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
+	if (tls->tsg)
 	{
-		fprintf(stderr, "SSL_set_fd failed\n");
-		return FALSE;
+		tls->bio = BIO_new(tls->methods);
+
+		if (!tls->bio)
+		{
+			fprintf(stderr, "BIO_new failed\n");
+			return FALSE;
+		}
+
+		tls->bio->ptr = tls->tsg;
+
+		SSL_set_bio(tls->ssl, tls->bio, tls->bio);
+	}
+	else
+	{
+		if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
+		{
+			fprintf(stderr, "SSL_set_fd failed\n");
+			return FALSE;
+		}
 	}
 
 	connection_status = SSL_connect(tls->ssl);
