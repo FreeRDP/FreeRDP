@@ -78,11 +78,15 @@ static void rail_process_connect(rdpSvcPlugin* plugin)
 	rail->rail_order = rail_order_new();
 	rail->rail_order->settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
 	rail->rail_order->plugin = rail;
+
+	WLog_Print(rail->log, WLOG_DEBUG, "Connect");
 }
 
 static void rail_process_terminate(rdpSvcPlugin* plugin)
 {
+	railPlugin* rail = (railPlugin*) plugin;
 
+	WLog_Print(rail->log, WLOG_DEBUG, "Terminate");
 }
 
 static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
@@ -408,6 +412,11 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 	}
+
+	WLog_Init();
+	_p->log = WLog_Get("com.freerdp.channels.rail.client");
+
+	WLog_Print(_p->log, WLOG_DEBUG, "VirtualChannelEntry");
 
 	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
 

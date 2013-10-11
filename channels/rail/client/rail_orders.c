@@ -41,8 +41,7 @@ void rail_send_pdu(rdpRailOrder* railOrder, wStream* s, UINT16 orderType)
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
 
-	/* send */
-	DEBUG_RAIL("Sending %s PDU, length:%d",
+	WLog_Print(((railPlugin*) railOrder->plugin)->log, WLOG_DEBUG, "Sending %s PDU, length: %d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
 	rail_send_channel_data(railOrder->plugin, Stream_Buffer(s), orderLength);
@@ -156,7 +155,6 @@ BOOL rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarIn
 
 	return TRUE;
 }
-
 
 void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
@@ -396,7 +394,7 @@ BOOL rail_order_recv(rdpRailOrder* railOrder, wStream* s)
 	if (!rail_read_pdu_header(s, &orderType, &orderLength))
 		return FALSE;
 
-	DEBUG_RAIL("Received %s PDU, length:%d",
+	WLog_Print(((railPlugin*) railOrder->plugin)->log, WLOG_DEBUG, "Received %s PDU, length: %d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
 	switch (orderType)

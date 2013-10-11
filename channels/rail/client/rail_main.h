@@ -24,12 +24,12 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include <freerdp/client/rail.h>
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
 
 #include "../rail_common.h"
@@ -37,6 +37,8 @@
 struct rail_plugin
 {
 	rdpSvcPlugin plugin;
+
+	wLog* log;
 	rdpRailOrder* rail_order;
 };
 typedef struct rail_plugin railPlugin;
