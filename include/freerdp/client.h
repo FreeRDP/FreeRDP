@@ -45,6 +45,8 @@ struct rdp_client_entry_points_v1
 	DWORD Size;
 	DWORD Version;
 
+	rdpSettings* settings;
+
 	pRdpGlobalInit GlobalInit;
 	pRdpGlobalUninit GlobalUninit;
 

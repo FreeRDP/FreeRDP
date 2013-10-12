@@ -1299,7 +1299,12 @@ typedef struct rdp_settings rdpSettings;
 extern "C" {
 #endif
 
-FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
+/**
+  * rdpSettings creation flags
+  */
+#define FREERDP_SETTINGS_SERVER_MODE	0x00000001
+
+FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);

@@ -385,6 +385,9 @@ int freerdp_context_new(freerdp* instance)
 	context = instance->context;
 	context->instance = instance;
 
+	context->ServerMode = FALSE;
+	context->settings = instance->settings;
+
 	context->pubSub = PubSub_New(TRUE);
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 

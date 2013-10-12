@@ -575,8 +575,6 @@ static void* schannel_test_server_thread(void* arg)
 int dump_test_certificate_files()
 {
 	FILE* fp;
-	int length;
-	char* filename;
 	char* fullpath;
 
 	/*
