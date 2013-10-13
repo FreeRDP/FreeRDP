@@ -1003,9 +1003,10 @@ rdpRdp* rdp_new(rdpContext* context)
 		if (context->ServerMode)
 			flags |= FREERDP_SETTINGS_SERVER_MODE;
 
-		if (!rdp->settings)
-			rdp->settings = freerdp_settings_new(flags);
+		if (!context->settings)
+			context->settings = freerdp_settings_new(flags);
 
+		rdp->settings = context->settings;
 		rdp->settings->instance = context->instance;
 
 		if (context->instance)
