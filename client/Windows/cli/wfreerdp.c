@@ -70,9 +70,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	for (index = 0; index < context->argc; index++)
 		context->argv[index] = _strdup(__argv[index]);
 
-	status = freerdp_client_parse_command_line(context, context->argc, context->argv);
+	status = freerdp_client_settings_parse_command_line(settings, context->argc, context->argv);
 
-	status = freerdp_client_command_line_status_print(context->argc, context->argv, settings, status);
+	status = freerdp_client_settings_command_line_status_print(settings, status, context->argc, context->argv);
 
 	if (status)
 	{

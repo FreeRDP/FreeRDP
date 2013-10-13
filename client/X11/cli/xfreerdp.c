@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 	xfc = (xfContext*) context;
 
-	status = freerdp_client_parse_command_line(context, argc, argv);
+	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv);
 
-	status = freerdp_client_command_line_status_print(argc, argv, settings, status);
+	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
 	if (status)
 	{

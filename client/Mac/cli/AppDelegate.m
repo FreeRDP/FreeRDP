@@ -36,7 +36,7 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	int status;
 	mfContext* mfc;
 
-    _singleDelegate = self;
+	_singleDelegate = self;
 	[self CreateContext];
 
 	status = [self ParseCommandLineArguments];
@@ -93,8 +93,8 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 		argv[i++] = cptr;
 	}
 	
-	status = freerdp_client_parse_command_line(context, argc, argv);
-	status = freerdp_client_command_line_status_print(context->argc, context->argv, context->settings, status);
+	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv);
+	status = freerdp_client_settings_command_line_status_print(context->settings, status, context->argc, context->argv);
 
 	return status;
 }

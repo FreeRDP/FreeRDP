@@ -960,7 +960,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 	if (file->argc > 1)
 	{
-		freerdp_client_parse_command_line_arguments(file->argc, file->argv, settings);
+		freerdp_client_settings_parse_command_line(settings, file->argc, file->argv);
 	}
 
 	return TRUE;
