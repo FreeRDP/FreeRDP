@@ -173,9 +173,9 @@ BOOL CloseHandle(HANDLE hObject)
 		if (pipe->serverfd != -1)
 			close(pipe->serverfd);
 
-		free(pipe->lpFileName);
-		free(pipe->lpFilePath);
-		free(pipe->name);
+		free((char *)pipe->lpFileName);
+		free((char *)pipe->lpFilePath);
+		free((char *)pipe->name);
 		free(pipe);
 
 		return TRUE;
