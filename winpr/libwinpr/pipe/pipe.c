@@ -285,7 +285,7 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 			break;
 		}
 	}
-
+	free(lpFilePath);
 	return status;
 }
 
