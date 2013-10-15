@@ -223,6 +223,9 @@ struct _RAIL_EXEC_ORDER
 	RAIL_UNICODE_STRING exeOrFile;
 	RAIL_UNICODE_STRING workingDir;
 	RAIL_UNICODE_STRING arguments;
+	char* RemoteApplicationProgram;
+	char* RemoteApplicationWorkingDir;
+	char* RemoteApplicationArguments;
 };
 typedef struct _RAIL_EXEC_ORDER RAIL_EXEC_ORDER;
 

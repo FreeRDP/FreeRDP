@@ -43,6 +43,8 @@ struct rail_plugin
 };
 typedef struct rail_plugin railPlugin;
 
+RailClientContext* rail_get_client_interface(void* railObject);
+
 void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param);
 void rail_send_channel_data(void* rail_object, void* data, size_t length);
 
