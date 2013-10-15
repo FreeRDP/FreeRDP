@@ -173,7 +173,10 @@ BOOL CloseHandle(HANDLE hObject)
 		if (pipe->serverfd != -1)
 			close(pipe->serverfd);
 
-		free(Object);
+		free(pipe->lpFileName);
+		free(pipe->lpFilePath);
+		free(pipe->name);
+		free(pipe);
 
 		return TRUE;
 	}
