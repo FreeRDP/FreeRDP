@@ -113,6 +113,18 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
+	if (!ListDictionary_Remove(list, key2))
+	{
+		printf("ListDictionary_Remove: Expected : %d, Actual: %d\n", TRUE, FALSE);
+		return -1;
+	}
+
+	if (ListDictionary_Remove(list, key2))
+	{
+		printf("ListDictionary_Remove: Expected : %d, Actual: %d\n", FALSE, TRUE);
+		return -1;
+	}
+
 	ListDictionary_Clear(list);
 
 	count = ListDictionary_Count(list);

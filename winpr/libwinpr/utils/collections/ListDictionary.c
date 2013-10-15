@@ -198,10 +198,11 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
  * Removes the entry with the specified key from the ListDictionary.
  */
 
-void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
+void *ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 {
 	wListDictionaryItem* item;
 	wListDictionaryItem* prevItem;
+	void *value = NULL;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -213,6 +214,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 		if (listDictionary->head->key == key)
 		{
 			listDictionary->head = listDictionary->head->next;
+			value = item->value;
 			free(item);
 		}
 		else
@@ -227,6 +229,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 					if (item->key == key)
 					{
 						prevItem->next = item->next;
+						value = item->value;
 						free(item);
 						break;
 					}
@@ -239,6 +242,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+	return value;
 }
 
 /**
