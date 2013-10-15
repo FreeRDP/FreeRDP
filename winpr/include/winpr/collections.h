@@ -199,6 +199,7 @@ WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
 
 WINPR_API void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
 WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, void* key);
+WINPR_API void* ListDictionary_Remove_Head(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
 
 WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key);

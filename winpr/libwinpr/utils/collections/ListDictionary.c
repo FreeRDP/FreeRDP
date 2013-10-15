@@ -249,6 +249,31 @@ void *ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 }
 
 /**
+ * Removes the first (head) entry from the list
+ */
+
+void *ListDictionary_Remove_Head(wListDictionary* listDictionary)
+{
+	wListDictionaryItem* item;
+	void *value = NULL;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+		listDictionary->head = listDictionary->head->next;
+		value = item->value;
+		free(item);
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+	return value;
+}
+
+/**
  * Get an item value using key
  */
 
