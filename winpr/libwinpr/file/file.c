@@ -227,6 +227,9 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	if (status != 0)
 	{
 		close(pNamedPipe->clientfd);
+		free((char *)pNamedPipe->name);
+		free((char *)pNamedPipe->lpFileName);
+		free((char *)pNamedPipe->lpFilePath);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
 	}
