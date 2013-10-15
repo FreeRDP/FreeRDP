@@ -68,10 +68,18 @@ struct rdp_window
 	RECTANGLE_16* visibilityRects;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state);
 
 FREERDP_API void rail_CreateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_UpdateWindow(rdpRail* rail, rdpWindow* window);
 FREERDP_API void rail_DestroyWindow(rdpRail* rail, rdpWindow* window);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_RAIL_WINDOW_H */

@@ -245,7 +245,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT32(s); /* CodePage */
 	Stream_Read_UINT32(s, flags); /* flags */
 
-	settings->AudioCapture = ((flags & RNS_INFO_AUDIOCAPTURE) ? TRUE : FALSE);
+	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
 	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
 	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
 	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
@@ -345,10 +345,13 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		INFO_DISABLECTRLALTDEL;
 
 	if (settings->AudioCapture)
-		flags |= RNS_INFO_AUDIOCAPTURE;
+		flags |= INFO_AUDIOCAPTURE;
 
 	if (!settings->AudioPlayback)
 		flags |= INFO_NOAUDIOPLAYBACK;
+
+	if (settings->VideoDisable)
+		flags |= INFO_VIDEO_DISABLE;
 
 	if (settings->AutoLogonEnabled)
 		flags |= INFO_AUTOLOGON;

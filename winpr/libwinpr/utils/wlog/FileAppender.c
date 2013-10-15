@@ -28,6 +28,8 @@
 
 #include <winpr/wlog.h>
 
+#include "wlog/Message.h"
+
 #include "wlog/FileAppender.h"
 
 /**
@@ -128,6 +130,8 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 
 	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
+	//fflush(fp); /* slow! */
+
 	return 1;
 }
 
@@ -175,6 +179,8 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 	if (FileAppender)
 	{
 		ZeroMemory(FileAppender, sizeof(wLogFileAppender));
+
+		FileAppender->Type = WLOG_APPENDER_FILE;
 
 		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
 		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;

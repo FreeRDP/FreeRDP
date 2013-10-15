@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/environment.h>
 
 #include <winpr/wlog.h>
 
@@ -63,34 +64,15 @@ int WLog_Write(wLog* log, wLogMessage* message)
 	if (!appender)
 		return -1;
 
+	if (!appender->State)
+		WLog_OpenAppender(log);
+
 	if (!appender->WriteMessage)
 		return -1;
 
 	EnterCriticalSection(&appender->lock);
 
 	status = appender->WriteMessage(log, appender, message);
-
-	LeaveCriticalSection(&appender->lock);
-
-	return status;
-}
-
-int WLog_WriteImage(wLog* log, wLogMessage* message)
-{
-	int status;
-	wLogAppender* appender;
-
-	appender = WLog_GetLogAppender(log);
-
-	if (!appender)
-		return -1;
-
-	if (!appender->WriteImageMessage)
-		return -1;
-
-	EnterCriticalSection(&appender->lock);
-
-	status = appender->WriteImageMessage(log, appender, message);
 
 	LeaveCriticalSection(&appender->lock);
 
@@ -107,12 +89,65 @@ int WLog_WriteData(wLog* log, wLogMessage* message)
 	if (!appender)
 		return -1;
 
+	if (!appender->State)
+		WLog_OpenAppender(log);
+
 	if (!appender->WriteDataMessage)
 		return -1;
 
 	EnterCriticalSection(&appender->lock);
 
 	status = appender->WriteDataMessage(log, appender, message);
+
+	LeaveCriticalSection(&appender->lock);
+
+	return status;
+}
+
+int WLog_WriteImage(wLog* log, wLogMessage* message)
+{
+	int status;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return -1;
+
+	if (!appender->State)
+		WLog_OpenAppender(log);
+
+	if (!appender->WriteImageMessage)
+		return -1;
+
+	EnterCriticalSection(&appender->lock);
+
+	status = appender->WriteImageMessage(log, appender, message);
+
+	LeaveCriticalSection(&appender->lock);
+
+	return status;
+}
+
+int WLog_WritePacket(wLog* log, wLogMessage* message)
+{
+	int status;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return -1;
+
+	if (!appender->State)
+		WLog_OpenAppender(log);
+
+	if (!appender->WritePacketMessage)
+		return -1;
+
+	EnterCriticalSection(&appender->lock);
+
+	status = appender->WritePacketMessage(log, appender, message);
 
 	LeaveCriticalSection(&appender->lock);
 
@@ -139,6 +174,13 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 			status = WLog_Write(log, message);
 		}
 	}
+	else if (message->Type == WLOG_MESSAGE_DATA)
+	{
+		message->Data = va_arg(args, void*);
+		message->Length = va_arg(args, int);
+
+		status = WLog_WriteData(log, message);
+	}
 	else if (message->Type == WLOG_MESSAGE_IMAGE)
 	{
 		message->ImageData = va_arg(args, void*);
@@ -148,12 +190,13 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 
 		status = WLog_WriteImage(log, message);
 	}
-	else if (message->Type == WLOG_MESSAGE_DATA)
+	else if (message->Type == WLOG_MESSAGE_PACKET)
 	{
-		message->Data = va_arg(args, void*);
-		message->Length = va_arg(args, int);
+		message->PacketData = va_arg(args, void*);
+		message->PacketLength = va_arg(args, int);
+		message->PacketFlags = va_arg(args, int);
 
-		status = WLog_WriteData(log, message);
+		status = WLog_WritePacket(log, message);
 	}
 
 	return status;
@@ -221,6 +264,8 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 wLog* WLog_New(LPCSTR name)
 {
 	wLog* log;
+	char* env;
+	DWORD nSize;
 
 	log = (wLog*) malloc(sizeof(wLog));
 
@@ -231,8 +276,6 @@ wLog* WLog_New(LPCSTR name)
 		log->Name = _strdup(name);
 		WLog_ParseName(log, name);
 
-		log->Level = WLOG_TRACE;
-
 		log->Parent = NULL;
 		log->ChildrenCount = 0;
 
@@ -240,6 +283,40 @@ wLog* WLog_New(LPCSTR name)
 		log->Children = (wLog**) malloc(sizeof(wLog*) * log->ChildrenSize);
 
 		log->Appender = NULL;
+
+		log->Level = WLOG_WARN;
+
+		nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
+
+		if (nSize)
+		{
+			env = (LPSTR) malloc(nSize);
+			nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
+
+			if (env)
+			{
+				if (_stricmp(env, "TRACE") == 0)
+					log->Level = WLOG_TRACE;
+				else if (_stricmp(env, "DEBUG") == 0)
+					log->Level = WLOG_DEBUG;
+				else if (_stricmp(env, "INFO") == 0)
+					log->Level = WLOG_INFO;
+				else if (_stricmp(env, "WARN") == 0)
+					log->Level = WLOG_WARN;
+				else if (_stricmp(env, "ERROR") == 0)
+					log->Level = WLOG_ERROR;
+				else if (_stricmp(env, "FATAL") == 0)
+					log->Level = WLOG_FATAL;
+				else if (_stricmp(env, "OFF") == 0)
+					log->Level = WLOG_OFF;
+				else if (_strnicmp(env, "0x", 2) == 0)
+				{
+					/* TODO: read custom hex value */
+				}
+
+				free(env);
+			}
+		}
 	}
 
 	return log;
@@ -258,6 +335,7 @@ void WLog_Free(wLog* log)
 		free(log->Name);
 		free(log->Names[0]);
 		free(log->Names);
+		free(log->Children);
 
 		free(log);
 	}
@@ -267,11 +345,38 @@ static wLog* g_RootLog = NULL;
 
 wLog* WLog_GetRoot()
 {
+	char* env;
+	DWORD nSize;
+	DWORD logAppenderType;
+
 	if (!g_RootLog)
 	{
 		g_RootLog = WLog_New("");
 		g_RootLog->IsRoot = TRUE;
-		WLog_SetLogAppenderType(g_RootLog, WLOG_APPENDER_CONSOLE);
+
+		logAppenderType = WLOG_APPENDER_CONSOLE;
+
+		nSize = GetEnvironmentVariableA("WLOG_APPENDER", NULL, 0);
+
+		if (nSize)
+		{
+			env = (LPSTR) malloc(nSize);
+			nSize = GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
+
+			if (env)
+			{
+				if (_stricmp(env, "CONSOLE") == 0)
+					logAppenderType = WLOG_APPENDER_CONSOLE;
+				else if (_stricmp(env, "FILE") == 0)
+					logAppenderType = WLOG_APPENDER_FILE;
+				else if (_stricmp(env, "BINARY") == 0)
+					logAppenderType = WLOG_APPENDER_BINARY;
+
+				free(env);
+			}
+		}
+
+		WLog_SetLogAppenderType(g_RootLog, logAppenderType);
 	}
 
 	return g_RootLog;

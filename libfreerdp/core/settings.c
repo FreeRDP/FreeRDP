@@ -198,22 +198,17 @@ void settings_get_computer_name(rdpSettings* settings)
 	GetComputerNameExA(ComputerNameNetBIOS, settings->ComputerName, &nSize);
 }
 
-rdpSettings* freerdp_settings_new(void* instance)
+rdpSettings* freerdp_settings_new(DWORD flags)
 {
 	rdpSettings* settings;
 
 	settings = (rdpSettings*) malloc(sizeof(rdpSettings));
 
-	if (settings != NULL)
+	if (settings)
 	{
 		ZeroMemory(settings, sizeof(rdpSettings));
 
-		settings->instance = instance;
-
-		/* Server instances are NULL */
-
-		if (!settings->instance)
-			settings->ServerMode = TRUE;
+		settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 
 		settings->DesktopWidth = 1024;
 		settings->DesktopHeight = 768;

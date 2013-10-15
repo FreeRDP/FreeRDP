@@ -45,6 +45,8 @@ struct rdp_client_entry_points_v1
 	DWORD Size;
 	DWORD Version;
 
+	rdpSettings* settings;
+
 	pRdpGlobalInit GlobalInit;
 	pRdpGlobalUninit GlobalUninit;
 
@@ -83,10 +85,10 @@ FREERDP_API int freerdp_client_stop(rdpContext* context);
 FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
 FREERDP_API HANDLE freerdp_client_get_thread(rdpContext* context);
 
-FREERDP_API int freerdp_client_parse_command_line(rdpContext* context, int argc, char** argv);
-FREERDP_API int freerdp_client_parse_connection_file(rdpContext* context, const char* filename);
-FREERDP_API int freerdp_client_parse_connection_file_buffer(rdpContext* context, BYTE* buffer, size_t size);
-FREERDP_API int freerdp_client_write_connection_file(rdpContext* context, const char* filename, BOOL unicode);
+FREERDP_API int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, char** argv);
+FREERDP_API int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const char* filename);
+FREERDP_API int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, BYTE* buffer, size_t size);
+FREERDP_API int freerdp_client_settings_write_connection_file(rdpSettings* settings, const char* filename, BOOL unicode);
 
 #ifdef __cplusplus
 }

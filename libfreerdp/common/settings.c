@@ -460,6 +460,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->ForceEncryptedCsPdu;
 			break;
 
+		case FreeRDP_HiDefRemoteApp:
+			return settings->HiDefRemoteApp;
+			break;
+
 		case FreeRDP_IPv6Enabled:
 			return settings->IPv6Enabled;
 			break;
@@ -798,9 +802,6 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_ServerMode:
@@ -917,6 +918,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_ForceEncryptedCsPdu:
 			settings->ForceEncryptedCsPdu = param;
+			break;
+
+		case FreeRDP_HiDefRemoteApp:
+			settings->HiDefRemoteApp = param;
 			break;
 
 		case FreeRDP_IPv6Enabled:
@@ -1252,12 +1257,8 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			break;
 	}
 
-	// Mark field as modified
+	/* Mark field as modified */
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return -1;
 }
@@ -1284,9 +1285,6 @@ int freerdp_get_param_int(rdpSettings* settings, int id)
 
 int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_XPan:
@@ -1303,10 +1301,6 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 	}
 
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }
@@ -1633,9 +1627,6 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_ShareId:
@@ -1951,12 +1942,8 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 	}
 
-	// Mark field as modified
+	/* Mark field as modified */
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -1979,9 +1966,6 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
 
 int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_ParentWindowId:
@@ -1993,12 +1977,8 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 	}
 
-	// Mark field as modified
+	/* Mark field as modified */
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 	
 	return 0;
 }
@@ -2169,9 +2149,6 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_ServerHostname:
@@ -2331,12 +2308,8 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			break;
 	}
 
-	// Mark field as modified
+	/* Mark field as modified */
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }
@@ -2359,9 +2332,6 @@ double freerdp_get_param_double(rdpSettings* settings, int id)
 
 int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 {
-	ParamChangeEventArgs e;
-	rdpContext* context = ((freerdp*) settings->instance)->context;
-
 	switch (id)
 	{
 		case FreeRDP_ScalingFactor:
@@ -2373,11 +2343,8 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 			break;
 	}
 
+	/* Mark field as modified */
 	settings->settings_modified[id] = 1;
-
-	EventArgsInit(&e, "freerdp");
-	e.id = id;
-	PubSub_OnParamChange(context->pubSub, context, &e);
 
 	return 0;
 }

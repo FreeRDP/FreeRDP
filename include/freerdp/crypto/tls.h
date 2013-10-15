@@ -39,9 +39,12 @@ typedef struct rdp_tls rdpTls;
 struct rdp_tls
 {
 	SSL* ssl;
+	BIO* bio;
+	void* tsg;
 	int sockfd;
 	SSL_CTX* ctx;
 	BYTE* PublicKey;
+	BIO_METHOD* methods;
 	DWORD PublicKeyLength;
 	rdpSettings* settings;
 	SecPkgContext_Bindings* Bindings;

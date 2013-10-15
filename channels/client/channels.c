@@ -514,7 +514,19 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 		pChannelClientData = &channels->clientDataList[index];
 
 		if (pChannelClientData->pChannelInitEventProc)
+		{
+			ChannelConnectedEventArgs e;
+			CHANNEL_OPEN_DATA* pChannelOpenData;
+
+			pChannelOpenData = &channels->openDataList[index];
+
 			pChannelClientData->pChannelInitEventProc(pChannelClientData->pInitHandle, CHANNEL_EVENT_CONNECTED, hostname, hostnameLength);
+
+			EventArgsInit(&e, "freerdp");
+			e.name = pChannelOpenData->name;
+			e.pInterface = pChannelOpenData->pInterface;
+			PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
+		}
 	}
 
 	channels->drdynvc = (DrdynvcClientContext*) freerdp_channels_get_static_channel_interface(channels, "drdynvc");
@@ -774,6 +786,7 @@ wMessage* freerdp_channels_pop_event(rdpChannels* channels)
 void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 {
 	int index;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
 	DEBUG_CHANNELS("closing");
@@ -783,10 +796,19 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	/* tell all libraries we are shutting down */
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
+		ChannelDisconnectedEventArgs e;
+
 		pChannelClientData = &channels->clientDataList[index];
 
 		if (pChannelClientData->pChannelInitEventProc)
 			pChannelClientData->pChannelInitEventProc(pChannelClientData->pInitHandle, CHANNEL_EVENT_TERMINATED, 0, 0);
+
+		pChannelOpenData = &channels->openDataList[index];
+
+		EventArgsInit(&e, "freerdp");
+		e.name = pChannelOpenData->name;
+		e.pInterface = pChannelOpenData->pInterface;
+		PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
 	}
 
 	/* Emit a quit signal to the internal message pipe. */

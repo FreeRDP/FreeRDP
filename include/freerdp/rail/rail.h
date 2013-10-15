@@ -61,9 +61,17 @@ struct rdp_rail
 	railDesktopNonMonitored rail_DesktopNonMonitored;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update);
 
 FREERDP_API rdpRail* rail_new(rdpSettings* settings);
 FREERDP_API void rail_free(rdpRail* rail);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_RAIL_H */

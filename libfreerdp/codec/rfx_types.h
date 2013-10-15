@@ -26,6 +26,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/wlog.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/debug.h>
@@ -39,6 +40,7 @@
 
 struct _RFX_CONTEXT_PRIV
 {
+	wLog* log;
 	wObjectPool* TilePool;
 
 	BOOL UseThreads;

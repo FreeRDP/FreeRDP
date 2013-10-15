@@ -65,6 +65,9 @@ static void nsc_decode(NSC_CONTEXT* context)
 	rw = ROUND_UP_TO(context->width, 8);
 	shift = context->nsc_stream.ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */
 
+	WLog_Print(context->priv->log, WLOG_DEBUG, "NscDecode: width: %d height: %d ChromaSubSamplingLevel: %d",
+			context->width, context->height, context->nsc_stream.ChromaSubSamplingLevel);
+
 	for (y = 0; y < context->height; y++)
 	{
 		if (context->nsc_stream.ChromaSubSamplingLevel > 0)
@@ -256,6 +259,11 @@ NSC_CONTEXT* nsc_context_new(void)
 
 	context = (NSC_CONTEXT*) calloc(1, sizeof(NSC_CONTEXT));
 	context->priv = (NSC_CONTEXT_PRIV*) calloc(1, sizeof(NSC_CONTEXT_PRIV));
+
+	WLog_Init();
+
+	context->priv->log = WLog_Get("com.freerdp.codec.nsc");
+	WLog_OpenAppender(context->priv->log);
 
 	for (i = 0; i < 5; ++i)
 	{

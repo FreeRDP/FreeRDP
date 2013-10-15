@@ -25,6 +25,7 @@ typedef enum
 	TRANSPORT_LAYER_TCP,
 	TRANSPORT_LAYER_TLS,
 	TRANSPORT_LAYER_TSG,
+	TRANSPORT_LAYER_TSG_TLS,
 	TRANSPORT_LAYER_CLOSED
 } TRANSPORT_LAYER;
 
@@ -36,6 +37,7 @@ typedef struct rdp_transport rdpTransport;
 #include "gateway/tsg.h"
 
 #include <winpr/sspi.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -74,6 +76,7 @@ struct rdp_transport
 	BOOL async;
 	HANDLE ReadMutex;
 	HANDLE WriteMutex;
+	wLog* log;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);

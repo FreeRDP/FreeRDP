@@ -1001,7 +1001,7 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	return compatibility;
 }
 
-int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings* settings, int status)
+int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int status, int argc, char** argv)
 {
 	COMMAND_LINE_ARGUMENT_A* arg;
 
@@ -1058,7 +1058,7 @@ int freerdp_client_command_line_status_print(int argc, char** argv, rdpSettings*
 	return 0;
 }
 
-int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettings* settings)
+int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc, char** argv)
 {
 	char* p;
 	char* str;
@@ -1483,7 +1483,10 @@ int freerdp_client_parse_command_line_arguments(int argc, char** argv, rdpSettin
 		CommandLineSwitchCase(arg, "nsc")
 		{
 			settings->NSCodec = TRUE;
+			settings->FastPathOutput = TRUE;
 			settings->ColorDepth = 32;
+			settings->LargePointerFlag = TRUE;
+			settings->FrameMarkerCommandEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "jpeg")
 		{

@@ -26,6 +26,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/collections.h>
 
 #include <freerdp/utils/debug.h>
@@ -36,6 +37,8 @@
 
 struct _NSC_CONTEXT_PRIV
 {
+	wLog* log;
+
 	wBufferPool* PlanePool;
 
 	BYTE* PlaneBuffers[5];		/* Decompressed Plane Buffers in the respective order */

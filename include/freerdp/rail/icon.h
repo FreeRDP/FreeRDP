@@ -53,10 +53,18 @@ struct rdp_icon_cache
 	WINDOW_ICON_CACHE* caches;
 };
 
-ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra);
-void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry, void* extra);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-rdpIconCache* icon_cache_new(rdpRail* rail);
-void icon_cache_free(rdpIconCache* cache);
+FREERDP_API ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra);
+FREERDP_API void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry, void* extra);
+
+FREERDP_API rdpIconCache* icon_cache_new(rdpRail* rail);
+FREERDP_API void icon_cache_free(rdpIconCache* cache);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_RAIL_ICON_CACHE_H */

@@ -40,7 +40,11 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
 
 	FileName = (char*) malloc(256);
-	sprintf_s(FileName, 256, "%u-%d.%s", (unsigned int) ProcessId, id, ext);
+
+	if (id >= 0)
+		sprintf_s(FileName, 256, "%u-%d.%s", (unsigned int) ProcessId, id, ext);
+	else
+		sprintf_s(FileName, 256, "%u.%s", (unsigned int) ProcessId, ext);
 
 	FullFileName = GetCombinedPath(FilePath, FileName);
 

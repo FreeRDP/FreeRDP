@@ -406,6 +406,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->context = (rdpContext*) malloc(client->ContextSize);
 	ZeroMemory(client->context, client->ContextSize);
 
+	client->context->ServerMode = TRUE;
+
 	rdp = rdp_new(client->context);
 
 	client->input = rdp->input;

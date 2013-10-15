@@ -97,6 +97,16 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	return ContextBindings;
 }
 
+static void tls_ssl_info_callback(const SSL* ssl, int type, int val)
+{
+	printf("tls_ssl_info_callback: type: %d val: %d\n");
+
+	if (type & SSL_CB_HANDSHAKE_START)
+	{
+
+	}
+}
+
 BOOL tls_connect(rdpTls* tls)
 {
 	CryptoCert cert;
@@ -106,7 +116,7 @@ BOOL tls_connect(rdpTls* tls)
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
-	if (tls->ctx == NULL)
+	if (!tls->ctx)
 	{
 		fprintf(stderr, "SSL_CTX_new failed\n");
 		return FALSE;
@@ -147,16 +157,35 @@ BOOL tls_connect(rdpTls* tls)
 
 	tls->ssl = SSL_new(tls->ctx);
 
-	if (tls->ssl == NULL)
+	if (!tls->ssl)
 	{
 		fprintf(stderr, "SSL_new failed\n");
 		return FALSE;
 	}
 
-	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
+	if (tls->tsg)
 	{
-		fprintf(stderr, "SSL_set_fd failed\n");
-		return FALSE;
+		tls->bio = BIO_new(tls->methods);
+
+		if (!tls->bio)
+		{
+			fprintf(stderr, "BIO_new failed\n");
+			return FALSE;
+		}
+
+		tls->bio->ptr = tls->tsg;
+
+		SSL_set_bio(tls->ssl, tls->bio, tls->bio);
+
+		SSL_CTX_set_info_callback(tls->ctx, tls_ssl_info_callback);
+	}
+	else
+	{
+		if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
+		{
+			fprintf(stderr, "SSL_set_fd failed\n");
+			return FALSE;
+		}
 	}
 
 	connection_status = SSL_connect(tls->ssl);
@@ -171,7 +200,7 @@ BOOL tls_connect(rdpTls* tls)
 
 	cert = tls_get_certificate(tls, TRUE);
 
-	if (cert == NULL)
+	if (!cert)
 	{
 		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;

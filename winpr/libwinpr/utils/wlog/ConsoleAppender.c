@@ -68,7 +68,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (message->Level > log->Level)
+	if (message->Level < log->Level)
 		return 0;
 
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
@@ -116,6 +116,28 @@ int WLog_ConsoleAppender_WriteImageMessage(wLog* log, wLogConsoleAppender* appen
 	return ImageId;
 }
 
+static int g_PacketId = 0;
+
+int WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogConsoleAppender* appender, wLogMessage* message)
+{
+	int PacketId;
+	char* FullFileName;
+
+	PacketId = g_PacketId++;
+
+	if (!appender->PacketMessageContext)
+	{
+		FullFileName = WLog_Message_GetOutputFileName(-1, "pcap");
+		appender->PacketMessageContext = (void*) Pcap_Open(FullFileName, TRUE);
+		free(FullFileName);
+	}
+
+	WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
+			message->PacketData, message->PacketLength, message->PacketFlags);
+
+	return PacketId;
+}
+
 wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 {
 	wLogConsoleAppender* ConsoleAppender;
@@ -126,6 +148,8 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 	{
 		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
 
+		ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
+
 		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
 		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
 
@@ -135,6 +159,8 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_ConsoleAppender_WriteDataMessage;
 		ConsoleAppender->WriteImageMessage =
 				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_ConsoleAppender_WriteImageMessage;
+		ConsoleAppender->WritePacketMessage =
+				(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_ConsoleAppender_WritePacketMessage;
 
 		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
 	}
@@ -146,6 +172,11 @@ void WLog_ConsoleAppender_Free(wLog* log, wLogConsoleAppender* appender)
 {
 	if (appender)
 	{
+		if (appender->PacketMessageContext)
+		{
+			Pcap_Close((wPcap*) appender->PacketMessageContext);
+		}
+
 		free(appender);
 	}
 }

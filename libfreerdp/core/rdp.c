@@ -987,6 +987,7 @@ int rdp_check_fds(rdpRdp* rdp)
 rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
+	DWORD flags;
 
 	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
 
@@ -995,9 +996,18 @@ rdpRdp* rdp_new(rdpContext* context)
 		ZeroMemory(rdp, sizeof(rdpRdp));
 
 		rdp->context = context;
-
 		rdp->instance = context->instance;
-		rdp->settings = freerdp_settings_new((void*) context->instance);
+
+		flags = 0;
+
+		if (context->ServerMode)
+			flags |= FREERDP_SETTINGS_SERVER_MODE;
+
+		if (!context->settings)
+			context->settings = freerdp_settings_new(flags);
+
+		rdp->settings = context->settings;
+		rdp->settings->instance = context->instance;
 
 		if (context->instance)
 			context->instance->settings = rdp->settings;

@@ -1,6 +1,6 @@
 /**
- * WinPR: Windows Portable Runtime
- * WinPR Logger
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Remote Applications Integrated Locally (RAIL)
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,18 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_MESSAGE_PRIVATE_H
-#define WINPR_WLOG_MESSAGE_PRIVATE_H
+#ifndef FREERDP_CHANNEL_RAIL_H
+#define FREERDP_CHANNEL_RAIL_H
 
-#include <winpr/wlog.h>
+#include <freerdp/api.h>
+#include <freerdp/types.h>
 
-#include "wlog/wlog.h"
 
-#include "wlog/TextMessage.h"
-#include "wlog/DataMessage.h"
-#include "wlog/ImageMessage.h"
-#include "wlog/PacketMessage.h"
 
-char* WLog_Message_GetOutputFileName(int id, const char* ext);
+#endif /* FREERDP_CHANNEL_RAIL_H */
 
-#endif /* WINPR_WLOG_MESSAGE_PRIVATE_H */

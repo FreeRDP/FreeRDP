@@ -41,22 +41,24 @@ void rail_write_client_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* win
 void rail_write_client_get_appid_req_order(wStream* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
 void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-BOOL rail_order_recv(rdpRailOrder* rail_order, wStream* s);
+BOOL rail_order_recv(rdpRailOrder* railOrder, wStream* s);
 
-void rail_send_handshake_order(rdpRailOrder* rail_order);
-void rail_send_client_status_order(rdpRailOrder* rail_order);
-void rail_send_client_exec_order(rdpRailOrder* rail_order);
-void rail_send_client_sysparam_order(rdpRailOrder* rail_order);
-void rail_send_client_sysparams_order(rdpRailOrder* rail_order);
-void rail_send_client_activate_order(rdpRailOrder* rail_order);
-void rail_send_client_sysmenu_order(rdpRailOrder* rail_order);
-void rail_send_client_syscommand_order(rdpRailOrder* rail_order);
-void rail_send_client_notify_event_order(rdpRailOrder* rail_order);
-void rail_send_client_window_move_order(rdpRailOrder* rail_order);
-void rail_send_client_get_appid_req_order(rdpRailOrder* rail_order);
-void rail_send_client_langbar_info_order(rdpRailOrder* rail_order);
+void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
+
+void rail_send_handshake_order(rdpRailOrder* railOrder);
+void rail_send_client_status_order(rdpRailOrder* railOrder);
+void rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec);
+void rail_send_client_sysparam_order(rdpRailOrder* railOrder);
+void rail_send_client_sysparams_order(rdpRailOrder* railOrder);
+void rail_send_client_activate_order(rdpRailOrder* railOrder);
+void rail_send_client_sysmenu_order(rdpRailOrder* railOrder);
+void rail_send_client_syscommand_order(rdpRailOrder* railOrder);
+void rail_send_client_notify_event_order(rdpRailOrder* railOrder);
+void rail_send_client_window_move_order(rdpRailOrder* railOrder);
+void rail_send_client_get_appid_req_order(rdpRailOrder* railOrder);
+void rail_send_client_langbar_info_order(rdpRailOrder* railOrder);
 
 rdpRailOrder* rail_order_new(void);
-void rail_order_free(rdpRailOrder* rail_order);
+void rail_order_free(rdpRailOrder* railOrder);
 
 #endif /* __RAIL_ORDERS_H */

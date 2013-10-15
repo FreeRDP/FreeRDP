@@ -532,6 +532,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_PasswordIsSmartcardPin				717
 #define FreeRDP_UsingSavedCredentials				718
 #define FreeRDP_ForceEncryptedCsPdu				719
+#define FreeRDP_HiDefRemoteApp					720
 #define FreeRDP_IPv6Enabled					768
 #define FreeRDP_ClientAddress					769
 #define FreeRDP_ClientDir					770
@@ -857,7 +858,8 @@ struct rdp_settings
 	ALIGN64 BOOL PasswordIsSmartcardPin; /* 717 */
 	ALIGN64 BOOL UsingSavedCredentials; /* 718 */
 	ALIGN64 BOOL ForceEncryptedCsPdu; /* 719 */
-	UINT64 padding0768[768 - 720]; /* 720 */
+	ALIGN64 BOOL HiDefRemoteApp; /* 720 */
+	UINT64 padding0768[768 - 721]; /* 721 */
 
 	/* Client Info (Extra) */
 	ALIGN64 BOOL IPv6Enabled; /* 768 */
@@ -1297,7 +1299,12 @@ typedef struct rdp_settings rdpSettings;
 extern "C" {
 #endif
 
-FREERDP_API rdpSettings* freerdp_settings_new(void* instance);
+/**
+  * rdpSettings creation flags
+  */
+#define FREERDP_SETTINGS_SERVER_MODE	0x00000001
+
+FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);

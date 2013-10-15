@@ -53,6 +53,12 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	Stream_SetPosition(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
 
+	WLog_Print(update->log, WLOG_DEBUG,
+			"SurfaceBits: destLeft: %d destTop: %d destRight: %d destBottom: %d "
+			"bpp: %d codecId: %d width: %d height: %d bitmapDataLength: %d",
+			cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+			cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
+
 	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	return 0;
@@ -67,6 +73,10 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s, UINT3
 
 	Stream_Read_UINT16(s, marker->frameAction);
 	Stream_Read_UINT32(s, marker->frameId);
+
+	WLog_Print(update->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%d) id: %d",
+			(!marker->frameAction) ? "Begin" : "End",
+			marker->frameAction, marker->frameId);
 
 	IFCALL(update->SurfaceFrameMarker, update->context, marker);
 

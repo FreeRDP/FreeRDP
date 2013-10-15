@@ -303,6 +303,8 @@
 #define RailChannel_ServerExecuteResult				17
 #define RailChannel_ClientGetAppIdRequest			18
 #define RailChannel_ServerGetAppIdResponse			19
+#define RailChannel_ClientHandshakeEx				20
+#define RailChannel_ServerHandshakeEx				21
 
 #define FREERDP_RAIL_CHANNEL_CLIENT_EXECUTE			MakeMessageId(RailChannel, ClientExecute)
 #define FREERDP_RAIL_CHANNEL_CLIENT_ACTIVATE			MakeMessageId(RailChannel, ClientActivate)
@@ -323,6 +325,8 @@
 #define FREERDP_RAIL_CHANNEL_SERVER_EXECUTE_RESULT		MakeMessageId(RailChannel, ServerExecuteResult)
 #define FREERDP_RAIL_CHANNEL_CLIENT_GET_APP_ID_REQUEST		MakeMessageId(RailChannel, ClientGetAppIdRequest)
 #define FREERDP_RAIL_CHANNEL_SERVER_GET_APP_ID_RESPONSE		MakeMessageId(RailChannel, ServerGetAppIdResponse)
+#define FREERDP_RAIL_CHANNEL_CLIENT_HANDSHAKE_EX		MakeMessageId(RailChannel, ClientHandshakeEx)
+#define FREERDP_RAIL_CHANNEL_SERVER_HANDSHAKE_EX		MakeMessageId(RailChannel, ServerHandshakeEx)
 
 /**
  * MultiTouch Input Channel Extension (MS-RDPEDI)

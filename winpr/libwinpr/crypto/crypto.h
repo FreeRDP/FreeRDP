@@ -1,8 +1,8 @@
 /**
  * WinPR: Windows Portable Runtime
- * WinPR Logger
+ * Cryptography API (CryptoAPI)
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_MESSAGE_PRIVATE_H
-#define WINPR_WLOG_MESSAGE_PRIVATE_H
+#ifndef WINPR_CRYPTO_PRIVATE_H
+#define WINPR_CRYPTO_PRIVATE_H
 
-#include <winpr/wlog.h>
+#ifndef _WIN32
 
-#include "wlog/wlog.h"
+struct _WINPR_CERTSTORE
+{
+	LPCSTR lpszStoreProvider;
+	DWORD dwMsgAndCertEncodingType;
+};
+typedef struct _WINPR_CERTSTORE WINPR_CERTSTORE;
 
-#include "wlog/TextMessage.h"
-#include "wlog/DataMessage.h"
-#include "wlog/ImageMessage.h"
-#include "wlog/PacketMessage.h"
+#endif
 
-char* WLog_Message_GetOutputFileName(int id, const char* ext);
-
-#endif /* WINPR_WLOG_MESSAGE_PRIVATE_H */
+#endif /* WINPR_CRYPTO_PRIVATE_H */
