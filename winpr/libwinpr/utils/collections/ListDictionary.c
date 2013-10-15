@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/collections.h>
+#include <winpr/memory.h>
 
 /**
  * C equivalent of the C# ListDictionary Class:
@@ -150,6 +151,8 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		while (item)
 		{
 			nextItem = item->next;
+			if (listDictionary->object.fnObjectFree)
+				listDictionary->object.fnObjectFree(item);
 			free(item);
 			item = nextItem;
 		}
@@ -198,10 +201,11 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
  * Removes the entry with the specified key from the ListDictionary.
  */
 
-void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
+void *ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 {
 	wListDictionaryItem* item;
 	wListDictionaryItem* prevItem;
+	void *value = NULL;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -213,6 +217,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 		if (listDictionary->head->key == key)
 		{
 			listDictionary->head = listDictionary->head->next;
+			value = item->value;
 			free(item);
 		}
 		else
@@ -227,6 +232,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 					if (item->key == key)
 					{
 						prevItem->next = item->next;
+						value = item->value;
 						free(item);
 						break;
 					}
@@ -239,6 +245,32 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+	return value;
+}
+
+/**
+ * Removes the first (head) entry from the list
+ */
+
+void *ListDictionary_Remove_Head(wListDictionary* listDictionary)
+{
+	wListDictionaryItem* item;
+	void *value = NULL;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+		listDictionary->head = listDictionary->head->next;
+		value = item->value;
+		free(item);
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+	return value;
 }
 
 /**
@@ -329,6 +361,7 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
 	}
 
+	ZeroMemory(&listDictionary->object, sizeof(wObject));
 	return listDictionary;
 }
 
