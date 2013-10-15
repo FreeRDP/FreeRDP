@@ -191,6 +191,7 @@ struct _wListDictionary
 	CRITICAL_SECTION lock;
 
 	wListDictionaryItem* head;
+	wObject object;
 };
 typedef struct _wListDictionary wListDictionary;
 

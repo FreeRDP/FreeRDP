@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/collections.h>
+#include <winpr/memory.h>
 
 /**
  * C equivalent of the C# ListDictionary Class:
@@ -150,6 +151,8 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		while (item)
 		{
 			nextItem = item->next;
+			if (listDictionary->object.fnObjectFree)
+				listDictionary->object.fnObjectFree(item);
 			free(item);
 			item = nextItem;
 		}
@@ -333,6 +336,7 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
 	}
 
+	ZeroMemory(&listDictionary->object, sizeof(wObject));
 	return listDictionary;
 }
 
