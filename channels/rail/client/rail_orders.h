@@ -45,18 +45,18 @@ BOOL rail_order_recv(rdpRailOrder* railOrder, wStream* s);
 
 void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
-void rail_send_handshake_order(rdpRailOrder* railOrder);
-void rail_send_client_status_order(rdpRailOrder* railOrder);
+void rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake);
+void rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus);
 void rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec);
-void rail_send_client_sysparam_order(rdpRailOrder* railOrder);
-void rail_send_client_sysparams_order(rdpRailOrder* railOrder);
-void rail_send_client_activate_order(rdpRailOrder* railOrder);
-void rail_send_client_sysmenu_order(rdpRailOrder* railOrder);
-void rail_send_client_syscommand_order(rdpRailOrder* railOrder);
-void rail_send_client_notify_event_order(rdpRailOrder* railOrder);
-void rail_send_client_window_move_order(rdpRailOrder* railOrder);
-void rail_send_client_get_appid_req_order(rdpRailOrder* railOrder);
-void rail_send_client_langbar_info_order(rdpRailOrder* railOrder);
+void rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam);
+void rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam);
+void rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* activate);
+void rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* sysmenu);
+void rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_ORDER* syscommand);
+void rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORDER* notifyEvent);
+void rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove);
+void rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
+void rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
 
 rdpRailOrder* rail_order_new(void);
 void rail_order_free(rdpRailOrder* railOrder);
