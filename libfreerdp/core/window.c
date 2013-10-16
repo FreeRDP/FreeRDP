@@ -122,7 +122,7 @@ BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* notify_ico
 			rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
 }
 
-BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	int i;
 	int size;
@@ -131,27 +131,30 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->ownerWindowId); /* ownerWindowId (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->ownerWindowId); /* ownerWindowId (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->style); /* style (4 bytes) */
-		Stream_Read_UINT32(s, window_state->extendedStyle); /* extendedStyle (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->style); /* style (4 bytes) */
+		Stream_Read_UINT32(s, windowState->extendedStyle); /* extendedStyle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
-		Stream_Read_UINT8(s, window_state->showState); /* showState (1 byte) */
+
+		Stream_Read_UINT8(s, windowState->showState); /* showState (1 byte) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		if (!rail_read_unicode_string(s, &window_state->titleInfo)) /* titleInfo */
+		if (!rail_read_unicode_string(s, &windowState->titleInfo)) /* titleInfo */
 			return FALSE;
 	}
 
@@ -159,46 +162,52 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->clientOffsetX); /* clientOffsetX (4 bytes) */
-		Stream_Read_UINT32(s, window_state->clientOffsetY); /* clientOffsetY (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->clientOffsetX); /* clientOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, windowState->clientOffsetY); /* clientOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->clientAreaWidth); /* clientAreaWidth (4 bytes) */
-		Stream_Read_UINT32(s, window_state->clientAreaHeight); /* clientAreaHeight (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->clientAreaWidth); /* clientAreaWidth (4 bytes) */
+		Stream_Read_UINT32(s, windowState->clientAreaHeight); /* clientAreaHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
-		Stream_Read_UINT8(s, window_state->RPContent); /* RPContent (1 byte) */
+
+		Stream_Read_UINT8(s, windowState->RPContent); /* RPContent (1 byte) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->rootParentHandle);/* rootParentHandle (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->rootParentHandle);/* rootParentHandle (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->windowOffsetX); /* windowOffsetX (4 bytes) */
-		Stream_Read_UINT32(s, window_state->windowOffsetY); /* windowOffsetY (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->windowOffsetX); /* windowOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowOffsetY); /* windowOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
-		Stream_Read_UINT32(s, window_state->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
-		Stream_Read_UINT32(s, window_state->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
+
+		Stream_Read_UINT32(s, windowState->windowClientDeltaX); /* windowClientDeltaX (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowClientDeltaY); /* windowClientDeltaY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
@@ -206,8 +215,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
 
-		Stream_Read_UINT32(s, window_state->windowWidth); /* windowWidth (4 bytes) */
-		Stream_Read_UINT32(s, window_state->windowHeight); /* windowHeight (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowWidth); /* windowWidth (4 bytes) */
+		Stream_Read_UINT32(s, windowState->windowHeight); /* windowHeight (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -215,21 +224,21 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
 
-		Stream_Read_UINT16(s, window_state->numWindowRects); /* numWindowRects (2 bytes) */
+		Stream_Read_UINT16(s, windowState->numWindowRects); /* numWindowRects (2 bytes) */
 
-		size = sizeof(RECTANGLE_16) * window_state->numWindowRects;
-		window_state->windowRects = (RECTANGLE_16*) malloc(size);
+		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
+		windowState->windowRects = (RECTANGLE_16*) malloc(size);
 
-		if (Stream_GetRemainingLength(s) < 8 * window_state->numWindowRects)
+		if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
 			return FALSE;
 
 		/* windowRects */
-		for (i = 0; i < (int) window_state->numWindowRects; i++)
+		for (i = 0; i < (int) windowState->numWindowRects; i++)
 		{
-			Stream_Read_UINT16(s, window_state->windowRects[i].left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, window_state->windowRects[i].top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, window_state->windowRects[i].right); /* right (2 bytes) */
-			Stream_Read_UINT16(s, window_state->windowRects[i].bottom); /* bottom (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].left); /* left (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].top); /* top (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, windowState->windowRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 
@@ -238,8 +247,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
-		Stream_Read_UINT32(s, window_state->visibleOffsetX); /* visibleOffsetX (4 bytes) */
-		Stream_Read_UINT32(s, window_state->visibleOffsetY); /* visibleOffsetY (4 bytes) */
+		Stream_Read_UINT32(s, windowState->visibleOffsetX); /* visibleOffsetX (4 bytes) */
+		Stream_Read_UINT32(s, windowState->visibleOffsetY); /* visibleOffsetY (4 bytes) */
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
@@ -247,21 +256,21 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
 
-		Stream_Read_UINT16(s, window_state->numVisibilityRects); /* numVisibilityRects (2 bytes) */
+		Stream_Read_UINT16(s, windowState->numVisibilityRects); /* numVisibilityRects (2 bytes) */
 
-		size = sizeof(RECTANGLE_16) * window_state->numVisibilityRects;
-		window_state->visibilityRects = (RECTANGLE_16*) malloc(size);
+		size = sizeof(RECTANGLE_16) * windowState->numVisibilityRects;
+		windowState->visibilityRects = (RECTANGLE_16*) malloc(size);
 
-		if (Stream_GetRemainingLength(s) < window_state->numVisibilityRects * 8)
+		if (Stream_GetRemainingLength(s) < windowState->numVisibilityRects * 8)
 			return FALSE;
 
 		/* visibilityRects */
-		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
+		for (i = 0; i < (int) windowState->numVisibilityRects; i++)
 		{
-			Stream_Read_UINT16(s, window_state->visibilityRects[i].left); /* left (2 bytes) */
-			Stream_Read_UINT16(s, window_state->visibilityRects[i].top); /* top (2 bytes) */
-			Stream_Read_UINT16(s, window_state->visibilityRects[i].right); /* right (2 bytes) */
-			Stream_Read_UINT16(s, window_state->visibilityRects[i].bottom); /* bottom (2 bytes) */
+			Stream_Read_UINT16(s, windowState->visibilityRects[i].left); /* left (2 bytes) */
+			Stream_Read_UINT16(s, windowState->visibilityRects[i].top); /* top (2 bytes) */
+			Stream_Read_UINT16(s, windowState->visibilityRects[i].right); /* right (2 bytes) */
+			Stream_Read_UINT16(s, windowState->visibilityRects[i].bottom); /* bottom (2 bytes) */
 		}
 	}
 	return TRUE;

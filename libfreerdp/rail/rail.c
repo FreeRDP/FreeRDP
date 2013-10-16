@@ -60,8 +60,9 @@ static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, W
 	}
 
 	window = window_list_get_by_id(rail->list, orderInfo->windowId);
+
 	if (!window)
-		return ;
+		return;
 
 	icon = (rdpIcon*) malloc(sizeof(rdpIcon));
 	ZeroMemory(icon, sizeof(rdpIcon));
