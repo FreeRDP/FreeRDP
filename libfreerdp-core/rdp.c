@@ -642,7 +642,8 @@ boolean rdp_decrypt(rdpRdp* rdp, STREAM* s, int length, uint16 securityFlags)
 
 	stream_read(s, wmac, sizeof(wmac));
 	length -= sizeof(wmac);
-	security_decrypt(s->p, length, rdp);
+	if (!security_decrypt(s->p, length, rdp))
+		return false;
 	if (securityFlags & SEC_SECURE_CHECKSUM)
 		security_salted_mac_signature(rdp, s->p, length, false, cmac);
 	else

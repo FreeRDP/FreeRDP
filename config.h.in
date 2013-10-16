@@ -19,6 +19,8 @@
 #cmakedefine HAVE_STDBOOL_H
 #cmakedefine HAVE_INTTYPES_H
 
+#cmakedefine HAVE_TM_GMTOFF
+
 /* Endian */
 #cmakedefine BIG_ENDIAN
 
@@ -27,6 +29,7 @@
 #cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_DVC
+#cmakedefine WITH_DEBUG_TIMEZONE
 #cmakedefine WITH_DEBUG_KBD
 #cmakedefine WITH_DEBUG_NLA
 #cmakedefine WITH_DEBUG_NEGO

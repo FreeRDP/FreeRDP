@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Client
- * Memory Utils
+ * Time Utils
  *
- * Copyright 2009-2011 Jay Sorg
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,20 @@
  * limitations under the License.
  */
 
-#ifndef __MEMORY_UTILS_H
-#define __MEMORY_UTILS_H
+#ifndef FREERDP_TIME_UTILS_H
+#define FREERDP_TIME_UTILS_H
 
-#include <stddef.h>
+#include <time.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 
-FREERDP_API void* xmalloc(size_t size);
-FREERDP_API void* xzalloc(size_t size);
-FREERDP_API void* xrealloc(void* ptr, size_t size);
-FREERDP_API void xfree(void* ptr);
-FREERDP_API char* xstrdup(const char* str);
+FREERDP_API uint64 rdp_windows_gmtime();
+FREERDP_API uint64 rdp_get_windows_time_from_unix_time(time_t unix_time);
+FREERDP_API time_t rdp_get_unix_time_from_windows_time(uint64 windows_time);
 
-#define xnew(_type) (_type*)xzalloc(sizeof(_type))
-
-#define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
-
-#endif /* __MEMORY_UTILS_H */
+#endif /* FREERDP_TIME_UTILS_H */
