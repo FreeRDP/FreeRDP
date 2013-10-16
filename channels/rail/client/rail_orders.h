@@ -41,7 +41,7 @@ void rail_write_client_window_move_order(wStream* s, RAIL_WINDOW_MOVE_ORDER* win
 void rail_write_client_get_appid_req_order(wStream* s, RAIL_GET_APPID_REQ_ORDER* get_appid_req);
 void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
-BOOL rail_order_recv(rdpRailOrder* railOrder, wStream* s);
+BOOL rail_order_recv(railPlugin* rail, wStream* s);
 
 void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 

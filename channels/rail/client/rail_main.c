@@ -100,7 +100,7 @@ static void rail_process_terminate(rdpSvcPlugin* plugin)
 static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	railPlugin* rail = (railPlugin*) plugin;
-	rail_order_recv(rail->rail_order, s);
+	rail_order_recv(rail, s);
 	Stream_Free(s, TRUE);
 }
 
