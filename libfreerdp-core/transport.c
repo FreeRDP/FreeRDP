@@ -121,10 +121,12 @@ boolean transport_connect_nla(rdpTransport* transport)
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		credssp_free(transport->credssp);
+		transport->credssp = NULL;
 		return false;
 	}
 
 	credssp_free(transport->credssp);
+	transport->credssp = NULL;
 
 	return true;
 }
