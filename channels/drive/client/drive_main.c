@@ -40,8 +40,8 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
+#include <winpr/collections.h>
 
-#include <freerdp/utils/list.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include "drive_file.h"
@@ -53,7 +53,7 @@ struct _DRIVE_DEVICE
 	DEVICE device;
 
 	char* path;
-	LIST* files;
+	wListDictionary* files;
 
 	HANDLE thread;
 	HANDLE irpEvent;
@@ -98,24 +98,20 @@ static UINT32 drive_map_posix_err(int fs_errno)
 
 static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* disk, UINT32 id)
 {
-	LIST_ITEM* item;
-	DRIVE_FILE* file;
+	DRIVE_FILE* file = NULL;
+	void* key = (void*) (size_t) id;
 
-	for (item = disk->files->head; item; item = item->next)
-	{
-		file = (DRIVE_FILE*) item->data;
+	file = (DRIVE_FILE*) ListDictionary_GetItemValue(disk->files, key);
 
-		if (file->id == id)
-			return file;
-	}
+	fprintf(stderr, "drive_get_file_by_id: %d / %p\n", id, file);
 
-	return NULL;
+	return file;
 }
 
 static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 {
-	char* path = NULL;
 	int status;
+	void* key;
 	UINT32 FileId;
 	DRIVE_FILE* file;
 	BYTE Information;
@@ -123,6 +119,7 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	UINT32 CreateDisposition;
 	UINT32 CreateOptions;
 	UINT32 PathLength;
+	char* path = NULL;
 
 	Stream_Read_UINT32(irp->input, DesiredAccess);
 	Stream_Seek(irp->input, 16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
@@ -141,7 +138,7 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	file = drive_file_new(disk->path, path, FileId,
 		DesiredAccess, CreateDisposition, CreateOptions);
 
-	if (file == NULL)
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		FileId = 0;
@@ -158,7 +155,10 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
-		list_enqueue(disk->files, file);
+		key = (void*) (size_t) file->id;
+		ListDictionary_Add(disk->files, key, file);
+
+		fprintf(stderr, "drive_file_new: %d / %p\n", file->id, file);
 
 		switch (CreateDisposition)
 		{
@@ -190,17 +190,21 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 
 static void drive_process_irp_close(DRIVE_DEVICE* disk, IRP* irp)
 {
+	void* key;
 	DRIVE_FILE* file;
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
-	if (file == NULL)
+	key = (void*) (size_t) irp->FileId;
+	fprintf(stderr, "drive_process_irp_close: %d / %p / %d\n", irp->FileId, file, file->id);
+
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
-		list_remove(disk->files, file);
+		ListDictionary_Remove(disk->files, key);
 		drive_file_free(file);
 	}
 
@@ -221,7 +225,7 @@ static void drive_process_irp_read(DRIVE_DEVICE* disk, IRP* irp)
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
-	if (file == NULL)
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
@@ -234,6 +238,7 @@ static void drive_process_irp_read(DRIVE_DEVICE* disk, IRP* irp)
 	else
 	{
 		buffer = (BYTE*) malloc(Length);
+
 		if (!drive_file_read(file, buffer, &Length))
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -625,7 +630,6 @@ static void drive_irp_request(DEVICE* device, IRP* irp)
 static void drive_free(DEVICE* device)
 {
 	IRP* irp;
-	DRIVE_FILE* file;
 	DRIVE_DEVICE* disk = (DRIVE_DEVICE*) device;
 
 	SetEvent(disk->stopEvent);
@@ -639,10 +643,7 @@ static void drive_free(DEVICE* device)
 
 	_aligned_free(disk->pIrpList);
 
-	while ((file = (DRIVE_FILE*) list_dequeue(disk->files)) != NULL)
-		drive_file_free(file);
-
-	list_free(disk->files);
+	ListDictionary_Free(disk->files);
 
 	free(disk);
 }
@@ -683,7 +684,9 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 			Stream_Write_UINT8(disk->device.data, name[i] < 0 ? '_' : name[i]);
 
 		disk->path = path;
-		disk->files = list_new();
+
+		disk->files = ListDictionary_New(TRUE);
+		ListDictionary_Object(disk->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 
 		disk->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 		InitializeSListHead(disk->pIrpList);
