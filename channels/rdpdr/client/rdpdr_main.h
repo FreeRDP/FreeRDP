@@ -37,18 +37,13 @@ typedef struct rdpdr_plugin rdpdrPlugin;
 
 struct rdpdr_plugin
 {
-	CHANNEL_ENTRY_POINTS_EX channel_entry_points;
-	CHANNEL_DEF channel_def;
-
-	void* connect_callback;
-	void* receive_callback;
-	void* event_callback;
-	void* terminate_callback;
+	CHANNEL_DEF channelDef;
+	CHANNEL_ENTRY_POINTS_EX channelEntryPoints;
 
 	HANDLE thread;
 	wStream* data_in;
-	void* init_handle;
-	UINT32 open_handle;
+	void* InitHandle;
+	UINT32 OpenHandle;
 	wMessagePipe* MsgPipe;
 
 	DEVMAN* devman;

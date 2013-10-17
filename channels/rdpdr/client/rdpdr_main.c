@@ -51,7 +51,7 @@ static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	rdpSettings* settings;
 
 	rdpdr->devman = devman_new(rdpdr);
-	settings = (rdpSettings*) rdpdr->channel_entry_points.pExtendedData;
+	settings = (rdpSettings*) rdpdr->channelEntryPoints.pExtendedData;
 
 	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
 
@@ -354,7 +354,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (!plugin)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
-		status = plugin->channel_entry_points.pVirtualChannelWrite(plugin->open_handle,
+		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
 			Stream_Buffer(s), Stream_GetPosition(s), s);
 
 	if (status != CHANNEL_RC_OK)
@@ -471,10 +471,10 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* plugin, void* pDa
 {
 	UINT32 status;
 
-	status = plugin->channel_entry_points.pVirtualChannelOpen(plugin->init_handle,
-		&plugin->open_handle, plugin->channel_def.name, rdpdr_virtual_channel_open_event);
+	status = plugin->channelEntryPoints.pVirtualChannelOpen(plugin->InitHandle,
+		&plugin->OpenHandle, plugin->channelDef.name, rdpdr_virtual_channel_open_event);
 
-	rdpdr_add_open_handle_data(plugin->open_handle, plugin);
+	rdpdr_add_open_handle_data(plugin->OpenHandle, plugin);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -496,7 +496,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* plugin)
 	MessagePipe_Free(plugin->MsgPipe);
 	CloseHandle(plugin->thread);
 
-	plugin->channel_entry_points.pVirtualChannelClose(plugin->open_handle);
+	plugin->channelEntryPoints.pVirtualChannelClose(plugin->OpenHandle);
 
 	if (plugin->data_in)
 	{
@@ -506,8 +506,8 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* plugin)
 
 	rdpdr_process_terminate(plugin);
 
-	rdpdr_remove_open_handle_data(plugin->open_handle);
-	rdpdr_remove_init_handle_data(plugin->init_handle);
+	rdpdr_remove_open_handle_data(plugin->OpenHandle);
+	rdpdr_remove_init_handle_data(plugin->InitHandle);
 }
 
 static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
@@ -547,19 +547,19 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	plugin = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
 	ZeroMemory(plugin, sizeof(rdpdrPlugin));
 
-	plugin->channel_def.options =
+	plugin->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP;
 
-	strcpy(plugin->channel_def.name, "rdpdr");
+	strcpy(plugin->channelDef.name, "rdpdr");
 
-	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&(plugin->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
 
-	plugin->channel_entry_points.pVirtualChannelInit(&plugin->init_handle,
-		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
+	plugin->channelEntryPoints.pVirtualChannelInit(&plugin->InitHandle,
+		&plugin->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
 
-	rdpdr_add_init_handle_data(plugin->init_handle, (void*) plugin);
+	rdpdr_add_init_handle_data(plugin->InitHandle, (void*) plugin);
 
 	return 1;
 }
