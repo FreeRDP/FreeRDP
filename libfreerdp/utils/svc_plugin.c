@@ -39,7 +39,7 @@
 
 static wArrayList* g_AddinList = NULL;
 
-static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
+rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
 {
 	int index;
 	BOOL found = FALSE;
@@ -66,7 +66,7 @@ static rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
 	return (found) ? plugin : NULL;
 }
 
-static rdpSvcPlugin* svc_plugin_find_by_open_handle(UINT32 open_handle)
+rdpSvcPlugin* svc_plugin_find_by_open_handle(UINT32 open_handle)
 {
 	int index;
 	BOOL found = FALSE;
@@ -93,7 +93,15 @@ static rdpSvcPlugin* svc_plugin_find_by_open_handle(UINT32 open_handle)
 	return (found) ? plugin : NULL;
 }
 
-static void svc_plugin_remove(rdpSvcPlugin* plugin)
+void svc_plugin_add(rdpSvcPlugin* plugin)
+{
+	if (!g_AddinList)
+		g_AddinList = ArrayList_New(TRUE);
+
+	ArrayList_Add(g_AddinList, (void*) plugin);
+}
+
+void svc_plugin_remove(rdpSvcPlugin* plugin)
 {
 	ArrayList_Remove(g_AddinList, (void*) plugin);
 }
@@ -298,10 +306,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 
 	CopyMemory(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
 
-	if (!g_AddinList)
-		g_AddinList = ArrayList_New(TRUE);
-
-	ArrayList_Add(g_AddinList, (void*) plugin);
+	svc_plugin_add(plugin);
 
 	plugin->channel_entry_points.pVirtualChannelInit(&plugin->init_handle,
 		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);

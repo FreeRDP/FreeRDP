@@ -297,17 +297,63 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 	Stream_Free(s, TRUE);
 }
 
-static void rdpdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
-{
-	freerdp_event_free(event);
-}
-
 static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 {
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
 	devman_free(rdpdr->devman);
 	free(plugin);
+}
+
+
+/****************************************************************************************/
+
+
+static wListDictionary* g_InitHandles;
+static wListDictionary* g_OpenHandles;
+
+void rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
+{
+	if (!g_InitHandles)
+		g_InitHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+}
+
+void* rdpdr_get_init_handle_data(void* pInitHandle)
+{
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
+	return pUserData;
+}
+
+void rdpdr_remove_init_handle_data(void* pInitHandle)
+{
+	ListDictionary_Remove(g_InitHandles, pInitHandle);
+}
+
+void rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		g_OpenHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+}
+
+void* rdpdr_get_open_handle_data(DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
+	return pUserData;
+}
+
+void rdpdr_remove_open_handle_data(DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
 }
 
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
@@ -330,15 +376,195 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	return status;
 }
 
+static void rdpdr_virtual_channel_event_data_received(rdpSvcPlugin* plugin,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	wStream* data_in;
+
+	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
+	{
+		/*
+		 * According to MS-RDPBCGR 2.2.6.1, "All virtual channel traffic MUST be suspended.
+		 * This flag is only valid in server-to-client virtual channel traffic. It MUST be
+		 * ignored in client-to-server data." Thus it would be best practice to cease data
+		 * transmission. However, simply returning here avoids a crash.
+		 */
+		return;
+	}
+
+	if (dataFlags & CHANNEL_FLAG_FIRST)
+	{
+		if (plugin->data_in != NULL)
+			Stream_Free(plugin->data_in, TRUE);
+
+		plugin->data_in = Stream_New(NULL, totalLength);
+	}
+
+	data_in = plugin->data_in;
+	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	Stream_Write(data_in, pData, dataLength);
+
+	if (dataFlags & CHANNEL_FLAG_LAST)
+	{
+		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		{
+			fprintf(stderr, "svc_plugin_process_received: read error\n");
+		}
+
+		plugin->data_in = NULL;
+		Stream_SealLength(data_in);
+		Stream_SetPosition(data_in, 0);
+
+		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+	}
+}
+
+static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	rdpSvcPlugin* plugin;
+
+	plugin = (rdpSvcPlugin*) rdpdr_get_open_handle_data(openHandle);
+
+	if (!plugin)
+	{
+		fprintf(stderr, "svc_plugin_open_event: error no match\n");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_DATA_RECEIVED:
+			rdpdr_virtual_channel_event_data_received(plugin, pData, dataLength, totalLength, dataFlags);
+			break;
+
+		case CHANNEL_EVENT_WRITE_COMPLETE:
+			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
+	}
+}
+
+static void* rdpdr_virtual_channel_client_thread(void* arg)
+{
+	wStream* data;
+	wMessage* event;
+	wMessage message;
+	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
+
+	IFCALL(plugin->connect_callback, plugin);
+
+	while (1)
+	{
+		if (!MessageQueue_Wait(plugin->MsgPipe->In))
+			break;
+
+		if (MessageQueue_Peek(plugin->MsgPipe->In, &message, TRUE))
+		{
+			if (message.id == WMQ_QUIT)
+				break;
+
+			if (message.id == 0)
+			{
+				data = (wStream*) message.wParam;
+				IFCALL(plugin->receive_callback, plugin, data);
+			}
+			else if (message.id == 1)
+			{
+				event = (wMessage*) message.wParam;
+				IFCALL(plugin->event_callback, plugin, event);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+static void rdpdr_virtual_channel_event_connected(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength)
+{
+	UINT32 status;
+
+	status = plugin->channel_entry_points.pVirtualChannelOpen(plugin->init_handle,
+		&plugin->open_handle, plugin->channel_def.name, rdpdr_virtual_channel_open_event);
+
+	rdpdr_add_open_handle_data(plugin->open_handle, plugin);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		fprintf(stderr, "svc_plugin_process_connected: open failed: status: %d\n", status);
+		return;
+	}
+
+	plugin->MsgPipe = MessagePipe_New();
+
+	plugin->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) plugin, 0, NULL);
+}
+
+static void rdpdr_virtual_channel_event_terminated(rdpSvcPlugin* plugin)
+{
+	MessagePipe_PostQuit(plugin->MsgPipe, 0);
+	WaitForSingleObject(plugin->thread, INFINITE);
+
+	MessagePipe_Free(plugin->MsgPipe);
+	CloseHandle(plugin->thread);
+
+	plugin->channel_entry_points.pVirtualChannelClose(plugin->open_handle);
+
+	if (plugin->data_in)
+	{
+		Stream_Free(plugin->data_in, TRUE);
+		plugin->data_in = NULL;
+	}
+
+	IFCALL(plugin->terminate_callback, plugin);
+
+	rdpdr_remove_open_handle_data(plugin->open_handle);
+	rdpdr_remove_init_handle_data(plugin->init_handle);
+}
+
+static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+{
+	rdpSvcPlugin* plugin;
+
+	plugin = (rdpSvcPlugin*) rdpdr_get_init_handle_data(pInitHandle);
+
+	if (!plugin)
+	{
+		fprintf(stderr, "svc_plugin_init_event: error no match\n");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_CONNECTED:
+			rdpdr_virtual_channel_event_connected(plugin, pData, dataLength);
+			break;
+
+		case CHANNEL_EVENT_DISCONNECTED:
+			break;
+
+		case CHANNEL_EVENT_TERMINATED:
+			rdpdr_virtual_channel_event_terminated(plugin);
+			break;
+	}
+}
+
 /* rdpdr is always built-in */
 #define VirtualChannelEntry	rdpdr_VirtualChannelEntry
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpdrPlugin* _p;
+	rdpSvcPlugin* plugin;
 
 	_p = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
 	ZeroMemory(_p, sizeof(rdpdrPlugin));
+
+	plugin = (rdpSvcPlugin*) _p;
 
 	_p->plugin.channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |
@@ -349,10 +575,14 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	_p->plugin.connect_callback = rdpdr_process_connect;
 	_p->plugin.receive_callback = rdpdr_process_receive;
-	_p->plugin.event_callback = rdpdr_process_event;
 	_p->plugin.terminate_callback = rdpdr_process_terminate;
 
-	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, pEntryPoints->cbSize);
+
+	plugin->channel_entry_points.pVirtualChannelInit(&plugin->init_handle,
+		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
+
+	rdpdr_add_init_handle_data(plugin->init_handle, (void*) plugin);
 
 	return 1;
 }
