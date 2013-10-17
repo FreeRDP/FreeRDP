@@ -74,6 +74,14 @@ Thumbs.db
 ipch
 Debug
 RelWithDebInfo
+*.lib
+*.exp
+*.pdb
+*.dll
+*.ilk
+*.resource.txt
+*.embed.manifest*
+*.intermediate.manifest*
 
 # Binaries
 *.a
