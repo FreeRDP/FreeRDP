@@ -186,5 +186,5 @@ void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 	rdpdr_write_drive_capset(rdpdr, s);
 	rdpdr_write_smartcard_capset(rdpdr, s);
 
-	svc_plugin_send((rdpSvcPlugin*)rdpdr, s);
+	rdpdr_send(rdpdr, s);
 }

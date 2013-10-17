@@ -56,7 +56,7 @@ static void irp_complete(IRP* irp)
 	Stream_Write_UINT32(irp->output, irp->IoStatus);
 	Stream_SetPosition(irp->output, pos);
 
-	svc_plugin_send(irp->devman->plugin, irp->output);
+	rdpdr_send((rdpdrPlugin*) irp->devman->plugin, irp->output);
 	irp->output = NULL;
 
 	irp_free(irp);

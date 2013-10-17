@@ -38,4 +38,6 @@ struct rdpdr_plugin
 	char computerName[256];
 };
 
+int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
+
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */
