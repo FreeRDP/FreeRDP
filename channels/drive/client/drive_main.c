@@ -103,8 +103,6 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* disk, UINT32 id)
 
 	file = (DRIVE_FILE*) ListDictionary_GetItemValue(disk->files, key);
 
-	fprintf(stderr, "drive_get_file_by_id: %d / %p\n", id, file);
-
 	return file;
 }
 
@@ -158,8 +156,6 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 		key = (void*) (size_t) file->id;
 		ListDictionary_Add(disk->files, key, file);
 
-		fprintf(stderr, "drive_file_new: %d / %p\n", file->id, file);
-
 		switch (CreateDisposition)
 		{
 			case FILE_SUPERSEDE:
@@ -196,7 +192,6 @@ static void drive_process_irp_close(DRIVE_DEVICE* disk, IRP* irp)
 	file = drive_get_file_by_id(disk, irp->FileId);
 
 	key = (void*) (size_t) irp->FileId;
-	fprintf(stderr, "drive_process_irp_close: %d / %p / %d\n", irp->FileId, file, file->id);
 
 	if (!file)
 	{
