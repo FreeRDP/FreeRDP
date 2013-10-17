@@ -29,8 +29,8 @@
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/svc_plugin.h>
 
 /* RDPDR_HEADER.Component */
 enum RDPDR_CTYP
@@ -336,7 +336,7 @@ struct _IRP
 
 struct _DEVMAN
 {
-	rdpSvcPlugin* plugin;
+	void* plugin;
 	UINT32 id_sequence;
 	LIST* devices;
 };

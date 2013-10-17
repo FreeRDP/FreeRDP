@@ -27,12 +27,11 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -45,15 +44,14 @@
 
 #include "rdpdr_main.h"
 
-static void rdpdr_process_connect(rdpSvcPlugin* plugin)
+static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
 	int index;
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
-	rdpdr->devman = devman_new(plugin);
-	settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
+	rdpdr->devman = devman_new(rdpdr);
+	settings = (rdpSettings*) rdpdr->channel_entry_points.pExtendedData;
 
 	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
 
@@ -69,8 +67,6 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
-
-	DEBUG_SVC("version %d.%d clientID %d", rdpdr->versionMajor, rdpdr->versionMinor, rdpdr->clientID);
 }
 
 static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
@@ -128,14 +124,12 @@ static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 
 	if (versionMajor != rdpdr->versionMajor || versionMinor != rdpdr->versionMinor)
 	{
-		DEBUG_WARN("unmatched version %d.%d", versionMajor, versionMinor);
 		rdpdr->versionMajor = versionMajor;
 		rdpdr->versionMinor = versionMinor;
 	}
 
 	if (clientID != rdpdr->clientID)
 	{
-		DEBUG_WARN("unmatched clientID %d", clientID);
 		rdpdr->clientID = clientID;
 	}
 }
@@ -219,7 +213,7 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 
 	irp = irp_new(rdpdr->devman, s);
 
-	if (irp == NULL)
+	if (!irp)
 		return FALSE;
 
 	IFCALL(irp->device->IRPRequest, irp->device, irp);
@@ -227,13 +221,12 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	return TRUE;
 }
 
-static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
+static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
 	UINT16 packetID;
 	UINT32 deviceID;
 	UINT32 status;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
 	Stream_Read_UINT16(s, component);
 	Stream_Read_UINT16(s, packetID);
@@ -243,26 +236,22 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 		switch (packetID)
 		{
 			case PAKID_CORE_SERVER_ANNOUNCE:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_SERVER_ANNOUNCE");
 				rdpdr_process_server_announce_request(rdpdr, s);
 				rdpdr_send_client_announce_reply(rdpdr);
 				rdpdr_send_client_name_request(rdpdr);
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_SERVER_CAPABILITY");
 				rdpdr_process_capability_request(rdpdr, s);
 				rdpdr_send_capability_response(rdpdr);
 				break;
 
 			case PAKID_CORE_CLIENTID_CONFIRM:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_CLIENTID_CONFIRM");
 				rdpdr_process_server_clientid_confirm(rdpdr, s);
 				rdpdr_send_device_list_announce_request(rdpdr, FALSE);
 				break;
 
 			case PAKID_CORE_USER_LOGGEDON:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_USER_LOGGEDON");
 				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 				break;
 
@@ -270,39 +259,34 @@ static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 				/* connect to a specific resource */
 				Stream_Read_UINT32(s, deviceID);
 				Stream_Read_UINT32(s, status);
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_REPLY (deviceID=%d status=0x%08X)", deviceID, status);
 				break;
 
 			case PAKID_CORE_DEVICE_IOREQUEST:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_IOREQUEST");
 				if (rdpdr_process_irp(rdpdr, s))
 					s = NULL;
 				break;
 
 			default:
-				DEBUG_WARN("RDPDR_CTYP_CORE / unknown packetID: 0x%02X", packetID);
 				break;
 
 		}
 	}
 	else if (component == RDPDR_CTYP_PRN)
 	{
-		DEBUG_SVC("RDPDR_CTYP_PRN");
+
 	}
 	else
 	{
-		DEBUG_WARN("RDPDR component: 0x%02X packetID: 0x%02X", component, packetID);
+
 	}
 
 	Stream_Free(s, TRUE);
 }
 
-static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
+static void rdpdr_process_terminate(rdpdrPlugin* rdpdr)
 {
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
-
 	devman_free(rdpdr->devman);
-	free(plugin);
+	free(rdpdr);
 }
 
 
@@ -359,7 +343,7 @@ void rdpdr_remove_open_handle_data(DWORD openHandle)
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT32 status = 0;
-	rdpSvcPlugin* plugin = (rdpSvcPlugin*) rdpdr;
+	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!plugin)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
@@ -376,7 +360,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	return status;
 }
 
-static void rdpdr_virtual_channel_event_data_received(rdpSvcPlugin* plugin,
+static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* plugin,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
@@ -422,9 +406,9 @@ static void rdpdr_virtual_channel_event_data_received(rdpSvcPlugin* plugin,
 static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	rdpSvcPlugin* plugin;
+	rdpdrPlugin* plugin;
 
-	plugin = (rdpSvcPlugin*) rdpdr_get_open_handle_data(openHandle);
+	plugin = (rdpdrPlugin*) rdpdr_get_open_handle_data(openHandle);
 
 	if (!plugin)
 	{
@@ -450,11 +434,10 @@ static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
 static void* rdpdr_virtual_channel_client_thread(void* arg)
 {
 	wStream* data;
-	wMessage* event;
 	wMessage message;
-	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
+	rdpdrPlugin* plugin = (rdpdrPlugin*) arg;
 
-	IFCALL(plugin->connect_callback, plugin);
+	rdpdr_process_connect(plugin);
 
 	while (1)
 	{
@@ -469,12 +452,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 			if (message.id == 0)
 			{
 				data = (wStream*) message.wParam;
-				IFCALL(plugin->receive_callback, plugin, data);
-			}
-			else if (message.id == 1)
-			{
-				event = (wMessage*) message.wParam;
-				IFCALL(plugin->event_callback, plugin, event);
+				rdpdr_process_receive(plugin, data);
 			}
 		}
 	}
@@ -483,7 +461,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static void rdpdr_virtual_channel_event_connected(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength)
+static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* plugin, void* pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -504,7 +482,7 @@ static void rdpdr_virtual_channel_event_connected(rdpSvcPlugin* plugin, void* pD
 			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) plugin, 0, NULL);
 }
 
-static void rdpdr_virtual_channel_event_terminated(rdpSvcPlugin* plugin)
+static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* plugin)
 {
 	MessagePipe_PostQuit(plugin->MsgPipe, 0);
 	WaitForSingleObject(plugin->thread, INFINITE);
@@ -520,7 +498,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpSvcPlugin* plugin)
 		plugin->data_in = NULL;
 	}
 
-	IFCALL(plugin->terminate_callback, plugin);
+	rdpdr_process_terminate(plugin);
 
 	rdpdr_remove_open_handle_data(plugin->open_handle);
 	rdpdr_remove_init_handle_data(plugin->init_handle);
@@ -528,9 +506,9 @@ static void rdpdr_virtual_channel_event_terminated(rdpSvcPlugin* plugin)
 
 static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
 {
-	rdpSvcPlugin* plugin;
+	rdpdrPlugin* plugin;
 
-	plugin = (rdpSvcPlugin*) rdpdr_get_init_handle_data(pInitHandle);
+	plugin = (rdpdrPlugin*) rdpdr_get_init_handle_data(pInitHandle);
 
 	if (!plugin)
 	{
@@ -558,24 +536,17 @@ static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, vo
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
-	rdpdrPlugin* _p;
-	rdpSvcPlugin* plugin;
+	rdpdrPlugin* plugin;
 
-	_p = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
-	ZeroMemory(_p, sizeof(rdpdrPlugin));
+	plugin = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
+	ZeroMemory(plugin, sizeof(rdpdrPlugin));
 
-	plugin = (rdpSvcPlugin*) _p;
-
-	_p->plugin.channel_def.options =
+	plugin->channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP;
 
-	strcpy(_p->plugin.channel_def.name, "rdpdr");
-
-	_p->plugin.connect_callback = rdpdr_process_connect;
-	_p->plugin.receive_callback = rdpdr_process_receive;
-	_p->plugin.terminate_callback = rdpdr_process_terminate;
+	strcpy(plugin->channel_def.name, "rdpdr");
 
 	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, pEntryPoints->cbSize);
 

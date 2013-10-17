@@ -23,7 +23,7 @@
 
 #include "rdpdr_main.h"
 
-void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* data_in);
+void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s);
 void rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H */

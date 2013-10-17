@@ -27,26 +27,25 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"
 
 #include "devman.h"
 
-DEVMAN* devman_new(rdpSvcPlugin* plugin)
+DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
 	DEVMAN* devman;
 
 	devman = (DEVMAN*) malloc(sizeof(DEVMAN));
 	ZeroMemory(devman, sizeof(DEVMAN));
 
-	devman->plugin = plugin;
+	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;
 	devman->devices = list_new();
 
@@ -69,8 +68,6 @@ static void devman_register_device(DEVMAN* devman, DEVICE* device)
 {
 	device->id = devman->id_sequence++;
 	list_add(devman->devices, device);
-
-	DEBUG_SVC("device %d.%s registered", device->id, device->name);
 }
 
 static char DRIVE_SERVICE_NAME[] = "drive";

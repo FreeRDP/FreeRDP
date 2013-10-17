@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_main.h"
 #include "rdpdr_capabilities.h"
@@ -162,7 +162,6 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			default:
-				DEBUG_WARN("Unknown capabilityType %d", capabilityType);
 				break;
 		}
 	}
