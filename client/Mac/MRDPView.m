@@ -334,8 +334,6 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 
-	y = [self frame].size.height - y;
-
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
@@ -353,8 +351,6 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
-	y = [self frame].size.height - y;
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
@@ -374,8 +370,6 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = [self frame].size.height - y;
-	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
@@ -393,8 +387,6 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
-	y = [self frame].size.height - y;
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
@@ -414,8 +406,6 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = [self frame].size.height - y;
-	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
@@ -433,8 +423,6 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
-	y = [self frame].size.height - y;
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
@@ -454,8 +442,6 @@ DWORD mac_client_thread(void* param)
 	int x = (int) loc.x;
 	int y = (int) loc.y;
 	
-	y = [self frame].size.height - y;
-	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON3, x, y);
 }
 
@@ -471,8 +457,6 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-
-	y = [self frame].size.height - y;
 	
 	flags = PTR_FLAGS_WHEEL;
 
@@ -505,8 +489,6 @@ DWORD mac_client_thread(void* param)
 	NSPoint loc = [event locationInWindow];
 	int x = (int) loc.x;
 	int y = (int) loc.y;
-	
-	y = [self frame].size.height - y;
 	
 	// send mouse motion event to RDP server
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
