@@ -1291,7 +1291,7 @@ struct rdp_settings
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
 	
-	ALIGN64 BYTE* settings_modified; /* byte array marking fields that have been modified from their default value */
+	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their default value */
 };
 typedef struct rdp_settings rdpSettings;
 
@@ -1305,6 +1305,7 @@ extern "C" {
 #define FREERDP_SETTINGS_SERVER_MODE	0x00000001
 
 FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
+FREERDP_API rdpSettings* freerdp_settings_clone(rdpSettings* settings);
 FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
 FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument);

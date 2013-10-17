@@ -525,7 +525,7 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 }
 
 #define WRITE_ALL_SETTINGS TRUE
-#define SETTING_MODIFIED(_settings, _field) (WRITE_ALL_SETTINGS || _settings->settings_modified[FreeRDP_##_field])
+#define SETTING_MODIFIED(_settings, _field) (WRITE_ALL_SETTINGS || _settings->SettingsModified[FreeRDP_##_field])
 #define SETTING_MODIFIED_SET(_target, _settings, _field) if SETTING_MODIFIED(_settings, _field) _target = _settings->_field
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* settings)

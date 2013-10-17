@@ -1258,7 +1258,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 	}
 
 	/* Mark field as modified */
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 
 	return -1;
 }
@@ -1300,7 +1300,7 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 			break;
 	}
 
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 
 	return 0;
 }
@@ -1943,7 +1943,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 	}
 
 	/* Mark field as modified */
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 	
 	return 0;
 }
@@ -1978,7 +1978,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 	}
 
 	/* Mark field as modified */
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 	
 	return 0;
 }
@@ -2309,7 +2309,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 	}
 
 	/* Mark field as modified */
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 
 	return 0;
 }
@@ -2344,7 +2344,7 @@ int freerdp_set_param_double(rdpSettings* settings, int id, double param)
 	}
 
 	/* Mark field as modified */
-	settings->settings_modified[id] = 1;
+	settings->SettingsModified[id] = 1;
 
 	return 0;
 }
