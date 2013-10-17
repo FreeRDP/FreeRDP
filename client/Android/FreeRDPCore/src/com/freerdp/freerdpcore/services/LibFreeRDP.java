@@ -35,7 +35,9 @@ public class LibFreeRDP
 		boolean disableMenuAnimations, boolean disableTheming,
 		boolean enableFontSmoothing, boolean enableDesktopComposition);
 
-	private static native void freerdp_set_advanced_settings(int inst, String remoteProgram, String workDir);
+	private static native void freerdp_set_advanced_settings(int inst,
+			String remoteProgram, String workDir, boolean async_channel,
+			boolean async_transport, boolean async_input, boolean async_update);
 	
 	private static native void freerdp_set_data_directory(int inst, String directory);
 	
@@ -151,7 +153,11 @@ public class LibFreeRDP
 				flags.getDesktopComposition());
 		
 		BookmarkBase.AdvancedSettings advancedSettings = bookmark.getAdvancedSettings();
-		freerdp_set_advanced_settings(inst, advancedSettings.getRemoteProgram(), advancedSettings.getWorkDir());
+		BookmarkBase.DebugSettings debugSettings = bookmark.getDebugSettings();
+		freerdp_set_advanced_settings(inst, advancedSettings.getRemoteProgram(),
+				advancedSettings.getWorkDir(), debugSettings.getAsyncChannel(),
+				debugSettings.getAsyncTransport(), debugSettings.getAsyncInput(),
+				debugSettings.getAsyncUpdate());
 
 		// drive redirection enabled?
 		if (advancedSettings.getRedirectSDCard())

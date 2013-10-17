@@ -210,6 +210,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	PTSG_PACKET packet;
 	UINT32 SwitchValue;
+	UINT32 MessageSwitchValue;
+	UINT32 IsMessagePresent;
+	UINT32 MsgBytes;
 	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_CAPABILITIES tsgCaps;
 	PTSG_PACKET_VERSIONCAPS versionCaps;
@@ -228,7 +231,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
 	ZeroMemory(packet, sizeof(TSG_PACKET));
 
-	offset = 4;
+	offset = 4; // Skip Packet Pointer
 	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
 	SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
 
@@ -245,21 +248,24 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		CopyMemory(&packetCapsResponse->pktQuarEncResponse.nonce, &buffer[offset + 24], 16); /* Nonce */
 		offset += 40;
 
-		Pointer = *((UINT32*) &buffer[offset]); /* Ptr */
+		Pointer = *((UINT32*) &buffer[offset]); /* VersionCapsPtr */
 		offset += 4;
 
 		if ((Pointer == 0x0002000C) || (Pointer == 0x00020008))
 		{
-			/* Not sure exactly what this is */
-			offset += 4; /* 0x00000001 (4 bytes) */
-			offset += 4; /* 0x00000001 (4 bytes) */
-			offset += 4; /* 0x00000000 (4 bytes) */
-			offset += 4; /* 0x00000001 (4 bytes) */
+			offset += 4; /* MsgID */
+			offset += 4; /* MsgType */
+			IsMessagePresent = *((UINT32*) &buffer[offset]);
+			offset += 4;
+			MessageSwitchValue = *((UINT32*) &buffer[offset]);
+			DEBUG_TSG("IsMessagePresent %d MessageSwitchValue %d",
+					IsMessagePresent, MessageSwitchValue);
+			offset += 4;
 		}
 
 		if (packetCapsResponse->pktQuarEncResponse.certChainLen > 0)
 		{
-			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020014 */
+			Pointer = *((UINT32*) &buffer[offset]); /* MsgPtr (4 bytes): 0x00020014 */
 			offset += 4;
 
 			offset += 4; /* MaxCount (4 bytes) */
@@ -304,7 +310,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		Pointer = *((UINT32*) &buffer[offset]); /* TsgCapsPtr */
 		versionCaps->numCapabilities = *((UINT32*) &buffer[offset + 4]); /* NumCapabilities */
 		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 8]); /* MajorVersion */
-		versionCaps->majorVersion = *((UINT16*) &buffer[offset + 10]); /* MinorVersion */
+		versionCaps->minorVersion = *((UINT16*) &buffer[offset + 10]); /* MinorVersion */
 		versionCaps->quarantineCapabilities = *((UINT16*) &buffer[offset + 12]); /* QuarantineCapabilities */
 		offset += 14;
 
@@ -334,13 +340,45 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		tsgCaps->tsgPacket.tsgCapNap.capabilities = *((UINT32*) &buffer[offset]); /* Capabilities */
 		offset += 4;
 
-		/* ??? (16 bytes): all zeros */
-		offset += 16;
+		switch(MessageSwitchValue)
+		{
+			case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
+			case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
+				offset += 4; // IsDisplayMandatory
+				offset += 4; // IsConsent Mandatory
+				MsgBytes = *((UINT32*) &buffer[offset]);
+				offset += 4;
+				Pointer = *((UINT32*) &buffer[offset]);
+				offset += 4;
+				if(Pointer) {
+					offset += 4; // MaxCount
+					offset += 8; // UnicodeString Offset, Length
+				}
+				if(MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH) {
+					fprintf(stderr, "Out of Spec Message Length %d");
+					return FALSE;
+				}
+				offset += MsgBytes;
+				break;
+			case TSG_ASYNC_MESSAGE_REAUTH:
+				rpc_offset_align(&offset, 8);
+				offset += 8; // UINT64 TunnelContext, not to be confused with
+					     // the ContextHandle TunnelContext below.
+				break;
+			default:
+				fprintf(stderr, "Unexpected Message Type: 0x%X\n", MessageSwitchValue);
+				return FALSE;
+
+		}
+
+		rpc_offset_align(&offset, 4);
 
 		/* TunnelContext (20 bytes) */
 		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType */
 		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
 		offset += 20;
+		// UINT32 TunnelId
+		// HRESULT ReturnValue
 
 #ifdef WITH_DEBUG_TSG
 		fprintf(stderr, "TSG TunnelContext:\n");

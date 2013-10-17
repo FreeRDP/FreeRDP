@@ -503,8 +503,6 @@ static void* rpc_client_thread(void* arg)
 
 	CloseHandle(ReadEvent);
 
-	rpc_client_free(rpc);
-
 	return NULL;
 }
 
@@ -571,6 +569,8 @@ int rpc_client_stop(rdpRpc* rpc)
 	SetEvent(rpc->client->StopEvent);
 
 	WaitForSingleObject(rpc->client->Thread, INFINITE);
+
+	rpc_client_free(rpc);
 
 	return 0;
 }
