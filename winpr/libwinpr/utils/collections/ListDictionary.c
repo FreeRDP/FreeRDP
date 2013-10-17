@@ -96,6 +96,60 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
  */
 
 /**
+ * Gets the list of keys as an array
+ */
+
+int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
+{
+	int index;
+	int count;
+	ULONG_PTR* pKeys;
+	wListDictionaryItem* item;
+
+	if (!ppKeys)
+		return -1;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	count = 0;
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			count++;
+			item = item->next;
+		}
+	}
+
+	pKeys = (ULONG_PTR*) malloc(sizeof(ULONG_PTR*) * count);
+	ZeroMemory(pKeys, sizeof(ULONG_PTR*) * count);
+
+	index = 0;
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			pKeys[index++] = (ULONG_PTR) item->key;
+			item = item->next;
+		}
+	}
+
+	*ppKeys = pKeys;
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return count;
+}
+
+/**
  * Adds an entry with the specified key and value into the ListDictionary.
  */
 

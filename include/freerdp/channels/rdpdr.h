@@ -28,6 +28,7 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
+#include <winpr/collections.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
@@ -338,7 +339,7 @@ struct _DEVMAN
 {
 	void* plugin;
 	UINT32 id_sequence;
-	LIST* devices;
+	wListDictionary* devices;
 };
 
 typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);

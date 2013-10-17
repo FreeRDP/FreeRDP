@@ -134,17 +134,19 @@ static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	}
 }
 
-static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL user_loggedon)
+static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn)
 {
 	int i;
-	int pos;
 	BYTE c;
+	int pos;
+	int index;
 	wStream* s;
 	UINT32 count;
 	int data_len;
 	int count_pos;
 	DEVICE* device;
-	LIST_ITEM* item;
+	int keyCount;
+	ULONG_PTR* pKeys;
 
 	s = Stream_New(NULL, 256);
 
@@ -153,11 +155,15 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 	count_pos = Stream_GetPosition(s);
 	count = 0;
+
 	Stream_Seek_UINT32(s); /* deviceCount */
 
-	for (item = rdpdr->devman->devices->head; item; item = item->next)
+	pKeys = NULL;
+	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
+
+	for (index = 0; index < keyCount; index++)
 	{
-		device = (DEVICE*) item->data;
+		device = (DEVICE*) ListDictionary_GetItemValue(rdpdr->devman->devices, (void*) pKeys[index]);
 
 		/**
 		 * 1. versionMinor 0x0005 doesn't send PAKID_CORE_USER_LOGGEDON
@@ -167,7 +173,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 */
 
 		if ((rdpdr->versionMinor == 0x0005) ||
-			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
+			(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
 			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 			Stream_EnsureRemainingCapacity(s, 20 + data_len);
