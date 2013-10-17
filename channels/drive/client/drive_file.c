@@ -40,10 +40,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/file.h>
-
 #include <winpr/stream.h>
+
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -125,7 +124,6 @@ static BOOL drive_file_remove_dir(const char* path)
 
 		if (STAT(p, &st) != 0)
 		{
-			DEBUG_WARN("stat %s failed.", p);
 			ret = FALSE;
 		}
 		else if (S_ISDIR(st.st_mode))
@@ -134,7 +132,6 @@ static BOOL drive_file_remove_dir(const char* path)
 		}
 		else if (unlink(p) < 0)
 		{
-			DEBUG_WARN("unlink %s failed.", p);
 			ret = FALSE;
 		}
 		else
@@ -156,7 +153,6 @@ static BOOL drive_file_remove_dir(const char* path)
 	{
 		if (rmdir(path) < 0)
 		{
-			DEBUG_WARN("rmdir %s failed.", path);
 			ret = FALSE;
 		}
 	}
@@ -422,7 +418,6 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 
 		default:
 			Stream_Write_UINT32(output, 0); /* Length */
-			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			return FALSE;
 	}
 	return TRUE;
@@ -517,12 +512,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			/* TODO rename does not work on win32 */
                         if (rename(file->fullpath, fullpath) == 0)
 			{
-				DEBUG_SVC("renamed %s to %s", file->fullpath, fullpath);
 				drive_file_set_fullpath(file, fullpath);
 			}
 			else
 			{
-				DEBUG_WARN("rename %s to %s failed, errno = %d", file->fullpath, fullpath, errno);
 				free(fullpath);
 				return FALSE;
 			}
@@ -530,7 +523,6 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			break;
 
 		default:
-			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			return FALSE;
 	}
 
@@ -545,8 +537,6 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 	WCHAR* ent_path;
 	struct STAT st;
 	struct dirent* ent;
-
-	DEBUG_SVC("path %s FsInformationClass %d InitialQuery %d", path, FsInformationClass, InitialQuery);
 
 	if (!file->dir)
 	{
@@ -586,9 +576,8 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		ent = readdir(file->dir);
 	}
 
-	if (ent == NULL)
+	if (!ent)
 	{
-		DEBUG_SVC("  pattern %s not found.", file->pattern);
 		Stream_Write_UINT32(output, 0); /* Length */
 		Stream_Write_UINT8(output, 0); /* Padding */
 		return FALSE;
@@ -600,10 +589,9 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 
 	if (STAT((char*) ent_path, &st) != 0)
 	{
-		DEBUG_WARN("stat %s failed. errno = %d", (char*) ent_path, errno);
+
 	}
 
-	DEBUG_SVC("  pattern %s matched %s", file->pattern, ent_path);
 	free(ent_path);
 	ent_path = NULL;
 
@@ -682,7 +670,6 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		default:
 			Stream_Write_UINT32(output, 0); /* Length */
 			Stream_Write_UINT8(output, 0); /* Padding */
-			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			ret = FALSE;
 			break;
 	}

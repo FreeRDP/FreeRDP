@@ -38,12 +38,11 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
 #include <freerdp/utils/list.h>
-#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "drive_file.h"
 
@@ -93,8 +92,6 @@ static UINT32 drive_map_posix_err(int fs_errno)
 			rc = STATUS_UNSUCCESSFUL;
 			break;
 	}
-
-	DEBUG_SVC("errno 0x%x mapped to 0x%x", fs_errno, rc);
 
 	return rc;
 }
@@ -149,8 +146,6 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		FileId = 0;
 		Information = 0;
-
-		DEBUG_WARN("failed to create %s.", path);
 	}
 	else if (file->err)
 	{
@@ -183,7 +178,6 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 				Information = 0;
 				break;
 		}
-		DEBUG_SVC("%s(%d) created.", file->fullpath, file->id);
 	}
 
 	Stream_Write_UINT32(irp->output, FileId);
@@ -203,13 +197,9 @@ static void drive_process_irp_close(DRIVE_DEVICE* disk, IRP* irp)
 	if (file == NULL)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else
 	{
-		DEBUG_SVC("%s(%d) closed.", file->fullpath, file->id);
-
 		list_remove(disk->files, file);
 		drive_file_free(file);
 	}
@@ -235,15 +225,11 @@ static void drive_process_irp_read(DRIVE_DEVICE* disk, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else if (!drive_file_seek(file, Offset))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
 	}
 	else
 	{
@@ -254,12 +240,10 @@ static void drive_process_irp_read(DRIVE_DEVICE* disk, IRP* irp)
 			free(buffer);
 			buffer = NULL;
 			Length = 0;
-
-			DEBUG_WARN("read %s(%d) failed.", file->fullpath, file->id);
 		}
 		else
 		{
-			DEBUG_SVC("read %llu-%llu from %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+
 		}
 	}
 
@@ -288,30 +272,24 @@ static void drive_process_irp_write(DRIVE_DEVICE* disk, IRP* irp)
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
-	if (file == NULL)
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else if (!drive_file_seek(file, Offset))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("seek %s(%d) failed.", file->fullpath, file->id);
 	}
 	else if (!drive_file_write(file, Stream_Pointer(irp->input), Length))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("write %s(%d) failed.", file->fullpath, file->id);
 	}
 	else
 	{
-		DEBUG_SVC("write %llu-%llu to %s(%d).", Offset, Offset + Length, file->fullpath, file->id);
+
 	}
 
 	Stream_Write_UINT32(irp->output, Length);
@@ -329,21 +307,17 @@ static void drive_process_irp_query_information(DRIVE_DEVICE* disk, IRP* irp)
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
-	if (file == NULL)
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else if (!drive_file_query_information(file, FsInformationClass, irp->output))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("FsInformationClass %d on %s(%d) failed.", FsInformationClass, file->fullpath, file->id);
 	}
 	else
 	{
-		DEBUG_SVC("FsInformationClass %d on %s(%d).", FsInformationClass, file->fullpath, file->id);
+
 	}
 
 	irp->Complete(irp);
@@ -361,21 +335,17 @@ static void drive_process_irp_set_information(DRIVE_DEVICE* disk, IRP* irp)
 
 	file = drive_get_file_by_id(disk, irp->FileId);
 
-	if (file == NULL)
+	if (!file)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else if (!drive_file_set_information(file, FsInformationClass, Length, irp->input))
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("FsInformationClass %d on %s(%d) failed.", FsInformationClass, file->fullpath, file->id);
 	}
 	else
 	{
-		DEBUG_SVC("FsInformationClass %d on %s(%d) ok.", FsInformationClass, file->fullpath, file->id);
+
 	}
 
 	Stream_Write_UINT32(irp->output, Length);
@@ -470,7 +440,6 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 		default:
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Stream_Write_UINT32(output, 0); /* Length */
-			DEBUG_WARN("invalid FsInformationClass %d", FsInformationClass);
 			break;
 	}
 
@@ -486,7 +455,6 @@ static void drive_process_irp_silent_ignore(DRIVE_DEVICE* disk, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
 
-	DEBUG_SVC("FsInformationClass %d in drive_process_irp_silent_ignore", FsInformationClass);
 	Stream_Write_UINT32(output, 0); /* Length */
 
 	irp->Complete(irp);
@@ -518,7 +486,6 @@ static void drive_process_irp_query_directory(DRIVE_DEVICE* disk, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Stream_Write_UINT32(irp->output, 0); /* Length */
-		DEBUG_WARN("FileId %d not valid.", irp->FileId);
 	}
 	else if (!drive_file_query_directory(file, FsInformationClass, InitialQuery, path, irp->output))
 	{
@@ -543,7 +510,6 @@ static void drive_process_irp_directory_control(DRIVE_DEVICE* disk, IRP* irp)
 			break;
 
 		default:
-			DEBUG_WARN("MinorFunction 0x%X not supported", irp->MinorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			Stream_Write_UINT32(irp->output, 0); /* Length */
 			irp->Complete(irp);
@@ -591,8 +557,7 @@ static void drive_process_irp(DRIVE_DEVICE* disk, IRP* irp)
 			drive_process_irp_query_volume_information(disk, irp);
 			break;
 
-		case IRP_MJ_LOCK_CONTROL :
-			DEBUG_WARN("MajorFunction IRP_MJ_LOCK_CONTROL silent ignored");
+		case IRP_MJ_LOCK_CONTROL:
 			drive_process_irp_silent_ignore(disk, irp);
 			break;
 
@@ -605,7 +570,6 @@ static void drive_process_irp(DRIVE_DEVICE* disk, IRP* irp)
 			break;
 
 		default:
-			DEBUG_WARN("MajorFunction 0x%X not supported", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);
 			break;
