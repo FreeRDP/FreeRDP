@@ -32,8 +32,8 @@
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">Login</string>
     <string name="list_placeholder_no_servers">No Servers</string>
-    <string name="list_placeholder_connecting">Connecting ...</string>
-    <string name="list_placeholder_disconnecting">Disconnecting ...</string>
+    <string name="list_placeholder_connecting">Connecting &#8230;</string>
+    <string name="list_placeholder_disconnecting">Disconnecting &#8230;</string>
     <string name="list_placeholder_connection_error">Connection Lost</string>
     <string name="list_placeholder_wrong_password">Wrong Password</string>
     <string name="list_placeholder_invalid_username">Invalid Username</string>
@@ -178,8 +178,8 @@
     <string name="dlg_title_credentials">Please enter your credentials</string>
     <string name="dlg_title_create_shortcut">Create Shortcut</string>
     <string name="dlg_msg_create_shortcut">Shortcut name:</string>
-    <string name="dlg_msg_connecting">Connecting ...</string>
-    <string name="dlg_msg_logging_in">Logging in ...</string>
+    <string name="dlg_msg_connecting">Connecting &#8230;</string>
+    <string name="dlg_msg_logging_in">Logging in &#8230;</string>
     <string name="dlg_title_about">About aFreeRDP</string>
     <string name="dlg_msg_about">Version: %1$s\n\u00A9 2012 Thinstuff Technologies GmbH</string>
     <string name="dlg_title_create_bookmark_after_qc">Save Connection Settings?</string>
@@ -191,4 +191,6 @@
     <string name="dlg_msg_exit">Are you sure you want to exit the application?</string>
     <string name="dlg_title_clear_cert_cache">Delete Certificates?</string>
     <string name="dlg_msg_clear_cert_cache">Are you sure you want to delete all your cached Certificates?</string>
+    <string name="debug_level">Debug Level</string>
+    <string name="settings_debug">Debug Settings</string>
 </resources>

@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 
@@ -418,7 +420,7 @@ int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** 
 	return 0;
 }
 
-char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
+static char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 {
 	char** p;
 	char* str;
@@ -428,6 +430,9 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 
 	nArgs = nCommas = 0;
 
+	assert(NULL != count);
+
+	*count = 0;
 	if (!list)
 		return NULL;
 
@@ -456,7 +461,7 @@ char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
 	return p;
 }
 
-char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int* count)
+static char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int* count)
 {
 	char** p;
 

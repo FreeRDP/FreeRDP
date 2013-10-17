@@ -28,6 +28,14 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/project.properties.cmake
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/ant.properties.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/ant.properties @ONLY)
 
+# Generate a Java class with static members set to the CMake
+# configuration properties.
+set(JAVA_CFG "src/com/freerdp/freerdpcore/utils/BuildConfiguration.java")
+set(JAVA_CFG_OUT "${CMAKE_CURRENT_BINARY_DIR}/${JAVA_CFG}")
+set(JAVA_CFG_IN "${CMAKE_CURRENT_SOURCE_DIR}/${JAVA_CFG}.in")
+
+CONFIGURE_FILE(${JAVA_CFG_IN} ${JAVA_CFG_OUT})
+
 file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if (ANDROID_SDK)
