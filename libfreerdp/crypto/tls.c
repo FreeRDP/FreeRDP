@@ -373,9 +373,9 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 	int error;
 	int status;
 
-	status = SSL_read(tls->ssl, data, length);
+	status = tls ? SSL_read(tls->ssl, data, length) : -1;
 
-	if (status <= 0)
+	if (tls && status <= 0)
 	{
 		error = SSL_get_error(tls->ssl, status);
 

@@ -119,7 +119,8 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	if ((settings->Password == NULL) || (settings->Username == NULL))
+	if ((settings->Password == NULL ) || (settings->Username == NULL)
+			|| (!strlen(settings->Password)) || (!strlen(settings->Username)))
 	{
 		if (instance->Authenticate)
 		{
