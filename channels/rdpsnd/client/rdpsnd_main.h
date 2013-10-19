@@ -21,6 +21,9 @@
 #ifndef __RDPSND_MAIN_H
 #define __RDPSND_MAIN_H
 
+#include <freerdp/api.h>
+#include <freerdp/svc.h>
+#include <freerdp/addin.h>
 #include <freerdp/client/rdpsnd.h>
 
 #if defined(WITH_DEBUG_SND)
@@ -28,5 +31,7 @@
 #else
 #define DEBUG_SND(fmt, ...) do { } while (0)
 #endif
+
+int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);
 
 #endif /* __RDPSND_MAIN_H */
