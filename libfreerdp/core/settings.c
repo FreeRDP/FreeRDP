@@ -425,6 +425,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 {
+	int index;
 	rdpSettings* _settings;
 
 	_settings = (rdpSettings*) malloc(sizeof(rdpSettings));
@@ -724,19 +725,37 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientTimeZone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
 		CopyMemory(_settings->ClientTimeZone, _settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
 
-		_settings->DeviceArraySize = 16;
+		_settings->DeviceCount = settings->DeviceCount;
+		_settings->DeviceArraySize = settings->DeviceArraySize;
 		_settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * _settings->DeviceArraySize);
 		ZeroMemory(_settings->DeviceArray, sizeof(RDPDR_DEVICE*) * _settings->DeviceArraySize);
 
-		_settings->StaticChannelArraySize = 16;
+		for (index = 0; index < _settings->DeviceCount; index++)
+		{
+			_settings->DeviceArray[index] = freerdp_device_clone(settings->DeviceArray[index]);
+		}
+
+		_settings->StaticChannelCount = settings->StaticChannelCount;
+		_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
 		_settings->StaticChannelArray = (ADDIN_ARGV**)
 				malloc(sizeof(ADDIN_ARGV*) * _settings->StaticChannelArraySize);
 		ZeroMemory(_settings->StaticChannelArray, sizeof(ADDIN_ARGV*) * _settings->StaticChannelArraySize);
 
-		_settings->DynamicChannelArraySize = 16;
+		for (index = 0; index < _settings->StaticChannelCount; index++)
+		{
+			_settings->StaticChannelArray[index] = freerdp_static_channel_clone(settings->StaticChannelArray[index]);
+		}
+
+		_settings->DynamicChannelCount = settings->DynamicChannelCount;
+		_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
 		_settings->DynamicChannelArray = (ADDIN_ARGV**)
 				malloc(sizeof(ADDIN_ARGV*) * _settings->DynamicChannelArraySize);
 		ZeroMemory(_settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * _settings->DynamicChannelArraySize);
+
+		for (index = 0; index < _settings->DynamicChannelCount; index++)
+		{
+			_settings->DynamicChannelArray[index] = freerdp_dynamic_channel_clone(settings->DynamicChannelArray[index]);
+		}
 
 		_settings->SettingsModified = (BYTE*) malloc(sizeof(rdpSettings) / 8);
 		ZeroMemory(_settings->SettingsModified, sizeof(rdpSettings) / 8);
