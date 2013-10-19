@@ -63,7 +63,6 @@ struct rdpsnd_plugin
 	wMessagePipe* MsgPipe;
 
 	HANDLE ScheduleThread;
-	wMessageQueue* queue;
 
 	BYTE cBlockNo;
 	int wCurrentFormatNo;
@@ -105,10 +104,10 @@ static void* rdpsnd_schedule_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(rdpsnd->queue))
+		if (!MessageQueue_Wait(rdpsnd->MsgPipe->Out))
 			break;
 
-		if (!MessageQueue_Peek(rdpsnd->queue, &message, TRUE))
+		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 			break;
 
 		if (message.id == WMQ_QUIT)
@@ -395,7 +394,7 @@ void rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE 
 
 static void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	MessageQueue_Post(device->rdpsnd->queue, NULL, 0, (void*) wave, NULL);
+	MessageQueue_Post(device->rdpsnd->MsgPipe->Out, NULL, 0, (void*) wave, NULL);
 }
 
 static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
@@ -655,7 +654,6 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	ADDIN_ARGV* args;
 
 	rdpsnd->latency = -1;
-	rdpsnd->queue = MessageQueue_New();
 
 	rdpsnd->ScheduleThread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
@@ -740,10 +738,9 @@ static void rdpsnd_process_terminate(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	MessageQueue_PostQuit(rdpsnd->queue, 0);
-	WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
+	MessageQueue_PostQuit(rdpsnd->MsgPipe->Out, 0);
 
-	MessageQueue_Free(rdpsnd->queue);
+	WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
 	CloseHandle(rdpsnd->ScheduleThread);
 
 	if (rdpsnd->subsystem)
