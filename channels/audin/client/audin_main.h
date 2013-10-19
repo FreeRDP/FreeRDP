@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef __AUDIN_MAIN_H
-#define __AUDIN_MAIN_H
+#ifndef FREERDP_AUDIN_CLIENT_MAIN_H
+#define FREERDP_AUDIN_CLIENT_MAIN_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -28,6 +28,7 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/utils/debug.h>
+#include <freerdp/client/audin.h>
 
 #ifdef WITH_DEBUG_DVC
 #define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
@@ -35,44 +36,5 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-typedef BOOL (*AudinReceive) (BYTE* data, int size, void* user_data);
-
-typedef struct audin_format audinFormat;
-struct audin_format
-{
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
-	UINT16 cbSize;
-	BYTE* data;
-};
-
-typedef struct _IAudinDevice IAudinDevice;
-struct _IAudinDevice
-{
-	void (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* user_data);
-	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
-	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
-	void (*Close) (IAudinDevice* devplugin);
-	void (*Free) (IAudinDevice* devplugin);
-};
-
-#define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
-
-typedef void (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
-
-struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
-{
-	IWTSPlugin* plugin;
-	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	ADDIN_ARGV* args;
-};
-typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
-typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
-
-typedef int (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
-
-#endif /* __AUDIN_MAIN_H */
+#endif /* FREERDP_AUDIN_CLIENT_MAIN_H */
 

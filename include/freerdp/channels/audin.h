@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Audio Output Virtual Channel
+ * Audio Input Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
- * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef __RDPSND_MAIN_H
-#define __RDPSND_MAIN_H
+#ifndef FREERDP_CHANNEL_AUDIN_H
+#define FREERDP_CHANNEL_AUDIN_H
 
-#include <freerdp/client/rdpsnd.h>
+#include <freerdp/api.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 
-#if defined(WITH_DEBUG_SND)
-#define DEBUG_SND(fmt, ...) DEBUG_CLASS("rdpsnd", fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_SND(fmt, ...) do { } while (0)
-#endif
 
-#endif /* __RDPSND_MAIN_H */
+
+#endif /* FREERDP_CHANNEL_AUDIN_H */
+
