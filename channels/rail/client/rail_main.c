@@ -286,11 +286,10 @@ int rail_client_execute(RailClientContext* context, RAIL_EXEC_ORDER* exec)
 
 int rail_client_activate(RailClientContext* context, RAIL_ACTIVATE_ORDER* activate)
 {
-	return 0;
-}
+	railPlugin* rail = (railPlugin*) context->handle;
 
-int rail_get_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
-{
+	rail_send_client_activate_order(rail, activate);
+
 	return 0;
 }
 
@@ -377,87 +376,123 @@ int rail_client_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sy
 
 int rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_client_system_command(RailClientContext* context, RAIL_SYSCOMMAND_ORDER* syscommand)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_syscommand_order(rail, syscommand);
+
 	return 0;
 }
 
 int rail_client_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_handshake_order(rail, handshake);
+
 	return 0;
 }
 
 int rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_client_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_handshake_ex_order(rail, handshakeEx);
+
 	return 0;
 }
 
 int rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_client_notify_event(RailClientContext* context, RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_notify_event_order(rail, notifyEvent);
+
 	return 0;
 }
 
 int rail_client_window_move(RailClientContext* context, RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_window_move_order(rail, windowMove);
+
 	return 0;
 }
 
 int rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_client_information(RailClientContext* context, RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_status_order(rail, clientStatus);
+
 	return 0;
 }
 
 int rail_client_system_menu(RailClientContext* context, RAIL_SYSMENU_ORDER* sysmenu)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_sysmenu_order(rail, sysmenu);
+
 	return 0;
 }
 
 int rail_client_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_langbar_info_order(rail, langBarInfo);
+
 	return 0;
 }
 
 int rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 int rail_client_get_appid_request(RailClientContext* context, RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
 {
+	railPlugin* rail = (railPlugin*) context->handle;
+
+	rail_send_client_get_appid_req_order(rail, getAppIdReq);
+
 	return 0;
 }
 
 int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
-	return 0;
+	return 0; /* stub - should be registered by client */
 }
 
 /* rail is always built-in */
@@ -496,12 +531,13 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		context->ClientExecute = rail_client_execute;
 		context->ClientActivate = rail_client_activate;
-		context->GetSystemParam = rail_get_system_param;
 		context->ClientSystemParam = rail_client_system_param;
 		context->ServerSystemParam = rail_server_system_param;
 		context->ClientSystemCommand = rail_client_system_command;
 		context->ClientHandshake = rail_client_handshake;
 		context->ServerHandshake = rail_server_handshake;
+		context->ClientHandshakeEx = rail_client_handshake_ex;
+		context->ServerHandshakeEx = rail_server_handshake_ex;
 		context->ClientNotifyEvent = rail_client_notify_event;
 		context->ClientWindowMove = rail_client_window_move;
 		context->ServerLocalMoveSize = rail_server_local_move_size;

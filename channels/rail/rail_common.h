@@ -30,6 +30,7 @@ extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 
 /* Fixed length of PDUs, excluding variable lengths */
 #define RAIL_HANDSHAKE_ORDER_LENGTH		4 /* fixed */
+#define RAIL_HANDSHAKE_EX_ORDER_LENGTH		8 /* fixed */
 #define RAIL_CLIENT_STATUS_ORDER_LENGTH		4 /* fixed */
 #define RAIL_EXEC_ORDER_LENGTH			8 /* variable */
 #define RAIL_SYSPARAM_ORDER_LENGTH		4 /* variable */

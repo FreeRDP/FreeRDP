@@ -37,7 +37,6 @@ typedef struct _rail_client_context RailClientContext;
 
 typedef int (*pcRailClientExecute)(RailClientContext* context, RAIL_EXEC_ORDER* exec);
 typedef int (*pcRailClientActivate)(RailClientContext* context, RAIL_ACTIVATE_ORDER* activate);
-typedef int (*pcRailGetSystemParam)(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam);
 typedef int (*pcRailClientSystemParam)(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam);
 typedef int (*pcRailServerSystemParam)(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam);
 typedef int (*pcRailClientSystemCommand)(RailClientContext* context, RAIL_SYSCOMMAND_ORDER* syscommand);
@@ -64,12 +63,13 @@ struct _rail_client_context
 
 	pcRailClientExecute ClientExecute;
 	pcRailClientActivate ClientActivate;
-	pcRailGetSystemParam GetSystemParam;
 	pcRailClientSystemParam ClientSystemParam;
 	pcRailServerSystemParam ServerSystemParam;
 	pcRailClientSystemCommand ClientSystemCommand;
 	pcRailClientHandshake ClientHandshake;
 	pcRailServerHandshake ServerHandshake;
+	pcRailClientHandshakeEx ClientHandshakeEx;
+	pcRailServerHandshakeEx ServerHandshakeEx;
 	pcRailClientNotifyEvent ClientNotifyEvent;
 	pcRailClientWindowMove ClientWindowMove;
 	pcRailServerLocalMoveSize ServerLocalMoveSize;

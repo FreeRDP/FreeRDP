@@ -285,6 +285,12 @@ BOOL rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake
 	if (!rail_read_handshake_order(s, handshake))
 		return FALSE;
 
+	if (context->custom)
+	{
+		IFCALL(context->ServerHandshake, context, handshake);
+		return TRUE;
+	}
+
 	handshake->buildNumber = 0x00001DB0;
 	rail_send_handshake_order(rail, handshake);
 
@@ -321,13 +327,21 @@ BOOL rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake
 	sysparam.workArea.right = 1024;
 	sysparam.workArea.bottom = 768;
 
+	rail_send_channel_event(rail, RailChannel_GetSystemParam, &sysparam);
+
+	return TRUE;
+}
+
+BOOL rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx, wStream* s)
+{
+	RailClientContext* context = rail_get_client_interface(rail);
+
+	if (!rail_read_handshake_ex_order(s, handshakeEx))
+		return FALSE;
+
 	if (context->custom)
 	{
-		IFCALL(context->GetSystemParam, context, &sysparam);
-	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_GetSystemParam, &sysparam);
+		IFCALL(context->ClientHandshakeEx, context, handshakeEx);
 	}
 
 	return TRUE;
@@ -468,6 +482,12 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s)
 			return rail_recv_handshake_order(rail, &handshake, s);
 		}
 
+		case RDP_RAIL_ORDER_HANDSHAKE_EX:
+		{
+			RAIL_HANDSHAKE_EX_ORDER handshakeEx;
+			return rail_recv_handshake_ex_order(rail, &handshakeEx, s);
+		}
+
 		case RDP_RAIL_ORDER_EXEC_RESULT:
 		{
 			RAIL_EXEC_RESULT_ORDER execResult;
@@ -518,6 +538,15 @@ void rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake
 	s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
 	rail_write_handshake_order(s, handshake);
 	rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE);
+	Stream_Free(s, TRUE);
+}
+
+void rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	wStream* s;
+	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
+	rail_write_handshake_ex_order(s, handshakeEx);
+	rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE_EX);
 	Stream_Free(s, TRUE);
 }
 

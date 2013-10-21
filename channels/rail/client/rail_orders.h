@@ -46,6 +46,7 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s);
 void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
 void rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake);
+void rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 void rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus);
 void rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec);
 void rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam);
