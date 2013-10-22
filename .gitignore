@@ -15,7 +15,7 @@ DartConfiguration.tcl
 CMakeCPackOptions.cmake
 _CPack_Packages
 LICENSE.txt
-external/*
+/external/*
 !external/README
 
 *.a.objlist.cmake

@@ -70,10 +70,13 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 void freerdp_client_context_free(rdpContext* context)
 {
 	freerdp* instance = context->instance;
-
-	freerdp_context_free(instance);
-	free(instance->pClientEntryPoints);
-	freerdp_free(instance);
+	if (instance)
+	{
+		freerdp_context_free(instance);
+		free(instance->pClientEntryPoints);
+		freerdp_free(instance);
+		context->instance = NULL;
+	}
 }
 
 int freerdp_client_start(rdpContext* context)

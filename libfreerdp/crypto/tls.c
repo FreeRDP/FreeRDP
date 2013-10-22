@@ -798,21 +798,32 @@ void tls_free(rdpTls* tls)
 	if (tls != NULL)
 	{
 		if (tls->ssl)
+		{
 			SSL_free(tls->ssl);
+			tls->ssl = NULL;
+		}
 
 		if (tls->ctx)
+		{
 			SSL_CTX_free(tls->ctx);
+			tls->ctx = NULL;
+		}
 
 		if (tls->PublicKey)
+		{
 			free(tls->PublicKey);
+			tls->PublicKey = NULL;
+		}
 
 		if (tls->Bindings)
 		{
 			free(tls->Bindings->Bindings);
 			free(tls->Bindings);
+			tls->Bindings = NULL;
 		}
 
 		certificate_store_free(tls->certificate_store);
+		tls->certificate_store = NULL;
 
 		free(tls);
 	}
