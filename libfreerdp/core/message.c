@@ -738,6 +738,26 @@ static void update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	lParam = (WINDOW_ICON_ORDER*) malloc(sizeof(WINDOW_ICON_ORDER));
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 
+	fprintf(stderr, "update_message_WindowIcon\n");
+
+	if (windowIcon->iconInfo->cbBitsColor > 0)
+	{
+		lParam->iconInfo->bitsColor = (BYTE*) malloc(windowIcon->iconInfo->cbBitsColor);
+		CopyMemory(lParam->iconInfo->bitsColor, windowIcon->iconInfo->bitsColor, windowIcon->iconInfo->cbBitsColor);
+	}
+
+	if (windowIcon->iconInfo->cbBitsMask > 0)
+	{
+		lParam->iconInfo->bitsMask = (BYTE*) malloc(windowIcon->iconInfo->cbBitsMask);
+		CopyMemory(lParam->iconInfo->bitsMask, windowIcon->iconInfo->bitsMask, windowIcon->iconInfo->cbBitsMask);
+	}
+
+	if (windowIcon->iconInfo->cbColorTable > 0)
+	{
+		lParam->iconInfo->colorTable = (BYTE*) malloc(windowIcon->iconInfo->cbColorTable);
+		CopyMemory(lParam->iconInfo->colorTable, windowIcon->iconInfo->colorTable, windowIcon->iconInfo->cbColorTable);
+	}
+
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(WindowUpdate, WindowIcon), (void*) wParam, (void*) lParam);
 }
@@ -1356,10 +1376,30 @@ int update_message_process_window_update_class(rdpUpdateProxy* proxy, wMessage* 
 			break;
 
 		case WindowUpdate_WindowIcon:
-			IFCALL(proxy->WindowIcon, msg->context, (WINDOW_ORDER_INFO*) msg->wParam,
-					(WINDOW_ICON_ORDER*) msg->lParam);
-			free(msg->wParam);
-			free(msg->lParam);
+			{
+				WINDOW_ORDER_INFO* orderInfo = (WINDOW_ORDER_INFO*) msg->wParam;
+				WINDOW_ICON_ORDER* windowIcon = (WINDOW_ICON_ORDER*) msg->lParam;
+
+				IFCALL(proxy->WindowIcon, msg->context, orderInfo, windowIcon);
+
+				if (windowIcon->iconInfo->cbBitsColor > 0)
+				{
+					free(windowIcon->iconInfo->bitsColor);
+				}
+
+				if (windowIcon->iconInfo->cbBitsMask > 0)
+				{
+					free(windowIcon->iconInfo->bitsMask);
+				}
+
+				if (windowIcon->iconInfo->cbColorTable > 0)
+				{
+					free(windowIcon->iconInfo->colorTable);
+				}
+
+				free(orderInfo);
+				free(windowIcon);
+			}
 			break;
 
 		case WindowUpdate_WindowCachedIcon:

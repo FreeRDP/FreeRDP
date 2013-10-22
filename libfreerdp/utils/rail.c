@@ -175,9 +175,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 
 	if (event_type == RailChannel_ServerGetAppIdResponse)
 	{
-		RAIL_GET_APPID_RESP_ORDER* new_app_resp = (RAIL_GET_APPID_RESP_ORDER*)new_order;
 
-		new_app_resp->applicationId.string = &new_app_resp->applicationIdBuffer[0];
 	}
 
 	return new_order;
