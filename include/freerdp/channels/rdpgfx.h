@@ -24,6 +24,8 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define RDPGFX_DVC_CHANNEL_NAME	"Microsoft::Windows::RDS::Graphics"
+
 /**
  * Common Data Types
  */
