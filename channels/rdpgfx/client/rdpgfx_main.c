@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -80,6 +81,8 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	int status = 0;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 
+	fprintf(stderr, "RdpGfxOnDataReceived\n");
+
 	s = Stream_New(pBuffer, cbSize);
 
 	status = rdpgfx_recv_pdu(callback, s);
@@ -117,6 +120,8 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
+	fprintf(stderr, "RdpGfxOnNewChannelConnection\n");
+
 	return 0;
 }
 
@@ -136,6 +141,8 @@ static int rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 		(IWTSListenerCallback*) rdpgfx->listener_callback, &(rdpgfx->listener));
 
 	rdpgfx->listener->pInterface = rdpgfx->iface.pInterface;
+
+	fprintf(stderr, "RdpGfxInitialize\n");
 
 	return status;
 }
@@ -190,6 +197,8 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetVersion = rdpgfx_get_version;
 
 		rdpgfx->iface.pInterface = (void*) context;
+
+		fprintf(stderr, "RdpGfxDVCPluginEntry\n");
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) rdpgfx);
 	}

@@ -23,7 +23,16 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include <freerdp/channels/rdpgfx.h>
 
+int rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* point16);
+int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
+int rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16);
+int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16);
+int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
+int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);
+int rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
+int rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_COMMON_H */
 

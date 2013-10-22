@@ -833,6 +833,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	int bm, em;
 	BOOL status;
 	wStream* s;
+	BYTE flags;
 	rdpSettings* settings;
 
 	status = TRUE;
@@ -846,17 +847,24 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	if (nego->selected_protocol > PROTOCOL_RDP)
 	{
+		flags = EXTENDED_CLIENT_DATA_SUPPORTED;
+
+		if (settings->SupportGraphicsPipeline)
+			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
+
 		/* RDP_NEG_DATA must be present for TLS and NLA */
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
-		Stream_Write_UINT8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
+		Stream_Write_UINT8(s, flags); /* flags */
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		Stream_Write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
 		length += 8;
 	}
 	else if (!settings->RdpSecurity)
 	{
+		flags = 0;
+
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_FAILURE);
-		Stream_Write_UINT8(s, 0); /* flags */
+		Stream_Write_UINT8(s, flags); /* flags */
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		/*
 		 * TODO: Check for other possibilities,
