@@ -783,7 +783,7 @@ int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, U
 			{
 				/* we have less bits than we need */
 				i32 = cur_byte >> (8 - cur_bits_left);
-				d32 |= (32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
+				d32 |= (i32 << ((32 - bits_left) - cur_bits_left)) & 0xFFFFFFFF;
 				bits_left += cur_bits_left;
 				tmp -= cur_bits_left;
 				if (cptr < cbuf + len)
