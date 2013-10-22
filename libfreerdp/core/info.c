@@ -22,6 +22,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/crypto/crypto.h>
+#include <stdio.h>
 
 #include "timezone.h"
 
@@ -60,6 +62,14 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
 	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* arcRandomBits (16 bytes) */
+	if ((settings->PrintReconnectCookie) && (autoReconnectCookie->cbLen > 0))
+	{
+		char *base64;
+		base64 = crypto_base64_encode((BYTE *) autoReconnectCookie,
+			sizeof(ARC_SC_PRIVATE_PACKET));
+		fprintf(stderr, "Reconnect-cookie: %s\n", base64);
+		free(base64);
+	}
 	return TRUE;
 }
 
@@ -188,7 +198,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	cbClientDir = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
 
-	cbAutoReconnectLen = (int) settings->ClientAutoReconnectCookie->cbLen;
+	cbAutoReconnectLen = (int) settings->ServerAutoReconnectCookie->cbLen;
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily */
 
@@ -214,7 +224,41 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
 
 	if (cbAutoReconnectLen > 0)
+	{
+		CryptoHmac hmac;
+		ARC_SC_PRIVATE_PACKET* serverCookie;
+		ARC_CS_PRIVATE_PACKET* clientCookie;
+
+		printf("Sending auto reconnect\n");
+		serverCookie = settings->ServerAutoReconnectCookie;
+		clientCookie = settings->ClientAutoReconnectCookie;
+
+		clientCookie->cbLen = serverCookie->cbLen;
+		clientCookie->version = serverCookie->version;
+		clientCookie->logonId = serverCookie->logonId;
+
+		hmac = crypto_hmac_new();
+		crypto_hmac_md5_init(hmac, serverCookie->arcRandomBits, 16);
+		if (settings->SelectedProtocol == PROTOCOL_RDP)
+		{
+			crypto_hmac_update(hmac, (BYTE *) (settings->ClientRandom), 32);
+		}
+		else
+		{
+			/* Anthony Tong's version had 16 zeroes here; I'm not sure why.
+			 * I do know that 16 did not reconnect correctly vs Win2008RDVH,
+			 * and 32 did.
+			 */
+			const BYTE zeros[32] = { 0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,
+				0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 };
+			crypto_hmac_update(hmac, zeros, 32);
+		}
+		crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
+
 		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+		/* mark as used */
+		settings->ServerAutoReconnectCookie->cbLen = 0;
+	}
 
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */

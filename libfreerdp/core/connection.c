@@ -380,7 +380,6 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	UINT32 length;
 	UINT32 key_len;
 	BYTE crypt_client_random[256 + 8];
-	BYTE client_random[CLIENT_RANDOM_LENGTH];
 
 	if (!rdp->settings->DisableEncryption)
 	{
@@ -389,12 +388,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	/* encrypt client random */
+	if (rdp->settings->ClientRandom) free(rdp->settings->ClientRandom);
+	rdp->settings->ClientRandom = malloc(CLIENT_RANDOM_LENGTH);
+	if (rdp->settings->ClientRandom == NULL) return FALSE;
 	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
-	crypto_nonce(client_random, sizeof(client_random));
+	crypto_nonce(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH);
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
 	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
-	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
+	crypto_rsa_public_encrypt(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
@@ -416,7 +418,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	Stream_Free(s, TRUE);
 
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(client_random, rdp))
+	if (!security_establish_keys(rdp->settings->ClientRandom, rdp))
 	{
 		return FALSE;
 	}
