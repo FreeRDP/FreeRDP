@@ -138,10 +138,7 @@ BOOL rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER
 		return FALSE;
 
 	Stream_Read_UINT32(s, getAppidResp->windowId); /* windowId (4 bytes) */
-	Stream_Read(s, &getAppidResp->applicationIdBuffer[0], 512); /* applicationId (256 UNICODE chars) */
-
-	getAppidResp->applicationId.length = 512;
-	getAppidResp->applicationId.string = &getAppidResp->applicationIdBuffer[0];
+	Stream_Read(s, (BYTE*) &(getAppidResp->applicationId), 512); /* applicationId (256 UNICODE chars) */
 
 	return TRUE;
 }

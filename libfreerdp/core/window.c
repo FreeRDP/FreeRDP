@@ -28,98 +28,98 @@
 
 #include "window.h"
 
-BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
+BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	Stream_Read_UINT8(s, icon_info->cacheId); /* cacheId (1 byte) */
-	Stream_Read_UINT8(s, icon_info->bpp); /* bpp (1 byte) */
-	Stream_Read_UINT16(s, icon_info->width); /* width (2 bytes) */
-	Stream_Read_UINT16(s, icon_info->height); /* height (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->cacheEntry); /* cacheEntry (2 bytes) */
+	Stream_Read_UINT8(s, iconInfo->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT8(s, iconInfo->bpp); /* bpp (1 byte) */
+	Stream_Read_UINT16(s, iconInfo->width); /* width (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->height); /* height (2 bytes) */
 
 	/* cbColorTable is only present when bpp is 1, 2 or 4 */
-	if (icon_info->bpp == 1 || icon_info->bpp == 2 || icon_info->bpp == 4)
+	if (iconInfo->bpp == 1 || iconInfo->bpp == 2 || iconInfo->bpp == 4)
 	{
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
 
-		Stream_Read_UINT16(s, icon_info->cbColorTable); /* cbColorTable (2 bytes) */
+		Stream_Read_UINT16(s, iconInfo->cbColorTable); /* cbColorTable (2 bytes) */
 	}
 	else
 	{
-		icon_info->cbColorTable = 0;
+		iconInfo->cbColorTable = 0;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT16(s, icon_info->cbBitsMask); /* cbBitsMask (2 bytes) */
-	Stream_Read_UINT16(s, icon_info->cbBitsColor); /* cbBitsColor (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->cbBitsMask); /* cbBitsMask (2 bytes) */
+	Stream_Read_UINT16(s, iconInfo->cbBitsColor); /* cbBitsColor (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < icon_info->cbBitsMask + icon_info->cbBitsColor)
+	if (Stream_GetRemainingLength(s) < iconInfo->cbBitsMask + iconInfo->cbBitsColor)
 		return FALSE;
 
 	/* bitsMask */
-	if (icon_info->bitsMask == NULL)
-		icon_info->bitsMask = (BYTE*) malloc(icon_info->cbBitsMask);
+	if (iconInfo->bitsMask == NULL)
+		iconInfo->bitsMask = (BYTE*) malloc(iconInfo->cbBitsMask);
 	else
-		icon_info->bitsMask = (BYTE*) realloc(icon_info->bitsMask, icon_info->cbBitsMask);
+		iconInfo->bitsMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 
-	Stream_Read(s, icon_info->bitsMask, icon_info->cbBitsMask);
+	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
 
 	/* colorTable */
-	if (icon_info->colorTable == NULL)
+	if (iconInfo->colorTable == NULL)
 	{
-		if (icon_info->cbColorTable)
-			icon_info->colorTable = (BYTE*) malloc(icon_info->cbColorTable);
+		if (iconInfo->cbColorTable)
+			iconInfo->colorTable = (BYTE*) malloc(iconInfo->cbColorTable);
 	}
-	else if (icon_info->cbColorTable)
+	else if (iconInfo->cbColorTable)
 	{
-		icon_info->colorTable = (BYTE*) realloc(icon_info->colorTable, icon_info->cbColorTable);
+		iconInfo->colorTable = (BYTE*) realloc(iconInfo->colorTable, iconInfo->cbColorTable);
 	}
 	else
 	{
-		free(icon_info->colorTable);
-		icon_info->colorTable = NULL;
+		free(iconInfo->colorTable);
+		iconInfo->colorTable = NULL;
 	}
 
-	if (icon_info->colorTable)
-		Stream_Read(s, icon_info->colorTable, icon_info->cbColorTable);
+	if (iconInfo->colorTable)
+		Stream_Read(s, iconInfo->colorTable, iconInfo->cbColorTable);
 
 	/* bitsColor */
-	if (icon_info->bitsColor == NULL)
-		icon_info->bitsColor = (BYTE*) malloc(icon_info->cbBitsColor);
+	if (iconInfo->bitsColor == NULL)
+		iconInfo->bitsColor = (BYTE*) malloc(iconInfo->cbBitsColor);
 	else
-		icon_info->bitsColor = (BYTE*) realloc(icon_info->bitsColor, icon_info->cbBitsColor);
+		iconInfo->bitsColor = (BYTE*) realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
 
-	Stream_Read(s, icon_info->bitsColor, icon_info->cbBitsColor);
+	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
 
 	return TRUE;
 }
 
-BOOL update_read_cached_icon_info(wStream* s, CACHED_ICON_INFO* cached_icon_info)
+BOOL update_read_cached_icon_info(wStream* s, CACHED_ICON_INFO* cachedIconInfo)
 {
 	if (Stream_GetRemainingLength(s) < 3)
 		return FALSE;
 
-	Stream_Read_UINT16(s, cached_icon_info->cacheEntry); /* cacheEntry (2 bytes) */
-	Stream_Read_UINT8(s, cached_icon_info->cacheId); /* cacheId (1 byte) */
+	Stream_Read_UINT16(s, cachedIconInfo->cacheEntry); /* cacheEntry (2 bytes) */
+	Stream_Read_UINT8(s, cachedIconInfo->cacheId); /* cacheId (1 byte) */
 
 	return TRUE;
 }
 
-BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* notify_icon_infotip)
+BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* notifyIconInfoTip)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, notify_icon_infotip->timeout); /* timeout (4 bytes) */
-	Stream_Read_UINT32(s, notify_icon_infotip->flags); /* infoFlags (4 bytes) */
+	Stream_Read_UINT32(s, notifyIconInfoTip->timeout); /* timeout (4 bytes) */
+	Stream_Read_UINT32(s, notifyIconInfoTip->flags); /* infoFlags (4 bytes) */
 
-	return rail_read_unicode_string(s, &notify_icon_infotip->text) && /* infoTipText */
-			rail_read_unicode_string(s, &notify_icon_infotip->title); /* title */
+	return rail_read_unicode_string(s, &notifyIconInfoTip->text) && /* infoTipText */
+			rail_read_unicode_string(s, &notifyIconInfoTip->title); /* title */
 }
 
 BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)

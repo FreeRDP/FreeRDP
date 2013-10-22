@@ -332,8 +332,7 @@ typedef struct _RAIL_GET_APPID_REQ_ORDER RAIL_GET_APPID_REQ_ORDER;
 struct _RAIL_GET_APPID_RESP_ORDER
 {
 	UINT32 windowId;
-	RAIL_UNICODE_STRING applicationId;
-	BYTE applicationIdBuffer[512];
+	WCHAR applicationId[256];
 };
 typedef struct _RAIL_GET_APPID_RESP_ORDER RAIL_GET_APPID_RESP_ORDER;
 

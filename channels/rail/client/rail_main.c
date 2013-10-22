@@ -269,6 +269,9 @@ int rail_client_execute(RailClientContext* context, RAIL_EXEC_ORDER* exec)
 
 	exeOrFile = exec->RemoteApplicationProgram;
 
+	if (!exeOrFile)
+		return -1;
+
 	if (strlen(exeOrFile) >= 2)
 	{
 		if (strncmp(exeOrFile, "||", 2) != 0)
