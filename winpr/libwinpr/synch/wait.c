@@ -150,9 +150,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
 				if (ETIMEDOUT == status)
-				{
 					return WAIT_TIMEOUT;
-				}
 			}
 			else
 				status = pthread_join(thread->thread, &thread_status);
@@ -180,7 +178,9 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			clock_gettime(CLOCK_REALTIME, &timeout);
 			ts_add_ms(&timeout, dwMilliseconds);	
 
-			pthread_mutex_timedlock(&mutex->mutex, &timeout);
+			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
+			if (ETIMEDOUT == status)
+				return WAIT_TIMEOUT;
 		}
 		else
 		{
