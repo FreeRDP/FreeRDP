@@ -29,6 +29,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 
 #include <freerdp/client/cmdline.h>
@@ -141,6 +142,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "print help" },
 	{ "play-rfx", COMMAND_LINE_VALUE_REQUIRED, "<pcap file>", NULL, NULL, -1, NULL, "Replay rfx pcap file" },
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Authenticate only." },
+	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64 cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },
+	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -1676,6 +1679,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "auth-only")
 		{
 			settings->AuthenticationOnly = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "reconnect-cookie")
+		{
+			BYTE *base64;
+			int length;
+			crypto_base64_decode((BYTE *) (arg->Value),
+				(int) strlen(arg->Value), &base64, &length);
+			if ((base64 != NULL) && (length == sizeof(ARC_SC_PRIVATE_PACKET)))
+			{
+				memcpy(settings->ServerAutoReconnectCookie, base64, length);
+				free(base64);
+			}
+			else
+			{
+				fprintf(stderr, "reconnect-cookie:  invalid base64 '%s'\n",
+					arg->Value);
+			}
+		}
+		CommandLineSwitchCase(arg, "print-reconnect-cookie")
+		{
+			settings->PrintReconnectCookie = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{

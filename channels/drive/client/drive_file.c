@@ -595,7 +595,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 	free(ent_path);
 	ent_path = NULL;
 
-	length = ConvertToUnicode(CP_UTF8, 0, ent->d_name, -1, &ent_path, 0) * 2;
+	length = ConvertToUnicode(sys_code_page, 0, ent->d_name, -1, &ent_path, 0) * 2;
 
 	ret = TRUE;
 

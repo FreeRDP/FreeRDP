@@ -797,7 +797,8 @@ struct rdp_settings
 	ALIGN64 DWORD ServerRandomLength; /* 197 */
 	ALIGN64 BYTE* ServerCertificate; /* 198 */
 	ALIGN64 DWORD ServerCertificateLength; /* 199 */
-	UINT64 padding0256[256 - 200]; /* 200 */
+	ALIGN64 BYTE* ClientRandom; /* 200 */
+	UINT64 padding0256[256 - 201]; /* 201 */
 
 	/* Client Network Data */
 	ALIGN64 UINT32 ChannelCount; /* 256 */
@@ -873,7 +874,8 @@ struct rdp_settings
 	ALIGN64 UINT32 AutoReconnectMaxRetries; /* 833 */
 	ALIGN64 ARC_CS_PRIVATE_PACKET* ClientAutoReconnectCookie; /* 834 */
 	ALIGN64 ARC_SC_PRIVATE_PACKET* ServerAutoReconnectCookie; /* 835 */
-	UINT64 padding0896[896 - 835]; /* 835 */
+	ALIGN64 BOOL PrintReconnectCookie; /* 836 */
+	UINT64 padding0896[896 - 837]; /* 837 */
 
 	/* Client Info (Time Zone) */
 	ALIGN64 TIME_ZONE_INFO* ClientTimeZone; /* 896 */

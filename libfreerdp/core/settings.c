@@ -786,6 +786,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->ClientHostname);
 		free(settings->ClientProductId);
 		free(settings->ServerRandom);
+		if (settings->ClientRandom) free(settings->ClientRandom);
 		free(settings->ServerCertificate);
 		free(settings->RdpKeyFile);
 		certificate_free(settings->RdpServerCertificate);
