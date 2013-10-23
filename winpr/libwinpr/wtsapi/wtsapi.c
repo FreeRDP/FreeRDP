@@ -301,11 +301,11 @@ BOOL VirtualChannelIoctl(HANDLE hChannelHandle, ULONG IoControlCode)
 		return FALSE;
 	}
 
-	ntstatus = NtDeviceIoControlFile(hChannelHandle, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
+	ntstatus = _NtDeviceIoControlFile(hChannelHandle, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
 
 	if (ntstatus == STATUS_PENDING)
 	{
-		ntstatus = NtWaitForSingleObject(hChannelHandle, 0, 0);
+		ntstatus = _NtWaitForSingleObject(hChannelHandle, 0, 0);
 
 		if (ntstatus >= 0)
 			ntstatus = ioStatusBlock.status;
@@ -314,14 +314,14 @@ BOOL VirtualChannelIoctl(HANDLE hChannelHandle, ULONG IoControlCode)
 	if (ntstatus == STATUS_BUFFER_OVERFLOW)
 	{
 		ntstatus = STATUS_BUFFER_TOO_SMALL;
-		error = RtlNtStatusToDosError(ntstatus);
+		error = _RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}
 
 	if (ntstatus < 0)
 	{
-		error = RtlNtStatusToDosError(ntstatus);
+		error = _RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}

@@ -37,6 +37,7 @@ typedef CHAR TCHAR;
 
 #ifdef UNICODE
 #define _tprintf	wprintf
+#define _tcslen		_wcslen
 #define _tcsdup		_wcsdup
 #define _tcscmp		wcscmp
 #define _tcscpy		wcscpy
@@ -47,6 +48,7 @@ typedef CHAR TCHAR;
 #define _stprintf_s	swprintf_s
 #else
 #define _tprintf	printf
+#define _tcslen		strlen
 #define _tcsdup		_strdup
 #define _tcscmp		strcmp
 #define _tcscpy		strcpy
