@@ -27,7 +27,10 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 
 	free(p);
 
-	if (SetEnvironmentVariableEBA(lpszEnvironmentBlock,"test","5",&lpszEnvironmentBlockNew) ) {
+	lpszEnvironmentBlockNew = (LPTCH)malloc(1024);
+	memcpy(lpszEnvironmentBlockNew,lpszEnvironmentBlock,56);
+
+	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew,"test","5") ) {
 
 		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"test", test, 1023) ) {
 			if (strcmp(test,"5") != 0) {
@@ -38,9 +41,9 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		}
 	}
 
-	free(lpszEnvironmentBlockNew);
+	//free(lpszEnvironmentBlockNew);
 
-	if (SetEnvironmentVariableEBA(lpszEnvironmentBlock,"test",NULL,&lpszEnvironmentBlockNew) ) {
+	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew,"test",NULL) ) {
 
 		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"test", test, 1023) ) {
 			return -1;

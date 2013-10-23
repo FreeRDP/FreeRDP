@@ -232,11 +232,12 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 	return TRUE;
 }
 
-BOOL SetEnvironmentVariableEBA(LPCSTR envBlock,LPCSTR lpName, LPCSTR lpValue, LPSTR * newEnvBlock)
+BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR lpValue)
 {
 	int length;
 	char* envstr;
 	char* newEB;
+
 
 	if (!lpName)
 		return FALSE;
@@ -249,9 +250,11 @@ BOOL SetEnvironmentVariableEBA(LPCSTR envBlock,LPCSTR lpName, LPCSTR lpValue, LP
 		sprintf_s(envstr, length + 1, "%s=%s", lpName, lpValue);
 		envstr[length] = '\0';
 
-		newEB = MergeEnvironmentStrings(envBlock,envstr);
+		newEB = MergeEnvironmentStrings((LPCSTR)*envBlock,envstr);
 		free(envstr);
-		*newEnvBlock = newEB;
+		if (*envBlock != NULL)
+			free(*envBlock);
+		*envBlock = newEB;
 		return TRUE;
 	}
 	else
@@ -261,9 +264,11 @@ BOOL SetEnvironmentVariableEBA(LPCSTR envBlock,LPCSTR lpName, LPCSTR lpValue, LP
 		sprintf_s(envstr, length + 1, "%s=", lpName);
 		envstr[length] = '\0';
 
-		newEB = MergeEnvironmentStrings(envBlock,envstr);
+		newEB = MergeEnvironmentStrings((LPCSTR)*envBlock,envstr);
 		free(envstr);
-		*newEnvBlock = newEB;
+		if (*envBlock != NULL)
+			free(*envBlock);
+		*envBlock = newEB;
 		return TRUE;
 	}
 }

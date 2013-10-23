@@ -76,7 +76,7 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
 
 WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
-WINPR_API BOOL SetEnvironmentVariableEBA(LPCSTR envBlock,LPCSTR lpName, LPCSTR lpValue, LPSTR * newEnvBlock);
+WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR lpValue);
 
 #ifdef __cplusplus
 }
