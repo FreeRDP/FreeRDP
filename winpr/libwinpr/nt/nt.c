@@ -34,6 +34,68 @@
  */
 
 /**
+ * InitializeObjectAttributes macro
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff547804/
+ */
+
+VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
+		PUNICODE_STRING ObjectName, ULONG Attributes, HANDLE RootDirectory,
+		PSECURITY_DESCRIPTOR SecurityDescriptor)
+{
+#ifdef _WIN32
+	InitializeObjectAttributes(InitializedAttributes, ObjectName,
+		Attributes, RootDirectory, SecurityDescriptor);
+#else
+	InitializedAttributes->Length = sizeof(OBJECT_ATTRIBUTES);
+	InitializedAttributes->ObjectName = ObjectName;
+	InitializedAttributes->Attributes = Attributes;
+	InitializedAttributes->RootDirectory = RootDirectory;
+	InitializedAttributes->SecurityDescriptor = SecurityDescriptor;
+	InitializedAttributes->SecurityQualityOfService = NULL;
+#endif
+}
+
+#ifndef _WIN32
+
+#include "nt.h"
+
+#include <pthread.h>
+
+#include <winpr/crt.h>
+
+static pthread_once_t _TebOnceControl = PTHREAD_ONCE_INIT;
+static pthread_key_t  _TebKey;
+
+static void _TebDestruct(void *teb)
+{
+	free(teb);
+}
+
+static void _TebInitOnce(void)
+{
+	pthread_key_create(&_TebKey, _TebDestruct);
+}
+
+PTEB NtCurrentTeb(void)
+{
+	PTEB teb = NULL;
+
+	if (pthread_once(&_TebOnceControl, _TebInitOnce) == 0)
+	{
+		if ((teb = pthread_getspecific(_TebKey)) == NULL)
+		{
+			teb = malloc(sizeof(TEB));
+			if (teb)
+			{
+				ZeroMemory(teb, sizeof(TEB));
+				pthread_setspecific(_TebKey, teb);
+			}
+		}
+	}
+	return teb;
+}
+
+/**
  * RtlInitAnsiString routine:
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff561918/
  */
@@ -138,63 +200,6 @@ VOID _RtlFreeUnicodeString(PUNICODE_STRING UnicodeString)
 ULONG _RtlNtStatusToDosError(NTSTATUS status)
 {
 	return status;
-}
-
-/**
- * InitializeObjectAttributes macro
- * http://msdn.microsoft.com/en-us/library/windows/hardware/ff547804/
- */
-
-VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
-		PUNICODE_STRING ObjectName, ULONG Attributes, HANDLE RootDirectory,
-		PSECURITY_DESCRIPTOR SecurityDescriptor)
-{
-	InitializedAttributes->Length = sizeof(OBJECT_ATTRIBUTES);
-	InitializedAttributes->ObjectName = ObjectName;
-	InitializedAttributes->Attributes = Attributes;
-	InitializedAttributes->RootDirectory = RootDirectory;
-	InitializedAttributes->SecurityDescriptor = SecurityDescriptor;
-	InitializedAttributes->SecurityQualityOfService = NULL;
-}
-
-#ifndef _WIN32
-
-#include "nt.h"
-
-#include <pthread.h>
-
-#include <winpr/crt.h>
-
-static pthread_once_t _TebOnceControl = PTHREAD_ONCE_INIT;
-static pthread_key_t  _TebKey;
-
-static void _TebDestruct(void *teb)
-{
-	free(teb);
-}
-
-static void _TebInitOnce(void)
-{
-	pthread_key_create(&_TebKey, _TebDestruct);
-}
-
-PTEB NtCurrentTeb(void)
-{
-	PTEB teb = NULL;
-
-	if (pthread_once(&_TebOnceControl, _TebInitOnce) == 0)
-	{
-		if ((teb = pthread_getspecific(_TebKey)) == NULL)
-		{
-			teb = malloc(sizeof(TEB));
-			if (teb)
-			{
-				ZeroMemory(teb, sizeof(TEB));
-				pthread_setspecific(_TebKey, teb);
-			}
-		}
-	}
-	return teb;
 }
 
 /**
@@ -326,6 +331,17 @@ static HMODULE NtdllModule = NULL;
 static BOOL moduleAvailable = FALSE;
 static BOOL moduleInitialized = FALSE;
 
+typedef VOID (WINAPI * RTL_INIT_ANSI_STRING_FN)(PANSI_STRING DestinationString, PCSZ SourceString);
+
+typedef VOID (WINAPI * RTL_INIT_UNICODE_STRING_FN)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
+
+typedef NTSTATUS (WINAPI * RTL_ANSI_STRING_TO_UNICODE_STRING_FN)(PUNICODE_STRING DestinationString,
+		PCANSI_STRING SourceString, BOOLEAN AllocateDestinationString);
+
+typedef VOID (WINAPI * RTL_FREE_UNICODE_STRING_FN)(PUNICODE_STRING UnicodeString);
+
+typedef ULONG (WINAPI * RTL_NT_STATUS_TO_DOS_ERROR_FN)(NTSTATUS status);
+
 typedef NTSTATUS (WINAPI * NT_CREATE_FILE_FN)(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
 		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
@@ -348,6 +364,11 @@ typedef NTSTATUS (WINAPI * NT_DEVICE_IO_CONTROL_FILE_FN)(HANDLE FileHandle, HAND
 
 typedef NTSTATUS (WINAPI * NT_CLOSE_FN)(HANDLE Handle);
 
+static RTL_INIT_ANSI_STRING_FN pRtlInitAnsiString = NULL;
+static RTL_INIT_UNICODE_STRING_FN pRtlInitUnicodeString = NULL;
+static RTL_ANSI_STRING_TO_UNICODE_STRING_FN pRtlAnsiStringToUnicodeString = NULL;
+static RTL_FREE_UNICODE_STRING_FN pRtlFreeUnicodeString = NULL;
+static RTL_NT_STATUS_TO_DOS_ERROR_FN pRtlNtStatusToDosError = NULL;
 static NT_CREATE_FILE_FN pNtCreateFile = NULL;
 static NT_OPEN_FILE_FN pNtOpenFile = NULL;
 static NT_READ_FILE_FN pNtReadFile = NULL;
@@ -368,12 +389,69 @@ static void NtdllModuleInit()
 
 	moduleAvailable = TRUE;
 
+	pRtlInitAnsiString = (RTL_INIT_ANSI_STRING_FN) GetProcAddress(NtdllModule, "RtlInitAnsiString");
+	pRtlInitUnicodeString = (RTL_INIT_UNICODE_STRING_FN) GetProcAddress(NtdllModule, "RtlInitUnicodeString");
+	pRtlAnsiStringToUnicodeString = (RTL_ANSI_STRING_TO_UNICODE_STRING_FN) GetProcAddress(NtdllModule, "RtlAnsiStringToUnicodeString");
+	pRtlFreeUnicodeString = (RTL_FREE_UNICODE_STRING_FN) GetProcAddress(NtdllModule, "RtlFreeUnicodeString");
+	pRtlNtStatusToDosError = (RTL_NT_STATUS_TO_DOS_ERROR_FN) GetProcAddress(NtdllModule, "RtlNtStatusToDosError");
 	pNtCreateFile = (NT_CREATE_FILE_FN) GetProcAddress(NtdllModule, "NtCreateFile");
 	pNtOpenFile = (NT_OPEN_FILE_FN) GetProcAddress(NtdllModule, "NtOpenFile");
 	pNtReadFile = (NT_READ_FILE_FN) GetProcAddress(NtdllModule, "NtReadFile");
 	pNtWriteFile = (NT_WRITE_FILE_FN) GetProcAddress(NtdllModule, "NtWriteFile");
 	pNtDeviceIoControlFile = (NT_DEVICE_IO_CONTROL_FILE_FN) GetProcAddress(NtdllModule, "NtDeviceIoControlFile");
 	pNtClose = (NT_CLOSE_FN) GetProcAddress(NtdllModule, "NtClose");
+}
+
+VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
+{
+	NtdllModuleInit();
+
+	if (!pRtlInitAnsiString)
+		return;
+
+	pRtlInitAnsiString(DestinationString, SourceString);
+}
+
+VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString)
+{
+	NtdllModuleInit();
+
+	if (!pRtlInitUnicodeString)
+		return;
+
+	pRtlInitUnicodeString(DestinationString, SourceString);
+}
+
+NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
+		PCANSI_STRING SourceString, BOOLEAN AllocateDestinationString)
+{
+	NtdllModuleInit();
+
+	if (!pRtlAnsiStringToUnicodeString)
+		return STATUS_INTERNAL_ERROR;
+
+	return pRtlAnsiStringToUnicodeString(DestinationString,
+		SourceString, AllocateDestinationString);
+}
+
+VOID _RtlFreeUnicodeString(PUNICODE_STRING UnicodeString)
+{
+	NtdllModuleInit();
+
+	if (!pRtlFreeUnicodeString)
+		return;
+
+	pRtlFreeUnicodeString(UnicodeString);
+}
+
+ULONG _RtlNtStatusToDosError(NTSTATUS status)
+{
+	NtdllModuleInit();
+
+	if (!pRtlNtStatusToDosError)
+		return status;
+
+	return pRtlNtStatusToDosError(status);
 }
 
 NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
