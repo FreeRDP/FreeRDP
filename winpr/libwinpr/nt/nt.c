@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/library.h>
 
 #include <winpr/nt.h>
 
@@ -223,6 +224,9 @@ NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 
 	*((PULONG_PTR) FileHandle) = (ULONG_PTR) pFileHandle;
 
+	//STATUS_OBJECT_PATH_NOT_FOUND
+	//STATUS_OBJECT_NAME_NOT_FOUND
+
 	return STATUS_SUCCESS;
 }
 
@@ -318,31 +322,110 @@ NTSTATUS _NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER
 
 #else
 
+static HMODULE NtdllModule = NULL;
+static BOOL moduleAvailable = FALSE;
+static BOOL moduleInitialized = FALSE;
+
+typedef NTSTATUS (WINAPI * NT_CREATE_FILE_FN)(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
+		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength);
+
+typedef NTSTATUS (WINAPI * NT_OPEN_FILE_FN)(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+		ULONG ShareAccess, ULONG OpenOptions);
+
+typedef NTSTATUS (WINAPI * NT_READ_FILE_FN)(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+
+typedef NTSTATUS (WINAPI * NT_WRITE_FILE_FN)(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+
+typedef NTSTATUS (WINAPI * NT_DEVICE_IO_CONTROL_FILE_FN)(HANDLE FileHandle, HANDLE Event,
+		PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock,
+		ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength,
+		PVOID OutputBuffer, ULONG OutputBufferLength);
+
+typedef NTSTATUS (WINAPI * NT_CLOSE_FN)(HANDLE Handle);
+
+static NT_CREATE_FILE_FN pNtCreateFile = NULL;
+static NT_OPEN_FILE_FN pNtOpenFile = NULL;
+static NT_READ_FILE_FN pNtReadFile = NULL;
+static NT_WRITE_FILE_FN pNtWriteFile = NULL;
+static NT_DEVICE_IO_CONTROL_FILE_FN pNtDeviceIoControlFile = NULL;
+static NT_CLOSE_FN pNtClose = NULL;
+
+static void NtdllModuleInit()
+{
+	if (moduleInitialized)
+		return;
+
+	NtdllModule = LoadLibraryA("ntdll.dll");
+	moduleInitialized = TRUE;
+
+	if (!NtdllModule)
+		return;
+
+	moduleAvailable = TRUE;
+
+	pNtCreateFile = (NT_CREATE_FILE_FN) GetProcAddress(NtdllModule, "NtCreateFile");
+	pNtOpenFile = (NT_OPEN_FILE_FN) GetProcAddress(NtdllModule, "NtOpenFile");
+	pNtReadFile = (NT_READ_FILE_FN) GetProcAddress(NtdllModule, "NtReadFile");
+	pNtWriteFile = (NT_WRITE_FILE_FN) GetProcAddress(NtdllModule, "NtWriteFile");
+	pNtDeviceIoControlFile = (NT_DEVICE_IO_CONTROL_FILE_FN) GetProcAddress(NtdllModule, "NtDeviceIoControlFile");
+	pNtClose = (NT_CLOSE_FN) GetProcAddress(NtdllModule, "NtClose");
+}
+
 NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
 		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
 		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtCreateFile)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtCreateFile(FileHandle, DesiredAccess, ObjectAttributes,
+		IoStatusBlock, AllocationSize, FileAttributes, ShareAccess,
+		CreateDisposition, CreateOptions, EaBuffer, EaLength);
 }
 
 NTSTATUS _NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
 		ULONG ShareAccess, ULONG OpenOptions)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtOpenFile)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtOpenFile(FileHandle, DesiredAccess, ObjectAttributes,
+		IoStatusBlock, ShareAccess, OpenOptions);
 }
 
 NTSTATUS _NtReadFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
 		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtReadFile)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtReadFile(FileHandle, Event, ApcRoutine, ApcContext,
+		IoStatusBlock, Buffer, Length, ByteOffset, Key);
 }
 
 NTSTATUS _NtWriteFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
 		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtWriteFile)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtWriteFile(FileHandle, Event, ApcRoutine, ApcContext,
+		IoStatusBlock, Buffer, Length, ByteOffset, Key);
 }
 
 NTSTATUS _NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
@@ -350,12 +433,24 @@ NTSTATUS _NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
 		ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength,
 		PVOID OutputBuffer, ULONG OutputBufferLength)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtDeviceIoControlFile)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtDeviceIoControlFile(FileHandle, Event,
+		ApcRoutine, ApcContext, IoStatusBlock, IoControlCode,
+		InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
 }
 
 NTSTATUS _NtClose(HANDLE Handle)
 {
-	return STATUS_SUCCESS;
+	NtdllModuleInit();
+
+	if (!pNtClose)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtClose(Handle);
 }
 
 #endif
