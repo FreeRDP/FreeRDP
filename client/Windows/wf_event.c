@@ -518,7 +518,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		case WM_ACTIVATE:
 			{
-				int activate = (int)(short) LOWORD(lParam);
+				int activate = (int)(short) LOWORD(wParam);
 				if (activate != WA_INACTIVE)
 				{
 					g_focus_hWnd = hWnd;
