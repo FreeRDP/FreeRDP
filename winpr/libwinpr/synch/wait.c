@@ -167,6 +167,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
+		int status;
 		WINPR_MUTEX* mutex;
 
 		mutex = (WINPR_MUTEX*) Object;
