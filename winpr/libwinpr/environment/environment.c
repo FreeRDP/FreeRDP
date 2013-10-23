@@ -373,7 +373,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 	envp  = original;
 
-	while (*envp && *(envp+1))
+	while ((original != NULL) && (*envp && *(envp+1)))
 	{
 		length = strlen(envp);
 
