@@ -106,6 +106,7 @@ typedef struct crypto_hmac_struct* CryptoHmac;
 
 FREERDP_API CryptoHmac crypto_hmac_new(void);
 FREERDP_API void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE *data, UINT32 length);
+FREERDP_API void crypto_hmac_md5_init(CryptoHmac hmac, const BYTE *data, UINT32 length);
 FREERDP_API void crypto_hmac_update(CryptoHmac hmac, const BYTE *data, UINT32 length);
 FREERDP_API void crypto_hmac_final(CryptoHmac hmac, BYTE *out_data, UINT32 length);
 FREERDP_API void crypto_hmac_free(CryptoHmac hmac);
