@@ -5,7 +5,8 @@
 
 int TestNtCreateFile(int argc, char* argv[])
 {
-#if 0
+#ifndef _WIN32
+
 	HANDLE handle;
 	NTSTATUS ntstatus;
 	ULONG CreateOptions;
@@ -18,7 +19,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	RtlInitAnsiString(&aString, "\\Device\\FreeRDP\\TEST");
 	RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 
-	InitializeObjectAttributes(&attributes, NULL, 0, NULL, NULL);
+	InitializeObjectAttributes(&attributes, &uString, 0, NULL, NULL);
 
 	DesiredAccess = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
 	CreateOptions = FILE_DIRECTORY_FILE | FILE_WRITE_THROUGH;
@@ -26,6 +27,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	ntstatus = NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock, 0, 0, 0, CreateOptions, 0, 0, 0);
 
 	RtlFreeUnicodeString(&uString);
+
 #endif
 
 	return 0;

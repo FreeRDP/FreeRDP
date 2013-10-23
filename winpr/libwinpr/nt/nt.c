@@ -32,6 +32,8 @@
 
 #ifndef _WIN32
 
+#include "nt.h"
+
 #include <pthread.h>
 
 #include <winpr/crt.h>
@@ -202,7 +204,24 @@ NTSTATUS NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
 		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
 {
-	return 0;
+	WINPR_FILE* pFileHandle;
+
+	pFileHandle = (WINPR_FILE*) malloc(sizeof(WINPR_FILE));
+
+	if (!pFileHandle)
+		return 0;
+
+	ZeroMemory(pFileHandle, sizeof(WINPR_FILE));
+
+	pFileHandle->DesiredAccess = DesiredAccess;
+	pFileHandle->FileAttributes = FileAttributes;
+	pFileHandle->ShareAccess = ShareAccess;
+	pFileHandle->CreateDisposition = CreateDisposition;
+	pFileHandle->CreateOptions = CreateOptions;
+
+	*((PULONG_PTR) FileHandle) = (ULONG_PTR) pFileHandle;
+
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -214,7 +233,43 @@ NTSTATUS NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
 		ULONG ShareAccess, ULONG OpenOptions)
 {
-	return 0;
+	WINPR_FILE* pFileHandle;
+
+	pFileHandle = (WINPR_FILE*) malloc(sizeof(WINPR_FILE));
+
+	if (!pFileHandle)
+		return 0;
+
+	ZeroMemory(pFileHandle, sizeof(WINPR_FILE));
+
+	pFileHandle->DesiredAccess = DesiredAccess;
+	pFileHandle->ShareAccess = ShareAccess;
+
+	*((PULONG_PTR) FileHandle) = (ULONG_PTR) pFileHandle;
+
+	return STATUS_SUCCESS;
+}
+
+/**
+ * NtReadFile function:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff567072/
+ */
+
+NTSTATUS NtReadFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key)
+{
+	return STATUS_SUCCESS;
+}
+
+/**
+ * NtWriteFile function:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff567121/
+ */
+
+NTSTATUS NtWriteFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key)
+{
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -237,7 +292,16 @@ NTSTATUS NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
 
 NTSTATUS NtClose(HANDLE Handle)
 {
-	return 0;
+	WINPR_FILE* pFileHandle;
+
+	if (!Handle)
+		return 0;
+
+	pFileHandle = (WINPR_FILE*) Handle;
+
+	free(pFileHandle);
+
+	return STATUS_SUCCESS;
 }
 
 /**
