@@ -403,7 +403,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			length = ConvertToUnicode(CP_UTF8, 0, volumeLabel, -1, &outStr, 0) * 2;
+			length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2;
 			Stream_Write_UINT32(output, 17 + length); /* Length */
 			Stream_EnsureRemainingCapacity(output, 17 + length);
 			Stream_Write_UINT64(output, FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
@@ -431,7 +431,7 @@ static void drive_process_irp_query_volume_information(DRIVE_DEVICE* disk, IRP* 
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			length = ConvertToUnicode(CP_UTF8, 0, diskType, -1, &outStr, 0) * 2;
+			length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2;
 			Stream_Write_UINT32(output, 12 + length); /* Length */
 			Stream_EnsureRemainingCapacity(output, 12 + length);
 			Stream_Write_UINT32(output,
@@ -738,6 +738,8 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 #define DeviceServiceEntry	drive_DeviceServiceEntry
 #endif
 
+UINT sys_code_page = 0;
+
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	RDPDR_DRIVE* drive;
@@ -751,6 +753,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 #ifndef WIN32
 
+	sys_code_page = CP_UTF8;
 	if (strcmp(drive->Path, "*") == 0)
 	{
 		/* all drives */
@@ -776,6 +779,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
         drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 
 #else
+	sys_code_page = GetACP();
         /* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
         if (strcmp(drive->Path, "%") == 0)

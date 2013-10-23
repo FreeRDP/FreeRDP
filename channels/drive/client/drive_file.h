@@ -118,4 +118,6 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
 	const char* path, wStream* output);
 
+extern UINT sys_code_page;
+
 #endif /* FREERDP_CHANNEL_DRIVE_FILE_H */
