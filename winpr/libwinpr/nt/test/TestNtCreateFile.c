@@ -15,7 +15,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
 
-	_RtlInitAnsiString(&aString, "\\Device\\WinPR");
+	_RtlInitAnsiString(&aString, "\\??\\C:\\Users\\Public\\foo.txt");
 	_RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 
 	handle = NULL;
