@@ -26,6 +26,7 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -49,10 +50,9 @@
 
 /* Drop in replacement for the linux pthread_timedjoin_np and
  * pthread_mutex_timedlock functions.
- * TODO: Reduce cost penalty. */
+ */
 #if !defined(HAVE_PTHREAD_GNU_EXT)
 #include <pthread.h>
-#include <errno.h>
 static int pthread_timedjoin_np(pthread_t td, void **res,
 		struct timespec *timeout)
 {
