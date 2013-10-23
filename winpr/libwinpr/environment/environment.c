@@ -25,6 +25,9 @@
 
 #ifndef _WIN32
 
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+
 #include <winpr/crt.h>
 
 #ifdef HAVE_UNISTD_H
@@ -240,6 +243,128 @@ LPCH GetEnvironmentStrings(VOID)
 
 	return lpszEnvironmentBlock;
 }
+
+LPCH MergeEnvironmentStrings(LPCH original, LPCH merge)
+{
+	char* p;
+	int offset;
+	int length;
+	char* envp;
+	DWORD cchEnvironmentBlock;
+	LPCH lpszEnvironmentBlock;
+	char **mergeStrings;
+	int mergeStringLenth;
+	int mergeArraySize = 128;
+	int run;
+	int mergeLength;
+	int foundMerge;
+	char * foundEquals;
+	// first build an char ** of the merge env strings
+
+	mergeStrings = (char *) malloc(mergeArraySize * sizeof(char *));
+	mergeStringLenth = 0;
+
+	p = merge;
+	while( *p && *(p+1)) {
+		length = strlen(p);
+		if (mergeStringLenth == mergeArraySize ) {
+			mergeArraySize += 128;
+			mergeStrings = (LPCH) realloc(mergeStrings, mergeArraySize * sizeof(char *));
+
+		}
+		mergeStrings[mergeStringLenth] = p;
+		p += length + 1;
+		mergeStringLenth++;
+	}
+
+	offset = 0;
+
+	cchEnvironmentBlock = 128;
+	lpszEnvironmentBlock = (LPCH) malloc(cchEnvironmentBlock * sizeof(CHAR));
+
+	envp  = original;
+
+	while (*envp && *(envp+1))
+	{
+		length = strlen(envp);
+
+		while ((offset + length + 8) > cchEnvironmentBlock)
+		{
+			cchEnvironmentBlock *= 2;
+			lpszEnvironmentBlock = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+		}
+
+		p = &(lpszEnvironmentBlock[offset]);
+
+		// check if this value is in the mergeStrings
+		foundMerge = 0;
+		for (run = 0; run < mergeStringLenth; run ++) {
+			if (mergeStrings[run] == NULL) {
+				continue;
+			}
+			mergeLength =strlen(mergeStrings[run]);
+			foundEquals = strstr(mergeStrings[run],"=");
+			if (foundEquals == NULL) {
+				continue;
+			}
+#ifdef _WIN32
+			if (strnicmp(envp,mergeStrings[run],foundEquals - mergeStrings[run]) == 0) {
+#else
+			if (strncmp(envp,mergeStrings[run],foundEquals - mergeStrings[run]) == 0) {
+#endif
+				// found variable in merge list ... use this ....
+				while ((offset + mergeLength + 8) > cchEnvironmentBlock)
+				{
+					cchEnvironmentBlock *= 2;
+					lpszEnvironmentBlock = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+				}
+				foundMerge = 1;
+				CopyMemory(p, mergeStrings[run], mergeLength);
+				mergeStrings[run] = NULL;
+				p[mergeLength] = '\0';
+				offset += (mergeLength + 1);
+			}
+		}
+
+
+		if (foundMerge == 0) {
+			CopyMemory(p, envp, length * sizeof(CHAR));
+			p[length] = '\0';
+			offset += (length + 1);
+		}
+		envp += (length +1);
+	}
+
+	// now merge the not already merged env
+	for (run = 0; run < mergeStringLenth; run ++) {
+		if (mergeStrings[run] == NULL) {
+			continue;
+		}
+
+		mergeLength =strlen(mergeStrings[run]);
+
+		while ((offset + mergeLength + 8) > cchEnvironmentBlock)
+		{
+			cchEnvironmentBlock *= 2;
+			lpszEnvironmentBlock = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+		}
+
+		p = &(lpszEnvironmentBlock[offset]);
+
+		CopyMemory(p, mergeStrings[run], mergeLength);
+		mergeStrings[run] = NULL;
+		p[mergeLength] = '\0';
+		offset += (mergeLength + 1);
+	}
+
+
+	lpszEnvironmentBlock[offset] = '\0';
+
+	free(mergeStrings);
+
+	return lpszEnvironmentBlock;
+}
+
 
 LPWCH GetEnvironmentStringsW(VOID)
 {
