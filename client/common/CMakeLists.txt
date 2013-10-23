@@ -18,6 +18,9 @@
 set(MODULE_NAME "freerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT")
 
+include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIRS})
+
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
