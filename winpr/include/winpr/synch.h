@@ -134,11 +134,6 @@ WINPR_API BOOL TryAcquireSRWLockShared(PSRWLOCK SRWLock);
 WINPR_API VOID ReleaseSRWLockExclusive(PSRWLOCK SRWLock);
 WINPR_API VOID ReleaseSRWLockShared(PSRWLOCK SRWLock);
 
-/* Condition Variable */
-
-typedef PVOID RTL_CONDITION_VARIABLE;
-typedef RTL_CONDITION_VARIABLE CONDITION_VARIABLE, *PCONDITION_VARIABLE;
-
 /* Critical Section */
 
 #if defined(__linux__)
@@ -175,6 +170,18 @@ WINPR_API BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 WINPR_API VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 WINPR_API VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+
+/* Condition Variable */
+
+typedef PVOID RTL_CONDITION_VARIABLE;
+typedef RTL_CONDITION_VARIABLE CONDITION_VARIABLE, *PCONDITION_VARIABLE;
+
+WINPR_API VOID InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+WINPR_API BOOL SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds);
+WINPR_API BOOL SleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK SRWLock, DWORD dwMilliseconds, ULONG Flags);
+WINPR_API VOID WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+WINPR_API VOID WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+
 
 /* Synchronization Barrier */
 
