@@ -106,8 +106,8 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
-	printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n",
-			mode, argp, argi, argl, ret);
+/*         printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n", */
+/*                         mode, argp, argi, argl, ret); */
 
 	return 1;
 }
@@ -117,12 +117,12 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	int status;
 	rdpTsg* tsg;
 
-	printf("transport_bio_tsg_write: %d\n", num);
+/*         printf("transport_bio_tsg_write: %d\n", num); */
 
 	tsg = (rdpTsg*) bio->ptr;
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
-	printf("tsg_write: %d\n", status);
+/*         printf("tsg_write: %d\n", status); */
 
 	BIO_clear_retry_flags(bio);
 
@@ -139,12 +139,12 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	int status;
 	rdpTsg* tsg;
 
-	printf("transport_bio_tsg_read: %d\n", size);
+/*         printf("transport_bio_tsg_read: %d\n", size); */
 
 	tsg = (rdpTsg*) bio->ptr;
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
-	printf("tsg_read: %d\n", status);
+/*         printf("tsg_read: %d\n", status); */
 
 	BIO_clear_retry_flags(bio);
 
@@ -158,19 +158,19 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
 {
-	printf("transport_bio_tsg_puts: %d\n", strlen(str));
+/*         printf("transport_bio_tsg_puts: %d\n", strlen(str)); */
 	return 1;
 }
 
 static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 {
-	printf("transport_bio_tsg_gets: %d\n", size);
+/*         printf("transport_bio_tsg_gets: %d\n", size); */
 	return 1;
 }
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	printf("transport_bio_tsg_ctrl: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2);
+/*         printf("transport_bio_tsg_ctrl: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2); */
 	if(cmd == BIO_CTRL_FLUSH) {
 		return 1;
 	}
@@ -179,7 +179,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_tsg_new(BIO* bio)
 {
-	printf("transport_bio_tsg_new\n");
+/*         printf("transport_bio_tsg_new\n"); */
 
 	bio->init = 1;
 	bio->num = 0;
@@ -191,7 +191,7 @@ static int transport_bio_tsg_new(BIO* bio)
 
 static int transport_bio_tsg_free(BIO* bio)
 {
-	printf("transport_bio_tsg_free\n");
+/*         printf("transport_bio_tsg_free\n"); */
 	return 1;
 }
 
