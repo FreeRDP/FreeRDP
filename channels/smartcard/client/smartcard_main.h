@@ -112,8 +112,8 @@ struct _SMARTCARD_DEVICE
 	HANDLE irpEvent;
 	HANDLE stopEvent;
 
-  LIST* CompletionIds;
-  HANDLE CompletionIdsMutex;
+	LIST* CompletionIds;
+	HANDLE CompletionIdsMutex;
 
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
