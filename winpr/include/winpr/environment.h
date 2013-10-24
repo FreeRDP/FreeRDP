@@ -3,6 +3,8 @@
  * Process Environment Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Thinstuff Technologies GmbH
+ * Copyright 2013 DI (FH) Martin Haimberger <martin.haimberger@thinstuff.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +72,11 @@ WINPR_API DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSi
 
 WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
 WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
+
+WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
+
+WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR lpValue);
 
 #ifdef __cplusplus
 }
