@@ -41,7 +41,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "smartcard_main.h"
 

@@ -31,7 +31,6 @@
 
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include <freerdp/channels/rdpdr.h>
 
@@ -229,7 +228,7 @@ static void smartcard_irp_complete(IRP* irp)
 	 * to be in this file so that "smartcard_irp_request()" can reference it.
 	 */
 
-	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
+	DEBUG_SCARD("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
 
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, 12);
@@ -246,8 +245,7 @@ static void smartcard_irp_complete(IRP* irp)
 
 	if (!duplicate)
 	{
-	        svc_plugin_send(irp->devman->plugin, irp->output);
-		irp->output = NULL;
+		irp->Complete(irp);
 	}
 
 	/* End TS Client defect workaround. */
@@ -315,7 +313,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i, length, ck;
+	int length, ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 
@@ -339,6 +337,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->name = NULL;
 	smartcard->path = NULL;
+
 	if (path)
 	{
 		smartcard->path = path;
