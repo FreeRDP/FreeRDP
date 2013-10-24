@@ -171,7 +171,10 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	printf("transport_bio_tsg_ctrl: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2);
-	return 1;
+	if(cmd == BIO_CTRL_FLUSH) {
+		return 1;
+	}
+	return 0;
 }
 
 static int transport_bio_tsg_new(BIO* bio)
@@ -217,28 +220,21 @@ BOOL transport_connect_tls(rdpTransport* transport)
 {
 	if (transport->layer == TRANSPORT_LAYER_TSG)
 	{
-		if (!transport->TlsIn)
-			transport->TlsIn = tls_new(transport->settings);
+		transport->TsgTls = tls_new(transport->settings);
 
-		if (!transport->TlsOut)
-			transport->TlsOut = transport->TlsIn;
+		transport->TsgTls->methods = BIO_s_tsg();
+		transport->TsgTls->tsg = (void*) transport->tsg;
 
-		transport->TlsIn->methods = BIO_s_tsg();
-		transport->TlsIn->tsg = (void*) transport->tsg;
+		transport->layer = TRANSPORT_LAYER_TSG_TLS;
 
-		transport->layer = TRANSPORT_LAYER_TLS;
-
-		if (tls_connect(transport->TlsIn) != TRUE)
+		if (tls_connect(transport->TsgTls) != TRUE)
 		{
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
 
-			tls_free(transport->TlsIn);
+			tls_free(transport->TsgTls);
 
-			if (transport->TlsIn == transport->TlsOut)
-				transport->TlsIn = transport->TlsOut = NULL;
-			else
-				transport->TlsIn = NULL;
+			transport->TsgTls = NULL;
 
 			return FALSE;
 		}
@@ -522,6 +518,8 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 			status = tcp_read(transport->TcpIn, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+			status = tls_read(transport->TsgTls, data + read, bytes - read);
 
 		/* blocking means that we can't continue until this is read */
 
@@ -677,6 +675,8 @@ int transport_write(rdpTransport* transport, wStream* s)
 			status = tcp_write(transport->TcpOut, Stream_Pointer(s), length);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_write(transport->tsg, Stream_Pointer(s), length);
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+			status = tls_write(transport->TsgTls, Stream_Pointer(s), length);
 
 		if (status < 0)
 			break; /* error occurred */

@@ -432,12 +432,14 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 		pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
 
 #ifdef WITH_DEBUG_TSG
+		/*
 		if (pdu)
 		{
 			fprintf(stderr, "Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
 			winpr_HexDump(Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 			fprintf(stderr, "\n");
 		}
+		*/
 #endif
 
 		return pdu;

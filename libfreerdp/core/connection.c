@@ -211,11 +211,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		free(cookie);
 
 		settings->RdpSecurity = TRUE;
-		settings->TlsSecurity = FALSE;
+/*                 settings->TlsSecurity = FALSE; */
 		settings->NlaSecurity = FALSE;
 		settings->ExtSecurity = FALSE;
 
-		//settings->TlsSecurity = TRUE;
+		settings->TlsSecurity = TRUE;
 		//settings->NlaSecurity = TRUE;
 	}
 	else
