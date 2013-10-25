@@ -355,7 +355,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 					offset += 8; // UnicodeString Offset, Length
 				}
 				if(MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH) {
-					fprintf(stderr, "Out of Spec Message Length %d");
+					fprintf(stderr, "Out of Spec Message Length %d", MsgBytes);
 					return FALSE;
 				}
 				offset += MsgBytes;
