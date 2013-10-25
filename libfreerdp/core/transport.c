@@ -223,6 +223,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	if (transport->layer == TRANSPORT_LAYER_TSG)
 	{
 		transport->TsgTls = tls_new(transport->settings);
+		LWD("create TsgTls");
 		sprintf(transport->TsgTls->desc, "TsgTls");
 
 		transport->TsgTls->methods = BIO_s_tsg();
@@ -247,6 +248,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (transport->TlsIn == NULL) {
 		transport->TlsIn = tls_new(transport->settings);
+		LWD("create TlsIn");
 		sprintf(transport->TlsIn->desc, "TlsIn");
 	}
 
@@ -324,6 +326,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	if (transport->TlsIn == NULL) {
 		transport->TlsIn = tls_new(transport->settings);
+		LWD("create TlsIn");
 		sprintf(transport->TlsIn->desc, "TlsIn");
 	}
 
@@ -331,6 +334,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	if (transport->TlsOut == NULL) {
 		transport->TlsOut = tls_new(transport->settings);
+		LWD("create TlsOut");
 		sprintf(transport->TlsOut->desc, "TlsOut");
 	}
 
@@ -398,6 +402,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 {
 	if (transport->TlsIn == NULL) {
 		transport->TlsIn = tls_new(transport->settings);
+		LWD("create TlsIn");
 		sprintf(transport->TlsIn->desc, "TlsIn");
 	}
 
@@ -418,13 +423,14 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
-	if (transport->TlsIn == NULL)
+	if (transport->TlsIn == NULL) {
 		transport->TlsIn = tls_new(transport->settings);
-
-	if (transport->TlsOut == NULL) {
-		transport->TlsOut = transport->TlsIn;
+		LWD("create TlsIn");
 		sprintf(transport->TlsIn->desc, "TlsIn");
 	}
+	
+	if (transport->TlsOut == NULL)
+		transport->TlsOut = transport->TlsIn;
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
@@ -518,6 +524,24 @@ UINT32 nla_header_length(wStream* s)
 	return length;
 }
 
+char *want(rdpTls *tls)
+{
+	int what = SSL_want(tls->ssl);
+	switch(what)
+	{
+	case SSL_NOTHING:
+		return "NOTHING";
+	case SSL_WRITING:
+		return "WRITING";
+	case SSL_READING:
+		return "READING";
+	case SSL_X509_LOOKUP:
+		return "X509_LOOKUP";
+	default:
+		return "UNKNOWN";
+	}
+}
+
 int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 {
 	int read = 0;
@@ -543,8 +567,12 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 			status = tcp_read(transport->TcpIn, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
-		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS) {
+			LWD("TlsIn  SSL pending %d want %s", SSL_pending(transport->TlsIn->ssl),  want(transport->TlsIn));
+			LWD("TlsOut SSL pending %d want %s", SSL_pending(transport->TlsOut->ssl), want(transport->TlsOut));
+			LWD("TsgTls SSL pending %d want %s", SSL_pending(transport->TsgTls->ssl), want(transport->TsgTls));
 			status = tls_read(transport->TsgTls, data + read, bytes - read);
+		}
 
 		/* blocking means that we can't continue until this is read */
 

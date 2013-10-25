@@ -10,13 +10,12 @@
 			time_t tod = time(NULL); \
 			char buf[25]; \
 			struct tm* tm_info = localtime(&tod); \
-			strftime(buf, 25, "%Y:%m:%d %H:%M:%S", tm_info); \
-	                fprintf(stderr, "%s [%s] ", __FUNCTION__, buf); \
+			strftime(buf, 25, "%H:%M:%S", tm_info); \
+	                fprintf(stderr, "%20.20s [%s] ", __FUNCTION__, buf); \
 	                fprintf(stderr, fmt, ## __VA_ARGS__); \
 	                fprintf(stderr, "\n"); \
-			fflush(stderr); \
 	        } while( 0 )
 
-
+//                         fflush(stderr);
 
 #endif

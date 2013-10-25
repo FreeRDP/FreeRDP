@@ -43,6 +43,8 @@
 
 #include "rpc.h"
 
+#include "lwd.h"
+
 /* Security Verification Trailer Signature */
 
 rpc_sec_verification_trailer RPC_SEC_VERIFICATION_TRAILER =
@@ -316,7 +318,11 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
+	LWD("len %d", length);
+
 	status = tls_read(rpc->TlsOut, data, length);
+
+	LWD("status %d", status);
 
 	return status;
 }
@@ -325,7 +331,11 @@ int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
+	LWD("len %d", length);
+
 	status = tls_write_all(rpc->TlsOut, data, length);
+
+	LWD("status %d", status);
 
 	return status;
 }
@@ -342,8 +352,12 @@ int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
 	fprintf(stderr, "\n");
 	*/
 #endif
+
+	LWD("len %d", length);
 	
 	status = tls_write_all(rpc->TlsIn, data, length);
+
+	LWD("status %d", status);
 
 	return status;
 }
@@ -362,9 +376,12 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	ntlm = rpc->ntlm;
 
+	LWD("len %d", length);
+
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
 		fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		LWD("status -1 query context");
 		return -1;
 	}
 
@@ -436,6 +453,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	{
 		fprintf(stderr, "EncryptMessage status: 0x%08X\n", encrypt_status);
 		free(request_pdu);
+		LWD("status -1 encrypt_status fail");
 		return -1;
 	}
 
@@ -445,6 +463,8 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
 	free(request_pdu);
+
+	LWD("status %d", length);
 
 	return length;
 }
