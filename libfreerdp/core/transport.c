@@ -79,7 +79,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		status &= tls_disconnect(transport->TlsIn);
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 	{
 		tsg_disconnect(transport->tsg);
 	}
@@ -119,10 +119,14 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	int status;
 	rdpTsg* tsg;
 
+	LWD("len %d", num);
+
 /*         printf("transport_bio_tsg_write: %d\n", num); */
 
 	tsg = (rdpTsg*) bio->ptr;
 	status = tsg_write(tsg, (BYTE*) buf, num);
+
+	LWD("status %d", status);
 
 /*         printf("tsg_write: %d\n", status); */
 
@@ -141,10 +145,14 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	int status;
 	rdpTsg* tsg;
 
+	LWD("len %d", size);
+
 /*         printf("transport_bio_tsg_read: %d\n", size); */
 
 	tsg = (rdpTsg*) bio->ptr;
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
+
+	LWD("status %d", status);
 
 /*         printf("tsg_read: %d\n", status); */
 
@@ -155,7 +163,7 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 		BIO_set_retry_read(bio);
 	}
 
-	return status;
+	return status > 0 ? status : -1;
 }
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
@@ -281,7 +289,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 		return TRUE;
 
 	if (!transport_connect_tls(transport))
@@ -568,9 +576,11 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS) {
+			/*
 			LWD("TlsIn  SSL pending %d want %s", SSL_pending(transport->TlsIn->ssl),  want(transport->TlsIn));
 			LWD("TlsOut SSL pending %d want %s", SSL_pending(transport->TlsOut->ssl), want(transport->TlsOut));
-			LWD("TsgTls SSL pending %d want %s", SSL_pending(transport->TsgTls->ssl), want(transport->TsgTls));
+			LWD("TsgTls SSL pending %d want %s", SSL_pending(transport->TsgTls->ssl), want(transport->TlsIn));
+			*/
 			status = tls_read(transport->TsgTls, data + read, bytes - read);
 		}
 
@@ -998,7 +1008,7 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 		status &= tcp_set_blocking_mode(transport->TcpIn, blocking);
 	}
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 	{
 		tsg_set_blocking_mode(transport->tsg, blocking);
 	}
