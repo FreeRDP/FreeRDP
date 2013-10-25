@@ -31,6 +31,8 @@
 
 #include <freerdp/crypto/tls.h>
 
+#include <lwd.h>
+
 static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
@@ -99,7 +101,7 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 
 static void tls_ssl_info_callback(const SSL* ssl, int type, int val)
 {
-	printf("tls_ssl_info_callback: type: %d val: %d\n");
+/*         printf("tls_ssl_info_callback: type: %d val: %d\n", type, val); */
 
 	if (type & SSL_CB_HANDSHAKE_START)
 	{
@@ -373,6 +375,8 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 	int error;
 	int status;
 
+	LWD("length %d", length);
+
 	status = SSL_read(tls->ssl, data, length);
 
 	if (status <= 0)
@@ -411,6 +415,8 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 		}
 	}
 
+	LWD("ret %d", status);
+
 	return status;
 }
 
@@ -433,6 +439,8 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 {
 	int error;
 	int status;
+
+	LWD("length %d", length);
 
 	status = SSL_write(tls->ssl, data, length);
 
@@ -470,6 +478,8 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 				break;
 		}
 	}
+
+	LWD("ret %d", status);
 
 	return status;
 }
