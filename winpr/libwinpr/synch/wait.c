@@ -44,11 +44,41 @@
 
 #ifndef _WIN32
 
+#include <time.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
+
+#ifdef __MACH__
+
+#include <mach/mach_time.h>
+
+#define CLOCK_REALTIME 0
+#define CLOCK_MONOTONIC 0
+
+int clock_gettime(int clk_id, struct timespec *t)
+{
+	UINT64 time;
+	double seconds;
+	double nseconds;
+	mach_timebase_info_data_t timebase;
+
+	mach_timebase_info(&timebase);
+	time = mach_absolute_time();
+
+	nseconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom);
+	seconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom * 1e9);
+
+	t->tv_sec = seconds;
+	t->tv_nsec = nseconds;
+
+	return 0;
+}
+
+#endif
 
 /* Drop in replacement for the linux pthread_timedjoin_np and
  * pthread_mutex_timedlock functions.
@@ -71,10 +101,12 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 
 		nanosleep(&sleepytime, NULL);
   
-		gettimeofday (&timenow, NULL);
+		gettimeofday(&timenow, NULL);
+
 		if (timenow.tv_sec >= timeout->tv_sec &&
-				(timenow.tv_usec * 1000) >= timeout->tv_nsec) {
-		 return ETIMEDOUT;
+				(timenow.tv_usec * 1000) >= timeout->tv_nsec)
+		{
+			return ETIMEDOUT;
 		}
 	}
 	while (TRUE);
