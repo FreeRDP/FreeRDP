@@ -31,8 +31,6 @@
 
 #include <freerdp/crypto/tls.h>
 
-#include <lwd.h>
-
 static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
@@ -375,8 +373,6 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 	int error;
 	int status;
 
-	LWD("tls %s length %d", tls->desc, length);
-
 	status = SSL_read(tls->ssl, data, length);
 
 	if (status <= 0)
@@ -415,8 +411,6 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 		}
 	}
 
-	LWD("tls %s ret %d", tls->desc, status);
-
 	return status;
 }
 
@@ -439,8 +433,6 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 {
 	int error;
 	int status;
-
-	LWD("tls %s length %d", tls->desc, length);
 
 	status = SSL_write(tls->ssl, data, length);
 
@@ -478,8 +470,6 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 				break;
 		}
 	}
-
-	LWD("tls %s ret %d", tls->desc, status);
 
 	return status;
 }

@@ -49,7 +49,6 @@ struct rdp_tls
 	rdpSettings* settings;
 	SecPkgContext_Bindings* Bindings;
 	rdpCertificateStore* certificate_store;
-	char desc[20];
 };
 
 FREERDP_API BOOL tls_connect(rdpTls* tls);

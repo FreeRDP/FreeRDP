@@ -274,7 +274,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
-		usleep(100);
 	}
 
 	return TRUE;
