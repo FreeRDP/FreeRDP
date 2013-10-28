@@ -108,8 +108,10 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
-/*         printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n", */
-/*                         mode, argp, argi, argl, ret); */
+	/*
+	printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n",
+			mode, argp, argi, argl, ret);
+			*/
 
 	return 1;
 }
@@ -288,11 +290,6 @@ BOOL transport_connect_nla(rdpTransport* transport)
 {
 	freerdp* instance;
 	rdpSettings* settings;
-
-	/*
-	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
-		return TRUE;
-		*/
 
 	if (!transport_connect_tls(transport))
 		return FALSE;
