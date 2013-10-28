@@ -99,7 +99,7 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 
 static void tls_ssl_info_callback(const SSL* ssl, int type, int val)
 {
-	printf("tls_ssl_info_callback: type: %d val: %d\n");
+	printf("tls_ssl_info_callback: type: %d val: %d\n", type, val);
 
 	if (type & SSL_CB_HANDSHAKE_START)
 	{
